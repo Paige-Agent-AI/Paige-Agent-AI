@@ -97,6 +97,14 @@ export function parseProductionAcl(dumpText) {
 
 /** Versions recorded on production, read by the header of `supabase migration list`, not a column number. */
 export function parseLedger(text) {
+  // In an agent environment the CLI prints `{"migrations":[{"local","remote","time"}]}` instead.
+  try {
+    const j = JSON.parse(text);
+    if (Array.isArray(j?.migrations)) {
+      const versions = new Set(j.migrations.map((m) => String(m?.remote ?? "").replace(/[^0-9]/g, "")).filter((v) => v.length === 14));
+      return { versions, headerFound: true };
+    }
+  } catch { /* the table form */ }
   let col = -1;
   const versions = new Set();
   for (const line of text.split("\n")) {
@@ -197,7 +205,7 @@ BEGIN
     END;
   END LOOP;
   IF cardinality(missing) > 0 THEN
-    RAISE EXCEPTION 'SCHEMA DRIFT: production grants on % object(s) the migration chain does not create: %',
+    RAISE EXCEPTION 'SCHEMA DRIFT: production grants on % object(s) the migration chain does not create: % (if this branch is behind main, update it: production has migrations it lacks)',
       cardinality(missing), array_to_string(ARRAY(SELECT DISTINCT unnest(missing) ORDER BY 1), '; ');
   END IF;
 END
@@ -270,12 +278,16 @@ function resetVersion() {
   }
   const plan = resetPlan(files, recorded);
   if (!plan.version) fail("No migration production has recorded exists in this tree.");
-  console.error(`Rebuild up to ${plan.version}; ${plan.pending.length} migration(s) production has not recorded will be applied after the grants are reproduced.`);
-  for (const v of plan.outOfOrder) {
-    console.error(`::warning::Migration ${v} is older than production's newest recorded version but is not recorded on production. It is applied before the grants are reproduced, so its own grants are replaced by production's.`);
-  }
+  // Unrecorded migrations OLDER than V would otherwise be applied by the rebuild, before the grants
+  // are reproduced, and lose their own grants. They are set aside and applied after, as production's
+  // `db push --include-all` applies them after everything it already has.
+  const aside = arg("--aside-list");
+  const asideFiles = files.filter((f) => plan.outOfOrder.includes(f.slice(0, 14)));
+  if (aside) writeFileSync(aside, asideFiles.map((f) => f + "\n").join(""));
+  else if (asideFiles.length) fail("Unrecorded migrations older than the rebuild version exist; pass --aside-list so they can be set aside.");
+  console.error(`Rebuild up to ${plan.version}; ${plan.pending.length} migration(s) production has not recorded are applied after the grants are reproduced (${asideFiles.length} of them older than ${plan.version}, set aside for the rebuild).`);
   if (process.env.GITHUB_STEP_SUMMARY) {
-    appendFileSync(process.env.GITHUB_STEP_SUMMARY, `- Rebuilt up to **${plan.version}**; applied afterwards (the change under review): **${plan.pending.length - plan.outOfOrder.length}**; older but unrecorded: **${plan.outOfOrder.length}**\n`);
+    appendFileSync(process.env.GITHUB_STEP_SUMMARY, `- Rebuilt up to **${plan.version}**; applied after the grants were reproduced (the change under review): **${plan.pending.length}**, of which older than the rebuild version: **${asideFiles.length}**\n`);
   }
   process.stdout.write(plan.version + "\n");
 }
@@ -346,6 +358,10 @@ function selfTest() {
     assert(l.headerFound && l.versions.has("20240101000000") && !l.versions.has("20250103000000"), `ledger (${label}) reads the Remote column only`);
   }
   assert(!parseLedger("no table here").headerFound, "a ledger without a header is reported");
+  const j = parseLedger(JSON.stringify({ migrations: [{ local: "20240101000000", remote: "20240101000000" }, { local: "20250103000000", remote: "" }] }));
+  assert(j.versions.size === 1 && j.versions.has("20240101000000"), "the JSON ledger form reads remote versions only");
+  const d = parseDefaultPrivileges('ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "anon";\nALTER DEFAULT PRIVILEGES FOR ROLE "supabase_admin" IN SCHEMA "public" GRANT ALL ON TABLES TO "anon";');
+  assert(d.length === 1, "only postgres's defaults in public are reproduced");
 
   const plan = resetPlan(["20250101000000_a.sql", "20250102000000_b.sql", "20250103000000_c.sql", "README.md"], new Set(["20250101000000", "20250103000000", "20990101000000"]));
   assert(plan.version === "20250103000000", "reset version is the newest recorded version present locally");
@@ -357,6 +373,40 @@ function selfTest() {
   console.log("reproduce-production-grants self-test: ok");
 }
 
+// Production's default privileges for objects `postgres` creates in `public`, for the API roles.
+const DEFAULT_ACL_LINE = /^ALTER DEFAULT PRIVILEGES FOR ROLE "?postgres"? IN SCHEMA "?public"? (GRANT|REVOKE) .* ON (TABLES|SEQUENCES|FUNCTIONS|ROUTINES) (TO|FROM) (PUBLIC|"?(anon|authenticated|service_role)"?);$/;
+export function parseDefaultPrivileges(dumpText) {
+  return dumpText.split("\n").map((l) => l.trim()).filter((l) => DEFAULT_ACL_LINE.test(l));
+}
+
+/**
+ * New objects the change under review creates must start from production's defaults, not the local
+ * stack's (measured in CI: tables default to DELETE/TRUNCATE/REFERENCES/TRIGGER for anon and
+ * authenticated). Revoke what `postgres`'s per-schema defaults in `public` add for the API roles —
+ * a per-schema default can only add to the built-in one, so this returns it to built-in — then
+ * apply production's lines, if it has any.
+ */
+function reproduceDefaults() {
+  const dumpPath = arg("--dump");
+  const db = arg("--db");
+  if (!dumpPath || !db) fail("usage: --defaults --dump <prod_schema.sql> --db <url>");
+  const lines = parseDefaultPrivileges(readFileSync(dumpPath, "utf8"));
+  const sql = `\\set ON_ERROR_STOP on
+BEGIN;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON TABLES FROM PUBLIC, anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON SEQUENCES FROM PUBLIC, anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON FUNCTIONS FROM anon, authenticated, service_role;
+${lines.join("\n")}
+COMMIT;
+`;
+  const dir = mkdtempSync(join(tmpdir(), "prod-defacl-"));
+  writeFileSync(join(dir, "defaults.sql"), sql);
+  const r = spawnSync("psql", ["-X", "-q", "-d", db, "-f", join(dir, "defaults.sql")], { encoding: "utf8" });
+  if (r.status !== 0) fail(`Production's default privileges could not be reproduced.\n${(r.stderr || "").split("\n").filter((l) => /ERROR|DETAIL/.test(l)).join("\n")}`);
+  console.log(`Default privileges for objects postgres creates in public: built-in, plus ${lines.length} production line(s).`);
+  if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `- Default privileges reproduced for new objects: built-in plus **${lines.length}** production line(s)\n`);
+}
+
 function printLedger() {
   const path = arg("--parse-ledger");
   const { versions, headerFound } = parseLedger(readFileSync(path, "utf8"));
@@ -366,5 +416,6 @@ function printLedger() {
 
 if (process.argv.includes("--self-test")) selfTest();
 else if (process.argv.includes("--parse-ledger")) printLedger();
+else if (process.argv.includes("--defaults")) reproduceDefaults();
 else if (process.argv.includes("--reset-version")) resetVersion();
 else reconcile();

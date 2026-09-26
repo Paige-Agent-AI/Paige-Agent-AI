@@ -197,24 +197,12 @@ jobs:
         run: .github/scripts/prod-readonly-baseline.sh "$RUNNER_TEMP/prod"
       - run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector
       # Production's grants are reproduced on the schema production actually has, and only then is
-      # the change under review applied on top of them — so its own grants and revokes, dynamic SQL
-      # and schema-wide ones included, land exactly as written. Guessing which objects a pending
-      # migration touches was tried and fails both ways (§39 review on #1487).
-      - name: Rebuild up to production's newest recorded migration
-        run: |
-          v="$(node scripts/ci/reproduce-production-grants.mjs --reset-version --recorded "$RUNNER_TEMP/prod/recorded_versions.txt")"
-          supabase db reset --version "$v"
-      # One transaction: reset every non-extension public table, view, sequence, function and
-      # procedure to its default ACL for anon/authenticated/service_role/PUBLIC, apply production's
-      # statements, and fail naming any object production grants on that the chain lacks, any dump
-      # line it cannot parse, and any grant that changed nothing. Counts go to the summary.
-      - name: Reproduce production's grants in the rebuilt database
-        run: >-
-          node scripts/ci/reproduce-production-grants.mjs
-          --dump "$RUNNER_TEMP/prod/baseline_schema.sql"
-          --db postgresql://postgres:postgres@127.0.0.1:54322/postgres
-      - name: Apply the migrations production has not recorded (the change under review)
-        run: supabase migration up --include-all --local
+      # the change under review applied on top — so its own grants and revokes, dynamic SQL,
+      # schema-wide ones and out-of-order migrations included, land exactly as written. Guessing
+      # which objects a pending migration touches was tried and fails both ways (§39 review on
+      # #1487). The sequence and its failure modes are documented in the script.
+      - name: Reproduce production's grants, then apply the change under review
+        run: scripts/ci/reproduce-production-grants.sh "$RUNNER_TEMP/prod"
 
       # Third-party speech availability is platform-owned, distinct from the
       # caller's existing tenant membership/role and Paige thread entitlement.

@@ -20,6 +20,25 @@ afterEach(() => {
   themeMock.setTheme.mockReset();
   window.localStorage.removeItem("paige.tenantShell.navExpanded");
 });
+// The Vibe Studio tests below mount the real SoloApp, whose media-jobs hook subscribes to a realtime
+// channel. Unmocked, that opened a live WebSocket from jsdom to whatever VITE_SUPABASE_URL names, and
+// undici's "open" event is rejected by Node's EventTarget under jsdom ("The event argument must be an
+// instance of Event"): an uncaught exception that failed CI's Test step after every test had passed.
+// No assertion here depends on realtime, so the channel is inert; everything else is the real client.
+vi.mock("@/integrations/supabase/client", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/integrations/supabase/client")>();
+  const channel = { on: () => channel, subscribe: () => channel, unsubscribe: async () => "ok" as const };
+  return {
+    ...actual,
+    supabase: new Proxy(actual.supabase, {
+      get(target, prop, receiver) {
+        if (prop === "channel") return () => channel;
+        if (prop === "removeChannel") return async () => "ok" as const;
+        return Reflect.get(target, prop, receiver);
+      },
+    }),
+  };
+});
 vi.mock("@/components/admin/AdminBridgeBell", () => ({ AdminBridgeBell: () => null }));
 vi.mock("@/components/admin/voice/DialPadTrigger", () => ({ DialPadTrigger: () => null }));
 vi.mock("@/components/ui/paige", () => ({

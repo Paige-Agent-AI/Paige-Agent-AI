@@ -378,11 +378,13 @@ describe("Solo Settings rendered customer copy", () => {
       </MemoryRouter>,
     );
     const text = renderedText(html);
-    expect(text).toContain("Booking presets");
+    // The Calendars segment's eyebrow. #1224 renamed it from "Booking presets" (owner copy ruling:
+    // user-facing "preset" becomes "calendar"); both the positive and negative checks follow it.
+    expect(text).toContain("Booking calendars");
     expect(html).toMatch(/aria-selected="true"[^>]*>Calendars</);
     // …and an ordinary visit still lands on Communications.
     const plain = renderDestination("connections");
-    expect(renderedText(plain)).not.toContain("Booking presets");
+    expect(renderedText(plain)).not.toContain("Booking calendars");
     expect(plain).toMatch(/aria-selected="true"[^>]*>Communications</);
   });
 

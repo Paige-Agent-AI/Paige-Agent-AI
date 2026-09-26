@@ -24,19 +24,11 @@
 -- ============================================================================
 BEGIN;
 
--- TEST-HARNESS PRIVILEGE PARITY. The `threads_select_owner_or_admin` permissive SELECT policy on
--- `paige_chat_threads` (migration 20260713040000) invokes `public.is_tenant_admin(tenant_id)` in its
--- admin-oversight branch, so the `authenticated` role must be able to EXECUTE that SECURITY DEFINER
--- helper for the policy to evaluate — exactly as `public.is_platform_owner()` (the sibling helper in
--- the same policy) is explicitly granted to `authenticated` in 20260628220854. `is_tenant_admin(uuid)`
--- got the analogous grant only for `anon` (20260703131428), never `authenticated`, and this env has no
--- PUBLIC-execute default — so evaluating the policy as `authenticated` raises "permission denied for
--- function is_tenant_admin". This grant restores the privilege the shipped policy REQUIRES so the
--- SET-ROLE proof can exercise the real validation read; it does not change any assertion below (the
--- helper is body-scoped to auth.uid(), §59). The missing migration-level `authenticated` grant — a
--- latent gap in the admin client-thread oversight branch, OUTSIDE this task↔thread slice — is filed
--- as issue #1204 for its own §37-verified fix; it is not masked here.
-GRANT EXECUTE ON FUNCTION public.is_tenant_admin(uuid) TO authenticated;
+-- PRIVILEGE PARITY. The `threads_select_owner_or_admin` policy on `paige_chat_threads` calls
+-- `public.is_tenant_admin(tenant_id)`, so `authenticated` must hold EXECUTE on it. Production does,
+-- from project default privileges no migration wrote (#1204 records the missing migration grant).
+-- The database-contract job reproduces production's API-role grants before this file runs
+-- (scripts/ci/reproduce-production-grants.mjs), so no test-local grant is needed or wanted.
 
 INSERT INTO auth.users (id, aud, role, email) VALUES
   ('57a00000-0000-0000-0000-0000000000a1','authenticated','authenticated','stl-user-a@example.invalid'),

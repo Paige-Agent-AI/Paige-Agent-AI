@@ -185,6 +185,14 @@ jobs:
           version: 2.109.1
       - run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector
       - run: supabase db reset
+      # PROBE (red-first stage): what grants does a database rebuilt from migrations actually hold?
+      - name: Measure the rebuilt database's API-role grants
+        run: |
+          psql -X -A -v ON_ERROR_STOP=1 postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+            -c "select 'default_acl', pg_get_userbyid(defaclrole), n.nspname, defaclobjtype, defaclacl::text from pg_default_acl d left join pg_namespace n on n.oid = d.defaclnamespace where n.nspname = 'public' or d.defaclnamespace = 0" \
+            -c "select 'authenticated SELECT on public.clients', has_table_privilege('authenticated','public.clients','SELECT')" \
+            -c "select 'public tables authenticated can SELECT', count(*) filter (where has_table_privilege('authenticated', c.oid, 'SELECT')), count(*) from pg_class c where c.relnamespace = 'public'::regnamespace and c.relkind in ('r','p')" \
+            -c "select 'authenticated EXECUTE is_tenant_admin(uuid)', has_function_privilege('authenticated','public.is_tenant_admin(uuid)','EXECUTE')"
       # Third-party speech availability is platform-owned, distinct from the
       # caller's existing tenant membership/role and Paige thread entitlement.
       - run: supabase test db supabase/tests/paige_live_pilot_feature_guard.sql

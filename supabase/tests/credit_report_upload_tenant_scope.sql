@@ -14,19 +14,9 @@ BEGIN;
 
 SELECT plan(24);
 
--- Production grants `authenticated` these privileges; a schema replayed from migrations does not.
--- Reproduced inside the rolled-back transaction, and no wider than production.
-GRANT SELECT, INSERT, UPDATE ON public.credit_report_uploads TO authenticated;
-GRANT SELECT ON public.clients, public.tenant_members, public.coach_clients TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON storage.objects TO authenticated;
-GRANT EXECUTE ON FUNCTION public.is_tenant_admin(uuid), public.agency_can_manage_child(uuid),
-  public.agency_team_role(uuid, uuid), public.current_user_tenant_id(), public.has_role(uuid, public.app_role),
-  public.has_any_role(uuid, text[]), public.is_assigned_to_client(uuid, uuid, text),
-  public.tenant_staff_owns_user(uuid, uuid), public.is_platform_admin(), public.is_platform_admin(uuid),
-  public.is_platform_operator(), public.is_platform_owner(), public.is_platform_owner(uuid),
-  public.is_super_admin(), public.is_super_admin(uuid), public.is_tenant_member(uuid),
-  public.can_manage_tenant_brand(uuid)
-TO authenticated;
+-- Production's API-role grants are reproduced in the rebuilt database by the database-contract job
+-- (scripts/ci/reproduce-production-grants.mjs), so this proof exercises the policies as production
+-- would, with no grants of its own.
 
 DO $$
 DECLARE

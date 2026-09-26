@@ -183,16 +183,31 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: 2.109.1
+      # The rebuilt database must hold production's API-role grants, or a proof exercising a policy
+      # as `authenticated` dies at the grant layer ("permission denied for table clients") before
+      # the policy runs. Most of production's grants came from project default privileges that no
+      # migration wrote, so no replay can produce them; they are read from production instead.
+      # READ-ONLY (pg_dump + ledger), through the one script CI uses to read production, BEFORE the
+      # local stack starts, and the project is unlinked again before any test SQL runs.
+      - name: Read production's baseline (read-only)
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+        run: .github/scripts/prod-readonly-baseline.sh "$RUNNER_TEMP/prod"
       - run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector
       - run: supabase db reset
-      # PROBE (red-first stage): what grants does a database rebuilt from migrations actually hold?
-      - name: Measure the rebuilt database's API-role grants
-        run: |
-          psql -X -A -v ON_ERROR_STOP=1 postgresql://postgres:postgres@127.0.0.1:54322/postgres \
-            -c "select 'default_acl', pg_get_userbyid(defaclrole), n.nspname, defaclobjtype, defaclacl::text from pg_default_acl d left join pg_namespace n on n.oid = d.defaclnamespace where n.nspname = 'public' or d.defaclnamespace = 0" \
-            -c "select 'authenticated SELECT on public.clients', has_table_privilege('authenticated','public.clients','SELECT')" \
-            -c "select 'public tables authenticated can SELECT', count(*) filter (where has_table_privilege('authenticated', c.oid, 'SELECT')), count(*) from pg_class c where c.relnamespace = 'public'::regnamespace and c.relkind in ('r','p')" \
-            -c "select 'authenticated EXECUTE is_tenant_admin(uuid)', has_function_privilege('authenticated','public.is_tenant_admin(uuid)','EXECUTE')"
+      # Reset every public object to its default ACL for anon/authenticated/service_role/PUBLIC and
+      # apply production's statements, in one transaction. Objects a migration production has not
+      # recorded yet keep their migration grants (the change under review); an object production
+      # grants on that the migrations never create fails here, by name. Counts go to the summary.
+      - name: Reproduce production's grants in the rebuilt database
+        run: >-
+          node scripts/ci/reproduce-production-grants.mjs
+          --dump "$RUNNER_TEMP/prod/baseline_schema.sql"
+          --recorded "$RUNNER_TEMP/prod/recorded_versions.txt"
+          --db postgresql://postgres:postgres@127.0.0.1:54322/postgres
+
       # Third-party speech availability is platform-owned, distinct from the
       # caller's existing tenant membership/role and Paige thread entitlement.
       - run: supabase test db supabase/tests/paige_live_pilot_feature_guard.sql

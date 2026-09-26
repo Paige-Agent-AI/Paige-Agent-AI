@@ -415,6 +415,7 @@ exist — do not follow references to them.)
 |---|---|---|
 | `lint:views` | Fails any migration that lets a VIEW drift to `security_invoker=off` (the #116 11-view anon/cross-tenant leak class). | PR #447 / §9 P0 #116 |
 | `lint:definer-fns` (`scripts/ci/definer-fn-lint.mjs`) | Fails any migration granting a new public `SECURITY DEFINER` function to `anon`/`PUBLIC` without an inline `-- definer-anon-exempt: <reason>` escape (the #117 owner-bypass fn class). Sibling of `lint:views`. | PR #448 / §9 P0 #117 |
+| `lint:title-authority` (`scripts/ci/title-authority-guard.mjs`, baseline `scripts/ci/title-authority-baseline.json`) | Fails CI when a permission decision reads a title (`job_title` / `responsibilities`): a policy (direct, dynamic or through a function or view), an authorization helper, an unreviewed or changed title reader, a title column added under an unwatched name, or a TypeScript gate. `lint:title-authority:test` proves each rule bites. | F1 (2026-09-26), owner ruling: roles authorize, titles describe |
 
 Repo: **`mrmogulmaker-bot/paige-agent-ai`** (✅ this is the accessible repo for GitHub MCP; a
 `mrmogulmaker/paige-agent-ai` path is **not** configured for the session). Default branch `main`.

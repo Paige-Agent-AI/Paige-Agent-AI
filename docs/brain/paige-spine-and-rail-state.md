@@ -199,7 +199,7 @@ of workspace B and a TEAM MEMBER of workspace A holds a conversation scoped to B
 reads resolve A — and both Chat call sites gated only on "the persona has SOME tenant".
 
 The Team hydration path never had this hole, because `get_paige_team_context()` RETURNS its tenant and
-`_shared/team-context.ts:71` refuses on mismatch. The two readiness reads did not, so **the binding was
+`buildTenantTeamContextBlock` in `_shared/team-context.ts` refuses on mismatch. The two readiness reads did not, so **the binding was
 impossible rather than omitted** — which is why a call-site guard alone could not have fixed it.
 
 Both reads now return the workspace they resolved (`tenant_id` on every row, including refusals), and

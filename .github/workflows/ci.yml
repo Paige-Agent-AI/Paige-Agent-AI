@@ -900,6 +900,20 @@ jobs:
         if: ${{ !cancelled() }}
         run: node scripts/ci/capability-kit-lint.mjs && node scripts/ci/capability-kit-lint.mjs --self-test && node --import ./scripts/capability-kit/register.mjs scripts/capability-kit/capability-kit.test.mjs
 
+      # Appended LAST in verify so inherited failing-step ordinals do not move.
+      # A job title is free text an owner types; tenant_members.role + is_owner are the enforced
+      # source. This fails a replayed policy (static or from a dynamic EXECUTE template), an
+      # authorization-helper-shaped function or view, or a TS decision beside an authorization
+      # token that reads job_title / responsibilities, and pins every other title reader to a
+      # reviewed, shrink-only baseline by migration file and body fingerprint.
+      - name: Title-authority guard (no permission decision reads a job title or responsibilities)
+        if: ${{ !cancelled() }}
+        run: npm run lint:title-authority
+
+      - name: Title-authority guard catches what it claims to
+        if: ${{ !cancelled() }}
+        run: npm run lint:title-authority:test
+
   web-fetch-hardening-smoke:
     # Its own job, deliberately on Node 22: the smoke imports the real
     # `_shared/ssrfGuard.ts`, whose `SsrfError` uses a TS parameter property that needs

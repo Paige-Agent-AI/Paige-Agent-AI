@@ -310,6 +310,18 @@ real call shapes so the assertion is about resolution rather than about existenc
   history is never edited. Such a review names the PR **head** commit, not the squash commit — same
   tree, different SHA, worth stating precisely rather than claiming the merge commit was reviewed. And
   never let a `Running` badge stand as approval: say the review is *absent*, not clean.
+  **It happened again on 2026-09-26 (PR #1468, docs only), and this is the case against relying on
+  prose.** The lane had cited this entry in its own session summary as a rule it knew. It spent its
+  care on proving the red `verify` was inherited, then marked the PR Ready and merged two seconds
+  later: the review started at 20:45:18Z and the merge landed at 20:45:20Z. The failure was not
+  forgetting the rule. The lane attached "wait" to the CI checks it was already looking at, and "the
+  reviews" were not on that checklist. Each occurrence has come right after a long evidence-gathering
+  step that felt like the last gate. **The durable fix is mechanical, not another paragraph.** A merge
+  helper, or a required check, should refuse unless **both** reviews have positively *completed* on the
+  exact head: the auto-triggered one and a requested one. A review that is absent, failed or
+  cancelled counts as not done, never as clean. Blocking only on a `Running` status would pass all
+  three. The Codex summary comment is not the evidence. On #1468 and #1470 it replaced the
+  auto-triggered row with the manual request, so the guard has to read the review records themselves. §71's honest note already names this pattern.
 
 ## Two pacing rules, from the same lane (2026-09-23)
 

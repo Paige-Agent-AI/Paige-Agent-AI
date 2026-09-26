@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SoloSettings } from "./settings";
+import type { SoloDomain } from "./data/useSoloComms";
 
 /**
  * The Connections controls a person can actually OPERATE.
@@ -157,7 +158,9 @@ describe("Business details are graded here, but owned by Setup", () => {
 });
 
 describe("Sending domains can be operated, not only listed", () => {
-  const DOMAIN = { id: "d1", domain: "mail.example.com", fromEmailLocal: "no-reply", fromName: "Example", status: "pending", isDefault: false };
+  // Typed as the real contract so a newly required field fails the typecheck here, not a render
+  // at runtime (#1138 added dnsRecords; this fixture went stale and crashed three tests).
+  const DOMAIN: SoloDomain = { id: "d1", domain: "mail.example.com", fromEmailLocal: "no-reply", fromName: "Example", status: "pending", isDefault: false, dnsRecords: [] };
 
   it("registers a domain through the existing edge seam", async () => {
     const add = vi.fn(async (_input: { domain: string; fromEmailLocal: string; fromName: string }) => ({ ok: true, error: null }));
@@ -205,6 +208,16 @@ describe("Sending domains can be operated, not only listed", () => {
     await mount();
     await act(async () => { findButton("Check DNS").click(); });
     expect(text()).toContain("domain_not_found");
+  });
+
+  it("lists each DNS record the domain must publish, each with a copy control", async () => {
+    const dnsRecords = [{ type: "TXT", name: "resend._domainkey.mail", record: "p=MIGfMA0GCSqGSIb3" }];
+    state.comms = comms({ domains: [{ ...DOMAIN, dnsRecords }] });
+    await mount();
+    expect(text()).toContain("Publish these at your DNS host");
+    expect(text()).toContain("resend._domainkey.mail");
+    expect(text()).toContain("p=MIGfMA0GCSqGSIb3");
+    expect(host.querySelector('[aria-label="Copy the TXT record"]')).toBeTruthy();
   });
 });
 

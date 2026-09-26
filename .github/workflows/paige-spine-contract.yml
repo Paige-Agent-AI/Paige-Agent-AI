@@ -289,6 +289,10 @@ jobs:
       # matches none; the person manages their own.
       - run: supabase test db supabase/tests/push_subscription_tenant_scope.sql
         if: ${{ !cancelled() }}
+      # Staff name resolution carries only what callers show, is read-only, and stays inside the
+      # business.
+      - run: supabase test db supabase/tests/coach_client_profiles_safe_projection.sql
+        if: ${{ !cancelled() }}
       - run: psql -v ON_ERROR_STOP=1 -f scripts/sql/social-foundation-legacy-shape-proof.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
       - run: psql -v ON_ERROR_STOP=1 -f scripts/sql/social-foundation-tenant-shaped-proof.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
       # Trusted task↔thread link — RLS SET-ROLE proof that the edge's server-side validation read

@@ -196,17 +196,25 @@ jobs:
           SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
         run: .github/scripts/prod-readonly-baseline.sh "$RUNNER_TEMP/prod"
       - run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector
-      - run: supabase db reset
-      # Reset every public object to its default ACL for anon/authenticated/service_role/PUBLIC and
-      # apply production's statements, in one transaction. Objects a migration production has not
-      # recorded yet keep their migration grants (the change under review); an object production
-      # grants on that the migrations never create fails here, by name. Counts go to the summary.
+      # Production's grants are reproduced on the schema production actually has, and only then is
+      # the change under review applied on top of them — so its own grants and revokes, dynamic SQL
+      # and schema-wide ones included, land exactly as written. Guessing which objects a pending
+      # migration touches was tried and fails both ways (§39 review on #1487).
+      - name: Rebuild up to production's newest recorded migration
+        run: |
+          v="$(node scripts/ci/reproduce-production-grants.mjs --reset-version --recorded "$RUNNER_TEMP/prod/recorded_versions.txt")"
+          supabase db reset --version "$v"
+      # One transaction: reset every non-extension public table, view, sequence, function and
+      # procedure to its default ACL for anon/authenticated/service_role/PUBLIC, apply production's
+      # statements, and fail naming any object production grants on that the chain lacks, any dump
+      # line it cannot parse, and any grant that changed nothing. Counts go to the summary.
       - name: Reproduce production's grants in the rebuilt database
         run: >-
           node scripts/ci/reproduce-production-grants.mjs
           --dump "$RUNNER_TEMP/prod/baseline_schema.sql"
-          --recorded "$RUNNER_TEMP/prod/recorded_versions.txt"
           --db postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      - name: Apply the migrations production has not recorded (the change under review)
+        run: supabase migration up --include-all --local
 
       # Third-party speech availability is platform-owned, distinct from the
       # caller's existing tenant membership/role and Paige thread entitlement.
@@ -442,3 +450,12 @@ jobs:
       - run: node scripts/proof/business-mission-concurrency.mjs
         env:
           BUSINESS_MISSION_TEST_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      # The grant reproduction must never overwrite the change under review. A migration production
+      # has not recorded is written at runtime (never committed); its GRANT and REVOKE must survive
+      # the job's rebuild → reproduce → apply sequence, and the reconcile alone must erase them
+      # (negative control). Last, because it rebuilds the database the proofs above used.
+      - name: Grant reproduction keeps the change under review (ordering proof)
+        if: ${{ !cancelled() }}
+        run: |
+          node scripts/ci/reproduce-production-grants.mjs --self-test
+          scripts/ci/grant-ordering-proof.sh "$RUNNER_TEMP/prod"

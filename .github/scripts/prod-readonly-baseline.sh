@@ -30,16 +30,20 @@ fi
 if [ -z "$ref" ]; then echo "::error::could not resolve the production project ref"; exit 1; fi
 echo "Linking the production project (read-only usage: dump + migration list only)"
 supabase link --project-ref "$ref"
+# The ledger is read BEFORE the dump. On a push to main, deploy-migrations may apply a migration
+# while this runs; read in this order, such a migration shows as pending (safe) and its objects, if
+# the dump has them, fail the grant reconcile by name instead of being silently reconciled away.
+supabase migration list --linked > "$out/migration_list.txt" || true
+# Versions already recorded on production. Read by the table's "Remote" header, never by column
+# number: in CI the CLI prints the table without a leading pipe, and a positional read took the Time
+# column, so every local-only migration counted as recorded (measured with CLI 2.109.1, CI=true).
+node scripts/ci/reproduce-production-grants.mjs --parse-ledger "$out/migration_list.txt" > "$out/recorded_versions.txt" || true
+echo "Production has $(grep -c . "$out/recorded_versions.txt" || echo 0) recorded migration versions."
 # --role-only excludes Supabase-managed roles by design, so it restores onto stock roles.
 supabase db dump --linked --role-only -f "$out/baseline_roles.sql"
 supabase db dump --linked -f "$out/baseline_schema.sql"
-# Versions already recorded on production (the Remote column). A migration already applied there
-# is not "pending", whatever this branch contains.
-supabase migration list --linked > "$out/migration_list.txt" || true
-awk -F'|' '{gsub(/[^0-9]/,"",$3); if (length($3)==14) print $3}' "$out/migration_list.txt" \
-  | sort -u > "$out/recorded_versions.txt" || true
-echo "Production has $(grep -c . "$out/recorded_versions.txt" || echo 0) recorded migration versions."
-# Leave nothing linked behind: every later step in the calling job must reach only its own
-# local database, never production, even by accident of a default.
+# Leave nothing linked behind: every later step in the calling job must reach only its own local
+# database, never production, even by accident of a default.
 supabase unlink >/dev/null 2>&1 || true
-rm -rf supabase/.temp/project-ref supabase/.temp/pooler-url
+rm -rf supabase/.temp
+if [ -e supabase/.temp/project-ref ]; then echo "::error::production link state survived unlink"; exit 1; fi

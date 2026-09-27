@@ -1317,6 +1317,33 @@ export function selfTestCases({ base, baseline }) {
       `ALTER TABLE public.tenant_members ADD COLUMN IF NOT EXISTS title text;`)],
     ["(n) a new title-like column on tenant_invite_tokens inside a DO block", "R6", addSql(
       `DO $$ BEGIN ALTER TABLE public.tenant_invite_tokens ADD COLUMN member_responsibility_notes text; EXCEPTION WHEN duplicate_column THEN NULL; END $$;`)],
+    // R7 — the retired title role is read nowhere: each shape a role read takes, in each kind of object.
+    ["(t) a function calling a role helper with the value cast to a role type", "R7", addSql(
+      `CREATE FUNCTION public.selftest_rr_cast() RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT public.has_role(auth.uid(), 'coach'::public.app_role) $$;`)],
+    ["(t) a function calling has_any_role with the value in a list", "R7", addSql(
+      `CREATE FUNCTION public.selftest_rr_any() RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT public.has_any_role(auth.uid(), ARRAY['admin','coach']) $$;`)],
+    ["(t) a policy comparing ur.role to the value", "R7", addSql(
+      `CREATE POLICY selftest_rr_col ON public.clients USING (EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = 'coach'));`)],
+    ["(t) a policy comparing a role to the value with = ANY over a role-typed array", "R7", addSql(
+      `CREATE POLICY selftest_rr_anyarr ON public.clients USING (EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = ANY (ARRAY['admin','coach']::public.app_role[])));`)],
+    ["(t) a policy comparing role to the value cast to app_role", "R7", addSql(
+      `CREATE POLICY selftest_rr_eqcast ON public.clients USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'coach'::app_role));`)],
+    ["(t) a view comparing a seat to the value", "R7", addSql(
+      `CREATE VIEW public.selftest_rr_v AS SELECT tm.user_id FROM public.tenant_members tm WHERE tm.role::text IN ('owner','coach');`)],
+    ["(t) a named refusal re-created so it also reads the value to decide", "R4", (t) => {
+      const e = need(baseline.retired_role_sql?.[0], "the baseline has no retired_role_sql entry");
+      const key = signatureKey(e.function);
+      t.migrations.push({ file: MIG, sql: `CREATE OR REPLACE FUNCTION ${key.split("(")[0]}(${argsOf(key)}) RETURNS boolean LANGUAGE sql AS $$ SELECT public.has_role(auth.uid(), 'coach'::public.app_role) $$;` });
+    }],
+    ["(t) a stale retired-role exemption", "R4", (t) => t.baseline.retired_role_sql.push({ function: "public.selftest_rr_gone(uuid)", reason: "self-test", defined_in: MIG, fingerprint: "0000000000000000" })],
+    ["(t) a TS decision on role === \"coach\"", "R7", addTs("src/selftest/rr-eq.ts",
+      `export function isStaff(role: string) { if (role === "coach") return true; return false; }\n`)],
+    ["(t) a TS permission type offering the value", "R7", addTs("src/selftest/rr-type.ts",
+      `export type TeamPermission = "owner" | "admin" | "coach" | "member";\n`)],
+    ["(t) a TS query filtering user_roles on the value", "R7", addTs("src/selftest/rr-query.ts",
+      `export const q = (sb: any) => sb.from("user_roles").select("user_id").eq("role", "coach");\n`)],
+    ["(t) a TS switch naming the value inside a permission function", "R7", addTs("src/selftest/rr-switch.ts",
+      `export function permissionLabel(v: string) { switch (v) { case "coach": return "Coach"; default: return "Member"; } }\n`)],
   ];
   const quiet = [
     ["a writer parameter _job_title is an input, not a read", addSql(
@@ -1345,6 +1372,12 @@ export function selfTestCases({ base, baseline }) {
       `export const Note = ({ role }: { role: string }) => <p>{role === "owner" ? "Job titles and responsibilities only describe work." : null}</p>;\n`)],
     ["a JSX display prop set from a title", addTs("src/selftest/display-prop.tsx",
       `export const Card = ({ m }: { m: { job_title?: string } }) => <Badge label={m.job_title ?? "Member"} isLead={m.job_title === "Lead"} />;\n`)],
+    ["the value as data in SQL: a lens, a seat label, a sender type, an assigned-role label", addSql(
+      `CREATE FUNCTION public.selftest_rr_data(_c uuid) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT EXISTS (SELECT 1 FROM public.paige_chat_threads t WHERE t.lens = 'coach') OR public.is_assigned_to_client(auth.uid(), _c, 'coach') OR EXISTS (SELECT 1 FROM public.program_messages m WHERE m.sender_type = 'coach') OR EXISTS (SELECT 1 FROM public.paige_coach_assignments a WHERE a.assigned_role IN ('coach','coach_vip')) $$;\nCREATE POLICY selftest_rr_seat ON public.clients USING (public.is_assigned_to_client(auth.uid(), id, 'coach'));`)],
+    ["the value as data in TS: a lens, an affiliate tier, a seat label", addTs("src/selftest/rr-data.ts",
+      `export const threads = (sb: any) => sb.from("paige_chat_threads").select("id").eq("lens", "coach");\nexport type Tier = "external" | "coach" | "admin";\nexport const seat = { p_role: "coach" };\n`)],
+    ["a comment about the retired role beside a role check", addTs("src/selftest/rr-comment.ts",
+      `// the platform-wide "coach" role grants nothing any longer\nexport const isOwner = (role: string) => role === "owner";\n`)],
     ["a display predicate and a display value named after owners", addTs("src/selftest/display.ts",
       `export const hasTitle = (m: { job_title?: string }) => Boolean(m.job_title?.trim());\nexport const ownerTitle = (owner: { job_title?: string }) => owner.job_title ?? "";\nexport function describe(m: { job_title?: string }) { return m.job_title?.includes("Lead") ? "Team lead" : "Member"; }\n`)],
   ];

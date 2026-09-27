@@ -278,6 +278,8 @@ jobs:
         if: ${{ !cancelled() }}
       - run: supabase test db supabase/tests/title_role_value_forbidden.sql
         if: ${{ !cancelled() }}
+      - run: supabase test db supabase/tests/title_role_read_nowhere.sql
+        if: ${{ !cancelled() }}
       # A tenant-less operator's semantic memory recall matches their own NULL-tenant rows (R5), and
       # a NULL tenant never reaches another user's rows or anyone's in-tenant rows.
       - run: supabase test db supabase/tests/owner_memory_recall_no_tenant.sql

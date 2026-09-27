@@ -11,7 +11,7 @@
 -- ============================================================================
 BEGIN;
 
-SELECT plan(15);
+SELECT plan(17);
 
 -- 1–10. Every role and seat column carries the constraint.
 SELECT ok(EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'public.user_roles'::regclass
@@ -45,10 +45,10 @@ SELECT ok(EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'public.paige_pen
                     AND conname = 'paige_pending_approvals_visible_to_roles_not_retired_title_role'),
   'pending approval visibility cannot name the value');
 
--- 11. Every constraint but the platform-role one is validated; that one waits for slice 5.
+-- 11. Every constraint is validated, so no stored row holds the value.
 SELECT is((SELECT count(*)::int FROM pg_constraint
             WHERE conname LIKE '%\_not\_retired\_title\_role' AND NOT convalidated),
-  1, 'only the platform-role constraint waits for the legacy rows to go');
+  0, 'every constraint is validated; no stored row holds the value');
 
 -- Fixtures.
 DO $$
@@ -84,6 +84,12 @@ SELECT throws_ok($q$SELECT public.grant_tenant_member_role('c9950000-0000-0000-0
 SELECT lives_ok($q$SELECT public.grant_tenant_member_role('c9950000-0000-0000-0000-0000000000a2', 'viewer',
                                                         'c9950000-0000-0000-0000-00000000000a', NULL)$q$,
   'an admin still grants a real role to a member of the business');
+
+-- 16–17. No platform role row holds the value, and the function that removed it is gone.
+SELECT is((SELECT count(*)::int FROM public.user_roles WHERE role::text = 'coach'),
+  0, 'no platform role row holds the value');
+SELECT ok(to_regprocedure('public.admin_remove_coach_role(uuid)') IS NULL,
+  'the function that removed the value is gone');
 
 SELECT * FROM finish();
 ROLLBACK;

@@ -235,7 +235,7 @@ serve(async (req) => {
     .eq("status", "active")
     .maybeSingle();
   const role = typeof member?.role === "string" ? member.role : null;
-  const accessAllowed = !memberError && ["owner", "admin", "coach"].includes(role ?? "");
+  const accessAllowed = !memberError && ["owner", "admin"].includes(role ?? "");
   const { data: tenantRoute } = await admin.from("tenants")
     .select("account_number,account_type,parent_tenant_id")
     .eq("id", tenantId).maybeSingle();

@@ -85,12 +85,22 @@ type DbConfig = {
 function mockDb(cfg: DbConfig): AdapterDb & EngineDb {
   const makeQuery = (table: string) => {
     const filters: Record<string, unknown> = {};
-    const q: any = {
+    type MockQuery = {
+      select(): MockQuery;
+      order(): MockQuery;
+      eq(k: string, v: unknown): MockQuery;
+      limit(): MockQuery;
+      then(
+        onF: (value: { data: unknown; error: unknown }) => unknown,
+        onR?: (reason: unknown) => unknown,
+      ): Promise<unknown>;
+    };
+    const q: MockQuery = {
       select() { return q; },
       order() { return q; },
       eq(k: string, v: unknown) { filters[k] = v; return q; },
       limit() { return q; },
-      then(onF: any, onR: any) {
+      then(onF, onR) {
         cfg.queryFilters.push({ table, filters: { ...filters } });
         let data: unknown = [];
         let error: unknown = null;
@@ -477,7 +487,7 @@ describe("resolveNativeCapabilityStatus — availability resolved THROUGH the ca
   });
 
   it("eligible actor + confirm tool lane → needs_approval", async () => {
-    const r = await call({ actorTier: "tenant", actorRoles: ["coach"], toolLane: "confirm", rpcCalls: [], queryFilters: [] });
+    const r = await call({ actorTier: "tenant", actorRoles: ["admin"], toolLane: "confirm", rpcCalls: [], queryFilters: [] });
     expect(r.ok && r.status.availability).toBe("needs_approval");
   });
 
@@ -486,6 +496,8 @@ describe("resolveNativeCapabilityStatus — availability resolved THROUGH the ca
     expect(client.ok && client.status.availability).toBe("not_for_tier");
     const noRole = await call({ actorTier: "tenant", actorRoles: [], toolLane: "auto", rpcCalls: [], queryFilters: [] });
     expect(noRole.ok && noRole.status.availability).toBe("not_for_tier");
+    const retiredTitleRole = await call({ actorTier: "tenant", actorRoles: ["coach"], toolLane: "auto", rpcCalls: [], queryFilters: [] });
+    expect(retiredTitleRole.ok && retiredTitleRole.status.availability).toBe("not_for_tier");
   });
 
   it("a role/lane infra error returns {ok:false} (retryable) — never a fabricated verdict", async () => {

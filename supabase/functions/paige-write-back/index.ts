@@ -273,18 +273,6 @@ serve(async (req) => {
             .maybeSingle();
           return !!client;
         },
-        // The direct coach↔client assignment, kept exactly as the prior guard had it — now behind the
-        // same-tenant bond, so it can never reach across workspaces.
-        coachAssigned: async (coachUserId, t) => {
-          const { data } = await supabase
-            .from("coach_clients")
-            .select("id")
-            .eq("coach_user_id", coachUserId)
-            .eq("client_user_id", t)
-            .eq("status", "active")
-            .maybeSingle();
-          return !!data;
-        },
       };
 
       const authz = await authorizeWriteBackTarget(authzDeps, { callerUserId: user.id, targetUserId });

@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
     ]);
     if (profRes.data?.full_name) callerDisplayName = String(profRes.data.full_name);
     if (rolesRes.data && rolesRes.data.length > 0) {
-      const priority = ["super_admin", "admin", "coach", "broker", "client", "user"];
+      const priority = ["super_admin", "admin", "broker", "client", "user"];
       const roles = (rolesRes.data as Array<{ role: string }>).map((r) => String(r.role));
       for (const p of priority) {
         if (roles.includes(p)) { callerRole = p; break; }

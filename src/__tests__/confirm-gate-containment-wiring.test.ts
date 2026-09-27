@@ -125,13 +125,14 @@ describe("FIX C — a bug-report/improvement that cannot be filed says so; it ne
   });
 
   it("the role refusal instructs an honest 'nothing was filed' report (never a false 'filed')", () => {
-    expect(imp).toContain("Improvement proposals are restricted to admins and coaches.");
+    expect(imp).toContain("Improvement proposals are restricted to admins.");
     expect(imp).toContain("Nothing was filed");
   });
 
   it("still WRITES only for an authorized caller with a resolved tenant (gate not weakened)", () => {
     // The insert is still guarded by the role check and a non-null impTenantId above it.
-    expect(imp).toContain("if (!(isAdmin || isCoach))");
+    expect(imp).toContain("if (!isAdmin) {");
+    expect(imp).not.toContain("isCoach");
     expect(imp).toContain('.from("paige_improvement_proposals").insert(');
     expect(imp).toContain("tenant_id: impTenantId");
   });

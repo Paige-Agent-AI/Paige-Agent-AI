@@ -315,8 +315,8 @@ async function resolveSkillCaller(
     // protection; a stricter staff-only access policy is a separate §51 decision, out of this slice.
     access: { allowed: true },
     isApprovingAuthority,
-    // 'admin' | 'coach' — both non-operator, which the interpreter's provenance gate requires.
-    actorRole: isApprovingAuthority ? "admin" : "coach",
+    // 'admin' | 'member' — both non-operator, which the interpreter's provenance gate requires.
+    actorRole: isApprovingAuthority ? "admin" : "member",
   };
 }
 

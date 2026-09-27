@@ -14,17 +14,9 @@ BEGIN;
 
 SELECT plan(12);
 
--- Production grants `authenticated` these privileges; a schema replayed from migrations does not.
--- Reproduced inside the rolled-back transaction so the reads exercise the policies.
-GRANT SELECT, INSERT, UPDATE ON public.client_memory TO authenticated;
-GRANT SELECT ON public.clients, public.tenant_members, public.coach_clients TO authenticated;
--- Function grants exactly as production holds them for `authenticated` — no more, so a policy that
--- calls a function production withholds fails here as it would there.
-GRANT EXECUTE ON FUNCTION public.is_tenant_admin(uuid), public.agency_can_manage_child(uuid),
-  public.agency_team_role(uuid, uuid), public.current_user_tenant_id(), public.has_role(uuid, public.app_role),
-  public.is_platform_admin(), public.is_platform_admin(uuid), public.is_platform_operator(),
-  public.is_platform_owner(), public.is_platform_owner(uuid), public.is_super_admin(), public.is_super_admin(uuid)
-TO authenticated;
+-- Production's API-role grants are reproduced in the rebuilt database by the database-contract job
+-- (scripts/ci/reproduce-production-grants.mjs), so this proof exercises the policies as production
+-- would, with no grants of its own.
 
 DO $$
 DECLARE

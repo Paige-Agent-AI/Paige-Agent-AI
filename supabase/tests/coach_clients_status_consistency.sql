@@ -14,14 +14,9 @@ BEGIN;
 
 SELECT plan(9);
 
--- Production grants `authenticated` these table privileges; a schema replayed from migrations
--- does not, so without this every read below stops at the grant layer before any policy is
--- evaluated. Reproduced here, inside the transaction that rolls back, so the test exercises
--- the policies and nothing else.
-GRANT SELECT, INSERT, UPDATE ON
-  public.client_goals, public.credit_predictions, public.funding_application_outcomes,
-  public.outreach_drafts, public.coach_clients
-TO authenticated;
+-- Production's API-role grants are reproduced in the rebuilt database by the database-contract job
+-- (scripts/ci/reproduce-production-grants.mjs), so this proof exercises the policies as production
+-- would, with no grants of its own.
 
 DO $$
 DECLARE

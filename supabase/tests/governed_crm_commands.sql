@@ -100,9 +100,10 @@ SELECT throws_ok($$INSERT INTO public.paige_invoices(tenant_id,contact_id,deal_i
 -- The executor itself remains SECURITY DEFINER and is the only production mutation surface.
 GRANT SELECT,UPDATE ON public.clients,public.paige_workspace_events TO service_role;
 GRANT SELECT ON public.businesses TO service_role;
--- Production revokes direct browser table privileges. Grant them only inside this rollback so the
--- adversarial test can prove that RLS plus the lineage trigger still fail closed if that outer
--- privilege boundary is ever broadened.
+-- `authenticated` already holds these on production (measured 2026-09-26; reproduced in CI by
+-- scripts/ci/reproduce-production-grants.mjs), so the privilege layer is not what protects this
+-- table: RLS plus the lineage trigger are. The grant is kept explicit so this adversarial proof
+-- still exercises them if that reproduction ever changes.
 GRANT SELECT,UPDATE ON public.clients TO authenticated;
 
 -- Test-local no-network spy: any unsuppressed task assignment trigger records here instead of

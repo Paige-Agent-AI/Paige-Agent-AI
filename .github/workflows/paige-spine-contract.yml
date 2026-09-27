@@ -183,8 +183,27 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: 2.109.1
+      # The rebuilt database must hold production's API-role grants, or a proof exercising a policy
+      # as `authenticated` dies at the grant layer ("permission denied for table clients") before
+      # the policy runs. Most of production's grants came from project default privileges that no
+      # migration wrote, so no replay can produce them; they are read from production instead.
+      # READ-ONLY (pg_dump + ledger), through the one script CI uses to read production, BEFORE the
+      # local stack starts, and the project is unlinked again before any test SQL runs.
+      - name: Read production's baseline (read-only)
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+        run: .github/scripts/prod-readonly-baseline.sh "$RUNNER_TEMP/prod"
       - run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector
-      - run: supabase db reset
+      # Production's grants are reproduced on the schema production actually has, and only then is
+      # the change under review applied on top — so its own grants and revokes, dynamic SQL,
+      # schema-wide ones and out-of-order migrations included, land exactly as written. Guessing
+      # which objects a pending migration touches was tried and fails both ways (§39 review on
+      # #1487). The sequence and its failure modes are documented in the script.
+      - name: Reproduce production's grants, then apply the change under review
+        run: scripts/ci/reproduce-production-grants.sh "$RUNNER_TEMP/prod"
+
       # Third-party speech availability is platform-owned, distinct from the
       # caller's existing tenant membership/role and Paige thread entitlement.
       - run: supabase test db supabase/tests/paige_live_pilot_feature_guard.sql
@@ -423,3 +442,12 @@ jobs:
       - run: node scripts/proof/business-mission-concurrency.mjs
         env:
           BUSINESS_MISSION_TEST_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      # The grant reproduction must never overwrite the change under review. A migration production
+      # has not recorded is written at runtime (never committed); its GRANT and REVOKE must survive
+      # the job's rebuild → reproduce → apply sequence, and the reconcile alone must erase them
+      # (negative control). Last, because it rebuilds the database the proofs above used.
+      - name: Grant reproduction keeps the change under review (ordering proof)
+        if: ${{ !cancelled() }}
+        run: |
+          node scripts/ci/reproduce-production-grants.mjs --self-test
+          scripts/ci/grant-ordering-proof.sh "$RUNNER_TEMP/prod"

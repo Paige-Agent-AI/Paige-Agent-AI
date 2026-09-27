@@ -13,9 +13,9 @@ BEGIN;
 
 SELECT plan(16);
 
--- Production grants `authenticated` these privileges; a schema replayed from migrations does not.
--- Reproduced inside the rolled-back transaction so the read assertions exercise the policies.
-GRANT SELECT ON public.invitations, public.clients, public.coach_clients TO authenticated;
+-- Production's API-role grants are reproduced in the rebuilt database by the database-contract job
+-- (scripts/ci/reproduce-production-grants.mjs), so this proof exercises the policies as production
+-- would, with no grants of its own.
 
 DO $$
 DECLARE

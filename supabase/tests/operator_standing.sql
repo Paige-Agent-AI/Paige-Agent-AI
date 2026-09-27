@@ -4,7 +4,7 @@
 -- DATA — adding an operator role, granting and withdrawing a capability are row changes that
 -- change the answer with no code change.
 BEGIN;
-SELECT plan(95);
+SELECT plan(97);
 
 -- ── Grants ──────────────────────────────────────────────────────────────────────────────────
 SELECT ok(NOT has_function_privilege('anon', 'public.operator_standing()', 'EXECUTE'),
@@ -172,6 +172,9 @@ SELECT pg_temp.as_caller('0a570000-0000-4000-8000-000000000004');
 SELECT lives_ok($$SELECT public.grant_tenant_member_role('0a570000-0000-4000-8000-000000000005'::uuid,
   'moderator'::public.app_role, '0a570000-0000-4000-8000-00000000a001'::uuid, 'test')$$,
   'a tenant admin may grant a role that is not an operator tier');
+SELECT lives_ok($$SELECT public.revoke_tenant_member_role('0a570000-0000-4000-8000-000000000007'::uuid,
+  'moderator'::public.app_role, '0a570000-0000-4000-8000-00000000a001'::uuid, 'test')$$,
+  'and may revoke a role that is not an operator tier');
 RESET ROLE;
 INSERT INTO public.platform_operator_roles (role, rank, holds_unlisted, description, ruling)
 VALUES ('moderator', 10, false, 'test-only operator role', 'test');
@@ -194,6 +197,10 @@ SELECT pg_temp.as_caller('0a570000-0000-4000-8000-000000000004');
 SELECT throws_like($$SELECT public.grant_tenant_member_role('0a570000-0000-4000-8000-000000000007'::uuid,
   'moderator'::public.app_role, '0a570000-0000-4000-8000-00000000a001'::uuid, 'test')$$,
   '%PROTECTED_ROLE_GRANT_FORBIDDEN%', 'a role made an operator tier by a row can no longer be granted by a tenant admin');
+-- Codex review of #1534 (second P1): nor revoked — the lockdown covers the row that leaves, too.
+SELECT throws_like($$SELECT public.revoke_tenant_member_role('0a570000-0000-4000-8000-000000000005'::uuid,
+  'moderator'::public.app_role, '0a570000-0000-4000-8000-00000000a001'::uuid, 'test')$$,
+  '%PROTECTED_ROLE_GRANT_FORBIDDEN%', 'nor revoked from its holder by a tenant admin');
 RESET ROLE;
 
 SELECT * FROM finish();

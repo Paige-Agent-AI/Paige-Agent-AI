@@ -237,12 +237,23 @@ GRANT EXECUTE ON FUNCTION public.operator_standing() TO authenticated, service_r
 GRANT EXECUTE ON FUNCTION public.operator_may(text) TO authenticated, service_role;
 
 -- ── The grant lockdown follows the tiers ─────────────────────────────────────────────────────
--- Codex review of #1534 (P1). The §53 lockdown trigger protected exactly two role names, so a role
--- made an operator tier by a row here (say moderator) stayed grantable by a tenant admin through
--- grant_tenant_member_role — and every holder would then read as a platform operator. A role is now
--- protected the moment it is listed. The two literals stay beside the table only until G3: until
--- then is_super_admin() / is_platform_admin() still test those names directly, so deleting a row
--- must not unprotect a role those helpers still honour. G3 removes them with the helpers.
+-- Codex review of #1534 (two P1s). The §53 lockdown trigger protected exactly two role names, and
+-- only the row being written. So a role made an operator tier by a row here (say moderator) stayed
+-- grantable by a tenant admin through grant_tenant_member_role — minting platform standing — and
+-- revocable through revoke_tenant_member_role / change_user_role, which let a tenant admin strip an
+-- operator unrelated to their tenant. A role is now protected the moment it is listed, on the way in
+-- AND on the way out: INSERT checks NEW, DELETE checks OLD, UPDATE checks both.
+--
+-- The two literals stay beside the table only until G3: until then is_super_admin() /
+-- is_platform_admin() still test those names directly, so deleting a row must not unprotect a role
+-- those helpers still honour. G3 removes them with the helpers.
+--
+-- Producer inventory for the new DELETE/OLD arm (production, 2026-09-27): revoke_platform_admin is
+-- owner-only; change_user_role and revoke_tenant_member_role already refuse non-owners for the two
+-- literals; revoke_platform_access (platform_admin may call it) deletes only non-operator roles
+-- today; sync_tenant_member_to_user_roles maps tenant roles, never an operator tier; the client's one
+-- delete is owner-only under RLS; account deletion cascades from auth.users through the auth service,
+-- a trusted context. Nothing that works today is refused.
 --
 -- Not closed here, and stated so: a role listed AFTER tenant admins have granted it promotes its
 -- existing holders at once. Listing a role is a service-only write (the tables carry no grants);
@@ -254,25 +265,38 @@ CREATE OR REPLACE FUNCTION public.enforce_protected_role_grant()
  SET search_path TO 'public'
 AS $function$
 DECLARE
-  _role_txt text := NEW.role::text;
   _jwt_role text := auth.role();  -- 'authenticated' | 'anon' | 'service_role' | NULL (direct/no-JWT)
+  _touched text[];
+  _role_txt text;
 BEGIN
-  IF _role_txt IN ('super_admin', 'platform_admin')
-     OR EXISTS (SELECT 1 FROM public.platform_operator_roles r WHERE r.role = _role_txt) THEN
-    -- Allowed writers: (a) an existing platform owner (super_admin) acting via a verified JWT, OR
-    -- (b) a trusted server context — a service_role API caller, or a direct no-JWT connection
-    -- (migration / pg_cron / superuser), where auth.role() is 'service_role' or NULL. A genuine
-    -- authenticated/anon JWT that is NOT the platform owner is REFUSED. coalesce maps the no-JWT
-    -- NULL to 'service' so it is treated as trusted (only real 'authenticated'/'anon' JWTs are gated).
-    IF NOT (
-         public.is_platform_owner()
-      OR coalesce(_jwt_role, 'service') NOT IN ('authenticated', 'anon')
-    ) THEN
-      RAISE EXCEPTION
-        'PROTECTED_ROLE_GRANT_FORBIDDEN: role "%" (a platform-operator tier) may be granted only by an existing super_admin or a trusted service context (§53).', _role_txt
-        USING ERRCODE = '42501';
+  _touched := CASE TG_OP
+    WHEN 'INSERT' THEN ARRAY[NEW.role::text]
+    WHEN 'DELETE' THEN ARRAY[OLD.role::text]
+    ELSE ARRAY[OLD.role::text, NEW.role::text]
+  END;
+  FOREACH _role_txt IN ARRAY _touched LOOP
+    IF _role_txt IN ('super_admin', 'platform_admin')
+       OR EXISTS (SELECT 1 FROM public.platform_operator_roles r WHERE r.role = _role_txt) THEN
+      -- Allowed writers: (a) an existing platform owner (super_admin) acting via a verified JWT, OR
+      -- (b) a trusted server context — a service_role API caller, or a direct no-JWT connection
+      -- (migration / pg_cron / superuser / the auth service), where auth.role() is 'service_role' or
+      -- NULL. A genuine authenticated/anon JWT that is NOT the platform owner is REFUSED. coalesce
+      -- maps the no-JWT NULL to 'service' so it is treated as trusted.
+      IF NOT (
+           public.is_platform_owner()
+        OR coalesce(_jwt_role, 'service') NOT IN ('authenticated', 'anon')
+      ) THEN
+        RAISE EXCEPTION
+          'PROTECTED_ROLE_GRANT_FORBIDDEN: role "%" (a platform-operator tier) may be granted or revoked only by an existing super_admin or a trusted service context (§53).', _role_txt
+          USING ERRCODE = '42501';
+      END IF;
     END IF;
-  END IF;
-  RETURN NEW;
+  END LOOP;
+  RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
 END;
 $function$;
+
+DROP TRIGGER IF EXISTS trg_enforce_protected_role_grant ON public.user_roles;
+CREATE TRIGGER trg_enforce_protected_role_grant
+  BEFORE INSERT OR UPDATE OR DELETE ON public.user_roles
+  FOR EACH ROW EXECUTE FUNCTION public.enforce_protected_role_grant();

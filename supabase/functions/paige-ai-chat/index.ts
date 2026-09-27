@@ -5873,7 +5873,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "team_set_permission",
-              description: "TENANT OWNER ONLY, and the server enforces that — an admin asking for this will be refused, so do not promise it. Changes what a teammate is ALLOWED TO DO in this workspace. Only 'admin' or 'member' can be set: the owner's own permission cannot be changed here, and nobody can be made an owner from chat. This is an access change, so state plainly what the person will be able to do afterwards, get an explicit yes, and only then call again with confirm:true. If the operator is really asking to describe someone's job differently, that is team_set_work_profile and it is not this.",
+              description: `TENANT OWNER ONLY, and the server enforces that — an admin asking for this will be refused, so do not promise it. Changes what a teammate is ALLOWED TO DO in this workspace. Only 'admin' or 'member' can be set: the owner's own permission cannot be changed here, and nobody can be made an owner from chat. This is an access change, so state plainly what the person will be able to do afterwards, get an explicit yes, and only then call again with confirm:true. If the operator is really asking to change someone's ${TITLE_WORD}, that is team_set_work_profile and it is not this.`,
               parameters: {
                 type: "object",
                 properties: {
@@ -5895,7 +5895,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 properties: {
                   email: { type: "string", description: "The person's email address." },
                   permission: { type: "string", enum: ["admin", "member"], description: "The access they get when they accept." },
-                  job_title: { type: "string", description: "Optional. What they will be called. Describes work; grants nothing." },
+                  job_title: { type: "string", description: `Optional. Their ${TITLE_WORD}: what they will be called. Describes work; grants nothing.` },
                   responsibilities: { type: "string", description: "Optional. What they will own and where they hand work off." },
                   confirm: { type: "boolean", description: "true once the operator has approved this exact invitation." }
                 },
@@ -7929,7 +7929,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // substitute for the person seeing what is being stored.
           const shown = resp.length > 200 ? `${resp.slice(0, 200)}…" (showing the first 200 of ${resp.length} characters)` : `${resp}"`;
           const parts: string[] = [];
-          parts.push(title ? `${TITLE_WORD} "${title.slice(0, 80)}"` : `no ${TITLE_WORD}`);
+          const titleShown = title.length > 120 ? `${title.slice(0, 120)}…" (showing the first 120 of ${title.length} characters)` : `${title}"`;
+          parts.push(title ? `${TITLE_WORD} "${titleShown}` : `no ${TITLE_WORD}`);
           parts.push(resp ? `responsibilities → "${shown}` : "responsibilities CLEARED");
           return `Save work details for ${who}: ${parts.join(", ")}. This describes what they do — it does NOT change what they can access.`;
         }
@@ -11281,7 +11282,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               result = {
                 success: true,
                 member_user_id: args.member_user_id,
-                job_title: (data as any)?.job_title ?? null,
+                [TITLE_WORD]: (data as any)?.job_title ?? null,
                 responsibilities: (data as any)?.responsibilities ?? null,
                 note: "Work details only. This changed nothing about what they can access.",
               };

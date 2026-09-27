@@ -1,7 +1,7 @@
 // The retired title role grants nothing in the credit and funding code. A person holding the
 // platform-wide `coach` role cannot analyse a credit report or a financial document, read a lender
-// summary or credit predictions, record an outcome for someone else, manage a client's accounts, edit
-// certifications, or open the broker workspace as staff. An assignment alone does not let anyone sync
+// summary or credit predictions, run lender research, record an outcome for someone else, manage a
+// client's accounts, edit certifications, or open the broker workspace as staff. An assignment alone does not let anyone sync
 // credit data into a client's records: an assignment opens reads, and whether it opens writes is a
 // product decision this change does not make.
 import { readFileSync } from "node:fs";
@@ -16,6 +16,7 @@ const FILES = [
   "supabase/functions/generate-lender-summary/index.ts",
   "supabase/functions/generate-credit-predictions/index.ts",
   "supabase/functions/ingest-rag-outcome/index.ts",
+  "supabase/functions/lender-research/index.ts",
   "supabase/functions/sync-credit-report-data/index.ts",
   "src/pages/broker/BrokerWorkspace.tsx",
   "src/components/dashboard/business-profile/BusinessInfrastructureAssessment.tsx",

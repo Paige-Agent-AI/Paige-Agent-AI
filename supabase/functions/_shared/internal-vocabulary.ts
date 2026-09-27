@@ -14,20 +14,26 @@
  * that turn (`deriveInternalVocabulary`), so a new tool, a renamed key or a new context block is
  * covered the moment it ships, with no list to keep in step. Each source is one the platform writes:
  *   - tool NAMES, from the tool definitions;
- *   - JSON keys (never values) in the server-built context blocks;
+ *   - JSON keys (never values) in the context blocks the caller VOUCHES for (below);
  *   - the TOP-LEVEL keys of a tool result, which is the platform's own result envelope — never the
  *     keys nested inside it, which for a runner (Zapier, n8n) are whatever a third party returned;
- *   - the names of server-built blocks: a `=== NAME ===` fence line, or a heading whose `END NAME`
+ *   - the names of vouched blocks: a `=== NAME ===` fence line, or a heading whose `END NAME`
  *     terminator is also present;
  *   - the § references in the tool definitions and in any code constant the caller passes, never in
  *     the runtime context, where a tenant's own "§ 1031 exchange" or "§ 1983 claim" also lives.
- * Tenant-authored, uploaded and fetched text is kept out: JSON values are never read, the body of every
- * fenced block is skipped before anything is derived (a block with no END runs to the next named fence
- * line, or to the end), and nothing is derived from prose. The persona, brand and who-line blocks are
- * unfenced tenant prose, and a tenant CAN write a quoted `"key":` into them ("Use "vip_plan": for
- * premium customers"). So a key is read only where JSON grammar puts one: straight after `{` or `,`,
- * and followed by the start of a value. Prose that writes a whole JSON object is still read; that is a
- * stated limit, below.
+ * AUTHORSHIP IS DECLARED, NEVER INFERRED. Keys and block names come only from `vouchedTexts`: text the
+ * caller declares server-written end to end, where every part is platform code or a value the server
+ * encoded (a JSON value, the body of a fenced block). The caller vouches each text explicitly where it
+ * builds it, never by default and never inherited, and never vouches a block that pastes in tenant,
+ * client, uploaded or fetched prose (persona, brand, address, business description, knowledge), however
+ * server-shaped it looks. This module cannot tell who wrote a piece of text from its syntax and does not
+ * try: a tenant can write `We offer basic, "gold_tier": true` or a `VIP PLAN … END VIP PLAN` passage
+ * into their own persona, and only the code that built that block knows it is theirs.
+ *
+ * Within vouched text, as defence in depth: JSON values are never read, the body of every fenced block
+ * is skipped (a block with no END runs to the next named fence line, or to the end), and a key is read
+ * only where JSON grammar puts one, straight after `{` or `,` and before the start of a value, so
+ * server prose that quotes a word and puts a colon after it is not a key.
  *
  * Tool PARAMETER names are deliberately not vocabulary. They are the fields of a form — `first_name`,
  * `due_date`, `zip_code` — and those names are also how a business talks about its own data ("name
@@ -56,8 +62,8 @@
  * the server sends as JSON values, tool descriptions, or tool parameter names; a heading with no END
  * terminator is not a marker; an uppercase UUID is not treated as a record id; a single-brace merge tag
  * hides whatever identifier it wraps (`{platform_role}`); and "§13" written that way in someone's own
- * lease is still read as doctrine. A tenant who writes a whole JSON object into their own prose
- * (`{"vip_plan": true}`) does make that key vocabulary. Postgres errors are recognised only in wording no person writes (see
+ * lease is still read as doctrine. A key or block name that appears only inside unvouched text is not
+ * caught until that text is vouched for. Postgres errors are recognised only in wording no person writes (see
  * DATABASE_ERROR), so an unqualified error with no `ERROR:` prefix can pass. A secret is out of scope
  * because the model is never sent one. A clean result means "none of the known vocabulary", never
  * "nothing internal".
@@ -211,9 +217,11 @@ function topLevelKeys(result: string): string[] {
 export function deriveInternalVocabulary(input: {
   /** The tool definitions sent to the model this turn. */
   tools?: readonly unknown[];
-  /** Server-built context the model was sent (the system blocks). Never the user's own messages,
-   *  the model's own turns, or tool results (pass those as `toolResults`). */
-  serverTexts?: readonly string[];
+  /** Text the caller declares server-written end to end (see AUTHORSHIP above), vouched explicitly where
+   *  it was built. Never a block that pastes in tenant, client, uploaded or fetched prose, never the
+   *  person's own messages or the model's own turns, and never tool results (pass those as
+   *  `toolResults`). Keys and block names are derived from these texts alone. */
+  vouchedTexts?: readonly string[];
   /** Tool results the model was sent, as the JSON strings it received. */
   toolResults?: readonly string[];
   /** Code constants that carry § references (a doctrine index, a prompt constant). Never runtime text. */
@@ -231,7 +239,7 @@ export function deriveInternalVocabulary(input: {
     for (const text of stringsIn(tool)) addRefs(text);
   }
 
-  for (const raw of input.serverTexts ?? []) {
+  for (const raw of input.vouchedTexts ?? []) {
     if (typeof raw !== "string" || !raw) continue;
     const text = stripFencedBodies(raw, markers);
     collectPairedHeadings(text, markers);

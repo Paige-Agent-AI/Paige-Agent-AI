@@ -44,6 +44,8 @@ const TOOLS = [
   { name: "search", input_schema: { type: "object", properties: { query: { type: "string" } } } },
 ];
 
+// Vouched here deliberately WITH fenced upload and fetched bodies inside it, to prove the defence in
+// depth: even in vouched text a fenced body is never read. A real caller never vouches such a block.
 const SYSTEM = `You are PAIGE. Never read key names aloud (§13).\n${TEAM_BLOCK}\n${UPLOAD}\n${FETCHED}`;
 // A runner's result: the platform's envelope at the top, a third party's rows inside it.
 const TOOL_RESULT = JSON.stringify({
@@ -53,7 +55,7 @@ const TOOL_RESULT = JSON.stringify({
 });
 
 const vocabulary: InternalVocabulary = deriveInternalVocabulary({
-  tools: TOOLS, serverTexts: [SYSTEM], toolResults: [TOOL_RESULT], doctrineSources: ["See §18 and §51."],
+  tools: TOOLS, vouchedTexts: [SYSTEM], toolResults: [TOOL_RESULT], doctrineSources: ["See §18 and §51."],
 });
 const kinds = (text: string, v: InternalVocabulary = vocabulary) => findInternalLeaks(text, v).map((leak) => `${leak.kind}:${leak.text}`);
 
@@ -70,7 +72,7 @@ test("derives the team block's keys and markers from the real builder", () => {
     assert.ok(vocabulary.keys.has(key), key);
   }
   // From the team block alone, so the heading's qualifier is proven to come from the heading line.
-  const teamOnly = deriveInternalVocabulary({ serverTexts: [TEAM_BLOCK] });
+  const teamOnly = deriveInternalVocabulary({ vouchedTexts: [TEAM_BLOCK] });
   assert.ok(teamOnly.markers.has("TEAM CONTEXT"));
   assert.ok(teamOnly.markers.has("REFERENCE DATA ONLY"));
 });
@@ -124,19 +126,19 @@ test("tenant-authored, uploaded and fetched text never becomes vocabulary", () =
 });
 
 test("fence parsing: a bare separator and an orphan END swallow nothing; one word is never a marker", () => {
-  const separator = deriveInternalVocabulary({ serverTexts: ["======\n{\"server_key\": 1}\nMORE TEXT"] });
+  const separator = deriveInternalVocabulary({ vouchedTexts: ["======\n{\"server_key\": 1}\nMORE TEXT"] });
   assert.ok(separator.keys.has("server_key"));
-  const orphanEnd = deriveInternalVocabulary({ serverTexts: ["=== END TEAM NOTES ===\n{\"server_key\": 1}"] });
+  const orphanEnd = deriveInternalVocabulary({ vouchedTexts: ["=== END TEAM NOTES ===\n{\"server_key\": 1}"] });
   assert.ok(orphanEnd.keys.has("server_key"));
   // A block closes at its OWN END, so a nested block's END does not end the outer one early.
-  const nested = deriveInternalVocabulary({ serverTexts: ["=== TENANT KNOWLEDGE ===\n=== UPLOADED FILE CONTENT (x) ===\n{\"file_key\": 1}\n=== END UPLOADED FILE CONTENT ===\n{\"tenant_chunk_key\": 1}\n=== END TENANT KNOWLEDGE ===\n{\"server_key\": 1}"] });
+  const nested = deriveInternalVocabulary({ vouchedTexts: ["=== TENANT KNOWLEDGE ===\n=== UPLOADED FILE CONTENT (x) ===\n{\"file_key\": 1}\n=== END UPLOADED FILE CONTENT ===\n{\"tenant_chunk_key\": 1}\n=== END TENANT KNOWLEDGE ===\n{\"server_key\": 1}"] });
   assert.ok(!nested.keys.has("file_key") && !nested.keys.has("tenant_chunk_key"));
   assert.ok(nested.keys.has("server_key"));
   // A block whose END carries a shorter name (the real "RELEVANT KNOWLEDGE BASE" / "END KNOWLEDGE BASE"
   // pair) still closes there, so text after a block nested inside it stays excluded.
-  const knowledge = deriveInternalVocabulary({ serverTexts: ["=== RELEVANT KNOWLEDGE BASE ===\n=== INNER NOTES ===\ninner\n=== END INNER NOTES ===\n{\"chunk_key\": 1}\n=== END KNOWLEDGE BASE ===\n{\"after_key\": 1}"] });
+  const knowledge = deriveInternalVocabulary({ vouchedTexts: ["=== RELEVANT KNOWLEDGE BASE ===\n=== INNER NOTES ===\ninner\n=== END INNER NOTES ===\n{\"chunk_key\": 1}\n=== END KNOWLEDGE BASE ===\n{\"after_key\": 1}"] });
   assert.ok(!knowledge.keys.has("chunk_key") && knowledge.keys.has("after_key"));
-  const oneWord = deriveInternalVocabulary({ serverTexts: ["=== MEMORY ===\nremembered\n=== END MEMORY ==="] });
+  const oneWord = deriveInternalVocabulary({ vouchedTexts: ["=== MEMORY ===\nremembered\n=== END MEMORY ==="] });
   assert.ok(!oneWord.markers.has("MEMORY"));
   assert.deepEqual(kinds("I checked my MEMORY.", oneWord), []);
 });
@@ -183,7 +185,7 @@ test("reports exact offsets, in reading order, and the longest of two markers at
   const leaks = findInternalLeaks(text, vocabulary);
   assert.deepEqual(leaks.map((leak) => leak.kind), ["internal_key", "record_id"]);
   for (const leak of leaks) assert.equal(text.slice(leak.index, leak.index + leak.text.length), leak.text);
-  const nested = deriveInternalVocabulary({ serverTexts: ["TEAM CONTEXT\nEND TEAM CONTEXT\nTEAM CONTEXT NOTES\nEND TEAM CONTEXT NOTES"] });
+  const nested = deriveInternalVocabulary({ vouchedTexts: ["TEAM CONTEXT\nEND TEAM CONTEXT\nTEAM CONTEXT NOTES\nEND TEAM CONTEXT NOTES"] });
   assert.deepEqual(kinds("See TEAM CONTEXT NOTES.", nested), ["context_marker:TEAM CONTEXT NOTES"]);
 });
 
@@ -253,16 +255,34 @@ test("a long draft scans in linear time (an inline image, a pasted export)", () 
   }
 });
 
-test("a tenant's prose that quotes a word and puts a colon after it is not a key; the server's JSON still is", () => {
-  // The persona and brand blocks are the tenant's own prose, interpolated into the system text unfenced.
-  // The second phrase puts a comma before the quoted word, as JSON does, but no value after its colon.
-  const PERSONA = 'You are Northside\'s assistant. Use "vip_plan": for premium customers. We offer basic, "gold_tier": the top one.';
+test("within vouched server text, a quoted word with a colon after it is not a key; the server's JSON still is", () => {
+  // Server prose can quote a word too. The first phrase has a real JSON value after its colon but
+  // nothing JSON before it; the second has a comma before the quoted word, as JSON does, but no value.
+  const PROSE = 'Reply "status_ok": true only when asked. Offer basic, "follow_up": the next day, never sooner.';
   // A server-built block, pretty-printed, with every kind of JSON value after a key.
   const SERVER = 'TEAM CONTEXT\n{\n  "platform_role": "member",\n  "seat_count": 3,\n  "is_owner": false,\n  "extra_notes": null,\n  "open_items": [1],\n  "last_change": {"a": 1},\n  "balance_due": -5\n}\nEND TEAM CONTEXT';
-  const vocabulary = deriveInternalVocabulary({ serverTexts: [PERSONA, SERVER] });
-  for (const word of ["vip_plan", "gold_tier"]) assert.equal(vocabulary.keys.has(word), false, word);
+  const vocabulary = deriveInternalVocabulary({ vouchedTexts: [PROSE, SERVER] });
+  for (const word of ["status_ok", "follow_up"]) assert.equal(vocabulary.keys.has(word), false, word);
   for (const key of ["platform_role", "seat_count", "is_owner", "extra_notes", "open_items", "last_change", "balance_due"]) {
     assert.equal(vocabulary.keys.has(key), true, key);
   }
-  assert.deepEqual(findInternalLeaks("Your vip_plan renews Friday, and gold_tier members get early access.", vocabulary), []);
+});
+
+test("authorship is declared: a tenant's persona is never vouched, so nothing a tenant writes becomes vocabulary", () => {
+  // Both phrasings a reviewer showed that no syntax rule can tell from the server's own: a comma, a
+  // quoted word and a real JSON value, and a heading with its END line.
+  const PERSONA = 'You are Northside\'s assistant. We offer basic, "gold_tier": true for premium customers.\nVIP PLAN\nMembers book first.\nEND VIP PLAN';
+  const SERVER = 'TEAM CONTEXT\n{"platform_role": "member"}\nEND TEAM CONTEXT';
+  const REPLY = "Your gold_tier plan includes early booking — that's part of the VIP PLAN.";
+  // Why this cannot be left to syntax: vouched by mistake, the persona reads exactly like server text.
+  const misvouched = deriveInternalVocabulary({ vouchedTexts: [PERSONA, SERVER] });
+  assert.equal(misvouched.keys.has("gold_tier"), true);
+  assert.equal(misvouched.markers.has("VIP PLAN"), true);
+  // Declared correctly — only the server's block vouched — the tenant's words are the tenant's.
+  const vouched = deriveInternalVocabulary({ vouchedTexts: [SERVER] });
+  assert.equal(vouched.keys.has("gold_tier"), false);
+  assert.equal(vouched.markers.has("VIP PLAN"), false);
+  assert.deepEqual(findInternalLeaks(REPLY, vouched), []);
+  // …and the vouched block still catches its own.
+  assert.deepEqual(findInternalLeaks("Per my TEAM CONTEXT, their platform_role is member.", vouched).map((l) => l.kind), ["context_marker", "internal_key"]);
 });

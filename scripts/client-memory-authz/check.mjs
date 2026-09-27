@@ -3519,6 +3519,7 @@ console.log("\nteam tools — the approval card, the tool descriptions and the r
 console.log("\ninternal text — the detector reads her reply with a vocabulary derived from what she was sent");
 {
   const { deriveInternalVocabulary, findInternalLeaks } = await import("../../supabase/functions/_shared/internal-vocabulary.ts");
+  const { buildTenantTeamContextBlock } = await import("../../supabase/functions/_shared/team-context.ts");
   const THREAD = "abababab-abab-4bab-8bab-abababababab";
   const MEMBER = "e7e7e7e7-e7e7-4e7e-8e7e-e7e7e7e7e7e7";
   // A tenant-authored title and responsibilities that LOOK like identifiers, on purpose: the team
@@ -3550,7 +3551,13 @@ console.log("\ninternal text — the detector reads her reply with a vocabulary 
     .map((l) => { try { return JSON.parse(l.slice(6)); } catch { return null; } }).filter(Boolean);
   // What the person receives: the streamed answer text, frame by frame, joined.
   const replyOf = (r) => frames(r).map((f) => f.choices?.[0]?.delta?.content).filter((c) => typeof c === "string").join("");
-  // What the server sent the model on the turn that produced the answer: the LAST request.
+  // What the server sent the model on the turn that produced the answer: the LAST request. Keys and
+  // block names come only from text the server VOUCHES it wrote end to end, never from the whole system
+  // prompt, which also carries the tenant's persona. The one block vouched here is the team block,
+  // rebuilt with the real builder from the same fixture and required to appear verbatim in what she was
+  // sent: its prose is platform code and every tenant string in it is a JSON value
+  // (_shared/team-context.ts, buildTenantTeamContextBlock).
+  const TEAM_BLOCK = buildTenantTeamContextBlock(TEAM, CALLER_TENANT);
   const sentOf = (r) => {
     const last = (() => { try { return JSON.parse(r.modelEgress.at(-1) ?? "null"); } catch { return null; } })();
     const system = typeof last?.system === "string" ? [last.system]
@@ -3559,7 +3566,8 @@ console.log("\ninternal text — the detector reads her reply with a vocabulary 
       ? m.content.filter((c) => c?.type === "tool_result")
         .map((c) => typeof c.content === "string" ? c.content : (c.content ?? []).map((b) => b?.text ?? "").join("\n"))
       : []);
-    return { tools: last?.tools ?? [], serverTexts: system, toolResults };
+    const vouchedTexts = system.some((text) => text.includes(TEAM_BLOCK)) ? [TEAM_BLOCK] : [];
+    return { tools: last?.tools ?? [], vouchedTexts, toolResults, system };
   };
 
   // Propose, approve, and let the approved turn end in a scripted answer.
@@ -3596,7 +3604,7 @@ console.log("\ninternal text — the detector reads her reply with a vocabulary 
   const leakyReply = replyOf(leaky);
 
   assert("29.0 the approved turn ran, the scripted answer reached the person verbatim, and the vocabulary came from the real request (guards this section)",
-    !!card?.fingerprint && leakyReply === LEAKY
+    !!card?.fingerprint && leakyReply === LEAKY && sent.vouchedTexts.length === 1
       && sent.toolResults.some((t) => t.includes('"member_user_id"'))
       && vocabulary.toolNames.has("team_set_work_profile") && vocabulary.keys.has("platform_role")
       && vocabulary.markers.has("TEAM CONTEXT") && vocabulary.toolNames.size >= 20,
@@ -3623,9 +3631,9 @@ console.log("\ninternal text — the detector reads her reply with a vocabulary 
 
   // The team block and the roster both carried the tenant's own strings. They are data, not ours.
   assert("29.3 the tenant's own words never become vocabulary, though they were in what she was sent",
-    sent.serverTexts.some((t) => t.includes("ops_lead")) && sent.serverTexts.some((t) => t.includes("vip_plan"))
+    sent.system.some((t) => t.includes("ops_lead")) && sent.system.some((t) => t.includes("vip_plan"))
       && ["ops_lead", "vip_plan"].every((word) => !vocabulary.keys.has(word) && !vocabulary.toolNames.has(word)),
-    JSON.stringify({ inContext: sent.serverTexts.some((t) => t.includes("ops_lead")) }));
+    JSON.stringify({ inContext: sent.system.some((t) => t.includes("ops_lead")) }));
 
   // The user's own message is not the server's: a word they typed is never "internal" because they
   // typed it. Here they type it in the one shape the derivation reads — a quoted JSON key — so the
@@ -3640,6 +3648,30 @@ console.log("\ninternal text — the detector reads her reply with a vocabulary 
       && !typedVocabulary.keys.has("my_custom_field") && !typedVocabulary.toolNames.has("my_custom_field")
       && findInternalLeaks(replyOf(typed), typedVocabulary).length === 0,
     JSON.stringify({ reached: typed.modelEgress.some((b) => b.includes("my_custom_field")), reply: replyOf(typed) }));
+
+  // AUTHORSHIP IS DECLARED, NEVER INFERRED. A tenant's persona is pasted into the system prompt as prose,
+  // and a tenant can write what looks exactly like the server's own text into it: a comma, a quoted word
+  // and a real JSON value, or a heading with its END line. Derived from the whole prompt, both became
+  // vocabulary and a reply repeating the tenant's own words read as a leak. Derived from what the server
+  // vouches for, neither does, and the vouched block still catches its own.
+  const PERSONA_RPC = { ...RPC, get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: "T", playbook_slug: null, funding_enabled: false, brand: null,
+    playbook_config: { persona: { name: "Paige", role: "your coach's assistant" }, journey: [
+      { key: "basic", label: "Basic", description: 'We offer basic, "gold_tier": true for premium customers.' },
+      { key: "vip", label: "VIP", description: "Members book first.\nVIP PLAN\nPriority booking, every week.\nEND VIP PLAN" },
+    ] } }], error: null } };
+  const TENANT_WORDS = "Your gold_tier plan includes early booking — that's part of the VIP PLAN.";
+  const persona = await drive({ stream: true, extraBody: { threadId: THREAD }, rpcOverrides: PERSONA_RPC, replyText: TENANT_WORDS });
+  const personaSent = sentOf(persona);
+  const wholePrompt = deriveInternalVocabulary({ tools: personaSent.tools, vouchedTexts: personaSent.system, toolResults: personaSent.toolResults });
+  const personaVocabulary = deriveInternalVocabulary(personaSent);
+  assert("29.6 CONTROL: the persona reached the model, and read as if the server wrote it, its words become vocabulary",
+    personaSent.system.some((t) => t.includes('"gold_tier": true') && t.includes("END VIP PLAN"))
+      && wholePrompt.keys.has("gold_tier") && wholePrompt.markers.has("VIP PLAN"),
+    JSON.stringify({ keys: wholePrompt.keys.has("gold_tier"), markers: [...wholePrompt.markers] }));
+  assert("29.7 derived from what the server vouches for, a tenant's persona words are never vocabulary, and repeating them is clean",
+    !personaVocabulary.keys.has("gold_tier") && !personaVocabulary.markers.has("VIP PLAN")
+      && findInternalLeaks(replyOf(persona), personaVocabulary).length === 0 && replyOf(persona) === TENANT_WORDS,
+    JSON.stringify({ found: findInternalLeaks(replyOf(persona), personaVocabulary) }));
 
   // WHERE THINGS STAND, stated as a check so it cannot be forgotten: no filter exists on this path
   // yet, so the leaky answer streamed exactly as the model wrote it. The owner-chat slice flips this.

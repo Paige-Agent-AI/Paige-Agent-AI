@@ -13,11 +13,11 @@
  * docs/evidence/ui-delivery/solo-approval-recovery/approval-recovery.<theme>.html). It is placed
  * into the live transcript the shell rendered, after its own greeting.
  *
- * WHAT THIS PROVES: geometry. The card in the dock and the full-screen workspace at each size, one
+ * WHAT THIS PROVES: geometry. The card in the dock (in two tenants) and the full-screen workspace at each size, one
  * scroll owner, nothing escaping the card, the next step in view, the page without horizontal
  * scroll with PAIGE folded, and the next step reachable by keyboard in the shell's own focus order.
- * WHAT IT DOES NOT: React behaviour of the turn (that is the jsdom suite), or anything deployed
- * or authenticated (§13/§32.c).
+ * WHAT IT DOES NOT: React behaviour of the turn, or a workspace switch with the card showing (both are
+ * the jsdom suite: PaigeAIChat.heldBackSwitch.test.tsx), or anything deployed or authenticated (§13/§32.c).
  *
  * Frames and shell-matrix-results.json land in scripts/live-drive/artifacts/outbound-draft-check/
  * (gitignored); the evidence record commits a subset beside the approval-recovery frames.
@@ -242,6 +242,15 @@ try {
       record(`${label} PAIGE open (docked): card inside the dock, one scroll owner, nothing escapes, next step in view`,
         placed === 4 && geometryOk(docked), { placed, ...docked, frame: dockedFrame });
       record(`${label} PAIGE open (docked): Shift+Tab reaches Ask Paige again`, keys.ok, keys);
+
+      // A different known-good tenant: the harness's second workspace, its own account and name.
+      await page.goto(`${BASE}/solo/2072681/command-center?theme=${theme}&screen=home&tenant=second`, { waitUntil: "domcontentloaded" });
+      await openDock(page);
+      const secondName = await page.evaluate(() => document.body.textContent?.includes("Second harness workspace") ?? false);
+      const placedSecond = await placeCard(page, markup);
+      const second = await measure(page);
+      record(`${label} PAIGE open (docked), second tenant: the same checks pass in another workspace`,
+        secondName && placedSecond === 4 && geometryOk(second), { secondName, placed: placedSecond, ...second });
 
       // PAIGE closed: fold with the shell's own key.
       await page.evaluate(() => (document.activeElement instanceof HTMLElement) && document.activeElement.blur());

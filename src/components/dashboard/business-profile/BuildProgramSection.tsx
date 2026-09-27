@@ -530,10 +530,10 @@ function AdminCoachingPanel({ answers, score }: { answers: Answers; score: numbe
     const doc = printWindow.document;
     doc.open();
     doc.write(`<!DOCTYPE html><html><head><title>BUILD Coaching Brief</title>
-      <style>body{font-family:Arial,sans-serif;max-width:700px;margin:40px auto;padding:20px;color:#222}
+      <style>body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;max-width:700px;margin:40px auto;padding:20px;color:#222}
       h1{font-size:20px;border-bottom:2px solid #CFAE70;padding-bottom:8px}
       .score{font-size:36px;font-weight:bold;color:#CFAE70;margin:16px 0}
-      pre{white-space:pre-wrap;font-family:Arial;font-size:14px;line-height:1.6}</style></head><body></body></html>`);
+      pre{white-space:pre-wrap;font-family:inherit;font-size:14px;line-height:1.6}</style></head><body></body></html>`);
     doc.close();
     const body = doc.body;
     const h1 = doc.createElement('h1'); h1.textContent = 'BUILD Coaching Brief'; body.appendChild(h1);

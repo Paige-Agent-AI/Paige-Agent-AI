@@ -166,7 +166,7 @@ export default function SlotSurfaceBody({ slot, view }: { slot: OperatorSlot; vi
     return (
       <Suspense fallback={<Holding />}>
         <p aria-live="polite" className="sr-only">{said}</p>
-        {bespoke === "FleetConsole" && <FleetConsole canSeeRevenue={isOwner === true} />}
+        {bespoke === "FleetConsole" && <FleetConsole isPlatformOwner={isOwner} />}
         {bespoke === "SystemsCheckSurface" && <SystemsCheckSurface />}
         {bespoke === "FleetHistorySurface" && <FleetHistorySurface />}
         {bespoke === "FleetAlertRulesSurface" && <FleetAlertRulesSurface />}

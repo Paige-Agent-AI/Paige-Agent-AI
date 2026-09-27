@@ -133,6 +133,7 @@ describe("Layer 3e v3 surface lineage", () => {
       <FleetDirectoryView
         tenants={TENANTS}
         classificationVisible
+        detailVisible
         onEnter={() => {}}
       />,
     );

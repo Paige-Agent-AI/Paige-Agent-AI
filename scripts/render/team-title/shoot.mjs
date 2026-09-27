@@ -108,7 +108,8 @@ try {
   await server.close();
 }
 
-writeFileSync(path.join(out, `${label}-copy.md`), [`# Visible "title" copy: ${label}`, "", ...transcript].join("\n"));
+// .txt, not .md: the UI evidence validator reads every .md under docs/evidence/ui-delivery as a record.
+writeFileSync(path.join(out, `${label}-copy.txt`), [`Visible "title" copy: ${label}`, "", ...transcript].join("\n"));
 if (errors.length) {
   console.error(errors.join("\n"));
   process.exit(1);

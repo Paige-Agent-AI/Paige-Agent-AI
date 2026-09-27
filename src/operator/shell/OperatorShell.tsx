@@ -49,8 +49,7 @@ import CommandBar, { type CommandState } from "@/operator/shell/CommandBar";
 import SummonedSurface, { type WsMode } from "@/operator/shell/SummonedSurface";
 import { useCanvasWidth } from "@/operator/shell/useCanvasWidth";
 import { isCapabilityId, type CapabilityId } from "@/operator/shell/commandPalette";
-import ScopeBand from "@/operator/shell/ScopeBand";
-import { PLATFORM_SCOPE } from "@/operator/shell/scopeStates";
+import LiveScopeBand from "@/operator/shell/LiveScopeBand";
 import SlotRail from "@/operator/shell/SlotRail";
 import OperatorSpine, { spineHasContent } from "@/operator/shell/OperatorSpine";
 import { useOperatorChat } from "@/operator/data/useOperatorChat";
@@ -297,7 +296,7 @@ function OperatorShellBody() {
       className="flex h-dvh min-h-0 min-w-0 flex-col overflow-hidden"
     >
       {/* Ruling B — the band is the LAST thing to change: it thins, it never goes. */}
-      <ScopeBand {...PLATFORM_SCOPE} compact={narrowForRail} />
+      <LiveScopeBand compact={narrowForRail} />
 
       <div
         data-shell-grid

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { useTenantContext } from "@/hooks/useTenantContext";
@@ -346,15 +346,24 @@ export default function FleetConsole({ isPlatformOwner }: { isPlatformOwner: boo
   const { tenants, classificationVisible, detailReadFailed, loading, error } = useFleet(true);
   const detailVisible = fleetDetailVisible(isPlatformOwner, detailReadFailed);
   const { switchTenant } = useTenantContext();
+  // Entering is an audited act, so one press is one entry. The ref stops a second press in the
+  // same tick (state re-renders too late); production recorded paired entries ~120ms apart.
+  const entering = useRef(false);
 
   const enterTenant = useCallback(
     async (tenant: FleetTenant) => {
-      const entered = await switchTenant(tenant.id);
-      if (!entered) {
-        toast.error(`Couldn't enter ${tenant.name}.`);
-        return;
+      if (entering.current) return;
+      entering.current = true;
+      try {
+        const entered = await switchTenant(tenant.id);
+        if (!entered) {
+          toast.error(`Couldn't enter ${tenant.name}.`);
+          return;
+        }
+        toast.success(`Acting as ${tenant.name}. Everything you do here is recorded.`);
+      } finally {
+        entering.current = false;
       }
-      toast.success(`Acting as ${tenant.name}. Everything you do here is recorded.`);
     },
     [switchTenant],
   );

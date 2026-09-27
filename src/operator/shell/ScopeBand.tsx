@@ -11,11 +11,10 @@
  * spine alike. The pack's own `exitScope` announcement is the tell: "active_tenant_id returned
  * to NULL" (§9, and the guard in `scopeIsNotNavigation.test.ts`).
  *
- * ROUND 1 IS GEOMETRY. The band renders the pack's REST scope — its own `P.SCOPES[0]` strings,
- * verbatim (`paige-ia.js` L2622) — and carries no scope machine yet: there is no read/act state,
- * no cross-window broadcast, and no cycle control, because each of those is a session behaviour
- * rather than a shape. The three tones are modelled here so the later wiring changes a value,
- * not this file's structure.
+ * THE BAND IS DRAWN, NOT DECIDED HERE. `LiveScopeBand` reads the session's scope and hands this
+ * component a state; when an act-as is open it also hands an `exit` — the pack's `exitScope`
+ * control (Shell v3 L78-L82). There is still no cross-window broadcast and no cycle control:
+ * those are session behaviours this band does not own.
  */
 import { cn } from "@/lib/utils";
 import type { ScopeState, ScopeTone } from "@/operator/shell/scopeStates";
@@ -24,7 +23,10 @@ import type { ScopeState, ScopeTone } from "@/operator/shell/scopeStates";
 const GROUND: Record<ScopeTone, string> = {
   none: "bg-[var(--pg-surface)] border-border",
   read: "bg-[var(--pg-workspace)] border-border-strong",
-  act: "bg-[var(--pg-workspace)] border-border-strong",
+  // Acting as a tenant must be unmissable at a glance: a raised ground, the authority line, and a
+  // caution rule on the leading edge (§23 — you are inside someone else's workspace). Gold stays
+  // on the exit act alone (§11).
+  act: "bg-[var(--pg-raised)] border-[var(--pg-line-authority)] shadow-[shadow:inset_3px_0_0_var(--pg-warning)]",
 };
 
 const KICKER: Record<ScopeTone, string> = {
@@ -42,9 +44,15 @@ export type ScopeBandProps = Omit<ScopeState, "tone"> & {
    * (`scripts/live-drive/harness/fixtures/_shell.css`); 36px is the pack's rest floor.
    */
   readonly compact?: boolean;
+  /**
+   * Leaving the tenant, offered only while acting. The act moment on this band, so it carries the
+   * authority line and gold ink (§11: gold on the act, never at rest). `busy` disables it while
+   * the audited exit is in flight so one press is one exit.
+   */
+  readonly exit?: { readonly label: string; readonly onExit: () => void; readonly busy: boolean };
 };
 
-export default function ScopeBand({ tone = "none", kicker, scope, audit, compact = false }: ScopeBandProps) {
+export default function ScopeBand({ tone = "none", kicker, scope, audit, compact = false, exit }: ScopeBandProps) {
   return (
     <div
       data-scope-band={tone}
@@ -64,9 +72,21 @@ export default function ScopeBand({ tone = "none", kicker, scope, audit, compact
       <b className="min-w-0 truncate text-[11px] font-medium tracking-[0.02em] text-foreground">
         {scope}
       </b>
-      <span className="min-w-0 flex-none truncate font-mono text-[11px] text-muted-foreground">
+      <span className="min-w-0 flex-none truncate text-[11px] text-muted-foreground">
         {audit}
       </span>
+      {exit && (
+        <button
+          type="button"
+          data-scope-exit=""
+          onClick={exit.onExit}
+          disabled={exit.busy}
+          aria-busy={exit.busy || undefined}
+          className="ml-auto min-h-[24px] flex-none rounded-[3px] border border-[var(--pg-line-authority)] bg-transparent px-2.5 text-[10px] font-semibold uppercase tracking-[0.07em] text-[var(--pg-gold-core)] disabled:opacity-60"
+        >
+          {exit.busy ? "Leaving…" : exit.label}
+        </button>
+      )}
     </div>
   );
 }

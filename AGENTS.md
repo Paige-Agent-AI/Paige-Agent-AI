@@ -74,7 +74,7 @@ Design around the user's actual job, real data contracts, permissions, and compl
 
 **Owner UI principle — performance and interaction quality over wording.** Cut redundant banner and intro copy; do not repeat context the user already has from where they are. Prefer usable space for the real work over decorative headers. Motion must be purposeful and performant — animate `transform`/`opacity` only, and be reduced-motion safe (honor `prefers-reduced-motion`).
 
-The UI skill does not grant design authority. Follow `CLAUDE.md` §00: implementation agents record and faithfully port the approved Claude Design pack; they do not invent or override visual direction.
+Interface authority is `CLAUDE.md` §00 (owner ruling, 2026-09-22): Claude Code owns the interface, executed as Flow-by-Flow first, then Impeccable, and the owner approves the design before it ships. Claude Design is out of the loop; a prior design pack is reference material, not an authority that outranks Impeccable's craft floor. (This line previously said agents "faithfully port the approved Claude Design pack"; §00 voids that and it is struck here, as it was in `.agents/skills/paige-ui-design/SKILL.md` on 2026-09-24.)
 
 All states must be honest:
 

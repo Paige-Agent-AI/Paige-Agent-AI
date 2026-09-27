@@ -41,7 +41,7 @@ RELEASE_RECOVERY: position=revert the commit; reference=git revert of this PR's 
 - Affected flows: an agent session reading operator guidance before editing the console.
 - Neighboring regressions: none; no code path changes.
 - Active-owner/file collisions: none known on these three files.
-- Explicit exclusions: other operator files still cite "Ruling F (Claude Design)" in comments (IntegrationsSurface, ComposeOutbound, FleetAlertRulesSurface) and AGENTS.md still says agents "faithfully port the approved Claude Design pack"; both are outside the approved slice and are routed at settlement rather than edited here.
+- Explicit exclusions: other operator files still cite "Ruling F (Claude Design)" in comments (IntegrationsSurface, ComposeOutbound, FleetAlertRulesSurface) these are outside the approved slice and are routed at settlement rather than edited here. AGENTS.md line 77 ("faithfully port the approved Claude Design pack") was first excluded too, but the Codex review on 210ce78 (P1) showed it directly contradicts the struck operator doctrine, so it is aligned to §00 in this PR.
 
 ## User job and state map
 

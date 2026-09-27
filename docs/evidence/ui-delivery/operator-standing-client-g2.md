@@ -22,7 +22,7 @@ UNVERIFIED: authenticated sign-in at every tier after G1 and G2 are on productio
 
 OWNER_INTENT: coordinator rulings packet and amendment 2026-09-27: one server answer to operator + tier, every guard, route, surface, tool and policy deriving from it, with a lint that fails on a new role list; the client-side role lists are deleted in G2, not left beside the hook
 MUST_NOT_HAPPEN: an operator locked out or a client let in; one person's operator grant admitting another; a failed read treated as a denial or as "client"; any change to who the server authorises (G2 is client-only)
-MUST_PRESERVE: RequireOperator's person-keyed verdict, generation guard, bounded retries and "Couldn't verify" state; the chooser pause for operators at every sign-in door; useTenantContext's isPlatformOwner/isPlatformStaff meanings; tenant RoleGate outcomes
+MUST_PRESERVE: RequireOperator's person-keyed verdict, generation guard, bounded retries and "Couldn't verify" state; the chooser pause for operators at every sign-in door; useTenantContext's isPlatformOwner/isPlatformStaff meanings; tenant RoleGate outcomes (the Solo tenant-relationships files are not touched by this slice)
 ACCEPTANCE_CRITERIA: after G1 and G2 deploy, each operator tier signs in through the operator door and /auth, lands on the chooser, picks Platform and reaches Fleet → Directory; a tenant owner and a client land as before
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: RequireOperator grant ownership (RequireOperator.test.tsx, 5 cases, green); sign-in doors' chooser contract (operatorTarget.test.ts, 18 green); landing routes (resolveLandingRoute.test.ts, 21 green); tenant route owners' account context (TenantRouteOwnerAccountContext.integration.test.tsx, 14 green); client guard (ClientOnlyRouteGuard.test.tsx, 5 green); act-as scope (untouched)
@@ -33,4 +33,4 @@ RELEASE_CLASSIFICATION: internal-only: sign-in routing and the operator console
 CUSTOMER_RELEASE_IDENTITY: none: no customer-visible change
 RELEASE_NOTE_REQUIRED: NO: no visible change
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: authenticated sign-in at each tier after G1 and G2 deploy
-RELEASE_RECOVERY: position=revert the merge commit (frontend only, no data change; G1's functions stay harmlessly unread); reference=this PR
+RELEASE_RECOVERY: position=revert the merge commit, frontend only with no data change, and G1's functions stay harmlessly unread; reference=this PR

@@ -2,7 +2,7 @@
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: flow-by-flow v2.0.1 read in full; mode Existing Project extension, Standard depth; affected flow is a platform operator reading Fleet → Directory; Platform Operator milestone slice 4 of 5, coordinator-approved 2026-09-27 (client count and status text already read, truthful header counts per tier, no MRR)
-PAIGE_UI_DESIGN: PASS: .agents/skills/paige-ui-design and routed references read for this milestone; Impeccable SKILL.md, operate.md, clarify.md, craft-floor.md read; `impeccable context` ran on FleetConsole.tsx (narrow refinement of the incumbent)
+PAIGE_UI_DESIGN: PASS: .agents/skills/paige-ui-design and routed references read for this milestone; Impeccable read and applied (installed .agents/skills/impeccable, upstream https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md): SKILL.md, reference/operate.md, reference/clarify.md and reference/craft-floor.md; `impeccable context` ran on FleetConsole.tsx (narrow refinement of the incumbent); checks applied — Operate accent rule "accent for primary actions, current selection and state indicators only, not decoration" (the resting seat bar moved off gold to muted: met), "state-rich semantic vocabulary, standardize these" (status words come from the platform's own STATUS_META map, not new strings: met), "consistent affordances, same form-control vocabulary" (no new control; a disabled chip that could never act is removed rather than left focusable: met), clarify (the header states what the at-risk figure includes at each tier: met), and `npx impeccable@4.1.0 detect` exit 0
 MATERIAL_FLOW_CHANGE: NO: no goal, step or exit changes; rows gain two read-only facts, the header count wording changes, and a chip that could never act at the platform_admin tier is no longer offered there
 FLOW_PROTOTYPE: NOT_REQUIRED: read-only presentation of data the view already fetched; no new action or transition
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: a platform operator scanning every tenant to see which need attention and why
@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: as super_admin each row shows seats, clients, grade and any
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: owner grading and seat display (tested); internal filter and chip for the owner (existing v3 test green); slice 3 not-visible behaviour (its tests green); useFleet (unchanged in this slice)
 
-INTERNAL_BUILD_IDENTITY: 88f5c7ea51a9ba9d42d85a52a90a45099bab6f4c; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=the commit named here carries the whole code and test change; the commit after it adds only this record; vitest, eslint, ci:tsc and harness frames were run on that code
+INTERNAL_BUILD_IDENTITY: 88f5c7ea51a9ba9d42d85a52a90a45099bab6f4c; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=the commit named here carries the whole code and test change; the commits after it change only this record or merge main in after slices 3 and 2 merged; vitest, eslint, ci:tsc and harness frames were run on that code
 RELEASE_CHANNEL: development: pre-merge branch build; production follows merge through the frontend deploy
 RELEASE_CLASSIFICATION: internal-only: Platform Operator console
 CUSTOMER_RELEASE_IDENTITY: none: operator console improvement, no customer release
@@ -57,3 +57,5 @@ Scan every tenant, see which need attention and why. Status labels and trial day
 ## Review and limitations
 
 Independent adversarial review (§39): no blocker; one MAJOR fixed before push — a lapsed trial's elapsed days were rounded up (production's one dated trial, 9.2 days lapsed, would have read "ended 10 days ago"); MINORs fixed — "0 days left" now "ends today", the platform_admin at-risk figure now says internal accounts are included, a status-label test added, evidence counts and the gold-lint claim corrected. Recorded, not changed: the client and seat reads are row reads capped at the API's default row limit, so per-tenant counts would undercount past that cap (9 clients and 16 memberships on production today); a status outside the platform's label map would show its stored value (none exists on production). Deployed behaviour is `UNVERIFIED` until slice 5.
+
+Base change: this PR was stacked on slice 3 and is now based on main after slices 3 (#1505) and 2 (#1506) merged; main was merged in rather than rebased, so the code commit named above is unchanged. Before its Codex review, the Impeccable citation above was expanded to name the upstream source and the checks applied, matching the finding raised on slice 2.

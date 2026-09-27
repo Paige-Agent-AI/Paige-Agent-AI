@@ -209,9 +209,10 @@ UPDATE public.clients SET assigned_coach_user_id='c7100000-0000-4000-8000-000000
 UPDATE public.clients SET assigned_coach_user_id='c7100000-0000-4000-8000-000000000002' WHERE id='c7100000-0000-4000-8000-00000000c111';
 UPDATE public.clients SET primary_business_id='c7100000-0000-4000-8000-00000000b102' WHERE id='c7100000-0000-4000-8000-00000000c101';
 SET LOCAL ROLE authenticated;
-SELECT set_config('request.jwt.claims','{"role":"authenticated","sub":"c7100000-0000-4000-8000-000000000002"}',true);
+-- The business owner can edit this contact directly; an assignment alone gives read access only.
+SELECT set_config('request.jwt.claims','{"role":"authenticated","sub":"c7100000-0000-4000-8000-000000000001"}',true);
 SELECT throws_ok($$UPDATE public.clients SET merged_into_contact_id='c7200000-0000-4000-8000-00000000c201',merged_at=now() WHERE id='c7100000-0000-4000-8000-00000000c105'$$,
- '42501','CRM_MERGE_LINEAGE_GOVERNED_ONLY','an authenticated coach cannot directly forge merge lineage on an otherwise editable contact');
+ '42501','CRM_MERGE_LINEAGE_GOVERNED_ONLY','an authenticated editor cannot directly forge merge lineage on an otherwise editable contact');
 SELECT is((SELECT merged_into_contact_id FROM public.clients WHERE id='c7100000-0000-4000-8000-00000000c105'),NULL::uuid,'refused direct lineage edit changes no contact');
 RESET ROLE;
 SET LOCAL ROLE service_role;

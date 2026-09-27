@@ -312,6 +312,9 @@ jobs:
       # business.
       - run: supabase test db supabase/tests/coach_client_profiles_safe_projection.sql
         if: ${{ !cancelled() }}
+      # Assigned staff reach what they are assigned, inside the business, with no title role.
+      - run: supabase test db supabase/tests/assigned_staff_access_without_title_role.sql
+        if: ${{ !cancelled() }}
       - run: psql -v ON_ERROR_STOP=1 -f scripts/sql/social-foundation-legacy-shape-proof.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
       - run: psql -v ON_ERROR_STOP=1 -f scripts/sql/social-foundation-tenant-shaped-proof.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
       # Trusted task↔thread link — RLS SET-ROLE proof that the edge's server-side validation read

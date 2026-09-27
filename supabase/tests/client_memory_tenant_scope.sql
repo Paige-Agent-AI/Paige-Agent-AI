@@ -42,10 +42,6 @@ BEGIN
     (_a, _x, 'member', 'active', false), (_b, _x, 'member', 'active', false),
     (_a, _y, 'member', 'active', false), (_b, _y, 'member', 'active', false);
   INSERT INTO public.user_roles (user_id, role) VALUES (_ab, 'admin') ON CONFLICT DO NOTHING;
-  -- S21: an assignee can read their own assignment rows only while holding the global 'coach' role.
-  -- That is a title used as a permission, due to be removed with the role; until then the assignee
-  -- holds it so this proof exercises tenant scope and nothing else. Remove with S21.
-  INSERT INTO public.user_roles (user_id, role) VALUES (_ca, 'coach') ON CONFLICT DO NOTHING;
   INSERT INTO public.profiles (user_id, active_tenant_id) VALUES
     (_sa, _a), (_ab, _b), (_ca, _a), (_x, _a), (_y, _b)
   ON CONFLICT (user_id) DO UPDATE SET active_tenant_id = EXCLUDED.active_tenant_id;

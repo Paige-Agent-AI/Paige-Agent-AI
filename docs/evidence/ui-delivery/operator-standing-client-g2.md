@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: after G1 and G2 deploy, each operator tier signs in through
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: RequireOperator grant ownership (RequireOperator.test.tsx, 5 cases, green); sign-in doors' chooser contract (operatorTarget.test.ts, 18 green); landing routes (resolveLandingRoute.test.ts, 21 green); tenant route owners' account context (TenantRouteOwnerAccountContext.integration.test.tsx, 14 green); client guard (ClientOnlyRouteGuard.test.tsx, 5 green); act-as scope (untouched)
 
-INTERNAL_BUILD_IDENTITY: 9e4bfca52617a5f32555514351c06077b5c1f520; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=the commit named here carries the whole code and test change on top of G1 (claude/operator-standing-g1 64ddf1fb8); vitest, tsc, eslint and the lints above were run on it
+INTERNAL_BUILD_IDENTITY: a10bcde1d351572aabd1f459ee2ce23050bf48d2; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=the commit named here (tree fa2eb99699fbe3c8fb0822036edf4de2531bf9a5) is the final code: 9e4bfca52 carried the change, then this commit took the two Solo tenant-relationships files back to main and baselined them; vitest (full suite on 9e4bfca52: 408 files, 5862 passed; tenant-relationships 48 passed after the revert), tsc and the lints above were run; the commit after it changes only this record
 RELEASE_CHANNEL: development: stacked on G1; authority-model slice, waits for a coordinator ruling and for G1 before merge
 RELEASE_CLASSIFICATION: internal-only: sign-in routing and the operator console
 CUSTOMER_RELEASE_IDENTITY: none: no customer-visible change

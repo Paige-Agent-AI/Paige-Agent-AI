@@ -114,7 +114,7 @@ INSERT INTO public.tenant_members (tenant_id, user_id, role, status, is_owner, j
   ('d1000000-0000-0000-0000-00000000dddd', 'd1000000-0000-0000-0000-000000000002', 'owner',  'active',    true,  now() - interval '9 days'),
   ('d1000000-0000-0000-0000-00000000dddd', 'd1000000-0000-0000-0000-000000000003', 'admin',  'active',    false, now() - interval '8 days'),
   ('d1000000-0000-0000-0000-00000000dddd', 'd1000000-0000-0000-0000-000000000004', 'member', 'active',    false, now() - interval '7 days'),
-  ('d1000000-0000-0000-0000-00000000dddd', 'd1000000-0000-0000-0000-000000000005', 'coach',  'active',    false, now() - interval '6 days'),
+  ('d1000000-0000-0000-0000-00000000dddd', 'd1000000-0000-0000-0000-000000000005', 'member',  'active',    false, now() - interval '6 days'),
   ('d1000000-0000-0000-0000-00000000dddd', 'd1000000-0000-0000-0000-000000000006', 'admin',  'suspended', false, now() - interval '5 days'),
   -- Workspace B. The SAME admin belongs here too, and joined B FIRST — so B is their earliest
   -- membership, which is what makes the multi-workspace assertions below meaningful.

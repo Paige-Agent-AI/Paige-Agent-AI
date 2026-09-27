@@ -61,7 +61,7 @@ INSERT INTO public.tenant_members (tenant_id, user_id, role, status, is_owner, j
 -- gate written against a global role would wrongly admit this member. The mapping must NOT.
 INSERT INTO public.user_roles (user_id, role) VALUES
   ('e9c00000-0000-0000-0000-0000000000d4', 'super_admin'),
-  ('e9c00000-0000-0000-0000-0000000000d3', 'coach')
+  ('e9c00000-0000-0000-0000-0000000000d3', 'sales_rep')
 ON CONFLICT DO NOTHING;
 
 -- Two connections on tenant T: one owner_only, one ordinary (default 'tenant'). auth_kind='none' (a

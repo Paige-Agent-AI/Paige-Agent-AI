@@ -12,6 +12,12 @@
 -- ============================================================================
 BEGIN;
 
+-- No row may hold the retired role any longer (20270508000000). This file proves that rows
+-- holding it, like the ones production held before they were deleted, grant nothing, so it
+-- stands such rows up by lifting the constraint inside this rolled-back transaction.
+ALTER TABLE public.user_roles DROP CONSTRAINT IF EXISTS user_roles_role_not_retired_title_role;
+ALTER TABLE public.tenant_members DROP CONSTRAINT IF EXISTS tenant_members_role_not_retired_title_role;
+
 SELECT plan(9);
 
 -- Production's API-role grants are reproduced in the rebuilt database by the database-contract job

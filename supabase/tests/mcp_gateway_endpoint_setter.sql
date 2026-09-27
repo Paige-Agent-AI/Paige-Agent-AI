@@ -83,7 +83,7 @@ INSERT INTO public.tenant_members (tenant_id, user_id, role, status, is_owner, j
 
 INSERT INTO public.user_roles (user_id, role) VALUES
   ('0e900000-0000-0000-0000-000000000004', 'super_admin'),
-  ('0e900000-0000-0000-0000-000000000003', 'coach')
+  ('0e900000-0000-0000-0000-000000000003', 'sales_rep')
 ON CONFLICT DO NOTHING;
 
 -- A NATIVE connection (legacy_source IS NULL) on T with an initial endpoint, a real secret, a granted

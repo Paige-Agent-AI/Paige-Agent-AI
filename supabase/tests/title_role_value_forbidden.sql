@@ -11,7 +11,7 @@
 -- ============================================================================
 BEGIN;
 
-SELECT plan(17);
+SELECT plan(19);
 
 -- 1–10. Every role and seat column carries the constraint.
 SELECT ok(EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'public.user_roles'::regclass
@@ -76,8 +76,19 @@ SELECT throws_ok($q$INSERT INTO public.tenant_members (tenant_id, user_id, role,
                            'coach', 'active', false)$q$,
   '23514', NULL, 'no one can be seated with the value');
 
--- 14–15. The tenant grant function refuses the value by name, and still grants a real role.
 SELECT set_config('request.jwt.claims', '{"sub":"c9950000-0000-0000-0000-0000000000a1","role":"authenticated"}', true);
+
+-- 14–15. Revoking the value is refused by name before anything is written. The member holds no other
+-- platform role, so without the refusal the seat resync that follows a revoke would revoke their seat.
+SELECT throws_ok($q$SELECT public.revoke_tenant_member_role('c9950000-0000-0000-0000-0000000000a2', 'coach',
+                                                           'c9950000-0000-0000-0000-00000000000a', NULL)$q$,
+  '42501', 'ROLE_CHANGE_FORBIDDEN: coach is a title, never a role', 'an admin cannot revoke the value');
+SELECT is((SELECT status FROM public.tenant_members
+            WHERE tenant_id = 'c9950000-0000-0000-0000-00000000000a'
+              AND user_id = 'c9950000-0000-0000-0000-0000000000a2'),
+  'active', 'the member keeps their seat');
+
+-- 16–17. The tenant grant function refuses the value by name, and still grants a real role.
 SELECT throws_ok($q$SELECT public.grant_tenant_member_role('c9950000-0000-0000-0000-0000000000a2', 'coach',
                                                           'c9950000-0000-0000-0000-00000000000a', NULL)$q$,
   '42501', 'ROLE_CHANGE_FORBIDDEN: coach is a title, never a role', 'an admin cannot grant the value');
@@ -85,7 +96,7 @@ SELECT lives_ok($q$SELECT public.grant_tenant_member_role('c9950000-0000-0000-00
                                                         'c9950000-0000-0000-0000-00000000000a', NULL)$q$,
   'an admin still grants a real role to a member of the business');
 
--- 16–17. No platform role row holds the value, and the function that removed it is gone.
+-- 18–19. No platform role row holds the value, and the function that removed it is gone.
 SELECT is((SELECT count(*)::int FROM public.user_roles WHERE role::text = 'coach'),
   0, 'no platform role row holds the value');
 SELECT ok(to_regprocedure('public.admin_remove_coach_role(uuid)') IS NULL,

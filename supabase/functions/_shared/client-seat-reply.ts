@@ -127,7 +127,7 @@ export function resultSavedSomething(content: string): boolean {
  * translates) as written.
  */
 export function withheldReplyForClient(businessName?: string | null, options: { savedSomething?: boolean } = {}): string {
-  const name = typeof businessName === "string" ? businessName.replace(/\s+/g, " ").trim().slice(0, 80) : "";
+  const name = displayName(businessName);
   if (options.savedSomething) {
     return name
       ? `I wrote an answer, but it included internal system details that aren't meant to be shared here, so I didn't send it. Anything I'd already finished is saved — you don't need to send it again. I won't guess at a different answer. You can ask me another way, or ask ${name} directly.`
@@ -136,6 +136,57 @@ export function withheldReplyForClient(businessName?: string | null, options: { 
   return name
     ? `I wrote an answer, but it included internal system details that aren't meant to be shared here, so I didn't send it. I won't guess at a different answer. You can ask me another way, or ask ${name} directly.`
     : "I wrote an answer, but it included internal system details that aren't meant to be shared here, so I didn't send it. I won't guess at a different answer. You can ask me another way, or ask the team you're working with directly.";
+}
+
+/** Business name as a client may read it: one line, trimmed, at most 80 characters, or empty. */
+function displayName(businessName?: string | null): string {
+  return typeof businessName === "string" ? businessName.replace(/\s+/g, " ").trim().slice(0, 80) : "";
+}
+
+/** The steps at which the pipeline stops before its first write: only a failure log exists, and no
+ *  client memory, upload stamp or proposal. Every other step (and any step not listed) may come after
+ *  the client memory row was written, so it never claims that nothing was kept. */
+const SYNC_STOPPED_BEFORE_ANY_WRITE = new Set(["extraction", "extraction_parse", "validation"]);
+const SYNC_COUNT_FIELDS = ["negative_items_synced", "positive_accounts_synced", "disputes_created"] as const;
+const SYNC_FLAG_FIELDS = ["credit_factors_recalculated", "funding_readiness_recalculated", "awaiting_review", "nothing_to_propose"] as const;
+const BUREAUS = ["equifax", "experian", "transunion"] as const;
+
+function isCount(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0;
+}
+
+/**
+ * A credit-report sync result as the uploader may read it (R3b). The pipeline's failures carry an
+ * exception's own text, validation messages naming internal fields, and a step name; none of that is
+ * for the person who uploaded the report, and none of it passes. What passes is the panel's own fields,
+ * each only in its own type (a count, a flag, a bureau score), and on a failure one fixed sentence:
+ * when the pipeline stopped before its first write, that nothing was added and they can upload again;
+ * at any other step, only that it did not finish, because by then a note about the report may already
+ * be kept. The raw cause stays in the server's log.
+ */
+export function syncStatusForClient(status: unknown, businessName?: string | null): Record<string, unknown> | null {
+  if (!status || typeof status !== "object") return null;
+  const raw = status as Record<string, unknown>;
+  const out: Record<string, unknown> = { success: raw.success === true };
+  for (const field of SYNC_COUNT_FIELDS) if (isCount(raw[field])) out[field] = raw[field];
+  for (const field of SYNC_FLAG_FIELDS) if (raw[field] === true) out[field] = true;
+  if (raw.scores_synced && typeof raw.scores_synced === "object") {
+    const given = raw.scores_synced as Record<string, unknown>;
+    const scores: Record<string, number | null> = {};
+    for (const bureau of BUREAUS) {
+      if (given[bureau] === null) scores[bureau] = null;
+      else if (isCount(given[bureau])) scores[bureau] = given[bureau] as number;
+    }
+    out.scores_synced = scores;
+  }
+  // A report waiting on review is not a failure; the handler sends those frames with their own
+  // sentences, and one arriving here carries none rather than a failure's.
+  if (out.success || out.awaiting_review) return out;
+  const name = displayName(businessName) || "the team you're working with";
+  out.error = typeof raw.step === "string" && SYNC_STOPPED_BEFORE_ANY_WRITE.has(raw.step)
+    ? `I read your report, but I couldn't pull out its details for you to review, and none of them were added to your profile. You can try uploading it again, or ask ${name} to take a look.`
+    : `I read your report, but I couldn't finish pulling out its details for you to review. You can ask ${name} to take a look.`;
+  return out;
 }
 
 /** The frame a portal reads to know the answer on this turn was withheld, so it treats the sentence as

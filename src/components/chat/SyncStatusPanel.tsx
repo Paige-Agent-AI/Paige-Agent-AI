@@ -8,8 +8,9 @@ export interface SyncStatus {
   disputes_created?: number;
   credit_factors_recalculated?: boolean;
   funding_readiness_recalculated?: boolean;
+  /** A sentence written for the person who uploaded the report. The server never sends the pipeline's
+   *  own error text or step name (R3b); a step that did arrive is still never shown. */
   error?: string;
-  step?: string;
   /** The document was read and a proposal is waiting on a person. Not a failure. */
   awaiting_review?: boolean;
 }
@@ -104,11 +105,7 @@ export function SyncStatusPanel({ syncStatus, isLoading }: SyncStatusPanelProps)
           </div>
         ))}
       </div>
-      {syncStatus.error && (
-        <div className="mt-2 text-xs text-destructive">
-          Error: {syncStatus.error} {syncStatus.step ? `(step: ${syncStatus.step})` : ''}
-        </div>
-      )}
+      {syncStatus.error && <div className="mt-2 text-xs text-destructive">{syncStatus.error}</div>}
     </div>
   );
 }

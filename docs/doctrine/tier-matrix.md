@@ -356,6 +356,7 @@ thread keeps. Owner and teammate seats are unchanged; they are R4's.
 | Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
 |---|---|---|---|---|---|---|---|
 | A client's answer and thought lines are read for internal text before release, on the chat and document paths; a finding withholds the turn | — (unchanged; R4) | — (unchanged; R4) | — (unchanged; R4) | — (unchanged; R4) | **PROOF OWED** (ships on merge; not live until proven) | 403 | **PROOF OWED:** `paige-ai-chat` redeploys on merge and is byte-verified in the closeout; no authenticated client-seat drive and no live model reply yet |
+| A credit report whose sync did not complete tells the uploader in one of two fixed sentences (nothing added, or did not finish), never claiming nothing was kept after the first write; the pipeline's error text and step name stay in the server log (R3b) | — (unchanged; the panel renders only in the portal chat) | — (unchanged) | — (unchanged) | — (unchanged) | **PROOF OWED** (ships on merge; not live until proven) | 403 | **PROOF OWED:** `paige-ai-chat` redeploys on merge and is byte-verified in the closeout; no authenticated upload drive yet |
 
 Honest note (§13): a clean result means none of the known vocabulary, not "nothing internal". A paraphrase passes,
 and so does a key or block name that appears only in a block nobody has vouched for yet (the owner-side context

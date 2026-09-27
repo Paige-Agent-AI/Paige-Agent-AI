@@ -51,12 +51,24 @@ describe("SyncStatusPanel — an extraction waiting on a person", () => {
    * this, making the awaiting case quiet could be done by making every case quiet.
    */
   it("leaves a genuine failure looking like a failure", () => {
-    const { container } = render(
-      <SyncStatusPanel syncStatus={{ success: false, error: "Upstream timed out", step: "sync" }} />,
-    );
+    const sentence = "I read your report, but I couldn't finish pulling out its details for you to review. You can ask Northside Fitness to take a look.";
+    const { container } = render(<SyncStatusPanel syncStatus={{ success: false, error: sentence }} />);
     expect(container.textContent).toContain("Sync Incomplete");
-    expect(container.textContent).toContain("Error:");
+    expect(container.textContent).toContain(sentence);
     expect(container.querySelectorAll(".text-destructive").length).toBeGreaterThan(0);
+  });
+
+  /**
+   * R3b — the person who uploaded the report reads a sentence, never a pipeline step. A server that
+   * still sends one (an older deployment, a stale tab) must not have it drawn.
+   */
+  it("never shows a step name or an 'Error:' label", () => {
+    const status = { success: false, error: "I read your report, but I couldn't finish pulling out its details for you to review.", step: "extraction_parse" };
+    const { container } = render(<SyncStatusPanel syncStatus={status as never} />);
+    expect(container.textContent).not.toContain("extraction_parse");
+    expect(container.textContent).not.toContain("step");
+    expect(container.textContent).not.toContain("Error:");
+    expect(container.textContent).toContain("I read your report, but I couldn't finish pulling out its details for you to review.");
   });
 
   it("leaves a genuine success looking like a success", () => {

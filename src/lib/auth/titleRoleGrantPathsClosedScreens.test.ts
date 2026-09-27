@@ -55,6 +55,8 @@ describe("the screens that hand out access do not offer the retired title role",
     const source = read("src/components/team/MembersRolesPanel.tsx");
     const guards = source.match(/\.eq\("assigned_coach_user_id", (revokeTarget|removeTarget)\.user_id\)/g) ?? [];
     expect(guards).toHaveLength(2);
+    // A count that cannot be read stops both removals rather than reading as zero.
+    expect(source.match(/if \(assignedErr \|\| assignedCount === null\)/g) ?? []).toHaveLength(2);
     expect(source).not.toMatch(/roles\.includes\("coach"\)/);
   });
 });

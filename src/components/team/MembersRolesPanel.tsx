@@ -226,8 +226,10 @@ export function MembersRolesPanel({
   const handleRevokeAccess = async () => {
     if (!revokeTarget) return;
     // Whoever holds clients has them reassigned first, whatever role they hold.
-    const { count: assignedCount } = await supabase.from("clients").select("id", { count: "exact", head: true }).eq("assigned_coach_user_id", revokeTarget.user_id);
-    if ((assignedCount || 0) > 0) {
+    const { count: assignedCount, error: assignedErr } = await supabase.from("clients").select("id", { count: "exact", head: true }).eq("assigned_coach_user_id", revokeTarget.user_id);
+    // If the count cannot be read, nothing is changed: the guard fails closed.
+    if (assignedErr || assignedCount === null) { toast.error("Couldn't check their assigned clients, so nothing was changed. Try again."); return; }
+    if (assignedCount > 0) {
       setReassignCoachId(revokeTarget.user_id); setReassignLabel(revokeTarget.full_name || revokeTarget.email || "this teammate"); setRevokeTarget(null);
       toast.message("Reassign their clients first", { description: "Then re-open Revoke access." }); return;
     }
@@ -239,8 +241,10 @@ export function MembersRolesPanel({
     if (!removeTarget) return;
     if (removeConfirmText.trim().toLowerCase() !== (removeTarget.email || "").toLowerCase()) { toast.error("Type the user's email exactly to confirm"); return; }
     // Whoever holds clients has them reassigned first, whatever role they hold.
-    const { count: assignedCount } = await supabase.from("clients").select("id", { count: "exact", head: true }).eq("assigned_coach_user_id", removeTarget.user_id);
-    if ((assignedCount || 0) > 0) {
+    const { count: assignedCount, error: assignedErr } = await supabase.from("clients").select("id", { count: "exact", head: true }).eq("assigned_coach_user_id", removeTarget.user_id);
+    // If the count cannot be read, nothing is changed: the guard fails closed.
+    if (assignedErr || assignedCount === null) { toast.error("Couldn't check their assigned clients, so nothing was changed. Try again."); return; }
+    if (assignedCount > 0) {
       setReassignCoachId(removeTarget.user_id); setReassignLabel(removeTarget.full_name || removeTarget.email || "this teammate"); setRemoveTarget(null);
       toast.message("Reassign their clients first", { description: "Then re-open Delete." }); return;
     }

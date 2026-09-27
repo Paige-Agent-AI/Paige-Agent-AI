@@ -1,7 +1,9 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { useTenantContext } from "@/hooks/useTenantContext";
+import { clearWorkspaceScopedState, rememberWorkspaceEntered } from "@/lib/auth/workspaceEntry";
+import { landAt, operatorLandingFor } from "@/operator/actAs";
 import { fleetDetailVisible, isInternal, useFleet, type FleetTenant } from "@/operator/data/useFleet";
 import { STATUS_META, trialDaysLeft, type TenantStatus } from "@/lib/platform/tenantLifecycle";
 
@@ -345,18 +347,40 @@ export function FleetDirectoryView({
 export default function FleetConsole({ isPlatformOwner }: { isPlatformOwner: boolean | null }) {
   const { tenants, classificationVisible, detailReadFailed, loading, error } = useFleet(true);
   const detailVisible = fleetDetailVisible(isPlatformOwner, detailReadFailed);
-  const { switchTenant } = useTenantContext();
+  const { switchTenant, tenants: contextTenants } = useTenantContext();
+  // Entering is an audited act, so one press is one entry. A ref, because state re-renders too
+  // late to stop a second press in the same tick; production recorded paired entries.
+  const entering = useRef(false);
 
+  // An act-as completes on both sides or on neither (see `operator/actAs.ts`). The landing is
+  // resolved BEFORE the audited enter runs, so a tenant the operator cannot stand in is refused
+  // without recording an entry, and a recorded entry is always followed by the operator
+  // actually arriving in that tenant's workspace — whose header carries their way out.
   const enterTenant = useCallback(
     async (tenant: FleetTenant) => {
-      const entered = await switchTenant(tenant.id);
-      if (!entered) {
-        toast.error(`Couldn't enter ${tenant.name}.`);
+      if (entering.current) return;
+      // The provider's row, not the directory's: it carries the account number the address needs.
+      const landing = operatorLandingFor(contextTenants.find((t) => t.id === tenant.id) ?? null);
+      if (landing.kind === "unavailable") {
+        toast.error(landing.reason);
         return;
       }
-      toast.success(`Acting as ${tenant.name}. Everything you do here is recorded.`);
+      entering.current = true;
+      try {
+        const entered = await switchTenant(tenant.id);
+        if (!entered) {
+          toast.error(`Couldn't enter ${tenant.name}. Nothing was recorded and your scope is unchanged.`);
+          return;
+        }
+        // Nothing from the console may render under the tenant's heading.
+        clearWorkspaceScopedState();
+        rememberWorkspaceEntered(tenant.id);
+        landAt.go(landing.root);
+      } finally {
+        entering.current = false;
+      }
     },
-    [switchTenant],
+    [contextTenants, switchTenant],
   );
 
   return (

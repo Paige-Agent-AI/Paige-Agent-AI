@@ -1,9 +1,15 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTenantContext } from "@/hooks/useTenantContext";
-import { WORKSPACE_CHOOSER_PATH, reachableWorkspaceCount } from "@/lib/auth/workspaceEntry";
+import {
+  WORKSPACE_CHOOSER_PATH,
+  clearWorkspaceScopedState,
+  forgetWorkspaceEntered,
+  reachableWorkspaceCount,
+} from "@/lib/auth/workspaceEntry";
+import { GOD_CONSOLE } from "@/lib/auth/operatorTarget";
 import { shouldOfferAccountPicker } from "@/lib/auth/accountSelection";
 import { allowAccountSwitch } from "@/lib/auth/accountSwitchGuard";
 import { toast } from "sonner";
@@ -50,8 +56,77 @@ import { toast } from "sonner";
  * genuinely multi-context person: a single-workspace owner has nothing to
  * choose. Platform staff always have Platform as a distinct context, so they
  * may leave a tenant shell for the same deliberate chooser used at sign-in.
+ *
+ * A PLATFORM OPERATOR ACTING AS A TENANT GETS THE EXIT ITSELF, NOT A DETOUR. For them this
+ * shell is an audited act-as, and the way out is the audited `operator_exit_tenant` (reached
+ * through `switchTenant(null)`), which records the exit and returns them to the console. The
+ * chooser detour reached the same exit two screens later under a label ("Switch workspace")
+ * that never said the act-as was still open — and the sub-account shell had no way out at all,
+ * only a "Back to agency" link into a route that bounces operators while leaving the act-as open.
+ * An operator inside a tenant always has a visible exit that actually ends the session.
  */
 export function WorkspaceExitControl() {
+  const { isPlatformStaff, activeTenantId } = useTenantContext();
+  // Both, for an operator acting as a tenant: Exit ends the act-as; Switch workspace stays
+  // because it is staff's only in-app route to workspaces they genuinely belong to — the console
+  // links nowhere near the chooser, so removing it would strand them there (§58).
+  if (isPlatformStaff && activeTenantId) {
+    return (
+      <>
+        <OperatorExitControl />
+        <MemberExitControl />
+      </>
+    );
+  }
+  return <MemberExitControl />;
+}
+
+/**
+ * The operator's exit from an act-as. One press is one exit; a refused exit leaves them where
+ * they are and says so, because the scope has not changed.
+ */
+function OperatorExitControl() {
+  const navigate = useNavigate();
+  const { activeTenant, activeTenantId, switchTenant } = useTenantContext();
+  const [leaving, setLeaving] = useState(false);
+  const name = activeTenant?.name ?? "this tenant";
+
+  const exit = async () => {
+    if (leaving) return;
+    // Unsaved work lives in this shell, so the guard runs here, for the same reason as below.
+    const allowed = await allowAccountSwitch({
+      fromTenantId: activeTenantId ?? null,
+      toTenantId: null,
+      toTenantName: "Platform",
+    });
+    if (!allowed) return;
+    setLeaving(true);
+    const exited = await switchTenant(null);
+    if (!exited) {
+      setLeaving(false);
+      toast.error(`Couldn't leave ${name}. You are still acting as this tenant.`);
+      return;
+    }
+    clearWorkspaceScopedState();
+    forgetWorkspaceEntered();
+    navigate(GOD_CONSOLE, { replace: true });
+  };
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      disabled={leaving}
+      onClick={() => void exit()}
+      aria-label={`Stop acting as ${name} and return to the platform`}
+    >
+      <LogOut className="mr-1.5 h-4 w-4" />
+      {leaving ? "Leaving…" : "Exit tenant"}
+    </Button>
+  );
+}
+
+function MemberExitControl() {
   const navigate = useNavigate();
   const { tenants = [], isPlatformStaff, activeTenantId } = useTenantContext();
 

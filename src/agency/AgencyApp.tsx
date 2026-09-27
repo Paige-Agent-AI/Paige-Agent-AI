@@ -23,6 +23,7 @@
 // code is unreachable. A sub-account owner sees only their own book.
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { WorkspaceExitControl } from "@/components/auth/WorkspaceExitControl";
 import { useTheme } from "next-themes";
 import { performSignOut } from "@/lib/auth/signOut";
 import { branchBySlug, branchByKey, branchPath, defaultBranchSlug } from "@/lib/routing/tierBranches";
@@ -342,7 +343,7 @@ const AgencyAppContent = ({ mode = "agency" }) => {
   // The adapters read ONLY session-scoped seams (agency_portfolio_metrics /
   // agency_list_my_subaccounts, gated by auth.uid()); they never touch a
   // client-supplied tenant_id and RAISE-safe for non-agency callers (§9/§51).
-  const { activeTenant, tenants, switchTenant, refresh: refreshTenants } = useTenantContext();
+  const { activeTenant, tenants, switchTenant, refresh: refreshTenants, isPlatformStaff } = useTenantContext();
   // §65 Option B2 — the caller's OWN agency/enterprise tenant, sourced independent of
   // `activeTenant` (which becomes the CHILD while acting). A caller's membership on
   // their own agency is never removed by entering a child (§37/§9), so this stays
@@ -731,7 +732,11 @@ const AgencyAppContent = ({ mode = "agency" }) => {
       accountType={accountContext.accountType}
       providedBy={!isAgency ? ownAgencyTenant?.name : null}
       userRole="admin"
-      accountControls={isAgency ? (
+      // A platform operator reaches this shell only as an audited act-as on a sub-account (the
+      // agency leg never mounts for them — AgencyEntry sends them to the console). Their way out
+      // is the audited exit, not "Back to {agency}": that link leads into a route that bounces
+      // operators and leaves the act-as open.
+      accountControls={!isAgency && isPlatformStaff ? <WorkspaceExitControl /> : isAgency ? (
         <button ref={switcherRef} type="button" onClick={() => setSwitcherOpen(v => !v)} aria-expanded={switcherOpen}>
           {acting ? `Sub-account: ${acting.name}` : "Switch account"}
         </button>

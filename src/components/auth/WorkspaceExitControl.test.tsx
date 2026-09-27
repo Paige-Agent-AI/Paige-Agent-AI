@@ -18,6 +18,8 @@ const h = vi.hoisted(() => ({
     tenants: [] as Tenant[],
     isPlatformStaff: false,
     activeTenantId: "a" as string | null,
+    activeTenant: null as Tenant | null,
+    switchTenant: (async () => true) as (id: string | null) => Promise<boolean>,
   },
 }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => h.ctx }));
@@ -40,6 +42,8 @@ describe("WorkspaceExitControl", () => {
     h.ctx.tenants = [active("a"), active("b")];
     h.ctx.isPlatformStaff = false;
     h.ctx.activeTenantId = "a";
+    h.ctx.activeTenant = active("a");
+    h.ctx.switchTenant = vi.fn(async () => true);
     host = document.createElement("div");
     document.body.appendChild(host);
     root = createRoot(host);
@@ -62,6 +66,7 @@ describe("WorkspaceExitControl", () => {
     });
     return {
       button: Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Switch workspace")),
+      exit: () => Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Exit tenant")),
       location: () => host.querySelector("[data-loc]")?.getAttribute("data-loc") ?? null,
     };
   }
@@ -141,5 +146,57 @@ describe("WorkspaceExitControl", () => {
     await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
     expect(location()).toBe("/choose-account");
     release();
+  });
+
+  // THE ACT-AS DEFECT (2026-09-27). An operator who entered a tenant had no control that ended
+  // the act-as: Solo offered only the chooser detour, the sub-account shell offered nothing that
+  // exited. An operator inside a tenant must always have a visible way out that records the exit.
+  describe("a platform operator acting as a tenant", () => {
+    beforeEach(() => {
+      h.ctx.isPlatformStaff = true;
+      h.ctx.activeTenantId = "a";
+    });
+
+    it("shows Exit tenant, and keeps Switch workspace beside it", async () => {
+      const { button, exit } = await render();
+      expect(exit()).toBeTruthy();
+      expect(exit()?.getAttribute("aria-label")).toBe("Stop acting as Workspace a and return to the platform");
+      expect(button).toBeTruthy();
+    });
+
+    it("exits through the audited seam and returns to the console", async () => {
+      const { exit, location } = await render();
+      await act(async () => { exit()?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(h.ctx.switchTenant).toHaveBeenCalledTimes(1);
+      expect(h.ctx.switchTenant).toHaveBeenCalledWith(null);
+      expect(location()).toBe("/operator/fleet/directory");
+    });
+
+    it("stays put and keeps the exit when the exit is refused", async () => {
+      h.ctx.switchTenant = vi.fn(async () => false);
+      const { exit, location } = await render();
+      await act(async () => { exit()?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(location()).toBe("/solo/1/command-center");
+      expect(exit()?.textContent).toContain("Exit tenant");
+      expect(exit()?.hasAttribute("disabled")).toBe(false);
+    });
+
+    it("asks the unsaved-work guard first, and does not exit when it refuses", async () => {
+      const release = registerAccountSwitchGuard(async () => false);
+      const { exit, location } = await render();
+      await act(async () => { exit()?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(h.ctx.switchTenant).not.toHaveBeenCalled();
+      expect(location()).toBe("/solo/1/command-center");
+      release();
+    });
+  });
+
+  it("offers no Exit tenant to a member, or to an operator at rest", async () => {
+    const member = await render();
+    expect(member.exit()).toBeFalsy();
+    h.ctx.isPlatformStaff = true;
+    h.ctx.activeTenantId = null;
+    const atRest = await render();
+    expect(atRest.exit()).toBeFalsy();
   });
 });

@@ -14,7 +14,7 @@ type GateState = "checking" | "allowed" | "recovery";
  */
 export function RequireSoloBetaEntitlement({ children }: { children: React.ReactNode }) {
   const location = useLocation();
-  const { loading, activeTenant } = useTenantContext();
+  const { loading, activeTenant, isPlatformStaff } = useTenantContext();
   const marked = activeTenant?.features?.solo_beta_offer_code === SOLO_BETA_OFFER_CODE;
   const billingRecovery = marked
     && /^\/solo\/\d+\/settings\/billing\/?$/.test(location.pathname);
@@ -26,7 +26,12 @@ export function RequireSoloBetaEntitlement({ children }: { children: React.React
       setState("checking");
       return () => { current = false; };
     }
-    if (!marked || billingRecovery) {
+    // A platform operator here is an audited act-as supporting this customer, not the customer.
+    // The entitlement check reads the CALLER's own enrollment and memberships, which an operator
+    // never has, so it would send them to checkout recovery and strand the act-as it just
+    // recorded. What they may read is governed server-side, exactly as for RequireSetupComplete,
+    // which exempts staff for the same reason.
+    if (!marked || billingRecovery || isPlatformStaff) {
       setState("allowed");
       return () => { current = false; };
     }
@@ -45,7 +50,7 @@ export function RequireSoloBetaEntitlement({ children }: { children: React.React
         : "recovery");
     })();
     return () => { current = false; };
-  }, [activeTenant?.account_number, billingRecovery, loading, marked]);
+  }, [activeTenant?.account_number, billingRecovery, isPlatformStaff, loading, marked]);
 
   if (state === "recovery") {
     return <Navigate to="/welcome?checkout=recovery" replace />;

@@ -1,0 +1,98 @@
+{
+  "_README": [
+    "Reviewed readers of the work-identity columns (job_title, responsibilities). Each entry is a",
+    "live function (\"function\") or view (\"view\") a reviewer read and confirmed is NOT a permission",
+    "decision. purpose is one of display | write | search | invite-copy. Each entry is PINNED to the",
+    "definition that was read: defined_in is the migration of its last definition and fingerprint",
+    "the guard's hash of that definition (comments stripped, whitespace normalised). A changed body",
+    "or a later redefinition fails the guard (R4) until someone re-reads it and re-pins it. The list",
+    "only shrinks: an entry that stops matching a live reader fails (R4). A policy (R1) or an",
+    "authorization-helper-shaped function or view (R2) that reads a title can never be listed here.",
+    "non_identity_columns pins every live column of the two tables that carry a work identity that is",
+    "NOT work identity. A column added to either table under any name fails (R6) until it is",
+    "classified in the same PR: into WORK_IDENTITY_BY_TABLE in the guard if it describes what a person",
+    "does or is called, otherwise into this list. A pinned column that is no longer live fails (R4).",
+    "Run `npm run lint:title-authority`."
+  ],
+  "sql": [
+    {
+      "function": "public.accept_solo_team_invite(text)",
+      "purpose": "invite-copy",
+      "reason": "Copies the accepted invitation's title and responsibilities onto the new membership; the membership's role comes from default_role, never from the title.",
+      "defined_in": "20261200000300_solo_team_recipient_binding.sql",
+      "fingerprint": "1c6c78d3b4fc528a"
+    },
+    {
+      "function": "public.create_solo_team_invite(uuid, uuid, text, text, text, text)",
+      "purpose": "write",
+      "reason": "Stores the invited person's title and responsibilities on the invitation row after solo_team_invite_authority() authorizes the actor; the access granted is _permission, checked against admin | member.",
+      "defined_in": "20261047000000_an_invitation_is_sent_to_the_workspace_the_owner_named.sql",
+      "fingerprint": "f8d144bd0f04c6ad"
+    },
+    {
+      "function": "public.get_paige_team_context()",
+      "purpose": "display",
+      "reason": "Hands PAIGE the roster's and pending invitations' work identity as context; what the caller may see is decided by role and is_owner, and the payload declares custom_work_identity_changes_authority = false.",
+      "defined_in": "20260901150000_solo_paige_team_invitation_context.sql",
+      "fingerprint": "0e9986152d7ebfbc"
+    },
+    {
+      "function": "public.get_solo_team_workspace(text, text, integer, integer)",
+      "purpose": "search",
+      "reason": "Returns each member's title and responsibilities for the Team roster and matches the owner's search text against them (ILIKE); roster access is decided first, from role and is_owner.",
+      "defined_in": "20261107000000_the_headline_is_the_furthest_the_email_got.sql",
+      "fingerprint": "fda0872a8c6e04ae"
+    },
+    {
+      "function": "public.resend_solo_team_invite(uuid, uuid, uuid)",
+      "purpose": "invite-copy",
+      "reason": "Carries the old invitation's title and responsibilities into its replacement through create_solo_team_invite; authority is resolved by solo_team_invite_authority().",
+      "defined_in": "20261047000000_an_invitation_is_sent_to_the_workspace_the_owner_named.sql",
+      "fingerprint": "77667e901d9ca63d"
+    },
+    {
+      "function": "public.set_solo_team_member_work_profile(uuid, text, text)",
+      "purpose": "write",
+      "reason": "Writes the two columns only after is_tenant_admin() authorizes the caller, then echoes the saved values back; nothing branches on them.",
+      "defined_in": "20260901001520_solo_team_workspace.sql",
+      "fingerprint": "9bae5500ae6446a1"
+    }
+  ],
+  "non_identity_columns": {
+    "public.tenant_members": [
+      "id",
+      "tenant_id",
+      "user_id",
+      "role",
+      "status",
+      "invited_at",
+      "joined_at",
+      "created_at",
+      "updated_at",
+      "is_owner"
+    ],
+    "public.tenant_invite_tokens": [
+      "id",
+      "tenant_id",
+      "token",
+      "kind",
+      "default_role",
+      "created_by",
+      "expires_at",
+      "max_uses",
+      "uses",
+      "last_used_at",
+      "revoked_at",
+      "created_at",
+      "updated_at",
+      "contact_id",
+      "email",
+      "agency_role",
+      "origin_account_id",
+      "actor_tier",
+      "target_tier",
+      "archived_at"
+    ]
+  },
+  "ts": []
+}

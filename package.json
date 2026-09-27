@@ -23,6 +23,8 @@
     "harness:proxy-bypass": "node scripts/live-drive/proxy-bypass.selftest.mjs",
     "harness:selftest-reject": "node scripts/live-drive/harness/selftest-reject.mjs",
     "lint:definer-fns": "node scripts/ci/definer-fn-lint.mjs && node scripts/ci/definer-signature-acl.mjs",
+    "lint:title-authority": "node scripts/ci/title-authority-guard.mjs",
+    "lint:title-authority:test": "node scripts/ci/title-authority-guard.mjs --self-test",
     "lint:rail-grants": "node scripts/ci/rail-browser-grant-lint.mjs",
     "lint:rail-grants:test": "node scripts/ci/rail-browser-grant-lint.mjs --self-test",
     "lint:ssrf-fork": "node scripts/ci/ssrf-fork-lint.mjs",

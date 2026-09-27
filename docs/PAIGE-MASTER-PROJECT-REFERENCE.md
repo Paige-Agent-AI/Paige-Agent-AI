@@ -760,6 +760,27 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-09-27 V1: the Team screen, PAIGE's team tools and her approval card say "title". Production (Vercel and Edge on merge), internal-only.** PR [#1504](https://github.com/mrmogulmaker-bot/Paige-Agent-AI/pull/1504), branch `claude/practical-wright-nskq1n` on base [`0bd5d67b0a5d38308312df668d9f564db1878f4d`](https://github.com/mrmogulmaker-bot/Paige-Agent-AI/commit/0bd5d67b0a5d38308312df668d9f564db1878f4d). **Not yet closed.** The squash commit on `main`, the merged head, the CI run on that head, and the byte-verified `paige-ai-chat` redeploy cannot exist before the merge. The identity-only closeout PR that follows the merge writes them into this row (`AGENTS.md` § *Shipped Delivery Log*). Until it lands, this row does not report the delivery complete.
+
+**What shipped.** The owner ruled "title" the product word for what someone is called (2026-09-27). Every place a person reads it now says so:
+- the Team screen: the editor label and its separation note, the invitation form and its review step, the roster's "Title not set", the first-use callout, the permission-change confirmation and Roles & access;
+- in `paige-ai-chat`, from `_shared/team-vocabulary.ts`: the work-details, invitation and permission tools' descriptions, the work-details approval card (which now shows up to the field's 120-character limit, with a cut marker, instead of silently cutting at 80), the key the saved work details come back under, and the note after an access change.
+
+The tool argument key `job_title` is unchanged: it is internal, and approvals already queued carry it. No control, state, write, permission or RPC changed. Evidence: [`docs/evidence/ui-delivery/team-title.md`](evidence/ui-delivery/team-title.md).
+
+**Proof boundary.** Executed:
+- `src/solo/team-title-copy.test.tsx`: 6/6, built from the constant; 6/6 fail on the base's screen;
+- `test:client-memory-authz`: 378 / 0, where section 28 fails on the base's handler for every item but the unchanged-key check;
+- the whole suite: 5,817 passed / 0 failed / 2 skipped;
+- `ci:tsc` 12/12, and the title-authority guard and its self-test.
+
+Before-and-after renders on the shared team-mount harness. **`UNVERIFIED`:**
+- the authenticated Solo shell matrix;
+- a live approval card;
+- whether a live model now says "title": every test reads what PAIGE is sent, never a reply.
+
+**Customer-release eligibility: no.**
+
 **2026-09-27 CI integrity — green means green again. CI tooling, internal-only.** PRs [#1478](https://github.com/mrmogulmaker-bot/Paige-Agent-AI/pull/1478) (`f22afce0`), [#1483](https://github.com/mrmogulmaker-bot/Paige-Agent-AI/pull/1483) (`83dcc847`, closes #1461), [#1487](https://github.com/mrmogulmaker-bot/Paige-Agent-AI/pull/1487) (`cfb94d13`), [#1496](https://github.com/mrmogulmaker-bot/Paige-Agent-AI/pull/1496) (`e7f61d00`), and the scanner-removal PR that follows it (CodeQL Advanced + Codacy workflows removed on owner authorization; see config registry). **Not yet closed:** the scanner-removal PR's own squash commit is recorded by the next change.
 
 **What shipped.** (1) The 20 failing unit tests in #1461 each resolved on the record: 18 were harness gaps behind later product changes (#1129, #1138, #1134 — the tests caught up, the behaviour stands), 2 were stale copy/structure assertions (#1224, #1431); plus one unlisted unhandled WebSocket error present in every CI run, which failed the Test step even when every test passed. `verify` on `main` went green at `83dcc847` (run 36279423161). (2) `database-contract` now rebuilds its database **with production's grants**: it reads production read-only (`.github/scripts/prod-readonly-baseline.sh` — `db dump` + ledger, re-read to refuse a moving ledger), rebuilds only up to the newest migration production has recorded, reproduces production's API-role object grants and default privileges (`scripts/ci/reproduce-production-grants.mjs`), then applies every unrecorded migration — the change under review — exactly as `db push --include-all` would. A missing object or an unparsed grant line fails loudly and names itself. An ordering proof runs at the end of every job (8 checks, including an out-of-order migration and a negative control proving production really holds what the probes revoke). Five tests' hand-written GRANT workarounds were removed. (3) `node scripts/ci/paige-chat-tool-contract-check.mjs` runs when run bare (it crashed before any check on strip-only TypeScript) — the last dark script found.

@@ -24,8 +24,10 @@
  * Tenant-authored, uploaded and fetched text is kept out: JSON values are never read, the body of every
  * fenced block is skipped before anything is derived (a block with no END runs to the next named fence
  * line, or to the end), and nothing is derived from prose. The persona, brand and who-line blocks are
- * unfenced tenant prose; they stay out because prose does not form a quoted `"key":` or an END-paired
- * heading, which is a property of how those blocks are written rather than a fence around them.
+ * unfenced tenant prose, and a tenant CAN write a quoted `"key":` into them ("Use "vip_plan": for
+ * premium customers"). So a key is read only where JSON grammar puts one: straight after `{` or `,`,
+ * and followed by the start of a value. Prose that writes a whole JSON object is still read; that is a
+ * stated limit, below.
  *
  * Tool PARAMETER names are deliberately not vocabulary. They are the fields of a form — `first_name`,
  * `due_date`, `zip_code` — and those names are also how a business talks about its own data ("name
@@ -54,7 +56,8 @@
  * the server sends as JSON values, tool descriptions, or tool parameter names; a heading with no END
  * terminator is not a marker; an uppercase UUID is not treated as a record id; a single-brace merge tag
  * hides whatever identifier it wraps (`{platform_role}`); and "§13" written that way in someone's own
- * lease is still read as doctrine. Postgres errors are recognised only in wording no person writes (see
+ * lease is still read as doctrine. A tenant who writes a whole JSON object into their own prose
+ * (`{"vip_plan": true}`) does make that key vocabulary. Postgres errors are recognised only in wording no person writes (see
  * DATABASE_ERROR), so an unqualified error with no `ERROR:` prefix can pass. A secret is out of scope
  * because the model is never sent one. A clean result means "none of the known vocabulary", never
  * "nothing internal".
@@ -184,9 +187,12 @@ function collectPairedHeadings(text: string, markers: Set<string>): void {
   }
 }
 
-/** A JSON key: a quoted snake_case identifier followed by a colon. A VALUE can never form one: inside a
- *  JSON string every quote is escaped, the closing one included, so `\"vip_plan\": 1` does not match. */
-const JSON_KEY = /"([a-z][a-z0-9]*(?:_[a-z0-9]+)+)"\s*:/g;
+/** A JSON key: a quoted snake_case identifier where JSON grammar puts a key, straight after `{` or `,`
+ *  (whitespace and line breaks allowed, so pretty-printed blocks read the same) and followed by a colon
+ *  and the start of a value. A VALUE can never form one: inside a JSON string every quote is escaped,
+ *  the closing one included, so `\"vip_plan\": 1` does not match. Nor does a tenant's prose that merely
+ *  quotes a word and puts a colon after it. */
+const JSON_KEY = /(?<=[{,]\s*)"([a-z][a-z0-9]*(?:_[a-z0-9]+)+)"\s*:\s*(?=["{[\-\d]|(?:true|false|null)\b)/g;
 const SECTION_REF = /§\s*(\d+(?:\.\d+)*[a-z]?)/g;
 /** The platform's own spelling of a doctrine reference: "§13", "(§9)", "§13/§14" — never "§ 13", "§ 13(a)"
  *  or "§13.2" unless that exact sub-number is ours. */

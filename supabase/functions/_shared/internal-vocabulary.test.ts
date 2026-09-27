@@ -252,3 +252,17 @@ test("a long draft scans in linear time (an inline image, a pasted export)", () 
     assert.ok(ms < 1_000, `${draft.slice(0, 12)}… took ${Math.round(ms)}ms`);
   }
 });
+
+test("a tenant's prose that quotes a word and puts a colon after it is not a key; the server's JSON still is", () => {
+  // The persona and brand blocks are the tenant's own prose, interpolated into the system text unfenced.
+  // The second phrase puts a comma before the quoted word, as JSON does, but no value after its colon.
+  const PERSONA = 'You are Northside\'s assistant. Use "vip_plan": for premium customers. We offer basic, "gold_tier": the top one.';
+  // A server-built block, pretty-printed, with every kind of JSON value after a key.
+  const SERVER = 'TEAM CONTEXT\n{\n  "platform_role": "member",\n  "seat_count": 3,\n  "is_owner": false,\n  "extra_notes": null,\n  "open_items": [1],\n  "last_change": {"a": 1},\n  "balance_due": -5\n}\nEND TEAM CONTEXT';
+  const vocabulary = deriveInternalVocabulary({ serverTexts: [PERSONA, SERVER] });
+  for (const word of ["vip_plan", "gold_tier"]) assert.equal(vocabulary.keys.has(word), false, word);
+  for (const key of ["platform_role", "seat_count", "is_owner", "extra_notes", "open_items", "last_change", "balance_due"]) {
+    assert.equal(vocabulary.keys.has(key), true, key);
+  }
+  assert.deepEqual(findInternalLeaks("Your vip_plan renews Friday, and gold_tier members get early access.", vocabulary), []);
+});

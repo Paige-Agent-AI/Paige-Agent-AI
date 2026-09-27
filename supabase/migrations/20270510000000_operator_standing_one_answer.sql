@@ -141,6 +141,12 @@ SELECT 'super_admin', c.capability, 'R0, owner ruling 2026-09-27'
 FROM public.platform_operator_capabilities c
 ON CONFLICT (role, capability) DO NOTHING;
 
+-- NOT SEEDED YET, and why: R0 revised rules that a platform_admin may grant and revoke
+-- platform_admin seats (operator.seat.platform_admin.grant / .revoke, listed above). The §53 lockdown
+-- trigger below still lets only super_admin write an operator role, so seeding those two rows now
+-- would make operator_may() answer yes to a write every attempt is refused (Codex review of #1534).
+-- The seats slice moves that enforcement onto operator_may() and rank and adds the two rows in the
+-- same change, so the answer and the enforcement never disagree.
 INSERT INTO public.platform_operator_role_capabilities (role, capability, ruling) VALUES
   ('platform_admin', 'console.enter', 'R0, owner ruling 2026-09-27'),
   ('platform_admin', 'fleet.directory.read', 'R0, owner ruling 2026-09-27'),
@@ -150,8 +156,6 @@ INSERT INTO public.platform_operator_role_capabilities (role, capability, ruling
   ('platform_admin', 'tenant.status.set', 'R0, owner ruling 2026-09-27'),
   ('platform_admin', 'billing.read', 'R0, owner ruling 2026-09-27'),
   ('platform_admin', 'capability.administer', 'R0, owner ruling 2026-09-27'),
-  ('platform_admin', 'operator.seat.platform_admin.grant', 'R0 revised, owner ruling 2026-09-27'),
-  ('platform_admin', 'operator.seat.platform_admin.revoke', 'R0 revised, owner ruling 2026-09-27'),
   ('platform_admin', 'autonomy.posture.raise', 'G3 decision 1, owner ruling 2026-09-27'),
   ('platform_admin', 'tenant.act_as.write', 'G3 decision 6, owner ruling 2026-09-27')
 ON CONFLICT (role, capability) DO NOTHING;

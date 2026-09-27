@@ -30,10 +30,9 @@ SELECT results_eq(
 SELECT results_eq(
   $$SELECT capability FROM public.platform_operator_role_capabilities WHERE role = 'platform_admin' ORDER BY 1$$,
   $$VALUES ('autonomy.posture.raise'::text), ('billing.read'), ('capability.administer'), ('console.enter'),
-           ('fleet.directory.read'), ('operator.seat.platform_admin.grant'), ('operator.seat.platform_admin.revoke'),
-           ('platform.health.read'), ('tenant.act_as'), ('tenant.act_as.write'), ('tenant.provision'),
-           ('tenant.status.set')$$,
-  'platform_admin holds exactly the revised R0 grants and the G3 rulings');
+           ('fleet.directory.read'), ('platform.health.read'), ('tenant.act_as'), ('tenant.act_as.write'),
+           ('tenant.provision'), ('tenant.status.set')$$,
+  'platform_admin holds exactly the revised R0 grants in force and the G3 rulings');
 SELECT set_eq(
   $$SELECT capability FROM public.platform_operator_role_capabilities WHERE role = 'super_admin'$$,
   $$SELECT capability FROM public.platform_operator_capabilities$$,
@@ -120,8 +119,12 @@ SELECT ok(public.operator_may('tenant.provision'), 'platform_admin may provision
 SELECT ok(public.operator_may('tenant.status.set'), 'platform_admin may change a tenant''s status');
 SELECT ok(public.operator_may('billing.read'), 'platform_admin may read billing, MRR and revenue class');
 SELECT ok(public.operator_may('capability.administer'), 'platform_admin may administer capabilities');
-SELECT ok(public.operator_may('operator.seat.platform_admin.grant'), 'platform_admin may grant a peer seat');
-SELECT ok(public.operator_may('operator.seat.platform_admin.revoke'), 'platform_admin may revoke a peer seat');
+-- Codex review of #1534 (third P1): R0 revised rules that a platform_admin may grant and revoke peer
+-- seats, but the §53 lockdown still lets only super_admin write an operator role. The one answer
+-- must not say yes to a write every attempt is refused, so the two rows wait for the seats slice,
+-- which moves the enforcement and adds them together.
+SELECT ok(NOT public.operator_may('operator.seat.platform_admin.grant'), 'platform_admin may not yet grant a peer seat: enforcement has not moved');
+SELECT ok(NOT public.operator_may('operator.seat.platform_admin.revoke'), 'platform_admin may not yet revoke a peer seat: enforcement has not moved');
 SELECT ok(NOT public.operator_may('operator.seat.super_admin.grant'), 'platform_admin may not grant a seat above its own');
 SELECT ok(NOT public.operator_may('operator.seat.super_admin.revoke'), 'platform_admin may not revoke a seat above its own');
 SELECT ok(public.operator_may('autonomy.posture.raise'), 'platform_admin may raise the posture above the ceiling, capped (G3 decision 1)');

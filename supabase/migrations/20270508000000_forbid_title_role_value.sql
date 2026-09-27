@@ -7,7 +7,14 @@
 -- Rows holding the value on production when this was written: user_roles 4, every other column 0.
 -- The user_roles constraint is therefore added NOT VALID: it refuses every new write now and is
 -- validated once the four legacy rows are deleted (slice 5). Every other constraint is validated
--- here. No row is changed or deleted by this migration.
+-- here. No row is deleted by this migration.
+--
+-- Approval rows: an early migration seeds default approval policies that require the value and list
+-- it as able to see the approval, so a fresh rebuild of the database holds such rows even though
+-- production holds none (production: 0 policies and 0 pending approvals carrying it). Before the
+-- constraints are added, a required approver of the value becomes admin, an auto-assignment to it is
+-- cleared, and the value is removed from every visibility list. On production these statements match
+-- no row and change nothing.
 --
 -- grant_tenant_member_role is the production body with two changes: it refuses the value before any
 -- write, and its seat-upgrade branch for the value is removed (the seat it produced can no longer be
@@ -21,6 +28,23 @@ SET lock_timeout = '10s';
 
 DO $migration$
 BEGIN
+  UPDATE public.paige_approval_policies
+     SET requires_role = CASE WHEN requires_role = 'coach'::public.app_role
+                              THEN 'admin'::public.app_role ELSE requires_role END,
+         auto_assign_role = CASE WHEN auto_assign_role = 'coach'::public.app_role
+                                 THEN NULL ELSE auto_assign_role END,
+         visible_to_roles = array_remove(visible_to_roles, 'coach'::public.app_role)
+   WHERE requires_role = 'coach'::public.app_role
+      OR auto_assign_role = 'coach'::public.app_role
+      OR 'coach'::public.app_role = ANY (COALESCE(visible_to_roles, '{}'::public.app_role[]));
+
+  UPDATE public.paige_pending_approvals
+     SET requires_role = CASE WHEN requires_role = 'coach'::public.app_role
+                              THEN 'admin'::public.app_role ELSE requires_role END,
+         visible_to_roles = array_remove(visible_to_roles, 'coach')
+   WHERE requires_role = 'coach'::public.app_role
+      OR 'coach' = ANY (COALESCE(visible_to_roles, '{}'::text[]));
+
   ALTER TABLE public.user_roles
     ADD CONSTRAINT user_roles_role_not_retired_title_role
     CHECK (role IS DISTINCT FROM 'coach'::public.app_role) NOT VALID;
@@ -56,6 +80,10 @@ BEGIN
   ALTER TABLE public.paige_pending_approvals
     ADD CONSTRAINT paige_pending_approvals_requires_role_not_retired_title_role
     CHECK (requires_role IS DISTINCT FROM 'coach'::public.app_role);
+
+  ALTER TABLE public.paige_pending_approvals
+    ADD CONSTRAINT paige_pending_approvals_visible_to_roles_not_retired_title_role
+    CHECK (NOT ('coach' = ANY (COALESCE(visible_to_roles, '{}'::text[]))));
 
   CREATE OR REPLACE FUNCTION public.grant_tenant_member_role(_user_id uuid, _role app_role, _tenant_id uuid DEFAULT NULL::uuid, _reason text DEFAULT NULL::text)
    RETURNS void

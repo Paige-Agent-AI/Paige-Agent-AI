@@ -11,9 +11,9 @@
 -- ============================================================================
 BEGIN;
 
-SELECT plan(14);
+SELECT plan(15);
 
--- 1–9. Every role and seat column carries the constraint.
+-- 1–10. Every role and seat column carries the constraint.
 SELECT ok(EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'public.user_roles'::regclass
                     AND conname = 'user_roles_role_not_retired_title_role'),
   'platform roles refuse the value');
@@ -41,8 +41,11 @@ SELECT ok(EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'public.paige_app
 SELECT ok(EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'public.paige_pending_approvals'::regclass
                     AND conname = 'paige_pending_approvals_requires_role_not_retired_title_role'),
   'pending approvals cannot require the value');
+SELECT ok(EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'public.paige_pending_approvals'::regclass
+                    AND conname = 'paige_pending_approvals_visible_to_roles_not_retired_title_role'),
+  'pending approval visibility cannot name the value');
 
--- 10. Every constraint but the platform-role one is validated; that one waits for slice 5.
+-- 11. Every constraint but the platform-role one is validated; that one waits for slice 5.
 SELECT is((SELECT count(*)::int FROM pg_constraint
             WHERE conname LIKE '%\_not\_retired\_title\_role' AND NOT convalidated),
   1, 'only the platform-role constraint waits for the legacy rows to go');
@@ -64,7 +67,7 @@ BEGIN
   INSERT INTO public.user_roles (user_id, role) VALUES (_a, 'admin') ON CONFLICT DO NOTHING;
 END $$;
 
--- 11–12. A direct write of the value is refused.
+-- 12–13. A direct write of the value is refused.
 SELECT throws_ok($q$INSERT INTO public.user_roles (user_id, role)
                    VALUES ('c9950000-0000-0000-0000-0000000000a2', 'coach')$q$,
   '23514', NULL, 'no one can be given the platform role');
@@ -73,7 +76,7 @@ SELECT throws_ok($q$INSERT INTO public.tenant_members (tenant_id, user_id, role,
                            'coach', 'active', false)$q$,
   '23514', NULL, 'no one can be seated with the value');
 
--- 13–14. The tenant grant function refuses the value by name, and still grants a real role.
+-- 14–15. The tenant grant function refuses the value by name, and still grants a real role.
 SELECT set_config('request.jwt.claims', '{"sub":"c9950000-0000-0000-0000-0000000000a1","role":"authenticated"}', true);
 SELECT throws_ok($q$SELECT public.grant_tenant_member_role('c9950000-0000-0000-0000-0000000000a2', 'coach',
                                                           'c9950000-0000-0000-0000-00000000000a', NULL)$q$,

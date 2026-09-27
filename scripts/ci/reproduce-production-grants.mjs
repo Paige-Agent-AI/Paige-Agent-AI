@@ -407,11 +407,20 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON FUNCTI
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres REVOKE ALL ON TABLES FROM anon, authenticated, service_role;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres REVOKE ALL ON SEQUENCES FROM anon, authenticated, service_role;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres REVOKE ALL ON FUNCTIONS FROM anon, authenticated, service_role;
+-- A schema-less default can also REMOVE PUBLIC's built-in EXECUTE on functions. Put it back, so a
+-- function the change under review creates is as executable here as it will be on production
+-- (Codex on #1487: otherwise CI hides a function production will expose).
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres GRANT EXECUTE ON FUNCTIONS TO PUBLIC;
 ${lines.join("\n")}
 -- It must hold: a table created now gets exactly what production's lines give.
 CREATE TABLE public._ci_default_acl_check (id int);
 SELECT 'DEFAULTS_CHECK|' || (SELECT coalesce(string_agg(a.grantee::regrole::text || ':' || a.privilege_type, ',' ORDER BY 1), '') FROM pg_class c, aclexplode(coalesce(c.relacl, acldefault('r'::"char", c.relowner))) a WHERE c.oid = 'public._ci_default_acl_check'::regclass AND a.grantee <> c.relowner AND a.grantee <> 0);
 DROP TABLE public._ci_default_acl_check;
+-- And a function created now gets exactly its built-in ACL (owner + PUBLIC EXECUTE) when production
+-- has no default lines: proacl stays NULL, or equals acldefault.
+CREATE FUNCTION public._ci_default_acl_check_fn() RETURNS int LANGUAGE sql AS 'select 1';
+SELECT 'DEFAULTS_FN_CHECK|' || (SELECT (p.proacl IS NULL OR p.proacl = acldefault('f'::"char", p.proowner))::text FROM pg_proc p WHERE p.oid = 'public._ci_default_acl_check_fn()'::regprocedure);
+DROP FUNCTION public._ci_default_acl_check_fn();
 COMMIT;
 `;
   const dir = mkdtempSync(join(tmpdir(), "prod-defacl-"));
@@ -422,6 +431,9 @@ COMMIT;
     const row = r.stdout.split("\n").find((l) => l.startsWith("DEFAULTS_CHECK|"));
     const got = row === undefined ? "?" : row.slice("DEFAULTS_CHECK|".length).trim();
     if (got !== "") fail(`Default privileges did not hold: a new public table got API-role privileges (${got}) that production's defaults do not grant.`);
+    const fnRow = r.stdout.split("\n").find((l) => l.startsWith("DEFAULTS_FN_CHECK|"));
+    const fnGot = fnRow === undefined ? "?" : fnRow.slice("DEFAULTS_FN_CHECK|".length).trim();
+    if (fnGot !== "true") fail(`Default privileges did not hold: a new public function did not get the built-in ACL (owner + PUBLIC EXECUTE) that production gives it (check returned ${fnGot}).`);
   }
   if (r.status !== 0) fail(`Production's default privileges could not be reproduced.\n${(r.stderr || "").split("\n").filter((l) => /ERROR|DETAIL/.test(l)).join("\n")}`);
   console.log(`Default privileges for objects postgres creates in public: built-in, plus ${lines.length} production line(s).`);

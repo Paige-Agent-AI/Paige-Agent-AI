@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # READ-ONLY baseline of production's database, for CI jobs that must compare against it.
 #
-# One home for the one way CI reads production (§18): premerge-migration-proof restores this
-# baseline to prove new migrations apply on top of production, and the PAIGE Spine
-# database-contract job reproduces production's API-role grants from it. Before this script, the
-# steps lived inline in premerge-migration-proof.yml; a second copy would have been a second way
-# in with its own credential handling.
-#
+# Used by the PAIGE Spine database-contract job to reproduce production's API-role grants.
+# premerge-migration-proof.yml still carries its own inline copy of these steps (and reads the
+# ledger by column number, which this script does not). That workflow is disabled and owned by the
+# open fail-closed rework (#574), so it is deliberately left untouched here; adopting this script
+# is that rework's call. Two ways in is a known, recorded debt, not an oversight.
+
 # What it touches on production: `supabase db dump` (pg_dump — schema and roles only, never
 # `--data-only`, so no rows or PII leave production) and `supabase migration list` (the ledger).
 # Nothing is written to production.

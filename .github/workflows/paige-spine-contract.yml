@@ -8,9 +8,10 @@ on:
   # branch runs the full contract against that branch's head. No job logic changes; no check is
   # weakened, skipped, or de-required — this only adds a way to TRIGGER the same gate on demand.
   workflow_dispatch:
-  # No `paths:` filter on pull_request: a required check that never starts blocks a PR forever.
-  # The `changes` job below decides whether the contract jobs run; when they skip, GitHub counts
-  # the skip as passing. EDIT THE FILE LIST IN THE `changes` JOB, not here.
+  # No `paths:` filter on pull_request, and no job-level `if:` either: both contract jobs run on
+  # EVERY pull request. They are required checks, and a required check that never starts leaves a
+  # PR waiting forever; a conditional job is also what team-removal-migration.test.ts refuses for
+  # the job carrying the team-removal proof. Running always is the one shape that satisfies both.
   pull_request:
   push:
     branches: [main]
@@ -94,120 +95,7 @@ permissions:
   contents: read
 
 jobs:
-  # Decides, per pull request, whether the contract jobs have anything to check. A pull request that
-  # touches none of these paths gets both jobs SKIPPED, which a required status check treats as
-  # passing; one that touches any of them gets the full gate. Every other event runs the gate.
-  # Matching is bash pattern matching, where `*` also crosses `/`, so it can only match MORE than the
-  # old trigger filter did, never less. (The list moved here verbatim from the old pull_request
-  # filter; its explanatory comments are kept below the list.)
-  changes:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    outputs:
-      run: ${{ steps.match.outputs.run }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - id: match
-        env:
-          EVENT: ${{ github.event_name }}
-          BASE: ${{ github.event.pull_request.base.sha }}
-          HEAD: ${{ github.event.pull_request.head.sha }}
-          PATTERNS: |
-            supabase/functions/_shared/paige-spine/**
-            supabase/migrations/**
-            supabase/tests/mcp_gateway_endpoint_revokes_approvals.sql
-            supabase/tests/mcp_gateway_durable_endpoint_bound_consent.sql
-            supabase/tests/mcp_gateway_url_auth_configured.sql
-            supabase/tests/mcp_gateway_endpoint_load_binding.sql
-            supabase/tests/mcp_gateway_owner_only_visibility.sql
-            supabase/tests/mcp_gateway_endpoint_setter.sql
-            supabase/tests/mcp_gateway_connection_create.sql
-            supabase/tests/mcp_gateway_oauth_state_and_hardenings.sql
-            supabase/tests/mcp_gateway_oauth_grant_writer.sql
-            supabase/tests/mcp_gateway_approval_future_expiry.sql
-            supabase/tests/integrations_surface_sees_mcp.sql
-            supabase/tests/record_capability_run_single_overload.sql
-            supabase/tests/mcp_tool_catalog_tenant_scope.sql
-            supabase/tests/mcp_oauth_refuses_the_rest_facet.sql
-            supabase/migrations/20270412090000_a_tenant_can_read_its_own_tool_catalog.sql
-            supabase/migrations/20270411090000_one_record_capability_run_not_two.sql
-            scripts/proof/mcp-gateway-endpoint-consent-race.mjs
-            supabase/functions/_shared/mcp-gateway/**
-            supabase/functions/paige-tts/**
-            supabase/tests/paige_voice_budget_control.sql
-            supabase/tests/paige_live_pilot_feature_guard.sql
-            supabase/tests/paige_live_runtime_claim.sql
-            supabase/tests/paige_live_session_transition.sql
-            scripts/proof/paige-voice-budget-concurrency.mjs
-            supabase/tests/paige_spine_foundation.sql
-            supabase/tests/governed_crm_commands.sql
-            supabase/tests/crm_patch_fields_match_database.sql
-            scripts/ci/crm-patch-field-gen.mjs
-            supabase/tests/media_credit_ledger.sql
-            supabase/tests/business_context_readiness.sql
-            supabase/tests/team_authority_readiness.sql
-            supabase/tests/business_mission_foundation.sql
-            supabase/tests/social_foundation.sql
-            supabase/tests/social_foundation_rls.sql
-            scripts/sql/social-foundation-legacy-shape-proof.sql
-            scripts/sql/social-foundation-tenant-shaped-proof.sql
-            supabase/tests/source_thread_link_scope.sql
-            supabase/functions/_shared/source-thread-link.ts
-            supabase/tests/solo_team_invite_workspace_authority.sql
-            supabase/tests/solo_setup_completion_marker.sql
-            supabase/tests/canonical_solo_provisioning.sql
-            supabase/tests/solo_team_invite_recipient_binding.sql
-            supabase/tests/solo_team_removal_authority.sql
-            supabase/functions/solo-team-invitations/**
-            supabase/functions/handle-resend-webhook/**
-            supabase/tests/resend_receipt_reliability.sql
-            supabase/tests/promotional_solo_grant.sql
-            supabase/tests/paige_orchestration_companion_minting.sql
-            supabase/functions/_shared/paige-orchestration/**
-            supabase/functions/execute-approval/**
-            scripts/proof/resend-receipt-concurrency.mjs
-            scripts/proof/business-mission-concurrency.mjs
-            src/__tests__/paige-spine-*.test.ts
-            src/__tests__/paige-orchestration-approve-executor.test.ts
-            src/solo/paigeClientScope.ts
-            src/solo/paigeClientScope.test.ts
-            scripts/ci/paige-spine-registry-lint.mjs
-            scripts/ci/chat-tool-registry-lint.mjs
-            scripts/proof/paige-spine-local-proof.sql
-            .github/workflows/paige-spine-contract.yml
-            supabase/tests/**
-            .github/scripts/prod-readonly-baseline.sh
-            scripts/ci/reproduce-production-grants.*
-            scripts/ci/grant-ordering-proof.sh
-            scripts/proof/mcp-gateway-tools-action.mjs
-        run: |
-          if [ "$EVENT" != "pull_request" ]; then echo "run=true" >> "$GITHUB_OUTPUT"; exit 0; fi
-          git diff --name-only "$BASE...$HEAD" > "$RUNNER_TEMP/changed.txt"
-          run=false
-          while IFS= read -r f; do
-            while IFS= read -r p; do
-              [ -z "$p" ] && continue
-              # shellcheck disable=SC2053 # the pattern is deliberately unquoted: it is a glob
-              if [[ "$f" == $p ]]; then echo "matched: $f (pattern $p)"; run=true; break 2; fi
-            done <<< "$PATTERNS"
-          done < "$RUNNER_TEMP/changed.txt"
-          echo "run=$run" >> "$GITHUB_OUTPUT"
-          echo "contract jobs run: $run"
-    # The CRM patch-schema proof and the generator that writes it. (`supabase/migrations/**`
-    # above already re-runs this job when an allowlist itself changes, which is the case that
-    # matters most; these two cover a change to the proof or to how it is derived.)
-    # The Solo Team invitation proof must re-run when the seam it proves changes,
-    # not only when a migration happens to touch it.
-    # Same reason for the removal proof: it must re-run when the seam changes.
-    # Layer C · C5 slice 2 — companion-minting + cancellation-sync + direct-approve guard + reconciler.
-    # Re-run when the proof or the orchestration seams it covers change, not only when a migration touches it.
-
   contract:
-    needs: changes
-    # Fail safe: if `changes` did not succeed, run the gate rather than skip it (a skip counts as a pass).
-    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.run == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -227,9 +115,6 @@ jobs:
       - run: npx vitest run src/__tests__/paige-spine-registry.test.ts src/__tests__/paige-spine-sql-contract.test.ts src/__tests__/paige-spine-chat-binding.test.ts src/__tests__/paige-spine-mind-binding.test.ts src/__tests__/paige-spine-business-context-readiness.test.ts src/__tests__/paige-spine-team-authority.test.ts src/__tests__/paige-spine-business-mission.test.ts src/solo/paigeClientScope.test.ts
 
   database-contract:
-    needs: changes
-    # Fail safe: if `changes` did not succeed, run the gate rather than skip it (a skip counts as a pass).
-    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.run == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

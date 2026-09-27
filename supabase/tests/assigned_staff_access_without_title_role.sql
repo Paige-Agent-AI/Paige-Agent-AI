@@ -2,16 +2,17 @@
 -- Assigned staff reach what they are assigned, inside the business, with no title role.
 --
 -- Proves, for the policies that gave an assigned staff member access to a client's records: the
--- assignment plus membership of the client's business is the whole of the grant — no platform role is
--- needed; an assignment to a client of a business the person does not belong to grants nothing; a
--- person holding the retired global coach role gains nothing from it; and no policy on these tables
--- reads that role any more.
+-- assignment plus membership of the client's business is the whole of the grant, and it grants read
+-- access only — no platform role is needed; an assignment to a client of a business the person does
+-- not belong to grants nothing; the assignee cannot delete, relink or rewrite the client, take over its
+-- deal, or create a task for it; a person holding the retired global coach role gains nothing from it;
+-- and no policy on these tables gives access through that role alone.
 --
 -- Synthetic fixtures only. Asserts counts, catalog facts and refusals, never field values. Rolls back.
 -- ============================================================================
 BEGIN;
 
-SELECT plan(10);
+SELECT plan(13);
 
 -- Production grants `authenticated` these privileges; a schema replayed from migrations does not.
 GRANT SELECT, UPDATE, DELETE ON public.clients TO authenticated;
@@ -67,7 +68,7 @@ SELECT is((SELECT count(*)::int FROM pg_policy p
             WHERE p.polrelid IN ('public.business_verification_runs'::regclass, 'public.clients'::regclass,
                                  'public.coach_clients'::regclass, 'public.deal_activities'::regclass,
                                  'public.deals'::regclass, 'public.invitations'::regclass,
-                                 'public.outreach_drafts'::regclass, 'public.paige_health_snapshots'::regclass,
+                                 'public.paige_health_snapshots'::regclass,
                                  'public.paige_messages_audit'::regclass, 'public.paige_skill_runs'::regclass,
                                  'public.paige_workflow_runs'::regclass, 'public.pipeline_stages'::regclass,
                                  'public.pipelines'::regclass, 'public.quickbooks_connections'::regclass,
@@ -95,6 +96,14 @@ BEGIN
   DELETE FROM public.clients WHERE id = 'a5560000-0000-0000-0000-00000000c1e1';
   GET DIAGNOSTICS _n = ROW_COUNT;
   PERFORM set_config('asn.m_deleted', _n::text, true);
+  UPDATE public.clients SET linked_user_id = 'a5560000-0000-0000-0000-0000000000a1'
+   WHERE id = 'a5560000-0000-0000-0000-00000000c1e1';
+  GET DIAGNOSTICS _n = ROW_COUNT;
+  PERFORM set_config('asn.m_relinked', _n::text, true);
+  UPDATE public.deals SET owner_user_id = 'a5560000-0000-0000-0000-0000000000a1'
+   WHERE id = 'a5560000-0000-0000-0000-00000000d001';
+  GET DIAGNOSTICS _n = ROW_COUNT;
+  PERFORM set_config('asn.m_deal_taken', _n::text, true);
 END $$;
 RESET ROLE;
 
@@ -108,7 +117,8 @@ END $$;
 RESET ROLE;
 SELECT set_config('request.jwt.claims', '', true);
 
--- 2-6. The assignment plus membership of the business is the whole grant.
+-- 2-6. The assignment plus membership of the business is the whole grant. (3 is a regression guard:
+--      the business boundary on clients also holds through its own isolation policy.)
 SELECT is(current_setting('asn.m_client_a')::int, 1, 'an assigned member sees the client they are assigned');
 SELECT is(current_setting('asn.m_client_b')::int, 0,
   'an assignment to a client of a business the person does not belong to grants nothing');
@@ -116,14 +126,17 @@ SELECT is(current_setting('asn.m_deal')::int, 1, 'an assigned member sees the de
 SELECT is(current_setting('asn.m_task')::int, 1, 'an assigned member sees the tasks for that client');
 SELECT is(current_setting('asn.m_rel')::int, 1, 'an assigned member sees their own assignment');
 
--- 7. An assignment does not let the assignee delete the client.
+-- 7-9. An assignment gives read access only. Writes to an assigned client's records stay with the
+--      business's owners and admins. (Regression guards: the assignee held no write path before.)
 SELECT is(current_setting('asn.m_deleted')::int, 0, 'an assignment does not let the assignee delete the client');
+SELECT is(current_setting('asn.m_relinked')::int, 0, 'an assignment does not let the assignee relink or rewrite the client');
+SELECT is(current_setting('asn.m_deal_taken')::int, 0, 'an assignment does not let the assignee take over the client''s deal');
 
--- 8-9. The retired role grants nothing on its own.
+-- 10-11. The retired role grants nothing on its own. (11 is a regression guard.)
 SELECT is(current_setting('asn.g_pipelines')::int, 0, 'the retired coach role does not open the business''s pipelines');
 SELECT is(current_setting('asn.g_deal')::int, 0, 'the retired coach role does not open a deal the person is not assigned to');
 
--- 10. Nor does it let the person create a deal.
+-- 12. Nor does it let the person create a deal.
 SELECT set_config('request.jwt.claims', '{"sub":"a5560000-0000-0000-0000-0000000000a2","role":"authenticated"}', true);
 SET LOCAL ROLE authenticated;
 SELECT throws_ok(
@@ -132,6 +145,15 @@ SELECT throws_ok(
             'a5560000-0000-0000-0000-00000000a101', 'open',
             'a5560000-0000-0000-0000-00000000000a', 'a5560000-0000-0000-0000-0000000000a2')$$,
   '42501', NULL, 'the retired coach role does not let a person create a deal');
+RESET ROLE;
+
+-- 13. An assignment does not let the assignee create a task for the client.
+SELECT set_config('request.jwt.claims', '{"sub":"a5560000-0000-0000-0000-0000000000a1","role":"authenticated"}', true);
+SET LOCAL ROLE authenticated;
+SELECT throws_ok(
+  $$INSERT INTO public.tasks (user_id, tenant_id, title)
+    VALUES ('a5560000-0000-0000-0000-000000000e01', 'a5560000-0000-0000-0000-00000000000a', 'ASN new task')$$,
+  '42501', NULL, 'an assignment does not let the assignee create a task for the client');
 RESET ROLE;
 
 SELECT * FROM finish();

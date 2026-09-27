@@ -14,7 +14,7 @@ const testState = vi.hoisted(() => ({ tab: "team" }));
 vi.mock("@/hooks/useUserRoles", () => ({
   // The predicate the SERVER gates on (platform owner OR global admin/coach). Mocked
   // rather than left to the real hook, which opens its own auth subscription.
-  useUserRoles: () => ({ loading: false, userId: "u1", roles: ["admin"], isAdmin: true, isCoach: false, isClient: false, isBroker: false, isStaff: true }),
+  useUserRoles: () => ({ loading: false, userId: "u1", roles: ["admin"], isAdmin: true, isClient: false, isBroker: false, isStaff: true }),
 }));
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {

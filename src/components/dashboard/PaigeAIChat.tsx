@@ -344,11 +344,11 @@ const PaigeAIChatInner = ({
       if (!user) return null;
       const { data } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
       const roles = (data || []).map((r: { role: string }) => r.role);
-      return { isAdmin: roles.includes("admin"), isCoach: roles.includes("coach") };
+      return { isAdmin: roles.includes("admin") };
     },
     staleTime: 5 * 60 * 1000,
   });
-  const showFeedback = userRole?.isAdmin || userRole?.isCoach;
+  const showFeedback = userRole?.isAdmin;
   const [messages, setMessages] = useState<Message[]>([
     mkMsg({ role: "assistant", content: greeting ?? "Hey, how can I help?" }),
   ]);

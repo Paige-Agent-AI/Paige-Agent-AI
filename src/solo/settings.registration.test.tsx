@@ -48,7 +48,7 @@ vi.mock("@/hooks/useUserRoles", () => ({
   // refused by BOTH halves — otherwise the authority row passes for want of one of them.
   useUserRoles: () => ({
     loading: false, userId: "u1", roles: state.isAdmin ? ["admin"] : [],
-    isAdmin: state.isAdmin === true, isCoach: false, isClient: false, isBroker: false,
+    isAdmin: state.isAdmin === true, isClient: false, isBroker: false,
     isStaff: state.isAdmin === true,
   }),
 }));

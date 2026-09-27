@@ -1,39 +1,23 @@
-# The operator console follows the Claude Design pack. Verbatim, until the owner says otherwise.
-
-**Owner-locked 2026-08-19.** Antonio, after finding the Paige chat pane off-design:
-*"Why can you not just follow the design pack from CD?"* · *"If Claude Design made it. That's how
-it's supposed to be moving forward. Whatever we had before CD. Is not longer valid. None of it!"* ·
-*"Give me my entire damn design in its entirety. I mean, mimic it down to the hair, nothing less."*
+# The operator console — working notes for any session under `src/operator/`.
 
 This file auto-loads for any session working under `src/operator/`. That is deliberate: a rule that
-lives in a doc someone has to remember to open is a rule that gets skipped, which is exactly how the
-pane below went off-design. Nothing here needs looking up — it is already in your context.
+lives in a doc someone has to remember to open is a rule that gets skipped. Nothing here needs
+looking up — it is already in your context.
+
+**§58 record — what was struck from this file on 2026-09-27, and why.** Until then this file opened
+with "THE LOCK": the Claude Design pack *was* the design, verbatim and frozen, deviations needed an
+owner instruction, and open design questions were to be taken to Claude Design. Root `CLAUDE.md`
+§00 (owner ruling, 2026-09-22) removed Claude Design from the loop and voids any rule that hands
+interface authority to a party other than CC + the owner, **deleted on sight rather than
+reconciled**. Those lines are gone. What survives is below: where the pack lives (as reference),
+the evidence discipline, and the engineering lessons this console paid for.
 
 ---
 
-## THE LOCK
-
-**Claude Design's pack IS the design.** Every operator surface renders what the pack draws. Not
-"inspired by," not "close enough," not "the spirit of." The pack.
-
-**A deviation requires an explicit owner instruction naming the exact thing to change.** Not your
-judgment that something would be better. Not a verifier's finding. Not a doctrine section you think
-applies. If you believe the pack is wrong somewhere, **raise it and let the owner decide** — do not
-quietly improve it. This mirrors §28 (approved design is frozen): the pack is the approved design,
-and it is frozen the same way until he unlocks a specific piece of it.
-
-**The pack is the ONLY design reference — a screenshot never is.** Owner-ruled 2026-08-19:
-*"The Design Pack should have to be your only reference. I send screenshots to show what's live."*
-The pack says what a surface SHOULD be; a screenshot he sends says what it CURRENTLY IS, which is
-usually evidence something is wrong. Open the pack, compare, fix the delta — never "match the
-screenshot," because a screenshot of a broken surface is a picture of the bug, and building toward it
-cements the defect. (CD's own renders under `uploads/`/`screens/` are a fast correctness check, but
-where a render and the `.dc.html` disagree, the markup wins.)
-
-**THE PACK IS v3. THE OLDER PACKS ARE DEAD — owner-locked 2026-08-23.**
+## Where the v3 pack lives — REFERENCE, not authority
 
 ```
-docs/design-references/cd-packs/super-admin-shell-v3/     <-- THE ONLY PACK
+docs/design-references/cd-packs/super-admin-shell-v3/     <-- the current reference pack
     PAIGE Super Admin Shell v3.dc.html    11,358 lines — the shell
     PAIGE Platform Operator - standalone.html            — the standalone render
     design-system-port.md                 the --pg-* system, the faces, the Command Mark
@@ -41,27 +25,16 @@ docs/design-references/cd-packs/super-admin-shell-v3/     <-- THE ONLY PACK
     paige-ia.js · mind-brain.js · support.js · github.md · corrections-2026-08-23.md
 ```
 
-Everything in it is IN THE REPO. Nothing about this design has to be invented, inferred,
-reconstructed from a screenshot, or reconciled with anything we built before it.
-
 **`super-admin-shell/` (the ~8,300-line pack) and `agency-mode-shell/` are SUPERSEDED.** They are
-kept only so a past decision can be traced. Do NOT build from them, do NOT diff against them, do
-NOT cite them as authority. Until 2026-08-23 this very section named the old pack as "the pack" —
-which is why sessions kept building toward a design the owner had already replaced. That was the
-bug in the doctrine, not in the work.
+kept only so a past decision can be traced. Do not build from them or diff against them.
 
-**The owner's ruling, verbatim (2026-08-23):** *"None of the colors, design, logos, or anything
-from the previous work that we've done matters. If we have rules in place, we need to change them
-to adopt them to what we currently have now that was provided by Claude Design… There's nothing
-about our design that needs to go anywhere near the direction of our previous design."*
-
-So the standing posture is **PORT, not design.** Before calling anything on an operator surface
-missing, blocked, or undecided, GREP THE v3 PACK FOR IT. It is an 11,358-line file and it contains
-far more than any one session has read. Worked example, 2026-08-23: the command palette and six
-"unreachable" surfaces were about to be scoped as a design blocker; the pack carries 115 `summon`
-references, 24 `palette`, 3 `⌘K`, Calendar ×33, Compose ×52, Integrations ×18. None of it was
-missing. All of it was unported. **A capability that is drawn in the pack is never a blocker — it
-is a port that has not happened yet.**
+**Search before claiming absence (§00 evidence discipline).** Before calling anything on an operator
+surface missing, blocked, or undecided, grep the v3 pack for it — at least four spellings, and read
+the region. It is an 11,358-line file and it contains far more than any one session has read.
+Worked example, 2026-08-23: the command palette and six "unreachable" surfaces were about to be
+scoped as a blocker; the pack carries 115 `summon` references, 24 `palette`, 3 `⌘K`, Calendar ×33,
+Compose ×52, Integrations ×18. None of it was missing. **Something the pack already solves is prior
+art to read before inventing a fourth variant (§18/§30) — never a blocker, and never an order.**
 
 ---
 
@@ -95,11 +68,10 @@ lets CD rule." That was still input, and it was corrected the same day. Zero mea
 
 ---
 
-## "IS THIS THING A PLACE?" — the default answer is NO (Claude Design, 2026-08-23)
+## "IS THIS THING A PLACE?" — the default answer is NO
 
-**The URL taxonomy (§65) is Claude Code's. Whether a capability IS a place is Claude Design's.**
-That seam matters because CC has now modelled the same mistake three times, and each time it
-arrived looking like a routing question.
+CC has modelled the same mistake three times, and each time it arrived looking like a routing
+question.
 
 **In this shell, SIX SLOTS ARE PLACES. Almost nothing else is.** A capability that is not one of
 the six is, by default, a **state** or a **surface** — something that changes what you are looking
@@ -111,41 +83,33 @@ at or what scope you are in — not an address you can navigate to, bookmark, or
 |---|---|
 | `act-as` a tenant | a SCOPE CHANGE — the operator's session enters a tenant; the address does not become the tenant |
 | agent runs | a SURFACE — work streams where you already are |
-| **Paige** (`/operator/paige`) | **the SPINE.** CD: *"A reference to her is not a route, it's an action that opens the spine and focuses the command bar… she's present in every surface, which is the whole point of the execution strip."* |
+| **Paige** (`/operator/paige`) | **the SPINE.** A reference to her is not a route; it is an action that opens the spine and focuses the command bar — she is present in every surface. |
 
-**The pack having no address for something is EVIDENCE, not an omission.** CD: *"The pack has no
-address for her because there isn't one."* When CC cannot find a route in the pack for a capability
-it is porting, the first hypothesis is that the capability is not a place — not that the pack is
-incomplete. Ask CD; do not assign it an address.
+**The pack having no address for something is evidence worth weighing.** When no route exists for a
+capability, the first hypothesis is that the capability is not a place — not that a route is
+missing.
 
-**The tell, and CC must watch for it in its own work:** *"If a later session finds itself wanting
-`/operator/paige`, that's the signal she's been modelled as a place again."* Generalised — **if you
-are reaching for a new top-level operator route to reach a capability, stop.** That reach is the
-symptom. Take it to CD before writing the route.
+**The tell, and CC must watch for it in its own work:** if a later session finds itself wanting
+`/operator/paige`, she has been modelled as a place again. Generalised — **if you are reaching for a
+new top-level operator route to reach a capability, stop.** That reach is the symptom. A new slot
+is an owner ruling (see `operatorIA.ts`).
 
 **A control to a place that does not exist gets REMOVED, not repointed.** Not disabled, not left
-dead, not pointed somewhere plausible. CD, on this exact case: *"A control that opens an empty
-spine asserts a capability that isn't there."* Same reasoning as collapsing an empty spine to 0 —
+dead, not pointed somewhere plausible: a control that opens an empty spine asserts a capability
+that isn't there. Same reasoning as collapsing an empty spine to 0 —
 applied to the control instead of the track. When the capability is genuinely wired, it returns as
 a control (expand the spine, focus the command bar), never as a URL.
 
 ---
 
-## THE ONE RULE THAT DECIDES EVERY CASE
+## VALUES ARE DATA — never a fixture
 
-> **Structure is design. Values are data.**
-
-**Comes over VERBATIM** — the pack's geometry, spacing, radii, type scale, tokens; every KPI label
-and unit; block titles, subtitles and foots; column headers; group chips; the anchor strip;
-placeholder text; button labels; empty-state wording; the closing footer lines. A tile reading
-`OVERALL —` above the pack's real 13-category grid **is** the design, waiting for data.
-
-**Does NOT come over** — the pack's invented figures, tenant names (`Meridian`, `Ashford`,
+**Never comes over from any reference** — the pack's invented figures, tenant names (`Meridian`, `Ashford`,
 `Harbor & Vine`), fake chat titles, token counts, timestamps, and written-in prose. Those are
 fixtures. They render from a real read, or they render as an honest absence (`—`, or a stated gap).
 Never a fabricated number or a real-sounding name (§13, §63).
 
-An empty card is **not** the design. A stand-in paragraph where the pack draws a surface is **not**
+An empty card is **not** the design. A stand-in paragraph where a surface belongs is **not**
 the design. Both have already been shipped once and rejected.
 
 ---
@@ -175,8 +139,8 @@ Each of these shipped. Each was caught by the owner, not by us. Do not repeat th
    of the old design."*
 
 **(3) and (4) are the same false choice made twice, in opposite directions.** The job is never
-*the pack's design OR the working engine.* It is **the pack's design RENDERED BY the working
-engine** — take the pack's markup apart, rebuild it as components, and drive it from real state.
+*the drawing OR the working engine.* It is **the designed surface RENDERED BY the working
+engine** — build it as components and drive it from real state.
 That is more work than either shortcut. It is the work.
 
 ---
@@ -197,8 +161,7 @@ what it contains, what it omits, what is ported — read that file.** It carries
 - the full `renderVals` dispatch table, so every surface's guard is known;
 - all **96 `paige-ia.js` catalogues** with exact item counts (evaluated, not estimated);
 - the **13-rule fidelity contract**, CD's **18-round install plan**, and rulings **R1–R7**;
-- **seven pack self-contradictions**, recorded and deliberately unresolved (§00 — CD rules);
-- **seven items owed from CD**, and the standing edits that must survive a re-delivery.
+- **seven pack self-contradictions**, recorded (CC resolves them under Impeccable, §00).
 
 Two facts from it that change how a session starts:
 
@@ -208,14 +171,6 @@ Two facts from it that change how a session starts:
    are spec, not a restatement. Port tokens from `design-system-port.md` or the shell itself.
 2. **`PAIGE Platform Operator - standalone.html` is the same design, compiled.** Proven by
    unpacking its blobs and diffing. Screenshot target only; never a source.
-
----
-
-## PACK-FIRST — `docs/design-references/PACK-FIRST.md`
-
-Before any UI work here, and again before any report that says something is missing: **the pack is
-CODE, not a spec.** Search it at least four ways and show the spellings. `PORT-SPEC-palette-and-six-
-surfaces.md` (99KB, line-cited) may answer it outright. Full rule in root `CLAUDE.md` §00.
 
 ---
 
@@ -234,11 +189,11 @@ npm run pack:keys -- --all              every builder, dead keys only
 npm run pack:keys -- --orphans          markup keys NO builder produces
 ```
 
-- **DEAD** = computed, drawn nowhere. Do not port it. It is a QUESTION for CD — a cut key, or a
-  block that lost its markup — and never a licence to invent the surface it looks like it wants.
-- **ORPHAN** = drawn, produced by nothing. It renders as empty. Owed from CD; never filled with
-  invented copy (§00). The pass finds exactly `emptyLine`/`storeEmpty` — pack finding #9, which
-  had been found by hand.
+- **DEAD** = computed, drawn nowhere. Do not port it blindly — a cut key, or a block that lost its
+  markup — and never a licence to invent the surface it looks like it wants.
+- **ORPHAN** = drawn, produced by nothing. It renders as empty. Never filled with invented figures
+  (§13); the copy is CC's to write under Impeccable. The pass finds exactly `emptyLine`/`storeEmpty`
+  — pack finding #9, which had been found by hand.
 - **0 of N rendered** = almost certainly a HELPER whose return another builder consumes, not a
   dead surface. `kindMark` is the example.
 - **Duplicate declarations are reported.** `alertVals` is declared twice and BUILD-ORDER says port
@@ -261,12 +216,12 @@ node scripts/live-drive/dev-loop.mjs --at /operator/settings --theme light --w 9
 node scripts/live-drive/dev-loop.mjs --ref-only         CD's reference alone
 ```
 
-It shoots **CD's reference and our build side by side**, same viewport, same theme, and prints
+It shoots **the pack's reference render and our build side by side**, same viewport, same theme, and prints
 measured geometry: grid tracks, rail width, spine width, which faces are showing, whether a
 document scrollbar appeared, and any page errors. Ours needs `npm run dev` on 127.0.0.1:5199;
 the reference needs nothing — `PAIGE Platform Operator - standalone.html` drives from `file://`
-with every script and font inlined, offline, in any sandbox. CD: *"it's a compiled artifact, so
-never edit it. When the pack changes I rebuild it and re-deliver."*
+with every script and font inlined, offline, in any sandbox. It is a compiled artifact; never edit
+it.
 
 **Why this is a rule and not a convenience.** Every defect this console has been rejected for
 passed `tsc`, `eslint` and the whole suite first: 78 tabs rendering one empty card; six purpose-
@@ -276,11 +231,11 @@ claims** (§32), and only one of them is what the owner opens.
 
 - **A change to an operator surface is not done until it has been driven.** Not "should be" —
   is not.
-- **The reference is the other half.** Shooting only ours proves it renders, never that it renders
-  what CD drew. Two frames, one command, and the geometry line at the bottom does the compare.
-- **It measures; it does not judge (§00).** Tracks, widths, faces, errors, whether a surface
-  rendered at all — facts about whether it WORKS. How it LOOKS is CD's, and the tool has no
-  opinion. Hand over the frame and the numbers, nothing else.
+- **The reference is the other half.** Two frames, one command, and the geometry line at the bottom
+  does the compare.
+- **It measures; CC judges.** Tracks, widths, faces, errors, whether a surface rendered at all are
+  facts. Whether it is good enough is CC's call against Impeccable's craft floor (§00), and the
+  owner approves what he sees.
 - **Frames land in `scripts/live-drive/artifacts/`**, which is gitignored. They are evidence for
   a conversation, not a committed artifact.
 
@@ -288,34 +243,27 @@ claims** (§32), and only one of them is what the owner opens.
 
 ## BEFORE YOU TOUCH AN OPERATOR SURFACE
 
-1. **Open the pack's block for that exact surface.** Not memory, not a screenshot, not the route
-   registry — the pack. (The nav says `growth`; the pack renders **Marketing**. The pack won, and
-   reading the registry instead is how that shipped wrong.)
-2. **Port the structure verbatim.** Labels, units, titles, subs, foots, headers, chips, placeholders,
-   geometry, tokens.
-3. **Wire the values to a real read** — or render the honest absence. Never a fixture.
-4. **If a capability already exists, the pack's drawing of it is the SKIN, never the replacement.**
-   Strip the old wrapper (§30) rather than nesting it; compose the pack's shell around the real
-   engine.
-5. **No duplicate chrome.** One "New chat", one chat list, one home per capability (§18/§21). If the
+1. **Flow-by-Flow, then Impeccable (§00).** Read the pack's block for that surface as reference
+   evidence, not as an order.
+2. **Wire the values to a real read** — or render the honest absence. Never a fixture.
+3. **If a capability already exists, a drawing of it is the SKIN, never the replacement.** Strip the
+   old wrapper (§30) rather than nesting it; compose the designed shell around the real engine.
+4. **No duplicate chrome.** One "New chat", one chat list, one home per capability (§18/§21). If the
    pack's rail owns the list, the pane does not also draw one.
-6. **Every control is real or honestly inert.** A control that silently does nothing is a defect —
+5. **Every control is real or honestly inert.** A control that silently does nothing is a defect —
    either wire it or have it say what it needs. (A `<span>` styled as an avatar with no menu behind
    it is how the operator ended up unable to sign out.)
 
-## STILL BINDING ON TOP OF THE PACK
+## STILL BINDING
 
-The pack governs what it draws. It does not waive the platform's own rules, and these are not
-"deviations" — the pack was authored to them:
+The constraints CC designs within (§00):
 
 - **§13 honesty** — no invented figure or name, ever, including ones the pack itself contains.
 - **§11 gold discipline** — gold is spent on the primary act only; never a resting border or tint.
 - **§23 light AND dark** — token-only, AA in both. The owner runs light mode; check it there too.
-- **§9/§51/§53** — what a surface may READ is decided by the server, never by the design. The pack
-  shows a God-tier view; a scoped `platform_admin` still only sees what RLS permits.
+- **§9/§51/§53** — what a surface may READ is decided by the server, never by the design. A reference
+  may show a God-tier view; a scoped `platform_admin` still only sees what RLS permits.
 - **§58** — never silently drop a shipped capability to make a surface match a drawing.
 
-**The test, every time:** *"Did I open the pack for this surface and render what it draws — structure
-verbatim, values real — or did I build from memory, from a screenshot, or from what was already
-there?"* If the owner can put his render beside ours and see a difference he did not ask for, it
-isn't done.
+**The test, every time (§00):** *"Did I run Flow-by-Flow, then Impeccable — values real, absences
+honest — and can the owner SEE and approve this before it ships?"*

@@ -36,7 +36,7 @@ function safeReturnOrigin(value: unknown): string | null {
 // before leaving (see `oauthReturn`), and honouring it is what keeps someone who
 // connected from Settings → Connections → Calendars from being dropped on an
 // unrelated page. The role default remains the fallback, unchanged.
-const STAFF_ROLES = new Set(["admin", "coach", "super_admin"]);
+const STAFF_ROLES = new Set(["admin", "super_admin"]);
 
 export default function GoogleCalendarCallback() {
   const [params] = useSearchParams();

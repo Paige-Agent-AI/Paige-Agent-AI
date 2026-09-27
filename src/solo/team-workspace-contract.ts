@@ -1,4 +1,4 @@
-export type TeamPermission = "owner" | "admin" | "coach" | "member" | string;
+export type TeamPermission = "owner" | "admin" | "member" | string;
 export type InviteLifecycle = "pending" | "accepted" | "expired" | "revoked";
 
 export type TeamMemberRecord = {

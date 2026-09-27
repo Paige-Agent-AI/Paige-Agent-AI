@@ -182,9 +182,9 @@ for (const [theme, r] of Object.entries(results.themes)) {
   const measured = new Set(r.contrast.map((c) => c.label));
   const missing = TEXT.map(([label]) => label).filter((label) => !measured.has(label));
   if (missing.length) throw new Error(`${theme}: no element matched for ${missing.join(", ")}`);
-  if (r.cards !== 8) throw new Error(`${theme}: only ${r.cards} cards rendered`);
+  if (r.cards !== 9) throw new Error(`${theme}: only ${r.cards} cards rendered`);
 }
-if (results.reducedMotionChecked !== 7) throw new Error(`reduced motion checked only ${results.reducedMotionChecked} cards`);
+if (results.reducedMotionChecked !== 8) throw new Error(`reduced motion checked only ${results.reducedMotionChecked} cards`);
 writeFileSync(`${DIR}/render-results.json`, `${JSON.stringify(results, null, 2)}\n`);
 const worst = Object.entries(results.themes).flatMap(([theme, r]) => r.contrast.map((c) => ({ theme, ...c })))
   .sort((a, b) => a.ratio - b.ratio).slice(0, 6);

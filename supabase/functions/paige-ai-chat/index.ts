@@ -98,6 +98,8 @@ import { buildStudioWhereYouAre, STUDIO_OPERATING_CORE } from "../_shared/design
 import { getActorTier, clientSeatToolAllowed, type Tier } from "../_shared/actorTier.ts";
 // R3 — what a client seat reads is read for internal text first.
 import { decodeChunks, internalTextForClient, leakKindCounts, readableFromFrames, syncStatusForClient, resultSavedSomething, WITHHELD_FRAME, withheldReplyForClient } from "../_shared/client-seat-reply.ts";
+// R2 — what PAIGE drafts for a customer is read for internal text before it is filed, carded or sent.
+import { customerBoundTexts, type DraftContext, draftRefusal, internalTextInDraft, OUTBOUND_DRAFT_TOOLS } from "../_shared/outbound-draft-check.ts";
 // Main Paige Operational Chat · P3 — truthful capability status (§13/§36/§70). The pure decision
 // core (resolver) + the MVP signal builder compose the honest "what can Paige do here?" answer;
 // the dispatch feeds them server-resolved facts (tier, clamped lane, Spine maturity). §18: one home.
@@ -169,6 +171,8 @@ function describeStep(
   // not run. Rendering it would show a client an owner's action, and for some tools the model's own
   // argument, on a channel the client-seat check does not read (R3). Nothing ran; nothing renders.
   if (out?.forbidden_seat === true) return null;
+  // A draft for a customer refused for internal text (R2) did not run either: PAIGE rewrites it.
+  if (out?.error === "internal_text_in_draft") return null;
 
   switch (name) {
     case "comms_connection_summary":
@@ -5201,8 +5205,8 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       } catch (e) { console.error("[paige] persist assistant turn failed:", (e as Error)?.message); }
     };
 
-    // === OPERATOR (admin/coach) CONTEXT INJECTION ===
-    // When the signed-in user is an admin or coach, Paige gets full CRM
+    // === OPERATOR (admin) CONTEXT INJECTION ===
+    // When the signed-in user is an admin, Paige gets full CRM
     // visibility tools (search contacts, read deals, list tasks, etc.).
     let isOperator = false;
     let operatorRoleLabel = "";
@@ -5254,7 +5258,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
         role: "system",
         content: whoLine +
 `=== CRM OPERATOR MODE ===
-The current user is an ADMIN or COACH operating the Paige CRM. You have full read access to every contact, deal, task, and activity in the system through the crm_* tools. Use them proactively whenever the operator asks anything that requires looking across the customer base — for example:
+The current user is an ADMIN operating the Paige CRM. You have full read access to every contact, deal, task, and activity in the system through the crm_* tools. Use them proactively whenever the operator asks anything that requires looking across the customer base — for example:
 - "Who are my new leads this week?" → crm_search_contacts with lifecycle_stage=lead, sort by created_at desc.
 - "Show me [first name]'s clients" → crm_search_contacts filtered by coach.
 - "Which pipelines do I have?" / "Find BUILD-to-FUND" → pipeline_catalogue. It reads pipeline records even when there are zero deals. Show every same-name match with its exact PPL reference and compact metadata; never guess, merge duplicates, split a display name, or infer stages.
@@ -5687,7 +5691,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_update_pipeline_stage",
-              description: "Admin/coach only. Move a client to a new pipeline stage. Use when the operator says things like 'move Jane to In Progress', 'mark this lead as closed', 'pause this client'.",
+              description: "Team only. Move a client to a new pipeline stage. Use when the operator says things like 'move Jane to In Progress', 'mark this lead as closed', 'pause this client'.",
               parameters: {
                 type: "object",
                 properties: {
@@ -5703,7 +5707,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_assign_coach",
-              description: "Admin/coach only. Assign a coach (by email) to one or more clients. Use when the operator says 'assign a coach to these 5 clients' or 'put this lead on my roster'.",
+              description: "Team only. Assign a coach (by email) to one or more clients. Use when the operator says 'assign a coach to these 5 clients' or 'put this lead on my roster'.",
               parameters: {
                 type: "object",
                 properties: {
@@ -5718,7 +5722,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_create_task",
-              description: "Admin/coach only. Create a task on the operator queue (or for an assigned user). Use for follow-ups, document collection, outreach reminders.",
+              description: "Team only. Create a task on the operator queue (or for an assigned user). Use for follow-ups, document collection, outreach reminders.",
               parameters: {
                 type: "object",
                 properties: {
@@ -5736,7 +5740,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_create_contact",
-              description: "Admin/coach only. Add a new contact (client) to the CRM. BEFORE calling this, confirm the details with the operator in one short line — e.g. \"Adding Jacqueline Turner, +1-310-661-1679 — want me to add her?\" — and only call the tool once they say yes. Missing fields like email are fine; add what you have and note they can fill the rest later. Returns the new contact id. DEDUP: if a contact with a very similar name (or the same email) already exists for this workspace, the tool does NOT create — it returns { needs_dedup_confirmation: true, matches: [...] }. When that happens, do NOT silently make a second record: show the operator the match(es) and ask whether it's the same person. If they want to update the existing one, call crm_update_contact with that contact_id. Only if they confirm it's a genuinely different, separate person do you call crm_create_contact again with confirm_new: true to force the new record.",
+              description: "Team only. Add a new contact (client) to the CRM. BEFORE calling this, confirm the details with the operator in one short line — e.g. \"Adding Jacqueline Turner, +1-310-661-1679 — want me to add her?\" — and only call the tool once they say yes. Missing fields like email are fine; add what you have and note they can fill the rest later. Returns the new contact id. DEDUP: if a contact with a very similar name (or the same email) already exists for this workspace, the tool does NOT create — it returns { needs_dedup_confirmation: true, matches: [...] }. When that happens, do NOT silently make a second record: show the operator the match(es) and ask whether it's the same person. If they want to update the existing one, call crm_update_contact with that contact_id. Only if they confirm it's a genuinely different, separate person do you call crm_create_contact again with confirm_new: true to force the new record.",
               parameters: {
                 type: "object",
                 properties: {
@@ -5761,7 +5765,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_update_contact",
-              description: "Admin/coach only. Update the owner-editable profile fields on an existing tenant contact. Resolve the contact first with crm_search_contacts to get its opaque client_ref. Only pass fields the operator wants changed; omitted fields stay unchanged and an empty string clears an optional text field. Tenant, linked-account, financial, consent, activity, and system-provenance fields are not writable here. Governed by the workspace autonomy policy: unless the operator has set this action to auto, PROPOSE the change first, get their yes, then call again with confirm:true (internal data, not outbound).",
+              description: "Team only. Update the owner-editable profile fields on an existing tenant contact. Resolve the contact first with crm_search_contacts to get its opaque client_ref. Only pass fields the operator wants changed; omitted fields stay unchanged and an empty string clears an optional text field. Tenant, linked-account, financial, consent, activity, and system-provenance fields are not writable here. Governed by the workspace autonomy policy: unless the operator has set this action to auto, PROPOSE the change first, get their yes, then call again with confirm:true (internal data, not outbound).",
               parameters: {
                 type: "object",
                 properties: {
@@ -5796,7 +5800,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "propose_business_brief_update",
-              description: "Admin/coach only. Stage a bounded suggestion for THIS workspace's Solo Setup business brief. This never changes confirmed business truth: it creates a visible proposal that an owner must review and save in Settings -> Setup. Use for business identity, existing active Team members designated as business representatives, offers, customers, direction, goals, constraints, brand voice, operating preferences, and do-not-assume boundaries. Resolve representative ids with crm_list_team; never invent ids or change Team membership/roles. Do not use for email/provider/payment configuration. PROPOSE FIRST in chat, get the operator's yes, then call with confirm:true unless Trust Compass already allows automatic proposal staging.",
+              description: "Team only. Stage a bounded suggestion for THIS workspace's Solo Setup business brief. This never changes confirmed business truth: it creates a visible proposal that an owner must review and save in Settings -> Setup. Use for business identity, existing active Team members designated as business representatives, offers, customers, direction, goals, constraints, brand voice, operating preferences, and do-not-assume boundaries. Resolve representative ids with crm_list_team; never invent ids or change Team membership/roles. Do not use for email/provider/payment configuration. PROPOSE FIRST in chat, get the operator's yes, then call with confirm:true unless Trust Compass already allows automatic proposal staging.",
               parameters: {
                 type: "object",
                 properties: {
@@ -5845,12 +5849,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "member_grant_role",
-              description: "Admin/coach only. Grant a staff role to a user by their auth user id (resolve via crm/admin lookup first). Roles: admin, coach, sales_rep, broker, cs_rep, finance, viewer. The server enforces the role hierarchy. Propose the grant first and call again with confirm:true once the operator approves — unless the workspace has set this action to auto.",
+              description: "Team only. Grant a staff role to a user by their auth user id (resolve via crm/admin lookup first). Roles: admin, sales_rep, broker, cs_rep, finance, viewer. 'Coach' is a title a business gives its people, never a role, so it cannot be granted. The server enforces the role hierarchy. Propose the grant first and call again with confirm:true once the operator approves — unless the workspace has set this action to auto.",
               parameters: {
                 type: "object",
                 properties: {
                   user_id: { type: "string", description: "auth.users.id of the person to grant the role to." },
-                  role: { type: "string", enum: ["admin", "coach", "sales_rep", "broker", "cs_rep", "finance", "viewer"] }
+                  role: { type: "string", enum: ["admin", "sales_rep", "broker", "cs_rep", "finance", "viewer"] }
                 },
                 required: ["user_id", "role"]
               }
@@ -5860,12 +5864,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "member_revoke_role",
-              description: "Admin/coach only. Remove a staff role from a user. The server enforces guards (can't remove the owner's admin, last-admin, coach-with-active-clients). Propose the change first and call again with confirm:true once the operator approves — unless the workspace has set this action to auto; returns {ok:false, reason:'active_clients'} if a coach still has assigned clients.",
+              description: "Team only. Remove a staff role from a user. The server enforces guards (can't remove the owner's admin or the last admin). Propose the change first and call again with confirm:true once the operator approves — unless the workspace has set this action to auto; returns {ok:false, reason:'active_clients'} if a coach still has assigned clients.",
               parameters: {
                 type: "object",
                 properties: {
                   user_id: { type: "string" },
-                  role: { type: "string", enum: ["admin", "coach", "sales_rep", "broker", "cs_rep", "finance", "viewer"] }
+                  role: { type: "string", enum: ["admin", "sales_rep", "broker", "cs_rep", "finance", "viewer"] }
                 },
                 required: ["user_id", "role"]
               }
@@ -5979,7 +5983,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "calendar_book_meeting",
-              description: "Admin/coach only. Book a one-on-one meeting on the operator's calendar. Because a booking is a real event, this is a TWO-STEP action: first call WITHOUT confirm to echo the details back, then call again with confirm:true only after the operator says yes. Provide start_at and end_at as ISO 8601 timestamps. If booking for a known contact, pass contact_id (guest name/email are filled from it).",
+              description: "Team only. Book a one-on-one meeting on the operator's calendar. Because a booking is a real event, this is a TWO-STEP action: first call WITHOUT confirm to echo the details back, then call again with confirm:true only after the operator says yes. Provide start_at and end_at as ISO 8601 timestamps. If booking for a known contact, pass contact_id (guest name/email are filled from it).",
               parameters: {
                 type: "object",
                 properties: {
@@ -6002,7 +6006,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "generate_image",
-              description: "Admin/coach only. Generate a marketing image from a text description (logos, social graphics, ad creative, hero images). Returns a public URL the operator can use or download. If image generation isn't configured, returns needs_config — tell the operator to add the image key. Safe to run; no side effects beyond storing the image.\n\nPICK THE BEST PROVIDER for the brief (omit to use the fast, cheap default): 'replicate' for premium photoreal/artistic HERO art (Flux — the top-quality option); 'ideogram' when the image must contain LEGIBLE TEXT — logos, typographic posters, ad creatives with words, thumbnails with a headline; 'gemini' for a fast, low-cost default (general marketing/social graphics); 'openai' for an alternate style when the default result isn't landing. If a chosen provider's key isn't set, generation auto-falls-back to a configured one and the result reports which provider actually served it.",
+              description: "Team only. Generate a marketing image from a text description (logos, social graphics, ad creative, hero images). Returns a public URL the operator can use or download. If image generation isn't configured, returns needs_config — tell the operator to add the image key. Safe to run; no side effects beyond storing the image.\n\nPICK THE BEST PROVIDER for the brief (omit to use the fast, cheap default): 'replicate' for premium photoreal/artistic HERO art (Flux — the top-quality option); 'ideogram' when the image must contain LEGIBLE TEXT — logos, typographic posters, ad creatives with words, thumbnails with a headline; 'gemini' for a fast, low-cost default (general marketing/social graphics); 'openai' for an alternate style when the default result isn't landing. If a chosen provider's key isn't set, generation auto-falls-back to a configured one and the result reports which provider actually served it.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6020,7 +6024,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "draft_marketing_content",
-              description: "Admin/coach only. Draft marketing content for the tenant — social posts, ad copy, email campaigns, captions, blog outlines, or SMS broadcasts — in their brand voice. Returns draft text for the operator to review; drafting is safe and has no side effects (sending is a separate approval-gated step). Use when the operator asks you to write, create, or draft marketing/social/ad/email content.",
+              description: "Team only. Draft marketing content for the tenant — social posts, ad copy, email campaigns, captions, blog outlines, or SMS broadcasts — in their brand voice. Returns draft text for the operator to review; drafting is safe and has no side effects (sending is a separate approval-gated step). Use when the operator asks you to write, create, or draft marketing/social/ad/email content.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6037,7 +6041,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "content_save",
-              description: "Admin/coach only. Save a piece of marketing content to the tenant's Content Studio library so the operator can reuse it later. Use after draft_marketing_content when the operator likes a draft and wants to keep it, or to save copy you wrote inline. Generated images auto-save, so use this for text/copy. Pure save; no sending.",
+              description: "Team only. Save a piece of marketing content to the tenant's Content Studio library so the operator can reuse it later. Use after draft_marketing_content when the operator likes a draft and wants to keep it, or to save copy you wrote inline. Generated images auto-save, so use this for text/copy. Pure save; no sending.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6054,7 +6058,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "document_generate",
-              description: "Admin/coach only. Submit a substantial private document for durable authoring. Use for guides, one-pagers, ebooks, checklists, worksheets, proposals, offer letters, sales offers, and attorney-review agreement drafts. Give the authoring worker a complete bounded brief and every real fact it must use; never invent missing names, prices, dates, legal terms, results, or sources. Ask the owner for material missing facts before calling. This call accepts work and returns immediately; the completed artifact is posted back into the same conversation after verified persistence, so never claim it is ready from the submission result alone. Ordinary offer letters and sales offers are non-signable draft documents: never request signature lines, an Accept button, or any other execution affordance. If the document is meant to be signed, use agreement_draft; it remains an attorney-review draft artifact and must enter the Agreements lifecycle before it can be sent or signed.",
+              description: "Team only. Submit a substantial private document for durable authoring. Use for guides, one-pagers, ebooks, checklists, worksheets, proposals, offer letters, sales offers, and attorney-review agreement drafts. Give the authoring worker a complete bounded brief and every real fact it must use; never invent missing names, prices, dates, legal terms, results, or sources. Ask the owner for material missing facts before calling. This call accepts work and returns immediately; the completed artifact is posted back into the same conversation after verified persistence, so never claim it is ready from the submission result alone. Ordinary offer letters and sales offers are non-signable draft documents: never request signature lines, an Accept button, or any other execution affordance. If the document is meant to be signed, use agreement_draft; it remains an attorney-review draft artifact and must enter the Agreements lifecycle before it can be sent or signed.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6074,7 +6078,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "growth_list",
-              description: "Admin/coach only. List the tenant's landing pages (growth pages) with their slug, title, status (draft/published/archived), and — for published pages — the real public URL. Read-only; safe to run. Use when the operator asks 'what pages do I have?', 'show my landing pages', or before saving/publishing so you can reference an existing page by id.",
+              description: "Team only. List the tenant's landing pages (growth pages) with their slug, title, status (draft/published/archived), and — for published pages — the real public URL. Read-only; safe to run. Use when the operator asks 'what pages do I have?', 'show my landing pages', or before saving/publishing so you can reference an existing page by id.",
               parameters: { type: "object", properties: {} }
             }
           },
@@ -6082,7 +6086,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "growth_page_generate",
-              description: "Admin/coach only. Draft a branded landing page from a one-line brief — Paige designs the page blocks (hero, feature/phase cards, CTA, an embedded lead form) in the tenant's brand. Returns the draft blocks for the operator to review; drafting is safe and writes nothing (saving and publishing are separate steps). Defaults to a coaching-generic offer (webinar, strategy call, program, lead magnet) — never credit/funding framing unless the brief explicitly asks. Use when the operator asks you to build, design, or create a landing/sales/opt-in page.",
+              description: "Team only. Draft a branded landing page from a one-line brief — Paige designs the page blocks (hero, feature/phase cards, CTA, an embedded lead form) in the tenant's brand. Returns the draft blocks for the operator to review; drafting is safe and writes nothing (saving and publishing are separate steps). Defaults to a coaching-generic offer (webinar, strategy call, program, lead magnet) — never credit/funding framing unless the brief explicitly asks. Use when the operator asks you to build, design, or create a landing/sales/opt-in page.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6097,7 +6101,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "growth_page_save",
-              description: "Admin/coach only. Save a landing page as a DRAFT to the tenant's growth pages (does not go live — publishing is a separate, approval-gated step). Use after growth_page_generate when the operator likes the draft, passing the reviewed blocks. Pass page_id to update an existing page, or omit it to create a new one keyed by slug.",
+              description: "Team only. Save a landing page as a DRAFT to the tenant's growth pages (does not go live — publishing is a separate, approval-gated step). Use after growth_page_generate when the operator likes the draft, passing the reviewed blocks. Pass page_id to update an existing page, or omit it to create a new one keyed by slug.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6116,7 +6120,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "growth_page_publish",
-              description: "Admin/coach only. Publish a saved landing page so it goes LIVE at its public URL. This is a going-live action — always confirm with the operator first, and on success report back the REAL public URL the publish returns (never claim it's live without the link). The page must already be saved as a draft (growth_page_save) and free of unfilled [PLACEHOLDER] prompts, which the publish step rejects.",
+              description: "Team only. Publish a saved landing page so it goes LIVE at its public URL. This is a going-live action — always confirm with the operator first, and on success report back the REAL public URL the publish returns (never claim it's live without the link). The page must already be saved as a draft (growth_page_save) and free of unfilled [PLACEHOLDER] prompts, which the publish step rejects.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6130,7 +6134,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "growth_funnel_generate",
-              description: "Admin/coach only. Draft a whole marketing FUNNEL from a one-line brief — Paige plans and drafts the entry landing page, an intake form, and a thank-you, wired together as a sequence. Returns the draft for the operator to review; drafting is safe and writes nothing (building and publishing are separate steps). Defaults to a coaching-generic offer — never credit/funding framing unless the brief explicitly asks. Use when the operator wants a funnel, a lead flow, an application flow, or a capture→qualify→confirm sequence (more than a single page).",
+              description: "Team only. Draft a whole marketing FUNNEL from a one-line brief — Paige plans and drafts the entry landing page, an intake form, and a thank-you, wired together as a sequence. Returns the draft for the operator to review; drafting is safe and writes nothing (building and publishing are separate steps). Defaults to a coaching-generic offer — never credit/funding framing unless the brief explicitly asks. Use when the operator wants a funnel, a lead flow, an application flow, or a capture→qualify→confirm sequence (more than a single page).",
               parameters: {
                 type: "object",
                 properties: {
@@ -6144,7 +6148,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "growth_funnel_build",
-              description: "Admin/coach only. Build a funnel into real DRAFT rows — the entry landing page, the intake form, and the wired funnel (does NOT go live; publishing is a separate step). Use after growth_funnel_generate when the operator likes the draft, passing the reviewed pieces. Pass funnel_id/page_id/form_id to update an existing funnel in place instead of creating new rows.",
+              description: "Team only. Build a funnel into real DRAFT rows — the entry landing page, the intake form, and the wired funnel (does NOT go live; publishing is a separate step). Use after growth_funnel_generate when the operator likes the draft, passing the reviewed pieces. Pass funnel_id/page_id/form_id to update an existing funnel in place instead of creating new rows.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6164,7 +6168,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "growth_funnel_publish",
-              description: "Admin/coach only. Publish a saved funnel so the WHOLE sequence goes live — publishes the entry page then the funnel, and returns the REAL public URL. This is a going-live action; always confirm with the operator first and report back the real link the publish returns (never claim it's live without it). The funnel must already be built (growth_funnel_build) and its entry page free of unfilled [PLACEHOLDER] prompts, which the publish step rejects.",
+              description: "Team only. Publish a saved funnel so the WHOLE sequence goes live — publishes the entry page then the funnel, and returns the REAL public URL. This is a going-live action; always confirm with the operator first and report back the real link the publish returns (never claim it's live without it). The funnel must already be built (growth_funnel_build) and its entry page free of unfilled [PLACEHOLDER] prompts, which the publish step rejects.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6178,7 +6182,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "action_file",
-              description: "Admin/coach only. File a unit of work from one of Paige's departments to the other on the action bus — e.g. Client Experience flags an at-risk client to Owner Ops, or Owner Ops queues a follow-up. This STARTS a tracked hand-off; it does not draft or send. Use action_advance next to draft/route it. action_kind must be one of the platform kinds (e.g. owner.followup_email, client.followup, client.at_risk, owner.task, owner.onboarding_nudge, client.portal_recommendation).",
+              description: "Team only. File a unit of work from one of Paige's departments to the other on the action bus — e.g. Client Experience flags an at-risk client to Owner Ops, or Owner Ops queues a follow-up. This STARTS a tracked hand-off; it does not draft or send. Use action_advance next to draft/route it. action_kind must be one of the platform kinds (e.g. owner.followup_email, client.followup, client.at_risk, owner.task, owner.onboarding_nudge, client.portal_recommendation).",
               parameters: {
                 type: "object",
                 properties: {
@@ -6197,7 +6201,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "action_advance",
-              description: "Admin/coach only. Move an action along its lifecycle: assign it to a sub-agent, attach a draft, route it, or dismiss it. Attaching a draft (to_status='drafted') to an approval-gated kind auto-files it into the coach's approval lane — it NEVER sends directly. Use to_status one of: assigned, drafting, drafted, executing, dismissed.",
+              description: "Team only. Move an action along its lifecycle: assign it to a sub-agent, attach a draft, route it, or dismiss it. Attaching a draft (to_status='drafted') to an approval-gated kind auto-files it into the coach's approval lane — it NEVER sends directly. Use to_status one of: assigned, drafting, drafted, executing, dismissed.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6266,7 +6270,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "action_list",
-              description: "Admin/coach only. List actions on Paige's bus — a department's queue or one client's — filed, drafting, waiting on approval, or done. Use to see her team's open work before deciding what to do next.",
+              description: "Team only. List actions on Paige's bus — a department's queue or one client's — filed, drafting, waiting on approval, or done. Use to see her team's open work before deciding what to do next.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6315,7 +6319,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "action_get",
-              description: "Admin/coach only. Fetch one action by id with its current status and links (the approval it waits on, the client-facing card it created).",
+              description: "Team only. Fetch one action by id with its current status and links (the approval it waits on, the client-facing card it created).",
               parameters: {
                 type: "object",
                 properties: { action_id: { type: "string", description: "The COMPLETE paige_actions id, exactly as action_list returned it — a 36-character UUID, never a shortened prefix." } },
@@ -6327,7 +6331,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_list_team",
-              description: "Admin/coach only. List the tenant's team members (coaches, brokers, admins, sales reps) with their names, roles, and user ids. Use this to resolve 'assign her to the coach named X' into a user_id before calling crm_assign_contact.",
+              description: "Team only. List the tenant's team members (coaches, brokers, admins, sales reps) with their names, roles, and user ids. Use this to resolve 'assign her to the coach named X' into a user_id before calling crm_assign_contact.",
               parameters: { type: "object", properties: {} }
             }
           },
@@ -6355,7 +6359,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_assign_contact",
-              description: "Admin/coach only. Assign a contact to a teammate. role picks the seat: 'coach' (default), 'owner'/'sales_rep' (lead owner), or 'cs' (client-success primary). Resolve the person via crm_list_team first to get their user_id. Confirm with the operator before assigning.",
+              description: "Team only. Assign a contact to a teammate. role picks the seat: 'coach' (default), 'owner'/'sales_rep' (lead owner), or 'cs' (client-success primary). Resolve the person via crm_list_team first to get their user_id. Confirm with the operator before assigning.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6371,7 +6375,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "program_list",
-              description: "Admin/coach only. List the programs and offers loaded for this tenant, priority/current-campaign first. Use to recommend the right program during onboarding and to resolve a program name to its id before enrolling.",
+              description: "Team only. List the programs and offers loaded for this tenant, priority/current-campaign first. Use to recommend the right program during onboarding and to resolve a program name to its id before enrolling.",
               parameters: { type: "object", properties: {} }
             }
           },
@@ -6379,7 +6383,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "program_enroll",
-              description: "Admin/coach only. Enroll a contact into a program/offer. Resolve the program via program_list first. Confirm with the operator before enrolling. Idempotent — re-enrolling returns the existing enrollment.",
+              description: "Team only. Enroll a contact into a program/offer. Resolve the program via program_list first. Confirm with the operator before enrolling. Idempotent — re-enrolling returns the existing enrollment.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6394,7 +6398,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_add_note",
-              description: "Admin/coach only. File a note onto a client's record — the notes panel their team reads, not the activity timeline. Use it when the operator tells you something worth keeping about a client ('note that Dana wants to close before year end', 'she's moving offices in March'), or dictates one. You must know WHICH client: resolve them with crm_search_contacts first and use that contact id — never guess, and never file against the client merely because they're the one in focus if the operator named someone else. The note is STAFF-ONLY: the client cannot see it, and you should say so plainly rather than implying they might. Propose it first and only file it once the operator says yes, unless the workspace set this to auto.",
+              description: "Team only. File a note onto a client's record — the notes panel their team reads, not the activity timeline. Use it when the operator tells you something worth keeping about a client ('note that Dana wants to close before year end', 'she's moving offices in March'), or dictates one. You must know WHICH client: resolve them with crm_search_contacts first and use that contact id — never guess, and never file against the client merely because they're the one in focus if the operator named someone else. The note is STAFF-ONLY: the client cannot see it, and you should say so plainly rather than implying they might. Propose it first and only file it once the operator says yes, unless the workspace set this to auto.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6411,7 +6415,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_list_documents",
-              description: "Admin/coach only. List the documents already uploaded onto client files, so you can name one before routing it. Returns the file id, filename, type, size, which client it is currently filed on, and who can see it. It does NOT return the document's contents or a download link — you cannot read what is inside these files, and you must not pretend to. Use this to find the file id that crm_file_document needs.",
+              description: "Team only. List the documents already uploaded onto client files, so you can name one before routing it. Returns the file id, filename, type, size, which client it is currently filed on, and who can see it. It does NOT return the document's contents or a download link — you cannot read what is inside these files, and you must not pretend to. Use this to find the file id that crm_file_document needs.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6426,7 +6430,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_file_document",
-              description: "Admin/coach only. Route a document that has ALREADY been uploaded onto the right client's file, and set who can see it. Use it when the operator says a file landed on the wrong client, or asks you to share an internal document with a client, or tells you where an upload belongs. You cannot upload a document and you cannot read one — the bytes must already exist, and you find the file with crm_list_documents first. You are deciding two things and must say both out loud before you do it: WHICH client it lands on, and WHETHER that client can see it. 'shared' means the client reads it in their own portal; 'internal' means only the team does. Never move a document the client uploaded themselves — that is their record of what they sent, and re-filing it misrepresents where it came from. Propose it and wait for the operator to approve.",
+              description: "Team only. Route a document that has ALREADY been uploaded onto the right client's file, and set who can see it. Use it when the operator says a file landed on the wrong client, or asks you to share an internal document with a client, or tells you where an upload belongs. You cannot upload a document and you cannot read one — the bytes must already exist, and you find the file with crm_list_documents first. You are deciding two things and must say both out loud before you do it: WHICH client it lands on, and WHETHER that client can see it. 'shared' means the client reads it in their own portal; 'internal' means only the team does. Never move a document the client uploaded themselves — that is their record of what they sent, and re-filing it misrepresents where it came from. Propose it and wait for the operator to approve.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6443,7 +6447,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_log_activity",
-              description: "Admin/coach only. Log a communication or activity (call, email, note, meeting) on a client's timeline.",
+              description: "Team only. Log a communication or activity (call, email, note, meeting) on a client's timeline.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6461,7 +6465,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_search_contacts",
-              description: "Admin/coach only. Search CRM contacts in the current server-resolved tenant only. Use to resolve names/emails to client_ref, list leads by lifecycle stage, filter by assigned coach, find recently added contacts, or browse the customer base. Returns up to 25 contacts with client_ref, name, email, phone, lifecycle_stage, source, assigned_coach_user_id, tags, lead_score, last_contacted_at, created_at.",
+              description: "Team only. Search CRM contacts in the current server-resolved tenant only. Use to resolve names/emails to client_ref, list leads by lifecycle stage, filter by assigned coach, find recently added contacts, or browse the customer base. Returns up to 25 contacts with client_ref, name, email, phone, lifecycle_stage, source, assigned_coach_user_id, tags, lead_score, last_contacted_at, created_at.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6480,7 +6484,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_get_contact_summary",
-              description: "Admin/coach only. Deep-dive on a single contact: profile, lifecycle stage, assigned coach, open/won deals with value, recent activities (last 10), open tasks, and notes. Use after crm_search_contacts to brief the operator on a specific customer.",
+              description: "Team only. Deep-dive on a single contact: profile, lifecycle stage, assigned coach, open/won deals with value, recent activities (last 10), open tasks, and notes. Use after crm_search_contacts to brief the operator on a specific customer.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6494,7 +6498,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_list_deals",
-              description: "Admin/coach only. List deals on the sales pipeline. Filter by stage, status (open/won/lost), owner, or contact. Returns id, title, contact name, stage label, value_cents, expected_close_date, status, owner, updated_at.",
+              description: "Team only. List deals on the sales pipeline. Filter by stage, status (open/won/lost), owner, or contact. Returns id, title, contact name, stage label, value_cents, expected_close_date, status, owner, updated_at.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6511,7 +6515,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "deal_create",
-              description: "Admin/coach only. Add a NEW deal to a pipeline — the operator's individual opportunity (e.g. 'add a deal for Jane's onboarding, $3k, in Proposal'). Resolve the pipeline and (optionally) the stage first: call crm_pipeline_summary or crm_list_deals to see the tenant's pipelines/stages, and crm_search_contacts to resolve a named client to contact_client_id. If stage_id is omitted the deal lands on the pipeline's first stage. value_cents is in CENTS ($3,000 → 300000). PROPOSE FIRST: say what you'll add and get the operator's yes, then call again with confirm:true — unless the workspace autonomy policy has set this action to auto. Returns the new deal id.",
+              description: "Team only. Add a NEW deal to a pipeline — the operator's individual opportunity (e.g. 'add a deal for Jane's onboarding, $3k, in Proposal'). Resolve the pipeline and (optionally) the stage first: call crm_pipeline_summary or crm_list_deals to see the tenant's pipelines/stages, and crm_search_contacts to resolve a named client to contact_client_id. If stage_id is omitted the deal lands on the pipeline's first stage. value_cents is in CENTS ($3,000 → 300000). PROPOSE FIRST: say what you'll add and get the operator's yes, then call again with confirm:true — unless the workspace autonomy policy has set this action to auto. Returns the new deal id.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6531,7 +6535,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "deal_move_stage",
-              description: "Admin/coach only. Move an existing deal to a different pipeline stage (the chat equivalent of dragging a card across the board). Moving into a WON stage marks the deal won and stamps today's close date; a LOST stage marks it lost; any other stage returns it to open. Resolve the deal id and target stage_id first via crm_list_deals. Logs a timeline activity. PROPOSE FIRST and call again with confirm:true once the operator approves — unless the workspace has set this action to auto.",
+              description: "Team only. Move an existing deal to a different pipeline stage (the chat equivalent of dragging a card across the board). Moving into a WON stage marks the deal won and stamps today's close date; a LOST stage marks it lost; any other stage returns it to open. Resolve the deal id and target stage_id first via crm_list_deals. Logs a timeline activity. PROPOSE FIRST and call again with confirm:true once the operator approves — unless the workspace has set this action to auto.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6641,7 +6645,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_list_tasks",
-              description: "Admin/coach only. List operator tasks. Use for 'what's due today', 'overdue tasks', or 'tasks for [coach]'. Returns id, title, due_date, status, assignee user_id, track, deal_id.",
+              description: "Team only. List operator tasks. Use for 'what's due today', 'overdue tasks', or 'tasks for [coach]'. Returns id, title, due_date, status, assignee user_id, track, deal_id.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6658,7 +6662,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_pipeline_summary",
-              description: "Admin/coach only. High-level CRM snapshot: total contacts by lifecycle stage, deals by stage with weighted forecast, open task count, and new contacts in the last 7/30 days. Use for 'how's the pipeline', 'state of the business', or any opening operator briefing.",
+              description: "Team only. High-level CRM snapshot: total contacts by lifecycle stage, deals by stage with weighted forecast, open task count, and new contacts in the last 7/30 days. Use for 'how's the pipeline', 'state of the business', or any opening operator briefing.",
               parameters: { type: "object", properties: {} }
             }
           },
@@ -6712,7 +6716,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "plan_add_milestone",
-              description: "Add a milestone (a dated checkpoint) to a plan — 'landing page live', 'first 10 clients onboarded'. Admin/coach only (milestones are team markers). Resolve the plan id first (plan_list). Optionally assign it to a specific teammate. Governed by the autonomy policy: unless auto, propose first, then confirm:true.",
+              description: "Add a milestone (a dated checkpoint) to a plan — 'landing page live', 'first 10 clients onboarded'. Team only (milestones are team markers). Resolve the plan id first (plan_list). Optionally assign it to a specific teammate. Governed by the autonomy policy: unless auto, propose first, then confirm:true.",
               parameters: {
                 type: "object",
                 properties: {
@@ -8296,6 +8300,46 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       return withheldReplyForClient(personaCtx.tenant_name, options);
     };
 
+    // R2 — A DRAFT PAIGE WRITES FOR A CUSTOMER IS READ BEFORE IT CAN BE FILED OR SENT, with the same
+    // vocabulary as R3: this turn's tool definitions, the text vouched for where it was built, and every
+    // tool result the model has been sent. Which fields reach a customer is outbound-draft-check's to say;
+    // this looks up what it needs to decide, under the caller's own session: the kind's executor, and for
+    // action_advance the action as stored. What it cannot find out is read, never waved through.
+    // Returns the refusal PAIGE reads, or null.
+    const outboundDraftRefusal = async (
+      tool: string, args: Record<string, unknown>, stage: "filing" | "approved",
+    ): Promise<Record<string, unknown> | null> => {
+      if (!OUTBOUND_DRAFT_TOOLS.has(tool)) return null;
+      const context: DraftContext = {};
+      if (tool === "action_file" || tool === "action_advance") {
+        try {
+          let kind = tool === "action_file" && typeof args.action_kind === "string" ? args.action_kind : "";
+          if (tool === "action_advance" && typeof args.action_id === "string" && args.action_id) {
+            const { data, error } = await supabaseClient.from("paige_actions")
+              .select("status, action_kind, title, summary, draft_content").eq("id", args.action_id).maybeSingle();
+            if (!error && data) {
+              context.stored = data;
+              kind = typeof (data as { action_kind?: unknown }).action_kind === "string" ? (data as { action_kind: string }).action_kind : "";
+            }
+          }
+          if (kind) {
+            const { data, error } = await supabaseClient.from("paige_action_kinds").select("executor, requires_approval").eq("slug", kind).maybeSingle();
+            const row = (error ? null : data) as { executor?: unknown; requires_approval?: unknown } | null;
+            if (typeof row?.executor === "string") context.executor = row.executor;
+            if (typeof row?.requires_approval === "boolean") context.requiresApproval = row.requires_approval;
+          }
+        } catch { /* what could not be found out stays unknown, and is read */ }
+      }
+      const leaks = internalTextInDraft(customerBoundTexts(tool, args, context), {
+        tools: toolDefs,
+        vouchedTexts: clientSeatVouched,
+        toolResults: [...toolResultContent.values()],
+      });
+      if (!leaks.length) return null;
+      console.warn("[paige] outbound draft refused: internal text", JSON.stringify({ tool, stage, kinds: leakKindCounts(leaks) }));
+      return draftRefusal(leaks, stage);
+    };
+
     // For non-document requests: check if streaming response contains tool calls
     // We need to accumulate first to detect tool calls, then handle accordingly
     if (!attachedDocument) {
@@ -9108,6 +9152,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(unaddressableArgsRefusal(idProblem, "proposal")) });
                 continue;
               }
+              // R2 — NOR DOES A DRAFT FOR A CUSTOMER THAT CARRIES INTERNAL TEXT: nothing is recorded, and
+              // PAIGE is told to rewrite it. An approved card is read where it runs (the dispatch branches),
+              // because what runs is the card's stored arguments.
+              const draftProblem = await outboundDraftRefusal(tc.function.name, gateArgs, "filing");
+              if (draftProblem) {
+                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(draftProblem) });
+                continue;
+              }
               const summary = await describeConfirm(tc.function.name, gateArgs);
               // Persist before offering the existing approval control.
               const recorded = await recordConfirmation(fp, tc.function.name, gateArgs, summary);
@@ -9906,7 +9958,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               } else {
                 const FRIENDLY: Record<string, string> = {
                   NO_TENANT: "This can only be set up from inside a practice's workspace — it's not available here.",
-                  FORBIDDEN: "You need to be an admin or coach on this workspace to add a new activity kind. Let the operator know it's a staff-only setting.",
+                  FORBIDDEN: "You need to be an admin on this workspace to add a new activity kind. Let the operator know it's a staff-only setting.",
                   SLUG_RESERVED: "That name matches one of the standard activities every workspace already has, so it can't be reused. Suggest a more specific name for this practice's version.",
                   SLUG_TAKEN: "This practice already has an activity using that identifier. Pick a different short name for it.",
                   INVALID_LABEL: "It needs a clear display name. Ask the operator what to call this activity.",
@@ -10064,7 +10116,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           tc.function.name === "comms_registration_status" ||
           tc.function.name === "comms_draft_registration"
         ) {
-          // Role gate: admin or coach only
+          // Role gate: admin only
           const { data: roleRows } = await supabase
             .from("user_roles")
             .select("role")
@@ -12052,6 +12104,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               if (_pubFErr) throw _pubFErr;
               result = { success: true, ...(_pub as any) };
             } else if (tc.function.name === "action_file") {
+              // R2 — read where it runs: in the auto lane these are the model's arguments, and on an
+              // approval the card's stored ones.
+              const fileProblem = await outboundDraftRefusal("action_file", args, approvalChannel.get(tc.id) === "operator_card" ? "approved" : "filing");
+              if (fileProblem) {
+                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(fileProblem) });
+                continue;
+              }
               const { data, error } = await supabaseClient.rpc("file_action", {
                 p_action_kind: args.action_kind,
                 p_title: args.title,
@@ -12071,6 +12130,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               const idProblem = unaddressableConfirmArgs("action_advance", args);
               if (idProblem) {
                 toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(unaddressableArgsRefusal(idProblem, "dispatch")) });
+                continue;
+              }
+              // R2 — read where it runs: in the auto lane these are the model's arguments, and on an
+              // approval the card's stored ones. With no draft attached, the stored action is what it delivers.
+              const draftProblem = await outboundDraftRefusal("action_advance", args, approvalChannel.get(tc.id) === "operator_card" ? "approved" : "filing");
+              if (draftProblem) {
+                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(draftProblem) });
                 continue;
               }
               const { data, error } = await supabaseClient.rpc("advance_action", {
@@ -12682,6 +12748,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               continue;
             }
             const args = JSON.parse(tc.function.arguments || "{}");
+            // R2 — the draft is for a customer: one carrying internal text is not filed.
+            const draftProblem = await outboundDraftRefusal("propose_action", args, "filing");
+            if (draftProblem) {
+              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(draftProblem) });
+              continue;
+            }
             const actionType = String(args.action_type || "email").toLowerCase();
             const channel = actionType === "sms" ? "sms" : "email";
             const contactId = args.contact_id || scopedClientId || null;
@@ -12962,6 +13034,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(r) });
             } else {
               // calendar_link_send — the confirmed high-risk send. Forward the caller JWT to send-message.
+              // R2 — the message that goes out is read here: the card's stored one on an approval.
+              const sendProblem = await outboundDraftRefusal("calendar_link_send", args, approvalChannel.get(tc.id) === "operator_card" ? "approved" : "filing");
+              if (sendProblem) {
+                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(sendProblem) });
+                continue;
+              }
               const forwardedAuth = authHeader ?? ""; // string (the handler 401s above if the header is absent)
               const sendMessage: SendMessageFn = async (i) => {
                 try {
@@ -13387,7 +13465,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         nav_pull_business_credit: "paige_business_credit_profiles",
         smartcredit_pull_snapshot: "paige_owner_credit_snapshots",
         coach_update_profile: "profiles",
-        coach_grant_role_globally: "user_roles", coach_revoke_role_globally: "user_roles",
+        coach_revoke_role_globally: "user_roles",
         team_invite_mint: "invitations",
         agency_create_subaccount: "tenants", tenant_create: "tenants",
         tenant_set_status: "tenants", tenant_set_features: "tenants",
@@ -13473,6 +13551,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // management write returns that for a write that happened without a workflow run
           // (_shared/n8n-management.ts), and it must stay on this trail.
           if (out?.needs_confirm === true || out?.disabled === true || out?.refused_before_run === true) return;
+          // R2 — a draft for a customer refused for internal text never reached its write.
+          if (out?.error === "internal_text_in_draft") return;
           const n8nOutcome = N8N_MANAGEMENT_TOOL_NAMES.has(name);
           const failed = n8nOutcome ? out?.ok !== true : out?.success === false;
           const missionReplay = (name === "mission_create" || name === "mission_revise" || name === "mission_transition") && out?.replayed === true;

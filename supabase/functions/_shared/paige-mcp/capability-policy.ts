@@ -3,10 +3,10 @@
  *
  * WHY THIS FILE EXISTS.
  * `action-risk.ts` is the platform's one classifier and it holds 62 canonical keys. `paige-mcp`
- * registers 119 tools. The intersection is EXACTLY ONE — `delegate_to_subagent`. Chat says
+ * registers 118 tools. The intersection is EXACTLY ONE — `delegate_to_subagent`. Chat says
  * `crm_create_contact`; MCP says `create_contact`. Chat says `crm_delete_contact`; MCP says
  * `bulk_delete_contacts`. So running the MCP surface through `classifyAction` unchanged returns
- * `unclassified` for 118 of 119 tools, which is refuse-by-design — correct as a default, useless as
+ * `unclassified` for 117 of 118 tools, which is refuse-by-design — correct as a default, useless as
  * a policy, and indistinguishable from "we never looked".
  *
  * This table is the correction, and it is a MAPPING rather than a second vocabulary. Every entry
@@ -80,7 +80,7 @@ export type McpCapability = {
 /** The number of tools registered in `paige-mcp/index.ts`. Asserted by CI rather than written in
  *  prose, because two comments in this repo said 117 while the real number was 119 — a count in a
  *  sentence rots silently. */
-export const MCP_TOOL_COUNT = 119;
+export const MCP_TOOL_COUNT = 118;
 
 /**
  * TOOL NAME → CAPABILITY. Filled from handler verification; see the module header.
@@ -191,7 +191,7 @@ export const MCP_CAPABILITY_POLICY: Readonly<Record<string, McpCapability>> = {
     canonical: "coach_roster",
     effect: "read",
     category: "read",
-    evidence: "index.ts:1128-1160 — three `.select()` calls (user_roles 1112, profiles + clients in Promise.all 1116-1117) then in-memory aggregation. No insert/update/delete/rpc/fetch, no audit().",
+    evidence: "index.ts:1141-1192 list_coaches — resolves actorTenantId(), then three `.select()` calls scoped to that tenant (clients and coach_clients in Promise.all, then profiles by the resulting ids) and in-memory aggregation. No insert/update/delete/rpc/fetch, no audit().",
     paigeHome: false,
   },
   list_communication_log: {
@@ -741,13 +741,6 @@ export const MCP_CAPABILITY_POLICY: Readonly<Record<string, McpCapability>> = {
   },
 
   // ── ACCESS — roles, invitations, credentials, connections, workspace switching.
-  add_coach_role: {
-    canonical: "coach_grant_role_globally",
-    effect: "mutate",
-    category: "access",
-    evidence: "index.ts:1167 `admin.from(\"user_roles\").upsert({user_id, role: \"coach\"}, {onConflict: \"user_id,role\"})` — grants an app_role on the GLOBAL user_roles table (no tenant_id column); audit at 1153.",
-    paigeHome: false,
-  },
   add_email_domain: {
     canonical: "comms_add_email_domain",
     effect: "mutate",

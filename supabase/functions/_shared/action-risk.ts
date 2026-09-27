@@ -396,7 +396,7 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   ["coach_update_profile", "high", "edits another person's profile and whether new clients route to them"],
   // create_team_invitation
   ["team_invite_mint", "high", "mints workspace access and hands back a live invitation link"],
-  // add_coach_role, remove_coach_role
+  // remove_coach_role
   //
   // NOT `member_grant_role` / `member_revoke_role`, and the peer gate was right to refuse that
   // reuse. Those keys name Chat's act, which runs `grant_tenant_member_role` — a tenant-scoped RPC
@@ -405,7 +405,6 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   // delete `user_roles` directly on the service-role client, and `user_roles` carries no
   // `tenant_id`, so the grant is fleet-global. An approval card reading "grants a staff role" would
   // describe the guarded act and authorise the unguarded one, which is the reuse hazard exactly.
-  ["coach_grant_role_globally", "high", "grants the coach role across the platform, outside any workspace roster"],
   ["coach_revoke_role_globally", "high", "removes the coach role across the platform, outside any workspace roster"],
   // upsert_email_template
   ["comms_upsert_email_template", "high", "overwrites a shared template every future send renders from"],

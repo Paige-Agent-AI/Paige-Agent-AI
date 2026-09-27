@@ -54,6 +54,12 @@ const CONTACT = [{
   summary: "Add Maya Ortiz at Ortiz Landscaping to your clients",
   fingerprint: FP_A,
 }];
+// The server's own sentence for this card (paige-ai-chat, calendar_link_send), with a synthetic address.
+const BOOKING_LINK = [{
+  tool: "calendar_link_send",
+  summary: "Send the public booking link for Intro call to maya@ortizlandscaping.example by email. A real person receives a link to your /book page. The server refuses a calendar that isn't public and a recipient who can't be messaged; it does not post to social or book a meeting.",
+  fingerprint: FP_A,
+}];
 
 const frame = (value: unknown) => `data: ${JSON.stringify(value)}\n\n`;
 const say = (text: string) => frame({ choices: [{ delta: { content: text } }] });
@@ -129,6 +135,20 @@ const SCENES: Scene[] = [
         actions: [{ fingerprint: FP_A, outcome: "not_run" }, { fingerprint: FP_B, outcome: "not_run" }],
       } }),
       say("If you still want those cleared, ask me again."), DONE,
+    ]),
+  },
+  {
+    label: "Held back: internal details",
+    note: "The approved message carried text only the platform uses, so it was not sent. The card says why, and the step is a rewrite.",
+    ask: "Send Maya Ortiz the link to book an intro call.",
+    offer: "Here's the booking link I'll send. Nothing goes out until you approve.",
+    proposal: BOOKING_LINK,
+    answer: sse([
+      frame({ paige_approval_outcome: {
+        note: "Nothing changed. The message included internal system details, so Paige stopped before it went out. Ask her to rewrite it.",
+        actions: [{ fingerprint: FP_A, outcome: "not_run" }],
+      } }),
+      say("That message didn't go out. It had some of the platform's own wording in it. Want me to rewrite it in plain words for a fresh approval?"), DONE,
     ]),
   },
   {

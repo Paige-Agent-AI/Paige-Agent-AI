@@ -59,7 +59,7 @@ interface Props {
   initialEdit?: boolean;
   onSaved?: () => void;
   /** Coach-management fields for this member (parent-resolved via the gated RPC).
-   *  When the member has the coach role, a "Coaching" section renders and saves
+   *  When the parent resolves them, a "Coaching" section renders and saves
    *  through set_coach_fields (own-record-or-tenant-admin), NOT the broad upsert. */
   coachFields?: CoachFields | null;
   onCoachSaved?: () => void;
@@ -313,7 +313,7 @@ export function MemberProfileDrawer({ member, open, onOpenChange, initialEdit = 
             </div>
           </div>
 
-          {member.roles.includes("coach") && (
+          {coachFields && (
             <>
               <Separator />
               {/* Coaching — capacity/specialties/availability. Saved via the gated

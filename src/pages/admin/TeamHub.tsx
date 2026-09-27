@@ -79,7 +79,7 @@ function TeamFloor() {
   const ownerUnscoped = isPlatformOwner && !activeTenantId;
   const hasHandoffs = handoffItems.length > 0;
 
-  // H2: /admin/coaches redirects to /admin/team?role=coach — open the roster coach-filtered.
+  // ?role=<filter> opens the roster pre-filtered; a value the roster does not know shows everyone.
   const [params] = useSearchParams();
   const roleParam = params.get("role");
 

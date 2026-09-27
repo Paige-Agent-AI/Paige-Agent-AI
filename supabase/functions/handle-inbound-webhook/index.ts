@@ -376,7 +376,9 @@ Deno.serve(async (req) => {
             .from("invitations")
             .insert({
               email: normalizedEmail,
-              role: "coach",
+              // "Coach" is a title, never a role: the invitation grants the plain user role, and
+              // the assignment below is what lets this person see their clients.
+              role: "user",
               invited_by: coachUserId, // self-ref placeholder; will be overridden below if owner found
               token: plaintextToken,
               expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -392,7 +394,7 @@ Deno.serve(async (req) => {
                   recipientEmail: normalizedEmail,
                   idempotencyKey: `coach-invite-${inv.id}`,
                   templateData: {
-                    role: "Coach",
+                    role: "Team member",
                     inviteUrl: `https://paigeagent.ai/auth?invite=${plaintextToken}`,
                     // §45: no inviting tenant is resolvable on this bridge path, so the
                     // inviter is omitted present-only (the template shows a neutral
@@ -406,11 +408,6 @@ Deno.serve(async (req) => {
             }
           }
         }
-
-        // Ensure coach role
-        await supabase
-          .from("user_roles")
-          .upsert({ user_id: coachUserId, role: "coach" }, { onConflict: "user_id,role" });
 
         // Bulk-insert coach_clients (idempotent via unique pair if present, otherwise best-effort dedupe)
         let assignmentsCreated = 0;

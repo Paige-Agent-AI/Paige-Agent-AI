@@ -204,7 +204,7 @@ SELECT throws_ok($$SELECT public.execute_crm_command('c7100000-0000-4000-8000-00
 SELECT throws_ok($$SELECT public.execute_crm_command('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001','{"approval_channel":"operator_card","action":"contact.update","contact_id":"c7200000-0000-4000-8000-00000000c201","expected_updated_at":"2026-09-13T00:00:00+00:00","patch":{"email":"forged@tests.invalid"}}','forged-target-1')$$,'P0002','CRM_CONTACT_NOT_FOUND','known cross-tenant target is refused without disclosure');
 SELECT throws_ok($$SELECT public.execute_crm_command('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000002','{"approval_channel":"operator_card","action":"contact.create","patch":{"first_name":"Denied","last_name":"Member"}}','member-denial-1')$$,'42501','CRM_FORBIDDEN','ordinary member cannot mutate CRM');
 RESET ROLE;
-UPDATE public.tenant_members SET role='coach' WHERE tenant_id='c7100000-0000-4000-8000-000000001111' AND user_id='c7100000-0000-4000-8000-000000000002';
+UPDATE public.tenant_members SET role='member' WHERE tenant_id='c7100000-0000-4000-8000-000000001111' AND user_id='c7100000-0000-4000-8000-000000000002';
 UPDATE public.clients SET assigned_coach_user_id='c7100000-0000-4000-8000-000000000002',primary_business_id='c7100000-0000-4000-8000-00000000b102' WHERE id='c7100000-0000-4000-8000-00000000c105';
 UPDATE public.clients SET assigned_coach_user_id='c7100000-0000-4000-8000-000000000002' WHERE id='c7100000-0000-4000-8000-00000000c111';
 UPDATE public.clients SET primary_business_id='c7100000-0000-4000-8000-00000000b102' WHERE id='c7100000-0000-4000-8000-00000000c101';

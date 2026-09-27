@@ -37,8 +37,6 @@ BEGIN
   INSERT INTO public.tenant_members (tenant_id, user_id, role, status, is_owner) VALUES
     (_a, _sa, 'member', 'active', false),
     (_b, _sb, 'member', 'active', false);
-  INSERT INTO public.user_roles (user_id, role) VALUES (_sa, 'coach'), (_sb, 'coach')
-    ON CONFLICT DO NOTHING;
   INSERT INTO public.clients (id, tenant_id, created_by, first_name, last_name, account_number, linked_user_id, email) VALUES
     ('a5500000-0000-0000-0000-00000000c1e1', _a, _sa, 'X', 'Client', 'ASX-1', _cx, 'as-client-x@example.test'),
     ('a5500000-0000-0000-0000-00000000c1e2', _a, _sa, 'Z', 'Client', 'ASZ-1', _cz, NULL),
@@ -118,10 +116,7 @@ SELECT is((SELECT count(*)::int FROM pg_policy
   'no policy lets a signed-in user write relationships directly');
 
 -- 14–15. An invitation is visible to an assignee only within the assignment's tenant.
--- The invitations policy also requires the global role; membership changes above may have synced it
--- away, so it is re-asserted here to keep this block about tenant scope and nothing else.
-INSERT INTO public.user_roles (user_id, role) VALUES ('a5500000-0000-0000-0000-0000000005a1', 'coach')
-  ON CONFLICT DO NOTHING;
+-- An assignee holds no staff role here: the assignment and the business are the whole of the grant.
 INSERT INTO public.invitations (email, invited_by, tenant_id) VALUES
   ('as-client-x@example.test', 'a5500000-0000-0000-0000-0000000005a1', 'a5500000-0000-0000-0000-00000000000a'),
   ('as-client-x@example.test', 'a5500000-0000-0000-0000-0000000005b1', 'a5500000-0000-0000-0000-00000000000b');

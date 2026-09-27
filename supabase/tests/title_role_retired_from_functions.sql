@@ -5,13 +5,14 @@
 -- platform-wide `coach` role or a `coach` membership seat; a person holding either gains nothing from
 -- it — not staff standing, not a studio seat, not paid features, not record access through the CRM
 -- commands; and an assigned member reads the deals of the client they are assigned in the pipeline
--- workspace through the assignment plus membership of the business.
+-- workspace through the assignment plus membership of the business, and not the deals of a client they
+-- only created; and the retired role no longer opens another person's profile.
 --
 -- Synthetic fixtures only. Asserts counts, catalog facts and refusals, never field values. Rolls back.
 -- ============================================================================
 BEGIN;
 
-SELECT plan(6);
+SELECT plan(8);
 
 -- Production grants `authenticated` these privileges; a schema replayed from migrations does not.
 GRANT SELECT ON public.clients, public.deals, public.pipelines, public.pipeline_stages,
@@ -19,8 +20,10 @@ GRANT SELECT ON public.clients, public.deals, public.pipelines, public.pipeline_
 GRANT EXECUTE ON FUNCTION public.current_user_tenant_id(), public.has_role(uuid, public.app_role),
   public.has_any_role(uuid, text[]), public.is_assigned_to_client(uuid, uuid, text),
   public.is_platform_owner(), public.is_platform_owner(uuid), public.is_tenant_member(uuid),
-  public.is_tenant_admin(uuid), public.get_pipeline_workspace_pre_identity(uuid)
+  public.is_tenant_admin(uuid), public.get_pipeline_workspace_pre_identity(uuid),
+  public.get_profile_with_pii_log(uuid)
 TO authenticated;
+GRANT SELECT ON public.profiles TO authenticated;
 
 DO $$
 DECLARE
@@ -55,7 +58,9 @@ BEGIN
     ('c8820000-0000-0000-0000-00000000a101', _p, _a, 'Lead', 1, 10, 'open');
   INSERT INTO public.deals (id, title, pipeline_id, stage_id, status, tenant_id, contact_client_id) VALUES
     ('c8820000-0000-0000-0000-00000000d001', 'TRF deal', _p,
-     'c8820000-0000-0000-0000-00000000a101', 'open', _a, 'c8820000-0000-0000-0000-00000000c1e1');
+     'c8820000-0000-0000-0000-00000000a101', 'open', _a, 'c8820000-0000-0000-0000-00000000c1e1'),
+    ('c8820000-0000-0000-0000-00000000d002', 'TRF deal U', _p,
+     'c8820000-0000-0000-0000-00000000a101', 'open', _a, 'c8820000-0000-0000-0000-00000000c1e3');
 END $$;
 
 -- 1. No function reads the retired role, outside the grant paths and the finance functions.
@@ -94,10 +99,25 @@ SELECT set_config('request.jwt.claims', '{"sub":"c8820000-0000-0000-0000-0000000
 SET LOCAL ROLE authenticated;
 SELECT set_config('trf.m_deals',
   jsonb_array_length(public.get_pipeline_workspace_pre_identity('c8820000-0000-0000-0000-00000000000a')->'deals')::text, true);
+SELECT set_config('trf.m_deal_u',
+  (SELECT count(*) FROM jsonb_array_elements(public.get_pipeline_workspace_pre_identity('c8820000-0000-0000-0000-00000000000a')->'deals') d
+    WHERE d->>'id' = 'c8820000-0000-0000-0000-00000000d002')::text, true);
 RESET ROLE;
 SELECT set_config('request.jwt.claims', '', true);
 SELECT is(current_setting('trf.m_deals')::int, 1,
   'an assigned member sees the deals of the client they are assigned in the pipeline workspace');
+
+-- 7. Regression guard: a client the member only created, assigned to someone else, stays out of view.
+SELECT is(current_setting('trf.m_deal_u')::int, 0,
+  'a member does not see the deals of a client they created but are not assigned');
+
+-- 8. The retired role does not open another person's profile.
+SELECT set_config('request.jwt.claims', '{"sub":"c8820000-0000-0000-0000-0000000000a2","role":"authenticated"}', true);
+SET LOCAL ROLE authenticated;
+SELECT throws_ok($$SELECT * FROM public.get_profile_with_pii_log('c8820000-0000-0000-0000-0000000000a1')$$,
+  NULL, NULL, 'the retired coach role does not open another person''s profile');
+RESET ROLE;
+SELECT set_config('request.jwt.claims', '', true);
 
 SELECT * FROM finish();
 ROLLBACK;

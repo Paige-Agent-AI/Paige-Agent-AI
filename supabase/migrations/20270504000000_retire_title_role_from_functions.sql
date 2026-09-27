@@ -9,10 +9,13 @@
 --     document-work and Paige-action checks;
 --   * the CRM commands no longer give a coach seat record-by-record access. Owners and admins keep
 --     theirs; whether an assigned member may run CRM commands is a product decision, and this
---     migration does not make it;
+--     migration does not make it. The same holds for naming a client's assigned staff member through
+--     the CRM commands: that is now open to owners and admins only, as it already was for everyone
+--     on production; making an ordinary member assignable there is a product decision too;
 --   * the pipeline workspace shows an assigned member the deals and clients they are assigned, read
 --     only, through membership of the business, as the row policies do since 20270502000000. Access
---     through "created it" is dropped, because creating a client is not an assignment.
+--     through "created it" is dropped, because creating a client is not an assignment, and the client
+--     behind a task or a deal must belong to the same business.
 --
 -- Each function is edited where it stands: its current definition is read, only the fragment that
 -- reads the role is replaced, and the result is recreated with the same signature and settings. The
@@ -116,4 +119,7 @@ SELECT pg_temp.retire_role('public.execute_crm_command_reversible(uuid, uuid, js
 SELECT pg_temp.retire_role('public.get_pipeline_workspace_pre_identity(uuid)'::regprocedure, ARRAY[
   'public\.has_role\(_caller,''coach''::public\.app_role\)', 'public.is_tenant_member(_tenant)',
   'c\.created_by=_caller or ', '',
+  -- The client behind a task or a deal must belong to this business too.
+  'tc\.linked_user_id=t\.user_id and tc\.assigned_coach_user_id=_caller', 'tc.tenant_id=_tenant and tc.linked_user_id=t.user_id and tc.assigned_coach_user_id=_caller',
+  'dc\.id=d\.contact_client_id and dc\.assigned_coach_user_id=_caller', 'dc.id=d.contact_client_id and dc.tenant_id=_tenant and dc.assigned_coach_user_id=_caller',
   '_is_coach', '_is_member']);

@@ -1,21 +1,29 @@
 -- Assigned staff reach what they are assigned through the business, not through a title role.
 --
--- "Coach" is a title a business gives its people. It never grants permission. Until now 25 policies
+-- "Coach" is a title a business gives its people. It never grants permission. Until now 24 policies
 -- outside the finance tables let a person in only if they held the platform-wide `coach` role. That
 -- role carries no business at all.
 --
 -- After this migration:
---   * the 16 policies that gate access on an assignment grant it on the assignment plus active
---     membership of the business the record belongs to. No role is needed. An assignment to a client
---     of a business the person does not belong to grants nothing;
+--   * where an assignment gave access to a client's records, the assignment plus active membership
+--     of the business the record belongs to now gives READ access to them. No role is needed. An
+--     assignment to a client of a business the person does not belong to grants nothing. A client
+--     counts as assigned by the client record's assigned staff member, by an active assignment of the
+--     'coach' kind, or by an active assignment relationship in the client's business;
+--   * the retired role's WRITE paths on these tables (clients, deals, tasks, health snapshots) are
+--     removed and not replaced. The business's owners and admins keep writing through the admin
+--     policies. Whether a member may write to an assigned client's records is a product decision,
+--     and this migration does not make it;
 --   * the 9 policies that gated only the holder's own rows or their business are removed. The admin
 --     policies on the same tables already give that access to a business's owners and admins, and a
 --     member gains nothing from the removal. What a member should reach on deals, pipelines,
 --     invitations and research is a product decision, and this migration does not make it;
---   * on `clients`, an assignment lets the assignee read and update the client, but no longer delete
---     it. Deleting a client stays with the business's owners and admins. Access through "created it"
---     is dropped, because creating a client is not an assignment;
+--   * access through "created it" on clients is dropped, because creating a client is not an
+--     assignment;
 --   * policies whose names carried the title are renamed to what they grant.
+--
+-- Outreach drafts are left for the finance slice: they carry lender and funding content and record no
+-- business.
 --
 -- Who is affected on production today: 0 membership seats hold coach. The 4 people who hold the
 -- platform-wide coach role also hold admin or above and keep every row through the admin policies.
@@ -54,28 +62,9 @@ CREATE POLICY clients_assigned_staff_read ON public.clients
                             AND cc.client_user_id = clients.linked_user_id
                             AND cc.tenant_id = clients.tenant_id
                             AND cc.status = 'active')));
-CREATE POLICY clients_assigned_staff_update ON public.clients
-  FOR UPDATE TO authenticated
-  USING (public.is_tenant_member(tenant_id)
-         AND (assigned_coach_user_id = auth.uid()
-              OR public.is_assigned_to_client(auth.uid(), id, 'coach')
-              OR EXISTS (SELECT 1 FROM public.coach_clients cc
-                          WHERE cc.coach_user_id = auth.uid()
-                            AND cc.client_user_id = clients.linked_user_id
-                            AND cc.tenant_id = clients.tenant_id
-                            AND cc.status = 'active')))
-  WITH CHECK (public.is_tenant_member(tenant_id)
-              AND (assigned_coach_user_id = auth.uid()
-              OR public.is_assigned_to_client(auth.uid(), id, 'coach')
-              OR EXISTS (SELECT 1 FROM public.coach_clients cc
-                          WHERE cc.coach_user_id = auth.uid()
-                            AND cc.client_user_id = clients.linked_user_id
-                            AND cc.tenant_id = clients.tenant_id
-                            AND cc.status = 'active')));
-
 -- An assignment row is admitted only for an assignee who qualifies in its business (20270427000000).
 ALTER POLICY "Coaches can view own clients" ON public.coach_clients
-  USING (auth.uid() = coach_user_id);
+  USING (auth.uid() = coach_user_id AND public.is_tenant_member(tenant_id));
 ALTER POLICY "Coaches can view own clients" ON public.coach_clients
   RENAME TO "Assigned staff view their own assignments";
 
@@ -100,20 +89,6 @@ ALTER POLICY deals_coach_select ON public.deals
                             AND c.assigned_coach_user_id = auth.uid())));
 ALTER POLICY deals_coach_select ON public.deals RENAME TO deals_assigned_staff_select;
 
-ALTER POLICY deals_coach_update ON public.deals
-  USING (public.is_tenant_member(tenant_id)
-         AND (owner_user_id = auth.uid()
-              OR EXISTS (SELECT 1 FROM public.clients c
-                          WHERE c.id = deals.contact_client_id
-                            AND c.tenant_id = deals.tenant_id
-                            AND c.assigned_coach_user_id = auth.uid())))
-  WITH CHECK (public.is_tenant_member(tenant_id)
-              AND (owner_user_id = auth.uid()
-                   OR EXISTS (SELECT 1 FROM public.clients c
-                               WHERE c.id = deals.contact_client_id
-                                 AND c.tenant_id = deals.tenant_id
-                                 AND c.assigned_coach_user_id = auth.uid())));
-ALTER POLICY deals_coach_update ON public.deals RENAME TO deals_assigned_staff_update;
 
 ALTER POLICY "Coaches can read assigned client invitations" ON public.invitations
   USING (EXISTS (
@@ -124,17 +99,6 @@ ALTER POLICY "Coaches can read assigned client invitations" ON public.invitation
 ALTER POLICY "Coaches can read assigned client invitations" ON public.invitations
   RENAME TO "Assigned staff read their clients' invitations";
 
-ALTER POLICY "Coaches manage assigned client outreach drafts" ON public.outreach_drafts
-  USING (EXISTS (SELECT 1 FROM public.coach_clients cc
-                  WHERE cc.coach_user_id = auth.uid()
-                    AND cc.client_user_id = outreach_drafts.client_user_id
-                    AND cc.status = 'active'))
-  WITH CHECK (EXISTS (SELECT 1 FROM public.coach_clients cc
-                       WHERE cc.coach_user_id = auth.uid()
-                         AND cc.client_user_id = outreach_drafts.client_user_id
-                         AND cc.status = 'active'));
-ALTER POLICY "Coaches manage assigned client outreach drafts" ON public.outreach_drafts
-  RENAME TO "Assigned staff manage their clients' outreach drafts";
 
 ALTER POLICY "Admins and coaches read health" ON public.paige_health_snapshots
   USING (public.tenant_staff_owns_contact(auth.uid(), contact_id)
@@ -147,20 +111,10 @@ ALTER POLICY "Admins and coaches read health" ON public.paige_health_snapshots
   RENAME TO "Admins and assigned staff read health";
 
 ALTER POLICY "Admins and coaches write health" ON public.paige_health_snapshots
-  USING (public.tenant_staff_owns_contact(auth.uid(), contact_id)
-         OR (contact_id IS NOT NULL AND EXISTS (
-               SELECT 1 FROM public.clients c
-                WHERE c.id = paige_health_snapshots.contact_id
-                  AND c.assigned_coach_user_id = auth.uid()
-                  AND public.is_tenant_member(c.tenant_id))))
-  WITH CHECK (public.tenant_staff_owns_contact(auth.uid(), contact_id)
-              OR (contact_id IS NOT NULL AND EXISTS (
-                    SELECT 1 FROM public.clients c
-                     WHERE c.id = paige_health_snapshots.contact_id
-                       AND c.assigned_coach_user_id = auth.uid()
-                       AND public.is_tenant_member(c.tenant_id))));
+  USING (public.tenant_staff_owns_contact(auth.uid(), contact_id))
+  WITH CHECK (public.tenant_staff_owns_contact(auth.uid(), contact_id));
 ALTER POLICY "Admins and coaches write health" ON public.paige_health_snapshots
-  RENAME TO "Admins and assigned staff write health";
+  RENAME TO "Admins write health";
 
 ALTER POLICY "Coaches view audit for assigned contacts" ON public.paige_messages_audit
   USING (contact_id IS NOT NULL
@@ -204,21 +158,18 @@ ALTER POLICY "Users view own QB transactions" ON public.quickbooks_transactions
                        AND c.assigned_coach_user_id = auth.uid()
                        AND public.is_tenant_member(c.tenant_id)));
 
-ALTER POLICY "Coaches manage assigned client tasks" ON public.tasks
+DROP POLICY "Coaches manage assigned client tasks" ON public.tasks;
+CREATE POLICY "Assigned staff read their clients' tasks" ON public.tasks
+  FOR SELECT TO authenticated
   USING (EXISTS (SELECT 1 FROM public.clients c
                   WHERE c.linked_user_id = tasks.user_id
                     AND c.tenant_id = tasks.tenant_id
                     AND c.assigned_coach_user_id = auth.uid()
-                    AND public.is_tenant_member(c.tenant_id)))
-  WITH CHECK (EXISTS (SELECT 1 FROM public.clients c
-                       WHERE c.linked_user_id = tasks.user_id
-                         AND c.tenant_id = tasks.tenant_id
-                         AND c.assigned_coach_user_id = auth.uid()
-                         AND public.is_tenant_member(c.tenant_id)));
-ALTER POLICY "Coaches manage assigned client tasks" ON public.tasks
-  RENAME TO "Assigned staff manage their clients' tasks";
+                    AND public.is_tenant_member(c.tenant_id)));
 
--- Step 2: policies that only restated admin access to the holder's own rows or business.
+-- Step 2: the retired role's write path on deals, and policies that only restated admin access to the
+-- holder's own rows or business.
+DROP POLICY deals_coach_update ON public.deals;
 DROP POLICY deal_activities_coach_insert ON public.deal_activities;
 DROP POLICY deals_coach_insert ON public.deals;
 DROP POLICY "Coaches can create assigned client invitations" ON public.invitations;

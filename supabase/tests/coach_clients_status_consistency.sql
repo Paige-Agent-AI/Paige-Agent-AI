@@ -2,10 +2,10 @@
 -- S11 · coach_clients status consistency — behavioural proof for migration
 -- 20270426000000_coach_clients_status_consistency.
 --
--- For the six policies that migration aligns, an assignment whose status is not
--- 'active' grants nothing, exactly like the other coach_clients-dependent policies;
--- an active assignment still grants what it did. Also proves that reactivating an
--- assignment restores access, which is what lets S2 deactivate instead of delete.
+-- For the six policies that migration aligned, an assignment whose status is not
+-- 'active' grants nothing. Since the coach title stopped carrying permission
+-- (20270503000000 for goals, 20270505000000 for finance rows), an active assignment
+-- grants nothing on these rows either, and reactivating one opens nothing.
 --
 -- Synthetic fixtures only (one coach, one active client, one inactive client);
 -- asserts counts and refusals, never field values. Rolls back.
@@ -90,6 +90,9 @@ END $$;
 RESET ROLE;
 SELECT ok(true, 'client_goals UPDATE: no assignment changes goals, active or inactive');
 
+-- Finance rows (credit predictions, funding outcomes, outreach drafts) carry no business, so no
+-- assignment opens them, active or inactive (20270505000000).
+
 -- 3. credit_predictions SELECT
 SET LOCAL ROLE authenticated;
 DO $$
@@ -97,10 +100,10 @@ DECLARE _a int; _i int;
 BEGIN
   SELECT count(*) INTO _a FROM public.credit_predictions WHERE user_id = 'a1100000-0000-0000-0000-0000000000a1';
   SELECT count(*) INTO _i FROM public.credit_predictions WHERE user_id = 'a1100000-0000-0000-0000-0000000000b1';
-  IF _a <> 1 OR _i <> 0 THEN RAISE EXCEPTION 'S11 credit_predictions SELECT: active=% inactive=% (want 1,0)', _a, _i; END IF;
+  IF _a <> 0 OR _i <> 0 THEN RAISE EXCEPTION 'S11 credit_predictions SELECT: active=% inactive=% (want 0,0)', _a, _i; END IF;
 END $$;
 RESET ROLE;
-SELECT ok(true, 'credit_predictions SELECT: active assignment visible, inactive not');
+SELECT ok(true, 'credit_predictions SELECT: no assignment opens predictions, active or inactive');
 
 -- 4. funding_application_outcomes SELECT
 SET LOCAL ROLE authenticated;
@@ -109,29 +112,32 @@ DECLARE _a int; _i int;
 BEGIN
   SELECT count(*) INTO _a FROM public.funding_application_outcomes WHERE user_id = 'a1100000-0000-0000-0000-0000000000a1';
   SELECT count(*) INTO _i FROM public.funding_application_outcomes WHERE user_id = 'a1100000-0000-0000-0000-0000000000b1';
-  IF _a <> 1 OR _i <> 0 THEN RAISE EXCEPTION 'S11 funding_application_outcomes SELECT: active=% inactive=% (want 1,0)', _a, _i; END IF;
+  IF _a <> 0 OR _i <> 0 THEN RAISE EXCEPTION 'S11 funding_application_outcomes SELECT: active=% inactive=% (want 0,0)', _a, _i; END IF;
 END $$;
 RESET ROLE;
-SELECT ok(true, 'funding_application_outcomes SELECT: active assignment visible, inactive not');
+SELECT ok(true, 'funding_application_outcomes SELECT: no assignment opens outcomes, active or inactive');
 
 -- 5. funding_application_outcomes INSERT
 SET LOCAL ROLE authenticated;
 DO $$
-DECLARE _refused boolean := false;
+DECLARE _refused int := 0;
 BEGIN
   BEGIN
     INSERT INTO public.funding_application_outcomes
       (user_id, lender_name, product_type, application_date, amount_requested, outcome, recorded_by)
     VALUES ('a1100000-0000-0000-0000-0000000000b1', 's11', 's11', current_date, 1, 'pending', 'a1100000-0000-0000-0000-0000000000c1');
-  EXCEPTION WHEN insufficient_privilege THEN _refused := true;
+  EXCEPTION WHEN insufficient_privilege THEN _refused := _refused + 1;
   END;
-  IF NOT _refused THEN RAISE EXCEPTION 'S11 funding_application_outcomes INSERT: inactive assignment was not refused'; END IF;
-  INSERT INTO public.funding_application_outcomes
-    (user_id, lender_name, product_type, application_date, amount_requested, outcome, recorded_by)
-  VALUES ('a1100000-0000-0000-0000-0000000000a1', 's11', 's11', current_date, 1, 'pending', 'a1100000-0000-0000-0000-0000000000c1');
+  BEGIN
+    INSERT INTO public.funding_application_outcomes
+      (user_id, lender_name, product_type, application_date, amount_requested, outcome, recorded_by)
+    VALUES ('a1100000-0000-0000-0000-0000000000a1', 's11', 's11', current_date, 1, 'pending', 'a1100000-0000-0000-0000-0000000000c1');
+  EXCEPTION WHEN insufficient_privilege THEN _refused := _refused + 1;
+  END;
+  IF _refused <> 2 THEN RAISE EXCEPTION 'S11 funding_application_outcomes INSERT: refused=% (want 2)', _refused; END IF;
 END $$;
 RESET ROLE;
-SELECT ok(true, 'funding_application_outcomes INSERT: active assignment allowed, inactive refused');
+SELECT ok(true, 'funding_application_outcomes INSERT: refused for active and inactive assignments');
 
 -- 6. outreach_drafts SELECT
 SET LOCAL ROLE authenticated;
@@ -140,29 +146,32 @@ DECLARE _a int; _i int;
 BEGIN
   SELECT count(*) INTO _a FROM public.outreach_drafts WHERE client_user_id = 'a1100000-0000-0000-0000-0000000000a1';
   SELECT count(*) INTO _i FROM public.outreach_drafts WHERE client_user_id = 'a1100000-0000-0000-0000-0000000000b1';
-  IF _a <> 1 OR _i <> 0 THEN RAISE EXCEPTION 'S11 outreach_drafts SELECT: active=% inactive=% (want 1,0)', _a, _i; END IF;
+  IF _a <> 0 OR _i <> 0 THEN RAISE EXCEPTION 'S11 outreach_drafts SELECT: active=% inactive=% (want 0,0)', _a, _i; END IF;
 END $$;
 RESET ROLE;
-SELECT ok(true, 'outreach_drafts SELECT: active assignment visible, inactive not');
+SELECT ok(true, 'outreach_drafts SELECT: no assignment opens drafts, active or inactive');
 
 -- 7. outreach_drafts INSERT
 SET LOCAL ROLE authenticated;
 DO $$
-DECLARE _refused boolean := false;
+DECLARE _refused int := 0;
 BEGIN
   BEGIN
     INSERT INTO public.outreach_drafts (client_user_id, outreach_type, generated_content, created_by)
     VALUES ('a1100000-0000-0000-0000-0000000000b1', 'client_progress_update', 's11', 'a1100000-0000-0000-0000-0000000000c1');
-  EXCEPTION WHEN insufficient_privilege THEN _refused := true;
+  EXCEPTION WHEN insufficient_privilege THEN _refused := _refused + 1;
   END;
-  IF NOT _refused THEN RAISE EXCEPTION 'S11 outreach_drafts INSERT: inactive assignment was not refused'; END IF;
-  INSERT INTO public.outreach_drafts (client_user_id, outreach_type, generated_content, created_by)
-  VALUES ('a1100000-0000-0000-0000-0000000000a1', 'client_progress_update', 's11', 'a1100000-0000-0000-0000-0000000000c1');
+  BEGIN
+    INSERT INTO public.outreach_drafts (client_user_id, outreach_type, generated_content, created_by)
+    VALUES ('a1100000-0000-0000-0000-0000000000a1', 'client_progress_update', 's11', 'a1100000-0000-0000-0000-0000000000c1');
+  EXCEPTION WHEN insufficient_privilege THEN _refused := _refused + 1;
+  END;
+  IF _refused <> 2 THEN RAISE EXCEPTION 'S11 outreach_drafts INSERT: refused=% (want 2)', _refused; END IF;
 END $$;
 RESET ROLE;
-SELECT ok(true, 'outreach_drafts INSERT: active assignment allowed, inactive refused');
+SELECT ok(true, 'outreach_drafts INSERT: refused for active and inactive assignments');
 
--- 8–9. Reactivation restores access (the property S2's lifecycle trigger relies on).
+-- 8–9. Reactivating an assignment still opens nothing on these rows.
 UPDATE public.coach_clients SET status = 'active'
  WHERE coach_user_id = 'a1100000-0000-0000-0000-0000000000c1'
    AND client_user_id = 'a1100000-0000-0000-0000-0000000000b1';
@@ -172,20 +181,20 @@ DO $$
 DECLARE _i int;
 BEGIN
   SELECT count(*) INTO _i FROM public.credit_predictions WHERE user_id = 'a1100000-0000-0000-0000-0000000000b1';
-  IF _i <> 1 THEN RAISE EXCEPTION 'S11 reactivation: credit_predictions visible=% (want 1)', _i; END IF;
+  IF _i <> 0 THEN RAISE EXCEPTION 'S11 reactivation: credit_predictions visible=% (want 0)', _i; END IF;
 END $$;
 RESET ROLE;
-SELECT ok(true, 'reactivating an assignment restores credit_predictions visibility');
+SELECT ok(true, 'reactivating an assignment does not open credit_predictions');
 
 SET LOCAL ROLE authenticated;
 DO $$
 DECLARE _i int;
 BEGIN
   SELECT count(*) INTO _i FROM public.outreach_drafts WHERE client_user_id = 'a1100000-0000-0000-0000-0000000000b1';
-  IF _i <> 1 THEN RAISE EXCEPTION 'S11 reactivation: outreach_drafts visible=% (want 1)', _i; END IF;
+  IF _i <> 0 THEN RAISE EXCEPTION 'S11 reactivation: outreach_drafts visible=% (want 0)', _i; END IF;
 END $$;
 RESET ROLE;
-SELECT ok(true, 'reactivating an assignment restores outreach_drafts visibility');
+SELECT ok(true, 'reactivating an assignment does not open outreach_drafts');
 
 SELECT * FROM finish();
 ROLLBACK;

@@ -4,9 +4,9 @@
 name: migration-lint
 
 on:
+  # No `paths:` filter: this is a required check, and one that never starts blocks a PR forever.
+  # The job already reports "nothing to lint" when a PR changes no migration.
   pull_request:
-    paths:
-      - "supabase/migrations/**"
 
 jobs:
   lint:

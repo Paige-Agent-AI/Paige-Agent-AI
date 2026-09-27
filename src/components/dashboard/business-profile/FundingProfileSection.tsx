@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ExternalLink, Award, Sparkles, Lock, Info, CheckCircle2, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 import {
   DemographicQuestionsStep,
@@ -23,7 +24,7 @@ import {
 interface Props {
   businessId: string;
   userId: string;
-  isAdminOrCoach?: boolean;
+  isAdmin?: boolean;
 }
 
 interface CertRow {
@@ -33,7 +34,7 @@ interface CertRow {
   certified_at?: string | null;
 }
 
-export function FundingProfileSection({ businessId, userId, isAdminOrCoach }: Props) {
+export function FundingProfileSection({ businessId, userId, isAdmin }: Props) {
   const [answers, setAnswers] = useState<DemographicAnswers>(EMPTY_ANSWERS);
   const [businessFlags, setBusinessFlags] = useState({
     is_minority_owned: false as boolean | null,
@@ -76,29 +77,29 @@ export function FundingProfileSection({ businessId, userId, isAdminOrCoach }: Pr
 
     if (profileRes.data) {
       setAnswers({
-        gender_identity: (profileRes.data as any).gender_identity ?? null,
-        ethnicity: ((profileRes.data as any).ethnicity ?? []) as string[],
-        is_veteran: (profileRes.data as any).is_veteran ?? null,
+        gender_identity: profileRes.data.gender_identity ?? null,
+        ethnicity: (profileRes.data.ethnicity ?? []) as string[],
+        is_veteran: profileRes.data.is_veteran ?? null,
         is_service_disabled_veteran:
-          (profileRes.data as any).is_service_disabled_veteran ?? null,
-        is_us_citizen: (profileRes.data as any).is_us_citizen ?? null,
-        is_permanent_resident: (profileRes.data as any).is_permanent_resident ?? null,
+          profileRes.data.is_service_disabled_veteran ?? null,
+        is_us_citizen: profileRes.data.is_us_citizen ?? null,
+        is_permanent_resident: profileRes.data.is_permanent_resident ?? null,
       });
     }
     if (bizRes.data) {
       setBusinessFlags({
-        is_minority_owned: (bizRes.data as any).is_minority_owned ?? false,
-        is_women_owned: (bizRes.data as any).is_women_owned ?? false,
-        is_veteran_owned: (bizRes.data as any).is_veteran_owned ?? false,
+        is_minority_owned: bizRes.data.is_minority_owned ?? false,
+        is_women_owned: bizRes.data.is_women_owned ?? false,
+        is_veteran_owned: bizRes.data.is_veteran_owned ?? false,
         is_service_disabled_veteran_owned:
-          (bizRes.data as any).is_service_disabled_veteran_owned ?? false,
-        is_hubzone_located: (bizRes.data as any).is_hubzone_located ?? false,
+          bizRes.data.is_service_disabled_veteran_owned ?? false,
+        is_hubzone_located: bizRes.data.is_hubzone_located ?? false,
       });
     }
     if (certRes.data) {
       const map: Record<string, CertRow> = {};
-      for (const row of certRes.data as any[]) {
-        map[row.certification_type] = row;
+      for (const row of certRes.data) {
+        map[row.certification_type] = row as CertRow;
       }
       setCertifications(map);
     }
@@ -120,7 +121,7 @@ export function FundingProfileSection({ businessId, userId, isAdminOrCoach }: Pr
         })
         .eq("id", businessId);
       toast.success("Funding profile saved");
-    } catch (e: any) {
+    } catch {
       toast.error("Failed to save funding profile");
     } finally {
       setSaving(false);
@@ -132,7 +133,7 @@ export function FundingProfileSection({ businessId, userId, isAdminOrCoach }: Pr
     status: CertRow["status"],
   ) => {
     const existing = certifications[type];
-    const payload: any = {
+    const payload: TablesInsert<"business_certifications"> = {
       business_id: businessId,
       user_id: userId,
       certification_type: type,
@@ -158,9 +159,9 @@ export function FundingProfileSection({ businessId, userId, isAdminOrCoach }: Pr
         toast.error("Couldn't create certification record");
         return;
       }
-      setCertifications((prev) => ({ ...prev, [type]: data as any }));
+      setCertifications((prev) => ({ ...prev, [type]: data as CertRow }));
     }
-    setCertifications((prev) => ({ ...prev, [type]: { ...(prev[type] || {}), ...payload } }));
+    setCertifications((prev) => ({ ...prev, [type]: { ...(prev[type] || {}), ...payload } as CertRow }));
 
     // Mirror "certified" booleans to businesses table for fast access
     const mirrorMap: Record<string, string> = {
@@ -171,7 +172,7 @@ export function FundingProfileSection({ businessId, userId, isAdminOrCoach }: Pr
     if (mirrorMap[type]) {
       await supabase
         .from("businesses")
-        .update({ [mirrorMap[type]]: status === "certified" } as any)
+        .update({ [mirrorMap[type]]: status === "certified" } as TablesUpdate<"businesses">)
         .eq("id", businessId);
     }
     toast.success("Certification status updated");
@@ -197,7 +198,7 @@ export function FundingProfileSection({ businessId, userId, isAdminOrCoach }: Pr
   }
 
   const statusBadge = (status?: CertRow["status"]) => {
-    const map: Record<string, { label: string; class: string; icon: any }> = {
+    const map: Record<string, { label: string; class: string; icon: React.ElementType }> = {
       certified: { label: "Certified", class: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30", icon: CheckCircle2 },
       in_progress: { label: "In Progress", class: "bg-amber-500/15 text-amber-600 border-amber-500/30", icon: AlertCircle },
       expired: { label: "Expired", class: "bg-destructive/15 text-destructive border-destructive/30", icon: AlertCircle },
@@ -268,7 +269,7 @@ export function FundingProfileSection({ businessId, userId, isAdminOrCoach }: Pr
               </Label>
               <Switch
                 id={row.key}
-                checked={!!(businessFlags as any)[row.key]}
+                checked={!!businessFlags[row.key as keyof typeof businessFlags]}
                 onCheckedChange={(v) =>
                   setBusinessFlags((prev) => ({ ...prev, [row.key]: v as boolean }))
                 }
@@ -291,7 +292,7 @@ export function FundingProfileSection({ businessId, userId, isAdminOrCoach }: Pr
           <CardTitle className="text-lg">Certifications Tracker</CardTitle>
           <p className="text-sm text-muted-foreground">
             Federal and state certifications open additional funding doors.{" "}
-            {!isAdminOrCoach && "Certification status is updated by your coach — contact us if you've recently been certified."}
+            {!isAdmin && "Certification status is updated by your team — contact us if you've recently been certified."}
           </p>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -308,10 +309,10 @@ export function FundingProfileSection({ businessId, userId, isAdminOrCoach }: Pr
                 </div>
                 <div className="flex items-center gap-2">
                   {statusBadge(row?.status)}
-                  {isAdminOrCoach ? (
+                  {isAdmin ? (
                     <Select
                       value={row?.status || "not_started"}
-                      onValueChange={(v) => updateCertStatus(cert.key, v as any)}
+                      onValueChange={(v) => updateCertStatus(cert.key, v as CertRow["status"])}
                     >
                       <SelectTrigger className="w-[140px] h-8 text-xs">
                         <SelectValue />

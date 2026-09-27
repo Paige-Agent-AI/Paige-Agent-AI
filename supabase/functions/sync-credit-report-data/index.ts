@@ -160,19 +160,14 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Authorization check
+    // Authorization check: a person syncs their own records; an admin may sync anyone's. An assignment
+    // opens reads only, so it does not let anyone write credit data into a client's records.
     if (user.id !== targetUserId) {
       const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
       if (!isAdmin) {
-        const { data: isCoach } = await supabase
-          .from("coach_clients").select("id")
-          .eq("coach_user_id", user.id).eq("client_user_id", targetUserId).eq("status", "active")
-          .maybeSingle();
-        if (!isCoach) {
-          return new Response(JSON.stringify({ error: "Forbidden" }), {
-            status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
     }
 

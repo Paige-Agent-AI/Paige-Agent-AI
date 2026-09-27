@@ -79,14 +79,14 @@ export function BusinessInfrastructureAssessment({ clientId }: Props) {
     }
   };
 
-  const [isAdminOrCoach, setIsAdminOrCoach] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       const { data } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
-      const roles = (data || []).map((r: any) => r.role);
-      setIsAdminOrCoach(roles.includes("admin") || roles.includes("coach"));
+      const roles = (data || []).map((r: { role: string }) => r.role);
+      setIsAdmin(roles.includes("admin"));
     })();
   }, []);
 
@@ -275,7 +275,7 @@ export function BusinessInfrastructureAssessment({ clientId }: Props) {
               <p className="text-sm text-muted-foreground">Add a business entity first.</p>
             </CardContent></Card>
           ) : (
-            <FundingProfileSection businessId={selectedBusinessId} userId={userId} isAdminOrCoach={isAdminOrCoach} />
+            <FundingProfileSection businessId={selectedBusinessId} userId={userId} isAdmin={isAdmin} />
           )}
         </TabsContent>
 

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, DollarSign, FileText, Mail, StickyNote, Upload, AlertTriangle, Brain, TrendingUp, Database, User, Phone, AtSign, MapPin, Calendar, Shield, MessageSquare, Trash2, Edit3, Briefcase, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { ReportUploadTab } from "./ReportUploadTab";
 import { OutreachCenter } from "./OutreachCenter";
 import { PMEFundingReadiness } from "./PMEFundingReadiness";
@@ -25,7 +26,7 @@ import { useTenantFeature } from "@/hooks/useTenantFeature";
 interface ClientFileViewProps {
   clientUserId: string;
   onBack: () => void;
-  userRole?: "admin" | "coach";
+  userRole?: "admin" | "member";
 }
 
 interface ClientProfile {
@@ -42,7 +43,7 @@ interface ClientProfile {
   estimated_fico_tu: number | null;
   onboarding_completed: boolean | null;
   has_discrepancies: boolean | null;
-  cross_bureau_discrepancies: any[] | null;
+  cross_bureau_discrepancies: Json[] | null;
   last_report_analyzed_at: string | null;
   created_at: string | null;
   updated_at: string | null;
@@ -80,7 +81,7 @@ interface ClientProfile {
   has_broker_access: boolean | null;
 }
 
-export function ClientFileView({ clientUserId, onBack, userRole = "coach" }: ClientFileViewProps) {
+export function ClientFileView({ clientUserId, onBack, userRole = "member" }: ClientFileViewProps) {
   const [profile, setProfile] = useState<ClientProfile | null>(null);
   const [email, setEmail] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("profile");
@@ -119,8 +120,8 @@ export function ClientFileView({ clientUserId, onBack, userRole = "coach" }: Cli
     ]);
 
     if (profileRes.data) setProfile(profileRes.data as unknown as ClientProfile);
-    if (subRes.data) setSubscription(subRes.data as any);
-    if (rolesRes.data) setRoles((rolesRes.data as any[]).map(r => r.role));
+    if (subRes.data) setSubscription(subRes.data);
+    if (rolesRes.data) setRoles(rolesRes.data.map((r) => r.role));
 
     // Fetch the client's email via the admin edge function (browser cannot read auth.users directly)
     try {
@@ -169,7 +170,7 @@ export function ClientFileView({ clientUserId, onBack, userRole = "coach" }: Cli
     toast.success(next ? "Complimentary access granted" : "Complimentary access revoked");
   };
 
-  const ProfileField = ({ label, value, icon: Icon }: { label: string; value: string | null | undefined; icon?: any }) => (
+  const ProfileField = ({ label, value, icon: Icon }: { label: string; value: string | null | undefined; icon?: React.ElementType }) => (
     <div className="space-y-1">
       <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</label>
       <div className="flex items-center gap-2">

@@ -42,6 +42,10 @@ read_ledger() {
 }
 for attempt in 1 2; do
   read_ledger "$out/migration_list.txt" > "$out/recorded_versions.txt"
+  if [ ! -s "$out/recorded_versions.txt" ]; then
+    echo "::error::production's migration ledger could not be read (supabase migration list returned no recorded versions)."
+    exit 1
+  fi
   # --role-only excludes Supabase-managed roles by design, so it restores onto stock roles.
   supabase db dump --linked --role-only -f "$out/baseline_roles.sql"
   supabase db dump --linked -f "$out/baseline_schema.sql"

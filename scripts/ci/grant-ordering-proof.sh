@@ -21,11 +21,11 @@ db=postgresql://postgres:postgres@127.0.0.1:54322/postgres
 tool=scripts/ci/reproduce-production-grants.mjs
 
 v="$(node "$tool" --reset-version --recorded "$prod/recorded_versions.txt" --aside-list /dev/null)"
-older="$(node -e '
-  const v = process.argv[1];
-  const t = Date.UTC(+v.slice(0,4), +v.slice(4,6)-1, +v.slice(6,8), +v.slice(8,10), +v.slice(10,12), +v.slice(12,14)) - 1000;
-  process.stdout.write(new Date(t).toISOString().replace(/[-:T]/g, "").slice(0, 14));
-' "$v")"
+# One version below V, as an integer: versions in this tree are not always real dates (hour 35,
+# day 48), and date arithmetic rolled those forward, which made the "older" probe newer than V and
+# the out-of-order path silently untested (§39 final read on #1487).
+older="$(node -e 'process.stdout.write((BigInt(process.argv[1]) - 1n).toString().padStart(14, "0"))' "$v")"
+if [[ ! "$older" < "$v" ]]; then echo "::error::out-of-order probe $older is not older than $v"; exit 1; fi
 newer_probe=supabase/migrations/29991231235959_ci_grant_ordering_probe.sql
 older_probe="supabase/migrations/${older}_ci_grant_ordering_probe_out_of_order.sql"
 if ls supabase/migrations/"${older}"_* >/dev/null 2>&1; then echo "::error::probe version $older already exists"; exit 1; fi
@@ -48,7 +48,11 @@ expect() { # label, sql, expected
   if [ "$got" = "$3" ]; then echo "  ok   $1"; else echo "::error::grant-ordering proof: $1 — expected $3, got $got"; exit 1; fi
 }
 
-scripts/ci/reproduce-production-grants.sh "$prod"
+out="$(scripts/ci/reproduce-production-grants.sh "$prod" 2>&1 | tee /dev/stderr)"
+# The out-of-order probe must actually have taken the set-aside path, or this proof tests nothing new.
+if ! grep -q "1 of them older than $v, set aside" <<<"$out"; then
+  echo "::error::grant-ordering proof: the out-of-order probe was not set aside for the rebuild"; exit 1
+fi
 
 expect "the newer unrecorded migration's GRANT survives" \
   "select has_table_privilege('authenticated','public._ci_grant_ordering_probe','SELECT')" t

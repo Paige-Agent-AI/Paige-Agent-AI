@@ -25,7 +25,13 @@ v="$(node "$tool" --reset-version --recorded "$prod/recorded_versions.txt" --asi
 
 restore() {
   while IFS= read -r f; do
-    [ -n "$f" ] && [ -f "$aside/$f" ] && mv "$aside/$f" "supabase/migrations/$f"
+    if [ -n "$f" ] && [ -f "$aside/$f" ]; then mv "$aside/$f" "supabase/migrations/$f"; fi
+  done < "$list"
+  return 0
+}
+restored_or_fail() {
+  while IFS= read -r f; do
+    if [ -n "$f" ] && [ ! -f "supabase/migrations/$f" ]; then echo "::error::set-aside migration was not restored: $f"; exit 1; fi
   done < "$list"
 }
 trap restore EXIT
@@ -42,6 +48,7 @@ node "$tool" --defaults --dump "$prod/baseline_schema.sql" --db "$db"
 
 restore
 trap - EXIT
+restored_or_fail
 
 echo "::group::Apply the migrations production has not recorded (the change under review)"
 supabase migration up --include-all --local

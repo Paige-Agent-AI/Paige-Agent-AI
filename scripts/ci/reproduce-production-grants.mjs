@@ -312,7 +312,7 @@ function reconcile() {
   const r = spawnSync("psql", ["-X", "-q", "-d", db, "-f", sqlPath], { encoding: "utf8" });
   const errLines = (r.stderr || "").split("\n");
   if (r.status !== 0) {
-    fail(`Production grants could not be reproduced in the rebuilt database.\n${errLines.filter((l) => /ERROR|DETAIL|SCHEMA DRIFT/.test(l)).join("\n")}`);
+    fail(`Production grants could not be reproduced in the rebuilt database.\n${errLines.filter((l) => /error|DETAIL|SCHEMA DRIFT/i.test(l)).join("\n")}`);
   }
   // A GRANT/REVOKE on an object the job cannot act for is a WARNING that changes nothing.
   const noop = errLines.filter((l) => /WARNING:\s+no privileges (could be|were) (granted|revoked)/.test(l));
@@ -360,8 +360,9 @@ function selfTest() {
   assert(!parseLedger("no table here").headerFound, "a ledger without a header is reported");
   const j = parseLedger(JSON.stringify({ migrations: [{ local: "20240101000000", remote: "20240101000000" }, { local: "20250103000000", remote: "" }] }));
   assert(j.versions.size === 1 && j.versions.has("20240101000000"), "the JSON ledger form reads remote versions only");
-  const d = parseDefaultPrivileges('ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "anon";\nALTER DEFAULT PRIVILEGES FOR ROLE "supabase_admin" IN SCHEMA "public" GRANT ALL ON TABLES TO "anon";');
-  assert(d.length === 1, "only postgres's defaults in public are reproduced");
+  const d = parseDefaultPrivileges('ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "anon";\nALTER DEFAULT PRIVILEGES FOR ROLE "postgres" GRANT SELECT ON TABLES TO "authenticated" WITH GRANT OPTION;\nALTER DEFAULT PRIVILEGES FOR ROLE "supabase_admin" IN SCHEMA "public" GRANT ALL ON TABLES TO "anon";\nALTER DEFAULT PRIVILEGES FOR ROLE "postgres" GRANT ALL ON TYPES TO "anon";');
+  assert(d.lines.length === 2, "postgres's public and schema-less defaults are reproduced, grant option included; other roles are not");
+  assert(d.unparsed.length === 1, "an unread default line naming an API role is reported");
 
   const plan = resetPlan(["20250101000000_a.sql", "20250102000000_b.sql", "20250103000000_c.sql", "README.md"], new Set(["20250101000000", "20250103000000", "20990101000000"]));
   assert(plan.version === "20250103000000", "reset version is the newest recorded version present locally");
@@ -374,9 +375,15 @@ function selfTest() {
 }
 
 // Production's default privileges for objects `postgres` creates in `public`, for the API roles.
-const DEFAULT_ACL_LINE = /^ALTER DEFAULT PRIVILEGES FOR ROLE "?postgres"? IN SCHEMA "?public"? (GRANT|REVOKE) .* ON (TABLES|SEQUENCES|FUNCTIONS|ROUTINES) (TO|FROM) (PUBLIC|"?(anon|authenticated|service_role)"?);$/;
+// Schema-less lines (FOR ROLE postgres, no IN SCHEMA) apply to every schema, public included.
+const DEFAULT_ACL_LINE = /^ALTER DEFAULT PRIVILEGES FOR ROLE "?postgres"?( IN SCHEMA "?public"?)? (GRANT|REVOKE) .* ON (TABLES|SEQUENCES|FUNCTIONS|ROUTINES) (TO|FROM) (PUBLIC|"?(anon|authenticated|service_role)"?)( WITH GRANT OPTION)?;$/;
+const DEFAULT_ACL_CANDIDATE = /^ALTER DEFAULT PRIVILEGES FOR ROLE "?postgres"?( IN SCHEMA "?public"?)? .*\b(TO|FROM) (PUBLIC|"?(anon|authenticated|service_role)"?)\b/;
 export function parseDefaultPrivileges(dumpText) {
-  return dumpText.split("\n").map((l) => l.trim()).filter((l) => DEFAULT_ACL_LINE.test(l));
+  const lines = dumpText.split("\n").map((l) => l.trim());
+  return {
+    lines: lines.filter((l) => DEFAULT_ACL_LINE.test(l)),
+    unparsed: lines.filter((l) => !DEFAULT_ACL_LINE.test(l) && DEFAULT_ACL_CANDIDATE.test(l)),
+  };
 }
 
 /**
@@ -390,18 +397,32 @@ function reproduceDefaults() {
   const dumpPath = arg("--dump");
   const db = arg("--db");
   if (!dumpPath || !db) fail("usage: --defaults --dump <prod_schema.sql> --db <url>");
-  const lines = parseDefaultPrivileges(readFileSync(dumpPath, "utf8"));
+  const { lines, unparsed } = parseDefaultPrivileges(readFileSync(dumpPath, "utf8"));
+  if (unparsed.length) fail(`${unparsed.length} production default-privilege line(s) naming an API role could not be parsed; refusing a partial reproduction.`);
   const sql = `\\set ON_ERROR_STOP on
 BEGIN;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON TABLES FROM PUBLIC, anon, authenticated, service_role;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON SEQUENCES FROM PUBLIC, anon, authenticated, service_role;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON FUNCTIONS FROM anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres REVOKE ALL ON TABLES FROM anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres REVOKE ALL ON SEQUENCES FROM anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres REVOKE ALL ON FUNCTIONS FROM anon, authenticated, service_role;
 ${lines.join("\n")}
+-- It must hold: a table created now gets exactly what production's lines give.
+CREATE TABLE public._ci_default_acl_check (id int);
+SELECT 'DEFAULTS_CHECK|' || (SELECT coalesce(string_agg(a.grantee::regrole::text || ':' || a.privilege_type, ',' ORDER BY 1), '') FROM pg_class c, aclexplode(coalesce(c.relacl, acldefault('r'::"char", c.relowner))) a WHERE c.oid = 'public._ci_default_acl_check'::regclass AND a.grantee <> c.relowner AND a.grantee <> 0);
+DROP TABLE public._ci_default_acl_check;
 COMMIT;
 `;
   const dir = mkdtempSync(join(tmpdir(), "prod-defacl-"));
   writeFileSync(join(dir, "defaults.sql"), sql);
-  const r = spawnSync("psql", ["-X", "-q", "-d", db, "-f", join(dir, "defaults.sql")], { encoding: "utf8" });
+  const r = spawnSync("psql", ["-X", "-q", "-A", "-t", "-d", db, "-f", join(dir, "defaults.sql")], { encoding: "utf8" });
+  if (r.status === 0 && !lines.length) {
+    // With no production default lines, a new table must carry no API-role privilege at all.
+    const row = r.stdout.split("\n").find((l) => l.startsWith("DEFAULTS_CHECK|"));
+    const got = row === undefined ? "?" : row.slice("DEFAULTS_CHECK|".length).trim();
+    if (got !== "") fail(`Default privileges did not hold: a new public table got API-role privileges (${got}) that production's defaults do not grant.`);
+  }
   if (r.status !== 0) fail(`Production's default privileges could not be reproduced.\n${(r.stderr || "").split("\n").filter((l) => /ERROR|DETAIL/.test(l)).join("\n")}`);
   console.log(`Default privileges for objects postgres creates in public: built-in, plus ${lines.length} production line(s).`);
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `- Default privileges reproduced for new objects: built-in plus **${lines.length}** production line(s)\n`);

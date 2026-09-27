@@ -47,7 +47,7 @@ BEGIN
   INSERT INTO public.funding_journey_applications (id, user_id, lender_name) VALUES
     ('c9930000-0000-0000-0000-00000000f601', _y, 'TRF lender');
   INSERT INTO public.outreach_drafts (id, client_user_id, outreach_type, generated_content, created_by) VALUES
-    ('c9930000-0000-0000-0000-00000000f701', _y, 'email', 'TRF draft', _o);
+    ('c9930000-0000-0000-0000-00000000f701', _y, 'client_progress_update', 'TRF draft', _o);
 END $$;
 
 -- 1. No policy anywhere reads the retired role.
@@ -92,7 +92,7 @@ SELECT set_config('request.jwt.claims', '{"sub":"c9930000-0000-0000-0000-0000000
 SET LOCAL ROLE authenticated;
 SELECT throws_ok(
   $$INSERT INTO public.outreach_drafts (client_user_id, outreach_type, generated_content, created_by)
-    VALUES ('c9930000-0000-0000-0000-000000000e01', 'email', 'TRF new', 'c9930000-0000-0000-0000-0000000000a2')$$,
+    VALUES ('c9930000-0000-0000-0000-000000000e01', 'client_progress_update', 'TRF new', 'c9930000-0000-0000-0000-0000000000a2')$$,
   '42501', NULL, 'the retired coach role does not let a person create an outreach draft for a client');
 SELECT throws_ok(
   $$SELECT public.delete_credit_report_upload('c9930000-0000-0000-0000-00000000f801', 'c9930000-0000-0000-0000-0000000000a2')$$,

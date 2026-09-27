@@ -17,7 +17,7 @@
  *
  * TWO SURFACES DECLARE ACTS, NOT ONE — added 2026-09-05 with the governed MCP door. The policy was
  * written when Chat was the only caller, so "does the handler still declare this?" meant one file.
- * `paige-mcp` now maps its 119 tools onto canonical keys in
+ * `paige-mcp` now maps its 118 tools onto canonical keys in
  * `_shared/paige-mcp/capability-policy.ts`, forty-nine of which exist for that door alone. Those
  * are not ghosts — a live registry points at every one of them — and the ghost rule had to learn
  * the second surface or it would have demanded the deletion of the classifications that make the

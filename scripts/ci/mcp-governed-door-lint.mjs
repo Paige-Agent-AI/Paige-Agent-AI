@@ -3,7 +3,7 @@
  * mcp-governed-door-lint — the no-bypass guard for the inbound MCP door.
  *
  * WHAT THIS GUARDS, AND WHY A TEST CANNOT.
- * `paige-mcp` registers its tools as 119 separate top-level `mcp.tool("<name>", …)` calls. Nothing
+ * `paige-mcp` registers its tools as 118 separate top-level `mcp.tool("<name>", …)` calls. Nothing
  * about that shape forces a new tool to be governed: a developer adds a 120th call, it dispatches,
  * and no test fails — because a test can only exercise the tools it knows about. The gap is
  * structural, so the guard has to be structural too.
@@ -140,7 +140,7 @@ export function outboundHelpers(masked) {
  * is declared at paige-mcp/index.ts:3195, in the 152-line gap between `list_my_proposals` (ends
  * 3058) and `list_subagents` (starts 3211). A span that runs to the next registration swallows it
  * and reports a `fetch(` inside `list_my_proposals`, which is a verified read whose handler contains
- * no fetch at all. Bounding on the closing brace attributes zero calls to it. All 119 registrations
+ * no fetch at all. Bounding on the closing brace attributes zero calls to it. All 118 registrations
  * terminate this way on the shipped tree; one that does not is reported rather than guessed at.
  */
 export function toolSpans(mcpSrc) {

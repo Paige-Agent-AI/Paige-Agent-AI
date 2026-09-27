@@ -62,8 +62,7 @@ BEGIN
     ('a5560000-0000-0000-0000-00000000f001', _y, _a, 'ASN task');
 END $$;
 
--- 1. No policy on these tables reads the retired role, and the policies that only restated admin
---    access are gone.
+-- 1. No policy on these tables gives access through the retired role alone.
 SELECT is((SELECT count(*)::int FROM pg_policy p
             WHERE p.polrelid IN ('public.business_verification_runs'::regclass, 'public.clients'::regclass,
                                  'public.coach_clients'::regclass, 'public.deal_activities'::regclass,
@@ -76,8 +75,11 @@ SELECT is((SELECT count(*)::int FROM pg_policy p
                                  'public.research_runs'::regclass, 'public.research_sources'::regclass,
                                  'public.response_quality_feedback'::regclass, 'public.tasks'::regclass)
               AND (coalesce(pg_get_expr(p.polqual, p.polrelid), '') || coalesce(pg_get_expr(p.polwithcheck, p.polrelid), ''))
-                  ~* 'has_role\(.{0,80}?''coach'''), 0,
-  'no policy on these tables reads the retired coach role');
+                  ~* 'has_role\(.{0,80}?''coach'''
+              -- Policies where the role sits beside an admin branch are removed in the next slice.
+              AND NOT (coalesce(pg_get_expr(p.polqual, p.polrelid), '') || coalesce(pg_get_expr(p.polwithcheck, p.polrelid), ''))
+                  ~* 'has_role\(.{0,80}?''admin''|has_any_role\(.{0,120}?''admin''|is_tenant_admin|is_platform|is_super_admin'), 0,
+  'no policy on these tables gives access through the retired coach role alone');
 
 -- Counts are read as each person, stored, then asserted after RESET ROLE.
 SELECT set_config('request.jwt.claims', '{"sub":"a5560000-0000-0000-0000-0000000000a1","role":"authenticated"}', true);

@@ -77,8 +77,9 @@
  *     R7  the retired title role is read nowhere. "coach" is a title a business gives its people,
  *         never a role. SQL: a function, procedure, policy or view whose last definition comes AFTER
  *         20270504000000 fails if it casts the value to a role type; calls a role helper with it;
- *         compares a role column or a role variable (v_…role) to it — =, IN, = ANY, LIKE, IS
- *         DISTINCT FROM, either way round, through casts and the parentheses Postgres adds when it
+ *         compares a role column (role, requires_role, auto_assign_role, default_role), a role
+ *         list (visible_to_roles, allowed_roles) or a role variable (v_…role) to it — =, IN, = ANY,
+ *         LIKE, IS DISTINCT FROM, && , @> — either way round, through casts and the parentheses Postgres adds when it
  *         stores an expression; puts it in an array or array literal of roles; or has a branch for
  *         it in a CASE over a role. Definitions at or before that migration were rewritten by it at
  *         run time (as 20270505, 20270506 and 20270508 rewrote a few more), which a source replay
@@ -183,10 +184,12 @@ const PURPOSES = new Set(["display", "write", "search", "invite-copy"]);
 // this rule judges every definition made after it, where the replayed text is the text that runs.
 const RETIRED_ROLE_REWRITTEN_THROUGH = "20270504000000";
 const RETIRED_ROLE_TEST = "supabase/tests/title_role_read_nowhere.sql";
-// The role column or a variable holding one: `ur.role`, `"role"`, `(tm.role)::text`, `v_actor_role`.
-// A `_role` / `p_role` parameter is a seat label passed as data and is left alone.
+// A role column, a role list or a variable holding a role: `ur.role`, `"role"`, `(tm.role)::text`,
+// `requires_role`, `auto_assign_role`, `default_role`, `visible_to_roles`, `allowed_roles`,
+// `v_actor_role`. A `_role` / `p_role` parameter is a seat label passed as data and is left alone.
 const RR_LIT = String.raw`'[^']*'(?:\s*::\s*[\w.]+(?:\[\])?)*`;
-const RR_ROLE = String.raw`\(?\s*(?:\w+\.)?"?(?:v_\w*)?role"?\s*\)?(?:\s*::\s*[\w.]+)?\s*\)?`;
+const RR_NAME = String.raw`(?:v_\w*|requires_|auto_assign_|default_|allowed_|visible_to_)?roles?`;
+const RR_ROLE = String.raw`\(?\s*(?:\w+\.)?"?${RR_NAME}"?\s*\)?(?:\s*::\s*[\w.]+)?\s*\)?`;
 const RR_OP = String.raw`(?:=\s*any|<>\s*all|=|<>|!=|not\s+in(?![\w])|in(?![\w])|not\s+i?like(?![\w])|i?like(?![\w])|is\s+(?:not\s+)?distinct\s+from)`;
 // Kept character-for-character in step with the search in supabase/tests/title_role_read_nowhere.sql:
 // only constructs Postgres ARE and JavaScript read the same way (no \b, which is backspace in ARE).
@@ -197,13 +200,16 @@ export const SQL_RETIRED_ROLE_SOURCE = [
   String.raw`has_(?:any_|tenant_)?role\s*\((?:[^;()]|\([^()]*\))*'coach'`,
   // a role column or role variable compared to a literal list that holds it
   String.raw`(?:^|[^\w.])${RR_ROLE}\s*${RR_OP}\s*\(?\s*(?:array\s*\[\s*)?(?:${RR_LIT}\s*,\s*)*'coach'`,
-  // the same comparison written the other way round
-  String.raw`'coach'(?:\s*::\s*[\w.]+)*\s*(?:=|<>|!=)\s*\(?\s*(?:\w+\.)?"?(?:v_\w*)?role"?(?![\w])`,
+  // the same comparison written the other way round, including 'coach' = ANY (visible_to_roles)
+  String.raw`'coach'(?:\s*::\s*[\w.]+)*\s*(?:=|<>|!=)\s*(?:any\s*\(\s*|all\s*\(\s*)?\(?\s*(?:\w+\.)?"?${RR_NAME}"?(?![\w])`,
+  // a role list overlapping or containing it
+  String.raw`(?:^|[^\w.])${RR_ROLE}\s*(?:&&|@>)\s*\(?\s*(?:array\s*\[\s*)?(?:${RR_LIT}\s*,\s*)*'coach'`,
+  String.raw`(?:^|[^\w.])${RR_ROLE}\s*(?:&&|@>)\s*'\{[^'}]*(?<![\w])coach(?![\w])`,
   // an array literal of roles that holds it: '{admin,coach}'::app_role[], or = ANY ('{admin,coach}')
   String.raw`'\{[^'}]*(?<![\w])coach(?![\w])[^'}]*\}'\s*::\s*(?:public\.)?(?:app_role|tenant_role)\[\]`,
   String.raw`(?:^|[^\w.])${RR_ROLE}\s*(?:=\s*any|<>\s*all)\s*\(\s*'\{[^'}]*(?<![\w])coach(?![\w])`,
   // a CASE over a role that has a branch for it
-  String.raw`case\s+(?:\w+\.)?"?\w*role"?\s+(?:when\s+(?:(?!end(?![\w]))[^;])*?)?when\s+(?:${RR_LIT}\s*,\s*)*'coach'`,
+  String.raw`case\s+(?:\w+\.)?"?\w*roles?"?\s+(?:when\s+(?:(?!end(?![\w]))[^;])*?)?when\s+(?:${RR_LIT}\s*,\s*)*'coach'`,
 ].join("|");
 const SQL_RETIRED_ROLE_READ = new RegExp(SQL_RETIRED_ROLE_SOURCE, "i");
 const TS_RETIRED_ROLE = /["'`]coach["'`]/;
@@ -1487,6 +1493,12 @@ export function selfTestCases({ base, baseline }) {
       `CREATE FUNCTION public.selftest_rr_arrlit() RETURNS boolean LANGUAGE sql AS $$ SELECT EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.role = ANY('{admin,coach}')) $$;`)],
     ["(t) the comparison written the other way round: 'coach' = ur.role", "R7", addSql(
       `CREATE FUNCTION public.selftest_rr_rev() RETURNS boolean LANGUAGE sql AS $$ SELECT EXISTS (SELECT 1 FROM public.user_roles ur WHERE 'coach' = ur.role) $$;`)],
+    ["(t) a policy on an approval's required role: requires_role = 'coach'", "R7", addSql(
+      `CREATE POLICY selftest_rr_requires ON public.paige_pending_approvals USING (requires_role = 'coach');`)],
+    ["(t) a function checking a role list: 'coach' = ANY (visible_to_roles)", "R7", addSql(
+      `CREATE FUNCTION public.selftest_rr_visible(_v text[]) RETURNS boolean LANGUAGE sql AS $$ SELECT 'coach' = ANY (_v) OR EXISTS (SELECT 1 FROM public.paige_pending_approvals a WHERE 'coach' = ANY (a.visible_to_roles)) $$;`)],
+    ["(t) a view on a role list overlapping the value: allowed_roles && ARRAY['coach']", "R7", addSql(
+      `CREATE VIEW public.selftest_rr_allowed AS SELECT id FROM public.paige_workflow_registry WHERE allowed_roles && ARRAY['coach'];`)],
     ["(t) a named refusal re-created so it also reads the value to decide", "R4", (t) => {
       const e = need(baseline.retired_role_sql?.[0], "the baseline has no retired_role_sql entry");
       const key = signatureKey(e.function);
@@ -1540,6 +1552,8 @@ export function selfTestCases({ base, baseline }) {
       `export const threads = (sb: any) => sb.from("paige_chat_threads").select("id").eq("lens", "coach");\nexport type Tier = "external" | "coach" | "admin";\nexport const owner: "client" | "coach" | "paige" = "coach";\n`)],
     ["SQL that reads a role and names the value elsewhere: SELECT role INTO ... WHERE lens = 'coach'; SET role = 'member', lens = 'coach'", addSql(
       `CREATE FUNCTION public.selftest_rr_into() RETURNS void LANGUAGE plpgsql AS $$ DECLARE v_role text; BEGIN SELECT tm.role INTO v_role FROM public.tenant_members tm JOIN public.paige_chat_threads t ON t.caller_user_id = tm.user_id WHERE t.lens = 'coach'; UPDATE public.paige_chat_threads SET title = 'member', lens = 'coach' WHERE false; END $$;`)],
+    ["a role column compared to another role beside the value used as a lens", addSql(
+      `CREATE FUNCTION public.selftest_rr_other() RETURNS boolean LANGUAGE sql AS $$ SELECT EXISTS (SELECT 1 FROM public.paige_pending_approvals a JOIN public.paige_chat_threads t ON true WHERE a.requires_role = 'admin' AND t.lens = 'coach') $$;`)],
     ["a comment about the retired role beside a role check", addTs("src/selftest/rr-comment.ts",
       `// the platform-wide "coach" role grants nothing any longer\nexport const isOwner = (role: string) => role === "owner";\n`)],
     ["a display predicate and a display value named after owners", addTs("src/selftest/display.ts",

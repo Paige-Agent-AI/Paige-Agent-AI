@@ -5,9 +5,10 @@
 -- rebuilt database, not migration source, so it also judges the function bodies 20270504000000
 -- rewrote at run time: every function, procedure, policy and view, in every schema, is searched for
 -- the shapes a role read takes — the value cast to a role type; a role helper called with it; a role
--- column or a role variable (v_…role) compared to it (=, IN, = ANY, LIKE, IS DISTINCT FROM), either
--- way round, through casts and the parentheses Postgres adds when it stores a view or policy; it in
--- an array or array literal of roles; and a CASE over a role with a branch for it.
+-- column (role, requires_role, auto_assign_role, default_role), a role list (visible_to_roles,
+-- allowed_roles) or a role variable (v_…role) compared to it (=, IN, = ANY, LIKE, IS DISTINCT FROM,
+-- &&, @>), either way round, through casts and the parentheses Postgres adds when it stores a view
+-- or policy; it in an array or array literal of roles; and a CASE over a role with a branch for it.
 --
 -- The value is still allowed where it is data and not a role: a conversation lens, an assignment
 -- seat label, a message sender type, an assigned-role label. Those shapes are not role reads and are
@@ -24,7 +25,7 @@
 -- ============================================================================
 BEGIN;
 
-SELECT plan(16);
+SELECT plan(18);
 
 CREATE FUNCTION pg_temp.retired_role_reads() RETURNS SETOF text LANGUAGE sql STABLE AS $fn$
   WITH src AS (
@@ -45,7 +46,7 @@ CREATE FUNCTION pg_temp.retired_role_reads() RETURNS SETOF text LANGUAGE sql STA
   SELECT what FROM src
    -- The search below is character-for-character SQL_RETIRED_ROLE_SOURCE in
    -- scripts/ci/title-authority-guard.mjs; the guard fails if the two drift apart.
-   WHERE body ~* $re$'coach'(?:\s*::\s*\w+)*\s*::\s*(?:public\.)?(?:app_role|tenant_role)(?![\w])|has_(?:any_|tenant_)?role\s*\((?:[^;()]|\([^()]*\))*'coach'|(?:^|[^\w.])\(?\s*(?:\w+\.)?"?(?:v_\w*)?role"?\s*\)?(?:\s*::\s*[\w.]+)?\s*\)?\s*(?:=\s*any|<>\s*all|=|<>|!=|not\s+in(?![\w])|in(?![\w])|not\s+i?like(?![\w])|i?like(?![\w])|is\s+(?:not\s+)?distinct\s+from)\s*\(?\s*(?:array\s*\[\s*)?(?:'[^']*'(?:\s*::\s*[\w.]+(?:\[\])?)*\s*,\s*)*'coach'|'coach'(?:\s*::\s*[\w.]+)*\s*(?:=|<>|!=)\s*\(?\s*(?:\w+\.)?"?(?:v_\w*)?role"?(?![\w])|'\{[^'}]*(?<![\w])coach(?![\w])[^'}]*\}'\s*::\s*(?:public\.)?(?:app_role|tenant_role)\[\]|(?:^|[^\w.])\(?\s*(?:\w+\.)?"?(?:v_\w*)?role"?\s*\)?(?:\s*::\s*[\w.]+)?\s*\)?\s*(?:=\s*any|<>\s*all)\s*\(\s*'\{[^'}]*(?<![\w])coach(?![\w])|case\s+(?:\w+\.)?"?\w*role"?\s+(?:when\s+(?:(?!end(?![\w]))[^;])*?)?when\s+(?:'[^']*'(?:\s*::\s*[\w.]+(?:\[\])?)*\s*,\s*)*'coach'$re$
+   WHERE body ~* $re$'coach'(?:\s*::\s*\w+)*\s*::\s*(?:public\.)?(?:app_role|tenant_role)(?![\w])|has_(?:any_|tenant_)?role\s*\((?:[^;()]|\([^()]*\))*'coach'|(?:^|[^\w.])\(?\s*(?:\w+\.)?"?(?:v_\w*|requires_|auto_assign_|default_|allowed_|visible_to_)?roles?"?\s*\)?(?:\s*::\s*[\w.]+)?\s*\)?\s*(?:=\s*any|<>\s*all|=|<>|!=|not\s+in(?![\w])|in(?![\w])|not\s+i?like(?![\w])|i?like(?![\w])|is\s+(?:not\s+)?distinct\s+from)\s*\(?\s*(?:array\s*\[\s*)?(?:'[^']*'(?:\s*::\s*[\w.]+(?:\[\])?)*\s*,\s*)*'coach'|'coach'(?:\s*::\s*[\w.]+)*\s*(?:=|<>|!=)\s*(?:any\s*\(\s*|all\s*\(\s*)?\(?\s*(?:\w+\.)?"?(?:v_\w*|requires_|auto_assign_|default_|allowed_|visible_to_)?roles?"?(?![\w])|(?:^|[^\w.])\(?\s*(?:\w+\.)?"?(?:v_\w*|requires_|auto_assign_|default_|allowed_|visible_to_)?roles?"?\s*\)?(?:\s*::\s*[\w.]+)?\s*\)?\s*(?:&&|@>)\s*\(?\s*(?:array\s*\[\s*)?(?:'[^']*'(?:\s*::\s*[\w.]+(?:\[\])?)*\s*,\s*)*'coach'|(?:^|[^\w.])\(?\s*(?:\w+\.)?"?(?:v_\w*|requires_|auto_assign_|default_|allowed_|visible_to_)?roles?"?\s*\)?(?:\s*::\s*[\w.]+)?\s*\)?\s*(?:&&|@>)\s*'\{[^'}]*(?<![\w])coach(?![\w])|'\{[^'}]*(?<![\w])coach(?![\w])[^'}]*\}'\s*::\s*(?:public\.)?(?:app_role|tenant_role)\[\]|(?:^|[^\w.])\(?\s*(?:\w+\.)?"?(?:v_\w*|requires_|auto_assign_|default_|allowed_|visible_to_)?roles?"?\s*\)?(?:\s*::\s*[\w.]+)?\s*\)?\s*(?:=\s*any|<>\s*all)\s*\(\s*'\{[^'}]*(?<![\w])coach(?![\w])|case\s+(?:\w+\.)?"?\w*roles?"?\s+(?:when\s+(?:(?!end(?![\w]))[^;])*?)?when\s+(?:'[^']*'(?:\s*::\s*[\w.]+(?:\[\])?)*\s*,\s*)*'coach'$re$
 $fn$;
 
 CREATE TEMP TABLE retired_role_exempt(what text PRIMARY KEY, why text NOT NULL);
@@ -123,6 +124,15 @@ SELECT ok('policy public.user_roles rrn_policy' IN (SELECT r FROM pg_temp.retire
   'a policy casting the role to text, as Postgres stores it, is caught');
 SELECT ok('view public.rrn_view_literal' IN (SELECT r FROM pg_temp.retired_role_reads() r),
   'a view comparing a role to an array literal, as Postgres stores it, is caught');
+
+-- The other role columns and role lists: an approval's required role and who may see it.
+CREATE POLICY rrn_requires ON public.paige_pending_approvals USING (requires_role = 'coach');
+CREATE FUNCTION public.rrn_visible() RETURNS boolean LANGUAGE sql AS
+  $$ SELECT EXISTS (SELECT 1 FROM public.paige_pending_approvals a WHERE 'coach' = ANY (a.visible_to_roles)) $$;
+SELECT ok('policy public.paige_pending_approvals rrn_requires' IN (SELECT r FROM pg_temp.retired_role_reads() r),
+  'a policy comparing an approval''s required role to the value is caught');
+SELECT ok('function rrn_visible()' IN (SELECT r FROM pg_temp.retired_role_reads() r),
+  'a function checking the value against an approval''s visibility list is caught');
 
 -- 14. The value as data, not a role, is not a read: a lens, a seat label, a sender type, an assigned-role label,
 -- and a function that reads a role and names the value only as a lens.

@@ -914,6 +914,14 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run lint:title-authority:test
 
+      # The internal-vocabulary detector (`_shared/internal-vocabulary.ts`) reads what PAIGE says for
+      # text internal to the platform, with a vocabulary derived from what she was sent. Its unit tests
+      # are as much about what it must leave alone (titles, contact details, links, everyday words) as
+      # what it must catch. Section 29 of the client-memory-authz smoke drives it on the real handler.
+      - name: Internal-vocabulary detector (catches internal text, passes ordinary customer text)
+        if: ${{ !cancelled() }}
+        run: npm run test:internal-vocabulary
+
   web-fetch-hardening-smoke:
     # Its own job, deliberately on Node 22: the smoke imports the real
     # `_shared/ssrfGuard.ts`, whose `SsrfError` uses a TS parameter property that needs

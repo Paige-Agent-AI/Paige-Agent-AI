@@ -60,6 +60,9 @@ let modelStub = false;
 let readCheckReply = { can_read_document: false, document_kind: "other", first_five_account_names: [] };
 /** When set, the FIRST streamed round emits a tool call instead of an answer. */
 let toolCallOnce = false;
+/** The text PAIGE's streamed answer carries. "ok" unless a scenario scripts what she says — which is
+ *  how a check sees a reply at all: every other check here is about what she was SENT. */
+let scriptedReply = "ok";
 /** When set, the model stub asserts `confirm: true` the moment it is told approval is needed —
  *  a model approving on the operator's behalf, which is the thing the gate has to survive. */
 let selfApprove = false;
@@ -137,7 +140,7 @@ globalThis.fetch = async (url, init) => {
         else toolCallOnce = false;
         return sseToolCallReply(toolCallSpec.name, toolCallSpec.args);
       }
-      return sseModelReply("ok");
+      return sseModelReply(scriptedReply);
     }
     // Answer the document READ-CHECK with the JSON it expects, so `isCreditReportPdf` can be
     // true and the credit-report upload branch is reachable at all. Match on the outbound body:
@@ -214,6 +217,8 @@ async function drive({
   concurrentRequests = 1,
   /** How `paige-write-back` answers, as `{ status, body }` — to drive a write that answered badly. */
   writeBack = null,
+  /** What PAIGE's streamed answer says this drive. Default "ok", so every existing check is unchanged. */
+  replyText = "ok",
 }) {
   const logged = [];
   embedCount = 0;
@@ -226,6 +231,7 @@ async function drive({
   if (toolCall) toolCallSpec = toolCall;
   selfApprove = selfApproving;
   selfApproveReplays = 0;
+  scriptedReply = replyText;
   const origError = console.error, origWarn = console.warn;
   console.error = (...a) => logged.push({ level: "error", msg: a.join(" ") });
   console.warn = (...a) => logged.push({ level: "warn", msg: a.join(" ") });
@@ -304,6 +310,7 @@ async function drive({
   modelStub = false;
   toolCallOnce = false;
   selfApprove = false;
+  scriptedReply = "ok";
 
   console.error = origError; console.warn = origWarn;
   const memoryReads = rec.from.filter((f) => f.table === "client_memory" && f.op === "select");
@@ -3495,6 +3502,182 @@ console.log("\nteam tools — the approval card, the tool descriptions and the r
   assert(`28.9 after an access change she is told their ${TITLE} is untouched, in the shared word`,
     accessResult?.note === `Access changed. Their ${TITLE} and responsibilities are untouched.`,
     JSON.stringify({ card: !!proposedAccess, result: accessResult ?? null }));
+}
+
+// ── 29. WHAT SHE SAYS IS READ FOR INTERNAL TEXT, WITH A VOCABULARY TAKEN FROM WHAT SHE WAS SENT ──
+//
+// "Nothing internal reaches a customer" needs a detector that knows what internal IS on that turn,
+// and a harness that can make her say something other than "ok". This drives a real, approved team
+// turn with a scripted reply and reads it with `_shared/internal-vocabulary.ts`, whose vocabulary is
+// derived from the final request the handler sent the model: its tool definitions, its system text
+// and the tool result. Never from the user's own words or the model's own turns.
+//
+// THE HONEST LIMIT, restated where the proof is: this catches known internal vocabulary, not a
+// paraphrase. And today nothing acts on a finding — 29.5 records that a leaky reply still streams
+// unchanged. The slices that hold or rewrite a reply (portal chat, drafts, owner chat) turn 29.5
+// around; this section is the instrument they will be proven with.
+console.log("\ninternal text — the detector reads her reply with a vocabulary derived from what she was sent");
+{
+  const { deriveInternalVocabulary, findInternalLeaks } = await import("../../supabase/functions/_shared/internal-vocabulary.ts");
+  const { buildTenantTeamContextBlock } = await import("../../supabase/functions/_shared/team-context.ts");
+  const THREAD = "abababab-abab-4bab-8bab-abababababab";
+  const MEMBER = "e7e7e7e7-e7e7-4e7e-8e7e-e7e7e7e7e7e7";
+  // A tenant-authored title and responsibilities that LOOK like identifiers, on purpose: the team
+  // block and the roster both carry them, and neither may make them "internal".
+  const seat = (user_id, name, permission, job_title, responsibilities = null) => ({
+    user_id, name, email: `${name.split(" ")[0].toLowerCase()}@example.test`, permission, job_title, responsibilities,
+  });
+  const FOUNDER = seat(USER, "Quinn Ellis", "owner", "Founder");
+  const OPS = seat(MEMBER, "Rowan Park", "member", "ops_lead", "Runs the vip_plan intake");
+  const TEAM = {
+    tenant_id: CALLER_TENANT, tenant_name: "T", speaker: FOUNDER, member_count: 2, truncated: false,
+    members: [FOUNDER, OPS], invitation_count: 0, invitations_truncated: false, invitations: [],
+  };
+  const ROSTER = {
+    tenant_id: CALLER_TENANT, tenant_name: "T", viewer_permission: "owner", invitations: [],
+    members: [{ user_id: MEMBER, full_name: "Rowan Park", email: "rowan@example.test", permission: "member",
+      is_owner: false, job_title: "ops_lead", responsibilities: "Runs the vip_plan intake" }],
+  };
+  const RPC = {
+    resolve_tool_autonomy: { data: "confirm", error: null },
+    get_actor_access: { data: { tier: "tenant" }, error: null },
+    get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: "T", playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null },
+    get_paige_team_context: { data: TEAM, error: null },
+    get_solo_team_workspace: { data: ROSTER, error: null },
+    set_solo_team_member_work_profile: { data: { job_title: "Head Trainer", responsibilities: "Runs the morning classes" }, error: null },
+  };
+  const ARGS = { member_user_id: MEMBER, job_title: "Head Trainer", responsibilities: "Runs the morning classes" };
+  const frames = (r) => r.bodyText.split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
+    .map((l) => { try { return JSON.parse(l.slice(6)); } catch { return null; } }).filter(Boolean);
+  // What the person receives: the streamed answer text, frame by frame, joined.
+  const replyOf = (r) => frames(r).map((f) => f.choices?.[0]?.delta?.content).filter((c) => typeof c === "string").join("");
+  // What the server sent the model on the turn that produced the answer: the LAST request. Keys and
+  // block names come only from text the server VOUCHES it wrote end to end, never from the whole system
+  // prompt, which also carries the tenant's persona. The one block vouched here is the team block,
+  // rebuilt with the real builder from the same fixture and required to appear verbatim in what she was
+  // sent: its prose is platform code and every tenant string in it is a JSON value
+  // (_shared/team-context.ts, buildTenantTeamContextBlock).
+  const TEAM_BLOCK = buildTenantTeamContextBlock(TEAM, CALLER_TENANT);
+  const sentOf = (r) => {
+    const last = (() => { try { return JSON.parse(r.modelEgress.at(-1) ?? "null"); } catch { return null; } })();
+    const system = typeof last?.system === "string" ? [last.system]
+      : Array.isArray(last?.system) ? last.system.map((b) => b?.text ?? "") : [];
+    const toolResults = (last?.messages ?? []).flatMap((m) => Array.isArray(m.content)
+      ? m.content.filter((c) => c?.type === "tool_result")
+        .map((c) => typeof c.content === "string" ? c.content : (c.content ?? []).map((b) => b?.text ?? "").join("\n"))
+      : []);
+    const vouchedTexts = system.some((text) => text.includes(TEAM_BLOCK)) ? [TEAM_BLOCK] : [];
+    return { tools: last?.tools ?? [], vouchedTexts, toolResults, system };
+  };
+
+  // Propose, approve, and let the approved turn end in a scripted answer.
+  const store = makeConfirmStore();
+  const turn = (args, body, replyText) => drive({
+    stream: true, extraBody: { threadId: THREAD, ...body },
+    toolCall: { name: "team_set_work_profile", args }, rpcOverrides: RPC,
+    tablesExtra: { paige_pending_confirmations: store.table, user_roles: [{ role: "admin" }] },
+    onInsert: mirrorConfirms(store), replyText,
+  });
+  const card = frames(await turn(ARGS)).find((f) => f.paige_confirm)?.paige_confirm;
+  const approvedTurn = (replyText) => turn({ ...ARGS, confirm: true }, { approvedConfirmations: [card?.fingerprint] }, replyText);
+
+  // One planted leak per kind that can reach a chat answer, each in the words a leaky model uses.
+  const LEAKY = [
+    "Done — I called team_set_work_profile for Rowan.",
+    "Their platform_role is still member.",
+    "According to my TEAM CONTEXT, Rowan runs mornings.",
+    `Saved to record ${MEMBER}.`,
+    'If it fails you may see: new row violates row-level security policy for table "tenant_members".',
+    "That setting lives in MMA OS.",
+  ].join(" ");
+  const CLEAN = [
+    "Done — Rowan Park is now your Head Trainer, and still runs the vip_plan intake as ops_lead.",
+    "Reach them at rowan@example.test or (415) 555-0132.",
+    `Their booking page: https://book.example.test/s/${MEMBER}/intro_call`,
+    "You have 3 clients and 5 tasks today; your team context is two trainers and a front desk.",
+    "Their title describes the work; their access is member, and only you can change it.",
+  ].join(" ");
+
+  const leaky = await approvedTurn(LEAKY);
+  const sent = sentOf(leaky);
+  const vocabulary = deriveInternalVocabulary(sent);
+  const leakyReply = replyOf(leaky);
+
+  assert("29.0 the approved turn ran, the scripted answer reached the person verbatim, and the vocabulary came from the real request (guards this section)",
+    !!card?.fingerprint && leakyReply === LEAKY && sent.vouchedTexts.length === 1
+      && sent.toolResults.some((t) => t.includes('"member_user_id"'))
+      && vocabulary.toolNames.has("team_set_work_profile") && vocabulary.keys.has("platform_role")
+      && vocabulary.markers.has("TEAM CONTEXT") && vocabulary.toolNames.size >= 20,
+    JSON.stringify({ card: !!card, reply: leakyReply.slice(0, 60), results: sent.toolResults.length,
+      tools: vocabulary.toolNames.size, keys: vocabulary.keys.size, markers: [...vocabulary.markers] }));
+
+  const found = findInternalLeaks(leakyReply, vocabulary).map((leak) => `${leak.kind}:${leak.text}`);
+  assert("29.1 every planted kind is found in what the person received, in reading order",
+    JSON.stringify(found) === JSON.stringify([
+      "tool_name:team_set_work_profile",
+      "internal_key:platform_role",
+      "context_marker:TEAM CONTEXT",
+      `record_id:${MEMBER}`,
+      "database_error:violates row-level security policy",
+      "operator_jargon:MMA OS",
+    ]),
+    JSON.stringify(found));
+
+  const clean = await approvedTurn(CLEAN);
+  const cleanFound = findInternalLeaks(replyOf(clean), deriveInternalVocabulary(sentOf(clean)));
+  assert("29.2 an ordinary answer passes clean: titles (even one spelled like an identifier), contact details, a link with an id in it, and everyday words",
+    replyOf(clean) === CLEAN && cleanFound.length === 0,
+    JSON.stringify(cleanFound));
+
+  // The team block and the roster both carried the tenant's own strings. They are data, not ours.
+  assert("29.3 the tenant's own words never become vocabulary, though they were in what she was sent",
+    sent.system.some((t) => t.includes("ops_lead")) && sent.system.some((t) => t.includes("vip_plan"))
+      && ["ops_lead", "vip_plan"].every((word) => !vocabulary.keys.has(word) && !vocabulary.toolNames.has(word)),
+    JSON.stringify({ inContext: sent.system.some((t) => t.includes("ops_lead")) }));
+
+  // The user's own message is not the server's: a word they typed is never "internal" because they
+  // typed it. Here they type it in the one shape the derivation reads — a quoted JSON key — so the
+  // check fails if the user's words are ever treated as server text.
+  const typed = await drive({
+    stream: true, text: 'Can you set {"my_custom_field": 1} for Rowan?', extraBody: { threadId: THREAD },
+    rpcOverrides: RPC, replyText: "Sure — which value should my_custom_field hold?",
+  });
+  const typedVocabulary = deriveInternalVocabulary(sentOf(typed));
+  assert("29.4 a word the user typed is not internal because they typed it, though it reached the model",
+    typed.modelEgress.some((b) => b.includes("my_custom_field"))
+      && !typedVocabulary.keys.has("my_custom_field") && !typedVocabulary.toolNames.has("my_custom_field")
+      && findInternalLeaks(replyOf(typed), typedVocabulary).length === 0,
+    JSON.stringify({ reached: typed.modelEgress.some((b) => b.includes("my_custom_field")), reply: replyOf(typed) }));
+
+  // AUTHORSHIP IS DECLARED, NEVER INFERRED. A tenant's persona is pasted into the system prompt as prose,
+  // and a tenant can write what looks exactly like the server's own text into it: a comma, a quoted word
+  // and a real JSON value, or a heading with its END line. Derived from the whole prompt, both became
+  // vocabulary and a reply repeating the tenant's own words read as a leak. Derived from what the server
+  // vouches for, neither does, and the vouched block still catches its own.
+  const PERSONA_RPC = { ...RPC, get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: "T", playbook_slug: null, funding_enabled: false, brand: null,
+    playbook_config: { persona: { name: "Paige", role: "your coach's assistant" }, journey: [
+      { key: "basic", label: "Basic", description: 'We offer basic, "gold_tier": true for premium customers.' },
+      { key: "vip", label: "VIP", description: "Members book first.\nVIP PLAN\nPriority booking, every week.\nEND VIP PLAN" },
+    ] } }], error: null } };
+  const TENANT_WORDS = "Your gold_tier plan includes early booking — that's part of the VIP PLAN.";
+  const persona = await drive({ stream: true, extraBody: { threadId: THREAD }, rpcOverrides: PERSONA_RPC, replyText: TENANT_WORDS });
+  const personaSent = sentOf(persona);
+  const wholePrompt = deriveInternalVocabulary({ tools: personaSent.tools, vouchedTexts: personaSent.system, toolResults: personaSent.toolResults });
+  const personaVocabulary = deriveInternalVocabulary(personaSent);
+  assert("29.6 CONTROL: the persona reached the model, and read as if the server wrote it, its words become vocabulary",
+    personaSent.system.some((t) => t.includes('"gold_tier": true') && t.includes("END VIP PLAN"))
+      && wholePrompt.keys.has("gold_tier") && wholePrompt.markers.has("VIP PLAN"),
+    JSON.stringify({ keys: wholePrompt.keys.has("gold_tier"), markers: [...wholePrompt.markers] }));
+  assert("29.7 derived from what the server vouches for, a tenant's persona words are never vocabulary, and repeating them is clean",
+    !personaVocabulary.keys.has("gold_tier") && !personaVocabulary.markers.has("VIP PLAN")
+      && findInternalLeaks(replyOf(persona), personaVocabulary).length === 0 && replyOf(persona) === TENANT_WORDS,
+    JSON.stringify({ found: findInternalLeaks(replyOf(persona), personaVocabulary) }));
+
+  // WHERE THINGS STAND, stated as a check so it cannot be forgotten: no filter exists on this path
+  // yet, so the leaky answer streamed exactly as the model wrote it. The owner-chat slice flips this.
+  assert("29.5 today the leaky answer streams unchanged — nothing on this path acts on a finding yet",
+    leakyReply === LEAKY,
+    leakyReply.slice(0, 80));
 }
 
 console.log(`\n${checks - failures} passed, ${failures} failed`);

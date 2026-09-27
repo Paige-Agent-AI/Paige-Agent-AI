@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: no line in src/operator/CLAUDE.md, operatorIA.ts header or 
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: NONE_AFFECTED: comments and nested doctrine only; operatorIA.test.ts still pins the IA module to paige-ia.js and passes unchanged
 
-INTERNAL_BUILD_IDENTITY: e9863546ea28f83b51cbe91f0aae249aabbf1f72; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=base commit named here plus this PR's comment-only diff
+INTERNAL_BUILD_IDENTITY: 915f657ecf9627c78be75d25d0db9be0d4d4ff26; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=915f657 is the last commit carrying the doctrine and comment change (210ce78 strikes the operator doctrine and comments, 915f657 aligns AGENTS.md); commits after it change only this record; reviewed by Codex on 210ce78 and 915f657
 RELEASE_CHANNEL: development: pre-merge branch build; comments and doctrine do not alter the shipped bundle's behavior
 RELEASE_CLASSIFICATION: internal-only: agent doctrine and code comments
 CUSTOMER_RELEASE_IDENTITY: none: internal-only doctrine change, no customer release
@@ -41,7 +41,7 @@ RELEASE_RECOVERY: position=revert the commit; reference=git revert of this PR's 
 - Affected flows: an agent session reading operator guidance before editing the console.
 - Neighboring regressions: none; no code path changes.
 - Active-owner/file collisions: none known on these three files.
-- Explicit exclusions: other operator files still cite "Ruling F (Claude Design)" in comments (IntegrationsSurface, ComposeOutbound, FleetAlertRulesSurface) these are outside the approved slice and are routed at settlement rather than edited here. AGENTS.md line 77 ("faithfully port the approved Claude Design pack") was first excluded too, but the Codex review on 210ce78 (P1) showed it directly contradicts the struck operator doctrine, so it is aligned to §00 in this PR.
+- Explicit exclusions: other operator files still cite "Ruling F (Claude Design)" in comments (IntegrationsSurface, ComposeOutbound, FleetAlertRulesSurface); these are outside the approved slice and are routed at settlement rather than edited here. AGENTS.md line 77 ("faithfully port the approved Claude Design pack") was first excluded too, but the Codex review on 210ce78 (P1) showed it directly contradicts the struck operator doctrine, so it is aligned to §00 in this PR.
 
 ## User job and state map
 
@@ -55,4 +55,4 @@ Not applicable to an end user. The builder's job: read `src/operator/CLAUDE.md` 
 
 ## Review and limitations
 
-Self-reviewed line by line, lower assurance. Remaining Claude Design authority phrasing in other operator comments and in `AGENTS.md` is recorded above as out of slice scope.
+Self-reviewed line by line, plus Codex review: on 210ce78 one P1 (AGENTS.md line 77 contradicted the struck doctrine) — fixed in 915f657 by aligning AGENTS.md to §00; on 915f657 one P1 (this record's build identity named the parent commit) and one P2 (this section still listed AGENTS.md as out of scope) — both fixed in this record. Remaining Claude Design authority phrasing is only in the three operator component comments named above, recorded as out of slice scope.

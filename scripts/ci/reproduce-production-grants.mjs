@@ -319,6 +319,9 @@ function reconcile() {
   if (r.status !== 0) {
     fail(`Production grants could not be reproduced in the rebuilt database.\n${errLines.filter((l) => /error|DETAIL|SCHEMA DRIFT/i.test(l)).join("\n")}`);
   }
+  // --report-missing turns drift into a NOTICE; print it, so a reported object is seen, not swallowed.
+  const drift = errLines.filter((l) => /NOTICE:\s+SCHEMA DRIFT/.test(l));
+  if (drift.length) console.error(drift.join("\n"));
   // A GRANT/REVOKE on an object the job cannot act for is a WARNING that changes nothing.
   const noop = errLines.filter((l) => /WARNING:\s+no privileges (could be|were) (granted|revoked)/.test(l));
   if (noop.length) fail(`${noop.length} grant statement(s) changed nothing (an object owned by a role this job cannot act for); the reconcile is incomplete.`);

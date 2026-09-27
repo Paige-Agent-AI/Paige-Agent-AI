@@ -192,6 +192,36 @@ describe("WorkspaceExitControl", () => {
       expect(location()).toBe("/solo/1/command-center");
       release();
     });
+
+    // Codex review of #1547 (2026-09-27): the lock was taken only after the guard resolved, so a
+    // second press while the guard was still asking ran a second audited exit — and the server
+    // records an exit even from no tenant.
+    it("records one exit for presses made while the guard is still asking", async () => {
+      const asking: Array<(v: boolean) => void> = [];
+      const release = registerAccountSwitchGuard(() => new Promise<boolean>((resolve) => { asking.push(resolve); }));
+      const { exit } = await render();
+      await act(async () => {
+        const b = exit();
+        b?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        b?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+      // Every question the guard was asked is answered yes; only one exit may follow.
+      await act(async () => { asking.forEach((yes) => yes(true)); });
+      expect(h.ctx.switchTenant).toHaveBeenCalledTimes(1);
+      release();
+    });
+
+    it("can be pressed again once the guard has refused", async () => {
+      let allow = false;
+      const release = registerAccountSwitchGuard(async () => allow);
+      const { exit } = await render();
+      await act(async () => { exit()?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(h.ctx.switchTenant).not.toHaveBeenCalled();
+      allow = true;
+      await act(async () => { exit()?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(h.ctx.switchTenant).toHaveBeenCalledTimes(1);
+      release();
+    });
   });
 
   it("offers no Exit tenant to a member, or to an operator at rest", async () => {

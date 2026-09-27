@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CornerUpLeft, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -90,20 +90,29 @@ function OperatorExitControl() {
   const navigate = useNavigate();
   const { activeTenant, activeTenantId, switchTenant } = useTenantContext();
   const [leaving, setLeaving] = useState(false);
+  // Taken synchronously, BEFORE the guard is asked: state set after an await lets a second press
+  // through, and the server records an exit even from no tenant, so one gesture would leave two
+  // receipts. Held after a successful exit, released on either refusal.
+  const exiting = useRef(false);
   const name = activeTenant?.name ?? "this tenant";
 
   const exit = async () => {
-    if (leaving) return;
+    if (exiting.current) return;
+    exiting.current = true;
     // Unsaved work lives in this shell, so the guard runs here, for the same reason as below.
     const allowed = await allowAccountSwitch({
       fromTenantId: activeTenantId ?? null,
       toTenantId: null,
       toTenantName: "Platform",
     });
-    if (!allowed) return;
+    if (!allowed) {
+      exiting.current = false;
+      return;
+    }
     setLeaving(true);
     const exited = await switchTenant(null);
     if (!exited) {
+      exiting.current = false;
       setLeaving(false);
       toast.error(`Couldn't leave ${name}. You are still acting as this tenant.`);
       return;

@@ -4152,6 +4152,14 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
   assert("31.7 a stored card whose message carries internal text sends nothing when approved, and PAIGE is told why",
     !!cleanCard && sends(approvedStale).length === 0 && refusedAsInternal(approvedStale) && toldModel(approvedStale).includes("Nothing was sent."),
     JSON.stringify({ consumed: staleStore.rows[0].consumed, sends: sends(approvedStale).length, refused: refusedAsInternal(approvedStale) }));
+  // The usual approval: the model re-sends the card's own arguments. The gate claims the card first, so the
+  // refusal is where it runs, and the card says so, rather than a refusal before the gate that leaves the
+  // card unclaimed and the owner told only that Paige didn't run it.
+  const sameStore = storedCard(`Pick a time. ${PLANTS[0][1]}`);
+  const approvedSame = await linkDrive(sameStore, linkArgs(`Pick a time. ${PLANTS[0][1]}`), { approvedConfirmations: ["dddddddddddddddd"] });
+  assert("31.7c ...and so does the usual approval, where PAIGE re-sends the card's own message",
+    sameStore.rows[0].consumed && sends(approvedSame).length === 0 && refusedAsInternal(approvedSame) && toldModel(approvedSame).includes("Nothing was sent."),
+    JSON.stringify({ consumed: sameStore.rows[0].consumed, sends: sends(approvedSame).length, refused: refusedAsInternal(approvedSame) }));
   // What the owner's card says for it: the server's one sentence, and the action marked as not run.
   const staleOutcome = approvedStale.bodyText.split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
     .map((l) => { try { return JSON.parse(l.slice(6)); } catch { return null; } })
@@ -4250,6 +4258,51 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
   const alone = await propose(KEY_BODY);
   assert("31.16 CONTROL: the same draft as the turn's only call files", approvalsFiled(alone).length === 1 && !refusedAsInternal(alone),
     JSON.stringify({ filed: approvalsFiled(alone).length }));
+
+  // A refused draft did not run: it renders no step in the owner's chat and is not audited as a failed
+  // write. The control shows the step and the audit row a filed one does leave, so the readers work.
+  const actionSteps = (r) => frames(r).filter((f) => f.paige_step?.kind === "action").map((f) => f.paige_step.label);
+  const audited = (r) => (r.rec.inserts ?? []).filter((i) => i.table === "paige_audit_log");
+  const refusedFiling = await fileAction("client.portal_recommendation", "surface_to_client", `Your next step. ${PLANTS[0][1]}`);
+  const cleanFiling = await fileAction("client.portal_recommendation", "surface_to_client", "Book your next session");
+  assert("31.20 a refused draft renders no step and is not audited as a write",
+    refusedAsInternal(refusedFiling) && actionSteps(refusedFiling).length === 0 && audited(refusedFiling).length === 0,
+    JSON.stringify({ steps: actionSteps(refusedFiling), audited: audited(refusedFiling).length }));
+  assert("31.20 CONTROL: a filed one renders its step and is audited",
+    actionSteps(cleanFiling).length === 1 && audited(cleanFiling).length >= 1,
+    JSON.stringify({ steps: actionSteps(cleanFiling), audited: audited(cleanFiling).length }));
+
+  // A body sent as a list is read string by string: the queue would store it joined into one message.
+  const listed = await propose(["Hi Dana,", PLANTS[0][1]]);
+  assert("31.17 a drafted email whose body arrives as a list is read too, and not filed",
+    approvalsFiled(listed).length === 0 && refusedAsInternal(listed), JSON.stringify({ filed: approvalsFiled(listed).length }));
+
+  // A follow-up action is read for what advance_action delivers for its kind, and nothing else: an
+  // owner-only kind's draft is the owner's, and a draft's ids and channel are the server's.
+  const advanceKnown = (row, executor, args) => drive({ stream: true, extraBody: { threadId: THREAD },
+    toolCall: { name: "action_advance", args: { action_id: ACTION, ...args } }, ...lane("auto"),
+    tablesExtra: { user_roles: [{ role: "admin" }], paige_actions: () => [{ id: ACTION, ...row }], paige_action_kinds: () => [{ executor }] } });
+  const ownerOnlyDraft = await advanceKnown({ status: "filed", action_kind: "exec.compile_brief", title: "Weekly brief" }, "record_only",
+    { to_status: "drafted", draft_content: { brief: "Retry update_client_data for Dana" } });
+  assert("31.18 an owner-only action's draft is not read here (it never reaches a customer)",
+    rpcsNamed(ownerOnlyDraft, "advance_action").length === 1 && !refusedAsInternal(ownerOnlyDraft),
+    JSON.stringify({ advanced: rpcsNamed(ownerOnlyDraft, "advance_action").length, refused: refusedAsInternal(ownerOnlyDraft) }));
+  const withIds = await advanceKnown({ status: "filed", action_kind: "client.follow_up", title: "Follow up" }, "send_via_approval",
+    { to_status: "drafted", draft_content: { channel: "email", contact_id: OWN, subject: "Checking in", body: "Hi Dana, how was your week?" } });
+  assert("31.18 CONTROL: a customer email's contact id and channel are not read as its text",
+    rpcsNamed(withIds, "advance_action").length === 1 && !refusedAsInternal(withIds),
+    JSON.stringify({ advanced: rpcsNamed(withIds, "advance_action").length, refused: refusedAsInternal(withIds) }));
+
+  // Executing a portal action shows the client its STORED title and draft, which nothing attached now carries.
+  const surface = (title) => advanceKnown({ status: "drafted", action_kind: "client.portal_recommendation", title, summary: "Next step",
+    draft_content: { body: "Book your next session when it suits you." } }, "surface_to_client", { to_status: "executing" });
+  const storedLeak = await surface(`Your next step. ${PLANTS[1][1]}`);
+  assert("31.19 executing a portal action whose stored title carries internal text shows the client nothing",
+    rpcsNamed(storedLeak, "advance_action").length === 0 && refusedAsInternal(storedLeak),
+    JSON.stringify({ advanced: rpcsNamed(storedLeak, "advance_action").length, refused: refusedAsInternal(storedLeak) }));
+  const surfacedClean = await surface("Your next step");
+  assert("31.19 CONTROL: executing a clean portal action runs", rpcsNamed(surfacedClean, "advance_action").length === 1 && !refusedAsInternal(surfacedClean),
+    JSON.stringify({ advanced: rpcsNamed(surfacedClean, "advance_action").length }));
 }
 
 console.log(`\n${checks - failures} passed, ${failures} failed`);

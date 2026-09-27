@@ -4,23 +4,27 @@
  * which fields of which tools a customer reads, and the refusal PAIGE is handed when one of them
  * carries internal text.
  *
- * THE CUSTOMER-BOUND FIELDS, per tool, and nothing else:
+ * THE CUSTOMER-BOUND FIELDS, per tool: what the send path actually delivers, and nothing else.
  *   - propose_action: the email's subject and the message body. The summary is the owner's line in the
  *     approvals queue, not the customer's.
  *   - calendar_link_send: the subject and the custom message. The booking link itself is the server's.
- *   - action_advance: every string in the draft it attaches. A draft is outbound by nature: the bus files
- *     it for approval and sends it, or shows it in the client's portal.
- *   - action_file: the title and summary, and only for a kind whose executor reaches a customer
- *     (`send_via_approval`, `surface_to_client`). A portal recommendation with no draft shows its title
- *     and summary to the client; an owner-only kind's title is the owner's.
- * A field that is not a string is not read, and neither is anything else a tool carries (ids, channels,
- * recipients), which the server resolves itself.
+ *   - action_file: the title and summary, for a kind whose executor reaches a customer
+ *     (`send_via_approval`, `surface_to_client`). An owner-only kind's title is the owner's.
+ *   - action_advance: what `advance_action` delivers for the action's kind. For `send_via_approval`, when the
+ *     action is drafted: the draft's subject and its body (or message), which the approval lane sends. For
+ *     `surface_to_client`, when it is drafted or executed: the action's title and the draft's body (or its
+ *     summary), which the client's portal shows. The draft is the one attached now, or the stored one when
+ *     none is attached. Other statuses deliver nothing.
+ * Ids, channels and recipients are never read: the server resolves them. A value the send path would turn
+ * into text (an array, say, which `String()` joins) is read string by string, so a list is not a way past.
+ * A kind, or an action, the caller could not look up is read by every route, never waved through.
  *
  * THE VOCABULARY is the caller's, from the same turn: the tool definitions, the text the caller vouches
- * for, and the tool results so far, exactly as R3 reads a client's answer. So a clean result means none
+ * for, and every tool result PAIGE has been sent, exactly as R3 reads a client's answer. So a clean result means none
  * of the known vocabulary, never "nothing internal".
  *
- * PURE: no I/O. The caller looks up the action kind's executor and passes the answer.
+ * PURE: no I/O. The caller looks up the kind's executor, and for action_advance the stored action, and
+ * passes what it found.
  */
 
 import { deriveInternalVocabulary, findInternalLeaks, type InternalLeak } from "./internal-vocabulary.ts";
@@ -33,28 +37,65 @@ export const CUSTOMER_REACHING_EXECUTORS: ReadonlySet<string> = new Set(["send_v
 
 const MAX_DEPTH = 4;
 
-function stringsOf(values: readonly unknown[]): string[] {
-  return values.filter((v): v is string => typeof v === "string" && v.trim().length > 0);
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
-/** Every string inside a draft object, to a bounded depth (a draft is small; a deeper value is not a message). */
+/** Every string inside a value, to a bounded depth (a draft is small; a deeper value is not a message). */
 function stringsIn(value: unknown, depth = 0): string[] {
   if (typeof value === "string") return value.trim() ? [value] : [];
   if (depth >= MAX_DEPTH || !value || typeof value !== "object") return [];
   return Object.values(value as Record<string, unknown>).flatMap((v) => stringsIn(v, depth + 1));
 }
 
-/**
- * The text a customer may read from one call of `tool`. `kindReachesCustomer` answers, for action_file,
- * whether the kind's executor reaches a customer; the caller passes true when it could not find out, so
- * an unknown kind is read rather than waved through.
- */
-export function customerBoundTexts(tool: string, args: Record<string, unknown>, options: { kindReachesCustomer?: boolean } = {}): string[] {
+/** The text in each field: a string as it is, a list or object string by string, anything else nothing. */
+function textsOf(values: readonly unknown[]): string[] {
+  return values.flatMap((value) => stringsIn(value));
+}
+
+/** The action as it is stored, for action_advance: what a status change delivers when no draft is attached. */
+export interface StoredAction {
+  status?: unknown;
+  title?: unknown;
+  summary?: unknown;
+  draft_content?: unknown;
+}
+
+export interface DraftContext {
+  /** The executor the registry names for the kind; absent when the caller could not find out. */
+  executor?: string;
+  /** action_advance: the action as stored; absent when the caller could not read it. */
+  stored?: StoredAction;
+}
+
+function reachesCustomer(executor: string | undefined): boolean {
+  return executor === undefined || CUSTOMER_REACHING_EXECUTORS.has(executor);
+}
+
+function advanceTexts(args: Record<string, unknown>, { executor, stored }: DraftContext): string[] {
+  const named = (v: unknown) => (typeof v === "string" && v.trim() ? v : undefined);
+  // advance_action moves to `p_to_status`, or re-runs the stored status when none is given. When neither is
+  // known, drafted is assumed: it is the one status that takes a new draft.
+  const next = named(args.to_status) ?? named(stored?.status) ?? "drafted";
+  if (next !== "drafted" && next !== "executing") return [];
+  const attached = args.draft_content ?? undefined;
+  const draft = next === "drafted" && attached !== undefined ? attached : stored?.draft_content;
+  const d = isRecord(draft) ? draft : {};
+  const message = [d.subject, d.body ?? d.message];
+  const surfaced = [stored?.title, d.body ?? stored?.summary ?? stored?.title];
+  if (executor === "send_via_approval") return next === "drafted" ? textsOf(message) : [];
+  if (executor === "surface_to_client") return textsOf(surfaced);
+  if (executor !== undefined) return [];
+  return [...new Set(textsOf([...message, ...surfaced]))];
+}
+
+/** The text a customer may read from one call of `tool`, given what the caller found out (see above). */
+export function customerBoundTexts(tool: string, args: Record<string, unknown>, context: DraftContext = {}): string[] {
   switch (tool) {
-    case "propose_action": return stringsOf([args.subject, args.body]);
-    case "calendar_link_send": return stringsOf([args.subject, args.message]);
-    case "action_advance": return stringsIn(args.draft_content);
-    case "action_file": return options.kindReachesCustomer === false ? [] : stringsOf([args.title, args.summary]);
+    case "propose_action": return textsOf([args.subject, args.body]);
+    case "calendar_link_send": return textsOf([args.subject, args.message]);
+    case "action_file": return reachesCustomer(context.executor) ? textsOf([args.title, args.summary]) : [];
+    case "action_advance": return advanceTexts(args, context);
     default: return [];
   }
 }

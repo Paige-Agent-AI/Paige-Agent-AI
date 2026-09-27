@@ -73,6 +73,21 @@
  *         function is authorization-shaped (`function canApprove(m) { if (m.job_title ===
  *         "Manager") return true; ... }`, and the same as an arrow bound to `canApprove`).
  *         A TS entry that no longer matches fails under R4.
+ *   Both halves:
+ *     R7  the retired title role is read nowhere. "coach" is a title a business gives its people,
+ *         never a role. SQL: a function, procedure, policy or view whose last definition comes AFTER
+ *         20270504000000 fails if it casts the value to a role type, calls a role helper with it,
+ *         compares a role column to it (= / IN / = ANY / IS DISTINCT FROM) or puts it in a
+ *         role-typed array. Definitions at or before that migration were rewritten by it at run time,
+ *         which a source replay cannot follow; supabase/tests/title_role_read_nowhere.sql judges
+ *         them, and everything else, on the live catalogue of the rebuilt database. TS: a statement
+ *         that names the value in a string and carries a role word as code (role, roles, app_role,
+ *         tenant_role, Enums, a permission word, has…Role, a type named so), or sits in a function
+ *         named so, fails. The only exemptions are code that reads the value to refuse it or to
+ *         remove it, pinned in "retired_role_sql" / "retired_role_ts"; a policy or view has none.
+ *         The value as data (a lens, a tier, a seat label passed as p_role) carries no role word and
+ *         passes. Limit: a JSX <option value="coach"> whose role word sits on a different element
+ *         (the enclosing <select value={permission}>) is not seen.
  *
  * A column is matched with word boundaries, so a writer's `_job_title` PARAMETER is an input and
  * does not count, while `tm.job_title`, `SET job_title = ...` and `'job_title', x.job_title` do.
@@ -152,6 +167,29 @@ const WATCHED_TABLE_NAMED = new RegExp(`\\b(${[...WATCHED_TABLES].map((t) => t.s
 const TITLE_LIKE_COLUMN = /title|responsib/i;
 const HELPER_NAME = /(^|_)(is|has|can|may|assert)_|(^|_)(guard|enforce|ensure|require|authz)(_|$)|^(check_|current_user_|authorize)|authority|permission|permitted|allowed|access/i;
 const PURPOSES = new Set(["display", "write", "search", "invite-copy"]);
+
+// R7 — the retired title role. "coach" is a title a business gives its people, never a role, and no
+// permission may read it. 20270504000000 rewrote the older function bodies that read it AT RUN TIME
+// (regexp_replace over pg_get_functiondef, then EXECUTE), which a source replay cannot follow: a
+// definition whose last CREATE is at or before that migration shows the pre-rewrite text here. Those
+// are judged on the live catalogue of the rebuilt database by supabase/tests/title_role_read_nowhere.sql;
+// this rule judges every definition made after it, where the replayed text is the text that runs.
+const RETIRED_ROLE_REWRITTEN_THROUGH = "20270504000000";
+const SQL_RETIRED_ROLE_READ = new RegExp([
+  String.raw`'coach'\s*::\s*(?:public\.)?(?:app_role|tenant_role)\b`,
+  String.raw`has_(?:any_|tenant_)?role\s*\([^;]*'coach'`,
+  String.raw`(?:^|[^\w.])(?:\w+\.)?role(?:::text)?\s*(?:=|<>|!=|not\s+in|in|is\s+(?:not\s+)?distinct\s+from|=\s*any|<>\s*all)\s*\(?[^;)]*'coach'`,
+  String.raw`'coach'[^;]*\]\s*::\s*(?:public\.)?(?:app_role|tenant_role)\[\]`,
+].join("|"), "i");
+const TS_RETIRED_ROLE = /["'`]coach["'`]/;
+const TS_ROLE_WORDS = new Set(["role", "roles", "app_role", "tenant_role", "appRole", "tenantRole", "AppRole", "TenantRole", "Enums"]);
+function isRoleWord(word) {
+  if (!word) return false;
+  if (TS_ROLE_WORDS.has(word)) return true;
+  const p = parts(word);
+  if (p.includes("permission") || p.includes("permissions")) return true;
+  return p[0] === "has" && (p.includes("role") || p.includes("roles"));
+}
 
 // Holes stand for SQL text computed at run time. Both are valid identifiers, so a hole in a name
 // position still parses; `<dynamic>` is the placeholder table a policy on a hole-named table gets.
@@ -964,6 +1002,31 @@ export function tsDecisionSites(path, src) {
   return hits;
 }
 
+/**
+ * Every statement in one TS/TSX source that reads the retired title role (R7): it names the value in
+ * a string literal and either carries a role word (role, roles, app_role, tenant_role, Enums, a
+ * permission word, has…Role) as code, or sits in a function whose name carries one. The value as data
+ * — a lens, a tier, a seat label passed as p_role — carries no role word and stays quiet.
+ */
+export function tsRetiredRoleSites(path, src) {
+  if (!TS_RETIRED_ROLE.test(src)) return [];
+  const tsx = path.endsWith(".tsx");
+  const { code, masked } = lexTs(src);
+  const hits = [];
+  for (const { start, end } of pieces(masked)) {
+    const text = code.slice(start, end);
+    if (!TS_RETIRED_ROLE.test(text)) continue;
+    // A type or interface name reads as prose to codeWords (`type TeamPermission = ...`), so it is read here.
+    const declared = /\b(?:type|interface)\s+([A-Za-z_$][\w$]*)/.exec(text)?.[1];
+    const reads = codeWords(text, tsx).some(isRoleWord) || isRoleWord(declared) || isRoleWord(enclosingFunctionName(masked, start));
+    if (!reads) continue;
+    const statement = text.replace(/\s+/g, " ").trim();
+    const lead = text.length - text.trimStart().length;
+    hits.push({ path, line: code.slice(0, start + lead).split("\n").length, fingerprint: fingerprint(statement), statement });
+  }
+  return hits;
+}
+
 // ── the guard ─────────────────────────────────────────────────────────────────────────────────
 
 const TS_ROOTS = [["src", /\.(ts|tsx)$/], ["supabase/functions", /\.ts$/]];
@@ -997,6 +1060,7 @@ export function readTree(root = ROOT) {
 }
 
 const siteCache = new WeakMap();
+const rrCache = new WeakMap();
 
 /** `seed`, when given, is the replayed state `migrations` are applied on top of (the self-test uses it). */
 export function analyze({ migrations, tsFiles, baseline, seed }) {
@@ -1159,6 +1223,56 @@ export function analyze({ migrations, tsFiles, baseline, seed }) {
   }
   for (const k of tsEntries.keys()) {
     if (!seen.has(k)) fail("R4", `baseline entry ${k} matches no current TS decision site — remove it (the baseline only shrinks)`);
+  }
+
+  // R7 — the retired title role is read nowhere. SQL: every function, policy and view last defined
+  // AFTER the run-time rewrite (see RETIRED_ROLE_REWRITTEN_THROUGH); a named refusal or removal path
+  // is exempt only while pinned to the body a reviewer read. TS: every statement that reads it.
+  const judged = (file) => String(file ?? "").slice(0, 14) > RETIRED_ROLE_REWRITTEN_THROUGH;
+  const rrEntries = new Map();
+  for (const e of baseline.retired_role_sql ?? []) {
+    const key = signatureKey(String(e.function ?? ""));
+    if (!key) { fail("R7", `retired_role_sql entry ${JSON.stringify(e.function)} is not a function signature like public.name(uuid, text)`); continue; }
+    if (!String(e.reason ?? "").trim()) fail("R7", `retired_role_sql entry ${key} has no reason`);
+    if (!String(e.defined_in ?? "").trim() || !/^[0-9a-f]{16}$/.test(String(e.fingerprint ?? ""))) fail("R7", `retired_role_sql entry ${key} is not pinned — it needs "defined_in" and "fingerprint" so a changed body cannot keep a reviewed name`);
+    rrEntries.set(key, e);
+  }
+  const rrReaders = new Map();
+  const rrWhy = "a permission may never read the retired title role — \"coach\" is a title a business gives its people, never a role";
+  for (const [key, f] of fns) {
+    if (!judged(f.file) || !SQL_RETIRED_ROLE_READ.test(stripSqlComments(f.text))) continue;
+    rrReaders.set(key, f);
+    if (!rrEntries.has(key)) fail("R7", `${f.kind ?? "function"} ${key} (last defined in ${f.file}) reads the retired title role — ${rrWhy}. If it reads the value only to refuse or remove it, add it to "retired_role_sql" pinned to "defined_in": "${f.file}", "fingerprint": "${fingerprint(f.text)}" with a reason`);
+  }
+  for (const [key, p] of policies) {
+    if (judged(p.file) && SQL_RETIRED_ROLE_READ.test(stripSqlComments(`${p.using}\n${p.check}`))) fail("R7", `policy ${key} (last defined in ${p.file}) reads the retired title role — ${rrWhy}; no exemption exists`);
+  }
+  for (const [key, v] of views) {
+    if (judged(v.file) && SQL_RETIRED_ROLE_READ.test(stripSqlComments(v.text))) fail("R7", `view ${key} (last defined in ${v.file}) reads the retired title role — ${rrWhy}; no exemption exists`);
+  }
+  for (const [key, e] of rrEntries) {
+    const live = rrReaders.get(key);
+    if (!live) { fail("R4", `retired_role_sql entry ${key} matches no live function that reads the retired title role — remove it (the list only shrinks)`); continue; }
+    const fp = fingerprint(live.text);
+    if (e.defined_in !== live.file || e.fingerprint !== fp) fail("R4", `retired_role_sql entry ${key}: reviewed body changed since review — re-read it and re-pin (reviewed: ${e.defined_in} @ ${e.fingerprint}; live: ${live.file} @ ${fp})`);
+  }
+  const rrTs = new Map();
+  for (const e of baseline.retired_role_ts ?? []) {
+    const k = `${e.path} :: ${e.fingerprint}`;
+    if (!String(e.reason ?? "").trim()) fail("R7", `retired_role_ts entry ${k} has no reason`);
+    rrTs.set(k, e);
+  }
+  const rrSeen = new Set();
+  for (const file of tsFiles) {
+    if (!rrCache.has(file)) rrCache.set(file, tsRetiredRoleSites(file.path, file.text));
+    for (const h of rrCache.get(file)) {
+      const k = `${h.path} :: ${h.fingerprint}`;
+      rrSeen.add(k);
+      if (!rrTs.has(k)) fail("R7", `${h.path}:${h.line} reads the retired title role — ${rrWhy}. If a reviewer confirms it only refuses or removes the value, baseline { "path": "${h.path}", "fingerprint": "${h.fingerprint}" } in "retired_role_ts" with a reason. Statement: ${h.statement.slice(0, 180)}`);
+    }
+  }
+  for (const k of rrTs.keys()) {
+    if (!rrSeen.has(k)) fail("R4", `retired_role_ts entry ${k} matches no current TS statement — remove it (the list only shrinks)`);
   }
 
   return { violations, readers: readers.size, policies: policies.size, dynamicPolicies, views: views.size, tsSites: seen.size };
@@ -1441,7 +1555,7 @@ function main() {
     for (const v of violations) console.error(`  ${v}`);
     return 1;
   }
-  console.log(`title-authority-guard: PASS (R0–R6) — ${policies} replayed policies (${dynamicPolicies} from dynamic EXECUTE templates) and ${views} replayed views read no title; ${readers} live title-reading function(s)/view(s), each reviewed and pinned; ${tsSites} TS decision site(s) reviewed`);
+  console.log(`title-authority-guard: PASS (R0–R7) — ${policies} replayed policies (${dynamicPolicies} from dynamic EXECUTE templates) and ${views} replayed views read no title; ${readers} live title-reading function(s)/view(s), each reviewed and pinned; ${tsSites} TS decision site(s) reviewed`);
   return 0;
 }
 

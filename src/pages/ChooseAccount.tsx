@@ -21,7 +21,7 @@ type Membership = { tenant_id: string; role: string };
 type Choice = { tenant: TenantSummary; role: string };
 
 function roleLabel(role: string): string {
-  return role === "owner" ? "Owner" : role === "admin" ? "Admin" : role === "coach" ? "Team member" : role;
+  return role === "owner" ? "Owner" : role === "admin" ? "Admin" : role;
 }
 
 export default function ChooseAccount() {

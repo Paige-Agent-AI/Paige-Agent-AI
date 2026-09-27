@@ -38,6 +38,7 @@ type NoteKey =
   | ApprovalRefusalReason
   | "not_attempted"
   | "id_refused"
+  | "internal_text"
   | "reproposed"
   | "failed"
   | "unconfirmed"
@@ -70,6 +71,9 @@ const NOTES: Record<NoteKey, (many: boolean) => string> = {
   id_refused: (many) => many
     ? "Nothing changed. Paige couldn't tell exactly which items these were, so she stopped."
     : "Nothing changed. Paige couldn't tell exactly which item this was, so she stopped.",
+  internal_text: (many) => many
+    ? "Nothing changed. These messages included internal system details, so Paige stopped before they went out. Ask her to rewrite them."
+    : "Nothing changed. The message included internal system details, so Paige stopped before it went out. Ask her to rewrite it.",
   reproposed: (many) => many
     ? "Those approvals couldn't be used, so Paige is asking again."
     : "That approval couldn't be used, so Paige is asking again.",
@@ -114,6 +118,9 @@ export function classifySpentApproval(
   }
   if (out.needs_confirm === true) return { outcome: "not_run", reason: "reproposed" };
   if (out.refused_before_run === true) return { outcome: "not_run", reason: "id_refused" };
+  // R2 — an approved draft for a customer that carried internal text was refused before it ran
+  // (_shared/outbound-draft-check.ts): nothing was filed or sent, and the card says why.
+  if (out.error === "internal_text_in_draft") return { outcome: "not_run", reason: "internal_text" };
   if (out.disabled === true) return { outcome: "not_run", reason: "not_attempted" };
   if (out.outcome_unknown === true || (opts.reportsOk && out.error === "outcome_unknown")) {
     return { outcome: "unconfirmed", reason: "unconfirmed" };

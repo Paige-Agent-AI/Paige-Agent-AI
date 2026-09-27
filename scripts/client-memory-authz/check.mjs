@@ -86,7 +86,7 @@ let fetchUrlAnswer = null;
  * the handler's agentic loop sees a real tool call. Without this the whole tool loop — where
  * Paige acts on the focused client — was unreachable by any check.
  */
-const sseToolCallReply = (name, args, text = "") =>
+const sseToolCallReply = (name, args, text = "", id = "toolu_test") =>
   new Response(
     [
       `event: message_start\ndata: ${JSON.stringify({ type: "message_start", message: { usage: { input_tokens: 1, output_tokens: 1 } } })}\n\n`,
@@ -95,7 +95,7 @@ const sseToolCallReply = (name, args, text = "") =>
         `event: content_block_delta\ndata: ${JSON.stringify({ type: "content_block_delta", index: 0, delta: { type: "text_delta", text } })}\n\n`,
         `event: content_block_stop\ndata: ${JSON.stringify({ type: "content_block_stop", index: 0 })}\n\n`,
       ] : []),
-      `event: content_block_start\ndata: ${JSON.stringify({ type: "content_block_start", index: text ? 1 : 0, content_block: { type: "tool_use", id: "toolu_test", name } })}\n\n`,
+      `event: content_block_start\ndata: ${JSON.stringify({ type: "content_block_start", index: text ? 1 : 0, content_block: { type: "tool_use", id, name } })}\n\n`,
       `event: content_block_delta\ndata: ${JSON.stringify({ type: "content_block_delta", index: text ? 1 : 0, delta: { type: "input_json_delta", partial_json: JSON.stringify(args) } })}\n\n`,
       `event: message_delta\ndata: ${JSON.stringify({ type: "message_delta", delta: { stop_reason: "tool_use" } })}\n\n`,
       `event: message_stop\ndata: ${JSON.stringify({ type: "message_stop" })}\n\n`,
@@ -150,9 +150,13 @@ globalThis.fetch = async (url, init) => {
       }
       const turn = modelTurnState.getStore();
       if (turn ? turn.toolCallOnce : toolCallOnce) {
-        if (turn) turn.toolCallOnce = false;
+        // A scripted turn may call several tools, one per round, in order (`toolCall` as a list).
+        const spec = turn?.next ?? toolCallSpec;
+        const id = turn?.round ? `toolu_test_${turn.round}` : "toolu_test";
+        if (turn?.queue?.length) { turn.next = turn.queue.shift(); turn.round += 1; }
+        else if (turn) turn.toolCallOnce = false;
         else toolCallOnce = false;
-        return sseToolCallReply(toolCallSpec.name, toolCallSpec.args, toolRoundText);
+        return sseToolCallReply(spec.name, spec.args, toolRoundText, id);
       }
       return sseModelReply(scriptedReply);
     }
@@ -250,8 +254,9 @@ async function drive({
   fetchUrlAnswer = fetchedPage;
   modelStub = stream;
   readCheckReply = readCheck;
-  toolCallOnce = !!toolCall;
-  if (toolCall) toolCallSpec = toolCall;
+  const toolCalls = Array.isArray(toolCall) ? toolCall : toolCall ? [toolCall] : [];
+  toolCallOnce = toolCalls.length > 0;
+  if (toolCalls.length) toolCallSpec = toolCalls[0];
   selfApprove = selfApproving;
   selfApproveReplays = 0;
   scriptedReply = replyText;
@@ -311,7 +316,7 @@ async function drive({
     },
   });
 
-  const responses = await Promise.all(Array.from({ length: concurrentRequests }, () => modelTurnState.run({ toolCallOnce: !!toolCall }, async () => {
+  const responses = await Promise.all(Array.from({ length: concurrentRequests }, () => modelTurnState.run({ toolCallOnce: toolCalls.length > 0, queue: toolCalls.slice(1), round: 0 }, async () => {
     let status = null, bodyText = "";
     try {
       const res = await handler(new Request("http://local/paige-ai-chat", {
@@ -4058,6 +4063,193 @@ console.log("\nclient seat — her answer is read for internal text before a cli
   assert("30.12 a block name only the server's document instruction carried is caught on the document path",
     answered.includes(`=== ${MARKER} ===`) && !docSystem.includes(MARKER) && replyOf(docMarker) === WITHHELD,
     JSON.stringify({ inRequest: answered.includes(`=== ${MARKER} ===`), inSystem: docSystem.includes(MARKER), reply: replyOf(docMarker).slice(0, 60) }));
+}
+
+console.log("\noutbound drafts — a draft PAIGE files for a customer is read for internal text before it can be filed or sent");
+{
+  const THREAD = "cececece-cece-4ece-8ece-cececececece";
+  const RECORD = "5a5a5a5a-5a5a-4a5a-8a5a-5a5a5a5a5a5a";
+  const CALENDAR = "c1c1c1c1-c1c1-4c1c-8c1c-c1c1c1c1c1c1";
+  const ACTION = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11";
+  const PERSONA = { get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: "Northside Fitness", playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null } };
+  const lane = (mode) => ({ rpcOverrides: { ...PERSONA, get_actor_access: { data: { tier: "tenant" }, error: null }, resolve_tool_autonomy: { data: mode, error: null },
+    calendar_link_shareable: { data: [{ shareable: true, slug: "intro", title: "Intro call", reason: null }], error: null } } });
+  const ADMIN = { user_roles: [{ role: "admin" }], paige_pending_approvals: () => [{ id: "b0b0b0b0-b0b0-4b0b-8b0b-b0b0b0b0b0b0" }] };
+  const frames = (r) => r.bodyText.split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
+    .map((l) => { try { return JSON.parse(l.slice(6)); } catch { return null; } }).filter(Boolean);
+  const cardOf = (r) => frames(r).find((f) => f.paige_confirm)?.paige_confirm;
+  const toldModel = (r) => r.modelEgress.map((b) => b.replace(/\\"/g, '"')).join("\n");
+  const refusedAsInternal = (r) => toldModel(r).includes("internal_text_in_draft");
+  const approvalsFiled = (r) => (r.rec.inserts ?? []).filter((i) => i.table === "paige_pending_approvals");
+  const sends = (r) => r.outboundCalls.filter((c) => c.url.includes("/functions/v1/send-message"));
+  const rpcsNamed = (r, name) => r.rec.rpc.filter((c) => c.name === name);
+  // Each kind the detector needs no conversation for, planted one at a time so a pass cannot ride on
+  // another kind: a declared tool's name, a record id, Postgres error text, the operator codename.
+  const PLANTS = [
+    ["a tool name", "I ran update_client_data so your file is current."],
+    ["a record id", `Your file is ${RECORD}.`],
+    ["database error text", 'We saw: new row violates row-level security policy for table "clients".'],
+    ["the operator codename", `It is set in ${["MMA", "OS"].join(" ")}.`],
+  ];
+  // A customer's ordinary message: a link, an email address, a phone number and a merge tag, each the
+  // reader's to use, and single words that are also keys.
+  const CLEAN = "Hi {{first_name}}, you can book your next session here: https://paigeagent.ai/book/intro. Questions? Reply to desk@northside.example or call (415) 555-0132. Your title and tasks are all set.";
+
+  // propose_action is exempt from the confirm gate, so filing IS the moment to stop it.
+  const propose = (body, extra = {}) => drive({ stream: true, extraBody: { threadId: THREAD },
+    toolCall: { name: "propose_action", args: { action_type: "email", contact_id: OWN, subject: "Your next session", body, summary: "Email Dana about booking", ...extra } },
+    ...lane("confirm"), tablesExtra: ADMIN });
+  for (const [kind, plant] of PLANTS) {
+    const r = await propose(`${CLEAN} ${plant}`);
+    assert(`31.1 a drafted email carrying ${kind} is not filed, and PAIGE is told to rewrite it`,
+      approvalsFiled(r).length === 0 && refusedAsInternal(r),
+      JSON.stringify({ filed: approvalsFiled(r).length, refused: refusedAsInternal(r) }));
+  }
+  const subjectLeak = await propose(CLEAN, { subject: "Re: update_client_data" });
+  assert("31.2 ...and so is one whose subject line carries it", approvalsFiled(subjectLeak).length === 0 && refusedAsInternal(subjectLeak),
+    JSON.stringify({ filed: approvalsFiled(subjectLeak).length }));
+  const cleanDraft = await propose(CLEAN);
+  const filedRow = approvalsFiled(cleanDraft)[0]?.row;
+  assert("31.3 CONTROL: a customer's ordinary email files exactly as drafted",
+    approvalsFiled(cleanDraft).length === 1 && filedRow?.draft_content?.body === CLEAN && filedRow?.draft_content?.subject === "Your next session" && !refusedAsInternal(cleanDraft),
+    JSON.stringify({ filed: approvalsFiled(cleanDraft).length, body: filedRow?.draft_content?.body?.slice(0, 40) }));
+
+  // calendar_link_send is gated: a leaky message never becomes a card, and a card whose stored message
+  // carries internal text (one recorded before this check existed) sends nothing when approved.
+  const linkArgs = (message) => ({ calendarId: CALENDAR, contactId: OWN, channel: "email", subject: "Book a time", message });
+  const linkDrive = (store, args, body = {}) => drive({ stream: true, extraBody: { threadId: THREAD, ...body },
+    toolCall: { name: "calendar_link_send", args }, ...lane("confirm"),
+    tablesExtra: { paige_pending_confirmations: store.table, user_roles: [{ role: "admin" }] },
+    serviceTablesExtra: { clients: () => [{ email: "dana@example.test", phone: null }] },
+    onInsert: mirrorConfirms(store) });
+  const leakyLinkStore = makeConfirmStore();
+  const leakyLink = await linkDrive(leakyLinkStore, linkArgs(`Pick a time. ${PLANTS[1][1]}`));
+  assert("31.4 a booking-link message carrying internal text never becomes an approval card",
+    leakyLinkStore.rows.length === 0 && !cardOf(leakyLink) && refusedAsInternal(leakyLink) && sends(leakyLink).length === 0,
+    JSON.stringify({ cards: leakyLinkStore.rows.length, refused: refusedAsInternal(leakyLink) }));
+  const cleanLinkStore = makeConfirmStore();
+  const cleanLink = await linkDrive(cleanLinkStore, linkArgs("Pick a time that suits you."));
+  const cleanCard = cleanLinkStore.rows[0];
+  assert("31.5 CONTROL: a clean booking-link message becomes a card", cleanLinkStore.rows.length === 1 && !!cardOf(cleanLink) && !refusedAsInternal(cleanLink),
+    JSON.stringify({ cards: cleanLinkStore.rows.length }));
+  const approveLink = (store) => linkDrive(store, linkArgs("Pick a time that suits you."), { approvedConfirmations: [issuedApproval(store.rows[0])] });
+  const approvedClean = await approveLink(cleanLinkStore);
+  assert("31.6 CONTROL: approving the clean card sends it", sends(approvedClean).length === 1
+    && JSON.parse(sends(approvedClean)[0].body).body.includes("Pick a time that suits you."),
+    JSON.stringify({ sends: sends(approvedClean).length }));
+  // A card stored before this check existed: seeded the way section 18 seeds a stored card, a row whose
+  // token is its own fingerprint, so the approval redeems exactly the arguments it holds while the model
+  // re-sends a clean call. The control redeems the same card holding a clean message, and it sends.
+  const storedCard = (message) => makeConfirmStore([{ id: "stored-card", fingerprint: "dddddddddddddddd", issued_in_request: "legacy-request",
+    user_id: USER, tool_name: "calendar_link_send", tenant_id: CALLER_TENANT, thread_id: THREAD, scoped_client_id: null, args: linkArgs(message) }]);
+  const redeem = (store) => linkDrive(store, linkArgs("Pick a time that suits you."), { approvedConfirmations: ["dddddddddddddddd"] });
+  const storedCleanStore = storedCard("Pick a time that suits you.");
+  const storedClean = await redeem(storedCleanStore);
+  assert("31.6b CONTROL: a stored card with a clean message is redeemed and sends", storedCleanStore.rows[0].consumed && sends(storedClean).length === 1,
+    JSON.stringify({ consumed: storedCleanStore.rows[0].consumed, sends: sends(storedClean).length }));
+  const staleStore = storedCard(`Pick a time. ${PLANTS[0][1]}`);
+  const approvedStale = await redeem(staleStore);
+  assert("31.7 a stored card whose message carries internal text sends nothing when approved, and PAIGE is told why",
+    !!cleanCard && sends(approvedStale).length === 0 && refusedAsInternal(approvedStale) && toldModel(approvedStale).includes("Nothing was sent."),
+    JSON.stringify({ consumed: staleStore.rows[0].consumed, sends: sends(approvedStale).length, refused: refusedAsInternal(approvedStale) }));
+  // What the owner's card says for it: the server's one sentence, and the action marked as not run.
+  const staleOutcome = approvedStale.bodyText.split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
+    .map((l) => { try { return JSON.parse(l.slice(6)); } catch { return null; } })
+    .find((f) => f && f.paige_approval_outcome)?.paige_approval_outcome;
+  assert("31.7b ...and the card reports it as not run, in the sentence for a held-back message",
+    staleOutcome?.note === "Nothing changed. The message included internal system details, so Paige stopped before it went out. Ask her to rewrite it."
+      && staleOutcome?.actions?.length === 1 && staleOutcome.actions[0].outcome === "not_run",
+    JSON.stringify(staleOutcome));
+
+  // action_advance attaches a draft; in the auto lane it runs at once, so dispatch is where it stops.
+  const advance = (draft, mode) => { const store = makeConfirmStore(); return drive({ stream: true, extraBody: { threadId: THREAD },
+    toolCall: { name: "action_advance", args: { action_id: ACTION, to_status: "drafted", draft_content: draft } }, ...lane(mode),
+    tablesExtra: { paige_pending_confirmations: store.table, user_roles: [{ role: "admin" }] }, onInsert: mirrorConfirms(store) }).then((r) => ({ r, store })); };
+  for (const mode of ["auto", "confirm"]) {
+    const { r, store } = await advance({ channel: "email", subject: "Checking in", body: `Hi Dana. ${PLANTS[2][1]}` }, mode);
+    assert(`31.8 a bus draft carrying internal text is not attached (${mode} lane): no advance, no card`,
+      rpcsNamed(r, "advance_action").length === 0 && store.rows.length === 0 && refusedAsInternal(r),
+      JSON.stringify({ advanced: rpcsNamed(r, "advance_action").length, cards: store.rows.length, refused: refusedAsInternal(r) }));
+  }
+  const { r: cleanAdvance } = await advance({ channel: "email", subject: "Checking in", body: CLEAN }, "auto");
+  assert("31.9 CONTROL: a clean bus draft is attached exactly as written",
+    rpcsNamed(cleanAdvance, "advance_action").length === 1 && rpcsNamed(cleanAdvance, "advance_action")[0].args.p_draft_content?.body === CLEAN,
+    JSON.stringify({ advanced: rpcsNamed(cleanAdvance, "advance_action").length }));
+
+  // action_file: for a kind whose executor reaches a customer, the title and summary can be what the
+  // client reads (a portal recommendation with no draft shows them). An owner-only kind is not read.
+  const fileAction = (kind, executor, title) => drive({ stream: true, extraBody: { threadId: THREAD },
+    toolCall: { name: "action_file", args: { action_kind: kind, title, summary: "Next step for Dana", contact_id: OWN } }, ...lane("auto"),
+    tablesExtra: { user_roles: [{ role: "admin" }], paige_action_kinds: () => [{ executor }] },
+    serviceTablesExtra: { paige_action_kinds: () => [{ executor }] } });
+  const portalLeak = await fileAction("client.portal_recommendation", "surface_to_client", `Your next step. ${PLANTS[3][1]}`);
+  assert("31.10 a portal recommendation whose title carries internal text is not filed",
+    rpcsNamed(portalLeak, "file_action").length === 0 && refusedAsInternal(portalLeak),
+    JSON.stringify({ filed: rpcsNamed(portalLeak, "file_action").length, refused: refusedAsInternal(portalLeak) }));
+  const ownerOnly = await fileAction("owner.internal_note", "record_only", "Retry update_client_data for Dana");
+  assert("31.11 an owner-only action's title is not read here (it never reaches a customer)",
+    rpcsNamed(ownerOnly, "file_action").length === 1 && !refusedAsInternal(ownerOnly),
+    JSON.stringify({ filed: rpcsNamed(ownerOnly, "file_action").length }));
+  // The same backstop where a stored card runs the bus tools: the approved card's arguments, not the
+  // model's clean re-send, are what the check reads. Each control redeems the same card holding clean text.
+  const storedBusCard = (tool, args) => makeConfirmStore([{ id: `stored-${tool}`, fingerprint: "eeeeeeeeeeeeeeee", issued_in_request: "legacy-request",
+    user_id: USER, tool_name: tool, tenant_id: CALLER_TENANT, thread_id: THREAD, scoped_client_id: null, args }]);
+  const redeemBus = (store, tool, resent, extra = {}) => drive({ stream: true, extraBody: { threadId: THREAD, approvedConfirmations: ["eeeeeeeeeeeeeeee"] },
+    toolCall: { name: tool, args: resent }, ...lane("confirm"),
+    tablesExtra: { paige_pending_confirmations: store.table, user_roles: [{ role: "admin" }], ...extra }, onInsert: mirrorConfirms(store) });
+  const advanceArgs = (body) => ({ action_id: ACTION, to_status: "drafted", draft_content: { channel: "email", subject: "Checking in", body } });
+  for (const [label, body, expectRun] of [["CONTROL: a stored card with a clean bus draft runs", "Checking in on your week.", true],
+    ["a stored card whose bus draft carries internal text attaches nothing when approved", `Checking in. ${PLANTS[0][1]}`, false]]) {
+    const store = storedBusCard("action_advance", advanceArgs(body));
+    const r = await redeemBus(store, "action_advance", advanceArgs("Checking in on your week."));
+    assert(`31.13 ${label}`, store.rows[0].consumed && (expectRun
+      ? rpcsNamed(r, "advance_action").length === 1 && !refusedAsInternal(r)
+      : rpcsNamed(r, "advance_action").length === 0 && refusedAsInternal(r)),
+      JSON.stringify({ consumed: store.rows[0].consumed, advanced: rpcsNamed(r, "advance_action").length, refused: refusedAsInternal(r) }));
+  }
+  const fileArgs = (title) => ({ action_kind: "client.portal_recommendation", title, summary: "Next step for Dana", contact_id: OWN });
+  for (const [label, title, expectRun] of [["CONTROL: a stored card filing a clean portal recommendation runs", "Book your next session", true],
+    ["a stored card filing a portal recommendation with internal text files nothing when approved", `Your next step. ${PLANTS[1][1]}`, false]]) {
+    const store = storedBusCard("action_file", fileArgs(title));
+    const r = await redeemBus(store, "action_file", fileArgs("Book your next session"), { paige_action_kinds: () => [{ executor: "surface_to_client" }] });
+    assert(`31.14 ${label}`, store.rows[0].consumed && (expectRun
+      ? rpcsNamed(r, "file_action").length === 1 && !refusedAsInternal(r)
+      : rpcsNamed(r, "file_action").length === 0 && refusedAsInternal(r)),
+      JSON.stringify({ consumed: store.rows[0].consumed, filed: rpcsNamed(r, "file_action").length, refused: refusedAsInternal(r) }));
+  }
+  const portalClean = await fileAction("client.portal_recommendation", "surface_to_client", "Book your next session");
+  assert("31.12 CONTROL: a clean portal recommendation files", rpcsNamed(portalClean, "file_action").length === 1 && !refusedAsInternal(portalClean),
+    JSON.stringify({ filed: rpcsNamed(portalClean, "file_action").length }));
+
+  // A kind the registry cannot answer for is read, never waved through: one it does not list, and one
+  // whose lookup fails. The control files the same unlisted kind with clean text.
+  const unlisted = (title, extra = {}) => drive({ stream: true, extraBody: { threadId: THREAD },
+    toolCall: { name: "action_file", args: { action_kind: "client.unlisted_kind", title, summary: "Next step for Dana", contact_id: OWN } }, ...lane("auto"),
+    tablesExtra: { user_roles: [{ role: "admin" }], paige_action_kinds: () => [] }, serviceTablesExtra: { paige_action_kinds: () => [] }, ...extra });
+  const noRow = await unlisted(`Your next step. ${PLANTS[0][1]}`);
+  assert("31.15 an action whose kind the registry does not list is read: internal text in it is not filed",
+    rpcsNamed(noRow, "file_action").length === 0 && refusedAsInternal(noRow), JSON.stringify({ filed: rpcsNamed(noRow, "file_action").length }));
+  const lookupFails = await unlisted(`Your next step. ${PLANTS[0][1]}`, { tableErrorsExtra: { "paige_action_kinds:select": { message: "boom", code: "XX000" } } });
+  assert("31.15 ...and so is one whose kind could not be looked up",
+    rpcsNamed(lookupFails, "file_action").length === 0 && refusedAsInternal(lookupFails), JSON.stringify({ filed: rpcsNamed(lookupFails, "file_action").length }));
+  const unlistedClean = await unlisted("Book your next session");
+  assert("31.15 CONTROL: the unlisted kind with ordinary text files", rpcsNamed(unlistedClean, "file_action").length === 1 && !refusedAsInternal(unlistedClean),
+    JSON.stringify({ filed: rpcsNamed(unlistedClean, "file_action").length }));
+
+  // The vocabulary is the turn's: a key the server wrote into a result PAIGE was sent earlier in the turn
+  // is internal text in a draft she files after it. The control files the same draft as the turn's only
+  // call, where nothing has taught that key.
+  const KEY_BODY = "Hi Dana, your approval_id is ready.";
+  const proposal = (body, summary) => ({ name: "propose_action", args: { action_type: "email", contact_id: OWN, subject: "Your next session", body, summary } });
+  const sameTurn = await drive({ stream: true, extraBody: { threadId: THREAD },
+    toolCall: [proposal(CLEAN, "Email Dana about booking"), proposal(KEY_BODY, "Email Dana again")], ...lane("confirm"), tablesExtra: ADMIN });
+  const sameTurnFiled = approvalsFiled(sameTurn);
+  assert("31.16 a key from a result earlier in the turn is internal text in a draft filed after it",
+    sameTurnFiled.length === 1 && sameTurnFiled[0].row?.draft_content?.body === CLEAN && refusedAsInternal(sameTurn),
+    JSON.stringify({ filed: sameTurnFiled.length, refused: refusedAsInternal(sameTurn) }));
+  const alone = await propose(KEY_BODY);
+  assert("31.16 CONTROL: the same draft as the turn's only call files", approvalsFiled(alone).length === 1 && !refusedAsInternal(alone),
+    JSON.stringify({ filed: approvalsFiled(alone).length }));
 }
 
 console.log(`\n${checks - failures} passed, ${failures} failed`);

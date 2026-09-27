@@ -98,6 +98,7 @@ import { buildStudioWhereYouAre, STUDIO_OPERATING_CORE } from "../_shared/design
 import { getActorTier, clientSeatToolAllowed, type Tier } from "../_shared/actorTier.ts";
 // R3 — what a client seat reads is read for internal text first.
 import { decodeChunks, internalTextForClient, leakKindCounts, readableFromFrames, syncStatusForClient, resultSavedSomething, WITHHELD_FRAME, withheldReplyForClient } from "../_shared/client-seat-reply.ts";
+import { customerBoundTexts, CUSTOMER_REACHING_EXECUTORS, draftRefusal, internalTextInDraft, OUTBOUND_DRAFT_TOOLS } from "../_shared/outbound-draft-check.ts";
 // Main Paige Operational Chat · P3 — truthful capability status (§13/§36/§70). The pure decision
 // core (resolver) + the MVP signal builder compose the honest "what can Paige do here?" answer;
 // the dispatch feeds them server-resolved facts (tier, clamped lane, Spine maturity). §18: one home.
@@ -8296,6 +8297,36 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       return withheldReplyForClient(personaCtx.tenant_name, options);
     };
 
+    // R2 — A DRAFT PAIGE WRITES FOR A CUSTOMER IS READ BEFORE IT CAN BE FILED OR SENT, with the same
+    // vocabulary as R3: this turn's tool definitions, the text vouched for where it was built, and every
+    // tool result the model has been sent. Which fields a customer reads is outbound-draft-check's
+    // to say. For action_file it asks the registry whether the kind reaches a customer; a kind it cannot
+    // find out about is read, never waved through. Returns the refusal PAIGE reads, or null.
+    const outboundDraftRefusal = async (
+      tool: string, args: Record<string, unknown>, stage: "filing" | "sending",
+    ): Promise<Record<string, unknown> | null> => {
+      if (!OUTBOUND_DRAFT_TOOLS.has(tool)) return null;
+      let kindReachesCustomer: boolean | undefined;
+      if (tool === "action_file") {
+        kindReachesCustomer = true;
+        const kind = typeof args.action_kind === "string" ? args.action_kind : "";
+        try {
+          const { data, error } = kind
+            ? await supabase.from("paige_action_kinds").select("executor").eq("slug", kind).maybeSingle()
+            : { data: null, error: null };
+          if (!error && data) kindReachesCustomer = CUSTOMER_REACHING_EXECUTORS.has(String((data as { executor?: unknown }).executor));
+        } catch { /* unknown stays read */ }
+      }
+      const leaks = internalTextInDraft(customerBoundTexts(tool, args, { kindReachesCustomer }), {
+        tools: toolDefs,
+        vouchedTexts: clientSeatVouched,
+        toolResults: [...toolResultContent.values()],
+      });
+      if (!leaks.length) return null;
+      console.warn("[paige] outbound draft refused: internal text", JSON.stringify({ tool, stage, kinds: leakKindCounts(leaks) }));
+      return draftRefusal(leaks, stage);
+    };
+
     // For non-document requests: check if streaming response contains tool calls
     // We need to accumulate first to detect tool calls, then handle accordingly
     if (!attachedDocument) {
@@ -8394,6 +8425,22 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         if (callerTier === "client" && !clientSeatToolAllowed(tc.function.name)) {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, forbidden_seat: true, error: "This is a client portal seat; that action is not available here." }) });
           continue;
+        }
+
+        // R2 — a draft for a customer is read here, before the confirm gate: one carrying internal text
+        // never becomes an approval card and never runs, and PAIGE is told to rewrite it. A card stored
+        // before this check existed is read again where it runs (the dispatch branches below).
+        if (OUTBOUND_DRAFT_TOOLS.has(tc.function.name)) {
+          let draftArgs: Record<string, unknown> = {};
+          try {
+            const parsed = JSON.parse(tc.function.arguments || "{}");
+            if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) draftArgs = parsed;
+          } catch { /* unparseable arguments carry no draft to read; the tool refuses them itself */ }
+          const draftProblem = await outboundDraftRefusal(tc.function.name, draftArgs, "filing");
+          if (draftProblem) {
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(draftProblem) });
+            continue;
+          }
         }
 
         // ── CANONICAL GOVERNED CRM/Pipeline DOOR ─────────────────────────────
@@ -12052,6 +12099,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               if (_pubFErr) throw _pubFErr;
               result = { success: true, ...(_pub as any) };
             } else if (tc.function.name === "action_file") {
+              // R2 — the arguments that run are an approved card's, which the check above never saw.
+              const fileProblem = await outboundDraftRefusal("action_file", args, "filing");
+              if (fileProblem) {
+                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(fileProblem) });
+                continue;
+              }
               const { data, error } = await supabaseClient.rpc("file_action", {
                 p_action_kind: args.action_kind,
                 p_title: args.title,
@@ -12071,6 +12124,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               const idProblem = unaddressableConfirmArgs("action_advance", args);
               if (idProblem) {
                 toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(unaddressableArgsRefusal(idProblem, "dispatch")) });
+                continue;
+              }
+              // R2 — the draft that runs is an approved card's, which the check above never saw.
+              const draftProblem = await outboundDraftRefusal("action_advance", args, "filing");
+              if (draftProblem) {
+                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(draftProblem) });
                 continue;
               }
               const { data, error } = await supabaseClient.rpc("advance_action", {
@@ -12962,6 +13021,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(r) });
             } else {
               // calendar_link_send — the confirmed high-risk send. Forward the caller JWT to send-message.
+              // R2 — the message that goes out is the approved card's, which the check above never saw.
+              const sendProblem = await outboundDraftRefusal("calendar_link_send", args, "sending");
+              if (sendProblem) {
+                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(sendProblem) });
+                continue;
+              }
               const forwardedAuth = authHeader ?? ""; // string (the handler 401s above if the header is absent)
               const sendMessage: SendMessageFn = async (i) => {
                 try {

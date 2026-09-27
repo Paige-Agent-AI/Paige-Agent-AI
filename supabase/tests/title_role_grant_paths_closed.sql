@@ -41,6 +41,11 @@ BEGIN
 END $$;
 
 -- 1–2. An invitation carrying the retired role is refused, and grants nothing.
+-- accept_invitation hashes the token with digest() under search_path public, where pgcrypto is not
+-- installed, so the function cannot run as it stands (filed separately; nothing calls it). A
+-- rolled-back stand-in computing the same SHA-256 lets the refusal itself be exercised.
+CREATE FUNCTION public.digest(text, text) RETURNS bytea LANGUAGE sql IMMUTABLE
+  AS $f$ SELECT sha256(convert_to($1, 'UTF8')) $f$;
 SELECT set_config('request.jwt.claims', '{"sub":"c9940000-0000-0000-0000-0000000000a4","role":"authenticated"}', true);
 SELECT throws_ok($q$SELECT public.accept_invitation('gp-token', 'c9940000-0000-0000-0000-0000000000a4')$q$,
   '42501', NULL, 'an invitation carrying the retired role is refused');
@@ -61,7 +66,9 @@ SELECT isnt(public.map_tenant_role_to_app_role('coach')::text, 'coach',
   'a coach seat never becomes the role');
 SELECT is(public.assignment_role_for('coach'), NULL, 'the role maps to no assignment seat');
 
--- 7. Holding the role enrolls nobody as an affiliate.
+-- 7. Holding the role enrolls nobody as an affiliate. The grant is made with no caller, so the
+-- role-to-seat sync (which acts for an admin's own business) stays out of the way.
+SELECT set_config('request.jwt.claims', '', true);
 INSERT INTO auth.users (id, email) VALUES ('c9940000-0000-0000-0000-0000000000a5', 'gp-late@example.test');
 INSERT INTO public.user_roles (user_id, role) VALUES ('c9940000-0000-0000-0000-0000000000a5', 'coach');
 SELECT is((SELECT count(*)::int FROM public.affiliate_profiles
@@ -69,6 +76,7 @@ SELECT is((SELECT count(*)::int FROM public.affiliate_profiles
   0, 'holding the role enrolls nobody as an affiliate');
 
 -- 8–9. Bulk assignment is decided by membership, not the role.
+SELECT set_config('request.jwt.claims', '{"sub":"c9940000-0000-0000-0000-0000000000a1","role":"authenticated"}', true);
 SELECT lives_ok($q$SELECT public.admin_bulk_assign_coach('c9940000-0000-0000-0000-0000000000a2',
                                                        ARRAY['c9940000-0000-0000-0000-00000000c1e1']::uuid[])$q$,
   'an active member can be assigned clients without holding the role');

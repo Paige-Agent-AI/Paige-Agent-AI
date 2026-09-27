@@ -68,23 +68,33 @@ let scriptedReply = "ok";
 let selfApprove = false;
 let selfApproveReplays = 0;
 let toolCallSpec = { name: "update_client_data", args: {} };
+/** What the model writes BEFORE its tool call in that round — her narration, which becomes a thought
+ *  line. Empty unless a scenario scripts one. */
+let toolRoundText = "";
 /** Every request body sent to the model this turn — the real prompt/model EGRESS surface. */
 let modelEgress = [];
 /** Every non-model outbound call this turn — the sibling-function surface (write-back, sync). */
 let outboundCalls = [];
 /** How `paige-write-back` answers this drive, as `{ status, body }`; unset, it answers success. */
 let writeBackAnswer = null;
+/** How `fetch-url-content` answers this drive, as `{ status, body }`; unset, it answers a bare success. */
+let fetchUrlAnswer = null;
 /**
  * An Anthropic-native tool_use stream. `gatewayCompat` converts it to OpenAI-compat deltas, so
  * the handler's agentic loop sees a real tool call. Without this the whole tool loop — where
  * Paige acts on the focused client — was unreachable by any check.
  */
-const sseToolCallReply = (name, args) =>
+const sseToolCallReply = (name, args, text = "") =>
   new Response(
     [
       `event: message_start\ndata: ${JSON.stringify({ type: "message_start", message: { usage: { input_tokens: 1, output_tokens: 1 } } })}\n\n`,
-      `event: content_block_start\ndata: ${JSON.stringify({ type: "content_block_start", index: 0, content_block: { type: "tool_use", id: "toolu_test", name } })}\n\n`,
-      `event: content_block_delta\ndata: ${JSON.stringify({ type: "content_block_delta", index: 0, delta: { type: "input_json_delta", partial_json: JSON.stringify(args) } })}\n\n`,
+      ...(text ? [
+        `event: content_block_start\ndata: ${JSON.stringify({ type: "content_block_start", index: 0, content_block: { type: "text", text: "" } })}\n\n`,
+        `event: content_block_delta\ndata: ${JSON.stringify({ type: "content_block_delta", index: 0, delta: { type: "text_delta", text } })}\n\n`,
+        `event: content_block_stop\ndata: ${JSON.stringify({ type: "content_block_stop", index: 0 })}\n\n`,
+      ] : []),
+      `event: content_block_start\ndata: ${JSON.stringify({ type: "content_block_start", index: text ? 1 : 0, content_block: { type: "tool_use", id: "toolu_test", name } })}\n\n`,
+      `event: content_block_delta\ndata: ${JSON.stringify({ type: "content_block_delta", index: text ? 1 : 0, delta: { type: "input_json_delta", partial_json: JSON.stringify(args) } })}\n\n`,
       `event: message_delta\ndata: ${JSON.stringify({ type: "message_delta", delta: { stop_reason: "tool_use" } })}\n\n`,
       `event: message_stop\ndata: ${JSON.stringify({ type: "message_stop" })}\n\n`,
     ].join(""),
@@ -113,7 +123,9 @@ globalThis.fetch = async (url, init) => {
   if (href.includes("anthropic.com")) modelEgress.push(String(init?.body ?? ""));
   else if (!href.includes("voyageai.com")) {
     outboundCalls.push({ url: href, body: String(init?.body ?? "") });
-    const answer = href.includes("paige-write-back") && writeBackAnswer ? writeBackAnswer : { status: 200, body: { success: true } };
+    const answer = href.includes("paige-write-back") && writeBackAnswer ? writeBackAnswer
+      : href.includes("fetch-url-content") && fetchUrlAnswer ? fetchUrlAnswer
+      : { status: 200, body: { success: true } };
     return new Response(JSON.stringify(answer.body), { status: answer.status, headers: { "Content-Type": "application/json" } });
   }
   if (modelStub && href.includes("anthropic.com")) {
@@ -138,7 +150,7 @@ globalThis.fetch = async (url, init) => {
       if (turn ? turn.toolCallOnce : toolCallOnce) {
         if (turn) turn.toolCallOnce = false;
         else toolCallOnce = false;
-        return sseToolCallReply(toolCallSpec.name, toolCallSpec.args);
+        return sseToolCallReply(toolCallSpec.name, toolCallSpec.args, toolRoundText);
       }
       return sseModelReply(scriptedReply);
     }
@@ -217,14 +229,19 @@ async function drive({
   concurrentRequests = 1,
   /** How `paige-write-back` answers, as `{ status, body }` — to drive a write that answered badly. */
   writeBack = null,
+  /** How `fetch-url-content` answers, as `{ status, body }` — to drive a page that was really read. */
+  fetchedPage = null,
   /** What PAIGE's streamed answer says this drive. Default "ok", so every existing check is unchanged. */
   replyText = "ok",
+  /** What she writes before her tool call, which becomes a thought line. Default none. */
+  toolRoundNarration = "",
 }) {
   const logged = [];
   embedCount = 0;
   modelEgress = [];
   outboundCalls = [];
   writeBackAnswer = writeBack;
+  fetchUrlAnswer = fetchedPage;
   modelStub = stream;
   readCheckReply = readCheck;
   toolCallOnce = !!toolCall;
@@ -232,6 +249,7 @@ async function drive({
   selfApprove = selfApproving;
   selfApproveReplays = 0;
   scriptedReply = replyText;
+  toolRoundText = toolRoundNarration;
   const origError = console.error, origWarn = console.warn;
   console.error = (...a) => logged.push({ level: "error", msg: a.join(" ") });
   console.warn = (...a) => logged.push({ level: "warn", msg: a.join(" ") });
@@ -311,6 +329,7 @@ async function drive({
   toolCallOnce = false;
   selfApprove = false;
   scriptedReply = "ok";
+  toolRoundText = "";
 
   console.error = origError; console.warn = origWarn;
   const memoryReads = rec.from.filter((f) => f.table === "client_memory" && f.op === "select");
@@ -3678,6 +3697,312 @@ console.log("\ninternal text — the detector reads her reply with a vocabulary 
   assert("29.5 today the leaky answer streams unchanged — nothing on this path acts on a finding yet",
     leakyReply === LEAKY,
     leakyReply.slice(0, 80));
+}
+
+// ── 30. A CLIENT SEAT READS NOTHING THAT HAS NOT BEEN READ FIRST (R3) ─────────────────────────────
+//
+// A client is the person a business serves, signed in to that business's portal. Everything the model
+// wrote that a client can read on a turn — the answer and each thought line — is read with the
+// section-29 detector before release, on both release points (the agentic stream and the document
+// stream). On a finding the whole turn is withheld and the client reads one fixed sentence, which
+// invents no answer. An owner's turn is untouched here; that is R4's.
+console.log("\nclient seat — her answer is read for internal text before a client can read it");
+{
+  const { withheldReplyForClient } = await import("../../supabase/functions/_shared/client-seat-reply.ts");
+  const THREAD = "cdcdcdcd-cdcd-4dcd-8dcd-cdcdcdcdcdcd";
+  const RECORD = "5a5a5a5a-5a5a-4a5a-8a5a-5a5a5a5a5a5a";
+  const BUSINESS = "Northside Fitness";
+  const PERSONA = { get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: BUSINESS, playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null } };
+  const AS_CLIENT = { ...PERSONA, get_actor_access: { data: { tier: "client" }, error: null } };
+  const AS_OWNER = { ...PERSONA, get_actor_access: { data: { tier: "tenant" }, error: null } };
+  const WITHHELD = withheldReplyForClient(BUSINESS);
+  const frames = (r) => r.bodyText.split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
+    .map((l) => { try { return JSON.parse(l.slice(6)); } catch { return null; } }).filter(Boolean);
+  const replyOf = (r) => frames(r).map((f) => f.choices?.[0]?.delta?.content).filter((c) => typeof c === "string").join("");
+  const thoughtsOf = (r) => frames(r).filter((f) => f.paige_step?.kind === "thought").map((f) => f.paige_step.label);
+  const personaCalls = (r) => r.rec.rpc.filter((c) => c.name === "get_paige_persona_context").length;
+  const persisted = (r) => r.rec.rpc.filter((c) => c.name === "paige_chat_turn_append" && c.args?.p_role === "assistant").map((c) => c.args.p_content);
+
+  // Each planted kind a client-seat turn can carry: a tool name from the definitions she was sent, a
+  // record id, Postgres error text and the operator codename.
+  const LEAKY_PARTS = [
+    "Done, I ran update_client_data for you.",
+    `Your record is ${RECORD}.`,
+    'It said: new row violates row-level security policy for table "clients".',
+    `That setting lives in ${["MMA", "OS"].join(" ")}.`,
+  ];
+  const LEAKY = LEAKY_PARTS.join(" ");
+  const CLEAN = [
+    `Thanks, Jordan. Your next session with ${BUSINESS} is Tuesday at 10am.`,
+    "Reach the front desk at desk@northside.example or (415) 555-0132.",
+    `Your booking page: https://book.example.test/s/${RECORD}/intro_call`,
+    "You have 3 open tasks, and your coach's title is Head Trainer.",
+  ].join(" ");
+
+  // No memory on these two, so the owner's turn carries no evidence and is genuinely ordinary: the only
+  // thing left to hold the client's is that it is a client's.
+  const NO_MEMORY = { tablesExtra: { client_memory: () => [] }, serviceTablesExtra: { client_memory: () => [] } };
+  const cleanClient = await drive({ stream: true, rpcOverrides: { ...AS_CLIENT, match_paige_memory: { data: [], error: null } }, replyText: CLEAN, ...NO_MEMORY });
+  const cleanOwner = await drive({ stream: true, rpcOverrides: { ...AS_OWNER, match_paige_memory: { data: [], error: null } }, replyText: CLEAN, ...NO_MEMORY });
+  assert("30.0 a clean answer reaches a client verbatim, and a client turn carrying no evidence pays no scope re-check, exactly as an owner's ordinary turn",
+    replyOf(cleanClient) === CLEAN && personaCalls(cleanClient) === 1 && personaCalls(cleanOwner) === 1,
+    JSON.stringify({ reply: replyOf(cleanClient).slice(0, 60), client: personaCalls(cleanClient), owner: personaCalls(cleanOwner) }));
+
+  // HOLDING IS NOT EVIDENCE. A client turn is held so it can be read, but the scope re-check protects
+  // retrieved evidence, so a lookup that fails after the turn began cannot refuse an ordinary client
+  // answer. The control proves the re-check is still live: the same failing lookup on a client turn
+  // that carries evidence (memory) is refused before the model is called.
+  const flakyPersona = () => {
+    let calls = 0;
+    return { ...AS_CLIENT, get_paige_persona_context: () => (++calls === 1 ? PERSONA.get_paige_persona_context : { data: null, error: { message: "temporarily unavailable" } }) };
+  };
+  const flakyPlain = await drive({ stream: true, rpcOverrides: { ...flakyPersona(), match_paige_memory: { data: [], error: null } }, replyText: CLEAN, ...NO_MEMORY });
+  const flakyEvidence = await drive({ stream: true, rpcOverrides: flakyPersona(), replyText: CLEAN });
+  assert("30.30 a lookup that fails mid-turn does not refuse a client answer that carried no evidence (control: with evidence it still does)",
+    flakyPlain.status === 200 && replyOf(flakyPlain) === CLEAN
+      && flakyEvidence.status === 409 && flakyEvidence.bodyText.includes("ACTIVE_ACCOUNT_CHANGED") && !flakyEvidence.bodyText.includes(CLEAN),
+    JSON.stringify({ plain: [flakyPlain.status, replyOf(flakyPlain).slice(0, 40)], evidence: [flakyEvidence.status, flakyEvidence.bodyText.slice(0, 80)] }));
+
+  // A CLIENT TURN IS HELD BECAUSE IT IS A CLIENT'S, NOT BECAUSE IT CARRIES EVIDENCE. Every other leaky
+  // client check drives the default fixture, whose memory is evidence and would hold the turn anyway.
+  // This one carries none (the control: no scope re-check ran), and the leak is still withheld whole.
+  const bareLeak = await drive({ stream: true, rpcOverrides: { ...AS_CLIENT, match_paige_memory: { data: [], error: null } }, replyText: LEAKY, ...NO_MEMORY });
+  assert("30.31 a client turn that carries no evidence is still held and read: its leaky answer is withheld whole",
+    personaCalls(bareLeak) === 1 && replyOf(bareLeak) === WITHHELD && !bareLeak.bodyText.includes(RECORD) && !bareLeak.bodyText.includes("update_client_data"),
+    JSON.stringify({ lookups: personaCalls(bareLeak), reply: replyOf(bareLeak).slice(0, 60) }));
+
+  // A CONFIRM CARD'S SUMMARY IS READ TOO. It names the fields the model asked to save, from the model's
+  // own arguments, and it is held with the answer; unread, a clean answer would release it as written.
+  // The control proves the card is built and released when its fields are ordinary.
+  const CONFIRM_CLIENT = { ...AS_CLIENT, resolve_tool_autonomy: { data: "confirm", error: null } };
+  const confirmsOf = (r) => frames(r).filter((f) => f.paige_confirm).map((f) => f.paige_confirm.summary);
+  const plainCard = await drive({ stream: true, rpcOverrides: CONFIRM_CLIENT, toolCall: { name: "update_client_data", args: { updates: { phone: "(415) 555-0132" } } }, replyText: "I've asked you to confirm the change." });
+  const leakyCard = await drive({ stream: true, rpcOverrides: CONFIRM_CLIENT, toolCall: { name: "update_client_data", args: { updates: { [`platform_role ${RECORD}`]: "x" } } }, replyText: "I've asked you to confirm the change." });
+  assert("30.32 a confirm card whose summary carries internal text withholds the turn (control: an ordinary card is released with its answer)",
+    confirmsOf(plainCard).some((c) => /\(phone\)/.test(c)) && replyOf(plainCard) === "I've asked you to confirm the change."
+      && replyOf(leakyCard) === WITHHELD && confirmsOf(leakyCard).length === 0 && !leakyCard.bodyText.includes(RECORD),
+    JSON.stringify({ plain: confirmsOf(plainCard), leaky: confirmsOf(leakyCard), reply: replyOf(leakyCard).slice(0, 50) }));
+
+  const leakyClient = await drive({ stream: true, rpcOverrides: AS_CLIENT, replyText: LEAKY });
+  const leaked = LEAKY_PARTS.filter((part) => leakyClient.bodyText.includes(part.split(" ").find((w) => /_|-|MMA|violates/.test(w)) ?? part));
+  assert("30.1 a leaky answer never reaches a client: the client reads exactly the withheld sentence, and nothing of what was written",
+    replyOf(leakyClient) === WITHHELD && leaked.length === 0
+      && !leakyClient.bodyText.includes("update_client_data") && !leakyClient.bodyText.includes(RECORD)
+      && !leakyClient.bodyText.includes("row-level security"),
+    JSON.stringify({ reply: replyOf(leakyClient).slice(0, 80), leaked }));
+
+  const leakyOwner = await drive({ stream: true, rpcOverrides: AS_OWNER, replyText: LEAKY });
+  assert("30.2 an owner's turn is untouched by this: the same answer still streams to an owner as written (R4 owns that)",
+    replyOf(leakyOwner) === LEAKY,
+    replyOf(leakyOwner).slice(0, 80));
+
+  const warned = leakyClient.logged.filter((l) => l.msg.includes("client-seat answer withheld"));
+  assert("30.3 the finding is logged by kind and count, never by what was written",
+    warned.length === 1 && /"tool_name":1/.test(warned[0].msg) && /"record_id":1/.test(warned[0].msg)
+      && /"database_error":1/.test(warned[0].msg) && /"operator_jargon":1/.test(warned[0].msg)
+      && !warned[0].msg.includes("update_client_data") && !warned[0].msg.includes(RECORD),
+    JSON.stringify(warned.map((w) => w.msg)));
+
+  // A THOUGHT LINE IS READ TOO. The existing thought filter drops a line with an identifier or a
+  // record id in it, but Postgres error text in words passes it — so the thought, not the answer, is
+  // what carries the leak here. The control proves this shape really does show a thought.
+  const NARRATION_CLEAN = "Let me update your phone number now.";
+  const NARRATION_LEAKY = "That save was refused: new row violates row-level security policy.";
+  const tool = { name: "update_client_data", args: { phone: "(415) 555-0132" } };
+  const thoughtControl = await drive({ stream: true, rpcOverrides: AS_CLIENT, toolCall: tool, toolRoundNarration: NARRATION_CLEAN, replyText: "Saved." });
+  const thoughtLeak = await drive({ stream: true, rpcOverrides: AS_CLIENT, toolCall: tool, toolRoundNarration: NARRATION_LEAKY, replyText: "Saved." });
+  assert("30.4 CONTROL: this shape shows a client her thought line, with the answer",
+    thoughtsOf(thoughtControl).includes(NARRATION_CLEAN) && replyOf(thoughtControl) === "Saved.",
+    JSON.stringify({ thoughts: thoughtsOf(thoughtControl), reply: replyOf(thoughtControl) }));
+  assert("30.5 a leak in a thought line alone withholds the turn, and the thought never reaches the client",
+    replyOf(thoughtLeak) === WITHHELD && thoughtsOf(thoughtLeak).length === 0 && !thoughtLeak.bodyText.includes("row-level security"),
+    JSON.stringify({ thoughts: thoughtsOf(thoughtLeak), reply: replyOf(thoughtLeak).slice(0, 60) }));
+
+  // THE THREAD KEEPS WHAT THE WIRE CARRIED. A reload must never show a client the answer they were told
+  // was not sent.
+  const threadLeak = await drive({ stream: true, rpcOverrides: AS_CLIENT, replyText: LEAKY, extraBody: { threadId: THREAD } });
+  const threadClean = await drive({ stream: true, rpcOverrides: AS_CLIENT, replyText: CLEAN, extraBody: { threadId: THREAD } });
+  assert("30.6 CONTROL: a client's clean answer is saved to the thread as sent",
+    JSON.stringify(persisted(threadClean)) === JSON.stringify([CLEAN]),
+    JSON.stringify(persisted(threadClean)).slice(0, 120));
+  assert("30.7 a withheld answer is saved as the withheld sentence, never as what was written",
+    JSON.stringify(persisted(threadLeak)) === JSON.stringify([WITHHELD]) && replyOf(threadLeak) === WITHHELD,
+    JSON.stringify(persisted(threadLeak)).slice(0, 120));
+
+  // THE DOCUMENT PATH is a second, independent stream with its own release point.
+  const doc = { fileName: "intake.pdf", base64: "JVBERi0xLjQK", mimeType: "application/pdf" };
+  const docClean = await drive({ stream: true, rpcOverrides: AS_CLIENT, document: doc, text: "here is my intake form", replyText: "Got it, I've read your intake form." });
+  const docLeak = await drive({ stream: true, rpcOverrides: AS_CLIENT, document: doc, text: "here is my intake form", replyText: `Got it. I saved it to record ${RECORD} with update_client_data.` });
+  const docOwner = await drive({ stream: true, rpcOverrides: AS_OWNER, document: doc, text: "here is my intake form", replyText: `Got it. I saved it to record ${RECORD} with update_client_data.` });
+  assert("30.8 CONTROL: a client's clean answer about a document arrives as written",
+    replyOf(docClean) === "Got it, I've read your intake form.",
+    JSON.stringify({ status: docClean.status, reply: replyOf(docClean).slice(0, 60) }));
+  assert("30.9 on the document path a leaky answer never reaches a client either",
+    replyOf(docLeak) === WITHHELD && !docLeak.bodyText.includes(RECORD) && !docLeak.bodyText.includes("update_client_data"),
+    JSON.stringify({ reply: replyOf(docLeak).slice(0, 80) }));
+  assert("30.10 ...and an owner's document turn is untouched",
+    replyOf(docOwner).includes(RECORD),
+    replyOf(docOwner).slice(0, 80));
+  const docThread = await drive({ stream: true, rpcOverrides: AS_CLIENT, document: doc, text: "here is my intake form", replyText: `Got it. I saved it to record ${RECORD}.`, extraBody: { threadId: THREAD } });
+  const docThreadClean = await drive({ stream: true, rpcOverrides: AS_CLIENT, document: doc, text: "here is my intake form", replyText: "Got it, I've read your intake form.", extraBody: { threadId: THREAD } });
+  assert("30.14 on the document path too, the thread keeps the withheld sentence, never what was written (the control saves a clean answer as sent)",
+    JSON.stringify(persisted(docThread)) === JSON.stringify([WITHHELD])
+      && JSON.stringify(persisted(docThreadClean)) === JSON.stringify(["Got it, I've read your intake form."]),
+    JSON.stringify({ leak: persisted(docThread), clean: persisted(docThreadClean) }).slice(0, 200));
+
+  // EACH SOURCE OF THE VOCABULARY IS LOAD-BEARING. A key the tool result's own envelope carried, and a
+  // block name only the server's document instruction carried: each is caught only if that source is
+  // read. The controls prove each word was really in what she was sent, and only there.
+  const sentTo = (r) => (r.modelEgress.at(-1) ?? "");
+  const resultKey = await drive({ stream: true, rpcOverrides: AS_CLIENT, toolCall: tool, replyText: "I queued it; needs_confirm is set, so tap approve." });
+  assert("30.11 a key from the tool result she was sent is caught in a client's answer",
+    sentTo(resultKey).includes('\\"needs_confirm\\"') && replyOf(resultKey) === WITHHELD,
+    JSON.stringify({ inResult: sentTo(resultKey).includes('\\"needs_confirm\\"'), reply: replyOf(resultKey).slice(0, 60) }));
+  const creditRead = { can_read_document: true, document_kind: "credit_report", first_five_account_names: ["ACCOUNT ONE"] };
+  const MARKER = "CREDIT REPORT ANALYSIS INSTRUCTIONS";
+  const docMarker = await drive({ stream: true, rpcOverrides: AS_CLIENT, document: { fileName: "report.pdf", base64: "JVBERi0xLjQK", mimeType: "application/pdf" }, readCheck: creditRead, text: "here is my report", replyText: `Per my ${MARKER}, your report has three accounts.` });
+  // The request that produced the answer is the streamed one; the credit path makes other model calls
+  // after it (the read check, the extraction).
+  const answered = docMarker.modelEgress.find((body) => { try { return JSON.parse(body).stream === true; } catch { return false; } }) ?? "";
+  const docSystem = (() => { try { const b = JSON.parse(answered); return typeof b.system === "string" ? b.system : JSON.stringify(b.system ?? ""); } catch { return ""; } })();
+  // Only text the handler VOUCHES for, where it built it, gives block names and keys. The team authority
+  // block is vouched (constant header and footer, sentences from a fixed switch), so its name is caught.
+  const AUTHORITY = "YOUR AUTHORITY IN THIS WORKSPACE";
+  const systemMarker = await drive({ stream: true, rpcOverrides: AS_CLIENT, replyText: `Per ${AUTHORITY}, you are a member here.` });
+  const systemOf = (r) => { try { const b = JSON.parse(r.modelEgress.find((x) => { try { return JSON.parse(x).stream === true; } catch { return false; } }) ?? "null"); return typeof b?.system === "string" ? b.system : JSON.stringify(b?.system ?? ""); } catch { return ""; } };
+  assert("30.13 the name of a vouched block (the team authority block) is caught in a client's answer",
+    systemOf(systemMarker).includes(`=== ${AUTHORITY}`) && replyOf(systemMarker) === WITHHELD,
+    JSON.stringify({ inSystem: systemOf(systemMarker).includes(`=== ${AUTHORITY}`), reply: replyOf(systemMarker).slice(0, 60) }));
+
+  // A TENANT'S OWN WORDS NEVER WITHHOLD THEIR CLIENT'S ANSWER. The persona is pasted into the system
+  // prompt as prose and is never vouched, and a tenant can write what looks exactly like the server's
+  // own text into it: a comma, a quoted word and a real JSON value, or a heading with its END line. Each
+  // phrasing, repeated in a client's answer, reaches the client and is saved as written. The control
+  // proves the persona really reached the model, and that read as the server's it would have withheld.
+  const { deriveInternalVocabulary: vocabularyOf, findInternalLeaks: leaksIn } = await import("../../supabase/functions/_shared/internal-vocabulary.ts");
+  const AS_CLIENT_WITH_PERSONA = { ...AS_CLIENT, get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: BUSINESS, playbook_slug: null, funding_enabled: false, brand: null,
+    playbook_config: { persona: { name: "Paige", role: "your coach's assistant" }, journey: [
+      { key: "basic", label: "Basic", description: 'We offer basic, "gold_tier": true for premium customers.' },
+      { key: "vip", label: "VIP", description: "Members book first.\nVIP PLAN\nPriority booking, every week.\nEND VIP PLAN" },
+    ] } }], error: null } };
+  for (const [id, words] of [["30.27", "Your gold_tier plan includes early booking on weekdays."], ["30.28", "You're on the VIP PLAN, so you book first every week."]]) {
+    const turn = await drive({ stream: true, rpcOverrides: AS_CLIENT_WITH_PERSONA, replyText: words, extraBody: { threadId: THREAD } });
+    const sentSystem = systemOf(turn);
+    const personaSent = sentSystem.includes('"gold_tier": true') && sentSystem.includes("END VIP PLAN");
+    const asIfServer = leaksIn(words, vocabularyOf({ vouchedTexts: [sentSystem] })).map((leak) => leak.text);
+    assert(`${id} a client's answer repeating the tenant's own persona words reaches the client and is saved as written (${words.slice(0, 22)}…)`,
+      personaSent && asIfServer.length > 0 && replyOf(turn) === words && persisted(turn).at(-1) === words,
+      JSON.stringify({ personaSent, asIfServer, reply: replyOf(turn).slice(0, 60), saved: persisted(turn).at(-1)?.slice(0, 60) }));
+  }
+
+  // A TOOL THE SEAT MAY NOT USE RENDERS NO STEP. Action steps go to the wire as they happen and are
+  // not read, so a refused owner tool must not become one: it would show a client an owner's action,
+  // and buying a number shows the model's own argument, which a client can ask the model to fill with
+  // anything. The control proves the call was made and refused, not skipped.
+  const stepsOf = (r) => frames(r).filter((f) => f.paige_step?.kind === "action").map((f) => f.paige_step);
+  const planted = `update_client_data ${RECORD}`;
+  const refused = await drive({ stream: true, rpcOverrides: AS_CLIENT, toolCall: { name: "comms_buy_number", args: { phone_number: planted } }, replyText: "Sorry, I can't do that here." });
+  const refusedReached = refused.modelEgress.some((body) => body.includes("forbidden_seat"));
+  assert("30.29 a tool a client seat may not use is refused and renders no step, so the model's own argument never reaches the client",
+    refusedReached && stepsOf(refused).length === 0 && !refused.bodyText.includes(planted) && !refused.bodyText.includes(RECORD)
+      && replyOf(refused) === "Sorry, I can't do that here.",
+    JSON.stringify({ refusedReached, steps: stepsOf(refused), reply: replyOf(refused).slice(0, 60) }));
+  // A WITHHELD ANSWER IS NOT EXTRACTED FROM. On the credit path the answer is the extraction's input,
+  // and the extraction writes a report summary, an analysis and a review proposal; none of that may be
+  // made from an answer the client was not shown. The control proves the clean turn does extract.
+  const EXTRACTS = "Here is the credit report analysis I just produced";
+  const creditClean = await drive({ stream: true, rpcOverrides: AS_CLIENT, document: { fileName: "report.pdf", base64: "JVBERi0xLjQK", mimeType: "application/pdf" }, readCheck: creditRead, text: "here is my report", replyText: "Your report has three accounts." });
+  assert("30.15 CONTROL: a client's clean credit-report answer is extracted from, as before",
+    creditClean.modelEgress.some((body) => body.includes(EXTRACTS)) && replyOf(creditClean) === "Your report has three accounts.",
+    JSON.stringify({ calls: creditClean.modelEgress.length }));
+  assert("30.16 a withheld credit-report answer is never extracted from, so nothing is written from it",
+    !docMarker.modelEgress.some((body) => body.includes(EXTRACTS))
+      && !docMarker.rec.inserts.some((i) => i.table === "audit_logs" || i.table === "client_memory"),
+    JSON.stringify({ extracted: docMarker.modelEgress.some((body) => body.includes(EXTRACTS)), inserts: docMarker.rec.inserts.map((i) => i.table) }));
+
+  // "[DONE]" INSIDE AN ANSWER IS TEXT. Only the whole payload `[DONE]` ends a stream; an answer that
+  // contains it was dropped from what the check read and what the thread saved, while its bytes still
+  // reached the person.
+  const doneLeak = await drive({ stream: true, rpcOverrides: AS_CLIENT, replyText: "Done, I ran update_client_data for you. [DONE]" });
+  assert("30.17 an answer that contains the text [DONE] is still read, and withheld when it leaks",
+    replyOf(doneLeak) === WITHHELD && !doneLeak.bodyText.includes("update_client_data"),
+    replyOf(doneLeak).slice(0, 80));
+  const doneOwner = await drive({ stream: true, rpcOverrides: AS_OWNER, replyText: "All set. Reply [DONE] when you have read it.", extraBody: { threadId: THREAD } });
+  assert("30.18 ...and on any seat the thread now saves what the person received, [DONE] and all",
+    replyOf(doneOwner) === "All set. Reply [DONE] when you have read it."
+      && JSON.stringify(persisted(doneOwner)) === JSON.stringify(["All set. Reply [DONE] when you have read it."]),
+    JSON.stringify({ reply: replyOf(doneOwner), saved: persisted(doneOwner) }));
+
+  const doneDoc = await drive({ stream: true, rpcOverrides: AS_OWNER, document: doc, text: "here is my intake form", replyText: "Got it. Reply [DONE] once you've checked it.", extraBody: { threadId: THREAD } });
+  assert("30.21 ...on the document path too: the answer is delivered and saved in full",
+    replyOf(doneDoc) === "Got it. Reply [DONE] once you've checked it."
+      && JSON.stringify(persisted(doneDoc)) === JSON.stringify(["Got it. Reply [DONE] once you've checked it."]),
+    JSON.stringify({ reply: replyOf(doneDoc), saved: persisted(doneDoc) }));
+
+  // WHEN SOMETHING WAS SAVED, THE SENTENCE SAYS SO — and only then. A client who reads "ask me another
+  // way" after their phone number was stored would send it again. "Saved" is the write's own report:
+  // the client-data write-back answers `success: true` for the request and lists each field's own
+  // outcome, so a request whose every field failed saved nothing.
+  const WITHHELD_SAVED = withheldReplyForClient(BUSINESS, { savedSomething: true });
+  const AUTO_CLIENT = { ...AS_CLIENT, resolve_tool_autonomy: { data: "auto", error: null } };
+  const phoneTool = { name: "update_client_data", args: { updates: [{ field_path: "phone", value: "(415) 555-0132" }] } };
+  const savedLeak = await drive({ stream: true, rpcOverrides: AUTO_CLIENT, toolCall: phoneTool, replyText: LEAKY,
+    writeBack: { status: 200, body: { success: true, results: [{ field_path: "phone", success: true }] } } });
+  const failedLeak = await drive({ stream: true, rpcOverrides: AUTO_CLIENT, toolCall: phoneTool, replyText: LEAKY,
+    writeBack: { status: 200, body: { success: true, results: [{ field_path: "phone", success: false, error: "Field not in whitelist" }] } } });
+  const pendingLeak = await drive({ stream: true, rpcOverrides: { ...AS_CLIENT, resolve_tool_autonomy: { data: "confirm", error: null } }, toolCall: phoneTool, replyText: LEAKY });
+  const wroteBack = (r) => r.outboundCalls.some((c) => c.url.includes("paige-write-back"));
+  assert("30.22 a save that landed on the turn is named in the withheld sentence, so the client does not send it again",
+    wroteBack(savedLeak) && replyOf(savedLeak) === WITHHELD_SAVED,
+    JSON.stringify({ wrote: wroteBack(savedLeak), reply: replyOf(savedLeak).slice(0, 160) }));
+  assert("30.23 a write that ran but saved no field is not called saved: the approved sentence, word for word",
+    wroteBack(failedLeak) && replyOf(failedLeak) === WITHHELD,
+    JSON.stringify({ wrote: wroteBack(failedLeak), reply: replyOf(failedLeak).slice(0, 160) }));
+  assert("30.24 a save still waiting on approval is not called saved either",
+    !wroteBack(pendingLeak) && replyOf(pendingLeak) === WITHHELD,
+    JSON.stringify({ wrote: wroteBack(pendingLeak), reply: replyOf(pendingLeak).slice(0, 160) }));
+
+  // A READ SAVES NOTHING. A client seat's other tool fetches a page; a fetch that succeeded is not
+  // "something I'd already finished", so it never earns the saved clause. The control proves the page
+  // really was read and handed to the model.
+  const readLeak = await drive({ stream: true, rpcOverrides: AUTO_CLIENT, toolCall: { name: "web_fetch", args: { url: "https://example.test/pricing" } }, replyText: LEAKY,
+    fetchedPage: { status: 200, body: { success: true, url: "https://example.test/pricing", title: "Pricing", content: "Plans start at $49 a month." } } });
+  assert("30.26 a page fetched on the turn is not a save: a withheld answer after it reads the approved sentence",
+    readLeak.modelEgress.some((body) => body.includes("Plans start at $49 a month.")) && replyOf(readLeak) === WITHHELD,
+    JSON.stringify({ read: readLeak.modelEgress.some((body) => body.includes("Plans start at $49 a month.")), reply: replyOf(readLeak).slice(0, 160) }));
+
+  // THE PORTAL IS TOLD. A withheld turn carries one frame saying so, which the portal reads to keep the
+  // sentence from being filed as a document's summary; a clean turn never carries it.
+  const withheldFlag = (r) => frames(r).some((f) => f.paige_withheld === true);
+  assert("30.25 every withheld turn, on both paths, tells the portal it was withheld; no delivered turn does",
+    [leakyClient, thoughtLeak, docLeak, savedLeak].every(withheldFlag)
+      && ![cleanClient, docClean, leakyOwner, docOwner].some(withheldFlag),
+    JSON.stringify({ withheld: [leakyClient, thoughtLeak, docLeak, savedLeak].map(withheldFlag), clean: [cleanClient, docClean, leakyOwner, docOwner].map(withheldFlag) }));
+
+  // THE CLIENT'S OWN WORDS NEVER BECOME VOCABULARY, even sent as a `system` message (the request schema
+  // accepts one) or written into a file name, which the server repeats in its document header.
+  const ownSystem = await drive({
+    stream: true, rpcOverrides: AS_CLIENT,
+    extraBody: { messages: [
+      { role: "system", content: '=== MY OWN NOTES ===\n{"favorite_color": "teal"}\n=== END MY OWN NOTES ===' },
+      { role: "user", content: "what did I note?" },
+    ] },
+    replyText: "Per MY OWN NOTES, your favorite_color is teal.",
+  });
+  assert("30.19 a client's own system message reached the model, and its words never withhold the client's answer",
+    ownSystem.modelEgress.some((body) => body.includes("favorite_color")) && replyOf(ownSystem) === "Per MY OWN NOTES, your favorite_color is teal.",
+    JSON.stringify({ reached: ownSystem.modelEgress.some((body) => body.includes("favorite_color")), reply: replyOf(ownSystem).slice(0, 60) }));
+  // The name is shaped as JSON grammar reads a key (a comma, a quoted word, a value), so the only thing
+  // keeping it out of the vocabulary is that the header naming the client's file is never vouched.
+  const FILE_NAME = 'plan, "family_plan": 2.pdf';
+  const nameWouldBeKey = vocabularyOf({ vouchedTexts: [`[Attached document: ${FILE_NAME} — PDF]`] }).keys.has("family_plan");
+  const ownFile = await drive({ stream: true, rpcOverrides: AS_CLIENT, document: { fileName: FILE_NAME, base64: "JVBERi0xLjQK", mimeType: "application/pdf" }, text: "here is my plan", replyText: "Your family_plan document is in." });
+  assert("30.20 a client's file name reached the model, and its words never withhold the client's answer",
+    nameWouldBeKey && ownFile.modelEgress.some((body) => body.includes("family_plan")) && replyOf(ownFile) === "Your family_plan document is in.",
+    JSON.stringify({ nameWouldBeKey, reached: ownFile.modelEgress.some((body) => body.includes("family_plan")), reply: replyOf(ownFile).slice(0, 60) }));
+  assert("30.12 a block name only the server's document instruction carried is caught on the document path",
+    answered.includes(`=== ${MARKER} ===`) && !docSystem.includes(MARKER) && replyOf(docMarker) === WITHHELD,
+    JSON.stringify({ inRequest: answered.includes(`=== ${MARKER} ===`), inSystem: docSystem.includes(MARKER), reply: replyOf(docMarker).slice(0, 60) }));
 }
 
 console.log(`\n${checks - failures} passed, ${failures} failed`);

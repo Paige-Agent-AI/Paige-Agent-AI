@@ -389,6 +389,13 @@ async function drive({ personaTenant, personaSequence = null, memberships, kbRej
       match_rag_documents: () => (ragHits
         ? { data: [{ id: "rag-1", title: "PRIVATE-RAGTITLE-MARKER outcomes", summary: "PRIVATE-RAG-SOURCE-MARKER", content: "", similarity: 0.88 }], error: null }
         : { data: [], error: null }),
+      // THE CALLER IS AN OWNER unless a scenario says otherwise. Unstubbed, the tier resolver fails
+      // closed to a client seat, and a client seat's turn is always held so its answer can be read
+      // before release (R3). With that default every drive here was held whatever evidence it
+      // carried, and the checks that prove each evidence source holds the turn passed whether or
+      // not it did: an independent review removed two sources from the entry list and this file
+      // stayed green. A scenario that means a client says so, as 21.ac2 does.
+      get_actor_access: { data: { tier: "tenant" }, error: null },
       // Scenario-specific RPCs (e.g. the `save_marketing_content` a `document_generate` tool
       // call persists through). Last, so a scenario can also override a default above.
       ...rpcExtras,

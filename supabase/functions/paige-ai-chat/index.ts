@@ -96,6 +96,8 @@ import { buildStudioWhereYouAre, STUDIO_OPERATING_CORE } from "../_shared/design
 // Tier Rail Spine (Phase D): the SAME declared-rail tier resolver + client-seat
 // allowlist that paige-mcp uses, so a client-portal Paige seat is sealed here too.
 import { getActorTier, clientSeatToolAllowed, type Tier } from "../_shared/actorTier.ts";
+// R3 — what a client seat reads is read for internal text first.
+import { decodeChunks, internalTextForClient, leakKindCounts, readableFromFrames, resultSavedSomething, WITHHELD_FRAME, withheldReplyForClient } from "../_shared/client-seat-reply.ts";
 // Main Paige Operational Chat · P3 — truthful capability status (§13/§36/§70). The pure decision
 // core (resolver) + the MVP signal builder compose the honest "what can Paige do here?" answer;
 // the dispatch feeds them server-resolved facts (tier, clamped lane, Spine maturity). §18: one home.
@@ -163,6 +165,10 @@ function describeStep(
   // The regex above misses both: the `off` message says "is turned off for this workspace",
   // and a `needs_confirm` result carries no `error` at all.
   if (out?.needs_confirm === true || out?.disabled === true) return null;
+  // A tool refused because this seat may not use it (a client seat asked for an owner's tool) did
+  // not run. Rendering it would show a client an owner's action, and for some tools the model's own
+  // argument, on a channel the client-seat check does not read (R3). Nothing ran; nothing renders.
+  if (out?.forbidden_seat === true) return null;
 
   switch (name) {
     case "comms_connection_summary":
@@ -2408,9 +2414,21 @@ JSON:`;
     // comment saying "one caller among several." A reviewer found both. Hence no count here:
     // grep for the callers, they cannot drift.
     let lateRetrievalProtected = false;
-    // Read through this, never off the entry value, so a tool round that lands mid-turn is seen
-    // by the emitter and the revalidation guard alike.
-    const turnCarriesProtectedContent = () => turnCarriesProtectedContentAtEntry || lateRetrievalProtected;
+    // A CLIENT SEAT'S TURN IS ALWAYS HELD, and not because it carries evidence (which is why this is
+    // not in the entry list above). Its reply is read for internal text before it is released
+    // (`_shared/client-seat-reply.ts`), and only a held reply can be withheld whole: a streamed one
+    // has already been read by the time a finding exists. Most client turns were already held, because
+    // the portal chat always sends page context (source 10); this makes it a rule instead of a
+    // coincidence of what the client happens to send. Holding does NOT by itself send the turn through
+    // the scope re-check below: that protects retrieved evidence, and a client turn carrying none has
+    // nothing to re-check, so a transient lookup error cannot refuse an ordinary client answer (owner
+    // ruling: a missed leak is preferable to a withheld ordinary answer).
+    const clientSeatReadsBeforeRelease = callerTier === "client";
+    // Read through these, never off the entry value, so a tool round that lands mid-turn is seen
+    // by the emitter and the revalidation guard alike. Evidence decides the re-check; evidence or a
+    // client seat decides the hold.
+    const turnCarriesEvidence = () => turnCarriesProtectedContentAtEntry || lateRetrievalProtected;
+    const turnCarriesProtectedContent = () => turnCarriesEvidence() || clientSeatReadsBeforeRelease;
     // INVERTED, deliberately: a tool result is EVIDENCE unless it is a write receipt. Classifying
     // the evidence-bearing tools instead would be an allowlist, and an allowlist is what has been
     // one round behind at every stage of this change — the safe error has to be "protected".
@@ -2602,9 +2620,10 @@ JSON:`;
     const turnScopeTenantId: string | null = personaCtx.tenant_id ?? null;
     const revalidateTenantKnowledgeScope = async (): Promise<boolean> => {
       if (tenantKnowledgeScopeRevoked) return false;
-      // An ordinary turn carries no protected evidence, so there is nothing to re-check and it
-      // pays no RPC — this is what keeps live streaming free of added latency.
-      if (!turnCarriesProtectedContent()) return true;
+      // A turn that carries no protected evidence has nothing to re-check and pays no RPC — this
+      // is what keeps live streaming free of added latency. A client seat's turn is held so its
+      // answer can be read (R3), but holding is not evidence.
+      if (!turnCarriesEvidence()) return true;
       try {
         const { data, error } = await supabaseClient.rpc("get_paige_persona_context");
         const row = Array.isArray(data) ? data[0] : data;
@@ -4782,6 +4801,24 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       traceCtx.agent_id = vpAddress.vp.slug;
     }
 
+    // R3 — what a client seat's reply check derives vocabulary from: text VOUCHED for where it is built,
+    // never by default and never inherited (_shared/internal-vocabulary.ts). Each entry is server-written
+    // end to end: platform constants, and wording the server chose, never a value it pasted in. A block
+    // that pastes in tenant, client, uploaded or fetched prose (persona, brand, address, business
+    // description, knowledge, the client's own messages) is never vouched, however server-shaped it
+    // looks, and is simply not read for vocabulary. Vouched today, each established by reading its
+    // builder:
+    //   - the team authority block: constant header and footer, and sentences chosen by a fixed switch
+    //     over the seat's role and ownership (_shared/paige-spine/domains/teamAuthorityChatEvidence.ts);
+    //   - the document instruction: UPLOADED_FILE_UNTRUSTED_NOTICE and fixed text. The header that names
+    //     the client's file is kept apart and not vouched.
+    // A new entry needs the same: someone establishes it is server-written end to end, and its PR says
+    // who and on what basis.
+    const clientSeatVouched: string[] = [];
+    const vouchForClientSeat = (text: string): string => {
+      clientSeatVouched.push(text);
+      return text;
+    };
     // Build message array — lead with the tenant's persona so identity is set first,
     // then the platform-default VOICE, THEN the task/tool operating core below.
     const aiMessages: any[] = [
@@ -4793,7 +4830,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       ...(tenantTeamContext ? [{ role: "system", content: tenantTeamContext }] : []),
       ...(businessContextReadinessBlock ? [{ role: "system", content: businessContextReadinessBlock }] : []),
       ...(publicPresenceContextBlock ? [{ role: "system", content: publicPresenceContextBlock }] : []),
-      ...(teamAuthorityBlock ? [{ role: "system", content: teamAuthorityBlock }] : []),
+      ...(teamAuthorityBlock ? [{ role: "system", content: vouchForClientSeat(teamAuthorityBlock) }] : []),
       ...(socialPresenceBlock ? [{ role: "system", content: socialPresenceBlock }] : []),
       ...(businessMissionContextBlock ? [{ role: "system", content: businessMissionContextBlock }] : []),
       ...(n8nReadinessBlock ? [{ role: "system", content: n8nReadinessBlock }] : []),
@@ -5431,9 +5468,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // vision surface (whose bytes cannot be text-wrapped) and clearly separates trusted instructions
         // from the untrusted document. The analysis instructions are unchanged — a legitimate document is
         // still read and analyzed; only obeying directives embedded IN the file is refused.
-        const baseInstruction = isCreditReportPdf
-          ? `[Attached document: ${attachedDocument.fileName}]\n\n${UPLOADED_FILE_UNTRUSTED_NOTICE}\n\n=== CREDIT REPORT ANALYSIS INSTRUCTIONS ===\nIf this document is a credit report (especially a tri-merge report), produce a STRUCTURED analysis. Tri-merge column order is TransUnion (left), Experian (middle), Equifax (right). Dashes (--) mean NOT reported at that bureau. Always identify document type and bureau in your response.`
-          : `[Attached document: ${attachedDocument.fileName} — ${docKind.toUpperCase()}]\n\n${UPLOADED_FILE_UNTRUSTED_NOTICE}\n\nThe client has shared a document. Acknowledge it briefly and naturally — e.g. "Got it — I've read through your [document type]." If you can identify what kind of document this is (EIN letter, articles of incorporation, business license, bank statement, ID, W-9, voided check, or other), name it. The system will offer the client a save dialog separately for any extracted fields, so do NOT recite them as a checklist; just confirm what you saw and ask what they'd like to do next.`;
+        // The header names the client's file; the instruction under it is the server's. Kept apart so
+        // R3 vouches for the instruction without vouching for the client's file name.
+        const documentHeader = isCreditReportPdf
+          ? `[Attached document: ${attachedDocument.fileName}]`
+          : `[Attached document: ${attachedDocument.fileName} — ${docKind.toUpperCase()}]`;
+        const documentInstruction = vouchForClientSeat(isCreditReportPdf
+          ? `${UPLOADED_FILE_UNTRUSTED_NOTICE}\n\n=== CREDIT REPORT ANALYSIS INSTRUCTIONS ===\nIf this document is a credit report (especially a tri-merge report), produce a STRUCTURED analysis. Tri-merge column order is TransUnion (left), Experian (middle), Equifax (right). Dashes (--) mean NOT reported at that bureau. Always identify document type and bureau in your response.`
+          : `${UPLOADED_FILE_UNTRUSTED_NOTICE}\n\nThe client has shared a document. Acknowledge it briefly and naturally — e.g. "Got it — I've read through your [document type]." If you can identify what kind of document this is (EIN letter, articles of incorporation, business license, bank statement, ID, W-9, voided check, or other), name it. The system will offer the client a save dialog separately for any extracted fields, so do NOT recite them as a checklist; just confirm what you saw and ask what they'd like to do next.`);
+        const baseInstruction = `${documentHeader}\n\n${documentInstruction}`;
 
         contentParts.push({
           type: "text",
@@ -8235,6 +8278,24 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       return new Response(JSON.stringify({ ...gwStructured, error: gwStructured.reason, errorId }), { status: gwStatus, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // R3 — THE ONE READ of what a client seat is about to see, called by both release points (the
+    // agentic stream and the document stream). The vocabulary comes from this turn's own request: the
+    // tool definitions, the text vouched for where it was built (clientSeatVouched, above), and every
+    // tool result. Never the client's own messages, the tenant's prose, or the model's own turns. Returns the sentence the client reads
+    // instead, or null when nothing internal was found; the finding is logged by kind and count only.
+    const withheldForClientSeat = (readable: readonly string[], options: { savedSomething?: boolean } = {}): string | null => {
+      if (!clientSeatReadsBeforeRelease) return null;
+      const leaks = internalTextForClient({
+        readable,
+        tools: toolDefs,
+        vouchedTexts: clientSeatVouched,
+        toolResults: [...toolResultContent.values()],
+      });
+      if (!leaks.length) return null;
+      console.warn("[paige] client-seat answer withheld: internal text", JSON.stringify({ kinds: leakKindCounts(leaks) }));
+      return withheldReplyForClient(personaCtx.tenant_name, options);
+    };
+
     // For non-document requests: check if streaming response contains tool calls
     // We need to accumulate first to detect tool calls, then handle accordingly
     if (!attachedDocument) {
@@ -8254,7 +8315,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // even though the raw bytes forward fine to the client. (#94 integrity.)
         let sseBuf = "";
         const handleLine = (line: string) => {
-          if (!line.startsWith("data: ") || line.includes("[DONE]")) return;
+          // The sentinel is the WHOLE payload. A reply that merely contains "[DONE]" is text, and
+          // skipping it here dropped it from the saved turn and from R3's read while its bytes
+          // still reached the person.
+          if (!line.startsWith("data: ") || line.slice(6).trim() === "[DONE]") return;
           try {
             const parsed = JSON.parse(line.slice(6));
             const c = parsed.choices?.[0]?.delta?.content;
@@ -13541,6 +13605,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       let tenantKnowledgeScopeInvalidated = false;
       // Accumulates Paige's final reply text so we can persist the turn (#94).
       let finalAssistantText = "";
+      let turnSavedSomething = false;
 
       // The agentic loop now runs INSIDE the response stream (#152) so Paige's
       // reasoning is watchable LIVE: each round streams her one-line narration
@@ -13551,8 +13616,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // guard, convo balance, and persistence are all preserved exactly.
       const enc = new TextEncoder();
       // NEUTRAL progress goes straight to the wire on every turn. An action step's label comes
-      // from a fixed vocabulary and its detail is a count — never source text, a title or a
-      // snippet — so it is safe to show while a protected answer is still being checked.
+      // from a fixed vocabulary and its detail is a fixed phrase or a count, with one exception:
+      // buying a number shows the number the model asked for. None of it is source text, a title
+      // or a snippet, so it is shown while a protected answer is still being checked. It is NOT
+      // read by the client-seat check (R3); on a client seat every tool the seat may not use is
+      // refused before it runs and renders no step, so the only step a client sees is the fixed
+      // label of the one write a client may make.
       const emitStep = (controller: ReadableStreamDefaultController, s: any) =>
         controller.enqueue(enc.encode(`data: ${JSON.stringify({ paige_step: s })}\n\n`));
       // PROTECTED content is held on a protected turn and released only after the final check.
@@ -13754,6 +13823,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               }
             }
             for (const r of toolResults) toolResultContent.set(r.tool_call_id, String(r.content ?? ""));
+            // R3 — whether anything on this turn was actually saved, by each write's own report, so a
+            // withheld answer can say so and the client does not send it again. Read after the
+            // rewrite above: a spent approval whose card will say "couldn't confirm" does not count.
+            for (const r of toolResults) {
+              const call = executed.find((c: any) => c?.id === r.tool_call_id);
+              if (call && MUTATING_TOOLS.has(call.function?.name) && resultSavedSomething(String(r.content ?? ""))) {
+                turnSavedSomething = true;
+              }
+            }
             if (scopeInvalidated) {
               tenantKnowledgeScopeInvalidated = true;
               forcedTermination = true;
@@ -13953,8 +14031,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // said. A refusal that leaves the summary of the answer visible is not a refusal.
           //
           // `emitStep` stays direct, and that distinction is the whole line: a step's label
-          // comes from a fixed vocabulary and its detail is a count, so it names an activity
-          // without ever quoting the evidence.
+          // comes from a fixed vocabulary and its detail is a fixed phrase or a count (buying a
+          // number shows the number asked for), so it names an activity without quoting the
+          // evidence.
           if (queuedApprovals.length) emitContent(controller, enc.encode(`data: ${JSON.stringify({ approval_queued: queuedApprovals })}\n\n`));
           // What became of each approval the operator sent (see `emitApprovalOutcome`).
           await emitApprovalOutcome(controller);
@@ -14103,6 +14182,44 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             } catch { /* client already gone */ }
             return;
           }
+
+          // R3 — A CLIENT SEAT READS NOTHING THAT HAS NOT BEEN READ FIRST. What the portal renders from
+          // a held turn is the answer and each thought line, so those are what the check reads, from
+          // the held frames themselves: exactly what `releaseContent` would send, not a copy assembled
+          // beside them. The saved answer is read too: non-load-bearing today, because everything it holds
+          // also arrives as a frame (mutation-verified: reading the frames alone leaves the suite green),
+          // and kept so that a later edit which saves text it did not stream cannot put an unread answer
+          // in the thread. On a finding the whole held turn is dropped, not trimmed: what is
+          // left of a sentence once its internal words are cut out says something the model did not,
+          // and a client cannot tell. The client reads one fixed sentence instead, and that sentence
+          // is what the thread keeps, so a reload shows what the wire did. The cards held beside the
+          // answer go with it; the portal chat does not render cards today, and a card built from
+          // this turn is not trusted by a turn whose answer was not.
+          const withheld = withheldForClientSeat(clientSeatReadsBeforeRelease
+            ? [...readableFromFrames(decodeChunks(heldContent)), finalAssistantText]
+            : [], { savedSomething: turnSavedSomething });
+          if (withheld !== null) {
+            // Non-load-bearing today, as on the refusal path above: the `return` below means nothing
+            // held is flushed. Kept for the same reason, so a later edit that adds a flush here cannot
+            // release the withheld turn. Mutation-verified: removing it alone, or adding a release
+            // alone, leaves the suite green; both together do not.
+            discardContent();
+            pendingTenantKbTelemetry = null;
+            finalAssistantText = withheld;
+            try {
+              controller.enqueue(enc.encode(WITHHELD_FRAME));
+              controller.enqueue(enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: withheld } }] })}\n\n`));
+              controller.enqueue(enc.encode("data: [DONE]\n\n"));
+            } catch { /* client already gone */ }
+            if (payloadThreadId) {
+              try {
+                const p = persistAssistantTurn(withheld, { bundleRef: null });
+                // @ts-ignore — EdgeRuntime is available in Supabase Edge Functions runtime
+                if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(p); else await p;
+              } catch (e) { console.error("[paige] persist assistant turn failed:", (e as Error)?.message); }
+            }
+            return;
+          }
           releaseContent(controller);
 
           // The durable record follows that same single decision. It used to sit behind its own
@@ -14234,12 +14351,24 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           directSseBuf += decoder.decode(); // flush; process any trailing line
           if (directSseBuf) {
             for (const line of directSseBuf.split("\n")) {
-              if (!line.startsWith("data: ") || line.includes("[DONE]")) continue;
+              if (!line.startsWith("data: ") || line.slice(6).trim() === "[DONE]") continue;
               if (holdProtectedContent) directFrames.push(`${line}\n\n`);
               try { const c = JSON.parse(line.slice(6))?.choices?.[0]?.delta?.content; if (c) fullAssistantResponse += c; } catch { /* skip */ }
             }
             directSseBuf = "";
           }
+          // R3 — ON A CLIENT SEAT THE ANSWER IS READ HERE, before the close-out below, because the
+          // close-out reads it: the credit extraction takes this answer as its input and writes a
+          // report summary, an analysis and an awaiting-review proposal from it. An answer the client
+          // is not shown must not become rows, so on a finding nothing below extracts from it, and the
+          // release point after the close decision sends the one sentence instead. Read from the held
+          // frames themselves, as on the agentic path, and from the saved answer. This path streams no
+          // thought lines, so today the two carry the same text and either read alone leaves the suite
+          // green (mutation-verified); both are kept so neither the wire nor the thread can hold
+          // something the check did not read.
+          const clientSeatWithheld = withheldForClientSeat(clientSeatReadsBeforeRelease
+            ? [...readableFromFrames(directFrames.join("")), fullAssistantResponse]
+            : []);
           // The close-out frames below (`sync_status`, `extraction_proposal`) are PROTECTED
           // CONTENT and take the same buffer the reply takes, released by the same single close
           // decision. They were going straight to the wire, which meant a turn whose reply was
@@ -14260,7 +14389,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // NAMED client's report — scores, negative items, accounts — into the CALLER's own
           // credit records, unscoped. Storing the file under the caller (above) is a safe
           // degrade; synthesising another subject's credit profile into their file is not.
-          if (clientScopeDenied) {
+          if (clientSeatWithheld !== null) {
+            // Nothing is extracted from an answer that was withheld; the client can ask again.
+          } else if (clientScopeDenied) {
             console.error(
               "[paige] client scope REFUSED — credit extraction and sync SKIPPED",
               JSON.stringify({ reason: clientScopeRefusal }),
@@ -14370,6 +14501,18 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // Returns `true` immediately, with no RPC, on any turn that retrieved no Knowledge, so
           // this costs nothing on the ordinary path.
           const scopeHeldAtClose = await revalidateTenantKnowledgeScope();
+
+          // R3 — THE RELEASE HALF of the decision made before the close-out. On a finding every held
+          // frame is replaced by the one sentence and the thread keeps that sentence, so the thread row,
+          // the analytics rows (which read `fullAssistantResponse`, the sentence by then) and the wire
+          // agree. The close frames go with the answer, as the cards do on the agentic path.
+          if (scopeHeldAtClose && clientSeatWithheld !== null) {
+            fullAssistantResponse = clientSeatWithheld;
+            pendingTenantKbTelemetry = null;
+            directFrames.length = 0;
+            directFrames.push(WITHHELD_FRAME);
+            directFrames.push(`data: ${JSON.stringify({ choices: [{ delta: { content: clientSeatWithheld } }] })}\n\n`);
+          }
 
           // Detect Paige's outputs for analytics: entity diagrams + legal flags.
           //
@@ -14499,7 +14642,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         while ((nl = directSseBuf.indexOf("\n")) !== -1) {
           const line = directSseBuf.slice(0, nl);
           directSseBuf = directSseBuf.slice(nl + 1);
-          if (!line.startsWith("data: ") || line.includes("[DONE]")) continue;
+          if (!line.startsWith("data: ") || line.slice(6).trim() === "[DONE]") continue;
           if (holdProtectedContent) directFrames.push(`${line}\n\n`);
           try {
             const parsed = JSON.parse(line.slice(6));

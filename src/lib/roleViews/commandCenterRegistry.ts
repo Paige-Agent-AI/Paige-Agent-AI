@@ -185,7 +185,6 @@ export const PERSONAS: Record<string, PersonaView> = {
 export const ROLE_TO_PERSONA: Record<string, string> = {
   owner: "owner",
   admin: "owner",
-  coach: "coach",
   sales_rep: "sales",
   cs_rep: "client_success",
   finance: "finance",
@@ -195,7 +194,7 @@ export const ROLE_TO_PERSONA: Record<string, string> = {
 
 /** Highest authority wins for a multi-hat user. */
 export const PERSONA_PRECEDENCE = [
-  "owner", "admin", "coach", "sales_rep", "cs_rep", "finance", "viewer",
+  "owner", "admin", "sales_rep", "cs_rep", "finance", "viewer",
 ] as const;
 
 export function resolvePersona(roles: string[], isOwner: boolean): PersonaView {

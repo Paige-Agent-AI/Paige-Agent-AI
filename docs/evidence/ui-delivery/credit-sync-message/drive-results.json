@@ -2,9 +2,9 @@
   "harness": "paige-chat-mount",
   "results": [
     {
-      "name": "a stale server's raw frame on this panel: the step name is never drawn",
+      "name": "a stale server's raw frame on this panel: no pipeline text and no step, the fallback sentence instead",
       "ok": true,
-      "detail": "ccounts synced (0)Disputes created (0)Credit factors recalculatedFunding readiness updatedFailed to parse extracted data"
+      "detail": "ut I couldn't finish pulling out its details for you to review. You can ask the team you're working with to take a look."
     },
     {
       "name": "after-1536x770-light: the uploader reads the sentence, no step name, no pipeline text, nothing clipped or scrolling sideways",

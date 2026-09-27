@@ -168,7 +168,7 @@ test("a credit-report sync failure reaches the uploader as a fixed sentence, nev
     negative_items_synced: 0,
   };
   const out = syncStatusForClient(raw, "  Northside   Fitness ");
-  assert.deepEqual(out, { success: false, negative_items_synced: 0, error: BEFORE_ANY_WRITE });
+  assert.deepEqual(out, { success: false, negative_items_synced: 0, uploader_sentence: true, error: BEFORE_ANY_WRITE });
   const text = JSON.stringify(out);
   for (const internal of ["validation", "negative_items[0]", "account_type", "step"]) assert.equal(text.includes(internal), false, internal);
   // An exception's own message is never passed either, and with no name the sentence still reads.
@@ -188,6 +188,7 @@ test("only a failure before the pipeline's first write says nothing was added (R
     const raw = { success: false, error: "That could not be saved", step, write: "credit_report_uploads" };
     const out = syncStatusForClient(raw, "Northside Fitness");
     assert.equal(out?.error, DID_NOT_FINISH, String(step));
+    assert.equal(out?.uploader_sentence, true, String(step));
     assert.equal(/none of them were added|uploading it again|saved/.test(String(out?.error)), false, String(step));
     assert.equal(JSON.stringify(out).includes("credit_report_uploads"), false, String(step));
   }
@@ -199,7 +200,7 @@ test("each panel field passes only in its own type, and a raw error never passes
   assert.deepEqual(syncStatusForClient(waiting), { success: false, awaiting_review: true, nothing_to_propose: true });
   const done = { success: true, scores_synced: { equifax: 700, experian: null, transunion: "700; DROP", vantage: 1 }, disputes_created: 2, negative_items_synced: "3 items", positive_accounts_synced: -1, credit_factors_recalculated: "yes", funding_readiness_recalculated: true, error: "should not pass", report_id: "5a5a5a5a-5a5a-4a5a-8a5a-5a5a5a5a5a5a", step: "done" };
   assert.deepEqual(syncStatusForClient(done), { success: true, disputes_created: 2, funding_readiness_recalculated: true, scores_synced: { equifax: 700, experian: null } });
-  assert.deepEqual(syncStatusForClient({ success: "true" }), { success: false, error: "I read your report, but I couldn't finish pulling out its details for you to review. You can ask the team you're working with to take a look." });
+  assert.deepEqual(syncStatusForClient({ success: "true" }), { success: false, uploader_sentence: true, error: "I read your report, but I couldn't finish pulling out its details for you to review. You can ask the team you're working with to take a look." });
   assert.equal(syncStatusForClient(null), null);
   assert.equal(syncStatusForClient("failed"), null);
 });

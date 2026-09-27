@@ -3929,7 +3929,7 @@ console.log("\nclient seat — her answer is read for internal text before a cli
   const syncSeen = syncOf(creditClean);
   assert("30.33 a credit-report sync that did not complete reaches the uploader as a fixed sentence, with no step and no pipeline text",
     syncSeen.length === 1 && syncSeen[0].success === false && !("step" in syncSeen[0])
-      && syncSeen[0].error === SYNC_BEFORE_ANY_WRITE
+      && syncSeen[0].error === SYNC_BEFORE_ANY_WRITE && syncSeen[0].uploader_sentence === true
       && !/Failed to|Validation failed|extraction|pipeline|Unknown/.test(JSON.stringify(syncSeen[0]))
       // "none of them were added" is only true because nothing was: no memory note, no upload stamp.
       && !creditClean.rec.inserts.some((i) => i.table === "client_memory" || (i.table === "credit_report_uploads" && i.update)),
@@ -3954,7 +3954,7 @@ console.log("\nclient seat — her answer is read for internal text before a cli
   const notReport = await reportDrive({ extractionReply: JSON.stringify({ ...JSON.parse(REPORT), is_credit_report: false }) });
   const notReportSync = syncOf(notReport);
   assert("30.36 a report refused by validation tells the uploader nothing was added, and nothing was: no memory note, no upload stamp",
-    notReportSync.length === 1 && notReportSync[0].error === SYNC_BEFORE_ANY_WRITE && !("step" in notReportSync[0])
+    notReportSync.length === 1 && notReportSync[0].error === SYNC_BEFORE_ANY_WRITE && notReportSync[0].uploader_sentence === true && !("step" in notReportSync[0])
       && !/Validation failed|Not identified|is_credit_report/.test(JSON.stringify(notReportSync))
       && !notReport.rec.inserts.some((i) => i.table === "client_memory" || (i.table === "credit_report_uploads" && i.update)),
     JSON.stringify({ sync: notReportSync, writes: notReport.rec.inserts.map((i) => `${i.table}${i.update ? ":update" : ""}`) }));
@@ -3963,7 +3963,7 @@ console.log("\nclient seat — her answer is read for internal text before a cli
   assert("30.35 a sync refused after its client memory note was written tells the uploader it did not finish, never that nothing was added",
     stampRefused.rec.inserts.some((i) => i.table === "client_memory")
       && refusedSync.length === 1 && refusedSync[0].success === false && !("step" in refusedSync[0]) && !("write" in refusedSync[0])
-      && refusedSync[0].error === SYNC_DID_NOT_FINISH
+      && refusedSync[0].error === SYNC_DID_NOT_FINISH && refusedSync[0].uploader_sentence === true
       && !/credit_report_uploads|check constraint|23514|write_rejected/.test(JSON.stringify(refusedSync))
       && stampRefused.logged.some((l) => l.level === "warn" && l.msg.includes("credit report sync did not complete") && l.msg.includes("write_rejected")),
     JSON.stringify({ inserts: stampRefused.rec.inserts.map((i) => i.table), sync: refusedSync, warns: stampRefused.logged.filter((l) => l.level === "warn").map((l) => l.msg.slice(0, 120)) }));

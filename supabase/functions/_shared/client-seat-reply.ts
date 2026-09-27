@@ -183,6 +183,9 @@ export function syncStatusForClient(status: unknown, businessName?: string | nul
   // sentences, and one arriving here carries none rather than a failure's.
   if (out.success || out.awaiting_review) return out;
   const name = displayName(businessName) || "the team you're working with";
+  // The marker tells the portal this `error` is a sentence written for the uploader. A frame without
+  // it came from an older server and carries the pipeline's own text, so the panel does not draw it.
+  out.uploader_sentence = true;
   out.error = typeof raw.step === "string" && SYNC_STOPPED_BEFORE_ANY_WRITE.has(raw.step)
     ? `I read your report, but I couldn't pull out its details for you to review, and none of them were added to your profile. You can try uploading it again, or ask ${name} to take a look.`
     : `I read your report, but I couldn't finish pulling out its details for you to review. You can ask ${name} to take a look.`;

@@ -22,6 +22,8 @@ import { syncStatusForClient } from "../../supabase/functions/_shared/client-sea
 const OUT = path.resolve("docs/evidence/ui-delivery/credit-sync-message");
 const SENTENCE = String(syncStatusForClient({ success: false, step: "extraction_parse" }, "Northside Fitness")?.error);
 const PARTIAL = String(syncStatusForClient({ success: false, step: "write_rejected" }, "Northside Fitness")?.error);
+// The panel's fallback is the did-not-finish sentence without a business name (the panel has none).
+const FALLBACK = String(syncStatusForClient({ success: false, step: "write_rejected" })?.error);
 
 const server = await createServer({
   configFile: path.resolve("scripts/live-drive/harness/paige-chat-mount/vite.config.ts"),
@@ -76,11 +78,11 @@ try {
     await before.context.close();
     throw Object.assign(new Error("before only"), { beforeOnly: true });
   }
-  // A server still sending the pipeline's frame (an older deployment) to this panel: the step is never
-  // drawn. Its text would be, which is why the server now sends a sentence.
+  // A server still sending the pipeline's frame (an older deployment) to this panel: neither its text nor
+  // its step is drawn; the panel's own fallback sentence is.
   await before.page.screenshot({ path: path.join(OUT, "stale-server-1366x768-light.png") });
-  check("a stale server's raw frame on this panel: the step name is never drawn",
-    !before.m.text.includes("extraction_parse") && !before.m.text.includes("step") && !before.m.text.includes("Error:"), before.m.text.slice(-120));
+  check("a stale server's raw frame on this panel: no pipeline text and no step, the fallback sentence instead",
+    before.m.text.includes(FALLBACK) && !/extraction_parse|Failed to parse|step|Error:/.test(before.m.text), before.m.text.slice(-120));
   await before.context.close();
 
   for (const [width, height, themes] of [[1536, 770, ["light"]], [1366, 768, ["light", "dark"]], [1024, 768, ["light"]], [390, 844, ["light", "dark"]]]) {

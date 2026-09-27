@@ -23,6 +23,11 @@
 -- The 'coach' kept in is_assigned_to_client(..., 'coach') is an assignment kind (a data label on
 -- paige_coach_assignments), not a role.
 
+-- Step 0: the membership check every rewritten policy calls. It answers only whether the caller is an
+-- active member of the given business, which is what production already grants signed-in users; this
+-- makes a database rebuilt from migrations hold the same grant.
+GRANT EXECUTE ON FUNCTION public.is_tenant_member(uuid) TO authenticated;
+
 -- Step 1: assignment plus membership of the record's business.
 ALTER POLICY "Coaches view verifications for their clients" ON public.business_verification_runs
   USING (contact_id IS NOT NULL AND EXISTS (

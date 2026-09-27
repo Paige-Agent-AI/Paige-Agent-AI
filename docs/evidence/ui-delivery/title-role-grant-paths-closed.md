@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: every grant path in this migration refuses or ignores the r
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: grant_tenant_member_role is left to slice 4; no RLS policy changes; no denial-letter or business-certification policy is touched
 
-INTERNAL_BUILD_IDENTITY: f2af2d40252dbc610531efc5a4659f1b95a53c6c; deployment=none; environment=development; migrations=PROOF_OWED(20270506000000 applies on merge through deploy-migrations.yml, the schema_migrations row and function behavior are checked after merge); edge=NOT_APPLICABLE; evidence=PR database-contract run on the implementation head (this SHA), red run on cf08c04290390fa67864ac50851dbdbd29cb4629
+INTERNAL_BUILD_IDENTITY: 999f01fb9710a88a61e02e3a12222495c5316d9a; deployment=none; environment=development; migrations=PROOF_OWED(20270506000000 applies on merge through deploy-migrations.yml, the schema_migrations row and function behavior are checked after merge); edge=NOT_APPLICABLE; evidence=PR database-contract run on the implementation head (this SHA, migration from f2af2d40252dbc610531efc5a4659f1b95a53c6c and corrected fixture), red run on cf08c04290390fa67864ac50851dbdbd29cb4629
 RELEASE_CHANNEL: development: pre-merge branch build; production follows merge
 RELEASE_CLASSIFICATION: internal-only: permission hardening; the only visible change is the text of a refusal toast
 CUSTOMER_RELEASE_IDENTITY: none: internal-only hardening, no customer release

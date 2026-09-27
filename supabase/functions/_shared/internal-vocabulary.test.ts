@@ -257,12 +257,13 @@ test("a long draft scans in linear time (an inline image, a pasted export)", () 
 
 test("within vouched server text, a quoted word with a colon after it is not a key; the server's JSON still is", () => {
   // Server prose can quote a word too. The first phrase has a real JSON value after its colon but
-  // nothing JSON before it; the second has a comma before the quoted word, as JSON does, but no value.
-  const PROSE = 'Reply "status_ok": true only when asked. Offer basic, "follow_up": the next day, never sooner.';
+  // nothing JSON before it; the second has a comma before the quoted word, as JSON does, but no value;
+  // the third has the comma and a word that only begins like a JSON literal ("falsehoods").
+  const PROSE = 'Reply "status_ok": true only when asked. Offer basic, "follow_up": the next day, never sooner. Keep it honest, "no_spin": falsehoods cost trust.';
   // A server-built block, pretty-printed, with every kind of JSON value after a key.
   const SERVER = 'TEAM CONTEXT\n{\n  "platform_role": "member",\n  "seat_count": 3,\n  "is_owner": false,\n  "extra_notes": null,\n  "open_items": [1],\n  "last_change": {"a": 1},\n  "balance_due": -5\n}\nEND TEAM CONTEXT';
   const vocabulary = deriveInternalVocabulary({ vouchedTexts: [PROSE, SERVER] });
-  for (const word of ["status_ok", "follow_up"]) assert.equal(vocabulary.keys.has(word), false, word);
+  for (const word of ["status_ok", "follow_up", "no_spin"]) assert.equal(vocabulary.keys.has(word), false, word);
   for (const key of ["platform_role", "seat_count", "is_owner", "extra_notes", "open_items", "last_change", "balance_due"]) {
     assert.equal(vocabulary.keys.has(key), true, key);
   }

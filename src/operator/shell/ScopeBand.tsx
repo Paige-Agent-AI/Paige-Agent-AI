@@ -26,7 +26,7 @@ const GROUND: Record<ScopeTone, string> = {
   // Acting as a tenant must be unmissable at a glance: a raised ground, the authority line, and a
   // caution rule on the leading edge (§23 — you are inside someone else's workspace). Gold stays
   // on the exit act alone (§11).
-  act: "bg-[var(--pg-raised)] border-[var(--pg-line-authority)] shadow-[inset_3px_0_0_var(--pg-warning)]",
+  act: "bg-[var(--pg-raised)] border-[var(--pg-line-authority)] shadow-[shadow:inset_3px_0_0_var(--pg-warning)]",
 };
 
 const KICKER: Record<ScopeTone, string> = {

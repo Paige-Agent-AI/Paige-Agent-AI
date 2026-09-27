@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { GOD_CONSOLE, operatorChooserTarget, operatorTarget } from "./operatorTarget";
+import { canonicalPath, resolveOperatorAddress } from "@/operator/shell/operatorAddress";
 
 /**
  * This validator decides where an authenticated operator lands, from a value an attacker can
@@ -136,6 +137,21 @@ describe("the operator door has exactly one home", () => {
 
   it("GOD_CONSOLE points inside the operator subtree", () => {
     expect(GOD_CONSOLE.startsWith("/operator/")).toBe(true);
+  });
+
+  // The landing address must name a view the console HAS. A stale view slug is canonicalised to
+  // the slot's first view, so a wrong constant lands every operator somewhere they did not ask
+  // for — which is exactly what "/operator/fleet/tenants" did (Systems check, not the tenants).
+  it("GOD_CONSOLE lands on the tenant directory, resolved through the shell's own resolver", () => {
+    const [, root, section, ...rest] = GOD_CONSOLE.split("/");
+    expect(root).toBe("operator");
+    const address = resolveOperatorAddress(section, rest.join("/"));
+    expect(address.kind).toBe("resolved");
+    if (address.kind !== "resolved") return;
+    expect(address.stale).toBe(false);
+    expect(address.slot.id).toBe("fleet");
+    expect(address.view).toBe("Directory");
+    expect(canonicalPath(address)).toBe(GOD_CONSOLE);
   });
 
   it("both sign-in doors require the chooser before Platform and the chooser owns final operator navigation", () => {

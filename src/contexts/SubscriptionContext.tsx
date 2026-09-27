@@ -26,14 +26,14 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Staff bypass — admins and coaches always get full access
+      // Staff bypass — admins always get full access
       const { data: roleRows } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", user.id);
 
-      const roles = (roleRows || []).map((r: any) => r.role);
-      const isStaff = roles.includes("admin") || roles.includes("coach");
+      const roles: string[] = (roleRows || []).map((r) => r.role);
+      const isStaff = roles.includes("admin");
 
       if (isStaff) {
         setSubscribed(true);
@@ -90,10 +90,10 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       if (data?.url) {
         window.open(data.url, '_blank');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Portal error:', error);
       toast.error('Failed to open customer portal', {
-        description: error.message || 'Please try again or contact support.'
+        description: (error instanceof Error && error.message) || 'Please try again or contact support.'
       });
     }
   };

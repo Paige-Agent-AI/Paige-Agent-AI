@@ -336,7 +336,15 @@ describe("the table underneath — a guarded function is not a boundary on its o
     expect(prAt, "the pull_request trigger was found").toBeGreaterThan(-1);
     expect(pushAt, "the push trigger was found").toBeGreaterThan(prAt);
     expect(jobsTextAt, "the jobs block was found").toBeGreaterThan(pushAt);
-    expect(text.slice(prAt, pushAt), "the pull_request paths filter matches it").toContain(proof);
+    // The pull_request trigger carries NO paths filter, so the proof runs on every pull request.
+    // Asserted as the absence of the key in any spelling (block or inline list, quoted or not)
+    // rather than by parsing its patterns: three review rounds each found one more spelling a
+    // line-walking pattern check missed. Reintroducing a filter must come back through this guard.
+    const prTrigger = text.slice(prAt, pushAt);
+    expect(
+      /["']?\bpaths(-ignore)?["']?\s*:/.test(prTrigger),
+      "the pull_request trigger has no paths or paths-ignore filter (the proof runs on every PR)",
+    ).toBe(false);
     expect(text.slice(pushAt, jobsTextAt), "the push paths filter matches it too").toContain(proof);
 
     // 4. The file it runs has to exist, with a plan matching the assertions it actually makes.

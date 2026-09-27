@@ -29,6 +29,10 @@ if [ -z "$ref" ]; then
 fi
 if [ -z "$ref" ]; then echo "::error::could not resolve the production project ref"; exit 1; fi
 echo "Linking the production project (read-only usage: dump + migration list only)"
+# Unlink on EVERY exit, not only the happy path: under set -e a failed read would otherwise leave
+# this checkout linked to production, and a developer's next supabase command would target it.
+unlink_production() { supabase unlink >/dev/null 2>&1 || true; rm -rf supabase/.temp; }
+trap unlink_production EXIT
 supabase link --project-ref "$ref"
 # The ledger is read BEFORE the dump and again AFTER it. On a push to main, deploy-migrations may
 # apply a migration while this runs; if the two reads differ, production changed mid-read and the
@@ -59,6 +63,6 @@ done
 echo "Production has $(grep -c . "$out/recorded_versions.txt" || echo 0) recorded migration versions."
 # Leave nothing linked behind: every later step in the calling job must reach only its own local
 # database, never production, even by accident of a default.
-supabase unlink >/dev/null 2>&1 || true
-rm -rf supabase/.temp
+unlink_production
+trap - EXIT
 if [ -e supabase/.temp/project-ref ]; then echo "::error::production link state survived unlink"; exit 1; fi

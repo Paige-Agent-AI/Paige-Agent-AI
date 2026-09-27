@@ -11,7 +11,7 @@ AUTOMATED_EVIDENCE: PASS: new src/operator/surfaces/FleetConsole.test.tsx — 3 
 STATIC_EVIDENCE: PASS: eslint clean on changed files; gold-discipline lint clean; `npx impeccable@4.1.0 detect` exit 0 on useFleet.ts and FleetConsole.tsx; `npm run ci:tsc` no new type errors (baseline 12, current 12); baseline-guard ok
 RENDERED_EVIDENCE: PASS: harness render (local, gitignored, neutral fixtures, not live) of FleetDirectoryView at 780x700 in light and dark for three states — owner (seats read), platform_admin (not visible), check unanswered; 0 page errors, no document horizontal scroll; frames at scripts/live-drive/artifacts/fleet-dir/{owner,admin,unknown}-{light,dark}.png
 BEHAVIORAL_EVIDENCE: UNVERIFIED: the directory is auth-gated; no signed-in operator session drove the deployed surface in this environment — owed to slice 5 (human-driven sessions at both tiers)
-AUTHENTICATED_RUNTIME: UNVERIFIED: no operator credentials in this environment; slice 5 records Antonio Cook's super_admin session and the platform_admin holder's session against the deployed console with a production count readback
+AUTHENTICATED_RUNTIME: UNVERIFIED: no operator credentials in this environment; slice 5 records a super_admin holder's session and a platform_admin holder's session against the deployed console with a production count readback
 KEYBOARD_FOCUS: PASS: no control added or removed; the row buttons, internal chip and their order are unchanged; the new header line is static text
 ZOOM_REFLOW: PASS: the new header line wraps (no nowrap) and the row's seat cell is shorter than before; no horizontal scroll at 780px in the harness
 REDUCED_MOTION: NOT_APPLICABLE: no motion added or changed
@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: signed in as platform_admin, the directory lists every tena
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: owner directory grading and seat display (tested: "still grades a zero-seat active tenant At risk and a seated one Nominal"); internal filter (existing v3 test still green); Enter act-as (unchanged code path, not re-tested here); useFleet's other outputs (unchanged)
 
-INTERNAL_BUILD_IDENTITY: 090c4161a08e18a2b3917033524eae8ad8fbfcbd; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=the commit named here carries the whole code and test change; the commit after it adds only this record; vitest, eslint, ci:tsc and harness frames were run on that code
+INTERNAL_BUILD_IDENTITY: 090c4161a08e18a2b3917033524eae8ad8fbfcbd; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=the commit named here carries the whole code and test change; the commits after it change only this record; vitest, eslint, ci:tsc and harness frames were run on that code
 RELEASE_CHANNEL: development: pre-merge branch build; production follows merge through the frontend deploy
 RELEASE_CLASSIFICATION: internal-only: Platform Operator console, not customer-facing
 CUSTOMER_RELEASE_IDENTITY: none: operator console correction, no customer release
@@ -57,3 +57,5 @@ A platform operator opens the directory to see every tenant and which need atten
 ## Review and limitations
 
 Independent adversarial review (§39) returned SHIP-after-F1 with 6 findings, handled before push: F1 MAJOR (a failed seat read would still grade zeros for the owner) fixed via `detailReadFailed` + `fleetDetailVisible`; F2 test gaps fixed (risk-count and visibility-rule tests); F3 header copy aligned with the rows; F4 comment corrected (reads are granted to the owner and within the caller's own tenants; restrictive policy wording removed); F5 duplicate owner RPC removed — the shell's `useIsPlatformOwner` answer is passed through (the ignored `canSeeRevenue` prop is replaced); F6 (pre-existing: the seat read has no row cap handling past 1,000 rows) recorded for settlement, not in scope. Every on-screen claim for the deployed console is `UNVERIFIED` until slice 5.
+
+Codex review on `ccfc70d`: one P1 upheld and fixed (this record named a real person as the planned slice-5 proof target; it now names the role). One P1 declined: it said the build identity is not an ancestor of a reviewed commit `d84f5a0`, but no such commit exists in this repository, and the identity above is the direct parent of the reviewed head.

@@ -19,8 +19,16 @@
  * directly, and so the page keeps a single component export (§18 — one home).
  */
 
-/** The operator's default landing surface — Claude Design's console. */
-export const GOD_CONSOLE = "/operator/fleet/tenants";
+/**
+ * The operator's default landing surface: Fleet → Directory, the list of every tenant.
+ *
+ * It must name a view the console actually has. The previous value, `/operator/fleet/tenants`,
+ * named a view from the retired first-pack tree; the shell treated it as a stale address and
+ * canonicalised it to the Fleet slot's FIRST view, so every operator sign-in landed on Systems
+ * check rather than the tenant list. `operatorTarget.test.ts` resolves this constant through the
+ * shell's own resolver so it cannot silently go stale again.
+ */
+export const GOD_CONSOLE = "/operator/fleet/directory";
 
 /** Preserve a safe operator deep link while requiring deliberate account choice. */
 export function operatorChooserTarget(search: string): string {

@@ -1,8 +1,10 @@
--- G1: one server answer. operator_standing() and operator_may() for every caller class, the R0
--- capability rows, the default rule for an unruled capability, and the grants that keep the
--- answer to the caller's own standing.
+-- G1: one server answer. operator_standing() and operator_may() for every caller class; the R0
+-- ruling (revised 2026-09-27) pinned as exact rows; the default rule for an unlisted capability;
+-- the grants that keep the answer to the caller's own standing; and proof that role access is
+-- DATA — adding an operator role, granting and withdrawing a capability are row changes that
+-- change the answer with no code change.
 BEGIN;
-SELECT plan(48);
+SELECT plan(88);
 
 -- ── Grants ──────────────────────────────────────────────────────────────────────────────────
 SELECT ok(NOT has_function_privilege('anon', 'public.operator_standing()', 'EXECUTE'),
@@ -13,46 +15,53 @@ SELECT ok(has_function_privilege('authenticated', 'public.operator_standing()', 
   'a signed-in caller can ask their own standing');
 SELECT ok(has_function_privilege('authenticated', 'public.operator_may(text)', 'EXECUTE'),
   'a signed-in caller can ask what they may do');
-SELECT ok(NOT has_table_privilege('authenticated', 'public.platform_operator_capabilities', 'SELECT'),
-  'the capability table is not readable directly');
-SELECT ok(NOT has_table_privilege('authenticated', 'public.platform_operator_capabilities', 'INSERT'),
-  'the capability table is not writable by a signed-in caller');
-SELECT ok(NOT has_table_privilege('authenticated', 'public.platform_operator_capabilities', 'UPDATE'),
-  'a signed-in caller cannot widen a capability');
-SELECT ok(NOT has_table_privilege('authenticated', 'public.platform_operator_capabilities', 'DELETE'),
-  'a signed-in caller cannot remove a capability row');
-SELECT ok(NOT has_table_privilege('anon', 'public.platform_operator_capabilities', 'SELECT'),
-  'anon cannot read the capability table');
-SELECT ok(NOT has_table_privilege('service_role', 'public.platform_operator_capabilities', 'UPDATE'),
-  'a ruling changes only through a migration, not a service call');
+SELECT ok(NOT has_table_privilege(r.rolname, t.tbl, p.priv),
+  format('%s has no %s on %s', r.rolname, p.priv, t.tbl))
+FROM (VALUES ('anon'), ('authenticated'), ('service_role')) r(rolname)
+CROSS JOIN (VALUES ('public.platform_operator_roles'), ('public.platform_operator_capabilities'),
+                   ('public.platform_operator_role_capabilities')) t(tbl)
+CROSS JOIN (VALUES ('SELECT'), ('INSERT'), ('UPDATE'), ('DELETE')) p(priv);
 
--- The table is exactly R0, plus the two §67/§68 autonomy rows R0 is read as not overriding. An
--- extra row granting platform_admin anything fails here, not in production.
+-- ── The ruling, as exact rows. A stray row fails here, not in production. ───────────────────
 SELECT results_eq(
-  $$SELECT capability, platform_admin_may FROM public.platform_operator_capabilities ORDER BY 1$$,
-  $$VALUES ('autonomy.posture.raise', false), ('autonomy.rung.renew', false),
-           ('billing.read', true), ('capability.administer', true), ('console.enter', true),
-           ('fleet.directory.read', true), ('operator.seat.grant', false),
-           ('operator.seat.revoke', false), ('platform.health.read', true),
-           ('tenant.act_as', true), ('tenant.provision', true), ('tenant.status.set', true)$$,
-  'the capability table holds exactly the ruled rows');
+  $$SELECT role, rank, holds_unlisted FROM public.platform_operator_roles ORDER BY rank DESC$$,
+  $$VALUES ('super_admin'::text, 100, true), ('platform_admin'::text, 50, false)$$,
+  'the operator roles are exactly super_admin over platform_admin, and only super_admin holds the unlisted');
+SELECT results_eq(
+  $$SELECT capability FROM public.platform_operator_role_capabilities WHERE role = 'platform_admin' ORDER BY 1$$,
+  $$VALUES ('billing.read'::text), ('capability.administer'), ('console.enter'), ('fleet.directory.read'),
+           ('operator.seat.platform_admin.grant'), ('operator.seat.platform_admin.revoke'),
+           ('platform.health.read'), ('tenant.act_as'), ('tenant.provision'), ('tenant.status.set')$$,
+  'platform_admin holds exactly the revised R0 grants');
+SELECT set_eq(
+  $$SELECT capability FROM public.platform_operator_role_capabilities WHERE role = 'super_admin'$$,
+  $$SELECT capability FROM public.platform_operator_capabilities$$,
+  'super_admin is granted every listed capability explicitly');
+SELECT is((SELECT count(*)::int FROM public.platform_operator_capabilities), 14,
+  'the catalogue lists the fourteen ruled capabilities');
+SELECT ok(obj_description('public.platform_operator_capabilities'::regclass, 'pg_class')
+  LIKE '%DEFAULT RULE: a capability with no row here is held only by an operator role whose holds_unlisted is true (super_admin)%',
+  'the catalogue states the default rule where the rows are');
 
 -- ── Callers ─────────────────────────────────────────────────────────────────────────────────
 INSERT INTO auth.users (id, aud, role, email) VALUES
   ('0a570000-0000-4000-8000-000000000001','authenticated','authenticated','standing-super@tests.invalid'),
   ('0a570000-0000-4000-8000-000000000002','authenticated','authenticated','standing-platform@tests.invalid'),
   ('0a570000-0000-4000-8000-000000000004','authenticated','authenticated','standing-tenant-admin@tests.invalid'),
-  ('0a570000-0000-4000-8000-000000000005','authenticated','authenticated','standing-user@tests.invalid');
+  ('0a570000-0000-4000-8000-000000000005','authenticated','authenticated','standing-user@tests.invalid'),
+  ('0a570000-0000-4000-8000-000000000006','authenticated','authenticated','standing-moderator@tests.invalid');
+SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);
 INSERT INTO public.user_roles (user_id, role) VALUES
   ('0a570000-0000-4000-8000-000000000001','super_admin'),
   ('0a570000-0000-4000-8000-000000000002','platform_admin'),
   ('0a570000-0000-4000-8000-000000000004','admin'),
-  ('0a570000-0000-4000-8000-000000000005','user');
+  ('0a570000-0000-4000-8000-000000000005','user'),
+  ('0a570000-0000-4000-8000-000000000006','moderator');
+SELECT set_config('request.jwt.claims','',true);
 
 INSERT INTO public.tenants (id, slug, name, owner_user_id, status, account_type, features, brand) VALUES
   ('0a570000-0000-4000-8000-00000000a001','standing-proof-tenant','Standing Proof Tenant',
    '0a570000-0000-4000-8000-000000000004','active','standalone','{}'::jsonb,'{}'::jsonb);
-
 INSERT INTO public.tenant_members (tenant_id, user_id, role, status, is_owner, joined_at) VALUES
   ('0a570000-0000-4000-8000-00000000a001','0a570000-0000-4000-8000-000000000004','owner','active',true,now()),
   ('0a570000-0000-4000-8000-00000000a001','0a570000-0000-4000-8000-000000000005','member','active',false,now());
@@ -65,7 +74,8 @@ INSERT INTO public.profiles (user_id, active_tenant_id) VALUES
   ('0a570000-0000-4000-8000-000000000001',NULL),
   ('0a570000-0000-4000-8000-000000000002',NULL),
   ('0a570000-0000-4000-8000-000000000004',NULL),
-  ('0a570000-0000-4000-8000-000000000005',NULL)
+  ('0a570000-0000-4000-8000-000000000005',NULL),
+  ('0a570000-0000-4000-8000-000000000006',NULL)
 ON CONFLICT (user_id) DO UPDATE SET active_tenant_id = NULL;
 UPDATE public.profiles SET active_tenant_id = '0a570000-0000-4000-8000-00000000a001'
  WHERE user_id IN ('0a570000-0000-4000-8000-000000000004','0a570000-0000-4000-8000-000000000005');
@@ -85,9 +95,10 @@ SELECT is((SELECT tier FROM public.operator_standing()), 'super_admin', 'super_a
 SELECT is((SELECT active_tenant_id FROM public.operator_standing()),
   '0a570000-0000-4000-8000-00000000a001'::uuid, 'an operator is told the tenant their session is scoped to');
 SELECT is((SELECT count(*)::int FROM public.operator_standing()), 1, 'the answer is always one row');
-SELECT ok(public.operator_may('operator.seat.grant'), 'super_admin may grant an operator seat');
+SELECT ok(public.operator_may('operator.seat.super_admin.grant'), 'super_admin may grant a super_admin seat');
+SELECT ok(public.operator_may('operator.seat.platform_admin.grant'), 'super_admin may grant a platform_admin seat');
 SELECT ok(public.operator_may('billing.read'), 'super_admin may read billing');
-SELECT ok(public.operator_may('platform.paige.use'), 'an unruled capability is still super_admin''s');
+SELECT ok(public.operator_may('platform.paige.use'), 'an unlisted capability is still super_admin''s');
 SELECT ok(NOT public.operator_may(NULL), 'a NULL capability is refused even to super_admin');
 
 -- platform_admin, at rest
@@ -102,13 +113,14 @@ SELECT ok(public.operator_may('tenant.provision'), 'platform_admin may provision
 SELECT ok(public.operator_may('tenant.status.set'), 'platform_admin may change a tenant''s status');
 SELECT ok(public.operator_may('billing.read'), 'platform_admin may read billing, MRR and revenue class');
 SELECT ok(public.operator_may('capability.administer'), 'platform_admin may administer capabilities');
-SELECT ok(NOT public.operator_may('operator.seat.grant'), 'platform_admin may not grant an operator seat (§53)');
-SELECT ok(NOT public.operator_may('operator.seat.revoke'), 'platform_admin may not revoke an operator seat');
-SELECT ok(NOT public.operator_may('platform.paige.use'), 'an unruled capability is refused to platform_admin');
-SELECT ok(NOT public.operator_may('billing.write'), 'a misspelled or unknown capability is refused, not guessed');
-SELECT ok(NOT public.operator_may('Console.Enter'), 'capabilities are matched exactly, case included');
+SELECT ok(public.operator_may('operator.seat.platform_admin.grant'), 'platform_admin may grant a peer seat');
+SELECT ok(public.operator_may('operator.seat.platform_admin.revoke'), 'platform_admin may revoke a peer seat');
+SELECT ok(NOT public.operator_may('operator.seat.super_admin.grant'), 'platform_admin may not grant a seat above its own');
+SELECT ok(NOT public.operator_may('operator.seat.super_admin.revoke'), 'platform_admin may not revoke a seat above its own');
 SELECT ok(NOT public.operator_may('autonomy.posture.raise'), 'platform_admin may not raise posture above the ceiling (§67)');
 SELECT ok(NOT public.operator_may('autonomy.rung.renew'), 'platform_admin may not renew a rung (§68)');
+SELECT ok(NOT public.operator_may('platform.paige.use'), 'an unlisted capability is refused to platform_admin');
+SELECT ok(NOT public.operator_may('Console.Enter'), 'capabilities are matched exactly, case included');
 SELECT ok(NOT public.operator_may(NULL), 'a NULL capability is refused');
 
 -- holds both roles. user_roles allows one super_admin row (the one_super_admin index), so the
@@ -118,16 +130,16 @@ SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);
 INSERT INTO public.user_roles (user_id, role) VALUES ('0a570000-0000-4000-8000-000000000001','platform_admin');
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_caller('0a570000-0000-4000-8000-000000000001');
-SELECT is((SELECT tier FROM public.operator_standing()), 'super_admin', 'holding both roles reads as super_admin');
-SELECT ok(public.operator_may('operator.seat.grant'), 'and carries super_admin''s capabilities');
+SELECT is((SELECT tier FROM public.operator_standing()), 'super_admin', 'holding both roles reads as the higher-ranked, super_admin');
+SELECT ok(public.operator_may('operator.seat.super_admin.grant'), 'and carries super_admin''s capabilities');
 
 -- a tenant admin is not an operator, and is not told about their pointer through this answer
 SELECT pg_temp.as_caller('0a570000-0000-4000-8000-000000000004');
 SELECT is((SELECT tier FROM public.operator_standing()), NULL::text, 'a tenant admin is not an operator');
 SELECT is((SELECT active_tenant_id FROM public.operator_standing()), NULL::uuid,
-  'a tenant''s own active tenant is not reported as an act-as');
+  'a tenant''s own active tenant is not reported through the operator answer');
 SELECT ok(NOT public.operator_may('console.enter'), 'a tenant admin may not enter the console');
-SELECT ok(NOT public.operator_may('fleet.directory.read'), 'a tenant admin may not read the directory');
+SELECT ok(NOT public.operator_may('platform.paige.use'), 'a tenant admin does not hold unlisted capabilities');
 
 -- an ordinary user
 SELECT pg_temp.as_caller('0a570000-0000-4000-8000-000000000005');
@@ -140,12 +152,26 @@ SELECT is((SELECT tier FROM public.operator_standing()), NULL::text, 'no subject
 SELECT is((SELECT active_tenant_id FROM public.operator_standing()), NULL::uuid, 'no subject, no pointer');
 SELECT ok(NOT public.operator_may('console.enter'), 'no subject may nothing');
 
+-- ── Role access is data: change rows, and the answer changes with no code change ────────────
+-- A moderator is not an operator until a row says so.
+SELECT pg_temp.as_caller('0a570000-0000-4000-8000-000000000006');
+SELECT is((SELECT tier FROM public.operator_standing()), NULL::text, 'a moderator is not an operator by default');
 RESET ROLE;
-
--- The table states its own default rule, so a future reader sees it where the rows are.
-SELECT ok(obj_description('public.platform_operator_capabilities'::regclass, 'pg_class')
-  LIKE '%DEFAULT RULE: a capability with no row here is super_admin only%',
-  'the capability table states the default rule');
+INSERT INTO public.platform_operator_roles (role, rank, holds_unlisted, description, ruling)
+VALUES ('moderator', 10, false, 'test-only operator role', 'test');
+INSERT INTO public.platform_operator_role_capabilities (role, capability, ruling)
+VALUES ('moderator', 'platform.health.read', 'test');
+-- Withdraw one capability from platform_admin, the same way.
+DELETE FROM public.platform_operator_role_capabilities
+ WHERE role = 'platform_admin' AND capability = 'billing.read';
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.as_caller('0a570000-0000-4000-8000-000000000006');
+SELECT is((SELECT tier FROM public.operator_standing()), 'moderator', 'a role added as a row becomes an operator tier');
+SELECT ok(public.operator_may('platform.health.read'), 'and holds the capability granted to it as a row');
+SELECT ok(NOT public.operator_may('console.enter'), 'and nothing it was not granted');
+SELECT pg_temp.as_caller('0a570000-0000-4000-8000-000000000002');
+SELECT ok(NOT public.operator_may('billing.read'), 'withdrawing a grant row withdraws the capability');
+RESET ROLE;
 
 SELECT * FROM finish();
 ROLLBACK;

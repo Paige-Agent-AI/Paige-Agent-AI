@@ -66,13 +66,23 @@ CREATE TABLE IF NOT EXISTS public.platform_operator_role_capabilities (
   role text NOT NULL REFERENCES public.platform_operator_roles(role) ON DELETE CASCADE,
   capability text NOT NULL REFERENCES public.platform_operator_capabilities(capability) ON DELETE CASCADE,
   ruling text NOT NULL CHECK (length(btrim(ruling)) > 0),
+  -- A ruled grant is recorded even before today's enforcement admits it, so the rulings live in data,
+  -- not in comments. operator_may() answers only from rows in force: the one answer never says yes
+  -- to something every attempt is refused (Codex review of #1534). A row not in force names what it
+  -- waits for; the slice that moves that gate flips it in the same change.
+  in_force boolean NOT NULL DEFAULT true,
+  pending text,
   created_at timestamptz NOT NULL DEFAULT now(),
-  PRIMARY KEY (role, capability)
+  PRIMARY KEY (role, capability),
+  CONSTRAINT platform_operator_grant_pending_named
+    CHECK (in_force OR (pending IS NOT NULL AND length(btrim(pending)) > 0))
 );
 
 COMMENT ON TABLE public.platform_operator_role_capabilities IS
   'Which operator role holds which listed capability. A listed capability no role is granted is '
-  'held by nobody except a holds_unlisted role. Granting or withdrawing is a row change.';
+  'held by nobody except a holds_unlisted role. Granting or withdrawing is a row change. A row with '
+  'in_force = false records a ruling whose enforcement has not moved yet; operator_may() ignores it '
+  'until the slice named in pending flips it.';
 
 -- No policies and no grants on any of the three: nobody reads or writes them directly, service_role
 -- included. The functions below read them as their owner.
@@ -136,28 +146,40 @@ ON CONFLICT (capability) DO NOTHING;
 
 -- super_admin holds everything through holds_unlisted AND through explicit rows for every listed
 -- capability, so the owner's tier never depends on a flag alone and reads plainly in the table.
-INSERT INTO public.platform_operator_role_capabilities (role, capability, ruling)
-SELECT 'super_admin', c.capability, 'R0, owner ruling 2026-09-27'
+-- Not in force: the super_admin seats. The one_super_admin unique index refuses a second super_admin
+-- row and guard_last_super_admin refuses removing the only one, so neither can succeed today.
+INSERT INTO public.platform_operator_role_capabilities (role, capability, ruling, in_force, pending)
+SELECT 'super_admin', c.capability, 'R0, owner ruling 2026-09-27',
+       c.capability NOT IN ('operator.seat.super_admin.grant', 'operator.seat.super_admin.revoke'),
+       CASE WHEN c.capability IN ('operator.seat.super_admin.grant', 'operator.seat.super_admin.revoke')
+            THEN 'seats slice: one_super_admin and guard_last_super_admin allow exactly one super_admin row'
+       END
 FROM public.platform_operator_capabilities c
 ON CONFLICT (role, capability) DO NOTHING;
 
--- NOT SEEDED YET, and why: R0 revised rules that a platform_admin may grant and revoke
--- platform_admin seats (operator.seat.platform_admin.grant / .revoke, listed above). The §53 lockdown
--- trigger below still lets only super_admin write an operator role, so seeding those two rows now
--- would make operator_may() answer yes to a write every attempt is refused (Codex review of #1534).
--- The seats slice moves that enforcement onto operator_may() and rank and adds the two rows in the
--- same change, so the answer and the enforcement never disagree.
-INSERT INTO public.platform_operator_role_capabilities (role, capability, ruling) VALUES
-  ('platform_admin', 'console.enter', 'R0, owner ruling 2026-09-27'),
-  ('platform_admin', 'fleet.directory.read', 'R0, owner ruling 2026-09-27'),
-  ('platform_admin', 'tenant.act_as', 'R0, owner ruling 2026-09-27'),
-  ('platform_admin', 'platform.health.read', 'R0, owner ruling 2026-09-27'),
-  ('platform_admin', 'tenant.provision', 'R0, owner ruling 2026-09-27'),
-  ('platform_admin', 'tenant.status.set', 'R0, owner ruling 2026-09-27'),
-  ('platform_admin', 'billing.read', 'R0, owner ruling 2026-09-27'),
-  ('platform_admin', 'capability.administer', 'R0, owner ruling 2026-09-27'),
-  ('platform_admin', 'autonomy.posture.raise', 'G3 decision 1, owner ruling 2026-09-27'),
-  ('platform_admin', 'tenant.act_as.write', 'G3 decision 6, owner ruling 2026-09-27')
+-- In force only where today's enforcement already admits platform_admin (audited against
+-- production, read-only, 2026-09-27). Each other row names the slice that moves its gate.
+INSERT INTO public.platform_operator_role_capabilities (role, capability, ruling, in_force, pending) VALUES
+  ('platform_admin', 'console.enter', 'R0, owner ruling 2026-09-27', true, NULL),
+  ('platform_admin', 'fleet.directory.read', 'R0, owner ruling 2026-09-27', true, NULL),
+  ('platform_admin', 'tenant.act_as', 'R0, owner ruling 2026-09-27', true, NULL),
+  ('platform_admin', 'platform.health.read', 'R0, owner ruling 2026-09-27', true, NULL),
+  ('platform_admin', 'tenant.provision', 'R0, owner ruling 2026-09-27', false,
+   'G3: operator_provision_tenant is gated on is_platform_owner()'),
+  ('platform_admin', 'tenant.status.set', 'R0, owner ruling 2026-09-27', false,
+   'G3: operator_set_tenant_status is gated on is_platform_owner()'),
+  ('platform_admin', 'billing.read', 'R0, owner ruling 2026-09-27', false,
+   'G3: tenant_revenue_classification is readable by is_platform_owner() only'),
+  ('platform_admin', 'capability.administer', 'R0, owner ruling 2026-09-27', false,
+   'G3: its writers are not proven to admit platform_admin'),
+  ('platform_admin', 'operator.seat.platform_admin.grant', 'R0 revised, owner ruling 2026-09-27', false,
+   'seats slice: enforce_protected_role_grant lets only super_admin write an operator role (§53)'),
+  ('platform_admin', 'operator.seat.platform_admin.revoke', 'R0 revised, owner ruling 2026-09-27', false,
+   'seats slice: enforce_protected_role_grant lets only super_admin write an operator role (§53)'),
+  ('platform_admin', 'autonomy.posture.raise', 'G3 decision 1, owner ruling 2026-09-27', false,
+   'G3: set_trust_posture lets only is_platform_owner() raise above the ceiling'),
+  ('platform_admin', 'tenant.act_as.write', 'G3 decision 6, owner ruling 2026-09-27', false,
+   'Solo parity slice after G3: tenant surfaces gate writes on roles an acting platform_admin does not hold')
 ON CONFLICT (role, capability) DO NOTHING;
 
 -- ── The one answer ───────────────────────────────────────────────────────────────────────────
@@ -222,7 +244,7 @@ AS $$
     WHERE r.user_id = auth.uid()
       AND (
         EXISTS (SELECT 1 FROM public.platform_operator_role_capabilities g
-                WHERE g.role = o.role AND g.capability = _capability)
+                WHERE g.role = o.role AND g.capability = _capability AND g.in_force)
         OR (o.holds_unlisted
             AND NOT EXISTS (SELECT 1 FROM public.platform_operator_capabilities c
                             WHERE c.capability = _capability))
@@ -232,8 +254,8 @@ $$;
 
 COMMENT ON FUNCTION public.operator_may(text) IS
   'Whether the caller holds the named operator capability, read entirely from '
-  'platform_operator_roles / _capabilities / _role_capabilities. An unlisted capability is held '
-  'only by a holds_unlisted role (R0 default rule: super_admin only).';
+  'platform_operator_roles / _capabilities / _role_capabilities. Only grants in force count. An '
+  'unlisted capability is held only by a holds_unlisted role (R0 default rule: super_admin only).';
 
 REVOKE ALL ON FUNCTION public.operator_standing() FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.operator_may(text) FROM PUBLIC, anon;

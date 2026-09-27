@@ -78,7 +78,7 @@ acts, **and** the live authenticated flow is proven. Writing a card does not mov
 
 Tenant permissions are exactly **owner · admin · member**. **Coach is removed as a permission** and survives only as a title. The Team screen's permission options and the `member_grant_role` / `member_revoke_role` tools will stop offering it in their own slices. **Nothing is removed by writing this down.**
 
-The *Job title* field this card describes is exactly the ruled **title**: descriptive only, never read by a permission decision. That matches the live code, which already writes it through a function that cannot reach `permission`. Authoritative: `docs/doctrine/role-taxonomy-and-matrix.md` §0.
+The *Title* field this card describes (labelled *Job title* until 2026-09-27; the owner made "title" the final word) is exactly the ruled **title**: descriptive only, never read by a permission decision. That matches the live code, which already writes it through a function that cannot reach `permission`. Authoritative: `docs/doctrine/role-taxonomy-and-matrix.md` §0.
 
 ### Related, and separately active: PR #728's post-merge follow-up
 

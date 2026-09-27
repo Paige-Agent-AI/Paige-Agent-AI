@@ -295,7 +295,9 @@ export function PaigeConfirmCard(props: PaigeConfirmCardProps) {
                         )}
                       </span>
                     ))}
-                  <span className="min-w-0">
+                  {/* A summary can carry a recipient's address, one unbroken word: it breaks rather
+                      than running off the card at side-panel width. */}
+                  <span className="min-w-0 break-words">
                     <span className={cn((settled || (!bound && multi)) && "text-muted-foreground")}>
                       {/* The icon beside a row is hidden from assistive tech, so its state is said
                           in words: in a mixed card the heading cannot tell which one ran. */}

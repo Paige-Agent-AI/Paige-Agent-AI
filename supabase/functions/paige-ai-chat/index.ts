@@ -98,6 +98,8 @@ import { buildStudioWhereYouAre, STUDIO_OPERATING_CORE } from "../_shared/design
 import { getActorTier, clientSeatToolAllowed, type Tier } from "../_shared/actorTier.ts";
 // R3 — what a client seat reads is read for internal text first.
 import { decodeChunks, internalTextForClient, leakKindCounts, readableFromFrames, syncStatusForClient, resultSavedSomething, WITHHELD_FRAME, withheldReplyForClient } from "../_shared/client-seat-reply.ts";
+// R2 — what PAIGE drafts for a customer is read for internal text before it is filed, carded or sent.
+import { customerBoundTexts, type DraftContext, draftRefusal, internalTextInDraft, OUTBOUND_DRAFT_TOOLS } from "../_shared/outbound-draft-check.ts";
 // Main Paige Operational Chat · P3 — truthful capability status (§13/§36/§70). The pure decision
 // core (resolver) + the MVP signal builder compose the honest "what can Paige do here?" answer;
 // the dispatch feeds them server-resolved facts (tier, clamped lane, Spine maturity). §18: one home.
@@ -169,6 +171,8 @@ function describeStep(
   // not run. Rendering it would show a client an owner's action, and for some tools the model's own
   // argument, on a channel the client-seat check does not read (R3). Nothing ran; nothing renders.
   if (out?.forbidden_seat === true) return null;
+  // A draft for a customer refused for internal text (R2) did not run either: PAIGE rewrites it.
+  if (out?.error === "internal_text_in_draft") return null;
 
   switch (name) {
     case "comms_connection_summary":
@@ -8296,6 +8300,46 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       return withheldReplyForClient(personaCtx.tenant_name, options);
     };
 
+    // R2 — A DRAFT PAIGE WRITES FOR A CUSTOMER IS READ BEFORE IT CAN BE FILED OR SENT, with the same
+    // vocabulary as R3: this turn's tool definitions, the text vouched for where it was built, and every
+    // tool result the model has been sent. Which fields reach a customer is outbound-draft-check's to say;
+    // this looks up what it needs to decide, under the caller's own session: the kind's executor, and for
+    // action_advance the action as stored. What it cannot find out is read, never waved through.
+    // Returns the refusal PAIGE reads, or null.
+    const outboundDraftRefusal = async (
+      tool: string, args: Record<string, unknown>, stage: "filing" | "approved",
+    ): Promise<Record<string, unknown> | null> => {
+      if (!OUTBOUND_DRAFT_TOOLS.has(tool)) return null;
+      const context: DraftContext = {};
+      if (tool === "action_file" || tool === "action_advance") {
+        try {
+          let kind = tool === "action_file" && typeof args.action_kind === "string" ? args.action_kind : "";
+          if (tool === "action_advance" && typeof args.action_id === "string" && args.action_id) {
+            const { data, error } = await supabaseClient.from("paige_actions")
+              .select("status, action_kind, title, summary, draft_content").eq("id", args.action_id).maybeSingle();
+            if (!error && data) {
+              context.stored = data;
+              kind = typeof (data as { action_kind?: unknown }).action_kind === "string" ? (data as { action_kind: string }).action_kind : "";
+            }
+          }
+          if (kind) {
+            const { data, error } = await supabaseClient.from("paige_action_kinds").select("executor, requires_approval").eq("slug", kind).maybeSingle();
+            const row = (error ? null : data) as { executor?: unknown; requires_approval?: unknown } | null;
+            if (typeof row?.executor === "string") context.executor = row.executor;
+            if (typeof row?.requires_approval === "boolean") context.requiresApproval = row.requires_approval;
+          }
+        } catch { /* what could not be found out stays unknown, and is read */ }
+      }
+      const leaks = internalTextInDraft(customerBoundTexts(tool, args, context), {
+        tools: toolDefs,
+        vouchedTexts: clientSeatVouched,
+        toolResults: [...toolResultContent.values()],
+      });
+      if (!leaks.length) return null;
+      console.warn("[paige] outbound draft refused: internal text", JSON.stringify({ tool, stage, kinds: leakKindCounts(leaks) }));
+      return draftRefusal(leaks, stage);
+    };
+
     // For non-document requests: check if streaming response contains tool calls
     // We need to accumulate first to detect tool calls, then handle accordingly
     if (!attachedDocument) {
@@ -9106,6 +9150,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               const idProblem = unaddressableConfirmArgs(tc.function.name, gateArgs);
               if (idProblem) {
                 toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(unaddressableArgsRefusal(idProblem, "proposal")) });
+                continue;
+              }
+              // R2 — NOR DOES A DRAFT FOR A CUSTOMER THAT CARRIES INTERNAL TEXT: nothing is recorded, and
+              // PAIGE is told to rewrite it. An approved card is read where it runs (the dispatch branches),
+              // because what runs is the card's stored arguments.
+              const draftProblem = await outboundDraftRefusal(tc.function.name, gateArgs, "filing");
+              if (draftProblem) {
+                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(draftProblem) });
                 continue;
               }
               const summary = await describeConfirm(tc.function.name, gateArgs);
@@ -12052,6 +12104,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               if (_pubFErr) throw _pubFErr;
               result = { success: true, ...(_pub as any) };
             } else if (tc.function.name === "action_file") {
+              // R2 — read where it runs: in the auto lane these are the model's arguments, and on an
+              // approval the card's stored ones.
+              const fileProblem = await outboundDraftRefusal("action_file", args, approvalChannel.get(tc.id) === "operator_card" ? "approved" : "filing");
+              if (fileProblem) {
+                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(fileProblem) });
+                continue;
+              }
               const { data, error } = await supabaseClient.rpc("file_action", {
                 p_action_kind: args.action_kind,
                 p_title: args.title,
@@ -12071,6 +12130,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               const idProblem = unaddressableConfirmArgs("action_advance", args);
               if (idProblem) {
                 toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(unaddressableArgsRefusal(idProblem, "dispatch")) });
+                continue;
+              }
+              // R2 — read where it runs: in the auto lane these are the model's arguments, and on an
+              // approval the card's stored ones. With no draft attached, the stored action is what it delivers.
+              const draftProblem = await outboundDraftRefusal("action_advance", args, approvalChannel.get(tc.id) === "operator_card" ? "approved" : "filing");
+              if (draftProblem) {
+                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(draftProblem) });
                 continue;
               }
               const { data, error } = await supabaseClient.rpc("advance_action", {
@@ -12682,6 +12748,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               continue;
             }
             const args = JSON.parse(tc.function.arguments || "{}");
+            // R2 — the draft is for a customer: one carrying internal text is not filed.
+            const draftProblem = await outboundDraftRefusal("propose_action", args, "filing");
+            if (draftProblem) {
+              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(draftProblem) });
+              continue;
+            }
             const actionType = String(args.action_type || "email").toLowerCase();
             const channel = actionType === "sms" ? "sms" : "email";
             const contactId = args.contact_id || scopedClientId || null;
@@ -12962,6 +13034,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(r) });
             } else {
               // calendar_link_send — the confirmed high-risk send. Forward the caller JWT to send-message.
+              // R2 — the message that goes out is read here: the card's stored one on an approval.
+              const sendProblem = await outboundDraftRefusal("calendar_link_send", args, approvalChannel.get(tc.id) === "operator_card" ? "approved" : "filing");
+              if (sendProblem) {
+                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(sendProblem) });
+                continue;
+              }
               const forwardedAuth = authHeader ?? ""; // string (the handler 401s above if the header is absent)
               const sendMessage: SendMessageFn = async (i) => {
                 try {
@@ -13473,6 +13551,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // management write returns that for a write that happened without a workflow run
           // (_shared/n8n-management.ts), and it must stay on this trail.
           if (out?.needs_confirm === true || out?.disabled === true || out?.refused_before_run === true) return;
+          // R2 — a draft for a customer refused for internal text never reached its write.
+          if (out?.error === "internal_text_in_draft") return;
           const n8nOutcome = N8N_MANAGEMENT_TOOL_NAMES.has(name);
           const failed = n8nOutcome ? out?.ok !== true : out?.success === false;
           const missionReplay = (name === "mission_create" || name === "mission_revise" || name === "mission_transition") && out?.replayed === true;

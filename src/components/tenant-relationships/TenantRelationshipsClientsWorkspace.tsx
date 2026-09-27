@@ -497,7 +497,7 @@ function SoloPeopleView({
         </label>
         <span className="trc-people-actions">
           {search && <button type="button" onClick={() => setSearch("")}>Clear search</button>}
-          <RoleGate allow={["admin", "super_admin"]} fallback={<ProofPill>Read only</ProofPill>}>
+          <RoleGate allow={["admin"]} fallback={<ProofPill>Read only</ProofPill>}>
             <button type="button" data-contact-editor-origin="toolbar-new" onClick={openNewContact}><Plus aria-hidden /> New contact</button>
           </RoleGate>
         </span>
@@ -548,7 +548,7 @@ function SoloPeopleView({
               <strong>{query ? "No matching people" : "No people here yet"}</strong>
               <span>{query ? "The loaded list is unchanged. Clear search to see every loaded record." : "Create the first tenant-scoped Person or Business record."}</span>
               {query ? <button type="button" onClick={() => setSearch("")}>Clear search</button> : (
-                <RoleGate allow={["admin", "super_admin"]} fallback={<ProofPill>Read only</ProofPill>}>
+                <RoleGate allow={["admin"]} fallback={<ProofPill>Read only</ProofPill>}>
                   <button type="button" data-contact-editor-origin="empty-new" onClick={openNewContact}><Plus aria-hidden /> New contact</button>
                 </RoleGate>
               )}
@@ -607,7 +607,7 @@ function ClientRecord({
           <ProofPill tone="live">Record · LIVE</ProofPill>
         </div>
         <div className="trc-record-actions">
-          <RoleGate allow={["admin", "super_admin"]} fallback={null}>
+          <RoleGate allow={["admin"]} fallback={null}>
             <button type="button" data-contact-editor-origin="record-edit" onClick={onEdit}><Pencil aria-hidden /> Edit contact</button>
           </RoleGate>
           <button type="button" onClick={openPaige}><Sparkles aria-hidden /> Open PAIGE workspace</button>

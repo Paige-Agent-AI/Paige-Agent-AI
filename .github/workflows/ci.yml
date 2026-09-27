@@ -248,6 +248,12 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run lint:shadow-vars
 
+      # One answer to "is this person a platform operator": operator_standing(), read on the
+      # client only through src/lib/auth/operatorStanding.ts. A role list elsewhere fails here.
+      - name: No operator role list outside the one client home
+        if: ${{ !cancelled() }}
+        run: npm run lint:operator-roles && npm run lint:operator-roles:test
+
       # Every tool the runtime GOVERNS must be one the operator can SEE. `MUTATING_TOOLS` in
       # paige-ai-chat gates 46 tools; `list_tool_autonomy()` — the catalogue the Capabilities
       # surface renders — carries 23. The other 23 are governed invisibly: they cannot be flipped

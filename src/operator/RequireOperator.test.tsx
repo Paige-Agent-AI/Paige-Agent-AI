@@ -113,12 +113,13 @@ const settle = async () => {
   });
 };
 
-/** Answer the oldest outstanding `is_platform_admin()` call. */
+/** Answer the oldest outstanding `operator_standing()` call. */
 const answerRpc = async (isOperator: boolean) => {
   const resolve = pendingRpc.shift();
   if (!resolve) throw new Error("no rpc in flight — the guard did not ask the server");
   await act(async () => {
-    resolve({ data: isOperator, error: null });
+    // The one server answer: a row with the caller's operator tier, or no tier at all.
+    resolve({ data: [{ tier: isOperator ? "platform_admin" : null, active_tenant_id: null }], error: null });
     await Promise.resolve();
   });
 };

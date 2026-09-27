@@ -75,11 +75,20 @@ vi.mock("@/integrations/supabase/client", () => ({
       },
     },
     rpc: (name: string) => {
-      if (name === "is_platform_owner") {
+      // The tenant context reads operator standing once per load (one server answer). The
+      // fixtures still describe it as owner/staff; this folds them into the answer's shape, and a
+      // failed read of either side is a failed read of the answer.
+      if (name === "operator_standing") {
         harness.currentLoad += 1;
-        return loadPart("owner");
+        return Promise.all([loadPart("owner"), loadPart("staff")]).then(([owner, staff]) =>
+          owner.error || staff.error
+            ? { data: null, error: owner.error ?? staff.error }
+            : {
+                data: [{ tier: owner.data ? "super_admin" : staff.data ? "platform_admin" : null, active_tenant_id: null }],
+                error: null,
+              },
+        );
       }
-      if (name === "is_platform_admin") return loadPart("staff");
       if (name === "get_user_primary_tenant") {
         const primary = harness.primaryLoads.shift();
         if (!primary) throw new Error("No primary-tenant response is queued");

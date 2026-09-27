@@ -161,12 +161,15 @@ describe("the operator door has exactly one home", () => {
     const chooser = fs.readFileSync(path.join(SRC, "pages", "ChooseAccount.tsx"), "utf8");
 
     expect(sharedAuth).toContain("navigate(operatorChooserTarget(window.location.search)");
-    expect(sharedAuth).toContain("if (initialMemberships.error || initialStaff.error)");
+    // A failed operator-standing read is unknown authority, never "not an operator".
+    expect(sharedAuth).toContain("if (initialMemberships.error || initialStanding === null)");
     expect(sharedAuth.match(/navigate\(operatorChooserTarget\(window\.location\.search\)/g)?.length).toBe(1);
     expect(sharedAuth).toContain("setRoutingError(\"Paige couldn't confirm your account access.");
     expect(sharedAuth).toContain("resolve(LANDING_ROUTE_RETRY)");
     expect(operatorLogin).toContain("navigate(operatorChooserTarget(window.location.search)");
-    expect(operatorLogin).toContain("error ? null : data === true");
+    // The one server answer; a failed read (null) is unknown, never a denial.
+    expect(operatorLogin).toContain("fetchOperatorStanding().then((s) => (s ? holdsOperatorTier(s) : null))");
+    expect(joinPlatform).toContain("fetchOperatorStanding().then((s) => (s ? holdsOperatorTier(s) : null))");
     expect(operatorLogin).toContain("if (isOperator === null)");
     expect(operatorLogin).toContain("setRoutingError(\"Paige couldn't confirm Platform access.");
     expect(operatorLogin).toContain("r(LANDING_ROUTE_RETRY)");

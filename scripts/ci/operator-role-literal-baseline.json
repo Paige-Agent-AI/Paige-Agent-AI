@@ -1,0 +1,21 @@
+{
+  "_why": "Files that still carry an operator role word in client code, and why. Each count may only fall (baseline-guard.mjs). None of these decides whether the SIGNED-IN person is an operator; that is src/lib/auth/operatorStanding.ts alone.",
+  "_reasons": {
+    "src/lib/team/assignableStaff.ts": "Tenant assignee filter over OTHER members' global roles (who may own a contact). Whether an operator is assignable inside a tenant is an unruled capability; converts when ruled.",
+    "src/pages/admin/conversations/ContactCardRail.tsx": "Same tenant assignee question as assignableStaff.ts, with its own list; converts with it.",
+    "src/operator/surfaces/specs/platformSpecs.ts": "Static role labels in the Settings -> Team panel (display only, values not read). Replaced when the seats feature reads roles from platform_operator_roles.",
+    "src/components/admin/ManageRolesDialog.tsx": "Orphaned team screen (reachable only through TeamHub, which nothing mounts). Referenced by the title-role retirement lane's tests; parked and routed to that lane rather than deleted here.",
+    "src/components/admin/InviteMemberDialog.tsx": "Orphaned with ManageRolesDialog; same lane, same routing.",
+    "src/components/team/MembersRolesPanel.tsx": "Orphaned with ManageRolesDialog; same lane, same routing.",
+    "src/pages/admin/analytics/sections/PaigeContributionSection.tsx": "Orphaned (AnalyticsDashboard is mounted nowhere); referenced by the title-role lane's tests; parked and routed."
+  },
+  "files": {
+    "src/components/admin/InviteMemberDialog.tsx": 1,
+    "src/components/admin/ManageRolesDialog.tsx": 3,
+    "src/components/team/MembersRolesPanel.tsx": 2,
+    "src/lib/team/assignableStaff.ts": 1,
+    "src/operator/surfaces/specs/platformSpecs.ts": 2,
+    "src/pages/admin/analytics/sections/PaigeContributionSection.tsx": 1,
+    "src/pages/admin/conversations/ContactCardRail.tsx": 1
+  }
+}

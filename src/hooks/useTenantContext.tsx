@@ -31,6 +31,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { tenantSwitchPersisted } from "@/lib/platform/fleetCommunications";
+import { fetchOperatorStanding, isOperator, isOwnerTier } from "@/lib/auth/operatorStanding";
 
 /**
  * #233 — on a GENUINE new sign-in, reset the active tenant to the user's HOME.
@@ -248,9 +249,9 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const [owner, staff, profileRes, tenantsRes, classRes] = await Promise.all([
-        supabase.rpc("is_platform_owner"),
-        supabase.rpc("is_platform_admin"),
+      const [standing, profileRes, tenantsRes, classRes] = await Promise.all([
+        // The one server answer to operator standing (G1), read once. null = the read failed.
+        fetchOperatorStanding(),
         // #233: fold `agency_login_default` into the SAME round-trip (never a
         // serial read) so the fresh-login reset can honor the #191 opt-in below.
         supabase.from("profiles").select("active_tenant_id, agency_login_default").eq("user_id", uid).maybeSingle(),
@@ -273,7 +274,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       // explicit error verdict — it can never be treated as an empty, valid identity.
       // NOTE: classRes is intentionally NOT in this guard — the classification is an
       // enhancement; its absence (pre-migration / non-staff) must never block the shell.
-      const requiredReadFailed = Boolean(owner.error || staff.error || profileRes.error || tenantsRes.error);
+      const requiredReadFailed = Boolean(standing === null || profileRes.error || tenantsRes.error);
       if (requiredReadFailed) {
         if (hasAcceptedContextRef.current) return;
         if (loadSubjectEpoch !== subjectEpochRef.current || loadId < acceptedLoadIdRef.current) return;
@@ -295,8 +296,8 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       const stillAuthoritative = () =>
         loadSubjectEpoch === subjectEpochRef.current && loadId === acceptedLoadIdRef.current;
 
-      setIsPlatformOwner(Boolean(owner.data));
-      setIsPlatformStaff(Boolean(staff.data));
+      setIsPlatformOwner(isOwnerTier(standing));
+      setIsPlatformStaff(isOperator(standing));
       // Merge the operator-only revenue_class onto each tenant (null when unknown).
       const classById = new Map<string, string>();
       if (!classRes.error && Array.isArray(classRes.data)) {
@@ -322,7 +323,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       // lets them read all of them — they operate at the God tier by default.
       const baseActiveTenantId =
         profileRes.data?.active_tenant_id ??
-        (staff.data ? null : (tenantsRes.data?.[0] as unknown as TenantSummary | undefined)?.id ?? null);
+        (isOperator(standing) ? null : (tenantsRes.data?.[0] as unknown as TenantSummary | undefined)?.id ?? null);
       setActiveTenantId(baseActiveTenantId);
 
       // --- #233: on a GENUINE new sign-in, reset the active tenant to the user's
@@ -354,7 +355,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
           // tie-break tenant_created_at ASC, tenant_id ASC — no #588
           // nondeterminism, and ONLY the caller's own entitled memberships, §9).
           let home: string | null = null;
-          if (!staff.data) {
+          if (!isOperator(standing)) {
             const primary = await supabase.rpc("get_user_primary_tenant", { _user_id: uid });
             if (!stillAuthoritative()) return;
             if (primary.error) {

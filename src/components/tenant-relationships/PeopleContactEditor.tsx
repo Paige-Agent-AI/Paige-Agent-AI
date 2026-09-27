@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CONTACT_SOURCES, LIFECYCLE_STAGES } from "@/lib/contacts";
 import type { RelationshipPerson } from "./useTenantRelationshipsData";
 import { upsertRelationshipContact, type ContactUpsertPatch } from "./contactUpsert";
+import { toAssignableStaff } from "@/lib/team/assignableStaff";
 
 type Coach = { user_id: string; name: string };
 type EditorStep = 0 | 1 | 2;
@@ -132,9 +133,8 @@ export function PeopleContactEditor({
       // Generated Supabase types do not yet include this established roster RPC.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data } = await (supabase as any).rpc("get_tenant_assignable_members");
-      if (current) setCoaches((data ?? [])
-        .filter(({ roles }: { roles?: string[] }) => (roles ?? []).some((role) => ["admin", "super_admin"].includes(role)))
-        .map(({ user_id, full_name }: { user_id: string; full_name: string | null }) => ({ user_id, name: full_name || "Unnamed coach" })));
+      // One home for "who may own a contact": the shared roster filter, not a second copy of it.
+      if (current) setCoaches(toAssignableStaff(data));
     })();
     const focusTimer = window.setTimeout(() => headingRef.current?.focus(), 0);
     return () => {

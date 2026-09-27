@@ -24,6 +24,7 @@ const tc = vi.hoisted(() => ({
     isPlatformStaff: false,
     activeTenant: null as Tenant | null,
     refresh: async () => {},
+    activeUserId: "op" as string | null,
     exitOperatorActAs: (async () => true) as () => Promise<boolean>,
   },
 }));
@@ -32,6 +33,7 @@ vi.mock("@/solo/SoloApp", () => ({ default: () => <div data-mounted="solo-shell"
 
 import SoloEntry from "./SoloEntry";
 import { landAt } from "@/operator/actAs";
+import { recordOperatorActAs } from "@/lib/auth/workspaceEntry";
 
 function LocationProbe() {
   const loc = useLocation();
@@ -121,10 +123,14 @@ describe("/solo/* tier gate", () => {
       tc.ctx.exitOperatorActAs = vi.fn(async () => true);
       go = vi.spyOn(landAt, "go").mockImplementation(() => {});
     });
-    afterEach(() => go.mockRestore());
+    afterEach(() => {
+      go.mockRestore();
+      sessionStorage.clear();
+      tc.ctx.exitOperatorActAs = async () => true;
+    });
 
     it("offers the audited exit when this session opened an act-as", async () => {
-      sessionStorage.setItem("paige.operator.actingAs", "t1");
+      recordOperatorActAs("op", "t1");
       await renderAt("/solo/1971670/command-center");
       expect(exitButton()?.hasAttribute("data-operator-exit")).toBe(true);
       await act(async () => { exitButton()?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
@@ -133,7 +139,7 @@ describe("/solo/* tier gate", () => {
     });
 
     it("stays, and keeps the exit, when the server refuses it", async () => {
-      sessionStorage.setItem("paige.operator.actingAs", "t1");
+      recordOperatorActAs("op", "t1");
       tc.ctx.exitOperatorActAs = vi.fn(async () => false);
       await renderAt("/solo/1971670/command-center");
       await act(async () => { exitButton()?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
@@ -145,6 +151,16 @@ describe("/solo/* tier gate", () => {
       await renderAt("/solo/1971670/command-center");
       expect(host.textContent).toContain("Try again");
       expect(exitButton()).toBeFalsy();
+    });
+
+    // Independent review of 88b651b8: an act-as left in this tab by a user who signed out must not
+    // be offered to the next person who signs in here.
+    it("offers nothing to a different user than the one who opened the act-as", async () => {
+      recordOperatorActAs("op", "t1");
+      tc.ctx.activeUserId = "next-person";
+      await renderAt("/solo/1971670/command-center");
+      expect(exitButton()).toBeFalsy();
+      tc.ctx.activeUserId = "op";
     });
   });
 });

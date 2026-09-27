@@ -282,25 +282,39 @@ export const WORKSPACE_ENTERED_KEY = "paige.workspace.entered";
 export const ACCOUNT_SWITCH_NOTICE_KEY = "paige.accountSwitch.notice";
 
 /**
- * This browser session opened an operator act-as that has not been exited. Written and cleared only
- * by the tenant provider, on a successful audited enter or exit. It grants nothing: it decides
- * whether a destination that could not load its account context still offers the operator the
- * audited exit, because at that moment the provider cannot tell an operator from a member.
+ * This browser tab holds an operator act-as, for the named user, that the server last confirmed.
+ * Written only by the tenant provider: on a successful audited enter, and on every successful
+ * account load, where it is reset to the server's own answer (an operator's active tenant, or
+ * nothing). Cleared on a successful exit and on sign-out. It grants nothing: it decides whether a
+ * destination that could not load its account context still offers that same user the audited
+ * exit, because at that moment the provider cannot tell an operator from a member.
  */
 export const OPERATOR_ACT_AS_KEY = "paige.operator.actingAs";
 
-export function recordOperatorActAs(tenantId: string | null): void {
+export function recordOperatorActAs(userId: string, tenantId: string): void {
   try {
-    if (tenantId) sessionStorage.setItem(OPERATOR_ACT_AS_KEY, tenantId);
-    else sessionStorage.removeItem(OPERATOR_ACT_AS_KEY);
+    sessionStorage.setItem(OPERATOR_ACT_AS_KEY, JSON.stringify({ userId, tenantId }));
   } catch {
     // Unavailable storage only means a stranded destination offers "Try again" alone.
   }
 }
 
-export function operatorActAsRecorded(): boolean {
+export function forgetOperatorActAs(): void {
   try {
-    return Boolean(sessionStorage.getItem(OPERATOR_ACT_AS_KEY));
+    sessionStorage.removeItem(OPERATOR_ACT_AS_KEY);
+  } catch {
+    // Best-effort, as above.
+  }
+}
+
+/** Does this tab hold an act-as for THIS user? Another user's record, or a malformed one, is none. */
+export function operatorActAsRecorded(userId: string | null | undefined): boolean {
+  if (!userId) return false;
+  try {
+    const raw = sessionStorage.getItem(OPERATOR_ACT_AS_KEY);
+    if (!raw) return false;
+    const held = JSON.parse(raw) as { userId?: unknown; tenantId?: unknown };
+    return held.userId === userId && typeof held.tenantId === "string" && held.tenantId.length > 0;
   } catch {
     return false;
   }

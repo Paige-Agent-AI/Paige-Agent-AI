@@ -14,29 +14,37 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const h = vi.hoisted(() => ({
   staff: { data: true, error: null as unknown },
+  activeTenant: null as string | null,
   rpcCalls: [] as string[],
+  enterError: null as unknown,
   exitError: null as unknown,
   profileWrites: 0,
+  authListener: null as null | ((event: string) => void),
+  signedIn: true,
 }));
 
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     auth: {
-      getSession: () => Promise.resolve({ data: { session: { user: { id: "op", last_sign_in_at: null } } } }),
+      getSession: () => Promise.resolve({ data: { session: h.signedIn ? { user: { id: "op", last_sign_in_at: null } } : null } }),
       getUser: () => Promise.resolve({ data: { user: { id: "op" } } }),
-      onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+      onAuthStateChange: (listener: (event: string) => void) => {
+        h.authListener = listener;
+        return { data: { subscription: { unsubscribe: () => { h.authListener = null; } } } };
+      },
     },
     rpc: (name: string) => {
       h.rpcCalls.push(name);
       if (name === "is_platform_owner") return Promise.resolve({ data: false, error: null });
       if (name === "is_platform_admin") return Promise.resolve(h.staff);
+      if (name === "operator_enter_tenant") return Promise.resolve({ data: null, error: h.enterError });
       if (name === "operator_exit_tenant") return Promise.resolve({ data: null, error: h.exitError });
       return Promise.resolve({ data: null, error: null });
     },
     from: (table: string) => {
       if (table === "profiles") {
         return {
-          select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: { active_tenant_id: null, agency_login_default: null }, error: null }) }) }),
+          select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: { active_tenant_id: h.activeTenant, agency_login_default: null }, error: null }) }) }),
           update: () => {
             h.profileWrites += 1;
             return { eq: () => ({ select: () => ({ maybeSingle: () => Promise.resolve({ data: { user_id: "op" }, error: null }) }) }) };
@@ -52,7 +60,9 @@ vi.mock("@/integrations/supabase/client", () => ({
 }));
 
 import { TenantProvider, useTenantContext } from "@/hooks/useTenantContext";
-import { operatorActAsRecorded } from "@/lib/auth/workspaceEntry";
+import { operatorActAsRecorded, recordOperatorActAs } from "@/lib/auth/workspaceEntry";
+
+const acting = () => operatorActAsRecorded("op");
 
 type Ctx = ReturnType<typeof useTenantContext>;
 
@@ -69,7 +79,10 @@ describe("the operator act-as marker and its audited exit", () => {
   beforeEach(() => {
     sessionStorage.clear();
     h.staff = { data: true, error: null };
+    h.activeTenant = null;
+    h.signedIn = true;
     h.rpcCalls = [];
+    h.enterError = null;
     h.exitError = null;
     h.profileWrites = 0;
     ctx = null;
@@ -98,14 +111,59 @@ describe("the operator act-as marker and its audited exit", () => {
     const c = await mount();
     expect(c.isPlatformStaff).toBe(true);
     await act(async () => { await c.switchTenant("t1"); });
-    expect(operatorActAsRecorded()).toBe(true);
+    expect(h.rpcCalls).toContain("operator_enter_tenant");
+    expect(acting()).toBe(true);
+    // It is this user's record, not a flag any later user of the tab inherits.
+    expect(operatorActAsRecorded("someone-else")).toBe(false);
     await act(async () => { await (ctx as Ctx).switchTenant(null); });
-    expect(operatorActAsRecorded()).toBe(false);
+    expect(acting()).toBe(false);
+  });
+
+  // Independent review of 88b651b8: nothing pinned that a refused enter records nothing.
+  it("records nothing when the server refuses the entry", async () => {
+    h.enterError = { message: "refused" };
+    const c = await mount();
+    let ok = true;
+    await act(async () => { ok = await c.switchTenant("t1"); });
+    expect(ok).toBe(false);
+    expect(acting()).toBe(false);
+  });
+
+  // Independent review of 88b651b8: scope can move without enter/exit (the fresh-login reset,
+  // another tab, a duplicated tab's copied storage). A readable server is the authority.
+  it("drops a record the server contradicts on a successful load", async () => {
+    recordOperatorActAs("op", "t1");
+    h.activeTenant = null;
+    await mount();
+    expect(acting()).toBe(false);
+  });
+
+  it("restores the record for an act-as the server still holds", async () => {
+    h.activeTenant = "t1";
+    await mount();
+    expect(acting()).toBe(true);
+  });
+
+  it("gives a member no record, whatever the tab held", async () => {
+    recordOperatorActAs("op", "t1");
+    h.staff = { data: false, error: null };
+    h.activeTenant = "t1";
+    await mount();
+    expect(acting()).toBe(false);
+  });
+
+  it("forgets the act-as on sign-out", async () => {
+    h.activeTenant = "t1";
+    await mount();
+    expect(acting()).toBe(true);
+    h.signedIn = false;
+    await act(async () => { h.authListener?.("SIGNED_OUT"); });
+    expect(acting()).toBe(false);
   });
 
   it("exits through the audited RPC even when its own account read failed", async () => {
     h.staff = { data: false, error: { message: "network" } };
-    sessionStorage.setItem("paige.operator.actingAs", "t1");
+    recordOperatorActAs("op", "t1");
     const c = await mount();
     expect(c.accountContextStatus).toBe("error");
     expect(c.isPlatformStaff).toBe(false);
@@ -115,16 +173,18 @@ describe("the operator act-as marker and its audited exit", () => {
     expect(h.rpcCalls).toContain("operator_exit_tenant");
     // Never the member path: that would clear the pointer with no exit recorded.
     expect(h.profileWrites).toBe(0);
-    expect(operatorActAsRecorded()).toBe(false);
+    expect(acting()).toBe(false);
   });
 
   it("keeps the act-as recorded when the server refuses the exit", async () => {
     h.exitError = { message: "refused" };
-    sessionStorage.setItem("paige.operator.actingAs", "t1");
+    // A failed read, so the load does not reset the record either way.
+    h.staff = { data: false, error: { message: "network" } };
+    recordOperatorActAs("op", "t1");
     const c = await mount();
     let ok = true;
     await act(async () => { ok = await c.exitOperatorActAs(); });
     expect(ok).toBe(false);
-    expect(operatorActAsRecorded()).toBe(true);
+    expect(acting()).toBe(true);
   });
 });

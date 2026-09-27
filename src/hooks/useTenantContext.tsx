@@ -31,7 +31,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { tenantSwitchPersisted } from "@/lib/platform/fleetCommunications";
-import { recordOperatorActAs } from "@/lib/auth/workspaceEntry";
+import { forgetOperatorActAs, recordOperatorActAs } from "@/lib/auth/workspaceEntry";
 
 /**
  * #233 — on a GENUINE new sign-in, reset the active tenant to the user's HOME.
@@ -247,6 +247,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         acceptedThisLoad = true;
         activeUidRef.current = null;
         setActiveUserId(null);
+        forgetOperatorActAs();
         hasAcceptedContextRef.current = false;
         setTenants([]);
         setActiveTenantId(null);
@@ -332,6 +333,8 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         profileRes.data?.active_tenant_id ??
         (staff.data ? null : (tenantsRes.data?.[0] as unknown as TenantSummary | undefined)?.id ?? null);
       setActiveTenantId(baseActiveTenantId);
+      // The scope this load ends on, for the act-as record below.
+      let committedActiveTenantId = baseActiveTenantId;
 
       // --- #233: on a GENUINE new sign-in, reset the active tenant to the user's
       // HOME so a fresh login lands on home instead of wherever the last session
@@ -397,11 +400,18 @@ export function TenantProvider({ children }: { children: ReactNode }) {
             // Commit + invalidate ONLY after the write succeeds, then burn the
             // marker LAST (fold-fix #1) so the reset is never lost on a bail.
             setActiveTenantId(home);
+            committedActiveTenantId = home;
             queryClient.invalidateQueries();
             burnHandledSignIn(uid, lastSignInAt);
           }
         }
       }
+      // The act-as record follows the server whenever the server can be read: an operator with an
+      // active tenant holds one, anyone else holds none. Scope moves that bypass enter/exit (the
+      // fresh-login reset above, another tab, a duplicated tab's copied storage) cannot leave a
+      // stale record that would later offer an exit from an act-as that is not open.
+      if (staff.data && committedActiveTenantId) recordOperatorActAs(uid, committedActiveTenantId);
+      else forgetOperatorActAs();
       hasAcceptedContextRef.current = true;
       setAccountContextStatus("ready");
     } catch {
@@ -446,6 +456,8 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         // uid captured on the last successful load, not a read-back of the session.
         const priorUid = activeUidRef.current;
         if (priorUid) clearHandledSignIn(priorUid);
+        // An act-as belongs to the session that opened it; the next person in this tab has none.
+        forgetOperatorActAs();
         activeUidRef.current = null;
         load(true);
         return;
@@ -468,7 +480,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: rpcError } = await supabase.rpc("operator_exit_tenant" as any);
     if (rpcError) return false;
-    recordOperatorActAs(null);
+    forgetOperatorActAs();
     setActiveTenantId(null);
     queryClient.invalidateQueries();
     return true;
@@ -500,7 +512,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       // Same failure contract as the direct write below: a refused or failed switch
       // does NOT move client scope, so client and DB can never disagree (§9).
       if (rpcError) return false;
-      recordOperatorActAs(tenantId);
+      recordOperatorActAs(uid, tenantId);
       setActiveTenantId(tenantId);
       queryClient.invalidateQueries();
       return true;

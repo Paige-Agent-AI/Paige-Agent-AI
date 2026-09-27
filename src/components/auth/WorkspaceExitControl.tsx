@@ -151,11 +151,11 @@ function OperatorExitControl() {
  * is a full load, because the provider that failed to read here is the one the console needs.
  */
 export function StrandedOperatorExit() {
-  const { exitOperatorActAs } = useTenantContext();
-  const [offered] = useState(operatorActAsRecorded);
+  const { activeUserId, exitOperatorActAs } = useTenantContext();
   const [leaving, setLeaving] = useState(false);
   const exiting = useRef(false);
-  if (!offered) return null;
+  // Only for the user who opened the act-as in this tab.
+  if (!operatorActAsRecorded(activeUserId)) return null;
 
   const exit = async () => {
     if (exiting.current) return;
@@ -165,7 +165,7 @@ export function StrandedOperatorExit() {
     if (!exited) {
       exiting.current = false;
       setLeaving(false);
-      toast.error("Couldn't leave this tenant. You are still acting as it.");
+      toast.error("Couldn't leave this tenant. Try again.");
       return;
     }
     clearWorkspaceScopedState();

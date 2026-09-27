@@ -31,7 +31,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { tenantSwitchPersisted } from "@/lib/platform/fleetCommunications";
-import { forgetOperatorActAs, recordOperatorActAs } from "@/lib/auth/workspaceEntry";
+import { ACCOUNT_SWITCH_NOTICE_KEY, forgetOperatorActAs, recordOperatorActAs } from "@/lib/auth/workspaceEntry";
 
 /**
  * #233 — on a GENUINE new sign-in, reset the active tenant to the user's HOME.
@@ -481,6 +481,13 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     const { error: rpcError } = await supabase.rpc("operator_exit_tenant" as any);
     if (rpcError) return false;
     forgetOperatorActAs();
+    // An "Acting as … recorded" notice still waiting for a shell that never mounted now announces an
+    // act-as that has ended; the next workspace opened must not show it.
+    try {
+      sessionStorage.removeItem(ACCOUNT_SWITCH_NOTICE_KEY);
+    } catch {
+      // Storage unavailable: then no notice was stored either.
+    }
     setActiveTenantId(null);
     queryClient.invalidateQueries();
     return true;

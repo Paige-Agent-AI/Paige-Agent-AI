@@ -5,6 +5,7 @@ import { useTenantContext } from "@/hooks/useTenantContext";
 import {
   ACCOUNT_SWITCH_NOTICE_KEY,
   clearWorkspaceScopedState,
+  operatorArrivalAddress,
   rememberWorkspaceEntered,
 } from "@/lib/auth/workspaceEntry";
 import { landAt, operatorLandingFor } from "@/operator/actAs";
@@ -388,7 +389,7 @@ export default function FleetConsole({ isPlatformOwner }: { isPlatformOwner: boo
           // Storage unavailable: the Exit tenant control in the header still says where they are.
         }
         leaving = true;
-        landAt.go(landing.root);
+        landAt.go(operatorArrivalAddress(landing.root));
       } finally {
         // Held once the landing has begun: a full load does not unload this page at once, and a
         // second press in that gap would record a second entry.

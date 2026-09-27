@@ -128,6 +128,18 @@ describe("FleetConsole Enter — the act-as lands or does not begin", () => {
     expect(go).toHaveBeenCalledTimes(1);
   });
 
+  // Codex review of 88b651b8: with storage blocked, the arrival must still know an act-as is open.
+  it("flags the arrival address when storage cannot hold the act-as", async () => {
+    const blocked = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("blocked"); });
+    try {
+      const enter = await render();
+      await act(async () => { enter("Solo Co")?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(go).toHaveBeenCalledWith("/solo/3855/command-center?acting-as=1");
+    } finally {
+      blocked.mockRestore();
+    }
+  });
+
   it("leaves the arrival notice for the tenant's shell to show", async () => {
     sessionStorage.clear();
     const enter = await render();

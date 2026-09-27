@@ -153,6 +153,30 @@ describe("/solo/* tier gate", () => {
       expect(exitButton()).toBeFalsy();
     });
 
+    // Codex review of 88b651b8: storage blocked by policy silently dropped the record, and with it
+    // the only way out. Where storage cannot be used, the arrival address carries the flag instead.
+    it("still offers the exit when storage is blocked and the arrival carries the flag", async () => {
+      const blocked = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("blocked"); });
+      window.history.replaceState(null, "", "/?acting-as=1");
+      try {
+        await renderAt("/solo/1971670/command-center");
+        expect(exitButton()).toBeTruthy();
+      } finally {
+        blocked.mockRestore();
+        window.history.replaceState(null, "", "/");
+      }
+    });
+
+    it("ignores the address flag where storage works and holds no act-as", async () => {
+      window.history.replaceState(null, "", "/?acting-as=1");
+      try {
+        await renderAt("/solo/1971670/command-center");
+        expect(exitButton()).toBeFalsy();
+      } finally {
+        window.history.replaceState(null, "", "/");
+      }
+    });
+
     // Independent review of 88b651b8: an act-as left in this tab by a user who signed out must not
     // be offered to the next person who signs in here.
     it("offers nothing to a different user than the one who opened the act-as", async () => {

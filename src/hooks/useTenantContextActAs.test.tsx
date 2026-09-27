@@ -176,6 +176,17 @@ describe("the operator act-as marker and its audited exit", () => {
     expect(acting()).toBe(false);
   });
 
+  // Codex review of 88b651b8: the console leaves an "Acting as … recorded" notice for the tenant's
+  // shell. If the shell never mounted, a later workspace would announce an act-as already ended.
+  it("drops the pending arrival notice with the act-as it announced", async () => {
+    h.staff = { data: false, error: { message: "network" } };
+    recordOperatorActAs("op", "t1");
+    sessionStorage.setItem("paige.accountSwitch.notice", "Acting as Solo Co. Everything you do here is recorded.");
+    const c = await mount();
+    await act(async () => { await c.exitOperatorActAs(); });
+    expect(sessionStorage.getItem("paige.accountSwitch.notice")).toBeNull();
+  });
+
   it("keeps the act-as recorded when the server refuses the exit", async () => {
     h.exitError = { message: "refused" };
     // A failed read, so the load does not reset the record either way.

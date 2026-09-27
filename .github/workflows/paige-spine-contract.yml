@@ -276,6 +276,8 @@ jobs:
         if: ${{ !cancelled() }}
       - run: supabase test db supabase/tests/title_role_grant_paths_closed.sql
         if: ${{ !cancelled() }}
+      - run: supabase test db supabase/tests/title_role_value_forbidden.sql
+        if: ${{ !cancelled() }}
       - run: psql -v ON_ERROR_STOP=1 -f scripts/sql/social-foundation-legacy-shape-proof.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
       - run: psql -v ON_ERROR_STOP=1 -f scripts/sql/social-foundation-tenant-shaped-proof.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
       # Trusted task↔thread link — RLS SET-ROLE proof that the edge's server-side validation read

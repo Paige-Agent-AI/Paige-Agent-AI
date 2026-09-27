@@ -186,7 +186,7 @@ describe("tenant shell owns one PAIGE surface", () => {
     const renderTenant = (
       accountNumber: string,
       accountName: string,
-      userRole: "admin" | "coach",
+      userRole: "admin" | "member",
     ) => {
       window.localStorage.setItem("paige.tenantShell.navExpanded", "true");
       const host = document.createElement("div");
@@ -222,7 +222,7 @@ describe("tenant shell owns one PAIGE surface", () => {
     };
 
     const affectedTenant = renderTenant("410001", "First example business", "admin");
-    const knownGoodTenant = renderTenant("410002", "Second example business", "coach");
+    const knownGoodTenant = renderTenant("410002", "Second example business", "member");
 
     expect({ ...affectedTenant, workspaceClaim: undefined }).toEqual({
       ...knownGoodTenant,

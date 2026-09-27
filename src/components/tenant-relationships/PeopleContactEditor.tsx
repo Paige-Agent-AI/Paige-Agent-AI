@@ -133,7 +133,7 @@ export function PeopleContactEditor({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data } = await (supabase as any).rpc("get_tenant_assignable_members");
       if (current) setCoaches((data ?? [])
-        .filter(({ roles }: { roles?: string[] }) => (roles ?? []).some((role) => ["coach", "admin", "super_admin"].includes(role)))
+        .filter(({ roles }: { roles?: string[] }) => (roles ?? []).some((role) => ["admin", "super_admin"].includes(role)))
         .map(({ user_id, full_name }: { user_id: string; full_name: string | null }) => ({ user_id, name: full_name || "Unnamed coach" })));
     })();
     const focusTimer = window.setTimeout(() => headingRef.current?.focus(), 0);

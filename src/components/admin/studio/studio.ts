@@ -138,7 +138,7 @@ function errText(err: unknown): string {
 
 /**
  * A message is only shown verbatim when it is genuinely operator-safe. The edge functions
- * write real, useful sentences ("Admin or coach access required.") and those beat any generic
+ * write real, useful sentences ("Admin access required.") and those beat any generic
  * we could invent — but a Postgres raise, a Rollup stack, or a driver string carries machinery
  * the operator must never read (§11). When in doubt, the mapped copy wins; the raw cause is
  * always preserved on the StudioError and logged.

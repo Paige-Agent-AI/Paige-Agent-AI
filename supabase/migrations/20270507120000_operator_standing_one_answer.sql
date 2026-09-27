@@ -15,7 +15,7 @@
 -- super_admin only. A capability widens deliberately, by a migration adding or changing its row,
 -- never by omission. That rule is enforced by operator_may() below and stated on the table.
 
-CREATE TABLE public.platform_operator_capabilities (
+CREATE TABLE IF NOT EXISTS public.platform_operator_capabilities (
   capability text PRIMARY KEY
     CHECK (capability ~ '^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$'),
   -- super_admin may every capability. This column is the only thing that varies by tier.
@@ -37,9 +37,9 @@ COMMENT ON COLUMN public.platform_operator_capabilities.ruling IS
   'Who ruled this row and when. A row without a ruling does not belong in this table.';
 
 ALTER TABLE public.platform_operator_capabilities ENABLE ROW LEVEL SECURITY;
--- No policies: nobody reads or writes the table directly. operator_may() reads it as its owner,
--- and a ruling changes it only through a migration.
-REVOKE ALL ON TABLE public.platform_operator_capabilities FROM PUBLIC, anon, authenticated;
+-- No policies and no grants: nobody reads or writes the table directly, service_role included.
+-- operator_may() reads it as its owner, and a ruling changes it only through a migration.
+REVOKE ALL ON TABLE public.platform_operator_capabilities FROM PUBLIC, anon, authenticated, service_role;
 
 INSERT INTO public.platform_operator_capabilities (capability, platform_admin_may, description, ruling) VALUES
   ('console.enter', true,
@@ -64,21 +64,36 @@ INSERT INTO public.platform_operator_capabilities (capability, platform_admin_ma
    'See billing, MRR and revenue classification. Reading only; writing revenue classification is not granted.',
    'R0, owner ruling 2026-09-27'),
   ('capability.administer', true,
-   'Administer capabilities and autonomy.',
+   'Administer capabilities and autonomy within the ceiling. Raising posture above the ceiling and renewing a rung are separate capabilities below.',
    'R0, owner ruling 2026-09-27'),
+  -- R0 grants administering autonomy; §67 and §68 (owner-ruled 2026-08-24) already keep raising
+  -- above the ceiling and renewing a rung with super_admin. Read together, those two stay
+  -- super_admin and are named here so no later gate folds them into capability.administer.
+  ('autonomy.posture.raise', false,
+   'Raise the daily autonomy posture above the ceiling. Lowering it is not gated here.',
+   'CLAUDE.md §67, owner ruling 2026-08-24; R0 2026-09-27 read as not overriding it'),
+  ('autonomy.rung.renew', false,
+   'Re-attest (renew) an autonomy rung.',
+   'CLAUDE.md §68 and §53, owner ruling 2026-08-24; R0 2026-09-27 read as not overriding it'),
   ('operator.seat.grant', false,
    'Grant an operator seat. The delegated tier can run the platform but cannot create another operator.',
    'R0, owner ruling 2026-09-27; CLAUDE.md §53'),
   ('operator.seat.revoke', false,
    'Revoke an operator seat.',
-   'R0, owner ruling 2026-09-27; CLAUDE.md §53');
+   'R0, owner ruling 2026-09-27; CLAUDE.md §53')
+ON CONFLICT (capability) DO NOTHING;
 
 -- The one answer. Keyed on auth.uid() only: a caller learns their own standing and nobody
--- else's (§59). A caller who holds both roles is super_admin. A non-operator, and an anonymous
--- caller, get (NULL, NULL): acting_tenant_id is reported only to an operator, because it is only
--- an act-as for an operator.
-CREATE FUNCTION public.operator_standing()
-RETURNS TABLE (tier text, acting_tenant_id uuid)
+-- else's (§59). A caller who holds both roles is super_admin. A non-operator, and a caller with no
+-- subject, get (NULL, NULL).
+--
+-- active_tenant_id is the operator's session scope: profiles.active_tenant_id, the value every
+-- query in the app is scoped by. For an operator a set value means acting inside that tenant. It
+-- is reported only to an operator. It is NOT proof that the audited act-as set it: until slice A2
+-- refuses direct writes, the sign-in reset and guard_active_tenant_membership's operator arm can
+-- still change it without an audit row. It is named for what it is, not for what A2 will make it.
+CREATE OR REPLACE FUNCTION public.operator_standing()
+RETURNS TABLE (tier text, active_tenant_id uuid)
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
@@ -101,26 +116,30 @@ $$;
 
 COMMENT ON FUNCTION public.operator_standing() IS
   'The one server answer to "is the caller a platform operator, and at which tier" (super_admin, '
-  'platform_admin, or NULL), plus the tenant they are acting as. Every operator gate derives from '
-  'this or from operator_may(); none keeps its own role list.';
+  'platform_admin, or NULL), plus, for an operator, the tenant their session is scoped to. Every '
+  'operator gate derives from this or from operator_may(); none keeps its own role list.';
 
--- May the caller do this? super_admin: always. platform_admin: only where the capability's row
--- grants it — an unknown or misspelled capability is refused, which is the default rule.
--- Anyone else: never.
-CREATE FUNCTION public.operator_may(_capability text)
+-- May the caller do this? A NULL capability: never, for anyone (a caller bug must not admit).
+-- super_admin: always. platform_admin: only where the capability's row grants it — an unknown,
+-- misspelled or wrong-case capability is refused, which is the default rule. Anyone else: never.
+-- In a policy, call it as (SELECT public.operator_may('...')) so it runs once per statement.
+CREATE OR REPLACE FUNCTION public.operator_may(_capability text)
 RETURNS boolean
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = ''
 AS $$
-  SELECT CASE (SELECT s.tier FROM public.operator_standing() s)
+  SELECT CASE
+    WHEN _capability IS NULL THEN false
+    ELSE CASE (SELECT s.tier FROM public.operator_standing() s)
     WHEN 'super_admin' THEN true
     WHEN 'platform_admin' THEN COALESCE(
       (SELECT c.platform_admin_may FROM public.platform_operator_capabilities c
        WHERE c.capability = _capability),
       false)
     ELSE false
+    END
   END;
 $$;
 

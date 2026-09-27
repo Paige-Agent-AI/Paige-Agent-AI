@@ -2,7 +2,7 @@
 -- capability rows, the default rule for an unruled capability, and the grants that keep the
 -- answer to the caller's own standing.
 BEGIN;
-SELECT plan(40);
+SELECT plan(48);
 
 -- ── Grants ──────────────────────────────────────────────────────────────────────────────────
 SELECT ok(NOT has_function_privilege('anon', 'public.operator_standing()', 'EXECUTE'),
@@ -19,6 +19,23 @@ SELECT ok(NOT has_table_privilege('authenticated', 'public.platform_operator_cap
   'the capability table is not writable by a signed-in caller');
 SELECT ok(NOT has_table_privilege('authenticated', 'public.platform_operator_capabilities', 'UPDATE'),
   'a signed-in caller cannot widen a capability');
+SELECT ok(NOT has_table_privilege('authenticated', 'public.platform_operator_capabilities', 'DELETE'),
+  'a signed-in caller cannot remove a capability row');
+SELECT ok(NOT has_table_privilege('anon', 'public.platform_operator_capabilities', 'SELECT'),
+  'anon cannot read the capability table');
+SELECT ok(NOT has_table_privilege('service_role', 'public.platform_operator_capabilities', 'UPDATE'),
+  'a ruling changes only through a migration, not a service call');
+
+-- The table is exactly R0, plus the two §67/§68 autonomy rows R0 is read as not overriding. An
+-- extra row granting platform_admin anything fails here, not in production.
+SELECT results_eq(
+  $$SELECT capability, platform_admin_may FROM public.platform_operator_capabilities ORDER BY 1$$,
+  $$VALUES ('autonomy.posture.raise', false), ('autonomy.rung.renew', false),
+           ('billing.read', true), ('capability.administer', true), ('console.enter', true),
+           ('fleet.directory.read', true), ('operator.seat.grant', false),
+           ('operator.seat.revoke', false), ('platform.health.read', true),
+           ('tenant.act_as', true), ('tenant.provision', true), ('tenant.status.set', true)$$,
+  'the capability table holds exactly the ruled rows');
 
 -- ── Callers ─────────────────────────────────────────────────────────────────────────────────
 INSERT INTO auth.users (id, aud, role, email) VALUES
@@ -42,7 +59,8 @@ INSERT INTO public.tenant_members (tenant_id, user_id, role, status, is_owner, j
 
 -- Every caller carries a pointer, so the test proves who is TOLD about it, not who has one. The
 -- tenant's own people point at their own tenant; the super_admin gets there through the audited
--- act-as, the only way an operator's pointer is set.
+-- act-as. (Direct writes can also set an operator's pointer until slice A2 closes them, which is
+-- why the column is called active_tenant_id, not an act-as.)
 INSERT INTO public.profiles (user_id, active_tenant_id) VALUES
   ('0a570000-0000-4000-8000-000000000001',NULL),
   ('0a570000-0000-4000-8000-000000000002',NULL),
@@ -64,17 +82,18 @@ SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_caller('0a570000-0000-4000-8000-000000000001');
 SELECT public.operator_enter_tenant('0a570000-0000-4000-8000-00000000a001');
 SELECT is((SELECT tier FROM public.operator_standing()), 'super_admin', 'super_admin reads as super_admin');
-SELECT is((SELECT acting_tenant_id FROM public.operator_standing()),
-  '0a570000-0000-4000-8000-00000000a001'::uuid, 'an operator is told the tenant they are acting as');
+SELECT is((SELECT active_tenant_id FROM public.operator_standing()),
+  '0a570000-0000-4000-8000-00000000a001'::uuid, 'an operator is told the tenant their session is scoped to');
 SELECT is((SELECT count(*)::int FROM public.operator_standing()), 1, 'the answer is always one row');
 SELECT ok(public.operator_may('operator.seat.grant'), 'super_admin may grant an operator seat');
 SELECT ok(public.operator_may('billing.read'), 'super_admin may read billing');
 SELECT ok(public.operator_may('platform.paige.use'), 'an unruled capability is still super_admin''s');
+SELECT ok(NOT public.operator_may(NULL), 'a NULL capability is refused even to super_admin');
 
 -- platform_admin, at rest
 SELECT pg_temp.as_caller('0a570000-0000-4000-8000-000000000002');
 SELECT is((SELECT tier FROM public.operator_standing()), 'platform_admin', 'platform_admin reads as platform_admin');
-SELECT is((SELECT acting_tenant_id FROM public.operator_standing()), NULL::uuid, 'at rest, no tenant');
+SELECT is((SELECT active_tenant_id FROM public.operator_standing()), NULL::uuid, 'at rest, no tenant');
 SELECT ok(public.operator_may('console.enter'), 'platform_admin may enter the console');
 SELECT ok(public.operator_may('fleet.directory.read'), 'platform_admin may read the directory');
 SELECT ok(public.operator_may('tenant.act_as'), 'platform_admin may act as a tenant');
@@ -87,6 +106,9 @@ SELECT ok(NOT public.operator_may('operator.seat.grant'), 'platform_admin may no
 SELECT ok(NOT public.operator_may('operator.seat.revoke'), 'platform_admin may not revoke an operator seat');
 SELECT ok(NOT public.operator_may('platform.paige.use'), 'an unruled capability is refused to platform_admin');
 SELECT ok(NOT public.operator_may('billing.write'), 'a misspelled or unknown capability is refused, not guessed');
+SELECT ok(NOT public.operator_may('Console.Enter'), 'capabilities are matched exactly, case included');
+SELECT ok(NOT public.operator_may('autonomy.posture.raise'), 'platform_admin may not raise posture above the ceiling (§67)');
+SELECT ok(NOT public.operator_may('autonomy.rung.renew'), 'platform_admin may not renew a rung (§68)');
 SELECT ok(NOT public.operator_may(NULL), 'a NULL capability is refused');
 
 -- holds both roles. user_roles allows one super_admin row (the one_super_admin index), so the
@@ -102,7 +124,7 @@ SELECT ok(public.operator_may('operator.seat.grant'), 'and carries super_admin''
 -- a tenant admin is not an operator, and is not told about their pointer through this answer
 SELECT pg_temp.as_caller('0a570000-0000-4000-8000-000000000004');
 SELECT is((SELECT tier FROM public.operator_standing()), NULL::text, 'a tenant admin is not an operator');
-SELECT is((SELECT acting_tenant_id FROM public.operator_standing()), NULL::uuid,
+SELECT is((SELECT active_tenant_id FROM public.operator_standing()), NULL::uuid,
   'a tenant''s own active tenant is not reported as an act-as');
 SELECT ok(NOT public.operator_may('console.enter'), 'a tenant admin may not enter the console');
 SELECT ok(NOT public.operator_may('fleet.directory.read'), 'a tenant admin may not read the directory');
@@ -112,10 +134,10 @@ SELECT pg_temp.as_caller('0a570000-0000-4000-8000-000000000005');
 SELECT is((SELECT tier FROM public.operator_standing()), NULL::text, 'an ordinary user is not an operator');
 SELECT ok(NOT public.operator_may('console.enter'), 'an ordinary user may not enter the console');
 
--- no subject at all (a service call, or a signed-out session reaching the function)
+-- a signed-in role with no subject in its claims (a service call carries none either)
 SELECT set_config('request.jwt.claims', '', true);
 SELECT is((SELECT tier FROM public.operator_standing()), NULL::text, 'no subject, no standing');
-SELECT is((SELECT acting_tenant_id FROM public.operator_standing()), NULL::uuid, 'no subject, no pointer');
+SELECT is((SELECT active_tenant_id FROM public.operator_standing()), NULL::uuid, 'no subject, no pointer');
 SELECT ok(NOT public.operator_may('console.enter'), 'no subject may nothing');
 
 RESET ROLE;

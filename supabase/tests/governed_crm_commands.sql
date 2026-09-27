@@ -1,6 +1,6 @@
 -- Canonical governed CRM command: synthetic tenant fixtures only; always rolled back.
 BEGIN;
-SELECT plan(143);
+SELECT plan(144);
 
 SELECT ok(NOT has_function_privilege('anon','public.execute_crm_command(uuid,uuid,jsonb,text)','EXECUTE'),'anon cannot execute the CRM domain writer');
 SELECT ok(NOT has_function_privilege('authenticated','public.execute_crm_command(uuid,uuid,jsonb,text)','EXECUTE'),'authenticated callers cannot bypass the CRM action door');
@@ -229,13 +229,15 @@ CREATE TEMP TABLE coach_command_input AS SELECT jsonb_build_object(
   'expected_updated_at',(SELECT updated_at FROM public.clients WHERE id='c7100000-0000-4000-8000-00000000c105'),
   'patch',jsonb_build_object('first_name','Coach Owned')
 ) command;
-CREATE TEMP TABLE coach_command_result AS SELECT public.execute_crm_command(
+-- A coach seat grants nothing (20270504000000): it runs no CRM command and reads back no result, even
+-- on the contact assigned to it.
+SELECT throws_ok($$SELECT public.execute_crm_command(
   'c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000002',
   command||jsonb_build_object('approval_channel','operator_card'),'coach-recovery-1'
-) result FROM coach_command_input;
-SELECT is((SELECT public.read_crm_command_result(
+) FROM coach_command_input$$,'42501','CRM_FORBIDDEN','a coach seat runs no CRM command, even on the contact assigned to it');
+SELECT throws_ok($$SELECT public.read_crm_command_result(
   'c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000002',command,'coach-recovery-1'
-)->>'replayed' FROM coach_command_input)::boolean,true,'coach can recover an exact result while current record assignment remains authorized');
+) FROM coach_command_input$$,'42501','CRM_FORBIDDEN','a coach seat reads back no CRM command result');
 SELECT throws_ok($$SELECT public.execute_crm_command(
   'c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000002',
   '{"approval_channel":"operator_card","action":"task.create","patch":{"title":"Foreign deal task","deal_id":"c7100000-0000-4000-8000-00000000d101"}}','coach-foreign-deal-task-1'
@@ -270,6 +272,9 @@ SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);
 SELECT throws_ok(format('SELECT public.execute_crm_command(%L,%L,%L::jsonb,%L)','c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000002',jsonb_build_object('approval_channel','operator_card','action','company.archive','company_id','c7100000-0000-4000-8000-00000000b102','expected_updated_at',(SELECT updated_at FROM public.businesses WHERE id='c7100000-0000-4000-8000-00000000b102'))::text,'coach-company-archive-1'),'42501','CRM_FORBIDDEN','coach cannot archive a tenant-wide company outside assigned scope');
 SELECT is((SELECT count(*)::integer FROM public.clients WHERE primary_business_id='c7100000-0000-4000-8000-00000000b102'),2,'refused coach company archive has no collateral effect');
 RESET ROLE;
+-- From here the same person is an admin of the business: only an owner or admin can be named a
+-- contact's assigned staff member through the CRM commands (20270504000000).
+UPDATE public.tenant_members SET role='admin' WHERE tenant_id='c7100000-0000-4000-8000-000000001111' AND user_id='c7100000-0000-4000-8000-000000000002';
 UPDATE public.businesses SET is_primary=true WHERE id='c7100000-0000-4000-8000-00000000b102';
 SET LOCAL ROLE service_role;
 SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);

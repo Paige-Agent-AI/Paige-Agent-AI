@@ -9,5 +9,7 @@
  * Today this constant governs the TEAM CONTEXT block (_shared/team-context.ts): its JSON key and every
  * sentence that names the word. The Team tool descriptions and approval cards in paige-ai-chat, and the
  * Team screen copy, still spell "job title"; they move onto this constant in their own slice.
+ * A TypeScript property renamed to this word must join TS_WORK_IDENTITY in
+ * scripts/ci/title-authority-guard.mjs in the same PR, or the guard stops seeing the title it carries.
  */
 export const TITLE_WORD = "title";

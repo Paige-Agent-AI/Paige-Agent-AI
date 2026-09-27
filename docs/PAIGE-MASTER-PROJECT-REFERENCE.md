@@ -760,6 +760,38 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-09-26 F1: PAIGE hears platform role and title as two labelled facts, and CI refuses any permission decision that reads a title. Production (Edge on merge), internal-only.** Branch `claude/practical-wright-nskq1n` off `83dcc8470`. The durable squash identity and the CI run are recorded on the PR.
+
+**What shipped.** The TEAM CONTEXT block (`_shared/team-context.ts`) gives every person `platform_role` (owner, admin or member, or an older value exactly as the server enforces it; the only access fact) and `title` (the business's own word; always present, `null` when unset). Invitations carry `proposed_platform_role` and `title`. The old `enforced_permission`, `proposed_permission` and `job_title` keys are gone. The block tells PAIGE to name people by name and title, to describe access only as owner, admin or member in plain words, never to read a key name aloud, and to ask once when an instruction could mean either ("make Sam a manager"). The word "title" comes from `_shared/team-vocabulary.ts`; today that constant governs this block only. The RPC and the `paige-ai-chat` call site are unchanged. Merging redeploys `paige-ai-chat`, which bundles the block.
+
+**The two guarantees the ruling required, in the same PR.** `npm run lint:title-authority` replays the migrations and fails CI on any of these:
+- a policy that reads a title, directly, through dynamic `EXECUTE`, or through a function or view;
+- an authorization helper that reads a title;
+- an unreviewed title reader, or a reviewed one whose definition has changed (the six reviewed readers are pinned by migration and fingerprint);
+- any column added to `tenant_members` or `tenant_invite_tokens` that has not been classified, or a title column renamed or dropped (a title field on any other table is outside the guard);
+- a TypeScript gate that reads a title.
+
+`lint:title-authority:test` proves each rule bites. Both CI steps are appended at the end of `verify`, so no existing step ordinal moves. `scripts/client-memory-authz` section 27 drives the real handler and parses the block PAIGE is sent. The guard states its limits in its header: it proves what the migration text says, not what Postgres holds (#1484), and its TypeScript rule is a heuristic.
+
+**Proof boundary.** Local results, on the rebased tree:
+- guard PASS: 1,093 replayed policies (one from a dynamic template), 15 views, 6 pinned readers, 0 TypeScript decision sites;
+- self-test: 53 mutations caught, 13 controls quiet;
+- `npx vitest run src/solo/paige-team-context.test.ts src/solo/paige-team-capability.test.ts src/solo/untrusted-fence.test.ts src/solo/team-workspace-contract.test.ts` 56/56;
+- the whole suite, `npx vitest run`: 5,811 passed, 0 failed, 2 skipped (both skips are existing render tests that need a build);
+- `test:client-memory-authz` 369 passed / 0 failed, including 27.0 to 27.8;
+- `ci:tsc` 12/12;
+- `ci:regression` exit 0.
+
+**Bite proof.** Section 27 run against the original module failed 27.1 to 27.7 and passed 27.0 and 27.8, as designed. Each guard fix was reverted one code path at a time, and each revert turned the self-test red.
+
+**Reviews.** The first §39 and §5 reviews returned SHIP-WITH-FIXES. Every MAJOR was fixed: dynamic-SQL policies, unpinned readers, CI step placement, and the missing record. A fresh §39 read of the committed diff also returned SHIP-WITH-FIXES, with no MAJOR findings. Its findings were fixed in turn: quoted function names, `guard_`/`enforce_`/`ensure_` helpers, `ALTER ROUTINE` renames, procedures, `BEGIN ATOMIC` bodies, title checks in the `if` heads of access-named TypeScript functions, and a fail-closed column rule. Whole-row reads (`tm::text ILIKE …`) stay a stated limit.
+
+**Effect on other lanes.** The column rule fails CI on any new column added to `tenant_members` or `tenant_invite_tokens` until it is classified. The author adds it to the guard's work-identity set if it describes what a person does or is called, otherwise to the baseline's `non_identity_columns`, in the same PR. That is how the isolation lane's title field will join the guard.
+
+**Truth labels.** The block and the guard are `LIVE` once merged, and the block once `paige-ai-chat` is redeployed and byte-verified. **Whether a live model speaks this way is `UNVERIFIED`**: every test reads the prompt, never a model reply. The drive owed is on the Solo chat: ask "make <teammate> a manager" and confirm exactly one clarifying question, then ask whether their title lets them approve things and confirm a plain no.
+
+**Routed.** [#1484](https://github.com/mrmogulmaker-bot/Paige-Agent-AI/issues/1484) proves the guard against Postgres. [#1485](https://github.com/mrmogulmaker-bot/Paige-Agent-AI/issues/1485) covers the RPC's `owner` rule, which is wider than `is_tenant_owner`. The Team tool descriptions, approval cards and Team screen still spell "job title" and move to the constant in their own slice. **F2** (switching to the isolation lane's title field) waits until that field exists on `main`. **Customer-release eligibility: no.**
+
 **2026-09-26 The role rulings are corrected where Codex found them wrong, and the #1468 closeout is recorded. PR [#1470](https://github.com/mrmogulmaker-bot/Paige-Agent-AI/pull/1470), docs only, internal-only. This row exists because the PR carries policy, so the closeout-only recursion exemption (`AGENTS.md` § *Shipped Delivery Log*) does not apply.** Squash [`61501e8a9e6e2bc7f3464df86e5670e6289b0375`](https://github.com/mrmogulmaker-bot/Paige-Agent-AI/commit/61501e8a9e6e2bc7f3464df86e5670e6289b0375); merged head `014976a8059ccbab581b4dfa0eee31da6aae2b04`, whose review found no issues. That identity is recorded by an identity-only closeout, which the exemption covers.
 
 **What changed in policy.** (1) Taxonomy R4 no longer tells implementers to copy Class-B grants into `tenant_members`. It is narrowed to `admin` only: `admin` is one of the three tenant roles, so its global grants still reconcile into `tenant_members.role`, which keeps R5 safe. Every other Class-B value waits on its own retirement decision. (2) The three-role ruling is scoped to the tenant role axis. The §53 operator tiers, the agency roles and client assignment are named as separate gates that the ruling leaves unchanged. (3) "Activity records keep the title as it was at the time" is labelled a requirement, not current behaviour, because nothing records it yet. These appear in the taxonomy, the roles brain, the decision log and master §3. (4) A fourth occurrence of the merge-gate miss is recorded in lessons-learned, naming a mechanical guard as the durable fix.

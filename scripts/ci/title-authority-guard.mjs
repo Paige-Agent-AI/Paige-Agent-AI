@@ -12,17 +12,20 @@
  *
  * WHAT IT CHECKS.
  *   SQL — replays supabase/migrations/*.sql in filename order, LAST DEFINITION WINS, recursing into
- *   DO blocks: functions are keyed by schema-qualified name + argument types (CREATE OR REPLACE
- *   replaces, DROP removes, ALTER FUNCTION ... RENAME / SET SCHEMA moves); policies are keyed by
- *   table + name (CREATE defines, ALTER POLICY replaces ONLY the USING / WITH CHECK clause it names,
- *   DROP POLICY / DROP TABLE removes, ALTER TABLE ... RENAME moves); views and materialized views
- *   are keyed by schema-qualified name (CREATE [OR REPLACE] defines, DROP removes, ALTER ... RENAME
- *   moves); the columns of tenant_members and tenant_invite_tokens are tracked through CREATE
- *   TABLE and ALTER TABLE ADD / DROP / RENAME COLUMN. The SQL an EXECUTE runs — in a DO block or in
- *   a function body — is read as a template: literals and format() templates are kept, a format()
+ *   DO blocks: functions and procedures are keyed by schema-qualified name + argument types
+ *   (CREATE OR REPLACE replaces, DROP FUNCTION / PROCEDURE / ROUTINE removes, ALTER FUNCTION /
+ *   PROCEDURE / ROUTINE ... RENAME / SET SCHEMA moves; a SQL-standard `BEGIN ATOMIC ... END` body
+ *   is one statement); policies are keyed by table + name (CREATE defines, ALTER POLICY replaces
+ *   ONLY the USING / WITH CHECK clause it names, DROP POLICY / DROP TABLE removes, ALTER TABLE ...
+ *   RENAME moves); views and materialized views are keyed by schema-qualified name (CREATE [OR
+ *   REPLACE] defines, DROP removes, ALTER ... RENAME moves); the columns of tenant_members and
+ *   tenant_invite_tokens are tracked through CREATE TABLE and ALTER TABLE ADD / DROP / RENAME
+ *   COLUMN. The SQL an EXECUTE runs — in a DO block or in a function body, dollar- or
+ *   single-quoted — is read as a template: literals and format() templates are kept, a format()
  *   argument that is itself a literal is substituted, anything computed at run time becomes a hole.
  *   A policy on a table named by a hole is replayed on the placeholder table `<dynamic>`, once per
- *   EXECUTE, and every rule below applies to it. Then, over what is LIVE:
+ *   EXECUTE, and every rule below applies to it. A call or a view is matched by name bare or
+ *   quoted (`get_x(`, `"get_x"(`, `"public"."get_x"(`). Then, over what is LIVE:
  *     R0  a statement the replay cannot read names a work-identity column or reaches a title reader
  *         (calls a function / names a view that reads one): an EXECUTE whose SQL is built at run
  *         time, whose statement kind is a hole, or whose policy clause / body / view query contains
@@ -32,24 +35,31 @@
  *         cannot be replayed cannot be proven clean. No exemption.
  *     R1  a policy expression references a work-identity column, calls a function that reads one,
  *         or names a view that reads one (directly or through further calls). No exemption.
- *     R2  a function or view named like an authorization helper (an is_ / has_ / can_ / may_ /
- *         assert_ segment anywhere in the name, a check_ / current_user_ / authorize* prefix, or
- *         naming authority / permission / permitted / allowed / access) references one, or reaches
- *         one. No exemption, baselined or not.
- *     R3  any other live function or view that references one must be in the baseline with a
- *         purpose of display | write | search | invite-copy, a one-line reason, and a pin:
+ *     R2  a function, procedure or view named like an authorization helper references one, or
+ *         reaches one. Helper-shaped, case-insensitively: an is_ / has_ / can_ / may_ / assert_
+ *         segment anywhere in the name; a guard / enforce / ensure / require / authz segment
+ *         bounded by `_` or the name's ends; a check_ / current_user_ / authorize* prefix; or the
+ *         words authority / permission / permitted / allowed / access. No exemption, baselined or not.
+ *     R3  any other live function, procedure or view that references one must be in the baseline
+ *         with a purpose of display | write | search | invite-copy, a one-line reason, and a pin:
  *         `defined_in` (the migration of its last definition) and `fingerprint` (of its
  *         comment-stripped, whitespace-normalised definition). An unlisted reader fails.
  *     R4  a baseline entry that no longer matches a live reader fails, so the baseline can only
- *         shrink and never rots into a list of names nobody can find; and a baselined reader whose
+ *         shrink and never rots into a list of names nobody can find; a baselined reader whose
  *         last definition moved to another migration or whose fingerprint changed fails until a
- *         reviewer re-reads it and re-pins it — a reviewed name is not a reviewed body.
- *     R6  a live column of tenant_members / tenant_invite_tokens whose name looks like a title
- *         (/title|responsib/i) but is not in the work-identity set. The tenant-isolation lane owns
- *         a pending title field (decision log, 2026-09-26: "F2 waits for that field to exist") and
- *         it has no migration yet; if it lands as, say, `tenant_members.title`, every rule above
- *         would silently stop watching the title. It fails closed until the column joins the SQL
- *         and TS work-identity sets in the same PR.
+ *         reviewer re-reads it and re-pins it — a reviewed name is not a reviewed body; and a
+ *         pinned non-identity column that is no longer live fails.
+ *     R6  fails CLOSED on the two tables that carry a work identity. Every live column of
+ *         tenant_members and tenant_invite_tokens is classified: work identity per table in
+ *         WORK_IDENTITY_BY_TABLE below, everything else pinned in the baseline's
+ *         "non_identity_columns". A column added under ANY name (or renamed to one) fails until it
+ *         is classified in the same PR; a work-identity column dropped or renamed away fails until
+ *         the sets follow it; TS_WORK_IDENTITY must carry every work-identity column's snake_case
+ *         and camelCase spellings. Why: the tenant-isolation lane owns a pending title field
+ *         (decision log, 2026-09-26: "F2 waits for that field to exist") with no migration yet, and
+ *         its name is not decided ("customized role" is the alternative on record) — a name-pattern
+ *         test would miss it, and every rule above would silently stop watching the title. A title
+ *         field on a table OTHER than these two is outside R6.
  *   TS — src/**\/*.{ts,tsx} and supabase/functions/**\/*.ts, excluding tests, generated files and
  *   the generated Supabase types:
  *     R5  a statement that reads job_title / jobTitle / responsibilities fails unless the baseline
@@ -59,8 +69,9 @@
  *         authorization token (role, permission, owner, admin, grant, allowed, authorized, can-,
  *         hasFeature); OR (b) it initialises or assigns an authorization-shaped binding
  *         (`const isAdmin = ...`, `canApprove: (m) => ...`, a JSX prop `canRemove={...}`); OR (c) it
- *         is a `return` whose nearest named enclosing function is authorization-shaped
- *         (`function canApprove(m) { return ... }`).
+ *         is a `return`, an `if` / `else if` head or a `switch` head whose nearest named enclosing
+ *         function is authorization-shaped (`function canApprove(m) { if (m.job_title ===
+ *         "Manager") return true; ... }`, and the same as an arrow bound to `canApprove`).
  *         A TS entry that no longer matches fails under R4.
  *
  * A column is matched with word boundaries, so a writer's `_job_title` PARAMETER is an input and
@@ -69,36 +80,43 @@
  * HEURISTIC LIMITS, stated rather than implied. The SQL half reads migration source, not
  * `pg_proc`, so it proves what the tree says, and its policy count is the policies it REPLAYED,
  * not the database's. It does not model CHECK constraints, triggers, rules or grants: written as
- * a plain statement, one of those is not judged at all (EXECUTEd, it is judged under R0). It
- * tracks columns only on the two watched tables, so a title-like column on any other table is
- * outside R6. It counts a function or view as a reader on any mention outside a comment —
- * including dynamic SQL in a string, which is the fail-closed direction. Calls are matched by
- * name, so an overload is treated as its sibling, and a view by its bare name (fail-closed
- * again). A pin covers the reader's OWN definition: a baselined reader whose behaviour changes
- * only because a function it calls changed keeps its pin; the callee is judged only on its own
- * terms (R2 / R3, when it reads or reaches a title). The template reader follows literals,
- * format() and `||` chains; SQL
- * assembled across several statements in a variable is a hole, judged under R0 on the text of
- * the block that runs it. A dynamic policy on `<dynamic>` is never removed by a later
- * statement — the replay cannot know which tables a loop touched, so a dynamic DROP POLICY
- * removes nothing and a dynamic ALTER POLICY is replayed as one more policy; both are the
- * fail-closed direction. A column name that reaches dynamic SQL only as a run-time value (a
- * parameter, a catalogue row) is invisible unless the enclosing block names it. A function that
- * is neither helper-named nor a direct reader, but calls a reader and then decides, is left to
- * R3's review of the reader it calls. The TS half is text-based, not an AST: a title copied into
- * a local under another name and compared later (`const t = m.job_title; ... if (t === "Lead" &&
- * isOwner)`) passes; so does a decision whose title read and authorization token sit on opposite
- * sides of a `{`, a title-only predicate with no authorization-shaped name (`const isLead =
- * m.job_title === "Lead"`; display predicates like `hasTitle` pass on purpose), and a JSX prop
- * gate whose prop name is not authorization-shaped (`<Row showRemove={m.job_title ===
- * "Manager"} />`): by the time the component reads `showRemove` it is a boolean with no title in
- * sight, so nothing downstream catches it either. Authorization shape is judged on a NAME: a
- * verdict word (`permission`, `access`, `allowed`, a `can` / `may` segment) over a title fails
- * even when it only labels (`permissionLabel = m.job_title`) — rename it or baseline it. English
- * prose in JSX text and string literals ("job title and responsibilities only describe work") is
- * set aside by a neighbouring-word test, so copy that explains the rule is not mistaken for code
- * that breaks it. Argument types are keyed by the shared normaliser in definer-signature-acl.mjs,
- * so `float` and `double precision` name one function, as in pg_proc.
+ * a plain statement, one of those is not judged at all (EXECUTEd, it is judged under R0). A
+ * WHOLE-ROW read is invisible: `tm::text ILIKE '%Manager%'`, `row_to_json(tm)` or `to_jsonb(tm)`
+ * consulted without naming a work-identity column reads the title with no column name in the
+ * text. R6 classifies columns only on the two tables above; a title field on any other table,
+ * and a column change on a table named at run time whose block names neither table and whose
+ * name does not look like a title, is outside it. It counts a function or view as a reader on any
+ * mention outside a comment — including dynamic SQL in a string, which is the fail-closed
+ * direction. Calls are matched by name, so an overload is treated as its sibling, and a view by
+ * its bare name (fail-closed again). A pin covers the reader's OWN definition: a baselined reader
+ * whose behaviour changes only because a function it calls changed keeps its pin; the callee is
+ * judged only on its own terms (R2 / R3, when it reads or reaches a title). The template reader
+ * follows literals, format() and `||` chains; SQL assembled across several statements in a
+ * variable is a hole, judged under R0 on the text of the block that runs it. A dynamic policy on
+ * `<dynamic>` is never removed by a later statement — the replay cannot know which tables a loop
+ * touched, so a dynamic DROP POLICY removes nothing and a dynamic ALTER POLICY is replayed as one
+ * more policy; both are the fail-closed direction. A column name that reaches dynamic SQL only as
+ * a run-time value (a parameter, a catalogue row) is invisible unless the enclosing block names
+ * it. A function that is neither helper-named nor a direct reader, but calls a reader and then
+ * decides, is left to R3's review of the reader it calls. The TS half is text-based, not an AST.
+ * Its spellings are job_title / jobTitle / responsibilities only: the TEAM CONTEXT block's new
+ * JSON key `title` (_shared/team-vocabulary.ts) is NOT watched — no TypeScript reads that key
+ * back today, and `title` is on nearly every page, dialog and card, so watching it would produce
+ * only false positives; a TS property renamed to that word must join TS_WORK_IDENTITY in the
+ * same PR. A title copied into a local under another name and compared later (`const t =
+ * m.job_title; ... if (t === "Lead" && isOwner)`) passes; so does a decision whose title read and
+ * authorization token sit on opposite sides of a `{`, a title-only predicate with no
+ * authorization-shaped name (`const isLead = m.job_title === "Lead"`; display predicates like
+ * `hasTitle` pass on purpose), and a JSX prop gate whose prop name is not authorization-shaped
+ * (`<Row showRemove={m.job_title === "Manager"} />`): by the time the component reads
+ * `showRemove` it is a boolean with no title in sight, so nothing downstream catches it either.
+ * Authorization shape is judged on a NAME: a verdict word (`permission`, `access`, `allowed`, a
+ * `can` / `may` segment) over a title fails even when it only labels (`permissionLabel =
+ * m.job_title`) — rename it or baseline it. English prose in JSX text and string literals ("job
+ * title and responsibilities only describe work") is set aside by a neighbouring-word test, so
+ * copy that explains the rule is not mistaken for code that breaks it. Argument types are keyed
+ * by the shared normaliser in definer-signature-acl.mjs, so `float` and `double precision` name
+ * one function, as in pg_proc.
  *
  * Self-test mode (--self-test) replays the real tree in memory, applies one mutation per rule and
  * fails if any mutation is not caught, if any control is not quiet, if the real tree's dynamic
@@ -117,14 +135,22 @@ const ROOT = (() => {
 })();
 const BASELINE_PATH = join(ROOT, "scripts", "ci", "title-authority-baseline.json");
 
-// The work-identity columns, in one place. A new title column joins BOTH lists in the PR that adds it (R6).
-const SQL_WORK_IDENTITY_COLUMNS = ["job_title", "responsibilities"];
+// The work-identity columns, per table, in one place. Every OTHER live column of these two tables is
+// pinned as not-work-identity in the baseline ("non_identity_columns"), so a column added under any
+// name is unclassified until a reviewer decides which it is (R6). A column that joins a list here
+// joins TS_WORK_IDENTITY (snake_case and camelCase) in the same PR; R6 checks that too.
+const WORK_IDENTITY_BY_TABLE = {
+  "public.tenant_members": ["job_title", "responsibilities"],
+  "public.tenant_invite_tokens": ["job_title", "responsibilities"],
+};
+const SQL_WORK_IDENTITY_COLUMNS = [...new Set(Object.values(WORK_IDENTITY_BY_TABLE).flat())];
 const TS_WORK_IDENTITY = new Set(["job_title", "jobTitle", "responsibilities"]);
 const SQL_WORK_IDENTITY = new RegExp(`\\b(${SQL_WORK_IDENTITY_COLUMNS.join("|")})\\b`, "i");
 const TS_WORK_IDENTITY_ANY = new RegExp(`\\b(${[...TS_WORK_IDENTITY].join("|")})\\b`);
-const WATCHED_TABLES = new Set(["public.tenant_members", "public.tenant_invite_tokens"]);
+const WATCHED_TABLES = new Set(Object.keys(WORK_IDENTITY_BY_TABLE));
+const WATCHED_TABLE_NAMED = new RegExp(`\\b(${[...WATCHED_TABLES].map((t) => t.split(".").pop()).join("|")})\\b`, "i");
 const TITLE_LIKE_COLUMN = /title|responsib/i;
-const HELPER_NAME = /(^|_)(is|has|can|may|assert)_|^(check_|current_user_|authorize)|authority|permission|permitted|allowed|access/;
+const HELPER_NAME = /(^|_)(is|has|can|may|assert)_|(^|_)(guard|enforce|ensure|require|authz)(_|$)|^(check_|current_user_|authorize)|authority|permission|permitted|allowed|access/i;
 const PURPOSES = new Set(["display", "write", "search", "invite-copy"]);
 
 // Holes stand for SQL text computed at run time. Both are valid identifiers, so a hole in a name
@@ -136,14 +162,28 @@ const DYNAMIC_TABLE = "<dynamic>";
 
 // ── SQL lexing ────────────────────────────────────────────────────────────────────────────────
 
-/** Top-level statements, top-level comments dropped; '..', E'..', ".." and $tag$..$tag$ respected. */
+/**
+ * Top-level statements, top-level comments dropped; '..', E'..', ".." and $tag$..$tag$ respected. A
+ * SQL-standard body (`BEGIN ATOMIC ... END`) is one statement: its inner `;` do not split it, and
+ * a CASE ... END inside it is counted so the body's own END is the one that closes it.
+ */
 export function splitSql(sql) {
   const out = [];
   let buf = "";
   let i = 0;
+  let atomic = 0;   // depth of BEGIN ATOMIC / CASE inside a SQL-standard body; 0 = not in one
   const n = sql.length;
   while (i < n) {
     const c = sql[i];
+    if (/[A-Za-z_]/.test(c) && !/[\w$]/.test(sql[i - 1] ?? "")) {
+      let j = i + 1;
+      while (j < n && /[\w$]/.test(sql[j])) j++;
+      const w = sql.slice(i, j).toLowerCase();
+      if (w === "begin" && /^\s+atomic\b/i.test(sql.slice(j, j + 24))) atomic++;
+      else if (atomic && w === "case") atomic++;
+      else if (atomic && w === "end") atomic--;
+      buf += sql.slice(i, j); i = j; continue;
+    }
     if (sql.startsWith("--", i)) { const e = sql.indexOf("\n", i); i = e === -1 ? n : e; continue; }
     if (sql.startsWith("/*", i)) { const e = sql.indexOf("*/", i + 2); i = e === -1 ? n : e + 2; continue; }
     if (c === "'") { const j = endOfString(sql, i); buf += sql.slice(i, j); i = j; continue; }
@@ -152,7 +192,7 @@ export function splitSql(sql) {
       const m = /^\$[A-Za-z_0-9]*\$/.exec(sql.slice(i, i + 64));
       if (m) { const e = sql.indexOf(m[0], i + m[0].length); const j = e === -1 ? n : e + m[0].length; buf += sql.slice(i, j); i = j; continue; }
     }
-    if (c === ";") { if (buf.trim()) out.push(buf.trim()); buf = ""; i++; continue; }
+    if (c === ";" && !atomic) { if (buf.trim()) out.push(buf.trim()); buf = ""; i++; continue; }
     buf += c; i++;
   }
   if (buf.trim()) out.push(buf.trim());
@@ -345,8 +385,8 @@ function executes(body) {
 // Inside a DO body, a DDL statement starts a statement or follows a control keyword
 // (`BEGIN CREATE POLICY`, `THEN DROP POLICY`). Anywhere else it is a clause of something else:
 // `ALTER PUBLICATION supabase_realtime DROP TABLE t` drops no table and removes no policy.
-const DDL_IN_BODY = /(^|\b(?:begin|then|else|loop))\s*\b(create\s+(?:or\s+replace\s+)?function|create\s+policy|alter\s+policy|drop\s+policy|drop\s+function|alter\s+function|drop\s+table|alter\s+table|create\s+(?:(?:global|local)\s+)?(?:(?:temp|temporary|unlogged)\s+)?table|create\s+(?:or\s+replace\s+)?(?:(?:temp|temporary|recursive)\s+)*(?:materialized\s+)?view|drop\s+(?:materialized\s+)?view|alter\s+(?:materialized\s+)?view)\b/i;
-const REPLAYED = /^(?:create\s+(?:or\s+replace\s+)?function|create\s+policy|alter\s+policy|drop\s+policy|drop\s+function|alter\s+function|create\s+(?:or\s+replace\s+)?(?:(?:temp|temporary|recursive)\s+)*(?:materialized\s+)?view|drop\s+(?:materialized\s+)?view)\b/i;
+const DDL_IN_BODY = /(^|\b(?:begin|then|else|loop))\s*\b(create\s+(?:or\s+replace\s+)?(?:function|procedure)|create\s+policy|alter\s+policy|drop\s+policy|drop\s+(?:function|procedure|routine)|alter\s+(?:function|procedure|routine)|drop\s+table|alter\s+table|create\s+(?:(?:global|local)\s+)?(?:(?:temp|temporary|unlogged)\s+)?table|create\s+(?:or\s+replace\s+)?(?:(?:temp|temporary|recursive)\s+)*(?:materialized\s+)?view|drop\s+(?:materialized\s+)?view|alter\s+(?:materialized\s+)?view)\b/i;
+const REPLAYED = /^(?:create\s+(?:or\s+replace\s+)?(?:function|procedure)|create\s+policy|alter\s+policy|drop\s+policy|drop\s+(?:function|procedure|routine)|alter\s+(?:function|procedure|routine)|create\s+(?:or\s+replace\s+)?(?:(?:temp|temporary|recursive)\s+)*(?:materialized\s+)?view|drop\s+(?:materialized\s+)?view)\b/i;
 const NOT_A_COLUMN = /^(constraint|primary|unique|check|foreign|exclude|like)$/i;
 // Statement kinds the replay reads besides REPLAYED: a dynamic one of these is not "unmodelled".
 const MODELLED = /^(?:do\b|drop\s+table|alter\s+table|create\s+(?:(?:global|local)\s+)?(?:(?:temp|temporary|unlogged)\s+)?table|alter\s+(?:materialized\s+)?view)\b/i;
@@ -367,11 +407,22 @@ export function replay(migrations, seed) {
   const policies = new Map(seed?.policies);  // "schema.table :: name" -> { file, table, name, using, check, dynamic }
   const views = new Map(seed?.views);        // "schema.name" -> { file, text }
   const columns = new Map([...(seed?.columns ?? [])].map(([t, c]) => [t, new Map(c)]));  // watched table -> column -> file
+  const gone = new Map([...(seed?.gone ?? [])].map(([t, c]) => [t, new Map(c)]));        // watched table -> column -> how it left
+  const dynColumns = [...(seed?.dynColumns ?? [])];  // column changes on a table named at run time
   const unreplayable = [...(seed?.unreplayable ?? [])];  // statements the replay could not read, judged in analyze()
   let dynSeq = seed?.dynSeq ?? 0;
 
   const colsOf = (table) => columns.get(table) ?? columns.set(table, new Map()).get(table);
+  const goneOf = (table) => gone.get(table) ?? gone.set(table, new Map()).get(table);
   const watched = (table) => WATCHED_TABLES.has(table) || HOLE.test(table);
+  /** A column change on a watched table; on a table named at run time it is kept for R6 to judge. */
+  const column = (file, table, how, col, to, dyn) => {
+    if (HOLE.test(table)) { dynColumns.push({ file, how, col: to ?? col, text: dyn?.origin ?? "" }); return; }
+    if (how === "add") { colsOf(table).set(col, file); goneOf(table).delete(col); return; }
+    colsOf(table).delete(col);
+    goneOf(table).set(col, `${how === "drop" ? "dropped" : `renamed to ${to}`} in ${file}`);
+    if (how === "rename") { colsOf(table).set(to, file); goneOf(table).delete(to); }
+  };
 
   /**
    * Apply one statement to the live state. Returns false when it looked like DDL we replay but did
@@ -397,21 +448,32 @@ export function replay(migrations, seed) {
       return true;
     }
 
-    if ((m = new RegExp(`^create\\s+(?:or\\s+replace\\s+)?function\\s+(${NAME})\\s*\\(`, "i").exec(mk))) {
+    // A procedure shares pg_proc's namespace with functions and is judged exactly like one.
+    if ((m = new RegExp(`^create\\s+(?:or\\s+replace\\s+)?(function|procedure)\\s+(${NAME})\\s*\\(`, "i").exec(mk))) {
       const open = m[0].length - 1;
       const close = closeParen(mk, open);
       if (close === -1) return false;
-      const key = signature(m[1], mk.slice(open + 1, close));
+      const key = signature(m[2], mk.slice(open + 1, close));
       const text = stripSqlComments(s);
-      fns.set(key, { file, text });
+      fns.set(key, { file, text, kind: m[1].toLowerCase() });
       holeIn(s.slice(close + 1), "function body");
-      // A function body can EXECUTE DDL too; its templates are replayed like a DO block's.
-      const b = /(\$[A-Za-z_0-9]*\$)([\s\S]*?)\1/.exec(s.slice(close + 1));
-      if (b) dynamic(file, b[2], text, `function ${key}`);
+      // A body can EXECUTE DDL too; its templates are replayed like a DO block's. The body is the
+      // literal after AS: dollar-quoted, or single-quoted ('' doubled). BEGIN ATOMIC has no EXECUTE.
+      // AS is found in the masked text; the whitespace after it is skipped in the REAL text, because
+      // in the masked text the body itself is blanked to spaces and `\s+` would swallow it.
+      const as = /\bas\b/i.exec(mk.slice(close + 1));
+      if (as) {
+        let at = close + 1 + as.index + as[0].length;
+        while (at < s.length && /\s/.test(s[at])) at++;
+        const dq = /^(\$[A-Za-z_0-9]*\$)([\s\S]*?)\1/.exec(s.slice(at));
+        const q = s[at] === "'" ? at : /[eE]/.test(s[at]) && s[at + 1] === "'" ? at + 1 : -1;
+        const body = dq ? dq[2] : q >= 0 ? literalText(s.slice(at, endOfString(s, q))) : null;
+        if (body) dynamic(file, body, text, `${m[1].toLowerCase()} ${key}`);
+      }
       return true;
     }
 
-    if ((m = /^drop\s+function\s+(?:if\s+exists\s+)?([\s\S]+)$/i.exec(mk))) {
+    if ((m = /^drop\s+(?:function|procedure|routine)\s+(?:if\s+exists\s+)?([\s\S]+)$/i.exec(mk))) {
       const list = m[1].replace(/\b(cascade|restrict)\b\s*$/i, "");
       for (const one of splitParams(list)) {
         const f = new RegExp(`^(${NAME})\\s*(?:\\(([\\s\\S]*)\\))?\\s*$`).exec(one.trim());
@@ -426,7 +488,7 @@ export function replay(migrations, seed) {
       return true;
     }
 
-    if ((m = new RegExp(`^alter\\s+function\\s+(${NAME})\\s*`, "i").exec(mk))) {
+    if ((m = new RegExp(`^alter\\s+(?:function|procedure|routine)\\s+(${NAME})\\s*`, "i").exec(mk))) {
       let key = null;
       let rest = mk.slice(m[0].length);
       if (rest.startsWith("(")) {
@@ -524,7 +586,7 @@ export function replay(migrations, seed) {
       for (const t of m[1].replace(/\b(cascade|restrict)\b\s*$/i, "").split(",")) {
         const table = qualified(t.trim());
         for (const k of [...policies.keys()]) if (k.startsWith(`${table} :: `)) policies.delete(k);
-        columns.delete(table);
+        for (const col of [...(columns.get(table)?.keys() ?? [])]) column(file, table, "drop", col);
       }
       return true;
     }
@@ -537,7 +599,7 @@ export function replay(migrations, seed) {
         const inner = s.slice(open + 1, close === -1 ? s.length : close);
         for (const def of splitTop(inner, maskSql(inner), ",")) {
           const c = new RegExp(`^\\s*(${ONE})`).exec(def);
-          if (c && !NOT_A_COLUMN.test(c[1])) colsOf(table).set(ident(c[1]), file);
+          if (c && !NOT_A_COLUMN.test(c[1])) column(file, table, "add", ident(c[1]), undefined, dyn);
         }
       }
       return true;
@@ -555,6 +617,8 @@ export function replay(migrations, seed) {
           policies.delete(k);
           policies.set(`${to} :: ${v.name}`, { ...v, table: to });
         }
+        // A watched table renamed away takes its columns with it: under its watched name they are gone.
+        for (const col of [...(columns.get(table)?.keys() ?? [])]) column(file, table, "drop", col);
         return true;
       }
       if (watched(table)) {
@@ -562,12 +626,11 @@ export function replay(migrations, seed) {
           const a = action.trim();
           let x;
           if ((x = new RegExp(`^add\\s+(column\\s+)?(?:if\\s+not\\s+exists\\s+)?(${ONE})`, "i").exec(a)) && (x[1] || !NOT_A_COLUMN.test(x[2]))) {
-            colsOf(table).set(ident(x[2]), file);
+            column(file, table, "add", ident(x[2]), undefined, dyn);
           } else if ((x = new RegExp(`^drop\\s+(column\\s+)?(?:if\\s+exists\\s+)?(${ONE})`, "i").exec(a)) && (x[1] || !NOT_A_COLUMN.test(x[2]))) {
-            colsOf(table).delete(ident(x[2]));
+            column(file, table, "drop", ident(x[2]), undefined, dyn);
           } else if ((x = new RegExp(`^rename\\s+(column\\s+)?(${ONE})\\s+to\\s+(${ONE})`, "i").exec(a)) && (x[1] || !NOT_A_COLUMN.test(x[2]))) {
-            colsOf(table).delete(ident(x[2]));
-            colsOf(table).set(ident(x[3]), file);
+            column(file, table, "rename", ident(x[2]), ident(x[3]), dyn);
           }
         }
       }
@@ -604,7 +667,7 @@ export function replay(migrations, seed) {
   };
 
   for (const { file, sql } of migrations) for (const s of splitSql(sql)) handle(file, s);
-  return { fns, policies, views, columns, unreplayable, dynSeq };
+  return { fns, policies, views, columns, gone, dynColumns, unreplayable, dynSeq };
 }
 
 // ── TS lexing ─────────────────────────────────────────────────────────────────────────────────
@@ -888,7 +951,9 @@ export function tsDecisionSites(path, src) {
     const bound = BINDING.exec(stText) ?? PROPERTY.exec(stText);
     const initAt = bound ? st.start + stText.length - bound[2].length : Infinity;
     const authBinding = Boolean(bound) && isAuthName(bound[1]) && initAt < end && readsTitle(code.slice(Math.max(start, initAt), end));
-    const authReturn = /^\s*return\b/.test(head) && isAuthName(enclosingFunctionName(masked, start));
+    // A return, or a branch head (`if (m.job_title === "Manager") return true`), inside a function
+    // whose NAME asks "may they?" is that function's verdict.
+    const authReturn = /^\s*(?:return\b|(?:else\s+)?if\s*\(|switch\s*\()/.test(head) && isAuthName(enclosingFunctionName(masked, start));
     // A JSX prop is a binding too: `<Row canRemove={m.job_title === "Manager"} />`.
     const prop = tsx ? /[\s<]([A-Za-z_$][\w$]*)=\{\s*$/.exec(masked.slice(Math.max(0, start - 80), start)) : null;
     const authProp = Boolean(prop) && isAuthName(prop[1]);
@@ -937,7 +1002,7 @@ const siteCache = new WeakMap();
 export function analyze({ migrations, tsFiles, baseline, seed }) {
   const violations = [];
   const fail = (rule, detail) => violations.push(`${rule}: ${detail}`);
-  const { fns, policies, views, columns, unreplayable } = replay(migrations, seed);
+  const { fns, policies, views, columns, gone, dynColumns, unreplayable } = replay(migrations, seed);
 
   // Every live function or view that reads a title, or reaches one that does. A baselined
   // "display" reader is still a title reader: a policy or a helper that calls it has laundered
@@ -945,9 +1010,12 @@ export function analyze({ migrations, tsFiles, baseline, seed }) {
   const reachFns = new Set([...fns].filter(([, f]) => SQL_WORK_IDENTITY.test(f.text)).map(([k]) => unqualified(k)));
   const reachViews = new Set([...views].filter(([, v]) => SQL_WORK_IDENTITY.test(v.text)).map(([k]) => unqualified(k)));
   const wordRe = new Map();
+  // A name is matched bare or quoted: `get_x(`, `"get_x"(`, `public."get_x"(`, `"public"."get_x" (`.
+  // The closing quote sits between the name and the paren, so `\bname\s*\(` alone misses it.
   const reOf = (n, call) => {
     const k = `${call ? "c" : "w"}:${n}`;
-    return wordRe.get(k) ?? wordRe.set(k, new RegExp(`\\b${n.replace(/[$]/g, "\\$&")}\\b${call ? "\\s*\\(" : ""}`, "i")).get(k);
+    const esc = n.replace(/[.*+?^${}()|[\]\\$]/g, "\\$&");
+    return wordRe.get(k) ?? wordRe.set(k, new RegExp(`(?<![\\w$])${esc}(?![\\w$])${call ? '"?\\s*\\(' : ""}`, "i")).get(k);
   };
   const calls = (text, names) => [...names].find((n) => reOf(n, true).test(text));
   const names = (text, set) => [...set].find((n) => reOf(n, false).test(text));
@@ -1010,7 +1078,7 @@ export function analyze({ migrations, tsFiles, baseline, seed }) {
     if (HELPER_NAME.test(name)) {
       fail("R2", `function ${key} (last defined in ${f.file}) is named like an authorization helper and reads ${m[1]} — a helper that answers "may they?" may never read a title; no exemption exists, baselined or not`);
     } else if (!entries.has(key)) {
-      fail("R3", `function ${key} (last defined in ${f.file}) reads ${m[1]} — unreviewed title reader: a reviewer must confirm it is not a permission decision, then add it to the baseline pinned to "defined_in": "${f.file}", "fingerprint": "${fingerprint(f.text)}"`);
+      fail("R3", `${f.kind ?? "function"} ${key} (last defined in ${f.file}) reads ${m[1]} — unreviewed title reader: a reviewer must confirm it is not a permission decision, then add it to the baseline pinned to "defined_in": "${f.file}", "fingerprint": "${fingerprint(f.text)}"`);
     }
   }
   for (const [vkey, v] of views) {
@@ -1038,12 +1106,38 @@ export function analyze({ migrations, tsFiles, baseline, seed }) {
     }
   }
 
-  for (const [table, cols] of columns) {
-    for (const [col, file] of cols) {
-      if (TITLE_LIKE_COLUMN.test(col) && !SQL_WORK_IDENTITY_COLUMNS.includes(col)) {
-        fail("R6", `column ${table === DYNAMIC_TABLE || HOLE.test(table) ? "on a table named at run time" : table}.${col} (added in ${file}) looks like a work-identity column but the guard does not watch it — add "${col}" to SQL_WORK_IDENTITY_COLUMNS and its TS spellings to TS_WORK_IDENTITY in scripts/ci/title-authority-guard.mjs in the same PR, so every rule reads it`);
-      }
+  // R6 — the two tables that carry a work identity are classified column by column. A column added
+  // under ANY name is unclassified until a reviewer decides, in the same PR, whether it describes
+  // what a person does or is called; a work-identity column that is dropped or renamed away fails
+  // until the sets follow it. A title field on any OTHER table is outside this rule.
+  const pinned = baseline.non_identity_columns ?? {};
+  const classify = `decide in this PR what it is: if it describes what a person does or is called, add it to WORK_IDENTITY_BY_TABLE and its snake_case and camelCase spellings to TS_WORK_IDENTITY in scripts/ci/title-authority-guard.mjs; otherwise add it to "non_identity_columns" in scripts/ci/title-authority-baseline.json`;
+  for (const table of WATCHED_TABLES) {
+    const live = columns.get(table) ?? new Map();
+    const identity = WORK_IDENTITY_BY_TABLE[table];
+    const other = new Set(pinned[table] ?? []);
+    if (!Array.isArray(pinned[table])) fail("R6", `the baseline has no "non_identity_columns" list for ${table} — every live column of it must be classified`);
+    for (const [col, file] of live) {
+      if (identity.includes(col) || other.has(col)) continue;
+      fail("R6", `column ${table}.${col} (added in ${file}) is not classified — ${classify}`);
     }
+    for (const col of identity) {
+      if (live.has(col)) continue;
+      fail("R6", `work-identity column ${table}.${col} is no longer live (${gone.get(table)?.get(col) ?? "never created in the replay"}) — if the title moved, the column it moved to joins WORK_IDENTITY_BY_TABLE and TS_WORK_IDENTITY, and ${col} leaves them, in the same PR; the guard never silently stops watching a title`);
+    }
+    for (const col of other) {
+      if (identity.includes(col)) fail("R6", `${table}.${col} is listed in "non_identity_columns" and is also a work-identity column — it is one or the other`);
+      else if (!live.has(col)) fail("R4", `"non_identity_columns" pins ${table}.${col}, which is no longer live (${gone.get(table)?.get(col) ?? "never created in the replay"}) — remove it (the pinned list matches the live table exactly)`);
+    }
+  }
+  for (const t of Object.keys(pinned)) if (!WATCHED_TABLES.has(t)) fail("R6", `"non_identity_columns" names ${t}, which is not a watched table`);
+  const camel = (c) => c.replace(/_([a-z])/g, (_, x) => x.toUpperCase());
+  for (const col of SQL_WORK_IDENTITY_COLUMNS) {
+    for (const spelling of new Set([col, camel(col)])) if (!TS_WORK_IDENTITY.has(spelling)) fail("R6", `TS_WORK_IDENTITY lacks "${spelling}" for the work-identity column ${col} — the TS rule would not see it`);
+  }
+  for (const d of dynColumns) {
+    const m = WATCHED_TABLE_NAMED.exec(d.text);
+    if (m || TITLE_LIKE_COLUMN.test(d.col)) fail("R6", `a column ${d.how === "add" ? "added" : d.how === "drop" ? "dropped" : "renamed"} (${d.col}) in ${d.file} on a table named at run time${m ? ` by a block that names ${m[1]}` : ""} cannot be checked against the classified columns — write the ALTER TABLE with the table named`);
   }
 
   const tsEntries = new Map();
@@ -1152,6 +1246,51 @@ export function selfTestCases({ base, baseline }) {
       `export const canManage = (m: { job_title?: string }) => m.job_title?.toLowerCase().includes("manager");\n`)],
     ["(e) a return inside function canApprove reading job_title", "R5", addTs("src/selftest/pred-return.ts",
       `export function canApprove(m: { job_title: string }){ return ["Manager","Lead"].includes(m.job_title) }\n`)],
+    // Round two: quoted names, the fail-closed column classification, wider helper names, more SQL forms.
+    ["(a) a policy calling \"public\".\"get_paige_team_context\"() (quoted identifiers)", "R1", (t) => {
+      need(base.fns.has("public.get_paige_team_context()"), "get_paige_team_context() is no longer a live reader");
+      t.migrations.push({ file: MIG, sql: `CREATE POLICY quoted_gate ON public.clients USING ("public"."get_paige_team_context"() IS NOT NULL);` });
+    }],
+    ["(d) an is_* helper calling \"public\".\"get_paige_team_context\"() (quoted identifiers)", "R2", (t) => {
+      need(base.fns.has("public.get_paige_team_context()"), "get_paige_team_context() is no longer a live reader");
+      t.migrations.push({ file: MIG, sql: `CREATE FUNCTION public.is_team_lead() RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT ("public"."get_paige_team_context"() -> 'speaker') IS NOT NULL $$;` });
+    }],
+    ["(a) the reach fixed point through a quoted call: FROM \"get_solo_team_workspace\"(...)", "R1", (t) => {
+      need([...base.fns.keys()].some((k) => k.startsWith("public.get_solo_team_workspace(")), "get_solo_team_workspace is no longer a live reader");
+      t.migrations.push({ file: MIG, sql: `CREATE FUNCTION public.team_snapshot() RETURNS jsonb LANGUAGE sql STABLE AS $$ SELECT w FROM "get_solo_team_workspace"(NULL, 'all', 25, 0) AS w $$;\nCREATE POLICY snapshot_gate ON public.clients USING (public.team_snapshot() IS NOT NULL);` });
+    }],
+    ["(n) ADD COLUMN customized_role (the alternative word on record) + a policy on it", "R6", addSql(
+      `ALTER TABLE public.tenant_members ADD COLUMN customized_role text;\nCREATE POLICY customized_role_gate ON public.clients USING (EXISTS (SELECT 1 FROM public.tenant_members m WHERE m.user_id = auth.uid() AND m.customized_role = 'Manager'));`)],
+    ["(n) RENAME COLUMN job_title TO position + a policy on it", "R6", addSql(
+      `ALTER TABLE public.tenant_members RENAME COLUMN job_title TO position;\nCREATE POLICY position_gate ON public.clients USING (EXISTS (SELECT 1 FROM public.tenant_members m WHERE m.user_id = auth.uid() AND m.position = 'Manager'));`)],
+    ["(n) DROP COLUMN job_title without updating the sets", "R6", addSql(
+      `ALTER TABLE public.tenant_members DROP COLUMN job_title;`)],
+    ["(f) a pinned non-identity column that is no longer live", "R4", addSql(
+      `ALTER TABLE public.tenant_invite_tokens DROP COLUMN archived_at;`)],
+    ["(d) a guard_* trigger function deciding through a baselined reader", "R2", (t) => {
+      need([...base.fns.keys()].some((k) => k.startsWith("public.get_solo_team_workspace(")), "get_solo_team_workspace is no longer a live reader");
+      t.migrations.push({ file: MIG, sql: `CREATE FUNCTION public.guard_team_changes() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF public.get_solo_team_workspace(NULL, 'all', 1, 0) IS NULL THEN RAISE EXCEPTION 'not allowed'; END IF; RETURN NEW; END $$;` });
+    }],
+    ["(d) an enforce_* function reading job_title directly is R2, not R3", "R2", addSql(
+      `CREATE FUNCTION public.enforce_manager_only() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF (SELECT job_title FROM public.tenant_members WHERE user_id = auth.uid() LIMIT 1) IS DISTINCT FROM 'Manager' THEN RAISE EXCEPTION 'managers only'; END IF; RETURN NEW; END $$;`), "R3"],
+    ["(d) ALTER ROUTINE ... RENAME moves a reader under a helper name", "R2", (t) => {
+      need(base.fns.has("public.get_paige_team_context()"), "get_paige_team_context() is no longer a live reader");
+      t.migrations.push({ file: MIG, sql: `ALTER ROUTINE public.get_paige_team_context() RENAME TO is_team_context_reader;` });
+    }],
+    ["(d) a helper-named PROCEDURE reading job_title", "R2", addSql(
+      `CREATE PROCEDURE public.assert_team_manager() LANGUAGE plpgsql AS $$ BEGIN IF NOT EXISTS (SELECT 1 FROM public.tenant_members WHERE user_id = auth.uid() AND job_title = 'Manager') THEN RAISE EXCEPTION 'managers only'; END IF; END $$;`)],
+    ["(c) an unlisted PROCEDURE reading job_title", "R3", addSql(
+      `CREATE OR REPLACE PROCEDURE public.selftest_title_sync(_tenant uuid) LANGUAGE sql AS $$ UPDATE public.tenant_invite_tokens SET job_title = NULL WHERE tenant_id = _tenant $$;`)],
+    ["(d) a BEGIN ATOMIC body whose second statement (after a CASE ... END) reads job_title", "R2", addSql(
+      `CREATE FUNCTION public.can_approve_atomic() RETURNS boolean LANGUAGE sql\nBEGIN ATOMIC\n  SELECT CASE WHEN auth.uid() IS NULL THEN false ELSE true END;\n  SELECT EXISTS (SELECT 1 FROM public.tenant_members WHERE user_id = auth.uid() AND job_title = 'Manager');\nEND;`)],
+    ["(a) EXECUTE inside a single-quoted function body creating a policy that calls a reader", "R1", (t) => {
+      need(base.fns.has("public.get_paige_team_context()"), "get_paige_team_context() is no longer a live reader");
+      t.migrations.push({ file: MIG, sql: `CREATE FUNCTION public.selftest_install_sq(_t text) RETURNS void LANGUAGE plpgsql AS 'BEGIN EXECUTE format(''CREATE POLICY sq_gate ON public.%I USING (public.get_paige_team_context() IS NOT NULL)'', _t); END';` });
+    }],
+    ["(e) an if head reading a title inside function canApprove", "R5", addTs("src/selftest/if-fn.ts",
+      `function canApprove(m){ if (m.job_title==="Manager") return true; return false; }\n`)],
+    ["(e) an if head reading a title inside an untyped arrow canApprove", "R5", addTs("src/selftest/if-arrow.ts",
+      `const canApprove = (m) => { if (m.job_title === "Manager") return true; return false; };\n`)],
     ["(f) a stale SQL baseline entry", "R4", (t) => t.baseline.sql.push({ function: "public.selftest_gone(uuid)", purpose: "display", reason: "self-test", defined_in: MIG, fingerprint: "0000000000000000" })],
     ["(f) a stale TS baseline entry", "R4", (t) => t.baseline.ts.push({ path: "src/selftest/nowhere.ts", fingerprint: "0000000000000000", reason: "self-test" })],
     ["(f) DROP FUNCTION of a baselined reader leaves its entry stale", "R4", (t) => t.migrations.push({ file: MIG, sql:
@@ -1194,6 +1333,12 @@ export function selfTestCases({ base, baseline }) {
       `ALTER TABLE public.tenant_members ADD COLUMN selftest_title text;\nALTER TABLE public.tenant_members DROP COLUMN selftest_title;`)],
     ["a constraint named after job_title is not a column", addSql(
       `ALTER TABLE public.tenant_members ADD CONSTRAINT selftest_job_title_chk CHECK (job_title IS NULL OR char_length(job_title) <= 120) NOT VALID;`)],
+    ["a new column classified as non-identity in the same PR", (t) => {
+      t.migrations.push({ file: MIG, sql: `ALTER TABLE public.tenant_members ADD COLUMN selftest_seat_count integer;` });
+      t.baseline.non_identity_columns["public.tenant_members"].push("selftest_seat_count");
+    }],
+    ["an if head reading a title inside a display function", addTs("src/selftest/if-display.ts",
+      `export function badge(m: { job_title?: string }) { if (m.job_title === "Lead") return "Lead"; return "Member"; }\n`)],
     ["a commented-out title gate in TS", addTs("src/selftest/commented.ts",
       `// if (member.job_title === "Manager" && member.role !== "owner") allow();\nexport const x = 1;\n`)],
     ["prose about titles beside a role check", addTs("src/selftest/prose.tsx",
@@ -1229,12 +1374,14 @@ function selfTest() {
   const loop = [...base.policies.values()].filter((p) => p.dynamic && p.table === DYNAMIC_TABLE && p.name === "tenant_isolation" && p.file.startsWith("20260629180214") && /current_user_tenant_id/.test(p.using) && /current_user_tenant_id/.test(p.check));
   if (!loop.length) { ok = false; console.error("SELF-TEST FAIL: (g) the real tree's dynamic tenant_isolation loop (20260629180214) was not replayed as a <dynamic> policy with USING and WITH CHECK"); }
   else console.log(`self-test: (g) the real tree's dynamic tenant_isolation loop is replayed on ${DYNAMIC_TABLE} with USING and WITH CHECK, reading no title ✓`);
-  for (const [label, rule, mutate] of cases) {
+  for (const [label, rule, mutate, absent] of cases) {
     let out;
     try { out = run(mutate); } catch (e) { ok = false; console.error(`SELF-TEST FAIL: ${label} could not be built (${e.message})`); continue; }
     const fired = out.filter((v) => v.startsWith(`${rule}:`));
+    const wrong = absent ? out.filter((v) => v.startsWith(`${absent}:`)) : [];
     if (!fired.length) { ok = false; console.error(`SELF-TEST FAIL: ${label} did not fire ${rule} (got: ${out.join(" | ").slice(0, 300) || "nothing"})`); }
-    else console.log(`self-test: ${label} → ${rule} fired ✓`);
+    else if (wrong.length) { ok = false; console.error(`SELF-TEST FAIL: ${label} fired ${rule} but also ${absent}, which it must not (${wrong.join(" | ").slice(0, 300)})`); }
+    else console.log(`self-test: ${label} → ${rule} fired${absent ? `, ${absent} did not` : ""} ✓`);
   }
   for (const [label, mutate] of quiet) {
     const out = run(mutate);

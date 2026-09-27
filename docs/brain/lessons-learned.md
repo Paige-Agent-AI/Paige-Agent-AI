@@ -3249,3 +3249,15 @@ be run", and it was exactly the thing that needed running.
 - **A probe version computed with date arithmetic is not always older.** Migration versions here are
   not always real dates (hour 35, day 48); the "out-of-order" probe rolled forward and tested
   nothing. Integer arithmetic plus an assertion that the probe actually took the path.
+
+## Merge only after the repository's own review finishes (2026-09-27)
+
+- **AGENTS.md's merge gate is real and I missed it.** It requires the auto-triggered Codex review on
+  the exact head AND one requested review to COMPLETE before merge. #1487 was merged two seconds after
+  it went ready; Codex posted three findings two minutes later (two real, fixed in #1500). Read the
+  repository's AGENTS.md merge gate before the first merge of a lane, not after.
+- **A guard that parses YAML line by line will lose to the next spelling.** When the property you want
+  is "there is no filter", assert the key is absent; don't try to evaluate the filter.
+- **A path-filtered workflow cannot be a required check.** GitHub treats a check that never started as
+  pending forever. Either run it on every PR, or make skips explicit job results — and a repository
+  guard may forbid the second.

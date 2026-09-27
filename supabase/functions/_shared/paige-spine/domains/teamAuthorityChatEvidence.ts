@@ -60,8 +60,6 @@ function permissionSentence(value: string | null): string {
       return "their seat role is Owner.";
     case "admin":
       return "their seat role is Admin.";
-    case "coach":
-      return "their seat role is Coach.";
     case "member":
       return "their seat role is Member.";
     default:

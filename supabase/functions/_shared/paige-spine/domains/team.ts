@@ -39,10 +39,9 @@ export const TEAM_AUTHORITY = {
     safeSummary: "The caller's own role and ownership in this workspace.",
     referencePrefix: "team_authority:",
     factValues: {
-      // The full tenant_role enum, verified against pg_enum on production 2026-09-03 — `coach` is
-      // a real seat role and omitting it would make a legitimate value look unregistered.
+      // Every seat a row may hold. The retired title seat is not one (20270508000000 refuses it).
       fact_key: ["viewer_permission", "viewer_is_legal_owner"],
-      value: ["owner", "admin", "coach", "member", "true", "false"],
+      value: ["owner", "admin", "member", "true", "false"],
       status: ["available", "unavailable"],
       source: ["team"],
     },

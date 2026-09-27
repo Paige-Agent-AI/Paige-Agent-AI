@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { useTenantContext } from "@/hooks/useTenantContext";
-import { isInternal, useFleet, type FleetTenant } from "@/operator/data/useFleet";
+import { fleetDetailVisible, isInternal, useFleet, type FleetTenant } from "@/operator/data/useFleet";
 
 /**
  * Fleet · Directory — authoritative v3 source:
@@ -15,7 +15,7 @@ import { isInternal, useFleet, type FleetTenant } from "@/operator/data/useFleet
  */
 
 type FleetKind = "Agency" | "Sub-account" | "Standalone" | "Internal" | "Enterprise";
-type Grade = "Nominal" | "At risk" | "Internal";
+type Grade = "Nominal" | "At risk" | "Internal" | "Not graded";
 
 type DirectoryRow = {
   tenant: FleetTenant;
@@ -41,19 +41,27 @@ function kindOf(tenant: FleetTenant, nested: boolean): FleetKind {
   return "Standalone";
 }
 
-function gradeOf(tenant: FleetTenant): Grade {
+/**
+ * `seatsRead` is whether this session could read seat counts at all. A tenant's status is always
+ * readable here, so a non-active status grades At risk at every tier; a seat count this session
+ * never read is not a zero and grades nothing (§13) — the row says Not graded instead.
+ */
+function gradeOf(tenant: FleetTenant, seatsRead: boolean): Grade {
   if (isInternal(tenant)) return "Internal";
-  if ((tenant.status && tenant.status !== "active") || tenant.seats === 0) return "At risk";
+  if (tenant.status && tenant.status !== "active") return "At risk";
+  if (!seatsRead) return "Not graded";
+  if (tenant.seats === 0) return "At risk";
   return "Nominal";
 }
 
 function gradeTone(grade: Grade): string {
   if (grade === "At risk") return "var(--pg-warning)";
   if (grade === "Internal") return "var(--pg-violet)";
+  if (grade === "Not graded") return "var(--pg-faint)";
   return "var(--pg-positive)";
 }
 
-function directoryRows(tenants: FleetTenant[]): DirectoryRow[] {
+function directoryRows(tenants: FleetTenant[], seatsRead: boolean): DirectoryRow[] {
   const children = new Map<string, FleetTenant[]>();
   const present = new Set(tenants.map((tenant) => tenant.id));
   for (const tenant of tenants) {
@@ -70,7 +78,7 @@ function directoryRows(tenants: FleetTenant[]): DirectoryRow[] {
     rows.push({
       tenant,
       kind: kindOf(tenant, false),
-      grade: gradeOf(tenant),
+      grade: gradeOf(tenant, seatsRead),
       depth: 0,
       last: false,
       note: nested.length ? `Parent of ${nested.length}` : "",
@@ -79,7 +87,7 @@ function directoryRows(tenants: FleetTenant[]): DirectoryRow[] {
       rows.push({
         tenant: child,
         kind: kindOf(child, true),
-        grade: gradeOf(child),
+        grade: gradeOf(child, seatsRead),
         depth: 1,
         last: index === nested.length - 1,
         note: "Under the agency",
@@ -92,12 +100,15 @@ function directoryRows(tenants: FleetTenant[]): DirectoryRow[] {
 export function FleetDirectoryView({
   tenants,
   classificationVisible,
+  detailVisible,
   loading = false,
   error = null,
   onEnter,
 }: {
   tenants: FleetTenant[];
   classificationVisible: boolean;
+  /** Seat/client counts readable by this session; null when the check did not answer. */
+  detailVisible: boolean | null;
   loading?: boolean;
   error?: string | null;
   onEnter: (tenant: FleetTenant) => void;
@@ -115,9 +126,12 @@ export function FleetDirectoryView({
     () => (showInternal || !classificationVisible ? tenants : live),
     [classificationVisible, live, showInternal, tenants],
   );
-  const rows = useMemo(() => directoryRows(shown), [shown]);
+  const seatsRead = detailVisible === true;
+  const rows = useMemo(() => directoryRows(shown, seatsRead), [shown, seatsRead]);
   const maxSeats = Math.max(...shown.map((tenant) => tenant.seats), 1);
-  const risk = classificationVisible ? live.filter((tenant) => gradeOf(tenant) === "At risk").length : null;
+  const risk = classificationVisible
+    ? live.filter((tenant) => gradeOf(tenant, seatsRead) === "At risk").length
+    : null;
 
   const composition = useMemo(() => {
     const values = (["Agency", "Sub-account", "Standalone", "Internal"] as const).map((kind) => {
@@ -188,6 +202,14 @@ export function FleetDirectoryView({
             {risk ?? "—"} at risk
           </small>
         </div>
+
+        {!loading && !error && !seatsRead && (
+          <p className="mt-2.5 text-[10.5px] leading-[1.5] text-[var(--pg-muted)]">
+            {detailVisible === false
+              ? "Seat counts are not visible to your role; only tenants whose status is not active are marked at risk."
+              : "Seat counts could not be confirmed; only tenants whose status is not active are marked at risk."}
+          </p>
+        )}
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto pt-0.5 [scrollbar-gutter:stable]">
@@ -239,17 +261,24 @@ export function FleetDirectoryView({
                   </small>
                 </span>
                 <span className="mt-[5px] flex min-w-0 flex-wrap items-center gap-x-3.5 gap-y-1">
-                  <span className="flex items-center gap-[7px]">
-                    <span className="h-[3px] w-[52px] flex-none overflow-hidden rounded-full bg-[var(--pg-line)]">
-                      <i
-                        className="block h-full bg-[var(--pg-gold-deep)]"
-                        style={{ width: row.tenant.seats ? `${Math.max(6, (row.tenant.seats / maxSeats) * 100)}%` : 0 }}
-                      />
+                  {seatsRead ? (
+                    <span className="flex items-center gap-[7px]">
+                      <span className="h-[3px] w-[52px] flex-none overflow-hidden rounded-full bg-[var(--pg-line)]">
+                        <i
+                          className="block h-full bg-[var(--pg-gold-deep)]"
+                          style={{ width: row.tenant.seats ? `${Math.max(6, (row.tenant.seats / maxSeats) * 100)}%` : 0 }}
+                        />
+                      </span>
+                      <small className="whitespace-nowrap font-mono text-[10.5px] text-[var(--pg-muted)]">
+                        {row.tenant.seats ? `${row.tenant.seats} ${row.tenant.seats === 1 ? "seat" : "seats"}` : "no seats"}
+                      </small>
                     </span>
-                    <small className="whitespace-nowrap font-mono text-[10.5px] text-[var(--pg-muted)]">
-                      {row.tenant.seats ? `${row.tenant.seats} ${row.tenant.seats === 1 ? "seat" : "seats"}` : "no seats"}
+                  ) : (
+                    // Stated once in the header; the row carries only the absence, never a zero.
+                    <small className="whitespace-nowrap font-mono text-[10.5px] text-[var(--pg-faint)]">
+                      seats —
                     </small>
-                  </span>
+                  )}
                   <small className="min-w-0 truncate text-[10.5px] text-[var(--pg-faint)]">{row.note}</small>
                   <small className="whitespace-nowrap text-[10px] font-medium" style={{ color: gradeTone(row.grade) }}>{row.grade}</small>
                   <small className="ml-auto whitespace-nowrap text-[10.5px] text-[var(--pg-faint)]">Enter →</small>
@@ -260,7 +289,7 @@ export function FleetDirectoryView({
 
         {!loading && !error && (
           <p className="mt-[15px] max-w-[66ch] text-[10.5px] leading-[1.55] text-[var(--pg-faint)]">
-            Act-as grants no tenant_members row, and exit returns active_tenant_id to NULL. Seats read from the tenant record; grade counts zero active seats. Platform fixtures are hidden by default and revealed by the chip.
+            Entering a tenant is an audited act-as: it adds no membership, and leaving returns you to platform scope. A tenant is at risk when its status is not active{seatsRead ? " or it has no active seats" : ""}. Internal accounts are hidden by default; the chip reveals them.
           </p>
         )}
       </div>
@@ -268,8 +297,13 @@ export function FleetDirectoryView({
   );
 }
 
-export default function FleetConsole({ canSeeRevenue: _canSeeRevenue }: { canSeeRevenue: boolean }) {
-  const { tenants, classificationVisible, loading, error } = useFleet(true);
+/**
+ * `isPlatformOwner` is the shell's one server answer (`useIsPlatformOwner`, re-asked on sign-in
+ * changes) — passed through rather than asked a second time here (§18).
+ */
+export default function FleetConsole({ isPlatformOwner }: { isPlatformOwner: boolean | null }) {
+  const { tenants, classificationVisible, detailReadFailed, loading, error } = useFleet(true);
+  const detailVisible = fleetDetailVisible(isPlatformOwner, detailReadFailed);
   const { switchTenant } = useTenantContext();
 
   const enterTenant = useCallback(
@@ -288,6 +322,7 @@ export default function FleetConsole({ canSeeRevenue: _canSeeRevenue }: { canSee
     <FleetDirectoryView
       tenants={tenants}
       classificationVisible={classificationVisible}
+      detailVisible={detailVisible}
       loading={loading}
       error={error}
       onEnter={(tenant) => void enterTenant(tenant)}

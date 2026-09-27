@@ -2,13 +2,18 @@
  * team-vocabulary — the one home (§18) for the word PAIGE uses for what a business calls its people.
  *
  * Owner ruling, 2026-09-26: roles authorize, titles describe. The platform role answers "can they?";
- * the title answers "who are they and what do they do?". The display word "title" is a coordinator
- * ruling pending the owner's final word (decision log, 2026-09-26); the alternative on record is
- * "customized role".
+ * the title answers "who are they and what do they do?". The display word "title" is final (owner
+ * ruling, 2026-09-27, decision log). "Customized role" was rejected: anyone reading "role" assumes it
+ * grants something, which is the exact ambiguity a title must never carry.
  *
- * Today this constant governs the TEAM CONTEXT block (_shared/team-context.ts): its JSON key and every
- * sentence that names the word. The Team tool descriptions and approval cards in paige-ai-chat, and the
- * Team screen copy, still spell "job title"; they move onto this constant in their own slice.
+ * This constant governs every place PAIGE reads or offers the word: the TEAM CONTEXT block
+ * (_shared/team-context.ts, its JSON key and its guidance), and in paige-ai-chat the work-details and
+ * invitation tools' descriptions, the permission tool's pointer to the work-details tool, the approval
+ * card for a work-details change, the key the saved work details come back under, and the note after an
+ * access change. The Team screen (src/solo/team-workspace.tsx) writes the same word in its own
+ * sentences; src/solo/team-title-copy.test.tsx builds its assertions from this constant, so changing it
+ * turns that test red until the screen follows. The tool argument key `job_title` stays: it is
+ * internal, and approvals already queued carry it.
  * A TypeScript property renamed to this word must join TS_WORK_IDENTITY in
  * scripts/ci/title-authority-guard.mjs in the same PR, or the guard stops seeing the title it carries.
  */

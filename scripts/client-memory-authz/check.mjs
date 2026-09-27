@@ -3379,5 +3379,124 @@ console.log("\nteam context — platform role and title reach her as two labelle
     JSON.stringify({ read: teamRead(foreign), egress: foreign.modelEgress.length, leaked }));
 }
 
+// ── 28. THE TEAM TOOLS AND THE CARD A PERSON APPROVES SAY "TITLE" ─────────────────────────────
+//
+// Owner ruling: owner, admin and member are the only roles; everything else people call each other
+// is a title, and the word is "title", not "job title" or "customized role". Section 27 proves the
+// block PAIGE reads. This proves the rest of what reaches a person or steers her: the card the owner
+// approves before a title is saved, the team tools' descriptions, and what the executed tools hand
+// back to her. The word is read from its one home, so these move with it.
+console.log("\nteam tools — the approval card, the tool descriptions and the results say title");
+{
+  const { TITLE_WORD: TITLE } = await import("../../supabase/functions/_shared/team-vocabulary.ts");
+  const THREAD = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+  const MEMBER = "e6e6e6e6-e6e6-4e6e-8e6e-e6e6e6e6e6e6";
+  const ROSTER = {
+    tenant_id: CALLER_TENANT, tenant_name: "T", viewer_permission: "owner",
+    members: [{ user_id: MEMBER, full_name: "Rowan Park", email: "rowan@example.test", permission: "member",
+      is_owner: false, job_title: "Trainer", responsibilities: "Mornings" }],
+    invitations: [],
+  };
+  const frames = (r) => r.bodyText.split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
+    .map((l) => { try { return JSON.parse(l.slice(6)); } catch { return null; } }).filter(Boolean);
+  const cardOf = (r) => frames(r).find((f) => f.paige_confirm)?.paige_confirm;
+  // What an executed tool handed back to her: the tool-result strings in the follow-up request,
+  // found by parsing, never by matching the whole request (which also carries the call's own
+  // arguments, whose key is job_title on purpose, and other tools' descriptions).
+  const strings = (v) => (typeof v === "string" ? [v] : v && typeof v === "object" ? Object.values(v).flatMap(strings) : []);
+  const toolResults = (r) => r.modelEgress
+    .flatMap((b) => { try { return strings(JSON.parse(b)); } catch { return []; } })
+    .flatMap((str) => { try { const v = JSON.parse(str); return v && typeof v === "object" && v.success === true ? [v] : []; } catch { return []; } });
+  // The persona resolves this workspace, so the card names the person (the card an owner normally
+  // sees) and the team seam's workspace check passes. Without it every card reads "that teammate".
+  const TEAM_RPC = {
+    resolve_tool_autonomy: { data: "confirm", error: null },
+    get_actor_access: { data: { tier: "tenant" }, error: null },
+    get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: "T", playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null },
+    get_solo_team_workspace: { data: ROSTER, error: null },
+    set_solo_team_member_work_profile: { data: { job_title: "Head Trainer", responsibilities: "Runs the morning classes" }, error: null },
+    set_solo_team_member_permission: { data: null, error: null },
+  };
+  const teamDrive = (store, name, args, body = {}) => drive({
+    stream: true, extraBody: { threadId: THREAD, ...body },
+    toolCall: { name, args: { member_user_id: MEMBER, ...args } },
+    rpcOverrides: TEAM_RPC,
+    tablesExtra: { paige_pending_confirmations: store.table, user_roles: [{ role: "admin" }] },
+    onInsert: mirrorConfirms(store),
+  });
+
+  const titledStore = makeConfirmStore();
+  const titled = await teamDrive(titledStore, "team_set_work_profile", { job_title: "Head Trainer", responsibilities: "Runs the morning classes" });
+  const titledCard = cardOf(titled);
+  assert(`28.1 the approval card names the person and their new ${TITLE} with the shared word, never "job title"`,
+    titledCard?.tool === "team_set_work_profile"
+      && titledCard.summary.startsWith(`Save work details for Rowan Park (rowan@example.test): ${TITLE} "Head Trainer",`)
+      && !/job title/i.test(titledCard.summary),
+    JSON.stringify(titledCard));
+
+  const cleared = await teamDrive(makeConfirmStore(), "team_set_work_profile", { job_title: "", responsibilities: "Mornings" });
+  const clearedCard = cardOf(cleared);
+  assert(`28.2 clearing it reads "no ${TITLE}" on the named card`,
+    !!clearedCard && clearedCard.summary.startsWith(`Save work details for Rowan Park (rowan@example.test): no ${TITLE},`)
+      && !/job title/i.test(clearedCard.summary),
+    JSON.stringify(clearedCard));
+
+  const longTitle = "A".repeat(130);
+  const longCard = cardOf(await teamDrive(makeConfirmStore(), "team_set_work_profile", { job_title: longTitle, responsibilities: "Mornings" }));
+  assert(`28.3 a ${TITLE} too long to show is marked as cut, never silently shortened`,
+    !!longCard && longCard.summary.includes(`${TITLE} "${"A".repeat(120)}…" (showing the first 120 of 130 characters)`),
+    JSON.stringify(longCard?.summary?.slice(0, 80)));
+
+  // The tool list PAIGE is handed, parsed out of the request body rather than matched loosely.
+  const toolsSent = titled.modelEgress.flatMap((body) => {
+    try { const parsed = JSON.parse(body); return Array.isArray(parsed.tools) ? parsed.tools : []; } catch { return []; }
+  });
+  const tool = (name) => toolsSent.find((t) => (t.name ?? t.function?.name) === name);
+  const descriptionOf = (t) => t?.description ?? t?.function?.description ?? "";
+  const argOf = (t, key) => (t?.input_schema ?? t?.parameters ?? t?.function?.parameters)?.properties?.[key]?.description ?? "";
+  const profileTool = tool("team_set_work_profile");
+  assert(`28.4 the work-details tool she is handed says "${TITLE}" in its description and its argument`,
+    descriptionOf(profileTool).includes(`a teammate's ${TITLE} and/or responsibilities`)
+      && argOf(profileTool, "job_title").startsWith(`Their ${TITLE}, 120 characters`)
+      && !/job title/i.test(descriptionOf(profileTool) + argOf(profileTool, "job_title")),
+    JSON.stringify({ found: !!profileTool, arg: argOf(profileTool, "job_title") }));
+
+  const inviteTool = tool("team_invite_member");
+  assert(`28.5 the invitation tool's argument says "${TITLE}", so she does not echo its key back`,
+    argOf(inviteTool, "job_title").startsWith(`Optional. Their ${TITLE}: what they will be called.`),
+    JSON.stringify({ found: !!inviteTool, arg: argOf(inviteTool, "job_title") }));
+
+  const permissionTool = tool("team_set_permission");
+  assert(`28.6 the permission tool sends a ${TITLE} change to the work-details tool in the product's word`,
+    descriptionOf(permissionTool).includes(`change someone's ${TITLE}, that is team_set_work_profile`)
+      && !/job title|describe someone's job/i.test(descriptionOf(permissionTool)),
+    JSON.stringify({ found: !!permissionTool }));
+
+  // The argument KEY stays job_title on purpose: approvals already queued carry it, and renaming it
+  // would break them for nothing a person sees. The word is the product's; the key is internal.
+  assert("28.7 the argument key stays job_title, so approvals already queued still match",
+    !!(profileTool?.input_schema ?? profileTool?.parameters ?? profileTool?.function?.parameters)?.properties?.job_title,
+    JSON.stringify(Object.keys((profileTool?.input_schema ?? profileTool?.parameters ?? {}).properties ?? {})));
+
+  // Executed, not proposed: approve the card and read what the tool hands back to her.
+  const profileArgs = { job_title: "Head Trainer", responsibilities: "Runs the morning classes" };
+  const saved = await teamDrive(titledStore, "team_set_work_profile", { ...profileArgs, confirm: true },
+    { approvedConfirmations: [titledCard?.fingerprint] });
+  const savedResult = toolResults(saved).find((v) => v.member_user_id === MEMBER && "responsibilities" in v);
+  assert(`28.8 the saved work details come back to her under "${TITLE}", the key the team block uses`,
+    savedResult?.[TITLE] === "Head Trainer" && !("job_title" in savedResult),
+    JSON.stringify(savedResult ?? null));
+
+  const permissionStore = makeConfirmStore();
+  const permissionArgs = { permission: "admin" };
+  const proposedAccess = cardOf(await teamDrive(permissionStore, "team_set_permission", permissionArgs));
+  const changedAccess = await teamDrive(permissionStore, "team_set_permission", { ...permissionArgs, confirm: true },
+    { approvedConfirmations: [proposedAccess?.fingerprint] });
+  const accessResult = toolResults(changedAccess).find((v) => v.member_user_id === MEMBER && v.permission === "admin");
+  assert(`28.9 after an access change she is told their ${TITLE} is untouched, in the shared word`,
+    accessResult?.note === `Access changed. Their ${TITLE} and responsibilities are untouched.`,
+    JSON.stringify({ card: !!proposedAccess, result: accessResult ?? null }));
+}
+
 console.log(`\n${checks - failures} passed, ${failures} failed`);
 process.exit(failures === 0 ? 0 : 1);

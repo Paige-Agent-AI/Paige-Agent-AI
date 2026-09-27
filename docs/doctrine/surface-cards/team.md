@@ -57,7 +57,7 @@ approval strength.** Applying it here would not have hardened the Team tools, it
 withdrawn PAIGE's ability to help an owner run their team, which is the opposite of the intent.
 `high` is the setting that means *she can do it, and only after you approve this exact call*.
 
-**`team_set_work_profile` stays `ordinary`**, because it changes only job title and
+**`team_set_work_profile` stays `ordinary`**, because it changes only title and
 responsibilities and cannot alter access. It still requires the normal compact confirmation and
 ordinary domain authorization. **It must never be represented as a permission change** — the RPC
 writes two text columns and cannot reach `permission`, and any copy suggesting otherwise is false.
@@ -78,7 +78,7 @@ acts, **and** the live authenticated flow is proven. Writing a card does not mov
 
 Tenant permissions are exactly **owner · admin · member**. **Coach is removed as a permission** and survives only as a title. The Team screen's permission options and the `member_grant_role` / `member_revoke_role` tools will stop offering it in their own slices. **Nothing is removed by writing this down.**
 
-The *Job title* field this card describes is exactly the ruled **title**: descriptive only, never read by a permission decision. That matches the live code, which already writes it through a function that cannot reach `permission`. Authoritative: `docs/doctrine/role-taxonomy-and-matrix.md` §0.
+The *Title* field this card describes (labelled *Job title* until 2026-09-27; the owner made "title" the final word) is exactly the ruled **title**: descriptive only, never read by a permission decision. That matches the live code, which already writes it through a function that cannot reach `permission`. Authoritative: `docs/doctrine/role-taxonomy-and-matrix.md` §0.
 
 ### Related, and separately active: PR #728's post-merge follow-up
 

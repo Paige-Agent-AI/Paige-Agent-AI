@@ -1,32 +1,54 @@
+import { activeWorkspace, WORKSPACES } from "./tenant-context-stub";
 type Member = { membership_id: string; user_id: string; full_name: string; email: string; avatar_url: null; status: string; permission: string; is_owner: boolean; job_title: string | null; responsibilities: string | null; last_sign_in_at: string | null };
 type Invite = { id: string; email: string; permission: string; created_at: string; expires_at: string; revoked_at: string | null; uses: number; job_title?: string; responsibilities?: string };
 
 const names = ["Antonio Martinez", "Maya Chen", "Jordan Ellis", "Priya Shah", "Theo Brooks", "Amina Lewis", "Noah Williams", "Sofia Ramirez"];
 const members: Member[] = Array.from({ length: 34 }, (_, i) => ({
-  membership_id: `membership-${i}`, user_id: `user-${i}`, full_name: i ? `${names[i % names.length]} ${i}` : "Antonio Martinez", email: i ? `person${i}@northstar.example` : "owner@northstar.example", avatar_url: null, status: "active", permission: i === 0 ? "owner" : i % 7 === 0 ? "admin" : "member", is_owner: i === 0, job_title: i === 0 ? "Founder" : i % 7 === 0 ? "Operations Lead" : "Client Success Manager", responsibilities: i === 0 ? "Sets company direction and confirms governed actions." : "Owns client delivery, communicates handoffs, and keeps account work moving.", last_sign_in_at: i % 5 === 0 ? null : "2026-08-30T16:00:00Z",
+  membership_id: `membership-${i}`, user_id: `user-${i}`, full_name: i ? `${names[i % names.length]} ${i}` : "Antonio Martinez", email: i ? `person${i}@northstar.example` : "owner@northstar.example", avatar_url: null, status: "active", permission: i === 0 ? "owner" : i % 7 === 0 ? "admin" : "member", is_owner: i === 0, // One person has no title, so the roster's "not set" state renders (team-title-render.mjs).
+  job_title: i === 0 ? "Founder" : i === 3 ? null : i % 7 === 0 ? "Operations Lead" : "Client Success Manager", responsibilities: i === 0 ? "Sets company direction and confirms governed actions." : "Owns client delivery, communicates handoffs, and keeps account work moving.", last_sign_in_at: i % 5 === 0 ? null : "2026-08-30T16:00:00Z",
 }));
+// The second workspace: fewer people, a title long enough to wrap, one untitled, one admin.
+const harbor: Member[] = [
+  ["Dana Reyes", "owner", "Founder and Lead Coach"],
+  ["Luis Ortega", "admin", "Operations Lead"],
+  ["Mei Tanaka", "member", "Senior Client Experience and Onboarding Coordinator for Corporate Wellness Programs and Partnerships"],
+  ["Ari Cohen", "member", null],
+  ["Grace Okafor", "member", "Front Desk"],
+].map(([full_name, permission, job_title], i) => ({
+  membership_id: `harbor-membership-${i}`, user_id: `harbor-user-${i}`, full_name: String(full_name), email: `${String(full_name).split(" ")[0].toLowerCase()}@harbor.example`, avatar_url: null, status: "active",
+  permission: String(permission), is_owner: permission === "owner", job_title: (job_title as string | null), responsibilities: i === 0 ? "Leads the coaching programme." : null, last_sign_in_at: "2026-09-20T16:00:00Z",
+}));
+const rosterOf = () => (activeWorkspace() === "team-harness-tenant-2" ? harbor : members);
+// Invitation dates are RELATIVE to now. They were fixed calendar dates, so the "pending" invitation
+// and every invitation sent through this harness expired on 2026-09-07 and dropped into the closed
+// "past invitations" list — which is why the drive's lifecycle check failed from that day on.
+const DAY = 86_400_000;
+const at = (days: number) => new Date(Date.now() + days * DAY).toISOString();
 const invites: Invite[] = [
-  { id: "invite-pending", email: "alex@northstar.example", permission: "member", created_at: "2026-08-30T00:00:00Z", expires_at: "2026-09-07T00:00:00Z", revoked_at: null, uses: 0 },
-  { id: "invite-expired", email: "sam@northstar.example", permission: "admin", created_at: "2026-08-01T00:00:00Z", expires_at: "2026-08-08T00:00:00Z", revoked_at: null, uses: 0 },
+  { id: "invite-pending", email: "alex@northstar.example", permission: "member", created_at: at(-1), expires_at: at(7), revoked_at: null, uses: 0 },
+  { id: "invite-expired", email: "sam@northstar.example", permission: "admin", created_at: at(-30), expires_at: at(-23), revoked_at: null, uses: 0 },
 ];
+// Invitations belong to a workspace, as the real read scopes them; the second one starts with none.
+const harborInvites: Invite[] = [];
+const invitesOf = () => (activeWorkspace() === "team-harness-tenant-2" ? harborInvites : invites);
 
 const mode = () => new URLSearchParams(window.location.search).get("state") || "dense";
 const rpc = async (name: string, args: Record<string, unknown> = {}) => {
   if (name === "get_solo_team_workspace") {
     if (mode() === "denied") return { data: null, error: { message: "access denied" } };
-    let rows = mode() === "first" ? members.slice(0, 1) : [...members];
+    let rows = mode() === "first" ? rosterOf().slice(0, 1) : [...rosterOf()];
     const search = String(args._search || "").toLowerCase(); const permission = String(args._permission || "all");
     if (search) rows = rows.filter((m) => [m.full_name, m.email, m.job_title, m.responsibilities].some((v) => v?.toLowerCase().includes(search)));
     if (permission !== "all") rows = rows.filter((m) => (m.is_owner ? "owner" : m.permission) === permission);
     const total = rows.length; const offset = Number(args._offset || 0); const limit = Number(args._limit || 25);
-    return { data: { tenant_id: "team-harness-tenant", tenant_name: "Northstar Studio", viewer_permission: "owner", can_manage_profiles: true, can_manage_invitations: true, can_change_permissions: true, total_members: total, members: rows.slice(offset, offset + limit), invitations: mode() === "first" ? [] : invites }, error: null };
+    return { data: { tenant_id: activeWorkspace(), tenant_name: WORKSPACES[activeWorkspace()], viewer_permission: "owner", can_manage_profiles: true, can_manage_invitations: true, can_change_permissions: true, total_members: total, members: rows.slice(offset, offset + limit), invitations: mode() === "first" ? [] : invitesOf() }, error: null };
   }
   if (name === "set_solo_team_member_work_profile") {
-    const row = members.find((m) => m.user_id === args._member_user_id); if (row) { row.job_title = String(args._job_title || "") || null; row.responsibilities = String(args._responsibilities || "") || null; }
+    const row = rosterOf().find((m) => m.user_id === args._member_user_id); if (row) { row.job_title = String(args._job_title || "") || null; row.responsibilities = String(args._responsibilities || "") || null; }
     return { data: { ok: true }, error: null };
   }
   if (name === "set_solo_team_member_permission") {
-    const row = members.find((m) => m.user_id === args._member_user_id); if (row) row.permission = String(args._new_permission);
+    const row = rosterOf().find((m) => m.user_id === args._member_user_id); if (row) row.permission = String(args._new_permission);
     return { data: { ok: true }, error: null };
   }
   if (name === "remove_solo_team_member") {
@@ -48,8 +70,8 @@ const rpc = async (name: string, args: Record<string, unknown> = {}) => {
 };
 const invoke = async (_name: string, options: { body?: Record<string, unknown> }) => {
   const body = options.body || {};
-  if (body.action === "create") invites.unshift({ id: `invite-${invites.length}`, email: String(body.email), permission: String(body.permission), created_at: new Date().toISOString(), expires_at: "2026-09-07T00:00:00Z", revoked_at: null, uses: 0 });
-  if (body.action === "revoke") { const row = invites.find((i) => i.id === body.inviteId); if (row) row.revoked_at = new Date().toISOString(); }
+  if (body.action === "create") invitesOf().unshift({ id: `invite-${invites.length}`, email: String(body.email), permission: String(body.permission), created_at: new Date().toISOString(), expires_at: at(7), revoked_at: null, uses: 0 });
+  if (body.action === "revoke") { const row = invitesOf().find((i) => i.id === body.inviteId); if (row) row.revoked_at = new Date().toISOString(); }
   return { data: { ok: true, emailed: true }, error: null };
 };
 export const supabase = { rpc, functions: { invoke } };

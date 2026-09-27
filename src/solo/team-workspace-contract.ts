@@ -202,7 +202,7 @@ export function removalRefusal(raw: string | null | undefined, personName: strin
 
 export function validateWorkProfile(title: string, responsibilities: string): { title?: string; responsibilities?: string } {
   const errors: { title?: string; responsibilities?: string } = {};
-  if (title.trim().length > 120) errors.title = "Keep the job title to 120 characters or fewer.";
+  if (title.trim().length > 120) errors.title = "Keep the title to 120 characters or fewer.";
   if (responsibilities.trim().length > 2_000) errors.responsibilities = "Keep responsibilities to 2,000 characters or fewer.";
   return errors;
 }

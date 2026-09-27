@@ -77,6 +77,7 @@ import { PAIGE_PERSONA_CORE } from "../_shared/paige-persona/core.ts";
 // below. NO-OP (returns null) for anyone but a seeded platform operator (the tenant-less God account).
 import { loadOwnerContextBlock } from "../_shared/owner-context.ts";
 import { buildTenantTeamContextBlock } from "../_shared/team-context.ts";
+import { TITLE_WORD } from "../_shared/team-vocabulary.ts";
 import {
   fenceUploadedFileText,
   RETRIEVED_KNOWLEDGE_UNTRUSTED_NOTICE,
@@ -5855,12 +5856,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "team_set_work_profile",
-              description: "Owner/admin only. Set a teammate's job title and/or responsibilities for THIS workspace — what they do, not what they may do. Takes the member_user_id from the team context block; never a name. This CANNOT change anyone's access, and saying it does would be untrue. Pass ONLY the field the operator asked to change and omit the other — an omitted field keeps whatever is stored. An empty string CLEARS a field, so send one only when they asked for it gone. Read the change back and get their yes, then call again with confirm:true.",
+              description: `Owner/admin only. Set a teammate's ${TITLE_WORD} and/or responsibilities for THIS workspace — what they do, not what they may do. Takes the member_user_id from the team context block; never a name. This CANNOT change anyone's access, and saying it does would be untrue. Pass ONLY the field the operator asked to change and omit the other — an omitted field keeps whatever is stored. An empty string CLEARS a field, so send one only when they asked for it gone. Read the change back and get their yes, then call again with confirm:true.`,
               parameters: {
                 type: "object",
                 properties: {
                   member_user_id: { type: "string", description: "The teammate's user_id, exactly as it appears in the team context block." },
-                  job_title: { type: "string", description: "Job title, 120 characters or fewer. OMIT it entirely to leave the current title alone; pass an empty string ONLY if they asked you to clear it." },
+                  job_title: { type: "string", description: `Their ${TITLE_WORD}, 120 characters or fewer. OMIT it entirely to leave the current ${TITLE_WORD} alone; pass an empty string ONLY if they asked you to clear it.` },
                   responsibilities: { type: "string", description: "What this person owns, decides and hands off. 2,000 characters or fewer. OMIT it entirely to leave the current text alone; pass an empty string ONLY if they asked you to clear it. Never retype what is already stored — omitting is how you keep it." },
                   confirm: { type: "boolean", description: "true once the operator has approved the exact change you read back." }
                 },
@@ -5872,7 +5873,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "team_set_permission",
-              description: "TENANT OWNER ONLY, and the server enforces that — an admin asking for this will be refused, so do not promise it. Changes what a teammate is ALLOWED TO DO in this workspace. Only 'admin' or 'member' can be set: the owner's own permission cannot be changed here, and nobody can be made an owner from chat. This is an access change, so state plainly what the person will be able to do afterwards, get an explicit yes, and only then call again with confirm:true. If the operator is really asking to describe someone's job differently, that is team_set_work_profile and it is not this.",
+              description: `TENANT OWNER ONLY, and the server enforces that — an admin asking for this will be refused, so do not promise it. Changes what a teammate is ALLOWED TO DO in this workspace. Only 'admin' or 'member' can be set: the owner's own permission cannot be changed here, and nobody can be made an owner from chat. This is an access change, so state plainly what the person will be able to do afterwards, get an explicit yes, and only then call again with confirm:true. If the operator is really asking to change someone's ${TITLE_WORD}, that is team_set_work_profile and it is not this.`,
               parameters: {
                 type: "object",
                 properties: {
@@ -5894,7 +5895,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 properties: {
                   email: { type: "string", description: "The person's email address." },
                   permission: { type: "string", enum: ["admin", "member"], description: "The access they get when they accept." },
-                  job_title: { type: "string", description: "Optional. What they will be called. Describes work; grants nothing." },
+                  job_title: { type: "string", description: `Optional. Their ${TITLE_WORD}: what they will be called. Describes work; grants nothing.` },
                   responsibilities: { type: "string", description: "Optional. What they will own and where they hand work off." },
                   confirm: { type: "boolean", description: "true once the operator has approved this exact invitation." }
                 },
@@ -7928,7 +7929,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // substitute for the person seeing what is being stored.
           const shown = resp.length > 200 ? `${resp.slice(0, 200)}…" (showing the first 200 of ${resp.length} characters)` : `${resp}"`;
           const parts: string[] = [];
-          parts.push(title ? `job title "${title.slice(0, 80)}"` : "no job title");
+          const titleShown = title.length > 120 ? `${title.slice(0, 120)}…" (showing the first 120 of ${title.length} characters)` : `${title}"`;
+          parts.push(title ? `${TITLE_WORD} "${titleShown}` : `no ${TITLE_WORD}`);
           parts.push(resp ? `responsibilities → "${shown}` : "responsibilities CLEARED");
           return `Save work details for ${who}: ${parts.join(", ")}. This describes what they do — it does NOT change what they can access.`;
         }
@@ -11280,7 +11282,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               result = {
                 success: true,
                 member_user_id: args.member_user_id,
-                job_title: (data as any)?.job_title ?? null,
+                [TITLE_WORD]: (data as any)?.job_title ?? null,
                 responsibilities: (data as any)?.responsibilities ?? null,
                 note: "Work details only. This changed nothing about what they can access.",
               };
@@ -11300,7 +11302,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 success: true,
                 member_user_id: args.member_user_id,
                 permission: args.permission,
-                note: "Access changed. Their job title and responsibilities are untouched.",
+                note: `Access changed. Their ${TITLE_WORD} and responsibilities are untouched.`,
               };
             } else if (
               tc.function.name === "team_invite_member" ||

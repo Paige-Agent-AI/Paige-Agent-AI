@@ -61,7 +61,7 @@ BEGIN
   INSERT INTO public.tenants (id, slug, name, status, account_type, account_number_prefix, features)
   VALUES (_t, 'vf-scope', 'VF Scope', 'active', 'standalone', 'VFS', '{}');
   INSERT INTO public.tenant_members (tenant_id, user_id, role, status, is_owner)
-  VALUES (_t, _a, 'admin', 'active', false);
+  VALUES (_t, _a, 'admin', 'active', false), (_t, _m, 'member', 'active', false);
   INSERT INTO public.profiles (user_id, active_tenant_id) VALUES (_a, _t)
   ON CONFLICT (user_id) DO UPDATE SET active_tenant_id = EXCLUDED.active_tenant_id;
   INSERT INTO public.user_roles (user_id, role) VALUES (_a, 'admin') ON CONFLICT DO NOTHING;
@@ -83,7 +83,7 @@ SELECT throws_ok($q$SELECT public.grant_tenant_member_role('c9950000-0000-0000-0
   '42501', 'ROLE_CHANGE_FORBIDDEN: coach is a title, never a role', 'an admin cannot grant the value');
 SELECT lives_ok($q$SELECT public.grant_tenant_member_role('c9950000-0000-0000-0000-0000000000a2', 'viewer',
                                                         'c9950000-0000-0000-0000-00000000000a', NULL)$q$,
-  'an admin still grants a real role');
+  'an admin still grants a real role to a member of the business');
 
 SELECT * FROM finish();
 ROLLBACK;

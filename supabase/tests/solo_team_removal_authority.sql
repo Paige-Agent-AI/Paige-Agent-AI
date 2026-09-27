@@ -214,12 +214,14 @@ SELECT throws_ok(
   'P0001', 'name the person to remove',
   'naming nobody is refused rather than interpreted'
 );
+-- The retired title seat can no longer be stored, so no workspace carries one for removal to
+-- reinterpret; every non-owner seat is an Admin or a Member.
 SELECT throws_ok(
-  $$SELECT public.remove_solo_team_member(
-      'd1000000-0000-0000-0000-000000000005'::uuid,
-      'd1000000-0000-0000-0000-00000000dddd'::uuid)$$,
-  'P0001', 'only an Admin or a Member can be removed from this workspace',
-  'a legacy specialised permission (Coach) is out of scope here rather than silently reinterpreted'
+  $$INSERT INTO public.tenant_members (tenant_id, user_id, role, status, is_owner)
+    VALUES ('d1000000-0000-0000-0000-00000000dddd', 'd1000000-0000-0000-0000-000000000007',
+            'coach', 'active', false)$$,
+  '23514', NULL,
+  'the retired title seat cannot be stored, so removal never meets one'
 );
 
 -- ── The outcome ─────────────────────────────────────────────────────────────────────────────────
@@ -309,7 +311,7 @@ SELECT is(
   (SELECT count(*)::int FROM public.tenant_members
     WHERE tenant_id = 'd1000000-0000-0000-0000-00000000dddd'),
   4,
-  'workspace A is down to its two owners, the member and the coach'
+  'workspace A is down to its two owners and its two members'
 );
 SELECT is(
   (SELECT count(*)::int FROM public.tenant_members

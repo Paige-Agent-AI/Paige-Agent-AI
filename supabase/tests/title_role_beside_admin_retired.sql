@@ -65,14 +65,15 @@ BEGIN
 END $$;
 
 -- 1. No policy outside the finance tables reads the retired role.
-SELECT is((SELECT count(*)::int FROM pg_policy p JOIN pg_class c ON c.oid = p.polrelid
+SELECT is((SELECT coalesce(string_agg(c.relnamespace::regnamespace::text || '.' || c.relname || ': ' || p.polname, '; ' ORDER BY 1), '')
+            FROM pg_policy p JOIN pg_class c ON c.oid = p.polrelid
             WHERE c.relname NOT IN ('banking_relationships', 'credit_predictions', 'credit_report_personal_info',
                                     'funding_application_outcomes', 'funding_journey_applications',
                                     'funding_milestones', 'funding_secured', 'lender_research_results',
                                     'outreach_drafts', 'business_certifications')
               AND (coalesce(pg_get_expr(p.polqual, p.polrelid), '') || coalesce(pg_get_expr(p.polwithcheck, p.polrelid), ''))
                   ~ 'has_role\(auth\.uid\(\), ''coach''::app_role\)|has_any_role\(auth\.uid\(\), ARRAY\[[^]]*''coach''::text'),
-  0, 'no policy outside the finance tables reads the retired coach role');
+  '', 'no policy outside the finance tables reads the retired coach role');
 
 -- Counts are read as each person, stored, then asserted after RESET ROLE.
 SELECT set_config('request.jwt.claims', '{"sub":"b7710000-0000-0000-0000-0000000000a2","role":"authenticated"}', true);

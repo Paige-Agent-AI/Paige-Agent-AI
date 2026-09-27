@@ -5912,3 +5912,25 @@ error that failed every CI Test step fixed; the chat tool contract check made ru
 **Not decided here (owner).** Re-enable or delete `premerge-migration-proof` (disabled since
 2026-08-24, #574 owns the fail-closed rework). Whether the changed-file lints become ratchets
 (reverses the written "touch a file, own its findings" policy, ci.yml:527-531).
+
+## 2026-09-27 — Required gates on main: every gate reports on every PR; forks fail closed (PRs #1499, #1500)
+
+**Decided (owner rulings, this session).**
+- **Requirable gates.** `verify`, `database-contract`, `lint` and `Validate UI delivery evidence` are
+  the gates to require on `main`. All four now report on every pull request: `migration-lint` lost
+  its `paths:` filter (the job already says "nothing to lint"), and the PAIGE Spine contract jobs run
+  on every PR — no `pull_request` filter and no job-level `if:`. A per-PR skip gate was tried and
+  rejected: `team-removal-migration.test.ts` refuses a conditional job carrying its proof, and a
+  required check that never starts blocks a PR forever.
+- **Fork PRs fail closed** on `database-contract`: a fork gets no secrets and must never read
+  production, so a step refuses it with the remedy (push the branch to this repository).
+- **The guard forbids a pull_request filter** rather than parsing one — three review rounds each found
+  a spelling a line-walking pattern check missed.
+- **Scanners removed:** `codeql.yml` (duplicated GitHub's CodeQL default setup, which refuses advanced
+  uploads) and `codacy.yml` (failed on every run). No replacement added; that decision is separate.
+
+**Not done here (owner):** switching on branch protection (no tool in this session); switching off the
+repository's "Code scanning AI findings" check; re-enabling or deleting `premerge-migration-proof`.
+
+**Cost accepted:** `database-contract` on every PR — ~8 min in parallel with `verify`, plus a
+read-only production schema read per PR. Actions minutes are not billed on this public repository.

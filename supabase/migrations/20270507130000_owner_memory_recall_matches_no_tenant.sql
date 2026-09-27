@@ -10,6 +10,13 @@
 -- Scope stays the caller's own: the user filter is unchanged, and a JWT caller is still confined to
 -- (auth.uid(), current_user_tenant_id()). A NULL tenant now matches exactly the rows that carry no
 -- tenant for that same user — never another tenant's rows, and never another user's.
+--
+-- And a JWT caller with no tenant must be the platform owner, exactly as get_paige_memory,
+-- record_paige_memory, forget_paige_memory and paige_owner_memory's own RLS already require
+-- (PAIGE_MEMORY_NO_WORKSPACE). Without it, this DEFINER seam would let any signed-in user with no
+-- workspace recall tenant-less rows a service writer had filed under them, past the table's
+-- owner-only RLS. Which operator tiers hold tenant-less memory moves with the rest of the memory
+-- fabric when the operator helpers move onto operator_standing() (G3), not here.
 CREATE OR REPLACE FUNCTION public.match_paige_owner_memory(
   _query_embedding vector,
   _tenant_id       uuid,
@@ -30,6 +37,9 @@ BEGIN
     IF auth.uid() IS DISTINCT FROM _user_id
        OR _tenant_id IS DISTINCT FROM public.current_user_tenant_id() THEN
       RAISE EXCEPTION 'Unauthorized';
+    END IF;
+    IF _tenant_id IS NULL AND NOT public.is_platform_owner() THEN
+      RAISE EXCEPTION 'PAIGE_MEMORY_NO_WORKSPACE' USING ERRCODE = '42501';
     END IF;
   END IF;
 

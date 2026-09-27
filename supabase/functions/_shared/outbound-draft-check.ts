@@ -17,8 +17,11 @@
  *     a workflow kind in the auto lane can file its stored draft the same way. When it is EXECUTED, a portal
  *     kind shows its stored title and the stored draft's body (or its summary), and a workflow kind can file
  *     its stored draft for approval. Other statuses deliver nothing.
- * Ids, channels and recipients are never read: the server resolves them. A value the send path would turn
- * into text (an array, say, which `String()` joins) is read string by string, so a list is not a way past.
+ * Ids, channels and recipients are never read: the server resolves them. A value that isn't a string is read
+ * for everything a send path could make of it, at any depth: `String()` joins a nested list into its strings
+ * (propose_action stores `String(args.body)`), and Postgres's `->>` writes an object out whole, keys and all
+ * (a portal action's body is `draft_content->>'body'`). So its strings and its keys are read, and neither a
+ * list, a deep nesting nor an object is a way past. Numbers, booleans and null carry no internal text.
  * Where the caller could not find out the kind, every route is read. The check refuses only on a finding:
  * text it was not given (an action whose stored row could not be read) it cannot read, and it does not
  * refuse for that alone, because a missed leak is preferable to a normal action withheld (owner rule).
@@ -39,20 +42,32 @@ export const OUTBOUND_DRAFT_TOOLS: ReadonlySet<string> = new Set(["propose_actio
 /** The action-bus executor whose action the client's portal shows (the registry's own value). */
 export const PORTAL_EXECUTOR = "surface_to_client";
 
-const MAX_DEPTH = 4;
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
-/** Every string inside a value, to a bounded depth (a draft is small; a deeper value is not a message). */
-function stringsIn(value: unknown, depth = 0): string[] {
-  if (typeof value === "string") return value.trim() ? [value] : [];
-  if (depth >= MAX_DEPTH || !value || typeof value !== "object") return [];
-  return Object.values(value as Record<string, unknown>).flatMap((v) => stringsIn(v, depth + 1));
+/**
+ * Every string inside a value, and every key of every object in it, at any depth, in order: the text any
+ * send path's serialization of it shows. Walked with a stack, so a deeply nested value cannot overflow it.
+ */
+function stringsIn(value: unknown): string[] {
+  const found: string[] = [];
+  const pending: unknown[] = [value];
+  while (pending.length) {
+    const next = pending.pop();
+    if (typeof next === "string") {
+      if (next.trim()) found.push(next);
+    } else if (Array.isArray(next)) {
+      for (let i = next.length - 1; i >= 0; i -= 1) pending.push(next[i]);
+    } else if (next && typeof next === "object") {
+      const entries = Object.entries(next as Record<string, unknown>);
+      for (let i = entries.length - 1; i >= 0; i -= 1) pending.push(entries[i][1], entries[i][0]);
+    }
+  }
+  return found;
 }
 
-/** The text in each field: a string as it is, a list or object string by string, anything else nothing. */
+/** The text in each field: a string as it is, a list or object by its strings and keys, anything else nothing. */
 function textsOf(values: readonly unknown[]): string[] {
   return values.flatMap((value) => stringsIn(value));
 }

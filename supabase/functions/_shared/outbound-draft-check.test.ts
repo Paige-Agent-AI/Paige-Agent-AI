@@ -27,10 +27,28 @@ test("each tool's customer-bound fields, and nothing else", () => {
   assert.deepEqual(customerBoundTexts("propose_action", { subject: "  ", body: 42 }), []);
 });
 
-test("a list or an object is read string by string, the way the send path would join it", () => {
+test("a list or an object is read for everything a send path could make of it: its strings and its keys", () => {
   assert.deepEqual(customerBoundTexts("propose_action", { subject: "S", body: ["Hi Dana,", "see you soon"] }), ["S", "Hi Dana,", "see you soon"]);
-  assert.deepEqual(customerBoundTexts("calendar_link_send", { message: { text: "M" } }), ["M"]);
+  // Postgres's ->> writes an object out whole, keys and all, so a key is text a customer can read.
+  assert.deepEqual(customerBoundTexts("calendar_link_send", { message: { text: "M" } }), ["text", "M"]);
   assert.deepEqual(customerBoundTexts("action_file", { title: ["T1", "T2"] }, { executor: "surface_to_client" }), ["T1", "T2"]);
+});
+
+test("depth is no way past: String() flattens any nesting, and ->> writes every level", () => {
+  let deep: unknown = "update_client_data";
+  for (let i = 0; i < 64; i += 1) deep = [deep];
+  assert.deepEqual(customerBoundTexts("propose_action", { body: deep }), ["update_client_data"]);
+  let keyed: unknown = "B";
+  for (let i = 0; i < 6; i += 1) keyed = { [`k${i}`]: keyed };
+  assert.deepEqual(customerBoundTexts("propose_action", { body: keyed }), ["k5", "k4", "k3", "k2", "k1", "k0", "B"]);
+  // A portal action's stored body as an object: its keys are what the portal would show.
+  const stored = { status: "drafted", title: "T", draft_content: { body: { update_client_data: "Book" } } };
+  assert.deepEqual(customerBoundTexts("action_advance", { to_status: "executing" }, { executor: "surface_to_client", requiresApproval: false, stored }),
+    ["T", "update_client_data", "Book"]);
+  // A value nested far deeper than any stack would allow by recursion still reads.
+  let huge: unknown = "end";
+  for (let i = 0; i < 100_000; i += 1) huge = [huge];
+  assert.deepEqual(customerBoundTexts("propose_action", { body: huge }), ["end"]);
 });
 
 test("a follow-up action is read for what advance_action delivers", () => {
@@ -71,12 +89,6 @@ test("a follow-up action is read for what advance_action delivers", () => {
 test("the portal executor is the registry's own value", () => {
   assert.equal(PORTAL_EXECUTOR, "surface_to_client");
   assert.deepEqual([...OUTBOUND_DRAFT_TOOLS].sort(), ["action_advance", "action_file", "calendar_link_send", "propose_action"]);
-});
-
-test("a value deeper than the bound is not walked", () => {
-  const deep = { a: { b: { c: { d: { e: "too deep" } } } } };
-  assert.deepEqual(customerBoundTexts("propose_action", { body: deep }), []);
-  assert.deepEqual(customerBoundTexts("propose_action", { body: { a: { b: { c: { d: "deep enough" } } } } }), ["deep enough"]);
 });
 
 test("internal text in a draft is found against this turn's vocabulary", () => {

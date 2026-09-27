@@ -4317,6 +4317,24 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
   const surfacedClean = await surface("Your next step");
   assert("31.19 CONTROL: executing a clean portal action runs", rpcsNamed(surfacedClean, "advance_action").length === 1 && !refusedAsInternal(surfacedClean),
     JSON.stringify({ advanced: rpcsNamed(surfacedClean, "advance_action").length }));
+
+  // Depth and shape are no way past. String() flattens a body nested any depth into its strings before the
+  // queue stores it, and Postgres's ->> writes a portal action's object body out whole, keys and all.
+  let nested = ["Hi Dana,", PLANTS[0][1]];
+  for (let i = 0; i < 6; i += 1) nested = [nested];
+  const deep = await propose(nested);
+  assert("31.21 a drafted email whose body is a list nested six deep is read too, and not filed",
+    approvalsFiled(deep).length === 0 && refusedAsInternal(deep), JSON.stringify({ filed: approvalsFiled(deep).length }));
+  const objectBody = (body) => advanceKnown({ status: "drafted", action_kind: "client.portal_recommendation", title: "Your next step",
+    summary: "Next step", draft_content: { body } }, { executor: "surface_to_client", requires_approval: false }, { to_status: "executing" });
+  const keyed = await objectBody({ update_client_data: "Book your next session when it suits you." });
+  assert("31.21 executing a portal action whose stored body is an object with an internal key shows the client nothing",
+    rpcsNamed(keyed, "advance_action").length === 0 && refusedAsInternal(keyed),
+    JSON.stringify({ advanced: rpcsNamed(keyed, "advance_action").length, refused: refusedAsInternal(keyed) }));
+  const plainKeyed = await objectBody({ note: "Book your next session when it suits you." });
+  assert("31.21 CONTROL: an object body whose keys are ordinary words runs",
+    rpcsNamed(plainKeyed, "advance_action").length === 1 && !refusedAsInternal(plainKeyed),
+    JSON.stringify({ advanced: rpcsNamed(plainKeyed, "advance_action").length }));
 }
 
 console.log(`\n${checks - failures} passed, ${failures} failed`);

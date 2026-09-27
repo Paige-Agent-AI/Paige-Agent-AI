@@ -35,7 +35,7 @@ ACCEPTANCE_CRITERIA: on Settings → Team an owner sees "Title" as the editor la
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: tested — the work-details approval card (section 28) and the Team screen's editor, invitation and roles states (team-title-copy test); unaffected and named — set_solo_team_member_work_profile and the invitation RPCs (argument names unchanged), the permission change path, team removal, and the TEAM CONTEXT block (section 27 still 27.0–27.8 passing).
 
-INTERNAL_BUILD_IDENTITY: d93fd287a245a2e241683611a03cefe2cbb90936; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat redeploys through deploy-edge-functions on merge; its deployed version and byte check are recorded in the delivery-log closeout); evidence=this-record-and-docs/evidence/ui-delivery/team-title/
+INTERNAL_BUILD_IDENTITY: d93fd287a245a2e241683611a03cefe2cbb90936; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat redeploys through deploy-edge-functions on merge, and its deployed version and byte check are recorded in the delivery-log closeout); evidence=this-record-and-docs/evidence/ui-delivery/team-title/
 RELEASE_CHANNEL: development: the identity above names the code head this record attests; the evidence and docs commits ride on top of it; the frontend deploys through Vercel and paige-ai-chat through deploy-edge-functions on merge
 RELEASE_CLASSIFICATION: internal-only: a wording correction applying an owner ruling across existing surfaces; no capability, permission or data change
 CUSTOMER_RELEASE_IDENTITY: none: an internal copy correction, not a customer release

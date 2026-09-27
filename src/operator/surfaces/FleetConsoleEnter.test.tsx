@@ -43,6 +43,7 @@ vi.mock("sonner", () => ({ toast: { error: (m: string) => h.toastError(m), succe
 
 import FleetConsole from "@/operator/surfaces/FleetConsole";
 import { landAt } from "@/operator/actAs";
+import { OPERATOR_ACT_AS_KEY, recordOperatorActAs } from "@/lib/auth/workspaceEntry";
 
 describe("FleetConsole Enter — the act-as lands or does not begin", () => {
   let host: HTMLDivElement;
@@ -58,7 +59,12 @@ describe("FleetConsole Enter — the act-as lands or does not begin", () => {
       { id: "solo", name: "Solo Co", account_type: "standalone", parent_tenant_id: null, account_number: 3855 },
       { id: "big", name: "Big Agency", account_type: "agency", parent_tenant_id: null, account_number: 12 },
     ];
-    h.switchTenant = vi.fn(async () => true);
+    sessionStorage.clear();
+    // As the real provider does: a successful audited enter records the act-as for this user.
+    h.switchTenant = vi.fn(async (id: string | null) => {
+      if (id) recordOperatorActAs("op", id);
+      return true;
+    });
     h.toastError = vi.fn();
     go = vi.spyOn(landAt, "go").mockImplementation(() => {});
     host = document.createElement("div");
@@ -151,6 +157,23 @@ describe("FleetConsole Enter — the act-as lands or does not begin", () => {
       expect(go).toHaveBeenCalledWith("/solo/3855/command-center?acting-as=op");
     } finally {
       forgetful.mockRestore();
+    }
+  });
+
+  // Codex review of 221ffbc5: a store with room for a small probe but not for the record looked
+  // usable, so the flag was dropped while the record was never written. Decide on the record itself.
+  it("flags the arrival address when the act-as record itself cannot be stored", async () => {
+    const setItem = Storage.prototype.setItem;
+    const full = vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (this: Storage, key: string, value: string) {
+      if (key === OPERATOR_ACT_AS_KEY) throw new Error("quota");
+      return setItem.call(this, key, value);
+    });
+    try {
+      const enter = await render();
+      await act(async () => { enter("Solo Co")?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(go).toHaveBeenCalledWith("/solo/3855/command-center?acting-as=op");
+    } finally {
+      full.mockRestore();
     }
   });
 

@@ -180,9 +180,11 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   const subjectEpochRef = useRef(0);
   const sessionUidRef = useRef<string | null>(null);
   const hasAcceptedContextRef = useRef(false);
-  // Advanced by every successful operator enter/exit. A load that began before one answers with the
-  // scope as it was, so it must not rewrite the act-as record the enter/exit just set.
-  const actAsEpochRef = useRef(0);
+  // Advanced by every successful scope change: an operator enter or exit, or a member's switch. A
+  // load that began before one answers with the scope as it was, so it must commit NOTHING — not the
+  // old active tenant, not the act-as record. Otherwise the browser reports a scope the server has
+  // already left, and a second exit could be recorded from it.
+  const scopeEpochRef = useRef(0);
   // The uid resolved by the last successful load — captured so the SIGNED_OUT
   // handler (whose session is already null) can clear THIS user's freshness
   // marker for the correct per-uid key (fold-fix #5).
@@ -204,7 +206,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   // the blocking loader (there's no prior state to preserve) so the gate resolves once.
   const load = useCallback(async (background = false) => {
     const loadId = ++nextLoadIdRef.current;
-    const actAsEpochAtStart = actAsEpochRef.current;
+    const scopeEpochAtStart = scopeEpochRef.current;
     let loadSubjectEpoch = subjectEpochRef.current;
     let acceptedThisLoad = false;
     if (!background) {
@@ -301,12 +303,15 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       // last-SUCCESSFUL-read guard, not a last-started-read guard: a transiently
       // failed background refresh must not suppress a valid foreground result.
       if (loadSubjectEpoch !== subjectEpochRef.current || loadId < acceptedLoadIdRef.current) return;
+      // A scope change landed while this read was in flight: its answer is the scope as it was.
+      if (scopeEpochAtStart !== scopeEpochRef.current) return;
       acceptedLoadIdRef.current = loadId;
       acceptedThisLoad = true;
       activeUidRef.current = uid;
       setActiveUserId(uid);
       const stillAuthoritative = () =>
-        loadSubjectEpoch === subjectEpochRef.current && loadId === acceptedLoadIdRef.current;
+        loadSubjectEpoch === subjectEpochRef.current && loadId === acceptedLoadIdRef.current
+        && scopeEpochAtStart === scopeEpochRef.current;
 
       setIsPlatformOwner(Boolean(owner.data));
       setIsPlatformStaff(Boolean(staff.data));
@@ -414,10 +419,9 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       // active tenant holds one, anyone else holds none. Scope moves that bypass enter/exit (the
       // fresh-login reset above, another tab, a duplicated tab's copied storage) cannot leave a
       // stale record that would later offer an exit from an act-as that is not open.
-      if (actAsEpochAtStart === actAsEpochRef.current) {
-        if (staff.data && committedActiveTenantId) recordOperatorActAs(uid, committedActiveTenantId);
-        else forgetOperatorActAs();
-      }
+      // (A load that saw a scope change never reaches here: see the checks above.)
+      if (staff.data && committedActiveTenantId) recordOperatorActAs(uid, committedActiveTenantId);
+      else forgetOperatorActAs();
       hasAcceptedContextRef.current = true;
       setAccountContextStatus("ready");
     } catch {
@@ -486,7 +490,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: rpcError } = await supabase.rpc("operator_exit_tenant" as any);
     if (rpcError) return false;
-    actAsEpochRef.current += 1;
+    scopeEpochRef.current += 1;
     forgetOperatorActAs();
     // An "Acting as … recorded" notice still waiting for a shell that never mounted now announces an
     // act-as that has ended; the next workspace opened must not show it.
@@ -526,7 +530,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       // Same failure contract as the direct write below: a refused or failed switch
       // does NOT move client scope, so client and DB can never disagree (§9).
       if (rpcError) return false;
-      actAsEpochRef.current += 1;
+      scopeEpochRef.current += 1;
       recordOperatorActAs(uid, tenantId);
       setActiveTenantId(tenantId);
       queryClient.invalidateQueries();
@@ -542,6 +546,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       .select("user_id")
       .maybeSingle();
     if (!tenantSwitchPersisted(uid, persisted, error)) return false;
+    scopeEpochRef.current += 1;
     // The one shared provider now commits the verified switch to every consumer.
     setActiveTenantId(tenantId);
     // Scope changed for everything — a broad invalidate is correct here (§9).

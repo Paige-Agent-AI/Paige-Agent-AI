@@ -190,6 +190,28 @@ describe("the operator act-as marker and its audited exit", () => {
     expect(acting()).toBe(false);
   });
 
+  // Codex review of 221ffbc5: the epoch guarded only the record; a late reload still committed the
+  // old scope to React state before reaching it. It must commit nothing at all.
+  it("does not put the old tenant back when an older reload answers after an exit", async () => {
+    h.activeTenant = "t1";
+    const c = await mount();
+    expect(c.activeTenantId).toBe("t1");
+    const answerStale = holdNextProfile("t1");
+    await act(async () => { h.authListener?.("TOKEN_REFRESHED"); });
+    await act(async () => { await c.exitOperatorActAs(); });
+    await act(async () => { answerStale(); });
+    expect((ctx as Ctx).activeTenantId).toBeNull();
+  });
+
+  it("does not put the old tenant back when an older reload answers after an enter", async () => {
+    const c = await mount();
+    const answerStale = holdNextProfile(null);
+    await act(async () => { h.authListener?.("TOKEN_REFRESHED"); });
+    await act(async () => { await c.switchTenant("t1"); });
+    await act(async () => { answerStale(); });
+    expect((ctx as Ctx).activeTenantId).toBe("t1");
+  });
+
   it("forgets the act-as on sign-out", async () => {
     h.activeTenant = "t1";
     await mount();

@@ -308,36 +308,41 @@ export function forgetOperatorActAs(): void {
 }
 
 /**
- * Where storage cannot hold the record (blocked by policy, quota, or a store that accepts writes and
- * reads back nothing), the console puts this flag on the arrival address instead, so the one load
- * that can strand an operator still knows an act-as is open. Its value is the operator's own user
- * id, so a flag that survives a sign-out redirect cannot be claimed by whoever signs in next. It is
- * read ONLY when the record cannot be used (`workspaceRecordUsable()` reads its probe back), and
- * like the record it grants nothing.
+ * Where storage cannot hold the record — blocked by policy, a store that accepts writes and reads
+ * back nothing, or one with room for a small value but not this one — the console puts this flag on
+ * the arrival address instead, so the one load that can strand an operator still knows an act-as is
+ * open. The decision reads back the ACTUAL record for this user, never a smaller probe. The flag's
+ * value is the operator's own user id, so a flag that survives a sign-out redirect offers nothing to
+ * whoever signs in next. Like the record, it grants nothing: the server gates the exit.
  */
 export const OPERATOR_ARRIVAL_PARAM = "acting-as";
 
-/** The arrival address for an act-as: flagged, with its operator, only when storage cannot record it. */
+/** The arrival address for an act-as: flagged, with its operator, unless their record reads back. */
 export function operatorArrivalAddress(root: string, userId: string | null | undefined): string {
-  if (workspaceRecordUsable() || !userId) return root;
+  if (!userId || storedOperatorActAs(userId)) return root;
   return `${root}?${OPERATOR_ARRIVAL_PARAM}=${encodeURIComponent(userId)}`;
 }
 
-/** Does this tab hold an act-as for THIS user? Another user's record, or a malformed one, is none. */
-export function operatorActAsRecorded(userId: string | null | undefined): boolean {
-  if (!userId) return false;
-  if (!workspaceRecordUsable()) {
-    try {
-      return new URLSearchParams(window.location.search).get(OPERATOR_ARRIVAL_PARAM) === userId;
-    } catch {
-      return false;
-    }
-  }
+function storedOperatorActAs(userId: string): boolean {
   try {
     const raw = sessionStorage.getItem(OPERATOR_ACT_AS_KEY);
     if (!raw) return false;
     const held = JSON.parse(raw) as { userId?: unknown; tenantId?: unknown };
     return held.userId === userId && typeof held.tenantId === "string" && held.tenantId.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Does this tab hold an act-as for THIS user — their stored record, or, where it could not be
+ * stored, their own arrival flag? Another user's record or flag, or a malformed one, is none.
+ */
+export function operatorActAsRecorded(userId: string | null | undefined): boolean {
+  if (!userId) return false;
+  if (storedOperatorActAs(userId)) return true;
+  try {
+    return new URLSearchParams(window.location.search).get(OPERATOR_ARRIVAL_PARAM) === userId;
   } catch {
     return false;
   }

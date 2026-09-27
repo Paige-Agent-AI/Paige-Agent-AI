@@ -180,11 +180,13 @@ describe("/solo/* tier gate", () => {
       }
     });
 
-    it("ignores the address flag where storage works and holds no act-as", async () => {
+    // Codex review of 221ffbc5: storage can look usable yet have failed to hold the record, so this
+    // operator's own flag counts whenever their record is absent.
+    it("honours this operator's flag when storage holds no record for them", async () => {
       window.history.replaceState(null, "", "/?acting-as=op");
       try {
         await renderAt("/solo/1971670/command-center");
-        expect(exitButton()).toBeFalsy();
+        expect(exitButton()).toBeTruthy();
       } finally {
         window.history.replaceState(null, "", "/");
       }

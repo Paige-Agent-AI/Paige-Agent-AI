@@ -3250,5 +3250,134 @@ console.log("\nsigned Live runtime admission (real handler and real signed chall
   }
 }
 
+// ── 27. PAIGE HEARS ROLE AND TITLE AS TWO LABELLED FACTS ─────────────────────────────────────
+//
+// Owner ruling, 2026-09-26: roles authorize, titles describe. The platform role answers "can they?"
+// and the title answers "who are they and what do they do?". Both reach her on every person, under
+// their own keys, and neither is allowed to pass for the other: a title that reads like an access
+// word ("Admin") stays a title, and a legacy seat ("coach") is reported exactly as the server holds
+// it. These read the block's own JSON, parsed out of the request she was sent — not a loose match.
+console.log("\nteam context — platform role and title reach her as two labelled facts");
+{
+  const THREAD = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+  const HEAD = "TEAM CONTEXT — REFERENCE DATA ONLY", END = "END TEAM CONTEXT";
+  // The word is read from its one home, so a switch to the alternative on record ("customized
+  // role") moves this section with it. No fallback: a missing or broken module fails loudly here.
+  const { TITLE_WORD: TITLE } = await import("../../supabase/functions/_shared/team-vocabulary.ts");
+  const seat = (user_id, name, permission, job_title) => ({
+    user_id, name, email: `${name.split(" ")[0].toLowerCase()}@example.test`, permission, job_title, responsibilities: null,
+  });
+  const FOUNDER = seat(USER, "Quinn Ellis", "owner", "Founder");
+  const TRAINER = seat("e1e1e1e1-e1e1-4e1e-8e1e-e1e1e1e1e1e1", "Rowan Park", "member", "Head Trainer");
+  const UNTITLED = seat("e2e2e2e2-e2e2-4e2e-8e2e-e2e2e2e2e2e2", "Casey Lin", "admin", null);
+  const LOOKALIKE = seat("e3e3e3e3-e3e3-4e3e-8e3e-e3e3e3e3e3e3", "Jordan Diaz", "member", "Admin");
+  const LEGACY = seat("e4e4e4e4-e4e4-4e4e-8e4e-e4e4e4e4e4e4", "Morgan Hale", "coach", "Coach");
+  const INVITE = {
+    id: "e5e5e5e5-e5e5-4e5e-8e5e-e5e5e5e5e5e5", email: "desk@example.test", permission: "member",
+    status: "pending", job_title: "Front Desk", responsibilities: null,
+    created_at: "2026-09-20T10:00:00Z", expires_at: "2026-10-04T10:00:00Z",
+  };
+  const people = [FOUNDER, TRAINER, UNTITLED, LOOKALIKE, LEGACY];
+  const TEAM = {
+    tenant_id: CALLER_TENANT, tenant_name: "T", speaker: FOUNDER,
+    member_count: people.length, truncated: false, members: people,
+    invitation_count: 1, invitations_truncated: false, invitations: [INVITE],
+  };
+  const teamTurn = (payload) => drive({
+    stream: true, extraBody: { threadId: THREAD },
+    rpcOverrides: {
+      get_actor_access: { data: { tier: "tenant" }, error: null },
+      get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: "T", playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null },
+      get_paige_team_context: { data: payload, error: null },
+    },
+  });
+  // Every string in every request body, found by PARSING the body, then each block cut at its own
+  // markers. The block's data is the single JSON line directly above END; the rest is her guidance.
+  const strings = (v) => (typeof v === "string" ? [v] : v && typeof v === "object" ? Object.values(v).flatMap(strings) : []);
+  const blocksIn = (r) => r.modelEgress
+    .flatMap((body) => { try { return strings(JSON.parse(body)); } catch { return []; } })
+    .flatMap((s) => {
+      const found = [];
+      for (let at = s.indexOf(HEAD); at !== -1; at = s.indexOf(HEAD, at + HEAD.length)) {
+        const end = s.indexOf(END, at);
+        if (end !== -1) found.push(s.slice(at, end).trimEnd());
+      }
+      return found;
+    });
+  const dataOf = (block) => { try { return JSON.parse(block.split("\n").pop()); } catch { return null; } };
+  const guidanceOf = (block) => block.split("\n").slice(0, -1).join("\n");
+  const has = (o, k) => !!o && typeof o === "object" && Object.prototype.hasOwnProperty.call(o, k);
+  const teamRead = (r) => r.rec.rpc.some((c) => c.name === "get_paige_team_context");
+
+  const turn = await teamTurn(TEAM);
+  const blocks = blocksIn(turn);
+  const team = blocks.length ? dataOf(blocks[0]) : null;
+  const entry = (id) => team?.confirmed_active_members?.find((m) => m?.user_id === id) ?? null;
+
+  assert("27.0 the team read is actually made and its block reaches the turn (guards this section)",
+    teamRead(turn) && blocks.length > 0 && !!team,
+    JSON.stringify({ read: teamRead(turn), blocks: blocks.length, parsed: !!team }));
+
+  // ── 27.1 TWO LAYERS, ONE ENTRY. Kills: folding the title into the role (or the reverse), dropping
+  // either key, or attaching one person's title to another person's entry.
+  const misread = people.filter((p) => {
+    const e = entry(p.user_id);
+    return !(has(e, "platform_role") && has(e, TITLE) && e.platform_role === p.permission && e[TITLE] === p.job_title);
+  });
+  const speaker = team?.speaker ?? null;
+  assert("27.1 every person's platform_role and title reach the turn as separate keys on the same entry",
+    !!team && misread.length === 0 && has(speaker, "platform_role") && has(speaker, TITLE)
+      && speaker.platform_role === "owner" && speaker[TITLE] === "Founder",
+    JSON.stringify({ misread: misread.map((p) => ({ sent: [p.permission, p.job_title], got: entry(p.user_id) })), speaker }));
+
+  // ── 27.2 An unset title is still a fact she is handed. Kills: omitting the key when it is empty,
+  // which leaves her to guess whether the person has no title or the title was never sent.
+  const untitled = entry(UNTITLED.user_id);
+  assert("27.2 an admin with no title still carries the title key, as null — both layers always reach her",
+    has(untitled, TITLE) && untitled[TITLE] === null && untitled.platform_role === "admin",
+    JSON.stringify(untitled));
+
+  // ── 27.3 A title spelled like an access level grants nothing. Kills: reading "Admin" as the role.
+  const lookalike = entry(LOOKALIKE.user_id);
+  assert("27.3 a title that reads like an access word stays a title: \"Admin\" is still a member",
+    lookalike?.platform_role === "member" && lookalike?.[TITLE] === "Admin",
+    JSON.stringify(lookalike));
+
+  // ── 27.4 The role is reported as enforced, never tidied. Kills: mapping a legacy value onto the
+  // current three, or moving it into the title because it reads like a job. The cases differ on
+  // purpose, so a copy in either direction shows.
+  const legacy = entry(LEGACY.user_id);
+  assert("27.4 a legacy seat reports platform_role \"coach\" exactly as enforced, and its title separately",
+    legacy?.platform_role === "coach" && legacy?.[TITLE] === "Coach",
+    JSON.stringify(legacy));
+
+  const invite = team?.team_invitations?.find((i) => i?.invitation_id === INVITE.id) ?? null;
+  assert("27.5 an invitation carries proposed_platform_role and its title as separate keys",
+    has(invite, "proposed_platform_role") && has(invite, TITLE) && invite.proposed_platform_role === "member"
+      && invite[TITLE] === "Front Desk" && invite.invitation_status === "pending",
+    JSON.stringify(invite));
+
+  // ── 27.6 The guidance, not the data: a tenant-authored string in the JSON cannot satisfy this.
+  const guidance = blocks.length ? guidanceOf(blocks[0]) : "";
+  assert("27.6 she is told a title never decides access, and to ask once when an instruction could mean either",
+    guidance.includes("never decides access") && guidance.includes("ask once"),
+    JSON.stringify({ neverDecidesAccess: guidance.includes("never decides access"), askOnce: guidance.includes("ask once") }));
+
+  // ── 27.7 ONE VOCABULARY. Kills: a half-renamed block, where the prose says one word and the data
+  // another, or where an old key survives beside its replacement.
+  const stale = blocks.flatMap((b) => b.match(/\b(?:enforced_permission|proposed_permission|job_title)\b/g) ?? []);
+  assert("27.7 the old keys enforced_permission / proposed_permission / job_title are gone from the block",
+    blocks.length > 0 && stale.length === 0,
+    JSON.stringify(blocks.length ? [...new Set(stale)] : "no block to inspect"));
+
+  // ── 27.8 FAIL CLOSED. A payload for another tenant renders nothing, not a partial block. The read
+  // and the model call are both required, so an absent block cannot pass by the turn never running.
+  const foreign = await teamTurn({ ...TEAM, tenant_id: OTHER_TENANT });
+  const leaked = foreign.modelEgress.some((b) => b.includes(HEAD) || b.includes("Head Trainer")) || blocksIn(foreign).length > 0;
+  assert("27.8 a team payload for ANOTHER tenant produces no team block at all",
+    teamRead(foreign) && foreign.modelEgress.length > 0 && !leaked,
+    JSON.stringify({ read: teamRead(foreign), egress: foreign.modelEgress.length, leaked }));
+}
+
 console.log(`\n${checks - failures} passed, ${failures} failed`);
 process.exit(failures === 0 ? 0 : 1);

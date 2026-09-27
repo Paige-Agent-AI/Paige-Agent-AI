@@ -137,11 +137,24 @@ from the expanding rail (`openPaige` → `expandRail`), beside whatever screen i
 
 ## What PAIGE can read
 
-`get_paige_team_context()` → a sanitised block: roster with `user_id`, name, email, **enforced**
-permission, job title, responsibilities; invitations with `invitation_id`, address, proposed
-permission and lifecycle status. Control characters stripped, fields length-capped, **the invite
-token never included**. Marked `REFERENCE DATA ONLY`; tenant-authored work text explicitly confers
-no authority. Suppressed entirely when the block's tenant ≠ the conversation's tenant.
+`get_paige_team_context()` → a sanitised block with **two separately labelled facts per person**
+(F1, 2026-09-26). The roster carries `user_id`, name, email, `platform_role` (owner, admin or
+member, or an older value exactly as the server enforces it) and `title` (the business's own word,
+always present, `null` when unset), plus responsibilities. Invitations carry `invitation_id`, address,
+`proposed_platform_role`, `title` and lifecycle status. The old `enforced_permission`,
+`proposed_permission` and `job_title` keys are gone. The block tells PAIGE to name people by name and
+title, to describe access only as owner, admin or member, never to read a key name aloud, and to ask
+once when an instruction could mean either (for example "make Sam a manager").
+
+The word "title" comes from `_shared/team-vocabulary.ts` (`TITLE_WORD`). Control characters are
+stripped, fields are length-capped, and **the invite token is never included**. The block is marked
+`REFERENCE DATA ONLY`; tenant-authored work text confers no authority. It is suppressed entirely when
+the block's tenant ≠ the conversation's tenant.
+
+**Proof.** The unit test is `src/solo/paige-team-context.test.ts`. The real handler is driven in CI by
+`scripts/client-memory-authz` section 27 (27.0–27.8). `npm run lint:title-authority` (with its
+`--self-test`) fails CI when a policy, an authorization helper or a TypeScript gate reads a title. Whether
+a live model actually speaks this way is **UNVERIFIED** until an authenticated drive; see decision 4.
 
 ## What PAIGE can propose or perform
 

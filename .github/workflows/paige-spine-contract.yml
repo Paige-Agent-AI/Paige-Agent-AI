@@ -128,6 +128,20 @@ jobs:
       # migration wrote, so no replay can produce them; they are read from production instead.
       # READ-ONLY (pg_dump + ledger), through the one script CI uses to read production, BEFORE the
       # local stack starts, and the project is unlinked again before any test SQL runs.
+      # A pull request from a fork gets no repository secrets, so it cannot read production's
+      # baseline, and it must never be given them. Say so plainly instead of failing on a missing
+      # token: a maintainer brings a fork contribution in by pushing its branch to this repository.
+      # (Owner ruling, 2026-09-27: fork PRs fail closed on this required check.)
+      - name: Refuse fork pull requests (no production access for forks)
+        env:
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          BASE_REPO: ${{ github.repository }}
+        run: |
+          if [ -n "$HEAD_REPO" ] && [ "$HEAD_REPO" != "$BASE_REPO" ]; then
+            echo "::error::database-contract reads production's schema and cannot run for a pull request from a fork ($HEAD_REPO). A maintainer must push this branch to $BASE_REPO and open the pull request from there."
+            exit 1
+          fi
+          echo "Pull request branch is in $BASE_REPO; the production baseline can be read."
       - name: Read production's baseline (read-only)
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}

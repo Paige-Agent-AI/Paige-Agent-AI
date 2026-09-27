@@ -343,7 +343,13 @@ describe("the table underneath — a guarded function is not a boundary on its o
       expect(prTrigger, "the pull_request paths filter matches it").toContain(proof);
     }
     if (/^\s*paths-ignore:/m.test(prTrigger)) {
-      expect(prTrigger, "the pull_request paths-ignore filter does not exclude it").not.toContain(proof);
+      // Match each ignore pattern as a glob, not as a literal: `supabase/tests/**` excludes the proof
+      // without ever naming it. `**` crosses directories, `*` stays within one segment.
+      const segment = (part: string) => part.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^/]*").replace(/\?/g, "[^/]");
+      const globToRegex = (glob: string) => new RegExp(`^${glob.split("**").map(segment).join(".*")}$`);
+      const ignored = [...prTrigger.matchAll(/^\s*-\s*["']?([^"'\s#]+)["']?\s*$/gm)].map((m) => m[1]);
+      const excluding = ignored.filter((glob) => globToRegex(glob).test(proof));
+      expect(excluding, "no pull_request paths-ignore pattern excludes it").toEqual([]);
     }
     expect(text.slice(pushAt, jobsTextAt), "the push paths filter matches it too").toContain(proof);
 

@@ -113,13 +113,25 @@ INSERT INTO public.platform_operator_capabilities (capability, description, ruli
    'R0 revised, owner ruling 2026-09-27; CLAUDE.md §53 as superseded by it'),
   ('operator.seat.super_admin.revoke', 'Revoke a super_admin seat.',
    'R0 revised, owner ruling 2026-09-27; CLAUDE.md §53 as superseded by it'),
-  -- R0 grants administering autonomy; §67 and §68 (owner-ruled 2026-08-24) keep raising above the
-  -- ceiling and renewing a rung with super_admin. Listed so no later gate folds them into
-  -- capability.administer, and granted to nobody below, so super_admin holds them alone.
-  ('autonomy.posture.raise', 'Raise the daily autonomy posture above the ceiling.',
-   'CLAUDE.md §67, owner ruling 2026-08-24; R0 2026-09-27 read as not overriding it'),
-  ('autonomy.rung.renew', 'Re-attest (renew) an autonomy rung.',
-   'CLAUDE.md §68 and §53, owner ruling 2026-08-24; R0 2026-09-27 read as not overriding it')
+  -- G3 decision packet, ruled 2026-09-27 (owner): a platform_admin MAY raise the posture above the
+  -- ceiling, and only super_admin may re-attest. A raise is capped at 24 hours; re-attesting is what
+  -- would turn that cap into no cap, so keeping it at the top makes the 24 hours a real ceiling.
+  -- Lowering is not listed: any operator may lower, as today.
+  ('autonomy.posture.raise', 'Raise the daily autonomy posture above the ceiling, for at most 24 hours.',
+   'G3 decision 1, owner ruling 2026-09-27; CLAUDE.md §67'),
+  ('autonomy.rung.renew', 'Re-attest (renew) platform authority, extending a raise beyond its cap.',
+   'G3 decision 1, owner ruling 2026-09-27; CLAUDE.md §68'),
+  -- G3 decision 2, owner ruling 2026-09-27: the standing bird's-eye view across every customer
+  -- (seats, client counts, revenue class in the directory) is a different act from entering one
+  -- customer with your name on the audit row. Listed, and granted to nobody below super_admin:
+  -- switched off, so widening it later is one row, never a rebuild.
+  ('fleet.directory.detail', 'See seats, client counts and revenue class across the whole fleet directory.',
+   'G3 decision 2, owner ruling 2026-09-27'),
+  -- G3 decision 6, owner ruling 2026-09-27: inside an entered tenant both tiers hold the same
+  -- powers, every act audited. Withdrawing this row from a tier makes that tier read-only inside
+  -- tenants.
+  ('tenant.act_as.write', 'Inside an entered tenant, act with that tenant administrator''s powers; every act audited.',
+   'G3 decision 6, owner ruling 2026-09-27')
 ON CONFLICT (capability) DO NOTHING;
 
 -- super_admin holds everything through holds_unlisted AND through explicit rows for every listed
@@ -139,7 +151,9 @@ INSERT INTO public.platform_operator_role_capabilities (role, capability, ruling
   ('platform_admin', 'billing.read', 'R0, owner ruling 2026-09-27'),
   ('platform_admin', 'capability.administer', 'R0, owner ruling 2026-09-27'),
   ('platform_admin', 'operator.seat.platform_admin.grant', 'R0 revised, owner ruling 2026-09-27'),
-  ('platform_admin', 'operator.seat.platform_admin.revoke', 'R0 revised, owner ruling 2026-09-27')
+  ('platform_admin', 'operator.seat.platform_admin.revoke', 'R0 revised, owner ruling 2026-09-27'),
+  ('platform_admin', 'autonomy.posture.raise', 'G3 decision 1, owner ruling 2026-09-27'),
+  ('platform_admin', 'tenant.act_as.write', 'G3 decision 6, owner ruling 2026-09-27')
 ON CONFLICT (role, capability) DO NOTHING;
 
 -- ── The one answer ───────────────────────────────────────────────────────────────────────────

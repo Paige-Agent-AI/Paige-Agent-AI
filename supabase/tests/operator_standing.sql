@@ -4,7 +4,7 @@
 -- DATA — adding an operator role, granting and withdrawing a capability are row changes that
 -- change the answer with no code change.
 BEGIN;
-SELECT plan(91);
+SELECT plan(93);
 
 -- ── Grants ──────────────────────────────────────────────────────────────────────────────────
 SELECT ok(NOT has_function_privilege('anon', 'public.operator_standing()', 'EXECUTE'),
@@ -29,16 +29,17 @@ SELECT results_eq(
   'the operator roles are exactly super_admin over platform_admin, and only super_admin holds the unlisted');
 SELECT results_eq(
   $$SELECT capability FROM public.platform_operator_role_capabilities WHERE role = 'platform_admin' ORDER BY 1$$,
-  $$VALUES ('billing.read'::text), ('capability.administer'), ('console.enter'), ('fleet.directory.read'),
-           ('operator.seat.platform_admin.grant'), ('operator.seat.platform_admin.revoke'),
-           ('platform.health.read'), ('tenant.act_as'), ('tenant.provision'), ('tenant.status.set')$$,
-  'platform_admin holds exactly the revised R0 grants');
+  $$VALUES ('autonomy.posture.raise'::text), ('billing.read'), ('capability.administer'), ('console.enter'),
+           ('fleet.directory.read'), ('operator.seat.platform_admin.grant'), ('operator.seat.platform_admin.revoke'),
+           ('platform.health.read'), ('tenant.act_as'), ('tenant.act_as.write'), ('tenant.provision'),
+           ('tenant.status.set')$$,
+  'platform_admin holds exactly the revised R0 grants and the G3 rulings');
 SELECT set_eq(
   $$SELECT capability FROM public.platform_operator_role_capabilities WHERE role = 'super_admin'$$,
   $$SELECT capability FROM public.platform_operator_capabilities$$,
   'super_admin is granted every listed capability explicitly');
-SELECT is((SELECT count(*)::int FROM public.platform_operator_capabilities), 14,
-  'the catalogue lists the fourteen ruled capabilities');
+SELECT is((SELECT count(*)::int FROM public.platform_operator_capabilities), 16,
+  'the catalogue lists the sixteen ruled capabilities');
 SELECT ok(obj_description('public.platform_operator_capabilities'::regclass, 'pg_class')
   LIKE '%DEFAULT RULE: a capability with no row here is held only by an operator role whose holds_unlisted is true (super_admin)%',
   'the catalogue states the default rule where the rows are');
@@ -119,8 +120,10 @@ SELECT ok(public.operator_may('operator.seat.platform_admin.grant'), 'platform_a
 SELECT ok(public.operator_may('operator.seat.platform_admin.revoke'), 'platform_admin may revoke a peer seat');
 SELECT ok(NOT public.operator_may('operator.seat.super_admin.grant'), 'platform_admin may not grant a seat above its own');
 SELECT ok(NOT public.operator_may('operator.seat.super_admin.revoke'), 'platform_admin may not revoke a seat above its own');
-SELECT ok(NOT public.operator_may('autonomy.posture.raise'), 'platform_admin may not raise posture above the ceiling (§67)');
-SELECT ok(NOT public.operator_may('autonomy.rung.renew'), 'platform_admin may not renew a rung (§68)');
+SELECT ok(public.operator_may('autonomy.posture.raise'), 'platform_admin may raise the posture above the ceiling, capped (G3 decision 1)');
+SELECT ok(NOT public.operator_may('autonomy.rung.renew'), 'platform_admin may not re-attest, so the cap stays a cap (G3 decision 1, §68)');
+SELECT ok(NOT public.operator_may('fleet.directory.detail'), 'platform_admin does not see fleet-wide seats, clients or revenue class (G3 decision 2)');
+SELECT ok(public.operator_may('tenant.act_as.write'), 'platform_admin holds the same powers inside a tenant as super_admin (G3 decision 6)');
 SELECT ok(NOT public.operator_may('platform.paige.use'), 'an unlisted capability is refused to platform_admin');
 SELECT ok(NOT public.operator_may('Console.Enter'), 'capabilities are matched exactly, case included');
 SELECT ok(NOT public.operator_may(NULL), 'a NULL capability is refused');

@@ -8,9 +8,11 @@ import {
   WORKSPACE_CHOOSER_PATH,
   clearWorkspaceScopedState,
   forgetWorkspaceEntered,
+  operatorActAsRecorded,
   reachableWorkspaceCount,
 } from "@/lib/auth/workspaceEntry";
 import { GOD_CONSOLE } from "@/lib/auth/operatorTarget";
+import { landAt } from "@/operator/actAs";
 import { shouldOfferAccountPicker } from "@/lib/auth/accountSelection";
 import { allowAccountSwitch } from "@/lib/auth/accountSwitchGuard";
 import { toast } from "sonner";
@@ -133,6 +135,52 @@ function OperatorExitControl() {
     >
       {/* Its own mark: it RETURNS to the platform and ends the act-as, where "Switch workspace"
           beside it leaves for the chooser. The same icon on both read as two doors to one place. */}
+      <CornerUpLeft className="mr-1.5 h-4 w-4" />
+      {leaving ? "Leaving…" : "Exit tenant"}
+    </Button>
+  );
+}
+
+/**
+ * The operator's exit on a destination that could not load its account context — the Solo and
+ * business "Couldn't verify your workspace" screens, which render before any shell (and so before
+ * `OperatorExitControl`) can mount. Offered only when this browser session opened an act-as; the
+ * exit itself is the audited RPC, and the server decides whether the caller may use it.
+ *
+ * No unsaved-work guard: nothing in a shell that never mounted can hold unsaved work. The return
+ * is a full load, because the provider that failed to read here is the one the console needs.
+ */
+export function StrandedOperatorExit() {
+  const { exitOperatorActAs } = useTenantContext();
+  const [offered] = useState(operatorActAsRecorded);
+  const [leaving, setLeaving] = useState(false);
+  const exiting = useRef(false);
+  if (!offered) return null;
+
+  const exit = async () => {
+    if (exiting.current) return;
+    exiting.current = true;
+    setLeaving(true);
+    const exited = await exitOperatorActAs();
+    if (!exited) {
+      exiting.current = false;
+      setLeaving(false);
+      toast.error("Couldn't leave this tenant. You are still acting as it.");
+      return;
+    }
+    clearWorkspaceScopedState();
+    forgetWorkspaceEntered();
+    landAt.go(GOD_CONSOLE);
+  };
+
+  return (
+    <Button
+      data-operator-exit
+      variant="outline"
+      disabled={leaving}
+      onClick={() => void exit()}
+      aria-label="Stop acting as this tenant and return to the platform"
+    >
       <CornerUpLeft className="mr-1.5 h-4 w-4" />
       {leaving ? "Leaving…" : "Exit tenant"}
     </Button>

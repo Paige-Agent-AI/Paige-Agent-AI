@@ -31,6 +31,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { tenantSwitchPersisted } from "@/lib/platform/fleetCommunications";
+import { recordOperatorActAs } from "@/lib/auth/workspaceEntry";
 
 /**
  * #233 — on a GENUINE new sign-in, reset the active tenant to the user's HOME.
@@ -146,6 +147,13 @@ interface TenantContextState {
    */
   agencyShellEnabled: boolean;
   switchTenant: (tenantId: string | null) => Promise<boolean>;
+  /**
+   * End an operator act-as through the audited `operator_exit_tenant`, whatever this provider's own
+   * read concluded. For a destination whose account read failed: there `isPlatformStaff` is still
+   * false, so `switchTenant(null)` would take the member path and record no exit. The server gates
+   * the RPC on `is_platform_operator()`; a non-operator is simply refused.
+   */
+  exitOperatorActAs: () => Promise<boolean>;
   refresh: () => Promise<void>;
 }
 
@@ -456,6 +464,16 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, [load]);
 
+  const exitOperatorActAs = useCallback(async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: rpcError } = await supabase.rpc("operator_exit_tenant" as any);
+    if (rpcError) return false;
+    recordOperatorActAs(null);
+    setActiveTenantId(null);
+    queryClient.invalidateQueries();
+    return true;
+  }, [queryClient]);
+
   const switchTenant = useCallback(async (tenantId: string | null) => {
     const { data: auth } = await supabase.auth.getUser();
     const uid = auth.user?.id;
@@ -476,14 +494,13 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     // so this branch is a convenience, never the authority — a non-operator who
     // reached it would simply be refused (§9/§59).
     if (isPlatformStaff) {
-      const { error: rpcError } = tenantId
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ? await supabase.rpc("operator_enter_tenant" as any, { _tenant: tenantId })
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        : await supabase.rpc("operator_exit_tenant" as any);
+      if (!tenantId) return exitOperatorActAs();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: rpcError } = await supabase.rpc("operator_enter_tenant" as any, { _tenant: tenantId });
       // Same failure contract as the direct write below: a refused or failed switch
       // does NOT move client scope, so client and DB can never disagree (§9).
       if (rpcError) return false;
+      recordOperatorActAs(tenantId);
       setActiveTenantId(tenantId);
       queryClient.invalidateQueries();
       return true;
@@ -503,7 +520,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     // Scope changed for everything — a broad invalidate is correct here (§9).
     queryClient.invalidateQueries();
     return true;
-  }, [queryClient, isPlatformStaff]);
+  }, [queryClient, isPlatformStaff, exitOperatorActAs]);
 
   const activeTenant = tenants.find((t) => t.id === activeTenantId) ?? null;
 
@@ -528,6 +545,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     soloShellEnabled,
     agencyShellEnabled,
     switchTenant,
+    exitOperatorActAs,
     // Always a foreground refresh — wrapped so an event-handler caller (onClick={refresh})
     // can't pass its event as the `background` arg and silently skip the loader/commit.
     refresh: () => load(),

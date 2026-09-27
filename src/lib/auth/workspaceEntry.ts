@@ -282,6 +282,31 @@ export const WORKSPACE_ENTERED_KEY = "paige.workspace.entered";
 export const ACCOUNT_SWITCH_NOTICE_KEY = "paige.accountSwitch.notice";
 
 /**
+ * This browser session opened an operator act-as that has not been exited. Written and cleared only
+ * by the tenant provider, on a successful audited enter or exit. It grants nothing: it decides
+ * whether a destination that could not load its account context still offers the operator the
+ * audited exit, because at that moment the provider cannot tell an operator from a member.
+ */
+export const OPERATOR_ACT_AS_KEY = "paige.operator.actingAs";
+
+export function recordOperatorActAs(tenantId: string | null): void {
+  try {
+    if (tenantId) sessionStorage.setItem(OPERATOR_ACT_AS_KEY, tenantId);
+    else sessionStorage.removeItem(OPERATOR_ACT_AS_KEY);
+  } catch {
+    // Unavailable storage only means a stranded destination offers "Try again" alone.
+  }
+}
+
+export function operatorActAsRecorded(): boolean {
+  try {
+    return Boolean(sessionStorage.getItem(OPERATOR_ACT_AS_KEY));
+  } catch {
+    return false;
+  }
+}
+
+/**
  * A SECOND-CHANCE settlement marker on the URL, for the one case the session
  * record cannot cover: storage that throws.
  *

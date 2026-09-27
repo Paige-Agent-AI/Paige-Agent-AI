@@ -127,6 +127,18 @@ describe("/business/* entry guards", () => {
     // redirect anywhere, and it certainly does not redirect to a Solo root.
     expect(location).toBeNull();
     expect(host.textContent).toContain("Couldn't verify your workspace");
+    // Nobody here opened an act-as, so the operator's exit is not offered.
+    expect(host.querySelector("[data-operator-exit]")).toBeNull();
+  });
+
+  // Codex review of #1547 (2026-09-27): the sub-account entry strands an operator the same way.
+  it("offers the audited exit to an operator stranded here inside an act-as", async () => {
+    sessionStorage.setItem("paige.operator.actingAs", "t1");
+    tc.ctx.accountContextStatus = "error";
+    await renderAt("/business/3855/command-center");
+    expect(host.textContent).toContain("Try again");
+    expect(host.querySelector("[data-operator-exit]")?.textContent).toContain("Exit tenant");
+    sessionStorage.clear();
   });
 
   it("sends a signed-out caller to sign in, carrying where they were going", async () => {

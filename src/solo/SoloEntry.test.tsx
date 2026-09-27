@@ -24,12 +24,14 @@ const tc = vi.hoisted(() => ({
     isPlatformStaff: false,
     activeTenant: null as Tenant | null,
     refresh: async () => {},
+    exitOperatorActAs: (async () => true) as () => Promise<boolean>,
   },
 }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => tc.ctx }));
 vi.mock("@/solo/SoloApp", () => ({ default: () => <div data-mounted="solo-shell" /> }));
 
 import SoloEntry from "./SoloEntry";
+import { landAt } from "@/operator/actAs";
 
 function LocationProbe() {
   const loc = useLocation();
@@ -104,5 +106,45 @@ describe("/solo/* tier gate", () => {
     const { html } = await renderAt("/solo/1971670/command-center");
     expect(html).not.toContain("solo-shell");
     expect(host.textContent).toContain("Couldn't verify your workspace");
+  });
+
+  // Codex review of #1547 (2026-09-27): an operator whose Enter succeeded but whose arrival could
+  // not load its account context was left here with only "Try again" — inside an open act-as.
+  describe("an operator stranded on the verify screen", () => {
+    let go: ReturnType<typeof vi.spyOn>;
+    const exitButton = () =>
+      Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Exit tenant"));
+
+    beforeEach(() => {
+      sessionStorage.clear();
+      tc.ctx.accountContextStatus = "error";
+      tc.ctx.exitOperatorActAs = vi.fn(async () => true);
+      go = vi.spyOn(landAt, "go").mockImplementation(() => {});
+    });
+    afterEach(() => go.mockRestore());
+
+    it("offers the audited exit when this session opened an act-as", async () => {
+      sessionStorage.setItem("paige.operator.actingAs", "t1");
+      await renderAt("/solo/1971670/command-center");
+      expect(exitButton()?.hasAttribute("data-operator-exit")).toBe(true);
+      await act(async () => { exitButton()?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(tc.ctx.exitOperatorActAs).toHaveBeenCalledTimes(1);
+      expect(go).toHaveBeenCalledWith("/operator/fleet/directory");
+    });
+
+    it("stays, and keeps the exit, when the server refuses it", async () => {
+      sessionStorage.setItem("paige.operator.actingAs", "t1");
+      tc.ctx.exitOperatorActAs = vi.fn(async () => false);
+      await renderAt("/solo/1971670/command-center");
+      await act(async () => { exitButton()?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(go).not.toHaveBeenCalled();
+      expect(exitButton()?.hasAttribute("disabled")).toBe(false);
+    });
+
+    it("offers nothing extra to someone who opened no act-as", async () => {
+      await renderAt("/solo/1971670/command-center");
+      expect(host.textContent).toContain("Try again");
+      expect(exitButton()).toBeFalsy();
+    });
   });
 });

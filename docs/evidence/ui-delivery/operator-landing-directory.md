@@ -2,9 +2,9 @@
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: flow-by-flow v2.0.1 read in full; mode Bug or Repair, Quick depth (one constant, reversible); affected flow is a platform operator signing in (operator door or shared sign-in → account chooser → Platform) and landing in the console; Platform Operator milestone slice 2 of 5, coordinator-approved 2026-09-27
-PAIGE_UI_DESIGN: PASS: .agents/skills/paige-ui-design SKILL.md and its routed references read for this milestone; this slice changes a navigation target only — no markup, token, copy or control
-MATERIAL_FLOW_CHANGE: NO: the sign-in steps, chooser, guard and exits are unchanged; only the default view the flow ends on changes, from Fleet → Systems check to Fleet → Directory, which was the intended target all along
-FLOW_PROTOTYPE: NOT_REQUIRED: corrects a stale destination to the view the constant was always meant to name; no step, state or exit added or removed
+PAIGE_UI_DESIGN: PASS: .agents/skills/paige-ui-design SKILL.md and its routed references read for this milestone; Impeccable read and applied (installed .agents/skills/impeccable, upstream https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md): SKILL.md, reference/operate.md and reference/craft-floor.md; checks applied — Operate mode "product loads into a task" (the operator's task on arrival is the tenant list, so the default view is the Directory rather than a diagnostic view: met), "standard navigation patterns" (the landing is an existing canonical console address, no new affordance: met), "inconsistent vocabulary across screens" (no new component, copy or control: not applicable), and `npx impeccable@4.1.0 detect src/lib/auth/operatorTarget.ts` exit 0 with no findings; this slice changes a navigation target only — no markup, token, copy or control
+MATERIAL_FLOW_CHANGE: NO: no screen, state, step, control or exit is added, removed or reordered; the default address the flow ends on was already meant to name the tenant directory, but it was a stale alias the console flagged stale and fell back to Systems check; the fix makes it resolve to the existing Directory view, one click from where it landed before
+FLOW_PROTOTYPE: NOT_REQUIRED: the flow-prototype skill scopes itself to complete flows across screens, states and exits and excludes logic-only changes; this is a one-constant correction of which existing view is the default, with every screen and state unchanged
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: audience is a platform operator at either tier; primary action is to see every tenant immediately after signing in
 VISUAL_DIRECTION: NOT_APPLICABLE: no visual change
 AUTOMATED_EVIDENCE: PASS: new test in src/lib/auth/operatorTarget.test.ts resolves GOD_CONSOLE through the shell's own resolveOperatorAddress and asserts slot fleet, view Directory, not stale, canonical path unchanged — red on the old constant (stale=true), green on the new; AgencyEntry.authorization, ChooseAccount, OperatorEntry, RequireOperator and operatorTarget suites 56/56 green
@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: signing in as either operator tier with no deep link ends o
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: operatorTarget next-allowlist (tested, unchanged); ChooseAccount Platform choice (tested, uses the constant); AgencyEntry platform-staff redirect (tested, expectation updated to the new constant); the landing on the agency side is not otherwise touched
 
-INTERNAL_BUILD_IDENTITY: 9a7ac9129a7f8d5ce7f9ded4abe9c5bd2bf337aa; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=the commit named here carries the whole code and test change; the commit after it adds only this record; vitest, eslint, ci:tsc and harness frames were run on that code
+INTERNAL_BUILD_IDENTITY: 9a7ac9129a7f8d5ce7f9ded4abe9c5bd2bf337aa; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=the commit named here carries the whole code and test change; the commits after it change only this record; vitest, eslint and ci:tsc were run on that code
 RELEASE_CHANNEL: development: pre-merge branch build; production follows merge through the frontend deploy
 RELEASE_CLASSIFICATION: internal-only: Platform Operator console
 CUSTOMER_RELEASE_IDENTITY: none: operator console correction, no customer release
@@ -55,3 +55,5 @@ Sign in → choose Platform → land on the tenant directory. Before, `/operator
 ## Review and limitations
 
 Self-reviewed, lower assurance; the change is one constant with a resolver-backed test. The signed-in landing is `UNVERIFIED` until slice 5.
+
+Codex review on `5ece301`: one P1 upheld and fixed (the record did not cite the Impeccable reading or checks; PAIGE_UI_DESIGN now does). One P1 declined, with the reason recorded above: it asked for MATERIAL_FLOW_CHANGE: YES and a prototype; no screen, state or exit changes, only which existing view the stale default resolves to, and a prototype built after the change would be the post-hoc approval the prototype skill forbids. If the owner rules this change material, the path is an owner waiver in the template's grammar, not a retrofitted prototype.

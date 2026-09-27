@@ -5,7 +5,7 @@
 // went out. This function is the single seam BOTH the UI (ApprovalRow) and Paige
 // (paige-mcp decide_pending_approval) call to actually run an approved action.
 //
-// It loads the approval, authorizes the caller (admin|coach + tenant match), and
+// It loads the approval, authorizes the caller (admin + tenant match), and
 // dispatches by the drafted channel:
 //   • email / SMS  → forwards to the existing `send-message` executor, which
 //     sends and stamps the row approved+sent_at+audit_id (send drives status).
@@ -51,8 +51,7 @@ Deno.serve(async (req) => {
   if (!user) return json(401, { error: "unauthorized" });
 
   const { data: isAdmin } = await admin.rpc("has_role", { _user_id: user.id, _role: "admin" });
-  const { data: isCoach } = await admin.rpc("has_role", { _user_id: user.id, _role: "coach" });
-  if (!isAdmin && !isCoach) return json(403, { error: "forbidden" });
+  if (!isAdmin) return json(403, { error: "forbidden" });
 
   let payload: { approval_id?: string };
   try { payload = await req.json(); } catch { return json(400, { error: "invalid_json" }); }
@@ -70,7 +69,7 @@ Deno.serve(async (req) => {
 
   // Tenant isolation: unless the caller is the platform owner, the approval must
   // belong to a tenant the caller is a member of (defense-in-depth over the
-  // global admin|coach gate). Skip only when the row carries no tenant_id.
+  // global admin gate). Skip only when the row carries no tenant_id.
   const { data: isOwner } = await admin.rpc("is_platform_owner", { _user_id: user.id });
   if (approval.tenant_id && !isOwner) {
     const { data: membership } = await admin

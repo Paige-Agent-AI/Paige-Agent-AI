@@ -8,7 +8,7 @@ export function hasTenantVoiceAuthority(input: {
   if (input.isPlatformOwner) return true;
   return input.membershipTenantId === input.activeTenantId &&
     input.membershipStatus === "active" &&
-    ["owner", "admin", "coach"].includes(input.membershipRole ?? "");
+    ["owner", "admin"].includes(input.membershipRole ?? "");
 }
 
 export type VoiceReadiness =

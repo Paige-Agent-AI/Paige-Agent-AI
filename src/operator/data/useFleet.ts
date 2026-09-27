@@ -90,7 +90,8 @@ export type FleetData = {
    */
   classificationVisible: boolean;
   /**
-   * True when the seat or client read itself FAILED (a timeout, a 5xx). The rows then carry
+   * True when the seat or client read FAILED (a timeout, a 5xx) or came back TRUNCATED at the row
+   * cap (`rowReadComplete`). The rows then carry
    * `seats: 0` / `customers: 0` that were never read, so the surface must treat the counts as
    * unknown — never as zeros to display or grade (§13). See `fleetDetailVisible`.
    */
@@ -120,6 +121,19 @@ export function fleetDetailVisible(isPlatformOwner: boolean | null, readFailed: 
   return isPlatformOwner;
 }
 
+/**
+ * Whether a row read returned EVERY row the server matched. PostgREST caps an unpaginated read at
+ * the project's max-rows and returns the first page without saying so, so per-tenant counts built
+ * from that page would undercount — and could print "no clients" for a tenant whose rows were cut —
+ * the moment the fleet outgrows the cap. The read therefore asks the server for the exact match
+ * count, and a count the page does not cover, or a count the server did not give, is treated as a
+ * failed read: the surface then says the counts could not be confirmed (§13). A server-side grouped
+ * count would remove the cap altogether; that is a backend change, filed rather than made here.
+ */
+export function rowReadComplete(rowsReturned: number, matched: number | null): boolean {
+  return matched !== null && matched <= rowsReturned;
+}
+
 export function useFleet(enabled: boolean): FleetData {
   const [tenants, setTenants] = useState<FleetTenant[]>([]);
   const [classificationVisible, setClassificationVisible] = useState(false);
@@ -137,8 +151,8 @@ export function useFleet(enabled: boolean): FleetData {
       try {
         const [
           { data: rows, error: tErr },
-          { data: members, error: membersErr },
-          { data: clients, error: clientsErr },
+          { data: members, error: membersErr, count: membersMatched },
+          { data: clients, error: clientsErr, count: clientsMatched },
           { data: revenue },
         ] =
           await Promise.all([
@@ -146,8 +160,8 @@ export function useFleet(enabled: boolean): FleetData {
               .from("tenants")
               .select("id, slug, name, status, account_type, parent_tenant_id, plan_offer, trial_ends_at")
               .order("created_at", { ascending: true }),
-            supabase.from("tenant_members").select("tenant_id").eq("status", "active"),
-            supabase.from("clients").select("tenant_id"),
+            supabase.from("tenant_members").select("tenant_id", { count: "exact" }).eq("status", "active"),
+            supabase.from("clients").select("tenant_id", { count: "exact" }),
             // Operator-internal revenue axis. RLS is owner-only, so a scoped platform_admin
             // reads 0 rows and every tenant simply shows no class — a narrower view, never a
             // leak and never a wrong number (§9).
@@ -175,7 +189,11 @@ export function useFleet(enabled: boolean): FleetData {
         // Any row at all proves the read is permitted for this session. None proves nothing
         // either way, so we report it as not-visible rather than as an empty classification.
         setClassificationVisible((revenue ?? []).length > 0);
-        setDetailReadFailed(Boolean(membersErr || clientsErr));
+        setDetailReadFailed(
+          Boolean(membersErr || clientsErr) ||
+            !rowReadComplete((members ?? []).length, membersMatched ?? null) ||
+            !rowReadComplete((clients ?? []).length, clientsMatched ?? null),
+        );
         const classBy = new Map<string, string>(
           ((revenue ?? []) as unknown as Array<{ tenant_id: string; revenue_class: string }>).map(
             (r) => [r.tenant_id, r.revenue_class],

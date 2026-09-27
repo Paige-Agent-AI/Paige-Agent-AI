@@ -178,7 +178,7 @@ const RETIRED_ROLE_REWRITTEN_THROUGH = "20270504000000";
 const SQL_RETIRED_ROLE_READ = new RegExp([
   String.raw`'coach'\s*::\s*(?:public\.)?(?:app_role|tenant_role)\b`,
   String.raw`has_(?:any_|tenant_)?role\s*\([^;]*'coach'`,
-  String.raw`(?:^|[^\w.])(?:\w+\.)?role(?:::text)?\s*(?:=|<>|!=|not\s+in|in|is\s+(?:not\s+)?distinct\s+from|=\s*any|<>\s*all)\s*\(?[^;)]*'coach'`,
+  String.raw`(?:^|[^\w.])(?:\w+\.)?role\)?(?:::\w+)?\)?\s*(?:=|<>|!=|not\s+in|in|is\s+(?:not\s+)?distinct\s+from|=\s*any|<>\s*all)\s*\(?[^;)]*'coach'`,
   String.raw`'coach'[^;]*\]\s*::\s*(?:public\.)?(?:app_role|tenant_role)\[\]`,
 ].join("|"), "i");
 const TS_RETIRED_ROLE = /["'`]coach["'`]/;
@@ -1444,6 +1444,8 @@ export function selfTestCases({ base, baseline }) {
       `CREATE POLICY selftest_rr_eqcast ON public.clients USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'coach'::app_role));`)],
     ["(t) a view comparing a seat to the value", "R7", addSql(
       `CREATE VIEW public.selftest_rr_v AS SELECT tm.user_id FROM public.tenant_members tm WHERE tm.role::text IN ('owner','coach');`)],
+    ["(t) a view written the way Postgres deparses one: ((tm.role)::text = ANY (ARRAY[...'coach'::text]))", "R7", addSql(
+      `CREATE VIEW public.selftest_rr_deparsed AS SELECT tm.user_id FROM public.tenant_members tm WHERE ((tm.role)::text = ANY (ARRAY['owner'::text, 'coach'::text]));`)],
     ["(t) a named refusal re-created so it also reads the value to decide", "R4", (t) => {
       const e = need(baseline.retired_role_sql?.[0], "the baseline has no retired_role_sql entry");
       const key = signatureKey(e.function);

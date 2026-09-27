@@ -43,7 +43,7 @@ CREATE FUNCTION pg_temp.retired_role_reads() RETURNS SETOF text LANGUAGE sql STA
   SELECT what FROM src
    WHERE body ~* ($re$'coach'\s*::\s*(public\.)?(app_role|tenant_role)$re$
                || '|' || $re$has_(any_|tenant_)?role\s*\([^;]*'coach'$re$
-               || '|' || $re$(^|[^\w.])(\w+\.)?role(::text)?\s*(=|<>|!=|not\s+in|in|is\s+(not\s+)?distinct\s+from|=\s*any|<>\s*all)\s*\(?[^;)]*'coach'$re$
+               || '|' || $re$(^|[^\w.])(\w+\.)?role\)?(::\w+)?\)?\s*(=|<>|!=|not\s+in|in|is\s+(not\s+)?distinct\s+from|=\s*any|<>\s*all)\s*\(?[^;)]*'coach'$re$
                || '|' || $re$'coach'[^;]*\]\s*::\s*(public\.)?(app_role|tenant_role)\[\]$re$)
 $fn$;
 

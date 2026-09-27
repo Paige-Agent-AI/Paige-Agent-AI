@@ -3231,3 +3231,21 @@ be run", and it was exactly the thing that needed running.
   rows set to skip asking; every other account had zero to three and defaulted to
   `coalesce(_mode,'confirm')`. The seam repair is what makes a brand-new tenant work with no
   configuration — the configured account was hiding the bug, not demonstrating the cure.
+
+## A replayed database is not production, and the gap hid in the grants (2026-09-27)
+
+- **Every RLS proof run against a rebuilt schema proves something about THAT database.** The
+  rebuild's default privileges differed from production's, so policies were tested against grants
+  production does not hold, and five proofs quietly hand-wrote grants to get past it. The fix was to
+  reproduce production's grants in CI and fail by name where the tree cannot — not to add a sixth
+  workaround.
+- **An unhandled error fails a vitest run whose every test passes.** Grepping only for failed tests
+  misses it; grep for `Errors` / `Unhandled` too. It was in every CI run and in no failure list.
+- **A disabled workflow is absent, and absent is not green.** Records spent a month naming
+  `premerge-migration-proof` as the owner of proofs it never ran. Before writing "proof owed to CI
+  X", confirm X is enabled and ran on that head.
+- **Check the worktree is clean before calling a run a baseline.** An uncommitted patch survived a
+  detached checkout and made a broken script look fixed upstream.
+- **A probe version computed with date arithmetic is not always older.** Migration versions here are
+  not always real dates (hour 35, day 48); the "out-of-order" probe rolled forward and tested
+  nothing. Integer arithmetic plus an assertion that the probe actually took the path.

@@ -8,10 +8,12 @@ import { describe, expect, it } from "vitest";
 
 const read = (path: string) => readFileSync(resolve(__dirname, "../../..", path), "utf8");
 
+// Comments are skipped, and so is the one line that names the retired role in order to refuse it.
 const codeLines = (path: string) =>
   read(path)
     .split("\n")
-    .filter((line) => !line.trim().startsWith("//") && !line.trim().startsWith("*"));
+    .filter((line) => !line.trim().startsWith("//") && !line.trim().startsWith("*"))
+    .filter((line) => !/^const RETIRED_ROLES = /.test(line.trim()));
 
 // The role written into user_roles or an invitation, compared, listed, or offered.
 const ROLE_USE =
@@ -45,7 +47,8 @@ describe("the server grants and offers the retired title role nowhere", () => {
   it("accepting an invitation that carries it is refused before any role is written", () => {
     const source = read("supabase/functions/accept-invite/index.ts");
     const refusal = source.search(/RETIRED_ROLES\.has\(\s*team\.role\s*\)/);
-    const grant = source.indexOf('.from("user_roles")');
+    const grant = source.search(/\.upsert\(\s*\{\s*user_id:\s*authUser\.id,\s*role:\s*team\.role\s*\}/);
+    expect(grant).toBeGreaterThan(-1);
     expect(refusal).toBeGreaterThan(-1);
     expect(refusal).toBeLessThan(grant);
   });

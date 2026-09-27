@@ -1139,26 +1139,36 @@ mcp.tool("assign_coach", {
 
 // ---------- Coach Ops ----------
 mcp.tool("list_coaches", {
-  description: "List everyone who has clients assigned to them, with their profile metadata (specialties, capacity, accepting-new-clients) and live client counts. \"Coach\" is a title, so this is decided by assignment, never by a role.",
+  description: "List everyone in your business who has clients assigned to them, directly or through an active client relationship, with their profile metadata (specialties, capacity, accepting-new-clients) and client counts. \"Coach\" is a title, so this is decided by assignment, never by a role. active_clients/total_clients count direct assignments; relationship_clients counts active relationships, which may cover some of the same clients.",
   inputSchema: z.object({
-    accepting_only: z.boolean().optional().describe("If true, return only coaches accepting new clients."),
+    accepting_only: z.boolean().optional().describe("If true, return only people accepting new clients."),
     specialty: z.string().optional().describe("Filter by a single specialty tag, e.g. 'personal_credit'."),
   }),
   handler: async ({ accepting_only, specialty }) => {
-    const { data: assigned, error: assignedErr } = await admin
-      .from("clients")
-      .select("assigned_coach_user_id")
-      .not("assigned_coach_user_id", "is", null);
-    if (assignedErr) return err(assignedErr.message);
-    const ids = [...new Set((assigned ?? []).map((r: any) => r.assigned_coach_user_id as string))];
-    if (!ids.length) return ok({ items: [] });
-    const [profilesRes, clientsRes] = await Promise.all([
-      admin.from("profiles").select("user_id, full_name, coach_specialties, coach_capacity, coach_accepting_clients, coach_bio, coach_timezone, suspended_at").in("user_id", ids),
-      admin.from("clients").select("assigned_coach_user_id, status").in("assigned_coach_user_id", ids),
+    // Scoped to the caller's own business: an assignment in another business is never listed.
+    const tenantId = await actorTenantId();
+    if (!tenantId) return err("tenant_not_resolved");
+    const [directRes, relationshipRes] = await Promise.all([
+      admin.from("clients").select("assigned_coach_user_id, status")
+        .eq("tenant_id", tenantId).not("assigned_coach_user_id", "is", null),
+      admin.from("coach_clients").select("coach_user_id")
+        .eq("tenant_id", tenantId).eq("status", "active"),
     ]);
+    if (directRes.error) return err(directRes.error.message);
+    if (relationshipRes.error) return err(relationshipRes.error.message);
+    const direct = (directRes.data ?? []) as Array<{ assigned_coach_user_id: string; status: string | null }>;
+    const relationships = (relationshipRes.data ?? []) as Array<{ coach_user_id: string }>;
+    const ids = [...new Set([
+      ...direct.map((c) => c.assigned_coach_user_id),
+      ...relationships.map((r) => r.coach_user_id),
+    ])];
+    if (!ids.length) return ok({ items: [] });
+    const profilesRes = await admin.from("profiles")
+      .select("user_id, full_name, coach_specialties, coach_capacity, coach_accepting_clients, coach_bio, coach_timezone, suspended_at")
+      .in("user_id", ids);
     const items = ids.map((id) => {
       const p: any = (profilesRes.data || []).find((x: any) => x.user_id === id) || {};
-      const assigned = (clientsRes.data || []).filter((c: any) => c.assigned_coach_user_id === id);
+      const assigned = direct.filter((c) => c.assigned_coach_user_id === id);
       return {
         user_id: id,
         full_name: p.full_name ?? null,
@@ -1168,8 +1178,9 @@ mcp.tool("list_coaches", {
         bio: p.coach_bio ?? null,
         timezone: p.coach_timezone ?? null,
         suspended: !!p.suspended_at,
-        active_clients: assigned.filter((c: any) => (c.status ?? "active") === "active").length,
+        active_clients: assigned.filter((c) => (c.status ?? "active") === "active").length,
         total_clients: assigned.length,
+        relationship_clients: relationships.filter((r) => r.coach_user_id === id).length,
       };
     }).filter((c) => {
       if (accepting_only && !c.accepting_clients) return false;

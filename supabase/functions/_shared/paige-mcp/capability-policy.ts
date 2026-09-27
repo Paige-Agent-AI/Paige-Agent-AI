@@ -191,7 +191,7 @@ export const MCP_CAPABILITY_POLICY: Readonly<Record<string, McpCapability>> = {
     canonical: "coach_roster",
     effect: "read",
     category: "read",
-    evidence: "index.ts:1128-1160 — three `.select()` calls (user_roles 1112, profiles + clients in Promise.all 1116-1117) then in-memory aggregation. No insert/update/delete/rpc/fetch, no audit().",
+    evidence: "index.ts:1141-1192 list_coaches — resolves actorTenantId(), then three `.select()` calls scoped to that tenant (clients and coach_clients in Promise.all, then profiles by the resulting ids) and in-memory aggregation. No insert/update/delete/rpc/fetch, no audit().",
     paigeHome: false,
   },
   list_communication_log: {

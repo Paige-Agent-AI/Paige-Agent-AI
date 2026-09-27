@@ -35,7 +35,7 @@ ACCEPTANCE_CRITERIA: no grant path offers or writes the retired role, proven by 
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: grant_tenant_member_role and the tenant seat value are left to slice 4; no RLS policy changes; no denial-letter or business-certification policy is touched
 
-INTERNAL_BUILD_IDENTITY: 36f09fe4a1febecafb9c24cd283c49a0d27d6919; deployment=none; environment=development; migrations=PROOF_OWED(20270507000000 applies on merge through deploy-migrations.yml and is checked after merge); edge=PROOF_OWED(accept-invite, handle-inbound-webhook, paige-ai-chat, paige-mcp and send-admin-invitation deploy on merge through deploy-edge-functions.yml and are checked after merge); evidence=PR verify run on the implementation head (this SHA), red run on e1c6a4288a93edd4d2a492b6ef02d465629027dd
+INTERNAL_BUILD_IDENTITY: a9b34d8bb7add10fbdada5bc735de832aef70bc7; deployment=none; environment=development; migrations=PROOF_OWED(20270507000000 applies on merge through deploy-migrations.yml and is checked after merge); edge=PROOF_OWED(accept-invite, handle-inbound-webhook, paige-ai-chat, paige-mcp and send-admin-invitation deploy on merge through deploy-edge-functions.yml and are checked after merge); evidence=PR verify run on the implementation head (this SHA), red run on e1c6a4288a93edd4d2a492b6ef02d465629027dd
 RELEASE_CHANNEL: development: pre-merge branch build; production follows merge
 RELEASE_CLASSIFICATION: internal-only: permission hardening; visible changes are one fewer option in pickers, one fewer legend row, and invite defaults
 CUSTOMER_RELEASE_IDENTITY: none: internal-only hardening, no customer release

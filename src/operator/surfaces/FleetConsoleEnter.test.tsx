@@ -116,4 +116,24 @@ describe("FleetConsole Enter — the act-as lands or does not begin", () => {
     expect(h.switchTenant).toHaveBeenCalledTimes(1);
     expect(go).toHaveBeenCalledTimes(1);
   });
+
+  // Review finding (2026-09-27): a full load does not unload the page at once, so a press after the
+  // landing began would have run a second audited enter.
+  it("records nothing more once the landing has begun", async () => {
+    const enter = await render();
+    await act(async () => { enter("Solo Co")?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+    await act(async () => { enter("Solo Co")?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+    await act(async () => { enter("Big Agency")?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+    expect(h.switchTenant).toHaveBeenCalledTimes(1);
+    expect(go).toHaveBeenCalledTimes(1);
+  });
+
+  it("leaves the arrival notice for the tenant's shell to show", async () => {
+    sessionStorage.clear();
+    const enter = await render();
+    await act(async () => { enter("Solo Co")?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+    expect(sessionStorage.getItem("paige.accountSwitch.notice")).toBe(
+      "Acting as Solo Co. Everything you do here is recorded.",
+    );
+  });
 });

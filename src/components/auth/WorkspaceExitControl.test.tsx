@@ -160,6 +160,9 @@ describe("WorkspaceExitControl", () => {
     it("shows Exit tenant, and keeps Switch workspace beside it", async () => {
       const { button, exit } = await render();
       expect(exit()).toBeTruthy();
+      // The shell keeps exactly this control visible on a phone (tenant-command-center-shell.css).
+      expect(exit()?.hasAttribute("data-operator-exit")).toBe(true);
+      expect(button?.hasAttribute("data-operator-exit")).toBe(false);
       expect(exit()?.getAttribute("aria-label")).toBe("Stop acting as Workspace a and return to the platform");
       expect(button).toBeTruthy();
     });

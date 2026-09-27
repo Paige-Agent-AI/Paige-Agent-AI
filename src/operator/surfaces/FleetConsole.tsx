@@ -2,7 +2,11 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { useTenantContext } from "@/hooks/useTenantContext";
-import { clearWorkspaceScopedState, rememberWorkspaceEntered } from "@/lib/auth/workspaceEntry";
+import {
+  ACCOUNT_SWITCH_NOTICE_KEY,
+  clearWorkspaceScopedState,
+  rememberWorkspaceEntered,
+} from "@/lib/auth/workspaceEntry";
 import { landAt, operatorLandingFor } from "@/operator/actAs";
 import { fleetDetailVisible, isInternal, useFleet, type FleetTenant } from "@/operator/data/useFleet";
 import { STATUS_META, trialDaysLeft, type TenantStatus } from "@/lib/platform/tenantLifecycle";
@@ -366,6 +370,7 @@ export default function FleetConsole({ isPlatformOwner }: { isPlatformOwner: boo
         return;
       }
       entering.current = true;
+      let leaving = false;
       try {
         const entered = await switchTenant(tenant.id);
         if (!entered) {
@@ -375,9 +380,19 @@ export default function FleetConsole({ isPlatformOwner }: { isPlatformOwner: boo
         // Nothing from the console may render under the tenant's heading.
         clearWorkspaceScopedState();
         rememberWorkspaceEntered(tenant.id);
+        // The toast would die with this page, so the tenant's shell says it on arrival
+        // (WorkspaceExitControl drains this key once): the operator is told the act-as is recorded.
+        try {
+          sessionStorage.setItem(ACCOUNT_SWITCH_NOTICE_KEY, `Acting as ${tenant.name}. Everything you do here is recorded.`);
+        } catch {
+          // Storage unavailable: the Exit tenant control in the header still says where they are.
+        }
+        leaving = true;
         landAt.go(landing.root);
       } finally {
-        entering.current = false;
+        // Held once the landing has begun: a full load does not unload this page at once, and a
+        // second press in that gap would record a second entry.
+        if (!leaving) entering.current = false;
       }
     },
     [contextTenants, switchTenant],

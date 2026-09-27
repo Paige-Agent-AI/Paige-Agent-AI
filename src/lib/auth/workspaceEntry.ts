@@ -275,6 +275,13 @@ export function workspaceRootForTenant(tenant: {
 export const WORKSPACE_ENTERED_KEY = "paige.workspace.entered";
 
 /**
+ * A one-time notice for the workspace a person just arrived in. The page that switched cannot show
+ * it (a full load ends that page), so the destination's account control drains it once on mount.
+ * The operator act-as uses it to say, on arrival, that the session is recorded.
+ */
+export const ACCOUNT_SWITCH_NOTICE_KEY = "paige.accountSwitch.notice";
+
+/**
  * A SECOND-CHANCE settlement marker on the URL, for the one case the session
  * record cannot cover: storage that throws.
  *

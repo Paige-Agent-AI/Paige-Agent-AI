@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import {
+  ACCOUNT_SWITCH_NOTICE_KEY,
   WORKSPACE_CHOOSER_PATH,
   clearWorkspaceScopedState,
   forgetWorkspaceEntered,
@@ -114,6 +115,7 @@ function OperatorExitControl() {
 
   return (
     <Button
+      data-operator-exit
       variant="outline"
       size="sm"
       disabled={leaving}
@@ -137,9 +139,9 @@ function MemberExitControl() {
   // still delivered once, rather than lingering in session storage forever.
   useEffect(() => {
     try {
-      const notice = sessionStorage.getItem("paige.accountSwitch.notice");
+      const notice = sessionStorage.getItem(ACCOUNT_SWITCH_NOTICE_KEY);
       if (!notice) return;
-      sessionStorage.removeItem("paige.accountSwitch.notice");
+      sessionStorage.removeItem(ACCOUNT_SWITCH_NOTICE_KEY);
       toast.success(notice);
     } catch {
       // Feedback is best-effort when session storage is unavailable.

@@ -18,6 +18,14 @@ REDUCED_MOTION: PASS: the replacement spinner uses the same animate-spin utility
 STATE_COVERAGE: PASS: admin, platform, operating-role and client states unchanged; the retired-role-only state resolves as read-only and unassignable
 TRUTHFUL_STATE_LABELS: PASS: the Solo shell's non-owner label value is now member; the visible text stays "Team workspace"
 SOLO_UI: YES: the Solo shell role label and the relationships workspace used in Solo change as described; no Solo layout or copy changes
+SOLO_1536X770_PAIGE_CLOSED: NOT_APPLICABLE: no layout, spacing or visible copy change in the Solo shell or the relationships workspace at any viewport, with PAIGE open or closed; the shell label text stays "Team workspace" and admins see the same controls; the only visual change is the client dashboard's loading spinner, which is not a Solo surface
+SOLO_1536X770_PAIGE_OPEN: NOT_APPLICABLE: no layout, spacing or visible copy change in the Solo shell or the relationships workspace at any viewport, with PAIGE open or closed; the shell label text stays "Team workspace" and admins see the same controls; the only visual change is the client dashboard's loading spinner, which is not a Solo surface
+SOLO_1366X768_PAIGE_CLOSED: NOT_APPLICABLE: no layout, spacing or visible copy change in the Solo shell or the relationships workspace at any viewport, with PAIGE open or closed; the shell label text stays "Team workspace" and admins see the same controls; the only visual change is the client dashboard's loading spinner, which is not a Solo surface
+SOLO_1366X768_PAIGE_OPEN: NOT_APPLICABLE: no layout, spacing or visible copy change in the Solo shell or the relationships workspace at any viewport, with PAIGE open or closed; the shell label text stays "Team workspace" and admins see the same controls; the only visual change is the client dashboard's loading spinner, which is not a Solo surface
+SOLO_1024X768_PAIGE_CLOSED: NOT_APPLICABLE: no layout, spacing or visible copy change in the Solo shell or the relationships workspace at any viewport, with PAIGE open or closed; the shell label text stays "Team workspace" and admins see the same controls; the only visual change is the client dashboard's loading spinner, which is not a Solo surface
+SOLO_1024X768_PAIGE_OPEN: NOT_APPLICABLE: no layout, spacing or visible copy change in the Solo shell or the relationships workspace at any viewport, with PAIGE open or closed; the shell label text stays "Team workspace" and admins see the same controls; the only visual change is the client dashboard's loading spinner, which is not a Solo surface
+SOLO_900X1000_PAIGE_CLOSED: NOT_APPLICABLE: no layout, spacing or visible copy change in the Solo shell or the relationships workspace at any viewport, with PAIGE open or closed; the shell label text stays "Team workspace" and admins see the same controls; the only visual change is the client dashboard's loading spinner, which is not a Solo surface
+SOLO_900X1000_PAIGE_OPEN: NOT_APPLICABLE: no layout, spacing or visible copy change in the Solo shell or the relationships workspace at any viewport, with PAIGE open or closed; the shell label text stays "Team workspace" and admins see the same controls; the only visual change is the client dashboard's loading spinner, which is not a Solo surface
 UNVERIFIED: authenticated browser behavior for a person holding only the retired role, because none exists on production and no test account holds it
 
 OWNER_INTENT: coach is not to exist as power anywhere in the platform; a title describes, it never authorizes
@@ -27,7 +35,7 @@ ACCEPTANCE_CRITERIA: no gate, staff check, assignee filter or shell label in the
 MOTION_PURPOSE: NONE: the spinner keeps its existing loading purpose
 PROTECTED_SEAMS: server-side authorization is unchanged by this PR (policies and functions were retired in 20270502000000, 20270503000000 and 20270504000000)
 
-INTERNAL_BUILD_IDENTITY: pending-head; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=PR verify runs on the red commit and on the fix head
+INTERNAL_BUILD_IDENTITY: 53e4f97271ca29a8f41a2ae5c8626550565fe85c; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=PR 1515 verify run on the red commit (this SHA) and on the fix head
 RELEASE_CHANNEL: development: pre-merge branch build; production follows merge
 RELEASE_CLASSIFICATION: internal-only: permission hardening with no customer-visible change beyond the spinner drawing
 CUSTOMER_RELEASE_IDENTITY: none: internal-only hardening, no customer release

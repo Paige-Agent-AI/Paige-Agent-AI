@@ -3040,10 +3040,9 @@ console.log('\n24. proposal authority requires proven current scope and durable 
 // ── 25. THE COMMS / CRM TOOL GATE — Super Admin admitted, platform_admin NOT, others unchanged ──
 //
 // `paige-ai-chat` gates the eight `comms_*` tools (with the CRM operator tools) on
-// `roles.includes("admin") || roles.includes("coach")`. A God-tier Super Admin's `user_roles`
-// row is `super_admin` — neither — so every comms tool refused with "restricted to admins and
-// coaches". Slice B admits super_admin WITHOUT widening to `platform_admin` (a distinct role
-// string) or any tenant role. These drive the REAL handler.
+// `roles.includes("admin") || roles.includes("super_admin")`. Slice B admitted super_admin WITHOUT
+// widening to `platform_admin` (a distinct role string) or any tenant role; the retired coach role
+// was then removed from the gate (coach removal, slice 1b). These drive the REAL handler.
 //
 // Observables: an ADMITTED `comms_connection_summary` (acting INSIDE a tenant) reaches its
 // readiness RPC (`tenant_comms_readiness` in rec.rpc); a DENIED one never does and the gate refusal
@@ -3053,7 +3052,7 @@ console.log('\n24. proposal authority requires proven current scope and durable 
 // documented `tenant_not_resolved`, never an opaque "Unknown error" from the readiness RAISE.
 console.log("\ncomms/CRM tool gate — Super Admin admitted, platform_admin denied, no widening");
 {
-  const GATE_REFUSAL = "restricted to admins and coaches";
+  const GATE_REFUSAL = "restricted to admins";
   const COMMS_THREAD = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
   const commsRpcs = {
     // Clear the EARLIER client-seat gate (:7532) so the ROLE gate (:8888) — the thing Slice B
@@ -3091,8 +3090,8 @@ console.log("\ncomms/CRM tool gate — Super Admin admitted, platform_admin deni
   assert("25.3 a tenant admin is still admitted (unchanged)",
     readinessRan(admin) && !refused(admin), JSON.stringify({ readiness: readinessRan(admin), refused: refused(admin) }));
   const coach = await driveGate("coach");
-  assert("25.4 a coach is still admitted (unchanged)",
-    readinessRan(coach) && !refused(coach), JSON.stringify({ readiness: readinessRan(coach), refused: refused(coach) }));
+  assert("25.4 the retired coach role is denied",
+    !readinessRan(coach) && refused(coach), JSON.stringify({ readiness: readinessRan(coach), refused: refused(coach) }));
 
   const member = await driveGate("member");
   assert("25.5 a tenant member is denied", !readinessRan(member) && refused(member),

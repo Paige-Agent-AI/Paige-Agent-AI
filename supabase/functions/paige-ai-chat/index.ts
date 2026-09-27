@@ -3271,7 +3271,7 @@ When you execute a write-back:
 DO NOT call update_client_data for:
 - Casual mentions without clear intent to store — e.g. "I'm thinking about getting a virtual office" is NOT an update
 - Sensitive fields like credit scores, SSN, or financial data — those are never writable through chat
-- Deleting accounts — Paige cannot delete records, only admins and coaches can
+- Deleting accounts — Paige cannot delete records, only admins can
 === END WRITE-BACK RULES ===
 
 === ACCOUNT MANAGEMENT & CLEANUP RULES ===
@@ -10019,7 +10019,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             toolResults.push({
               tool_call_id: tc.id,
               role: "tool",
-              content: JSON.stringify({ success: false, error: "CRM operator tools are restricted to admins and coaches." }),
+              content: JSON.stringify({ success: false, error: "CRM operator tools are restricted to admins." }),
             });
             continue;
           }

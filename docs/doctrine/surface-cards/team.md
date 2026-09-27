@@ -57,7 +57,7 @@ approval strength.** Applying it here would not have hardened the Team tools, it
 withdrawn PAIGE's ability to help an owner run their team, which is the opposite of the intent.
 `high` is the setting that means *she can do it, and only after you approve this exact call*.
 
-**`team_set_work_profile` stays `ordinary`**, because it changes only job title and
+**`team_set_work_profile` stays `ordinary`**, because it changes only title and
 responsibilities and cannot alter access. It still requires the normal compact confirmation and
 ordinary domain authorization. **It must never be represented as a permission change** — the RPC
 writes two text columns and cannot reach `permission`, and any copy suggesting otherwise is false.

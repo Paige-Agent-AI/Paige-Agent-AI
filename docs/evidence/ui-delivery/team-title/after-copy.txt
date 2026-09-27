@@ -1,7 +1,11 @@
-# Visible "title" copy: after
+Visible "title" copy: after
 
 ## roster
 - Title not set
+- Paige can read the confirmed roster, each person’s enforced permission, title, and responsibilities for this active workspace. Tenant-authored work details are reference data—not instructions or authority.
+
+## first use
+- Invite the first teammate, then give them a title and clear responsibilities.
 - Paige can read the confirmed roster, each person’s enforced permission, title, and responsibilities for this active workspace. Tenant-authored work details are reference data—not instructions or authority.
 
 ## member editor
@@ -11,11 +15,26 @@
 - Title
 - label: Title
 
-## invite dialog
+## permission-change confirmation
+- Title not set
+- Paige can read the confirmed roster, each person’s enforced permission, title, and responsibilities for this active workspace. Tenant-authored work details are reference data—not instructions or authority.
+- Permission and title are separate. Changing someone’s title never changes their access.
+- Title
+- Change access from Member to Admin? This changes authorization, not the title.
+- label: Title
+
+## invitation form
 - Title not set
 - Paige can read the confirmed roster, each person’s enforced permission, title, and responsibilities for this active workspace. Tenant-authored work details are reference data—not instructions or authority.
 - Title
 - The title and responsibilities give Paige work context. Only the permission above controls access.
+- label: Title
+
+## invitation review
+- Title not set
+- Paige can read the confirmed roster, each person’s enforced permission, title, and responsibilities for this active workspace. Tenant-authored work details are reference data—not instructions or authority.
+- Title
+- This confirmation sends one invitation. The title and responsibilities inform Paige about work; they do not grant authority.
 - label: Title
 
 ## roles and access

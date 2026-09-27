@@ -1191,18 +1191,6 @@ mcp.tool("list_coaches", {
   },
 });
 
-mcp.tool("remove_coach_role", {
-  description: "Revoke the 'coach' role. Blocked if the coach still has active clients — reassign them first via assign_coach or bulk_assign_clients_to_coach.",
-  inputSchema: z.object({ user_id: z.string() }),
-  annotations: { destructiveHint: true },
-  handler: async ({ user_id }) => {
-    const { data, error } = await admin.rpc("admin_remove_coach_role", { _user_id: user_id });
-    if (error) return err(error.message);
-    await audit("remove_coach_role", "user", user_id, { result: data });
-    return ok(data);
-  },
-});
-
 mcp.tool("update_coach_profile", {
   description: "Update a coach's specialties, capacity, accepting-new-clients toggle, bio, or timezone. Omitted fields are left unchanged.",
   inputSchema: z.object({
@@ -5164,7 +5152,6 @@ const TOOL_SCOPE: Record<string, Scope> = {
   send_invoice: "crm.write",
   // Coach Ops
   list_coaches: "admin.read",
-  remove_coach_role: "admin.delete",     // Tenant Owner only (permanent role removal)
   update_coach_profile: "admin.write",
   bulk_assign_clients_to_coach: "admin.write",
   get_coach_performance: "admin.read",

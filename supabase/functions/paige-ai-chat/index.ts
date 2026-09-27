@@ -13465,7 +13465,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         nav_pull_business_credit: "paige_business_credit_profiles",
         smartcredit_pull_snapshot: "paige_owner_credit_snapshots",
         coach_update_profile: "profiles",
-        coach_revoke_role_globally: "user_roles",
         team_invite_mint: "invitations",
         agency_create_subaccount: "tenants", tenant_create: "tenants",
         tenant_set_status: "tenants", tenant_set_features: "tenants",

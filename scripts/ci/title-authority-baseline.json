@@ -126,11 +126,6 @@
       "reason": "A refusal: the set of role-name literals that may never be used as an owner-grantable capability permission."
     },
     {
-      "path": "supabase/functions/_shared/paige-mcp/capability-policy.ts",
-      "fingerprint": "008539de01f9762e",
-      "reason": "Evidence text for the operator tool that REMOVES the retired role from a person; a removal path, which goes with the last rows holding the value."
-    },
-    {
       "path": "supabase/functions/accept-invite/index.ts",
       "fingerprint": "49fb077635d7e0f0",
       "reason": "A refusal: RETIRED_ROLES lists the values an invitation may not carry; the invitation is refused before any role is written."
@@ -139,11 +134,6 @@
       "path": "supabase/functions/paige-ai-chat/index.ts",
       "fingerprint": "0a192c7d43afdffd",
       "reason": "The default assignment SEAT label passed to assign_contact (p_role), a data value naming which seat an assignment fills; it grants nothing and reads no role."
-    },
-    {
-      "path": "supabase/functions/paige-mcp/index.ts",
-      "fingerprint": "1efcd4e6ead6a1fc",
-      "reason": "Description of the operator tool that REMOVES the retired role from a person; a removal path, which goes with the last rows holding the value."
     }
   ]
 }

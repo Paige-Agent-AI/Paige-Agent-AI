@@ -74,10 +74,9 @@ SELECT is((SELECT coalesce(string_agg(p.proname, '; ' ORDER BY p.proname), '')
              FROM pg_proc p
             WHERE p.pronamespace = 'public'::regnamespace AND p.prokind = 'f'
               -- The grant paths are the next slice.
-              AND p.proname NOT IN ('accept_invitation', 'admin_bulk_assign_coach', 'admin_remove_coach_role',
+              AND p.proname NOT IN ('accept_invitation', 'admin_bulk_assign_coach',
                                     'assignment_role_for', 'auto_enroll_affiliate', 'grant_tenant_member_role',
                                     'map_app_role_to_tenant_role', 'map_tenant_role_to_app_role',
-                                    'revoke_platform_access', 'revoke_tenant_member_role',
                                     'sync_user_role_to_tenant_member', 'reassign_coach_clients',
                                     -- A finance function, with the finance slice.
                                     'delete_credit_report_upload')

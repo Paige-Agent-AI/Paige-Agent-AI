@@ -17,9 +17,14 @@ describe("the removal paths for the retired title role are gone", () => {
     for (const path of [
       "supabase/functions/_shared/paige-mcp/capability-policy.ts",
       "supabase/functions/_shared/action-risk.ts",
-      "scripts/ci/receipt-coverage-ledger.json",
+      "supabase/functions/paige-ai-chat/index.ts",
     ]) {
       expect(read(path), path).not.toMatch(/remove_coach_role|coach_revoke_role_globally/);
     }
+    // The ledger's live entries only; its seeded list is a frozen record of the first seeding.
+    const ledger = JSON.parse(read("scripts/ci/receipt-coverage-ledger.json")) as {
+      entries: Array<{ tool: string }>;
+    };
+    expect(ledger.entries.map((e) => e.tool)).not.toContain("coach_revoke_role_globally");
   });
 });

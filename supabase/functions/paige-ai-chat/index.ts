@@ -3272,7 +3272,7 @@ When you execute a write-back:
 DO NOT call update_client_data for:
 - Casual mentions without clear intent to store — e.g. "I'm thinking about getting a virtual office" is NOT an update
 - Sensitive fields like credit scores, SSN, or financial data — those are never writable through chat
-- Deleting accounts — Paige cannot delete records, only admins and coaches can
+- Deleting accounts — Paige cannot delete records, only admins can
 === END WRITE-BACK RULES ===
 
 === ACCOUNT MANAGEMENT & CLEANUP RULES ===
@@ -4557,7 +4557,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       try {
         const { data } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
         const roles = (data || []).map((r: any) => r.role);
-        ownerOpsEligibleCache = roles.includes("admin") || roles.includes("coach") || roles.includes("super_admin");
+        ownerOpsEligibleCache = roles.includes("admin") || roles.includes("super_admin");
       } catch {
         ownerOpsEligibleCache = false;
       }
@@ -5175,11 +5175,10 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
         .select("role")
         .eq("user_id", user.id);
       const roles = (roleRows || []).map((r: any) => r.role);
-      isOperator = roles.includes("admin") || roles.includes("coach");
+      isOperator = roles.includes("admin");
       // A short, human role phrase for the identity line (#139): she should know
       // WHO she's talking to and in WHAT capacity, not just their name.
-      operatorRoleLabel = roles.includes("admin") ? "an admin/owner"
-        : roles.includes("coach") ? "a coach" : "";
+      operatorRoleLabel = roles.includes("admin") ? "an admin/owner" : "";
     } catch (e) {
       console.warn("[paige-ai-chat] role lookup failed:", e);
     }
@@ -10017,12 +10016,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // role string here is the same one `is_platform_owner()`/`is_super_admin()` gate on, and
           // `platform_admin` is a DISTINCT string that stays denied. Server-derived from the JWT
           // (user.id) — a caller-supplied role can never reach this array.
-          const allowed = N8N_MANAGEMENT_TOOL_NAMES.has(tc.function.name) || roles.includes("admin") || roles.includes("coach") || roles.includes("super_admin");
+          const allowed = N8N_MANAGEMENT_TOOL_NAMES.has(tc.function.name) || roles.includes("admin") || roles.includes("super_admin");
           if (!allowed) {
             toolResults.push({
               tool_call_id: tc.id,
               role: "tool",
-              content: JSON.stringify({ success: false, error: "CRM operator tools are restricted to admins and coaches." }),
+              content: JSON.stringify({ success: false, error: "CRM operator tools are restricted to admins." }),
             });
             continue;
           }
@@ -12090,9 +12089,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               const { data: roleRows } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
               const roles = (roleRows || []).map((r: any) => r.role);
               const isAdmin = roles.includes("admin");
-              const isCoach = roles.includes("coach");
-              if (!(isAdmin || isCoach)) {
-                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Improvement proposals are restricted to admins and coaches.", note: "Nothing was filed. Tell the operator plainly you could not file this and nothing was recorded — do NOT say it was filed or logged." }) });
+              if (!isAdmin) {
+                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Improvement proposals are restricted to admins.", note: "Nothing was filed. Tell the operator plainly you could not file this and nothing was recorded — do NOT say it was filed or logged." }) });
                 continue;
               }
               if (tc.function.name === "improvement_decide" && !isAdmin) {
@@ -12503,13 +12501,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             });
           }
         } else if (tc.function.name === "list_subagents" || tc.function.name === "delegate_to_subagent") {
-          // Section 18: Orchestrator delegation. Role gate to admin/coach only.
+          // Section 18: Orchestrator delegation. Role gate to admin only.
           try {
             const { data: roleRows } = await supabase
               .from("user_roles").select("role").eq("user_id", user.id);
             const roles = (roleRows || []).map((r: any) => r.role);
-            if (!(roles.includes("admin") || roles.includes("coach"))) {
-              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Sub-agent delegation is restricted to admins and coaches." }) });
+            if (!roles.includes("admin")) {
+              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Sub-agent delegation is restricted to admins." }) });
               continue;
             }
             const args = JSON.parse(tc.function.arguments || "{}");
@@ -12542,8 +12540,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             const { data: roleRows } = await supabase
               .from("user_roles").select("role").eq("user_id", user.id);
             const roles = (roleRows || []).map((r: any) => r.role);
-            if (!(roles.includes("admin") || roles.includes("coach"))) {
-              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Creating new team specialists is restricted to admins and coaches." }) });
+            if (!roles.includes("admin")) {
+              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Creating new team specialists is restricted to admins." }) });
               continue;
             }
             const args = JSON.parse(tc.function.arguments || "{}");
@@ -12610,13 +12608,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // Propose→confirm: draft a consequential outbound action and FILE it as a
           // pending approval. Never sends here — the operator approves in the Live
           // desk, which runs execute-approval → send-message. Outbound comms are
-          // gated to admin|coach, matching send-message and the CRM operator tools.
+          // gated to admin, matching send-message and the CRM operator tools.
           try {
             const { data: roleRows } = await supabase
               .from("user_roles").select("role").eq("user_id", user.id);
             const roles = (roleRows || []).map((r: any) => r.role);
-            if (!(roles.includes("admin") || roles.includes("coach"))) {
-              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Proposing outbound client messages is restricted to admins and coaches." }) });
+            if (!roles.includes("admin")) {
+              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Proposing outbound client messages is restricted to admins." }) });
               continue;
             }
             const args = JSON.parse(tc.function.arguments || "{}");

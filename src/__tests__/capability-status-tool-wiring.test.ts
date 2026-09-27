@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- Source-string assertions on the edge handler. */
 // @vitest-environment node
 //
 // Piece 3b WIRING — the capability manifest seams a unit test can't see (§32/§37). The pure signal
@@ -40,7 +39,7 @@ describe("capability_status tool wiring (source assertions)", () => {
     expect(src).toContain('case "capability_status": return { label: "Checking what I can do here", group: "owner" };');
   });
 
-  it("routes capability_status INTO the admin/coach/super_admin role-gated owner block", () => {
+  it("routes capability_status INTO the admin/super_admin role-gated owner block", () => {
     expect(src).toContain('tc.function.name === "capability_status" ||');
   });
 
@@ -73,10 +72,10 @@ describe("capability_status tool wiring (source assertions)", () => {
     expect(src).toContain('import { classifyAction, clampLaneByRisk,');
     const riskSrc = readFileSync("supabase/functions/_shared/action-risk.ts", "utf8");
     expect(riskSrc).toContain("export function clampLaneByRisk(");
-    // the manifest must agree with the tools' OWN role gate (admin/coach/super_admin), so a
+    // the manifest must agree with the tools' OWN role gate (admin/super_admin), so a
     // non-admin member is not told she can do what the gate refuses (§13/§51)
     expect(src).toContain("const resolveOwnerOpsEligible = async (): Promise<boolean> =>");
-    expect(src).toContain('roles.includes("admin") || roles.includes("coach") || roles.includes("super_admin")');
+    expect(src).toContain('roles.includes("admin") || roles.includes("super_admin")');
     expect(src).toContain("ownerOpsEligible,");
 
     // the tool dispatch calls the SAME gatherer (never its own divergent resolution)

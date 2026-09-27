@@ -122,13 +122,13 @@ async function resolvePlanSlug(
   supabase: ReturnType<typeof createClient>,
   userId: string,
 ): Promise<string> {
-  // Staff bypass — admins and coaches get full (enterprise) support entitlement.
+  // Staff bypass — admins get full (enterprise) support entitlement.
   const { data: roleRows } = await supabase
     .from("user_roles")
     .select("role")
     .eq("user_id", userId);
   const roles = (roleRows ?? []).map((r: { role?: string }) => r.role);
-  if (roles.includes("admin") || roles.includes("coach")) return "enterprise";
+  if (roles.includes("admin")) return "enterprise";
 
   // Complimentary access — Pro-level (premium) support without Stripe.
   const { data: profileRow } = await supabase

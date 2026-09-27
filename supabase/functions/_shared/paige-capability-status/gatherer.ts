@@ -118,7 +118,7 @@ export async function resolveNativeCapabilityStatus(
     const { data: roleRows, error: roleErr } = await db.from("user_roles").select("role").eq("user_id", opts.actorUserId);
     if (roleErr) return { ok: false, error: `role read failed: ${roleErr.message ?? String(roleErr)}` };
     const roles = (Array.isArray(roleRows) ? roleRows : []).map((r: { role?: unknown }) => r.role);
-    const ownerOpsEligible = roles.includes("admin") || roles.includes("coach") || roles.includes("super_admin");
+    const ownerOpsEligible = roles.includes("admin") || roles.includes("super_admin");
 
     // Effective lane = ceiling clamp (resolve_tool_autonomy) THEN action-class clamp (clampLaneByRisk),
     // exactly as the chat manifest computes it. Service branch trusts the passed tenant (auth.uid() NULL).

@@ -210,7 +210,7 @@
     "react-markdown": "^10.1.0",
     "react-plaid-link": "^4.1.1",
     "react-resizable-panels": "^2.1.9",
-    "react-router-dom": "6.30.4",
+    "react-router-dom": "6.30.6",
     "recharts": "^3.9.1",
     "remark-gfm": "^4.0.1",
     "sonner": "^1.7.4",

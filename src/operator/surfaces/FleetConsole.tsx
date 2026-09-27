@@ -181,7 +181,7 @@ export function FleetDirectoryView({
         <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1.5">
           <b id="fleet-directory-title" className="text-[12px] font-medium">The fleet</b>
           <small className="min-w-0 text-[10.5px] text-[var(--pg-faint)]">
-            {loading
+            {loading || error
               ? "—"
               : classificationVisible
                 ? `${live.length} live · ${shown.length} shown · entering performs an audited act-as`
@@ -229,8 +229,8 @@ export function FleetDirectoryView({
               <small className="font-mono text-[10px] text-[var(--pg-faint)]">{item.count}</small>
             </span>
           ))}
-          <small className="ml-auto whitespace-nowrap text-[10.5px] font-medium" style={{ color: risk ? "var(--pg-warning)" : "var(--pg-faint)" }}>
-            {risk} at risk{classificationVisible ? "" : ", internal included"}
+          <small className="ml-auto whitespace-nowrap text-[10.5px] font-medium" style={{ color: risk && !loading && !error ? "var(--pg-warning)" : "var(--pg-faint)" }}>
+            {loading || error ? "—" : risk} at risk{classificationVisible ? "" : ", internal included"}
           </small>
         </div>
 

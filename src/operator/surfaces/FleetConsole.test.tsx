@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import type { FleetTenant } from "@/operator/data/useFleet";
-import { fleetDetailVisible } from "@/operator/data/useFleet";
+import { fleetDetailVisible, rowReadComplete } from "@/operator/data/useFleet";
 import { FleetDirectoryView } from "@/operator/surfaces/FleetConsole";
 
 /**
@@ -250,5 +250,47 @@ describe("FleetDirectoryView — status wording is exact (slice 4 review)", () =
       ),
     );
     expect(out).toContain("1 at risk, internal included");
+  });
+});
+
+describe("FleetDirectoryView — header counts while the fleet is not read (slice 4, Codex)", () => {
+  const view = (over: { loading?: boolean; error?: string | null }) =>
+    text(
+      renderToStaticMarkup(
+        <FleetDirectoryView
+          tenants={[]}
+          classificationVisible={false}
+          detailVisible={false}
+          onEnter={() => {}}
+          {...over}
+        />,
+      ),
+    );
+
+  it("shows no tenant or at-risk figure while loading", () => {
+    const out = view({ loading: true });
+    expect(out).not.toMatch(/\b0 tenants\b/);
+    expect(out).not.toMatch(/\b0 at risk\b/);
+    expect(out).toContain("— at risk");
+  });
+
+  it("shows no tenant or at-risk figure when the read failed", () => {
+    const out = view({ error: "timeout" });
+    expect(out).not.toMatch(/\b0 tenants\b/);
+    expect(out).not.toMatch(/\b0 at risk\b/);
+    expect(out).toContain("— at risk");
+  });
+});
+
+describe("rowReadComplete — a row read the server truncated is not a count", () => {
+  it("is complete when every matching row came back", () => {
+    expect(rowReadComplete(9, 9)).toBe(true);
+    expect(rowReadComplete(0, 0)).toBe(true);
+  });
+  it("is incomplete when the server matched more rows than it returned (row cap)", () => {
+    expect(rowReadComplete(1000, 1432)).toBe(false);
+  });
+  it("is incomplete when the server did not report how many rows matched", () => {
+    expect(rowReadComplete(9, null)).toBe(false);
   });
 });

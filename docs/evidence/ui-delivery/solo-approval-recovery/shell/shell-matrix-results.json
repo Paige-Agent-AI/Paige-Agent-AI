@@ -1,9 +1,9 @@
 {
-  "revision": "3065a584ebf64d4a94c50244032f3fb95508ef10",
+  "revision": "ebc4d67e49f2e62059b810334fd35d7c06a04dc6",
   "treeClean": true,
-  "generatedAt": "2026-09-27T18:26:35.567Z",
+  "generatedAt": "2026-09-27T18:39:51.096Z",
   "note": "Nothing changed. The message included internal system details, so Paige stopped before it went out. Ask her to rewrite it.",
-  "passed": 40,
+  "passed": 48,
   "failed": 0,
   "results": [
     {
@@ -42,6 +42,36 @@
       "detail": {
         "ok": true,
         "presses": 3
+      }
+    },
+    {
+      "name": "1536x770 dark PAIGE open (docked), second tenant: the same checks pass in another workspace",
+      "ok": true,
+      "detail": {
+        "secondName": true,
+        "placed": 4,
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 522,
+          "full": "false"
+        },
+        "transcriptWidth": 491,
+        "card": {
+          "width": 321,
+          "insetLeft": 52,
+          "insetRight": 149,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": false,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true
       }
     },
     {
@@ -128,6 +158,36 @@
       }
     },
     {
+      "name": "1366x768 dark PAIGE open (docked), second tenant: the same checks pass in another workspace",
+      "ok": true,
+      "detail": {
+        "secondName": true,
+        "placed": 4,
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 464,
+          "full": "false"
+        },
+        "transcriptWidth": 433,
+        "card": {
+          "width": 275,
+          "insetLeft": 52,
+          "insetRight": 137,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": false,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true
+      }
+    },
+    {
       "name": "1366x768 dark PAIGE closed: no horizontal page scroll, PAIGE takes no width, the screen does",
       "ok": true,
       "detail": {
@@ -208,6 +268,36 @@
       "detail": {
         "ok": true,
         "presses": 3
+      }
+    },
+    {
+      "name": "1024x768 dark PAIGE open (docked), second tenant: the same checks pass in another workspace",
+      "ok": true,
+      "detail": {
+        "secondName": true,
+        "placed": 4,
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 410,
+          "full": "false"
+        },
+        "transcriptWidth": 379,
+        "card": {
+          "width": 232,
+          "insetLeft": 52,
+          "insetRight": 126,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": true,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true
       }
     },
     {
@@ -294,6 +384,36 @@
       }
     },
     {
+      "name": "900x1000 dark PAIGE open (docked), second tenant: the same checks pass in another workspace",
+      "ok": true,
+      "detail": {
+        "secondName": true,
+        "placed": 4,
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 410,
+          "full": "false"
+        },
+        "transcriptWidth": 379,
+        "card": {
+          "width": 232,
+          "insetLeft": 52,
+          "insetRight": 126,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": false,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true
+      }
+    },
+    {
       "name": "900x1000 dark PAIGE closed: no horizontal page scroll, PAIGE takes no width, the screen does",
       "ok": true,
       "detail": {
@@ -374,6 +494,36 @@
       "detail": {
         "ok": true,
         "presses": 3
+      }
+    },
+    {
+      "name": "1536x770 light PAIGE open (docked), second tenant: the same checks pass in another workspace",
+      "ok": true,
+      "detail": {
+        "secondName": true,
+        "placed": 4,
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 522,
+          "full": "false"
+        },
+        "transcriptWidth": 491,
+        "card": {
+          "width": 321,
+          "insetLeft": 52,
+          "insetRight": 149,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": false,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true
       }
     },
     {
@@ -460,6 +610,36 @@
       }
     },
     {
+      "name": "1366x768 light PAIGE open (docked), second tenant: the same checks pass in another workspace",
+      "ok": true,
+      "detail": {
+        "secondName": true,
+        "placed": 4,
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 464,
+          "full": "false"
+        },
+        "transcriptWidth": 433,
+        "card": {
+          "width": 275,
+          "insetLeft": 52,
+          "insetRight": 137,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": false,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true
+      }
+    },
+    {
       "name": "1366x768 light PAIGE closed: no horizontal page scroll, PAIGE takes no width, the screen does",
       "ok": true,
       "detail": {
@@ -543,6 +723,36 @@
       }
     },
     {
+      "name": "1024x768 light PAIGE open (docked), second tenant: the same checks pass in another workspace",
+      "ok": true,
+      "detail": {
+        "secondName": true,
+        "placed": 4,
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 410,
+          "full": "false"
+        },
+        "transcriptWidth": 379,
+        "card": {
+          "width": 232,
+          "insetLeft": 52,
+          "insetRight": 126,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": true,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true
+      }
+    },
+    {
       "name": "1024x768 light PAIGE closed: no horizontal page scroll, PAIGE takes no width, the screen does",
       "ok": true,
       "detail": {
@@ -623,6 +833,36 @@
       "detail": {
         "ok": true,
         "presses": 3
+      }
+    },
+    {
+      "name": "900x1000 light PAIGE open (docked), second tenant: the same checks pass in another workspace",
+      "ok": true,
+      "detail": {
+        "secondName": true,
+        "placed": 4,
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 410,
+          "full": "false"
+        },
+        "transcriptWidth": 379,
+        "card": {
+          "width": 232,
+          "insetLeft": 52,
+          "insetRight": 126,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": false,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true
       }
     },
     {

@@ -349,7 +349,8 @@ turn's own vocabulary (the tool definitions, the vouched blocks, every tool resu
 propose_action's body (and an email's subject), calendar_link_send's message (and an email's subject), action_file's
 title and summary for a kind the client's portal shows, and what action_advance delivers: a draft whose kind requires
 approval, whatever its executor, and at executing a portal action's stored title and body (an unlisted kind, or one
-whose lookup fails, is read). The fields per tool live in `_shared/outbound-draft-check.ts`. A refused draft is not filed and
+whose lookup fails, is read). A value that isn't a string is read at any depth, its keys too, as `String()` and Postgres's
+`->>` would show it. The fields per tool live in `_shared/outbound-draft-check.ts`. A refused draft is not filed and
 never becomes a card, and PAIGE is told to rewrite it. A card stored before this check existed is read again where it
 runs; nothing is sent or filed, and the owner's card says Didn't run with its one next step. Drafts that never pass
 through the chat (the Live desk's approve path, send-message, other drafters) are R2b; other chat tools that carry

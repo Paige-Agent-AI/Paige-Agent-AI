@@ -341,6 +341,29 @@ class of lie as a fabricated metric (§13).
 
 Legend: **✓** live · **—** not built · **N/A** tier not opened yet · **403** denied at the route gate.
 
+### A client reads nothing internal in PAIGE's answer (R3, branch `claude/practical-wright-nskq1n`, 2026-09-27)
+
+The server half of "nothing internal reaches a customer", for the one seat that is a customer: a **client seat**
+(`callerTier === "client"` in `paige-ai-chat`, a business's client signed in to its portal, whose chat is
+`PaigeChat` on `/app`). Every client turn is held until the final check. The answer and each thought line are
+read with `_shared/internal-vocabulary.ts` against a vocabulary taken from what the server sent the model on that
+turn: the tool definitions, every tool result, and the text the handler vouches for where it built it (the team
+authority block and the document instruction). The tenant's persona and every other block that pastes in tenant
+or client prose are never vouched, so a tenant's own words never withhold their client's answer. On any finding
+the whole turn is withheld and the client reads one fixed sentence (`_shared/client-seat-reply.ts`), which the
+thread keeps. Owner and teammate seats are unchanged; they are R4's.
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|
+| A client's answer and thought lines are read for internal text before release, on the chat and document paths; a finding withholds the turn | — (unchanged; R4) | — (unchanged; R4) | — (unchanged; R4) | — (unchanged; R4) | **PROOF OWED** (ships on merge; not live until proven) | 403 | **PROOF OWED:** `paige-ai-chat` redeploys on merge and is byte-verified in the closeout; no authenticated client-seat drive and no live model reply yet |
+
+Honest note (§13): a clean result means none of the known vocabulary, not "nothing internal". A paraphrase passes,
+and so does a key or block name that appears only in a block nobody has vouched for yet (the owner-side context
+blocks a client's turn is sent today are among them; what a client's turn is sent is its own slice). So does
+server text the client reads that the model did not write (a document's `sync_status` error text is
+one; it is recorded as its own follow-up, not covered here). A caller whose tier cannot be resolved falls back to
+a client seat, so their turn is held and read too.
+
 ### Approval recovery — after Approve, the card answers for what happened (branch `claude/festive-tesla-n0cjrc`, 2026-09-26)
 
 Owner-approved design, **Solo only by ruling** ("Nothing else changes. Solo only. No pilot gating."). The client

@@ -922,6 +922,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run test:internal-vocabulary
 
+      - name: Client-seat answer check (a client reads the withheld sentence, never internal text)
+        if: ${{ !cancelled() }}
+        run: npm run test:client-seat-reply
+
   web-fetch-hardening-smoke:
     # Its own job, deliberately on Node 22: the smoke imports the real
     # `_shared/ssrfGuard.ts`, whose `SsrfError` uses a TS parameter property that needs

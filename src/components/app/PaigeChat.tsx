@@ -446,6 +446,9 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
       let textBuffer = "";
       let streamDone = false;
       let syncStatus: SyncStatus | null = null;
+      // The server withheld this turn's answer (its text read as internal) and sent one fixed sentence
+      // instead. That sentence is not an account of the attached document, so it is never kept as one.
+      let answerWithheld = false;
       const assistantId = safeMessageId();
 
       setMessages([...newMessages, mkMessage({ id: assistantId, role: "assistant", content: "" })]);
@@ -483,6 +486,7 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
               syncStatus = parsed.sync_status;
               continue;
             }
+            if (parsed.paige_withheld === true) { answerWithheld = true; continue; }
             const content = parsed.choices?.[0]?.delta?.content as string | undefined;
             if (content) {
               if (!assistantMessage) setWritingPhase(true); // #11 — first token → "Writing…"
@@ -496,7 +500,7 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
         }
       }
 
-      if (currentDoc && assistantMessage.length > 100) {
+      if (currentDoc && !answerWithheld && assistantMessage.length > 100) {
         extractDocumentSummary(assistantMessage, currentDoc.name);
 
         if (syncStatus) {

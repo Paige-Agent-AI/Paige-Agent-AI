@@ -270,7 +270,7 @@ type VoiceScope = { kind: "tenant"; tenantId: string } | { kind: "operator" };
 
 /**
  * §9 — the browser-seat identities to ring for an INBOUND call: the tenant's active
- * owner/admin/coach members, each as `${tenantId}.${userId}` (the A1 identity format).
+ * owner/admin members, each as `${tenantId}.${userId}` (the A1 identity format).
  * Scoped to the ONE resolved tenant — never another tenant's members. Empty array when
  * the tenant has no reachable seat (→ honest voicemail-ish message).
  */
@@ -280,7 +280,7 @@ async function resolveTenantSeatIdentities(admin: Admin, tenantId: string): Prom
     .select("user_id, role")
     .eq("tenant_id", tenantId)
     .eq("status", "active")
-    .in("role", ["owner", "admin", "coach"]);
+    .in("role", ["owner", "admin"]);
   if (error) {
     console.error("[voice-twiml] seat lookup failed:", error.code, error.message);
     return [];

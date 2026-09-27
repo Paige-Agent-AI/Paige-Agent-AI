@@ -5,7 +5,7 @@
 // tenant's channel_connectors row.
 //
 // §18 REUSE — this is the gmail-oauth-callback shape MINUS OAuth (there is no code exchange /
-// userinfo for a bring-your-own SMTP server): the admin/coach has_role gate, the server-side
+// userinfo for a bring-your-own SMTP server): the admin has_role gate, the server-side
 // tenant resolve from profiles (never the body, §9), the write_channel_secret-under-service-role
 // step, and the connector upsert are all the SAME pattern. The Vault bridge (write/read_channel_secret),
 // the SSRF guard, and the transport live in _shared/smtp.ts (§18 one home) — this fn is the
@@ -109,12 +109,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    // §9: provisioning the tenant-wide SMTP SENDING identity is an admin/coach action — the SAME
+    // §9: provisioning the tenant-wide SMTP SENDING identity is an admin action — the SAME
     // gate the Gmail connect/disconnect apply. has_role is global; tenant is bound server-side below.
     const admin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const { data: isAdmin } = await admin.rpc("has_role", { _user_id: user.id, _role: "admin" });
-    const { data: isCoach } = await admin.rpc("has_role", { _user_id: user.id, _role: "coach" });
-    if (!isAdmin && !isCoach) {
+    if (!isAdmin) {
       return new Response(JSON.stringify({ error: "forbidden" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

@@ -15,7 +15,7 @@ describe("tenant Voice authorization", () => {
     })).toBe(false);
   });
 
-  it.each(["owner", "admin", "coach"])("allows active %s authority in the resolved tenant", (role) => {
+  it.each(["owner", "admin"])("allows active %s authority in the resolved tenant", (role) => {
     expect(hasTenantVoiceAuthority({
       isPlatformOwner: false,
       membershipTenantId: "tenant-a",

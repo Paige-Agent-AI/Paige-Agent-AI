@@ -84,7 +84,7 @@ function redirectTo(origin: string, status: "connected" | "error", detail?: stri
 }
 
 // Role-aware success landing (shared redirect contract): a staff user (admin,
-// coach, or super_admin) lands on the admin connectors surface; a client/consumer
+// super_admin or platform_admin) lands on the admin connectors surface; a client/consumer
 // lands on their own portal settings. Errors always use redirectTo() above — only
 // the *success* path is role-aware. On any role-lookup failure we fail toward the
 // safe non-admin surface so an admin route is never leaked to a client.
@@ -101,7 +101,7 @@ async function redirectConnectedForUser(
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
-      .in("role", ["admin", "coach", "super_admin", "platform_admin"])
+      .in("role", ["admin", "super_admin", "platform_admin"])
       .limit(1);
     if (!error && data && data.length > 0) staffRole = String(data[0].role);
   } catch {

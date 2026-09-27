@@ -2,7 +2,7 @@
 //
 // §18 clone of gmail-disconnect, adapted for bring-your-own SMTP:
 //   • §9: scoped to the caller's OWN tenant (current_user_tenant_id from the JWT), and
-//     gated to an admin/coach — never a cross-tenant teardown.
+//     gated to an admin — never a cross-tenant teardown.
 //   • Deactivates the tenant's provider='smtp' channel_connectors row (active=false,
 //     status='disabled') and clears credentials_vault_ref so the row no longer references
 //     the secret.
@@ -42,8 +42,7 @@ Deno.serve(async (req) => {
   // §9: role + tenant gate. has_role is global, so bind the teardown to the caller's own
   // tenant (JWT-scoped) — never a cross-tenant disconnect.
   const { data: isAdmin } = await admin.rpc("has_role", { _user_id: user.id, _role: "admin" });
-  const { data: isCoach } = await admin.rpc("has_role", { _user_id: user.id, _role: "coach" });
-  if (!isAdmin && !isCoach) {
+  if (!isAdmin) {
     return new Response(JSON.stringify({ error: "forbidden" }), {
       status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

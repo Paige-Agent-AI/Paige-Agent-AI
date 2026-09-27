@@ -1,4 +1,4 @@
-// Comms C-2v — Voice Access Token mint (#140 Slice A1). JWT-gated; a tenant admin/coach
+// Comms C-2v — Voice Access Token mint (#140 Slice A1). JWT-gated; a tenant admin
 // (or the platform owner) requests a SHORT-lived Twilio Voice Access Token so their
 // browser can register with Twilio and place/receive calls billed to the tenant's OWN
 // Twilio subaccount. This is the callable token seam (§10) — the future dial-pad UI (A2)
@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-  // ── AuthN + admin/coach gate (§9). Tenant + identity are derived from the JWT, never the body. ──
+  // ── AuthN + admin gate (§9). Tenant + identity are derived from the JWT, never the body. ──
   const auth = req.headers.get("Authorization") ?? "";
   if (!auth) return json({ error: "unauthorized" }, 401);
   const userClient = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: auth } } });
@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
   }
 
   // ── TENANT path — UNCHANGED behavior (§37 byte-identical for every tenant caller). ──
-  // Platform owner OR an active owner/admin/coach IN THIS TENANT may mint. A
+  // Platform owner OR an active owner/admin IN THIS TENANT may mint. A
   // global user_roles row is not tenant authority and must never unlock another
   // workspace's billable Voice token.
   const { data: isOwner } = await userClient.rpc("is_platform_owner");

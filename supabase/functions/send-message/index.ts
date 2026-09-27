@@ -417,7 +417,7 @@ Deno.serve(async (req) => {
 
   // ── C-1.5: internal-caller branch. The scheduled-send drainer re-enters this fn under a
   //    service-role bearer to RELEASE a queued row (contract §4). A service-role bearer must
-  //    skip the getUser + admin/coach gate (there is no human user) AND the §9 caller-tenant
+  //    skip the getUser + admin gate (there is no human user) AND the §9 caller-tenant
   //    gate (the queued row's own server-derived tenant_id is authoritative). Any OTHER caller
   //    still goes through the full JWT + role gate unchanged (§37 — legacy callers unaffected).
   const internalBearer = auth.replace(/^Bearer\s+/i, "").trim();
@@ -433,8 +433,7 @@ Deno.serve(async (req) => {
     }
     user = u;
     const { data: isAdmin } = await admin.rpc("has_role", { _user_id: u.id, _role: "admin" });
-    const { data: isCoach } = await admin.rpc("has_role", { _user_id: u.id, _role: "coach" });
-    if (!isAdmin && !isCoach) {
+    if (!isAdmin) {
       return new Response(JSON.stringify({ error: "forbidden" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -648,7 +647,7 @@ Deno.serve(async (req) => {
   // ── §9 caller-tenant gate — BEFORE any send ──────────────────────────────────
   // tenantId above is resolved from body-referenced rows via the SERVICE-ROLE client
   // (RLS bypassed), and has_role (L116-118) is GLOBAL — so without this bind a
-  // tenant-A admin/coach could pass a tenant-B message_id / contact_id / connector_id
+  // tenant-A admin could pass a tenant-B message_id / contact_id / connector_id
   // and send UNDER TENANT B's verified sender identity (tenant_sender_identity below)
   // and write into B's inbox. Require the resolved tenant to equal the caller's own
   // (JWT-scoped current_user_tenant_id); the platform owner (God) may act cross-tenant
@@ -1249,9 +1248,9 @@ Deno.serve(async (req) => {
     //
     // `admin` is service-role, so RLS does not apply here, and
     // `body.conversation_id` arrives from the request and is validated nowhere.
-    // The caller gate above requires only a GLOBAL `admin`/`coach` app_role, and
+    // The caller gate above requires only a GLOBAL `admin` app_role, and
     // `user_roles` has no tenant column (§59) — so without this predicate a
-    // tenant-A coach who performs any successful send could pass tenant B's
+    // tenant-A admin who performs any successful send could pass tenant B's
     // conversation id and flip that row. An unguessable UUID is not access
     // control.
     //

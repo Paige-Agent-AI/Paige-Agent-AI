@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { LogOut } from "lucide-react";
+import { CornerUpLeft, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTenantContext } from "@/hooks/useTenantContext";
@@ -120,7 +120,9 @@ function OperatorExitControl() {
       onClick={() => void exit()}
       aria-label={`Stop acting as ${name} and return to the platform`}
     >
-      <LogOut className="mr-1.5 h-4 w-4" />
+      {/* Its own mark: it RETURNS to the platform and ends the act-as, where "Switch workspace"
+          beside it leaves for the chooser. The same icon on both read as two doors to one place. */}
+      <CornerUpLeft className="mr-1.5 h-4 w-4" />
       {leaving ? "Leaving…" : "Exit tenant"}
     </Button>
   );

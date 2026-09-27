@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { loadAssignableStaff } from "@/lib/team/assignableStaff";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,7 +52,7 @@ export function NewDealDialog({ open, onOpenChange, pipeline, stages, defaultSta
       .select("id, first_name, last_name, entity_name, email")
       .order("created_at", { ascending: false })
       .limit(500);
-    setContacts((cs || []).map((c: any) => ({
+    setContacts((cs || []).map((c) => ({
       id: c.id,
       label: `${c.first_name ?? ""} ${c.last_name ?? ""}`.trim() + (c.entity_name ? ` · ${c.entity_name}` : ""),
       email: c.email,
@@ -64,14 +65,7 @@ export function NewDealDialog({ open, onOpenChange, pipeline, stages, defaultSta
       const { data: { user } } = await supabase.auth.getUser();
       setMeId(user?.id ?? null);
       await loadContacts();
-      const { data: roles } = await supabase.from("user_roles").select("user_id").eq("role", "coach");
-      const coachIds = (roles || []).map((r: any) => r.user_id);
-      if (coachIds.length) {
-        const { data: profs } = await supabase.from("coach_client_profiles_safe").select("user_id, full_name").in("user_id", coachIds);
-        setCoaches((profs || []).map((p: any) => ({ user_id: p.user_id, name: p.full_name || "Unnamed Coach" })));
-      } else {
-        setCoaches([]);
-      }
+      setCoaches(await loadAssignableStaff());
       setStageId(defaultStageId || stages[0]?.id || "");
       setTitle("");
       setContactId(defaultContactId || "none");

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { loadAssignableStaff } from "@/lib/team/assignableStaff";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -125,12 +126,7 @@ export default function ContactDetail() {
       if (!c) { toast.error("Contact not found"); navigate("/choose-account"); return; }
       setClient(c as Client);
 
-      const { data: roles } = await supabase.from("user_roles").select("user_id").eq("role", "coach");
-      const coachIds = (roles || []).map((r: { user_id: string }) => r.user_id);
-      if (coachIds.length) {
-        const { data: profs } = await supabase.from("profiles").select("user_id, full_name").in("user_id", coachIds);
-        setCoaches((profs || []).map((p: { user_id: string; full_name: string | null }) => ({ user_id: p.user_id, name: p.full_name || "Unnamed Coach" })));
-      }
+      setCoaches(await loadAssignableStaff());
 
       if (c.linked_user_id) {
         const [actRes, taskRes, noteRes, fileRes, bizRes] = await Promise.all([

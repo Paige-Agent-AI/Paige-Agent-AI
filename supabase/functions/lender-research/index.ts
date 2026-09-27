@@ -339,18 +339,18 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await anonClient.auth.getUser();
     if (userError || !user) return json({ error: "Unauthorized" }, 401);
 
-    // --- Role gate (admin or coach) — unchanged ---
+    // --- Role gate (admin) ---
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
-    const userRoles = roles?.map((r: any) => r.role) || [];
-    if (!userRoles.includes("admin") && !userRoles.includes("coach")) {
-      return json({ error: "Access denied. Admin or coach role required." }, 403);
+    const userRoles = roles?.map((r: { role: string }) => r.role) || [];
+    if (!userRoles.includes("admin")) {
+      return json({ error: "Access denied. Admin role required." }, 403);
     }
 
     // --- D5: §2 funding-preset gate ---
     // The lender/funding surface is opt-in per account. We mirror the exact gate
     // the platform already uses for every funding surface: the SECURITY-DEFINER
     // RPC check_feature_access(user_id, 'funding_tools'), which reads
-    // subscription_plans.has_funding_tools (and honors admin/coach/complimentary
+    // subscription_plans.has_funding_tools (and honors admin/complimentary
     // bypass). Same predicate as <PlanGate feature="funding_tools"> in the UI.
     const { data: fundingEnabled, error: gateError } = await supabase.rpc("check_feature_access", {
       _user_id: user.id,

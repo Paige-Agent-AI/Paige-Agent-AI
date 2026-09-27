@@ -6,7 +6,7 @@
 //   trigger="score_milestone"    → credit_strategy (score crossed threshold)
 //   trigger="coaching_insight"   → coaching_insight (from a chat session)
 //
-// Auth: must be the affected user OR an admin/coach OR the service role.
+// Auth: must be the affected user OR an admin OR the service role.
 // Embeddings: OpenAI Voyage voyage-3 (1024 dims) — matches schema.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { embeddingsCompat } from "../_shared/voyage.ts";
@@ -113,11 +113,11 @@ serve(async (req) => {
     }
     const payload = parsed.data;
 
-    // Permission: caller must be the affected user, an admin/coach, or service role.
+    // Permission: caller must be the affected user, an admin, or service role.
     const admin = createClient(supabaseUrl, supabaseServiceKey);
     if (!isServiceRole && callerId !== payload.user_id) {
       const { data: roles } = await admin.from("user_roles").select("role").eq("user_id", callerId);
-      const isStaff = (roles ?? []).some((r: any) => r.role === "admin" || r.role === "coach");
+      const isStaff = (roles ?? []).some((r: { role: string }) => r.role === "admin");
       if (!isStaff) {
         return new Response(JSON.stringify({ error: "Forbidden" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -36,8 +36,10 @@ BEGIN
   ON CONFLICT DO NOTHING;
   INSERT INTO public.clients (id, tenant_id, created_by, first_name, last_name, account_number, assigned_coach_user_id)
   VALUES ('c9940000-0000-0000-0000-00000000c1e1', _t, _a, 'G', 'Client', 'GPC-1', _m);
-  INSERT INTO public.invitations (email, role, invited_by, token_hash, expires_at, tenant_id)
-  VALUES ('gp-invitee@example.test', 'coach', _a, encode(sha256('gp-token'::bytea), 'hex'), now() + interval '1 day', _t);
+  -- The insert trigger hashes the plaintext token into token_hash and clears it, as it does for a
+  -- real invitation.
+  INSERT INTO public.invitations (email, role, invited_by, token, expires_at, tenant_id)
+  VALUES ('gp-invitee@example.test', 'coach', _a, 'gp-token', now() + interval '1 day', _t);
 END $$;
 
 -- 1–2. An invitation carrying the retired role is refused, and grants nothing.
@@ -48,7 +50,7 @@ CREATE FUNCTION public.digest(text, text) RETURNS bytea LANGUAGE sql IMMUTABLE
   AS $f$ SELECT sha256(convert_to($1, 'UTF8')) $f$;
 SELECT set_config('request.jwt.claims', '{"sub":"c9940000-0000-0000-0000-0000000000a4","role":"authenticated"}', true);
 SELECT throws_ok($q$SELECT public.accept_invitation('gp-token', 'c9940000-0000-0000-0000-0000000000a4')$q$,
-  '42501', NULL, 'an invitation carrying the retired role is refused');
+  '42501', 'this invitation carries a retired role', 'an invitation carrying the retired role is refused');
 SELECT is((SELECT count(*)::int FROM public.user_roles
             WHERE user_id = 'c9940000-0000-0000-0000-0000000000a4' AND role = 'coach'),
   0, 'and the invitee does not hold the role');

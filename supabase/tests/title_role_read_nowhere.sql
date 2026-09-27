@@ -6,7 +6,7 @@
 -- rewrote at run time: every function, procedure, policy and view, in every schema, is searched for
 -- the shapes a role read takes — the value cast to a role type; a role helper called with it; a role
 -- column (role, requires_role, auto_assign_role, default_role), a role list (visible_to_roles,
--- allowed_roles) or a role variable (v_…role) compared to it (=, IN, = ANY, LIKE, IS DISTINCT FROM,
+-- allowed_roles), a role variable (v_…role) or a role aliased as permission compared to it (=, IN, = ANY, LIKE, IS DISTINCT FROM,
 -- &&, @>), either way round, through casts and the parentheses Postgres adds when it stores a view
 -- or policy; it in an array or array literal of roles; and a CASE over a role with a branch for it.
 --
@@ -25,7 +25,7 @@
 -- ============================================================================
 BEGIN;
 
-SELECT plan(18);
+SELECT plan(19);
 
 CREATE FUNCTION pg_temp.retired_role_reads() RETURNS SETOF text LANGUAGE sql STABLE AS $fn$
   WITH src AS (
@@ -46,7 +46,7 @@ CREATE FUNCTION pg_temp.retired_role_reads() RETURNS SETOF text LANGUAGE sql STA
   SELECT what FROM src
    -- The search below is character-for-character SQL_RETIRED_ROLE_SOURCE in
    -- scripts/ci/title-authority-guard.mjs; the guard fails if the two drift apart.
-   WHERE body ~* $re$'coach'(?:\s*::\s*\w+)*\s*::\s*(?:public\.)?(?:app_role|tenant_role)(?![\w])|has_(?:any_|tenant_)?role\s*\((?:[^;()]|\([^()]*\))*'coach'|(?:^|[^\w.])\(?\s*(?:\w+\.)?"?(?:v_\w*|requires_|auto_assign_|default_|allowed_|visible_to_)?roles?"?\s*\)?(?:\s*::\s*[\w.]+)?\s*\)?\s*(?:=\s*any|<>\s*all|=|<>|!=|not\s+in(?![\w])|in(?![\w])|not\s+i?like(?![\w])|i?like(?![\w])|is\s+(?:not\s+)?distinct\s+from)\s*\(?\s*(?:array\s*\[\s*)?(?:'[^']*'(?:\s*::\s*[\w.]+(?:\[\])?)*\s*,\s*)*'coach'|'coach'(?:\s*::\s*[\w.]+)*\s*(?:=|<>|!=)\s*(?:any\s*\(\s*|all\s*\(\s*)?\(?\s*(?:\w+\.)?"?(?:v_\w*|requires_|auto_assign_|default_|allowed_|visible_to_)?roles?"?(?![\w])|(?:^|[^\w.])\(?\s*(?:\w+\.)?"?(?:v_\w*|requires_|auto_assign_|default_|allowed_|visible_to_)?roles?"?\s*\)?(?:\s*::\s*[\w.]+)?\s*\)?\s*(?:&&|@>)\s*\(?\s*(?:array\s*\[\s*)?(?:'[^']*'(?:\s*::\s*[\w.]+(?:\[\])?)*\s*,\s*)*'coach'|(?:^|[^\w.])\(?\s*(?:\w+\.)?"?(?:v_\w*|requires_|auto_assign_|default_|allowed_|visible_to_)?roles?"?\s*\)?(?:\s*::\s*[\w.]+)?\s*\)?\s*(?:&&|@>)\s*'\{[^'}]*(?<![\w])coach(?![\w])|'\{[^'}]*(?<![\w])coach(?![\w])[^'}]*\}'\s*::\s*(?:public\.)?(?:app_role|tenant_role)\[\]|(?:^|[^\w.])\(?\s*(?:\w+\.)?"?(?:v_\w*|requires_|auto_assign_|default_|allowed_|visible_to_)?roles?"?\s*\)?(?:\s*::\s*[\w.]+)?\s*\)?\s*(?:=\s*any|<>\s*all)\s*\(\s*'\{[^'}]*(?<![\w])coach(?![\w])|case\s+(?:\w+\.)?"?\w*roles?"?\s+(?:when\s+(?:(?!end(?![\w]))[^;])*?)?when\s+(?:'[^']*'(?:\s*::\s*[\w.]+(?:\[\])?)*\s*,\s*)*'coach'$re$
+   WHERE body ~* $re$'coach'(?:\s*::\s*\w+)*\s*::\s*(?:public\.)?(?:app_role|tenant_role)(?![\w])|has_(?:any_|tenant_)?role\s*\((?:[^;()]|\([^()]*\))*'coach'|(?:^|[^\w.])\(?\s*(?:\w+\.)?"?(?:(?:v_\w*|requires_|auto_assign_|default_|allowed_|visible_to_)?roles?|(?:v_\w*)?permissions?)"?\s*\)?(?:\s*::\s*[\w.]+)?\s*\)?\s*(?:=\s*any|<>\s*all|=|<>|!=|not\s+in(?![\w])|in(?![\w])|not\s+i?like(?![\w])|i?like(?![\w])|is\s+(?:not\s+)?distinct\s+from)\s*\(?\s*(?:array\s*\[\s*)?(?:'[^']*'(?:\s*::\s*[\w.]+(?:\[\])?)*\s*,\s*)*'coach'|'coach'(?:\s*::\s*[\w.]+)*\s*(?:=|<>|!=)\s*(?:any\s*\(\s*|all\s*\(\s*)?\(?\s*(?:\w+\.)?"?(?:(?:v_\w*|requires_|auto_assign_|default_|allowed_|visible_to_)?roles?|(?:v_\w*)?permissions?)"?(?![\w])|(?:^|[^\w.])\(?\s*(?:\w+\.)?"?(?:(?:v_\w*|requires_|auto_assign_|default_|allowed_|visible_to_)?roles?|(?:v_\w*)?permissions?)"?\s*\)?(?:\s*::\s*[\w.]+)?\s*\)?\s*(?:&&|@>)\s*\(?\s*(?:array\s*\[\s*)?(?:'[^']*'(?:\s*::\s*[\w.]+(?:\[\])?)*\s*,\s*)*'coach'|(?:^|[^\w.])\(?\s*(?:\w+\.)?"?(?:(?:v_\w*|requires_|auto_assign_|default_|allowed_|visible_to_)?roles?|(?:v_\w*)?permissions?)"?\s*\)?(?:\s*::\s*[\w.]+)?\s*\)?\s*(?:&&|@>)\s*'\{[^'}]*(?<![\w])coach(?![\w])|'\{[^'}]*(?<![\w])coach(?![\w])[^'}]*\}'\s*::\s*(?:public\.)?(?:app_role|tenant_role)\[\]|(?:^|[^\w.])\(?\s*(?:\w+\.)?"?(?:(?:v_\w*|requires_|auto_assign_|default_|allowed_|visible_to_)?roles?|(?:v_\w*)?permissions?)"?\s*\)?(?:\s*::\s*[\w.]+)?\s*\)?\s*(?:=\s*any|<>\s*all)\s*\(\s*'\{[^'}]*(?<![\w])coach(?![\w])|case\s+(?:\w+\.)?"?\w*roles?"?\s+(?:when\s+(?:(?!end(?![\w]))[^;])*?)?when\s+(?:'[^']*'(?:\s*::\s*[\w.]+(?:\[\])?)*\s*,\s*)*'coach'$re$
 $fn$;
 
 CREATE TEMP TABLE retired_role_exempt(what text PRIMARY KEY, why text NOT NULL);
@@ -133,6 +133,11 @@ SELECT ok('policy public.paige_pending_approvals rrn_requires' IN (SELECT r FROM
   'a policy comparing an approval''s required role to the value is caught');
 SELECT ok('function rrn_visible()' IN (SELECT r FROM pg_temp.retired_role_reads() r),
   'a function checking the value against an approval''s visibility list is caught');
+CREATE FUNCTION public.rrn_alias() RETURNS boolean LANGUAGE sql AS
+  $$ SELECT EXISTS (SELECT 1 FROM (SELECT tm.role::text AS permission FROM public.tenant_members tm
+                                    WHERE tm.user_id = auth.uid()) m WHERE m.permission = 'coach') $$;
+SELECT ok('function rrn_alias()' IN (SELECT r FROM pg_temp.retired_role_reads() r),
+  'a role aliased as permission and compared to the value is caught');
 
 -- 14. The value as data, not a role, is not a read: a lens, a seat label, a sender type, an assigned-role label,
 -- and a function that reads a role and names the value only as a lens.

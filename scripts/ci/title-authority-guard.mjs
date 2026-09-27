@@ -186,9 +186,9 @@ const RETIRED_ROLE_REWRITTEN_THROUGH = "20270504000000";
 const RETIRED_ROLE_TEST = "supabase/tests/title_role_read_nowhere.sql";
 // A role column, a role list or a variable holding a role: `ur.role`, `"role"`, `(tm.role)::text`,
 // `requires_role`, `auto_assign_role`, `default_role`, `visible_to_roles`, `allowed_roles`,
-// `v_actor_role`. A `_role` / `p_role` parameter is a seat label passed as data and is left alone.
+// `v_actor_role`, and a role aliased as `permission` (`tm.role::text AS permission`). A `_role` / `p_role` parameter is a seat label passed as data and is left alone.
 const RR_LIT = String.raw`'[^']*'(?:\s*::\s*[\w.]+(?:\[\])?)*`;
-const RR_NAME = String.raw`(?:v_\w*|requires_|auto_assign_|default_|allowed_|visible_to_)?roles?`;
+const RR_NAME = String.raw`(?:(?:v_\w*|requires_|auto_assign_|default_|allowed_|visible_to_)?roles?|(?:v_\w*)?permissions?)`;
 const RR_ROLE = String.raw`\(?\s*(?:\w+\.)?"?${RR_NAME}"?\s*\)?(?:\s*::\s*[\w.]+)?\s*\)?`;
 const RR_OP = String.raw`(?:=\s*any|<>\s*all|=|<>|!=|not\s+in(?![\w])|in(?![\w])|not\s+i?like(?![\w])|i?like(?![\w])|is\s+(?:not\s+)?distinct\s+from)`;
 // Kept character-for-character in step with the search in supabase/tests/title_role_read_nowhere.sql:
@@ -1499,6 +1499,8 @@ export function selfTestCases({ base, baseline }) {
       `CREATE FUNCTION public.selftest_rr_visible(_v text[]) RETURNS boolean LANGUAGE sql AS $$ SELECT 'coach' = ANY (_v) OR EXISTS (SELECT 1 FROM public.paige_pending_approvals a WHERE 'coach' = ANY (a.visible_to_roles)) $$;`)],
     ["(t) a view on a role list overlapping the value: allowed_roles && ARRAY['coach']", "R7", addSql(
       `CREATE VIEW public.selftest_rr_allowed AS SELECT id FROM public.paige_workflow_registry WHERE allowed_roles && ARRAY['coach'];`)],
+    ["(t) a role aliased as permission and compared to the value", "R7", addSql(
+      `CREATE FUNCTION public.selftest_rr_alias() RETURNS boolean LANGUAGE sql AS $$ SELECT EXISTS (SELECT 1 FROM (SELECT tm.role::text AS permission FROM public.tenant_members tm WHERE tm.user_id = auth.uid()) m WHERE m.permission = 'coach') $$;`)],
     ["(t) a named refusal re-created so it also reads the value to decide", "R4", (t) => {
       const e = need(baseline.retired_role_sql?.[0], "the baseline has no retired_role_sql entry");
       const key = signatureKey(e.function);

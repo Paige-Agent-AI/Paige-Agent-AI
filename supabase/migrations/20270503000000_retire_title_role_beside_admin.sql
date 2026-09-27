@@ -2,9 +2,10 @@
 --
 -- "Coach" is a title a business gives its people. It never grants permission. 71 policies outside the
 -- finance tables let the platform-wide `coach` role in beside the admin branch. After this migration:
---   * 62 policies drop the role (three of them, on the archived social posts table and the
---     generated files bucket, only where they exist) and keep every other branch unchanged: the business's admins, the
---     platform owner, the other roles named beside it, and the row's own author, sender or owner;
+--   * 62 policies drop the role and keep every other branch unchanged: the business's admins, the
+--     platform owner, the other roles named beside it, and the row's own author, sender or owner.
+--     Three of them, on the archived social posts table and the generated files bucket, change only
+--     where they exist;
 --   * 3 read policies where the role opened an assigned client's records (browser sessions, business
 --     verifications, conversations) now grant READ access through the assignment plus active
 --     membership of the business the record belongs to, with no role;
@@ -17,8 +18,12 @@
 --     admins and gave the role holder their own rows, and a member gains nothing new;
 --   * policies whose names carried the title are renamed to what they grant.
 --
--- The finance tables (credit, funding, lender, banking, business certifications, outreach drafts) are
--- the next slice. The database functions that read the role are a separate change.
+-- A database rebuilt from migrations also carries two client-files bucket policies production no
+-- longer has; they drop the role there too.
+--
+-- The finance tables (credit, funding, lender, banking, business certifications, outreach drafts) and
+-- the denial-letter files policy are the next slice. The database functions that read the role are a
+-- separate change.
 --
 -- Who is affected on production today: 0 membership seats hold coach. The 4 people who hold the
 -- platform-wide coach role also hold admin or above and keep every row through the admin branches.
@@ -188,6 +193,15 @@ BEGIN
   IF EXISTS (SELECT 1 FROM pg_policy WHERE polrelid = 'storage.objects'::regclass AND polname = 'paige_generated_staff_update') THEN
     ALTER POLICY paige_generated_staff_update ON storage.objects
       USING (((bucket_id = 'paige-generated'::text) AND public.has_any_role(auth.uid(), ARRAY['admin'::text, 'super_admin'::text])));
+  END IF;
+  -- A database rebuilt from migrations also carries the client-files bucket policies; production does not.
+  IF EXISTS (SELECT 1 FROM pg_policy WHERE polrelid = 'storage.objects'::regclass AND polname = 'client-files: staff read') THEN
+    ALTER POLICY "client-files: staff read" ON storage.objects
+      USING (bucket_id = 'client-files' AND public.has_role(auth.uid(), 'admin'::public.app_role));
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_policy WHERE polrelid = 'storage.objects'::regclass AND polname = 'client-files: staff write') THEN
+    ALTER POLICY "client-files: staff write" ON storage.objects
+      WITH CHECK (bucket_id = 'client-files' AND public.has_role(auth.uid(), 'admin'::public.app_role));
   END IF;
   IF EXISTS (SELECT 1 FROM pg_policy WHERE polrelid = 'storage.objects'::regclass AND polname = 'paige_generated_staff_write') THEN
     ALTER POLICY paige_generated_staff_write ON storage.objects

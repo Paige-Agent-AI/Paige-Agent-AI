@@ -71,6 +71,8 @@ SELECT is((SELECT coalesce(string_agg(c.relnamespace::regnamespace::text || '.' 
                                     'funding_application_outcomes', 'funding_journey_applications',
                                     'funding_milestones', 'funding_secured', 'lender_research_results',
                                     'outreach_drafts', 'business_certifications')
+              -- The denial-letter files policy is consumer finance and belongs to the next slice.
+              AND p.polname <> 'Admins and coaches read all denial letters'
               AND (coalesce(pg_get_expr(p.polqual, p.polrelid), '') || coalesce(pg_get_expr(p.polwithcheck, p.polrelid), ''))
                   ~ 'has_role\(auth\.uid\(\), ''coach''::app_role\)|has_any_role\(auth\.uid\(\), ARRAY\[[^]]*''coach''::text'),
   '', 'no policy outside the finance tables reads the retired coach role');

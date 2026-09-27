@@ -69,10 +69,11 @@ DECLARE _a int; _i int;
 BEGIN
   SELECT count(*) INTO _a FROM public.client_goals WHERE user_id = 'a1100000-0000-0000-0000-0000000000a1';
   SELECT count(*) INTO _i FROM public.client_goals WHERE user_id = 'a1100000-0000-0000-0000-0000000000b1';
-  IF _a <> 1 OR _i <> 0 THEN RAISE EXCEPTION 'S11 client_goals SELECT: active=% inactive=% (want 1,0)', _a, _i; END IF;
+  IF _a <> 0 OR _i <> 0 THEN RAISE EXCEPTION 'S11 client_goals SELECT: active=% inactive=% (want 0,0)', _a, _i; END IF;
 END $$;
 RESET ROLE;
-SELECT ok(true, 'client_goals SELECT: active assignment visible, inactive not');
+-- Goals carry no business, so no assignment opens them (20270503000000).
+SELECT ok(true, 'client_goals SELECT: no assignment opens goals, active or inactive');
 
 -- 2. client_goals UPDATE
 SET LOCAL ROLE authenticated;
@@ -84,10 +85,10 @@ BEGIN
   IF _n <> 0 THEN RAISE EXCEPTION 'S11 client_goals UPDATE: inactive rows updated=% (want 0)', _n; END IF;
   UPDATE public.client_goals SET progress_notes = 's11' WHERE user_id = 'a1100000-0000-0000-0000-0000000000a1';
   GET DIAGNOSTICS _n = ROW_COUNT;
-  IF _n <> 1 THEN RAISE EXCEPTION 'S11 client_goals UPDATE: active rows updated=% (want 1)', _n; END IF;
+  IF _n <> 0 THEN RAISE EXCEPTION 'S11 client_goals UPDATE: active rows updated=% (want 0)', _n; END IF;
 END $$;
 RESET ROLE;
-SELECT ok(true, 'client_goals UPDATE: active assignment updatable, inactive not');
+SELECT ok(true, 'client_goals UPDATE: no assignment changes goals, active or inactive');
 
 -- 3. credit_predictions SELECT
 SET LOCAL ROLE authenticated;
@@ -170,11 +171,11 @@ SET LOCAL ROLE authenticated;
 DO $$
 DECLARE _i int;
 BEGIN
-  SELECT count(*) INTO _i FROM public.client_goals WHERE user_id = 'a1100000-0000-0000-0000-0000000000b1';
-  IF _i <> 1 THEN RAISE EXCEPTION 'S11 reactivation: client_goals visible=% (want 1)', _i; END IF;
+  SELECT count(*) INTO _i FROM public.credit_predictions WHERE user_id = 'a1100000-0000-0000-0000-0000000000b1';
+  IF _i <> 1 THEN RAISE EXCEPTION 'S11 reactivation: credit_predictions visible=% (want 1)', _i; END IF;
 END $$;
 RESET ROLE;
-SELECT ok(true, 'reactivating an assignment restores client_goals visibility');
+SELECT ok(true, 'reactivating an assignment restores credit_predictions visibility');
 
 SET LOCAL ROLE authenticated;
 DO $$

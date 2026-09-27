@@ -6,6 +6,20 @@
  */
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+
+// The check imports the real paige-ai-chat handler, a Deno module graph (TypeScript with parameter
+// properties, https: and npm: specifiers). Node can load it only through the repository's offline
+// loader. Run bare — as the INT-080 evidence record documents — this used to crash on an unrelated
+// file (`_shared/n8n-management.ts`: "parameter property is not supported in strip-only mode")
+// before a single check ran. Register the loader ourselves, once, the way
+// capability-declaration-lint.mjs does, so the documented command is the command that works.
+const LOADER = new URL("../knowledge-scope/register.mjs", import.meta.url);
+if (!process.execArgv.some((a) => a.includes("knowledge-scope/register.mjs"))) {
+  const child = spawnSync(process.execPath, ["--import", LOADER.href, fileURLToPath(import.meta.url), ...process.argv.slice(2)], { stdio: "inherit" });
+  process.exit(child.error ? 1 : child.status ?? 1);
+}
 
 const SOLO = "33333333-3333-4333-8333-333333333333";
 const USER = "44444444-4444-4444-8444-444444444444";

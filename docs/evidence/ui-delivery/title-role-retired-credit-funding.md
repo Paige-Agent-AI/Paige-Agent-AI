@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: no credit or funding gate reads the retired role; sync-cred
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: the finance tables' database policies are unchanged by this PR (retired in 20270505000000); service-role callers of sync-credit-report-data are unchanged
 
-INTERNAL_BUILD_IDENTITY: 6cb9ca8df38afe9d1ed4b3ca47914553dcbb0590; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(six edge functions deploy on merge through deploy-edge-functions.yml, the run is checked after merge); evidence=PR verify run on the red commit and on the fix head
+INTERNAL_BUILD_IDENTITY: a32917d7843df7a3a03a41e5eee9b0f8a1011b36; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(seven edge functions deploy on merge through deploy-edge-functions.yml, the run is checked after merge); evidence=PR verify run on the implementation head (this SHA), red run on 6cb9ca8df38afe9d1ed4b3ca47914553dcbb0590
 RELEASE_CHANNEL: development: pre-merge branch build; production follows merge
 RELEASE_CLASSIFICATION: internal-only: permission hardening with no customer-visible change beyond one helper sentence
 CUSTOMER_RELEASE_IDENTITY: none: internal-only hardening, no customer release
@@ -38,7 +38,7 @@ RELEASE_RECOVERY: position=forward-fix or revert of the app commit, since no dat
 ## Scope and collisions
 
 - Classification: coach removal, app code part 6 (credit and funding), paired with slice 2's finance migration.
-- Affected flows: credit account manager, admin client file account management, business funding profile certifications, broker workspace return link; credit report analysis, financial document analysis, lender summary, credit predictions, outcome ingestion and credit data sync on the server.
+- Affected flows: credit account manager, admin client file account management, business funding profile certifications, broker workspace return link; credit report analysis, financial document analysis, lender summary, credit predictions, lender research, outcome ingestion and credit data sync on the server.
 - Neighboring regressions: service-role callers (paige-apply-extraction, analyze-credit-report) of sync-credit-report-data are unchanged.
 - Active-owner/file collisions: none known.
 - Explicit exclusions: invite and role-grant flows (grant paths, slice 3).

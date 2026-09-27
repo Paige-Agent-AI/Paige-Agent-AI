@@ -97,7 +97,7 @@ import { buildStudioWhereYouAre, STUDIO_OPERATING_CORE } from "../_shared/design
 // allowlist that paige-mcp uses, so a client-portal Paige seat is sealed here too.
 import { getActorTier, clientSeatToolAllowed, type Tier } from "../_shared/actorTier.ts";
 // R3 — what a client seat reads is read for internal text first.
-import { decodeChunks, internalTextForClient, leakKindCounts, readableFromFrames, resultSavedSomething, WITHHELD_FRAME, withheldReplyForClient } from "../_shared/client-seat-reply.ts";
+import { decodeChunks, internalTextForClient, leakKindCounts, readableFromFrames, syncStatusForClient, resultSavedSomething, WITHHELD_FRAME, withheldReplyForClient } from "../_shared/client-seat-reply.ts";
 // Main Paige Operational Chat · P3 — truthful capability status (§13/§36/§70). The pure decision
 // core (resolver) + the MVP signal builder compose the honest "what can Paige do here?" answer;
 // the dispatch feeds them server-resolved facts (tier, clamped lane, Spine maturity). §18: one home.
@@ -14479,11 +14479,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 // and never walked CONSUMERS of this frame. Both halves are the contract.
                 emitCloseFrame(`data: ${JSON.stringify({ sync_status: { success: false, awaiting_review: true, nothing_to_propose: true, error: "I read the document, but nothing in it was clear enough to be worth saving to the profile." } })}\n\n`);
               } else {
-                emitCloseFrame(`data: ${JSON.stringify({ sync_status: syncResult })}\n\n`);
+                // R3b — the uploader reads the panel's own fields and a fixed sentence, never the
+                // pipeline's exception text, validation messages or step name; those stay in the log.
+                if (syncResult?.success !== true) console.warn("[paige] credit report sync did not complete", JSON.stringify({ step: syncResult?.step ?? null }));
+                emitCloseFrame(`data: ${JSON.stringify({ sync_status: syncStatusForClient(syncResult, personaCtx.tenant_name) })}\n\n`);
               }
             } catch (err) {
               console.error("Extraction pipeline error:", err);
-              emitCloseFrame(`data: ${JSON.stringify({ sync_status: { success: false, error: err instanceof Error ? err.message : "Unknown extraction error" } })}\n\n`);
+              emitCloseFrame(`data: ${JSON.stringify({ sync_status: syncStatusForClient({ success: false, step: "pipeline_exception" }, personaCtx.tenant_name) })}\n\n`);
             }
           } else if (extractionProposal && extractionProposal.fields?.length > 0) {
             // General document path: emit extraction proposal for inline confirmation card.

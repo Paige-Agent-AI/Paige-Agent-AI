@@ -3,10 +3,10 @@ import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PaigeChat } from "@/components/app/PaigeChat";
 // The sentence is the shipped one, read from the server module itself, never a copy typed here.
-import { WITHHELD_FRAME, withheldReplyForClient } from "../../../../supabase/functions/_shared/client-seat-reply.ts";
+import { syncStatusForClient, WITHHELD_FRAME, withheldReplyForClient } from "../../../../supabase/functions/_shared/client-seat-reply.ts";
 import "@/index.css";
 
-// ?theme=light|dark · ?variant=withheld|saved|answer · ?doc=1 (an attached document)
+// ?theme=light|dark · ?variant=withheld|saved|answer|syncfail|syncpartial|syncfail-before · ?doc=1 (an attached document)
 const params = new URLSearchParams(window.location.search);
 const theme = params.get("theme") === "light" ? "light" : "dark";
 const variant = params.get("variant") ?? "withheld";
@@ -35,6 +35,16 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   const isGreeting = !body.document && Array.isArray(body.messages) && body.messages.length === 1 && !("sessionDocumentContext" in body);
   if (isGreeting) return stream(frame({ choices: [{ delta: { content: "Good morning, Jordan. What can I help you with today?" } }] }) + "data: [DONE]\n\n");
   if (variant === "answer") return stream(frame({ choices: [{ delta: { content: ANSWER } }] }) + "data: [DONE]\n\n");
+  // A credit report whose sync did not complete (R3b): what the pipeline used to send, and what the
+  // uploader reads now, the sentence taken from the server module itself.
+  // `syncpartial` is a sync that stopped after its first write (a refused upload stamp).
+  if (variant === "syncfail" || variant === "syncpartial" || variant === "syncfail-before") {
+    const failed = variant === "syncpartial"
+      ? { success: false, error: "That could not be saved", step: "write_rejected", write: "credit_report_uploads" }
+      : { success: false, error: "Failed to parse extracted data", step: "extraction_parse" };
+    const sync = variant === "syncfail-before" ? failed : syncStatusForClient(failed, BUSINESS);
+    return stream(frame({ choices: [{ delta: { content: "Got it — I've read through your credit report. It's a tri-merge from all three bureaus, and I can see your scores and the accounts listed on each." } }] }) + frame({ sync_status: sync }) + "data: [DONE]\n\n");
+  }
   const sentence = withheldReplyForClient(BUSINESS, { savedSomething: variant === "saved" });
   return stream(WITHHELD_FRAME + frame({ choices: [{ delta: { content: sentence } }] }) + "data: [DONE]\n\n");
 };

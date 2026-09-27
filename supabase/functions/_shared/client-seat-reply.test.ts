@@ -7,7 +7,7 @@
  */
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { decodeChunks, internalTextForClient, leakKindCounts, readableFromFrames, resultSavedSomething, WITHHELD_FRAME, withheldReplyForClient } from "./client-seat-reply.ts";
+import { decodeChunks, internalTextForClient, leakKindCounts, readableFromFrames, resultSavedSomething, syncStatusForClient, WITHHELD_FRAME, withheldReplyForClient } from "./client-seat-reply.ts";
 
 const TOOLS = [
   { type: "function", function: { name: "update_client_data", description: "Update the client's own record.", parameters: { type: "object", properties: {} } } },
@@ -154,4 +154,53 @@ test("when something was saved, the sentence says so in the platform's own words
 test("the withheld frame is one data line that carries no text", () => {
   assert.equal(WITHHELD_FRAME, 'data: {"paige_withheld":true}\n\n');
   assert.deepEqual(readableFromFrames(WITHHELD_FRAME), [""]);
+});
+
+const BEFORE_ANY_WRITE = "I read your report, but I couldn't pull out its details for you to review, and none of them were added to your profile. You can try uploading it again, or ask Northside Fitness to take a look.";
+const DID_NOT_FINISH = "I read your report, but I couldn't finish pulling out its details for you to review. You can ask Northside Fitness to take a look.";
+
+test("a credit-report sync failure reaches the uploader as a fixed sentence, never the pipeline's text or step (R3b)", () => {
+  const raw = {
+    success: false,
+    error: "Validation failed: negative_items[0].account_type must be one of revolving, installment",
+    step: "validation",
+    validationErrors: ["negative_items[0].account_type"],
+    negative_items_synced: 0,
+  };
+  const out = syncStatusForClient(raw, "  Northside   Fitness ");
+  assert.deepEqual(out, { success: false, negative_items_synced: 0, uploader_sentence: true, error: BEFORE_ANY_WRITE });
+  const text = JSON.stringify(out);
+  for (const internal of ["validation", "negative_items[0]", "account_type", "step"]) assert.equal(text.includes(internal), false, internal);
+  // An exception's own message is never passed either, and with no name the sentence still reads.
+  assert.equal(syncStatusForClient({ success: false, error: "TypeError: cannot read properties of undefined (reading 'id')", step: "pipeline" })?.error,
+    "I read your report, but I couldn't finish pulling out its details for you to review. You can ask the team you're working with to take a look.");
+});
+
+test("only a failure before the pipeline's first write says nothing was added (R3b)", () => {
+  // The three steps that stop before the client memory row, the upload stamp or the proposal.
+  for (const step of ["extraction", "extraction_parse", "validation"]) {
+    assert.equal(syncStatusForClient({ success: false, error: "x", step }, "Northside Fitness")?.error, BEFORE_ANY_WRITE, step);
+  }
+  // Every other step may come after the client memory row was written, so none says nothing was
+  // kept, and none suggests uploading again: a rejected upload stamp, an exception, a missing upload
+  // record, a workspace that changed mid-way, the handler's own catch, and a step nobody has named yet.
+  for (const step of ["write_rejected", "pipeline", "no_upload_record", "active_account_changed", "pipeline_exception", "something_new", undefined]) {
+    const raw = { success: false, error: "That could not be saved", step, write: "credit_report_uploads" };
+    const out = syncStatusForClient(raw, "Northside Fitness");
+    assert.equal(out?.error, DID_NOT_FINISH, String(step));
+    assert.equal(out?.uploader_sentence, true, String(step));
+    assert.equal(/none of them were added|uploading it again|saved/.test(String(out?.error)), false, String(step));
+    assert.equal(JSON.stringify(out).includes("credit_report_uploads"), false, String(step));
+  }
+});
+
+test("each panel field passes only in its own type, and a raw error never passes (R3b)", () => {
+  const waiting = { success: false, awaiting_review: true, nothing_to_propose: true, error: "I read the document, but nothing in it was clear enough to be worth saving to the profile.", step: "x" };
+  // A report waiting on review carries its flags and no sentence: never the raw one, never a failure's.
+  assert.deepEqual(syncStatusForClient(waiting), { success: false, awaiting_review: true, nothing_to_propose: true });
+  const done = { success: true, scores_synced: { equifax: 700, experian: null, transunion: "700; DROP", vantage: 1 }, disputes_created: 2, negative_items_synced: "3 items", positive_accounts_synced: -1, credit_factors_recalculated: "yes", funding_readiness_recalculated: true, error: "should not pass", report_id: "5a5a5a5a-5a5a-4a5a-8a5a-5a5a5a5a5a5a", step: "done" };
+  assert.deepEqual(syncStatusForClient(done), { success: true, disputes_created: 2, funding_readiness_recalculated: true, scores_synced: { equifax: 700, experian: null } });
+  assert.deepEqual(syncStatusForClient({ success: "true" }), { success: false, uploader_sentence: true, error: "I read your report, but I couldn't finish pulling out its details for you to review. You can ask the team you're working with to take a look." });
+  assert.equal(syncStatusForClient(null), null);
+  assert.equal(syncStatusForClient("failed"), null);
 });

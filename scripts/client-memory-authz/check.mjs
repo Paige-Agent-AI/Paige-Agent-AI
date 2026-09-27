@@ -63,6 +63,8 @@ let toolCallOnce = false;
 /** The text PAIGE's streamed answer carries. "ok" unless a scenario scripts what she says — which is
  *  how a check sees a reply at all: every other check here is about what she was SENT. */
 let scriptedReply = "ok";
+/** What the credit report's structured extraction returns this drive; null answers "ok", as before. */
+let extractionReplyText = null;
 /** When set, the model stub asserts `confirm: true` the moment it is told approval is needed —
  *  a model approving on the operator's behalf, which is the thing the gate has to survive. */
 let selfApprove = false;
@@ -160,7 +162,8 @@ globalThis.fetch = async (url, init) => {
     // caller's `response_format` is gone by here and cannot be used to identify the call. The
     // reply must be Anthropic-shaped too — the gateway converts it back to `choices[0].message`.
     const isReadCheck = String(init?.body ?? "").includes("verify that you can literally read the PDF");
-    const text = isReadCheck ? JSON.stringify(readCheckReply) : "ok";
+    const isExtraction = String(init?.body ?? "").includes("Extract the structured data into the required JSON format");
+    const text = isReadCheck ? JSON.stringify(readCheckReply) : isExtraction && extractionReplyText !== null ? extractionReplyText : "ok";
     return new Response(
       JSON.stringify({
         id: "msg_test", type: "message", role: "assistant", model: "test",
@@ -235,6 +238,9 @@ async function drive({
   replyText = "ok",
   /** What she writes before her tool call, which becomes a thought line. Default none. */
   toolRoundNarration = "",
+  /** What the credit report's structured extraction returns, so the pipeline can get past its
+   *  parse and validation to the writes after them. Default null: "ok", which fails the parse. */
+  extractionReply = null,
 }) {
   const logged = [];
   embedCount = 0;
@@ -250,6 +256,7 @@ async function drive({
   selfApproveReplays = 0;
   scriptedReply = replyText;
   toolRoundText = toolRoundNarration;
+  extractionReplyText = extractionReply;
   const origError = console.error, origWarn = console.warn;
   console.error = (...a) => logged.push({ level: "error", msg: a.join(" ") });
   console.warn = (...a) => logged.push({ level: "warn", msg: a.join(" ") });
@@ -330,6 +337,7 @@ async function drive({
   selfApprove = false;
   scriptedReply = "ok";
   toolRoundText = "";
+  extractionReplyText = null;
 
   console.error = origError; console.warn = origWarn;
   const memoryReads = rec.from.filter((f) => f.table === "client_memory" && f.op === "select");
@@ -3912,6 +3920,53 @@ console.log("\nclient seat — her answer is read for internal text before a cli
   // made from an answer the client was not shown. The control proves the clean turn does extract.
   const EXTRACTS = "Here is the credit report analysis I just produced";
   const creditClean = await drive({ stream: true, rpcOverrides: AS_CLIENT, document: { fileName: "report.pdf", base64: "JVBERi0xLjQK", mimeType: "application/pdf" }, readCheck: creditRead, text: "here is my report", replyText: "Your report has three accounts." });
+  // R3b — A SYNC THAT FAILED IS TOLD IN A SENTENCE. The harness's extraction cannot produce a
+  // report, so the pipeline fails the way a real one does; the uploader reads a fixed sentence, never
+  // the pipeline's own error text or step name.
+  const syncOf = (r) => frames(r).filter((f) => f.sync_status).map((f) => f.sync_status);
+  const SYNC_BEFORE_ANY_WRITE = `I read your report, but I couldn't pull out its details for you to review, and none of them were added to your profile. You can try uploading it again, or ask ${BUSINESS} to take a look.`;
+  const SYNC_DID_NOT_FINISH = `I read your report, but I couldn't finish pulling out its details for you to review. You can ask ${BUSINESS} to take a look.`;
+  const syncSeen = syncOf(creditClean);
+  assert("30.33 a credit-report sync that did not complete reaches the uploader as a fixed sentence, with no step and no pipeline text",
+    syncSeen.length === 1 && syncSeen[0].success === false && !("step" in syncSeen[0])
+      && syncSeen[0].error === SYNC_BEFORE_ANY_WRITE && syncSeen[0].uploader_sentence === true
+      && !/Failed to|Validation failed|extraction|pipeline|Unknown/.test(JSON.stringify(syncSeen[0]))
+      // "none of them were added" is only true because nothing was: no memory note, no upload stamp.
+      && !creditClean.rec.inserts.some((i) => i.table === "client_memory" || (i.table === "credit_report_uploads" && i.update)),
+    JSON.stringify({ sync: syncSeen, writes: creditClean.rec.inserts.map((i) => `${i.table}${i.update ? ":update" : ""}`) }));
+  // ...AND A SYNC THAT STOPPED AFTER ITS FIRST WRITE NEVER SAYS NOTHING WAS ADDED. Given a report the
+  // extraction can read, the pipeline writes a client memory note before it stamps the upload; when the
+  // stamp is refused, that note is already kept, so the uploader reads only that it did not finish.
+  // The control proves the same report, unrefused, reaches the proposal.
+  const REPORT = JSON.stringify({ is_credit_report: true, extraction_verified: true, report_type: "consumer", scores: { equifax: 700, experian: 705, transunion: 698 },
+    negative_items: [{ creditor_name: "ACCOUNT ONE", account_type: "revolving", status: "charge_off", balance: 500 }], positive_accounts: [], hard_inquiries: [] });
+  const reportDrive = (extra = {}) => drive({ stream: true, rpcOverrides: AS_CLIENT, document: { fileName: "report.pdf", base64: "JVBERi0xLjQK", mimeType: "application/pdf" },
+    readCheck: creditRead, text: "here is my report", replyText: "Your report has three accounts.", extractionReply: REPORT,
+    // The upload record the portal's upload writes, read back by its id, so the pipeline has a record to stamp.
+    serviceTablesExtra: { credit_report_uploads: () => [{ id: "7e7e7e7e-7e7e-4e7e-8e7e-7e7e7e7e7e7e" }] },
+    tablesExtra: { credit_report_uploads: () => [{ id: "7e7e7e7e-7e7e-4e7e-8e7e-7e7e7e7e7e7e" }] }, ...extra });
+  const proposed = await reportDrive();
+  assert("30.34 CONTROL: a report the extraction can read reaches the proposal, after a client memory note is written",
+    frames(proposed).some((f) => f.extraction_proposal) && proposed.rec.inserts.some((i) => i.table === "client_memory")
+      && syncOf(proposed).every((st) => st.awaiting_review === true),
+    JSON.stringify({ proposal: frames(proposed).some((f) => f.extraction_proposal), inserts: proposed.rec.inserts.map((i) => i.table), sync: syncOf(proposed) }));
+  // A report the extraction reads but validation refuses stops before its first write too.
+  const notReport = await reportDrive({ extractionReply: JSON.stringify({ ...JSON.parse(REPORT), is_credit_report: false }) });
+  const notReportSync = syncOf(notReport);
+  assert("30.36 a report refused by validation tells the uploader nothing was added, and nothing was: no memory note, no upload stamp",
+    notReportSync.length === 1 && notReportSync[0].error === SYNC_BEFORE_ANY_WRITE && notReportSync[0].uploader_sentence === true && !("step" in notReportSync[0])
+      && !/Validation failed|Not identified|is_credit_report/.test(JSON.stringify(notReportSync))
+      && !notReport.rec.inserts.some((i) => i.table === "client_memory" || (i.table === "credit_report_uploads" && i.update)),
+    JSON.stringify({ sync: notReportSync, writes: notReport.rec.inserts.map((i) => `${i.table}${i.update ? ":update" : ""}`) }));
+  const stampRefused = await reportDrive({ tableErrorsExtra: { "credit_report_uploads:update": { message: "new row violates check constraint", code: "23514" } } });
+  const refusedSync = syncOf(stampRefused);
+  assert("30.35 a sync refused after its client memory note was written tells the uploader it did not finish, never that nothing was added",
+    stampRefused.rec.inserts.some((i) => i.table === "client_memory")
+      && refusedSync.length === 1 && refusedSync[0].success === false && !("step" in refusedSync[0]) && !("write" in refusedSync[0])
+      && refusedSync[0].error === SYNC_DID_NOT_FINISH && refusedSync[0].uploader_sentence === true
+      && !/credit_report_uploads|check constraint|23514|write_rejected/.test(JSON.stringify(refusedSync))
+      && stampRefused.logged.some((l) => l.level === "warn" && l.msg.includes("credit report sync did not complete") && l.msg.includes("write_rejected")),
+    JSON.stringify({ inserts: stampRefused.rec.inserts.map((i) => i.table), sync: refusedSync, warns: stampRefused.logged.filter((l) => l.level === "warn").map((l) => l.msg.slice(0, 120)) }));
   assert("30.15 CONTROL: a client's clean credit-report answer is extracted from, as before",
     creditClean.modelEgress.some((body) => body.includes(EXTRACTS)) && replyOf(creditClean) === "Your report has three accounts.",
     JSON.stringify({ calls: creditClean.modelEgress.length }));

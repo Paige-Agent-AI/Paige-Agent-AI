@@ -1,0 +1,60 @@
+{
+  "harness": "paige-chat-mount",
+  "results": [
+    {
+      "name": "a stale server's raw frame on this panel: no pipeline text and no step, the fallback sentence instead",
+      "ok": true,
+      "detail": "ut I couldn't finish pulling out its details for you to review. You can ask the team you're working with to take a look."
+    },
+    {
+      "name": "after-1536x770-light: the uploader reads the sentence, no step name, no pipeline text, nothing clipped or scrolling sideways",
+      "ok": true,
+      "detail": "{\"text\":\"rofile. You can try uploading it again, or ask Northside Fitness to take a look.\",\"docOverflow\":0,\"clipped\":0,\"inViewport\":true,\"errors\":[]}"
+    },
+    {
+      "name": "after-1366x768-light: the uploader reads the sentence, no step name, no pipeline text, nothing clipped or scrolling sideways",
+      "ok": true,
+      "detail": "{\"text\":\"rofile. You can try uploading it again, or ask Northside Fitness to take a look.\",\"docOverflow\":0,\"clipped\":0,\"inViewport\":true,\"errors\":[]}"
+    },
+    {
+      "name": "after-1366x768-dark: the uploader reads the sentence, no step name, no pipeline text, nothing clipped or scrolling sideways",
+      "ok": true,
+      "detail": "{\"text\":\"rofile. You can try uploading it again, or ask Northside Fitness to take a look.\",\"docOverflow\":0,\"clipped\":0,\"inViewport\":true,\"errors\":[]}"
+    },
+    {
+      "name": "after-1024x768-light: the uploader reads the sentence, no step name, no pipeline text, nothing clipped or scrolling sideways",
+      "ok": true,
+      "detail": "{\"text\":\"rofile. You can try uploading it again, or ask Northside Fitness to take a look.\",\"docOverflow\":0,\"clipped\":0,\"inViewport\":true,\"errors\":[]}"
+    },
+    {
+      "name": "after-390x844-light: the uploader reads the sentence, no step name, no pipeline text, nothing clipped or scrolling sideways",
+      "ok": true,
+      "detail": "{\"text\":\"rofile. You can try uploading it again, or ask Northside Fitness to take a look.\",\"docOverflow\":0,\"clipped\":0,\"inViewport\":true,\"errors\":[]}"
+    },
+    {
+      "name": "after-390x844-dark: the uploader reads the sentence, no step name, no pipeline text, nothing clipped or scrolling sideways",
+      "ok": true,
+      "detail": "{\"text\":\"rofile. You can try uploading it again, or ask Northside Fitness to take a look.\",\"docOverflow\":0,\"clipped\":0,\"inViewport\":true,\"errors\":[]}"
+    },
+    {
+      "name": "partial-1366x768-light: a sync stopped after its first write reads the did-not-finish sentence, no claim that nothing was added, nothing clipped",
+      "ok": true,
+      "detail": "{\"text\":\"out its details for you to review. You can ask Northside Fitness to take a look.\",\"docOverflow\":0,\"clipped\":0,\"inViewport\":true,\"errors\":[]}"
+    },
+    {
+      "name": "partial-390x844-light: a sync stopped after its first write reads the did-not-finish sentence, no claim that nothing was added, nothing clipped",
+      "ok": true,
+      "detail": "{\"text\":\"out its details for you to review. You can ask Northside Fitness to take a look.\",\"docOverflow\":0,\"clipped\":0,\"inViewport\":true,\"errors\":[]}"
+    },
+    {
+      "name": "partial-390x844-dark: a sync stopped after its first write reads the did-not-finish sentence, no claim that nothing was added, nothing clipped",
+      "ok": true,
+      "detail": "{\"text\":\"out its details for you to review. You can ask Northside Fitness to take a look.\",\"docOverflow\":0,\"clipped\":0,\"inViewport\":true,\"errors\":[]}"
+    },
+    {
+      "name": "200% zoom of 1366x768: the sentence reflows and nothing scrolls sideways",
+      "ok": true,
+      "detail": "{\"docOverflow\":0,\"clipped\":0}"
+    }
+  ]
+}

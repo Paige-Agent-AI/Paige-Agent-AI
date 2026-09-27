@@ -84,7 +84,11 @@ vi.mock("@/integrations/supabase/client", () => ({
           owner.error || staff.error
             ? { data: null, error: owner.error ?? staff.error }
             : {
-                data: [{ tier: owner.data ? "super_admin" : staff.data ? "platform_admin" : null, active_tenant_id: null }],
+                data: [{
+                  tier: owner.data ? "super_admin" : staff.data ? "platform_admin" : null,
+                  active_tenant_id: null,
+                  holds_unlisted: Boolean(owner.data),
+                }],
                 error: null,
               },
         );

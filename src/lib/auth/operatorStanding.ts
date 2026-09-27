@@ -37,29 +37,39 @@ export interface OperatorStanding {
    * act-as.
    */
   activeTenantId: string | null;
+  /**
+   * Whether the caller's tier holds every capability, listed or not — the owner tier. The server
+   * reports it from its own role data, so no client names the owner role to recognise it.
+   */
+  holdsUnlisted: boolean;
 }
 
 /**
- * The owner tier: the one tier the tenant context calls the platform owner (`isPlatformOwner`).
- * Named once, here, so no surface compares against the role word itself.
+ * Admission to the operator console: the caller holds an operator tier. Which roles are tiers is
+ * server data; until G3 moves the server gates onto the same answer, "holds a tier" is the rule on
+ * both sides (is_platform_admin() admits exactly the seeded tiers today).
  */
-export const OWNER_TIER: OperatorTier = "super_admin";
-
 export const isOperator = (s: OperatorStanding | null | undefined): boolean => !!s?.tier;
-export const isOwnerTier = (s: OperatorStanding | null | undefined): boolean => s?.tier === OWNER_TIER;
+/** The platform owner (the tenant context's `isPlatformOwner`): the tier that holds the unlisted. */
+export const isOwnerTier = (s: OperatorStanding | null | undefined): boolean => !!s?.tier && !!s.holdsUnlisted;
 
-type Row = { tier: string | null; active_tenant_id: string | null };
+type Row = { tier: string | null; active_tenant_id: string | null; holds_unlisted: boolean | null };
 
 /** Ask the server once. `null` means the read failed — never read it as "not an operator". */
 export async function fetchOperatorStanding(): Promise<OperatorStanding | null> {
   try {
     // supabase.rpc() RESOLVES with {data, error}; it does not reject. The error field is the
     // only failure signal, and a failure must not be mistaken for a "no".
+    // Not in the generated types until G1 is on production; the cast follows the repo's usual form.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase.rpc as any)("operator_standing");
+    const { data, error } = await (supabase as any).rpc("operator_standing");
     if (error) return null;
     const row = (Array.isArray(data) ? data[0] : data) as Row | undefined;
-    return { tier: row?.tier ?? null, activeTenantId: row?.active_tenant_id ?? null };
+    return {
+      tier: row?.tier ?? null,
+      activeTenantId: row?.active_tenant_id ?? null,
+      holdsUnlisted: row?.holds_unlisted === true,
+    };
   } catch {
     return null;
   }
@@ -109,7 +119,13 @@ export function useOperatorStanding(): OperatorStandingState {
         await new Promise((r) => setTimeout(r, 400 * 2 ** attempt));
         if (!alive || gen !== generation) return;
       }
-      if (alive && gen === generation) setState({ phase: "unverifiable", uid, standing: null });
+      if (!alive || gen !== generation) return;
+      // Exhausted. A YES this person already earned, and that is still showing, stands — exactly as
+      // the operator guard behaved before this home existed: tearing the console down over a
+      // network blip would destroy in-page state and deny nothing the server had not already
+      // allowed. Without a remembered YES, say we could not verify.
+      if (verified?.uid === uid && isOperator(verified.standing)) return;
+      setState({ phase: "unverifiable", uid, standing: null });
     };
 
     const readSession = (uid: string | null) => {

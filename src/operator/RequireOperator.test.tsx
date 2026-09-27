@@ -197,6 +197,41 @@ describe("RequireOperator — a grant belongs to a person, not to a browser", ()
     expect(pendingRpc).toHaveLength(1); // and it is being re-confirmed in the background.
   });
 
+  it("keeps a re-entering operator's console up when every re-check fails", async () => {
+    // A network blip while re-confirming must not tear down a console this same person was
+    // already admitted to (and lose its in-page state): the old guard kept its remembered YES
+    // through exhausted retries, and the shared home must too. It never ADMITS on a failure —
+    // only a YES the server already gave this uid stands.
+    vi.useFakeTimers();
+    try {
+      sessionUid = "user-A5";
+      mount();
+      await settle();
+      await answerRpc(true);
+      unmount();
+
+      mount();
+      await settle();
+      expect(screen()).toContain("OPERATOR_CONSOLE");
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        const resolve = pendingRpc.shift();
+        if (!resolve) throw new Error(`no re-check in flight on attempt ${attempt + 1}`);
+        await act(async () => {
+          resolve({ data: null, error: { message: "network" } });
+          await Promise.resolve();
+        });
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(400 * 2 ** attempt);
+        });
+      }
+      expect(pendingRpc).toHaveLength(0);
+      expect(screen()).toContain("OPERATOR_CONSOLE");
+      expect(screen()).not.toContain("Couldn't verify your access");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("burns the grant on sign-out, even for the very same person signing back in", async () => {
     sessionUid = "user-A4";
     mount();

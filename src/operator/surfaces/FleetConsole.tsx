@@ -352,7 +352,7 @@ export function FleetDirectoryView({
 export default function FleetConsole({ isPlatformOwner }: { isPlatformOwner: boolean | null }) {
   const { tenants, classificationVisible, detailReadFailed, loading, error } = useFleet(true);
   const detailVisible = fleetDetailVisible(isPlatformOwner, detailReadFailed);
-  const { switchTenant, tenants: contextTenants } = useTenantContext();
+  const { switchTenant, tenants: contextTenants, activeUserId } = useTenantContext();
   // Entering is an audited act, so one press is one entry. A ref, because state re-renders too
   // late to stop a second press in the same tick; production recorded paired entries.
   const entering = useRef(false);
@@ -389,14 +389,14 @@ export default function FleetConsole({ isPlatformOwner }: { isPlatformOwner: boo
           // Storage unavailable: the Exit tenant control in the header still says where they are.
         }
         leaving = true;
-        landAt.go(operatorArrivalAddress(landing.root));
+        landAt.go(operatorArrivalAddress(landing.root, activeUserId));
       } finally {
         // Held once the landing has begun: a full load does not unload this page at once, and a
         // second press in that gap would record a second entry.
         if (!leaving) entering.current = false;
       }
     },
-    [contextTenants, switchTenant],
+    [contextTenants, switchTenant, activeUserId],
   );
 
   return (

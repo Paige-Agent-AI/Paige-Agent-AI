@@ -37,7 +37,7 @@ vi.mock("@/operator/data/useFleet", async (importOriginal) => {
   };
 });
 vi.mock("@/hooks/useTenantContext", () => ({
-  useTenantContext: () => ({ switchTenant: h.switchTenant, tenants: h.ctxTenants }),
+  useTenantContext: () => ({ switchTenant: h.switchTenant, tenants: h.ctxTenants, activeUserId: "op" }),
 }));
 vi.mock("sonner", () => ({ toast: { error: (m: string) => h.toastError(m), success: () => {} } }));
 
@@ -134,9 +134,23 @@ describe("FleetConsole Enter — the act-as lands or does not begin", () => {
     try {
       const enter = await render();
       await act(async () => { enter("Solo Co")?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
-      expect(go).toHaveBeenCalledWith("/solo/3855/command-center?acting-as=1");
+      // The flag names the operator who opened the act-as, so no one else can claim it.
+      expect(go).toHaveBeenCalledWith("/solo/3855/command-center?acting-as=op");
     } finally {
       blocked.mockRestore();
+    }
+  });
+
+  // Codex review of b22716a6: a store that accepts writes but reads back nothing looked usable, so
+  // the flag was dropped while the record could never be read on arrival.
+  it("flags the arrival address when storage accepts writes but reads back nothing", async () => {
+    const forgetful = vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => null);
+    try {
+      const enter = await render();
+      await act(async () => { enter("Solo Co")?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(go).toHaveBeenCalledWith("/solo/3855/command-center?acting-as=op");
+    } finally {
+      forgetful.mockRestore();
     }
   });
 

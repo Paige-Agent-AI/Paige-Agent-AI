@@ -157,7 +157,7 @@ describe("/solo/* tier gate", () => {
     // the only way out. Where storage cannot be used, the arrival address carries the flag instead.
     it("still offers the exit when storage is blocked and the arrival carries the flag", async () => {
       const blocked = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("blocked"); });
-      window.history.replaceState(null, "", "/?acting-as=1");
+      window.history.replaceState(null, "", "/?acting-as=op");
       try {
         await renderAt("/solo/1971670/command-center");
         expect(exitButton()).toBeTruthy();
@@ -167,8 +167,21 @@ describe("/solo/* tier gate", () => {
       }
     });
 
+    // Codex review of b22716a6: the flag survives a sign-out redirect, so it must name its operator.
+    it("ignores an address flag that names a different user", async () => {
+      const blocked = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("blocked"); });
+      window.history.replaceState(null, "", "/?acting-as=someone-else");
+      try {
+        await renderAt("/solo/1971670/command-center");
+        expect(exitButton()).toBeFalsy();
+      } finally {
+        blocked.mockRestore();
+        window.history.replaceState(null, "", "/");
+      }
+    });
+
     it("ignores the address flag where storage works and holds no act-as", async () => {
-      window.history.replaceState(null, "", "/?acting-as=1");
+      window.history.replaceState(null, "", "/?acting-as=op");
       try {
         await renderAt("/solo/1971670/command-center");
         expect(exitButton()).toBeFalsy();

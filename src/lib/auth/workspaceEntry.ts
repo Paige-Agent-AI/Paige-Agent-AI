@@ -308,34 +308,27 @@ export function forgetOperatorActAs(): void {
 }
 
 /**
- * Where storage cannot hold the record (blocked by policy, quota), the console puts this flag on
- * the arrival address instead, so the one load that can strand an operator still knows an act-as
- * is open. It is read ONLY when storage is unusable, and like the record it grants nothing.
+ * Where storage cannot hold the record (blocked by policy, quota, or a store that accepts writes and
+ * reads back nothing), the console puts this flag on the arrival address instead, so the one load
+ * that can strand an operator still knows an act-as is open. Its value is the operator's own user
+ * id, so a flag that survives a sign-out redirect cannot be claimed by whoever signs in next. It is
+ * read ONLY when the record cannot be used (`workspaceRecordUsable()` reads its probe back), and
+ * like the record it grants nothing.
  */
 export const OPERATOR_ARRIVAL_PARAM = "acting-as";
 
-export function sessionStorageUsable(): boolean {
-  try {
-    const probe = "paige.storage.probe";
-    sessionStorage.setItem(probe, "1");
-    sessionStorage.removeItem(probe);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/** The arrival address for an act-as: flagged only when storage cannot record it. */
-export function operatorArrivalAddress(root: string): string {
-  return sessionStorageUsable() ? root : `${root}?${OPERATOR_ARRIVAL_PARAM}=1`;
+/** The arrival address for an act-as: flagged, with its operator, only when storage cannot record it. */
+export function operatorArrivalAddress(root: string, userId: string | null | undefined): string {
+  if (workspaceRecordUsable() || !userId) return root;
+  return `${root}?${OPERATOR_ARRIVAL_PARAM}=${encodeURIComponent(userId)}`;
 }
 
 /** Does this tab hold an act-as for THIS user? Another user's record, or a malformed one, is none. */
 export function operatorActAsRecorded(userId: string | null | undefined): boolean {
   if (!userId) return false;
-  if (!sessionStorageUsable()) {
+  if (!workspaceRecordUsable()) {
     try {
-      return new URLSearchParams(window.location.search).get(OPERATOR_ARRIVAL_PARAM) === "1";
+      return new URLSearchParams(window.location.search).get(OPERATOR_ARRIVAL_PARAM) === userId;
     } catch {
       return false;
     }

@@ -34,7 +34,7 @@
 //     400 INVALID_BLOCK_INDEX block_index was present but not a non-negative integer
 //     400 INVALID_TENANT_ID   service-role caller passed a malformed tenant_id
 //     401 UNAUTHENTICATED     no / invalid bearer token
-//     403 FORBIDDEN           JWT caller lacks admin, coach or super_admin
+//     403 FORBIDDEN           JWT caller lacks admin or super_admin
 //     422 BLOCK_TYPE_CHANGED  the model tried to change the section's kind — an edit revises a
 //                             section, it does not turn a hero into a pricing table
 //     422 REVISION_INVALID    the revision fails GrowthBlock validation (it would be rejected
@@ -198,8 +198,8 @@ serve(async (req: Request) => {
         return fail(500, "INTERNAL", `Could not read your roles: ${rErr.message}`);
       }
       const roles = (roleRows || []).map((r: any) => r.role);
-      if (!roles.some((r: string) => r === "admin" || r === "super_admin" || r === "coach")) {
-        return fail(403, "FORBIDDEN", "Admin or coach access required.");
+      if (!roles.some((r: string) => r === "admin" || r === "super_admin")) {
+        return fail(403, "FORBIDDEN", "Admin access required.");
       }
 
       // The tenant pin. SECURITY DEFINER, evaluated as the caller — it cannot return a tenant

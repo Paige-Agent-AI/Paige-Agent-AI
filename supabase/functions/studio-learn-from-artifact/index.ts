@@ -131,8 +131,8 @@ serve(async (req: Request) => {
 
       const { data: roleRows } = await authed.from("user_roles").select("role").eq("user_id", user.id);
       const roles = (roleRows || []).map((r: Record<string, unknown>) => r.role);
-      if (!roles.some((r) => r === "admin" || r === "super_admin" || r === "coach")) {
-        return json(403, { error: "Admin or coach access required." });
+      if (!roles.some((r) => r === "admin" || r === "super_admin")) {
+        return json(403, { error: "Admin access required." });
       }
       // The caller must be acting IN the artifact's workspace — this blocks an agency from
       // learning a sub-account's page into the agency's KB (resolve from artifact, authorize

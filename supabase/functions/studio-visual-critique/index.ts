@@ -227,10 +227,10 @@ serve(async (req: Request) => {
       actorUserId = user.id;
       const { data: roleRows } = await authed.from("user_roles").select("role").eq("user_id", user.id);
       const roles = (roleRows || []).map((r: Record<string, unknown>) => r.role);
-      if (!roles.some((r) => r === "admin" || r === "super_admin" || r === "coach")) {
-        return json(403, { error: "Admin or coach access required." });
+      if (!roles.some((r) => r === "admin" || r === "super_admin")) {
+        return json(403, { error: "Admin access required." });
       }
-      actorRole = roles.includes("super_admin") ? "super_admin" : roles.includes("admin") ? "admin" : "coach";
+      actorRole = roles.includes("super_admin") ? "super_admin" : "admin";
       const { data: activeTenant } = await authed.rpc("current_user_tenant_id");
       // super_admin (platform owner) may critique for an explicit tenant; everyone else is pinned to
       // their own active tenant regardless of what body.tenant_id says (§9 — body is not trusted).

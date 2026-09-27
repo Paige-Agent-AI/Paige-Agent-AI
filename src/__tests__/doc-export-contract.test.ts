@@ -449,7 +449,7 @@ describe("export-document edge function — the callable seam (source contract)"
     expect(SRC).toContain('"doc-render"');
   });
 
-  it("authorizes ENTIRELY by tenant-scoped role (owner/admin/coach) or operator — no coarse global gate (§9/§59/§70 source contract)", () => {
+  it("authorizes ENTIRELY by tenant-scoped role (owner/admin) or operator — no coarse global gate (§9/§59/§70 source contract)", () => {
     expect(SRC).toContain('authed.auth.getUser()');
     // Codex round-8 J1 (§70) — the coarse `admin|coach` GLOBAL gate is GONE: it 403'd a freshly-provisioned
     // Solo owner (global role only `user`; authority is an owner membership is_tenant_admin recognizes)
@@ -468,9 +468,10 @@ describe("export-document edge function — the callable seam (source contract)"
     expect(SRC).toContain("await service");
     expect(SRC).not.toContain("const reader = isOperator ? service : authed");
     // Codex F2 / §59 global-role trap — the in-body gate requires a MANAGE role IN THE DOC'S TENANT
-    // (owner/admin via is_tenant_admin, coach via has_tenant_role), tenant-scoped — never is_tenant_member.
+    // (owner/admin via is_tenant_admin), tenant-scoped — never is_tenant_member. The retired coach seat
+    // grants nothing.
     expect(SRC).toContain('authed.rpc("is_tenant_admin", { _tenant: tenantId })');
-    expect(SRC).toContain('authed.rpc("has_tenant_role", { _user_id: user.id, _tenant_id: tenantId, _role: "coach" })');
+    expect(SRC).not.toContain('_role: "coach"');
     expect(SRC).not.toContain('.rpc("is_tenant_member"'); // the any-role membership CALL was the F2 leak (a comment may still name it)
     // L1 — the privileged read means the auth failure must fail closed as a 404 (not 403), so a by-id caller
     // can't learn that an out-of-scope document exists.

@@ -1,6 +1,6 @@
 // export-document — turn a document a workspace ALREADY created (a marketing_content row, kind
 // 'document', the output of document_generate) into a real, DOWNLOADABLE file (pdf / docx / pptx / md)
-// and return a private, 30-day signed URL. Authorized IN-BODY by an owner/admin/coach manage role in the
+// and return a private, 30-day signed URL. Authorized IN-BODY by an owner/admin manage role in the
 // row's tenant, or a platform operator (super_admin/platform_admin) — NOT by RLS.
 //
 // WHY THIS EXISTS (§18/§13). The binary renderer (_shared/doc-render.ts) and the model router's
@@ -16,8 +16,8 @@
 // TENANT ISOLATION (§9/§59). The source row is read with the SERVICE-ROLE client (a privileged, RLS-bypassing
 // read — `marketing_content` RLS refuses a legitimate fresh Solo owner AND a platform_admin, so a caller-JWT
 // read would 404 them). The read is therefore NOT the access decision: the caller is authorized IN-BODY,
-// BEFORE any kind/tenant-shape response, by a MANAGE role in the ROW's tenant (owner/admin via is_tenant_admin,
-// coach via has_tenant_role) OR the platform-operator role; a non-authorized caller fails CLOSED as a 404 so
+// BEFORE any kind/tenant-shape response, by a MANAGE role in the ROW's tenant (owner/admin via is_tenant_admin)
+// OR the platform-operator role; a non-authorized caller fails CLOSED as a 404 so
 // the by-id endpoint never reveals an out-of-scope row. The in-body check — NOT RLS — is the load-bearing
 // boundary. The file is filed under the ROW's tenant_id, never a value from the body.
 //
@@ -61,9 +61,9 @@ serve(async (req: Request) => {
     // NO coarse global-role gate here. `user_roles` is GLOBAL and tenant-agnostic, and a freshly-provisioned
     // Solo owner holds ONLY the global `user` role — their authority is an active OWNER membership that
     // `is_tenant_admin` recognizes (migration 20261180000000, the §59 "WRONGLY REFUSES" half). A coarse
-    // `admin|coach` global gate would 403 that owner before the tenant check even runs — they'd be unable to
+    // `admin` global gate would 403 that owner before the tenant check even runs — they'd be unable to
     // export their OWN document (§70). Authorization is decided ENTIRELY by the tenant-scoped check below
-    // (owner/admin via is_tenant_admin, coach via has_tenant_role) OR the platform-operator role — so a
+    // (owner/admin via is_tenant_admin) OR the platform-operator role — so a
     // non-member/non-operator still fails there. The global roles are read ONLY to detect operators.
 
     const body = await req.json().catch(() => ({}));
@@ -83,7 +83,7 @@ serve(async (req: Request) => {
     const service = createClient(supabaseUrl, supabaseServiceKey);
 
     // §9/§59 — PRIVILEGED READ, then AUTHORIZE IN-BODY. `marketing_content` RLS admits only users holding a
-    // GLOBAL admin/coach role in the active tenant (or is_platform_owner), so a caller-JWT read returns NULL
+    // GLOBAL admin role in the active tenant (or is_platform_owner), so a caller-JWT read returns NULL
     // for a freshly-provisioned Solo OWNER (global role only `user`) AND for a platform_admin — both would
     // 404 before their tenant-scoped authority could be checked (Codex L1/F1; the §59 "WRONGLY REFUSES"
     // half). So the row is read with the SERVICE-ROLE client (RLS-bypassing) — this read is NOT the access
@@ -113,26 +113,22 @@ serve(async (req: Request) => {
     // admin in workspace A but only a PLAIN member of the doc's tenant B export B's documents (Codex F2 —
     // §59's global-role trap; the documented pattern in 20261180000000). A bare `is_tenant_member` check
     // does NOT close it — a plain member passes. RE-ENFORCE a MANAGE role IN THE DOC'S TENANT, tenant-scoped
-    // on the caller's own auth.uid(): owner/admin via `is_tenant_admin`, or coach via `has_tenant_role`
-    // (both SECURITY DEFINER, keyed on the caller's own identity — never a passed actor). A null `tenantId`
-    // makes both RPCs return false (no row matches `tenant_id = null`), so a non-operator hitting a
+    // on the caller's own auth.uid(): owner/admin via `is_tenant_admin`
+    // (SECURITY DEFINER, keyed on the caller's own identity — never a passed actor). A null `tenantId`
+    // makes it return false (no row matches `tenant_id = null`), so a non-operator hitting a
     // null-tenant row of any kind is denied as a 404 — never reaching the 422 that would confirm the row.
     // Operators (super_admin/platform_admin, §53) span tenants and skip this. (The RLS OR-branch is a
     // platform-wide §9/§59 gap reachable via raw PostgREST — its own follow-up (#1023); this gate closes
     // the export vector regardless.)
     if (!isOperator) {
       const { data: isAdmin } = await authed.rpc("is_tenant_admin", { _tenant: tenantId });
-      let allowed = isAdmin === true;
-      if (!allowed) {
-        const { data: isCoach } = await authed.rpc("has_tenant_role", { _user_id: user.id, _tenant_id: tenantId, _role: "coach" });
-        allowed = isCoach === true;
-      }
+      const allowed = isAdmin === true;
       // Fail CLOSED as a 404 (not 403): the service-role read above can see any tenant's row, so a 403 here
       // would reveal that an out-of-scope document exists. 404 keeps it indistinguishable from "not found".
       if (!allowed) return json(404, { error: "Document not found, or you don't have access to it." });
     }
 
-    // Only an authorized caller (operator, or admin/coach of THIS doc's tenant) reaches these branches, so
+    // Only an authorized caller (operator, or admin of THIS doc's tenant) reaches these branches, so
     // the kind/tenant-shape responses below cannot reveal another tenant's row (Codex M1).
     if (doc.kind !== "document") {
       return json(400, { error: "That content isn't a document — only documents can be exported to a file." });

@@ -142,7 +142,7 @@ SELECT ok(NOT EXISTS (SELECT 1 FROM pg_temp.retired_role_reads() r WHERE r IN ('
   'the value used as data — a lens, a seat label, a sender type, an assigned-role label — is not a role read');
 
 -- 15. The staff name projection gates on the business, never on the retired role.
-SELECT unlike(pg_get_viewdef('public.coach_client_profiles_safe'::regclass), '%''coach''%',
+SELECT ok(pg_get_viewdef('public.coach_client_profiles_safe'::regclass) !~ '''coach''',
   'the staff name projection does not read the retired role');
 
 -- 16. The seat mapping keeps every seat a membership may hold.

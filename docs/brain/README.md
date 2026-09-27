@@ -124,7 +124,7 @@ All figures below were checked live this session; how each was verified is in `c
   `is_active`); **live Stripe active prices = Solo + Agency only** (Enterprise has no active Stripe
   price yet — see `config-registry.md`).
 - **CI pipelines:** 6 — `ci`, `deploy-migrations`, `deploy-edge-functions`, `migration-lint`,
-  `premerge-migration-proof`, `security-audit` (verified: `.github/workflows/`). Plus two RLS
+  `premerge-migration-proof` (**DISABLED** since 2026-08-24 — does not run; #574), `security-audit` (verified: `.github/workflows/`). Plus two RLS
   drift-guard npm scripts wired into `ci.yml`: **`lint:views`** (VIEW `security_invoker` drift, #116/PR #447)
   + **`lint:definer-fns`** (`SECURITY DEFINER` fn granted to anon w/o exempt escape, #117/PR #448) —
   the anon/cross-tenant-reach class is now guarded at both Postgres object types. See `config-registry.md` → CI.

@@ -5891,3 +5891,25 @@ refuses; the CRM door skips `cancellationsRecorded`/`revalidateProposalScope()`.
 built bundle, and the test that kept them asserted only that the file contained an export.
 
 **Owed:** authenticated runtime proof on the deployed Solo shell (§32.c/§70.1).
+
+## 2026-09-27 — CI integrity: green means green (PRs #1478, #1483, #1487, #1496)
+
+**Decided.** `database-contract` rebuilds its database with production's API-role grants instead of
+the local stack's defaults. Order: read production read-only → rebuild to production's newest
+recorded migration → reproduce production's object grants + default privileges → apply every
+unrecorded migration as written. Any object production grants that this tree lacks, or any grant
+line the parser cannot read, fails the job by name. An ordering proof (8 checks, with a negative
+control) runs at the end of every job so reproduction can never overwrite the change under review.
+
+**Why.** Production's grants came from old project-level default privileges (126 tables carry no
+migration grant); the local stack gave `authenticated` SELECT on 207 of 438 public tables and no
+EXECUTE on `is_tenant_admin(uuid)`. Five proofs had hand-written grants to compensate, and one
+wrote a false comment about production. A rebuilt DB that differs from production silently makes
+every RLS proof a proof about a different database.
+
+**Also.** #1461's 20 tests resolved (18 harness gaps, 2 stale); an unlisted unhandled WebSocket
+error that failed every CI Test step fixed; the chat tool contract check made runnable bare.
+
+**Not decided here (owner).** Re-enable or delete `premerge-migration-proof` (disabled since
+2026-08-24, #574 owns the fail-closed rework). Whether the changed-file lints become ratchets
+(reverses the written "touch a file, own its findings" policy, ci.yml:527-531).

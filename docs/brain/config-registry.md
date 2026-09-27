@@ -406,8 +406,17 @@ exist — do not follow references to them.)
 | `deploy-migrations.yml` | push (to `main`) | `supabase db push` → `migration list` verify → moves `db-live` tag (§32 persisted-apply) |
 | `deploy-edge-functions.yml` | push (to `main`) | Deploys only changed functions (follows `_shared` imports via `.github/scripts/edge-affected.py`); moves `edge-live` tag (§24) |
 | `migration-lint.yml` | pull_request | Migration shape lint (§208/§213) |
-| `premerge-migration-proof.yml` | pull_request | Pre-merge `BEGIN..ROLLBACK` migration proof (§32.a) |
+| `premerge-migration-proof.yml` | pull_request — **DISABLED** (manually, no run since 2026-08-24) | Pre-merge migration proof (§32.a). Does not run: a proof "owed" to it is not owed to anything. Fail-closed rework is #574; re-enable or delete is an owner decision |
 | `security-audit.yml` ("Security Audit") | pull_request + push | Security audit gate |
+
+**Security scanning (2026-09-27).** `codeql.yml` ("CodeQL Advanced") and `codacy.yml` ("Codacy Security
+Scan") were **removed** on owner authorization: CodeQL Advanced failed on every run because GitHub's
+CodeQL *default setup* (a repository setting, not a file — dynamic workflow `github-code-scanning/codeql`)
+is enabled and refuses advanced-configuration results; Codacy failed on every run. The default setup
+still scans `actions`, `javascript-typescript` and `python` on every PR and push and is green. The
+`github-advanced-security` PR check ("Code scanning AI findings", dynamic agent) is also a repository
+setting; it fails on an unsupported model and can only be switched off in repository settings. A
+replacement scanning decision is being made separately; do not add a scanner here without it.
 
 **RLS anon/cross-tenant-reach drift guards (npm scripts wired into `ci.yml`):**
 

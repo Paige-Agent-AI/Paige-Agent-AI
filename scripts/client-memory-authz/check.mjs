@@ -4150,7 +4150,7 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
   const staleStore = storedCard(`Pick a time. ${PLANTS[0][1]}`);
   const approvedStale = await redeem(staleStore);
   assert("31.7 a stored card whose message carries internal text sends nothing when approved, and PAIGE is told why",
-    !!cleanCard && sends(approvedStale).length === 0 && refusedAsInternal(approvedStale) && toldModel(approvedStale).includes("Nothing was sent."),
+    !!cleanCard && sends(approvedStale).length === 0 && refusedAsInternal(approvedStale) && toldModel(approvedStale).includes("Nothing went ahead."),
     JSON.stringify({ consumed: staleStore.rows[0].consumed, sends: sends(approvedStale).length, refused: refusedAsInternal(approvedStale) }));
   // The usual approval: the model re-sends the card's own arguments. The gate claims the card first, so the
   // refusal is where it runs, and the card says so, rather than a refusal before the gate that leaves the
@@ -4158,7 +4158,7 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
   const sameStore = storedCard(`Pick a time. ${PLANTS[0][1]}`);
   const approvedSame = await linkDrive(sameStore, linkArgs(`Pick a time. ${PLANTS[0][1]}`), { approvedConfirmations: ["dddddddddddddddd"] });
   assert("31.7c ...and so does the usual approval, where PAIGE re-sends the card's own message",
-    sameStore.rows[0].consumed && sends(approvedSame).length === 0 && refusedAsInternal(approvedSame) && toldModel(approvedSame).includes("Nothing was sent."),
+    sameStore.rows[0].consumed && sends(approvedSame).length === 0 && refusedAsInternal(approvedSame) && toldModel(approvedSame).includes("Nothing went ahead."),
     JSON.stringify({ consumed: sameStore.rows[0].consumed, sends: sends(approvedSame).length, refused: refusedAsInternal(approvedSame) }));
   // What the owner's card says for it: the server's one sentence, and the action marked as not run.
   const staleOutcome = approvedStale.bodyText.split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
@@ -4277,17 +4277,31 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
   assert("31.17 a drafted email whose body arrives as a list is read too, and not filed",
     approvalsFiled(listed).length === 0 && refusedAsInternal(listed), JSON.stringify({ filed: approvalsFiled(listed).length }));
 
-  // A follow-up action is read for what advance_action delivers for its kind, and nothing else: an
-  // owner-only kind's draft is the owner's, and a draft's ids and channel are the server's.
-  const advanceKnown = (row, executor, args) => drive({ stream: true, extraBody: { threadId: THREAD },
+  // A follow-up action is read for what advance_action delivers. Drafted, a kind that requires approval sends
+  // its draft through the approval lane WHATEVER its executor, so an owner-only kind that requires approval is
+  // read; one that needs none is not, and neither are a draft's ids and channel.
+  const advanceKnown = (row, kind, args, extra = {}) => drive({ stream: true, extraBody: { threadId: THREAD },
     toolCall: { name: "action_advance", args: { action_id: ACTION, ...args } }, ...lane("auto"),
-    tablesExtra: { user_roles: [{ role: "admin" }], paige_actions: () => [{ id: ACTION, ...row }], paige_action_kinds: () => [{ executor }] } });
-  const ownerOnlyDraft = await advanceKnown({ status: "filed", action_kind: "exec.compile_brief", title: "Weekly brief" }, "record_only",
-    { to_status: "drafted", draft_content: { brief: "Retry update_client_data for Dana" } });
-  assert("31.18 an owner-only action's draft is not read here (it never reaches a customer)",
-    rpcsNamed(ownerOnlyDraft, "advance_action").length === 1 && !refusedAsInternal(ownerOnlyDraft),
-    JSON.stringify({ advanced: rpcsNamed(ownerOnlyDraft, "advance_action").length, refused: refusedAsInternal(ownerOnlyDraft) }));
-  const withIds = await advanceKnown({ status: "filed", action_kind: "client.follow_up", title: "Follow up" }, "send_via_approval",
+    tablesExtra: { user_roles: [{ role: "admin" }], paige_actions: () => [{ id: ACTION, ...row }], paige_action_kinds: () => [kind] }, ...extra });
+  const leakyEmail = { channel: "email", contact_id: OWN, subject: "Checking in", body: `Hi Dana. ${PLANTS[0][1]}` };
+  const approvalLane = await advanceKnown({ status: "filed", action_kind: "curriculum.suggest_resource", title: "Suggest a resource" },
+    { executor: "record_only", requires_approval: true }, { to_status: "drafted", draft_content: leakyEmail });
+  assert("31.18 an owner-only kind that requires approval is read: its draft goes out as an email when approved",
+    rpcsNamed(approvalLane, "advance_action").length === 0 && refusedAsInternal(approvalLane),
+    JSON.stringify({ advanced: rpcsNamed(approvalLane, "advance_action").length, refused: refusedAsInternal(approvalLane) }));
+  const noApproval = await advanceKnown({ status: "filed", action_kind: "exec.compile_brief", title: "Weekly brief" },
+    { executor: "record_only", requires_approval: false }, { to_status: "drafted", draft_content: leakyEmail });
+  assert("31.18 CONTROL: the same draft on an owner-only kind that needs no approval is not read (it never reaches a customer)",
+    rpcsNamed(noApproval, "advance_action").length === 1 && !refusedAsInternal(noApproval),
+    JSON.stringify({ advanced: rpcsNamed(noApproval, "advance_action").length, refused: refusedAsInternal(noApproval) }));
+  const kindUnreadable = await advanceKnown({ status: "filed", action_kind: "exec.compile_brief", title: "Weekly brief" },
+    { executor: "record_only", requires_approval: false }, { to_status: "drafted", draft_content: leakyEmail },
+    { tableErrorsExtra: { "paige_action_kinds:select": { message: "boom", code: "XX000" } } });
+  assert("31.18 ...and when the kind cannot be looked up, the draft is read",
+    rpcsNamed(kindUnreadable, "advance_action").length === 0 && refusedAsInternal(kindUnreadable),
+    JSON.stringify({ advanced: rpcsNamed(kindUnreadable, "advance_action").length }));
+  const withIds = await advanceKnown({ status: "filed", action_kind: "sales.work_followup", title: "Follow up" },
+    { executor: "send_via_approval", requires_approval: true },
     { to_status: "drafted", draft_content: { channel: "email", contact_id: OWN, subject: "Checking in", body: "Hi Dana, how was your week?" } });
   assert("31.18 CONTROL: a customer email's contact id and channel are not read as its text",
     rpcsNamed(withIds, "advance_action").length === 1 && !refusedAsInternal(withIds),
@@ -4295,7 +4309,7 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
 
   // Executing a portal action shows the client its STORED title and draft, which nothing attached now carries.
   const surface = (title) => advanceKnown({ status: "drafted", action_kind: "client.portal_recommendation", title, summary: "Next step",
-    draft_content: { body: "Book your next session when it suits you." } }, "surface_to_client", { to_status: "executing" });
+    draft_content: { body: "Book your next session when it suits you." } }, { executor: "surface_to_client", requires_approval: false }, { to_status: "executing" });
   const storedLeak = await surface(`Your next step. ${PLANTS[1][1]}`);
   assert("31.19 executing a portal action whose stored title carries internal text shows the client nothing",
     rpcsNamed(storedLeak, "advance_action").length === 0 && refusedAsInternal(storedLeak),

@@ -5,19 +5,23 @@
  * carries internal text.
  *
  * THE CUSTOMER-BOUND FIELDS, per tool: what the send path actually delivers, and nothing else.
- *   - propose_action: the email's subject and the message body. The summary is the owner's line in the
- *     approvals queue, not the customer's.
- *   - calendar_link_send: the subject and the custom message. The booking link itself is the server's.
- *   - action_file: the title and summary, for a kind whose executor reaches a customer
- *     (`send_via_approval`, `surface_to_client`). An owner-only kind's title is the owner's.
- *   - action_advance: what `advance_action` delivers for the action's kind. For `send_via_approval`, when the
- *     action is drafted: the draft's subject and its body (or message), which the approval lane sends. For
- *     `surface_to_client`, when it is drafted or executed: the action's title and the draft's body (or its
- *     summary), which the client's portal shows. The draft is the one attached now, or the stored one when
- *     none is attached. Other statuses deliver nothing.
+ *   - propose_action: the message body, and the subject of an email (a text carries none). The summary is
+ *     the owner's line in the approvals queue, not the customer's.
+ *   - calendar_link_send: the custom message, and the subject of an email. The booking link is the server's.
+ *   - action_file: the title and summary, for a kind the client's portal shows (`surface_to_client`): the
+ *     portal shows the action's title, and its summary when no draft body replaces it. Another executor's
+ *     title and summary are the owner's.
+ *   - action_advance: what `advance_action` delivers. When the action is DRAFTED and its kind requires
+ *     approval, whatever its executor, the draft (the one attached, else the stored one) goes to the approval
+ *     lane, and approving it sends its subject and body (or message) as a message when it names a channel;
+ *     a workflow kind in the auto lane can file its stored draft the same way. When it is EXECUTED, a portal
+ *     kind shows its stored title and the stored draft's body (or its summary), and a workflow kind can file
+ *     its stored draft for approval. Other statuses deliver nothing.
  * Ids, channels and recipients are never read: the server resolves them. A value the send path would turn
  * into text (an array, say, which `String()` joins) is read string by string, so a list is not a way past.
- * A kind, or an action, the caller could not look up is read by every route, never waved through.
+ * Where the caller could not find out the kind, every route is read. The check refuses only on a finding:
+ * text it was not given (an action whose stored row could not be read) it cannot read, and it does not
+ * refuse for that alone, because a missed leak is preferable to a normal action withheld (owner rule).
  *
  * THE VOCABULARY is the caller's, from the same turn: the tool definitions, the text the caller vouches
  * for, and every tool result PAIGE has been sent, exactly as R3 reads a client's answer. So a clean result means none
@@ -32,8 +36,8 @@ import { deriveInternalVocabulary, findInternalLeaks, type InternalLeak } from "
 /** The tools whose arguments carry text a customer reads. */
 export const OUTBOUND_DRAFT_TOOLS: ReadonlySet<string> = new Set(["propose_action", "calendar_link_send", "action_advance", "action_file"]);
 
-/** The action-bus executors whose output reaches a customer (the registry's own values). */
-export const CUSTOMER_REACHING_EXECUTORS: ReadonlySet<string> = new Set(["send_via_approval", "surface_to_client"]);
+/** The action-bus executor whose action the client's portal shows (the registry's own value). */
+export const PORTAL_EXECUTOR = "surface_to_client";
 
 const MAX_DEPTH = 4;
 
@@ -64,37 +68,55 @@ export interface StoredAction {
 export interface DraftContext {
   /** The executor the registry names for the kind; absent when the caller could not find out. */
   executor?: string;
+  /** Whether the registry says the kind requires approval; absent when the caller could not find out. */
+  requiresApproval?: boolean;
   /** action_advance: the action as stored; absent when the caller could not read it. */
   stored?: StoredAction;
 }
 
-function reachesCustomer(executor: string | undefined): boolean {
-  return executor === undefined || CUSTOMER_REACHING_EXECUTORS.has(executor);
+function isEmail(channel: unknown): boolean {
+  return String(channel ?? "").toLowerCase() !== "sms";
 }
 
-function advanceTexts(args: Record<string, unknown>, { executor, stored }: DraftContext): string[] {
+/** The fields of a draft that the approval lane sends as a message (execute-approval). */
+function messageOf(draft: unknown): unknown[] {
+  const d = isRecord(draft) ? draft : {};
+  return [d.subject, d.body ?? d.message];
+}
+
+function advanceTexts(args: Record<string, unknown>, { executor, requiresApproval, stored }: DraftContext): string[] {
   const named = (v: unknown) => (typeof v === "string" && v.trim() ? v : undefined);
   // advance_action moves to `p_to_status`, or re-runs the stored status when none is given. When neither is
   // known, drafted is assumed: it is the one status that takes a new draft.
   const next = named(args.to_status) ?? named(stored?.status) ?? "drafted";
-  if (next !== "drafted" && next !== "executing") return [];
   const attached = args.draft_content ?? undefined;
-  const draft = next === "drafted" && attached !== undefined ? attached : stored?.draft_content;
-  const d = isRecord(draft) ? draft : {};
-  const message = [d.subject, d.body ?? d.message];
-  const surfaced = [stored?.title, d.body ?? stored?.summary ?? stored?.title];
-  if (executor === "send_via_approval") return next === "drafted" ? textsOf(message) : [];
-  if (executor === "surface_to_client") return textsOf(surfaced);
-  if (executor !== undefined) return [];
-  return [...new Set(textsOf([...message, ...surfaced]))];
+  const texts: unknown[] = [];
+  const portal = executor === undefined || executor === PORTAL_EXECUTOR;
+  const workflow = executor === undefined || executor === "workflow";
+  if (next === "drafted") {
+    if (requiresApproval !== false) texts.push(...messageOf(attached !== undefined ? attached : stored?.draft_content));
+    if (workflow && requiresApproval !== true) texts.push(...messageOf(stored?.draft_content));
+  } else if (next === "executing") {
+    if (portal) {
+      const storedDraft = stored?.draft_content;
+      const d = isRecord(storedDraft) ? storedDraft : {};
+      texts.push(stored?.title, d.body ?? stored?.summary ?? stored?.title);
+    }
+    if (workflow) texts.push(...messageOf(stored?.draft_content));
+  }
+  return [...new Set(textsOf(texts))];
 }
 
 /** The text a customer may read from one call of `tool`, given what the caller found out (see above). */
 export function customerBoundTexts(tool: string, args: Record<string, unknown>, context: DraftContext = {}): string[] {
   switch (tool) {
-    case "propose_action": return textsOf([args.subject, args.body]);
-    case "calendar_link_send": return textsOf([args.subject, args.message]);
-    case "action_file": return reachesCustomer(context.executor) ? textsOf([args.title, args.summary]) : [];
+    case "propose_action": {
+      const email = isEmail(args.action_type);
+      return textsOf(email ? [args.subject, args.body] : [args.body]);
+    }
+    case "calendar_link_send": return textsOf(isEmail(args.channel) ? [args.subject, args.message] : [args.message]);
+    case "action_file":
+      return context.executor === undefined || context.executor === PORTAL_EXECUTOR ? textsOf([args.title, args.summary]) : [];
     case "action_advance": return advanceTexts(args, context);
     default: return [];
   }
@@ -118,10 +140,10 @@ export function internalTextInDraft(texts: readonly string[], turn: DraftTurn): 
 
 /**
  * The tool result PAIGE reads when a draft is refused. It lists what matched, so she can take it out,
- * and says what to do: at filing, rewrite and file again; at sending (a card stored before this check
- * existed), tell the owner plainly that nothing was sent and offer a rewrite for a fresh approval.
+ * and says what to do: when she filed it just now, rewrite and file again; when it came from a card the
+ * owner approved, tell them plainly that it did not go ahead and offer a rewrite for a fresh approval.
  */
-export function draftRefusal(leaks: readonly InternalLeak[], stage: "filing" | "sending"): Record<string, unknown> {
+export function draftRefusal(leaks: readonly InternalLeak[], stage: "filing" | "approved"): Record<string, unknown> {
   const found = [...new Set(leaks.map((leak) => leak.text))].slice(0, 10);
   return {
     success: false,
@@ -129,6 +151,6 @@ export function draftRefusal(leaks: readonly InternalLeak[], stage: "filing" | "
     found,
     note: stage === "filing"
       ? "Nothing was filed. This draft is for a customer, and it contains text only the platform uses (listed in found): a tool name, a field name, a record id or error text. Rewrite it in plain words the customer would use, without those, and file it again."
-      : "Nothing was sent. The approved message contains text only the platform uses (listed in found), so it was not sent. Tell the owner plainly that the message was not sent because it contained internal system details, and offer to rewrite it for a fresh approval.",
+      : "Nothing went ahead. The approved draft contains text only the platform uses (listed in found), so it was stopped before it reached the customer. Tell the owner plainly that it did not go ahead because it contained internal system details, and offer to rewrite it for a fresh approval.",
   };
 }

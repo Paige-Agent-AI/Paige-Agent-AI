@@ -8307,7 +8307,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // action_advance the action as stored. What it cannot find out is read, never waved through.
     // Returns the refusal PAIGE reads, or null.
     const outboundDraftRefusal = async (
-      tool: string, args: Record<string, unknown>, stage: "filing" | "sending",
+      tool: string, args: Record<string, unknown>, stage: "filing" | "approved",
     ): Promise<Record<string, unknown> | null> => {
       if (!OUTBOUND_DRAFT_TOOLS.has(tool)) return null;
       const context: DraftContext = {};
@@ -8323,9 +8323,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             }
           }
           if (kind) {
-            const { data, error } = await supabaseClient.from("paige_action_kinds").select("executor").eq("slug", kind).maybeSingle();
-            const executor = (data as { executor?: unknown } | null)?.executor;
-            if (!error && typeof executor === "string") context.executor = executor;
+            const { data, error } = await supabaseClient.from("paige_action_kinds").select("executor, requires_approval").eq("slug", kind).maybeSingle();
+            const row = (error ? null : data) as { executor?: unknown; requires_approval?: unknown } | null;
+            if (typeof row?.executor === "string") context.executor = row.executor;
+            if (typeof row?.requires_approval === "boolean") context.requiresApproval = row.requires_approval;
           }
         } catch { /* what could not be found out stays unknown, and is read */ }
       }
@@ -12105,7 +12106,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             } else if (tc.function.name === "action_file") {
               // R2 — read where it runs: in the auto lane these are the model's arguments, and on an
               // approval the card's stored ones.
-              const fileProblem = await outboundDraftRefusal("action_file", args, "filing");
+              const fileProblem = await outboundDraftRefusal("action_file", args, approvalChannel.get(tc.id) === "operator_card" ? "approved" : "filing");
               if (fileProblem) {
                 toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(fileProblem) });
                 continue;
@@ -12133,7 +12134,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               }
               // R2 — read where it runs: in the auto lane these are the model's arguments, and on an
               // approval the card's stored ones. With no draft attached, the stored action is what it delivers.
-              const draftProblem = await outboundDraftRefusal("action_advance", args, "filing");
+              const draftProblem = await outboundDraftRefusal("action_advance", args, approvalChannel.get(tc.id) === "operator_card" ? "approved" : "filing");
               if (draftProblem) {
                 toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(draftProblem) });
                 continue;
@@ -13034,7 +13035,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             } else {
               // calendar_link_send — the confirmed high-risk send. Forward the caller JWT to send-message.
               // R2 — the message that goes out is read here: the card's stored one on an approval.
-              const sendProblem = await outboundDraftRefusal("calendar_link_send", args, "sending");
+              const sendProblem = await outboundDraftRefusal("calendar_link_send", args, approvalChannel.get(tc.id) === "operator_card" ? "approved" : "filing");
               if (sendProblem) {
                 toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(sendProblem) });
                 continue;

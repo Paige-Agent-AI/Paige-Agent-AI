@@ -39,16 +39,36 @@ ALTER POLICY "Coaches view verifications for their clients" ON public.business_v
   RENAME TO "Assigned staff view verifications for their clients";
 
 DROP POLICY clients_coaches_assigned ON public.clients;
+-- A client is assigned to a person by the client record's assigned staff member, by an active
+-- assignment of the 'coach' kind, or by an active assignment relationship in the client's business.
 CREATE POLICY clients_assigned_staff_read ON public.clients
   FOR SELECT TO authenticated
   USING (public.is_tenant_member(tenant_id)
-         AND (assigned_coach_user_id = auth.uid() OR public.is_assigned_to_client(auth.uid(), id, 'coach')));
+         AND (assigned_coach_user_id = auth.uid()
+              OR public.is_assigned_to_client(auth.uid(), id, 'coach')
+              OR EXISTS (SELECT 1 FROM public.coach_clients cc
+                          WHERE cc.coach_user_id = auth.uid()
+                            AND cc.client_user_id = clients.linked_user_id
+                            AND cc.tenant_id = clients.tenant_id
+                            AND cc.status = 'active')));
 CREATE POLICY clients_assigned_staff_update ON public.clients
   FOR UPDATE TO authenticated
   USING (public.is_tenant_member(tenant_id)
-         AND (assigned_coach_user_id = auth.uid() OR public.is_assigned_to_client(auth.uid(), id, 'coach')))
+         AND (assigned_coach_user_id = auth.uid()
+              OR public.is_assigned_to_client(auth.uid(), id, 'coach')
+              OR EXISTS (SELECT 1 FROM public.coach_clients cc
+                          WHERE cc.coach_user_id = auth.uid()
+                            AND cc.client_user_id = clients.linked_user_id
+                            AND cc.tenant_id = clients.tenant_id
+                            AND cc.status = 'active')))
   WITH CHECK (public.is_tenant_member(tenant_id)
-              AND (assigned_coach_user_id = auth.uid() OR public.is_assigned_to_client(auth.uid(), id, 'coach')));
+              AND (assigned_coach_user_id = auth.uid()
+              OR public.is_assigned_to_client(auth.uid(), id, 'coach')
+              OR EXISTS (SELECT 1 FROM public.coach_clients cc
+                          WHERE cc.coach_user_id = auth.uid()
+                            AND cc.client_user_id = clients.linked_user_id
+                            AND cc.tenant_id = clients.tenant_id
+                            AND cc.status = 'active')));
 
 -- An assignment row is admitted only for an assignee who qualifies in its business (20270427000000).
 ALTER POLICY "Coaches can view own clients" ON public.coach_clients

@@ -4,7 +4,7 @@
 -- DATA — adding an operator role, granting and withdrawing a capability are row changes that
 -- change the answer with no code change.
 BEGIN;
-SELECT plan(88);
+SELECT plan(91);
 
 -- ── Grants ──────────────────────────────────────────────────────────────────────────────────
 SELECT ok(NOT has_function_privilege('anon', 'public.operator_standing()', 'EXECUTE'),
@@ -95,6 +95,7 @@ SELECT is((SELECT tier FROM public.operator_standing()), 'super_admin', 'super_a
 SELECT is((SELECT active_tenant_id FROM public.operator_standing()),
   '0a570000-0000-4000-8000-00000000a001'::uuid, 'an operator is told the tenant their session is scoped to');
 SELECT is((SELECT count(*)::int FROM public.operator_standing()), 1, 'the answer is always one row');
+SELECT ok((SELECT holds_unlisted FROM public.operator_standing()), 'the owner tier is reported as holding the unlisted');
 SELECT ok(public.operator_may('operator.seat.super_admin.grant'), 'super_admin may grant a super_admin seat');
 SELECT ok(public.operator_may('operator.seat.platform_admin.grant'), 'super_admin may grant a platform_admin seat');
 SELECT ok(public.operator_may('billing.read'), 'super_admin may read billing');
@@ -105,6 +106,7 @@ SELECT ok(NOT public.operator_may(NULL), 'a NULL capability is refused even to s
 SELECT pg_temp.as_caller('0a570000-0000-4000-8000-000000000002');
 SELECT is((SELECT tier FROM public.operator_standing()), 'platform_admin', 'platform_admin reads as platform_admin');
 SELECT is((SELECT active_tenant_id FROM public.operator_standing()), NULL::uuid, 'at rest, no tenant');
+SELECT ok(NOT (SELECT holds_unlisted FROM public.operator_standing()), 'the delegated tier does not hold the unlisted');
 SELECT ok(public.operator_may('console.enter'), 'platform_admin may enter the console');
 SELECT ok(public.operator_may('fleet.directory.read'), 'platform_admin may read the directory');
 SELECT ok(public.operator_may('tenant.act_as'), 'platform_admin may act as a tenant');
@@ -150,6 +152,7 @@ SELECT ok(NOT public.operator_may('console.enter'), 'an ordinary user may not en
 SELECT set_config('request.jwt.claims', '', true);
 SELECT is((SELECT tier FROM public.operator_standing()), NULL::text, 'no subject, no standing');
 SELECT is((SELECT active_tenant_id FROM public.operator_standing()), NULL::uuid, 'no subject, no pointer');
+SELECT is((SELECT count(*)::int FROM public.operator_standing()), 1, 'no subject still gets exactly one row');
 SELECT ok(NOT public.operator_may('console.enter'), 'no subject may nothing');
 
 -- ── Role access is data: change rows, and the answer changes with no code change ────────────

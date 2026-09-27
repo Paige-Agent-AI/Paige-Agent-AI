@@ -145,7 +145,11 @@ ON CONFLICT (role, capability) DO NOTHING;
 -- ── The one answer ───────────────────────────────────────────────────────────────────────────
 -- Keyed on auth.uid() only: a caller learns their own standing and nobody else's (§59). The tier
 -- is the highest-ranked operator role the caller holds. A non-operator, and a caller with no
--- subject, get (NULL, NULL).
+-- subject, get (NULL, NULL, false).
+--
+-- holds_unlisted is that tier's flag from platform_operator_roles: the owner tier, which holds
+-- every capability. Reported so no client has to name the owner role to recognise it — the owner
+-- tier is data here like everything else.
 --
 -- active_tenant_id is the operator's session scope: profiles.active_tenant_id, the value every
 -- query in the app is scoped by. For an operator a set value means acting inside that tenant. It
@@ -153,27 +157,26 @@ ON CONFLICT (role, capability) DO NOTHING;
 -- refuses direct writes, the sign-in reset and guard_active_tenant_membership's operator arm can
 -- still change it without an audit row. It is named for what it is, not for what A2 will make it.
 CREATE OR REPLACE FUNCTION public.operator_standing()
-RETURNS TABLE (tier text, active_tenant_id uuid)
+RETURNS TABLE (tier text, active_tenant_id uuid, holds_unlisted boolean)
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = ''
 AS $$
-  WITH standing AS (
-    SELECT (
-      SELECT o.role
-      FROM public.user_roles r
-      JOIN public.platform_operator_roles o ON o.role = r.role::text
-      WHERE r.user_id = auth.uid()
-      ORDER BY o.rank DESC
-      LIMIT 1
-    ) AS tier
+  WITH top AS (
+    SELECT o.role, o.holds_unlisted
+    FROM public.user_roles r
+    JOIN public.platform_operator_roles o ON o.role = r.role::text
+    WHERE r.user_id = auth.uid()
+    ORDER BY o.rank DESC
+    LIMIT 1
   )
-  SELECT s.tier,
-         CASE WHEN s.tier IS NOT NULL
+  SELECT t.role,
+         CASE WHEN t.role IS NOT NULL
               THEN (SELECT p.active_tenant_id FROM public.profiles p WHERE p.user_id = auth.uid())
-         END
-  FROM standing s;
+         END,
+         COALESCE(t.holds_unlisted, false)
+  FROM (SELECT 1) one LEFT JOIN top t ON true;
 $$;
 
 COMMENT ON FUNCTION public.operator_standing() IS

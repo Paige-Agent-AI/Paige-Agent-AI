@@ -86,15 +86,15 @@ DROP POLICY "Coaches can view assigned client funding_secured" ON public.funding
 DROP POLICY "Coaches can manage own research results" ON public.lender_research_results;
 DROP POLICY "Coaches manage assigned client outreach drafts" ON public.outreach_drafts;
 
--- The denial-letter files policy: the coach branch is removed where the policy exists.
+-- The denial-letter files policy: the coach branch is removed where the policy exists. Production has
+-- no such policy; a database rebuilt from migrations does. Its name is left as is, because renaming a
+-- storage policy needs the storage owner, which migrations do not run as.
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'storage' AND tablename = 'objects'
              AND policyname = 'Admins and coaches read all denial letters') THEN
     ALTER POLICY "Admins and coaches read all denial letters" ON storage.objects
       USING (bucket_id = 'denial-letters' AND public.has_role(auth.uid(), 'admin'::public.app_role));
-    ALTER POLICY "Admins and coaches read all denial letters" ON storage.objects
-      RENAME TO "Admins read all denial letters";
   END IF;
 END $$;
 

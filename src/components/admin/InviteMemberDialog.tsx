@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Enums } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,12 +18,11 @@ import { z } from "zod";
 
 // Mirrors STAFF_ROLES in MembersAdmin — non-staff are clients/leads.
 const STAFF_ROLE_SET = new Set([
-  "admin","coach","sales_rep","broker","broker_team_member","cs_rep","finance","viewer","moderator","owner","super_admin",
+  "admin","sales_rep","broker","broker_team_member","cs_rep","finance","viewer","moderator","owner","super_admin",
 ]);
 
 const ROLE_OPTIONS: Array<{ value: string; label: string; template: string }> = [
   { value: "admin",     label: "Administrator",  template: "role-invitation" },
-  { value: "coach",     label: "Coach",          template: "role-invitation" },
   { value: "sales_rep", label: "Sales Rep",      template: "role-invitation" },
   { value: "broker",    label: "Broker",         template: "role-invitation" },
   { value: "cs_rep",    label: "Customer Success", template: "role-invitation" },
@@ -52,7 +52,7 @@ interface UserOption {
 export function InviteMemberDialog({ open, onOpenChange, onInvited }: Props) {
   // Invite-new state
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("coach");
+  const [role, setRole] = useState("viewer");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -60,11 +60,11 @@ export function InviteMemberDialog({ open, onOpenChange, onInvited }: Props) {
   const [users, setUsers] = useState<UserOption[]>([]);
   const [promoteFilter, setPromoteFilter] = useState("");
   const [promoteSelected, setPromoteSelected] = useState<string | null>(null);
-  const [promoteRole, setPromoteRole] = useState("coach");
+  const [promoteRole, setPromoteRole] = useState("viewer");
 
   const reset = () => {
-    setEmail(""); setRole("coach"); setMessage("");
-    setPromoteSelected(null); setPromoteFilter(""); setPromoteRole("coach");
+    setEmail(""); setRole("viewer"); setMessage("");
+    setPromoteSelected(null); setPromoteFilter(""); setPromoteRole("viewer");
   };
 
   useEffect(() => {
@@ -72,15 +72,15 @@ export function InviteMemberDialog({ open, onOpenChange, onInvited }: Props) {
     (async () => {
       const { data: usersRes, error } = await supabase.functions.invoke("admin-list-users", { body: {} });
       if (error) return;
-      const list: any[] = usersRes?.users ?? [];
+      const list: Array<{ id: string; email?: string | null }> = usersRes?.users ?? [];
       const ids = list.map((u) => u.id);
       const [{ data: profs }, { data: roleRows }] = await Promise.all([
         supabase.from("coach_client_profiles_safe").select("user_id, full_name").in("user_id", ids),
         supabase.from("user_roles").select("user_id, role").in("user_id", ids),
       ]);
-      const nameById = new Map((profs ?? []).map((p: any) => [p.user_id, p.full_name]));
+      const nameById = new Map((profs ?? []).map((p) => [p.user_id, p.full_name]));
       const rolesById = new Map<string, string[]>();
-      (roleRows ?? []).forEach((r: any) => {
+      (roleRows ?? []).forEach((r) => {
         const arr = rolesById.get(r.user_id) || [];
         arr.push(r.role); rolesById.set(r.user_id, arr);
       });
@@ -127,8 +127,8 @@ export function InviteMemberDialog({ open, onOpenChange, onInvited }: Props) {
       reset();
       onOpenChange(false);
       onInvited?.();
-    } catch (e: any) {
-      toast.error(e.message || "Failed to send invitation");
+    } catch (e) {
+      toast.error((e instanceof Error ? e.message : "") || "Failed to send invitation");
     } finally {
       setSubmitting(false);
     }
@@ -140,7 +140,7 @@ export function InviteMemberDialog({ open, onOpenChange, onInvited }: Props) {
     try {
       const { error } = await supabase.rpc("grant_tenant_member_role", {
         _user_id: promoteSelected,
-        _role: promoteRole as any,
+        _role: promoteRole as Enums<"app_role">,
       });
       if (error) throw error;
       const target = users.find((u) => u.id === promoteSelected);
@@ -148,8 +148,8 @@ export function InviteMemberDialog({ open, onOpenChange, onInvited }: Props) {
       reset();
       onOpenChange(false);
       onInvited?.();
-    } catch (e: any) {
-      toast.error(e.message || "Failed to promote user");
+    } catch (e) {
+      toast.error((e instanceof Error ? e.message : "") || "Failed to promote user");
     } finally {
       setSubmitting(false);
     }

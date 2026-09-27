@@ -64,7 +64,7 @@ export function WorkspaceSettingsPanel() {
   const [loadingInvites, setLoadingInvites] = useState(false);
   const [minting, setMinting] = useState(false);
   const [inviteKind, setInviteKind] = useState<"consumer" | "team">("consumer");
-  const [inviteRole, setInviteRole] = useState<"member" | "coach" | "admin">("member");
+  const [inviteRole, setInviteRole] = useState<"member" | "admin">("member");
   const [expiresDays, setExpiresDays] = useState<number>(30);
 
   const isAdmin = isPlatformOwner || activeTenant !== null; // tenants RLS already gates UPDATE
@@ -317,11 +317,10 @@ export function WorkspaceSettingsPanel() {
             </div>
             <div className="space-y-1.5">
               <Label>Default role</Label>
-              <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as "member" | "coach" | "admin")}>
+              <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as "member" | "admin")}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="member">Member</SelectItem>
-                  <SelectItem value="coach">Coach</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
               </Select>

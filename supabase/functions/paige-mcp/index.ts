@@ -1139,15 +1139,18 @@ mcp.tool("assign_coach", {
 
 // ---------- Coach Ops ----------
 mcp.tool("list_coaches", {
-  description: "List all coaches with their profile metadata (specialties, capacity, accepting-new-clients) and live client counts.",
+  description: "List everyone who has clients assigned to them, with their profile metadata (specialties, capacity, accepting-new-clients) and live client counts. \"Coach\" is a title, so this is decided by assignment, never by a role.",
   inputSchema: z.object({
     accepting_only: z.boolean().optional().describe("If true, return only coaches accepting new clients."),
     specialty: z.string().optional().describe("Filter by a single specialty tag, e.g. 'personal_credit'."),
   }),
   handler: async ({ accepting_only, specialty }) => {
-    const { data: roles, error: rolesErr } = await admin.from("user_roles").select("user_id").eq("role", "coach");
-    if (rolesErr) return err(rolesErr.message);
-    const ids = (roles ?? []).map((r: any) => r.user_id);
+    const { data: assigned, error: assignedErr } = await admin
+      .from("clients")
+      .select("assigned_coach_user_id")
+      .not("assigned_coach_user_id", "is", null);
+    if (assignedErr) return err(assignedErr.message);
+    const ids = [...new Set((assigned ?? []).map((r: any) => r.assigned_coach_user_id as string))];
     if (!ids.length) return ok({ items: [] });
     const [profilesRes, clientsRes] = await Promise.all([
       admin.from("profiles").select("user_id, full_name, coach_specialties, coach_capacity, coach_accepting_clients, coach_bio, coach_timezone, suspended_at").in("user_id", ids),
@@ -1174,18 +1177,6 @@ mcp.tool("list_coaches", {
       return true;
     });
     return ok({ items });
-  },
-});
-
-mcp.tool("add_coach_role", {
-  description: "Grant the 'coach' role to an existing user. Idempotent.",
-  inputSchema: z.object({ user_id: z.string() }),
-  annotations: { destructiveHint: true },
-  handler: async ({ user_id }) => {
-    const { error } = await admin.from("user_roles").upsert({ user_id, role: "coach" }, { onConflict: "user_id,role" });
-    if (error) return err(error.message);
-    await audit("add_coach_role", "user", user_id, {});
-    return ok({ ok: true });
   },
 });
 
@@ -1287,11 +1278,11 @@ mcp.tool("get_coach_performance", {
 
 mcp.tool("create_team_invitation", {
   description:
-    "Create a team invitation row for an internal tenant team member (admin | coach | sales_rep | cs_rep). Does NOT send the email — pair with the send-admin-invitation function for that. Platform (super_admin/platform_admin) and agency_* roles are NOT grantable here — those go through the platform-invite and agency-team flows.",
+    "Create a team invitation row for an internal tenant team member (admin | sales_rep | cs_rep). Does NOT send the email — pair with the send-admin-invitation function for that. Platform (super_admin/platform_admin) and agency_* roles are NOT grantable here — those go through the platform-invite and agency-team flows.",
   inputSchema: z.object({
     email: z.string(),
-    role: z.enum(["admin", "coach", "sales_rep", "cs_rep"])
-      .describe("Tenant staff role. Valid app_role staff labels only: admin | coach | sales_rep | cs_rep."),
+    role: z.enum(["admin", "sales_rep", "cs_rep"])
+      .describe("Tenant staff role. Valid app_role staff labels only: admin | sales_rep | cs_rep."),
     invited_by_user_id: z.string().optional(),
     template_name: z.string().optional(),
   }),
@@ -1311,7 +1302,7 @@ mcp.tool("create_team_invitation", {
     // DB-valid app_role staff labels only. Deny-by-default: super_admin,
     // platform_admin, agency_*, finance, moderator, developer, broker*, etc. are
     // NOT grantable through this generic tenant-invite tool.
-    const ALLOWED_TENANT_INVITE_ROLES = new Set(["admin", "coach", "sales_rep", "cs_rep"]);
+    const ALLOWED_TENANT_INVITE_ROLES = new Set(["admin", "sales_rep", "cs_rep"]);
     if (!ALLOWED_TENANT_INVITE_ROLES.has(args.role)) return err("role_not_allowed");
     const tenantId = await actorTenantId();
     if (!tenantId) return err("tenant_not_resolved");
@@ -5162,7 +5153,6 @@ const TOOL_SCOPE: Record<string, Scope> = {
   send_invoice: "crm.write",
   // Coach Ops
   list_coaches: "admin.read",
-  add_coach_role: "admin.write",         // Tenant Admin can add
   remove_coach_role: "admin.delete",     // Tenant Owner only (permanent role removal)
   update_coach_profile: "admin.write",
   bulk_assign_clients_to_coach: "admin.write",

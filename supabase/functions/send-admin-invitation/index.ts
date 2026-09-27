@@ -15,8 +15,9 @@ const corsHeaders = {
 // (create_tenant_invite_token kind='consumer' + send-portal-invite → /join), so
 // 'user' and 'client' are deliberately excluded here: a miswired caller passing
 // them now fails loudly instead of silently dropping a client into the dashboard.
+// "Coach" is a title a business gives its people, never a role an invitation grants.
 const VALID_ROLES = [
-  "coach", "moderator", "admin",
+  "moderator", "admin",
   "affiliate", "sales_rep", "broker", "cs_rep", "finance", "viewer",
 ] as const;
 type InviteRole = typeof VALID_ROLES[number];
@@ -143,7 +144,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // 6. Send branded invitation email
     const roleLabels: Record<string, string> = {
-      admin: "Administrator", coach: "Coach", moderator: "Moderator",
+      admin: "Administrator", moderator: "Moderator",
       affiliate: "Affiliate Partner",
       sales_rep: "Sales Rep", broker: "Broker", cs_rep: "Customer Success",
       finance: "Finance", viewer: "Viewer",

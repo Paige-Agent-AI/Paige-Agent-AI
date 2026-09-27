@@ -50,7 +50,7 @@ import type { RosterMember } from "@/hooks/useTeamRoster";
 
 // A "staff role" grants platform/workspace authority. Clients / no-role auth users
 // live in Contacts, not here.
-const STAFF_ROLES = ["admin", "coach", "sales_rep", "broker", "broker_team_member", "affiliate", "cs_rep", "finance", "viewer", "moderator", "owner", "super_admin"] as const;
+const STAFF_ROLES = ["admin", "sales_rep", "broker", "broker_team_member", "affiliate", "cs_rep", "finance", "viewer", "moderator", "owner", "super_admin"] as const;
 const STAFF_ROLE_SET = new Set<string>(STAFF_ROLES);
 // #227: roster visibility uses the per-tenant owner OR any global staff role (incl. the
 // platform super_admin, which lives in the global roles set).
@@ -60,7 +60,7 @@ const isStaffRow = (m: RosterMember) => m.tenant_is_owner || m.roles.some((r) =>
 // GLOBAL roles so a platform owner appearing in a roster read stays shielded.
 const isShielded = (m: RosterMember) => m.tenant_is_owner || m.roles.includes("super_admin");
 
-const ROLE_FILTERS = ["all", "owner", "admin", "coach", "sales_rep", "broker", "cs_rep", "finance", "viewer"] as const;
+const ROLE_FILTERS = ["all", "owner", "admin", "sales_rep", "broker", "cs_rep", "finance", "viewer"] as const;
 type RoleFilter = typeof ROLE_FILTERS[number];
 
 interface PendingInvite {
@@ -104,6 +104,9 @@ export function MembersRolesPanel({
 
   const [invites, setInvites] = useState<PendingInvite[]>([]);
   const [coachFields, setCoachFields] = useState<Record<string, CoachFields>>({});
+  // Who has clients assigned to them. "Coach" is a title, so serving clients is decided by
+  // assignment, never by a role.
+  const [servesClients, setServesClients] = useState<Set<string>>(new Set());
 
   // Dialog / drawer targets
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -170,17 +173,20 @@ export function MembersRolesPanel({
     return () => { if (scheduled) clearTimeout(scheduled); supabase.removeChannel(channel); };
   }, [isAdmin, loadInvites]);
 
-  // --- Coach-management fields via the gated RPC (own-record-or-tenant-admin). ---
-  const coachIds = useMemo(
-    () => members.filter((m) => m.roles.includes("coach")).map((m) => m.user_id),
-    [members],
-  );
-  const coachIdKey = coachIds.join(",");
+  // --- Client-facing profile fields via the gated RPC (own-record-or-tenant-admin), for every
+  // member, plus who has clients assigned to them. ---
+  const memberIds = useMemo(() => members.map((m) => m.user_id), [members]);
+  const memberIdKey = memberIds.join(",");
 
   const loadCoachFields = useCallback(async () => {
-    if (!isAdmin || coachIds.length === 0) { setCoachFields({}); return; }
+    if (!isAdmin || memberIds.length === 0) { setCoachFields({}); setServesClients(new Set()); return; }
+    const { data: assigned } = await supabase
+      .from("clients")
+      .select("assigned_coach_user_id")
+      .in("assigned_coach_user_id", memberIds);
+    setServesClients(new Set((assigned ?? []).map((r) => r.assigned_coach_user_id).filter((id): id is string => !!id)));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- new RPC not yet in generated types (#234)
-    const { data, error } = await supabase.rpc("get_tenant_coach_fields" as any, { _user_ids: coachIds });
+    const { data, error } = await supabase.rpc("get_tenant_coach_fields" as any, { _user_ids: memberIds });
     if (error) return;
     const map: Record<string, CoachFields> = {};
     (data ?? []).forEach((r: { user_id: string; coach_specialties: string[] | null; coach_capacity: number | null; coach_accepting_clients: boolean | null; coach_timezone: string | null; coach_bio: string | null }) => {
@@ -193,7 +199,7 @@ export function MembersRolesPanel({
       };
     });
     setCoachFields(map);
-  }, [isAdmin, coachIds, coachIdKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isAdmin, memberIds, memberIdKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { void loadCoachFields(); }, [loadCoachFields]);
 
@@ -219,12 +225,11 @@ export function MembersRolesPanel({
   };
   const handleRevokeAccess = async () => {
     if (!revokeTarget) return;
-    if (revokeTarget.roles.includes("coach")) {
-      const { count } = await supabase.from("clients").select("id", { count: "exact", head: true }).eq("assigned_coach_user_id", revokeTarget.user_id);
-      if ((count || 0) > 0) {
-        setReassignCoachId(revokeTarget.user_id); setReassignLabel(revokeTarget.full_name || revokeTarget.email || "Coach"); setRevokeTarget(null);
-        toast.message("Reassign their clients first", { description: "Then re-open Revoke access." }); return;
-      }
+    // Whoever holds clients has them reassigned first, whatever role they hold.
+    const { count: assignedCount } = await supabase.from("clients").select("id", { count: "exact", head: true }).eq("assigned_coach_user_id", revokeTarget.user_id);
+    if ((assignedCount || 0) > 0) {
+      setReassignCoachId(revokeTarget.user_id); setReassignLabel(revokeTarget.full_name || revokeTarget.email || "this teammate"); setRevokeTarget(null);
+      toast.message("Reassign their clients first", { description: "Then re-open Revoke access." }); return;
     }
     const { error } = await supabase.rpc("revoke_platform_access", { _user_id: revokeTarget.user_id });
     if (error) { toast.error(error.message); return; }
@@ -233,12 +238,11 @@ export function MembersRolesPanel({
   const handleRemoveUser = async () => {
     if (!removeTarget) return;
     if (removeConfirmText.trim().toLowerCase() !== (removeTarget.email || "").toLowerCase()) { toast.error("Type the user's email exactly to confirm"); return; }
-    if (removeTarget.roles.includes("coach")) {
-      const { count } = await supabase.from("clients").select("id", { count: "exact", head: true }).eq("assigned_coach_user_id", removeTarget.user_id);
-      if ((count || 0) > 0) {
-        setReassignCoachId(removeTarget.user_id); setReassignLabel(removeTarget.full_name || removeTarget.email || "Coach"); setRemoveTarget(null);
-        toast.message("Reassign their clients first", { description: "Then re-open Delete." }); return;
-      }
+    // Whoever holds clients has them reassigned first, whatever role they hold.
+    const { count: assignedCount } = await supabase.from("clients").select("id", { count: "exact", head: true }).eq("assigned_coach_user_id", removeTarget.user_id);
+    if ((assignedCount || 0) > 0) {
+      setReassignCoachId(removeTarget.user_id); setReassignLabel(removeTarget.full_name || removeTarget.email || "this teammate"); setRemoveTarget(null);
+      toast.message("Reassign their clients first", { description: "Then re-open Delete." }); return;
     }
     const { data, error } = await supabase.functions.invoke("admin-delete-user", { body: { user_id: removeTarget.user_id } });
     if (error) { toast.error(error.message); return; }
@@ -402,7 +406,7 @@ export function MembersRolesPanel({
                 <div className="divide-y divide-border/60 rounded-md border border-border">
                   {byGroup.get(g)!.map((m) => {
                     const cf = coachFields[m.user_id];
-                    const isCoach = m.roles.includes("coach");
+                    const hasClients = servesClients.has(m.user_id);
                     const shielded = isShielded(m);
                     return (
                       <div key={m.user_id} className="flex flex-wrap items-center gap-2 px-3 py-2">
@@ -428,7 +432,7 @@ export function MembersRolesPanel({
                         </div>
 
                         <div className="ml-auto flex items-center gap-2">
-                          {isCoach && cf && (
+                          {hasClients && cf && (
                             <button type="button" onClick={() => toggleAccepting(m)} title="Toggle accepting new clients">
                               <StatePill state={cf.accepting ? "success" : "off"}>{cf.accepting ? "Accepting" : "Paused"}</StatePill>
                             </button>
@@ -449,8 +453,8 @@ export function MembersRolesPanel({
                               {!shielded && (
                                 <DropdownMenuItem onClick={() => setManageRolesTarget(m)}><UserCog className="mr-2 h-4 w-4" /> Manage roles</DropdownMenuItem>
                               )}
-                              {isCoach && (
-                                <DropdownMenuItem onClick={() => { setReassignCoachId(m.user_id); setReassignLabel(m.full_name || m.email || "Coach"); }}><UserCog className="mr-2 h-4 w-4" /> Reassign clients</DropdownMenuItem>
+                              {hasClients && (
+                                <DropdownMenuItem onClick={() => { setReassignCoachId(m.user_id); setReassignLabel(m.full_name || m.email || "this teammate"); }}><UserCog className="mr-2 h-4 w-4" /> Reassign clients</DropdownMenuItem>
                               )}
                               {shielded ? (
                                 /* Omit-and-explain: no disabled-with-no-reason rows (§11/§36

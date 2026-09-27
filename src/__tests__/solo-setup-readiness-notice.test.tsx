@@ -228,17 +228,17 @@ describe("the shell's Owner/Team label derives from authoritative membership (IN
   });
 
   it("membership ADMIN and MEMBER both see the Team workspace label", () => {
-    expect(soloShellRole(probe({ admin: true }), "t-1", "u-1")).toBe("coach");
-    expect(soloShellRole(probe({}), "t-1", "u-1")).toBe("coach");
+    expect(soloShellRole(probe({ admin: true }), "t-1", "u-1")).toBe("member");
+    expect(soloShellRole(probe({}), "t-1", "u-1")).toBe("member");
   });
 
   it("unresolved verdict fails to Team workspace", () => {
-    expect(soloShellRole(null, "t-1", "u-1")).toBe("coach");
+    expect(soloShellRole(null, "t-1", "u-1")).toBe("member");
   });
 
   it("an account switch never leaks the previous workspace's label — a verdict keyed to a prior tenant OR prior user is dead", () => {
-    expect(soloShellRole(probe({ owner: true, tenant: "t-prior" }), "t-1", "u-1")).toBe("coach");
-    expect(soloShellRole(probe({ owner: true, user: "u-prior" }), "t-1", "u-1")).toBe("coach");
+    expect(soloShellRole(probe({ owner: true, tenant: "t-prior" }), "t-1", "u-1")).toBe("member");
+    expect(soloShellRole(probe({ owner: true, user: "u-prior" }), "t-1", "u-1")).toBe("member");
   });
 
   it("pointer/membership disagreement resolves to membership — the derivation's CODE has no owner_user_id input at all", () => {
@@ -249,10 +249,10 @@ describe("the shell's Owner/Team label derives from authoritative membership (IN
       .replace(/^\s*\/\/.*$/gm, "");
     expect(shellRoleSrc).not.toContain("owner_user_id");
     // The pointer CANNOT disagree because it is not consulted: a pointer-owner
-    // without a membership-owner verdict is "coach", a membership owner whose
+    // without a membership-owner verdict is "member", a membership owner whose
     // pointer names someone else is "admin".
     expect(soloShellRole(probe({ owner: true }), "t-1", "u-1")).toBe("admin");
-    expect(soloShellRole(null, "t-1", "u-1")).toBe("coach");
+    expect(soloShellRole(null, "t-1", "u-1")).toBe("member");
   });
 
   it("SoloApp wires the label to the tenant+user-keyed membership probe — never to the display-only tenants.owner_user_id pointer", () => {

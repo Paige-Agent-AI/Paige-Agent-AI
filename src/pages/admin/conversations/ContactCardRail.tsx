@@ -55,7 +55,7 @@ import { QuickAddDialog } from "@/components/planning/QuickAddDialog";
 interface Coach { user_id: string; name: string; roles: string[] }
 
 // Roles that can OWN a contact (mirror ClientManagementDashboard's team split).
-const ASSIGNABLE_ROLES = new Set(["admin", "super_admin", "coach", "moderator"]);
+const ASSIGNABLE_ROLES = new Set(["admin", "super_admin", "moderator"]);
 
 // #6 Custom-field surfacing — the tenant's client custom-field definitions + this contact's values,
 // read through the ONE canonical seam (@/lib/customFields, §18/§12 — same fetch Paige and the

@@ -11,7 +11,7 @@
  *
  * The verdict is keyed to the ACTIVE tenant+user: while unresolved — or still
  * keyed to a previous identity after an account switch — the label fails to
- * "coach" ("Team workspace"), so the prior workspace's Owner claim can never
+ * "member" ("Team workspace"), so the prior workspace's Owner claim can never
  * leak across a switch and a URL/account name can never manufacture the
  * visible Owner claim.
  */
@@ -26,7 +26,7 @@ export function soloShellRole(
   probe: MembershipRoleProbe | null,
   activeTenantId: string | null,
   activeUserId: string | null,
-): "admin" | "coach" {
-  if (probe === null || probe.tenant !== activeTenantId || probe.user !== activeUserId) return "coach";
-  return probe.owner ? "admin" : "coach";
+): "admin" | "member" {
+  if (probe === null || probe.tenant !== activeTenantId || probe.user !== activeUserId) return "member";
+  return probe.owner ? "admin" : "member";
 }

@@ -16,7 +16,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Users, Search, TrendingUp, UserCheck, UserPlus, Upload, Building2, MoreHorizontal, Trash2, UserCog, ArrowRightLeft, Mail, Send, Eye, LogOut, Sparkles, Layers } from "lucide-react";
+import { Users, Search, TrendingUp, UserCheck, UserPlus, Upload, Building2, MoreHorizontal, Trash2, UserCog, ArrowRightLeft, Mail, Send, Eye, LogOut, Sparkles, Layers, Loader2 } from "lucide-react";
 import { AddClientDialog } from "./AddClientDialog";
 import { AddInternalClientDialog } from "./AddInternalClientDialog";
 import { QuickUploadReportModal } from "./QuickUploadReportModal";
@@ -227,7 +227,7 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
   });
   const teamUsers = authClients.filter((c) => {
     const r = c.roles || [];
-    return r.some((role) => ["admin", "coach", "moderator"].includes(role));
+    return r.some((role) => ["admin", "moderator"].includes(role));
   });
 
   const filteredInternal = internalClients.filter((c) => {
@@ -262,16 +262,14 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
     (acc, u) => {
       const r = u.roles || [];
       if (r.includes("admin")) acc.admin++;
-      if (r.includes("coach")) acc.coach++;
       if (r.includes("moderator")) acc.moderator++;
       return acc;
     },
-    { admin: 0, coach: 0, moderator: 0 },
+    { admin: 0, moderator: 0 },
   );
   const teamRoleSummary =
     [
       teamRoleCounts.admin ? `${teamRoleCounts.admin} Admin` : null,
-      teamRoleCounts.coach ? `${teamRoleCounts.coach} Coach` : null,
       teamRoleCounts.moderator ? `${teamRoleCounts.moderator} Mod` : null,
     ]
       .filter(Boolean)
@@ -505,7 +503,6 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
     const roleNoun = (role: string) => {
       switch (role) {
         case "admin": return "admin";
-        case "coach": return "coach";
         case "moderator": return "moderator";
         case "affiliate": return "affiliate";
         default: return "member";
@@ -693,7 +690,7 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden />
       </div>
     );
   }

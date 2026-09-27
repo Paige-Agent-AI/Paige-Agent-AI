@@ -64,7 +64,7 @@ VALUES
 INSERT INTO public.tenant_members (tenant_id, user_id, role, status, is_owner, joined_at) VALUES
   ('ae100000-0000-0000-0000-000000001111', 'ae100000-0000-0000-0000-000000000001', 'owner', 'active', true, now()),
   ('be200000-0000-0000-0000-000000002222', 'ae100000-0000-0000-0000-000000000001', 'admin', 'active', false, now()),
-  ('ae100000-0000-0000-0000-000000001111', 'ae100000-0000-0000-0000-000000000002', 'coach', 'active', false, now()),
+  ('ae100000-0000-0000-0000-000000001111', 'ae100000-0000-0000-0000-000000000002', 'member', 'active', false, now()),
   ('be200000-0000-0000-0000-000000002222', 'be200000-0000-0000-0000-000000000001', 'owner', 'active', true, now()),
   ('ce300000-0000-0000-0000-000000003333', 'ce300000-0000-0000-0000-000000000001', 'owner', 'active', true, now()),
   ('ae100000-0000-0000-0000-000000001111', 'de400000-0000-0000-0000-000000000001', 'admin', 'active', false, now());
@@ -196,7 +196,7 @@ SELECT 'role_loss', public.issue_analytics_evidence_bundle(
 )->>'evidence_ref';
 RESET ROLE;
 UPDATE public.tenant_members
-   SET role = 'coach'
+   SET role = 'member'
  WHERE tenant_id = 'ae100000-0000-0000-0000-000000001111'
    AND user_id = 'de400000-0000-0000-0000-000000000001';
 SET LOCAL ROLE authenticated;

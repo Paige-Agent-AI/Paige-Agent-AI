@@ -75,7 +75,7 @@ ON CONFLICT (user_id) DO UPDATE SET active_tenant_id = EXCLUDED.active_tenant_id
 -- pass for the wrong reason (no role at all) and could never catch a regression to a global check.
 INSERT INTO public.user_roles (user_id, role) VALUES
   ('b1000000-0000-0000-0000-000000000001', 'admin'),
-  ('b1000000-0000-0000-0000-000000000002', 'coach'),
+  ('b1000000-0000-0000-0000-000000000002', 'sales_rep'),
   ('b2000000-0000-0000-0000-000000000001', 'admin')
 ON CONFLICT DO NOTHING;
 

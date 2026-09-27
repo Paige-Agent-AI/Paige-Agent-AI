@@ -38,9 +38,6 @@ BEGIN
   INSERT INTO public.tenant_members (tenant_id, user_id, role, status, is_owner) VALUES
     (_a, _ada, 'admin', 'active', false), (_b, _adb, 'admin', 'active', false),
     (_a, _sa, 'member', 'active', false), (_a, _x, 'member', 'active', false);
-  -- S21: an assignee reads their own assignment rows only while holding the global 'coach' role.
-  -- Remove with S21.
-  INSERT INTO public.user_roles (user_id, role) VALUES (_sa, 'coach') ON CONFLICT DO NOTHING;
   INSERT INTO public.profiles (user_id, active_tenant_id) VALUES
     (_ada, _a), (_adb, _b), (_sa, _a), (_x, _a), (_y, NULL), (_z, NULL)
   ON CONFLICT (user_id) DO UPDATE SET active_tenant_id = EXCLUDED.active_tenant_id;

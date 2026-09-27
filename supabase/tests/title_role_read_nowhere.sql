@@ -16,7 +16,7 @@
 --
 -- Named exemptions, each with its reason:
 --   * refusals — they read the value only to refuse it: accept_invitation, change_user_role,
---     grant_tenant_member_role.
+--     grant_tenant_member_role, revoke_tenant_member_role.
 -- The removal paths went with the last rows holding the value (20270510000000).
 --
 -- Synthetic fixtures only. Asserts object names and counts, never field values. Rolls back.
@@ -51,7 +51,8 @@ CREATE TEMP TABLE retired_role_exempt(what text PRIMARY KEY, why text NOT NULL);
 INSERT INTO retired_role_exempt VALUES
   ('function accept_invitation(text,uuid)', 'refuses an invitation carrying the value'),
   ('function change_user_role(uuid,app_role,app_role,uuid,text)', 'refuses a change to the value'),
-  ('function grant_tenant_member_role(uuid,app_role,uuid,text)', 'refuses a grant of the value');
+  ('function grant_tenant_member_role(uuid,app_role,uuid,text)', 'refuses a grant of the value'),
+  ('function revoke_tenant_member_role(uuid,app_role,uuid,text)', 'refuses a revoke of the value');
 
 -- 1. Nothing outside the named exemptions reads the retired role.
 SELECT is((SELECT coalesce(string_agg(r, '; ' ORDER BY r), '')

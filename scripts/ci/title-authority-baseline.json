@@ -112,6 +112,12 @@
       "reason": "Refuses a grant of the retired role by name before any write.",
       "defined_in": "20270508000000_forbid_title_role_value.sql",
       "fingerprint": "2e68e23b91930d58"
+    },
+    {
+      "function": "public.revoke_tenant_member_role(uuid, app_role, uuid, text)",
+      "reason": "Refuses a revoke of the retired role by name before any write, so the seat resync never runs for a value no row can hold.",
+      "defined_in": "20270510000000_no_row_holds_the_retired_title_role.sql",
+      "fingerprint": "9731c60a67422df8"
     }
   ],
   "retired_role_ts": [

@@ -25,7 +25,10 @@
 --      remove_coach_role, is removed in the same change.
 --   3. revoke_platform_access (both overloads) no longer lists the value among the roles it deletes.
 --   4. revoke_tenant_member_role loses its active-clients check for the value and its branch mapping
---      a remaining platform role of that value to a seat. Neither can run once no row holds it.
+--      a remaining platform role of that value to a seat, and refuses the value by name before it
+--      writes anything, as grant_tenant_member_role does. Without the refusal, revoking the value
+--      would delete nothing and then resync the target's seat, revoking the membership of a person
+--      who holds no other platform role.
 -- Every other line of the three redefined functions is production's current body, unchanged.
 -- Signatures, security, settings and grants are unchanged; CREATE OR REPLACE keeps the grants.
 --
@@ -151,6 +154,10 @@ BEGIN
 
   IF NOT _is_owner_call AND _role = ANY(_protected) THEN
     RAISE EXCEPTION 'ROLE_CHANGE_FORBIDDEN: cannot modify admin or super_admin (owner-only)' USING ERRCODE = '42501';
+  END IF;
+  -- The retired title role is a value no row may hold; refuse it before the seat resync below.
+  IF _role = 'coach'::public.app_role THEN
+    RAISE EXCEPTION 'ROLE_CHANGE_FORBIDDEN: coach is a title, never a role' USING ERRCODE = '42501';
   END IF;
   IF _role = 'admin'::public.app_role THEN
     IF public.is_super_admin(_user_id) THEN

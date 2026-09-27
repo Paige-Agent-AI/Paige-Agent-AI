@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { loadAssignableStaff } from "@/lib/team/assignableStaff";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,12 +45,7 @@ export function NewContactDialog({ open, onOpenChange, onCreated }: Props) {
     setPrimaryOffer("none"); setOfferCustom("");
     setTagsRaw(""); setNotes("");
     (async () => {
-      const { data: roles } = await supabase.from("user_roles").select("user_id").eq("role", "coach");
-      const ids = (roles || []).map((r: { user_id: string }) => r.user_id);
-      if (ids.length) {
-        const { data: profs } = await supabase.from("coach_client_profiles_safe").select("user_id, full_name").in("user_id", ids);
-        setCoaches((profs || []).map((p: { user_id: string; full_name: string | null }) => ({ user_id: p.user_id, name: p.full_name || "Unnamed Coach" })));
-      } else setCoaches([]);
+      setCoaches(await loadAssignableStaff());
     })();
   }, [open]);
 

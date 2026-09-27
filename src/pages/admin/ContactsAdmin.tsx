@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { loadAssignableStaff } from "@/lib/team/assignableStaff";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -256,9 +257,9 @@ export default function ContactsAdmin() {
         return;
       }
 
-      const [clientsRes, rolesRes, typesRes] = await Promise.all([
+      const [clientsRes, staff, typesRes] = await Promise.all([
         supabase.from("clients").select("*").eq("tenant_id", activeTenantId).order("created_at", { ascending: false }),
-        supabase.from("user_roles").select("user_id").eq("role", "coach"),
+        loadAssignableStaff(),
         // client_types HAS its own tenant_id (server-derived from the parent client),
         // so it takes the same explicit active-tenant filter (§9).
         fromUntyped("client_types").select("contact_id,type").eq("tenant_id", activeTenantId),
@@ -280,14 +281,7 @@ export default function ContactsAdmin() {
       });
       setPartnerIds(partnerSet);
 
-      const coachIds = (rolesRes.data || []).map((r) => r.user_id);
-      if (coachIds.length) {
-        const { data: profs } = await supabase
-          .from("profiles").select("user_id, full_name").in("user_id", coachIds);
-        setCoaches((profs || []).map((p) => ({
-          user_id: p.user_id, name: p.full_name || "Unnamed Coach",
-        })));
-      }
+      setCoaches(staff);
 
       // contact_deal_rollup is a security_invoker VIEW with NO tenant_id column, so under
       // the clients owner-bypass an unbounded read returns cross-tenant rows — for the

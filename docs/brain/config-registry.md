@@ -406,7 +406,7 @@ exist — do not follow references to them.)
 | `deploy-migrations.yml` | push (to `main`) | `supabase db push` → `migration list` verify → moves `db-live` tag (§32 persisted-apply) |
 | `deploy-edge-functions.yml` | push (to `main`) | Deploys only changed functions (follows `_shared` imports via `.github/scripts/edge-affected.py`); moves `edge-live` tag (§24) |
 | `migration-lint.yml` | pull_request | Migration shape lint (§208/§213) |
-| `premerge-migration-proof.yml` | pull_request | Pre-merge `BEGIN..ROLLBACK` migration proof (§32.a) |
+| `premerge-migration-proof.yml` | pull_request — **DISABLED** (manually, no run since 2026-08-24) | Pre-merge migration proof (§32.a). Does not run: a proof "owed" to it is not owed to anything. Fail-closed rework is #574; re-enable or delete is an owner decision |
 | `security-audit.yml` ("Security Audit") | pull_request + push | Security audit gate |
 
 **RLS anon/cross-tenant-reach drift guards (npm scripts wired into `ci.yml`):**

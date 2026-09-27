@@ -13,12 +13,20 @@ import { fileURLToPath } from "node:url";
 // properties, https: and npm: specifiers). Node can load it only through the repository's offline
 // loader. Run bare — as the INT-080 evidence record documents — this used to crash on an unrelated
 // file (`_shared/n8n-management.ts`: "parameter property is not supported in strip-only mode")
-// before a single check ran. Register the loader ourselves, once, the way
-// capability-declaration-lint.mjs does, so the documented command is the command that works.
+// before a single check ran. Register the loader ourselves, once: re-exec under it with an env
+// sentinel (the pattern capability-declaration-lint.mjs uses), unless the caller already passed it
+// on the command line, as tool-catalogue-lint.mjs does. The sentinel also covers a loader supplied
+// through NODE_OPTIONS or a path spelled another way, so the child can never re-exec again.
 const LOADER = new URL("../knowledge-scope/register.mjs", import.meta.url);
-if (!process.execArgv.some((a) => a.includes("knowledge-scope/register.mjs"))) {
-  const child = spawnSync(process.execPath, ["--import", LOADER.href, fileURLToPath(import.meta.url), ...process.argv.slice(2)], { stdio: "inherit" });
-  process.exit(child.error ? 1 : child.status ?? 1);
+const loaderOnArgv = process.execArgv.some((a) => a.replaceAll("\\", "/").includes("knowledge-scope/register.mjs"));
+if (!process.env.__TOOL_CONTRACT_LOADER && !loaderOnArgv) {
+  const child = spawnSync(process.execPath, ["--import", LOADER.href, fileURLToPath(import.meta.url), ...process.argv.slice(2)], {
+    stdio: "inherit",
+    env: { ...process.env, __TOOL_CONTRACT_LOADER: "1" },
+  });
+  if (child.error) console.error(`contract check could not start under the loader: ${child.error.message}`);
+  else if (child.signal) console.error(`contract check was killed by ${child.signal}`);
+  process.exit(child.error || child.signal ? 1 : child.status ?? 1);
 }
 
 const SOLO = "33333333-3333-4333-8333-333333333333";

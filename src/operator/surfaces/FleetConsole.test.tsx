@@ -138,3 +138,117 @@ describe("FleetDirectoryView — header risk count when seats are unread but cla
     expect(count(out, "At risk")).toBe(1);
   });
 });
+
+describe("FleetDirectoryView — the row carries the real data already read (slice 4)", () => {
+  const DAY = 86_400_000;
+  const soon = new Date(Date.now() + 5.5 * DAY).toISOString();
+  const readRows = [
+    tenant({ id: "a", name: "Has Clients", seats: 2, customers: 4, revenueClass: "promotional" }),
+    tenant({ id: "b", name: "One Client", seats: 1, customers: 1, revenueClass: "promotional" }),
+    tenant({ id: "c", name: "Trialing", status: "trial", seats: 1, trialEndsAt: soon, revenueClass: "promotional" }),
+    tenant({ id: "d", name: "Gone", status: "canceled", seats: 1, revenueClass: "promotional" }),
+    tenant({ id: "e", name: "Internal Row", seats: 0, revenueClass: "internal_test" }),
+  ];
+
+  it("shows each tenant's client count when counts are readable", () => {
+    const out = text(
+      renderToStaticMarkup(
+        <FleetDirectoryView tenants={readRows} classificationVisible detailVisible onEnter={() => {}} />,
+      ),
+    );
+    expect(out).toContain("4 clients");
+    expect(out).toContain("1 client ");
+    expect(out).toContain("no clients");
+  });
+
+  it("names a non-active status beside the grade, with the trial's days left", () => {
+    const out = text(
+      renderToStaticMarkup(
+        <FleetDirectoryView tenants={readRows} classificationVisible detailVisible onEnter={() => {}} />,
+      ),
+    );
+    expect(out).toContain("Trial · 6 days left");
+    expect(out).toContain("Canceled");
+    expect(out).not.toMatch(/\bActive\b/); // the default status is not repeated on every row
+  });
+
+  it("counts at risk from the rows actually shown, at both tiers", () => {
+    const owner = text(
+      renderToStaticMarkup(
+        <FleetDirectoryView tenants={readRows} classificationVisible detailVisible onEnter={() => {}} />,
+      ),
+    );
+    expect(owner).toContain("2 at risk"); // trial + canceled; the internal row is hidden
+    const admin = text(
+      renderToStaticMarkup(
+        <FleetDirectoryView
+          tenants={readRows.map((t) => ({ ...t, seats: 0, customers: 0, revenueClass: null }))}
+          classificationVisible={false}
+          detailVisible={false}
+          onEnter={() => {}}
+        />,
+      ),
+    );
+    expect(admin).toContain("2 at risk"); // status alone: trial + canceled
+    expect(admin).not.toContain("— at risk");
+  });
+
+  it("states the header count truthfully when internal accounts cannot be told apart", () => {
+    const admin = text(
+      renderToStaticMarkup(
+        <FleetDirectoryView
+          tenants={readRows.map((t) => ({ ...t, seats: 0, customers: 0, revenueClass: null }))}
+          classificationVisible={false}
+          detailVisible={false}
+          onEnter={() => {}}
+        />,
+      ),
+    );
+    expect(admin).toContain("5 tenants, internal accounts included");
+    expect(admin).not.toContain("— live");
+    expect(admin).not.toContain("Show — internal");
+    expect(admin).not.toContain("clients"); // client counts are not readable at this role
+    expect(admin).toContain("Seat and client counts are not visible to your role");
+    expect(admin).not.toContain("the chip reveals them"); // no chip is offered at this role
+  });
+});
+
+describe("FleetDirectoryView — status wording is exact (slice 4 review)", () => {
+  const DAY = 86_400_000;
+  const render = (t: FleetTenant) =>
+    text(
+      renderToStaticMarkup(
+        <FleetDirectoryView tenants={[{ ...t, revenueClass: "promotional" }]} classificationVisible detailVisible onEnter={() => {}} />,
+      ),
+    );
+
+  it("counts a lapsed trial's elapsed days without rounding up", () => {
+    const out = render(tenant({ status: "trial", trialEndsAt: new Date(Date.now() - 9.2 * DAY).toISOString() }));
+    expect(out).toContain("Trial · ended 9 days ago");
+  });
+
+  it("says a trial that lapsed within the day ended today", () => {
+    const out = render(tenant({ status: "trial", trialEndsAt: new Date(Date.now() - 60 * 60 * 1000).toISOString() }));
+    expect(out).toContain("Trial · ended today");
+  });
+
+  it("uses the platform's own label for a status, not its stored value", () => {
+    expect(render(tenant({ status: "past_due" }))).toContain("Past due");
+    expect(render(tenant({ status: "past_due" }))).not.toContain("past_due");
+    expect(render(tenant({ status: "suspended" }))).toContain("Suspended");
+  });
+
+  it("marks the at-risk figure as including internal accounts when they cannot be told apart", () => {
+    const out = text(
+      renderToStaticMarkup(
+        <FleetDirectoryView
+          tenants={[tenant({ status: "canceled" })]}
+          classificationVisible={false}
+          detailVisible={false}
+          onEnter={() => {}}
+        />,
+      ),
+    );
+    expect(out).toContain("1 at risk, internal included");
+  });
+});

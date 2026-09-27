@@ -4,7 +4,7 @@
 -- DATA — adding an operator role, granting and withdrawing a capability are row changes that
 -- change the answer with no code change.
 BEGIN;
-SELECT plan(93);
+SELECT plan(95);
 
 -- ── Grants ──────────────────────────────────────────────────────────────────────────────────
 SELECT ok(NOT has_function_privilege('anon', 'public.operator_standing()', 'EXECUTE'),
@@ -50,7 +50,8 @@ INSERT INTO auth.users (id, aud, role, email) VALUES
   ('0a570000-0000-4000-8000-000000000002','authenticated','authenticated','standing-platform@tests.invalid'),
   ('0a570000-0000-4000-8000-000000000004','authenticated','authenticated','standing-tenant-admin@tests.invalid'),
   ('0a570000-0000-4000-8000-000000000005','authenticated','authenticated','standing-user@tests.invalid'),
-  ('0a570000-0000-4000-8000-000000000006','authenticated','authenticated','standing-moderator@tests.invalid');
+  ('0a570000-0000-4000-8000-000000000006','authenticated','authenticated','standing-moderator@tests.invalid'),
+  ('0a570000-0000-4000-8000-000000000007','authenticated','authenticated','standing-grantee@tests.invalid');
 SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);
 INSERT INTO public.user_roles (user_id, role) VALUES
   ('0a570000-0000-4000-8000-000000000001','super_admin'),
@@ -65,7 +66,8 @@ INSERT INTO public.tenants (id, slug, name, owner_user_id, status, account_type,
    '0a570000-0000-4000-8000-000000000004','active','standalone','{}'::jsonb,'{}'::jsonb);
 INSERT INTO public.tenant_members (tenant_id, user_id, role, status, is_owner, joined_at) VALUES
   ('0a570000-0000-4000-8000-00000000a001','0a570000-0000-4000-8000-000000000004','owner','active',true,now()),
-  ('0a570000-0000-4000-8000-00000000a001','0a570000-0000-4000-8000-000000000005','member','active',false,now());
+  ('0a570000-0000-4000-8000-00000000a001','0a570000-0000-4000-8000-000000000005','member','active',false,now()),
+  ('0a570000-0000-4000-8000-00000000a001','0a570000-0000-4000-8000-000000000007','member','active',false,now());
 
 -- Every caller carries a pointer, so the test proves who is TOLD about it, not who has one. The
 -- tenant's own people point at their own tenant; the super_admin gets there through the audited
@@ -76,10 +78,12 @@ INSERT INTO public.profiles (user_id, active_tenant_id) VALUES
   ('0a570000-0000-4000-8000-000000000002',NULL),
   ('0a570000-0000-4000-8000-000000000004',NULL),
   ('0a570000-0000-4000-8000-000000000005',NULL),
-  ('0a570000-0000-4000-8000-000000000006',NULL)
+  ('0a570000-0000-4000-8000-000000000006',NULL),
+  ('0a570000-0000-4000-8000-000000000007',NULL)
 ON CONFLICT (user_id) DO UPDATE SET active_tenant_id = NULL;
 UPDATE public.profiles SET active_tenant_id = '0a570000-0000-4000-8000-00000000a001'
- WHERE user_id IN ('0a570000-0000-4000-8000-000000000004','0a570000-0000-4000-8000-000000000005');
+ WHERE user_id IN ('0a570000-0000-4000-8000-000000000004','0a570000-0000-4000-8000-000000000005',
+                   '0a570000-0000-4000-8000-000000000007');
 
 CREATE FUNCTION pg_temp.as_caller(_uid uuid) RETURNS void LANGUAGE plpgsql AS $$
 BEGIN
@@ -162,6 +166,12 @@ SELECT ok(NOT public.operator_may('console.enter'), 'no subject may nothing');
 -- A moderator is not an operator until a row says so.
 SELECT pg_temp.as_caller('0a570000-0000-4000-8000-000000000006');
 SELECT is((SELECT tier FROM public.operator_standing()), NULL::text, 'a moderator is not an operator by default');
+-- Control for the grant lockdown below: while moderator is NOT an operator tier, a tenant admin may
+-- grant it through the tenant-role RPC, so the refusal after the row is the row's doing.
+SELECT pg_temp.as_caller('0a570000-0000-4000-8000-000000000004');
+SELECT lives_ok($$SELECT public.grant_tenant_member_role('0a570000-0000-4000-8000-000000000005'::uuid,
+  'moderator'::public.app_role, '0a570000-0000-4000-8000-00000000a001'::uuid, 'test')$$,
+  'a tenant admin may grant a role that is not an operator tier');
 RESET ROLE;
 INSERT INTO public.platform_operator_roles (role, rank, holds_unlisted, description, ruling)
 VALUES ('moderator', 10, false, 'test-only operator role', 'test');
@@ -177,6 +187,13 @@ SELECT ok(public.operator_may('platform.health.read'), 'and holds the capability
 SELECT ok(NOT public.operator_may('console.enter'), 'and nothing it was not granted');
 SELECT pg_temp.as_caller('0a570000-0000-4000-8000-000000000002');
 SELECT ok(NOT public.operator_may('billing.read'), 'withdrawing a grant row withdraws the capability');
+-- Codex review of #1534 (P1): once a row makes a role an operator tier, the structural grant
+-- lockdown must protect it, or a tenant admin could mint platform standing through the tenant RPC.
+SELECT pg_temp.as_caller('0a570000-0000-4000-8000-000000000004');
+-- Named by the lockdown's own error, so a refusal from any other guard cannot pass it.
+SELECT throws_like($$SELECT public.grant_tenant_member_role('0a570000-0000-4000-8000-000000000007'::uuid,
+  'moderator'::public.app_role, '0a570000-0000-4000-8000-00000000a001'::uuid, 'test')$$,
+  '%PROTECTED_ROLE_GRANT_FORBIDDEN%', 'a role made an operator tier by a row can no longer be granted by a tenant admin');
 RESET ROLE;
 
 SELECT * FROM finish();

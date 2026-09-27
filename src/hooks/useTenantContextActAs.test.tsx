@@ -21,6 +21,8 @@ const h = vi.hoisted(() => ({
   profileWrites: 0,
   authListener: null as null | ((event: string) => void),
   signedIn: true,
+  // When set, the NEXT profile read waits on this instead of answering at once.
+  heldProfile: null as null | Promise<unknown>,
 }));
 
 vi.mock("@/integrations/supabase/client", () => ({
@@ -44,7 +46,10 @@ vi.mock("@/integrations/supabase/client", () => ({
     from: (table: string) => {
       if (table === "profiles") {
         return {
-          select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: { active_tenant_id: h.activeTenant, agency_login_default: null }, error: null }) }) }),
+          select: () => ({ eq: () => ({ maybeSingle: () => {
+            if (h.heldProfile) { const held = h.heldProfile; h.heldProfile = null; return held; }
+            return Promise.resolve({ data: { active_tenant_id: h.activeTenant, agency_login_default: null }, error: null });
+          } }) }),
           update: () => {
             h.profileWrites += 1;
             return { eq: () => ({ select: () => ({ maybeSingle: () => Promise.resolve({ data: { user_id: "op" }, error: null }) }) }) };
@@ -81,6 +86,7 @@ describe("the operator act-as marker and its audited exit", () => {
     h.staff = { data: true, error: null };
     h.activeTenant = null;
     h.signedIn = true;
+    h.heldProfile = null;
     h.rpcCalls = [];
     h.enterError = null;
     h.exitError = null;
@@ -149,6 +155,38 @@ describe("the operator act-as marker and its audited exit", () => {
     h.staff = { data: false, error: null };
     h.activeTenant = "t1";
     await mount();
+    expect(acting()).toBe(false);
+  });
+
+  // Codex review of 59ce223e: a background reload that began before an enter or exit, and answers
+  // after it, reports the scope as it was. It must not rewrite the record the enter/exit just set.
+  function holdNextProfile(activeTenantId: string | null) {
+    let answer: () => void = () => {};
+    h.heldProfile = new Promise((resolve) => {
+      answer = () => resolve({ data: { active_tenant_id: activeTenantId, agency_login_default: null }, error: null });
+    });
+    return () => answer();
+  }
+
+  it("keeps the record an enter just wrote when an older reload answers late", async () => {
+    const c = await mount();
+    const answerStale = holdNextProfile(null);
+    await act(async () => { h.authListener?.("TOKEN_REFRESHED"); });
+    await act(async () => { await c.switchTenant("t1"); });
+    expect(acting()).toBe(true);
+    await act(async () => { answerStale(); });
+    expect(acting()).toBe(true);
+  });
+
+  it("keeps the record an exit just cleared when an older reload answers late", async () => {
+    h.activeTenant = "t1";
+    const c = await mount();
+    expect(acting()).toBe(true);
+    const answerStale = holdNextProfile("t1");
+    await act(async () => { h.authListener?.("TOKEN_REFRESHED"); });
+    await act(async () => { await c.exitOperatorActAs(); });
+    expect(acting()).toBe(false);
+    await act(async () => { answerStale(); });
     expect(acting()).toBe(false);
   });
 

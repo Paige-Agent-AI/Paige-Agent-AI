@@ -1,25 +1,18 @@
 /**
  * The operator console's information architecture — six slots, thirty-two views.
  *
- * This is OUR mirror of the pack's `P.PLACES` + `P.DEST` (see
- * `docs/design-references/cd-packs/super-admin-shell-v3/paige-ia.js`). The pack is the design
- * source of truth; a Vite bundle cannot import a design artifact at runtime, so the IA ships as
- * this module and a test asserts the two agree. Change the pack, then change this, in the same PR.
+ * This mirrors the v3 reference pack's `P.PLACES` + `P.DEST` (see
+ * `docs/design-references/cd-packs/super-admin-shell-v3/paige-ia.js`). A Vite bundle cannot import
+ * a design artifact at runtime, so the IA ships as this module and a test pins the two together:
+ * a deliberate IA change updates both in the same PR. The pack is reference, not authority — root
+ * `CLAUDE.md` §00 (owner, 2026-09-22): CC owns the interface under Impeccable; the owner approves.
  *
  * SIX SLOTS, NOT SEVEN. Ruled three times during design: a rail slot is a body of work with its own
  * objects and its own performance. Everything else is a view, a summoned surface, or a mechanism.
  * Sequences folded into Active; Follow-ups became an automation; Field became Marketplace with
  * Calendar moving to Relationships. **Do not add a slot without an owner ruling.**
  *
- * DIRECTION OF ACCOMMODATION (owner, 2026-08-23). The backend is built to fit this design, never
- * the reverse. A correction about which table, column or join holds a record is ours to make; a
- * change to what the surface looks like, where a capability lives, or how something reads is a
- * redesign request and the answer is no — if a table cannot serve the design, the table changes.
- *
- * COPY IS SURFACE. The absence copy below is the DESIGN SIDE'S, lifted verbatim from the pack's
- * `docs/handoff/absence-copy.md` — it replaced a CC draft that was on its way to becoming settled
- * design by having shipped first. Do not edit these strings here; they change at the source.
- *
+ * ABSENCE COPY. The absence strings below came from the pack's `docs/handoff/absence-copy.md`.
  * Each does a specific job, worth knowing before anyone "tidies" them. Relationships distinguishes
  * DRAWN from WIRED, because an operator seeing an empty slot assumes the question is still open —
  * this says the decision is closed and only the seam is missing, so nobody re-opens it. Campaigns

@@ -27,12 +27,12 @@ ACCEPTANCE_CRITERIA: a client asking in their portal reads PAIGE's clean answer 
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: tested — the protected-turn hold and its final scope check (knowledge-scope and section 30), thread persistence (30.6, 30.7, 30.14), credit-report extraction (30.15, 30.16), the portal's document summary (vitest and the Chromium drive); unaffected and named — owner and teammate chat (30.2, 30.10), the workspace-changed refusal, tool execution and approvals (sections 1–29 unchanged), and the Solo chat.
 
-INTERNAL_BUILD_IDENTITY: f8e6a167cdd741c00bfa7000c5a88b0034404cce; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat redeploys through deploy-edge-functions on merge, and its deployed version and byte check are recorded in the delivery-log closeout); evidence=this-record-and-docs/evidence/ui-delivery/client-seat-withheld/
-RELEASE_CHANNEL: development: the identity above names the code head this record attests; paige-ai-chat redeploys through deploy-edge-functions and the portal through Vercel on merge
+INTERNAL_BUILD_IDENTITY: 425690aa0ef75ec76b7c2ec2c023895d4a0f6f00; deployment=paige-ai-chat-v284 by deploy-edge-functions run 36302735123 (the Vercel production deployment built from the squash is READY, and its ID is an operational identifier kept outside this public repository by the owner's standing order); environment=production; migrations=NOT_APPLICABLE; edge=APPLIED(paige-ai-chat@v284); evidence=this-record-and-docs/evidence/ui-delivery/client-seat-withheld/
+RELEASE_CHANNEL: production: PR #1522 squash-merged as 425690aa0ef75ec76b7c2ec2c023895d4a0f6f00; deploy-edge-functions run 36302735123 redeployed paige-ai-chat alone as version 284, all 84 bundle files byte-identical to the squash; the Vercel production deployment built from the squash is READY, and its ID is an operational identifier kept outside this public repository by the owner's standing order
 RELEASE_CLASSIFICATION: patch: a fix to what a client can read in the portal chat; no new capability
 CUSTOMER_RELEASE_IDENTITY: none: a reliability fix recorded internally, not a customer release
 RELEASE_NOTE_REQUIRED: NO: no capability or action changes; a client only ever sees the sentence when an answer would have shown internal text
-RELEASE_TRUTH_BOUNDARY: PROOF OWED: the check is proven on the real handler and the sentence in the real portal chat on a harness; the authenticated run on a live portal with a live model is owed after deploy
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: deployed to production (paige-ai-chat v284, all 84 bundle files byte-identical to the squash; the portal on Vercel production); the check is proven on the real handler and the sentence in the real portal chat on a harness, and the authenticated run on a live portal with a live model is owed
 RELEASE_RECOVERY: position=forward-fix — no migration and no data written, and a revert of the squash restores the previous behaviour and CI redeploys paige-ai-chat; reference=client-memory-authz section 30 and PaigeChat.withheld-summary.test.tsx pin the behaviour
 
 ## Scope and collisions

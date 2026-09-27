@@ -27,12 +27,12 @@ ACCEPTANCE_CRITERIA: a client whose credit report could not be synced reads "Syn
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: tested — the sync_status frame on the credit path (30.33, 30.35, 30.36, 30.15, 30.16), the proposal a readable report reaches (30.34), the panel's awaiting-review and success states (vitest); unaffected and named — the extraction proposal frame, sync-credit-report-data itself, the document summary, R3's withheld turn.
 
-INTERNAL_BUILD_IDENTITY: 9aaa8a09a2fad54fadb8f9f6743e5e03ea97c8e9; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat redeploys through deploy-edge-functions on merge, and its deployed version and byte check are recorded in the delivery-log closeout); evidence=this-record-and-docs/evidence/ui-delivery/credit-sync-message/
-RELEASE_CHANNEL: development: the identity above names the code head this record attests; paige-ai-chat redeploys through deploy-edge-functions and the portal through Vercel on merge
+INTERNAL_BUILD_IDENTITY: ee1fca298b7221a274543dfe132544757c8f8525; deployment=paige-ai-chat-v285 by deploy-edge-functions run 36306503690 (the Vercel production deployment built from the squash is READY, and its ID is an operational identifier kept outside this public repository by the owner's standing order); environment=production; migrations=NOT_APPLICABLE; edge=APPLIED(paige-ai-chat@v285); evidence=this-record-and-docs/evidence/ui-delivery/credit-sync-message/
+RELEASE_CHANNEL: production: PR #1527 squash-merged as ee1fca298b7221a274543dfe132544757c8f8525; deploy-edge-functions run 36306503690 redeployed paige-ai-chat alone as version 285, all 84 bundle files byte-identical to the squash; the Vercel production deployment built from the squash is READY, and its ID is an operational identifier kept outside this public repository by the owner's standing order
 RELEASE_CLASSIFICATION: patch: a fix to what a client reads when their report could not be synced
 CUSTOMER_RELEASE_IDENTITY: none: a reliability fix recorded internally, not a customer release
 RELEASE_NOTE_REQUIRED: NO: no capability or action changes; only the words on an existing failure change
-RELEASE_TRUTH_BOUNDARY: PROOF OWED: the sentences are proven on the real handler and in the real portal chat on a harness; the authenticated run is owed after deploy
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: deployed to production (paige-ai-chat v285, all 84 bundle files byte-identical to the squash; the portal on Vercel production); the sentences are proven on the real handler and in the real portal chat on a harness, and an authenticated upload on a live portal is owed
 RELEASE_RECOVERY: position=forward-fix — no migration and no data written, and a revert of the squash restores the previous text; reference=client-memory-authz 30.33, 30.35 and 30.36, client-seat-reply.test.ts and SyncStatusPanel.awaitingReview.test.tsx pin the behaviour
 
 ## Scope and collisions

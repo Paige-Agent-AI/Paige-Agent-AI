@@ -76,18 +76,25 @@
  *   Both halves:
  *     R7  the retired title role is read nowhere. "coach" is a title a business gives its people,
  *         never a role. SQL: a function, procedure, policy or view whose last definition comes AFTER
- *         20270504000000 fails if it casts the value to a role type, calls a role helper with it,
- *         compares a role column to it (= / IN / = ANY / IS DISTINCT FROM) or puts it in a
- *         role-typed array. Definitions at or before that migration were rewritten by it at run time,
- *         which a source replay cannot follow; supabase/tests/title_role_read_nowhere.sql judges
- *         them, and everything else, on the live catalogue of the rebuilt database. TS: a statement
- *         that names the value in a string and carries a role word as code (role, roles, app_role,
- *         tenant_role, Enums, a permission word, has…Role, a type named so), or sits in a function
- *         named so, fails. The only exemptions are code that reads the value to refuse it or to
- *         remove it, pinned in "retired_role_sql" / "retired_role_ts"; a policy or view has none.
- *         The value as data (a lens, a tier, a seat label passed as p_role) carries no role word and
- *         passes. Limit: a JSX <option value="coach"> whose role word sits on a different element
- *         (the enclosing <select value={permission}>) is not seen.
+ *         20270504000000 fails if it casts the value to a role type; calls a role helper with it;
+ *         compares a role column or a role variable (v_…role) to it — =, IN, = ANY, LIKE, IS
+ *         DISTINCT FROM, either way round, through casts and the parentheses Postgres adds when it
+ *         stores an expression; puts it in an array or array literal of roles; or has a branch for
+ *         it in a CASE over a role. Definitions at or before that migration were rewritten by it at
+ *         run time (as 20270505, 20270506 and 20270508 rewrote a few more), which a source replay
+ *         cannot follow; supabase/tests/title_role_read_nowhere.sql judges them, and everything
+ *         else, on the live catalogue of the rebuilt database, with the SAME pattern
+ *         (SQL_RETIRED_ROLE_SOURCE, which R7 requires that file to carry verbatim). TS: a statement
+ *         that names the value in a string and carries a role word as code (any identifier with a
+ *         role / roles / permission segment, app_role, tenant_role, Enums, a type named so), or sits
+ *         in a function named so or named like an authorization check, fails. The only exemptions
+ *         are code that reads the value to refuse or remove it, or that a reviewer confirmed uses it
+ *         as data (an assignment seat label), pinned in "retired_role_sql" / "retired_role_ts"; a
+ *         policy or view has none. The value as data (a lens, a tier, a sender type) passes.
+ *         Limits: a comparison through a variable not named for a role (`_s = 'coach'`,
+ *         `CASE _s WHEN 'coach'`); a `_role` / `p_role` parameter, left alone because it carries a
+ *         seat label as data; an unquoted object key (`{ coach: 1 }`); and a JSX <option
+ *         value="coach"> whose role word sits on another element are not seen.
  *
  * A column is matched with word boundaries, so a writer's `_job_title` PARAMETER is an input and
  * does not count, while `tm.job_title`, `SET job_title = ...` and `'job_title', x.job_title` do.
@@ -175,20 +182,37 @@ const PURPOSES = new Set(["display", "write", "search", "invite-copy"]);
 // are judged on the live catalogue of the rebuilt database by supabase/tests/title_role_read_nowhere.sql;
 // this rule judges every definition made after it, where the replayed text is the text that runs.
 const RETIRED_ROLE_REWRITTEN_THROUGH = "20270504000000";
-const SQL_RETIRED_ROLE_READ = new RegExp([
-  String.raw`'coach'\s*::\s*(?:public\.)?(?:app_role|tenant_role)\b`,
-  String.raw`has_(?:any_|tenant_)?role\s*\([^;]*'coach'`,
-  String.raw`(?:^|[^\w.])(?:\w+\.)?role\)?(?:::\w+)?\)?\s*(?:=|<>|!=|not\s+in|in|is\s+(?:not\s+)?distinct\s+from|=\s*any|<>\s*all)\s*\(?[^;)]*'coach'`,
-  String.raw`'coach'[^;]*\]\s*::\s*(?:public\.)?(?:app_role|tenant_role)\[\]`,
-].join("|"), "i");
+const RETIRED_ROLE_TEST = "supabase/tests/title_role_read_nowhere.sql";
+// The role column or a variable holding one: `ur.role`, `"role"`, `(tm.role)::text`, `v_actor_role`.
+// A `_role` / `p_role` parameter is a seat label passed as data and is left alone.
+const RR_LIT = String.raw`'[^']*'(?:\s*::\s*[\w.]+(?:\[\])?)*`;
+const RR_ROLE = String.raw`\(?\s*(?:\w+\.)?"?(?:v_\w*)?role"?\s*\)?(?:\s*::\s*[\w.]+)?\s*\)?`;
+const RR_OP = String.raw`(?:=\s*any|<>\s*all|=|<>|!=|not\s+in(?![\w])|in(?![\w])|not\s+i?like(?![\w])|i?like(?![\w])|is\s+(?:not\s+)?distinct\s+from)`;
+// Kept character-for-character in step with the search in supabase/tests/title_role_read_nowhere.sql:
+// only constructs Postgres ARE and JavaScript read the same way (no \b, which is backspace in ARE).
+export const SQL_RETIRED_ROLE_SOURCE = [
+  // the value cast to a role type, directly or through another cast
+  String.raw`'coach'(?:\s*::\s*\w+)*\s*::\s*(?:public\.)?(?:app_role|tenant_role)(?![\w])`,
+  // a role helper called with it, anywhere in its own argument list
+  String.raw`has_(?:any_|tenant_)?role\s*\((?:[^;()]|\([^()]*\))*'coach'`,
+  // a role column or role variable compared to a literal list that holds it
+  String.raw`(?:^|[^\w.])${RR_ROLE}\s*${RR_OP}\s*\(?\s*(?:array\s*\[\s*)?(?:${RR_LIT}\s*,\s*)*'coach'`,
+  // the same comparison written the other way round
+  String.raw`'coach'(?:\s*::\s*[\w.]+)*\s*(?:=|<>|!=)\s*\(?\s*(?:\w+\.)?"?(?:v_\w*)?role"?(?![\w])`,
+  // an array literal of roles that holds it: '{admin,coach}'::app_role[], or = ANY ('{admin,coach}')
+  String.raw`'\{[^'}]*(?<![\w])coach(?![\w])[^'}]*\}'\s*::\s*(?:public\.)?(?:app_role|tenant_role)\[\]`,
+  String.raw`(?:^|[^\w.])${RR_ROLE}\s*(?:=\s*any|<>\s*all)\s*\(\s*'\{[^'}]*(?<![\w])coach(?![\w])`,
+  // a CASE over a role that has a branch for it
+  String.raw`case\s+(?:\w+\.)?"?\w*role"?\s+(?:when\s+(?:(?!end(?![\w]))[^;])*?)?when\s+(?:${RR_LIT}\s*,\s*)*'coach'`,
+].join("|");
+const SQL_RETIRED_ROLE_READ = new RegExp(SQL_RETIRED_ROLE_SOURCE, "i");
 const TS_RETIRED_ROLE = /["'`]coach["'`]/;
 const TS_ROLE_WORDS = new Set(["role", "roles", "app_role", "tenant_role", "appRole", "tenantRole", "AppRole", "TenantRole", "Enums"]);
 function isRoleWord(word) {
   if (!word) return false;
   if (TS_ROLE_WORDS.has(word)) return true;
   const p = parts(word);
-  if (p.includes("permission") || p.includes("permissions")) return true;
-  return p[0] === "has" && (p.includes("role") || p.includes("roles"));
+  return p.includes("role") || p.includes("roles") || p.includes("permission") || p.includes("permissions");
 }
 
 // Holes stand for SQL text computed at run time. Both are valid identifiers, so a hole in a name
@@ -1018,7 +1042,7 @@ export function tsRetiredRoleSites(path, src) {
     if (!TS_RETIRED_ROLE.test(text)) continue;
     // A type or interface name reads as prose to codeWords (`type TeamPermission = ...`), so it is read here.
     const declared = /\b(?:type|interface)\s+([A-Za-z_$][\w$]*)/.exec(text)?.[1];
-    const reads = codeWords(text, tsx).some(isRoleWord) || isRoleWord(declared) || isRoleWord(enclosingFunctionName(masked, start));
+    const reads = codeWords(text, tsx).some(isRoleWord) || isRoleWord(declared) || isRoleWord(enclosingFunctionName(masked, start)) || isAuthName(enclosingFunctionName(masked, start));
     if (!reads) continue;
     const statement = text.replace(/\s+/g, " ").trim();
     const lead = text.length - text.trimStart().length;
@@ -1056,14 +1080,16 @@ export function readTree(root = ROOT) {
     if (/@generated/.test(text.split("\n", 3).join("\n"))) continue;
     tsFiles.push({ path, text });
   }
-  return { migrations, tsFiles };
+  let retiredRoleTest = null;
+  try { retiredRoleTest = readFileSync(join(root, RETIRED_ROLE_TEST), "utf8"); } catch { /* reported by analyze */ }
+  return { migrations, tsFiles, retiredRoleTest };
 }
 
 const siteCache = new WeakMap();
 const rrCache = new WeakMap();
 
 /** `seed`, when given, is the replayed state `migrations` are applied on top of (the self-test uses it). */
-export function analyze({ migrations, tsFiles, baseline, seed }) {
+export function analyze({ migrations, tsFiles, baseline, seed, retiredRoleTest }) {
   const violations = [];
   const fail = (rule, detail) => violations.push(`${rule}: ${detail}`);
   const { fns, policies, views, columns, gone, dynColumns, unreplayable } = replay(migrations, seed);
@@ -1256,6 +1282,11 @@ export function analyze({ migrations, tsFiles, baseline, seed }) {
     const fp = fingerprint(live.text);
     if (e.defined_in !== live.file || e.fingerprint !== fp) fail("R4", `retired_role_sql entry ${key}: reviewed body changed since review — re-read it and re-pin (reviewed: ${e.defined_in} @ ${e.fingerprint}; live: ${live.file} @ ${fp})`);
   }
+  // The database check searches with the same pattern; the two may never drift apart. (Absent in
+  // the self-test's mutation runs, which judge the replay only.)
+  if (retiredRoleTest !== undefined && !String(retiredRoleTest ?? "").includes(`$re$${SQL_RETIRED_ROLE_SOURCE}$re$`)) {
+    fail("R7", `${RETIRED_ROLE_TEST} does not search with SQL_RETIRED_ROLE_SOURCE verbatim (as $re$…$re$) — the database check and this rule must look for exactly the same shapes`);
+  }
   const rrTs = new Map();
   for (const e of baseline.retired_role_ts ?? []) {
     const k = `${e.path} :: ${e.fingerprint}`;
@@ -1446,11 +1477,22 @@ export function selfTestCases({ base, baseline }) {
       `CREATE VIEW public.selftest_rr_v AS SELECT tm.user_id FROM public.tenant_members tm WHERE tm.role::text IN ('owner','coach');`)],
     ["(t) a view written the way Postgres deparses one: ((tm.role)::text = ANY (ARRAY[...'coach'::text]))", "R7", addSql(
       `CREATE VIEW public.selftest_rr_deparsed AS SELECT tm.user_id FROM public.tenant_members tm WHERE ((tm.role)::text = ANY (ARRAY['owner'::text, 'coach'::text]));`)],
+    ["(t) a policy casting the role to text: ((role)::text = 'coach'::text)", "R7", addSql(
+      `CREATE POLICY selftest_rr_textcast ON public.clients USING (EXISTS (SELECT 1 FROM public.user_roles WHERE ((role)::text = 'coach'::text)));`)],
+    ["(t) a role held in a variable: v_role IS DISTINCT FROM 'coach'", "R7", addSql(
+      `CREATE FUNCTION public.selftest_rr_var() RETURNS boolean LANGUAGE plpgsql AS $$ DECLARE v_role text; BEGIN SELECT role INTO v_role FROM public.user_roles WHERE user_id = auth.uid(); IF v_role IS DISTINCT FROM 'coach' THEN RETURN false; END IF; RETURN true; END $$;`)],
+    ["(t) a CASE over a seat with a branch for the value", "R7", addSql(
+      `CREATE FUNCTION public.selftest_rr_case(_tenant_role public.tenant_role) RETURNS int LANGUAGE sql AS $$ SELECT CASE _tenant_role WHEN 'owner' THEN 3 WHEN 'coach' THEN 1 END $$;`)],
+    ["(t) a role compared to an array literal: ur.role = ANY('{admin,coach}')", "R7", addSql(
+      `CREATE FUNCTION public.selftest_rr_arrlit() RETURNS boolean LANGUAGE sql AS $$ SELECT EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.role = ANY('{admin,coach}')) $$;`)],
+    ["(t) the comparison written the other way round: 'coach' = ur.role", "R7", addSql(
+      `CREATE FUNCTION public.selftest_rr_rev() RETURNS boolean LANGUAGE sql AS $$ SELECT EXISTS (SELECT 1 FROM public.user_roles ur WHERE 'coach' = ur.role) $$;`)],
     ["(t) a named refusal re-created so it also reads the value to decide", "R4", (t) => {
       const e = need(baseline.retired_role_sql?.[0], "the baseline has no retired_role_sql entry");
       const key = signatureKey(e.function);
       t.migrations.push({ file: MIG, sql: `CREATE OR REPLACE FUNCTION ${key.split("(")[0]}(${argsOf(key)}) RETURNS boolean LANGUAGE sql AS $$ SELECT public.has_role(auth.uid(), 'coach'::public.app_role) $$;` });
     }],
+    ["(t) the database check searching with a pattern that drifted from this rule", "R7", (t) => { t.retiredRoleTest = "WHERE body ~* $re$'coach'::app_role$re$"; }],
     ["(t) a stale retired-role exemption", "R4", (t) => t.baseline.retired_role_sql.push({ function: "public.selftest_rr_gone(uuid)", reason: "self-test", defined_in: MIG, fingerprint: "0000000000000000" })],
     ["(t) a TS decision on role === \"coach\"", "R7", addTs("src/selftest/rr-eq.ts",
       `export function isStaff(role: string) { if (role === "coach") return true; return false; }\n`)],
@@ -1458,6 +1500,10 @@ export function selfTestCases({ base, baseline }) {
       `export type TeamPermission = "owner" | "admin" | "coach" | "member";\n`)],
     ["(t) a TS query filtering user_roles on the value", "R7", addTs("src/selftest/rr-query.ts",
       `export const q = (sb: any) => sb.from("user_roles").select("user_id").eq("role", "coach");\n`)],
+    ["(t) a TS comparison on a role-named variable: userRole === \"coach\"", "R7", addTs("src/selftest/rr-userrole.ts",
+      `export const staff = (userRole: string) => userRole === "coach";\n`)],
+    ["(t) a TS return inside an authorization-named function", "R7", addTs("src/selftest/rr-canedit.ts",
+      `export function canEdit(r: string) { return r === "coach"; }\n`)],
     ["(t) a TS switch naming the value inside a permission function", "R7", addTs("src/selftest/rr-switch.ts",
       `export function permissionLabel(v: string) { switch (v) { case "coach": return "Coach"; default: return "Member"; } }\n`)],
   ];
@@ -1491,7 +1537,9 @@ export function selfTestCases({ base, baseline }) {
     ["the value as data in SQL: a lens, a seat label, a sender type, an assigned-role label", addSql(
       `CREATE FUNCTION public.selftest_rr_data(_c uuid) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT EXISTS (SELECT 1 FROM public.paige_chat_threads t WHERE t.lens = 'coach') OR public.is_assigned_to_client(auth.uid(), _c, 'coach') OR EXISTS (SELECT 1 FROM public.program_messages m WHERE m.sender_type = 'coach') OR EXISTS (SELECT 1 FROM public.paige_coach_assignments a WHERE a.assigned_role IN ('coach','coach_vip')) $$;\nCREATE POLICY selftest_rr_seat ON public.clients USING (public.is_assigned_to_client(auth.uid(), id, 'coach'));`)],
     ["the value as data in TS: a lens, an affiliate tier, a seat label", addTs("src/selftest/rr-data.ts",
-      `export const threads = (sb: any) => sb.from("paige_chat_threads").select("id").eq("lens", "coach");\nexport type Tier = "external" | "coach" | "admin";\nexport const seat = { p_role: "coach" };\n`)],
+      `export const threads = (sb: any) => sb.from("paige_chat_threads").select("id").eq("lens", "coach");\nexport type Tier = "external" | "coach" | "admin";\nexport const owner: "client" | "coach" | "paige" = "coach";\n`)],
+    ["SQL that reads a role and names the value elsewhere: SELECT role INTO ... WHERE lens = 'coach'; SET role = 'member', lens = 'coach'", addSql(
+      `CREATE FUNCTION public.selftest_rr_into() RETURNS void LANGUAGE plpgsql AS $$ DECLARE v_role text; BEGIN SELECT tm.role INTO v_role FROM public.tenant_members tm JOIN public.paige_chat_threads t ON t.caller_user_id = tm.user_id WHERE t.lens = 'coach'; UPDATE public.paige_chat_threads SET title = 'member', lens = 'coach' WHERE false; END $$;`)],
     ["a comment about the retired role beside a role check", addTs("src/selftest/rr-comment.ts",
       `// the platform-wide "coach" role grants nothing any longer\nexport const isOwner = (role: string) => role === "owner";\n`)],
     ["a display predicate and a display value named after owners", addTs("src/selftest/display.ts",

@@ -4,8 +4,10 @@
 -- "Coach" is a title a business gives its people, never a role. This reads the LIVE catalogue of the
 -- rebuilt database, not migration source, so it also judges the function bodies 20270504000000
 -- rewrote at run time: every function, procedure, policy and view, in every schema, is searched for
--- the four shapes a role read takes — the value cast to a role type, a role helper called with it, a
--- role column compared to it (=, IN, = ANY, IS DISTINCT FROM), and it inside a role-typed array.
+-- the shapes a role read takes — the value cast to a role type; a role helper called with it; a role
+-- column or a role variable (v_…role) compared to it (=, IN, = ANY, LIKE, IS DISTINCT FROM), either
+-- way round, through casts and the parentheses Postgres adds when it stores a view or policy; it in
+-- an array or array literal of roles; and a CASE over a role with a branch for it.
 --
 -- The value is still allowed where it is data and not a role: a conversation lens, an assignment
 -- seat label, a message sender type, an assigned-role label. Those shapes are not role reads and are
@@ -22,7 +24,7 @@
 -- ============================================================================
 BEGIN;
 
-SELECT plan(9);
+SELECT plan(16);
 
 CREATE FUNCTION pg_temp.retired_role_reads() RETURNS SETOF text LANGUAGE sql STABLE AS $fn$
   WITH src AS (
@@ -41,10 +43,9 @@ CREATE FUNCTION pg_temp.retired_role_reads() RETURNS SETOF text LANGUAGE sql STA
     SELECT 'view ' || schemaname || '.' || matviewname, definition FROM pg_matviews
   )
   SELECT what FROM src
-   WHERE body ~* ($re$'coach'\s*::\s*(public\.)?(app_role|tenant_role)$re$
-               || '|' || $re$has_(any_|tenant_)?role\s*\([^;]*'coach'$re$
-               || '|' || $re$(^|[^\w.])(\w+\.)?role\)?(::\w+)?\)?\s*(=|<>|!=|not\s+in|in|is\s+(not\s+)?distinct\s+from|=\s*any|<>\s*all)\s*\(?[^;)]*'coach'$re$
-               || '|' || $re$'coach'[^;]*\]\s*::\s*(public\.)?(app_role|tenant_role)\[\]$re$)
+   -- The search below is character-for-character SQL_RETIRED_ROLE_SOURCE in
+   -- scripts/ci/title-authority-guard.mjs; the guard fails if the two drift apart.
+   WHERE body ~* $re$'coach'(?:\s*::\s*\w+)*\s*::\s*(?:public\.)?(?:app_role|tenant_role)(?![\w])|has_(?:any_|tenant_)?role\s*\((?:[^;()]|\([^()]*\))*'coach'|(?:^|[^\w.])\(?\s*(?:\w+\.)?"?(?:v_\w*)?role"?\s*\)?(?:\s*::\s*[\w.]+)?\s*\)?\s*(?:=\s*any|<>\s*all|=|<>|!=|not\s+in(?![\w])|in(?![\w])|not\s+i?like(?![\w])|i?like(?![\w])|is\s+(?:not\s+)?distinct\s+from)\s*\(?\s*(?:array\s*\[\s*)?(?:'[^']*'(?:\s*::\s*[\w.]+(?:\[\])?)*\s*,\s*)*'coach'|'coach'(?:\s*::\s*[\w.]+)*\s*(?:=|<>|!=)\s*\(?\s*(?:\w+\.)?"?(?:v_\w*)?role"?(?![\w])|'\{[^'}]*(?<![\w])coach(?![\w])[^'}]*\}'\s*::\s*(?:public\.)?(?:app_role|tenant_role)\[\]|(?:^|[^\w.])\(?\s*(?:\w+\.)?"?(?:v_\w*)?role"?\s*\)?(?:\s*::\s*[\w.]+)?\s*\)?\s*(?:=\s*any|<>\s*all)\s*\(\s*'\{[^'}]*(?<![\w])coach(?![\w])|case\s+(?:\w+\.)?"?\w*role"?\s+(?:when\s+(?:(?!end(?![\w]))[^;])*?)?when\s+(?:'[^']*'(?:\s*::\s*[\w.]+(?:\[\])?)*\s*,\s*)*'coach'$re$
 $fn$;
 
 CREATE TEMP TABLE retired_role_exempt(what text PRIMARY KEY, why text NOT NULL);
@@ -93,19 +94,61 @@ SELECT ok('function rrn_seat_any()' IN (SELECT r FROM pg_temp.retired_role_reads
 SELECT ok('view public.rrn_view' IN (SELECT r FROM pg_temp.retired_role_reads() r),
   'a view comparing a seat to the value is caught');
 
--- 8. The value as data, not a role, is not a read: a lens, a seat label, a sender type, an assigned-role label.
+-- 8-13. The shapes Postgres stores differently from how they are written, and the plpgsql shapes.
+CREATE FUNCTION public.rrn_variable() RETURNS boolean LANGUAGE plpgsql AS $$
+DECLARE v_role text;
+BEGIN
+  SELECT ur.role INTO v_role FROM public.user_roles ur WHERE ur.user_id = auth.uid() LIMIT 1;
+  RETURN v_role IS DISTINCT FROM 'coach';
+END $$;
+CREATE FUNCTION public.rrn_case(_tenant_role public.tenant_role) RETURNS int LANGUAGE sql AS
+  $$ SELECT CASE _tenant_role WHEN 'owner' THEN 3 WHEN 'coach' THEN 1 END $$;
+CREATE FUNCTION public.rrn_array_literal() RETURNS boolean LANGUAGE sql AS
+  $$ SELECT EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.role = ANY ('{admin,coach}')) $$;
+CREATE FUNCTION public.rrn_reversed() RETURNS boolean LANGUAGE sql AS
+  $$ SELECT EXISTS (SELECT 1 FROM public.user_roles ur WHERE 'coach' = ur.role) $$;
+CREATE POLICY rrn_policy ON public.user_roles USING (role::text = 'coach');
+CREATE VIEW public.rrn_view_literal AS
+  SELECT ur.user_id FROM public.user_roles ur WHERE ur.role = ANY ('{admin,coach}');
+
+SELECT ok('function rrn_variable()' IN (SELECT r FROM pg_temp.retired_role_reads() r),
+  'a role held in a variable and compared to the value is caught');
+SELECT ok('function rrn_case(tenant_role)' IN (SELECT r FROM pg_temp.retired_role_reads() r),
+  'a CASE over a seat with a branch for the value is caught');
+SELECT ok('function rrn_array_literal()' IN (SELECT r FROM pg_temp.retired_role_reads() r),
+  'a role compared to an array literal holding the value is caught');
+SELECT ok('function rrn_reversed()' IN (SELECT r FROM pg_temp.retired_role_reads() r),
+  'the comparison written the other way round is caught');
+SELECT ok('policy public.user_roles rrn_policy' IN (SELECT r FROM pg_temp.retired_role_reads() r),
+  'a policy casting the role to text, as Postgres stores it, is caught');
+SELECT ok('view public.rrn_view_literal' IN (SELECT r FROM pg_temp.retired_role_reads() r),
+  'a view comparing a role to an array literal, as Postgres stores it, is caught');
+
+-- 14. The value as data, not a role, is not a read: a lens, a seat label, a sender type, an assigned-role label,
+-- and a function that reads a role and names the value only as a lens.
 CREATE FUNCTION public.rrn_data(_contact uuid) RETURNS boolean LANGUAGE sql AS $$
   SELECT EXISTS (SELECT 1 FROM public.paige_chat_threads t WHERE t.lens = 'coach')
       OR public.is_assigned_to_client(auth.uid(), _contact, 'coach')
       OR EXISTS (SELECT 1 FROM public.program_messages m WHERE m.sender_type = 'coach')
       OR EXISTS (SELECT 1 FROM public.paige_coach_assignments a WHERE a.assigned_role IN ('coach', 'coach_vip'))
 $$;
-SELECT ok('function rrn_data(uuid)' NOT IN (SELECT r FROM pg_temp.retired_role_reads() r),
+CREATE FUNCTION public.rrn_data_into() RETURNS void LANGUAGE plpgsql AS $$
+DECLARE v_role text;
+BEGIN
+  SELECT tm.role INTO v_role FROM public.tenant_members tm
+    JOIN public.paige_chat_threads t ON t.caller_user_id = tm.user_id WHERE t.lens = 'coach';
+END $$;
+SELECT ok(NOT EXISTS (SELECT 1 FROM pg_temp.retired_role_reads() r WHERE r IN ('function rrn_data(uuid)', 'function rrn_data_into()')),
   'the value used as data — a lens, a seat label, a sender type, an assigned-role label — is not a role read');
 
--- 9. The staff name projection gates on the business, never on the retired role.
+-- 15. The staff name projection gates on the business, never on the retired role.
 SELECT unlike(pg_get_viewdef('public.coach_client_profiles_safe'::regclass), '%''coach''%',
   'the staff name projection does not read the retired role');
+
+-- 16. The seat mapping keeps every seat a membership may hold.
+SELECT is(ARRAY[public.map_tenant_role_to_app_role('owner'), public.map_tenant_role_to_app_role('admin'),
+                public.map_tenant_role_to_app_role('member')]::text[],
+  ARRAY['admin', 'admin', 'user'], 'the seat mapping still maps every seat a membership may hold');
 
 SELECT * FROM finish();
 ROLLBACK;

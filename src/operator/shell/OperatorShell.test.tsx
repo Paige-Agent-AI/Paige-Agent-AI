@@ -20,6 +20,11 @@ import { resolveOperatorAddress, viewPath } from "@/operator/shell/operatorAddre
 import { SPINE_REGIONS, spineHasContent } from "@/operator/shell/OperatorSpine";
 
 vi.mock("@/lib/auth/signOut", () => ({ performSignOut: vi.fn() }));
+// The app mounts TenantProvider at its root; the shell's scope band reads it. These geometry
+// tests render the shell at rest: an operator acting as no tenant.
+vi.mock("@/hooks/useTenantContext", () => ({
+  useTenantContext: () => ({ activeTenantId: null, tenants: [], switchTenant: vi.fn() }),
+}));
 
 import OperatorShell from "./OperatorShell";
 

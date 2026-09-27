@@ -30,7 +30,7 @@ const VENDOR_LIST = [
   "Global Industrial", "Nav Business Boost"
 ];
 
-interface Answers {
+type Answers = {
   // Base
   base_entity: string;
   base_ein: string;
@@ -56,7 +56,7 @@ interface Answers {
   develop_monitoring: string;
   develop_utilization: string;
   develop_derogatory: string;
-}
+};
 
 const defaultAnswers: Answers = {
   base_entity: "", base_ein: "", base_bank: "", base_duns: "", base_phone: "", base_address: "",
@@ -115,7 +115,7 @@ function tierComplete(tier: number, a: Answers): boolean {
 }
 
 export function BuildProgramSection({ foundationPct, bureauPct, onCompletionChange, businessId }: BuildProgramSectionProps) {
-  const { isCoachOrAdmin } = useDashboardMode();
+  const { isAdmin } = useDashboardMode();
   const [mode, setMode] = useState<"loading" | "assessment" | "dashboard">("loading");
   const [currentTier, setCurrentTier] = useState(0);
   const [answers, setAnswers] = useState<Answers>({ ...defaultAnswers });
@@ -207,7 +207,7 @@ export function BuildProgramSection({ foundationPct, bureauPct, onCompletionChan
     const { error } = await supabase
       .from("businesses")
       .update({
-        build_assessment_answers: answers as any,
+        build_assessment_answers: answers,
         build_score: score,
         build_assessed_at: new Date().toISOString(),
       })
@@ -360,7 +360,7 @@ export function BuildProgramSection({ foundationPct, bureauPct, onCompletionChan
       </Button>
 
       {/* Admin Coaching Panel */}
-      {isCoachOrAdmin && <AdminCoachingPanel answers={answers} score={buildScore} />}
+      {isAdmin && <AdminCoachingPanel answers={answers} score={buildScore} />}
     </div>
   );
 }

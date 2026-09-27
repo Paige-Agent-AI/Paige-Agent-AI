@@ -7,7 +7,6 @@ const STAFF_ROLES = new Set([
   "admin",
   "super_admin",
   "owner",
-  "coach",
   "sales_rep",
   "broker",
   "broker_team_member",

@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type AppRole =
   | "admin"
-  | "coach"
   | "client"
   | "broker"
   | "broker_team_member"
@@ -15,10 +14,9 @@ interface UserRolesState {
   userId: string | null;
   roles: AppRole[];
   isAdmin: boolean;
-  isCoach: boolean;
   isClient: boolean;
   isBroker: boolean;
-  /** Convenience: admin OR coach — the standard "staff" check. */
+  /** Convenience: the standard "staff" check. A job title never counts; only the admin role does. */
   isStaff: boolean;
 }
 
@@ -27,7 +25,6 @@ const DEFAULT: UserRolesState = {
   userId: null,
   roles: [],
   isAdmin: false,
-  isCoach: false,
   isClient: false,
   isBroker: false,
   isStaff: false,
@@ -54,16 +51,15 @@ export function useUserRoles(): UserRolesState {
         .select("role")
         .eq("user_id", userId);
       if (!active) return;
-      const roles = (data || []).map((r: any) => r.role as AppRole);
+      const roles = (data || []).map((r) => r.role as AppRole);
       setState({
         loading: false,
         userId,
         roles,
         isAdmin: roles.includes("admin"),
-        isCoach: roles.includes("coach"),
         isClient: roles.includes("client"),
         isBroker: roles.includes("broker") || roles.includes("broker_team_member"),
-        isStaff: roles.includes("admin") || roles.includes("coach"),
+        isStaff: roles.includes("admin"),
       });
     };
 

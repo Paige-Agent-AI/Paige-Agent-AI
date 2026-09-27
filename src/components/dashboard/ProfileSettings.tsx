@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesUpdate } from "@/integrations/supabase/types";
+import type { UserIdentity } from "@supabase/supabase-js";
 import { AvatarUploader, isAvatarBucketUrl, removeAvatarObject } from "@/components/ui/avatar-uploader";
 import { Loader2, User, Building2, Eye, EyeOff, Monitor, UserCircle, Link2, ShieldOff } from "lucide-react";
 import { AccountSecurityPanel } from "@/components/settings/AccountSecurityPanel";
@@ -23,7 +25,7 @@ import { useDashboardMode } from "@/contexts/DashboardModeContext";
 const ssnSchema = z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/, "Invalid SSN format (XXX-XX-XXXX)");
 
 const ConnectedAccountsSection = () => {
-  const [identities, setIdentities] = useState<any[]>([]);
+  const [identities, setIdentities] = useState<UserIdentity[]>([]);
   const [isLinking, setIsLinking] = useState(false);
   const { toast } = useToast();
   useEffect(() => {
@@ -75,7 +77,7 @@ export const ProfileSettings = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isEditingPersonal, setIsEditingPersonal] = useState(false);
   const { toast } = useToast();
-  const { mode, setMode, isCoachOrAdmin } = useDashboardMode();
+  const { mode, setMode, isAdmin } = useDashboardMode();
 
   // Honor a `?tab=` deep link (e.g. the post-connect redirect lands clients on
   // ?tab=accounts). Falls back to Personal for unknown/gated values.
@@ -86,7 +88,7 @@ export const ProfileSettings = () => {
     requestedTab === "business" ||
     requestedTab === "accounts" ||
     requestedTab === "privacy" ||
-    (requestedTab === "preferences" && isCoachOrAdmin);
+    (requestedTab === "preferences" && isAdmin);
   const [activeTab, setActiveTab] = useState(isValidTab ? (requestedTab as string) : "personal");
 
   // Realtime sync indicator state
@@ -203,8 +205,8 @@ export const ProfileSettings = () => {
         }
         
         // Use the dedicated ssn_last_4 column for display (never derive from encrypted blob)
-        if ((profile as any).ssn_last_4) {
-          setSsnLast4((profile as any).ssn_last_4);
+        if (profile.ssn_last_4) {
+          setSsnLast4(profile.ssn_last_4);
           setSsn(""); // Never load full SSN into client state
           setIsEditingSSN(false);
         } else if (profile.ssn_encrypted) {
@@ -258,7 +260,7 @@ export const ProfileSettings = () => {
       }
 
       // Update non-sensitive fields directly
-      const updateData: any = {
+      const updateData: TablesUpdate<"profiles"> = {
         full_name: fullName,
         phone,
         address,
@@ -412,7 +414,7 @@ export const ProfileSettings = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className={`grid w-full ${isCoachOrAdmin ? "grid-cols-5" : "grid-cols-4"}`}>
+        <TabsList className={`grid w-full ${isAdmin ? "grid-cols-5" : "grid-cols-4"}`}>
           <TabsTrigger value="personal" className="gap-2">
             <User className="w-4 h-4" />
             Personal Info
@@ -429,7 +431,7 @@ export const ProfileSettings = () => {
             <ShieldOff className="w-4 h-4" />
             Data &amp; Privacy
           </TabsTrigger>
-          {isCoachOrAdmin && (
+          {isAdmin && (
             <TabsTrigger value="preferences" className="gap-2">
               <Monitor className="w-4 h-4" />
               Preferences
@@ -442,7 +444,7 @@ export const ProfileSettings = () => {
         </TabsContent>
 
 
-        {isCoachOrAdmin && (
+        {isAdmin && (
           <TabsContent value="preferences">
             <Card className="p-6">
               <div className="space-y-6">

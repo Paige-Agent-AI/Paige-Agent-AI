@@ -3379,5 +3379,75 @@ console.log("\nteam context — platform role and title reach her as two labelle
     JSON.stringify({ read: teamRead(foreign), egress: foreign.modelEgress.length, leaked }));
 }
 
+// ── 28. THE TEAM TOOLS AND THE CARD A PERSON APPROVES SAY "TITLE" ─────────────────────────────
+//
+// Owner ruling: owner, admin and member are the only roles; everything else people call each other
+// is a title, and the word is "title", not "job title" or "customized role". Section 27 proves the
+// block PAIGE reads. This proves the two places the word reaches a person or steers her: the card
+// the owner approves before a title is saved, and the tool descriptions she is handed. The word is
+// read from its one home, so these move with it.
+console.log("\nteam tools — the approval card and the tool descriptions say title");
+{
+  const { TITLE_WORD: TITLE } = await import("../../supabase/functions/_shared/team-vocabulary.ts");
+  const THREAD = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+  const MEMBER = "e6e6e6e6-e6e6-4e6e-8e6e-e6e6e6e6e6e6";
+  const ROSTER = {
+    tenant_id: CALLER_TENANT, tenant_name: "T", viewer_permission: "owner",
+    members: [{ user_id: MEMBER, full_name: "Rowan Park", email: "rowan@example.test", permission: "member",
+      is_owner: false, job_title: "Trainer", responsibilities: "Mornings" }],
+    invitations: [],
+  };
+  const frames = (r) => r.bodyText.split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
+    .map((l) => { try { return JSON.parse(l.slice(6)); } catch { return null; } }).filter(Boolean);
+  const cardOf = (r) => frames(r).find((f) => f.paige_confirm)?.paige_confirm;
+  const profileTurn = (args) => {
+    const store = makeConfirmStore();
+    return drive({
+      stream: true, extraBody: { threadId: THREAD },
+      toolCall: { name: "team_set_work_profile", args: { member_user_id: MEMBER, ...args } },
+      rpcOverrides: {
+        resolve_tool_autonomy: { data: "confirm", error: null },
+        get_actor_access: { data: { tier: "tenant" }, error: null },
+        get_solo_team_workspace: { data: ROSTER, error: null },
+      },
+      tablesExtra: { paige_pending_confirmations: store.table, user_roles: [{ role: "admin" }] },
+      onInsert: mirrorConfirms(store),
+    });
+  };
+
+  const titled = await profileTurn({ job_title: "Head Trainer", responsibilities: "Runs the morning classes" });
+  const titledCard = cardOf(titled);
+  assert(`28.1 the approval card names the new ${TITLE} with the shared word, never "job title"`,
+    titledCard?.tool === "team_set_work_profile"
+      && titledCard.summary.includes(`${TITLE} "Head Trainer"`) && !/job title/i.test(titledCard.summary),
+    JSON.stringify(titledCard));
+
+  const cleared = await profileTurn({ job_title: "", responsibilities: "Mornings" });
+  const clearedCard = cardOf(cleared);
+  assert(`28.2 clearing it reads "no ${TITLE}" on the card`,
+    !!clearedCard && clearedCard.summary.includes(`no ${TITLE},`) && !/job title/i.test(clearedCard.summary),
+    JSON.stringify(clearedCard));
+
+  // The tool list PAIGE is handed, parsed out of the request body rather than matched loosely.
+  const toolsSent = titled.modelEgress.flatMap((body) => {
+    try { const parsed = JSON.parse(body); return Array.isArray(parsed.tools) ? parsed.tools : []; } catch { return []; }
+  });
+  const profileTool = toolsSent.find((t) => (t.name ?? t.function?.name) === "team_set_work_profile");
+  const profileDescription = profileTool?.description ?? profileTool?.function?.description ?? "";
+  const schema = profileTool?.input_schema ?? profileTool?.parameters ?? profileTool?.function?.parameters;
+  const titleArg = schema?.properties?.job_title?.description ?? "";
+  assert(`28.3 the work-details tool she is handed says "${TITLE}" in its description and its argument`,
+    profileDescription.includes(`a teammate's ${TITLE} and/or responsibilities`)
+      && titleArg.startsWith(`Their ${TITLE}, 120 characters`)
+      && !/job title/i.test(profileDescription + titleArg),
+    JSON.stringify({ found: !!profileTool, description: profileDescription.slice(0, 120), titleArg }));
+
+  // The argument KEY stays job_title on purpose: approvals already queued carry it, and renaming it
+  // would break them for nothing a person sees. The word is the product's; the key is internal.
+  assert("28.4 the argument key stays job_title, so approvals already queued still match",
+    !!schema?.properties?.job_title && !schema?.properties?.title,
+    JSON.stringify(Object.keys(schema?.properties ?? {})));
+}
+
 console.log(`\n${checks - failures} passed, ${failures} failed`);
 process.exit(failures === 0 ? 0 : 1);

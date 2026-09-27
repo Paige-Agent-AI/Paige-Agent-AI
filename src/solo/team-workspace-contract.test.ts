@@ -30,7 +30,7 @@ describe("Solo Team workspace contract", () => {
 
   it("validates title and responsibilities without treating either as authority", () => {
     expect(validateWorkProfile("Operations Lead", "Owns delivery quality and weekly planning.")).toEqual({});
-    expect(validateWorkProfile("x".repeat(121), "Clear work")).toEqual({ title: "Keep the job title to 120 characters or fewer." });
+    expect(validateWorkProfile("x".repeat(121), "Clear work")).toEqual({ title: "Keep the title to 120 characters or fewer." });
     expect(validateWorkProfile("Client Success", "x".repeat(2001))).toEqual({ responsibilities: "Keep responsibilities to 2,000 characters or fewer." });
   });
 

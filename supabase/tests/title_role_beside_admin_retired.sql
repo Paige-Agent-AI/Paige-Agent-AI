@@ -29,11 +29,10 @@ DECLARE
   _m uuid := 'b7710000-0000-0000-0000-0000000000a1';  -- member of A, assigned to X; no platform role
   _g uuid := 'b7710000-0000-0000-0000-0000000000a2';  -- member of A holding the retired global coach role
   _y uuid := 'b7710000-0000-0000-0000-000000000e01';  -- the person X is, a client of A
-  _z uuid := 'b7710000-0000-0000-0000-000000000e02';  -- the person W is, a client of B
 BEGIN
   INSERT INTO auth.users (id, email) VALUES
     (_m, 'trr-member@example.test'), (_g, 'trr-titled@example.test'),
-    (_y, 'trr-client-a@example.test'), (_z, 'trr-client-b@example.test');
+    (_y, 'trr-client-a@example.test');
   INSERT INTO public.tenants (id, slug, name, status, account_type, account_number_prefix, features) VALUES
     (_a, 'trr-scope-a', 'TRR Scope A', 'active', 'standalone', 'TRA', '{}'),
     (_b, 'trr-scope-b', 'TRR Scope B', 'active', 'standalone', 'TRB', '{}');
@@ -47,9 +46,10 @@ BEGIN
   INSERT INTO public.clients (id, tenant_id, created_by, first_name, last_name, account_number, linked_user_id, assigned_coach_user_id) VALUES
     ('b7710000-0000-0000-0000-00000000c1e1', _a, _m, 'X', 'Client', 'TRX-1', _y, _m),
     ('b7710000-0000-0000-0000-00000000c1e3', _a, _m, 'U', 'Client', 'TRU-1', NULL, NULL),
-    ('b7710000-0000-0000-0000-00000000c1e2', _b, _m, 'W', 'Client', 'TRW-1', _z, _m);
+    ('b7710000-0000-0000-0000-00000000c1e2', _b, _m, 'W', 'Client', 'TRW-1', NULL, _m);
+  -- Assigning X to M records M's relationship with Y itself; G's is recorded here.
   INSERT INTO public.coach_clients (coach_user_id, client_user_id, tenant_id, status) VALUES
-    (_m, _y, _a, 'active'), (_g, _y, _a, 'active');
+    (_g, _y, _a, 'active');
   -- G also holds an active assignment to X (as its lead owner), which the retired role used to open.
   INSERT INTO public.paige_coach_assignments (tenant_id, contact_id, rep_user_id, assigned_role, active) VALUES
     (_a, 'b7710000-0000-0000-0000-00000000c1e1', _g, 'lead_owner', true);
@@ -59,10 +59,9 @@ BEGIN
     ('b7710000-0000-0000-0000-00000000c002', _b, 'b7710000-0000-0000-0000-00000000c1e2', 'email', 'inbound', 'TRR w');
   INSERT INTO public.client_goals (id, user_id, goal_category) VALUES
     ('b7710000-0000-0000-0000-00000000f001', _y, 'other');
-  -- A message and a thread take their business from the client they concern.
+  -- A message takes its business from the client it concerns, and records its thread itself.
   INSERT INTO public.messages (id, contact_id, thread_key, channel_type, direction) VALUES
     ('b7710000-0000-0000-0000-00000000e001', 'b7710000-0000-0000-0000-00000000c1e1', 'trr-thread', 'email', 'inbound');
-  INSERT INTO public.threads (contact_id, thread_key) VALUES ('b7710000-0000-0000-0000-00000000c1e1', 'trr-thread');
 END $$;
 
 -- 1. No policy outside the finance tables reads the retired role.

@@ -23,10 +23,13 @@
 -- The 'coach' kept in is_assigned_to_client(..., 'coach') is an assignment kind (a data label on
 -- paige_coach_assignments), not a role.
 
--- Step 0: the membership check every rewritten policy calls. It answers only whether the caller is an
+-- Step 0: what the rewritten policies read. The membership check answers only whether the caller is an
 -- active member of the given business, which is what production already grants signed-in users; this
 -- makes a database rebuilt from migrations hold the same grant.
 GRANT EXECUTE ON FUNCTION public.is_tenant_member(uuid) TO authenticated;
+-- The client policy below reads assignment relationships. Production grants signed-in users SELECT on
+-- them (their row policies limit which rows); a database rebuilt from migrations did not.
+GRANT SELECT ON public.coach_clients TO authenticated;
 
 -- Step 1: assignment plus membership of the record's business.
 ALTER POLICY "Coaches view verifications for their clients" ON public.business_verification_runs

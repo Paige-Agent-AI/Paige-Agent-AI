@@ -52,7 +52,12 @@
  *
  * Usage:
  *   node scripts/ci/reproduce-production-grants.mjs --reset-version --recorded <recorded_versions.txt> [--migrations dir]
- *   node scripts/ci/reproduce-production-grants.mjs --dump <prod_schema.sql> --db <postgres url>
+ *   node scripts/ci/reproduce-production-grants.mjs --dump <prod_schema.sql> --db <postgres url> [--report-missing]
+ *
+ * --report-missing is for grant-ordering-proof.sh's negative control only. That control reconciles
+ * AFTER the change under review is applied, so an object the change drops still has production
+ * grants and is missing by design; the flag reports it instead of failing. The job's own reconcile
+ * runs before the change and never passes it, so drift there still fails.
  *   node scripts/ci/reproduce-production-grants.mjs --parse-ledger <migration_list.txt>
  *   node scripts/ci/reproduce-production-grants.mjs --self-test
  */
@@ -157,7 +162,7 @@ LANGUAGE sql AS $f$
 $f$;`;
 
 /** The single transaction that reproduces production's ACL in the rebuilt database. */
-export function buildReconcileSql(statements) {
+export function buildReconcileSql(statements, { reportMissing = false } = {}) {
   const rows = statements
     .map((s) => `(${dollarQuote(s.sql)}, ${dollarQuote(`${s.kind.toLowerCase()} public.${s.name}`)})`)
     .join(",\n");
@@ -205,7 +210,7 @@ BEGIN
     END;
   END LOOP;
   IF cardinality(missing) > 0 THEN
-    RAISE EXCEPTION 'SCHEMA DRIFT: production grants on % object(s) the migration chain does not create: % (if this branch is behind main, update it: production has migrations it lacks)',
+    RAISE ${reportMissing ? "NOTICE" : "EXCEPTION"} 'SCHEMA DRIFT: production grants on % object(s) the migration chain does not create: % (if this branch is behind main, update it: production has migrations it lacks)',
       cardinality(missing), array_to_string(ARRAY(SELECT DISTINCT unnest(missing) ORDER BY 1), '; ');
   END IF;
 END
@@ -308,12 +313,15 @@ function reconcile() {
   if (statements.length < minStatements) fail(`Only ${statements.length} production ACL statements parsed from ${dumpPath}; refusing to reset grants on that basis.`);
   const dir = mkdtempSync(join(tmpdir(), "prod-acl-"));
   const sqlPath = join(dir, "reconcile.sql");
-  writeFileSync(sqlPath, buildReconcileSql(statements));
+  writeFileSync(sqlPath, buildReconcileSql(statements, { reportMissing: process.argv.includes("--report-missing") }));
   const r = spawnSync("psql", ["-X", "-q", "-d", db, "-f", sqlPath], { encoding: "utf8" });
   const errLines = (r.stderr || "").split("\n");
   if (r.status !== 0) {
     fail(`Production grants could not be reproduced in the rebuilt database.\n${errLines.filter((l) => /error|DETAIL|SCHEMA DRIFT/i.test(l)).join("\n")}`);
   }
+  // --report-missing turns drift into a NOTICE; print it, so a reported object is seen, not swallowed.
+  const drift = errLines.filter((l) => /NOTICE:\s+SCHEMA DRIFT/.test(l));
+  if (drift.length) console.error(drift.join("\n"));
   // A GRANT/REVOKE on an object the job cannot act for is a WARNING that changes nothing.
   const noop = errLines.filter((l) => /WARNING:\s+no privileges (could be|were) (granted|revoked)/.test(l));
   if (noop.length) fail(`${noop.length} grant statement(s) changed nothing (an object owned by a role this job cannot act for); the reconcile is incomplete.`);
@@ -371,6 +379,9 @@ function selfTest() {
   const sql = buildReconcileSql(s);
   assert(sql.includes("SCHEMA DRIFT") && sql.includes("BEGIN;") && sql.includes("COMMIT;"), "one transaction that fails on drift");
   assert(sql.includes("'PROCEDURE'"), "procedures are reset with the PROCEDURE keyword");
+  assert(sql.includes("RAISE EXCEPTION 'SCHEMA DRIFT") && !sql.includes("RAISE NOTICE 'SCHEMA DRIFT"), "drift fails the job's own reconcile");
+  const reported = buildReconcileSql(s, { reportMissing: true });
+  assert(reported.includes("RAISE NOTICE 'SCHEMA DRIFT") && !reported.includes("RAISE EXCEPTION 'SCHEMA DRIFT"), "the negative control reports drift instead of failing");
   console.log("reproduce-production-grants self-test: ok");
 }
 

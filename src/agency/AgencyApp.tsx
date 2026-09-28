@@ -23,6 +23,7 @@
 // code is unreachable. A sub-account owner sees only their own book.
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { WorkspaceExitControl } from "@/components/auth/WorkspaceExitControl";
 import { useTheme } from "next-themes";
 import { performSignOut } from "@/lib/auth/signOut";
 import { branchBySlug, branchByKey, branchPath, defaultBranchSlug } from "@/lib/routing/tierBranches";
@@ -117,69 +118,6 @@ const TITLES = {
 
 // Help launcher quick-prompts (Agency Shell.dc.html:11475).
 const HELP_PROMPTS = ["Something's not working", "Question about billing", "How do I…"];
-
-// ── Rail ────────────────────────────────────────────────────────────────────
-// Two nav groups + brand block + plan card + collapse — mirrors SoloApp's Rail
-// but carries the Agency brand mark (a rounded-square plate, AA-mixed via AV) and
-// the design's second group. `sub` drives the badge/plan variants; `brand` is the
-// resolved workspace identity (agency, own sub-account, or the account being acted
-// on) so the mark and name always speak for the workspace in view.
-// `planLine`/`bookLine` arrive TIER-CORRECT from the parent — the plan card makes no
-// tier decision of its own, and `bookLine` is optional (the sub path has no second
-// line, so the card renders the plan chip alone rather than a fabricated sentence).
-const Rail = ({ route, go, collapsed, setCollapsed, sub, brand, planLine, bookLine }) => {
-  const w = collapsed ? 72 : 248;
-  const av = AV(brand.color);
-  const Item = ([k, label, Icn, badgeOf]) => {
-    const on = route === k;
-    const badge = badgeOf ? badgeOf(sub) : "";
-    return (
-      <button key={k} onClick={() => go(k)} title={label} className="row"
-        style={{ width: "100%", gap: 12, padding: collapsed ? "10px" : "9px 12px", borderRadius: 11, marginBottom: 2,
-          justifyContent: collapsed ? "center" : "flex-start", background: on ? "var(--rail-2)" : "transparent",
-          color: on ? "#fff" : "var(--rail-text)", position: "relative", transition: ".15s" }}
-        onMouseEnter={e => { if (!on) e.currentTarget.style.background = "rgba(255,255,255,.05)"; }}
-        onMouseLeave={e => { if (!on) e.currentTarget.style.background = "transparent"; }}>
-        {on && <span style={{ position: "absolute", left: collapsed ? 6 : 0, top: "50%", transform: "translateY(-50%)", width: 3, height: 18, borderRadius: 3, background: "var(--gold-bright)" }} />}
-        <span style={{ display: "flex", color: on ? "var(--gold-bright)" : "inherit" }}>{Icn()}</span>
-        {!collapsed && <span className="grow trunc" style={{ fontSize: 13.4, fontWeight: on ? 600 : 450, textAlign: "left" }}>{label}</span>}
-        {!collapsed && badge && <span className="pill" style={{ background: "var(--gold-bright)", color: "#241C05", height: 19, padding: "0 7px" }}>{badge}</span>}
-      </button>
-    );
-  };
-  return (
-    <nav style={{ width: w, flex: "none", background: "var(--rail)", display: "flex", flexDirection: "column", padding: collapsed ? "16px 12px" : "16px 14px", transition: "width .22s", overflowX: "hidden", overflowY: "auto" }}>
-      <div className="row" style={{ gap: 11, padding: collapsed ? "0 0 18px" : "2px 4px 18px", justifyContent: collapsed ? "center" : "flex-start" }}>
-        {brand.isAgency && !brand.acting
-          ? <Logo size={collapsed ? 26 : 28} />
-          : <div style={{ width: collapsed ? 26 : 30, height: collapsed ? 26 : 30, borderRadius: 9, background: av.plate, boxShadow: "inset 0 0 0 2px " + av.ring, color: av.ink, display: "grid", placeItems: "center", fontSize: 11, fontWeight: 700, flex: "none" }}>{brand.initials}</div>}
-        {!collapsed && <div className="grow" style={{ minWidth: 0 }}>
-          <div className="trunc" style={{ color: "#FFFDF8", fontWeight: 600, fontSize: 14, letterSpacing: "-.02em" }}>{brand.name}</div>
-          <div className="row" style={{ gap: 6, marginTop: 2 }}>
-            <span style={{ color: "var(--rail-text)", fontSize: 9.5, letterSpacing: ".15em", textTransform: "uppercase", opacity: .8 }}>{sub ? "Sub-account" : "Agency workspace"}</span>
-            {brand.acting && <span style={{ width: 7, height: 7, borderRadius: 2, background: brand.color }} />}
-          </div>
-        </div>}
-      </div>
-
-      {NAV_MAIN.map(Item)}
-      <div style={{ height: 1, background: "var(--rail-line)", margin: "14px 4px" }} />
-      {!collapsed && <div style={{ color: "var(--rail-text)", fontSize: 10, letterSpacing: ".15em", textTransform: "uppercase", padding: "0 12px 8px", opacity: .7 }}>Platform</div>}
-      {NAV_PLATFORM.map(Item)}
-
-      <div style={{ marginTop: "auto", paddingTop: 14, flex: "none" }}>
-        {!collapsed && <div style={{ border: "1px solid var(--rail-line)", borderRadius: 11, padding: "12px 13px", marginBottom: 10, background: "var(--rail-2)" }}>
-          <div className="row" style={{ gap: 7, color: "var(--gold-bright)", fontSize: 12.5, fontWeight: 600 }}><Ic.bolt size={13} />
-            <span className="trunc">{planLine}</span></div>
-          {bookLine && <div style={{ color: "var(--rail-text)", fontSize: 12, marginTop: 5, lineHeight: 1.5 }}>
-            {bookLine}</div>}
-        </div>}
-        <button onClick={() => setCollapsed(!collapsed)} className="row" style={{ width: "100%", justifyContent: "center", padding: 9, borderRadius: 10, color: "var(--rail-text)" }}>
-          <span style={{ display: "flex", transform: collapsed ? "" : "rotate(180deg)", transition: ".2s" }}><Ic.chev size={15} /></span></button>
-      </div>
-    </nav>
-  );
-};
 
 // ── TopBar ───────────────────────────────────────────────────────────────────
 // Identity/breadcrumb · account SWITCHER (agency only) · search · provider chip ·
@@ -342,7 +280,7 @@ const AgencyAppContent = ({ mode = "agency" }) => {
   // The adapters read ONLY session-scoped seams (agency_portfolio_metrics /
   // agency_list_my_subaccounts, gated by auth.uid()); they never touch a
   // client-supplied tenant_id and RAISE-safe for non-agency callers (§9/§51).
-  const { activeTenant, tenants, switchTenant, refresh: refreshTenants } = useTenantContext();
+  const { activeTenant, tenants, switchTenant, refresh: refreshTenants, isPlatformStaff } = useTenantContext();
   // §65 Option B2 — the caller's OWN agency/enterprise tenant, sourced independent of
   // `activeTenant` (which becomes the CHILD while acting). A caller's membership on
   // their own agency is never removed by entering a child (§37/§9), so this stays
@@ -731,7 +669,11 @@ const AgencyAppContent = ({ mode = "agency" }) => {
       accountType={accountContext.accountType}
       providedBy={!isAgency ? ownAgencyTenant?.name : null}
       userRole="admin"
-      accountControls={isAgency ? (
+      // A platform operator reaches this shell only as an audited act-as on a sub-account (the
+      // agency leg never mounts for them — AgencyEntry sends them to the console). Their way out
+      // is the audited exit, not "Back to {agency}": that link leads into a route that bounces
+      // operators and leaves the act-as open.
+      accountControls={!isAgency && isPlatformStaff ? <WorkspaceExitControl /> : isAgency ? (
         <button ref={switcherRef} type="button" onClick={() => setSwitcherOpen(v => !v)} aria-expanded={switcherOpen}>
           {acting ? `Sub-account: ${acting.name}` : "Switch account"}
         </button>

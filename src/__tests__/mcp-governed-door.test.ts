@@ -4,8 +4,8 @@
  * WHY IT IS DRIVEN FROM THE POLICY AND WHY THE COUNTS ARE STILL WRITTEN DOWN.
  * Every case below iterates `MCP_CAPABILITY_POLICY`, so adding a tool without a decision is
  * impossible to miss. That alone would be circular — a test that derives its expectations from the
- * thing under test agrees with anything — so the numbers that MATTER are pinned as literals: 118
- * tools, 51 reads, 67 mutations, 66 `approval_required`, exactly 1 `owner_only`. Emptying the
+ * thing under test agrees with anything — so the numbers that MATTER are pinned as literals: 117
+ * tools, 51 reads, 66 mutations, 65 `approval_required`, exactly 1 `owner_only`. Emptying the
  * policy, flipping an effect, or quietly reclassifying a send breaks an arithmetic assertion here
  * before it can reach production.
  *
@@ -88,13 +88,13 @@ const SENTINELS = Object.values(SENTINEL_ARGS) as string[];
 
 describe("the capability map is complete, and complete in both directions", () => {
   it("covers exactly the number of tools the door declares", () => {
-    expect(ENTRIES.length).toBe(118);
-    expect(MCP_TOOL_COUNT).toBe(118);
+    expect(ENTRIES.length).toBe(117);
+    expect(MCP_TOOL_COUNT).toBe(117);
   });
 
-  it("splits 51 reads / 67 mutations, as verified from the handler bodies", () => {
+  it("splits 51 reads / 66 mutations, as verified from the handler bodies", () => {
     expect(READS.length).toBe(51);
-    expect(MUTATIONS.length).toBe(67);
+    expect(MUTATIONS.length).toBe(66);
   });
 
   it("carries handler-backed evidence on every single row", () => {
@@ -140,18 +140,18 @@ describe("the capability map is complete, and complete in both directions", () =
   });
 });
 
-describe("the door's answer for all 118 tools", () => {
+describe("the door's answer for all 117 tools", () => {
   it("allows every verified read", () => {
     const refused = READS.filter(([tool]) => decide({ tool }).outcome.kind !== "allow");
     expect(refused.map(([t]) => t)).toEqual([]);
   });
 
-  it("refuses every verified mutation — 66 approval_required, exactly 1 owner_only", () => {
+  it("refuses every verified mutation — 65 approval_required, exactly 1 owner_only", () => {
     const codes = MUTATIONS.map(([tool]) => {
       const { outcome } = decide({ tool });
       return outcome.kind === "refuse" ? outcome.code : `ALLOWED:${tool}`;
     });
-    expect(codes.filter((c) => c === "approval_required").length).toBe(66);
+    expect(codes.filter((c) => c === "approval_required").length).toBe(65);
     expect(codes.filter((c) => c === "owner_only").length).toBe(1);
     expect(codes.filter((c) => c !== "approval_required" && c !== "owner_only")).toEqual([]);
   });
@@ -193,7 +193,7 @@ describe("the door's answer for all 118 tools", () => {
     const home = ENTRIES.filter(([, c]) => c.effect === "mutate" && c.paigeHome);
     const away = ENTRIES.filter(([, c]) => c.effect === "mutate" && !c.paigeHome);
     expect(home.length).toBe(11);
-    expect(away.length).toBe(56); // 55 approval_required + create_tenant, which is owner_only
+    expect(away.length).toBe(55); // 54 approval_required + create_tenant, which is owner_only
     for (const [tool] of home) {
       const { outcome } = decide({ tool });
       expect(outcome.kind === "refuse" && outcome.message, tool).toContain("Ask Paige to do it");
@@ -235,7 +235,7 @@ describe("named harm classes the owner asked to see refused, by name", () => {
     ["privacy", ["handle_data_subject_request"]],
     ["provider dispatch", ["delegate_to_subagent", "compose_email", "verify_business", "cancel_workflow_run"]],
     ["workspace switching", ["switch_into_subaccount", "exit_subaccount"]],
-    ["access and roles", ["assign_coach", "remove_coach_role", "create_team_invitation", "bulk_assign_clients_to_coach"]],
+    ["access and roles", ["assign_coach", "create_team_invitation", "bulk_assign_clients_to_coach"]],
     ["platform availability", ["suspend_tenant", "update_tenant_features", "broadcast_system_announcement", "update_tenant_branding"]],
   ];
 
@@ -269,7 +269,7 @@ describe("named harm classes the owner asked to see refused, by name", () => {
 });
 
 describe("a forged governance value in the model's own arguments is inert", () => {
-  it("changes no decision, for any of the 118 tools", () => {
+  it("changes no decision, for any of the 117 tools", () => {
     for (const [tool] of ENTRIES) {
       const clean = decide({ tool }).outcome;
       const forged = decide({ tool, args: FORGED_ARGS }).outcome;

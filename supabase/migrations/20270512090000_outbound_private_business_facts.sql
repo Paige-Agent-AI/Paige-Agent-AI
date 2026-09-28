@@ -75,9 +75,12 @@
 --             "Covent Garden", "Hertfordshire"). In a single-line address a line with no digit is
 --             a town when it follows the street line (the first line that starts with a number and
 --             names a road, so neither "1st Floor" nor "2 Rose Cottage" is it). With no street line,
---             it is a town when it is one of the last two of three or more lines that name a place
---             (a postcode counts), unless it is the road right after a numbered house. The first
---             line never is, and the stored city or region always is. Nor a line made only of
+--             but a numbered house or building ("2 Rose Cottage"), the lines after it are towns
+--             except the one right after it when that names a plain road ("Mill Lane", not "Earls
+--             Court"); with neither, a line is a town when it is one of the last two of three or
+--             more lines that name a place (a postcode counts). The first line never is, and the
+--             stored city or region always is. A numbered building is also looked for without its
+--             number. Nor a line made only of
 --             floor, suite or room words ("First Floor", "Suite 400", "Unit 3", "The Office"). Each
 --             names a place or a room, not this business, and refusing it would refuse every
 --             mention of it.
@@ -308,6 +311,13 @@ declare
   c_road_words constant text :=
     '(st|ave|rd|blvd|dr|ln|ct|pl|sq|ter|hwy|pkwy|cres|cl|cir|trl|gdns|gdn|gr|aly|str|way|row|walk|'
     || 'mews|loop|parade)';
+  -- Road words that rarely name a district: the line after a numbered house is a road only with
+  -- one of these ("Mill Lane" is; "Earls Court", "Covent Garden" and "Elk Grove" are not).
+  c_plain_road_words constant text :=
+    '(st|ave|rd|blvd|dr|ln|pl|sq|ter|hwy|pkwy|cres|cl|cir|trl|aly|str|way|row|walk|mews|loop|parade)';
+  -- Words that name a building, not a road or a district.
+  c_building_words constant text :=
+    '(cottage|house|farm|lodge|hall|manor|barn|mill|tower|plaza|bldg|estate)';
   -- Words that on their own name a floor or a room, not a place ("First Floor", "Suite 400",
   -- "The Office"). A named house ("The Grange") is not one of them.
   c_room_words constant text :=
@@ -505,18 +515,27 @@ begin
               or (v_kind <> 'postal'
                   and (v_kind <> 'single'
                        or (v_numbered_at > 0 and v_i < v_numbered_at)
-                       or (v_numbered_at = 0 and v_building_at > 0 and v_i = v_building_at + 1
-                           and v_norm ~ ('[[:alnum:]] ' || c_road_words || '\M'))
-                       or (v_numbered_at = 0 and (v_place_count < 3 or v_place_i <= v_place_count - 2)))
+                       or (v_numbered_at = 0 and v_building_at > 0
+                           and (v_i < v_building_at
+                                or (v_i = v_building_at + 1
+                                    and v_norm ~ ('[[:alnum:]] ' || c_plain_road_words || '\M'))))
+                       or (v_numbered_at = 0 and v_building_at = 0
+                           and (v_place_count < 3 or v_place_i <= v_place_count - 2)))
                   and v_norm ~ ('[[:alnum:]] ' || c_street_words || '\M'))) then
         v_cands := v_cands || v_norm;
       end if;
-      -- A line joined to the house number before it is also looked for on its own ("Rose Cottage").
+      -- A line joined to the house number before it is also looked for on its own when it names a
+      -- building or a road ("Rose Cottage", "Mill Lane"), and a numbered building without its
+      -- number ("2 Rose Cottage" as "Rose Cottage").
       if v_rest[v_i] is not null then
         v_cand := btrim(public.outbound_fact_street_text(v_rest[v_i]));
-        if v_cand ~ ('[[:alnum:]] ' || c_street_words || '\M') and not (v_cand = any(v_towns)) then
+        if v_cand ~ ('[[:alnum:]] (' || c_building_words || '|' || c_plain_road_words || ')\M')
+           and not (v_cand = any(v_towns)) then
           v_cands := v_cands || v_cand;
         end if;
+      end if;
+      if v_norm ~ ('^[0-9]+[a-z]? .*[[:alnum:]] ' || c_building_words || '\M') then
+        v_cands := v_cands || regexp_replace(v_norm, '^[0-9]+[a-z]? ', '');
       end if;
       -- A postcode, or a state and ZIP, inside the line.
       v_cands := v_cands || array(
@@ -562,31 +581,38 @@ begin
   v_text_alnum := regexp_replace(lower(v_scan), '[^[:alnum:]]', '', 'g');
   -- The confirmed number is the owner's to share however the draft writes it, so it is taken out
   -- of the draft before any other stored number is looked for. Only a whole written number is
-  -- taken out, and only when it is one of the confirmed number's forms. Stored with a country code
-  -- ("+44 20 7946 0555", "0044…", or eleven digits or more with no trunk 0), the code's length is
-  -- read from its first digits (E.164 codes are prefix-free), and the forms are the national number
-  -- with and without a trunk 0, each with and without the code, "+" or "00" ("020…", "20…",
-  -- "+44 20…", "+44 (0)20…"). Stored domestically ("020 7946 0131"), the forms are the number as
-  -- stored, less its trunk 0, and, when that is eight digits or more, behind any country code. A
+  -- taken out, and only when it is one of the confirmed number's forms. Stored with "+" or "00"
+  -- ("+44 20 7946 0555"), the code's length is read from its first digits (E.164 codes are
+  -- prefix-free), and the forms are the national number, with a trunk 0 where the country uses
+  -- one, each with and without the code, "+" or "00" ("020…", "20…", "+44 20…", "+44 (0)20…").
+  -- Stored without either ("020 7946 0131", "1 415 555 0132"), the forms are the number as
+  -- stored, less a trunk 0, and, when that is eight digits or more, behind any country code. A
   -- different number that merely ends in the same digits is never a whole form, so it is still
-  -- found. (Named limit: a number carrying all of a domestically confirmed number's national
-  -- digits under another country code is taken for it.)
+  -- found. (Named limits: a number carrying all of a number confirmed without "+" behind another
+  -- country code is taken for it; a number confirmed with its country code but no "+" is held
+  -- back in its domestic form.)
   for v_run in
     select m[1]
     from regexp_matches(v_licensed_phone, '([+]?[0-9](?:[ ().+/-]{0,4}[0-9])*)', 'g') as m
   loop
     v_digits := regexp_replace(v_run, '[^0-9]', '', 'g');
     continue when length(v_digits) < 7;
-    if v_run ~ '^[+]' or v_digits ~ '^00' or (v_digits !~ '^0' and length(v_digits) >= 11) then
+    if v_run ~ '^[+]' or v_digits ~ '^00' then
       v_digits := regexp_replace(v_digits, '^00', '');
       v_j := case when v_digits ~ '^[17]' then 1
                   when left(v_digits, 2) = any(c_two_digit_country_codes) then 2
                   else 3 end;
-      v_key := regexp_replace(substr(v_digits, v_j + 1), '^0', '');
-      continue when length(v_key) < 7;
       v_cc := left(v_digits, v_j);
-      v_licensed_numbers := v_licensed_numbers || v_key || ('0' || v_key) || (v_cc || v_key)
-        || (v_cc || '0' || v_key) || ('00' || v_cc || v_key) || ('00' || v_cc || '0' || v_key);
+      -- Italy dials its leading 0 from abroad too, so it is part of the national number there.
+      v_key := case when v_cc = '39' then substr(v_digits, v_j + 1)
+                    else regexp_replace(substr(v_digits, v_j + 1), '^0', '') end;
+      continue when length(v_key) < 7;
+      v_licensed_numbers := v_licensed_numbers || v_key || (v_cc || v_key) || ('00' || v_cc || v_key);
+      -- A trunk 0 where the country uses one (not +1, +7 or +39).
+      if v_cc not in ('1', '7', '39') then
+        v_licensed_numbers := v_licensed_numbers || ('0' || v_key) || (v_cc || '0' || v_key)
+          || ('00' || v_cc || '0' || v_key);
+      end if;
     else
       v_key := regexp_replace(v_digits, '^0', '');
       v_licensed_numbers := v_licensed_numbers || v_digits || v_key;
@@ -659,8 +685,9 @@ begin
   -- page. Every other stored copy is then looked for in the draft, and a match counts unless what
   -- it matched is exactly one of those keys. So a parent domain, a sibling subdomain, a stored
   -- subdomain of the confirmed host, a host inside the confirmed link's query string, and a
-  -- stored page under the confirmed host are all still found. The confirmed record itself is not
-  -- looked for: anything on its own host is the owner's.
+  -- stored page under the confirmed host are all still found. The confirmed record, and any other
+  -- stored copy of the same host or page, is not looked for: anything on its own host is the
+  -- owner's.
   v_hit := false;
   v_site_text := lower(v_scan);
   <<websites>>
@@ -694,8 +721,8 @@ begin
         v_path := coalesce(substring(regexp_replace(regexp_replace(v_token, '^[a-z][a-z0-9+.-]*://', ''),
                                                     '^[^/@]*@', '')
                                      from '^[^/?#]*/+([^?#]*)'), '');
-        v_seg1 := split_part(v_path, '/', 1);
-        v_seg2 := split_part(v_path, '/', 2);
+        v_seg1 := rtrim(split_part(v_path, '/', 1), '.');
+        v_seg2 := rtrim(split_part(v_path, '/', 2), '.');
         continue when v_seg1 = '';
         if v_seg1 = any(c_generic_segments) then
           continue when v_seg2 = '';
@@ -717,6 +744,8 @@ begin
         v_site_keys := v_site_keys || v_key;
         continue;
       end if;
+      -- A stored copy of the confirmed host or page is the confirmed value.
+      continue when v_key = any(v_site_keys);
       -- What each occurrence matched, without "www." and with its slashes single, must be exactly
       -- a confirmed key to pass.
       for v_cand in

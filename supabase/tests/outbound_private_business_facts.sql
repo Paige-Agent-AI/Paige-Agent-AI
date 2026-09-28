@@ -11,7 +11,7 @@
 -- spine's business_identity_readiness() resolves it, passes and nothing else does; that it reads
 -- only the tenant it is given and refuses an unknown one; and that nobody but the server may ask it.
 BEGIN;
-SELECT plan(219);
+SELECT plan(237);
 
 -- ── Grants ──────────────────────────────────────────────────────────────────────────────────
 SELECT ok(NOT has_function_privilege(r.rolname, f.fn, 'EXECUTE'),
@@ -215,6 +215,17 @@ INSERT INTO src VALUES
   (157,'private.address','Rose Cottage, Mill Lane, Springfield, 62704','We are on Mill Lane.',ARRAY['address'],'a road, with a ZIP line counted among the last two'),
   (158,'legal.registered_address','Bahnhofstrasse 10, 8001, Zurich','Meet at the Kongresshaus, 8001 Zurich.','{}','a four-digit postcode and its town'),
   (159,'legal.registered_address','12 Rose Cottage, Little Snoring, Norfolk','We serve Little Snoring.','{}','a village after a numbered house'),
+  (160,'brand.address','3, 5-7 Mill Lane, Leeds','Visit 7 Mill Lane.',ARRAY['address'],'one end of a street range after a unit number'),
+  (161,'private.address','2, Rose Cottage, Leeds','Visit Rose Cottage.',ARRAY['address'],'a named house without the number on the line before it'),
+  -- Districts after a numbered building, and a numbered house without its number (§39 round 6).
+  (162,'legal.registered_address','12 Mill House, Earls Court, London','Workshops in Earls Court.','{}','a district after a numbered building'),
+  (163,'private.address','10 Strand, Covent Garden, London','Meet in Covent Garden.','{}','a district after a numbered street with no road word'),
+  (164,'brand.address','5 Broadway, Covent Garden, London, WC2E 9DD','We love Covent Garden.','{}','a district two lines before the last, after a numbered street with no road word'),
+  (165,'legal.registered_address','3, Elk Grove, CA','Friends in Elk Grove.','{}','a town after a lone house number'),
+  (166,'private.address','2 Rose Cottage, The Green, Little Snoring, Norfolk','Visit Rose Cottage on The Green.',ARRAY['address'],'a numbered house, written without its number'),
+  (167,'legal.registered_address','12 Mill House, 3 Mill Lane, Leeds','Come to Mill House.',ARRAY['address'],'a numbered building before a numbered street, written without its number'),
+  (168,'private.address','Flat 2, 7 Holly Grove, Park Lane','Walk down Park Lane.','{}','a road named after the numbered street line'),
+  (169,'brand.address','The Coach House, 4 Rose Cottages, Little Snoring, Norfolk','Visit The Coach House.',ARRAY['address'],'a building named before a numbered house'),
   -- Addresses: suites, ranges, missing separators, street words and HTML.
   (45,'legal.registered_street','123 Main St., Suite 400','Come to 123 Main Street.',ARRAY['address'],'a street stored with its suite'),
   (46,'legal.registered_street','123 Main St #400','Come to 123 Main Street.',ARRAY['address'],'a street stored with "#400"'),
@@ -367,7 +378,7 @@ INSERT INTO lic VALUES
   ( 2,'+1 234 5678',NULL,'private.phone','(212) 345-6789','Call (212) 345-6789.',ARRAY['phone'],'a longer number holding the confirmed one''s digits in its middle'),
   ( 3,'+44 20 7946 0555',NULL,'private.phone','07946 055512','Text 07946 055512.',ARRAY['phone'],'a number starting with the confirmed one''s digits, less its area code'),
   ( 4,'0044 20 7946 0555',NULL,'private.phone','07946 055512','Text 07946 055512.',ARRAY['phone'],'the same, with the confirmed number stored after "00"'),
-  ( 5,'1 415 555 0132',NULL,NULL,NULL,'Call (415) 555-0132.','{}','a number confirmed with a country code and no "+", written domestically'),
+  ( 5,'1 415 555 0132',NULL,NULL,NULL,'Call (415) 555-0132.',ARRAY['phone'],'a number confirmed with a country code but no "+", written domestically (named limit: which digits are the code is not known)'),
   ( 6,'+44 20 7946 0555',NULL,NULL,NULL,'Call 020 7946 0555, 020 7946 0555.','{}','the confirmed number written twice in a row'),
   ( 7,NULL,'https://coaching.janedoe.example','brand.website','janedoe.example','See janedoe.example/diary.',ARRAY['website'],'a parent domain of the confirmed website'),
   ( 8,NULL,'https://coaching.janedoe.example','brand.website','janedoe.example','See private.janedoe.example.',ARRAY['website'],'a sibling subdomain of the confirmed website'),
@@ -381,7 +392,15 @@ INSERT INTO lic VALUES
   (16,'+1 212 555 0147',NULL,'private.phone','+852 2555 0147','Call 2555 0147.',ARRAY['phone'],'a number equal to the confirmed one''s last eight digits'),
   (17,'+852 2555 0147',NULL,NULL,NULL,'Call 2555 0147.','{}','a number confirmed with a three-digit country code, written domestically'),
   (18,'+7 495 123 4567',NULL,NULL,NULL,'Call (495) 123-4567.','{}','a number confirmed with a one-digit country code, written domestically'),
-  (19,NULL,'https://acme-coaching.example','brand.website','acme-coaching.example','Visit www.acme-coaching.example/book','{}','the confirmed website with "www.", stored again in the legacy brand');
+  (19,NULL,'https://acme-coaching.example','brand.website','acme-coaching.example','Visit www.acme-coaching.example/book','{}','the confirmed website with "www.", stored again in the legacy brand'),
+  (20,'020 7946 0555',NULL,NULL,NULL,'From abroad, dial +44, then 20 7946 0555.','{}','a number confirmed domestically, written without its trunk 0'),
+  (21,NULL,'https://acme-coaching.example','brand.website','acme-coaching.example','Shop at shop.acme-coaching.example','{}','a subdomain of the confirmed website, with a legacy copy of it stored'),
+  (22,NULL,'https://calendly.com/acme.','brand.website','calendly.com/acme','Book at calendly.com/acme','{}','a confirmed page stored with a trailing dot'),
+  (23,NULL,'https://coaching.janedoe.example','brand.website','janedoe.example','Book at www.coaching.janedoe.example','{}','the confirmed subdomain with "www.", beside a stored parent domain'),
+  (24,'+1 212 555 0147',NULL,'private.phone','021 2555 0147','Call 021 2555 0147.',ARRAY['phone'],'a number that is a +1 number with a 0 in front'),
+  (25,'+39 06 1234 5678',NULL,'private.phone','612 345 678','Call 612 345 678.',ARRAY['phone'],'an Italian number less its 0, which Italy keeps'),
+  (26,'+39 06 1234 5678',NULL,NULL,NULL,'Chiama lo 06 1234 5678.','{}','an Italian number confirmed internationally, written domestically'),
+  (27,'139 1234 5678',NULL,'private.phone','(391) 234-5678','Call (391) 234-5678.',ARRAY['phone'],'a number equal to a domestic mobile''s digits after its first');
 DO $lic$
 DECLARE
   r record;

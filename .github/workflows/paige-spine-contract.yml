@@ -292,6 +292,11 @@ jobs:
       # repeated enter or exit (a second tab, a second press) writes no second receipt (#1547).
       - run: supabase test db supabase/tests/operator_act_as_one_at_a_time.sql
         if: ${{ !cancelled() }}
+      # A member's private Paige conversation is hidden from an operator by default, openable on
+      # purpose through the audited operator_open_member_thread(), and recorded (owner ruling
+      # 2026-09-28).
+      - run: supabase test db supabase/tests/member_threads_private_by_default.sql
+        if: ${{ !cancelled() }}
       - run: psql -v ON_ERROR_STOP=1 -f scripts/sql/social-foundation-legacy-shape-proof.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
       - run: psql -v ON_ERROR_STOP=1 -f scripts/sql/social-foundation-tenant-shaped-proof.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
       # Trusted task↔thread link — RLS SET-ROLE proof that the edge's server-side validation read

@@ -72,9 +72,14 @@ export function usePaigeThreads(opts: { callerUserId: string | null; tenantId: s
       // never undefined here — no tenant context ⇒ query disabled ⇒ no threads.
       // Platform mode (#130): list the operator's NULL-tenant lens='platform' threads
       // instead — RLS (is_platform_owner()) keeps these visible only to the operator.
+      // Only the viewer's own conversations (owner ruling 2026-09-28). A member's private
+      // conversation must never open unbidden or read as the viewer's own; an operator reaches one
+      // only on purpose, through the audited operator_open_member_thread(). The server enforces
+      // this too — the list does not lean on a policy alone.
       let q = db
         .from("paige_chat_threads")
-        .select("id,title,last_message_at,message_count,is_archived,updated_at");
+        .select("id,title,last_message_at,message_count,is_archived,updated_at")
+        .eq("caller_user_id", callerUserId);
       q = platform
         ? q.is("tenant_id", null).eq("lens", "platform")
         : q.eq("tenant_id", tenantId).eq("lens", "coach");

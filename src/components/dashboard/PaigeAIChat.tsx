@@ -37,6 +37,7 @@ import { usePaigeThreads, type PaigeThread } from "@/hooks/usePaigeThreads";
 import { useScopedUserId } from "@/hooks/useScopedUserId";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { ThreadRail } from "@/components/dashboard/paige/ThreadRail";
+import { MemberConversations } from "@/components/dashboard/paige/MemberConversations";
 import { PanelLeft } from "lucide-react";
 import { useChatDocumentUpload, type AttachedDocument, type AttachedDocKind } from "@/hooks/useChatDocumentUpload";
 import { DocumentAttachmentChip } from "@/components/chat/DocumentAttachmentChip";
@@ -270,6 +271,10 @@ export type ChatRailApi = {
   onDelete: (id: string) => void;
   mobileOpen: boolean;
   onMobileOpenChange: (open: boolean) => void;
+  /** An operator acting as the workspace: the deliberate, recorded door to members' private
+   *  conversations (owner ruling 2026-09-28). Null for everyone else. A rail places it below its
+   *  own list; it is never mixed into the viewer's own conversations. */
+  memberConversations: React.ReactNode;
 };
 
 /**
@@ -393,7 +398,7 @@ const PaigeAIChatInner = ({
   } = useChatDocumentUpload();
   // ── Multi-chat history (#94) — owner "Your Paige" only (enableHistory). ──
   const scopedUserId = useScopedUserId();
-  const { activeTenantId, activeTenant } = useTenantContext();
+  const { activeTenantId, activeTenant, isPlatformStaff } = useTenantContext();
   const threadsApi = usePaigeThreads({ callerUserId: scopedUserId, tenantId: activeTenantId, platform });
   // Controlled/uncontrolled selection. `controlledThreadId === undefined` ⇒ this
   // component owns it, which is every pre-existing mount (behavior unchanged).
@@ -1925,6 +1930,9 @@ const PaigeAIChatInner = ({
     },
     mobileOpen: mobileRailOpen,
     onMobileOpenChange: setMobileRailOpen,
+    memberConversations: isPlatformStaff && activeTenantId && !platform
+      ? <MemberConversations scopeKey={activeTenantId} />
+      : null,
   };
 
   return (
@@ -1949,6 +1957,7 @@ const PaigeAIChatInner = ({
                 onDelete={railApi.onDelete}
                 mobileOpen={railApi.mobileOpen}
                 onMobileOpenChange={railApi.onMobileOpenChange}
+                footer={railApi.memberConversations}
               />
             ))}
         <div

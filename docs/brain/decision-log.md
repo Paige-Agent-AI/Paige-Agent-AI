@@ -7,24 +7,37 @@
     - the private Setup brief
     - the legacy copies in `tenants.brand`
     - a proposal PAIGE has staged but the owner has not applied
-  - **How each is found:** the text is read as HTML e-mail may carry it (entities, URL escapes, Unicode spaces and dashes, tags).
-    - An address is found by its street lines. Words are normalised on both sides (street/st, fifth/5th, saint/st, accents, apostrophes), with suites, ranges and single lines without separators handled.
-    - A phone is found by its last seven digits, which every written form of a number shares, domestic or international, with or without its area code.
-    - A website is found by its host and any subdomain. On a shared booking, social or link-page host, or Paige's own, it is found by the host plus its first path segment.
+  - **How each is found:** the text is read as HTML e-mail may carry it: entities, URL escapes, Unicode spaces, dashes and digits, zero-width and bidirectional marks, and tags.
+    - An address is found by its street lines. Words are normalised on both sides (street/st, fifth/5th, saint/st, P.O. Box, accents, apostrophes). A line's core is taken up to its first street or suite word, each end of a number range counts, and a postcode inside a line counts.
+    - A phone is found by any seven consecutive digits of a stored number. A stored value is split into numbers at letters, so opening hours, labels, extensions and a second number do not blur it. Every written form of a number carries seven of its digits in a row.
+    - A website is found by its host and any subdomain. On a shared platform (booking, social, map, link-page, or Paige's own host), a page is found by the platform's host plus its first path segment, or two where the first is generic, as in `linkedin.com/in/<name>`. A tenant's own subdomain of a platform is the tenant's host.
   - **Deliberately not matched:**
-    - a city or district on its own
+    - a town, district or region on its own: never the last two lines of a single-line address, never the stored city or region
+    - a line made only of floor or suite words, or a bare "the <word>"
     - a fragment of the number
     - the business's e-mail address
     - a longer domain
-    - another tenant's page on a shared host
-    - a number written in words, or a punycode host
-  - **Owner-put:** a value that also appears in what the owner typed that turn is exempt, per value. This is interim rule (a), the owner's own words only, until the owner answers (a)/(b).
-  - **Authority (§59):** service_role only. The body refuses every other caller and an unknown tenant.
+    - another page on a shared platform
+  - **Named limits:** a number written in words, a punycode host, "Str." against "Straße".
+  - **Owner-put:** a value that also appears in what the owner typed that turn is exempt, per value, and for a phone per seven-digit run. A number the owner typed in one form and the draft carries in another is held back. This is interim rule (a), the owner's own words only, until the owner answers (a)/(b).
+  - **Authority (§59):**
+    - service_role only; the body refuses every other caller, an unknown tenant, and more than 256 KB of text
+    - all five functions search `pg_catalog` first and `pg_temp` last
   - **The probe:** `solo_setup_persistence_rollback_probe.sql` is rewritten, not deleted, per the owner's ruling. It now fails ("customer-bound draft") if the check does not find the address, phone and website that Setup just saved, once when only the private brief holds them and again after the save has also written them to the legal profile. That proves the check recognises what Setup saves, not that nothing reaches a customer: A1-1b's proof covers the exits. The persona-projection check stays as the client-seat half, because that projection is sent on every seat.
-  - **Proof:** `supabase/tests/outbound_private_business_facts.sql`, 114 checks. 81 of them store exactly one copy per tenant and try it in one way of writing, and 7 of those must pass. On a local stand-in, 62 of 62 reinstated defects each turn a check red, one per stored copy and one per rule. It is added to CI's database-contract job. The rewritten probe ran rollback-only on production.
-  - **Independent review (§39):** BLOCK on the first version. It missed number forms, HTML and Unicode separators, labels, suites and single-line addresses, a staged proposal, subdomains and shared hosts; it read an unknown tenant as "nothing stored"; and the records overclaimed. All fixed in this PR.
+  - **Proof:** `supabase/tests/outbound_private_business_facts.sql`, 153 checks, is added to CI's database-contract job.
+    - 116 of them store exactly one copy per tenant and try one way of writing it; 22 of those must pass.
+    - On a local stand-in of the tables it reads, 80 of 80 reinstated defects each turn a check red: one per stored copy, one per rule.
+    - The rewritten probe ran rollback-only on production.
+  - **Independent review (§39):** three rounds.
+    - Round 1: BLOCK. The first version missed number forms, HTML and Unicode separators, labels, suites, single lines without separators, a staged proposal, subdomains and shared hosts, and it read an unknown tenant as "nothing stored".
+    - Round 2: SHIP-WITH-FIXES, four majors:
+      - a tenant subdomain on a shared host went unchecked (a regression from round 1's fix)
+      - phones with trailing text or two numbers were missed
+      - PO box spellings were not equated
+      - towns whose names hold a street word were refused
+    - Everything from both rounds is fixed in this PR.
   - **Consequence of the ruling as written:** the website is already in PAIGE's shared persona context today. Once A1-1b wires the check, a customer draft carrying it is held back unless the owner typed it.
-  - **Next:** A1-1b wires the check into the chat's four customer-bound exits, Zapier and n8n free-form arguments, and the send in execute-approval, each failing closed on error. A1-2 gives the facts to PAIGE on the owner's seat only, and rewrites the Setup copy.
+  - **Next:** A1-1b wires the check into the chat's four customer-bound exits, Zapier and n8n free-form arguments, and the send in execute-approval, each failing closed on error, passing only the owner's own message as owner text. A1-2 gives the facts to PAIGE on the owner's seat only, and rewrites the Setup copy.
 - **R2: a draft for a customer that carries internal text is never filed or sent (2026-09-27).** R2 of the owner-approved Paige Chat plan: filing a draft that contains internal text is refused, and the refusal tells PAIGE to rewrite; as a backstop, a flagged draft already waiting for approval is refused where it runs, and the card says so honestly.
   - **What is read:** exactly what the send path delivers, named per tool in `_shared/outbound-draft-check.ts`: propose_action's subject and body (its summary is the owner's line in the queue), calendar_link_send's subject and message, action_file's title and summary for a kind the client's portal shows (`surface_to_client`), and for action_advance what `advance_action` delivers: drafted, when the kind requires approval, WHATEVER its executor, the draft's subject and body or message (the approval lane sends it as a message when it names a channel); executed, a portal kind's stored title and body, and a workflow kind's stored draft. A kind that cannot be looked up is read by every route. The check refuses only on a finding: an action whose stored row cannot be read is not read at executing (owner rule: a missed leak is preferable to a normal action withheld). An email's subject is read; a text has none. Ids, channels and recipients are the server's and are not read. A field sent as a list is read string by string, the way the send path would join it.
   - **The vocabulary** is R3's, from the same turn: the tool definitions, the vouched blocks, and every tool result PAIGE was sent. Results from the round in progress are not included, because she has not been sent them.

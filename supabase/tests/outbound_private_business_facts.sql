@@ -3,12 +3,13 @@
 -- exits will ask (A1-1b). This proves: what it finds in every stored copy, each copy on its own; the
 -- ways of writing each fact it must see through (domestic and international numbers, HTML e-mail,
 -- Unicode spaces and dashes, labels and extensions, suites, ranges, street-word variants, subdomains,
--- shared booking hosts); what it deliberately does not match (a city, a fragment of the number, the
--- business's e-mail address, a longer domain, another tenant's page on a shared host); that the
+-- shared booking hosts); what it deliberately does not match (a town or district, a floor or suite on
+-- its own, a fragment of the number, the digits of a note beside a number, the business's e-mail
+-- address, a longer domain, another page on a shared platform); that the
 -- owner's own words are exempt per value; that it reads only the tenant it is given and refuses an
 -- unknown one; and that nobody but the server may ask it.
 BEGIN;
-SELECT plan(114);
+SELECT plan(153);
 
 -- ── Grants ──────────────────────────────────────────────────────────────────────────────────
 SELECT ok(NOT has_function_privilege(r.rolname, f.fn, 'EXECUTE'),
@@ -62,12 +63,12 @@ CREATE TEMP TABLE src (n int, place text, stored text, draft text, expect text[]
 INSERT INTO src VALUES
   -- Every place a copy lives, each on its own.
   ( 1,'legal.registered_street','14 Quarry Hill','Meet at 14 Quarry Hill.',ARRAY['address'],'the legal profile''s street'),
-  ( 2,'legal.registered_street_secondary','Suite 400','Take the lift to Suite 400.',ARRAY['address'],'the legal profile''s second line'),
+  ( 2,'legal.registered_street_secondary','Building 7, Riverside Court','Come to Riverside Court.',ARRAY['address'],'the legal profile''s second line'),
   ( 3,'legal.registered_postal_code','SW1A 2AA','Post it to SW1A 2AA.',ARRAY['address'],'the legal profile''s postal code'),
   ( 4,'legal.registered_address','9 Mill Road, Cambridge','We are at 9 Mill Rd.',ARRAY['address'],'the legal profile''s single-line address'),
   ( 5,'private.address','31 Harbour Street, Whitby','Find us at 31 Harbour St.',ARRAY['address'],'the private brief''s address'),
   ( 6,'private.registeredStreet','5 Kiln Lane','Come to 5 Kiln Ln.',ARRAY['address'],'the private brief''s street'),
-  ( 7,'private.registeredStreetSecondary','Suite 210','Suite 210 is on the left.',ARRAY['address'],'the private brief''s second line'),
+  ( 7,'private.registeredStreetSecondary','Riverside House','Come to Riverside House.',ARRAY['address'],'the private brief''s second line'),
   ( 8,'private.registeredPostalCode','EH1 1YZ','Send it to EH1 1YZ.',ARRAY['address'],'the private brief''s postal code'),
   ( 9,'brand.address','66 Canal Walk, Leicester','Meet at 66 Canal Walk.',ARRAY['address'],'the legacy brand address'),
   (10,'brief.address','18 Chapel Row','See you at 18 Chapel Row.',ARRAY['address'],'the legacy business-brief address'),
@@ -110,6 +111,45 @@ INSERT INTO src VALUES
   (44,'legal.support_phone','020 7946 0044 or 07700 900044','Or call 020 7946 0044.',ARRAY['phone'],'the first of two stored numbers'),
   (80,'legal.support_phone','+32 471 12 34 56','Bel 0471/12 34 56.',ARRAY['phone'],'a Belgian mobile written with a slash'),
   (81,'legal.support_phone','+44 800 123 457','Call (0800) - 123 457.',ARRAY['phone'],'a number with a bracket and a spaced dash inside its last seven digits'),
+  -- Round 2: numbers with trailing text, and two numbers without a separator.
+  (82,'legal.support_phone','020 7946 0082 (9am-5pm)','Call 020 7946 0082.',ARRAY['phone'],'a stored number followed by opening hours'),
+  (83,'legal.support_phone','Mobile: 07700 900183 (WhatsApp 24h)','Text 07700 900183.',ARRAY['phone'],'a stored number between a label and a note'),
+  (84,'legal.support_phone','555-123-9084 ext. 204 (reception)','Call 555-123-9084.',ARRAY['phone'],'a stored number with an extension and a note'),
+  (85,'legal.support_phone','Office 020 7946 0085 Mobile 07700 900085','Call 020 7946 0085.',ARRAY['phone'],'the first of two labelled numbers'),
+  (86,'legal.support_phone','020 7946 0086 07700 900086','Call 020 7946 0086.',ARRAY['phone'],'the first of two numbers with no separator'),
+  (87,'legal.support_phone','+44 20 7946 0087',U&'Call 020\200E7946\200E0087.',ARRAY['phone'],'a number with bidirectional marks'),
+  (88,'legal.support_phone','+44 20 7946 0088',U&'Call \0660\0662\0660 \0667\0669\0664\0666 \0660\0660\0668\0668.',ARRAY['phone'],'a number in Arabic-Indic digits'),
+  -- Round 2: post-office boxes, street cores, postcodes inside a line, business parks.
+  (89,'legal.registered_street','P.O. Box 1234','Mail us at PO Box 1234.',ARRAY['address'],'"P.O. Box" written "PO Box"'),
+  (90,'legal.registered_street','PO Box 4321','Post Office Box 4321, please.',ARRAY['address'],'"PO Box" written "Post Office Box"'),
+  (91,'private.address','PO Box 5678, Springfield, IL 62701','Write to P.O. Box 5678.',ARRAY['address'],'a box in a single-line address'),
+  (92,'legal.registered_street','2 Mill Lane Cottages','Come to 2 Mill Lane.',ARRAY['address'],'the core of a street whose first street word is not its last'),
+  (93,'private.address','10 Test Way Leeds LS1 4AB','Post it to LS1 4AB.',ARRAY['address'],'a postcode inside a line with no separators'),
+  (94,'legal.registered_street_secondary','Riverside Business Park','Come to Riverside Business Park.',ARRAY['address'],'a business park with no number'),
+  -- Round 2: a tenant's own subdomain of a platform, and profile pages.
+  (95,'brief.website','https://acme.paigeagent.ai','Visit https://acme.paigeagent.ai today.',ARRAY['website'],'a tenant''s own subdomain of Paige''s host'),
+  (96,'brief.website','https://acme.paigeagent.ai/about','Visit acme.paigeagent.ai',ARRAY['website'],'a tenant''s own subdomain, stored with a path'),
+  (97,'brief.website','https://acme.medium.com','Read acme.medium.com',ARRAY['website'],'a tenant''s own subdomain of a publishing host'),
+  (98,'brief.website','https://www.linkedin.com/in/janedoe','Connect at linkedin.com/in/janedoe',ARRAY['website'],'a profile page under a generic path'),
+  (99,'brief.website','https://sites.google.com/view/acme-studio','See sites.google.com/view/acme-studio/home',ARRAY['website'],'a site under a generic path on a platform subdomain'),
+  (100,'brief.website','https://g.page/acme-coaching','Review us at g.page/acme-coaching',ARRAY['website'],'a page on a short-link host'),
+  (101,'brief.website','www.acme-studio.example (launching soon)','See acme-studio.example',ARRAY['website'],'a website stored with a note'),
+  -- Round 2: what must pass.
+  (102,'legal.registered_street_secondary','Suite 400','Take the lift to Suite 400.','{}','a suite number on its own'),
+  (103,'private.address','Unit 3, 48 Orchard Road, Leeds, LS1 4AB','Start Unit 3 of the programme.','{}','a unit number on its own'),
+  (104,'legal.registered_street','The Office, 5 Mill Lane','I will be out of the office next week.','{}','a bare "the office"'),
+  (105,'private.address','First Floor, 12 High Street, Leeds, LS1 4AB','The workshop is on the first floor.','{}','a floor on its own'),
+  (106,'legal.registered_address','123 Main St, Elk Grove, CA 95624','Serving families across Elk Grove.','{}','a town whose name holds a street word'),
+  (107,'private.address','1 Canada Square, Canary Wharf, London E14 5AB','Our event is in Canary Wharf.','{}','a district whose name holds a building word'),
+  (108,'private.address',E'4 Bridge Road\nWelwyn Garden City\nAL8 6AA','Welcome to Welwyn Garden City.','{}','a town on its own line'),
+  (109,'legal.registered_address','5 Main St, Cottage Grove, Washington County, OR 97424','Families across Cottage Grove love it.','{}','the stored city, wherever it sits'),
+  (110,'brief.website','https://www.linkedin.com/in/janedoe','See linkedin.com/in/someoneelse','{}','another profile on the same platform'),
+  (111,'brief.website','https://sites.google.com/view/acme-studio','Directions: https://maps.google.com/?q=cafe','{}','a map link on the same platform'),
+  (112,'legal.support_phone','Call 9am-5pm','We are open 9am-5pm.','{}','opening hours stored in the phone field'),
+  (113,'legal.registered_street','The Workshop, 5 Mill Lane','Come to the workshop on Tuesday.','{}','a bare "the <word>"'),
+  (114,'private.address','12 Harbour Street, St Ives, Cornwall, TR26 1AB','Surf lessons in St Ives.','{}','a town led by a street word'),
+  (115,'brief.website','https://app.paigeagent.ai/store/acme','Log in at https://app.paigeagent.ai/login','{}','the platform''s own subdomain, on another page'),
+  (116,'legal.support_phone','020 7946 0116 (9am-5pm)','Your order 6011695 has shipped.','{}','the digits of a note beside a number, which are not part of it'),
   -- Addresses: suites, ranges, missing separators, street words and HTML.
   (45,'legal.registered_street','123 Main St., Suite 400','Come to 123 Main Street.',ARRAY['address'],'a street stored with its suite'),
   (46,'legal.registered_street','123 Main St #400','Come to 123 Main Street.',ARRAY['address'],'a street stored with "#400"'),
@@ -178,6 +218,9 @@ BEGIN
   END LOOP;
 END
 $fixtures$;
+-- The stored city for row 109.
+UPDATE public.tenant_legal_profile SET registered_city = 'Cottage Grove'
+WHERE tenant_id = '0c1a0000-0000-4000-8000-0000000b0109';
 
 SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);
 
@@ -226,6 +269,16 @@ SELECT is(public.outbound_private_business_facts_found((SELECT a FROM t),
 SELECT is(public.outbound_private_business_facts_found((SELECT a FROM t),
     ARRAY['Everything is at https://www.proof-business.example'], ARRAY['include proof-business.example']),
   '{}'::text[], 'the website the owner typed passes, however it is written in the draft');
+SELECT is(public.outbound_private_business_facts_found('0c1a0000-0000-4000-8000-0000000b0043',
+    ARRAY['Call 1-800-FLOWERS today.'], ARRAY['Tell them to call 1-800-FLOWERS.']),
+  '{}'::text[], 'a letter number the owner typed passes');
+-- A number is exempt run by run: a form of it the owner did not type is held back.
+SELECT is(public.outbound_private_business_facts_found((SELECT a FROM t),
+    ARRAY['Call +44 20 7946 0001.'], ARRAY['Give them 020 7946 0001.']),
+  ARRAY['phone'], 'a number the owner typed domestically is held back when the draft writes it internationally');
+SELECT is(public.outbound_private_business_facts_found('0c1a0000-0000-4000-8000-0000000b0086',
+    ARRAY['Call 020 7946 0086.'], ARRAY['Give them 07700 900086.']),
+  ARRAY['phone'], 'typing the second of two stored numbers does not license the first');
 
 -- ── Only the tenant it is given ─────────────────────────────────────────────────────────────
 SELECT is(public.outbound_private_business_facts_found((SELECT a FROM t),
@@ -245,6 +298,8 @@ SELECT throws_ok($$SELECT public.outbound_private_business_facts_found(NULL, ARR
   '22023', 'OUTBOUND_FACTS_TENANT_REQUIRED', 'a missing tenant is refused, never read as "nothing stored"');
 SELECT throws_ok($$SELECT public.outbound_private_business_facts_found('0c1a0000-0000-4000-8000-00000000ffff', ARRAY['221B Baker Street'])$$,
   '22023', 'OUTBOUND_FACTS_TENANT_UNKNOWN', 'an unknown tenant is refused, never read as "nothing stored"');
+SELECT throws_ok($$SELECT public.outbound_private_business_facts_found('0c1a0000-0000-4000-8000-00000000a001', ARRAY[repeat('a', 262145)])$$,
+  '22023', 'OUTBOUND_FACTS_TEXT_TOO_LONG', 'more customer text than the check reads is refused, never passed');
 
 -- ── Nobody but the server may ask ───────────────────────────────────────────────────────────
 SELECT set_config('request.jwt.claims',

@@ -76,14 +76,19 @@
 --             a town when it follows the street line (the first line that starts with a number and
 --             names a road, so neither "1st Floor" nor "2 Rose Cottage" is it). With no street line,
 --             but a numbered house or building ("2 Rose Cottage"), the lines after it are towns
---             except the one right after it when that names a plain road ("Mill Lane", not "Earls
---             Court"); with neither, a line is a town when it is one of the last two of three or
---             more lines that name a place (a postcode counts). The first line never is, and the
---             stored city or region always is. A numbered building is also looked for without its
---             number. Nor a line made only of
+--             except the one right after it when that names a road ("Mill Lane", "Holly Grove");
+--             with neither, a line is a town when it is one of the last two of three or more lines
+--             that name a place (a postcode counts). The first line never is, and the stored city or
+--             region always is. A numbered building is also looked for without its number. Nor a
+--             line made only of
 --             floor, suite or room words ("First Floor", "Suite 400", "Unit 3", "The Office"). Each
 --             names a place or a room, not this business, and refusing it would refuse every
 --             mention of it.
+--             ALSO HELD BACK, named costs of reading wide: a district named like a road right after
+--             a numbered building ("12 Mill House, Earls Court"); a phrase that is a numbered
+--             building's name ("the coach house").
+--             NOT LOOKED FOR: a line before the street line with no street or building word ("The
+--             Old Rectory"), since it is as often the business's own name.
 --   phone   — By any seven consecutive digits of a stored number. A stored value is split into
 --             numbers at letters (so opening hours, labels, an extension and a second number do not
 --             blur it), and every written form of a number, international or domestic, with or
@@ -308,13 +313,17 @@ declare
   c_two_digit_country_codes constant text[] := array['20','27','30','31','32','33','34','36','39','40',
     '41','43','44','45','46','47','48','49','51','52','53','54','55','56','57','58','60','61','62',
     '63','64','65','66','81','82','84','86','90','91','92','93','94','95','98'];
+  -- Country codes whose numbers are dialled at home with a trunk 0. A country not listed gets no
+  -- trunk-0 form, so its number written with one is held back rather than a different number
+  -- taken for it.
+  c_trunk_zero_country_codes constant text[] := array['20','27','31','32','33','40','41','43','44',
+    '46','49','51','53','54','58','60','61','62','63','64','66','81','82','84','86','90','91','92',
+    '93','94','95','98','212','213','233','234','254','255','256','260','263','353','355','358',
+    '359','380','381','382','385','386','387','389','880','886','961','962','963','964','966','971',
+    '972','977'];
   c_road_words constant text :=
     '(st|ave|rd|blvd|dr|ln|ct|pl|sq|ter|hwy|pkwy|cres|cl|cir|trl|gdns|gdn|gr|aly|str|way|row|walk|'
     || 'mews|loop|parade)';
-  -- Road words that rarely name a district: the line after a numbered house is a road only with
-  -- one of these ("Mill Lane" is; "Earls Court", "Covent Garden" and "Elk Grove" are not).
-  c_plain_road_words constant text :=
-    '(st|ave|rd|blvd|dr|ln|pl|sq|ter|hwy|pkwy|cres|cl|cir|trl|aly|str|way|row|walk|mews|loop|parade)';
   -- Words that name a building, not a road or a district.
   c_building_words constant text :=
     '(cottage|house|farm|lodge|hall|manor|barn|mill|tower|plaza|bldg|estate)';
@@ -518,7 +527,7 @@ begin
                        or (v_numbered_at = 0 and v_building_at > 0
                            and (v_i < v_building_at
                                 or (v_i = v_building_at + 1
-                                    and v_norm ~ ('[[:alnum:]] ' || c_plain_road_words || '\M'))))
+                                    and v_norm ~ ('[[:alnum:]] ' || c_road_words || '\M'))))
                        or (v_numbered_at = 0 and v_building_at = 0
                            and (v_place_count < 3 or v_place_i <= v_place_count - 2)))
                   and v_norm ~ ('[[:alnum:]] ' || c_street_words || '\M'))) then
@@ -529,7 +538,7 @@ begin
       -- number ("2 Rose Cottage" as "Rose Cottage").
       if v_rest[v_i] is not null then
         v_cand := btrim(public.outbound_fact_street_text(v_rest[v_i]));
-        if v_cand ~ ('[[:alnum:]] (' || c_building_words || '|' || c_plain_road_words || ')\M')
+        if v_cand ~ ('[[:alnum:]] (' || c_building_words || '|' || c_road_words || ')\M')
            and not (v_cand = any(v_towns)) then
           v_cands := v_cands || v_cand;
         end if;
@@ -588,9 +597,10 @@ begin
   -- Stored without either ("020 7946 0131", "1 415 555 0132"), the forms are the number as
   -- stored, less a trunk 0, and, when that is eight digits or more, behind any country code. A
   -- different number that merely ends in the same digits is never a whole form, so it is still
-  -- found. (Named limits: a number carrying all of a number confirmed without "+" behind another
-  -- country code is taken for it; a number confirmed with its country code but no "+" is held
-  -- back in its domestic form.)
+  -- found. (Named limits: a number confirmed with the code of a country not on the trunk-0 list
+  -- is held back when written with a 0; a number carrying all of a number confirmed without "+"
+  -- behind another country code is taken for it; a number confirmed with its country code but no
+  -- "+" is held back in its domestic form.)
   for v_run in
     select m[1]
     from regexp_matches(v_licensed_phone, '([+]?[0-9](?:[ ().+/-]{0,4}[0-9])*)', 'g') as m
@@ -603,13 +613,16 @@ begin
                   when left(v_digits, 2) = any(c_two_digit_country_codes) then 2
                   else 3 end;
       v_cc := left(v_digits, v_j);
-      -- Italy dials its leading 0 from abroad too, so it is part of the national number there.
-      v_key := case when v_cc = '39' then substr(v_digits, v_j + 1)
-                    else regexp_replace(substr(v_digits, v_j + 1), '^0', '') end;
+      -- A leading 0 after the code is a trunk 0 only where the country uses one (Italy keeps its
+      -- 0 from abroad too, so there it is part of the national number).
+      v_key := case when v_cc = any(c_trunk_zero_country_codes)
+                    then regexp_replace(substr(v_digits, v_j + 1), '^0', '')
+                    else substr(v_digits, v_j + 1) end;
       continue when length(v_key) < 7;
       v_licensed_numbers := v_licensed_numbers || v_key || (v_cc || v_key) || ('00' || v_cc || v_key);
-      -- A trunk 0 where the country uses one (not +1, +7 or +39).
-      if v_cc not in ('1', '7', '39') then
+      -- A trunk 0 only where the country is known to use one; elsewhere a "0" in front would
+      -- be a different number ("+34 612 345 678" is not "0612 345 678").
+      if v_cc = any(c_trunk_zero_country_codes) then
         v_licensed_numbers := v_licensed_numbers || ('0' || v_key) || (v_cc || '0' || v_key)
           || ('00' || v_cc || '0' || v_key);
       end if;
@@ -686,7 +699,7 @@ begin
   -- it matched is exactly one of those keys. So a parent domain, a sibling subdomain, a stored
   -- subdomain of the confirmed host, a host inside the confirmed link's query string, and a
   -- stored page under the confirmed host are all still found. The confirmed record, and any other
-  -- stored copy of the same host or page, is not looked for: anything on its own host is the
+  -- stored copy of the same host or page, is skipped by its key: anything on its own host is the
   -- owner's.
   v_hit := false;
   v_site_text := lower(v_scan);
@@ -694,7 +707,7 @@ begin
   for v_source, v_mode in
     select x.value, x.mode
     from (values (v_licensed_site, 'key', 0), (v_brief ->> 'website', 'find', 1),
-                 (case when v_licensed_site = '' then v_legal.website_url end, 'find', 2),
+                 (v_legal.website_url, 'find', 2),
                  (v_brand ->> 'website', 'find', 3), (v_patch ->> 'website', 'find', 4))
          as x(value, mode, ord)
     where x.value is not null and btrim(x.value) <> ''

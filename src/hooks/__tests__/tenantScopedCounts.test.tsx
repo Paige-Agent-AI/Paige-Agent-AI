@@ -11,6 +11,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 const h = vi.hoisted(() => ({
   activeTenantId: null as string | null,
   filters: [] as Array<{ table: string; column: string; value: unknown }>,
+  // When set, each knowledge read waits here until the test resolves it, so replies can be
+  // made to arrive out of order.
+  held: null as null | Array<{ tenant: unknown; resolve: (rows: unknown[]) => void }>,
 }));
 
 vi.mock("@/hooks/useTenantContext", () => ({
@@ -22,11 +25,20 @@ vi.mock("@/integrations/supabase/client", () => {
     const result = { data: [], error: null };
     const chain: Record<string, unknown> = {};
     for (const method of ["select", "order", "in", "limit"]) chain[method] = () => chain;
+    let tenant: unknown = null;
     chain.eq = (column: string, value: unknown) => {
       h.filters.push({ table, column, value });
+      if (column === "tenant_id") tenant = value;
       return chain;
     };
-    chain.then = (resolve: (value: typeof result) => unknown) => Promise.resolve(result).then(resolve);
+    chain.then = (resolve: (value: typeof result) => unknown) => {
+      if (h.held && table === "tenant_knowledge_docs") {
+        const held = h.held;
+        return new Promise<unknown[]>((done) => held.push({ tenant, resolve: done }))
+          .then((rows) => resolve({ data: rows as never[], error: null }));
+      }
+      return Promise.resolve(result).then(resolve);
+    };
     return chain;
   };
   return { supabase: { from: (table: string) => builder(table) } };
@@ -40,6 +52,10 @@ import { usePaigeDeptStatus } from "../usePaigeDeptStatus";
 function KnowledgeProbe() {
   useSoloKnowledge();
   return null;
+}
+function KnowledgeTitles() {
+  const k = useSoloKnowledge();
+  return <output>{k.docs.map((d) => d.title).join(",")}</output>;
 }
 function DeptProbe() {
   usePaigeDeptStatus();
@@ -61,6 +77,7 @@ const tenantFilters = (table: string) =>
 afterEach(() => {
   h.filters.length = 0;
   h.activeTenantId = null;
+  h.held = null;
 });
 
 describe("reads that RLS alone would widen", () => {
@@ -86,5 +103,25 @@ describe("reads that RLS alone would widen", () => {
     expect(tenantFilters("paige_actions")).toEqual([]);
     a.unmount();
     b.unmount();
+  });
+
+  // Codex review of 96eb602a: a workspace switch starts a second read; the first must not land late.
+  it("keeps the current workspace's documents when the previous workspace's reply arrives late", async () => {
+    h.held = [];
+    h.activeTenantId = "tenant-a";
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    await act(async () => { root.render(<KnowledgeTitles />); });
+    h.activeTenantId = "tenant-b";
+    await act(async () => { root.render(<KnowledgeTitles />); });
+    const [forA, forB] = h.held;
+    expect(forA.tenant).toBe("tenant-a");
+    expect(forB.tenant).toBe("tenant-b");
+    const doc = (id: string, title: string) => ({ id, title, created_at: "2026-09-28T00:00:00Z" });
+    await act(async () => { forB.resolve([doc("b1", "B doc")]); await Promise.resolve(); });
+    await act(async () => { forA.resolve([doc("a1", "A doc")]); await Promise.resolve(); });
+    expect(host.querySelector("output")?.textContent).toBe("B doc");
+    root.unmount();
   });
 });

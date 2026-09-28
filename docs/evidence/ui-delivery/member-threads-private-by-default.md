@@ -1,0 +1,62 @@
+# UI delivery evidence: a member's PAIGE conversation is private by default, opened only on purpose
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: flow-by-flow v2.0.1 read for this milestone; flows are (1) an operator acting as a workspace opens PAIGE and sees only their own conversations, (2) the same operator opens a member's conversation on purpose — expand, choose, confirm, read, close — and it is recorded, (3) a member's own conversations are unchanged
+PAIGE_UI_DESIGN: PASS: .agents/skills/paige-ui-design SKILL.md and its routed references read; Impeccable SKILL.md, reference/operate.md and reference/craft-floor.md read before the UI edit; impeccable context run for the rail (no PRODUCT.md, incumbent chat panel is the authority, extension not redesign); impeccable detect clean on MemberConversations.tsx
+MATERIAL_FLOW_CHANGE: YES: a new, deliberate path to a member's conversation (a section, a confirmation, a read-only view and its exits) and the removal of the unbidden one
+FLOW_PROTOTYPE: PASS: rendered frames of the real component at both rail widths in both themes (collapsed, expanded, confirm, read-only view), sent to the owner for approval; this PR is held unmerged until the owner approves them (coordinator standing rule: owner sees frames first)
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: audience is a platform operator (today super_admin) acting as a workspace to support it; primary action is helping with something PAIGE said to a member, by reading that member's conversation on purpose
+VISUAL_DIRECTION: PASS: Operate mode, restrained; extends the existing rail vocabulary (row, muted meta line, hairline divider, lucide icons); a lock glyph marks other people's conversations; no gold (the open is sensitive, not a celebration); the conversation opens in its own dialog named as the member's so it can never read as the viewer's own transcript
+AUTOMATED_EVIDENCE: PASS: supabase/tests/member_threads_private_by_default.sql 24/24, its hidden-by-default, cross-workspace, operating-memory and delete cases failing on the current policies; src/hooks/__tests__/usePaigeThreads.ownThreads.test.tsx two cases fail before the caller filter; src/components/dashboard/paige/MemberConversations.test.tsx 5 cases (refused list renders nothing, collapsed by default and no titles, confirm before open and Cancel opens nothing, open shows a read-only view named as the member's, a refused open shows nothing); components/solo/hooks 3002 passed; existing chat-table proofs (business_mission_foundation, paige_live_runtime_claim, paige_live_session_transition, secure_browser_control_plane_security, title_role_read_nowhere; source_thread_link_scope and paige_durable_work_envelope via psql) pass
+STATIC_EVIDENCE: PASS: ci:tsc 12/12; eslint clean on the changed files; impeccable detect clean; lint:definer-fns, lint:migration-versions (1109, none reused), lint:title-authority R0–R7 clean; lint:gold fails only on BusinessCreditDashboard.tsx:271, which main fails identically and this change does not touch
+RENDERED_EVIDENCE: PASS: local harness render of the real MemberConversations with a fixed-row client (not tenant data) at 208px and 288px, light and dark — frames light-208-1-collapsed 0857453c90788ec8, light-208-2-expanded a46af9df60a0e93d, light-288-1-collapsed 9aca4170a306e30f, light-288-2-expanded ab99774a9e2031df, light-3-confirm 3ac41646a4c15694, light-4-viewer 3996438e53870b2f, dark-208-1-collapsed 61a5dd8a9d5f4f94, dark-208-2-expanded 552329490e93ae1f, dark-288-1-collapsed ffd1dd4be2e5b0b6, dark-288-2-expanded 3a1f9a481ebb4c27, dark-3-confirm 98dd5a504b6d985b, dark-4-viewer 25b82105672c73cc (sha256 prefixes); no page errors; helper text rgb(112,101,129) on white in light and rgb(166,155,181) on rgb(19,12,29) in dark; the first render truncated the heading at 208px, fixed to wrap
+BEHAVIORAL_EVIDENCE: PASS: in the real browser harness, focus returns to the member's row after Escape, after Close and after a cancelled confirm, in both themes (it went to the page body before the fix); the server behaviour is proven in pgTAP against the real functions and policies
+AUTHENTICATED_RUNTIME: UNVERIFIED: requires a human super_admin session acting as a workspace on production after approval and deploy
+KEYBOARD_FOCUS: PASS: every control is a real button; the section toggle carries aria-expanded; both dialogs trap focus and return it to the row on every exit (browser-measured)
+ZOOM_REFLOW: UNVERIFIED: the heading wraps at 208px; 200% zoom was not rendered
+REDUCED_MOTION: PASS: the only motion is the disclosure chevron's 200ms rotation, removed under motion-reduce; the dialogs use the existing primitives' own motion
+STATE_COVERAGE: PASS: not an operator or capability withheld → no section; loading → no section until the list answers; none → no section; list error → a one-line Retry; collapsed default; expanded list; confirm; opening (buttons disabled, "Opening…"); opened read-only view; empty conversation; refused open (no longer acting / no longer available / other failure) → a toast and nothing shown; workspace switch → the section resets and re-reads
+TRUTHFUL_STATE_LABELS: PASS: the list says who and when, never a title quoted from the conversation; the view says it is read-only and that the open was recorded, which the server did before returning it
+SOLO_UI: YES: src/solo/SoloPaigeWorkspace.tsx (the Solo history rail places the member section below the viewer's own list, desktop rail and <lg modal)
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: rail-level harness frames only (the member section lives in the Solo rail, a fixed 208px column at every desktop viewport, and in its <lg modal); the full Solo shell at this viewport was not rendered with an operator act-as
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: rail-level harness frames only (the member section lives in the Solo rail, a fixed 208px column at every desktop viewport, and in its <lg modal); the full Solo shell at this viewport was not rendered with an operator act-as
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: rail-level harness frames only (the member section lives in the Solo rail, a fixed 208px column at every desktop viewport, and in its <lg modal); the full Solo shell at this viewport was not rendered with an operator act-as
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: rail-level harness frames only (the member section lives in the Solo rail, a fixed 208px column at every desktop viewport, and in its <lg modal); the full Solo shell at this viewport was not rendered with an operator act-as
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: rail-level harness frames only (the member section lives in the Solo rail, a fixed 208px column at every desktop viewport, and in its <lg modal); the full Solo shell at this viewport was not rendered with an operator act-as
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: rail-level harness frames only (the member section lives in the Solo rail, a fixed 208px column at every desktop viewport, and in its <lg modal); the full Solo shell at this viewport was not rendered with an operator act-as
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: rail-level harness frames only (the member section lives in the Solo rail, a fixed 208px column at every desktop viewport, and in its <lg modal); the full Solo shell at this viewport was not rendered with an operator act-as
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: rail-level harness frames only (the member section lives in the Solo rail, a fixed 208px column at every desktop viewport, and in its <lg modal); the full Solo shell at this viewport was not rendered with an operator act-as
+UNVERIFIED: the full Solo shell at the four viewports with an operator act-as; 200% zoom; a live super_admin session. UNAVAILABLE by design today: the business (sub-account) shell's PAIGE panel draws no conversation history for anyone, so it carries no member section; giving that panel a history rail is a separate design decision put to the owner
+
+OWNER_INTENT: owner ruling 2026-09-28: "hidden by default, openable on purpose, and audited when opened … The panel shows the operator's own threads only … Reaching a member's thread stays possible, as a deliberate act … Every such access is recorded … Do not ship the client filter alone … Both halves land together"
+MUST_NOT_HAPPEN: a member's conversation opening unbidden or reading as the viewer's own; a read of someone else's private conversation that leaves no record; the client filter shipping without the server permission; Paige drawing on a member's private conversation for an operator
+MUST_PRESERVE: every member's access to their own conversations; the super_admin's own threads and platform-lens threads; contact-bound conversation access for workspace admins; every SECURITY DEFINER writer's own owner checks
+ACCEPTANCE_CRITERIA: acting as a workspace, an operator's PAIGE panel lists only their own conversations; a super_admin can open a member's conversation through the section, sees it read-only and named as the member's, and an operator.thread.open row records who, which, where and when
+MOTION_PURPOSE: STATE: the chevron rotation shows the section's open or closed state; nothing else moves beyond the existing dialog primitives
+PROTECTED_SEAMS: paige_chat_turn_append and every DEFINER writer (unchanged); threads_insert_self, threads_update_self, threads_tenant_isolation (unchanged); paige_operating_memory (unchanged, now fed only readable rows); ContactPaigePanel and StudioChat (already caller-scoped); the operator console's platform-lens chat (unchanged)
+
+INTERNAL_BUILD_IDENTITY: a6e085e80eb1e203919437b0116c4a404e40a0e2; deployment=none; environment=development; migrations=PROOF_OWED(20270514000000_member_threads_private_by_default applies on merge through deploy-migrations and is then read back on production); edge=NOT_APPLICABLE; evidence=the commit named here (tree 0c01271ea093b74a580841216a3faaa2bed72a64) holds this PR's code, tests and migration
+RELEASE_CHANNEL: development: owner-ruled privacy fix, held for the owner's approval of the frames, then merged per CLAUDE.md §4
+RELEASE_CLASSIFICATION: internal-only: operator support surfaces and a tightening of who reads private conversations; members' own experience is unchanged
+CUSTOMER_RELEASE_IDENTITY: none: no customer-visible change
+RELEASE_NOTE_REQUIRED: NO: no customer-visible change
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: proven in pgTAP, unit tests and harness frames; owner approval of the frames, production readback and a live operator session owed
+RELEASE_RECOVERY: position=revert the merge and restore the two SELECT policies' previous text (recorded in the migration header) — the three new functions are unreferenced once reverted; reference=this PR
+
+## Scope and collisions
+
+- Classification: owner-ruled privacy defect found in the owner's live drive.
+- Affected flows: the PAIGE panel for an operator acting as a workspace (Solo rail, ThreadRail mounts); Paige's operating memory for that operator; deliberate access to a member's conversation.
+- Neighboring regressions: none found; every reader of the chat tables was inventoried (frontend, edge functions, SQL, tests) and only the panel list, its transcript read, paige_operating_memory and the delete change for a super_admin, each intentionally.
+- Active-owner/file collisions: #1554 and #1555 (mine) touch none of these files.
+- Explicit exclusions: the business shell's PAIGE panel (no history rail for anyone); widening the capability to platform_admin (a catalogue row, not decided here).
+
+## User job and state map
+
+Acting as a workspace, the operator's PAIGE shows their own conversations. Below them, only for an operator who may, a collapsed "Members' conversations" section lists whose and when. Choosing one asks first and says it is recorded; confirming opens it read-only in its own dialog named as the member's. Every exit returns focus to the row.
+
+## Evidence index
+
+- `supabase test db supabase/tests/member_threads_private_by_default.sql` → 24/24 (hidden-by-default cases red on the current policies).
+- `npx vitest run src/components src/solo src/hooks` → 3002 passed.
+- Frames: local harness, checksums above; sent to the owner with this PR.

@@ -658,9 +658,10 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   // §57 config-as-data: derive the Agency-shell flag from ONLY the active tenant's own
   // features (§51-safe — no cross-tenant read, no request param). Absent flag → false.
   const endActAsBeforeSignOut = useCallback(async (): Promise<"clear" | "refused" | "unknown"> => {
+    // A member the server has confirmed has nothing to end, and pays for no network call — whatever
+    // this browser's record or a URL flag says, since a member cannot hold an act-as.
+    if (accountContextStatus === "ready" && !isPlatformStaff) return "clear";
     const recorded = operatorActAsRecorded(activeUserId);
-    // A member with a loaded context has nothing to end, and pays for no network call.
-    if (!recorded && accountContextStatus === "ready" && !isPlatformStaff) return "clear";
     if (!recorded && !(accountContextStatus === "ready" && activeTenantId)) {
       // An operator this tab believes is at rest, or anyone whose context did not load: ask the
       // server, because another tab can have opened an act-as this provider has not seen.

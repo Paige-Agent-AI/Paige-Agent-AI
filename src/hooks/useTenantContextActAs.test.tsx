@@ -430,6 +430,24 @@ describe("the operator act-as marker and its audited exit", () => {
       expect(h.rpcCalls).not.toContain("operator_exit_tenant");
     });
 
+    // Codex review of 174a20bb: a stray or forged ?acting-as flag must not stop a confirmed member
+    // from signing out.
+    it("clears a confirmed member even when the URL carries an act-as flag for them", async () => {
+      h.staff = { data: false, error: null };
+      h.activeTenant = "t1";
+      await mount();
+      window.history.replaceState(null, "", "/solo/1/command-center?acting-as=op");
+      h.rpcCalls = [];
+      let outcome = "";
+      try {
+        await act(async () => { outcome = await (ctx as Ctx).endActAsBeforeSignOut(); });
+      } finally {
+        window.history.replaceState(null, "", "/");
+      }
+      expect(outcome).toBe("clear");
+      expect(h.rpcCalls).toEqual([]);
+    });
+
     it("asks the server when the context could not load, and holds on an unreadable answer", async () => {
       h.profileReadError = { message: "network" };
       await mount();

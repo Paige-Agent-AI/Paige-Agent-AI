@@ -326,3 +326,30 @@ DROP TRIGGER IF EXISTS trg_enforce_protected_role_grant ON public.user_roles;
 CREATE TRIGGER trg_enforce_protected_role_grant
   BEFORE INSERT OR UPDATE OR DELETE ON public.user_roles
   FOR EACH ROW EXECUTE FUNCTION public.enforce_protected_role_grant();
+
+-- ── Listing a role serialises with grants of it ──────────────────────────────────────────────
+-- Codex review of #1534 (P1 on 49335124). The lockdown above reads platform_operator_roles, but a
+-- listing not yet committed is invisible to it: a tenant admin granting the role in that window gets
+-- through, and the grantee holds operator standing once both commit. So a listing first takes SHARE
+-- ROW EXCLUSIVE on user_roles, which conflicts with the ROW EXCLUSIVE every grant holds: a grant in
+-- flight finishes first (and is then visible to whoever reviews the role's holders in the listing
+-- transaction), and a grant attempted after waits for the listing to commit, then sees the tier and is
+-- refused. The lock is held only for the listing transaction, a service-only write.
+CREATE OR REPLACE FUNCTION public.serialise_operator_role_listing()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+BEGIN
+  LOCK TABLE public.user_roles IN SHARE ROW EXCLUSIVE MODE;
+  RETURN NEW;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.serialise_operator_role_listing() FROM PUBLIC, anon, authenticated;
+
+DROP TRIGGER IF EXISTS trg_serialise_operator_role_listing ON public.platform_operator_roles;
+CREATE TRIGGER trg_serialise_operator_role_listing
+  BEFORE INSERT OR UPDATE ON public.platform_operator_roles
+  FOR EACH ROW EXECUTE FUNCTION public.serialise_operator_role_listing();

@@ -4,7 +4,7 @@
 -- DATA — adding an operator role, granting and withdrawing a capability are row changes that
 -- change the answer with no code change.
 BEGIN;
-SELECT plan(99);
+SELECT plan(100);
 
 -- ── Grants ──────────────────────────────────────────────────────────────────────────────────
 SELECT ok(NOT has_function_privilege('anon', 'public.operator_standing()', 'EXECUTE'),
@@ -192,6 +192,15 @@ SELECT lives_ok($$SELECT public.revoke_tenant_member_role('0a570000-0000-4000-80
 RESET ROLE;
 INSERT INTO public.platform_operator_roles (role, rank, holds_unlisted, description, ruling)
 VALUES ('moderator', 10, false, 'test-only operator role', 'test');
+-- Codex review of #1534 (P1 on 49335124): listing a role races a concurrent grant of it, whose check
+-- cannot see the uncommitted tier. Listing therefore takes a lock that makes grants in flight finish
+-- first and grants after it wait for the listing to commit. The race needs two sessions; what one
+-- session can prove is that listing holds exactly that lock on user_roles.
+SELECT ok(EXISTS (SELECT 1 FROM pg_locks
+                  WHERE pid = pg_backend_pid() AND locktype = 'relation'
+                    AND relation = 'public.user_roles'::regclass
+                    AND mode = 'ShareRowExclusiveLock' AND granted),
+  'listing a role as an operator tier serialises with grants of it (SHARE ROW EXCLUSIVE on user_roles)');
 INSERT INTO public.platform_operator_role_capabilities (role, capability, ruling)
 VALUES ('moderator', 'platform.health.read', 'test');
 -- Withdraw one capability from platform_admin, the same way.

@@ -1,5 +1,5 @@
 -- Reproducible rollback-only proof for 20261046000000_solo_setup_persistence_repair.sql and
--- 20270511090000_outbound_private_business_facts.sql.
+-- 20270512090000_outbound_private_business_facts.sql.
 -- Runner: BEGIN; apply any of those migrations not yet on the database, without an outer
 -- BEGIN/COMMIT; run this file's DO block; ROLLBACK. No tenant mutation may be committed.
 --

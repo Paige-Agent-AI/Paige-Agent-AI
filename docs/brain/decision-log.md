@@ -5,7 +5,7 @@
   - **2026-09-28:** the exemption is keyed to Setup, never to the draft. A phone or website the owner confirmed in Setup is owner-supplied and may appear in customer-bound output. Anything not confirmed there is held back. The registered address needs a second state, publicly shareable, because confirming it states a legal fact, not consent. The approval card keeps its own job.
 
   This check ships before the facts reach PAIGE (A1-2). Nothing calls it yet; A1-1b wires it into the customer-bound exits.
-  - **What:** `outbound_private_business_facts_found(tenant, texts)`, migration `20270511090000`. It returns which of the three it finds and Setup does not license (`address`, `phone`, `website`), never a value.
+  - **What:** `outbound_private_business_facts_found(tenant, texts)`, migration `20270512090000`. It returns which of the three it finds and Setup does not license (`address`, `phone`, `website`), never a value.
   - **Licensed, through the spine:** "confirmed in Setup" is the spine's one answer, `business_identity_readiness()`: state `owner_confirmed`, source `setup`. The value licensed is the Setup record it names, the legal profile's `support_phone` and `website_url`.
     - A confirmed number is recognised in any form, domestic or international, with or without "(0)", and taken out of the draft before any other stored number is looked for.
     - Any other stored copy is held back: a legacy brand value, a staged proposal, a phone kept only in the private brief, or an older number on the same exchange.

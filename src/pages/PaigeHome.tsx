@@ -24,7 +24,7 @@ const SEAMS = [
 ];
 
 /** The close: Paige works through the commands an owner would give her, and lands on the last. */
-const CLOSE_COMMANDS = ["Run follow-ups", "Run the launch", "Run your week", "Run everything"];
+const CLOSE_COMMANDS = ["Run follow-ups", "Run the launch", "Run everything"];
 
 const OUTCOMES = [
   "Replies, follow-ups and proposals, written in your voice",

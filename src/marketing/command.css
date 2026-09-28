@@ -2,8 +2,12 @@
    The Command Mark is the cursor. Letters are laid out from the start and only revealed, so the
    line never reflows; the cursor hangs off the last written letter without taking space. */
 .pa-cmd__word { white-space: nowrap; }
-.pa-cmd__ch { position: relative; display: inline-block; }
+/* The drawn letters are decoration over the heading's real text: not selectable, not copied. */
+.pa-cmd__line, .pa-cmd__art { user-select: none; -webkit-user-select: none; }
+.pa-cmd__line { position: relative; display: inline-block; }
+.pa-cmd__ch { display: inline-block; }
 .pa-cmd__g { display: inline-block; }
+.pa-cmd__g::before { content: attr(data-ch); }
 
 /* A letter swipes up into place as the cursor passes. */
 .pa-cmd__ch .pa-cmd__g {
@@ -15,15 +19,17 @@
    full stop would. 1.6em of the 48-unit box puts the 20.8-unit slash at about cap height. */
 .pa-cmd__caret {
   position: absolute;
-  top: 50%;
-  left: calc(100% - 0.32em);
+  top: var(--cy, 0);
+  left: calc(var(--cx, 0) - 0.32em);
   width: 1.6em;
   height: 1.6em;
   transform: translateY(-46%);
   pointer-events: none;
+  visibility: hidden;
   transition: opacity 420ms var(--pa-ease), transform 420ms var(--pa-ease);
 }
-.pa-cmd__caret[data-at="start"] { left: -0.38em; }
+.pa-cmd__caret[data-placed] { visibility: visible; }
+.pa-cmd__caret[data-at="start"] { left: calc(var(--cx, 0) - 0.38em); }
 .pa-cmd__caret .pa-mark { width: 100%; height: 100%; }
 .pa-cmd__caret[data-out] { opacity: 0; transform: translateY(-46%) scale(0.8); }
 
@@ -41,8 +47,9 @@
 .pa-cmd__stack { display: inline-grid; }
 .pa-cmd__stack > * { grid-area: 1 / 1; justify-self: center; align-self: center; }
 .pa-cmd__reserve { visibility: hidden; }
-/* Room for the mark at the end of the line, so the command and its mark centre as one. */
-.pa-cmd--sequence .pa-cmd__line { display: inline-block; padding-right: 0.9em; }
+/* A command is one line, never wrapped; room is kept for the mark at its end so the command and
+   its mark centre as one. The close's type size is set so the longest command fits (home.css). */
+.pa-cmd--sequence .pa-cmd__line { white-space: nowrap; padding-right: 0.9em; }
 
 /* Accent words in section headings swipe up letter by letter once their heading has landed. */
 [data-motion="on"] [data-reveal] .pa-accent .pa-cmd__g {

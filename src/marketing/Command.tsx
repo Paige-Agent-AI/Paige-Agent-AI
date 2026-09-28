@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Mark, type MarkState } from "./Mark";
 import { usePrefersReducedMotion } from "./motion";
 import "./command.css";
@@ -40,11 +40,13 @@ function tokenize(parts: CommandPart[]): { tokens: Token[]; total: number } {
   return { tokens, total: glyphs.length };
 }
 
-/** A little human irregularity, but the same every visit: longer after a word or a comma. */
-function stepDelay(parts: string, i: number, speed: number) {
-  const prev = parts[i - 1];
+/**
+ * A little human irregularity, but the same every visit: a beat at the end of a word, a longer
+ * one after a comma. `i` characters are written; `text[i]` comes next.
+ */
+function stepDelay(text: string, i: number, speed: number) {
   const jitter = 0.72 + ((i * 37) % 11) / 18;
-  return speed * jitter + (prev === " " ? speed * 0.8 : 0) + (prev === "," ? speed * 4 : 0);
+  return speed * jitter + (text[i] === " " ? speed * 0.8 : 0) + (text[i - 1] === "," ? speed * 4 : 0);
 }
 
 function Letters({
@@ -60,23 +62,43 @@ function Letters({
   shown: number;
   /** The cursor's state, or null for no cursor. */
   caret: MarkState | null;
+  /** Changes only when the cursor's phase changes, so its one-time bloom and execute play once. */
   caretKey?: string;
   caretOut?: boolean;
   leaving?: boolean;
 }) {
   const { tokens, total } = useMemo(() => tokenize(parts), [parts]);
   const at = Math.min(shown, total);
-  // The cursor hangs off the last revealed character (or before the first, when nothing is).
+  // The cursor follows the last revealed character (or waits before the first, when none is).
   const host = at === 0 ? firstGlyph(tokens) : lastGlyphAtOrBefore(tokens, at - 1);
-  const cursor =
-    caret === null ? null : (
-      <span className="pa-cmd__caret" data-at={at === 0 ? "start" : "end"} data-out={caretOut || undefined}>
-        <Mark state={caret} size={48} key={caretKey} />
-      </span>
-    );
+  const lineRef = useRef<HTMLSpanElement>(null);
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const hasCaret = caret !== null;
+
+  // One cursor per line, placed from the host letter's box: it moves as the line is written but
+  // is never rebuilt, so the mark's animations are not restarted on every keystroke.
+  useLayoutEffect(() => {
+    const line = lineRef.current;
+    if (!hasCaret || !line) return;
+    const measure = () => {
+      const el = line.querySelector<HTMLElement>(`[data-i="${host}"]`);
+      if (!el) return;
+      const l = line.getBoundingClientRect();
+      const r = el.getBoundingClientRect();
+      setPos({ x: (at === 0 ? r.left : r.right) - l.left, y: r.top + r.height / 2 - l.top });
+    };
+    measure();
+    let live = true;
+    document.fonts?.ready.then(() => live && measure());
+    window.addEventListener("resize", measure);
+    return () => {
+      live = false;
+      window.removeEventListener("resize", measure);
+    };
+  }, [hasCaret, host, at]);
 
   return (
-    <span className="pa-cmd__line" data-leaving={leaving || undefined}>
+    <span ref={lineRef} className="pa-cmd__line" data-leaving={leaving || undefined}>
       {tokens.map((t) =>
         t.kind === "space" ? (
           " "
@@ -85,17 +107,29 @@ function Letters({
             {t.glyphs.map(({ g, i }) => (
               <span
                 key={i}
+                data-i={i}
                 className={`pa-cmd__ch${g.accent ? " pa-accent" : ""}`}
                 data-on={i < at || undefined}
                 style={{ ["--o" as string]: i } as CSSProperties}
               >
-                <span className="pa-cmd__g">{g.ch}</span>
-                {i === host ? cursor : null}
+                {/* The letter is drawn from an attribute, so the heading's text exists once. */}
+                <span className="pa-cmd__g" data-ch={g.ch} />
               </span>
             ))}
           </span>
         ),
       )}
+      {hasCaret ? (
+        <span
+          className="pa-cmd__caret"
+          data-at={at === 0 ? "start" : "end"}
+          data-out={caretOut || undefined}
+          data-placed={pos ? "true" : undefined}
+          style={pos ? ({ ["--cx" as string]: `${pos.x}px`, ["--cy" as string]: `${pos.y}px` } as CSSProperties) : undefined}
+        >
+          <Mark state={caret} size={48} key={caretKey} />
+        </span>
+      ) : null}
     </span>
   );
 }
@@ -164,18 +198,27 @@ export function CommandHeading({
   const text = plain(parts);
   const [start, setStart] = useState(false);
   const [phase, setPhase] = useState<"typing" | "executed" | "gone">("typing");
+  // Once the line is written (or motion is turned off) it stays written; it is never retyped.
+  const [settled, setSettled] = useState(reduced);
+  useEffect(() => {
+    if (reduced) setSettled(true);
+  }, [reduced]);
 
   useEffect(() => {
-    if (reduced) return;
+    if (settled) return;
     const t = window.setTimeout(() => setStart(true), delay);
     return () => window.clearTimeout(t);
-  }, [reduced, delay]);
+  }, [settled, delay]);
 
-  const shown = useTyping(text, start && !reduced, speed, () => setPhase("executed"));
+  const shown = useTyping(text, start && !settled, speed, () => setPhase("executed"));
 
+  // Executed: the mark holds a beat, fades, and the headline is left on its own.
   useEffect(() => {
-    if (phase !== "executed") return;
-    const t = window.setTimeout(() => setPhase("gone"), 1100);
+    if (phase === "typing") return;
+    const t = window.setTimeout(
+      () => (phase === "executed" ? setPhase("gone") : setSettled(true)),
+      phase === "executed" ? 1100 : 450,
+    );
     return () => window.clearTimeout(t);
   }, [phase]);
 
@@ -183,7 +226,7 @@ export function CommandHeading({
     <Tag id={id} className={`${className ?? ""} pa-cmd`}>
       <span className="pa-sr">{text}</span>
       <span aria-hidden="true">
-        {reduced ? (
+        {settled ? (
           <Letters parts={parts} shown={text.length} caret={null} />
         ) : (
           <Letters
@@ -209,8 +252,8 @@ export function CommandSequence({
   className,
   commands,
   label,
-  speed = 46,
-  hold = 620,
+  speed = 42,
+  hold = 480,
 }: {
   id?: string;
   className?: string;
@@ -231,7 +274,12 @@ export function CommandSequence({
 
   useEffect(() => {
     const el = ref.current;
-    if (reduced || !el || typeof IntersectionObserver === "undefined") return;
+    if (reduced || !el) return;
+    // Without an observer, play it now rather than leave the close empty.
+    if (typeof IntersectionObserver === "undefined") {
+      setInView(true);
+      return;
+    }
     const io = new IntersectionObserver(
       ([e]) => {
         if (e.isIntersecting) {
@@ -245,9 +293,12 @@ export function CommandSequence({
     return () => io.disconnect();
   }, [reduced]);
 
-  const shown = useTyping(commands[index], inView && phase === "typing", speed, () => setPhase("executed"));
+  const shown = useTyping(commands[index], inView && !reduced && phase === "typing", speed, () =>
+    setPhase("executed"),
+  );
 
   useEffect(() => {
+    if (reduced) return;
     if (phase === "executed" && !last) {
       const t = window.setTimeout(() => setPhase("leaving"), hold);
       return () => window.clearTimeout(t);
@@ -256,10 +307,10 @@ export function CommandSequence({
       const t = window.setTimeout(() => {
         setIndex((i) => i + 1);
         setPhase("typing");
-      }, 480);
+      }, 400);
       return () => window.clearTimeout(t);
     }
-  }, [phase, last, hold]);
+  }, [phase, last, hold, reduced]);
 
   const final = commands[commands.length - 1];
 
@@ -301,16 +352,19 @@ export function Accent({ children }: { children: string }) {
   return (
     <span className="pa-accent">
       <span className="pa-sr">{children}</span>
-      <span aria-hidden="true">
+      <span className="pa-cmd__art" aria-hidden="true">
         {tokens.map((t) =>
           t.kind === "space" ? (
             " "
           ) : (
             <span key={t.glyphs[0].i} className="pa-cmd__word">
               {t.glyphs.map(({ g, i }) => (
-                <span key={i} className="pa-cmd__g" style={{ ["--k" as string]: i } as CSSProperties}>
-                  {g.ch}
-                </span>
+                <span
+                  key={i}
+                  className="pa-cmd__g"
+                  data-ch={g.ch}
+                  style={{ ["--k" as string]: i } as CSSProperties}
+                />
               ))}
             </span>
           ),

@@ -653,7 +653,8 @@
 .pa-close__inner { display: grid; justify-items: center; gap: 1.5rem; }
 .pa-close__inner > * { max-width: 100%; min-width: 0; }
 .pa-close__line {
-  font-size: clamp(1.55rem, 0.3rem + 6.3vw, 5.2rem);
+  /* Sized so the longest command (about 12.3em with its mark) always fits on one line. */
+  font-size: min(5.2rem, calc((100vw - 2 * var(--pa-gutter) - 0.5rem) / 12.4));
   font-weight: 830;
   letter-spacing: 0.14em;
   text-transform: uppercase;

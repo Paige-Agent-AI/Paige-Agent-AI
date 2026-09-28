@@ -33,7 +33,7 @@ RELEASE_CLASSIFICATION: internal-only: operator support reads; no customer-visib
 CUSTOMER_RELEASE_IDENTITY: none: no customer-visible change
 RELEASE_NOTE_REQUIRED: NO: no customer-visible change
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: proven in pgTAP and unit tests; production readback and a real operator session owed after deploy
-RELEASE_RECOVERY: position=revert the merge and apply a migration restoring the two functions' original gate (their bodies are production's apart from that line); the two new helper functions are unreferenced once reverted; reference=this PR
+RELEASE_RECOVERY: position=revert the merge and apply a migration restoring the two functions' original gate (their bodies are production's apart from that line) — the two new helper functions are unreferenced once reverted; reference=this PR
 
 ## Scope and collisions
 

@@ -159,8 +159,13 @@ interface TenantContextState {
    * a refusal — the enter may have committed with its response lost — so on any error the caller's
    * own pointer is read back: `entered` if it now holds the tenant, `refused` if it confirmably does
    * not, `unknown` if even that read fails. Only `refused` may be reported as "nothing was recorded".
+   *
+   * The scope is read FIRST, so an entry is never recorded over an open act-as (the console shows
+   * platform scope after a reload, so a second press there would otherwise duplicate or overwrite
+   * it): already in this tenant lands with no new entry, another tenant open is `occupied`, and an
+   * unreadable scope is `unknown` with nothing sent.
    */
-  enterOperatorActAs: (tenantId: string) => Promise<"entered" | "refused" | "unknown">;
+  enterOperatorActAs: (tenantId: string) => Promise<"entered" | "refused" | "unknown" | "occupied">;
   /**
    * Ask the server, afresh, whether the caller is an operator with an open act-as. For a destination
    * whose account read failed and that holds no local record of the act-as (blocked storage, or a
@@ -516,12 +521,17 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     const { data: auth } = await supabase.auth.getUser();
     const uid = auth.user?.id;
     if (!uid) return "refused" as const;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: rpcError } = await supabase.rpc("operator_enter_tenant" as any, { _tenant: tenantId });
-    if (rpcError) {
-      const scope = await readOwnScope();
-      if (!scope.ok) return "unknown" as const;
-      if (scope.activeTenantId !== tenantId) return "refused" as const;
+    const before = await readOwnScope();
+    if (!before.ok) return "unknown" as const;
+    if (before.activeTenantId && before.activeTenantId !== tenantId) return "occupied" as const;
+    if (before.activeTenantId !== tenantId) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: rpcError } = await supabase.rpc("operator_enter_tenant" as any, { _tenant: tenantId });
+      if (rpcError) {
+        const scope = await readOwnScope();
+        if (!scope.ok) return "unknown" as const;
+        if (scope.activeTenantId !== tenantId) return "refused" as const;
+      }
     }
     scopeEpochRef.current += 1;
     recordOperatorActAs(uid, tenantId);
@@ -538,7 +548,12 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   const exitOperatorActAs = useCallback(async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: rpcError } = await supabase.rpc("operator_exit_tenant" as any);
-    if (rpcError) return false;
+    if (rpcError) {
+      // The exit may have committed with its response lost; retrying would record a second, false
+      // exit. Read the pointer back and treat a confirmed empty scope as exited.
+      const scope = await readOwnScope();
+      if (!scope.ok || scope.activeTenantId) return false;
+    }
     scopeEpochRef.current += 1;
     forgetOperatorActAs();
     // An "Acting as … recorded" notice still waiting for a shell that never mounted now announces an

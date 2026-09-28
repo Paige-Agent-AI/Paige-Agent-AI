@@ -25,6 +25,7 @@ const h = vi.hoisted(() => ({
   heldProfile: null as null | Promise<unknown>,
   // Simulates operator_enter_tenant committing on the server while its response is lost.
   enterCommitsThenFails: false,
+  exitCommitsThenFails: false,
   profileReadError: null as unknown,
 }));
 
@@ -46,7 +47,10 @@ vi.mock("@/integrations/supabase/client", () => ({
         if (h.enterCommitsThenFails) h.activeTenant = "t1";
         return Promise.resolve({ data: null, error: h.enterError });
       }
-      if (name === "operator_exit_tenant") return Promise.resolve({ data: null, error: h.exitError });
+      if (name === "operator_exit_tenant") {
+        if (h.exitCommitsThenFails) h.activeTenant = null;
+        return Promise.resolve({ data: null, error: h.exitError });
+      }
       return Promise.resolve({ data: null, error: null });
     },
     from: (table: string) => {
@@ -98,6 +102,7 @@ describe("the operator act-as marker and its audited exit", () => {
     h.enterError = null;
     h.exitError = null;
     h.enterCommitsThenFails = false;
+    h.exitCommitsThenFails = false;
     h.profileReadError = null;
     h.profileWrites = 0;
     ctx = null;
@@ -253,6 +258,61 @@ describe("the operator act-as marker and its audited exit", () => {
     expect(acting()).toBe(false);
   });
 
+  // Codex review of ab5ef150: an exit whose response was lost must not be retried into a false
+  // second receipt; the pointer is read back as the enter path does.
+  it("treats a lost exit response as exited when the server holds no scope", async () => {
+    h.activeTenant = "t1";
+    const c = await mount();
+    h.exitError = { message: "Failed to fetch" };
+    h.exitCommitsThenFails = true;
+    let ok = false;
+    await act(async () => { ok = await c.exitOperatorActAs(); });
+    expect(ok).toBe(true);
+    expect(acting()).toBe(false);
+    expect((ctx as Ctx).activeTenantId).toBeNull();
+  });
+
+  it("keeps the act-as when the server still holds the scope after a failed exit", async () => {
+    h.activeTenant = "t1";
+    const c = await mount();
+    h.exitError = { message: "refused" };
+    let ok = true;
+    await act(async () => { ok = await c.exitOperatorActAs(); });
+    expect(ok).toBe(false);
+    expect(acting()).toBe(true);
+  });
+
+  // Codex review of ab5ef150: never record a second entry over an open act-as.
+  it("lands without a new entry when the operator is already in that tenant", async () => {
+    h.activeTenant = "t1";
+    const c = await mount();
+    h.rpcCalls = [];
+    let outcome = "";
+    await act(async () => { outcome = await c.enterOperatorActAs("t1"); });
+    expect(outcome).toBe("entered");
+    expect(h.rpcCalls).not.toContain("operator_enter_tenant");
+  });
+
+  it("enters nothing while another tenant's act-as is open", async () => {
+    h.activeTenant = "t2";
+    const c = await mount();
+    h.rpcCalls = [];
+    let outcome = "";
+    await act(async () => { outcome = await c.enterOperatorActAs("t1"); });
+    expect(outcome).toBe("occupied");
+    expect(h.rpcCalls).not.toContain("operator_enter_tenant");
+  });
+
+  it("enters nothing when it cannot read the current scope first", async () => {
+    const c = await mount();
+    h.profileReadError = { message: "Failed to fetch" };
+    h.rpcCalls = [];
+    let outcome = "";
+    await act(async () => { outcome = await c.enterOperatorActAs("t1"); });
+    expect(outcome).toBe("unknown");
+    expect(h.rpcCalls).not.toContain("operator_enter_tenant");
+  });
+
   it("asks the server whether an operator is acting, independent of the context's own read", async () => {
     h.staff = { data: false, error: { message: "network" } };
     const c = await mount();
@@ -303,8 +363,10 @@ describe("the operator act-as marker and its audited exit", () => {
 
   it("keeps the act-as recorded when the server refuses the exit", async () => {
     h.exitError = { message: "refused" };
-    // A failed read, so the load does not reset the record either way.
+    // A failed read, so the load does not reset the record either way. The server still holds the
+    // scope, which is what a refused exit means (the read-back sees it).
     h.staff = { data: false, error: { message: "network" } };
+    h.activeTenant = "t1";
     recordOperatorActAs("op", "t1");
     const c = await mount();
     let ok = true;

@@ -25,8 +25,9 @@ const row = (over: Partial<FleetTenant>): FleetTenant => ({
 const h = vi.hoisted(() => ({
   fleet: [] as unknown[],
   ctxTenants: [] as Array<Record<string, unknown>>,
-  enter: (async () => "entered") as (id: string) => Promise<"entered" | "refused" | "unknown">,
-  toastError: (() => {}) as (msg: string) => void,
+  enter: (async () => "entered") as (id: string) => Promise<"entered" | "refused" | "unknown" | "occupied">,
+  exit: (async () => true) as () => Promise<boolean>,
+  toastError: (() => {}) as (msg: string, opts?: { action?: { label: string; onClick: () => void } }) => void,
 }));
 
 vi.mock("@/operator/data/useFleet", async (importOriginal) => {
@@ -37,9 +38,14 @@ vi.mock("@/operator/data/useFleet", async (importOriginal) => {
   };
 });
 vi.mock("@/hooks/useTenantContext", () => ({
-  useTenantContext: () => ({ enterOperatorActAs: h.enter, tenants: h.ctxTenants, activeUserId: "op" }),
+  useTenantContext: () => ({ enterOperatorActAs: h.enter, exitOperatorActAs: h.exit, tenants: h.ctxTenants, activeUserId: "op" }),
 }));
-vi.mock("sonner", () => ({ toast: { error: (m: string) => h.toastError(m), success: () => {} } }));
+vi.mock("sonner", () => ({
+  toast: {
+    error: (m: string, opts?: { action?: { label: string; onClick: () => void } }) => (opts ? h.toastError(m, opts) : h.toastError(m)),
+    success: () => {},
+  },
+}));
 
 import FleetConsole from "@/operator/surfaces/FleetConsole";
 import { landAt } from "@/operator/actAs";
@@ -117,6 +123,22 @@ describe("FleetConsole Enter — the act-as lands or does not begin", () => {
     expect(go).not.toHaveBeenCalled();
     expect(h.toastError).toHaveBeenCalledWith(expect.stringContaining("couldn't confirm"));
     expect(h.toastError).not.toHaveBeenCalledWith(expect.stringContaining("Nothing was recorded"));
+  });
+
+  // Codex review of ab5ef150: after an unknown outcome and a reload, the console shows platform scope
+  // with no exit, so a second Enter would record a duplicate or overwrite the open act-as. The
+  // provider now refuses to enter over an open act-as; the console says so and offers the way out.
+  it("enters nothing over an open act-as, and offers its audited exit", async () => {
+    h.enter = vi.fn(async () => "occupied" as const);
+    h.exit = vi.fn(async () => true);
+    const enter = await render();
+    await act(async () => { enter("Solo Co")?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+    expect(go).not.toHaveBeenCalled();
+    const [message, opts] = (h.toastError as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(message).toContain("Nothing was entered");
+    expect(opts?.action?.label).toBeTruthy();
+    await act(async () => { opts?.action?.onClick(); });
+    expect(h.exit).toHaveBeenCalledTimes(1);
   });
 
   it("records one entry for presses made while an entry is in flight", async () => {

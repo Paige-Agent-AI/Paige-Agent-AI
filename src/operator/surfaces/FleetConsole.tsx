@@ -352,7 +352,7 @@ export function FleetDirectoryView({
 export default function FleetConsole({ isPlatformOwner }: { isPlatformOwner: boolean | null }) {
   const { tenants, classificationVisible, detailReadFailed, loading, error } = useFleet(true);
   const detailVisible = fleetDetailVisible(isPlatformOwner, detailReadFailed);
-  const { enterOperatorActAs, tenants: contextTenants, activeUserId } = useTenantContext();
+  const { enterOperatorActAs, exitOperatorActAs, tenants: contextTenants, activeUserId } = useTenantContext();
   // Entering is an audited act, so one press is one entry. A ref, because state re-renders too
   // late to stop a second press in the same tick; production recorded paired entries.
   const entering = useRef(false);
@@ -378,6 +378,22 @@ export default function FleetConsole({ isPlatformOwner }: { isPlatformOwner: boo
           toast.error(`Couldn't enter ${tenant.name}. Nothing was recorded and your scope is unchanged.`);
           return;
         }
+        if (outcome === "occupied") {
+          // An act-as is still open for this operator (the console shows platform scope after a
+          // reload). Entering over it would record a duplicate or silently replace it, so nothing is
+          // entered and the audited exit is offered right here.
+          toast.error("You're still acting in another tenant. Nothing was entered. End that act-as first.", {
+            action: {
+              label: "End it",
+              onClick: () => {
+                void exitOperatorActAs().then((exited) => {
+                  if (!exited) toast.error("Couldn't end it. Try again.");
+                });
+              },
+            },
+          });
+          return;
+        }
         if (outcome === "unknown") {
           // The enter may have committed with its response lost; claiming otherwise would be false.
           toast.error(`Paige couldn't confirm whether you entered ${tenant.name}. Reload the console before trying again.`);
@@ -401,7 +417,7 @@ export default function FleetConsole({ isPlatformOwner }: { isPlatformOwner: boo
         if (!leaving) entering.current = false;
       }
     },
-    [contextTenants, enterOperatorActAs, activeUserId],
+    [contextTenants, enterOperatorActAs, exitOperatorActAs, activeUserId],
   );
 
   return (

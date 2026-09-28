@@ -19570,7 +19570,6 @@ export type Database = {
         Args: { p_actions: Json; p_contact_id: string }
         Returns: Json
       }
-      admin_remove_coach_role: { Args: { _user_id: string }; Returns: Json }
       admin_resume_customer_subscription: {
         Args: { _subscription_id: string }
         Returns: undefined

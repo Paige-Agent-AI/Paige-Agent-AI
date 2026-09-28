@@ -80,7 +80,7 @@ export type McpCapability = {
 /** The number of tools registered in `paige-mcp/index.ts`. Asserted by CI rather than written in
  *  prose, because two comments in this repo said 117 while the real number was 119 — a count in a
  *  sentence rots silently. */
-export const MCP_TOOL_COUNT = 118;
+export const MCP_TOOL_COUNT = 117;
 
 /**
  * TOOL NAME → CAPABILITY. Filled from handler verification; see the module header.
@@ -774,13 +774,6 @@ export const MCP_CAPABILITY_POLICY: Readonly<Record<string, McpCapability>> = {
     effect: "mutate",
     category: "access",
     evidence: "index.ts:3826 admin.rpc('agency_exit_subaccount', {_actor}); the SQL function (migrations/20260712310000_agency_mcp_enter_exit.sql:71-84) UPDATEs profiles.active_tenant_id back to actor_primary_agency(_actor). audit insert at index.ts:3828.",
-    paigeHome: false,
-  },
-  remove_coach_role: {
-    canonical: "coach_revoke_role_globally",
-    effect: "mutate",
-    category: "access",
-    evidence: "index.ts:1179 `admin.rpc(\"admin_remove_coach_role\", {_user_id})`. The RPC body (supabase/migrations/20260821010000_definer_fn_wave2_writer_hardening.sql:214-249) performs `DELETE FROM public.user_roles WHERE user_id = _user_id AND role = 'coach'` — a role revocation. Audit at 1165.",
     paigeHome: false,
   },
   set_default_email_domain: {

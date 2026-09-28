@@ -594,7 +594,14 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
   const exitOperatorActAsFrom = useCallback(async (tenantId: string) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: rpcError } = await supabase.rpc("operator_exit_tenant" as any, { _expected: tenantId });
+    let { error: rpcError } = await supabase.rpc("operator_exit_tenant" as any, { _expected: tenantId });
+    if (rpcError?.code === "PGRST202") {
+      // The server does not have the bound exit yet (its migration is not applied). The operator's
+      // way out still works through the unbound exit every server has; the stale-tab protection
+      // arrives with the migration. Dormant once it is applied.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ({ error: rpcError } = await supabase.rpc("operator_exit_tenant" as any));
+    }
     if (rpcError) {
       // Refused, lost, or the open act-as is another tenant's: the pointer read back says which.
       const scope = await readOwnScope();

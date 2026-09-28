@@ -28,6 +28,9 @@ const h = vi.hoisted(() => ({
   exitCommitsThenFails: false,
   // Another tab's enter commits after this tab's preflight read, so the server refuses this one.
   otherTabEnters: null as string | null,
+  // The server does not have the bound exit yet (its migration is not applied): PostgREST answers
+  // PGRST202 for a call with `_expected`.
+  boundExitMissing: false,
   profileReadError: null as unknown,
 }));
 
@@ -54,6 +57,9 @@ vi.mock("@/integrations/supabase/client", () => ({
         return Promise.resolve({ data: null, error: h.enterError });
       }
       if (name === "operator_exit_tenant") {
+        if (args?._expected && h.boundExitMissing) {
+          return Promise.resolve({ data: null, error: { code: "PGRST202", message: "Could not find the function public.operator_exit_tenant(_expected)" } });
+        }
         // The bound exit refuses, writing nothing, when the open act-as is not the one it names.
         if (args?._expected && h.activeTenant && h.activeTenant !== args._expected) {
           return Promise.resolve({ data: null, error: { message: "operator_scope_changed" } });
@@ -114,6 +120,7 @@ describe("the operator act-as marker and its audited exit", () => {
     h.exitError = null;
     h.enterCommitsThenFails = false;
     h.otherTabEnters = null;
+    h.boundExitMissing = false;
     h.exitCommitsThenFails = false;
     h.profileReadError = null;
     h.profileWrites = 0;
@@ -374,6 +381,19 @@ describe("the operator act-as marker and its audited exit", () => {
     expect(h.activeTenant).toBe("t2");
     await act(async () => { outcome = await (ctx as Ctx).exitOperatorActAsFrom("t2"); });
     expect(outcome).toBe("exited");
+    expect((ctx as Ctx).activeTenantId).toBeNull();
+  });
+
+  // Until the bound exit's migration is applied, the server answers PGRST202 for it. The operator's
+  // way out must still work: fall back to the unbound exit, which every server has.
+  it("still exits when the server does not have the bound exit yet", async () => {
+    h.activeTenant = "t1";
+    const c = await mount();
+    h.boundExitMissing = true;
+    let outcome = "";
+    await act(async () => { outcome = await c.exitOperatorActAsFrom("t1"); });
+    expect(outcome).toBe("exited");
+    expect(h.activeTenant).toBeNull();
     expect((ctx as Ctx).activeTenantId).toBeNull();
   });
 

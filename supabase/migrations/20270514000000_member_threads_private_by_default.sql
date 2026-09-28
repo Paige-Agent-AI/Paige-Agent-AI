@@ -33,9 +33,7 @@
 --
 -- WHAT DOES NOT CHANGE: INSERT/UPDATE policies (self only); the RESTRICTIVE tenant isolation; every
 -- SECURITY DEFINER writer (they keep their own owner checks).
---
--- NOT CLOSED HERE, reported to the owner: paige_llm_trace.input_excerpt keeps request messages and
--- its read policy is tenant-wide, so conversation text is still readable there by workspace members.
+
 
 -- The open act-as comes from operator_open_act_as_tenant(), defined by 20270513000000 (#1554): the
 -- operator's pointer, where their most recent operator.tenant.enter/exit receipt is an enter for that

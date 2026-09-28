@@ -22,6 +22,9 @@ const harness = vi.hoisted(() => ({
     isPlatformStaff: false,
     switchTenant: vi.fn(),
     refresh: vi.fn(),
+    activeUserId: "user-1" as string | null,
+    exitOperatorActAs: vi.fn(),
+    probeOperatorActAs: vi.fn(),
   },
 }));
 
@@ -71,6 +74,8 @@ describe("ChooseAccount", () => {
     harness.context.isPlatformStaff = false;
     harness.context.switchTenant = vi.fn(async () => true);
     harness.context.refresh = vi.fn(async () => undefined);
+    harness.context.exitOperatorActAs = vi.fn(async () => true);
+    harness.context.probeOperatorActAs = vi.fn(async () => false);
     harness.context.accountContextStatus = "ready";
     // Restore the tenant fixture. Several cases mutate it (status, canary,
     // account_number) and without this the mutations leak forward and the next
@@ -531,6 +536,60 @@ describe("ChooseAccount", () => {
       await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
       expect(supabase.auth.signOut).not.toHaveBeenCalled();
       expect(host.textContent).toContain("Paige couldn't end your act-as in Antonio Daniel LLC, so you're still signed in.");
+    });
+  });
+  // Codex review of #1547 (8292f9d6): when the account context cannot be read, the page cannot tell
+  // an operator from anyone else, yet still offers the sign-out. The server is asked directly.
+  describe("signing out when the account context could not be read", () => {
+    beforeEach(() => {
+      harness.context.accountContextStatus = "error";
+      harness.context.isPlatformStaff = false;
+      harness.context.activeTenantId = null;
+    });
+
+    async function pressDifferentAccount() {
+      await act(async () => {
+        root.render(<MemoryRouter initialEntries={["/choose-account"]}><ChooseAccount /></MemoryRouter>);
+      });
+      const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("different Google account"));
+      expect(button).toBeTruthy();
+      await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+    }
+
+    it("ends an act-as the server still holds before signing out", async () => {
+      const order: string[] = [];
+      harness.context.probeOperatorActAs = vi.fn(async () => true);
+      harness.context.exitOperatorActAs = vi.fn(async () => { order.push("exit"); return true; });
+      vi.mocked(supabase.auth.signOut).mockImplementationOnce(async () => { order.push("signOut"); return { error: null }; });
+      vi.mocked(signInWithOAuth).mockResolvedValueOnce({ error: null } as never);
+      await pressDifferentAccount();
+      expect(order).toEqual(["exit", "signOut"]);
+    });
+
+    it("stays signed in when that act-as cannot be ended", async () => {
+      harness.context.probeOperatorActAs = vi.fn(async () => true);
+      harness.context.exitOperatorActAs = vi.fn(async () => false);
+      vi.mocked(supabase.auth.signOut).mockClear();
+      await pressDifferentAccount();
+      expect(supabase.auth.signOut).not.toHaveBeenCalled();
+      expect(host.textContent).toContain("Paige couldn't end your act-as in this tenant, so you're still signed in.");
+    });
+
+    it("uses this browser's act-as record when the server cannot be asked", async () => {
+      sessionStorage.setItem("paige.operator.actingAs", JSON.stringify({ userId: "user-1", tenantId: "antonio" }));
+      harness.context.probeOperatorActAs = vi.fn(async () => false);
+      harness.context.exitOperatorActAs = vi.fn(async () => true);
+      vi.mocked(signInWithOAuth).mockResolvedValueOnce({ error: null } as never);
+      await pressDifferentAccount();
+      expect(harness.context.exitOperatorActAs).toHaveBeenCalledTimes(1);
+    });
+
+    it("signs a member out without an exit", async () => {
+      vi.mocked(signInWithOAuth).mockResolvedValueOnce({ error: null } as never);
+      vi.mocked(supabase.auth.signOut).mockClear();
+      await pressDifferentAccount();
+      expect(harness.context.exitOperatorActAs).not.toHaveBeenCalled();
+      expect(supabase.auth.signOut).toHaveBeenCalledTimes(1);
     });
   });
 });

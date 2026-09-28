@@ -309,6 +309,55 @@ describe("members' conversations", () => {
     expect(host.textContent).toContain("Test Member");
   });
 
+  it("clears the open conversation when a read of earlier messages is refused", async () => {
+    h.openPages = [
+      { data: { threadId: "thread-1", ownerName: "Test Member", earlierBeforeSeq: 7, turns: [{ role: "user", content: "private words", createdAt: "2026-09-28T01:00:00Z" }] }, error: null },
+      { data: null, error: { message: "operator_scope_moved" } } as never,
+    ];
+    await mount();
+    await act(async () => { byText("Members' conversations")!.click(); });
+    await act(async () => { byText("Test Member")!.click(); });
+    await act(async () => { byText("Open conversation")!.click(); await Promise.resolve(); });
+    expect(document.body.textContent).toContain("private words");
+    await act(async () => { byText("Show earlier messages")!.click(); await Promise.resolve(); });
+    expect(document.body.textContent).not.toContain("private words");
+    expect(host.textContent).toBe("");
+    expect(h.toasts.some((t) => t.includes("another workspace"))).toBe(true);
+  });
+
+  it("frees Show earlier messages when its reply lands after a refusal revoked it", async () => {
+    let answer!: (value: unknown) => void;
+    const withEarlier = { data: { threadId: "thread-1", ownerName: "Test Member", earlierBeforeSeq: 7, turns: [{ role: "user", content: "recent turn", createdAt: "2026-09-28T01:00:00Z" }] }, error: null };
+    h.openPages = [withEarlier, new Promise((resolve) => { answer = resolve; }) as never, withEarlier];
+    await mount();
+    await act(async () => { byText("Members' conversations")!.click(); });
+    await act(async () => { byText("Test Member")!.click(); });
+    await act(async () => { byText("Open conversation")!.click(); await Promise.resolve(); });
+    await act(async () => { byText("Show earlier messages")!.click(); });
+    // A refusal lands while the earlier page is in flight, then the operator is back.
+    h.listResult = { data: [], error: { message: "operator_not_acting" } };
+    await act(async () => { window.dispatchEvent(new Event("focus")); await Promise.resolve(); await Promise.resolve(); });
+    await act(async () => { answer({ data: { threadId: "thread-1", turns: [], earlierBeforeSeq: null }, error: null }); await Promise.resolve(); });
+    h.listResult = { data: [thread], error: null };
+    await act(async () => { window.dispatchEvent(new Event("focus")); await Promise.resolve(); await Promise.resolve(); });
+    if (!byText("Test Member")) await act(async () => { byText("Members' conversations")!.click(); });
+    await act(async () => { byText("Test Member")!.click(); });
+    await act(async () => { byText("Open conversation")!.click(); await Promise.resolve(); });
+    expect(byText("Loading…")).toBeUndefined();
+    expect(byText("Show earlier messages")?.disabled).toBe(false);
+  });
+
+  it("clears the list when a read of the next page is refused", async () => {
+    const page = Array.from({ length: 50 }, (_, i) => ({ ...thread, thread_id: `t${i}`, owner_name: `Member ${i}`, sort_at: new Date(Date.UTC(2026, 8, 28) - i * 60000).toISOString() }));
+    h.listResult = { data: page, error: null };
+    await mount();
+    await act(async () => { byText("Members' conversations")!.click(); });
+    h.listPages = [{ data: [], error: { message: "operator_not_acting" } } as never];
+    await act(async () => { byText("Show more")!.click(); await Promise.resolve(); });
+    expect(host.textContent).toBe("");
+    expect(h.toasts.some((t) => t.includes("no longer acting"))).toBe(true);
+  });
+
   it("drops an open still in flight when a re-check has revoked this workspace", async () => {
     let answer!: (value: unknown) => void;
     h.openGate = new Promise((resolve) => { answer = resolve; });

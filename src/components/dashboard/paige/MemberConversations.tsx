@@ -125,6 +125,25 @@ function MemberConversationsForWorkspace({ scopeKey }: { scopeKey: string }) {
   shownRef.current = list.phase === "ready" || !!opened || !!pending;
   const idleRef = useRef(true);
   idleRef.current = list.phase === "idle";
+  // The server refused this workspace (another tab left or moved it): clear everything shown and
+  // revoke everything in flight — list loads (generation) and opens or earlier-message reads (epoch)
+  // — so none of them can land after this and repaint what was cleared. The section comes back
+  // collapsed, as it starts, if a later check finds the operator back.
+  const revoke = useCallback((message: string) => {
+    const wasShowing = shownRef.current;
+    generation.current += 1;
+    scopeEpoch.current += 1;
+    setOpening(false);
+    setOpened(null);
+    setPending(null);
+    setExpanded(false);
+    setList({ phase: "idle" });
+    if (wasShowing) {
+      toast.error(/operator_scope_moved/.test(message)
+        ? "You've moved to another workspace in a different tab, so members' conversations here were closed."
+        : "You're no longer acting as this workspace, so members' conversations here were closed.");
+    }
+  }, []);
   const revalidate = useCallback(async () => {
     const mine = generation.current;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -142,21 +161,8 @@ function MemberConversationsForWorkspace({ scopeKey }: { scopeKey: string }) {
     const message = String(error.message ?? "");
     // A transient failure changes nothing: what is shown was allowed a moment ago and may still be.
     if (!REFUSED.test(message)) return;
-    const wasShowing = shownRef.current;
-    // Revoke everything this workspace had in flight too: list loads (generation) and opens or
-    // earlier-message reads (epoch), so none of them can land after this and repaint what was cleared.
-    generation.current += 1;
-    scopeEpoch.current += 1;
-    setOpening(false);
-    setOpened(null);
-    setPending(null);
-    setList({ phase: "idle" });
-    if (wasShowing) {
-      toast.error(/operator_scope_moved/.test(message)
-        ? "You've moved to another workspace in a different tab, so members' conversations here were closed."
-        : "You're no longer acting as this workspace, so members' conversations here were closed.");
-    }
-  }, [scopeKey]);
+    revoke(message);
+  }, [revoke, scopeKey]);
 
   useEffect(() => {
     const onFocus = () => { void revalidate(); };
@@ -184,12 +190,15 @@ function MemberConversationsForWorkspace({ scopeKey }: { scopeKey: string }) {
     setLoadingMore(false);
     if (mine !== generation.current) return;
     if (error) {
-      toast.error("Couldn't load more members' conversations. Try again.");
+      const message = String(error.message ?? "");
+      // A refusal is not a failed fetch: the rows already shown were read under an authority that is gone.
+      if (REFUSED.test(message)) revoke(message);
+      else toast.error("Couldn't load more members' conversations. Try again.");
       return;
     }
     const rows = (data ?? []) as MemberThread[];
     setList({ phase: "ready", threads: [...list.threads, ...rows], hasMore: rows.length === PAGE });
-  }, [list, loadingMore, scopeKey]);
+  }, [list, loadingMore, revoke, scopeKey]);
 
   useEffect(() => {
     setExpanded(false);
@@ -247,17 +256,22 @@ function MemberConversationsForWorkspace({ scopeKey }: { scopeKey: string }) {
     const { data, error } = await (supabase as any).rpc("operator_open_member_thread", {
       _thread_id: opened.threadId, _expected_tenant: scopeKey, _before_seq: opened.earlierBeforeSeq,
     });
-    if (epoch !== scopeEpoch.current) return;
+    // Free the button first: a reply dropped as stale must not leave it on "Loading…" for the
+    // conversation opened after it (Codex review of 290b942e).
     setLoadingEarlier(false);
+    if (epoch !== scopeEpoch.current) return;
     if (error) {
-      toast.error("Couldn't load earlier messages. Try again.");
+      const message = String(error.message ?? "");
+      // A refusal is not a failed fetch: this workspace was taken back, so the transcript goes too.
+      if (REFUSED.test(message)) revoke(message);
+      else toast.error("Couldn't load earlier messages. Try again.");
       return;
     }
     const earlier = Array.isArray(data.turns) ? data.turns : [];
     setOpened((current) => current && current.threadId === opened.threadId
       ? { ...current, turns: [...earlier, ...current.turns], earlierBeforeSeq: typeof data.earlierBeforeSeq === "number" ? data.earlierBeforeSeq : null }
       : current);
-  }, [loadingEarlier, opened, scopeKey]);
+  }, [loadingEarlier, opened, revoke, scopeKey]);
 
   if (list.phase === "idle" || list.phase === "loading") return null;
   if (list.phase === "ready" && list.threads.length === 0) return null;

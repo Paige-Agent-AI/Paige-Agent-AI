@@ -115,7 +115,7 @@ Auth-check location: RAISE EXCEPTION unless caller is admin.
 ### Function: public.admin_bulk_assign_coach
 Grants: authenticated
 Category: A — Intentional user-facing public API
-Justification: Admin coach assignment. Requires `is_admin` or `is_tenant_admin`. (admin_remove_coach_role, formerly listed here, was dropped by 20270510000000.)
+Justification: Admin coach assignment. Requires `is_admin` or `is_tenant_admin`. (admin_remove_coach_role, formerly listed here, was dropped by 20270511000000.)
 
 ### Function: public.claim_client
 Grants: authenticated

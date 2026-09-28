@@ -17,7 +17,7 @@
 -- Named exemptions, each with its reason:
 --   * refusals — they read the value only to refuse it: accept_invitation, change_user_role,
 --     grant_tenant_member_role, revoke_tenant_member_role.
--- The removal paths went with the last rows holding the value (20270510000000).
+-- The removal paths went with the last rows holding the value (20270511000000).
 --
 -- Synthetic fixtures only. Asserts object names and counts, never field values. Rolls back.
 -- ============================================================================

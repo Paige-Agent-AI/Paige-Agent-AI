@@ -1,6 +1,6 @@
 // The paths that removed the retired title role are gone with the last rows that held it. No PAIGE
 // operator tool, capability decision or risk class names the removal, because there is nothing left
-// to remove and the value can no longer be stored. The database side is 20270510000000.
+// to remove and the value can no longer be stored. The database side is 20270511000000.
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";

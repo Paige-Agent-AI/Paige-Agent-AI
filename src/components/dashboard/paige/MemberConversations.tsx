@@ -33,20 +33,27 @@ type MemberThread = {
   message_count: number;
   last_message_at: string | null;
   created_at: string;
+  /** The server's paging key: the time shown for the thread. */
+  sort_at: string;
 };
+
+// A page of the list, and the server's own cap on it. The transcript is windowed by the server too.
+const PAGE = 50;
 
 type OpenedThread = {
   threadId: string;
   ownerName: string;
   ownerEmail: string | null;
   openedAt: Date;
+  /** Where earlier turns begin, or null when the start of the conversation is shown. */
+  earlierBeforeSeq: number | null;
   turns: Array<{ role: "user" | "assistant"; content: string; createdAt: string }>;
 };
 
 type ListState =
   | { phase: "idle" }
   | { phase: "loading" }
-  | { phase: "ready"; threads: MemberThread[] }
+  | { phase: "ready"; threads: MemberThread[]; hasMore: boolean }
   | { phase: "error" };
 
 const REFUSED = /operator_member_threads_not_permitted|operator_not_acting|operator_scope_moved/;
@@ -99,15 +106,36 @@ function MemberConversationsForWorkspace({ scopeKey }: { scopeKey: string }) {
     setList({ phase: "loading" });
     // The workspace this tab shows, asserted; the server's own act-as decides (another tab may have moved it).
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase as any).rpc("operator_list_member_threads", { _expected_tenant: scopeKey });
+    const { data, error } = await (supabase as any).rpc("operator_list_member_threads", { _expected_tenant: scopeKey, _limit: PAGE });
     if (mine !== generation.current) return;
     if (error) {
       // Not an operator who may, or not in an audited act-as: this door does not exist for them.
       setList(REFUSED.test(String(error.message ?? "")) ? { phase: "idle" } : { phase: "error" });
       return;
     }
-    setList({ phase: "ready", threads: (data ?? []) as MemberThread[] });
+    const rows = (data ?? []) as MemberThread[];
+    setList({ phase: "ready", threads: rows, hasMore: rows.length === PAGE });
   }, [scopeKey]);
+
+  const [loadingMore, setLoadingMore] = useState(false);
+  const loadMore = useCallback(async () => {
+    if (list.phase !== "ready" || !list.hasMore || loadingMore) return;
+    const last = list.threads[list.threads.length - 1];
+    const mine = generation.current;
+    setLoadingMore(true);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any).rpc("operator_list_member_threads", {
+      _expected_tenant: scopeKey, _limit: PAGE, _before_sort_at: last.sort_at, _before_thread_id: last.thread_id,
+    });
+    if (mine !== generation.current) return;
+    setLoadingMore(false);
+    if (error) {
+      toast.error("Couldn't load more members' conversations. Try again.");
+      return;
+    }
+    const rows = (data ?? []) as MemberThread[];
+    setList({ phase: "ready", threads: [...list.threads, ...rows], hasMore: rows.length === PAGE });
+  }, [list, loadingMore, scopeKey]);
 
   useEffect(() => {
     setExpanded(false);
@@ -147,11 +175,35 @@ function MemberConversationsForWorkspace({ scopeKey }: { scopeKey: string }) {
       threadId: data.threadId,
       ownerName: data.ownerName ?? who,
       ownerEmail: data.ownerEmail ?? null,
+      earlierBeforeSeq: typeof data.earlierBeforeSeq === "number" ? data.earlierBeforeSeq : null,
       // The recorded time, read back from the server's audit row; the browser clock is only a fallback.
       openedAt: data.openedAt ? new Date(data.openedAt) : new Date(),
       turns: Array.isArray(data.turns) ? data.turns : [],
     });
   }, [load, opening, pending, scopeKey]);
+
+  // Earlier turns of the open conversation, a window at a time. Each read is an open of its own on the
+  // server and is recorded as one.
+  const [loadingEarlier, setLoadingEarlier] = useState(false);
+  const loadEarlier = useCallback(async () => {
+    if (!opened || opened.earlierBeforeSeq == null || loadingEarlier) return;
+    const epoch = scopeEpoch.current;
+    setLoadingEarlier(true);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any).rpc("operator_open_member_thread", {
+      _thread_id: opened.threadId, _expected_tenant: scopeKey, _before_seq: opened.earlierBeforeSeq,
+    });
+    if (epoch !== scopeEpoch.current) return;
+    setLoadingEarlier(false);
+    if (error) {
+      toast.error("Couldn't load earlier messages. Try again.");
+      return;
+    }
+    const earlier = Array.isArray(data.turns) ? data.turns : [];
+    setOpened((current) => current && current.threadId === opened.threadId
+      ? { ...current, turns: [...earlier, ...current.turns], earlierBeforeSeq: typeof data.earlierBeforeSeq === "number" ? data.earlierBeforeSeq : null }
+      : current);
+  }, [loadingEarlier, opened, scopeKey]);
 
   if (list.phase === "idle" || list.phase === "loading") return null;
   if (list.phase === "ready" && list.threads.length === 0) return null;
@@ -211,6 +263,16 @@ function MemberConversationsForWorkspace({ scopeKey }: { scopeKey: string }) {
                   </li>
                 ))}
               </ul>
+              {list.hasMore && (
+                <button
+                  type="button"
+                  disabled={loadingMore}
+                  onClick={() => void loadMore()}
+                  className="mt-1 w-full rounded-lg px-2 py-1.5 text-left text-xs font-medium text-foreground hover:bg-muted disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {loadingMore ? "Loading…" : "Show more"}
+                </button>
+              )}
             </div>
           )}
         </>
@@ -246,6 +308,13 @@ function MemberConversationsForWorkspace({ scopeKey }: { scopeKey: string }) {
             </DialogDescription>
           </DialogHeader>
           <ol className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5" aria-label={`${opened?.ownerName ?? "Member"}'s messages`}>
+            {opened?.earlierBeforeSeq != null && (
+              <li>
+                <Button variant="ghost" size="sm" disabled={loadingEarlier} onClick={() => void loadEarlier()}>
+                  {loadingEarlier ? "Loading…" : "Show earlier messages"}
+                </Button>
+              </li>
+            )}
             {opened && opened.turns.length === 0 && (
               <li className="text-sm text-muted-foreground">This conversation has no messages.</li>
             )}

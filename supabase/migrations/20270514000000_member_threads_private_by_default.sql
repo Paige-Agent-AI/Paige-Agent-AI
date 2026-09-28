@@ -76,14 +76,20 @@ CREATE POLICY turns_select_via_thread ON public.paige_chat_turns
 -- The members' private threads in the workspace the caller is acting as: who, how many messages,
 -- when last active. No title and no content. Other people's only; the caller's own threads are
 -- already theirs to read.
-CREATE OR REPLACE FUNCTION public.operator_list_member_threads(_expected_tenant uuid)
+CREATE OR REPLACE FUNCTION public.operator_list_member_threads(
+  _expected_tenant uuid,
+  _limit integer DEFAULT 50,
+  _before_sort_at timestamptz DEFAULT NULL,
+  _before_thread_id uuid DEFAULT NULL
+)
 RETURNS TABLE (
   thread_id uuid,
   owner_name text,
   owner_email text,
   message_count integer,
   last_message_at timestamptz,
-  created_at timestamptz
+  created_at timestamptz,
+  sort_at timestamptz
 )
 LANGUAGE plpgsql
 STABLE
@@ -120,7 +126,8 @@ begin
            au.email::text,
            coalesce(t.message_count, 0)::integer,
            t.last_message_at,
-           t.created_at
+           t.created_at,
+           coalesce(t.last_message_at, t.created_at)
     from public.paige_chat_threads t
     left join public.profiles pr on pr.user_id = t.caller_user_id
     left join auth.users au on au.id = t.caller_user_id
@@ -129,16 +136,26 @@ begin
       and t.studio_session_id is null
       and t.caller_user_id is distinct from auth.uid()
       and coalesce(t.is_archived, false) = false
-    order by t.last_message_at desc nulls last, t.created_at desc;
+      -- A page at a time (Codex review of b5ff3e2e): keyset on the time shown and the id, so a page
+      -- boundary never skips or repeats a thread; the limit is clamped, never trusted.
+      and (_before_sort_at is null
+           or (coalesce(t.last_message_at, t.created_at), t.id) < (_before_sort_at, _before_thread_id))
+    order by coalesce(t.last_message_at, t.created_at) desc, t.id desc
+    limit greatest(1, least(coalesce(_limit, 50), 100));
 end;
 $function$;
 
-REVOKE ALL ON FUNCTION public.operator_list_member_threads(uuid) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.operator_list_member_threads(uuid) TO authenticated;
+REVOKE ALL ON FUNCTION public.operator_list_member_threads(uuid, integer, timestamptz, uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.operator_list_member_threads(uuid, integer, timestamptz, uuid) TO authenticated;
 
 -- Open one member's private thread, on purpose. Records the operator, the thread, the workspace and
 -- the time before anything is returned; a refused open returns nothing and records nothing.
-CREATE OR REPLACE FUNCTION public.operator_open_member_thread(_thread_id uuid, _expected_tenant uuid)
+CREATE OR REPLACE FUNCTION public.operator_open_member_thread(
+  _thread_id uuid,
+  _expected_tenant uuid,
+  _turn_limit integer DEFAULT 200,
+  _before_seq bigint DEFAULT NULL
+)
 RETURNS jsonb
 LANGUAGE plpgsql
 VOLATILE
@@ -151,6 +168,8 @@ declare
   v_owner_name text;
   v_turns jsonb;
   v_opened_at timestamptz;
+  v_limit integer := greatest(1, least(coalesce(_turn_limit, 200), 500));
+  v_earliest bigint;
 begin
   -- Both grants, every call: reading a member's thread is a narrower act inside act-as, so withdrawing
   -- tenant.act_as closes it too, even inside an act-as already open (Codex review of 1b81bb3d).
@@ -187,18 +206,29 @@ begin
     into v_owner_name
   from public.profiles pr where pr.user_id = v_thread.caller_user_id;
 
+  -- The most recent window of turns, oldest first within it (Codex review of b5ff3e2e): a long
+  -- conversation is never sent whole. _before_seq reads the window before an earlier one; each read
+  -- is an open of its own and is recorded as one.
   select coalesce(jsonb_agg(jsonb_build_object(
-           'role', tu.role, 'content', tu.content, 'createdAt', tu.created_at) order by tu.seq), '[]'::jsonb)
-    into v_turns
-  from public.paige_chat_turns tu
-  where tu.thread_id = v_thread.id and tu.role in ('user', 'assistant');
+           'role', w.role, 'content', w.content, 'createdAt', w.created_at) order by w.seq), '[]'::jsonb),
+         min(w.seq)
+    into v_turns, v_earliest
+  from (
+    select tu.seq, tu.role, tu.content, tu.created_at
+    from public.paige_chat_turns tu
+    where tu.thread_id = v_thread.id and tu.role in ('user', 'assistant')
+      and (_before_seq is null or tu.seq < _before_seq)
+    order by tu.seq desc
+    limit v_limit
+  ) w;
 
   INSERT INTO public.paige_audit_log
     (actor_user_id, actor_role, action, target_type, target_id, tenant_id, payload)
   VALUES
     (auth.uid(), 'platform_operator', 'operator.thread.open', 'paige_chat_thread', v_thread.id, v_tenant,
      jsonb_build_object('owner_user_id', v_thread.caller_user_id,
-                        'turn_count', jsonb_array_length(v_turns)))
+                        'turn_count', jsonb_array_length(v_turns),
+                        'before_seq', _before_seq))
   RETURNING created_at INTO v_opened_at;
 
   return jsonb_build_object(
@@ -210,10 +240,15 @@ begin
     -- The time the open was recorded, read back from the audit row, so the viewer never shows a
     -- browser clock as the recorded time (Codex review of 50bda0e5).
     'openedAt', v_opened_at,
+    -- Where earlier turns begin, or null when this window reaches the start of the conversation.
+    'earlierBeforeSeq', case when v_earliest is not null and exists (
+        select 1 from public.paige_chat_turns tu
+        where tu.thread_id = v_thread.id and tu.role in ('user', 'assistant') and tu.seq < v_earliest)
+      then v_earliest end,
     'turns', v_turns
   );
 end;
 $function$;
 
-REVOKE ALL ON FUNCTION public.operator_open_member_thread(uuid, uuid) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.operator_open_member_thread(uuid, uuid) TO authenticated;
+REVOKE ALL ON FUNCTION public.operator_open_member_thread(uuid, uuid, integer, bigint) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.operator_open_member_thread(uuid, uuid, integer, bigint) TO authenticated;

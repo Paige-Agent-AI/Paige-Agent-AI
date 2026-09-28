@@ -65,8 +65,8 @@ CREATE POLICY threads_delete_owner_or_platform ON public.paige_chat_threads
   FOR DELETE TO authenticated
   USING ((caller_user_id = auth.uid()) OR is_platform_owner());
 
-DROP FUNCTION IF EXISTS public.operator_list_member_threads(uuid);
-DROP FUNCTION IF EXISTS public.operator_open_member_thread(uuid, uuid);
+DROP FUNCTION IF EXISTS public.operator_list_member_threads(uuid, integer, timestamptz, uuid);
+DROP FUNCTION IF EXISTS public.operator_open_member_thread(uuid, uuid, integer, bigint);
 ```
 
 The `operator.thread.open` audit rows already written stay; they are the record of what happened. `operator_open_act_as_tenant()` belongs to #1554 and is not touched.

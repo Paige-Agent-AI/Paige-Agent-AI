@@ -10,6 +10,8 @@ const h = vi.hoisted(() => ({
   openResult: { data: null as unknown, error: null as null | { message: string } },
   calls: [] as Array<{ name: string; args?: unknown }>,
   openGate: null as null | Promise<unknown>,
+  listPages: null as null | Array<{ data: unknown[]; error: null }>,
+  openPages: null as null | Array<{ data: unknown; error: null }>,
   toasts: [] as string[],
 }));
 
@@ -17,8 +19,8 @@ vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     rpc: (name: string, args?: unknown) => {
       h.calls.push({ name, args });
-      if (name === "operator_list_member_threads") return Promise.resolve(h.listResult);
-      if (name === "operator_open_member_thread") return h.openGate ?? Promise.resolve(h.openResult);
+      if (name === "operator_list_member_threads") return Promise.resolve(h.listPages?.shift() ?? h.listResult);
+      if (name === "operator_open_member_thread") return h.openGate ?? Promise.resolve(h.openPages?.shift() ?? h.openResult);
       return Promise.resolve({ data: null, error: null });
     },
   },
@@ -53,6 +55,8 @@ beforeEach(() => {
   h.calls.length = 0;
   h.toasts.length = 0;
   h.openGate = null;
+  h.listPages = null;
+  h.openPages = null;
 });
 afterEach(() => {
   act(() => root.unmount());
@@ -100,7 +104,7 @@ describe("members' conversations", () => {
     await act(async () => { byText("Test Member")!.click(); });
     await act(async () => { byText("Open conversation")!.click(); await Promise.resolve(); });
     expect(opens()).toEqual([{ name: "operator_open_member_thread", args: { _thread_id: "thread-1", _expected_tenant: "tenant-a" } }]);
-    expect(h.calls.find((c) => c.name === "operator_list_member_threads")?.args).toEqual({ _expected_tenant: "tenant-a" });
+    expect(h.calls.find((c) => c.name === "operator_list_member_threads")?.args).toEqual({ _expected_tenant: "tenant-a", _limit: 50 });
     const dialog = document.querySelector('[role="dialog"]');
     expect(dialog?.textContent).toContain("Test Member's conversation with PAIGE");
     expect(dialog?.textContent).toContain("Read only");
@@ -216,5 +220,38 @@ describe("members' conversations", () => {
     expect(rows[1]).toContain("slee@example.test");
     await act(async () => { byText("slee@example.test")!.click(); });
     expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain("slee@example.test");
+  });
+
+  it("lists fifty at a time and fetches the next page from the last row on request", async () => {
+    const at = (i: number) => new Date(Date.UTC(2026, 8, 28, 0, 0) - i * 60000).toISOString();
+    const page = (from: number, n: number) => Array.from({ length: n }, (_, i) => ({
+      ...thread, thread_id: `t${from + i}`, owner_name: `Member ${from + i}`, owner_email: `m${from + i}@example.test`, sort_at: at(from + i),
+    }));
+    h.listPages = [{ data: page(0, 50), error: null }, { data: page(50, 3), error: null }];
+    await mount();
+    await act(async () => { byText("Members' conversations")!.click(); });
+    expect(host.querySelectorAll("li button").length).toBe(50);
+    await act(async () => { byText("Show more")!.click(); await Promise.resolve(); });
+    const lists = h.calls.filter((c) => c.name === "operator_list_member_threads");
+    expect(lists[1].args).toEqual({ _expected_tenant: "tenant-a", _limit: 50, _before_sort_at: at(49), _before_thread_id: "t49" });
+    expect(host.querySelectorAll("li button").length).toBe(53);
+    expect(byText("Show more")).toBeUndefined();
+  });
+
+  it("shows earlier messages on request, above the ones already shown", async () => {
+    h.openPages = [
+      { data: { threadId: "thread-1", ownerName: "Test Member", earlierBeforeSeq: 7, turns: [{ role: "user", content: "recent turn", createdAt: "2026-09-28T01:00:00Z" }] }, error: null },
+      { data: { threadId: "thread-1", ownerName: "Test Member", earlierBeforeSeq: null, turns: [{ role: "user", content: "first turn", createdAt: "2026-09-27T01:00:00Z" }] }, error: null },
+    ];
+    await mount();
+    await act(async () => { byText("Members' conversations")!.click(); });
+    await act(async () => { byText("Test Member")!.click(); });
+    await act(async () => { byText("Open conversation")!.click(); await Promise.resolve(); });
+    await act(async () => { byText("Show earlier messages")!.click(); await Promise.resolve(); });
+    expect(opens()[1].args).toEqual({ _thread_id: "thread-1", _expected_tenant: "tenant-a", _before_seq: 7 });
+    const text = document.querySelector('[role="dialog"]')?.textContent ?? "";
+    expect(text.indexOf("first turn")).toBeGreaterThan(-1);
+    expect(text.indexOf("first turn")).toBeLessThan(text.indexOf("recent turn"));
+    expect(byText("Show earlier messages")).toBeUndefined();
   });
 });

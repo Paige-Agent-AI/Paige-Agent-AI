@@ -2,7 +2,7 @@
 -- purpose, and recorded when opened (owner ruling 2026-09-28, after a super_admin acting as a
 -- workspace was shown a member's conversation as their own). Synthetic fixtures; rolled back.
 BEGIN;
-SELECT plan(37);
+SELECT plan(44);
 
 INSERT INTO auth.users (id, aud, role, email) VALUES
   ('0a5c0000-0000-4000-8000-000000000001','authenticated','authenticated','threads-super@tests.invalid'),
@@ -81,9 +81,9 @@ CREATE FUNCTION pg_temp.thread_exists(_id uuid) RETURNS boolean LANGUAGE sql SEC
 $$;
 
 -- Grant surface.
-SELECT ok(NOT has_function_privilege('anon','public.operator_open_member_thread(uuid,uuid)','EXECUTE'),
+SELECT ok(NOT has_function_privilege('anon','public.operator_open_member_thread(uuid,uuid,integer,bigint)','EXECUTE'),
   'the audited open is not callable anonymously');
-SELECT ok(NOT has_function_privilege('anon','public.operator_list_member_threads(uuid)','EXECUTE'),
+SELECT ok(NOT has_function_privilege('anon','public.operator_list_member_threads(uuid,integer,timestamptz,uuid)','EXECUTE'),
   'the member list is not callable anonymously');
 SELECT ok(NOT has_function_privilege('authenticated','public.operator_open_act_as_tenant()','EXECUTE'),
   'the act-as receipt helper (from #1554) is not a door of its own');
@@ -143,6 +143,31 @@ SELECT is((public.operator_open_member_thread('0a5c0000-0000-4000-8000-000000000
   'the open returns the recorded time of its own audit row');
 SELECT is(public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f1', '0a5c0000-0000-4000-8000-00000000a001') ->> 'ownerEmail', 'threads-member@tests.invalid',
   'the open names the member by email too');
+-- Paged, both ways, so neither a large workspace nor a long conversation is sent whole
+-- (Codex review of b5ff3e2e). A second, older member thread gives the list a second page.
+RESET ROLE;
+INSERT INTO public.paige_chat_threads (id, tenant_id, caller_user_id, lens, title, message_count, last_message_at) VALUES
+  ('0a5c0000-0000-4000-8000-0000000000f5','0a5c0000-0000-4000-8000-00000000a001',
+   '0a5c0000-0000-4000-8000-000000000003','coach','Older member title',0,now() - interval '1 day');
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.as_caller('0a5c0000-0000-4000-8000-000000000001');
+SELECT is((SELECT array_agg(thread_id::text) FROM public.operator_list_member_threads('0a5c0000-0000-4000-8000-00000000a001', 1)),
+  ARRAY['0a5c0000-0000-4000-8000-0000000000f1'], 'a page of one holds the most recent member thread');
+SELECT is((SELECT array_agg(l2.thread_id::text) FROM public.operator_list_member_threads('0a5c0000-0000-4000-8000-00000000a001', 1) l1,
+             LATERAL public.operator_list_member_threads('0a5c0000-0000-4000-8000-00000000a001', 1, l1.sort_at, l1.thread_id) l2),
+  ARRAY['0a5c0000-0000-4000-8000-0000000000f5'], 'the cursor from that page returns the next, older thread');
+SELECT is((SELECT count(*)::int FROM public.operator_list_member_threads('0a5c0000-0000-4000-8000-00000000a001', 1000)), 2,
+  'an oversized limit is clamped, never an error, and still returns every thread here');
+-- The transcript comes newest-first in a bounded window, with a cursor to earlier turns.
+SELECT is(jsonb_array_length(public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f1', '0a5c0000-0000-4000-8000-00000000a001', 1) -> 'turns'), 1,
+  'a window of one turn returns one turn');
+SELECT is((public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f1', '0a5c0000-0000-4000-8000-00000000a001', 1) -> 'turns' -> 0 ->> 'content'), 'paige answer to the member',
+  'the window holds the most recent turn');
+SELECT ok((public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f1', '0a5c0000-0000-4000-8000-00000000a001', 1) ->> 'earlierBeforeSeq') IS NOT NULL,
+  'a window that is not the whole conversation says where earlier turns begin');
+SELECT is((public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f1', '0a5c0000-0000-4000-8000-00000000a001', 1,
+            (public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f1', '0a5c0000-0000-4000-8000-00000000a001', 1) ->> 'earlierBeforeSeq')::bigint) -> 'turns' -> 0 ->> 'content'),
+  'member question', 'the cursor reads the earlier turn, and the earliest window has no further cursor');
 SELECT throws_ok($$SELECT public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f2', '0a5c0000-0000-4000-8000-00000000a001')$$,
   'P0002', 'member_thread_not_available', 'a thread in another workspace cannot be opened');
 SELECT throws_ok($$SELECT public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f4', '0a5c0000-0000-4000-8000-00000000a001')$$,
@@ -166,7 +191,7 @@ UPDATE public.profiles SET active_tenant_id = '0a5c0000-0000-4000-8000-00000000a
  WHERE user_id = '0a5c0000-0000-4000-8000-000000000001';
 SELECT throws_ok($$SELECT public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f1', '0a5c0000-0000-4000-8000-00000000a001')$$,
   '42501', 'operator_not_acting', 'a pointer with no open enter receipt cannot open a member''s thread');
-SELECT is(pg_temp.opens(), 3, 'a refused open records nothing');
+SELECT is(pg_temp.opens(), 8, 'a refused open records nothing');
 
 -- The capability is the super_admin's today (G1's default rule for an unlisted capability).
 SELECT pg_temp.as_caller('0a5c0000-0000-4000-8000-000000000002');
@@ -187,7 +212,7 @@ SELECT throws_ok($$SELECT * FROM public.operator_list_member_threads('0a5c0000-0
   '42501', 'operator_member_threads_not_permitted', 'with act-as withdrawn, the list is refused inside an open act-as');
 SELECT throws_ok($$SELECT public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f1', '0a5c0000-0000-4000-8000-00000000a001')$$,
   '42501', 'operator_member_threads_not_permitted', 'with act-as withdrawn, the open is refused inside an open act-as');
-SELECT is(pg_temp.opens(), 3, 'a refused open after withdrawal records nothing');
+SELECT is(pg_temp.opens(), 8, 'a refused open after withdrawal records nothing');
 
 SELECT * FROM finish();
 ROLLBACK;

@@ -7,7 +7,8 @@
   This check ships before the facts reach PAIGE (A1-2). Nothing calls it yet; A1-1b wires it into the customer-bound exits.
   - **What:** `outbound_private_business_facts_found(tenant, texts)`, migration `20270512090000`. It returns which of the three it finds and Setup does not license (`address`, `phone`, `website`), never a value.
   - **Licensed, through the spine:** "confirmed in Setup" is the spine's one answer, `business_identity_readiness()`: state `owner_confirmed`, source `setup`. The value licensed is the Setup record it names, the legal profile's `support_phone` and `website_url`.
-    - A confirmed number is recognised in any form, domestic or international, with or without "(0)", and taken out of the draft before any other stored number is looked for.
+    - A confirmed number is taken out of the draft before any other stored number is looked for, in any form, domestic or international, with or without "(0)". Only a whole written number is taken out, so a different number that ends in the same digits is still found.
+    - The confirmed website is taken out the same way, by its own host (and any subdomain of it) or, on a shared platform, its own page. A parent domain, a sibling subdomain or a host inside its query string is still found.
     - Any other stored copy is held back: a legacy brand value, a staged proposal, a phone kept only in the private brief, or an older number on the same exchange.
     - The owner-typed exemption of the interim rule (a) is gone.
   - **The registered address is never licensed.** Setup records no "publicly shareable" state for it. Searched: shareable, share_address/public_address/address_public, show/display/hide address, address visibility, publicly shareable/isPublicAddress, business_address/mailing_address, and shareable_address, across migrations, `src` and functions. Read: Setup's Business address section (`SoloBusinessContextSetup.tsx`), the Public Presence facts drawer (`settings-public-presence.tsx`), the provenance shape (source, confidence, confirmedAt), and the legal profile's columns. None of them holds it. Adding the state is a Setup change that goes back to the owner and the coordinator first.
@@ -22,7 +23,7 @@
     - A phone is found by any seven consecutive digits of a stored number, split into numbers at letters. A six-digit number and a letter number are found too.
     - A website is found by its host and subdomains, and on a shared platform (Paige's own included) by its page, as in `paigeagent.ai/book/<calendar>`.
   - **Deliberately not matched:**
-    - a town, district, county or country line: any line with no number after the numbered street line; with no numbered line, the last two of three or more; and the stored city or region
+    - a town, district, county or country line: any line with no number after the numbered street line (the first that starts with a number and names more than a floor or room; a house number on its own line is joined to the next); with no numbered line, the last two of three or more lines that name a place; and the stored city or region
     - a line of floor, suite or room words
     - a fragment of the number, and the digits of a note beside it
     - the business's e-mail address
@@ -35,6 +36,8 @@
     - the confirmed number written without its area code (held back)
     - a different number sharing seven digits in a row with a stored one (held back)
     - a free-text address whose first line is a house name with no number or street word (found by its other lines)
+    - the confirmed number joined in the text to digits right after it, as in "(9am-5pm)" (held back)
+    - a number carrying all of the confirmed number's national digits under another country code (taken for it)
   - **Authority (§59):**
     - service_role only; the body refuses every other caller, an unknown tenant, and more than 256 KB of text
     - all five functions search `pg_catalog` first and `pg_temp` last

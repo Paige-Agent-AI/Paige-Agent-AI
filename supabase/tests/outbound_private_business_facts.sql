@@ -11,7 +11,7 @@
 -- spine's business_identity_readiness() resolves it, passes and nothing else does; that it reads
 -- only the tenant it is given and refuses an unknown one; and that nobody but the server may ask it.
 BEGIN;
-SELECT plan(178);
+SELECT plan(202);
 
 -- ── Grants ──────────────────────────────────────────────────────────────────────────────────
 SELECT ok(NOT has_function_privilege(r.rolname, f.fn, 'EXECUTE'),
@@ -49,7 +49,7 @@ INSERT INTO public.tenants (id, slug, name, owner_user_id, status, account_type,
    'active','standalone','{}'::jsonb,
    jsonb_build_object('phone','+44 161 496 0556','website','https://old-licensed.example',
                       'business_phone','020 7946 0555 07700 900557',
-                      'business_brief', jsonb_build_object('website','https://licensed-studio.example')));
+                      'business_brief', jsonb_build_object('website','https://brief-studio.example')));
 INSERT INTO public.tenant_members (tenant_id, user_id, role, status, is_owner, joined_at) VALUES
   ('0c1a0000-0000-4000-8000-00000000a001','0c1a0000-0000-4000-8000-000000000001','owner','active',true,now()),
   ('0c1a0000-0000-4000-8000-00000000a002','0c1a0000-0000-4000-8000-000000000002','owner','active',true,now()),
@@ -191,6 +191,19 @@ INSERT INTO src VALUES
   (136,'private.address','St Albans, Hertfordshire','Workshops across St Albans.','{}','a town led by a street word, stored as the whole address'),
   (137,'brand.phone','Open 9-5 weekdays','We are open 9-5 weekdays.','{}','opening hours with two digits stored in the phone field'),
   (138,'legal.support_phone','+44 (0)20 7946 0138','Call 020 7946 0138.','{}','a phone confirmed with "(0)", written domestically'),
+  -- A floor line or a lone house number first is not the numbered street line (§39 round 4).
+  (139,'legal.registered_address','1st Floor, Mill House, Station Road, Leeds','Come to Mill House, Station Road.',ARRAY['address'],'a building line after a floor line'),
+  (140,'private.address','4th Floor, The Old Mill, Mill Lane, Leeds','Find us at The Old Mill on Mill Lane.',ARRAY['address'],'a named building after a floor line'),
+  (141,'legal.registered_address','12, Mill Lane, Little Snoring, Norfolk','Visit 12 Mill Lane.',ARRAY['address'],'a house number on a line of its own'),
+  (142,'brand.address','2, Rose Cottage, Mill Lane, Leeds','Visit 2 Rose Cottage.',ARRAY['address'],'a house number on its own before a named house'),
+  (143,'legal.registered_address','3rd Floor, Mill House, Leeds, LS1','Mill House is where we are.',ARRAY['address'],'a building after a floor line, with a postcode last'),
+  (144,'private.address','12, Mill Lane, Leeds','Visit 12 Mill Lane.',ARRAY['address'],'a house number on its own in three lines'),
+  (145,'legal.registered_address','1st Floor, Mill House, Leeds','Mill House is where we are.',ARRAY['address'],'a floor line does not count towards the last two'),
+  (146,'legal.registered_address','1st Floor, 10 Station Road, Canary Wharf, London','We meet clients in Canary Wharf.','{}','a district after the street, with a floor line first'),
+  (147,'private.address','12, Mill Lane, Canary Wharf, London','We meet clients in Canary Wharf.','{}','a district after a joined house number and street'),
+  -- A short number joined in the text to the digits after it.
+  (148,'brand.phone','13 20 00','Call 13 20 00 - 9am to 5pm.',ARRAY['phone'],'a six-digit number followed by opening hours'),
+  (149,'brand.phone','13 20 00','Ring 13 20 00 / 24 hours.',ARRAY['phone'],'a six-digit number followed by a slash and a number'),
   -- Addresses: suites, ranges, missing separators, street words and HTML.
   (45,'legal.registered_street','123 Main St., Suite 400','Come to 123 Main Street.',ARRAY['address'],'a street stored with its suite'),
   (46,'legal.registered_street','123 Main St #400','Come to 123 Main Street.',ARRAY['address'],'a street stored with "#400"'),
@@ -317,6 +330,8 @@ SELECT is(public.outbound_private_business_facts_found((SELECT l FROM t), ARRAY[
   ARRAY['phone'], 'an older phone Setup never confirmed is held back');
 SELECT is(public.outbound_private_business_facts_found((SELECT l FROM t), ARRAY['See old-licensed.example']),
   ARRAY['website'], 'an older website Setup never confirmed is held back');
+SELECT is(public.outbound_private_business_facts_found((SELECT l FROM t), ARRAY['See brief-studio.example']),
+  ARRAY['website'], 'a website held only in the business brief is held back: the spine confirms the Setup record alone');
 SELECT is(public.outbound_private_business_facts_found((SELECT l FROM t), ARRAY['Text 07700 900557.']),
   ARRAY['phone'], 'a second number stored beside the confirmed one is held back');
 SELECT is(public.outbound_private_business_facts_found((SELECT l FROM t), ARRAY['Visit 5 Licensed Lane.']),
@@ -324,6 +339,52 @@ SELECT is(public.outbound_private_business_facts_found((SELECT l FROM t), ARRAY[
 SELECT is(public.outbound_private_business_facts_found((SELECT l FROM t),
     ARRAY['Visit 5 Licensed Lane, call 020 7946 0555, or book at licensed-studio.example']),
   ARRAY['address'], 'with all three in one draft, only the address is held back');
+
+-- ── What Setup confirms is taken out of the draft, and nothing beside it (§39 round 4) ────────
+-- Each tenant's Setup record confirms a phone or a website; place names one other stored copy
+-- (or none). The confirmed value is taken out only as a whole written number, or by its own host
+-- or page, so a different number ending in the same digits, a parent domain, a sibling subdomain
+-- or a host inside the confirmed link's query string is still held back.
+CREATE TEMP TABLE lic (n int, phone text, site text, place text, stored text, draft text, expect text[], what text);
+INSERT INTO lic VALUES
+  ( 1,'+1 212 555 0147',NULL,'private.phone','(312) 555-0147','Call me on (312) 555-0147.',ARRAY['phone'],'a different number ending in the confirmed one''s last nine digits'),
+  ( 2,'+1 234 5678',NULL,'private.phone','(212) 345-6789','Call (212) 345-6789.',ARRAY['phone'],'a longer number holding the confirmed one''s digits in its middle'),
+  ( 3,'+44 20 7946 0555',NULL,'private.phone','07946 055512','Text 07946 055512.',ARRAY['phone'],'a number starting with the confirmed one''s digits, less its area code'),
+  ( 4,'0044 20 7946 0555',NULL,'private.phone','07946 055512','Text 07946 055512.',ARRAY['phone'],'the same, with the confirmed number stored after "00"'),
+  ( 5,'1 415 555 0132',NULL,NULL,NULL,'Call (415) 555-0132.','{}','a number confirmed with a country code and no "+", written domestically'),
+  ( 6,'+44 20 7946 0555',NULL,NULL,NULL,'Call 020 7946 0555, 020 7946 0555.','{}','the confirmed number written twice in a row'),
+  ( 7,NULL,'https://coaching.janedoe.example','brand.website','janedoe.example','See janedoe.example/diary.',ARRAY['website'],'a parent domain of the confirmed website'),
+  ( 8,NULL,'https://coaching.janedoe.example','brand.website','janedoe.example','See private.janedoe.example.',ARRAY['website'],'a sibling subdomain of the confirmed website'),
+  ( 9,NULL,'https://coaching.janedoe.example','brand.website','janedoe.example','Book at coaching.janedoe.example/book.','{}','the confirmed subdomain, with a parent domain stored beside it'),
+  (10,NULL,'https://linktr.ee/acme?from=secret-home.example','brand.website','secret-home.example','See secret-home.example.',ARRAY['website'],'a host named inside the confirmed link''s query string'),
+  (11,NULL,'https://linktr.ee/acme?from=secret-home.example','brand.website','secret-home.example','All my links: linktr.ee/acme','{}','the confirmed page on a shared platform'),
+  (12,NULL,'https://licensed.example',NULL,NULL,'See licensed.example and licensed.example/book','{}','the confirmed website written twice');
+DO $lic$
+DECLARE
+  r record;
+  v_id uuid;
+  v_key text;
+BEGIN
+  FOR r IN SELECT * FROM lic ORDER BY n LOOP
+    v_id := ('0c1a0000-0000-4000-8000-0000000c' || lpad(r.n::text, 4, '0'))::uuid;
+    v_key := split_part(r.place, '.', 2);
+    INSERT INTO public.tenants (id, slug, name, owner_user_id, status, account_type, features, brand)
+    VALUES (v_id, 'facts-licence-' || r.n, 'Facts Licence ' || r.n, '0c1a0000-0000-4000-8000-000000000004',
+            'active', 'standalone', '{}'::jsonb,
+            CASE WHEN split_part(r.place, '.', 1) = 'brand' THEN jsonb_build_object(v_key, r.stored) ELSE '{}'::jsonb END);
+    INSERT INTO public.tenant_legal_profile (tenant_id, legal_business_name, support_phone, website_url)
+    VALUES (v_id, 'Licence Proof Ltd', r.phone, r.site);
+    IF split_part(r.place, '.', 1) = 'private' THEN
+      INSERT INTO public.tenant_setup_private_context (tenant_id, private_brief)
+      VALUES (v_id, jsonb_build_object(v_key, r.stored));
+    END IF;
+  END LOOP;
+END
+$lic$;
+SELECT is(public.outbound_private_business_facts_found(
+    ('0c1a0000-0000-4000-8000-0000000c' || lpad(n::text, 4, '0'))::uuid, ARRAY[draft]),
+  expect, format('confirmed in Setup, %s: %s', CASE WHEN expect = '{}'::text[] THEN 'passes' ELSE 'held back' END, what))
+FROM lic ORDER BY n;
 
 -- ── Only the tenant it is given ─────────────────────────────────────────────────────────────
 SELECT is(public.outbound_private_business_facts_found((SELECT a FROM t),

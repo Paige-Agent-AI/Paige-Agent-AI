@@ -37,8 +37,11 @@
 -- 'setup'. The value it licenses is the Setup record that answer names (the legal profile's
 -- support_phone and website_url), and a draft carrying that value passes. Any other stored copy
 -- (a legacy brand value, a proposal, a phone kept only in the private brief) is held back until
--- Setup confirms it. For a phone the licence is per seven-digit run, so a different number, or a
--- legacy copy written in a form the confirmed value does not share, is still held back.
+-- Setup confirms it. The confirmed value is taken out of the draft before the stored copies are
+-- looked for: the confirmed phone only where a whole written number is one of its forms (so a
+-- different number ending in the same digits is still held back), and the confirmed website by its
+-- own host, or on a shared platform its own page (so a parent domain, a sibling subdomain, or a
+-- host named inside its query string is still held back).
 -- THE REGISTERED ADDRESS IS NEVER LICENSED. Confirming it in Setup states a legal fact about the
 -- business, not consent to show it to customers, and for a solo operator it is often their home.
 -- Only a "publicly shareable" state would license it, and Setup records no such state. Adding one
@@ -64,11 +67,14 @@
 --             "123 Main St" from "123 Main St Suite 400 Springfield") and up to its first suite
 --             word. A number range adds each end. A postcode or "state ZIP" inside any line is
 --             looked for on its own.
+--             A house number on a line of its own ("12, Mill Lane") is joined to the line after it.
 --             NOT MATCHED: a town, district, county or country ("Leeds", "St. Louis", "Elk Grove",
 --             "Covent Garden", "Hertfordshire"). In a single-line address a line with no digit is
---             a town when it follows the numbered street line, or, when no line is numbered and
---             there are three lines or more, when it is one of the last two; the first line never
---             is, and neither is a line that is the stored city or region. Nor a line made only of
+--             a town when it follows the numbered street line (the first line that starts with a
+--             number and names more than a floor or room, so "1st Floor" is not it), or, when no
+--             line is numbered and three or more lines name a place, when it is one of the last two
+--             of those; the first line never is, and the stored city or region always is. Nor a
+--             line made only of
 --             floor, suite or room words ("First Floor", "Suite 400", "Unit 3", "The Office"). Each
 --             names a place or a room, not this business, and refusing it would refuse every
 --             mention of it.
@@ -76,13 +82,15 @@
 --             numbers at letters (so opening hours, labels, an extension and a second number do not
 --             blur it), and every written form of a number, international or domestic, with or
 --             without its area code, carries seven of its digits in a row. A value holding no number
---             of seven digits is looked for by its six-digit number ("13 20 00"). A letter number
+--             of seven digits is looked for by its six-digit number ("13 20 00") at either end of a
+--             run of digits in the text. A letter number
 --             ("1-800-FLOWERS", "0800 FLOWERS") is looked for as written when it has three or more
 --             digits. In the text, digits are joined across spaces, dots, brackets, plus signs,
 --             slashes and dashes (up to four in a row).
 --             NOT MATCHED: a number written in words, or in letters on one side only.
 --             ALSO HELD BACK, a named cost of reading wide: a different number that shares seven
---             digits in a row with a stored one, typically the same area and exchange.
+--             digits in a row with a stored one, typically the same area and exchange; and the
+--             confirmed number when the text joins it to digits right after it ("… 0555 (9am").
 --   website — By its host, without scheme, "www.", port or path, including any subdomain of it
 --             ("shop.example.com"); international hosts are read as written; a stored value holding
 --             prose or two addresses is read address by address.
@@ -103,7 +111,9 @@
 -- tenant is resolved by the server that calls it, never by a browser, and no signed-in caller gets
 -- an oracle for any tenant's stored facts. An unknown tenant is refused, never read as "nothing
 -- stored". It reads only the tenant it is given and returns only kinds. All five functions search
--- pg_catalog first and pg_temp last, so no temporary type or function can shadow what they use.
+-- pg_catalog first and pg_temp last. The spine's resolver sets its own search path, which does not
+-- name pg_temp, so a temporary type made in the calling session can break that call: the check
+-- then raises, and the caller refuses the draft.
 
 create or replace function public.outbound_fact_decode(p_text text)
 returns text
@@ -306,7 +316,13 @@ declare
   v_licensed_numbers text[] := '{}'::text[];
   v_text_digits_masked text;
   v_licensed_site text := '';
+  v_site_text text;
+  v_mode text;
   v_numbered_at integer;
+  v_joined text[];
+  v_place_count integer;
+  v_place_i integer;
+  v_is_place boolean;
   v_found text[] := '{}'::text[];
   v_towns text[];
   v_source text;
@@ -405,30 +421,58 @@ begin
       from regexp_split_to_table(public.outbound_fact_decode(v_source),
                                  '[,;|/\n\r]+|[[:space:]]+-[[:space:]]+') as p
       where btrim(p) <> '');
+    -- A house number on a line of its own ("12, Mill Lane") belongs to the line after it.
+    v_joined := '{}'::text[];
+    v_i := 1;
+    while v_i <= coalesce(array_length(v_parts, 1), 0) loop
+      if v_i < array_length(v_parts, 1)
+         and btrim(public.outbound_fact_street_text(v_parts[v_i]))
+             ~ '^[0-9]{1,4}[a-z]?( [0-9]{1,4}[a-z]?)?$' then
+        v_joined := v_joined || (v_parts[v_i] || ' ' || v_parts[v_i + 1]);
+        v_i := v_i + 2;
+      else
+        v_joined := v_joined || v_parts[v_i];
+        v_i := v_i + 1;
+      end if;
+    end loop;
+    v_parts := v_joined;
     v_count := coalesce(array_length(v_parts, 1), 0);
-    -- Where the numbered street line is. Every line after it names a town, district, county,
-    -- postcode or country, never the business.
+    -- Where the numbered street line is: the first line that starts with a number and names more
+    -- than a floor or a room ("1st Floor" does not). Every line after it names a town, district,
+    -- county, postcode or country, never the business.
     v_numbered_at := coalesce((
       select min(o) from unnest(v_parts) with ordinality as x(part, o)
-      where btrim(public.outbound_fact_street_text(x.part)) ~ '^[0-9]'), 0);
+      where btrim(public.outbound_fact_street_text(x.part)) ~ '^[0-9]'
+        and exists (select 1
+                    from unnest(string_to_array(btrim(public.outbound_fact_street_text(x.part)), ' ')) as w
+                    where w !~ ('^' || c_room_words || '$'))), 0);
+    -- With no numbered line, only the lines that name a place count towards the last two.
+    v_place_count := (
+      select count(*) from unnest(v_parts) as x(part)
+      where exists (select 1
+                    from unnest(string_to_array(btrim(public.outbound_fact_street_text(x.part)), ' ')) as w
+                    where w !~ ('^' || c_room_words || '$')));
+    v_place_i := 0;
     for v_i in 1 .. v_count loop
       v_part := v_parts[v_i];
       v_norm := btrim(public.outbound_fact_street_text(v_part));
       v_words := string_to_array(v_norm, ' ');
       v_cands := '{}'::text[];
+      v_is_place := exists (select 1 from unnest(v_words) as w where w !~ ('^' || c_room_words || '$'));
+      if v_is_place then v_place_i := v_place_i + 1; end if;
       -- The line itself, unless it names only a floor, a room or a town. In a single-line value
       -- a line with no number is a town when it follows the numbered street line, or, with no
-      -- numbered line and three lines or more, when it is one of the last two. (So the first line
-      -- never is.)
+      -- numbered line and three place lines or more, when it is one of the last two of them. (So
+      -- the first line never is.)
       if length(v_norm) >= 6 and v_norm ~ '[[:alpha:]]'
-         and exists (select 1 from unnest(v_words) as w where w !~ ('^' || c_room_words || '$'))
+         and v_is_place
          and not (v_norm = any(v_towns))
          and (v_norm ~ '[0-9]'
               or (v_kind = 'street' and v_i = 1)
               or (v_kind <> 'postal'
                   and (v_kind <> 'single'
                        or (v_numbered_at > 0 and v_i < v_numbered_at)
-                       or (v_numbered_at = 0 and (v_count < 3 or v_i <= v_count - 2)))
+                       or (v_numbered_at = 0 and (v_place_count < 3 or v_place_i <= v_place_count - 2)))
                   and v_norm ~ ('[[:alnum:]] ' || c_street_words || '\M'))) then
         v_cands := v_cands || v_norm;
       end if;
@@ -474,34 +518,42 @@ begin
   -- ── Phone ────────────────────────────────────────────────────────────────────────────────
   v_text_digits := public.outbound_fact_digit_runs(v_scan);
   v_text_alnum := regexp_replace(lower(v_scan), '[^[:alnum:]]', '', 'g');
-  -- The confirmed number is the owner's to share however the draft writes it, so every
-  -- occurrence of it is taken out of the draft before any other stored number is looked for.
-  -- It is recognised by its national number: as stored, less a trunk 0, or, when stored with its
-  -- country code, less a country code of one, two or three digits (which also covers "+44 (0)").
-  -- What is left of a prefix ("44", "0") is shorter than any number looked for.
+  -- The confirmed number is the owner's to share however the draft writes it, so it is taken out
+  -- of the draft before any other stored number is looked for. Only a whole written number is
+  -- taken out, and only when it is one of the confirmed number's forms: as stored; less a trunk 0;
+  -- or, reading its first one, two or three digits as a country code, the national number with or
+  -- without a trunk 0 ("+44 (0)20…", "020…", "20…") and with or without "+"/"00"; or its whole
+  -- national number behind any country code. A different number that merely ends in the same
+  -- digits is never a whole form, so it is still found. (Named limit: a number carrying all of the
+  -- confirmed number's national digits under another country code is taken for it.)
   for v_run in
     select m[1]
     from regexp_matches(v_licensed_phone, '([+]?[0-9](?:[ ().+/-]{0,4}[0-9])*)', 'g') as m
   loop
-    v_digits := regexp_replace(v_run, '[^0-9]', '', 'g');
+    v_digits := regexp_replace(regexp_replace(v_run, '[^0-9]', '', 'g'), '^00', '');
     continue when length(v_digits) < 7;
-    if v_run ~ '^[+]' or v_digits ~ '^00' then
-      v_digits := regexp_replace(v_digits, '^00', '');
-      for v_j in 1 .. 3 loop
-        if length(v_digits) - v_j >= 7 then
-          v_licensed_numbers := v_licensed_numbers || substr(v_digits, v_j + 1);
-        end if;
-      end loop;
-    else
-      v_licensed_numbers := v_licensed_numbers || v_digits;
-      if v_digits ~ '^0' and length(v_digits) >= 8 then
-        v_licensed_numbers := v_licensed_numbers || substr(v_digits, 2);
-      end if;
+    v_licensed_numbers := v_licensed_numbers || v_digits || ('00' || v_digits);
+    if v_digits ~ '^0' and length(v_digits) >= 8 then
+      v_licensed_numbers := v_licensed_numbers || substr(v_digits, 2);
+    end if;
+    for v_j in 1 .. 3 loop
+      continue when length(v_digits) - v_j < 7;
+      v_key := substr(v_digits, v_j + 1);
+      v_licensed_numbers := v_licensed_numbers || v_key || ('0' || v_key)
+        || (left(v_digits, v_j) || '0' || v_key) || ('00' || left(v_digits, v_j) || '0' || v_key);
+    end loop;
+    -- Stored domestically ("020 7946 0131"), and written with a country code ("+44 20 7946 0131",
+    -- "+44 (0)20…"): the whole national number, at least eight digits, behind any country code.
+    v_key := regexp_replace(v_digits, '^0', '');
+    if length(v_key) >= 8 then
+      v_licensed_numbers := v_licensed_numbers || ('(00)?[1-9][0-9]{0,2}0?' || v_key);
     end if;
   end loop;
+  -- The digit text is " run run … run ": a form is taken out only between two spaces. The
+  -- trailing space is a lookahead, so a form written twice in a row is taken out both times.
   v_text_digits_masked := v_text_digits;
   foreach v_key in array v_licensed_numbers loop
-    v_text_digits_masked := replace(v_text_digits_masked, v_key, ' ');
+    v_text_digits_masked := regexp_replace(v_text_digits_masked, ' ' || v_key || '(?= )', ' ', 'g');
   end loop;
   v_hit := false;
   <<phones>>
@@ -528,14 +580,15 @@ begin
         end if;
       end loop;
     end loop;
-    -- A short number ("13 20 00") when the value holds no longer one.
+    -- A short number ("13 20 00") when the value holds no longer one: at either end of a run of
+    -- digits, since the text joins digits across a separator ("13 20 00 - 9am" is one run).
     if not v_any_number then
       for v_run in
         select m[1] from regexp_matches(v_value, '([0-9](?:[ ().+/-]{0,4}[0-9])*)', 'g') as m
       loop
         v_digits := regexp_replace(v_run, '[^0-9]', '', 'g');
         continue when length(v_digits) <> 6;
-        if position(' ' || v_digits || ' ' in v_text_digits_masked) > 0 then
+        if v_text_digits_masked ~ (' ' || v_digits || '|' || v_digits || ' ') then
           v_hit := true;
           exit phones;
         end if;
@@ -556,13 +609,19 @@ begin
   if v_hit then v_found := v_found || 'phone'::text; end if;
 
   -- ── Website ──────────────────────────────────────────────────────────────────────────────
+  -- The confirmed website is taken out of the draft first, by the same pattern a stored copy is
+  -- looked for with: its own host and any subdomain of it, or on a shared platform its own page.
+  -- A parent domain, a sibling subdomain, or a host inside its query string stays in the draft.
   v_hit := false;
+  v_site_text := lower(v_scan);
   <<websites>>
-  for v_source in
-    select x.value
-    from (values (v_brief ->> 'website'), (v_legal.website_url), (v_brand ->> 'website'),
-                 (v_patch ->> 'website')) as x(value)
+  for v_source, v_mode in
+    select x.value, x.mode
+    from (values (v_licensed_site, 'mask', 0), (v_brief ->> 'website', 'find', 1),
+                 (v_legal.website_url, 'find', 2), (v_brand ->> 'website', 'find', 3),
+                 (v_patch ->> 'website', 'find', 4)) as x(value, mode, ord)
     where x.value is not null and btrim(x.value) <> ''
+    order by x.ord
   loop
     for v_token in
       select t from regexp_split_to_table(lower(btrim(public.outbound_fact_decode(v_source))),
@@ -596,12 +655,15 @@ begin
           v_pattern := regexp_replace(v_seg1, '([^[:alnum:]])', '\\\1', 'g');
         end if;
         v_pattern := '(^|[^[:alnum:]@._-])([[:alnum:]-]+\.)*' || replace(v_base, '.', '\.') || '/+'
-          || v_pattern || '($|[^[:alnum:]._-]|\.($|[^[:alnum:]_-]))';
+          || v_pattern || '(?=$|[^[:alnum:]._-]|\.($|[^[:alnum:]_-]))';
       else
         v_pattern := '(^|[^[:alnum:]@._-])([[:alnum:]-]+\.)*' || replace(v_host, '.', '\.')
-          || '($|[^[:alnum:]._-]|\.($|[^[:alnum:]_-]))';
+          || '(?=$|[^[:alnum:]._-]|\.($|[^[:alnum:]_-]))';
       end if;
-      if lower(v_scan) ~ v_pattern and v_licensed_site !~ v_pattern then
+      -- The trailing boundary is a lookahead, so taking one occurrence out leaves the next one's.
+      if v_mode = 'mask' then
+        v_site_text := regexp_replace(v_site_text, v_pattern, '\1 ', 'g');
+      elsif v_site_text ~ v_pattern then
         v_hit := true;
         exit websites;
       end if;

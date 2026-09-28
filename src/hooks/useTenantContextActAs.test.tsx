@@ -397,6 +397,47 @@ describe("the operator act-as marker and its audited exit", () => {
     expect((ctx as Ctx).activeTenantId).toBeNull();
   });
 
+  // Codex review of 17e7d129: without the bound exit, a stale tab must not end the act-as another
+  // tab has opened since.
+  it("does not end another tab's act-as when the server does not have the bound exit yet", async () => {
+    h.activeTenant = "t1";
+    const c = await mount();
+    h.boundExitMissing = true;
+    h.activeTenant = "t2";
+    h.rpcCalls = [];
+    let outcome = "";
+    await act(async () => { outcome = await c.exitOperatorActAsFrom("t1"); });
+    expect(outcome).toBe("moved");
+    expect(h.activeTenant).toBe("t2");
+    expect(h.rpcCalls.filter((n) => n === "operator_exit_tenant")).toHaveLength(1);
+  });
+
+  it("records no exit when the act-as already ended and the server does not have the bound exit yet", async () => {
+    h.activeTenant = "t1";
+    const c = await mount();
+    h.boundExitMissing = true;
+    h.activeTenant = null;
+    h.rpcCalls = [];
+    let outcome = "";
+    await act(async () => { outcome = await c.exitOperatorActAsFrom("t1"); });
+    expect(outcome).toBe("exited");
+    expect(h.rpcCalls.filter((n) => n === "operator_exit_tenant")).toHaveLength(1);
+    expect((ctx as Ctx).activeTenantId).toBeNull();
+  });
+
+  it("refuses without exiting when the scope cannot be read and the server does not have the bound exit yet", async () => {
+    h.activeTenant = "t1";
+    const c = await mount();
+    h.boundExitMissing = true;
+    h.profileReadError = { message: "down" };
+    h.rpcCalls = [];
+    let outcome = "";
+    await act(async () => { outcome = await c.exitOperatorActAsFrom("t1"); });
+    expect(outcome).toBe("refused");
+    expect(h.activeTenant).toBe("t1");
+    expect(h.rpcCalls.filter((n) => n === "operator_exit_tenant")).toHaveLength(1);
+  });
+
   // Codex review of d51754bd: every chosen sign-out ends an open act-as through the audited exit.
   describe("before a sign-out", () => {
     it("ends an operator's open act-as through the audited exit", async () => {

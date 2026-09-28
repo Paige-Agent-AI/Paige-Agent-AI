@@ -597,8 +597,18 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     let { error: rpcError } = await supabase.rpc("operator_exit_tenant" as any, { _expected: tenantId });
     if (rpcError?.code === "PGRST202") {
       // The server does not have the bound exit yet (its migration is not applied). The operator's
-      // way out still works through the unbound exit every server has; the stale-tab protection
-      // arrives with the migration. Dormant once it is applied.
+      // way out still works through the unbound exit every server has, but only after this client
+      // checks what the bound exit would have: a stale tab must not end the act-as another tab has
+      // opened since, and an act-as that already ended needs no second exit row. A tab can still
+      // enter between this read and the exit; the server closes that window once the migration is
+      // applied, and this branch is dormant from then on.
+      const scope = await readOwnScope();
+      if (!scope.ok) return "refused" as const;
+      if (scope.activeTenantId && scope.activeTenantId !== tenantId) return "moved" as const;
+      if (!scope.activeTenantId) {
+        commitOperatorExit();
+        return "exited" as const;
+      }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ({ error: rpcError } = await supabase.rpc("operator_exit_tenant" as any));
     }

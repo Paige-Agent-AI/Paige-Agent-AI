@@ -307,8 +307,6 @@ declare
     || 'mews|loop|cottage|house|farm|lodge|hall|manor|barn|mill|tower|plaza|bldg|estate|wharf|quay|'
     || 'yard|park|centre|gate|parade)';
   c_secondary_words constant text := '(ste|apt|unit|fl|rm|lvl|bldg|flat)';
-  -- The street words that name a road, not a building or a district: only a numbered line with
-  -- one of these is the street line ("2 Rose Cottage" and "1 Canary Wharf" are not).
   -- The two-digit E.164 country codes; 1 and 7 are the one-digit ones, every other code has three.
   c_two_digit_country_codes constant text[] := array['20','27','30','31','32','33','34','36','39','40',
     '41','43','44','45','46','47','48','49','51','52','53','54','55','56','57','58','60','61','62',
@@ -321,6 +319,8 @@ declare
     '93','94','95','98','212','213','233','234','254','255','256','260','263','353','355','358',
     '359','380','381','382','385','386','387','389','880','886','961','962','963','964','966','971',
     '972','977','249','251','264','373','374','421','855','976','994','995'];
+  -- The street words that name a road, not a building or a district: only a numbered line with
+  -- one of these is the street line ("2 Rose Cottage" and "1 Canary Wharf" are not).
   c_road_words constant text :=
     '(st|ave|rd|blvd|dr|ln|ct|pl|sq|ter|hwy|pkwy|cres|cl|cir|trl|gdns|gdn|gr|aly|str|way|row|walk|'
     || 'mews|loop|parade)';
@@ -515,8 +515,9 @@ begin
       if v_is_place then v_place_i := v_place_i + 1; end if;
       -- The line itself, unless it names only a floor, a room or a town. In a single-line value
       -- a line with no number is a town when it follows the numbered street line; with no street
-      -- line, when it is one of the last two of three place lines or more, unless it is the road
-      -- right after a numbered house. (So the first line never is.)
+      -- line but a numbered house or building, when it follows that, unless it is the road right
+      -- after it; with neither, when it is one of the last two of three place lines or more. (So
+      -- the first line never is.)
       if length(v_norm) >= 6 and v_norm ~ '[[:alpha:]]'
          and v_is_place
          and not (v_norm = any(v_towns))

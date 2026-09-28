@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const h = vi.hoisted(() => ({
   context: {
     loading: false,
+    isPlatformStaff: false,
     activeTenant: null as null | { account_number: number; features?: Record<string, unknown> },
   },
   invoke: vi.fn(),
@@ -31,6 +32,7 @@ describe("RequireSoloBetaEntitlement", () => {
 
   beforeEach(() => {
     h.context.loading = false;
+    h.context.isPlatformStaff = false;
     h.context.activeTenant = null;
     h.invoke.mockReset();
     host = document.createElement("div");
@@ -110,6 +112,21 @@ describe("RequireSoloBetaEntitlement", () => {
     };
     const view = await renderAt("/solo/42/settings/billing");
     expect(view.workspace()).toBeTruthy();
+    expect(h.invoke).not.toHaveBeenCalled();
+  });
+
+  // THE ACT-AS DEFECT (2026-09-27). The entitlement check reads the CALLER's own enrollment,
+  // which a platform operator supporting this customer never has, so it sent them to checkout
+  // recovery and stranded the act-as that had just been recorded.
+  it("admits a platform operator acting in a marked workspace without asking about their enrollment", async () => {
+    h.context.isPlatformStaff = true;
+    h.context.activeTenant = {
+      account_number: 42,
+      features: { solo_beta_offer_code: "paige-solo-beta-monthly-v1" },
+    };
+    const view = await renderAt("/solo/42/command-center");
+    expect(view.workspace()).toBeTruthy();
+    expect(view.location()).toBe("/solo/42/command-center");
     expect(h.invoke).not.toHaveBeenCalled();
   });
 });

@@ -22,6 +22,10 @@ const harness = vi.hoisted(() => ({
     isPlatformStaff: false,
     switchTenant: vi.fn(),
     refresh: vi.fn(),
+    activeUserId: "user-1" as string | null,
+    endActAsBeforeSignOut: vi.fn(),
+    enterOperatorActAs: vi.fn(),
+    exitOperatorActAsFrom: vi.fn(),
   },
 }));
 
@@ -49,6 +53,8 @@ vi.mock("@/integrations/supabase/client", () => ({
 const PRISTINE_TENANTS = harness.context.tenants.map((t) => ({ ...t }));
 
 import { registerAccountSwitchGuard } from "@/lib/auth/accountSwitchGuard";
+import { supabase } from "@/integrations/supabase/client";
+import { signInWithOAuth } from "@/integrations/auth/oauth";
 import { GOD_CONSOLE } from "@/lib/auth/operatorTarget";
 import ChooseAccount from "./ChooseAccount";
 
@@ -69,6 +75,9 @@ describe("ChooseAccount", () => {
     harness.context.isPlatformStaff = false;
     harness.context.switchTenant = vi.fn(async () => true);
     harness.context.refresh = vi.fn(async () => undefined);
+    harness.context.endActAsBeforeSignOut = vi.fn(async () => "clear" as const);
+    harness.context.enterOperatorActAs = vi.fn(async () => "entered" as const);
+    harness.context.exitOperatorActAsFrom = vi.fn(async () => "exited" as const);
     harness.context.accountContextStatus = "ready";
     // Restore the tenant fixture. Several cases mutate it (status, canary,
     // account_number) and without this the mutations leak forward and the next
@@ -463,5 +472,171 @@ describe("ChooseAccount", () => {
     expect(localStorage.getItem("paige.activeBusinessId")).toBe("belongs-to-the-person");
     expect(sessionStorage.getItem("paige.workspace.entered")).toBe("mogul");
     Object.defineProperty(window, "location", { configurable: true, value: original });
+  });
+  // Codex review of #1547 (850ba847). An operator acting as a tenant reaches this page through
+  // Switch workspace with the act-as still open. The server now refuses an enter over an open
+  // act-as, and signing out leaves the server-side act-as open with no exit receipt, so both
+  // routes out of this page end the act-as through the audited exit first.
+  describe("an operator arriving with an act-as open", () => {
+    // Neutral test tenants (CLAUDE.md §63): these cases never name a real account.
+    beforeEach(() => {
+      harness.context.tenants = [
+        { id: "test-tenant-a", slug: "test-tenant-a", name: "Test Tenant A", status: "active", account_type: "standalone", parent_tenant_id: null, account_number: 900001, features: { solo_shell_enabled: true } },
+        { id: "test-tenant-b", slug: "test-tenant-b", name: "Test Tenant B", status: "active", account_type: "standalone", parent_tenant_id: null, account_number: 900002, features: { solo_shell_enabled: true } },
+      ];
+      harness.memberships = [
+        { tenant_id: "test-tenant-a", role: "admin" },
+        { tenant_id: "test-tenant-b", role: "owner" },
+      ];
+    });
+
+    beforeEach(() => {
+      harness.context.isPlatformStaff = true;
+      harness.context.activeTenantId = "test-tenant-a";
+    });
+
+    it("ends the act-as before entering the chosen workspace", async () => {
+      const assign = vi.fn();
+      const original = window.location;
+      Object.defineProperty(window, "location", { configurable: true, value: { ...original, assign, search: "" } });
+      const calls: Array<string | null> = [];
+      harness.context.exitOperatorActAsFrom = vi.fn(async (id: string) => { calls.push(`exit:${id}`); return "exited" as const; });
+      harness.context.enterOperatorActAs = vi.fn(async (id: string) => { calls.push(`enter:${id}`); return "entered" as const; });
+      await act(async () => {
+        root.render(<MemoryRouter initialEntries={["/choose-account"]}><ChooseAccount /></MemoryRouter>);
+      });
+      const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Test Tenant B"));
+      await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      // The exit names the act-as this tab shows (Codex review of 49ac446e).
+      expect(calls).toEqual(["exit:test-tenant-a", "enter:test-tenant-b"]);
+      expect(assign).toHaveBeenCalledWith("/solo/900002/command-center");
+      Object.defineProperty(window, "location", { configurable: true, value: original });
+    });
+
+    it("enters nothing and says so when the act-as cannot be ended", async () => {
+      const assign = vi.fn();
+      const original = window.location;
+      Object.defineProperty(window, "location", { configurable: true, value: { ...original, assign, search: "" } });
+      harness.context.exitOperatorActAsFrom = vi.fn(async () => "refused" as const);
+      await act(async () => {
+        root.render(<MemoryRouter initialEntries={["/choose-account"]}><ChooseAccount /></MemoryRouter>);
+      });
+      const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Test Tenant B"));
+      await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(harness.context.enterOperatorActAs).not.toHaveBeenCalled();
+      expect(assign).not.toHaveBeenCalled();
+      expect(host.textContent).toContain("Paige couldn't end your act-as in Test Tenant A. Nothing else was entered.");
+      Object.defineProperty(window, "location", { configurable: true, value: original });
+    });
+
+    it("enters nothing when this tab's act-as already ended in another tab", async () => {
+      harness.context.exitOperatorActAsFrom = vi.fn(async () => "moved" as const);
+      await act(async () => {
+        root.render(<MemoryRouter initialEntries={["/choose-account"]}><ChooseAccount /></MemoryRouter>);
+      });
+      const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Test Tenant B"));
+      await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(harness.context.enterOperatorActAs).not.toHaveBeenCalled();
+      expect(host.textContent).toContain("Your act-as in Test Tenant A already ended in another tab, and another tenant is open now. Reload to see where you are.");
+    });
+
+    // Codex review of a9c6b22c: after the exit, an enter whose outcome is unknown must not be
+    // reported as "you're at platform scope".
+    it("does not claim platform scope when the new enter's outcome is unknown", async () => {
+      const assign = vi.fn();
+      const original = window.location;
+      Object.defineProperty(window, "location", { configurable: true, value: { ...original, assign, search: "" } });
+      harness.context.enterOperatorActAs = vi.fn(async () => "unknown" as const);
+      await act(async () => {
+        root.render(<MemoryRouter initialEntries={["/choose-account"]}><ChooseAccount /></MemoryRouter>);
+      });
+      const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Test Tenant B"));
+      await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(assign).not.toHaveBeenCalled();
+      expect(host.textContent).not.toContain("You're at platform scope");
+      expect(host.textContent).toContain("couldn't confirm whether Test Tenant B opened. Reload before trying again.");
+      Object.defineProperty(window, "location", { configurable: true, value: original });
+    });
+
+    it("says platform scope only when the new enter is confirmed refused", async () => {
+      harness.context.enterOperatorActAs = vi.fn(async () => "refused" as const);
+      await act(async () => {
+        root.render(<MemoryRouter initialEntries={["/choose-account"]}><ChooseAccount /></MemoryRouter>);
+      });
+      const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Test Tenant B"));
+      await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(host.textContent).toContain("Paige ended your act-as in Test Tenant A but couldn't open Test Tenant B. You're at platform scope.");
+    });
+
+    it("ends the act-as before signing out for a different account", async () => {
+      const order: string[] = [];
+      harness.context.endActAsBeforeSignOut = vi.fn(async () => { order.push("end"); return "clear" as const; });
+      vi.mocked(supabase.auth.signOut).mockImplementationOnce(async () => { order.push("signOut"); return { error: null }; });
+      vi.mocked(signInWithOAuth).mockResolvedValueOnce({ error: null } as never);
+      await act(async () => {
+        root.render(<MemoryRouter initialEntries={["/choose-account"]}><ChooseAccount /></MemoryRouter>);
+      });
+      const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("different Google account"));
+      await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(order).toEqual(["end", "signOut"]);
+    });
+
+    it("does not sign out while the act-as cannot be ended", async () => {
+      harness.context.endActAsBeforeSignOut = vi.fn(async () => "refused" as const);
+      vi.mocked(supabase.auth.signOut).mockClear();
+      await act(async () => {
+        root.render(<MemoryRouter initialEntries={["/choose-account"]}><ChooseAccount /></MemoryRouter>);
+      });
+      const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("different Google account"));
+      await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(supabase.auth.signOut).not.toHaveBeenCalled();
+      expect(host.textContent).toContain("Paige couldn't end your act-as in Test Tenant A, so you're still signed in.");
+    });
+  });
+  // Codex review of #1547 (8292f9d6): when the account context cannot be read, the page cannot tell
+  // an operator from anyone else, yet still offers the sign-out. The server is asked directly.
+  describe("signing out when the account context could not be read", () => {
+    // Neutral test tenants (CLAUDE.md §63): these cases never name a real account.
+    beforeEach(() => {
+      harness.context.tenants = [
+        { id: "test-tenant-a", slug: "test-tenant-a", name: "Test Tenant A", status: "active", account_type: "standalone", parent_tenant_id: null, account_number: 900001, features: { solo_shell_enabled: true } },
+        { id: "test-tenant-b", slug: "test-tenant-b", name: "Test Tenant B", status: "active", account_type: "standalone", parent_tenant_id: null, account_number: 900002, features: { solo_shell_enabled: true } },
+      ];
+      harness.memberships = [
+        { tenant_id: "test-tenant-a", role: "admin" },
+        { tenant_id: "test-tenant-b", role: "owner" },
+      ];
+    });
+
+    beforeEach(() => {
+      harness.context.accountContextStatus = "error";
+      harness.context.isPlatformStaff = false;
+      harness.context.activeTenantId = null;
+    });
+
+    async function pressDifferentAccount() {
+      await act(async () => {
+        root.render(<MemoryRouter initialEntries={["/choose-account"]}><ChooseAccount /></MemoryRouter>);
+      });
+      const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("different Google account"));
+      expect(button).toBeTruthy();
+      await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+    }
+
+    it("stays signed in when Paige cannot tell whether an act-as is open", async () => {
+      harness.context.endActAsBeforeSignOut = vi.fn(async () => "unknown" as const);
+      vi.mocked(supabase.auth.signOut).mockClear();
+      await pressDifferentAccount();
+      expect(supabase.auth.signOut).not.toHaveBeenCalled();
+      expect(host.textContent).toContain("Paige couldn't confirm whether your act-as is still open, so you're still signed in.");
+    });
+
+    it("signs out once nothing is left open", async () => {
+      vi.mocked(signInWithOAuth).mockResolvedValueOnce({ error: null } as never);
+      vi.mocked(supabase.auth.signOut).mockClear();
+      await pressDifferentAccount();
+      expect(harness.context.endActAsBeforeSignOut).toHaveBeenCalledTimes(1);
+      expect(supabase.auth.signOut).toHaveBeenCalledTimes(1);
+    });
   });
 });

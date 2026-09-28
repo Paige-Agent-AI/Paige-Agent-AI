@@ -3,6 +3,7 @@ import SoloApp from "@/solo/SoloApp";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { EmptyState, PageSkeleton } from "@/components/ui/page";
 import { Button } from "@/components/ui/button";
+import { StrandedOperatorExit } from "@/components/auth/WorkspaceExitControl";
 import { WORKSPACE_CHOOSER_PATH, decideWorkspaceEntry } from "@/lib/auth/workspaceEntry";
 
 /**
@@ -53,9 +54,14 @@ export default function SoloEntry() {
           title="Couldn't verify your workspace"
           description="PAIGE couldn't confirm the active account just now. Try again before opening this workspace."
           action={
-            <Button variant="gold" onClick={() => void refresh()}>
-              Try again
-            </Button>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button variant="gold" onClick={() => void refresh()}>
+                Try again
+              </Button>
+              {/* An operator whose act-as began but whose arrival could not load would otherwise
+                  be stuck inside it here: no shell, so no exit, has mounted. */}
+              <StrandedOperatorExit />
+            </div>
           }
         />
       </div>

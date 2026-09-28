@@ -66,6 +66,13 @@ export default function ChooseAccount() {
       .map((tenant) => ({ tenant, role: roles.get(tenant.id) ?? "member" }));
   }, [context.tenants, memberships]);
 
+  // The act-as an operator still has open if they came here from inside a tenant (Switch workspace).
+  const openActAs = useMemo(() => {
+    if (!context.isPlatformStaff || !context.activeTenantId) return null;
+    const name = context.tenants?.find((t) => t.id === context.activeTenantId)?.name ?? "this tenant";
+    return { id: context.activeTenantId, name };
+  }, [context.isPlatformStaff, context.activeTenantId, context.tenants]);
+
   // ONE TRUTHFUL TRANSITION, shared by the explicit pick and the nothing-to-ask
   // auto-leave (owner ruling 2026-09-03). A workspace is recorded as ENTERED only
   // when the transition into it actually succeeded.
@@ -89,9 +96,38 @@ export default function ChooseAccount() {
         toTenantName: tenant.name,
       });
       if (!allowed) return false;
-      const switched = await context.switchTenant(tenant.id);
-      if (!switched) {
-        setError("Paige couldn't open that account. Your current workspace is unchanged.");
+      // An operator who came here from inside a tenant still has that act-as open, and the server
+      // refuses to enter over it. Choosing another workspace is the explicit intent to leave, so
+      // the act-as ends through the audited exit first — and if it will not end, nothing is entered.
+      // The exit names the act-as this tab shows: a stale tab must not end one another tab opened.
+      const endedActAs = Boolean(openActAs);
+      if (openActAs) {
+        const exited = await context.exitOperatorActAsFrom(openActAs.id);
+        if (exited === "moved") {
+          setError(`Your act-as in ${openActAs.name} already ended in another tab, and another tenant is open now. Reload to see where you are.`);
+          return false;
+        }
+        if (exited !== "exited") {
+          setError(`Paige couldn't end your act-as in ${openActAs.name}. Nothing else was entered.`);
+          return false;
+        }
+      }
+      // An operator's enter answers entered / refused / unknown / occupied; each is reported for
+      // what it is, and "platform scope" is claimed only when the refusal is confirmed.
+      const outcome = context.isPlatformStaff
+        ? await context.enterOperatorActAs(tenant.id)
+        : (await context.switchTenant(tenant.id)) ? "entered" : "refused";
+      if (outcome !== "entered") {
+        const ended = endedActAs ? `Paige ended your act-as in ${openActAs?.name}` : null;
+        if (outcome === "unknown") {
+          setError(`${ended ? `${ended}, but` : "Paige"} couldn't confirm whether ${tenant.name} opened. Reload before trying again.`);
+        } else if (outcome === "occupied") {
+          setError("Another act-as is open, so nothing else was entered. End it before choosing a workspace.");
+        } else {
+          setError(ended
+            ? `${ended} but couldn't open ${tenant.name}. You're at platform scope.`
+            : "Paige couldn't open that account. Your current workspace is unchanged.");
+        }
         return false;
       }
       // Nothing from the previous account may render under the new one's heading.
@@ -101,7 +137,7 @@ export default function ChooseAccount() {
     // switch succeeded or because they were already in it.
     rememberWorkspaceEntered(tenant.id);
     return true;
-  }, [context]);
+  }, [context, openActAs]);
 
   // A platform operator always pauses here after sign-in. Platform is a real
   // operating context, not an automatic default, and tenant entry still runs
@@ -163,6 +199,7 @@ export default function ChooseAccount() {
         setSwitchingTo(null);
         return;
       }
+      // Unbound on purpose: choosing Platform means ending whatever act-as is open, from any tab.
       const switched = await context.switchTenant(null);
       if (!switched) {
         setSwitchingTo(null);
@@ -178,6 +215,18 @@ export default function ChooseAccount() {
   const handleDifferentGoogleAccount = async () => {
     setError(null);
     setSwitchingTo("google");
+    // Signing out clears this browser, not the server: an open act-as would stay open with no exit
+    // receipt. The provider ends it through the audited exit first — asking the server when this
+    // page's account context could not be read — and the person stays signed in if it will not end
+    // or cannot be confirmed.
+    const settled = await context.endActAsBeforeSignOut();
+    if (settled !== "clear") {
+      setSwitchingTo(null);
+      setError(settled === "refused"
+        ? `Paige couldn't end your act-as in ${openActAs?.name ?? "this tenant"}, so you're still signed in. Try again.`
+        : "Paige couldn't confirm whether your act-as is still open, so you're still signed in. Try again.");
+      return;
+    }
     await supabase.auth.signOut();
     const result = await signInWithOAuth("google", `${window.location.origin}/auth`, { chooseAccount: true });
     if (result.error) {

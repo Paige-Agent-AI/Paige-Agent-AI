@@ -1334,7 +1334,7 @@ console.log("\n— slice ②: oauth_begin (runOauthBegin) —");
   const makeAdmin = (o = {}) => ({
     rpc: async (fn, params) => {
       if (fn === "get_mcp_connection_secret") {
-        return { data: o.secret === undefined ? { configured: true, enabled: true, server_url: OSRV, tenant_id: OTEN } : o.secret, error: o.secretErr ?? null };
+        return { data: o.secret === undefined ? { configured: true, enabled: true, server_url: OSRV, tenant_id: OTEN, config_generation: 1 } : o.secret, error: o.secretErr ?? null };
       }
       if (fn === "begin_mcp_oauth") { beginCalls.push(params); return { data: null, error: o.beginErr ?? null }; }
       return { data: null, error: null };
@@ -1415,6 +1415,8 @@ console.log("\n— slice ②: oauth_callback (runOauthCallback — #1355 structu
     issuer: "https://public.example", client_id: "client-xyz",
     redirect_uri: "https://xygzykjyynhzqytbqnzu.supabase.co/functions/v1/mcp-oauth-callback",
     resource: "https://public.example/mcp-oauth-srv", code_verifier: "verifier-xyz", client_secret: null,
+    state_id: "10000000-0000-4000-8000-000000000002", actor: "test-owner", config_generation: 1,
+    requested_scopes: ["mcp.read"], return_destination: "integrations", account_type: "solo", account_number: "10000001",
   };
   const grantCalls = [];
   const makeAdmin = (o = {}) => ({
@@ -1436,16 +1438,16 @@ console.log("\n— slice ②: oauth_callback (runOauthCallback — #1355 structu
   // THE #1355 assertion: code/state never appear in a redirect Location.
   const noCodeState = (loc) => { const u = new URL(loc); return u.searchParams.get("code") === null && u.searchParams.get("state") === null && !loc.includes(CODE) && !loc.includes(STATE); };
 
-  // Happy path — state consumed, code exchanged, grant persisted, land on the tenant's OWN connections page.
+  // Happy path — state consumed, code exchanged, grant persisted, return to the stored Integrations owner.
   grantCalls.length = 0;
   const okCb = await cbMod.runOauthCallback({ admin: makeAdmin(), ops: okOps }, { code: CODE, state: STATE, error: null }, { appOrigin: APP });
   check("callback happy path → 302 connected", okCb.status === 302 && okCb.outcome === "connected", JSON.stringify(okCb));
-  check("callback lands on the tenant's OWN canonical connections page (solo/3855, from the grant writer's routing facts)",
-    okCb.location === `${APP}/solo/3855/settings/connections?mcp=connected&connection=${CBCONN}`, okCb.location);
+  check("callback lands on the server-owned Integrations destination from persisted routing facts",
+    okCb.location === `${APP}/solo/10000001/settings/integrations?mcp=connected&connection=${CBCONN}`, okCb.location);
   check("#1355: the SUCCESS redirect carries NO code and NO state", noCodeState(okCb.location), okCb.location);
-  check("callback persisted the grant with tenant+connection FROM THE CONSUMED STATE, tokens from the exchange, actor null",
+  check("callback persisted the grant with tenant, connection, actor and state binding FROM THE CONSUMED STATE",
     grantCalls.length === 1 && grantCalls[0]._connection_id === CBCONN && grantCalls[0]._tenant_id === CBTEN &&
-    grantCalls[0]._access_token === "provider-access-xyz" && grantCalls[0]._actor === null, JSON.stringify(Object.keys(grantCalls[0] ?? {})));
+    grantCalls[0]._access_token === "provider-access-xyz" && grantCalls[0]._actor === "test-owner" && grantCalls[0]._state_id === validPending.state_id, JSON.stringify(Object.keys(grantCalls[0] ?? {})));
   check("callback bound the exchange to the STORED verifier + resource + redirect_uri (only the code came from the browser)",
     okOps._lastExchange.verifier === "verifier-xyz" && okOps._lastExchange.resource === "https://public.example/mcp-oauth-srv" &&
     okOps._lastExchange.redirectUri === validPending.redirect_uri && okOps._lastExchange.code === CODE, JSON.stringify(okOps._lastExchange));
@@ -1454,7 +1456,7 @@ console.log("\n— slice ②: oauth_callback (runOauthCallback — #1355 structu
   // #1355 MEASURED across EVERY reject path — code/state present in the INPUT, absent from the redirect.
   const denied = await cbMod.runOauthCallback({ admin: makeAdmin(), ops: okOps }, { code: CODE, state: STATE, error: "access_denied" }, { appOrigin: APP });
   check("callback on provider denial → 302 error, #1355: no code/state in the redirect", denied.status === 302 && denied.outcome === "access_denied" && noCodeState(denied.location), denied.location);
-  check("...and NO grant is written on a denial (nothing consumed)", grantCalls.length === 1, String(grantCalls.length));
+  check("...and NO grant is written on a denial", grantCalls.length === 1, String(grantCalls.length));
   const missing = await cbMod.runOauthCallback({ admin: makeAdmin(), ops: okOps }, { code: CODE, state: null, error: null }, { appOrigin: APP });
   check("callback with missing params → 302 error, no code/state leak", missing.outcome === "missing_params" && noCodeState(missing.location), missing.location);
   const noState = await cbMod.runOauthCallback({ admin: makeAdmin({ pending: { found: false } }), ops: okOps }, { code: CODE, state: STATE, error: null }, { appOrigin: APP });
@@ -1508,8 +1510,8 @@ console.log("\n— slice ②: oauth_callback (runOauthCallback — #1355 structu
 
   // Landing falls CLOSED to /auth when the tenant route is unresolvable (e.g. enterprise/unmounted) —
   // never a guessed or shared address; still no code/state.
-  const unmounted = await cbMod.runOauthCallback({ admin: makeAdmin({ grant: { connection_id: CBCONN, status: "pending_verification", account_type: "enterprise", account_number: null } }), ops: okOps }, { code: CODE, state: STATE, error: null }, { appOrigin: APP });
-  check("callback lands closed to /auth when the tenant route is unresolvable, still no code/state", unmounted.outcome === "connected" && unmounted.location.startsWith(`${APP}/auth?mode=login`) && noCodeState(unmounted.location), unmounted.location);
+  const unmounted = await cbMod.runOauthCallback({ admin: makeAdmin({ pending: { ...validPending, account_type: "enterprise", account_number: null } }), ops: okOps }, { code: CODE, state: STATE, error: null }, { appOrigin: APP });
+  check("callback refuses before exchange when the persisted destination is unresolvable, still no code/state", unmounted.outcome === "state_invalid" && unmounted.location.startsWith(`${APP}/auth?mode=login`) && noCodeState(unmounted.location), unmounted.location);
 }
 
 // ── Slice ③ — APPROVE (runApprove: the operator's per-tool durable consent writer) ─────────────────
@@ -1756,3 +1758,7 @@ console.log("\n— slice ③: execute (runExecute) —");
 server.close();
 console.log(`\n${passed} assertions passed.`);
 if (failures.length) { console.error(`\n${failures.length} FAILURE(S):\n- ${failures.join("\n- ")}`); process.exit(1); }
+
+// Keep callback routing/binding regressions on the existing CI smoke entrypoint.
+// This uses injected transport only; SQL transaction/role proof runs separately.
+await import("./proof/mcp-oauth-return.mjs");

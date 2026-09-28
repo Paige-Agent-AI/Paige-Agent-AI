@@ -32,6 +32,7 @@
 -- Run: psql -v ON_ERROR_STOP=1 -f supabase/tests/mcp_oauth_refuses_the_rest_facet.sql "$DB_URL"
 -- ============================================================================
 BEGIN;
+\ir helpers/mcp_oauth_binding.sql
 
 INSERT INTO auth.users (id, aud, role, email) VALUES
   ('fa0e0000-0000-0000-0000-000000000001', 'authenticated', 'authenticated', 'facet-admin@tests.invalid'),
@@ -98,10 +99,9 @@ BEGIN
   END IF;
 
   -- ── 4. The guard narrows EXACTLY one facet — a 'none' shell still runs both ──────────────────
-  PERFORM public.begin_mcp_oauth(_shell, T, 'state-facet-ok', 'verifier-facet-ok',
-    'https://cb.example.com/cb', 'https://iss.example.com', NULL, 'client-123', NULL, NULL);
   PERFORM public.complete_mcp_oauth_grant(_shell, T, 'tok-shell-123456', NULL,
-    'https://iss.example.com', 'client-123', NULL, NULL, NULL, NULL);
+    'https://iss.example.com', 'client-123', NULL, NULL, NULL, auth.uid(),
+    pg_temp.mcp_oauth_binding(_shell, T, auth.uid()));
   SELECT auth_kind INTO _kind FROM public.mcp_connections WHERE connection_id = _shell;
   IF _kind <> 'oauth' THEN
     RAISE EXCEPTION '(facet) a legitimate shell did not become oauth, got % — the guard is too wide', _kind;

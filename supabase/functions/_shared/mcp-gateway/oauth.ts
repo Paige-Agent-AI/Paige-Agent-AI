@@ -118,7 +118,7 @@ export async function runOauthBegin(deps: OauthBeginDeps, input: OauthBeginInput
   //    server URL + tenant from it (no usability gate applies to starting a consent flow).
   const { data: sec, error: sErr } = await admin.rpc("get_mcp_connection_secret", { _connection_id: id });
   if (sErr) return { httpStatus: 500, body: { error: "lookup_failed" } };
-  const row = (sec ?? {}) as { configured?: unknown; enabled?: unknown; server_url?: unknown; tenant_id?: unknown };
+  const row = (sec ?? {}) as { configured?: unknown; enabled?: unknown; server_url?: unknown; tenant_id?: unknown; config_generation?: unknown };
   if (row.configured !== true) return { httpStatus: 409, body: { error: "connection_unconfigured" } };
   if (row.enabled === false) return { httpStatus: 409, body: { error: "connection_disabled" } };
   const serverUrl = typeof row.server_url === "string" ? row.server_url : "";
@@ -126,6 +126,9 @@ export async function runOauthBegin(deps: OauthBeginDeps, input: OauthBeginInput
   if (!serverUrl) return { httpStatus: 409, body: { error: "connection_unconfigured" } };
   // Defense in depth (§9): the tenant-agnostic read loaded SOME row; it must be the caller's.
   if (rowTenant !== tenantId) return { httpStatus: 403, body: { error: "forbidden" } };
+  if (!Number.isSafeInteger(row.config_generation) || Number(row.config_generation) < 1) {
+    return { httpStatus: 409, body: { error: "connection_unconfigured" } };
+  }
 
   try {
     // OAuth 2.1 discovery spine (all issuer-verified, all safeFetch): ask the MCP server which
@@ -154,6 +157,8 @@ export async function runOauthBegin(deps: OauthBeginDeps, input: OauthBeginInput
       _client_id: registration.clientId,
       _client_secret: registration.clientSecret,
       _actor: actor,
+      _expected_generation: row.config_generation,
+      _requested_scopes: server.scopesSupported,
     });
     if (bErr) return { httpStatus: 500, body: { error: "oauth_begin_failed" } };
 

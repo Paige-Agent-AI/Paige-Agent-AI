@@ -22,6 +22,7 @@ import { fireAndForgetBridge } from "../_shared/mmaOsBridge.ts";
 // uses to compute address_normalized, so the WRITER stores a key the reader will match.
 // (pre-send-pipeline.ts's only heavy imports are `import type`, erased at runtime — cheap.)
 import { normalizePhone } from "../_shared/pre-send-pipeline.ts";
+import { findClientIdByAddress } from "../_shared/contact-methods.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -129,28 +130,17 @@ async function resolveReceivingTenant(admin: Admin, toPhone: string): Promise<st
   return (data?.tenant_id as string | undefined) ?? null;
 }
 
-// Contact lookup SCOPED to the resolved receiving tenant (§9). We match the sender
-// phone in both the raw Twilio-E.164 form and the normalized form (they are usually
-// identical, but this is defensive against stored-format drift). null when no contact
-// belongs to this tenant — the suppression is then written contactless (by address).
+// Contact lookup SCOPED to the resolved receiving tenant (§9): the contact holding the
+// sender's number as ANY of its phone numbers, matched on the last ten digits, so stored-format
+// drift cannot hide it. null when no contact belongs to this tenant — the suppression is then
+// written contactless (by address).
 async function resolveContactForTenant(
   admin: Admin,
   tenantId: string,
   fromPhoneRaw: string,
   normalizedFrom: string,
 ): Promise<string | null> {
-  const { data, error } = await admin
-    .from("clients")
-    .select("id")
-    .eq("tenant_id", tenantId)
-    .or(`phone.eq.${fromPhoneRaw},phone.eq.${normalizedFrom}`)
-    .limit(1)
-    .maybeSingle();
-  if (error) {
-    console.warn("[handle-inbound-sms] tenant-scoped contact lookup failed:", error.code, error.message);
-    return null;
-  }
-  return (data?.id as string | undefined) ?? null;
+  return await findClientIdByAddress(admin, tenantId, "phone", normalizedFrom || fromPhoneRaw, "handle-inbound-sms");
 }
 
 // Legacy back-compat: flip the user-keyed communication_preferences.sms_enabled flag.
@@ -368,11 +358,7 @@ Deno.serve(async (req) => {
       contactId = c?.id ?? null;
     }
     if (!contactId) {
-      const { data: c } = await admin.from("clients").select("id")
-        .eq("phone", fromPhone)
-        .eq("tenant_id", receivingTenantId)
-        .maybeSingle();
-      contactId = c?.id ?? null;
+      contactId = await findClientIdByAddress(admin, receivingTenantId, "phone", fromPhone, "handle-inbound-sms");
     }
   }
 

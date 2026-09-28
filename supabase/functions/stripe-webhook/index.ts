@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { upsertBillingAccount } from "../_shared/platform-billing.ts";
+import { findSoleClientByEmailAnyWorkspace } from "../_shared/contact-methods.ts";
 
 import { reconcilePaymentSetup } from "../_shared/payment-setup-reconciliation.ts";
 import { verifyStripeWebhook } from "../_shared/stripe-webhook-signature.ts";
@@ -82,14 +83,7 @@ async function upsertTierState(
       const u = userData?.users?.find((x: any) => x.email?.toLowerCase() === args.email.toLowerCase());
       if (u) userId = u.id;
     } catch (_) { /* ignore */ }
-    try {
-      const { data: c } = await supabaseAdmin
-        .from("clients")
-        .select("id")
-        .ilike("email", args.email)
-        .maybeSingle();
-      if (c?.id) clientId = c.id;
-    } catch (_) { /* ignore */ }
+    clientId = (await findSoleClientByEmailAnyWorkspace(supabaseAdmin, args.email, "stripe-webhook"))?.id ?? null;
 
     const { error } = await supabaseAdmin
       .from("tier_state")

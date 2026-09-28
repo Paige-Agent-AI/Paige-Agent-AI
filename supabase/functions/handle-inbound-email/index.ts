@@ -24,6 +24,7 @@
 // provisions an inbound email connector.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { fireAndForgetBridge } from "../_shared/mmaOsBridge.ts";
+import { findClientIdByAddress } from "../_shared/contact-methods.ts";
 import {
   getInboundAdapter,
   registerInboundAdapter,
@@ -294,17 +295,9 @@ Deno.serve(async (req) => {
   const tenantId = connector.tenant_id;
 
   // -- 4. Upsert the contact in public.clients, tenant-scoped (§9). ---------------
-  let contactId: string | null = null;
-  const { data: existing } = await admin
-    .from("clients")
-    .select("id")
-    .eq("tenant_id", tenantId)
-    .ilike("email", fromEmail)
-    .limit(1)
-    .maybeSingle();
-  if (existing?.id) {
-    contactId = existing.id;
-  } else {
+  // A sender writing from ANY of a contact's addresses is that contact.
+  let contactId: string | null = await findClientIdByAddress(admin, tenantId, "email", fromEmail, "handle-inbound-email");
+  if (!contactId) {
     // clients.created_by is NOT NULL. Use the tenant's owner; fall back to the
     // platform owner user only if the tenant has no owner set.
     const { data: tenantRow } = await admin

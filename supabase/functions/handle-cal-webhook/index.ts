@@ -3,6 +3,7 @@
 import { adminClient, corsHeaders, jsonResponse } from "../_shared/adminAuth.ts";
 import { verifyHmacSha256Hex } from "../_shared/webhookSig.ts";
 import { fireAndForgetBridge } from "../_shared/mmaOsBridge.ts";
+import { findSoleClientByEmailAnyWorkspace } from "../_shared/contact-methods.ts";
 
 type EventTypeKey = "vip_intro" | "dfy_discovery" | "coffee_hour" | "workshop" | "other";
 
@@ -72,16 +73,8 @@ Deno.serve(async (req) => {
   const map = (cfg?.cal_event_type_map ?? {}) as Record<string, EventTypeKey>;
   const eventType = classifyEventType(calEventTypeId, title, map);
 
-  // Match contact by email
-  let contactId: string | null = null;
-  if (attendeeEmail) {
-    const { data: contact } = await admin
-      .from("clients")
-      .select("id")
-      .ilike("email", attendeeEmail)
-      .maybeSingle();
-    contactId = contact?.id ?? null;
-  }
+  // Match contact by any of its email addresses
+  const contactId = (await findSoleClientByEmailAnyWorkspace(admin, attendeeEmail, "handle-cal-webhook"))?.id ?? null;
 
   const status = statusFromTrigger(trigger);
 

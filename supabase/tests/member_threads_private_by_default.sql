@@ -2,7 +2,7 @@
 -- purpose, and recorded when opened (owner ruling 2026-09-28, after a super_admin acting as a
 -- workspace was shown a member's conversation as their own). Synthetic fixtures; rolled back.
 BEGIN;
-SELECT plan(31);
+SELECT plan(35);
 
 INSERT INTO auth.users (id, aud, role, email) VALUES
   ('0a5c0000-0000-4000-8000-000000000001','authenticated','authenticated','threads-super@tests.invalid'),
@@ -81,9 +81,9 @@ CREATE FUNCTION pg_temp.thread_exists(_id uuid) RETURNS boolean LANGUAGE sql SEC
 $$;
 
 -- Grant surface.
-SELECT ok(NOT has_function_privilege('anon','public.operator_open_member_thread(uuid)','EXECUTE'),
+SELECT ok(NOT has_function_privilege('anon','public.operator_open_member_thread(uuid,uuid)','EXECUTE'),
   'the audited open is not callable anonymously');
-SELECT ok(NOT has_function_privilege('anon','public.operator_list_member_threads()','EXECUTE'),
+SELECT ok(NOT has_function_privilege('anon','public.operator_list_member_threads(uuid)','EXECUTE'),
   'the member list is not callable anonymously');
 SELECT ok(NOT has_function_privilege('authenticated','public.operator_open_act_as_tenant()','EXECUTE'),
   'the act-as receipt helper (from #1554) is not a door of its own');
@@ -118,19 +118,30 @@ SELECT is((SELECT count(*)::int FROM public.paige_chat_threads WHERE id = '0a5c0
   'the operator still reads their own thread');
 
 -- Openable on purpose, and recorded.
-SELECT is((SELECT count(*)::int FROM public.operator_list_member_threads()), 1,
+SELECT is((SELECT count(*)::int FROM public.operator_list_member_threads('0a5c0000-0000-4000-8000-00000000a001')), 1,
   'the operator sees that one member conversation exists');
-SELECT is((SELECT owner_name FROM public.operator_list_member_threads()), 'Proof Member',
+SELECT is((SELECT owner_name FROM public.operator_list_member_threads('0a5c0000-0000-4000-8000-00000000a001')), 'Proof Member',
   'the list names whose it is');
 SELECT is(pg_temp.opens(), 0, 'listing records no open');
-SELECT is(jsonb_array_length(public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f1') -> 'turns'), 2,
+SELECT is(jsonb_array_length(public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f1', '0a5c0000-0000-4000-8000-00000000a001') -> 'turns'), 2,
   'opening it on purpose returns its turns');
 SELECT is(pg_temp.opens(), 1, 'opening it records one operator.thread.open');
-SELECT throws_ok($$SELECT public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f2')$$,
+-- The workspace on screen is asserted by the caller and checked against the server's own act-as:
+-- a stale tab showing another workspace is refused, and nothing is recorded (Codex review of 50bda0e5).
+SELECT throws_ok($$SELECT * FROM public.operator_list_member_threads('0a5c0000-0000-4000-8000-00000000a002')$$,
+  '42501', 'operator_scope_moved', 'a list for a workspace other than the open act-as is refused');
+SELECT throws_ok($$SELECT public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f1', '0a5c0000-0000-4000-8000-00000000a002')$$,
+  '42501', 'operator_scope_moved', 'an open asserted for another workspace is refused');
+SELECT is(pg_temp.opens(), 1, 'a refused open for a moved scope records nothing');
+-- The time shown is the time recorded: the open returns its own audit row's timestamp.
+SELECT is((public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f1', '0a5c0000-0000-4000-8000-00000000a001') ->> 'openedAt')::timestamptz,
+  (SELECT max(created_at) FROM public.paige_audit_log WHERE action = 'operator.thread.open'),
+  'the open returns the recorded time of its own audit row');
+SELECT throws_ok($$SELECT public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f2', '0a5c0000-0000-4000-8000-00000000a001')$$,
   'P0002', 'member_thread_not_available', 'a thread in another workspace cannot be opened');
-SELECT throws_ok($$SELECT public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f4')$$,
+SELECT throws_ok($$SELECT public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f4', '0a5c0000-0000-4000-8000-00000000a001')$$,
   'P0002', 'member_thread_not_available', 'a member''s Studio-session thread is not opened here');
-SELECT throws_ok($$SELECT public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f3')$$,
+SELECT throws_ok($$SELECT public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f3', '0a5c0000-0000-4000-8000-00000000a001')$$,
   'P0002', 'member_thread_not_available', 'the open is only for other people''s private threads');
 
 -- A delete cannot reach a thread the operator cannot see — filtered or bare.
@@ -147,13 +158,13 @@ SELECT ok(NOT pg_temp.thread_exists('0a5c0000-0000-4000-8000-0000000000f3'),
 SELECT ok((public.operator_exit_tenant() ->> 'exited')::boolean IS NOT FALSE, 'the super_admin exits');
 UPDATE public.profiles SET active_tenant_id = '0a5c0000-0000-4000-8000-00000000a001'
  WHERE user_id = '0a5c0000-0000-4000-8000-000000000001';
-SELECT throws_ok($$SELECT public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f1')$$,
+SELECT throws_ok($$SELECT public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f1', '0a5c0000-0000-4000-8000-00000000a001')$$,
   '42501', 'operator_not_acting', 'a pointer with no open enter receipt cannot open a member''s thread');
-SELECT is(pg_temp.opens(), 1, 'a refused open records nothing');
+SELECT is(pg_temp.opens(), 2, 'a refused open records nothing');
 
 -- The capability is the super_admin's today (G1's default rule for an unlisted capability).
 SELECT pg_temp.as_caller('0a5c0000-0000-4000-8000-000000000002');
-SELECT throws_ok($$SELECT * FROM public.operator_list_member_threads()$$,
+SELECT throws_ok($$SELECT * FROM public.operator_list_member_threads('0a5c0000-0000-4000-8000-00000000a001')$$,
   '42501', 'operator_member_threads_not_permitted', 'a platform_admin does not hold the capability');
 
 -- Withdrawing act-as closes the door even inside an act-as already open: the member-thread
@@ -166,11 +177,11 @@ SELECT pg_temp.later_enter('0a5c0000-0000-4000-8000-000000000001');
 SELECT pg_temp.set_act_as_in_force('super_admin', false);
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_caller('0a5c0000-0000-4000-8000-000000000001');
-SELECT throws_ok($$SELECT * FROM public.operator_list_member_threads()$$,
+SELECT throws_ok($$SELECT * FROM public.operator_list_member_threads('0a5c0000-0000-4000-8000-00000000a001')$$,
   '42501', 'operator_member_threads_not_permitted', 'with act-as withdrawn, the list is refused inside an open act-as');
-SELECT throws_ok($$SELECT public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f1')$$,
+SELECT throws_ok($$SELECT public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f1', '0a5c0000-0000-4000-8000-00000000a001')$$,
   '42501', 'operator_member_threads_not_permitted', 'with act-as withdrawn, the open is refused inside an open act-as');
-SELECT is(pg_temp.opens(), 1, 'a refused open after withdrawal records nothing');
+SELECT is(pg_temp.opens(), 2, 'a refused open after withdrawal records nothing');
 
 SELECT * FROM finish();
 ROLLBACK;

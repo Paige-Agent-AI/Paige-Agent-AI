@@ -76,7 +76,7 @@ CREATE POLICY turns_select_via_thread ON public.paige_chat_turns
 -- The members' private threads in the workspace the caller is acting as: who, how many messages,
 -- when last active. No title and no content. Other people's only; the caller's own threads are
 -- already theirs to read.
-CREATE OR REPLACE FUNCTION public.operator_list_member_threads()
+CREATE OR REPLACE FUNCTION public.operator_list_member_threads(_expected_tenant uuid)
 RETURNS TABLE (
   thread_id uuid,
   owner_name text,
@@ -103,6 +103,12 @@ begin
   if v_tenant is null then
     raise exception 'operator_not_acting' using errcode = '42501';
   end if;
+  -- The caller names the workspace it is showing; the server's own act-as decides. A tab still
+  -- showing a workspace the operator has since left (in another tab) is refused, never answered
+  -- with the workspace now open. The caller's value is an assertion, never the authority.
+  if _expected_tenant is distinct from v_tenant then
+    raise exception 'operator_scope_moved' using errcode = '42501';
+  end if;
   return query
     select t.id,
            coalesce(nullif(btrim(pr.full_name), ''),
@@ -122,12 +128,12 @@ begin
 end;
 $function$;
 
-REVOKE ALL ON FUNCTION public.operator_list_member_threads() FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.operator_list_member_threads() TO authenticated;
+REVOKE ALL ON FUNCTION public.operator_list_member_threads(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.operator_list_member_threads(uuid) TO authenticated;
 
 -- Open one member's private thread, on purpose. Records the operator, the thread, the workspace and
 -- the time before anything is returned; a refused open returns nothing and records nothing.
-CREATE OR REPLACE FUNCTION public.operator_open_member_thread(_thread_id uuid)
+CREATE OR REPLACE FUNCTION public.operator_open_member_thread(_thread_id uuid, _expected_tenant uuid)
 RETURNS jsonb
 LANGUAGE plpgsql
 VOLATILE
@@ -139,6 +145,7 @@ declare
   v_thread public.paige_chat_threads%rowtype;
   v_owner_name text;
   v_turns jsonb;
+  v_opened_at timestamptz;
 begin
   -- Both grants, every call: reading a member's thread is a narrower act inside act-as, so withdrawing
   -- tenant.act_as closes it too, even inside an act-as already open (Codex review of 1b81bb3d).
@@ -150,6 +157,12 @@ begin
   v_tenant := public.operator_open_act_as_tenant();
   if v_tenant is null then
     raise exception 'operator_not_acting' using errcode = '42501';
+  end if;
+  -- The caller names the workspace it is showing; the server's own act-as decides. A tab still
+  -- showing a workspace the operator has since left (in another tab) is refused, never answered
+  -- with the workspace now open. The caller's value is an assertion, never the authority.
+  if _expected_tenant is distinct from v_tenant then
+    raise exception 'operator_scope_moved' using errcode = '42501';
   end if;
 
   select * into v_thread from public.paige_chat_threads where id = _thread_id;
@@ -180,17 +193,21 @@ begin
   VALUES
     (auth.uid(), 'platform_operator', 'operator.thread.open', 'paige_chat_thread', v_thread.id, v_tenant,
      jsonb_build_object('owner_user_id', v_thread.caller_user_id,
-                        'turn_count', jsonb_array_length(v_turns)));
+                        'turn_count', jsonb_array_length(v_turns)))
+  RETURNING created_at INTO v_opened_at;
 
   return jsonb_build_object(
     'threadId', v_thread.id,
     'ownerName', coalesce(v_owner_name, 'A member of this workspace'),
     'title', v_thread.title,
     'lastMessageAt', v_thread.last_message_at,
+    -- The time the open was recorded, read back from the audit row, so the viewer never shows a
+    -- browser clock as the recorded time (Codex review of 50bda0e5).
+    'openedAt', v_opened_at,
     'turns', v_turns
   );
 end;
 $function$;
 
-REVOKE ALL ON FUNCTION public.operator_open_member_thread(uuid) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.operator_open_member_thread(uuid) TO authenticated;
+REVOKE ALL ON FUNCTION public.operator_open_member_thread(uuid, uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.operator_open_member_thread(uuid, uuid) TO authenticated;

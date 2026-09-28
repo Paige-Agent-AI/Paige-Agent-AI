@@ -47,7 +47,7 @@ type ListState =
   | { phase: "ready"; threads: MemberThread[] }
   | { phase: "error" };
 
-const REFUSED = /operator_member_threads_not_permitted|operator_not_acting/;
+const REFUSED = /operator_member_threads_not_permitted|operator_not_acting|operator_scope_moved/;
 
 function relative(iso: string | null): string {
   if (!iso) return "no messages yet";
@@ -95,8 +95,9 @@ function MemberConversationsForWorkspace({ scopeKey }: { scopeKey: string }) {
   const load = useCallback(async () => {
     const mine = ++generation.current;
     setList({ phase: "loading" });
+    // The workspace this tab shows, asserted; the server's own act-as decides (another tab may have moved it).
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase as any).rpc("operator_list_member_threads");
+    const { data, error } = await (supabase as any).rpc("operator_list_member_threads", { _expected_tenant: scopeKey });
     if (mine !== generation.current) return;
     if (error) {
       // Not an operator who may, or not in an audited act-as: this door does not exist for them.
@@ -104,7 +105,7 @@ function MemberConversationsForWorkspace({ scopeKey }: { scopeKey: string }) {
       return;
     }
     setList({ phase: "ready", threads: (data ?? []) as MemberThread[] });
-  }, []);
+  }, [scopeKey]);
 
   useEffect(() => {
     setExpanded(false);
@@ -123,7 +124,7 @@ function MemberConversationsForWorkspace({ scopeKey }: { scopeKey: string }) {
     setOpening(true);
     const epoch = scopeEpoch.current;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase as any).rpc("operator_open_member_thread", { _thread_id: pending.thread_id });
+    const { data, error } = await (supabase as any).rpc("operator_open_member_thread", { _thread_id: pending.thread_id, _expected_tenant: scopeKey });
     // The workspace changed while this was in flight: its conversation belongs to the one left.
     if (epoch !== scopeEpoch.current) return;
     setOpening(false);
@@ -132,6 +133,7 @@ function MemberConversationsForWorkspace({ scopeKey }: { scopeKey: string }) {
     if (error) {
       const message = String(error.message ?? "");
       if (/operator_not_acting/.test(message)) toast.error("You're no longer acting as this workspace, so the conversation wasn't opened.");
+      else if (/operator_scope_moved/.test(message)) toast.error("You've moved to another workspace in a different tab, so this conversation wasn't opened.");
       else if (/member_thread_not_available/.test(message)) toast.error(`${who}'s conversation isn't available any more.`);
       // The server may have recorded the open before the reply was lost, so this cannot say it
       // wasn't; opening again records another open, which is the truth of what happened.
@@ -142,10 +144,11 @@ function MemberConversationsForWorkspace({ scopeKey }: { scopeKey: string }) {
     setOpened({
       threadId: data.threadId,
       ownerName: data.ownerName ?? who,
-      openedAt: new Date(),
+      // The recorded time, read back from the server's audit row; the browser clock is only a fallback.
+      openedAt: data.openedAt ? new Date(data.openedAt) : new Date(),
       turns: Array.isArray(data.turns) ? data.turns : [],
     });
-  }, [load, opening, pending]);
+  }, [load, opening, pending, scopeKey]);
 
   if (list.phase === "idle" || list.phase === "loading") return null;
   if (list.phase === "ready" && list.threads.length === 0) return null;
@@ -183,7 +186,8 @@ function MemberConversationsForWorkspace({ scopeKey }: { scopeKey: string }) {
               <p className="px-2 pb-1.5 text-[11px] leading-snug text-muted-foreground">
                 Private to each member. Opening one is recorded under your name.
               </p>
-              <ul className="space-y-0.5">
+              {/* Its own bounded scroll: the section sits below the rail's list, outside its scroll owner. */}
+              <ul className="max-h-[min(40vh,18rem)] space-y-0.5 overflow-y-auto overscroll-contain">
                 {list.threads.map((thread) => (
                   <li key={thread.thread_id}>
                     <button

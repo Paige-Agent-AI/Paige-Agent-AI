@@ -99,7 +99,8 @@ describe("members' conversations", () => {
     await act(async () => { byText("Members' conversations")!.click(); });
     await act(async () => { byText("Test Member")!.click(); });
     await act(async () => { byText("Open conversation")!.click(); await Promise.resolve(); });
-    expect(opens()).toEqual([{ name: "operator_open_member_thread", args: { _thread_id: "thread-1" } }]);
+    expect(opens()).toEqual([{ name: "operator_open_member_thread", args: { _thread_id: "thread-1", _expected_tenant: "tenant-a" } }]);
+    expect(h.calls.find((c) => c.name === "operator_list_member_threads")?.args).toEqual({ _expected_tenant: "tenant-a" });
     const dialog = document.querySelector('[role="dialog"]');
     expect(dialog?.textContent).toContain("Test Member's conversation with PAIGE");
     expect(dialog?.textContent).toContain("Read only");
@@ -181,5 +182,25 @@ describe("members' conversations", () => {
       confirm.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
     });
     expect(sheetKeys).toEqual([]);
+  });
+
+  it("shows the time the server recorded, not the browser's clock", async () => {
+    h.openResult = { data: { threadId: "thread-1", ownerName: "Test Member", openedAt: "2026-09-28T03:07:00Z", turns: [] }, error: null };
+    await mount();
+    await act(async () => { byText("Members' conversations")!.click(); });
+    await act(async () => { byText("Test Member")!.click(); });
+    await act(async () => { byText("Open conversation")!.click(); await Promise.resolve(); });
+    const recorded = new Date("2026-09-28T03:07:00Z").toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    expect(document.querySelector('[role="dialog"]')?.textContent).toContain(`You opened it at ${recorded}`);
+  });
+
+  it("says so when this tab shows a workspace the operator has since left", async () => {
+    h.openResult = { data: null, error: { message: "operator_scope_moved" } };
+    await mount();
+    await act(async () => { byText("Members' conversations")!.click(); });
+    await act(async () => { byText("Test Member")!.click(); });
+    await act(async () => { byText("Open conversation")!.click(); await Promise.resolve(); });
+    expect(h.toasts[0]).toContain("another workspace");
+    expect(document.body.textContent).not.toContain("conversation with PAIGE");
   });
 });

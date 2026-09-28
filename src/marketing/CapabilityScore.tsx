@@ -22,7 +22,6 @@ export function CapabilityScore({ compact = false }: { compact?: boolean }) {
                 <p className="pa-lane__promise">{lane.promise}</p>
               </div>
               <div className="pa-lane__stave">
-                <span className="pa-staff" aria-hidden="true" />
                 <ul className="pa-lane__items">
                   {lane.items.map((item) => (
                     <li key={item.text} className="pa-note" data-state={item.state}>

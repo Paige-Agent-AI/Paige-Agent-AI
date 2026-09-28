@@ -2,12 +2,14 @@ import { appUrl } from "@/lib/hostRouting";
 import { soloBetaSignupPath } from "@/lib/auth/soloBetaAcquisition";
 
 /**
- * Where the public site's two acts go. Both are the unchanged, test-pinned enrollment seams:
- * signup → `/auth?mode=signup&plan=solo&billing=monthly`, login → `/auth`, both born on the app
- * origin via `appUrl` (a relative path while the host split is off).
+ * Where the public site's acts go. All are the unchanged, test-pinned enrollment seams: signup →
+ * `/auth?mode=signup&plan=solo&billing=monthly`, login → `/auth`, the plan card → `/pricing`, each
+ * born on the app origin via `appUrl` (a relative path while the host split is off).
  */
 export const trialHref = () => appUrl(soloBetaSignupPath());
 export const loginHref = () => appUrl("/auth");
+/** The plan card's act: `/pricing`, where the offer is re-checked server-side before signup. */
+export const pricingHref = () => appUrl("/pricing");
 
 export type SiteLink = { label: string; to: string };
 

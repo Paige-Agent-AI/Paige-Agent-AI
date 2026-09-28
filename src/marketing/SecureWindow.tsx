@@ -1,19 +1,35 @@
+import { useEffect, useRef, useState } from "react";
 import { Mark } from "./Mark";
 
 /**
  * The secure browser moment — marked as in build, honestly. Paige works inside a window the owner
  * can watch, signed in with the owner's own login, and the owner can take over at any time. The
- * portal is a fictional, labelled illustration; the fields fill on a CSS loop that stops under
- * reduced motion (showing the filled state).
+ * portal is a fictional, labelled illustration. The fields fill once, when the window scrolls into
+ * view, then hold; reduced motion shows the filled state with nothing moving.
  */
 export function SecureWindow() {
+  const ref = useRef<HTMLElement>(null);
+  const [play, setPlay] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) {
+        setPlay(true);
+        io.disconnect();
+      }
+    }, { threshold: 0.4 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
   return (
-    <figure className="pa-window">
+    <figure className="pa-window" ref={ref} data-play={play}>
       <p className="pa-sr">
         Illustration of a feature in build: Paige filling in a form on a supplier portal inside a
         secure window, signed in with your own login, while you watch and can take over.
       </p>
-      <div className="pa-window__frame" aria-hidden="true">
+      <div className="pa-stacked pa-window__stack" aria-hidden="true">
+      <div className="pa-window__frame">
         <div className="pa-window__chrome">
           <span className="pa-window__dots">
             <i />
@@ -48,12 +64,13 @@ export function SecureWindow() {
             <b>receipt-march.pdf</b>
           </div>
           <div className="pa-window__submit" style={{ ["--d" as string]: "3" }}>
-            Waiting for your go-ahead to submit
+            Ready for you to submit
           </div>
           <span className="pa-window__presence">
             <Mark state="spectral" size={18} />
           </span>
         </div>
+      </div>
       </div>
       <figcaption className="pa-window__caption">
         <span className="pa-state pa-state--build">In build</span>

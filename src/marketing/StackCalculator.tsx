@@ -12,14 +12,18 @@ const CATEGORIES = [
   "Your CRM",
   "Your scheduler",
   "Your proposal tool",
-  "Your e-signature tool",
   "Your email marketing tool",
   "Your forms tool",
-  "Your social scheduler",
   "Your project manager",
   "Your client portal",
   "Assistant hours",
 ];
+
+/** Digits and one decimal point; a comma decimal ("12,50") reads as a point. Capped at 8 characters. */
+function cleanAmount(raw: string) {
+  const [whole, ...rest] = raw.replace(/,/g, ".").replace(/[^0-9.]/g, "").split(".");
+  return (rest.length ? `${whole}.${rest.join("").slice(0, 2)}` : whole).slice(0, 8);
+}
 
 const money = (n: number) =>
   n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
@@ -33,7 +37,7 @@ export function StackCalculator() {
     () =>
       CATEGORIES.reduce((sum, c) => {
         if (!on[c]) return sum;
-        const v = Number.parseFloat((amounts[c] ?? "").replace(/[^0-9.]/g, ""));
+        const v = Number.parseFloat(amounts[c] ?? "");
         return Number.isFinite(v) && v > 0 ? sum + v : sum;
       }, 0),
     [on, amounts],
@@ -45,7 +49,7 @@ export function StackCalculator() {
   return (
     <div className="pa-calc">
       <fieldset className="pa-calc__list">
-        <legend className="pa-caps pa-calc__legend">Tap what you pay for, then add your monthly cost</legend>
+        <legend className="pa-calc__legend">Tap what you pay for, then add what it costs you each month.</legend>
         {CATEGORIES.map((c, i) => {
           const id = `${baseId}-${i}`;
           const active = !!on[c];
@@ -70,7 +74,7 @@ export function StackCalculator() {
                     autoComplete="off"
                     placeholder="0"
                     value={amounts[c] ?? ""}
-                    onChange={(e) => setAmounts((s) => ({ ...s, [c]: e.target.value.replace(/[^0-9.]/g, "").slice(0, 8) }))}
+                    onChange={(e) => setAmounts((s) => ({ ...s, [c]: cleanAmount(e.target.value) }))}
                   />
                   <span aria-hidden="true" className="pa-calc__per">/mo</span>
                 </label>
@@ -80,7 +84,7 @@ export function StackCalculator() {
         })}
       </fieldset>
 
-      <div className="pa-calc__result" aria-live="polite">
+      <div className="pa-calc__result">
         <div className="pa-calc__bars">
           <div className="pa-calc__bar">
             <span className="pa-calc__bar-label">Your stack{picked ? `, ${picked} ${picked === 1 ? "tool" : "tools"}` : ""}</span>
@@ -97,7 +101,7 @@ export function StackCalculator() {
             </span>
           </div>
         </div>
-        <p className="pa-calc__verdict">
+        <p className="pa-calc__verdict" aria-live="polite">
           {hasTotal
             ? `You pay ${money(total)} a month for the seats. Paige is ${money(PAIGE_MONTHLY)} for the one who works between them.`
             : "Your numbers, your call. Nothing you type leaves this page."}

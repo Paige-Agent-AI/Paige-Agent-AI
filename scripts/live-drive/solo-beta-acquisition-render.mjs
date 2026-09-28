@@ -177,7 +177,8 @@ try {
   const page = await context.newPage();
   await page.goto(`${BASE}/`, { waitUntil: "domcontentloaded", timeout: 45_000 });
   await settle(page);
-  await page.getByRole("button", { name: /Hire Paige/i }).waitFor({ state: "visible", timeout: 20_000 });
+  // The public site's acts are real links (they work without JS and on middle-click), not buttons.
+  await page.getByRole("link", { name: "Hire Paige", exact: true }).waitFor({ state: "visible", timeout: 20_000 });
   const home = await pageFacts(page);
   const acquisitionLinks = home.interactive.filter(({ text, href }) =>
     /(start|get started|join|signup|sign up|trial|beta)/i.test(`${text} ${href || ""}`));
@@ -185,12 +186,12 @@ try {
     /(agency|enterprise|platform|portal|subaccount|premium|legacy)/i.test(`${text} ${href || ""}`));
   record(unsupportedHome.length === 0, "homepage: no unsupported acquisition action", unsupportedHome);
   record(acquisitionLinks.length > 0, "homepage: meaningful acquisition actions are present", acquisitionLinks);
-  for (const label of [/Hire Paige/i, /Start with Paige/i]) {
+  for (const label of [{ name: "Hire Paige", exact: true }, { name: /Start your 30-day trial/i }]) {
     await page.goto(`${BASE}/`, { waitUntil: "domcontentloaded", timeout: 45_000 });
     await settle(page);
-    await page.getByRole("button", { name: label }).click({ noWaitAfter: true });
+    await page.getByRole("link", label).first().click({ noWaitAfter: true });
     await page.waitForURL((url) => url.pathname === "/auth" && url.searchParams.get("mode") === "signup", { timeout: 15_000 });
-    record(page.url().includes(CANONICAL_SIGNUP), `homepage ${label}: reaches canonical paid Solo signup`, { finalUrl: new URL(page.url()).pathname + new URL(page.url()).search });
+    record(page.url().includes(CANONICAL_SIGNUP), `homepage ${label.name}: reaches canonical paid Solo signup`, { finalUrl: new URL(page.url()).pathname + new URL(page.url()).search });
   }
 
   for (const route of ["/premium", "/legacy", "/get-started", "/signup/coach-qualify"]) {

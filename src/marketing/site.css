@@ -101,6 +101,9 @@
 }
 
 /* Base rules sit at zero specificity (:where) so every component class wins without a fight. */
+:where(.pa-site), :where(.pa-site) *, :where(.pa-site) *::before, :where(.pa-site) *::after { box-sizing: border-box; }
+:where(.pa-site) :is(ul, ol, figure, fieldset) { margin: 0; }
+:where(.pa-site) :is(button, input) { font: inherit; }
 :where(.pa-site) ::selection { background: var(--pa-selection); color: var(--pa-ink); }
 :where(.pa-site) *:focus-visible {
   outline: 2px solid var(--pa-focus);
@@ -120,7 +123,27 @@
 /* ── Layout ─────────────────────────────────────────────────────────── */
 .pa-wrap { width: 100%; max-width: var(--pa-max); margin-inline: auto; padding-inline: var(--pa-gutter); }
 .pa-section { padding-block: var(--pa-section); position: relative; }
-.pa-section + .pa-section { border-top: 1px solid var(--pa-line); }
+.pa-section + .pa-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--pa-staff-gap) * 4 + 1px);
+  background: repeating-linear-gradient(to bottom, var(--pa-line) 0 1px, transparent 1px var(--pa-staff-gap));
+  pointer-events: none;
+}
+/* Depth by overlap only: a second sheet sits behind a raised plane, like pages on a stand. */
+.pa-stacked { position: relative; }
+.pa-stacked::before {
+  content: "";
+  position: absolute;
+  inset: 12px 18px -12px 18px;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--pa-plane-2);
+  border: 1px solid var(--pa-line);
+}
 
 /* ── Type roles ─────────────────────────────────────────────────────── */
 .pa-display {
@@ -171,6 +194,7 @@
   white-space: nowrap;
 }
 .pa-btn:active { transform: translateY(1px) scale(0.985); }
+@media (max-width: 400px) { .pa-btn { white-space: normal; text-align: center; line-height: 1.2; padding-block: 0.6rem; } }
 .pa-btn[disabled] { opacity: 0.55; cursor: not-allowed; }
 .pa-btn--act { background: var(--pa-champagne); color: var(--pa-on-champagne); }
 .pa-btn--act:hover { background: var(--pa-champagne-hi); }
@@ -208,8 +232,8 @@
   border-radius: 50%;
   flex: none;
 }
-.pa-state--live { color: var(--pa-champagne-ink); }
-.pa-state--live::before { background: var(--pa-champagne); }
+.pa-state--live { color: var(--pa-ink); }
+.pa-state--live::before { background: var(--pa-ink); }
 .pa-state--build { color: var(--pa-ink-3); }
 .pa-state--build::before { border: 1.5px solid var(--pa-ink-3); background: transparent; }
 
@@ -306,6 +330,7 @@
   .pa-header__actions { margin-left: 0.75rem; }
   .pa-header__login { display: inline-flex; }
   .pa-menu-btn { display: none; }
+  .pa-sheet { display: none; }
 }
 
 /* ── Footer ─────────────────────────────────────────────────────────── */
@@ -374,3 +399,4 @@
 }
 .pa-disclose[open] summary::after { transform: rotate(225deg) translateY(-2px); }
 .pa-disclose__body { padding-bottom: 1.25rem; color: var(--pa-ink-2); max-width: 64ch; }
+:where(.pa-footer__grid) > * { min-width: 0; }

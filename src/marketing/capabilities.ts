@@ -53,7 +53,7 @@ export const CAPABILITY_LANES: CapabilityLane[] = [
   {
     id: "social",
     name: "Social",
-    promise: "Posts written for the week, in your voice.",
+    promise: "Posts drafted in your voice, ready when you are.",
     items: [
       { text: "Drafts posts, ready to copy", state: "live" },
       { text: "Publishes and schedules for you", state: "build" },
@@ -61,8 +61,8 @@ export const CAPABILITY_LANES: CapabilityLane[] = [
   },
   {
     id: "browser",
-    name: "Secure browser",
-    promise: "The portals and admin sites nobody wants to log into.",
+    name: "Web & portals",
+    promise: "Research today. The portals you dread, next.",
     items: [
       { text: "Researches public web pages", state: "live" },
       { text: "Works vendor portals under your own login, while you watch", state: "build" },
@@ -71,7 +71,7 @@ export const CAPABILITY_LANES: CapabilityLane[] = [
   {
     id: "marketplace",
     name: "Marketplace",
-    promise: "New skills for the way your business works.",
+    promise: "Browse the skills coming to Paige.",
     items: [
       { text: "Browse the catalogue", state: "live" },
       { text: "Install skills and add-ons", state: "build" },
@@ -88,5 +88,5 @@ export const CAPABILITY_LANES: CapabilityLane[] = [
   },
 ];
 
-/** A lane is lit when anything in it works today. */
+/** A lane is lit when anything in it works today. Items always carry their own state in words. */
 export const laneIsLive = (lane: CapabilityLane) => lane.items.some((i) => i.state === "live");

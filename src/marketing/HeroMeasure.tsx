@@ -22,11 +22,11 @@ const T_SEND = 6700;
 const T_FADE = 7750;
 
 const INCOMING =
-  "Hi! Something came up Thursday. Can we move our session to next week? And could you resend the prep questions?";
+  "Hi! Something came up on Thursday. Can we move our call to next week?";
 const REPLY = [
   "Hi Dana, of course.",
   "Next week I have Tuesday at 10 or Wednesday at 2. Grab whichever works on my booking page and it's yours.",
-  "The prep questions are below so they're right here when you need them.",
+  "Thanks for the heads-up.",
   "Talk soon, Jordan",
 ];
 
@@ -40,6 +40,12 @@ function playhead(t: number) {
   }
   return 1;
 }
+
+const beatAt = (t: number) => (t < T_READ ? 0 : t < T_WRITE ? 1 : t < T_DECIDE ? 2 : 3);
+const wordsAt = (t: number, total: number) =>
+  beatAt(t) < 2 ? 0 : Math.round(Math.min(1, Math.max(0, (t - T_WRITE) / (T_DECIDE - T_WRITE - 250))) * total);
+/** Everything the measure renders from the clock, as one comparable key. */
+const frameKey = (t: number, total: number) => `${beatAt(t)}|${wordsAt(t, total)}|${t >= T_SEND}|${t >= T_FADE}`;
 
 function usePrefersReducedMotion() {
   const [reduced, setReduced] = useState(() =>
@@ -56,13 +62,14 @@ function usePrefersReducedMotion() {
   return reduced;
 }
 
-export function HeroMeasure({ children, honest }: { children: ReactNode; honest: ReactNode }) {
+export function HeroMeasure({ title, children, honest }: { title: ReactNode; children: ReactNode; honest: ReactNode }) {
   const reduced = usePrefersReducedMotion();
   const [userPaused, setUserPaused] = useState(false);
   const [visible, setVisible] = useState(true);
   const [t, setT] = useState(reduced ? T_SEND - 1 : 0);
   const ref = useRef<HTMLDivElement>(null);
-  const clock = useRef({ last: 0, t: 0 });
+  const headRef = useRef<HTMLSpanElement>(null);
+  const clock = useRef({ last: 0, t: 0, key: "" });
 
   const words = useMemo(() => REPLY.map((line) => line.split(" ")), []);
   const totalWords = useMemo(() => words.reduce((n, w) => n + w.length, 0), [words]);
@@ -86,21 +93,28 @@ export function HeroMeasure({ children, honest }: { children: ReactNode; honest:
       if (document.hidden) {
         clock.current.last = now;
       } else {
-        clock.current.t = (clock.current.t + (now - clock.current.last)) % LOOP;
+        const next = (clock.current.t + (now - clock.current.last)) % LOOP;
+        clock.current.t = next;
         clock.current.last = now;
-        setT(clock.current.t);
+        // The playhead moves every frame without React; the measure re-renders only when what it
+        // shows changes (beat, words written, sent, fade).
+        if (headRef.current) headRef.current.style.left = `${playhead(next) * 100}%`;
+        const key = frameKey(next, totalWords);
+        if (key !== clock.current.key) {
+          clock.current.key = key;
+          setT(next);
+        }
       }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [running]);
+  }, [running, totalWords]);
 
   // Reduced motion: hold the composed decision moment, nothing moving, nothing "sent".
   const now = reduced ? T_SEND - 1 : t;
-  const beat = now < T_READ ? 0 : now < T_WRITE ? 1 : now < T_DECIDE ? 2 : 3;
-  const writeProgress = Math.min(1, Math.max(0, (now - T_WRITE) / (T_DECIDE - T_WRITE - 250)));
-  const shownWords = beat < 2 ? 0 : Math.round(writeProgress * totalWords);
+  const beat = beatAt(now);
+  const shownWords = wordsAt(now, totalWords);
   const sent = now >= T_SEND;
   const fading = now >= T_FADE;
 
@@ -126,14 +140,21 @@ export function HeroMeasure({ children, honest }: { children: ReactNode; honest:
   return (
     <div className="pa-hero__stage" ref={ref}>
       <div className="pa-wrap pa-hero__grid">
-        <div className="pa-hero__copy">{children}</div>
+        <div className="pa-hero__copy">
+          {title}
+          {/* The hero's second beat: present as a ghost, struck forward the moment the owner sends. */}
+          <p className={`pa-run${sent || reduced ? " is-struck" : ""}`}>
+            <span className="pa-sr">Run everything.</span>
+            <span aria-hidden="true">Run everything.</span>
+          </p>
+          {children}
+        </div>
         <figure className="pa-measure">
           <p className="pa-sr">
-            Illustration: a client asks to move a session and resend prep questions. You hand the
-            message to Paige, she reads it, writes the reply in your voice, and waits. You choose
-            Send or Edit.
+            Illustration: a client asks to move a call. You hand the message to
+            Paige, she reads it and writes the reply in your voice. You choose Send or Edit.
           </p>
-          <div className={`pa-measure__plane${fading ? " is-fading" : ""}`} aria-hidden="true">
+          <div className={`pa-measure__plane pa-stacked${fading ? " is-fading" : ""}`} aria-hidden="true">
             <div className="pa-measure__bar">
               <span className="pa-measure__who">
                 <Mark state={markState} size={26} key={markState === "charged" ? "c" : markState} />
@@ -169,9 +190,19 @@ export function HeroMeasure({ children, honest }: { children: ReactNode; honest:
             </div>
 
             <div className={`pa-decide${beat === 3 ? " is-in" : ""}`}>
-              <span className={`pa-decide__send${sent ? " is-pressed" : ""}`}>{sent ? "Sent" : "Send"}</span>
-              <span className="pa-decide__edit">Edit</span>
-              <span className="pa-decide__note">{sent ? "You sent it." : "Nothing goes out until you choose."}</span>
+              {sent ? (
+                <span className="pa-decide__done">
+                  <svg viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M3.5 8.5 6.5 11.5 12.5 4.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  Sent to Dana, 9:42
+                </span>
+              ) : (
+                <>
+                  <span className="pa-decide__send">Send</span>
+                  <span className="pa-decide__edit">Edit</span>
+                </>
+              )}
             </div>
           </div>
           <figcaption className="pa-measure__foot">
@@ -195,7 +226,9 @@ export function HeroMeasure({ children, honest }: { children: ReactNode; honest:
       <div className="pa-beats" aria-hidden="true">
         <div className="pa-wrap pa-beats__inner">
           <span className="pa-staff pa-beats__staff" />
-          <span className="pa-beats__head" style={{ transform: `translateX(${playhead(now) * 100}%)` }} />
+          <span className="pa-beats__track">
+            <span ref={headRef} className="pa-beats__head" style={{ left: `${playhead(now) * 100}%` }} />
+          </span>
           <ol className="pa-beats__list">
             {BEATS.map((label, i) => (
               <li key={label} data-state={i < beat ? "past" : i === beat ? "now" : "next"}>
@@ -205,9 +238,6 @@ export function HeroMeasure({ children, honest }: { children: ReactNode; honest:
             ))}
           </ol>
           <span className="pa-beats__final" />
-        </div>
-        <div className="pa-wrap">
-          <p className={`pa-run${sent || reduced ? " is-struck" : ""}`}>Run everything.</p>
         </div>
       </div>
     </div>

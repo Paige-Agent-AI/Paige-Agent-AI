@@ -6,6 +6,7 @@ import { CapabilityScore } from "@/marketing/CapabilityScore";
 import { SecureWindow } from "@/marketing/SecureWindow";
 import { WeekScore } from "@/marketing/WeekScore";
 import { Mark } from "@/marketing/Mark";
+import { pricingHref } from "@/marketing/siteLinks";
 import "@/marketing/home.css";
 
 /**
@@ -22,11 +23,11 @@ const SEAMS = [
 ];
 
 const OUTCOMES = [
-  "Replies, follow-ups and documents drafted in your voice",
+  "Replies and follow-ups written in your voice",
+  "Proposals, offers and letters drafted from what she knows",
   "Clients, notes and tasks kept in order",
   "Your booking page run, and meetings booked",
-  "Posts written for the week",
-  "Nothing sent without your say",
+  "Social posts drafted in your voice, ready to copy",
 ];
 
 export default function PaigeHome() {
@@ -34,17 +35,24 @@ export default function PaigeHome() {
     <SiteShell>
       <PageHead
         title="Paige — the AI chief operating officer for client-service businesses"
-        description="Paige does the work between your client sessions and you decide what goes out. Start Paige Solo free for 30 days, then $74.50/month."
+        description="Paige is the AI chief operating officer for client-service businesses. She does the work between your client meetings. Start Paige Solo free for 30 days, then $74.50/month."
         path="/"
       />
 
       {/* Hero: the thesis, and the one loop that proves it. */}
       <section className="pa-hero" aria-labelledby="hero-title">
-        <HeroMeasure honest="Today you hand Paige the message in chat. Reading your inbox directly is in build.">
-          <h1 id="hero-title" className="pa-display">
-            Paige is your AI chief operating officer.
-          </h1>
-          <p className="pa-hero__beat">She does the work. You decide what goes out.</p>
+        <HeroMeasure
+          honest="Today you hand Paige the message in chat. Reading your inbox directly is in build."
+          title={
+            <h1 id="hero-title" className="pa-display">
+              Paige is your AI chief operating officer.
+            </h1>
+          }
+        >
+          <p className="pa-hero__beat">
+            The replies, the follow-ups, the proposal drafts, the bookings. Done in your voice, between your client
+            meetings.
+          </p>
           <div className="pa-hero__acts">
             <TrialButton />
             <a href="#today" className="pa-btn pa-btn--line">
@@ -65,13 +73,13 @@ export default function PaigeHome() {
           </h2>
           <div className="pa-capacity__body">
             <p className="pa-lead">
-              You tell Paige what matters. She takes the work between your client sessions off your hands and brings back
-              the finished thing: the reply, the proposal, the post, the booked meeting.
+              You tell Paige what matters. She takes the work between your client meetings off your hands and brings it
+              back done: the reply, the proposal draft, the post, the meeting on your calendar.
             </p>
             <ol className="pa-capacity__line">
               <li data-state="live">
                 <span className="pa-state pa-state--live">Works today</span>
-                <p>Paige works every lane herself, in one conversation with you.</p>
+                <p>Paige does the work herself, in one conversation with you.</p>
               </li>
               <li data-state="build">
                 <span className="pa-state pa-state--build">In build</span>
@@ -85,9 +93,9 @@ export default function PaigeHome() {
               <summary>How her team will work</summary>
               <div className="pa-disclose__body">
                 <p>
-                  Paige hands each specialist one bounded task and only the context that task needs. Specialists draft, look
-                  things up and operate the tools you’ve connected; they report back to Paige, who checks the work before
-                  it reaches you. None of them can send anything on your behalf. That stays your call.
+                  Paige will hand each specialist one bounded task and only the context that task needs. Specialists will
+                  draft, look things up and operate the tools you’ve connected, then report back to Paige, who checks the
+                  work before it reaches you. None of them will be able to send anything on your behalf.
                 </p>
               </div>
             </details>
@@ -141,8 +149,8 @@ export default function PaigeHome() {
               What she does today. What’s coming next.
             </h2>
             <p className="pa-copy">
-              Everything lit works for Solo customers now. Everything else is being built, and it’s on this map so you
-              can see where Paige is going.
+              Every item marked “Works today” is live for Solo customers now. Everything marked “In build” is being
+              built, and it’s on this map so you can see where Paige is going.
             </p>
           </div>
           <CapabilityScore />
@@ -158,8 +166,7 @@ export default function PaigeHome() {
             </h2>
             <p className="pa-copy">
               Supplier portals, admin sites, the renewal form nobody wants to fill in. Paige will work them inside a secure
-              window, signed in with your own login, with you watching. You can take over at any moment, and she waits
-              for your go-ahead before anything is submitted.
+              window, signed in with your own login, with you watching. You can take over at any moment.
             </p>
           </div>
           <SecureWindow />
@@ -173,7 +180,7 @@ export default function PaigeHome() {
             <h2 id="time-title" className="pa-h2">
               Your week, with the gaps worked.
             </h2>
-            <p className="pa-copy">The client work stays yours. The work between it is what Paige takes off your hands.</p>
+            <p className="pa-copy">The client work stays yours. The work between the meetings is what Paige takes off your hands.</p>
           </div>
           <WeekScore />
         </div>
@@ -184,11 +191,11 @@ export default function PaigeHome() {
         <div className="pa-wrap pa-promise__inner">
           <Mark state="spectral" size={40} />
           <h2 id="promise-title" className="pa-h2">
-            Nothing goes out without your say.
+            Nothing Paige writes goes out without your say.
           </h2>
           <p className="pa-lead">
-            Paige does the work; you stay in charge of what leaves the building. Every email she writes waits for you to
-            send it or change it. That’s not a step she hasn’t finished. It’s the control that keeps it your business.
+            Paige does the work; you stay in charge of what leaves the building. Every email she drafts waits for you to
+            send it or change it. That isn’t unfinished work. It’s the control that keeps it your business.
           </p>
         </div>
       </section>
@@ -204,7 +211,7 @@ export default function PaigeHome() {
               Paige Solo is for the owner running a client-service business. Agency and team accounts are coming.
             </p>
           </div>
-          <div className="pa-plan__card">
+          <div className="pa-plan__card pa-stacked">
             <div className="pa-plan__top">
               <p className="pa-h3">Paige Solo</p>
               <p className="pa-plan__price">
@@ -220,10 +227,12 @@ export default function PaigeHome() {
                 </li>
               ))}
             </ul>
-            <TrialButton />
+            <a href={pricingHref()} className="pa-btn pa-btn--act">
+              Start your 30-day trial
+              <ArrowIcon />
+            </a>
             <p className="pa-small">
-              Card collected at checkout. Cancel before your first renewal and you pay nothing. Your clients pay you through
-              your own processor; Paige never touches that money.
+              Card collected at checkout. Cancel before your first renewal and you pay nothing.
             </p>
           </div>
         </div>
@@ -239,7 +248,7 @@ export default function PaigeHome() {
           <p className="pa-lead">Hire the chief operating officer your business has been missing.</p>
           <div className="pa-hero__acts pa-close__acts">
             <TrialButton>Hire Paige, free for 30 days</TrialButton>
-            <a href="/pricing" className="pa-btn pa-btn--line">
+            <a href="#pricing" className="pa-btn pa-btn--line">
               See pricing
               <ArrowIcon />
             </a>

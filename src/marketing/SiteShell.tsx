@@ -1,4 +1,4 @@
-import { useEffect, useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import "./site.css";
 import { Lockup } from "./Mark";
@@ -39,8 +39,17 @@ function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const sheetId = useId();
+  const toggleRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => setOpen(false), [location.pathname]);
+
+  // The sheet belongs to narrow screens: widening past the desktop breakpoint closes it.
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 900px)");
+    const onChange = () => mq.matches && setOpen(false);
+    mq.addEventListener?.("change", onChange);
+    return () => mq.removeEventListener?.("change", onChange);
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -51,7 +60,11 @@ function SiteHeader() {
 
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setOpen(false);
+      toggleRef.current?.focus();
+    };
     document.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -82,10 +95,11 @@ function SiteHeader() {
             Hire Paige
           </a>
           <button
+            ref={toggleRef}
             type="button"
             className="pa-menu-btn"
             aria-expanded={open}
-            aria-controls={sheetId}
+            aria-controls={open ? sheetId : undefined}
             aria-label={open ? "Close menu" : "Open menu"}
             onClick={() => setOpen((v) => !v)}
           >
@@ -96,7 +110,7 @@ function SiteHeader() {
       {open ? (
         <nav id={sheetId} className="pa-sheet" aria-label="Menu">
           {[{ label: "Home", to: "/" }, ...PRIMARY_NAV].map((l) => (
-            <Link key={l.to} to={l.to} className="pa-sheet__link">
+            <Link key={l.to} to={l.to} className="pa-sheet__link" onClick={() => setOpen(false)}>
               {l.label}
             </Link>
           ))}

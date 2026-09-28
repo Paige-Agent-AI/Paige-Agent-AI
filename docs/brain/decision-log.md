@@ -51,11 +51,11 @@
     - It fails ("confirmed in Setup") unless, once the save has written them to the Setup record, a draft carrying all three is held back for the address alone.
     - It proves the check reads what Setup saves and confirms, not that nothing reaches a customer: A1-1b's proof covers the exits.
     - The persona-projection check stays as the client-seat half.
-  - **Proof:** `supabase/tests/outbound_private_business_facts.sql`, 241 checks, is added to CI's database-contract job.
-    - 172 of them store one copy per tenant and try one way of writing it; 41 of those must pass.
-    - 39 cover what Setup confirms: 11 on one tenant holding confirmed and unconfirmed copies side by side, and 28 on tenants each confirming a phone or website beside one other copy (13 must pass).
-    - It runs on a local stand-in carrying the spine's real resolver and production's one-top-level-tenant-per-owner index. There, 96 of 97 reinstated defects each turn a check red.
-    - The one that does not is equivalent: the legal profile's website is always confirmed by the spine, and it stays read so detection does not depend on that.
+  - **Proof:** `supabase/tests/outbound_private_business_facts.sql`, 243 checks, is added to CI's database-contract job.
+    - 173 of them store one copy per tenant and try one way of writing it; 42 of those must pass.
+    - 40 cover what Setup confirms: 11 on one tenant holding confirmed and unconfirmed copies side by side, and 29 on tenants each confirming a phone or website beside one other copy (14 must pass).
+    - It runs on a local stand-in carrying the spine's real resolver and production's one-top-level-tenant-per-owner index. There, 115 of 116 reinstated defects each turn a check red.
+    - The one that does not is equivalent: the legal profile's website is always the confirmed value, so it is skipped by its key whether or not it is read.
   - **Independent review (§39):** seven rounds.
     - Round 1: BLOCK. Missed forms of writing, unread copies, an unknown tenant read as "nothing stored", and overclaiming records.
     - Round 2: SHIP-WITH-FIXES, four majors: a tenant subdomain on a shared host, phones with trailing text, PO boxes, and towns refused.
@@ -64,6 +64,7 @@
     - Round 5: BLOCK. The round-4 house-number join swallowed a unit's street ("3/22 Acacia Avenue"), and a numbered house counted as the street line. Minors: a postcode line not counted as a place, the confirmed website masking a stored subdomain and a stored page, and phone country codes guessed from one to three digits.
     - Round 6: SHIP-WITH-FIXES, minors: phone forms for a bare eleven-digit number, Italy's 0 and +1/+7; districts after a numbered building; a numbered house not looked for without its number; a legacy copy of the confirmed website refusing its subdomains.
     - Round 7: SHIP-WITH-FIXES, minors: round 6's plain-road rule missed a road like "Holly Grove" after a numbered building; trunk-0 forms for countries with no trunk. By the owner's rule that a withheld send is preferable to a missed leak, the road is found again and a district named like a road there is held back, a named cost.
+    - Round 8 (targeted): SHIP-WITH-FIXES, one minor that failed safe: the confirmed website was decoded twice to make its keys and once where copies are read, so a page holding an escaped escape was refused. It is decoded once now.
     - Every round's findings are fixed in this PR, except one reported and not changed: the spine counts any legal-profile phone or website as confirmed, whoever wrote it (a platform operator can write one), because the ruling keys the licence to the spine.
   - **Next:**
     - A1-1b wires the check into the chat's four customer-bound exits, Zapier and n8n free-form arguments, and the send in execute-approval, each failing closed on error.

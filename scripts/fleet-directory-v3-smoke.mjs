@@ -37,7 +37,7 @@ const required = [
   "builder `fleetVals` 8269–8362",
   'aria-label="Fleet composition"',
   'aria-pressed={showInternal}',
-  "switchTenant(tenant.id)",
+  "enterOperatorActAs(tenant.id)",
 ];
 for (const token of required) {
   if (!source.includes(token)) fail(`FleetConsole is missing v3 guard token: ${token}`);

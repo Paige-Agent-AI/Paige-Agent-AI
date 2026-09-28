@@ -32,6 +32,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { tenantSwitchPersisted } from "@/lib/platform/fleetCommunications";
 import { ACCOUNT_SWITCH_NOTICE_KEY, forgetOperatorActAs, operatorActAsRecorded, recordOperatorActAs } from "@/lib/auth/workspaceEntry";
+import { registerSignOutActAsGuard } from "@/lib/auth/signOut";
 
 /**
  * #233 — on a GENUINE new sign-in, reset the active tenant to the user's HOME.
@@ -634,16 +635,19 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   // features (§51-safe — no cross-tenant read, no request param). Absent flag → false.
   const endActAsBeforeSignOut = useCallback(async (): Promise<"clear" | "refused" | "unknown"> => {
     const recorded = operatorActAsRecorded(activeUserId);
-    if (!recorded && accountContextStatus === "ready") {
-      // The loaded context is the server's answer: a member, or an operator at rest, has nothing open.
-      if (!isPlatformStaff || !activeTenantId) return "clear";
-    }
-    if (!recorded && accountContextStatus !== "ready") {
+    // A member with a loaded context has nothing to end, and pays for no network call.
+    if (!recorded && accountContextStatus === "ready" && !isPlatformStaff) return "clear";
+    if (!recorded && !(accountContextStatus === "ready" && activeTenantId)) {
+      // An operator this tab believes is at rest, or anyone whose context did not load: ask the
+      // server, because another tab can have opened an act-as this provider has not seen.
       const probed = await probeOperatorActAs().catch(() => "unknown" as const);
       if (probed !== "acting") return probed === "not_acting" ? "clear" : "unknown";
     }
     return (await exitOperatorActAs()) ? "clear" : "refused";
   }, [accountContextStatus, activeTenantId, activeUserId, exitOperatorActAs, isPlatformStaff, probeOperatorActAs]);
+
+  // Every sign-out, from any surface, runs this first (performSignOut consults it).
+  useEffect(() => registerSignOutActAsGuard(endActAsBeforeSignOut), [endActAsBeforeSignOut]);
 
   const agencyShellEnabled = activeTenant?.features?.agency_shell_enabled === true;
 

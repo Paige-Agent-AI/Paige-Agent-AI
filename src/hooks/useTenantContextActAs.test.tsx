@@ -390,6 +390,27 @@ describe("the operator act-as marker and its audited exit", () => {
       expect(h.rpcCalls).toEqual([]);
     });
 
+    // Codex review of 260ce580: another tab can open an act-as this tab's provider has not seen.
+    it("asks the server for an operator this tab believes is at rest", async () => {
+      await mount();
+      expect((ctx as Ctx).activeTenantId).toBeNull();
+      h.activeTenant = "t1";
+      h.rpcCalls = [];
+      let outcome = "";
+      await act(async () => { outcome = await (ctx as Ctx).endActAsBeforeSignOut(); });
+      expect(outcome).toBe("clear");
+      expect(h.rpcCalls).toContain("operator_exit_tenant");
+    });
+
+    it("clears an operator at rest once the server confirms nothing is open", async () => {
+      await mount();
+      h.rpcCalls = [];
+      let outcome = "";
+      await act(async () => { outcome = await (ctx as Ctx).endActAsBeforeSignOut(); });
+      expect(outcome).toBe("clear");
+      expect(h.rpcCalls).not.toContain("operator_exit_tenant");
+    });
+
     it("asks the server when the context could not load, and holds on an unreadable answer", async () => {
       h.profileReadError = { message: "network" };
       await mount();

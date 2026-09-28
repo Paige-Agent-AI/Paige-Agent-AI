@@ -520,14 +520,16 @@ function SessionsCard() {
     setSigningOut(true);
     // Customers return to their coach's branded gateway; staff exit to root.
     const target = await customerSignOutTarget("/");
-    await performSignOut(target);
+    // Held (with a toast) when an operator's act-as will not end; the button comes back.
+    if (!(await performSignOut(target))) setSigningOut(false);
   };
 
   const handleSignOutAllDevices = async () => {
     if (signingOut || signingOutAll) return;
     setSigningOutAll(true);
     const target = await customerSignOutTarget("/");
-    await performSignOut({ redirectTo: target, scope: "global" });
+    // Signing out every device is a security action: end an open act-as if possible, never hold it.
+    await performSignOut({ redirectTo: target, scope: "global", actAs: "attempt" });
   };
 
   return (

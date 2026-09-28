@@ -1,4 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 // A tenant's customer must return to their coach's branded gateway on EVERY
@@ -118,7 +119,31 @@ function clearAuthStorage(opts: { wipeAll: boolean }) {
   }
 }
 
+/**
+ * An operator acting as a tenant holds that act-as on the SERVER. Signing out clears this browser
+ * only, so every sign-out first gives the tenant provider a chance to end it through the audited
+ * exit. The provider registers the check (it knows the account context); with nothing registered,
+ * sign-out behaves exactly as before.
+ */
+export type ActAsSettlement = "clear" | "refused" | "unknown";
+let actAsGuard: (() => Promise<ActAsSettlement>) | null = null;
+export function registerSignOutActAsGuard(guard: () => Promise<ActAsSettlement>): () => void {
+  actAsGuard = guard;
+  return () => {
+    if (actAsGuard === guard) actAsGuard = null;
+  };
+}
+
 interface SignOutOptions {
+  /**
+   * What an open operator act-as means for this sign-out:
+   * - `require` (default, a sign-out the person chose): end it first, and stay signed in if it will
+   *   not end or cannot be confirmed.
+   * - `attempt` (security and timeout sign-outs): end it if possible, and sign out regardless — a
+   *   security action is never held.
+   * - `skip` (the session is already invalid): no request can reach the server, so don't try.
+   */
+  actAs?: "require" | "attempt" | "skip";
   /** Where to send the user after sign-out completes. Defaults to "/". */
   redirectTo?: string;
   /** "global" kills refresh tokens on every device for this user. */
@@ -133,7 +158,7 @@ let isSigningOut = false;
 
 export async function performSignOut(
   redirectToOrOptions: string | SignOutOptions = "/",
-): Promise<void> {
+): Promise<boolean> {
   // Normalize args
   const opts: SignOutOptions =
     typeof redirectToOrOptions === "string"
@@ -146,8 +171,25 @@ export async function performSignOut(
   const queryClient = opts.queryClient ?? registeredQueryClient;
 
   // Re-entrancy guard so listener + button click don't double-fire.
-  if (isSigningOut) return;
+  if (isSigningOut) return false;
   isSigningOut = true;
+
+  const actAs = opts.actAs ?? "require";
+  if (actAs !== "skip" && actAsGuard) {
+    let settled: ActAsSettlement = "unknown";
+    try {
+      settled = await actAsGuard();
+    } catch (err) {
+      console.error("Checking for an open act-as before sign-out failed:", err);
+    }
+    if (settled !== "clear" && actAs === "require") {
+      isSigningOut = false;
+      toast.error(settled === "refused"
+        ? "Couldn't end your act-as in this tenant, so you're still signed in. Try again."
+        : "Paige couldn't confirm whether your act-as is still open, so you're still signed in. Try again.");
+      return false;
+    }
+  }
 
   try {
     try {
@@ -174,4 +216,5 @@ export async function performSignOut(
     // Use replace so back-button doesn't return to authenticated view.
     window.location.replace(redirectTo);
   }
+  return true;
 }

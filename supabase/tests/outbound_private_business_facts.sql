@@ -200,7 +200,7 @@ INSERT INTO src VALUES
   (144,'private.address','12, Mill Lane, Leeds','Visit 12 Mill Lane.',ARRAY['address'],'a house number on its own in three lines'),
   (145,'legal.registered_address','1st Floor, Mill House, Leeds','Mill House is where we are.',ARRAY['address'],'a floor line does not count towards the last two'),
   (146,'legal.registered_address','1st Floor, 10 Station Road, Canary Wharf, London','We meet clients in Canary Wharf.','{}','a district after the street, with a floor line first'),
-  (147,'private.address','12, Mill Lane, Canary Wharf, London','We meet clients in Canary Wharf.','{}','a district after a joined house number and street'),
+  (147,'private.address','12, Mill Lane, Canary Wharf, London, E14 5AB','We meet clients in Canary Wharf.','{}','a district after a house number joined to its street'),
   -- A short number joined in the text to the digits after it.
   (148,'brand.phone','13 20 00','Call 13 20 00 - 9am to 5pm.',ARRAY['phone'],'a six-digit number followed by opening hours'),
   (149,'brand.phone','13 20 00','Ring 13 20 00 / 24 hours.',ARRAY['phone'],'a six-digit number followed by a slash and a number'),
@@ -259,8 +259,13 @@ BEGIN
       WHEN 'proposal' THEN jsonb_build_object('business_brief_proposal',
         jsonb_build_object('id', gen_random_uuid(), 'patch', jsonb_build_object(v_key, r.stored)))
       ELSE '{}'::jsonb END;
+    -- One owner per tenant: production allows one top-level tenant per owner.
+    INSERT INTO auth.users (id, aud, role, email)
+    VALUES (('0c1a0000-0000-4000-8000-0000000d' || lpad(r.n::text, 4, '0'))::uuid, 'authenticated',
+            'authenticated', 'facts-source-' || r.n || '@tests.invalid');
     INSERT INTO public.tenants (id, slug, name, owner_user_id, status, account_type, features, brand)
-    VALUES (v_id, 'facts-source-' || r.n, 'Facts Source ' || r.n, '0c1a0000-0000-4000-8000-000000000001',
+    VALUES (v_id, 'facts-source-' || r.n, 'Facts Source ' || r.n,
+            ('0c1a0000-0000-4000-8000-0000000d' || lpad(r.n::text, 4, '0'))::uuid,
             'active', 'standalone', '{}'::jsonb, v_brand);
     IF split_part(r.place, '.', 1) = 'legal' THEN
       EXECUTE format('INSERT INTO public.tenant_legal_profile (tenant_id, legal_business_name, %I) VALUES ($1, $2, $3)', v_key)
@@ -358,7 +363,7 @@ INSERT INTO lic VALUES
   ( 9,NULL,'https://coaching.janedoe.example','brand.website','janedoe.example','Book at coaching.janedoe.example/book.','{}','the confirmed subdomain, with a parent domain stored beside it'),
   (10,NULL,'https://linktr.ee/acme?from=secret-home.example','brand.website','secret-home.example','See secret-home.example.',ARRAY['website'],'a host named inside the confirmed link''s query string'),
   (11,NULL,'https://linktr.ee/acme?from=secret-home.example','brand.website','secret-home.example','All my links: linktr.ee/acme','{}','the confirmed page on a shared platform'),
-  (12,NULL,'https://licensed.example',NULL,NULL,'See licensed.example and licensed.example/book','{}','the confirmed website written twice');
+  (12,NULL,'https://licensed.example',NULL,NULL,'See licensed.example licensed.example/book','{}','the confirmed website written twice in a row');
 DO $lic$
 DECLARE
   r record;
@@ -368,8 +373,12 @@ BEGIN
   FOR r IN SELECT * FROM lic ORDER BY n LOOP
     v_id := ('0c1a0000-0000-4000-8000-0000000c' || lpad(r.n::text, 4, '0'))::uuid;
     v_key := split_part(r.place, '.', 2);
+    INSERT INTO auth.users (id, aud, role, email)
+    VALUES (('0c1a0000-0000-4000-8000-0000000e' || lpad(r.n::text, 4, '0'))::uuid, 'authenticated',
+            'authenticated', 'facts-licence-' || r.n || '@tests.invalid');
     INSERT INTO public.tenants (id, slug, name, owner_user_id, status, account_type, features, brand)
-    VALUES (v_id, 'facts-licence-' || r.n, 'Facts Licence ' || r.n, '0c1a0000-0000-4000-8000-000000000004',
+    VALUES (v_id, 'facts-licence-' || r.n, 'Facts Licence ' || r.n,
+            ('0c1a0000-0000-4000-8000-0000000e' || lpad(r.n::text, 4, '0'))::uuid,
             'active', 'standalone', '{}'::jsonb,
             CASE WHEN split_part(r.place, '.', 1) = 'brand' THEN jsonb_build_object(v_key, r.stored) ELSE '{}'::jsonb END);
     INSERT INTO public.tenant_legal_profile (tenant_id, legal_business_name, support_phone, website_url)

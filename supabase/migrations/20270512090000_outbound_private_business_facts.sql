@@ -533,9 +533,8 @@ begin
     v_digits := regexp_replace(regexp_replace(v_run, '[^0-9]', '', 'g'), '^00', '');
     continue when length(v_digits) < 7;
     v_licensed_numbers := v_licensed_numbers || v_digits || ('00' || v_digits);
-    if v_digits ~ '^0' and length(v_digits) >= 8 then
-      v_licensed_numbers := v_licensed_numbers || substr(v_digits, 2);
-    end if;
+    -- Read with a country code of one digit, a domestic number's first digit is its trunk 0, so
+    -- the national number less its trunk 0 is among these forms too.
     for v_j in 1 .. 3 loop
       continue when length(v_digits) - v_j < 7;
       v_key := substr(v_digits, v_j + 1);

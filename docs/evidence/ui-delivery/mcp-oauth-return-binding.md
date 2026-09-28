@@ -1,7 +1,8 @@
 # Canonical MCP OAuth return and completion binding — working evidence
 
-2026-09-28. Status: **PASS** for the bounded local proofs below; hosted/authenticated proof remains
-**UNVERIFIED**, and this slice is not delivered or production-accepted.
+2026-09-28. Status: **PASS** for the bounded local and predecessor hosted database proofs below;
+frontend preview and authenticated proof remain **UNVERIFIED**. This slice is not delivered or
+production-accepted. The PR conversation records fresh exact-head checks after publication.
 This is the first one-concern implementation slice of the full Integrations objective, not a
 phase-one scope lock or a claim that outbound execution is delivered.
 
@@ -30,13 +31,13 @@ MUST_PRESERVE: n8n specialized facet, other mounted tiers' Connections return, i
 ACCEPTANCE_CRITERIA: Server-state return and completion bind actor/tenant/generation; callback replay and superseded exchange refuse; current record is reachable with focus return and explicit retry.
 MOTION_PURPOSE: NONE: no new motion; existing drawer remains reduced-motion compatible.
 PROTECTED_SEAMS: Tenant switching/late replies and shared callback tier routing tested; Connections/Calendar/communications/Marketplace workflows not edited.
-INTERNAL_BUILD_IDENTITY: base=13e9894b7c83208e609f3f53d99364c9a66f0c6d; working patch until PR exact head; deployment=none; environment=local; migrations=APPLIED(20270517000000_mcp_oauth_return_and_completion_binding); edge=PROOF_OWED(mcp-gateway and mcp-oauth-callback not deployed); evidence=disposable local PostgreSQL only, outputs/mcp-oauth-database/run-LaMifa/report.json and this record.
-RELEASE_CHANNEL: development: isolated local work, not customer-reachable.
+INTERNAL_BUILD_IDENTITY: base=13e9894b7c83208e609f3f53d99364c9a66f0c6d; exact current head/tree in draft PR 1566; supporting preview build=685e686669cec5bf3170b023cd34f7b35ea49da6; deployment=Supabase branch 8ce41bbf-ab66-417c-ba6b-e29b277e1df0; environment=disposable preview; migrations=APPLIED(20270517000000_mcp_oauth_return_and_completion_binding); edge=predecessor mcp-gateway v26, mcp-oauth-callback v6 ACTIVE; current-head refresh and frontend preview PROOF_OWED; evidence=Hosted disposable proof below and outputs/mcp-oauth-database/run-LaMifa/report.json.
+RELEASE_CHANNEL: development and disposable backend preview; no production release or customer claim.
 RELEASE_CLASSIFICATION: patch: internal OAuth return and completion-binding repair within the full capability objective.
 CUSTOMER_RELEASE_IDENTITY: none: no production or customer announcement authority.
 RELEASE_NOTE_REQUIRED: no: no customer release or announcement made by this draft.
-RELEASE_TRUTH_BOUNDARY: PROOF OWED: authenticated provider and production, because the new Edge/database contract has not been deployed; local implementation/test PASS is not LIVE.
-RELEASE_RECOVERY: position=forward-fix migration and coordinated callback/gateway deployment after named owner approval; reference=Revision and authority and Root causes below; old Edge revisions fail closed during schema transition.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: authenticated provider and production; predecessor backend preview/SQL proof is not authenticated OAuth or production acceptance. Frontend preview is absent.
+RELEASE_RECOVERY: position=forward-fix migration and coordinated callback/gateway production deployment only after named owner approval; reference=Revision and authority and Independent review below; patched gateway must precede or be atomic with schema/callback, and old completion signatures fail closed during transition.
 SOLO_1536X770_PAIGE_CLOSED: PASS: scripts/live-drive/artifacts/oauth-return/1536-770-light-closed.png and dark counterpart; local structural geometry/focus only.
 SOLO_1536X770_PAIGE_OPEN: PASS: scripts/live-drive/artifacts/oauth-return/1536-770-light-open.png and dark counterpart; reserved column, not actual PAIGE runtime.
 SOLO_1366X768_PAIGE_CLOSED: PASS: scripts/live-drive/artifacts/oauth-return/1366-768-light-closed.png and dark counterpart; local structural geometry/focus only.
@@ -50,21 +51,21 @@ SOLO_900X1000_PAIGE_OPEN: PASS: scripts/live-drive/artifacts/oauth-return/900-10
 
 - Repository: `https://github.com/Paige-Agent-AI/Paige-Agent-AI` (authenticated access verified).
 - Branch: `codex/mcp-oauth-return-integrations`.
-- Refreshed base and unchanged HEAD: `13e9894b7c83208e609f3f53d99364c9a66f0c6d`.
+- Refreshed base: `13e9894b7c83208e609f3f53d99364c9a66f0c6d`; current draft head is separate.
 - Base tree: `4636632093dda637f8491751d4ed891c1fe4dea4`.
 - Refresh from `7fc3e8e19ad2984b5404fdce2d976ed989e0bef5` was a fast-forward over #1552,
   solely the Master Reference Coach-removal closeout. No tenant-context/product drift.
-- Proof was captured before publication; base-tree hash does **not** identify the working patch.
-  The draft PR head identifies the published source; no base hash is presented as its execution proof.
+- Local initial proof preceded publication; hosted and CI proof below identify their supporting
+  revision explicitly. The draft PR identifies current source; base hash is not execution proof.
 - `git ls-remote origin refs/heads/main` still returned that base at final recheck.
 - #1536 remains draft/open at `932bedf1af7f5b97774dcd9e5a6f0f8aef879774`.
   It is a live tenant-context dependency. Switching proof must be repeated if it lands.
 - #917, #754 and #574 remain parked and untouched; none of their work was incorporated.
-- No production/shared/real-tenant migration application, merge, deploy or provider/tenant mutation occurred.
+- No production/shared/real-tenant migration application, merge, production deployment or provider/tenant mutation occurred. Automatic disposable preview deployment is explicitly recorded below.
 - Production metadata SELECT only: newest observed migration `20270513000000`.
   This is not a future merge authorization or a substitute for the mandatory pre-merge reread.
 - Author-created migration `20270517000000_mcp_oauth_return_and_completion_binding.sql`
-  applied only in fresh disposable PostgreSQL clusters under the coordinator's explicit
+  applied only in fresh disposable PostgreSQL clusters and the no-data PR preview under the coordinator's explicit
   2026-09-28 clarification. Antonio Cook's named written authorization is still required for
   production and all real-tenant/shared/persistent targets. No production authorization inferred.
 
@@ -223,7 +224,7 @@ Artifacts under `scripts/live-drive/artifacts/oauth-return/` (local generated ev
 
 ## Independent review
 
-Backend reviewer: no remaining BLOCKER/MAJOR in final static review; full-schema/provider runtime owed.
+Backend reviewer: no remaining BLOCKER/MAJOR in final static review; authenticated provider runtime owed.
 Fresh facet review independently reran 373 gateway assertions and 11 callback cases: no remaining
 BLOCKER/MAJOR. No current tenant-facing writer can change an HTTP connection to SSE/stdio; transport
 is not generation-bound today. Any future transport-changing writer must add that forward safeguard

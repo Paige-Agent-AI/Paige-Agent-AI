@@ -35,7 +35,7 @@ ACCEPTANCE_CRITERIA: inside a canceled or trial tenant the header names the stat
 MOTION_PURPOSE: NONE: no motion added
 PROTECTED_SEAMS: exitOperatorActAsFrom and the exit paths are untouched; Fleet's statusNote moved to tenantLifecycle unchanged in wording
 
-INTERNAL_BUILD_IDENTITY: ac59008df6e746ca73f7d895b2d9b7baf1c96feb; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this PR's head carries the code, tests and this record
+INTERNAL_BUILD_IDENTITY: b31feb43b0563afdf5c32150adcbdcd018cf7d97; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=the commit named here holds this PR's code and tests
 RELEASE_CHANNEL: development: operator act-as clarity, held for the owner's frames approval, then merged on green per CLAUDE.md §4
 RELEASE_CLASSIFICATION: internal-only: operator view only; no tenant member sees the label
 CUSTOMER_RELEASE_IDENTITY: none: no customer-visible change

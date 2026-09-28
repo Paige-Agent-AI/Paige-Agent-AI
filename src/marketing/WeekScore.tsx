@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * Time given back — a week as blocks, crowded before, cleared after. Illustrative, and labelled so
@@ -48,17 +48,56 @@ const AFTER: Block[] = [
   { day: 3, start: 16, dur: 0.75, kind: "admin", label: "Inbox" },
 ];
 
+type Placed = Block & { phase: "both" | "before" | "after" };
+// Every block is always in the DOM with a stable key, so switching views can animate the work
+// between meetings folding away and Paige's finished work arriving, instead of a hard swap.
+const ALL: Placed[] = [
+  ...CLIENT.map((b) => ({ ...b, phase: "both" as const })),
+  ...BEFORE.map((b) => ({ ...b, phase: "before" as const })),
+  ...AFTER.map((b) => ({ ...b, phase: "after" as const })),
+];
+
 export function WeekScore() {
   const [view, setView] = useState<"before" | "after">("before");
-  const blocks = [...CLIENT, ...(view === "before" ? BEFORE : AFTER)];
+  const touched = useRef(false);
+  const ref = useRef<HTMLElement>(null);
+
+  // Plays its own story once: shown crowded, then — unless the visitor has already chosen —
+  // the week clears. Reduced motion never auto-switches; the buttons stay the visitor's.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    let timer = 0;
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (!e.isIntersecting) return;
+        io.disconnect();
+        timer = window.setTimeout(() => {
+          if (!touched.current) setView("after");
+        }, 1800);
+      },
+      { threshold: 0.5 },
+    );
+    io.observe(el);
+    return () => {
+      io.disconnect();
+      window.clearTimeout(timer);
+    };
+  }, []);
+
+  const choose = (v: "before" | "after") => {
+    touched.current = true;
+    setView(v);
+  };
 
   return (
-    <figure className="pa-week" data-view={view}>
+    <figure className="pa-week" data-view={view} ref={ref}>
       <div className="pa-week__switch" role="group" aria-label="Show the week">
-        <button type="button" aria-pressed={view === "before"} onClick={() => setView("before")}>
+        <button type="button" aria-pressed={view === "before"} onClick={() => choose("before")}>
           Before Paige
         </button>
-        <button type="button" aria-pressed={view === "after"} onClick={() => setView("after")}>
+        <button type="button" aria-pressed={view === "after"} onClick={() => choose("after")}>
           With Paige
         </button>
       </div>
@@ -81,15 +120,15 @@ export function WeekScore() {
           <div key={d} className="pa-week__day">
             <span className="pa-week__dayname">{d}</span>
             <div className="pa-week__col">
-              {blocks
-                .filter((b) => b.day === day)
-                .map((b) => (
+              {ALL.filter((b) => b.day === day).map((b, n) => (
                   <span
-                    key={`${view}-${b.kind}-${b.start}`}
+                    key={`${b.phase}-${b.kind}-${b.start}`}
                     className={`pa-week__block pa-week__block--${b.kind}`}
+                    data-shown={b.phase === "both" || b.phase === view}
                     style={{
                       top: `${((b.start - OPEN) / (CLOSE - OPEN)) * 100}%`,
                       height: `${(b.dur / (CLOSE - OPEN)) * 100}%`,
+                      ["--n" as string]: n,
                     }}
                   >
                     <span>{b.label}</span>

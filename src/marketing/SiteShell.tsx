@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import "./site.css";
 import { Lockup } from "./Mark";
@@ -162,10 +162,40 @@ function SiteFooter() {
   );
 }
 
+/**
+ * Scroll reveals, one observer for the whole site: any element marked `data-reveal` gets
+ * `data-in` the first time it enters the viewport. The site only opts into hiding-until-seen
+ * (`data-motion="on"`) once this runs and motion is allowed, so without script or with reduced
+ * motion every section is simply there.
+ */
+function useReveals(root: RefObject<HTMLDivElement>) {
+  const location = useLocation();
+  useEffect(() => {
+    const el = root.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    el.dataset.motion = "on";
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          (e.target as HTMLElement).dataset.in = "true";
+          io.unobserve(e.target);
+        }
+      },
+      { rootMargin: "0px 0px -12% 0px", threshold: 0.12 },
+    );
+    el.querySelectorAll<HTMLElement>("[data-reveal]:not([data-in])").forEach((n) => io.observe(n));
+    return () => io.disconnect();
+  }, [root, location.pathname]);
+}
+
 /** The public site's one frame: skip link, header, main landmark, footer. */
 export function SiteShell({ children }: { children: ReactNode }) {
+  const root = useRef<HTMLDivElement>(null);
+  useReveals(root);
   return (
-    <div className="pa-site">
+    <div className="pa-site" ref={root}>
       <a href="#main" className="pa-skip">
         Skip to content
       </a>

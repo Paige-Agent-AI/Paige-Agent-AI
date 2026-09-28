@@ -76,7 +76,7 @@ export default function PaigeHome() {
       {/* Capacity: a COO runs the work, and she has a team. */}
       <section className="pa-section pa-capacity" aria-labelledby="capacity-title">
         <div className="pa-wrap pa-capacity__grid">
-          <h2 id="capacity-title" className="pa-h2">
+          <h2 id="capacity-title" className="pa-h2" data-reveal="rise">
             A chief operating officer doesn’t do everything herself. She <span className="pa-accent">runs</span> it.
           </h2>
           <div className="pa-capacity__body">
@@ -114,10 +114,10 @@ export default function PaigeHome() {
       {/* The seam: sell the gaps, not the seats. */}
       <section className="pa-section pa-seam" aria-labelledby="seam-title">
         <div className="pa-wrap">
-          <h2 id="seam-title" className="pa-h2 pa-seam__title">
+          <h2 id="seam-title" className="pa-h2 pa-seam__title" data-reveal="rise">
             The tools aren’t the problem. The <span className="pa-accent">gaps</span> between them are.
           </h2>
-          <ul className="pa-seam__list">
+          <ul className="pa-seam__list" data-reveal="seam">
             {SEAMS.map((s) => (
               <li key={s.gap}>
                 <span className="pa-staff" aria-hidden="true" />
@@ -127,7 +127,7 @@ export default function PaigeHome() {
               </li>
             ))}
           </ul>
-          <p className="pa-seam__turn">
+          <p className="pa-seam__turn" data-reveal="rise">
             Tools don’t do work. A person does. <span>Paige is the one who works the gaps.</span>
           </p>
         </div>
@@ -137,7 +137,7 @@ export default function PaigeHome() {
       <section className="pa-section pa-stack" aria-labelledby="stack-title">
         <div className="pa-wrap pa-stack__grid">
           <div className="pa-stack__intro">
-            <h2 id="stack-title" className="pa-h2">
+            <h2 id="stack-title" className="pa-h2" data-reveal="rise">
               Add up what you pay for the seats.
             </h2>
             <p className="pa-copy">
@@ -153,7 +153,7 @@ export default function PaigeHome() {
       <section className="pa-section pa-map" id="today" aria-labelledby="map-title">
         <div className="pa-wrap">
           <div className="pa-map__head">
-            <h2 id="map-title" className="pa-h2">
+            <h2 id="map-title" className="pa-h2" data-reveal="rise">
               What she does today. What’s <span className="pa-accent">coming next.</span>
             </h2>
             <p className="pa-copy">
@@ -169,7 +169,7 @@ export default function PaigeHome() {
       <section className="pa-section pa-coming" aria-labelledby="window-title">
         <div className="pa-wrap pa-coming__grid">
           <div className="pa-coming__copy">
-            <h2 id="window-title" className="pa-h2">
+            <h2 id="window-title" className="pa-h2" data-reveal="rise">
               Coming next: the portals you dread, handled while you watch.
             </h2>
             <p className="pa-copy">
@@ -185,7 +185,7 @@ export default function PaigeHome() {
       <section className="pa-section pa-time" aria-labelledby="time-title">
         <div className="pa-wrap">
           <div className="pa-time__head">
-            <h2 id="time-title" className="pa-h2">
+            <h2 id="time-title" className="pa-h2" data-reveal="rise">
               Your week, with the gaps worked.
             </h2>
             <p className="pa-copy">The client work stays yours. The work between the meetings is what Paige takes off your hands.</p>
@@ -198,7 +198,7 @@ export default function PaigeHome() {
       <section className="pa-section pa-promise" aria-labelledby="promise-title">
         <div className="pa-wrap pa-promise__inner">
           <Mark state="spectral" size={40} />
-          <h2 id="promise-title" className="pa-h2">
+          <h2 id="promise-title" className="pa-h2" data-reveal="rise">
             Nothing Paige writes goes out without your say.
           </h2>
           <p className="pa-lead">
@@ -212,14 +212,14 @@ export default function PaigeHome() {
       <section className="pa-section pa-plan" id="pricing" aria-labelledby="plan-title">
         <div className="pa-wrap pa-plan__grid">
           <div>
-            <h2 id="plan-title" className="pa-h2">
+            <h2 id="plan-title" className="pa-h2" data-reveal="rise">
               One plan. One operator.
             </h2>
             <p className="pa-copy">
               Paige Solo is for the owner running a client-service business. Agency and team accounts are coming.
             </p>
           </div>
-          <div className="pa-plan__card pa-stacked">
+          <div className="pa-plan__card pa-stacked" data-reveal="rise">
             <div className="pa-plan__top">
               <p className="pa-h3">Paige Solo</p>
               <p className="pa-plan__price">
@@ -248,10 +248,14 @@ export default function PaigeHome() {
 
       {/* Close: the mark's payoff. */}
       <section className="pa-section pa-close" aria-labelledby="close-title">
-        <div className="pa-wrap pa-close__inner">
+        <div className="pa-wrap pa-close__inner" data-reveal="close">
           <Mark state="spectral" size={88} />
-          <h2 id="close-title" className="pa-close__line">
-            Run everything.
+          <h2 id="close-title" className="pa-close__line" aria-label="Run everything.">
+            {"Run everything.".split("").map((ch, i) => (
+              <span key={i} aria-hidden="true" style={{ ["--i" as string]: i }}>
+                {ch === " " ? "\u00a0" : ch}
+              </span>
+            ))}
           </h2>
           <p className="pa-lead">Hire the chief operating officer your business has been missing.</p>
           <div className="pa-hero__acts pa-close__acts">

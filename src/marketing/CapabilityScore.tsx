@@ -7,16 +7,16 @@ import { CAPABILITY_LANES, laneIsLive } from "./capabilities";
  */
 export function CapabilityScore({ compact = false }: { compact?: boolean }) {
   return (
-    <div className={`pa-score${compact ? " pa-score--compact" : ""}`}>
+    <div className={`pa-score${compact ? " pa-score--compact" : ""}`} data-reveal="score">
       <div className="pa-score__legend" aria-hidden="true">
         <span className="pa-state pa-state--live">Works today</span>
         <span className="pa-state pa-state--build">In build</span>
       </div>
       <ul className="pa-score__lanes">
-        {CAPABILITY_LANES.map((lane) => {
+        {CAPABILITY_LANES.map((lane, index) => {
           const lit = laneIsLive(lane);
           return (
-            <li key={lane.id} className="pa-lane" data-lit={lit}>
+            <li key={lane.id} className="pa-lane" data-lit={lit} style={{ ["--i" as string]: index }}>
               <div className="pa-lane__head">
                 <h3 className="pa-lane__name">{lane.name}</h3>
                 <p className="pa-lane__promise">{lane.promise}</p>

@@ -565,13 +565,16 @@
   font-weight: 600;
   line-height: 1.2;
   overflow: hidden;
-  animation: pa-block-in 360ms var(--pa-ease) both;
+  transform-origin: top center;
+  transition: opacity 420ms var(--pa-ease), transform 520ms var(--pa-ease), clip-path 520ms var(--pa-ease);
+  transition-delay: calc(var(--n, 0) * 45ms);
 }
+/* Folding away: the work between meetings collapses upward and fades; Paige's work arrives. */
+.pa-week__block[data-shown="false"] { opacity: 0; transform: scaleY(0.2); clip-path: inset(0 0 100% 0); pointer-events: none; }
 .pa-week__block span { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .pa-week__block--client { background: var(--pa-ink); color: var(--pa-ground); }
 .pa-week__block--admin { background: var(--pa-plane-2); color: var(--pa-ink-2); border: 1px solid var(--pa-line-strong); }
 .pa-week__block--review { background: var(--pa-plane); color: var(--pa-ink); border: 1.5px solid var(--pa-ink); }
-@keyframes pa-block-in { from { opacity: 0; clip-path: inset(0 0 100% 0); } to { opacity: 1; clip-path: inset(0 0 0 0); } }
 /* Narrow screens keep every label: the week scrolls sideways inside its own frame, never the page. */
 .pa-week__scroll { overflow-x: auto; overscroll-behavior-x: contain; margin-inline: calc(-1 * var(--pa-gutter)); padding-inline: var(--pa-gutter); }
 @media (max-width: 760px) {
@@ -761,10 +764,63 @@
 .pa-close { background: radial-gradient(60% 70% at 50% 45%, var(--pa-glow-b), transparent 70%), var(--pa-ground-deep); }
 .pa-close .pa-mark { filter: drop-shadow(0 0 32px rgba(240, 196, 110, 0.35)); }
 
-/* The accent: set in the site face by default; the serif option restyles only these words. */
-.pa-accent { color: inherit; }
 
 @media (prefers-reduced-motion: reduce) {
   .pa-atmos__light, .pa-hero__copy > *, .pa-measure { animation: none !important; }
   .pa-btn--act::after { display: none; }
 }
+
+/* ── Scroll reveals ──────────────────────────────────────────────────
+   Only active once the site opts in (`data-motion="on"`, set when script runs and motion is
+   allowed), so every section is present at rest without it. Each reveal explains something:
+   a heading arrives and its accent word writes in; the seams get worked one by one; the
+   capability lanes set down in order with their live notes struck; the close spells itself. */
+[data-motion="on"] [data-reveal] { transition: opacity 800ms var(--pa-ease), transform 800ms var(--pa-ease), filter 800ms var(--pa-ease); }
+[data-motion="on"] [data-reveal="rise"]:not([data-in]),
+[data-motion="on"] [data-reveal="score"]:not([data-in]) .pa-lane,
+[data-motion="on"] [data-reveal="seam"]:not([data-in]) li {
+  opacity: 0;
+  transform: translateY(22px);
+  filter: blur(4px);
+}
+/* The accent word writes itself in, after its heading lands. */
+[data-motion="on"] [data-reveal] .pa-accent {
+  display: inline-block;
+  clip-path: inset(-0.2em -0.1em -0.25em -0.1em);
+  transition: clip-path 900ms var(--pa-ease) 320ms;
+}
+[data-motion="on"] [data-reveal]:not([data-in]) .pa-accent { clip-path: inset(-0.2em 100% -0.25em -0.1em); }
+
+/* Seams: each gap gets worked in turn — a thread runs across its staff. */
+.pa-seam__list li { transition: opacity 700ms var(--pa-ease), transform 700ms var(--pa-ease), filter 700ms var(--pa-ease); }
+.pa-seam__list li:nth-child(2) { transition-delay: 160ms; }
+.pa-seam__list li:nth-child(3) { transition-delay: 320ms; }
+.pa-seam__list .pa-staff { position: relative; }
+.pa-seam__list .pa-staff::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--pa-staff-gap) * 2 - 1px);
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--pa-ink), var(--pa-champagne));
+  transform-origin: left center;
+  transition: transform 1100ms var(--pa-ease);
+}
+[data-motion="on"] [data-reveal="seam"]:not([data-in]) .pa-staff::after { transform: scaleX(0); }
+.pa-seam__list li:nth-child(1) .pa-staff::after { transition-delay: 500ms; }
+.pa-seam__list li:nth-child(2) .pa-staff::after { transition-delay: 900ms; }
+.pa-seam__list li:nth-child(3) .pa-staff::after { transition-delay: 1300ms; }
+
+/* Capability lanes set down in order; live notes strike as they land. */
+.pa-lane { transition: opacity 700ms var(--pa-ease), transform 700ms var(--pa-ease), filter 700ms var(--pa-ease); transition-delay: calc(var(--i, 0) * 90ms); }
+[data-motion="on"] [data-reveal="score"] .pa-note[data-state="live"] .pa-note__head { transition: transform 520ms var(--pa-ease-exec); transition-delay: calc(var(--i, 0) * 90ms + 420ms); }
+[data-motion="on"] [data-reveal="score"]:not([data-in]) .pa-note[data-state="live"] .pa-note__head { transform: rotate(-22deg) scale(0); }
+
+/* The close spells itself out, letter by letter, then the mark lights. */
+.pa-close__line span { display: inline-block; }
+[data-motion="on"] [data-reveal="close"] .pa-close__line span { transition: opacity 500ms var(--pa-ease), transform 600ms var(--pa-ease); transition-delay: calc(var(--i, 0) * 45ms); }
+[data-motion="on"] [data-reveal="close"]:not([data-in]) .pa-close__line span { opacity: 0; transform: translateY(0.4em); }
+[data-motion="on"] [data-reveal="close"] .pa-mark { transition: filter 900ms var(--pa-ease) 700ms, transform 900ms var(--pa-ease) 700ms; }
+[data-motion="on"] [data-reveal="close"]:not([data-in]) .pa-mark { filter: none; transform: scale(0.85); }

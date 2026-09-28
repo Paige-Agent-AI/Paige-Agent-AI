@@ -295,4 +295,20 @@ describe("members' conversations", () => {
     await act(async () => { answer({ data: [], error: null }); await Promise.resolve(); });
     expect(byText("Show more")?.disabled).toBe(false);
   });
+
+  it("drops an open still in flight when a re-check has revoked this workspace", async () => {
+    let answer!: (value: unknown) => void;
+    h.openGate = new Promise((resolve) => { answer = resolve; });
+    await mount();
+    await act(async () => { byText("Members' conversations")!.click(); });
+    await act(async () => { byText("Test Member")!.click(); });
+    await act(async () => { byText("Open conversation")!.click(); await Promise.resolve(); });
+    h.listResult = { data: [], error: { message: "operator_scope_moved" } };
+    await act(async () => { window.dispatchEvent(new Event("focus")); await Promise.resolve(); await Promise.resolve(); });
+    await act(async () => {
+      answer({ data: { threadId: "thread-1", ownerName: "Test Member", turns: [{ role: "user", content: "revoked words", createdAt: "2026-09-28T00:00:00Z" }] }, error: null });
+      await Promise.resolve();
+    });
+    expect(document.body.textContent).not.toContain("revoked words");
+  });
 });

@@ -132,7 +132,11 @@ function MemberConversationsForWorkspace({ scopeKey }: { scopeKey: string }) {
     // A transient failure changes nothing: what is shown was allowed a moment ago and may still be.
     if (!REFUSED.test(message)) return;
     const wasShowing = shownRef.current;
+    // Revoke everything this workspace had in flight too: list loads (generation) and opens or
+    // earlier-message reads (epoch), so none of them can land after this and repaint what was cleared.
     generation.current += 1;
+    scopeEpoch.current += 1;
+    setOpening(false);
     setOpened(null);
     setPending(null);
     setList({ phase: "idle" });

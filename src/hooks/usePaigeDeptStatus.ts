@@ -37,6 +37,7 @@
  */
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useOptionalTenantContext } from "@/hooks/useTenantContext";
 
 /** Live-refresh cadence for the dept snapshot (§36). Poll, not realtime — see header. */
 const POLL_INTERVAL_MS = 15_000;
@@ -141,14 +142,19 @@ export function buildDeptStatus(
 const EMPTY: PaigeDeptStatus = { loading: true, configured: false, departments: [] };
 
 export function usePaigeDeptStatus(accountEpoch?: string | null): PaigeDeptStatus {
-  const [snapshot, setSnapshot] = useState<{ epoch: string | null | undefined; value: PaigeDeptStatus }>({
+  // RLS decides what the caller MAY read; the active workspace decides what these counts ARE. A
+  // super_admin acting as one workspace is admitted to every workspace's open actions, so the read
+  // is also bound to the active workspace whenever one is active — a narrowing, never a grant.
+  const activeTenantId = useOptionalTenantContext()?.activeTenantId ?? null;
+  const [snapshot, setSnapshot] = useState<{ epoch: string | null | undefined; tenant: string | null; value: PaigeDeptStatus }>({
     epoch: accountEpoch,
+    tenant: activeTenantId,
     value: EMPTY,
   });
 
   useEffect(() => {
     let active = true;
-    setSnapshot({ epoch: accountEpoch, value: EMPTY });
+    setSnapshot({ epoch: accountEpoch, tenant: activeTenantId, value: EMPTY });
 
     // A caller that opts into the epoch contract may deliberately pass null while
     // the server-resolved account is unavailable. Clear immediately and do not read.
@@ -168,11 +174,14 @@ export function usePaigeDeptStatus(accountEpoch?: string | null): PaigeDeptStatu
           .from("paige_departments" as any)
           .select("slug, name, display_order")
           .eq("enabled", true),
-        supabase
-          .from("paige_actions" as any)
-          .select("to_department, status, filed_at")
-          .in("status", OPEN_STATUSES as unknown as string[])
-          .limit(10000),
+        (() => {
+          const actionsQuery = supabase
+            .from("paige_actions" as any)
+            .select("to_department, status, filed_at")
+            .in("status", OPEN_STATUSES as unknown as string[])
+            .limit(10000);
+          return activeTenantId ? actionsQuery.eq("tenant_id", activeTenantId) : actionsQuery;
+        })(),
       ]);
       /* eslint-enable @typescript-eslint/no-explicit-any */
 
@@ -186,6 +195,7 @@ export function usePaigeDeptStatus(accountEpoch?: string | null): PaigeDeptStatu
 
       setSnapshot({
         epoch: accountEpoch,
+        tenant: activeTenantId,
         value: {
           loading: false,
           configured,
@@ -211,10 +221,10 @@ export function usePaigeDeptStatus(accountEpoch?: string | null): PaigeDeptStatu
       clearInterval(interval);
       window.removeEventListener("focus", onFocus);
     };
-  }, [accountEpoch]);
+  }, [accountEpoch, activeTenantId]);
 
   // The passive effect above starts the next epoch's read. This render-time guard is
   // what prevents React from exposing the previous epoch for even one commit before
   // that effect runs.
-  return snapshot.epoch === accountEpoch ? snapshot.value : EMPTY;
+  return snapshot.epoch === accountEpoch && snapshot.tenant === activeTenantId ? snapshot.value : EMPTY;
 }

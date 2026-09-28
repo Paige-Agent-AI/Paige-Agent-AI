@@ -50,6 +50,11 @@ function SaveProbe() {
   }}>{data.loading ? "Loading" : result}</button>;
 }
 
+function ErrorProbe() {
+  const data = useSoloSetupBrief();
+  return <output data-loading={String(data.loading)}>{data.error ?? "no error"}</output>;
+}
+
 describe("useSoloSetupBrief tenant gate", () => {
   it("drops a late prior-tenant response and enables editing only after the current tenant resolves", async () => {
     testState.tenantId = "tenant-a";
@@ -178,5 +183,53 @@ describe("useSoloSetupBrief tenant gate", () => {
     expect(host.textContent).not.toContain("Old response");
     await act(async () => root.unmount());
     host.remove();
+  });
+  // Owner live drive 2026-09-28: an operator acting as a workspace got NULL from the Setup read and
+  // Business Game Plan sat on its skeleton forever, because a failed read never counted as settled.
+  describe("a read that fails for the current workspace", () => {
+    async function mountErrorProbe() {
+      testState.tenantId = "tenant-a";
+      testState.pending.length = 0;
+      const host = document.createElement("div");
+      document.body.append(host);
+      const root = createRoot(host);
+      await act(async () => root.render(<ErrorProbe />));
+      return { host, root };
+    }
+
+    it("settles a refused read (no row) into an error instead of loading forever", async () => {
+      const { host } = await mountErrorProbe();
+      await act(async () => {
+        testState.pending[0].resolve({ data: null, error: null });
+        await Promise.resolve();
+      });
+      const out = host.querySelector("output");
+      expect(out?.dataset.loading).toBe("false");
+      expect(out?.textContent).not.toBe("no error");
+    });
+
+    it("settles a failed read into its error instead of loading forever", async () => {
+      const { host } = await mountErrorProbe();
+      await act(async () => {
+        testState.pending[0].resolve({ data: null, error: { message: "permission denied" } });
+        await Promise.resolve();
+      });
+      const out = host.querySelector("output");
+      expect(out?.dataset.loading).toBe("false");
+      expect(out?.textContent).toContain("permission denied");
+    });
+
+    it("does not let a late failure for the previous workspace settle the current one", async () => {
+      const { host, root } = await mountErrorProbe();
+      testState.tenantId = "tenant-b";
+      await act(async () => root.render(<ErrorProbe />));
+      await act(async () => {
+        testState.pending[0].resolve({ data: null, error: { message: "permission denied" } });
+        await Promise.resolve();
+      });
+      const out = host.querySelector("output");
+      expect(out?.dataset.loading).toBe("true");
+      expect(out?.textContent).toBe("no error");
+    });
   });
 });

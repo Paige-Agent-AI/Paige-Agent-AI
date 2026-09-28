@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { ChevronRight, LockKeyhole } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -82,6 +82,11 @@ function MemberConversationsForWorkspace({ scopeKey }: { scopeKey: string }) {
   // Both dialogs open from a row, not from a trigger Radix knows, so focus is handed back by hand:
   // after Cancel, or after the conversation is closed, the keyboard is where it was.
   const returnFocus = useRef<HTMLElement | null>(null);
+  // These dialogs render in a portal, but React still sends their key events up the component tree,
+  // so the Solo history sheet around this section saw Escape and Tab too: Escape on the confirm
+  // closed the whole sheet, and the sheet's Tab trap could pull focus out of the dialog. The dialog
+  // handles its own keys (Radix listens on the document), so nothing above needs them.
+  const keepKeysInside = useCallback((event: KeyboardEvent<HTMLDivElement>) => { event.stopPropagation(); }, []);
   const restoreFocus = useCallback((event: Event) => {
     event.preventDefault();
     returnFocus.current?.focus();
@@ -203,7 +208,7 @@ function MemberConversationsForWorkspace({ scopeKey }: { scopeKey: string }) {
       )}
 
       <AlertDialog open={!!pending} onOpenChange={(value) => { if (!value && !opening) setPending(null); }}>
-        <AlertDialogContent onCloseAutoFocus={(event) => { if (!opened) restoreFocus(event); }}>
+        <AlertDialogContent onKeyDown={keepKeysInside} onCloseAutoFocus={(event) => { if (!opened) restoreFocus(event); }}>
           <AlertDialogHeader>
             <AlertDialogTitle>Open {pending?.owner_name}'s conversation?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -224,7 +229,7 @@ function MemberConversationsForWorkspace({ scopeKey }: { scopeKey: string }) {
       </AlertDialog>
 
       <Dialog open={!!opened} onOpenChange={(value) => { if (!value) setOpened(null); }}>
-        <DialogContent className="flex max-h-[85vh] max-w-2xl flex-col gap-0 p-0" onCloseAutoFocus={restoreFocus}>
+        <DialogContent className="flex max-h-[85vh] max-w-2xl flex-col gap-0 p-0" onKeyDown={keepKeysInside} onCloseAutoFocus={restoreFocus}>
           <DialogHeader className="border-b border-border px-6 pb-4 pt-6 text-left">
             <DialogTitle>{opened?.ownerName}'s conversation with PAIGE</DialogTitle>
             <DialogDescription>

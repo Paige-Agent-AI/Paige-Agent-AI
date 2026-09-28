@@ -160,4 +160,26 @@ describe("members' conversations", () => {
     expect(atCommit.length).toBeGreaterThan(0);
     expect(atCommit[0]).not.toContain("Test Member");
   });
+
+  it("keeps its dialogs' keys to themselves, so Escape does not also close the sheet around it", async () => {
+    // The Solo history sheet closes on Escape and traps Tab from its own onKeyDown. React sends a
+    // portaled dialog's key events up the component tree, so without a stop they reach the sheet.
+    const sheetKeys: string[] = [];
+    host = document.createElement("div");
+    document.body.append(host);
+    root = createRoot(host);
+    await act(async () => {
+      root.render(<div onKeyDown={(e) => sheetKeys.push(e.key)}><MemberConversations scopeKey="tenant-a" /></div>);
+    });
+    await act(async () => { await Promise.resolve(); });
+    await act(async () => { byText("Members' conversations")!.click(); });
+    await act(async () => { byText("Test Member")!.click(); });
+    const confirm = document.querySelector('[role="alertdialog"]') as HTMLElement;
+    expect(confirm).not.toBeNull();
+    await act(async () => {
+      confirm.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true }));
+      confirm.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    });
+    expect(sheetKeys).toEqual([]);
+  });
 });

@@ -203,7 +203,7 @@ export function HeroMeasure({ title, children, honest }: { title: ReactNode; chi
                 type="button"
                 className="pa-measure__pause"
                 onClick={() => setUserPaused((p) => !p)}
-                aria-pressed={userPaused}
+                data-paused={userPaused || undefined}
               >
                 {userPaused ? "Play" : "Pause"}
                 <span className="pa-sr"> the illustration</span>

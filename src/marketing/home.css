@@ -684,7 +684,7 @@
 }
 .pa-atmos { position: absolute; inset: 0; z-index: -2; pointer-events: none; overflow: hidden; }
 /* The hero's Pause stops everything that moves on the first screen, the drifting light included. */
-.pa-hero:has(.pa-measure__pause[aria-pressed="true"]) .pa-atmos__light { animation-play-state: paused; }
+.pa-hero:has(.pa-measure__pause[data-paused]) .pa-atmos__light { animation-play-state: paused; }
 .pa-atmos__light {
   position: absolute;
   border-radius: 50%;
@@ -806,10 +806,10 @@
    a heading arrives and its accent word swipes up letter by letter (command.css); the seams get
    worked one by one; the capability lanes set down in order with their live notes struck. The
    hero headline and the close are written by the Command Mark itself (Command.tsx). */
-[data-motion="on"] [data-reveal] { transition: opacity 800ms var(--pa-ease), transform 800ms var(--pa-ease), filter 800ms var(--pa-ease); }
-[data-motion="on"] [data-reveal="rise"]:not([data-in]),
-[data-motion="on"] [data-reveal="score"]:not([data-in]) .pa-lane,
-[data-motion="on"] [data-reveal="seam"]:not([data-in]) li {
+.pa-site[data-motion="on"] [data-reveal] { transition: opacity 800ms var(--pa-ease), transform 800ms var(--pa-ease), filter 800ms var(--pa-ease); }
+.pa-site[data-motion="on"] [data-reveal="rise"]:not([data-in]),
+.pa-site[data-motion="on"] [data-reveal="score"]:not([data-in]) .pa-lane,
+.pa-site[data-motion="on"] [data-reveal="seam"]:not([data-in]) li {
   opacity: 0;
   transform: translateY(22px);
   filter: blur(4px);
@@ -831,13 +831,13 @@
   transform-origin: left center;
   transition: transform 1100ms var(--pa-ease);
 }
-[data-motion="on"] [data-reveal="seam"]:not([data-in]) .pa-staff::after { transform: scaleX(0); }
+.pa-site[data-motion="on"] [data-reveal="seam"]:not([data-in]) .pa-staff::after { transform: scaleX(0); }
 .pa-seam__list li:nth-child(1) .pa-staff::after { transition-delay: 500ms; }
 .pa-seam__list li:nth-child(2) .pa-staff::after { transition-delay: 900ms; }
 .pa-seam__list li:nth-child(3) .pa-staff::after { transition-delay: 1300ms; }
 
 /* Capability lanes set down in order; live notes strike as they land. */
 .pa-lane { transition: opacity 700ms var(--pa-ease), transform 700ms var(--pa-ease), filter 700ms var(--pa-ease); transition-delay: calc(var(--i, 0) * 90ms); }
-[data-motion="on"] [data-reveal="score"] .pa-note[data-state="live"] .pa-note__head { transition: transform 520ms var(--pa-ease-exec); transition-delay: calc(var(--i, 0) * 90ms + 420ms); }
-[data-motion="on"] [data-reveal="score"]:not([data-in]) .pa-note[data-state="live"] .pa-note__head { transform: rotate(-22deg) scale(0); }
+.pa-site[data-motion="on"] [data-reveal="score"] .pa-note[data-state="live"] .pa-note__head { transition: transform 520ms var(--pa-ease-exec); transition-delay: calc(var(--i, 0) * 90ms + 420ms); }
+.pa-site[data-motion="on"] [data-reveal="score"]:not([data-in]) .pa-note[data-state="live"] .pa-note__head { transform: rotate(-22deg) scale(0); }
 

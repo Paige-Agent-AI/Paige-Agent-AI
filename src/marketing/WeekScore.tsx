@@ -106,7 +106,8 @@ export function WeekScore() {
           ? "An illustrative week before Paige: client calls surrounded by inbox time, follow-ups, proposals, scheduling, paperwork and admin on every day."
           : "The same illustrative week with Paige: the same client calls, and each day starts with half an hour going through the work Paige has ready. Inbox time and onboarding paperwork remain, because those are still in build. The rest of the time is open."}
       </p>
-      <div className="pa-week__scroll">
+      {/* Scrolls sideways on a phone, so it takes focus and can be scrolled from the keyboard. */}
+      <div className="pa-week__scroll" tabIndex={0} role="region" aria-label="Illustrative week, scrolls sideways">
       <div className="pa-week__grid" aria-hidden="true">
         <div className="pa-week__hours">
           {[8, 10, 12, 14, 16].map((h) => (

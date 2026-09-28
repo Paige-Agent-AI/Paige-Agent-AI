@@ -52,11 +52,11 @@
 .pa-cmd--sequence .pa-cmd__line { white-space: nowrap; padding-right: 0.9em; }
 
 /* Accent words in section headings swipe up letter by letter once their heading has landed. */
-[data-motion="on"] [data-reveal] .pa-accent .pa-cmd__g {
+.pa-site[data-motion="on"] [data-reveal] .pa-accent .pa-cmd__g {
   transition: opacity 420ms var(--pa-ease), transform 640ms var(--pa-ease), filter 480ms var(--pa-ease);
   transition-delay: calc(360ms + var(--k, 0) * 36ms);
 }
-[data-motion="on"] [data-reveal]:not([data-in]) .pa-accent .pa-cmd__g {
+.pa-site[data-motion="on"] [data-reveal]:not([data-in]) .pa-accent .pa-cmd__g {
   opacity: 0;
   transform: translateY(0.6em);
   filter: blur(3px);

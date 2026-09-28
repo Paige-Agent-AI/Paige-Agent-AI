@@ -46,15 +46,17 @@
     - It fails ("confirmed in Setup") unless, once the save has written them to the Setup record, a draft carrying all three is held back for the address alone.
     - It proves the check reads what Setup saves and confirms, not that nothing reaches a customer: A1-1b's proof covers the exits.
     - The persona-projection check stays as the client-seat half.
-  - **Proof:** `supabase/tests/outbound_private_business_facts.sql`, 178 checks, is added to CI's database-contract job.
-    - 138 of them store one copy per tenant and try one way of writing it; 36 of those must pass.
-    - It runs on a local stand-in carrying the spine's real resolver. There, 86 of 87 reinstated defects each turn a check red.
+  - **Proof:** `supabase/tests/outbound_private_business_facts.sql`, 202 checks, is added to CI's database-contract job.
+    - 149 of them store one copy per tenant and try one way of writing it; 38 of those must pass.
+    - 23 cover what Setup confirms: 11 on one tenant holding confirmed and unconfirmed copies side by side, and 12 on tenants each confirming a phone or website beside one other copy (5 must pass).
+    - It runs on a local stand-in carrying the spine's real resolver and production's one-top-level-tenant-per-owner index. There, 96 of 97 reinstated defects each turn a check red.
     - The one that does not is equivalent: the legal profile's website is always confirmed by the spine, and it stays read so detection does not depend on that.
-  - **Independent review (§39):** three rounds.
+  - **Independent review (§39):** four rounds.
     - Round 1: BLOCK. Missed forms of writing, unread copies, an unknown tenant read as "nothing stored", and overclaiming records.
     - Round 2: SHIP-WITH-FIXES, four majors: a tenant subdomain on a shared host, phones with trailing text, PO boxes, and towns refused.
     - Round 3: SHIP-WITH-FIXES, three majors: towns in addresses of four or more lines, short home addresses no longer read, and named houses dropped.
-    - All three rounds' findings are fixed in this PR, with the minors.
+    - Round 4, on the Setup licensing: BLOCK. A floor line or a lone house number was taken as the street line, so the building and street after it were read as towns; the confirmed phone was taken out of the draft wherever its digits appeared, hiding a different number that ended in them. Minors: six-digit numbers joined to the next digits, the website licence tested by text rather than host, a confirmed number with a country code and no "+", the spine's search path, and a test that could not tell the brief from the Setup record.
+    - All four rounds' findings are fixed in this PR, with the minors, except one reported and not changed: the spine counts any legal-profile phone or website as confirmed, whoever wrote it (a platform operator can write one), because the ruling keys the licence to the spine.
   - **Next:**
     - A1-1b wires the check into the chat's four customer-bound exits, Zapier and n8n free-form arguments, and the send in execute-approval, each failing closed on error.
     - A1-2 gives the facts to PAIGE on the owner's seat only, through the same spine, and rewrites the Setup copy.

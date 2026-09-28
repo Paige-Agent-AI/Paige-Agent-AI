@@ -67,9 +67,11 @@
 --             after the number and one more word ("2 Mill Lane" from "2 Mill Lane Cottages",
 --             "123 Main St" from "123 Main St Suite 400 Springfield") and up to its first suite
 --             word. A number range adds each end. A postcode or "state ZIP" inside any line is
---             looked for on its own. A numeric postcode of five digits ("46208", "46208-1234",
---             "IN 46208", "10115 Berlin") is looked for as a whole number, with or without four
---             more digits; a four-digit one is not, since a year or a price would equal it.
+--             looked for on its own. A numeric postcode ("46208", "46208-1234", "IN 46208",
+--             "10115 Berlin", "110001", "123-4567", "01310-100") is looked for as a whole number:
+--             each number of five digits or more in a line (a five-digit one with or without four
+--             more), and the numbers starting or ending a line joined, when five digits or more. A
+--             four-digit one is not, since a year or a price would equal it.
 --             A house number of up to three digits on a line of its own ("12, Mill Lane") is joined
 --             to the line after it, unless that line has its own number ("3/22 Acacia Avenue"), and
 --             the line after it is looked for on its own as well.
@@ -551,15 +553,25 @@ begin
       if v_norm ~ ('^[0-9]+[a-z]? .*[[:alnum:]] ' || c_building_words || '\M') then
         v_cands := v_cands || regexp_replace(v_norm, '^[0-9]+[a-z]? ', '');
       end if;
-      -- A numeric postcode ("46208", "46208-1234", "IN 46208", "10115 Berlin") is looked for as a
-      -- whole number in the text, with or without four more digits. Five digits at least, so a
-      -- year or a price rarely equals it.
-      v_match := coalesce(regexp_match(v_norm, '(?:^|\m[a-z]{2} )([0-9]{5})(?: [0-9]{4})?$'),
-                          regexp_match(v_norm, '^([0-9]{5}) [a-z]'));
-      if v_match is not null and v_text_digits ~ (' ' || v_match[1] || '([0-9]{4})? ') then
-        v_hit := true;
-        exit sources;
-      end if;
+      -- A numeric postcode ("46208", "46208-1234", "IN 46208", "10115 Berlin", "110001",
+      -- "123-4567", "01310-100") is looked for as a whole number in the text: every number of five
+      -- digits or more in the line (a five-digit one with or without four more after it), and the
+      -- numbers that start or end the line joined into one, when that is five digits or more.
+      -- Five digits at least, so a year or a price rarely equals it.
+      for v_value in
+        select case when length(m[1]) = 5 then m[1] || '([0-9]{4})?' else m[1] end
+        from regexp_matches(v_norm, '\m([0-9]{5,})\M', 'g') as m
+        union all
+        select replace(x, ' ', '')
+        from unnest(array[(regexp_match(v_norm, '^([0-9]+(?: [0-9]+)*)\M'))[1],
+                          (regexp_match(v_norm, '\m([0-9]+(?: [0-9]+)*)$'))[1]]) as x
+        where length(replace(x, ' ', '')) >= 5
+      loop
+        if v_text_digits ~ (' ' || v_value || ' ') then
+          v_hit := true;
+          exit sources;
+        end if;
+      end loop;
       -- A postcode, or a state and ZIP, inside the line.
       v_cands := v_cands || array(
         select m[1] from regexp_matches(v_norm,

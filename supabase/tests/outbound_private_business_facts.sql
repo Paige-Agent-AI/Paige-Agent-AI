@@ -11,7 +11,7 @@
 -- spine's business_identity_readiness() resolves it, passes and nothing else does; that it reads
 -- only the tenant it is given and refuses an unknown one; and that nobody but the server may ask it.
 BEGIN;
-SELECT plan(249);
+SELECT plan(259);
 
 -- ── Grants ──────────────────────────────────────────────────────────────────────────────────
 SELECT ok(NOT has_function_privilege(r.rolname, f.fn, 'EXECUTE'),
@@ -239,6 +239,16 @@ INSERT INTO src VALUES
   (177,'legal.registered_address','100 Market Street, St. Louis, MO 63101','Our ZIP is 63101.',ARRAY['address'],'the ZIP of a single-line address'),
   (178,'brand.address','Hauptstrasse 5, 10115 Berlin','Postleitzahl 10115.',ARRAY['address'],'a postcode written before its town'),
   (179,'legal.registered_postal_code','46208','Your order number is 462080.','{}','a longer number that starts with the ZIP'),
+  (180,'legal.registered_postal_code','110001','Our PIN code is 110001.',ARRAY['address'],'a six-digit postcode stored as the postal code'),
+  (181,'private.registeredPostalCode','123-4567','Post it to 〒123-4567.',ARRAY['address'],'a postcode of two numbers'),
+  (182,'legal.registered_postal_code','01310-100','CEP 01310100.',ARRAY['address'],'a postcode of two numbers, written as one'),
+  (183,'brand.address','5 Nehru Place, New Delhi 110019','Our PIN is 110019.',ARRAY['address'],'a six-digit postcode ending a single-line address'),
+  (184,'legal.registered_address','Shibuya, Tokyo 150-0002','Postcode 150-0002.',ARRAY['address'],'a postcode of two numbers ending a line'),
+  (185,'brand.address','150-0002 Shibuya, Tokyo','Postcode 1500002.',ARRAY['address'],'a postcode of two numbers starting a line'),
+  (186,'legal.registered_postal_code','110001','Invoice 1100012 is paid.','{}','a longer number that holds the postcode'),
+  (187,'legal.registered_postal_code','2000','We have coached since 2000.','{}','a four-digit postcode, which a year would equal (named limit)'),
+  (188,'brand.address','Nehru Place, New Delhi 110019 India','Our PIN is 110019.',ARRAY['address'],'a six-digit postcode inside a line'),
+  (189,'legal.registered_postal_code','00-950','Kod pocztowy 00-950.',ARRAY['address'],'a five-digit postcode of two numbers'),
   -- Addresses: suites, ranges, missing separators, street words and HTML.
   (45,'legal.registered_street','123 Main St., Suite 400','Come to 123 Main Street.',ARRAY['address'],'a street stored with its suite'),
   (46,'legal.registered_street','123 Main St #400','Come to 123 Main Street.',ARRAY['address'],'a street stored with "#400"'),

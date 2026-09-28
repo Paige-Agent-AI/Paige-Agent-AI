@@ -1303,12 +1303,15 @@ console.log("\n— slice ②: oauth_begin (runOauthBegin) —");
   const OSRV = "https://public.example/mcp-oauth-srv";
   const REDIRECT = "https://xygzykjyynhzqytbqnzu.supabase.co/functions/v1/mcp-oauth-callback";
   const ISSUER = "https://public.example"; // origin == every endpoint's origin (RFC 8414 requires it)
+  let discoveryCalls = 0;
 
   routes.set("/.well-known/oauth-protected-resource/mcp-oauth-srv", (_req, res) => {
+    discoveryCalls++;
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ resource: OSRV, authorization_servers: [ISSUER] }));
   });
   routes.set("/.well-known/oauth-authorization-server", (_req, res) => {
+    discoveryCalls++;
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({
       issuer: ISSUER,
@@ -1334,7 +1337,7 @@ console.log("\n— slice ②: oauth_begin (runOauthBegin) —");
   const makeAdmin = (o = {}) => ({
     rpc: async (fn, params) => {
       if (fn === "get_mcp_connection_secret") {
-        return { data: o.secret === undefined ? { configured: true, enabled: true, server_url: OSRV, tenant_id: OTEN, config_generation: 1 } : o.secret, error: o.secretErr ?? null };
+        return { data: o.secret === undefined ? { configured: true, enabled: true, server_url: OSRV, tenant_id: OTEN, config_generation: 1, auth_kind: "none", transport: "http" } : o.secret, error: o.secretErr ?? null };
       }
       if (fn === "begin_mcp_oauth") { beginCalls.push(params); return { data: null, error: o.beginErr ?? null }; }
       return { data: null, error: null };
@@ -1390,6 +1393,33 @@ console.log("\n— slice ②: oauth_begin (runOauthBegin) —");
   check("oauth_begin refuses a disabled connection (409 connection_disabled)", disabledB.httpStatus === 409 && disabledB.body.error === "connection_disabled");
   const crossB = await oauthMod.runOauthBegin({ userClient: makeUser(), admin: makeAdmin({ secret: { configured: true, enabled: true, server_url: OSRV, tenant_id: "ten-ELSE" } }) }, beginInput());
   check("oauth_begin refuses when the loaded row's tenant ≠ the caller's (defense in depth, 403)", crossB.httpStatus === 403 && crossB.body.error === "forbidden");
+
+  // The SQL refusal is too late if discovery/DCR already happened. Refuse non-MCP facets
+  // before any provider request; count actual requests reaching the local fake server.
+  for (const facet of [
+    { auth_kind: "api_key", transport: "http" },
+    { auth_kind: "none", transport: "sse" },
+    { auth_kind: "none", transport: "stdio" },
+    { auth_kind: "unknown", transport: "http" },
+    { auth_kind: undefined, transport: "http" },
+    { auth_kind: "none", transport: undefined },
+  ]) {
+    const before = [discoveryCalls, regCalls.length, beginCalls.length];
+    const result = await oauthMod.runOauthBegin({ userClient: makeUser(), admin: makeAdmin({ secret: {
+      configured: true, enabled: true, server_url: OSRV, tenant_id: OTEN, config_generation: 1, ...facet,
+    } }) }, beginInput());
+    const label = `${facet.auth_kind}/${facet.transport}`;
+    check(`oauth_begin refuses unsupported facet ${label}`, result.httpStatus === 409 && result.body.error === "connection_unusable");
+    check(`oauth_begin ${label} makes no discovery, registration or state write`,
+      JSON.stringify(before) === JSON.stringify([discoveryCalls, regCalls.length, beginCalls.length]));
+  }
+
+  // Reauthorization must still repair an expired OAuth grant; it is not dispatch.
+  const expiredRetry = await oauthMod.runOauthBegin({ userClient: makeUser(), admin: makeAdmin({ secret: {
+    configured: true, enabled: true, server_url: OSRV, tenant_id: OTEN, config_generation: 1,
+    auth_kind: "oauth", transport: "http", expires_at: "2000-01-01T00:00:00Z",
+  } }) }, beginInput());
+  check("oauth_begin still permits explicit reauthorization of expired OAuth", expiredRetry.httpStatus === 200);
 
   // A begin_mcp_oauth store failure → 500 (never a consent that can complete against nothing).
   const storeFail = await oauthMod.runOauthBegin({ userClient: makeUser(), admin: makeAdmin({ beginErr: { message: "store boom" } }) }, beginInput());

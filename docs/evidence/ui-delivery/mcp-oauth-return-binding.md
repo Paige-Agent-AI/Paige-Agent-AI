@@ -12,8 +12,8 @@ MATERIAL_FLOW_CHANGE: NO: repairs the approved existing connect/return/retry flo
 FLOW_PROTOTYPE: NOT_REQUIRED: installed skill and flow-ui reference read; incumbent drawer/Sign in interaction reused for this repair, not a new design.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: a Solo owner explicitly signs in to a saved tool and returns to that record, without inferring readiness from callback parameters.
 VISUAL_DIRECTION: PASS: existing Mineral/Obsidian drawer and provider tile; no new styling or catalogue design. Impeccable harden/operate/craft-floor checks applied, detector clean on both owned UI files.
-AUTOMATED_EVIDENCE: PASS: 164 rendered unit tests, 360 gateway assertions, 11 callback cases and disposable SQL/role/concurrency groups below; no provider-runtime claim.
-STATIC_EVIDENCE: PASS: changed-file lint, 12/12 TypeScript ratchet, build and authority lints below; inherited audit findings separately filed and unresolved.
+AUTOMATED_EVIDENCE: PASS: 164 rendered unit tests, 373 gateway assertions, 11 callback cases and disposable SQL/role/concurrency groups below; no provider-runtime claim.
+STATIC_EVIDENCE: PASS: UI changed-file lint, 12/12 TypeScript ratchet, build and authority lints below. Broad ESLint of the two Edge handlers reports three unchanged no-explicit-any errors reproduced on predecessor source; no new lint finding. Inherited audit findings separately filed and unresolved.
 RENDERED_EVIDENCE: PASS: real SoloSettings/Integrations in the local shell-markup harness at four frames, two themes and two PAIGE-column states; stubbed transport, not authenticated runtime.
 BEHAVIORAL_EVIDENCE: PASS: returned record drawer, explicit sign-in affordance, focus and Escape exercised locally; no external control clicked.
 AUTHENTICATED_RUNTIME: UNVERIFIED: no authenticated provider consent or real multi-account browser session driven; synthetic PostgreSQL subjects are not real authentication.
@@ -23,7 +23,7 @@ REDUCED_MOTION: PASS: all local browser cases use reducedMotion=reduce and asser
 STATE_COVERAGE: PASS: local first-use/retry/cancel/error/permission/absent return/current scope/late reply/StrictMode cases; authenticated equivalents remain owed.
 TRUTHFUL_STATE_LABELS: PASS: return parameters only navigate; the canonical saved row still requires an explicit connectivity check. No connection, health or execution permission is asserted by returning.
 SOLO_UI: YES: Settings → Integrations, canonical connected-tool drawer.
-UNVERIFIED: Linux CI and hosted preview; full production-schema migration compatibility; authenticated consent/cancellation and tenant switching; real provider/refresh/execution; production; native PAIGE ownership and production fonts; zoom/reflow.
+UNVERIFIED: refreshed exact-head Linux CI and frontend preview; authenticated consent/cancellation and tenant switching; real provider/refresh/execution; production; native PAIGE ownership and production fonts; zoom/reflow. Hosted disposable SQL and previous-head Linux database proof are recorded below, not carried forward as fresh-head CI.
 OWNER_INTENT: Return owners to their canonical Integrations record and preserve authority across consent/cancel/retry/account changes; complete outbound MCP objective remains in scope.
 MUST_NOT_HAPPEN: No URL-derived tenant authority, stale callback token replacement, other-account drawer, auto provider call, credential URL, parallel setup or premature LIVE claim.
 MUST_PRESERVE: n8n specialized facet, other mounted tiers' Connections return, incumbent settings IA/scroll/layout, exactly one PAIGE workspace.
@@ -115,16 +115,23 @@ privacy and tenant-context lanes; this packet does not pre-authorize those share
   parent test reproduced it; scope-aware clearing preserves the current drawer only.
 - Expiry and cross-tenant SQL tests were repaired to vary the relevant guard alone; missing
   binding must not falsely make a negative security control pass.
+- Independent review found OAuth discovery/client registration could precede the SQL refusal of
+  a specialized REST facet. OAuth begin now uses the dispatch loader's shared HTTP-MCP facet predicate
+  after ownership but before any network call. Six unsupported/missing facet cases each assert a
+  closed refusal and zero discovery, registration and state-write calls; expired OAuth remains a
+  positive reauthorization case. Failing-first: 12 failures / 361 passes; repaired: 373 passes.
+  No migration was rewritten after preview application, and no n8n execution behavior was changed.
 
 ## Evidence ledger
 
 | Class | Status | Command/result and limit |
 |---|---|---|
 | AUTOMATED | PASS | `node scripts/proof/mcp-oauth-return.mjs`: 11/11, exit 0. Injected state/provider adapters, not DB atomicity. |
-| AUTOMATED | PASS | `node scripts/mcp-gateway-smoke.mjs`: 360 assertions, exit 0. Local simulated transport, not external execution. |
+| AUTOMATED | PASS | `node scripts/mcp-gateway-smoke.mjs`: 373 assertions, exit 0. Local simulated transport, not external execution. |
 | AUTOMATED | PASS | Vitest gateway + parent Integrations + specialized n8n tabs: 164/164 across 3 files, exit 0. |
 | FAILING-FIRST | PASS | Callback initially 1/8; first-use retry 3 failures; focus-return failure; non-Solo route failure; StrictMode parent 1 failure/57 pass. Each targeted regression now passes. |
 | STATIC | PASS | Changed TSX/test ESLint: 0 errors, 4 existing warnings. `git diff --check` clean. |
+| STATIC | FAIL | Broad ESLint of connection.ts/oauth.ts: three inherited no-explicit-any errors, reproduced using git-show predecessor input. No new errors; Edge-native/authority checks are separate proof, not an ESLint waiver. |
 | STATIC | PASS | `node scripts/ci/tsc-ratchet.mjs`: baseline 12/current 12, exit 0; not a zero-error typecheck. |
 | BUILD | PASS | `npm run build`: 5714 modules, exit 0. Existing large-chunk/annotation/easing warnings remain. |
 | STATIC | PASS | `lint:definer-fns`, `lint:governed-execution`, `lint:mcp-governed-door` pass; not runtime authorization proof. |
@@ -132,7 +139,7 @@ privacy and tenant-context lanes; this packet does not pre-authorize those share
 | DEPENDENCIES | FAIL | `npm audit --json` exit 1: Vite high; ajv, react-router and react-router-dom moderate. Package/lockfile unchanged; no dependency upgrade absorbed. |
 | STRUCTURAL-RENDERED | PASS | Local Chrome drive: 16 viewport/theme/PAIGE-column combinations, callback drawer, explicit sign-in affordance, focus/Escape and document/drawer horizontal geometry. |
 | DATABASE | PASS | `node scripts/proof/mcp-oauth-database.mjs`: eight proof groups, four SQL files via native grant-writer entrypoint, exact canonical MCP migrations, real pgcrypto/membership predicates, two-session consume/complete races, anon/authenticated denial; exit 0. Minimal unrelated schema, not full Supabase replay. |
-| PREVIEW/CI | UNVERIFIED | No pushed exact head, draft PR, Linux CI, Security Audit or preview yet. |
+| PREVIEW/CI | PASS / UNVERIFIED | Draft #1566 predecessor `685e686669cec5bf3170b023cd34f7b35ea49da6`: full Linux database-contract, Security Audit, migration lint and UI evidence pass. Hosted disposable preview SQL/Edge refusals pass. Refreshed-head CI and frontend Vercel preview remain owed. |
 | AUTHENTICATED RUNTIME | UNVERIFIED | Real owner consent, cancellation, refresh, account switching and provider execution not exercised. |
 | PRODUCTION | UNVERIFIED | Nothing released or production-accepted. |
 
@@ -156,6 +163,36 @@ ajv 8.17.1 MODERATE (GHSA-2g4f-4pwh-qvx6), react-router 6.30.4 MODERATE
 (GHSA-wrjc-x8rr-h8h6/GHSA-337j-9hxr-rhxg), react-router-dom 6.30.4 MODERATE
 (GHSA-jjmj-jmhj-qwj2 plus inherited router findings). Unresolved; routed to Antonio, not waived;
 owner ruled park-and-route non-blocking for this slice. No dependency upgrade absorbed.
+
+## Hosted disposable proof and delivery environment
+
+PR #1566 created a non-default, non-persistent Supabase branch with `with_data=false`.
+Migration `20270517000000` applied there; mcp-gateway version 26 and mcp-oauth-callback version 6
+were ACTIVE at predecessor head `685e686669cec5bf3170b023cd34f7b35ea49da6`.
+The four committed OAuth SQL files passed against its full schema after literal expansion of
+psql includes and an environment guard. Transactions rolled back; post-proof auth users,
+MCP connections and OAuth states were zero, and seeded tenant count remained three.
+The inherited synchronous signup notification trigger's enabling credential was absent, checked
+as a boolean before testing and inside every transaction; no secret was read, trigger disabled,
+or provider called. Initial client-side include substitution damaged dollar quoting and failed
+parsing before execution; corrected literal substitution passed unchanged product SQL.
+
+Unauthenticated preview callback probes returned clean 302 recovery URLs for missing/unknown state,
+with no-store/no-referrer; the gateway refused an unauthenticated tools read with 401. Redirects
+were not followed. The callback inherits a production app-origin default, so a legitimate isolated
+frontend origin and authenticated provider account are still needed for the real OAuth journey.
+
+Linux database job 109171721840 / run 36494793460 passed fresh replay, reproduced production grants,
+all OAuth SQL entrypoints and grant-ordering controls. Its synthetic merge
+`1193df0c16864439c40e8a892fba48163d036f7c` has the identical predecessor tree
+`8af827eb63c45fa6527dde3f8583865aec2bdd5b`. Fresh CI must run after the facet repair.
+
+Vercel lists no deployment for this branch/head; newest listed deployment was 2026-09-28 08:03 UTC
+with former personal-repository metadata. The cause is UNVERIFIED: the get-project connector fails
+parameter validation and browser automation fails initialization on the Windows sandbox ACL.
+No Git-link/configuration, deployment, promotion, production migration or provider workaround was used.
+Hosted proof details are on the draft conversation; these are preview/SQL facts, not authenticated
+provider or production acceptance.
 
 ## Browser evidence and critique
 
@@ -187,6 +224,11 @@ Artifacts under `scripts/live-drive/artifacts/oauth-return/` (local generated ev
 ## Independent review
 
 Backend reviewer: no remaining BLOCKER/MAJOR in final static review; full-schema/provider runtime owed.
+Fresh facet review independently reran 373 gateway assertions and 11 callback cases: no remaining
+BLOCKER/MAJOR. No current tenant-facing writer can change an HTTP connection to SSE/stdio; transport
+is not generation-bound today. Any future transport-changing writer must add that forward safeguard
+before enabling it. Roll out the patched gateway before or atomically with the migration/callback,
+so an old OAuth-begin handler cannot perform discovery before refusing an unsupported facet.
 UI reviewer: no remaining BLOCKER/MAJOR; independent 140/140 gateway+parent tests, including
 StrictMode and late-response/account-switch coverage. Browser matrix was not independently rerun.
 Findings repaired: first-use retry, focus restoration, obsolete comments, other-tier compatibility,

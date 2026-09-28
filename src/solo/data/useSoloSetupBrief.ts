@@ -82,6 +82,9 @@ export function useSoloSetupBrief(): SoloSetupBriefData {
   const [error, setError] = useState<string | null>(null);
   const [accessScope, setAccessScope] = useState<SetupAccessScope>("read_only");
   const [resolvedTenantId, setResolvedTenantId] = useState<string | null>(null);
+  // The workspace the last load finished for, whether it succeeded or failed. A failed read must
+  // still settle, or its error is hidden behind a loading state that never ends.
+  const [settledTenantId, setSettledTenantId] = useState<string | null>(null);
   const [brief, setBrief] = useState(() => cleanSoloSetupBrief(null));
   const [businessOwners, setBusinessOwners] = useState<SoloBusinessOwner[]>([]);
   const [managedSendingEmail, setManagedSendingEmail] = useState<string | null>(null);
@@ -108,6 +111,7 @@ export function useSoloSetupBrief(): SoloSetupBriefData {
     setError(null);
     setAccessScope("read_only");
     setResolvedTenantId(null);
+    setSettledTenantId(null);
     setBrief(cleanSoloSetupBrief(null));
     setBusinessOwners([]);
     setPendingProposal(null);
@@ -136,7 +140,10 @@ export function useSoloSetupBrief(): SoloSetupBriefData {
       if (!gate.current.isCurrent(token)) return;
       setError(errorMessage(caught, "Couldn't load this business brief."));
     } finally {
-      if (gate.current.isCurrent(token)) setLoading(false);
+      if (gate.current.isCurrent(token)) {
+        setSettledTenantId(activeTenantId);
+        setLoading(false);
+      }
     }
   }, [acceptContext, activeTenantId]);
 
@@ -150,6 +157,7 @@ export function useSoloSetupBrief(): SoloSetupBriefData {
     && Boolean(activeTenantId)
     && resolvedTenantId === activeTenantId;
   const tenantResolved = Boolean(activeTenantId) && resolvedTenantId === activeTenantId;
+  const tenantSettled = Boolean(activeTenantId) && settledTenantId === activeTenantId;
 
   const save = useCallback(async (
     next: SoloSetupBrief,
@@ -214,8 +222,8 @@ export function useSoloSetupBrief(): SoloSetupBriefData {
   }, [canEditCurrentTenant]);
 
   return {
-    loading: loading || people.loading || !tenantResolved,
-    error: tenantResolved ? error : null,
+    loading: loading || people.loading || !tenantSettled,
+    error: tenantSettled ? error : null,
     saving,
     accessScope,
     canEdit: canEditCurrentTenant,

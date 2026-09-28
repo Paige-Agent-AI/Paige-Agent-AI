@@ -29,8 +29,9 @@
  *   • the g4 stat tiles other than "Documents indexed": Citations this week,
  *     Gaps she flagged, Retrieval accuracy — Preview unless a real source exists.
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useOptionalTenantContext } from "@/hooks/useTenantContext";
 
 /** One indexed document, reshaped for the solo Knowledge surface. */
 export interface SoloKnowledgeDoc {
@@ -146,30 +147,48 @@ function toDoc(r: KnowledgeDocRow): SoloKnowledgeDoc {
 export function useSoloKnowledge(): SoloKnowledgeData {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [docs, setDocs] = useState<SoloKnowledgeDoc[]>([]);
+  // The documents, and the workspace they were read for. Returned only for that workspace, so a
+  // switch never shows the previous workspace's documents while the new read is in flight.
+  const [loaded, setLoaded] = useState<{ tenant: string | null; docs: SoloKnowledgeDoc[] }>({ tenant: null, docs: [] });
+  // Only the latest read may write: a switch starts a second read, and the first can land late.
+  const generation = useRef(0);
+
+  const activeTenantId = useOptionalTenantContext()?.activeTenantId ?? null;
 
   const load = useCallback(async () => {
+    const mine = ++generation.current;
     setLoading(true);
     setError(null);
-    // RLS-tenant-scoped — NO tenant param (§9). The generated types don't carry this
-    // recent table, so the select is cast, mirroring KnowledgePanel/NetworkKbInsights.
-    const { data, error: selErr } = await supabase
+    // RLS decides what the caller MAY read (§9). It is not enough to decide what this workspace
+    // IS: a super_admin acting as one workspace is admitted to every workspace's documents, and a
+    // member of several workspaces to all of theirs. So the read is also bound to the active
+    // workspace — a narrowing, never a grant. The generated types don't carry this recent table,
+    // so the select is cast, mirroring KnowledgePanel/NetworkKbInsights.
+    let query = supabase
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .from("tenant_knowledge_docs" as any)
       .select("id, title, summary, category, tags, source, chunk_count, created_at")
       .order("created_at", { ascending: false });
+    if (activeTenantId) query = query.eq("tenant_id", activeTenantId);
+    const { data, error: selErr } = await query;
+    if (mine !== generation.current) return;
     if (selErr) {
       setError(selErr.message);
-      setDocs([]);
+      setLoaded({ tenant: activeTenantId, docs: [] });
       setLoading(false);
       return;
     }
     const rows = ((data as unknown as KnowledgeDocRow[] | null) ?? []).filter(
       (r): r is KnowledgeDocRow => !!r && typeof r.id === "string" && typeof r.title === "string",
     );
-    setDocs(rows.map(toDoc));
+    setLoaded({ tenant: activeTenantId, docs: rows.map(toDoc) });
     setLoading(false);
-  }, []);
+  }, [activeTenantId]);
+
+  const docs = useMemo(
+    () => (loaded.tenant === activeTenantId ? loaded.docs : []),
+    [loaded, activeTenantId],
+  );
 
   useEffect(() => {
     void load();

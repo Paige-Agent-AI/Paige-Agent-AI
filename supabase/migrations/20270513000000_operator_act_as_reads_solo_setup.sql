@@ -21,12 +21,41 @@
 --     platform_admin and not decided here.
 --   * `solo_setup_access_scope()`: an operator who is not a member still reads 'read_only', so the
 --     client's edit controls stay off.
---   * The workspace is the caller's own act-as pointer AND that pointer is backed by an open
---     `operator.tenant.enter` receipt: an enter for that workspace with no exit for it at or after
---     it. The pointer alone is not enough — `profiles` lets an operator update their own row, and
+--   * The workspace is the caller's own act-as pointer AND that pointer is backed by an open act-as:
+--     the operator's most recent enter-or-exit receipt is an enter for that workspace
+--     (operator_open_act_as_tenant(), below). The pointer alone is not enough — `profiles` lets an operator update their own row, and
 --     `guard_active_tenant_membership` admits a platform admin's non-member pointer, so a pointer
 --     can be set with no receipt at all (found by the independent review of this change). The
 --     owner's standing principle is gate by audit; a read that skipped the audit would break it.
+
+-- The workspace the caller is in by an audited act-as, or NULL. One home for "is this act-as real"
+-- (§18): the operator's pointer, where their MOST RECENT operator.tenant.enter / .exit is an enter
+-- for that same workspace. Not "some enter with no exit after it": enters were left un-exited by the
+-- sign-in pointer reset and by pre-#1547 switches, and an old one must not re-open by hand-pointing
+-- (independent review of #1556). On a tied timestamp the exit counts as later. The receipts
+-- themselves are server-written only (the audit-log policy at the end of this file).
+CREATE OR REPLACE FUNCTION public.operator_open_act_as_tenant()
+RETURNS uuid
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+  select p.active_tenant_id
+  from public.profiles p
+  where p.user_id = auth.uid()
+    and p.active_tenant_id is not null
+    and (
+      select a.action = 'operator.tenant.enter' and a.target_id = p.active_tenant_id
+      from public.paige_audit_log a
+      where a.actor_user_id = auth.uid()
+        and a.action in ('operator.tenant.enter', 'operator.tenant.exit')
+      order by a.created_at desc, (a.action = 'operator.tenant.exit') desc
+      limit 1
+    ) is true
+$function$;
+
+REVOKE ALL ON FUNCTION public.operator_open_act_as_tenant() FROM PUBLIC, anon, authenticated;
 
 CREATE OR REPLACE FUNCTION public.solo_setup_operator_can_read()
 RETURNS boolean
@@ -38,26 +67,9 @@ AS $function$
   select auth.uid() is not null
     and public.current_user_tenant_id() is not null
     and public.operator_may('tenant.act_as')
-    and exists (
-      select 1 from public.profiles p
-      join public.tenants t on t.id = p.active_tenant_id
-      where p.user_id = auth.uid()
-        and p.active_tenant_id = public.current_user_tenant_id()
-        -- The entry was recorded, and has not been recorded as ended since.
-        and exists (
-          select 1 from public.paige_audit_log e
-          where e.actor_user_id = auth.uid()
-            and e.action = 'operator.tenant.enter'
-            and e.target_id = p.active_tenant_id
-            and not exists (
-              select 1 from public.paige_audit_log x
-              where x.actor_user_id = auth.uid()
-                and x.action = 'operator.tenant.exit'
-                and x.target_id = e.target_id
-                and x.created_at >= e.created_at
-            )
-        )
-    )
+    -- COALESCE, not a bare comparison: with no open act-as the helper is NULL, the comparison is
+    -- NULL, and `IF NOT (false OR NULL)` in the readers does not fire — the read would fail OPEN.
+    and coalesce(public.operator_open_act_as_tenant() = public.current_user_tenant_id(), false)
 $function$;
 
 COMMENT ON FUNCTION public.solo_setup_operator_can_read() IS

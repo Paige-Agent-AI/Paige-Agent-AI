@@ -4,7 +4,7 @@
 -- capability `tenant.act_as` and the operator's own act-as pointer; every Setup write stays
 -- member-only. Synthetic fixtures; always rolled back.
 BEGIN;
-SELECT plan(25);
+SELECT plan(27);
 
 INSERT INTO auth.users (id, aud, role, email) VALUES
   ('0a5b0000-0000-4000-8000-000000000001','authenticated','authenticated','setup-read-super@tests.invalid'),
@@ -43,6 +43,12 @@ BEGIN
   PERFORM set_config('request.jwt.claims',
     json_build_object('sub', _uid::text, 'role', 'authenticated')::text, true);
 END $$;
+-- An enter receipt a month old whose act-as was never exited — the kind a sign-in pointer reset or a
+-- pre-#1547 switch left behind. Written as the table owner, as only the server can.
+CREATE FUNCTION pg_temp.stale_enter(_actor uuid, _tenant uuid) RETURNS void LANGUAGE sql SECURITY DEFINER AS $$
+  INSERT INTO public.paige_audit_log (actor_user_id, actor_role, action, target_type, target_id, tenant_id, created_at)
+  VALUES (_actor, 'platform_operator', 'operator.tenant.enter', 'tenant', _tenant, _tenant, now() - interval '30 days')
+$$;
 -- Runs as the table owner: the capability grant is not the caller's to change.
 CREATE FUNCTION pg_temp.set_act_as_in_force(_role text, _on boolean) RETURNS void
 LANGUAGE sql SECURITY DEFINER AS $$
@@ -135,6 +141,20 @@ SELECT is(public.get_solo_setup_context(), NULL::jsonb,
 SELECT lives_ok($$INSERT INTO public.paige_audit_log (actor_user_id, actor_role, action, tenant_id)
   VALUES ('0a5b0000-0000-4000-8000-000000000001', 'paige_chat', 'crm_create_task', '0a5b0000-0000-4000-8000-00000000a001')$$,
   'a caller still records their own non-operator actions');
+
+-- A stale receipt is not an open act-as: only the operator's most recent enter or exit counts
+-- (independent review of #1556). The super_admin's last act was the exit above; a month-old enter
+-- for workspace two, never exited, must not let a self-set pointer read it.
+RESET ROLE;
+SELECT pg_temp.stale_enter('0a5b0000-0000-4000-8000-000000000001', '0a5b0000-0000-4000-8000-00000000a002');
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.as_caller('0a5b0000-0000-4000-8000-000000000001');
+UPDATE public.profiles SET active_tenant_id = '0a5b0000-0000-4000-8000-00000000a002'
+ WHERE user_id = '0a5b0000-0000-4000-8000-000000000001';
+SELECT is(public.current_user_tenant_id(), '0a5b0000-0000-4000-8000-00000000a002'::uuid,
+  'the super_admin points their own scope at the workspace of an old, never-exited enter');
+SELECT is(public.get_solo_setup_context(), NULL::jsonb,
+  'an old un-exited enter behind a later exit is not an open act-as, so it reads nothing');
 
 -- A caller who is neither a member nor an operator is refused, even with a global admin role.
 SELECT pg_temp.as_caller('0a5b0000-0000-4000-8000-000000000004');

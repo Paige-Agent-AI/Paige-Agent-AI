@@ -1,4 +1,4 @@
-import { act } from "react";
+import { act, Profiler } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -135,5 +135,29 @@ describe("members' conversations", () => {
     });
     expect(document.body.textContent).not.toContain("workspace A question");
     expect(document.querySelector('[role="dialog"]')).toBeNull();
+  });
+
+  it("never commits a frame of the next workspace that still shows this one's members", async () => {
+    // The same tree on both renders, so React reuses the component rather than remounting it.
+    const atCommit: string[] = [];
+    let recording = false;
+    const tree = (scope: string) => (
+      <Profiler id="switch" onRender={() => { if (recording) atCommit.push(host.textContent ?? ""); }}>
+        <MemberConversations scopeKey={scope} />
+      </Profiler>
+    );
+    host = document.createElement("div");
+    document.body.append(host);
+    root = createRoot(host);
+    await act(async () => { root.render(tree("tenant-a")); });
+    await act(async () => { await Promise.resolve(); });
+    await act(async () => { byText("Members' conversations")!.click(); });
+    expect(host.textContent).toContain("Test Member");
+    // What the DOM holds at the moment workspace B's render commits, before any effect runs.
+    h.listResult = { data: [], error: null };
+    recording = true;
+    await act(async () => { root.render(tree("tenant-b")); });
+    expect(atCommit.length).toBeGreaterThan(0);
+    expect(atCommit[0]).not.toContain("Test Member");
   });
 });

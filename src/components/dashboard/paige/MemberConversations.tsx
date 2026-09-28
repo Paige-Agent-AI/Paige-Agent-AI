@@ -64,7 +64,13 @@ function clock(date: Date): string {
   return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
+// Keyed by workspace: each workspace gets a fresh instance, so no frame of one workspace can ever
+// paint another's members or transcript (an effect-time reset runs only after the frame commits).
 export function MemberConversations({ scopeKey }: { scopeKey: string }) {
+  return <MemberConversationsForWorkspace key={scopeKey} scopeKey={scopeKey} />;
+}
+
+function MemberConversationsForWorkspace({ scopeKey }: { scopeKey: string }) {
   const [list, setList] = useState<ListState>({ phase: "idle" });
   const [expanded, setExpanded] = useState(false);
   const [pending, setPending] = useState<MemberThread | null>(null);

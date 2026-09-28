@@ -92,7 +92,11 @@ AS $function$
 declare
   v_tenant uuid;
 begin
-  if auth.uid() is null or not public.operator_may('tenant.member_threads.read') then
+  -- Both grants, every call: reading a member's thread is a narrower act inside act-as, so withdrawing
+  -- tenant.act_as closes it too, even inside an act-as already open (Codex review of 1b81bb3d).
+  if auth.uid() is null
+     or not public.operator_may('tenant.act_as')
+     or not public.operator_may('tenant.member_threads.read') then
     raise exception 'operator_member_threads_not_permitted' using errcode = '42501';
   end if;
   v_tenant := public.operator_open_act_as_tenant();
@@ -136,7 +140,11 @@ declare
   v_owner_name text;
   v_turns jsonb;
 begin
-  if auth.uid() is null or not public.operator_may('tenant.member_threads.read') then
+  -- Both grants, every call: reading a member's thread is a narrower act inside act-as, so withdrawing
+  -- tenant.act_as closes it too, even inside an act-as already open (Codex review of 1b81bb3d).
+  if auth.uid() is null
+     or not public.operator_may('tenant.act_as')
+     or not public.operator_may('tenant.member_threads.read') then
     raise exception 'operator_member_threads_not_permitted' using errcode = '42501';
   end if;
   v_tenant := public.operator_open_act_as_tenant();

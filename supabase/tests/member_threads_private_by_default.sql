@@ -2,7 +2,7 @@
 -- purpose, and recorded when opened (owner ruling 2026-09-28, after a super_admin acting as a
 -- workspace was shown a member's conversation as their own). Synthetic fixtures; rolled back.
 BEGIN;
-SELECT plan(27);
+SELECT plan(31);
 
 INSERT INTO auth.users (id, aud, role, email) VALUES
   ('0a5c0000-0000-4000-8000-000000000001','authenticated','authenticated','threads-super@tests.invalid'),
@@ -58,6 +58,20 @@ BEGIN
   PERFORM set_config('request.jwt.claims',
     json_build_object('sub', _uid::text, 'role', 'authenticated')::text, true);
 END $$;
+-- Runs as the table owner: the capability grant is not the caller's to change.
+CREATE FUNCTION pg_temp.set_act_as_in_force(_role text, _on boolean) RETURNS void
+LANGUAGE sql SECURITY DEFINER AS $$
+  UPDATE public.platform_operator_role_capabilities
+     SET in_force = _on,
+         pending = CASE WHEN _on THEN NULL ELSE 'withdrawn by this test' END
+   WHERE role = _role AND capability = 'tenant.act_as'
+$$;
+-- One transaction has one now(): a re-enter after an exit would tie with it, and the exit wins a
+-- tie. This moves the operator's latest enter a minute on, as time would.
+CREATE FUNCTION pg_temp.later_enter(_actor uuid) RETURNS void LANGUAGE sql SECURITY DEFINER AS $$
+  UPDATE public.paige_audit_log SET created_at = now() + interval '1 minute'
+   WHERE actor_user_id = _actor AND action = 'operator.tenant.enter' AND created_at = now()
+$$;
 CREATE FUNCTION pg_temp.opens() RETURNS int LANGUAGE sql SECURITY DEFINER AS $$
   SELECT count(*)::int FROM public.paige_audit_log
    WHERE action = 'operator.thread.open' AND target_id = '0a5c0000-0000-4000-8000-0000000000f1'
@@ -141,6 +155,22 @@ SELECT is(pg_temp.opens(), 1, 'a refused open records nothing');
 SELECT pg_temp.as_caller('0a5c0000-0000-4000-8000-000000000002');
 SELECT throws_ok($$SELECT * FROM public.operator_list_member_threads()$$,
   '42501', 'operator_member_threads_not_permitted', 'a platform_admin does not hold the capability');
+
+-- Withdrawing act-as closes the door even inside an act-as already open: the member-thread
+-- capability is not a standing pass around tenant.act_as (Codex review of 1b81bb3d).
+SELECT pg_temp.as_caller('0a5c0000-0000-4000-8000-000000000001');
+SELECT is(public.operator_enter_tenant('0a5c0000-0000-4000-8000-00000000a001') ->> 'active_tenant_id',
+  '0a5c0000-0000-4000-8000-00000000a001', 'the super_admin enters the workspace again');
+RESET ROLE;
+SELECT pg_temp.later_enter('0a5c0000-0000-4000-8000-000000000001');
+SELECT pg_temp.set_act_as_in_force('super_admin', false);
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.as_caller('0a5c0000-0000-4000-8000-000000000001');
+SELECT throws_ok($$SELECT * FROM public.operator_list_member_threads()$$,
+  '42501', 'operator_member_threads_not_permitted', 'with act-as withdrawn, the list is refused inside an open act-as');
+SELECT throws_ok($$SELECT public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f1')$$,
+  '42501', 'operator_member_threads_not_permitted', 'with act-as withdrawn, the open is refused inside an open act-as');
+SELECT is(pg_temp.opens(), 1, 'a refused open after withdrawal records nothing');
 
 SELECT * FROM finish();
 ROLLBACK;

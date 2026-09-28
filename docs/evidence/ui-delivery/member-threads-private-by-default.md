@@ -41,7 +41,7 @@ RELEASE_CLASSIFICATION: internal-only: operator support surfaces and a tightenin
 CUSTOMER_RELEASE_IDENTITY: none: no customer-visible change
 RELEASE_NOTE_REQUIRED: NO: no customer-visible change
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: proven in pgTAP, unit tests and harness frames; owner approval of the frames, production readback and a live operator session owed
-RELEASE_RECOVERY: position=revert the merge and restore the two SELECT policies' previous text (recorded in the migration header) — the three new functions are unreferenced once reverted; reference=this PR
+RELEASE_RECOVERY: position=revert the merge and restore the two SELECT policies' previous text (quoted exactly in this PR's description) — the three new functions are unreferenced once reverted; reference=this PR
 
 ## Scope and collisions
 

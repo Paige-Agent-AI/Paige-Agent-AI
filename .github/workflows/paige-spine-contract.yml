@@ -186,6 +186,12 @@ jobs:
       # rather than fixed from this lane.
       - run: supabase test db supabase/tests/crm_patch_fields_match_database.sql
         if: ${{ !cancelled() }}
+      # Contact methods: several labelled, ordered addresses per contact and per person, exactly one
+      # primary of each kind enforced by the tables, one contact per address per workspace, row
+      # access with the contact, and every matcher recognising a contact by ANY of its addresses.
+      # Reports its own result, like the step above, so an earlier red step cannot hide it.
+      - run: supabase test db supabase/tests/contact_methods.sql
+        if: ${{ !cancelled() }}
       - run: supabase test db supabase/tests/paige_spine_foundation.sql
       # Vibe Media Credit Ledger: append-only, closure math, anti-leakage release
       # gate, lazy mint, RLS, and the §59 service-role surface (2026-09-12).

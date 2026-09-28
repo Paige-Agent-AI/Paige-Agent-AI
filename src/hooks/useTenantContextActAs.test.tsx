@@ -26,6 +26,8 @@ const h = vi.hoisted(() => ({
   // Simulates operator_enter_tenant committing on the server while its response is lost.
   enterCommitsThenFails: false,
   exitCommitsThenFails: false,
+  // Another tab's enter commits after this tab's preflight read, so the server refuses this one.
+  otherTabEnters: null as string | null,
   profileReadError: null as unknown,
 }));
 
@@ -45,6 +47,10 @@ vi.mock("@/integrations/supabase/client", () => ({
       if (name === "is_platform_admin") return Promise.resolve(h.staff);
       if (name === "operator_enter_tenant") {
         if (h.enterCommitsThenFails) h.activeTenant = "t1";
+        if (h.otherTabEnters) {
+          h.activeTenant = h.otherTabEnters;
+          return Promise.resolve({ data: null, error: { message: "operator_scope_occupied" } });
+        }
         return Promise.resolve({ data: null, error: h.enterError });
       }
       if (name === "operator_exit_tenant") {
@@ -102,6 +108,7 @@ describe("the operator act-as marker and its audited exit", () => {
     h.enterError = null;
     h.exitError = null;
     h.enterCommitsThenFails = false;
+    h.otherTabEnters = null;
     h.exitCommitsThenFails = false;
     h.profileReadError = null;
     h.profileWrites = 0;
@@ -301,6 +308,18 @@ describe("the operator act-as marker and its audited exit", () => {
     await act(async () => { outcome = await c.enterOperatorActAs("t1"); });
     expect(outcome).toBe("occupied");
     expect(h.rpcCalls).not.toContain("operator_enter_tenant");
+  });
+
+  // Codex review of 1253b5ab: the preflight read is one tab's check. When another tab enters first,
+  // the server refuses this enter as occupied (operator_scope_occupied), and the operator is told
+  // an act-as is open rather than that the tenant refused them.
+  it("reports occupied when another tab's act-as lands between the read and the enter", async () => {
+    const c = await mount();
+    h.otherTabEnters = "t2";
+    let outcome = "";
+    await act(async () => { outcome = await c.enterOperatorActAs("t1"); });
+    expect(outcome).toBe("occupied");
+    expect(acting()).toBe(false);
   });
 
   it("enters nothing when it cannot read the current scope first", async () => {

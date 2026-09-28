@@ -530,6 +530,9 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       if (rpcError) {
         const scope = await readOwnScope();
         if (!scope.ok) return "unknown" as const;
+        // Another tab can enter between the read above and this call; the server then refuses this
+        // one (operator_scope_occupied), and the pointer read back names the act-as that is open.
+        if (scope.activeTenantId && scope.activeTenantId !== tenantId) return "occupied" as const;
         if (scope.activeTenantId !== tenantId) return "refused" as const;
       }
     }

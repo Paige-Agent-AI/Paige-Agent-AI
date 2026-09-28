@@ -11,7 +11,7 @@
 -- spine's business_identity_readiness() resolves it, passes and nothing else does; that it reads
 -- only the tenant it is given and refuses an unknown one; and that nobody but the server may ask it.
 BEGIN;
-SELECT plan(241);
+SELECT plan(243);
 
 -- ── Grants ──────────────────────────────────────────────────────────────────────────────────
 SELECT ok(NOT has_function_privilege(r.rolname, f.fn, 'EXECUTE'),
@@ -231,6 +231,7 @@ INSERT INTO src VALUES
   (170,'legal.registered_address','2 Rose Cottage, Holly Grove, Leeds','We are on Holly Grove.',ARRAY['address'],'a road named like a district, right after a numbered house'),
   (171,'brand.address','2, Holly Grove, Leeds','We are on Holly Grove.',ARRAY['address'],'a road named like a district, after a lone house number'),
   (172,'private.address','3 Mill House, Leeds','We meet at Mill House.',ARRAY['address'],'a numbered building, written without its number'),
+  (173,'legal.registered_address','12 Mill House, Station Road, Canary Wharf, London, E14 5AB','We meet clients in Canary Wharf.','{}','a district after a numbered building and its road'),
   -- Addresses: suites, ranges, missing separators, street words and HTML.
   (45,'legal.registered_street','123 Main St., Suite 400','Come to 123 Main Street.',ARRAY['address'],'a street stored with its suite'),
   (46,'legal.registered_street','123 Main St #400','Come to 123 Main Street.',ARRAY['address'],'a street stored with "#400"'),
@@ -406,7 +407,8 @@ INSERT INTO lic VALUES
   (25,'+39 06 1234 5678',NULL,'private.phone','612 345 678','Call 612 345 678.',ARRAY['phone'],'an Italian number less its 0, which Italy keeps'),
   (26,'+39 06 1234 5678',NULL,NULL,NULL,'Chiama lo 06 1234 5678.','{}','an Italian number confirmed internationally, written domestically'),
   (27,'139 1234 5678',NULL,'private.phone','(391) 234-5678','Call (391) 234-5678.',ARRAY['phone'],'a number equal to a domestic mobile''s digits after its first'),
-  (28,'+34 612 345 678',NULL,'private.phone','06 1234 5678','Chiama lo 06 1234 5678.',ARRAY['phone'],'a number equal to a no-trunk country''s number with a 0 in front');
+  (28,'+34 612 345 678',NULL,'private.phone','06 1234 5678','Chiama lo 06 1234 5678.',ARRAY['phone'],'a number equal to a no-trunk country''s number with a 0 in front'),
+  (29,NULL,'https://calendly.com/acme%2520team',NULL,NULL,'Book at https://calendly.com/acme%2520team','{}','a confirmed page holding an escaped escape');
 DO $lic$
 DECLARE
   r record;

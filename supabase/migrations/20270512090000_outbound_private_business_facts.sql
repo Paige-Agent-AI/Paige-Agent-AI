@@ -320,7 +320,7 @@ declare
     '46','49','51','53','54','58','60','61','62','63','64','66','81','82','84','86','90','91','92',
     '93','94','95','98','212','213','233','234','254','255','256','260','263','353','355','358',
     '359','380','381','382','385','386','387','389','880','886','961','962','963','964','966','971',
-    '972','977'];
+    '972','977','249','251','264','373','374','421','855','976','994','995'];
   c_road_words constant text :=
     '(st|ave|rd|blvd|dr|ln|ct|pl|sq|ter|hwy|pkwy|cres|cl|cir|trl|gdns|gdn|gr|aly|str|way|row|walk|'
     || 'mews|loop|parade)';
@@ -430,7 +430,8 @@ begin
   from public.business_identity_readiness(p_tenant) as r;
   v_licensed_phone := public.outbound_fact_decode(v_licensed_phone);
   v_licensed_phone_alnum := regexp_replace(lower(v_licensed_phone), '[^[:alnum:]]', '', 'g');
-  v_licensed_site := lower(public.outbound_fact_decode(v_licensed_site));
+  -- Decoded once, below, like every stored copy, so its keys are what a copy of it would give.
+  v_licensed_site := lower(v_licensed_site);
 
   -- ── Address ──────────────────────────────────────────────────────────────────────────────
   v_text_street := public.outbound_fact_street_text(v_scan);
@@ -534,11 +535,11 @@ begin
         v_cands := v_cands || v_norm;
       end if;
       -- A line joined to the house number before it is also looked for on its own when it names a
-      -- building or a road ("Rose Cottage", "Mill Lane"), and a numbered building without its
-      -- number ("2 Rose Cottage" as "Rose Cottage").
+      -- road ("Mill Lane"), and a numbered building without its number ("2 Rose Cottage" as "Rose
+      -- Cottage", whether the number was on its own line or not).
       if v_rest[v_i] is not null then
         v_cand := btrim(public.outbound_fact_street_text(v_rest[v_i]));
-        if v_cand ~ ('[[:alnum:]] (' || c_building_words || '|' || c_road_words || ')\M')
+        if v_cand ~ ('[[:alnum:]] ' || c_road_words || '\M')
            and not (v_cand = any(v_towns)) then
           v_cands := v_cands || v_cand;
         end if;

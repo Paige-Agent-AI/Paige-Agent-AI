@@ -73,8 +73,15 @@ describe("Solo-only beta acquisition contract", () => {
       "hired Paige", "Ready to hire me", "I sent this month's invoices",
       "Every client gets the follow-up", "Paige runs your operation",
     ]) expect(publicHome).not.toContain(unsupported);
-    expect(publicHome).toContain("Solo founders");
-    expect(publicHome).toContain("ready for your review");
+    // The honest line replaced the old hedge (Lane D, 2026-09-28): Paige's work is the
+    // deliverable, the owner's say is the control, and anything not live is labelled in build.
+    expect(publicHome).toContain("Nothing goes out without your say.");
+    expect(publicHome).toContain("Reading your inbox directly is in build.");
+    expect(publicHome).not.toContain("ready for your review");
+    expect(publicHome).not.toMatch(/\bbeta\b/i);
+    for (const invented of ["Solo business coach", "Solo executive coach", "Solo consultant", "Solo advisor", "Solo strategist", "Solo creator"]) {
+      expect(publicHome).not.toContain(invented);
+    }
   });
 
   it("accepts only a server-returned live Solo entitlement", () => {

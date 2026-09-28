@@ -33,7 +33,20 @@
 -- for that same workspace. Not "some enter with no exit after it": enters were left un-exited by the
 -- sign-in pointer reset and by pre-#1547 switches, and an old one must not re-open by hand-pointing
 -- (independent review of #1556). On a tied timestamp the exit counts as later. The receipts
--- themselves are server-written only (the audit-log policy at the end of this file).
+-- themselves are server-written only (the audit-log policy at the end of this file). Only rows written
+-- after that lock count (operator_rows_server_only, just below): before it, a caller could write
+-- an operator.* row of their own, stamped at any time (Codex review of ecb844c7).
+-- Which audit rows were written while operator.* rows could only come from the server. Added with no
+-- default, so every row already in the log reads NULL, including any operator.* row a caller wrote
+-- for themselves before the INSERT policy at the end of this file refused it; the default set after
+-- it marks every later row. Callers cannot UPDATE the log (no policy admits it), so an old row
+-- cannot be relabelled. Only rows marked true may authorise an act-as. The operators' act-as
+-- sessions open when this migration runs are therefore closed for reads: they re-enter from Fleet.
+ALTER TABLE public.paige_audit_log ADD COLUMN IF NOT EXISTS operator_rows_server_only boolean;
+ALTER TABLE public.paige_audit_log ALTER COLUMN operator_rows_server_only SET DEFAULT true;
+COMMENT ON COLUMN public.paige_audit_log.operator_rows_server_only IS
+  'True for rows written after 20270513000000 locked operator.* rows to the server; NULL for earlier rows. operator_open_act_as_tenant() trusts only true rows.';
+
 CREATE OR REPLACE FUNCTION public.operator_open_act_as_tenant()
 RETURNS uuid
 LANGUAGE sql
@@ -50,6 +63,7 @@ AS $function$
       from public.paige_audit_log a
       where a.actor_user_id = auth.uid()
         and a.action in ('operator.tenant.enter', 'operator.tenant.exit')
+        and a.operator_rows_server_only
       order by a.created_at desc, (a.action = 'operator.tenant.exit') desc
       limit 1
     ) is true

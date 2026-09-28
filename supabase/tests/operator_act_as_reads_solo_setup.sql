@@ -4,7 +4,7 @@
 -- capability `tenant.act_as` and the operator's own act-as pointer; every Setup write stays
 -- member-only. Synthetic fixtures; always rolled back.
 BEGIN;
-SELECT plan(27);
+SELECT plan(29);
 
 INSERT INTO auth.users (id, aud, role, email) VALUES
   ('0a5b0000-0000-4000-8000-000000000001','authenticated','authenticated','setup-read-super@tests.invalid'),
@@ -155,6 +155,20 @@ SELECT is(public.current_user_tenant_id(), '0a5b0000-0000-4000-8000-00000000a002
   'the super_admin points their own scope at the workspace of an old, never-exited enter');
 SELECT is(public.get_solo_setup_context(), NULL::jsonb,
   'an old un-exited enter behind a later exit is not an open act-as, so it reads nothing');
+
+-- A receipt from before the lock above is not a receipt: until this migration ran, a caller could
+-- write an operator.* row of their own, stamped at any time, even in the future (Codex review of
+-- ecb844c7). Such a row carries operator_rows_server_only NULL, and the helper does not look at it.
+RESET ROLE;
+INSERT INTO public.paige_audit_log (actor_user_id, actor_role, action, target_type, target_id, tenant_id, created_at, operator_rows_server_only)
+VALUES ('0a5b0000-0000-4000-8000-000000000001', 'platform_operator', 'operator.tenant.enter', 'tenant',
+        '0a5b0000-0000-4000-8000-00000000a002', '0a5b0000-0000-4000-8000-00000000a002', now() + interval '1 day', NULL);
+SET LOCAL ROLE authenticated;
+SELECT pg_temp.as_caller('0a5b0000-0000-4000-8000-000000000001');
+SELECT is(public.current_user_tenant_id(), '0a5b0000-0000-4000-8000-00000000a002'::uuid,
+  'the super_admin still points at the workspace a pre-lock enter row names');
+SELECT is(public.get_solo_setup_context(), NULL::jsonb,
+  'an enter row written before the lock, even stamped in the future, reads nothing');
 
 -- A caller who is neither a member nor an operator is refused, even with a global admin role.
 SELECT pg_temp.as_caller('0a5b0000-0000-4000-8000-000000000004');

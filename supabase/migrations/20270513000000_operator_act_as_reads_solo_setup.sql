@@ -1,0 +1,248 @@
+-- An operator acting as a Solo workspace can READ its Setup context. Writes are unchanged.
+--
+-- The defect (owner live drive, 2026-09-28): a platform operator entered a Solo workspace through
+-- the audited act-as, the shell rendered, and Business Game Plan stayed an empty skeleton forever.
+-- `get_solo_setup_context()` opens with `solo_setup_can_read()`, which admits only the workspace
+-- owner or an active member. An operator is neither — act-as adds no membership, by design — so the
+-- read returned NULL for every operator in every workspace, and the page never left its skeleton.
+-- The same predicate, through `solo_setup_assert_canonical_tenant()`, refused
+-- `get_solo_business_context()` with 42501.
+--
+-- The rule this applies is the shell scope document's, already ruled: inside an act-as the operator
+-- sees that tenant's content READ-ONLY, audited on entry and exit. The authority is G1's capability
+-- `tenant.act_as` (held in force by super_admin and platform_admin), read through `operator_may()`,
+-- so no role is named here and a capability revoked in the table closes this read with it.
+--
+-- WHAT DOES NOT CHANGE:
+--   * `solo_setup_can_read()` itself. It also gates `save_solo_setup_context` and, through
+--     `solo_setup_assert_canonical_tenant()`, `solo_setup_lock_expected_tenant`,
+--     `check_solo_setup_managed_email` and `search_solo_setup_naics`. Widening it in place would
+--     open those; writing inside an act-as is G3's `tenant.act_as.write`, not in force for
+--     platform_admin and not decided here.
+--   * `solo_setup_access_scope()`: an operator who is not a member still reads 'read_only', so the
+--     client's edit controls stay off.
+--   * The workspace is the caller's own act-as pointer AND that pointer is backed by an open act-as:
+--     the operator's most recent enter-or-exit receipt is an enter for that workspace
+--     (operator_open_act_as_tenant(), below). The pointer alone is not enough — `profiles` lets an operator update their own row, and
+--     `guard_active_tenant_membership` admits a platform admin's non-member pointer, so a pointer
+--     can be set with no receipt at all (found by the independent review of this change). The
+--     owner's standing principle is gate by audit; a read that skipped the audit would break it.
+
+-- The workspace the caller is in by an audited act-as, or NULL. One home for "is this act-as real"
+-- (§18): the operator's pointer, where their MOST RECENT operator.tenant.enter / .exit is an enter
+-- for that same workspace. Not "some enter with no exit after it": enters were left un-exited by the
+-- sign-in pointer reset and by pre-#1547 switches, and an old one must not re-open by hand-pointing
+-- (independent review of #1556). On a tied timestamp the exit counts as later. The receipts
+-- themselves are server-written only (the audit-log policy at the end of this file). Only rows written
+-- after that lock count (operator_rows_server_only, just below): before it, a caller could write
+-- an operator.* row of their own, stamped at any time (Codex review of ecb844c7).
+-- Which audit rows were written while operator.* rows could only come from the server. Added with no
+-- default, so every row already in the log reads NULL, including any operator.* row a caller wrote
+-- for themselves before the INSERT policy at the end of this file refused it; the default set after
+-- it marks every later row. Callers cannot UPDATE the log (no policy admits it), so an old row
+-- cannot be relabelled. Only rows marked true may authorise an act-as. The operators' act-as
+-- sessions open when this migration runs are therefore closed for reads: they re-enter from Fleet.
+ALTER TABLE public.paige_audit_log ADD COLUMN IF NOT EXISTS operator_rows_server_only boolean;
+ALTER TABLE public.paige_audit_log ALTER COLUMN operator_rows_server_only SET DEFAULT true;
+COMMENT ON COLUMN public.paige_audit_log.operator_rows_server_only IS
+  'True for rows written after 20270513000000 locked operator.* rows to the server; NULL for earlier rows. operator_open_act_as_tenant() trusts only true rows.';
+
+CREATE OR REPLACE FUNCTION public.operator_open_act_as_tenant()
+RETURNS uuid
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+  select p.active_tenant_id
+  from public.profiles p
+  where p.user_id = auth.uid()
+    and p.active_tenant_id is not null
+    and (
+      select a.action = 'operator.tenant.enter' and a.target_id = p.active_tenant_id
+      from public.paige_audit_log a
+      where a.actor_user_id = auth.uid()
+        and a.action in ('operator.tenant.enter', 'operator.tenant.exit')
+        and a.operator_rows_server_only
+      order by a.created_at desc, (a.action = 'operator.tenant.exit') desc
+      limit 1
+    ) is true
+$function$;
+
+REVOKE ALL ON FUNCTION public.operator_open_act_as_tenant() FROM PUBLIC, anon, authenticated;
+
+CREATE OR REPLACE FUNCTION public.solo_setup_operator_can_read()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+  select auth.uid() is not null
+    and public.current_user_tenant_id() is not null
+    and public.operator_may('tenant.act_as')
+    -- COALESCE, not a bare comparison: with no open act-as the helper is NULL, the comparison is
+    -- NULL, and `IF NOT (false OR NULL)` in the readers does not fire — the read would fail OPEN.
+    and coalesce(public.operator_open_act_as_tenant() = public.current_user_tenant_id(), false)
+$function$;
+
+COMMENT ON FUNCTION public.solo_setup_operator_can_read() IS
+  'Whether the caller is an operator holding tenant.act_as whose Setup scope is their own act-as '
+  'pointer, backed by an operator.tenant.enter receipt with no exit since. Read paths only: it admits get_solo_setup_context and get_solo_business_context, '
+  'never a Setup write.';
+
+REVOKE ALL ON FUNCTION public.solo_setup_operator_can_read() FROM PUBLIC, anon, authenticated;
+
+-- The read-side twin of solo_setup_assert_canonical_tenant(): the same two refusals, admitting an
+-- operator's act-as as well as a member. The original stays as it is for the write paths.
+CREATE OR REPLACE FUNCTION public.solo_setup_assert_canonical_tenant_for_read()
+RETURNS uuid
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+declare v_tid uuid := public.current_user_tenant_id();
+begin
+  if auth.uid() is null or v_tid is null
+     or not (public.solo_setup_can_read() or public.solo_setup_operator_can_read()) then
+    raise exception 'Solo Setup requires an authenticated workspace member' using errcode='42501';
+  end if;
+  if not exists(select 1 from public.tenants t where t.id=v_tid and t.account_type::text='standalone' and t.parent_tenant_id is null) then
+    raise exception 'This Setup contract is available only to a top-level Solo workspace' using errcode='42501';
+  end if;
+  return v_tid;
+end $function$;
+
+REVOKE ALL ON FUNCTION public.solo_setup_assert_canonical_tenant_for_read() FROM PUBLIC, anon, authenticated;
+
+-- Body unchanged from production except the first statement's gate.
+CREATE OR REPLACE FUNCTION public.get_solo_setup_context()
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare
+  v_identity record;
+  v_owners jsonb;
+  v_representatives jsonb := '[]'::jsonb;
+  v_representative_provenance jsonb;
+  v_legal_provenance jsonb := '{}'::jsonb;
+  v_private_brief jsonb := '{}'::jsonb;
+  v_private_provenance jsonb := '{}'::jsonb;
+begin
+  if not (public.solo_setup_can_read() or public.solo_setup_operator_can_read()) then return null; end if;
+  select * into v_identity from public.get_solo_setup_identity() limit 1;
+  if not found then return null; end if;
+  select coalesce(lp.setup_provenance,'{}'::jsonb) into v_legal_provenance
+  from public.tenant_legal_profile lp where lp.tenant_id=v_identity.tenant_id;
+  select coalesce(pc.private_brief,'{}'::jsonb),coalesce(pc.setup_provenance,'{}'::jsonb)
+  into v_private_brief,v_private_provenance
+  from public.tenant_setup_private_context pc where pc.tenant_id=v_identity.tenant_id;
+  if v_legal_provenance ? 'authorizedRepresentativeUserId' then
+    v_legal_provenance := (v_legal_provenance - 'authorizedRepresentativeUserId')
+      || jsonb_build_object('authorizedRepresentative',v_legal_provenance -> 'authorizedRepresentativeUserId');
+  end if;
+  select coalesce(jsonb_agg(r.user_id::text order by r.user_id::text),'[]'::jsonb)
+  into v_representatives
+  from public.tenant_business_representatives r where r.tenant_id=v_identity.tenant_id;
+  select jsonb_build_object('source',r.source,'confidence',r.confidence,'confirmedAt',r.confirmed_at)
+  into v_representative_provenance
+  from public.tenant_business_representatives r
+  where r.tenant_id=v_identity.tenant_id order by r.created_at limit 1;
+  select coalesce(jsonb_agg(jsonb_build_object(
+    'id',bo.id,
+    'ownerKind',bo.owner_kind,
+    'legalName',bo.legal_name,
+    'displayName',coalesce(bo.display_name,''),
+    'ownershipInterest',coalesce(bo.ownership_interest::text,''),
+    'effectiveDate',coalesce(bo.effective_date::text,''),
+    'status',bo.ownership_status,
+    'representativeUserId',coalesce(bo.representative_user_id::text,''),
+    'provenance',bo.setup_provenance
+  ) order by bo.created_at,bo.id),'[]'::jsonb)
+  into v_owners
+  from public.tenant_business_owners bo
+  where bo.tenant_id = v_identity.tenant_id;
+  return jsonb_build_object(
+    'tenantId',v_identity.tenant_id,
+    'tenantName',v_identity.tenant_name,
+    'brief',jsonb_set(
+      coalesce(v_private_brief,'{}'::jsonb)
+        || coalesce(v_identity.business_brief,'{}'::jsonb) || jsonb_build_object(
+        'businessRegistrationNumberLast4',coalesce(v_identity.business_registration_number_last_4,''),
+        'representativeUserIds',v_representatives
+      ),
+      '{provenance}',
+      coalesce(v_private_provenance,'{}'::jsonb)
+        || coalesce(v_identity.business_brief -> 'provenance','{}'::jsonb)
+        || coalesce(v_legal_provenance,'{}'::jsonb)
+        || case when v_representative_provenance is null then '{}'::jsonb
+             else jsonb_build_object('representatives',v_representative_provenance) end,
+      true
+    ),
+    'pendingProposal',v_identity.pending_proposal,
+    'primaryBusinessEmail',v_identity.primary_business_email,
+    'accessScope',public.solo_setup_access_scope(),
+    'businessOwners',v_owners
+  );
+end;
+$function$;
+
+-- Body unchanged from production except the assert it opens with.
+CREATE OR REPLACE FUNCTION public.get_solo_business_context()
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare
+  v_tid uuid := public.solo_setup_assert_canonical_tenant_for_read();
+  v_base jsonb;
+  v_managed_local text;
+  v_managed_domain text;
+begin
+  v_base := public.get_solo_setup_context();
+  select i.local_part into v_managed_local from public.tenant_email_identities i where i.tenant_id=v_tid;
+  select coalesce(nullif(shared_domain,''),'mail.paigeagent.ai') into v_managed_domain from public.platform_email_settings limit 1;
+  v_managed_domain := coalesce(v_managed_domain,'mail.paigeagent.ai');
+  return v_base || jsonb_build_object(
+    'contextRevision',coalesce((select revision from public.tenant_setup_business_context_meta where tenant_id=v_tid),0),
+    'primaryEmailProvenance',coalesce(nullif((select primary_email_provenance from public.tenant_setup_business_context_meta where tenant_id=v_tid
+      and primary_email_snapshot is not distinct from nullif(lower(btrim(coalesce(v_base->>'primaryBusinessEmail',''))),'')),'{}'::jsonb),
+      case when nullif(v_base->>'primaryBusinessEmail','') is null then '{"source":"needs_confirmation","confidence":"unknown"}'::jsonb
+      else '{"source":"connection_sourced","confidence":"observed"}'::jsonb end),
+    'knowledgeSources',coalesce((select jsonb_agg(jsonb_build_object(
+      'id',k.id,'sourceType',k.source_type,'title',k.title,'category',k.category,
+      'sourceUrl',coalesce(k.source_url,''),'reference',coalesce(k.reference,''),'notes',coalesce(k.notes,''),
+      'reviewStatus',k.review_status,'provenance',k.setup_provenance,'updatedAt',k.updated_at
+    ) order by k.updated_at desc) from public.tenant_setup_knowledge_sources k where k.tenant_id=v_tid),'[]'::jsonb),
+    'paigeProfile',coalesce((select p.profile || jsonb_build_object('provenance',p.setup_provenance) from public.tenant_setup_paige_profiles p where p.tenant_id=v_tid),'{}'::jsonb),
+    'voiceExamples',coalesce((select jsonb_agg(jsonb_build_object(
+      'id',e.id,'channel',e.channel,'kind',e.example_kind,'example',e.example_text,'note',coalesce(e.note,''),
+      'provenance',e.setup_provenance,'updatedAt',e.updated_at
+    ) order by e.updated_at desc) from public.tenant_setup_voice_examples e where e.tenant_id=v_tid),'[]'::jsonb),
+    'managedEmail',jsonb_build_object(
+      'localPart',coalesce(v_managed_local,''),
+      'domain',v_managed_domain,
+      'address',case when v_managed_local is null then '' else v_managed_local||'@'||v_managed_domain end,
+      'registrationAvailable',public.solo_setup_managed_email_registration_ready()
+    )
+  );
+end $function$;
+
+-- An operator.* audit row is a server fact, never a caller's claim. The receipt check above trusts
+-- operator.tenant.enter / operator.tenant.exit rows, but the audit log's own-row INSERT policy let
+-- any authenticated caller write a row with their own actor id — including a forged enter receipt
+-- that, with a self-set pointer, read a workspace without the audited enter (Codex review of
+-- 41fff866). Callers still record their own ordinary actions; operator.* rows now come only from the
+-- SECURITY DEFINER functions that perform the act (operator_enter_tenant, operator_exit_tenant and
+-- their successors), which write as the table owner and are unaffected by this policy.
+-- Producer inventory (§37): every authenticated-JWT insert into paige_audit_log in src/ and
+-- supabase/functions was read; the only one (paige-ai-chat's tool-write trail) writes tool names,
+-- never an operator.* action. Service-role inserts bypass RLS and are unaffected.
+DROP POLICY IF EXISTS "Actors record their own actions" ON public.paige_audit_log;
+CREATE POLICY "Actors record their own actions" ON public.paige_audit_log
+  FOR INSERT TO authenticated
+  WITH CHECK (actor_user_id = auth.uid() AND action NOT LIKE 'operator.%');

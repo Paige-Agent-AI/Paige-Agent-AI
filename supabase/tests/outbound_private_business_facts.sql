@@ -11,7 +11,7 @@
 -- spine's business_identity_readiness() resolves it, passes and nothing else does; that it reads
 -- only the tenant it is given and refuses an unknown one; and that nobody but the server may ask it.
 BEGIN;
-SELECT plan(202);
+SELECT plan(219);
 
 -- ── Grants ──────────────────────────────────────────────────────────────────────────────────
 SELECT ok(NOT has_function_privilege(r.rolname, f.fn, 'EXECUTE'),
@@ -204,6 +204,17 @@ INSERT INTO src VALUES
   -- A short number joined in the text to the digits after it.
   (148,'brand.phone','13 20 00','Call 13 20 00 - 9am to 5pm.',ARRAY['phone'],'a six-digit number followed by opening hours'),
   (149,'brand.phone','13 20 00','Ring 13 20 00 / 24 hours.',ARRAY['phone'],'a six-digit number followed by a slash and a number'),
+  -- A unit before its street, a numbered house before its road, and a postcode line (§39 round 5).
+  (150,'legal.registered_address','3/22 Acacia Avenue, Richmond VIC 3121','Come to 22 Acacia Avenue.',ARRAY['address'],'a street after a unit number and a slash'),
+  (151,'legal.registered_street','3/22 Acacia Avenue','Come to 22 Acacia Avenue.',ARRAY['address'],'a structured street after a unit number and a slash'),
+  (152,'private.address','2/15 Smith St, Fitzroy, VIC, 3065','See you at 15 Smith St.',ARRAY['address'],'a street after a unit number, with a postcode line'),
+  (153,'brand.address','12, 14 Mill Lane, Leeds','Visit 14 Mill Lane.',ARRAY['address'],'a unit number on its own before a numbered street'),
+  (154,'legal.registered_address','3, 5-7 Mill Lane, Leeds','Visit 5-7 Mill Lane.',ARRAY['address'],'a unit number on its own before a street range'),
+  (155,'private.address','2, Rose Cottage, Mill Lane, Leeds','Visit Rose Cottage, Mill Lane.',ARRAY['address'],'a named house and its road, without its number'),
+  (156,'legal.registered_address','12 Rose Cottage, Mill Lane, Leeds','Rose Cottage, Mill Lane is where we are.',ARRAY['address'],'the road after a numbered house'),
+  (157,'private.address','Rose Cottage, Mill Lane, Springfield, 62704','We are on Mill Lane.',ARRAY['address'],'a road, with a ZIP line counted among the last two'),
+  (158,'legal.registered_address','Bahnhofstrasse 10, 8001, Zurich','Meet at the Kongresshaus, 8001 Zurich.','{}','a four-digit postcode and its town'),
+  (159,'legal.registered_address','12 Rose Cottage, Little Snoring, Norfolk','We serve Little Snoring.','{}','a village after a numbered house'),
   -- Addresses: suites, ranges, missing separators, street words and HTML.
   (45,'legal.registered_street','123 Main St., Suite 400','Come to 123 Main Street.',ARRAY['address'],'a street stored with its suite'),
   (46,'legal.registered_street','123 Main St #400','Come to 123 Main Street.',ARRAY['address'],'a street stored with "#400"'),
@@ -363,7 +374,14 @@ INSERT INTO lic VALUES
   ( 9,NULL,'https://coaching.janedoe.example','brand.website','janedoe.example','Book at coaching.janedoe.example/book.','{}','the confirmed subdomain, with a parent domain stored beside it'),
   (10,NULL,'https://linktr.ee/acme?from=secret-home.example','brand.website','secret-home.example','See secret-home.example.',ARRAY['website'],'a host named inside the confirmed link''s query string'),
   (11,NULL,'https://linktr.ee/acme?from=secret-home.example','brand.website','secret-home.example','All my links: linktr.ee/acme','{}','the confirmed page on a shared platform'),
-  (12,NULL,'https://licensed.example',NULL,NULL,'See licensed.example licensed.example/book','{}','the confirmed website written twice in a row');
+  (12,NULL,'https://licensed.example',NULL,NULL,'See licensed.example licensed.example/book','{}','the confirmed website written twice in a row'),
+  (13,NULL,'https://acme-coaching.example',NULL,NULL,'Shop at shop.acme-coaching.example','{}','a subdomain of the confirmed website'),
+  (14,NULL,'https://acme-coaching.example','brand.website','members.acme-coaching.example','Log in at members.acme-coaching.example',ARRAY['website'],'a stored subdomain of the confirmed website'),
+  (15,NULL,'https://acme.paigeagent.ai','brand.website','https://paigeagent.ai/book/jane-private','Book: acme.paigeagent.ai/book/jane-private',ARRAY['website'],'a stored page, written under the confirmed host'),
+  (16,'+1 212 555 0147',NULL,'private.phone','+852 2555 0147','Call 2555 0147.',ARRAY['phone'],'a number equal to the confirmed one''s last eight digits'),
+  (17,'+852 2555 0147',NULL,NULL,NULL,'Call 2555 0147.','{}','a number confirmed with a three-digit country code, written domestically'),
+  (18,'+7 495 123 4567',NULL,NULL,NULL,'Call (495) 123-4567.','{}','a number confirmed with a one-digit country code, written domestically'),
+  (19,NULL,'https://acme-coaching.example','brand.website','acme-coaching.example','Visit www.acme-coaching.example/book','{}','the confirmed website with "www.", stored again in the legacy brand');
 DO $lic$
 DECLARE
   r record;

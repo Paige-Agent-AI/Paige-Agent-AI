@@ -5975,3 +5975,15 @@ repository's "Code scanning AI findings" check; re-enabling or deleting `premerg
 
 **Cost accepted:** `database-contract` on every PR — ~8 min in parallel with `verify`, plus a
 read-only production schema read per PR. Actions minutes are not billed on this public repository.
+
+## 2026-09-28 — Public site: Twilight palette, COO positioning, the Command Mark types the page (PR #1561)
+
+- **Owner rulings (Antonio Cook, 2026-09-28):** the public site is dark blue, not the dashboard's
+  Obsidian/Mineral pair; **Twilight** chosen over Midnight and Indigo; serif accents kept. Paige is
+  positioned as an AI chief operating officer — she does far more than write (integrations, MCP,
+  automations, analytics, strategy, Vibe Studio), so the trust line is "you decide what she does on
+  her own" rather than "nothing she writes goes out". The mark "gives the command" and the page
+  writes it: it types the hero headline and the closing run of commands.
+- **Honesty line:** `src/marketing/capabilities.ts` is the single public source for live vs in build.
+- **Not decided yet:** a light counterpart for the public site; a clickable row of hero commands.
+

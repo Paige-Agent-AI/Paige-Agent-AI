@@ -7,22 +7,25 @@ import { CAPABILITY_GROUPS, laneIsLive } from "./capabilities";
  * Nothing is hidden and nothing is claimed early. Colour is never the only signal.
  */
 export function CapabilityScore() {
-  let index = 0;
   return (
-    <div className="pa-score" data-reveal="score">
+    <div className="pa-score">
       <div className="pa-score__legend" aria-hidden="true">
         <span className="pa-state pa-state--live">Works today</span>
         <span className="pa-state pa-state--build">In build</span>
       </div>
       {CAPABILITY_GROUPS.map((group) => (
-        <section key={group.id} className="pa-movement" aria-labelledby={`movement-${group.id}`}>
+        <section
+          key={group.id}
+          className="pa-movement"
+          aria-labelledby={`movement-${group.id}`}
+          data-reveal="score"
+        >
           <h3 id={`movement-${group.id}`} className="pa-movement__name">
             {group.name}
           </h3>
           <ul className="pa-score__lanes">
-            {group.lanes.map((lane) => {
+            {group.lanes.map((lane, i) => {
               const lit = laneIsLive(lane);
-              const i = index++;
               return (
                 <li key={lane.id} className="pa-lane" data-lit={lit} style={{ ["--i" as string]: i }}>
                   <div className="pa-lane__head">

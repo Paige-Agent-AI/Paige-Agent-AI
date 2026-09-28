@@ -47,14 +47,20 @@ Honesty line as of 2026-09-28 (grounded in master reference §4/§5 and the bind
 surface is yet customer-release-proven, so "live" below means deployed and usable by a Solo
 customer today):
 
-- **Live today:** Paige drafts email in chat in the owner's brand voice and sends only after the
-  owner approves; drafts documents in chat; drafts social copy (copy-ready, not posted); creates and
-  updates contacts, notes and tasks; runs booking pages and books meetings with approval; researches
-  public web pages.
-- **In build:** reading the owner's inbox directly; the secure browser session on vendor portals
-  under the owner's own login; posting and scheduling social; Marketplace installs; payments and
-  invoicing through the owner's own processor; voice conversation; the visible specialist team she
-  delegates to.
+- **Live today:** Paige drafts email and follow-ups in the owner's brand voice and sends only
+  after the owner approves; drafts documents and social copy (copy-ready, not posted); creates and
+  updates contacts, notes and tasks; runs booking pages and books meetings; builds landing pages,
+  funnels and lead forms in Vibe Studio and publishes them to a live link on the owner's say; gives
+  growth advice from the owner's setup, pipeline and knowledge; keeps the Game Plan and week-to-year
+  plans with milestones; researches the web with cited sources; reads the sales funnel from the
+  owner's pipeline; connects Google Calendar, sending email and MCP servers; builds and runs n8n
+  workflows with approval; turns form submissions into contacts, deals and alerts; Marketplace
+  browsing. The public-site source of truth is `src/marketing/capabilities.ts`.
+- **In build:** reading the owner's inbox directly; PDF export and signatures; posting and
+  scheduling social; Studio image generation and on-page editing; marketing/campaign analytics and
+  profit/retention tracking; actions inside MCP-connected tools; the secure browser session on
+  vendor portals under the owner's own login; payments and invoicing through the owner's own
+  processor; Marketplace installs; the visible specialist team she delegates to.
 - **Not offered and never on the public site:** funding or credit (CLAUDE.md §2 — platform
   defaults never carry finance wording).
 
@@ -70,10 +76,15 @@ customer today):
 - Headline positioning: the AI chief operating officer line leads. "RUN EVERYTHING" is the mark's
   motion payoff and the hero's second beat. "The command layer for modern business" is a category
   line for footer, about and investor contexts — never the first sentence.
-- Champagne is spent on the act, never on surfaces (§11). Obsidian (dark) and Mineral (light) are
-  the two material worlds; light is genuinely light (§23).
+- Champagne is spent on the act, never on surfaces (§11). The public site is one committed world,
+  **Twilight** — deep navy lit with violet (owner ruling 2026-09-28, chosen over Midnight and
+  Indigo). The app's Obsidian/Mineral pair is the dashboard's, not the site's.
+- The Command Mark is the site's cursor: it types the hero headline and the closing run of
+  commands, and executes when a line is written (`src/marketing/Command.tsx`).
 - Voice (§3): direct, confident, mogul-founder. Never "AI-powered", "streamline", "seamless",
-  "empower". Review is stated once, as a trust promise — never as the deliverable.
+  "empower". Control is stated once, as a trust promise — the owner decides in the Trust Compass
+  what she does on her own; anything sent to a customer, published, or changed in a connected tool
+  waits for the owner's yes. Paige does far more than write: never frame her as a drafting tool.
 - Paige has a non-human presence: a mark, a motion signature, a way she appears when working. No
   face, no avatar, no human stand-in.
 - Trademark hygiene (§50): no pop-culture AI names anywhere.
@@ -100,5 +111,5 @@ customer today):
 
 ## Accessibility & Inclusion
 
-WCAG AA contrast in both themes; full keyboard paths; every visual works with motion off and
+WCAG AA contrast on every token (one theme); full keyboard paths; every visual works with motion off and
 honors `prefers-reduced-motion`; mobile-first.

@@ -1,6 +1,6 @@
 /* Paige Agent AI — public site design system.
-   Scoped to `.pa-site` so nothing here leaks into the app shell. One committed world: Midnight,
-   a deep dark blue lit by champagne. Champagne is spent only on the act — the primary CTA, Send,
+   Scoped to `.pa-site` so nothing here leaks into the app shell. One committed world: Twilight,
+   a deep navy lit with violet and champagne. Champagne is spent only on the act — the primary CTA, Send,
    the beat (§11). */
 
 @font-face {
@@ -31,30 +31,30 @@
 }
 
 .pa-site {
-  /* Midnight — the public site's own world: a deep, committed dark blue with champagne light.
-     Deliberately one theme (owner ruling 2026-09-28: the public site is dark blue, not the
-     dashboard's Obsidian/Mineral pair). Every token meets AA on its ground. */
-  --pa-ground: #0a1330;
-  --pa-ground-deep: #070d24;
-  --pa-plane: #111c3d;
-  --pa-plane-2: #18254d;
-  --pa-line: rgba(186, 200, 245, 0.13);
-  --pa-line-strong: rgba(186, 200, 245, 0.28);
-  --pa-ink: #eef1fa;
-  --pa-ink-2: #bac3dd;
-  --pa-ink-3: #8f9bbf;
-  --pa-ghost: rgba(238, 241, 250, 0.24);
+  /* Twilight — the public site's own world: a deep navy lit with violet, champagne on the act.
+     Owner ruling 2026-09-28: the public site is dark blue, not the dashboard's Obsidian/Mineral
+     pair; Twilight chosen over Midnight and Indigo. One theme. Every token meets AA on its ground. */
+  --pa-ground: #0c1034;
+  --pa-ground-deep: #080b27;
+  --pa-plane: #141a47;
+  --pa-plane-2: #1c2358;
+  --pa-line: rgba(196, 196, 255, 0.13);
+  --pa-line-strong: rgba(196, 196, 255, 0.28);
+  --pa-ink: #f0f0fc;
+  --pa-ink-2: #c1c3e6;
+  --pa-ink-3: #9699c5;
+  --pa-ghost: rgba(240, 240, 252, 0.24);
   --pa-champagne: #f0c46e;
   --pa-champagne-hi: #f7d593;
   --pa-on-champagne: #1d1405;
   --pa-champagne-ink: #f2c877;
   --pa-slash: #e9a83a;
   --pa-orb: #f5c266;
-  --pa-graphite: #5c6788;
+  --pa-graphite: #7079a8;
   --pa-focus: #9fb0ff;
   --pa-glow-a: rgba(240, 196, 110, 0.16);
-  --pa-glow-b: rgba(64, 104, 230, 0.34);
-  --pa-glow-c: rgba(120, 92, 235, 0.18);
+  --pa-glow-b: rgba(80, 86, 235, 0.38);
+  --pa-glow-c: rgba(150, 90, 230, 0.2);
   --pa-sheen: inset 0 1px 0 rgba(255, 255, 255, 0.06);
   --pa-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 18px 40px -18px rgba(0, 0, 0, 0.7);
   --pa-selection: rgba(240, 196, 110, 0.3);

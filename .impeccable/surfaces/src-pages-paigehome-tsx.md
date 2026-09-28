@@ -26,7 +26,8 @@ THESIS: The site is a conductor's score. The Command Mark's slash is the downbea
 a measure with a beat the reader can follow, and Paige's work lands on the beat. It refuses the
 category default — dark SaaS hero, floating UI cards, icon-card grid, testimonial wall.
 
-OWN-WORLD: Obsidian (warm near-black) and Mineral (architectural white) as two real themes; staff
+OWN-WORLD: Twilight — one committed world, deep navy lit with violet (owner ruling 2026-09-28,
+superseding the earlier Obsidian/Mineral pair for the public site); staff
 lines — five hairlines — are the grid, the dividers and the capability map; champagne only on the
 act (the Send, the primary CTA, the struck/live note). Schibsted Grotesk throughout, display set
 heavy with tight negative tracking; the PAIGE wordmark at 0.42em. Depth from layered planes, never

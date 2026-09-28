@@ -4390,3 +4390,14 @@ This is an acquisition constraint, not a deletion or migration of existing tenan
 | Workspace | Exactly one top-level `standalone` owner workspace; idempotent retry | Existing memberships remain selectable | No tenant authority |
 
 Production proof: migrations #1202/#1210 culminated in persisted version `20270201000000` (run `34743013452`). The Antonio Cook owner-authorized grant created one personal workspace and one owner membership; retry returned `already_granted` with workspace, platform-subscription, usage-receipt, and audit-receipt counts each still one. Antonio Daniel LLC membership was preserved; Antonio Daniel LLC and Mogul Maker Academy remained active promotional tenants. Authenticated browser sign-in, rendered Billing status, and account switching remain `PROOF OWED`.
+
+### Public site home page, route `/` (PR #1561, 2026-09-28)
+
+Anonymous-tier marketing surface only: no auth, no tenant read, no RPC; the two acts are links into
+the unchanged enrollment seams (`/auth?mode=signup&plan=solo&billing=monthly`, `/auth`, `/pricing`).
+Styles are scoped to `.pa-site` so no tenant or operator surface changes.
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|
+| Public home page (`/`): COO positioning, capability map from `capabilities.ts`, stack calculator, Solo trial and login links | N/A — public page, same for every visitor | N/A — public page | N/A — public page | N/A — public page | N/A — public page | **Shipping in PR #1561**; signed-out render proof in the evidence record | Merged to `main` with this PR; Vercel production proof recorded post-deploy |
+

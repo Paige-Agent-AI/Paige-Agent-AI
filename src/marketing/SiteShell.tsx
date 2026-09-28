@@ -183,7 +183,9 @@ function useReveals(root: RefObject<HTMLDivElement>) {
           io.unobserve(e.target);
         }
       },
-      { rootMargin: "0px 0px -12% 0px", threshold: 0.12 },
+      // Fires when an element's top edge is 12% into the viewport, however tall it is, so a long
+      // section never sits blank waiting for a fraction of itself to show.
+      { rootMargin: "0px 0px -12% 0px", threshold: 0 },
     );
     el.querySelectorAll<HTMLElement>("[data-reveal]:not([data-in])").forEach((n) => io.observe(n));
     return () => io.disconnect();

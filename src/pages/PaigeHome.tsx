@@ -41,11 +41,19 @@ export default function PaigeHome() {
 
       {/* Hero: the thesis, and the one loop that proves it. */}
       <section className="pa-hero" aria-labelledby="hero-title">
+        {/* The stage: a slow champagne light over deep blue, a fine grain, and the staff lines
+            running through it. Purely atmospheric, still under reduced motion. */}
+        <div className="pa-atmos" aria-hidden="true">
+          <span className="pa-atmos__light pa-atmos__light--a" />
+          <span className="pa-atmos__light pa-atmos__light--b" />
+          <span className="pa-atmos__light pa-atmos__light--c" />
+          <span className="pa-atmos__grain" />
+        </div>
         <HeroMeasure
           honest="Today you hand Paige the message in chat. Reading your inbox directly is in build."
           title={
             <h1 id="hero-title" className="pa-display">
-              Paige is your AI chief operating officer.
+              Paige is your AI chief operating <span className="pa-accent">officer.</span>
             </h1>
           }
         >
@@ -69,7 +77,7 @@ export default function PaigeHome() {
       <section className="pa-section pa-capacity" aria-labelledby="capacity-title">
         <div className="pa-wrap pa-capacity__grid">
           <h2 id="capacity-title" className="pa-h2">
-            A chief operating officer doesn’t do everything herself. She runs it.
+            A chief operating officer doesn’t do everything herself. She <span className="pa-accent">runs</span> it.
           </h2>
           <div className="pa-capacity__body">
             <p className="pa-lead">
@@ -107,7 +115,7 @@ export default function PaigeHome() {
       <section className="pa-section pa-seam" aria-labelledby="seam-title">
         <div className="pa-wrap">
           <h2 id="seam-title" className="pa-h2 pa-seam__title">
-            The tools aren’t the problem. The gaps between them are.
+            The tools aren’t the problem. The <span className="pa-accent">gaps</span> between them are.
           </h2>
           <ul className="pa-seam__list">
             {SEAMS.map((s) => (
@@ -146,7 +154,7 @@ export default function PaigeHome() {
         <div className="pa-wrap">
           <div className="pa-map__head">
             <h2 id="map-title" className="pa-h2">
-              What she does today. What’s coming next.
+              What she does today. What’s <span className="pa-accent">coming next.</span>
             </h2>
             <p className="pa-copy">
               Every item marked “Works today” is live for Solo customers now. Everything marked “In build” is being

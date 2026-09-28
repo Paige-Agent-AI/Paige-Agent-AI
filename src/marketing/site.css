@@ -1,7 +1,7 @@
 /* Paige Agent AI — public site design system.
-   Scoped to `.pa-site` so nothing here leaks into the app shell. Two real material worlds:
-   Mineral (light) is the base; Obsidian (dark) follows the app's class-strategy `.dark` on <html>.
-   Champagne is spent only on the act — the primary CTA, Send, the struck/live note (§11). */
+   Scoped to `.pa-site` so nothing here leaks into the app shell. One committed world: Midnight,
+   a deep dark blue lit by champagne. Champagne is spent only on the act — the primary CTA, Send,
+   the beat (§11). */
 
 @font-face {
   font-family: "Schibsted Grotesk Variable";
@@ -21,26 +21,34 @@
 }
 
 .pa-site {
-  /* Mineral — architectural white, graphite ink. */
-  --pa-ground: #f2f2ee;
-  --pa-plane: #ffffff;
-  --pa-plane-2: #e8e7e1;
-  --pa-line: rgba(22, 20, 15, 0.13);
-  --pa-line-strong: rgba(22, 20, 15, 0.28);
-  --pa-ink: #16140f;
-  --pa-ink-2: #45413a;
-  --pa-ink-3: #635e55;
-  --pa-ghost: rgba(22, 20, 15, 0.22);
-  --pa-champagne: #e6ac41;
-  --pa-champagne-hi: #f0bd5c;
+  /* Midnight — the public site's own world: a deep, committed dark blue with champagne light.
+     Deliberately one theme (owner ruling 2026-09-28: the public site is dark blue, not the
+     dashboard's Obsidian/Mineral pair). Every token meets AA on its ground. */
+  --pa-ground: #0a1330;
+  --pa-ground-deep: #070d24;
+  --pa-plane: #111c3d;
+  --pa-plane-2: #18254d;
+  --pa-line: rgba(186, 200, 245, 0.13);
+  --pa-line-strong: rgba(186, 200, 245, 0.28);
+  --pa-ink: #eef1fa;
+  --pa-ink-2: #bac3dd;
+  --pa-ink-3: #8f9bbf;
+  --pa-ghost: rgba(238, 241, 250, 0.24);
+  --pa-champagne: #f0c46e;
+  --pa-champagne-hi: #f7d593;
   --pa-on-champagne: #1d1405;
-  --pa-champagne-ink: #7f5405;
-  --pa-slash: #c9860c;
-  --pa-orb: #e9a83a;
-  --pa-graphite: #8f897d;
-  --pa-focus: #3c47b8;
-  --pa-shadow: 0 1px 2px rgba(22, 20, 15, 0.06), 0 12px 32px -12px rgba(22, 20, 15, 0.18);
-  --pa-selection: rgba(230, 172, 65, 0.32);
+  --pa-champagne-ink: #f2c877;
+  --pa-slash: #e9a83a;
+  --pa-orb: #f5c266;
+  --pa-graphite: #5c6788;
+  --pa-focus: #9fb0ff;
+  --pa-glow-a: rgba(240, 196, 110, 0.16);
+  --pa-glow-b: rgba(64, 104, 230, 0.34);
+  --pa-glow-c: rgba(120, 92, 235, 0.18);
+  --pa-sheen: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --pa-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 18px 40px -18px rgba(0, 0, 0, 0.7);
+  --pa-selection: rgba(240, 196, 110, 0.3);
+  color-scheme: dark;
 
   --pa-font: "Schibsted Grotesk Variable", "Schibsted Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --pa-display: clamp(2.6rem, 1.5rem + 3.9vw, 4.6rem);
@@ -74,30 +82,6 @@
   overflow-x: clip;
   accent-color: var(--pa-champagne);
   caret-color: var(--pa-champagne-ink);
-}
-
-/* Obsidian — deep warm obsidian, differentiated dark materials, champagne light. */
-.dark .pa-site,
-.pa-site[data-theme="dark"] {
-  --pa-ground: #0e0d0b;
-  --pa-plane: #171512;
-  --pa-plane-2: #211e19;
-  --pa-line: rgba(240, 230, 210, 0.12);
-  --pa-line-strong: rgba(240, 230, 210, 0.26);
-  --pa-ink: #f3eee4;
-  --pa-ink-2: #c3bbad;
-  --pa-ink-3: #9a9284;
-  --pa-ghost: rgba(243, 238, 228, 0.24);
-  --pa-champagne: #f0c46e;
-  --pa-champagne-hi: #f7d38f;
-  --pa-on-champagne: #1d1405;
-  --pa-champagne-ink: #f2c877;
-  --pa-slash: #e9a83a;
-  --pa-orb: #f5c266;
-  --pa-graphite: #5d574d;
-  --pa-focus: #9ea8ff;
-  --pa-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 18px 40px -18px rgba(0, 0, 0, 0.7);
-  --pa-selection: rgba(240, 196, 110, 0.3);
 }
 
 /* Base rules sit at zero specificity (:where) so every component class wins without a fight. */
@@ -269,11 +253,11 @@
   position: sticky;
   top: 0;
   z-index: 40;
-  background: var(--pa-ground);
+  background: transparent;
   border-bottom: 1px solid transparent;
-  transition: border-color 200ms var(--pa-ease);
+  transition: border-color 200ms var(--pa-ease), background-color 200ms var(--pa-ease);
 }
-.pa-header[data-scrolled="true"] { border-bottom-color: var(--pa-line); }
+.pa-header[data-scrolled="true"] { border-bottom-color: var(--pa-line); background: var(--pa-ground); }
 .pa-header__bar { display: flex; align-items: center; gap: 1.25rem; min-height: 4.25rem; }
 .pa-brand { display: inline-flex; align-items: center; gap: 0.7rem; text-decoration: none; color: var(--pa-ink); }
 .pa-brand .pa-wordmark { font-size: 0.95rem; }

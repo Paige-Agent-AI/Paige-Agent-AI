@@ -141,6 +141,11 @@ export function HeroMeasure({ title, children, honest }: { title: ReactNode; chi
     <div className="pa-hero__stage" ref={ref}>
       <div className="pa-wrap pa-hero__grid">
         <div className="pa-hero__copy">
+          {/* Paige's presence: the Command Mark performs its one sequence in time with the loop —
+              rests, charges while she works, executes once on the send. */}
+          <span className="pa-hero__presence" data-state={markState} aria-hidden="true">
+            <Mark state={markState} size={72} key={markState === "charged" ? "c" : markState} />
+          </span>
           {title}
           {/* The hero's second beat: present as a ghost, struck forward the moment the owner sends. */}
           <p className={`pa-run${sent || reduced ? " is-struck" : ""}`}>

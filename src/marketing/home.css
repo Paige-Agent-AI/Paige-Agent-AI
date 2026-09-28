@@ -1,7 +1,8 @@
 /* Home — composition. Tokens and primitives come from site.css. */
 
 /* ── Hero ───────────────────────────────────────────────────────────── */
-.pa-hero { padding-block: clamp(2.5rem, 1rem + 5vw, 5rem) clamp(3rem, 2rem + 4vw, 5.5rem); }
+/* The stage runs up under the transparent header so the light reads as one scene. */
+.pa-hero { margin-top: -4.25rem; padding-block: calc(4.25rem + clamp(2.5rem, 1rem + 5vw, 5rem)) clamp(3rem, 2rem + 4vw, 5.5rem); }
 .pa-hero__grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(2.5rem, 1.5rem + 3vw, 4.5rem); align-items: center; }
 .pa-hero__grid > * { min-width: 0; }
 .pa-hero__copy .pa-display { max-width: 15ch; }
@@ -85,7 +86,7 @@
 }
 .pa-msg--in .pa-msg__text.is-reading { animation: pa-read 1000ms var(--pa-ease) forwards; }
 @keyframes pa-read { to { background-size: 100% 100%; } }
-.pa-msg--out { align-self: flex-end; max-width: 94%; opacity: 0.35; transition: opacity 200ms var(--pa-ease); }
+.pa-msg--out { align-self: flex-end; width: 94%; max-width: 94%; opacity: 0.35; transition: opacity 200ms var(--pa-ease); }
 .pa-msg--out.is-in { opacity: 1; }
 .pa-msg--out .pa-msg__from { text-align: right; }
 .pa-msg__body {
@@ -636,3 +637,134 @@
 /* Every grid that collapses to one column lets its children shrink: long text wraps inside its
    track instead of widening the page. */
 :where(.pa-capacity__grid, .pa-stack__grid, .pa-coming__grid, .pa-plan__grid, .pa-calc, .pa-lane) > * { min-width: 0; }
+
+/* ── The stage (hero atmosphere) ─────────────────────────────────────
+   One orchestrated moment: champagne light drifting slowly over deep blue, fine grain, the
+   headline rising once on load, and the Command Mark at stage scale performing its sequence in
+   time with the loop. All motion is transform/opacity; reduced motion leaves a still stage. */
+.pa-hero { position: relative; isolation: isolate; overflow: hidden; }
+.pa-hero::after {
+  /* a floor of deeper blue so the stage reads as lit from above */
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 40%;
+  background: linear-gradient(to bottom, transparent, var(--pa-ground-deep));
+  z-index: -1;
+  pointer-events: none;
+}
+.pa-atmos { position: absolute; inset: 0; z-index: -2; pointer-events: none; overflow: hidden; }
+.pa-atmos__light {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  will-change: transform;
+}
+.pa-atmos__light--a {
+  width: 56vmax; height: 56vmax;
+  right: -14vmax; top: -24vmax;
+  background: radial-gradient(closest-side, var(--pa-glow-a), transparent);
+  animation: pa-drift-a 26s ease-in-out infinite alternate;
+}
+.pa-atmos__light--b {
+  width: 64vmax; height: 64vmax;
+  left: -26vmax; bottom: -30vmax;
+  background: radial-gradient(closest-side, var(--pa-glow-b), transparent);
+  animation: pa-drift-b 32s ease-in-out infinite alternate;
+}
+.pa-atmos__light--c {
+  width: 36vmax; height: 36vmax;
+  left: 34%; top: 18%;
+  background: radial-gradient(closest-side, var(--pa-glow-c), transparent);
+  animation: pa-drift-c 22s ease-in-out infinite alternate;
+}
+@keyframes pa-drift-a { to { transform: translate3d(-8vmax, 6vmax, 0) scale(1.08); } }
+@keyframes pa-drift-b { to { transform: translate3d(10vmax, -6vmax, 0) scale(0.94); } }
+@keyframes pa-drift-c { to { transform: translate3d(-6vmax, 8vmax, 0) scale(1.15); } }
+.pa-atmos__grain {
+  position: absolute;
+  inset: -50%;
+  opacity: 0.07;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* Paige's presence above the thesis: the Command Mark, large enough to read in half a second,
+   performing Dormant → Charged → Executed in time with the loop. */
+.pa-hero__stage { position: relative; }
+.pa-hero__presence {
+  display: inline-grid;
+  place-items: center;
+  width: clamp(3.5rem, 2.8rem + 2.4vw, 4.75rem);
+  aspect-ratio: 1;
+  margin-bottom: clamp(1rem, 0.8rem + 0.8vw, 1.6rem);
+  border-radius: 22px;
+  background: radial-gradient(circle at 50% 60%, rgba(240, 196, 110, 0.14), transparent 70%);
+  transition: background-color 400ms var(--pa-ease);
+}
+.pa-hero__presence .pa-mark { width: 100%; height: 100%; }
+.pa-hero__presence[data-state="executed"] { background-color: rgba(240, 196, 110, 0.08); }
+
+/* The thesis rises once, in order: headline, second beat, lead, acts. */
+.pa-hero__copy > * { animation: pa-rise 900ms var(--pa-ease) both; }
+.pa-hero__copy > :nth-child(1) { animation-delay: 60ms; }
+.pa-hero__copy > :nth-child(2) { animation-delay: 220ms; }
+.pa-hero__copy > :nth-child(3) { animation-delay: 360ms; }
+.pa-hero__copy > :nth-child(4) { animation-delay: 480ms; }
+.pa-hero__copy > :nth-child(5) { animation-delay: 580ms; }
+.pa-measure { animation: pa-rise 1000ms var(--pa-ease) 380ms both; }
+@keyframes pa-rise { from { opacity: 0; transform: translateY(18px); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+
+/* The playhead carries a light along the staff: the beat you can see. */
+.pa-beats__head::before {
+  content: "";
+  position: absolute;
+  right: 1px;
+  top: calc(50% - 1px);
+  width: clamp(4rem, 12vw, 11rem);
+  height: 2px;
+  background: linear-gradient(to right, transparent, var(--pa-champagne));
+  opacity: 0.85;
+}
+.pa-beats__head::after {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin-top: -6px;
+  border-radius: 50%;
+  background: var(--pa-champagne-hi);
+  box-shadow: 0 0 0 4px rgba(240, 196, 110, 0.18), 0 0 18px 4px rgba(240, 196, 110, 0.45);
+}
+.pa-beats .pa-staff { opacity: 0.9; }
+
+/* The act, lit: the champagne CTA carries a slow sheen, never a loop of attention-seeking. */
+.pa-btn--act { position: relative; overflow: hidden; box-shadow: 0 10px 30px -12px rgba(240, 196, 110, 0.55); }
+.pa-btn--act::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.45) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 700ms var(--pa-ease);
+}
+.pa-btn--act:hover::after { transform: translateX(120%); }
+
+/* Planes on blue: a hairline of light on the top edge. */
+.pa-measure__plane, .pa-plan__card, .pa-window__frame { box-shadow: var(--pa-sheen); }
+.pa-stacked::before { background: var(--pa-ground-deep); }
+
+/* Section rhythm: bands of deeper blue, and a spill of light under the map and the close. */
+.pa-map, .pa-plan { background: var(--pa-ground-deep); }
+.pa-close { background: radial-gradient(60% 70% at 50% 45%, var(--pa-glow-b), transparent 70%), var(--pa-ground-deep); }
+.pa-close .pa-mark { filter: drop-shadow(0 0 32px rgba(240, 196, 110, 0.35)); }
+
+/* The accent: set in the site face by default; the serif option restyles only these words. */
+.pa-accent { color: inherit; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pa-atmos__light, .pa-hero__copy > *, .pa-measure { animation: none !important; }
+  .pa-btn--act::after { display: none; }
+}

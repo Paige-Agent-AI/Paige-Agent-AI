@@ -1808,10 +1808,9 @@ mcp.tool("create_contact", {
       });
       if (methodsError) {
         // Only a race with another writer reaches here (the addresses were checked above). The
-        // contact this call made is removed rather than left without the addresses it was asked for.
-        const { error: undoError } = await admin.from("clients").delete().eq("id", data.id).eq("tenant_id", tenant_id);
-        if (undoError) console.error("[paige-mcp] create_contact undo failed", { contact_id: data.id, message: undoError.message });
-        return err(contactMethodsError(methodsError.message));
+        // contact exists without its addresses; say exactly that, and how to finish it.
+        console.error("[paige-mcp] create_contact addresses not saved", { contact_id: data.id, message: methodsError.message });
+        return err(`CONTACT_CREATED_WITHOUT_ADDRESSES: contact ${data.account_number} was created, but its addresses were not saved (${contactMethodsError(methodsError.message)}). Add them with update_contact and add_contact_methods.`);
       }
     }
     await audit("create_contact", "client", data.id, { contact_methods: methods.length, tenant_id }, tenant_id);
@@ -1894,10 +1893,10 @@ mcp.tool("update_contact", {
     // Addresses first: they are the part that can be refused (a malformed or already-used address),
     // and the database checks the whole list before it writes any of it.
     if (methods) {
-      const { error: methodsError } = await admin.rpc(
-        contact_methods ? "_replace_client_contact_methods" : "_add_client_contact_methods",
-        { _tenant_id: tenant_id, _client_id: contact_id, _methods: methods },
-      );
+      const target = { _tenant_id: tenant_id, _client_id: contact_id, _methods: methods };
+      const { error: methodsError } = contact_methods
+        ? await admin.rpc("_replace_client_contact_methods", target)
+        : await admin.rpc("_add_client_contact_methods", target);
       if (methodsError) return err(contactMethodsError(methodsError.message));
     }
     if (Object.keys(patch).length) {

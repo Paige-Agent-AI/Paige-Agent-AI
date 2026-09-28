@@ -79,7 +79,7 @@ describe("Solo-only beta acquisition contract", () => {
     ]) expect(publicHome).not.toContain(unsupported);
     // The honest line replaced the old hedge (Lane D, 2026-09-28): Paige's work is the
     // deliverable, the owner's say is the control, and anything not live is labelled in build.
-    expect(publicHome).toContain("Nothing Paige writes goes out without your say.");
+    expect(publicHome).toContain("waits for your yes.");
     expect(publicHome).toContain("Reading your inbox directly is in build.");
     expect(publicHome).not.toContain("ready for your review");
     expect(publicHome).not.toMatch(/\bbeta\b/i);

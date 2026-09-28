@@ -23,11 +23,11 @@ const SEAMS = [
 ];
 
 const OUTCOMES = [
-  "Replies and follow-ups written in your voice",
-  "Proposals, offers and letters drafted from what she knows",
-  "Clients, notes and tasks kept in order",
-  "Your booking page run, and meetings booked",
-  "Social posts drafted in your voice, ready to copy",
+  "Replies, follow-ups and proposals, written in your voice",
+  "Landing pages and funnels, built and published on your say",
+  "Growth advice, a Game Plan, and plans that keep you moving",
+  "Clients, calendar and booking page kept in order",
+  "Your calendar, email and n8n workflows connected",
 ];
 
 export default function PaigeHome() {
@@ -58,8 +58,8 @@ export default function PaigeHome() {
           }
         >
           <p className="pa-hero__beat">
-            The replies, the follow-ups, the proposal drafts, the bookings. Done in your voice, between your client
-            meetings.
+            The replies, the proposals, the landing pages, the plan for the quarter. Done in your voice, between
+            your client meetings.
           </p>
           <div className="pa-hero__acts">
             <TrialButton />
@@ -82,7 +82,8 @@ export default function PaigeHome() {
           <div className="pa-capacity__body">
             <p className="pa-lead">
               You tell Paige what matters. She takes the work between your client meetings off your hands and brings it
-              back done: the reply, the proposal draft, the post, the meeting on your calendar.
+              back done: the reply, the proposal draft, the landing page, the plan for the quarter, the meeting on your
+              calendar.
             </p>
             <ol className="pa-capacity__line">
               <li data-state="live">
@@ -199,11 +200,12 @@ export default function PaigeHome() {
         <div className="pa-wrap pa-promise__inner">
           <Mark state="spectral" size={40} />
           <h2 id="promise-title" className="pa-h2" data-reveal="rise">
-            Nothing Paige writes goes out without your say.
+            You decide what she does <span className="pa-accent">on her own.</span>
           </h2>
           <p className="pa-lead">
-            Paige does the work; you stay in charge of what leaves the building. Every email she drafts waits for you to
-            send it or change it. That isn’t unfinished work. It’s the control that keeps it your business.
+            Paige drafts, researches, plans and builds for you. In her Trust Compass you choose which everyday jobs
+            she handles by herself. Anything she sends to a customer, publishes, or changes in one of your tools
+            waits for your yes. That isn’t unfinished work. It’s the control that keeps it your business.
           </p>
         </div>
       </section>

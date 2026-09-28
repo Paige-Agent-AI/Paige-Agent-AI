@@ -370,6 +370,32 @@
 .pa-map__head .pa-h2 { max-width: 16ch; }
 .pa-score__legend { display: flex; gap: 1.5rem; margin-bottom: 1.5rem; }
 .pa-score__lanes { list-style: none; margin: 0; padding: 0; }
+.pa-score { counter-reset: pa-movement; }
+/* Four movements, numbered like a score: I She runs the work, II She builds… */
+.pa-movement { counter-increment: pa-movement; }
+.pa-movement + .pa-movement { margin-top: clamp(2.75rem, 2rem + 3vw, 4.5rem); }
+.pa-movement__name {
+  display: flex;
+  align-items: baseline;
+  gap: 0.9rem;
+  margin-bottom: 1.1rem;
+  font-family: var(--pa-serif);
+  font-style: italic;
+  font-weight: 430;
+  font-size: clamp(1.55rem, 1.2rem + 1.4vw, 2.2rem);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--pa-ink);
+}
+.pa-movement__name::before {
+  content: counter(pa-movement, upper-roman);
+  font-family: inherit;
+  font-style: normal;
+  font-size: 0.55em;
+  letter-spacing: 0.08em;
+  color: var(--pa-ink-3);
+  min-width: 2.2ch;
+}
 .pa-lane {
   position: relative;
   display: grid;

@@ -12,6 +12,7 @@ const CATEGORIES = [
   "Your CRM",
   "Your scheduler",
   "Your proposal tool",
+  "Your landing page builder",
   "Your email marketing tool",
   "Your forms tool",
   "Your project manager",

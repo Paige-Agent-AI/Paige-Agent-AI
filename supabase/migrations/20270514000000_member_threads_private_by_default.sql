@@ -189,11 +189,15 @@ begin
     raise exception 'operator_scope_moved' using errcode = '42501';
   end if;
 
-  select * into v_thread from public.paige_chat_threads where id = _thread_id;
+  -- FOR SHARE holds the row through the read: an archive or delete that lands meanwhile waits for
+  -- this open to finish, so what is checked here is what is read and recorded below.
+  select * into v_thread from public.paige_chat_threads where id = _thread_id for share;
   if not found
      or v_thread.tenant_id is distinct from v_tenant
      or v_thread.contact_id is not null
      or v_thread.studio_session_id is not null
+     -- Archived threads are left out of the list, so the open refuses them too (Codex review of 12648c11).
+     or coalesce(v_thread.is_archived, false)
      or v_thread.caller_user_id is not distinct from auth.uid() then
     -- One answer for "no such thread", "another workspace's" and "not a member's private thread",
     -- so the refusal says nothing about threads the caller may not see.

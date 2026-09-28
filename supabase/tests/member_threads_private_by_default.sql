@@ -2,7 +2,7 @@
 -- purpose, and recorded when opened (owner ruling 2026-09-28, after a super_admin acting as a
 -- workspace was shown a member's conversation as their own). Synthetic fixtures; rolled back.
 BEGIN;
-SELECT plan(44);
+SELECT plan(45);
 
 INSERT INTO auth.users (id, aud, role, email) VALUES
   ('0a5c0000-0000-4000-8000-000000000001','authenticated','authenticated','threads-super@tests.invalid'),
@@ -49,6 +49,11 @@ INSERT INTO public.paige_chat_threads (id, tenant_id, caller_user_id, lens, titl
   ('0a5c0000-0000-4000-8000-0000000000f4','0a5c0000-0000-4000-8000-00000000a001',
    '0a5c0000-0000-4000-8000-000000000003','coach','Member studio session',1,now(),
    '0a5c0000-0000-4000-8000-0000000000e1');
+-- A member's archived conversation: left out of the list, so it cannot be opened either
+-- (Codex review of 12648c11).
+INSERT INTO public.paige_chat_threads (id, tenant_id, caller_user_id, lens, title, message_count, last_message_at, is_archived) VALUES
+  ('0a5c0000-0000-4000-8000-0000000000f6','0a5c0000-0000-4000-8000-00000000a001',
+   '0a5c0000-0000-4000-8000-000000000003','coach','Member archived title',1,now(),true);
 INSERT INTO public.paige_chat_turns (thread_id, role, content) VALUES
   ('0a5c0000-0000-4000-8000-0000000000f1','user','member question'),
   ('0a5c0000-0000-4000-8000-0000000000f1','assistant','paige answer to the member');
@@ -172,6 +177,8 @@ SELECT throws_ok($$SELECT public.operator_open_member_thread('0a5c0000-0000-4000
   'P0002', 'member_thread_not_available', 'a thread in another workspace cannot be opened');
 SELECT throws_ok($$SELECT public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f4', '0a5c0000-0000-4000-8000-00000000a001')$$,
   'P0002', 'member_thread_not_available', 'a member''s Studio-session thread is not opened here');
+SELECT throws_ok($$SELECT public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f6', '0a5c0000-0000-4000-8000-00000000a001')$$,
+  'P0002', 'member_thread_not_available', 'a member''s archived thread is not opened, as it is not listed');
 SELECT throws_ok($$SELECT public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f3', '0a5c0000-0000-4000-8000-00000000a001')$$,
   'P0002', 'member_thread_not_available', 'the open is only for other people''s private threads');
 

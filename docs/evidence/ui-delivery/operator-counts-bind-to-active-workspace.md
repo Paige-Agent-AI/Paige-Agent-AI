@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: no state, transition or exit changes; the same surface
 FLOW_PROTOTYPE: NOT_REQUIRED: no visible element changes
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: audience is a super_admin acting as a workspace, and a member of several workspaces; primary action is reading that workspace's knowledge and open work
 VISUAL_DIRECTION: PASS: no visual change
-AUTOMATED_EVIDENCE: PASS: src/hooks/__tests__/tenantScopedCounts.test.tsx two cases fail before the change (no tenant filter issued on tenant_knowledge_docs or paige_actions) and pass after, one pins that no filter is added with no active workspace; full suite 5963 passed
+AUTOMATED_EVIDENCE: PASS: src/hooks/__tests__/tenantScopedCounts.test.tsx two cases fail before the change (no tenant filter issued on tenant_knowledge_docs or paige_actions) and pass after, one pins that no filter is added with no active workspace, and one (a late reply for the previous workspace must not replace the current one's documents) fails before the stale-reply guard and passes after; full suite 5963 passed before the guard, src/solo and hook tests 2124 passed after
 STATIC_EVIDENCE: PASS: ci:tsc 12/12 baseline; eslint 0 errors (one react-refresh warning of the kind main already raises in useTenantContext.tsx); lint:tier-features and lint:operator-reach clean
 RENDERED_EVIDENCE: NOT_APPLICABLE: no rendered element changes; the lists and counts render from narrower data
 BEHAVIORAL_EVIDENCE: UNVERIFIED: the filters are proven in unit tests; a super_admin session counting one workspace's rows has not been driven
@@ -15,7 +15,7 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: requires a human operator session on producti
 KEYBOARD_FOCUS: NOT_APPLICABLE: no focusable element changes
 ZOOM_REFLOW: NOT_APPLICABLE: no layout change
 REDUCED_MOTION: NOT_APPLICABLE: no motion change
-STATE_COVERAGE: PASS: active workspace → that workspace's rows; no active workspace → unchanged; workspace switch → the previous workspace's counts are never shown (snapshot keyed on the workspace)
+STATE_COVERAGE: PASS: active workspace → that workspace's rows; no active workspace → unchanged; workspace switch → the previous workspace's counts and documents are never shown (both keyed on the workspace), and a late reply for the previous workspace is discarded
 TRUTHFUL_STATE_LABELS: PASS: a workspace's knowledge count and department counts no longer include other workspaces
 SOLO_UI: YES: src/solo/data/useSoloKnowledge.ts (data hook behind Knowledge, the Game Plan knowledge tile and the PAIGE workspace); no Solo component, layout or geometry changes
 SOLO_1536X770_PAIGE_CLOSED: NOT_APPLICABLE: data-hook change only — it narrows which rows the knowledge list and department counts show; no Solo component, layout, geometry or scroll owner changes at any viewport, PAIGE open or closed
@@ -35,7 +35,7 @@ ACCEPTANCE_CRITERIA: acting as a workspace, its knowledge list and department co
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: usePaigeDeptStatus accountEpoch contract (existing tests pass); useTenantContext throw-on-mis-mount unchanged (the new accessor is separate)
 
-INTERNAL_BUILD_IDENTITY: d9a14b18ab092630c3a15d90db879a7da1643f3e; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=the commit named here (tree 9481807bddfcf4153a2e00bad38eb002e26ec44c) holds this PR's code and tests
+INTERNAL_BUILD_IDENTITY: 7afbcc8b5ca9fdaedafcc9b0ba95d82e3757a380; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=the commit named here (tree b60b3d3e019081adc31a72280f517debb26b784e) holds this PR's code and tests, including the stale-reply guard added after Codex review
 RELEASE_CHANNEL: development: operator act-as correctness, merged on green per CLAUDE.md §4 pre-launch stance
 RELEASE_CLASSIFICATION: internal-only: operator and multi-workspace member views; no customer-visible change for a single-workspace member
 CUSTOMER_RELEASE_IDENTITY: none: no customer-visible change

@@ -44,6 +44,7 @@ on:
       - "scripts/proof/paige-voice-budget-concurrency.mjs"
       - "supabase/tests/paige_spine_foundation.sql"
       - "supabase/tests/governed_crm_commands.sql"
+      - "supabase/tests/outbound_private_business_facts.sql"
       # The CRM patch-schema proof and the generator that writes it. (`supabase/migrations/**`
       # above already re-runs this job when an allowlist itself changes, which is the case that
       # matters most; these two cover a change to the proof or to how it is derived.)
@@ -283,6 +284,11 @@ jobs:
       # A tenant-less operator's semantic memory recall matches their own NULL-tenant rows (R5), and
       # a NULL tenant never reaches another user's rows or anyone's in-tenant rows.
       - run: supabase test db supabase/tests/owner_memory_recall_no_tenant.sql
+        if: ${{ !cancelled() }}
+      # A1: the owner's registered address, business phone and website are found in any
+      # customer-bound draft, however they are written, unless the owner typed them; only the server
+      # may ask, and only about the tenant it names.
+      - run: supabase test db supabase/tests/outbound_private_business_facts.sql
         if: ${{ !cancelled() }}
       # One server answer to "is this person a platform operator, and at which tier", and the R0
       # capability table behind "may this operator do X", including its super_admin-only default.

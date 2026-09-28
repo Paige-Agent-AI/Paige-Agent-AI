@@ -49,6 +49,8 @@ vi.mock("@/integrations/supabase/client", () => ({
 const PRISTINE_TENANTS = harness.context.tenants.map((t) => ({ ...t }));
 
 import { registerAccountSwitchGuard } from "@/lib/auth/accountSwitchGuard";
+import { supabase } from "@/integrations/supabase/client";
+import { signInWithOAuth } from "@/integrations/auth/oauth";
 import { GOD_CONSOLE } from "@/lib/auth/operatorTarget";
 import ChooseAccount from "./ChooseAccount";
 
@@ -463,5 +465,72 @@ describe("ChooseAccount", () => {
     expect(localStorage.getItem("paige.activeBusinessId")).toBe("belongs-to-the-person");
     expect(sessionStorage.getItem("paige.workspace.entered")).toBe("mogul");
     Object.defineProperty(window, "location", { configurable: true, value: original });
+  });
+  // Codex review of #1547 (850ba847). An operator acting as a tenant reaches this page through
+  // Switch workspace with the act-as still open. The server now refuses an enter over an open
+  // act-as, and signing out leaves the server-side act-as open with no exit receipt, so both
+  // routes out of this page end the act-as through the audited exit first.
+  describe("an operator arriving with an act-as open", () => {
+    beforeEach(() => {
+      harness.context.isPlatformStaff = true;
+      harness.context.activeTenantId = "antonio";
+    });
+
+    it("ends the act-as before entering the chosen workspace", async () => {
+      const assign = vi.fn();
+      const original = window.location;
+      Object.defineProperty(window, "location", { configurable: true, value: { ...original, assign, search: "" } });
+      const calls: Array<string | null> = [];
+      harness.context.switchTenant = vi.fn(async (id: string | null) => { calls.push(id); return true; });
+      await act(async () => {
+        root.render(<MemoryRouter initialEntries={["/choose-account"]}><ChooseAccount /></MemoryRouter>);
+      });
+      const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Mogul Maker Academy"));
+      await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(calls).toEqual([null, "mogul"]);
+      expect(assign).toHaveBeenCalledWith("/solo/222222/command-center");
+      Object.defineProperty(window, "location", { configurable: true, value: original });
+    });
+
+    it("enters nothing and says so when the act-as cannot be ended", async () => {
+      const assign = vi.fn();
+      const original = window.location;
+      Object.defineProperty(window, "location", { configurable: true, value: { ...original, assign, search: "" } });
+      harness.context.switchTenant = vi.fn(async (id: string | null) => id !== null);
+      await act(async () => {
+        root.render(<MemoryRouter initialEntries={["/choose-account"]}><ChooseAccount /></MemoryRouter>);
+      });
+      const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Mogul Maker Academy"));
+      await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(harness.context.switchTenant).not.toHaveBeenCalledWith("mogul");
+      expect(assign).not.toHaveBeenCalled();
+      expect(host.textContent).toContain("Paige couldn't end your act-as in Antonio Daniel LLC. Nothing else was entered.");
+      Object.defineProperty(window, "location", { configurable: true, value: original });
+    });
+
+    it("ends the act-as before signing out for a different account", async () => {
+      const order: string[] = [];
+      harness.context.switchTenant = vi.fn(async (id: string | null) => { order.push(`switch:${id}`); return true; });
+      vi.mocked(supabase.auth.signOut).mockImplementationOnce(async () => { order.push("signOut"); return { error: null }; });
+      vi.mocked(signInWithOAuth).mockResolvedValueOnce({ error: null } as never);
+      await act(async () => {
+        root.render(<MemoryRouter initialEntries={["/choose-account"]}><ChooseAccount /></MemoryRouter>);
+      });
+      const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("different Google account"));
+      await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(order).toEqual(["switch:null", "signOut"]);
+    });
+
+    it("does not sign out while the act-as cannot be ended", async () => {
+      harness.context.switchTenant = vi.fn(async () => false);
+      vi.mocked(supabase.auth.signOut).mockClear();
+      await act(async () => {
+        root.render(<MemoryRouter initialEntries={["/choose-account"]}><ChooseAccount /></MemoryRouter>);
+      });
+      const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("different Google account"));
+      await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(supabase.auth.signOut).not.toHaveBeenCalled();
+      expect(host.textContent).toContain("Paige couldn't end your act-as in Antonio Daniel LLC, so you're still signed in.");
+    });
   });
 });

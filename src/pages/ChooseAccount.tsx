@@ -66,6 +66,13 @@ export default function ChooseAccount() {
       .map((tenant) => ({ tenant, role: roles.get(tenant.id) ?? "member" }));
   }, [context.tenants, memberships]);
 
+  // The act-as an operator still has open if they came here from inside a tenant (Switch workspace).
+  const openActAs = useMemo(() => {
+    if (!context.isPlatformStaff || !context.activeTenantId) return null;
+    const name = context.tenants?.find((t) => t.id === context.activeTenantId)?.name ?? "this tenant";
+    return { id: context.activeTenantId, name };
+  }, [context.isPlatformStaff, context.activeTenantId, context.tenants]);
+
   // ONE TRUTHFUL TRANSITION, shared by the explicit pick and the nothing-to-ask
   // auto-leave (owner ruling 2026-09-03). A workspace is recorded as ENTERED only
   // when the transition into it actually succeeded.
@@ -89,9 +96,19 @@ export default function ChooseAccount() {
         toTenantName: tenant.name,
       });
       if (!allowed) return false;
+      // An operator who came here from inside a tenant still has that act-as open, and the server
+      // refuses to enter over it. Choosing another workspace is the explicit intent to leave, so
+      // the act-as ends through the audited exit first — and if it will not end, nothing is entered.
+      const endedActAs = Boolean(openActAs);
+      if (openActAs && !(await context.switchTenant(null))) {
+        setError(`Paige couldn't end your act-as in ${openActAs.name}. Nothing else was entered.`);
+        return false;
+      }
       const switched = await context.switchTenant(tenant.id);
       if (!switched) {
-        setError("Paige couldn't open that account. Your current workspace is unchanged.");
+        setError(endedActAs
+          ? `Paige ended your act-as in ${openActAs?.name} but couldn't open that account. You're at platform scope.`
+          : "Paige couldn't open that account. Your current workspace is unchanged.");
         return false;
       }
       // Nothing from the previous account may render under the new one's heading.
@@ -101,7 +118,7 @@ export default function ChooseAccount() {
     // switch succeeded or because they were already in it.
     rememberWorkspaceEntered(tenant.id);
     return true;
-  }, [context]);
+  }, [context, openActAs]);
 
   // A platform operator always pauses here after sign-in. Platform is a real
   // operating context, not an automatic default, and tenant entry still runs
@@ -178,6 +195,13 @@ export default function ChooseAccount() {
   const handleDifferentGoogleAccount = async () => {
     setError(null);
     setSwitchingTo("google");
+    // Signing out clears this browser, not the server: an open act-as would stay open with no exit
+    // receipt. End it through the audited exit first, and stay signed in if it will not end.
+    if (openActAs && !(await context.switchTenant(null))) {
+      setSwitchingTo(null);
+      setError(`Paige couldn't end your act-as in ${openActAs.name}, so you're still signed in. Try again.`);
+      return;
+    }
     await supabase.auth.signOut();
     const result = await signInWithOAuth("google", `${window.location.origin}/auth`, { chooseAccount: true });
     if (result.error) {

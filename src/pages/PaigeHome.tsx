@@ -6,6 +6,7 @@ import { CapabilityScore } from "@/marketing/CapabilityScore";
 import { SecureWindow } from "@/marketing/SecureWindow";
 import { WeekScore } from "@/marketing/WeekScore";
 import { Mark } from "@/marketing/Mark";
+import { Accent, CommandHeading, CommandSequence } from "@/marketing/Command";
 import { pricingHref } from "@/marketing/siteLinks";
 import "@/marketing/home.css";
 
@@ -21,6 +22,9 @@ const SEAMS = [
   { gap: "The proposal", miss: "that never got a follow-up." },
   { gap: "The client", miss: "who signed and was never onboarded." },
 ];
+
+/** The close: Paige works through the commands an owner would give her, and lands on the last. */
+const CLOSE_COMMANDS = ["Run follow-ups", "Run the launch", "Run your week", "Run everything"];
 
 const OUTCOMES = [
   "Replies, follow-ups and proposals, written in your voice",
@@ -52,9 +56,11 @@ export default function PaigeHome() {
         <HeroMeasure
           honest="Today you hand Paige the message in chat. Reading your inbox directly is in build."
           title={
-            <h1 id="hero-title" className="pa-display">
-              Paige is your AI chief operating <span className="pa-accent">officer.</span>
-            </h1>
+            <CommandHeading
+              id="hero-title"
+              className="pa-display"
+              parts={["Paige is your AI chief operating ", { accent: "officer." }]}
+            />
           }
         >
           <p className="pa-hero__beat">
@@ -77,7 +83,7 @@ export default function PaigeHome() {
       <section className="pa-section pa-capacity" aria-labelledby="capacity-title">
         <div className="pa-wrap pa-capacity__grid">
           <h2 id="capacity-title" className="pa-h2" data-reveal="rise">
-            A chief operating officer doesn’t do everything herself. She <span className="pa-accent">runs</span> it.
+            A chief operating officer doesn’t do everything herself. She <Accent>runs</Accent> it.
           </h2>
           <div className="pa-capacity__body">
             <p className="pa-lead">
@@ -116,7 +122,7 @@ export default function PaigeHome() {
       <section className="pa-section pa-seam" aria-labelledby="seam-title">
         <div className="pa-wrap">
           <h2 id="seam-title" className="pa-h2 pa-seam__title" data-reveal="rise">
-            The tools aren’t the problem. The <span className="pa-accent">gaps</span> between them are.
+            The tools aren’t the problem. The <Accent>gaps</Accent> between them are.
           </h2>
           <ul className="pa-seam__list" data-reveal="seam">
             {SEAMS.map((s) => (
@@ -155,7 +161,7 @@ export default function PaigeHome() {
         <div className="pa-wrap">
           <div className="pa-map__head">
             <h2 id="map-title" className="pa-h2" data-reveal="rise">
-              What she does today. What’s <span className="pa-accent">coming next.</span>
+              What she does today. What’s <Accent>coming next.</Accent>
             </h2>
             <p className="pa-copy">
               Every item marked “Works today” is live for Solo customers now. Everything marked “In build” is being
@@ -200,7 +206,7 @@ export default function PaigeHome() {
         <div className="pa-wrap pa-promise__inner">
           <Mark state="spectral" size={40} />
           <h2 id="promise-title" className="pa-h2" data-reveal="rise">
-            You decide what she does <span className="pa-accent">on her own.</span>
+            You decide what she does <Accent>on her own.</Accent>
           </h2>
           <p className="pa-lead">
             Paige drafts, researches, plans and builds for you. In her Trust Compass you choose which everyday jobs
@@ -250,15 +256,13 @@ export default function PaigeHome() {
 
       {/* Close: the mark's payoff. */}
       <section className="pa-section pa-close" aria-labelledby="close-title">
-        <div className="pa-wrap pa-close__inner" data-reveal="close">
-          <Mark state="spectral" size={88} />
-          <h2 id="close-title" className="pa-close__line" aria-label="Run everything.">
-            {"Run everything.".split("").map((ch, i) => (
-              <span key={i} aria-hidden="true" style={{ ["--i" as string]: i }}>
-                {ch === " " ? "\u00a0" : ch}
-              </span>
-            ))}
-          </h2>
+        <div className="pa-wrap pa-close__inner">
+          <CommandSequence
+            id="close-title"
+            className="pa-close__line"
+            commands={CLOSE_COMMANDS}
+            label="Run everything."
+          />
           <p className="pa-lead">Hire the chief operating officer your business has been missing.</p>
           <div className="pa-hero__acts pa-close__acts">
             <TrialButton>Hire Paige, free for 30 days</TrialButton>

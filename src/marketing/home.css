@@ -658,7 +658,6 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   line-height: 1;
-  margin-right: -0.16em;
 }
 .pa-close__inner .pa-lead { max-width: 30ch; margin-inline: auto; }
 .pa-close__acts { justify-content: center; margin-top: 0.5rem; }
@@ -736,6 +735,8 @@
 
 /* The thesis rises once, in order: headline, second beat, lead, acts. */
 .pa-hero__copy > * { animation: pa-rise 900ms var(--pa-ease) both; }
+/* The headline is written by the mark instead of rising in. */
+.pa-hero__copy > .pa-cmd { animation: none; }
 .pa-hero__copy > :nth-child(1) { animation-delay: 60ms; }
 .pa-hero__copy > :nth-child(2) { animation-delay: 220ms; }
 .pa-hero__copy > :nth-child(3) { animation-delay: 360ms; }
@@ -799,8 +800,9 @@
 /* ── Scroll reveals ──────────────────────────────────────────────────
    Only active once the site opts in (`data-motion="on"`, set when script runs and motion is
    allowed), so every section is present at rest without it. Each reveal explains something:
-   a heading arrives and its accent word writes in; the seams get worked one by one; the
-   capability lanes set down in order with their live notes struck; the close spells itself. */
+   a heading arrives and its accent word swipes up letter by letter (command.css); the seams get
+   worked one by one; the capability lanes set down in order with their live notes struck. The
+   hero headline and the close are written by the Command Mark itself (Command.tsx). */
 [data-motion="on"] [data-reveal] { transition: opacity 800ms var(--pa-ease), transform 800ms var(--pa-ease), filter 800ms var(--pa-ease); }
 [data-motion="on"] [data-reveal="rise"]:not([data-in]),
 [data-motion="on"] [data-reveal="score"]:not([data-in]) .pa-lane,
@@ -809,14 +811,6 @@
   transform: translateY(22px);
   filter: blur(4px);
 }
-/* The accent word writes itself in, after its heading lands. */
-[data-motion="on"] [data-reveal] .pa-accent {
-  display: inline-block;
-  clip-path: inset(-0.2em -0.1em -0.25em -0.1em);
-  transition: clip-path 900ms var(--pa-ease) 320ms;
-}
-[data-motion="on"] [data-reveal]:not([data-in]) .pa-accent { clip-path: inset(-0.2em 100% -0.25em -0.1em); }
-
 /* Seams: each gap gets worked in turn — a thread runs across its staff. */
 .pa-seam__list li { transition: opacity 700ms var(--pa-ease), transform 700ms var(--pa-ease), filter 700ms var(--pa-ease); }
 .pa-seam__list li:nth-child(2) { transition-delay: 160ms; }
@@ -844,9 +838,3 @@
 [data-motion="on"] [data-reveal="score"] .pa-note[data-state="live"] .pa-note__head { transition: transform 520ms var(--pa-ease-exec); transition-delay: calc(var(--i, 0) * 90ms + 420ms); }
 [data-motion="on"] [data-reveal="score"]:not([data-in]) .pa-note[data-state="live"] .pa-note__head { transform: rotate(-22deg) scale(0); }
 
-/* The close spells itself out, letter by letter, then the mark lights. */
-.pa-close__line span { display: inline-block; }
-[data-motion="on"] [data-reveal="close"] .pa-close__line span { transition: opacity 500ms var(--pa-ease), transform 600ms var(--pa-ease); transition-delay: calc(var(--i, 0) * 45ms); }
-[data-motion="on"] [data-reveal="close"]:not([data-in]) .pa-close__line span { opacity: 0; transform: translateY(0.4em); }
-[data-motion="on"] [data-reveal="close"] .pa-mark { transition: filter 900ms var(--pa-ease) 700ms, transform 900ms var(--pa-ease) 700ms; }
-[data-motion="on"] [data-reveal="close"]:not([data-in]) .pa-mark { filter: none; transform: scale(0.85); }

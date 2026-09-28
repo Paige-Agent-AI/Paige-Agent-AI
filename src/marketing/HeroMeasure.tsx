@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Mark, type MarkState } from "./Mark";
+import { usePrefersReducedMotion } from "./motion";
 
 /**
  * The hero's one loop, as a four-beat measure (8s):
@@ -46,21 +47,6 @@ const wordsAt = (t: number, total: number) =>
   beatAt(t) < 2 ? 0 : Math.round(Math.min(1, Math.max(0, (t - T_WRITE) / (T_DECIDE - T_WRITE - 250))) * total);
 /** Everything the measure renders from the clock, as one comparable key. */
 const frameKey = (t: number, total: number) => `${beatAt(t)}|${wordsAt(t, total)}|${t >= T_SEND}|${t >= T_FADE}`;
-
-function usePrefersReducedMotion() {
-  const [reduced, setReduced] = useState(() =>
-    typeof window !== "undefined" && window.matchMedia
-      ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
-      : false,
-  );
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const on = () => setReduced(mq.matches);
-    mq.addEventListener?.("change", on);
-    return () => mq.removeEventListener?.("change", on);
-  }, []);
-  return reduced;
-}
 
 export function HeroMeasure({ title, children, honest }: { title: ReactNode; children: ReactNode; honest: ReactNode }) {
   const reduced = usePrefersReducedMotion();

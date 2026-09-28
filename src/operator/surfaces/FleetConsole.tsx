@@ -8,7 +8,7 @@ import {
   operatorArrivalAddress,
   rememberWorkspaceEntered,
 } from "@/lib/auth/workspaceEntry";
-import { landAt, operatorLandingFor } from "@/operator/actAs";
+import { landAt, operatorLandingFor, readActAsTenant } from "@/operator/actAs";
 import { fleetDetailVisible, isInternal, useFleet, type FleetTenant } from "@/operator/data/useFleet";
 import { STATUS_META, trialDaysLeft, type TenantStatus } from "@/lib/platform/tenantLifecycle";
 
@@ -364,13 +364,16 @@ export default function FleetConsole({ isPlatformOwner }: { isPlatformOwner: boo
   const enterTenant = useCallback(
     async (tenant: FleetTenant) => {
       if (entering.current) return;
-      // The provider's row, not the directory's: it carries the account number the address needs.
-      const landing = operatorLandingFor(contextTenants.find((t) => t.id === tenant.id) ?? null);
+      entering.current = true;
+      // The provider's row, not the directory's: it carries the account number the address needs. A
+      // tenant newer than the provider's snapshot is read fresh rather than refused as missing.
+      const known = contextTenants.find((t) => t.id === tenant.id) ?? (await readActAsTenant(tenant.id));
+      const landing = operatorLandingFor(known);
       if (landing.kind === "unavailable") {
+        entering.current = false;
         toast.error(landing.reason);
         return;
       }
-      entering.current = true;
       let leaving = false;
       try {
         const outcome = await enterOperatorActAs(tenant.id);

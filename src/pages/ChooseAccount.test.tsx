@@ -478,9 +478,21 @@ describe("ChooseAccount", () => {
   // act-as, and signing out leaves the server-side act-as open with no exit receipt, so both
   // routes out of this page end the act-as through the audited exit first.
   describe("an operator arriving with an act-as open", () => {
+    // Neutral test tenants (CLAUDE.md §63): these cases never name a real account.
+    beforeEach(() => {
+      harness.context.tenants = [
+        { id: "test-tenant-a", slug: "test-tenant-a", name: "Test Tenant A", status: "active", account_type: "standalone", parent_tenant_id: null, account_number: 900001, features: { solo_shell_enabled: true } },
+        { id: "test-tenant-b", slug: "test-tenant-b", name: "Test Tenant B", status: "active", account_type: "standalone", parent_tenant_id: null, account_number: 900002, features: { solo_shell_enabled: true } },
+      ];
+      harness.memberships = [
+        { tenant_id: "test-tenant-a", role: "admin" },
+        { tenant_id: "test-tenant-b", role: "owner" },
+      ];
+    });
+
     beforeEach(() => {
       harness.context.isPlatformStaff = true;
-      harness.context.activeTenantId = "antonio";
+      harness.context.activeTenantId = "test-tenant-a";
     });
 
     it("ends the act-as before entering the chosen workspace", async () => {
@@ -493,11 +505,11 @@ describe("ChooseAccount", () => {
       await act(async () => {
         root.render(<MemoryRouter initialEntries={["/choose-account"]}><ChooseAccount /></MemoryRouter>);
       });
-      const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Mogul Maker Academy"));
+      const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Test Tenant B"));
       await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
       // The exit names the act-as this tab shows (Codex review of 49ac446e).
-      expect(calls).toEqual(["exit:antonio", "enter:mogul"]);
-      expect(assign).toHaveBeenCalledWith("/solo/222222/command-center");
+      expect(calls).toEqual(["exit:test-tenant-a", "enter:test-tenant-b"]);
+      expect(assign).toHaveBeenCalledWith("/solo/900002/command-center");
       Object.defineProperty(window, "location", { configurable: true, value: original });
     });
 
@@ -509,11 +521,11 @@ describe("ChooseAccount", () => {
       await act(async () => {
         root.render(<MemoryRouter initialEntries={["/choose-account"]}><ChooseAccount /></MemoryRouter>);
       });
-      const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Mogul Maker Academy"));
+      const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Test Tenant B"));
       await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
       expect(harness.context.enterOperatorActAs).not.toHaveBeenCalled();
       expect(assign).not.toHaveBeenCalled();
-      expect(host.textContent).toContain("Paige couldn't end your act-as in Antonio Daniel LLC. Nothing else was entered.");
+      expect(host.textContent).toContain("Paige couldn't end your act-as in Test Tenant A. Nothing else was entered.");
       Object.defineProperty(window, "location", { configurable: true, value: original });
     });
 
@@ -522,10 +534,10 @@ describe("ChooseAccount", () => {
       await act(async () => {
         root.render(<MemoryRouter initialEntries={["/choose-account"]}><ChooseAccount /></MemoryRouter>);
       });
-      const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Mogul Maker Academy"));
+      const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Test Tenant B"));
       await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
       expect(harness.context.enterOperatorActAs).not.toHaveBeenCalled();
-      expect(host.textContent).toContain("Your act-as in Antonio Daniel LLC already ended in another tab, and another tenant is open now. Reload to see where you are.");
+      expect(host.textContent).toContain("Your act-as in Test Tenant A already ended in another tab, and another tenant is open now. Reload to see where you are.");
     });
 
     // Codex review of a9c6b22c: after the exit, an enter whose outcome is unknown must not be
@@ -538,11 +550,11 @@ describe("ChooseAccount", () => {
       await act(async () => {
         root.render(<MemoryRouter initialEntries={["/choose-account"]}><ChooseAccount /></MemoryRouter>);
       });
-      const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Mogul Maker Academy"));
+      const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Test Tenant B"));
       await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
       expect(assign).not.toHaveBeenCalled();
       expect(host.textContent).not.toContain("You're at platform scope");
-      expect(host.textContent).toContain("couldn't confirm whether Mogul Maker Academy opened. Reload before trying again.");
+      expect(host.textContent).toContain("couldn't confirm whether Test Tenant B opened. Reload before trying again.");
       Object.defineProperty(window, "location", { configurable: true, value: original });
     });
 
@@ -551,9 +563,9 @@ describe("ChooseAccount", () => {
       await act(async () => {
         root.render(<MemoryRouter initialEntries={["/choose-account"]}><ChooseAccount /></MemoryRouter>);
       });
-      const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Mogul Maker Academy"));
+      const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Test Tenant B"));
       await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
-      expect(host.textContent).toContain("Paige ended your act-as in Antonio Daniel LLC but couldn't open Mogul Maker Academy. You're at platform scope.");
+      expect(host.textContent).toContain("Paige ended your act-as in Test Tenant A but couldn't open Test Tenant B. You're at platform scope.");
     });
 
     it("ends the act-as before signing out for a different account", async () => {
@@ -578,12 +590,24 @@ describe("ChooseAccount", () => {
       const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("different Google account"));
       await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
       expect(supabase.auth.signOut).not.toHaveBeenCalled();
-      expect(host.textContent).toContain("Paige couldn't end your act-as in Antonio Daniel LLC, so you're still signed in.");
+      expect(host.textContent).toContain("Paige couldn't end your act-as in Test Tenant A, so you're still signed in.");
     });
   });
   // Codex review of #1547 (8292f9d6): when the account context cannot be read, the page cannot tell
   // an operator from anyone else, yet still offers the sign-out. The server is asked directly.
   describe("signing out when the account context could not be read", () => {
+    // Neutral test tenants (CLAUDE.md §63): these cases never name a real account.
+    beforeEach(() => {
+      harness.context.tenants = [
+        { id: "test-tenant-a", slug: "test-tenant-a", name: "Test Tenant A", status: "active", account_type: "standalone", parent_tenant_id: null, account_number: 900001, features: { solo_shell_enabled: true } },
+        { id: "test-tenant-b", slug: "test-tenant-b", name: "Test Tenant B", status: "active", account_type: "standalone", parent_tenant_id: null, account_number: 900002, features: { solo_shell_enabled: true } },
+      ];
+      harness.memberships = [
+        { tenant_id: "test-tenant-a", role: "admin" },
+        { tenant_id: "test-tenant-b", role: "owner" },
+      ];
+    });
+
     beforeEach(() => {
       harness.context.accountContextStatus = "error";
       harness.context.isPlatformStaff = false;

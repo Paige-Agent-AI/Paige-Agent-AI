@@ -28,6 +28,23 @@ const h = vi.hoisted(() => ({
   enter: (async () => "entered") as (id: string) => Promise<"entered" | "refused" | "unknown" | "occupied">,
   exit: (async () => true) as () => Promise<boolean>,
   toastError: (() => {}) as (msg: string, opts?: { action?: { label: string; onClick: () => void } }) => void,
+  // The tenant row a fresh read returns when the provider's snapshot is older than the directory.
+  freshRow: null as Record<string, unknown> | null,
+  freshReads: [] as string[],
+}));
+vi.mock("@/integrations/supabase/client", () => ({
+  supabase: {
+    from: () => ({
+      select: () => ({
+        eq: (_col: string, id: string) => ({
+          maybeSingle: async () => {
+            h.freshReads.push(id);
+            return { data: h.freshRow, error: null };
+          },
+        }),
+      }),
+    }),
+  },
 }));
 
 vi.mock("@/operator/data/useFleet", async (importOriginal) => {
@@ -72,6 +89,8 @@ describe("FleetConsole Enter — the act-as lands or does not begin", () => {
       return "entered" as const;
     });
     h.toastError = vi.fn();
+    h.freshRow = null;
+    h.freshReads = [];
     go = vi.spyOn(landAt, "go").mockImplementation(() => {});
     host = document.createElement("div");
     document.body.appendChild(host);
@@ -96,6 +115,26 @@ describe("FleetConsole Enter — the act-as lands or does not begin", () => {
     expect(h.enter).toHaveBeenCalledTimes(1);
     expect(h.enter).toHaveBeenCalledWith("solo");
     expect(go).toHaveBeenCalledWith("/solo/3855/command-center");
+  });
+
+  // Codex review of 02235ca4: the directory can list a tenant the provider's snapshot does not have
+  // yet. Its landing is read fresh rather than refused as though it did not exist.
+  it("lands in a tenant newer than the provider's snapshot, read fresh", async () => {
+    h.fleet = [...h.fleet, row({ id: "new-solo", name: "New Solo" })];
+    h.freshRow = { id: "new-solo", name: "New Solo", account_type: "standalone", parent_tenant_id: null, account_number: 4000 };
+    const enter = await render();
+    await act(async () => { enter("New Solo")?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+    expect(h.freshReads).toEqual(["new-solo"]);
+    expect(h.enter).toHaveBeenCalledWith("new-solo");
+    expect(go).toHaveBeenCalledWith("/solo/4000/command-center");
+  });
+
+  it("records nothing when the fresh read cannot find the tenant", async () => {
+    h.fleet = [...h.fleet, row({ id: "gone", name: "Gone Co" })];
+    const enter = await render();
+    await act(async () => { enter("Gone Co")?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+    expect(h.enter).not.toHaveBeenCalled();
+    expect(h.toastError).toHaveBeenCalledWith(expect.stringContaining("Nothing was entered."));
   });
 
   it("does not record an entry for a tenant the operator could not stand in", async () => {

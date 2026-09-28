@@ -1,3 +1,4 @@
+import { supabase } from "@/integrations/supabase/client";
 import { resolveTierKey } from "@/lib/tier/tierFeatures";
 import { workspaceRootForTenant } from "@/lib/auth/workspaceEntry";
 
@@ -55,6 +56,23 @@ export function operatorLandingFor(tenant: ActAsTenant | null | undefined): ActA
     };
   }
   return { kind: "land", root };
+}
+
+/**
+ * The tenant row a landing is resolved from, read fresh. For a tenant the Fleet directory lists but
+ * the tenant provider's snapshot does not have yet (provisioned after it loaded). The same columns
+ * and the same access rules as the provider's own read; a failed or empty read is `null`, which
+ * refuses the entry before anything is recorded.
+ */
+export async function readActAsTenant(tenantId: string): Promise<ActAsTenant | null> {
+  const { data, error } = await supabase
+    .from("tenants")
+    .select("id, name, account_type, parent_tenant_id, account_number")
+    .eq("id", tenantId)
+    .maybeSingle();
+  if (error || !data) return null;
+  // `account_number` is live but not yet in the generated types (the provider casts the same way).
+  return data as unknown as ActAsTenant;
 }
 
 /**

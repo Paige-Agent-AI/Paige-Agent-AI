@@ -1,14 +1,17 @@
--- A1 (owner ruling 2026-09-27): the owner's registered address, business phone and website may
--- reach PAIGE for the owner's own use, but none of the three may appear in anything addressed to a
--- customer unless the owner put it there. This migration adds the check that later callers use to
--- hold such a draft back. It ships BEFORE the facts enter PAIGE's owner context (A1-2), so there is
--- never a moment when she holds them and nothing stands between them and a customer.
+-- A1 (owner rulings 2026-09-27 and 2026-09-28): the owner's registered address, business phone and
+-- website may reach PAIGE for the owner's own use. In anything addressed to a customer, a phone or
+-- website the owner confirmed in Setup may appear, because the owner supplied it there,
+-- deliberately; anything else of the three is held back. This migration adds the check that later
+-- callers use to hold such a draft back. It ships BEFORE the facts enter PAIGE's owner context
+-- (A1-2), so there is never a moment when she holds them and nothing stands between them and a
+-- customer.
 --
--- outbound_private_business_facts_found(tenant, texts, owner_texts) answers one question: which of
--- the three facts, as this tenant has them stored, appear in these customer-bound texts? It
--- returns the kinds found ('address', 'phone', 'website'), never a value, so a refusal can say
--- what matched without repeating it. NOTHING CALLS IT YET: A1-1b wires it into the customer-bound
--- exits, each refusing the draft on any finding and on any error.
+-- outbound_private_business_facts_found(tenant, texts) answers one question: which of the three
+-- facts, as this tenant has them stored and not licensed by Setup, appear in these customer-bound
+-- texts? It returns the kinds found ('address', 'phone', 'website'), never a value, so a refusal
+-- can say what matched without repeating it. NOTHING CALLS IT YET: A1-1b wires it into the
+-- customer-bound exits, each refusing the draft on any finding and on any error. The approval card
+-- keeps its own job: the owner sees every customer-bound draft before it sends.
 --
 -- The principle it is built to: a withheld normal action is preferable to a missed leak. So it
 -- reads wide and matches wide, and it is narrowed only where matching would make ordinary use
@@ -28,6 +31,19 @@
 --   website — business_brief.website, tenant_legal_profile.website_url, brand.website, and a
 --             staged proposal's website.
 --
+-- WHAT SETUP LICENSES (owner ruling 2026-09-28). The exemption is keyed to Setup, never to the
+-- draft or to what anyone typed in the conversation. Whether a phone or website is confirmed is
+-- the spine's one answer, business_identity_readiness(): state 'owner_confirmed' from source
+-- 'setup'. The value it licenses is the Setup record that answer names (the legal profile's
+-- support_phone and website_url), and a draft carrying that value passes. Any other stored copy
+-- (a legacy brand value, a proposal, a phone kept only in the private brief) is held back until
+-- Setup confirms it. For a phone the licence is per seven-digit run, so a different number, or a
+-- legacy copy written in a form the confirmed value does not share, is still held back.
+-- THE REGISTERED ADDRESS IS NEVER LICENSED. Confirming it in Setup states a legal fact about the
+-- business, not consent to show it to customers, and for a solo operator it is often their home.
+-- Only a "publicly shareable" state would license it, and Setup records no such state. Adding one
+-- is a Setup change that goes back to the owner first; until then no address is licensed.
+--
 -- READING THE TEXT. Customer-bound text may be HTML e-mail. Entities are decoded (named and
 -- numeric), URL escapes of printable ASCII are decoded, Unicode spaces, dashes, apostrophes and
 -- full-width, Arabic-Indic and Devanagari digits are mapped to plain forms, and zero-width and
@@ -41,27 +57,32 @@
 --             other non-letter/digit made a space, and common words normalised (street→st,
 --             fifth→5th, saint→st, north west→nw, P.O. Box→po box, …). A line is looked for when it
 --             has six or more characters and a letter, and also one of: a digit; a street or
---             building word that follows another word ("Mill Lane", "Rose Cottage"); or being the
---             first line of the structured street. For a line that starts with a number, its core is
---             looked for too: up to its first street word after the number and one more word
---             ("2 Mill Lane" from "2 Mill Lane Cottages", "123 Main St" from "123 Main St Suite 400
---             Springfield") and up to its first suite word. A
---             number range adds each end. A postcode or "state ZIP" inside any line is looked for on
---             its own.
---             NOT MATCHED: a town, district or region on its own ("Leeds", "St. Louis", "Elk Grove",
---             "Canary Wharf"). A line with no digit is never taken from the last two lines of a
---             single-line address (where the town and region sit), nor when it is the stored city
---             or region. Nor a line made only of floor or suite words ("First Floor", "Suite 400",
---             "Unit 3") or a bare "the <word>" ("The Office"). Each names a place or a room, not this
---             business, and refusing it would refuse every mention of it.
+--             building word that follows another word ("Mill Lane", "Rose Cottage", "Mill
+--             House"); or being the first line of the structured street ("The Grange"). For a line
+--             that starts with a number, its core is looked for too: up to its first street word
+--             after the number and one more word ("2 Mill Lane" from "2 Mill Lane Cottages",
+--             "123 Main St" from "123 Main St Suite 400 Springfield") and up to its first suite
+--             word. A number range adds each end. A postcode or "state ZIP" inside any line is
+--             looked for on its own.
+--             NOT MATCHED: a town, district, county or country ("Leeds", "St. Louis", "Elk Grove",
+--             "Covent Garden", "Hertfordshire"). In a single-line address a line with no digit is
+--             a town when it follows the numbered street line, or, when no line is numbered and
+--             there are three lines or more, when it is one of the last two; the first line never
+--             is, and neither is a line that is the stored city or region. Nor a line made only of
+--             floor, suite or room words ("First Floor", "Suite 400", "Unit 3", "The Office"). Each
+--             names a place or a room, not this business, and refusing it would refuse every
+--             mention of it.
 --   phone   — By any seven consecutive digits of a stored number. A stored value is split into
 --             numbers at letters (so opening hours, labels, an extension and a second number do not
 --             blur it), and every written form of a number, international or domestic, with or
---             without its area code, carries seven of its digits in a row. A stored value with no
---             number of seven digits ("1-800-FLOWERS") is looked for as written, when its letter
---             number has three or more digits. In the text, digits are joined across spaces, dots,
---             brackets, plus signs, slashes and dashes (up to four in a row).
+--             without its area code, carries seven of its digits in a row. A value holding no number
+--             of seven digits is looked for by its six-digit number ("13 20 00"). A letter number
+--             ("1-800-FLOWERS", "0800 FLOWERS") is looked for as written when it has three or more
+--             digits. In the text, digits are joined across spaces, dots, brackets, plus signs,
+--             slashes and dashes (up to four in a row).
 --             NOT MATCHED: a number written in words, or in letters on one side only.
+--             ALSO HELD BACK, a named cost of reading wide: a different number that shares seven
+--             digits in a row with a stored one, typically the same area and exchange.
 --   website — By its host, without scheme, "www.", port or path, including any subdomain of it
 --             ("shop.example.com"); international hosts are read as written; a stored value holding
 --             prose or two addresses is read address by address.
@@ -70,24 +91,19 @@
 --             signed message; a longer domain that merely starts with the host; the same host in
 --             punycode. On a shared platform (a booking, social, map or link-page host, or Paige's
 --             own) the platform's host alone names nobody: a page there is matched by the host AND
---             its first path segment (two segments where the first is generic, as in
---             "linkedin.com/in/<name>"), and a bare platform host is not matched. A tenant's own
---             subdomain of such a platform ("acme.paigeagent.ai") is the tenant's host, matched as
---             one.
---
--- OWNER-PUT (interim rule (a), until the owner rules on (a)/(b)). A value that also appears in
--- owner_texts (what the owner typed on this turn) is not reported: the owner put it there. The
--- exemption is per value, never per kind: typing one stored address does not license another. For
--- a phone it is per seven-digit run, so a number the owner typed in one form and the draft carries
--- in another is still held back.
+--             its first path segment (two where the first is generic, as in
+--             "linkedin.com/in/<name>" or "paigeagent.ai/book/<calendar>"), and a bare platform host
+--             is not matched. A tenant's own subdomain of such a platform ("acme.paigeagent.ai") is
+--             the tenant's host, matched as one, unless its label is one the platform uses itself
+--             ("app", "business", "go", a country code).
 --
 -- AUTHORITY (§59). SECURITY DEFINER, because the private brief and the legal profile are closed to
--- browser callers. EXECUTE is service_role only and the body refuses every other caller, the
--- owner included: the tenant is resolved by the server that calls it, never by a browser, and no
--- signed-in caller gets an oracle for any tenant's stored facts. An unknown tenant is refused,
--- never read as "nothing stored". It reads only the tenant it is given and returns only kinds. All
--- five functions search pg_catalog first and pg_temp last, so no temporary type or function can
--- shadow what they use.
+-- browser callers, and because the spine's resolver is callable only from inside such a function.
+-- EXECUTE is service_role only and the body refuses every other caller, the owner included: the
+-- tenant is resolved by the server that calls it, never by a browser, and no signed-in caller gets
+-- an oracle for any tenant's stored facts. An unknown tenant is refused, never read as "nothing
+-- stored". It reads only the tenant it is given and returns only kinds. All five functions search
+-- pg_catalog first and pg_temp last, so no temporary type or function can shadow what they use.
 
 create or replace function public.outbound_fact_decode(p_text text)
 returns text
@@ -235,8 +251,7 @@ $$;
 
 create or replace function public.outbound_private_business_facts_found(
   p_tenant uuid,
-  p_texts text[],
-  p_owner_texts text[] default '{}'::text[]
+  p_texts text[]
 )
 returns text[]
 language plpgsql
@@ -255,21 +270,26 @@ declare
     'gumroad.com'];
   -- A subdomain label that is still the platform, not a tenant ("app.paigeagent.ai").
   c_shared_labels constant text[] := array[
-    'app', 'm', 'mobile', 'web', 'maps', 'sites', 'business', 'meetings', 'l', 'lm', 'go',
-    'en', 'uk', 'us', 'de', 'fr', 'es', 'it', 'ca', 'au'];
-  -- A first path segment that names a kind of page, not its owner ("linkedin.com/in/<name>").
+    'app', 'm', 'mobile', 'web', 'maps', 'sites', 'business', 'meetings', 'music', 'vm', 'l', 'lm',
+    'go', 'en', 'uk', 'us', 'de', 'fr', 'es', 'it', 'ca', 'au', 'nl', 'in', 'br', 'pt', 'ie', 'nz',
+    'za', 'mx', 'jp', 'se', 'no', 'dk', 'pl'];
+  -- A first path segment that names a kind of page, not its owner ("linkedin.com/in/<name>",
+  -- and Paige's own "/book/<calendar>", "/store/<tenant>", "/portal/<tenant>", "/f/<form>").
   c_generic_segments constant text[] := array[
     'in', 'company', 'school', 'showcase', 'shop', 'channel', 'c', 'user', 'pages', 'people',
-    'profile', 'biz', 'p', 'u', 'view', 'site', 's', 'l', 'maps', 'place', 'groups', 'events', 'e'];
+    'profile', 'biz', 'p', 'u', 'view', 'site', 's', 'l', 'maps', 'place', 'groups', 'events', 'e',
+    'book', 'store', 'portal', 'f', 'form', 'forms', 'join', 'sign', 'legal'];
   c_street_words constant text :=
     '(st|ave|rd|blvd|dr|ln|ct|pl|sq|ter|hwy|pkwy|cres|cl|cir|trl|gdns|gdn|gr|aly|str|way|row|walk|'
     || 'mews|loop|cottage|house|farm|lodge|hall|manor|barn|mill|tower|plaza|bldg|estate|wharf|quay|'
     || 'yard|park|centre|gate|parade)';
   c_secondary_words constant text := '(ste|apt|unit|fl|rm|lvl|bldg|flat)';
-  -- Words that on their own name a floor or a room, not a place.
+  -- Words that on their own name a floor or a room, not a place ("First Floor", "Suite 400",
+  -- "The Office"). A named house ("The Grange") is not one of them.
   c_room_words constant text :=
-    '(the|ground|lower|upper|basement|mezzanine|top|fl|lvl|ste|apt|unit|flat|rm|bldg|no|office|'
-    || 'studio|[0-9]+[a-z]?|[0-9]+(st|nd|rd|th))';
+    '(the|ground|lower|upper|basement|mezzanine|top|back|front|rear|fl|lvl|ste|apt|unit|flat|rm|'
+    || 'bldg|no|office|studio|workshop|shop|salon|clinic|lobby|reception|loft|annex|annexe|'
+    || '[0-9]+[a-z]?|[0-9]+(st|nd|rd|th))';
   v_brand jsonb;
   v_brief jsonb;
   v_patch jsonb;
@@ -277,15 +297,16 @@ declare
   v_legal public.tenant_legal_profile%rowtype;
   v_all text;
   v_raw text;
-  v_owner_raw text;
   v_scan text;
-  v_owner_scan text;
   v_text_street text;
-  v_owner_street text;
   v_text_digits text;
-  v_owner_digits text;
   v_text_alnum text;
-  v_owner_alnum text;
+  v_licensed_phone text := '';
+  v_licensed_phone_alnum text;
+  v_licensed_numbers text[] := '{}'::text[];
+  v_text_digits_masked text;
+  v_licensed_site text := '';
+  v_numbered_at integer;
   v_found text[] := '{}'::text[];
   v_towns text[];
   v_source text;
@@ -333,12 +354,8 @@ begin
   if btrim(v_raw) = '' then
     return v_found;
   end if;
-  -- The owner's text only ever exempts, so reading less of it only holds more back.
-  v_owner_raw := public.outbound_fact_decode(
-    left(coalesce(array_to_string(p_owner_texts, E'\n'), ''), c_max_text));
   -- As written (a link inside a tag is seen), and with tags as spaces ("Baker<br>Street").
   v_scan := v_raw || E'\n' || regexp_replace(v_raw, '<[^>]*>', ' ', 'g');
-  v_owner_scan := v_owner_raw || E'\n' || regexp_replace(v_owner_raw, '<[^>]*>', ' ', 'g');
 
   v_brief := coalesce(v_brand -> 'business_brief', '{}'::jsonb);
   v_patch := coalesce(v_brand -> 'business_brief_proposal' -> 'patch', '{}'::jsonb);
@@ -347,9 +364,23 @@ begin
   v_private := coalesce(v_private, '{}'::jsonb);
   select * into v_legal from public.tenant_legal_profile lp where lp.tenant_id = p_tenant;
 
+  -- What the owner supplied (owner ruling, 2026-09-28): a phone or website the owner confirmed in
+  -- Setup is theirs to share, so a draft carrying it passes. Whether it is confirmed is the spine's
+  -- one answer, business_identity_readiness(); the value licensed is the Setup record it names.
+  -- The registered address is never licensed: confirming it states a legal fact, not consent to
+  -- share it, and Setup records no "publicly shareable" state for it.
+  select coalesce(max(case when r.fact_key = 'business_phone' and r.state = 'owner_confirmed'
+                           and r.source = 'setup' then v_legal.support_phone end), ''),
+         coalesce(max(case when r.fact_key = 'website' and r.state = 'owner_confirmed'
+                           and r.source = 'setup' then v_legal.website_url end), '')
+  into v_licensed_phone, v_licensed_site
+  from public.business_identity_readiness(p_tenant) as r;
+  v_licensed_phone := public.outbound_fact_decode(v_licensed_phone);
+  v_licensed_phone_alnum := regexp_replace(lower(v_licensed_phone), '[^[:alnum:]]', '', 'g');
+  v_licensed_site := lower(public.outbound_fact_decode(v_licensed_site));
+
   -- ── Address ──────────────────────────────────────────────────────────────────────────────
   v_text_street := public.outbound_fact_street_text(v_scan);
-  v_owner_street := public.outbound_fact_street_text(v_owner_scan);
   v_towns := array(
     select btrim(public.outbound_fact_street_text(public.outbound_fact_decode(x)))
     from unnest(array[v_legal.registered_city, v_legal.registered_region,
@@ -375,19 +406,29 @@ begin
                                  '[,;|/\n\r]+|[[:space:]]+-[[:space:]]+') as p
       where btrim(p) <> '');
     v_count := coalesce(array_length(v_parts, 1), 0);
+    -- Where the numbered street line is. Every line after it names a town, district, county,
+    -- postcode or country, never the business.
+    v_numbered_at := coalesce((
+      select min(o) from unnest(v_parts) with ordinality as x(part, o)
+      where btrim(public.outbound_fact_street_text(x.part)) ~ '^[0-9]'), 0);
     for v_i in 1 .. v_count loop
       v_part := v_parts[v_i];
       v_norm := btrim(public.outbound_fact_street_text(v_part));
       v_words := string_to_array(v_norm, ' ');
       v_cands := '{}'::text[];
-      -- The line itself, unless it names only a floor, a room or a town.
+      -- The line itself, unless it names only a floor, a room or a town. In a single-line value
+      -- a line with no number is a town when it follows the numbered street line, or, with no
+      -- numbered line and three lines or more, when it is one of the last two. (So the first line
+      -- never is.)
       if length(v_norm) >= 6 and v_norm ~ '[[:alpha:]]'
-         and v_norm !~ '^the [a-z]+$'
          and exists (select 1 from unnest(v_words) as w where w !~ ('^' || c_room_words || '$'))
          and not (v_norm = any(v_towns))
          and (v_norm ~ '[0-9]'
               or (v_kind = 'street' and v_i = 1)
-              or (v_kind <> 'postal' and (v_kind <> 'single' or v_i <= v_count - 2)
+              or (v_kind <> 'postal'
+                  and (v_kind <> 'single'
+                       or (v_numbered_at > 0 and v_i < v_numbered_at)
+                       or (v_numbered_at = 0 and (v_count < 3 or v_i <= v_count - 2)))
                   and v_norm ~ ('[[:alnum:]] ' || c_street_words || '\M'))) then
         v_cands := v_cands || v_norm;
       end if;
@@ -421,8 +462,7 @@ begin
       end if;
       foreach v_cand in array v_cands loop
         continue when length(v_cand) < 6 or v_cand !~ '[[:alpha:]]';
-        if position(' ' || v_cand || ' ' in v_text_street) > 0
-           and position(' ' || v_cand || ' ' in v_owner_street) = 0 then
+        if position(' ' || v_cand || ' ' in v_text_street) > 0 then
           v_hit := true;
           exit sources;
         end if;
@@ -433,9 +473,36 @@ begin
 
   -- ── Phone ────────────────────────────────────────────────────────────────────────────────
   v_text_digits := public.outbound_fact_digit_runs(v_scan);
-  v_owner_digits := public.outbound_fact_digit_runs(v_owner_scan);
   v_text_alnum := regexp_replace(lower(v_scan), '[^[:alnum:]]', '', 'g');
-  v_owner_alnum := regexp_replace(lower(v_owner_scan), '[^[:alnum:]]', '', 'g');
+  -- The confirmed number is the owner's to share however the draft writes it, so every
+  -- occurrence of it is taken out of the draft before any other stored number is looked for.
+  -- It is recognised by its national number: as stored, less a trunk 0, or, when stored with its
+  -- country code, less a country code of one, two or three digits (which also covers "+44 (0)").
+  -- What is left of a prefix ("44", "0") is shorter than any number looked for.
+  for v_run in
+    select m[1]
+    from regexp_matches(v_licensed_phone, '([+]?[0-9](?:[ ().+/-]{0,4}[0-9])*)', 'g') as m
+  loop
+    v_digits := regexp_replace(v_run, '[^0-9]', '', 'g');
+    continue when length(v_digits) < 7;
+    if v_run ~ '^[+]' or v_digits ~ '^00' then
+      v_digits := regexp_replace(v_digits, '^00', '');
+      for v_j in 1 .. 3 loop
+        if length(v_digits) - v_j >= 7 then
+          v_licensed_numbers := v_licensed_numbers || substr(v_digits, v_j + 1);
+        end if;
+      end loop;
+    else
+      v_licensed_numbers := v_licensed_numbers || v_digits;
+      if v_digits ~ '^0' and length(v_digits) >= 8 then
+        v_licensed_numbers := v_licensed_numbers || substr(v_digits, 2);
+      end if;
+    end if;
+  end loop;
+  v_text_digits_masked := v_text_digits;
+  foreach v_key in array v_licensed_numbers loop
+    v_text_digits_masked := replace(v_text_digits_masked, v_key, ' ');
+  end loop;
   v_hit := false;
   <<phones>>
   for v_source in
@@ -455,20 +522,32 @@ begin
       v_any_number := true;
       for v_j in 1 .. length(v_digits) - 6 loop
         v_seven := substr(v_digits, v_j, 7);
-        if position(v_seven in v_text_digits) > 0 and position(v_seven in v_owner_digits) = 0 then
+        if position(v_seven in v_text_digits_masked) > 0 then
           v_hit := true;
           exit phones;
         end if;
       end loop;
     end loop;
-    continue when v_any_number;
-    -- No number of seven digits: a letter number, looked for as written.
+    -- A short number ("13 20 00") when the value holds no longer one.
+    if not v_any_number then
+      for v_run in
+        select m[1] from regexp_matches(v_value, '([0-9](?:[ ().+/-]{0,4}[0-9])*)', 'g') as m
+      loop
+        v_digits := regexp_replace(v_run, '[^0-9]', '', 'g');
+        continue when length(v_digits) <> 6;
+        if position(' ' || v_digits || ' ' in v_text_digits_masked) > 0 then
+          v_hit := true;
+          exit phones;
+        end if;
+      end loop;
+    end if;
+    -- A letter number ("1-800-FLOWERS", "0800 FLOWERS"), looked for as written.
     for v_key in
       select regexp_replace(m[1], '[^[:alnum:]]', '', 'g')
-      from regexp_matches(v_value, '([0-9][0-9a-z.-]*[a-z][0-9a-z.-]*)', 'g') as m
+      from regexp_matches(v_value, '([0-9][0-9 .-]*[a-z]{2,}[0-9]*)', 'g') as m
     loop
       continue when length(v_key) < 6 or length(regexp_replace(v_key, '[^0-9]', '', 'g')) < 3;
-      if position(v_key in v_text_alnum) > 0 and position(v_key in v_owner_alnum) = 0 then
+      if position(v_key in v_text_alnum) > 0 and position(v_key in v_licensed_phone_alnum) = 0 then
         v_hit := true;
         exit phones;
       end if;
@@ -522,7 +601,7 @@ begin
         v_pattern := '(^|[^[:alnum:]@._-])([[:alnum:]-]+\.)*' || replace(v_host, '.', '\.')
           || '($|[^[:alnum:]._-]|\.($|[^[:alnum:]_-]))';
       end if;
-      if lower(v_scan) ~ v_pattern and lower(v_owner_scan) !~ v_pattern then
+      if lower(v_scan) ~ v_pattern and v_licensed_site !~ v_pattern then
         v_hit := true;
         exit websites;
       end if;
@@ -534,12 +613,12 @@ begin
 end;
 $$;
 
-comment on function public.outbound_private_business_facts_found(uuid, text[], text[]) is
-  'A1: which of the tenant''s registered address, business phone and website appear in customer-bound texts. Returns kinds only; a value the owner typed (owner_texts) is exempt, per value. Service-only; unknown tenants and over-long text are refused; the caller refuses the draft on any finding or error.';
+comment on function public.outbound_private_business_facts_found(uuid, text[]) is
+  'A1: which of the tenant''s registered address, business phone and website appear in customer-bound texts, other than a phone or website the owner confirmed in Setup (business_identity_readiness). Returns kinds only. Service-only; unknown tenants and over-long text are refused; the caller refuses the draft on any finding or error.';
 
 revoke all on function public.outbound_fact_decode(text) from public, anon, authenticated;
 revoke all on function public.outbound_fact_street_text(text) from public, anon, authenticated;
 revoke all on function public.outbound_fact_digit_runs(text) from public, anon, authenticated;
 revoke all on function public.outbound_fact_website_host(text) from public, anon, authenticated;
-revoke all on function public.outbound_private_business_facts_found(uuid, text[], text[]) from public, anon, authenticated;
-grant execute on function public.outbound_private_business_facts_found(uuid, text[], text[]) to service_role;
+revoke all on function public.outbound_private_business_facts_found(uuid, text[]) from public, anon, authenticated;
+grant execute on function public.outbound_private_business_facts_found(uuid, text[]) to service_role;

@@ -71,6 +71,8 @@ export function MemberConversations({ scopeKey }: { scopeKey: string }) {
   const [opening, setOpening] = useState(false);
   const [opened, setOpened] = useState<OpenedThread | null>(null);
   const generation = useRef(0);
+  // Moves on every workspace change: a reply begun in one workspace is never shown in the next.
+  const scopeEpoch = useRef(0);
   // Both dialogs open from a row, not from a trigger Radix knows, so focus is handed back by hand:
   // after Cancel, or after the conversation is closed, the keyboard is where it was.
   const returnFocus = useRef<HTMLElement | null>(null);
@@ -97,15 +99,22 @@ export function MemberConversations({ scopeKey }: { scopeKey: string }) {
     setExpanded(false);
     setPending(null);
     setOpened(null);
+    setOpening(false);
     void load();
-    return () => { generation.current += 1; };
+    return () => {
+      generation.current += 1;
+      scopeEpoch.current += 1;
+    };
   }, [load, scopeKey]);
 
   const open = useCallback(async () => {
     if (!pending || opening) return;
     setOpening(true);
+    const epoch = scopeEpoch.current;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase as any).rpc("operator_open_member_thread", { _thread_id: pending.thread_id });
+    // The workspace changed while this was in flight: its conversation belongs to the one left.
+    if (epoch !== scopeEpoch.current) return;
     setOpening(false);
     const who = pending.owner_name;
     setPending(null);

@@ -9,6 +9,7 @@ const h = vi.hoisted(() => ({
   listResult: { data: [] as unknown[], error: null as null | { message: string } },
   openResult: { data: null as unknown, error: null as null | { message: string } },
   calls: [] as Array<{ name: string; args?: unknown }>,
+  openGate: null as null | Promise<unknown>,
   toasts: [] as string[],
 }));
 
@@ -17,7 +18,7 @@ vi.mock("@/integrations/supabase/client", () => ({
     rpc: (name: string, args?: unknown) => {
       h.calls.push({ name, args });
       if (name === "operator_list_member_threads") return Promise.resolve(h.listResult);
-      if (name === "operator_open_member_thread") return Promise.resolve(h.openResult);
+      if (name === "operator_open_member_thread") return h.openGate ?? Promise.resolve(h.openResult);
       return Promise.resolve({ data: null, error: null });
     },
   },
@@ -51,6 +52,7 @@ beforeEach(() => {
   h.openResult = { data: null, error: null };
   h.calls.length = 0;
   h.toasts.length = 0;
+  h.openGate = null;
 });
 afterEach(() => {
   act(() => root.unmount());
@@ -114,5 +116,24 @@ describe("members' conversations", () => {
     await act(async () => { byText("Open conversation")!.click(); await Promise.resolve(); });
     expect(h.toasts[0]).toContain("no longer acting as this workspace");
     expect(document.body.textContent).not.toContain("conversation with PAIGE");
+  });
+
+  it("drops an open that answers after the workspace changed", async () => {
+    let answer!: (value: unknown) => void;
+    h.openGate = new Promise((resolve) => { answer = resolve; });
+    await mount();
+    await act(async () => { byText("Members' conversations")!.click(); });
+    await act(async () => { byText("Test Member")!.click(); });
+    await act(async () => { byText("Open conversation")!.click(); await Promise.resolve(); });
+    // The operator moves to another workspace while the open for this one is still in flight.
+    await act(async () => { root.render(<MemberConversations scopeKey="tenant-b" />); });
+    await act(async () => {
+      answer({ data: { threadId: "thread-1", ownerName: "Test Member", turns: [
+        { role: "user", content: "workspace A question", createdAt: "2026-09-28T00:00:00Z" },
+      ] }, error: null });
+      await Promise.resolve();
+    });
+    expect(document.body.textContent).not.toContain("workspace A question");
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
   });
 });

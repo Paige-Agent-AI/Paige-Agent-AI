@@ -46,7 +46,9 @@ describe("immutable tenant-scoped client identity contract", () => {
   it("keeps MCP contact reads tenant-scoped and metadata-limited", () => {
     const mcp = read("supabase/functions/paige-mcp/index.ts");
     expect(mcp).toContain("client_ref");
-    expect(mcp).toContain('.select("account_number, first_name, last_name, email, phone, entity_name');
+    // A contact's addresses are read through its contact methods, never the single legacy pair.
+    expect(mcp).toContain(".select(`account_number, first_name, last_name, entity_name, lifecycle_stage, status, source, tags, last_contacted_at, created_at, updated_at, ${CONTACT_METHOD_SELECT}`)");
+    expect(mcp).toContain('const CONTACT_METHOD_SELECT = "client_contact_methods(kind, value, label, is_primary, position)";');
   });
 
   it("routes authenticated manual creates through the server contract", () => {

@@ -27,41 +27,20 @@
 --   * `operator_list_member_threads()` lets that operator see that such threads exist (whose, how
 --     long, when last active) without their titles, which are derived from the first message.
 --
--- WHAT DOES NOT CHANGE: INSERT/UPDATE policies (self only); the RESTRICTIVE tenant isolation; the
--- DELETE policy's text (its platform branch now reaches only rows the SELECT policy admits, so a
--- super_admin can no longer delete a member's private thread they cannot see); every SECURITY
--- DEFINER writer (they keep their own owner checks).
+-- WHAT ELSE CHANGES: the DELETE policy's platform branch reaches only contact-bound threads, so a
+-- super_admin cannot delete a member's private thread. Studio-session threads (which the panel lists
+-- in the Studio gallery, not here) are outside the member list and the open.
+--
+-- WHAT DOES NOT CHANGE: INSERT/UPDATE policies (self only); the RESTRICTIVE tenant isolation; every
+-- SECURITY DEFINER writer (they keep their own owner checks).
+--
+-- NOT CLOSED HERE, reported to the owner: paige_llm_trace.input_excerpt keeps request messages and
+-- its read policy is tenant-wide, so conversation text is still readable there by workspace members.
 
--- An act-as the audit trail backs: the caller's pointer, with an operator.tenant.enter receipt for
--- it that no exit has followed. NULL when there is none. The pointer alone is not proof: an
--- operator can update their own profile row.
-CREATE OR REPLACE FUNCTION public.operator_open_act_as_tenant()
-RETURNS uuid
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path TO 'public'
-AS $function$
-  select p.active_tenant_id
-  from public.profiles p
-  where p.user_id = auth.uid()
-    and p.active_tenant_id is not null
-    and exists (
-      select 1 from public.paige_audit_log e
-      where e.actor_user_id = auth.uid()
-        and e.action = 'operator.tenant.enter'
-        and e.target_id = p.active_tenant_id
-        and not exists (
-          select 1 from public.paige_audit_log x
-          where x.actor_user_id = auth.uid()
-            and x.action = 'operator.tenant.exit'
-            and x.target_id = e.target_id
-            and x.created_at >= e.created_at
-        )
-    )
-$function$;
-
-REVOKE ALL ON FUNCTION public.operator_open_act_as_tenant() FROM PUBLIC, anon, authenticated;
+-- The open act-as comes from operator_open_act_as_tenant(), defined by 20270513000000 (#1554): the
+-- operator's pointer, where their most recent operator.tenant.enter/exit receipt is an enter for that
+-- workspace, and receipts are server-written only. One home for "is this act-as real" (§18); this
+-- migration therefore needs #1554's applied first, which its version order guarantees.
 
 DROP POLICY IF EXISTS threads_select_owner_or_admin ON public.paige_chat_threads;
 CREATE POLICY threads_select_owner_or_admin ON public.paige_chat_threads
@@ -71,6 +50,15 @@ CREATE POLICY threads_select_owner_or_admin ON public.paige_chat_threads
     OR ((tenant_id = current_user_tenant_id())
         AND ((caller_user_id = auth.uid()) OR ((contact_id IS NOT NULL) AND is_tenant_admin(tenant_id))))
   );
+
+-- The platform branch of DELETE reaches only contact-bound threads. Postgres checks the SELECT
+-- policy on a DELETE only when the statement reads a column, so a bare DELETE would otherwise still
+-- reach a member's private thread (independent review; PostgREST's safeupdate blocks it on the web
+-- API, but the policy should not lean on that).
+DROP POLICY IF EXISTS threads_delete_owner_or_platform ON public.paige_chat_threads;
+CREATE POLICY threads_delete_owner_or_platform ON public.paige_chat_threads
+  FOR DELETE TO authenticated
+  USING (caller_user_id = auth.uid() OR (is_platform_owner() AND contact_id IS NOT NULL));
 
 DROP POLICY IF EXISTS turns_select_via_thread ON public.paige_chat_turns;
 CREATE POLICY turns_select_via_thread ON public.paige_chat_turns
@@ -125,6 +113,7 @@ begin
     left join public.profiles pr on pr.user_id = t.caller_user_id
     where t.tenant_id = v_tenant
       and t.contact_id is null
+      and t.studio_session_id is null
       and t.caller_user_id is distinct from auth.uid()
       and coalesce(t.is_archived, false) = false
     order by t.last_message_at desc nulls last, t.created_at desc;
@@ -161,6 +150,7 @@ begin
   if not found
      or v_thread.tenant_id is distinct from v_tenant
      or v_thread.contact_id is not null
+     or v_thread.studio_session_id is not null
      or v_thread.caller_user_id is not distinct from auth.uid() then
     -- One answer for "no such thread", "another workspace's" and "not a member's private thread",
     -- so the refusal says nothing about threads the caller may not see.

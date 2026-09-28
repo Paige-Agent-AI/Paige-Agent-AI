@@ -113,7 +113,9 @@ export function MemberConversations({ scopeKey }: { scopeKey: string }) {
       const message = String(error.message ?? "");
       if (/operator_not_acting/.test(message)) toast.error("You're no longer acting as this workspace, so the conversation wasn't opened.");
       else if (/member_thread_not_available/.test(message)) toast.error(`${who}'s conversation isn't available any more.`);
-      else toast.error(`Couldn't open ${who}'s conversation. Try again.`);
+      // The server may have recorded the open before the reply was lost, so this cannot say it
+      // wasn't; opening again records another open, which is the truth of what happened.
+      else toast.error(`Paige couldn't confirm ${who}'s conversation opened. If it did, the open was recorded. Try again.`);
       void load();
       return;
     }

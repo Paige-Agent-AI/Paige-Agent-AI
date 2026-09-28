@@ -2,7 +2,7 @@
 -- purpose, and recorded when opened (owner ruling 2026-09-28, after a super_admin acting as a
 -- workspace was shown a member's conversation as their own). Synthetic fixtures; rolled back.
 BEGIN;
-SELECT plan(24);
+SELECT plan(27);
 
 INSERT INTO auth.users (id, aud, role, email) VALUES
   ('0a5c0000-0000-4000-8000-000000000001','authenticated','authenticated','threads-super@tests.invalid'),
@@ -41,6 +41,14 @@ INSERT INTO public.paige_chat_threads (id, tenant_id, caller_user_id, lens, titl
    '0a5c0000-0000-4000-8000-000000000004','coach','Other workspace title',NULL,1,now()),
   ('0a5c0000-0000-4000-8000-0000000000f3','0a5c0000-0000-4000-8000-00000000a001',
    '0a5c0000-0000-4000-8000-000000000001','coach','Operator own title',NULL,0,now());
+-- A member's Studio-session thread: it lives in the Studio gallery, so it is neither listed nor
+-- openable here.
+INSERT INTO public.studio_sessions (id, tenant_id) VALUES
+  ('0a5c0000-0000-4000-8000-0000000000e1','0a5c0000-0000-4000-8000-00000000a001');
+INSERT INTO public.paige_chat_threads (id, tenant_id, caller_user_id, lens, title, message_count, last_message_at, studio_session_id) VALUES
+  ('0a5c0000-0000-4000-8000-0000000000f4','0a5c0000-0000-4000-8000-00000000a001',
+   '0a5c0000-0000-4000-8000-000000000003','coach','Member studio session',1,now(),
+   '0a5c0000-0000-4000-8000-0000000000e1');
 INSERT INTO public.paige_chat_turns (thread_id, role, content) VALUES
   ('0a5c0000-0000-4000-8000-0000000000f1','user','member question'),
   ('0a5c0000-0000-4000-8000-0000000000f1','assistant','paige answer to the member');
@@ -64,7 +72,7 @@ SELECT ok(NOT has_function_privilege('anon','public.operator_open_member_thread(
 SELECT ok(NOT has_function_privilege('anon','public.operator_list_member_threads()','EXECUTE'),
   'the member list is not callable anonymously');
 SELECT ok(NOT has_function_privilege('authenticated','public.operator_open_act_as_tenant()','EXECUTE'),
-  'the act-as receipt helper is not a door of its own');
+  'the act-as receipt helper (from #1554) is not a door of its own');
 
 SET LOCAL ROLE authenticated;
 
@@ -106,13 +114,20 @@ SELECT is(jsonb_array_length(public.operator_open_member_thread('0a5c0000-0000-4
 SELECT is(pg_temp.opens(), 1, 'opening it records one operator.thread.open');
 SELECT throws_ok($$SELECT public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f2')$$,
   'P0002', 'member_thread_not_available', 'a thread in another workspace cannot be opened');
+SELECT throws_ok($$SELECT public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f4')$$,
+  'P0002', 'member_thread_not_available', 'a member''s Studio-session thread is not opened here');
 SELECT throws_ok($$SELECT public.operator_open_member_thread('0a5c0000-0000-4000-8000-0000000000f3')$$,
   'P0002', 'member_thread_not_available', 'the open is only for other people''s private threads');
 
--- A delete cannot reach a thread the operator cannot see.
+-- A delete cannot reach a thread the operator cannot see — filtered or bare.
 DELETE FROM public.paige_chat_threads WHERE id = '0a5c0000-0000-4000-8000-0000000000f1';
 SELECT ok(pg_temp.thread_exists('0a5c0000-0000-4000-8000-0000000000f1'),
   'the operator cannot delete the member''s private thread');
+DELETE FROM public.paige_chat_threads WHERE true;
+SELECT ok(pg_temp.thread_exists('0a5c0000-0000-4000-8000-0000000000f1'),
+  'a delete that reads no column still cannot reach the member''s private thread');
+SELECT ok(NOT pg_temp.thread_exists('0a5c0000-0000-4000-8000-0000000000f3'),
+  'the operator''s own thread is still theirs to delete');
 
 -- Not acting: nothing to open. A self-set pointer is not an act-as.
 SELECT ok((public.operator_exit_tenant() ->> 'exited')::boolean IS NOT FALSE, 'the super_admin exits');

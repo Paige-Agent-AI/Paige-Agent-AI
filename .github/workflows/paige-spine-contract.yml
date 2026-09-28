@@ -276,9 +276,21 @@ jobs:
         if: ${{ !cancelled() }}
       - run: supabase test db supabase/tests/title_role_grant_paths_closed.sql
         if: ${{ !cancelled() }}
+      - run: supabase test db supabase/tests/title_role_value_forbidden.sql
+        if: ${{ !cancelled() }}
+      - run: supabase test db supabase/tests/title_role_read_nowhere.sql
+        if: ${{ !cancelled() }}
+      # A tenant-less operator's semantic memory recall matches their own NULL-tenant rows (R5), and
+      # a NULL tenant never reaches another user's rows or anyone's in-tenant rows.
+      - run: supabase test db supabase/tests/owner_memory_recall_no_tenant.sql
+        if: ${{ !cancelled() }}
       # One server answer to "is this person a platform operator, and at which tier", and the R0
       # capability table behind "may this operator do X", including its super_admin-only default.
       - run: supabase test db supabase/tests/operator_standing.sql
+        if: ${{ !cancelled() }}
+      # One act-as at a time, decided on the server: an enter over an open act-as is refused, and a
+      # repeated enter or exit (a second tab, a second press) writes no second receipt (#1547).
+      - run: supabase test db supabase/tests/operator_act_as_one_at_a_time.sql
         if: ${{ !cancelled() }}
       - run: psql -v ON_ERROR_STOP=1 -f scripts/sql/social-foundation-legacy-shape-proof.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
       - run: psql -v ON_ERROR_STOP=1 -f scripts/sql/social-foundation-tenant-shaped-proof.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres

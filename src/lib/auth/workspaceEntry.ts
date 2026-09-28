@@ -275,6 +275,80 @@ export function workspaceRootForTenant(tenant: {
 export const WORKSPACE_ENTERED_KEY = "paige.workspace.entered";
 
 /**
+ * A one-time notice for the workspace a person just arrived in. The page that switched cannot show
+ * it (a full load ends that page), so the destination's account control drains it once on mount.
+ * The operator act-as uses it to say, on arrival, that the session is recorded.
+ */
+export const ACCOUNT_SWITCH_NOTICE_KEY = "paige.accountSwitch.notice";
+
+/**
+ * This browser tab holds an operator act-as, for the named user, that the server last confirmed.
+ * Written only by the tenant provider: on a successful audited enter, and on every successful
+ * account load, where it is reset to the server's own answer (an operator's active tenant, or
+ * nothing). Cleared on a successful exit and on sign-out. It grants nothing: it decides whether a
+ * destination that could not load its account context still offers that same user the audited
+ * exit, because at that moment the provider cannot tell an operator from a member.
+ */
+export const OPERATOR_ACT_AS_KEY = "paige.operator.actingAs";
+
+export function recordOperatorActAs(userId: string, tenantId: string): void {
+  try {
+    sessionStorage.setItem(OPERATOR_ACT_AS_KEY, JSON.stringify({ userId, tenantId }));
+  } catch {
+    // Unavailable storage only means a stranded destination offers "Try again" alone.
+  }
+}
+
+export function forgetOperatorActAs(): void {
+  try {
+    sessionStorage.removeItem(OPERATOR_ACT_AS_KEY);
+  } catch {
+    // Best-effort, as above.
+  }
+}
+
+/**
+ * Where storage cannot hold the record — blocked by policy, a store that accepts writes and reads
+ * back nothing, or one with room for a small value but not this one — the console puts this flag on
+ * the arrival address instead, so the one load that can strand an operator still knows an act-as is
+ * open. The decision reads back the ACTUAL record for this user, never a smaller probe. The flag's
+ * value is the operator's own user id, so a flag that survives a sign-out redirect offers nothing to
+ * whoever signs in next. Like the record, it grants nothing: the server gates the exit.
+ */
+export const OPERATOR_ARRIVAL_PARAM = "acting-as";
+
+/** The arrival address for an act-as: flagged, with its operator, unless their record reads back. */
+export function operatorArrivalAddress(root: string, userId: string | null | undefined): string {
+  if (!userId || storedOperatorActAs(userId)) return root;
+  return `${root}?${OPERATOR_ARRIVAL_PARAM}=${encodeURIComponent(userId)}`;
+}
+
+function storedOperatorActAs(userId: string): boolean {
+  try {
+    const raw = sessionStorage.getItem(OPERATOR_ACT_AS_KEY);
+    if (!raw) return false;
+    const held = JSON.parse(raw) as { userId?: unknown; tenantId?: unknown };
+    return held.userId === userId && typeof held.tenantId === "string" && held.tenantId.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Does this tab hold an act-as for THIS user — their stored record, or, where it could not be
+ * stored, their own arrival flag? Another user's record or flag, or a malformed one, is none.
+ */
+export function operatorActAsRecorded(userId: string | null | undefined): boolean {
+  if (!userId) return false;
+  if (storedOperatorActAs(userId)) return true;
+  try {
+    return new URLSearchParams(window.location.search).get(OPERATOR_ARRIVAL_PARAM) === userId;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * A SECOND-CHANCE settlement marker on the URL, for the one case the session
  * record cannot cover: storage that throws.
  *

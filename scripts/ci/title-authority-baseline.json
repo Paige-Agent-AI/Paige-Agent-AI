@@ -12,7 +12,12 @@
     "NOT work identity. A column added to either table under any name fails (R6) until it is",
     "classified in the same PR: into WORK_IDENTITY_BY_TABLE in the guard if it describes what a person",
     "does or is called, otherwise into this list. A pinned column that is no longer live fails (R4).",
-    "Run `npm run lint:title-authority`."
+    "Run `npm run lint:title-authority`.",
+    "retired_role_sql / retired_role_ts (R7) name the only places allowed to name the retired title role",
+    "\"coach\" beside a role word: code that reads the value only to refuse it or to remove it, and code a",
+    "reviewer confirmed uses it as data, not as a role (an assignment seat label). Each is pinned to the body",
+    "a reviewer read (sql: defined_in + fingerprint; ts: path + fingerprint of the statement). A changed body",
+    "fails (R4) until re-read; an entry that stops matching fails (R4), so the lists only shrink."
   ],
   "sql": [
     {
@@ -94,5 +99,47 @@
       "archived_at"
     ]
   },
-  "ts": []
+  "ts": [],
+  "retired_role_sql": [
+    {
+      "function": "public.accept_invitation(text, uuid)",
+      "reason": "Refuses an invitation that carries the retired role before any role is written.",
+      "defined_in": "20270506000000_close_title_role_grant_paths.sql",
+      "fingerprint": "8fb3b591476d8fec"
+    },
+    {
+      "function": "public.grant_tenant_member_role(uuid, app_role, uuid, text)",
+      "reason": "Refuses a grant of the retired role by name before any write.",
+      "defined_in": "20270508000000_forbid_title_role_value.sql",
+      "fingerprint": "2e68e23b91930d58"
+    },
+    {
+      "function": "public.revoke_tenant_member_role(uuid, app_role, uuid, text)",
+      "reason": "Refuses a revoke of the retired role by name before any write, so the seat resync never runs for a value no row can hold.",
+      "defined_in": "20270511000000_no_row_holds_the_retired_title_role.sql",
+      "fingerprint": "9731c60a67422df8"
+    }
+  ],
+  "retired_role_ts": [
+    {
+      "path": "src/pages/admin/conversations/ContactCardRail.tsx",
+      "fingerprint": "d3a5ef9c90187495",
+      "reason": "The assignment SEAT label passed to assign_contact (p_role), a data value naming which seat an assignment fills; it grants nothing and reads no role."
+    },
+    {
+      "path": "supabase/functions/_shared/capability-kit/permission.ts",
+      "fingerprint": "ec8b2ed3099e9cf5",
+      "reason": "A refusal: the set of role-name literals that may never be used as an owner-grantable capability permission."
+    },
+    {
+      "path": "supabase/functions/accept-invite/index.ts",
+      "fingerprint": "49fb077635d7e0f0",
+      "reason": "A refusal: RETIRED_ROLES lists the values an invitation may not carry; the invitation is refused before any role is written."
+    },
+    {
+      "path": "supabase/functions/paige-ai-chat/index.ts",
+      "fingerprint": "0a192c7d43afdffd",
+      "reason": "The default assignment SEAT label passed to assign_contact (p_role), a data value naming which seat an assignment fills; it grants nothing and reads no role."
+    }
+  ]
 }

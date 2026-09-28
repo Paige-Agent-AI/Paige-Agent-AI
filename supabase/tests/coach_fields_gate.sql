@@ -34,9 +34,9 @@ INSERT INTO public.profiles(user_id,active_tenant_id,coach_specialties,coach_cap
 
 INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner,joined_at) VALUES
  ('c0000000-0000-0000-0000-000000001111','c0000000-0000-0000-0000-0000000000a1','admin','active',false,now()),
- ('c0000000-0000-0000-0000-000000001111','c0000000-0000-0000-0000-0000000000c1','coach','active',false,now()),
- ('c0000000-0000-0000-0000-000000001111','c0000000-0000-0000-0000-0000000000c2','coach','active',false,now()),
- ('c0000000-0000-0000-0000-000000002222','c0000000-0000-0000-0000-0000000000c3','coach','active',false,now());
+ ('c0000000-0000-0000-0000-000000001111','c0000000-0000-0000-0000-0000000000c1','member','active',false,now()),
+ ('c0000000-0000-0000-0000-000000001111','c0000000-0000-0000-0000-0000000000c2','member','active',false,now()),
+ ('c0000000-0000-0000-0000-000000002222','c0000000-0000-0000-0000-0000000000c3','member','active',false,now());
 
 DO $t$
 DECLARE _n int; _blocked boolean;

@@ -171,7 +171,7 @@ vi.mock("@/solo/SoloGamePlanWorkspace", () => ({
     </output>
   ),
 }));
-vi.mock("@/lib/auth/signOut", () => ({ performSignOut: vi.fn() }));
+vi.mock("@/lib/auth/signOut", () => ({ performSignOut: vi.fn(), registerSignOutActAsGuard: vi.fn(() => () => undefined) }));
 
 const emptyCoreData = {
   greeting: { name: "Owner", dateLabel: "Today", summary: "Nothing waiting." },

@@ -339,16 +339,6 @@
       "receipt": "seeded_undeclared"
     },
     {
-      "tool": "coach_grant_role_globally",
-      "risk": "high",
-      "receipt": "seeded_undeclared"
-    },
-    {
-      "tool": "coach_revoke_role_globally",
-      "risk": "high",
-      "receipt": "seeded_undeclared"
-    },
-    {
       "tool": "coach_update_profile",
       "risk": "high",
       "receipt": "seeded_undeclared"

@@ -65,7 +65,8 @@ async function handleExpiredSession() {
   // auth page (§9); staff (no cached slug) fall back to /auth.
   const expiredTarget = readCachedPortalTarget() ?? "/auth";
   setTimeout(() => {
-    performSignOut({ redirectTo: expiredTarget, scope: "local" });
+    // The session is already invalid: no request can reach the server, so no act-as check.
+    performSignOut({ redirectTo: expiredTarget, scope: "local", actAs: "skip" });
   }, 250);
 }
 
@@ -213,7 +214,8 @@ export function GlobalAuthSessionManager() {
         // the user is not trapped in a stale authenticated loading loop.
         forcedLogoutHandledRef.current = true;
         toast.error("Your session was reset — please sign in again.");
-        await performSignOut({ redirectTo: readCachedPortalTarget() ?? "/auth", scope: "local" });
+        // Server-side sessions were already revoked: no act-as check can reach the server.
+        await performSignOut({ redirectTo: readCachedPortalTarget() ?? "/auth", scope: "local", actAs: "skip" });
       } catch {
         // Non-blocking: ordinary auth/session handling still applies.
       }

@@ -168,7 +168,7 @@ INSERT INTO public.tenants(id,name,account_type) VALUES
   ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','Tenant B','standalone');
 INSERT INTO public.tenant_members(tenant_id,user_id,role,status) VALUES
   ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','11111111-1111-1111-1111-111111111111','owner','active'),
-  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','33333333-3333-3333-3333-333333333333','coach','active'),
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','33333333-3333-3333-3333-333333333333','member','active'),
   ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','55555555-5555-5555-5555-555555555555','owner','active');
 
 -- ── APPLY THE REAL MIGRATIONS, IN ORDER, EACH TWICE (clean + replay). The first

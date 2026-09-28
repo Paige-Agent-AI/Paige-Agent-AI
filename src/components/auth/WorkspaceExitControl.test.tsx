@@ -18,6 +18,16 @@ const h = vi.hoisted(() => ({
     tenants: [] as Tenant[],
     isPlatformStaff: false,
     activeTenantId: "a" as string | null,
+    activeTenant: null as Tenant | null,
+    switchTenant: (async () => true) as (id: string | null) => Promise<boolean>,
+    exitOperatorActAsFrom: (async () => "exited") as (id: string) => Promise<"exited" | "refused" | "moved">,
+  },
+  toasts: [] as string[],
+}));
+vi.mock("sonner", () => ({
+  toast: {
+    error: (m: string) => { h.toasts.push(m); },
+    success: (m: string) => { h.toasts.push(m); },
   },
 }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => h.ctx }));
@@ -40,6 +50,10 @@ describe("WorkspaceExitControl", () => {
     h.ctx.tenants = [active("a"), active("b")];
     h.ctx.isPlatformStaff = false;
     h.ctx.activeTenantId = "a";
+    h.ctx.activeTenant = active("a");
+    h.ctx.switchTenant = vi.fn(async () => true);
+    h.ctx.exitOperatorActAsFrom = vi.fn(async () => "exited" as const);
+    h.toasts = [];
     host = document.createElement("div");
     document.body.appendChild(host);
     root = createRoot(host);
@@ -62,6 +76,7 @@ describe("WorkspaceExitControl", () => {
     });
     return {
       button: Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Switch workspace")),
+      exit: () => Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Exit tenant")),
       location: () => host.querySelector("[data-loc]")?.getAttribute("data-loc") ?? null,
     };
   }
@@ -141,5 +156,100 @@ describe("WorkspaceExitControl", () => {
     await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
     expect(location()).toBe("/choose-account");
     release();
+  });
+
+  // THE ACT-AS DEFECT (2026-09-27). An operator who entered a tenant had no control that ended
+  // the act-as: Solo offered only the chooser detour, the sub-account shell offered nothing that
+  // exited. An operator inside a tenant must always have a visible way out that records the exit.
+  describe("a platform operator acting as a tenant", () => {
+    beforeEach(() => {
+      h.ctx.isPlatformStaff = true;
+      h.ctx.activeTenantId = "a";
+    });
+
+    it("shows Exit tenant, and keeps Switch workspace beside it", async () => {
+      const { button, exit } = await render();
+      expect(exit()).toBeTruthy();
+      // The shell keeps exactly this control visible on a phone (tenant-command-center-shell.css).
+      expect(exit()?.hasAttribute("data-operator-exit")).toBe(true);
+      expect(button?.hasAttribute("data-operator-exit")).toBe(false);
+      expect(exit()?.getAttribute("aria-label")).toBe("Stop acting as Workspace a and return to the platform");
+      expect(button).toBeTruthy();
+    });
+
+    it("exits through the audited seam and returns to the console", async () => {
+      const { exit, location } = await render();
+      await act(async () => { exit()?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      // The exit names the tenant this shell shows (Codex review of 2484540d).
+      expect(h.ctx.exitOperatorActAsFrom).toHaveBeenCalledTimes(1);
+      expect(h.ctx.exitOperatorActAsFrom).toHaveBeenCalledWith("a");
+      expect(location()).toBe("/operator/fleet/directory");
+    });
+
+    it("stays put and keeps the exit when the exit is refused", async () => {
+      h.ctx.exitOperatorActAsFrom = vi.fn(async () => "refused" as const);
+      const { exit, location } = await render();
+      await act(async () => { exit()?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(location()).toBe("/solo/1/command-center");
+      expect(exit()?.textContent).toContain("Exit tenant");
+      expect(exit()?.hasAttribute("disabled")).toBe(false);
+    });
+
+    // Codex review of 2484540d: a stale tab must not end an act-as another tab opened since.
+    it("ends nothing and says so when another tenant's act-as is open now", async () => {
+      h.ctx.exitOperatorActAsFrom = vi.fn(async () => "moved" as const);
+      const { exit, location } = await render();
+      await act(async () => { exit()?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(location()).toBe("/solo/1/command-center");
+      expect(h.toasts).toContain("Workspace a's act-as already ended in another tab, and another tenant is open now. Reload to see where you are.");
+    });
+
+    it("asks the unsaved-work guard first, and does not exit when it refuses", async () => {
+      const release = registerAccountSwitchGuard(async () => false);
+      const { exit, location } = await render();
+      await act(async () => { exit()?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(h.ctx.exitOperatorActAsFrom).not.toHaveBeenCalled();
+      expect(location()).toBe("/solo/1/command-center");
+      release();
+    });
+
+    // Codex review of #1547 (2026-09-27): the lock was taken only after the guard resolved, so a
+    // second press while the guard was still asking ran a second audited exit — and the server
+    // records an exit even from no tenant.
+    it("records one exit for presses made while the guard is still asking", async () => {
+      const asking: Array<(v: boolean) => void> = [];
+      const release = registerAccountSwitchGuard(() => new Promise<boolean>((resolve) => { asking.push(resolve); }));
+      const { exit } = await render();
+      await act(async () => {
+        const b = exit();
+        b?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        b?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+      // Every question the guard was asked is answered yes; only one exit may follow.
+      await act(async () => { asking.forEach((yes) => yes(true)); });
+      expect(h.ctx.exitOperatorActAsFrom).toHaveBeenCalledTimes(1);
+      release();
+    });
+
+    it("can be pressed again once the guard has refused", async () => {
+      let allow = false;
+      const release = registerAccountSwitchGuard(async () => allow);
+      const { exit } = await render();
+      await act(async () => { exit()?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(h.ctx.exitOperatorActAsFrom).not.toHaveBeenCalled();
+      allow = true;
+      await act(async () => { exit()?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(h.ctx.exitOperatorActAsFrom).toHaveBeenCalledTimes(1);
+      release();
+    });
+  });
+
+  it("offers no Exit tenant to a member, or to an operator at rest", async () => {
+    const member = await render();
+    expect(member.exit()).toBeFalsy();
+    h.ctx.isPlatformStaff = true;
+    h.ctx.activeTenantId = null;
+    const atRest = await render();
+    expect(atRest.exit()).toBeFalsy();
   });
 });

@@ -67,7 +67,7 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
   const { setMode } = useDashboardMode();
   const { activeTenantId } = useTenantContext();
   // §60 tier lock (owner-ruled 2026-08-11): the consumer/client ("Client" role)
-  // portal invite is solo + sub_account ONLY. Staff-role invites (coach/admin/…)
+  // portal invite is solo + sub_account ONLY. Staff-role invites (admin/…)
   // are untouched — an Agency legitimately invites staff, just not a direct
   // consumer client book.
   const { has: hasTierFeature } = useTierFeatures();
@@ -95,8 +95,9 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   // §60: default to the consumer "Client" role only where it's available; on
-  // Agency/Enterprise/God the "Client" option is hidden, so default to "coach".
-  const [inviteRole, setInviteRole] = useState<string>(canInvitePortal ? "user" : "coach");
+  // Agency/Enterprise/God the "Client" option is hidden, so default to the least-privileged
+  // staff option, "moderator".
+  const [inviteRole, setInviteRole] = useState<string>(canInvitePortal ? "user" : "moderator");
   const [inviteSending, setInviteSending] = useState(false);
 
   // Business-limit override dialog state
@@ -460,7 +461,7 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
             : `Client portal invite sent to ${inviteEmail}`,
         );
       } else {
-        // Staff roles (coach/moderator/admin/affiliate) keep the admin path.
+        // Staff roles (moderator/admin/affiliate) keep the admin path.
         const { data: { session } } = await supabase.auth.getSession();
         const { data, error } = await supabase.functions.invoke("send-admin-invitation", {
           body: { email: inviteEmail.trim(), role: inviteRole },
@@ -470,7 +471,7 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
         if (data?.error) throw new Error(data.error);
 
         const roleLabels: Record<string, string> = {
-          admin: "Administrator", coach: "Coach", moderator: "Moderator",
+          admin: "Administrator", moderator: "Moderator",
           affiliate: "Affiliate", user: "Client",
         };
         toast.success(`Invitation sent to ${inviteEmail} as ${roleLabels[inviteRole] || inviteRole}`);
@@ -480,7 +481,7 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
       // §60: mirror the initial default — never reset to "user" (Client) on a tier
       // where that option is hidden, which would leave the Select bound to an
       // invisible value (blank trigger) on the next open.
-      setInviteRole(canInvitePortal ? "user" : "coach");
+      setInviteRole(canInvitePortal ? "user" : "moderator");
     } catch (err: any) {
       console.error("Error sending invite:", err);
       toast.error(err.message || "Failed to send invitation");
@@ -599,7 +600,6 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="user">User</SelectItem>
-                      <SelectItem value="coach">Coach</SelectItem>
                       <SelectItem value="moderator">Moderator</SelectItem>
                       <SelectItem value="admin">Admin</SelectItem>
                       <SelectItem value="affiliate">Affiliate</SelectItem>
@@ -666,7 +666,6 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="user">User</SelectItem>
-                          <SelectItem value="coach">Coach</SelectItem>
                           <SelectItem value="moderator">Moderator</SelectItem>
                           <SelectItem value="admin">Admin</SelectItem>
                           <SelectItem value="affiliate">Affiliate</SelectItem>
@@ -1109,7 +1108,6 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
                 <SelectContent>
                   {/* §60: consumer "Client" invite — solo + sub_account only. */}
                   {canInvitePortal && <SelectItem value="user">Client</SelectItem>}
-                  <SelectItem value="coach">Coach</SelectItem>
                   <SelectItem value="moderator">Moderator</SelectItem>
                   <SelectItem value="admin">Administrator</SelectItem>
                   <SelectItem value="affiliate">Affiliate Partner</SelectItem>

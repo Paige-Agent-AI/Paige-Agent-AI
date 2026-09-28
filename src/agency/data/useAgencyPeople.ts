@@ -164,7 +164,7 @@ export interface AgencyPeopleData {
   remove: (userId: string) => Promise<PeopleMutationResult>;
   invite: (args: {
     email: string;
-    role?: "owner" | "admin" | "coach" | "member";
+    role?: "owner" | "admin" | "member";
     kind?: "team" | "consumer";
     expiresInDays?: number;
   }) => Promise<PeopleMutationResult>;
@@ -198,7 +198,6 @@ const AGENCY_MANAGER_ROLES = new Set(["agency_owner", "agency_admin", "agency_ma
 const TENANT_ROLE_LABEL: Record<string, string> = {
   owner: "Owner",
   admin: "Admin",
-  coach: "Coach",
   member: "Member",
 };
 
@@ -386,7 +385,7 @@ export function useAgencyPeople(ctx: AgencyShellCtx): AgencyPeopleData {
   const invite = useCallback(
     async (args: {
       email: string;
-      role?: "owner" | "admin" | "coach" | "member";
+      role?: "owner" | "admin" | "member";
       kind?: "team" | "consumer";
       expiresInDays?: number;
     }): Promise<PeopleMutationResult> => {

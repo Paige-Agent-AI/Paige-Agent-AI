@@ -66,13 +66,23 @@ CREATE TABLE IF NOT EXISTS public.platform_operator_role_capabilities (
   role text NOT NULL REFERENCES public.platform_operator_roles(role) ON DELETE CASCADE,
   capability text NOT NULL REFERENCES public.platform_operator_capabilities(capability) ON DELETE CASCADE,
   ruling text NOT NULL CHECK (length(btrim(ruling)) > 0),
+  -- A ruled grant is recorded even before today's enforcement admits it, so the rulings live in data,
+  -- not in comments. operator_may() answers only from rows in force: the one answer never says yes
+  -- to something every attempt is refused (Codex review of #1534). A row not in force names what it
+  -- waits for; the slice that moves that gate flips it in the same change.
+  in_force boolean NOT NULL DEFAULT true,
+  pending text,
   created_at timestamptz NOT NULL DEFAULT now(),
-  PRIMARY KEY (role, capability)
+  PRIMARY KEY (role, capability),
+  CONSTRAINT platform_operator_grant_pending_named
+    CHECK (in_force OR (pending IS NOT NULL AND length(btrim(pending)) > 0))
 );
 
 COMMENT ON TABLE public.platform_operator_role_capabilities IS
   'Which operator role holds which listed capability. A listed capability no role is granted is '
-  'held by nobody except a holds_unlisted role. Granting or withdrawing is a row change.';
+  'held by nobody except a holds_unlisted role. Granting or withdrawing is a row change. A row with '
+  'in_force = false records a ruling whose enforcement has not moved yet; operator_may() ignores it '
+  'until the slice named in pending flips it.';
 
 -- No policies and no grants on any of the three: nobody reads or writes them directly, service_role
 -- included. The functions below read them as their owner.
@@ -113,33 +123,63 @@ INSERT INTO public.platform_operator_capabilities (capability, description, ruli
    'R0 revised, owner ruling 2026-09-27; CLAUDE.md §53 as superseded by it'),
   ('operator.seat.super_admin.revoke', 'Revoke a super_admin seat.',
    'R0 revised, owner ruling 2026-09-27; CLAUDE.md §53 as superseded by it'),
-  -- R0 grants administering autonomy; §67 and §68 (owner-ruled 2026-08-24) keep raising above the
-  -- ceiling and renewing a rung with super_admin. Listed so no later gate folds them into
-  -- capability.administer, and granted to nobody below, so super_admin holds them alone.
-  ('autonomy.posture.raise', 'Raise the daily autonomy posture above the ceiling.',
-   'CLAUDE.md §67, owner ruling 2026-08-24; R0 2026-09-27 read as not overriding it'),
-  ('autonomy.rung.renew', 'Re-attest (renew) an autonomy rung.',
-   'CLAUDE.md §68 and §53, owner ruling 2026-08-24; R0 2026-09-27 read as not overriding it')
+  -- G3 decision packet, ruled 2026-09-27 (owner): a platform_admin MAY raise the posture above the
+  -- ceiling, and only super_admin may re-attest. A raise is capped at 24 hours; re-attesting is what
+  -- would turn that cap into no cap, so keeping it at the top makes the 24 hours a real ceiling.
+  -- Lowering is not listed: any operator may lower, as today.
+  ('autonomy.posture.raise', 'Raise the daily autonomy posture above the ceiling, for at most 24 hours.',
+   'G3 decision 1, owner ruling 2026-09-27; CLAUDE.md §67'),
+  ('autonomy.rung.renew', 'Re-attest (renew) platform authority, extending a raise beyond its cap.',
+   'G3 decision 1, owner ruling 2026-09-27; CLAUDE.md §68'),
+  -- G3 decision 2, owner ruling 2026-09-27: the standing bird's-eye view across every customer
+  -- (seats, client counts, revenue class in the directory) is a different act from entering one
+  -- customer with your name on the audit row. Listed, and granted to nobody below super_admin:
+  -- switched off, so widening it later is one row, never a rebuild.
+  ('fleet.directory.detail', 'See seats, client counts and revenue class across the whole fleet directory.',
+   'G3 decision 2, owner ruling 2026-09-27'),
+  -- G3 decision 6, owner ruling 2026-09-27: inside an entered tenant both tiers hold the same
+  -- powers, every act audited. Withdrawing this row from a tier makes that tier read-only inside
+  -- tenants.
+  ('tenant.act_as.write', 'Inside an entered tenant, act with that tenant administrator''s powers; every act audited.',
+   'G3 decision 6, owner ruling 2026-09-27')
 ON CONFLICT (capability) DO NOTHING;
 
 -- super_admin holds everything through holds_unlisted AND through explicit rows for every listed
 -- capability, so the owner's tier never depends on a flag alone and reads plainly in the table.
-INSERT INTO public.platform_operator_role_capabilities (role, capability, ruling)
-SELECT 'super_admin', c.capability, 'R0, owner ruling 2026-09-27'
+-- Not in force: the super_admin seats. The one_super_admin unique index refuses a second super_admin
+-- row and guard_last_super_admin refuses removing the only one, so neither can succeed today.
+INSERT INTO public.platform_operator_role_capabilities (role, capability, ruling, in_force, pending)
+SELECT 'super_admin', c.capability, 'R0, owner ruling 2026-09-27',
+       c.capability NOT IN ('operator.seat.super_admin.grant', 'operator.seat.super_admin.revoke'),
+       CASE WHEN c.capability IN ('operator.seat.super_admin.grant', 'operator.seat.super_admin.revoke')
+            THEN 'seats slice: one_super_admin and guard_last_super_admin allow exactly one super_admin row'
+       END
 FROM public.platform_operator_capabilities c
 ON CONFLICT (role, capability) DO NOTHING;
 
-INSERT INTO public.platform_operator_role_capabilities (role, capability, ruling) VALUES
-  ('platform_admin', 'console.enter', 'R0, owner ruling 2026-09-27'),
-  ('platform_admin', 'fleet.directory.read', 'R0, owner ruling 2026-09-27'),
-  ('platform_admin', 'tenant.act_as', 'R0, owner ruling 2026-09-27'),
-  ('platform_admin', 'platform.health.read', 'R0, owner ruling 2026-09-27'),
-  ('platform_admin', 'tenant.provision', 'R0, owner ruling 2026-09-27'),
-  ('platform_admin', 'tenant.status.set', 'R0, owner ruling 2026-09-27'),
-  ('platform_admin', 'billing.read', 'R0, owner ruling 2026-09-27'),
-  ('platform_admin', 'capability.administer', 'R0, owner ruling 2026-09-27'),
-  ('platform_admin', 'operator.seat.platform_admin.grant', 'R0 revised, owner ruling 2026-09-27'),
-  ('platform_admin', 'operator.seat.platform_admin.revoke', 'R0 revised, owner ruling 2026-09-27')
+-- In force only where today's enforcement already admits platform_admin (audited against
+-- production, read-only, 2026-09-27). Each other row names the slice that moves its gate.
+INSERT INTO public.platform_operator_role_capabilities (role, capability, ruling, in_force, pending) VALUES
+  ('platform_admin', 'console.enter', 'R0, owner ruling 2026-09-27', true, NULL),
+  ('platform_admin', 'fleet.directory.read', 'R0, owner ruling 2026-09-27', true, NULL),
+  ('platform_admin', 'tenant.act_as', 'R0, owner ruling 2026-09-27', true, NULL),
+  ('platform_admin', 'platform.health.read', 'R0, owner ruling 2026-09-27', true, NULL),
+  ('platform_admin', 'tenant.provision', 'R0, owner ruling 2026-09-27', false,
+   'G3: operator_provision_tenant is gated on is_platform_owner()'),
+  ('platform_admin', 'tenant.status.set', 'R0, owner ruling 2026-09-27', false,
+   'G3: operator_set_tenant_status is gated on is_platform_owner()'),
+  ('platform_admin', 'billing.read', 'R0, owner ruling 2026-09-27', false,
+   'G3: tenant_revenue_classification is readable by is_platform_owner() only'),
+  ('platform_admin', 'capability.administer', 'R0, owner ruling 2026-09-27', false,
+   'G3: its writers are not proven to admit platform_admin'),
+  ('platform_admin', 'operator.seat.platform_admin.grant', 'R0 revised, owner ruling 2026-09-27', false,
+   'seats slice: enforce_protected_role_grant lets only super_admin write an operator role (§53)'),
+  ('platform_admin', 'operator.seat.platform_admin.revoke', 'R0 revised, owner ruling 2026-09-27', false,
+   'seats slice: enforce_protected_role_grant lets only super_admin write an operator role (§53)'),
+  ('platform_admin', 'autonomy.posture.raise', 'G3 decision 1, owner ruling 2026-09-27', false,
+   'G3: set_trust_posture lets only is_platform_owner() raise above the ceiling'),
+  ('platform_admin', 'tenant.act_as.write', 'G3 decision 6, owner ruling 2026-09-27', false,
+   'Solo parity slice after G3: tenant surfaces gate writes on roles an acting platform_admin does not hold')
 ON CONFLICT (role, capability) DO NOTHING;
 
 -- ── The one answer ───────────────────────────────────────────────────────────────────────────
@@ -204,7 +244,7 @@ AS $$
     WHERE r.user_id = auth.uid()
       AND (
         EXISTS (SELECT 1 FROM public.platform_operator_role_capabilities g
-                WHERE g.role = o.role AND g.capability = _capability)
+                WHERE g.role = o.role AND g.capability = _capability AND g.in_force)
         OR (o.holds_unlisted
             AND NOT EXISTS (SELECT 1 FROM public.platform_operator_capabilities c
                             WHERE c.capability = _capability))
@@ -214,10 +254,102 @@ $$;
 
 COMMENT ON FUNCTION public.operator_may(text) IS
   'Whether the caller holds the named operator capability, read entirely from '
-  'platform_operator_roles / _capabilities / _role_capabilities. An unlisted capability is held '
-  'only by a holds_unlisted role (R0 default rule: super_admin only).';
+  'platform_operator_roles / _capabilities / _role_capabilities. Only grants in force count. An '
+  'unlisted capability is held only by a holds_unlisted role (R0 default rule: super_admin only).';
 
 REVOKE ALL ON FUNCTION public.operator_standing() FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.operator_may(text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.operator_standing() TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.operator_may(text) TO authenticated, service_role;
+
+-- ── The grant lockdown follows the tiers ─────────────────────────────────────────────────────
+-- Codex review of #1534 (two P1s). The §53 lockdown trigger protected exactly two role names, and
+-- only the row being written. So a role made an operator tier by a row here (say moderator) stayed
+-- grantable by a tenant admin through grant_tenant_member_role — minting platform standing — and
+-- revocable through revoke_tenant_member_role / change_user_role, which let a tenant admin strip an
+-- operator unrelated to their tenant. A role is now protected the moment it is listed, on the way in
+-- AND on the way out: INSERT checks NEW, DELETE checks OLD, UPDATE checks both.
+--
+-- The two literals stay beside the table only until G3: until then is_super_admin() /
+-- is_platform_admin() still test those names directly, so deleting a row must not unprotect a role
+-- those helpers still honour. G3 removes them with the helpers.
+--
+-- Producer inventory for the new DELETE/OLD arm (production, 2026-09-27): revoke_platform_admin is
+-- owner-only; change_user_role and revoke_tenant_member_role already refuse non-owners for the two
+-- literals; revoke_platform_access (platform_admin may call it) deletes only non-operator roles
+-- today; sync_tenant_member_to_user_roles maps tenant roles, never an operator tier; the client's one
+-- delete is owner-only under RLS; account deletion cascades from auth.users through the auth service,
+-- a trusted context. Nothing that works today is refused.
+--
+-- Not closed here, and stated so: a role listed AFTER tenant admins have granted it promotes its
+-- existing holders at once. Listing a role is a service-only write (the tables carry no grants);
+-- the seats slice is where holders are reviewed before a tier is added.
+CREATE OR REPLACE FUNCTION public.enforce_protected_role_grant()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  _jwt_role text := auth.role();  -- 'authenticated' | 'anon' | 'service_role' | NULL (direct/no-JWT)
+  _touched text[];
+  _role_txt text;
+BEGIN
+  _touched := CASE TG_OP
+    WHEN 'INSERT' THEN ARRAY[NEW.role::text]
+    WHEN 'DELETE' THEN ARRAY[OLD.role::text]
+    ELSE ARRAY[OLD.role::text, NEW.role::text]
+  END;
+  FOREACH _role_txt IN ARRAY _touched LOOP
+    IF _role_txt IN ('super_admin', 'platform_admin')
+       OR EXISTS (SELECT 1 FROM public.platform_operator_roles r WHERE r.role = _role_txt) THEN
+      -- Allowed writers: (a) an existing platform owner (super_admin) acting via a verified JWT, OR
+      -- (b) a trusted server context — a service_role API caller, or a direct no-JWT connection
+      -- (migration / pg_cron / superuser / the auth service), where auth.role() is 'service_role' or
+      -- NULL. A genuine authenticated/anon JWT that is NOT the platform owner is REFUSED. coalesce
+      -- maps the no-JWT NULL to 'service' so it is treated as trusted.
+      IF NOT (
+           public.is_platform_owner()
+        OR coalesce(_jwt_role, 'service') NOT IN ('authenticated', 'anon')
+      ) THEN
+        RAISE EXCEPTION
+          'PROTECTED_ROLE_GRANT_FORBIDDEN: role "%" (a platform-operator tier) may be granted or revoked only by an existing super_admin or a trusted service context (§53).', _role_txt
+          USING ERRCODE = '42501';
+      END IF;
+    END IF;
+  END LOOP;
+  RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
+END;
+$function$;
+
+DROP TRIGGER IF EXISTS trg_enforce_protected_role_grant ON public.user_roles;
+CREATE TRIGGER trg_enforce_protected_role_grant
+  BEFORE INSERT OR UPDATE OR DELETE ON public.user_roles
+  FOR EACH ROW EXECUTE FUNCTION public.enforce_protected_role_grant();
+
+-- ── Listing a role serialises with grants of it ──────────────────────────────────────────────
+-- Codex review of #1534 (P1 on 49335124). The lockdown above reads platform_operator_roles, but a
+-- listing not yet committed is invisible to it: a tenant admin granting the role in that window gets
+-- through, and the grantee holds operator standing once both commit. So a listing first takes SHARE
+-- ROW EXCLUSIVE on user_roles, which conflicts with the ROW EXCLUSIVE every grant holds: a grant in
+-- flight finishes first (and is then visible to whoever reviews the role's holders in the listing
+-- transaction), and a grant attempted after waits for the listing to commit, then sees the tier and is
+-- refused. The lock is held only for the listing transaction, a service-only write.
+CREATE OR REPLACE FUNCTION public.serialise_operator_role_listing()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+BEGIN
+  LOCK TABLE public.user_roles IN SHARE ROW EXCLUSIVE MODE;
+  RETURN NEW;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.serialise_operator_role_listing() FROM PUBLIC, anon, authenticated;
+
+DROP TRIGGER IF EXISTS trg_serialise_operator_role_listing ON public.platform_operator_roles;
+CREATE TRIGGER trg_serialise_operator_role_listing
+  BEFORE INSERT OR UPDATE ON public.platform_operator_roles
+  FOR EACH ROW EXECUTE FUNCTION public.serialise_operator_role_listing();

@@ -932,6 +932,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run test:client-seat-reply
 
+      - name: Outbound draft check (a draft for a customer carrying internal text is never filed or sent)
+        if: ${{ !cancelled() }}
+        run: npm run test:outbound-draft-check
+
   web-fetch-hardening-smoke:
     # Its own job, deliberately on Node 22: the smoke imports the real
     # `_shared/ssrfGuard.ts`, whose `SsrfError` uses a TS parameter property that needs

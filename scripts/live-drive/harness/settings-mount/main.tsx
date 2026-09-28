@@ -73,6 +73,9 @@ const clipped = params.get("host") === "clipped";
 // the Settings override has leaked into a design-locked surface. Command Center is
 // the home for Systems Check and Mind, so `?screen=home` covers both.
 const screen = params.get("screen") ?? "settings";
+// `?paige=full` mounts PAIGE as SoloApp does on its own route (`route==='paige'`): the shell's
+// `paigeFull` and the workspace's `full`, together. Default off, so every existing drive is unchanged.
+const paigeFullMode = params.get("paige") === "full";
 
 // Applied BEFORE first paint so a frame can never capture the pre-toggle state.
 // The Solo shell keys its palette on data-pg, not on the `dark` class.
@@ -137,7 +140,8 @@ function Shell() {
     accountType="standalone"
     userRole="admin"
     contextualNavigation={contextualNavigation}
-    soloPaigeWorkspace={<SoloPaigeWorkspace full={false} dockedTab="chat" onDockedTabChange={() => undefined} />}
+    soloPaigeWorkspace={<SoloPaigeWorkspace full={paigeFullMode} dockedTab="chat" onDockedTabChange={() => undefined} />}
+    paigeFull={paigeFullMode}
     brandHomeHref={`/solo/${account}/command-center`}
     onSignOut={() => {}}
   >

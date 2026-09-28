@@ -12,19 +12,19 @@ import { toast } from "sonner";
 import { useConfirm } from "@/hooks/useConfirm";
 
 // The roles a member can be granted here. Mirrors ASSIGNABLE_ROLES in MembersAdmin.
-// super_admin / platform_admin are intentionally absent — never grantable from this surface.
-const EDITABLE_ROLES = ["admin", "coach", "sales_rep", "broker", "cs_rep", "finance", "viewer"] as const;
+// super_admin / platform_admin are intentionally absent — never grantable from this surface. So is
+// coach: it is a title a business gives its people, never a role anyone is granted.
+const EDITABLE_ROLES = ["admin", "sales_rep", "broker", "cs_rep", "finance", "viewer"] as const;
 type EditableRole = typeof EDITABLE_ROLES[number];
 
 // Staff roles that keep a member visible in Members & Roles (mirrors isStaffRow).
 const STAFF_ROLE_SET = new Set<string>([
-  "admin", "coach", "sales_rep", "broker", "broker_team_member", "affiliate",
+  "admin", "sales_rep", "broker", "broker_team_member", "affiliate",
   "cs_rep", "finance", "viewer", "moderator", "owner", "super_admin",
 ]);
 
 const roleColor: Record<string, string> = {
   admin: "bg-red-500/15 text-red-700 dark:text-red-300",
-  coach: "bg-blue-500/15 text-blue-700 dark:text-blue-300",
   sales_rep: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
   broker: "bg-purple-500/15 text-purple-700 dark:text-purple-300",
   cs_rep: "bg-cyan-500/15 text-cyan-700 dark:text-cyan-300",
@@ -36,13 +36,12 @@ const roleColor: Record<string, string> = {
 // Exported (§18 one home) so tenant-scoped role legends elsewhere (e.g. the Solo
 // Setup › People roles legend) reuse the SAME copy instead of forking it.
 export const ROLE_LABEL: Record<EditableRole, string> = {
-  admin: "Admin", coach: "Coach", sales_rep: "Sales Rep", broker: "Broker",
+  admin: "Admin", sales_rep: "Sales Rep", broker: "Broker",
   cs_rep: "Customer Success", finance: "Finance", viewer: "Viewer",
 };
 
 export const ROLE_BLURB: Record<EditableRole, string> = {
   admin: "Runs the whole account — settings, billing, and the team.",
-  coach: "Carries their own clients and shows up in the Coaches roster.",
   sales_rep: "Works the pipeline and closes new business.",
   broker: "Brings deals in and manages their book of referrals.",
   cs_rep: "Keeps clients happy and handles day-to-day support.",
@@ -165,7 +164,7 @@ export function ManageRolesDialog({
         }
         const res = data as { ok?: boolean; reason?: string } | null;
         if (res && res.ok === false && res.reason === "active_clients") {
-          coachReassignNeeded = true; // coach still has clients — route to reassign
+          coachReassignNeeded = true; // they still have assigned clients — route to reassign
           continue;
         }
         succeeded.removed.push(role);
@@ -179,7 +178,7 @@ export function ManageRolesDialog({
         onOpenChange(false);
         onNeedsCoachReassign(member.user_id, member.full_name || member.email || "Coach");
         toast.message("Reassign their clients first", {
-          description: "Then re-open Manage roles to remove Coach.",
+          description: "Then re-open Manage roles.",
         });
       }
 

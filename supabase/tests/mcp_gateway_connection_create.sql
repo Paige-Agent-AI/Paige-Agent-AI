@@ -78,7 +78,7 @@ INSERT INTO public.tenant_members (tenant_id, user_id, role, status, is_owner, j
 
 INSERT INTO public.user_roles (user_id, role) VALUES
   ('c1a00000-0000-0000-0000-000000000004', 'super_admin'),
-  ('c1a00000-0000-0000-0000-000000000003', 'coach')
+  ('c1a00000-0000-0000-0000-000000000003', 'sales_rep')
 ON CONFLICT DO NOTHING;
 
 -- The admin (c1a...002) holds mcp.connections.{use_restricted,manage,delete} for T — the happy-path caller;

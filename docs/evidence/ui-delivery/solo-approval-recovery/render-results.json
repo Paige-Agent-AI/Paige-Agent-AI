@@ -12,6 +12,7 @@
         "running-light.png",
         "done-light.png",
         "didn-t-run-light.png",
+        "held-back-internal-details-light.png",
         "one-of-two-ran-light.png",
         "one-ran-one-couldn-t-confirm-light.png",
         "couldn-t-confirm-light.png",
@@ -38,6 +39,14 @@
         {
           "label": "heading",
           "scene": "Didn't run",
+          "text": "Didn't run",
+          "size": "13px",
+          "weight": "600",
+          "ratio": 14.68
+        },
+        {
+          "label": "heading",
+          "scene": "Held back: internal details",
           "text": "Didn't run",
           "size": "13px",
           "weight": "600",
@@ -79,6 +88,14 @@
           "label": "card note",
           "scene": "Didn't run",
           "text": "Nothing changed. More than one approval was waiting, so Paig",
+          "size": "13px",
+          "weight": "400",
+          "ratio": 10.07
+        },
+        {
+          "label": "card note",
+          "scene": "Held back: internal details",
+          "text": "Nothing changed. The message included internal system detail",
           "size": "13px",
           "weight": "400",
           "ratio": 10.07
@@ -135,6 +152,14 @@
           "label": "row summary",
           "scene": "Didn't run",
           "text": "Didn't run: Dismiss the draft “Checking in after the kickoff",
+          "size": "14px",
+          "weight": "400",
+          "ratio": 5.35
+        },
+        {
+          "label": "row summary",
+          "scene": "Held back: internal details",
+          "text": "Send the public booking link for Intro call to maya@ortizlan",
           "size": "14px",
           "weight": "400",
           "ratio": 5.35
@@ -221,6 +246,14 @@
         },
         {
           "label": "ask again",
+          "scene": "Held back: internal details",
+          "text": "Ask Paige again",
+          "size": "14px",
+          "weight": "500",
+          "ratio": 14.73
+        },
+        {
+          "label": "ask again",
           "scene": "One of two ran",
           "text": "Ask Paige again",
           "size": "14px",
@@ -263,6 +296,14 @@
           "label": "record",
           "scene": "Didn't run",
           "text": "Approved · 2 actions",
+          "size": "12px",
+          "weight": "400",
+          "ratio": 5.65
+        },
+        {
+          "label": "record",
+          "scene": "Held back: internal details",
+          "text": "Approved",
           "size": "12px",
           "weight": "400",
           "ratio": 5.65
@@ -316,7 +357,7 @@
           "ratio": 15.43
         }
       ],
-      "cards": 8,
+      "cards": 9,
       "narrowOverflow": [],
       "pageScrollsSideways": false,
       "reflow320": {
@@ -330,6 +371,7 @@
         "side-panel-running-light.png",
         "side-panel-done-light.png",
         "side-panel-didn-t-run-light.png",
+        "side-panel-held-back-internal-details-light.png",
         "side-panel-one-of-two-ran-light.png",
         "side-panel-one-ran-one-couldn-t-confirm-light.png",
         "side-panel-couldn-t-confirm-light.png",
@@ -347,6 +389,7 @@
         "running-dark.png",
         "done-dark.png",
         "didn-t-run-dark.png",
+        "held-back-internal-details-dark.png",
         "one-of-two-ran-dark.png",
         "one-ran-one-couldn-t-confirm-dark.png",
         "couldn-t-confirm-dark.png",
@@ -373,6 +416,14 @@
         {
           "label": "heading",
           "scene": "Didn't run",
+          "text": "Didn't run",
+          "size": "13px",
+          "weight": "600",
+          "ratio": 16.08
+        },
+        {
+          "label": "heading",
+          "scene": "Held back: internal details",
           "text": "Didn't run",
           "size": "13px",
           "weight": "600",
@@ -414,6 +465,14 @@
           "label": "card note",
           "scene": "Didn't run",
           "text": "Nothing changed. More than one approval was waiting, so Paig",
+          "size": "13px",
+          "weight": "400",
+          "ratio": 11.74
+        },
+        {
+          "label": "card note",
+          "scene": "Held back: internal details",
+          "text": "Nothing changed. The message included internal system detail",
           "size": "13px",
           "weight": "400",
           "ratio": 11.74
@@ -470,6 +529,14 @@
           "label": "row summary",
           "scene": "Didn't run",
           "text": "Didn't run: Dismiss the draft “Checking in after the kickoff",
+          "size": "14px",
+          "weight": "400",
+          "ratio": 7.53
+        },
+        {
+          "label": "row summary",
+          "scene": "Held back: internal details",
+          "text": "Send the public booking link for Intro call to maya@ortizlan",
           "size": "14px",
           "weight": "400",
           "ratio": 7.53
@@ -556,6 +623,14 @@
         },
         {
           "label": "ask again",
+          "scene": "Held back: internal details",
+          "text": "Ask Paige again",
+          "size": "14px",
+          "weight": "500",
+          "ratio": 16.08
+        },
+        {
+          "label": "ask again",
           "scene": "One of two ran",
           "text": "Ask Paige again",
           "size": "14px",
@@ -598,6 +673,14 @@
           "label": "record",
           "scene": "Didn't run",
           "text": "Approved · 2 actions",
+          "size": "12px",
+          "weight": "400",
+          "ratio": 7.93
+        },
+        {
+          "label": "record",
+          "scene": "Held back: internal details",
+          "text": "Approved",
           "size": "12px",
           "weight": "400",
           "ratio": 7.93
@@ -651,7 +734,7 @@
           "ratio": 16.76
         }
       ],
-      "cards": 8,
+      "cards": 9,
       "narrowOverflow": [],
       "pageScrollsSideways": false,
       "reflow320": {
@@ -665,6 +748,7 @@
         "side-panel-running-dark.png",
         "side-panel-done-dark.png",
         "side-panel-didn-t-run-dark.png",
+        "side-panel-held-back-internal-details-dark.png",
         "side-panel-one-of-two-ran-dark.png",
         "side-panel-one-ran-one-couldn-t-confirm-dark.png",
         "side-panel-couldn-t-confirm-dark.png",
@@ -672,6 +756,6 @@
       ]
     }
   },
-  "reducedMotionChecked": 7,
+  "reducedMotionChecked": 8,
   "reducedMotion": []
 }

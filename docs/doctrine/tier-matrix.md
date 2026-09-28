@@ -341,6 +341,28 @@ class of lie as a fabricated metric (§13).
 
 Legend: **✓** live · **—** not built · **N/A** tier not opened yet · **403** denied at the route gate.
 
+### A draft for a customer that carries internal text is never filed or sent (R2, branch `claude/practical-wright-nskq1n`, 2026-09-27)
+
+The owner-seat half of "nothing internal reaches a customer": what PAIGE drafts for a customer in the chat. Before a
+draft is filed, carded or sent, its customer-bound fields are read with `_shared/internal-vocabulary.ts` against the
+turn's own vocabulary (the tool definitions, the vouched blocks, every tool result PAIGE was sent):
+propose_action's body (and an email's subject), calendar_link_send's message (and an email's subject), action_file's
+title and summary for a kind the client's portal shows, and what action_advance delivers: a draft whose kind requires
+approval, whatever its executor, and at executing a portal action's stored title and body (an unlisted kind, or one
+whose lookup fails, is read). A value that isn't a string is read at any depth, its keys too, as `String()` and Postgres's
+`->>` would show it. The fields per tool live in `_shared/outbound-draft-check.ts`. A refused draft is not filed and
+never becomes a card, and PAIGE is told to rewrite it. A card stored before this check existed is read again where it
+runs; nothing is sent or filed, and the owner's card says Didn't run with its one next step. Drafts that never pass
+through the chat (the Live desk's approve path, send-message, other drafters) are R2b; other chat tools that carry
+PAIGE's words outside the workspace are #1530.
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|
+| A customer-bound draft PAIGE writes in the chat (email or text, booking-link message, follow-up action, portal recommendation) is read for internal text before it is filed, carded, sent or shown in the client's portal; a stored card that carries it sends nothing and says Didn't run (R2) | **PROOF OWED** (the same shared handler; not driven on this seat) | **PROOF OWED** (the same shared handler; parked, not driven) | **PROOF OWED** (ships on merge; not live until proven) | **PROOF OWED** (the same shared handler; parked, not driven) | — (a client seat may call none of these tools; refused before the check) | 403 | **PROOF OWED:** `paige-ai-chat` redeploys on merge and is byte-verified in the closeout; no authenticated Solo drive and no live model reply yet |
+
+Honest note (§13): a clean result means none of the known vocabulary, not "nothing internal", and a paraphrase
+passes. A draft sent without passing through the chat is not read here (R2b).
+
 ### A client reads nothing internal in PAIGE's answer (R3, branch `claude/practical-wright-nskq1n`, 2026-09-27)
 
 The server half of "nothing internal reaches a customer", for the one seat that is a customer: a **client seat**

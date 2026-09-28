@@ -259,6 +259,10 @@
   .tcs-brand { padding-inline: 6px; }
   .tcs-command-row { min-height: 58px; padding-inline: 10px; }
   .tcs-context, .tcs-command-actions > .tcs-icon-button, .tcs-account-controls { display: none; }
+  /* An operator acting as this tenant keeps their way out on a phone: the slot stays, holding only
+     the audited Exit tenant. Everything else in the slot stays hidden at this width, as before. */
+  .tcs-account-controls:has([data-operator-exit]) { display: flex; }
+  .tcs-account-controls:has([data-operator-exit]) > :not([data-operator-exit]) { display: none; }
   .tcs-command-field { min-width: 0; }
   .tcs-paige { width: calc(100% - var(--tcs-rail)); }
 }

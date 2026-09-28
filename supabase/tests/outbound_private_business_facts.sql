@@ -11,7 +11,7 @@
 -- spine's business_identity_readiness() resolves it, passes and nothing else does; that it reads
 -- only the tenant it is given and refuses an unknown one; and that nobody but the server may ask it.
 BEGIN;
-SELECT plan(243);
+SELECT plan(249);
 
 -- ── Grants ──────────────────────────────────────────────────────────────────────────────────
 SELECT ok(NOT has_function_privilege(r.rolname, f.fn, 'EXECUTE'),
@@ -232,6 +232,13 @@ INSERT INTO src VALUES
   (171,'brand.address','2, Holly Grove, Leeds','We are on Holly Grove.',ARRAY['address'],'a road named like a district, after a lone house number'),
   (172,'private.address','3 Mill House, Leeds','We meet at Mill House.',ARRAY['address'],'a numbered building, written without its number'),
   (173,'legal.registered_address','12 Mill House, Station Road, Canary Wharf, London, E14 5AB','We meet clients in Canary Wharf.','{}','a district after a numbered building and its road'),
+  -- A numeric postcode on its own (Codex P1).
+  (174,'legal.registered_postal_code','46208','We are in 46208.',ARRAY['address'],'a ZIP stored as the postal code'),
+  (175,'private.registeredPostalCode','46208-1234','Mail it to 46208-1234.',ARRAY['address'],'a ZIP+4'),
+  (176,'legal.registered_postal_code','46208','Mail it to 46208-5550.',ARRAY['address'],'a ZIP written with a different +4'),
+  (177,'legal.registered_address','100 Market Street, St. Louis, MO 63101','Our ZIP is 63101.',ARRAY['address'],'the ZIP of a single-line address'),
+  (178,'brand.address','Hauptstrasse 5, 10115 Berlin','Postleitzahl 10115.',ARRAY['address'],'a postcode written before its town'),
+  (179,'legal.registered_postal_code','46208','Your order number is 462080.','{}','a longer number that starts with the ZIP'),
   -- Addresses: suites, ranges, missing separators, street words and HTML.
   (45,'legal.registered_street','123 Main St., Suite 400','Come to 123 Main Street.',ARRAY['address'],'a street stored with its suite'),
   (46,'legal.registered_street','123 Main St #400','Come to 123 Main Street.',ARRAY['address'],'a street stored with "#400"'),

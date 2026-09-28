@@ -41,7 +41,35 @@ RELEASE_CLASSIFICATION: internal-only: operator support surfaces and a tightenin
 CUSTOMER_RELEASE_IDENTITY: none: no customer-visible change
 RELEASE_NOTE_REQUIRED: NO: no customer-visible change
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: proven in pgTAP, unit tests and harness frames; owner approval of the frames, production readback and a live operator session owed
-RELEASE_RECOVERY: position=revert the merge and restore the two SELECT policies' previous text (quoted exactly in this PR's description) — the three new functions are unreferenced once reverted; reference=this PR
+RELEASE_RECOVERY: position=a forward rollback migration, not a revert (a revert does not re-run an applied migration): restore the three policies this migration replaces (threads_select_owner_or_admin, turns_select_via_thread, threads_delete_owner_or_platform) to their production text and drop both new functions, exactly as written under Recovery below, then revert the client; reference=this PR
+
+## Recovery
+
+A revert does not undo an applied migration. If this change must come out after it has applied, ship a new migration with exactly this body (the policy text is production's, read before this change), then revert the client so it stops calling the dropped functions:
+
+```sql
+DROP POLICY IF EXISTS threads_select_owner_or_admin ON public.paige_chat_threads;
+CREATE POLICY threads_select_owner_or_admin ON public.paige_chat_threads
+  FOR SELECT TO authenticated
+  USING (is_platform_owner() OR ((tenant_id = current_user_tenant_id()) AND ((caller_user_id = auth.uid()) OR ((contact_id IS NOT NULL) AND is_tenant_admin(tenant_id)))));
+
+DROP POLICY IF EXISTS turns_select_via_thread ON public.paige_chat_turns;
+CREATE POLICY turns_select_via_thread ON public.paige_chat_turns
+  FOR SELECT TO authenticated
+  USING (EXISTS (SELECT 1 FROM public.paige_chat_threads t
+                 WHERE t.id = paige_chat_turns.thread_id
+                   AND (is_platform_owner() OR ((t.tenant_id = current_user_tenant_id()) AND ((t.caller_user_id = auth.uid()) OR ((t.contact_id IS NOT NULL) AND is_tenant_admin(t.tenant_id)))))));
+
+DROP POLICY IF EXISTS threads_delete_owner_or_platform ON public.paige_chat_threads;
+CREATE POLICY threads_delete_owner_or_platform ON public.paige_chat_threads
+  FOR DELETE TO authenticated
+  USING ((caller_user_id = auth.uid()) OR is_platform_owner());
+
+DROP FUNCTION IF EXISTS public.operator_list_member_threads(uuid);
+DROP FUNCTION IF EXISTS public.operator_open_member_thread(uuid, uuid);
+```
+
+The `operator.thread.open` audit rows already written stay; they are the record of what happened. `operator_open_act_as_tenant()` belongs to #1554 and is not touched.
 
 ## Scope and collisions
 

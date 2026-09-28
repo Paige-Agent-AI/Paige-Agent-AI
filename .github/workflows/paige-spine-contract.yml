@@ -295,6 +295,7 @@ jobs:
       # An operator acting as a Solo workspace reads its Setup context read-only, through G1's
       # tenant.act_as; every Setup write stays member-only (owner live drive 2026-09-28).
       - run: supabase test db supabase/tests/operator_act_as_reads_solo_setup.sql
+        if: ${{ !cancelled() }}
       # A member's private Paige conversation is hidden from an operator by default, openable on
       # purpose through the audited operator_open_member_thread(), and recorded (owner ruling
       # 2026-09-28).

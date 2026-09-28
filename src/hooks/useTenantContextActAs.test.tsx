@@ -337,12 +337,75 @@ describe("the operator act-as marker and its audited exit", () => {
     const c = await mount();
     h.staff = { data: true, error: null };
     h.activeTenant = "t1";
-    let acts = false;
+    let acts = "";
     await act(async () => { acts = await c.probeOperatorActAs(); });
-    expect(acts).toBe(true);
+    expect(acts).toBe("acting");
     h.activeTenant = null;
     await act(async () => { acts = await c.probeOperatorActAs(); });
-    expect(acts).toBe(false);
+    expect(acts).toBe("not_acting");
+  });
+
+  // Codex review of d51754bd: a probe that cannot read must not report "not acting".
+  it("reports unknown, not 'not acting', when the probe's own reads fail", async () => {
+    const c = await mount();
+    let acts = "";
+    h.staff = { data: null, error: { message: "network" } };
+    await act(async () => { acts = await c.probeOperatorActAs(); });
+    expect(acts).toBe("unknown");
+    h.staff = { data: true, error: null };
+    h.profileReadError = { message: "network" };
+    await act(async () => { acts = await c.probeOperatorActAs(); });
+    expect(acts).toBe("unknown");
+  });
+
+  // Codex review of d51754bd: every chosen sign-out ends an open act-as through the audited exit.
+  describe("before a sign-out", () => {
+    it("ends an operator's open act-as through the audited exit", async () => {
+      h.activeTenant = "t1";
+      await mount();
+      h.rpcCalls = [];
+      let outcome = "";
+      await act(async () => { outcome = await (ctx as Ctx).endActAsBeforeSignOut(); });
+      expect(outcome).toBe("clear");
+      expect(h.rpcCalls).toContain("operator_exit_tenant");
+    });
+
+    it("refuses when the exit does not happen", async () => {
+      h.activeTenant = "t1";
+      await mount();
+      h.exitError = { message: "refused" };
+      let outcome = "";
+      await act(async () => { outcome = await (ctx as Ctx).endActAsBeforeSignOut(); });
+      expect(outcome).toBe("refused");
+    });
+
+    it("clears a member with a loaded context and no network call", async () => {
+      h.staff = { data: false, error: null };
+      h.activeTenant = "t1";
+      await mount();
+      h.rpcCalls = [];
+      let outcome = "";
+      await act(async () => { outcome = await (ctx as Ctx).endActAsBeforeSignOut(); });
+      expect(outcome).toBe("clear");
+      expect(h.rpcCalls).toEqual([]);
+    });
+
+    it("asks the server when the context could not load, and holds on an unreadable answer", async () => {
+      h.profileReadError = { message: "network" };
+      await mount();
+      expect((ctx as Ctx).accountContextStatus).not.toBe("ready");
+      h.staff = { data: null, error: { message: "network" } };
+      let outcome = "";
+      await act(async () => { outcome = await (ctx as Ctx).endActAsBeforeSignOut(); });
+      expect(outcome).toBe("unknown");
+      h.staff = { data: true, error: null };
+      h.profileReadError = null;
+      h.activeTenant = "t1";
+      h.rpcCalls = [];
+      await act(async () => { outcome = await (ctx as Ctx).endActAsBeforeSignOut(); });
+      expect(outcome).toBe("clear");
+      expect(h.rpcCalls).toContain("operator_exit_tenant");
+    });
   });
 
   it("forgets the act-as on sign-out", async () => {

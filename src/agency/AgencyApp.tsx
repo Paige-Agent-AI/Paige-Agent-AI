@@ -25,10 +25,10 @@ import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { WorkspaceExitControl } from "@/components/auth/WorkspaceExitControl";
 import { useTheme } from "next-themes";
-import { performSignOut } from "@/lib/auth/signOut";
 import { branchBySlug, branchByKey, branchPath, defaultBranchSlug } from "@/lib/routing/tierBranches";
 import { useSubtabRoute } from "@/lib/routing/useSubtabRoute";
 import { useTenantContext } from "@/hooks/useTenantContext";
+import { useSignOutEndingActAs } from "@/hooks/useSignOutEndingActAs";
 import { supabase } from "@/integrations/supabase/client";
 import "./agency-tokens.css";
 import { Ic, Logo, Avatar, Wrap, PageHead, Modal, Popover, SlideOut, AV } from "./_shared";
@@ -281,6 +281,8 @@ const AgencyAppContent = ({ mode = "agency" }) => {
   // agency_list_my_subaccounts, gated by auth.uid()); they never touch a
   // client-supplied tenant_id and RAISE-safe for non-agency callers (§9/§51).
   const { activeTenant, tenants, switchTenant, refresh: refreshTenants, isPlatformStaff } = useTenantContext();
+  // A chosen sign-out ends an operator's open act-as through the audited exit first (#1547).
+  const signOut = useSignOutEndingActAs();
   // §65 Option B2 — the caller's OWN agency/enterprise tenant, sourced independent of
   // `activeTenant` (which becomes the CHILD while acting). A caller's membership on
   // their own agency is never removed by entering a child (§37/§9), so this stays
@@ -682,7 +684,7 @@ const AgencyAppContent = ({ mode = "agency" }) => {
           Back to {ownAgencyTenant.name || "agency"}
         </button>
       ) : null}
-      onSignOut={() => void performSignOut({ redirectTo: "/" })}
+      onSignOut={() => void signOut({ redirectTo: "/" })}
     >
     <div className="paige-agency" data-theme={theme} style={{ height: "100%", minHeight: 0 }}>
       <div style={{ display: "flex", height: "100%", overflow: "hidden" }}>
@@ -764,7 +766,7 @@ const AgencyAppContent = ({ mode = "agency" }) => {
                     onMouseEnter={e => e.currentTarget.style.background = "var(--surface-sunk)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                     <Ic.support size={13} /><span style={{ fontSize: 12, color: "var(--ink)" }}>Help and support</span></button>
                 </div>
-                <button onClick={() => { setAcctOpen(false); performSignOut({ redirectTo: "/" }); }} className="row" style={{ width: "100%", gap: 9, padding: "11px 15px", borderTop: "1px solid var(--line-soft)", background: "var(--surface-2)", border: "none", cursor: "pointer", textAlign: "left" }}
+                <button onClick={() => { setAcctOpen(false); void signOut({ redirectTo: "/" }); }} className="row" style={{ width: "100%", gap: 9, padding: "11px 15px", borderTop: "1px solid var(--line-soft)", background: "var(--surface-2)", border: "none", cursor: "pointer", textAlign: "left" }}
                   onMouseEnter={e => e.currentTarget.style.background = "var(--bad-tint)"} onMouseLeave={e => e.currentTarget.style.background = "var(--surface-2)"}>
                   <Ic.arrow size={13} style={{ color: "var(--bad)" }} /><span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--bad)" }}>Sign out</span></button>
               </Popover>

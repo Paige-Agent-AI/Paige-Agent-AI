@@ -12,7 +12,6 @@ import {
   clearWorkspaceScopedState,
   enterableWorkspaces,
   forgetWorkspaceEntered,
-  operatorActAsRecorded,
   rememberWorkspaceEntered,
   workspaceRootForTenant,
 } from "@/lib/auth/workspaceEntry";
@@ -197,20 +196,16 @@ export default function ChooseAccount() {
     setError(null);
     setSwitchingTo("google");
     // Signing out clears this browser, not the server: an open act-as would stay open with no exit
-    // receipt. End it through the audited exit first, and stay signed in if it will not end. When the
-    // account context could not be read this page cannot see the act-as, so this browser's own record
-    // is consulted and then the server is asked directly.
-    let acting = Boolean(openActAs) || operatorActAsRecorded(context.activeUserId);
-    if (!acting && context.probeOperatorActAs) {
-      acting = await context.probeOperatorActAs().catch(() => false);
-    }
-    if (acting) {
-      const ended = openActAs ? await context.switchTenant(null) : await context.exitOperatorActAs();
-      if (!ended) {
-        setSwitchingTo(null);
-        setError(`Paige couldn't end your act-as in ${openActAs?.name ?? "this tenant"}, so you're still signed in. Try again.`);
-        return;
-      }
+    // receipt. The provider ends it through the audited exit first — asking the server when this
+    // page's account context could not be read — and the person stays signed in if it will not end
+    // or cannot be confirmed.
+    const settled = await context.endActAsBeforeSignOut();
+    if (settled !== "clear") {
+      setSwitchingTo(null);
+      setError(settled === "refused"
+        ? `Paige couldn't end your act-as in ${openActAs?.name ?? "this tenant"}, so you're still signed in. Try again.`
+        : "Paige couldn't confirm whether your act-as is still open, so you're still signed in. Try again.");
+      return;
     }
     await supabase.auth.signOut();
     const result = await signInWithOAuth("google", `${window.location.origin}/auth`, { chooseAccount: true });

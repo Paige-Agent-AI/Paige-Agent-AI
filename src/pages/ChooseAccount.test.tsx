@@ -23,8 +23,7 @@ const harness = vi.hoisted(() => ({
     switchTenant: vi.fn(),
     refresh: vi.fn(),
     activeUserId: "user-1" as string | null,
-    exitOperatorActAs: vi.fn(),
-    probeOperatorActAs: vi.fn(),
+    endActAsBeforeSignOut: vi.fn(),
   },
 }));
 
@@ -74,8 +73,7 @@ describe("ChooseAccount", () => {
     harness.context.isPlatformStaff = false;
     harness.context.switchTenant = vi.fn(async () => true);
     harness.context.refresh = vi.fn(async () => undefined);
-    harness.context.exitOperatorActAs = vi.fn(async () => true);
-    harness.context.probeOperatorActAs = vi.fn(async () => false);
+    harness.context.endActAsBeforeSignOut = vi.fn(async () => "clear" as const);
     harness.context.accountContextStatus = "ready";
     // Restore the tenant fixture. Several cases mutate it (status, canary,
     // account_number) and without this the mutations leak forward and the next
@@ -515,7 +513,7 @@ describe("ChooseAccount", () => {
 
     it("ends the act-as before signing out for a different account", async () => {
       const order: string[] = [];
-      harness.context.switchTenant = vi.fn(async (id: string | null) => { order.push(`switch:${id}`); return true; });
+      harness.context.endActAsBeforeSignOut = vi.fn(async () => { order.push("end"); return "clear" as const; });
       vi.mocked(supabase.auth.signOut).mockImplementationOnce(async () => { order.push("signOut"); return { error: null }; });
       vi.mocked(signInWithOAuth).mockResolvedValueOnce({ error: null } as never);
       await act(async () => {
@@ -523,11 +521,11 @@ describe("ChooseAccount", () => {
       });
       const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("different Google account"));
       await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
-      expect(order).toEqual(["switch:null", "signOut"]);
+      expect(order).toEqual(["end", "signOut"]);
     });
 
     it("does not sign out while the act-as cannot be ended", async () => {
-      harness.context.switchTenant = vi.fn(async () => false);
+      harness.context.endActAsBeforeSignOut = vi.fn(async () => "refused" as const);
       vi.mocked(supabase.auth.signOut).mockClear();
       await act(async () => {
         root.render(<MemoryRouter initialEntries={["/choose-account"]}><ChooseAccount /></MemoryRouter>);
@@ -556,39 +554,19 @@ describe("ChooseAccount", () => {
       await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
     }
 
-    it("ends an act-as the server still holds before signing out", async () => {
-      const order: string[] = [];
-      harness.context.probeOperatorActAs = vi.fn(async () => true);
-      harness.context.exitOperatorActAs = vi.fn(async () => { order.push("exit"); return true; });
-      vi.mocked(supabase.auth.signOut).mockImplementationOnce(async () => { order.push("signOut"); return { error: null }; });
-      vi.mocked(signInWithOAuth).mockResolvedValueOnce({ error: null } as never);
-      await pressDifferentAccount();
-      expect(order).toEqual(["exit", "signOut"]);
-    });
-
-    it("stays signed in when that act-as cannot be ended", async () => {
-      harness.context.probeOperatorActAs = vi.fn(async () => true);
-      harness.context.exitOperatorActAs = vi.fn(async () => false);
+    it("stays signed in when Paige cannot tell whether an act-as is open", async () => {
+      harness.context.endActAsBeforeSignOut = vi.fn(async () => "unknown" as const);
       vi.mocked(supabase.auth.signOut).mockClear();
       await pressDifferentAccount();
       expect(supabase.auth.signOut).not.toHaveBeenCalled();
-      expect(host.textContent).toContain("Paige couldn't end your act-as in this tenant, so you're still signed in.");
+      expect(host.textContent).toContain("Paige couldn't confirm whether your act-as is still open, so you're still signed in.");
     });
 
-    it("uses this browser's act-as record when the server cannot be asked", async () => {
-      sessionStorage.setItem("paige.operator.actingAs", JSON.stringify({ userId: "user-1", tenantId: "antonio" }));
-      harness.context.probeOperatorActAs = vi.fn(async () => false);
-      harness.context.exitOperatorActAs = vi.fn(async () => true);
-      vi.mocked(signInWithOAuth).mockResolvedValueOnce({ error: null } as never);
-      await pressDifferentAccount();
-      expect(harness.context.exitOperatorActAs).toHaveBeenCalledTimes(1);
-    });
-
-    it("signs a member out without an exit", async () => {
+    it("signs out once nothing is left open", async () => {
       vi.mocked(signInWithOAuth).mockResolvedValueOnce({ error: null } as never);
       vi.mocked(supabase.auth.signOut).mockClear();
       await pressDifferentAccount();
-      expect(harness.context.exitOperatorActAs).not.toHaveBeenCalled();
+      expect(harness.context.endActAsBeforeSignOut).toHaveBeenCalledTimes(1);
       expect(supabase.auth.signOut).toHaveBeenCalledTimes(1);
     });
   });

@@ -162,7 +162,7 @@ export function StrandedOperatorExit() {
     if (recordedHere || !probeOperatorActAs) return;
     let live = true;
     probeOperatorActAs()
-      .then((acting) => { if (live) setServerSaysActing(acting); })
+      .then((answer) => { if (live) setServerSaysActing(answer === "acting"); })
       .catch(() => {});
     return () => { live = false; };
   }, [recordedHere, probeOperatorActAs]);

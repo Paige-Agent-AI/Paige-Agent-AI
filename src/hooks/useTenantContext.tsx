@@ -31,7 +31,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { tenantSwitchPersisted } from "@/lib/platform/fleetCommunications";
-import { ACCOUNT_SWITCH_NOTICE_KEY, forgetOperatorActAs, recordOperatorActAs } from "@/lib/auth/workspaceEntry";
+import { ACCOUNT_SWITCH_NOTICE_KEY, forgetOperatorActAs, operatorActAsRecorded, recordOperatorActAs } from "@/lib/auth/workspaceEntry";
 
 /**
  * #233 — on a GENUINE new sign-in, reset the active tenant to the user's HOME.
@@ -169,9 +169,16 @@ interface TenantContextState {
   /**
    * Ask the server, afresh, whether the caller is an operator with an open act-as. For a destination
    * whose account read failed and that holds no local record of the act-as (blocked storage, or a
-   * navigation that dropped the arrival flag).
+   * navigation that dropped the arrival flag). A failed read is `unknown`, never "not acting".
    */
-  probeOperatorActAs: () => Promise<boolean>;
+  probeOperatorActAs: () => Promise<"acting" | "not_acting" | "unknown">;
+  /**
+   * Run before any sign-out a person chooses. Signing out clears this browser, not the server, so
+   * an operator's open act-as is ended through the audited exit first. `clear` means sign-out may
+   * proceed; `refused` means the exit did not happen; `unknown` means Paige could not tell whether
+   * an act-as is open. A member whose account context is loaded is `clear` with no network call.
+   */
+  endActAsBeforeSignOut: () => Promise<"clear" | "refused" | "unknown">;
   refresh: () => Promise<void>;
 }
 
@@ -543,9 +550,12 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     return "entered" as const;
   }, [queryClient, readOwnScope]);
 
-  const probeOperatorActAs = useCallback(async () => {
+  const probeOperatorActAs = useCallback(async (): Promise<"acting" | "not_acting" | "unknown"> => {
     const [staff, scope] = await Promise.all([supabase.rpc("is_platform_admin"), readOwnScope()]);
-    return !staff.error && staff.data === true && scope.ok && Boolean(scope.activeTenantId);
+    if (staff.error) return "unknown";
+    if (staff.data !== true) return "not_acting";
+    if (!scope.ok) return "unknown";
+    return scope.activeTenantId ? "acting" : "not_acting";
   }, [readOwnScope]);
 
   const exitOperatorActAs = useCallback(async () => {
@@ -622,6 +632,19 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
   // §57 config-as-data: derive the Agency-shell flag from ONLY the active tenant's own
   // features (§51-safe — no cross-tenant read, no request param). Absent flag → false.
+  const endActAsBeforeSignOut = useCallback(async (): Promise<"clear" | "refused" | "unknown"> => {
+    const recorded = operatorActAsRecorded(activeUserId);
+    if (!recorded && accountContextStatus === "ready") {
+      // The loaded context is the server's answer: a member, or an operator at rest, has nothing open.
+      if (!isPlatformStaff || !activeTenantId) return "clear";
+    }
+    if (!recorded && accountContextStatus !== "ready") {
+      const probed = await probeOperatorActAs().catch(() => "unknown" as const);
+      if (probed !== "acting") return probed === "not_acting" ? "clear" : "unknown";
+    }
+    return (await exitOperatorActAs()) ? "clear" : "refused";
+  }, [accountContextStatus, activeTenantId, activeUserId, exitOperatorActAs, isPlatformStaff, probeOperatorActAs]);
+
   const agencyShellEnabled = activeTenant?.features?.agency_shell_enabled === true;
 
   const value: TenantContextState = {
@@ -640,6 +663,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     exitOperatorActAs,
     enterOperatorActAs,
     probeOperatorActAs,
+    endActAsBeforeSignOut,
     // Always a foreground refresh — wrapped so an event-handler caller (onClick={refresh})
     // can't pass its event as the `background` arg and silently skip the loader/commit.
     refresh: () => load(),

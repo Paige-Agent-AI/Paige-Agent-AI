@@ -32,7 +32,7 @@ const tc = vi.hoisted(() => ({
     refresh: async () => {},
     activeUserId: "op" as string | null,
     exitOperatorActAs: (async () => true) as () => Promise<boolean>,
-    probeOperatorActAs: (async () => false) as () => Promise<boolean>,
+    probeOperatorActAs: (async () => "not_acting") as () => Promise<"acting" | "not_acting" | "unknown">,
   },
 }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => tc.ctx }));

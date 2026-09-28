@@ -7,6 +7,7 @@ import { useTheme } from "next-themes";
 import { performSignOut } from "@/lib/auth/signOut";
 import { usePendingApprovals } from "@/hooks/usePendingApprovals";
 import { useTenantContext } from "@/hooks/useTenantContext";
+import { useSignOutEndingActAs } from "@/hooks/useSignOutEndingActAs";
 import { supabase } from "@/integrations/supabase/client";
 import { SoloSetupReadinessNotice } from "./SoloSetupReadinessNotice";
 import { soloShellRole } from "./shell-role";
@@ -58,7 +59,7 @@ onMouseEnter={e=>{if(!on)e.currentTarget.style.background='rgba(255,255,255,.05)
 <span style={{display:'flex',color:on?'var(--gold-bright)':'inherit'}}>{Icn()}</span>
 {!collapsed&&<span className="grow trunc" style={{fontSize:13.4,fontWeight:on?600:450,textAlign:'left'}}>{label}</span>}
 {!collapsed&&k==='home'&&homeCount>0&&<span className="pill" style={{background:'var(--gold-bright)',color:'#2A1C00',height:19,padding:'0 7px'}}>{homeCount}</span>}</button>};
-return <nav style={{width:w,flex:'none',background:'var(--rail)',display:'flex',flexDirection:'column',padding:collapsed?'16px 12px':'16px 14px',transition:'width .22s',overflowX:'hidden',overflowY:'auto'}}>
+return <nav style={{width:w,flex:'none',background:'var(--rail)',display:'flex',flexDirection:'column',padding:collapsed?'16px 12px':'16px 14px',overflowX:'hidden',overflowY:'auto'}}>
 <div className="row" style={{gap:10,padding:collapsed?'0 0 18px':'2px 4px 18px',justifyContent:collapsed?'center':'flex-start'}}>
 <Logo size={collapsed?24:26}/>{!collapsed&&<div className="grow" style={{minWidth:0}}>
 <div style={{color:'#fff',fontWeight:600,fontSize:14.5,letterSpacing:'-.02em'}}>Paige Agent AI</div>
@@ -168,6 +169,8 @@ const go = (k) => {
 // Acts ONLY once the caller's own account_number is known, so a mid-load null never
 // bounces.
 const { activeTenant, activeTenantId, activeUserId, isPlatformStaff } = useTenantContext();
+// A chosen sign-out ends an operator's open act-as through the audited exit first (#1547).
+const signOut = useSignOutEndingActAs();
 // Setup readiness reminder (owner adjudication: Setup is NOT an access gate).
 // The SHELL holds the dismissal so it survives route remounts; the reminder
 // itself renders INSIDE the height-owned paige-solo column below — the shell
@@ -368,7 +371,7 @@ paigeFull={route==='paige'}
 paigeFullHref={urlDriven?`${branchPath('solo',urlAccount,'paige')}/${paigeDockedTab}`:undefined}
 paigeReturnHref={urlDriven?branchPath('solo',urlAccount,'command-center'):undefined}
 brandHomeHref={activeTenant?.account_number!=null?branchPath('solo',String(activeTenant.account_number),'command-center'):undefined}
-onSignOut={()=>void performSignOut({redirectTo:'/'})}>
+onSignOut={()=>void signOut({redirectTo:'/'})}>
 <div className="paige-solo" data-theme={theme} style={{width:'100%',maxWidth:'none',height:'100%',minWidth:0,minHeight:0,alignSelf:'stretch',display:'flex',flexDirection:'column'}}>
 <SoloSetupReadinessNotice visible={showSetupReminder} setupHref={soloSetupHref} dismissed={setupReminderDismissed} onDismiss={()=>setSetupReminderDismissed(activeTenantId && activeUserId ? { tenant: activeTenantId, user: activeUserId } : null)}/>
 <div style={{display:'flex',flex:1,minHeight:0,overflow:'hidden'}}>

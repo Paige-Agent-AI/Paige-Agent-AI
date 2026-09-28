@@ -26,7 +26,7 @@ const tc = vi.hoisted(() => ({
     refresh: async () => {},
     activeUserId: "op" as string | null,
     exitOperatorActAs: (async () => true) as () => Promise<boolean>,
-    probeOperatorActAs: (async () => false) as () => Promise<boolean>,
+    probeOperatorActAs: (async () => "not_acting") as () => Promise<"acting" | "not_acting" | "unknown">,
   },
 }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => tc.ctx }));
@@ -196,11 +196,11 @@ describe("/solo/* tier gate", () => {
     // Codex review of e29f174c: client-side signals can be lost (blocked storage, navigation that
     // drops the arrival flag). Where neither is present, the server is asked directly.
     it("offers the exit when the server says this operator is acting, with no local record", async () => {
-      tc.ctx.probeOperatorActAs = vi.fn(async () => true);
+      tc.ctx.probeOperatorActAs = vi.fn(async () => "acting" as const);
       await renderAt("/solo/1971670/command-center");
       await act(async () => {});
       expect(exitButton()).toBeTruthy();
-      tc.ctx.probeOperatorActAs = async () => false;
+      tc.ctx.probeOperatorActAs = async () => "not_acting" as const;
     });
 
     // Independent review of 88b651b8: an act-as left in this tab by a user who signed out must not

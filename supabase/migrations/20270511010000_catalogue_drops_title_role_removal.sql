@@ -1,6 +1,6 @@
 -- The autonomy catalogue drops the switch for removing the retired title role.
 -- "Coach" is a title a business gives its people, never a role. No row holds the value any longer
--- (20270510000000), so the operator tool that removed it is gone and its catalogue row would be a
+-- (20270511000000), so the operator tool that removed it is gone and its catalogue row would be a
 -- switch that governs nothing. This body is 20270507000000's, unchanged except for that one row. It
 -- changes visibility only; no autonomy is granted and no other row moves.
 -- catalogue-removal-ok: coach_revoke_role_globally — the tool it governed (remove_coach_role) is removed; no row holds the value

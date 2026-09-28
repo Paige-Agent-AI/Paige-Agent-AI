@@ -14,8 +14,10 @@
 --     no one loses access to anything: the deleted value already granted nothing (20270509000000);
 --   * 0 active client assignments name any of the 4 holders;
 --   * 0 foreign keys reference public.user_roles, so nothing cascades;
---   * the two delete triggers on public.user_roles (protect_owner_admin, trg_guard_last_super_admin)
---     concern the admin and super_admin roles only and do not fire on these rows.
+--   * the three delete triggers on public.user_roles concern other roles and let these rows go:
+--     protect_owner_admin and trg_guard_last_super_admin concern the admin and super_admin roles;
+--     trg_enforce_protected_role_grant (20270510000000) concerns the operator tiers, which the value
+--     is not, and admits a migration's trusted context in any case.
 -- The deletion refuses to run if more than 4 rows hold the value, so it can never remove more than
 -- was measured. A rebuilt database holds none and deletes nothing.
 --

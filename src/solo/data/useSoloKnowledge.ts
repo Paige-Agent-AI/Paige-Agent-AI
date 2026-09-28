@@ -31,6 +31,7 @@
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useOptionalTenantContext } from "@/hooks/useTenantContext";
 
 /** One indexed document, reshaped for the solo Knowledge surface. */
 export interface SoloKnowledgeDoc {
@@ -148,16 +149,23 @@ export function useSoloKnowledge(): SoloKnowledgeData {
   const [error, setError] = useState<string | null>(null);
   const [docs, setDocs] = useState<SoloKnowledgeDoc[]>([]);
 
+  const activeTenantId = useOptionalTenantContext()?.activeTenantId ?? null;
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    // RLS-tenant-scoped — NO tenant param (§9). The generated types don't carry this
-    // recent table, so the select is cast, mirroring KnowledgePanel/NetworkKbInsights.
-    const { data, error: selErr } = await supabase
+    // RLS decides what the caller MAY read (§9). It is not enough to decide what this workspace
+    // IS: a super_admin acting as one workspace is admitted to every workspace's documents, and a
+    // member of several workspaces to all of theirs. So the read is also bound to the active
+    // workspace — a narrowing, never a grant. The generated types don't carry this recent table,
+    // so the select is cast, mirroring KnowledgePanel/NetworkKbInsights.
+    let query = supabase
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .from("tenant_knowledge_docs" as any)
       .select("id, title, summary, category, tags, source, chunk_count, created_at")
       .order("created_at", { ascending: false });
+    if (activeTenantId) query = query.eq("tenant_id", activeTenantId);
+    const { data, error: selErr } = await query;
     if (selErr) {
       setError(selErr.message);
       setDocs([]);
@@ -169,7 +177,7 @@ export function useSoloKnowledge(): SoloKnowledgeData {
     );
     setDocs(rows.map(toDoc));
     setLoading(false);
-  }, []);
+  }, [activeTenantId]);
 
   useEffect(() => {
     void load();

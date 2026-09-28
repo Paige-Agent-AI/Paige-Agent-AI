@@ -731,3 +731,13 @@ export function useTenantContext(): TenantContextState {
   }
   return ctx;
 }
+
+/**
+ * The shared tenant context, or null outside a <TenantProvider>. For shared data hooks that also
+ * render in isolation (tests, previews) and only need to NARROW a read to the active workspace —
+ * never for deciding who the caller is. Everything that needs the context to exist uses
+ * useTenantContext(), which throws on a mis-mount.
+ */
+export function useOptionalTenantContext(): TenantContextState | null {
+  return useContext(TenantContext);
+}

@@ -154,6 +154,19 @@ interface TenantContextState {
    * the RPC on `is_platform_operator()`; a non-operator is simply refused.
    */
   exitOperatorActAs: () => Promise<boolean>;
+  /**
+   * Begin an operator act-as through the audited `operator_enter_tenant`. A transport failure is not
+   * a refusal — the enter may have committed with its response lost — so on any error the caller's
+   * own pointer is read back: `entered` if it now holds the tenant, `refused` if it confirmably does
+   * not, `unknown` if even that read fails. Only `refused` may be reported as "nothing was recorded".
+   */
+  enterOperatorActAs: (tenantId: string) => Promise<"entered" | "refused" | "unknown">;
+  /**
+   * Ask the server, afresh, whether the caller is an operator with an open act-as. For a destination
+   * whose account read failed and that holds no local record of the act-as (blocked storage, or a
+   * navigation that dropped the arrival flag).
+   */
+  probeOperatorActAs: () => Promise<boolean>;
   refresh: () => Promise<void>;
 }
 
@@ -486,6 +499,42 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, [load]);
 
+  const readOwnScope = useCallback(async (): Promise<{ ok: true; activeTenantId: string | null } | { ok: false }> => {
+    const { data: auth } = await supabase.auth.getUser();
+    const uid = auth.user?.id;
+    if (!uid) return { ok: false };
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("active_tenant_id")
+      .eq("user_id", uid)
+      .maybeSingle();
+    if (error) return { ok: false };
+    return { ok: true, activeTenantId: (data as { active_tenant_id?: string | null } | null)?.active_tenant_id ?? null };
+  }, []);
+
+  const enterOperatorActAs = useCallback(async (tenantId: string) => {
+    const { data: auth } = await supabase.auth.getUser();
+    const uid = auth.user?.id;
+    if (!uid) return "refused" as const;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: rpcError } = await supabase.rpc("operator_enter_tenant" as any, { _tenant: tenantId });
+    if (rpcError) {
+      const scope = await readOwnScope();
+      if (!scope.ok) return "unknown" as const;
+      if (scope.activeTenantId !== tenantId) return "refused" as const;
+    }
+    scopeEpochRef.current += 1;
+    recordOperatorActAs(uid, tenantId);
+    setActiveTenantId(tenantId);
+    queryClient.invalidateQueries();
+    return "entered" as const;
+  }, [queryClient, readOwnScope]);
+
+  const probeOperatorActAs = useCallback(async () => {
+    const [staff, scope] = await Promise.all([supabase.rpc("is_platform_admin"), readOwnScope()]);
+    return !staff.error && staff.data === true && scope.ok && Boolean(scope.activeTenantId);
+  }, [readOwnScope]);
+
   const exitOperatorActAs = useCallback(async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: rpcError } = await supabase.rpc("operator_exit_tenant" as any);
@@ -525,16 +574,9 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     // reached it would simply be refused (§9/§59).
     if (isPlatformStaff) {
       if (!tenantId) return exitOperatorActAs();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: rpcError } = await supabase.rpc("operator_enter_tenant" as any, { _tenant: tenantId });
-      // Same failure contract as the direct write below: a refused or failed switch
-      // does NOT move client scope, so client and DB can never disagree (§9).
-      if (rpcError) return false;
-      scopeEpochRef.current += 1;
-      recordOperatorActAs(uid, tenantId);
-      setActiveTenantId(tenantId);
-      queryClient.invalidateQueries();
-      return true;
+      // Same failure contract as the direct write below: a refused switch does NOT move client
+      // scope, so client and DB can never disagree (§9). An unknown outcome moves nothing either.
+      return (await enterOperatorActAs(tenantId)) === "entered";
     }
 
     // Persist FIRST so a rejected profile write can never leave browser scope and
@@ -552,7 +594,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     // Scope changed for everything — a broad invalidate is correct here (§9).
     queryClient.invalidateQueries();
     return true;
-  }, [queryClient, isPlatformStaff, exitOperatorActAs]);
+  }, [queryClient, isPlatformStaff, exitOperatorActAs, enterOperatorActAs]);
 
   const activeTenant = tenants.find((t) => t.id === activeTenantId) ?? null;
 
@@ -578,6 +620,8 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     agencyShellEnabled,
     switchTenant,
     exitOperatorActAs,
+    enterOperatorActAs,
+    probeOperatorActAs,
     // Always a foreground refresh — wrapped so an event-handler caller (onClick={refresh})
     // can't pass its event as the `background` arg and silently skip the loader/commit.
     refresh: () => load(),

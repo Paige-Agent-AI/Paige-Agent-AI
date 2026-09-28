@@ -25,7 +25,7 @@ const row = (over: Partial<FleetTenant>): FleetTenant => ({
 const h = vi.hoisted(() => ({
   fleet: [] as unknown[],
   ctxTenants: [] as Array<Record<string, unknown>>,
-  switchTenant: (async () => true) as (id: string | null) => Promise<boolean>,
+  enter: (async () => "entered") as (id: string) => Promise<"entered" | "refused" | "unknown">,
   toastError: (() => {}) as (msg: string) => void,
 }));
 
@@ -37,7 +37,7 @@ vi.mock("@/operator/data/useFleet", async (importOriginal) => {
   };
 });
 vi.mock("@/hooks/useTenantContext", () => ({
-  useTenantContext: () => ({ switchTenant: h.switchTenant, tenants: h.ctxTenants, activeUserId: "op" }),
+  useTenantContext: () => ({ enterOperatorActAs: h.enter, tenants: h.ctxTenants, activeUserId: "op" }),
 }));
 vi.mock("sonner", () => ({ toast: { error: (m: string) => h.toastError(m), success: () => {} } }));
 
@@ -61,9 +61,9 @@ describe("FleetConsole Enter — the act-as lands or does not begin", () => {
     ];
     sessionStorage.clear();
     // As the real provider does: a successful audited enter records the act-as for this user.
-    h.switchTenant = vi.fn(async (id: string | null) => {
-      if (id) recordOperatorActAs("op", id);
-      return true;
+    h.enter = vi.fn(async (id: string) => {
+      recordOperatorActAs("op", id);
+      return "entered" as const;
     });
     h.toastError = vi.fn();
     go = vi.spyOn(landAt, "go").mockImplementation(() => {});
@@ -87,30 +87,41 @@ describe("FleetConsole Enter — the act-as lands or does not begin", () => {
   it("enters, then takes the operator into the tenant's workspace", async () => {
     const enter = await render();
     await act(async () => { enter("Solo Co")?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
-    expect(h.switchTenant).toHaveBeenCalledTimes(1);
-    expect(h.switchTenant).toHaveBeenCalledWith("solo");
+    expect(h.enter).toHaveBeenCalledTimes(1);
+    expect(h.enter).toHaveBeenCalledWith("solo");
     expect(go).toHaveBeenCalledWith("/solo/3855/command-center");
   });
 
   it("does not record an entry for a tenant the operator could not stand in", async () => {
     const enter = await render();
     await act(async () => { enter("Big Agency")?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
-    expect(h.switchTenant).not.toHaveBeenCalled();
+    expect(h.enter).not.toHaveBeenCalled();
     expect(go).not.toHaveBeenCalled();
     expect(h.toastError).toHaveBeenCalledWith(expect.stringContaining("Nothing was entered."));
   });
 
   it("stays put, and says so, when the server refuses the entry", async () => {
-    h.switchTenant = vi.fn(async () => false);
+    h.enter = vi.fn(async () => "refused" as const);
     const enter = await render();
     await act(async () => { enter("Solo Co")?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
     expect(go).not.toHaveBeenCalled();
     expect(h.toastError).toHaveBeenCalledWith(expect.stringContaining("Couldn't enter Solo Co"));
   });
 
+  // Codex review of e29f174c: an enter that committed but whose response was lost is not a refusal.
+  // When the provider cannot tell, the console must not claim that nothing was recorded.
+  it("does not claim nothing was recorded when the outcome is unknown", async () => {
+    h.enter = vi.fn(async () => "unknown" as const);
+    const enter = await render();
+    await act(async () => { enter("Solo Co")?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+    expect(go).not.toHaveBeenCalled();
+    expect(h.toastError).toHaveBeenCalledWith(expect.stringContaining("couldn't confirm"));
+    expect(h.toastError).not.toHaveBeenCalledWith(expect.stringContaining("Nothing was recorded"));
+  });
+
   it("records one entry for presses made while an entry is in flight", async () => {
-    let release: (v: boolean) => void = () => {};
-    h.switchTenant = vi.fn(() => new Promise<boolean>((resolve) => { release = resolve; }));
+    let release: (v: "entered") => void = () => {};
+    h.enter = vi.fn(() => new Promise<"entered" | "refused" | "unknown">((resolve) => { release = resolve; }));
     const enter = await render();
     await act(async () => {
       const b = enter("Solo Co");
@@ -118,8 +129,8 @@ describe("FleetConsole Enter — the act-as lands or does not begin", () => {
       b?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
       b?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
-    await act(async () => { release(true); });
-    expect(h.switchTenant).toHaveBeenCalledTimes(1);
+    await act(async () => { release("entered"); });
+    expect(h.enter).toHaveBeenCalledTimes(1);
     expect(go).toHaveBeenCalledTimes(1);
   });
 
@@ -130,7 +141,7 @@ describe("FleetConsole Enter — the act-as lands or does not begin", () => {
     await act(async () => { enter("Solo Co")?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
     await act(async () => { enter("Solo Co")?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
     await act(async () => { enter("Big Agency")?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
-    expect(h.switchTenant).toHaveBeenCalledTimes(1);
+    expect(h.enter).toHaveBeenCalledTimes(1);
     expect(go).toHaveBeenCalledTimes(1);
   });
 

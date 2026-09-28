@@ -151,11 +151,22 @@ function OperatorExitControl() {
  * is a full load, because the provider that failed to read here is the one the console needs.
  */
 export function StrandedOperatorExit() {
-  const { activeUserId, exitOperatorActAs } = useTenantContext();
+  const { activeUserId, exitOperatorActAs, probeOperatorActAs } = useTenantContext();
   const [leaving, setLeaving] = useState(false);
   const exiting = useRef(false);
-  // Only for the user who opened the act-as in this tab.
-  if (!operatorActAsRecorded(activeUserId)) return null;
+  // This user's own record or arrival flag answers at once; without either, ask the server afresh,
+  // because client-side signals can be lost (blocked storage, navigation that drops the flag).
+  const recordedHere = operatorActAsRecorded(activeUserId);
+  const [serverSaysActing, setServerSaysActing] = useState(false);
+  useEffect(() => {
+    if (recordedHere || !probeOperatorActAs) return;
+    let live = true;
+    probeOperatorActAs()
+      .then((acting) => { if (live) setServerSaysActing(acting); })
+      .catch(() => {});
+    return () => { live = false; };
+  }, [recordedHere, probeOperatorActAs]);
+  if (!recordedHere && !serverSaysActing) return null;
 
   const exit = async () => {
     if (exiting.current) return;

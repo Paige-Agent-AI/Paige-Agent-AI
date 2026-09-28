@@ -352,7 +352,7 @@ export function FleetDirectoryView({
 export default function FleetConsole({ isPlatformOwner }: { isPlatformOwner: boolean | null }) {
   const { tenants, classificationVisible, detailReadFailed, loading, error } = useFleet(true);
   const detailVisible = fleetDetailVisible(isPlatformOwner, detailReadFailed);
-  const { switchTenant, tenants: contextTenants, activeUserId } = useTenantContext();
+  const { enterOperatorActAs, tenants: contextTenants, activeUserId } = useTenantContext();
   // Entering is an audited act, so one press is one entry. A ref, because state re-renders too
   // late to stop a second press in the same tick; production recorded paired entries.
   const entering = useRef(false);
@@ -373,9 +373,14 @@ export default function FleetConsole({ isPlatformOwner }: { isPlatformOwner: boo
       entering.current = true;
       let leaving = false;
       try {
-        const entered = await switchTenant(tenant.id);
-        if (!entered) {
+        const outcome = await enterOperatorActAs(tenant.id);
+        if (outcome === "refused") {
           toast.error(`Couldn't enter ${tenant.name}. Nothing was recorded and your scope is unchanged.`);
+          return;
+        }
+        if (outcome === "unknown") {
+          // The enter may have committed with its response lost; claiming otherwise would be false.
+          toast.error(`Paige couldn't confirm whether you entered ${tenant.name}. Reload the console before trying again.`);
           return;
         }
         // Nothing from the console may render under the tenant's heading.
@@ -396,7 +401,7 @@ export default function FleetConsole({ isPlatformOwner }: { isPlatformOwner: boo
         if (!leaving) entering.current = false;
       }
     },
-    [contextTenants, switchTenant, activeUserId],
+    [contextTenants, enterOperatorActAs, activeUserId],
   );
 
   return (

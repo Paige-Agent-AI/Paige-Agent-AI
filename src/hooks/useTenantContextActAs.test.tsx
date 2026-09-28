@@ -23,6 +23,9 @@ const h = vi.hoisted(() => ({
   signedIn: true,
   // When set, the NEXT profile read waits on this instead of answering at once.
   heldProfile: null as null | Promise<unknown>,
+  // Simulates operator_enter_tenant committing on the server while its response is lost.
+  enterCommitsThenFails: false,
+  profileReadError: null as unknown,
 }));
 
 vi.mock("@/integrations/supabase/client", () => ({
@@ -39,7 +42,10 @@ vi.mock("@/integrations/supabase/client", () => ({
       h.rpcCalls.push(name);
       if (name === "is_platform_owner") return Promise.resolve({ data: false, error: null });
       if (name === "is_platform_admin") return Promise.resolve(h.staff);
-      if (name === "operator_enter_tenant") return Promise.resolve({ data: null, error: h.enterError });
+      if (name === "operator_enter_tenant") {
+        if (h.enterCommitsThenFails) h.activeTenant = "t1";
+        return Promise.resolve({ data: null, error: h.enterError });
+      }
       if (name === "operator_exit_tenant") return Promise.resolve({ data: null, error: h.exitError });
       return Promise.resolve({ data: null, error: null });
     },
@@ -48,6 +54,7 @@ vi.mock("@/integrations/supabase/client", () => ({
         return {
           select: () => ({ eq: () => ({ maybeSingle: () => {
             if (h.heldProfile) { const held = h.heldProfile; h.heldProfile = null; return held; }
+            if (h.profileReadError) return Promise.resolve({ data: null, error: h.profileReadError });
             return Promise.resolve({ data: { active_tenant_id: h.activeTenant, agency_login_default: null }, error: null });
           } }) }),
           update: () => {
@@ -90,6 +97,8 @@ describe("the operator act-as marker and its audited exit", () => {
     h.rpcCalls = [];
     h.enterError = null;
     h.exitError = null;
+    h.enterCommitsThenFails = false;
+    h.profileReadError = null;
     h.profileWrites = 0;
     ctx = null;
     host = document.createElement("div");
@@ -210,6 +219,51 @@ describe("the operator act-as marker and its audited exit", () => {
     await act(async () => { await c.switchTenant("t1"); });
     await act(async () => { answerStale(); });
     expect((ctx as Ctx).activeTenantId).toBe("t1");
+  });
+
+  // Codex review of e29f174c: an enter whose response was lost may still have committed. The provider
+  // reads the pointer back before calling it a refusal.
+  it("treats a lost response as entered when the server holds the new scope", async () => {
+    const c = await mount();
+    h.enterError = { message: "Failed to fetch" };
+    h.enterCommitsThenFails = true;
+    let outcome = "";
+    await act(async () => { outcome = await c.enterOperatorActAs("t1"); });
+    expect(outcome).toBe("entered");
+    expect(acting()).toBe(true);
+    expect((ctx as Ctx).activeTenantId).toBe("t1");
+  });
+
+  it("calls it refused only when the server confirms the scope did not move", async () => {
+    const c = await mount();
+    h.enterError = { message: "refused" };
+    let outcome = "";
+    await act(async () => { outcome = await c.enterOperatorActAs("t1"); });
+    expect(outcome).toBe("refused");
+    expect(acting()).toBe(false);
+  });
+
+  it("says unknown when neither the enter nor the read-back can be trusted", async () => {
+    const c = await mount();
+    h.enterError = { message: "Failed to fetch" };
+    h.profileReadError = { message: "Failed to fetch" };
+    let outcome = "";
+    await act(async () => { outcome = await c.enterOperatorActAs("t1"); });
+    expect(outcome).toBe("unknown");
+    expect(acting()).toBe(false);
+  });
+
+  it("asks the server whether an operator is acting, independent of the context's own read", async () => {
+    h.staff = { data: false, error: { message: "network" } };
+    const c = await mount();
+    h.staff = { data: true, error: null };
+    h.activeTenant = "t1";
+    let acts = false;
+    await act(async () => { acts = await c.probeOperatorActAs(); });
+    expect(acts).toBe(true);
+    h.activeTenant = null;
+    await act(async () => { acts = await c.probeOperatorActAs(); });
+    expect(acts).toBe(false);
   });
 
   it("forgets the act-as on sign-out", async () => {

@@ -7,6 +7,7 @@
 //             contact, write growth_form_submissions, optional deal create.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { findClientIdByAddress } from "../_shared/contact-methods.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -67,16 +68,10 @@ Deno.serve(async (req) => {
     let contactId: string | null = null;
     if (email) {
       // Upsert contact by email — scoped to this source's tenant to prevent
-      // cross-tenant contact linkage when the same email exists in another tenant.
-      const { data: existing } = await supabase
-        .from("clients")
-        .select("id")
-        .eq("email", email)
-        .eq("tenant_id", source.tenant_id)
-        .maybeSingle();
-      if (existing?.id) {
-        contactId = existing.id;
-      } else {
+      // cross-tenant contact linkage when the same email exists in another tenant —
+      // and matched against ANY of a contact's addresses, not only its primary.
+      contactId = await findClientIdByAddress(supabase, source.tenant_id, "email", email, "growth-inbound");
+      if (!contactId) {
         const { data: inserted } = await supabase
           .from("clients")
           .insert({

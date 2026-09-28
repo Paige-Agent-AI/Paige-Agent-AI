@@ -14,6 +14,7 @@ import {
 // surface, layered on top of the existing per-host create cap. Fail-open on the
 // limiter's own error so a hiccup never blocks a legit booking.
 import { clientIp, overRateLimit } from "../_shared/rateLimit.ts";
+import { findClientIdByAddress } from "../_shared/contact-methods.ts";
 // Per-host Zoom (§9): when a calendar meets over Zoom and the assigned host has
 // connected their own Zoom, mint the meeting on THEIR account and drop the real
 // join link into the confirmation. Best-effort (§13) — any failure falls back to
@@ -620,17 +621,11 @@ async function findOrCreateContact(
   phone: string | null,
 ): Promise<string | null> {
   try {
-    // Escape LIKE wildcards before the case-insensitive lookup: a perfectly
-    // ordinary address like a_b@x.com would otherwise let "_" match any single
-    // char and misattribute this booking to a DIFFERENT existing contact (or
-    // match 2+ rows, which maybeSingle() silently reports as "none" — leading
-    // to a needless duplicate). "%" and "\" get the same treatment.
-    const emailPattern = email.replace(/([\\%_])/g, "\\$1");
-    const findExisting = async (): Promise<string | null> => {
-      const base = admin.from("clients").select("id").ilike("email", emailPattern);
-      const { data } = await (tenantId ? base.eq("tenant_id", tenantId) : base.is("tenant_id", null)).maybeSingle();
-      return (data as { id: string } | null)?.id ?? null;
-    };
+    // The guest is the contact holding this address as ANY of its emails, in the host's
+    // workspace, matched exactly on the address (no pattern, so no wildcard can misattribute).
+    // A booking with no workspace matches no contact: every contact belongs to one.
+    const findExisting = async (): Promise<string | null> =>
+      tenantId ? await findClientIdByAddress(admin, tenantId, "email", email, "public-booking") : null;
 
     const existing = await findExisting();
     if (existing) return existing;

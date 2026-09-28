@@ -126,7 +126,13 @@ function makeAdmin(rows) {
     from: (t) => builder(t),
     /** RPC arguments are recorded too — `record_rail_event` carries its tenant
      *  as an argument, so an unrecorded call is an unobservable §9 decision. */
-    rpc: async (name, args) => { rpcs.push({ name, args: args ?? null }); return { data: null, error: null }; },
+    rpc: async (name, args) => {
+      rpcs.push({ name, args: args ?? null });
+      // The contact an address names inside one workspace (20270515000000). Answered like a
+      // `clients` read, so a lookup that reaches it resolves a contact exactly as before.
+      if (name === "client_id_for_address") return { data: rows("client_id_for_address", args ?? {})?.id ?? null, error: null };
+      return { data: null, error: null };
+    },
   };
 }
 
@@ -336,6 +342,7 @@ console.log("comms tenant-scope smoke\n");
     }
     if (table === "communication_preferences") return opts.linkedUser === false ? null : { user_id: "user-1" };
     if (table === "clients") return { id: "contact-1", tenant_id: TENANT_A };
+    if (table === "client_id_for_address") return f._tenant_id === TENANT_A ? { id: "contact-1" } : null;
     return null;
   };
   const rows = makeRows();
@@ -348,8 +355,15 @@ console.log("comms tenant-scope smoke\n");
    * the guard and would fail for a reason that is not a defect.
    */
   const SENDER_KEYS = ["phone", "linked_user_id", "or"];
-  const senderResolutions = (a) =>
-    a.reads("clients").filter((r) => SENDER_KEYS.some((k) => k in r.filters));
+  // A sender's number is matched through its contact methods (client_id_for_address, which
+  // recognises ANY of a contact's phones). That lookup is a sender-keyed resolution too, and
+  // its workspace is the `_tenant_id` argument, so it is held to the same tenant predicate.
+  const addressLookups = (a) => a.rpcs.filter((r) => r.name === "client_id_for_address")
+    .map((r) => ({ filters: { tenant_id: r.args?._tenant_id, kind: r.args?._kind } }));
+  const senderResolutions = (a) => [
+    ...a.reads("clients").filter((r) => SENDER_KEYS.some((k) => k in r.filters)),
+    ...addressLookups(a),
+  ];
 
   const post = (body) =>
     handler(new Request(`https://ref.functions.supabase.co/fn?t=${SECRET_A}`, {
@@ -391,7 +405,10 @@ console.log("comms tenant-scope smoke\n");
     const res = await post({ To: NUMBER_A, From: "+15559998888", Body: "hello", MessageSid: "SM5" });
     const a = globalThis.__ADMIN__;
     check("an inbound text still resolves when the sender has no linked user", res.status === 200);
-    const byPhone = a.reads("clients").filter((r) => "phone" in r.filters);
+    const byPhone = [
+      ...a.reads("clients").filter((r) => "phone" in r.filters),
+      ...addressLookups(a).filter((r) => r.filters.kind === "phone"),
+    ];
     check("...and the PHONE-fallback resolution really ran (non-vacuity)", byPhone.length > 0);
     check("...and it too is scoped to the RECEIVING tenant (§9)",
       byPhone.every((r) => r.filters.tenant_id === TENANT_A));

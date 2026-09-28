@@ -177,6 +177,29 @@ describe("WorkspaceExitControl", () => {
       expect(button).toBeTruthy();
     });
 
+    // Owner ruling 2026-09-28: an operator in an unusual account knows what they are standing in,
+    // for as long as they stand in it, in the Fleet directory's own words.
+    it("names nothing extra for an active account", async () => {
+      h.ctx.activeTenant = active("a");
+      await render();
+      expect(document.querySelector("[data-operator-scope]")).toBeNull();
+    });
+
+    it("names a canceled account's state beside the exit, and keeps it with the exit on a phone", async () => {
+      h.ctx.activeTenant = { id: "a", name: "Workspace a", status: "canceled" };
+      const { exit } = await render();
+      const scope = document.querySelector("[data-operator-scope]");
+      expect(scope?.textContent).toBe("This workspace is Canceled");
+      // The phone rule keeps the slot's direct children marked exit or scope, so both stay visible.
+      expect(scope?.parentElement).toBe(exit()?.parentElement);
+    });
+
+    it("names a trial the same way the directory does", async () => {
+      h.ctx.activeTenant = { id: "a", name: "Workspace a", status: "trial" };
+      await render();
+      expect(document.querySelector("[data-operator-scope]")?.textContent).toBe("This workspace is Trial");
+    });
+
     it("exits through the audited seam and returns to the console", async () => {
       const { exit, location } = await render();
       await act(async () => { exit()?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });

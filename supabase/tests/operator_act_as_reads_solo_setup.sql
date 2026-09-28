@@ -4,7 +4,7 @@
 -- capability `tenant.act_as` and the operator's own act-as pointer; every Setup write stays
 -- member-only. Synthetic fixtures; always rolled back.
 BEGIN;
-SELECT plan(19);
+SELECT plan(22);
 
 INSERT INTO auth.users (id, aud, role, email) VALUES
   ('0a5b0000-0000-4000-8000-000000000001','authenticated','authenticated','setup-read-super@tests.invalid'),
@@ -108,6 +108,19 @@ SELECT throws_ok($$SELECT public.get_solo_business_context()$$, '42501', NULL,
 RESET ROLE;
 SELECT pg_temp.set_act_as_in_force('platform_admin', true);
 SET LOCAL ROLE authenticated;
+
+-- A pointer set without the audited enter is not an act-as: an operator can update their own
+-- profile row, and the membership guard admits a platform admin's non-member pointer, so this is
+-- reachable with a plain PATCH. No receipt, no read.
+SELECT pg_temp.as_caller('0a5b0000-0000-4000-8000-000000000001');
+UPDATE public.profiles SET active_tenant_id = '0a5b0000-0000-4000-8000-00000000a001'
+ WHERE user_id = '0a5b0000-0000-4000-8000-000000000001';
+SELECT is(public.current_user_tenant_id(), '0a5b0000-0000-4000-8000-00000000a001'::uuid,
+  'a super_admin can point their own scope at a workspace without the audited enter');
+SELECT is(public.get_solo_setup_context(), NULL::jsonb,
+  'a pointer with no open enter receipt reads nothing (the earlier enter here was exited)');
+SELECT throws_ok($$SELECT public.get_solo_business_context()$$, '42501', NULL,
+  'a pointer with no open enter receipt is refused the business context');
 
 -- A caller who is neither a member nor an operator is refused, even with a global admin role.
 SELECT pg_temp.as_caller('0a5b0000-0000-4000-8000-000000000004');

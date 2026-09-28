@@ -21,9 +21,12 @@
 --     platform_admin and not decided here.
 --   * `solo_setup_access_scope()`: an operator who is not a member still reads 'read_only', so the
 --     client's edit controls stay off.
---   * The workspace is still the caller's own act-as pointer. `current_user_tenant_id()` already
---     honours an operator's pointer; this read additionally requires the pointer to BE the scope,
---     so an operator reads only the workspace they have entered and recorded entering.
+--   * The workspace is the caller's own act-as pointer AND that pointer is backed by an open
+--     `operator.tenant.enter` receipt: an enter for that workspace with no exit for it at or after
+--     it. The pointer alone is not enough — `profiles` lets an operator update their own row, and
+--     `guard_active_tenant_membership` admits a platform admin's non-member pointer, so a pointer
+--     can be set with no receipt at all (found by the independent review of this change). The
+--     owner's standing principle is gate by audit; a read that skipped the audit would break it.
 
 CREATE OR REPLACE FUNCTION public.solo_setup_operator_can_read()
 RETURNS boolean
@@ -40,12 +43,26 @@ AS $function$
       join public.tenants t on t.id = p.active_tenant_id
       where p.user_id = auth.uid()
         and p.active_tenant_id = public.current_user_tenant_id()
+        -- The entry was recorded, and has not been recorded as ended since.
+        and exists (
+          select 1 from public.paige_audit_log e
+          where e.actor_user_id = auth.uid()
+            and e.action = 'operator.tenant.enter'
+            and e.target_id = p.active_tenant_id
+            and not exists (
+              select 1 from public.paige_audit_log x
+              where x.actor_user_id = auth.uid()
+                and x.action = 'operator.tenant.exit'
+                and x.target_id = e.target_id
+                and x.created_at >= e.created_at
+            )
+        )
     )
 $function$;
 
 COMMENT ON FUNCTION public.solo_setup_operator_can_read() IS
-  'Whether the caller is an operator holding tenant.act_as whose Setup scope is their own recorded '
-  'act-as pointer. Read paths only: it admits get_solo_setup_context and get_solo_business_context, '
+  'Whether the caller is an operator holding tenant.act_as whose Setup scope is their own act-as '
+  'pointer, backed by an operator.tenant.enter receipt with no exit since. Read paths only: it admits get_solo_setup_context and get_solo_business_context, '
   'never a Setup write.';
 
 REVOKE ALL ON FUNCTION public.solo_setup_operator_can_read() FROM PUBLIC, anon, authenticated;

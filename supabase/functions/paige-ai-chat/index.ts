@@ -26,7 +26,9 @@ import { resolveSourceThreadLink } from "../_shared/source-thread-link.ts";
 import { buildCreditProposal, buildCreditSyncPayload } from "../_shared/credit-extraction-payload.ts";
 import { projectOutcomeForModel } from "../_shared/mcp-outcome.ts";
 import { embeddingsCompat } from "../_shared/voyage.ts";
-import { applyContactSearchFilter } from "../_shared/contact-search.ts";
+import { applyContactSearchFilter, CONTACT_NAME_SEARCH_COLUMNS, contactIdsByAddressToken } from "../_shared/contact-search.ts";
+import { resolveClientRef } from "../_shared/client-ref.ts";
+import { orderedContactMethods } from "../_shared/contact-methods.ts";
 import { readPipelineWorkspace } from "../_shared/pipelineWorkspaceRead.ts";
 import { isSpendableQuoteCents } from "../_shared/purchase-quote.ts";
 // Wave 3 · Communications — the owner can find out what Paige did with the business
@@ -357,12 +359,9 @@ function describeStep(
   }
 }
 
+// One home for turning a client_ref into the contact it names, inside one workspace (_shared/client-ref.ts).
 async function resolveClientReference(admin: any, tenantId: string | null, clientRef: unknown): Promise<string | null> {
-  if (!tenantId || typeof clientRef !== "string" || !clientRef.trim()) return null;
-  const { data, error } = await admin.from("clients").select("id")
-    .eq("tenant_id", tenantId).eq("account_number", clientRef.trim().toUpperCase()).maybeSingle();
-  if (error || !data?.id) return null;
-  return data.id;
+  return await resolveClientRef(admin, tenantId, clientRef, "paige-ai-chat");
 }
 
 // Fire-and-forget analytics writer for Paige internals (RAG, Firecrawl, legal flags).
@@ -6465,11 +6464,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_search_contacts",
-              description: "Team only. Search CRM contacts in the current server-resolved tenant only. Use to resolve names/emails to client_ref, list leads by lifecycle stage, filter by assigned coach, find recently added contacts, or browse the customer base. Returns up to 25 contacts with client_ref, name, email, phone, lifecycle_stage, source, assigned_coach_user_id, tags, lead_score, last_contacted_at, created_at.",
+              description: "Team only. Search CRM contacts in the current server-resolved tenant only. Use to resolve names, emails or phone numbers to client_ref, list leads by lifecycle stage, filter by assigned coach, find recently added contacts, or browse the customer base. An email or phone matches whichever of the contact's addresses it is. Returns up to 25 contacts with client_ref, name, contact_methods (every email then every phone, in the owner's order, each marked is_primary), lifecycle_stage, source, assigned_coach_user_id, tags, lead_score, last_contacted_at, created_at and updated_at. To change a contact, pass its client_ref and updated_at (as expected_updated_at) to the CRM tool.",
               parameters: {
                 type: "object",
                 properties: {
-                  query: { type: "string", description: "Free-text match on first/last name, email, entity_name, or phone." },
+                  query: { type: "string", description: "Free-text match on first/last name, entity_name, or any of the contact's email addresses and phone numbers." },
                   lifecycle_stage: { type: "string", enum: ["lead","mql","sql","opportunity","customer","evangelist","churned","archived"] },
                   status: { type: "string", enum: ["pending","active","inactive","archived"] },
                   assigned_coach_email: { type: "string", description: "Filter by the coach's email." },
@@ -12354,7 +12353,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             } else if (tc.function.name === "crm_search_contacts") {
               const limit = Math.min(Math.max(Number(args.limit) || 25, 1), 100);
               let q = admin.from("clients").select(
-                "account_number, first_name, last_name, email, phone, entity_name, lifecycle_stage, status, source, tags, lead_score, assigned_coach_user_id, last_contacted_at, created_at"
+                "account_number, first_name, last_name, entity_name, lifecycle_stage, status, source, tags, lead_score, assigned_coach_user_id, last_contacted_at, created_at, updated_at, client_contact_methods(kind, value, label, is_primary, position)"
               ).eq("tenant_id", crmTenantId);
               if (args.lifecycle_stage) q = q.eq("lifecycle_stage", args.lifecycle_stage);
               if (args.status) q = q.eq("status", args.status);
@@ -12369,7 +12368,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 // false-negative: a multi-word query like "Tashia Anderson" now matches
                 // first_name=Tashia AND last_name=Anderson (separate columns), instead of
                 // the whole phrase against each single column (which matched 0 rows).
-                q = applyContactSearchFilter(q, String(args.query));
+                // An address token matches whichever of the contact's emails or phones holds it.
+                const addressMatches = crmTenantId
+                  ? await contactIdsByAddressToken(admin, crmTenantId, String(args.query), "paige-ai-chat")
+                  : new Map<string, string[]>();
+                q = applyContactSearchFilter(q, String(args.query), { columns: CONTACT_NAME_SEARCH_COLUMNS, addressMatches });
               }
               const sortMap: Record<string, [string, boolean]> = {
                 recent: ["created_at", false],
@@ -12380,7 +12383,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               const [col, asc] = sortMap[args.sort || "recent"] || sortMap.recent;
               const { data, error } = await q.order(col, { ascending: asc, nullsFirst: false }).limit(limit);
               if (error) throw error;
-              result = { success: true, count: data?.length || 0, contacts: (data || []).map(({ account_number, ...contact }: any) => ({ ...contact, client_ref: account_number })) };
+              result = { success: true, count: data?.length || 0, contacts: (data || []).map(({ account_number, client_contact_methods, ...contact }: any) => ({
+                ...contact, client_ref: account_number, contact_methods: orderedContactMethods(client_contact_methods),
+              })) };
             } else if (tc.function.name === "crm_get_contact_summary") {
               const id = await resolveClientReference(admin, crmTenantId, args.client_ref);
               // §9 IDOR FIX: scope the contact fetch to the caller's tenant so a
@@ -12389,7 +12394,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               // defense-in-depth; tasks/activities/comms derive from the now
               // tenant-verified contact/deal ids, so they inherit the scope.
               const [contact, deals, tasksRes, activities] = await Promise.all([
-                admin.from("clients").select("*").eq("id", id).eq("tenant_id", crmTenantId).maybeSingle(),
+                admin.from("clients").select("*, client_contact_methods(kind, value, label, is_primary, position)").eq("id", id).eq("tenant_id", crmTenantId).maybeSingle(),
                 admin.from("deals").select("id, title, status, value_cents, currency, stage_id, expected_close_date, updated_at").eq("contact_client_id", id).eq("tenant_id", crmTenantId).order("updated_at", { ascending: false }).limit(20),
                 admin.from("tasks").select("id, title, status, due_date, track").eq("biz_id", id).neq("status", "completed").order("due_date", { ascending: true, nullsFirst: false }).limit(20),
                 admin.from("deal_activities").select("id, deal_id, type, summary, created_at").in("deal_id", []).limit(1),
@@ -12405,9 +12410,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   recentActivity = a || [];
                 }
                 const { data: commLog } = await admin.from("communication_log").select("channel, message_type, subject, preview, created_at").eq("user_id", (contact.data as any)?.linked_user_id || "00000000-0000-0000-0000-000000000000").order("created_at", { ascending: false }).limit(10);
+                // Every address the contact holds, never the single legacy pair (email/phone).
+                const { client_contact_methods: methodRows, email: _email, phone: _phone, ...profile } = contact.data as any;
                 result = {
                   success: true,
-                  contact: contact.data,
+                  contact: { ...profile, client_ref: profile.account_number ?? null, contact_methods: orderedContactMethods(methodRows) },
                   deals: deals.data || [],
                   open_tasks: tasksRes.data || [],
                   recent_deal_activity: recentActivity,

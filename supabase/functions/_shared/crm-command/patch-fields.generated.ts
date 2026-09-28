@@ -5,7 +5,7 @@
 // that rejects it. `npm run lint:crm-patch-fields` re-derives and fails on any difference.
 //
 // Regenerate:  node scripts/ci/crm-patch-field-gen.mjs --write
-// Derived from: 20270204000000_governed_crm_contact_company_commands.sql
+// Derived from: 20270516000000_crm_commands_speak_contact_methods.sql
 
 export type CrmPatchFieldSpec = { readonly name: string; readonly description?: string };
 
@@ -14,8 +14,7 @@ export const CRM_PATCH_FIELDS: Readonly<Record<string, readonly CrmPatchFieldSpe
   "contact.create": Object.freeze([
     { name: "first_name" },
     { name: "last_name" },
-    { name: "email" },
-    { name: "phone" },
+    { name: "contact_methods", description: "The contact's COMPLETE list of email addresses and phone numbers, in display order: [{ kind: \"email\" | \"phone\", value, label?, is_primary? }]. On an update anything left out is REMOVED, so read the current list first (crm_search_contacts or crm_get_contact_summary). One primary per kind; with none marked, the first of each kind is primary. To only add an address, use add_contact_methods." },
     { name: "entity_name", description: "The company or business name for this contact. Use this for what a person calls \"the company name\"." },
     { name: "entity_type", description: "Business entity form, e.g. LLC or S-Corp. Not the industry." },
     { name: "title", description: "The person's job title on a contact; the short name of the record on a task." },
@@ -38,8 +37,8 @@ export const CRM_PATCH_FIELDS: Readonly<Record<string, readonly CrmPatchFieldSpe
   "contact.update": Object.freeze([
     { name: "first_name" },
     { name: "last_name" },
-    { name: "email" },
-    { name: "phone" },
+    { name: "contact_methods", description: "The contact's COMPLETE list of email addresses and phone numbers, in display order: [{ kind: \"email\" | \"phone\", value, label?, is_primary? }]. On an update anything left out is REMOVED, so read the current list first (crm_search_contacts or crm_get_contact_summary). One primary per kind; with none marked, the first of each kind is primary. To only add an address, use add_contact_methods." },
+    { name: "add_contact_methods", description: "Addresses to ADD to the contact, keeping every one it already has: [{ kind: \"email\" | \"phone\", value, label?, is_primary? }]. Set is_primary only when the operator asked for the new one to become the default. Cannot be combined with contact_methods." },
     { name: "entity_name", description: "The company or business name for this contact. Use this for what a person calls \"the company name\"." },
     { name: "entity_type", description: "Business entity form, e.g. LLC or S-Corp. Not the industry." },
     { name: "title", description: "The person's job title on a contact; the short name of the record on a task." },

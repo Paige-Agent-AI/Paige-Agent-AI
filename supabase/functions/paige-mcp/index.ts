@@ -21,7 +21,9 @@ import { McpServer, StreamableHttpTransport } from "https://esm.sh/mcp-lite@0.10
 import { z } from "https://esm.sh/zod@3.25.76";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { resolveOperatorIdentity } from "../_shared/operator-identity.ts";
-import { applyContactSearchFilter, contactSearchTokens, CONTACT_SEARCH_COLUMNS } from "../_shared/contact-search.ts";
+import { applyContactSearchFilter, contactSearchTokens, CONTACT_NAME_SEARCH_COLUMNS, CONTACT_SEARCH_COLUMNS, contactIdsByAddressToken } from "../_shared/contact-search.ts";
+import { findClientIdByAddress, orderedContactMethods } from "../_shared/contact-methods.ts";
+import { resolveClientRef } from "../_shared/client-ref.ts";
 import { canonicalAppUrl, type CanonicalDestination, type CanonicalTier } from "../_shared/canonical-app-url.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -92,6 +94,30 @@ function ok(payload: unknown) {
 }
 function err(message: string) {
   return { content: [{ type: "text" as const, text: JSON.stringify({ error: message }) }], isError: true };
+}
+
+// ── Contact methods: a contact's emails and phones, several of each, one primary per kind ──────
+const CONTACT_METHOD_SELECT = "client_contact_methods(kind, value, label, is_primary, position)";
+const contactMethodInput = z.object({
+  kind: z.enum(["email", "phone"]),
+  value: z.string(),
+  label: z.string().optional(),
+  is_primary: z.boolean().optional(),
+}).strict();
+const contactMethodsInput = z.array(contactMethodInput).max(20);
+
+/** A contact row as a reader sees it: its client_ref and every address, never the legacy pair. */
+// deno-lint-ignore no-explicit-any
+function contactForReader(row: any) {
+  const { account_number, client_contact_methods, email: _email, phone: _phone, ...rest } = row ?? {};
+  return { ...rest, client_ref: account_number, contact_methods: orderedContactMethods(client_contact_methods) };
+}
+
+/** Why an address write was refused, in words an operator can act on. */
+function contactMethodsError(message: string | undefined): string {
+  const text = message ?? "contact_methods_write_failed";
+  if (text.includes("CONTACT_METHOD_TAKEN")) return text.slice(text.indexOf("CONTACT_METHOD_TAKEN"));
+  return text;
 }
 
 // Per-request actor context (set by the HTTP route before invoking the MCP transport).
@@ -364,9 +390,9 @@ async function deriveTier(actor: ActorCtx): Promise<McpTier> {
 // ---------- Contacts ----------
 mcp.tool("search_contacts", {
   description:
-    "Search Paige contacts (clients table) by name, email, phone, or company. Returns up to `limit` matches with safe CRM metadata and client_ref. Use client_ref for later contact tools.",
+    "Search Paige contacts (clients table) by name, email, phone, or company. An email or phone matches whichever of the contact's addresses it is. Returns up to `limit` matches with safe CRM metadata, client_ref and contact_methods (every email and phone, each marked is_primary). Use client_ref for later contact tools.",
   inputSchema: z.object({
-    query: z.string().describe("Free-text match across first/last name, email, phone, entity_name."),
+    query: z.string().describe("Free-text match across first/last name, entity_name, and every email and phone the contact holds."),
     lifecycle_stage: z.string().optional().describe("Optional filter, e.g. 'qualifying', 'self_serve', 'active'."),
     limit: z.number().int().optional().describe("1-50, default 20."),
   }),
@@ -379,31 +405,33 @@ mcp.tool("search_contacts", {
     let q = applyContactSearchFilter(
       admin
         .from("clients")
-        .select("account_number, first_name, last_name, email, phone, entity_name, lifecycle_stage, tier, status, assigned_coach_user_id, updated_at")
+        .select(`account_number, first_name, last_name, entity_name, lifecycle_stage, tier, status, assigned_coach_user_id, updated_at, ${CONTACT_METHOD_SELECT}`)
         .eq("tenant_id", tenantId),
       String(args.query),
+      // An email or phone matches whichever of the contact's addresses holds it.
+      { columns: CONTACT_NAME_SEARCH_COLUMNS, addressMatches: await contactIdsByAddressToken(admin, tenantId, String(args.query), "paige-mcp") },
     );
     if (args.lifecycle_stage) q = q.eq("lifecycle_stage", args.lifecycle_stage);
     const { data, error } = await q.order("updated_at", { ascending: false }).limit(limit);
     if (error) return err(error.message);
-    return ok({ items: (data ?? []).map(({ account_number, ...item }) => ({ ...item, client_ref: account_number })), count: (data ?? []).length });
+    return ok({ items: (data ?? []).map(contactForReader), count: (data ?? []).length });
   },
 });
 
 mcp.tool("get_contact", {
   description:
-    "Fetch a single contact's full Paige profile, including business details, address, owner/coach assignments, and notes.",
+    "Fetch a single contact's full Paige profile, including business details, address, owner/coach assignments, notes, and contact_methods (every email and phone, each marked is_primary).",
   inputSchema: z.object({ client_ref: z.string().describe("Tenant-scoped client reference, for example CLT-A1B2C3D4E5F6.") }),
   handler: async ({ client_ref }) => {
     const tenantId = await actorTenantId();
     if (!tenantId) return err("tenant_not_resolved");
     const { data, error } = await admin.from("clients")
-      .select("account_number, first_name, last_name, email, phone, entity_name, lifecycle_stage, status, source, tags, last_contacted_at, created_at")
+      .select(`account_number, first_name, last_name, entity_name, lifecycle_stage, status, source, tags, last_contacted_at, created_at, updated_at, ${CONTACT_METHOD_SELECT}`)
       .eq("account_number", client_ref.trim().toUpperCase()).eq("tenant_id", tenantId).maybeSingle();
     if (error) return err(error.message);
     if (!data) return err("contact_not_found");
     const paigeUrl = await externalActorDestination(tenantId, "contacts");
-    return ok({ contact: { ...data, client_ref: data.account_number, account_number: undefined }, ...(paigeUrl ? { paige_url: paigeUrl } : {}) });
+    return ok({ contact: contactForReader(data), ...(paigeUrl ? { paige_url: paigeUrl } : {}) });
   },
 });
 
@@ -417,12 +445,12 @@ mcp.tool("lookup_contact_by_account_number", {
     const tenantId = await actorTenantId();
     if (!tenantId) return err("tenant_not_resolved");
     const { data, error } = await admin.from("clients")
-      .select("account_number, first_name, last_name, email, phone, entity_name, lifecycle_stage, status, source, tags, last_contacted_at, created_at")
+      .select(`account_number, first_name, last_name, entity_name, lifecycle_stage, status, source, tags, last_contacted_at, created_at, updated_at, ${CONTACT_METHOD_SELECT}`)
       .eq("account_number", account_number.trim().toUpperCase()).eq("tenant_id", tenantId).maybeSingle();
     if (error) return err(error.message);
     if (!data) return err("contact_not_found");
     const paigeUrl = await externalActorDestination(tenantId, "contacts");
-    return ok({ contact: { ...data, client_ref: data.account_number, account_number: undefined }, ...(paigeUrl ? { paige_url: paigeUrl } : {}) });
+    return ok({ contact: contactForReader(data), ...(paigeUrl ? { paige_url: paigeUrl } : {}) });
   },
 });
 
@@ -1683,13 +1711,12 @@ const DOCTRINE_111_LIFECYCLE_STAGES = [
 
 mcp.tool("create_contact", {
   description:
-    "Create a new contact (clients row) in the caller's tenant. Returns the new contact_id. Tenant is auto-resolved from the caller (user's active tenant, or MMA for platform callers). All optional fields map 1:1 to the underlying clients columns so Claude/ChatGPT can populate everything a human form would. Lifecycle stage follows Doctrine §111: new_lead, qualified, nurturing, hot_lead, negotiating, won, client_active, client_paused, client_churned, client_funded, client_alumni.",
+    "Create a new contact (clients row) in the caller's tenant. Returns the new contact_id and client_ref. Emails and phones go in contact_methods: [{ kind: \"email\" | \"phone\", value, label?, is_primary? }], one primary per kind (the first of each kind when none is marked). Tenant is auto-resolved from the caller (user's active tenant, or MMA for platform callers). All optional fields map 1:1 to the underlying clients columns so Claude/ChatGPT can populate everything a human form would. Lifecycle stage follows Doctrine §111: new_lead, qualified, nurturing, hot_lead, negotiating, won, client_active, client_paused, client_churned, client_funded, client_alumni.",
   inputSchema: z.object({
     // identity
     first_name: z.string(),
     last_name: z.string().optional(),
-    email: z.string().optional(),
-    phone: z.string().optional(),
+    contact_methods: contactMethodsInput.optional().describe("Every email and phone for the contact, in display order."),
     title: z.string().optional(),
     // business
     entity_name: z.string().optional(),
@@ -1719,9 +1746,22 @@ mcp.tool("create_contact", {
     notes: z.string().optional().describe("Seeded into current_notes."),
     // tenant override
     tenant_id: z.string().optional().describe("Override the auto-resolved tenant_id (platform-only)."),
-  }),
+  }).strict(),
   handler: async (args) => {
     const tenant_id = await resolveTenantId(args.tenant_id ?? null);
+    // Addresses are checked BEFORE the contact is written, so a bad or already-used address never
+    // leaves a half-made contact behind.
+    const methods = args.contact_methods ?? [];
+    if (methods.length) {
+      if (!tenant_id) return err("tenant_not_resolved");
+      const { error: shapeError } = await admin.rpc("contact_methods_canonical", { _methods: methods });
+      if (shapeError) return err(contactMethodsError(shapeError.message));
+      for (const method of methods) {
+        if (await findClientIdByAddress(admin, tenant_id, method.kind, method.value, "paige-mcp")) {
+          return err(`CONTACT_METHOD_TAKEN: ${method.value} already belongs to another contact in this workspace`);
+        }
+      }
+    }
     const actor = currentActor();
     let createdBy: string | null = actor.user_id ?? null;
     if (!createdBy && tenant_id) {
@@ -1733,8 +1773,6 @@ mcp.tool("create_contact", {
     const row: Record<string, unknown> = {
       first_name: args.first_name,
       last_name: args.last_name ?? null,
-      email: args.email ?? null,
-      phone: args.phone ?? null,
       title: args.title ?? null,
       entity_name: args.entity_name ?? null,
       entity_type: args.entity_type ?? null,
@@ -1762,23 +1800,36 @@ mcp.tool("create_contact", {
       created_by: createdBy,
       created_by_channel_type: "api", // #10 channel-of-origin (Paige/MCP programmatic create)
     };
-    const { data, error } = await admin.from("clients").insert(row).select("id, created_at").single();
+    const { data, error } = await admin.from("clients").insert(row).select("id, account_number, created_at").single();
     if (error) return err(error.message);
-    await audit("create_contact", "client", data.id, { email: args.email ?? null, tenant_id });
-    return ok({ ok: true, contact_id: data.id, created_at: data.created_at, tenant_id, created_by: createdBy });
+    if (methods.length) {
+      const { error: methodsError } = await admin.rpc("_replace_client_contact_methods", {
+        _tenant_id: tenant_id, _client_id: data.id, _methods: methods,
+      });
+      if (methodsError) {
+        // Only a race with another writer reaches here (the addresses were checked above). The
+        // contact this call made is removed rather than left without the addresses it was asked for.
+        const { error: undoError } = await admin.from("clients").delete().eq("id", data.id).eq("tenant_id", tenant_id);
+        if (undoError) console.error("[paige-mcp] create_contact undo failed", { contact_id: data.id, message: undoError.message });
+        return err(contactMethodsError(methodsError.message));
+      }
+    }
+    await audit("create_contact", "client", data.id, { contact_methods: methods.length, tenant_id }, tenant_id);
+    return ok({ ok: true, contact_id: data.id, client_ref: data.account_number, created_at: data.created_at, tenant_id, created_by: createdBy });
   },
 });
 
 mcp.tool("update_contact", {
   description:
-    "Update any combination of fields on an existing contact (clients row). Only fields you pass are updated; omit a field to leave it unchanged. Scoped to caller's tenant. For lifecycle moves prefer `update_lifecycle_stage` (it writes a transition audit). For notes prefer `add_contact_note` (it appends instead of replacing).",
+    "Update any combination of fields on an existing contact (clients row), named by its client_ref (or contact_id). Only fields you pass are updated; omit a field to leave it unchanged. Emails and phones: contact_methods REPLACES the whole list (read it first with get_contact), add_contact_methods adds to it and keeps what is there; send one or the other. Scoped to caller's tenant. For lifecycle moves prefer `update_lifecycle_stage` (it writes a transition audit). For notes prefer `add_contact_note` (it appends instead of replacing).",
   inputSchema: z.object({
-    contact_id: z.string(),
+    client_ref: z.string().optional().describe("The contact's client_ref, as search_contacts or get_contact returned it."),
+    contact_id: z.string().optional().describe("Only when you hold the contact's UUID rather than its client_ref."),
     // identity
     first_name: z.string().optional(),
     last_name: z.string().optional(),
-    email: z.string().nullable().optional(),
-    phone: z.string().nullable().optional(),
+    contact_methods: contactMethodsInput.optional().describe("The COMPLETE list of the contact's emails and phones; anything left out is removed."),
+    add_contact_methods: contactMethodsInput.min(1).optional().describe("Emails or phones to add, keeping every one the contact already has."),
     title: z.string().nullable().optional(),
     // business
     entity_name: z.string().nullable().optional(),
@@ -1808,13 +1859,22 @@ mcp.tool("update_contact", {
     primary_business_id: z.string().nullable().optional(),
     // notes (REPLACES current_notes — use add_contact_note to append)
     current_notes: z.string().nullable().optional(),
-  }),
+  }).strict(),
   handler: async (args) => {
     const tenant_id = await actorTenantId();
     if (!tenant_id) return err("tenant_not_resolved");
-    const { contact_id, ...rest } = args;
+    const { client_ref, contact_id: suppliedId, contact_methods, add_contact_methods, ...rest } = args;
+    if (contact_methods && add_contact_methods) return err("CONTACT_METHODS_AMBIGUOUS: send contact_methods or add_contact_methods, not both");
 
-    // Tenant scope check
+    // The contact, named inside the caller's own workspace only.
+    let contact_id = suppliedId ?? null;
+    if (client_ref !== undefined) {
+      const resolved = await resolveClientRef(admin, tenant_id, client_ref, "paige-mcp");
+      if (!resolved) return err("contact_not_found");
+      if (contact_id && contact_id.toLowerCase() !== resolved.toLowerCase()) return err("contact_reference_mismatch");
+      contact_id = resolved;
+    }
+    if (!contact_id) return err("client_ref_required");
     const { data: existing, error: exErr } = await admin
       .from("clients").select("id, tenant_id").eq("id", contact_id).maybeSingle();
     if (exErr) return err(exErr.message);
@@ -1826,14 +1886,30 @@ mcp.tool("update_contact", {
     for (const [k, v] of Object.entries(rest)) {
       if (v !== undefined) patch[k] = v;
     }
-    if (Object.keys(patch).length === 0) {
+    const methods = contact_methods ?? add_contact_methods;
+    if (Object.keys(patch).length === 0 && !methods) {
       return ok({ ok: true, contact_id, updated_fields: [], note: "no fields supplied" });
     }
 
-    const { error: uErr } = await admin.from("clients").update(patch).eq("id", contact_id);
-    if (uErr) return err(uErr.message);
-    await audit("update_contact", "client", contact_id, { fields: Object.keys(patch) });
-    return ok({ ok: true, contact_id, updated_fields: Object.keys(patch) });
+    // Addresses first: they are the part that can be refused (a malformed or already-used address),
+    // and the database checks the whole list before it writes any of it.
+    if (methods) {
+      const { error: methodsError } = await admin.rpc(
+        contact_methods ? "_replace_client_contact_methods" : "_add_client_contact_methods",
+        { _tenant_id: tenant_id, _client_id: contact_id, _methods: methods },
+      );
+      if (methodsError) return err(contactMethodsError(methodsError.message));
+    }
+    if (Object.keys(patch).length) {
+      const { error: uErr } = await admin.from("clients").update(patch).eq("id", contact_id).eq("tenant_id", tenant_id);
+      if (uErr) return err(uErr.message);
+    }
+    const updatedFields = [...Object.keys(patch), ...(contact_methods ? ["contact_methods"] : add_contact_methods ? ["add_contact_methods"] : [])];
+    await audit("update_contact", "client", contact_id, { fields: updatedFields }, tenant_id);
+    const { data: after } = await admin.from("clients")
+      .select(`account_number, updated_at, ${CONTACT_METHOD_SELECT}`).eq("id", contact_id).eq("tenant_id", tenant_id).maybeSingle();
+    return ok({ ok: true, contact_id, client_ref: after?.account_number ?? null, updated_fields: updatedFields,
+      contact_methods: orderedContactMethods(after?.client_contact_methods), updated_at: after?.updated_at ?? null });
   },
 });
 

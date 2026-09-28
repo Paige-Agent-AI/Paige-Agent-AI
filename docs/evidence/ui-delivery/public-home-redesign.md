@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: a signed-out visitor on phone or desktop reads the offer, s
 MOTION_PURPOSE: the Command Mark types the hero headline and the closing run of commands so Paige is seen producing the work; accent words swipe up once their heading lands; the hero loop shows one reply written in the owner's voice; all of it holds still under reduced motion
 PROTECTED_SEAMS: enrollment links tested (Playwright render script clicks Hire Paige and Start your 30-day trial to /auth?mode=signup); unaffected and named — /auth, /pricing, /welcome, the Solo shell and the operator shell (no files changed there)
 
-INTERNAL_BUILD_IDENTITY: cf5c533c1e87f2b92d823fde10fa34fa85fef5f4; deployment=local-vite-dev-server; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/public-home-1440x900-hero.png
+INTERNAL_BUILD_IDENTITY: ba4645767b7147490d33d44456703f8a9e7de5d5; deployment=local-vite-dev-server; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/public-home-1440x900-hero.png
 RELEASE_CHANNEL: development: verified on a local build before merge; production deploy follows the merge to main through Vercel
 RELEASE_CLASSIFICATION: internal-only: pre-launch public page redesign with no customer release identity
 CUSTOMER_RELEASE_IDENTITY: none: pre-launch marketing page, no customer release is being published
@@ -51,4 +51,11 @@ Local Vite dev server, Chromium from /opt/pw-browsers, signed out, 2026-09-28. S
 
 - Adversarial review of the command typing found four defects (the cursor restarting its bloom, the close wrapping on phones, doubled heading text, the dead word pause), all fixed in 64e865e.
 - Compliance review found internal jargon in two capability rows and the plan list, a duplicated link name, a trust line that needed "by default", and no pause for the hero light; all fixed. Its gold-discipline notes on the hero's ambient light, the mark's glow and the beat marker are raised with the owner rather than changed, because the owner approved the frame as rendered.
+- Independent verifier (full PR): no merge blockers; login and signup targets match main, vite build
+  succeeds, no style leakage. Fixed its findings: duplicate description/canonical (index.html static tags
+  said "beta"; now updated and Helmet-managed), a keyboard-unreachable week scroller, a Pause button
+  announcing its state twice, and unscoped motion selectors.
+- §58: the previous home page's 3D PaigeScene background, the ?intro cinematic sequence and the
+  #hero/#workspace/#day/#proof anchors are removed with the redesign, under the owner's grant of full
+  redesign authority for the public site (Lane D addendum). Old deep links land at the top of the page.
 - Pricing and About still use the previous design; they are the next PRs.

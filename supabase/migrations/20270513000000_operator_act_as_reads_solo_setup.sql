@@ -205,3 +205,18 @@ begin
     )
   );
 end $function$;
+
+-- An operator.* audit row is a server fact, never a caller's claim. The receipt check above trusts
+-- operator.tenant.enter / operator.tenant.exit rows, but the audit log's own-row INSERT policy let
+-- any authenticated caller write a row with their own actor id — including a forged enter receipt
+-- that, with a self-set pointer, read a workspace without the audited enter (Codex review of
+-- 41fff866). Callers still record their own ordinary actions; operator.* rows now come only from the
+-- SECURITY DEFINER functions that perform the act (operator_enter_tenant, operator_exit_tenant and
+-- their successors), which write as the table owner and are unaffected by this policy.
+-- Producer inventory (§37): every authenticated-JWT insert into paige_audit_log in src/ and
+-- supabase/functions was read; the only one (paige-ai-chat's tool-write trail) writes tool names,
+-- never an operator.* action. Service-role inserts bypass RLS and are unaffected.
+DROP POLICY IF EXISTS "Actors record their own actions" ON public.paige_audit_log;
+CREATE POLICY "Actors record their own actions" ON public.paige_audit_log
+  FOR INSERT TO authenticated
+  WITH CHECK (actor_user_id = auth.uid() AND action NOT LIKE 'operator.%');

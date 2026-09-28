@@ -4,7 +4,7 @@
 -- capability `tenant.act_as` and the operator's own act-as pointer; every Setup write stays
 -- member-only. Synthetic fixtures; always rolled back.
 BEGIN;
-SELECT plan(22);
+SELECT plan(25);
 
 INSERT INTO auth.users (id, aud, role, email) VALUES
   ('0a5b0000-0000-4000-8000-000000000001','authenticated','authenticated','setup-read-super@tests.invalid'),
@@ -121,6 +121,20 @@ SELECT is(public.get_solo_setup_context(), NULL::jsonb,
   'a pointer with no open enter receipt reads nothing (the earlier enter here was exited)');
 SELECT throws_ok($$SELECT public.get_solo_business_context()$$, '42501', NULL,
   'a pointer with no open enter receipt is refused the business context');
+
+-- Nor can an operator write their own receipt: the audit log admits a caller's own rows, but an
+-- operator.* row comes only from the server's own functions (Codex review of 41fff866).
+-- Stamped a minute later than the earlier exit, so it would read as an open act-as if it landed.
+SELECT throws_ok($$INSERT INTO public.paige_audit_log (actor_user_id, actor_role, action, target_type, target_id, tenant_id, created_at)
+  VALUES ('0a5b0000-0000-4000-8000-000000000001', 'platform_operator', 'operator.tenant.enter', 'tenant',
+          '0a5b0000-0000-4000-8000-00000000a001', '0a5b0000-0000-4000-8000-00000000a001', now() + interval '1 minute')$$,
+  '42501', NULL, 'an operator cannot write their own operator.tenant.enter receipt');
+SELECT is(public.get_solo_setup_context(), NULL::jsonb,
+  'with no receipt of their own making, the self-set pointer still reads nothing');
+-- An ordinary caller still records their own ordinary actions.
+SELECT lives_ok($$INSERT INTO public.paige_audit_log (actor_user_id, actor_role, action, tenant_id)
+  VALUES ('0a5b0000-0000-4000-8000-000000000001', 'paige_chat', 'crm_create_task', '0a5b0000-0000-4000-8000-00000000a001')$$,
+  'a caller still records their own non-operator actions');
 
 -- A caller who is neither a member nor an operator is refused, even with a global admin role.
 SELECT pg_temp.as_caller('0a5b0000-0000-4000-8000-000000000004');

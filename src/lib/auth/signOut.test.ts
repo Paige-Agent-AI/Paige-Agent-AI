@@ -70,6 +70,20 @@ describe("performSignOut and an open act-as", () => {
     expect(h.order).toEqual(["check", "signOut", "redirect"]);
   });
 
+  // Codex review of a9c6b22c: a stalled check must not keep a security sign-out from happening.
+  it("does not let a stalled check hold a security sign-out", async () => {
+    vi.useFakeTimers();
+    try {
+      release = registerSignOutActAsGuard(() => new Promise<ActAsSettlement>(() => {}));
+      const done = performSignOut({ redirectTo: "/auth", actAs: "attempt" });
+      await vi.advanceTimersByTimeAsync(10_000);
+      expect(await done).toBe(true);
+      expect(h.order).toEqual(["signOut", "redirect"]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("does not try the server when the session is already invalid", async () => {
     guard("refused");
     expect(await performSignOut({ redirectTo: "/auth", actAs: "skip" })).toBe(true);

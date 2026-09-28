@@ -104,11 +104,22 @@ export default function ChooseAccount() {
         setError(`Paige couldn't end your act-as in ${openActAs.name}. Nothing else was entered.`);
         return false;
       }
-      const switched = await context.switchTenant(tenant.id);
-      if (!switched) {
-        setError(endedActAs
-          ? `Paige ended your act-as in ${openActAs?.name} but couldn't open that account. You're at platform scope.`
-          : "Paige couldn't open that account. Your current workspace is unchanged.");
+      // An operator's enter answers entered / refused / unknown / occupied; each is reported for
+      // what it is, and "platform scope" is claimed only when the refusal is confirmed.
+      const outcome = context.isPlatformStaff
+        ? await context.enterOperatorActAs(tenant.id)
+        : (await context.switchTenant(tenant.id)) ? "entered" : "refused";
+      if (outcome !== "entered") {
+        const ended = endedActAs ? `Paige ended your act-as in ${openActAs?.name}` : null;
+        if (outcome === "unknown") {
+          setError(`${ended ? `${ended}, but` : "Paige"} couldn't confirm whether ${tenant.name} opened. Reload before trying again.`);
+        } else if (outcome === "occupied") {
+          setError("Another act-as is open, so nothing else was entered. End it before choosing a workspace.");
+        } else {
+          setError(ended
+            ? `${ended} but couldn't open ${tenant.name}. You're at platform scope.`
+            : "Paige couldn't open that account. Your current workspace is unchanged.");
+        }
         return false;
       }
       // Nothing from the previous account may render under the new one's heading.

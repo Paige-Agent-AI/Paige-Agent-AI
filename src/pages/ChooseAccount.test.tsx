@@ -24,6 +24,7 @@ const harness = vi.hoisted(() => ({
     refresh: vi.fn(),
     activeUserId: "user-1" as string | null,
     endActAsBeforeSignOut: vi.fn(),
+    enterOperatorActAs: vi.fn(),
   },
 }));
 
@@ -74,6 +75,7 @@ describe("ChooseAccount", () => {
     harness.context.switchTenant = vi.fn(async () => true);
     harness.context.refresh = vi.fn(async () => undefined);
     harness.context.endActAsBeforeSignOut = vi.fn(async () => "clear" as const);
+    harness.context.enterOperatorActAs = vi.fn(async () => "entered" as const);
     harness.context.accountContextStatus = "ready";
     // Restore the tenant fixture. Several cases mutate it (status, canary,
     // account_number) and without this the mutations leak forward and the next
@@ -485,12 +487,13 @@ describe("ChooseAccount", () => {
       Object.defineProperty(window, "location", { configurable: true, value: { ...original, assign, search: "" } });
       const calls: Array<string | null> = [];
       harness.context.switchTenant = vi.fn(async (id: string | null) => { calls.push(id); return true; });
+      harness.context.enterOperatorActAs = vi.fn(async (id: string) => { calls.push(`enter:${id}`); return "entered" as const; });
       await act(async () => {
         root.render(<MemoryRouter initialEntries={["/choose-account"]}><ChooseAccount /></MemoryRouter>);
       });
       const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Mogul Maker Academy"));
       await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
-      expect(calls).toEqual([null, "mogul"]);
+      expect(calls).toEqual([null, "enter:mogul"]);
       expect(assign).toHaveBeenCalledWith("/solo/222222/command-center");
       Object.defineProperty(window, "location", { configurable: true, value: original });
     });
@@ -505,10 +508,38 @@ describe("ChooseAccount", () => {
       });
       const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Mogul Maker Academy"));
       await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
-      expect(harness.context.switchTenant).not.toHaveBeenCalledWith("mogul");
+      expect(harness.context.enterOperatorActAs).not.toHaveBeenCalled();
       expect(assign).not.toHaveBeenCalled();
       expect(host.textContent).toContain("Paige couldn't end your act-as in Antonio Daniel LLC. Nothing else was entered.");
       Object.defineProperty(window, "location", { configurable: true, value: original });
+    });
+
+    // Codex review of a9c6b22c: after the exit, an enter whose outcome is unknown must not be
+    // reported as "you're at platform scope".
+    it("does not claim platform scope when the new enter's outcome is unknown", async () => {
+      const assign = vi.fn();
+      const original = window.location;
+      Object.defineProperty(window, "location", { configurable: true, value: { ...original, assign, search: "" } });
+      harness.context.enterOperatorActAs = vi.fn(async () => "unknown" as const);
+      await act(async () => {
+        root.render(<MemoryRouter initialEntries={["/choose-account"]}><ChooseAccount /></MemoryRouter>);
+      });
+      const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Mogul Maker Academy"));
+      await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(assign).not.toHaveBeenCalled();
+      expect(host.textContent).not.toContain("You're at platform scope");
+      expect(host.textContent).toContain("couldn't confirm whether Mogul Maker Academy opened. Reload before trying again.");
+      Object.defineProperty(window, "location", { configurable: true, value: original });
+    });
+
+    it("says platform scope only when the new enter is confirmed refused", async () => {
+      harness.context.enterOperatorActAs = vi.fn(async () => "refused" as const);
+      await act(async () => {
+        root.render(<MemoryRouter initialEntries={["/choose-account"]}><ChooseAccount /></MemoryRouter>);
+      });
+      const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Mogul Maker Academy"));
+      await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(host.textContent).toContain("Paige ended your act-as in Antonio Daniel LLC but couldn't open Mogul Maker Academy. You're at platform scope.");
     });
 
     it("ends the act-as before signing out for a different account", async () => {

@@ -127,6 +127,7 @@ function clearAuthStorage(opts: { wipeAll: boolean }) {
  */
 export type ActAsSettlement = "clear" | "refused" | "unknown";
 let actAsGuard: (() => Promise<ActAsSettlement>) | null = null;
+const ATTEMPT_ACT_AS_TIMEOUT_MS = 3000;
 export function registerSignOutActAsGuard(guard: () => Promise<ActAsSettlement>): () => void {
   actAsGuard = guard;
   return () => {
@@ -177,11 +178,18 @@ export async function performSignOut(
   const actAs = opts.actAs ?? "require";
   if (actAs !== "skip" && actAsGuard) {
     let settled: ActAsSettlement = "unknown";
-    try {
-      settled = await actAsGuard();
-    } catch (err) {
+    const check = actAsGuard().catch((err) => {
       console.error("Checking for an open act-as before sign-out failed:", err);
-    }
+      return "unknown" as const;
+    });
+    // A security sign-out waits for the check only briefly: a stalled request must never keep the
+    // session signed in. A chosen sign-out waits for the answer, because it will not proceed without one.
+    settled = actAs === "attempt"
+      ? await Promise.race([
+          check,
+          new Promise<ActAsSettlement>((resolve) => setTimeout(() => resolve("unknown"), ATTEMPT_ACT_AS_TIMEOUT_MS)),
+        ])
+      : await check;
     if (settled !== "clear" && actAs === "require") {
       isSigningOut = false;
       toast.error(settled === "refused"

@@ -566,7 +566,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     setActiveTenantId(null);
     queryClient.invalidateQueries();
     return true;
-  }, [queryClient]);
+  }, [queryClient, readOwnScope]);
 
   const switchTenant = useCallback(async (tenantId: string | null) => {
     const { data: auth } = await supabase.auth.getUser();

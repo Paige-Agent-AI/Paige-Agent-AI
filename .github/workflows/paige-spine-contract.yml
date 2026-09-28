@@ -65,6 +65,7 @@ on:
       - "supabase/tests/solo_setup_completion_marker.sql"
       - "supabase/tests/canonical_solo_provisioning.sql"
       - "supabase/tests/solo_team_invite_recipient_binding.sql"
+      - "supabase/tests/solo_team_invite_accept_end_to_end.sql"
       # Same reason for the removal proof: it must re-run when the seam changes.
       - "supabase/tests/solo_team_removal_authority.sql"
       - "supabase/functions/solo-team-invitations/**"
@@ -201,6 +202,9 @@ jobs:
       - run: supabase test db supabase/tests/canonical_solo_provisioning.sql
       - run: supabase test db supabase/tests/solo_team_invite_workspace_authority.sql
       - run: supabase test db supabase/tests/solo_team_invite_recipient_binding.sql
+      # The owner's real send through create_solo_team_invite, accepted through accept_solo_team_invite,
+      # for Member and Admin across two businesses: no hand-written token.
+      - run: supabase test db supabase/tests/solo_team_invite_accept_end_to_end.sql
       - run: supabase test db supabase/tests/solo_team_removal_authority.sql
       - run: supabase test db supabase/tests/solo_team_invite_lifecycle.sql
       # Solo Beta acquisition rides the same freshly replayed database. These two files prove

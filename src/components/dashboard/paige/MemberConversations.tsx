@@ -117,6 +117,43 @@ function MemberConversationsForWorkspace({ scopeKey }: { scopeKey: string }) {
     setList({ phase: "ready", threads: rows, hasMore: rows.length === PAGE });
   }, [scopeKey]);
 
+  // The workspace this tab shows is asserted on every request, but that cannot take back what is
+  // already on screen if another tab moves the operator's act-as. So whenever this tab comes back
+  // (focus, or visible again) it asks the server once more, quietly; if the server now refuses, the
+  // list and any open conversation are cleared, and the operator is told why (Codex review of 3ca53c69).
+  const shownRef = useRef(false);
+  shownRef.current = list.phase === "ready" || !!opened || !!pending;
+  const revalidate = useCallback(async () => {
+    const mine = generation.current;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any).rpc("operator_list_member_threads", { _expected_tenant: scopeKey, _limit: PAGE });
+    if (mine !== generation.current || !error) return;
+    const message = String(error.message ?? "");
+    // A transient failure changes nothing: what is shown was allowed a moment ago and may still be.
+    if (!REFUSED.test(message)) return;
+    const wasShowing = shownRef.current;
+    generation.current += 1;
+    setOpened(null);
+    setPending(null);
+    setList({ phase: "idle" });
+    if (wasShowing) {
+      toast.error(/operator_scope_moved/.test(message)
+        ? "You've moved to another workspace in a different tab, so members' conversations here were closed."
+        : "You're no longer acting as this workspace, so members' conversations here were closed.");
+    }
+  }, [scopeKey]);
+
+  useEffect(() => {
+    const onFocus = () => { void revalidate(); };
+    const onVisibility = () => { if (document.visibilityState !== "hidden") void revalidate(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [revalidate]);
+
   const [loadingMore, setLoadingMore] = useState(false);
   const loadMore = useCallback(async () => {
     if (list.phase !== "ready" || !list.hasMore || loadingMore) return;
@@ -127,8 +164,10 @@ function MemberConversationsForWorkspace({ scopeKey }: { scopeKey: string }) {
     const { data, error } = await (supabase as any).rpc("operator_list_member_threads", {
       _expected_tenant: scopeKey, _limit: PAGE, _before_sort_at: last.sort_at, _before_thread_id: last.thread_id,
     });
-    if (mine !== generation.current) return;
+    // Free the button first: a reply that is stale (the list reloaded meanwhile) is dropped, but it
+    // must not leave Show more disabled for the list that replaced it.
     setLoadingMore(false);
+    if (mine !== generation.current) return;
     if (error) {
       toast.error("Couldn't load more members' conversations. Try again.");
       return;

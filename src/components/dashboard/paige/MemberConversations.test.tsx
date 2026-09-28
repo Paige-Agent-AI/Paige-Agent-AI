@@ -254,4 +254,45 @@ describe("members' conversations", () => {
     expect(text.indexOf("first turn")).toBeLessThan(text.indexOf("recent turn"));
     expect(byText("Show earlier messages")).toBeUndefined();
   });
+
+  it("clears what it shows when the operator's workspace moved in another tab", async () => {
+    h.openResult = { data: { threadId: "thread-1", ownerName: "Test Member", turns: [{ role: "user", content: "private words", createdAt: "2026-09-28T00:00:00Z" }] }, error: null };
+    await mount();
+    await act(async () => { byText("Members' conversations")!.click(); });
+    await act(async () => { byText("Test Member")!.click(); });
+    await act(async () => { byText("Open conversation")!.click(); await Promise.resolve(); });
+    expect(document.body.textContent).toContain("private words");
+    // Another tab exits this workspace and enters another; this tab comes back into focus.
+    h.listResult = { data: [], error: { message: "operator_scope_moved" } };
+    await act(async () => { window.dispatchEvent(new Event("focus")); await Promise.resolve(); await Promise.resolve(); });
+    expect(document.body.textContent).not.toContain("private words");
+    expect(host.textContent).toBe("");
+    expect(h.toasts.some((t) => t.includes("another workspace"))).toBe(true);
+  });
+
+  it("re-checks when the tab becomes visible again, and keeps what still holds", async () => {
+    await mount();
+    await act(async () => { byText("Members' conversations")!.click(); });
+    const before = h.calls.filter((c) => c.name === "operator_list_member_threads").length;
+    await act(async () => { document.dispatchEvent(new Event("visibilitychange")); await Promise.resolve(); });
+    expect(h.calls.filter((c) => c.name === "operator_list_member_threads").length).toBe(before + 1);
+    expect(host.textContent).toContain("Test Member");
+  });
+
+  it("frees Show more when its page answers after the list was reloaded", async () => {
+    const page = Array.from({ length: 50 }, (_, i) => ({ ...thread, thread_id: `t${i}`, owner_name: `Member ${i}`, sort_at: new Date(Date.UTC(2026, 8, 28) - i * 60000).toISOString() }));
+    h.listResult = { data: page, error: null };
+    await mount();
+    await act(async () => { byText("Members' conversations")!.click(); });
+    let answer!: (value: unknown) => void;
+    h.listPages = [new Promise((resolve) => { answer = resolve; }) as never];
+    await act(async () => { byText("Show more")!.click(); });
+    // A failed open reloads the list while the page is still in flight.
+    h.listPages = null;
+    h.openResult = { data: null, error: { message: "member_thread_not_available" } };
+    await act(async () => { byText("Member 0")!.click(); });
+    await act(async () => { byText("Open conversation")!.click(); await Promise.resolve(); await Promise.resolve(); });
+    await act(async () => { answer({ data: [], error: null }); await Promise.resolve(); });
+    expect(byText("Show more")?.disabled).toBe(false);
+  });
 });

@@ -134,3 +134,56 @@ $$;
 
 COMMENT ON FUNCTION public.operator_exit_tenant() IS
   'Platform operator stops acting as a tenant: restores the tenant-less resting state (active_tenant_id = NULL) and records the exit in paige_audit_log. An exit from an empty scope changes nothing and records nothing.';
+
+-- ── The bound exit: operator_exit_tenant(_expected) ──────────────────────────
+-- Codex review of #1547 (2484540d): the exit takes no argument, so a stale tab that still shows
+-- tenant X, pressed after another tab exited X and entered Y, ended Y — an act-as the operator had
+-- not asked to leave. A tab's "Exit tenant" names the tenant it shows; if that is no longer the open
+-- act-as, nothing is written and the caller is told. The unbound exit above stays for the paths
+-- whose intent is "end whatever is open": sign-out, and the stranded screen whose context never loaded.
+CREATE OR REPLACE FUNCTION public.operator_exit_tenant(_expected uuid)
+RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
+AS $$
+DECLARE
+  _prev  uuid;
+  _found boolean;
+BEGIN
+  IF NOT public.is_platform_operator() THEN
+    RAISE EXCEPTION 'operator_scope_forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  SELECT active_tenant_id, true INTO _prev, _found
+    FROM public.profiles WHERE user_id = auth.uid() FOR UPDATE;
+  IF NOT coalesce(_found, false) THEN
+    RAISE EXCEPTION 'operator_profile_missing' USING ERRCODE = 'P0002';
+  END IF;
+
+  IF _prev IS NULL THEN
+    RETURN jsonb_build_object('active_tenant_id', NULL, 'previous_active_tenant_id', NULL,
+                              'already_exited', true);
+  END IF;
+
+  IF _expected IS DISTINCT FROM _prev THEN
+    RAISE EXCEPTION 'operator_scope_changed'
+      USING ERRCODE = 'P0001',
+            DETAIL = 'The open act-as is not the tenant this exit named. Nothing was ended.';
+  END IF;
+
+  UPDATE public.profiles SET active_tenant_id = NULL WHERE user_id = auth.uid();
+
+  INSERT INTO public.paige_audit_log
+    (actor_user_id, actor_role, action, target_type, target_id, tenant_id, payload)
+  VALUES
+    (auth.uid(), 'platform_operator', 'operator.tenant.exit', 'tenant', _prev, _prev,
+     jsonb_build_object('previous_active_tenant_id', _prev));
+
+  RETURN jsonb_build_object('active_tenant_id', NULL, 'previous_active_tenant_id', _prev);
+END;
+$$;
+
+COMMENT ON FUNCTION public.operator_exit_tenant(uuid) IS
+  'Platform operator stops acting as the named tenant. Refuses with operator_scope_changed, writing nothing, when a different tenant is the open act-as; an empty scope changes nothing and records nothing.';
+
+REVOKE ALL ON FUNCTION public.operator_exit_tenant(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.operator_exit_tenant(uuid) TO authenticated;

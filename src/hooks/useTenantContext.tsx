@@ -156,6 +156,12 @@ interface TenantContextState {
    */
   exitOperatorActAs: () => Promise<boolean>;
   /**
+   * End the act-as on the tenant this surface shows, and only that one. A stale tab whose tenant's
+   * act-as already ended — and another tenant's has since opened in another tab — gets `moved` and
+   * ends nothing; `refused` means the exit did not happen and the tenant is still open.
+   */
+  exitOperatorActAsFrom: (tenantId: string) => Promise<"exited" | "refused" | "moved">;
+  /**
    * Begin an operator act-as through the audited `operator_enter_tenant`. A transport failure is not
    * a refusal — the enter may have committed with its response lost — so on any error the caller's
    * own pointer is read back: `entered` if it now holds the tenant, `refused` if it confirmably does
@@ -559,15 +565,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     return scope.activeTenantId ? "acting" : "not_acting";
   }, [readOwnScope]);
 
-  const exitOperatorActAs = useCallback(async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: rpcError } = await supabase.rpc("operator_exit_tenant" as any);
-    if (rpcError) {
-      // The exit may have committed with its response lost; retrying would record a second, false
-      // exit. Read the pointer back and treat a confirmed empty scope as exited.
-      const scope = await readOwnScope();
-      if (!scope.ok || scope.activeTenantId) return false;
-    }
+  const commitOperatorExit = useCallback(() => {
     scopeEpochRef.current += 1;
     forgetOperatorActAs();
     // An "Acting as … recorded" notice still waiting for a shell that never mounted now announces an
@@ -579,8 +577,34 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     }
     setActiveTenantId(null);
     queryClient.invalidateQueries();
+  }, [queryClient]);
+
+  const exitOperatorActAs = useCallback(async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: rpcError } = await supabase.rpc("operator_exit_tenant" as any);
+    if (rpcError) {
+      // The exit may have committed with its response lost; retrying would record a second, false
+      // exit. Read the pointer back and treat a confirmed empty scope as exited.
+      const scope = await readOwnScope();
+      if (!scope.ok || scope.activeTenantId) return false;
+    }
+    commitOperatorExit();
     return true;
-  }, [queryClient, readOwnScope]);
+  }, [commitOperatorExit, readOwnScope]);
+
+  const exitOperatorActAsFrom = useCallback(async (tenantId: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: rpcError } = await supabase.rpc("operator_exit_tenant" as any, { _expected: tenantId });
+    if (rpcError) {
+      // Refused, lost, or the open act-as is another tenant's: the pointer read back says which.
+      const scope = await readOwnScope();
+      if (!scope.ok) return "refused" as const;
+      if (scope.activeTenantId && scope.activeTenantId !== tenantId) return "moved" as const;
+      if (scope.activeTenantId) return "refused" as const;
+    }
+    commitOperatorExit();
+    return "exited" as const;
+  }, [commitOperatorExit, readOwnScope]);
 
   const switchTenant = useCallback(async (tenantId: string | null) => {
     const { data: auth } = await supabase.auth.getUser();
@@ -665,6 +689,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     agencyShellEnabled,
     switchTenant,
     exitOperatorActAs,
+    exitOperatorActAsFrom,
     enterOperatorActAs,
     probeOperatorActAs,
     endActAsBeforeSignOut,

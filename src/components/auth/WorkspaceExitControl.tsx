@@ -61,9 +61,9 @@ import { toast } from "sonner";
  * may leave a tenant shell for the same deliberate chooser used at sign-in.
  *
  * A PLATFORM OPERATOR ACTING AS A TENANT GETS THE EXIT ITSELF, NOT A DETOUR. For them this
- * shell is an audited act-as, and the way out is the audited `operator_exit_tenant` (reached
- * through `switchTenant(null)`), which records the exit and returns them to the console. The
- * chooser detour reached the same exit two screens later under a label ("Switch workspace")
+ * shell is an audited act-as, and the way out is the audited `operator_exit_tenant` (reached through
+ * `exitOperatorActAsFrom`, naming the tenant this shell shows), which records the exit and returns
+ * them to the console. The chooser detour reached the same exit two screens later under a label ("Switch workspace")
  * that never said the act-as was still open — and the sub-account shell had no way out at all,
  * only a "Back to agency" link into a route that bounces operators while leaving the act-as open.
  * An operator inside a tenant always has a visible exit that actually ends the session.
@@ -90,7 +90,7 @@ export function WorkspaceExitControl() {
  */
 function OperatorExitControl() {
   const navigate = useNavigate();
-  const { activeTenant, activeTenantId, switchTenant } = useTenantContext();
+  const { activeTenant, activeTenantId, exitOperatorActAsFrom } = useTenantContext();
   const [leaving, setLeaving] = useState(false);
   // Taken synchronously, BEFORE the guard is asked: state set after an await lets a second press
   // through, and the server records an exit even from no tenant, so one gesture would leave two
@@ -112,11 +112,15 @@ function OperatorExitControl() {
       return;
     }
     setLeaving(true);
-    const exited = await switchTenant(null);
-    if (!exited) {
+    // The exit names the tenant this shell shows: a stale tab must not end an act-as another tab has
+    // opened since (the server refuses, and this surface says so).
+    const outcome = activeTenantId ? await exitOperatorActAsFrom(activeTenantId) : "refused";
+    if (outcome !== "exited") {
       exiting.current = false;
       setLeaving(false);
-      toast.error(`Couldn't leave ${name}. You are still acting as this tenant.`);
+      toast.error(outcome === "moved"
+        ? `${name}'s act-as already ended in another tab, and another tenant is open now. Reload to see where you are.`
+        : `Couldn't leave ${name}. You are still acting as this tenant.`);
       return;
     }
     clearWorkspaceScopedState();

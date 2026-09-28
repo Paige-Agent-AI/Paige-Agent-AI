@@ -20,6 +20,14 @@ const h = vi.hoisted(() => ({
     activeTenantId: "a" as string | null,
     activeTenant: null as Tenant | null,
     switchTenant: (async () => true) as (id: string | null) => Promise<boolean>,
+    exitOperatorActAsFrom: (async () => "exited") as (id: string) => Promise<"exited" | "refused" | "moved">,
+  },
+  toasts: [] as string[],
+}));
+vi.mock("sonner", () => ({
+  toast: {
+    error: (m: string) => { h.toasts.push(m); },
+    success: (m: string) => { h.toasts.push(m); },
   },
 }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => h.ctx }));
@@ -44,6 +52,8 @@ describe("WorkspaceExitControl", () => {
     h.ctx.activeTenantId = "a";
     h.ctx.activeTenant = active("a");
     h.ctx.switchTenant = vi.fn(async () => true);
+    h.ctx.exitOperatorActAsFrom = vi.fn(async () => "exited" as const);
+    h.toasts = [];
     host = document.createElement("div");
     document.body.appendChild(host);
     root = createRoot(host);
@@ -170,13 +180,14 @@ describe("WorkspaceExitControl", () => {
     it("exits through the audited seam and returns to the console", async () => {
       const { exit, location } = await render();
       await act(async () => { exit()?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
-      expect(h.ctx.switchTenant).toHaveBeenCalledTimes(1);
-      expect(h.ctx.switchTenant).toHaveBeenCalledWith(null);
+      // The exit names the tenant this shell shows (Codex review of 2484540d).
+      expect(h.ctx.exitOperatorActAsFrom).toHaveBeenCalledTimes(1);
+      expect(h.ctx.exitOperatorActAsFrom).toHaveBeenCalledWith("a");
       expect(location()).toBe("/operator/fleet/directory");
     });
 
     it("stays put and keeps the exit when the exit is refused", async () => {
-      h.ctx.switchTenant = vi.fn(async () => false);
+      h.ctx.exitOperatorActAsFrom = vi.fn(async () => "refused" as const);
       const { exit, location } = await render();
       await act(async () => { exit()?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
       expect(location()).toBe("/solo/1/command-center");
@@ -184,11 +195,20 @@ describe("WorkspaceExitControl", () => {
       expect(exit()?.hasAttribute("disabled")).toBe(false);
     });
 
+    // Codex review of 2484540d: a stale tab must not end an act-as another tab opened since.
+    it("ends nothing and says so when another tenant's act-as is open now", async () => {
+      h.ctx.exitOperatorActAsFrom = vi.fn(async () => "moved" as const);
+      const { exit, location } = await render();
+      await act(async () => { exit()?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(location()).toBe("/solo/1/command-center");
+      expect(h.toasts).toContain("Workspace a's act-as already ended in another tab, and another tenant is open now. Reload to see where you are.");
+    });
+
     it("asks the unsaved-work guard first, and does not exit when it refuses", async () => {
       const release = registerAccountSwitchGuard(async () => false);
       const { exit, location } = await render();
       await act(async () => { exit()?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
-      expect(h.ctx.switchTenant).not.toHaveBeenCalled();
+      expect(h.ctx.exitOperatorActAsFrom).not.toHaveBeenCalled();
       expect(location()).toBe("/solo/1/command-center");
       release();
     });
@@ -207,7 +227,7 @@ describe("WorkspaceExitControl", () => {
       });
       // Every question the guard was asked is answered yes; only one exit may follow.
       await act(async () => { asking.forEach((yes) => yes(true)); });
-      expect(h.ctx.switchTenant).toHaveBeenCalledTimes(1);
+      expect(h.ctx.exitOperatorActAsFrom).toHaveBeenCalledTimes(1);
       release();
     });
 
@@ -216,10 +236,10 @@ describe("WorkspaceExitControl", () => {
       const release = registerAccountSwitchGuard(async () => allow);
       const { exit } = await render();
       await act(async () => { exit()?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
-      expect(h.ctx.switchTenant).not.toHaveBeenCalled();
+      expect(h.ctx.exitOperatorActAsFrom).not.toHaveBeenCalled();
       allow = true;
       await act(async () => { exit()?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
-      expect(h.ctx.switchTenant).toHaveBeenCalledTimes(1);
+      expect(h.ctx.exitOperatorActAsFrom).toHaveBeenCalledTimes(1);
       release();
     });
   });

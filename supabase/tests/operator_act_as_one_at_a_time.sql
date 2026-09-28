@@ -2,7 +2,7 @@
 -- enter or exit — a second tab, a second press — writes no second receipt. The client checks the
 -- same things, but only within one tab; these are the checks two tabs cannot both pass.
 BEGIN;
-SELECT plan(19);
+SELECT plan(26);
 
 INSERT INTO auth.users (id, aud, role, email) VALUES
   ('0a5a0000-0000-4000-8000-000000000001','authenticated','authenticated','actas-super@tests.invalid'),
@@ -82,6 +82,21 @@ SELECT is(pg_temp.receipts('operator.tenant.exit'), 1, 'exiting from an empty sc
 -- Having exited, the other tenant can be entered.
 SELECT is(public.operator_enter_tenant('0a5a0000-0000-4000-8000-00000000a002') ->> 'active_tenant_id',
   '0a5a0000-0000-4000-8000-00000000a002', 'after the exit, another tenant can be entered');
+
+-- Codex review of 2484540d: an exit names the tenant its tab shows. A stale tab that still shows the
+-- first tenant must not end an act-as another tab opened since.
+SELECT ok(NOT has_function_privilege('anon', 'public.operator_exit_tenant(uuid)', 'EXECUTE'),
+  'anon cannot call the bound exit');
+SELECT throws_ok($$SELECT public.operator_exit_tenant('0a5a0000-0000-4000-8000-00000000a001'::uuid)$$,
+  'P0001', 'operator_scope_changed', 'an exit naming a tenant that is no longer the open act-as is refused');
+SELECT is(pg_temp.pointer(), '0a5a0000-0000-4000-8000-00000000a002'::uuid,
+  'the refused exit leaves the other act-as open');
+SELECT is(pg_temp.receipts('operator.tenant.exit'), 1, 'the refused exit records nothing');
+SELECT is(public.operator_exit_tenant('0a5a0000-0000-4000-8000-00000000a002'::uuid) ->> 'previous_active_tenant_id',
+  '0a5a0000-0000-4000-8000-00000000a002', 'an exit naming the open act-as ends it');
+SELECT is(pg_temp.receipts('operator.tenant.exit'), 2, 'and records one exit');
+SELECT is(public.operator_exit_tenant('0a5a0000-0000-4000-8000-00000000a002'::uuid) ->> 'already_exited', 'true',
+  'naming a tenant when nothing is open changes nothing and records nothing');
 
 -- Unchanged refusals.
 SELECT pg_temp.as_caller('0a5a0000-0000-4000-8000-000000000002');

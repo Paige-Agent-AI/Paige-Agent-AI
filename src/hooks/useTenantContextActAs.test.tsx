@@ -41,7 +41,7 @@ vi.mock("@/integrations/supabase/client", () => ({
         return { data: { subscription: { unsubscribe: () => { h.authListener = null; } } } };
       },
     },
-    rpc: (name: string) => {
+    rpc: (name: string, args?: { _expected?: string }) => {
       h.rpcCalls.push(name);
       if (name === "is_platform_owner") return Promise.resolve({ data: false, error: null });
       if (name === "is_platform_admin") return Promise.resolve(h.staff);
@@ -54,7 +54,12 @@ vi.mock("@/integrations/supabase/client", () => ({
         return Promise.resolve({ data: null, error: h.enterError });
       }
       if (name === "operator_exit_tenant") {
+        // The bound exit refuses, writing nothing, when the open act-as is not the one it names.
+        if (args?._expected && h.activeTenant && h.activeTenant !== args._expected) {
+          return Promise.resolve({ data: null, error: { message: "operator_scope_changed" } });
+        }
         if (h.exitCommitsThenFails) h.activeTenant = null;
+        if (!h.exitError) h.activeTenant = null;
         return Promise.resolve({ data: null, error: h.exitError });
       }
       return Promise.resolve({ data: null, error: null });
@@ -356,6 +361,20 @@ describe("the operator act-as marker and its audited exit", () => {
     h.profileReadError = { message: "network" };
     await act(async () => { acts = await c.probeOperatorActAs(); });
     expect(acts).toBe("unknown");
+  });
+
+  // Codex review of 2484540d: a stale tab's exit names the tenant it shows.
+  it("ends the named act-as, and ends nothing when another tenant's is open now", async () => {
+    h.activeTenant = "t1";
+    const c = await mount();
+    h.activeTenant = "t2"; // another tab exited t1 and entered t2
+    let outcome = "";
+    await act(async () => { outcome = await c.exitOperatorActAsFrom("t1"); });
+    expect(outcome).toBe("moved");
+    expect(h.activeTenant).toBe("t2");
+    await act(async () => { outcome = await (ctx as Ctx).exitOperatorActAsFrom("t2"); });
+    expect(outcome).toBe("exited");
+    expect((ctx as Ctx).activeTenantId).toBeNull();
   });
 
   // Codex review of d51754bd: every chosen sign-out ends an open act-as through the audited exit.

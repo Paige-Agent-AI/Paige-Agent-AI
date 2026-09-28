@@ -80,6 +80,7 @@ CREATE OR REPLACE FUNCTION public.operator_list_member_threads(_expected_tenant 
 RETURNS TABLE (
   thread_id uuid,
   owner_name text,
+  owner_email text,
   message_count integer,
   last_message_at timestamptz,
   created_at timestamptz
@@ -114,11 +115,15 @@ begin
            coalesce(nullif(btrim(pr.full_name), ''),
                     nullif(btrim(concat_ws(' ', pr.first_name, pr.last_name)), ''),
                     'A member of this workspace'),
+           -- Names repeat or are missing; the sign-in email tells two members apart before an open
+           -- (Codex review of f7b986ee). The same address the team roster shows.
+           au.email::text,
            coalesce(t.message_count, 0)::integer,
            t.last_message_at,
            t.created_at
     from public.paige_chat_threads t
     left join public.profiles pr on pr.user_id = t.caller_user_id
+    left join auth.users au on au.id = t.caller_user_id
     where t.tenant_id = v_tenant
       and t.contact_id is null
       and t.studio_session_id is null
@@ -199,6 +204,7 @@ begin
   return jsonb_build_object(
     'threadId', v_thread.id,
     'ownerName', coalesce(v_owner_name, 'A member of this workspace'),
+    'ownerEmail', (select au.email from auth.users au where au.id = v_thread.caller_user_id),
     'title', v_thread.title,
     'lastMessageAt', v_thread.last_message_at,
     -- The time the open was recorded, read back from the audit row, so the viewer never shows a

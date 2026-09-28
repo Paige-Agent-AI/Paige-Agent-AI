@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 type MemberThread = {
   thread_id: string;
   owner_name: string;
+  owner_email: string | null;
   message_count: number;
   last_message_at: string | null;
   created_at: string;
@@ -37,6 +38,7 @@ type MemberThread = {
 type OpenedThread = {
   threadId: string;
   ownerName: string;
+  ownerEmail: string | null;
   openedAt: Date;
   turns: Array<{ role: "user" | "assistant"; content: string; createdAt: string }>;
 };
@@ -144,6 +146,7 @@ function MemberConversationsForWorkspace({ scopeKey }: { scopeKey: string }) {
     setOpened({
       threadId: data.threadId,
       ownerName: data.ownerName ?? who,
+      ownerEmail: data.ownerEmail ?? null,
       // The recorded time, read back from the server's audit row; the browser clock is only a fallback.
       openedAt: data.openedAt ? new Date(data.openedAt) : new Date(),
       turns: Array.isArray(data.turns) ? data.turns : [],
@@ -198,6 +201,8 @@ function MemberConversationsForWorkspace({ scopeKey }: { scopeKey: string }) {
                       <LockKeyhole aria-hidden className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-foreground">{thread.owner_name}</span>
+                        {/* Names repeat or are missing; the email says which member this is. */}
+                        {thread.owner_email && <span className="block truncate text-[11px] text-muted-foreground">{thread.owner_email}</span>}
                         <span className="block truncate text-[11px] text-muted-foreground">
                           {thread.message_count} {thread.message_count === 1 ? "message" : "messages"} · {relative(thread.last_message_at)}
                         </span>
@@ -216,7 +221,7 @@ function MemberConversationsForWorkspace({ scopeKey }: { scopeKey: string }) {
           <AlertDialogHeader>
             <AlertDialogTitle>Open {pending?.owner_name}'s conversation?</AlertDialogTitle>
             <AlertDialogDescription>
-              This is {pending?.owner_name}'s private conversation with PAIGE. Opening it is recorded under
+              This is {pending?.owner_name}'s{pending?.owner_email ? ` (${pending.owner_email})` : ""} private conversation with PAIGE. Opening it is recorded under
               your name, with the time. You'll be able to read it, not add to it.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -237,7 +242,7 @@ function MemberConversationsForWorkspace({ scopeKey }: { scopeKey: string }) {
           <DialogHeader className="border-b border-border px-6 pb-4 pt-6 text-left">
             <DialogTitle>{opened?.ownerName}'s conversation with PAIGE</DialogTitle>
             <DialogDescription>
-              Read only. You opened it at {opened ? clock(opened.openedAt) : ""}, and that's recorded.
+              {opened?.ownerEmail ? `${opened.ownerEmail}. ` : ""}Read only. You opened it at {opened ? clock(opened.openedAt) : ""}, and that's recorded.
             </DialogDescription>
           </DialogHeader>
           <ol className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5" aria-label={`${opened?.ownerName ?? "Member"}'s messages`}>

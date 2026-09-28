@@ -32,7 +32,7 @@ import { MemberConversations } from "./MemberConversations";
 let host: HTMLDivElement;
 let root: Root;
 const thread = {
-  thread_id: "thread-1", owner_name: "Test Member", message_count: 2,
+  thread_id: "thread-1", owner_name: "Test Member", owner_email: "member@example.test", message_count: 2,
   last_message_at: new Date().toISOString(), created_at: new Date().toISOString(),
 };
 
@@ -202,5 +202,19 @@ describe("members' conversations", () => {
     await act(async () => { byText("Open conversation")!.click(); await Promise.resolve(); });
     expect(h.toasts[0]).toContain("another workspace");
     expect(document.body.textContent).not.toContain("conversation with PAIGE");
+  });
+
+  it("tells same-named members apart by email, in the row and before the open", async () => {
+    h.listResult = { data: [
+      { ...thread, thread_id: "a", owner_name: "Sam Lee", owner_email: "sam.lee@example.test" },
+      { ...thread, thread_id: "b", owner_name: "Sam Lee", owner_email: "slee@example.test" },
+    ], error: null };
+    await mount();
+    await act(async () => { byText("Members' conversations")!.click(); });
+    const rows = Array.from(host.querySelectorAll("li button")).map((b) => b.textContent);
+    expect(rows[0]).toContain("sam.lee@example.test");
+    expect(rows[1]).toContain("slee@example.test");
+    await act(async () => { byText("slee@example.test")!.click(); });
+    expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain("slee@example.test");
   });
 });

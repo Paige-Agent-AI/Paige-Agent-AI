@@ -100,7 +100,7 @@ export async function findSoleClientByEmailAnyWorkspace(
 
 /**
  * Like findSoleClientByEmailAnyWorkspace, for the callers whose existing rule is "the first
- * contact holding this email, in any workspace" (the MMA OS bridge verbs). Same reach, same rule;
+ * contact holding this email, in any workspace" (the paige-bridge verbs). Same reach, same rule;
  * narrowing it is recorded as its own item.
  */
 export async function findFirstClientByEmailAnyWorkspace(

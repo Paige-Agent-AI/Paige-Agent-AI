@@ -29,6 +29,14 @@ INSERT INTO public.tenants (id, slug, name, status, account_type, account_number
   ('c3000000-0000-4000-8000-00000000000a', 'contact-methods-a', 'Contact Methods A', 'active', 'standalone', 'CMA', 9320001, '{}'::jsonb),
   ('c3000000-0000-4000-8000-00000000000b', 'contact-methods-b', 'Contact Methods B', 'active', 'standalone', 'CMB', 9320002, '{}'::jsonb);
 
+INSERT INTO public.tenant_members (tenant_id, user_id, role, status, is_owner, joined_at) VALUES
+  ('c3000000-0000-4000-8000-00000000000a', 'c3000000-0000-4000-8000-0000000000a1', 'owner', 'active', true, now() - interval '3 days'),
+  ('c3000000-0000-4000-8000-00000000000a', 'c3000000-0000-4000-8000-0000000000a2', 'admin', 'active', false, now() - interval '2 days'),
+  ('c3000000-0000-4000-8000-00000000000a', 'c3000000-0000-4000-8000-0000000000a3', 'member', 'active', false, now() - interval '1 day'),
+  ('c3000000-0000-4000-8000-00000000000b', 'c3000000-0000-4000-8000-0000000000b1', 'owner', 'active', true, now() - interval '3 days');
+
+-- A person's active workspace must be one they belong to (guard_active_tenant_membership), so
+-- the memberships above come first.
 INSERT INTO public.profiles (user_id, active_tenant_id) VALUES
   ('c3000000-0000-4000-8000-0000000000a1', 'c3000000-0000-4000-8000-00000000000a'),
   ('c3000000-0000-4000-8000-0000000000a2', 'c3000000-0000-4000-8000-00000000000a'),
@@ -36,11 +44,6 @@ INSERT INTO public.profiles (user_id, active_tenant_id) VALUES
   ('c3000000-0000-4000-8000-0000000000b1', 'c3000000-0000-4000-8000-00000000000b')
 ON CONFLICT (user_id) DO UPDATE SET active_tenant_id = EXCLUDED.active_tenant_id;
 
-INSERT INTO public.tenant_members (tenant_id, user_id, role, status, is_owner, joined_at) VALUES
-  ('c3000000-0000-4000-8000-00000000000a', 'c3000000-0000-4000-8000-0000000000a1', 'owner', 'active', true, now() - interval '3 days'),
-  ('c3000000-0000-4000-8000-00000000000a', 'c3000000-0000-4000-8000-0000000000a2', 'admin', 'active', false, now() - interval '2 days'),
-  ('c3000000-0000-4000-8000-00000000000a', 'c3000000-0000-4000-8000-0000000000a3', 'member', 'active', false, now() - interval '1 day'),
-  ('c3000000-0000-4000-8000-00000000000b', 'c3000000-0000-4000-8000-0000000000b1', 'owner', 'active', true, now() - interval '3 days');
 
 -- upsert_contact and conversations require the platform admin role in addition to the seat.
 INSERT INTO public.user_roles (user_id, role) VALUES

@@ -123,11 +123,22 @@ function MemberConversationsForWorkspace({ scopeKey }: { scopeKey: string }) {
   // list and any open conversation are cleared, and the operator is told why (Codex review of 3ca53c69).
   const shownRef = useRef(false);
   shownRef.current = list.phase === "ready" || !!opened || !!pending;
+  const idleRef = useRef(true);
+  idleRef.current = list.phase === "idle";
   const revalidate = useCallback(async () => {
     const mine = generation.current;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any).rpc("operator_list_member_threads", { _expected_tenant: scopeKey, _limit: PAGE });
-    if (mine !== generation.current || !error) return;
+    const { data, error } = await (supabase as any).rpc("operator_list_member_threads", { _expected_tenant: scopeKey, _limit: PAGE });
+    if (mine !== generation.current) return;
+    if (!error) {
+      // Cleared earlier (or refused at first) and allowed again: the operator is back in this
+      // workspace, so the section returns with the first page this check just read (Codex review of 0e81cac9).
+      if (idleRef.current) {
+        const rows = (data ?? []) as MemberThread[];
+        setList({ phase: "ready", threads: rows, hasMore: rows.length === PAGE });
+      }
+      return;
+    }
     const message = String(error.message ?? "");
     // A transient failure changes nothing: what is shown was allowed a moment ago and may still be.
     if (!REFUSED.test(message)) return;

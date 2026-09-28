@@ -296,6 +296,19 @@ describe("members' conversations", () => {
     expect(byText("Show more")?.disabled).toBe(false);
   });
 
+  it("comes back when a later re-check finds the operator back in this workspace", async () => {
+    await mount();
+    // Another tab exits this workspace; this tab comes back and clears.
+    h.listResult = { data: [], error: { message: "operator_not_acting" } };
+    await act(async () => { window.dispatchEvent(new Event("focus")); await Promise.resolve(); await Promise.resolve(); });
+    expect(host.textContent).toBe("");
+    // The operator re-enters the same workspace in that tab; this tab's scope never changed.
+    h.listResult = { data: [thread], error: null };
+    await act(async () => { window.dispatchEvent(new Event("focus")); await Promise.resolve(); await Promise.resolve(); });
+    await act(async () => { byText("Members' conversations")?.click(); });
+    expect(host.textContent).toContain("Test Member");
+  });
+
   it("drops an open still in flight when a re-check has revoked this workspace", async () => {
     let answer!: (value: unknown) => void;
     h.openGate = new Promise((resolve) => { answer = resolve; });

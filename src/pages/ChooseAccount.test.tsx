@@ -25,6 +25,7 @@ const harness = vi.hoisted(() => ({
     activeUserId: "user-1" as string | null,
     endActAsBeforeSignOut: vi.fn(),
     enterOperatorActAs: vi.fn(),
+    exitOperatorActAsFrom: vi.fn(),
   },
 }));
 
@@ -76,6 +77,7 @@ describe("ChooseAccount", () => {
     harness.context.refresh = vi.fn(async () => undefined);
     harness.context.endActAsBeforeSignOut = vi.fn(async () => "clear" as const);
     harness.context.enterOperatorActAs = vi.fn(async () => "entered" as const);
+    harness.context.exitOperatorActAsFrom = vi.fn(async () => "exited" as const);
     harness.context.accountContextStatus = "ready";
     // Restore the tenant fixture. Several cases mutate it (status, canary,
     // account_number) and without this the mutations leak forward and the next
@@ -486,14 +488,15 @@ describe("ChooseAccount", () => {
       const original = window.location;
       Object.defineProperty(window, "location", { configurable: true, value: { ...original, assign, search: "" } });
       const calls: Array<string | null> = [];
-      harness.context.switchTenant = vi.fn(async (id: string | null) => { calls.push(id); return true; });
+      harness.context.exitOperatorActAsFrom = vi.fn(async (id: string) => { calls.push(`exit:${id}`); return "exited" as const; });
       harness.context.enterOperatorActAs = vi.fn(async (id: string) => { calls.push(`enter:${id}`); return "entered" as const; });
       await act(async () => {
         root.render(<MemoryRouter initialEntries={["/choose-account"]}><ChooseAccount /></MemoryRouter>);
       });
       const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Mogul Maker Academy"));
       await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
-      expect(calls).toEqual([null, "enter:mogul"]);
+      // The exit names the act-as this tab shows (Codex review of 49ac446e).
+      expect(calls).toEqual(["exit:antonio", "enter:mogul"]);
       expect(assign).toHaveBeenCalledWith("/solo/222222/command-center");
       Object.defineProperty(window, "location", { configurable: true, value: original });
     });
@@ -502,7 +505,7 @@ describe("ChooseAccount", () => {
       const assign = vi.fn();
       const original = window.location;
       Object.defineProperty(window, "location", { configurable: true, value: { ...original, assign, search: "" } });
-      harness.context.switchTenant = vi.fn(async (id: string | null) => id !== null);
+      harness.context.exitOperatorActAsFrom = vi.fn(async () => "refused" as const);
       await act(async () => {
         root.render(<MemoryRouter initialEntries={["/choose-account"]}><ChooseAccount /></MemoryRouter>);
       });
@@ -512,6 +515,17 @@ describe("ChooseAccount", () => {
       expect(assign).not.toHaveBeenCalled();
       expect(host.textContent).toContain("Paige couldn't end your act-as in Antonio Daniel LLC. Nothing else was entered.");
       Object.defineProperty(window, "location", { configurable: true, value: original });
+    });
+
+    it("enters nothing when this tab's act-as already ended in another tab", async () => {
+      harness.context.exitOperatorActAsFrom = vi.fn(async () => "moved" as const);
+      await act(async () => {
+        root.render(<MemoryRouter initialEntries={["/choose-account"]}><ChooseAccount /></MemoryRouter>);
+      });
+      const button = Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Mogul Maker Academy"));
+      await act(async () => { button?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(harness.context.enterOperatorActAs).not.toHaveBeenCalled();
+      expect(host.textContent).toContain("Your act-as in Antonio Daniel LLC already ended in another tab, and another tenant is open now. Reload to see where you are.");
     });
 
     // Codex review of a9c6b22c: after the exit, an enter whose outcome is unknown must not be

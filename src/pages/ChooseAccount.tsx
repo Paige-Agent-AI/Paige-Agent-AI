@@ -99,10 +99,18 @@ export default function ChooseAccount() {
       // An operator who came here from inside a tenant still has that act-as open, and the server
       // refuses to enter over it. Choosing another workspace is the explicit intent to leave, so
       // the act-as ends through the audited exit first — and if it will not end, nothing is entered.
+      // The exit names the act-as this tab shows: a stale tab must not end one another tab opened.
       const endedActAs = Boolean(openActAs);
-      if (openActAs && !(await context.switchTenant(null))) {
-        setError(`Paige couldn't end your act-as in ${openActAs.name}. Nothing else was entered.`);
-        return false;
+      if (openActAs) {
+        const exited = await context.exitOperatorActAsFrom(openActAs.id);
+        if (exited === "moved") {
+          setError(`Your act-as in ${openActAs.name} already ended in another tab, and another tenant is open now. Reload to see where you are.`);
+          return false;
+        }
+        if (exited !== "exited") {
+          setError(`Paige couldn't end your act-as in ${openActAs.name}. Nothing else was entered.`);
+          return false;
+        }
       }
       // An operator's enter answers entered / refused / unknown / occupied; each is reported for
       // what it is, and "platform scope" is claimed only when the refusal is confirmed.
@@ -191,6 +199,7 @@ export default function ChooseAccount() {
         setSwitchingTo(null);
         return;
       }
+      // Unbound on purpose: choosing Platform means ending whatever act-as is open, from any tab.
       const switched = await context.switchTenant(null);
       if (!switched) {
         setSwitchingTo(null);

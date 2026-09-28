@@ -127,9 +127,9 @@ export const CAPABILITY_GROUPS: CapabilityGroup[] = [
         promise: "Your tools talking to each other, with Paige in the middle.",
         items: [
           { text: "Connects your Google Calendar and sending email", state: "live" },
-          { text: "Builds and runs your n8n workflows, with your approval", state: "live" },
+          { text: "Builds and runs automations across your tools, with your approval", state: "live" },
           { text: "Turns form submissions into contacts, deals and team alerts", state: "live" },
-          { text: "Connects your tools' MCP servers", state: "live" },
+          { text: "Connects the tools you already use", state: "live" },
           { text: "Takes actions inside those connected tools", state: "build" },
         ],
       },

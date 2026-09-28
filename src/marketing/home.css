@@ -683,6 +683,8 @@
   pointer-events: none;
 }
 .pa-atmos { position: absolute; inset: 0; z-index: -2; pointer-events: none; overflow: hidden; }
+/* The hero's Pause stops everything that moves on the first screen, the drifting light included. */
+.pa-hero:has(.pa-measure__pause[aria-pressed="true"]) .pa-atmos__light { animation-play-state: paused; }
 .pa-atmos__light {
   position: absolute;
   border-radius: 50%;

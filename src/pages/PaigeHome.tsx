@@ -31,7 +31,7 @@ const OUTCOMES = [
   "Landing pages and funnels, built and published on your say",
   "Growth advice, a Game Plan, and plans that keep you moving",
   "Clients, calendar and booking page kept in order",
-  "Your calendar, email and n8n workflows connected",
+  "Your calendar, email and automations connected",
 ];
 
 export default function PaigeHome() {
@@ -210,8 +210,8 @@ export default function PaigeHome() {
           </h2>
           <p className="pa-lead">
             Paige drafts, researches, plans and builds for you. In her Trust Compass you choose which everyday jobs
-            she handles by herself. Anything she sends to a customer, publishes, or changes in one of your tools
-            waits for your yes. That isn’t unfinished work. It’s the control that keeps it your business.
+            she handles by herself. By default, anything she writes to a customer, publishes, or changes in one of
+            your tools waits for your yes. That isn’t unfinished work. It’s the control that keeps it your business.
           </p>
         </div>
       </section>
@@ -229,7 +229,7 @@ export default function PaigeHome() {
           </div>
           <div className="pa-plan__card pa-stacked" data-reveal="rise">
             <div className="pa-plan__top">
-              <p className="pa-h3">Paige Solo</p>
+              <h3 className="pa-h3">Paige Solo</h3>
               <p className="pa-plan__price">
                 <span className="pa-num">$74.50</span>
                 <span className="pa-small">per month, after 30 days free</span>
@@ -244,7 +244,7 @@ export default function PaigeHome() {
               ))}
             </ul>
             <a href={pricingHref()} className="pa-btn pa-btn--act">
-              Start your 30-day trial
+              See the Solo plan
               <ArrowIcon />
             </a>
             <p className="pa-small">

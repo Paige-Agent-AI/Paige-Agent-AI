@@ -5,10 +5,15 @@
 --
 -- A1 (owner ruling 2026-09-27) moved what this probe guards. The registered address, business
 -- phone and website may now reach PAIGE for the owner's own use, so the boundary that matters is
--- the one in front of the customer: "customer-bound draft" below fails if the saved address, phone
--- or website can reach a customer-bound draft unnoticed. The shared persona projection check
--- ("private PAIGE projection") stays, because that projection is sent on every seat, a client's
--- included; A1 gives the facts to PAIGE only through the owner's own seat.
+-- the one in front of the customer. "customer-bound draft" below fails if the check that stands at
+-- that boundary does not find the address, phone and website Setup just saved, in a draft addressed
+-- to a customer, once when only the private brief holds them and again after the save has also
+-- written them to the legal profile (each stored copy on its own is proven by
+-- outbound_private_business_facts.sql). That proves the check recognises what Setup saves. It does
+-- not by itself prove nothing reaches a customer: no customer-bound exit calls the check until
+-- A1-1b, whose own proof covers that. The shared persona projection check ("private PAIGE
+-- projection") stays, because that projection is sent on every seat, a client's included; A1 gives
+-- the facts to PAIGE only through the owner's own seat.
 do $probe$
 declare
   v_tenant uuid;
@@ -134,6 +139,16 @@ begin
   if v_saved -> 'brief' ->> 'legalName'<>'First-use Legal Person'
      or not exists(select 1 from public.tenant_legal_profile where tenant_id=v_tenant and legal_business_name='First-use Legal Person')
     then raise exception 'PROBE_FAIL: first-use legal name durable readback'; end if;
+  -- And after the real save path has also written them to the legal profile.
+  if not exists(select 1 from public.tenant_legal_profile where tenant_id=v_tenant
+                and registered_address='10 Test Way' and support_phone='+442079460001')
+    then raise exception 'PROBE_FIXTURE_MISSING: legal profile contact'; end if;
+  perform set_config('request.jwt.claim.role','service_role',true);
+  if not (public.outbound_private_business_facts_found(v_tenant,
+       array['Our office is 10 Test Way. Call 020 7946 0001 or book at https://rollback.example/book'])
+       @> array['address','phone','website']::text[])
+    then raise exception 'PROBE_FAIL: customer-bound draft once the legal profile holds them'; end if;
+  perform set_config('request.jwt.claim.role','authenticated',true);
 
   v_version:=v_saved -> 'brief' ->> 'updatedAt';
   begin

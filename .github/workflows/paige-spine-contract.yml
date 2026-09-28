@@ -285,14 +285,14 @@ jobs:
       # a NULL tenant never reaches another user's rows or anyone's in-tenant rows.
       - run: supabase test db supabase/tests/owner_memory_recall_no_tenant.sql
         if: ${{ !cancelled() }}
-      # One server answer to "is this person a platform operator, and at which tier", and the R0
-      # capability table behind "may this operator do X", including its super_admin-only default.
-      - run: supabase test db supabase/tests/operator_standing.sql
-        if: ${{ !cancelled() }}
       # A1: the owner's registered address, business phone and website are found in any
       # customer-bound draft, however they are written, unless the owner typed them; only the server
       # may ask, and only about the tenant it names.
       - run: supabase test db supabase/tests/outbound_private_business_facts.sql
+        if: ${{ !cancelled() }}
+      # One server answer to "is this person a platform operator, and at which tier", and the R0
+      # capability table behind "may this operator do X", including its super_admin-only default.
+      - run: supabase test db supabase/tests/operator_standing.sql
         if: ${{ !cancelled() }}
       - run: psql -v ON_ERROR_STOP=1 -f scripts/sql/social-foundation-legacy-shape-proof.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
       - run: psql -v ON_ERROR_STOP=1 -f scripts/sql/social-foundation-tenant-shaped-proof.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres

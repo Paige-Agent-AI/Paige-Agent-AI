@@ -20,6 +20,7 @@
     - a staged proposal
   - **How each is found:** the text is read as HTML e-mail carries it.
     - An address is found by its street lines, words normalised on both sides. A line's core is taken up to its first street or suite word, each end of a number range counts, and a postcode inside a line counts.
+    - A numeric postcode is found as a whole number: each number of five digits or more in a line (a five-digit one with or without four more), and the numbers that start or end a line joined into one, as in "110001", "123-4567" and "IN 46208".
     - A phone is found by any seven consecutive digits of a stored number, split into numbers at letters. A six-digit number and a letter number are found too.
     - A website is found by its host and subdomains, and on a shared platform (Paige's own included) by its page, as in `paigeagent.ai/book/<calendar>`.
   - **Deliberately not matched:**
@@ -37,6 +38,7 @@
     - a different number sharing seven digits in a row with a stored one (held back)
     - a free-text address whose first line is a house name with no number or street word (found by its other lines)
     - the confirmed number joined in the text to digits right after it, as in "(9am-5pm)" (held back)
+    - a four-digit postcode on its own, since a year or a price would equal it
     - a number confirmed with its country code but no "+", written domestically (held back)
     - a number confirmed with the code of a country not known to dial a trunk 0, written with a 0; a trunk prefix other than 0, as Russia's 8 (held back)
     - a number carrying all the digits of a number confirmed without "+", under another country code (taken for it)
@@ -51,12 +53,12 @@
     - It fails ("confirmed in Setup") unless, once the save has written them to the Setup record, a draft carrying all three is held back for the address alone.
     - It proves the check reads what Setup saves and confirms, not that nothing reaches a customer: A1-1b's proof covers the exits.
     - The persona-projection check stays as the client-seat half.
-  - **Proof:** `supabase/tests/outbound_private_business_facts.sql`, 243 checks, is added to CI's database-contract job.
-    - 173 of them store one copy per tenant and try one way of writing it; 42 of those must pass.
+  - **Proof:** `supabase/tests/outbound_private_business_facts.sql`, 259 checks, is added to CI's database-contract job.
+    - 189 of them store one copy per tenant and try one way of writing it; 45 of those must pass.
     - 40 cover what Setup confirms: 11 on one tenant holding confirmed and unconfirmed copies side by side, and 29 on tenants each confirming a phone or website beside one other copy (14 must pass).
-    - It runs on a local stand-in carrying the spine's real resolver and production's one-top-level-tenant-per-owner index. There, 115 of 116 reinstated defects each turn a check red.
+    - It runs on a local stand-in carrying the spine's real resolver and production's one-top-level-tenant-per-owner index. There, 124 of 125 reinstated defects each turn a check red.
     - The one that does not is equivalent: the legal profile's website is always the confirmed value, so it is skipped by its key whether or not it is read.
-  - **Independent review (§39):** seven rounds.
+  - **Independent review (§39):** eight rounds.
     - Round 1: BLOCK. Missed forms of writing, unread copies, an unknown tenant read as "nothing stored", and overclaiming records.
     - Round 2: SHIP-WITH-FIXES, four majors: a tenant subdomain on a shared host, phones with trailing text, PO boxes, and towns refused.
     - Round 3: SHIP-WITH-FIXES, three majors: towns in addresses of four or more lines, short home addresses no longer read, and named houses dropped.
@@ -65,6 +67,7 @@
     - Round 6: SHIP-WITH-FIXES, minors: phone forms for a bare eleven-digit number, Italy's 0 and +1/+7; districts after a numbered building; a numbered house not looked for without its number; a legacy copy of the confirmed website refusing its subdomains.
     - Round 7: SHIP-WITH-FIXES, minors: round 6's plain-road rule missed a road like "Holly Grove" after a numbered building; trunk-0 forms for countries with no trunk. By the owner's rule that a withheld send is preferable to a missed leak, the road is found again and a district named like a road there is held back, a named cost.
     - Round 8 (targeted): SHIP-WITH-FIXES, one minor that failed safe: the confirmed website was decoded twice to make its keys and once where copies are read, so a page holding an escaped escape was refused. It is decoded once now.
+    - Codex's merge-gate review, two rounds: a P1 each time on numeric postcodes (a ZIP stored as the postal code; then six-digit and two-part postcodes), and a P2 on these records' counts. All three are fixed.
     - Every round's findings are fixed in this PR, except one reported and not changed: the spine counts any legal-profile phone or website as confirmed, whoever wrote it (a platform operator can write one), because the ruling keys the licence to the spine.
   - **Next:**
     - A1-1b wires the check into the chat's four customer-bound exits, Zapier and n8n free-form arguments, and the send in execute-approval, each failing closed on error.

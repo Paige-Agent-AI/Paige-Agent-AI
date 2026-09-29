@@ -6048,3 +6048,19 @@ repository's "Code scanning AI findings" check; re-enabling or deleting `premerg
 
 **Cost accepted:** `database-contract` on every PR — ~8 min in parallel with `verify`, plus a
 read-only production schema read per PR. Actions minutes are not billed on this public repository.
+
+## 2026-09-29 — A platform user's address is read from `user_contact_methods`, through one shared read
+
+`profiles` has no email column. `ingest-rag-outcome`, `security-canary-probe` and `send-funding-report`
+selected one, so each read failed with 42703. They now read `user_contact_methods` through
+`supabase/functions/_shared/user-contact-methods.ts` (`primaryEmailsForUsers` / `primaryEmailForUser` /
+`contactMethodsForUser`). A failed read throws, because the callers send mail or scrub text on the answer.
+- **Canary recipients are the platform operators** (`super_admin` + `platform_admin`, §53). The old list
+  named `'owner'`, which is not an `app_role` value, so the recipient query itself failed with 22P02.
+  It also named the tenant-level `admin`.
+- **The funding report goes only to its owner's primary address.** The caller-supplied `email` override is
+  removed from the function and from both callers: it let anyone send someone else's credit report anywhere.
+- **The RAG anonymizer receives every address the person holds** (`emails[]` / `phones[]`), and the ingest
+  refuses to publish if the identity read fails. Before this, the failed read left the name unscrubbed.
+- Proofs: `_shared/user-contact-methods.test.ts` (ci.yml), `supabase/tests/user_address_readers.sql`
+  (database-contract), `src/__tests__/user-address-readers-contract.test.ts`.

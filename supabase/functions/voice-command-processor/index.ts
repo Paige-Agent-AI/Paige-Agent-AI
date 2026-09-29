@@ -234,7 +234,6 @@ async function handleSendFundingReport(supabaseUrl: string, userId: string, para
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       userId,
-      email: params.email,
       includeBusinessCredit: params.includeBusinessCredit ?? true,
       includePersonalCredit: params.includePersonalCredit ?? true,
       includeFundingOffers: params.includeFundingOffers ?? true,

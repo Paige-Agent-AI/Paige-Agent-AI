@@ -25,6 +25,19 @@
 --      company workspace — that would be Option A by another door, and it would survive losing
 --      the role. Only the platform owner or the same direct server context may insert, change or
 --      remove tenant_members rows for a company workspace. Production holds no such rows today.
+--      Deliberate consequence: once the platform owner seats someone there, only the platform
+--      owner (or a server context) can change or remove that seat — not the member, not an
+--      operator, not a service-role offboarding path.
+--   2c. REFUSES invitations into a company workspace (tenant_invite_tokens, invitations) unless
+--      written by a direct server context. An invitation is accepted by the invitee, who is not
+--      the platform owner, so it could only fail at acceptance (2b); refusing it when created is
+--      the honest answer, and it closes the other door to a lasting seat (an operator minting an
+--      invite for an account they control). The platform owner seats people directly
+--      (grant_tenant_member_role). Production holds no such invitations today.
+--   2d. sync_user_role_to_tenant_member keeps its prior outcome: it never seats anyone in a
+--      company workspace on an operator's behalf (before this migration an operator was not an
+--      admin there, so it skipped; now it skips explicitly). Without this, an operator whose
+--      active workspace is the company's would fail to accept any invitation elsewhere.
 --   3. WIDENS the four membership predicates, and only for a company workspace:
 --        is_tenant_admin(_tenant)            OR (is_platform_operator() AND is_company_workspace)
 --        is_tenant_member(_tenant)           OR (is_platform_operator() AND is_company_workspace)
@@ -52,8 +65,11 @@
 -- REVERSIBILITY: fully reversible and writes, moves and deletes no data. To revert: restore the
 -- four predicates and create_contact_v2 to their prior definitions (quoted in this PR and in
 -- 20260714235406 / 20260803190000 / 20270515010000), drop triggers trg_guard_company_workspace_flag
--- and trg_guard_company_workspace_membership, and drop functions guard_company_workspace_flag(),
--- guard_company_workspace_membership(), is_direct_server_context() and is_company_workspace(uuid).
+-- trg_guard_company_workspace_membership and both trg_guard_company_workspace_invitation, restore
+-- sync_user_role_to_tenant_member (as last defined in 20270506000000; the prior body differs only in the
+-- admin branch), and drop functions guard_company_workspace_flag(),
+-- guard_company_workspace_membership(), guard_company_workspace_invitation(),
+-- is_direct_server_context() and is_company_workspace(uuid).
 -- ============================================================================
 
 -- ── 1. What a company workspace is ───────────────────────────────────────────
@@ -80,6 +96,9 @@ COMMENT ON FUNCTION public.is_company_workspace(uuid) IS
 -- A direct server context: no request session of any kind (a migration, pg_cron, a psql session).
 -- anon, authenticated and service_role sessions are all request sessions; service_role in
 -- particular is how edge functions act for a signed-in person, so it is never trusted here.
+-- NOTE: a SECURITY DEFINER function that clears request.jwt.claims inside itself becomes a direct
+-- context and inherits this trust; today only operator_provision_tenant (platform-owner gated
+-- first) and _n8n_cancel_on_workspace_switch (n8n tables only) do. Any new one must be reviewed.
 CREATE OR REPLACE FUNCTION public.is_direct_server_context()
 RETURNS boolean
 LANGUAGE sql
@@ -147,6 +166,85 @@ CREATE TRIGGER trg_guard_company_workspace_membership
   BEFORE INSERT OR UPDATE OR DELETE ON public.tenant_members
   FOR EACH ROW EXECUTE FUNCTION public.guard_company_workspace_membership();
 
+-- ── 2c. A company workspace takes no invitations ─────────────────────────────
+CREATE OR REPLACE FUNCTION public.guard_company_workspace_invitation()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+BEGIN
+  IF public.is_company_workspace(NEW.tenant_id) AND NOT public.is_direct_server_context() THEN
+    RAISE EXCEPTION 'TENANT_FORBIDDEN: a company workspace does not take invitations; the platform owner adds people to it directly'
+      USING ERRCODE = '42501';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+REVOKE ALL ON FUNCTION public.guard_company_workspace_invitation() FROM PUBLIC, anon, authenticated;
+DROP TRIGGER IF EXISTS trg_guard_company_workspace_invitation ON public.tenant_invite_tokens;
+CREATE TRIGGER trg_guard_company_workspace_invitation
+  BEFORE INSERT OR UPDATE OF tenant_id ON public.tenant_invite_tokens
+  FOR EACH ROW EXECUTE FUNCTION public.guard_company_workspace_invitation();
+DROP TRIGGER IF EXISTS trg_guard_company_workspace_invitation ON public.invitations;
+CREATE TRIGGER trg_guard_company_workspace_invitation
+  BEFORE INSERT OR UPDATE OF tenant_id ON public.invitations
+  FOR EACH ROW EXECUTE FUNCTION public.guard_company_workspace_invitation();
+
+-- ── 2d. Role sync never seats anyone in a company workspace for an operator ───
+-- Production's live definition, with one change: the admin branch excludes a company workspace.
+CREATE OR REPLACE FUNCTION public.sync_user_role_to_tenant_member()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  DECLARE
+    _tenant_id uuid;
+    _tenant_role public.tenant_role;
+  BEGIN
+    IF TG_OP = 'DELETE' THEN
+      RETURN OLD;
+    END IF;
+
+    IF NEW.role = 'super_admin'::public.app_role THEN
+      RETURN NEW;
+    END IF;
+
+    _tenant_id := public.current_user_tenant_id();
+    IF _tenant_id IS NULL THEN
+      RETURN NEW;
+    END IF;
+
+    -- An operator's authority in a company workspace is the role's, not a seat (20270521000000).
+    IF NOT (public.is_platform_owner()
+            OR (public.is_tenant_admin(_tenant_id) AND NOT public.is_company_workspace(_tenant_id))) THEN
+      RETURN NEW;
+    END IF;
+
+    _tenant_role := public.map_app_role_to_tenant_role(NEW.role);
+
+    INSERT INTO public.tenant_members (tenant_id, user_id, role, status, invited_at, joined_at)
+    VALUES (_tenant_id, NEW.user_id, _tenant_role, 'active', now(), now())
+    ON CONFLICT (tenant_id, user_id) DO UPDATE
+      SET role = CASE
+            WHEN public.tenant_members.role = 'owner'::public.tenant_role THEN public.tenant_members.role
+            WHEN EXCLUDED.role = 'admin'::public.tenant_role THEN 'admin'::public.tenant_role
+            ELSE public.tenant_members.role
+          END,
+          status = 'active',
+          joined_at = COALESCE(public.tenant_members.joined_at, now()),
+          updated_at = now();
+
+    UPDATE public.profiles
+       SET active_tenant_id = _tenant_id
+     WHERE user_id = NEW.user_id
+       AND active_tenant_id IS NULL;
+
+    RETURN NEW;
+  END;
+  $function$;
+
 -- ── 3. Membership predicates: owner authority for operators, company workspaces only ──
 CREATE OR REPLACE FUNCTION public.is_tenant_admin(_tenant uuid)
  RETURNS boolean
@@ -207,7 +305,7 @@ AS $function$
   -- when a person asks about themselves (or a server path asks), so this function never becomes
   -- a way for anyone to learn whether some other user id holds the operator role.
   OR (_tenant_id IS NOT NULL AND _user_id IS NOT NULL
-      AND (_user_id = auth.uid() OR COALESCE(auth.role(), '') <> ALL (ARRAY['anon', 'authenticated']))
+      AND (COALESCE(_user_id = auth.uid(), false) OR COALESCE(auth.role(), '') <> ALL (ARRAY['anon', 'authenticated']))
       AND public.is_company_workspace(_tenant_id) AND public.is_platform_admin(_user_id));
 $function$;
 

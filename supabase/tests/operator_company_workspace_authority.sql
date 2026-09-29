@@ -3,7 +3,7 @@
 -- workspace; and only the platform owner decides which workspaces are the company's.
 -- Synthetic fixtures; always rolled back.
 BEGIN;
-SELECT plan(45);
+SELECT plan(48);
 
 INSERT INTO auth.users (id, aud, role, email) VALUES
   ('0b0b0000-0000-4000-8000-000000000001','authenticated','authenticated','cw-super@tests.invalid'),
@@ -150,20 +150,32 @@ SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_caller('0b0b0000-0000-4000-8000-000000000003');
 SELECT ok(NOT public.is_tenant_owner('0b0b0000-0000-4000-8000-000000000002','0b0b0000-0000-4000-8000-00000000c001'),
   'nor can a signed-in customer');
-SELECT lives_ok($$INSERT INTO public.tenant_members (tenant_id, user_id, role, status) VALUES ('0b0b0000-0000-4000-8000-00000000c002','0b0b0000-0000-4000-8000-000000000004','member','active')$$,
+SELECT lives_ok($$SELECT public.grant_tenant_member_role('0b0b0000-0000-4000-8000-000000000004'::uuid, 'client'::public.app_role, '0b0b0000-0000-4000-8000-00000000c002'::uuid)$$,
   'a customer owner still adds people to their own workspace');
+SELECT lives_ok($$SELECT public.create_tenant_invite_token('0b0b0000-0000-4000-8000-00000000c002'::uuid, 'team')$$,
+  'and still invites people to it');
 SELECT pg_temp.as_caller('0b0b0000-0000-4000-8000-000000000002');
 SELECT ok(public.is_tenant_owner('0b0b0000-0000-4000-8000-000000000002','0b0b0000-0000-4000-8000-00000000c001'),
   'an operator asking about themselves owns the company workspace');
 
 -- ── Authority there is the role's, never a lasting seat (review S1; Option A stays rejected) ──
-SELECT throws_ok($$INSERT INTO public.tenant_members (tenant_id, user_id, role, status) VALUES ('0b0b0000-0000-4000-8000-00000000c001','0b0b0000-0000-4000-8000-000000000002','admin','active')$$,
+SELECT throws_ok($$SELECT public.grant_tenant_member_role('0b0b0000-0000-4000-8000-000000000002'::uuid, 'client'::public.app_role, '0b0b0000-0000-4000-8000-00000000c001'::uuid)$$,
   '42501', 'TENANT_FORBIDDEN: membership of a company workspace is managed by the platform owner; operators act there through their role',
-  'an operator cannot seat themselves in a company workspace');
+  'an operator cannot seat anyone, themselves included, in a company workspace');
+SELECT throws_ok($$SELECT public.create_tenant_invite_token('0b0b0000-0000-4000-8000-00000000c001'::uuid, 'team', 'owner'::public.tenant_role)$$,
+  '42501', 'TENANT_FORBIDDEN: a company workspace does not take invitations; the platform owner adds people to it directly',
+  'nor mint an invitation into it for an account they control');
+
+-- Role sync, fired by a role granted while the operator's active workspace is the company's,
+-- keeps skipping it instead of trying (and failing) to seat someone there.
+RESET ROLE;
+SELECT lives_ok($$INSERT INTO public.user_roles (user_id, role) VALUES ('0b0b0000-0000-4000-8000-000000000003','client')$$,
+  'a role granted in an operator''s company-workspace context does not try to seat anyone there');
+SET LOCAL ROLE authenticated;
 
 SELECT pg_temp.as_caller('0b0b0000-0000-4000-8000-000000000001');
-SELECT lives_ok($$INSERT INTO public.tenant_members (tenant_id, user_id, role, status) VALUES ('0b0b0000-0000-4000-8000-00000000c001','0b0b0000-0000-4000-8000-000000000004','member','active')$$,
-  'the platform owner manages company-workspace membership');
+SELECT lives_ok($$SELECT public.grant_tenant_member_role('0b0b0000-0000-4000-8000-000000000004'::uuid, 'client'::public.app_role, '0b0b0000-0000-4000-8000-00000000c001'::uuid)$$,
+  'the platform owner seats people in a company workspace directly');
 
 SELECT pg_temp.as_caller('0b0b0000-0000-4000-8000-000000000001');
 SELECT lives_ok($$UPDATE public.tenants SET features = features || '{"system_workspace":true}'::jsonb WHERE id = '0b0b0000-0000-4000-8000-00000000c002'$$,

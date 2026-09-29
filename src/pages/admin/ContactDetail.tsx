@@ -48,6 +48,10 @@ import { useTenantFeature } from "@/hooks/useTenantFeature";
 import { usePendingApprovals } from "@/hooks/usePendingApprovals";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { CATEGORY_LABEL, RISK_COLOR, type ApprovalCategory } from "@/lib/approvals";
+import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses, type WithClientContactMethods } from "@/lib/contact-methods";
+
+// Widened to string: the generated types do not know the contact-methods embed yet.
+const CONTACT_DETAIL_SELECT: string = `*,${CLIENT_CONTACT_METHODS_EMBED}`;
 
 
 type Client = {
@@ -121,10 +125,12 @@ export default function ContactDetail() {
   const load = async (clientId: string) => {
     setLoading(true);
     try {
-      const { data: c, error } = await supabase.from("clients").select("*").eq("id", clientId).maybeSingle();
+      const { data: row, error } = await supabase.from("clients").select(CONTACT_DETAIL_SELECT).eq("id", clientId).maybeSingle();
       if (error) throw error;
-      if (!c) { toast.error("Contact not found"); navigate("/choose-account"); return; }
-      setClient(c as Client);
+      if (!row) { toast.error("Contact not found"); navigate("/choose-account"); return; }
+      // `email` / `phone` are the contact's primary addresses, read from its contact methods.
+      const c = withPrimaryAddresses(row as unknown as Client & WithClientContactMethods);
+      setClient(c);
 
       setCoaches(await loadAssignableStaff());
 

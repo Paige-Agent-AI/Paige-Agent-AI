@@ -38,6 +38,7 @@ import {
 } from "./inbox-shared";
 import { AttachmentChip } from "./AttachmentChip";
 import { selectComposeConnector } from "./connectorRouting";
+import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses, type WithClientContactMethods } from "@/lib/contact-methods";
 
 // Structural subset of the page's Connector — only what the channel picker needs.
 export interface ComposeConnector {
@@ -164,13 +165,13 @@ export function ComposeThreadDialog({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await (supabase as any)
       .from("clients")
-      .select("first_name, last_name, entity_name, email, phone")
+      .select(`first_name, last_name, entity_name, ${CLIENT_CONTACT_METHODS_EMBED}`)
       .eq("id", id)
       .single();
-    const row = (data ?? {}) as {
+    // The address a message goes to is the contact's PRIMARY email / phone.
+    const row = withPrimaryAddresses((data ?? {}) as {
       first_name?: string | null; last_name?: string | null; entity_name?: string | null;
-      email?: string | null; phone?: string | null;
-    };
+    } & WithClientContactMethods);
     const name =
       row.entity_name?.trim() ||
       [row.first_name, row.last_name].filter(Boolean).join(" ").trim() ||

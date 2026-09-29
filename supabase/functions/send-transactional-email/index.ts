@@ -3,7 +3,7 @@ import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 import { resolveTenantEmailContext } from '../_shared/email/branding.ts'
-import { decideSendAuthority } from '../_shared/email/send-authority.ts'
+import { decideSendAuthority, safeFromDisplayName } from '../_shared/email/send-authority.ts'
 import { isAuthorizedInternalCaller, adminClient, operatorUserId } from '../_shared/systems-check-http.ts'
 import { overRateLimit } from '../_shared/rateLimit.ts'
 import { createClient as createLimiterClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -545,7 +545,9 @@ Deno.serve(async (req) => {
   // shared Paige default (§6/§9). Caller-provided tenantId always wins; otherwise
   // resolve from the recipient's profile / active membership. Runs BEFORE the render
   // so the tenant brand can thread into the template props below.
-  if (!tenantId) {
+  // NEVER for a person's own send: there the "recipient" is the caller, so resolving
+  // would hand the caller's own tenant name and reply-to to mail they triggered.
+  if (!tenantId && authority.kind !== 'user') {
     try {
       let uid = recipientUserId
       if (!uid) {
@@ -648,15 +650,17 @@ Deno.serve(async (req) => {
     const sender = (senderRow ?? null) as
       | { from_name?: string; from_address?: string; reply_to?: string; tenant_name?: string }
       | null
-    if (sender?.from_name && sender?.from_address) {
-      const candidate = `${sender.from_name} <${sender.from_address}>`
+    // A tenant names itself, so its From name is a plain, short label or the platform's.
+    const tenantFromName = safeFromDisplayName(sender?.from_name)
+    if (tenantFromName && sender?.from_address) {
+      const candidate = `${tenantFromName} <${sender.from_address}>`
       if (fromAddressAligns(candidate)) {
         resolvedFrom = candidate
         resolvedReplyTo = sender.reply_to ?? null
       } else {
         // Address domain isn't verified for sending, but we can still honor
         // the tenant's display name by swapping in the aligned fallback address.
-        const displayName = sender.from_name || sender.tenant_name || SITE_NAME
+        const displayName = tenantFromName || safeFromDisplayName(sender.tenant_name) || SITE_NAME
         resolvedFrom = `${displayName} <notifications@${FROM_DOMAIN}>`
         resolvedReplyTo = sender.reply_to ?? null
         console.warn('tenant from-address unaligned — kept tenant display name with default address', {

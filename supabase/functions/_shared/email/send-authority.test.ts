@@ -3,6 +3,7 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   decideSendAuthority,
+  safeFromDisplayName,
   type SendAuthorityDeps,
   type SendRequestFields,
   USER_SENDABLE_TEMPLATES,
@@ -133,4 +134,20 @@ Deno.test("an operator template needs a platform operator", async () => {
     await decideSendAuthority(req({ templateName: "support-ticket-reply" }), caller({ userId: USER, operator: true })),
     { ok: true, kind: "user", userId: USER, recipientEmail: "victim@elsewhere.test", recipientUserId: null },
   );
+});
+
+Deno.test("a tenant-chosen From name is a plain short label or nothing", () => {
+  assertEquals(safeFromDisplayName("Summit Advisory & Co."), "Summit Advisory & Co.");
+  assertEquals(safeFromDisplayName("  Summit \n Advisory "), "Summit Advisory");
+  for (const bad of [
+    "Account locked, visit https://evil.test",
+    "Verify at www.evil.test",
+    "Support <help@evil.test>",
+    'Quote " break',
+    "x".repeat(61),
+    "",
+    null,
+  ]) {
+    assertEquals(safeFromDisplayName(bad), null, String(bad));
+  }
 });

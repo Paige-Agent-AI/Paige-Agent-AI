@@ -73,6 +73,11 @@ const handler = async (req: Request): Promise<Response> => {
     if (message && message.length > MAX_MESSAGE_CHARS) {
       throw new Error(`Message must be ${MAX_MESSAGE_CHARS} characters or fewer`);
     }
+    // The invitation carries its own accept link. A note with another one is how an invite becomes
+    // a phishing mail, and anyone can start a trial tenant, so notes are link-free.
+    if (message && /https?:\/\/|www\.|\b[a-z0-9-]+\.(com|net|org|io|co|ai|app|link|info|biz|xyz|me|ly)\b/i.test(message)) {
+      throw new Error("Leave links out of the note — the invitation already includes the link to join.");
+    }
     console.log(`Creating invitation for ${email} with role ${role}`);
 
     // Get inviter's name + active tenant for the email. Tenant membership is

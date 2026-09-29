@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
 
   const { data: app, error: appErr } = await admin
     .from("affiliate_applications")
-    .select("id, email, full_name, requested_tier_key, user_id, created_at")
+    .select("id, email, full_name, requested_tier_key, created_at")
     .eq("id", applicationId)
     .maybeSingle();
   if (appErr) return json(503, { error: "application_lookup_failed" });
@@ -94,7 +94,8 @@ Deno.serve(async (req) => {
     body: JSON.stringify({
       templateName: TEMPLATE,
       recipientEmail: email,
-      recipientUserId: app.user_id ?? undefined,
+      // No recipientUserId: the applicant sets user_id on their own row, and the sender would
+      // take that account's tenant name and reply-to for this mail.
       idempotencyKey,
       templateData: {
         // The applicant typed this; only a plain first name reaches the email, never a link.

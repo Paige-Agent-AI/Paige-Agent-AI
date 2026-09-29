@@ -36,6 +36,13 @@ describe("send-transactional-email decides authority before it does anything", (
     );
   });
 
+  it("a person's send never picks up a tenant from the caller, and tenant From names are clamped", () => {
+    expect(src).toMatch(/if \(!tenantId && authority\.kind !== 'user'\) \{/);
+    expect(src).toMatch(/const tenantFromName = safeFromDisplayName\(sender\?\.from_name\)/);
+    expect(src).not.toMatch(/`\$\{sender\.from_name\} </);
+    expect(src).not.toMatch(/sender\.from_name \|\| sender\.tenant_name/);
+  });
+
   it("no longer claims the gateway check is enough", () => {
     expect(read(SENDER)).not.toMatch(/No in-function auth check is needed/);
   });
@@ -84,6 +91,7 @@ describe("the side doors that forwarded with the service key are internal-only",
     expect(src).toMatch(/const inviterName = plainLabel\(/);
     expect(src).toMatch(/brandName = plainLabel\(rb\.tenant_name/);
     expect(src).toMatch(/rb\.logo_url\.startsWith\(ownStorage\)/);
+    expect(src).toMatch(/Leave links out of the note/);
   });
 
   it("agreement-send caps sends per workspace before it renders, mints or mails", () => {
@@ -153,17 +161,18 @@ describe("browser code asks the sender only for what a person may send", () => {
     for (const f of files) expect(read(f), f).not.toMatch(/["']broker-client-invite["']/);
   });
 
-  it("the broker session only says a summary was shared once the in-app card was written", () => {
+  it("the broker session never claims a summary reaches the client (nothing can deliver it)", () => {
     const src = code("src/pages/broker/BrokerPaigeSession.tsx");
-    expect(src).not.toMatch(/by email/);
-    const written = src.indexOf("if (cardError) throw cardError;");
-    expect(written).toBeGreaterThan(-1);
-    expect(src.indexOf('title: "Summary shared"')).toBeGreaterThan(written);
+    expect(src).not.toMatch(/by email|will see it in their|Summary shared|Share with client/);
+    expect(src).not.toMatch(/from\("communication_log"\)\.insert/);
+    expect(src).toMatch(/navigator\.clipboard\.writeText\(summary\)/);
   });
 
   it("the anonymous affiliate confirmation goes through its bounded function, never the sender", () => {
     const src = code("src/lib/affiliates/applications.ts");
     expect(src).toMatch(/functions\.invoke\("affiliate-application-confirm"/);
     expect(src).not.toMatch(/"affiliate-application-received"/);
+    // The applicant sets user_id on their own row; the sender must not take that account's tenant.
+    expect(code("supabase/functions/affiliate-application-confirm/index.ts")).not.toMatch(/recipientUserId/);
   });
 });

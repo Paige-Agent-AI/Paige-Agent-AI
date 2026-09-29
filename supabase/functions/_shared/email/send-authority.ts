@@ -67,6 +67,16 @@ export const TICKET_CONFIRMATIONS_PLATFORM_PER_HOUR = 60;
 /** The shape the database generates ('PT-' + zero-padded sequence). */
 const TICKET_NUMBER = /^PT-\d{1,10}$/;
 
+/** A tenant-chosen From display name as a plain, short label; null when it is not one. Anyone
+ *  can create a tenant and name it, so the name is one line, at most 60 characters, and carries no
+ *  link, address or header characters. */
+export function safeFromDisplayName(value: unknown): string | null {
+  const text = String(value ?? "").replace(/[\r\n\t]+/g, " ").replace(/\s+/g, " ").trim();
+  if (!text || text.length > 60) return null;
+  if (/[<>"@]|https?:\/\/|www\./i.test(text)) return null;
+  return text;
+}
+
 export interface SendRequestFields {
   templateName: string;
   recipientEmail: string | null;

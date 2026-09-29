@@ -24,7 +24,8 @@ import Ajv, { type ErrorObject, type SchemaObject } from "ajv";
 import { CRM_COMMAND_TOOLS } from "../../supabase/functions/_shared/crm-command/catalog.ts";
 import { CRM_PATCH_FIELDS } from "../../supabase/functions/_shared/crm-command/patch-fields.generated.ts";
 
-const MIGRATION = "supabase/migrations/20270204000000_governed_crm_contact_company_commands.sql";
+// The migration that now owns the contact allowlists (it restates the three executors whole).
+const MIGRATION = "supabase/migrations/20270516000000_crm_commands_speak_contact_methods.sql";
 const GEN = "scripts/ci/crm-patch-field-gen.mjs";
 
 const patchSchema = (toolName: string): SchemaObject | undefined =>
@@ -114,7 +115,7 @@ describe("CRM patch schema is generated from the database allowlist", () => {
     const dir = mkdtempSync(join(tmpdir(), "crm-drift-"));
     try {
       const sql = readFileSync(MIGRATION, "utf8").split("'entity_name'").join("'company_name'");
-      writeFileSync(join(dir, "20270204000000_mutated.sql"), sql);
+      writeFileSync(join(dir, "20270516000000_mutated.sql"), sql);
       const r = spawnSync(process.execPath, [GEN], {
         env: { ...process.env, CRM_PATCH_MIGRATIONS_DIR: dir, CRM_PATCH_LIVE_DEFS: "" },
         encoding: "utf8",

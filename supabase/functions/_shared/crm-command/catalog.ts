@@ -1,6 +1,7 @@
 import { confirmFingerprint } from "../confirm-fingerprint.ts";
 import { classifyAction } from "../action-risk.ts";
 import { CRM_PATCH_FIELDS } from "./patch-fields.generated.ts";
+import { normalizeClientRef } from "../client-ref.ts";
 
 export const CRM_ACTION_CAPABILITY = {
   "contact.create": "crm_create_contact", "contact.update": "crm_update_contact",
@@ -43,19 +44,25 @@ function stableCommandValue(value: unknown): unknown {
 // two approved effects for the same subject deliberately remain ambiguous and fail closed. Create
 // actions have no pre-existing record id, so they fall back to the normalized full proposed command.
 export async function crmApprovalSubject(action: CrmAction, command: Record<string, unknown>): Promise<string> {
+  // A contact is named by the client_ref Paige was shown, or by its id. The reference wins when
+  // present so the proposing call (Paige's arguments) and the approving call (the same arguments,
+  // before crm-command resolves them) key on the same value.
+  const contact = normalizeClientRef(command.client_ref) ?? command.contact_id ?? null;
   let identity: unknown;
   if (action === "contact.bulk_update") {
-    identity = Array.isArray(command.target_ids) ? [...command.target_ids].map(String).sort() : null;
+    identity = Array.isArray(command.target_client_refs)
+      ? [...command.target_client_refs].map((ref) => normalizeClientRef(ref) ?? String(ref)).sort()
+      : Array.isArray(command.target_ids) ? [...command.target_ids].map(String).sort() : null;
   } else if (action.startsWith("contact.") && !["contact.create"].includes(action)) {
-    identity = command.contact_id ?? null;
+    identity = contact;
   } else if (action === "company.create") {
-    identity = command.contact_id ?? null;
+    identity = contact;
   } else if (action.startsWith("company.")) {
     identity = command.company_id ?? null;
   } else if (action.startsWith("task.") && action !== "task.create") {
     identity = command.task_id ?? null;
   } else if (action === "activity.log") {
-    identity = command.contact_id ?? null;
+    identity = contact;
   } else if (action.startsWith("deal.") && action !== "deal.create") {
     identity = command.deal_id ?? null;
   } else {
@@ -66,17 +73,20 @@ export async function crmApprovalSubject(action: CrmAction, command: Record<stri
 
 const properties = {
   idempotency_key: { type: "string", maxLength: 192, description: "Optional stable retry key. Paige may omit it; the server settles one." },
-  contact_id: { type: ["string", "null"], description: "Exact contact UUID from a current CRM read." },
-  loser_contact_id: { type: "string", description: "Exact losing contact UUID for merge." },
+  client_ref: { type: "string", description: "The contact's client_ref, exactly as crm_search_contacts returned it. This is how you name a contact." },
+  loser_client_ref: { type: "string", description: "The losing contact's client_ref for a merge, exactly as crm_search_contacts returned it." },
+  contact_id: { type: ["string", "null"], description: "Only when a read gave you a contact's UUID rather than its client_ref (a deal's contact_client_id). Otherwise name the contact with client_ref." },
+  loser_contact_id: { type: "string", description: "Only when a read gave you the losing contact's UUID. Otherwise use loser_client_ref." },
   company_id: { type: "string", description: "Exact company UUID from a current CRM read." },
   task_id: { type: "string", description: "Exact task UUID from a current CRM read." },
   deal_id: { type: "string", description: "Exact deal UUID from a current Pipeline read." },
   pipeline_id: { type: "string" }, stage_id: { type: "string" }, target_stage_id: { type: "string" },
   owner_user_id: { type: ["string", "null"], description: "Exact active member UUID. Null unassigns only where supported." },
-  expected_updated_at: { type: "string", description: "Exact updated_at returned by the latest read." },
+  expected_updated_at: { type: "string", description: "Exact updated_at returned by the latest read of this record (crm_search_contacts returns it for a contact)." },
   expected_loser_updated_at: { type: "string", description: "Exact losing-contact updated_at returned by the latest read." },
   expected_version: { type: "integer", minimum: 1 }, expected_target_version: { type: "integer", minimum: 1 },
-  target_ids: { type: "array", minItems: 1, maxItems: 200, items: { type: "string" } },
+  target_client_refs: { type: "array", minItems: 1, maxItems: 200, items: { type: "string" }, description: "The client_refs of every contact a bulk update touches, exactly as crm_search_contacts returned them." },
+  target_ids: { type: "array", minItems: 1, maxItems: 200, items: { type: "string" }, description: "Only when a read gave you contact UUIDs. Otherwise use target_client_refs; never send both." },
   resolutions: { type: "object", additionalProperties: { type: "string", enum: ["survivor", "loser"] } },
   // The OPEN patch, kept only for the actions whose database branch enforces no allowlist —
   // `task.assign`, `task.reschedule` and `activity.log` read specific keys and ignore the rest, so
@@ -90,20 +100,20 @@ const properties = {
 } as const;
 
 const required: Record<CrmAction, string[]> = {
-  "contact.create": ["patch"], "contact.update": ["contact_id","expected_updated_at","patch"],
-  "contact.archive": ["contact_id","expected_updated_at"], "contact.restore": ["contact_id","expected_updated_at"],
-  "contact.link_company": ["contact_id","company_id","expected_updated_at"], "contact.unlink_company": ["contact_id","expected_updated_at"],
-  "contact.assign_coach": ["contact_id","owner_user_id","expected_updated_at"], "contact.assign_owner": ["contact_id","owner_user_id","expected_updated_at"],
-  "contact.merge": ["contact_id","loser_contact_id","expected_updated_at","expected_loser_updated_at"],
-  "contact.hard_delete": ["contact_id","expected_updated_at"], "contact.bulk_update": ["target_ids","patch"],
-  "company.create": ["contact_id","patch"], "company.update": ["company_id","expected_updated_at","patch"],
+  "contact.create": ["patch"], "contact.update": ["client_ref","expected_updated_at","patch"],
+  "contact.archive": ["client_ref","expected_updated_at"], "contact.restore": ["client_ref","expected_updated_at"],
+  "contact.link_company": ["client_ref","company_id","expected_updated_at"], "contact.unlink_company": ["client_ref","expected_updated_at"],
+  "contact.assign_coach": ["client_ref","owner_user_id","expected_updated_at"], "contact.assign_owner": ["client_ref","owner_user_id","expected_updated_at"],
+  "contact.merge": ["client_ref","loser_client_ref","expected_updated_at","expected_loser_updated_at"],
+  "contact.hard_delete": ["client_ref","expected_updated_at"], "contact.bulk_update": ["target_client_refs","patch"],
+  "company.create": ["client_ref","patch"], "company.update": ["company_id","expected_updated_at","patch"],
   "company.archive": ["company_id","expected_updated_at"], "company.restore": ["company_id","expected_updated_at"],
   "task.create": ["patch"], "task.update": ["task_id","expected_updated_at","patch"], "task.assign": ["task_id","expected_updated_at","patch"],
   "task.reschedule": ["task_id","expected_updated_at","patch"], "task.complete": ["task_id","expected_updated_at"],
   "task.reopen": ["task_id","expected_updated_at"], "task.cancel": ["task_id","expected_updated_at"], "task.delete": ["task_id","expected_updated_at"],
-  "activity.log": ["contact_id","patch"],
+  "activity.log": ["client_ref","patch"],
   "deal.create": ["title","pipeline_id","stage_id"], "deal.update": ["deal_id","expected_version"],
-  "deal.assign_owner": ["deal_id","owner_user_id","expected_version"], "deal.assign_contact": ["deal_id","contact_id","expected_version"],
+  "deal.assign_owner": ["deal_id","owner_user_id","expected_version"], "deal.assign_contact": ["deal_id","client_ref","expected_version"],
   "deal.move": ["deal_id","pipeline_id","target_stage_id","expected_version","expected_target_version"],
   "deal.close": ["deal_id","expected_version","outcome_type"], "deal.reopen": ["deal_id","expected_version","target_stage_id"],
   "deal.delete": ["deal_id","expected_version"],

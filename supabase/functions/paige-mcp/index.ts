@@ -22,7 +22,7 @@ import { z } from "https://esm.sh/zod@3.25.76";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { resolveOperatorIdentity } from "../_shared/operator-identity.ts";
 import { applyContactSearchFilter, contactSearchTokens, CONTACT_NAME_SEARCH_COLUMNS, CONTACT_SEARCH_COLUMNS, contactIdsByAddressToken } from "../_shared/contact-search.ts";
-import { findClientIdByAddress, orderedContactMethods } from "../_shared/contact-methods.ts";
+import { createClientWithContactMethods, findClientIdByAddress, orderedContactMethods } from "../_shared/contact-methods.ts";
 import { resolveClientRef } from "../_shared/client-ref.ts";
 import { canonicalAppUrl, type CanonicalDestination, type CanonicalTier } from "../_shared/canonical-app-url.ts";
 
@@ -1751,11 +1751,12 @@ mcp.tool("create_contact", {
   }).strict(),
   handler: async (args) => {
     const tenant_id = await resolveTenantId(args.tenant_id ?? null);
-    // Addresses are checked BEFORE the contact is written, so a bad or already-used address never
-    // leaves a half-made contact behind.
+    // A contact belongs to a workspace (clients.tenant_id is NOT NULL).
+    if (!tenant_id) return err("tenant_not_resolved");
+    // Addresses are checked first so the usual refusal names the address plainly; the create
+    // below is one transaction either way.
     const methods = args.contact_methods ?? [];
     if (methods.length) {
-      if (!tenant_id) return err("tenant_not_resolved");
       const { error: shapeError } = await admin.rpc("contact_methods_canonical", { _methods: methods });
       if (shapeError) return err(contactMethodsError(shapeError.message));
       for (const method of methods) {
@@ -1798,25 +1799,27 @@ mcp.tool("create_contact", {
       cs_primary_user_id: args.cs_primary_user_id ?? null,
       status: "active",
       current_notes: args.notes ?? null,
-      tenant_id,
       created_by: createdBy,
       created_by_channel_type: "api", // #10 channel-of-origin (Paige/MCP programmatic create)
     };
-    const { data, error } = await admin.from("clients").insert(row).select("id, account_number, created_at").single();
-    if (error) return err(error.message);
-    if (methods.length) {
-      const { error: methodsError } = await admin.rpc("_replace_client_contact_methods", {
-        _tenant_id: tenant_id, _client_id: data.id, _methods: methods,
-      });
-      if (methodsError) {
-        // Only a race with another writer reaches here (the addresses were checked above). The
-        // contact exists without its addresses; say exactly that, and how to finish it.
-        console.error("[paige-mcp] create_contact addresses not saved", { contact_id: data.id, message: methodsError.message });
-        return err(`CONTACT_CREATED_WITHOUT_ADDRESSES: contact ${data.account_number} was created, but its addresses were not saved (${contactMethodsError(methodsError.message)}). Add them with update_contact and add_contact_methods.`);
-      }
+    // The contact and its addresses are ONE transaction (20270519005000): an address another
+    // writer took since the check above refuses the whole create, so no contact — and no
+    // contact.created event — is left behind without the addresses it was created with.
+    const { data: created, error } = await createClientWithContactMethods(
+      admin, { ...row, tenant_id }, methods, "paige-mcp create_contact",
+    );
+    if (error || !created) return err(contactMethodsError(error?.message));
+    const { data, error: readError } = await admin.from("clients")
+      .select("id, account_number, created_at").eq("id", created.id).eq("tenant_id", tenant_id).maybeSingle();
+    if (readError || !data) {
+      // The contact IS created; only reading back its reference failed. Say so rather than fail it.
+      console.error("[paige-mcp] create_contact read-back failed", { contact_id: created.id, message: readError?.message });
     }
-    await audit("create_contact", "client", data.id, { contact_methods: methods.length, tenant_id }, tenant_id);
-    return ok({ ok: true, contact_id: data.id, client_ref: data.account_number, created_at: data.created_at, tenant_id, created_by: createdBy });
+    await audit("create_contact", "client", created.id, { contact_methods: methods.length, tenant_id }, tenant_id);
+    return ok({
+      ok: true, contact_id: created.id, client_ref: data?.account_number ?? null, created_at: data?.created_at ?? null,
+      tenant_id, created_by: createdBy,
+    });
   },
 });
 

@@ -13,6 +13,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { resolveCreditDataProvider } from "./credit-data-provider.ts";
+import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses } from "../_shared/contact-methods.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -65,13 +66,14 @@ async function loadCohort(tenantId: string) {
   // Scheduled cohort: BTF Active AND lifecycle in (STACK, FUND).
   const q = admin
     .from("clients")
-    .select("id, first_name, last_name, email, tags, lifecycle_stage, linked_user_id, assigned_coach_user_id")
+    .select(`id, first_name, last_name, tags, lifecycle_stage, linked_user_id, assigned_coach_user_id, ${CLIENT_CONTACT_METHODS_EMBED}`)
     .eq("tenant_id", tenantId)
     .contains("tags", ["BTF Active"])
     .in("lifecycle_stage", ["STACK", "FUND"]);
   const { data, error } = await q.limit(1000);
   if (error) throw new Error(`cohort_load_failed:${error.message}`);
-  return data ?? [];
+  // Each cohort member carries its PRIMARY email as `email`, as the scan's consumers expect.
+  return (data ?? []).map((row) => withPrimaryAddresses(row)!);
 }
 
 async function fetchReadinessSnapshot(contactUserId: string | null) {

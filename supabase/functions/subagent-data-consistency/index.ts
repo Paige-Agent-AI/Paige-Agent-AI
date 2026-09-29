@@ -5,6 +5,7 @@
 // external calls. Returns a per-channel match matrix and blocking mismatches.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses } from "../_shared/contact-methods.ts";
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -38,11 +39,13 @@ Deno.serve(async (req) => {
   const contactId = payload.input?.contact_id ?? payload.input?.client_id ?? payload.context?.contact_id;
   if (!contactId) return ok({ ok: false, error: "contact_id required" }, 400);
 
-  const { data: client } = await supabase
+  // The CRM record's phone is the contact's PRIMARY phone.
+  const { data: row } = await supabase
     .from("clients")
-    .select("id,first_name,last_name,email,entity_name,linked_user_id,street_address,city,state,zip_code,phone")
+    .select(`id,first_name,last_name,entity_name,linked_user_id,street_address,city,state,zip_code,${CLIENT_CONTACT_METHODS_EMBED}`)
     .eq("id", contactId)
     .maybeSingle();
+  const client = withPrimaryAddresses(row);
   if (!client) return ok({ ok: false, error: "Client not found" }, 404);
 
   const userId = client.linked_user_id;

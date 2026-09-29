@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
 
   const { data: client } = await supabase
     .from("clients")
-    .select("first_name,last_name,email,entity_name,funding_goal,linked_user_id,tenant_id")
+    .select("first_name,last_name,entity_name,funding_goal,linked_user_id,tenant_id")
     .eq("id", contactId)
     .maybeSingle();
   if (!client) return ok({ ok: false, error: "Client not found" }, 404);

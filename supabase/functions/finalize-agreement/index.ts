@@ -174,7 +174,7 @@ Deno.serve(async (req) => {
   // Authorize: must be the linked owner of this client record.
   const { data: client, error: cliErr } = await admin
     .from("clients")
-    .select("id, linked_user_id, onboarding_stage, first_name, last_name, email")
+    .select("id, linked_user_id, onboarding_stage, first_name, last_name")
     .eq("id", client_id)
     .maybeSingle();
   if (cliErr || !client) return err(404, "CLIENT_NOT_FOUND", "Client not found");

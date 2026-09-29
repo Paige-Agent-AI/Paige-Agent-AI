@@ -33,6 +33,7 @@ import { resolveGmailAccessToken, gmailSend } from "../_shared/gmail.ts";
 // to it when provider==='smtp' (§18 — not a second 'email' registry entry).
 import { resolveSmtpCreds, smtpSend } from "../_shared/smtp.ts";
 import { runPreSend } from "../_shared/pre-send-pipeline.ts";
+import { CLIENT_CONTACT_METHODS_EMBED, clientAddresses } from "../_shared/contact-methods.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -477,7 +478,8 @@ Deno.serve(async (req) => {
   // the platform default sender is the last resort. This never forks §38.
   let tenantId: string | null = null;
   let draftRow: { status?: string | null; connector_id?: string | null; contact_id?: string | null; thread_key?: string | null; channel_type?: string | null; meta?: Record<string, unknown> | null } | null = null;
-  let contactRow: { tenant_id?: string | null; email?: string | null; phone?: string | null } | null = null;
+  // The contact's workspace and every address it holds (its contact methods).
+  let contactRow: { tenant_id?: string | null; emails: string[]; phones: string[] } | null = null;
   let connectorRow:
     | {
         tenant_id?: string | null; from_address?: string | null; from_name?: string | null;
@@ -573,7 +575,7 @@ Deno.serve(async (req) => {
   if (effectiveContactId) {
     const { data, error: contactError } = await admin
       .from("clients")
-      .select("tenant_id, email, phone")
+      .select(`tenant_id, ${CLIENT_CONTACT_METHODS_EMBED}`)
       .eq("id", effectiveContactId)
       .maybeSingle();
     if (contactError) {
@@ -581,7 +583,9 @@ Deno.serve(async (req) => {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    contactRow = data ?? null;
+    contactRow = data
+      ? { tenant_id: (data as { tenant_id?: string | null }).tenant_id ?? null, ...clientAddresses(data) }
+      : null;
     if (!contactRow) {
       if (isInternal && draftRow?.status === "queued") return await terminalizeScheduledRelease("scheduled_contact_unavailable");
       return new Response(JSON.stringify({ error: "contact_not_found" }), {
@@ -687,8 +691,13 @@ Deno.serve(async (req) => {
   }
 
   if (effectiveContactId) {
-    const canonicalRecipient = body.channel === "email" ? contactRow?.email : contactRow?.phone;
-    if (!canonicalRecipient || normalizeRecipient(body.channel, canonicalRecipient) !== normalizeRecipient(body.channel, body.to)) {
+    // The recipient must be one of the contact's own addresses for this channel — any of them,
+    // not only the primary: a person reached at their second address is still that person.
+    const contactAddresses = (body.channel === "email" ? contactRow?.emails : contactRow?.phones) ?? [];
+    const recipient = normalizeRecipient(body.channel, body.to);
+    const recipientBelongsToContact = recipient !== "" &&
+      contactAddresses.some((address) => normalizeRecipient(body.channel, address) === recipient);
+    if (!recipientBelongsToContact) {
       if (isInternal && body.message_id && tenantId) {
         // A scheduled row keeps the exact recipient approved when it was queued. If the
         // canonical People address changes before release, never retarget silently and never

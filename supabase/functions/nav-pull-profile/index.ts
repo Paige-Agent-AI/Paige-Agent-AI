@@ -140,7 +140,7 @@ Deno.serve(async (req) => {
   // Coaching Tools gate scope and the provider call need it.
   const { data: contact } = await admin
     .from("clients")
-    .select("id, business_name, ein, email, tenant_id")
+    .select("id, business_name, ein, tenant_id")
     .eq("id", contact_id)
     .maybeSingle();
   if (!contact) return jsonResponse({ error: "contact not found" }, 404);

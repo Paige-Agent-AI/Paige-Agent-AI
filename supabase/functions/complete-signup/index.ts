@@ -4,6 +4,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://esm.sh/zod@3.23.8";
 import { fireAndForgetBridge } from "../_shared/mmaOsBridge.ts";
+import { addClientAddresses, insertClientWithAddresses } from "../_shared/contact-methods.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -126,8 +127,6 @@ Deno.serve(async (req) => {
     const clientPatch: Record<string, unknown> = {
       first_name: first || data.full_legal_name,
       last_name: last || null,
-      email: user.email ?? data.business_email ?? null,
-      phone: data.personal_phone ?? null,
       entity_name: data.entity_name ?? null,
       entity_type: data.entity_structure ?? null,
       funding_goal: data.funding_goal_usd ?? null,
@@ -143,17 +142,28 @@ Deno.serve(async (req) => {
         `Industry: ${data.industry ?? "—"} · Banking: ${data.banking_relationship ?? "—"}`,
     };
 
+    // The sign-in email (else the business email) and the personal phone are the contact's
+    // addresses: contact methods, each made the contact's primary of its kind.
+    const signupEmail = user.email ?? data.business_email ?? null;
+    const signupPhone = data.personal_phone ?? null;
+
     let clientId = existing?.id as string | undefined;
     if (clientId) {
       await admin.from("clients").update(clientPatch).eq("id", clientId);
+      // A failure is logged by the helper; like the row update above, it does not fail the signup.
+      await addClientAddresses(admin, tenantId, clientId, [
+        { kind: "email", value: signupEmail, is_primary: true },
+        { kind: "phone", value: signupPhone, is_primary: true },
+      ], "complete-signup");
     } else {
-      const { data: inserted, error: insErr } = await admin
-        .from("clients")
-        .insert({ ...clientPatch, created_by: user.id, created_by_channel_type: "signup" }) // #10 channel-of-origin (self-serve signup)
-        .select("id")
-        .single();
-      if (insErr) {
-        return new Response(JSON.stringify({ error: "client_create_failed", details: insErr.message }), {
+      const { data: inserted, error: insErr } = await insertClientWithAddresses(
+        admin,
+        { ...clientPatch, tenant_id: tenantId, created_by: user.id, created_by_channel_type: "signup" }, // #10 channel-of-origin (self-serve signup)
+        { email: signupEmail, phone: signupPhone },
+        "complete-signup",
+      );
+      if (insErr || !inserted) {
+        return new Response(JSON.stringify({ error: "client_create_failed", details: insErr?.message ?? "no row" }), {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });

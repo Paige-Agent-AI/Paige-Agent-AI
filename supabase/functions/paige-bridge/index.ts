@@ -5,7 +5,12 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { z } from "npm:zod@3.23.8";
-import { findClientIdByAddress, findFirstClientByEmailAnyWorkspace } from "../_shared/contact-methods.ts";
+import {
+  CLIENT_CONTACT_METHODS_EMBED,
+  findFirstClientByEmailAnyWorkspace,
+  withPrimaryAddresses,
+} from "../_shared/contact-methods.ts";
+import { upsertContactMirror } from "./contact-mirror.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -380,79 +385,14 @@ Deno.serve(async (req) => {
           assignedUserId = u?.id ?? null;
         }
 
-        // Try by ghl_contact_id first, then by email
-        let existingId: string | null = null;
-        if (p.ghl_contact_id) {
-          const { data: byGhl } = await supabase
-            .from("clients")
-            .select("id")
-            .eq("ghl_contact_id", p.ghl_contact_id)
-            .eq("tenant_id", tenantId)
-            .limit(1)
-            .maybeSingle();
-          existingId = byGhl?.id ?? null;
-        }
-        if (!existingId) {
-          existingId = await findClientIdByAddress(supabase, tenantId, "email", emailLower, "paige-bridge");
-        }
-
-        const sharedPatch: Record<string, unknown> = {
-          first_name: first || "Unknown",
-          last_name: last,
-          mirror_source: "mma_os",
-          last_mirrored_at: nowIso,
-        };
-        if (p.phone) sharedPatch.phone = p.phone;
-        if (p.tier) sharedPatch.tier = p.tier;
-        if (p.ghl_contact_id) sharedPatch.ghl_contact_id = p.ghl_contact_id;
-        if (p.source) sharedPatch.source = p.source;
-
-        if (existingId) {
-          const { error } = await supabase.from("clients").update(sharedPatch).eq("id", existingId).eq("tenant_id", tenantId);
-          if (error) throw error;
-          if (assignedUserId) {
-            await supabase
-              .from("paige_coach_assignments")
-              .upsert(
-                {
-                  contact_id: existingId,
-                  assigned_role: "lead_owner",
-                  rep_user_id: assignedUserId,
-                  active: true,
-                  metadata: { source: "mma_os_assigned_to" },
-                },
-                { onConflict: "contact_id,assigned_role" } as any,
-              );
-          }
-          return ok(verb, { client_id: existingId, action: "updated" });
-        }
-
-        const { data, error } = await supabase
-          .from("clients")
-          .insert({
-            ...sharedPatch,
-            created_by: ownerId,
-            tenant_id: tenantId,
-            email: emailLower,
-            status: "active",
-            source: p.source ?? "mma_bridge",
-            lifecycle_stage: "new_lead", // #172: 'lead' violates clients_lifecycle_stage_chk (23514)
-            created_by_channel_type: "import", // #10 channel-of-origin (external CRM mirror/sync)
-          })
-          .select("id")
-          .single();
-        if (error) throw error;
-
-        if (assignedUserId) {
-          await supabase.from("paige_coach_assignments").insert({
-            contact_id: data.id,
-            assigned_role: "lead_owner",
-            rep_user_id: assignedUserId,
-            active: true,
-            metadata: { source: "mma_os_assigned_to" },
-          });
-        }
-        return ok(verb, { client_id: data.id, action: "created" });
+        // Match by the external CRM id, then by ANY email a contact here holds; update it, or create
+        // the contact with its addresses in one transaction (contact-mirror.ts).
+        const result = await upsertContactMirror(supabase, {
+          tenantId, ownerId, emailLower, first, last,
+          phone: p.phone ?? null, tier: p.tier ?? null, ghlContactId: p.ghl_contact_id ?? null,
+          source: p.source ?? null, assignedUserId, nowIso,
+        });
+        return ok(verb, result);
       }
 
       // -----------------------------------------------------------------
@@ -564,13 +504,16 @@ Deno.serve(async (req) => {
         const p = ListModifiedClientsSinceSchema.parse(payload);
         const { data, error } = await supabase
           .from("clients")
-          .select("id, email, first_name, last_name, phone, tier, ghl_contact_id, lifecycle_stage, lead_score, tags, updated_at, mirror_source")
+          .select(`id, first_name, last_name, tier, ghl_contact_id, lifecycle_stage, lead_score, tags, updated_at, mirror_source, ${CLIENT_CONTACT_METHODS_EMBED}`)
           .gt("updated_at", p.since)
           .or("mirror_source.is.null,mirror_source.neq.mma_os")
           .order("updated_at", { ascending: true })
           .limit(p.limit);
         if (error) throw error;
-        return ok(verb, { count: data?.length ?? 0, clients: data ?? [] });
+        // Each contact's PRIMARY email and phone, read from its contact methods (an address change
+        // moves the contact's updated_at, so it is picked up here too).
+        const clients = (data ?? []).map((row: { client_contact_methods?: unknown }) => withPrimaryAddresses(row));
+        return ok(verb, { count: clients.length, clients });
       }
 
       // -----------------------------------------------------------------

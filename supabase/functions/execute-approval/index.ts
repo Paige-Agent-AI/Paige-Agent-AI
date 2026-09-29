@@ -22,6 +22,7 @@
 // branch fires only for orchestration-sourced rows and changes nothing for existing approvals, §58.)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { executeApprovedLayerCAct, type ApproveExecutorDb } from "../_shared/paige-orchestration/approve-executor.ts";
+import { CLIENT_CONTACT_METHODS_EMBED, clientAddresses } from "../_shared/contact-methods.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -178,15 +179,16 @@ Deno.serve(async (req) => {
   if (isComms) {
     const channel = channelRaw === "sms" || category.includes("sms") ? "sms" : "email";
 
-    // Resolve the recipient: explicit draft address, else the contact's email.
+    // Resolve the recipient: explicit draft address, else the contact's PRIMARY email (or phone).
     let to = String(dc.to ?? dc.recipient ?? "");
     if (!to && approval.contact_id) {
       const { data: contact } = await admin
         .from("clients")
-        .select("email, phone")
+        .select(CLIENT_CONTACT_METHODS_EMBED)
         .eq("id", approval.contact_id)
         .maybeSingle();
-      to = channel === "sms" ? String(contact?.phone ?? "") : String(contact?.email ?? "");
+      const primary = clientAddresses(contact);
+      to = channel === "sms" ? String(primary.phone ?? "") : String(primary.email ?? "");
     }
     if (!to) { await releaseClaim(); return json(422, { error: "no_recipient", detail: "draft has no `to` and the contact has no address" }); }
 

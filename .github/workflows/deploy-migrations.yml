@@ -228,6 +228,7 @@ jobs:
               `- Run: ${runUrl}`,
               ``,
               `First checks: is \`SUPABASE_DB_PASSWORD\` set? did a non-idempotent migration half-apply (see this workflow's header)? did the pooler connection time out?`,
+              `If the log says "Found local migration files to be inserted before the last migration on remote database": a migration numbered below production's newest was refused and NOTHING was applied. Rename that file to a version newer than production's newest and merge it again. Never rerun with \`--include-all\` (owner ruling, 2026-09-29), whatever the CLI suggests.`,
             ].join('\n');
             // DEDUP: a wedged chain fails on EVERY later migration merge. Don't spam a new
             // issue each time — if an open incident issue already exists, comment on it; only

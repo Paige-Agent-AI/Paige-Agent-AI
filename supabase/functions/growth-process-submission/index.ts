@@ -664,7 +664,7 @@ async function runExecutor(
       }
       const { error: markErr } = await admin
         .from("growth_form_submissions")
-        .update({ alert_sent_at: new Date().toISOString() })
+        .update({ alert_sent_at: new Date().toISOString(), alert_skipped_reason: null })
         .eq("id", submissionId);
       if (markErr) {
         // The email went; failing here would re-send it on retry. Record the truth and stop.

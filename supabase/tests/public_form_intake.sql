@@ -13,7 +13,7 @@
 --   * a saved route takes effect: on a form that runs from automation rows, the rows follow it.
 BEGIN;
 
-SELECT plan(23);
+SELECT plan(24);
 
 DO $$
 DECLARE
@@ -28,7 +28,8 @@ BEGIN
     (_a, 'intake-probe-a', 'Intake Probe A', 'active', 'standalone', 'IPA', '{}'),
     (_b, 'intake-probe-b', 'Intake Probe B', 'active', 'standalone', 'IPB', '{}'),
     ('f1a70000-0000-0000-0000-00000000000c', 'intake-probe-c', 'Intake Probe C', 'past_due', 'standalone', 'IPC', '{}'),
-    ('f1a70000-0000-0000-0000-00000000000d', 'intake-probe-d', 'Intake Probe D', 'canceled', 'standalone', 'IPD', '{}');
+    ('f1a70000-0000-0000-0000-00000000000d', 'intake-probe-d', 'Intake Probe D', 'canceled', 'standalone', 'IPD', '{}'),
+    ('f1a70000-0000-0000-0000-00000000000e', 'intake-probe-e', 'Intake Probe E', 'suspended', 'standalone', 'IPE', '{}');
   INSERT INTO public.tenant_members (tenant_id, user_id, role, status, is_owner) VALUES
     (_a, _oa, 'owner', 'active', true),
     (_b, _ob, 'owner', 'active', true);
@@ -57,6 +58,8 @@ BEGIN
     ('f1a70000-0000-0000-0000-0000000f0c01', 'f1a70000-0000-0000-0000-00000000000c', 'contact', 'Contact C', 'active',
      '{"sections":[]}', '{}', NULL),
     ('f1a70000-0000-0000-0000-0000000f0d01', 'f1a70000-0000-0000-0000-00000000000d', 'contact', 'Contact D', 'active',
+     '{"sections":[]}', '{}', NULL),
+    ('f1a70000-0000-0000-0000-0000000f0e01', 'f1a70000-0000-0000-0000-00000000000e', 'contact', 'Contact E', 'active',
      '{"sections":[]}', '{}', NULL);
   -- A form that runs from automation rows (the 2026-07-14 backfill shape): contact creation off,
   -- deals on into pipeline A with no stage.
@@ -91,6 +94,10 @@ SELECT is(
   (SELECT count(*)::int FROM public.growth_public_form(p_form_id => 'f1a70000-0000-0000-0000-0000000f0d01')),
   0,
   'a canceled business shows no form');
+SELECT is(
+  (SELECT count(*)::int FROM public.growth_public_form(p_form_id => 'f1a70000-0000-0000-0000-0000000f0e01')),
+  0,
+  'a suspended business shows no form');
 RESET ROLE;
 
 SELECT is(

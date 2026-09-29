@@ -6075,3 +6075,28 @@ selected one, so each read failed with 42703. They now read `user_contact_method
   refuses to publish if the identity read fails. Before this, the failed read left the name unscrubbed.
 - Proofs: `_shared/user-contact-methods.test.ts` (ci.yml), `supabase/tests/user_address_readers.sql`
   (database-contract), `src/__tests__/user-address-readers-contract.test.ts`.
+
+## 2026-09-29 — Public forms: one protected intake for every business (PR #1573)
+
+- **Owner rulings (Antonio Cook, 2026-09-29):**
+  - **Independent review is the lane's own to run.** A separately spawned reviewer that did not write the
+    code reviews the exact head before merge. Codex may review and its findings are handled, but Codex is
+    never a gate. `AGENTS.md` § *Merge gate* (line 96 and steps 1–4) carries this.
+  - **Canceled businesses' forms stop taking submissions; past-due businesses' forms keep taking them.**
+    A past-due account is usually an expired card, and a lead not captured never comes back. The rule is
+    the platform's own live-business set (`trial | active | past_due`); `suspended` is treated like
+    `canceled`. Applied in `growth_public_form()` and `growth-public-submit`.
+  - **The owner-preview submit gap is accepted** until the form page moves to `growth-public-submit`.
+  - **A workspace's alert address and pipeline are set through the product, never seeded.** No account is
+    named in code, migrations or defaults.
+- **What it is:** `growth-public-submit` is the only way a visitor's answers reach a form (origin, required
+  bot trap, per-IP and per-form limits that fail closed, the form's own fields only).
+  `growth_public_form()` is the only public read. `growth_form_set_intake()` is the owner/admin seam for
+  pipeline routing and the alert address; a trigger refuses a direct browser write of `notify_email`. The
+  alert is capped per form per hour and per business per day; a withheld alert is recorded on the
+  submission (`alert_skipped_reason`).
+- **`cf-connecting-ip` is set by the Supabase edge runtime** (measured 2026-09-29, read-only): the
+  `paige-public-chat` limiter, keyed only on that header, holds 7 per-IP rows across 6 distinct IP-shaped
+  keys and none keyed `unknown`. The form limiter uses the same resolver.
+- Proofs: `supabase/functions/_shared/growth-intake.test.ts` (ci.yml),
+  `supabase/tests/public_form_intake.sql` (database-contract).

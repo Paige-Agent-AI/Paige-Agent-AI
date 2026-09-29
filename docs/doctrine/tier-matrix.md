@@ -341,6 +341,13 @@ class of lie as a fabricated metric (§13).
 
 Legend: **✓** live · **—** not built · **N/A** tier not opened yet · **403** denied at the route gate.
 
+### Public forms take submissions for every business (PR #1573, 2026-09-29)
+
+| Surface | God / Super Admin | Agency | Standalone (Solo) | Sub-account | Client | Anonymous | Status |
+|---|---|---|---|---|---|---|---|
+| `growth-public-submit` (submit a public form) · `growth_public_form()` (read one) | same as any visitor | same as any visitor | same as any visitor | same as any visitor | same as any visitor | **✓** — active forms of a `trial`/`active`/`past_due` business only; origin, bot trap and rate limits apply | **LIVE on merge** — the edge function deploys and `20270518000000` applies through CI. Writes only through the service role; nobody inserts a submission from the browser any more. **OWED:** a real submission on production (PR 3). |
+| `growth_form_set_intake()` (route leads to a pipeline, set the alert address) | **— refused** (`is_tenant_admin` is membership only; act-as confers none) | **—** no Growth surface (§60 exception) | ✓ owner/admin | ✓ owner/admin of that sub-account | — refused | — not granted | **LIVE on merge** as a seam; its UI ships in PR 2. A member who is not owner/admin cannot change the alert address directly either (guard trigger). |
+
 ### A draft for a customer that carries internal text is never filed or sent (R2, branch `claude/practical-wright-nskq1n`, 2026-09-27)
 
 The owner-seat half of "nothing internal reaches a customer": what PAIGE drafts for a customer in the chat. Before a

@@ -11,6 +11,7 @@
 //   { action: "send" }  -> performs the fan-out (default)
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { operatorUserId } from '../_shared/systems-check-http.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -70,19 +71,11 @@ Deno.serve(async (req) => {
   }
   const callerId = userData.user.id
 
-  const { data: roleRows, error: roleErr } = await adminClient
-    .from('user_roles')
-    .select('role')
-    .eq('user_id', callerId)
-  if (roleErr) {
-    return new Response(JSON.stringify({ error: 'Role lookup failed' }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
-  const isAdmin = (roleRows ?? []).some((r: { role: string }) => r.role === 'admin')
-  if (!isAdmin) {
-    return new Response(JSON.stringify({ error: 'Admin role required' }), {
+  // Platform operators only (super_admin / platform_admin, §53). This mails EVERY platform user, and
+  // the global `admin` role it used to check is held by every tenant owner, so any account that
+  // signed up could send it.
+  if ((await operatorUserId(req)) !== callerId) {
+    return new Response(JSON.stringify({ error: 'Platform operator required' }), {
       status: 403,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

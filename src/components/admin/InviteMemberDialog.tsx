@@ -21,13 +21,13 @@ const STAFF_ROLE_SET = new Set([
   "admin","sales_rep","broker","broker_team_member","cs_rep","finance","viewer","moderator","owner","super_admin",
 ]);
 
-const ROLE_OPTIONS: Array<{ value: string; label: string; template: string }> = [
-  { value: "admin",     label: "Administrator",  template: "role-invitation" },
-  { value: "sales_rep", label: "Sales Rep",      template: "role-invitation" },
-  { value: "broker",    label: "Broker",         template: "role-invitation" },
-  { value: "cs_rep",    label: "Customer Success", template: "role-invitation" },
-  { value: "finance",   label: "Finance",        template: "role-invitation" },
-  { value: "viewer",    label: "Viewer (read-only)", template: "role-invitation" },
+const ROLE_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: "admin",     label: "Administrator" },
+  { value: "sales_rep", label: "Sales Rep" },
+  { value: "broker",    label: "Broker" },
+  { value: "cs_rep",    label: "Customer Success" },
+  { value: "finance",   label: "Finance" },
+  { value: "viewer",    label: "Viewer (read-only)" },
 ];
 
 const schema = z.object({
@@ -113,9 +113,8 @@ export function InviteMemberDialog({ open, onOpenChange, onInvited }: Props) {
     }
     setSubmitting(true);
     try {
-      const tmpl = ROLE_OPTIONS.find(r => r.value === role)?.template;
       const { data, error } = await supabase.functions.invoke("send-admin-invitation", {
-        body: { email: parsed.data.email, role, templateName: tmpl, message: parsed.data.message },
+        body: { email: parsed.data.email, role, message: parsed.data.message },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);

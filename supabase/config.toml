@@ -226,6 +226,11 @@ project_id = "xygzykjyynhzqytbqnzu"
     verify_jwt = true
   [functions.send-transactional-email]
     verify_jwt = true
+  # affiliate-application-confirm — the public affiliate form's confirmation email. Anonymous by design
+  # (applicants have no account); bounded in-body to one fixed template, to the stored application's
+  # address, once per application and per address per day, under an hourly platform ceiling.
+  [functions.affiliate-application-confirm]
+    verify_jwt = false
   [functions.stripe-webhook]
     verify_jwt = false
   [functions.handle-stripe-webhook]

@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { LIFECYCLE_STAGES, CONTACT_SOURCES } from "@/lib/contacts";
+import { LIFECYCLE_STAGES, CONTACT_SOURCES, contactIdsWithAddress } from "@/lib/contacts";
 import { useTenantOffers } from "@/hooks/useTenantOffers";
 
 type Coach = { user_id: string; name: string };
@@ -88,12 +88,20 @@ export function NewContactDialog({ open, onOpenChange, onCreated }: Props) {
       // 23505 = unique_violation. Race with the pre-check above, or constraint on another column.
       if ((error as { code?: string }).code === "23505" || /duplicate key/i.test(error.message || "")) {
         if (em) {
-          const { data: existing } = await supabase
-            .from("clients")
-            .select("id")
-            .eq("created_by", user.id)
-            .eq("email", em)
-            .maybeSingle();
+          // The contact already holding this address — any of its addresses, matched as the
+          // database matches them — among the ones this user created.
+          const holders = await contactIdsWithAddress("email", em).catch((cause: unknown) => {
+            console.warn("[NewContactDialog] looking up the contact holding this email failed", cause);
+            return [] as string[];
+          });
+          const { data: existing } = holders.length
+            ? await supabase
+              .from("clients")
+              .select("id")
+              .eq("created_by", user.id)
+              .in("id", holders)
+              .maybeSingle()
+            : { data: null };
           if (existing) {
             toast.message("Contact already exists — opening it");
             onOpenChange(false);

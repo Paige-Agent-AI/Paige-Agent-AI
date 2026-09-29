@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { Pipeline, PipelineStage, dollarsToCents, logDealActivity } from "@/lib/pipelines";
 import { useTenantOffers } from "@/hooks/useTenantOffers";
 import { NewContactDialog } from "@/components/admin/contacts/NewContactDialog";
+import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses, type WithClientContactMethods } from "@/lib/contact-methods";
 
 type Props = {
   open: boolean;
@@ -26,6 +27,9 @@ type Props = {
 };
 
 type ContactOption = { id: string; label: string; email?: string | null };
+
+// Widened to string: the generated types do not know the contact-methods embed yet.
+const DEAL_CONTACT_SELECT: string = `id,first_name,last_name,entity_name,${CLIENT_CONTACT_METHODS_EMBED}`;
 type CoachOption = { user_id: string; name: string };
 
 export function NewDealDialog({ open, onOpenChange, pipeline, stages, defaultStageId, defaultContactId, onCreated }: Props) {
@@ -49,13 +53,14 @@ export function NewDealDialog({ open, onOpenChange, pipeline, stages, defaultSta
   const loadContacts = async () => {
     const { data: cs } = await supabase
       .from("clients")
-      .select("id, first_name, last_name, entity_name, email")
+      .select(DEAL_CONTACT_SELECT)
       .order("created_at", { ascending: false })
       .limit(500);
-    setContacts((cs || []).map((c) => ({
+    const rows = (cs ?? []) as unknown as Array<{ id: string; first_name: string | null; last_name: string | null; entity_name: string | null } & WithClientContactMethods>;
+    setContacts(rows.map((c) => ({
       id: c.id,
       label: `${c.first_name ?? ""} ${c.last_name ?? ""}`.trim() + (c.entity_name ? ` · ${c.entity_name}` : ""),
-      email: c.email,
+      email: withPrimaryAddresses(c).email,
     })));
   };
 

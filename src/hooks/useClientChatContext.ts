@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { readUserPrimaryAddress } from "@/lib/contacts";
 import { countUniqueNegativeAccounts, deduplicateNegativeItems } from "@/lib/deduplicateNegatives";
 import { differenceInMonths } from "date-fns";
 import { buildBureauHealthContext } from "@/components/credit/CreditFileHealthAssessment";
 import { getUnlockedPrograms, summarizeDemographics, type DemographicProfile } from "@/lib/unlockedPrograms";
+import type { Tables } from "@/integrations/supabase/types";
 
 export interface ClientChatContext {
   contextBlock: string;
@@ -36,6 +38,18 @@ function ageLabel(months: number): string {
 
 function fmt$(n: number): string { return `$${n.toLocaleString()}`; }
 
+/** The amount columns of a credit account that the limit and comparable-credit readings use. */
+type CreditAccountAmounts = Pick<Tables<"credit_accounts">, "credit_limit" | "limit_amount" | "original_amount" | "balance">;
+
+/** The fields read from a profile's `funding_goals` JSON when they are present. */
+interface FundingGoalsJson {
+  target_amount?: unknown;
+  objective?: unknown;
+  timeline?: unknown;
+}
+
+type BureauHealthInputs = Parameters<typeof buildBureauHealthContext>;
+
 /**
  * Assembles a structured client brief from real database data
  * for injection into Paige AI chat sessions.
@@ -67,7 +81,7 @@ export function useClientChatContext(clientId?: string | null, userId?: string |
         if (clientId) {
           const { data: client } = await supabase
             .from("clients")
-            .select("first_name, last_name, entity_name, email, phone, funding_goal, monthly_revenue")
+            .select("first_name, last_name, entity_name, funding_goal, monthly_revenue")
             .eq("id", clientId)
             .maybeSingle();
 
@@ -97,7 +111,7 @@ export function useClientChatContext(clientId?: string | null, userId?: string |
         const resolvedUserId = userId || (clientId ? await resolveUserIdFromClient(clientId) : null);
 
         // --- Bureau scores from profiles ---
-        let scores = { equifax: null as number | null, experian: null as number | null, transunion: null as number | null };
+        const scores = { equifax: null as number | null, experian: null as number | null, transunion: null as number | null };
         if (resolvedUserId) {
           const { data: profile } = await supabase
             .from("profiles")
@@ -110,7 +124,7 @@ export function useClientChatContext(clientId?: string | null, userId?: string |
             scores.transunion = profile.estimated_fico_tu;
             if (!fundingGoal && profile.funding_goals) {
               try {
-                const fg = profile.funding_goals as any;
+                const fg = profile.funding_goals as FundingGoalsJson | null;
                 if (fg?.target_amount) parts.push(`Funding Goal: $${Number(fg.target_amount).toLocaleString()} — ${fg.objective || ""} — ${fg.timeline || ""}`);
               } catch { /* skip */ }
             }
@@ -161,10 +175,10 @@ export function useClientChatContext(clientId?: string | null, userId?: string |
             let worstAccount = "";
             let worstPct = 100;
             for (const a of bAccounts) {
-              const phj = a.payment_history_json as any;
+              const phj = a.payment_history_json;
               if (phj && typeof phj === "object") {
                 const months = Object.values(phj).length;
-                const onTime = Object.values(phj).filter((v: any) => v === "OK" || v === "C" || v === "1").length;
+                const onTime = Object.values(phj).filter((v) => v === "OK" || v === "C" || v === "1").length;
                 totalPayments += months;
                 onTimeCount += onTime;
                 const pct = months > 0 ? Math.round((onTime / months) * 100) : 100;
@@ -179,7 +193,7 @@ export function useClientChatContext(clientId?: string | null, userId?: string |
               const t = (a.type || "").toLowerCase();
               return t.includes("revolving") || t.includes("credit_card") || t.includes("creditcard");
             });
-            const inferLimit = (a: any): number => {
+            const inferLimit = (a: Omit<CreditAccountAmounts, "balance">): number => {
               return Number(a.credit_limit) || Number(a.limit_amount) || Number(a.original_amount) || 0;
             };
             // Separate accounts with reported limits from those without
@@ -317,7 +331,7 @@ export function useClientChatContext(clientId?: string | null, userId?: string |
               return 3;
             };
 
-            const getAmount = (a: any) => Number(a.original_amount) || Number(a.credit_limit) || Number(a.limit_amount) || Number(a.balance) || 0;
+            const getAmount = (a: CreditAccountAmounts) => Number(a.original_amount) || Number(a.credit_limit) || Number(a.limit_amount) || Number(a.balance) || 0;
 
             comparableLines.push(`Comparable Credit — ${bureauLabel}:`);
             if (activeComp.length > 0) {
@@ -417,7 +431,7 @@ export function useClientChatContext(clientId?: string | null, userId?: string |
 
         // --- Business Foundation Status + Personal/Business Separation Audit ---
         if (resolvedUserId) {
-          const [{ data: businesses }, { data: ownerProfile }] = await Promise.all([
+          const [{ data: businesses }, { data: ownerProfile }, ownerPhone] = await Promise.all([
             supabase
               .from("businesses")
               .select("id, legal_name, entity_type, state_of_formation, formation_date, ein, business_address_type, business_street_address, business_city, business_state, business_zip, business_phone, business_email, phone_411_listed, has_bank_account, bank_name, bank_account_opened_date")
@@ -425,9 +439,11 @@ export function useClientChatContext(clientId?: string | null, userId?: string |
               .limit(3),
             supabase
               .from("profiles")
-              .select("street_address:address, city, state, zip_code:postal_code, phone")
+              .select("street_address:address, city, state, zip_code:postal_code")
               .eq("user_id", resolvedUserId)
               .maybeSingle(),
+            // The owner's personal phone is the PRIMARY phone among their contact methods.
+            readUserPrimaryAddress(resolvedUserId, "phone"),
           ]);
 
           if (businesses && businesses.length > 0) {
@@ -475,11 +491,11 @@ export function useClientChatContext(clientId?: string | null, userId?: string |
 
               const { runSeparationAudit, summarizeSeparation } = await import("@/lib/separationAudit");
               const audit = runSeparationAudit({
-                personalAddress: (ownerProfile as any)?.street_address ?? null,
-                personalCity: (ownerProfile as any)?.city ?? null,
-                personalState: (ownerProfile as any)?.state ?? null,
-                personalZip: (ownerProfile as any)?.zip_code ?? null,
-                personalPhone: (ownerProfile as any)?.phone ?? null,
+                personalAddress: ownerProfile?.street_address ?? null,
+                personalCity: ownerProfile?.city ?? null,
+                personalState: ownerProfile?.state ?? null,
+                personalZip: ownerProfile?.zip_code ?? null,
+                personalPhone: ownerPhone,
                 personalEmail: null,
                 businessName: biz.legal_name,
                 businessStreetAddress: biz.business_street_address,
@@ -487,7 +503,7 @@ export function useClientChatContext(clientId?: string | null, userId?: string |
                 businessState: biz.business_state,
                 businessZip: biz.business_zip,
                 businessPhone: biz.business_phone,
-                businessEmail: (biz as any).business_email,
+                businessEmail: biz.business_email,
                 businessAddressType: biz.business_address_type,
                 phone411Listed: biz.phone_411_listed,
                 websiteUrl: presence?.website_url ?? null,
@@ -516,7 +532,7 @@ export function useClientChatContext(clientId?: string | null, userId?: string |
           const [{ data: creditAccounts }, { data: negItems }, { data: lenderPrefs }] = await Promise.all([
             supabase.from("credit_accounts").select("id, creditor, type, is_open, is_authorized_user, credit_limit, limit_amount, balance, current_balance, account_open_date, account_close_date, opened_on, status").eq("user_id", resolvedUserId).order("creditor"),
             supabase.from("credit_negative_items").select("id, creditor_name, account_number_masked, amount, bureau, item_type, status").eq("user_id", resolvedUserId).neq("status", "removed"),
-            supabase.from("lender_bureau_preferences" as any).select("institution_name, primary_bureau, secondary_bureau").limit(100),
+            supabase.from("lender_bureau_preferences").select("institution_name, primary_bureau, secondary_bureau").limit(100),
           ]);
 
           if (creditAccounts && creditAccounts.length > 0) {
@@ -527,9 +543,9 @@ export function useClientChatContext(clientId?: string | null, userId?: string |
             };
             const ctx = buildBureauHealthContext(
               bureauScores,
-              creditAccounts as any,
-              (negItems || []) as any,
-              ((lenderPrefs as unknown) || []) as any
+              creditAccounts as BureauHealthInputs[1],
+              (negItems || []) as BureauHealthInputs[2],
+              (lenderPrefs || []) as BureauHealthInputs[3]
             );
             parts.push(`\n${ctx}`);
           }
@@ -575,7 +591,7 @@ export function useClientChatContext(clientId?: string | null, userId?: string |
             .limit(10);
 
           const { data: qualityLogs } = await supabase
-            .from("extraction_quality_log" as any)
+            .from("extraction_quality_log")
             .select("overall_quality_score, required_fields_percentage")
             .eq("client_id", resolvedUserId)
             .order("extraction_date", { ascending: false })
@@ -599,8 +615,8 @@ export function useClientChatContext(clientId?: string | null, userId?: string |
 
           // Overall data completeness from quality logs
           if (qualityLogs && qualityLogs.length > 0) {
-            const avgQuality = Math.round((qualityLogs as any[]).reduce((s: number, q: any) => s + (q.overall_quality_score || 0), 0) / qualityLogs.length);
-            const avgFields = Math.round((qualityLogs as any[]).reduce((s: number, q: any) => s + (q.required_fields_percentage || 0), 0) / qualityLogs.length);
+            const avgQuality = Math.round(qualityLogs.reduce((s, q) => s + (q.overall_quality_score || 0), 0) / qualityLogs.length);
+            const avgFields = Math.round(qualityLogs.reduce((s, q) => s + (q.required_fields_percentage || 0), 0) / qualityLogs.length);
             parts.push(`  Overall data completeness: ${avgFields}% of account fields fully populated`);
             parts.push(`  Average extraction quality: ${avgQuality}/100`);
           }
@@ -616,8 +632,8 @@ export function useClientChatContext(clientId?: string | null, userId?: string |
         if (fundingFilter) {
           const { data: apps } = await fundingFilter;
           if (apps && apps.length > 0) {
-            const approved = apps.filter((a: any) => a.outcome === "approved").length;
-            const declined = apps.filter((a: any) => a.outcome === "declined").length;
+            const approved = apps.filter((a) => a.outcome === "approved").length;
+            const declined = apps.filter((a) => a.outcome === "declined").length;
             parts.push(`Funding Applications: ${apps.length} total | ${approved} approved, ${declined} declined`);
           }
         }
@@ -666,7 +682,7 @@ export function useClientChatContext(clientId?: string | null, userId?: string |
             .order("created_at", { ascending: false })
             .limit(5);
           if (preds && preds.length > 0) {
-            const lines = preds.map((p: any, i: number) => {
+            const lines = preds.map((p, i) => {
               const impact = p.impact_score ? ` — Impact: ${p.impact_score > 0 ? "+" : ""}${p.impact_score} pts` : "";
               const deadline = p.deadline_date ? ` — Deadline: ${new Date(p.deadline_date).toLocaleDateString()}` : "";
               return `${i + 1}. ${p.title}${impact}${deadline}`;
@@ -692,19 +708,19 @@ export function useClientChatContext(clientId?: string | null, userId?: string |
           ]);
 
           const merged: DemographicProfile = {
-            gender_identity: (demoProfile as any)?.gender_identity ?? null,
-            ethnicity: (demoProfile as any)?.ethnicity ?? null,
-            is_veteran: (demoProfile as any)?.is_veteran ?? null,
-            is_service_disabled_veteran: (demoProfile as any)?.is_service_disabled_veteran ?? null,
-            is_us_citizen: (demoProfile as any)?.is_us_citizen ?? null,
-            is_minority_owned: (demoBiz as any)?.is_minority_owned ?? null,
-            is_women_owned: (demoBiz as any)?.is_women_owned ?? null,
-            is_veteran_owned: (demoBiz as any)?.is_veteran_owned ?? null,
-            is_service_disabled_veteran_owned: (demoBiz as any)?.is_service_disabled_veteran_owned ?? null,
-            is_hubzone_located: (demoBiz as any)?.is_hubzone_located ?? null,
-            has_8a_certification: (demoBiz as any)?.has_8a_certification ?? null,
-            has_wosb_certification: (demoBiz as any)?.has_wosb_certification ?? null,
-            has_vetcert_certification: (demoBiz as any)?.has_vetcert_certification ?? null,
+            gender_identity: demoProfile?.gender_identity ?? null,
+            ethnicity: demoProfile?.ethnicity ?? null,
+            is_veteran: demoProfile?.is_veteran ?? null,
+            is_service_disabled_veteran: demoProfile?.is_service_disabled_veteran ?? null,
+            is_us_citizen: demoProfile?.is_us_citizen ?? null,
+            is_minority_owned: demoBiz?.is_minority_owned ?? null,
+            is_women_owned: demoBiz?.is_women_owned ?? null,
+            is_veteran_owned: demoBiz?.is_veteran_owned ?? null,
+            is_service_disabled_veteran_owned: demoBiz?.is_service_disabled_veteran_owned ?? null,
+            is_hubzone_located: demoBiz?.is_hubzone_located ?? null,
+            has_8a_certification: demoBiz?.has_8a_certification ?? null,
+            has_wosb_certification: demoBiz?.has_wosb_certification ?? null,
+            has_vetcert_certification: demoBiz?.has_vetcert_certification ?? null,
           };
 
           const hasAnyDemo =
@@ -765,12 +781,12 @@ export function useClientChatContext(clientId?: string | null, userId?: string |
             .eq("user_id", resolvedUserId)
             .maybeSingle();
 
-          const intakeDone = !!(goalProfile as any)?.intake_completed;
+          const intakeDone = !!goalProfile?.intake_completed;
           setHasCompletedIntake(intakeDone);
 
           parts.push("");
-          if (intakeDone && (goalProfile as any)?.primary_goal) {
-            const gp: any = goalProfile;
+          if (intakeDone && goalProfile?.primary_goal) {
+            const gp = goalProfile;
             parts.push("CLIENT GOAL PROFILE");
             parts.push(`Primary Goal: ${gp.primary_goal}`);
             if (gp.primary_goal_category) parts.push(`Goal Category: ${gp.primary_goal_category}`);
@@ -782,7 +798,7 @@ export function useClientChatContext(clientId?: string | null, userId?: string |
 
             // Active goal record(s)
             const { data: activeGoals } = await supabase
-              .from("client_goals" as any)
+              .from("client_goals")
               .select("goal_category, goal_description, status, target_amount, target_date")
               .eq("user_id", resolvedUserId)
               .eq("status", "active")
@@ -790,7 +806,7 @@ export function useClientChatContext(clientId?: string | null, userId?: string |
               .limit(3);
             if (activeGoals && activeGoals.length > 0) {
               parts.push(`Active Goals: ${activeGoals.length}`);
-              for (const ag of activeGoals as any[]) {
+              for (const ag of activeGoals) {
                 const amt = ag.target_amount ? ` $${Number(ag.target_amount).toLocaleString()}` : "";
                 const dt = ag.target_date ? ` by ${new Date(ag.target_date).toLocaleDateString()}` : "";
                 parts.push(`  - ${ag.goal_category}${amt}${dt}: ${ag.goal_description || ""} [${ag.status}]`);
@@ -802,7 +818,7 @@ export function useClientChatContext(clientId?: string | null, userId?: string |
               .from("chat_messages")
               .select("id", { count: "exact", head: true })
               .eq("user_id", resolvedUserId);
-            const sessionCount = (msgCount as any)?.length ?? 0;
+            const sessionCount = msgCount?.length ?? 0;
             const isExisting = sessionCount > 2 || hasCreditData;
 
             parts.push("INTAKE REQUIRED: This client has not completed goal discovery. Begin with the intake protocol before any credit assessment or funding discussion.");
@@ -824,12 +840,12 @@ export function useClientChatContext(clientId?: string | null, userId?: string |
 
           const apps = journeyApps || [];
           if (apps.length > 0) {
-            const approved = apps.filter((a: any) => a.status === "approved" || a.status === "funded").length;
-            const denied = apps.filter((a: any) => a.status === "denied").length;
-            const pending = apps.filter((a: any) => ["draft", "submitted", "under_review"].includes(a.status)).length;
+            const approved = apps.filter((a) => a.status === "approved" || a.status === "funded").length;
+            const denied = apps.filter((a) => a.status === "denied").length;
+            const pending = apps.filter((a) => ["draft", "submitted", "under_review"].includes(a.status)).length;
             const capitalSecured = apps
-              .filter((a: any) => a.status === "funded")
-              .reduce((s: number, a: any) => s + (a.amount_approved || a.amount_requested || 0), 0);
+              .filter((a) => a.status === "funded")
+              .reduce((s, a) => s + (a.amount_approved || a.amount_requested || 0), 0);
             const reasonCounts = new Map<string, number>();
             for (const a of apps) {
               if (a.denial_reason_category) reasonCounts.set(a.denial_reason_category, (reasonCounts.get(a.denial_reason_category) || 0) + 1);

@@ -10,10 +10,14 @@ import { usePlaybook } from "@/lib/playbook";
 import type { IntakeField } from "@/lib/playbook";
 import { readableTextOn } from "@/lib/brand/contrast";
 import type { OnboardClient } from "./useOnboardingClient";
+import type { Tables } from "@/integrations/supabase/types";
 import { advanceOnboardingStage } from "./useOnboardingClient";
 import type { OnboardBrand } from "./OnboardLayout";
 
 type Ctx = { client: OnboardClient; refresh: () => void; brand: OnboardBrand | null };
+
+/** The postal address columns of the contact row, read when the onboarding record carries them. */
+type ClientPostalAddress = Partial<Pick<Tables<"clients">, "street_address" | "city" | "state" | "zip_code">>;
 
 const STEPS = ["Your info", "Agreement"];
 
@@ -77,11 +81,12 @@ export default function Step1Welcome() {
 
   const [firstName, setFirstName] = useState(client.first_name ?? "");
   const [lastName, setLastName] = useState(client.last_name ?? "");
-  const [phone, setPhone] = useState<string>((client as any).phone ?? "");
-  const [street, setStreet] = useState<string>((client as any).street_address ?? "");
-  const [city, setCity] = useState<string>((client as any).city ?? "");
-  const [stateRegion, setStateRegion] = useState<string>((client as any).state ?? "");
-  const [zip, setZip] = useState<string>((client as any).zip_code ?? "");
+  const [phone, setPhone] = useState<string>(client.phone ?? "");
+  const postal = client as OnboardClient & ClientPostalAddress;
+  const [street, setStreet] = useState<string>(postal.street_address ?? "");
+  const [city, setCity] = useState<string>(postal.city ?? "");
+  const [stateRegion, setStateRegion] = useState<string>(postal.state ?? "");
+  const [zip, setZip] = useState<string>(postal.zip_code ?? "");
 
   // The tenant's Playbook drives the intake — never a hardcoded (funding) set.
   const questions = (pb.intake ?? []).filter((f) => !CONTACT_KEYS.has(f.key));
@@ -125,7 +130,11 @@ export default function Step1Welcome() {
         .update({
           first_name: firstName.trim(),
           last_name: lastName.trim(),
-          phone: phone.trim() || null,
+          // The phone is NOT written here: a contact's phones live in its contact methods, and a
+          // linked client has no seam that writes their own (upsert_contact is staff-only). A
+          // client-self address RPC is the missing backend piece; until it exists the number is
+          // collected and not stored — as it already was for a linked client, whose UPDATE on
+          // `clients` matches no policy and changes no row.
           street_address: street.trim() || null,
           city: city.trim() || null,
           state: stateRegion.trim() || null,
@@ -156,8 +165,8 @@ export default function Step1Welcome() {
       if (error) throw error;
       await refresh();
       navigate("/onboard/agreement");
-    } catch (e: any) {
-      toast.error(e?.message || "Couldn't save your info — please try again.");
+    } catch (e) {
+      toast.error((e as { message?: string } | null | undefined)?.message || "Couldn't save your info — please try again.");
       setBusy(false);
     }
   };

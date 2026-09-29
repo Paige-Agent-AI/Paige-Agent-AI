@@ -62,13 +62,11 @@ export function NewTicketDialog({ open, onOpenChange, userId, userEmail, onCreat
         is_internal: false,
       });
 
-      // Best-effort confirmation email
+      // Best-effort confirmation email — the server sends it to your own primary address.
       if (userEmail) {
         void supabase.functions.invoke("send-transactional-email", {
           body: {
             templateName: "support-ticket-created",
-            recipientEmail: userEmail,
-            recipientUserId: userId,
             idempotencyKey: `support-created-${data.id}`,
             templateData: {
               ticketNumber: data.ticket_number,
@@ -84,8 +82,8 @@ export function NewTicketDialog({ open, onOpenChange, userId, userEmail, onCreat
       reset();
       onCreated();
       onOpenChange(false);
-    } catch (err: any) {
-      toast.error(err?.message || "Could not create ticket");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error && err.message ? err.message : "Could not create ticket");
     } finally {
       setSubmitting(false);
     }

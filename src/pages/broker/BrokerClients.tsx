@@ -128,7 +128,8 @@ const BrokerClients = () => {
       await supabase.functions.invoke("send-transactional-email", {
         body: {
           templateName: "broker-client-invite",
-          recipientEmail: email,
+          // The server sends to this relationship's client, and only if you can see it.
+          relationshipId: inserted?.id,
           idempotencyKey: `broker-client-invite-${inserted?.id}`,
           templateData: {
             firstName: form.firstName.trim(),
@@ -159,7 +160,7 @@ const BrokerClients = () => {
       await supabase.functions.invoke("send-transactional-email", {
         body: {
           templateName: "broker-client-invite",
-          recipientEmail: row.client_email,
+          relationshipId: row.id,
           idempotencyKey: `broker-client-invite-${row.id}-resend-${Date.now()}`,
           templateData: {
             firstName: row.client_first_name,
@@ -170,8 +171,8 @@ const BrokerClients = () => {
         },
       });
       toast({ title: "Invite resent", description: `Sent to ${row.client_email}.` });
-    } catch (err: any) {
-      toast({ title: "Resend failed", description: err?.message || "Unknown error", variant: "destructive" });
+    } catch (err: unknown) {
+      toast({ title: "Resend failed", description: err instanceof Error && err.message ? err.message : "Unknown error", variant: "destructive" });
     }
   };
 

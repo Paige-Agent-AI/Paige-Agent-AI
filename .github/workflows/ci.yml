@@ -749,6 +749,20 @@ jobs:
             supabase/functions/schedule-automated-tasks/index.ts \
             supabase/functions/voice-command-processor/index.ts
 
+      - name: The platform email sender is not an open relay (who may send, and to whom)
+        if: ${{ !cancelled() }}
+        run: |
+          # send-transactional-email trusted the gateway's verify_jwt, which the public publishable key
+          # passes. The in-body decision, executed: no token and the publishable key are refused;
+          # internal callers pass; a person sends only listed templates to a server-bound recipient.
+          deno test --allow-import=esm.sh,deno.land --node-modules-dir=none --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/_shared/email/send-authority.test.ts
+          deno check --allow-import --node-modules-dir=none \
+            supabase/functions/send-transactional-email/index.ts \
+            supabase/functions/affiliate-application-confirm/index.ts \
+            supabase/functions/notify-approval-event/index.ts \
+            supabase/functions/agreement-send/index.ts
+
       - name: Test
         if: ${{ !cancelled() }}
         run: npm run test

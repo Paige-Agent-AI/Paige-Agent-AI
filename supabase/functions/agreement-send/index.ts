@@ -249,7 +249,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const link = `${PUBLIC_BASE}/sign/${token}`;
     const res = await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
       method: "POST",
-      headers: { Authorization: authHeader, "Content-Type": "application/json" },
+      // As an internal caller: this function has already authorized the sender (owner/admin of the
+      // agreement's workspace) and derived the signer from the agreement, which is what the send
+      // function requires of anything that is not a person sending their own mail.
+      headers: { Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`, "Content-Type": "application/json" },
       // The sender's real contract — templateName / recipientEmail / tenantId / templateData —
       // read off an existing caller rather than assumed. `idempotencyKey` is RECORDED, not enforced —
       // the shared sender stores it and deliberately does not dedupe on it (see its own note), so

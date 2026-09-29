@@ -3,6 +3,9 @@ import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 import { resolveTenantEmailContext } from '../_shared/email/branding.ts'
+import { decideSendAuthority } from '../_shared/email/send-authority.ts'
+import { isAuthorizedInternalCaller, adminClient, operatorUserId } from '../_shared/systems-check-http.ts'
+import { primaryEmailForUser } from '../_shared/user-contact-methods.ts'
 
 // Configuration baked in at scaffold time — do NOT change these manually.
 // To update, re-run the email domain setup flow.
@@ -43,9 +46,11 @@ async function sha256Hex(input: string): Promise<string> {
     .join('')
 }
 
-// Auth note: this function uses verify_jwt = true in config.toml, so Supabase's
-// gateway validates the caller's JWT (anon or service_role) before the request
-// reaches this code. No in-function auth check is needed.
+// Auth: the gateway's verify_jwt accepts ANY validly signed token, including the publishable key
+// that ships in the public site, so it is not an authorization check. Every request is decided
+// in-body by `decideSendAuthority` (_shared/email/send-authority.ts) before anything is rendered,
+// logged or sent: internal platform callers may send any template; a verified person may send only
+// the templates listed there, to a recipient bound on the server; everyone else is refused.
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -78,6 +83,7 @@ Deno.serve(async (req) => {
   let fromOverride: string | null = null
   let replyToOverride: string | null = null
   let soloFulfillmentEventId: string | null = null
+  let relationshipId: string | null = null
   try {
     const body = await req.json()
     templateName = body.templateName || body.template_name
@@ -92,6 +98,7 @@ Deno.serve(async (req) => {
     fromOverride = body.fromOverride || body.from_override || null
     replyToOverride = body.replyToOverride || body.reply_to_override || null
     soloFulfillmentEventId = body.fulfillmentEventId || body.fulfillment_event_id || null
+    relationshipId = body.relationshipId || body.relationship_id || null
   } catch {
     return new Response(
       JSON.stringify({ error: 'Invalid JSON in request body' }),
@@ -100,6 +107,56 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     )
+  }
+
+  const authority = await decideSendAuthority(
+    { templateName, recipientEmail: recipientEmail || null, recipientUserId, relationshipId },
+    {
+      isInternalCaller: () => isAuthorizedInternalCaller(req, adminClient()),
+      verifiedUserId: async () => {
+        const authorization = req.headers.get('Authorization') ?? ''
+        if (!authorization.startsWith('Bearer ')) return null
+        const anonKey = Deno.env.get('SUPABASE_ANON_KEY')
+        if (!anonKey) return null
+        const caller = createClient(supabaseUrl, anonKey, {
+          global: { headers: { Authorization: authorization } },
+          auth: { persistSession: false },
+        })
+        const { data, error } = await caller.auth.getUser()
+        return error ? null : data?.user?.id ?? null
+      },
+      callerIsOperator: async () => (await operatorUserId(req)) !== null,
+      primaryEmail: (userId) => primaryEmailForUser(adminClient(), userId),
+      relationshipEmail: async (id) => {
+        // Read AS THE CALLER: row-level security on broker_client_relationships decides who may
+        // see — and therefore write to — a client (the owning broker, their team, an operator).
+        const caller = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
+          global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } },
+          auth: { persistSession: false },
+        })
+        const { data } = await caller
+          .from('broker_client_relationships')
+          .select('client_email')
+          .eq('id', id)
+          .maybeSingle()
+        return (data as { client_email?: string } | null)?.client_email ?? null
+      },
+    },
+  )
+  if (!authority.ok) {
+    return new Response(JSON.stringify({ error: authority.error }), {
+      status: authority.status,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+  if (authority.kind === 'user') {
+    // A person never chooses where the mail goes (beyond what their policy allows), who it claims
+    // to be from, where replies land, or whose brand it wears.
+    recipientEmail = authority.recipientEmail
+    recipientUserId = authority.recipientUserId
+    fromOverride = null
+    replyToOverride = null
+    tenantId = null
   }
 
   // Solo Beta welcome is an internal mode of the existing transactional sender.
@@ -350,8 +407,8 @@ Deno.serve(async (req) => {
 
   // 1b. Affiliate-program preference gate.
   // Only enforced when caller passed recipientUserId (e.g., approved/conversion/paid/monthly).
-  // Public submissions like elite-waitlist or application-received from anon visitors
-  // skip this check because there is no authenticated user yet.
+  // A confirmation for someone with no account yet (an affiliate application, sent by
+  // affiliate-application-confirm on the applicant's behalf) skips it: there is no user to look up.
   const isAffiliateTemplate = templateName.startsWith('affiliate-') || templateName === 'elite-waitlist-confirmed'
   if (isAffiliateTemplate && recipientUserId) {
     try {

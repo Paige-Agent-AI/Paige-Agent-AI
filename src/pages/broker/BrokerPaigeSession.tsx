@@ -374,7 +374,7 @@ const BrokerPaigeSession = () => {
         await supabase.functions.invoke("send-transactional-email", {
           body: {
             templateName: "broker-client-invite", // reuse existing template as fallback container
-            recipientEmail: rel.client_email,
+            relationshipId: rel.id,
             idempotencyKey: `broker-summary-${sessionId}`,
             templateData: {
               firstName: rel.client_first_name,

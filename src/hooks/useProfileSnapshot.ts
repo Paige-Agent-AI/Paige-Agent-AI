@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { ProfileSnapshot } from "@/lib/conversationalExtractor";
+import { readUserPrimaryAddresses } from "@/lib/userPrimaryContact";
 
 export function useProfileSnapshot(userId: string | null | undefined) {
   const [snapshot, setSnapshot] = useState<ProfileSnapshot>({
@@ -21,10 +22,10 @@ export function useProfileSnapshot(userId: string | null | undefined) {
 
   const load = useCallback(async () => {
     if (!userId) return;
-    const [{ data: profile }, { data: biz }] = await Promise.all([
+    const [{ data: profile }, { data: biz }, contact] = await Promise.all([
       supabase
         .from("profiles")
-        .select("full_name, phone, address, primary_goal, goal_amount")
+        .select("full_name, address, primary_goal, goal_amount")
         .eq("user_id", userId)
         .maybeSingle(),
       supabase
@@ -36,11 +37,13 @@ export function useProfileSnapshot(userId: string | null | undefined) {
         .order("created_at", { ascending: true })
         .limit(1)
         .maybeSingle(),
+      // Phone is the person's primary phone contact method.
+      readUserPrimaryAddresses(userId),
     ]);
 
     setSnapshot({
       full_name: profile?.full_name ?? null,
-      phone: profile?.phone ?? null,
+      phone: contact.phone,
       address: profile?.address ?? null,
       primary_goal: profile?.primary_goal ?? null,
       goal_amount: profile?.goal_amount ?? null,

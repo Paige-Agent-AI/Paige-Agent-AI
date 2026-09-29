@@ -3262,12 +3262,12 @@ be run", and it was exactly the thing that needed running.
   pending forever. Either run it on every PR, or make skips explicit job results — and a repository
   guard may forbid the second.
 
-
 ## 2026-09-29 — A repository move silently stops Vercel deploys
 
 When the repository moved from `mrmogulmaker-bot` to the `Paige-Agent-AI` organisation, Vercel stopped
-receiving pushes: #1551 through #1570 merged to `main` with no deployment and no Vercel commit status, and
-production kept serving the last build for about 19 hours. Nothing failed loudly. The tell is a merge on
+receiving pushes: every merge after #1554 (#1552, #1551, #1560, #1562, #1559, #1561, #1563, #1569 and #1570) reached `main` with no deployment and no Vercel
+commit status, and production kept serving the last build for about 20 hours (2026-09-28 05:07 UTC to
+2026-09-29 01:27 UTC). Nothing failed loudly. The tell is a merge on
 `main` with **no** Vercel status at all (not a failed one); the API answers "The provided GitHub repository
 can't be found." The fix is granting Vercel's GitHub app access to the new organisation and relinking the
 project. After any repository transfer, check that the next merge produces a Vercel deployment.

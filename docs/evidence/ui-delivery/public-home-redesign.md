@@ -65,7 +65,7 @@ Local Vite dev server, Chromium from /opt/pw-browsers, signed out, 2026-09-28. S
 - **Deployment:** Vercel production deployment `dpl_88F55qQSHtfRuUpivMcfQZZDZ8jr` of `main` at
   `7b22b8176df008fda290544777afd249261a00d4`, which contains the squash merge `ade15563` of PR #1561.
   Vercel had stopped receiving pushes after the repository moved from `mrmogulmaker-bot` to the
-  `Paige-Agent-AI` organisation (no deployment or commit status for #1551–#1570); the owner granted
+  `Paige-Agent-AI` organisation (no deployment or Vercel commit status for any merge after #1554: #1552, #1551, #1560, #1562, #1559, #1561, #1563, #1569 and #1570); the owner granted
   Vercel's GitHub app access to the new organisation, and this deployment was then triggered on `main`.
 - **Live drive, `https://paigeagent.ai/`, Chromium through the session proxy, signed out:**
   1440×900 and 390×844 — one `h1`, one meta description, no horizontal overflow, no page errors,

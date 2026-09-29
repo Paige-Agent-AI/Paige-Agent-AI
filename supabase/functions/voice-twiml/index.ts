@@ -37,6 +37,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { authenticateTwilioWebhook } from "../_shared/twilio-webhook-auth.ts";
 import { deriveOperatorVoiceWebhookSecret, operatorVoiceCallerId } from "../_shared/operator-twilio.ts";
 import { normalizePhone } from "../_shared/pre-send-pipeline.ts";
+import { findClientIdByAddress } from "../_shared/contact-methods.ts";
 import { mintStreamToken } from "../_shared/voice-stream-token.ts";
 import {
   buildIdentity,
@@ -50,7 +51,6 @@ import {
   parseClientCaller,
   parseOperatorClientCaller,
   resolveStatusCallbackUrl,
-  sanitizePhoneFilter,
   voiceThreadKey,
   CALL_UNAVAILABLE_MESSAGE,
   NO_CALLER_ID_MESSAGE,
@@ -216,32 +216,15 @@ async function resolveTenantCallerId(admin: Admin, tenantId: string): Promise<st
  * §9/§13 — resolve the call's CLIENT counterparty phone → a TENANT-SCOPED contact id. The tenant is
  * the SAME non-forgeable value already resolved for the bridge (outbound = authenticated identity,
  * inbound = number owner); the contact is only ever looked up WITHIN that tenant, so a call can never
- * link to another tenant's client. Matches the stored phone in both the raw (Twilio-E.164) and
- * normalized forms (defensive against stored-format drift) — the SAME pattern the inbound-SMS reader
- * uses (§18 one lookup). Returns null when no contact matches — we NEVER invent/auto-create a contact
- * here; a null contact is an honest degrade the copilot handles (it files the action contactless).
+ * link to another tenant's client. The number matches ANY of a contact's phone numbers on its last ten
+ * digits — the one rule every inbound channel uses (§18, _shared/contact-methods.ts). It is passed as
+ * a bound parameter, never interpolated into a filter. Returns null when no contact matches — we NEVER
+ * invent/auto-create a contact here; a null contact is an honest degrade the copilot handles (it files
+ * the action contactless).
  */
 async function resolveContactByPhone(admin: Admin, tenantId: string, phone: string): Promise<string | null> {
   if (!phone || !tenantId) return null;
-  // §568: strip BOTH filter operands to [0-9+] before interpolating into the PostgREST `.or()` so a
-  // crafted To/From (e.g. `+1,id.eq.<uuid>`) can't inject a filter clause. An empty raw value ⇒ skip
-  // that operand entirely (an empty `.eq.` would be a malformed/over-broad filter, never emitted).
-  const raw = sanitizePhoneFilter(phone);
-  const norm = sanitizePhoneFilter(normalizePhone(phone));
-  const operands = [...new Set([raw, norm].filter((p) => p.length > 0))].map((p) => `phone.eq.${p}`);
-  if (operands.length === 0) return null;
-  const { data, error } = await admin
-    .from("clients")
-    .select("id")
-    .eq("tenant_id", tenantId)
-    .or(operands.join(","))
-    .limit(1)
-    .maybeSingle();
-  if (error) {
-    console.warn("[voice-twiml] tenant-scoped contact lookup failed — proceeding contactless:", error.code, error.message);
-    return null;
-  }
-  return (data?.id as string | undefined) ?? null;
+  return await findClientIdByAddress(admin, tenantId, "phone", normalizePhone(phone) || phone, "voice-twiml");
 }
 
 /**

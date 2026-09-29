@@ -5,6 +5,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { z } from "npm:zod@3.23.8";
+import { findClientIdByAddress, findFirstClientByEmailAnyWorkspace } from "../_shared/contact-methods.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -244,13 +245,7 @@ Deno.serve(async (req) => {
         const p = CreatePendingApprovalSchema.parse(payload);
         let contactId = p.contact_id ?? null;
         if (!contactId && p.contact_email) {
-          const { data: c } = await supabase
-            .from("clients")
-            .select("id")
-            .ilike("email", p.contact_email)
-            .limit(1)
-            .maybeSingle();
-          contactId = c?.id ?? null;
+          contactId = (await findFirstClientByEmailAnyWorkspace(supabase, p.contact_email, "paige-bridge"))?.id ?? null;
         }
         const { data, error } = await supabase
           .from("paige_pending_approvals")
@@ -398,14 +393,7 @@ Deno.serve(async (req) => {
           existingId = byGhl?.id ?? null;
         }
         if (!existingId) {
-          const { data: byEmail } = await supabase
-            .from("clients")
-            .select("id")
-            .ilike("email", emailLower)
-            .eq("tenant_id", tenantId)
-            .limit(1)
-            .maybeSingle();
-          existingId = byEmail?.id ?? null;
+          existingId = await findClientIdByAddress(supabase, tenantId, "email", emailLower, "paige-bridge");
         }
 
         const sharedPatch: Record<string, unknown> = {
@@ -512,12 +500,7 @@ Deno.serve(async (req) => {
       // -----------------------------------------------------------------
       case "get_coach_for_client": {
         const p = GetCoachForClientSchema.parse(payload);
-        const { data: client } = await supabase
-          .from("clients")
-          .select("id, email")
-          .ilike("email", p.email)
-          .limit(1)
-          .maybeSingle();
+        const client = await findFirstClientByEmailAnyWorkspace(supabase, p.email, "paige-bridge");
         if (!client?.id) return ok(verb, { client_id: null, assignments: [] });
 
         const { data: rows, error } = await supabase
@@ -547,8 +530,7 @@ Deno.serve(async (req) => {
       // -----------------------------------------------------------------
       case "get_opportunities_for_contact": {
         const p = GetOpportunitiesForContactSchema.parse(payload);
-        const { data: client } = await supabase
-          .from("clients").select("id").ilike("email", p.email).limit(1).maybeSingle();
+        const client = await findFirstClientByEmailAnyWorkspace(supabase, p.email, "paige-bridge");
         if (!client?.id) return ok(verb, { client_id: null, deals: [] });
 
         const { data, error } = await supabase
@@ -642,9 +624,7 @@ Deno.serve(async (req) => {
         // Resolve client_id
         let clientId = p.client_id ?? null;
         if (!clientId && p.client_email) {
-          const { data: c } = await supabase
-            .from("clients").select("id").ilike("email", p.client_email).limit(1).maybeSingle();
-          clientId = c?.id ?? null;
+          clientId = (await findFirstClientByEmailAnyWorkspace(supabase, p.client_email, "paige-bridge"))?.id ?? null;
         }
         if (!clientId) return fail(verb, 404, "client_not_found");
 

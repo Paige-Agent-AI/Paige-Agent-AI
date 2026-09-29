@@ -139,7 +139,7 @@
 .ss-return { display: flex; max-width: 1180px; align-items: center; justify-content: space-between; gap: 10px; margin: -4px auto 14px; padding: 8px 10px; border: 1px solid color-mix(in srgb, var(--pg-accent) 30%, var(--pg-line)); border-radius: var(--pg-r-chip); color: var(--pg-muted); background: color-mix(in srgb, var(--pg-accent) 6%, var(--pg-surface)); font-size: 10px; }
 .tcs-main--settings-scrollbar-hidden { scrollbar-width: none; -ms-overflow-style: none; }
 [data-tenant-shell] .tcs-main--settings-scrollbar-hidden::-webkit-scrollbar { width: 0; height: 0; display: none; }
-.ss-phone-setup, .ss-reg-setup { grid-column: 1 / -1; border-color: color-mix(in srgb, var(--pg-accent) 28%, var(--pg-line)); box-shadow: inset 3px 0 var(--pg-accent), var(--pg-e1), var(--pg-rim); }
+.ss-phone-setup, .ss-reg-setup { grid-column: 1 / -1; border-color: color-mix(in srgb, var(--pg-accent) 28%, var(--pg-line)); box-shadow: var(--pg-e1), var(--pg-rim); }
 .ss-phone-heading { min-width: 0; flex: 1; }
 .ss-phone-setup .ss-phone-title, .ss-reg-setup .ss-phone-title { margin: 0 0 2px; font: 650 18px/1.1 var(--pg-font-display); letter-spacing: -.02em; }
 .ss-phone-heading p { margin: 0; }
@@ -200,8 +200,7 @@
 
 /* The single next action, when texting is not ready. */
 .ss-next {
-  border: 1px solid var(--pg-line);
-  border-left: 3px solid var(--pg-warning);
+  border: 1px solid color-mix(in srgb, var(--pg-warning) 45%, var(--pg-line));
   border-radius: var(--pg-r-chip, 9px);
   background: var(--pg-raised);
   padding: 11px 13px;

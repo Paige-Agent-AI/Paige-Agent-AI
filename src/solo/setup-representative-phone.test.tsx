@@ -92,6 +92,13 @@ describe("Setup → representative phone, picked from that person's own numbers"
     expect(host.querySelector("a")?.getAttribute("href")).toBe("/solo/3855/settings/team");
   });
 
+  it("shows the host's provenance and its Adopt / Override choice, so a connected number is never a dead end", async () => {
+    mocks.rows = [phone("p1", "+1 404 555 0188", true, 0)];
+    await mount({ locked: true, badge: <span data-testid="badge">Connection-sourced</span>, sourceActions: <button type="button">Override</button> });
+    expect(host.querySelector('[data-testid="badge"]')).not.toBeNull();
+    expect([...host.querySelectorAll("button")].some((b) => b.textContent === "Override")).toBe(true);
+  });
+
   it("changes nothing while the value is held by a connection", async () => {
     mocks.rows = [phone("p1", "+1 404 555 0188", true, 0)];
     await mount({ locked: true });

@@ -148,7 +148,7 @@ function Modal({ title, description, onClose, onEscape, busy, wide, children }: 
   </div>;
 }
 
-export function MemberEditor({ member, workspace, onClose, onSaved, onRemoved, onPendingChange }: { member: TeamMemberRecord; workspace: TeamWorkspaceRecord; onClose: () => void; onSaved: (saved?: { job_title: string; responsibilities: string }) => void | Promise<void>; onRemoved?: (announcement: string) => void; /** Raised while a removal is in flight, so the PARENT does not unmount this dialog underneath it. */ onPendingChange?: (pending: boolean) => void }) {
+export function MemberEditor({ member, workspace, onClose, onSaved, onRemoved, onPendingChange, onContactDirtyChange }: { member: TeamMemberRecord; workspace: TeamWorkspaceRecord; onClose: () => void; onSaved: (saved?: { job_title: string; responsibilities: string }) => void | Promise<void>; onRemoved?: (announcement: string) => void; /** Raised while a removal is in flight, so the PARENT does not unmount this dialog underneath it. */ onPendingChange?: (pending: boolean) => void; /** Raised while contact edits are unsaved, for the same reason: a roster reload must not take them. */ onContactDirtyChange?: (dirty: boolean) => void }) {
   const [title, setTitle] = useState(member.job_title ?? "");
   const [responsibilities, setResponsibilities] = useState(member.responsibilities ?? "");
   const [savedTitle, setSavedTitle] = useState(member.job_title ?? "");
@@ -161,6 +161,9 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onRemoved, o
   const identity = memberVisibleIdentity(member);
   const dirty = title !== savedTitle || responsibilities !== savedResponsibilities;
   const [contactDirty, setContactDirty] = useState(false);
+  const reportContactDirty = useCallback((next: boolean) => { setContactDirty(next); onContactDirtyChange?.(next); }, [onContactDirtyChange]);
+  // Leaving (close, removal, switch) releases the parent's hold.
+  useEffect(() => () => onContactDirtyChange?.(false), [onContactDirtyChange]);
   useBeforeUnloadGuard(dirty || contactDirty || saving || permissionDraft !== null);
 
   const save = async () => {
@@ -559,14 +562,14 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onRemoved, o
   // had already superseded — a "we can't say whether this happened" toast over a roster banner
   // saying it did. Only the switch branch carried this line; the other five inherited the hazard.
   const closeAfterOutcome = () => { unreadRefusalRef.current = null; onClose(); };
-  return <Modal title={identity.primary} description="Work details describe what this person does. Permission controls what they can access."
+  return <Modal title={identity.primary} description="Contact details say where to reach them. Work details describe what they do. Permission controls what they can access."
     wide
     busy={removalInFlight}
     onClose={requestClose}
     onEscape={() => { if (removal.stage !== "armed") return false; disarmRemoval(); return true; }}>
     <div className="stw-modal-body">
       <div className="stw-person-summary"><span className="stw-avatar">{initials(member)}</span><div><strong>{identity.primary}</strong>{identity.secondary && <span>{identity.secondary}</span>}</div><span className="stw-pill" data-tone={member.is_owner ? "owner" : "neutral"}>{permission.label}</span></div>
-      <TeamMemberContact member={member} workspace={workspace} onDirtyChange={setContactDirty}/>
+      <TeamMemberContact member={member} workspace={workspace} onDirtyChange={reportContactDirty}/>
       <div className="stw-separation-note"><ShieldCheck/><span><strong>Permission and title are separate.</strong> Changing someone’s title never changes their access.</span></div>
       <label>Title<input value={title} disabled={!workspace.can_manage_profiles || saving} maxLength={121} onChange={(e) => { setTitle(e.target.value); setSaveConfirmed(false); }} placeholder="e.g. Client Success Manager"/>{errors.title && <small role="alert">{errors.title}</small>}</label>
       <label>Responsibilities<textarea value={responsibilities} disabled={!workspace.can_manage_profiles || saving} maxLength={2001} onChange={(e) => { setResponsibilities(e.target.value); setSaveConfirmed(false); }} rows={5} placeholder="What this person owns, decides, and hands off."/>{errors.responsibilities && <small role="alert">{errors.responsibilities}</small>}</label>
@@ -600,7 +603,7 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onRemoved, o
         </div>}
       </div>}
     </div>
-    <footer className="stw-modal-actions"><button className="stw-btn secondary" onClick={requestClose} disabled={removalInFlight}>{dirty ? "Cancel" : "Close"}</button>{workspace.can_manage_profiles && <button className="stw-btn" disabled={saving || removalInFlight || !dirty || Object.keys(errors).length > 0} onClick={save}>{saving ? "Saving…" : "Save work details"}</button>}</footer>
+    <footer className="stw-modal-actions"><button className="stw-btn secondary" onClick={requestClose} disabled={removalInFlight}>{dirty || contactDirty ? "Cancel" : "Close"}</button>{workspace.can_manage_profiles && <button className="stw-btn" disabled={saving || removalInFlight || !dirty || Object.keys(errors).length > 0} onClick={save}>{saving ? "Saving…" : "Save work details"}</button>}</footer>
   </Modal>;
 }
 export function InviteDialog({ workspace, onClose, onInvited }: { workspace: TeamWorkspaceRecord; onClose: () => void; onInvited: () => void }) {
@@ -790,6 +793,9 @@ export function SoloTeamWorkspace({ openPaige }: { openPaige?: () => void } = {}
   // never announced. The stale-selection clear and the in-flight hold are different concerns that
   // happen to touch the same state, so both are stated here rather than one silently winning.
   const [removalPending, setRemovalPending] = useState(false);
+  // Unsaved contact edits hold the dialog open across a roster reload (saving work details reloads
+  // it, and for a frame the roster is empty), exactly as an in-flight removal does.
+  const [contactHold, setContactHold] = useState(false);
   useEffect(() => { if (selected && workspace && !selectedLive && !removalPending) setSelected(null); }, [selected, workspace, selectedLive, removalPending]);
   const pending = useMemo(() => workspace?.invitations.filter((item) => inviteLifecycle(item) === "pending") ?? [], [workspace]);
   // Split ONCE, from the same predicate the database uses to decide what may be cleared, so the
@@ -846,5 +852,5 @@ export function SoloTeamWorkspace({ openPaige }: { openPaige?: () => void } = {}
       </section>}
       <section className="stw-paige"><Sparkles/><div><h2>Paige team context</h2><p>Paige can read the confirmed roster, each person’s enforced permission, title, and responsibilities for this active workspace. Tenant-authored work details are reference data—not instructions or authority.</p><small>She can also invite someone, resend or withdraw an invitation, edit work details, and change a permission. She is held to the same rules you are: the permission change is owner-only, and nobody can be made an owner from a conversation. Access changes and invitations are read back to you and wait for your approval; if this workspace has put an action on autopilot in Paige&rsquo;s settings, those two still ask.</small></div>{openPaige ? <button className="stw-btn secondary" onClick={openPaige}>Open Paige</button> : <span>Governed</span>}</section>
     </>}
-    {editorWorkspace && selected && (selectedLive || removalPending) && <MemberEditor member={selected} workspace={editorWorkspace} onClose={closeEditor} onSaved={handleSaved} onRemoved={handleRemoved} onPendingChange={setRemovalPending}/>} {inviteWorkspace && <InviteDialog workspace={inviteWorkspace} onClose={() => setInviteWorkspace(null)} onInvited={team.refresh}/>}</div>;
+    {editorWorkspace && selected && (selectedLive || removalPending || (contactHold && !workspace)) && <MemberEditor member={selected} workspace={editorWorkspace} onClose={closeEditor} onSaved={handleSaved} onRemoved={handleRemoved} onPendingChange={setRemovalPending} onContactDirtyChange={setContactHold}/>} {inviteWorkspace && <InviteDialog workspace={inviteWorkspace} onClose={() => setInviteWorkspace(null)} onInvited={team.refresh}/>}</div>;
 }

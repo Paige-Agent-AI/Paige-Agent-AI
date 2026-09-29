@@ -23,6 +23,17 @@ const KIND = {
 
 const ICON = { email: Mail, phone: Phone };
 
+/** Who the addresses belong to decides what may be promised about them. For a client, Paige sends to
+ *  the primary and recognises every address on inbound; for a person on the team neither is true, so
+ *  the copy only says which address is primary (§13). */
+export type ContactMethodsAudience = "client" | "person";
+const sectionHint = (audience: ContactMethodsAudience, verb: string, count: number): string | null =>
+  audience === "client"
+    ? count > 1 ? `Paige ${verb} to the primary and recognises every one.` : count === 1 ? `Paige ${verb} here.` : null
+    : count > 1 ? "The primary comes first." : null;
+const PrimaryMeta = ({ audience, verb }: { audience: ContactMethodsAudience; verb: string }) =>
+  audience === "client" ? <span className="ctm-meta"><b>Primary</b> · Paige {verb} here</span> : <span className="ctm-meta"><b>Primary</b></span>;
+
 /**
  * Several emails and phones, one primary of each (approved design, comp A, 2026-09-28).
  * The primary is always first and carries the orb; "Make primary" moves an address to the top and
@@ -37,6 +48,7 @@ export function ContactMethodsEditor({
   announce,
   copy,
   firstPersonNoun = "their",
+  audience = "client",
 }: {
   methods: ContactMethod[];
   onChange: (next: ContactMethod[]) => void;
@@ -46,6 +58,7 @@ export function ContactMethodsEditor({
   announce: (message: string) => void;
   copy: Record<ContactMethodKind, KindCopy>;
   firstPersonNoun?: "their" | "your";
+  audience?: ContactMethodsAudience;
 }) {
   const reduceMotion = useReducedMotion();
   const listRef = useRef<HTMLDivElement | null>(null);
@@ -195,7 +208,7 @@ export function ContactMethodsEditor({
           <section key={kind} className="ctm-sec" aria-labelledby={`ctm-h-${kind}`}>
             <div className="ctm-sec-h">
               <h3 id={`ctm-h-${kind}`}>{k.title}{list.length > 0 && <span className="ctm-n">{list.length}</span>}</h3>
-              {list.length > 0 && <p>{list.length > 1 ? `Paige ${k.verb} to the primary and recognises every one.` : `Paige ${k.verb} here.`}</p>}
+              {sectionHint(audience, k.verb, list.length) && <p>{sectionHint(audience, k.verb, list.length)}</p>}
             </div>
             <ul className="ctm-list" data-ctm-list={kind}>
               {list.length === 0 ? (
@@ -234,7 +247,7 @@ export function ContactMethodsEditor({
                         aria-describedby={error ? `ctm-err-${method.id}` : undefined}
                         onChange={(event) => setValue(method, event.target.value)}
                       />
-                      {method.isPrimary && <span className="ctm-meta"><b>Primary</b> · Paige {k.verb} here</span>}
+                      {method.isPrimary && <PrimaryMeta audience={audience} verb={k.verb} />}
                       {error && <span className="ctm-err" id={`ctm-err-${method.id}`}>{error}</span>}
                     </span>
                     <span className="ctm-label">
@@ -298,7 +311,7 @@ export function ContactMethodsEditor({
 }
 
 /** The same list, read only: the saved record. */
-export function ContactMethodsList({ methods, headingLevel = 3 }: { methods: ContactMethod[]; /** Sits under the caller's own heading, one level down. */ headingLevel?: 3 | 4 }) {
+export function ContactMethodsList({ methods, headingLevel = 3, audience = "client" }: { methods: ContactMethod[]; /** Sits under the caller's own heading, one level down. */ headingLevel?: 3 | 4; audience?: ContactMethodsAudience }) {
   const Heading = headingLevel === 4 ? "h4" : "h3";
   return (
     <div className="ctm-editor is-readonly">
@@ -310,7 +323,7 @@ export function ContactMethodsList({ methods, headingLevel = 3 }: { methods: Con
           <section key={kind} className="ctm-sec" aria-labelledby={`ctm-rh-${kind}`}>
             <div className="ctm-sec-h">
               <Heading id={`ctm-rh-${kind}`}>{k.title}{list.length > 0 && <span className="ctm-n">{list.length}</span>}</Heading>
-              {list.length > 1 && <p>Paige {k.verb} to the primary and recognises every one.</p>}
+              {list.length > 1 && sectionHint(audience, k.verb, list.length) && <p>{sectionHint(audience, k.verb, list.length)}</p>}
             </div>
             <ul className="ctm-list" data-ctm-list={kind}>
               {list.length === 0 ? (
@@ -320,7 +333,7 @@ export function ContactMethodsList({ methods, headingLevel = 3 }: { methods: Con
                   <span className="ctm-mark">{method.isPrimary ? <span className="ctm-orb" aria-hidden /> : <Icon aria-hidden />}</span>
                   <span className="ctm-body">
                     <span className={kind === "phone" ? "ctm-val is-mono" : "ctm-val"}>{method.value}</span>
-                    {method.isPrimary && <span className="ctm-meta"><b>Primary</b> · Paige {k.verb} here</span>}
+                    {method.isPrimary && <PrimaryMeta audience={audience} verb={k.verb} />}
                   </span>
                   <span className="ctm-label">{method.label && <span className="ctm-tag">{method.label}</span>}</span>
                 </li>

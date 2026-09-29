@@ -411,6 +411,36 @@ function Drawer({
   );
 }
 
+/** Keep, adopt or override a value that came from a connection — one home for the choice. */
+function SourceActions({
+  fieldKey,
+  sourceDecisions,
+  onDecision,
+}: {
+  fieldKey: SoloSetupTextField;
+  sourceDecisions: Partial<Record<SoloSetupTextField, SetupSourceDecision>>;
+  onDecision: (key: SoloSetupTextField, value: SetupSourceDecision) => void;
+}) {
+  return (
+    <div className="setup-source-actions">
+      <span>Keep the connected fact, adopt it, or explicitly override it.</span>
+      <button type="button" onClick={() => onDecision(fieldKey, "adopt")}>
+        Adopt
+      </button>
+      <button type="button" onClick={() => onDecision(fieldKey, "override")}>
+        Override
+      </button>
+      {sourceDecisions[fieldKey] && (
+        <strong>
+          {sourceDecisions[fieldKey] === "adopt"
+            ? "Will adopt"
+            : "Override authorized"}
+        </strong>
+      )}
+    </div>
+  );
+}
+
 function Fields({
   fields,
   draft,
@@ -530,35 +560,11 @@ function Fields({
               </ReadValue>
             )}
             {editing && !locked && source === "connection_sourced" && (
-              <div className="setup-source-actions">
-                <span>
-                  Keep the connected fact, adopt it, or explicitly override it.
-                </span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    onDecision(field.key as SoloSetupTextField, "adopt")
-                  }
-                >
-                  Adopt
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    onDecision(field.key as SoloSetupTextField, "override")
-                  }
-                >
-                  Override
-                </button>
-                {sourceDecisions[field.key as SoloSetupTextField] && (
-                  <strong>
-                    {sourceDecisions[field.key as SoloSetupTextField] ===
-                    "adopt"
-                      ? "Will adopt"
-                      : "Override authorized"}
-                  </strong>
-                )}
-              </div>
+              <SourceActions
+                fieldKey={field.key as SoloSetupTextField}
+                sourceDecisions={sourceDecisions}
+                onDecision={onDecision}
+              />
             )}
             {field.hint && <small>{field.hint}</small>}
             {errors[field.key] && (
@@ -1429,6 +1435,24 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
                           decisions.authorizedRepresentativePhone !== "override"
                         }
                         error={errors.authorizedRepresentativePhone}
+                        badge={
+                          <SourceBadge
+                            source={
+                              draft.provenance.authorizedRepresentativePhone
+                                ?.source
+                            }
+                          />
+                        }
+                        sourceActions={
+                          draft.provenance.authorizedRepresentativePhone
+                            ?.source === "connection_sourced" ? (
+                            <SourceActions
+                              fieldKey="authorizedRepresentativePhone"
+                              sourceDecisions={decisions}
+                              onDecision={decide}
+                            />
+                          ) : null
+                        }
                       />
                     ) : (
                       <Fields
@@ -2168,6 +2192,12 @@ function PeopleEmail({
                 onDraft({
                   ...draft,
                   authorizedRepresentativeUserId: event.target.value,
+                  // The phone is that person's own number: a different person
+                  // starts with none chosen rather than inheriting the last one.
+                  authorizedRepresentativePhone:
+                    event.target.value === draft.authorizedRepresentativeUserId
+                      ? draft.authorizedRepresentativePhone
+                      : "",
                 })
               }
             >

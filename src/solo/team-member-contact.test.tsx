@@ -70,9 +70,11 @@ describe("Team → how the team reaches a person", () => {
     mocks.rows = [row("e1", "email", "dana@example.com", true, 0), row("p1", "phone", "5125550100", true, 0)];
     await mount(person({ user_id: "owner-1", full_name: "Dana Whitfield", is_owner: true, permission: "owner" }), space("admin"));
     expect(mocks.eq).toHaveBeenCalledWith("user_contact_methods", "user_id", "owner-1");
-    expect(host.textContent).toContain("How the team reaches Dana");
+    expect(host.textContent).toContain("Dana's contact details");
     expect(host.textContent).toContain("Only the owner can change the owner's contact details.");
-    expect(host.textContent).toContain("Used to log in. Changed under Security, not here.");
+    expect(host.textContent).toContain("Used to sign in. Nothing on this screen changes it.");
+    // A team member's addresses carry no promise about what Paige sends to or recognises.
+    expect(host.textContent).not.toMatch(/Paige (sends|texts|recognises)/);
     expect(host.textContent).toContain("dana@example.com");
     expect(host.querySelector("input")).toBeNull();
     expect(button("Save contact details")).toBeNull();
@@ -88,8 +90,9 @@ describe("Team → how the team reaches a person", () => {
     mocks.rows = [row("e1", "email", "sam@example.com", true, 0, "Work")];
     const dirty = vi.fn();
     await mount(person({ user_id: "viewer-1" }), space("member"), dirty);
-    expect(host.textContent).toContain("How the team reaches you");
-    expect(button("Save contact details")?.hasAttribute("disabled")).toBe(true);
+    expect(host.textContent).toContain("Your contact details");
+    // Nothing to save yet, so no act-coloured control is offered at rest.
+    expect(button("Save contact details")).toBeNull();
 
     await click(host.querySelector('[data-ctm-add="email"]'));
     const inputs = host.querySelectorAll<HTMLInputElement>('input[type="email"]');
@@ -107,6 +110,9 @@ describe("Team → how the team reaches a person", () => {
       ],
     });
     expect(host.textContent).toContain("Your contact details are saved.");
+    // The save button leaves once nothing is unsaved; focus lands on the outcome, not the page.
+    await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
+    expect(document.activeElement?.textContent).toBe("Your contact details are saved.");
     expect(dirty).toHaveBeenLastCalledWith(false);
   });
 
@@ -136,7 +142,8 @@ describe("Team → how the team reaches a person", () => {
     await act(async () => { type(input, "sam@example.net"); });
     await click(button("Save contact details"));
     await flush();
-    expect(host.querySelector('[role="alert"]')?.textContent).toBe("You can't change this person's contact details from this workspace.");
+    expect(host.querySelector(".stw-contact-msg.is-bad")?.textContent).toBe("You can't change this person's contact details from this workspace.");
+    expect(host.querySelector('[aria-live="polite"]')?.textContent).toBe("You can't change this person's contact details from this workspace.");
     expect(host.textContent).not.toContain("USER_CONTACT_METHODS_FORBIDDEN");
   });
 

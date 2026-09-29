@@ -108,7 +108,15 @@ function RegistrationBusinessEditor({ account, missing, open: _open, onOpenChang
   };
 
   const change = (key: RegistrationEditableField, next: string) =>
-    setEdits((now) => ({ ...now, [key]: next }));
+    setEdits((now) => {
+      // The representative's phone is that person's own number: choosing a different person
+      // starts with none chosen rather than carrying the previous person's number across.
+      if (key === "authorizedRepresentativeUserId") {
+        const current = now.authorizedRepresentativeUserId ?? brief.authorizedRepresentativeUserId;
+        if (next !== current) return { ...now, [key]: next, authorizedRepresentativePhone: "" };
+      }
+      return { ...now, [key]: next };
+    });
 
   const dirty = useMemo(
     () => Object.entries(edits).some(([key, v]) =>
@@ -262,6 +270,7 @@ function RegistrationBusinessEditor({ account, missing, open: _open, onOpenChang
         idPrefix="reg-rep-phone"
         className="ss-field-block"
         labelClassName=""
+        titleClassName=""
       />
     </div>
 

@@ -1108,6 +1108,28 @@ describe("canonical Solo Setup business context", () => {
     );
     await act(async () => root.unmount());
   });
+  it("does not carry one representative's phone across to the next person chosen", async () => {
+    state.brief = cleanSoloSetupBrief({
+      ...state.brief,
+      authorizedRepresentativeUserId: "owner-1",
+      authorizedRepresentativePhone: "+14045550188",
+    });
+    const { host, root } = await mount();
+    await act(async () => button(host, "Edit business context").click());
+    await act(async () => button(host, "People & email").click());
+    const select = host.querySelector<HTMLSelectElement>("#setup-authorized-representative")!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set?.call(select, "");
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    await act(async () => button(host, "Save business context").click());
+    expect(state.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        brief: expect.objectContaining({ authorizedRepresentativeUserId: "", authorizedRepresentativePhone: "" }),
+      }),
+    );
+    await act(async () => root.unmount());
+  });
   it("keeps drawer edits isolated until confirmed and restores focus on discard", async () => {
     const { host, root } = await mount();
     await act(async () => button(host, "Edit business context").click());

@@ -100,6 +100,20 @@ describe("Solo Team member work-details dialog", () => {
     await act(async () => root.unmount());
   });
 
+  it("labels abandoning unsaved contact edits as Cancel too, not Close", async () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    await act(async () => root.render(<MemberEditor member={member} workspace={workspace} onClose={vi.fn()} onSaved={vi.fn()} />));
+    await act(async () => { for (let i = 0; i < 4; i++) await Promise.resolve(); });
+    const footer = () => host.querySelector(".stw-modal-actions button")?.textContent?.trim();
+    expect(footer()).toBe("Close");
+    await act(async () => (host.querySelector('[data-ctm-add="email"]') as HTMLButtonElement).click());
+    await act(async () => setValue(host.querySelector<HTMLInputElement>('.stw-contact input[type="email"]')!, "member.two@example.com"));
+    expect(footer()).toBe("Cancel");
+    await act(async () => root.unmount());
+  });
+
   it("keeps saved values visible and never changes permission during a work-details save", async () => {
     mocks.rpc.mockResolvedValueOnce({
       data: { membership_id: member.membership_id, job_title: "Operations Lead", responsibilities: "Owns delivery and weekly planning." },

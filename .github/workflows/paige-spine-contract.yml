@@ -46,6 +46,9 @@ on:
       - "supabase/tests/governed_crm_commands.sql"
       - "supabase/tests/outbound_private_business_facts.sql"
       - "supabase/tests/user_address_readers.sql"
+      - "supabase/tests/contact_methods_concurrency.sql"
+      - "supabase/tests/contact_create_with_methods.sql"
+      - "supabase/tests/user_primary_address.sql"
       # The CRM patch-schema proof and the generator that writes it. (`supabase/migrations/**`
       # above already re-runs this job when an allowlist itself changes, which is the case that
       # matters most; these two cover a change to the proof or to how it is derived.)
@@ -193,6 +196,19 @@ jobs:
       # access with the contact, and every matcher recognising a contact by ANY of its addresses.
       # Reports its own result, like the step above, so an earlier red step cannot hide it.
       - run: supabase test db supabase/tests/contact_methods.sql
+        if: ${{ !cancelled() }}
+      # A save built on a list that changed since it was loaded is refused, never overwrites: a
+      # person's list, a client's list (the People editor and Paige's MCP update_contact), and an
+      # address attached by inbound recognition moving the contact's version for CRM commands.
+      - run: supabase test db supabase/tests/contact_methods_concurrency.sql
+        if: ${{ !cancelled() }}
+      # A contact created from an inbound address and its first addresses are one transaction: a
+      # refused or taken address leaves no contact row and no contact.created event behind.
+      - run: supabase test db supabase/tests/contact_create_with_methods.sql
+        if: ${{ !cancelled() }}
+      # A person's primary address set by the server (provider webhooks, Paige's write-back): under
+      # the same per-person lock as a checked save, keeping every address and any relabel saved since.
+      - run: supabase test db supabase/tests/user_primary_address.sql
         if: ${{ !cancelled() }}
       # Public form intake: a visitor reads an active form only through growth_public_form (never the
       # table, never the business/pipeline/alert columns), nobody inserts a submission from the

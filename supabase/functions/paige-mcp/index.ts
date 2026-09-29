@@ -22,7 +22,7 @@ import { z } from "https://esm.sh/zod@3.25.76";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { resolveOperatorIdentity } from "../_shared/operator-identity.ts";
 import { applyContactSearchFilter, contactSearchTokens, CONTACT_NAME_SEARCH_COLUMNS, CONTACT_SEARCH_COLUMNS, contactIdsByAddressToken } from "../_shared/contact-search.ts";
-import { findClientIdByAddress, orderedContactMethods } from "../_shared/contact-methods.ts";
+import { createClientWithContactMethods, findClientIdByAddress, orderedContactMethods } from "../_shared/contact-methods.ts";
 import { resolveClientRef } from "../_shared/client-ref.ts";
 import { canonicalAppUrl, type CanonicalDestination, type CanonicalTier } from "../_shared/canonical-app-url.ts";
 
@@ -101,7 +101,9 @@ const CONTACT_METHOD_SELECT = "client_contact_methods(kind, value, label, is_pri
 const contactMethodInput = z.object({
   kind: z.enum(["email", "phone"]),
   value: z.string(),
-  label: z.string().optional(),
+  // Nullable: get_contact returns an unlabelled address as label: null, and a list read there is
+  // sent back as it came.
+  label: z.string().nullable().optional(),
   is_primary: z.boolean().optional(),
 }).strict();
 const contactMethodsInput = z.array(contactMethodInput).max(20);
@@ -1749,11 +1751,12 @@ mcp.tool("create_contact", {
   }).strict(),
   handler: async (args) => {
     const tenant_id = await resolveTenantId(args.tenant_id ?? null);
-    // Addresses are checked BEFORE the contact is written, so a bad or already-used address never
-    // leaves a half-made contact behind.
+    // A contact belongs to a workspace (clients.tenant_id is NOT NULL).
+    if (!tenant_id) return err("tenant_not_resolved");
+    // Addresses are checked first so the usual refusal names the address plainly; the create
+    // below is one transaction either way.
     const methods = args.contact_methods ?? [];
     if (methods.length) {
-      if (!tenant_id) return err("tenant_not_resolved");
       const { error: shapeError } = await admin.rpc("contact_methods_canonical", { _methods: methods });
       if (shapeError) return err(contactMethodsError(shapeError.message));
       for (const method of methods) {
@@ -1796,38 +1799,43 @@ mcp.tool("create_contact", {
       cs_primary_user_id: args.cs_primary_user_id ?? null,
       status: "active",
       current_notes: args.notes ?? null,
-      tenant_id,
       created_by: createdBy,
       created_by_channel_type: "api", // #10 channel-of-origin (Paige/MCP programmatic create)
     };
-    const { data, error } = await admin.from("clients").insert(row).select("id, account_number, created_at").single();
-    if (error) return err(error.message);
-    if (methods.length) {
-      const { error: methodsError } = await admin.rpc("_replace_client_contact_methods", {
-        _tenant_id: tenant_id, _client_id: data.id, _methods: methods,
-      });
-      if (methodsError) {
-        // Only a race with another writer reaches here (the addresses were checked above). The
-        // contact exists without its addresses; say exactly that, and how to finish it.
-        console.error("[paige-mcp] create_contact addresses not saved", { contact_id: data.id, message: methodsError.message });
-        return err(`CONTACT_CREATED_WITHOUT_ADDRESSES: contact ${data.account_number} was created, but its addresses were not saved (${contactMethodsError(methodsError.message)}). Add them with update_contact and add_contact_methods.`);
-      }
+    // The contact and its addresses are ONE transaction (20270519005000): an address another
+    // writer took since the check above refuses the whole create, so no contact — and no
+    // contact.created event — is left behind without the addresses it was created with.
+    const { data: created, error } = await createClientWithContactMethods(
+      admin, { ...row, tenant_id }, methods, "paige-mcp create_contact",
+    );
+    if (error || !created) return err(contactMethodsError(error?.message));
+    const { data, error: readError } = await admin.from("clients")
+      .select("id, account_number, created_at").eq("id", created.id).eq("tenant_id", tenant_id).maybeSingle();
+    if (readError || !data) {
+      // The contact IS created; only reading back its reference failed. Say so rather than fail it.
+      console.error("[paige-mcp] create_contact read-back failed", { contact_id: created.id, message: readError?.message });
     }
-    await audit("create_contact", "client", data.id, { contact_methods: methods.length, tenant_id }, tenant_id);
-    return ok({ ok: true, contact_id: data.id, client_ref: data.account_number, created_at: data.created_at, tenant_id, created_by: createdBy });
+    await audit("create_contact", "client", created.id, { contact_methods: methods.length, tenant_id }, tenant_id);
+    return ok({
+      ok: true, contact_id: created.id, client_ref: data?.account_number ?? null, created_at: data?.created_at ?? null,
+      tenant_id, created_by: createdBy,
+    });
   },
 });
 
 mcp.tool("update_contact", {
   description:
-    "Update any combination of fields on an existing contact (clients row), named by its client_ref (or contact_id). Only fields you pass are updated; omit a field to leave it unchanged. Emails and phones: contact_methods REPLACES the whole list (read it first with get_contact), add_contact_methods adds to it and keeps what is there; send one or the other. Scoped to caller's tenant. For lifecycle moves prefer `update_lifecycle_stage` (it writes a transition audit). For notes prefer `add_contact_note` (it appends instead of replacing).",
+    "Update any combination of fields on an existing contact (clients row), named by its client_ref (or contact_id). Only fields you pass are updated; omit a field to leave it unchanged. Emails and phones: contact_methods REPLACES the whole list and needs expected_contact_methods, the list exactly as get_contact returned it; if the stored list changed since, the update is refused as CONTACT_METHODS_STALE and nothing is written (read it again and redo the change). add_contact_methods adds to the list and keeps what is there, and needs no expected list; send one or the other. Scoped to caller's tenant. For lifecycle moves prefer `update_lifecycle_stage` (it writes a transition audit). For notes prefer `add_contact_note` (it appends instead of replacing).",
   inputSchema: z.object({
     client_ref: z.string().optional().describe("The contact's client_ref, as search_contacts or get_contact returned it."),
     contact_id: z.string().optional().describe("Only when you hold the contact's UUID rather than its client_ref."),
     // identity
     first_name: z.string().optional(),
     last_name: z.string().optional(),
-    contact_methods: contactMethodsInput.optional().describe("The COMPLETE list of the contact's emails and phones; anything left out is removed."),
+    contact_methods: contactMethodsInput.optional().describe("The COMPLETE list of the contact's emails and phones; anything left out is removed. Requires expected_contact_methods."),
+    expected_contact_methods: z.array(z.object({
+      kind: z.string(), value: z.string(), label: z.string().nullable().optional(), is_primary: z.boolean().optional(),
+    }).passthrough()).max(40).optional().describe("With contact_methods: the contact's contact_methods exactly as get_contact returned them. The update is refused if the stored list is no longer this one."),
     add_contact_methods: contactMethodsInput.min(1).optional().describe("Emails or phones to add, keeping every one the contact already has."),
     title: z.string().nullable().optional(),
     // business
@@ -1862,8 +1870,10 @@ mcp.tool("update_contact", {
   handler: async (args) => {
     const tenant_id = await actorTenantId();
     if (!tenant_id) return err("tenant_not_resolved");
-    const { client_ref, contact_id: suppliedId, contact_methods, add_contact_methods, ...rest } = args;
+    const { client_ref, contact_id: suppliedId, contact_methods, add_contact_methods, expected_contact_methods, ...rest } = args;
     if (contact_methods && add_contact_methods) return err("CONTACT_METHODS_AMBIGUOUS: send contact_methods or add_contact_methods, not both");
+    // Replacing the list must name the list it replaces, or a change made in between is lost.
+    if (contact_methods && !expected_contact_methods) return err("CONTACT_METHODS_EXPECTED_REQUIRED: send expected_contact_methods, the contact's contact_methods as get_contact returned them");
 
     // The contact, named inside the caller's own workspace only.
     let contact_id = suppliedId ?? null;
@@ -1890,12 +1900,12 @@ mcp.tool("update_contact", {
       return ok({ ok: true, contact_id, updated_fields: [], note: "no fields supplied" });
     }
 
-    // Addresses first: they are the part that can be refused (a malformed or already-used address),
-    // and the database checks the whole list before it writes any of it.
+    // Addresses first: they are the part that can be refused (a changed list, a malformed or
+    // already-used address), and the database checks the whole list before it writes any of it.
     if (methods) {
       const target = { _tenant_id: tenant_id, _client_id: contact_id, _methods: methods };
       const { error: methodsError } = contact_methods
-        ? await admin.rpc("_replace_client_contact_methods", target)
+        ? await admin.rpc("_replace_client_contact_methods_checked", { ...target, _expected: expected_contact_methods })
         : await admin.rpc("_add_client_contact_methods", target);
       if (methodsError) return err(contactMethodsError(methodsError.message));
     }

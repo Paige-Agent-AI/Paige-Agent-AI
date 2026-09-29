@@ -13,6 +13,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { emitAutomationRail } from "../_shared/railAutomation.ts";
+import { CLIENT_CONTACT_METHODS_EMBED, clientAddresses } from "../_shared/contact-methods.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -75,11 +76,12 @@ Deno.serve(async (req) => {
     if (body.contact_id) {
       const { data: client } = await supabase
         .from("clients")
-        .select("email, linked_user_id")
+        .select(`linked_user_id, ${CLIENT_CONTACT_METHODS_EMBED}`)
         .eq("id", body.contact_id)
         .maybeSingle();
 
-      const email = client?.email?.toLowerCase().trim();
+      // Consent is checked against the contact's PRIMARY email — the address a send goes to.
+      const email = clientAddresses(client)?.email?.toLowerCase().trim();
       if (email) {
         const consentKind = INTENT_TO_CONSENT[body.rule.compose_intent];
         const rpc =

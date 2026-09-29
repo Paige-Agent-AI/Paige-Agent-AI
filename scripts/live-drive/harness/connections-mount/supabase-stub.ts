@@ -106,7 +106,15 @@ type Row = Record<string, unknown>;
  */
 function seed(): Record<string, Row[]> {
   const s = state();
+  // Contact methods (Lane A): the Setup harness representative's own phone numbers, so the
+  // representative-phone picker renders a real choice. Design fixtures.
+  const userContactMethods: Row[] = [
+    { id: "rep-p1", user_id: "harness-owner", kind: "phone", value: "+1 (404) 555-0188", label: "Mobile", is_primary: true, position: 0 },
+    { id: "rep-p2", user_id: "harness-owner", kind: "phone", value: "+1 404 555 0190", label: "Work", is_primary: false, position: 1 },
+    { id: "rep-p3", user_id: "harness-owner", kind: "phone", value: "(404) 555-0123", label: "Home", is_primary: false, position: 2 },
+  ];
   return {
+    user_contact_methods: userContactMethods,
     calendars: seedCalendars(),
     calendar_hosts: s === "issues" ? [] : [
       { calendar_id: "cal-1", user_id: "u1", priority: 0, availability_json: null, timezone: null },

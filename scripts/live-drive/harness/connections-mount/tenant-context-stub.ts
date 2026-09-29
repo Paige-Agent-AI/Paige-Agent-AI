@@ -22,4 +22,9 @@ export function useTenantContext() {
     isPlatformStaff: false,
   };
 }
-export default { useTenantContext };
+/** The real hook returns null outside a provider; inside this harness the stub context is always present. */
+export function useOptionalTenantContext() {
+  return useTenantContext();
+}
+
+export default { useTenantContext, useOptionalTenantContext };

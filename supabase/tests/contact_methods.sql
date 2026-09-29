@@ -1,5 +1,5 @@
 -- ============================================================================
--- Contact methods (20270515000000 + 20270515010000) — executed proof.
+-- Contact methods (20270515000000 + 20270515010000, writers as restated by 20270519000000) — executed proof.
 --
 -- A client contact and a platform user each hold several labelled, ordered email addresses and
 -- phone numbers with exactly one primary of each kind, enforced in the data. This proves:
@@ -78,7 +78,8 @@ SELECT lives_ok($q$SELECT public.upsert_contact(jsonb_build_object('contact_meth
     jsonb_build_object('kind','email','value','ada@a.tests.invalid','label','Work','is_primary',true),
     jsonb_build_object('kind','email','value','ada.home@a.tests.invalid','label','Personal'),
     jsonb_build_object('kind','phone','value','+1 (555) 010-0101','label','Mobile'),
-    jsonb_build_object('kind','phone','value','555-010-0199','label','Office','is_primary',true))),
+    jsonb_build_object('kind','phone','value','555-010-0199','label','Office','is_primary',true)),
+    'expected_contact_methods', (SELECT COALESCE(jsonb_agg(jsonb_build_object('kind',kind,'value',value,'label',label,'is_primary',is_primary) ORDER BY kind, position), '[]'::jsonb) FROM public.client_contact_methods WHERE client_id = 'c3000000-0000-4000-8000-000000000ca1')),
   'c3000000-0000-4000-8000-000000000ca1')$q$,
   'the owner saves two emails and two phones on one contact');
 RESET ROLE;
@@ -100,7 +101,8 @@ SELECT lives_ok($q$SELECT public.upsert_contact(jsonb_build_object('contact_meth
     jsonb_build_object('kind','email','value','ada.home@a.tests.invalid','label','Personal','is_primary',true),
     jsonb_build_object('kind','email','value','ada@a.tests.invalid','label','Work'),
     jsonb_build_object('kind','phone','value','+1 (555) 010-0101','label','Mobile'),
-    jsonb_build_object('kind','phone','value','555-010-0199','label','Office','is_primary',true))),
+    jsonb_build_object('kind','phone','value','555-010-0199','label','Office','is_primary',true)),
+    'expected_contact_methods', (SELECT COALESCE(jsonb_agg(jsonb_build_object('kind',kind,'value',value,'label',label,'is_primary',is_primary) ORDER BY kind, position), '[]'::jsonb) FROM public.client_contact_methods WHERE client_id = 'c3000000-0000-4000-8000-000000000ca1')),
   'c3000000-0000-4000-8000-000000000ca1')$q$,
   'the owner reorders the emails and moves the primary');
 RESET ROLE;
@@ -120,7 +122,8 @@ SELECT throws_like($q$SELECT public.upsert_contact('{"contact_methods":[{"kind":
   'CONTACT_METHOD_INVALID_PHONE%', 'a phone number without enough digits is refused');
 SELECT throws_like($q$SELECT public.upsert_contact('{"email":"z@a.tests.invalid","contact_methods":[]}'::jsonb, 'c3000000-0000-4000-8000-000000000ca2')$q$,
   'CONTACT_METHODS_AMBIGUOUS%', 'the list and the single-address keys cannot be mixed');
-SELECT throws_like($q$SELECT public.upsert_contact('{"contact_methods":[{"kind":"email","value":"bob@a.tests.invalid"},{"kind":"email","value":"ada@a.tests.invalid"}]}'::jsonb, 'c3000000-0000-4000-8000-000000000ca2')$q$,
+SELECT throws_like($q$SELECT public.upsert_contact(jsonb_build_object('contact_methods', '[{"kind":"email","value":"bob@a.tests.invalid"},{"kind":"email","value":"ada@a.tests.invalid"}]'::jsonb,
+    'expected_contact_methods', (SELECT COALESCE(jsonb_agg(jsonb_build_object('kind',kind,'value',value,'label',label,'is_primary',is_primary) ORDER BY kind, position), '[]'::jsonb) FROM public.client_contact_methods WHERE client_id = 'c3000000-0000-4000-8000-000000000ca2')), 'c3000000-0000-4000-8000-000000000ca2')$q$,
   'CONTACT_METHOD_TAKEN%', 'an address held by another contact in the workspace is refused, even a secondary one');
 RESET ROLE;
 SELECT is((SELECT array_agg(value) FROM public.client_contact_methods WHERE client_id = 'c3000000-0000-4000-8000-000000000ca2'),
@@ -250,9 +253,10 @@ SELECT is((SELECT email FROM public.clients WHERE id = 'c3000000-0000-4000-8000-
 SELECT set_config('request.jwt.claims', '{"sub":"c3000000-0000-4000-8000-0000000000a3","role":"authenticated"}', true);
 SET LOCAL ROLE authenticated;
 SELECT lives_ok($q$SELECT public.set_user_contact_methods('c3000000-0000-4000-8000-0000000000a3',
-  '[{"kind":"email","value":"cm-member-a@tests.invalid","label":"Sign-in"},{"kind":"email","value":"member.work@tests.invalid","label":"Work","is_primary":true},{"kind":"phone","value":"+1 555 010 0505","label":"Mobile"}]')$q$,
+  '[{"kind":"email","value":"cm-member-a@tests.invalid","label":"Sign-in"},{"kind":"email","value":"member.work@tests.invalid","label":"Work","is_primary":true},{"kind":"phone","value":"+1 555 010 0505","label":"Mobile"}]',
+  '[{"kind":"email","value":"cm-member-a@tests.invalid","label":"Sign-in","is_primary":true}]')$q$,
   'a member sets their own addresses');
-SELECT throws_ok($q$SELECT public.set_user_contact_methods('c3000000-0000-4000-8000-0000000000a2', '[]')$q$,
+SELECT throws_ok($q$SELECT public.set_user_contact_methods('c3000000-0000-4000-8000-0000000000a2', '[]', '[]')$q$,
   '42501', 'USER_CONTACT_METHODS_FORBIDDEN', 'a member cannot set a teammate''s');
 SELECT is((SELECT count(*)::int FROM public.user_contact_methods WHERE user_id = 'c3000000-0000-4000-8000-0000000000a2'),
           0, 'and cannot read a teammate''s');
@@ -263,20 +267,24 @@ SELECT is((SELECT work_email || '|' || phone FROM public.profiles WHERE user_id 
 SELECT set_config('request.jwt.claims', '{"sub":"c3000000-0000-4000-8000-0000000000a2","role":"authenticated"}', true);
 SET LOCAL ROLE authenticated;
 SELECT lives_ok($q$SELECT public.set_user_contact_methods('c3000000-0000-4000-8000-0000000000a3',
-  '[{"kind":"email","value":"member.work@tests.invalid","label":"Work"}]')$q$,
+  '[{"kind":"email","value":"member.work@tests.invalid","label":"Work"}]',
+  '[{"kind":"email","value":"member.work@tests.invalid","label":"Work","is_primary":true},{"kind":"email","value":"cm-member-a@tests.invalid","label":"Sign-in"},{"kind":"phone","value":"+1 555 010 0505","label":"Mobile","is_primary":true}]')$q$,
   'an admin sets a member''s addresses in their workspace');
 SELECT ok((SELECT count(*) FROM public.user_contact_methods WHERE user_id = 'c3000000-0000-4000-8000-0000000000a3') = 1,
           'and reads them');
-SELECT throws_ok($q$SELECT public.set_user_contact_methods('c3000000-0000-4000-8000-0000000000a1', '[]')$q$,
-  '42501', 'USER_CONTACT_METHODS_OWNER_ONLY', 'an admin cannot rewrite the owner''s');
+SELECT lives_ok($q$SELECT public.set_user_contact_methods('c3000000-0000-4000-8000-0000000000a1',
+  '[{"kind":"email","value":"cm-owner-a@tests.invalid","label":"Sign-in"},{"kind":"phone","value":"+1 555 010 0606","label":"Mobile"}]',
+  '[{"kind":"email","value":"cm-owner-a@tests.invalid","label":"Sign-in","is_primary":true}]')$q$,
+  'an admin sets the owner''s addresses too: an admin holds the owner''s powers except removing the owner');
 
 SELECT set_config('request.jwt.claims', '{"sub":"c3000000-0000-4000-8000-0000000000a1","role":"authenticated"}', true);
 SELECT lives_ok($q$SELECT public.set_user_contact_methods('c3000000-0000-4000-8000-0000000000a2',
-  '[{"kind":"email","value":"admin.work@tests.invalid"}]')$q$,
+  '[{"kind":"email","value":"admin.work@tests.invalid"}]',
+  '[{"kind":"email","value":"cm-admin-a@tests.invalid","label":"Sign-in","is_primary":true}]')$q$,
   'the owner sets an admin''s addresses');
 
 SELECT set_config('request.jwt.claims', '{"sub":"c3000000-0000-4000-8000-0000000000b1","role":"authenticated"}', true);
-SELECT throws_ok($q$SELECT public.set_user_contact_methods('c3000000-0000-4000-8000-0000000000a3', '[]')$q$,
+SELECT throws_ok($q$SELECT public.set_user_contact_methods('c3000000-0000-4000-8000-0000000000a3', '[]', '[]')$q$,
   '42501', 'USER_CONTACT_METHODS_FORBIDDEN', 'another workspace''s owner cannot set them');
 SELECT is((SELECT count(*)::int FROM public.user_contact_methods WHERE user_id = 'c3000000-0000-4000-8000-0000000000a3'),
           0, 'or read them');

@@ -5,6 +5,8 @@ import react from "@vitejs/plugin-react-swc";
 const repo = path.resolve(import.meta.dirname, "../../../..");
 export default defineConfig({
   root: import.meta.dirname,
+  // Its own dependency cache: harnesses served side by side otherwise invalidate each other's bundles.
+  cacheDir: path.join(repo, "node_modules/.vite/harness-people-contact-methods-mount"),
   css: { postcss: repo },
   plugins: [react()],
   resolve: { alias: [

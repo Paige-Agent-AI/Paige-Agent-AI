@@ -14,7 +14,8 @@ import {
 // surface, layered on top of the existing per-host create cap. Fail-open on the
 // limiter's own error so a hiccup never blocks a legit booking.
 import { clientIp, overRateLimit } from "../_shared/rateLimit.ts";
-import { findClientIdByAddress } from "../_shared/contact-methods.ts";
+import { findClientIdByAddress, insertClientWithAddresses } from "../_shared/contact-methods.ts";
+import { primaryPhonesForUsers } from "../_shared/user-contact-methods.ts";
 // Per-host Zoom (§9): when a calendar meets over Zoom and the assigned host has
 // connected their own Zoom, mint the meeting on THEIR account and drop the real
 // join link into the confirmation. Best-effort (§13) — any failure falls back to
@@ -628,20 +629,22 @@ async function findOrCreateContact(
       tenantId ? await findClientIdByAddress(admin, tenantId, "email", email, "public-booking") : null;
 
     const existing = await findExisting();
-    if (existing) return existing;
+    if (existing || !tenantId) return existing;
 
+    // The guest's email (and phone) become the new contact's first contact methods.
     const parts = name.trim().split(/\s+/).filter(Boolean);
-    const { data: created, error } = await admin.from("clients").insert({
+    const { data: created, error } = await insertClientWithAddresses(admin, {
       tenant_id: tenantId, created_by: createdBy,
       first_name: parts[0] || "Guest", last_name: parts.slice(1).join(" "),
-      email, phone, source: "booking_page",
+      source: "booking_page",
       created_by_channel_type: "form", // #10 channel-of-origin (public booking guest)
-    }).select("id").single();
-    if (!error) return (created as { id: string }).id;
+    }, { email, phone }, "public-booking");
+    if (created) return created.id;
 
-    // Unique-violation race: a concurrent request for the same guest+host
-    // just created the row we were about to — go find it instead of failing.
-    if ((error as { code?: string }).code === "23505") return await findExisting();
+    // Unique-violation race: a concurrent request for the same guest+host just
+    // attached this email to the contact it created (ours rolled back whole, contact and all) — go
+    // find that contact instead of failing.
+    if (error?.code === "23505") return await findExisting();
     return null;
   } catch {
     return null;
@@ -1261,11 +1264,16 @@ Deno.serve(async (req) => {
             guest_name: name || "there", when: whenLabel, where: loc, title, service: title,
           };
           const hostEmails = hostInfos.map((h) => h.email).filter((e): e is string => !!e);
-          // Host phones (only fetched when a host-targeted step exists).
+          // Each host's primary phone (only fetched when a host-targeted step exists). An
+          // unreadable phone list skips SMS-to-host, loudly.
           let hostPhones: string[] = [];
           if (createdLc.some((l) => l.to !== "guest")) {
-            const { data: profs } = await admin.from("profiles").select("phone").in("user_id", hostsToNotify);
-            hostPhones = (profs ?? []).map((p) => String((p as { phone?: string }).phone ?? "")).filter(Boolean);
+            try {
+              const phones = await primaryPhonesForUsers(admin, hostsToNotify);
+              hostPhones = hostsToNotify.map((uid) => phones.get(uid) ?? "").filter(Boolean);
+            } catch (e) {
+              console.error("[public-booking] host_phone_read_failed", (e as Error).message);
+            }
           }
           // claim→send→delete-on-failure, mirroring the worker so a failed send
           // is retryable and a won claim guarantees exactly one send.

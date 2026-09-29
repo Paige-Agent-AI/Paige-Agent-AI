@@ -36,7 +36,7 @@
 .setup-field { display: grid; min-width: 0; align-content: start; gap: 6px; padding: 11px; border: 1px solid var(--pg-line-soft); border-radius: var(--pg-r-chip); background: var(--pg-lift); }
 .setup-field--wide { grid-column: 1 / -1; }
 .setup-field__label { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 8px; }
-.setup-field label { color: var(--pg-faint); font-size: 9px; font-weight: 750; letter-spacing: .05em; text-transform: uppercase; }
+.setup-field label, .setup-field__title { color: var(--pg-faint); font-size: 9px; font-weight: 750; letter-spacing: .05em; text-transform: uppercase; }
 .setup-field :is(input,textarea,select) { width: 100%; min-width: 0; border: 1px solid var(--pg-line); border-radius: 8px; padding: 9px 10px; color: var(--pg-ink); background: var(--pg-surface); font: 500 12px/1.45 var(--pg-font-sans); }
 .setup-field textarea { min-height: 82px; resize: vertical; }
 .setup-field :is(input,textarea,select)[aria-invalid="true"] { border-color: var(--pg-negative); }

@@ -2,6 +2,7 @@
 // Runs daily via pg_cron. Anonymizes PII and deletes derived records.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { deleteUserContactMethods } from "../_shared/user-contact-methods.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -51,7 +52,6 @@ serve(async (req) => {
           .from("profiles")
           .update({
             full_name: "DELETED",
-            phone: null,
             address: null,
             city: null,
             state: null,
@@ -62,6 +62,12 @@ serve(async (req) => {
           })
           .eq("user_id", userId),
       );
+
+      // 1b. Erase every email and phone the person holds (their contact methods).
+      await safe("user_contact_methods", async () => {
+        await deleteUserContactMethods(supabase, userId);
+        return { error: null };
+      });
 
       // 2. Delete derived sensitive records
       await safe("credit_report_verifications", () =>

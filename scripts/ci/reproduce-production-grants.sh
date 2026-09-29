@@ -11,7 +11,8 @@
 #      default privileges for objects `postgres` creates in public (--defaults), so the change under
 #      review's new objects start where they will on production.
 #   4. Put the set-aside migrations back and apply every unrecorded one — the change under review —
-#      exactly as written, as production's `db push --include-all` would.
+#      exactly as written. (Production's plain `db push` applies only the ones newer than its newest
+#      and refuses an older one; see deploy-migrations.yml.)
 #
 # Usage: scripts/ci/reproduce-production-grants.sh <prod-baseline-dir>   (from prod-readonly-baseline.sh)
 set -euo pipefail

@@ -387,12 +387,13 @@ Deno.serve(async (req) => {
 
         // Match by the external CRM id, then by ANY email a contact here holds; update it, or create
         // the contact with its addresses in one transaction (contact-mirror.ts).
-        const result = await upsertContactMirror(supabase, {
+        const mirrored = await upsertContactMirror(supabase, {
           tenantId, ownerId, emailLower, first, last,
           phone: p.phone ?? null, tier: p.tier ?? null, ghlContactId: p.ghl_contact_id ?? null,
           source: p.source ?? null, assignedUserId, nowIso,
         });
-        return ok(verb, result);
+        if (!mirrored.ok) return fail(verb, 409, mirrored.error, mirrored.details);
+        return ok(verb, mirrored.data);
       }
 
       // -----------------------------------------------------------------

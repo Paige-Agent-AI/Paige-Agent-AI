@@ -4120,7 +4120,8 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
   const linkDrive = (store, args, body = {}) => drive({ stream: true, extraBody: { threadId: THREAD, ...body },
     toolCall: { name: "calendar_link_send", args }, ...lane("confirm"),
     tablesExtra: { paige_pending_confirmations: store.table, user_roles: [{ role: "admin" }] },
-    serviceTablesExtra: { clients: () => [{ email: "dana@example.test", phone: null }] },
+    // The contact holds its addresses as contact methods; the send goes to the primary email.
+    serviceTablesExtra: { clients: () => [{ id: OWN, client_contact_methods: [{ kind: "email", value: "dana@example.test", is_primary: true }] }] },
     onInsert: mirrorConfirms(store) });
   const leakyLinkStore = makeConfirmStore();
   const leakyLink = await linkDrive(leakyLinkStore, linkArgs(`Pick a time. ${PLANTS[1][1]}`));

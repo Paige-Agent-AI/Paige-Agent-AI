@@ -323,6 +323,11 @@ jobs:
       # tenant.act_as; every Setup write stays member-only (owner live drive 2026-09-28).
       - run: supabase test db supabase/tests/operator_act_as_reads_solo_setup.sql
         if: ${{ !cancelled() }}
+      # A platform operator has owner authority inside a company-owned system workspace, and only
+      # there: customer workspaces are unchanged, the service path records the operator as creator,
+      # and only the platform owner can mark a workspace as company-owned (owner ruling 2026-09-29).
+      - run: supabase test db supabase/tests/operator_company_workspace_authority.sql
+        if: ${{ !cancelled() }}
       - run: psql -v ON_ERROR_STOP=1 -f scripts/sql/social-foundation-legacy-shape-proof.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
       - run: psql -v ON_ERROR_STOP=1 -f scripts/sql/social-foundation-tenant-shaped-proof.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
       # Trusted task↔thread link — RLS SET-ROLE proof that the edge's server-side validation read

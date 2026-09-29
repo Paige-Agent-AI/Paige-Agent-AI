@@ -3,8 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 export type ContactUpsertPatch = Partial<{
   first_name: string | null;
   last_name: string | null;
-  email: string | null;
-  phone: string | null;
+  /** The contact's complete, ordered list of emails and phones (replaces what is stored). */
+  contact_methods: Array<{ kind: "email" | "phone"; value: string; label: string | null; is_primary: boolean }>;
   entity_name: string | null;
   entity_type: string | null;
   title: string | null;

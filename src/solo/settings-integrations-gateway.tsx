@@ -1375,8 +1375,8 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = fals
  * Two contract facts shape this form and neither is optional. First, the endpoint setter takes the
  * FULL address as a required argument, while the list read returns the HOST ONLY by design — it
  * strips the path so no secret-bearing URL is ever projected. So the address cannot be reconstructed
- * here: it is shown as an editable field, seeded with the host and explicitly asking for the rest,
- * rather than silently re-pointing a working tool at its bare host. Second, the server validates the
+ * here: require the owner to enter the full address, never seed a saveable bare-host guess.
+ * Second, the server validates the
  * credential bundle per auth kind — `header` needs its header name, `url` and `none` carry no
  * credential at all — so the form collects exactly what the chosen kind requires and nothing else.
  */
@@ -1384,7 +1384,7 @@ function RekeyForm({ gw, tool, isRest, onDone, onCancel }: { gw: UseMcpGateway; 
   const authKind = ((tool.authKind as GatewayAuthKind) ?? "bearer") as GatewayAuthKind;
   const needsKey = isRest || authKind === "bearer" || authKind === "header";
   const needsHeaderName = !isRest && authKind === "header";
-  const [url, setUrl] = useState(tool.serverUrlHost ? `https://${tool.serverUrlHost}/` : "");
+  const [url, setUrl] = useState("");
   const [key, setKey] = useState("");
   const [headerName, setHeaderName] = useState("");
   const [bad, setBad] = useState<Record<string, boolean>>({});
@@ -1414,7 +1414,7 @@ function RekeyForm({ gw, tool, isRest, onDone, onCancel }: { gw: UseMcpGateway; 
       {message && <div className="ig-error" role="alert"><TriangleAlert aria-hidden size={14} /><span>{message}</span></div>}
       <label className={`ig-field${bad.url ? " ig-field-bad" : ""}`}><span>{isRest ? "Base URL" : "Full address"}</span>
         <input type="url" autoComplete="off" spellCheck={false} value={url} onChange={(e) => setUrl(e.target.value)} aria-invalid={bad.url || undefined} aria-describedby={bad.url ? "ig-gw-rekey-url-note ig-gw-rekey-url-err" : "ig-gw-rekey-url-note"} />
-        <small id="ig-gw-rekey-url-note">Paige stores only the host, so confirm the whole address — including any path — before saving.</small>
+        <small id="ig-gw-rekey-url-note">The saved address is kept private. Enter the full address from your provider, including its path.</small>
         {bad.url && <small className="ig-gw-err" id="ig-gw-rekey-url-err">Enter the full public https:// address.</small>}
       </label>
       {needsHeaderName && (

@@ -16,7 +16,9 @@ Owners of client-service businesses — coaches, consultants, agencies, advisors
 anyone who sells their expertise to clients (CLAUDE.md §2: never narrowed to "coaching", never
 "practice"). They run the business themselves, usually alone or with a small team, and lose their
 week to the work between client sessions. On the public site they are first-time visitors who have
-never heard of Paige, most often on a phone, often on poor signal.
+never heard of Paige, most often on a phone, often on poor signal. Inside the signed-in Solo
+workspace they are daily users at desk and on phone, with the teammates they invite (admins and
+members); their own clients reach the business only through a separate, client-scoped portal.
 
 ## Product Purpose
 

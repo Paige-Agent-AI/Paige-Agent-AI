@@ -28,6 +28,10 @@ INSERT INTO public.profiles(user_id,active_tenant_id) VALUES
  ('c7100000-0000-4000-8000-000000000002','c7100000-0000-4000-8000-000000001111'),
  ('c7200000-0000-4000-8000-000000000001','c7200000-0000-4000-8000-000000002222')
 ON CONFLICT(user_id) DO UPDATE SET active_tenant_id=excluded.active_tenant_id;
+-- The fixture pins each contact's version (updated_at) for the version checks below. Writing its
+-- address (through the legacy mirror) must not move that pin, so the address-change trigger is off
+-- while the fixture is built; every command under test runs with it on.
+ALTER TABLE public.client_contact_methods DISABLE TRIGGER client_contact_methods_touch_client;
 INSERT INTO public.clients(id,tenant_id,account_number,created_by,first_name,last_name,email,updated_at) VALUES
  ('c7100000-0000-4000-8000-00000000c101','c7100000-0000-4000-8000-000000001111','CLT-CGA-1','c7100000-0000-4000-8000-000000000001','Safe','Contact','before@tests.invalid','2026-09-13 00:00:00+00'),
  ('c7200000-0000-4000-8000-00000000c201','c7200000-0000-4000-8000-000000002222','CLT-CGB-1','c7200000-0000-4000-8000-000000000001','Other','Tenant','other@tests.invalid','2026-09-13 00:00:00+00'),
@@ -84,6 +88,7 @@ INSERT INTO public.businesses(id,tenant_id,owner_user_id,legal_name,is_active,is
  ('c7200000-0000-4000-8000-00000000b201','c7200000-0000-4000-8000-000000002222','c7200000-0000-4000-8000-000000000001','Archived Primary',false,true,'2026-09-13 00:00:00+00'),
  ('c7200000-0000-4000-8000-00000000b202','c7200000-0000-4000-8000-000000002222','c7200000-0000-4000-8000-000000000001','Active Primary',true,true,'2026-09-13 00:00:00+00');
 UPDATE public.clients SET entity_name='Unlink Fixture LLC',primary_business_id='c7100000-0000-4000-8000-00000000b102' WHERE id='c7100000-0000-4000-8000-00000000c106';
+ALTER TABLE public.client_contact_methods ENABLE TRIGGER client_contact_methods_touch_client;
 SELECT set_config('app.pipeline_created_through','paige',true);
 SELECT set_config('app.pipeline_requested_by','c7100000-0000-4000-8000-000000000001',true);
 INSERT INTO public.pipelines(tenant_id,name,is_default) VALUES

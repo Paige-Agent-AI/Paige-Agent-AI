@@ -18,7 +18,7 @@ import { removalRefusal, type TeamMemberRecord, type TeamWorkspaceRecord } from 
 const mocks = vi.hoisted(() => ({ rpc: vi.fn(), invoke: vi.fn(), success: vi.fn(), error: vi.fn(), warning: vi.fn(), tenant: { activeTenantId: "tenant-1" } }));
 
 vi.mock("@/integrations/supabase/client", () => ({
-  supabase: { rpc: mocks.rpc, functions: { invoke: mocks.invoke } },
+  supabase: { auth: { getUser: async () => ({ data: { user: { id: "viewer-under-test" } } }) }, from: () => ({ select: () => ({ eq: async () => ({ data: [], error: null }) }) }), rpc: mocks.rpc, functions: { invoke: mocks.invoke } },
 }));
 vi.mock("@/hooks/useTenantContext", () => ({
   useTenantContext: () => ({ activeTenantId: mocks.tenant.activeTenantId, loading: false }),

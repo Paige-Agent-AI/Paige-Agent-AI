@@ -41,7 +41,7 @@ const rpc = async (name: string, args: Record<string, unknown> = {}) => {
     if (search) rows = rows.filter((m) => [m.full_name, m.email, m.job_title, m.responsibilities].some((v) => v?.toLowerCase().includes(search)));
     if (permission !== "all") rows = rows.filter((m) => (m.is_owner ? "owner" : m.permission) === permission);
     const total = rows.length; const offset = Number(args._offset || 0); const limit = Number(args._limit || 25);
-    return { data: { tenant_id: activeWorkspace(), tenant_name: WORKSPACES[activeWorkspace()], viewer_permission: "owner", can_manage_profiles: true, can_manage_invitations: true, can_change_permissions: true, total_members: total, members: rows.slice(offset, offset + limit), invitations: mode() === "first" ? [] : invitesOf() }, error: null };
+    return { data: { tenant_id: activeWorkspace(), tenant_name: WORKSPACES[activeWorkspace()], viewer_permission: viewerPermission(), can_manage_profiles: true, can_manage_invitations: true, can_change_permissions: true, total_members: total, members: rows.slice(offset, offset + limit), invitations: mode() === "first" ? [] : invitesOf() }, error: null };
   }
   if (name === "set_solo_team_member_work_profile") {
     const row = rosterOf().find((m) => m.user_id === args._member_user_id); if (row) { row.job_title = String(args._job_title || "") || null; row.responsibilities = String(args._responsibilities || "") || null; }
@@ -66,6 +66,15 @@ const rpc = async (name: string, args: Record<string, unknown> = {}) => {
     const [gone] = members.splice(index, 1);
     return { data: { tenant_id: "team-harness-tenant", membership_id: gone.membership_id, removed_user_id: gone.user_id }, error: null };
   }
+  if (name === "set_user_contact_methods") {
+    const target = String(args.p_user_id);
+    const list = (args.p_methods as Array<{ kind: string; value: string; label: string | null; is_primary: boolean }>) ?? [];
+    const bad = list.find((m) => m.kind === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m.value));
+    if (bad) return { data: null, error: { message: `CONTACT_METHOD_INVALID_EMAIL: ${bad.value}` } };
+    const pos: Record<string, number> = {};
+    contactMethods[target] = list.map((m, i) => ({ id: `${target}-cm-${i}-${Date.now()}`, user_id: target, kind: m.kind, value: m.value, label: m.label, is_primary: m.is_primary, position: (pos[m.kind] = (pos[m.kind] ?? -1) + 1) }));
+    return { data: contactMethods[target], error: null };
+  }
   return { data: null, error: { message: `Unsupported harness RPC ${name}` } };
 };
 const invoke = async (_name: string, options: { body?: Record<string, unknown> }) => {
@@ -74,4 +83,22 @@ const invoke = async (_name: string, options: { body?: Record<string, unknown> }
   if (body.action === "revoke") { const row = invitesOf().find((i) => i.id === body.inviteId); if (row) row.revoked_at = new Date().toISOString(); }
   return { data: { ok: true, emailed: true }, error: null };
 };
-export const supabase = { rpc, functions: { invoke } };
+// Contact methods (Lane A). `?as=admin` signs the viewer in as an admin (user-7) instead of the
+// owner (user-0), so the drive can show an admin editing the owner's row. Design fixtures.
+const viewerPermission = () => (new URLSearchParams(window.location.search).get("as") === "admin" ? "admin" : "owner");
+const viewerId = () => (viewerPermission() === "admin" ? "user-7" : "user-0");
+type MethodRow = { id: string; user_id: string; kind: string; value: string; label: string | null; is_primary: boolean; position: number };
+const contactMethods: Record<string, MethodRow[]> = {
+  "user-0": [
+    { id: "o-e1", user_id: "user-0", kind: "email", value: "antonio@northstar.example", label: "Work", is_primary: true, position: 0 },
+    { id: "o-e2", user_id: "user-0", kind: "email", value: "owner@northstar.example", label: "Sign-in", is_primary: false, position: 1 },
+    { id: "o-p1", user_id: "user-0", kind: "phone", value: "+1 (404) 555-0188", label: "Mobile", is_primary: true, position: 0 },
+  ],
+  "user-7": [
+    { id: "a-e1", user_id: "user-7", kind: "email", value: "person7@northstar.example", label: "Work", is_primary: true, position: 0 },
+  ],
+};
+const auth = { getUser: async () => ({ data: { user: { id: viewerId() } } }) };
+const from = (table: string) => ({ select: () => ({ eq: async (_column: string, value: string) =>
+  table === "user_contact_methods" ? { data: contactMethods[value] ?? [], error: null } : { data: null, error: { message: `Unsupported harness table ${table}` } } }) });
+export const supabase = { rpc, functions: { invoke }, auth, from };

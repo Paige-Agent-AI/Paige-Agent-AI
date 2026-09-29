@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/integrations/supabase/client", () => ({
-  supabase: { rpc: mocks.rpc, functions: { invoke: vi.fn() } },
+  supabase: { auth: { getUser: async () => ({ data: { user: { id: "viewer-under-test" } } }) }, from: () => ({ select: () => ({ eq: async () => ({ data: [], error: null }) }) }), rpc: mocks.rpc, functions: { invoke: vi.fn() } },
 }));
 
 vi.mock("@/hooks/useTenantContext", () => ({
@@ -97,6 +97,20 @@ describe("Solo Team member work-details dialog", () => {
 
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(mocks.rpc).not.toHaveBeenCalled();
+    await act(async () => root.unmount());
+  });
+
+  it("labels abandoning unsaved contact edits as Cancel too, not Close", async () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    await act(async () => root.render(<MemberEditor member={member} workspace={workspace} onClose={vi.fn()} onSaved={vi.fn()} />));
+    await act(async () => { for (let i = 0; i < 4; i++) await Promise.resolve(); });
+    const footer = () => host.querySelector(".stw-modal-actions button")?.textContent?.trim();
+    expect(footer()).toBe("Close");
+    await act(async () => (host.querySelector('[data-ctm-add="email"]') as HTMLButtonElement).click());
+    await act(async () => setValue(host.querySelector<HTMLInputElement>('.stw-contact input[type="email"]')!, "member.two@example.com"));
+    expect(footer()).toBe("Cancel");
     await act(async () => root.unmount());
   });
 

@@ -3,14 +3,15 @@
  * `profiles` own-row seam, never a new query family).
  *
  * READS the caller's OWN `profiles` row (`.eq("user_id", uid)`): full_name,
- * avatar_url, work_email, phone, website_url — plus the auth-user email/name as an
- * honest fallback (the useCommandCenter firstToken pattern). There is NO title /
+ * avatar_url, website_url — plus the auth-user email/name as an honest fallback (the
+ * useCommandCenter firstToken pattern). Email and phone are the caller's OWN contact methods
+ * (`user_contact_methods`, via useUserContactMethods): `email`/`phone` below are their primaries. There is NO title /
  * pronouns / owner-since / signature / bio / continuity storage in this schema, so
  * those stay Preview and are NOT sourced here (§31/§13).
  *
- * WRITES via the plain own-row update:
- *   supabase.from("profiles").update({ full_name, work_email, phone, website_url })
- *     .eq("user_id", uid)
+ * WRITES name and website via the plain own-row update:
+ *   supabase.from("profiles").update({ full_name, website_url }).eq("user_id", uid)
+ * and every email and phone through `contact.save` (`set_user_contact_methods`).
  * §9: the write keys on the caller's OWN uid (from the verified session) — NO
  * client-supplied id — and RLS gates the row. Every field is present-guarded; a
  * null renders as an em-dash upstream, never "undefined".
@@ -18,22 +19,23 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { TablesUpdate } from "@/integrations/supabase/types";
+import { useUserContactMethods, type UserContactMethods } from "@/components/contact-methods/useUserContactMethods";
+import { primaryValue } from "@/lib/contact-methods";
 
 export interface SoloOwner {
   /** Display name (profiles.full_name → auth metadata full_name/name → null). */
   name: string | null;
-  /** Work email (profiles.work_email → auth email → null). */
+  /** Primary email (contact methods → auth email → null). */
   email: string | null;
+  /** Primary phone (contact methods → null). */
   phone: string | null;
   website: string | null;
   avatarUrl: string | null;
 }
 
-/** The editable subset — name/email/phone/website only (the fields with real storage). */
+/** The editable profile subset — name and website. Emails and phones are `contact`. */
 export type SoloOwnerPatch = Partial<{
   full_name: string;
-  work_email: string;
-  phone: string;
   website_url: string;
 }>;
 
@@ -42,6 +44,8 @@ export interface SoloOwnerData {
   error: string | null;
   saving: boolean;
   owner: SoloOwner;
+  /** Every email and phone the owner uses; the editor saves through this. */
+  contact: UserContactMethods;
   saveOwner: (patch: SoloOwnerPatch) => Promise<{ ok: boolean; error?: string }>;
   refresh: () => void;
 }
@@ -64,7 +68,9 @@ export function useSoloOwner(): SoloOwnerData {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [uid, setUid] = useState<string | null>(null);
-  const [owner, setOwner] = useState<SoloOwner>(EMPTY_OWNER);
+  const [profile, setProfile] = useState<SoloOwner>(EMPTY_OWNER);
+  const contact = useUserContactMethods(uid);
+  const refreshContact = contact.refresh;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -75,7 +81,7 @@ export function useSoloOwner(): SoloOwnerData {
       const userId = user?.id ?? null;
       setUid(userId);
       if (!userId) {
-        setOwner(EMPTY_OWNER);
+        setProfile(EMPTY_OWNER);
         return;
       }
       const meta = (user?.user_metadata ?? {}) as Record<string, unknown>;
@@ -84,15 +90,15 @@ export function useSoloOwner(): SoloOwnerData {
 
       const { data, error: profErr } = await supabase
         .from("profiles")
-        .select("full_name, avatar_url, work_email, phone, website_url")
+        .select("full_name, avatar_url, website_url")
         .eq("user_id", userId)
         .maybeSingle();
       if (profErr) throw profErr;
 
-      setOwner({
+      setProfile({
         name: str(data?.full_name) ?? authName,
-        email: str(data?.work_email) ?? authEmail,
-        phone: str(data?.phone),
+        email: authEmail,
+        phone: null,
         website: str(data?.website_url),
         avatarUrl: str(data?.avatar_url),
       });
@@ -114,7 +120,7 @@ export function useSoloOwner(): SoloOwnerData {
       try {
         // Only send the keys the caller actually edited; empty string clears to null.
         const update: TablesUpdate<"profiles"> = {};
-        (["full_name", "work_email", "phone", "website_url"] as const).forEach((k) => {
+        (["full_name", "website_url"] as const).forEach((k) => {
           if (k in patch) {
             const v = patch[k];
             update[k] = typeof v === "string" && v.trim() ? v.trim() : null;
@@ -135,7 +141,14 @@ export function useSoloOwner(): SoloOwnerData {
 
   const refresh = useCallback(() => {
     void load();
-  }, [load]);
+    void refreshContact();
+  }, [load, refreshContact]);
 
-  return { loading, error, saving, owner, saveOwner, refresh };
+  const owner: SoloOwner = {
+    ...profile,
+    email: primaryValue(contact.methods, "email") ?? profile.email,
+    phone: primaryValue(contact.methods, "phone"),
+  };
+
+  return { loading: loading || contact.loading, error: error ?? contact.error, saving, owner, contact, saveOwner, refresh };
 }

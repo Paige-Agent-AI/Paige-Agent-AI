@@ -18,7 +18,7 @@ REDUCED_MOTION: PASS: with prefers-reduced-motion the hero headline and close re
 STATE_COVERAGE: PASS: first load, typing, settled, reduced motion, no IntersectionObserver fallback (close plays immediately), paused illustration (Pause also stops the hero light), calculator empty and filled, mobile menu open and closed
 TRUTHFUL_STATE_LABELS: PASS: every capability claim renders from src/marketing/capabilities.ts with Works today or In build in words; illustrations carry an Illustrative label; the specialist team, inbox reading, secure browser, social publishing, images, MCP actions and payments are marked in build
 SOLO_UI: NO: this is the anonymous public marketing page at route /, not the Solo tenant shell; no src/solo or tenant-shell file changes
-UNVERIFIED: production render of route / on the live domain after merge is proven in the post-deploy check and appended to this record; the remaining public pages ship as follow-up PRs
+UNVERIFIED: none for route / — production proof is recorded under Post-deploy proof below; the remaining public pages ship as follow-up PRs
 
 OWNER_INTENT: Antonio Cook wants the public site to present Paige as an AI chief operating officer for client-service businesses — her whole range, told honestly — in a Twilight palette, with the Command Mark visibly producing the words on the page
 MUST_NOT_HAPPEN: login or Solo enrollment must not break; no capability may be described as working before it works; no invented testimonials, stats or the word beta; no finance wording; no pop-culture marks
@@ -59,3 +59,21 @@ Local Vite dev server, Chromium from /opt/pw-browsers, signed out, 2026-09-28. S
   #hero/#workspace/#day/#proof anchors are removed with the redesign, under the owner's grant of full
   redesign authority for the public site (Lane D addendum). Old deep links land at the top of the page.
 - Pricing and About still use the previous design; they are the next PRs.
+
+## Post-deploy proof (2026-09-29)
+
+- **Deployment:** Vercel production deployment `dpl_88F55qQSHtfRuUpivMcfQZZDZ8jr` of `main` at
+  `7b22b8176df008fda290544777afd249261a00d4`, which contains the squash merge `ade15563` of PR #1561.
+  Vercel had stopped receiving pushes after the repository moved from `mrmogulmaker-bot` to the
+  `Paige-Agent-AI` organisation (no deployment or Vercel commit status for any merge after #1554: #1552, #1551, #1560, #1562, #1559, #1561, #1563, #1569 and #1570); the owner granted
+  Vercel's GitHub app access to the new organisation, and this deployment was then triggered on `main`.
+- **Live drive, `https://paigeagent.ai/`, Chromium through the session proxy, signed out:**
+  1440×900 and 390×844 — one `h1`, one meta description, no horizontal overflow, no page errors,
+  Schibsted Grotesk and Newsreader loaded; every trial link is
+  `/auth?mode=signup&plan=solo&billing=monthly` and Log in is `/auth`.
+- **Enrollment seams on production:** Hire Paige → `/auth?mode=signup&plan=solo&billing=monthly` with the
+  email field present; Log in → `/auth` with the email field present; `/pricing` renders the $74.50 offer.
+- **Screenshots:** docs/evidence/ui-delivery/public-home-live-desk-hero.png,
+  docs/evidence/ui-delivery/public-home-live-desk-close.png,
+  docs/evidence/ui-delivery/public-home-live-mob-hero.png,
+  docs/evidence/ui-delivery/public-home-live-mob-close.png.

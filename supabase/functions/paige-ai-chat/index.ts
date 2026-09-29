@@ -28,7 +28,8 @@ import { projectOutcomeForModel } from "../_shared/mcp-outcome.ts";
 import { embeddingsCompat } from "../_shared/voyage.ts";
 import { applyContactSearchFilter, CONTACT_NAME_SEARCH_COLUMNS, contactIdsByAddressToken } from "../_shared/contact-search.ts";
 import { resolveClientRef } from "../_shared/client-ref.ts";
-import { orderedContactMethods } from "../_shared/contact-methods.ts";
+import { orderedContactMethods, primaryContactMethod } from "../_shared/contact-methods.ts";
+import { addedMethodsProblem, CLIENT_RECORD_COLUMNS, withAddedMethods, type ContactMethodInput } from "../_shared/paige-mcp/contact-method-edits.ts";
 import { readPipelineWorkspace } from "../_shared/pipelineWorkspaceRead.ts";
 import { isSpendableQuoteCents } from "../_shared/purchase-quote.ts";
 // Wave 3 · Communications — the owner can find out what Paige did with the business
@@ -5771,8 +5772,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   client_ref: { type: "string", description: "Tenant-scoped client reference from crm_search_contacts." },
                   first_name: { type: "string" },
                   last_name: { type: "string" },
-                  email: { type: "string" },
-                  phone: { type: "string" },
+                  contact_methods: { type: "array", description: "The COMPLETE list of the contact's emails and phones, in display order; anything left out is removed. Read the current list first with crm_get_contact_summary and send it back as expected_contact_methods. Send this or add_contact_methods, not both.", items: { type: "object", properties: { kind: { type: "string", enum: ["email", "phone"] }, value: { type: "string" }, label: { type: "string" }, is_primary: { type: "boolean" } }, required: ["kind", "value"] } },
+                  add_contact_methods: { type: "array", description: "Emails or phones to add, keeping every one the contact already holds. Mark one is_primary to make it the primary of its kind.", items: { type: "object", properties: { kind: { type: "string", enum: ["email", "phone"] }, value: { type: "string" }, label: { type: "string" }, is_primary: { type: "boolean" } }, required: ["kind", "value"] } },
+                  expected_contact_methods: { type: "array", description: "Required with contact_methods: the contact's emails and phones exactly as crm_get_contact_summary returned them. The update is refused if the stored list has changed since.", items: { type: "object", properties: { kind: { type: "string", enum: ["email", "phone"] }, value: { type: "string" }, label: { type: ["string", "null"] }, is_primary: { type: "boolean" } }, required: ["kind", "value"] } },
                   entity_name: { type: "string" },
                   entity_type: { type: "string", description: "Business/entity classification. Use an empty string to clear it for a person record." },
                   title: { type: "string" },
@@ -7850,10 +7852,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           const tenantForCard = personaCtx?.tenant_id ?? null;
           if (UUIDISH.test(cidForCard) && tenantForCard) {
             try {
-              const { data } = await supabaseClient.from("clients").select("email, phone").eq("id", cidForCard).eq("tenant_id", tenantForCard).maybeSingle();
-              const addr = a?.channel === "sms"
-                ? (typeof data?.phone === "string" ? data.phone.trim() : "")
-                : (typeof data?.email === "string" ? data.email.trim() : "");
+              // The contact's PRIMARY address of the channel's kind — the one the send goes to.
+              const { data } = await supabaseClient.from("clients").select("client_contact_methods(kind, value, is_primary)").eq("id", cidForCard).eq("tenant_id", tenantForCard).maybeSingle();
+              const addr = (primaryContactMethod((data as { client_contact_methods?: Parameters<typeof primaryContactMethod>[0] } | null)?.client_contact_methods, a?.channel === "sms" ? "phone" : "email") ?? "").trim();
               if (addr) who = addr;
             } catch { /* fall through to "this contact" (§13 — better unnamed than wrongly named) */ }
           }
@@ -7870,7 +7871,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           return `Add contact ${[a?.first_name, a?.last_name].filter(Boolean).join(" ") || a?.email || "new contact"}${a?.email ? ` (${a.email})` : ""}.`;
         case "crm_update_contact": {
           const labels: Record<string, string> = {
-            first_name: "first name", last_name: "last name", email: "email", phone: "phone",
+            first_name: "first name", last_name: "last name",
+            contact_methods: "emails and phones (complete list)", add_contact_methods: "add emails or phones",
             entity_name: "company", entity_type: "record type", title: "title", website: "website",
             linkedin_url: "LinkedIn", street_address: "street address", city: "city", state: "state",
             zip_code: "ZIP / postal code", lifecycle_stage: "lifecycle stage", source: "source",
@@ -7879,7 +7881,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           };
           const shown = Object.keys(labels).filter((key) => Object.prototype.hasOwnProperty.call(a || {}, key)).map((key) => {
             const value = a[key];
-            const display = value === null || value === "" ? "clear" : Array.isArray(value) ? `[${value.join(", ")}]` : JSON.stringify(value);
+            // An address list reads as the addresses themselves, the primary of each kind marked.
+            const item = (entry: unknown) => entry && typeof entry === "object" && "value" in entry
+              ? `${String((entry as { value: unknown }).value ?? "")}${(entry as { is_primary?: unknown }).is_primary === true ? " (primary)" : ""}`
+              : String(entry);
+            const display = value === null || value === "" ? "clear" : Array.isArray(value) ? `[${value.map(item).join(", ")}]` : JSON.stringify(value);
             return `${labels[key]} = ${display}`;
           });
           return `Update contact ${a?.client_ref || "(missing client reference)"}: ${shown.join("; ") || "no changes"}.`;
@@ -10909,7 +10915,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               if (!crmTenantId) throw new Error("tenant_not_resolved");
               const contactPatch: Record<string, unknown> = {};
               const fields = [
-                "first_name", "last_name", "email", "phone", "entity_name", "entity_type", "title",
+                "first_name", "last_name", "entity_name", "entity_type", "title",
                 "website", "linkedin_url", "street_address", "city", "state", "zip_code",
                 "lifecycle_stage", "source", "tags", "primary_offer", "status",
                 "assigned_coach_user_id", "do_not_contact",
@@ -10918,6 +10924,35 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 if (Object.prototype.hasOwnProperty.call(args, field)) contactPatch[field] = args[field];
               }
               if (Object.prototype.hasOwnProperty.call(args, "notes")) contactPatch.current_notes = args.notes;
+              // Emails and phones travel as the contact's COMPLETE address list, the one form
+              // upsert_contact takes for them, together with the list that change was built on
+              // (expected_contact_methods). upsert_contact compares the two under the contact's
+              // row lock and refuses CONTACT_METHODS_STALE if the list changed in between, so a
+              // replacement never overwrites an address added meanwhile. An addition is merged
+              // onto the list the caller can read now (RLS decides, as the caller) and sent with
+              // that same list as the expected one.
+              if (Array.isArray(args.contact_methods) && Array.isArray(args.add_contact_methods)) {
+                throw new Error("CONTACT_METHODS_AMBIGUOUS: send contact_methods or add_contact_methods, not both");
+              }
+              if (Array.isArray(args.contact_methods)) {
+                if (!Array.isArray(args.expected_contact_methods)) {
+                  throw new Error("CONTACT_METHODS_EXPECTED_REQUIRED: send expected_contact_methods, the contact's list exactly as crm_get_contact_summary returned it");
+                }
+                contactPatch.contact_methods = args.contact_methods;
+                contactPatch.expected_contact_methods = args.expected_contact_methods;
+              } else if (Array.isArray(args.add_contact_methods)) {
+                const added = args.add_contact_methods as ContactMethodInput[];
+                const problem = addedMethodsProblem(added);
+                if (problem) throw new Error(problem);
+                const { data: held, error: heldErr } = await supabaseClient.from("clients")
+                  .select("client_contact_methods(kind, value, label, is_primary, position)")
+                  .eq("id", contactId).eq("tenant_id", crmTenantId).maybeSingle();
+                if (heldErr) throw heldErr;
+                if (!held) throw new Error("contact_not_found");
+                const current = orderedContactMethods((held as { client_contact_methods?: unknown }).client_contact_methods);
+                contactPatch.contact_methods = withAddedMethods(current, added);
+                contactPatch.expected_contact_methods = current;
+              }
               if (!Object.keys(contactPatch).length) throw new Error("No contact fields were provided");
               const { data: updatedId, error } = await supabaseClient.rpc("upsert_contact", {
                 p_patch: contactPatch,
@@ -10927,7 +10962,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 p_channel: "api",
               });
               if (error) throw error;
-              result = { success: true, client_ref: args.client_ref, updated_fields: Object.keys(contactPatch), updated: Boolean(updatedId) };
+              result = { success: true, client_ref: args.client_ref, updated_fields: Object.keys(contactPatch).filter((key) => key !== "expected_contact_methods"), updated: Boolean(updatedId) };
             } else if (tc.function.name === "propose_business_brief_update") {
               if (!crmTenantId) {
                 result = { success: false, error: "tenant_not_resolved" };
@@ -12394,7 +12429,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               // defense-in-depth; tasks/activities/comms derive from the now
               // tenant-verified contact/deal ids, so they inherit the scope.
               const [contact, deals, tasksRes, activities] = await Promise.all([
-                admin.from("clients").select("*, client_contact_methods(kind, value, label, is_primary, position)").eq("id", id).eq("tenant_id", crmTenantId).maybeSingle(),
+                admin.from("clients").select(`${CLIENT_RECORD_COLUMNS}, client_contact_methods(kind, value, label, is_primary, position)`).eq("id", id).eq("tenant_id", crmTenantId).maybeSingle(),
                 admin.from("deals").select("id, title, status, value_cents, currency, stage_id, expected_close_date, updated_at").eq("contact_client_id", id).eq("tenant_id", crmTenantId).order("updated_at", { ascending: false }).limit(20),
                 admin.from("tasks").select("id, title, status, due_date, track").eq("biz_id", id).neq("status", "completed").order("due_date", { ascending: true, nullsFirst: false }).limit(20),
                 admin.from("deal_activities").select("id, deal_id, type, summary, created_at").in("deal_id", []).limit(1),
@@ -12410,8 +12445,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   recentActivity = a || [];
                 }
                 const { data: commLog } = await admin.from("communication_log").select("channel, message_type, subject, preview, created_at").eq("user_id", (contact.data as any)?.linked_user_id || "00000000-0000-0000-0000-000000000000").order("created_at", { ascending: false }).limit(10);
-                // Every address the contact holds, never the single legacy pair (email/phone).
-                const { client_contact_methods: methodRows, email: _email, phone: _phone, ...profile } = contact.data as any;
+                // Every address the contact holds, from its contact methods.
+                const { client_contact_methods: methodRows, ...profile } = contact.data as any;
                 result = {
                   success: true,
                   contact: { ...profile, client_ref: profile.account_number ?? null, contact_methods: orderedContactMethods(methodRows) },

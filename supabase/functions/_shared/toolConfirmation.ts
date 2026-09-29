@@ -118,9 +118,12 @@ export const TOOL_IDENTITY_FIELDS: Readonly<Record<string, readonly string[]>> =
   crm_delete_contact: ["contact_id"],
   // Contact edits are fully rendered in describeConfirm. Pin both the opaque tenant-scoped
   // subject and every allowlisted writable value so an approval cannot be replayed for another
-  // client or a substituted patch.
+  // client or a substituted patch. Emails and phones are the contact's address list — the
+  // replacement, the addition, and the list a replacement was built on — so an approval can
+  // neither be spent on a different list nor carried over to one that changed since.
   crm_update_contact: [
-    "client_ref", "first_name", "last_name", "email", "phone", "entity_name", "entity_type",
+    "client_ref", "first_name", "last_name", "contact_methods", "add_contact_methods", "expected_contact_methods",
+    "entity_name", "entity_type",
     "title", "website", "linkedin_url", "street_address", "city", "state", "zip_code",
     "lifecycle_stage", "source", "tags", "primary_offer", "notes", "status",
     "assigned_coach_user_id", "do_not_contact",

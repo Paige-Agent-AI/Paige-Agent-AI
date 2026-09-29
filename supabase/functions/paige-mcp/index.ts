@@ -21,8 +21,13 @@ import { McpServer, StreamableHttpTransport } from "https://esm.sh/mcp-lite@0.10
 import { z } from "https://esm.sh/zod@3.25.76";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { resolveOperatorIdentity } from "../_shared/operator-identity.ts";
-import { applyContactSearchFilter, contactSearchTokens, CONTACT_NAME_SEARCH_COLUMNS, CONTACT_SEARCH_COLUMNS, contactIdsByAddressToken } from "../_shared/contact-search.ts";
-import { createClientWithContactMethods, findClientIdByAddress, orderedContactMethods } from "../_shared/contact-methods.ts";
+import { applyContactSearchFilter, contactSearchTokens, CONTACT_NAME_SEARCH_COLUMNS, contactIdsByAddressToken } from "../_shared/contact-search.ts";
+import { createClientWithContactMethods, findClientIdByAddress, orderedContactMethods, primaryContactMethod } from "../_shared/contact-methods.ts";
+import {
+  CLIENT_RECORD_COLUMNS, clientRowPatchProblem, intentResult, PROPOSABLE_CLIENT_FIELDS, proposedAddressIntent,
+  storedAddressIntent, storedMethodList, undoAddressWrite, writeAddressIntent, type AddressWriteResult,
+  type ContactMethodInput,
+} from "../_shared/paige-mcp/contact-method-edits.ts";
 import { resolveClientRef } from "../_shared/client-ref.ts";
 import { canonicalAppUrl, type CanonicalDestination, type CanonicalTier } from "../_shared/canonical-app-url.ts";
 
@@ -108,11 +113,29 @@ const contactMethodInput = z.object({
 }).strict();
 const contactMethodsInput = z.array(contactMethodInput).max(20);
 
-/** A contact row as a reader sees it: its client_ref and every address, never the legacy pair. */
+/** A contact row as a reader sees it: its client_ref and every address. */
 // deno-lint-ignore no-explicit-any
 function contactForReader(row: any) {
-  const { account_number, client_contact_methods, email: _email, phone: _phone, ...rest } = row ?? {};
+  const { account_number, client_contact_methods, ...rest } = row ?? {};
   return { ...rest, client_ref: account_number, contact_methods: orderedContactMethods(client_contact_methods) };
+}
+
+/**
+ * A row read with CONTACT_METHOD_SELECT, keeping the `email` / `phone` fields its readers already
+ * use — each now the contact's PRIMARY address of that kind — and dropping the embed.
+ */
+function withPrimaryAddressFields<T extends { client_contact_methods?: unknown }>(row: T) {
+  const { client_contact_methods, ...rest } = row ?? ({} as T);
+  return {
+    ...rest,
+    email: primaryContactMethod(client_contact_methods as Parameters<typeof primaryContactMethod>[0], "email"),
+    phone: primaryContactMethod(client_contact_methods as Parameters<typeof primaryContactMethod>[0], "phone"),
+  };
+}
+
+/** A contact's addresses as the writers take them back, in the owner's order. */
+function heldMethods(rows: unknown): ContactMethodInput[] {
+  return orderedContactMethods(rows);
 }
 
 /** Why an address write was refused, in words an operator can act on. */
@@ -1939,11 +1962,11 @@ mcp.tool("bulk_delete_contacts", {
     // Resolve which ids actually belong to caller's tenant.
     const { data: rows, error: rErr } = await admin
       .from("clients")
-      .select("id, tenant_id, first_name, last_name, email")
+      .select(`id, tenant_id, first_name, last_name, ${CONTACT_METHOD_SELECT}`)
       .in("id", contact_ids);
     if (rErr) return err(rErr.message);
 
-    const eligible = (rows ?? []).filter((r) => r.tenant_id === tenant_id);
+    const eligible = (rows ?? []).filter((r) => r.tenant_id === tenant_id).map(withPrimaryAddressFields);
     const eligibleIds = eligible.map((r) => r.id as string);
     const skipped = contact_ids.filter((id) => !eligibleIds.includes(id));
 
@@ -2703,8 +2726,10 @@ mcp.tool("send_invoice", {
     if (!inv) return err("invoice_not_found");
     if (inv.status !== "draft") return err(`invoice_not_draft:${inv.status}`);
 
-    const { data: contact } = await admin
-      .from("clients").select("email, first_name, last_name").eq("id", inv.contact_id).maybeSingle();
+    // The invoice goes to the contact's PRIMARY email, whichever of their addresses that is.
+    const { data: contactRow } = await admin
+      .from("clients").select(`first_name, last_name, ${CONTACT_METHOD_SELECT}`).eq("id", inv.contact_id).maybeSingle();
+    const contact = contactRow ? withPrimaryAddressFields(contactRow) : null;
     if (!contact?.email) return err("contact_email_missing");
 
     // Stripe Connect hosted URL — placeholder fallback (BYPASS_STRIPE_CONNECT) when not configured.
@@ -2891,24 +2916,32 @@ mcp.tool("search_clients_fuzzy", {
     // so a natural-language query ("Marcus from Atlanta") surfaces candidates (stopwords
     // just match nothing) AND a full name ("Tashia Anderson") is no longer missed because
     // first/last live in separate columns. Includes `city` for the "from <place>" pattern.
-    let q = applyContactSearchFilter(
-      admin
-        .from("clients")
-        .select("id, first_name, last_name, email, phone, entity_name, city, state, lifecycle_stage, tenant_id, updated_at"),
-      String(query),
-      { mode: "any", columns: [...CONTACT_SEARCH_COLUMNS, "city"] },
-    );
     // Only the platform owner searches across every tenant; everyone else
     // (including agencies) is hard-scoped to their own tenant here (§9).
     // Fail CLOSED: a non-god with no resolvable tenant gets nothing, never an
     // unscoped cross-tenant search.
-    if (!isGod) {
-      if (!tid) return err("tenant_not_resolved");
-      q = q.eq("tenant_id", tid);
-    }
+    if (!isGod && !tid) return err("tenant_not_resolved");
+    // An email or phone token matches whichever of the contact's addresses holds it, inside the
+    // same reach as the name search (the caller's workspace; every workspace for the owner).
+    const addressMatches = await contactIdsByAddressToken(
+      admin, isGod ? { anyWorkspace: true } : tid!, String(query), "paige-mcp",
+    );
+    let q = applyContactSearchFilter(
+      admin
+        .from("clients")
+        .select(`id, first_name, last_name, entity_name, city, state, lifecycle_stage, tenant_id, updated_at, ${CONTACT_METHOD_SELECT}`),
+      String(query),
+      { mode: "any", columns: [...CONTACT_NAME_SEARCH_COLUMNS, "city"], addressMatches },
+    );
+    if (!isGod) q = q.eq("tenant_id", tid);
     const { data, error } = await q.order("updated_at", { ascending: false }).limit(max);
     if (error) return err(error.message);
-    const items = data ?? [];
+    // Each candidate keeps its `email` / `phone` (now its primary of each kind) and carries every
+    // address it holds, so a teammate can recognise the person by any of them.
+    const items = (data ?? []).map((row) => ({
+      ...withPrimaryAddressFields(row),
+      contact_methods: orderedContactMethods(row.client_contact_methods),
+    }));
     return ok({
       items,
       count: items.length,
@@ -2928,7 +2961,7 @@ mcp.tool("propose_client_update", {
     "Stage a free-form update against a single contact. DOES NOT WRITE. Returns a proposal_id and a diff that the connected LLM MUST read back to the teammate before calling `confirm_proposal`. Use this for ad-hoc changes that don't have a dedicated ingest_* tool.",
   inputSchema: z.object({
     client_id: z.string(),
-    updates: z.record(z.any()).describe("Partial fields on clients (whitelisted): first_name, last_name, email, phone, entity_name, entity_type, street_address, city, state, zip_code, funding_goal, monthly_revenue, primary_offer, lifecycle_stage, tier, source, title, website, current_notes."),
+    updates: z.record(z.any()).describe("Partial fields on clients (whitelisted): first_name, last_name, entity_name, entity_type, street_address, city, state, zip_code, funding_goal, monthly_revenue, primary_offer, lifecycle_stage, tier, source, title, website, current_notes. Emails and phones are the contact's contact methods, changed with ONE of: `email` / `phone` (makes that address the primary of its kind, replacing the current primary; every other address is kept), `add_contact_methods` ([{ kind: \"email\" | \"phone\", value, label?, is_primary? }] — adds, keeping every address already held), or `contact_methods` (the COMPLETE list; anything left out is removed)."),
     confidence: z.enum(CONFIDENCE).describe("high = teammate confirmed verbatim, medium = paraphrased, low = unsure/approximate."),
     external_llm_model: z.string().optional(),
     review_reason: z.string().optional().describe("Why this might need human review."),
@@ -2936,19 +2969,45 @@ mcp.tool("propose_client_update", {
   handler: async ({ client_id, updates, confidence, external_llm_model, review_reason }) => {
     const scope = await tenantScopedClient(client_id);
     if (!scope.ok) return err(scope.reason ?? "scope_denied");
-    const ALLOWED = new Set([
-      "first_name","last_name","email","phone","entity_name","entity_type",
-      "street_address","city","state","zip_code","funding_goal","monthly_revenue",
-      "primary_offer","lifecycle_stage","tier","source","title","website","current_notes",
-    ]);
+    const ALLOWED = new Set(PROPOSABLE_CLIENT_FIELDS);
     const clean: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(updates ?? {})) if (ALLOWED.has(k)) clean[k] = v;
-    if (Object.keys(clean).length === 0) return err("no_whitelisted_fields");
+    // The row half is checked now, exactly as the contact row would check it, so a proposal that
+    // the database would refuse is never staged — and never half-applied on confirm.
+    const rowProblem = clientRowPatchProblem(clean);
+    if (rowProblem) return err(rowProblem);
 
-    const { data: current } = await admin.from("clients").select(Object.keys(clean).join(",")).eq("id", client_id).maybeSingle();
+    // Addresses: the proposal records the address change the teammate ASKED for (make primary /
+    // add / replace) and the list it was built on — never a frozen copy of the whole resulting
+    // list. On confirm (writeAddressIntent) an addition merges onto the list held then; a new
+    // primary or replacement lands only if the list is still the one it was built on (the preview).
+    const addressIntent = proposedAddressIntent(updates ?? {});
+    if ("error" in addressIntent) return err(addressIntent.error);
+    if (Object.keys(clean).length === 0 && !addressIntent.intent) return err("no_whitelisted_fields");
+
     const diff: Record<string, { from: unknown; to: unknown }> = {};
-    for (const [k, v] of Object.entries(clean)) {
-      diff[k] = { from: (current as Record<string, unknown> | null)?.[k] ?? null, to: v };
+    if (Object.keys(clean).length) {
+      const { data: current } = await admin.from("clients").select(Object.keys(clean).join(",")).eq("id", client_id).maybeSingle();
+      for (const [k, v] of Object.entries(clean)) {
+        diff[k] = { from: (current as Record<string, unknown> | null)?.[k] ?? null, to: v };
+      }
+    }
+    let builtOn: ContactMethodInput[] | undefined;
+    if (addressIntent.intent) {
+      const { data: held, error: heldErr } = await admin.from("client_contact_methods")
+        .select("kind, value, label, is_primary, position").eq("client_id", client_id);
+      if (heldErr) return err(heldErr.message);
+      builtOn = heldMethods(held);
+      const preview = intentResult(addressIntent.intent, builtOn);
+      // Refused here, before anything is staged, exactly as the write would refuse it.
+      const checks = addressIntent.intent.op === "add"
+        ? [addressIntent.intent.methods, preview]
+        : [preview];
+      for (const list of checks) {
+        const { error: shapeError } = await admin.rpc("contact_methods_canonical", { _methods: list });
+        if (shapeError) return err(contactMethodsError(shapeError.message));
+      }
+      diff.contact_methods = { from: builtOn, to: preview };
     }
 
     const needsReview = confidence === "low" || !!review_reason;
@@ -2956,7 +3015,7 @@ mcp.tool("propose_client_update", {
       client_id,
       tool_name: "propose_client_update",
       target_table: "clients",
-      payload: { updates: clean },
+      payload: { updates: clean, ...(addressIntent.intent ? { address_intent: addressIntent.intent, contact_methods_built_on: builtOn } : {}) },
       diff,
       confidence,
       source: "mcp:field_ops",
@@ -2965,7 +3024,7 @@ mcp.tool("propose_client_update", {
       auto_status: needsReview ? "needs_review" : "pending",
     });
     if (!proposal) return err("proposal_insert_failed");
-    await audit("propose_client_update", "client", client_id, { proposal_id: proposal.id, fields: Object.keys(clean) });
+    await audit("propose_client_update", "client", client_id, { proposal_id: proposal.id, fields: Object.keys(diff) });
     return ok({
       proposal_id: proposal.id,
       client_id,
@@ -3232,10 +3291,55 @@ async function applyProposal(proposal_id: string): Promise<{ ok: boolean; applie
   try {
     switch (prop.tool_name) {
       case "propose_client_update": {
-        const updates = payload.updates ?? {};
-        const { error: upErr } = await admin.from("clients").update(updates).eq("id", prop.client_id);
-        if (upErr) throw upErr;
-        applied.clients = { id: prop.client_id, updated_fields: Object.keys(updates) };
+        const updates = (payload.updates ?? {}) as Record<string, unknown>;
+        // Checked again before anything is written: a proposal the row would refuse is sent back
+        // for review whole, rather than failing after its addresses have landed.
+        const rowProblem = clientRowPatchProblem(updates);
+        if (rowProblem) throw new Error(rowProblem);
+        const intent = payload.address_intent === undefined ? null : storedAddressIntent(payload.address_intent);
+        if (payload.address_intent !== undefined && !intent) throw new Error("address_change_unreadable: propose it again");
+        if (Array.isArray(payload.contact_methods)) throw new Error("address_change_format_retired: propose it again");
+        const builtOn = storedMethodList(payload.contact_methods_built_on);
+        if (intent && intent.op !== "add" && !builtOn) throw new Error("address_change_unreadable: propose it again");
+
+        const { data: owner, error: ownerErr } = await admin.from("clients")
+          .select("tenant_id").eq("id", prop.client_id).maybeSingle();
+        if (ownerErr) throw ownerErr;
+        if (!owner?.tenant_id) throw new Error("contact_not_found");
+
+        // Addresses first: they are the part that can still be refused now — the list changed
+        // since it was proposed (CONTACT_METHODS_STALE), or another contact holds an address — and
+        // a refusal there writes nothing at all. The change is applied to the list held NOW: an
+        // addition merges under the database's rules, and a replacement or new primary is checked
+        // against the list the proposal was built on.
+        let addressWrite: Extract<AddressWriteResult, { ok: true }> | null = null;
+        if (intent) {
+          const written = await writeAddressIntent(admin, owner.tenant_id, prop.client_id, intent, builtOn);
+          if (!written.ok) {
+            throw new Error(written.stale
+              ? "contact_methods_changed_since_proposal: the contact's emails or phones changed after this was proposed, so nothing was written — propose it again against the current list"
+              : contactMethodsError(written.error));
+          }
+          addressWrite = written;
+          applied.contact_methods = { client_id: prop.client_id, count: written.after.length };
+        }
+        if (Object.keys(updates).length) {
+          const { error: upErr } = await admin.from("clients").update(updates)
+            .eq("id", prop.client_id).eq("tenant_id", owner.tenant_id);
+          if (upErr) {
+            // Put the addresses back so the proposal is all-or-nothing. The undo is itself checked:
+            // if someone changed the list in the meantime it refuses, and the audit says so.
+            if (addressWrite) {
+              const undoErr = await undoAddressWrite(admin, owner.tenant_id, prop.client_id, addressWrite);
+              if (undoErr) {
+                throw new Error(`apply_partial: the address change was saved and could not be undone (${undoErr}); the field update failed: ${upErr.message}`);
+              }
+              delete applied.contact_methods;
+            }
+            throw upErr;
+          }
+        }
+        applied.clients = { id: prop.client_id, updated_fields: [...Object.keys(updates), ...(intent ? ["contact_methods"] : [])] };
         break;
       }
       case "ingest_credit_scores": {
@@ -3329,6 +3433,9 @@ async function applyProposal(proposal_id: string): Promise<{ ok: boolean; applie
       .from("paige_ingestion_proposals")
       .update({ status: "needs_review", review_reason: `apply_failed: ${msg}` })
       .eq("id", proposal_id);
+    // What actually landed before the failure (empty when nothing did), so the record never says
+    // less than the database holds.
+    await audit("apply_proposal_failed", "proposal", proposal_id, { tool: prop.tool_name, reason: msg, landed: applied });
     return { ok: false, reason: `apply_failed:${msg}` };
   }
 
@@ -4457,9 +4564,11 @@ mcp.tool("bulk_send_template_email", {
     if (!fromAddress) return err("from_address_not_resolved");
     const fromHeader = fromName ? `${fromName} <${fromAddress}>` : fromAddress;
 
-    const { data: contacts, error: cErr } = await admin.from("clients")
-      .select("id, email, first_name, last_name, entity_name").in("id", contact_ids);
+    // Each contact is mailed at their PRIMARY email, whichever of their addresses that is.
+    const { data: contactRows, error: cErr } = await admin.from("clients")
+      .select(`id, first_name, last_name, entity_name, ${CONTACT_METHOD_SELECT}`).in("id", contact_ids);
     if (cErr) return err(cErr.message);
+    const contacts = (contactRows ?? []).map(withPrimaryAddressFields);
 
     const interp = (s: string, vars: Record<string, unknown>) =>
       s.replace(/\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g, (_, k) => String(vars[k] ?? ""));
@@ -4604,9 +4713,16 @@ mcp.tool("me_get_profile", {
   handler: async () => {
     const me = await actorClient();
     if (!me) return err("no_linked_client_record");
-    const { data, error } = await admin.from("clients").select("*").eq("id", me.id).maybeSingle();
+    const { data, error } = await admin.from("clients")
+      .select(`${CLIENT_RECORD_COLUMNS}, ${CONTACT_METHOD_SELECT}`).eq("id", me.id).maybeSingle();
     if (error) return err(error.message);
-    return ok({ profile: data });
+    // The column list is built at runtime, so the row's type is stated rather than inferred.
+    const record = data as unknown as ({ client_contact_methods?: unknown } & Record<string, unknown>) | null;
+    // `email` / `phone` stay on the profile, each now the caller's PRIMARY of that kind; every
+    // address they hold comes with it.
+    return ok({
+      profile: record ? { ...withPrimaryAddressFields(record), contact_methods: orderedContactMethods(record.client_contact_methods) } : record,
+    });
   },
 });
 
@@ -4623,14 +4739,53 @@ mcp.tool("me_update_profile", {
   handler: async (patch) => {
     const me = await actorClient();
     if (!me) return err("no_linked_client_record");
-    const ALLOWED = ["first_name","last_name","phone","entity_name","current_notes","funding_goal_amount"];
+    // Each self-editable input, and the contact-row column it writes. `funding_goal_amount` is the
+    // tool's input name; the column is `funding_goal` (there is no funding_goal_amount column, so
+    // writing the input name straight through failed every time it was sent).
+    const COLUMNS: Record<string, string> = {
+      first_name: "first_name", last_name: "last_name", entity_name: "entity_name",
+      current_notes: "current_notes", funding_goal_amount: "funding_goal",
+    };
+    const input = patch as Record<string, unknown>;
     const clean: Record<string, unknown> = {};
-    for (const k of ALLOWED) if ((patch as any)[k] !== undefined) clean[k] = (patch as any)[k];
-    if (Object.keys(clean).length === 0) return err("no_updatable_fields");
-    const { error } = await admin.from("clients").update(clean).eq("id", me.id);
-    if (error) return err(error.message);
-    await audit("me_update_profile", "contact", me.id, { fields: Object.keys(clean) });
-    return ok({ updated: true, fields: Object.keys(clean) });
+    for (const [field, column] of Object.entries(COLUMNS)) if (input[field] !== undefined) clean[column] = input[field];
+    const phone = (patch as { phone?: string }).phone;
+    if (Object.keys(clean).length === 0 && phone === undefined) return err("no_updatable_fields");
+    const rowProblem = clientRowPatchProblem(clean);
+    if (rowProblem) return err(rowProblem);
+    const fieldsOf = (row: boolean, address: boolean) => [
+      ...(row ? Object.keys(COLUMNS).filter((f) => input[f] !== undefined) : []),
+      ...(address ? ["phone"] : []),
+    ];
+
+    // A phone is one of the caller's contact methods: it becomes their PRIMARY phone, taking the
+    // current primary's place, and every other address they hold is kept. It is written first —
+    // it is the part the database can refuse, and a refusal writes nothing — against the list held
+    // at that moment, checked, so an address added concurrently is never overwritten.
+    let addressWrite: Extract<AddressWriteResult, { ok: true }> | null = null;
+    if (phone !== undefined) {
+      if (!me.tenant_id) return err("tenant_not_resolved");
+      const written = await writeAddressIntent(admin, me.tenant_id, me.id, { op: "primary", values: { phone } }, null, 2);
+      if (!written.ok) return err(contactMethodsError(written.error));
+      addressWrite = written;
+    }
+    if (Object.keys(clean).length) {
+      const { error } = await admin.from("clients").update(clean).eq("id", me.id);
+      if (error) {
+        // All-or-nothing: put the phone back, checked against the list this call left.
+        if (addressWrite && me.tenant_id) {
+          const undoErr = await undoAddressWrite(admin, me.tenant_id, me.id, addressWrite);
+          if (undoErr) {
+            await audit("me_update_profile", "contact", me.id, { fields: fieldsOf(false, true), failed_fields: fieldsOf(true, false), reason: error.message });
+            return err(`${error.message} (your phone was saved and could not be put back: ${undoErr})`);
+          }
+        }
+        return err(error.message);
+      }
+    }
+    const fields = fieldsOf(true, phone !== undefined);
+    await audit("me_update_profile", "contact", me.id, { fields });
+    return ok({ updated: true, fields });
   },
 });
 

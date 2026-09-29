@@ -139,7 +139,7 @@ export async function interpretSkill(deps: InterpretDeps, ctx: InterpretCtx): Pr
     try {
       const { data: contact } = await deps.admin
         .from("clients")
-        .select("id, first_name, last_name, email, tenant_id")
+        .select("id, first_name, last_name, tenant_id")
         .eq("id", contactId)
         .eq("tenant_id", tenantId) // §9 — only the caller's own tenant's contact
         .maybeSingle();

@@ -194,6 +194,11 @@ jobs:
       # Reports its own result, like the step above, so an earlier red step cannot hide it.
       - run: supabase test db supabase/tests/contact_methods.sql
         if: ${{ !cancelled() }}
+      # Public form intake: a visitor reads an active form only through growth_public_form (never the
+      # table, never the business/pipeline/alert columns), nobody inserts a submission from the
+      # browser, and a form's intake settings change only for its own business's owner/admin.
+      - run: supabase test db supabase/tests/public_form_intake.sql
+        if: ${{ !cancelled() }}
       # Where the RAG ingest, the security canary and the funding report read a person's address:
       # the old profiles.email read fails, the user_contact_methods reads they now send run as the
       # service role, and every new account has exactly one primary email to send to.

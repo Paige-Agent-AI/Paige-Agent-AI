@@ -102,6 +102,7 @@
     "test:internal-vocabulary": "node --import ./scripts/client-memory-authz/register.mjs --test supabase/functions/_shared/internal-vocabulary.test.ts",
     "test:client-seat-reply": "node --import ./scripts/client-memory-authz/register.mjs --test supabase/functions/_shared/client-seat-reply.test.ts",
     "test:outbound-draft-check": "node --import ./scripts/client-memory-authz/register.mjs --test supabase/functions/_shared/outbound-draft-check.test.ts",
+    "test:growth-intake": "node --import ./scripts/client-memory-authz/register.mjs --test supabase/functions/_shared/growth-intake.test.ts",
     "test:token-pricing": "node --import ./scripts/client-memory-authz/register.mjs scripts/token-pricing/check.mjs",
     "test:trace-wiring": "node --import ./scripts/client-memory-authz/register.mjs scripts/token-pricing/trace-wiring.mjs",
     "test:extraction-proposal": "node --import ./scripts/knowledge-scope/register.mjs scripts/extraction-proposal/check.mjs",

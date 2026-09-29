@@ -91,3 +91,7 @@ docs/evidence/ui-delivery/solo-approval-recovery/*.html
 .impeccable/review/
 .impeccable/frame/
 .impeccable/build/
+# The approved comp-led build record for Solo People contact methods is committed; comps not chosen are not.
+.impeccable/mocks/decision/*
+!.impeccable/mocks/decision/comp-a.png
+!.impeccable/mocks/decision/comp-a.json

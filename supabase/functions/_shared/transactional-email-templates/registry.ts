@@ -55,6 +55,7 @@ import { template as soloBetaWelcome } from './solo-beta-welcome.tsx'
 import { template as approvalNotification } from './approval-notification.tsx'
 import { template as securityCanaryRegression } from './security-canary-regression.tsx'
 import { template as securitySignedOut } from './security-signed-out.tsx'
+import { template as formSubmissionAlert } from './form-submission-alert.tsx'
 
 /**
  * BULK templates (§ deliverability): notifications + marketing that a recipient
@@ -109,6 +110,7 @@ const RAW_TEMPLATES: Record<string, TemplateEntry> = {
   'approval-notification': approvalNotification,
   'security-canary-regression': securityCanaryRegression,
   'security-signed-out': securitySignedOut,
+  'form-submission-alert': formSubmissionAlert,
   'agreement-signature-request': agreementSignatureRequest,
   'agreement-activity': agreementActivity,
   'agreement-completed': agreementCompleted,

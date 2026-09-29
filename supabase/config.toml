@@ -3,6 +3,11 @@ project_id = "xygzykjyynhzqytbqnzu"
 [functions]
   [functions.public-booking]
     verify_jwt = false
+
+  # Public form intake: anonymous visitors submit any active growth form. The function itself checks
+  # origin, a bot trap, per-IP and per-form rate limits, and accepts only the form's own fields.
+  [functions.growth-public-submit]
+    verify_jwt = false
   # Zoom redirects the host's browser straight here with ?code=&state= and no
   # Supabase JWT — the HMAC-signed state is what authenticates the connecting host.
   [functions.zoom-oauth-callback]

@@ -142,12 +142,17 @@ Deno.serve(async (req) => {
     destination = "marketplace_submissions";
     severity = "info";
 
-    // Recipients: admins in tenant. Fall back to all admins.
-    const { data: roleRows } = await supabase
-      .from("user_roles")
-      .select("user_id, role")
-      .in("role", ["admin", "super_admin"]);
-    const userIds = Array.from(new Set((roleRows ?? []).map((r) => r.user_id as string)));
+    // Recipients: the active owners and admins of the business the submission belongs to — its
+    // tenant membership, never the global role table. No tenant, no recipients.
+    const { data: memberRows } = sub.tenant_id
+      ? await supabase
+          .from("tenant_members")
+          .select("user_id")
+          .eq("tenant_id", sub.tenant_id)
+          .eq("status", "active")
+          .in("role", ["owner", "admin"])
+      : { data: [] as Array<{ user_id: string }> };
+    const userIds = Array.from(new Set((memberRows ?? []).map((r) => r.user_id as string)));
     for (const uid of userIds) {
       const r = await resolveUser(uid);
       if (r) recipients.push(r);
@@ -267,11 +272,20 @@ Deno.serve(async (req) => {
           },
         }),
       });
-      emailResults.push({ to: r.email, status: res.status });
+      // The provider's answer, not the HTTP call, decides whether this email was sent.
+      const sent = await res.json().then((j) => j?.success === true && j?.sent === true).catch(() => false);
+      emailResults.push({ to: r.email, status: res.status, sent });
     } catch (err) {
-      emailResults.push({ to: r.email, error: (err as Error).message });
+      emailResults.push({ to: r.email, sent: false, error: (err as Error).message });
     }
   }
 
-  return json({ success: true, event: body.event, recipients: recipients.length, emails: emailResults });
+  const emailsFailed = emailResults.filter((e) => (e as { sent?: boolean }).sent !== true).length;
+  return json({
+    success: emailsFailed === 0,
+    event: body.event,
+    recipients: recipients.length,
+    emails: emailResults,
+    emails_failed: emailsFailed,
+  });
 });

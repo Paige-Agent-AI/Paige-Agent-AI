@@ -45,8 +45,47 @@ export function contactSearchTokens(raw: string): string[] {
 export function contactSearchOrGroup(
   token: string,
   columns: readonly string[] = CONTACT_SEARCH_COLUMNS,
+  addressMatches: readonly string[] = [],
 ): string {
-  return columns.map((c) => `${c}.ilike.%${token}%`).join(",");
+  const clauses = columns.map((c) => `${c}.ilike.%${token}%`);
+  if (addressMatches.length) clauses.push(`id.in.(${addressMatches.join(",")})`);
+  return clauses.join(",");
+}
+
+/** The name columns a contact is searched on; its addresses are searched through its methods. */
+export const CONTACT_NAME_SEARCH_COLUMNS = ["first_name", "last_name", "entity_name"] as const;
+
+// deno-lint-ignore no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type MethodsClient = { from: (...args: any[]) => any };
+
+/**
+ * For each search token, the contacts in ONE workspace holding an email or phone that contains it —
+ * whichever of their addresses it is, not only the primary. A phone token also matches on its
+ * digits, so "555 0101" finds "+1 (555) 010-0101". A lookup failure is logged and reads as no
+ * address match; the name columns still search.
+ */
+export async function contactIdsByAddressToken(
+  admin: MethodsClient,
+  tenantId: string,
+  raw: string,
+  caller: string,
+): Promise<Map<string, string[]>> {
+  const byToken = new Map<string, string[]>();
+  for (const token of contactSearchTokens(raw)) {
+    const digits = token.replace(/\D/g, "");
+    const clauses = [`value.ilike.%${token}%`];
+    if (digits.length >= 4) clauses.push(`match_key.ilike.%${digits}%`);
+    const { data, error } = await admin.from("client_contact_methods").select("client_id")
+      .eq("tenant_id", tenantId).or(clauses.join(",")).limit(500);
+    if (error) {
+      console.error(`[${caller}] contact_address_search_failed`, { code: error.code, message: error.message });
+      continue;
+    }
+    const ids = [...new Set(((data ?? []) as Array<{ client_id: string }>).map((row) => row.client_id))];
+    if (ids.length) byToken.set(token, ids);
+  }
+  return byToken;
 }
 
 export interface ContactSearchOpts {
@@ -61,6 +100,8 @@ export interface ContactSearchOpts {
   mode?: "all" | "any";
   /** Searchable columns (defaults to CONTACT_SEARCH_COLUMNS). */
   columns?: readonly string[];
+  /** Per token, contact ids whose addresses match it (contactIdsByAddressToken). */
+  addressMatches?: ReadonlyMap<string, readonly string[]>;
 }
 
 /**
@@ -79,12 +120,14 @@ export function applyContactSearchFilter<Q>(query: Q, raw: string, opts: Contact
     // One OR-group over every token × column — natural-language tolerant (a stopword
     // token simply matches nothing rather than zeroing the whole result).
     const clauses = tokens.flatMap((t) => columns.map((c) => `${c}.ilike.%${t}%`));
+    const ids = [...new Set(tokens.flatMap((t) => [...(opts.addressMatches?.get(t) ?? [])]))];
+    if (ids.length) clauses.push(`id.in.(${ids.join(",")})`);
     q = q.or(clauses.join(","));
   } else {
     // AND across tokens: each token is its own OR-group; chained `.or()` are
     // AND-combined by PostgREST, so every token must match some column.
     for (const token of tokens) {
-      q = q.or(contactSearchOrGroup(token, columns));
+      q = q.or(contactSearchOrGroup(token, columns, opts.addressMatches?.get(token) ?? []));
     }
   }
   return q as Q;

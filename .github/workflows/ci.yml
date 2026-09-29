@@ -733,6 +733,22 @@ jobs:
           # SQLSTATE of every refusal, plus positive controls. It needs no credentials.
           ./scripts/agreements/run-integrity-proof.sh
 
+      - name: A user's address is read from user_contact_methods (RAG ingest, canary, funding report)
+        if: ${{ !cancelled() }}
+        run: |
+          # profiles has no email column; these three functions selected it and failed with 42703.
+          # The shared read and the anonymizer that consumes it, executed:
+          deno test --allow-import=esm.sh,deno.land --node-modules-dir=none --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/_shared/user-contact-methods.test.ts
+          # The functions that call it must type-check. ingest-rag-outcome is left out: it carries
+          # nine supabase-js generic errors that predate this step, identical on the base commit;
+          # the deno-edge-ratchet holds functions like it to "no new errors".
+          deno check --allow-import --node-modules-dir=none \
+            supabase/functions/security-canary-probe/index.ts \
+            supabase/functions/send-funding-report/index.ts \
+            supabase/functions/schedule-automated-tasks/index.ts \
+            supabase/functions/voice-command-processor/index.ts
+
       - name: Test
         if: ${{ !cancelled() }}
         run: npm run test

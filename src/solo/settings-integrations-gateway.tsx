@@ -622,18 +622,8 @@ function SignInFlow({ gw, item, onCancel }: { gw: UseMcpGateway; item: CatItem; 
       return;
     }
 
-    // 3. Leave.
-    //    NOT arming a return path, deliberately. This flow's callback is the JWT-less, server-owned
-    //    `mcp-oauth-callback`, which redirects straight to `connectedLocation(..., destination:
-    //    "connections")` — a FIXED destination that never loads the SPA route reading the stored
-    //    path (`takeOAuthReturn` has no production caller at all). Arming it looked like it brought
-    //    the owner back here and did nothing, so the call and its comment asserted a behaviour that
-    //    does not exist (§13/§70.1). Sign-in therefore lands on Connections, carrying
-    //    `?mcp=connected&connection=<id>`.
-    //    BACKEND DOOR NEEDED to land back here instead (§00 — named, not silently worked around):
-    //    the intended destination has to travel with the server-owned flow (oauth_begin → the stored
-    //    PKCE state → the callback), because a client-side hint cannot reach a callback that never
-    //    loads the app.
+    // 3. Leave. The callback returns to Integrations using routing facts held in single-use,
+    // server-owned PKCE state. No browser return address or account identity supplies authority.
     window.location.assign(flow.authorizeUrl);
   };
 
@@ -665,7 +655,7 @@ function SignInFlow({ gw, item, onCancel }: { gw: UseMcpGateway; item: CatItem; 
         />
         {shellId !== null && (
           <small id="ig-gw-signin-label-note">
-            Saved under this name. To use a different one, remove it from Connections and start again.
+            Saved under this name. To use a different one, remove it from Integrations and start again.
           </small>
         )}
         {bad.label && <small className="ig-gw-err">Enter a name.</small>}
@@ -1233,12 +1223,13 @@ function ToolActions({ gw, tool, reloadKey }: { gw: UseMcpGateway; tool: Gateway
   );
 }
 
-function ToolDetail({ gw, tool, onClose, onOlderSetup }: {
+function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = false }: {
   gw: UseMcpGateway;
   tool: GatewayConnection;
   onClose: () => void;
   /** Open this vendor's older setup panel. Absent for a vendor that has none. */
   onOlderSetup?: () => void;
+  returnedFromSignIn?: boolean;
 }) {
   const [mode, setMode] = useState<"view" | "rekey" | "disconnect">("view");
   /** The last probe verdict, held so the person sees what the check FOUND rather than only a row
@@ -1253,6 +1244,10 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup }: {
   const chip = statusChip(tool);
   const isRest = tool.authKind === "api_key";
   const isOAuth = tool.authKind === "oauth";
+  // A cancelled first sign-in leaves its canonical credential-free shell. The existing begin
+  // contract can discover OAuth for that row; the return query is never eligibility evidence.
+  const canStartSignIn = tool.configured && tool.transport === "http"
+    && tool.providerKey === "generic-remote" && tool.authKind === "none";
 
   /** Run the read-only probe: handshake the server and load what it offers. */
   const check = async () => {
@@ -1268,7 +1263,7 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup }: {
     if (result.ok) setCatalogueRead((n) => n + 1);
   };
 
-  /** Re-run the provider sign-in for a connection that already holds an OAuth grant. */
+  /** Explicitly start/re-run sign-in for the same canonical connection, never create a duplicate. */
   const signInAgain = async () => {
     setChecked(null);
     const flow = await gw.beginOAuth(tool.id);
@@ -1277,9 +1272,8 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup }: {
       setSignInMessage(flow.message ?? "That sign-in couldn't be started. Try again in a moment.");
       return;
     }
-    // Same server-owned callback as the create flow above, so the same note applies: it lands on
-    // Connections via a fixed destination and never loads the SPA route that would read a stored
-    // return path. Nothing is armed here, rather than arming something nothing reads.
+    // The callback uses the server-owned Integrations destination in single-use PKCE state.
+    // No browser-stored return address or tenant identity participates.
     window.location.assign(flow.authorizeUrl);
   };
   /** An OAuth tool's credential is issued by its provider's sign-in, not pasted here, so this
@@ -1289,6 +1283,7 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup }: {
 
   return (
     <GatewayDrawer eyebrow="Connected MCP Gateway" title={tool.label} dirty={mode === "rekey"} onClose={onClose}>
+      {returnedFromSignIn && <p className="ig-gw-info" role="status">Returning from sign-in does not verify this tool. Review its saved status, then check it when you’re ready.</p>}
       <dl className="ig-facts">
         <div><dt>Endpoint</dt><dd>{tool.serverUrlHost ?? "—"}</dd></div>
         <div><dt>Type</dt><dd>{facetName(tool)}</dd></div>
@@ -1349,6 +1344,7 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup }: {
           <div className="ig-actions ig-gw-actions">
             {gw.canWrite && tool.enabled && <button type="button" className="ig-btn" disabled={gw.saving} onClick={() => void check()}>{gw.saving ? "Checking…" : "Check now"}</button>}
             {gw.canWrite && tool.enabled && isOAuth && <button type="button" className="ig-btn" disabled={gw.saving} onClick={() => void signInAgain()}>Sign in again</button>}
+            {gw.canWrite && tool.enabled && canStartSignIn && <button type="button" className="ig-btn" disabled={gw.saving} onClick={() => void signInAgain()}>Sign in</button>}
             {gw.canWrite && rekeyable && <button type="button" className="ig-btn" onClick={() => setMode("rekey")}>Re-key</button>}
             {gw.canWrite && <button type="button" className="ig-btn" data-danger onClick={() => setMode("disconnect")}>Disconnect</button>}
           </div>
@@ -1506,6 +1502,8 @@ export function IntegrationsGatewaySection({
   group,
   tiles,
   hidden,
+  oauthReturn,
+  onOAuthReturnHandled,
 }: {
   onOpenLegacy?: (which: CatLegacy) => void;
   /** The one gateway hook instance, owned by the parent — the parent counts these tiles in the
@@ -1517,6 +1515,9 @@ export function IntegrationsGatewaySection({
   tiles: ReactNode;
   /** True when a category filter has this group filtered out. */
   hidden?: boolean;
+  /** Navigation hint only. The owned row and every readiness fact still come from gw. */
+  oauthReturn?: { connectionId: string; result: "connected" | "cancelled" | "error" } | null;
+  onOAuthReturnHandled?: () => void;
 }) {
   const { activeTenantId, activeUserId, loading: tenantLoading } = useTenantContext();
   const scopeKey = `${activeUserId ?? ""}:${activeTenantId ?? ""}`;
@@ -1525,7 +1526,7 @@ export function IntegrationsGatewaySection({
     | { kind: "add"; preset: AddPreset }
     | { kind: "signin"; item: CatItem }
     | { kind: "stop"; item: CatItem; via: "setup" | "zapier" }
-    | { kind: "detail"; tool: GatewayConnection; scope: string }
+    | { kind: "detail"; tool: GatewayConnection; scope: string; returnedFromSignIn?: boolean }
     | null
   >(null);
   const close = useCallback(() => setDrawer(null), []);
@@ -1538,7 +1539,31 @@ export function IntegrationsGatewaySection({
    * page that is now someone else's (§9). Drop it on every scope change, and guard the render as
    * well, exactly as the incumbent surface does for its own panels.
    */
-  useEffect(() => { setDrawer(null); }, [scopeKey, tenantLoading]);
+  useEffect(() => {
+    // Effect replay must not erase the same-scope callback drawer opened just after mount.
+    // A real scope/loading change still clears it, in addition to the synchronous render guard.
+    setDrawer(current => current?.kind === "detail" && current.scope === scopeKey && !tenantLoading ? current : null);
+  }, [scopeKey, tenantLoading]);
+  const handledReturn = useRef<string | null>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  const [returnMissing, setReturnMissing] = useState<string | null>(null);
+  useEffect(() => { setReturnMissing(current => !tenantLoading && current === scopeKey ? current : null); }, [scopeKey, tenantLoading]);
+  useEffect(() => {
+    if (!oauthReturn || tenantLoading || !activeTenantId || gw.loading || gw.error) return;
+    const key = `${scopeKey}:${oauthReturn.connectionId}:${oauthReturn.result}`;
+    if (handledReturn.current === key) return;
+    handledReturn.current = key;
+    const tool = gw.tools.find((candidate) => candidate.id === oauthReturn.connectionId);
+    if (tool) {
+      // An OAuth redirect has no clicked opener. Give the drawer a real current-scope return
+      // target before it captures focus, so Close/Escape returns to the tool rather than body.
+      Array.from(sectionRef.current?.querySelectorAll<HTMLButtonElement>("button[data-gateway-tool]") ?? [])
+        .find((button) => button.dataset.gatewayTool === tool.id)?.focus();
+      setDrawer({ kind: "detail", tool, scope: scopeKey, returnedFromSignIn: true });
+    }
+    else setReturnMissing(scopeKey);
+    onOAuthReturnHandled?.();
+  }, [oauthReturn, onOAuthReturnHandled, tenantLoading, activeTenantId, scopeKey, gw.loading, gw.error, gw.tools]);
   /** Whether the add form holds anything worth warning about before it closes. */
   const [addDirty, setAddDirty] = useState(false);
   useEffect(() => { if (drawer?.kind !== "add") setAddDirty(false); }, [drawer?.kind]);
@@ -1590,7 +1615,7 @@ export function IntegrationsGatewaySection({
   );
 
   return (
-    <section className="ig-group" aria-label={group.label}>
+    <section ref={sectionRef} className="ig-group" aria-label={group.label}>
       <div className="ig-group-head">
         <i className="ig-bar-dot" style={{ background: group.accent }} aria-hidden />
         <b>{group.label}</b><em>{group.blurb}</em><i className="ig-group-rule" aria-hidden />
@@ -1601,6 +1626,7 @@ export function IntegrationsGatewaySection({
       ) : gw.error ? (
         <div className="ig-state" role="alert"><TriangleAlert aria-hidden /><span>Your tools couldn’t be read just now. Nothing was changed.</span><button type="button" className="ig-btn" onClick={() => gw.reload()}>Try again</button></div>
       ) : null}
+      {!tenantLoading && returnMissing === scopeKey && <p className="ig-state" role="status">That tool is not available in this workspace. Review the tools listed here or return to the workspace where you started.</p>}
 
       <ul className="ig-grid">
         {tiles}
@@ -1675,6 +1701,7 @@ export function IntegrationsGatewaySection({
         const legacy: CatLegacy | null =
           live.providerKey === "n8n" ? "n8n" : live.providerKey === "zapier" ? "zapier" : null;
         return <ToolDetail key={`${scopeKey}:${live.id}`} gw={gw} tool={live} onClose={closeDetail}
+          returnedFromSignIn={drawer.returnedFromSignIn}
           onOlderSetup={legacy ? () => openLegacy(legacy) : undefined} />;
       })()}
     </section>

@@ -50,7 +50,7 @@ SELECT is(
          pg_get_functiondef(p.oid), 'k not in \(([^)]*)\)', 'g') WITH ORDINALITY AS t(arr, ord)
      ) s
      WHERE n.nspname = 'public' AND p.prokind = 'f' AND p.proname = 'execute_crm_command_reversible' AND s.ord = 1),
-  ARRAY['first_name', 'last_name', 'email', 'phone', 'entity_name', 'entity_type', 'title', 'lifecycle_stage', 'source', 'tags', 'primary_offer', 'notes', 'do_not_contact', 'website', 'linkedin_url', 'street_address', 'city', 'state', 'zip_code', 'funding_goal', 'monthly_revenue']::text[],
+  ARRAY['first_name', 'last_name', 'contact_methods', 'entity_name', 'entity_type', 'title', 'lifecycle_stage', 'source', 'tags', 'primary_offer', 'notes', 'do_not_contact', 'website', 'linkedin_url', 'street_address', 'city', 'state', 'zip_code', 'funding_goal', 'monthly_revenue']::text[],
   'contact.create patch fields match the schema Paige is shown'
 );
 
@@ -64,7 +64,7 @@ SELECT is(
          pg_get_functiondef(p.oid), 'k not in \(([^)]*)\)', 'g') WITH ORDINALITY AS t(arr, ord)
      ) s
      WHERE n.nspname = 'public' AND p.prokind = 'f' AND p.proname = 'execute_crm_command_reversible' AND s.ord = 2),
-  ARRAY['first_name', 'last_name', 'email', 'phone', 'entity_name', 'entity_type', 'title', 'lifecycle_stage', 'source', 'tags', 'primary_offer', 'current_notes', 'do_not_contact', 'website', 'linkedin_url', 'street_address', 'city', 'state', 'zip_code', 'funding_goal', 'monthly_revenue']::text[],
+  ARRAY['first_name', 'last_name', 'contact_methods', 'add_contact_methods', 'entity_name', 'entity_type', 'title', 'lifecycle_stage', 'source', 'tags', 'primary_offer', 'current_notes', 'do_not_contact', 'website', 'linkedin_url', 'street_address', 'city', 'state', 'zip_code', 'funding_goal', 'monthly_revenue']::text[],
   'contact.update patch fields match the schema Paige is shown'
 );
 

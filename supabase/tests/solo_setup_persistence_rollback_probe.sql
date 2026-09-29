@@ -1,6 +1,22 @@
--- Reproducible rollback-only proof for 20261046000000_solo_setup_persistence_repair.sql.
--- Runner: BEGIN; apply the migration body without its outer BEGIN/COMMIT; run
--- this file's DO block; ROLLBACK. No tenant mutation may be committed.
+-- Reproducible rollback-only proof for 20261046000000_solo_setup_persistence_repair.sql and
+-- 20270513090000_outbound_private_business_facts.sql.
+-- Runner: BEGIN; apply any of those migrations not yet on the database, without an outer
+-- BEGIN/COMMIT; run this file's DO block; ROLLBACK. No tenant mutation may be committed.
+--
+-- A1 (owner rulings 2026-09-27 and 2026-09-28) moved what this probe guards. The registered
+-- address, business phone and website may now reach PAIGE for the owner's own use, so the boundary
+-- that matters is the one in front of the customer, where only a phone or website the owner
+-- confirmed in Setup may pass. "customer-bound draft" below fails if the check that stands at that
+-- boundary does not find the address, phone and website Setup just saved while Setup's record does
+-- not yet confirm them (only the private brief holds them). "confirmed in Setup" fails unless, once
+-- the save has written the phone and website to the Setup record, a draft carrying all three is
+-- held back for the address alone: the phone and website pass, and the address, which Setup
+-- records no shareable state for, never does. (Each stored copy on its own is proven by
+-- outbound_private_business_facts.sql.) That proves the check reads what Setup saves and confirms.
+-- It does not by itself prove nothing reaches a customer: no customer-bound exit calls the check
+-- until A1-1b, whose own proof covers that. The shared persona projection check ("private PAIGE
+-- projection") stays, because that projection is sent on every seat, a client's included; A1 gives
+-- the facts to PAIGE only through the owner's own seat.
 do $probe$
 declare
   v_tenant uuid;
@@ -51,6 +67,7 @@ begin
   if v_saved -> 'brief' ->> 'businessRegistrationNumberLast4'<>'2-34' then raise exception 'PROBE_FAIL: non-US mask'; end if;
   if exists(select 1 from public.tenants where id=v_tenant and brand::text like '%'||v_secret||'%') then raise exception 'PROBE_FAIL: brand secret'; end if;
   if exists(select 1 from public.paige_audit_log where tenant_id=v_tenant and payload::text like '%'||v_secret||'%') then raise exception 'PROBE_FAIL: audit secret'; end if;
+  -- Client-seat half: the projection every seat receives never carries the private keys.
   if ((public.get_paige_persona_context()).brand -> 'business_brief') ?| array[
     'legalName','address','phone','entityType','stateOfFormation',
     'businessRegistrationIdentifier','registeredStreet','registeredCity',
@@ -99,6 +116,21 @@ begin
   if v_saved -> 'brief' ->> 'offers'<>'First-use operational proof' then raise exception 'PROBE_FAIL: first-use owner save'; end if;
   if v_saved -> 'brief' ->> 'address'<>'10 Test Way' or v_saved -> 'brief' ->> 'phone'<>'+442079460001'
     then raise exception 'PROBE_FAIL: first-use private contact readback'; end if;
+  -- Customer-bound half (A1): the address, phone and website just saved, not yet confirmed in
+  -- Setup's record, are found in a draft addressed to a customer. The check is the server's, so it
+  -- is asked as the server; a signed-in caller, this owner included, is refused.
+  perform set_config('request.jwt.claim.role','service_role',true);
+  if not (public.outbound_private_business_facts_found(v_tenant,
+       array['Our office is 10 Test Way. Call +44 20 7946 0001 or see rollback.example'])
+       @> array['address','phone','website']::text[])
+    then raise exception 'PROBE_FAIL: customer-bound draft'; end if;
+  if cardinality(public.outbound_private_business_facts_found(v_tenant, array['See you on Tuesday.'])) <> 0
+    then raise exception 'PROBE_FAIL: clean customer-bound draft refused'; end if;
+  perform set_config('request.jwt.claim.role','authenticated',true);
+  begin
+    perform public.outbound_private_business_facts_found(v_tenant, array['10 Test Way']);
+    raise exception 'PROBE_FAIL: signed-in caller asked the customer-bound check';
+  exception when insufficient_privilege then null; end;
   v_context:=v_saved;
   v_saved:=public.save_solo_setup_context(
     v_context -> 'brief' || jsonb_build_object('legalName','First-use Legal Person'),
@@ -107,6 +139,18 @@ begin
   if v_saved -> 'brief' ->> 'legalName'<>'First-use Legal Person'
      or not exists(select 1 from public.tenant_legal_profile where tenant_id=v_tenant and legal_business_name='First-use Legal Person')
     then raise exception 'PROBE_FAIL: first-use legal name durable readback'; end if;
+  -- Once the real save path has written them to Setup's record, the phone and website are
+  -- confirmed there and pass; the registered address is still held back.
+  if not exists(select 1 from public.tenant_legal_profile where tenant_id=v_tenant
+                and registered_address='10 Test Way' and support_phone='+442079460001'
+                and website_url='https://rollback.example')
+    then raise exception 'PROBE_FIXTURE_MISSING: legal profile contact'; end if;
+  perform set_config('request.jwt.claim.role','service_role',true);
+  if public.outbound_private_business_facts_found(v_tenant,
+       array['Our office is 10 Test Way. Call 020 7946 0001 or book at https://rollback.example/book'])
+       is distinct from array['address']::text[]
+    then raise exception 'PROBE_FAIL: confirmed in Setup'; end if;
+  perform set_config('request.jwt.claim.role','authenticated',true);
 
   v_version:=v_saved -> 'brief' ->> 'updatedAt';
   begin

@@ -57,6 +57,13 @@ const MCP_EXECUTABLE_TRANSPORTS = new Set(["http"]);
 // JSON-RPC endpoint and stays off this list.)
 const MCP_EXECUTABLE_AUTH_KINDS = new Set(["oauth", "bearer", "header", "url", "none"]);
 
+/** Shared facet gate for dispatch and OAuth initiation. Reauthorization may repair an expired
+ * credential, but must not discover/register against a specialized REST or unsupported transport. */
+export function isHttpMcpFacet(authKind: unknown, transport: unknown): boolean {
+  return typeof transport === "string" && MCP_EXECUTABLE_TRANSPORTS.has(transport)
+    && typeof authKind === "string" && MCP_EXECUTABLE_AUTH_KINDS.has(authKind);
+}
+
 /**
  * Production loader: the service-role `get_mcp_connection_secret` RPC is the single decrypted read of
  * the row. It returns the endpoint, auth and tenant from THAT read, so dispatch and consent cannot
@@ -99,8 +106,7 @@ export function makeRpcConnectionLoader(admin: Admin): ConnectionLoader {
         typeof row.endpoint_hash !== "string" || !/^[0-9a-f]{64}$/.test(row.endpoint_hash) ||
         // Refuse a facet the MCP client cannot execute — a non-http transport, or an auth kind that is
         // not an MCP credential scheme (the n8n REST `api_key` facet). See the allow-list note above.
-        typeof row.transport !== "string" || !MCP_EXECUTABLE_TRANSPORTS.has(row.transport) ||
-        typeof row.auth_kind !== "string" || !MCP_EXECUTABLE_AUTH_KINDS.has(row.auth_kind)
+        !isHttpMcpFacet(row.auth_kind, row.transport)
       ) {
         return { ok: false, reason: "connection_unusable" };
       }

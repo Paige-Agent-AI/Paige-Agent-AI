@@ -89,7 +89,7 @@ async function main() {
       check(addrEditable, `${theme} · the ADDRESS stays editable — it is the field a retry can apply`);
       const text = await page.locator('[role="dialog"]').innerText();
       check(
-        /remove it from Connections and start again/.test(text),
+        /remove it from Integrations and start again/.test(text),
         `${theme} · the locked field says what to do instead of leaving it unexplained`,
       );
       check(

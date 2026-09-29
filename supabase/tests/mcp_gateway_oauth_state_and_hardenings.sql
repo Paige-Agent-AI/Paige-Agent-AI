@@ -18,9 +18,8 @@
 --      _mcp_assert_credential_bundle and through the real writer.
 --
 -- Any failed assertion RAISEs, so under `psql -v ON_ERROR_STOP=1` the process exit code alone reports
--- pass (0) / fail (non-zero) — no pass-count to trust (§13/§32). Wrapped in BEGIN..ROLLBACK: nothing
--- persists, so it is idempotent and safe to run against any environment (including a prod rollback
--- smoke).
+-- pass (0) / fail (non-zero) — no pass-count to trust (§13/§32). Disposable database only.
+-- BEGIN..ROLLBACK does not authorize running test records against production or real tenant data.
 --
 -- Run: psql -v ON_ERROR_STOP=1 -f supabase/tests/mcp_gateway_oauth_state_and_hardenings.sql "$DB_URL"
 -- ============================================================================
@@ -148,7 +147,8 @@ BEGIN
 
   -- begin stores the verifier ENCRYPTED (the plaintext must NOT be readable in the ciphertext column).
   PERFORM public.begin_mcp_oauth(_cid, T, 'state-abc-123', 'verifier-plaintext-xyz',
-          'https://app.example.com/cb', 'https://iss.example.com', 'https://res.example.com', 'client-123', NULL, NULL);
+          'https://app.example.com/cb', 'https://iss.example.com', 'https://res.example.com', 'client-123', NULL, auth.uid(),
+          (SELECT config_generation FROM public.mcp_connections WHERE connection_id = _cid), ARRAY['mcp.read']);
   IF NOT EXISTS (SELECT 1 FROM public.mcp_connection_oauth_state WHERE state = 'state-abc-123' AND consumed_at IS NULL) THEN
     RAISE EXCEPTION '(oauth) begin did not store an un-consumed flow'; END IF;
   -- The verifier column must be genuine ciphertext, never the raw bytes (a bytea equality that cannot
@@ -169,11 +169,17 @@ BEGIN
   _r := public.consume_mcp_oauth_state('state-abc-123');
   IF (_r->>'found') <> 'false' THEN RAISE EXCEPTION '(oauth) a replayed state was consumable twice: %', _r; END IF;
 
-  -- an EXPIRED state is not consumable. Insert one directly with expires_at in the past.
-  INSERT INTO public.mcp_connection_oauth_state (connection_id, tenant_id, state, code_verifier_ct,
-    redirect_uri, issuer, client_id, expires_at)
-  VALUES (_cid, T, 'state-expired', public.platform_encrypt('v'), 'https://app.example.com/cb',
-    'https://iss.example.com', 'client-123', now() - interval '1 minute');
+  -- Isolate expiry: both states have genuine authority/return/generation bindings, differing
+  -- only in expiry. Missing new bindings must not mask a removed expiry predicate.
+  PERFORM public.begin_mcp_oauth(_cid,T,'state-fresh','test-verifier','https://app.example.com/cb',
+    'https://iss.example.com','https://res.example.com','client-123',NULL,auth.uid(),
+    (SELECT config_generation FROM public.mcp_connections WHERE connection_id=_cid),ARRAY['mcp.read']);
+  _r := public.consume_mcp_oauth_state('state-fresh');
+  IF _r->>'found' IS DISTINCT FROM 'true' THEN RAISE EXCEPTION '(oauth) unexpired positive control refused'; END IF;
+  PERFORM public.begin_mcp_oauth(_cid,T,'state-expired','test-verifier','https://app.example.com/cb',
+    'https://iss.example.com','https://res.example.com','client-123',NULL,auth.uid(),
+    (SELECT config_generation FROM public.mcp_connections WHERE connection_id=_cid),ARRAY['mcp.read']);
+  UPDATE public.mcp_connection_oauth_state SET expires_at=clock_timestamp()-interval '1 minute' WHERE state='state-expired';
   _r := public.consume_mcp_oauth_state('state-expired');
   IF (_r->>'found') <> 'false' THEN RAISE EXCEPTION '(oauth) an expired state was consumable: %', _r; END IF;
 

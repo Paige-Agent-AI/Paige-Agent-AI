@@ -8,9 +8,9 @@
  * empty, manage, reconnect, disconnect, reload, permission, invalid input,
  * retry, dirty abandonment, and tenant isolation.
  */
-import { act } from "react";
+import { act, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SoloIntegrationsView } from "./settings-integrations";
 import { n8nWriteMessage } from "./data/useN8nConnection";
@@ -136,6 +136,62 @@ beforeEach(() => {
   invoke.mockReset();
   invoke.mockResolvedValue({ data: { ok: true, status: "connected", toolCount: 4 }, error: null });
   document.body.innerHTML = "";
+});
+
+describe("canonical OAuth return through the real Integrations route", () => {
+  const id = "00000000-0000-4000-8000-000000000021";
+  const savedTool = { connection_id: id, provider_key: "generic-remote", label: "Test service",
+    transport: "http", auth_kind: "none", configured: true, enabled: true,
+    status: "pending_verification", health: "unknown", server_url_host: "service.example" };
+  async function route() {
+    const host = document.createElement("div"); document.body.appendChild(host);
+    const root = createRoot(host);
+    let search = "";
+    function LocationProbe() { search = useLocation().search; return null; }
+    const tree = <StrictMode><MemoryRouter initialEntries={[`/solo/10000001/settings/integrations?mcp=cancelled&connection=${id}&mcp_detail=untrusted-provider-prose&keep=yes`]}><LocationProbe /><SoloIntegrationsView /></MemoryRouter></StrictMode>;
+    await act(async () => root.render(tree));
+    return { host, root, search: () => search, rerender: async () => { await act(async () => root.render(<StrictMode><MemoryRouter initialEntries={["/unused"]}><LocationProbe /><SoloIntegrationsView /></MemoryRouter></StrictMode>)); } };
+  }
+  const providerCalls = () => invoke.mock.calls.filter((c) => c[0] === "mcp-gateway" && ["verify", "oauth_begin", "create", "run"].includes(c[1]?.body?.action));
+  it("waits for account resolution, strips one-shot hints, and opens only the saved row", async () => {
+    world({ gateway: [savedTool] }); context.loading = true;
+    const view = await route();
+    expect(view.host.querySelector('[role="dialog"]')).toBeNull();
+    context.loading = false; await view.rerender();
+    expect(view.search()).toBe("?keep=yes");
+    expect(view.host.querySelector('[role="dialog"]')?.textContent).toContain("Test service");
+    expect(view.host.textContent).not.toContain("untrusted-provider-prose");
+    expect(providerCalls()).toHaveLength(0);
+    await act(async () => view.root.unmount());
+  });
+  it("retains the hint across a failed canonical read and permits an explicit read retry", async () => {
+    world({ gateway: [savedTool] }); const original = rpc.getMockImplementation()!;
+    let failed = true;
+    rpc.mockImplementation((name: string, ...args: unknown[]) => name === "get_mcp_connections_v2" && failed
+      ? Promise.resolve({ data: null, error: { message: "test-read-unavailable" } }) : original(name, ...args));
+    const view = await route();
+    expect(view.search()).toBe("?keep=yes");
+    expect(view.host.querySelector('[role="dialog"]')).toBeNull();
+    expect(view.host.textContent).toContain("Your tools couldn’t be read");
+    failed = false; await click(byText(view.host, "Try again"));
+    expect(view.host.querySelector('[role="dialog"]')?.textContent).toContain("Test service");
+    expect(providerCalls()).toHaveLength(0);
+    await act(async () => view.root.unmount());
+  });
+  it("rejects the previous account's late tool read after an account switch", async () => {
+    world(); const original = rpc.getMockImplementation()!;
+    const pending = deferred<{ data: unknown; error: null }>();
+    rpc.mockImplementation((name: string, ...args: unknown[]) => name === "get_mcp_connections_v2" && context.tenantId === "tenant-a"
+      ? pending.promise : original(name, ...args));
+    const view = await route();
+    context.loading = true; await view.rerender();
+    context.tenantId = "tenant-b"; context.loading = false; await view.rerender();
+    await act(async () => pending.resolve({ data: [savedTool], error: null }));
+    expect(view.host.querySelector('[role="dialog"]')).toBeNull();
+    expect(view.host.textContent).not.toContain("Test service");
+    expect(providerCalls()).toHaveLength(0);
+    await act(async () => view.root.unmount());
+  });
 });
 
 describe("Truth boundary", () => {

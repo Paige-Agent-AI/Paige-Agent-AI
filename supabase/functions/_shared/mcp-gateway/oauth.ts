@@ -27,11 +27,12 @@ import {
   buildAuthorizationUrl, createPkce, createState, discoverAuthorizationServer,
   discoverProtectedResource, OAuthError, registerClient,
 } from "../mcp-oauth.ts";
+import { isHttpMcpFacet } from "./connection.ts";
 
 // NB: makeRpcConnectionLoader (connection.ts) is deliberately NOT used here — it is the DISPATCH loader
-// and fails closed on an expired oauth token / non-executable facet, which is exactly the connection a
-// re-authorization must still serve. The server URL is read directly from get_mcp_connection_secret
-// below (the §18 one home for the decrypted read), with no dispatch-usability gate applied.
+// and fails closed on an expired OAuth token, which reauthorization must still serve. Read from
+// get_mcp_connection_secret (the §18 one home for the decrypted read), and apply the shared facet
+// predicate without the dispatch credential-expiry gate. Unsupported facets remain refused.
 
 // The one thing runOauthBegin needs from a Supabase client: an awaitable `rpc` (a PromiseLike, matching
 // verify.ts/create.ts, so the real SupabaseClient satisfies the dep under `deno check`).
@@ -115,10 +116,10 @@ export async function runOauthBegin(deps: OauthBeginDeps, input: OauthBeginInput
   //    non-executable facets — but re-authorizing an expired oauth connection is exactly a case
   //    oauth_begin must still serve, and we are about to (re)configure the connection, not dispatch to
   //    it. get_mcp_connection_secret is the §18 one home for the decrypted read; we take only the
-  //    server URL + tenant from it (no usability gate applies to starting a consent flow).
+  //    server URL, tenant, generation and facet from it; credential expiry does not block consent.
   const { data: sec, error: sErr } = await admin.rpc("get_mcp_connection_secret", { _connection_id: id });
   if (sErr) return { httpStatus: 500, body: { error: "lookup_failed" } };
-  const row = (sec ?? {}) as { configured?: unknown; enabled?: unknown; server_url?: unknown; tenant_id?: unknown };
+  const row = (sec ?? {}) as { configured?: unknown; enabled?: unknown; server_url?: unknown; tenant_id?: unknown; config_generation?: unknown; auth_kind?: unknown; transport?: unknown };
   if (row.configured !== true) return { httpStatus: 409, body: { error: "connection_unconfigured" } };
   if (row.enabled === false) return { httpStatus: 409, body: { error: "connection_disabled" } };
   const serverUrl = typeof row.server_url === "string" ? row.server_url : "";
@@ -126,6 +127,16 @@ export async function runOauthBegin(deps: OauthBeginDeps, input: OauthBeginInput
   if (!serverUrl) return { httpStatus: 409, body: { error: "connection_unconfigured" } };
   // Defense in depth (§9): the tenant-agnostic read loaded SOME row; it must be the caller's.
   if (rowTenant !== tenantId) return { httpStatus: 403, body: { error: "forbidden" } };
+  // The SQL backstop runs only after discovery/DCR. Reject unsupported facets here first,
+  // after ownership, so even client registration cannot cross the specialized n8n boundary.
+  // Use only the shared facet predicate: the full dispatch loader refuses expired credentials,
+  // which this explicit reauthorization flow must still be able to repair.
+  if (!isHttpMcpFacet(row.auth_kind, row.transport)) {
+    return { httpStatus: 409, body: { error: "connection_unusable" } };
+  }
+  if (!Number.isSafeInteger(row.config_generation) || Number(row.config_generation) < 1) {
+    return { httpStatus: 409, body: { error: "connection_unconfigured" } };
+  }
 
   try {
     // OAuth 2.1 discovery spine (all issuer-verified, all safeFetch): ask the MCP server which
@@ -154,6 +165,8 @@ export async function runOauthBegin(deps: OauthBeginDeps, input: OauthBeginInput
       _client_id: registration.clientId,
       _client_secret: registration.clientSecret,
       _actor: actor,
+      _expected_generation: row.config_generation,
+      _requested_scopes: server.scopesSupported,
     });
     if (bErr) return { httpStatus: 500, body: { error: "oauth_begin_failed" } };
 

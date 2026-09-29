@@ -54,30 +54,34 @@ beforeEach(() => {
 afterEach(() => { act(() => root.unmount()); host.remove(); });
 
 describe("who may change a teammate's addresses", () => {
-  it("mirrors set_user_contact_methods: yourself; the owner, anyone; an admin, anyone but the owner; a member, nobody else", () => {
+  it("mirrors set_user_contact_methods: yourself; an owner or an admin, anyone, the owner included; a member, nobody else", () => {
     expect(contactAccess(person({ user_id: "me" }), space("member"), "me")).toBe("edit");
     expect(contactAccess(person({ is_owner: true }), space("owner"), "me")).toBe("edit");
     expect(contactAccess(person(), space("admin"), "me")).toBe("edit");
-    expect(contactAccess(person({ is_owner: true }), space("admin"), "me")).toBe("read");
+    expect(contactAccess(person({ is_owner: true }), space("admin"), "me")).toBe("edit");
     expect(contactAccess(person(), space("member"), "me")).toBe("hidden");
-    expect(contactAccess(person(), space("admin"), null)).toBe("edit");
     expect(contactAccess(person({ user_id: "me" }), space("member"), null)).toBe("hidden");
   });
 });
 
 describe("Team → how the team reaches a person", () => {
-  it("an admin sees the owner's addresses and the sign-in address, and is offered no way to change them", async () => {
+  it("an admin edits the owner's addresses like anyone's, and the sign-in address stays apart", async () => {
     mocks.rows = [row("e1", "email", "dana@example.com", true, 0), row("p1", "phone", "5125550100", true, 0)];
     await mount(person({ user_id: "owner-1", full_name: "Dana Whitfield", is_owner: true, permission: "owner" }), space("admin"));
     expect(mocks.eq).toHaveBeenCalledWith("user_contact_methods", "user_id", "owner-1");
     expect(host.textContent).toContain("Dana's contact details");
-    expect(host.textContent).toContain("Only the owner can change the owner's contact details.");
     expect(host.textContent).toContain("Used to sign in. Nothing on this screen changes it.");
+    expect(host.textContent).not.toContain("Only the owner can change");
     // A team member's addresses carry no promise about what Paige sends to or recognises.
     expect(host.textContent).not.toMatch(/Paige (sends|texts|recognises)/);
-    expect(host.textContent).toContain("dana@example.com");
-    expect(host.querySelector("input")).toBeNull();
-    expect(button("Save contact details")).toBeNull();
+    const input = host.querySelector<HTMLInputElement>('input[type="email"]')!;
+    expect(input.value).toBe("dana@example.com");
+    await act(async () => { type(input, "dana@brightpath.example"); });
+    mocks.rpc.mockResolvedValue({ data: [row("e1", "email", "dana@brightpath.example", true, 0), row("p1", "phone", "5125550100", true, 0)], error: null });
+    await click(button("Save contact details"));
+    await flush();
+    expect(mocks.rpc).toHaveBeenCalledWith("set_user_contact_methods", expect.objectContaining({ p_user_id: "owner-1" }));
+    expect(host.textContent).toContain("Dana's contact details are saved.");
   });
 
   it("a member opening a teammate reads nothing and shows nothing", async () => {

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Lock, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { ContactMethodsEditor, ContactMethodsList } from "@/components/contact-methods/ContactMethodsEditor";
+import { ContactMethodsEditor } from "@/components/contact-methods/ContactMethodsEditor";
 import { useContactMethodsDraft, useUserContactMethods } from "@/components/contact-methods/useUserContactMethods";
 import { contactAccess, type TeamMemberRecord, type TeamWorkspaceRecord } from "./team-workspace-contract";
 
@@ -61,15 +61,10 @@ export function TeamMemberContact({ member, workspace, onDirtyChange }: { member
           <span className="h">Used to sign in. Nothing on this screen changes it.</span>
         </div>
       )}
-      {access === "read" && (
-        <div className="stw-contact-lock" role="note"><Lock aria-hidden /><span>Only the owner can change the owner's contact details.</span></div>
-      )}
       {stored.loading ? (
         <div className="stw-state" role="status"><RefreshCw className="ss-spin" aria-hidden />Loading contact details…</div>
       ) : stored.error ? (
         <div className="stw-state error" role="alert"><strong>Contact details unavailable</strong><span>{stored.error}</span><button type="button" onClick={() => void stored.refresh()}>Retry</button></div>
-      ) : access === "read" ? (
-        <ContactMethodsList methods={stored.methods} headingLevel={4} audience="person" />
       ) : (
         <>
           <ContactMethodsEditor

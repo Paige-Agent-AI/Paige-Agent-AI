@@ -107,12 +107,11 @@ export type TeamWorkspaceRecord = {
 };
 
 /** Who may change this person's addresses. The server decides for real (`set_user_contact_methods`);
- *  this only decides what to offer, and mirrors the same rule: yourself; an owner, anyone on the team;
- *  an admin, anyone but the owner. */
-export function contactAccess(member: Pick<TeamMemberRecord, "user_id" | "is_owner">, workspace: Pick<TeamWorkspaceRecord, "viewer_permission">, viewerId: string | null): "edit" | "read" | "hidden" {
+ *  this only decides what to offer, and mirrors the same rule: yourself; an owner or an admin, anyone
+ *  on the team, the owner included (an admin holds the owner's powers except removing the owner). */
+export function contactAccess(member: Pick<TeamMemberRecord, "user_id">, workspace: Pick<TeamWorkspaceRecord, "viewer_permission">, viewerId: string | null): "edit" | "hidden" {
   if (viewerId && member.user_id === viewerId) return "edit";
-  if (workspace.viewer_permission === "owner") return "edit";
-  if (workspace.viewer_permission === "admin") return member.is_owner ? "read" : "edit";
+  if (workspace.viewer_permission === "owner" || workspace.viewer_permission === "admin") return "edit";
   return "hidden";
 }
 

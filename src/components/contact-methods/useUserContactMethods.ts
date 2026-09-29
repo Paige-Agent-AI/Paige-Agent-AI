@@ -90,7 +90,6 @@ export function useUserContactMethods(userId: string | null | undefined): UserCo
 
 /** The server's refusal codes for a person's own list, in words a person can act on. */
 export function userContactMethodsRefusal(message: string): string {
-  if (/USER_CONTACT_METHODS_OWNER_ONLY/.test(message)) return "Only the owner can change the owner's contact details.";
   if (/USER_CONTACT_METHODS_FORBIDDEN/.test(message)) return "You can't change this person's contact details from this workspace.";
   if (/CONTACT_METHODS_TOO_MANY/.test(message)) return "That's more than 20 of one kind. Remove one and save again.";
   if (/CONTACT_METHOD_BAD_LABEL/.test(message)) return "One of the labels is too long. Choose one from the list.";

@@ -311,7 +311,8 @@ export function ContactMethodsEditor({
 }
 
 /** The same list, read only: the saved record. */
-export function ContactMethodsList({ methods, headingLevel = 3, audience = "client" }: { methods: ContactMethod[]; /** Sits under the caller's own heading, one level down. */ headingLevel?: 3 | 4; audience?: ContactMethodsAudience }) {
+export function ContactMethodsList({ methods, headingLevel = 3 }: { methods: ContactMethod[]; /** Sits under the caller's own heading, one level down. */ headingLevel?: 3 | 4 }) {
+  const audience: ContactMethodsAudience = "client";
   const Heading = headingLevel === 4 ? "h4" : "h3";
   return (
     <div className="ctm-editor is-readonly">

@@ -67,9 +67,7 @@ const rpc = async (name: string, args: Record<string, unknown> = {}) => {
     return { data: { tenant_id: "team-harness-tenant", membership_id: gone.membership_id, removed_user_id: gone.user_id }, error: null };
   }
   if (name === "set_user_contact_methods") {
-    // Mirrors the server's authority rule: an admin may not rewrite the owner's addresses.
     const target = String(args.p_user_id);
-    if (viewerPermission() === "admin" && target === "user-0") return { data: null, error: { message: "USER_CONTACT_METHODS_OWNER_ONLY" } };
     const list = (args.p_methods as Array<{ kind: string; value: string; label: string | null; is_primary: boolean }>) ?? [];
     const bad = list.find((m) => m.kind === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m.value));
     if (bad) return { data: null, error: { message: `CONTACT_METHOD_INVALID_EMAIL: ${bad.value}` } };
@@ -86,7 +84,7 @@ const invoke = async (_name: string, options: { body?: Record<string, unknown> }
   return { data: { ok: true, emailed: true }, error: null };
 };
 // Contact methods (Lane A). `?as=admin` signs the viewer in as an admin (user-7) instead of the
-// owner (user-0), so the drive can show an admin opening the owner's row. Design fixtures.
+// owner (user-0), so the drive can show an admin editing the owner's row. Design fixtures.
 const viewerPermission = () => (new URLSearchParams(window.location.search).get("as") === "admin" ? "admin" : "owner");
 const viewerId = () => (viewerPermission() === "admin" ? "user-7" : "user-0");
 type MethodRow = { id: string; user_id: string; kind: string; value: string; label: string | null; is_primary: boolean; position: number };

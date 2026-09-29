@@ -1,5 +1,5 @@
 // Drives the Team → a person → contact methods dialog and the Setup representative-phone picker:
-// the Solo matrix (4 viewports × PAIGE closed/open), both themes, the admin-sees-owner state, the
+// the Solo matrix (4 viewports × PAIGE closed/open), both themes, an admin editing the owner, the
 // keyboard route, reduced motion and 200% zoom. Structural harness — NOT the live app.
 // Serve first (both):
 //   npx vite --config scripts/live-drive/harness/team-mount/vite.config.ts
@@ -58,10 +58,10 @@ for (const [w, h] of [[1536, 770], [1366, 768], [1024, 768], [900, 1000]]) {
     await page.close();
   }
 }
-// States: yourself (light), an admin opening the owner (read only), an owner opening a teammate with none.
-for (const [name, query, who] of [["team-self-light", "theme=light", "Antonio Martinez"], ["team-admin-sees-owner-light", "theme=light&as=admin", "Antonio Martinez"], ["team-teammate-empty-dark", "theme=dark", "Maya Chen 1"]]) {
+// States: yourself (light), an admin editing the owner, an owner opening a teammate with none.
+for (const [name, query, who] of [["team-self-light", "theme=light", "Antonio Martinez"], ["team-admin-edits-owner-light", "theme=light&as=admin", "Antonio Martinez"], ["team-teammate-empty-dark", "theme=dark", "Maya Chen 1"]]) {
   const page = await openMember(query, 1366, 900, who);
-  const state = await page.evaluate(() => ({ inputs: document.querySelectorAll(".stw-contact input").length, lock: document.querySelector(".stw-contact-lock")?.textContent ?? null, heading: document.querySelector("#stw-contact-h")?.textContent, paigePromise: /Paige (sends|texts|recognises)/.test(document.querySelector(".stw-contact")?.textContent ?? "") }));
+  const state = await page.evaluate(() => ({ inputs: document.querySelectorAll(".stw-contact input").length, heading: document.querySelector("#stw-contact-h")?.textContent, paigePromise: /Paige (sends|texts|recognises)/.test(document.querySelector(".stw-contact")?.textContent ?? "") }));
   await label(page);
   await (await page.$(".stw-modal")).screenshot({ path: `${out}/${name}.png` });
   results.push({ name, ...state });

@@ -284,8 +284,9 @@ function resetVersion() {
   const plan = resetPlan(files, recorded);
   if (!plan.version) fail("No migration production has recorded exists in this tree.");
   // Unrecorded migrations OLDER than V would otherwise be applied by the rebuild, before the grants
-  // are reproduced, and lose their own grants. They are set aside and applied after, as production's
-  // `db push --include-all` applies them after everything it already has.
+  // are reproduced, and lose their own grants. They are set aside and applied after, so their SQL is
+  // still exercised here. Production's plain `db push` REFUSES such a file (deploy-migrations.yml):
+  // it must be renamed newer than production's newest before it can ship.
   const aside = arg("--aside-list");
   const asideFiles = files.filter((f) => plan.outOfOrder.includes(f.slice(0, 14)));
   if (aside) writeFileSync(aside, asideFiles.map((f) => f + "\n").join(""));

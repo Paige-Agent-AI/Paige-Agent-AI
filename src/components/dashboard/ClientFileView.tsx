@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, DollarSign, FileText, Mail, StickyNote, Upload, AlertTriangle, Brain, TrendingUp, Database, User, Phone, AtSign, MapPin, Calendar, Shield, MessageSquare, Trash2, Edit3, Briefcase, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { readUserPrimaryAddresses } from "@/lib/userPrimaryContact";
 import type { Json } from "@/integrations/supabase/types";
 import { ReportUploadTab } from "./ReportUploadTab";
 import { OutreachCenter } from "./OutreachCenter";
@@ -31,7 +32,6 @@ interface ClientFileViewProps {
 
 interface ClientProfile {
   full_name: string | null;
-  phone: string | null;
   city: string | null;
   state: string | null;
   street_address: string | null;
@@ -84,6 +84,8 @@ interface ClientProfile {
 export function ClientFileView({ clientUserId, onBack, userRole = "member" }: ClientFileViewProps) {
   const [profile, setProfile] = useState<ClientProfile | null>(null);
   const [email, setEmail] = useState<string | null>(null);
+  // The client's primary phone, from their contact methods.
+  const [phone, setPhone] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("profile");
   const [subscription, setSubscription] = useState<{ plan_slug: string; status: string } | null>(null);
   const [roles, setRoles] = useState<string[]>([]);
@@ -100,11 +102,11 @@ export function ClientFileView({ clientUserId, onBack, userRole = "member" }: Cl
   }, [clientUserId]);
 
   const fetchProfile = async () => {
-    const [profileRes, subRes, rolesRes] = await Promise.all([
+    const [profileRes, subRes, rolesRes, contact] = await Promise.all([
       supabase
         .from("profiles")
         .select(
-          "full_name, phone, city, state, street_address:address, zip_code:postal_code, date_of_birth, ssn_last_4, estimated_fico_eq, estimated_fico_ex, estimated_fico_tu, onboarding_completed, has_discrepancies, cross_bureau_discrepancies, last_report_analyzed_at, created_at, updated_at, is_complimentary, primary_goal, primary_goal_category, goal_timeline, goal_amount, experience_level, financing_preference, biggest_obstacle, intake_completed, gender_identity, ethnicity, is_veteran, is_service_disabled_veteran, is_us_citizen, is_permanent_resident, primary_bank_name, primary_bank_months, primary_bank_average_balance, monthly_revenue_range, has_investment_accounts, investment_account_value_range, total_liquid_assets_range, has_real_estate_equity, real_estate_equity_range, has_equipment_assets, has_invoice_receivables, pme_phase, has_broker_access",
+          "full_name, city, state, street_address:address, zip_code:postal_code, date_of_birth, ssn_last_4, estimated_fico_eq, estimated_fico_ex, estimated_fico_tu, onboarding_completed, has_discrepancies, cross_bureau_discrepancies, last_report_analyzed_at, created_at, updated_at, is_complimentary, primary_goal, primary_goal_category, goal_timeline, goal_amount, experience_level, financing_preference, biggest_obstacle, intake_completed, gender_identity, ethnicity, is_veteran, is_service_disabled_veteran, is_us_citizen, is_permanent_resident, primary_bank_name, primary_bank_months, primary_bank_average_balance, monthly_revenue_range, has_investment_accounts, investment_account_value_range, total_liquid_assets_range, has_real_estate_equity, real_estate_equity_range, has_equipment_assets, has_invoice_receivables, pme_phase, has_broker_access",
         )
         .eq("user_id", clientUserId)
         .maybeSingle(),
@@ -117,9 +119,11 @@ export function ClientFileView({ clientUserId, onBack, userRole = "member" }: Cl
         .from("user_roles")
         .select("role")
         .eq("user_id", clientUserId),
+      readUserPrimaryAddresses(clientUserId),
     ]);
 
     if (profileRes.data) setProfile(profileRes.data as unknown as ClientProfile);
+    setPhone(contact.phone);
     if (subRes.data) setSubscription(subRes.data);
     if (rolesRes.data) setRoles(rolesRes.data.map((r) => r.role));
 
@@ -298,7 +302,7 @@ export function ClientFileView({ clientUserId, onBack, userRole = "member" }: Cl
                 <div className="grid grid-cols-2 gap-6">
                   <ProfileField label="Full Name" value={profile?.full_name} icon={User} />
                   <ProfileField label="Email" value={email} icon={AtSign} />
-                  <ProfileField label="Phone" value={profile?.phone} icon={Phone} />
+                  <ProfileField label="Phone" value={phone} icon={Phone} />
                   <ProfileField label="Date of Birth" value={profile?.date_of_birth ? new Date(profile.date_of_birth).toLocaleDateString() : null} icon={Calendar} />
                   <ProfileField label="SSN (Last 4)" value={profile?.ssn_last_4 ? `••••${profile.ssn_last_4}` : null} icon={Shield} />
                 </div>

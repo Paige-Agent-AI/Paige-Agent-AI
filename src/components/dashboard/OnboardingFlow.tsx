@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { saveUserPrimaryAddresses } from "@/lib/userPrimaryContact";
 import { Loader2, ArrowRight, ArrowLeft, Target, TrendingUp, DollarSign, CheckCircle2, Sparkles, FileText } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { DemographicQuestionsStep, EMPTY_ANSWERS, saveDemographicAnswers, type DemographicAnswers } from "@/components/onboarding/DemographicQuestionsStep";
@@ -119,7 +120,6 @@ export const OnboardingFlow = ({ open, onComplete }: OnboardingFlowProps) => {
         .from("profiles")
         .update({
           full_name: fullName,
-          phone,
           address,
           city,
           state,
@@ -128,6 +128,14 @@ export const OnboardingFlow = ({ open, onComplete }: OnboardingFlowProps) => {
         .eq("user_id", user.id);
 
       if (profileError) throw profileError;
+
+      // A phone typed here becomes the person's primary phone contact method; any other email or
+      // phone they already keep is left as it is. A blank field means "not given" — this form never
+      // showed their stored number — so it writes nothing, and never removes a phone they keep.
+      if (phone.trim()) {
+        const savedPhone = await saveUserPrimaryAddresses(user.id, { phone });
+        if (savedPhone.ok === false) throw new Error(savedPhone.error);
+      }
 
       // Save business info if applicable
       if (hasBusinessCredit && legalName) {
@@ -144,7 +152,7 @@ export const OnboardingFlow = ({ open, onComplete }: OnboardingFlowProps) => {
       }
 
       // Save demographic answers (additive — only writes provided fields)
-      try { await saveDemographicAnswers(supabase, user.id, demographicAnswers); } catch {}
+      try { await saveDemographicAnswers(supabase, user.id, demographicAnswers); } catch { /* demographic answers are optional; onboarding completes without them */ }
 
       toast({
         title: `Welcome to ${brandName}!`,
@@ -177,7 +185,7 @@ export const OnboardingFlow = ({ open, onComplete }: OnboardingFlowProps) => {
         const snoozeUntil = Date.now() + 7 * 24 * 60 * 60 * 1000;
         localStorage.setItem("onboarding_snoozed_until", String(snoozeUntil));
       }
-    } catch {}
+    } catch { /* storage unavailable (private mode): the snooze is best-effort */ }
     toast({
       title: "No problem — explore freely",
       description: "Your setup checklist stays on your dashboard. Finish it whenever you're ready.",

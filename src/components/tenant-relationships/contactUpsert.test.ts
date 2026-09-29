@@ -13,10 +13,10 @@ describe("People contact upsert adapter", () => {
     await expect(upsertRelationshipContact({
       tenantId: "tenant-1",
       contactId: "contact-1",
-      patch: { first_name: "Tashia", email: null, tags: ["hot lead"], do_not_contact: false },
+      patch: { first_name: "Tashia", contact_methods: [{ kind: "email", value: "tashia@example.test", label: "Work", is_primary: true }], tags: ["hot lead"], do_not_contact: false },
     })).resolves.toBe("contact-1");
     expect(rpc).toHaveBeenCalledWith("upsert_contact", {
-      p_patch: { first_name: "Tashia", email: null, tags: ["hot lead"], do_not_contact: false },
+      p_patch: { first_name: "Tashia", contact_methods: [{ kind: "email", value: "tashia@example.test", label: "Work", is_primary: true }], tags: ["hot lead"], do_not_contact: false },
       p_contact_id: "contact-1",
       p_tenant_id: "tenant-1",
       p_channel: "manual",

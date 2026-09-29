@@ -20,6 +20,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { renderPresentedPdf, hashDocument, assertDocumentIsRenderable, assertNamesAreStampable, UnrenderableDocumentError, UnrenderableNameError } from "../_shared/agreements/document.ts";
 import { expiryFromNow, mintSignerToken, sha256Hex, SIGNING_TOKEN_TTL_DAYS } from "../_shared/agreements/token.ts";
 import { tenantContactForDisclosure } from "../_shared/agreements/notify.ts";
+import { overRateLimit } from "../_shared/rateLimit.ts";
+
+// This function makes the platform send signature requests on a workspace admin's say-so, as an
+// internal caller, so its volume is bounded: sends and resends per workspace per hour.
+const AGREEMENT_SENDS_PER_TENANT_PER_HOUR = 20;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -94,6 +99,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
       status: "needs_config",
       error: "No email provider is connected yet, so this agreement was not sent and nothing was changed. Connect email delivery in Settings, then send it again.",
     }, 503);
+  }
+
+  if (await overRateLimit(admin, `agreement-send:${tenantId}`, AGREEMENT_SENDS_PER_TENANT_PER_HOUR, 3600, true)) {
+    return json({
+      ok: false,
+      error: "This workspace has sent a lot of agreements in the last hour, so this one was not sent and nothing was changed. Try again later.",
+    }, 429);
   }
 
   // Scoped by the caller's tenant, never by an id from the body alone.
@@ -249,7 +261,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const link = `${PUBLIC_BASE}/sign/${token}`;
     const res = await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
       method: "POST",
-      headers: { Authorization: authHeader, "Content-Type": "application/json" },
+      // As an internal caller: this function has already authorized the sender (owner/admin of the
+      // agreement's workspace) and derived the signer from the agreement, which is what the send
+      // function requires of anything that is not a person sending their own mail.
+      headers: { Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`, "Content-Type": "application/json" },
       // The sender's real contract — templateName / recipientEmail / tenantId / templateData —
       // read off an existing caller rather than assumed. `idempotencyKey` is RECORDED, not enforced —
       // the shared sender stores it and deliberately does not dedupe on it (see its own note), so

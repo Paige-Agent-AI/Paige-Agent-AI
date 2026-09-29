@@ -95,10 +95,10 @@ Before opening or closing a PR, merging, deploying, assigning a version, or desc
 
 **Independent review is the lane's own to run** (owner ruling, Antonio Cook, 2026-09-29): before asking to merge, the lane spawns a separate reviewer that did not write the code, and records it as such. Codex may review and its findings are handled like any reviewer's, but Codex is never a gate and no lane holds a merge waiting on one.
 
-1. **Wait for that auto-triggered exact-head review to COMPLETE before merging.** Never merge while it is running.
-2. **Disposition every finding** — fix it, or record a reasoned decline on the thread. If you push a fix, the head changed: repeat from step 1 **once**. If a further round would be needed, stop and escalate rather than merging.
-3. **"Exactly one review" means one REQUESTED review plus the auto-triggered exact-head review.** Never merge ahead of either.
-4. **Docs-only closeout PRs wait for the auto review too** — they are small and it is fast.
+1. **Run the independent review on the exact head, and let it COMPLETE before merging.** The reviewer is spawned separately, did not write the code, and reads the real diff. Never merge while it is running.
+2. **Disposition every finding** — fix it, or record a reasoned decline. If you push a fix, the head changed: have the reviewer re-check the new head, repeating from step 1 **once**. If a further round would be needed, stop and escalate rather than merging.
+3. **Record the review in the PR** — that the reviewer did not write the code, what it checked, and its verdict. Findings from Codex or any other reviewer that does report are dispositioned the same way; no step waits for one.
+4. **Docs-only closeout PRs get the independent review too** — they are small and it is fast.
 
 This is in addition to every existing gate (exact-head required CI green, mergeability, evidence). It exists because a PR marked Ready and merged seconds later has had real defects — including a P1 — surfaced by the auto review only after merge.
 

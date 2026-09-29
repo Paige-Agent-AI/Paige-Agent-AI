@@ -6,8 +6,10 @@
 //                  person can type, is dropped with an ordinary 200 so a bot learns nothing
 //   3. rate      — per visitor IP and per form, on the shared durable limiter (_shared/rateLimit.ts);
 //                  fails CLOSED: if the limiter cannot answer, nothing is written
-//   4. the form  — must exist and be ACTIVE, and its business active or on trial; the business comes
-//                  from the form row, never the request
+//   4. the form  — must exist and be ACTIVE, and its business live: trial, active or past-due (a
+//                  past-due business keeps capturing leads — usually an expired card, and lost leads
+//                  never come back); canceled and suspended businesses take none. Same rule as
+//                  growth_public_form(). The business comes from the form row, never the request.
 //   5. content   — only the form's own fields, each in the shape its field type allows
 //                  (_shared/growth-intake.ts); unknown and invalid keys are dropped and reported back
 // The row is written with the service role, so nothing the browser sends can set tenant_id,
@@ -29,7 +31,8 @@ const SLUG_RE = /^[a-z0-9][a-z0-9-]{0,99}$/i;
 const MAX_BODY_BYTES = 64 * 1024;
 const PER_IP_PER_MINUTE = 10;
 const PER_FORM_PER_MINUTE = 60;
-const OPEN_BUSINESS = new Set(["active", "trial"]);
+// A live business (the platform's own trial | active | past_due set; owner ruling 2026-09-29).
+const OPEN_BUSINESS = new Set(["trial", "active", "past_due"]);
 
 function corsFor(origin: string | null): Record<string, string> {
   return {

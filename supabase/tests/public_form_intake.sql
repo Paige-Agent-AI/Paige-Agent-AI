@@ -4,7 +4,8 @@
 -- owner; business A has an active form, a draft form and a pipeline, business B has a pipeline.
 -- What must be true, for every business:
 --   * a visitor reads an ACTIVE form only through growth_public_form(), which never returns the
---     business, pipeline, alert address or author — and the table itself refuses them;
+--     business, pipeline, alert address or author — and the table itself refuses them; a past-due
+--     business keeps its forms, a canceled one shows none;
 --   * nobody writes a submission from the browser: anon and signed-in inserts are both refused;
 --   * a form's intake settings change only for an owner/admin of the form's OWN business, only to
 --     that business's pipeline and stage, and only to a well-formed alert address — and the alert
@@ -12,7 +13,7 @@
 --   * a saved route takes effect: on a form that runs from automation rows, the rows follow it.
 BEGIN;
 
-SELECT plan(21);
+SELECT plan(23);
 
 DO $$
 DECLARE
@@ -25,7 +26,9 @@ BEGIN
   INSERT INTO auth.users (id, email) VALUES (_oa, 'intake-owner-a@example.test'), (_ob, 'intake-owner-b@example.test');
   INSERT INTO public.tenants (id, slug, name, status, account_type, account_number_prefix, features) VALUES
     (_a, 'intake-probe-a', 'Intake Probe A', 'active', 'standalone', 'IPA', '{}'),
-    (_b, 'intake-probe-b', 'Intake Probe B', 'active', 'standalone', 'IPB', '{}');
+    (_b, 'intake-probe-b', 'Intake Probe B', 'active', 'standalone', 'IPB', '{}'),
+    ('f1a70000-0000-0000-0000-00000000000c', 'intake-probe-c', 'Intake Probe C', 'past_due', 'standalone', 'IPC', '{}'),
+    ('f1a70000-0000-0000-0000-00000000000d', 'intake-probe-d', 'Intake Probe D', 'canceled', 'standalone', 'IPD', '{}');
   INSERT INTO public.tenant_members (tenant_id, user_id, role, status, is_owner) VALUES
     (_a, _oa, 'owner', 'active', true),
     (_b, _ob, 'owner', 'active', true);
@@ -50,7 +53,11 @@ BEGIN
     ('f1a70000-0000-0000-0000-0000000f0a02', _a, 'draft-form', 'Draft A', 'draft',
      '{"sections":[]}', '{}', _oa),
     ('f1a70000-0000-0000-0000-0000000f0a03', _a, 'routed', 'Routed A', 'active',
-     '{"sections":[]}', '{}', _oa);
+     '{"sections":[]}', '{}', _oa),
+    ('f1a70000-0000-0000-0000-0000000f0c01', 'f1a70000-0000-0000-0000-00000000000c', 'contact', 'Contact C', 'active',
+     '{"sections":[]}', '{}', NULL),
+    ('f1a70000-0000-0000-0000-0000000f0d01', 'f1a70000-0000-0000-0000-00000000000d', 'contact', 'Contact D', 'active',
+     '{"sections":[]}', '{}', NULL);
   -- A form that runs from automation rows (the 2026-07-14 backfill shape): contact creation off,
   -- deals on into pipeline A with no stage.
   INSERT INTO public.growth_form_automations (tenant_id, form_id, target_slug, order_index, enabled, config_json) VALUES
@@ -76,6 +83,14 @@ SELECT is(
   (SELECT count(*)::int FROM public.growth_public_form(p_form_id => 'f1a70000-0000-0000-0000-0000000f0a02')),
   0,
   'a draft form is not readable');
+SELECT is(
+  (SELECT name FROM public.growth_public_form(p_form_id => 'f1a70000-0000-0000-0000-0000000f0c01')),
+  'Contact C',
+  'a past-due business keeps its form, so its leads are still captured');
+SELECT is(
+  (SELECT count(*)::int FROM public.growth_public_form(p_form_id => 'f1a70000-0000-0000-0000-0000000f0d01')),
+  0,
+  'a canceled business shows no form');
 RESET ROLE;
 
 SELECT is(

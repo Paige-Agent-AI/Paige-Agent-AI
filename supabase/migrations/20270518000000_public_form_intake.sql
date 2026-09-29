@@ -12,7 +12,8 @@
 -- WHAT THIS DOES:
 --   1. DELETES the dead `growth_forms_public_read_published` policy and every anon privilege on
 --      growth_forms. Visitors read a form only through growth_public_form(), which returns the name,
---      fields and thank-you text of an ACTIVE form — never tenant_id, pipeline, alert address or author.
+--      fields and thank-you text of an ACTIVE form of a live (trial | active | past_due) business —
+--      never tenant_id, pipeline, alert address or author.
 --   2. DELETES `growth_form_submissions_public_insert` and the anon/authenticated INSERT privilege.
 --      Submissions arrive only through the growth-public-submit edge function (service role), which
 --      checks origin, a bot trap, per-IP and per-form rate limits, and accepts only the form's own fields.
@@ -49,7 +50,11 @@ SET search_path = public
 AS $$
   SELECT f.id, f.slug, f.name, f.schema_json, f.success_action_json
     FROM public.growth_forms f
+    JOIN public.tenants t ON t.id = f.tenant_id
    WHERE f.status = 'active'
+     -- A live business only (trial | active | past_due): a past-due business keeps capturing leads;
+     -- a canceled or suspended one shows no form. growth-public-submit applies the same rule.
+     AND t.status IN ('trial'::public.tenant_status, 'active'::public.tenant_status, 'past_due'::public.tenant_status)
      AND (
           (p_form_id IS NOT NULL AND f.id = p_form_id)
        OR (p_form_id IS NULL AND p_tenant_id IS NOT NULL AND p_slug IS NOT NULL

@@ -101,7 +101,9 @@ const CONTACT_METHOD_SELECT = "client_contact_methods(kind, value, label, is_pri
 const contactMethodInput = z.object({
   kind: z.enum(["email", "phone"]),
   value: z.string(),
-  label: z.string().optional(),
+  // Nullable: get_contact returns an unlabelled address as label: null, and a list read there is
+  // sent back as it came.
+  label: z.string().nullable().optional(),
   is_primary: z.boolean().optional(),
 }).strict();
 const contactMethodsInput = z.array(contactMethodInput).max(20);

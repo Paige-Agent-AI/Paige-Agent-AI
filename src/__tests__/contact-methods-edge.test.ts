@@ -136,6 +136,8 @@ describe("Paige's MCP update_contact never overwrites a list that changed", () =
     expect(tool).toContain('rpc("_replace_client_contact_methods_checked", { ...target, _expected: expected_contact_methods })');
     expect(tool).not.toMatch(/rpc\("_replace_client_contact_methods"/);
     expect(tool).toContain("if (contact_methods && !expected_contact_methods) return err(\"CONTACT_METHODS_EXPECTED_REQUIRED");
+    // A list read with get_contact (unlabelled addresses come back as label: null) is accepted as sent.
+    expect(source).toMatch(/const contactMethodInput = z\.object\(\{[\s\S]*?label: z\.string\(\)\.nullable\(\)\.optional\(\),/);
     // Adding keeps what is there, so it needs no expected list.
     expect(tool).toContain('await admin.rpc("_add_client_contact_methods", target)');
   });

@@ -123,6 +123,8 @@ BEGIN
 END;
 $$;
 REVOKE ALL ON FUNCTION public._replace_client_contact_methods_checked(uuid, uuid, jsonb, jsonb) FROM PUBLIC, anon, authenticated;
+-- Named explicitly, as its siblings are (20270516000000), rather than left to default privileges.
+GRANT EXECUTE ON FUNCTION public._replace_client_contact_methods_checked(uuid, uuid, jsonb, jsonb) TO service_role;
 
 -- ─── Clients: every address change moves the contact's version ───────────────────────────────
 CREATE FUNCTION public.client_contact_methods_touch_client()

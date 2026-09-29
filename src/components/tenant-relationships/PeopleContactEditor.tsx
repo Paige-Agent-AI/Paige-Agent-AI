@@ -11,11 +11,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { CONTACT_SOURCES, LIFECYCLE_STAGES } from "@/lib/contacts";
 import { ContactMethodsEditor } from "@/components/contact-methods/ContactMethodsEditor";
 import {
+  CLIENT_CONTACT_METHODS_EMBED,
   contactMethodErrorFor,
+  isContactMethodsStale,
   methodsOfKind,
+  orderContactMethods,
+  rebaseContactMethods,
   toContactMethodsPayload,
   validateContactMethods,
   type ContactMethod,
+  type ContactMethodRow,
 } from "@/lib/contact-methods";
 import type { RelationshipPerson } from "./useTenantRelationshipsData";
 import { upsertRelationshipContact, type ContactUpsertPatch } from "./contactUpsert";
@@ -110,6 +115,9 @@ export function PeopleContactEditor({
   onSaved: (contactId: string) => Promise<void> | void;
 }) {
   const [form, setForm] = useState<FormState>(() => formFor(contact));
+  // The address list and version this form was built on. A save that replaces the list names the
+  // version; the database refuses it if the contact changed since (CONTACT_METHODS_STALE).
+  const [basis, setBasis] = useState(() => ({ methods: contact?.contactMethods ?? [], version: contact?.updatedAt ?? null }));
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [step, setStep] = useState<EditorStep>(0);
   const [saving, setSaving] = useState(false);
@@ -134,6 +142,7 @@ export function PeopleContactEditor({
   useEffect(() => {
     if (!open) return;
     setForm(formFor(contact));
+    setBasis({ methods: contact?.contactMethods ?? [], version: contact?.updatedAt ?? null });
     setStep(0);
     setDirty(false);
     setConfirmClose(false);
@@ -240,6 +249,35 @@ export function PeopleContactEditor({
     return true;
   };
 
+  // Someone changed this contact after the editor opened. Nothing was saved. The addresses become
+  // what is stored now plus what this person added; every other field of the draft is untouched.
+  const takeLatestAddresses = async (contactId: string) => {
+    setStep(0);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the embed awaits generated types
+    const { data, error: readError } = await (supabase as any)
+      .from("clients")
+      .select(`updated_at,${CLIENT_CONTACT_METHODS_EMBED}`)
+      .eq("id", contactId)
+      .maybeSingle();
+    const row = data as { updated_at: string; client_contact_methods: ContactMethodRow[] | null } | null;
+    if (readError || !row) {
+      const shown = "Not saved. Someone else changed this contact after you opened it. Your draft is unchanged. To see their change, close the contact and open it again; closing discards this draft.";
+      setError(shown);
+      toast.error(shown);
+      return;
+    }
+    const latest = orderContactMethods(row.client_contact_methods);
+    const { methods, carried } = rebaseContactMethods(latest, basis.methods, form.contactMethods);
+    setBasis({ methods: latest, version: row.updated_at });
+    setForm((previous) => ({ ...previous, contactMethods: methods }));
+    setMethodErrors({});
+    erroredValues.current = {};
+    const shown = `Not saved. Someone else changed this contact after you opened it. The addresses now show what is saved${carried ? `, with ${carried === 1 ? "the address" : "the addresses"} you added kept at the end` : ""}; the rest of your draft is unchanged. Check them and save again.`;
+    setError(shown);
+    toast.error("Not saved: this contact changed since you opened it");
+    announce(shown);
+  };
+
   const save = async () => {
     if (!validateIdentity()) return;
     if (offline) {
@@ -271,8 +309,9 @@ export function PeopleContactEditor({
     // for a new contact). A save of notes or tags must never overwrite addresses that arrived after
     // this editor opened — a merge, Paige, or an inbound match can add one in the meantime.
     const methodsPayload = toContactMethodsPayload(form.contactMethods);
-    if (!contact || JSON.stringify(methodsPayload) !== JSON.stringify(toContactMethodsPayload(contact.contactMethods))) {
+    if (!contact || JSON.stringify(methodsPayload) !== JSON.stringify(toContactMethodsPayload(basis.methods))) {
       patch.contact_methods = methodsPayload;
+      if (contact) patch.expected_updated_at = basis.version;
     }
     setSaving(true);
     setError(null);
@@ -284,6 +323,10 @@ export function PeopleContactEditor({
       toast.success(editing ? "Contact updated" : "Contact created");
     } catch (saveError) {
       const message = saveError instanceof Error ? saveError.message : "Contact save failed";
+      if (contact && isContactMethodsStale(message)) {
+        await takeLatestAddresses(contact.id);
+        return;
+      }
       const onRow = contactMethodErrorFor(form.contactMethods, message);
       if (onRow) {
         setStep(0);
@@ -431,8 +474,6 @@ export function PeopleContactEditor({
           </div>
         )}
 
-        {(offline || error) && <div className="trc-contact-editor-message" role="status">{error ?? "You are offline. This draft remains available; saving is unavailable."}</div>}
-
         {confirmClose && (
           <div className="trc-contact-editor-overlay" role="alertdialog" aria-modal="true" aria-labelledby="trc-contact-close-title">
             <div>
@@ -463,6 +504,8 @@ export function PeopleContactEditor({
         )}
       </section>
 
+      {/* Outside the chapter panel, which scrolls: a refusal stays in view above the actions, on every step. */}
+      {(offline || error) && <div className="trc-contact-editor-message" role="status">{error ?? "You are offline. This draft remains available; saving is unavailable."}</div>}
       {/* Outside the chapter panel, which is itself a live region: one announcement per change. */}
       <div className="sr-only" aria-live="polite">{announcement}</div>
       <footer className="trc-contact-editor-footer">

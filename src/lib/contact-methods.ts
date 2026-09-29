@@ -157,3 +157,28 @@ export function e164Of(value: string): string | null {
   const compact = value.replace(/[\s().-]/g, "");
   return /^\+[1-9]\d{7,14}$/.test(compact) ? compact : null;
 }
+
+/** The database refuses a save built on a list that has since changed (CONTACT_METHODS_STALE). */
+export const isContactMethodsStale = (message: string) => /CONTACT_METHODS_STALE/.test(message);
+
+/**
+ * After a stale refusal: the list as it is stored now, plus each address this person added in their
+ * draft that the stored list does not have. Only the person's own ADDITIONS carry over — an address
+ * that was in what they loaded and is gone now was removed by someone else, and stays removed. What
+ * they relabelled, reordered or removed is not replayed: they see the current list and redo it.
+ */
+export function rebaseContactMethods(
+  latest: readonly ContactMethod[],
+  loaded: readonly ContactMethod[],
+  draft: readonly ContactMethod[],
+): { methods: ContactMethod[]; carried: number } {
+  const keyOf = (method: ContactMethod) => `${method.kind}:${contactMethodMatchKey(method.kind, method.value)}`;
+  const known = new Set([...loaded, ...latest].map(keyOf));
+  const additions = draft.filter((method) => method.value.trim() && !known.has(keyOf(method)));
+  const methods = (["email", "phone"] as const).flatMap((kind) => {
+    const stored = methodsOfKind(latest, kind);
+    const added = methodsOfKind(additions, kind).map((method, i) => ({ ...method, isPrimary: stored.length === 0 && i === 0 }));
+    return [...stored, ...added];
+  });
+  return { methods, carried: additions.length };
+}

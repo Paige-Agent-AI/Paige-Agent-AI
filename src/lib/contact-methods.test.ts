@@ -6,7 +6,9 @@ import {
   makePrimary,
   moveContactMethod,
   orderContactMethods,
+  isContactMethodsStale,
   primaryValue,
+  rebaseContactMethods,
   removeContactMethod,
   toContactMethodsPayload,
   validateContactMethods,
@@ -104,5 +106,28 @@ describe("contact methods model", () => {
     expect(contactMethodErrorFor(base, "CONTACT_METHOD_INVALID_PHONE: (512) 555-0190")).toEqual({ id: "p2", text: "A phone number needs 7 to 15 digits." });
     expect(contactMethodErrorFor(base, "CONTACT_FORBIDDEN: admin or coach required")).toBeNull();
     expect(contactMethodErrorFor(base, "CONTACT_METHOD_TAKEN: nobody@else.co already belongs to another contact")).toBeNull();
+  });
+
+  it("after a stale refusal, keeps the stored list and carries over only what this person added", () => {
+    // Loaded e1,e2,p1. Meanwhile someone else removed e2 and added e9. This person added n1 and
+    // a phone already stored under different formatting.
+    const loaded = [m("e1", "email", "a@x.co", true), m("e2", "email", "b@x.co"), m("p1", "phone", "512 555 0100", true)];
+    const latest = [m("e1", "email", "a@x.co", true), m("e9", "email", "theirs@x.co"), m("p1", "phone", "512 555 0100", true)];
+    const draft = [...loaded, m("n1", "email", "Mine@X.co"), m("n2", "phone", "(512) 555-0100")];
+    const { methods, carried } = rebaseContactMethods(latest, loaded, draft);
+    expect(ids(methods)).toBe("e1*,e9,n1,p1*");
+    expect(carried).toBe(1);
+  });
+
+  it("an address added to an empty kind becomes that kind's primary when carried over", () => {
+    const { methods } = rebaseContactMethods([m("e1", "email", "a@x.co", true)], [], [m("n1", "phone", "5125550100", true)]);
+    expect(ids(methods)).toBe("e1*,n1*");
+    const blank = rebaseContactMethods([], [], [m("n2", "email", "  ")]);
+    expect(blank.carried).toBe(0);
+  });
+
+  it("recognises the stale refusal", () => {
+    expect(isContactMethodsStale("CONTACT_METHODS_STALE: this list changed since it was loaded")).toBe(true);
+    expect(isContactMethodsStale("CONTACT_METHOD_TAKEN: a@x.co")).toBe(false);
   });
 });

@@ -21,6 +21,12 @@ const ownerHarness = vi.hoisted(() => ({ conversations: 0, calendars: 0, portals
 const editorHarness = vi.hoisted(() => ({
   rpc: vi.fn(async (..._args: unknown[]) => ({ data: [] })),
   upsert: vi.fn(async (..._args: unknown[]) => "saved-contact"),
+  // What `clients` answers when the editor re-reads a contact after a stale refusal.
+  latest: { data: null as unknown, error: null as unknown },
+  from: vi.fn((_table: string) => {
+    const chain = { select: () => chain, eq: () => chain, maybeSingle: async () => editorHarness.latest };
+    return chain;
+  }),
 }));
 
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => useTenantContext() }));
@@ -56,7 +62,7 @@ vi.mock("@/lib/routing/useSubtabRoute", () => ({ useSubtabRoute: (...args: unkno
 vi.mock("./useTenantRelationshipsData", () => ({
   useTenantRelationshipsData: (...args: unknown[]) => useTenantRelationshipsData(...args),
 }));
-vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: editorHarness.rpc } }));
+vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: editorHarness.rpc, from: editorHarness.from } }));
 vi.mock("./contactUpsert", () => ({
   upsertRelationshipContact: (...args: unknown[]) => editorHarness.upsert(...args),
 }));
@@ -121,7 +127,10 @@ describe("tenant Relationships / Clients workspace", () => {
     useSubtabRoute.mockReset();
     useTenantRelationshipsData.mockReset();
     editorHarness.rpc.mockClear();
-    editorHarness.upsert.mockClear();
+    editorHarness.upsert.mockReset();
+    editorHarness.upsert.mockImplementation(async () => "saved-contact");
+    editorHarness.from.mockClear();
+    editorHarness.latest = { data: null, error: null };
     useTenantContext.mockReturnValue({
       activeTenantId: "tenant-solo",
       activeTenant: { id: "tenant-solo", name: "Supplied Workspace", account_type: "standalone", parent_tenant_id: null },
@@ -384,6 +393,70 @@ describe("tenant Relationships / Clients workspace", () => {
       { kind: "email", value: "person@example.test", label: "Work", is_primary: false },
       { kind: "phone", value: "+1 202 555 0142", label: "Mobile", is_primary: true },
     ]);
+    // Replacing the list names the version the editor loaded, so a later change elsewhere is refused.
+    expect(patch.expected_updated_at).toBe("2026-08-24T12:00:00Z");
+    act(() => root.unmount());
+    host.remove();
+  });
+
+  it("refuses to overwrite a change made elsewhere, shows what is saved and keeps what was added", async () => {
+    useSubtabRoute.mockImplementation((_tier: string, _branch: string, initial: string) => React.useState(initial));
+    useTenantRelationshipsData.mockReturnValue(baseData);
+    editorHarness.upsert
+      .mockRejectedValueOnce(new Error("CONTACT_METHODS_STALE: this contact changed since it was loaded"))
+      .mockResolvedValueOnce("p-1");
+    // Meanwhile an inbound message attached a second email to this contact.
+    editorHarness.latest = {
+      data: {
+        updated_at: "2026-09-29T02:00:00.123456+00:00",
+        client_contact_methods: [
+          { id: "m-e1", kind: "email", value: "person@example.test", label: "Work", is_primary: true, position: 0 },
+          { id: "m-e2", kind: "email", value: "inbound@example.test", label: null, is_primary: false, position: 1 },
+          { id: "m-p1", kind: "phone", value: "+1 202 555 0142", label: "Mobile", is_primary: true, position: 0 },
+        ],
+      },
+      error: null,
+    };
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    await act(async () => root.render(<MemoryRouter initialEntries={["/solo/42/clients/people?person=p-1"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>));
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-contact-editor-origin="record-edit"]')?.click());
+    const lastName = host.querySelector<HTMLInputElement>("#trc-last-name");
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(lastName, "Personson");
+      lastName?.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-ctm-add="email"]')?.click());
+    const added = host.querySelectorAll<HTMLElement>('[data-ctm-list="email"] [data-ctm-id]')[1];
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(added.querySelector("input"), "mine@example.test");
+      added.querySelector("input")?.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    const toLastStep = async () => {
+      const finalStep = Array.from(host.querySelectorAll<HTMLButtonElement>('.trc-contact-editor-steps [role="tab"]')).find((b) => b.textContent?.includes("Relationship & consent"));
+      await act(async () => finalStep?.click());
+    };
+    const save = () => Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((b) => b.textContent === "Save changes" || b.textContent === "Retry save");
+    await toLastStep();
+    await act(async () => save()?.click());
+
+    await vi.waitFor(() => expect(host.textContent).toContain("Not saved. Someone else changed this contact after you opened it."));
+    expect(host.textContent).toContain("with the address you added kept at the end");
+    expect(host.textContent).not.toContain("CONTACT_METHODS_STALE");
+    // Back on Identity: what is saved now, then this person's addition. The rest of the draft stands.
+    const values = () => Array.from(host.querySelectorAll<HTMLElement>('[data-ctm-list="email"] [data-ctm-id] input')).map((i) => (i as HTMLInputElement).value);
+    expect(values()).toEqual(["person@example.test", "inbound@example.test", "mine@example.test"]);
+    expect(host.querySelector<HTMLInputElement>("#trc-last-name")?.value).toBe("Personson");
+
+    // Saving again is built on the version just read, and keeps the address that arrived meanwhile.
+    await toLastStep();
+    await act(async () => save()?.click());
+    await vi.waitFor(() => expect(editorHarness.upsert).toHaveBeenCalledTimes(2));
+    const { patch } = editorHarness.upsert.mock.lastCall?.[0] as { patch: Record<string, unknown> };
+    expect(patch.expected_updated_at).toBe("2026-09-29T02:00:00.123456+00:00");
+    expect((patch.contact_methods as Array<{ value: string }>).map((m) => m.value)).toEqual(["person@example.test", "inbound@example.test", "mine@example.test", "+1 202 555 0142"]);
+    expect(patch).toMatchObject({ last_name: "Personson" });
     act(() => root.unmount());
     host.remove();
   });
@@ -409,6 +482,7 @@ describe("tenant Relationships / Clients workspace", () => {
     const { patch } = editorHarness.upsert.mock.lastCall?.[0] as { patch: Record<string, unknown> };
     // Addresses that arrived after the editor opened (a merge, Paige, an inbound match) must survive.
     expect(patch).not.toHaveProperty("contact_methods");
+    expect(patch).not.toHaveProperty("expected_updated_at");
     expect(patch).toMatchObject({ last_name: "Personson" });
     act(() => root.unmount());
     host.remove();

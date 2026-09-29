@@ -88,3 +88,16 @@ Deno.test("the anonymizer scrubs every address the person holds, including a non
   assert(!out.includes("x.test"), out);
   assert(!out.includes("0101"), out);
 });
+
+Deno.test("an international number the person holds is scrubbed, with or without spacing", () => {
+  const out = anonymize(
+    "Call +44 20 7946 0958, or text +442079460958, or (020) 7946-0958.",
+    { phones: ["+44 20 7946 0958", "+442079460958", "(020) 7946-0958"] },
+  );
+  assert(!/7946|0958/.test(out), out);
+});
+
+Deno.test("a name token still matches whole words only", () => {
+  assertEquals(anonymize("Ada met Adam.", { firstName: "Ada" }), "[REDACTED] met Adam.");
+});
+

@@ -30,7 +30,9 @@ function tokenSet(values: Array<string | null | undefined>): RegExp[] {
     if (seen.has(key)) continue;
     seen.add(key);
     const escaped = v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    rxs.push(new RegExp(`\\b${escaped}\\b`, "gi"));
+    // Whole-token boundaries by lookaround, not \b: \b never matches before a leading "+" or "(",
+    // so an international number like "+44 20 7946 0958" would pass through unscrubbed.
+    rxs.push(new RegExp(`(?<![\\w+])${escaped}(?!\\w)`, "gi"));
   }
   return rxs;
 }

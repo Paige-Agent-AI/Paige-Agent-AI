@@ -88,7 +88,11 @@ INSERT INTO public.businesses(id,tenant_id,owner_user_id,legal_name,is_active,is
  ('c7200000-0000-4000-8000-00000000b201','c7200000-0000-4000-8000-000000002222','c7200000-0000-4000-8000-000000000001','Archived Primary',false,true,'2026-09-13 00:00:00+00'),
  ('c7200000-0000-4000-8000-00000000b202','c7200000-0000-4000-8000-000000002222','c7200000-0000-4000-8000-000000000001','Active Primary',true,true,'2026-09-13 00:00:00+00');
 UPDATE public.clients SET entity_name='Unlink Fixture LLC',primary_business_id='c7100000-0000-4000-8000-00000000b102' WHERE id='c7100000-0000-4000-8000-00000000c106';
+-- The fixture's address rows leave the table's deferred checks pending, and a table with pending
+-- trigger events cannot be altered: run exactly those checks now, then defer them again as they were.
+SET CONSTRAINTS public.client_contact_methods_position_key, public.client_contact_methods_one_primary, public.client_contact_methods_require_primary IMMEDIATE;
 ALTER TABLE public.client_contact_methods ENABLE TRIGGER client_contact_methods_touch_client;
+SET CONSTRAINTS public.client_contact_methods_position_key, public.client_contact_methods_one_primary, public.client_contact_methods_require_primary DEFERRED;
 SELECT set_config('app.pipeline_created_through','paige',true);
 SELECT set_config('app.pipeline_requested_by','c7100000-0000-4000-8000-000000000001',true);
 INSERT INTO public.pipelines(tenant_id,name,is_default) VALUES

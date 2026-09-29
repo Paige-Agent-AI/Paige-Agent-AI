@@ -3,7 +3,7 @@
 -- workspace; and only the platform owner decides which workspaces are the company's.
 -- Synthetic fixtures; always rolled back.
 BEGIN;
-SELECT plan(48);
+SELECT plan(50);
 
 INSERT INTO auth.users (id, aud, role, email) VALUES
   ('0b0b0000-0000-4000-8000-000000000001','authenticated','authenticated','cw-super@tests.invalid'),
@@ -165,6 +165,11 @@ SELECT throws_ok($$SELECT public.grant_tenant_member_role('0b0b0000-0000-4000-80
 SELECT throws_ok($$SELECT public.create_tenant_invite_token('0b0b0000-0000-4000-8000-00000000c001'::uuid, 'team', 'owner'::public.tenant_role)$$,
   '42501', 'TENANT_FORBIDDEN: a company workspace does not take invitations; the platform owner adds people to it directly',
   'nor mint an invitation into it for an account they control');
+SELECT throws_ok($$INSERT INTO public.invitations (email, invited_by) VALUES ('seat@tests.invalid','0b0b0000-0000-4000-8000-000000000002')$$,
+  '42501', 'TENANT_FORBIDDEN: a company workspace does not take invitations; the platform owner adds people to it directly',
+  'nor a staff invitation that names no workspace and would be stamped with the company''s');
+SELECT lives_ok($$SELECT public.create_tenant_invite_token('0b0b0000-0000-4000-8000-00000000c001'::uuid, 'consumer')$$,
+  'a client portal invite, which creates no seat, is still allowed in a company workspace');
 
 -- Role sync, fired by a role granted while the operator's active workspace is the company's,
 -- keeps skipping it instead of trying (and failing) to seat someone there.

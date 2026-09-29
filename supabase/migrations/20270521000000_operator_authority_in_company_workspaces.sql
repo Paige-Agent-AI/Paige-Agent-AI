@@ -28,8 +28,13 @@
 --      Deliberate consequence: once the platform owner seats someone there, only the platform
 --      owner (or a server context) can change or remove that seat — not the member, not an
 --      operator, not a service-role offboarding path.
---   2c. REFUSES invitations into a company workspace (tenant_invite_tokens, invitations) unless
---      written by a direct server context. An invitation is accepted by the invitee, who is not
+--   2c. REFUSES seat-creating invitations into a company workspace unless written by a direct
+--      server context: every staff invitation (invitations) and every tenant_invite_tokens kind
+--      except 'consumer'. A consumer (client portal) invite never creates a seat — accepting it
+--      links a clients row and grants the client role — so contacts that arrive in a company
+--      workspace (e.g. through its forms) can still be given portal access. The workspace is read
+--      as COALESCE(NEW.tenant_id, current_user_tenant_id()), because invitations stamps an omitted
+--      tenant_id in a later trigger. An invitation is accepted by the invitee, who is not
 --      the platform owner, so it could only fail at acceptance (2b); refusing it when created is
 --      the honest answer, and it closes the other door to a lasting seat (an operator minting an
 --      invite for an account they control). The platform owner seats people directly
@@ -38,6 +43,8 @@
 --      company workspace on an operator's behalf (before this migration an operator was not an
 --      admin there, so it skipped; now it skips explicitly). Without this, an operator whose
 --      active workspace is the company's would fail to accept any invitation elsewhere.
+--      Unchanged and allowed by 2b: when the PLATFORM OWNER grants a role while their active
+--      workspace is a company workspace, the sync still seats the grantee there, as it always has.
 --   3. WIDENS the four membership predicates, and only for a company workspace:
 --        is_tenant_admin(_tenant)            OR (is_platform_operator() AND is_company_workspace)
 --        is_tenant_member(_tenant)           OR (is_platform_operator() AND is_company_workspace)
@@ -174,7 +181,17 @@ SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
 BEGIN
-  IF public.is_company_workspace(NEW.tenant_id) AND NOT public.is_direct_server_context() THEN
+  -- A client portal invite creates no seat (see header 2c). Nested so NEW.kind is only read on
+  -- the table that has it.
+  IF TG_TABLE_NAME = 'tenant_invite_tokens' THEN
+    IF NEW.kind = 'consumer' THEN
+      RETURN NEW;
+    END IF;
+  END IF;
+  -- invitations fills an omitted tenant_id in a later trigger (trg_stamp_tenant_id), so read
+  -- the workspace it will land in, not only the one written.
+  IF public.is_company_workspace(COALESCE(NEW.tenant_id, public.current_user_tenant_id()))
+     AND NOT public.is_direct_server_context() THEN
     RAISE EXCEPTION 'TENANT_FORBIDDEN: a company workspace does not take invitations; the platform owner adds people to it directly'
       USING ERRCODE = '42501';
   END IF;

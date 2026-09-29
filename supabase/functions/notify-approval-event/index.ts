@@ -2,6 +2,7 @@
 // Triggered by DB triggers on paige_pending_approvals (insert + update→changes_requested).
 // Creates in-app notifications (paige_admin_notifications) and sends transactional emails.
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { isAuthorizedInternalCaller, adminClient } from '../_shared/systems-check-http.ts'
 import { canonicalAppUrl, resolveCanonicalAppPath } from '../_shared/canonical-app-url.ts'
 
 const corsHeaders = {
@@ -24,6 +25,15 @@ function json(data: Record<string, unknown>, status = 200): Response {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders })
+  // Internal only. This function forwards to send-transactional-email with the
+  // service key, so an open door here was an open relay there: anyone holding the publishable key and an approval id could put their own words in the email. Its callers are the platform's
+  // own crons and database triggers, which all send the service key.
+  if (!(await isAuthorizedInternalCaller(req, adminClient()))) {
+    return new Response(JSON.stringify({ error: 'forbidden' }), {
+      status: 403,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!

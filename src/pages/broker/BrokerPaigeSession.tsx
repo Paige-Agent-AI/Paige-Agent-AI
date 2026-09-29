@@ -12,7 +12,7 @@ import {
   Send,
   Loader2,
   FileText,
-  Share2,
+  Copy,
   Save,
   StopCircle,
   Info,
@@ -119,7 +119,6 @@ const BrokerPaigeSession = () => {
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [summary, setSummary] = useState("");
   const [generatingSummary, setGeneratingSummary] = useState(false);
-  const [sharing, setSharing] = useState(false);
   const sessionStartRef = useRef<number>(Date.now());
   const scrollerRef = useRef<HTMLDivElement | null>(null);
 
@@ -347,59 +346,18 @@ const BrokerPaigeSession = () => {
     }
   };
 
-  const shareSummary = async () => {
-    if (!rel || !sessionId || !summary) return;
-    setSharing(true);
+  // Nothing on the platform can deliver a session summary to the client today: the in-app card
+  // this used to write is refused by the database (no insert policy, and neither its channel nor
+  // its status is allowed), and the email it used to send was the client invite, which never
+  // carried the summary. So the broker copies it and sends it themselves.
+  const copySummary = async () => {
+    if (!rel || !summary) return;
     try {
-      // Mark on session row
-      await supabase
-        .from("broker_paige_sessions")
-        .update({ summary_shared_at: new Date().toISOString() })
-        .eq("id", sessionId);
-
-      // In-app card via communication_log so the client sees it in their app
-      if (rel.client_user_id) {
-        await supabase.from("communication_log").insert({
-          user_id: rel.client_user_id,
-          channel: "in_app",
-          message_type: "broker_session_summary",
-          subject: `Notes from your broker at ${profile?.business_name || "your firm"}`,
-          preview: summary.slice(0, 240),
-          status: "delivered",
-        });
-      }
-
-      // Email it via the transactional pipeline (best effort)
-      try {
-        await supabase.functions.invoke("send-transactional-email", {
-          body: {
-            templateName: "broker-client-invite", // reuse existing template as fallback container
-            recipientEmail: rel.client_email,
-            idempotencyKey: `broker-summary-${sessionId}`,
-            templateData: {
-              firstName: rel.client_first_name,
-              brokerBusinessName: profile?.business_name || "your broker",
-              brokerReferralCode: profile?.referral_code || "",
-              signupLink: "https://paigeagent.ai/app",
-              customMessage: summary,
-            },
-          },
-        });
-      } catch (e) {
-        console.warn("[broker session] email send failed (non-blocking)", e);
-      }
-
-      trackEvent("broker_summary_shared", "engagement", {
-        session_id: sessionId,
-        relationship_id: rel.id,
-      });
-
-      toast({ title: "Summary shared", description: `Sent to ${rel.client_first_name}.` });
-      setSummaryOpen(false);
-    } catch (e: unknown) {
-      toast({ title: "Share failed", description: e instanceof Error ? e.message : "Try again.", variant: "destructive" });
-    } finally {
-      setSharing(false);
+      await navigator.clipboard.writeText(summary);
+      trackEvent("broker_summary_copied", "engagement", { session_id: sessionId, relationship_id: rel.id });
+      toast({ title: "Summary copied", description: `Paste it into your own message to ${rel.client_first_name}.` });
+    } catch {
+      toast({ title: "Copy the summary", description: "Select the summary text and copy it." });
     }
   };
 
@@ -631,7 +589,7 @@ const BrokerPaigeSession = () => {
           <DialogHeader>
             <DialogTitle>Client-ready summary</DialogTitle>
             <DialogDescription>
-              Preview what {rel.client_first_name} will receive — by email and in their PaigeAgent dashboard.
+              A client-ready summary of this session. Copy it and send it to {rel.client_first_name} yourself.
             </DialogDescription>
           </DialogHeader>
           <div className="prose prose-sm dark:prose-invert max-w-none max-h-[50vh] overflow-y-auto border rounded-md p-4 bg-muted/30">
@@ -640,9 +598,9 @@ const BrokerPaigeSession = () => {
           <DialogFooter>
             <Button variant="ghost" onClick={() => setSummaryOpen(false)}>Cancel</Button>
             {permissions.can_share_summaries && (
-              <Button onClick={shareSummary} disabled={sharing || !summary}>
-                {sharing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Share2 className="h-4 w-4 mr-2" />}
-                Share with client
+              <Button onClick={copySummary} disabled={!summary}>
+                <Copy className="h-4 w-4 mr-2" />
+                Copy summary
               </Button>
             )}
           </DialogFooter>

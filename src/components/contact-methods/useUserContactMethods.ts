@@ -4,9 +4,11 @@ import {
   USER_CONTACT_METHODS_SELECT,
   contactMethodErrorFor,
   isContactMethodsStale,
+  isOutdatedPage,
   orderContactMethods,
   rebaseContactMethods,
   toContactMethodsPayload,
+  toLoadedContactMethodsPayload,
   validateContactMethods,
   type ContactMethod,
   type ContactMethodRow,
@@ -90,7 +92,7 @@ export function useUserContactMethods(userId: string | null | undefined): UserCo
       const { data, error: saveError } = await (supabase as any).rpc("set_user_contact_methods", {
         p_user_id: userId,
         p_methods: toContactMethodsPayload(next),
-        p_expected: toContactMethodsPayload(loaded.current),
+        p_expected: toLoadedContactMethodsPayload(loaded.current),
       });
       if (saveError) return { ok: false as const, error: saveError.message || "Couldn't save contact details." };
       // The RPC answers with what it stored, row ids included: the screen shows that, never its draft.
@@ -115,6 +117,7 @@ export function useUserContactMethods(userId: string | null | undefined): UserCo
 export function userContactMethodsRefusal(message: string): string {
   if (/USER_CONTACT_METHODS_FORBIDDEN/.test(message)) return "You can't change this person's contact details from this workspace.";
   if (isContactMethodsStale(message)) return "Someone else changed these contact details after you opened them. Nothing was saved.";
+  if (isOutdatedPage(message)) return "Nothing was saved: this page is out of date. Reload the page and save again.";
   if (/CONTACT_METHODS_TOO_MANY/.test(message)) return "That's more than 20 of one kind. Remove one and save again.";
   if (/CONTACT_METHOD_BAD_LABEL/.test(message)) return "One of the labels is too long. Choose one from the list.";
   if (/^CONTACT_METHODS?_|USER_CONTACT_METHODS_/.test(message)) return "Those contact details couldn't be saved. Check each address and try again.";

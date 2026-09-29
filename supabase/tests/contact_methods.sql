@@ -79,7 +79,7 @@ SELECT lives_ok($q$SELECT public.upsert_contact(jsonb_build_object('contact_meth
     jsonb_build_object('kind','email','value','ada.home@a.tests.invalid','label','Personal'),
     jsonb_build_object('kind','phone','value','+1 (555) 010-0101','label','Mobile'),
     jsonb_build_object('kind','phone','value','555-010-0199','label','Office','is_primary',true)),
-    'expected_updated_at', (SELECT updated_at FROM public.clients WHERE id = 'c3000000-0000-4000-8000-000000000ca1')),
+    'expected_contact_methods', (SELECT COALESCE(jsonb_agg(jsonb_build_object('kind',kind,'value',value,'label',label,'is_primary',is_primary) ORDER BY kind, position), '[]'::jsonb) FROM public.client_contact_methods WHERE client_id = 'c3000000-0000-4000-8000-000000000ca1')),
   'c3000000-0000-4000-8000-000000000ca1')$q$,
   'the owner saves two emails and two phones on one contact');
 RESET ROLE;
@@ -102,7 +102,7 @@ SELECT lives_ok($q$SELECT public.upsert_contact(jsonb_build_object('contact_meth
     jsonb_build_object('kind','email','value','ada@a.tests.invalid','label','Work'),
     jsonb_build_object('kind','phone','value','+1 (555) 010-0101','label','Mobile'),
     jsonb_build_object('kind','phone','value','555-010-0199','label','Office','is_primary',true)),
-    'expected_updated_at', (SELECT updated_at FROM public.clients WHERE id = 'c3000000-0000-4000-8000-000000000ca1')),
+    'expected_contact_methods', (SELECT COALESCE(jsonb_agg(jsonb_build_object('kind',kind,'value',value,'label',label,'is_primary',is_primary) ORDER BY kind, position), '[]'::jsonb) FROM public.client_contact_methods WHERE client_id = 'c3000000-0000-4000-8000-000000000ca1')),
   'c3000000-0000-4000-8000-000000000ca1')$q$,
   'the owner reorders the emails and moves the primary');
 RESET ROLE;
@@ -123,7 +123,7 @@ SELECT throws_like($q$SELECT public.upsert_contact('{"contact_methods":[{"kind":
 SELECT throws_like($q$SELECT public.upsert_contact('{"email":"z@a.tests.invalid","contact_methods":[]}'::jsonb, 'c3000000-0000-4000-8000-000000000ca2')$q$,
   'CONTACT_METHODS_AMBIGUOUS%', 'the list and the single-address keys cannot be mixed');
 SELECT throws_like($q$SELECT public.upsert_contact(jsonb_build_object('contact_methods', '[{"kind":"email","value":"bob@a.tests.invalid"},{"kind":"email","value":"ada@a.tests.invalid"}]'::jsonb,
-    'expected_updated_at', (SELECT updated_at FROM public.clients WHERE id = 'c3000000-0000-4000-8000-000000000ca2')), 'c3000000-0000-4000-8000-000000000ca2')$q$,
+    'expected_contact_methods', (SELECT COALESCE(jsonb_agg(jsonb_build_object('kind',kind,'value',value,'label',label,'is_primary',is_primary) ORDER BY kind, position), '[]'::jsonb) FROM public.client_contact_methods WHERE client_id = 'c3000000-0000-4000-8000-000000000ca2')), 'c3000000-0000-4000-8000-000000000ca2')$q$,
   'CONTACT_METHOD_TAKEN%', 'an address held by another contact in the workspace is refused, even a secondary one');
 RESET ROLE;
 SELECT is((SELECT array_agg(value) FROM public.client_contact_methods WHERE client_id = 'c3000000-0000-4000-8000-000000000ca2'),

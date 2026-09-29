@@ -30,7 +30,7 @@ const jordan = {
   ],
   email: "jordan@reyesbuild.co", phone: "+1 (512) 555-0148", title: null, website: null, linkedinUrl: null, streetAddress: null, city: null, state: null, zipCode: null,
   location: null, source: "referral", status: "active", tags: [], doNotContact: false, sharedContextConsent: false, linkedUserId: null, relationship: "client active",
-  lifecycleStage: "client_active", primaryOffer: null, notes: null, assignedCoachUserId: null, owner: "Unassigned", lastTouch: null, createdAt: null, updatedAt: "2026-09-28T18:00:00.000000+00:00",
+  lifecycleStage: "client_active", primaryOffer: null, notes: null, assignedCoachUserId: null, owner: "Unassigned", lastTouch: null, createdAt: null, updatedAt: null,
 } as RelationshipPerson;
 
 function Harness() {

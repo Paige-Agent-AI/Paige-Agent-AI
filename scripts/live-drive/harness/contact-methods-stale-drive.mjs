@@ -80,7 +80,7 @@ for (const theme of ["light", "dark"]) {
     await save();
     await page.waitForFunction(() => window.__upserts.length === 2);
     const last = await page.evaluate(() => window.__upserts.at(-1).p_patch);
-    refused.retry = { expected_updated_at: last.expected_updated_at, emails: last.contact_methods.filter((m) => m.kind === "email").map((m) => m.value) };
+    refused.retry = { expectedEmails: last.expected_contact_methods.filter((m) => m.kind === "email").map((m) => m.value), emails: last.contact_methods.filter((m) => m.kind === "email").map((m) => m.value) };
   }
   results[`people-${theme}`] = refused;
   await page.close();

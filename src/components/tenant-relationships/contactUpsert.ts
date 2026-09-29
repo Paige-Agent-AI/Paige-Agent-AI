@@ -5,9 +5,10 @@ export type ContactUpsertPatch = Partial<{
   last_name: string | null;
   /** The contact's complete, ordered list of emails and phones (replaces what is stored). */
   contact_methods: Array<{ kind: "email" | "phone"; value: string; label: string | null; is_primary: boolean }>;
-  /** The contact's `updated_at` as it was loaded. Required with `contact_methods` on an existing
-   *  contact: the database refuses the replacement if the contact changed since. */
-  expected_updated_at: string | null;
+  /** The contact's list as it was loaded (`toLoadedContactMethodsPayload`). Required with
+   *  `contact_methods` on an existing contact: the database refuses the replacement if the stored
+   *  list is no longer this one. */
+  expected_contact_methods: Array<{ kind: "email" | "phone"; value: string; label: string | null; is_primary: boolean }>;
   entity_name: string | null;
   entity_type: string | null;
   title: string | null;

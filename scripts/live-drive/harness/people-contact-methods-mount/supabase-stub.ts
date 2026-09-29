@@ -2,7 +2,8 @@
 // sent into `window.__upserts` so a drive can assert the exact payload; `?taken=<address>`
 // makes it refuse that address the way the database does. `?stale=1` refuses the first list
 // replacement as CONTACT_METHODS_STALE, as if an inbound message had attached an address after the
-// editor opened, and `clients` then answers with that newer list.
+// editor opened, and `clients` then answers with that newer list. A replacement that names no
+// loaded list is refused, as the database refuses it.
 declare global { interface Window { __upserts: unknown[] } }
 window.__upserts = [];
 const taken = new URLSearchParams(window.location.search).get("taken");
@@ -10,13 +11,13 @@ let stale = new URLSearchParams(window.location.search).get("stale") === "1";
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const supabase = {
-  rpc: async (name: string, args: { p_patch?: { contact_methods?: Array<{ value: string }>; expected_updated_at?: string | null } }) => {
+  rpc: async (name: string, args: { p_patch?: { contact_methods?: Array<{ value: string }>; expected_contact_methods?: unknown } }) => {
     if (name === "get_tenant_assignable_members") return { data: [{ user_id: "owner-1", full_name: "Dana Whitfield", roles: ["admin"] }], error: null };
     if (name === "upsert_contact") {
       window.__upserts.push(args);
       await wait(500);
       const clash = taken && args.p_patch?.contact_methods?.find((m) => m.value.toLowerCase() === taken.toLowerCase());
-      if (args.p_patch?.contact_methods && args.p_patch.expected_updated_at === null) return { data: null, error: { message: "CONTACT_EXPECTED_VERSION_INVALID: expected_updated_at must be a timestamp" } };
+      if (args.p_patch?.contact_methods && !Array.isArray(args.p_patch.expected_contact_methods)) return { data: null, error: { message: "CONTACT_METHODS_EXPECTED_REQUIRED: send the list you loaded" } };
       if (stale && args.p_patch?.contact_methods) {
         stale = false;
         return { data: null, error: { message: "CONTACT_METHODS_STALE: this contact changed since it was loaded" } };
@@ -32,7 +33,6 @@ export const supabase = {
       eq: () => chain,
       maybeSingle: async () => table !== "clients" ? { data: null, error: { message: `unstubbed table ${table}` } } : {
         data: {
-          updated_at: "2026-09-29T02:00:00.123456+00:00",
           client_contact_methods: [
             { id: "e1", kind: "email", value: "jordan@reyesbuild.co", label: "Work", is_primary: true, position: 0 },
             { id: "e2", kind: "email", value: "jordan.reyes.home@fastmail.com", label: "Personal", is_primary: false, position: 1 },

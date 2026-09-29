@@ -393,8 +393,11 @@ describe("tenant Relationships / Clients workspace", () => {
       { kind: "email", value: "person@example.test", label: "Work", is_primary: false },
       { kind: "phone", value: "+1 202 555 0142", label: "Mobile", is_primary: true },
     ]);
-    // Replacing the list names the version the editor loaded, so a later change elsewhere is refused.
-    expect(patch.expected_updated_at).toBe("2026-08-24T12:00:00Z");
+    // Replacing the list names the list the editor loaded, so a change made elsewhere is refused.
+    expect(patch.expected_contact_methods).toEqual([
+      { kind: "email", value: "person@example.test", label: "Work", is_primary: true },
+      { kind: "phone", value: "+1 202 555 0142", label: "Mobile", is_primary: true },
+    ]);
     act(() => root.unmount());
     host.remove();
   });
@@ -408,7 +411,6 @@ describe("tenant Relationships / Clients workspace", () => {
     // Meanwhile an inbound message attached a second email to this contact.
     editorHarness.latest = {
       data: {
-        updated_at: "2026-09-29T02:00:00.123456+00:00",
         client_contact_methods: [
           { id: "m-e1", kind: "email", value: "person@example.test", label: "Work", is_primary: true, position: 0 },
           { id: "m-e2", kind: "email", value: "inbound@example.test", label: null, is_primary: false, position: 1 },
@@ -449,14 +451,45 @@ describe("tenant Relationships / Clients workspace", () => {
     expect(values()).toEqual(["person@example.test", "inbound@example.test", "mine@example.test"]);
     expect(host.querySelector<HTMLInputElement>("#trc-last-name")?.value).toBe("Personson");
 
-    // Saving again is built on the version just read, and keeps the address that arrived meanwhile.
+    // Saving again is built on the list just read, and keeps the address that arrived meanwhile.
     await toLastStep();
     await act(async () => save()?.click());
     await vi.waitFor(() => expect(editorHarness.upsert).toHaveBeenCalledTimes(2));
     const { patch } = editorHarness.upsert.mock.lastCall?.[0] as { patch: Record<string, unknown> };
-    expect(patch.expected_updated_at).toBe("2026-09-29T02:00:00.123456+00:00");
+    expect((patch.expected_contact_methods as Array<{ value: string }>).map((m) => m.value)).toEqual(["person@example.test", "inbound@example.test", "+1 202 555 0142"]);
     expect((patch.contact_methods as Array<{ value: string }>).map((m) => m.value)).toEqual(["person@example.test", "inbound@example.test", "mine@example.test", "+1 202 555 0142"]);
     expect(patch).toMatchObject({ last_name: "Personson" });
+    act(() => root.unmount());
+    host.remove();
+  });
+
+  it("a second Save after a saved address change sends nothing stale", async () => {
+    useSubtabRoute.mockImplementation((_tier: string, _branch: string, initial: string) => React.useState(initial));
+    useTenantRelationshipsData.mockReturnValue(baseData);
+    editorHarness.upsert.mockResolvedValue("p-1");
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    await act(async () => root.render(<MemoryRouter initialEntries={["/solo/42/clients/people?person=p-1"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>));
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-contact-editor-origin="record-edit"]')?.click());
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-ctm-add="email"]')?.click());
+    const added = host.querySelectorAll<HTMLElement>('[data-ctm-list="email"] [data-ctm-id]')[1];
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(added.querySelector("input"), "second@example.test");
+      added.querySelector("input")?.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    const finalStep = Array.from(host.querySelectorAll<HTMLButtonElement>('.trc-contact-editor-steps [role="tab"]')).find((b) => b.textContent?.includes("Relationship & consent"));
+    await act(async () => finalStep?.click());
+    const save = () => Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((b) => b.textContent === "Save changes");
+    await act(async () => save()?.click());
+    await vi.waitFor(() => expect(editorHarness.upsert).toHaveBeenCalledTimes(1));
+    // The saved overlay leaves the footer live; a second click is a no-op on addresses, never a
+    // replacement named against the list the editor opened with.
+    await act(async () => save()?.click());
+    await vi.waitFor(() => expect(editorHarness.upsert).toHaveBeenCalledTimes(2));
+    const { patch } = editorHarness.upsert.mock.lastCall?.[0] as { patch: Record<string, unknown> };
+    expect(patch).not.toHaveProperty("contact_methods");
+    expect(patch).not.toHaveProperty("expected_contact_methods");
     act(() => root.unmount());
     host.remove();
   });
@@ -482,7 +515,7 @@ describe("tenant Relationships / Clients workspace", () => {
     const { patch } = editorHarness.upsert.mock.lastCall?.[0] as { patch: Record<string, unknown> };
     // Addresses that arrived after the editor opened (a merge, Paige, an inbound match) must survive.
     expect(patch).not.toHaveProperty("contact_methods");
-    expect(patch).not.toHaveProperty("expected_updated_at");
+    expect(patch).not.toHaveProperty("expected_contact_methods");
     expect(patch).toMatchObject({ last_name: "Personson" });
     act(() => root.unmount());
     host.remove();

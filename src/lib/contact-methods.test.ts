@@ -7,10 +7,12 @@ import {
   moveContactMethod,
   orderContactMethods,
   isContactMethodsStale,
+  isOutdatedPage,
   primaryValue,
   rebaseContactMethods,
   removeContactMethod,
   toContactMethodsPayload,
+  toLoadedContactMethodsPayload,
   validateContactMethods,
   type ContactMethod,
 } from "./contact-methods";
@@ -124,6 +126,16 @@ describe("contact methods model", () => {
     expect(ids(methods)).toBe("e1*,n1*");
     const blank = rebaseContactMethods([], [], [m("n2", "email", "  ")]);
     expect(blank.carried).toBe(0);
+  });
+
+  it("names a loaded list exactly as it was read, untrimmed", () => {
+    const loaded = [m("p1", "phone", "512 555 0100\u00a0", true, " Work "), m("e1", "email", "a@x.co", true)];
+    expect(toLoadedContactMethodsPayload(loaded)).toEqual([
+      { kind: "email", value: "a@x.co", label: null, is_primary: true },
+      { kind: "phone", value: "512 555 0100\u00a0", label: " Work ", is_primary: true },
+    ]);
+    expect(isOutdatedPage("Could not find the function public.set_user_contact_methods(p_expected) in the schema cache")).toBe(true);
+    expect(isOutdatedPage("CONTACT_METHODS_STALE")).toBe(false);
   });
 
   it("recognises the stale refusal", () => {

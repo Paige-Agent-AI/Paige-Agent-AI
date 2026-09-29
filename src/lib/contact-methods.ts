@@ -90,6 +90,17 @@ export function toContactMethodsPayload(methods: readonly ContactMethod[]) {
   );
 }
 
+/**
+ * The list exactly as it was read, for a save to name what it replaces (`expected_contact_methods`,
+ * `p_expected`). Nothing is trimmed or cleaned: the server compares it with what it stores, and a
+ * cleaned copy of a value stored with a stray space would never match it.
+ */
+export function toLoadedContactMethodsPayload(methods: readonly ContactMethod[]) {
+  return (["email", "phone"] as const).flatMap((kind) =>
+    methodsOfKind(methods, kind).map((method) => ({ kind, value: method.value, label: method.label, is_primary: method.isPrimary })),
+  );
+}
+
 /** Makes `id` the primary of its kind and moves it to the top; the previous primary steps down. */
 export function makePrimary(methods: readonly ContactMethod[], id: string): ContactMethod[] {
   const target = methods.find((method) => method.id === id);
@@ -160,6 +171,10 @@ export function e164Of(value: string): string | null {
 
 /** The database refuses a save built on a list that has since changed (CONTACT_METHODS_STALE). */
 export const isContactMethodsStale = (message: string) => /CONTACT_METHODS_STALE/.test(message);
+
+/** A save that reached a database function this page doesn't know: the page is older than the
+ *  server (a deploy in progress, or a tab left open across one). */
+export const isOutdatedPage = (message: string) => /Could not find the function|PGRST202/.test(message);
 
 /**
  * After a stale refusal: the list as it is stored now, plus each address this person added in their

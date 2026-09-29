@@ -151,6 +151,33 @@ describe("Team → how the team reaches a person", () => {
     expect(host.textContent).toContain("Sam's contact details are saved.");
   });
 
+  it("names the loaded list exactly as stored, so a stray no-break space can never make every save stale", async () => {
+    // A number that arrived through the old single field with a trailing no-break space.
+    mocks.rows = [row("e1", "email", "sam@example.com", true, 0, "Work"), row("p1", "phone", "512 555 0100\u00a0", true, 0, null)];
+    await mount(person({ user_id: "viewer-1" }), space("member"));
+    await click(host.querySelector('[data-ctm-add="email"]'));
+    const inputs = host.querySelectorAll<HTMLInputElement>('input[type="email"]');
+    await act(async () => { type(inputs[inputs.length - 1], "sam.two@example.com"); });
+    mocks.rpc.mockResolvedValue({ data: [], error: null });
+    await click(button("Save contact details"));
+    await flush();
+    const call = mocks.rpc.mock.lastCall?.[1] as { p_expected: Array<{ kind: string; value: string }> };
+    expect(call.p_expected.find((m) => m.kind === "phone")?.value).toBe("512 555 0100\u00a0");
+  });
+
+  it("says the page is out of date, not a raw error, when the server no longer has the function it called", async () => {
+    mocks.rows = [row("e1", "email", "sam@example.com", true, 0, "Work")];
+    await mount(person({ user_id: "viewer-1" }), space("member"));
+    await click(host.querySelector('[data-ctm-add="email"]'));
+    const inputs = host.querySelectorAll<HTMLInputElement>('input[type="email"]');
+    await act(async () => { type(inputs[inputs.length - 1], "sam.two@example.com"); });
+    mocks.rpc.mockResolvedValue({ data: null, error: { message: "Could not find the function public.set_user_contact_methods(p_expected, p_methods, p_user_id) in the schema cache" } });
+    await click(button("Save contact details"));
+    await flush();
+    expect(host.textContent).toContain("Nothing was saved: this page is out of date. Reload the page and save again.");
+    expect(host.textContent).not.toContain("schema cache");
+  });
+
   it("does not save a list the database would refuse, and says why on the row", async () => {
     await mount(person({ user_id: "viewer-1" }), space("member"));
     await click(host.querySelector('[data-ctm-add="email"]'));

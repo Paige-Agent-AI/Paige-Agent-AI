@@ -1820,14 +1820,17 @@ mcp.tool("create_contact", {
 
 mcp.tool("update_contact", {
   description:
-    "Update any combination of fields on an existing contact (clients row), named by its client_ref (or contact_id). Only fields you pass are updated; omit a field to leave it unchanged. Emails and phones: contact_methods REPLACES the whole list (read it first with get_contact), add_contact_methods adds to it and keeps what is there; send one or the other. Scoped to caller's tenant. For lifecycle moves prefer `update_lifecycle_stage` (it writes a transition audit). For notes prefer `add_contact_note` (it appends instead of replacing).",
+    "Update any combination of fields on an existing contact (clients row), named by its client_ref (or contact_id). Only fields you pass are updated; omit a field to leave it unchanged. Emails and phones: contact_methods REPLACES the whole list and needs expected_contact_methods, the list exactly as get_contact returned it; if the stored list changed since, the update is refused as CONTACT_METHODS_STALE and nothing is written (read it again and redo the change). add_contact_methods adds to the list and keeps what is there, and needs no expected list; send one or the other. Scoped to caller's tenant. For lifecycle moves prefer `update_lifecycle_stage` (it writes a transition audit). For notes prefer `add_contact_note` (it appends instead of replacing).",
   inputSchema: z.object({
     client_ref: z.string().optional().describe("The contact's client_ref, as search_contacts or get_contact returned it."),
     contact_id: z.string().optional().describe("Only when you hold the contact's UUID rather than its client_ref."),
     // identity
     first_name: z.string().optional(),
     last_name: z.string().optional(),
-    contact_methods: contactMethodsInput.optional().describe("The COMPLETE list of the contact's emails and phones; anything left out is removed."),
+    contact_methods: contactMethodsInput.optional().describe("The COMPLETE list of the contact's emails and phones; anything left out is removed. Requires expected_contact_methods."),
+    expected_contact_methods: z.array(z.object({
+      kind: z.string(), value: z.string(), label: z.string().nullable().optional(), is_primary: z.boolean().optional(),
+    }).passthrough()).max(40).optional().describe("With contact_methods: the contact's contact_methods exactly as get_contact returned them. The update is refused if the stored list is no longer this one."),
     add_contact_methods: contactMethodsInput.min(1).optional().describe("Emails or phones to add, keeping every one the contact already has."),
     title: z.string().nullable().optional(),
     // business
@@ -1862,8 +1865,10 @@ mcp.tool("update_contact", {
   handler: async (args) => {
     const tenant_id = await actorTenantId();
     if (!tenant_id) return err("tenant_not_resolved");
-    const { client_ref, contact_id: suppliedId, contact_methods, add_contact_methods, ...rest } = args;
+    const { client_ref, contact_id: suppliedId, contact_methods, add_contact_methods, expected_contact_methods, ...rest } = args;
     if (contact_methods && add_contact_methods) return err("CONTACT_METHODS_AMBIGUOUS: send contact_methods or add_contact_methods, not both");
+    // Replacing the list must name the list it replaces, or a change made in between is lost.
+    if (contact_methods && !expected_contact_methods) return err("CONTACT_METHODS_EXPECTED_REQUIRED: send expected_contact_methods, the contact's contact_methods as get_contact returned them");
 
     // The contact, named inside the caller's own workspace only.
     let contact_id = suppliedId ?? null;
@@ -1890,12 +1895,12 @@ mcp.tool("update_contact", {
       return ok({ ok: true, contact_id, updated_fields: [], note: "no fields supplied" });
     }
 
-    // Addresses first: they are the part that can be refused (a malformed or already-used address),
-    // and the database checks the whole list before it writes any of it.
+    // Addresses first: they are the part that can be refused (a changed list, a malformed or
+    // already-used address), and the database checks the whole list before it writes any of it.
     if (methods) {
       const target = { _tenant_id: tenant_id, _client_id: contact_id, _methods: methods };
       const { error: methodsError } = contact_methods
-        ? await admin.rpc("_replace_client_contact_methods", target)
+        ? await admin.rpc("_replace_client_contact_methods_checked", { ...target, _expected: expected_contact_methods })
         : await admin.rpc("_add_client_contact_methods", target);
       if (methodsError) return err(contactMethodsError(methodsError.message));
     }

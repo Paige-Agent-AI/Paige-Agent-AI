@@ -14,10 +14,12 @@ import {
   CLIENT_CONTACT_METHODS_EMBED,
   contactMethodErrorFor,
   isContactMethodsStale,
+  isOutdatedPage,
   methodsOfKind,
   orderContactMethods,
   rebaseContactMethods,
   toContactMethodsPayload,
+  toLoadedContactMethodsPayload,
   validateContactMethods,
   type ContactMethod,
   type ContactMethodRow,
@@ -115,9 +117,9 @@ export function PeopleContactEditor({
   onSaved: (contactId: string) => Promise<void> | void;
 }) {
   const [form, setForm] = useState<FormState>(() => formFor(contact));
-  // The address list and version this form was built on. A save that replaces the list names the
-  // version; the database refuses it if the contact changed since (CONTACT_METHODS_STALE).
-  const [basis, setBasis] = useState(() => ({ methods: contact?.contactMethods ?? [], version: contact?.updatedAt ?? null }));
+  // The address list this form was built on. A save that replaces the list names it; the database
+  // refuses the save if the stored list is no longer this one (CONTACT_METHODS_STALE).
+  const [basis, setBasis] = useState<ContactMethod[]>(() => contact?.contactMethods ?? []);
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [step, setStep] = useState<EditorStep>(0);
   const [saving, setSaving] = useState(false);
@@ -142,7 +144,7 @@ export function PeopleContactEditor({
   useEffect(() => {
     if (!open) return;
     setForm(formFor(contact));
-    setBasis({ methods: contact?.contactMethods ?? [], version: contact?.updatedAt ?? null });
+    setBasis(contact?.contactMethods ?? []);
     setStep(0);
     setDirty(false);
     setConfirmClose(false);
@@ -256,10 +258,10 @@ export function PeopleContactEditor({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the embed awaits generated types
     const { data, error: readError } = await (supabase as any)
       .from("clients")
-      .select(`updated_at,${CLIENT_CONTACT_METHODS_EMBED}`)
+      .select(CLIENT_CONTACT_METHODS_EMBED)
       .eq("id", contactId)
       .maybeSingle();
-    const row = data as { updated_at: string; client_contact_methods: ContactMethodRow[] | null } | null;
+    const row = data as { client_contact_methods: ContactMethodRow[] | null } | null;
     if (readError || !row) {
       const shown = "Not saved. Someone else changed this contact after you opened it. Your draft is unchanged. To see their change, close the contact and open it again; closing discards this draft.";
       setError(shown);
@@ -267,15 +269,15 @@ export function PeopleContactEditor({
       return;
     }
     const latest = orderContactMethods(row.client_contact_methods);
-    const { methods, carried } = rebaseContactMethods(latest, basis.methods, form.contactMethods);
-    setBasis({ methods: latest, version: row.updated_at });
+    const { methods, carried } = rebaseContactMethods(latest, basis, form.contactMethods);
+    setBasis(latest);
     setForm((previous) => ({ ...previous, contactMethods: methods }));
     setMethodErrors({});
     erroredValues.current = {};
     const shown = `Not saved. Someone else changed this contact after you opened it. The addresses now show what is saved${carried ? `, with ${carried === 1 ? "the address" : "the addresses"} you added kept at the end` : ""}; the rest of your draft is unchanged. Check them and save again.`;
     setError(shown);
+    // The message line is itself a status region; announcing it again would read it twice.
     toast.error("Not saved: this contact changed since you opened it");
-    announce(shown);
   };
 
   const save = async () => {
@@ -309,14 +311,17 @@ export function PeopleContactEditor({
     // for a new contact). A save of notes or tags must never overwrite addresses that arrived after
     // this editor opened — a merge, Paige, or an inbound match can add one in the meantime.
     const methodsPayload = toContactMethodsPayload(form.contactMethods);
-    if (!contact || JSON.stringify(methodsPayload) !== JSON.stringify(toContactMethodsPayload(basis.methods))) {
+    if (!contact || JSON.stringify(methodsPayload) !== JSON.stringify(toContactMethodsPayload(basis))) {
       patch.contact_methods = methodsPayload;
-      if (contact) patch.expected_updated_at = basis.version;
+      if (contact) patch.expected_contact_methods = toLoadedContactMethodsPayload(basis);
     }
     setSaving(true);
     setError(null);
     try {
       const contactId = await upsertRelationshipContact({ tenantId, contactId: contact?.id, patch });
+      // What is stored now: a second click of Save (the saved overlay leaves the footer live) must
+      // compare against this list, not the one this editor opened with.
+      if (patch.contact_methods) setBasis(form.contactMethods);
       await onSaved(contactId);
       setDirty(false);
       setSaved(true);
@@ -338,7 +343,9 @@ export function PeopleContactEditor({
         // reaches the screen as a raw code: it is named in plain words, and the draft is kept.
         const shown = /^CONTACT_METHODS?_/.test(message)
           ? "Not saved. The addresses could not be accepted as entered; check each row and try again. Your draft is unchanged."
-          : message;
+          : isOutdatedPage(message)
+            ? "Not saved: this page is out of date. Reload the page and save again; copy anything you typed first."
+            : message;
         setError(shown);
         toast.error(shown);
       }

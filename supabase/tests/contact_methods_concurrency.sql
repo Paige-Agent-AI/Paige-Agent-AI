@@ -4,19 +4,20 @@
 -- A save that would silently overwrite someone else's change is refused:
 --   * a person's list: set_user_contact_methods compares the list the caller loaded with what is
 --     stored, and refuses any difference as CONTACT_METHODS_STALE;
---   * a client's list: upsert_contact requires the version the caller loaded to replace it, and
---     every address change — including an address attached by inbound recognition — moves that
---     version, so a stale save is refused rather than dropping the new address;
+--   * a client's list: upsert_contact (and Paige's MCP update_contact, through the checked helper)
+--     compares the list the caller loaded with what is stored under the contact's row lock, so a
+--     stale save is refused rather than dropping an address attached meanwhile; a change to
+--     anything else about the contact does not refuse it;
 --   * an admin edits the owner's list (owner ruling 2026-09-29), and the edit is attributed to the
 --     admin in audit_logs.
 --
--- `now()` is fixed for a transaction, so staleness is observed against fixtures inserted with a
--- past updated_at (update_clients_updated_at stamps updates, not inserts).
+-- `now()` is fixed for a transaction, so the version move is observed against fixtures set to a
+-- past updated_at.
 --
 -- Synthetic fixtures only. Rolls back.
 -- ============================================================================
 BEGIN;
-SELECT plan(15);
+SELECT plan(21);
 
 INSERT INTO auth.users (id, aud, role, email) VALUES
   ('e5000000-0000-4000-8000-0000000000a1', 'authenticated', 'authenticated', 'cc-owner@tests.invalid'),
@@ -63,6 +64,11 @@ SELECT isnt(public.contact_methods_fingerprint('[{"kind":"email","value":"a@x.in
 SELECT isnt(public.contact_methods_fingerprint('[{"kind":"email","value":"a@x.invalid","is_primary":true},{"kind":"email","value":"b@x.invalid"},{"kind":"email","value":"c@x.invalid"}]'),
             public.contact_methods_fingerprint('[{"kind":"email","value":"a@x.invalid","is_primary":true},{"kind":"email","value":"c@x.invalid"},{"kind":"email","value":"b@x.invalid"}]'),
             'a reordered list is a different list');
+SELECT is(public.contact_methods_fingerprint('[{"kind":"phone","value":"512 555 0100\u00a0","label":" Work "}]'),
+          public.contact_methods_fingerprint('[{"kind":"phone","value":"512 555 0100","label":"Work"}]'),
+          'a stray no-break space or outer space, which a browser trims and btrim keeps, never makes a list look changed');
+SELECT lives_ok($q$SELECT public.contact_methods_fingerprint('[{"kind":"phone","value":"12"}]')$q$,
+          'a stored value that predates today''s rules still compares instead of raising');
 
 -- ── 2. A person's list ──────────────────────────────────────────────────────────────────────
 SELECT set_config('request.jwt.claims', '{"sub":"e5000000-0000-4000-8000-0000000000a3","role":"authenticated"}', true);
@@ -106,24 +112,45 @@ SELECT set_config('request.jwt.claims', '{"sub":"e5000000-0000-4000-8000-0000000
 SET LOCAL ROLE authenticated;
 SELECT lives_ok($q$SELECT public.upsert_contact(jsonb_build_object(
     'contact_methods', '[{"kind":"email","value":"fresh@cc.tests.invalid","is_primary":true},{"kind":"email","value":"fresh.second@cc.tests.invalid"}]'::jsonb,
-    'expected_updated_at', '2026-01-01T00:00:00Z'), 'e5000000-0000-4000-8000-000000000c01')$q$,
-  'replacing a list with the version that was loaded succeeds');
+    'expected_contact_methods', '[{"kind":"email","value":"fresh@cc.tests.invalid","label":null,"is_primary":true}]'::jsonb), 'e5000000-0000-4000-8000-000000000c01')$q$,
+  'replacing a list named as it was loaded succeeds');
 SELECT throws_like($q$SELECT public.upsert_contact('{"contact_methods":[{"kind":"email","value":"none@cc.tests.invalid","is_primary":true},{"kind":"email","value":"x@cc.tests.invalid"}]}'::jsonb, 'e5000000-0000-4000-8000-000000000c03')$q$,
-  'CONTACT_EXPECTED_VERSION_REQUIRED%', 'replacing an existing contact''s list without a version is refused');
+  'CONTACT_METHODS_EXPECTED_REQUIRED%', 'replacing an existing contact''s list without naming the loaded list is refused');
 RESET ROLE;
 
--- Inbound recognition attaches an address while an editor holds the old version.
+-- Another field changes (a note, as a logged message or enrichment would) — not the addresses.
+UPDATE public.clients SET current_notes = 'Called about renewal' WHERE id = 'e5000000-0000-4000-8000-000000000c03';
+SET LOCAL ROLE authenticated;
+SELECT lives_ok($q$SELECT public.upsert_contact(jsonb_build_object(
+    'contact_methods', '[{"kind":"email","value":"none@cc.tests.invalid","is_primary":true},{"kind":"email","value":"x@cc.tests.invalid"}]'::jsonb,
+    'expected_contact_methods', '[{"kind":"email","value":"none@cc.tests.invalid","label":null,"is_primary":true}]'::jsonb), 'e5000000-0000-4000-8000-000000000c03')$q$,
+  'an address save is not refused because something else about the contact changed');
+RESET ROLE;
+
+-- Inbound recognition attaches an address while an editor holds the old list.
 SELECT public._attach_client_address('e5000000-0000-4000-8000-00000000000a', 'e5000000-0000-4000-8000-000000000c02', 'email', 'stale.inbound@cc.tests.invalid');
 SELECT isnt((SELECT updated_at FROM public.clients WHERE id = 'e5000000-0000-4000-8000-000000000c02'),
-            '2026-01-01T00:00:00Z'::timestamptz, 'an attached address moves the contact''s version');
+            '2026-01-01T00:00:00Z'::timestamptz, 'an attached address moves the contact''s version, which Paige''s CRM commands check');
 SET LOCAL ROLE authenticated;
 SELECT throws_like($q$SELECT public.upsert_contact(jsonb_build_object(
     'contact_methods', '[{"kind":"email","value":"stale@cc.tests.invalid","is_primary":true}]'::jsonb,
-    'expected_updated_at', '2026-01-01T00:00:00Z'), 'e5000000-0000-4000-8000-000000000c02')$q$,
-  'CONTACT_METHODS_STALE%', 'a save from the old version is refused');
+    'expected_contact_methods', '[{"kind":"email","value":"stale@cc.tests.invalid","label":null,"is_primary":true}]'::jsonb), 'e5000000-0000-4000-8000-000000000c02')$q$,
+  'CONTACT_METHODS_STALE%', 'a save built on the list before the attach is refused');
 RESET ROLE;
 SELECT is((SELECT array_agg(value ORDER BY position) FROM public.client_contact_methods WHERE client_id = 'e5000000-0000-4000-8000-000000000c02'),
           ARRAY['stale@cc.tests.invalid', 'stale.inbound@cc.tests.invalid'], 'and the recognised address survives');
+
+-- Paige's MCP update_contact replaces through the checked helper (service role).
+SELECT throws_like($q$SELECT public._replace_client_contact_methods_checked('e5000000-0000-4000-8000-00000000000a', 'e5000000-0000-4000-8000-000000000c02',
+    '[{"kind":"email","value":"stale@cc.tests.invalid","is_primary":true}]', '[{"kind":"email","value":"stale@cc.tests.invalid","is_primary":true}]')$q$,
+  'CONTACT_METHODS_STALE%', 'Paige replacing a list that changed since she read it is refused');
+SELECT throws_like($q$SELECT public._replace_client_contact_methods_checked('e5000000-0000-4000-8000-00000000000a', 'e5000000-0000-4000-8000-000000000c02',
+    '[{"kind":"email","value":"stale@cc.tests.invalid","is_primary":true}]', NULL)$q$,
+  'CONTACT_METHODS_EXPECTED_REQUIRED%', 'and a replacement that names no loaded list is refused');
+SELECT lives_ok($q$SELECT public._replace_client_contact_methods_checked('e5000000-0000-4000-8000-00000000000a', 'e5000000-0000-4000-8000-000000000c02',
+    '[{"kind":"email","value":"stale@cc.tests.invalid","is_primary":true}]',
+    '[{"kind":"email","value":"stale@cc.tests.invalid","label":null,"is_primary":true},{"kind":"email","value":"stale.inbound@cc.tests.invalid","label":null,"is_primary":false}]')$q$,
+  'with the current list named, it proceeds');
 SELECT set_config('request.jwt.claims', '', true);
 
 SELECT * FROM finish();

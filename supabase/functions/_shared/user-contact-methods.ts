@@ -12,9 +12,11 @@
 // act on the result — send mail, or scrub identifiers before publishing text — and an empty
 // answer from a broken read is indistinguishable from "this person has no address".
 
+import { orderedContactMethods } from "./contact-methods.ts";
+
 type Db = { from: (table: string) => any };
 
-type MethodRow = { user_id: string; kind: "email" | "phone"; value: string; is_primary: boolean; position: number };
+type MethodRow = { user_id: string; value: string };
 
 export class ContactMethodsReadError extends Error {
   constructor(cause: unknown) {
@@ -34,7 +36,7 @@ export async function primaryEmailsForUsers(db: Db, userIds: string[]): Promise<
     .eq("is_primary", true)
     .in("user_id", ids);
   if (error) throw new ContactMethodsReadError(error);
-  for (const row of (data ?? []) as Pick<MethodRow, "user_id" | "value">[]) {
+  for (const row of (data ?? []) as MethodRow[]) {
     if (row?.user_id && row.value) out.set(row.user_id, row.value);
   }
   return out;
@@ -45,17 +47,18 @@ export async function primaryEmailForUser(db: Db, userId: string): Promise<strin
   return (await primaryEmailsForUsers(db, [userId])).get(userId) ?? null;
 }
 
-/** Every email and phone a user holds, primary first, then in their own order. */
+/**
+ * Every email and phone a user holds, each kind in the owner's display order. Ordering is
+ * `orderedContactMethods` from contact-methods.ts — the one reader-order rule for contact methods.
+ */
 export async function contactMethodsForUser(db: Db, userId: string): Promise<{ emails: string[]; phones: string[] }> {
   const { data, error } = await db.from("user_contact_methods")
-    .select("kind, value, is_primary, position")
+    .select("kind, value, label, is_primary, position")
     .eq("user_id", userId);
   if (error) throw new ContactMethodsReadError(error);
-  const rows = ((data ?? []) as MethodRow[])
-    .slice()
-    .sort((a, b) => Number(b.is_primary) - Number(a.is_primary) || a.position - b.position);
+  const methods = orderedContactMethods(data);
   return {
-    emails: rows.filter((r) => r.kind === "email").map((r) => r.value),
-    phones: rows.filter((r) => r.kind === "phone").map((r) => r.value),
+    emails: methods.filter((m) => m.kind === "email").map((m) => m.value),
+    phones: methods.filter((m) => m.kind === "phone").map((m) => m.value),
   };
 }

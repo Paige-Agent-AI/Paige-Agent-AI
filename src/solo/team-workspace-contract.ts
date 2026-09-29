@@ -106,6 +106,16 @@ export type TeamWorkspaceRecord = {
   invitations: TeamInviteRecord[];
 };
 
+/** Who may change this person's addresses. The server decides for real (`set_user_contact_methods`);
+ *  this only decides what to offer, and mirrors the same rule: yourself; an owner, anyone on the team;
+ *  an admin, anyone but the owner. */
+export function contactAccess(member: Pick<TeamMemberRecord, "user_id" | "is_owner">, workspace: Pick<TeamWorkspaceRecord, "viewer_permission">, viewerId: string | null): "edit" | "read" | "hidden" {
+  if (viewerId && member.user_id === viewerId) return "edit";
+  if (workspace.viewer_permission === "owner") return "edit";
+  if (workspace.viewer_permission === "admin") return member.is_owner ? "read" : "edit";
+  return "hidden";
+}
+
 export function memberVisibleIdentity(member: Pick<TeamMemberRecord, "full_name" | "email">): { primary: string; secondary: string | null } {
   const verifiedName = member.full_name?.trim();
   const email = member.email?.trim();

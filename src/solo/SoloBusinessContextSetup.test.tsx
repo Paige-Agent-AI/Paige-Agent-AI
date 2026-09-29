@@ -1057,11 +1057,13 @@ describe("canonical Solo Setup business context", () => {
       expect(host.querySelector(`[name="${name}"]`)).toBeTruthy();
     await act(async () => button(host, "People & email").click());
     for (const name of [
-      "authorizedRepresentativePhone",
       "authorizedRepresentativeJobPosition",
       "authorizedRepresentativeUserId",
     ])
       expect(host.querySelector(`[name="${name}"]`)).toBeTruthy();
+    // The representative's phone is picked from that person's own numbers, not typed again.
+    expect(host.querySelector("#setup-rep-phone-h")?.textContent).toBe("Representative phone");
+    expect(host.querySelector('input[name="authorizedRepresentativePhone"]')).toBeNull();
     await act(async () => root.unmount());
   });
   it("cancels unfinished knowledge without keeping an invalid record", async () => {

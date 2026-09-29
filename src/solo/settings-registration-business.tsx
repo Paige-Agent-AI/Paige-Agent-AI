@@ -8,6 +8,7 @@ import {
 } from "./settings-registration-fields";
 import { useSoloBusinessContext } from "./data/useSoloBusinessContext";
 import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
+import { RepresentativePhonePicker } from "./setup-representative-phone";
 
 /**
  * Completing the carrier record from Registration — the SECOND EDITOR of ONE record.
@@ -211,7 +212,8 @@ function RegistrationBusinessEditor({ account, missing, open: _open, onOpenChang
     </div>}
 
     <div className="ss-fields">
-      {REGISTRATION_BUSINESS_FIELDS.map((f) => {
+      {/* The representative phone is picked from that person's own numbers, below the representative. */}
+      {REGISTRATION_BUSINESS_FIELDS.filter((f) => f.key !== "authorizedRepresentativePhone").map((f) => {
         const id = `reg-${f.key}`;
         const last4 = f.secret ? brief.businessRegistrationNumberLast4 : "";
         return <label key={f.key} className="ss-field-block" htmlFor={id}>
@@ -250,6 +252,17 @@ function RegistrationBusinessEditor({ account, missing, open: _open, onOpenChang
         </small>
         {context.representativesError && <small className="ss-note" role="alert">{context.representativesError}</small>}
       </label>
+      <RepresentativePhonePicker
+        account={account}
+        userId={value("authorizedRepresentativeUserId")}
+        personName={context.representatives.find((person) => person.id === value("authorizedRepresentativeUserId"))?.name ?? null}
+        value={value("authorizedRepresentativePhone")}
+        onChange={(next) => change("authorizedRepresentativePhone", next)}
+        locked={!readable || saving}
+        idPrefix="reg-rep-phone"
+        className="ss-field-block"
+        labelClassName=""
+      />
     </div>
 
     <div className="ss-form-actions">

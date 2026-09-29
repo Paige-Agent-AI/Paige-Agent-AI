@@ -335,6 +335,23 @@
 .stw-modal-backdrop { position: fixed; z-index: 70; inset: 0; display: grid; place-items: center; padding: 18px; background: rgba(4, 3, 10, .72); backdrop-filter: blur(5px); }
 .stw-modal { width: min(560px, 100%); max-height: min(760px, calc(100dvh - 36px)); overflow-y: auto; border: 1px solid var(--pg-line); border-radius: 14px; color: var(--pg-ink); background: var(--pg-surface); box-shadow: 0 22px 70px rgba(0,0,0,.45); }
 .stw-modal > header { display: flex; align-items: flex-start; gap: 12px; padding: 15px; border-bottom: 1px solid var(--pg-line-soft); }.stw-modal > header > div { min-width: 0; flex: 1; }.stw-modal h2 { margin: 0; font-size: 15px; }.stw-modal header p { margin: 4px 0 0; color: var(--pg-muted); font-size: 10px; line-height: 1.5; }.stw-icon-btn { display: grid; width: 30px; height: 30px; flex: none; place-items: center; border: 1px solid var(--pg-line); border-radius: 8px; color: var(--pg-muted); background: var(--pg-raised); cursor: pointer; }.stw-icon-btn svg { width: 14px; }
+.stw-modal.is-wide { width: min(780px, 100%); }
+/* Team → a person → how the team reaches them (approved comp A). The sign-in address is shown apart
+   from the editable addresses, and read-only, because it is an account credential, not a contact. */
+.stw-contact { display: grid; gap: 14px; padding: 14px 0 16px; border-block: 1px solid var(--pg-line-soft); }
+.stw-contact-h h3 { margin: 0; color: var(--pg-ink); font: 600 14px/1.25 var(--pg-font-display); letter-spacing: -.01em; }
+.stw-contact-h p { margin: 4px 0 0; color: var(--pg-muted); font-size: 11px; line-height: 1.5; }
+.stw-signin { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 2px 12px; padding: 10px 12px; border: 1px solid var(--pg-line-soft); border-radius: 10px; background: var(--pg-canvas); }
+.stw-signin .k { color: var(--pg-faint); font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.stw-signin .v { overflow-wrap: anywhere; color: var(--pg-ink); font-size: 12px; }
+.stw-signin .h { grid-column: 2; color: var(--pg-muted); font-size: 10px; }
+.stw-contact-lock { display: flex; align-items: center; gap: 8px; color: var(--pg-muted); font-size: 11px; }
+.stw-contact-lock svg { width: 14px; height: 14px; flex: none; }
+.stw-contact-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+.stw-contact-msg { margin: 0 auto 0 0; color: var(--pg-muted); font-size: 11px; }
+.stw-contact-msg.is-bad { color: var(--pg-negative); }
+.stw-contact .stw-state { min-height: 90px; }
+@media (prefers-reduced-motion: reduce) { .stw-contact *, .stw-contact *::before, .stw-contact *::after { animation: none; transition: none; } }
 .stw-modal-body { display: grid; gap: 12px; padding: 15px; }.stw-modal label { display: grid; gap: 5px; color: var(--pg-muted); font-size: 10px; }.stw-modal label > span { color: var(--pg-faint); font-weight: 400; }.stw-modal input, .stw-modal select { padding: 0 10px; }.stw-modal textarea { min-height: 90px; padding: 9px 10px; resize: vertical; }.stw-modal input:disabled, .stw-modal textarea:disabled { opacity: 1; color: var(--pg-ink); background: var(--pg-canvas); }.stw-modal label small { color: var(--pg-danger, #d87878); }
 .stw-person-summary { display: flex; min-width: 0; align-items: center; gap: 9px; }.stw-person-summary > div { min-width: 0; flex: 1; }.stw-person-summary strong, .stw-person-summary span { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }.stw-person-summary strong { font-size: 12px; }.stw-person-summary div span { margin-top: 2px; color: var(--pg-faint); font-size: 9px; }
 .stw-separation-note { display: flex; align-items: flex-start; gap: 8px; padding: 9px; border: 1px solid color-mix(in srgb, var(--pg-gold-core), transparent 70%); border-radius: 9px; color: var(--pg-muted); background: color-mix(in srgb, var(--pg-gold-core), transparent 94%); font-size: 10px; line-height: 1.45; }.stw-separation-note svg { width: 15px; flex: none; color: var(--pg-gold-core); }.stw-separation-note strong { color: var(--pg-ink); }

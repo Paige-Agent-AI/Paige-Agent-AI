@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
 import { readFunctionErrorBody } from "@/lib/integrations/connectError";
+import { TeamMemberContact } from "./team-member-contact";
 import {
   inviteLifecycle,
   inviteIsFinished,
@@ -81,7 +82,7 @@ function useTeamWorkspace(search: string, permission: string) {
  * X?" discarded the whole editor, including unsaved work details the footer's Cancel/Close wording
  * exists to protect.
  */
-function Modal({ title, description, onClose, onEscape, busy, children }: { title: string; description: string; onClose: () => void; onEscape?: () => boolean; /** A request is in flight and must not be interrupted: the close control is DISABLED, not merely inert. */ busy?: boolean; children: React.ReactNode }) {
+function Modal({ title, description, onClose, onEscape, busy, wide, children }: { title: string; description: string; onClose: () => void; onEscape?: () => boolean; /** A request is in flight and must not be interrupted: the close control is DISABLED, not merely inert. */ busy?: boolean; /** Opens at the wider size from the first frame, so content arriving later never resizes it. */ wide?: boolean; children: React.ReactNode }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
   // The key handler and the focus capture read the latest callbacks through refs so the effect can
@@ -140,7 +141,7 @@ function Modal({ title, description, onClose, onEscape, busy, children }: { titl
     };
   }, []);
   return <div className="stw-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) onClose(); }}>
-    <section ref={dialogRef} className="stw-modal" role="dialog" aria-modal="true" aria-labelledby="stw-modal-title" aria-describedby="stw-modal-desc">
+    <section ref={dialogRef} className={wide ? "stw-modal is-wide" : "stw-modal"} role="dialog" aria-modal="true" aria-labelledby="stw-modal-title" aria-describedby="stw-modal-desc">
       <header><div><h2 id="stw-modal-title">{title}</h2><p id="stw-modal-desc">{description}</p></div><button ref={closeRef} className="stw-icon-btn" onClick={onClose} disabled={busy} aria-label="Close"><X /></button></header>
       {children}
     </section>
@@ -159,7 +160,8 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onRemoved, o
   const permission = permissionPresentation(member.permission, member.is_owner);
   const identity = memberVisibleIdentity(member);
   const dirty = title !== savedTitle || responsibilities !== savedResponsibilities;
-  useBeforeUnloadGuard(dirty || saving || permissionDraft !== null);
+  const [contactDirty, setContactDirty] = useState(false);
+  useBeforeUnloadGuard(dirty || contactDirty || saving || permissionDraft !== null);
 
   const save = async () => {
     if (!workspace.can_manage_profiles || !dirty || Object.keys(errors).length) return;
@@ -558,11 +560,13 @@ export function MemberEditor({ member, workspace, onClose, onSaved, onRemoved, o
   // saying it did. Only the switch branch carried this line; the other five inherited the hazard.
   const closeAfterOutcome = () => { unreadRefusalRef.current = null; onClose(); };
   return <Modal title={identity.primary} description="Work details describe what this person does. Permission controls what they can access."
+    wide
     busy={removalInFlight}
     onClose={requestClose}
     onEscape={() => { if (removal.stage !== "armed") return false; disarmRemoval(); return true; }}>
     <div className="stw-modal-body">
       <div className="stw-person-summary"><span className="stw-avatar">{initials(member)}</span><div><strong>{identity.primary}</strong>{identity.secondary && <span>{identity.secondary}</span>}</div><span className="stw-pill" data-tone={member.is_owner ? "owner" : "neutral"}>{permission.label}</span></div>
+      <TeamMemberContact member={member} workspace={workspace} onDirtyChange={setContactDirty}/>
       <div className="stw-separation-note"><ShieldCheck/><span><strong>Permission and title are separate.</strong> Changing someone’s title never changes their access.</span></div>
       <label>Title<input value={title} disabled={!workspace.can_manage_profiles || saving} maxLength={121} onChange={(e) => { setTitle(e.target.value); setSaveConfirmed(false); }} placeholder="e.g. Client Success Manager"/>{errors.title && <small role="alert">{errors.title}</small>}</label>
       <label>Responsibilities<textarea value={responsibilities} disabled={!workspace.can_manage_profiles || saving} maxLength={2001} onChange={(e) => { setResponsibilities(e.target.value); setSaveConfirmed(false); }} rows={5} placeholder="What this person owns, decides, and hands off."/>{errors.responsibilities && <small role="alert">{errors.responsibilities}</small>}</label>

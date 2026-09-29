@@ -21,7 +21,7 @@ import { TITLE_WORD } from "../../supabase/functions/_shared/team-vocabulary";
 const mocks = vi.hoisted(() => ({ rpc: vi.fn(), invoke: vi.fn() }));
 
 vi.mock("@/integrations/supabase/client", () => ({
-  supabase: { rpc: mocks.rpc, functions: { invoke: mocks.invoke } },
+  supabase: { auth: { getUser: async () => ({ data: { user: { id: "viewer-under-test" } } }) }, from: () => ({ select: () => ({ eq: async () => ({ data: [], error: null }) }) }), rpc: mocks.rpc, functions: { invoke: mocks.invoke } },
 }));
 vi.mock("@/hooks/useTenantContext", () => ({
   useTenantContext: () => ({ activeTenantId: "tenant-1", loading: false }),

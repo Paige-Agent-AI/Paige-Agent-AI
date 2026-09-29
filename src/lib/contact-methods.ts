@@ -151,3 +151,9 @@ export function contactMethodErrorFor(methods: readonly ContactMethod[], message
     : code === "DUPLICATE" ? "Already listed above." : code === "INVALID_EMAIL" ? "That isn't a complete email address." : "A phone number needs 7 to 15 digits.";
   return { id: target.id, text };
 }
+
+/** The number carriers need: E.164. Only formatting is removed — never a guessed country code. */
+export function e164Of(value: string): string | null {
+  const compact = value.replace(/[\s().-]/g, "");
+  return /^\+[1-9]\d{7,14}$/.test(compact) ? compact : null;
+}

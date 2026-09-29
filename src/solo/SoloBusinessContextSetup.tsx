@@ -56,6 +56,7 @@ import {
   type SoloSetupTab,
 } from "./settings-business-context-contract";
 import "./settings-setup.css";
+import { RepresentativePhonePicker } from "./setup-representative-phone";
 import { resolveSetupSubtabRoute, setupSubtabPath } from "./setup-subtab-route";
 import { settingsScrollOwner } from "./settings-scroll-owner";
 import { PeopleEmailPreferences } from "./settings-people-email-preferences";
@@ -188,12 +189,12 @@ const ownerOnlyFields = new Set<EditableField>([
   "authorizedRepresentativePhone",
   "authorizedRepresentativeJobPosition",
 ]);
+const representativePhoneField: Field = {
+  key: "authorizedRepresentativePhone",
+  label: "Representative phone",
+  hint: "Include + and the country code.",
+};
 const representativeFields: Field[] = [
-  {
-    key: "authorizedRepresentativePhone",
-    label: "Representative phone",
-    hint: "Include + and the country code.",
-  },
   {
     key: "authorizedRepresentativeJobPosition",
     label: "Representative position",
@@ -917,6 +918,7 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
         ...profileFields,
         ...addressFields,
         ...directionFields,
+        representativePhoneField,
         ...representativeFields,
         ...legacyVoiceFields,
       ].map((field) => field.key),
@@ -1406,16 +1408,51 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
                 representativeError={data.representativesError}
                 storedOwners={data.businessOwners}
                 fields={
-                  <Fields
-                    fields={representativeFields}
-                    draft={draft}
-                    editing={editing}
-                    disabled={disabled}
-                    errors={errors}
-                    onChange={change}
-                    sourceDecisions={decisions}
-                    onDecision={decide}
-                  />
+                  <>
+                    {editing && !disabled("authorizedRepresentativePhone") ? (
+                      <RepresentativePhonePicker
+                        account={account}
+                        userId={draft.authorizedRepresentativeUserId}
+                        personName={
+                          data.representatives.find(
+                            (person) =>
+                              person.id === draft.authorizedRepresentativeUserId,
+                          )?.name ?? null
+                        }
+                        value={draft.authorizedRepresentativePhone}
+                        onChange={(next) =>
+                          change("authorizedRepresentativePhone", next)
+                        }
+                        locked={
+                          draft.provenance.authorizedRepresentativePhone
+                            ?.source === "connection_sourced" &&
+                          decisions.authorizedRepresentativePhone !== "override"
+                        }
+                        error={errors.authorizedRepresentativePhone}
+                      />
+                    ) : (
+                      <Fields
+                        fields={[representativePhoneField]}
+                        draft={draft}
+                        editing={editing}
+                        disabled={disabled}
+                        errors={errors}
+                        onChange={change}
+                        sourceDecisions={decisions}
+                        onDecision={decide}
+                      />
+                    )}
+                    <Fields
+                      fields={representativeFields}
+                      draft={draft}
+                      editing={editing}
+                      disabled={disabled}
+                      errors={errors}
+                      onChange={change}
+                      sourceDecisions={decisions}
+                      onDecision={decide}
+                    />
+                  </>
                 }
                 representatives={data.representatives}
                 managedEmail={data.managedEmail?.address ?? ""}

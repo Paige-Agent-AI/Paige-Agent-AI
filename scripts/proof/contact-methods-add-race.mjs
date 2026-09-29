@@ -15,6 +15,8 @@
 //   4. B returns, and the contact holds the original address, x AND y.
 // Scenario 1's writer is another add; scenario 2's is the checked whole-list replace that
 // upsert_contact, update_contact and the DSR correction use.
+// Scenario 3 replaces the old address entirely while erasure waits. Erasure must then remove
+// the committed replacement, report its actual count, redact the contact and audit the outcome.
 //
 // Disposable databases only: the CI Supabase stack (CI=true, 127.0.0.1:54322/postgres), or a local
 // throwaway cluster named with CONTACT_METHODS_RACE_DISPOSABLE_DB=1. The rows are committed (a
@@ -63,7 +65,7 @@ const user = randomUUID();
 const tenant = randomUUID();
 const prefix = "CMR";
 const accountNumber = 9700000 + Math.floor(Math.random() * 200000);
-const clients = [randomUUID(), randomUUID()];
+const clients = [randomUUID(), randomUUID(), randomUUID()];
 const addr = (tag, i) => `${tag}-${i}-${suffix}@race.tests.invalid`;
 const appPrefix = `cm_race_${suffix}_`;
 const appName = (role, i) => `${appPrefix}${role}_${i}`;
@@ -142,8 +144,11 @@ const cleanup = () => {
       DECLARE _step text;
       BEGIN
         FOREACH _step IN ARRAY ARRAY[
+          $s$DELETE FROM public.paige_audit_log WHERE tenant_id = '${tenant}'$s$,
+          $s$DELETE FROM public.pii_access_log WHERE accessor_user_id = '${user}'$s$,
           $s$DELETE FROM public.client_contact_methods WHERE tenant_id = '${tenant}'$s$,
           $s$DELETE FROM public.clients WHERE tenant_id = '${tenant}'$s$,
+          $s$DELETE FROM public.tenant_members WHERE tenant_id = '${tenant}'$s$,
           $s$DELETE FROM public.tenants WHERE id = '${tenant}'$s$,
           $s$DELETE FROM auth.users WHERE id = '${user}'$s$]
         LOOP
@@ -190,7 +195,7 @@ const openGate = async (i) => {
   };
 };
 
-const scenario = async (i, holderName, heldTag, holderCall) => {
+const scenario = async (i, holderName, heldTag, holderCall, erase = false) => {
   const client = clients[i];
   const gateApp = appName("gate", i);
   const holderApp = appName("holder", i);
@@ -211,8 +216,10 @@ const scenario = async (i, holderName, heldTag, holderCall) => {
        WHERE application_name = '${holderApp}' AND wait_event_type = 'Lock' AND wait_event = 'advisory');`);
     const adder = session(adderApp, `${limits}
       BEGIN; SET LOCAL ROLE service_role;
-      SELECT 1 FROM (SELECT public._add_client_contact_methods('${tenant}', '${client}',
-        '[{"kind":"email","value":"${addr("added", i)}"}]'::jsonb)) AS w;
+      SET LOCAL request.jwt.claims = '{"role":"service_role"}';
+      SELECT ${erase
+        ? `public.handle_data_subject_request('${tenant}', '${client}', 'delete', NULL, 'Disposable race proof', '${user}')`
+        : `public._add_client_contact_methods('${tenant}', '${client}', '[{"kind":"email","value":"${addr("added", i)}"}]'::jsonb)`};
       COMMIT;`);
     sessions.push(adder);
     // B must be blocked by A before A commits, or this run says nothing about the race.
@@ -220,7 +227,20 @@ const scenario = async (i, holderName, heldTag, holderCall) => {
        WHERE application_name = '${adderApp}' AND wait_event_type = 'Lock' AND wait_event <> 'advisory');`);
     await gate.release();
     await holder;
-    await adder;
+    const result = await adder;
+    if (erase) {
+      const receipt = JSON.parse(result);
+      assert.equal(receipt.redacted, true);
+      assert.equal(receipt.addresses_removed, 1, "erasure must count the newly committed replacement address");
+      assert.equal(run(`SELECT count(*) FROM public.client_contact_methods WHERE client_id = '${client}'`), "0",
+        "erasure must not leave the replacement address behind");
+      assert.equal(run(`SELECT first_name = 'REDACTED' AND last_name = 'REDACTED' AND status = 'archived'
+        FROM public.clients WHERE id = '${client}' AND tenant_id = '${tenant}'`), "t");
+      assert.equal(run(`SELECT count(*) FROM public.paige_audit_log
+        WHERE tenant_id = '${tenant}' AND target_id = '${client}' AND actor_user_id = '${user}' AND action = 'dsr.delete'`), "1");
+      console.log("PASS (replacement versus erasure): the erasure waited, removed the committed replacement, and recorded one scoped audit outcome.");
+      return;
+    }
     const held = heldList(client);
     const expected = [addr("added", i), addr("orig", i), addr(heldTag, i)].sort();
     assert.deepEqual(held, expected,
@@ -256,10 +276,14 @@ try {
       VALUES ('${tenant}', 'cm-add-race-${suffix}', 'Contact Methods Add Race', 'active', 'standalone', '${prefix}', ${accountNumber}, '{}'::jsonb);
     INSERT INTO public.clients (id, tenant_id, created_by, first_name, last_name, account_number) VALUES
       ('${clients[0]}', '${tenant}', '${user}', 'Race', 'One', '${prefix}-1-${suffix}'),
-      ('${clients[1]}', '${tenant}', '${user}', 'Race', 'Two', '${prefix}-2-${suffix}');
+      ('${clients[1]}', '${tenant}', '${user}', 'Race', 'Two', '${prefix}-2-${suffix}'),
+      ('${clients[2]}', '${tenant}', '${user}', 'Race', 'Three', '${prefix}-3-${suffix}');
+    INSERT INTO public.tenant_members (tenant_id, user_id, role, status, is_owner)
+      VALUES ('${tenant}', '${user}', 'owner', 'active', true);
     INSERT INTO public.client_contact_methods (tenant_id, client_id, kind, value, is_primary, position) VALUES
       ('${tenant}', '${clients[0]}', 'email', '${addr("orig", 0)}', true, 0),
-      ('${tenant}', '${clients[1]}', 'email', '${addr("orig", 1)}', true, 0);
+      ('${tenant}', '${clients[1]}', 'email', '${addr("orig", 1)}', true, 0),
+      ('${tenant}', '${clients[2]}', 'email', '${addr("orig", 2)}', true, 0);
     COMMIT;
   `);
   await attempt(0, "an add", "held-add",
@@ -268,6 +292,10 @@ try {
     `public._replace_client_contact_methods_checked('${tenant}', '${clients[1]}',
        '[{"kind":"email","value":"${addr("orig", 1)}","is_primary":true},{"kind":"email","value":"${addr("held-replace", 1)}"}]'::jsonb,
        '[{"kind":"email","value":"${addr("orig", 1)}","is_primary":true}]'::jsonb)`);
+  await attempt(2, "a checked replacement before erasure", "held-replace",
+    `public._replace_client_contact_methods_checked('${tenant}', '${clients[2]}',
+       '[{"kind":"email","value":"${addr("held-replace", 2)}","is_primary":true}]'::jsonb,
+       '[{"kind":"email","value":"${addr("orig", 2)}","is_primary":true}]'::jsonb)`, true);
 } catch (e) {
   fixtureFailed = true;
   console.error(`FAIL (fixture): the test rows could not be written: ${e.message.split("\n")[0]}`);
@@ -277,7 +305,7 @@ try {
 }
 if (fixtureFailed) process.exit(1);
 if (failed) {
-  console.error(`FAIL: ${failed} of 2 scenarios did not show the add keeping an address written while it waited.`);
+  console.error(`FAIL: ${failed} of 3 contact-method concurrency scenarios failed.`);
   process.exit(1);
 }
-console.log("PASS: an address add issued while another transaction holds the contact waits for it, then keeps that transaction's address.");
+console.log("PASS: concurrent additions preserve committed addresses; erasure removes committed replacement addresses.");

@@ -1,34 +1,18 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { UserSearch } from "lucide-react";
 
 export default function ApolloIntegrationConfig() {
-  const [autoEnrich, setAutoEnrich] = useState(true);
   const [email, setEmail] = useState("");
   const [domain, setDomain] = useState("");
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<unknown>(null);
-
-  useEffect(() => {
-    void (async () => {
-      const { data } = await supabase.from("paige_config").select("apollo_auto_enrich").eq("id", 1).maybeSingle();
-      setAutoEnrich(data?.apollo_auto_enrich ?? true);
-    })();
-  }, []);
-
-  const toggleAuto = async (v: boolean) => {
-    setAutoEnrich(v);
-    const { error } = await supabase.from("paige_config").update({ apollo_auto_enrich: v }).eq("id", 1);
-    if (error) toast.error(error.message);
-    else toast.success(v ? "Auto-enrich enabled" : "Auto-enrich disabled");
-  };
 
   const enrichPerson = async () => {
     if (!email) return;
@@ -58,12 +42,11 @@ export default function ApolloIntegrationConfig() {
         <CardHeader>
           <CardTitle>Auto-enrich new contacts</CardTitle>
           <CardDescription>
-            When on, every new contact triggers a background Apollo person enrichment. Consumes Apollo credits per insert.
+            New contacts are not automatically sent to Apollo.
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex items-center gap-3">
-          <Switch checked={autoEnrich} onCheckedChange={toggleAuto} id="auto" />
-          <Label htmlFor="auto">Auto-enrich on contact insert</Label>
+        <CardContent>
+          <p className="text-sm">Automatic enrichment is unavailable.</p>
         </CardContent>
       </Card>
 

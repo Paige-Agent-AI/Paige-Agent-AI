@@ -6118,8 +6118,10 @@ selected one, so each read failed with 42703. They now read `user_contact_method
 - **Deploy order:** the migration must reach production only after lane 6c's `paige-ai-chat`
   `crm_update_contact` change (which stops sending `email`/`phone`) is deployed, and before the column drop.
 - **Removed:** `trg_clients_apollo_enrich` (it posted each new client's email to a foreign project with that
-  project's anon key and never enriched a contact here). The "Auto-enrich on contact insert" switch now
-  controls nothing — an owner call-out under §58, not yet signed off.
+  project's anon key and never enriched a contact here). Owner sign-off on 2026-09-29 explicitly
+  approves retiring this hook and making automatic enrichment honestly unavailable. The obsolete
+  switch/config writer and catalogue "on" claim are removed; manual lookup is unchanged. This is
+  product-behavior approval, not authorization to apply the migration to production.
 - **An address add could delete an address written a moment earlier.** `_add_client_contact_methods`
   (live since 20270516000000) read the contact's list before it took the contact's row lock, then wrote
   the merged list as a whole list. An address another transaction was writing at that moment (another

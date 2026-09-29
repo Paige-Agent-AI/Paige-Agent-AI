@@ -8,11 +8,10 @@
 -- (CONTACT_ADDRESS_FIELDS_RETIRED). deploy-migrations.yml applies it to production the moment it
 -- reaches main, so it must reach production only AFTER every producer that still sends those keys
 -- is deployed:
---   * paige-ai-chat's crm_update_contact (supabase/functions/paige-ai-chat/index.ts) still copies
---     args.email / args.phone into upsert_contact's patch on main. Lane 6c
---     (claude/keen-mccarthy-jarmcw-6c) moves it to contact_methods; that edge change must be merged
---     AND deployed (deploy-edge-functions.yml, the `edge-live` tag) before this file merges.
---     Merged first, every "change Jane's email" request in Paige chat fails with 22023.
+--   * paige-ai-chat's crm_update_contact moved to contact_methods in #1585, already on
+--     main at aca4dd99. Source parity is not deployment proof: verify that edge change is
+--     deployed (deploy-edge-functions.yml, the `edge-live` tag) before this file merges.
+--     Applied before that edge deploy, email changes in Paige chat fail with 22023.
 --   * the People editor (contactUpsert / PeopleContactEditor) already sends only contact_methods
 --     (main, #1564).
 -- It must also merge BEFORE the pull request that drops the four columns: without it that drop
@@ -836,6 +835,14 @@ BEGIN
   END IF;
 
   IF _request_type = 'delete' THEN
+    -- Serialize with the canonical address writers before taking the DELETE snapshot.
+    -- Otherwise a replacement can commit while DELETE waits on an old address tuple:
+    -- the old tuple is skipped and its newly inserted replacement is never seen.
+    PERFORM 1 FROM public.clients
+     WHERE id = _contact_id AND tenant_id = _tenant_id FOR UPDATE;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'contact_not_found_in_tenant';
+    END IF;
     -- Soft delete: null PII and mark deletion; keeps audit trail intact.
     DELETE FROM public.client_contact_methods m
      WHERE m.client_id = _contact_id AND m.tenant_id = _tenant_id;
@@ -1056,9 +1063,8 @@ GRANT EXECUTE ON FUNCTION public.start_client_impersonation(uuid) TO authenticat
 --   * so it has never enriched a contact here, and while paige_config.apollo_auto_enrich is true
 --     (it is) every new client with an email sends that email and the contact's id to the other
 --     project.
--- Nothing is lost: enrichment on demand (the Apollo settings page) is unaffected. The "Auto-enrich
--- on contact insert" switch on that page now controls nothing — as it effectively never did — which
--- is recorded for the frontend lane rather than hidden. The foreign URL and key are deliberately not
--- reproduced here.
+-- Owner approved retirement on 2026-09-29. Enrichment on demand is unchanged; the retired switch
+-- and its config writer are removed, and the Apollo settings/catalogue explicitly say automatic
+-- enrichment is unavailable. The foreign URL and key are deliberately not reproduced here.
 DROP TRIGGER IF EXISTS trg_clients_apollo_enrich ON public.clients;
 DROP FUNCTION IF EXISTS public.trg_clients_apollo_enrich();

@@ -98,12 +98,8 @@ describe("finding a contact when the caller knows no workspace (provider webhook
 
 // ── Anti-regression: no edge function finds a contact by the old single columns ─────────────────
 // A contact holds several addresses; a lookup on clients.email / clients.phone sees only the
-// primary and silently misses a person writing from their second address. PAIGE's own tools are
-// moved by the next slice of this lane; this list shrinks to empty there and is then deleted.
-const NOT_YET_MOVED = new Set([
-  "supabase/functions/paige-ai-chat/index.ts",
-  "supabase/functions/paige-mcp/index.ts",
-]);
+// primary and silently misses a person writing from their second address. No exemptions: Paige's
+// own tools (paige-ai-chat, paige-mcp) are held to it like every other function.
 
 function edgeSources(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
@@ -118,7 +114,6 @@ describe("edge functions recognise contacts by any address", () => {
     const root = process.cwd();
     const offenders = edgeSources(join(root, "supabase/functions"))
       .map((file) => relative(root, file))
-      .filter((file) => !NOT_YET_MOVED.has(file))
       .filter((file) => {
         const source = readFileSync(join(root, file), "utf8");
         // A lookup chain on `clients` filtered by email or phone…

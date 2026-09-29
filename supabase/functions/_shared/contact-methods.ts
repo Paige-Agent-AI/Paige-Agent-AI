@@ -50,6 +50,19 @@ export function primaryContactMethod(
 }
 
 /**
+ * A contact's methods as a reader should see them: emails then phones, each in the owner's display
+ * order, carrying which one is primary. Accepts the rows of an embedded `client_contact_methods`
+ * select; anything else reads as no methods.
+ */
+export function orderedContactMethods(rows: unknown): Array<Omit<ContactMethod, "position">> {
+  if (!Array.isArray(rows)) return [];
+  return (rows as ContactMethod[])
+    .filter((row) => row && (row.kind === "email" || row.kind === "phone") && typeof row.value === "string")
+    .sort((a, b) => (a.kind === b.kind ? (a.position ?? 0) - (b.position ?? 0) : a.kind === "email" ? -1 : 1))
+    .map(({ kind, value, label, is_primary }) => ({ kind, value, label: label ?? null, is_primary: is_primary === true }));
+}
+
+/**
  * The contact an address identifies inside ONE workspace, whichever of that contact's addresses
  * it is — or null. A lookup failure is logged loudly and reads as "not found", never as a match.
  */

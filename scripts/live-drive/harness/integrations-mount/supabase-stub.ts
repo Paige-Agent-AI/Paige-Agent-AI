@@ -20,6 +20,7 @@ function gatewayRows(){
  const tenant=currentHarnessTenantId();
  if(tenant.endsWith('-b')||mode()==='empty')return [];
  const base={provider_key:'generic-remote',transport:'http',auth_kind:'bearer',configured:true,enabled:true,visibility:'tenant',granted_scopes:[] as string[]};
+ if(mode()==='oauth-return')return [{...base,connection_id:'00000000-0000-4000-8000-000000000021',label:'Test service',auth_kind:'none',status:'pending_verification',health:'unknown',server_url_host:'service.example',last_checked_at:null,tool_count:0,approved_count:0}];
  // ?data=held — the duplicate-tile case the owner reported. Two connections to vendors the
  // catalogue NAMES, carrying labels of the shape the one-time backfill composed per tenant.
  // The labels are invented for this fixture on purpose: a real account's name never becomes

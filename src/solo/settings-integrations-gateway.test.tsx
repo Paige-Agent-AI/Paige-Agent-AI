@@ -21,9 +21,9 @@ const GROUP = { label: "Automation", accent: "var(--k-automation)", blurb: "Run 
  * the same tools the group renders. These tests stand in for that owner: the hook is the REAL
  * one, running against the mocked RPC exactly as before — only who calls it moved.
  */
-function Section({ onOpenLegacy }: { onOpenLegacy?: (which: "n8n" | "zapier" | "social") => void }) {
+function Section({ onOpenLegacy, oauthReturn }: { onOpenLegacy?: (which: "n8n" | "zapier" | "social") => void; oauthReturn?: { connectionId: string; result: "connected" | "cancelled" | "error" } }) {
   const gw = useMcpGateway();
-  return <IntegrationsGatewaySection onOpenLegacy={onOpenLegacy} gw={gw} group={GROUP} tiles={null} />;
+  return <IntegrationsGatewaySection onOpenLegacy={onOpenLegacy} gw={gw} group={GROUP} tiles={null} oauthReturn={oauthReturn} />;
 }
 
 const context = vi.hoisted(() => ({ tenantId: "tenant-a" as string | null, loading: false }));
@@ -222,6 +222,69 @@ beforeEach(() => {
   document.body.innerHTML = "";
 });
 
+describe("OAuth return is a navigation hint, never connection authority", () => {
+  it.each(["cancelled", "error", null] as const)("offers an explicit same-row retry for a credential-free shell (%s)", async (result) => {
+    world({ rows: [row({ auth_kind: "none", status: "pending_verification", health: "unknown" })], write: edgeRefusal("discovery_failed") });
+    const { host, root } = await render();
+    if (result) await act(async () => root.render(<Section oauthReturn={{ connectionId: "conn-1", result }} />));
+    else await click(host.querySelector('[data-owner="gateway"][data-gateway-tool]'));
+    const signIn = buttons(host).find((button) => button.textContent === "Sign in");
+    expect(signIn).toBeTruthy();
+    expect(edgeCalls("oauth_begin")).toHaveLength(0);
+    expect(edgeCalls("verify")).toHaveLength(0);
+    await click(signIn);
+    expect(edgeCalls("oauth_begin")).toHaveLength(1);
+    expect(lastEdgeBody().connection_id).toBe("conn-1");
+    expect(edgeCalls("create")).toHaveLength(0);
+    expect(dialog(host)?.querySelector('[role="alert"]')).not.toBeNull();
+    await act(async () => root.unmount());
+  });
+  it.each([
+    { enabled: false }, { configured: false }, { transport: "rest" },
+    { provider_key: "n8n" }, { auth_kind: "bearer" },
+  ])("does not derive sign-in eligibility from a return hint (%j)", async (over) => {
+    world({ rows: [row({ auth_kind: "none", ...over })] });
+    const { host, root } = await render();
+    await act(async () => root.render(<Section oauthReturn={{ connectionId: "conn-1", result: "cancelled" }} />));
+    expect(buttons(host).find((button) => button.textContent === "Sign in")).toBeUndefined();
+    expect(edgeCalls("oauth_begin")).toHaveLength(0);
+    await act(async () => root.unmount());
+  });
+  it("opens only the current owned row and retains pending rather than inventing Ready", async () => {
+    world({ rows: [row({ status: "pending_verification", health: "unknown", auth_kind: "oauth" })] });
+    const { host, root } = await render();
+    await act(async () => root.render(<Section oauthReturn={{ connectionId: "conn-1", result: "connected" }} />));
+    expect(dialog(host)).not.toBeNull();
+    expect(dialog(host)?.textContent).toContain("Returning from sign-in does not verify this tool");
+    expect(dialog(host)?.textContent).toContain("Not checked yet");
+    expect(edgeCalls("verify")).toHaveLength(0);
+    expect(edgeCalls("oauth_begin")).toHaveLength(0);
+    await click(host.querySelector('button[aria-label="Close Scheduling tool"]'));
+    expect(document.activeElement).toBe(host.querySelector('[data-gateway-tool="conn-1"]'));
+    await act(async () => root.unmount());
+  });
+  it("does not open a foreign or missing callback row", async () => {
+    world({ rows: [row()] });
+    const { host, root } = await render();
+    await act(async () => root.render(<Section oauthReturn={{ connectionId: "foreign-connection", result: "connected" }} />));
+    expect(dialog(host)).toBeNull();
+    expect(host.textContent).toContain("That tool is not available in this workspace");
+    expect(invoke).not.toHaveBeenCalled();
+    await act(async () => root.unmount());
+  });
+  it("clears returned tool context synchronously while switching accounts", async () => {
+    world({ rows: [row({ auth_kind: "oauth" })] });
+    const { host, root } = await render();
+    await act(async () => root.render(<Section oauthReturn={{ connectionId: "conn-1", result: "cancelled" }} />));
+    expect(dialog(host)).not.toBeNull();
+    context.loading = true; context.tenantId = null;
+    await act(async () => root.render(<Section />));
+    expect(dialog(host)).toBeNull();
+    expect(host.textContent).not.toContain("Returning from sign-in");
+    await act(async () => root.unmount());
+  });
+});
+
 describe("Sign-in retry after a failed start", () => {
   /** REGRESSION (Codex P2, 2026-09-23). `oauth_begin` failing after `create` used to strand the
    *  owner: the shell row existed, so pressing the button again re-ran `create` with the same
@@ -317,7 +380,7 @@ describe("Sign-in retry after a failed start", () => {
     const name = fieldFor(host, "Name") as HTMLInputElement;
     expect(name.disabled).toBe(true);
     expect(name.value).toBe("My Close");
-    expect(host.textContent).toContain("remove it from Connections and start again");
+    expect(host.textContent).toContain("remove it from Integrations and start again");
     // The create carried the name the owner actually typed.
     expect((edgeCalls("create")[0][1]?.body as Record<string, unknown>).label).toBe("My Close");
   });

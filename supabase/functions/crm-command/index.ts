@@ -7,6 +7,7 @@ import { CRM_ACTION_CAPABILITY as ACTION_CAPABILITY, crmApprovalSubject, type Cr
 import { parseExecutorError, executorFailureSpeech } from "../_shared/crm-command/executor-error.ts";
 import { databaseAnswered } from "../_shared/approval-outcome.ts";
 import { canonicalAppUrl, type CanonicalTier } from "../_shared/canonical-app-url.ts";
+import { resolveCommandContactRefs } from "../_shared/crm-command/contact-refs.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -32,8 +33,13 @@ const commandSchema = z.object({
   action: actionSchema,
   contact_id: z.string().uuid().nullable().optional(),
   loser_contact_id: z.string().uuid().nullable().optional(),
+  // The reference Paige is shown (a contact's account number). Resolved to contact_id inside the
+  // caller's own workspace before anything else runs; see resolveContactReferences below.
+  client_ref: z.string().trim().min(1).max(64).optional(),
+  loser_client_ref: z.string().trim().min(1).max(64).optional(),
   expected_loser_updated_at: z.string().datetime({ offset: true }).optional(),
   target_ids: z.array(z.string().uuid()).min(1).max(200).optional(),
+  target_client_refs: z.array(z.string().trim().min(1).max(64)).min(1).max(200).optional(),
   resolutions: z.record(z.enum(["survivor", "loser"])).optional(),
   preview_id: z.string().uuid().optional(),
   company_id: z.string().uuid().optional(),
@@ -61,11 +67,35 @@ const commandSchema = z.object({
   const requireField = (field: keyof typeof command) => {
     if (command[field] === undefined) ctx.addIssue({ code: z.ZodIssueCode.custom, path: [field], message: `${String(field)} is required for ${command.action}` });
   };
-  if (command.action.startsWith("contact.") && !["contact.create", "contact.bulk_update"].includes(command.action)) {
-    requireField("contact_id"); requireField("expected_updated_at");
+  // A contact is named by its id or by the client_ref a read returned; either satisfies the action.
+  const requireContact = (idField: "contact_id" | "loser_contact_id", refField: "client_ref" | "loser_client_ref") => {
+    if (command[idField] === undefined && command[refField] === undefined) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: [refField], message: `${refField} or ${idField} is required for ${command.action}` });
+    }
+  };
+  const namesContact = (command.action.startsWith("contact.") && !["contact.create", "contact.bulk_update"].includes(command.action))
+    || ["company.create", "activity.log", "deal.assign_contact"].includes(command.action);
+  if (command.client_ref !== undefined && !namesContact) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["client_ref"], message: `${command.action} does not name a contact.` });
   }
-  if (command.action === "contact.merge") { requireField("loser_contact_id"); requireField("expected_loser_updated_at"); }
-  if (command.action === "contact.bulk_update") { requireField("target_ids"); requireField("patch"); }
+  if (command.loser_client_ref !== undefined && command.action !== "contact.merge") {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["loser_client_ref"], message: "loser_client_ref names the losing contact of a merge only." });
+  }
+  if (command.action.startsWith("contact.") && !["contact.create", "contact.bulk_update"].includes(command.action)) {
+    requireContact("contact_id", "client_ref"); requireField("expected_updated_at");
+  }
+  if (command.action === "contact.merge") { requireContact("loser_contact_id", "loser_client_ref"); requireField("expected_loser_updated_at"); }
+  if (command.action === "contact.bulk_update") {
+    if (command.target_ids === undefined && command.target_client_refs === undefined) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["target_client_refs"], message: "target_client_refs or target_ids is required for contact.bulk_update" });
+    }
+    if (command.target_ids !== undefined && command.target_client_refs !== undefined) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["target_client_refs"], message: "Name the contacts by target_client_refs or by target_ids, not both." });
+    }
+    requireField("patch");
+  } else if (command.target_client_refs !== undefined) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["target_client_refs"], message: "target_client_refs names the contacts of a bulk update only." });
+  }
   if (["contact.assign_coach", "contact.assign_owner"].includes(command.action)) requireField("owner_user_id");
   if (command.action === "contact.link_company") requireField("company_id");
   if (command.action === "contact.create" || command.action === "contact.update" || command.action === "company.create" || command.action === "company.update") requireField("patch");
@@ -75,7 +105,7 @@ const commandSchema = z.object({
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["patch", "tags"], message: "Contact tags must be an array of 1-80 character strings." });
     }
   }
-  if (command.action === "company.create") requireField("contact_id");
+  if (command.action === "company.create") requireContact("contact_id", "client_ref");
   if (command.action.startsWith("company.") && command.action !== "company.create") {
     requireField("company_id"); requireField("expected_updated_at");
   }
@@ -90,7 +120,7 @@ const commandSchema = z.object({
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["patch", "metadata"], message: "Task metadata must be an object." });
     }
   }
-  if (command.action === "activity.log") { requireField("contact_id"); requireField("patch"); }
+  if (command.action === "activity.log") { requireContact("contact_id", "client_ref"); requireField("patch"); }
   if (command.action === "deal.create") { requireField("title"); requireField("pipeline_id"); requireField("stage_id"); }
   if (command.action === "deal.update") {
     requireField("deal_id"); requireField("expected_version");
@@ -98,7 +128,7 @@ const commandSchema = z.object({
       .some((field) => command[field as keyof typeof command] !== undefined)) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["action"], message: "At least one reversible deal field is required for deal.update." });
     }
-    if (command.owner_user_id !== undefined || command.contact_id !== undefined) {
+    if (command.owner_user_id !== undefined || command.contact_id !== undefined || command.client_ref !== undefined) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["action"], message: "Use the separately governed deal assignment action." });
     }
   }
@@ -106,7 +136,7 @@ const commandSchema = z.object({
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["owner_user_id"], message: "Assign the deal owner through the separately governed action." });
   }
   if (command.action === "deal.assign_owner") { requireField("deal_id"); requireField("expected_version"); requireField("owner_user_id"); }
-  if (command.action === "deal.assign_contact") { requireField("deal_id"); requireField("expected_version"); requireField("contact_id"); }
+  if (command.action === "deal.assign_contact") { requireField("deal_id"); requireField("expected_version"); requireContact("contact_id", "client_ref"); }
   if (command.action === "deal.move") {
     requireField("deal_id"); requireField("pipeline_id"); requireField("target_stage_id"); requireField("expected_version"); requireField("expected_target_version");
   }
@@ -162,7 +192,9 @@ function summaryFor(command: z.infer<typeof commandSchema>, preview?: JsonObject
       return `Permanently delete deal ${String(preview.title ?? preview.record_id ?? "(unknown)")} (${String(preview.record_id ?? "unknown id")}); delete ${String(dependencies.activities ?? 0)} activity row(s), ${String(dependencies.automation_events ?? 0)} automation event(s), ${String(dependencies.move_approvals ?? 0)} move approval(s), and ${String(dependencies.outcomes ?? 0)} outcome row(s); detach ${String(dependencies.tasks ?? 0)} task(s) and ${String(dependencies.invoices ?? 0)} invoice(s). This cannot be undone.`;
     }
   }
-  const target = command.contact_id ?? command.company_id ?? command.task_id ?? command.deal_id ?? "a new record";
+  const contactName = command.client_ref ?? command.contact_id;
+  const target = (command.action.startsWith("deal.") ? command.deal_id : undefined)
+    ?? contactName ?? command.company_id ?? command.task_id ?? command.deal_id ?? "a new record";
   const commandPatch = object(command.patch);
   switch (command.action) {
     case "contact.assign_coach":
@@ -172,7 +204,7 @@ function summaryFor(command: z.infer<typeof commandSchema>, preview?: JsonObject
     case "deal.assign_owner":
       return `Change deal ${target}'s owner to ${command.owner_user_id ?? "unassigned"}.`;
     case "deal.assign_contact":
-      return `Change deal ${target}'s contact to ${command.contact_id ?? "unassigned"}.`;
+      return `Change deal ${target}'s contact to ${contactName ?? "unassigned"}.`;
     case "deal.move":
       return `Move deal ${target} to stage ${command.target_stage_id} in pipeline ${command.pipeline_id}.`;
     case "deal.close":
@@ -239,6 +271,20 @@ serve(async (req) => {
   const { data: tenantRoute } = await admin.from("tenants")
     .select("account_number,account_type,parent_tenant_id")
     .eq("id", tenantId).maybeSingle();
+  // THE REFERENCE PAIGE HOLDS, TURNED INTO THE CONTACT IT NAMES. Every read Paige makes gives her a
+  // contact's client_ref, never its id; a command naming contacts that way is resolved inside the
+  // caller's own workspace before anything is decided, cached, approved or executed
+  // (_shared/crm-command/contact-refs.ts). Skipped for a caller the decision below refuses anyway,
+  // so a caller without CRM authority learns nothing about which references exist.
+  if (accessAllowed) {
+    const resolution = await resolveCommandContactRefs(admin, tenantId, body.command, "crm-command");
+    if (!resolution.ok) {
+      return response(resolution.status, {
+        ok: false, outcome: "refused", code: resolution.code, detail: resolution.detail,
+        ...executorFailureSpeech(resolution.code, resolution.detail, "refused"),
+      });
+    }
+  }
   const capability = ACTION_CAPABILITY[body.command.action];
   const requestArgs = { command: body.command, idempotency_key: body.idempotency_key };
   const successfulResultResponse = (resultObject: JsonObject, action: string): Response => {

@@ -210,6 +210,8 @@ const FIELD_DESCRIPTIONS = {
   description: "Longer body text for the task.",
   assigned_coach_user_id: "Exact active member UUID to set as coach across the selected contacts.",
   tags: "Full replacement list of tags; this is not additive.",
+  contact_methods: "The contact's COMPLETE list of email addresses and phone numbers, in display order: [{ kind: \"email\" | \"phone\", value, label?, is_primary? }]. On an update anything left out is REMOVED, so read the current list first (crm_search_contacts or crm_get_contact_summary). One primary per kind; with none marked, the first of each kind is primary. To only add an address, use add_contact_methods.",
+  add_contact_methods: "Addresses to ADD to the contact, keeping every one it already has: [{ kind: \"email\" | \"phone\", value, label?, is_primary? }]. Set is_primary only when the operator asked for the new one to become the default. Cannot be combined with contact_methods.",
 };
 
 const ALLOWLIST_RE = /k not in \(([^)]*)\)/g;

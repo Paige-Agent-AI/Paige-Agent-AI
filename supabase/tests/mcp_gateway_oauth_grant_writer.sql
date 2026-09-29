@@ -19,12 +19,13 @@
 --      enforce, so a broken exchange can never persist an unusable grant.
 --
 -- Any failed assertion RAISEs, so under `psql -v ON_ERROR_STOP=1` the exit code alone reports pass(0)/
--- fail(non-zero) — no pass-count to trust (§13/§32). BEGIN..ROLLBACK: nothing persists (idempotent, safe
--- against any environment including a prod rollback smoke).
+-- fail(non-zero) — no pass-count to trust (§13/§32). Disposable test database only. NEVER run
+-- against production, even with BEGIN..ROLLBACK. Test records are not production evidence.
 --
 -- Run: psql -v ON_ERROR_STOP=1 -f supabase/tests/mcp_gateway_oauth_grant_writer.sql "$DB_URL"
 -- ============================================================================
 BEGIN;
+\ir helpers/mcp_oauth_binding.sql
 
 -- Admin of tenant T (create the shell), a DIFFERENT tenant T2 (the §9 cross-tenant refusal), and a
 -- FOREIGN actor who is an active member of T2 ONLY (the mismatched-_actor refusal).
@@ -62,7 +63,8 @@ BEGIN
     _cid, T,
     'provider-access-token-xyz', 'provider-refresh-token-xyz',
     'https://iss.example.com', 'client-123', NULL,
-    ARRAY['mcp.read','mcp.write']::text[], now() + interval '1 hour', NULL);
+    ARRAY['mcp.read','mcp.write']::text[], now() + interval '1 hour', auth.uid(),
+    pg_temp.mcp_oauth_binding(_cid, T, auth.uid()));
 
   IF (_r->>'status') <> 'pending_verification' THEN RAISE EXCEPTION '(grant) status not pending_verification: %', _r; END IF;
   IF (_r->>'connection_id') <> _cid::text THEN RAISE EXCEPTION '(grant) wrong connection_id returned: %', _r; END IF;
@@ -105,7 +107,8 @@ BEGIN
   -- (a) a connection that is not in the passed tenant → MCP_FORBIDDEN (the connection surface).
   _msg := NULL;
   BEGIN PERFORM public.complete_mcp_oauth_grant(_cid, T2, 'tok-cross-123456', NULL,
-          'https://iss.example.com', 'client-123', NULL, NULL, NULL, NULL);
+          'https://iss.example.com', 'client-123', NULL, NULL, NULL, auth.uid(),
+          pg_temp.mcp_oauth_binding(_cid, T, auth.uid()));
   EXCEPTION WHEN OTHERS THEN _msg := SQLERRM; END;
   IF _msg IS NULL OR _msg NOT LIKE '%MCP_FORBIDDEN%' THEN
     RAISE EXCEPTION '(grant §9) a grant for a connection not in the passed tenant was allowed: %', _msg; END IF;
@@ -116,7 +119,8 @@ BEGIN
   _msg := NULL;
   BEGIN PERFORM public.complete_mcp_oauth_grant(_cid, T, 'tok-actor-123456', NULL,
           'https://iss.example.com', 'client-123', NULL, NULL, NULL,
-          'c3a00000-0000-0000-0000-000000000003'::uuid);  -- foreign actor (member of T2, not T)
+          'c3a00000-0000-0000-0000-000000000003'::uuid,
+          pg_temp.mcp_oauth_binding(_cid, T, auth.uid()));  -- foreign actor against real initiating owner binding
   EXCEPTION WHEN OTHERS THEN _msg := SQLERRM; END;
   IF _msg IS NULL OR _msg NOT LIKE '%MCP_FORBIDDEN%' THEN
     RAISE EXCEPTION '(grant §59) a grant with a non-member _actor was allowed: %', _msg; END IF;
@@ -127,7 +131,8 @@ BEGIN
   -- (20270319000000), so a NULL _oauth_scopes must land as '{}', never a NOT NULL violation.
   _r := public.complete_mcp_oauth_grant(_cid, T, 'tok-member-123456', NULL,
           'https://iss.example.com', 'client-123', NULL, NULL, NULL,
-          'c3a00000-0000-0000-0000-000000000002'::uuid);  -- the real T admin (member of T)
+          'c3a00000-0000-0000-0000-000000000002'::uuid,
+          pg_temp.mcp_oauth_binding(_cid, T, auth.uid()));  -- the real T admin (member of T)
   IF (_r->>'status') <> 'pending_verification' THEN
     RAISE EXCEPTION '(grant §59) a grant with a legitimate member _actor was wrongly refused: %', _r; END IF;
   IF (SELECT granted_scopes FROM public.mcp_connections WHERE connection_id=_cid) IS DISTINCT FROM '{}'::text[]
@@ -137,26 +142,30 @@ BEGIN
   -- ── 3. VALIDATION REUSE — an unusable oauth bundle can never persist ───────────────────────────────
   -- empty access token
   _msg := NULL;
-  BEGIN PERFORM public.complete_mcp_oauth_grant(_cid, T, '', NULL, 'https://iss.example.com', 'client-123', NULL, NULL, NULL, NULL);
+  BEGIN PERFORM public.complete_mcp_oauth_grant(_cid, T, '', NULL, 'https://iss.example.com', 'client-123', NULL, NULL, NULL, auth.uid(), pg_temp.mcp_oauth_binding(_cid, T, auth.uid()));
   EXCEPTION WHEN OTHERS THEN _msg := SQLERRM; END;
-  IF _msg NOT LIKE '%MCP_BAD_CREDENTIAL_BUNDLE%' THEN RAISE EXCEPTION '(grant) empty access token not rejected: %', _msg; END IF;
+  IF _msg IS NULL OR _msg NOT LIKE '%MCP_BAD_CREDENTIAL_BUNDLE%' THEN RAISE EXCEPTION '(grant) empty access token not rejected: %', _msg; END IF;
   -- missing issuer
   _msg := NULL;
-  BEGIN PERFORM public.complete_mcp_oauth_grant(_cid, T, 'tok-ok-123456', NULL, NULL, 'client-123', NULL, NULL, NULL, NULL);
+  BEGIN PERFORM public.complete_mcp_oauth_grant(_cid, T, 'tok-ok-123456', NULL, NULL, 'client-123', NULL, NULL, NULL, auth.uid(), pg_temp.mcp_oauth_binding(_cid, T, auth.uid()));
   EXCEPTION WHEN OTHERS THEN _msg := SQLERRM; END;
-  IF _msg NOT LIKE '%MCP_BAD_CREDENTIAL_BUNDLE%' THEN RAISE EXCEPTION '(grant) missing issuer not rejected: %', _msg; END IF;
+  IF _msg IS NULL OR _msg NOT LIKE '%MCP_BAD_CREDENTIAL_BUNDLE%' THEN RAISE EXCEPTION '(grant) missing issuer not rejected: %', _msg; END IF;
   -- missing client_id
   _msg := NULL;
-  BEGIN PERFORM public.complete_mcp_oauth_grant(_cid, T, 'tok-ok-123456', NULL, 'https://iss.example.com', NULL, NULL, NULL, NULL, NULL);
+  BEGIN PERFORM public.complete_mcp_oauth_grant(_cid, T, 'tok-ok-123456', NULL, 'https://iss.example.com', NULL, NULL, NULL, NULL, auth.uid(), pg_temp.mcp_oauth_binding(_cid, T, auth.uid()));
   EXCEPTION WHEN OTHERS THEN _msg := SQLERRM; END;
-  IF _msg NOT LIKE '%MCP_BAD_CREDENTIAL_BUNDLE%' THEN RAISE EXCEPTION '(grant) missing client_id not rejected: %', _msg; END IF;
+  IF _msg IS NULL OR _msg NOT LIKE '%MCP_BAD_CREDENTIAL_BUNDLE%' THEN RAISE EXCEPTION '(grant) missing client_id not rejected: %', _msg; END IF;
   -- already-expired access token
   _msg := NULL;
-  BEGIN PERFORM public.complete_mcp_oauth_grant(_cid, T, 'tok-ok-123456', NULL, 'https://iss.example.com', 'client-123', NULL, NULL, now() - interval '1 minute', NULL);
+  BEGIN PERFORM public.complete_mcp_oauth_grant(_cid, T, 'tok-ok-123456', NULL, 'https://iss.example.com', 'client-123', NULL, NULL, now() - interval '1 minute', auth.uid(), pg_temp.mcp_oauth_binding(_cid, T, auth.uid()));
   EXCEPTION WHEN OTHERS THEN _msg := SQLERRM; END;
-  IF _msg NOT LIKE '%MCP_OAUTH_TOKEN_EXPIRED%' THEN RAISE EXCEPTION '(grant) expired access token not rejected: %', _msg; END IF;
+  IF _msg IS NULL OR _msg NOT LIKE '%MCP_OAUTH_TOKEN_EXPIRED%' THEN RAISE EXCEPTION '(grant) expired access token not rejected: %', _msg; END IF;
 
   RAISE NOTICE 'OAUTH-GRANT-WRITER OK: re-key+encrypt+bump+routing facts; §9 cross-tenant refusal; bundle validation reused.';
 END $$;
 
 ROLLBACK;
+
+-- Same native CI entrypoint; exercise the state-bound writer after the legacy grant cases.
+-- This file and its include are disposable-database tests, never production smoke tests.
+\ir mcp_oauth_completion_binding.sql

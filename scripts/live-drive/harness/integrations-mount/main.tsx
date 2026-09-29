@@ -37,6 +37,10 @@ const theme = params.get("theme") === "light" ? "light" : "dark";
 // The shell's PAIGE dock changes the content column's width, so a surface can fit with the
 // dock closed and reflow badly with it open. Defaults to closed — existing drives are unchanged.
 const paige = params.get("paige") === "open" ? "open" : "closed";
+// Synthetic callback route only; never a tenant-authority input or a production entry.
+const route = params.get("data") === "oauth-return"
+  ? "/solo/10000001/settings/integrations?mcp=cancelled&connection=00000000-0000-4000-8000-000000000021"
+  : "/solo/1971670/settings/integrations";
 
 // Applied BEFORE first paint so a frame can never capture the pre-toggle state.
 document.documentElement.setAttribute("data-pg", theme);
@@ -76,7 +80,7 @@ createRoot(document.getElementById("root")!).render(
           <div className="paige-solo" data-theme={theme} style={{ height: "100%", minHeight: 0 }}>
             <div style={{ display: "flex", height: "100%", overflow: "hidden" }}>
               <main data-solo-screen-host style={{ flex: 1, overflow: "auto", minHeight: 0, minWidth: 0 }}>
-                <MemoryRouter initialEntries={["/solo/1971670/settings/integrations"]}>
+                <MemoryRouter initialEntries={[route]}>
                   <Routes>
                     <Route path="/solo/:account/*" element={<SoloSettings />} />
                   </Routes>

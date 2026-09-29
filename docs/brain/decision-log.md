@@ -6095,8 +6095,9 @@ selected one, so each read failed with 42703. They now read `user_contact_method
   pipeline routing and the alert address; a trigger refuses a direct browser write of `notify_email`. The
   alert is capped per form per hour and per business per day; a withheld alert is recorded on the
   submission (`alert_skipped_reason`).
-- **`cf-connecting-ip` is set by the Supabase edge runtime** (measured 2026-09-29, read-only): the
+- **`cf-connecting-ip` was present on every retained request** (measured 2026-09-29, read-only): the
   `paige-public-chat` limiter, keyed only on that header, holds 7 per-IP rows across 6 distinct IP-shaped
-  keys and none keyed `unknown`. The form limiter uses the same resolver.
+  keys and none keyed `unknown`. The form limiter uses the same resolver. Not verified: whether a value a
+  client sends itself is overwritten, and the sample is small. PR 3's live submission re-checks it.
 - Proofs: `supabase/functions/_shared/growth-intake.test.ts` (ci.yml),
   `supabase/tests/public_form_intake.sql` (database-contract).

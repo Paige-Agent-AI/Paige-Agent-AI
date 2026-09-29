@@ -185,7 +185,9 @@ export default function GrowthFunnelRenderer() {
         // Advance the funnel on a completed submission — but only when a step follows. If this
         // form ends the funnel, it keeps its own authored success state.
         onComplete={hasNext ? next : undefined}
-        onSkip={next}
+        // A missing form that ends the funnel has nothing to continue to — Continue would land on
+        // "You're all set" when nothing was sent.
+        onSkip={hasNext ? next : undefined}
       />
     );
   }
@@ -258,10 +260,19 @@ function FunnelPageStep({
 // A form that is not live (inactive, or its business is not taking submissions) never strands the
 // visitor on an empty section: it becomes the same "not ready" step as any other missing step.
 function FunnelFormStep({ formId, brandFloor, onComplete, onSkip }: {
-  formId: string; brandFloor: GrowthPageTheme; onComplete?: () => void; onSkip: () => void;
+  formId: string; brandFloor: GrowthPageTheme; onComplete?: () => void; onSkip?: () => void;
 }) {
   const [missing, setMissing] = useState(false);
-  if (missing) return <StepUnavailable brandFloor={brandFloor} ctaLabel="Continue" onNext={onSkip} />;
+  if (missing && onSkip) return <StepUnavailable brandFloor={brandFloor} ctaLabel="Continue" onNext={onSkip} />;
+  if (missing) {
+    return (
+      <FunnelNotice
+        brandFloor={brandFloor}
+        title="This form isn't taking responses right now"
+        body="Nothing was sent. Please check back later or contact the business directly."
+      />
+    );
+  }
   return (
     <Scope brandFloor={brandFloor} className="px-6 py-16 md:py-24">
       <div className="mx-auto w-full max-w-2xl">

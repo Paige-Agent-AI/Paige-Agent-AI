@@ -128,13 +128,16 @@ function fieldAnswered(field: GrowthField, value: Answer): boolean {
   return value !== undefined && value !== null;
 }
 
-/** The answers as they are sent: text trimmed, and blank answers left out — the server refuses a
- *  blank one rather than ignoring it, so one stray space must never block a submission. */
-function answersToSend(data: Record<string, Answer>): Record<string, Answer> {
+/** The answers as they are sent: typed text trimmed, and blank answers left out — the server refuses
+ *  a blank one rather than ignoring it, so one stray space must never block a submission. A chosen
+ *  option is sent exactly as authored, since the server matches it against the form's options. */
+const CHOICE_TYPES = new Set(["select", "radio", "checkbox"]);
+function answersToSend(data: Record<string, Answer>, fields: GrowthField[]): Record<string, Answer> {
   const out: Record<string, Answer> = {};
+  const typeOf = new Map(fields.map((f) => [f.key, f.type]));
   for (const [key, value] of Object.entries(data)) {
     if (value === undefined) continue;
-    if (typeof value === "string") {
+    if (typeof value === "string" && !CHOICE_TYPES.has(typeOf.get(key) ?? "")) {
       const trimmed = value.trim();
       if (trimmed) out[key] = trimmed;
       continue;
@@ -167,7 +170,7 @@ function FormBody({ form, accent, onComplete }: { form: FormRow; accent?: string
     setSubmitting(true);
     setSubmitError(null);
     const outcome = await submitGrowthForm({
-      formId: form.id, answers: answersToSend(data), utm: readUtm(), trap, startedAt: startedAt.current,
+      formId: form.id, answers: answersToSend(data, schema.sections.flatMap((s) => s.fields)), utm: readUtm(), trap, startedAt: startedAt.current,
     });
     setSubmitting(false);
     if (!outcome.ok) { setSubmitError(submitErrorMessage(outcome, schema.sections.flatMap((s) => s.fields))); return; }

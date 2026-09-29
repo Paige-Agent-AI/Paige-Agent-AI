@@ -14,13 +14,15 @@ import GrowthFunnelRenderer from "./GrowthFunnelRenderer";
 
 const state = vi.hoisted(() => ({ rpc: vi.fn(), invoke: vi.fn() }));
 
+const TWO_STEPS = [
+  { id: "s1", step_type: "form", order_index: 0, page_id: null, form_id: "form-1", config_json: {} },
+  { id: "s2", step_type: "thankyou", order_index: 1, page_id: null, form_id: null, config_json: {} },
+];
+
 const ROWS: Record<string, unknown> = {
   tenants: { id: "biz-1" },
   growth_funnels: { id: "fun-1", tenant_id: "biz-1", name: "Book a call" },
-  growth_funnel_steps: [
-    { id: "s1", step_type: "form", order_index: 0, page_id: null, form_id: "form-1", config_json: {} },
-    { id: "s2", step_type: "thankyou", order_index: 1, page_id: null, form_id: null, config_json: {} },
-  ],
+  growth_funnel_steps: TWO_STEPS,
 };
 
 function query(table: string) {
@@ -57,6 +59,7 @@ async function render() {
 
 beforeEach(() => {
   state.rpc.mockReset();
+  ROWS.growth_funnel_steps = TWO_STEPS;
   container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
@@ -82,5 +85,15 @@ describe("funnel form step", () => {
     expect(text()).toContain("This step isn't ready yet");
     const onward = Array.from(container.querySelectorAll("button")).find((b) => b.textContent?.includes("Continue"));
     expect(onward).toBeDefined();
+  });
+
+  it("never tells a visitor they are all set when the funnel's only form is not live", async () => {
+    ROWS.growth_funnel_steps = [TWO_STEPS[0]];
+    state.rpc.mockResolvedValue({ data: [], error: null });
+    await render();
+    expect(text()).toContain("This form isn't taking responses right now");
+    expect(text()).toContain("Nothing was sent");
+    expect(Array.from(container.querySelectorAll("button")).some((b) => b.textContent?.includes("Continue"))).toBe(false);
+    expect(text()).not.toContain("You're all set");
   });
 });

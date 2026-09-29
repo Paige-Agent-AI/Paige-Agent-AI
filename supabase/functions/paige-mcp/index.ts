@@ -5147,12 +5147,17 @@ mcp.tool("handle_data_subject_request", {
   handler: async ({ contact_id, request_type, corrections, reason }) => {
     const tenantId = await actorTenantId();
     if (!tenantId) return err("tenant_not_resolved");
+    // The call runs with the service role, so the database has no session to know who is acting:
+    // it is told, and it re-checks that this person is a platform owner or an owner/admin of the
+    // tenant resolved above (20270519010000). A platform-key caller has no person to name and is
+    // refused there as actor_required: an erasure or correction needs someone accountable for it.
     const { data, error } = await admin.rpc("handle_data_subject_request", {
       _tenant_id: tenantId,
       _contact_id: contact_id,
       _request_type: request_type,
       _corrections: corrections ?? null,
       _reason: reason ?? null,
+      _actor_user_id: currentActor().user_id,
     });
     if (error) return err(error.message);
     await audit("handle_data_subject_request", "clients", contact_id, { request_type, reason });

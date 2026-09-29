@@ -319,10 +319,12 @@ console.log("comms tenant-scope smoke\n");
    * `opts.linkedUser` decides WHICH contact-resolution branch the handler takes.
    *
    * There are THREE sender-keyed resolution sites, not two: `linked_user_id`,
-   * the `phone` fallback beneath it, and `resolveContactForTenant`'s `or(phone…)`
-   * on the STOP path. A fixture that always returns a `communication_preferences`
-   * row makes `prefs?.user_id` truthy every time, so the first branch always wins
-   * and the `phone` fallback is DEAD in every case — its tenant predicate could
+   * the phone fallback beneath it, and `resolveContactForTenant` on the STOP path
+   * (both phone lookups go through client_id_for_address, by any of a contact's
+   * numbers; neither reads the retired `clients.phone` column). A fixture that
+   * always returns a `communication_preferences` row makes `prefs?.user_id` truthy
+   * every time, so the first branch always wins and the phone fallback is DEAD in
+   * every case — its tenant predicate could
    * be deleted with the whole suite still green. Returning null here reaches it.
    *
    * `opts.numberStatus` exercises the released/suspended-number guard.
@@ -354,7 +356,7 @@ console.log("comms tenant-scope smoke\n");
    * this set; requiring a tenant filter there would assert something that is not
    * the guard and would fail for a reason that is not a defect.
    */
-  const SENDER_KEYS = ["phone", "linked_user_id", "or"];
+  const SENDER_KEYS = ["linked_user_id"];
   // A sender's number is matched through its contact methods (client_id_for_address, which
   // recognises ANY of a contact's phones). That lookup is a sender-keyed resolution too, and
   // its workspace is the `_tenant_id` argument, so it is held to the same tenant predicate.
@@ -405,13 +407,12 @@ console.log("comms tenant-scope smoke\n");
     const res = await post({ To: NUMBER_A, From: "+15559998888", Body: "hello", MessageSid: "SM5" });
     const a = globalThis.__ADMIN__;
     check("an inbound text still resolves when the sender has no linked user", res.status === 200);
-    const byPhone = [
-      ...a.reads("clients").filter((r) => "phone" in r.filters),
-      ...addressLookups(a).filter((r) => r.filters.kind === "phone"),
-    ];
+    const byPhone = addressLookups(a).filter((r) => r.filters.kind === "phone");
     check("...and the PHONE-fallback resolution really ran (non-vacuity)", byPhone.length > 0);
     check("...and it too is scoped to the RECEIVING tenant (§9)",
       byPhone.every((r) => r.filters.tenant_id === TENANT_A));
+    check("...and it matches the contact's addresses, never the retired clients.phone column",
+      a.reads("clients").every((r) => !("phone" in r.filters) && !("or" in r.filters)));
   }
 
   // ── The compliance writes carry their tenant in the ROW, not in a filter.

@@ -64,12 +64,15 @@ INSERT INTO public.user_roles (user_id, role) VALUES
 ON CONFLICT DO NOTHING;
 
 INSERT INTO public.clients
-  (id, tenant_id, account_number, created_by, first_name, last_name, email)
+  (id, tenant_id, account_number, created_by, first_name, last_name)
 VALUES
   ('f1000000-0000-0000-0000-00000000c101', 'f1000000-0000-0000-0000-000000001111', 'CLT-SPINE-A',
-   'f1000000-0000-0000-0000-000000000001', 'Safe', 'Subject', 'spine-a@tests.invalid'),
+   'f1000000-0000-0000-0000-000000000001', 'Safe', 'Subject'),
   ('f2000000-0000-0000-0000-00000000c201', 'f2000000-0000-0000-0000-000000002222', 'CLT-SPINE-B',
-   'f2000000-0000-0000-0000-000000000001', 'Other', 'Subject', 'spine-b@tests.invalid');
+   'f2000000-0000-0000-0000-000000000001', 'Other', 'Subject');
+INSERT INTO public.client_contact_methods (tenant_id, client_id, kind, value, is_primary, position) VALUES
+  ('f1000000-0000-0000-0000-000000001111', 'f1000000-0000-0000-0000-00000000c101', 'email', 'spine-a@tests.invalid', true, 0),
+  ('f2000000-0000-0000-0000-000000002222', 'f2000000-0000-0000-0000-00000000c201', 'email', 'spine-b@tests.invalid', true, 0);
 
 INSERT INTO public.paige_client_events
   (id, tenant_id, contact_id, event_kind, surface, actor_type, actor_user_id, audience,

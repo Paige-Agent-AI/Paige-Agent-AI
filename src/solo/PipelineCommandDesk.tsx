@@ -325,6 +325,7 @@ export function PipelineCommandDesk({
       return;
     }
     setMode("board");
+    setNotice("");
     setDetail(requested);
   }, [focusDealId, workspace.deals, selected?.id, setFolderFilter, setSelectedId]);
   const run = async (action) => {

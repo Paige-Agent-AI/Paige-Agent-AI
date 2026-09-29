@@ -11,6 +11,7 @@ import { SocialCommand } from "./social-command";
 import { PipelineDelete } from "./PipelineDelete";
 import { PipelineCommandDesk } from "./PipelineCommandDesk";
 import CampaignOverview from "./campaign-desk";
+import { FormIntakePanel } from "./form-intake";
 import "./solo-campaigns.css";
 
 // RETIRED 2026-09-12: the GR projects fixture served only the pre-rebuild Vibe
@@ -91,7 +92,10 @@ function DetailDrawer({ detail, onClose }) {
     const onKeyDown = (event) => {
       if (event.key === "Escape") { event.preventDefault(); onClose(); return; }
       if (event.key !== "Tab") return;
-      const focusable = [...(drawerRef.current?.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])') ?? [])];
+      // Only what Tab can actually reach: controls inside a collapsed <details> are not focusable,
+      // except that details' own <summary>.
+      const focusable = [...(drawerRef.current?.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])') ?? [])]
+        .filter((el) => { const closed = el.closest("details:not([open])"); return !closed || el.parentElement === closed && el.tagName === "SUMMARY"; });
       if (!focusable.length) return;
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
@@ -104,7 +108,7 @@ function DetailDrawer({ detail, onClose }) {
   if (!detail) return null;
   return <><button className="campaigns-drawer-scrim" tabIndex={-1} aria-label="Close details" onClick={onClose}/><aside ref={drawerRef} className="campaigns-drawer" role="dialog" aria-modal="true" aria-labelledby="campaigns-detail-title">
     <header><div><span className="eyebrow">Grounded detail</span><h2 id="campaigns-detail-title">{detail.title}</h2></div><button ref={closeRef} className="btn btn-s" onClick={onClose} aria-label="Close details"><Ic.x size={14}/></button></header>
-    <div className="campaigns-drawer-body">{detail.rows.map(([label, value]) => <div className="campaigns-detail-row" key={label}><span>{label}</span><strong>{value || "Not recorded"}</strong></div>)}{detail.actions&&<div className="campaigns-detail-actions">{detail.actions}</div>}{detail.note&&<p className="campaigns-detail-note">{detail.note}</p>}</div>
+    <div className="campaigns-drawer-body">{detail.rows.map(([label, value]) => <div className="campaigns-detail-row" key={label}><span>{label}</span><strong>{value || "Not recorded"}</strong></div>)}{detail.body}{detail.actions&&<div className="campaigns-detail-actions">{detail.actions}</div>}{detail.note&&<p className="campaigns-detail-note">{detail.note}</p>}</div>
   </aside></>;
 }
 
@@ -124,7 +128,7 @@ function Overview({ data, onRoute }) {
 //                      deliberately NOT deleted or reframed as offers.
 // A legacy address (/growth/pages and its four siblings, or ?type=) still means the Vibe-owned
 // half, so an incoming `initialType` opens Published assets rather than Offers.
-function Catalog({ data, setDetail, initialType }) {
+function Catalog({ data, setDetail, initialType, onOpenContact, onOpenDeal }) {
   const [section, setSection] = React.useState(initialType ? "assets" : "offers");
   const [type, setType] = React.useState(initialType || "all");
   // The null transition is reachable without unmounting: clicking the already-selected Catalog
@@ -146,7 +150,10 @@ function Catalog({ data, setDetail, initialType }) {
   </section>;
   return <section className="campaigns-surface"><SurfaceHead truthKey="catalog" title="Published assets" description="Read-only published outputs owned by Vibe Studio." action={sectionSwitch}/>
     <div className="campaigns-segmented" aria-label="Filter published outputs" style={{margin:"12px 19px 0"}}>{["all","page","funnel","form"].map((item)=><button key={item} aria-pressed={type===item} onClick={()=>setType(item)}>{item === "all" ? "All" : `${item[0].toUpperCase()}${item.slice(1)}s`}</button>)}</div>
-    <StateFrame phase={data.phase} retry={data.retry} noun="published outputs">{shown.length===0?<Empty title="No published outputs in this view" detail="Create and publish creative work in Vibe Studio. Campaigns will list only grounded published outputs here."/>:<div className="campaigns-catalog-grid">{shown.map((artifact)=><article className="campaigns-artifact" key={`${artifact.type}-${artifact.id}`}><div><span className="campaigns-type">{artifact.type}</span><h3>{artifact.name}</h3><p>Updated {formatDate(artifact.updatedAt)}</p></div><div className="campaigns-artifact-actions"><button className="btn btn-s" onClick={()=>setDetail({title:artifact.name,rows:[["Type",artifact.type],["Published state",artifact.status],["Recent captures",artifact.type==="form"?`${artifact.recentSubmissions} in the latest 200 workspace submissions`:"Not available"],["Routing contract",artifact.type==="form"?(artifact.routingConfigured?"Configured":"Not configured"):"Not applicable"]],note:"Creative changes remain in Vibe Studio. Recent capture counts are a bounded window, not lifetime totals."})}>Details</button>{artifact.publicHref&&<a className="btn btn-s" href={artifact.publicHref} target="_blank" rel="noreferrer">Open published <Ic.arrow size={12}/></a>}</div></article>)}</div>}</StateFrame>
+    <StateFrame phase={data.phase} retry={data.retry} noun="published outputs">{shown.length===0?<Empty title="No published outputs in this view" detail="Create and publish creative work in Vibe Studio. Campaigns will list only grounded published outputs here."/>:<div className="campaigns-catalog-grid">{shown.map((artifact)=><article className="campaigns-artifact" key={`${artifact.type}-${artifact.id}`}><div><span className="campaigns-type">{artifact.type}</span><h3>{artifact.name}</h3><p>Updated {formatDate(artifact.updatedAt)}</p></div><div className="campaigns-artifact-actions"><button className="btn btn-s" onClick={()=>setDetail(artifact.type==="form"
+  // A form's drawer carries its intake: where submissions go, and what each visitor typed.
+  ?{title:artifact.name,rows:[["Type",artifact.type],["Published state",artifact.status],["Recent captures",`${artifact.recentSubmissions} in the latest 200 workspace submissions`],["Routing contract",artifact.routingConfigured?"Configured":"Not configured"]],body:<FormIntakePanel key={artifact.id} tenantId={data.tenantId} formId={artifact.id} workspace={data.pipelineWorkspace} onOpenContact={onOpenContact} onOpenDeal={onOpenDeal}/>,note:"Creative changes remain in Vibe Studio. Recent capture counts are a bounded window, not lifetime totals."}
+  :{title:artifact.name,rows:[["Type",artifact.type],["Published state",artifact.status],["Recent captures","Not available"],["Routing contract","Not applicable"]],note:"Creative changes remain in Vibe Studio. Recent capture counts are a bounded window, not lifetime totals."})}>Details</button>{artifact.publicHref&&<a className="btn btn-s" href={artifact.publicHref} target="_blank" rel="noreferrer">Open published <Ic.arrow size={12}/></a>}</div></article>)}</div>}</StateFrame>
   </section>;
 }
 
@@ -401,6 +408,17 @@ export const GrowthHub=()=>{
   const openPipeline=React.useCallback(()=>{
     navigate(subtabPath("solo",params.account,"growth","pipeline"));
   },[navigate,params.account]);
+  // A form submission's contact, by the same `?person=` deep link — without `origin=sales`, which
+  // would offer a "Return to commercial terms" that has nothing to do with a form.
+  const openContact=React.useCallback((contactId)=>{
+    navigate(`${subtabPath("solo",params.account,"clients","people")}?person=${encodeURIComponent(contactId)}`);
+  },[navigate,params.account]);
+  // `?deal=` is the Pipeline tab's existing focus contract (PipelineSurface focusDealId).
+  // A lead can arrive after the workspace's deals were read; refresh them so Pipeline can open it.
+  const openDeal=React.useCallback((dealId)=>{
+    if(!data.pipelineWorkspace.deals.some((deal)=>deal.id===dealId)) data.retry();
+    navigate(`${subtabPath("solo",params.account,"growth","pipeline")}?deal=${encodeURIComponent(dealId)}`);
+  },[navigate,params.account,data]);
   // `?person=` is NOT a new contract — TenantRelationshipsClientsWorkspace already reads it as
   // `deepLinkedContactId`. A control labelled "Open <client>'s record" that landed on the general
   // list was not missing a route; it was declining to use one that already existed (§18).
@@ -445,7 +463,7 @@ export const GrowthHub=()=>{
   React.useEffect(()=>{if(segment!=="active")return;const account=params.account;if(account)navigate(`/solo/${account}/growth/overview${location.search}`,{replace:true});},[segment,params.account,location.search,navigate]);
   let body=<Overview data={data} onRoute={onRoute}/>;
   if(legacy) body=<CompatibilityLanding legacy={legacy} returnToAssets={returnToAssets}/>;
-  else if(tab==="catalog") body=<Catalog data={data} setDetail={setDetail} initialType={requestedType}/>;
+  else if(tab==="catalog") body=<Catalog data={data} setDetail={setDetail} initialType={requestedType} onOpenContact={openContact} onOpenDeal={openDeal}/>;
   else if(tab==="sales") body=<Sales data={data} setDetail={setDetail} onOpenCatalog={openCatalogOffers} onOpenClients={openClients} onOpenPipeline={openPipeline}/>;
   else if(tab==="pipeline") body=<PipelineSurface key={data.tenantId} data={data} setDetail={setDetail} focusDealId={query.get("deal")} onClearFocus={()=>{const next=new URLSearchParams(location.search);next.delete("deal");navigate({pathname:location.pathname,search:next.toString()},{replace:true});}}/>;
   else if(tab==="social") body=<Social data={data} onOpenCompass={openCompass} onOpenPipeline={openPipeline}/>;

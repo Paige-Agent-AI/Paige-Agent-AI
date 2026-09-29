@@ -112,12 +112,70 @@ describe("Team → how the team reaches a person", () => {
         { kind: "email", value: "sam@example.com", label: "Work", is_primary: true },
         { kind: "email", value: "sam.personal@example.com", label: "Personal", is_primary: false },
       ],
+      // The list this screen loaded: the server refuses the save if it is no longer what is stored.
+      p_expected: [{ kind: "email", value: "sam@example.com", label: "Work", is_primary: true }],
     });
     expect(host.textContent).toContain("Your contact details are saved.");
     // The save button leaves once nothing is unsaved; focus lands on the outcome, not the page.
     await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
     expect(document.activeElement?.textContent).toBe("Your contact details are saved.");
     expect(dirty).toHaveBeenLastCalledWith(false);
+  });
+
+  it("an admin's save over a list the person changed meanwhile is refused; the screen shows theirs and keeps the admin's addition", async () => {
+    mocks.rows = [row("e1", "email", "sam@example.com", true, 0, "Work")];
+    await mount(person(), space("admin"));
+    await click(host.querySelector('[data-ctm-add="email"]'));
+    let inputs = host.querySelectorAll<HTMLInputElement>('input[type="email"]');
+    await act(async () => { type(inputs[inputs.length - 1], "sam.billing@example.com"); });
+
+    // Meanwhile Sam added a phone. The server compares the loaded list with what is stored.
+    mocks.rpc.mockResolvedValueOnce({ data: null, error: { message: "CONTACT_METHODS_STALE: this list changed since it was loaded" } });
+    mocks.rows = [row("e1", "email", "sam@example.com", true, 0, "Work"), row("p1", "phone", "5125550100", true, 0, "Mobile")];
+    await click(button("Save contact details"));
+    await flush();
+    expect(host.textContent).toContain("Someone else changed these contact details after you opened them. Nothing was saved.");
+    expect(host.textContent).toContain("with the address you added kept at the end");
+    expect(host.textContent).not.toContain("CONTACT_METHODS_STALE");
+    inputs = host.querySelectorAll<HTMLInputElement>('input[type="email"]');
+    expect([...inputs].map((i) => i.value)).toEqual(["sam@example.com", "sam.billing@example.com"]);
+    expect(host.querySelector<HTMLInputElement>('input[type="tel"]')?.value).toBe("5125550100");
+
+    // Saving again is built on what was just read, so Sam's phone is kept.
+    mocks.rpc.mockResolvedValueOnce({ data: [row("e1", "email", "sam@example.com", true, 0, "Work"), row("e2", "email", "sam.billing@example.com", false, 1, "Personal"), row("p1", "phone", "5125550100", true, 0, "Mobile")], error: null });
+    await click(button("Save contact details"));
+    await flush();
+    const call = mocks.rpc.mock.lastCall?.[1] as { p_methods: Array<{ value: string }>; p_expected: Array<{ value: string }> };
+    expect(call.p_methods.map((m) => m.value)).toEqual(["sam@example.com", "sam.billing@example.com", "5125550100"]);
+    expect(call.p_expected.map((m) => m.value)).toEqual(["sam@example.com", "5125550100"]);
+    expect(host.textContent).toContain("Sam's contact details are saved.");
+  });
+
+  it("names the loaded list exactly as stored, so a stray no-break space can never make every save stale", async () => {
+    // A number that arrived through the old single field with a trailing no-break space.
+    mocks.rows = [row("e1", "email", "sam@example.com", true, 0, "Work"), row("p1", "phone", "512 555 0100\u00a0", true, 0, null)];
+    await mount(person({ user_id: "viewer-1" }), space("member"));
+    await click(host.querySelector('[data-ctm-add="email"]'));
+    const inputs = host.querySelectorAll<HTMLInputElement>('input[type="email"]');
+    await act(async () => { type(inputs[inputs.length - 1], "sam.two@example.com"); });
+    mocks.rpc.mockResolvedValue({ data: [], error: null });
+    await click(button("Save contact details"));
+    await flush();
+    const call = mocks.rpc.mock.lastCall?.[1] as { p_expected: Array<{ kind: string; value: string }> };
+    expect(call.p_expected.find((m) => m.kind === "phone")?.value).toBe("512 555 0100\u00a0");
+  });
+
+  it("says the page is out of date, not a raw error, when the server no longer has the function it called", async () => {
+    mocks.rows = [row("e1", "email", "sam@example.com", true, 0, "Work")];
+    await mount(person({ user_id: "viewer-1" }), space("member"));
+    await click(host.querySelector('[data-ctm-add="email"]'));
+    const inputs = host.querySelectorAll<HTMLInputElement>('input[type="email"]');
+    await act(async () => { type(inputs[inputs.length - 1], "sam.two@example.com"); });
+    mocks.rpc.mockResolvedValue({ data: null, error: { message: "Could not find the function public.set_user_contact_methods(p_expected, p_methods, p_user_id) in the schema cache" } });
+    await click(button("Save contact details"));
+    await flush();
+    expect(host.textContent).toContain("Nothing was saved: this page is out of date. Reload the page and save again.");
+    expect(host.textContent).not.toContain("schema cache");
   });
 
   it("does not save a list the database would refuse, and says why on the row", async () => {

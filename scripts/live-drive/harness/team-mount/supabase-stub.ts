@@ -33,6 +33,7 @@ const harborInvites: Invite[] = [];
 const invitesOf = () => (activeWorkspace() === "team-harness-tenant-2" ? harborInvites : invites);
 
 const mode = () => new URLSearchParams(window.location.search).get("state") || "dense";
+let staleOnce = new URLSearchParams(window.location.search).get("stale") === "1";
 const rpc = async (name: string, args: Record<string, unknown> = {}) => {
   if (name === "get_solo_team_workspace") {
     if (mode() === "denied") return { data: null, error: { message: "access denied" } };
@@ -69,6 +70,18 @@ const rpc = async (name: string, args: Record<string, unknown> = {}) => {
   if (name === "set_user_contact_methods") {
     const target = String(args.p_user_id);
     const list = (args.p_methods as Array<{ kind: string; value: string; label: string | null; is_primary: boolean }>) ?? [];
+    // Mirrors the server: the caller names the list it loaded, and a list that changed since is
+    // refused. `?stale=1` has the person add a phone just before the first save lands.
+    if (!Array.isArray(args.p_expected)) return { data: null, error: { message: "CONTACT_METHODS_EXPECTED_REQUIRED: send the list you loaded" } };
+    if (staleOnce) {
+      staleOnce = false;
+      const stored = contactMethods[target] ?? [];
+      contactMethods[target] = [...stored, { id: `${target}-cm-meanwhile`, user_id: target, kind: "phone", value: "+1 (404) 555-0123", label: "Work", is_primary: !stored.some((m) => m.kind === "phone"), position: stored.filter((m) => m.kind === "phone").length }];
+    }
+    const print = (rows: Array<{ kind: string; value: string; label: string | null; is_primary: boolean; position?: number }>) =>
+      JSON.stringify(["email", "phone"].flatMap((kind) => rows.filter((m) => m.kind === kind).sort((a, b) => Number(b.is_primary) - Number(a.is_primary) || (a.position ?? 0) - (b.position ?? 0)).map((m) => [m.kind, m.value.trim().toLowerCase(), m.label ?? null, m.is_primary])));
+    const expected = (args.p_expected as Array<{ kind: string; value: string; label: string | null; is_primary: boolean }>).map((m, i) => ({ ...m, position: i }));
+    if (print(contactMethods[target] ?? []) !== print(expected)) return { data: null, error: { message: "CONTACT_METHODS_STALE: this list changed since it was loaded" } };
     const bad = list.find((m) => m.kind === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m.value));
     if (bad) return { data: null, error: { message: `CONTACT_METHOD_INVALID_EMAIL: ${bad.value}` } };
     const pos: Record<string, number> = {};

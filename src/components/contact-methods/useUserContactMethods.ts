@@ -3,8 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   USER_CONTACT_METHODS_SELECT,
   contactMethodErrorFor,
+  isContactMethodsStale,
+  isOutdatedPage,
   orderContactMethods,
+  rebaseContactMethods,
   toContactMethodsPayload,
+  toLoadedContactMethodsPayload,
   validateContactMethods,
   type ContactMethod,
   type ContactMethodRow,
@@ -16,17 +20,22 @@ export interface UserContactMethods {
   error: string | null;
   methods: ContactMethod[];
   saving: boolean;
-  /** Replaces the person's whole list through `set_user_contact_methods` and reads back what it stored. */
+  /** Replaces the person's whole list through `set_user_contact_methods` and reads back what it
+   *  stored. The server refuses it (CONTACT_METHODS_STALE) if the stored list is no longer the one
+   *  this hook last read — someone else saved in between. */
   save: (next: ContactMethod[]) => Promise<{ ok: true; methods: ContactMethod[] } | { ok: false; error: string }>;
   refresh: () => Promise<void>;
+  /** Re-reads the stored list without the loading state, and answers with it (null if the read failed). */
+  reread: () => Promise<ContactMethod[] | null>;
 }
 
 /**
  * One person's own emails and phones (`user_contact_methods`). Reads go through RLS
  * (`can_read_user_contact_methods`: yourself, or an owner/admin of your current workspace reading a
  * member of it). Writes go through `set_user_contact_methods`, which re-checks the same authority in
- * its body and refuses an admin editing the owner. The screen never decides authority; it only
- * decides what to offer.
+ * its body; an owner or admin of the workspace may edit anyone in it, the owner included, and every
+ * such edit is attributed in audit_logs. The screen never decides authority; it only decides what to
+ * offer.
  */
 export function useUserContactMethods(userId: string | null | undefined): UserContactMethods {
   const [loading, setLoading] = useState(Boolean(userId));
@@ -35,28 +44,39 @@ export function useUserContactMethods(userId: string | null | undefined): UserCo
   const [saving, setSaving] = useState(false);
   const seq = useRef(0);
 
-  const load = useCallback(async () => {
+  // What the server last said is stored: the list a save claims to have been built on.
+  const loaded = useRef<ContactMethod[]>([]);
+
+  const load = useCallback(async (quiet = false): Promise<ContactMethod[] | null> => {
     const mine = ++seq.current;
     if (!userId) {
+      loaded.current = [];
       setMethods([]);
       setLoading(false);
-      return;
+      return [];
     }
-    setLoading(true);
-    setError(null);
+    if (!quiet) {
+      setLoading(true);
+      setError(null);
+    }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- table awaits generated types
     const { data, error: readError } = await (supabase as any)
       .from("user_contact_methods")
       .select(USER_CONTACT_METHODS_SELECT)
       .eq("user_id", userId);
-    if (mine !== seq.current) return;
+    if (mine !== seq.current) return null;
     if (readError) {
+      if (quiet) return null;
       setError(readError.message || "Couldn't load contact details.");
       setMethods([]);
-    } else {
-      setMethods(orderContactMethods(data as ContactMethodRow[] | null));
+      setLoading(false);
+      return null;
     }
+    const next = orderContactMethods(data as ContactMethodRow[] | null);
+    loaded.current = next;
+    setMethods(next);
     setLoading(false);
+    return next;
   }, [userId]);
 
   useEffect(() => {
@@ -72,10 +92,12 @@ export function useUserContactMethods(userId: string | null | undefined): UserCo
       const { data, error: saveError } = await (supabase as any).rpc("set_user_contact_methods", {
         p_user_id: userId,
         p_methods: toContactMethodsPayload(next),
+        p_expected: toLoadedContactMethodsPayload(loaded.current),
       });
       if (saveError) return { ok: false as const, error: saveError.message || "Couldn't save contact details." };
       // The RPC answers with what it stored, row ids included: the screen shows that, never its draft.
       const stored = orderContactMethods(Array.isArray(data) ? (data as ContactMethodRow[]) : []);
+      loaded.current = stored;
       setMethods(stored);
       return { ok: true as const, methods: stored };
     } catch (e) {
@@ -85,12 +107,17 @@ export function useUserContactMethods(userId: string | null | undefined): UserCo
     }
   }, [userId]);
 
-  return { loading, error, methods, saving, save, refresh: load };
+  const refresh = useCallback(async () => { await load(); }, [load]);
+  const reread = useCallback(() => load(true), [load]);
+
+  return { loading, error, methods, saving, save, refresh, reread };
 }
 
 /** The server's refusal codes for a person's own list, in words a person can act on. */
 export function userContactMethodsRefusal(message: string): string {
   if (/USER_CONTACT_METHODS_FORBIDDEN/.test(message)) return "You can't change this person's contact details from this workspace.";
+  if (isContactMethodsStale(message)) return "Someone else changed these contact details after you opened them. Nothing was saved.";
+  if (isOutdatedPage(message)) return "Nothing was saved: this page is out of date. Reload the page and save again.";
   if (/CONTACT_METHODS_TOO_MANY/.test(message)) return "That's more than 20 of one kind. Remove one and save again.";
   if (/CONTACT_METHOD_BAD_LABEL/.test(message)) return "One of the labels is too long. Choose one from the list.";
   if (/^CONTACT_METHODS?_|USER_CONTACT_METHODS_/.test(message)) return "Those contact details couldn't be saved. Check each address and try again.";
@@ -148,6 +175,20 @@ export function useContactMethodsDraft(stored: UserContactMethods, editable: boo
       return { ok: false };
     }
     const result = await stored.save(draft);
+    if (result.ok === false && isContactMethodsStale(result.error)) {
+      // Someone saved in between. Show what is stored now, keep what this person added, save nothing.
+      const built = stored.methods;
+      const latest = await stored.reread();
+      if (!latest) return { ok: false, error: `${userContactMethodsRefusal(result.error)} Reload the page to see their change.` };
+      const { methods, carried } = rebaseContactMethods(latest, built, draft);
+      seededFrom.current = latest;
+      setDraftState(methods);
+      setServerError(null);
+      return {
+        ok: false,
+        error: `${userContactMethodsRefusal(result.error)} The list now shows what is saved${carried ? `, with ${carried === 1 ? "the address" : "the addresses"} you added kept at the end` : ""}. Check it and save again.`,
+      };
+    }
     if (result.ok === false) {
       const onRow = contactMethodErrorFor(draft, result.error);
       if (onRow) {

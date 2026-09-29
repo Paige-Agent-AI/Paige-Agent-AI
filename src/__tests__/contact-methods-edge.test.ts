@@ -127,3 +127,35 @@ describe("edge functions recognise contacts by any address", () => {
     expect(offenders).toEqual([]);
   });
 });
+
+describe("Paige's MCP update_contact never overwrites a list that changed", () => {
+  const source = readFileSync("supabase/functions/paige-mcp/index.ts", "utf8");
+  const tool = source.slice(source.indexOf('mcp.tool("update_contact"'), source.indexOf("mcp.tool(", source.indexOf('mcp.tool("update_contact"') + 10));
+
+  it("replaces a list only through the checked helper, naming the list it read", () => {
+    expect(tool).toContain('rpc("_replace_client_contact_methods_checked", { ...target, _expected: expected_contact_methods })');
+    expect(tool).not.toMatch(/rpc\("_replace_client_contact_methods"/);
+    expect(tool).toContain("if (contact_methods && !expected_contact_methods) return err(\"CONTACT_METHODS_EXPECTED_REQUIRED");
+    // A list read with get_contact (unlabelled addresses come back as label: null) is accepted as sent.
+    expect(source).toMatch(/const contactMethodInput = z\.object\(\{[\s\S]*?label: z\.string\(\)\.nullable\(\)\.optional\(\),/);
+    // Adding keeps what is there, so it needs no expected list.
+    expect(tool).toContain('await admin.rpc("_add_client_contact_methods", target)');
+  });
+
+  it("no edge function replaces an existing contact's list unchecked", () => {
+    const hits: string[] = [];
+    const walk = (dir: string) => {
+      for (const name of readdirSync(dir)) {
+        const path = join(dir, name);
+        if (statSync(path).isDirectory()) walk(path);
+        else if (/\.ts$/.test(name) && readFileSync(path, "utf8").includes('"_replace_client_contact_methods"')) hits.push(relative(".", path));
+      }
+    };
+    walk("supabase/functions");
+    // create_contact writes a brand-new contact's first list: nothing can have changed it yet.
+    expect(hits).toEqual(["supabase/functions/paige-mcp/index.ts"]);
+    const create = source.slice(source.indexOf('mcp.tool("create_contact"'), source.indexOf('mcp.tool("update_contact"'));
+    expect(create).toContain('rpc("_replace_client_contact_methods"');
+  });
+});
+

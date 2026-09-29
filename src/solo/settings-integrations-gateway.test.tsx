@@ -222,6 +222,61 @@ beforeEach(() => {
   document.body.innerHTML = "";
 });
 
+describe("saved configuration is visible without disclosing its contents", () => {
+  it("shows canonical address, credential and header presence separately from readiness", async () => {
+    world({ rows: [row({
+      address_configured: true, credentials_configured: true, custom_header_count: 2,
+      status: "pending_verification", health: "unknown", last_checked_at: null,
+      server_url: "https://services.example.com/private-path/mcp",
+      auth_token: "test-only-secret-never-render",
+      custom_headers: { "X-Private": "test-only-header-never-render" },
+    })] });
+    const { host, root } = await render();
+    await click(host.querySelector('[data-gateway-tool]'));
+    const facts = dialog(host)?.querySelector(".ig-facts")?.textContent;
+    expect(facts).toContain("AddressOn file · kept private");
+    expect(facts).toContain("CredentialsOn file · encrypted");
+    expect(facts).toContain("Additional headers2 on file · encrypted");
+    expect(facts).toContain("Not checked yet");
+    expect(host.textContent).not.toContain("private-path");
+    expect(host.textContent).not.toContain("test-only-secret-never-render");
+    expect(host.textContent).not.toContain("test-only-header-never-render");
+    expect(edgeCalls("verify")).toHaveLength(0);
+    await act(async () => root.unmount());
+  });
+
+  it.each(["none", "bearer", "url"])("reports absent credentials without treating %s as proof of a key", async (authKind) => {
+    world({ rows: [row({ auth_kind: authKind, address_configured: authKind !== "url", credentials_configured: false, custom_header_count: 0 })] });
+    const { host, root } = await render();
+    await click(host.querySelector('[data-gateway-tool]'));
+    const facts = dialog(host)?.querySelector(".ig-facts")?.textContent;
+    expect(facts).toContain(authKind === "none" ? "CredentialsNot used" : "CredentialsNot on file");
+    expect(facts).toContain("Additional headersNone on file");
+    await act(async () => root.unmount());
+  });
+
+  it.each(["bearer", "url"])("does not turn unavailable %s readback into an absent configuration claim", async (authKind) => {
+    world({ rows: [row({ auth_kind: authKind })] });
+    const { host, root } = await render();
+    await click(host.querySelector('[data-gateway-tool]'));
+    const facts = dialog(host)?.querySelector(".ig-facts")?.textContent;
+    expect(facts).toContain("AddressNot confirmed");
+    expect(facts).toContain("CredentialsNot confirmed");
+    expect(facts).toContain("Additional headersNot confirmed");
+    await act(async () => root.unmount());
+  });
+
+  it("reports URL-carried credentials on file without showing the private address", async () => {
+    world({ rows: [row({ auth_kind: "url", address_configured: true, credentials_configured: true,
+      server_url: "https://services.example.com/private-test-value/mcp" })] });
+    const { host, root } = await render();
+    await click(host.querySelector('[data-gateway-tool]'));
+    expect(dialog(host)?.querySelector(".ig-facts")?.textContent).toContain("CredentialsOn file · encrypted");
+    expect(host.textContent).not.toContain("private-test-value");
+    await act(async () => root.unmount());
+  });
+});
+
 describe("OAuth return is a navigation hint, never connection authority", () => {
   it.each(["cancelled", "error", null] as const)("offers an explicit same-row retry for a credential-free shell (%s)", async (result) => {
     world({ rows: [row({ auth_kind: "none", status: "pending_verification", health: "unknown" })], write: edgeRefusal("discovery_failed") });

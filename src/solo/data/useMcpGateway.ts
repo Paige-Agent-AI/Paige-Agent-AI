@@ -79,6 +79,11 @@ export type GatewayConnection = {
   serverUrlHost: string | null;
   toolCount: number | null;
   approvedCount: number | null;
+  /** Safe presence only. null/absent means the deployment did not prove this fact. */
+  addressConfigured?: boolean | null;
+  credentialsConfigured?: boolean | null;
+  customHeaderCount?: number | null;
+  configGeneration?: number | null;
 };
 
 /** The generic-remote-MCP credential shapes the create door accepts. */
@@ -91,6 +96,8 @@ export type CreateMcpDraft = {
   authKind: GatewayAuthKind;
   authToken?: string | null;
   authHeaderName?: string | null;
+  /** Write-only, encrypted by the canonical writer; never retained in hook state. */
+  customHeaders?: Record<string, string>;
 };
 
 export type CreateRestDraft = { label: string; baseUrl: string; apiKey: string };
@@ -368,6 +375,7 @@ const ERR: Record<string, string> = {
   MCP_BAD_ENDPOINT:
     "That address can't be used. Enter a public https:// address — local, private, or non-HTTPS addresses aren't allowed.",
   MCP_BAD_CREDENTIAL_BUNDLE: "Those credentials are incomplete for this sign-in type.",
+  MCP_BAD_CUSTOM_HEADERS: "Check the header names and values. Duplicate, reserved, or oversized headers cannot be saved.",
   // INT-153. Previously absent from this map, so the commonest paste mistake — a short token —
   // fell through to the generic "that didn't go through" and told the person nothing actionable.
   MCP_CREDENTIAL_TOO_SHORT: `That key is too short. Paste the full one — it needs at least ${MCP_CREDENTIAL_MIN_LENGTH} characters.`,
@@ -517,7 +525,7 @@ function rpcResult(value: unknown): { data: unknown; error: unknown } {
  */
 function interpretWrite(data: Record<string, unknown>): GatewayWriteResult {
   const connectionId = str(data.connection_id);
-  if (!connectionId) {
+  if (!connectionId || data.ok === false) {
     return { ok: false, code: null, message: mcpGatewayMessage(null) };
   }
   return {
@@ -582,6 +590,10 @@ function readRow(value: unknown): GatewayConnection | null {
     serverUrlHost: str(r.server_url_host),
     toolCount: count(r.tool_count),
     approvedCount: count(r.approved_count),
+    addressConfigured: typeof r.address_configured === "boolean" ? r.address_configured : null,
+    credentialsConfigured: typeof r.credentials_configured === "boolean" ? r.credentials_configured : null,
+    customHeaderCount: count(r.custom_header_count),
+    configGeneration: count(r.config_generation),
   };
 }
 
@@ -628,6 +640,7 @@ export type UseMcpGateway = McpGatewayState & {
     authKind: GatewayAuthKind,
     authToken?: string | null,
     authHeaderName?: string | null,
+    customHeaders?: Record<string, string>,
   ) => Promise<GatewayWriteResult>;
   rekeyRest: (connectionId: string, baseUrl: string, apiKey: string) => Promise<GatewayWriteResult>;
   disconnect: (connectionId: string, hard: boolean) => Promise<GatewayWriteResult>;
@@ -664,6 +677,7 @@ export function useMcpGateway(): UseMcpGateway {
     mutation.current += 1;
     pendingMutation.current = false;
     if (loadedScope !== null) setLoadedScope(null);
+    setState({ ...EMPTY });
   }
 
   const load = useCallback(async () => {
@@ -870,6 +884,7 @@ export function useMcpGateway(): UseMcpGateway {
             // kind needs is a refusal, not a kindness.
             auth_token: usesToken ? draft.authToken ?? null : null,
             auth_header_name: draft.authKind === "header" ? draft.authHeaderName ?? null : null,
+            ...(draft.customHeaders === undefined ? {} : { custom_headers: draft.customHeaders }),
           });
         },
         (data) => interpretWrite(data),
@@ -1101,14 +1116,14 @@ export function useMcpGateway(): UseMcpGateway {
       // 20270331000000_mcp_gateway_native_writers.sql, disconnect's three branches included). An
       // answer without it did not confirm the operation, and the reload that follows cannot make a
       // success claim retroactively true (§13).
-      if (!str(out.connection_id)) {
-        const message = mcpGatewayMessage(null);
-        setState((prev) => ({ ...prev, saving: false, writeError: message }));
-        return { ok: false, code: null, message };
+      const result = interpretWrite(out);
+      if (!result.ok) {
+        setState((prev) => ({ ...prev, saving: false, writeError: result.message }));
+        return result;
       }
       setState((prev) => ({ ...prev, saving: false, writeError: null }));
       void load();
-      return interpretWrite(out);
+      return result;
     },
     [preflight, activeTenantId, scope, load],
   );
@@ -1120,6 +1135,7 @@ export function useMcpGateway(): UseMcpGateway {
       authKind: GatewayAuthKind,
       authToken?: string | null,
       authHeaderName?: string | null,
+      customHeaders?: Record<string, string>,
     ) =>
       runRpc("set_mcp_connection_endpoint", {
         _connection_id: connectionId,
@@ -1128,6 +1144,7 @@ export function useMcpGateway(): UseMcpGateway {
         // `url` and `none` carry no credential by contract; every other kind carries what it was given.
         _auth_token: authKind === "url" || authKind === "none" ? null : authToken ?? null,
         _auth_header_name: authKind === "header" ? authHeaderName ?? null : null,
+        ...(customHeaders === undefined ? {} : { _custom_headers: customHeaders }),
       }),
     [runRpc],
   );

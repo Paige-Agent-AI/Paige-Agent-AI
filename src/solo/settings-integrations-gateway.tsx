@@ -1287,6 +1287,9 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = fals
       <dl className="ig-facts">
         <div><dt>Endpoint</dt><dd>{tool.serverUrlHost ?? "—"}</dd></div>
         <div><dt>Type</dt><dd>{facetName(tool)}</dd></div>
+        <div><dt>Address</dt><dd>{tool.addressConfigured === true ? "On file · kept private" : tool.addressConfigured === false ? "Not on file" : "Not confirmed"}</dd></div>
+        <div><dt>Credentials</dt><dd>{tool.credentialsConfigured === true ? "On file · encrypted" : tool.credentialsConfigured === false ? (tool.authKind === "none" ? "Not used" : "Not on file") : "Not confirmed"}</dd></div>
+        <div><dt>Additional headers</dt><dd>{tool.customHeaderCount == null ? "Not confirmed" : tool.customHeaderCount === 0 ? "None on file" : `${tool.customHeaderCount} on file · encrypted`}</dd></div>
         <div><dt>Status</dt><dd><span className="ig-gw-chip" data-tone={chip.tone}>{chip.label}</span></dd></div>
         <div><dt>Last checked</dt><dd>{tool.lastCheckedAt ? new Date(tool.lastCheckedAt).toLocaleString() : "No successful check yet"}</dd></div>
       </dl>

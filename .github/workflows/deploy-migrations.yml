@@ -37,11 +37,17 @@
 #     wedges every later deploy behind it. This is the SAME risk the old hand-apply
 #     carried, now with a loud red run + an auto-filed issue (see the failure step)
 #     instead of silent drift. Author migrations idempotently.
+#   - ONLY NEWER MIGRATIONS ARE APPLIED — a plain `db push`, never `--include-all`
+#     (owner ruling, 2026-09-29). A migration file OLDER than production's newest
+#     recorded version is refused: the push fails before applying anything ("Found
+#     local migration files to be inserted before the last migration on remote
+#     database"), the run goes red and an issue is filed. Such a file must be renamed
+#     to a version newer than production's newest, reviewed, and merged again.
 #   - #275 ON A FRESH REBUILD. `db push` connects as the role SUPABASE_DB_PASSWORD
 #     authenticates (typically `postgres`), which does NOT own `realtime.messages`.
 #     On the current prod DB the realtime RLS migration is already RECORDED, so
 #     `db push` never re-runs it — fine. But on any fresh-DB rebuild / reset history,
-#     `db push --include-all` WILL re-execute `ALTER TABLE realtime.messages ENABLE
+#     replaying the chain WILL re-execute `ALTER TABLE realtime.messages ENABLE
 #     ROW LEVEL SECURITY` and can hit 42501 'must be owner'. Making that migration
 #     ownership-safe (DO-block / has_table_privilege guard) is tracked as #350/#275 —
 #     a hard dependency for fresh rebuilds, out of scope for this catch-up pipeline.
@@ -148,26 +154,13 @@ jobs:
           echo "Linking prod project $ref"
           # `link` reads SUPABASE_ACCESS_TOKEN + SUPABASE_DB_PASSWORD from the env.
           supabase link --project-ref "$ref"
-          # PR #1148 exposed one production catalog/history mismatch: the first
-          # Solo table exists while migration 20270118010000 is not recorded.
-          # Preserve immutable repository SQL. Only when that exact version is
-          # missing, dump schema read-only, validate any pre-existing Solo table,
-          # and transform CREATE statements in this ephemeral runner checkout.
-          # The digest-pinned transformer fails closed on source or schema drift.
-          migration_status="$RUNNER_TEMP/solo-beta-migration-status.txt"
-          supabase migration list --linked | tee "$migration_status"
-          if awk -F'|' '$1 ~ /20270118010000/ && $2 !~ /20270118010000/ { missing=1 } END { exit(missing ? 0 : 1) }' "$migration_status"; then
-            schema_dump="$RUNNER_TEMP/solo-beta-production-schema.sql"
-            supabase db dump --linked --schema public -f "$schema_dump"
-            node scripts/ci/solo-beta-migration-recovery.mjs \
-              "$schema_dump" \
-              supabase/migrations/20270118010000_solo_beta_atomic_fulfillment.sql
-            rm -f "$schema_dump"
-          fi
+          supabase migration list --linked
           echo "::group::supabase db push (idempotent — already-recorded migrations are skipped)"
           # `db push` queries supabase_migrations.schema_migrations and applies ONLY
-          # versions not yet recorded, in order. Re-running with nothing new is a no-op.
-          supabase db push --include-all
+          # versions not yet recorded AND newer than production's newest, in order;
+          # it refuses the whole push if any unrecorded file is older. Re-running with
+          # nothing new is a no-op.
+          supabase db push
           echo "::endgroup::"
 
       - name: Verify prod is caught up (PERSISTED, not just ran — §32)

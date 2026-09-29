@@ -353,7 +353,7 @@ This contradicts a clean `edge-live == HEAD` assumption; the cause (CI lag, rena
 
 ### Migrations — `deploy-migrations.yml`
 
-On push to `main` touching `supabase/migrations/**`: a lint gate → `supabase db push --include-all` → a **PERSISTED-verify** step that parses `supabase migration list --linked` (pipe-delimited, 14-digit-version match with a vacuous-pass guard) and **fails if any local version is not recorded remotely** → moves the **`db-live`** tag. On failure it auto-files a deduped incident issue. Requires `SUPABASE_DB_PASSWORD`. This machinery is the §32 enforcement that "a migration is not done until PROVEN PERSISTED on prod" (a `BEGIN…ROLLBACK` proof alone is insufficient).
+On push to `main` touching `supabase/migrations/**`: a lint gate → `supabase db push` (plain since 2026-09-29, owner ruling: a migration older than production's newest is refused, never back-filled; formerly `--include-all`) → a **PERSISTED-verify** step that parses `supabase migration list --linked` (pipe-delimited, 14-digit-version match with a vacuous-pass guard) and **fails if any local version is not recorded remotely** → moves the **`db-live`** tag. On failure it auto-files a deduped incident issue. Requires `SUPABASE_DB_PASSWORD`. This machinery is the §32 enforcement that "a migration is not done until PROVEN PERSISTED on prod" (a `BEGIN…ROLLBACK` proof alone is insufficient).
 
 ### The "KNOWN db-live pipeline bug" — could NOT be grounded (§13)
 

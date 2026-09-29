@@ -17,6 +17,7 @@ import {
   extractAttachmentText,
   type ModelInvoker,
 } from "../_shared/attachment-extract.ts";
+import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses } from "../_shared/contact-methods.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -133,11 +134,13 @@ Deno.serve(async (req) => {
   let fundingGoal = "";
   let contactTenantId: string | null = null;
   if (contactId) {
-    const { data: c } = await supabase
+    // Addressed to the contact's PRIMARY email unless the caller named one.
+    const { data: row } = await supabase
       .from("clients")
-      .select("first_name,last_name,email,entity_name,funding_goal,tenant_id")
+      .select(`first_name,last_name,entity_name,funding_goal,tenant_id,${CLIENT_CONTACT_METHODS_EMBED}`)
       .eq("id", contactId)
       .maybeSingle();
+    const c = withPrimaryAddresses(row);
     if (c) {
       recipientName ||= [c.first_name, c.last_name].filter(Boolean).join(" ").trim();
       recipientEmail ||= c.email ?? "";

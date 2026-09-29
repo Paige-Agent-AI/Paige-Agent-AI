@@ -28,6 +28,7 @@ import { clientIp, overRateLimit } from "../_shared/rateLimit.ts";
 // move it on reschedule, delete it on cancel. Best-effort (§13): a Zoom failure
 // never fails a change that's already committed.
 import { deleteZoomMeeting, updateZoomMeeting } from "../_shared/zoomMeetings.ts";
+import { primaryPhonesForUsers } from "../_shared/user-contact-methods.ts";
 
 // Per-window ceilings (60s). A real guest managing one booking makes a handful of
 // calls; these sit well above that but stop a replay/brute-force flood.
@@ -247,10 +248,16 @@ async function resolveHostEmails(admin: ReturnType<typeof createClient>, hostIds
   return out.filter((e): e is string => !!e);
 }
 
+/** Each host's primary phone. An unreadable list skips SMS-to-host, loudly — never the change. */
 async function resolveHostPhones(admin: ReturnType<typeof createClient>, hostIds: string[]): Promise<string[]> {
   if (!hostIds.length) return [];
-  const { data: profs } = await admin.from("profiles").select("phone").in("user_id", hostIds);
-  return (profs ?? []).map((p) => String((p as { phone?: string }).phone ?? "")).filter(Boolean);
+  try {
+    const phones = await primaryPhonesForUsers(admin, hostIds);
+    return hostIds.map((uid) => phones.get(uid) ?? "").filter(Boolean);
+  } catch (e) {
+    console.error("[booking-manage] host_phone_read_failed", (e as Error).message);
+    return [];
+  }
 }
 
 /** Best-effort Zoom sync on reschedule/cancel. The meeting lives on ONE host

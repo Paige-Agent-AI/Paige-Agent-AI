@@ -24,7 +24,7 @@
 // provisions an inbound email connector.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { fireAndForgetBridge } from "../_shared/mmaOsBridge.ts";
-import { findClientIdByAddress } from "../_shared/contact-methods.ts";
+import { findClientIdByAddress, insertClientWithAddresses } from "../_shared/contact-methods.ts";
 import {
   getInboundAdapter,
   registerInboundAdapter,
@@ -322,24 +322,23 @@ Deno.serve(async (req) => {
     if (createdBy) {
       const localPart = fromEmail.split("@")[0];
       const firstName = msg.sender?.display_name?.trim() || localPart || "Inbound";
-      const { data: created, error: contactErr } = await admin
-        .from("clients")
-        .insert({
+      // The sender's address becomes the new contact's first (primary) email. A failed create,
+      // or one whose address cannot be attached, is logged by the helper and writes nothing.
+      const { data: created } = await insertClientWithAddresses(
+        admin,
+        {
           tenant_id: tenantId, // §9 — explicit; never inferred cross-tenant.
           created_by: createdBy,
           first_name: firstName,
           last_name: "",
-          email: fromEmail,
           lifecycle_stage: "new_lead", // #172: 'lead' violates clients_lifecycle_stage_chk (23514)
           source: "inbound_email",
           status: "active",
           created_by_channel_type: "email", // #10 channel-of-origin
-        })
-        .select("id")
-        .single();
-      if (contactErr) {
-        console.error("[handle-inbound-email] contact_insert_error", contactErr);
-      }
+        },
+        { email: fromEmail },
+        "handle-inbound-email",
+      );
       contactId = created?.id ?? null;
     } else {
       console.warn("[handle-inbound-email] no_created_by_for_tenant", { tenantId });

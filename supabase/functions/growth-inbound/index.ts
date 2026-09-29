@@ -7,7 +7,7 @@
 //             contact, write growth_form_submissions, optional deal create.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { findClientIdByAddress } from "../_shared/contact-methods.ts";
+import { findClientIdByAddress, insertClientWithAddresses } from "../_shared/contact-methods.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -72,22 +72,23 @@ Deno.serve(async (req) => {
       // and matched against ANY of a contact's addresses, not only its primary.
       contactId = await findClientIdByAddress(supabase, source.tenant_id, "email", email, "growth-inbound");
       if (!contactId) {
-        const { data: inserted } = await supabase
-          .from("clients")
-          .insert({
-            email,
+        // The form's email (and phone, when it carried one) become the new contact's first
+        // contact methods. A create whose address cannot be attached writes nothing: no contact.
+        const { data: inserted } = await insertClientWithAddresses(
+          supabase,
+          {
             first_name: firstName || "New",
             last_name: lastName || "",
-            phone: phone || null,
             source: `external:${source.provider}`,
             lifecycle_stage: "new_lead", // #172: 'lead' violates clients_lifecycle_stage_chk (23514)
             status: "active",
             created_by: source.created_by,
             tenant_id: source.tenant_id,
             created_by_channel_type: "form", // #10 channel-of-origin (external form bridge)
-          })
-          .select("id")
-          .single();
+          },
+          { email, phone: phone || null },
+          "growth-inbound",
+        );
         contactId = inserted?.id ?? null;
       }
     }

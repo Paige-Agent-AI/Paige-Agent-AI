@@ -2,6 +2,7 @@
 // Body: { contact_id?, envelope_type, template_id, prefill?: { email, name, role? }, email_subject?, email_blurb? }
 import { adminClient, corsHeaders, jsonResponse, requireAdmin } from "../_shared/adminAuth.ts";
 import { getDocuSignAccess } from "../_shared/docusignJwt.ts";
+import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses } from "../_shared/contact-methods.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -28,11 +29,13 @@ Deno.serve(async (req) => {
   const roleName = (prefill?.role as string | undefined) || "Signer";
 
   if (contact_id && (!toEmail || !toName)) {
-    const { data: contact } = await guard.admin
+    // The signer is the contact at their PRIMARY email.
+    const { data: row } = await guard.admin
       .from("clients")
-      .select("email, first_name, last_name")
+      .select(`first_name, last_name, ${CLIENT_CONTACT_METHODS_EMBED}`)
       .eq("id", contact_id)
       .maybeSingle();
+    const contact = withPrimaryAddresses(row);
     if (contact) {
       toEmail ||= contact.email ?? undefined;
       toName ||= `${contact.first_name ?? ""} ${contact.last_name ?? ""}`.trim() || contact.email || undefined;

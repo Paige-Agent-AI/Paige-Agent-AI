@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { gatewayCompat } from "../_shared/claude.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { addClientAddresses } from "../_shared/contact-methods.ts";
+import { setUserPrimaryAddress } from "../_shared/user-contact-methods.ts";
 // N5 §2/§9 — the funding methodology corpus is no longer bundled into platform code;
 // it lives in the installable Marketplace funding preset (tenant KB). This extraction
 // pass parses the report structure and does not need the coaching methodology inline.
@@ -561,14 +563,22 @@ serve(async (req) => {
         // Build profile patch — only fill blanks (never overwrite client-entered data) except for phone/address which we always refresh from latest report
         const { data: existingProfile } = await supabase
           .from("profiles")
-          .select("full_name, phone, address, city, state, date_of_birth, ssn_last_4")
+          .select("full_name, address, city, state, date_of_birth, ssn_last_4")
           .eq("user_id", targetUserId)
           .maybeSingle();
 
         if (existingProfile) {
+          // The report's phone becomes the person's primary phone; their other numbers stay.
+          if (primaryPhone) {
+            try {
+              await setUserPrimaryAddress(supabase, targetUserId, "phone", primaryPhone);
+              console.log("[analyze-credit-report] mirrored phone to contact methods");
+            } catch (phoneErr) {
+              console.error("[analyze-credit-report] phone mirror failed:", phoneErr);
+            }
+          }
           const patch: Record<string, any> = {};
           if (primaryName && !existingProfile.full_name) patch.full_name = primaryName;
-          if (primaryPhone) patch.phone = primaryPhone;
           if (addr.street) patch.address = addr.street;
           if (addr.city) patch.city = addr.city;
           if (addr.state) patch.state = addr.state;
@@ -590,8 +600,8 @@ serve(async (req) => {
         if (linkedClientId || targetUserId) {
           // Find the clients row either by explicit clientId or by linked_user_id
           const clientQuery = linkedClientId
-            ? supabase.from("clients").select("id, first_name, last_name, phone, street_address, city, state, zip_code").eq("id", linkedClientId).maybeSingle()
-            : supabase.from("clients").select("id, first_name, last_name, phone, street_address, city, state, zip_code").eq("linked_user_id", targetUserId).maybeSingle();
+            ? supabase.from("clients").select("id, tenant_id, first_name, last_name, street_address, city, state, zip_code").eq("id", linkedClientId).maybeSingle()
+            : supabase.from("clients").select("id, tenant_id, first_name, last_name, street_address, city, state, zip_code").eq("linked_user_id", targetUserId).maybeSingle();
 
           const { data: clientRow } = await clientQuery;
           if (clientRow) {
@@ -604,7 +614,15 @@ serve(async (req) => {
               if (first && !clientRow.first_name) cPatch.first_name = first;
               if (last && !clientRow.last_name) cPatch.last_name = last;
             }
-            if (primaryPhone) cPatch.phone = primaryPhone;
+            // The report's phone becomes the contact's primary phone; their other numbers stay.
+            if (primaryPhone) {
+              const { error: phoneErr } = await addClientAddresses(
+                supabase, clientRow.tenant_id, clientRow.id,
+                [{ kind: "phone", value: primaryPhone, is_primary: true }],
+                "analyze-credit-report",
+              );
+              if (!phoneErr) console.log("[analyze-credit-report] mirrored phone to client contact methods:", clientRow.id);
+            }
             if (addr.street) cPatch.street_address = addr.street;
             if (addr.city) cPatch.city = addr.city;
             if (addr.state) cPatch.state = addr.state;

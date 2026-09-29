@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { usePortalConfig } from "@/hooks/usePortalConfig";
+import { CLIENT_CONTACT_METHODS_EMBED, orderContactMethods, primaryValue, type ContactMethod, type ContactMethodRow } from "@/lib/contact-methods";
 
 export type RelationshipWorkspaceVariant = "relationships" | "clients";
 
@@ -12,6 +13,8 @@ export interface RelationshipPerson {
   recordType: "person" | "business";
   entityType: string | null;
   company: string | null;
+  /** Every email and phone, primary first. `email` / `phone` are the primaries, for display. */
+  contactMethods: ContactMethod[];
   email: string | null;
   phone: string | null;
   title: string | null;
@@ -45,8 +48,7 @@ interface ClientRow {
   last_name: string | null;
   entity_name: string | null;
   entity_type: string | null;
-  email: string | null;
-  phone: string | null;
+  client_contact_methods: ContactMethodRow[] | null;
   title: string | null;
   website: string | null;
   linkedin_url: string | null;
@@ -69,12 +71,17 @@ interface ClientRow {
   updated_at: string;
 }
 
-const clientName = (row: ClientRow) => {
+const clientName = (row: ClientRow, primaryEmail: string | null) => {
   const full = `${row.first_name ?? ""} ${row.last_name ?? ""}`.trim();
   const company = row.entity_name?.trim();
   if (company && (Boolean(row.entity_type?.trim()) || !full)) return company;
-  return full || company || row.email?.trim() || "Unnamed contact";
+  return full || company || primaryEmail || "Unnamed contact";
 };
+
+// Widened to string on purpose: the generated types do not know the contact-methods embed yet,
+// and a literal select string makes the client's type parser recurse past its limit.
+const SOLO_PERSON_SELECT: string = `id,first_name,last_name,entity_name,entity_type,${CLIENT_CONTACT_METHODS_EMBED},title,website,linkedin_url,street_address,city,state,zip_code,source,status,tags,do_not_contact,paige_shared_context_consent,linked_user_id,lifecycle_stage,primary_offer,current_notes,assigned_coach_user_id,last_contacted_at,created_at,updated_at`;
+const ROSTER_PERSON_SELECT: string = `id,first_name,last_name,entity_name,${CLIENT_CONTACT_METHODS_EMBED},linked_user_id,lifecycle_stage,assigned_coach_user_id,last_contacted_at`;
 
 const trimOrNull = (value: string | null | undefined) => value?.trim() || null;
 
@@ -84,16 +91,20 @@ const recordType = (row: ClientRow): RelationshipPerson["recordType"] => {
   return hasBusinessEvidence ? "business" : "person";
 };
 
-const mapClient = (row: ClientRow): RelationshipPerson => ({
+const mapClient = (row: ClientRow): RelationshipPerson => {
+  const contactMethods = orderContactMethods(row.client_contact_methods);
+  const email = primaryValue(contactMethods, "email");
+  return {
   id: row.id,
   firstName: row.first_name ?? "",
   lastName: row.last_name ?? "",
-  name: clientName(row),
+  name: clientName(row, email),
   recordType: recordType(row),
   entityType: trimOrNull(row.entity_type),
   company: trimOrNull(row.entity_name),
-  email: trimOrNull(row.email),
-  phone: trimOrNull(row.phone),
+  contactMethods,
+  email,
+  phone: primaryValue(contactMethods, "phone"),
   title: trimOrNull(row.title),
   website: trimOrNull(row.website),
   linkedinUrl: trimOrNull(row.linkedin_url),
@@ -117,7 +128,8 @@ const mapClient = (row: ClientRow): RelationshipPerson => ({
   lastTouch: row.last_contacted_at,
   createdAt: row.created_at ?? null,
   updatedAt: row.updated_at ?? null,
-});
+  };
+};
 
 /**
  * Account-keyed read adapter for the approved workspace. The authoritative tenant id comes
@@ -144,8 +156,8 @@ export function useTenantRelationshipsData({
       const { data, error } = await supabase
         .from("clients")
         .select(soloPeople
-          ? "id,first_name,last_name,entity_name,entity_type,email,phone,title,website,linkedin_url,street_address,city,state,zip_code,source,status,tags,do_not_contact,paige_shared_context_consent,linked_user_id,lifecycle_stage,primary_offer,current_notes,assigned_coach_user_id,last_contacted_at,created_at,updated_at"
-          : "id,first_name,last_name,entity_name,email,linked_user_id,lifecycle_stage,assigned_coach_user_id,last_contacted_at")
+          ? SOLO_PERSON_SELECT
+          : ROSTER_PERSON_SELECT)
         .eq("tenant_id", activeTenantId)
         .order("created_at", { ascending: false })
         .limit(250);
@@ -162,12 +174,12 @@ export function useTenantRelationshipsData({
       if (!activeTenantId || !deepLinkedContactId) return null;
       const { data, error } = await supabase
         .from("clients")
-        .select("id,first_name,last_name,entity_name,entity_type,email,phone,title,website,linkedin_url,street_address,city,state,zip_code,source,status,tags,do_not_contact,paige_shared_context_consent,linked_user_id,lifecycle_stage,primary_offer,current_notes,assigned_coach_user_id,last_contacted_at,created_at,updated_at")
+        .select(SOLO_PERSON_SELECT)
         .eq("tenant_id", activeTenantId)
         .eq("id", deepLinkedContactId)
         .maybeSingle();
       if (error) throw error;
-      return data ? mapClient(data as ClientRow) : null;
+      return data ? mapClient(data as unknown as ClientRow) : null;
     },
   });
 

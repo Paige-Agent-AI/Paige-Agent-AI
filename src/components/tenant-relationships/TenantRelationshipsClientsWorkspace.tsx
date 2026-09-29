@@ -7,10 +7,8 @@ import {
   CalendarDays,
   ExternalLink,
   FileText,
-  Mail,
   MapPin,
   MessageSquare,
-  Phone,
   Pencil,
   Plus,
   RefreshCw,
@@ -35,6 +33,7 @@ import {
 } from "./workspaceModel";
 import { TenantCanonicalCalendarWorkspace } from "@/components/tenant-calendar/TenantCanonicalCalendarWorkspace";
 import { PeopleContactEditor } from "./PeopleContactEditor";
+import { ContactMethodsList } from "@/components/contact-methods/ContactMethodsEditor";
 import "./tenant-relationships-clients-workspace.css";
 
 const CanonicalConversations = lazy(() => import("@/pages/admin/ClientsConversations"));
@@ -72,6 +71,13 @@ function BoundedState({
       )}
     </section>
   );
+}
+
+/** A search matches any of a person's emails, or any phone by its digits whatever the formatting. */
+function matchesContactMethod(person: { contactMethods: { kind: string; value: string }[] }, query: string) {
+  const digits = query.replace(/\D/g, "");
+  return person.contactMethods.some((method) => method.value.toLowerCase().includes(query)
+    || (method.kind === "phone" && digits.length >= 3 && method.value.replace(/\D/g, "").includes(digits)));
 }
 
 function formatDate(value: string | null, fallback = "Not recorded") {
@@ -248,7 +254,7 @@ function PeopleView({ variant, data, openPaige, selectedContactId, onSelectConta
   const people = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) return data.people;
-    return data.people.filter((person) => [person.name, person.company, person.email, person.relationship, person.owner]
+    return data.people.filter((person) => [person.name, person.company, ...person.contactMethods.map((method) => method.value), person.relationship, person.owner]
       .some((value) => value?.toLowerCase().includes(query)));
   }, [data.people, search]);
   const selected = people.find(({ id }) => id === selectedContactId) ?? null;
@@ -340,8 +346,8 @@ function SoloPeopleView({
   const query = search.trim().toLowerCase();
   const people = useMemo(() => {
     if (!query) return data.people;
-    return data.people.filter((person) => [person.name, person.company, person.email, person.phone, person.relationship, person.owner, person.source, ...person.tags]
-      .some((value) => value?.toLowerCase().includes(query)));
+    return data.people.filter((person) => [person.name, person.company, person.relationship, person.owner, person.source, ...person.tags]
+      .some((value) => value?.toLowerCase().includes(query)) || matchesContactMethod(person, query));
   }, [data.people, query]);
 
   useEffect(() => {
@@ -631,9 +637,8 @@ function ClientRecord({
 
         <section className="trc-record-section">
           <header><div><span>Identity</span><h3>{isBusiness ? "Organization details" : "Contact details"}</h3></div><ProofPill tone="live">Owner-editable · LIVE</ProofPill></header>
+          <div className="trc-record-methods"><ContactMethodsList methods={person.contactMethods} /></div>
           <div className="trc-contact-lines">
-            <div><Mail aria-hidden /><span><small>Email</small>{person.email || "Not recorded"}</span></div>
-            <div><Phone aria-hidden /><span><small>Phone</small>{person.phone || "Not recorded"}</span></div>
             <div><MapPin aria-hidden /><span><small>Location</small>{person.location || "Not recorded"}</span></div>
             <div><Building2 aria-hidden /><span><small>Company</small>{person.company || "Not recorded"}</span></div>
             <div><ExternalLink aria-hidden /><span><small>Website</small>{person.website || "Not recorded"}</span></div>

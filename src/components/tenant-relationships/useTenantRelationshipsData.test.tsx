@@ -90,7 +90,7 @@ describe("tenant relationship adapter sequencing", () => {
     await act(async () => root.render(<QueryClientProvider client={client}><Harness tenantId={null} /></QueryClientProvider>));
     expect(host.querySelector("output")?.getAttribute("data-people")).toBe("");
     await act(async () => {
-      pending.get("clients:tenant-a")?.resolve({ data: [{ id: "a", first_name: "Late", last_name: "Account", entity_name: null, email: null, linked_user_id: null, lifecycle_stage: "client_active", assigned_coach_user_id: null, last_contacted_at: null }], error: null });
+      pending.get("clients:tenant-a")?.resolve({ data: [{ id: "a", first_name: "Late", last_name: "Account", entity_name: null, client_contact_methods: [], linked_user_id: null, lifecycle_stage: "client_active", assigned_coach_user_id: null, last_contacted_at: null }], error: null });
       await Promise.resolve();
     });
     expect(host.querySelector("output")?.getAttribute("data-people")).toBe("");
@@ -107,7 +107,12 @@ describe("tenant relationship adapter sequencing", () => {
       pending.get("clients:tenant-business")?.resolve({
         data: [{
           id: "business-1", first_name: "Supplied", last_name: "Contact", entity_name: "Supplied Company", entity_type: "LLC",
-          email: "hello@example.test", phone: "+1 202 555 0142", title: null, website: "https://example.test",
+          client_contact_methods: [
+            { id: "cm-2", kind: "email", value: "billing@example.test", label: "Billing", is_primary: false, position: 1 },
+            { id: "cm-3", kind: "phone", value: "+1 202 555 0142", label: "Mobile", is_primary: true, position: 0 },
+            { id: "cm-1", kind: "email", value: "hello@example.test", label: "Work", is_primary: true, position: 0 },
+          ],
+          title: null, website: "https://example.test",
           linkedin_url: "https://linkedin.com/in/supplied", street_address: "10 Peachtree St", city: "Atlanta", state: "GA", zip_code: "30303",
           primary_offer: "Advisory", current_notes: "Prefers email", source: "referral", status: "active", tags: ["Priority"],
           do_not_contact: false, paige_shared_context_consent: false, linked_user_id: null,
@@ -124,7 +129,13 @@ describe("tenant relationship adapter sequencing", () => {
       id: "business-1",
       name: "Supplied Company",
       recordType: "business",
+      email: "hello@example.test",
       phone: "+1 202 555 0142",
+      contactMethods: [
+        { id: "cm-1", kind: "email", value: "hello@example.test", label: "Work", isPrimary: true },
+        { id: "cm-2", kind: "email", value: "billing@example.test", label: "Billing", isPrimary: false },
+        { id: "cm-3", kind: "phone", value: "+1 202 555 0142", label: "Mobile", isPrimary: true },
+      ],
       website: "https://example.test",
       linkedinUrl: "https://linkedin.com/in/supplied",
       streetAddress: "10 Peachtree St",
@@ -147,6 +158,10 @@ describe("tenant relationship adapter sequencing", () => {
     for (const field of ["street_address", "zip_code", "linkedin_url", "primary_offer", "current_notes"]) {
       expect(columns.split(",")).toContain(field);
     }
+    // Every address comes from contact methods; the retired single-value columns are not read.
+    expect(columns).toContain("client_contact_methods(id,kind,value,label,is_primary,position)");
+    expect(columns.split(",")).not.toContain("email");
+    expect(columns.split(",")).not.toContain("phone");
     act(() => root.unmount());
   });
 
@@ -156,7 +171,7 @@ describe("tenant relationship adapter sequencing", () => {
     const root = createRoot(host);
     await act(async () => root.render(<QueryClientProvider client={client}><Harness tenantId="tenant-legacy" /></QueryClientProvider>));
     await vi.waitFor(() => expect(pending.has("clients:tenant-legacy")).toBe(true));
-    expect(selections.find(({ table }) => table === "clients")?.columns).toBe("id,first_name,last_name,entity_name,email,linked_user_id,lifecycle_stage,assigned_coach_user_id,last_contacted_at");
+    expect(selections.find(({ table }) => table === "clients")?.columns).toBe("id,first_name,last_name,entity_name,client_contact_methods(id,kind,value,label,is_primary,position),linked_user_id,lifecycle_stage,assigned_coach_user_id,last_contacted_at");
     act(() => root.unmount());
   });
 

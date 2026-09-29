@@ -178,13 +178,15 @@ export default function GrowthFunnelRenderer() {
       return <StepUnavailable brandFloor={brandFloor} ctaLabel="Continue" onNext={next} />;
     }
     return (
-      <Scope brandFloor={brandFloor} className="px-6 py-16 md:py-24">
-        <div className="mx-auto w-full max-w-2xl">
-          {/* Advance the funnel on a completed submission — but only when a step follows. If
-              this form ends the funnel, it keeps its own authored success state (no onNext). */}
-          <FunnelFormStep key={step.id} formId={step.form_id} onComplete={hasNext ? next : undefined} />
-        </div>
-      </Scope>
+      <FunnelFormStep
+        key={step.id}
+        formId={step.form_id}
+        brandFloor={brandFloor}
+        // Advance the funnel on a completed submission — but only when a step follows. If this
+        // form ends the funnel, it keeps its own authored success state.
+        onComplete={hasNext ? next : undefined}
+        onSkip={next}
+      />
     );
   }
 
@@ -252,8 +254,27 @@ function FunnelPageStep({
   );
 }
 
-function FunnelFormStep({ formId, onComplete }: { formId: string; onComplete?: () => void }) {
-  return <GrowthFormEmbed formId={formId} accent="var(--gp-accent)" onComplete={onComplete} />;
+// ── the form step: the one public form embed, with the funnel's own loading and missing states ─
+// A form that is not live (inactive, or its business is not taking submissions) never strands the
+// visitor on an empty section: it becomes the same "not ready" step as any other missing step.
+function FunnelFormStep({ formId, brandFloor, onComplete, onSkip }: {
+  formId: string; brandFloor: GrowthPageTheme; onComplete?: () => void; onSkip: () => void;
+}) {
+  const [missing, setMissing] = useState(false);
+  if (missing) return <StepUnavailable brandFloor={brandFloor} ctaLabel="Continue" onNext={onSkip} />;
+  return (
+    <Scope brandFloor={brandFloor} className="px-6 py-16 md:py-24">
+      <div className="mx-auto w-full max-w-2xl">
+        <GrowthFormEmbed
+          formId={formId}
+          accent="var(--gp-accent)"
+          onComplete={onComplete}
+          loading={<FormSkeleton />}
+          onUnavailable={() => setMissing(true)}
+        />
+      </div>
+    </Scope>
+  );
 }
 
 // ── the advance affordance ───────────────────────────────────────────────────

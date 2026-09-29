@@ -1,6 +1,6 @@
 // Public form renderer — standalone hosted form at /form/:id and embeddable
 // inside landing pages via <GrowthFormEmbed>.
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useParams } from "react-router-dom";
 import type { GrowthField, GrowthSubmitOutcome, PublicGrowthForm } from "@/lib/growth";
 import { loadPublicGrowthForm, submitGrowthForm, readUtm, growthOptionValue, growthOptionLabel } from "@/lib/growth";
@@ -73,21 +73,29 @@ export default function GrowthFormPage() {
 }
 
 /** A form embedded in a page or funnel step, found by id or by the page's business and the form's
- *  slug. Renders nothing until the form is found, and nothing if it isn't available. */
-export function GrowthFormEmbed({ formId, tenantId, formSlug, accent, onComplete }: {
+ *  slug. While it loads it shows `loading` (nothing by default); if the form isn't available it
+ *  calls `onUnavailable` and shows nothing, so a caller that can move on (a funnel) can say so. */
+export function GrowthFormEmbed({ formId, tenantId, formSlug, accent, onComplete, loading, onUnavailable }: {
   formId?: string; tenantId?: string; formSlug?: string; accent?: string; onComplete?: () => void;
+  loading?: ReactNode; onUnavailable?: () => void;
 }) {
-  const [form, setForm] = useState<FormRow | null>(null);
+  const [form, setForm] = useState<FormRow | null | undefined>(undefined);
+  const unavailable = useRef(onUnavailable);
+  unavailable.current = onUnavailable;
   useEffect(() => {
     let cancelled = false;
+    setForm(undefined);
     (async () => {
       const found = formId
         ? await loadPublicGrowthForm({ formId })
         : tenantId && formSlug ? await loadPublicGrowthForm({ tenantId, slug: formSlug }) : null;
-      if (!cancelled) setForm(found);
+      if (cancelled) return;
+      setForm(found);
+      if (!found) unavailable.current?.();
     })();
     return () => { cancelled = true; };
   }, [formId, tenantId, formSlug]);
+  if (form === undefined) return <>{loading ?? null}</>;
   if (!form) return null;
   return (
     // §6 brand continuity + dark-AA: the embed rides the surrounding page's --gp-* palette so it
@@ -116,7 +124,24 @@ function fieldAnswered(field: GrowthField, value: Answer): boolean {
     if (field.options?.length) return Array.isArray(value) && value.length > 0;
     return value === true;
   }
-  return value !== undefined && value !== null && value !== "";
+  if (typeof value === "string") return value.trim() !== "";
+  return value !== undefined && value !== null;
+}
+
+/** The answers as they are sent: text trimmed, and blank answers left out — the server refuses a
+ *  blank one rather than ignoring it, so one stray space must never block a submission. */
+function answersToSend(data: Record<string, Answer>): Record<string, Answer> {
+  const out: Record<string, Answer> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value === undefined) continue;
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (trimmed) out[key] = trimmed;
+      continue;
+    }
+    out[key] = value;
+  }
+  return out;
 }
 
 function FormBody({ form, accent, onComplete }: { form: FormRow; accent?: string; onComplete?: () => void }) {
@@ -142,7 +167,7 @@ function FormBody({ form, accent, onComplete }: { form: FormRow; accent?: string
     setSubmitting(true);
     setSubmitError(null);
     const outcome = await submitGrowthForm({
-      formId: form.id, answers: data, utm: readUtm(), trap, startedAt: startedAt.current,
+      formId: form.id, answers: answersToSend(data), utm: readUtm(), trap, startedAt: startedAt.current,
     });
     setSubmitting(false);
     if (!outcome.ok) { setSubmitError(submitErrorMessage(outcome, schema.sections.flatMap((s) => s.fields))); return; }
@@ -215,8 +240,9 @@ function FormBody({ form, accent, onComplete }: { form: FormRow; accent?: string
       )}
 
       <div aria-hidden="true" style={{ position: "absolute", left: "-10000px", width: 1, height: 1, overflow: "hidden" }}>
-        <label htmlFor={`gf-trap-${form.id}`}>Leave this empty</label>
-        <input id={`gf-trap-${form.id}`} type="text" name="website" tabIndex={-1} autoComplete="off" value={trap} onChange={(e) => setTrap(e.target.value)} />
+        <label htmlFor={`gf-hp-${form.id}`}>Leave this empty</label>
+        {/* A name with no meaning, so browser and password-manager autofill never fill it. */}
+        <input id={`gf-hp-${form.id}`} type="text" name="gf_hp_x7" tabIndex={-1} autoComplete="off" value={trap} onChange={(e) => setTrap(e.target.value)} />
       </div>
 
       <div className="flex justify-between pt-2">
@@ -237,13 +263,15 @@ function FormBody({ form, accent, onComplete }: { form: FormRow; accent?: string
 function submitErrorMessage(outcome: GrowthSubmitOutcome, fields: GrowthField[]): string {
   if ("reason" in outcome && outcome.reason === "invalid") {
     const label = (key: string) => fields.find((f) => f.key === key)?.label ?? key;
-    const keys = [...outcome.missing, ...outcome.invalid];
+    const keys = [...new Set([...outcome.missing, ...outcome.invalid])];
     return keys.length
       ? `Please check ${keys.map(label).join(", ")} and try again.`
       : "Please check your answers and try again.";
   }
   if ("reason" in outcome && outcome.reason === "rate_limited") return "Lots of responses are coming in right now. Please wait a minute and try again.";
   if ("reason" in outcome && outcome.reason === "unavailable") return "This form isn't taking responses any more.";
+  if ("reason" in outcome && outcome.reason === "empty") return "Please answer at least one question before sending.";
+  if ("reason" in outcome && outcome.reason === "refused") return "This form can't accept responses from this page. Please contact the business directly.";
   return "We couldn't submit your responses just now. Please try again in a moment.";
 }
 

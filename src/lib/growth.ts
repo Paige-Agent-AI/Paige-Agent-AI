@@ -341,7 +341,7 @@ export async function loadPublicGrowthForm(
 export type GrowthSubmitOutcome =
   | { ok: true; submissionId: string }
   | { ok: false; reason: "invalid"; missing: string[]; invalid: string[] }
-  | { ok: false; reason: "rate_limited" | "unavailable" | "failed" };
+  | { ok: false; reason: "rate_limited" | "unavailable" | "empty" | "refused" | "failed" };
 
 /** Every real form waits at least this long before sending, so a person who fills a one-field
  *  form in an instant is never mistaken for a bot (the server drops faster submissions). */
@@ -380,6 +380,12 @@ export async function submitGrowthForm(opts: {
     }
     if (status === 422 && body.error === "invalid_answers") {
       return { ok: false, reason: "invalid", missing: body.missing_required ?? [], invalid: body.invalid ?? [] };
+    }
+    if (status === 422 && body.error === "no_answers") return { ok: false, reason: "empty" };
+    // Not worth retrying: the page is not an allowed origin, or the request itself is malformed.
+    if (status === 403 || status === 400 || status === 413) {
+      console.error("growth-public-submit refused", status, body.error);
+      return { ok: false, reason: "refused" };
     }
     if (status === 429) return { ok: false, reason: "rate_limited" };
     if (status === 404) return { ok: false, reason: "unavailable" };

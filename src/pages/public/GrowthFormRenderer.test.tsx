@@ -2,7 +2,7 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import GrowthFormPage from "./GrowthFormRenderer";
+import GrowthFormPage, { GrowthFormEmbed } from "./GrowthFormRenderer";
 
 /**
  * A visitor's answers reach a form only through growth-public-submit, and a form is read only
@@ -143,15 +143,90 @@ describe("public form page", () => {
 
   it("keeps the bot trap out of sight and out of the tab order", async () => {
     await render();
-    const trap = container.querySelector('input[name="website"]') as HTMLInputElement;
+    expect(container.querySelector('input[name="website"]')).toBeNull();
+    const trap = container.querySelector('input[name="gf_hp_x7"]') as HTMLInputElement;
     expect(trap).not.toBeNull();
     expect(trap.tabIndex).toBe(-1);
     expect(trap.closest('[aria-hidden="true"]')).not.toBeNull();
+  });
+
+  it("sends trimmed answers and leaves a blank one out, so a stray space never blocks a submission", async () => {
+    state.invoke.mockResolvedValue({ data: { ok: true, submission_id: "sub-1" }, error: null });
+    state.rpc.mockResolvedValue({ data: [{ ...FORM, schema_json: { sections: [{ title: "About you", fields: [
+      ...FORM.schema_json.sections[0].fields,
+      { key: "note", type: "text", label: "Anything else?" },
+    ] }] } }], error: null });
+    await render();
+    type(container.querySelector("#gf-note") as HTMLInputElement, "   ");
+    type(container.querySelector("#gf-name") as HTMLInputElement, "  Dana Reyes ");
+    type(container.querySelector("#gf-email") as HTMLInputElement, "dana@example.com");
+    await act(async () => { submitButton().click(); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+    const [, opts] = state.invoke.mock.calls[0] as [string, { body: Record<string, unknown> }];
+    expect(opts.body.answers).toEqual({ name: "Dana Reyes", email: "dana@example.com" });
+  });
+
+  it("does not let a space-only answer satisfy a required field", async () => {
+    await render();
+    type(container.querySelector("#gf-name") as HTMLInputElement, "   ");
+    type(container.querySelector("#gf-email") as HTMLInputElement, "dana@example.com");
+    await act(async () => { await Promise.resolve(); });
+    expect(submitButton().disabled).toBe(true);
+  });
+
+  it("names a field once even when it is both missing and invalid", async () => {
+    state.invoke.mockResolvedValue(httpError(422, { error: "invalid_answers", missing_required: ["email"], invalid: ["email"] }));
+    await render();
+    await fillAndSubmit();
+    expect(container.querySelector('[role="alert"]')?.textContent).toBe("Please check Work email and try again.");
+  });
+
+  it("does not ask the visitor to retry when the page itself is refused", async () => {
+    state.invoke.mockResolvedValue(httpError(403, { error: "origin_not_allowed" }));
+    await render();
+    await fillAndSubmit();
+    const alert = container.querySelector('[role="alert"]')?.textContent ?? "";
+    expect(alert).toContain("contact the business directly");
+    expect(alert).not.toContain("try again");
+  });
+
+  it("says the form has closed on a 404, and never claims success on a 500", async () => {
+    state.invoke.mockResolvedValue(httpError(404, { error: "form_not_found" }));
+    await render();
+    await fillAndSubmit();
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain("isn't taking responses");
+
+    state.invoke.mockResolvedValue(httpError(500, { error: "not_saved" }));
+    await act(async () => { submitButton().click(); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+    expect(text()).not.toContain("Thanks, Dana will reply today.");
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain("couldn't submit");
   });
 
   it("says the form is unavailable when the read finds nothing", async () => {
     state.rpc.mockResolvedValue({ data: [], error: null });
     await render();
     expect(text()).toContain("This form isn't available");
+  });
+});
+
+describe("embedded form (landing pages and funnel steps)", () => {
+  it("shows the caller's loading state, then the form", async () => {
+    let resolve!: (v: unknown) => void;
+    state.rpc.mockReturnValue(new Promise((r) => { resolve = r; }));
+    await act(async () => { root.render(<GrowthFormEmbed formId="form-1" loading={<p>Loading form</p>} />); });
+    expect(text()).toContain("Loading form");
+    await act(async () => { resolve({ data: [FORM], error: null }); });
+    expect(text()).not.toContain("Loading form");
+    expect(text()).toContain("Book a call");
+  });
+
+  it("tells the caller when the form is not available, so a funnel can move on", async () => {
+    state.rpc.mockResolvedValue({ data: [], error: null });
+    const onUnavailable = vi.fn();
+    await act(async () => { root.render(<GrowthFormEmbed formId="form-1" loading={<p>Loading form</p>} onUnavailable={onUnavailable} />); });
+    await act(async () => { await Promise.resolve(); });
+    expect(onUnavailable).toHaveBeenCalledTimes(1);
+    expect(text()).toBe("");
   });
 });

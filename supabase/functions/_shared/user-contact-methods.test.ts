@@ -71,7 +71,7 @@ Deno.test("a failed read throws instead of looking like 'no address'", async () 
   await assertRejects(() => contactMethodsForUser(broken, A), ContactMethodsReadError);
 });
 
-Deno.test("contactMethodsForUser returns every address, primary first", async () => {
+Deno.test("contactMethodsForUser returns every address in the owner's order", async () => {
   assertEquals(await contactMethodsForUser(fakeDb(rows), A), {
     emails: ["a@x.test", "a.second@x.test"],
     phones: ["555.0101 ext 9"],

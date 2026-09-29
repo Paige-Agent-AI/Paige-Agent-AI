@@ -93,7 +93,7 @@ Before opening or closing a PR, merging, deploying, assigning a version, or desc
 
 ## Merge gate
 
-Marking a PR **Ready for review auto-triggers a repository Codex review on the exact head.** After marking Ready:
+**Independent review is the lane's own to run** (owner ruling, Antonio Cook, 2026-09-29): before asking to merge, the lane spawns a separate reviewer that did not write the code, and records it as such. Codex may review and its findings are handled like any reviewer's, but Codex is never a gate and no lane holds a merge waiting on one.
 
 1. **Wait for that auto-triggered exact-head review to COMPLETE before merging.** Never merge while it is running.
 2. **Disposition every finding** — fix it, or record a reasoned decline on the thread. If you push a fix, the head changed: repeat from step 1 **once**. If a further round would be needed, stop and escalate rather than merging.

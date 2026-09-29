@@ -11,6 +11,8 @@
 //   * growth_submission_dispatches                   - the fire-once ledger, UNIQUE(submission,automation)
 // Legacy forms with no automation rows fall back to their growth_forms columns (auto_create_contact /
 // pipeline_id / workflow_slug / notify_user_ids) exactly as the migration's backfill intends.
+// A form's own INTAKE settings (growth_form_set_intake: create a lead in <pipeline → stage>, email
+// <notify_email>) apply to every form, with or without automation rows — see applyIntakeSettings.
 //
 // -- EXECUTOR MAP (growth_automation_targets.executor -> what runs) ----------------------------
 //   contact_upsert     -> resolve_contact_id, else create_contact; writes submission.contact_id
@@ -19,6 +21,8 @@
 //   surface_to_client  -> file_action(<kind>) (client-facing surface kind), same seam
 //   client_rail_event  -> record_rail_event onto the client's activity timeline
 //   notify_team        -> invoke notify-team-event (event=form_submission)
+//   email_alert        -> email the form's notify_email (the address the owning workspace set) via
+//                         send-transactional-email; the provider's answer decides done|error
 //   n8n_workflow       -> file_action(owner.run_workflow, {workflow_key}) then advance_action -> run
 //   outbound_webhook   -> SSRF-guarded POST of the submission to a connected endpoint
 //
@@ -177,7 +181,7 @@ Deno.serve(async (req) => {
     // -- 2. Load the claimed submission + its form --
     const { data: submission, error: subErr } = await admin
       .from("growth_form_submissions")
-      .select("id, tenant_id, form_id, contact_id, deal_id, source, payload_json")
+      .select("id, tenant_id, form_id, contact_id, deal_id, source, payload_json, alert_sent_at, created_at")
       .eq("id", submissionId)
       .maybeSingle();
     if (subErr || !submission) {
@@ -187,7 +191,7 @@ Deno.serve(async (req) => {
 
     const { data: form, error: formErr } = await admin
       .from("growth_forms")
-      .select("id, tenant_id, name, schema_json, created_by, auto_create_contact, auto_create_deal, pipeline_id, stage_id, workflow_slug, notify_user_ids")
+      .select("id, tenant_id, name, schema_json, created_by, auto_create_contact, auto_create_deal, pipeline_id, stage_id, workflow_slug, notify_user_ids, notify_email")
       .eq("id", submission.form_id)
       .maybeSingle();
     if (formErr || !form) {
@@ -257,6 +261,8 @@ Deno.serve(async (req) => {
       }
     }
 
+    applyIntakeSettings(plan, form);
+
     // Existing dispatch ledger for this submission -> skip already-completed executors (idempotent).
     const { data: existingDispatches } = await admin
       .from("growth_submission_dispatches")
@@ -288,7 +294,7 @@ Deno.serve(async (req) => {
       let outcome: ExecOutcome;
       try {
         outcome = await runExecutor(p, {
-          admin, tenantId, submissionId, form, payload,
+          admin, tenantId, submissionId, form, payload, submission,
           contactId, setContactId: (id: string) => { contactId = id; },
         });
       } catch (e) {
@@ -346,6 +352,8 @@ type ExecCtx = {
   // deno-lint-ignore no-explicit-any
   form: any;
   payload: Record<string, unknown>;
+  // deno-lint-ignore no-explicit-any
+  submission: any;
   contactId: string | null;
   setContactId: (id: string) => void;
 };
@@ -393,7 +401,7 @@ async function runExecutor(
             p_notes: null,
             p_assigned_coach_user_id: null,
             p_tenant_id: tenantId,
-            p_created_by: form.created_by ?? null,
+            p_created_by: await resolveIntakeOperator(admin, tenantId, form.created_by),
           });
           if (createErr || !created) {
             return { status: "error", result: {}, error: `create_contact_failed: ${createErr?.message ?? "no id returned"}` };
@@ -474,7 +482,8 @@ async function runExecutor(
           .from("deals")
           .insert({
             title, pipeline_id: pipelineId, stage_id: resolvedStageId, contact_client_id: contactId,
-            status: "open", source: "paige_form", tenant_id: tenantId, created_by: form.created_by ?? null,
+            status: "open", source: "paige_form", tenant_id: tenantId,
+            created_by: await resolveIntakeOperator(admin, tenantId, form.created_by),
           })
           .select("id").single();
         if (dealErr || !newDeal) return { status: "error", result: {}, error: `deal_insert_failed: ${dealErr?.message ?? "no id"}` };
@@ -545,8 +554,65 @@ async function runExecutor(
       });
       const txt = await res.text();
       if (!res.ok) return { status: "error", result: {}, error: `notify_team_${res.status}: ${txt.slice(0, 200)}` };
-      let parsed: unknown = null; try { parsed = JSON.parse(txt); } catch { /* plain text */ }
+      // deno-lint-ignore no-explicit-any
+      let parsed: any = null; try { parsed = JSON.parse(txt); } catch { /* plain text */ }
+      // A 200 is not a delivery: the notifier reports success=false when any email it tried failed.
+      if (parsed?.success === false) {
+        return { status: "error", result: { notify: parsed }, error: "notify_team_email_failed" };
+      }
       return { status: "done", result: { notify: parsed ?? txt.slice(0, 200) } };
+    }
+
+    // -- email_alert: email the address the owning workspace set on this form. --
+    // The provider's answer decides the outcome (§13): send-transactional-email returns 200
+    // {success:true, sent:true, id} only when Resend accepted the message; anything else is an error
+    // the sweeper can retry. alert_sent_at makes the send once-only across retries.
+    case "email_alert": {
+      const to = s(form.notify_email);
+      if (!to) return { status: "done", result: { note: "no_alert_address" } };
+      if (ctx.submission?.alert_sent_at) return { status: "done", result: { note: "already_sent" } };
+
+      const fields = labelledAnswers(payload, form.schema_json);
+      const idn = extractIdentity(payload, form.schema_json);
+      const visitorName = [idn.firstName, idn.lastName].filter(Boolean).join(" ").trim() || null;
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/send-transactional-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${SERVICE_ROLE}`, apikey: SERVICE_ROLE },
+        body: JSON.stringify({
+          templateName: "form-submission-alert",
+          recipientEmail: to,
+          tenantId,
+          idempotencyKey: `form-submission-alert-${submissionId}`,
+          // Replying goes straight to the person who filled in the form, when they gave an email.
+          ...(idn.email ? { replyToOverride: idn.email } : {}),
+          templateData: {
+            formName: form.name ?? "Form",
+            visitorName,
+            visitorEmail: idn.email,
+            fields,
+            submittedAt: ctx.submission?.created_at ?? new Date().toISOString(),
+          },
+        }),
+      });
+      const txt = await res.text();
+      // deno-lint-ignore no-explicit-any
+      let parsed: any = null; try { parsed = JSON.parse(txt); } catch { /* plain text */ }
+      if (!res.ok || parsed?.success !== true || parsed?.sent !== true) {
+        return {
+          status: "error",
+          result: { http: res.status },
+          error: `email_alert_not_sent: ${res.status} ${txt.slice(0, 200)}`,
+        };
+      }
+      const { error: markErr } = await admin
+        .from("growth_form_submissions")
+        .update({ alert_sent_at: new Date().toISOString() })
+        .eq("id", submissionId);
+      if (markErr) {
+        // The email went; failing here would re-send it on retry. Record the truth and stop.
+        return { status: "done", result: { sent: true, provider_id: parsed?.id ?? null, mark_error: markErr.message } };
+      }
+      return { status: "done", result: { sent: true, provider_id: parsed?.id ?? null } };
     }
 
     // -- n8n_workflow: file owner.run_workflow, then advance it into a queued run (governed). --
@@ -610,3 +676,74 @@ async function runExecutor(
   }
 }
 
+// -- A form's own intake settings, applied to every form (with or without automation rows). --
+// growth_form_set_intake() is the one place an owner sets them: "create a lead in <pipeline → stage>"
+// (auto_create_deal + pipeline_id/stage_id) and "email <notify_email>". Forms that carry automation
+// rows (every form the 2026-07-14 backfill touched) would otherwise never reach the column fallback,
+// so the settings would save and do nothing. Each is added only when no automation already covers it,
+// and a deal always has a contact ahead of it.
+// deno-lint-ignore no-explicit-any
+function applyIntakeSettings(plan: any[], form: any): void {
+  const has = (executor: string) => plan.some((p) => p.executor === executor);
+  if (form.auto_create_deal && s(form.pipeline_id) && !has("pipeline_attach")) {
+    if (!has("contact_upsert")) {
+      plan.push({ automationId: null, slug: "contact_upsert", executor: "contact_upsert", lane: null, config: {}, targetConfig: {} });
+    }
+    plan.push({ automationId: null, slug: "pipeline_attach", executor: "pipeline_attach", lane: null,
+      config: { pipeline_id: form.pipeline_id, stage_id: form.stage_id }, targetConfig: {} });
+  }
+  if (s(form.notify_email) && !has("email_alert")) {
+    plan.push({ automationId: null, slug: "email_alert", executor: "email_alert", lane: null, config: {}, targetConfig: {} });
+  }
+}
+
+// -- Who a public submission's contact and deal are recorded as created by. --
+// create_contact requires an active owner/admin of the tenant (CONTACT_NO_OPERATOR /
+// CONTACT_CREATOR_NOT_IN_TENANT). The form's author is used while they still hold that seat; once
+// they leave or are downgraded, the business's current owner is used instead, so a staff change
+// never stops the business's forms from creating leads. Resolved from the form's own tenant only.
+// deno-lint-ignore no-explicit-any
+async function resolveIntakeOperator(admin: any, tenantId: string, createdBy: string | null): Promise<string | null> {
+  const seat = async (userId: string) => {
+    const { data } = await admin
+      .from("tenant_members")
+      .select("user_id")
+      .eq("tenant_id", tenantId).eq("user_id", userId).eq("status", "active")
+      .in("role", ["owner", "admin"])
+      .limit(1).maybeSingle();
+    return !!data?.user_id;
+  };
+  if (createdBy && await seat(createdBy)) return createdBy;
+  const { data: owner } = await admin
+    .from("tenant_members")
+    .select("user_id")
+    .eq("tenant_id", tenantId).eq("status", "active").eq("role", "owner")
+    .order("joined_at", { ascending: true })
+    .limit(1).maybeSingle();
+  return s(owner?.user_id) ?? createdBy ?? null;
+}
+
+// -- The visitor's answers, labelled by the form's own fields, in the form's order. --
+// deno-lint-ignore no-explicit-any
+function labelledAnswers(payload: Record<string, unknown>, schema: any): Array<{ label: string; value: string }> {
+  const out: Array<{ label: string; value: string }> = [];
+  const sections = Array.isArray(schema?.sections) ? schema.sections : [];
+  for (const sec of sections) {
+    for (const f of (Array.isArray(sec?.fields) ? sec.fields : [])) {
+      if (f?.key == null) continue;
+      const raw = payload[f.key];
+      if (raw === undefined || raw === null || raw === "") continue;
+      // deno-lint-ignore no-explicit-any
+      const optionLabel = (v: unknown) => {
+        const opt = (Array.isArray(f.options) ? f.options : []).find((o: any) =>
+          (typeof o === "string" ? o : o?.value) === v);
+        return typeof opt === "string" ? opt : (opt?.label ?? String(v));
+      };
+      const value = Array.isArray(raw) ? raw.map(optionLabel).join(", ")
+        : typeof raw === "boolean" ? (raw ? "Yes" : "No")
+        : f.options ? optionLabel(raw) : String(raw);
+      out.push({ label: String(f.label ?? f.key).slice(0, 200), value: value.slice(0, 2000) });
+    }
+  }
+  return out;
+}

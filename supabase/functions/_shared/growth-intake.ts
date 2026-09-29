@@ -15,23 +15,23 @@ export type IntakeField = {
 export type IntakeSchema = { sections?: Array<{ fields?: IntakeField[]; visible_when?: unknown }> } | IntakeField[][] | null;
 
 /** Hosts a public form may be submitted from: the platform's own domain and its business
- *  subdomains (<slug>.paigeagent.ai), plus this project's Vercel preview deployments. HTTPS only. */
+ *  subdomains (<slug>.paigeagent.ai). HTTPS only. Vercel preview hosts are deliberately not
+ *  accepted: *.vercel.app names are registrable by anyone, so no suffix rule can tell ours apart. */
 export function isAllowedOrigin(origin: string | null): boolean {
   if (!origin) return false;
   let url: URL;
   try { url = new URL(origin); } catch { return false; }
   if (url.protocol !== "https:") return false;
   const host = url.hostname.toLowerCase();
-  if (host === "paigeagent.ai" || host.endsWith(".paigeagent.ai")) return true;
-  if (host === "paige-agent-ai.vercel.app" || host.endsWith("-paige-agent-ai.vercel.app")) return true;
-  return false;
+  return host === "paigeagent.ai" || host.endsWith(".paigeagent.ai");
 }
 
-/** A filled bot trap, or a submission faster than a person can type, is a bot. */
+/** Every real form sends its (empty) bot-trap field and how long the visitor spent on it. A filled
+ *  trap, a missing trap or timing, or a submission faster than a person can type, is a bot — so a
+ *  script cannot skip the trap by leaving the fields out. */
 export function looksLikeBot(trap: unknown, elapsedMs: unknown): boolean {
-  if (typeof trap === "string" && trap.trim() !== "") return true;
-  if (trap !== undefined && trap !== null && typeof trap !== "string") return true;
-  if (typeof elapsedMs === "number" && Number.isFinite(elapsedMs) && elapsedMs < 1500) return true;
+  if (typeof trap !== "string" || trap.trim() !== "") return true;
+  if (typeof elapsedMs !== "number" || !Number.isFinite(elapsedMs) || elapsedMs < 1500) return true;
   return false;
 }
 
@@ -44,6 +44,11 @@ function sectionsOf(schema: IntakeSchema): Array<{ fields: IntakeField[]; visibl
 
 const optionValue = (o: string | { value: string }) => (typeof o === "string" ? o : o?.value);
 const EMAIL = /^[^@\s]{1,64}@[^@\s]+\.[^@\s]{2,}$/;
+
+/** A single, well-formed address (used before an address becomes an email header). */
+export function isEmailAddress(v: unknown): v is string {
+  return typeof v === "string" && v.length <= 254 && EMAIL.test(v) && !/[\r\n,;<>"]/.test(v);
+}
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 /** Shape one answer by its field's type. Returns undefined when the value is not acceptable. */
@@ -58,7 +63,7 @@ function shape(field: IntakeField, raw: unknown): unknown {
     }
     case "tel": {
       const v = str(40);
-      return v && /^[+()\-.\s\d]{5,40}$/.test(v) ? v : undefined;
+      return v && /^[+()\-.\s\d]{5,32}(\s*(x|ext\.?|#)\s*\d{1,6})?$/i.test(v) ? v : undefined;
     }
     case "number":
     case "currency": {
@@ -132,9 +137,9 @@ export function sanitizeAnswers(schema: IntakeSchema, raw: unknown): IntakeResul
   return { answers, unknownKeys, invalidKeys, missingRequired };
 }
 
-const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"];
+const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "ref", "gclid", "fbclid"];
 
-/** Campaign tags only, each a short string. */
+/** Campaign and click tags only (the same keys the form page reads from its URL), each a short string. */
 export function sanitizeUtm(raw: unknown): Record<string, string> {
   const input = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
   const out: Record<string, string> = {};

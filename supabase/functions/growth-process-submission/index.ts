@@ -11,8 +11,9 @@
 //   * growth_submission_dispatches                   - the fire-once ledger, UNIQUE(submission,automation)
 // Legacy forms with no automation rows fall back to their growth_forms columns (auto_create_contact /
 // pipeline_id / workflow_slug / notify_user_ids) exactly as the migration's backfill intends.
-// A form's own INTAKE settings (growth_form_set_intake: create a lead in <pipeline → stage>, email
-// <notify_email>) apply to every form, with or without automation rows — see applyIntakeSettings.
+// A form's own INTAKE settings (growth_form_set_intake) land where this plan already reads them:
+// pipeline routing in the columns or in the ledgered automation rows, and the alert address as an
+// email_alert step added to every form that has one — see applyIntakeSettings.
 //
 // -- EXECUTOR MAP (growth_automation_targets.executor -> what runs) ----------------------------
 //   contact_upsert     -> resolve_contact_id, else create_contact; writes submission.contact_id
@@ -40,8 +41,9 @@
 // with the per-executor results - never a 200 hiding a top-level error.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { isEmailAddress } from "../_shared/growth-intake.ts";
 // NOTE: the outbound_webhook executor (which uses the shared SSRF guard) is DEFERRED for the first
-// live ship (see its case below), so this function is intentionally dependency-free / single-file.
+// live ship (see its case below); its only shared import is the pure address check above.
 // The fast-follow that re-enables outbound_webhook re-adds: import { assertPublicHttpUrl } from
 // "../_shared/ssrfGuard.ts";
 
@@ -54,6 +56,11 @@ const jsonHeaders = { ...corsHeaders, "Content-Type": "application/json" };
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+// Owner alert caps (email_alert): per form per hour, per business per day.
+const ALERTS_PER_FORM_PER_HOUR = 30;
+const ALERTS_PER_BUSINESS_PER_DAY = 200;
+const SENSITIVE_FIELD_TYPES = new Set(["ssn4"]);
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -181,7 +188,7 @@ Deno.serve(async (req) => {
     // -- 2. Load the claimed submission + its form --
     const { data: submission, error: subErr } = await admin
       .from("growth_form_submissions")
-      .select("id, tenant_id, form_id, contact_id, deal_id, source, payload_json, alert_sent_at, created_at")
+      .select("*") // whole row: this code must not fail on a column its migration has not added yet
       .eq("id", submissionId)
       .maybeSingle();
     if (subErr || !submission) {
@@ -191,7 +198,7 @@ Deno.serve(async (req) => {
 
     const { data: form, error: formErr } = await admin
       .from("growth_forms")
-      .select("id, tenant_id, name, schema_json, created_by, auto_create_contact, auto_create_deal, pipeline_id, stage_id, workflow_slug, notify_user_ids, notify_email")
+      .select("*") // whole row, for the same reason
       .eq("id", submission.form_id)
       .maybeSingle();
     if (formErr || !form) {
@@ -435,7 +442,13 @@ async function runExecutor(
     // -- pipeline_attach: create/advance a tenant-OWNED deal on the form's pipeline/stage. --
     case "pipeline_attach": {
       const contactId = ctx.contactId;
-      if (!contactId) return { status: "error", result: {}, error: "no_contact_for_pipeline" };
+      if (!contactId) {
+        // A visitor who left no email or phone is captured as a submission, not a contact, so there
+        // is nothing to hang a deal on — the same outcome as contact_upsert's, not a failure to retry.
+        const idn = extractIdentity(payload, form.schema_json);
+        if (!idn.email && !idn.phone) return { status: "done", result: { note: "no_contact_for_pipeline" } };
+        return { status: "error", result: {}, error: "no_contact_for_pipeline" };
+      }
       const pipelineId = s(p.config.pipeline_id) ?? s(form.pipeline_id);
       const stageId = s(p.config.stage_id) ?? s(form.stage_id);
       if (!pipelineId) return { status: "done", result: { note: "no_pipeline_configured" } };
@@ -556,11 +569,18 @@ async function runExecutor(
       if (!res.ok) return { status: "error", result: {}, error: `notify_team_${res.status}: ${txt.slice(0, 200)}` };
       // deno-lint-ignore no-explicit-any
       let parsed: any = null; try { parsed = JSON.parse(txt); } catch { /* plain text */ }
-      // A 200 is not a delivery: the notifier reports success=false when any email it tried failed.
-      if (parsed?.success === false) {
-        return { status: "error", result: { notify: parsed }, error: "notify_team_email_failed" };
-      }
-      return { status: "done", result: { notify: parsed ?? txt.slice(0, 200) } };
+      // The in-app notices are the team notification; the notifier's companion email is reported,
+      // never assumed. Its template is not registered today, so that email has never been sent —
+      // failing the submission (and retrying it five times, re-posting every in-app notice) over a
+      // side-channel that cannot succeed would be worse than recording the truth. The owner's
+      // email alert is the form's own email_alert step, which does fail on a refused send.
+      return {
+        status: "done",
+        result: {
+          notify: parsed ?? txt.slice(0, 200),
+          ...(parsed?.success === false ? { emails_failed: parsed?.emails_failed ?? null } : {}),
+        },
+      };
     }
 
     // -- email_alert: email the address the owning workspace set on this form. --
@@ -571,6 +591,26 @@ async function runExecutor(
       const to = s(form.notify_email);
       if (!to) return { status: "done", result: { note: "no_alert_address" } };
       if (ctx.submission?.alert_sent_at) return { status: "done", result: { note: "already_sent" } };
+
+      // A flood of submissions must not become a flood of email through the platform's one sending
+      // account. Past the cap the lead is still captured and visible in the account; only the email
+      // is withheld, and it says so. If the counts cannot be read, nothing is sent (fail closed).
+      const sentSince = async (column: "form_id" | "tenant_id", value: string, hours: number) => {
+        const { count, error } = await admin
+          .from("growth_form_submissions")
+          .select("id", { count: "exact", head: true })
+          .eq(column, value)
+          .gte("alert_sent_at", new Date(Date.now() - hours * 3600_000).toISOString());
+        return error ? null : (count ?? 0);
+      };
+      const formHour = await sentSince("form_id", form.id, 1);
+      const businessDay = await sentSince("tenant_id", tenantId, 24);
+      if (formHour === null || businessDay === null) {
+        return { status: "error", result: {}, error: "email_alert_cap_unreadable" };
+      }
+      if (formHour >= ALERTS_PER_FORM_PER_HOUR || businessDay >= ALERTS_PER_BUSINESS_PER_DAY) {
+        return { status: "done", result: { note: "alert_capped", form_last_hour: formHour, business_last_day: businessDay } };
+      }
 
       const fields = labelledAnswers(payload, form.schema_json);
       const idn = extractIdentity(payload, form.schema_json);
@@ -583,12 +623,12 @@ async function runExecutor(
           recipientEmail: to,
           tenantId,
           idempotencyKey: `form-submission-alert-${submissionId}`,
-          // Replying goes straight to the person who filled in the form, when they gave an email.
-          ...(idn.email ? { replyToOverride: idn.email } : {}),
+          // Replying goes straight to the person who filled in the form, when they gave a real address.
+          ...(isEmailAddress(idn.email) ? { replyToOverride: idn.email } : {}),
           templateData: {
             formName: form.name ?? "Form",
             visitorName,
-            visitorEmail: idn.email,
+            visitorEmail: isEmailAddress(idn.email) ? idn.email : null,
             fields,
             submittedAt: ctx.submission?.created_at ?? new Date().toISOString(),
           },
@@ -676,23 +716,14 @@ async function runExecutor(
   }
 }
 
-// -- A form's own intake settings, applied to every form (with or without automation rows). --
-// growth_form_set_intake() is the one place an owner sets them: "create a lead in <pipeline → stage>"
-// (auto_create_deal + pipeline_id/stage_id) and "email <notify_email>". Forms that carry automation
-// rows (every form the 2026-07-14 backfill touched) would otherwise never reach the column fallback,
-// so the settings would save and do nothing. Each is added only when no automation already covers it,
-// and a deal always has a contact ahead of it.
+// -- A form's alert address, applied to every form (with or without automation rows). --
+// growth_form_set_intake() is the one place an owner sets it. Pipeline routing is NOT added here: that
+// RPC writes it where the plan above already reads it (the form's columns for a form with no
+// automation rows, its ledgered contact_upsert/pipeline_attach rows otherwise), so there is exactly
+// one route per form and a retry never re-runs an unledgered deal step.
 // deno-lint-ignore no-explicit-any
 function applyIntakeSettings(plan: any[], form: any): void {
-  const has = (executor: string) => plan.some((p) => p.executor === executor);
-  if (form.auto_create_deal && s(form.pipeline_id) && !has("pipeline_attach")) {
-    if (!has("contact_upsert")) {
-      plan.push({ automationId: null, slug: "contact_upsert", executor: "contact_upsert", lane: null, config: {}, targetConfig: {} });
-    }
-    plan.push({ automationId: null, slug: "pipeline_attach", executor: "pipeline_attach", lane: null,
-      config: { pipeline_id: form.pipeline_id, stage_id: form.stage_id }, targetConfig: {} });
-  }
-  if (s(form.notify_email) && !has("email_alert")) {
+  if (s(form.notify_email) && !plan.some((p) => p.executor === "email_alert")) {
     plan.push({ automationId: null, slug: "email_alert", executor: "email_alert", lane: null, config: {}, targetConfig: {} });
   }
 }
@@ -727,10 +758,15 @@ async function resolveIntakeOperator(admin: any, tenantId: string, createdBy: st
 // deno-lint-ignore no-explicit-any
 function labelledAnswers(payload: Record<string, unknown>, schema: any): Array<{ label: string; value: string }> {
   const out: Array<{ label: string; value: string }> = [];
-  const sections = Array.isArray(schema?.sections) ? schema.sections : [];
+  // Both stored layouts: { sections: [{ fields }] } and a bare array of field arrays.
+  const sections = Array.isArray(schema?.sections) ? schema.sections
+    : Array.isArray(schema) ? schema.map((fields: unknown) => ({ fields }))
+    : [];
   for (const sec of sections) {
     for (const f of (Array.isArray(sec?.fields) ? sec.fields : [])) {
       if (f?.key == null) continue;
+      // Identity numbers never travel by email; the owner reads them in the account.
+      if (SENSITIVE_FIELD_TYPES.has(f.type)) continue;
       const raw = payload[f.key];
       if (raw === undefined || raw === null || raw === "") continue;
       // deno-lint-ignore no-explicit-any

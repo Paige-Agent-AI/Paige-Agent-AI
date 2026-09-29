@@ -7,10 +7,12 @@
 --     business, pipeline, alert address or author — and the table itself refuses them;
 --   * nobody writes a submission from the browser: anon and signed-in inserts are both refused;
 --   * a form's intake settings change only for an owner/admin of the form's OWN business, only to
---     that business's pipeline and stage, and only to a well-formed alert address.
+--     that business's pipeline and stage, and only to a well-formed alert address — and the alert
+--     address cannot be written around that seam;
+--   * a saved route takes effect: on a form that runs from automation rows, the rows follow it.
 BEGIN;
 
-SELECT plan(14);
+SELECT plan(20);
 
 DO $$
 DECLARE
@@ -46,7 +48,14 @@ BEGIN
      '{"sections":[{"fields":[{"key":"email","type":"email","label":"Email","required":true}]}]}',
      '{"type":"thank_you","message":"Thanks"}', _oa),
     ('f1a70000-0000-0000-0000-0000000f0a02', _a, 'draft-form', 'Draft A', 'draft',
+     '{"sections":[]}', '{}', _oa),
+    ('f1a70000-0000-0000-0000-0000000f0a03', _a, 'routed', 'Routed A', 'active',
      '{"sections":[]}', '{}', _oa);
+  -- A form that runs from automation rows (the 2026-07-14 backfill shape): contact creation off,
+  -- deals on into pipeline A with no stage.
+  INSERT INTO public.growth_form_automations (tenant_id, form_id, target_slug, order_index, enabled, config_json) VALUES
+    (_a, 'f1a70000-0000-0000-0000-0000000f0a03', 'contact_upsert', 10, false, '{}'),
+    (_a, 'f1a70000-0000-0000-0000-0000000f0a03', 'pipeline_attach', 20, true, jsonb_build_object('pipeline_id', _pa));
 END $$;
 
 -- ── A visitor reads an active form only through the narrow function ────────────────────────────
@@ -128,15 +137,50 @@ SELECT lives_ok(
   format($$ SELECT public.growth_form_set_intake('f1a70000-0000-0000-0000-0000000f0a01', true, %L::uuid, 'f1a70000-0000-0000-0000-00000000a5a1', 'Leads@Example.test') $$,
          current_setting('intake.pa')),
   'the business''s owner routes leads into their own pipeline and sets an alert address');
+
+SELECT lives_ok(
+  $$ UPDATE public.growth_forms SET name = 'Contact A (renamed)' WHERE id = 'f1a70000-0000-0000-0000-0000000f0a01' $$,
+  'control: the owner can edit the form row directly');
+SELECT throws_ok(
+  $$ UPDATE public.growth_forms SET notify_email = 'someone-else@example.test' WHERE id = 'f1a70000-0000-0000-0000-0000000f0a01' $$,
+  '42501', NULL,
+  'but the alert address cannot be changed around growth_form_set_intake');
+
+SELECT lives_ok(
+  $$ SELECT public.growth_form_set_intake('f1a70000-0000-0000-0000-0000000f0a03', false, NULL, NULL, NULL) $$,
+  'the owner turns deals off on a form that runs from automation rows');
+RESET ROLE;
+
+SELECT is(
+  (SELECT enabled FROM public.growth_form_automations
+    WHERE form_id = 'f1a70000-0000-0000-0000-0000000f0a03' AND target_slug = 'pipeline_attach'),
+  false,
+  'turning deals off disables the form''s pipeline row, so no deal is created');
+
+SELECT set_config('request.jwt.claims', '{"sub":"f1a70000-0000-0000-0000-0000000000a1","role":"authenticated"}', true);
+SET LOCAL ROLE authenticated;
+SELECT lives_ok(
+  format($$ SELECT public.growth_form_set_intake('f1a70000-0000-0000-0000-0000000f0a03', true, %L::uuid, 'f1a70000-0000-0000-0000-00000000a5a1', NULL) $$,
+         current_setting('intake.pa')),
+  'the owner turns deals back on, into a chosen stage');
 RESET ROLE;
 SELECT set_config('request.jwt.claims', '', true);
 
 SELECT results_eq(
-  $$ SELECT auto_create_deal, pipeline_id::text, stage_id::text, notify_email
+  $$ SELECT auto_create_contact, auto_create_deal, pipeline_id::text, stage_id::text, notify_email
        FROM public.growth_forms WHERE id = 'f1a70000-0000-0000-0000-0000000f0a01' $$,
-  format($$ VALUES (true, %L::text, 'f1a70000-0000-0000-0000-00000000a5a1'::text, 'Leads@Example.test'::text) $$,
+  format($$ VALUES (true, true, %L::text, 'f1a70000-0000-0000-0000-00000000a5a1'::text, 'Leads@Example.test'::text) $$,
          current_setting('intake.pa')),
-  'the settings are stored on the form');
+  'the settings are stored on the form, and the direct write changed nothing');
+
+SELECT results_eq(
+  $$ SELECT target_slug, enabled, config_json->>'pipeline_id', config_json->>'stage_id'
+       FROM public.growth_form_automations
+      WHERE form_id = 'f1a70000-0000-0000-0000-0000000f0a03' ORDER BY order_index $$,
+  format($$ VALUES ('contact_upsert'::text, true, NULL::text, NULL::text),
+                   ('pipeline_attach'::text, true, %L::text, 'f1a70000-0000-0000-0000-00000000a5a1'::text) $$,
+         current_setting('intake.pa')),
+  'the rows follow the saved route: a contact first, then the deal into the chosen stage');
 
 SELECT * FROM finish();
 ROLLBACK;

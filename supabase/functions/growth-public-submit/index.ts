@@ -1,11 +1,13 @@
 // growth-public-submit — the ONE way a visitor's answers reach a growth form, for every business.
 //
 // Public (verify_jwt = false): visitors are anonymous. Before anything is written it checks, in order:
-//   1. origin    — the platform's own domain, a business subdomain, or this project's preview deploys
-//   2. bot trap  — a filled hidden field, or a submission faster than a person can type, is dropped
-//                  with an ordinary 200 so a bot learns nothing
-//   3. rate      — per visitor IP and per form, on the shared durable limiter (_shared/rateLimit.ts)
-//   4. the form  — must exist and be ACTIVE; its business comes from the form row, never the request
+//   1. origin    — the platform's own domain or a business subdomain (HTTPS)
+//   2. bot trap  — a filled or missing hidden field, missing timing, or a submission faster than a
+//                  person can type, is dropped with an ordinary 200 so a bot learns nothing
+//   3. rate      — per visitor IP and per form, on the shared durable limiter (_shared/rateLimit.ts);
+//                  fails CLOSED: if the limiter cannot answer, nothing is written
+//   4. the form  — must exist and be ACTIVE, and its business active or on trial; the business comes
+//                  from the form row, never the request
 //   5. content   — only the form's own fields, each in the shape its field type allows
 //                  (_shared/growth-intake.ts); unknown and invalid keys are dropped and reported back
 // The row is written with the service role, so nothing the browser sends can set tenant_id,
@@ -27,6 +29,7 @@ const SLUG_RE = /^[a-z0-9][a-z0-9-]{0,99}$/i;
 const MAX_BODY_BYTES = 64 * 1024;
 const PER_IP_PER_MINUTE = 10;
 const PER_FORM_PER_MINUTE = 60;
+const OPEN_BUSINESS = new Set(["active", "trial"]);
 
 function corsFor(origin: string | null): Record<string, string> {
   return {
@@ -48,9 +51,12 @@ Deno.serve(async (req) => {
   // 1. Origin.
   if (!isAllowedOrigin(origin)) return reply({ error: "origin_not_allowed" }, 403);
 
-  // Body, size-capped before parsing.
-  const text = await req.text();
-  if (text.length > MAX_BODY_BYTES) return reply({ error: "too_large" }, 413);
+  // Body, size-capped in bytes: refused on its declared length, and again on what actually arrived.
+  const declared = Number(req.headers.get("content-length") ?? "0");
+  if (Number.isFinite(declared) && declared > MAX_BODY_BYTES) return reply({ error: "too_large" }, 413);
+  const bytes = new Uint8Array(await req.arrayBuffer());
+  if (bytes.byteLength > MAX_BODY_BYTES) return reply({ error: "too_large" }, 413);
+  const text = new TextDecoder().decode(bytes);
   // deno-lint-ignore no-explicit-any
   let body: any;
   try { body = JSON.parse(text); } catch { return reply({ error: "invalid_json" }, 400); }
@@ -66,7 +72,7 @@ Deno.serve(async (req) => {
 
   // 3. Rate limit per visitor. (Per form once the form is known.)
   const ip = trustedClientIp(req);
-  if (await overRateLimit(admin, `gps:ip:${ip}`, PER_IP_PER_MINUTE)) {
+  if (await overRateLimit(admin, `gps:ip:${ip}`, PER_IP_PER_MINUTE, 60, true)) {
     return reply({ error: "rate_limited" }, 429);
   }
 
@@ -92,7 +98,10 @@ Deno.serve(async (req) => {
   }
   if (!form || form.status !== "active") return reply({ error: "form_not_found" }, 404);
 
-  if (await overRateLimit(admin, `gps:form:${form.id}`, PER_FORM_PER_MINUTE)) {
+  const { data: business } = await admin.from("tenants").select("status").eq("id", form.tenant_id).maybeSingle();
+  if (!business || !OPEN_BUSINESS.has(business.status)) return reply({ error: "form_not_found" }, 404);
+
+  if (await overRateLimit(admin, `gps:form:${form.id}`, PER_FORM_PER_MINUTE, 60, true)) {
     return reply({ error: "rate_limited" }, 429);
   }
 

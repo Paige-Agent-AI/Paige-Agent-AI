@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { isAllowedOrigin, looksLikeBot, sanitizeAnswers, sanitizeUtm } from "./growth-intake.ts";
+import { isAllowedOrigin, isEmailAddress, looksLikeBot, sanitizeAnswers, sanitizeUtm } from "./growth-intake.ts";
 
 const SCHEMA = {
   sections: [
@@ -25,7 +25,8 @@ test("only the platform's own origins may submit", () => {
   assert.equal(isAllowedOrigin("https://paigeagent.ai"), true);
   assert.equal(isAllowedOrigin("https://www.paigeagent.ai"), true);
   assert.equal(isAllowedOrigin("https://northline.paigeagent.ai"), true);
-  assert.equal(isAllowedOrigin("https://paige-agent-ai-git-main-paige-agent-ai.vercel.app"), true);
+  assert.equal(isAllowedOrigin("https://paige-agent-ai-git-main-paige-agent-ai.vercel.app"), false, "a *.vercel.app name anyone can register is refused");
+  assert.equal(isAllowedOrigin("https://evil-paige-agent-ai.vercel.app"), false);
   assert.equal(isAllowedOrigin("http://paigeagent.ai"), false, "plain http is refused");
   assert.equal(isAllowedOrigin("https://paigeagent.ai.evil.example"), false, "a lookalike suffix is refused");
   assert.equal(isAllowedOrigin("https://evilpaigeagent.ai"), false, "a lookalike prefix is refused");
@@ -34,19 +35,32 @@ test("only the platform's own origins may submit", () => {
   assert.equal(isAllowedOrigin("not a url"), false);
 });
 
-test("a filled trap or an instant submission is a bot; a person is not", () => {
+test("a filled or missing trap, missing timing, or an instant submission is a bot; a person is not", () => {
   assert.equal(looksLikeBot("https://spam.example", 5000), true);
   assert.equal(looksLikeBot({ x: 1 }, 5000), true);
   assert.equal(looksLikeBot("", 400), true);
   assert.equal(looksLikeBot("", 4000), false);
-  assert.equal(looksLikeBot(undefined, undefined), false);
+  assert.equal(looksLikeBot(undefined, undefined), true, "a script that leaves the trap out is not let through");
+  assert.equal(looksLikeBot("", undefined), true, "timing is required");
+  assert.equal(looksLikeBot(undefined, 4000), true, "the trap is required");
+  assert.equal(looksLikeBot("", Number.NaN), true);
+});
+
+test("only a single well-formed address can become an email header", () => {
+  assert.equal(isEmailAddress("dana@example.com"), true);
+  assert.equal(isEmailAddress("dana@example.com\r\nBcc: x@evil.test"), false);
+  assert.equal(isEmailAddress("a@example.com, b@example.com"), false);
+  assert.equal(isEmailAddress("not an address"), false);
+  assert.equal(isEmailAddress('"Dana"<dana@example.com>'), false, "a display-name form is not a bare address");
+  assert.equal(isEmailAddress("a@example.com;b@example.com"), false, "a list is not one address");
+  assert.equal(isEmailAddress(42), false);
 });
 
 test("only the form's own fields are kept, each in its type's shape", () => {
   const r = sanitizeAnswers(SCHEMA, {
     name: "  Dana Reyes ",
     email: "Dana@Example.COM",
-    phone: "+1 (555) 010-2000",
+    phone: "+1 (555) 010-2000 ext. 12",
     budget: "1200",
     plan: "solo",
     tools: ["crm", "scheduler", "crm"],
@@ -59,7 +73,7 @@ test("only the form's own fields are kept, each in its type's shape", () => {
   assert.deepEqual(r.answers, {
     name: "Dana Reyes",
     email: "dana@example.com",
-    phone: "+1 (555) 010-2000",
+    phone: "+1 (555) 010-2000 ext. 12",
     budget: 1200,
     plan: "solo",
     tools: ["crm", "scheduler"],
@@ -87,5 +101,7 @@ test("long text is capped and odd input shapes are handled", () => {
 });
 
 test("campaign tags only", () => {
-  assert.deepEqual(sanitizeUtm({ utm_source: "ad", utm_medium: " cpc ", ref: "x", utm_campaign: 5 }), { utm_source: "ad", utm_medium: "cpc" });
+  assert.deepEqual(
+    sanitizeUtm({ utm_source: "ad", utm_medium: " cpc ", ref: "x", gclid: "g1", fbclid: "f1", utm_campaign: 5, contact_id: "y" }),
+    { utm_source: "ad", utm_medium: "cpc", ref: "x", gclid: "g1", fbclid: "f1" });
 });

@@ -21,10 +21,13 @@
 --   4. ADDS growth_form_set_intake(): the one write seam (§10) for a form's intake settings — create a
 --      lead in <pipeline → stage>, and email <address>. Scoped to the form's own business: the caller
 --      must be an active owner/admin member of that tenant (§9/§59). No account is named anywhere.
+--      Routing is written where the submission processor reads it (columns, or the form's ledgered
+--      automation rows when it has them), so a saved setting always takes effect.
+--   5. ADDS a guard so notify_email cannot be written directly from the browser — only through (4).
 --
--- REVERSIBILITY: every step is reversible — drop the two functions, drop the two columns, re-create
--- the two deleted policies and re-grant the revoked privileges (their definitions are in
--- 20260630004505 / 20260702022450). No data is written, moved or deleted.
+-- REVERSIBILITY: every step is reversible — drop the guard trigger and the three functions, drop the
+-- two columns, re-create the two deleted policies and re-grant the revoked privileges (their
+-- definitions are in 20260630004505 / 20260702022450). The migration writes, moves and deletes no data.
 --
 -- definer-anon-exempt: growth_public_form returns only the name, fields and thank-you text of ACTIVE forms (the content a visitor is shown); no tenant, pipeline, alert address or author column is ever returned.
 
@@ -70,10 +73,37 @@ ALTER TABLE public.growth_forms
   DROP CONSTRAINT IF EXISTS growth_forms_notify_email_chk;
 ALTER TABLE public.growth_forms
   ADD CONSTRAINT growth_forms_notify_email_chk
-  CHECK (notify_email IS NULL OR (length(notify_email) <= 254 AND notify_email ~* '^[^@\s]+@[^@\s]+\.[^@\s]+$'));
+  CHECK (notify_email IS NULL OR (length(notify_email) <= 254 AND notify_email ~* '^[^@\s,;<>"]+@[^@\s,;<>"]+\.[^@\s,;<>"]+$'));
 
 COMMENT ON COLUMN public.growth_forms.notify_email IS
-  'Address the owning workspace chose to be emailed on each submission. Set through growth_form_set_intake(); never read by the public.';
+  'Address the owning workspace chose to be emailed on each submission. Set only through growth_form_set_intake() (an owner/admin, audited); never read by the public.';
+
+-- Leads' details are emailed to this address, so it changes only through the audited owner/admin
+-- seam. growth_forms_tenant_manage lets any member of the business update the row, which would let a
+-- member point every future lead at themselves and keep receiving them after they leave; a direct
+-- browser write (role authenticated/anon) of this one column is refused. The seam runs as its
+-- definer, and service/migration contexts are trusted, so neither is affected.
+CREATE OR REPLACE FUNCTION public.growth_forms_guard_notify_email()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+BEGIN
+  IF current_user IN ('authenticated', 'anon') AND (
+       (TG_OP = 'INSERT' AND NEW.notify_email IS NOT NULL)
+    OR (TG_OP = 'UPDATE' AND NEW.notify_email IS DISTINCT FROM OLD.notify_email)) THEN
+    RAISE EXCEPTION 'GROWTH_FORBIDDEN: an owner or admin sets the alert address through growth_form_set_intake'
+      USING ERRCODE = '42501';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+REVOKE ALL ON FUNCTION public.growth_forms_guard_notify_email() FROM PUBLIC, anon, authenticated;
+
+DROP TRIGGER IF EXISTS trg_growth_forms_guard_notify_email ON public.growth_forms;
+CREATE TRIGGER trg_growth_forms_guard_notify_email
+  BEFORE INSERT OR UPDATE OF notify_email ON public.growth_forms
+  FOR EACH ROW EXECUTE FUNCTION public.growth_forms_guard_notify_email();
 
 ALTER TABLE public.growth_form_submissions
   ADD COLUMN IF NOT EXISTS alert_sent_at timestamptz;
@@ -82,6 +112,11 @@ COMMENT ON COLUMN public.growth_form_submissions.alert_sent_at IS
   'When the form''s submission alert email was accepted by the provider; set once so a retried submission never emails twice.';
 
 -- ── 4. The one write seam for a form's intake settings ─────────────────────────────────────────
+-- Sets the whole intake in one call: p_notify_email NULL (or blank) clears the alert address.
+-- Routing is written where growth-process-submission reads it, so each form has exactly one route:
+-- a form with no automation rows runs from its columns; a form with rows runs from its ledgered
+-- contact_upsert (order 10) and pipeline_attach (order 20) rows, which are synced here too. A deal
+-- always has a contact ahead of it, so turning deals on turns contact creation on.
 CREATE OR REPLACE FUNCTION public.growth_form_set_intake(
   p_form_id          uuid,
   p_auto_create_deal boolean,
@@ -129,17 +164,37 @@ BEGIN
     END IF;
   END IF;
 
-  IF _email IS NOT NULL AND (length(_email) > 254 OR _email !~* '^[^@\s]+@[^@\s]+\.[^@\s]+$') THEN
+  IF _email IS NOT NULL AND (length(_email) > 254 OR _email !~* '^[^@\s,;<>"]+@[^@\s,;<>"]+\.[^@\s,;<>"]+$') THEN
     RAISE EXCEPTION 'GROWTH_INVALID_INTAKE: that alert address is not a valid email' USING ERRCODE = '22023';
   END IF;
 
   UPDATE public.growth_forms SET
+    auto_create_contact = auto_create_contact OR COALESCE(p_auto_create_deal, false),
     auto_create_deal = COALESCE(p_auto_create_deal, false),
     pipeline_id      = CASE WHEN COALESCE(p_auto_create_deal, false) THEN p_pipeline_id ELSE pipeline_id END,
     stage_id         = CASE WHEN COALESCE(p_auto_create_deal, false) THEN p_stage_id ELSE stage_id END,
     notify_email     = _email
   WHERE id = _form.id
   RETURNING * INTO _row;
+
+  IF EXISTS (SELECT 1 FROM public.growth_form_automations a WHERE a.form_id = _form.id) THEN
+    IF _row.auto_create_deal THEN
+      INSERT INTO public.growth_form_automations (tenant_id, form_id, target_slug, order_index, enabled, config_json, created_by)
+      VALUES (_form.tenant_id, _form.id, 'contact_upsert', 10, true, '{}'::jsonb, _caller)
+      ON CONFLICT (form_id, target_slug) DO UPDATE SET enabled = true, updated_at = now();
+
+      INSERT INTO public.growth_form_automations (tenant_id, form_id, target_slug, order_index, enabled, config_json, created_by)
+      VALUES (_form.tenant_id, _form.id, 'pipeline_attach', 20, true,
+              jsonb_strip_nulls(jsonb_build_object('pipeline_id', _row.pipeline_id, 'stage_id', _row.stage_id)), _caller)
+      ON CONFLICT (form_id, target_slug) DO UPDATE SET
+        enabled     = true,
+        config_json = (public.growth_form_automations.config_json - 'pipeline_id' - 'stage_id') || EXCLUDED.config_json,
+        updated_at  = now();
+    ELSE
+      UPDATE public.growth_form_automations SET enabled = false, updated_at = now()
+      WHERE form_id = _form.id AND target_slug = 'pipeline_attach';
+    END IF;
+  END IF;
 
   INSERT INTO public.audit_logs (user_id, entity, action, entity_id, data)
   VALUES (_caller, 'growth_forms', 'growth_form_set_intake', _row.id,
@@ -153,5 +208,7 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.growth_form_set_intake(uuid, boolean, uuid, uuid, text) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.growth_form_set_intake(uuid, boolean, uuid, uuid, text) TO authenticated, service_role;
+-- Callable by a signed-in owner/admin only: authority is re-derived from auth.uid() in the body, so
+-- a service-role call (no user) would be refused anyway and is not granted.
+REVOKE ALL ON FUNCTION public.growth_form_set_intake(uuid, boolean, uuid, uuid, text) FROM PUBLIC, anon, service_role;
+GRANT EXECUTE ON FUNCTION public.growth_form_set_intake(uuid, boolean, uuid, uuid, text) TO authenticated;

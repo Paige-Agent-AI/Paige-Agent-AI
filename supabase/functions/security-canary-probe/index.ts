@@ -25,7 +25,7 @@ const PROBES: Array<{
   {
     name: "growth_forms_internal_columns",
     table: "growth_forms",
-    restrictedCols: ["tenant_id", "notify_user_ids", "notify_email", "workflow_slug", "pipeline_id", "stage_id"],
+    restrictedCols: ["tenant_id", "notify_user_ids", "workflow_slug", "pipeline_id", "stage_id"],
     filter: "status=eq.active",
   },
   {

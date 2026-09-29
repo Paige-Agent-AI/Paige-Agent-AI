@@ -7,6 +7,15 @@ const base = "http://127.0.0.1:5214/";
 const browser = await chromium.launch({ executablePath: process.env.PW_EXECUTABLE_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" });
 const errors = [];
 const results = [];
+// Burned into every frame AFTER measuring, so a frame pasted anywhere still says what it is.
+async function label(page) {
+  await page.evaluate(() => {
+    const tag = document.createElement("div");
+    tag.textContent = "harness render · not live";
+    Object.assign(tag.style, { position: "fixed", right: "8px", bottom: "6px", zIndex: "99", padding: "2px 8px", borderRadius: "999px", font: "600 11px system-ui", color: "#fff", background: "rgba(101,90,150,.9)" });
+    document.body.append(tag);
+  });
+}
 async function open(query, w, h, opts = {}) {
   const page = await browser.newPage({ viewport: { width: w, height: h }, reducedMotion: opts.reducedMotion ?? "no-preference" });
   page.on("pageerror", (e) => errors.push(`${query}: ${e}`));
@@ -35,6 +44,7 @@ for (const [w, h] of [[1536, 770], [1366, 768], [1024, 768], [900, 1000]]) {
     const m = await measure(page);
     await page.evaluate(() => { document.querySelector("#trc-contact-editor-panel").scrollTop = 0; });
     const name = `solo-${w}x${h}-paige-${paige}`;
+    await label(page);
     await page.screenshot({ path: `${out}/${name}.png` });
     results.push({ name, ...m });
     await page.close();
@@ -58,6 +68,7 @@ for (const [w, h] of [[1536, 770], [1366, 768], [1024, 768], [900, 1000]]) {
   await page.keyboard.press("ArrowDown"); await page.keyboard.press("Enter");
   const relabelled = await page.evaluate(() => ({ label: document.querySelector('[data-cm-id="e2"] [data-cm-label]').textContent, focusBack: document.activeElement.hasAttribute("data-cm-label") }));
   const focusRing = await page.evaluate(() => getComputedStyle(document.activeElement).outlineStyle + " " + getComputedStyle(document.activeElement).outlineColor);
+  await label(page);
   await page.screenshot({ path: `${out}/keyboard-light.png` });
   results.push({ name: "keyboard", route, toolsVisibleOnFocus, listFocus, relabelled, focusRing });
   await page.close();
@@ -76,8 +87,28 @@ for (const [w, h] of [[1536, 770], [1366, 768], [1024, 768], [900, 1000]]) {
 {
   const page = await open("theme=dark", 683, 384);
   const m = await measure(page);
+  await label(page);
   await page.screenshot({ path: `${out}/zoom-200.png` });
   results.push({ name: "zoom-200", ...m });
+  await page.close();
+}
+// State frames: themes, make-primary, label list, refusal, first use, read-only record.
+for (const [query, name, act] of [
+  ["theme=dark", "editor-dark"], ["theme=light", "editor-light"], ["theme=light&view=empty", "editor-empty-light"],
+  ["theme=dark", "editor-made-primary", async (p) => { await p.hover('[data-cm-id="e3"]'); await p.click('[aria-label="Make accounts@reyesbuild.co the primary email"]'); await p.waitForTimeout(700); }],
+  ["theme=dark", "editor-label-open", async (p) => { await p.click('[data-cm-id="e1"] [data-cm-label]'); await p.waitForTimeout(250); }],
+  ["theme=dark&taken=hello@reyesbuild.co", "editor-taken", async (p) => {
+    for (const t of ["Business context", "Relationship & consent"]) await p.click(`[role="tab"]:has-text("${t}")`);
+    await p.click('button:has-text("Save changes")');
+    await p.waitForSelector(".cm-row.has-err");
+    results.push({ name: "taken-refusal", onRow: await p.evaluate(() => document.querySelector(".cm-row.has-err input")?.value), focused: await p.evaluate(() => document.activeElement?.closest(".cm-row.has-err") !== null) });
+  }],
+  ["theme=light&view=record&heard=e4", "record-light"],
+]) {
+  const page = await open(query, 1440, 900);
+  if (act) await act(page);
+  await label(page);
+  await page.screenshot({ path: `${out}/${name}.png` });
   await page.close();
 }
 console.log(JSON.stringify({ results, errors }, null, 1));

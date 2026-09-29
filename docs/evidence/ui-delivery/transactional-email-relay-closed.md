@@ -14,7 +14,7 @@ MATERIAL_FLOW_CHANGE: NO: every touched page keeps its surfaces, states, transit
 FLOW_PROTOTYPE: NOT_REQUIRED: no visual surface or interface-flow change to prototype (request payload and server authorization only); not a convenience skip
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: audience = the pages that trigger platform email (support ticket, broker clients, broker session, affiliate apply); primary action unchanged; purpose = stop anyone holding the public publishable key from sending email from the platform's verified domain
 VISUAL_DIRECTION: NOT_APPLICABLE: no visual surface changed; no pack, tokens, layout, or motion involved
-AUTOMATED_EVIDENCE: PASS: supabase/functions/_shared/email/send-authority.test.ts 7/7 (no token and publishable key refused for every template incl. user ones; internal passes; unlisted template refused for a signed-in person; self template bound to own address; operator template needs an operator; broker invite bound to a visible relationship) — each falsified by reinstating a defect; src/__tests__/transactional-email-relay-closed.test.ts 10/10, failing against the main-branch version of each of the 7 touched files; full vitest 6023 passed vs 6013 on main (+10 new)
+AUTOMATED_EVIDENCE: PASS: supabase/functions/_shared/email/send-authority.test.ts 8/8 (no token and publishable key refused for every template incl. user ones; internal passes; unlisted template refused for a signed-in person; self template bound to own address; operator template needs an operator; broker invite needs a visible relationship from a platform-granted broker, is capped hourly, and its words and link come from the database) — each falsified by reinstating a defect; src/__tests__/transactional-email-relay-closed.test.ts 12/12, failing against the main-branch version of each of the 7 touched files; full vitest 6023 passed vs 6013 on main (+10 new)
 STATIC_EVIDENCE: PASS: deno check clean on send-transactional-email, affiliate-application-confirm, notify-approval-event, agreement-send; send-notification carries 3 pre-existing errors, identical count on main; tsc ratchet 12 to 12; eslint and gold-discipline clean on the changed src files
 RENDERED_EVIDENCE: NOT_APPLICABLE: no rendered output changes; the touched components render the same markup
 BEHAVIORAL_EVIDENCE: PASS: decision behavior proven headless (send-authority.test.ts); production baseline recorded before the change — the live sender answered a publishable-key request with 404 template-not-found (it reached the body), and no-token with 401 from the gateway
@@ -23,7 +23,7 @@ KEYBOARD_FOCUS: NOT_APPLICABLE: no interactive surface changed
 ZOOM_REFLOW: NOT_APPLICABLE: no visual surface changed
 REDUCED_MOTION: NOT_APPLICABLE: no motion added or changed
 STATE_COVERAGE: PASS: server outcomes covered — refused (401 no token or publishable key, 403 template not user-sendable, 403 not an operator, 403 relationship not visible), sent to a server-bound recipient; the pages already treat the send as best-effort and non-blocking
-TRUTHFUL_STATE_LABELS: PASS: the broker page's toast still says an invite was sent to the address it shows; that address is the relationship's client_email, which is now exactly where the server sends
+TRUTHFUL_STATE_LABELS: PASS: the broker page's toast still says an invite was sent to the address it shows; that address is the relationship's client_email, which is now exactly where the server sends; a broker without the platform-granted role now gets a refusal the page already treats as a non-blocking send failure
 SOLO_UI: NO: the touched pages are support (all accounts) and the broker vertical; no src/solo, tenant-shell, growth, or public-site path changed
 UNVERIFIED: the authenticated in-browser send from each of the three touched pages on production (no signed-in session in this environment); the live publishable-key and no-token refusals are proven after deploy against the deployed function
 
@@ -50,6 +50,6 @@ Purpose: the platform sends email only for legitimate callers. Audience and prim
 
 ## Evidence index
 
-- `deno test … supabase/functions/_shared/email/send-authority.test.ts` → 7 passed; `npx vitest run src/__tests__/transactional-email-relay-closed.test.ts` → 10 passed.
+- `deno test … supabase/functions/_shared/email/send-authority.test.ts` → 8 passed; `npx vitest run src/__tests__/transactional-email-relay-closed.test.ts` → 12 passed.
 - Production baseline (2026-09-29, before merge): POST send-transactional-email with the publishable key and a nonexistent template → 404 template-not-found; with no token → 401.
 - Redacted: no secrets or customer data in this record.

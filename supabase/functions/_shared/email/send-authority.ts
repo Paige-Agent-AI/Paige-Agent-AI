@@ -23,8 +23,11 @@ export type UserPolicy =
   | { kind: "self" }
   /** Sent by a platform operator (super_admin / platform_admin) to a person they are serving. */
   | { kind: "operator" }
-  /** A broker's invite or note to one of their clients: goes to that client relationship's address,
-   *  and only if the caller can read the relationship (row-level security decides who can). */
+  /** A broker's invite to one of their clients. Goes to that relationship's client, only if the caller
+   *  can read the relationship (row-level security: the broker, their team, an operator) AND that
+   *  relationship's broker holds the platform-granted `broker` role — a broker profile alone is
+   *  self-serve and proves nothing. Every word of the email is built from the database, and a
+   *  broker is capped per hour. */
   | { kind: "broker_relationship" };
 
 export const USER_SENDABLE_TEMPLATES: Readonly<Record<string, UserPolicy>> = Object.freeze({
@@ -46,9 +49,25 @@ export interface SendAuthorityDeps {
   callerIsOperator(): Promise<boolean>;
   /** The user's primary email (user_contact_methods). */
   primaryEmail(userId: string): Promise<string | null>;
-  /** client_email of a broker relationship read AS THE CALLER, or null when the caller cannot see it. */
-  relationshipEmail(relationshipId: string): Promise<string | null>;
+  /** A broker relationship read AS THE CALLER (null when the caller cannot see it), with its broker's
+   *  profile and whether that broker holds the platform-granted `broker` role. */
+  brokerRelationship(relationshipId: string): Promise<BrokerRelationship | null>;
+  /** True when this caller is over the hourly cap for this template. */
+  overHourlyLimit(userId: string, templateName: string, max: number): Promise<boolean>;
 }
+
+export interface BrokerRelationship {
+  clientEmail: string;
+  clientFirstName: string | null;
+  businessName: string | null;
+  referralCode: string | null;
+  brokerIsGranted: boolean;
+}
+
+/** Hourly cap on broker invites per sender. */
+export const BROKER_INVITES_PER_HOUR = 20;
+
+const PUBLIC_SITE = "https://paigeagent.ai";
 
 export interface SendRequestFields {
   templateName: string;
@@ -59,8 +78,16 @@ export interface SendRequestFields {
 
 export type SendAuthority =
   | { ok: true; kind: "internal" }
-  | { ok: true; kind: "user"; userId: string; recipientEmail: string; recipientUserId: string | null }
-  | { ok: false; status: 401 | 403 | 400; error: string };
+  | {
+    ok: true;
+    kind: "user";
+    userId: string;
+    recipientEmail: string;
+    recipientUserId: string | null;
+    /** When set, replaces the caller's templateData entirely. */
+    templateData?: Record<string, unknown>;
+  }
+  | { ok: false; status: 401 | 403 | 400 | 429; error: string };
 
 export async function decideSendAuthority(
   req: SendRequestFields,
@@ -93,9 +120,27 @@ export async function decideSendAuthority(
     }
     case "broker_relationship": {
       if (!req.relationshipId) return { ok: false, status: 400, error: "relationship_required" };
-      const to = await deps.relationshipEmail(req.relationshipId);
-      if (!to) return { ok: false, status: 403, error: "relationship_not_yours" };
-      return { ok: true, kind: "user", userId, recipientEmail: to, recipientUserId: null };
+      const rel = await deps.brokerRelationship(req.relationshipId);
+      if (!rel) return { ok: false, status: 403, error: "relationship_not_yours" };
+      if (!rel.brokerIsGranted) return { ok: false, status: 403, error: "broker_not_approved" };
+      if (await deps.overHourlyLimit(userId, req.templateName, BROKER_INVITES_PER_HOUR)) {
+        return { ok: false, status: 429, error: "rate_limited" };
+      }
+      return {
+        ok: true,
+        kind: "user",
+        userId,
+        recipientEmail: rel.clientEmail,
+        recipientUserId: null,
+        templateData: {
+          firstName: rel.clientFirstName,
+          brokerBusinessName: rel.businessName,
+          brokerReferralCode: rel.referralCode,
+          signupLink: rel.referralCode
+            ? `${PUBLIC_SITE}/auth?ref=${encodeURIComponent(rel.referralCode)}&mode=signup`
+            : `${PUBLIC_SITE}/auth?mode=signup`,
+        },
+      };
     }
   }
 }

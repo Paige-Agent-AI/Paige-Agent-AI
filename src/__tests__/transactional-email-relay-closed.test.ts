@@ -51,6 +51,12 @@ describe("the side doors that forwarded with the service key are internal-only",
     });
   }
 
+  it("send-beta-launch-email (mails every user) is platform-operator only, not the global admin role", () => {
+    const src = code("supabase/functions/send-beta-launch-email/index.ts");
+    expect(src).toMatch(/if \(\(await operatorUserId\(req\)\) !== callerId\)/);
+    expect(src).not.toMatch(/r\.role === 'admin'/);
+  });
+
   it("agreement-send calls the sender as an internal caller, not with the end user's token", () => {
     const src = code("supabase/functions/agreement-send/index.ts");
     expect(src).not.toMatch(/headers: \{ Authorization: authHeader, "Content-Type"/);
@@ -74,10 +80,18 @@ describe("browser code asks the sender only for what a person may send", () => {
   };
   walk("src");
 
+  // Each whole invoke call, from `functions.invoke("send-transactional-email", {` to its closing `})`.
   const calls = files.flatMap((f) => {
     const src = read(f);
-    return [...src.matchAll(/functions\.invoke\(\s*["']send-transactional-email["'][\s\S]{0,400}?templateName:\s*["']([a-z0-9-]+)["'][^}]*\}?/g)]
-      .map((m) => ({ file: f, template: m[1], body: m[0] }));
+    return [...src.matchAll(/functions\.invoke\(\s*["']send-transactional-email["'],\s*\{[\s\S]*?\n\s*\}\s*\)/g)].map((m) => ({
+      file: f,
+      template: /templateName:\s*["']([a-z0-9-]+)["']/.exec(m[0])?.[1] ?? "(none)",
+      body: m[0],
+    }));
+  });
+
+  it("no browser code calls the sender over raw fetch, around the invoke path", () => {
+    for (const f of files) expect(read(f), f).not.toMatch(/functions\/v1\/send-transactional-email/);
   });
 
   it("finds the browser callers (non-vacuous)", () => {

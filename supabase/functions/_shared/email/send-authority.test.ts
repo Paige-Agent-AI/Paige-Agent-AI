@@ -14,13 +14,25 @@ function caller(o: {
   operator?: boolean;
   primary?: string | null;
   canSeeRelationship?: boolean;
+  brokerGranted?: boolean;
+  overLimit?: boolean;
 }): SendAuthorityDeps {
   return {
     isInternalCaller: async () => o.internal === true,
     verifiedUserId: async () => o.userId ?? null,
     callerIsOperator: async () => o.operator === true,
     primaryEmail: async () => o.primary ?? null,
-    relationshipEmail: async (id) => (o.canSeeRelationship && id === REL ? "client@broker.test" : null),
+    brokerRelationship: async (id) =>
+      o.canSeeRelationship && id === REL
+        ? {
+          clientEmail: "client@broker.test",
+          clientFirstName: "Dana",
+          businessName: "Summit Advisory",
+          referralCode: "BROK-A1B2C3",
+          brokerIsGranted: o.brokerGranted === true,
+        }
+        : null,
+    overHourlyLimit: async () => o.overLimit === true,
   };
 }
 
@@ -72,18 +84,46 @@ Deno.test("an operator template needs a platform operator", async () => {
   );
 });
 
-Deno.test("a broker invite goes to the relationship's client, and only if the caller can see it", async () => {
+Deno.test("a broker invite needs a relationship the caller can see, from a platform-granted broker", async () => {
   const t = "broker-client-invite";
   assertEquals(
-    await decideSendAuthority(req({ templateName: t }), caller({ userId: USER, canSeeRelationship: true })),
+    await decideSendAuthority(req({ templateName: t }), caller({ userId: USER, canSeeRelationship: true, brokerGranted: true })),
     { ok: false, status: 400, error: "relationship_required" },
   );
   assertEquals(
-    await decideSendAuthority(req({ templateName: t, relationshipId: REL }), caller({ userId: USER })),
+    await decideSendAuthority(req({ templateName: t, relationshipId: REL }), caller({ userId: USER, brokerGranted: true })),
     { ok: false, status: 403, error: "relationship_not_yours" },
   );
+  // A self-serve broker profile with a relationship pointed at a stranger: refused.
   assertEquals(
     await decideSendAuthority(req({ templateName: t, relationshipId: REL }), caller({ userId: USER, canSeeRelationship: true })),
-    { ok: true, kind: "user", userId: USER, recipientEmail: "client@broker.test", recipientUserId: null },
+    { ok: false, status: 403, error: "broker_not_approved" },
   );
+  assertEquals(
+    await decideSendAuthority(
+      req({ templateName: t, relationshipId: REL }),
+      caller({ userId: USER, canSeeRelationship: true, brokerGranted: true, overLimit: true }),
+    ),
+    { ok: false, status: 429, error: "rate_limited" },
+  );
+});
+
+Deno.test("a broker invite's words and link come from the database, never the request", async () => {
+  const d = await decideSendAuthority(
+    req({ templateName: "broker-client-invite", relationshipId: REL }),
+    caller({ userId: USER, canSeeRelationship: true, brokerGranted: true }),
+  );
+  assertEquals(d, {
+    ok: true,
+    kind: "user",
+    userId: USER,
+    recipientEmail: "client@broker.test",
+    recipientUserId: null,
+    templateData: {
+      firstName: "Dana",
+      brokerBusinessName: "Summit Advisory",
+      brokerReferralCode: "BROK-A1B2C3",
+      signupLink: "https://paigeagent.ai/auth?ref=BROK-A1B2C3&mode=signup",
+    },
+  });
 });

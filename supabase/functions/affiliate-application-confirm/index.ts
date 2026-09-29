@@ -18,6 +18,11 @@ const TEMPLATE = "affiliate-application-received";
 const FRESH_MS = 15 * 60 * 1000;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+function firstNameOnly(fullName: unknown): string | null {
+  const first = String(fullName ?? "").trim().split(/\s+/)[0] ?? "";
+  return /^[\p{L}][\p{L}'-]{0,39}$/u.test(first) ? first : null;
+}
+
 function json(status: number, body: Record<string, unknown>): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -41,11 +46,9 @@ Deno.serve(async (req) => {
   const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
     auth: { persistSession: false },
   });
-  // Per-IP and platform-wide ceilings. Fail CLOSED: when the limiter itself errors, no mail goes.
+  // Per-IP ceiling first, so junk ids cannot be sprayed at the table. Every limiter fails CLOSED: when
+  // it errors, no mail goes.
   if (await overRateLimit(admin, `aff-confirm:ip:${trustedClientIp(req)}`, 5, 3600, true)) {
-    return json(429, { error: "rate_limited" });
-  }
-  if (await overRateLimit(admin, "aff-confirm:all", 30, 3600, true)) {
     return json(429, { error: "rate_limited" });
   }
 
@@ -62,9 +65,6 @@ Deno.serve(async (req) => {
 
   const email = String(app.email ?? "").trim().toLowerCase();
   if (!email) return json(404, { error: "application_not_found" });
-  if (await overRateLimit(admin, `aff-confirm:to:${email}`, 1, 86400, true)) {
-    return json(429, { error: "rate_limited" });
-  }
 
   const idempotencyKey = `aff-app-received-${app.id}`;
   const { data: prior, error: priorErr } = await admin
@@ -75,6 +75,15 @@ Deno.serve(async (req) => {
     .limit(1);
   if (priorErr) return json(503, { error: "send_log_lookup_failed" });
   if ((prior ?? []).length > 0) return json(200, { success: true, duplicate: true });
+
+  // Counted only for a real, fresh, not-yet-confirmed application: once a day per address, and a
+  // platform-wide hourly ceiling that junk requests cannot use up.
+  if (await overRateLimit(admin, `aff-confirm:to:${email}`, 1, 86400, true)) {
+    return json(429, { error: "rate_limited" });
+  }
+  if (await overRateLimit(admin, "aff-confirm:all", 30, 3600, true)) {
+    return json(429, { error: "rate_limited" });
+  }
 
   const res = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-transactional-email`, {
     method: "POST",
@@ -88,7 +97,8 @@ Deno.serve(async (req) => {
       recipientUserId: app.user_id ?? undefined,
       idempotencyKey,
       templateData: {
-        name: String(app.full_name ?? "").split(" ")[0] || null,
+        // The applicant typed this; only a plain first name reaches the email, never a link.
+        name: firstNameOnly(app.full_name),
         tierKey: app.requested_tier_key,
       },
     }),

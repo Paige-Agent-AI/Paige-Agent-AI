@@ -6,6 +6,14 @@ import { resolveTenantEmailContext } from '../_shared/email/branding.ts'
 import { decideSendAuthority } from '../_shared/email/send-authority.ts'
 import { isAuthorizedInternalCaller, adminClient, operatorUserId } from '../_shared/systems-check-http.ts'
 import { primaryEmailForUser } from '../_shared/user-contact-methods.ts'
+import { overRateLimit } from '../_shared/rateLimit.ts'
+import { createClient as createLimiterClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+// The shared public rate limiter is typed against its own supabase-js build.
+const limiterClient = () =>
+  createLimiterClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, {
+    auth: { persistSession: false },
+  })
 
 // Configuration baked in at scaffold time — do NOT change these manually.
 // To update, re-run the email domain setup flow.
@@ -127,20 +135,41 @@ Deno.serve(async (req) => {
       },
       callerIsOperator: async () => (await operatorUserId(req)) !== null,
       primaryEmail: (userId) => primaryEmailForUser(adminClient(), userId),
-      relationshipEmail: async (id) => {
+      brokerRelationship: async (id) => {
         // Read AS THE CALLER: row-level security on broker_client_relationships decides who may
         // see — and therefore write to — a client (the owning broker, their team, an operator).
         const caller = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
           global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } },
           auth: { persistSession: false },
         })
-        const { data } = await caller
+        const { data: rel } = await caller
           .from('broker_client_relationships')
-          .select('client_email')
+          .select('client_email, client_first_name, broker_id')
           .eq('id', id)
           .maybeSingle()
-        return (data as { client_email?: string } | null)?.client_email ?? null
+        const row = rel as { client_email?: string; client_first_name?: string | null; broker_id?: string } | null
+        if (!row?.client_email || !row.broker_id) return null
+        // The broker's profile and role are read with the service role: a broker profile is
+        // self-serve, the `broker` role is granted only by a platform operator.
+        const admin = adminClient()
+        const { data: bp } = await admin
+          .from('broker_profiles')
+          .select('user_id, business_name, referral_code')
+          .eq('id', row.broker_id)
+          .maybeSingle()
+        const profile = bp as { user_id?: string; business_name?: string | null; referral_code?: string | null } | null
+        if (!profile?.user_id) return null
+        const { data: granted } = await admin.rpc('has_role', { _user_id: profile.user_id, _role: 'broker' })
+        return {
+          clientEmail: row.client_email,
+          clientFirstName: row.client_first_name ?? null,
+          businessName: profile.business_name ?? null,
+          referralCode: profile.referral_code ?? null,
+          brokerIsGranted: granted === true,
+        }
       },
+      overHourlyLimit: (userId, template, max) =>
+        overRateLimit(limiterClient(), `ste:${template}:${userId}`, max, 3600, true),
     },
   )
   if (!authority.ok) {
@@ -157,6 +186,7 @@ Deno.serve(async (req) => {
     fromOverride = null
     replyToOverride = null
     tenantId = null
+    if (authority.templateData) templateData = authority.templateData
   }
 
   // Solo Beta welcome is an internal mode of the existing transactional sender.

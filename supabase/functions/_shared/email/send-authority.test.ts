@@ -19,7 +19,9 @@ function caller(o: {
   operator?: boolean;
   signIn?: string | null;
   ownsTicket?: boolean;
+  ticketNumber?: string;
   overLimit?: boolean;
+  overPlatformLimit?: boolean;
 }): SendAuthorityDeps {
   return {
     isInternalCaller: async () => o.internal === true,
@@ -28,9 +30,10 @@ function caller(o: {
     signInEmail: async () => o.signIn ?? null,
     ownTicket: async (userId, id) =>
       o.ownsTicket && userId === USER && id === TICKET
-        ? { ticketNumber: "PT-1042", subject: "Calendar won't sync", category: "technical", priority: "normal" }
+        ? { ticketNumber: o.ticketNumber ?? "PT-01042", category: "technical_issue", priority: "normal" }
         : null,
     overHourlyLimit: async () => o.overLimit === true,
+    overPlatformHourlyLimit: async () => o.overPlatformLimit === true,
   };
 }
 
@@ -58,7 +61,8 @@ Deno.test("an internal platform caller may send any template to the recipient it
 });
 
 Deno.test("a signed-in person cannot send a template that is not user-sendable", async () => {
-  for (const templateName of ["role-invitation", "broker-client-invite", "affiliate-application-received"]) {
+  const names = ["role-invitation", "broker-client-invite", "affiliate-application-received", "constructor", "toString", "__proto__", "hasOwnProperty"];
+  for (const templateName of names) {
     assertEquals(
       await decideSendAuthority(req({ templateName }), caller({ userId: USER })),
       { ok: false, status: 403, error: "template_not_user_sendable" },
@@ -84,6 +88,25 @@ Deno.test("a ticket confirmation needs a ticket the caller filed", async () => {
     ),
     { ok: false, status: 429, error: "rate_limited" },
   );
+  assertEquals(
+    await decideSendAuthority(
+      req({ templateName: t, ticketId: TICKET }),
+      caller({ userId: USER, ownsTicket: true, signIn: "me@solo.test", overPlatformLimit: true }),
+    ),
+    { ok: false, status: 429, error: "rate_limited" },
+  );
+});
+
+Deno.test("a ticket confirmation carries no caller-written text: a rewritten ticket number is dropped", async () => {
+  const d = await decideSendAuthority(
+    req({ templateName: "support-ticket-created", ticketId: TICKET }),
+    caller({ userId: USER, ownsTicket: true, signIn: "me@solo.test", ticketNumber: "Your account is locked, visit evil.test" }),
+  );
+  assertEquals(d.ok && d.kind === "user" ? d.templateData : null, {
+    ticketNumber: null,
+    category: "technical_issue",
+    priority: "normal",
+  });
 });
 
 Deno.test("a ticket confirmation goes to the sign-in address, with words from the ticket row only", async () => {
@@ -97,7 +120,7 @@ Deno.test("a ticket confirmation goes to the sign-in address, with words from th
     userId: USER,
     recipientEmail: "me@solo.test",
     recipientUserId: USER,
-    templateData: { ticketNumber: "PT-1042", subject: "Calendar won't sync", category: "technical", priority: "normal" },
+    templateData: { ticketNumber: "PT-01042", category: "technical_issue", priority: "normal" },
   });
 });
 

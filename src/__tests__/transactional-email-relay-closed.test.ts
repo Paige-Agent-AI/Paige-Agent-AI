@@ -67,6 +67,31 @@ describe("the side doors that forwarded with the service key are internal-only",
     expect(cap).toBeGreaterThan(-1);
     expect(src.indexOf('from("invitations")')).toBeGreaterThan(cap);
     expect(src.indexOf("auth.admin.createUser(")).toBeGreaterThan(cap);
+    expect(src).toMatch(/`invite-tenant:\$\{inviterTenantId\}`/);
+    expect(src).toMatch(/"invite:all"/);
+  });
+
+  it("send-admin-invitation lets in an operator or an admin of THIS tenant, never the global admin role", () => {
+    const src = code("supabase/functions/send-admin-invitation/index.ts");
+    expect(src).not.toMatch(/\.eq\("role", "admin"\)/);
+    expect(src).not.toMatch(/rpc\("is_platform_owner"\)/);
+    expect(src).toMatch(/const isOperator = \(await operatorUserId\(req\)\) === user\.id/);
+    expect(src).toMatch(/asCaller\.rpc\("is_tenant_admin", \{ _tenant: inviterTenantId \}\)/);
+    const refuse = src.indexOf('if (!isOperator && !isTenantAdmin) throw new Error("Insufficient permissions")');
+    expect(refuse).toBeGreaterThan(-1);
+    expect(src.indexOf("auth.admin.createUser(")).toBeGreaterThan(refuse);
+    // Names that reach the inbox are clamped; a logo only from the platform's own storage.
+    expect(src).toMatch(/const inviterName = plainLabel\(/);
+    expect(src).toMatch(/brandName = plainLabel\(rb\.tenant_name/);
+    expect(src).toMatch(/rb\.logo_url\.startsWith\(ownStorage\)/);
+  });
+
+  it("agreement-send caps sends per workspace before it renders, mints or mails", () => {
+    const src = code("supabase/functions/agreement-send/index.ts");
+    const cap = src.indexOf("await overRateLimit(admin, `agreement-send:${tenantId}`");
+    expect(cap).toBeGreaterThan(-1);
+    expect(src.indexOf('from("paige_agreements")')).toBeGreaterThan(cap);
+    expect(src.indexOf("/functions/v1/send-transactional-email")).toBeGreaterThan(cap);
   });
 
   it("agreement-send calls the sender as an internal caller, not with the end user's token", () => {
@@ -126,6 +151,14 @@ describe("browser code asks the sender only for what a person may send", () => {
 
   it("no browser code asks the platform to email a broker's client (a broker profile is self-serve)", () => {
     for (const f of files) expect(read(f), f).not.toMatch(/["']broker-client-invite["']/);
+  });
+
+  it("the broker session only says a summary was shared once the in-app card was written", () => {
+    const src = code("src/pages/broker/BrokerPaigeSession.tsx");
+    expect(src).not.toMatch(/by email/);
+    const written = src.indexOf("if (cardError) throw cardError;");
+    expect(written).toBeGreaterThan(-1);
+    expect(src.indexOf('title: "Summary shared"')).toBeGreaterThan(written);
   });
 
   it("the anonymous affiliate confirmation goes through its bounded function, never the sender", () => {

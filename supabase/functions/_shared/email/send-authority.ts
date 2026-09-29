@@ -19,9 +19,11 @@
 // Pure: every lookup is injected, so the decision is unit-tested without a network.
 
 export type UserPolicy =
-  /** The confirmation for a support ticket the caller filed. Goes to the caller's sign-in address
-   *  (not a user-settable contact field), is built only from that ticket's row, and is capped per
-   *  hour. The caller names the ticket; nothing else in the request reaches the email. */
+  /** The confirmation for a support ticket the caller filed. Goes to the caller's sign-in address,
+   *  and carries no text the caller wrote: sign-up does not verify that address, so a person could
+   *  point it at someone else. Only the generated ticket number (format-checked, because the owner
+   *  may update their own row) and the constrained category and priority reach the email. Capped
+   *  per person and platform-wide. */
   | { kind: "own_ticket" }
   /** Sent by a platform operator (super_admin / platform_admin) to a person they are serving. */
   | { kind: "operator" };
@@ -48,17 +50,22 @@ export interface SendAuthorityDeps {
   ownTicket(userId: string, ticketId: string): Promise<OwnTicket | null>;
   /** True when this caller is over the hourly cap for this template. */
   overHourlyLimit(userId: string, templateName: string, max: number): Promise<boolean>;
+  /** True when all callers together are over the hourly cap for this template. */
+  overPlatformHourlyLimit(templateName: string, max: number): Promise<boolean>;
 }
 
 export interface OwnTicket {
   ticketNumber: string | null;
-  subject: string | null;
   category: string | null;
   priority: string | null;
 }
 
-/** Hourly cap on support-ticket confirmations per person. */
+/** Hourly caps on support-ticket confirmations: per person, and across the platform. */
 export const TICKET_CONFIRMATIONS_PER_HOUR = 5;
+export const TICKET_CONFIRMATIONS_PLATFORM_PER_HOUR = 60;
+
+/** The shape the database generates ('PT-' + zero-padded sequence). */
+const TICKET_NUMBER = /^PT-\d{1,10}$/;
 
 export interface SendRequestFields {
   templateName: string;
@@ -89,7 +96,10 @@ export async function decideSendAuthority(
   const userId = await deps.verifiedUserId();
   if (!userId) return { ok: false, status: 401, error: "sign_in_required" };
 
-  const policy = USER_SENDABLE_TEMPLATES[req.templateName];
+  // Own keys only: a template name like "constructor" must not resolve through the prototype.
+  const policy = Object.hasOwn(USER_SENDABLE_TEMPLATES, req.templateName)
+    ? USER_SENDABLE_TEMPLATES[req.templateName]
+    : undefined;
   if (!policy) return { ok: false, status: 403, error: "template_not_user_sendable" };
 
   switch (policy.kind) {
@@ -99,7 +109,10 @@ export async function decideSendAuthority(
       if (!ticket) return { ok: false, status: 403, error: "ticket_not_yours" };
       const email = await deps.signInEmail(userId);
       if (!email) return { ok: false, status: 403, error: "no_sign_in_email" };
-      if (await deps.overHourlyLimit(userId, req.templateName, TICKET_CONFIRMATIONS_PER_HOUR)) {
+      if (
+        (await deps.overHourlyLimit(userId, req.templateName, TICKET_CONFIRMATIONS_PER_HOUR)) ||
+        (await deps.overPlatformHourlyLimit(req.templateName, TICKET_CONFIRMATIONS_PLATFORM_PER_HOUR))
+      ) {
         return { ok: false, status: 429, error: "rate_limited" };
       }
       return {
@@ -109,8 +122,7 @@ export async function decideSendAuthority(
         recipientEmail: email,
         recipientUserId: userId,
         templateData: {
-          ticketNumber: ticket.ticketNumber,
-          subject: ticket.subject,
+          ticketNumber: ticket.ticketNumber && TICKET_NUMBER.test(ticket.ticketNumber) ? ticket.ticketNumber : null,
           category: ticket.category,
           priority: ticket.priority,
         },
@@ -127,5 +139,7 @@ export async function decideSendAuthority(
         recipientUserId: req.recipientUserId,
       };
     }
+    default:
+      return { ok: false, status: 403, error: "template_not_user_sendable" };
   }
 }

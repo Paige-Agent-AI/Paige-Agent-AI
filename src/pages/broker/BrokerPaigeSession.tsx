@@ -349,42 +349,39 @@ const BrokerPaigeSession = () => {
 
   const shareSummary = async () => {
     if (!rel || !sessionId || !summary) return;
+    // No email: the only template this ever used was the client invite, which never carried the
+    // summary. The summary reaches the client in their app — and a client who has not signed up yet
+    // has no app, so nothing is marked shared and the summary stays open for the broker to copy.
+    if (!rel.client_user_id) {
+      toast({
+        title: "Not shared yet",
+        description: `${rel.client_first_name} hasn't signed up, so there's no app to deliver it to. The summary stays open here so you can copy it.`,
+      });
+      return;
+    }
     setSharing(true);
     try {
-      // Mark on session row
+      const { error: cardError } = await supabase.from("communication_log").insert({
+        user_id: rel.client_user_id,
+        channel: "in_app",
+        message_type: "broker_session_summary",
+        subject: `Notes from your broker at ${profile?.business_name || "your firm"}`,
+        preview: summary.slice(0, 240),
+        status: "delivered",
+      });
+      if (cardError) throw cardError;
+
       await supabase
         .from("broker_paige_sessions")
         .update({ summary_shared_at: new Date().toISOString() })
         .eq("id", sessionId);
-
-      // In-app card via communication_log so the client sees it in their app
-      if (rel.client_user_id) {
-        await supabase.from("communication_log").insert({
-          user_id: rel.client_user_id,
-          channel: "in_app",
-          message_type: "broker_session_summary",
-          subject: `Notes from your broker at ${profile?.business_name || "your firm"}`,
-          preview: summary.slice(0, 240),
-          status: "delivered",
-        });
-      }
-
-      // No email: the only template this used was the client invite, which never carried the summary.
-      // The summary reaches the client in their app; a client who has not signed up yet has no app.
 
       trackEvent("broker_summary_shared", "engagement", {
         session_id: sessionId,
         relationship_id: rel.id,
       });
 
-      toast(
-        rel.client_user_id
-          ? { title: "Summary shared", description: `${rel.client_first_name} will see it in their app.` }
-          : {
-            title: "Summary saved",
-            description: `${rel.client_first_name} hasn't signed up yet, so there's no app to deliver it to. Copy the summary and send it yourself.`,
-          },
-      );
+      toast({ title: "Summary shared", description: `${rel.client_first_name} will see it in their app.` });
       setSummaryOpen(false);
     } catch (e: unknown) {
       toast({ title: "Share failed", description: e instanceof Error ? e.message : "Try again.", variant: "destructive" });
@@ -621,7 +618,7 @@ const BrokerPaigeSession = () => {
           <DialogHeader>
             <DialogTitle>Client-ready summary</DialogTitle>
             <DialogDescription>
-              Preview what {rel.client_first_name} will receive — by email and in their PaigeAgent dashboard.
+              Preview what {rel.client_first_name} will see in their PaigeAgent dashboard once you share it.
             </DialogDescription>
           </DialogHeader>
           <div className="prose prose-sm dark:prose-invert max-w-none max-h-[50vh] overflow-y-auto border rounded-md p-4 bg-muted/30">

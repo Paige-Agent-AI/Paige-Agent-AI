@@ -140,17 +140,19 @@ Deno.serve(async (req) => {
       ownTicket: async (userId, id) => {
         const { data } = await adminClient()
           .from('support_tickets')
-          .select('ticket_number, subject, category, priority')
+          .select('ticket_number, category, priority')
           .eq('id', id)
           .eq('user_id', userId)
           .maybeSingle()
-        const t = data as { ticket_number?: string | null; subject?: string | null; category?: string | null; priority?: string | null } | null
+        const t = data as { ticket_number?: string | null; category?: string | null; priority?: string | null } | null
         return t
-          ? { ticketNumber: t.ticket_number ?? null, subject: t.subject ?? null, category: t.category ?? null, priority: t.priority ?? null }
+          ? { ticketNumber: t.ticket_number ?? null, category: t.category ?? null, priority: t.priority ?? null }
           : null
       },
       overHourlyLimit: (userId, template, max) =>
         overRateLimit(limiterClient(), `ste:${template}:${userId}`, max, 3600, true),
+      overPlatformHourlyLimit: (template, max) =>
+        overRateLimit(limiterClient(), `ste:${template}:all`, max, 3600, true),
     },
   )
   if (!authority.ok) {

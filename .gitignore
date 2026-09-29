@@ -86,9 +86,12 @@ docs/evidence/ui-delivery/solo-approval-executes/confirm-card.html
 # the PNGs and render-results.json beside them are the tracked evidence.
 docs/evidence/ui-delivery/solo-approval-recovery/*.html
 
-# Impeccable comp-led build: the approved comp and its record are committed; the per-session
-# build scratch (grid, regions, phase state) and the comps that were not chosen are not.
+# Impeccable working captures and throwaway approval frames — never shipped. The surface brief
+# (.impeccable/surfaces/) and DESIGN.md are committed; screenshots and frame builds are not.
+.impeccable/review/
+.impeccable/frame/
 .impeccable/build/
+# The approved comp-led build record for Solo People contact methods is committed; comps not chosen are not.
 .impeccable/mocks/decision/*
 !.impeccable/mocks/decision/comp-a.png
 !.impeccable/mocks/decision/comp-a.json

@@ -188,9 +188,12 @@ BEGIN
       RETURN NEW;
     END IF;
   END IF;
-  -- invitations fills an omitted tenant_id in a later trigger (trg_stamp_tenant_id), so read
-  -- the workspace it will land in, not only the one written.
-  IF public.is_company_workspace(COALESCE(NEW.tenant_id, public.current_user_tenant_id()))
+  -- On INSERT, invitations fills an omitted tenant_id in a later trigger (trg_stamp_tenant_id),
+  -- so read the workspace it will land in. On UPDATE only the value written counts: a NULL there
+  -- is the ON DELETE SET NULL of a tenant being deleted, never a move into a workspace.
+  IF public.is_company_workspace(CASE WHEN TG_OP = 'INSERT'
+                                      THEN COALESCE(NEW.tenant_id, public.current_user_tenant_id())
+                                      ELSE NEW.tenant_id END)
      AND NOT public.is_direct_server_context() THEN
     RAISE EXCEPTION 'TENANT_FORBIDDEN: a company workspace does not take invitations; the platform owner adds people to it directly'
       USING ERRCODE = '42501';

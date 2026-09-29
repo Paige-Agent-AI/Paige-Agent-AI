@@ -20,13 +20,13 @@ async function open(query, w, h, opts = {}) {
   const page = await browser.newPage({ viewport: { width: w, height: h }, reducedMotion: opts.reducedMotion ?? "no-preference" });
   page.on("pageerror", (e) => errors.push(`${query}: ${e}`));
   await page.goto(`${base}?${query}`);
-  await page.waitForSelector('[data-cm-list="email"]');
+  await page.waitForSelector('[data-ctm-list="email"]');
   return page;
 }
 async function measure(page) {
   return page.evaluate(() => {
     const panel = document.querySelector("#trc-contact-editor-panel");
-    const add = document.querySelector('[data-cm-add="phone"]');
+    const add = document.querySelector('[data-ctm-add="phone"]');
     panel.scrollTop = panel.scrollHeight;
     const r = add.getBoundingClientRect(), p = panel.getBoundingClientRect();
     return {
@@ -34,7 +34,7 @@ async function measure(page) {
       docScrollsY: document.documentElement.scrollHeight > innerHeight + 1,
       panelScrolls: panel.scrollHeight > panel.clientHeight,
       lastControlReachable: r.bottom <= p.bottom + 1 && r.top >= p.top - 1,
-      rowsOverflowing: [...document.querySelectorAll(".cm-row")].filter((row) => row.scrollWidth > row.clientWidth + 1).length,
+      rowsOverflowing: [...document.querySelectorAll(".ctm-row")].filter((row) => row.scrollWidth > row.clientWidth + 1).length,
     };
   });
 }
@@ -60,13 +60,13 @@ for (const [w, h] of [[1536, 770], [1366, 768], [1024, 768], [900, 1000]]) {
     route.push(await page.evaluate(() => { const a = document.activeElement; return a.getAttribute("aria-label") || a.id || a.textContent?.trim().slice(0, 30); }));
   }
   await page.waitForTimeout(300); // let the .15s reveal finish before reading it
-  const toolsVisibleOnFocus = await page.evaluate(() => getComputedStyle(document.activeElement.closest(".cm-row")?.querySelector(".cm-tools") ?? document.body).opacity);
-  await page.focus('[data-cm-id="e2"] [data-cm-label]');
+  const toolsVisibleOnFocus = await page.evaluate(() => getComputedStyle(document.activeElement.closest(".ctm-row")?.querySelector(".ctm-tools") ?? document.body).opacity);
+  await page.focus('[data-ctm-id="e2"] [data-ctm-label]');
   await page.keyboard.press("Enter");
   await page.waitForSelector('[role="listbox"]');
   const listFocus = await page.evaluate(() => document.activeElement.textContent);
   await page.keyboard.press("ArrowDown"); await page.keyboard.press("Enter");
-  const relabelled = await page.evaluate(() => ({ label: document.querySelector('[data-cm-id="e2"] [data-cm-label]').textContent, focusBack: document.activeElement.hasAttribute("data-cm-label") }));
+  const relabelled = await page.evaluate(() => ({ label: document.querySelector('[data-ctm-id="e2"] [data-ctm-label]').textContent, focusBack: document.activeElement.hasAttribute("data-ctm-label") }));
   const focusRing = await page.evaluate(() => getComputedStyle(document.activeElement).outlineStyle + " " + getComputedStyle(document.activeElement).outlineColor);
   await label(page);
   await page.screenshot({ path: `${out}/keyboard-light.png` });
@@ -76,11 +76,26 @@ for (const [w, h] of [[1536, 770], [1366, 768], [1024, 768], [900, 1000]]) {
 // Reduced motion: make primary; the rows must not carry a transform transition.
 {
   const page = await open("theme=dark", 1366, 768, { reducedMotion: "reduce" });
-  await page.focus('[data-cm-id="e3"] .cm-mk');
+  await page.focus('[data-ctm-id="e3"] .ctm-mk');
   await page.keyboard.press("Enter");
-  const transforms = await page.evaluate(() => [...document.querySelectorAll("[data-cm-id], [data-cm-orb]")].map((n) => n.style.transform).filter(Boolean).length);
-  const top = await page.evaluate(() => document.querySelector('[data-cm-list="email"] [data-cm-id]').dataset.cmId);
-  results.push({ name: "reduced-motion", inlineTransforms: transforms, topAfterMakePrimary: top });
+  const transforms = await page.evaluate(() => [...document.querySelectorAll("[data-ctm-id], [data-ctm-orb]")].map((n) => n.style.transform).filter(Boolean).length);
+  const top = await page.evaluate(() => document.querySelector('[data-ctm-list="email"] [data-ctm-id]').dataset.ctmId);
+  // The new-row fade and the label-list reveal are measured, not assumed: their computed animation.
+  await page.click('[data-ctm-add="email"]');
+  const newRowAnimation = await page.evaluate(() => getComputedStyle(document.querySelector(".ctm-row.is-new") ?? document.body).animationName);
+  await page.click('[data-ctm-id="e1"] [data-ctm-label]');
+  const listAnimation = await page.evaluate(() => getComputedStyle(document.querySelector(".ctm-lb")).animationName);
+  results.push({ name: "reduced-motion", inlineTransforms: transforms, topAfterMakePrimary: top, newRowAnimation, listAnimation });
+  await page.close();
+}
+// Control: with motion allowed the same two animations DO run, so the reduced-motion reading means something.
+{
+  const page = await open("theme=dark", 1366, 768);
+  await page.click('[data-ctm-add="email"]');
+  const newRowAnimation = await page.evaluate(() => getComputedStyle(document.querySelector(".ctm-row.is-new") ?? document.body).animationName);
+  await page.click('[data-ctm-id="e1"] [data-ctm-label]');
+  const listAnimation = await page.evaluate(() => getComputedStyle(document.querySelector(".ctm-lb")).animationName);
+  results.push({ name: "motion-control", newRowAnimation, listAnimation });
   await page.close();
 }
 // 200% zoom ≈ half the CSS viewport at 1366×768.
@@ -95,15 +110,18 @@ for (const [w, h] of [[1536, 770], [1366, 768], [1024, 768], [900, 1000]]) {
 // State frames: themes, make-primary, label list, refusal, first use, read-only record.
 for (const [query, name, act] of [
   ["theme=dark", "editor-dark"], ["theme=light", "editor-light"], ["theme=light&view=empty", "editor-empty-light"],
-  ["theme=dark", "editor-made-primary", async (p) => { await p.hover('[data-cm-id="e3"]'); await p.click('[aria-label="Make accounts@reyesbuild.co the primary email"]'); await p.waitForTimeout(700); }],
-  ["theme=dark", "editor-label-open", async (p) => { await p.click('[data-cm-id="e1"] [data-cm-label]'); await p.waitForTimeout(250); }],
-  ["theme=dark&taken=hello@reyesbuild.co", "editor-taken", async (p) => {
+  ["theme=dark", "editor-made-primary", async (p) => { await p.hover('[data-ctm-id="e3"]'); await p.click('[aria-label="Make primary: accounts@reyesbuild.co"]'); await p.waitForTimeout(700); }],
+  ["theme=dark", "editor-label-open", async (p) => { await p.click('[data-ctm-id="e1"] [data-ctm-label]'); await p.waitForTimeout(250); }],
+  ["theme=dark&taken=jordan@northbeam.example", "editor-taken", async (p) => {
+    // A person adds an address that another contact in the workspace already holds, then saves.
+    await p.click('[data-ctm-add="email"]');
+    await p.keyboard.type("jordan@northbeam.example");
     for (const t of ["Business context", "Relationship & consent"]) await p.click(`[role="tab"]:has-text("${t}")`);
     await p.click('button:has-text("Save changes")');
-    await p.waitForSelector(".cm-row.has-err");
-    results.push({ name: "taken-refusal", onRow: await p.evaluate(() => document.querySelector(".cm-row.has-err input")?.value), focused: await p.evaluate(() => document.activeElement?.closest(".cm-row.has-err") !== null) });
+    await p.waitForSelector(".ctm-row.has-err");
+    results.push({ name: "taken-refusal", onRow: await p.evaluate(() => document.querySelector(".ctm-row.has-err input")?.value), focused: await p.evaluate(() => document.activeElement?.closest(".ctm-row.has-err") !== null) });
   }],
-  ["theme=light&view=record&heard=e4", "record-light"],
+  ["theme=light&view=record", "record-light"],
 ]) {
   const page = await open(query, 1440, 900);
   if (act) await act(page);

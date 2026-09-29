@@ -73,9 +73,10 @@ function BoundedState({
   );
 }
 
-/** A search matches any of a person's emails, or any phone by its digits whatever the formatting. */
+/** A search matches any of a person's emails, or — when the query is written like a phone number —
+ *  any phone by its digits whatever the formatting. "a1b2c3" is not a phone query. */
 function matchesContactMethod(person: { contactMethods: { kind: string; value: string }[] }, query: string) {
-  const digits = query.replace(/\D/g, "");
+  const digits = /^[\d\s()+.-]+$/.test(query) ? query.replace(/\D/g, "") : "";
   return person.contactMethods.some((method) => method.value.toLowerCase().includes(query)
     || (method.kind === "phone" && digits.length >= 3 && method.value.replace(/\D/g, "").includes(digits)));
 }
@@ -455,7 +456,9 @@ function SoloPeopleView({
     setEditorOpen(next);
   };
   const handleSaved = async (contactId: string) => {
-    await data.retryPeople();
+    // The record may come from the list or from the deep-link read (a contact outside the first
+    // 250); both are re-read so the next edit opens on what was actually saved.
+    await Promise.all([data.retryPeople(), data.retryDeepLink?.()]);
     selectPerson(contactId);
   };
 
@@ -637,7 +640,7 @@ function ClientRecord({
 
         <section className="trc-record-section">
           <header><div><span>Identity</span><h3>{isBusiness ? "Organization details" : "Contact details"}</h3></div><ProofPill tone="live">Owner-editable · LIVE</ProofPill></header>
-          <div className="trc-record-methods"><ContactMethodsList methods={person.contactMethods} /></div>
+          <div className="trc-record-methods"><ContactMethodsList methods={person.contactMethods} headingLevel={4} /></div>
           <div className="trc-contact-lines">
             <div><MapPin aria-hidden /><span><small>Location</small>{person.location || "Not recorded"}</span></div>
             <div><Building2 aria-hidden /><span><small>Company</small>{person.company || "Not recorded"}</span></div>

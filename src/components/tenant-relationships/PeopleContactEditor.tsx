@@ -119,6 +119,12 @@ export function PeopleContactEditor({
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [methodErrors, setMethodErrors] = useState<Record<string, string>>({});
+  // The value each shown error was raised against: an error stays until THAT row changes.
+  const erroredValues = useRef<Record<string, string>>({});
+  const showMethodErrors = (errors: Record<string, string>, methods: ContactMethod[]) => {
+    erroredValues.current = Object.fromEntries(Object.keys(errors).map((id) => [id, methods.find((m) => m.id === id)?.value ?? ""]));
+    setMethodErrors(errors);
+  };
   const [announcement, setAnnouncement] = useState("");
   const [offline, setOffline] = useState(() => typeof navigator !== "undefined" && !navigator.onLine);
   const headingRef = useRef<HTMLHeadingElement | null>(null);
@@ -134,6 +140,7 @@ export function PeopleContactEditor({
     setSaved(false);
     setError(null);
     setMethodErrors({});
+    erroredValues.current = {};
     setSaving(false);
     let current = true;
     void (async () => {
@@ -190,10 +197,16 @@ export function PeopleContactEditor({
 
   const setMethods = (contactMethods: ContactMethod[]) => {
     set("contactMethods", contactMethods);
-    // A row's problem clears as soon as it is fixed; untouched rows keep theirs.
+    // A row's problem clears when that row changes and the change fixes it; every other row keeps
+    // its problem — including a refusal from the server, which the client's own checks cannot see.
     setMethodErrors((previous) => {
       const fresh = validateContactMethods(contactMethods);
-      return Object.fromEntries(Object.entries(previous).filter(([id]) => fresh[id] && contactMethods.some((method) => method.id === id)));
+      return Object.fromEntries(Object.entries(previous).filter(([id, text]) => {
+        const row = contactMethods.find((method) => method.id === id);
+        if (!row) return false;
+        if (row.value === erroredValues.current[id]) return true;
+        return Boolean(fresh[id]) && fresh[id] === text;
+      }));
     });
   };
 
@@ -206,9 +219,9 @@ export function PeopleContactEditor({
     const rowErrors = validateContactMethods(form.contactMethods);
     if (Object.keys(rowErrors).length) {
       setStep(0);
-      setMethodErrors(rowErrors);
+      showMethodErrors(rowErrors, form.contactMethods);
       setError("Some addresses need attention. Your draft is unchanged.");
-      window.setTimeout(() => document.getElementById(`cm-value-${Object.keys(rowErrors)[0]}`)?.focus(), 0);
+      window.setTimeout(() => document.getElementById(`ctm-value-${Object.keys(rowErrors)[0]}`)?.focus(), 0);
       return false;
     }
     const hasIdentity = Boolean(form.firstName.trim() || form.lastName.trim() || form.entityName.trim() || methodsOfKind(form.contactMethods, "email").length);
@@ -239,7 +252,6 @@ export function PeopleContactEditor({
       entity_name: optional(form.entityName),
       entity_type: form.recordType === "business" ? (contact?.entityType || "business") : null,
       title: optional(form.title),
-      contact_methods: toContactMethodsPayload(form.contactMethods),
       website: optional(form.website),
       linkedin_url: optional(form.linkedinUrl),
       street_address: optional(form.streetAddress),
@@ -255,6 +267,13 @@ export function PeopleContactEditor({
       assigned_coach_user_id: form.assignedCoachUserId === "unassigned" ? null : form.assignedCoachUserId,
       do_not_contact: form.doNotContact,
     };
+    // The address list replaces what is stored, so it is sent only when the person changed it (or
+    // for a new contact). A save of notes or tags must never overwrite addresses that arrived after
+    // this editor opened — a merge, Paige, or an inbound match can add one in the meantime.
+    const methodsPayload = toContactMethodsPayload(form.contactMethods);
+    if (!contact || JSON.stringify(methodsPayload) !== JSON.stringify(toContactMethodsPayload(contact.contactMethods))) {
+      patch.contact_methods = methodsPayload;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -268,12 +287,17 @@ export function PeopleContactEditor({
       const onRow = contactMethodErrorFor(form.contactMethods, message);
       if (onRow) {
         setStep(0);
-        setMethodErrors({ [onRow.id]: onRow.text });
+        showMethodErrors({ [onRow.id]: onRow.text }, form.contactMethods);
         setError("Not saved. One address needs attention. Your draft is unchanged.");
-        window.setTimeout(() => document.getElementById(`cm-value-${onRow.id}`)?.focus(), 0);
+        window.setTimeout(() => document.getElementById(`ctm-value-${onRow.id}`)?.focus(), 0);
       } else {
-        setError(message);
-        toast.error(message);
+        // A refusal code the rows cannot place (a label, the per-kind cap, a missing primary) never
+        // reaches the screen as a raw code: it is named in plain words, and the draft is kept.
+        const shown = /^CONTACT_METHODS?_/.test(message)
+          ? "Not saved. The addresses could not be accepted as entered; check each row and try again. Your draft is unchanged."
+          : message;
+        setError(shown);
+        toast.error(shown);
       }
     } finally {
       setSaving(false);
@@ -407,7 +431,6 @@ export function PeopleContactEditor({
           </div>
         )}
 
-        <div className="sr-only" aria-live="polite">{announcement}</div>
         {(offline || error) && <div className="trc-contact-editor-message" role="status">{error ?? "You are offline. This draft remains available; saving is unavailable."}</div>}
 
         {confirmClose && (
@@ -440,6 +463,8 @@ export function PeopleContactEditor({
         )}
       </section>
 
+      {/* Outside the chapter panel, which is itself a live region: one announcement per change. */}
+      <div className="sr-only" aria-live="polite">{announcement}</div>
       <footer className="trc-contact-editor-footer">
         <Button type="button" variant="outline" onClick={requestClose} disabled={saving}>Cancel</Button>
         <span>
@@ -498,7 +523,7 @@ function IdentityPlate({ form, set, dirty }: { form: FormState; set: <K extends 
         ))}
       </div>
       <hr className="trc-plate-rule" />
-      <p className="trc-plate-stats">
+      <p className="trc-plate-stats" aria-live="off">
         {total ? <><b>{plural(emails, "email")} · {plural(phones, "phone")}</b><br /><span>{dirty ? `Paige will recognise ${total === 1 ? "it" : `all ${total}`} once saved` : `Paige recognises ${total === 1 ? "it" : `all ${total}`}`}</span></> : <span>No addresses yet</span>}
       </p>
     </div>

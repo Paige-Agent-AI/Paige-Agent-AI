@@ -347,27 +347,27 @@ describe("tenant Relationships / Clients workspace", () => {
     await act(async () => host.querySelector<HTMLButtonElement>('[data-contact-editor-origin="record-edit"]')?.click());
 
     // The saved addresses open in the editor, primary first with its orb.
-    const emailRows = () => Array.from(host.querySelectorAll<HTMLElement>('[data-cm-list="email"] [data-cm-id]'));
+    const emailRows = () => Array.from(host.querySelectorAll<HTMLElement>('[data-ctm-list="email"] [data-ctm-id]'));
     expect(emailRows().map((row) => row.querySelector("input")?.value)).toEqual(["person@example.test"]);
-    expect(emailRows()[0].querySelector("[data-cm-orb]")).not.toBeNull();
+    expect(emailRows()[0].querySelector("[data-ctm-orb]")).not.toBeNull();
 
     // Add a second email; it lands as a secondary with focus in it.
-    await act(async () => host.querySelector<HTMLButtonElement>('[data-cm-add="email"]')?.click());
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-ctm-add="email"]')?.click());
     const added = emailRows()[1];
     expect(document.activeElement).toBe(added.querySelector("input"));
     expect(added.classList.contains("is-primary")).toBe(false);
     await type(added.querySelector("input"), "person.home@example.test");
 
     // Make it primary: it moves to the top and the old primary steps down.
-    await act(async () => button("Make person.home@example.test the primary email")?.click());
+    await act(async () => button("Make primary: person.home@example.test")?.click());
     expect(emailRows().map((row) => `${row.querySelector("input")?.value}${row.classList.contains("is-primary") ? "*" : ""}`))
       .toEqual(["person.home@example.test*", "person@example.test"]);
     await vi.waitFor(() => expect(host.textContent).toContain("person.home@example.test is now the primary email; person@example.test is kept as a secondary."));
 
     // Relabel it from the label list with the keyboard.
-    await act(async () => emailRows()[0].querySelector<HTMLButtonElement>("[data-cm-label]")?.click());
+    await act(async () => emailRows()[0].querySelector<HTMLButtonElement>("[data-ctm-label]")?.click());
     const options = () => Array.from(host.querySelectorAll<HTMLLIElement>('[role="option"]'));
-    expect(options().map((o) => o.textContent)).toEqual(["Work", "Personal", "Billing", "Other"]);
+    expect(options().map((o) => o.textContent)).toEqual(["Work", "Personal", "Billing", "Other", "No label"]);
     await act(async () => options().find((o) => o.textContent === "Personal")?.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true })));
     expect(host.querySelector('[role="listbox"]')).toBeNull();
 
@@ -388,6 +388,61 @@ describe("tenant Relationships / Clients workspace", () => {
     host.remove();
   });
 
+  it("does not send the address list when a save leaves the addresses unchanged", async () => {
+    useSubtabRoute.mockImplementation((_tier: string, _branch: string, initial: string) => React.useState(initial));
+    useTenantRelationshipsData.mockReturnValue(baseData);
+    editorHarness.upsert.mockResolvedValueOnce("p-1");
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    await act(async () => root.render(<MemoryRouter initialEntries={["/solo/42/clients/people?person=p-1"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>));
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-contact-editor-origin="record-edit"]')?.click());
+    const lastName = host.querySelector<HTMLInputElement>("#trc-last-name");
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(lastName, "Personson");
+      lastName?.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    const finalStep = Array.from(host.querySelectorAll<HTMLButtonElement>('.trc-contact-editor-steps [role="tab"]')).find((b) => b.textContent?.includes("Relationship & consent"));
+    await act(async () => finalStep?.click());
+    await act(async () => Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((b) => b.textContent === "Save changes")?.click());
+    await vi.waitFor(() => expect(editorHarness.upsert).toHaveBeenCalled());
+    const { patch } = editorHarness.upsert.mock.lastCall?.[0] as { patch: Record<string, unknown> };
+    // Addresses that arrived after the editor opened (a merge, Paige, an inbound match) must survive.
+    expect(patch).not.toHaveProperty("contact_methods");
+    expect(patch).toMatchObject({ last_name: "Personson" });
+    act(() => root.unmount());
+    host.remove();
+  });
+
+  it("searches every address, and treats only phone-like queries as digits", async () => {
+    useSubtabRoute.mockImplementation((_tier: string, _branch: string, initial: string) => React.useState(initial));
+    useTenantRelationshipsData.mockReturnValue({
+      ...baseData,
+      people: [
+        { ...baseData.people[0], contactMethods: [...baseData.people[0].contactMethods, { id: "m-e9", kind: "email", value: "billing@supplied.test", label: "Billing", isPrimary: false }] },
+        { ...baseData.people[0], id: "p-2", firstName: "Other", lastName: "Client", name: "Other Client", company: "Elsewhere", email: "x@y.test", phone: null, contactMethods: [{ id: "m-x", kind: "email", value: "x@y.test", label: null, isPrimary: true }] },
+      ],
+    });
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    await act(async () => root.render(<MemoryRouter initialEntries={["/solo/42/clients/people"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>));
+    const search = async (value: string) => {
+      const input = host.querySelector<HTMLInputElement>('input[placeholder^="Search name"]');
+      await act(async () => {
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(input, value);
+        input?.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+      return Array.from(host.querySelectorAll(".trc-person-select strong, [data-person-id] strong, strong")).map((n) => n.textContent).filter((t) => t === "Supplied Person" || t === "Other Client");
+    };
+    expect(await search("billing@supplied")).toEqual(["Supplied Person"]);
+    expect(await search("(202) 555")).toEqual(["Supplied Person"]);
+    expect(await search("202-555-0142")).toEqual(["Supplied Person"]);
+    expect(await search("a2b0c2")).toEqual([]);
+    act(() => root.unmount());
+    host.remove();
+  });
+
   it("puts an address another contact holds back on its row and keeps the draft", async () => {
     useSubtabRoute.mockImplementation((_tier: string, _branch: string, initial: string) => React.useState(initial));
     useTenantRelationshipsData.mockReturnValue(baseData);
@@ -397,33 +452,47 @@ describe("tenant Relationships / Clients workspace", () => {
     const root = createRoot(host);
     await act(async () => root.render(<MemoryRouter initialEntries={["/solo/42/clients/people?person=p-1"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>));
     await act(async () => host.querySelector<HTMLButtonElement>('[data-contact-editor-origin="record-edit"]')?.click());
-    await act(async () => host.querySelector<HTMLButtonElement>('[data-cm-add="email"]')?.click());
-    const row = host.querySelectorAll<HTMLElement>('[data-cm-list="email"] [data-cm-id]')[1];
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-ctm-add="email"]')?.click());
+    const row = host.querySelectorAll<HTMLElement>('[data-ctm-list="email"] [data-ctm-id]')[1];
     await act(async () => {
       Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(row.querySelector("input"), "Taken@example.test");
       row.querySelector("input")?.dispatchEvent(new Event("input", { bubbles: true }));
     });
     // An empty address blocks the save on its own row before anything is sent.
-    await act(async () => host.querySelector<HTMLButtonElement>('[data-cm-add="phone"]')?.click());
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-ctm-add="phone"]')?.click());
     const finalStep = Array.from(host.querySelectorAll<HTMLButtonElement>('.trc-contact-editor-steps [role="tab"]')).find((b) => b.textContent?.includes("Relationship & consent"));
     await act(async () => finalStep?.click());
     const save = () => Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((b) => b.textContent === "Save changes" || b.textContent === "Retry save");
     await act(async () => save()?.click());
     expect(editorHarness.upsert).not.toHaveBeenCalled();
     expect(host.textContent).toContain("Enter a phone number, or remove this row.");
-    const blankPhone = host.querySelectorAll<HTMLElement>('[data-cm-list="phone"] [data-cm-id]')[1];
-    await act(async () => blankPhone.querySelector<HTMLButtonElement>("[data-cm-remove]")?.click());
+    const blankPhone = host.querySelectorAll<HTMLElement>('[data-ctm-list="phone"] [data-ctm-id]')[1];
+    await act(async () => blankPhone.querySelector<HTMLButtonElement>("[data-ctm-remove]")?.click());
 
     const lastStep = Array.from(host.querySelectorAll<HTMLButtonElement>('.trc-contact-editor-steps [role="tab"]')).find((b) => b.textContent?.includes("Relationship & consent"));
     await act(async () => lastStep?.click());
     await act(async () => save()?.click());
     await vi.waitFor(() => expect(host.textContent).toContain("Another contact in this workspace already uses this address."));
-    const refused = host.querySelectorAll<HTMLElement>('[data-cm-list="email"] [data-cm-id]')[1];
+    const refused = host.querySelectorAll<HTMLElement>('[data-ctm-list="email"] [data-ctm-id]')[1];
     expect(refused.classList.contains("has-err")).toBe(true);
     expect(refused.querySelector("input")?.getAttribute("aria-invalid")).toBe("true");
     expect(refused.querySelector("input")?.value).toBe("Taken@example.test");
     await vi.waitFor(() => expect(document.activeElement).toBe(refused.querySelector("input")));
     expect(host.textContent).not.toContain("Contact saved");
+
+    // Editing a different row leaves the refusal where it is; changing the refused row clears it.
+    const primary = host.querySelectorAll<HTMLElement>('[data-ctm-list="email"] [data-ctm-id]')[0];
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(primary.querySelector("input"), "person+1@example.test");
+      primary.querySelector("input")?.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    expect(host.querySelectorAll<HTMLElement>('[data-ctm-list="email"] [data-ctm-id]')[1].classList.contains("has-err")).toBe(true);
+    await act(async () => {
+      const again = host.querySelectorAll<HTMLElement>('[data-ctm-list="email"] [data-ctm-id]')[1].querySelector("input");
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(again, "someone.new@example.test");
+      again?.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    expect(host.querySelectorAll<HTMLElement>('[data-ctm-list="email"] [data-ctm-id]')[1].classList.contains("has-err")).toBe(false);
     act(() => root.unmount());
     host.remove();
   });

@@ -36,7 +36,7 @@ const jordan = {
 function Harness() {
   const [open, setOpen] = useState(true);
   if (view === "record") {
-    return <div className="trc-solo-people" style={{ padding: 24, background: "var(--pg-workspace)", minHeight: "100vh" }}><section className="trc-record-section" style={{ maxWidth: 860 }}><header><div><span>Identity</span><h3>Contact details</h3></div></header><div className="trc-record-methods"><ContactMethodsList methods={jordan.contactMethods} heardId={params.get("heard") ?? null} /></div></section></div>;
+    return <div className="trc-solo-people" style={{ padding: 24, background: "var(--pg-workspace)", minHeight: "100vh" }}><section className="trc-record-section" style={{ maxWidth: 860 }}><header><div><span>Identity</span><h3>Contact details</h3></div></header><div className="trc-record-methods"><ContactMethodsList methods={jordan.contactMethods} /></div></section></div>;
   }
   // Mounted in the shell's own chrome (as the Team harness is) so the PAIGE dock state changes the
   // content column exactly as it does in the app. People's container query needs .trc-solo-people.

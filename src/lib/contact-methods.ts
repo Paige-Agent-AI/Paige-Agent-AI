@@ -143,7 +143,8 @@ export function contactMethodErrorFor(methods: readonly ContactMethod[], message
   const match = /CONTACT_METHOD_(TAKEN|INVALID_EMAIL|INVALID_PHONE|DUPLICATE):\s*(.+?)(?:\s+already belongs.*)?$/.exec(message);
   if (!match) return null;
   const [, code, value] = match;
-  const target = methods.find((method) => method.value.trim().toLowerCase() === value.trim().toLowerCase());
+  // The server names the LATER of two equal addresses, so the last match is the row it means.
+  const target = [...methods].reverse().find((method) => method.value.trim().toLowerCase() === value.trim().toLowerCase());
   if (!target) return null;
   const text = code === "TAKEN"
     ? "Another contact in this workspace already uses this address. Remove it here, or remove it from that contact first."

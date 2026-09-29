@@ -162,14 +162,17 @@
 .trc-contact-editor-panel:has(.trc-identity) { overflow: auto; }
 .trc-identity { display: grid; grid-template-columns: minmax(230px, 31%) minmax(0, 1fr); gap: 22px; align-items: start; min-width: 0; }
 .trc-plate { position: sticky; top: 0; display: grid; justify-items: center; padding: 26px 18px 20px; border: 1px solid var(--pg-line); border-radius: 14px; text-align: center;
-  background: radial-gradient(120% 70% at 50% 0%, color-mix(in srgb, var(--pg-gold-fill) 9%, transparent), transparent 62%), var(--pg-raised); box-shadow: var(--pg-lift-1); }
-.trc-plate-tile { display: grid; width: 96px; height: 96px; margin-bottom: 18px; place-items: center; border: 1px solid var(--pg-line-authority, var(--pg-line-strong)); border-radius: 22px;
+  background: var(--pg-raised); box-shadow: var(--pg-lift-1); }
+.trc-plate-tile { display: grid; width: 96px; height: 96px; margin-bottom: 18px; place-items: center; border: 1px solid var(--pg-line-strong); border-radius: 22px;
   color: var(--pg-muted); background: linear-gradient(170deg, var(--pg-raised), var(--pg-canvas)); box-shadow: var(--pg-rim); font: 700 42px/1 var(--pg-font-display); letter-spacing: -.04em; }
 .trc-plate-tile.is-blank { border-style: dashed; color: var(--pg-faint); }
-.trc-plate-names { display: grid; width: 100%; gap: 2px; }
-.trc-plate-in { width: 100%; min-width: 0; padding: 2px 6px; border: 0; border-bottom: 1px solid transparent; border-radius: 8px 8px 0 0; color: var(--pg-ink); background: transparent; text-align: center;
-  font: 800 clamp(24px, 2.6vw, 36px)/1.1 var(--pg-font-display); letter-spacing: -.035em; cursor: text; transition: background .15s, border-color .15s; }
-.trc-plate-in.is-org { margin-top: 6px; color: var(--pg-muted); font: 500 16px/1.3 var(--pg-font-ui); letter-spacing: -.01em; }
+/* First and last name sit on one line, each input as wide as its text; they wrap only when the name
+   is longer than the plate. The business line is its own full-width row below. */
+.trc-plate-names { display: flex; width: 100%; flex-wrap: wrap; justify-content: center; gap: 2px .22em; }
+.trc-plate-in { max-width: 100%; min-width: 0; padding: 2px 6px; border: 0; border-bottom: 1px dashed var(--pg-line-soft); border-radius: 8px 8px 0 0; color: var(--pg-ink); background: transparent; text-align: center;
+  font: 800 clamp(24px, 2.6vw, 36px)/1.1 var(--pg-font-display); letter-spacing: -.035em; cursor: text; transition: background .15s, border-color .15s;
+  field-sizing: content; min-width: 3ch; }
+.trc-plate-in.is-org { width: 100%; flex-basis: 100%; field-sizing: fixed; margin-top: 6px; color: var(--pg-muted); font: 500 16px/1.3 var(--pg-font-ui); letter-spacing: -.01em; }
 .trc-plate-in::placeholder { color: var(--pg-faint); }
 .trc-plate-in:hover { border-bottom-color: var(--pg-line-strong); background: var(--pg-surface); }
 .trc-plate-in:focus { border-bottom-color: var(--pg-ink-2); outline: none; background: var(--pg-surface); }
@@ -187,10 +190,9 @@
   .trc-identity { grid-template-columns: minmax(0, 1fr); gap: 16px; }
   .trc-plate { position: static; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "tile names seg" "tile stats seg"; align-items: center; justify-items: start; gap: 2px 16px; padding: 14px 16px; text-align: left; }
   .trc-plate-tile { grid-area: tile; width: 64px; height: 64px; margin: 0; border-radius: 16px; font-size: 26px; }
-  .trc-plate-names { grid-area: names; }
-  .trc-plate-names { grid-template-columns: repeat(2, minmax(0, max-content)) minmax(0, 1fr); align-items: baseline; column-gap: 8px; }
-  .trc-plate-in { text-align: left; font-size: clamp(20px, 3.4cqi, 26px); field-sizing: content; min-width: 4ch; max-width: 100%; }
-  .trc-plate-in.is-org { margin: 0; font-size: 14px; }
+  .trc-plate-names { grid-area: names; justify-content: flex-start; align-items: baseline; column-gap: 8px; }
+  .trc-plate-in { text-align: left; font-size: clamp(20px, 3.4cqi, 26px); max-width: 100%; }
+  .trc-plate-in.is-org { flex-basis: auto; field-sizing: content; margin: 0; font-size: 14px; }
   .trc-plate-seg { grid-area: seg; margin: 0; }
   .trc-plate-rule { display: none; }
   .trc-plate-stats { grid-area: stats; font-size: 13px; }
@@ -199,7 +201,6 @@
 }
 @container solo-people-workspace (max-width: 520px) {
   .trc-plate { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "tile names" "tile stats" "seg seg"; }
-  .trc-plate-names { grid-template-columns: minmax(0, 1fr); }
   .trc-plate-seg { margin-top: 8px; }
 }
 @media (prefers-reduced-motion: reduce) { .trc-plate-in { transition: none; } }

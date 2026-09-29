@@ -63,20 +63,20 @@ export function ContactMethodsEditor({
       const target = focusAfter.current;
       focusAfter.current = null;
       if (target.startsWith("listbox:")) {
-        const box = root.querySelector<HTMLElement>(`[id="cm-lb-${target.slice(8)}"]`);
+        const box = root.querySelector<HTMLElement>(`[id="ctm-lb-${target.slice(8)}"]`);
         (box?.querySelector<HTMLElement>('[aria-selected="true"]') ?? box?.querySelector<HTMLElement>('[role="option"]'))?.focus();
       } else root.querySelector<HTMLElement>(target)?.focus();
     }
     if (!pending || !root || reduceMotion) return;
     const moved: HTMLElement[] = [];
-    root.querySelectorAll<HTMLElement>(`[data-cm-list="${pending.kind}"] [data-cm-id]`).forEach((row) => {
-      const before = pending.rects.get(row.dataset.cmId ?? "");
+    root.querySelectorAll<HTMLElement>(`[data-ctm-list="${pending.kind}"] [data-ctm-id]`).forEach((row) => {
+      const before = pending.rects.get(row.dataset.ctmId ?? "");
       if (!before) return;
       const dy = before.top - row.getBoundingClientRect().top;
       if (!dy) return;
       row.style.transform = `translateY(${dy}px)`;
       moved.push(row);
-      const orb = row.querySelector<HTMLElement>("[data-cm-orb]");
+      const orb = row.querySelector<HTMLElement>("[data-ctm-orb]");
       if (orb && pending.orb) {
         const now = orb.getBoundingClientRect();
         orb.style.transform = `translate(${pending.orb.left - now.left}px, ${pending.orb.top - now.top - dy}px)`;
@@ -87,7 +87,13 @@ export function ContactMethodsEditor({
     requestAnimationFrame(() => requestAnimationFrame(() => moved.forEach((node) => {
       node.style.transition = "transform 420ms cubic-bezier(.22,1,.36,1)";
       node.style.transform = "";
-      node.addEventListener("transitionend", () => { node.style.transition = ""; }, { once: true });
+      // transitionend bubbles: only this node's own transform ends the glide, never a child's fade.
+      const done = (event: TransitionEvent) => {
+        if (event.target !== node || event.propertyName !== "transform") return;
+        node.style.transition = "";
+        node.removeEventListener("transitionend", done);
+      };
+      node.addEventListener("transitionend", done);
     })));
   });
 
@@ -95,7 +101,7 @@ export function ContactMethodsEditor({
   useEffect(() => {
     if (!labelOpen) return;
     const close = (event: PointerEvent) => {
-      if (!(event.target instanceof Element) || !event.target.closest(".cm-label")) setLabelOpen(null);
+      if (!(event.target instanceof Element) || !event.target.closest(".ctm-label")) setLabelOpen(null);
     };
     document.addEventListener("pointerdown", close);
     return () => document.removeEventListener("pointerdown", close);
@@ -105,8 +111,8 @@ export function ContactMethodsEditor({
     const root = listRef.current;
     if (!root) return;
     const rects = new Map<string, DOMRect>();
-    root.querySelectorAll<HTMLElement>(`[data-cm-list="${kind}"] [data-cm-id]`).forEach((row) => rects.set(row.dataset.cmId ?? "", row.getBoundingClientRect()));
-    flip.current = { rects, orb: root.querySelector<HTMLElement>(`[data-cm-list="${kind}"] [data-cm-orb]`)?.getBoundingClientRect() ?? null, kind };
+    root.querySelectorAll<HTMLElement>(`[data-ctm-list="${kind}"] [data-ctm-id]`).forEach((row) => rects.set(row.dataset.ctmId ?? "", row.getBoundingClientRect()));
+    flip.current = { rects, orb: root.querySelector<HTMLElement>(`[data-ctm-list="${kind}"] [data-ctm-orb]`)?.getBoundingClientRect() ?? null, kind };
   };
 
   const describe = (method: ContactMethod) => method.value.trim() || `new ${KIND[method.kind].noun}`;
@@ -114,7 +120,7 @@ export function ContactMethodsEditor({
   const add = (kind: ContactMethodKind) => {
     const { methods: next, id } = addContactMethod(methods, kind);
     setJustAdded(id);
-    focusAfter.current = `[id="cm-value-${id}"]`;
+    focusAfter.current = `[id="ctm-value-${id}"]`;
     onChange(next);
     announce(`New ${KIND[kind].noun} row added${methodsOfKind(methods, kind).length === 0 ? "; it is the primary" : ""}.`);
   };
@@ -122,7 +128,7 @@ export function ContactMethodsEditor({
   const promote = (method: ContactMethod) => {
     const was = methodsOfKind(methods, method.kind).find((m) => m.isPrimary);
     capture(method.kind);
-    focusAfter.current = `[data-cm-id="${method.id}"] [data-cm-label]`;
+    focusAfter.current = `[data-ctm-id="${method.id}"] [data-ctm-label]`;
     onChange(makePrimary(methods, method.id));
     announce(`${describe(method)} is now the primary ${KIND[method.kind].noun}${was ? `; ${describe(was)} is kept as a secondary` : ""}.`);
   };
@@ -134,7 +140,7 @@ export function ContactMethodsEditor({
     const remaining = methodsOfKind(next, method.kind);
     const focusTarget = remaining[Math.min(index, remaining.length - 1)];
     capture(method.kind);
-    focusAfter.current = focusTarget ? `[data-cm-id="${focusTarget.id}"] [data-cm-remove]` : `[data-cm-add="${method.kind}"]`;
+    focusAfter.current = focusTarget ? `[data-ctm-id="${focusTarget.id}"] [data-ctm-remove]` : `[data-ctm-add="${method.kind}"]`;
     onChange(next);
     announce(`Removed ${method.value.trim() || "the empty row"}.${method.isPrimary && remaining[0] ? ` ${describe(remaining[0])} is now the primary ${KIND[method.kind].noun}.` : ""}`);
   };
@@ -145,7 +151,7 @@ export function ContactMethodsEditor({
     const at = ofKind.findIndex((m) => m.id === method.id);
     capture(method.kind);
     const canKeep = delta === -1 ? at > 1 : at < ofKind.length - 1;
-    focusAfter.current = `[data-cm-id="${method.id}"] [data-cm-move="${canKeep ? delta : -delta}"]`;
+    focusAfter.current = `[data-ctm-id="${method.id}"] [data-ctm-move="${canKeep ? delta : -delta}"]`;
     onChange(next);
     announce(`${describe(method)} moved to position ${at + 1} of ${ofKind.length}.`);
   };
@@ -153,14 +159,14 @@ export function ContactMethodsEditor({
   const setValue = (method: ContactMethod, value: string) =>
     onChange(methods.map((m) => (m.id === method.id ? { ...m, value } : m)));
 
-  const setLabel = (method: ContactMethod, label: string) => {
+  const setLabel = (method: ContactMethod, label: string | null) => {
     setLabelOpen(null);
-    focusAfter.current = `[data-cm-id="${method.id}"] [data-cm-label]`;
+    focusAfter.current = `[data-ctm-id="${method.id}"] [data-ctm-label]`;
     onChange(methods.map((m) => (m.id === method.id ? { ...m, label } : m)));
-    announce(`Labelled ${label}.`);
+    announce(label ? `Labelled ${label}.` : "Label removed.");
   };
 
-  const onOptionKey = (event: ReactKeyboardEvent<HTMLLIElement>, method: ContactMethod, label: string) => {
+  const onOptionKey = (event: ReactKeyboardEvent<HTMLLIElement>, method: ContactMethod, label: string | null) => {
     const options = Array.from(event.currentTarget.parentElement?.querySelectorAll<HTMLLIElement>('[role="option"]') ?? []);
     const index = options.indexOf(event.currentTarget);
     const go = (i: number) => { event.preventDefault(); options[(i + options.length) % options.length]?.focus(); };
@@ -172,12 +178,12 @@ export function ContactMethodsEditor({
     else if (event.key === "Escape" || event.key === "Tab") {
       if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); }
       setLabelOpen(null);
-      focusAfter.current = `[data-cm-id="${method.id}"] [data-cm-label]`;
+      focusAfter.current = `[data-ctm-id="${method.id}"] [data-ctm-label]`;
     }
   };
 
   return (
-    <div className="cm-editor" ref={listRef} onBlur={(event) => {
+    <div className="ctm-editor" ref={listRef} onBlur={(event) => {
       if (labelOpen && !event.currentTarget.contains(event.relatedTarget as Node | null)) setLabelOpen(null);
     }}>
       {(["email", "phone"] as const).map((kind) => {
@@ -186,16 +192,16 @@ export function ContactMethodsEditor({
         const Icon = ICON[kind];
         const full = list.length >= CONTACT_METHODS_PER_KIND;
         return (
-          <section key={kind} className="cm-sec" aria-labelledby={`cm-h-${kind}`}>
-            <div className="cm-sec-h">
-              <h3 id={`cm-h-${kind}`}>{k.title}{list.length > 0 && <span className="cm-n">{list.length}</span>}</h3>
+          <section key={kind} className="ctm-sec" aria-labelledby={`ctm-h-${kind}`}>
+            <div className="ctm-sec-h">
+              <h3 id={`ctm-h-${kind}`}>{k.title}{list.length > 0 && <span className="ctm-n">{list.length}</span>}</h3>
               {list.length > 0 && <p>{list.length > 1 ? `Paige ${k.verb} to the primary and recognises every one.` : `Paige ${k.verb} here.`}</p>}
             </div>
-            <ul className="cm-list" data-cm-list={kind}>
+            <ul className="ctm-list" data-ctm-list={kind}>
               {list.length === 0 ? (
-                <li className="cm-row cm-slot">
-                  <button type="button" className="cm-add" data-cm-add={kind} disabled={disabled} onClick={() => add(kind)}>
-                    <span className="cm-ring" aria-hidden />
+                <li className="ctm-row ctm-slot">
+                  <button type="button" className="ctm-add" data-ctm-add={kind} disabled={disabled} onClick={() => add(kind)}>
+                    <span className="ctm-ring" aria-hidden />
                     <span><strong>{firstPersonNoun === "your" ? `Add your first ${k.noun}` : k.first}</strong><small>{copy[kind].empty}</small></span>
                   </button>
                 </li>
@@ -207,16 +213,16 @@ export function ContactMethodsEditor({
                 return (
                   <li
                     key={method.id}
-                    data-cm-id={method.id}
-                    className={["cm-row", method.isPrimary && "is-primary", error && "has-err", justAdded === method.id && "is-new"].filter(Boolean).join(" ")}
+                    data-ctm-id={method.id}
+                    className={["ctm-row", method.isPrimary && "is-primary", error && "has-err", justAdded === method.id && "is-new"].filter(Boolean).join(" ")}
                     onAnimationEnd={() => justAdded === method.id && setJustAdded(null)}
                   >
-                    <span className="cm-mark">{method.isPrimary ? <span className="cm-orb" data-cm-orb aria-hidden /> : <Icon aria-hidden />}</span>
-                    <span className="cm-body">
-                      <label className="sr-only" htmlFor={`cm-value-${method.id}`}>{kind === "email" ? "Email address" : "Phone number"} {index + 1}{method.isPrimary ? ", primary" : ""}</label>
+                    <span className="ctm-mark">{method.isPrimary ? <span className="ctm-orb" data-ctm-orb aria-hidden /> : <Icon aria-hidden />}</span>
+                    <span className="ctm-body">
+                      <label className="sr-only" htmlFor={`ctm-value-${method.id}`}>{kind === "email" ? "Email address" : "Phone number"} {index + 1}{method.isPrimary ? ", primary" : ""}</label>
                       <input
-                        id={`cm-value-${method.id}`}
-                        className={kind === "phone" ? "cm-in is-mono" : "cm-in"}
+                        id={`ctm-value-${method.id}`}
+                        className={kind === "phone" ? "ctm-in is-mono" : "ctm-in"}
                         type={k.type}
                         inputMode={k.inputMode}
                         autoComplete="off"
@@ -225,20 +231,20 @@ export function ContactMethodsEditor({
                         placeholder={k.placeholder}
                         disabled={disabled}
                         aria-invalid={error ? true : undefined}
-                        aria-describedby={error ? `cm-err-${method.id}` : undefined}
+                        aria-describedby={error ? `ctm-err-${method.id}` : undefined}
                         onChange={(event) => setValue(method, event.target.value)}
                       />
-                      {method.isPrimary && <span className="cm-meta"><b>Primary</b> · Paige {k.verb} here</span>}
-                      {error && <span className="cm-err" id={`cm-err-${method.id}`}>{error}</span>}
+                      {method.isPrimary && <span className="ctm-meta"><b>Primary</b> · Paige {k.verb} here</span>}
+                      {error && <span className="ctm-err" id={`ctm-err-${method.id}`}>{error}</span>}
                     </span>
-                    <span className="cm-label">
+                    <span className="ctm-label">
                       <button
                         type="button"
-                        className="cm-tag"
-                        data-cm-label
+                        className="ctm-tag"
+                        data-ctm-label
                         aria-haspopup="listbox"
                         aria-expanded={open}
-                        aria-controls={open ? `cm-lb-${method.id}` : undefined}
+                        aria-controls={open ? `ctm-lb-${method.id}` : undefined}
                         aria-label={`Label for ${name}: ${method.label ?? "none"}`}
                         disabled={disabled}
                         onClick={() => {
@@ -249,41 +255,41 @@ export function ContactMethodsEditor({
                         {method.label ?? "Label"}<ChevronDown aria-hidden />
                       </button>
                       {open && (
-                        <ul className="cm-lb" role="listbox" id={`cm-lb-${method.id}`} aria-label={`Label for ${name}`}>
-                          {labels.map((label) => (
-                            <li key={label} role="option" tabIndex={-1} aria-selected={label === method.label} onClick={() => setLabel(method, label)} onKeyDown={(event) => onOptionKey(event, method, label)}>
-                              {label}{label === method.label && <Check aria-hidden />}
+                        <ul className="ctm-lb" role="listbox" id={`ctm-lb-${method.id}`} aria-label={`Label for ${name}`}>
+                          {[...labels, null].map((label) => (
+                            <li key={label ?? "none"} role="option" tabIndex={-1} className={label ? undefined : "is-none"} aria-selected={label === method.label} onClick={() => setLabel(method, label)} onKeyDown={(event) => onOptionKey(event, method, label)}>
+                              {label ?? "No label"}{label === method.label && <Check aria-hidden />}
                             </li>
                           ))}
                         </ul>
                       )}
                     </span>
-                    <span className="cm-acts">
+                    <span className="ctm-acts">
                       {!method.isPrimary && (
-                        <button type="button" className="cm-mk" aria-label={`Make ${name} the primary ${k.noun}`} disabled={disabled} onClick={() => promote(method)}>Make primary</button>
+                        <button type="button" className="ctm-mk" aria-label={`Make primary: ${name}`} disabled={disabled} onClick={() => promote(method)}>Make primary</button>
                       )}
-                      <span className="cm-tools">
+                      <span className="ctm-tools">
                         {!method.isPrimary && (
                           <>
-                            <button type="button" className="cm-ib" data-cm-move="-1" aria-label={`Move ${name} up`} disabled={disabled || index <= 1} onClick={() => move(method, -1)}><ChevronUp aria-hidden /></button>
-                            <button type="button" className="cm-ib" data-cm-move="1" aria-label={`Move ${name} down`} disabled={disabled || index === list.length - 1} onClick={() => move(method, 1)}><ChevronDown aria-hidden /></button>
+                            <button type="button" className="ctm-ib" data-ctm-move="-1" aria-label={`Move ${name} up`} title="Move up" disabled={disabled || index <= 1} onClick={() => move(method, -1)}><ChevronUp aria-hidden /></button>
+                            <button type="button" className="ctm-ib" data-ctm-move="1" aria-label={`Move ${name} down`} title="Move down" disabled={disabled || index === list.length - 1} onClick={() => move(method, 1)}><ChevronDown aria-hidden /></button>
                           </>
                         )}
-                        <button type="button" className="cm-ib is-rm" data-cm-remove aria-label={`Remove ${name}`} disabled={disabled} onClick={() => remove(method)}><X aria-hidden /></button>
+                        <button type="button" className="ctm-ib is-rm" data-ctm-remove aria-label={`Remove ${name}`} title="Remove" disabled={disabled} onClick={() => remove(method)}><X aria-hidden /></button>
                       </span>
                     </span>
                   </li>
                 );
               })}
               {list.length > 0 && !full && (
-                <li className="cm-row cm-addrow">
-                  <button type="button" className="cm-add" data-cm-add={kind} disabled={disabled} onClick={() => add(kind)}>
-                    <span className="cm-ring" aria-hidden><Plus /></span><span>{k.add}</span>
+                <li className="ctm-row ctm-addrow">
+                  <button type="button" className="ctm-add" data-ctm-add={kind} disabled={disabled} onClick={() => add(kind)}>
+                    <span className="ctm-ring" aria-hidden><Plus /></span><span>{k.add}</span>
                   </button>
                 </li>
               )}
             </ul>
-            {full && <p className="cm-cap">{CONTACT_METHODS_PER_KIND} is the most a record can hold.</p>}
+            {full && <p className="ctm-cap">{CONTACT_METHODS_PER_KIND} is the most a record can hold.</p>}
           </section>
         );
       })}
@@ -292,30 +298,31 @@ export function ContactMethodsEditor({
 }
 
 /** The same list, read only: the saved record. */
-export function ContactMethodsList({ methods, heardId = null }: { methods: ContactMethod[]; heardId?: string | null }) {
+export function ContactMethodsList({ methods, headingLevel = 3 }: { methods: ContactMethod[]; /** Sits under the caller's own heading, one level down. */ headingLevel?: 3 | 4 }) {
+  const Heading = headingLevel === 4 ? "h4" : "h3";
   return (
-    <div className="cm-editor is-readonly">
+    <div className="ctm-editor is-readonly">
       {(["email", "phone"] as const).map((kind) => {
         const k = KIND[kind];
         const list = methodsOfKind(methods, kind);
         const Icon = ICON[kind];
         return (
-          <section key={kind} className="cm-sec" aria-labelledby={`cm-rh-${kind}`}>
-            <div className="cm-sec-h">
-              <h3 id={`cm-rh-${kind}`}>{k.title}{list.length > 0 && <span className="cm-n">{list.length}</span>}</h3>
+          <section key={kind} className="ctm-sec" aria-labelledby={`ctm-rh-${kind}`}>
+            <div className="ctm-sec-h">
+              <Heading id={`ctm-rh-${kind}`}>{k.title}{list.length > 0 && <span className="ctm-n">{list.length}</span>}</Heading>
               {list.length > 1 && <p>Paige {k.verb} to the primary and recognises every one.</p>}
             </div>
-            <ul className="cm-list" data-cm-list={kind}>
+            <ul className="ctm-list" data-ctm-list={kind}>
               {list.length === 0 ? (
-                <li className="cm-row"><span className="cm-mark"><Icon aria-hidden /></span><span className="cm-body"><span className="cm-meta">Not recorded</span></span></li>
+                <li className="ctm-row"><span className="ctm-mark"><Icon aria-hidden /></span><span className="ctm-body"><span className="ctm-meta">Not recorded</span></span></li>
               ) : list.map((method) => (
-                <li key={method.id} data-cm-id={method.id} className={["cm-row", method.isPrimary && "is-primary", heardId === method.id && "is-heard"].filter(Boolean).join(" ")}>
-                  <span className="cm-mark">{method.isPrimary ? <span className="cm-orb" aria-hidden /> : <Icon aria-hidden />}</span>
-                  <span className="cm-body">
-                    <span className={kind === "phone" ? "cm-val is-mono" : "cm-val"}>{method.value}</span>
-                    {method.isPrimary && <span className="cm-meta"><b>Primary</b> · Paige {k.verb} here</span>}
+                <li key={method.id} data-ctm-id={method.id} className={method.isPrimary ? "ctm-row is-primary" : "ctm-row"}>
+                  <span className="ctm-mark">{method.isPrimary ? <span className="ctm-orb" aria-hidden /> : <Icon aria-hidden />}</span>
+                  <span className="ctm-body">
+                    <span className={kind === "phone" ? "ctm-val is-mono" : "ctm-val"}>{method.value}</span>
+                    {method.isPrimary && <span className="ctm-meta"><b>Primary</b> · Paige {k.verb} here</span>}
                   </span>
-                  <span className="cm-label">{method.label && <span className="cm-tag">{method.label}</span>}</span>
+                  <span className="ctm-label">{method.label && <span className="ctm-tag">{method.label}</span>}</span>
                 </li>
               ))}
             </ul>

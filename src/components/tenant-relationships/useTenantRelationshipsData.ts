@@ -194,6 +194,7 @@ export function useTenantRelationshipsData({
     deepLinkedPerson: deepLinkQuery.data ?? null,
     deepLinkLoading: deepLinkQuery.isLoading && deepLinkQuery.fetchStatus === "fetching",
     deepLinkError: deepLinkQuery.isError,
+    retryDeepLink: deepLinkQuery.refetch,
     portalConfig: portal.config,
     portalLoading: portal.isLoading,
     portalError: portal.isError,

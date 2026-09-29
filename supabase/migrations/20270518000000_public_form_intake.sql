@@ -17,7 +17,8 @@
 --      Submissions arrive only through the growth-public-submit edge function (service role), which
 --      checks origin, a bot trap, per-IP and per-form rate limits, and accepts only the form's own fields.
 --   3. ADDS growth_forms.notify_email — the address a workspace sets to be emailed on each submission —
---      and growth_form_submissions.alert_sent_at, so a retried submission never emails twice.
+--      and growth_form_submissions.alert_sent_at (a retried submission never emails twice) and
+--      alert_skipped_reason (why an alert was withheld, e.g. a flood cap).
 --   4. ADDS growth_form_set_intake(): the one write seam (§10) for a form's intake settings — create a
 --      lead in <pipeline → stage>, and email <address>. Scoped to the form's own business: the caller
 --      must be an active owner/admin member of that tenant (§9/§59). No account is named anywhere.
@@ -26,7 +27,7 @@
 --   5. ADDS a guard so notify_email cannot be written directly from the browser — only through (4).
 --
 -- REVERSIBILITY: every step is reversible — drop the guard trigger and the three functions, drop the
--- two columns, re-create the two deleted policies and re-grant the revoked privileges (their
+-- three columns, re-create the two deleted policies and re-grant the revoked privileges (their
 -- definitions are in 20260630004505 / 20260702022450). The migration writes, moves and deletes no data.
 --
 -- definer-anon-exempt: growth_public_form returns only the name, fields and thank-you text of ACTIVE forms (the content a visitor is shown); no tenant, pipeline, alert address or author column is ever returned.
@@ -110,6 +111,12 @@ ALTER TABLE public.growth_form_submissions
 
 COMMENT ON COLUMN public.growth_form_submissions.alert_sent_at IS
   'When the form''s submission alert email was accepted by the provider; set once so a retried submission never emails twice.';
+
+ALTER TABLE public.growth_form_submissions
+  ADD COLUMN IF NOT EXISTS alert_skipped_reason text;
+
+COMMENT ON COLUMN public.growth_form_submissions.alert_skipped_reason IS
+  'Why no alert email was sent for this submission (form_hourly_cap | business_daily_cap), so the account can say so. NULL when an alert was sent or none is configured.';
 
 -- ── 4. The one write seam for a form's intake settings ─────────────────────────────────────────
 -- Sets the whole intake in one call: p_notify_email NULL (or blank) clears the alert address.

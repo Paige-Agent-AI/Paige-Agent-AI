@@ -12,7 +12,7 @@
 --   * a saved route takes effect: on a form that runs from automation rows, the rows follow it.
 BEGIN;
 
-SELECT plan(20);
+SELECT plan(21);
 
 DO $$
 DECLARE
@@ -181,6 +181,9 @@ SELECT results_eq(
                    ('pipeline_attach'::text, true, %L::text, 'f1a70000-0000-0000-0000-00000000a5a1'::text) $$,
          current_setting('intake.pa')),
   'the rows follow the saved route: a contact first, then the deal into the chosen stage');
+
+SELECT has_column('public', 'growth_form_submissions', 'alert_skipped_reason',
+  'a submission can record why its alert email was withheld');
 
 SELECT * FROM finish();
 ROLLBACK;

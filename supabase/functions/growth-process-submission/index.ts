@@ -80,6 +80,15 @@ type Identity = {
   email: string | null; firstName: string | null; lastName: string | null;
   phone: string | null; entityName: string | null; title: string | null;
 };
+// Both stored form layouts: { sections: [{ fields }] } and a bare array of field arrays (which
+// growth_form_upsert and the public intake both accept).
+// deno-lint-ignore no-explicit-any
+function schemaSections(schema: any): any[] {
+  if (Array.isArray(schema?.sections)) return schema.sections;
+  if (Array.isArray(schema)) return schema.map((fields: unknown) => ({ fields }));
+  return [];
+}
+
 function extractIdentity(payload: Record<string, unknown>, schema: any): Identity {
   const id: Identity = { email: null, firstName: null, lastName: null, phone: null, entityName: null, title: null };
   const put = (mapsTo: string, raw: unknown) => {
@@ -93,7 +102,7 @@ function extractIdentity(payload: Record<string, unknown>, schema: any): Identit
     else if ((col === "legal_name" || col === "business_name" || col === "company" || col === "entity_name") && !id.entityName) id.entityName = v;
     else if (col === "title" && !id.title) id.title = v;
   };
-  const sections = Array.isArray(schema?.sections) ? schema.sections : [];
+  const sections = schemaSections(schema);
   for (const sec of sections) {
     for (const f of (Array.isArray(sec?.fields) ? sec.fields : [])) {
       if (f?.maps_to && f?.key != null) put(String(f.maps_to), payload[f.key]);
@@ -124,7 +133,7 @@ function extractIdentity(payload: Record<string, unknown>, schema: any): Identit
 // than failing the submission (§13 — one bad key never blocks the rest of a real answer).
 function extractCustomFields(payload: Record<string, unknown>, schema: any): Record<string, unknown> {
   const out: Record<string, unknown> = {};
-  const sections = Array.isArray(schema?.sections) ? schema.sections : [];
+  const sections = schemaSections(schema);
   for (const sec of sections) {
     for (const f of (Array.isArray(sec?.fields) ? sec.fields : [])) {
       const mapsTo = typeof f?.maps_to === "string" ? f.maps_to : null;
@@ -594,7 +603,9 @@ async function runExecutor(
 
       // A flood of submissions must not become a flood of email through the platform's one sending
       // account. Past the cap the lead is still captured and visible in the account; only the email
-      // is withheld, and it says so. If the counts cannot be read, nothing is sent (fail closed).
+      // is withheld, and the submission records why (alert_skipped_reason). If the counts cannot be
+      // read, nothing is sent (fail closed). The check precedes the send, so a burst processed in
+      // parallel can pass the cap by the number in flight.
       const sentSince = async (column: "form_id" | "tenant_id", value: string, hours: number) => {
         const { count, error } = await admin
           .from("growth_form_submissions")
@@ -609,7 +620,14 @@ async function runExecutor(
         return { status: "error", result: {}, error: "email_alert_cap_unreadable" };
       }
       if (formHour >= ALERTS_PER_FORM_PER_HOUR || businessDay >= ALERTS_PER_BUSINESS_PER_DAY) {
-        return { status: "done", result: { note: "alert_capped", form_last_hour: formHour, business_last_day: businessDay } };
+        const reason = formHour >= ALERTS_PER_FORM_PER_HOUR ? "form_hourly_cap" : "business_daily_cap";
+        // Recorded on the submission itself, so the account can show why this lead sent no email.
+        const { error: markErr } = await admin
+          .from("growth_form_submissions")
+          .update({ alert_skipped_reason: reason })
+          .eq("id", submissionId);
+        if (markErr) return { status: "error", result: {}, error: `alert_cap_mark_failed: ${markErr.message}` };
+        return { status: "done", result: { note: "alert_capped", reason, form_last_hour: formHour, business_last_day: businessDay } };
       }
 
       const fields = labelledAnswers(payload, form.schema_json);
@@ -758,10 +776,7 @@ async function resolveIntakeOperator(admin: any, tenantId: string, createdBy: st
 // deno-lint-ignore no-explicit-any
 function labelledAnswers(payload: Record<string, unknown>, schema: any): Array<{ label: string; value: string }> {
   const out: Array<{ label: string; value: string }> = [];
-  // Both stored layouts: { sections: [{ fields }] } and a bare array of field arrays.
-  const sections = Array.isArray(schema?.sections) ? schema.sections
-    : Array.isArray(schema) ? schema.map((fields: unknown) => ({ fields }))
-    : [];
+  const sections = schemaSections(schema);
   for (const sec of sections) {
     for (const f of (Array.isArray(sec?.fields) ? sec.fields : [])) {
       if (f?.key == null) continue;

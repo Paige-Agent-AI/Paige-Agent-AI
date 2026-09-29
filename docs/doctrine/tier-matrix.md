@@ -4399,5 +4399,5 @@ Styles are scoped to `.pa-site` so no tenant or operator surface changes.
 
 | Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
 |---|---|---|---|---|---|---|---|
-| Public home page (`/`): COO positioning, capability map from `capabilities.ts`, stack calculator, Solo trial and login links | N/A — public page, same for every visitor | N/A — public page | N/A — public page | N/A — public page | N/A — public page | **Shipping in PR #1561**; signed-out render proof in the evidence record | Merged to `main` with this PR; Vercel production proof recorded post-deploy |
+| Public home page (`/`): COO positioning, capability map from `capabilities.ts`, stack calculator, Solo trial and login links | N/A — public page, same for every visitor | N/A — public page | N/A — public page | N/A — public page | N/A — public page | **LIVE** — signed-out production drive 2026-09-29 (evidence record, Post-deploy proof) | LIVE on paigeagent.ai, first live in `dpl_88F55qQSHtfRuUpivMcfQZZDZ8jr` (2026-09-29); carried by every later production deploy of `main` |
 

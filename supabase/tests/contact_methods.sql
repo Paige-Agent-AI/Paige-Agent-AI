@@ -1,5 +1,5 @@
 -- ============================================================================
--- Contact methods (20270515000000 + 20270515010000, writers as restated by 20270518000000) — executed proof.
+-- Contact methods (20270515000000 + 20270515010000, writers as restated by 20270519000000) — executed proof.
 --
 -- A client contact and a platform user each hold several labelled, ordered email addresses and
 -- phone numbers with exactly one primary of each kind, enforced in the data. This proves:

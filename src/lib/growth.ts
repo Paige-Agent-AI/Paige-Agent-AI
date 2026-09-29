@@ -312,26 +312,84 @@ export interface GrowthFormAutomation {
 // Helpers
 // ────────────────────────────────────────────────────────────────────────────
 
+/** What a visitor may see of a form: exactly what growth_public_form() returns — never the
+ *  business, pipeline, alert address or author. Only an ACTIVE form of a live business is found. */
+export interface PublicGrowthForm {
+  id: string;
+  slug: string;
+  name: string;
+  schema_json: GrowthFormSchema;
+  success_action_json: GrowthSuccessAction;
+}
+
+/** Read one public form, by id or by (business, slug). Null when it isn't available. */
+export async function loadPublicGrowthForm(
+  by: { formId: string } | { tenantId: string; slug: string },
+): Promise<PublicGrowthForm | null> {
+  const args = "formId" in by
+    ? { p_form_id: by.formId }
+    : { p_tenant_id: by.tenantId, p_slug: by.slug };
+  const { data, error } = await supabase.rpc("growth_public_form" as never, args as never);
+  if (error) {
+    console.error("growth_public_form failed", error.message);
+    return null;
+  }
+  const rows = data as unknown as PublicGrowthForm[] | null;
+  return Array.isArray(rows) && rows[0] ? rows[0] : null;
+}
+
+export type GrowthSubmitOutcome =
+  | { ok: true; submissionId: string }
+  | { ok: false; reason: "invalid"; missing: string[]; invalid: string[] }
+  | { ok: false; reason: "rate_limited" | "unavailable" | "failed" };
+
+/** Every real form waits at least this long before sending, so a person who fills a one-field
+ *  form in an instant is never mistaken for a bot (the server drops faster submissions). */
+const MIN_ELAPSED_MS = 1600;
+
+/** Send a visitor's answers through growth-public-submit — the one way a submission is saved.
+ *  The server derives the business from the form, keeps only the form's own fields, and applies
+ *  the bot trap and rate limits; `trap` is the hidden field's value and `startedAt` when the form
+ *  was shown. Success means a submission id came back — nothing less. */
 export async function submitGrowthForm(opts: {
-  form_id: string;
-  tenant_id: string;
-  payload: Record<string, unknown>;
+  formId: string;
+  answers: Record<string, unknown>;
   utm?: Record<string, string>;
-  consent?: Record<string, unknown>;
-  funnel_session_id?: string;
-}) {
-  const { error } = await supabase.from("growth_form_submissions").insert({
-    form_id: opts.form_id,
-    tenant_id: opts.tenant_id,
-    payload_json: opts.payload as never,
-    utm_json: (opts.utm ?? {}) as never,
-    consent_json: (opts.consent ?? {}) as never,
-    funnel_session_id: opts.funnel_session_id ?? null,
-    source: "paige_form",
-    referrer: typeof document !== "undefined" ? document.referrer : null,
-    user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+  trap: string;
+  startedAt: number;
+}): Promise<GrowthSubmitOutcome> {
+  const wait = MIN_ELAPSED_MS - (Date.now() - opts.startedAt);
+  if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+  const { data, error } = await supabase.functions.invoke("growth-public-submit", {
+    body: {
+      form_id: opts.formId,
+      answers: opts.answers,
+      utm: opts.utm ?? {},
+      hp: opts.trap,
+      elapsed_ms: Date.now() - opts.startedAt,
+    },
   });
-  return { error };
+  if (error) {
+    // A non-2xx carries the endpoint's own JSON in error.context (a one-shot Response).
+    let status = 0;
+    let body: { error?: string; missing_required?: string[]; invalid?: string[] } = {};
+    const ctx = (error as { context?: unknown }).context;
+    if (ctx instanceof Response) {
+      status = ctx.status;
+      try { body = await ctx.json(); } catch { /* not JSON */ }
+    }
+    if (status === 422 && body.error === "invalid_answers") {
+      return { ok: false, reason: "invalid", missing: body.missing_required ?? [], invalid: body.invalid ?? [] };
+    }
+    if (status === 429) return { ok: false, reason: "rate_limited" };
+    if (status === 404) return { ok: false, reason: "unavailable" };
+    console.error("growth-public-submit failed", status, body.error ?? error.message);
+    return { ok: false, reason: "failed" };
+  }
+  const id = (data as { submission_id?: unknown } | null)?.submission_id;
+  if (typeof id === "string" && id) return { ok: true, submissionId: id };
+  console.error("growth-public-submit returned no submission id");
+  return { ok: false, reason: "failed" };
 }
 
 export function readUtm(): Record<string, string> {

@@ -1,10 +1,9 @@
 // Public form renderer — standalone hosted form at /form/:id and embeddable
 // inside landing pages via <GrowthFormEmbed>.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import type { GrowthFormSchema, GrowthField, GrowthSuccessAction } from "@/lib/growth";
-import { submitGrowthForm, readUtm, growthOptionValue, growthOptionLabel } from "@/lib/growth";
+import type { GrowthField, GrowthSubmitOutcome, PublicGrowthForm } from "@/lib/growth";
+import { loadPublicGrowthForm, submitGrowthForm, readUtm, growthOptionValue, growthOptionLabel } from "@/lib/growth";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -12,14 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-interface FormRow {
-  id: string;
-  tenant_id: string;
-  name: string;
-  status: string;
-  schema_json: GrowthFormSchema;
-  success_action_json: GrowthSuccessAction;
-}
+type FormRow = PublicGrowthForm;
 
 /** The real uploaded file's own name, recovered from its Storage URL
  *  (<tenant_id>/<uuid>-<name>) — never a fabricated label (§13). Falls back to a generic
@@ -42,12 +34,7 @@ export default function GrowthFormPage() {
   useEffect(() => {
     if (!id) return;
     (async () => {
-      const { data } = await supabase.from("growth_forms")
-        .select("id,tenant_id,name,status,schema_json,success_action_json")
-        .eq("id", id)
-        .eq("status", "active")
-        .maybeSingle();
-      setForm(data as unknown as FormRow);
+      setForm(await loadPublicGrowthForm({ formId: id }));
       setLoading(false);
     })();
   }, [id]);
@@ -85,17 +72,22 @@ export default function GrowthFormPage() {
   );
 }
 
-export function GrowthFormEmbed({ tenantId, formSlug, accent, onComplete }: { tenantId: string; formSlug: string; accent?: string; onComplete?: () => void }) {
+/** A form embedded in a page or funnel step, found by id or by the page's business and the form's
+ *  slug. Renders nothing until the form is found, and nothing if it isn't available. */
+export function GrowthFormEmbed({ formId, tenantId, formSlug, accent, onComplete }: {
+  formId?: string; tenantId?: string; formSlug?: string; accent?: string; onComplete?: () => void;
+}) {
   const [form, setForm] = useState<FormRow | null>(null);
   useEffect(() => {
+    let cancelled = false;
     (async () => {
-      const { data } = await supabase.from("growth_forms")
-        .select("id,tenant_id,name,status,schema_json,success_action_json")
-        .eq("tenant_id", tenantId).eq("slug", formSlug).eq("status", "active")
-        .maybeSingle();
-      setForm(data as unknown as FormRow);
+      const found = formId
+        ? await loadPublicGrowthForm({ formId })
+        : tenantId && formSlug ? await loadPublicGrowthForm({ tenantId, slug: formSlug }) : null;
+      if (!cancelled) setForm(found);
     })();
-  }, [tenantId, formSlug]);
+    return () => { cancelled = true; };
+  }, [formId, tenantId, formSlug]);
   if (!form) return null;
   return (
     // §6 brand continuity + dark-AA: the embed rides the surrounding page's --gp-* palette so it
@@ -116,7 +108,10 @@ export function GrowthFormEmbed({ tenantId, formSlug, accent, onComplete }: { te
 // checkbox group must have at least one choice, everything else must be a non-empty value.
 // (A plain `!== ""` check would wrongly pass an unchecked required consent box, whose value
 // is `false`/`undefined`.)
-function fieldAnswered(field: GrowthField, value: any): boolean {
+/** One answer as the form holds it: text, a number, a checkbox, or a group of choices. */
+type Answer = string | number | boolean | string[] | undefined;
+
+function fieldAnswered(field: GrowthField, value: Answer): boolean {
   if (field.type === "checkbox") {
     if (field.options?.length) return Array.isArray(value) && value.length > 0;
     return value === true;
@@ -128,26 +123,29 @@ function FormBody({ form, accent, onComplete }: { form: FormRow; accent?: string
   const schema = form.schema_json ?? { sections: [] };
   const totalSteps = schema.sections.length;
   const [step, setStep] = useState(0);
-  const [data, setData] = useState<Record<string, any>>({});
+  const [data, setData] = useState<Record<string, Answer>>({});
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
-  const [submitError, setSubmitError] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  // The bot trap: a field people never see or reach. Real visitors leave it empty.
+  const [trap, setTrap] = useState("");
+  const startedAt = useRef(Date.now());
 
   const section = schema.sections[step];
   const progress = totalSteps > 0 ? Math.round(((step + 1) / totalSteps) * 100) : 100;
 
-  const setField = (k: string, v: any) => setData((d) => ({ ...d, [k]: v }));
+  const setField = (k: string, v: Answer) => setData((d) => ({ ...d, [k]: v }));
 
   const requiredOk = (s: typeof section) => s.fields.every((f) => !f.required || fieldAnswered(f, data[f.key]));
 
   const submit = async () => {
     setSubmitting(true);
-    setSubmitError(false);
-    const { error } = await submitGrowthForm({
-      form_id: form.id, tenant_id: form.tenant_id, payload: data, utm: readUtm(),
+    setSubmitError(null);
+    const outcome = await submitGrowthForm({
+      formId: form.id, answers: data, utm: readUtm(), trap, startedAt: startedAt.current,
     });
     setSubmitting(false);
-    if (error) { setSubmitError(true); return; }
+    if (!outcome.ok) { setSubmitError(submitErrorMessage(outcome, schema.sections.flatMap((s) => s.fields))); return; }
     // A download_url wins over an immediate redirect — navigating straight away would strand
     // the visitor before they ever see the download button (additive: pages with ONLY
     // redirect_url set, which is every page today, behave exactly as before).
@@ -212,9 +210,14 @@ function FormBody({ form, accent, onComplete }: { form: FormRow; accent?: string
 
       {submitError && (
         <div role="alert" className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
-          We couldn't submit your responses just now. Please try again in a moment.
+          {submitError}
         </div>
       )}
+
+      <div aria-hidden="true" style={{ position: "absolute", left: "-10000px", width: 1, height: 1, overflow: "hidden" }}>
+        <label htmlFor={`gf-trap-${form.id}`}>Leave this empty</label>
+        <input id={`gf-trap-${form.id}`} type="text" name="website" tabIndex={-1} autoComplete="off" value={trap} onChange={(e) => setTrap(e.target.value)} />
+      </div>
 
       <div className="flex justify-between pt-2">
         {step > 0 ? <Button variant="outline" onClick={() => setStep((s) => s - 1)}>Back</Button> : <div />}
@@ -230,7 +233,22 @@ function FormBody({ form, accent, onComplete }: { form: FormRow; accent?: string
   );
 }
 
-function FieldRenderer({ field, value, onChange }: { field: GrowthField; value: any; onChange: (v: any) => void }) {
+/** What to tell a visitor when their answers were not saved — specific where the server said why. */
+function submitErrorMessage(outcome: GrowthSubmitOutcome, fields: GrowthField[]): string {
+  if ("reason" in outcome && outcome.reason === "invalid") {
+    const label = (key: string) => fields.find((f) => f.key === key)?.label ?? key;
+    const keys = [...outcome.missing, ...outcome.invalid];
+    return keys.length
+      ? `Please check ${keys.map(label).join(", ")} and try again.`
+      : "Please check your answers and try again.";
+  }
+  if ("reason" in outcome && outcome.reason === "rate_limited") return "Lots of responses are coming in right now. Please wait a minute and try again.";
+  if ("reason" in outcome && outcome.reason === "unavailable") return "This form isn't taking responses any more.";
+  return "We couldn't submit your responses just now. Please try again in a moment.";
+}
+
+function FieldRenderer({ field, value, onChange }: { field: GrowthField; value: Answer; onChange: (v: Answer) => void }) {
+  const text = typeof value === "string" || typeof value === "number" ? String(value) : "";
   const fid = `gf-${field.key}`;
   const help = field.help ? <p className="text-xs text-muted-foreground mt-1">{field.help}</p> : null;
   const req = field.required ? <span className="text-destructive"> *</span> : null;
@@ -289,9 +307,9 @@ function FieldRenderer({ field, value, onChange }: { field: GrowthField; value: 
           })}
         </div>
       ) : field.type === "textarea" ? (
-        <Textarea id={fid} value={value ?? ""} onChange={(e) => onChange(e.target.value)} placeholder={field.placeholder} />
+        <Textarea id={fid} value={text} onChange={(e) => onChange(e.target.value)} placeholder={field.placeholder} />
       ) : field.type === "select" ? (
-        <Select value={value || undefined} onValueChange={(v) => onChange(v)}>
+        <Select value={text || undefined} onValueChange={(v) => onChange(v)}>
           <SelectTrigger id={fid}>
             <SelectValue placeholder={field.placeholder ?? "Select…"} />
           </SelectTrigger>
@@ -302,7 +320,7 @@ function FieldRenderer({ field, value, onChange }: { field: GrowthField; value: 
           </SelectContent>
         </Select>
       ) : field.type === "radio" ? (
-        <RadioGroup value={value ?? ""} onValueChange={(v) => onChange(v)} aria-label={field.label} aria-required={field.required || undefined} className="mt-1">
+        <RadioGroup value={text} onValueChange={(v) => onChange(v)} aria-label={field.label} aria-required={field.required || undefined} className="mt-1">
           {field.options?.filter((o) => growthOptionValue(o) !== "").map((o) => {
             const v = growthOptionValue(o);
             return (
@@ -317,7 +335,7 @@ function FieldRenderer({ field, value, onChange }: { field: GrowthField; value: 
         <Input
           id={fid}
           type={field.type === "ssn4" ? "text" : field.type === "currency" || field.type === "number" ? "number" : field.type === "date" ? "date" : field.type === "email" ? "email" : field.type === "tel" ? "tel" : "text"}
-          value={value ?? ""}
+          value={text}
           onChange={(e) => onChange(e.target.value)}
           maxLength={field.type === "ssn4" ? 4 : undefined}
           placeholder={field.placeholder}

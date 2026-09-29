@@ -253,20 +253,7 @@ function FunnelPageStep({
 }
 
 function FunnelFormStep({ formId, onComplete }: { formId: string; onComplete?: () => void }) {
-  const [tenantId, setTenantId] = useState<string | null>(null);
-  const [slug, setSlug] = useState<string | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const { data } = await supabase.from("growth_forms").select("tenant_id,slug").eq("id", formId).maybeSingle();
-      if (cancelled || !data) return;
-      setTenantId(data.tenant_id);
-      setSlug(data.slug);
-    })();
-    return () => { cancelled = true; };
-  }, [formId]);
-  if (!tenantId || !slug) return <FormSkeleton />;
-  return <GrowthFormEmbed tenantId={tenantId} formSlug={slug} accent="var(--gp-accent)" onComplete={onComplete} />;
+  return <GrowthFormEmbed formId={formId} accent="var(--gp-accent)" onComplete={onComplete} />;
 }
 
 // ── the advance affordance ───────────────────────────────────────────────────

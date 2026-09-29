@@ -13,6 +13,7 @@ import { embeddingsCompat } from "../_shared/voyage.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { z } from "https://esm.sh/zod@3.22.4";
 import { anonymize, scoreBand, amountBand, type AnonymizeIdentity } from "../_shared/rag-anonymize.ts";
+import { contactMethodsForUser } from "../_shared/user-contact-methods.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -51,19 +52,24 @@ async function embed(text: string, openaiKey: string): Promise<number[] | null> 
   }
 }
 
+// Everything that could identify this person in the published text. A failed read THROWS: the
+// request then fails instead of publishing a document the anonymizer could not scrub the name from.
 async function loadIdentity(admin: ReturnType<typeof createClient>, userId: string): Promise<AnonymizeIdentity> {
-  const [{ data: profile }, { data: biz }] = await Promise.all([
-    admin.from("profiles").select("full_name, email, phone").eq("user_id", userId).maybeSingle(),
+  const [{ data: profile, error: profileErr }, { data: biz, error: bizErr }, methods] = await Promise.all([
+    admin.from("profiles").select("full_name").eq("user_id", userId).maybeSingle(),
     admin.from("businesses").select("legal_name, dba, business_street_address, business_city").eq("owner_user_id", userId).limit(5),
+    contactMethodsForUser(admin, userId),
   ]);
+  if (profileErr) throw new Error(`profile read failed: ${profileErr.message}`);
+  if (bizErr) throw new Error(`business read failed: ${bizErr.message}`);
   const first = profile?.full_name?.split(/\s+/)?.[0] ?? null;
   const last = profile?.full_name?.split(/\s+/)?.slice(-1)?.[0] ?? null;
   return {
     fullName: profile?.full_name ?? null,
     firstName: first,
     lastName: last,
-    email: (profile as any)?.email ?? null,
-    phone: (profile as any)?.phone ?? null,
+    emails: methods.emails,
+    phones: methods.phones,
     businessLegalName: biz?.[0]?.legal_name ?? null,
     businessDba: biz?.[0]?.dba ?? null,
     street: biz?.[0]?.business_street_address ?? null,

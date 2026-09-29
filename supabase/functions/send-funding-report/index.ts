@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { Resend } from "https://esm.sh/resend@4.0.0";
+import { primaryEmailForUser } from "../_shared/user-contact-methods.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,7 +10,6 @@ const corsHeaders = {
 
 interface FundingReportRequest {
   userId: string;
-  email?: string;
   includeBusinessCredit?: boolean;
   includePersonalCredit?: boolean;
   includeFundingOffers?: boolean;
@@ -29,7 +29,6 @@ serve(async (req) => {
 
     const { 
       userId, 
-      email,
       includeBusinessCredit = true,
       includePersonalCredit = true,
       includeFundingOffers = true,
@@ -48,7 +47,9 @@ serve(async (req) => {
 
     if (profileError) throw profileError;
 
-    const recipientEmail = email || profile.email || '';
+    // The report goes to its owner's primary address and nowhere else. It carries their credit
+    // accounts and scores, so a recipient supplied in the request body is not honoured.
+    const recipientEmail = await primaryEmailForUser(supabase, userId);
     if (!recipientEmail) {
       throw new Error('No email address available');
     }

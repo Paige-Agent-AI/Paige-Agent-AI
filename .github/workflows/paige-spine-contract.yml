@@ -45,6 +45,7 @@ on:
       - "supabase/tests/paige_spine_foundation.sql"
       - "supabase/tests/governed_crm_commands.sql"
       - "supabase/tests/outbound_private_business_facts.sql"
+      - "supabase/tests/user_address_readers.sql"
       # The CRM patch-schema proof and the generator that writes it. (`supabase/migrations/**`
       # above already re-runs this job when an allowlist itself changes, which is the case that
       # matters most; these two cover a change to the proof or to how it is derived.)
@@ -192,6 +193,11 @@ jobs:
       # access with the contact, and every matcher recognising a contact by ANY of its addresses.
       # Reports its own result, like the step above, so an earlier red step cannot hide it.
       - run: supabase test db supabase/tests/contact_methods.sql
+        if: ${{ !cancelled() }}
+      # Where the RAG ingest, the security canary and the funding report read a person's address:
+      # the old profiles.email read fails, the user_contact_methods reads they now send run as the
+      # service role, and every new account has exactly one primary email to send to.
+      - run: supabase test db supabase/tests/user_address_readers.sql
         if: ${{ !cancelled() }}
       - run: supabase test db supabase/tests/paige_spine_foundation.sql
       # Vibe Media Credit Ledger: append-only, closure math, anti-leakage release

@@ -35,7 +35,7 @@ ACCEPTANCE_CRITERIA: On production, a Solo owner opens Team → their own row, a
 MOTION_PURPOSE: The editor's own motion (the orb travelling to a new primary; rows gliding) as in PR 3; nothing new. Under reduced motion none of it runs.
 PROTECTED_SEAMS: Impacted and tested — set_user_contact_methods payload and refusals (team-member-contact.test.tsx), user_contact_methods read (useSoloOwner.test.tsx, picker tests), Setup representative fields (SoloBusinessContextSetup.test.tsx), Team dialog contracts (existing Team tests with the section present). Unaffected, named — Team roster, invitations, permissions and removal RPCs; Setup's save RPC and its payload (the phone is still a string in E.164).
 
-INTERNAL_BUILD_IDENTITY: this PR's head; deployment=NOT_DEPLOYED-awaiting-owner-merge-authorization; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/team-setup-contact-methods.md and the PR checks
+INTERNAL_BUILD_IDENTITY: 5aedc3024786dd1a628b237635dab3a45d62dc56; deployment=NOT_DEPLOYED-awaiting-owner-merge-authorization; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/team-setup-contact-methods.md and the PR checks
 RELEASE_CHANNEL: development: pull-request build and CI; production follows only on the owner's written merge authorization for this slice
 RELEASE_CLASSIFICATION: internal-only: one slice of the contact-methods lane; released with the lane settlement
 CUSTOMER_RELEASE_IDENTITY: none: no approved release record exists for the lane; authenticated production saves are PROOF OWED

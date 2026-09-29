@@ -45,7 +45,14 @@ export function formatAnswer(field: FormIntakeField | undefined, value: unknown)
   if (typeof value === "boolean") return value ? "Yes" : "No";
   if (Array.isArray(value)) return value.length ? value.map((v) => optionLabel(field, v)).join(", ") : null;
   if (typeof value === "number") return String(value);
-  return JSON.stringify(value);
+  // A structured answer (an address, say) reads as its parts, never as raw JSON.
+  if (typeof value === "object") {
+    const parts = Object.values(value as Record<string, unknown>)
+      .map((part) => (typeof part === "string" || typeof part === "number" ? String(part).trim() : ""))
+      .filter(Boolean);
+    return parts.length ? parts.join(", ") : null;
+  }
+  return String(value);
 }
 
 export const humanize = (key: string) => key.replace(/[_-]+/g, " ").replace(/^\w/, (c) => c.toUpperCase());

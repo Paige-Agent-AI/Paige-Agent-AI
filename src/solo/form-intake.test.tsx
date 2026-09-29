@@ -1,4 +1,4 @@
-import { act } from "react";
+import { act, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FormIntakePanel } from "./form-intake";
@@ -16,7 +16,9 @@ const db = vi.hoisted(() => ({
   submissions: [] as Record<string, unknown>[],
   calls: [] as Array<{ table: string; filters: Array<[string, unknown]>; range?: [number, number] }>,
   rpc: vi.fn(),
+  admin: true as boolean | null,
   failRead: false,
+  failMore: false,
 }));
 
 function builder(table: string) {
@@ -29,7 +31,8 @@ function builder(table: string) {
   chain.maybeSingle = () => Promise.resolve(db.failRead ? { data: null, error: { message: "boom" } } : { data: db.form, error: null });
   chain.range = (from: number, to: number) => {
     call.range = [from, to];
-    return Promise.resolve(db.failRead ? { data: null, error: { message: "boom" } } : { data: db.submissions.slice(from, to + 1), error: null });
+    const fail = db.failRead || (db.failMore && from > 0);
+    return Promise.resolve(fail ? { data: null, error: { message: "boom" } } : { data: db.submissions.slice(from, to + 1), error: null });
   };
   return chain;
 }
@@ -37,7 +40,10 @@ function builder(table: string) {
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     from: (table: string) => builder(table),
-    rpc: (...args: unknown[]) => db.rpc(...args),
+    rpc: (name: string, args: unknown) =>
+      name === "is_tenant_admin"
+        ? Promise.resolve(db.admin === null ? { data: null, error: { message: "boom" } } : { data: db.admin, error: null })
+        : db.rpc(name, args),
   },
 }));
 
@@ -95,9 +101,10 @@ const text = () => container.textContent ?? "";
 const button = (label: string) =>
   Array.from(container.querySelectorAll("button")).find((b) => b.textContent === label) as HTMLButtonElement | undefined;
 
-async function render(workspace: PipelineWorkspace = WORKSPACE) {
+async function render(workspace: PipelineWorkspace = WORKSPACE, strict = false) {
+  const panel = <FormIntakePanel tenantId="biz-1" formId="form-1" workspace={workspace} onOpenContact={onOpenContact} onOpenDeal={onOpenDeal} />;
   await act(async () => {
-    root.render(<FormIntakePanel tenantId="biz-1" formId="form-1" workspace={workspace} onOpenContact={onOpenContact} onOpenDeal={onOpenDeal} />);
+    root.render(strict ? <StrictMode>{panel}</StrictMode> : panel);
   });
   await act(async () => { await Promise.resolve(); });
 }
@@ -113,6 +120,8 @@ beforeEach(() => {
   db.submissions = [SUBMISSION()];
   db.calls = [];
   db.failRead = false;
+  db.failMore = false;
+  db.admin = true;
   db.rpc.mockReset();
   onOpenContact.mockReset();
   onOpenDeal.mockReset();
@@ -269,12 +278,70 @@ describe("form intake panel — settings", () => {
     expect(text()).toContain("There's no pipeline in this workspace yet");
   });
 
+  it("someone the server would refuse — even with the workspace's manage flag — gets the read-only view", async () => {
+    db.admin = false;
+    await render({ ...WORKSPACE, canManage: true });
+    expect(container.querySelector('[role="switch"]')).toBeNull();
+    expect(text()).toContain("An owner or admin of this business sets where submissions go.");
+  });
+
+  it("an unreadable answer about authority is treated as read-only, never as an editor that will be refused", async () => {
+    db.admin = null;
+    await render();
+    expect(container.querySelector('[role="switch"]')).toBeNull();
+  });
+
   it("a member reads the settings and cannot change them", async () => {
+    db.admin = false;
     await render({ ...WORKSPACE, canManage: false });
     expect(container.querySelector('[role="switch"]')).toBeNull();
     expect(container.querySelector("#intake-email")).toBeNull();
     const rows = Array.from(container.querySelectorAll(".intake-readonly .campaigns-detail-row")).map((r) => r.textContent);
     expect(rows).toEqual(["PipelineSales pipeline → New inquiry", "Email alertsOn"]);
     expect(text()).not.toContain("hello@yourbusiness.example");
+  });
+
+  it("saves and shows Saved under React StrictMode", async () => {
+    db.rpc.mockResolvedValue({ data: { auto_create_deal: true, pipeline_id: "p-sales", stage_id: "s-new", notify_email: "alerts@yourbusiness.example", schema_json: SCHEMA }, error: null });
+    await render(WORKSPACE, true);
+    await act(async () => { setValue(container.querySelector("#intake-email") as HTMLInputElement, "alerts@yourbusiness.example"); });
+    await act(async () => { button("Save changes")!.click(); });
+    expect(container.querySelector(".intake-status")?.textContent).toBe("Saved");
+  });
+});
+
+describe("form intake panel — robustness", () => {
+  it("loads older submissions under React StrictMode", async () => {
+    db.submissions = Array.from({ length: 25 }, (_, i) => SUBMISSION({ id: `s${i}`, payload_json: { full_name: `Visitor ${i}` } }));
+    await render(WORKSPACE, true);
+    await act(async () => { button("Show more")!.click(); });
+    expect(container.querySelectorAll(".sub")).toHaveLength(25);
+  });
+
+  it("says so when older submissions fail to load, and lets the owner try again", async () => {
+    db.submissions = Array.from({ length: 25 }, (_, i) => SUBMISSION({ id: `s${i}` }));
+    db.failMore = true;
+    await render();
+    await act(async () => { button("Show more")!.click(); });
+    expect(container.querySelector('.subs-list ~ [role="alert"]')?.textContent).toBe("Older submissions didn't load. Try again.");
+    expect(button("Show more")!.disabled).toBe(false);
+  });
+
+  it("reads a structured answer as its parts, never as raw JSON", async () => {
+    db.form = { ...db.form!, schema_json: { sections: [{ fields: [{ key: "address", label: "Business address", type: "business_address" }] }] } };
+    db.submissions = [SUBMISSION({ payload_json: { address: { street: "12 Harbor Way", city: "Portland", state: "OR" } } })];
+    await render();
+    const row = Array.from(container.querySelectorAll(".sub-answers div")).map((r) => r.textContent);
+    expect(row).toEqual(["Business address12 Harbor Way, Portland, OR"]);
+  });
+
+  it("with no pipeline, asks for one instead of contradicting itself", async () => {
+    db.form = { auto_create_deal: false, pipeline_id: null, stage_id: null, notify_email: null, schema_json: SCHEMA };
+    await render({ ...WORKSPACE, pipelines: [], stages: [] });
+    await act(async () => { (container.querySelector('[role="switch"]') as HTMLButtonElement).click(); });
+    await act(async () => { button("Save changes")!.click(); });
+    expect(db.rpc).not.toHaveBeenCalled();
+    expect(text()).toContain("Create a pipeline first, or turn this off to save the email setting.");
+    expect(text()).not.toContain("Choose the pipeline new leads go into.");
   });
 });

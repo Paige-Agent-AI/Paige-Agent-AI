@@ -69,10 +69,10 @@ vi.mock("./useCatalogOffers", () => ({
 vi.mock("./useFormIntake", () => ({
   FORM_INTAKE_PAGE_SIZE: 20,
   useFormIntake: (_tenantId: string, formId: string) => ({
-    phase: "ready",
+    phase: "ready", canEdit: true, loadMoreFailed: false,
     settings: { autoCreateDeal: false, pipelineId: null, stageId: null, notifyEmail: null },
     fields: [{ key: "email", label: "Work email", type: "email" }],
-    submissions: formId === "form-1" ? [{ id: "sub-1", createdAt: "2026-09-29T12:00:00Z", state: "done", contactId: "contact-9", dealId: "deal-1", alertSentAt: null, alertSkippedReason: null, answers: { email: "visitor@example.com" } }] : [],
+    submissions: formId === "form-1" ? [{ id: "sub-1", createdAt: "2026-09-29T12:00:00Z", state: "done", contactId: "contact-9", dealId: "deal-1", alertSentAt: null, alertSkippedReason: null, answers: { email: "visitor@example.com" } }, { id: "sub-2", createdAt: "2026-09-29T13:00:00Z", state: "done", contactId: null, dealId: "deal-arrived-later", alertSentAt: null, alertSkippedReason: null, answers: { email: "late@example.com" } }] : [],
     hasMore: false, loadingMore: false, retry: () => {}, loadMore: () => {}, save: async () => ({ ok: true, message: "Saved" }),
   }),
 }));
@@ -457,7 +457,7 @@ describe("Solo Campaigns rendered flows", () => {
       const dialog = host.querySelector('[role="dialog"]')!;
       expect(dialog.textContent).toContain("When someone submits");
       expect(dialog.textContent).toContain("visitor@example.com");
-      expect(dialog.textContent).not.toContain("Routing contract");
+      expect(dialog.textContent).toContain("Routing contract");
       act(() => ([...dialog.querySelectorAll("button")].find((button) => button.textContent === "Open contact") as HTMLButtonElement).click());
       expect(host.querySelector("[data-location]")?.textContent).toBe("/solo/42/clients/people?person=contact-9");
     } finally {
@@ -471,8 +471,29 @@ describe("Solo Campaigns rendered flows", () => {
     try {
       renderAt("/solo/42/growth/catalog?type=form");
       act(() => ([...host.querySelectorAll("button")].find((button) => button.textContent === "Details") as HTMLButtonElement).click());
+      const retry = harness.state.retry as ReturnType<typeof vi.fn>;
+      retry.mockClear();
       act(() => ([...host.querySelectorAll('[role="dialog"] button')].find((button) => button.textContent === "Open deal") as HTMLButtonElement).click());
       expect(host.querySelector("[data-location]")?.textContent).toBe("/solo/42/growth/pipeline?deal=deal-1");
+      // deal-1 is already in the workspace read, so nothing is re-read.
+      expect(retry).not.toHaveBeenCalled();
+    } finally {
+      harness.state.artifacts = artifacts;
+    }
+  });
+
+  it("a deal created after the workspace was read is re-read before Pipeline opens it", () => {
+    const artifacts = harness.state.artifacts;
+    harness.state.artifacts = [{ id: "form-1", type: "form", name: "Discovery call request", slug: "call", status: "active", updatedAt: "2026-08-28T12:00:00Z", publicHref: "/form/form-1", recentSubmissions: 2, routingConfigured: false, routingTargets: [], recentDispatches: { succeeded: 0, failed: 0, other: 0 } }];
+    const retry = harness.state.retry as ReturnType<typeof vi.fn>;
+    retry.mockClear();
+    try {
+      renderAt("/solo/42/growth/catalog?type=form");
+      act(() => ([...host.querySelectorAll("button")].find((button) => button.textContent === "Details") as HTMLButtonElement).click());
+      const openDeals = [...host.querySelectorAll('[role="dialog"] button')].filter((button) => button.textContent === "Open deal") as HTMLButtonElement[];
+      act(() => openDeals[1].click());
+      expect(retry).toHaveBeenCalledTimes(1);
+      expect(host.querySelector("[data-location]")?.textContent).toBe("/solo/42/growth/pipeline?deal=deal-arrived-later");
     } finally {
       harness.state.artifacts = artifacts;
     }

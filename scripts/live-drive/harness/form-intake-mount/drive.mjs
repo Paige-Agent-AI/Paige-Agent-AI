@@ -78,6 +78,11 @@ for (const [w, h] of [[1536, 770], [1366, 768], [1024, 768], [900, 1000]]) {
     route.push(await page.evaluate(() => { const a = document.activeElement; return a.getAttribute("role") || a.id || a.tagName.toLowerCase(); }));
   }
   results.push({ name: "keyboard", route });
+  // Shift+Tab from the close button wraps to the last control Tab can actually reach — never to a
+  // button hidden inside a collapsed submission.
+  await page.focus(".campaigns-drawer header button");
+  await page.keyboard.press("Shift+Tab");
+  results.push({ name: "shift-tab-wrap", focused: await page.evaluate(() => { const a = document.activeElement; return { text: a.textContent?.trim().slice(0, 40), insideDrawer: !!a.closest(".campaigns-drawer"), hiddenInClosedDetails: !!a.closest("details:not([open])") && a.tagName !== "SUMMARY" }; }) });
   await page.close();
 }
 // Member: read-only, no inputs, no address shown.

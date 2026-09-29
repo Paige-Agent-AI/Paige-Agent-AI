@@ -25,6 +25,8 @@ function from(table: string) {
 export const supabase = {
   from,
   rpc: async (name: string, args: Record<string, unknown>) => {
+    // The server's own "may this person edit?" answer; ?member=1 plays a member.
+    if (name === "is_tenant_admin") return { data: new URLSearchParams(window.location.search).get("member") !== "1", error: null };
     if (name === "growth_form_set_intake") {
       window.__intakeSaves.push(args);
       form = { ...form, auto_create_deal: args.p_auto_create_deal, pipeline_id: args.p_pipeline_id ?? form.pipeline_id, stage_id: args.p_stage_id ?? form.stage_id, notify_email: args.p_notify_email };

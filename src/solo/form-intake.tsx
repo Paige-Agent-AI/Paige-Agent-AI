@@ -58,7 +58,7 @@ export function FormIntakePanel({ tenantId, formId, workspace, onOpenContact, on
   }
   return (
     <>
-      {workspace.canManage
+      {intake.canEdit
         ? <IntakeEditor key={formId} settings={intake.settings} workspace={workspace} save={intake.save} />
         : <IntakeReadOnly settings={intake.settings} workspace={workspace} />}
       <Submissions
@@ -66,6 +66,7 @@ export function FormIntakePanel({ tenantId, formId, workspace, onOpenContact, on
         submissions={intake.submissions}
         hasMore={intake.hasMore}
         loadingMore={intake.loadingMore}
+        loadMoreFailed={intake.loadMoreFailed}
         loadMore={intake.loadMore}
         workspace={workspace}
         onOpenContact={onOpenContact}
@@ -117,7 +118,10 @@ function IntakeEditor({ settings, workspace, save }: {
   // An address is judged when the owner saves, never while it is being typed.
   const emailProblem = draft.email.trim() && !EMAIL.test(draft.email.trim())
     ? "Enter a full address, like name@yourbusiness.com." : null;
-  const pipelineProblem = draft.enabled && !draft.pipelineId ? "Choose the pipeline new leads go into." : null;
+  const noPipelines = workspace.pipelines.every((p) => p.lifecycleStatus !== "active");
+  const pipelineProblem = draft.enabled && !draft.pipelineId
+    ? (noPipelines ? "Create a pipeline first, or turn this off to save the email setting." : "Choose the pipeline new leads go into.")
+    : null;
 
   const update = (patch: Partial<Draft>) => { setDraft((d) => ({ ...d, ...patch })); setStatus({ tone: "idle", text: "" }); };
 
@@ -145,8 +149,6 @@ function IntakeEditor({ settings, workspace, save }: {
   };
 
   React.useEffect(() => { setDraft(saved); }, [saved]);
-
-  const noPipelines = workspace.pipelines.every((p) => p.lifecycleStatus !== "active");
 
   return (
     <section className="intake-section" aria-labelledby="intake-heading">
@@ -182,14 +184,15 @@ function IntakeEditor({ settings, workspace, save }: {
                 disabled={saving}
               >
                 {!draft.pipelineId && <option value="">Choose a pipeline</option>}
-                {pipelines.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                {pipelines.map((p) => <option key={p.id} value={p.id}>{p.lifecycleStatus === "active" ? p.name : `${p.name} (archived)`}</option>)}
               </select>
             </label>
             <label>
               Stage
               <select value={draft.stageId} onChange={(e) => update({ stageId: e.target.value })} disabled={saving || !draft.pipelineId}>
                 <option value="">First stage of the pipeline</option>
-                {stages.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+                {stages.map((s) => <option key={s.id} value={s.id}>{s.archivedAt ? `${s.label} (archived)` : s.stageType === "won" || s.stageType === "lost" ? `${s.label} (closed)` : s.label}</option>)}
+                {draft.stageId && !stages.some((s) => s.id === draft.stageId) && <option value={draft.stageId}>A stage no longer in this pipeline</option>}
               </select>
             </label>
           </div>
@@ -234,11 +237,12 @@ function when(iso: string) {
   return d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
-function Submissions({ fields, submissions, hasMore, loadingMore, loadMore, workspace, onOpenContact, onOpenDeal }: {
+function Submissions({ fields, submissions, hasMore, loadingMore, loadMoreFailed, loadMore, workspace, onOpenContact, onOpenDeal }: {
   fields: FormIntakeField[];
   submissions: FormIntakeSubmission[];
   hasMore: boolean;
   loadingMore: boolean;
+  loadMoreFailed: boolean;
   loadMore: () => void;
   workspace: PipelineWorkspace;
   onOpenContact: (id: string) => void;
@@ -293,6 +297,7 @@ function Submissions({ fields, submissions, hasMore, loadingMore, loadMore, work
           );
         })}
       </div>
+      {loadMoreFailed && <p className="intake-error" role="alert">Older submissions didn't load. Try again.</p>}
       {hasMore && (
         <button type="button" className="btn btn-s subs-more" onClick={loadMore} disabled={loadingMore}>
           {loadingMore ? "Loading…" : "Show more"}

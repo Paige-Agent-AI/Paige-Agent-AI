@@ -38,6 +38,11 @@ export type FormIntakeSubmission = {
 
 export type FormIntakeState = {
   phase: "loading" | "ready" | "error" | "missing";
+  /** The server's own answer to "may this person change this form's intake?" — the same
+   *  is_tenant_admin() that growth_form_set_intake() checks, so the editor never offers a save
+   *  the server will refuse. */
+  canEdit: boolean;
+  loadMoreFailed: boolean;
   settings: FormIntakeSettings | null;
   fields: FormIntakeField[];
   submissions: FormIntakeSubmission[];
@@ -111,18 +116,19 @@ function refusalMessage(error: { message?: string } | null): string {
 
 export function useFormIntake(tenantId: string | null, formId: string, pageSize = FORM_INTAKE_PAGE_SIZE) {
   const [state, setState] = useState<FormIntakeState>({
-    phase: "loading", settings: null, fields: [], submissions: [], hasMore: false, loadingMore: false,
+    phase: "loading", canEdit: false, loadMoreFailed: false, settings: null, fields: [], submissions: [], hasMore: false, loadingMore: false,
   });
   const [attempt, setAttempt] = useState(0);
   const live = useRef(true);
-  useEffect(() => () => { live.current = false; }, []);
+  // Set on every mount, not only the first: StrictMode mounts, cleans up and mounts again.
+  useEffect(() => { live.current = true; return () => { live.current = false; }; }, []);
 
   useEffect(() => {
     let current = true;
-    setState({ phase: "loading", settings: null, fields: [], submissions: [], hasMore: false, loadingMore: false });
+    setState({ phase: "loading", canEdit: false, loadMoreFailed: false, settings: null, fields: [], submissions: [], hasMore: false, loadingMore: false });
     if (!tenantId) { setState((s) => ({ ...s, phase: "error" })); return; }
     void (async () => {
-      const [formResponse, submissionResponse] = await Promise.all([
+      const [formResponse, submissionResponse, authorityResponse] = await Promise.all([
         supabase
           .from("growth_forms")
           .select("auto_create_deal,pipeline_id,stage_id,notify_email,schema_json" as never)
@@ -136,6 +142,7 @@ export function useFormIntake(tenantId: string | null, formId: string, pageSize 
           .eq("form_id", formId)
           .order("created_at", { ascending: false })
           .range(0, pageSize),
+        supabase.rpc("is_tenant_admin" as never, { _tenant: tenantId } as never),
       ]);
       if (!current) return;
       if (formResponse.error || submissionResponse.error) {
@@ -146,8 +153,12 @@ export function useFormIntake(tenantId: string | null, formId: string, pageSize 
       const form = formResponse.data as unknown as FormRow | null;
       if (!form) { setState((s) => ({ ...s, phase: "missing" })); return; }
       const rows = (submissionResponse.data ?? []) as unknown as SubmissionRow[];
+      if (authorityResponse.error) console.error("[form-intake] authority read failed", authorityResponse.error);
       setState({
         phase: "ready",
+        // An unreadable answer is treated as "no": read-only is honest, a refused save is not.
+        canEdit: (authorityResponse.data as unknown) === true,
+        loadMoreFailed: false,
         settings: {
           autoCreateDeal: form.auto_create_deal === true,
           pipelineId: form.pipeline_id,
@@ -168,7 +179,7 @@ export function useFormIntake(tenantId: string | null, formId: string, pageSize 
   const loadMore = useCallback(async () => {
     if (!tenantId || state.loadingMore || !state.hasMore) return;
     const offset = state.submissions.length;
-    setState((s) => ({ ...s, loadingMore: true }));
+    setState((s) => ({ ...s, loadingMore: true, loadMoreFailed: false }));
     const { data, error } = await supabase
       .from("growth_form_submissions")
       .select(SUBMISSION_COLUMNS as never)
@@ -179,7 +190,7 @@ export function useFormIntake(tenantId: string | null, formId: string, pageSize 
     if (!live.current) return;
     if (error) {
       console.error("[form-intake] load more failed", error);
-      setState((s) => ({ ...s, loadingMore: false }));
+      setState((s) => ({ ...s, loadingMore: false, loadMoreFailed: true }));
       return;
     }
     const rows = (data ?? []) as unknown as SubmissionRow[];

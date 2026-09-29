@@ -92,7 +92,10 @@ function DetailDrawer({ detail, onClose }) {
     const onKeyDown = (event) => {
       if (event.key === "Escape") { event.preventDefault(); onClose(); return; }
       if (event.key !== "Tab") return;
-      const focusable = [...(drawerRef.current?.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])') ?? [])];
+      // Only what Tab can actually reach: controls inside a collapsed <details> are not focusable,
+      // except that details' own <summary>.
+      const focusable = [...(drawerRef.current?.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])') ?? [])]
+        .filter((el) => { const closed = el.closest("details:not([open])"); return !closed || el.parentElement === closed && el.tagName === "SUMMARY"; });
       if (!focusable.length) return;
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
@@ -149,7 +152,7 @@ function Catalog({ data, setDetail, initialType, onOpenContact, onOpenDeal }) {
     <div className="campaigns-segmented" aria-label="Filter published outputs" style={{margin:"12px 19px 0"}}>{["all","page","funnel","form"].map((item)=><button key={item} aria-pressed={type===item} onClick={()=>setType(item)}>{item === "all" ? "All" : `${item[0].toUpperCase()}${item.slice(1)}s`}</button>)}</div>
     <StateFrame phase={data.phase} retry={data.retry} noun="published outputs">{shown.length===0?<Empty title="No published outputs in this view" detail="Create and publish creative work in Vibe Studio. Campaigns will list only grounded published outputs here."/>:<div className="campaigns-catalog-grid">{shown.map((artifact)=><article className="campaigns-artifact" key={`${artifact.type}-${artifact.id}`}><div><span className="campaigns-type">{artifact.type}</span><h3>{artifact.name}</h3><p>Updated {formatDate(artifact.updatedAt)}</p></div><div className="campaigns-artifact-actions"><button className="btn btn-s" onClick={()=>setDetail(artifact.type==="form"
   // A form's drawer carries its intake: where submissions go, and what each visitor typed.
-  ?{title:artifact.name,rows:[["Type",artifact.type],["Published state",artifact.status],["Recent captures",`${artifact.recentSubmissions} in the latest 200 workspace submissions`]],body:<FormIntakePanel key={artifact.id} tenantId={data.tenantId} formId={artifact.id} workspace={data.pipelineWorkspace} onOpenContact={onOpenContact} onOpenDeal={onOpenDeal}/>,note:"Creative changes remain in Vibe Studio. Recent capture counts are a bounded window, not lifetime totals."}
+  ?{title:artifact.name,rows:[["Type",artifact.type],["Published state",artifact.status],["Recent captures",`${artifact.recentSubmissions} in the latest 200 workspace submissions`],["Routing contract",artifact.routingConfigured?"Configured":"Not configured"]],body:<FormIntakePanel key={artifact.id} tenantId={data.tenantId} formId={artifact.id} workspace={data.pipelineWorkspace} onOpenContact={onOpenContact} onOpenDeal={onOpenDeal}/>,note:"Creative changes remain in Vibe Studio. Recent capture counts are a bounded window, not lifetime totals."}
   :{title:artifact.name,rows:[["Type",artifact.type],["Published state",artifact.status],["Recent captures","Not available"],["Routing contract","Not applicable"]],note:"Creative changes remain in Vibe Studio. Recent capture counts are a bounded window, not lifetime totals."})}>Details</button>{artifact.publicHref&&<a className="btn btn-s" href={artifact.publicHref} target="_blank" rel="noreferrer">Open published <Ic.arrow size={12}/></a>}</div></article>)}</div>}</StateFrame>
   </section>;
 }
@@ -411,9 +414,11 @@ export const GrowthHub=()=>{
     navigate(`${subtabPath("solo",params.account,"clients","people")}?person=${encodeURIComponent(contactId)}`);
   },[navigate,params.account]);
   // `?deal=` is the Pipeline tab's existing focus contract (PipelineSurface focusDealId).
+  // A lead can arrive after the workspace's deals were read; refresh them so Pipeline can open it.
   const openDeal=React.useCallback((dealId)=>{
+    if(!data.pipelineWorkspace.deals.some((deal)=>deal.id===dealId)) data.retry();
     navigate(`${subtabPath("solo",params.account,"growth","pipeline")}?deal=${encodeURIComponent(dealId)}`);
-  },[navigate,params.account]);
+  },[navigate,params.account,data]);
   // `?person=` is NOT a new contract — TenantRelationshipsClientsWorkspace already reads it as
   // `deepLinkedContactId`. A control labelled "Open <client>'s record" that landed on the general
   // list was not missing a route; it was declining to use one that already existed (§18).

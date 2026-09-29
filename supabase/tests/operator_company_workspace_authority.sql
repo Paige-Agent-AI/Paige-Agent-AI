@@ -28,13 +28,16 @@ INSERT INTO public.tenants (id, slug, name, status, account_type, features, bran
 INSERT INTO public.tenants (id, slug, name, status, account_type, parent_tenant_id, features, brand) VALUES
   ('0b0b0000-0000-4000-8000-00000000c003','cw-child','Flagged Child','active','sub_account',
    '0b0b0000-0000-4000-8000-00000000c002','{"system_workspace":true}'::jsonb,'{}'::jsonb);
+-- The outsider is an active member of the second customer workspace and works there, as any real
+-- user does; granting them a role elsewhere then leaves their active workspace alone.
 INSERT INTO public.tenant_members (tenant_id, user_id, role, status, is_owner, joined_at) VALUES
-  ('0b0b0000-0000-4000-8000-00000000c002','0b0b0000-0000-4000-8000-000000000003','owner','active',true,now());
+  ('0b0b0000-0000-4000-8000-00000000c002','0b0b0000-0000-4000-8000-000000000003','owner','active',true,now()),
+  ('0b0b0000-0000-4000-8000-00000000c004','0b0b0000-0000-4000-8000-000000000004','member','active',false,now());
 INSERT INTO public.profiles (user_id, active_tenant_id) VALUES
   ('0b0b0000-0000-4000-8000-000000000001',NULL),
   ('0b0b0000-0000-4000-8000-000000000002','0b0b0000-0000-4000-8000-00000000c001'),
   ('0b0b0000-0000-4000-8000-000000000003','0b0b0000-0000-4000-8000-00000000c002'),
-  ('0b0b0000-0000-4000-8000-000000000004',NULL)
+  ('0b0b0000-0000-4000-8000-000000000004','0b0b0000-0000-4000-8000-00000000c004')
 ON CONFLICT (user_id) DO UPDATE SET active_tenant_id = EXCLUDED.active_tenant_id;
 INSERT INTO public.growth_forms (id, tenant_id, slug, name, status, schema_json) VALUES
   ('0b0b0000-0000-4000-8000-00000000f001','0b0b0000-0000-4000-8000-00000000c001','cw-form','Company form','active','{"sections":[]}'::jsonb),

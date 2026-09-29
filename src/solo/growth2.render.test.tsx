@@ -64,6 +64,19 @@ vi.mock("./useCatalogOffers", () => ({
   useCatalogOffers: () => ({ tenantId: "tenant-1", phase: "ready", offers: [], canManage: true, retry: () => {} }),
 }));
 
+// A form's Details drawer mounts the intake panel, which reads through its own adapter. This file
+// proves the drawer wiring; the panel's reads, writes and states are proven in form-intake.test.tsx.
+vi.mock("./useFormIntake", () => ({
+  FORM_INTAKE_PAGE_SIZE: 20,
+  useFormIntake: (_tenantId: string, formId: string) => ({
+    phase: "ready",
+    settings: { autoCreateDeal: false, pipelineId: null, stageId: null, notifyEmail: null },
+    fields: [{ key: "email", label: "Work email", type: "email" }],
+    submissions: formId === "form-1" ? [{ id: "sub-1", createdAt: "2026-09-29T12:00:00Z", state: "done", contactId: "contact-9", dealId: "deal-1", alertSentAt: null, alertSkippedReason: null, answers: { email: "visitor@example.com" } }] : [],
+    hasMore: false, loadingMore: false, retry: () => {}, loadMore: () => {}, save: async () => ({ ok: true, message: "Saved" }),
+  }),
+}));
+
 let host: HTMLDivElement;
 let root: Root;
 
@@ -433,6 +446,36 @@ describe("Solo Campaigns rendered flows", () => {
     act(() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })));
     expect(host.querySelector('[role="dialog"]')).toBeNull();
     expect(document.activeElement).toBe(details);
+  });
+
+  it("a published form's Details shows where submissions go and what visitors typed, with working links", () => {
+    const artifacts = harness.state.artifacts;
+    harness.state.artifacts = [{ id: "form-1", type: "form", name: "Discovery call request", slug: "call", status: "active", updatedAt: "2026-08-28T12:00:00Z", publicHref: "/form/form-1", recentSubmissions: 1, routingConfigured: false, routingTargets: [], recentDispatches: { succeeded: 0, failed: 0, other: 0 } }];
+    try {
+      renderAt("/solo/42/growth/catalog?type=form");
+      act(() => ([...host.querySelectorAll("button")].find((button) => button.textContent === "Details") as HTMLButtonElement).click());
+      const dialog = host.querySelector('[role="dialog"]')!;
+      expect(dialog.textContent).toContain("When someone submits");
+      expect(dialog.textContent).toContain("visitor@example.com");
+      expect(dialog.textContent).not.toContain("Routing contract");
+      act(() => ([...dialog.querySelectorAll("button")].find((button) => button.textContent === "Open contact") as HTMLButtonElement).click());
+      expect(host.querySelector("[data-location]")?.textContent).toBe("/solo/42/clients/people?person=contact-9");
+    } finally {
+      harness.state.artifacts = artifacts;
+    }
+  });
+
+  it("a submission's Open deal lands on that deal in Pipeline", () => {
+    const artifacts = harness.state.artifacts;
+    harness.state.artifacts = [{ id: "form-1", type: "form", name: "Discovery call request", slug: "call", status: "active", updatedAt: "2026-08-28T12:00:00Z", publicHref: "/form/form-1", recentSubmissions: 1, routingConfigured: false, routingTargets: [], recentDispatches: { succeeded: 0, failed: 0, other: 0 } }];
+    try {
+      renderAt("/solo/42/growth/catalog?type=form");
+      act(() => ([...host.querySelectorAll("button")].find((button) => button.textContent === "Details") as HTMLButtonElement).click());
+      act(() => ([...host.querySelectorAll('[role="dialog"] button')].find((button) => button.textContent === "Open deal") as HTMLButtonElement).click());
+      expect(host.querySelector("[data-location]")?.textContent).toBe("/solo/42/growth/pipeline?deal=deal-1");
+    } finally {
+      harness.state.artifacts = artifacts;
+    }
   });
 
   it("offers a same-account return from Catalog to unfinished commercial terms", () => {

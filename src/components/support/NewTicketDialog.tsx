@@ -62,18 +62,14 @@ export function NewTicketDialog({ open, onOpenChange, userId, userEmail, onCreat
         is_internal: false,
       });
 
-      // Best-effort confirmation email — the server sends it to your own primary address.
+      // Best-effort confirmation email. The server builds it from this ticket and sends it to the
+      // address you sign in with.
       if (userEmail) {
         void supabase.functions.invoke("send-transactional-email", {
           body: {
             templateName: "support-ticket-created",
             idempotencyKey: `support-created-${data.id}`,
-            templateData: {
-              ticketNumber: data.ticket_number,
-              subject: data.subject,
-              category: data.category,
-              priority: data.priority,
-            },
+            ticketId: data.id,
           },
         });
       }

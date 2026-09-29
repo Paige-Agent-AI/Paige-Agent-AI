@@ -122,30 +122,12 @@ const BrokerClients = () => {
       return;
     }
 
-    // 2. Fire invite email (best-effort)
-    const signupLink = `https://paigeagent.ai/auth?ref=${profile.referral_code}&mode=signup`;
-    try {
-      await supabase.functions.invoke("send-transactional-email", {
-        body: {
-          templateName: "broker-client-invite",
-          // The server sends to this relationship's client, and only if you can see it.
-          relationshipId: inserted?.id,
-          idempotencyKey: `broker-client-invite-${inserted?.id}`,
-          templateData: {
-            firstName: form.firstName.trim(),
-            brokerBusinessName: profile.business_name,
-            brokerReferralCode: profile.referral_code,
-            signupLink,
-          },
-        },
-      });
-    } catch (err) {
-      console.warn("Invite email failed (non-blocking)", err);
-    }
-
+    // 2. The platform does not email the client for you: a broker profile is self-serve today, so
+    //    platform-domain mail on a broker's behalf is held until approval is operator-only. You
+    //    share your own signup link, which carries the broker rate.
     toast({
       title: "Client added",
-      description: `Invite sent to ${email}. They’ll get the $17/mo broker rate at signup.`,
+      description: `Share your invite link with ${email} — use Copy invite link in their row. They get the $17/mo broker rate when they sign up with it.`,
     });
     setForm({ firstName: "", lastName: "", email: "", phone: "", goal: "" });
     setOpen(false);
@@ -153,26 +135,14 @@ const BrokerClients = () => {
     load();
   };
 
-  const handleResendInvite = async (row: ClientRow) => {
+  const handleCopyInviteLink = async (row: ClientRow) => {
     if (!profile?.referral_code) return;
-    const signupLink = `https://paigeagent.ai/auth?ref=${profile.referral_code}&mode=signup`;
+    const signupLink = `https://paigeagent.ai/auth?ref=${encodeURIComponent(profile.referral_code)}&mode=signup`;
     try {
-      await supabase.functions.invoke("send-transactional-email", {
-        body: {
-          templateName: "broker-client-invite",
-          relationshipId: row.id,
-          idempotencyKey: `broker-client-invite-${row.id}-resend-${Date.now()}`,
-          templateData: {
-            firstName: row.client_first_name,
-            brokerBusinessName: profile.business_name,
-            brokerReferralCode: profile.referral_code,
-            signupLink,
-          },
-        },
-      });
-      toast({ title: "Invite resent", description: `Sent to ${row.client_email}.` });
-    } catch (err: unknown) {
-      toast({ title: "Resend failed", description: err instanceof Error && err.message ? err.message : "Unknown error", variant: "destructive" });
+      await navigator.clipboard.writeText(signupLink);
+      toast({ title: "Invite link copied", description: `Send it to ${row.client_email} from your own email or phone.` });
+    } catch {
+      toast({ title: "Copy your invite link", description: signupLink });
     }
   };
 
@@ -333,8 +303,8 @@ const BrokerClients = () => {
                         </Button>
                       )}
                       {row.client_subscription_status !== "active" && row.is_active && permissions.can_add_clients && (
-                        <Button variant="ghost" size="sm" onClick={() => handleResendInvite(row)}>
-                          Resend
+                        <Button variant="ghost" size="sm" onClick={() => handleCopyInviteLink(row)}>
+                          Copy invite link
                         </Button>
                       )}
                       {permissions.can_remove_clients && (

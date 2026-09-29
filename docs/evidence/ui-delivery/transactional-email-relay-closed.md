@@ -1,31 +1,37 @@
 # UI delivery evidence: close the open transactional-email relay
 
-Three UI files change, and none of them changes what a person sees. They change the body of a request the page already made:
-- The broker invite and session-summary calls name the client relationship, not an address.
-- The support-ticket confirmation stops naming its own recipient.
-- A pre-existing `catch (err: any)` becomes `unknown` in two of them, which the changed-file lint requires.
+Four UI files change.
+- **Support ticket:** the confirmation request names the ticket and nothing else. The server builds the email from that ticket's row and sends it to the address the person signs in with.
+- **Invite member:** the dialog stops sending a template name. The server always sends the role invitation.
+- **Broker clients and broker session:** these stop asking the platform to email a broker's client.
+  - A broker profile is self-serve today, and so is the `broker` role (a tenant owner can grant it). Nothing on production separates a platform-approved broker from a self-made one, so platform-domain mail on a broker's say-so is an open relay with a different name.
+  - Adding a client now tells the broker to share their own invite link. The row's "Resend" becomes "Copy invite link".
+  - Sharing a session summary now says truthfully where it went. The old email used the invite template, which never carried the summary.
+- **Lint:** a pre-existing `catch (err: any)` becomes `unknown` where the changed-file lint requires it.
 
-The substance is server-side. The email sender now decides authority in-body.
+**§58 — a capability removed, flagged explicitly.** The platform no longer sends broker-client invite email from the browser.
+- Production today has 0 broker profiles, 0 holders of the `broker` role and 0 client relationships, and the broker onboarding functions are not deployed. So no working broker loses anything.
+- It comes back when broker approval can only be granted by an operator. That needs a migration, which is proposed for authorization and not applied.
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
-FLOW_BY_FLOW: PASS: discovery-first producer inventory of every caller of send-transactional-email (8 browser call sites, 19 edge callers, 5 migrations) with each caller's authentication, recorded in PR body; actor=platform internal callers, signed-in operators, brokers and Solo users, anonymous affiliate applicants; goal="only legitimate callers can make the platform send email"
-PAIGE_UI_DESIGN: PASS: paige-ui-design router considered; no visual surface, token, layout, copy or motion changes — only request payloads and a typed catch, so there is no visual delivery to design
-MATERIAL_FLOW_CHANGE: NO: every touched page keeps its surfaces, states, transitions, toasts and exits; the server now binds the recipient the page used to pass, with no new or altered visual state
-FLOW_PROTOTYPE: NOT_REQUIRED: no visual surface or interface-flow change to prototype (request payload and server authorization only); not a convenience skip
-PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: audience = the pages that trigger platform email (support ticket, broker clients, broker session, affiliate apply); primary action unchanged; purpose = stop anyone holding the public publishable key from sending email from the platform's verified domain
-VISUAL_DIRECTION: NOT_APPLICABLE: no visual surface changed; no pack, tokens, layout, or motion involved
-AUTOMATED_EVIDENCE: PASS: supabase/functions/_shared/email/send-authority.test.ts 8/8 (no token and publishable key refused for every template incl. user ones; internal passes; unlisted template refused for a signed-in person; self template bound to own address; operator template needs an operator; broker invite needs a visible relationship from a platform-granted broker, is capped hourly, and its words and link come from the database) — each falsified by reinstating a defect; src/__tests__/transactional-email-relay-closed.test.ts 12/12, failing against the main-branch version of each of the 7 touched files; full vitest 6023 passed vs 6013 on main (+10 new)
-STATIC_EVIDENCE: PASS: deno check clean on send-transactional-email, affiliate-application-confirm, notify-approval-event, agreement-send; send-notification carries 3 pre-existing errors, identical count on main; tsc ratchet 12 to 12; eslint and gold-discipline clean on the changed src files
-RENDERED_EVIDENCE: NOT_APPLICABLE: no rendered output changes; the touched components render the same markup
+FLOW_BY_FLOW: PASS: discovery-first producer inventory of every caller of send-transactional-email (browser call sites, edge callers, migrations) with each caller's authentication, recorded in PR body; actor=platform internal callers, signed-in operators, signed-in people filing support tickets, tenant admins inviting staff, anonymous affiliate applicants; goal="only legitimate callers can make the platform send email"
+PAIGE_UI_DESIGN: PASS: paige-ui-design router considered; no layout, token, motion or component change — one button label on the broker clients row and three toast strings change wording to stay truthful about who sends the invite
+MATERIAL_FLOW_CHANGE: NO: no screen, state, transition or exit is added or removed; on the broker clients row one button changes label and action (Resend -> Copy invite link) and the add-client and share-summary toasts change wording; the support, invite-member and affiliate pages keep every surface and toast; the removed platform email is flagged separately under section 58
+FLOW_PROTOTYPE: NOT_REQUIRED: no new surface or interface flow to prototype; a relabelled row action and toast wording on an existing table, driven by a security fix
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: audience = the pages that trigger platform email (support ticket, invite member, broker clients, broker session, affiliate apply); purpose = stop anyone holding the public publishable key, or a self-made account, from sending mail from the platform's verified domain; a broker's primary action (get a client signed up on the broker rate) is kept through their own invite link
+VISUAL_DIRECTION: NOT_APPLICABLE: no visual direction change; existing button and toast components carry new wording
+AUTOMATED_EVIDENCE: PASS: supabase/functions/_shared/email/send-authority.test.ts 7/7 (no token and the publishable key refused for every template; internal passes; unlisted templates incl. broker-client-invite refused for a signed-in person; a ticket confirmation needs a ticket the caller filed, is capped hourly, goes to the sign-in address with words from the ticket row only; operator templates need an operator) — five mutations reinstated one at a time, each caught; src/__tests__/transactional-email-relay-closed.test.ts 14/14, 5 of them failing against the previous commit; full vitest 6027 passed vs 6013 on main
+STATIC_EVIDENCE: PASS: deno check clean on send-transactional-email, affiliate-application-confirm, notify-approval-event, agreement-send, send-beta-launch-email, send-admin-invitation; tsc ratchet 12 to 12; eslint clean on the changed src files; gold/impeccable report only files this change does not touch
+RENDERED_EVIDENCE: UNVERIFIED: the broker clients row label and the three toasts were not rendered in this session; their wording is pinned in source only; broker pages have no production users (0 brokers)
 BEHAVIORAL_EVIDENCE: PASS: decision behavior proven headless (send-authority.test.ts); production baseline recorded before the change — the live sender answered a publishable-key request with 404 template-not-found (it reached the body), and no-token with 401 from the gateway
-AUTHENTICATED_RUNTIME: UNVERIFIED: no signed-in operator, broker or Solo session is available to this headless session, so the in-browser send from each touched page is not driven; affected claims are the three touched pages' sends
-KEYBOARD_FOCUS: NOT_APPLICABLE: no interactive surface changed
+AUTHENTICATED_RUNTIME: UNVERIFIED: no signed-in session is available to this headless session, so the in-browser support confirmation, staff invite and broker copy-link are not driven; the unauthenticated and publishable-key refusals are probed against the deployed function after merge
+KEYBOARD_FOCUS: NOT_APPLICABLE: the relabelled control is the same Button component in the same position
 ZOOM_REFLOW: NOT_APPLICABLE: no visual surface changed
 REDUCED_MOTION: NOT_APPLICABLE: no motion added or changed
-STATE_COVERAGE: PASS: server outcomes covered — refused (401 no token or publishable key, 403 template not user-sendable, 403 not an operator, 403 relationship not visible), sent to a server-bound recipient; the pages already treat the send as best-effort and non-blocking
-TRUTHFUL_STATE_LABELS: PASS: the broker page's toast still says an invite was sent to the address it shows; that address is the relationship's client_email, which is now exactly where the server sends; a broker without the platform-granted role now gets a refusal the page already treats as a non-blocking send failure
+STATE_COVERAGE: PASS: server outcomes covered — 401 no token or publishable key, 403 template not user-sendable, 403 ticket not yours, 429 rate limited, 403 not an operator, sent to a server-bound recipient; copy-link covers clipboard success and clipboard refusal (the link is shown instead)
+TRUTHFUL_STATE_LABELS: PASS: the broker add-client toast no longer claims an invite was sent; it tells the broker to share their link; the old Resend toast claimed success even when the server refused (invoke does not throw on an error response) and is gone; share-summary says the client sees it in their app when they have one, and says it was only saved when they do not
 SOLO_UI: NO: the touched pages are support (all accounts) and the broker vertical; no src/solo, tenant-shell, growth, or public-site path changed
-UNVERIFIED: the authenticated in-browser send from each of the three touched pages on production (no signed-in session in this environment); the live publishable-key and no-token refusals are proven after deploy against the deployed function
+UNVERIFIED: the authenticated in-browser flows on production (support confirmation, staff invite, broker copy-link) and the rendered broker wording; the live publishable-key and no-token refusals are proven after deploy against the deployed function
 
 <!-- RELEASE_GOVERNANCE_POLICY — read docs/doctrine/release-governance-and-customer-update-policy.md -->
 INTERNAL_BUILD_IDENTITY: 4034180e98fbca6c017a2ab6f68d2ead9466ab7a; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(edge-deploy-on-merge-send-transactional-email-and-callers); evidence=send-authority.test.ts-and-transactional-email-relay-closed.test.ts
@@ -39,17 +45,17 @@ RELEASE_RECOVERY: position=revert the PR merge commit — the sender returns to 
 ## Scope and collisions
 
 - Classification: security fix to a shared backend send surface, with request-payload changes in three UI files.
-- Affected flows: support ticket confirmation (self), operator support/feature/affiliate replies, broker client invite and session summary, anonymous affiliate application confirmation, agreement signature request.
+- Affected flows: support ticket confirmation, staff invitation, operator support/feature/affiliate replies, broker client invite and session summary, anonymous affiliate application confirmation, agreement signature request.
 - Neighboring regressions: every edge caller that sends the service key is unaffected (producer inventory in the PR body).
 - Active-owner/file collisions: none of the touched files is open in another PR at time of writing.
-- Explicit exclusions: broker-auto-approve (not deployed to production); the funding report's callers and sandbox sender (parked by ruling).
+- Explicit exclusions: broker-auto-approve and send-broker-team-invite (not deployed to production); the broker-role grant paths (a migration, proposed not applied); the funding report's callers and sandbox sender (parked by ruling).
 
 ## User job and state map
 
-Purpose: the platform sends email only for legitimate callers. Audience and primary actions are unchanged on every touched page; the only difference is that the server, not the page, decides the recipient. No scroll owner changes.
+Purpose: the platform sends email only for legitimate callers. The server, not the page, decides the recipient and the words. The broker invite moves from a platform email to the broker's own link. No scroll owner changes.
 
 ## Evidence index
 
-- `deno test … supabase/functions/_shared/email/send-authority.test.ts` → 8 passed; `npx vitest run src/__tests__/transactional-email-relay-closed.test.ts` → 12 passed.
+- `deno test … supabase/functions/_shared/email/send-authority.test.ts` → 7 passed; `npx vitest run src/__tests__/transactional-email-relay-closed.test.ts` → 14 passed.
 - Production baseline (2026-09-29, before merge): POST send-transactional-email with the publishable key and a nonexistent template → 404 template-not-found; with no token → 401.
 - Redacted: no secrets or customer data in this record.

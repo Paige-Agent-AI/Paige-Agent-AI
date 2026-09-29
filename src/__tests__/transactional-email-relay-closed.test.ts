@@ -57,6 +57,18 @@ describe("the side doors that forwarded with the service key are internal-only",
     expect(src).not.toMatch(/r\.role === 'admin'/);
   });
 
+  it("send-admin-invitation always sends the role invitation, with a bounded note, capped per inviter", () => {
+    const src = code("supabase/functions/send-admin-invitation/index.ts");
+    expect(src).toMatch(/templateName: INVITE_TEMPLATE,/);
+    expect(src).toMatch(/const INVITE_TEMPLATE = "role-invitation"/);
+    expect(src).not.toMatch(/body\.templateName|templateName \|\||\{ email, role, templateName/);
+    expect(src).toMatch(/message\.length > MAX_MESSAGE_CHARS/);
+    const cap = src.indexOf("await overRateLimit(limiter, `invite:${user.id}`");
+    expect(cap).toBeGreaterThan(-1);
+    expect(src.indexOf('from("invitations")')).toBeGreaterThan(cap);
+    expect(src.indexOf("auth.admin.createUser(")).toBeGreaterThan(cap);
+  });
+
   it("agreement-send calls the sender as an internal caller, not with the end user's token", () => {
     const src = code("supabase/functions/agreement-send/index.ts");
     expect(src).not.toMatch(/headers: \{ Authorization: authHeader, "Content-Type"/);
@@ -67,7 +79,7 @@ describe("the side doors that forwarded with the service key are internal-only",
 describe("browser code asks the sender only for what a person may send", () => {
   const policy = read("supabase/functions/_shared/email/send-authority.ts");
   const allowed = new Set(
-    [...policy.matchAll(/^\s*"([a-z0-9-]+)": \{ kind: "(self|operator|broker_relationship)" \},$/gm)].map((m) => m[1]),
+    [...policy.matchAll(/^\s*"([a-z0-9-]+)": \{ kind: "(own_ticket|operator)" \},$/gm)].map((m) => m[1]),
   );
 
   const files: string[] = [];
@@ -95,19 +107,25 @@ describe("browser code asks the sender only for what a person may send", () => {
   });
 
   it("finds the browser callers (non-vacuous)", () => {
-    expect(allowed.size).toBeGreaterThanOrEqual(7);
-    expect(calls.length).toBeGreaterThanOrEqual(8);
+    expect(allowed.size).toBeGreaterThanOrEqual(6);
+    expect(calls.length).toBeGreaterThanOrEqual(6);
   });
 
   it("every browser call names a user-sendable template", () => {
     for (const c of calls) expect(allowed.has(c.template), `${c.file}: ${c.template}`).toBe(true);
   });
 
-  it("broker invites name the relationship, not an address", () => {
-    for (const c of calls.filter((c) => c.template === "broker-client-invite")) {
-      expect(c.body, c.file).toMatch(/relationshipId:/);
-      expect(c.body, c.file).not.toMatch(/recipientEmail:/);
+  it("the support confirmation names the caller's ticket and nothing that reaches the email", () => {
+    const own = calls.filter((c) => c.template === "support-ticket-created");
+    expect(own.length).toBeGreaterThan(0);
+    for (const c of own) {
+      expect(c.body, c.file).toMatch(/ticketId:/);
+      expect(c.body, c.file).not.toMatch(/recipientEmail:|templateData:/);
     }
+  });
+
+  it("no browser code asks the platform to email a broker's client (a broker profile is self-serve)", () => {
+    for (const f of files) expect(read(f), f).not.toMatch(/["']broker-client-invite["']/);
   });
 
   it("the anonymous affiliate confirmation goes through its bounded function, never the sender", () => {

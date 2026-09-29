@@ -1,10 +1,15 @@
 // Executed proof for who may make the platform send a transactional email (send-authority.ts).
 // Runs under Deno in CI (ci.yml).
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { decideSendAuthority, type SendAuthorityDeps, type SendRequestFields } from "./send-authority.ts";
+import {
+  decideSendAuthority,
+  type SendAuthorityDeps,
+  type SendRequestFields,
+  USER_SENDABLE_TEMPLATES,
+} from "./send-authority.ts";
 
 const USER = "00000000-0000-4000-8000-0000000000u1";
-const REL = "00000000-0000-4000-8000-0000000000r1";
+const TICKET = "00000000-0000-4000-8000-0000000000t1";
 
 // A caller as the send function sees it. The publishable key is a signed token with no user in it,
 // so it reaches the function as "not internal, no verified user" — exactly the no-token case.
@@ -12,25 +17,18 @@ function caller(o: {
   internal?: boolean;
   userId?: string | null;
   operator?: boolean;
-  primary?: string | null;
-  canSeeRelationship?: boolean;
-  brokerGranted?: boolean;
+  signIn?: string | null;
+  ownsTicket?: boolean;
   overLimit?: boolean;
 }): SendAuthorityDeps {
   return {
     isInternalCaller: async () => o.internal === true,
     verifiedUserId: async () => o.userId ?? null,
     callerIsOperator: async () => o.operator === true,
-    primaryEmail: async () => o.primary ?? null,
-    brokerRelationship: async (id) =>
-      o.canSeeRelationship && id === REL
-        ? {
-          clientEmail: "client@broker.test",
-          clientFirstName: "Dana",
-          businessName: "Summit Advisory",
-          referralCode: "BROK-A1B2C3",
-          brokerIsGranted: o.brokerGranted === true,
-        }
+    signInEmail: async () => o.signIn ?? null,
+    ownTicket: async (userId, id) =>
+      o.ownsTicket && userId === USER && id === TICKET
+        ? { ticketNumber: "PT-1042", subject: "Calendar won't sync", category: "technical", priority: "normal" }
         : null,
     overHourlyLimit: async () => o.overLimit === true,
   };
@@ -40,7 +38,7 @@ const req = (p: Partial<SendRequestFields>): SendRequestFields => ({
   templateName: "role-invitation",
   recipientEmail: "victim@elsewhere.test",
   recipientUserId: null,
-  relationshipId: null,
+  ticketId: null,
   ...p,
 });
 
@@ -49,9 +47,9 @@ Deno.test("no token is refused", async () => {
 });
 
 Deno.test("the publishable key alone is refused, for every template including the user ones", async () => {
-  for (const templateName of ["role-invitation", "support-ticket-created", "broker-client-invite", "solo-beta-welcome"]) {
-    const d = await decideSendAuthority(req({ templateName, relationshipId: REL }), caller({ userId: null }));
-    assertEquals(d.ok, false, templateName);
+  for (const templateName of ["role-invitation", "solo-beta-welcome", ...Object.keys(USER_SENDABLE_TEMPLATES)]) {
+    const d = await decideSendAuthority(req({ templateName, ticketId: TICKET }), caller({ userId: null }));
+    assertEquals(d, { ok: false, status: 401, error: "sign_in_required" }, templateName);
   }
 });
 
@@ -60,17 +58,47 @@ Deno.test("an internal platform caller may send any template to the recipient it
 });
 
 Deno.test("a signed-in person cannot send a template that is not user-sendable", async () => {
+  for (const templateName of ["role-invitation", "broker-client-invite", "affiliate-application-received"]) {
+    assertEquals(
+      await decideSendAuthority(req({ templateName }), caller({ userId: USER })),
+      { ok: false, status: 403, error: "template_not_user_sendable" },
+      templateName,
+    );
+  }
+});
+
+Deno.test("a ticket confirmation needs a ticket the caller filed", async () => {
+  const t = "support-ticket-created";
   assertEquals(
-    await decideSendAuthority(req({ templateName: "role-invitation" }), caller({ userId: USER })),
-    { ok: false, status: 403, error: "template_not_user_sendable" },
+    await decideSendAuthority(req({ templateName: t }), caller({ userId: USER, ownsTicket: true, signIn: "me@solo.test" })),
+    { ok: false, status: 400, error: "ticket_required" },
+  );
+  assertEquals(
+    await decideSendAuthority(req({ templateName: t, ticketId: TICKET }), caller({ userId: USER, signIn: "me@solo.test" })),
+    { ok: false, status: 403, error: "ticket_not_yours" },
+  );
+  assertEquals(
+    await decideSendAuthority(
+      req({ templateName: t, ticketId: TICKET }),
+      caller({ userId: USER, ownsTicket: true, signIn: "me@solo.test", overLimit: true }),
+    ),
+    { ok: false, status: 429, error: "rate_limited" },
   );
 });
 
-Deno.test("a self template goes to the caller's own address, whatever recipient the request names", async () => {
-  assertEquals(
-    await decideSendAuthority(req({ templateName: "support-ticket-created" }), caller({ userId: USER, primary: "me@solo.test" })),
-    { ok: true, kind: "user", userId: USER, recipientEmail: "me@solo.test", recipientUserId: USER },
+Deno.test("a ticket confirmation goes to the sign-in address, with words from the ticket row only", async () => {
+  const d = await decideSendAuthority(
+    req({ templateName: "support-ticket-created", ticketId: TICKET }),
+    caller({ userId: USER, ownsTicket: true, signIn: "me@solo.test" }),
   );
+  assertEquals(d, {
+    ok: true,
+    kind: "user",
+    userId: USER,
+    recipientEmail: "me@solo.test",
+    recipientUserId: USER,
+    templateData: { ticketNumber: "PT-1042", subject: "Calendar won't sync", category: "technical", priority: "normal" },
+  });
 });
 
 Deno.test("an operator template needs a platform operator", async () => {
@@ -82,48 +110,4 @@ Deno.test("an operator template needs a platform operator", async () => {
     await decideSendAuthority(req({ templateName: "support-ticket-reply" }), caller({ userId: USER, operator: true })),
     { ok: true, kind: "user", userId: USER, recipientEmail: "victim@elsewhere.test", recipientUserId: null },
   );
-});
-
-Deno.test("a broker invite needs a relationship the caller can see, from a platform-granted broker", async () => {
-  const t = "broker-client-invite";
-  assertEquals(
-    await decideSendAuthority(req({ templateName: t }), caller({ userId: USER, canSeeRelationship: true, brokerGranted: true })),
-    { ok: false, status: 400, error: "relationship_required" },
-  );
-  assertEquals(
-    await decideSendAuthority(req({ templateName: t, relationshipId: REL }), caller({ userId: USER, brokerGranted: true })),
-    { ok: false, status: 403, error: "relationship_not_yours" },
-  );
-  // A self-serve broker profile with a relationship pointed at a stranger: refused.
-  assertEquals(
-    await decideSendAuthority(req({ templateName: t, relationshipId: REL }), caller({ userId: USER, canSeeRelationship: true })),
-    { ok: false, status: 403, error: "broker_not_approved" },
-  );
-  assertEquals(
-    await decideSendAuthority(
-      req({ templateName: t, relationshipId: REL }),
-      caller({ userId: USER, canSeeRelationship: true, brokerGranted: true, overLimit: true }),
-    ),
-    { ok: false, status: 429, error: "rate_limited" },
-  );
-});
-
-Deno.test("a broker invite's words and link come from the database, never the request", async () => {
-  const d = await decideSendAuthority(
-    req({ templateName: "broker-client-invite", relationshipId: REL }),
-    caller({ userId: USER, canSeeRelationship: true, brokerGranted: true }),
-  );
-  assertEquals(d, {
-    ok: true,
-    kind: "user",
-    userId: USER,
-    recipientEmail: "client@broker.test",
-    recipientUserId: null,
-    templateData: {
-      firstName: "Dana",
-      brokerBusinessName: "Summit Advisory",
-      brokerReferralCode: "BROK-A1B2C3",
-      signupLink: "https://paigeagent.ai/auth?ref=BROK-A1B2C3&mode=signup",
-    },
-  });
 });

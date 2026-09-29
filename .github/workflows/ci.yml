@@ -762,7 +762,8 @@ jobs:
             supabase/functions/affiliate-application-confirm/index.ts \
             supabase/functions/notify-approval-event/index.ts \
             supabase/functions/agreement-send/index.ts \
-            supabase/functions/send-beta-launch-email/index.ts
+            supabase/functions/send-beta-launch-email/index.ts \
+            supabase/functions/send-admin-invitation/index.ts
 
       - name: Test
         if: ${{ !cancelled() }}

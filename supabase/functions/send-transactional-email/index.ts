@@ -5,7 +5,6 @@ import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 import { resolveTenantEmailContext } from '../_shared/email/branding.ts'
 import { decideSendAuthority } from '../_shared/email/send-authority.ts'
 import { isAuthorizedInternalCaller, adminClient, operatorUserId } from '../_shared/systems-check-http.ts'
-import { primaryEmailForUser } from '../_shared/user-contact-methods.ts'
 import { overRateLimit } from '../_shared/rateLimit.ts'
 import { createClient as createLimiterClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -91,7 +90,7 @@ Deno.serve(async (req) => {
   let fromOverride: string | null = null
   let replyToOverride: string | null = null
   let soloFulfillmentEventId: string | null = null
-  let relationshipId: string | null = null
+  let ticketId: string | null = null
   try {
     const body = await req.json()
     templateName = body.templateName || body.template_name
@@ -106,7 +105,7 @@ Deno.serve(async (req) => {
     fromOverride = body.fromOverride || body.from_override || null
     replyToOverride = body.replyToOverride || body.reply_to_override || null
     soloFulfillmentEventId = body.fulfillmentEventId || body.fulfillment_event_id || null
-    relationshipId = body.relationshipId || body.relationship_id || null
+    ticketId = body.ticketId || body.ticket_id || null
   } catch {
     return new Response(
       JSON.stringify({ error: 'Invalid JSON in request body' }),
@@ -118,7 +117,7 @@ Deno.serve(async (req) => {
   }
 
   const authority = await decideSendAuthority(
-    { templateName, recipientEmail: recipientEmail || null, recipientUserId, relationshipId },
+    { templateName, recipientEmail: recipientEmail || null, recipientUserId, ticketId },
     {
       isInternalCaller: () => isAuthorizedInternalCaller(req, adminClient()),
       verifiedUserId: async () => {
@@ -134,39 +133,21 @@ Deno.serve(async (req) => {
         return error ? null : data?.user?.id ?? null
       },
       callerIsOperator: async () => (await operatorUserId(req)) !== null,
-      primaryEmail: (userId) => primaryEmailForUser(adminClient(), userId),
-      brokerRelationship: async (id) => {
-        // Read AS THE CALLER: row-level security on broker_client_relationships decides who may
-        // see — and therefore write to — a client (the owning broker, their team, an operator).
-        const caller = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
-          global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } },
-          auth: { persistSession: false },
-        })
-        const { data: rel } = await caller
-          .from('broker_client_relationships')
-          .select('client_email, client_first_name, broker_id')
+      signInEmail: async (userId) => {
+        const { data } = await adminClient().auth.admin.getUserById(userId)
+        return data?.user?.email ?? null
+      },
+      ownTicket: async (userId, id) => {
+        const { data } = await adminClient()
+          .from('support_tickets')
+          .select('ticket_number, subject, category, priority')
           .eq('id', id)
+          .eq('user_id', userId)
           .maybeSingle()
-        const row = rel as { client_email?: string; client_first_name?: string | null; broker_id?: string } | null
-        if (!row?.client_email || !row.broker_id) return null
-        // The broker's profile and role are read with the service role: a broker profile is
-        // self-serve, the `broker` role is granted only by a platform operator.
-        const admin = adminClient()
-        const { data: bp } = await admin
-          .from('broker_profiles')
-          .select('user_id, business_name, referral_code')
-          .eq('id', row.broker_id)
-          .maybeSingle()
-        const profile = bp as { user_id?: string; business_name?: string | null; referral_code?: string | null } | null
-        if (!profile?.user_id) return null
-        const { data: granted } = await admin.rpc('has_role', { _user_id: profile.user_id, _role: 'broker' })
-        return {
-          clientEmail: row.client_email,
-          clientFirstName: row.client_first_name ?? null,
-          businessName: profile.business_name ?? null,
-          referralCode: profile.referral_code ?? null,
-          brokerIsGranted: granted === true,
-        }
+        const t = data as { ticket_number?: string | null; subject?: string | null; category?: string | null; priority?: string | null } | null
+        return t
+          ? { ticketNumber: t.ticket_number ?? null, subject: t.subject ?? null, category: t.category ?? null, priority: t.priority ?? null }
+          : null
       },
       overHourlyLimit: (userId, template, max) =>
         overRateLimit(limiterClient(), `ste:${template}:${userId}`, max, 3600, true),

@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { createClient as createLimiterClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { overRateLimit } from "../_shared/rateLimit.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -22,10 +24,15 @@ const VALID_ROLES = [
 ] as const;
 type InviteRole = typeof VALID_ROLES[number];
 
+// This function sends platform-domain mail on an inviter's say-so, so what reaches the inbox is
+// bounded: always the role-invitation template, a short personal note, and a per-inviter hourly cap.
+const INVITE_TEMPLATE = "role-invitation";
+const MAX_MESSAGE_CHARS = 500;
+const INVITES_PER_HOUR = 20;
+
 interface InvitationRequest {
   email: string;
   role: InviteRole;
-  templateName?: string;
   message?: string;
 }
 
@@ -59,9 +66,17 @@ const handler = async (req: Request): Promise<Response> => {
     if (!ownerCheck && !roleData) throw new Error("Insufficient permissions");
 
     const body: InvitationRequest = await req.json();
-    const { email, role, templateName, message } = body;
+    const { email, role } = body;
     if (!email || !role) throw new Error("Email and role are required");
     if (!VALID_ROLES.includes(role)) throw new Error(`Invalid role: ${role}`);
+    const message = typeof body.message === "string" && body.message.trim() ? body.message.trim() : null;
+    if (message && message.length > MAX_MESSAGE_CHARS) {
+      throw new Error(`Message must be ${MAX_MESSAGE_CHARS} characters or fewer`);
+    }
+    const limiter = createLimiterClient(supabaseUrl, supabaseServiceKey, { auth: { persistSession: false } });
+    if (await overRateLimit(limiter, `invite:${user.id}`, INVITES_PER_HOUR, 3600, true)) {
+      throw new Error("Too many invitations in the last hour. Try again later.");
+    }
 
     console.log(`Creating invitation for ${email} with role ${role}`);
 
@@ -129,7 +144,7 @@ const handler = async (req: Request): Promise<Response> => {
         invited_by: user.id,
         token: rawToken,
         expires_at: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString(),
-        template_name: templateName ?? null,
+        template_name: INVITE_TEMPLATE,
         tenant_id: inviterTenantId,
         metadata: { ...(message ? { message } : {}), invited_by_name: inviterName },
       })
@@ -172,11 +187,11 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { error: emailError } = await supabase.functions.invoke("send-transactional-email", {
       body: {
-        templateName: templateName || "role-invitation",
+        templateName: INVITE_TEMPLATE,
         recipientEmail: email,
         idempotencyKey: `invite-${invitation.id}`,
         tenantId: inviterTenantId,
-        templateData: { role: roleLabel, inviteUrl, invitedBy: inviterName, message: message ?? null, brandName, brandLogoUrl, brandColor },
+        templateData: { role: roleLabel, inviteUrl, invitedBy: inviterName, message, brandName, brandLogoUrl, brandColor },
       },
     });
 

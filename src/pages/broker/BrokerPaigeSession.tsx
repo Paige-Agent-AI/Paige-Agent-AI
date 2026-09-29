@@ -369,32 +369,22 @@ const BrokerPaigeSession = () => {
         });
       }
 
-      // Email it via the transactional pipeline (best effort)
-      try {
-        await supabase.functions.invoke("send-transactional-email", {
-          body: {
-            templateName: "broker-client-invite", // reuse existing template as fallback container
-            relationshipId: rel.id,
-            idempotencyKey: `broker-summary-${sessionId}`,
-            templateData: {
-              firstName: rel.client_first_name,
-              brokerBusinessName: profile?.business_name || "your broker",
-              brokerReferralCode: profile?.referral_code || "",
-              signupLink: "https://paigeagent.ai/app",
-              customMessage: summary,
-            },
-          },
-        });
-      } catch (e) {
-        console.warn("[broker session] email send failed (non-blocking)", e);
-      }
+      // No email: the only template this used was the client invite, which never carried the summary.
+      // The summary reaches the client in their app; a client who has not signed up yet has no app.
 
       trackEvent("broker_summary_shared", "engagement", {
         session_id: sessionId,
         relationship_id: rel.id,
       });
 
-      toast({ title: "Summary shared", description: `Sent to ${rel.client_first_name}.` });
+      toast(
+        rel.client_user_id
+          ? { title: "Summary shared", description: `${rel.client_first_name} will see it in their app.` }
+          : {
+            title: "Summary saved",
+            description: `${rel.client_first_name} hasn't signed up yet, so there's no app to deliver it to. Copy the summary and send it yourself.`,
+          },
+      );
       setSummaryOpen(false);
     } catch (e: unknown) {
       toast({ title: "Share failed", description: e instanceof Error ? e.message : "Try again.", variant: "destructive" });

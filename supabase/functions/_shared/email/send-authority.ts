@@ -11,33 +11,28 @@
 //     one shared gate `isAuthorizedInternalCaller`). It has already authorized its own caller and
 //     derived the recipient, so it may send any template.
 //   * USER — a verified signed-in person, for the few templates a person legitimately triggers from
-//     the app. Each is listed below with WHO may send it and WHERE it may go; the recipient is bound
-//     on the server, never taken from the request, except for platform-operator templates.
+//     the app. Each is listed below with WHO may send it and WHERE it may go; the recipient and the words are
+//     bound on the server, never taken from the request, except for platform-operator templates.
 //   * Everyone else — no token, the publishable key alone, or a signed-in person asking for a
 //     template not listed — is refused.
 //
 // Pure: every lookup is injected, so the decision is unit-tested without a network.
 
 export type UserPolicy =
-  /** Goes to the caller's own primary address. */
-  | { kind: "self" }
+  /** The confirmation for a support ticket the caller filed. Goes to the caller's sign-in address
+   *  (not a user-settable contact field), is built only from that ticket's row, and is capped per
+   *  hour. The caller names the ticket; nothing else in the request reaches the email. */
+  | { kind: "own_ticket" }
   /** Sent by a platform operator (super_admin / platform_admin) to a person they are serving. */
-  | { kind: "operator" }
-  /** A broker's invite to one of their clients. Goes to that relationship's client, only if the caller
-   *  can read the relationship (row-level security: the broker, their team, an operator) AND that
-   *  relationship's broker holds the platform-granted `broker` role — a broker profile alone is
-   *  self-serve and proves nothing. Every word of the email is built from the database, and a
-   *  broker is capped per hour. */
-  | { kind: "broker_relationship" };
+  | { kind: "operator" };
 
 export const USER_SENDABLE_TEMPLATES: Readonly<Record<string, UserPolicy>> = Object.freeze({
-  "support-ticket-created": { kind: "self" },
+  "support-ticket-created": { kind: "own_ticket" },
   "support-ticket-reply": { kind: "operator" },
   "support-ticket-resolved": { kind: "operator" },
   "feature-request-status-update": { kind: "operator" },
   "affiliate-commission-paid": { kind: "operator" },
   "affiliate-approved-welcome": { kind: "operator" },
-  "broker-client-invite": { kind: "broker_relationship" },
 });
 
 export interface SendAuthorityDeps {
@@ -47,33 +42,29 @@ export interface SendAuthorityDeps {
   verifiedUserId(): Promise<string | null>;
   /** is_platform_operator() for the verified caller. */
   callerIsOperator(): Promise<boolean>;
-  /** The user's primary email (user_contact_methods). */
-  primaryEmail(userId: string): Promise<string | null>;
-  /** A broker relationship read AS THE CALLER (null when the caller cannot see it), with its broker's
-   *  profile and whether that broker holds the platform-granted `broker` role. */
-  brokerRelationship(relationshipId: string): Promise<BrokerRelationship | null>;
+  /** The address the user signs in with (auth.users), or null. */
+  signInEmail(userId: string): Promise<string | null>;
+  /** The support ticket with this id, only if this user filed it; otherwise null. */
+  ownTicket(userId: string, ticketId: string): Promise<OwnTicket | null>;
   /** True when this caller is over the hourly cap for this template. */
   overHourlyLimit(userId: string, templateName: string, max: number): Promise<boolean>;
 }
 
-export interface BrokerRelationship {
-  clientEmail: string;
-  clientFirstName: string | null;
-  businessName: string | null;
-  referralCode: string | null;
-  brokerIsGranted: boolean;
+export interface OwnTicket {
+  ticketNumber: string | null;
+  subject: string | null;
+  category: string | null;
+  priority: string | null;
 }
 
-/** Hourly cap on broker invites per sender. */
-export const BROKER_INVITES_PER_HOUR = 20;
-
-const PUBLIC_SITE = "https://paigeagent.ai";
+/** Hourly cap on support-ticket confirmations per person. */
+export const TICKET_CONFIRMATIONS_PER_HOUR = 5;
 
 export interface SendRequestFields {
   templateName: string;
   recipientEmail: string | null;
   recipientUserId: string | null;
-  relationshipId: string | null;
+  ticketId: string | null;
 }
 
 export type SendAuthority =
@@ -102,10 +93,28 @@ export async function decideSendAuthority(
   if (!policy) return { ok: false, status: 403, error: "template_not_user_sendable" };
 
   switch (policy.kind) {
-    case "self": {
-      const own = await deps.primaryEmail(userId);
-      if (!own) return { ok: false, status: 403, error: "no_primary_email" };
-      return { ok: true, kind: "user", userId, recipientEmail: own, recipientUserId: userId };
+    case "own_ticket": {
+      if (!req.ticketId) return { ok: false, status: 400, error: "ticket_required" };
+      const ticket = await deps.ownTicket(userId, req.ticketId);
+      if (!ticket) return { ok: false, status: 403, error: "ticket_not_yours" };
+      const email = await deps.signInEmail(userId);
+      if (!email) return { ok: false, status: 403, error: "no_sign_in_email" };
+      if (await deps.overHourlyLimit(userId, req.templateName, TICKET_CONFIRMATIONS_PER_HOUR)) {
+        return { ok: false, status: 429, error: "rate_limited" };
+      }
+      return {
+        ok: true,
+        kind: "user",
+        userId,
+        recipientEmail: email,
+        recipientUserId: userId,
+        templateData: {
+          ticketNumber: ticket.ticketNumber,
+          subject: ticket.subject,
+          category: ticket.category,
+          priority: ticket.priority,
+        },
+      };
     }
     case "operator": {
       if (!(await deps.callerIsOperator())) return { ok: false, status: 403, error: "operator_required" };
@@ -116,30 +125,6 @@ export async function decideSendAuthority(
         userId,
         recipientEmail: req.recipientEmail,
         recipientUserId: req.recipientUserId,
-      };
-    }
-    case "broker_relationship": {
-      if (!req.relationshipId) return { ok: false, status: 400, error: "relationship_required" };
-      const rel = await deps.brokerRelationship(req.relationshipId);
-      if (!rel) return { ok: false, status: 403, error: "relationship_not_yours" };
-      if (!rel.brokerIsGranted) return { ok: false, status: 403, error: "broker_not_approved" };
-      if (await deps.overHourlyLimit(userId, req.templateName, BROKER_INVITES_PER_HOUR)) {
-        return { ok: false, status: 429, error: "rate_limited" };
-      }
-      return {
-        ok: true,
-        kind: "user",
-        userId,
-        recipientEmail: rel.clientEmail,
-        recipientUserId: null,
-        templateData: {
-          firstName: rel.clientFirstName,
-          brokerBusinessName: rel.businessName,
-          brokerReferralCode: rel.referralCode,
-          signupLink: rel.referralCode
-            ? `${PUBLIC_SITE}/auth?ref=${encodeURIComponent(rel.referralCode)}&mode=signup`
-            : `${PUBLIC_SITE}/auth?mode=signup`,
-        },
       };
     }
   }

@@ -1100,6 +1100,24 @@ describe("Shipped flows are routed, never reimplemented", () => {
 });
 
 describe("Managing a tool", () => {
+  it.each(["url", "none", "bearer", "header"])("never submits a reconstructed host when re-keying %s authentication", async (authKind) => {
+    world({ rows: [row({ auth_kind: authKind })] });
+    const { host } = await render();
+    await click(host.querySelector('[data-gateway-tool="conn-1"]'));
+    await click(byText(host, "Re-key"));
+    if (authKind === "bearer" || authKind === "header") {
+      await type(fieldFor(host, "New key / value"), "test-replacement-value");
+    }
+    if (authKind === "header") await type(fieldFor(host, "Header name"), "X-Api-Key");
+    await click(byText(host, "Save & re-check"));
+    expect(rpc.mock.calls.filter((call) => WRITE_RPCS.has(call[0]))).toEqual([]);
+    expect(edgeCalls("verify")).toHaveLength(0);
+    expect(fieldFor(host, "Full address")).toHaveProperty("value", "");
+    expect(fieldFor(host, "Full address")?.getAttribute("aria-invalid")).toBe("true");
+    expect(host.textContent).toContain("Enter the full public https:// address.");
+    expect(host.textContent).not.toContain("Paige stores only the host");
+  });
+
   it("opens a tool and re-keys it, warning that approvals are cleared", async () => {
     world({ rows: [row()] });
     const { host } = await render();
@@ -1108,10 +1126,72 @@ describe("Managing a tool", () => {
 
     await click(byText(host, "Re-key"));
     expect(host.textContent).toMatch(/approvals are cleared/i);
+    await type(fieldFor(host, "Full address"), "https://services.example.com/mcp");
     await type(fieldFor(host, "New key / value"), "new_token_value");
     await click(byText(host, "Save & re-check"));
     const write = rpc.mock.calls.find((c) => c[0] === "set_mcp_connection_endpoint");
     expect(write?.[1]).toMatchObject({ _connection_id: "conn-1", _tenant_id: "tenant-a" });
+  });
+
+  it.each(["url", "none", "bearer", "header"])("preserves an explicitly entered endpoint path for %s authentication", async (authKind) => {
+    world({ rows: [row({ auth_kind: authKind })] });
+    const { host } = await render();
+    await click(host.querySelector('[data-gateway-tool="conn-1"]'));
+    await click(byText(host, "Re-key"));
+    const endpoint = "https://services.example.com/api/mcp/team%2Ftools/?region=test";
+    await type(fieldFor(host, "Full address"), endpoint);
+    if (authKind === "bearer" || authKind === "header") await type(fieldFor(host, "New key / value"), "test-replacement-value");
+    if (authKind === "header") await type(fieldFor(host, "Header name"), "X-Api-Key");
+    await click(byText(host, "Save & re-check"));
+    expect(rpc.mock.calls.find((call) => call[0] === "set_mcp_connection_endpoint")?.[1]).toMatchObject({
+      _connection_id: "conn-1", _server_url: endpoint, _auth_kind: authKind,
+    });
+  });
+
+  it("requires an explicit address on the shared REST re-key form too", async () => {
+    world({ rows: [row({ provider_key: "n8n", auth_kind: "api_key" })] });
+    const { host } = await render();
+    await click(host.querySelector('[data-gateway-tool="conn-1"]'));
+    await click(byText(host, "Re-key"));
+    await type(fieldFor(host, "New API key"), "test-replacement-value");
+    await click(byText(host, "Save & re-check"));
+    expect(rpc.mock.calls.filter((call) => WRITE_RPCS.has(call[0]))).toEqual([]);
+    await type(fieldFor(host, "Base URL"), "https://services.example.com/automation/");
+    await click(byText(host, "Save & re-check"));
+    expect(rpc.mock.calls.find((call) => call[0] === "set_mcp_rest_connection_endpoint")?.[1]).toMatchObject({
+      _connection_id: "conn-1", _base_url: "https://services.example.com/automation/",
+    });
+  });
+
+  it("does not carry an abandoned endpoint into another connection", async () => {
+    world({ rows: [row(), row({ connection_id: "conn-2", label: "Other tool", auth_kind: "none" })] });
+    const { host } = await render();
+    await click(host.querySelector('[data-gateway-tool="conn-1"]'));
+    await click(byText(host, "Re-key"));
+    await type(fieldFor(host, "Full address"), "https://services.example.com/private-path/mcp");
+    await click(byText(host, "Cancel"));
+    await click(host.querySelector(".ig-close"));
+    if (host.querySelector('[role="alertdialog"]')) await click(byText(host, "Discard them"));
+    await click(host.querySelector('[data-gateway-tool="conn-2"]'));
+    await click(byText(host, "Re-key"));
+    expect(fieldFor(host, "Full address")).toHaveProperty("value", "");
+    expect(rpc.mock.calls.filter((call) => WRITE_RPCS.has(call[0]))).toEqual([]);
+  });
+
+  it("keeps the full entered endpoint after a refused save so the owner can retry", async () => {
+    world({ rows: [row({ auth_kind: "none" })], rpcWrite: { data: null, error: { code: "42501", message: "permission denied" } } });
+    const { host } = await render();
+    await click(host.querySelector('[data-gateway-tool="conn-1"]'));
+    await click(byText(host, "Re-key"));
+    const endpoint = "https://services.example.com/mcp/";
+    await type(fieldFor(host, "Full address"), endpoint);
+    await click(byText(host, "Save & re-check"));
+    expect(fieldFor(host, "Full address")).toHaveProperty("value", endpoint);
+    expect(dialog(host)?.querySelector('[role="alert"]')).toBeTruthy();
+    expect(edgeCalls("verify")).toHaveLength(0);
+    world({ rows: [row({ auth_kind: "none" })] });
+    await click(byText(host, "Save & re-check"));
+    expect(rpc.mock.calls.filter((call) => call[0] === "set_mcp_connection_endpoint")).toHaveLength(2);
   });
 
   it("will not re-key on an empty value", async () => {
@@ -1119,6 +1199,7 @@ describe("Managing a tool", () => {
     const { host } = await render();
     await click(host.querySelector('[data-gateway-tool="conn-1"]'));
     await click(byText(host, "Re-key"));
+    await type(fieldFor(host, "Full address"), "https://services.example.com/mcp");
     await click(byText(host, "Save & re-check"));
     expect(host.textContent).toMatch(/enter the new value/i);
     expect(rpc.mock.calls.some((c) => c[0] === "set_mcp_connection_endpoint")).toBe(false);
@@ -1198,6 +1279,7 @@ describe("Managing a tool", () => {
     await click(host.querySelector('[data-gateway-tool="conn-1"]'));
     await click(byText(host, "Re-key"));
     await type(fieldFor(host, "Header name"), "X-Api-Key");
+    await type(fieldFor(host, "Full address"), "https://services.example.com/mcp");
     await type(fieldFor(host, "New key / value"), "new_value");
     await click(byText(host, "Save & re-check"));
     // Without the header name the server refuses the bundle every time and the typed key is lost.

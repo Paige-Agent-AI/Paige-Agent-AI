@@ -3,7 +3,7 @@
 -- workspace; and only the platform owner decides which workspaces are the company's.
 -- Synthetic fixtures; always rolled back.
 BEGIN;
-SELECT plan(50);
+SELECT plan(70);
 
 INSERT INTO auth.users (id, aud, role, email) VALUES
   ('0b0b0000-0000-4000-8000-000000000001','authenticated','authenticated','cw-super@tests.invalid'),
@@ -173,6 +173,70 @@ SELECT throws_ok($$INSERT INTO public.invitations (email, invited_by) VALUES ('s
   'nor a staff invitation that names no workspace and would be stamped with the company''s');
 SELECT lives_ok($$SELECT public.create_tenant_invite_token('0b0b0000-0000-4000-8000-00000000c001'::uuid, 'consumer')$$,
   'a client portal invite, which creates no seat, is still allowed in a company workspace');
+
+-- A company cannot be disguised while an operator creates a lasting seat. All three
+-- classification inputs belong to the platform owner, not only the JSON flag.
+SELECT throws_ok($$UPDATE public.tenants SET account_type = 'agency' WHERE id = '0b0b0000-0000-4000-8000-00000000c001'$$,
+  '42501', 'TENANT_FORBIDDEN: only the platform owner can mark a workspace as company-owned',
+  'an operator cannot remove company protection by changing its account type');
+SELECT throws_ok($$UPDATE public.tenants SET account_type = 'agency', features = features || '{"cw_test_flag":true}'::jsonb WHERE id = '0b0b0000-0000-4000-8000-00000000c001'$$,
+  '42501', 'TENANT_FORBIDDEN: only the platform owner can mark a workspace as company-owned',
+  'an unrelated feature edit cannot disguise the account-type transition');
+SELECT is((SELECT account_type FROM public.tenants WHERE id = '0b0b0000-0000-4000-8000-00000000c001'), 'standalone',
+  'a refused classification change leaves the company unchanged');
+SELECT lives_ok($$UPDATE public.tenants SET account_type = 'standalone' WHERE id = '0b0b0000-0000-4000-8000-00000000c001'$$,
+  'an unchanged company classification remains editable');
+SELECT throws_ok($$UPDATE public.tenant_invite_tokens SET kind = 'team' WHERE tenant_id = '0b0b0000-0000-4000-8000-00000000c001' AND kind = 'consumer'$$,
+  '42501', 'TENANT_FORBIDDEN: a company workspace does not take invitations; the platform owner adds people to it directly',
+  'an operator cannot convert a client portal invitation into a lasting-seat invitation');
+SELECT throws_ok($$UPDATE public.tenant_invite_tokens SET kind = 'subaccount_owner' WHERE tenant_id = '0b0b0000-0000-4000-8000-00000000c001' AND kind = 'consumer'$$,
+  '42501', 'TENANT_FORBIDDEN: a company workspace does not take invitations; the platform owner adds people to it directly',
+  'a portal invitation cannot be converted to another non-consumer kind');
+SELECT is((SELECT count(*)::int FROM public.tenant_invite_tokens WHERE tenant_id = '0b0b0000-0000-4000-8000-00000000c001' AND kind = 'consumer'), 1,
+  'rejected conversions preserve the original portal invitation');
+
+RESET ROLE;
+SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);
+SET LOCAL ROLE service_role;
+SELECT throws_ok($$UPDATE public.tenants SET parent_tenant_id = '0b0b0000-0000-4000-8000-00000000c002' WHERE id = '0b0b0000-0000-4000-8000-00000000c001'$$,
+  '42501', 'TENANT_FORBIDDEN: only the platform owner can mark a workspace as company-owned',
+  'a service request cannot reparent a company to remove its protection');
+SELECT throws_ok($$UPDATE public.tenants SET account_type = 'standalone', parent_tenant_id = NULL WHERE id = '0b0b0000-0000-4000-8000-00000000c003'$$,
+  '42501', 'TENANT_FORBIDDEN: only the platform owner can mark a workspace as company-owned',
+  'a service request cannot promote a flagged child into a company workspace');
+SELECT lives_ok($$UPDATE public.tenants SET account_type = 'agency' WHERE id = '0b0b0000-0000-4000-8000-00000000c004'$$,
+  'account-type changes on unflagged customer workspaces are unaffected');
+SELECT lives_ok($$UPDATE public.tenants SET account_type = 'standalone' WHERE id = '0b0b0000-0000-4000-8000-00000000c004'$$,
+  'the customer workspace can return to its original account type');
+
+-- Revocation is read from current role rows, never a lasting company seat or cached JWT role.
+RESET ROLE;
+SELECT set_config('request.jwt.claims','',true);
+DELETE FROM public.user_roles WHERE user_id = '0b0b0000-0000-4000-8000-000000000002' AND role = 'platform_admin';
+SELECT pg_temp.as_caller('0b0b0000-0000-4000-8000-000000000002');
+SET LOCAL ROLE authenticated;
+SELECT ok(NOT public.is_tenant_admin('0b0b0000-0000-4000-8000-00000000c001'), 'revocation removes company admin authority');
+SELECT ok(NOT public.is_tenant_member('0b0b0000-0000-4000-8000-00000000c001'), 'revocation removes company member authority');
+SELECT ok(NOT public.is_tenant_owner('0b0b0000-0000-4000-8000-000000000002','0b0b0000-0000-4000-8000-00000000c001'), 'revocation removes company owner authority');
+SELECT is(public.current_user_tenant_id(), NULL::uuid, 'a revoked operator has no surviving company workspace context');
+SELECT throws_ok($$SELECT * FROM public.create_contact_v2(p_first_name => 'Revoked', p_email => 'revoked@tests.invalid')$$,
+  '22023', 'CONTACT_NO_TENANT', 'a revoked operator cannot create a company contact');
+RESET ROLE;
+SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);
+SET LOCAL ROLE service_role;
+SELECT throws_ok($$SELECT * FROM public.create_contact_v2(p_first_name => 'Revoked', p_email => 'revoked-service@tests.invalid',
+  p_tenant_id => '0b0b0000-0000-4000-8000-00000000c001', p_created_by => '0b0b0000-0000-4000-8000-000000000002')$$,
+  '42501', 'CONTACT_CREATOR_NOT_IN_TENANT', 'the service path also refuses the revoked operator');
+RESET ROLE;
+SELECT is((SELECT count(*)::int FROM public.clients WHERE tenant_id = '0b0b0000-0000-4000-8000-00000000c001' AND first_name = 'Revoked'), 0,
+  'the refused write creates no contact');
+SELECT is((SELECT count(*)::int FROM public.tenant_members WHERE tenant_id = '0b0b0000-0000-4000-8000-00000000c001' AND user_id = '0b0b0000-0000-4000-8000-000000000002'), 0,
+  'operator use left no lasting company membership');
+SELECT set_config('request.jwt.claims','',true);
+INSERT INTO public.user_roles (user_id, role) VALUES ('0b0b0000-0000-4000-8000-000000000002','platform_admin');
+SELECT pg_temp.as_caller('0b0b0000-0000-4000-8000-000000000002');
+SET LOCAL ROLE authenticated;
+SELECT ok(public.is_tenant_admin('0b0b0000-0000-4000-8000-00000000c001'), 'restoring the operator role restores role-derived authority');
 
 -- Role sync, fired by a role granted while the operator's active workspace is the company's,
 -- keeps skipping it instead of trying (and failing) to seat someone there.

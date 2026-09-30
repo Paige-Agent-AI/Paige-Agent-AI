@@ -20,6 +20,9 @@
 --      auth.uid(), and trusting it would let a delegated platform_admin mark a customer's
 --      workspace as the company's. No edge function writes this key. Without this lock, rule 3 of
 --      the ruling could be broken by anyone who can write a customer's features.
+--      The lock also covers account_type and parent_tenant_id whenever they change effective
+--      company classification. Otherwise an operator could disguise a company as an agency,
+--      acquire a lasting seat while company protection is off, and then restore standalone.
 --   2b. LOCKS membership in a company workspace. Authority there comes from the operator role and
 --      ends with it; nobody may seat themselves (or anyone) as a lasting owner/admin/member of a
 --      company workspace — that would be Option A by another door, and it would survive losing
@@ -39,6 +42,8 @@
 --      the honest answer, and it closes the other door to a lasting seat (an operator minting an
 --      invite for an account they control). The platform owner seats people directly
 --      (grant_tenant_member_role). Production holds no such invitations today.
+--      Changes to an existing token's kind are checked too: a consumer invitation cannot be
+--      converted into a seat-creating invitation after its insert was allowed.
 --   2d. sync_user_role_to_tenant_member keeps its prior outcome: it never seats anyone in a
 --      company workspace on an operator's behalf (before this migration an operator was not an
 --      admin there, so it skipped; now it skips explicitly). Without this, an operator whose
@@ -70,8 +75,8 @@
 -- tenants.owner_user_id, CRM command execution (execute_crm_command*), internal booking changes.
 --
 -- REVERSIBILITY: fully reversible and writes, moves and deletes no data. To revert: restore the
--- four predicates and create_contact_v2 to their prior definitions (quoted in this PR and in
--- 20260714235406 / 20260803190000 / 20270515010000), drop triggers trg_guard_company_workspace_flag
+-- four predicates and create_contact_v2 to their reviewed pre-apply definitions (the current
+-- contact body is 20270519005000, not the pre-contact-methods body), drop triggers trg_guard_company_workspace_flag
 -- trg_guard_company_workspace_membership and both trg_guard_company_workspace_invitation, restore
 -- sync_user_role_to_tenant_member (as last defined in 20270506000000; the prior body differs only in the
 -- admin branch), and drop functions guard_company_workspace_flag(),
@@ -129,8 +134,12 @@ DECLARE
   -- Compared as JSON, so a malformed stored value can never make this trigger throw.
   _was boolean := TG_OP = 'UPDATE' AND COALESCE(OLD.features -> 'system_workspace' = 'true'::jsonb, false);
   _now boolean := COALESCE(NEW.features -> 'system_workspace' = 'true'::jsonb, false);
+  _was_company boolean := _was AND OLD.parent_tenant_id IS NULL
+    AND COALESCE(OLD.account_type = 'standalone', false);
+  _now_company boolean := _now AND NEW.parent_tenant_id IS NULL
+    AND COALESCE(NEW.account_type = 'standalone', false);
 BEGIN
-  IF _now IS NOT DISTINCT FROM _was THEN
+  IF _now IS NOT DISTINCT FROM _was AND _now_company IS NOT DISTINCT FROM _was_company THEN
     RETURN NEW;
   END IF;
   -- Trusted: the platform owner, or a direct server context. Not service_role (see header).
@@ -145,7 +154,7 @@ REVOKE ALL ON FUNCTION public.guard_company_workspace_flag() FROM PUBLIC, anon, 
 
 DROP TRIGGER IF EXISTS trg_guard_company_workspace_flag ON public.tenants;
 CREATE TRIGGER trg_guard_company_workspace_flag
-  BEFORE INSERT OR UPDATE OF features ON public.tenants
+  BEFORE INSERT OR UPDATE OF features, account_type, parent_tenant_id ON public.tenants
   FOR EACH ROW EXECUTE FUNCTION public.guard_company_workspace_flag();
 
 -- ── 2b. Membership in a company workspace is the platform owner's alone ───────
@@ -204,7 +213,7 @@ $$;
 REVOKE ALL ON FUNCTION public.guard_company_workspace_invitation() FROM PUBLIC, anon, authenticated;
 DROP TRIGGER IF EXISTS trg_guard_company_workspace_invitation ON public.tenant_invite_tokens;
 CREATE TRIGGER trg_guard_company_workspace_invitation
-  BEFORE INSERT OR UPDATE OF tenant_id ON public.tenant_invite_tokens
+  BEFORE INSERT OR UPDATE OF tenant_id, kind ON public.tenant_invite_tokens
   FOR EACH ROW EXECUTE FUNCTION public.guard_company_workspace_invitation();
 DROP TRIGGER IF EXISTS trg_guard_company_workspace_invitation ON public.invitations;
 CREATE TRIGGER trg_guard_company_workspace_invitation

@@ -62,7 +62,7 @@ describe("Paige Chat canonical CRM adoption", () => {
       properties: {
         first_name: expect.any(Object),
         last_name: expect.any(Object),
-        phone: expect.any(Object),
+        contact_methods: expect.any(Object),
         lifecycle_stage: {
           type: "string",
           enum: [
@@ -73,6 +73,12 @@ describe("Paige Chat canonical CRM adoption", () => {
       },
     });
     expect(patch).not.toHaveProperty("properties.name");
+    // The generated registry (contact-methods series) replaced the bare email/phone fields with
+    // contact_methods; the merged schema keeps that removal while carrying the INT-140 name
+    // requirements. Either regression — bare phone returning, or contact_methods dropping —
+    // must fail here.
+    expect(patch).not.toHaveProperty("properties.email");
+    expect(patch).not.toHaveProperty("properties.phone");
   });
 
   it("canonicalizes the exact legacy create-contact shape before approval or execution", async () => {

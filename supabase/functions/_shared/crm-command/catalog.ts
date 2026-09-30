@@ -35,10 +35,6 @@ export type CanonicalCrmCommand<T extends Record<string, unknown> = Record<strin
   T & { readonly [canonicalCrmCommandBrand]: true };
 export const CRM_COMMAND_CANONICAL_IDENTITY_FIELD = "__paige_canonical_identity_v1" as const;
 export const CRM_COMMAND_LEGACY_DISPLAY_FIELD = "__paige_legacy_display_v1" as const;
-export const CRM_TOOL_TO_ACTION = Object.freeze(Object.fromEntries(
-  Object.entries(CRM_ACTION_CAPABILITY).map(([action, capability]) => [capability, action]),
-)) as Readonly<Record<CrmCapability, CrmAction>>;
-export const CRM_COMMAND_TOOL_NAMES = new Set<CrmCapability>(Object.keys(CRM_TOOL_TO_ACTION) as CrmCapability[]);
 
 const CONTACT_NAME_FIELDS = ["first_name", "last_name"] as const;
 const fingerprintArgsByCanonicalCommand = new WeakMap<object, Record<string, unknown>>();

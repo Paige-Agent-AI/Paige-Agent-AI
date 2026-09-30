@@ -99,10 +99,23 @@ function credentialMaterial(auth: McpAuth, serverUrl: string): string[] {
  *  echoes our secret is not healthy: the caller rejects the WHOLE catalog rather than store any of it. */
 export function intakeReflectsCredential(tools: McpToolFingerprint[], auth: McpAuth, serverUrl: string): boolean {
   const secrets = credentialMaterial(auth, serverUrl);
-  if (secrets.length === 0) return false;
+  const headerValues = Object.values(auth.headers ?? {});
+  // Supplementary values can be short configuration such as a region. Long values use the same
+  // substring defense as tokens; short values match whole lexical tokens, not e.g. "us" in
+  // "customers". This is a reflection defense, not a claim to detect encoded/covert exfiltration.
+  const reflectsHeader = (field: string) => headerValues.some(value => {
+    if (value.length >= MIN_SECRET_SCAN_LEN) return field.includes(value);
+    if (!value) return false;
+    // Keep punctuation WITHIN a private value intact; inspect only its surrounding boundaries.
+    for (let at = field.indexOf(value); at !== -1; at = field.indexOf(value, at + 1)) {
+      if (!/[A-Za-z0-9]/.test(field[at - 1] ?? "") && !/[A-Za-z0-9]/.test(field[at + value.length] ?? "")) return true;
+    }
+    return false;
+  });
+  if (secrets.length === 0 && headerValues.length === 0) return false;
   for (const t of tools) {
     for (const field of [t.name, t.app, t.actionType, ...(Array.isArray(t.effects) ? t.effects : [])]) {
-      if (typeof field === "string" && secrets.some((s) => field.includes(s))) return true;
+      if (typeof field === "string" && (secrets.some((s) => field.includes(s)) || reflectsHeader(field))) return true;
     }
   }
   return false;

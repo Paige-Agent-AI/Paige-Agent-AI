@@ -1175,6 +1175,20 @@ console.log("\n— slice ①: verify (runVerify) —");
   // scanned RAW and percent-DECODED (writer-side minimum length is the sound completion — Slice ②/INT-153).
   const mkTool = (name, app = "", actionType = "", effects = []) => ({ name, app, actionType, effects, schemaHash: "h", authorityHash: "h", pin: "h" });
   const bearerAuth = (t) => ({ kind: "bearer", token: t });
+  check("supplementary credential reflection is rejected",
+    verifyMod.intakeReflectsCredential([mkTool("echo_test-private-workspace")],
+      { ...bearerAuth("supersecrettoken12"), headers: { "X-Workspace": "test-private-workspace" } }, "https://public.example/x"));
+  check("short supplementary values are rejected when echoed as a field or token",
+    verifyMod.intakeReflectsCredential([mkTool("region_us")],
+      { kind: "none", headers: { "X-Region": "us" } }, "https://public.example/x"));
+  check("short configuration values do not collide with substrings in ordinary tool names",
+    !verifyMod.intakeReflectsCredential([mkTool("list_customers")],
+      { kind: "none", headers: { "X-Region": "us" } }, "https://public.example/x"));
+  for (const value of ["abc-def", "a.b", "a/b", "a b", "a+b"]) {
+    check("short punctuated header values remain literal during reflection checks",
+      verifyMod.intakeReflectsCredential([mkTool(`prefix_${value}_suffix`)],
+        { kind: "none", headers: { "X-Private": value } }, "https://public.example/x"));
+  }
   check("reflection helper catches a long bearer token echoed into a tool name",
     verifyMod.intakeReflectsCredential([mkTool("echo_supersecrettoken12")], bearerAuth("supersecrettoken12"), "https://public.example/x") === true);
   check("reflection helper does NOT false-positive a short token against ordinary tool names (Codex P2 — no collision DoS)",
@@ -1287,6 +1301,18 @@ console.log("\n— slice ②: create (runCreate) —");
   check("readCreateInput maps snake_case body → typed input", parsed.facet === "mcp" && parsed.providerKey === "generic-remote" && parsed.serverUrl === "https://public.example/mcp" && parsed.authToken === "supersecrettoken12" && parsed.expectedTenantId === "ten-x", JSON.stringify(parsed));
   check("readCreateInput coerces an empty string to null and filters a non-string out of oauth_scopes", parsed.visibility === null && Array.isArray(parsed.oauthScopes) && parsed.oauthScopes.length === 2 && parsed.oauthScopes.every((s) => typeof s === "string"), JSON.stringify(parsed.oauthScopes));
   const parsedEmpty = createMod.readCreateInput({}, null);
+  check("explicit malformed header input is not silently discarded",
+    createMod.readCreateInput({ custom_headers: null }, null).customHeaders === null);
+  createCalls.length = 0;
+  const headerBody = await createMod.runCreate({ userClient: makeCreateUser({ mcpResult: { data: {
+    connection_id: NEWID, status: "pending_verification", address_configured: true,
+    credentials_configured: true, custom_header_count: 1, config_generation: 1,
+    custom_headers: { "X-Workspace": "test-private-workspace" },
+  }, error: null } }) }, inMcp({ customHeaders: { "X-Workspace": "test-private-workspace" } }));
+  check("create forwards headers only to canonical writer", createCalls[0].params._custom_headers["X-Workspace"] === "test-private-workspace");
+  check("create acknowledges persisted presence/count/generation without returning values",
+    headerBody.body.address_configured === true && headerBody.body.credentials_configured === true && headerBody.body.custom_header_count === 1
+    && headerBody.body.config_generation === 1 && !JSON.stringify(headerBody.body).includes("test-private-workspace"));
   check("readCreateInput on an empty body → facet '' (→ unsupported_facet), all fields null", parsedEmpty.facet === "" && parsedEmpty.label === null && parsedEmpty.apiKey === null && parsedEmpty.expectedTenantId === null, JSON.stringify(parsedEmpty));
 }
 

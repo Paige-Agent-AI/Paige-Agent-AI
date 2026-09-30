@@ -3,6 +3,10 @@ import { currentHarnessTenantId } from './tenant-context-stub';
 const mode = () => new URLSearchParams(window.location.search).get('data') || 'empty';
 const apiRows = new Map<string, Record<string, unknown>>();
 const mcpRows = new Map<string, Record<string, unknown>>();
+// Synthetic canonical records for shared-form browser proof. Never retain submitted secrets.
+const savedGatewayRows = new Map<string, Array<Record<string, unknown>>>();
+const gatewayCalls: Array<{ action: unknown; connectionId?: unknown }> = [];
+Object.defineProperty(window, '__mcpHarnessCalls', { get: () => gatewayCalls });
 const none = () => ({ configured: false, status: 'unconfigured' });
 const emptyApi = (tenant: string) => ({tenant_id:tenant,can_write:mode()!=='readonly',configured:false,label:null,base_url:null,health:'not_configured',failure_code:null,workflow_count:null,checked_at:null,last_success_at:null});
 function apiRow() {
@@ -18,6 +22,7 @@ function mcpRow(){
 /** Gateway tool rows, keyed to the same `?data=` vocabulary the rest of this stub uses. */
 function gatewayRows(){
  const tenant=currentHarnessTenantId();
+ if(savedGatewayRows.has(tenant)) return mode()==='readback-fail' ? [] : savedGatewayRows.get(tenant)!;
  if(tenant.endsWith('-b')||mode()==='empty')return [];
  const base={provider_key:'generic-remote',transport:'http',auth_kind:'bearer',configured:true,enabled:true,visibility:'tenant',granted_scopes:[] as string[]};
  if(mode()==='oauth-return')return [{...base,connection_id:'00000000-0000-4000-8000-000000000021',label:'Test service',auth_kind:'none',status:'pending_verification',health:'unknown',server_url_host:'service.example',last_checked_at:null,tool_count:0,approved_count:0}];
@@ -66,7 +71,7 @@ const pending:Array<()=>void>=[];
 window.addEventListener('n8n-harness-finish',()=>pending.splice(0).forEach(f=>f()));
 const delayed=(run:()=>Record<string,unknown>)=>mode()==='pending'?new Promise(resolve=>pending.push(()=>resolve({data:run(),error:null}))):ok(run());
 export const supabase={
- rpc:(name:string)=>{
+ rpc:(name:string,args:Record<string,unknown>={})=>{
   if(name==='get_n8n_connection_readiness')return mode()==='error'||mode()==='mcp-error'?fail('fixture-read-refused'):ok({tenant_id:currentHarnessTenantId(),can_manage:mode()!=='readonly',api:{},mcp:{state:mcpRow()?.configured?'oauth_needed':'not_configured',auth_kind:mcpRow()?.auth_kind??null,oauth_readiness:'ready',approved_workflow_count:0,approved_tool_count:0,server_url:'https://harness.example.invalid/mcp-server/http'}});
   if(name==='get_tenant_n8n_api_readiness')return mode()==='error'||mode()==='api-error'?fail('fixture-read-refused'):ok(apiRow());
   if(name==='get_tenant_mcp_connections')return mode()==='error'||mode()==='mcp-error'?fail('fixture-read-refused'):ok({n8n:mcpRow(),zapier:none()});
@@ -78,7 +83,15 @@ export const supabase={
  // with {data:null}, which trips the hook's acknowledgement guard, so the harness silently
  // rendered a generic refusal on a path the unit tests prove works — a wrong SHAPE, not a
  // wrong value, and therefore invisible.
- if(name==='set_mcp_connection_endpoint')return ok({connection_id:'harness-shell-1',status:'pending_verification'});
+ if(name==='set_mcp_connection_endpoint'){
+  const tenant=currentHarnessTenantId();
+  const rows=gatewayRows();const found=rows.find(row=>row.connection_id===args._connection_id);
+  if(!found)return ok({ok:false,error:'not_found'});
+  const generation=Number(found.config_generation??0)+1;
+  Object.assign(found,{config_generation:generation,address_configured:true,credentials_configured:Boolean(args._auth_token),custom_header_count:Object.keys(args._custom_headers as object??{}).length,auth_kind:args._auth_kind,status:'pending_verification',last_checked_at:null});
+  savedGatewayRows.set(tenant,rows);
+  return ok({connection_id:args._connection_id,config_generation:generation});
+ }
  // Anything else is a gap in this fixture or a bug in the caller. It must be loud: a silent
  // null-shaped success is how a renamed RPC passes for a working one.
  return fail('unstubbed rpc: '+name);
@@ -93,7 +106,19 @@ export const supabase={
   // is locked because `set_mcp_connection_endpoint` carries no label — can be rendered at all.
   // Without a refusal the flow navigates to a provider and the state is unreachable in a harness.
   if(name==='mcp-gateway'){
-   if(body.action==='create')return ok({connection_id:'harness-shell-1',status:'pending_verification'});
+   gatewayCalls.push({action:body.action,connectionId:body.connection_id});
+   if(body.action==='create'){
+    if(mode()==='gateway-save-fail')return ok({ok:false,error:'MCP_FORBIDDEN'});
+    const rows=gatewayRows(); const id='harness-saved-'+(rows.length+1);
+    savedGatewayRows.set(tenant,[...rows,{connection_id:id,label:body.label,provider_key:'generic-remote',transport:'http',auth_kind:body.auth_kind,configured:true,enabled:true,status:'pending_verification',health:'unknown',server_url_host:new URL(String(body.server_url)).hostname,config_generation:1,address_configured:true,credentials_configured:Boolean(body.auth_token),custom_header_count:Object.keys(body.custom_headers as object??{}).length,last_checked_at:null,tool_count:0,approved_count:0}]);
+    return ok({connection_id:id,config_generation:1,status:'pending_verification'});
+   }
+   if(body.action==='verify'){
+    const found=gatewayRows().find(row=>row.connection_id===body.connection_id);
+    if(!found)return ok({ok:false,error:'not_found'});
+    Object.assign(found,{status:'connected',health:'healthy',last_checked_at:'2026-09-29T12:00:00Z'});
+    return ok({ok:true,connection_id:body.connection_id,tool_count:0});
+   }
    if(body.action==='oauth_begin')return mode()==='signin-fail'
     ?ok({error:'discovery_failed'})
     :ok({authorize_url:'https://provider.example.invalid/authorize?harness=1'});

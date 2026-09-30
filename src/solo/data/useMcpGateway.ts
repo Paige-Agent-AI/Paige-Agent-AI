@@ -262,6 +262,8 @@ export type GatewayWriteResult = {
   code: string | null;
   message: string | null;
   connectionId?: string | null;
+  /** Persisted writer generation, used only to match safe readback. */
+  configGeneration?: number | null;
   status?: string | null;
   /** last-4 is only ever present here (a create/re-key response), never in the list read. */
   last4?: string | null;
@@ -533,6 +535,7 @@ function interpretWrite(data: Record<string, unknown>): GatewayWriteResult {
     code: null,
     message: null,
     connectionId,
+    configGeneration: count(data.config_generation),
     status: str(data.status),
     last4: str(data.auth_token_last4),
     // `mode` is the disconnect writer's soft/hard answer, so it is only ever set on the RPC lane.
@@ -620,6 +623,8 @@ function readList(value: unknown): GatewayConnection[] | null {
 }
 
 export type UseMcpGateway = McpGatewayState & {
+  /** Fresh canonical read; null means this exact saved configuration was not confirmed. */
+  confirmSaved: (connectionId: string, generation: number | null) => Promise<GatewayConnection | null>;
   createMcp: (draft: CreateMcpDraft) => Promise<GatewayWriteResult>;
   createRest: (draft: CreateRestDraft) => Promise<GatewayWriteResult>;
   /** Run the read-only probe: handshake the server, load its tool catalogue, persist the result. */
@@ -680,8 +685,8 @@ export function useMcpGateway(): UseMcpGateway {
     setState({ ...EMPTY });
   }
 
-  const load = useCallback(async () => {
-    if (tenantLoading) return;
+  const load = useCallback(async (): Promise<GatewayConnection[] | null> => {
+    if (tenantLoading || !activeTenantId || !activeUserId) return null;
     const token = gate.current.begin();
     const answers = (await Promise.all([
       // Reads take NO tenant argument — the server derives the tenant. (Locked by the settings
@@ -695,7 +700,7 @@ export function useMcpGateway(): UseMcpGateway {
     const list = rpcResult(answers[0]);
     const admin = rpcResult(answers[1]);
 
-    if (!mounted.current || scopeRef.current !== scope || !gate.current.isCurrent(token)) return;
+    if (!mounted.current || scopeRef.current !== scope || !gate.current.isCurrent(token)) return null;
     setLoadedScope(scope);
     if (list.error) {
       // A failed READ is never rendered as "no connections" — that would lie about the account.
@@ -707,7 +712,7 @@ export function useMcpGateway(): UseMcpGateway {
         saving: pendingMutation.current,
         writeError: prev.writeError,
       }));
-      return;
+      return null;
     }
     const parsed = readList(list.data);
     if (parsed === null) {
@@ -720,7 +725,7 @@ export function useMcpGateway(): UseMcpGateway {
         saving: pendingMutation.current,
         writeError: prev.writeError,
       }));
-      return;
+      return null;
     }
     setState((prev) => ({
       tools: parsed,
@@ -730,7 +735,17 @@ export function useMcpGateway(): UseMcpGateway {
       saving: pendingMutation.current,
       writeError: prev.writeError,
     }));
-  }, [scope, tenantLoading]);
+    return parsed;
+  }, [scope, tenantLoading, activeTenantId, activeUserId]);
+
+  const confirmSaved = useCallback(async (connectionId: string, generation: number | null) => {
+    // A missing/old deployment contract cannot be promoted into confirmation by matching only ID.
+    if (generation === null || !Number.isSafeInteger(generation) || generation < 0) return null;
+    const rows = await load();
+    if (!mounted.current || scopeRef.current !== scope) return null;
+    return rows?.find((row) => row.id === connectionId && row.configGeneration === generation
+      && row.addressConfigured === true && row.enabled) ?? null;
+  }, [load, scope]);
 
   useEffect(() => {
     mounted.current = true;
@@ -1183,6 +1198,7 @@ export function useMcpGateway(): UseMcpGateway {
   return {
     ...visible,
     createMcp,
+    confirmSaved,
     createRest,
     verify,
     beginOAuth,

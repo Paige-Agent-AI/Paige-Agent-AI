@@ -116,6 +116,55 @@ afterEach(() => {
 });
 
 describe("useMcpGateway", () => {
+  it("confirms a save only from fresh same-connection, same-generation safe readback", async () => {
+    await mount();
+    h.rpc.mockImplementation(defaultRpc({ list: { data: [row("A", {
+      config_generation: 3, address_configured: true, credentials_configured: true,
+    })], error: null } }));
+    let confirmed;
+    await act(async () => { confirmed = await latest().confirmSaved("id-A", 3); });
+    expect(confirmed).toMatchObject({ id: "id-A", configGeneration: 3, addressConfigured: true });
+    await act(async () => { confirmed = await latest().confirmSaved("id-A", 4); });
+    expect(confirmed).toBeNull();
+    await act(async () => { confirmed = await latest().confirmSaved("id-missing", 3); });
+    expect(confirmed).toBeNull();
+    await act(async () => { confirmed = await latest().confirmSaved("id-A", null); });
+    expect(confirmed).toBeNull();
+    expect(h.invoke).not.toHaveBeenCalled();
+  });
+
+  it("failed or missing persisted readback cannot confirm a saved connection", async () => {
+    await mount();
+    for (const list of [{ data: null, error: { code: "offline" } }, { data: [], error: null }]) {
+      h.rpc.mockImplementation(defaultRpc({ list }));
+      let confirmed;
+      await act(async () => { confirmed = await latest().confirmSaved("id-A", 3); });
+      expect(confirmed).toBeNull();
+    }
+    expect(h.invoke).not.toHaveBeenCalled();
+  });
+
+  it.each(["tenant", "user"] as const)("rejects late saved readback after a %s switch", async (field) => {
+    await mount();
+    let resolve!: (value: unknown) => void;
+    const deferred = new Promise((done) => { resolve = done; });
+    h.rpc.mockImplementation((name: string) => name === "get_mcp_connections_v2"
+      ? deferred : builder({ data: true, error: null }));
+    let pending!: ReturnType<UseMcpGateway["confirmSaved"]>;
+    await act(async () => { pending = latest().confirmSaved("id-A", 3); });
+    h[field] = "next";
+    h.rpc.mockImplementation(defaultRpc({ list: listOk(["B"]) }));
+    await rerender();
+    let confirmed;
+    await act(async () => {
+      resolve({ data: [row("A", { config_generation: 3, address_configured: true })], error: null });
+      confirmed = await pending;
+    });
+    expect(confirmed).toBeNull();
+    expect(latest().tools.map((tool) => tool.label)).toEqual(["B"]);
+    expect(h.invoke).not.toHaveBeenCalled();
+  });
+
   it("retains only safe credential presence and generation from canonical readback", async () => {
     await mount();
     h.rpc.mockImplementation(defaultRpc({ list: { data: [row("A", {

@@ -43,13 +43,31 @@ const priorFetch = globalThis.fetch;
 let observedUrl = "";
 let observedModel = "";
 let observedVoice = "";
-let observedSignal: AbortSignal | null | undefined;
+const priorWebSocket = globalThis.WebSocket;
+let socketUrl = "";
+const socketFrames: Record<string, unknown>[] = [];
+class FakeMouthSocket {
+  onopen: (() => void) | null = null;
+  onmessage: ((event: { data: string }) => void) | null = null;
+  onerror: (() => void) | null = null;
+  onclose: (() => void) | null = null;
+  constructor(url: string) { socketUrl = url; queueMicrotask(() => this.onopen?.()); }
+  send(raw: string) {
+    const frame = JSON.parse(raw);
+    socketFrames.push(frame);
+    if (frame.close_socket) queueMicrotask(() => {
+      this.onmessage?.({ data: JSON.stringify({ audio: "AQI=" }) });
+      this.onmessage?.({ data: JSON.stringify({ is_final: true }) });
+    });
+  }
+  close() { /* local fake, no network */ }
+}
+globalThis.WebSocket = FakeMouthSocket as unknown as typeof WebSocket;
 env.ELEVENLABS_API_KEY = "local-presence-only";
 globalThis.fetch = async (input, init) => {
   observedUrl = String(input);
   observedModel = String(JSON.parse(String(init?.body)).model_id);
   observedVoice = String(init?.headers && (init.headers as Record<string, string>)["xi-api-key"]);
-  observedSignal = init?.signal;
   return new Response(new Uint8Array([1, 2, 3]), { status: 200 });
 };
 try {
@@ -57,10 +75,13 @@ try {
   ok("TTS transport requires no-retention mode and exact voice", observedUrl.includes("/g6xIsTj2HwM6VR4iXFCw?enable_logging=false") && observedVoice === "local-presence-only");
   ok("TTS transport defaults to conversational v3", observedModel === "eleven_v3_conversational");
   const cancel = new AbortController();
-  const audio = await elevenlabsSpeechStream({ text: "A first sentence.", voiceId: "g6xIsTj2HwM6VR4iXFCw" }, cancel.signal);
-  ok("live mouth uses cancellable PCM compatible with the existing browser player", observedUrl.includes("/g6xIsTj2HwM6VR4iXFCw/stream?enable_logging=false&output_format=pcm_16000") && observedSignal === cancel.signal && audio.body !== null);
+  const audio = await elevenlabsSpeechStream({ text: "A first sentence.", voiceId: "g6xIsTj2HwM6VR4iXFCw", retentionPolicy: "default_provider_retention" }, cancel.signal);
+  ok("live mouth uses documented dialogue WSS and authorized default retention", socketUrl === "wss://api.elevenlabs.io/v1/text-to-dialogue/stream-input?model_id=eleven_v3_conversational&output_format=pcm_16000&enable_logging=true");
+  ok("live mouth registers exact voice and keeps credential out of the URL", eq(socketFrames[0], { voices: ["g6xIsTj2HwM6VR4iXFCw"], xi_api_key: "local-presence-only" }) && !socketUrl.includes("local-presence-only"));
+  ok("live mouth preserves PCM bytes for the existing browser player", eq(Array.from(new Uint8Array(await audio.arrayBuffer())), [1, 2]));
 } finally {
   globalThis.fetch = priorFetch;
+  globalThis.WebSocket = priorWebSocket;
   delete env.ELEVENLABS_API_KEY;
 }
 

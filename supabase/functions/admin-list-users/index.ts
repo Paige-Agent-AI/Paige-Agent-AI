@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
     }
     const roleList = (roles || []).map((r: { role: string }) => r.role);
     const isPlatformOwner = roleList.includes("super_admin");
-    if (!roleList.includes("admin") && !roleList.includes("coach") && !isPlatformOwner) {
+    if (!roleList.includes("admin") && !isPlatformOwner) {
       return json({ error: "Forbidden" }, 403);
     }
 

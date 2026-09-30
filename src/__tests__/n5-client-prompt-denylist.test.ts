@@ -23,6 +23,181 @@ import {
 // denylists. It lives in its own shared module (extracted from paige-ai-chat/index.ts)
 // so this test scans the exact string the edge function sends (§32: green build ≠ proof).
 import { PAIGE_VOICE_BLOCK } from "../../supabase/functions/_shared/paige-voice.ts";
+import * as voice from "../../supabase/functions/_shared/paige-voice.ts";
+import { readFileSync } from "node:fs";
+import ts from "typescript";
+
+describe("INT-104 Live final-answer streaming preserves the canonical tool gate", () => {
+  const code = readFileSync("supabase/functions/paige-ai-chat/index.ts", "utf8");
+  const source = ts.createSourceFile("chat.ts", code, ts.ScriptTarget.Latest, true);
+  const find = (predicate: (node: ts.Node) => boolean): ts.Node => {
+    let found: ts.Node | undefined;
+    const visit = (node: ts.Node) => { if (found) return; if (predicate(node)) found = node; else ts.forEachChild(node, visit); };
+    visit(source); if (!found) throw new Error("Production seam not found"); return found;
+  };
+  const js = (body: string) => ts.transpileModule(body, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None } }).outputText;
+  const initializer = (name: string) => (find((n) => ts.isVariableDeclaration(n) && n.name.getText(source) === name) as ts.VariableDeclaration).initializer!.getText(source);
+  it("uses a private decision instruction only on verified non-document Live rounds", () => {
+    const messages = [{ role: "user", content: "Hello" }];
+    const make = new Function("liveRuntimeScope", "attachedDocument", js(`return ${initializer("liveDecisionMessages")};`));
+    expect(make(null, null)(messages)).toBe(messages);
+    expect(make({}, {})(messages)).toBe(messages);
+    const decision = make({}, null)(messages);
+    expect(decision).toHaveLength(2);
+    expect(decision[1].content).toContain("Do not draft the user-facing answer here");
+    expect(messages).toHaveLength(1);
+    const start = code.indexOf('finalStreamResponse = await gatewayCompat');
+    const closing = code.slice(start, code.indexOf('traceFor(', start));
+    expect(closing.includes('messages: convo, stream: true')).toBe(true);
+    expect(/tools:|tool_choice:/.test(closing)).toBe(false);
+  });
+  it("does not replay decision-round prose for a verified Live turn", () => {
+    const gate = find((n) => ts.isIfStatement(n) && n.expression.getText(source) === "!hasToolCall").getText(source);
+    const run = new Function("liveRuntimeScope", js(`let finalChunks=null,finalAssistantText='',liveAnswerPending=false;const hasToolCall=false,allChunks=['decision'],content='not an answer';for(let i=0;i<1;i++){${gate}}return {finalChunks,finalAssistantText,liveAnswerPending};`));
+    expect(run({})).toEqual({ finalChunks: null, finalAssistantText: "", liveAnswerPending: true });
+    expect(run(null)).toEqual({ finalChunks: ["decision"], finalAssistantText: "not an answer", liveAnswerPending: false });
+    expect(code.match(/!finalChunks && \(forcedTermination \|\| liveAnswerPending\) && !tenantKnowledgeScopeInvalidated/g)).toHaveLength(2);
+  });
+  it("does not mistake early prose followed by a late tool call for an answer", async () => {
+    const consume = new Function(js(`return ${initializer("consumeRound")};`))();
+    let upstream!: ReadableStreamDefaultController<Uint8Array>;
+    const stream = new ReadableStream<Uint8Array>({ start(c) { upstream = c; } });
+    let completed = false;
+    const result = consume(new Response(stream)).then((r: { hasToolCall: boolean }) => { completed = true; return r; });
+    const enc = new TextEncoder();
+    upstream.enqueue(enc.encode('data: {"choices":[{"delta":{"content":"Done."}}]}\n\n'));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(completed).toBe(false);
+    upstream.enqueue(enc.encode('data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call","function":{"name":"governed_write","arguments":"{}"}}]},"finish_reason":"tool_calls"}]}\n\ndata: [DONE]\n\n'));
+    upstream.close();
+    expect((await result).hasToolCall).toBe(true);
+  });
+  it.each([false, true])("streams only the tools-free final answer, preserving protected hold=%s", async (protectedTurn) => {
+    const branch = find((n) => ts.isIfStatement(n) && n.expression.getText(source) === "finalStreamResponse?.ok && finalStreamResponse.body") as ts.IfStatement;
+    const body = (branch.thenStatement as ts.Block).statements.map((n) => n.getText(source)).join("\n");
+    const heldContent: Uint8Array[] = [], emitted: Uint8Array[] = [];
+    const emit = new Function("turnCarriesProtectedContent", "heldContent", js(`return ${initializer("emitContent")};`))(() => protectedTurn, heldContent);
+    let upstream!: ReadableStreamDefaultController<Uint8Array>;
+    const response = new Response(new ReadableStream<Uint8Array>({ start(c) { upstream = c; } }));
+    const run = new Function("finalStreamResponse", "controller", "emitContent", js(`return (async()=>{let finalAssistantText='';const liveRuntimeScope={};${body};return finalAssistantText;})();`));
+    const answer = run(response, { enqueue(c: Uint8Array) { emitted.push(c); } }, emit);
+    const enc = new TextEncoder();
+    upstream.enqueue(enc.encode('data: {"choices":[{"delta":{"content":"First sentence."}}]}\n\n'));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(emitted.length).toBe(protectedTurn ? 0 : 1);
+    expect(heldContent.length).toBe(protectedTurn ? 1 : 0);
+    upstream.enqueue(enc.encode('data: {"choices":[{"delta":{"content":" Next sentence."}}]}\n\ndata: [DONE]\n\ndata: {"choices":[{"delta":{"content":" must be ignored"}}]}\n\n'));
+    upstream.close();
+    expect(await answer).toBe("First sentence. Next sentence.");
+    if (protectedTurn) expect(emitted).toEqual([]);
+  });
+  it.each(["First sentence.", ""])("keeps already-issued safe cards when Live fails with text=%j", async (text) => {
+    const caught = find((n) => ts.isCatchClause(n) && n.getText(source).includes('[paige] live reasoning stream failed:')) as ts.CatchClause;
+    const meta = { surfaces: ["client"], bundleRef: { approval_queued: [{ id: "approval" }], paige_confirm: [{ tool: "governed_write" }], paige_crm_result: [{ outcome: "success", receipt_recorded: true }] } };
+    const persisted: unknown[] = [];
+    // The catch also reports what became of the turn's approvals (emitApprovalOutcome); a no-op here.
+    const run = new Function("finalAssistantText", "assistantTurnMetadata", "persistAssistantTurn", "turnCarriesProtectedContent", "revalidateTenantKnowledgeScope", "console",
+      js(`return (async()=>{const liveRuntimeScope={},payloadThreadId='thread',enc=new TextEncoder(),controller={enqueue(){}},discardContent=()=>{},emitApprovalOutcome=async()=>{};try{throw Error('fixture')}catch(e)${caught.block.getText(source)}})();`));
+    await run(text, () => meta, async (content: string, metadata: unknown) => persisted.push({ content, metadata }), () => false, async () => true, { error() {} });
+    expect(persisted).toEqual([{ content: text, metadata: meta }]);
+    for (const [protectedTurn, validScope] of [[true, true], [false, false]]) {
+      persisted.length = 0;
+      await run(text, () => meta, async (content: string) => persisted.push(content), () => protectedTurn, async () => validScope, { error() {} });
+      expect(persisted).toEqual([]);
+    }
+  });
+  it("writes a receipt-only assistant turn without inventing spoken text", async () => {
+    const writes: unknown[] = [];
+    const make = new Function("payloadThreadId", "supabaseClient", "maybeRefreshSummary", "console", js(`return ${initializer("persistAssistantTurn")};`));
+    const persist = make("thread", { rpc: async (_name: string, args: unknown) => { writes.push(args); }, from() { throw Error("no title in fixture"); } }, async () => {}, { error() {} });
+    const bundleRef = { paige_crm_result: [{ outcome: "success", receipt_recorded: true }] };
+    await persist("", { bundleRef });
+    expect(writes).toHaveLength(1);
+    expect(writes[0]).toMatchObject({ p_content: "", p_bundle_ref: bundleRef });
+    await persist("", { bundleRef: null });
+    expect(writes).toHaveLength(1);
+  });
+  it("shares the success projection and drops CRM readback and locator from history", () => {
+    const make = new Function("stepTrace", "queuedApprovals", "confirmTrace", "crmResultTrace", js(`return ${initializer("assistantTurnMetadata")};`));
+    const result = { action: "crm_update", outcome: "success", receipt_recorded: true, external_effect: false, readback: { private: "fixture" }, record_locator: "private-fixture", contact_id: "private-fixture" };
+    const project = make([{ kind: "thought", group: "owner" }, { kind: "action", group: "client" }, { kind: "action", group: "client" }], [], [], [result]);
+    expect(project()).toEqual({ surfaces: ["client"], bundleRef: { approval_queued: [], paige_confirm: [], paige_crm_result: [{ action: "crm_update", outcome: "success", receipt_recorded: true, external_effect: false }] } });
+    expect(code).toContain("persistAssistantTurn(finalAssistantText, assistantTurnMetadata())");
+  });
+  it.each([false, true].flatMap((protectedTurn) => ["reject", "eof", "error-frame", "enqueue-reject", "non-ok", "bodyless", "empty-done", "whitespace-done"].map((ending) => ({ protectedTurn, ending }))))("settles an interrupted Live stream without success or transcript loss, %j", async ({ protectedTurn, ending }) => {
+    const branch = find((n) => ts.isIfStatement(n) && n.expression.getText(source) === "finalStreamResponse?.ok && finalStreamResponse.body") as ts.IfStatement;
+    const body = branch.getText(source);
+    const caught = find((n) => ts.isCatchClause(n) && n.getText(source).includes('[paige] live reasoning stream failed:')) as ts.CatchClause;
+    const heldContent: Uint8Array[] = [], emitted: Uint8Array[] = [], persisted: string[] = [];
+    const emit = new Function("turnCarriesProtectedContent", "heldContent", js(`return ${initializer("emitContent")};`))(() => protectedTurn, heldContent);
+    let upstream!: ReadableStreamDefaultController<Uint8Array>;
+    const hasStream = !["non-ok", "bodyless"].includes(ending);
+    const response = hasStream ? new Response(new ReadableStream<Uint8Array>({ start(c) { upstream = c; } }))
+      : new Response(null, { status: ending === "non-ok" ? 503 : 200 });
+    // An interrupted Live answer still says what became of the turn's approvals, before the error
+    // frame the Live client settles on (paige_approval_outcome, _shared/approval-outcome.ts).
+    const outcomeReports: string[] = [];
+    const run = new Function("finalStreamResponse", "controller", "emitContent", "turnCarriesProtectedContent", "discardContent", "persistAssistantTurn", "revalidateTenantKnowledgeScope", "console", "assistantTurnMetadata", "emitApprovalOutcome",
+      js(`return (async()=>{let finalAssistantText='';const liveRuntimeScope={},payloadThreadId='thread',enc=new TextEncoder();try{${body}}catch(e)${caught.block.getText(source)}})();`));
+    const settled = run(response, { enqueue(c: Uint8Array) { emitted.push(c); } },
+      ending === "enqueue-reject" ? () => { throw new Error("fixture-enqueue-rejected"); } : emit, () => protectedTurn,
+      () => { heldContent.length = 0; }, async (text: string) => { persisted.push(text); }, async () => true, { error() {} }, () => ({ surfaces: [], bundleRef: null }),
+      async () => { outcomeReports.push(emitted.map((c) => new TextDecoder().decode(c)).join("")); });
+    if (hasStream) {
+      const content = ending === "empty-done" ? "" : ending === "whitespace-done" ? "   " : "First sentence.";
+      upstream.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ choices: [{ delta: { content } }] })}\n\n`));
+      await new Promise((r) => setTimeout(r, 0));
+      if (ending === "reject") upstream.error(new Error("fixture-stream-interrupted"));
+      else {
+        if (ending === "error-frame") upstream.enqueue(new TextEncoder().encode('data: {"error":"fixture"}\n\ndata: [DONE]\n\n'));
+        if (ending.endsWith("-done")) upstream.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
+        upstream.close();
+      }
+    }
+    await settled;
+    const wire = emitted.map((c) => new TextDecoder().decode(c)).join("");
+    expect(wire.includes('[DONE]')).toBe(false);
+    expect(persisted).toEqual(protectedTurn || !hasStream || ending === "enqueue-reject" || ending.endsWith("-done") ? [] : ["First sentence."]);
+    expect(heldContent).toEqual([]);
+    expect(wire.includes('paige_live_error')).toBe(true);
+    // Once, and before the error frame: the card that asked is answered before the answer ends.
+    expect(outcomeReports).toHaveLength(1);
+    expect(outcomeReports[0].includes('paige_live_error')).toBe(false);
+  });
+});
+
+describe("INT-104 S5 — authenticated Live delivery uses the existing voice home", () => {
+  const chat = readFileSync("supabase/functions/paige-ai-chat/index.ts", "utf8");
+  it("adds spoken delivery only for the server-verified Live scope, never ordinary text", () => {
+    const line = chat.split(/\r?\n/).find((line) => line.includes('content: PAIGE_LIVE_SPOKEN_STYLE'));
+    expect(line).toBeDefined();
+    const assemble = new Function("liveRuntimeScope", "PAIGE_LIVE_SPOKEN_STYLE", `return [${line}]`);
+    expect(assemble(null, voice.PAIGE_LIVE_SPOKEN_STYLE)).toEqual([]);
+    expect(assemble({ turnId: "verified-turn" }, voice.PAIGE_LIVE_SPOKEN_STYLE))
+      .toEqual([{ role: "system", content: voice.PAIGE_LIVE_SPOKEN_STYLE }]);
+    expect(chat.indexOf("liveRuntimeScope = scope;")).toBeGreaterThan(chat.indexOf("if (claimError || !claimed)"));
+  });
+
+  it("keeps the spoken register tenant-neutral, short, expressive and authority-preserving", () => {
+    const style = voice.PAIGE_LIVE_SPOKEN_STYLE;
+    expect(typeof style).toBe("string");
+    expect(style).toContain("first complete sentence");
+    expect(style).toContain("1-3 sentences");
+    expect(style).toContain("tenant-authored persona");
+    expect(style).toContain("distress");
+    expect(style).toContain('A spoken "yes" is review input, never approval');
+    expect(style).toContain("Never claim a save, summary, sent message or completed action without its receipt");
+    expect(CREDIT_DENYLIST.test(style)).toBe(false);
+    expect(CREDIT_PROGRAM_DENYLIST.test(style)).toBe(false);
+  });
+
+  it("retires the old text-marker trigger and unsupported post-call promises", () => {
+    expect(chat.includes('look for "VOICE_MODE: true"')).toBe(false);
+    expect(chat.includes("I'll add a summary of what we discussed to your chat")).toBe(false);
+    expect(chat.includes("the extraction card will appear in their chat after the call ends")).toBe(false);
+    expect(chat.match(/content: PAIGE_LIVE_SPOKEN_STYLE/g)).toHaveLength(1);
+  });
+});
 
 // --- Chainable Supabase mock. Every builder method returns `this`; `this` is
 // thenable (resolves to {data: list, count}); `.maybeSingle()` resolves to

@@ -7,8 +7,11 @@
  * hard invariants are not weakened. The PURE decision primitive (confirmIdentityValue) is proven
  * behaviourally in confirm-fingerprint.test.ts; the authenticated end-to-end battery (benign
  * dismissal, batch resolve, expired/replayed/forged/cross-tenant, receipt/Rail, no-outbound) is
- * PROOF OWED against the deployed surface (§32.c) — recorded, not faked.
+ * PROOF OWED against the deployed surface (§32.c) — recorded, not faked. One part is no longer only
+ * a source-assertion: the refusal of an id the executor cannot address is EXECUTED on the real
+ * handler in CI by scripts/client-memory-authz (checks 18.ID1–ID8).
  */
+import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { describe, it, expect } from "vitest";
 
@@ -28,12 +31,14 @@ describe("FIX A — a batch is disambiguated by the stable subject id, WITHIN th
   it("narrows the APPROVED-SET lookup by the call's subject id — never widens what is claimable", () => {
     // The narrowing filter is applied to the same query that is scoped `.in("fingerprint", approvedConfirmations)`,
     // so it can only ever select a proposal the operator already approved.
-    expect(gate).toContain('.in("fingerprint", [...approvedConfirmations])');
+    expect(gate).toContain('.in("fingerprint", [...approvedConfirmations].map((token) => token.split(":")[0]))');
+    expect(gate).toContain('if (token && approvedConfirmations.has(token))');
     // The jsonb-text narrow uses the proven `.filter(col,"eq",val)` form (not `.eq` shorthand).
     expect(gate).toContain('lookup = lookup.filter(`args->>${identityKey}`, "eq", identityVal)');
     // The narrowed claim still requires exactly one match and that it is in the approved set.
     expect(gate).toContain("matches?.length === 1");
-    expect(gate).toContain("approvedConfirmations.has(matches[0].fingerprint)");
+    expect(gate).toContain("approvedConfirmations.has(selected.fingerprint)");
+    expect(gate).toContain("exactMatches.length === 1");
   });
 
   it("the narrowed claim still runs STORED args (I2) — the gate overwrites arguments with the approved call", () => {
@@ -76,9 +81,7 @@ describe("FIX B — an ambiguous approval ends in ONE truthful terminal, never a
   it("only fires when the operator is approving AND the batch is genuinely ambiguous (never on a first ask)", () => {
     // Primary signal: the approved-set lookup found ≥1 but resolved no single fingerprint.
     expect(gate).toContain("approvedSetAmbiguous = true");
-    expect(gate).toContain("let ambiguousApproval = approvedSetAmbiguous");
-    // The typed-yes (no card) branch only considers it ambiguous at ≥2 live proposals.
-    expect(gate).toContain("(pendRows?.length ?? 0) >= 2");
+    expect(gate).toContain("const ambiguousApproval = approvedSetAmbiguous");
   });
 
   it("GUARD (adversary #2): ambiguity is only flagged on an actual approval attempt, not a fresh confirm:false", () => {
@@ -86,13 +89,15 @@ describe("FIX B — an ambiguous approval ends in ONE truthful terminal, never a
   });
 });
 
-describe("GUARD (adversary #1) — the model's word can only claim on a CARD-LESS surface", () => {
-  it("by-scope (claimBy=null) is gated on approvedConfirmations.size === 0 — never when a card was echoed", () => {
-    // When the surface echoed approvals, only the echoed fingerprint (surfaceApproved) may claim; the
-    // model-asserted by-scope path cannot reach an unapproved leftover proposal.
-    expect(gate).toContain("(modelAsserted && !highRisk && approvedConfirmations.size === 0)");
-    // high-risk is still never model-asserted (I6), independent of this guard.
-    expect(gate).toContain("modelAsserted && !highRisk");
+describe("approval-path hardening", () => {
+  it("contract A", () => {
+    expect(gate).toContain("approvedFingerprint !== undefined");
+    expect(gate).toContain("await claimConfirmation(approvedFingerprint, tc.function.name)");
+    expect(HANDLER).toContain("!approvedConfirmations.has(fp)");
+    expect(gate).not.toContain("claimBy");
+    expect(HANDLER).not.toContain("if (fp === null)");
+    expect(HANDLER).toContain('const nonce = await selectedConfirmationNonce(fp, tool)');
+    expect(HANDLER).toContain('.eq("fingerprint", fp.split(":")[0]).eq("issued_in_request", nonce)');
   });
 
   it("the terminal NEVER executes — it only pushes a success:false tool result and continues", () => {
@@ -120,14 +125,109 @@ describe("FIX C — a bug-report/improvement that cannot be filed says so; it ne
   });
 
   it("the role refusal instructs an honest 'nothing was filed' report (never a false 'filed')", () => {
-    expect(imp).toContain("Improvement proposals are restricted to admins and coaches.");
+    expect(imp).toContain("Improvement proposals are restricted to admins.");
     expect(imp).toContain("Nothing was filed");
   });
 
   it("still WRITES only for an authorized caller with a resolved tenant (gate not weakened)", () => {
     // The insert is still guarded by the role check and a non-null impTenantId above it.
-    expect(imp).toContain("if (!(isAdmin || isCoach))");
+    expect(imp).toContain("if (!isAdmin) {");
+    expect(imp).not.toContain("isCoach");
     expect(imp).toContain('.from("paige_improvement_proposals").insert(');
     expect(imp).toContain("tenant_id: impTenantId");
+  });
+});
+
+describe("THE SHORTENED-ID HALF — an id the executor cannot address never becomes a card (2026-09-26)", () => {
+  // 2026-09-13, production: with the fingerprint stable again, Paige sent a shortened action id, the
+  // operator approved, the approval was claimed, and advance_action cast the prefix to uuid and
+  // failed 22P02 — 13 proposals, 0 dismissals. The shape itself is proven behaviourally (and against
+  // production's own uuid input) in confirm-fingerprint.test.ts; these pin that BOTH doors use it.
+  const mint = HANDLER.indexOf("const recorded = await recordConfirmation(fp, tc.function.name, gateArgs, summary);");
+  const refuseAtMint = HANDLER.indexOf("const idProblem = unaddressableConfirmArgs(tc.function.name, gateArgs);");
+  const dispatch = HANDLER.indexOf('} else if (tc.function.name === "action_advance") {');
+  const rpc = HANDLER.indexOf('supabaseClient.rpc("advance_action"', dispatch);
+  const refuseAtDispatch = HANDLER.indexOf('const idProblem = unaddressableConfirmArgs("action_advance", args);', dispatch);
+
+  it("imports the shape check and its one refusal from the gate's home (§18)", () => {
+    expect(HANDLER).toMatch(
+      /import\s*\{[^}]*\bunaddressableConfirmArgs\b[^}]*\bunaddressableArgsRefusal\b[^}]*\}\s*from\s*["']\.\.\/_shared\/confirm-fingerprint\.ts["']/,
+    );
+  });
+
+  it("refuses at the proposal door BEFORE anything is recorded — no card, no spent approval", () => {
+    expect(refuseAtMint).toBeGreaterThan(gateStart);
+    expect(mint).toBeGreaterThan(refuseAtMint);
+    const between = HANDLER.slice(refuseAtMint, mint);
+    expect(between).toContain('JSON.stringify(unaddressableArgsRefusal(idProblem, "proposal"))');
+    expect(between).toContain("continue;");
+  });
+
+  it("refuses at dispatch BEFORE the cast, for the lanes that never pass the gate", () => {
+    expect(dispatch).toBeGreaterThan(-1);
+    expect(refuseAtDispatch).toBeGreaterThan(dispatch);
+    expect(rpc).toBeGreaterThan(refuseAtDispatch);
+    expect(HANDLER.slice(refuseAtDispatch, rpc)).toContain('JSON.stringify(unaddressableArgsRefusal(idProblem, "dispatch"))');
+  });
+
+  it("tells the model the complete-id contract where it reads the tool, for both tools that cast it", () => {
+    expect(HANDLER).toMatch(/name: "action_advance"[\s\S]{0,900}action_id: \{ type: "string", description: "The COMPLETE paige_actions id/);
+    expect(HANDLER).toMatch(/name: "action_get"[\s\S]{0,500}action_id: \{ type: "string", description: "The COMPLETE paige_actions id/);
+  });
+});
+
+describe("the write trail skips only what declares it never ran", () => {
+  // The first fix keyed the skip on `executed: false`, which n8n management writes already return for
+  // a write that DID happen (no workflow run), so every such write would have left the audit trail.
+  // The marker is its own field, and only the refusal produces it.
+  it("keys the skip on refused_before_run, never on executed", () => {
+    expect(HANDLER).toContain("out?.refused_before_run === true) return;");
+    expect(HANDLER).not.toMatch(/out\?\.executed === false\) return;/);
+  });
+
+  it("no other edge code produces the marker", () => {
+    // One producer; everything else that names it only reads it: the audit skip, and the approval
+    // card's outcome (approval-outcome.ts, which reports such a call as not run).
+    const producers = execSync("grep -rlE 'refused_before_run: ?true' supabase/functions --include=*.ts", { encoding: "utf8" })
+      .trim().split("\n").sort();
+    expect(producers).toEqual(["supabase/functions/_shared/confirm-fingerprint.ts"]);
+    const mentions = execSync("grep -rl 'refused_before_run' supabase/functions --include=*.ts", { encoding: "utf8" })
+      .trim().split("\n").sort();
+    expect(mentions).toEqual([
+      "supabase/functions/_shared/approval-outcome.ts",
+      "supabase/functions/_shared/confirm-fingerprint.ts",
+      "supabase/functions/paige-ai-chat/index.ts",
+    ]);
+  });
+});
+
+describe("no refusal sends the operator to a control that is not on screen (2026-09-26)", () => {
+  // After Approve the card is gone — PaigeAIChat.approvalRecovery.test.tsx drives the real surface
+  // and proves it. So a note may FORBID these instructions but must never GIVE them. The general
+  // gate said "approve the actions one at a time"; #1450 replaced that on the CRM door with "press
+  // Not now to clear them", which was the same mistake.
+  it("no note instructs 'approve one at a time' or 'press Not now'", () => {
+    expect(HANDLER).not.toMatch(/they can approve (?:the actions|them) one at a time/);
+    expect(HANDLER).not.toMatch(/they can press Not now/);
+  });
+
+  // Matching two phrasings let a third through: the CRM door's lookup_failed note said "they can
+  // approve it again", after Approve, with the card gone (found by the §39 peer-gate on #1458). So
+  // every terminal note is read whole. Only a "Do NOT …" sentence may name a control.
+  const operatorNotes = [...HANDLER.matchAll(/note: "(Say this to the operator[^"]*)"/g)].map((m) => m[1]);
+
+  it("finds every terminal note it guards", () => {
+    expect(operatorNotes.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it("no terminal note tells the operator to approve or press anything", () => {
+    for (const note of operatorNotes) {
+      expect(note.replace(/Do NOT[^.]*\./g, "")).not.toMatch(/\b(approve|press|click|tap)\b/i);
+    }
+  });
+
+  it("both ambiguous terminals name the recovery that exists — asking again", () => {
+    expect(HANDLER).toContain("if they still want it they can ask you again.");
+    expect(HANDLER).toContain("and they can ask you again for the one they want.");
   });
 });

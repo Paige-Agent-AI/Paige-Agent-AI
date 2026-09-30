@@ -44,14 +44,13 @@ Deno.serve(async (req) => {
   // alone therefore authorises nothing about WHICH workflow may be triggered.
   // The caller's tenant is resolved server-side and used to scope the lookup
   // below; it is never taken from the request body.
-  const [{ data: isAdmin }, { data: isCoach }, { data: callerTenantId }, { data: isOperator }] =
+  const [{ data: isAdmin }, { data: callerTenantId }, { data: isOperator }] =
     await Promise.all([
       admin.rpc("has_role", { _user_id: user.id, _role: "admin" }),
-      admin.rpc("has_role", { _user_id: user.id, _role: "coach" }),
       userClient.rpc("current_user_tenant_id"),
       userClient.rpc("is_platform_operator"),
     ]);
-  if (!isAdmin && !isCoach) return jsonRes({ error: "forbidden" }, 403);
+  if (!isAdmin) return jsonRes({ error: "forbidden" }, 403);
 
   let body: { registry_key: string; payload?: Record<string, unknown> };
   try { body = await req.json(); } catch { return jsonRes({ error: "invalid_json" }, 400); }

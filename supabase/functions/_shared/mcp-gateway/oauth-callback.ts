@@ -60,25 +60,25 @@ function errorLocation(appOrigin: string, detail: string): string {
   return url.toString();
 }
 
-/** Land on the connecting tenant's own Connections surface, resolved from the account type + number the
- *  grant writer returned (canonical route contract). Falls closed to login if unresolvable — never a
- *  guessed or shared address. The destination carries only `mcp=connected` + the connection id. */
-function connectedLocation(appOrigin: string, accountType: unknown, accountNumber: unknown, connectionId: string): string {
+/** Only the persisted, server-selected destination can route a callback. It is an address,
+ * not authority: the mounted shell and connection read still resolve the signed-in account. */
+function returnPath(pending: Record<string, unknown>): string | null {
+  const tier = String(pending.account_type ?? "") as CanonicalTier;
+  const destination = tier === "solo" || tier === "standalone" ? "integrations"
+    : tier === "agency" || tier === "sub_account" ? "connections" : null;
+  if (!destination || pending.return_destination !== destination) return null;
   let path: string | null = null;
   try {
     path = resolveCanonicalAppPath({
       actor: "account",
-      tier: String(accountType ?? "") as CanonicalTier,
-      account: (typeof accountNumber === "number" || typeof accountNumber === "string") ? accountNumber : null,
-      destination: "connections",
+      tier,
+      account: (typeof pending.account_number === "number" || typeof pending.account_number === "string") ? pending.account_number : null,
+      destination,
     });
   } catch {
     path = null;
   }
-  const url = new URL(path ? `${appOrigin}${path}` : `${appOrigin}/auth?mode=login`);
-  url.searchParams.set("mcp", "connected");
-  url.searchParams.set("connection", connectionId);
-  return url.toString();
+  return path;
 }
 
 /**
@@ -105,11 +105,9 @@ export async function runOauthCallback(
   const stateRefusal = (internal: "state_invalid" | "state_error"): OauthCallbackResult =>
     ({ status: 302, location: errorLocation(origin, "state_invalid"), outcome: internal });
 
-  // A provider denial or a malformed callback: nothing to consume, so no legitimate in-flight flow can
-  // be burned. (An error redirect carries no state to spend.) These are pre-redemption conditions that
-  // reveal nothing about the state store, so they keep their own closed detail.
-  if (query.error) return err("access_denied");
-  if (!query.code || !query.state) return err("missing_params");
+  // OAuth error redirects carry state too. Redeem it before returning cancellation; otherwise a
+  // abandoned consent remains redeemable and loses its safe recovery destination.
+  if (!query.state || (!query.code && !query.error)) return err("missing_params");
   const code = query.code;
   const state = query.state;
 
@@ -125,7 +123,9 @@ export async function runOauthCallback(
   //     stranded "flow spent, no grant, no way forward".
   let pending: Record<string, unknown> | null = null;
   try {
-    const { data, error } = await admin.rpc("consume_mcp_oauth_state", { _state: state });
+    const { data, error } = await admin.rpc("consume_mcp_oauth_state", {
+      _state: state, _purpose: query.error ? "cancel" : "exchange",
+    });
     if (error) return stateRefusal("state_error");
     pending = (data ?? null) as Record<string, unknown> | null;
   } catch {
@@ -146,9 +146,26 @@ export async function runOauthCallback(
   const resource = typeof pending.resource === "string" && pending.resource ? pending.resource : "";
   const verifier = typeof pending.code_verifier === "string" ? pending.code_verifier : "";
   const clientSecret = typeof pending.client_secret === "string" && pending.client_secret ? pending.client_secret : null;
-  if (!tenantId || !connectionId || !issuer || !clientId || !redirectUri || !resource || !verifier) {
+  const stateId = typeof pending.state_id === "string" ? pending.state_id : "";
+  const actor = typeof pending.actor === "string" ? pending.actor : "";
+  const path = returnPath(pending);
+  const requestedScopes = pending.requested_scopes;
+  if (!tenantId || !connectionId || !issuer || !clientId || !redirectUri || !resource || !verifier ||
+      !stateId || !actor || !path || !Number.isSafeInteger(pending.config_generation) ||
+      Number(pending.config_generation) < 1 || !Array.isArray(requestedScopes) ||
+      !requestedScopes.every((scope) => typeof scope === "string")) {
     return stateRefusal("state_invalid");
   }
+  const returned = (outcome: string, result: "connected" | "cancelled" | "error"): OauthCallbackResult => {
+    const url = new URL(`${origin}${path}`);
+    url.searchParams.set("mcp", result);
+    url.searchParams.set("connection", connectionId);
+    if (result === "error") url.searchParams.set("mcp_detail", outcome);
+    return { status: 302, location: url.toString(), outcome };
+  };
+  if (query.error) return query.error === "access_denied"
+    ? returned("access_denied", "cancelled")
+    : returned("authorization_failed", "error");
 
   try {
     // Re-discover the AS from the STORED issuer (issuer-verified in the helper), then exchange the code
@@ -157,17 +174,17 @@ export async function runOauthCallback(
     // steers the exchange except the code itself.
     const server = await ops.discoverAuthorizationServer(issuer);
     const tokens = await ops.exchangeCode({
-      server, clientId, clientSecret, redirectUri, code, verifier, resource,
+      server, clientId, clientSecret, redirectUri, code: code!, verifier, resource,
       // RFC 6749 §5.1: an omitted response `scope` means "identical to requested"; oauth_begin requested
-      // this same server's advertised scopes, so this is the exact requested set (honest, never a widening).
-      requestedScopes: server.scopesSupported,
+      // the persisted begin-time set, not discovery metadata that may have changed during consent.
+      requestedScopes: requestedScopes as string[],
     });
 
     // Persist through the service-role, connection-keyed grant writer. §9/§59: it re-verifies in-body that
     // the connection is in this tenant, re-keys auth_kind->oauth, stores the tokens encrypted, records the
     // granted scopes, resets to pending_verification (so the shipped verify action proves it next), and
-    // returns the tenant's routing address for the landing. _actor is null: a provider redirect has no
-    // authenticated user; the grant is tenant-scoped and the row's state change IS the record.
+    // revalidates the persisted actor and configuration generation under lock. No actor or state ID
+    // from the browser participates; a replay/rekey/disconnect/revoked membership cannot write a grant.
     const { data: grant, error } = await admin.rpc("complete_mcp_oauth_grant", {
       _connection_id: connectionId,
       _tenant_id: tenantId,
@@ -178,19 +195,17 @@ export async function runOauthCallback(
       _oauth_client_secret: clientSecret,
       _oauth_scopes: tokens.scopes,
       _access_token_expires_at: tokens.expiresAt,
-      _actor: null,
+      _actor: actor,
+      _state_id: stateId,
     });
-    if (error) return err("persist_failed");
-
-    const g = (grant ?? {}) as { account_type?: unknown; account_number?: unknown };
-    return {
-      status: 302,
-      location: connectedLocation(origin, g.account_type, g.account_number, connectionId),
-      outcome: "connected",
-    };
+    if (error || grant?.connection_id !== connectionId || grant?.status !== "pending_verification") {
+      return returned("persist_failed", "error");
+    }
+    // A saved authorization is not verified connectivity; the UI re-reads the canonical row.
+    return returned("connected", "connected");
   } catch (e) {
     // OAuthError carries a closed code (token_exchange_failed / issuer_mismatch / …); anything else is an
     // internal fault. Never the provider's body — that is where tokens live.
-    return err(e instanceof OAuthError ? e.code : "exchange_failed");
+    return returned(e instanceof OAuthError ? e.code : "exchange_failed", "error");
   }
 }

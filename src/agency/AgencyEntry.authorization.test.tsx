@@ -83,7 +83,7 @@ describe("AgencyEntry server-resolved authority", () => {
   it("routes platform staff to the governed operator context without probing agency authority", async () => {
     state.context.isPlatformStaff = true;
     await mount("/agency/2222222/clients");
-    expect(host.querySelector('[data-testid="location"]')?.textContent).toBe("/operator/fleet/tenants");
+    expect(host.querySelector('[data-testid="location"]')?.textContent).toBe("/operator/fleet/directory");
     expect(state.rpc).not.toHaveBeenCalled();
   });
 

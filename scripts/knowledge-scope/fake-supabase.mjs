@@ -38,6 +38,11 @@ class QueryBuilder {
   // the table) is what lets a check prove an unordered LIMIT 1 pick is gone.
   select(...a) { this._filters.push(["select", a[0]]); return this; }
   insert(row) { this._op = "insert"; this._recorder.inserts.push({ table: this._table, row }); return this; }
+  // Real postgrest-js has this, and traceLLMCall calls `.insert(record).abortSignal(sig)`. Without it
+  // the expression THROWS before the `{ error }` destructure, lands in that function's swallowing
+  // catch, and every assertion here passes without the write path ever executing. Mirrors
+  // scripts/client-memory-authz/fake-supabase.mjs:92.
+  abortSignal(sig) { void sig; this._filters.push(["abortSignal"]); return this; }
   update(row) { this._op = "update"; this._recorder.inserts.push({ table: this._table, row, update: true }); return this; }
   upsert(row) { this._op = "upsert"; this._recorder.inserts.push({ table: this._table, row, upsert: true }); return this; }
   delete() { this._op = "delete"; return this; }

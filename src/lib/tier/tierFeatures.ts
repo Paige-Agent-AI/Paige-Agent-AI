@@ -104,6 +104,27 @@ export type Feature =
   // Enterprise inherits it via the Solo union (harmless — enterprise renders a
   // different shell); agency/god render different shells and don't carry it.
   | "trust_compass"
+  // Live Conversation — speaking with Paige in real time, on the tenant's own workspace and
+  // book. SOLO for now, mirroring `trust_compass` above and for the same reason: the standing
+  // owner ruling of 2026-09-06 defers sub-account delivery until an explicit release, and the
+  // owner named Solo when he asked for this ("I want this to be available for my solo tier for
+  // all of my users", 2026-09-23). Opening it wider is a one-line edit here plus the matching
+  // server scope — it is not a rebuild, which is the point of declaring it as a tier feature at
+  // all. Enterprise inherits it through the Solo union below; harmless, as enterprise renders a
+  // different shell (same posture as trust_compass).
+  //
+  // WHERE THIS IS ENFORCED (§60's honesty clause — name the layer, do not imply one). NOT here.
+  // The database answers: `live_conversation_tier_allows(tenant_id)` (migration 20270422000000)
+  // derives the same question from tier, and `paige_live_pilot_authorized_internal` refuses
+  // admission on every path including the service role. This declaration is how a SURFACE asks
+  // whether to render the entry point; it grants nothing. A brand-new Solo tenant satisfies the
+  // server predicate the moment it is provisioned, with no operator action and no per-account row.
+  //
+  // ALSO NOT A LICENCE TO SPEAK. Tier eligibility is one of three independent conditions. The
+  // rollout scope (`paige_voice_readiness.pilot_rollout_scope`, a setting that names no person)
+  // and the subject's own acceptance both still apply, and the provider gate is unresolved, so
+  // this ships with the scope at 'off' and refuses everyone until that one value changes.
+  | "live_conversation"
   // Parent-tier only.
   | "subaccount_management"
   // Operator only.
@@ -223,6 +244,7 @@ const SOLO_FEATURES: ReadonlySet<Feature> = new Set<Feature>([
   "agreement_signing", // and can send that client an agreement to sign
   "skills", // §61 self-use — solo runs the skills engine on its own book
   "trust_compass", // Solo governs its own per-capability autonomy (Command Center 3rd sub-tab)
+  "live_conversation", // Solo can speak with Paige in real time on its own workspace (server-enforced)
 ]);
 
 const SUB_ACCOUNT_FEATURES: ReadonlySet<Feature> = new Set<Feature>([

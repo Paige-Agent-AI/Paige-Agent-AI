@@ -1,0 +1,10 @@
+{
+  "harness": "paige-chat-mount",
+  "results": [
+    {
+      "name": "BEFORE (base commit's panel, the pipeline's frame): the uploader read the step name and the pipeline's own text",
+      "ok": true,
+      "detail": "ed (0)Credit factors recalculatedFunding readiness updatedError: Failed to parse extracted data (step: extraction_parse)"
+    }
+  ]
+}

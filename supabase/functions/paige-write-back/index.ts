@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { z } from "https://esm.sh/zod@3.22.4";
 import { resolveTenantForUser } from "../_shared/tenant-for-user.ts";
+import { phoneOrAddressText, setUserPrimaryAddress } from "../_shared/user-contact-methods.ts";
 import {
   authorizeWriteBackTarget,
   decideWriteBack,
@@ -55,7 +56,8 @@ const ALLOWED_FIELDS: Record<string, { table: string; column: string; type: "str
   "profile.state": { table: "profiles", column: "state", type: "string" },
   "profile.address": { table: "profiles", column: "address", type: "string" },
   "profile.postal_code": { table: "profiles", column: "postal_code", type: "string" },
-  "profile.phone": { table: "profiles", column: "phone", type: "string" },
+  // A person's phone is a contact method, not a profiles column: it becomes their primary phone.
+  "profile.phone": { table: "_user_contact_method", column: "phone", type: "string" },
   // Intake / goal discovery fields (written by Paige after the intake conversation)
   "intake.primary_goal": { table: "profiles", column: "primary_goal", type: "string" },
   "intake.primary_goal_category": { table: "profiles", column: "primary_goal_category", type: "string" },
@@ -273,18 +275,6 @@ serve(async (req) => {
             .maybeSingle();
           return !!client;
         },
-        // The direct coach↔client assignment, kept exactly as the prior guard had it — now behind the
-        // same-tenant bond, so it can never reach across workspaces.
-        coachAssigned: async (coachUserId, t) => {
-          const { data } = await supabase
-            .from("coach_clients")
-            .select("id")
-            .eq("coach_user_id", coachUserId)
-            .eq("client_user_id", t)
-            .eq("status", "active")
-            .maybeSingle();
-          return !!data;
-        },
       };
 
       const authz = await authorizeWriteBackTarget(authzDeps, { callerUserId: user.id, targetUserId });
@@ -500,6 +490,18 @@ serve(async (req) => {
           } else {
             results.push({ field_path: update.field_path, success: false, error: "Unknown intake operation" });
           }
+        } else if (table === "_user_contact_method") {
+          // The value becomes the person's primary address of that kind; the addresses they
+          // already hold stay on their list.
+          // A number is a phone written without formatting (the schema accepts one), so it is
+          // written as its digits.
+          const phone = phoneOrAddressText(update.field_value);
+          if (phone === "") {
+            results.push({ field_path: update.field_path, success: false, error: "A phone number is required" });
+            continue;
+          }
+          await setUserPrimaryAddress(supabase, targetUserId, "phone", phone);
+          results.push({ field_path: update.field_path, success: true });
         } else if (table === "profiles") {
           // intake.intake_responses comes through as a string from the JSON-only schema —
           // try to parse it back into an object so it lands as JSONB.

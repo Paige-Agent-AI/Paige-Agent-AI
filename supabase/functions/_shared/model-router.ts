@@ -251,6 +251,11 @@ export async function routedChatCompletion(jobKind: JobKind, body: OpenAIStyleBo
     const usage = resp?.usage ?? {};
     const tokensIn = usage.prompt_tokens ?? null;
     const tokensOut = usage.completion_tokens ?? null;
+    // Cache counts are recorded but NOT priced here — pricing cached tokens moves a shipped cost cap
+    // and is a separate, owner-visible decision. Recording them first is what makes that decision
+    // answerable with data instead of instinct.
+    const cacheRead = usage.cache_read_input_tokens ?? null;
+    const cacheCreate = usage.cache_creation_input_tokens ?? null;
     traceLLMCall({
       tenant_id: trace?.tenant_id ?? null,
       task_id: trace?.task_id ?? null,
@@ -264,6 +269,8 @@ export async function routedChatCompletion(jobKind: JobKind, body: OpenAIStyleBo
       status,
       tokens_in: tokensIn,
       tokens_out: tokensOut,
+      cache_read_input_tokens: cacheRead,
+      cache_creation_input_tokens: cacheCreate,
       latency_ms: Date.now() - started,
       cost_estimate_usd: status === "success"
         ? (estimateCost(provider, "text", tokensIn ?? undefined, tokensOut ?? undefined, resp?.model ?? null) ?? null)
@@ -459,6 +466,8 @@ async function claudeText(task: unknown, model?: string): Promise<ProviderCallRe
     model: resp?.model ?? (tier === "reasoning" ? CLAUDE_REASONING : CLAUDE_CLASSIFICATION),
     tokens_in: resp?.usage?.prompt_tokens,
     tokens_out: resp?.usage?.completion_tokens,
+    cache_read_input_tokens: resp?.usage?.cache_read_input_tokens,
+    cache_creation_input_tokens: resp?.usage?.cache_creation_input_tokens,
     latency_ms: Date.now() - started,
   };
 }
@@ -885,7 +894,7 @@ export async function callModel(
   //      client (offline/no service context) → no ledger to read → ungated, like audit/persist.
   const budgetBand: BudgetBand = (opts.is_customer_send || opts.is_approval_decision)
     ? "sensitive"
-    : (tier === "reasoning" ? "reasoning" : "cheap");
+    : (tier === "frontier" ? "reasoning" : "cheap");
   let budgetCheck: BudgetDecision | null = null;
   const budgetAdmin = getAdmin();
   if (budgetAdmin) {
@@ -1120,6 +1129,8 @@ export async function callModel(
     status: "success",
     tokens_in: result.tokens_in ?? null,
     tokens_out: result.tokens_out ?? null,
+    cache_read_input_tokens: result.cache_read_input_tokens ?? null,
+    cache_creation_input_tokens: result.cache_creation_input_tokens ?? null,
     latency_ms: result.latency_ms,
     cost_estimate_usd: cost ?? null,
     input: text,

@@ -43,6 +43,9 @@ async function sha256Hex(input: string): Promise<string> {
   return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+// Roles that no invitation may grant any longer.
+const RETIRED_ROLES = new Set<string>(["coach"]);
+
 const ROLE_DASHBOARD: Record<string, string> = {
   broker: "/broker/app",
   affiliate: "/app/affiliate",
@@ -62,7 +65,7 @@ async function dashboardFor(role: string, tenantId?: string | null): Promise<str
   if (!tenant) return "/login";
   const destination: CanonicalDestination = role === "sales_rep"
     ? "pipeline"
-    : role === "coach" || role === "cs_rep"
+    : role === "cs_rep"
       ? "contacts"
       : "home";
   return resolveCanonicalAppPath({
@@ -318,6 +321,19 @@ Deno.serve(async (req) => {
         return json(403, { ok: false, error: "This invite cannot be accepted here. Contact your administrator." });
       }
 
+      // "Coach" is a title a business gives its people, never a role anyone is granted. An
+      // invitation still carrying the retired role is refused before any change is made.
+      if (RETIRED_ROLES.has(team.role)) {
+        await admin.from("audit_logs").insert({
+          user_id: authUser.id,
+          entity: "invitation",
+          action: "invite_rejected_retired_role",
+          entity_id: team.id,
+          data: { email: team.email },
+        }).then(() => {}, () => {});
+        return json(403, { ok: false, error: "This invite is no longer valid. Ask your administrator for a new one." });
+      }
+
       // A staff/team invite may only grant membership on a NON-agency tenant
       // (mirrors accept_tenant_invite's staff-branch guard). Agency/enterprise
       // authority must come through the agency-team invite flow — a staff
@@ -372,7 +388,7 @@ Deno.serve(async (req) => {
         .upsert({ user_id: authUser.id, role: team.role }, { onConflict: "user_id,role" });
 
       if (team.tenant_id && team.role !== "super_admin") {
-        const tenantRole = team.role === "admin" ? "admin" : team.role === "coach" ? "coach" : "member";
+        const tenantRole = team.role === "admin" ? "admin" : "member";
         await admin
           .from("tenant_members")
           .upsert(

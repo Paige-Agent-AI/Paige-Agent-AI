@@ -4,7 +4,8 @@
 // affected-set (INT-105 / edge-affected.py import closure) — until now those modules shipped to
 // nothing.
 //
-// ACTIONS: `verify` (Slice ①) + `create` + `oauth_begin` (Slice ②) + `approve` + `execute` (Slice ③).
+// ACTIONS: `verify` (Slice ①) + `create` + `oauth_begin` (Slice ②) + `approve` + `execute` (Slice ③)
+// + `tools` (Door 1 — the per-action catalogue `approve` was always missing a list for).
 // The OAuth flow COMPLETES out of band in the JWT-less `mcp-oauth-callback` edge fn (the provider
 // redirect target — a top-level GET with no JWT cannot be an action on this JWT-gated door; see that
 // function). §18: one gateway door, many actions.
@@ -25,6 +26,7 @@ import { readCreateInput, runCreate } from "../_shared/mcp-gateway/create.ts";
 import { runOauthBegin } from "../_shared/mcp-gateway/oauth.ts";
 import { readApproveInput, runApprove } from "../_shared/mcp-gateway/approve.ts";
 import { readExecuteInput, runExecute } from "../_shared/mcp-gateway/execute.ts";
+import { readToolsInput, runTools } from "../_shared/mcp-gateway/tools.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -102,6 +104,17 @@ Deno.serve(async (req) => {
       { userClient, admin, readToolPin },
       readApproveInput(body, expectedTenantId),
     );
+    return jsonResponse(result.body, result.httpStatus);
+  }
+
+  if (action === "tools") {
+    // READ action, and the ONLY branch that builds no service-role client — deliberately. The RPC
+    // is granted to `authenticated` alone, so the caller's own client IS the authority (§59); an
+    // admin client here would resolve its tenant from the request body, which is the shape the
+    // writers refuse. Membership suffices: the connection list already discloses tool_count and
+    // approved_count to an ordinary member, and this is the per-row expansion of those integers.
+    // Admin standing still gates the WRITE, and still gates owner_only visibility, both in-body.
+    const result = await runTools({ userClient }, readToolsInput(body, expectedTenantId));
     return jsonResponse(result.body, result.httpStatus);
   }
 

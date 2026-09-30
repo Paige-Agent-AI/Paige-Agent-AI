@@ -19,7 +19,8 @@ export const useSessionTimeout = () => {
     }, IDLE_TIMEOUT - WARNING_BEFORE);
 
     timeoutRef.current = setTimeout(async () => {
-      await performSignOut("/auth");
+      // A security sign-out: end an open act-as if possible, but never hold the sign-out for it.
+      await performSignOut({ redirectTo: "/auth", actAs: "attempt" });
     }, IDLE_TIMEOUT);
   }, []);
 

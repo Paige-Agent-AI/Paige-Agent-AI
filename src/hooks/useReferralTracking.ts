@@ -9,7 +9,11 @@
 
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client"; // ADJUST-IF-NEEDED
-import { redactSecretPath, redactSecretSearch } from "./useAnalytics";
+import {
+  redactAttributionValue,
+  redactSecretPath,
+  redactSecretSearch,
+} from "./useAnalytics";
 import {
   saveReferral,
   loadReferral,
@@ -17,6 +21,12 @@ import {
 } from "@/lib/referralStorage";
 
 export { getStoredReferralCode };
+
+/** Attribution params, redacted by the shared mint-shape rule before they leave the browser. */
+function attribution(url: URL, key: string): string | undefined {
+  const raw = url.searchParams.get(key);
+  return raw ? redactAttributionValue(raw) : undefined;
+}
 
 function readUrlParams(): {
   code: string | null;
@@ -42,9 +52,13 @@ function readUrlParams(): {
     // of the three sinks. The wiring test did not catch it, because it asserted against SOURCE
     // TEXT: it looked for the fully-unredacted spelling, which this line never had.
     landingPath: redactSecretPath(url.pathname) + redactSecretSearch(url.search),
-    utmSource: url.searchParams.get("utm_source") ?? undefined,
-    utmMedium: url.searchParams.get("utm_medium") ?? undefined,
-    utmCampaign: url.searchParams.get("utm_campaign") ?? undefined,
+    // ...and then read RAW out of the very search string the line above had just redacted. This
+    // hook posts to `track-referral-click`, a DIFFERENT edge function, so `trackEvent`'s
+    // whole-payload scrub never sees these three values — redacting `landingPath` alone left a
+    // complete invite token reaching a separate table one line below the fix for it.
+    utmSource: attribution(url, "utm_source"),
+    utmMedium: attribution(url, "utm_medium"),
+    utmCampaign: attribution(url, "utm_campaign"),
   };
 }
 

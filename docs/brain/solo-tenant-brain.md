@@ -33,7 +33,7 @@ Flow before and after the existing chat-canonical authority/confirmation gate re
 6. Resolve the active tenant again after the write; a switch stops readback/Rail attribution and returns outcome-unknown.
 7. Re-read `public.get_business_mission` under the current caller scope.
 8. Match canonical Mission id, revision, lifecycle, brief version and every normalized persisted field, including revision reason and explicit lifecycle clears. A missing/failed/mismatched readback writes no Rail and cannot claim success.
-9. Only after a match, call the existing service-role-only `record_capability_run` with the Mission request UUID as the stable run id.
+9. Only after a match, call the existing `record_capability_run` (service-role-only on its 6-argument signature; the 10-argument overload added by `20270107000000` shipped with no ACL and defaults to `EXECUTE TO PUBLIC` — `20270416000000` revokes it, MEASURED 2026-09-24: prod already service-role-only on both signatures; the hole is not live and the migration makes that lock reproducible) with the Mission request UUID as the stable run id.
 10. Return a compact verified outcome context containing source, source reference, revision, lifecycle, source update time, observation time and `current_canonical_revision` freshness.
 
 `freshness=current_canonical_revision` means that exact revision was just read from the canonical projector. It does not claim the owner's Mission content is objectively recent or correct.

@@ -7,8 +7,10 @@
 //   1. The BEHAVIOUR — does `artifactProduced` correctly separate a real artifact from a
 //      200-with-empty-payload (null url, empty drafts, null saved id)? This half runs the real
 //      module, so it is execution proof, not a source grep.
-//   2. The WIRING — is that honest decision actually applied at each of the five creation handlers
-//      in the 11k-line `serve()` handler, which cannot be imported? This half asserts on its source.
+//   2. The WIRING — is that honest decision actually applied at each of the four synchronous creation
+//      handlers in the 11k-line `serve()` handler, which cannot be imported? This half asserts on its
+//      source. The fifth, document_generate, became durable async work in #1431: it returns a work id,
+//      never an artifact, and the persisted-id readback lives in the document worker — asserted below.
 //      Weaker than execution and stated as such: it catches the regression that reverts a handler
 //      to an unguarded `{ success: true }` — the exact §13/§70 defect this slice closes.
 import { readFileSync } from "node:fs";
@@ -155,13 +157,43 @@ describe("WIRING — each creation handler wraps its success in the honesty guar
     expect(src).toMatch(/usableDrafts\(/);
     expect(src).toMatch(/artifactProduced\(\s*["']draft_list["']/);
   });
-  it("content_save, document_generate and growth_page_save guard the saved id", () => {
-    const savedIdGuards = src.match(/artifactProduced\(\s*["']saved_id["']/g) ?? [];
-    // three creation handlers persist a row and must each guard its returned id
-    expect(savedIdGuards.length).toBeGreaterThanOrEqual(3);
+  // One handler's source: from its dispatch branch to the next dispatch branch of ANY name. A count
+  // over the whole file let two Studio image guards stand in for a removed document guard (#1461);
+  // ending the slice at a named neighbour, or starting it at a non-unique marker, would let a guard
+  // from a different handler do the same (§39 finding on this PR). So the marker must be unique and
+  // the slice stops at the very next handler.
+  function handler(name: string) {
+    const marker = `tc.function.name === "${name}") {`;
+    const start = src.indexOf(marker);
+    expect(start, `${name} handler`).toBeGreaterThan(-1);
+    expect(src.indexOf(marker, start + 1), `${name} dispatch marker must be unique`).toBe(-1);
+    const after = start + marker.length;
+    const next = src.slice(after).search(/tc\.function\.name === "[^"]+"\) \{/);
+    expect(next, `a handler after ${name}`).toBeGreaterThan(-1);
+    return src.slice(start, after + next);
+  }
+  it("content_save and growth_page_save each guard the saved id with the honest error", () => {
+    for (const name of ["content_save", "growth_page_save"]) {
+      const body = handler(name);
+      expect(body, name).toMatch(/artifactProduced\(\s*["']saved_id["']/);
+      expect(body, name).toContain("ARTIFACT_ABSENT_ERROR.saved_id");
+    }
   });
-  it("references the honest absent-artifact error at the guarded sites", () => {
-    const uses = src.match(/ARTIFACT_ABSENT_ERROR\.(file_url|draft_list|saved_id)/g) ?? [];
-    expect(uses.length).toBeGreaterThanOrEqual(5);
+  it("draft_marketing_content and generate_image each return the honest error for their shape", () => {
+    expect(handler("draft_marketing_content")).toContain("ARTIFACT_ABSENT_ERROR.draft_list");
+    expect(handler("generate_image")).toContain("ARTIFACT_ABSENT_ERROR.file_url");
+  });
+  it("document_generate never claims an artifact; the durable worker verifies the persisted id", () => {
+    // Chat side: the durable submission returns a work id. A missing one is an honest failure, and
+    // no branch hands back a content id as if a document already exists.
+    const body = handler("document_generate");
+    expect(body).toContain("DURABLE_DOCUMENT_WORK_ID_MISSING");
+    expect(body).toContain("Nothing may be claimed as created");
+    // Any key form: `content_id:`, `"content_id":`, or shorthand `{ content_id }` — but not
+    // `target_content_id` or a read like `accepted.content_id`.
+    expect(body).not.toMatch(/(?<![\w.$])["']?content_id["']?\s*[:,}]/);
+    // Worker side: success is read back from the database and requires the persisted content id.
+    const worker = readFileSync("supabase/functions/paige-document-worker/index.ts", "utf8");
+    expect(worker).toMatch(/work_status !== "succeeded" \|\| !row\.content_id\)[\s\S]{0,80}DURABLE_DOCUMENT_SUCCESS_READBACK_MISSING/);
   });
 });

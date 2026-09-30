@@ -33,6 +33,7 @@ import { resolveGmailAccessToken, gmailSend } from "../_shared/gmail.ts";
 // to it when provider==='smtp' (§18 — not a second 'email' registry entry).
 import { resolveSmtpCreds, smtpSend } from "../_shared/smtp.ts";
 import { runPreSend } from "../_shared/pre-send-pipeline.ts";
+import { CLIENT_CONTACT_METHODS_EMBED, clientAddresses } from "../_shared/contact-methods.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -417,7 +418,7 @@ Deno.serve(async (req) => {
 
   // ── C-1.5: internal-caller branch. The scheduled-send drainer re-enters this fn under a
   //    service-role bearer to RELEASE a queued row (contract §4). A service-role bearer must
-  //    skip the getUser + admin/coach gate (there is no human user) AND the §9 caller-tenant
+  //    skip the getUser + admin gate (there is no human user) AND the §9 caller-tenant
   //    gate (the queued row's own server-derived tenant_id is authoritative). Any OTHER caller
   //    still goes through the full JWT + role gate unchanged (§37 — legacy callers unaffected).
   const internalBearer = auth.replace(/^Bearer\s+/i, "").trim();
@@ -433,8 +434,7 @@ Deno.serve(async (req) => {
     }
     user = u;
     const { data: isAdmin } = await admin.rpc("has_role", { _user_id: u.id, _role: "admin" });
-    const { data: isCoach } = await admin.rpc("has_role", { _user_id: u.id, _role: "coach" });
-    if (!isAdmin && !isCoach) {
+    if (!isAdmin) {
       return new Response(JSON.stringify({ error: "forbidden" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -478,7 +478,8 @@ Deno.serve(async (req) => {
   // the platform default sender is the last resort. This never forks §38.
   let tenantId: string | null = null;
   let draftRow: { status?: string | null; connector_id?: string | null; contact_id?: string | null; thread_key?: string | null; channel_type?: string | null; meta?: Record<string, unknown> | null } | null = null;
-  let contactRow: { tenant_id?: string | null; email?: string | null; phone?: string | null } | null = null;
+  // The contact's workspace and every address it holds (its contact methods).
+  let contactRow: { tenant_id?: string | null; emails: string[]; phones: string[] } | null = null;
   let connectorRow:
     | {
         tenant_id?: string | null; from_address?: string | null; from_name?: string | null;
@@ -574,7 +575,7 @@ Deno.serve(async (req) => {
   if (effectiveContactId) {
     const { data, error: contactError } = await admin
       .from("clients")
-      .select("tenant_id, email, phone")
+      .select(`tenant_id, ${CLIENT_CONTACT_METHODS_EMBED}`)
       .eq("id", effectiveContactId)
       .maybeSingle();
     if (contactError) {
@@ -582,7 +583,9 @@ Deno.serve(async (req) => {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    contactRow = data ?? null;
+    contactRow = data
+      ? { tenant_id: (data as { tenant_id?: string | null }).tenant_id ?? null, ...clientAddresses(data) }
+      : null;
     if (!contactRow) {
       if (isInternal && draftRow?.status === "queued") return await terminalizeScheduledRelease("scheduled_contact_unavailable");
       return new Response(JSON.stringify({ error: "contact_not_found" }), {
@@ -648,7 +651,7 @@ Deno.serve(async (req) => {
   // ── §9 caller-tenant gate — BEFORE any send ──────────────────────────────────
   // tenantId above is resolved from body-referenced rows via the SERVICE-ROLE client
   // (RLS bypassed), and has_role (L116-118) is GLOBAL — so without this bind a
-  // tenant-A admin/coach could pass a tenant-B message_id / contact_id / connector_id
+  // tenant-A admin could pass a tenant-B message_id / contact_id / connector_id
   // and send UNDER TENANT B's verified sender identity (tenant_sender_identity below)
   // and write into B's inbox. Require the resolved tenant to equal the caller's own
   // (JWT-scoped current_user_tenant_id); the platform owner (God) may act cross-tenant
@@ -688,8 +691,13 @@ Deno.serve(async (req) => {
   }
 
   if (effectiveContactId) {
-    const canonicalRecipient = body.channel === "email" ? contactRow?.email : contactRow?.phone;
-    if (!canonicalRecipient || normalizeRecipient(body.channel, canonicalRecipient) !== normalizeRecipient(body.channel, body.to)) {
+    // The recipient must be one of the contact's own addresses for this channel — any of them,
+    // not only the primary: a person reached at their second address is still that person.
+    const contactAddresses = (body.channel === "email" ? contactRow?.emails : contactRow?.phones) ?? [];
+    const recipient = normalizeRecipient(body.channel, body.to);
+    const recipientBelongsToContact = recipient !== "" &&
+      contactAddresses.some((address) => normalizeRecipient(body.channel, address) === recipient);
+    if (!recipientBelongsToContact) {
       if (isInternal && body.message_id && tenantId) {
         // A scheduled row keeps the exact recipient approved when it was queued. If the
         // canonical People address changes before release, never retarget silently and never
@@ -1249,9 +1257,9 @@ Deno.serve(async (req) => {
     //
     // `admin` is service-role, so RLS does not apply here, and
     // `body.conversation_id` arrives from the request and is validated nowhere.
-    // The caller gate above requires only a GLOBAL `admin`/`coach` app_role, and
+    // The caller gate above requires only a GLOBAL `admin` app_role, and
     // `user_roles` has no tenant column (§59) — so without this predicate a
-    // tenant-A coach who performs any successful send could pass tenant B's
+    // tenant-A admin who performs any successful send could pass tenant B's
     // conversation id and flip that row. An unguessable UUID is not access
     // control.
     //

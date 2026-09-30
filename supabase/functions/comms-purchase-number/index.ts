@@ -1,4 +1,4 @@
-// Comms C-2s-B — number MARKETPLACE purchase. JWT-gated; a tenant admin/coach buys a
+// Comms C-2s-B — number MARKETPLACE purchase. JWT-gated; a tenant admin buys a
 // specific number into the tenant's OWN Twilio subaccount, then records it as a
 // tenant_phone_numbers row (source='marketplace'). The tenant never touches Twilio (§36):
 // they click Buy in the marketplace UI and get a working number.
@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-  // ── AuthN + admin/coach gate (§9). Tenant is derived from the JWT, never the body. ──
+  // ── AuthN + admin gate (§9). Tenant is derived from the JWT, never the body. ──
   const auth = req.headers.get("Authorization") ?? "";
   if (!auth) return json({ error: "unauthorized" }, 401);
   const userClient = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: auth } } });
@@ -120,8 +120,7 @@ Deno.serve(async (req) => {
 
   const { data: isOwner } = await userClient.rpc("is_platform_owner");
   const { data: isAdmin } = await admin.rpc("has_role", { _user_id: user.id, _role: "admin" });
-  const { data: isCoach } = await admin.rpc("has_role", { _user_id: user.id, _role: "coach" });
-  if (isOwner !== true && isAdmin !== true && isCoach !== true) {
+  if (isOwner !== true && isAdmin !== true) {
     return json({ error: "forbidden" }, 403);
   }
 

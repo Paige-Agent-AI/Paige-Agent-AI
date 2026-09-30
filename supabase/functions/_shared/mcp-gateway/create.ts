@@ -54,6 +54,8 @@ export type CreateInput = {
   authKind: string | null;
   authToken: string | null;
   authHeaderName: string | null;
+  /** Untrusted map; malformed values must reach the canonical writer's validation, not disappear. */
+  customHeaders?: unknown;
   refreshToken: string | null;
   oauthIssuer: string | null;
   oauthClientId: string | null;
@@ -99,6 +101,7 @@ export function readCreateInput(
     authKind: nonEmptyString(body.auth_kind),
     authToken: nonEmptyString(body.auth_token),
     authHeaderName: nonEmptyString(body.auth_header_name),
+    customHeaders: Object.hasOwn(body, "custom_headers") ? body.custom_headers : {},
     refreshToken: nonEmptyString(body.refresh_token),
     oauthIssuer: nonEmptyString(body.oauth_issuer),
     oauthClientId: nonEmptyString(body.oauth_client_id),
@@ -154,6 +157,7 @@ export async function runCreate(deps: CreateDeps, input: CreateInput): Promise<C
       _auth_kind: input.authKind,
       _auth_token: input.authToken,
       _auth_header_name: input.authHeaderName,
+      _custom_headers: input.customHeaders === undefined ? {} : input.customHeaders,
       _refresh_token: input.refreshToken,
       _oauth_issuer: input.oauthIssuer,
       _oauth_client_id: input.oauthClientId,
@@ -189,6 +193,10 @@ export async function runCreate(deps: CreateDeps, input: CreateInput): Promise<C
       status: row.status,
       endpoint_hash: row.endpoint_hash,
       auth_token_last4: row.auth_token_last4,
+      address_configured: row.address_configured,
+      credentials_configured: row.credentials_configured,
+      custom_header_count: row.custom_header_count,
+      config_generation: row.config_generation,
     },
   };
 }

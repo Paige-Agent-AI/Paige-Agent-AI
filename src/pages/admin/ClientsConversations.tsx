@@ -31,7 +31,7 @@ import { toast } from "sonner";
 import {
   type ChannelType, type MessageRow, type DbThread, type Label,
   type ThreadFilter, type Suppression, type SelectedView, type InboxView, type EmailTemplate,
-  MESSAGE_COLS, THREAD_COLS, CHANNEL_ICON, CHANNEL_LABEL,
+  MESSAGE_COLS, THREAD_COLS, messageRowsFromDb, threadsFromDb, CHANNEL_ICON, CHANNEL_LABEL,
   partyLabel, bodyPreview, msgTime, contactNameFromClient,
   INBOX_VIEWS, endOfTodayMs, readSendResult, resolveMergeVars, UNDO_WINDOW_MS,
   useCommsAttachments,
@@ -426,7 +426,7 @@ export default function ClientsConversations() {
       setMessageLoadFailure(msgRes.error.message || "Conversation messages are unavailable.");
     } else {
       setMessageLoadFailure(null);
-      setRows((msgRes.data as unknown as MessageRow[]) ?? []);
+      setRows(messageRowsFromDb(msgRes.data));
     }
     if (connRes.error) {
       setConnectorReadReported(false);
@@ -467,7 +467,7 @@ export default function ClientsConversations() {
       toast.error("Couldn't load the inbox.");
       setThreadLoadFailure(error.message || "The conversation queue is unavailable.");
     } else {
-      setDbThreads((data as DbThread[]) ?? []);
+      setDbThreads(threadsFromDb(data));
       setThreadLoadFailure(null);
     }
     setThreadsReady(true); // gate the ?contact deep-link on a real first threads pull

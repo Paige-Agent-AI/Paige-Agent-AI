@@ -5,7 +5,7 @@
 // went out. This function is the single seam BOTH the UI (ApprovalRow) and Paige
 // (paige-mcp decide_pending_approval) call to actually run an approved action.
 //
-// It loads the approval, authorizes the caller (admin|coach + tenant match), and
+// It loads the approval, authorizes the caller (admin + tenant match), and
 // dispatches by the drafted channel:
 //   • email / SMS  → forwards to the existing `send-message` executor, which
 //     sends and stamps the row approved+sent_at+audit_id (send drives status).
@@ -22,6 +22,7 @@
 // branch fires only for orchestration-sourced rows and changes nothing for existing approvals, §58.)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { executeApprovedLayerCAct, type ApproveExecutorDb } from "../_shared/paige-orchestration/approve-executor.ts";
+import { CLIENT_CONTACT_METHODS_EMBED, clientAddresses } from "../_shared/contact-methods.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -51,8 +52,7 @@ Deno.serve(async (req) => {
   if (!user) return json(401, { error: "unauthorized" });
 
   const { data: isAdmin } = await admin.rpc("has_role", { _user_id: user.id, _role: "admin" });
-  const { data: isCoach } = await admin.rpc("has_role", { _user_id: user.id, _role: "coach" });
-  if (!isAdmin && !isCoach) return json(403, { error: "forbidden" });
+  if (!isAdmin) return json(403, { error: "forbidden" });
 
   let payload: { approval_id?: string };
   try { payload = await req.json(); } catch { return json(400, { error: "invalid_json" }); }
@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
 
   // Tenant isolation: unless the caller is the platform owner, the approval must
   // belong to a tenant the caller is a member of (defense-in-depth over the
-  // global admin|coach gate). Skip only when the row carries no tenant_id.
+  // global admin gate). Skip only when the row carries no tenant_id.
   const { data: isOwner } = await admin.rpc("is_platform_owner", { _user_id: user.id });
   if (approval.tenant_id && !isOwner) {
     const { data: membership } = await admin
@@ -179,15 +179,16 @@ Deno.serve(async (req) => {
   if (isComms) {
     const channel = channelRaw === "sms" || category.includes("sms") ? "sms" : "email";
 
-    // Resolve the recipient: explicit draft address, else the contact's email.
+    // Resolve the recipient: explicit draft address, else the contact's PRIMARY email (or phone).
     let to = String(dc.to ?? dc.recipient ?? "");
     if (!to && approval.contact_id) {
       const { data: contact } = await admin
         .from("clients")
-        .select("email, phone")
+        .select(CLIENT_CONTACT_METHODS_EMBED)
         .eq("id", approval.contact_id)
         .maybeSingle();
-      to = channel === "sms" ? String(contact?.phone ?? "") : String(contact?.email ?? "");
+      const primary = clientAddresses(contact);
+      to = channel === "sms" ? String(primary.phone ?? "") : String(primary.email ?? "");
     }
     if (!to) { await releaseClaim(); return json(422, { error: "no_recipient", detail: "draft has no `to` and the contact has no address" }); }
 

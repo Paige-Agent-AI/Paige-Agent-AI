@@ -1,0 +1,26 @@
+[
+  {
+    "rule": "implicit-default-grant",
+    "path": "supabase/migrations/20260701014500_dynamic_tenant_data_wiring.sql",
+    "signature": "current_user_tenant_ids()",
+    "note": "READ, self-scoped on auth.uid(). Dead code: one reference in the whole corpus, its own CREATE; zero in src/ and supabase/functions/. The only one of these four that is free to revoke, and doing so is its own change."
+  },
+  {
+    "rule": "implicit-default-grant",
+    "path": "supabase/migrations/20260702005950_d93465cf-845c-4a74-9132-5af6d238ef56.sql",
+    "signature": "is_platform_owner(uuid)",
+    "note": "READ predicate delegating to is_super_admin(_user_id). LOAD-BEARING ON THE DEFAULT GRANT: 74 call sites in migrations, overwhelmingly is_platform_owner(auth.uid()) inside RLS USING/WITH CHECK. Policy expressions evaluate with the caller's privileges, so a bare REVOKE with no matching GRANT TO authenticated breaks them. Also a §53-frozen helper — changing it needs an owner ruling."
+  },
+  {
+    "rule": "implicit-default-grant",
+    "path": "supabase/migrations/20260721024632_move2_f1_userid_finance_tenant_scope.sql",
+    "signature": "tenant_staff_owns_user(uuid,uuid)",
+    "note": "READ predicate. LOAD-BEARING ON THE DEFAULT GRANT: 69 RLS policy lines. Same reasoning as is_platform_owner(uuid)."
+  },
+  {
+    "rule": "implicit-default-grant",
+    "path": "supabase/migrations/20260721043812_move2_slice2a_contact_family_tenant_scope.sql",
+    "signature": "tenant_staff_owns_contact(uuid,uuid)",
+    "note": "READ predicate. LOAD-BEARING ON THE DEFAULT GRANT: 13 RLS policy lines. Same reasoning as is_platform_owner(uuid)."
+  }
+]

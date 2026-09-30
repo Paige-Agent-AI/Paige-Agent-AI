@@ -1,0 +1,87 @@
+{
+  "_README": [
+    "CLOSED HISTORY. `list_tool_autonomy` is CREATE OR REPLACEd with its whole body, so the newest",
+    "declaration by filename is the only one prod runs, and a migration written from a stale copy of",
+    "the catalogue erases every row added after that copy was taken. tool-catalogue-lint walks every",
+    "consecutive pair in the chain and fails on any row that disappears without a reason.",
+    "",
+    "These removals predate that rule. They are listed by EXACT (migration, tool_key) pair and never",
+    "as a count, because a count stays flat while membership churns \u2014 one row quietly dropped and",
+    "another added nets to zero and passes. The same reasoning is written out at",
+    "tool-catalogue-lint.mjs:27-31.",
+    "",
+    "SHRINK ONLY. Nothing is ever added here. A new deliberate removal is declared in the migration",
+    "that makes it, with `-- catalogue-removal-ok: <tool_key> \u2014 <why>`; the guard reads that line and",
+    "the reason is required. When a baselined removal stops happening the guard says so and this file",
+    "loses the entry.",
+    "",
+    "shadowedRemovals  keys present in the preceding declaration and absent from this one.",
+    "phantomRows       rows in the live catalogue with no entry in _shared/action-risk.ts. No runtime",
+    "                  reads their stored mode, so the operator's switch governs nothing (\u00a770.1).",
+    "                  crm_delete_contact is a tombstone whose row outlived the tool; pipeline_create",
+    "                  and pipeline_add_stage are named 'phantom/unclassified' in",
+    "                  src/solo/data/capabilityTools.ts:171; social_post is filtered out at both read",
+    "                  sites. The catalogue is meant to be exactly the governed set \u2014 these are the",
+    "                  four rows that are not, held at four."
+  ],
+  "shadowedRemovals": {
+    "20260711200000_paige_tool_autonomy.sql": [
+      "n8n_activate_workflow",
+      "n8n_create_workflow",
+      "n8n_deactivate_workflow",
+      "n8n_run_workflow",
+      "n8n_update_workflow"
+    ],
+    "20260716171236_paige_studio_tool_autonomy_catalog.sql": [
+      "n8n_activate_workflow",
+      "n8n_create_workflow",
+      "n8n_deactivate_workflow",
+      "n8n_run_workflow",
+      "n8n_update_workflow"
+    ],
+    "20261019000000_solo_setup_business_brief.sql": [
+      "pipeline_configure"
+    ],
+    "20261020300000_tool_autonomy_catalogue_covers_the_gate.sql": [
+      "comms_buy_number",
+      "comms_draft_registration",
+      "comms_name_number",
+      "comms_set_primary_number",
+      "pipeline_configure",
+      "propose_business_brief_update"
+    ],
+    "20270305000000_calendar_preset_tool_autonomy_catalogue.sql": [
+      "crm_archive_company",
+      "crm_archive_contact",
+      "crm_assign_contact_owner",
+      "crm_assign_deal_contact",
+      "crm_assign_deal_owner",
+      "crm_assign_task",
+      "crm_bulk_update_contacts",
+      "crm_cancel_task",
+      "crm_close_deal",
+      "crm_complete_task",
+      "crm_create_company",
+      "crm_delete_deal",
+      "crm_hard_delete_contact",
+      "crm_link_contact_company",
+      "crm_merge_contacts",
+      "crm_reopen_deal",
+      "crm_reopen_task",
+      "crm_reschedule_task",
+      "crm_restore_company",
+      "crm_restore_contact",
+      "crm_unlink_contact_company",
+      "crm_update_company",
+      "crm_update_deal",
+      "nav_pull_business_credit",
+      "smartcredit_pull_snapshot"
+    ]
+  },
+  "phantomRows": [
+    "crm_delete_contact",
+    "pipeline_add_stage",
+    "pipeline_create",
+    "social_post"
+  ]
+}

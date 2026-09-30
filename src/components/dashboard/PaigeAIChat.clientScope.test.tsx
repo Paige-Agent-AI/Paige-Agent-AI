@@ -24,7 +24,13 @@ const harness = vi.hoisted(() => ({
   // file behaves exactly as before — and note that this default is precisely why #765 hid:
   // with no saved thread there is nothing to auto-resume, so the defect cannot fire.
   threads: [] as Array<{ id: string; title: string; updated_at: string }>,
-  loadTurns: vi.fn(async (_id: string): Promise<Array<{ role: string; content: string }>> => []),
+  loadTurns: vi.fn(async (_id: string): Promise<Array<{
+    role: string;
+    content: string;
+    id?: string;
+    created_at?: string;
+    bundle_ref?: Record<string, unknown>;
+  }>> => []),
   liveCard: null as null | { id: string; title: string },
   liveFingerprints: [] as string[],
 }));
@@ -60,6 +66,11 @@ vi.mock("@/components/paige/live/PaigeLiveConversation", () => ({
     harness.liveFingerprints = props.confirmationFingerprints;
     return <button type="button">Talk live with Paige</button>;
   },
+}));
+vi.mock("@/components/paige/chat/PaigeArtifactCard", () => ({
+  PaigeArtifactCard: ({ artifact, tenantId }: { artifact: { id: string; title: string }; tenantId: string }) => (
+    <div data-testid={`artifact-${artifact.id}`}>{tenantId}:{artifact.title}</div>
+  ),
 }));
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -658,6 +669,42 @@ describe("PAIGE chat — #765 holds on the Solo mount, with soloTenantSafety set
     expect(host.textContent).not.toContain(PRIOR);
     // Not stranded: the composer is usable, so the owner can send the turn they came to send.
     expect(host.querySelector("textarea")).not.toBeNull();
+
+    await act(async () => root.unmount());
+    host.remove();
+  });
+});
+
+describe("PAIGE chat — durable document reconnect", () => {
+  const SAVED = { id: "thread-durable", title: "Agreement draft", updated_at: "2026-09-23T10:00:00.000Z" };
+
+  afterEach(() => {
+    harness.threads = [];
+    harness.loadTurns.mockReset();
+    harness.loadTurns.mockImplementation(async () => []);
+  });
+
+  it("reconstructs the persisted artifact card from the completion turn after reconnect", async () => {
+    harness.threads = [SAVED];
+    harness.loadTurns.mockImplementation(async () => [{
+      id: "turn-complete",
+      created_at: "2026-09-23T10:01:00.000Z",
+      role: "assistant",
+      content: "Your document is ready: Services Agreement Draft.",
+      bundle_ref: {
+        paige_artifact: [{
+          id: "00000000-0000-4000-8000-000000000101",
+          title: "Services Agreement Draft",
+          artifactType: "document",
+          tenant_id: "account-a",
+        }],
+      },
+    }]);
+
+    const { host, root } = await mount({ clientId: null, renderRail: () => null });
+    expect(harness.loadTurns).toHaveBeenCalledWith(SAVED.id);
+    expect(host.querySelector('[data-testid="artifact-00000000-0000-4000-8000-000000000101"]')?.textContent)
+      .toBe("account-a:Services Agreement Draft");
 
     await act(async () => root.unmount());
     host.remove();

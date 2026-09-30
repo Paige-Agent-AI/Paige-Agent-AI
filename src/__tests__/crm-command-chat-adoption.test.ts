@@ -216,7 +216,8 @@ describe("Paige Chat canonical CRM adoption", () => {
     expect(chat).toContain("paige_crm_result");
     expect(chat).toContain("crmResultTrace");
     expect(chat).toContain("paige_crm_result: crmResultTrace.map");
-    const persistedCrmProjection = chat.slice(chat.indexOf("paige_crm_result: crmResultTrace.map"), chat.indexOf("@ts-ignore", chat.indexOf("paige_crm_result: crmResultTrace.map")));
+    // Success and interrupted Live now share this one projection, before convo.
+    const persistedCrmProjection = chat.slice(chat.indexOf("paige_crm_result: crmResultTrace.map"), chat.indexOf("const convo:", chat.indexOf("paige_crm_result: crmResultTrace.map")));
     expect(persistedCrmProjection).not.toContain("readback:");
     expect(persistedCrmProjection).not.toContain("record_locator:");
     expect(chat).toContain("receipt_recorded: parsed.receipt_recorded === true");
@@ -227,8 +228,17 @@ describe("Paige Chat canonical CRM adoption", () => {
     expect(chat).not.toContain("thread_id: payloadThreadId ?? null,\n            messages,");
     expect(chat).toContain("for (const src of [out?.readback, out, args])");
     expect(chat).toContain('crm_log_activity: "client_notes"');
-    expect(chat).toContain('.filter("args->>approval_subject", "eq", approvalSubject)');
-    expect(chat).toContain("approvedRows?.length === 1");
+    // The approval-subject narrowing moved from an SQL GATE on this query to a PREFERENCE over its
+    // candidates (2026-09-25). The old equality was computed from the MODEL's re-emitted arguments,
+    // and a *.create has no stable record id, so any drift on the approval turn returned zero rows
+    // and an approved create was refused with nothing created (prod: 3 of 4 crm_create_contact and
+    // 2 of 2 deal_create approvals stranded). What still binds — and is what this line now pins —
+    // is that the candidates are ONLY the fingerprints the human echoed back, and that the
+    // resolution order lives in the one shared, unit-tested home. Behaviour: see
+    // crm-approval-resolution.test.ts; wiring: see crm-approval-door-wiring.test.ts.
+    expect(chat).toContain('.in("fingerprint", [...approvedConfirmations].map((token) => token.split(":")[0]))');
+    expect(chat).toContain("resolveCrmApprovedFingerprint(approvedRows ?? [], approvalSubject, sameToolCallsThisTurn)");
+    expect(chat).toContain("if (approvedConfirmations.has(resolved.fingerprint)) approvedFingerprint = resolved.fingerprint;");
     expect(chat).not.toContain("const idempotencyKey = suppliedKey || crypto.randomUUID()");
   });
 

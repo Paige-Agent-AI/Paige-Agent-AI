@@ -5,7 +5,7 @@
 //
 // All inserts are performed with the service role and bypass RLS. The matching
 // SELECT/UPDATE policies in the credit_predictions table give the user, their
-// coach, and admins read access.
+// business's owners and admins read access.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
@@ -473,12 +473,12 @@ serve(async (req) => {
         });
         const { data: userRes } = await userClient.auth.getUser();
         if (!userRes?.user || userRes.user.id !== body.user_id) {
-          // Allow coaches/admins
+          // Allow admins
           const { data: roles } = await supabase
             .from("user_roles")
             .select("role")
             .eq("user_id", userRes?.user?.id || "");
-          const allowed = (roles || []).some((r: any) => ["admin", "coach"].includes(r.role));
+          const allowed = (roles || []).some((r: { role: string }) => r.role === "admin");
           if (!allowed) {
             return new Response(JSON.stringify({ error: "Unauthorized" }), {
               status: 401,

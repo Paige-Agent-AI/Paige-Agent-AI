@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { resolveOperatorIdentity } from "../_shared/operator-identity.ts";
+import { phoneNotSavedMessage, setUserPrimaryAddress } from "../_shared/user-contact-methods.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -106,8 +107,13 @@ Deno.serve(async (req) => {
         const userId = authUser.user.id;
         await supabase.from("profiles").update({
           full_name: `${first_name} ${last_name}`,
-          phone: phone || null,
         }).eq("user_id", userId);
+        // The phone, when given, becomes the new person's primary phone contact method.
+        try {
+          await setUserPrimaryAddress(supabase, userId, "phone", phone ? String(phone) : null);
+        } catch (e) {
+          console.error("[handle-inbound-webhook] phone_write_failed", (e as Error).message);
+        }
 
         // If entity info provided, create a business
         if (entity_name) {
@@ -136,11 +142,24 @@ Deno.serve(async (req) => {
 
         const updateData: Record<string, unknown> = {};
         if (profileFields.full_name) updateData.full_name = profileFields.full_name;
-        if (profileFields.phone) updateData.phone = profileFields.phone;
         if (profileFields.address) updateData.address = profileFields.address;
 
-        const { error } = await supabase.from("profiles").update(updateData).eq("user_id", client_id);
-        if (error) return res(400, { success: false, message: error.message });
+        if (Object.keys(updateData).length > 0 || !profileFields.phone) {
+          const { error } = await supabase.from("profiles").update(updateData).eq("user_id", client_id);
+          if (error) return res(400, { success: false, message: error.message });
+        }
+        // A phone becomes the person's primary phone; the numbers they already hold stay.
+        if (profileFields.phone) {
+          try {
+            await setUserPrimaryAddress(supabase, client_id, "phone", String(profileFields.phone));
+          } catch (e) {
+            // The database's own text names the table; it stays in the log. Any other field sent
+            // with the phone has already been saved above, and the caller is told so.
+            console.error("[handle-inbound-webhook] phone_write_failed", { client_id, message: (e as Error).message });
+            const saved = Object.keys(updateData).length > 0 ? "The profile was updated. " : "";
+            return res(400, { success: false, message: `${saved}${phoneNotSavedMessage(e)}` });
+          }
+        }
 
         result = { success: true, message: "Client profile updated" };
         break;
@@ -376,7 +395,9 @@ Deno.serve(async (req) => {
             .from("invitations")
             .insert({
               email: normalizedEmail,
-              role: "coach",
+              // "Coach" is a title, never a role: the invitation grants the plain user role, and
+              // the assignment below is what lets this person see their clients.
+              role: "user",
               invited_by: coachUserId, // self-ref placeholder; will be overridden below if owner found
               token: plaintextToken,
               expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -392,7 +413,7 @@ Deno.serve(async (req) => {
                   recipientEmail: normalizedEmail,
                   idempotencyKey: `coach-invite-${inv.id}`,
                   templateData: {
-                    role: "Coach",
+                    role: "Team member",
                     inviteUrl: `https://paigeagent.ai/auth?invite=${plaintextToken}`,
                     // §45: no inviting tenant is resolvable on this bridge path, so the
                     // inviter is omitted present-only (the template shows a neutral
@@ -406,11 +427,6 @@ Deno.serve(async (req) => {
             }
           }
         }
-
-        // Ensure coach role
-        await supabase
-          .from("user_roles")
-          .upsert({ user_id: coachUserId, role: "coach" }, { onConflict: "user_id,role" });
 
         // Bulk-insert coach_clients (idempotent via unique pair if present, otherwise best-effort dedupe)
         let assignmentsCreated = 0;

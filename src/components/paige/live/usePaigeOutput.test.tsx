@@ -7,8 +7,35 @@ vi.mock("@/lib/voice/messageTts", () => ({ messageTts: {
   getAudioElement: () => null, stop: store.stop, pause: store.pause, resume: store.resume,
 } }));
 import { usePaigeOutput } from "./usePaigeOutput";
+import type { RelayTransport } from "@/lib/paigeLiveConversation/relayTransport";
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 describe("same-thread output ownership", () => {
+  it("owns real relay playback, Hold, Resume and stale-source detachment", async () => {
+    const host = document.createElement("div"), root = createRoot(host);
+    let output!: ReturnType<typeof usePaigeOutput>;
+    let playing = false;
+    const listeners = new Set<() => void>();
+    const relay = {
+      subscribeOutput: (fn: () => void) => { listeners.add(fn); return () => { listeners.delete(fn); }; },
+      outputPlaying: () => playing,
+      readEnergy: () => ({ amplitude: .4, brightness: .2 }),
+      pauseOutput: vi.fn(), resumeOutput: vi.fn(), clearOutput: vi.fn(),
+    } as unknown as RelayTransport;
+    function Harness() { output = usePaigeOutput(true, []); return null; }
+    await act(async () => root.render(<Harness />));
+    await act(async () => output.attachRelay(relay));
+    await act(async () => { playing = true; listeners.forEach((fn) => fn()); });
+    expect(output.playing).toBe(true);
+    expect(output.readEnergy()).toEqual({ amplitude: .4, brightness: .2 });
+    output.pause(); output.resume(); output.stop();
+    expect(relay.pauseOutput).toHaveBeenCalledOnce();
+    expect(relay.resumeOutput).toHaveBeenCalledOnce();
+    expect(relay.clearOutput).toHaveBeenCalledOnce();
+    await act(async () => output.attachRelay(null));
+    expect(output.playing).toBe(false);
+    expect(listeners.size).toBe(0);
+    await act(async () => root.unmount());
+  });
   it("stops the old owned loading output after a thread change without stopping another thread's new audio", async () => {
     const host = document.createElement("div"), root = createRoot(host);
     let output!: ReturnType<typeof usePaigeOutput>;

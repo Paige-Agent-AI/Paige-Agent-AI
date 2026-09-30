@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { loadAssignableStaff } from "@/lib/team/assignableStaff";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -47,6 +48,10 @@ import { useTenantFeature } from "@/hooks/useTenantFeature";
 import { usePendingApprovals } from "@/hooks/usePendingApprovals";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { CATEGORY_LABEL, RISK_COLOR, type ApprovalCategory } from "@/lib/approvals";
+import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses, type WithClientContactMethods } from "@/lib/contact-methods";
+
+// Widened to string: the generated types do not know the contact-methods embed yet.
+const CONTACT_DETAIL_SELECT: string = `*,${CLIENT_CONTACT_METHODS_EMBED}`;
 
 
 type Client = {
@@ -120,17 +125,14 @@ export default function ContactDetail() {
   const load = async (clientId: string) => {
     setLoading(true);
     try {
-      const { data: c, error } = await supabase.from("clients").select("*").eq("id", clientId).maybeSingle();
+      const { data: row, error } = await supabase.from("clients").select(CONTACT_DETAIL_SELECT).eq("id", clientId).maybeSingle();
       if (error) throw error;
-      if (!c) { toast.error("Contact not found"); navigate("/choose-account"); return; }
-      setClient(c as Client);
+      if (!row) { toast.error("Contact not found"); navigate("/choose-account"); return; }
+      // `email` / `phone` are the contact's primary addresses, read from its contact methods.
+      const c = withPrimaryAddresses(row as unknown as Client & WithClientContactMethods);
+      setClient(c);
 
-      const { data: roles } = await supabase.from("user_roles").select("user_id").eq("role", "coach");
-      const coachIds = (roles || []).map((r: { user_id: string }) => r.user_id);
-      if (coachIds.length) {
-        const { data: profs } = await supabase.from("profiles").select("user_id, full_name").in("user_id", coachIds);
-        setCoaches((profs || []).map((p: { user_id: string; full_name: string | null }) => ({ user_id: p.user_id, name: p.full_name || "Unnamed Coach" })));
-      }
+      setCoaches(await loadAssignableStaff());
 
       if (c.linked_user_id) {
         const [actRes, taskRes, noteRes, fileRes, bizRes] = await Promise.all([

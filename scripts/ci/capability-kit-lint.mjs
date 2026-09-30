@@ -24,7 +24,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import ts from "typescript";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -97,6 +97,194 @@ function collectDeclaredCapabilityNames(files, resolver) {
     visit(sourceFile);
   }
   return { riskKeys, toolNames };
+}
+
+/**
+ * The canonical action-risk policy, read as DATA: key -> risk class.
+ *
+ * The rule below needs the class column, not just the key column the `direct-risk-entry` walk
+ * already reads. It is parsed from the same array in the same file rather than imported, because
+ * this lint is dependency-free `.mjs` and `action-risk.ts` is TypeScript; parsing is what the file
+ * already does, so this adds a column rather than a mechanism.
+ */
+function collectRiskPolicy(files, resolver) {
+  const policy = new Map();
+  for (const file of files) {
+    if (relative(file) !== "supabase/functions/_shared/action-risk.ts") continue;
+    const sourceFile = resolver.sourceFile(file);
+    if (!sourceFile) continue;
+    for (const statement of sourceFile.statements) {
+      if (!ts.isVariableStatement(statement)) continue;
+      for (const declaration of statement.declarationList.declarations) {
+        if (!ts.isIdentifier(declaration.name) || declaration.name.text !== "RISK" || !declaration.initializer) continue;
+        const initializer = ts.isAsExpression(declaration.initializer)
+          ? declaration.initializer.expression
+          : declaration.initializer;
+        if (!ts.isArrayLiteralExpression(initializer)) continue;
+        for (const entry of initializer.elements) {
+          if (!ts.isArrayLiteralExpression(entry)) continue;
+          const [keyNode, classNode] = entry.elements;
+          if (!keyNode || !ts.isStringLiteralLike(keyNode)) continue;
+          if (!classNode || !ts.isStringLiteralLike(classNode)) continue;
+          // `classifyAction` folds duplicates to the FIRST entry seen (action-risk.ts builds its
+          // map in array order), so this must too or the two disagree on a duplicated key.
+          if (!policy.has(keyNode.text)) policy.set(keyNode.text, classNode.text);
+        }
+      }
+    }
+  }
+  return policy;
+}
+
+const REVALIDATION_SEAMS = ["before_availability", "before_execution", "before_receipt"];
+const REPLAY_POLICIES = new Set(["return_recorded_result", "reconcile_then_return"]);
+const RISK_CLASSES = new Set(["read_only", "ordinary", "high", "owner_only"]);
+
+/** The string literals of an array-literal property, or null when it is absent or not static. */
+function literalArray(properties, key, sourceFile) {
+  const node = properties.get(key);
+  if (!node || !ts.isPropertyAssignment(node)) return null;
+  const initializer = unwrapExpression(node.initializer);
+  if (!initializer || !ts.isArrayLiteralExpression(initializer)) return null;
+  const out = [];
+  for (const element of initializer.elements) {
+    if (!ts.isStringLiteralLike(element)) return null; // a computed member: unknowable, fail OPEN
+    out.push(element.text);
+  }
+  return out;
+}
+
+/** Whether a property is written as the literal `null`. */
+function isLiteralNull(properties, key) {
+  const node = properties.get(key);
+  if (!node || !ts.isPropertyAssignment(node)) return false;
+  const initializer = unwrapExpression(node.initializer);
+  return Boolean(initializer && initializer.kind === ts.SyntaxKind.NullKeyword);
+}
+
+function nestedProperties(properties, key, sourceFile) {
+  const node = properties.get(key);
+  if (!node || !ts.isPropertyAssignment(node)) return null;
+  const initializer = unwrapExpression(node.initializer);
+  if (!initializer || !ts.isObjectLiteralExpression(initializer)) return null;
+  return objectProperties(initializer, sourceFile);
+}
+
+/**
+ * A DECLARATION THE LINT PASSES MUST BE ONE THE CONSTRUCTOR ACCEPTS.
+ *
+ * `defineCapability()` (supabase/functions/_shared/capability-kit/defineCapability.ts) throws at
+ * MODULE LOAD on a contradictory declaration, which takes the whole edge function down. Until this
+ * rule existed the lint read exactly one field out of a declaration — `governance.actionRiskKey`,
+ * and only to grant clearance — so it checked 3 of the constructor's 10 required top-level keys and
+ * NONE of its seven risk predicates. Measured before this was written: seven distinct shapes passed
+ * CI with zero findings and threw on import, and the SHIPPED canonical example
+ * (`scripts/fixtures/capability-kit/type-contract.fixture.ts`) was one of them — it declared
+ * `revalidateAt: ["before_execution"]` where the constructor requires all three authority seams. The
+ * one file a first adopter would copy did not construct, and nothing said so.
+ *
+ * This is STRICT tier deliberately. A declaration that cannot construct is not debt to be paid down
+ * later; it is a module that will not load, so there is no legitimate reason to baseline one.
+ *
+ * WHY THE PREDICATES ARE RESTATED HERE rather than imported: this lint is dependency-free `.mjs`
+ * and the constructor is TypeScript behind a Deno-style import. Two homes for one predicate drift,
+ * so they are pinned together by a PAIRED INVARIANT test — `scripts/capability-kit/capability-kit.test.mjs`
+ * runs both this rule and the real constructor over one corpus and fails if their verdicts ever
+ * disagree. Add a predicate here and the corpus proves it matches; change the constructor and the
+ * corpus catches the omission.
+ *
+ * It checks only what is STATICALLY DECIDABLE from literals. A declaration assembled from variables
+ * or spreads reads as unknown and is skipped — fail OPEN here, because the constructor is still the
+ * real gate and a lint that guesses gets switched off.
+ */
+function checkDeclarationConstructs(argument, sourceFile, normalized, riskPolicy, findings) {
+  const root = objectProperties(argument, sourceFile);
+  const flag = (detail) => findings.push(violation("declaration-contradicts-constructor", normalized, detail));
+
+  const effect = literalProperty(root, "effect");
+  if (effect === null) return; // not statically known
+  if (!["read", "mutation", "external_effect"].includes(effect)) {
+    flag(`effect "${effect}" is not read | mutation | external_effect`);
+    return;
+  }
+
+  const governance = nestedProperties(root, "governance", sourceFile);
+  const risk = governance ? literalProperty(governance, "risk") : null;
+  const approval = governance ? literalProperty(governance, "approval") : null;
+  const actionRiskKey = governance ? literalProperty(governance, "actionRiskKey") : null;
+  const actionRiskKeyIsNull = governance ? isLiteralNull(governance, "actionRiskKey") : false;
+
+  if (risk !== null && !RISK_CLASSES.has(risk)) flag(`governance.risk "${risk}" is not a risk class`);
+
+  if (effect === "read") {
+    // defineCapability.ts:105-108
+    if (actionRiskKey !== null) {
+      flag(`a read declares governance.actionRiskKey "${actionRiskKey}" — a read must declare null`);
+    }
+    if (risk !== null && risk !== "read_only") {
+      flag(`a read declares governance.risk "${risk}" — a read must declare read_only`);
+    }
+    if (approval !== null && approval !== "none") {
+      flag(`a read declares governance.approval "${approval}" — a read must declare none`);
+    }
+    const idem = nestedProperties(root, "idempotency", sourceFile);
+    const mode = idem ? literalProperty(idem, "mode") : null;
+    if (mode !== null && mode !== "not_applicable") {
+      flag(`a read declares idempotency.mode "${mode}" — a read must declare not_applicable`);
+    }
+  } else {
+    // defineCapability.ts:131-152
+    if (actionRiskKeyIsNull) {
+      flag(`a ${effect} declares governance.actionRiskKey null — only a read may`);
+    } else if (actionRiskKey !== null) {
+      const canonical = riskPolicy ? riskPolicy.get(actionRiskKey) : undefined;
+      if (riskPolicy && canonical === undefined) {
+        flag(`governance.actionRiskKey "${actionRiskKey}" is not in the canonical action-risk policy — classify it in supabase/functions/_shared/action-risk.ts first, with its rationale`);
+      } else if (canonical !== undefined) {
+        if (risk !== null && risk !== canonical) {
+          flag(`governance.risk "${risk}" contradicts the canonical policy, which classifies "${actionRiskKey}" as "${canonical}"`);
+        }
+        const canonicalApproval = canonical === "owner_only" ? "owner_only" : "confirm";
+        if (approval !== null && approval !== canonicalApproval) {
+          flag(`governance.approval "${approval}" contradicts the canonical policy — "${actionRiskKey}" is "${canonical}", so approval must be "${canonicalApproval}"`);
+        }
+      }
+    }
+    if (risk === "read_only") flag(`a ${effect} declares governance.risk read_only — only a read may`);
+    if (effect === "external_effect" && risk !== null && risk !== "high") {
+      flag(`an external_effect declares governance.risk "${risk}" — an external effect must be high`);
+    }
+    const idem = nestedProperties(root, "idempotency", sourceFile);
+    if (idem) {
+      const mode = literalProperty(idem, "mode");
+      if (mode !== null && mode !== "required") {
+        flag(`a ${effect} declares idempotency.mode "${mode}" — it must be required`);
+      }
+      const replay = literalProperty(idem, "replay");
+      if (replay !== null && !REPLAY_POLICIES.has(replay)) {
+        flag(`idempotency.replay "${replay}" is not return_recorded_result | reconcile_then_return`);
+      }
+    }
+  }
+
+  // defineCapability.ts:178-183 — every authority seam, not a subset. This is the predicate the
+  // shipped canonical example failed.
+  const tenantScope = nestedProperties(root, "tenantScope", sourceFile);
+  if (tenantScope) {
+    const source = literalProperty(tenantScope, "source");
+    if (source !== null && source !== "server") {
+      flag(`tenantScope.source "${source}" — capability tenant authority must be server-derived`);
+    }
+    const revalidateAt = literalArray(tenantScope, "revalidateAt", sourceFile);
+    if (revalidateAt) {
+      const missing = REVALIDATION_SEAMS.filter((seam) => !revalidateAt.includes(seam));
+      const unknown = revalidateAt.filter((seam) => !REVALIDATION_SEAMS.includes(seam));
+      if (missing.length) {
+        flag(`tenantScope.revalidateAt is missing ${missing.join(", ")} — the constructor requires all three authority seams`);
+      }
+      for (const seam of unknown) flag(`tenantScope.revalidateAt names an unknown seam "${seam}"`);
+    }
+  }
 }
 
 function relative(file) {
@@ -463,6 +651,10 @@ export function scanSource(source, file = "fixture.ts", options = {}) {
   const strictOnly = options.strictOnly === true;
   const declaredRiskKeys = options.declaredRiskKeys ?? new Set();
   const declaredToolNames = options.declaredToolNames ?? new Set();
+  // Absent (a bare scanSource call, e.g. the self-test) means the policy-membership and
+  // class-agreement predicates cannot run. They are SKIPPED rather than guessed — fewer checks
+  // without the policy, never a false accusation with it.
+  const riskPolicy = options.riskPolicy ?? null;
   const sourceFile = options.sourceFile ?? ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
   const resolver = options.resolver;
   const findings = [];
@@ -470,6 +662,24 @@ export function scanSource(source, file = "fixture.ts", options = {}) {
   const effectBindings = [];
 
   function visitFirst(node) {
+    // A DECLARATION WRITTEN AS A TYPED CONST, NOT ONLY ONE PASSED INLINE.
+    //
+    // The construction rules originally read only the object literal handed straight to
+    // `defineCapability({...})`. Real declarations are routinely written
+    // `const x: CapabilityDefinition = { ... }` and passed by name — the repo's own canonical
+    // example does exactly that — and the resolver's documented heuristic limit meant every one of
+    // them was invisible. Found by TESTING the guard rather than trusting it: reverting the fixture
+    // to its shipped-broken shape left the suite green.
+    //
+    // The type annotation is the signal, and it is unambiguous: `CapabilityDefinition` is the Kit's
+    // own declaration type, so an object annotated with it IS a declaration wherever it later goes.
+    if (ts.isVariableDeclaration(node) && node.type && node.initializer) {
+      const annotation = node.type.getText(sourceFile);
+      const initializer = unwrapExpression(node.initializer);
+      if (/\bCapabilityDefinition\b/.test(annotation) && initializer && ts.isObjectLiteralExpression(initializer)) {
+        checkDeclarationConstructs(initializer, sourceFile, normalized, riskPolicy, findings);
+      }
+    }
     if (ts.isCallExpression(node)) {
       const member = calledMember(node, sourceFile);
       if (member === "decideGovernedExecution" || resolver?.isGovernedCall(sourceFile.fileName, node)) {
@@ -498,12 +708,22 @@ export function scanSource(source, file = "fixture.ts", options = {}) {
             if (props.has(keyword)) findings.push(violation("root-schema-combinator", normalized, keyword));
           }
         } else {
-          for (const required of ["idempotency", "receipt", "outcome"]) {
+          // ALL TEN required top-level keys, not the three this rule originally checked.
+          // `defineCapability()` uses `exactKeys` (defineCapability.ts:87), which refuses a
+          // declaration missing ANY of them — so checking three meant a declaration could be
+          // seven keys short, pass CI, and throw at module load. Measured before this was widened:
+          // `defineCapability({idempotency:{},receipt:{},outcome:{}})` was lint-green and threw
+          // "Capability definition must contain exactly: availability, effect, governance, ...".
+          for (const required of [
+            "identity", "input", "effect", "governance", "tenantScope",
+            "availability", "providerBinding", "idempotency", "receipt", "outcome",
+          ]) {
             if (!props.has(required)) findings.push(violation("incomplete-capability", normalized, required));
           }
           for (const forbidden of ["authoritySource", "marketplaceGrant", "marketplaceListing"]) {
             if (props.has(forbidden)) findings.push(violation("marketplace-as-authority", normalized, forbidden));
           }
+          checkDeclarationConstructs(unwrappedArgument, sourceFile, normalized, riskPolicy, findings);
         }
       }
       if (!strictOnly && member === "rpc" && stringArgument(node) === "record_capability_run") {
@@ -648,12 +868,13 @@ function scanRepository() {
     .filter((file) => !relative(file).startsWith(MCP_GATEWAY_EXEMPT));
   const resolver = createAstResolver(files);
   const { riskKeys: declaredRiskKeys, toolNames: declaredToolNames } = collectDeclaredCapabilityNames(files, resolver);
+  const riskPolicy = collectRiskPolicy(files, resolver);
   for (const file of files) {
     const rel = relative(file);
     const sourceFile = resolver.sourceFile(file);
     if (!sourceFile) throw new Error(`TypeScript did not load ${rel}.`);
     if (!rel.startsWith(KIT_DIR)) {
-      const shared = { sourceFile, resolver, declaredRiskKeys, declaredToolNames };
+      const shared = { sourceFile, resolver, declaredRiskKeys, declaredToolNames, riskPolicy };
       strictFindings.push(...scanSource(sourceFile.text, rel, { ...shared, strictOnly: true }));
       debtFindings.push(...scanSource(sourceFile.text, rel, shared));
     }
@@ -696,6 +917,29 @@ function runSelfTest() {
     ["missing receipt", `defineCapability({idempotency:{},outcome:{}})`, "incomplete-capability"],
     ["marketplace authority", `defineCapability({idempotency:{},receipt:{},outcome:{},authoritySource:"marketplace"})`, "marketplace-as-authority"],
     ["brand cast", `const x = raw as DefinedCapability`, "fabricated-capability-brand"],
+    // `declaration-contradicts-constructor`. The cases here are the POLICY-INDEPENDENT predicates,
+    // because a bare `scanSource` is handed no risk policy. The policy-dependent half (risk class,
+    // approval class, key membership) is proven against the REAL policy by the paired-invariant
+    // corpus in scripts/capability-kit/capability-kit.test.mjs, which runs the constructor beside
+    // this rule — a stronger check than any fixture here could be.
+    ["read declaring an action-risk key",
+      `defineCapability({effect:"read",governance:{actionRiskKey:"x_y",risk:"read_only",approval:"none"},identity:{},input:{},tenantScope:{},availability:{},providerBinding:{},idempotency:{},receipt:{},outcome:{}})`,
+      "declaration-contradicts-constructor"],
+    ["mutation declaring read_only risk",
+      `defineCapability({effect:"mutation",governance:{actionRiskKey:"x_y",risk:"read_only",approval:"confirm"},identity:{},input:{},tenantScope:{},availability:{},providerBinding:{},idempotency:{},receipt:{},outcome:{}})`,
+      "declaration-contradicts-constructor"],
+    ["external effect that is not high",
+      `defineCapability({effect:"external_effect",governance:{actionRiskKey:"x_y",risk:"ordinary",approval:"confirm"},identity:{},input:{},tenantScope:{},availability:{},providerBinding:{},idempotency:{},receipt:{},outcome:{}})`,
+      "declaration-contradicts-constructor"],
+    ["revalidateAt missing an authority seam",
+      `defineCapability({effect:"read",governance:{actionRiskKey:null,risk:"read_only",approval:"none"},tenantScope:{source:"server",revalidateAt:["before_execution"]},identity:{},input:{},availability:{},providerBinding:{},idempotency:{},receipt:{},outcome:{}})`,
+      "declaration-contradicts-constructor"],
+    // The variable-reference form. The rule read ONLY inline literals until a bite test on the
+    // shipped fixture came back green with the fixture broken; a typed const is how the repo's own
+    // canonical example is written, so missing it made the rule vacuous where it mattered most.
+    ["a declaration written as a typed const, not passed inline",
+      `const valid: CapabilityDefinition = {effect:"read",governance:{actionRiskKey:null,risk:"read_only",approval:"none"},tenantScope:{source:"server",revalidateAt:["before_execution"]},identity:{},input:{},availability:{},providerBinding:{},idempotency:{},receipt:{},outcome:{}};`,
+      "declaration-contradicts-constructor"],
   ];
   let failed = 0;
   for (const [name, source, expected] of cases) {
@@ -833,47 +1077,61 @@ if (process.argv.includes("--self-test")) {
   process.exit(0);
 }
 
-const findings = scanRepository();
-if (process.argv.includes("--print-baseline")) {
-  process.stdout.write(`${JSON.stringify(findings.debt, null, 2)}\n`);
-  process.exit(0);
-}
-
-const typeErrors = typecheckKit();
-if (typeErrors.length) {
-  console.error("✗ capability-kit type contract failed:");
-  for (const error of typeErrors) console.error(`  ${error}`);
-  process.exit(1);
-}
-
-if (!fs.existsSync(BASELINE_PATH)) {
-  console.error(`✗ missing shrink-only baseline: ${relative(BASELINE_PATH)}`);
-  process.exit(1);
-}
-const baseline = JSON.parse(fs.readFileSync(BASELINE_PATH, "utf8"));
-if (findings.strict.length) {
-  console.error("✗ strict Capability Kit construction rule failed:");
-  for (const item of findings.strict) console.error(`  ${item.rule} | ${item.path} | ${item.symbol}`);
-  process.exit(1);
-}
-const additions = additionsAgainstBaseline(findings.debt, baseline);
-if (additions.length) {
-  console.error("✗ capability-kit anti-bypass debt grew:");
-  for (const item of additions) console.error(`  ${item.rule} | ${item.path} | ${item.symbol}`);
-  console.error("\nRoute the declaration through defineCapability(); never expand the baseline to clear CI.");
-  if (additions.some((item) => item.rule === "direct-risk-entry")) {
-    console.error(
-      "\nFor direct-risk-entry specifically: a mutating action needs BOTH halves, in the same change.\n" +
-      "  1. classify it — add its entry to RISK in supabase/functions/_shared/action-risk.ts\n" +
-      "  2. govern it  — declare defineCapability({ governance: { actionRiskKey: \"<key>\", ... } })\n" +
-      "     under supabase/functions/ or src/.\n" +
-      "Step 1 alone is what this reports. Step 2 clears it, and step 2 REQUIRES step 1 — classifyAction()\n" +
-      "reads the same RISK array, so the entry is the declaration's dependency, not debt to be avoided."
-    );
+/**
+ * ENTRY-POINT GUARD. Everything below runs the lint; everything above is a reusable surface.
+ *
+ * Without this, `import { scanSource } from "./capability-kit-lint.mjs"` executed the whole
+ * repository scan, the kit typecheck, and every `process.exit(1)` path as an IMPORT SIDE EFFECT.
+ * That made the module effectively unimportable — a caller wanting the rules could be killed by
+ * them, and every probe printed the lint's own success line before its own output. The paired
+ * invariant test in scripts/capability-kit/capability-kit.test.mjs needs `scanSource` as a
+ * library, so the two uses are separated here rather than worked around there.
+ */
+function main() {
+  const findings = scanRepository();
+  if (process.argv.includes("--print-baseline")) {
+    process.stdout.write(`${JSON.stringify(findings.debt, null, 2)}\n`);
+    process.exit(0);
   }
-  process.exit(1);
+
+  const typeErrors = typecheckKit();
+  if (typeErrors.length) {
+    console.error("✗ capability-kit type contract failed:");
+    for (const error of typeErrors) console.error(`  ${error}`);
+    process.exit(1);
+  }
+
+  if (!fs.existsSync(BASELINE_PATH)) {
+    console.error(`✗ missing shrink-only baseline: ${relative(BASELINE_PATH)}`);
+    process.exit(1);
+  }
+  const baseline = JSON.parse(fs.readFileSync(BASELINE_PATH, "utf8"));
+  if (findings.strict.length) {
+    console.error("✗ strict Capability Kit construction rule failed:");
+    for (const item of findings.strict) console.error(`  ${item.rule} | ${item.path} | ${item.symbol}`);
+    process.exit(1);
+  }
+  const additions = additionsAgainstBaseline(findings.debt, baseline);
+  if (additions.length) {
+    console.error("✗ capability-kit anti-bypass debt grew:");
+    for (const item of additions) console.error(`  ${item.rule} | ${item.path} | ${item.symbol}`);
+    console.error("\nRoute the declaration through defineCapability(); never expand the baseline to clear CI.");
+    if (additions.some((item) => item.rule === "direct-risk-entry")) {
+      console.error(
+        "\nFor direct-risk-entry specifically: a mutating action needs BOTH halves, in the same change.\n" +
+        "  1. classify it — add its entry to RISK in supabase/functions/_shared/action-risk.ts\n" +
+        "  2. govern it  — declare defineCapability({ governance: { actionRiskKey: \"<key>\", ... } })\n" +
+        "     under supabase/functions/ or src/.\n" +
+        "Step 1 alone is what this reports. Step 2 clears it, and step 2 REQUIRES step 1 — classifyAction()\n" +
+        "reads the same RISK array, so the entry is the declaration's dependency, not debt to be avoided."
+      );
+    }
+    process.exit(1);
+  }
+
+  console.log(
+    `✓ capability-kit lint: type contract valid; ${findings.debt.length}/${baseline.length} baseline path+symbol entries remain; no new bypass.`,
+  );
 }
 
-console.log(
-  `✓ capability-kit lint: type contract valid; ${findings.debt.length}/${baseline.length} baseline path+symbol entries remain; no new bypass.`,
-);
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();

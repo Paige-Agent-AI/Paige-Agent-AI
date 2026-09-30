@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { KeyRound, Link2Off, Plug, RefreshCw, TriangleAlert, Workflow, X, Zap } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { SoloAutomationsView } from "./settings-automations";
-import { IntegrationsGatewaySection, type GatewayLegacyTarget } from "./settings-integrations-gateway";
+import { IntegrationsGatewaySection, connectionForProvider, type GatewayLegacyTarget } from "./settings-integrations-gateway";
 import { useMcpGateway } from "./data/useMcpGateway";
 import { IntegrationLogo } from "./integration-logos";
 import { SocialDrawer } from "./settings-integrations-social";
@@ -839,6 +839,24 @@ export function SoloIntegrationsView() {
   const [socialOpen, setSocialOpen] = useState<{ platform: SocialPlatformDefinition; scope: string } | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
+  const [mcpReturn, setMcpReturn] = useState<{ connectionId: string; result: "connected" | "cancelled" | "error"; scope: string } | null>(null);
+  const clearMcpReturn = useCallback(() => setMcpReturn(null), []);
+  useEffect(() => { setMcpReturn(null); }, [scopeKey, tenantLoading]);
+  useEffect(() => {
+    if (tenantLoading || !activeTenantId) return;
+    const params = new URLSearchParams(location.search);
+    if (!params.has("mcp")) return;
+    const result = params.get("mcp");
+    const connectionId = params.get("connection");
+    // Remove the one-shot navigation hints; never render raw callback detail or provider text.
+    for (const key of ["mcp", "mcp_detail", "connection"]) params.delete(key);
+    navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
+    if ((result === "connected" || result === "cancelled" || result === "error") &&
+        connectionId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(connectionId)) {
+      setCategory("all");
+      setMcpReturn({ connectionId: connectionId.toLowerCase(), result, scope: scopeKey });
+    }
+  }, [location.pathname, location.search, navigate, activeTenantId, tenantLoading, scopeKey]);
   useEffect(() => { setOpen(null); setSocialOpen(null); }, [scopeKey, tenantLoading]);
   useEffect(() => {
     if (tenantLoading || !activeTenantId) return;
@@ -877,16 +895,38 @@ export function SoloIntegrationsView() {
   /** Automation is rendered by IntegrationsGatewaySection, which owns the MCP tiles that belong
    *  beside these (owner ruling 2026-09-22) — so it is handed over rather than drawn twice. */
   const automation = GROUPS.find(g => g.id === "automation")!;
-  const automationTiles = tiles.filter(t => t.group === "automation");
+  /**
+   * ONE TOOL, ONE TILE (owner ruling 2026-09-24).
+   *
+   * These shipped provider tiles and the gateway's connection tiles are built from two unrelated
+   * sources that never compared notes, so a tenant who had connected n8n saw n8n twice — once here
+   * offering to set it up, once beside it as the connection they already had. With Zapier doing the
+   * same, two connections read as six tiles.
+   *
+   * A covered tile is DROPPED, never disabled or greyed: its drawer is still reachable from the
+   * connection that covers it, so nothing here removes a path (§58). The suppression is computed
+   * from this tenant's own connections through the gateway's one matcher — never a hardcoded list
+   * of vendors to hide, which would be right only for the accounts it was written against.
+   *
+   * While the list is loading or refused, `gw.tools` is empty and NOTHING is suppressed. That is
+   * the safe direction: an unread list must not make a shipped tile vanish.
+   */
+  const automationTiles = tiles.filter(t =>
+    t.group === "automation"
+    && !(t.kind === "provider" && connectionForProvider(gw.tools, { providerKey: t.name })),
+  );
   /** What the Automation group actually renders: its shipped tiles, every MCP server already
    *  added, and the repeatable add tile — but none of them while the list is unread. */
   const gatewayCount = gw.loading || gw.error ? 0 : gw.tools.length + (gw.canWrite ? 1 : 0);
-  const countOf = (id: GroupId) => tiles.filter(t => t.group === id).length + (id === "automation" ? gatewayCount : 0);
+  const countOf = (id: GroupId) =>
+    (id === "automation" ? automationTiles.length + gatewayCount : tiles.filter(t => t.group === id).length);
   const groupsShown = GROUPS
     .filter(g => g.id !== "automation")
     .map(g => ({ ...g, items: tiles.filter(t => t.group === g.id) }))
     .filter(g => g.items.length > 0 && (category === "all" || category === g.id));
-  const totalTiles = tiles.length + gatewayCount;
+  /** The headline count must agree with what is actually on screen: the suppressed duplicates
+   *  are gone from the Automation group, so they are gone from the total too. */
+  const totalTiles = tiles.filter(t => t.group !== "automation").length + automationTiles.length + gatewayCount;
 
   const tabs: ReadonlyArray<{ id: IntegrationsLeaf; label: string; Icon: typeof Workflow }> = [
     { id: "catalogue", label: "Integrations", Icon: Plug }, { id: "automations", label: "Automations", Icon: Zap },
@@ -954,6 +994,7 @@ export function SoloIntegrationsView() {
       {status.loading ? <p className="ig-state" role="status"><RefreshCw className="ig-spin" aria-hidden />Resolving this account…</p> : <>
         {status.error && <div className="ig-state" role="alert"><TriangleAlert aria-hidden /><span>Some integration status could not be read. Each connection below reports only its own available state.</span><button type="button" className="ig-btn" onClick={() => void status.retry()}>Try again</button></div>}
         <IntegrationsGatewaySection onOpenLegacy={openLegacy} gw={gw} group={automation}
+          oauthReturn={!tenantLoading && mcpReturn?.scope === scopeKey ? mcpReturn : null} onOAuthReturnHandled={clearMcpReturn}
           tiles={automationTiles.map(renderTile)} hidden={category !== "all" && category !== "automation"} />
         {groupsShown.map(g => <section key={g.id} className="ig-group" aria-label={g.label}>
           <div className="ig-group-head">

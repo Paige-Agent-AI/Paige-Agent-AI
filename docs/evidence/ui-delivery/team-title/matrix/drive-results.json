@@ -1,0 +1,330 @@
+{
+  "evidence": "STRUCTURAL-HARNESS",
+  "results": [
+    {
+      "name": "1536x770 PAIGE closed light roster fits its column",
+      "ok": true,
+      "detail": "{\"dock\":\"closed\",\"column\":1320,\"docOverflow\":false,\"hostOverflow\":false}"
+    },
+    {
+      "name": "1536x770 PAIGE closed light editor: Title field present, nothing clipped, Save reachable",
+      "ok": true,
+      "detail": "{\"labels\":[\"Title\",\"Responsibilities\",\"Enforced permission\"],\"overflow\":false,\"docOverflow\":false,\"save\":{\"y\":658,\"h\":34}}"
+    },
+    {
+      "name": "1366x768 PAIGE closed light roster fits its column",
+      "ok": true,
+      "detail": "{\"dock\":\"closed\",\"column\":1150,\"docOverflow\":false,\"hostOverflow\":false}"
+    },
+    {
+      "name": "1366x768 PAIGE closed light editor: Title field present, nothing clipped, Save reachable",
+      "ok": true,
+      "detail": "{\"labels\":[\"Title\",\"Responsibilities\",\"Enforced permission\"],\"overflow\":false,\"docOverflow\":false,\"save\":{\"y\":657,\"h\":34}}"
+    },
+    {
+      "name": "1024x768 PAIGE closed light roster fits its column",
+      "ok": true,
+      "detail": "{\"dock\":\"closed\",\"column\":808,\"docOverflow\":false,\"hostOverflow\":false}"
+    },
+    {
+      "name": "1024x768 PAIGE closed light editor: Title field present, nothing clipped, Save reachable",
+      "ok": true,
+      "detail": "{\"labels\":[\"Title\",\"Responsibilities\",\"Enforced permission\"],\"overflow\":false,\"docOverflow\":false,\"save\":{\"y\":657,\"h\":34}}"
+    },
+    {
+      "name": "900x1000 PAIGE closed light roster fits its column",
+      "ok": true,
+      "detail": "{\"dock\":\"closed\",\"column\":684,\"docOverflow\":false,\"hostOverflow\":false}"
+    },
+    {
+      "name": "900x1000 PAIGE closed light editor: Title field present, nothing clipped, Save reachable",
+      "ok": true,
+      "detail": "{\"labels\":[\"Title\",\"Responsibilities\",\"Enforced permission\"],\"overflow\":false,\"docOverflow\":false,\"save\":{\"y\":773,\"h\":34}}"
+    },
+    {
+      "name": "1536x770 PAIGE closed dark roster fits its column",
+      "ok": true,
+      "detail": "{\"dock\":\"closed\",\"column\":1320,\"docOverflow\":false,\"hostOverflow\":false}"
+    },
+    {
+      "name": "1536x770 PAIGE closed dark editor: Title field present, nothing clipped, Save reachable",
+      "ok": true,
+      "detail": "{\"labels\":[\"Title\",\"Responsibilities\",\"Enforced permission\"],\"overflow\":false,\"docOverflow\":false,\"save\":{\"y\":658,\"h\":34}}"
+    },
+    {
+      "name": "1366x768 PAIGE closed dark roster fits its column",
+      "ok": true,
+      "detail": "{\"dock\":\"closed\",\"column\":1150,\"docOverflow\":false,\"hostOverflow\":false}"
+    },
+    {
+      "name": "1366x768 PAIGE closed dark editor: Title field present, nothing clipped, Save reachable",
+      "ok": true,
+      "detail": "{\"labels\":[\"Title\",\"Responsibilities\",\"Enforced permission\"],\"overflow\":false,\"docOverflow\":false,\"save\":{\"y\":657,\"h\":34}}"
+    },
+    {
+      "name": "1024x768 PAIGE closed dark roster fits its column",
+      "ok": true,
+      "detail": "{\"dock\":\"closed\",\"column\":808,\"docOverflow\":false,\"hostOverflow\":false}"
+    },
+    {
+      "name": "1024x768 PAIGE closed dark editor: Title field present, nothing clipped, Save reachable",
+      "ok": true,
+      "detail": "{\"labels\":[\"Title\",\"Responsibilities\",\"Enforced permission\"],\"overflow\":false,\"docOverflow\":false,\"save\":{\"y\":657,\"h\":34}}"
+    },
+    {
+      "name": "900x1000 PAIGE closed dark roster fits its column",
+      "ok": true,
+      "detail": "{\"dock\":\"closed\",\"column\":684,\"docOverflow\":false,\"hostOverflow\":false}"
+    },
+    {
+      "name": "900x1000 PAIGE closed dark editor: Title field present, nothing clipped, Save reachable",
+      "ok": true,
+      "detail": "{\"labels\":[\"Title\",\"Responsibilities\",\"Enforced permission\"],\"overflow\":false,\"docOverflow\":false,\"save\":{\"y\":773,\"h\":34}}"
+    },
+    {
+      "name": "1536x770 PAIGE open light roster fits its column",
+      "ok": true,
+      "detail": "{\"dock\":\"open\",\"column\":921,\"docOverflow\":false,\"hostOverflow\":false}"
+    },
+    {
+      "name": "1536x770 PAIGE open light editor: Title field present, nothing clipped, Save reachable",
+      "ok": true,
+      "detail": "{\"labels\":[\"Title\",\"Responsibilities\",\"Enforced permission\"],\"overflow\":false,\"docOverflow\":false,\"save\":{\"y\":658,\"h\":34}}"
+    },
+    {
+      "name": "1366x768 PAIGE open light roster fits its column",
+      "ok": true,
+      "detail": "{\"dock\":\"open\",\"column\":810,\"docOverflow\":false,\"hostOverflow\":false}"
+    },
+    {
+      "name": "1366x768 PAIGE open light editor: Title field present, nothing clipped, Save reachable",
+      "ok": true,
+      "detail": "{\"labels\":[\"Title\",\"Responsibilities\",\"Enforced permission\"],\"overflow\":false,\"docOverflow\":false,\"save\":{\"y\":657,\"h\":34}}"
+    },
+    {
+      "name": "1024x768 PAIGE open light roster fits its column",
+      "ok": true,
+      "detail": "{\"dock\":\"open\",\"column\":808,\"docOverflow\":false,\"hostOverflow\":false}"
+    },
+    {
+      "name": "1024x768 PAIGE open light editor: Title field present, nothing clipped, Save reachable",
+      "ok": true,
+      "detail": "{\"labels\":[\"Title\",\"Responsibilities\",\"Enforced permission\"],\"overflow\":false,\"docOverflow\":false,\"save\":{\"y\":657,\"h\":34}}"
+    },
+    {
+      "name": "900x1000 PAIGE open light roster fits its column",
+      "ok": true,
+      "detail": "{\"dock\":\"open\",\"column\":684,\"docOverflow\":false,\"hostOverflow\":false}"
+    },
+    {
+      "name": "900x1000 PAIGE open light editor: Title field present, nothing clipped, Save reachable",
+      "ok": true,
+      "detail": "{\"labels\":[\"Title\",\"Responsibilities\",\"Enforced permission\"],\"overflow\":false,\"docOverflow\":false,\"save\":{\"y\":773,\"h\":34}}"
+    },
+    {
+      "name": "1536x770 PAIGE open dark roster fits its column",
+      "ok": true,
+      "detail": "{\"dock\":\"open\",\"column\":921,\"docOverflow\":false,\"hostOverflow\":false}"
+    },
+    {
+      "name": "1536x770 PAIGE open dark editor: Title field present, nothing clipped, Save reachable",
+      "ok": true,
+      "detail": "{\"labels\":[\"Title\",\"Responsibilities\",\"Enforced permission\"],\"overflow\":false,\"docOverflow\":false,\"save\":{\"y\":658,\"h\":34}}"
+    },
+    {
+      "name": "1366x768 PAIGE open dark roster fits its column",
+      "ok": true,
+      "detail": "{\"dock\":\"open\",\"column\":810,\"docOverflow\":false,\"hostOverflow\":false}"
+    },
+    {
+      "name": "1366x768 PAIGE open dark editor: Title field present, nothing clipped, Save reachable",
+      "ok": true,
+      "detail": "{\"labels\":[\"Title\",\"Responsibilities\",\"Enforced permission\"],\"overflow\":false,\"docOverflow\":false,\"save\":{\"y\":657,\"h\":34}}"
+    },
+    {
+      "name": "1024x768 PAIGE open dark roster fits its column",
+      "ok": true,
+      "detail": "{\"dock\":\"open\",\"column\":808,\"docOverflow\":false,\"hostOverflow\":false}"
+    },
+    {
+      "name": "1024x768 PAIGE open dark editor: Title field present, nothing clipped, Save reachable",
+      "ok": true,
+      "detail": "{\"labels\":[\"Title\",\"Responsibilities\",\"Enforced permission\"],\"overflow\":false,\"docOverflow\":false,\"save\":{\"y\":657,\"h\":34}}"
+    },
+    {
+      "name": "900x1000 PAIGE open dark roster fits its column",
+      "ok": true,
+      "detail": "{\"dock\":\"open\",\"column\":684,\"docOverflow\":false,\"hostOverflow\":false}"
+    },
+    {
+      "name": "900x1000 PAIGE open dark editor: Title field present, nothing clipped, Save reachable",
+      "ok": true,
+      "detail": "{\"labels\":[\"Title\",\"Responsibilities\",\"Enforced permission\"],\"overflow\":false,\"docOverflow\":false,\"save\":{\"y\":773,\"h\":34}}"
+    },
+    {
+      "name": "200% zoom of 1366x768: no sideways scroll, Title field and Save reachable",
+      "ok": true,
+      "detail": "{\"docOverflow\":false,\"titleVisible\":true,\"save\":329}"
+    },
+    {
+      "name": "200% zoom of 1536x770: no sideways scroll, Title field and Save reachable",
+      "ok": true,
+      "detail": "{\"docOverflow\":false,\"titleVisible\":true,\"save\":330}"
+    },
+    {
+      "name": "keyboard reaches a teammate row from the search field",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "keyboard reaches the Title field, named Title, with a visible focus ring",
+      "ok": true,
+      "detail": "{\"name\":\"Title\",\"focusVisible\":true,\"ring\":true}"
+    },
+    {
+      "name": "Escape closes the editor and returns focus to the teammate",
+      "ok": true,
+      "detail": "AMAntonio Martinezowner@northstar.exampl"
+    },
+    {
+      "name": "reduced motion: opening the editor runs no animation",
+      "ok": true,
+      "detail": "0 running []"
+    },
+    {
+      "name": "second workspace: its own people and titles, the untitled one reads Title not set, the long title fits",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "workspace switch: the open invitation closes and says so, and the roster and invitations become the new workspace's",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1536x770 no horizontal overflow",
+      "ok": true,
+      "detail": "{\"docOverflow\":false,\"ownerOverflow\":false,\"ownerScrollable\":true,\"rosterOverflow\":false,\"rosterScrollOwner\":false,\"surfaceWidth\":1180}"
+    },
+    {
+      "name": "1536x770 one reachable page scroll",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1536x770 bottom reachable",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1366x768 no horizontal overflow",
+      "ok": true,
+      "detail": "{\"docOverflow\":false,\"ownerOverflow\":false,\"ownerScrollable\":true,\"rosterOverflow\":false,\"rosterScrollOwner\":false,\"surfaceWidth\":1080}"
+    },
+    {
+      "name": "1366x768 one reachable page scroll",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1366x768 bottom reachable",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1024x768 no horizontal overflow",
+      "ok": true,
+      "detail": "{\"docOverflow\":false,\"ownerOverflow\":false,\"ownerScrollable\":true,\"rosterOverflow\":false,\"rosterScrollOwner\":false,\"surfaceWidth\":753}"
+    },
+    {
+      "name": "1024x768 one reachable page scroll",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "1024x768 bottom reachable",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "900x1000 no horizontal overflow",
+      "ok": true,
+      "detail": "{\"docOverflow\":false,\"ownerOverflow\":false,\"ownerScrollable\":true,\"rosterOverflow\":false,\"rosterScrollOwner\":false,\"surfaceWidth\":634}"
+    },
+    {
+      "name": "900x1000 one reachable page scroll",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "900x1000 bottom reachable",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "large roster starts paged",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "load more reaches remaining people",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "edit cancel restores work title",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "saved work title survives re-read",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "permission requires confirmation",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "invalid invitation is blocked",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "invitation has owner confirmation state",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "confirmed invitation enters lifecycle",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Escape closes and restores trigger focus",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "roles explanation reachable",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "existing Paige workspace opener wired",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "first teammate state reachable",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "permission denied state explicit",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}

@@ -78,7 +78,7 @@ INSERT INTO public.tenant_members (tenant_id, user_id, role, status, is_owner, j
 
 INSERT INTO public.user_roles (user_id, role) VALUES
   ('c1a00000-0000-0000-0000-000000000004', 'super_admin'),
-  ('c1a00000-0000-0000-0000-000000000003', 'coach')
+  ('c1a00000-0000-0000-0000-000000000003', 'sales_rep')
 ON CONFLICT DO NOTHING;
 
 -- The admin (c1a...002) holds mcp.connections.{use_restricted,manage,delete} for T — the happy-path caller;
@@ -95,7 +95,11 @@ BEGIN
   -- INT-153 (20270332000000): the writer floor rejects a bearer/header token < 12 chars, so accept-case
   -- tokens must be >= 12 (the value is arbitrary; the row-shape asserts below do not check the token).
   _r := public.create_mcp_connection('generic-remote','acc-header','https://acc-header.example.com/rpc','header','tok-header-key-1','X-Api-Key');
-  IF (SELECT count(*) FROM jsonb_object_keys(_r)) <> 4
+  IF (SELECT count(*) FROM jsonb_object_keys(_r)) <> 8
+     OR _r->>'address_configured' IS DISTINCT FROM 'true'
+     OR _r->>'credentials_configured' IS DISTINCT FROM 'true'
+     OR _r->>'custom_header_count' IS DISTINCT FROM '0'
+     OR _r->>'config_generation' IS DISTINCT FROM '1'
      OR (_r->>'status') <> 'pending_verification'
      OR (_r->>'endpoint_hash') IS DISTINCT FROM public._mcp_endpoint_hash('https://acc-header.example.com/rpc')
      OR (_r ? 'server_url') OR (_r ? 'auth_token') OR (_r ? 'refresh_token') OR (_r ? 'oauth_client_secret') THEN
@@ -709,3 +713,6 @@ END $$;
 DO $$ BEGIN RAISE NOTICE 'MCP_GW_CONNECTION_CREATE_PROVEN'; END $$;
 
 ROLLBACK;
+
+-- Keep the supplementary-header contract in this already-executed Linux database CI entry.
+\ir mcp_connection_header_bundle.sql

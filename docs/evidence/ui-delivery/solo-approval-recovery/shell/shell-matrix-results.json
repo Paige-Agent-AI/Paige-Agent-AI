@@ -1,0 +1,915 @@
+{
+  "revision": "ebc4d67e49f2e62059b810334fd35d7c06a04dc6",
+  "treeClean": true,
+  "generatedAt": "2026-09-27T18:39:51.096Z",
+  "note": "Nothing changed. The message included internal system details, so Paige stopped before it went out. Ask her to rewrite it.",
+  "passed": 48,
+  "failed": 0,
+  "results": [
+    {
+      "name": "1536x770 dark PAIGE open (docked): card inside the dock, one scroll owner, nothing escapes, next step in view",
+      "ok": true,
+      "detail": {
+        "placed": 4,
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 522,
+          "full": "false"
+        },
+        "transcriptWidth": 491,
+        "card": {
+          "width": 321,
+          "insetLeft": 52,
+          "insetRight": 149,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": false,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true,
+        "frame": "shell-1536x770-dark-paige-open.png"
+      }
+    },
+    {
+      "name": "1536x770 dark PAIGE open (docked): Shift+Tab reaches Ask Paige again",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "presses": 3
+      }
+    },
+    {
+      "name": "1536x770 dark PAIGE open (docked), second tenant: the same checks pass in another workspace",
+      "ok": true,
+      "detail": {
+        "secondName": true,
+        "placed": 4,
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 522,
+          "full": "false"
+        },
+        "transcriptWidth": 491,
+        "card": {
+          "width": 321,
+          "insetLeft": 52,
+          "insetRight": 149,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": false,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true
+      }
+    },
+    {
+      "name": "1536x770 dark PAIGE closed: no horizontal page scroll, PAIGE takes no width, the screen does",
+      "ok": true,
+      "detail": {
+        "pageHorizontalScroll": false,
+        "paigeWidth": 0,
+        "hostWidth": 1320,
+        "hostHorizontalOverflow": false,
+        "frame": "shell-1536x770-dark-paige-closed.png"
+      }
+    },
+    {
+      "name": "1536x770 dark PAIGE full-screen: card inside the workspace, one scroll owner, nothing escapes, next step in view",
+      "ok": true,
+      "detail": {
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 1320,
+          "full": "true"
+        },
+        "transcriptWidth": 1093,
+        "card": {
+          "width": 803,
+          "insetLeft": 248,
+          "insetRight": 269,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": false,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true,
+        "frame": "shell-1536x770-dark-paige-full.png"
+      }
+    },
+    {
+      "name": "1536x770 dark no page error",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "1366x768 dark PAIGE open (docked): card inside the dock, one scroll owner, nothing escapes, next step in view",
+      "ok": true,
+      "detail": {
+        "placed": 4,
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 464,
+          "full": "false"
+        },
+        "transcriptWidth": 433,
+        "card": {
+          "width": 275,
+          "insetLeft": 52,
+          "insetRight": 137,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": false,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true,
+        "frame": "shell-1366x768-dark-paige-open.png"
+      }
+    },
+    {
+      "name": "1366x768 dark PAIGE open (docked): Shift+Tab reaches Ask Paige again",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "presses": 3
+      }
+    },
+    {
+      "name": "1366x768 dark PAIGE open (docked), second tenant: the same checks pass in another workspace",
+      "ok": true,
+      "detail": {
+        "secondName": true,
+        "placed": 4,
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 464,
+          "full": "false"
+        },
+        "transcriptWidth": 433,
+        "card": {
+          "width": 275,
+          "insetLeft": 52,
+          "insetRight": 137,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": false,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true
+      }
+    },
+    {
+      "name": "1366x768 dark PAIGE closed: no horizontal page scroll, PAIGE takes no width, the screen does",
+      "ok": true,
+      "detail": {
+        "pageHorizontalScroll": false,
+        "paigeWidth": 0,
+        "hostWidth": 1294,
+        "hostHorizontalOverflow": false,
+        "frame": "shell-1366x768-dark-paige-closed.png"
+      }
+    },
+    {
+      "name": "1366x768 dark PAIGE full-screen: card inside the workspace, one scroll owner, nothing escapes, next step in view",
+      "ok": true,
+      "detail": {
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 1294,
+          "full": "true"
+        },
+        "transcriptWidth": 1067,
+        "card": {
+          "width": 782,
+          "insetLeft": 248,
+          "insetRight": 264,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": false,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true,
+        "frame": "shell-1366x768-dark-paige-full.png"
+      }
+    },
+    {
+      "name": "1366x768 dark no page error",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "1024x768 dark PAIGE open (docked): card inside the dock, one scroll owner, nothing escapes, next step in view",
+      "ok": true,
+      "detail": {
+        "placed": 4,
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 410,
+          "full": "false"
+        },
+        "transcriptWidth": 379,
+        "card": {
+          "width": 232,
+          "insetLeft": 52,
+          "insetRight": 126,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": true,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true,
+        "frame": "shell-1024x768-dark-paige-open.png"
+      }
+    },
+    {
+      "name": "1024x768 dark PAIGE open (docked): Shift+Tab reaches Ask Paige again",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "presses": 3
+      }
+    },
+    {
+      "name": "1024x768 dark PAIGE open (docked), second tenant: the same checks pass in another workspace",
+      "ok": true,
+      "detail": {
+        "secondName": true,
+        "placed": 4,
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 410,
+          "full": "false"
+        },
+        "transcriptWidth": 379,
+        "card": {
+          "width": 232,
+          "insetLeft": 52,
+          "insetRight": 126,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": true,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true
+      }
+    },
+    {
+      "name": "1024x768 dark PAIGE closed: no horizontal page scroll, PAIGE takes no width, the screen does",
+      "ok": true,
+      "detail": {
+        "pageHorizontalScroll": false,
+        "paigeWidth": 0,
+        "hostWidth": 952,
+        "hostHorizontalOverflow": false,
+        "frame": "shell-1024x768-dark-paige-closed.png"
+      }
+    },
+    {
+      "name": "1024x768 dark PAIGE full-screen: card inside the workspace, one scroll owner, nothing escapes, next step in view",
+      "ok": true,
+      "detail": {
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 952,
+          "full": "true"
+        },
+        "transcriptWidth": 725,
+        "card": {
+          "width": 508,
+          "insetLeft": 248,
+          "insetRight": 196,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": false,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true,
+        "frame": "shell-1024x768-dark-paige-full.png"
+      }
+    },
+    {
+      "name": "1024x768 dark no page error",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "900x1000 dark PAIGE open (docked): card inside the dock, one scroll owner, nothing escapes, next step in view",
+      "ok": true,
+      "detail": {
+        "placed": 4,
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 410,
+          "full": "false"
+        },
+        "transcriptWidth": 379,
+        "card": {
+          "width": 232,
+          "insetLeft": 52,
+          "insetRight": 126,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": false,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true,
+        "frame": "shell-900x1000-dark-paige-open.png"
+      }
+    },
+    {
+      "name": "900x1000 dark PAIGE open (docked): Shift+Tab reaches Ask Paige again",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "presses": 3
+      }
+    },
+    {
+      "name": "900x1000 dark PAIGE open (docked), second tenant: the same checks pass in another workspace",
+      "ok": true,
+      "detail": {
+        "secondName": true,
+        "placed": 4,
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 410,
+          "full": "false"
+        },
+        "transcriptWidth": 379,
+        "card": {
+          "width": 232,
+          "insetLeft": 52,
+          "insetRight": 126,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": false,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true
+      }
+    },
+    {
+      "name": "900x1000 dark PAIGE closed: no horizontal page scroll, PAIGE takes no width, the screen does",
+      "ok": true,
+      "detail": {
+        "pageHorizontalScroll": false,
+        "paigeWidth": 0,
+        "hostWidth": 828,
+        "hostHorizontalOverflow": false,
+        "frame": "shell-900x1000-dark-paige-closed.png"
+      }
+    },
+    {
+      "name": "900x1000 dark PAIGE full-screen: card inside the workspace, one scroll owner, nothing escapes, next step in view",
+      "ok": true,
+      "detail": {
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 828,
+          "full": "true"
+        },
+        "transcriptWidth": 601,
+        "card": {
+          "width": 409,
+          "insetLeft": 248,
+          "insetRight": 171,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": false,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true,
+        "frame": "shell-900x1000-dark-paige-full.png"
+      }
+    },
+    {
+      "name": "900x1000 dark no page error",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "1536x770 light PAIGE open (docked): card inside the dock, one scroll owner, nothing escapes, next step in view",
+      "ok": true,
+      "detail": {
+        "placed": 4,
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 522,
+          "full": "false"
+        },
+        "transcriptWidth": 491,
+        "card": {
+          "width": 321,
+          "insetLeft": 52,
+          "insetRight": 149,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": false,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true,
+        "frame": "shell-1536x770-light-paige-open.png"
+      }
+    },
+    {
+      "name": "1536x770 light PAIGE open (docked): Shift+Tab reaches Ask Paige again",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "presses": 3
+      }
+    },
+    {
+      "name": "1536x770 light PAIGE open (docked), second tenant: the same checks pass in another workspace",
+      "ok": true,
+      "detail": {
+        "secondName": true,
+        "placed": 4,
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 522,
+          "full": "false"
+        },
+        "transcriptWidth": 491,
+        "card": {
+          "width": 321,
+          "insetLeft": 52,
+          "insetRight": 149,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": false,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true
+      }
+    },
+    {
+      "name": "1536x770 light PAIGE closed: no horizontal page scroll, PAIGE takes no width, the screen does",
+      "ok": true,
+      "detail": {
+        "pageHorizontalScroll": false,
+        "paigeWidth": 0,
+        "hostWidth": 1320,
+        "hostHorizontalOverflow": false,
+        "frame": "shell-1536x770-light-paige-closed.png"
+      }
+    },
+    {
+      "name": "1536x770 light PAIGE full-screen: card inside the workspace, one scroll owner, nothing escapes, next step in view",
+      "ok": true,
+      "detail": {
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 1320,
+          "full": "true"
+        },
+        "transcriptWidth": 1093,
+        "card": {
+          "width": 803,
+          "insetLeft": 248,
+          "insetRight": 269,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": false,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true,
+        "frame": "shell-1536x770-light-paige-full.png"
+      }
+    },
+    {
+      "name": "1536x770 light no page error",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "1366x768 light PAIGE open (docked): card inside the dock, one scroll owner, nothing escapes, next step in view",
+      "ok": true,
+      "detail": {
+        "placed": 4,
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 464,
+          "full": "false"
+        },
+        "transcriptWidth": 433,
+        "card": {
+          "width": 275,
+          "insetLeft": 52,
+          "insetRight": 137,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": false,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true,
+        "frame": "shell-1366x768-light-paige-open.png"
+      }
+    },
+    {
+      "name": "1366x768 light PAIGE open (docked): Shift+Tab reaches Ask Paige again",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "presses": 3
+      }
+    },
+    {
+      "name": "1366x768 light PAIGE open (docked), second tenant: the same checks pass in another workspace",
+      "ok": true,
+      "detail": {
+        "secondName": true,
+        "placed": 4,
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 464,
+          "full": "false"
+        },
+        "transcriptWidth": 433,
+        "card": {
+          "width": 275,
+          "insetLeft": 52,
+          "insetRight": 137,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": false,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true
+      }
+    },
+    {
+      "name": "1366x768 light PAIGE closed: no horizontal page scroll, PAIGE takes no width, the screen does",
+      "ok": true,
+      "detail": {
+        "pageHorizontalScroll": false,
+        "paigeWidth": 0,
+        "hostWidth": 1294,
+        "hostHorizontalOverflow": false,
+        "frame": "shell-1366x768-light-paige-closed.png"
+      }
+    },
+    {
+      "name": "1366x768 light PAIGE full-screen: card inside the workspace, one scroll owner, nothing escapes, next step in view",
+      "ok": true,
+      "detail": {
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 1294,
+          "full": "true"
+        },
+        "transcriptWidth": 1067,
+        "card": {
+          "width": 782,
+          "insetLeft": 248,
+          "insetRight": 264,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": false,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true,
+        "frame": "shell-1366x768-light-paige-full.png"
+      }
+    },
+    {
+      "name": "1366x768 light no page error",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "1024x768 light PAIGE open (docked): card inside the dock, one scroll owner, nothing escapes, next step in view",
+      "ok": true,
+      "detail": {
+        "placed": 4,
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 410,
+          "full": "false"
+        },
+        "transcriptWidth": 379,
+        "card": {
+          "width": 232,
+          "insetLeft": 52,
+          "insetRight": 126,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": true,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true,
+        "frame": "shell-1024x768-light-paige-open.png"
+      }
+    },
+    {
+      "name": "1024x768 light PAIGE open (docked): Shift+Tab reaches Ask Paige again",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "presses": 3
+      }
+    },
+    {
+      "name": "1024x768 light PAIGE open (docked), second tenant: the same checks pass in another workspace",
+      "ok": true,
+      "detail": {
+        "secondName": true,
+        "placed": 4,
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 410,
+          "full": "false"
+        },
+        "transcriptWidth": 379,
+        "card": {
+          "width": 232,
+          "insetLeft": 52,
+          "insetRight": 126,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": true,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true
+      }
+    },
+    {
+      "name": "1024x768 light PAIGE closed: no horizontal page scroll, PAIGE takes no width, the screen does",
+      "ok": true,
+      "detail": {
+        "pageHorizontalScroll": false,
+        "paigeWidth": 0,
+        "hostWidth": 952,
+        "hostHorizontalOverflow": false,
+        "frame": "shell-1024x768-light-paige-closed.png"
+      }
+    },
+    {
+      "name": "1024x768 light PAIGE full-screen: card inside the workspace, one scroll owner, nothing escapes, next step in view",
+      "ok": true,
+      "detail": {
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 952,
+          "full": "true"
+        },
+        "transcriptWidth": 725,
+        "card": {
+          "width": 508,
+          "insetLeft": 248,
+          "insetRight": 196,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": false,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true,
+        "frame": "shell-1024x768-light-paige-full.png"
+      }
+    },
+    {
+      "name": "1024x768 light no page error",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "900x1000 light PAIGE open (docked): card inside the dock, one scroll owner, nothing escapes, next step in view",
+      "ok": true,
+      "detail": {
+        "placed": 4,
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 410,
+          "full": "false"
+        },
+        "transcriptWidth": 379,
+        "card": {
+          "width": 232,
+          "insetLeft": 52,
+          "insetRight": 126,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": false,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true,
+        "frame": "shell-900x1000-light-paige-open.png"
+      }
+    },
+    {
+      "name": "900x1000 light PAIGE open (docked): Shift+Tab reaches Ask Paige again",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "presses": 3
+      }
+    },
+    {
+      "name": "900x1000 light PAIGE open (docked), second tenant: the same checks pass in another workspace",
+      "ok": true,
+      "detail": {
+        "secondName": true,
+        "placed": 4,
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 410,
+          "full": "false"
+        },
+        "transcriptWidth": 379,
+        "card": {
+          "width": 232,
+          "insetLeft": 52,
+          "insetRight": 126,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": false,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true
+      }
+    },
+    {
+      "name": "900x1000 light PAIGE closed: no horizontal page scroll, PAIGE takes no width, the screen does",
+      "ok": true,
+      "detail": {
+        "pageHorizontalScroll": false,
+        "paigeWidth": 0,
+        "hostWidth": 828,
+        "hostHorizontalOverflow": false,
+        "frame": "shell-900x1000-light-paige-closed.png"
+      }
+    },
+    {
+      "name": "900x1000 light PAIGE full-screen: card inside the workspace, one scroll owner, nothing escapes, next step in view",
+      "ok": true,
+      "detail": {
+        "pageHorizontalScroll": false,
+        "region": {
+          "width": 828,
+          "full": "true"
+        },
+        "transcriptWidth": 601,
+        "card": {
+          "width": 409,
+          "insetLeft": 248,
+          "insetRight": 171,
+          "state": "failed"
+        },
+        "cardInsideRegion": true,
+        "escapes": [],
+        "scrollers": [
+          "transcript"
+        ],
+        "transcriptHorizontalOverflow": false,
+        "cardTallerThanTranscript": false,
+        "noteVisible": true,
+        "askVisible": true,
+        "summaryWraps": true,
+        "frame": "shell-900x1000-light-paige-full.png"
+      }
+    },
+    {
+      "name": "900x1000 light no page error",
+      "ok": true,
+      "detail": null
+    }
+  ],
+  "boundary": "Local render of the shipped Solo shell with the card's captured markup placed in its live transcript. Geometry only; not a React-driven turn, not deployed, not authenticated."
+}

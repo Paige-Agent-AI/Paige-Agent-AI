@@ -15,6 +15,7 @@ export class AudioRecorder {
   constructor(
     private onAudioData: (audioData: Float32Array) => void,
     private targetSampleRate: number = 24000,
+    private frameSamples: 1024 | 2048 | 4096 = 4096,
   ) {}
 
   async start() {
@@ -52,7 +53,7 @@ export class AudioRecorder {
       }
 
       this.source = this.audioContext.createMediaStreamSource(this.stream);
-      this.processor = this.audioContext.createScriptProcessor(4096, 1, 1);
+      this.processor = this.audioContext.createScriptProcessor(this.frameSamples, 1, 1);
 
       this.processor.onaudioprocess = (e) => {
         const inputData = e.inputBuffer.getChannelData(0);

@@ -24,18 +24,20 @@ import { useKnowledge } from "@/operator/data/useKnowledge";
 import { useIsPlatformOwner } from "@/operator/data/useIsPlatformOwner";
 
 /**
- * RULING F (Claude Design, 2026-08-23) — ELEVATION IS DISTANCE FROM `--pg-env`.
+ * ELEVATION IS DISTANCE FROM `--pg-env` (the console's token rule; first written up as the v3
+ * pack's "Ruling F", 2026-08-23 — reference, not authority, per root `CLAUDE.md` §00).
  * `--pg-surface` sits ABOVE canvas in dark and BELOW it in light, so the role inverts between
  * themes and a plate painted on it RECEDES in light. A plate that rises off the canvas — a card,
  * a KPI tile, a control, a popover — paints `--pg-raised` in BOTH themes; `--pg-surface` is kept
  * for regions that genuinely recede (a well, an inset strip, a sunken list).
  *
- * AND FILL ALONE CANNOT CARRY IT (Claude Design, 2026-08-23). In light, `--pg-raised` `#fffdf8`
+ * AND FILL ALONE CANNOT CARRY IT. In light, `--pg-raised` `#fffdf8`
  * on `--pg-canvas` `#fbf9f5` is three units — correct, and invisible on its own. Separation on a
  * raised plate is `--pg-rim` PLUS `--pg-lift-1`: the rim is a seated inset pair (a top highlight
  * and a bottom shade, L21/L28) and the lift is the outer cast (L22/L29). Carrying the rim alone
- * left only insets, which read as a plain outline against the 1.5px border — the "hairline
- * outline" CD reported. Both tokens ship at the pack's own values; this is where they are spent.
+ * left only insets, which read as a plain outline against the 1.5px border — a "hairline
+ * outline" rather than a raised plate. Both tokens ship at the pack's values; this is where they
+ * are spent.
  * The pack pairs them exactly this way at L9420 and L9477: `var(--pg-rim), var(--pg-lift-N)`.
  *
  * AND WHY THE RIM WAS NOT PAINTING AT ALL — measured, not inferred. `shadow-[shadow:var(--pg-rim)]`
@@ -164,7 +166,7 @@ export default function SlotSurfaceBody({ slot, view }: { slot: OperatorSlot; vi
     return (
       <Suspense fallback={<Holding />}>
         <p aria-live="polite" className="sr-only">{said}</p>
-        {bespoke === "FleetConsole" && <FleetConsole canSeeRevenue={isOwner === true} />}
+        {bespoke === "FleetConsole" && <FleetConsole isPlatformOwner={isOwner} />}
         {bespoke === "SystemsCheckSurface" && <SystemsCheckSurface />}
         {bespoke === "FleetHistorySurface" && <FleetHistorySurface />}
         {bespoke === "FleetAlertRulesSurface" && <FleetAlertRulesSurface />}

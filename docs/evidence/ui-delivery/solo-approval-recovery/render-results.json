@@ -1,0 +1,761 @@
+{
+  "proofClass": "rendered harness — not an authenticated runtime drive",
+  "themes": {
+    "light": {
+      "faces": [
+        "Schibsted Grotesk 400",
+        "Schibsted Grotesk 500",
+        "Schibsted Grotesk 600"
+      ],
+      "shots": [
+        "needs-your-ok-light.png",
+        "running-light.png",
+        "done-light.png",
+        "didn-t-run-light.png",
+        "held-back-internal-details-light.png",
+        "one-of-two-ran-light.png",
+        "one-ran-one-couldn-t-confirm-light.png",
+        "couldn-t-confirm-light.png",
+        "connection-lost-light.png",
+        "not-now-light.png"
+      ],
+      "contrast": [
+        {
+          "label": "heading",
+          "scene": "Running",
+          "text": "Running…",
+          "size": "13px",
+          "weight": "600",
+          "ratio": 15.34
+        },
+        {
+          "label": "heading",
+          "scene": "Done",
+          "text": "Done",
+          "size": "13px",
+          "weight": "600",
+          "ratio": 14.77
+        },
+        {
+          "label": "heading",
+          "scene": "Didn't run",
+          "text": "Didn't run",
+          "size": "13px",
+          "weight": "600",
+          "ratio": 14.68
+        },
+        {
+          "label": "heading",
+          "scene": "Held back: internal details",
+          "text": "Didn't run",
+          "size": "13px",
+          "weight": "600",
+          "ratio": 14.68
+        },
+        {
+          "label": "heading",
+          "scene": "One of two ran",
+          "text": "1 done · 1 didn't run",
+          "size": "13px",
+          "weight": "600",
+          "ratio": 14.68
+        },
+        {
+          "label": "heading",
+          "scene": "One ran, one couldn't confirm",
+          "text": "Couldn't confirm",
+          "size": "13px",
+          "weight": "600",
+          "ratio": 14.54
+        },
+        {
+          "label": "heading",
+          "scene": "Couldn't confirm",
+          "text": "Couldn't confirm",
+          "size": "13px",
+          "weight": "600",
+          "ratio": 14.54
+        },
+        {
+          "label": "heading",
+          "scene": "Connection lost",
+          "text": "Couldn't confirm",
+          "size": "13px",
+          "weight": "600",
+          "ratio": 14.54
+        },
+        {
+          "label": "card note",
+          "scene": "Didn't run",
+          "text": "Nothing changed. More than one approval was waiting, so Paig",
+          "size": "13px",
+          "weight": "400",
+          "ratio": 10.07
+        },
+        {
+          "label": "card note",
+          "scene": "Held back: internal details",
+          "text": "Nothing changed. The message included internal system detail",
+          "size": "13px",
+          "weight": "400",
+          "ratio": 10.07
+        },
+        {
+          "label": "card note",
+          "scene": "Couldn't confirm",
+          "text": "This may have gone through. Check before asking again, so it",
+          "size": "13px",
+          "weight": "400",
+          "ratio": 9.97
+        },
+        {
+          "label": "card note",
+          "scene": "Connection lost",
+          "text": "The connection dropped before Paige could report back, so th",
+          "size": "13px",
+          "weight": "400",
+          "ratio": 9.97
+        },
+        {
+          "label": "row summary",
+          "scene": "Running",
+          "text": "Running: Dismiss the draft “Following up on the Q3 proposal”",
+          "size": "14px",
+          "weight": "400",
+          "ratio": 5.59
+        },
+        {
+          "label": "row summary",
+          "scene": "Running",
+          "text": "Running: Dismiss the draft “Checking in after the kickoff ca",
+          "size": "14px",
+          "weight": "400",
+          "ratio": 5.59
+        },
+        {
+          "label": "row summary",
+          "scene": "Done",
+          "text": "Add Maya Ortiz at Ortiz Landscaping to your clients",
+          "size": "14px",
+          "weight": "400",
+          "ratio": 5.39
+        },
+        {
+          "label": "row summary",
+          "scene": "Didn't run",
+          "text": "Didn't run: Dismiss the draft “Following up on the Q3 propos",
+          "size": "14px",
+          "weight": "400",
+          "ratio": 5.35
+        },
+        {
+          "label": "row summary",
+          "scene": "Didn't run",
+          "text": "Didn't run: Dismiss the draft “Checking in after the kickoff",
+          "size": "14px",
+          "weight": "400",
+          "ratio": 5.35
+        },
+        {
+          "label": "row summary",
+          "scene": "Held back: internal details",
+          "text": "Send the public booking link for Intro call to maya@ortizlan",
+          "size": "14px",
+          "weight": "400",
+          "ratio": 5.35
+        },
+        {
+          "label": "row summary",
+          "scene": "One of two ran",
+          "text": "Done: Dismiss the draft “Following up on the Q3 proposal”",
+          "size": "14px",
+          "weight": "400",
+          "ratio": 5.35
+        },
+        {
+          "label": "row summary",
+          "scene": "One of two ran",
+          "text": "Didn't run: Dismiss the draft “Checking in after the kickoff",
+          "size": "14px",
+          "weight": "400",
+          "ratio": 5.35
+        },
+        {
+          "label": "row summary",
+          "scene": "One ran, one couldn't confirm",
+          "text": "Done: Dismiss the draft “Following up on the Q3 proposal”",
+          "size": "14px",
+          "weight": "400",
+          "ratio": 5.3
+        },
+        {
+          "label": "row summary",
+          "scene": "One ran, one couldn't confirm",
+          "text": "Couldn't confirm: Dismiss the draft “Checking in after the k",
+          "size": "14px",
+          "weight": "400",
+          "ratio": 5.3
+        },
+        {
+          "label": "row summary",
+          "scene": "Couldn't confirm",
+          "text": "Add Maya Ortiz at Ortiz Landscaping to your clients",
+          "size": "14px",
+          "weight": "400",
+          "ratio": 5.3
+        },
+        {
+          "label": "row summary",
+          "scene": "Connection lost",
+          "text": "Add Maya Ortiz at Ortiz Landscaping to your clients",
+          "size": "14px",
+          "weight": "400",
+          "ratio": 5.3
+        },
+        {
+          "label": "row note",
+          "scene": "One of two ran",
+          "text": "It didn't go through.",
+          "size": "12px",
+          "weight": "400",
+          "ratio": 5.28
+        },
+        {
+          "label": "row note",
+          "scene": "One ran, one couldn't confirm",
+          "text": "This may have gone through. Check before asking again, so it",
+          "size": "12px",
+          "weight": "400",
+          "ratio": 6.05
+        },
+        {
+          "label": "helper",
+          "scene": "One of two ran",
+          "text": "Only the one that didn’t run.",
+          "size": "12px",
+          "weight": "400",
+          "ratio": 5.35
+        },
+        {
+          "label": "ask again",
+          "scene": "Didn't run",
+          "text": "Ask Paige again",
+          "size": "14px",
+          "weight": "500",
+          "ratio": 14.73
+        },
+        {
+          "label": "ask again",
+          "scene": "Held back: internal details",
+          "text": "Ask Paige again",
+          "size": "14px",
+          "weight": "500",
+          "ratio": 14.73
+        },
+        {
+          "label": "ask again",
+          "scene": "One of two ran",
+          "text": "Ask Paige again",
+          "size": "14px",
+          "weight": "500",
+          "ratio": 14.73
+        },
+        {
+          "label": "check link",
+          "scene": "Couldn't confirm",
+          "text": "Open your clients",
+          "size": "13px",
+          "weight": "600",
+          "ratio": 14.54
+        },
+        {
+          "label": "check link",
+          "scene": "Connection lost",
+          "text": "Open your clients",
+          "size": "13px",
+          "weight": "600",
+          "ratio": 14.54
+        },
+        {
+          "label": "record",
+          "scene": "Running",
+          "text": "Approved · 2 actions",
+          "size": "12px",
+          "weight": "400",
+          "ratio": 5.65
+        },
+        {
+          "label": "record",
+          "scene": "Done",
+          "text": "Approved",
+          "size": "12px",
+          "weight": "400",
+          "ratio": 5.65
+        },
+        {
+          "label": "record",
+          "scene": "Didn't run",
+          "text": "Approved · 2 actions",
+          "size": "12px",
+          "weight": "400",
+          "ratio": 5.65
+        },
+        {
+          "label": "record",
+          "scene": "Held back: internal details",
+          "text": "Approved",
+          "size": "12px",
+          "weight": "400",
+          "ratio": 5.65
+        },
+        {
+          "label": "record",
+          "scene": "One of two ran",
+          "text": "Approved · 2 actions",
+          "size": "12px",
+          "weight": "400",
+          "ratio": 5.65
+        },
+        {
+          "label": "record",
+          "scene": "One ran, one couldn't confirm",
+          "text": "Approved · 2 actions",
+          "size": "12px",
+          "weight": "400",
+          "ratio": 5.65
+        },
+        {
+          "label": "record",
+          "scene": "Couldn't confirm",
+          "text": "Approved",
+          "size": "12px",
+          "weight": "400",
+          "ratio": 5.65
+        },
+        {
+          "label": "record",
+          "scene": "Connection lost",
+          "text": "Approved",
+          "size": "12px",
+          "weight": "400",
+          "ratio": 5.65
+        },
+        {
+          "label": "record",
+          "scene": "Not now",
+          "text": "Skipped · nothing changed",
+          "size": "12px",
+          "weight": "400",
+          "ratio": 5.65
+        },
+        {
+          "label": "receipt heading",
+          "scene": "Done",
+          "text": "Added",
+          "size": "14px",
+          "weight": "500",
+          "ratio": 15.43
+        }
+      ],
+      "cards": 9,
+      "narrowOverflow": [],
+      "pageScrollsSideways": false,
+      "reflow320": {
+        "overflowingCards": [
+          "Needs your OK"
+        ],
+        "pageScrollsSideways": false
+      },
+      "narrowShots": [
+        "side-panel-needs-your-ok-light.png",
+        "side-panel-running-light.png",
+        "side-panel-done-light.png",
+        "side-panel-didn-t-run-light.png",
+        "side-panel-held-back-internal-details-light.png",
+        "side-panel-one-of-two-ran-light.png",
+        "side-panel-one-ran-one-couldn-t-confirm-light.png",
+        "side-panel-couldn-t-confirm-light.png",
+        "side-panel-connection-lost-light.png"
+      ]
+    },
+    "dark": {
+      "faces": [
+        "Schibsted Grotesk 400",
+        "Schibsted Grotesk 500",
+        "Schibsted Grotesk 600"
+      ],
+      "shots": [
+        "needs-your-ok-dark.png",
+        "running-dark.png",
+        "done-dark.png",
+        "didn-t-run-dark.png",
+        "held-back-internal-details-dark.png",
+        "one-of-two-ran-dark.png",
+        "one-ran-one-couldn-t-confirm-dark.png",
+        "couldn-t-confirm-dark.png",
+        "connection-lost-dark.png",
+        "not-now-dark.png"
+      ],
+      "contrast": [
+        {
+          "label": "heading",
+          "scene": "Running",
+          "text": "Running…",
+          "size": "13px",
+          "weight": "600",
+          "ratio": 16.71
+        },
+        {
+          "label": "heading",
+          "scene": "Done",
+          "text": "Done",
+          "size": "13px",
+          "weight": "600",
+          "ratio": 15.96
+        },
+        {
+          "label": "heading",
+          "scene": "Didn't run",
+          "text": "Didn't run",
+          "size": "13px",
+          "weight": "600",
+          "ratio": 16.08
+        },
+        {
+          "label": "heading",
+          "scene": "Held back: internal details",
+          "text": "Didn't run",
+          "size": "13px",
+          "weight": "600",
+          "ratio": 16.08
+        },
+        {
+          "label": "heading",
+          "scene": "One of two ran",
+          "text": "1 done · 1 didn't run",
+          "size": "13px",
+          "weight": "600",
+          "ratio": 16.08
+        },
+        {
+          "label": "heading",
+          "scene": "One ran, one couldn't confirm",
+          "text": "Couldn't confirm",
+          "size": "13px",
+          "weight": "600",
+          "ratio": 15.58
+        },
+        {
+          "label": "heading",
+          "scene": "Couldn't confirm",
+          "text": "Couldn't confirm",
+          "size": "13px",
+          "weight": "600",
+          "ratio": 15.58
+        },
+        {
+          "label": "heading",
+          "scene": "Connection lost",
+          "text": "Couldn't confirm",
+          "size": "13px",
+          "weight": "600",
+          "ratio": 15.58
+        },
+        {
+          "label": "card note",
+          "scene": "Didn't run",
+          "text": "Nothing changed. More than one approval was waiting, so Paig",
+          "size": "13px",
+          "weight": "400",
+          "ratio": 11.74
+        },
+        {
+          "label": "card note",
+          "scene": "Held back: internal details",
+          "text": "Nothing changed. The message included internal system detail",
+          "size": "13px",
+          "weight": "400",
+          "ratio": 11.74
+        },
+        {
+          "label": "card note",
+          "scene": "Couldn't confirm",
+          "text": "This may have gone through. Check before asking again, so it",
+          "size": "13px",
+          "weight": "400",
+          "ratio": 11.37
+        },
+        {
+          "label": "card note",
+          "scene": "Connection lost",
+          "text": "The connection dropped before Paige could report back, so th",
+          "size": "13px",
+          "weight": "400",
+          "ratio": 11.37
+        },
+        {
+          "label": "row summary",
+          "scene": "Running",
+          "text": "Running: Dismiss the draft “Following up on the Q3 proposal”",
+          "size": "14px",
+          "weight": "400",
+          "ratio": 7.82
+        },
+        {
+          "label": "row summary",
+          "scene": "Running",
+          "text": "Running: Dismiss the draft “Checking in after the kickoff ca",
+          "size": "14px",
+          "weight": "400",
+          "ratio": 7.82
+        },
+        {
+          "label": "row summary",
+          "scene": "Done",
+          "text": "Add Maya Ortiz at Ortiz Landscaping to your clients",
+          "size": "14px",
+          "weight": "400",
+          "ratio": 7.47
+        },
+        {
+          "label": "row summary",
+          "scene": "Didn't run",
+          "text": "Didn't run: Dismiss the draft “Following up on the Q3 propos",
+          "size": "14px",
+          "weight": "400",
+          "ratio": 7.53
+        },
+        {
+          "label": "row summary",
+          "scene": "Didn't run",
+          "text": "Didn't run: Dismiss the draft “Checking in after the kickoff",
+          "size": "14px",
+          "weight": "400",
+          "ratio": 7.53
+        },
+        {
+          "label": "row summary",
+          "scene": "Held back: internal details",
+          "text": "Send the public booking link for Intro call to maya@ortizlan",
+          "size": "14px",
+          "weight": "400",
+          "ratio": 7.53
+        },
+        {
+          "label": "row summary",
+          "scene": "One of two ran",
+          "text": "Done: Dismiss the draft “Following up on the Q3 proposal”",
+          "size": "14px",
+          "weight": "400",
+          "ratio": 7.53
+        },
+        {
+          "label": "row summary",
+          "scene": "One of two ran",
+          "text": "Didn't run: Dismiss the draft “Checking in after the kickoff",
+          "size": "14px",
+          "weight": "400",
+          "ratio": 7.53
+        },
+        {
+          "label": "row summary",
+          "scene": "One ran, one couldn't confirm",
+          "text": "Done: Dismiss the draft “Following up on the Q3 proposal”",
+          "size": "14px",
+          "weight": "400",
+          "ratio": 7.29
+        },
+        {
+          "label": "row summary",
+          "scene": "One ran, one couldn't confirm",
+          "text": "Couldn't confirm: Dismiss the draft “Checking in after the k",
+          "size": "14px",
+          "weight": "400",
+          "ratio": 7.29
+        },
+        {
+          "label": "row summary",
+          "scene": "Couldn't confirm",
+          "text": "Add Maya Ortiz at Ortiz Landscaping to your clients",
+          "size": "14px",
+          "weight": "400",
+          "ratio": 7.29
+        },
+        {
+          "label": "row summary",
+          "scene": "Connection lost",
+          "text": "Add Maya Ortiz at Ortiz Landscaping to your clients",
+          "size": "14px",
+          "weight": "400",
+          "ratio": 7.29
+        },
+        {
+          "label": "row note",
+          "scene": "One of two ran",
+          "text": "It didn't go through.",
+          "size": "12px",
+          "weight": "400",
+          "ratio": 8.59
+        },
+        {
+          "label": "row note",
+          "scene": "One ran, one couldn't confirm",
+          "text": "This may have gone through. Check before asking again, so it",
+          "size": "12px",
+          "weight": "400",
+          "ratio": 11.31
+        },
+        {
+          "label": "helper",
+          "scene": "One of two ran",
+          "text": "Only the one that didn’t run.",
+          "size": "12px",
+          "weight": "400",
+          "ratio": 7.53
+        },
+        {
+          "label": "ask again",
+          "scene": "Didn't run",
+          "text": "Ask Paige again",
+          "size": "14px",
+          "weight": "500",
+          "ratio": 16.08
+        },
+        {
+          "label": "ask again",
+          "scene": "Held back: internal details",
+          "text": "Ask Paige again",
+          "size": "14px",
+          "weight": "500",
+          "ratio": 16.08
+        },
+        {
+          "label": "ask again",
+          "scene": "One of two ran",
+          "text": "Ask Paige again",
+          "size": "14px",
+          "weight": "500",
+          "ratio": 16.08
+        },
+        {
+          "label": "check link",
+          "scene": "Couldn't confirm",
+          "text": "Open your clients",
+          "size": "13px",
+          "weight": "600",
+          "ratio": 15.58
+        },
+        {
+          "label": "check link",
+          "scene": "Connection lost",
+          "text": "Open your clients",
+          "size": "13px",
+          "weight": "600",
+          "ratio": 15.58
+        },
+        {
+          "label": "record",
+          "scene": "Running",
+          "text": "Approved · 2 actions",
+          "size": "12px",
+          "weight": "400",
+          "ratio": 7.93
+        },
+        {
+          "label": "record",
+          "scene": "Done",
+          "text": "Approved",
+          "size": "12px",
+          "weight": "400",
+          "ratio": 7.93
+        },
+        {
+          "label": "record",
+          "scene": "Didn't run",
+          "text": "Approved · 2 actions",
+          "size": "12px",
+          "weight": "400",
+          "ratio": 7.93
+        },
+        {
+          "label": "record",
+          "scene": "Held back: internal details",
+          "text": "Approved",
+          "size": "12px",
+          "weight": "400",
+          "ratio": 7.93
+        },
+        {
+          "label": "record",
+          "scene": "One of two ran",
+          "text": "Approved · 2 actions",
+          "size": "12px",
+          "weight": "400",
+          "ratio": 7.93
+        },
+        {
+          "label": "record",
+          "scene": "One ran, one couldn't confirm",
+          "text": "Approved · 2 actions",
+          "size": "12px",
+          "weight": "400",
+          "ratio": 7.93
+        },
+        {
+          "label": "record",
+          "scene": "Couldn't confirm",
+          "text": "Approved",
+          "size": "12px",
+          "weight": "400",
+          "ratio": 7.93
+        },
+        {
+          "label": "record",
+          "scene": "Connection lost",
+          "text": "Approved",
+          "size": "12px",
+          "weight": "400",
+          "ratio": 7.93
+        },
+        {
+          "label": "record",
+          "scene": "Not now",
+          "text": "Skipped · nothing changed",
+          "size": "12px",
+          "weight": "400",
+          "ratio": 7.93
+        },
+        {
+          "label": "receipt heading",
+          "scene": "Done",
+          "text": "Added",
+          "size": "14px",
+          "weight": "500",
+          "ratio": 16.76
+        }
+      ],
+      "cards": 9,
+      "narrowOverflow": [],
+      "pageScrollsSideways": false,
+      "reflow320": {
+        "overflowingCards": [
+          "Needs your OK"
+        ],
+        "pageScrollsSideways": false
+      },
+      "narrowShots": [
+        "side-panel-needs-your-ok-dark.png",
+        "side-panel-running-dark.png",
+        "side-panel-done-dark.png",
+        "side-panel-didn-t-run-dark.png",
+        "side-panel-held-back-internal-details-dark.png",
+        "side-panel-one-of-two-ran-dark.png",
+        "side-panel-one-ran-one-couldn-t-confirm-dark.png",
+        "side-panel-couldn-t-confirm-dark.png",
+        "side-panel-connection-lost-dark.png"
+      ]
+    }
+  },
+  "reducedMotionChecked": 8,
+  "reducedMotion": []
+}

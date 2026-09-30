@@ -109,6 +109,11 @@ jobs:
           src="$(echo "$all" | grep -E '^src/.*\.(ts|tsx)$' || true)"
           echo "src_count=$(printf '%s' "$src" | grep -c . || true)" >> "$GITHUB_OUTPUT"
           printf '%s\n' "$src" | grep -E '.' > changed_src.txt || true
+          # Impeccable reads stylesheets as well as components, so its change set is wider
+          # than the ESLint one. Same base/head, so the two gates never disagree.
+          ui="$(echo "$all" | grep -E '^src/.*\.(ts|tsx|css)$' || true)"
+          echo "ui_count=$(printf '%s' "$ui" | grep -c . || true)" >> "$GITHUB_OUTPUT"
+          printf '%s\n' "$ui" | grep -E '.' > changed_ui.txt || true
           echo "Changed src files:"; cat changed_src.txt || true
           # Edge functions are a SEPARATE tree that tsc never sees (they are Deno, not Vite).
           fns="$(echo "$all" | grep -E '^supabase/functions/.*\.ts$' || true)"
@@ -168,6 +173,10 @@ jobs:
       - name: Secure Browser prerequisite security contract (tenant attribution, JWT authority, gated worker, read-only egress)
         if: ${{ !cancelled() }}
         run: npm run smoke:secure-browser-security
+
+      - name: Secure Browser provider-neutral control plane (RLS, receipts, limits, quarantine, hard provider gates)
+        if: ${{ !cancelled() }}
+        run: npm run smoke:secure-browser-control-plane
 
       - name: Install Chromium for the Secure Browser hostile-page proof
         if: ${{ !cancelled() }}
@@ -250,6 +259,44 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run lint:tool-catalogue
 
+      # The guard above also walks EVERY consecutive pair of catalogue declarations, because
+      # `list_tool_autonomy` is CREATE OR REPLACEd with its whole body: a migration written from a
+      # stale copy erases every row added after that copy was taken. That is not hypothetical — on
+      # 2026-09-13 a lane whose migration sorted EARLIER than the tip had 25 governed CRM rows
+      # erased the moment it merged, and shipped a second migration to put them back. The check is
+      # pre-merge: a PR branch already carries the other lane's migration. This proves it bites,
+      # including the case where grading only the newly-added file would pass.
+      - name: ...and the catalogue guard fails when a declaration erases rows
+        if: ${{ !cancelled() }}
+        run: npm run lint:tool-catalogue:test
+
+      # The patch field list the model sees is GENERATED from the database allowlist. On 2026-09-25
+      # an approved contact create threw `CRM_PATCH_FIELDS_INVALID:company_name,zip` on production:
+      # Paige sent `company_name` and `zip`, the executor accepts `entity_name` and `zip_code`, and
+      # the tool schema described `patch` as a bare `{ type: "object" }` — so she had no way to know
+      # the real names and used the ones a person would say. The seven allowlists live in two
+      # plpgsql functions and are NOT identical to each other (`contact.create` takes `notes`,
+      # `contact.update` takes `current_notes`), so a single hardcoded map gets four of the seven
+      # wrong. This re-derives all seven from the migrations that define those functions and fails
+      # on any difference, so a field added or renamed in the database cannot leave the schema
+      # quietly stale. No secrets and no network: it runs on fork PRs too. It is deliberately only
+      # HALF the guard — it reads migration TEXT, which means re-implementing the "newest
+      # definition wins" rule Postgres already owns. The other half,
+      # `supabase/tests/crm_patch_fields_match_database.sql`, asks a real database via
+      # pg_get_functiondef() in the `paige-spine-contract` database-contract job. Both artifacts
+      # are generated in one pass, so they cannot disagree without one of the two going red.
+      - name: CRM patch schema still matches the database allowlist
+        if: ${{ !cancelled() }}
+        run: npm run lint:crm-patch-fields
+
+      # ...and proof the guard BITES. Reinstates the original defect (`entity_name` renamed back to
+      # `company_name`) and asserts the check goes red and names the exact delta, plus the cases a
+      # green-only check would miss: an eighth allowlist appearing with no action mapped to it, an
+      # earlier-sorting migration shadowing a later one, and an allowlist escaping its own branch.
+      - name: ...and the CRM patch guard fails when the database drifts
+        if: ${{ !cancelled() }}
+        run: npm run lint:crm-patch-fields:test
+
       # Every reason `tenant_comms_readiness()` can BLOCK a tenant for must have a
       # next step on the surface that renders it. The two halves live in a SQL
       # migration and a React file, reviewed at different times by different eyes,
@@ -299,6 +346,27 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run lint:action-risk
 
+      # Risk classification fails CLOSED and is gated above. Evidence coverage did not: which
+      # capabilities write a receipt was three hand-maintained Sets with no guard, so a lane could
+      # classify a new write tool correctly, ship it, emit no receipt, and nothing would say so.
+      # This asks for a DECLARATION rather than detecting emission, because a static detector
+      # cannot reliably tell which tool a recordCapabilityRun call belongs to.
+      - name: Every classified mutation declares whether it writes a receipt
+        if: ${{ !cancelled() }}
+        run: npm run lint:receipt-coverage
+
+      - name: Receipt-coverage guard catches what it claims to
+        if: ${{ !cancelled() }}
+        run: npm run lint:receipt-coverage:test
+
+      # The sibling DEFINER guard matches an EXPLICIT grant to anon/PUBLIC, per file, by name. It
+      # is blind to a function with NO acl at all (which inherits EXECUTE TO PUBLIC) and to a new
+      # OVERLOAD of a name whose sibling it already saw granted. That is how record_capability_run
+      # lost its lock. `lint:definer-fns` now runs both rules; this proves the new one bites.
+      - name: DEFINER signature-ACL guard catches what it claims to
+        if: ${{ !cancelled() }}
+        run: npm run lint:definer-fns:test
+
       # Three separate slices independently built a SECOND way to prove the operator approved
       # something (#709, #711, #718). Each was competent alone; a door with three locks is only
       # as strong as the weakest, and nobody inspects the weak one. This fails a new channel —
@@ -314,6 +382,25 @@ jobs:
       - name: No new tool is hand-wired into the Chat handler
         if: ${{ !cancelled() }}
         run: npm run lint:chat-tool-registry
+
+      # THE MODEL↔SPINE SEAM, which nothing held before. `lint:tool-catalogue` holds
+      # runtime↔operator; this holds "every tool the model can call is DECLARED by a domain".
+      # Measured on this tree: 154 tools on the maximum model surface, 65 declared, 89 not —
+      # and 46 of those 89 MUTATE, so they can act unattended the moment a tenant sets them to
+      # `auto`. A RATCHET on that gap (exact keys with their kind, never a bare count: a read
+      # tool that later gains a risk class fails even though membership stayed flat), and a
+      # WALL on agreement — where a tool has both a Spine capability and an action-risk class
+      # they must not contradict each other, which has zero violations today.
+      - name: Every model-callable tool is declared by a domain (capability ratchet)
+        if: ${{ !cancelled() }}
+        run: npm run lint:capability-declaration
+
+      # The guard's own proof, including a negative fixture that drives the REAL check against a
+      # baseline with one entry removed and asserts it exits non-zero. A guard nobody proved can
+      # fail is theatre.
+      - name: Capability declaration guard can actually fail
+        if: ${{ !cancelled() }}
+        run: npm run lint:capability-declaration:test
 
       - name: Chat-tool registry ratchet catches what it claims to
         if: ${{ !cancelled() }}
@@ -436,6 +523,22 @@ jobs:
       - name: Gold-discipline (changed src)
         if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch') && steps.changed.outputs.src_count != '0' }}
         run: xargs -r -a changed_src.txt node scripts/gold-discipline-lint.mjs
+
+      # Impeccable (npm `impeccable`, Apache-2.0) — UI anti-pattern detection on the files this
+      # PR actually touches, the same posture as the two lints above. Deliberately NOT repo-wide:
+      # `src/index.css` carries pre-existing findings (an overused face, gradient-clipped text,
+      # bounce easing) and failing every unrelated PR on them would train people to ignore the
+      # gate. Touch a file, own its findings.
+      #
+      # The CLI exits 0 clean / 2 findings / 1 could-not-scan and prints findings to STDERR.
+      # MEASURED: xargs collapses any non-zero child status to 123, so this step fails on both
+      # findings and an unscannable target without distinguishing them — the same trade the two
+      # xargs lints above already make. Do not pipe it; a pipe would report the pipe's status
+      # and mask the failure entirely. The engine binary is platform-specific and gitignored,
+      # so CI fetches it through npx at the pinned version.
+      - name: Impeccable — UI anti-patterns (changed src)
+        if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch') && steps.changed.outputs.ui_count != '0' }}
+        run: xargs -r -a changed_ui.txt npx --yes impeccable@4.1.0 detect
 
       # --- Edge functions: the gap this closes (task #142) ---------------------------------
       # NOTHING compiled an edge function before it deployed. `tsc` covers src/ only (edge fns
@@ -630,6 +733,38 @@ jobs:
           # SQLSTATE of every refusal, plus positive controls. It needs no credentials.
           ./scripts/agreements/run-integrity-proof.sh
 
+      - name: A user's address is read from user_contact_methods (RAG ingest, canary, funding report)
+        if: ${{ !cancelled() }}
+        run: |
+          # profiles has no email column; these three functions selected it and failed with 42703.
+          # The shared read and the anonymizer that consumes it, executed:
+          deno test --allow-import=esm.sh,deno.land --node-modules-dir=none --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/_shared/user-contact-methods.test.ts
+          # The functions that call it must type-check. ingest-rag-outcome is left out: it carries
+          # nine supabase-js generic errors that predate this step, identical on the base commit;
+          # the deno-edge-ratchet holds functions like it to "no new errors".
+          deno check --allow-import --node-modules-dir=none \
+            supabase/functions/security-canary-probe/index.ts \
+            supabase/functions/send-funding-report/index.ts \
+            supabase/functions/schedule-automated-tasks/index.ts \
+            supabase/functions/voice-command-processor/index.ts
+
+      - name: The platform email sender is not an open relay (who may send, and to whom)
+        if: ${{ !cancelled() }}
+        run: |
+          # send-transactional-email trusted the gateway's verify_jwt, which the public publishable key
+          # passes. The in-body decision, executed: no token and the publishable key are refused;
+          # internal callers pass; a person sends only listed templates to a server-bound recipient.
+          deno test --allow-import=esm.sh,deno.land --node-modules-dir=none --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/_shared/email/send-authority.test.ts
+          deno check --allow-import --node-modules-dir=none \
+            supabase/functions/send-transactional-email/index.ts \
+            supabase/functions/affiliate-application-confirm/index.ts \
+            supabase/functions/notify-approval-event/index.ts \
+            supabase/functions/agreement-send/index.ts \
+            supabase/functions/send-beta-launch-email/index.ts \
+            supabase/functions/send-admin-invitation/index.ts
+
       - name: Test
         if: ${{ !cancelled() }}
         run: npm run test
@@ -639,6 +774,9 @@ jobs:
       - name: Smoke — Live Conversation relay contract and ticket (deterministic, provider-neutral)
         if: ${{ !cancelled() }}
         run: npm run smoke:live-relay && npm run smoke:live-ticket
+      - name: Smoke — Live Conversation relay interpreter (fake ears/runtime/mouth, no network)
+        if: ${{ !cancelled() }}
+        run: npm run smoke:live-relay-bridge
 
       # Mock socket: falsifies either absent or false mip_opt_out before any provider contact.
       - name: Smoke — Deepgram Flux route and mandatory MIP opt-out (no network)
@@ -646,6 +784,19 @@ jobs:
         run: npm run smoke:voice-stt
 
       # Mock fetch: approved voice/model, owner-switchable model, and no-retention flag.
+      # §32 — a green build is not a working render. The 3D presence degrades to the flat presence
+      # on any throw, which is correct and is also how a compiles-but-crashes bug hides: the corner
+      # quietly shows 2D and nobody learns the 3D never ran. This executes the real GLB parse,
+      # normal computation, material swap and framing headless, against the actual asset.
+      #
+      # Plain `node`, deliberately: this job runs Node 20, which has no type stripping. The matching
+      # honesty assertions — that the scene may only move to real audio — import presence.ts and so
+      # live in the vitest suite, where they execute, rather than here where they would have been
+      # skipped in silence.
+      - name: Smoke — Paige 3D presence (the real model parses, frames and materialises)
+        if: ${{ !cancelled() }}
+        run: npm run smoke:paige-presence-3d
+
       - name: Smoke — Paige voice mouth transport (no network)
         if: ${{ !cancelled() }}
         run: npm run smoke:voice-tts
@@ -780,6 +931,40 @@ jobs:
       - name: Capability Kit contract + anti-bypass guard (INT-003)
         if: ${{ !cancelled() }}
         run: node scripts/ci/capability-kit-lint.mjs && node scripts/ci/capability-kit-lint.mjs --self-test && node --import ./scripts/capability-kit/register.mjs scripts/capability-kit/capability-kit.test.mjs
+
+      # Appended LAST in verify so inherited failing-step ordinals do not move.
+      # A job title is free text an owner types; tenant_members.role + is_owner are the enforced
+      # source. This fails a replayed policy (static or from a dynamic EXECUTE template), an
+      # authorization-helper-shaped function or view, or a TS decision beside an authorization
+      # token that reads job_title / responsibilities, and pins every other title reader to a
+      # reviewed, shrink-only baseline by migration file and body fingerprint.
+      - name: Title-authority guard (no permission decision reads a job title or responsibilities)
+        if: ${{ !cancelled() }}
+        run: npm run lint:title-authority
+
+      - name: Title-authority guard catches what it claims to
+        if: ${{ !cancelled() }}
+        run: npm run lint:title-authority:test
+
+      # The internal-vocabulary detector (`_shared/internal-vocabulary.ts`) reads what PAIGE says for
+      # text internal to the platform, with a vocabulary derived from what she was sent. Its unit tests
+      # are as much about what it must leave alone (titles, contact details, links, everyday words) as
+      # what it must catch. Section 29 of the client-memory-authz smoke drives it on the real handler.
+      - name: Internal-vocabulary detector (catches internal text, passes ordinary customer text)
+        if: ${{ !cancelled() }}
+        run: npm run test:internal-vocabulary
+
+      - name: Client-seat answer check (a client reads the withheld sentence, never internal text)
+        if: ${{ !cancelled() }}
+        run: npm run test:client-seat-reply
+
+      - name: Outbound draft check (a draft for a customer carrying internal text is never filed or sent)
+        if: ${{ !cancelled() }}
+        run: npm run test:outbound-draft-check
+
+      - name: Public form intake (only the platform's origins, no bots, only the form's own fields)
+        if: ${{ !cancelled() }}
+        run: npm run test:growth-intake
 
   web-fetch-hardening-smoke:
     # Its own job, deliberately on Node 22: the smoke imports the real

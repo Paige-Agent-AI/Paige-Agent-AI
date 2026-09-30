@@ -22,3 +22,6 @@
 *.mp4    binary
 *.webm   binary
 *.wasm   binary
+# Carries a literal NUL byte, so git classifies it as binary and prints only "Binary files differ".
+# That is how a half-applied correction survived two review passes. Force a textual diff.
+supabase/functions/_shared/capability-record.ts diff

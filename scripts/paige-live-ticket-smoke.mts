@@ -67,10 +67,18 @@ assert.ok(relay.indexOf("markUnavailable(unavailableCode)") < relay.indexOf("Den
 assert.ok(session.indexOf('rpc("current_user_tenant_id")') < session.indexOf("issueRelayTicket()"));
 assert.match(session, /liveContextEpochTenant\(parsed\.data\.context_epoch\)/, "ticket admission understands the current composer scope format");
 assert.ok(session.indexOf('from("paige_chat_threads")') < session.indexOf("issueRelayTicket()"));
-assert.ok(session.indexOf('from("paige_live_tenant_availability")') < session.indexOf("issueRelayTicket()"), "platform availability read precedes ticket issuance");
-assert.match(session, /isLiveAudioPilotEnabled\(tenantPilot\)/, "session ticket requires the platform-stored flag");
-assert.ok(relay.indexOf('from("paige_live_tenant_availability")') < relay.indexOf("Deno.upgradeWebSocket(req)"), "relay rechecks platform availability before upgrade");
-assert.match(relay, /isLiveAudioPilotEnabled\(tenantPilot\)/, "relay admission requires the platform-stored flag");
+// The admission question has ONE home, and it is the database predicate (§18). These used to pin a
+// SECOND, weaker gate in each function — a direct paige_live_tenant_availability read that refused
+// on a missing row. That second answer contradicted the predicate as soon as a missing row came to
+// mean "follow the rollout scope", so it was removed and these assertions now pin the real gate:
+// the predicate is consulted, and anything short of an explicit `true` refuses. The predicate reads
+// that same table itself and still honours both of its meanings, which the pgTAP suite proves.
+assert.ok(session.indexOf('rpc("paige_live_pilot_authorized_internal"') < session.indexOf("issueRelayTicket()"), "scoped admission is decided before a ticket is issued");
+assert.match(session, /authorizationError \|\| authorizedPilot !== true/, "session ticket refuses anything short of an explicit admission");
+assert.doesNotMatch(session, /from\("paige_live_tenant_availability"\)/, "no second availability gate may reappear beside the predicate");
+assert.ok(relay.indexOf('rpc("paige_live_pilot_authorized_internal"') < relay.indexOf("Deno.upgradeWebSocket(req)"), "relay decides scoped admission before upgrade");
+assert.match(relay, /authorizationError \|\| authorizedPilot !== true/, "relay admission refuses anything short of an explicit admission");
+assert.doesNotMatch(relay, /from\("paige_live_tenant_availability"\)/, "no second availability gate may reappear beside the predicate");
 assert.ok(relay.indexOf('return new Response("live_audio_not_enabled", { status: 403 })') < relay.indexOf("Deno.upgradeWebSocket(req)"), "revoked or missing pilot rejects before socket upgrade");
 assert.match(relay, /from\("tenant_members"\)[\s\S]*?\.eq\("user_id", session\.actor_user_id\)\.eq\("status", "active"\)/, "relay rechecks the signed-in user's active membership, independent of role label");
 assert.match(relay, /rpc\("agency_can_manage_child"/, "relay preserves canonical agency child access");
@@ -84,6 +92,17 @@ assert.match(pilotMigration, /CREATE TABLE IF NOT EXISTS public\.paige_live_tena
 assert.match(pilotMigration, /REVOKE ALL ON TABLE public\.paige_live_tenant_availability FROM PUBLIC, anon, authenticated/, "tenant roles have no table write route");
 assert.doesNotMatch(relay + session, /from\("tenants"\)\.select\("features"\)/, "tenant-writable feature JSON never controls Live audio");
 assert.doesNotMatch(relay + session, /daily_ceiling|concurrent_session_limit|reserve_paige_voice|allowance_gate/i);
-assert.doesNotMatch(relay, /stt-router|tts-router|elevenlabs|DEEPGRAM_API_KEY|ELEVENLABS_API_KEY/);
+// S4 intentionally joins real adapters. Admission still precedes ANY adapter
+// open, and canonical privacy proof is independent of pilot availability.
+assert.ok(relay.indexOf('if (unavailableCode)') < relay.indexOf('openEars: (events) => openFluxEars(events)'), 'provider readiness refuses before ears open');
+const chat = readFileSync(new URL("../supabase/functions/paige-ai-chat/index.ts", import.meta.url), "utf8");
+for (const source of [session, relay, chat]) {
+  assert.match(source, /rpc\("paige_live_pilot_authorized_internal", \{\s*_actor_user_id: [^,]+, _tenant_id: [^,]+,/, 'every entry scopes the one canonical pilot predicate');
+  assert.match(source, /authorizationError \|\| authorizedPilot !== true/, 'missing and errored authorization always refuses');
+}
+assert.ok(session.indexOf('rpc("paige_live_pilot_authorized_internal"') < session.indexOf('issueRelayTicket()'), 'account authorization precedes ticket creation');
+assert.ok(chat.indexOf('rpc("paige_live_pilot_authorized_internal"') < chat.indexOf('const { data: claimed, error: claimError }'), 'account authorization precedes signed runtime claim');
+assert.doesNotMatch(relay, /DEEPGRAM_MIP_ACCOUNT_VERIFIED/, 'no nonexistent project-level opt-out setting');
+assert.doesNotMatch(session, /elevenlabsSpeechStream|openFluxEars/, 'ticket issuance never opens providers');
 assert.equal(network, 0);
 console.log("✅ relay ticket smoke: expiry, tamper, concurrent one-use, replay, server-scope, pre-upgrade gate, zero network/provider calls");

@@ -12,13 +12,22 @@ function request(body = JSON.stringify(payload), id = 'msg_receipt1', timestamp 
   const sig = createHmac('sha256', Buffer.from(secret.slice(6), 'base64')).update(`${id}.${timestamp}.${body}`).digest('base64');
   return new Request('https://example.invalid/receipt', { method: 'POST', headers: { 'svix-id': id, 'svix-timestamp': timestamp, 'svix-signature': `v1,${sig}` }, body });
 }
-function harness(result: unknown = { data: 'processed', error: null }, signingSecret = secret) {
+function harness(result: unknown = { data: 'processed', error: null }, signingSecret = secret, settingsSecret: unknown = null) {
   const ingest = vi.fn().mockResolvedValue(result);
   const log = vi.fn();
   let handle!: (request: Request) => Promise<Response>;
-  const createClient = vi.fn(() => ({ rpc: (_name: string, args: Record<string, unknown>) => ingest({
-    receiptId: args._receipt_id, messageId: args._message_id, status: args._status, eventAt: args._event_at,
-  }) }));
+  // Answers only the exact read the real schema supports (admin_app_settings.key → value), so a
+  // handler that asks for the wrong column gets nothing, as it would in production.
+  const settingsRead = vi.fn((table: string, field: string, column: string, key: string) => ({
+    data: table === 'admin_app_settings' && field === 'value' && column === 'key' && key === 'resend_webhook_secret' && settingsSecret !== null ? { value: settingsSecret } : null,
+    error: null,
+  }));
+  const createClient = vi.fn(() => ({
+    rpc: (_name: string, args: Record<string, unknown>) => ingest({
+      receiptId: args._receipt_id, messageId: args._message_id, status: args._status, eventAt: args._event_at,
+    }),
+    from: (table: string) => ({ select: (field: string) => ({ eq: (column: string, key: string) => ({ maybeSingle: async () => settingsRead(table, field, column, key) }) }) }),
+  }));
   const source = ts.transpileModule(readFileSync('supabase/functions/handle-resend-webhook/index.ts', 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   }).outputText;
@@ -32,7 +41,7 @@ function harness(result: unknown = { data: 'processed', error: null }, signingSe
     env: { get: (name: string) => name === 'RESEND_WEBHOOK_SECRET' ? signingSecret : 'isolated-config' },
     serve: (callback: typeof handle) => { handle = callback; },
   }, class extends Date { static now() { return now; } }, { info: log, error: log });
-  return { ingest, log, handle, createClient };
+  return { ingest, log, handle, createClient, settingsRead };
 }
 describe('verified shared receipt boundary', () => {
   it('passes only minimal verified fields to persistence', async () => {
@@ -48,8 +57,18 @@ describe('verified shared receipt boundary', () => {
     const h = harness(); expect((await h.handle(request(undefined, undefined, String(now / 1000 - 301)))).status).toBe(401); expect(h.ingest).not.toHaveBeenCalled();
   });
   it('fails closed when signing is unconfigured', async () => {
-    const { ingest, handle } = harness(undefined, '');
+    const { ingest, handle, settingsRead, log } = harness(undefined, '');
     expect((await handle(request())).status).toBe(503); expect(ingest).not.toHaveBeenCalled();
+    expect(settingsRead).toHaveBeenCalledWith('admin_app_settings', 'value', 'key', 'resend_webhook_secret'); expect(log).toHaveBeenCalledWith('receipt_not_configured');
+  });
+  it('refuses a settings-row value that is not a signing secret', async () => {
+    const h = harness(undefined, '', 'not-a-whsec'); expect((await h.handle(request())).status).toBe(503); expect(h.ingest).not.toHaveBeenCalled();
+  });
+  it('verifies against the operator settings secret when env is unset', async () => {
+    const h = harness(undefined, '', secret); expect((await h.handle(request())).status).toBe(200);
+    expect(h.ingest).toHaveBeenCalledWith({ receiptId: 'msg_receipt1', messageId: 'provider-message-1', status: 'delivered', eventAt: '2026-09-04T00:00:00.000Z' });
+    const t = harness(undefined, '', secret); const r = request(); r.headers.set('svix-signature', 'v1,invalid');
+    expect((await t.handle(r)).status).toBe(401); expect(t.ingest).not.toHaveBeenCalled();
   });
   it('fails closed on malformed signing configuration without database access', async () => {
     const h = harness(undefined, 'whsec_%%%'); const r = await h.handle(request());

@@ -51,6 +51,19 @@ canonical.
 **§BRAIN** — the Second Brain read/update discipline (this directory). Proposed section added to
 `CLAUDE.md` this task, **pending owner ruling on exact wording** (Cowork #26).
 
+**§71 — GROUND BEFORE YOU BUILD** (owner-ruled 2026-09-25; amended the same day from its own
+author's two failures of it). Four questions answered with an ARTIFACT, not a belief, before the
+first edit: (1) is it still broken — check the fix commit, its ancestry on `main`, and its deploy
+run — **AND is the surface REACHABLE**, proven by the import graph and the built bundle, because a
+file's folder and name are not evidence that it ships; (2) what does PRODUCTION say — a real
+read-only query, not a source reading; (3) is the baseline MEASURED — the same command on the base
+commit and on the change, **whole suite both sides**, via a `git worktree`, never `git stash`: a
+stash on an already-clean tree stashes nothing and compares a tree with itself; (4) does my test
+BITE — reinstate the defect and watch it fail. Plus, for anything
+visible: render it and look at it, and name the evidence class you did NOT reach. Sits in front of
+§69 rather than replacing any of it; §71.4 does not replace §39's peer-gate. The section records
+honestly that prose alone has failed here before and that the durable version is a CI gate.
+
 ---
 
 ## Tier vocabulary (the §51 Canonical Six) — and the public↔internal naming debt (#67)

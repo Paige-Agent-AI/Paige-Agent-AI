@@ -60,7 +60,7 @@ INSERT INTO auth.users (id, aud, role, email) VALUES
 INSERT INTO public.user_roles (user_id, role) VALUES
   ('d1000000-0000-0000-0000-000000000001', 'admin'),
   ('d1000000-0000-0000-0000-000000000002', 'admin'),
-  ('d1000000-0000-0000-0000-000000000003', 'coach'),
+  ('d1000000-0000-0000-0000-000000000003', 'sales_rep'),
   ('e2000000-0000-0000-0000-000000000001', 'admin'),
   ('f3000000-0000-0000-0000-000000000001', 'admin')
 ON CONFLICT DO NOTHING;
@@ -96,7 +96,7 @@ SET active_tenant_id = EXCLUDED.active_tenant_id;
 INSERT INTO public.tenant_members (tenant_id, user_id, role, status, is_owner, joined_at) VALUES
   ('d1000000-0000-0000-0000-000000001111', 'd1000000-0000-0000-0000-000000000001', 'owner', 'active', true, now()),
   ('d1000000-0000-0000-0000-000000001111', 'd1000000-0000-0000-0000-000000000002', 'admin', 'active', false, now()),
-  ('d1000000-0000-0000-0000-000000001111', 'd1000000-0000-0000-0000-000000000003', 'coach', 'active', false, now()),
+  ('d1000000-0000-0000-0000-000000001111', 'd1000000-0000-0000-0000-000000000003', 'member', 'active', false, now()),
   ('d1000000-0000-0000-0000-000000001111', 'd1000000-0000-0000-0000-000000000004', 'member', 'active', false, now()),
   ('d1000000-0000-0000-0000-000000001111', 'd1000000-0000-0000-0000-000000000006', 'owner', 'active', true, now()),
   ('d1000000-0000-0000-0000-000000001111', 'd1000000-0000-0000-0000-000000000007', 'admin', 'suspended', false, now()),
@@ -120,11 +120,13 @@ UPDATE public.profiles
  );
 
 INSERT INTO public.clients
-  (id, tenant_id, linked_user_id, created_by, first_name, last_name, email)
+  (id, tenant_id, linked_user_id, created_by, first_name, last_name)
 VALUES
   ('d1000000-0000-0000-0000-00000000c105', 'd1000000-0000-0000-0000-000000001111',
    'd1000000-0000-0000-0000-000000000005', 'd1000000-0000-0000-0000-000000000001',
-   'Linked', 'Client', 'integrity-linked-client@tests.invalid');
+   'Linked', 'Client');
+INSERT INTO public.client_contact_methods (tenant_id, client_id, kind, value, is_primary, position) VALUES
+  ('d1000000-0000-0000-0000-000000001111', 'd1000000-0000-0000-0000-00000000c105', 'email', 'integrity-linked-client@tests.invalid', true, 0);
 
 INSERT INTO public.paige_systems_check_run
   (id, tenant_id, scan_flavor, started_at, completed_at, check_count, pass_count, fail_count, triggered_by)

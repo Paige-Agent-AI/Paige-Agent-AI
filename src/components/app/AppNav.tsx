@@ -106,7 +106,7 @@ export function AppNav({ user }: AppNavProps) {
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const { isCoachOrAdmin, isAdmin, mode, setMode } = useDashboardMode();
+  const { isAdmin, mode, setMode } = useDashboardMode();
   const { count: unreadSupport } = useUnreadSupportCount(user.id);
   const pb = usePlaybook();
   // Resolve the TENANT's brand for the chrome (same resolver onboarding uses —
@@ -134,9 +134,9 @@ export function AppNav({ user }: AppNavProps) {
   // Paige page (§9). Reuses the brand already resolved above (no second RPC).
   // No-ops for staff (get_client_portal_brand returns no row → brand is null).
   useEffect(() => {
-    if (isCoachOrAdmin || brandLoading) return;
+    if (isAdmin || brandLoading) return;
     cachePortalSlug(brand?.tenant_slug ?? null);
-  }, [isCoachOrAdmin, brandLoading, brand]);
+  }, [isAdmin, brandLoading, brand]);
 
   // Base nav = the active Playbook's module CATALOG (filtered to routable keys,
   // default order) with the tenant PRESENTATION OVERLAY applied — both computed
@@ -152,7 +152,7 @@ export function AppNav({ user }: AppNavProps) {
   // "Action items" is the customer's side of the two-way action bus (§8) — a core
   // portal surface every client gets, regardless of what their Playbook's module
   // list happens to include. Slot it right after Home.
-  if (!isCoachOrAdmin && !navItems.some((i) => i.href === "/app/actions")) {
+  if (!isAdmin && !navItems.some((i) => i.href === "/app/actions")) {
     const homeIdx = navItems.findIndex((i) => i.href === "/app");
     navItems.splice(homeIdx >= 0 ? homeIdx + 1 : 0, 0, {
       label: "Action items", href: "/app/actions", icon: ClipboardList,
@@ -163,12 +163,12 @@ export function AppNav({ user }: AppNavProps) {
   // sets actually lives, and the landing spot for a fired reminder's
   // notification. Staff always get it (plan_list is tenant-member scoped, so a
   // pure client can't use it yet — the client view ships separately).
-  if (isCoachOrAdmin && !navItems.some((i) => i.href === "/app/planning")) {
+  if (isAdmin && !navItems.some((i) => i.href === "/app/planning")) {
     navItems.push({ label: "Planning", href: "/app/planning", icon: CalendarClock });
   }
 
-  const userRoleLabel = isAdmin ? "Admin" : isCoachOrAdmin ? "Coach" : "Client";
-  const isViewingAsClient = isCoachOrAdmin && mode === "client";
+  const userRoleLabel = isAdmin ? "Admin" : "Client";
+  const isViewingAsClient = isAdmin && mode === "client";
 
   const handleSignOut = async () => {
     if (isSigningOut) return;
@@ -309,7 +309,7 @@ export function AppNav({ user }: AppNavProps) {
           </Button>
         )}
 
-        {!isCoachOrAdmin && (
+        {!isAdmin && (
           <Button
             variant="ghost"
             size="sm"
@@ -341,7 +341,7 @@ export function AppNav({ user }: AppNavProps) {
               {user.email}
             </div>
             <DropdownMenuSeparator />
-            {isCoachOrAdmin && !isViewingAsClient && (
+            {isAdmin && !isViewingAsClient && (
               <>
                 <DropdownMenuItem onClick={() => navigate("/choose-account")}>
                   <Eye className="w-4 h-4 mr-2" />

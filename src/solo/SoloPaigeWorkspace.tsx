@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { PaigeAIChat, type ChatRailApi } from "@/components/dashboard/PaigeAIChat";
 import { PaigeComposerAutonomyChip } from "@/components/dashboard/paige/PaigeComposerAutonomyChip";
 import { useTenantContext } from "@/hooks/useTenantContext";
+import { useTierFeatures } from "@/hooks/useTierFeatures";
 import { useSubtabRoute } from "@/lib/routing/useSubtabRoute";
 import { useSoloKnowledge } from "./data/useSoloKnowledge";
 import { useSoloSkills } from "./data/useSoloSkills";
@@ -275,6 +276,13 @@ export function SoloPaigeWorkspace({
   onDockedTabChange?: (tab: SoloPaigeTab) => void;
 } = {}) {
   const { activeTenantId } = useTenantContext();
+  // §60 — does this account type carry Live Conversation? Answered in the one home
+  // (src/lib/tier/tierFeatures.ts), never by an inline account_type compare. While the tenant is
+  // still resolving the classification defaults to the permissive solo tier, so stay optimistic
+  // rather than flashing the control away and back; the database refuses independently
+  // (live_conversation_tier_allows), so this decides presentation, not permission.
+  const { has: hasTierFeature, loading: tierLoading } = useTierFeatures();
+  const liveConversationAvailable = tierLoading || hasTierFeature("live_conversation");
   const location = useLocation();
   const navigate = useNavigate();
   // The client a Solo surface pointed PAIGE at, read for THIS account only. The store
@@ -343,6 +351,7 @@ export function SoloPaigeWorkspace({
           fill
           enableHistory
           soloTenantSafety
+          liveConversation={liveConversationAvailable}
           composerAutonomyControl={<PaigeComposerAutonomyChip accountEpoch={activeTenantId} />}
           renderRail={(api) => <SoloHistoryRail api={api} />}
           greeting="What are we moving? Tell me the outcome, and I’ll show what I can read, draft, or ask you to approve."

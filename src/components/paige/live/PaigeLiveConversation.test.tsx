@@ -7,18 +7,26 @@ const control = vi.hoisted(() => ({
   start: vi.fn(),
   transition: vi.fn(async (_id?: string, _action?: string) => undefined),
   renew: vi.fn(),
+  acceptTerms: vi.fn(),
 }));
 const relay = vi.hoisted(() => ({
   connect: vi.fn(),
   stop: vi.fn(),
   interrupt: vi.fn(),
   setMuted: vi.fn(),
+  runtimeProof: vi.fn(),
+  runtimeFailed: vi.fn(),
 }));
 vi.mock("@/lib/paigeLiveConversation/client", () => ({
   startPaigeLiveConversation: control.start,
   transitionPaigeLiveConversation: control.transition,
   renewPaigeLiveRelayTicket: control.renew,
+  acceptPaigeLiveTerms: control.acceptTerms,
 }));
+// The 3D presence fetches a 3.7 MB GLB through a lazy import and needs a WebGL context; neither
+// exists here. The component already falls back to the flat presence when WebGL is absent, which is
+// exactly what happens in this environment, so these tests exercise the real fallback path rather
+// than a stub of it.
 vi.mock("@/lib/paigeLiveConversation/relayTransport", () => ({
   connectPaigeLiveRelay: relay.connect,
 }));
@@ -42,6 +50,8 @@ describe("Paige Live Conversation owner surface", () => {
   const onAnswer = vi.fn();
   const onApprove = vi.fn();
   const onDecline = vi.fn();
+  const onVoiceTurn = vi.fn();
+  const onVoiceInterrupt = vi.fn();
 
   beforeEach(() => {
     host = document.createElement("div");
@@ -51,15 +61,26 @@ describe("Paige Live Conversation owner surface", () => {
     control.transition.mockClear();
     control.transition.mockImplementation(async () => undefined);
     control.renew.mockReset();
+    control.acceptTerms.mockReset();
     relay.connect.mockReset();
     relay.stop.mockClear();
     relay.interrupt.mockClear();
     relay.setMuted.mockClear();
-    relay.connect.mockReturnValue({ stop: relay.stop, interrupt: relay.interrupt, setMuted: relay.setMuted });
+    relay.runtimeProof.mockClear();
+    relay.runtimeFailed.mockClear();
+    relay.connect.mockReturnValue({
+      stop: relay.stop, interrupt: relay.interrupt, setMuted: relay.setMuted,
+      runtimeProof: relay.runtimeProof, runtimeFailed: relay.runtimeFailed,
+      subscribeOutput: () => () => {}, outputPlaying: () => false,
+      readEnergy: () => ({ amplitude: 0, brightness: 0 }),
+      pauseOutput: vi.fn(), resumeOutput: vi.fn(), clearOutput: vi.fn(),
+    });
     ensureThread.mockClear();
     onAnswer.mockClear();
     onApprove.mockClear();
     onDecline.mockClear();
+    onVoiceTurn.mockClear();
+    onVoiceInterrupt.mockClear();
     getUserMedia = vi.fn();
     Object.defineProperty(navigator, "mediaDevices", { configurable: true, value: { getUserMedia } });
     vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => { callback(0); return 1; });
@@ -73,7 +94,7 @@ describe("Paige Live Conversation owner surface", () => {
     document.body.querySelectorAll(".plc-stage").forEach((node) => node.remove());
   });
 
-  const render = async (card: LiveConversationCard | null = null, epoch = "tenant-a||", working = false, threadId: string | null = null, disabled = false) => {
+  const render = async (card: LiveConversationCard | null = null, epoch = "tenant-a||", working = false, threadId: string | null = null, disabled = false, voiceTurn = onVoiceTurn) => {
     await act(async () => root.render(
       <PaigeLiveConversation
         contextEpoch={epoch}
@@ -87,9 +108,42 @@ describe("Paige Live Conversation owner surface", () => {
         onAnswer={onAnswer}
         onApprove={onApprove}
         onDecline={onDecline}
+        onVoiceTurn={voiceTurn}
+        onVoiceInterrupt={onVoiceInterrupt}
       />,
     ));
   };
+
+  it("uses the latest chat callback after lazy thread creation and later renders", async () => {
+    control.start.mockResolvedValueOnce({ ok: true, sessionId: "session", ticket: "ticket", availability: "PROOF OWED", code: "relay_ticket_issued" });
+    await render();
+    await act(async () => clickText("Talk live with Paige"));
+    const socket = relay.connect.mock.calls[0][0];
+    const latest = vi.fn();
+    await render(null, "tenant-a||", false, "11111111-1111-4111-8111-111111111111", false, latest);
+    await act(async () => socket.onVoiceTurn("next turn", "turn", "challenge"));
+    expect(latest).toHaveBeenCalledOnce();
+    expect(onVoiceTurn).not.toHaveBeenCalled();
+  });
+
+  it.each(["offline", "hidden", "disconnected", "unavailable"])("cancels an active voice runtime once on %s, then fences late proof", async (exit) => {
+    control.start.mockResolvedValueOnce({ ok: true, sessionId: "session", ticket: "ticket", availability: "PROOF OWED", code: "relay_ticket_issued" });
+    await render();
+    await act(async () => clickText("Talk live with Paige"));
+    const socket = relay.connect.mock.calls[0][0];
+    await act(async () => { socket.onState({ kind: "ready" }); socket.onVoiceTurn("hello", "turn", "challenge"); });
+    const sink = onVoiceTurn.mock.calls[0][1];
+    await act(async () => {
+      if (exit === "offline") window.dispatchEvent(new Event("offline"));
+      else if (exit === "hidden") {
+        vi.spyOn(document, "hidden", "get").mockReturnValue(true);
+        document.dispatchEvent(new Event("visibilitychange"));
+      } else socket.onState({ kind: exit, message: "Stopped" });
+    });
+    await act(async () => { sink.proof("late"); sink.done(); });
+    expect(onVoiceInterrupt).toHaveBeenCalledOnce();
+    expect(relay.runtimeProof).not.toHaveBeenCalled();
+  });
 
   it("opens the same-thread immersive stage and fails closed without requesting a microphone", async () => {
     await render();
@@ -123,6 +177,29 @@ describe("Paige Live Conversation owner surface", () => {
     expect(getUserMedia).not.toHaveBeenCalled();
     await act(async () => clickText("End"));
     expect(relay.stop).toHaveBeenCalledOnce();
+  });
+
+  it("routes spoken input to the same Paige turn without approving it, and cancels a barge-in", async () => {
+    control.start.mockResolvedValueOnce({
+      ok: true, sessionId: "22222222-2222-4222-8222-222222222222",
+      ticket: "first-ticket", availability: "PROOF OWED", code: "relay_ticket_issued",
+    });
+    await render();
+    await act(async () => clickText("Talk live with Paige"));
+    const live = relay.connect.mock.calls[0][0];
+    await act(async () => live.onState({ kind: "ready" }));
+    await act(async () => live.onVoiceTurn("yes", "turn-1", "signed-challenge"));
+    expect(onVoiceTurn).toHaveBeenCalledWith("yes", expect.objectContaining({
+      challenge: "signed-challenge", proof: expect.any(Function),
+    }));
+    expect(onApprove).not.toHaveBeenCalled();
+    const sink = onVoiceTurn.mock.calls[0][1];
+    await act(async () => sink.proof("signed-output"));
+    expect(relay.runtimeProof).toHaveBeenCalledWith("turn-1", "signed-output");
+    await act(async () => live.onRuntimeCancel("turn-1"));
+    expect(onVoiceInterrupt).toHaveBeenCalledOnce();
+    await act(async () => { sink.proof("late-output"); sink.done(); });
+    expect(relay.runtimeProof).toHaveBeenCalledTimes(1);
   });
 
   it("keeps audio unavailable during genuine text work and clears working Presence afterwards", async () => {
@@ -328,6 +405,22 @@ describe("Paige Live Conversation owner surface", () => {
     expect(clickText("Hold").disabled).toBe(false);
   });
 
+  it.each([false, true])("interrupting Hold restores the selected mute state (%s)", async (muted) => {
+    control.start.mockResolvedValueOnce({
+      ok: true, sessionId: "22222222-2222-4222-8222-222222222222",
+      ticket: "first-ticket", availability: "PROOF OWED", code: "relay_ticket_issued",
+    });
+    await render();
+    await act(async () => clickText("Talk live with Paige"));
+    await act(async () => relay.connect.mock.calls[0][0].onState({ kind: "ready" }));
+    if (muted) await act(async () => clickText("Mute"));
+    await act(async () => clickText("Hold"));
+    expect(relay.setMuted).toHaveBeenLastCalledWith(true);
+    await act(async () => clickText("Interrupt"));
+    expect(relay.setMuted).toHaveBeenLastCalledWith(muted);
+    expect(document.querySelector(".plc-state")?.textContent).toContain(muted ? "Muted" : "Listening");
+  });
+
   it("ends a minimized session on workspace or thread switch", async () => {
     await render(null, "tenant-a||", false, "thread-a");
     await act(async () => clickText("Talk live with Paige"));
@@ -501,5 +594,130 @@ describe("Paige Live Conversation owner surface", () => {
     expect(popupDocument.querySelector('[role="dialog"]')).toBeNull();
     expect(document.activeElement).toBe(trigger);
     expect(control.transition).toHaveBeenCalledWith("22222222-2222-4222-8222-222222222222", "minimize", { threadId: "11111111-1111-4111-8111-111111111111", contextEpoch: "tenant-a||" });
+  });
+
+  // §70 — the deliverable is a person completing a task, not a code path that exists. Until this
+  // control shipped, a Solo user whose rollout was open still had no way to give the acceptance the
+  // database requires, so Live stayed off for a reason they could neither see nor act on.
+  describe("turning Live on is something a person can actually finish", () => {
+    const refusedForTerms = {
+      ok: false, sessionId: null, availability: "UNAVAILABLE", code: "live_audio_not_enabled",
+      explanation: "Live audio isn't available for this account yet. You can keep working with Paige in chat.",
+    };
+
+    it("offers the terms, and says what is true about the audio before anyone speaks", async () => {
+      control.start.mockResolvedValue(refusedForTerms);
+      await render();
+      clickText("Talk live with Paige");
+      await flush();
+      const notice = document.querySelector(".plc-notice");
+      expect(notice?.textContent).toContain("default retention");
+      expect(notice?.textContent).toContain("one speaker");
+      expect(notice?.textContent).toContain("your own decision for your own account");
+      expect([...document.querySelectorAll("button")].some((b) => b.textContent?.includes("I understand"))).toBe(true);
+    });
+
+    it("accepting admits the person and starts the session, with no identifier supplied by the caller", async () => {
+      control.start.mockResolvedValueOnce(refusedForTerms);
+      control.acceptTerms.mockResolvedValue({ accepted: true, unchanged: false, code: null });
+      control.start.mockResolvedValue({
+        ok: true, sessionId: "22222222-2222-4222-8222-222222222222", availability: "LIVE",
+        code: "live", explanation: "", ticket: "ticket-1", ticketExpiresAt: Date.now() + 60_000,
+      });
+      await render();
+      clickText("Talk live with Paige");
+      await flush();
+      await act(async () => { clickText("I understand"); });
+      await flush();
+      // The RPC takes NO arguments. That is the doctrine — a build that needs an account identifier
+      // is the wrong build — so it is asserted here rather than left to the migration comment.
+      expect(control.acceptTerms).toHaveBeenCalledTimes(1);
+      expect(control.acceptTerms.mock.calls[0]).toEqual([]);
+      // And the acceptance is followed by a real attempt, not a claim that it worked.
+      expect(control.start).toHaveBeenCalledTimes(2);
+      expect(relay.connect).toHaveBeenCalled();
+    });
+
+    it("a refusal stays honest: no session is started and nothing claims success", async () => {
+      control.start.mockResolvedValue(refusedForTerms);
+      control.acceptTerms.mockResolvedValue({ accepted: false, unchanged: false, code: "live_audio_not_enabled" });
+      await render();
+      clickText("Talk live with Paige");
+      await flush();
+      await act(async () => { clickText("I understand"); });
+      await flush();
+      expect(control.start).toHaveBeenCalledTimes(1);
+      expect(relay.connect).not.toHaveBeenCalled();
+      const notice = document.querySelector(".plc-notice");
+      expect(notice?.textContent).toContain("UNAVAILABLE");
+      expect(notice?.textContent).toContain("nothing was recorded, sent, or saved");
+      // The old assertion here was `expect(getUserMedia).not.toHaveBeenCalled()`, which could never
+      // fail: nothing in src/ calls getUserMedia outside tests, and the relay is mocked, so this
+      // suite could not observe a microphone request even if one happened. What IS observable, and
+      // is the thing that matters, is that no relay connection was opened and the terms are still
+      // being offered rather than replaced by a claim of success.
+      expect(relay.connect).not.toHaveBeenCalled();
+      expect(document.querySelector(".plc-terms")).not.toBeNull();
+
+      // THE PRESS MUST BE VISIBLE. This suite passed while the control was, to a human, dead: the
+      // old branch re-set the explanation to the sentence already on screen and left the button
+      // exactly where it was, so pressing it changed literally nothing on the surface. The owner
+      // pressed it and reported it broken. A refusal is an outcome, so assert the outcome is drawn
+      // and that the control which cannot succeed is no longer offered.
+      const blocked = document.querySelector(".plc-terms__blocked");
+      expect(blocked).not.toBeNull();
+      expect(blocked?.textContent).toContain("not something you can turn on from here");
+      expect(document.querySelector(".plc-terms button")).toBeNull();
+    });
+
+    it("a thrown failure says so instead of silently doing nothing", async () => {
+      // The reachable case is ordinary: acceptPaigeLiveTerms dynamically imports the Supabase
+      // client, and a hashed chunk goes stale the moment a deploy lands under an open tab. Before
+      // this was caught, the button flipped back from "Turning on Live…" with no message at all —
+      // a press that does nothing and says nothing, which is the exact failure this control exists
+      // to remove.
+      control.start.mockResolvedValue(refusedForTerms);
+      control.acceptTerms.mockRejectedValue(new Error("Failed to fetch dynamically imported module"));
+      await render();
+      clickText("Talk live with Paige");
+      await flush();
+      await act(async () => { clickText("I understand"); });
+      await flush();
+      const notice = document.querySelector(".plc-notice");
+      expect(notice?.textContent).toContain("could not turn Live on");
+      expect(notice?.textContent).toContain("Nothing was recorded, sent, or saved");
+      expect(relay.connect).not.toHaveBeenCalled();
+      // And the control is usable again rather than stuck mid-flight.
+      const button = [...document.querySelectorAll("button")].find((b) => b.textContent?.includes("I understand"));
+      expect(button?.disabled).toBe(false);
+    });
+
+    it("a later, different failure does not leave the audio-consent panel standing", async () => {
+      // `reason` is set on every refusal and was cleared in one place, so after the first
+      // "not open yet" it survived retries — and any later failure (a dropped socket, an expired
+      // session) still rendered the retention consent panel underneath it, inviting someone to
+      // accept provider retention in order to fix a network error.
+      control.start.mockResolvedValueOnce(refusedForTerms);
+      await render();
+      clickText("Talk live with Paige");
+      await flush();
+      expect(document.querySelector(".plc-terms")).not.toBeNull();
+      control.start.mockRejectedValue(new Error("network"));
+      await act(async () => { clickText("Retry setup check"); });
+      await flush();
+      const notice = document.querySelector(".plc-notice");
+      expect(notice?.textContent).toContain("could not verify live audio availability");
+      expect(document.querySelector(".plc-terms")).toBeNull();
+    });
+
+    it("the terms are not offered for a refusal the person cannot act on", async () => {
+      // privacy_not_approved is the platform's own gate. Offering an acceptance there would invite
+      // someone to press a button that cannot change the answer.
+      await render();
+      clickText("Talk live with Paige");
+      await flush();
+      expect([...document.querySelectorAll("button")].some((b) => b.textContent?.includes("I understand"))).toBe(false);
+      expect(document.querySelector(".plc-terms")).toBeNull();
+    });
   });
 });

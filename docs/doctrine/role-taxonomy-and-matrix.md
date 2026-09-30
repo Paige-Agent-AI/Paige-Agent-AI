@@ -14,6 +14,21 @@ Every number in §4 and §5 is a real query result against prod (`xygzykjyynhzqy
 
 ---
 
+## 0. Owner ruling — three roles authorize, titles describe (2026-09-26)
+
+**This section supersedes the Class-B target state in §2 and §3. The superseded rows stay visible below, marked, because §58 forbids silently deleting a dated entry.**
+
+- **The tenant role set is exactly `owner` · `admin` · `member`.** That set does not grow. Within a tenant, what a staff member may do comes from their tenant role, never from a title and never from a tenant-defined permission set. No tenant may define its own permission set. **This ruling does not touch the independent gates.** The platform operator tiers (`super_admin`, `platform_admin`, §53), the agency roles (`agency_team_members.agency_role`), and resource-scope relationships such as client assignment keep deciding access alongside the tenant role. Tenant-defined permissions, if ever needed, would be a separate explicit owner decision with its own design.
+- **Coach holds no power anywhere.** It is not a role, not a permission, not a condition in any check, and not a selectable option on any screen or tool. It survives only as a title. The capability it carried becomes **a member reaches the clients assigned to them**. Assignment is a data relationship and replaces coach; nothing else does. Existing coach seats become `member` + title "Coach", with effective access proven identical.
+- **A title is descriptive tenant data, never an authority input.** It describes what a tenant calls its people and what they do. No policy, function, gate or tool reads a title to decide access. **Enforced since F1 (2026-09-26)** by `npm run lint:title-authority` and its `--self-test`. The guard replays the migrations, and fails on a policy that reads a title (directly, dynamically, or through a function or view), on an authorization helper that reads one, on an unreviewed or changed title reader, on any unclassified column added to `tenant_members` or `tenant_invite_tokens` (and a title column renamed or dropped), and on a TypeScript gate that reads a title. Its limits are stated in its header: it proves what the migration text says, not what Postgres holds, and its TypeScript rule is a heuristic. PAIGE receives the two layers separately labelled; that is proven by `scripts/client-memory-authz` section 27 on the real handler. Activity records must keep the title *as it was* when the action happened. **That is a requirement, not current behaviour:** nothing records it yet (today the title-change audit row carries no title), and it ships with the title work.
+- **The word is "title"**: final, owner ruling 2026-09-27. "Customized role" was rejected because anyone reading "role" assumes it grants something. Chat reads it from one place, `_shared/team-vocabulary.ts`. The Team screen spells it in its own copy, and `src/solo/team-title-copy.test.tsx` builds every assertion from that constant, so changing the word turns the screen's test red until the screen follows.
+- **Consequence for the other Class-B values:** `admin` is one of the three tenant roles, so its correct store stays `tenant_members.role`. A global `admin` grant reconciles there only when its holder's tenant is proven by an existing membership; any other global `admin` grant is investigated and retired (R4). None of the remaining Class-B values (`sales_rep`, `cs_rep`, `finance`, `viewer`, `moderator`, `developer`, `client`, `affiliate`, `broker`, `broker_team_member`) becomes a `tenant_members` role. This ruling names coach's retirement. How each of those other values is retired is **not decided here**; each needs its own decision.
+- **Unchanged by this ruling:** Class A (§2) and the §7 standing rule. `user_roles` still holds only platform-global operator tiers, and nothing tenant-scoped is ever authorised from it.
+
+Decision record: `docs/brain/decision-log.md` (2026-09-26).
+
+---
+
 ## 1. The three role stores
 
 The platform has **three** places a role can live. Two are correctly scoped. One is not.
@@ -43,13 +58,16 @@ Operator tiers. Global is the *intent*: they act across all tenants (§53).
 | `platform_admin` | Delegated operator. Fleet/support/provisioning. Cannot grant super_admin, cannot pass `is_platform_owner()`. | `user_roles` ✅ |
 
 ### Class B — TENANT-SCOPED (currently mis-stored in `user_roles`)
+
+> **SUPERSEDED IN PART by §0 (owner ruling, 2026-09-26).** The *"Correct store"* column below described a target in which these values become `tenant_members` roles. Only `admin` does, because tenant roles are exactly owner · admin · member; for `admin` the *Correct store* column still holds. `coach` is retired as a permission and survives only as a title. The retirement of the other values is undecided. The classification of these values as **tenant-scoped rather than platform-global** still stands.
+
 These describe a person's authority **inside one business**. Global storage is a category error:
 being "a coach" is meaningless without answering *whose coach*.
 
 | Role | Meaning | Correct store |
 |---|---|---|
 | `admin` | Runs a tenant's workspace | `tenant_members.role` |
-| `coach` | Serves that tenant's clients | `tenant_members.role` |
+| `coach` | ~~Serves that tenant's clients~~ **Retired as a permission (§0); a title only** | ~~`tenant_members.role`~~ **none: a title, never a role** |
 | `client` | An end customer **of** a tenant | `tenant_members` / `clients` linkage |
 | `sales_rep` | Sells for a tenant | `tenant_members.role` |
 | `cs_rep` | Support for a tenant | `tenant_members.role` |
@@ -80,7 +98,8 @@ is already right. Live values: `agency_owner`, `agency_admin`.
 | `agency_owner` | `agency_team_members` | One agency | Agency owner / super_admin | `agency_current_id()` + `agency_team_role()` |
 | `agency_admin` | `agency_team_members` | One agency | Agency owner | same |
 | `owner` | `tenant_members` | One tenant | Tenant owner / provisioning | `is_tenant_member()` + role check |
-| `admin`, `coach`, `sales_rep`, … | `tenant_members` **(target state)** | One tenant | Tenant admin/owner | tenant-scoped check |
+| ~~`admin`, `coach`, `sales_rep`, … | `tenant_members` **(target state)** | One tenant | Tenant admin/owner | tenant-scoped check~~ |
+| `admin`, `member` **(§0, 2026-09-26)** | `tenant_members` | One tenant | Tenant owner (admin/member only; nobody grants owner) | tenant-scoped check |
 
 **Hard rule (§59):** cross-tenant authority is `is_platform_owner()` / `is_platform_operator()` —
 **never** a tenant-level `app_role`. A function branching on `has_role(uid,'admin')` to permit a
@@ -150,8 +169,8 @@ Each slice is its own PR with a §37 producer inventory, §32 proof, and §39 pe
     explicit `service_role` trust branch so the legitimate `paige-ai-chat` path works. Boundary proof
     `supabase/tests/match_paige_memory_authz.sql`; evidence `docs/evidence/match-paige-memory-authz.md`.
     (The remaining c1 candidates + the c2 policy queue are NOT swept here — narrow, evidence-led slice.)
-- **R4 — Backfill + dual-read.** Ensure every Class-B grant exists in `tenant_members`; make helpers
-  read tenant-scoped first, global second. Reversible.
+- **R4 — Backfill + dual-read, narrowed by §0 (2026-09-26) to `admin` only. Do not execute the struck plan for any other value.** ~~Ensure every Class-B grant exists in `tenant_members`; make helpers
+  read tenant-scoped first, global second. Reversible.~~ **`admin` keeps the original reconciliation, but only where the tenant is proven.** It is one of the three tenant roles, so a global `admin` grant is reconciled into `tenant_members.role` only when its holder already has a matching active owner or admin membership. `user_roles` carries no tenant, so that membership is the only evidence of which tenant the grant belongs to. A global `admin` grant with no such membership is **never** turned into a new membership, because that would invent tenant authority. It is investigated and retired. Helpers read the tenant-scoped grant first and the global one second. Reconciling the proven grants and retiring the unproven ones is what makes the R5 constraint safe. **Every other Class-B grant does not move into `tenant_members`**, because none of those values becomes a tenant role. For them, R4 is a **per-value retirement**, one decision per value. `coach` is ruled: the seat becomes `member` + title "Coach", and access comes from client assignment, with effective access proven identical before any grant is removed. Every other Class-B value is **undecided** and stays as it is until its own decision.
 - **R5 — Cut over and constrain.** Once no reader depends on global Class-B roles, add a DB CHECK so
   `user_roles` accepts **only** Class-A roles. Structural, not conventional (the §51/§53 pattern).
 

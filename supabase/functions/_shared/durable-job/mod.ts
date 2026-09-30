@@ -11,10 +11,10 @@
  * renames a business lifecycle.
  *
  * SCOPE OF MECHANICS. The seam owns canonical states, lease math, idempotency-window
- * math, and receipt correlation. It intentionally owns NO table and NO claim SQL of its
- * own: each substrate keeps its schema (the comms drainer's `claim_due_scheduled_messages`
- * is the in-repo model — FOR UPDATE SKIP LOCKED + service-role-only grant) and adopts
- * these semantics through a per-substrate claim RPC and adapter.
+ * math, and receipt correlation. Migration `20270417000000_paige_durable_work_envelope`
+ * supplies the ONE cross-capability work-identity table and its server-only transition seam.
+ * Capability-specific substrates keep their own business/run schemas and reference that
+ * envelope through `work_id`; none may create a second universal job table or scheduler.
  *
  * HONEST STATES (CLAUDE.md §13). `succeeded` requires a verified canonical write. A
  * lost lease is `expired`, which routes to reconciliation — never blind retry. An
@@ -29,14 +29,17 @@
  * Canonical execution states. Substrate adapters project their native status onto
  * exactly these; no native status may bypass the projection.
  */
-export type DurableJobState =
-  | "claimed"
-  | "succeeded"
-  | "failed"
-  | "blocked"
-  | "cancelled"
-  | "expired"
-  | "outcome_unknown";
+export const DURABLE_JOB_STATES = [
+  "claimed",
+  "succeeded",
+  "failed",
+  "blocked",
+  "cancelled",
+  "expired",
+  "outcome_unknown",
+] as const;
+
+export type DurableJobState = (typeof DURABLE_JOB_STATES)[number];
 
 /** States from which no further attempt may be dispatched. */
 export const TERMINAL_STATES: readonly DurableJobState[] = [

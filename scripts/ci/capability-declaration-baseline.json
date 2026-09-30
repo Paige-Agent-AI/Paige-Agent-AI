@@ -1,0 +1,358 @@
+[
+  {
+    "tool": "action_advance",
+    "kind": "mutating"
+  },
+  {
+    "tool": "action_file",
+    "kind": "mutating"
+  },
+  {
+    "tool": "action_get",
+    "kind": "read"
+  },
+  {
+    "tool": "action_list",
+    "kind": "read"
+  },
+  {
+    "tool": "ask_choices",
+    "kind": "read"
+  },
+  {
+    "tool": "author_event_kind",
+    "kind": "mutating"
+  },
+  {
+    "tool": "automation_draft",
+    "kind": "mutating"
+  },
+  {
+    "tool": "automation_list",
+    "kind": "read"
+  },
+  {
+    "tool": "automation_set_grant",
+    "kind": "mutating"
+  },
+  {
+    "tool": "automation_set_state",
+    "kind": "mutating"
+  },
+  {
+    "tool": "automation_triggers_list",
+    "kind": "read"
+  },
+  {
+    "tool": "calendar_book_meeting",
+    "kind": "mutating"
+  },
+  {
+    "tool": "calendar_link_send",
+    "kind": "mutating"
+  },
+  {
+    "tool": "capability_status",
+    "kind": "read"
+  },
+  {
+    "tool": "comms_buy_number",
+    "kind": "mutating"
+  },
+  {
+    "tool": "comms_connection_summary",
+    "kind": "read"
+  },
+  {
+    "tool": "comms_draft_registration",
+    "kind": "mutating"
+  },
+  {
+    "tool": "comms_list_numbers",
+    "kind": "read"
+  },
+  {
+    "tool": "comms_name_number",
+    "kind": "mutating"
+  },
+  {
+    "tool": "comms_registration_status",
+    "kind": "read"
+  },
+  {
+    "tool": "comms_search_numbers",
+    "kind": "read"
+  },
+  {
+    "tool": "comms_set_primary_number",
+    "kind": "mutating"
+  },
+  {
+    "tool": "content_save",
+    "kind": "mutating"
+  },
+  {
+    "tool": "crm_add_note",
+    "kind": "mutating"
+  },
+  {
+    "tool": "crm_file_document",
+    "kind": "mutating"
+  },
+  {
+    "tool": "crm_get_contact_summary",
+    "kind": "read"
+  },
+  {
+    "tool": "crm_list_deals",
+    "kind": "read"
+  },
+  {
+    "tool": "crm_list_documents",
+    "kind": "read"
+  },
+  {
+    "tool": "crm_list_tasks",
+    "kind": "read"
+  },
+  {
+    "tool": "crm_list_team",
+    "kind": "read"
+  },
+  {
+    "tool": "crm_pipeline_summary",
+    "kind": "read"
+  },
+  {
+    "tool": "crm_search_contacts",
+    "kind": "read"
+  },
+  {
+    "tool": "deep_research",
+    "kind": "read"
+  },
+  {
+    "tool": "delegate_to_subagent",
+    "kind": "mutating"
+  },
+  {
+    "tool": "document_generate",
+    "kind": "mutating"
+  },
+  {
+    "tool": "document_pending_reviews",
+    "kind": "read"
+  },
+  {
+    "tool": "document_resume_review",
+    "kind": "read"
+  },
+  {
+    "tool": "draft_marketing_content",
+    "kind": "mutating"
+  },
+  {
+    "tool": "forge_subagent",
+    "kind": "mutating"
+  },
+  {
+    "tool": "generate_image",
+    "kind": "mutating"
+  },
+  {
+    "tool": "get_client_rail",
+    "kind": "read"
+  },
+  {
+    "tool": "get_current_rates",
+    "kind": "read"
+  },
+  {
+    "tool": "growth_funnel_build",
+    "kind": "mutating"
+  },
+  {
+    "tool": "growth_funnel_generate",
+    "kind": "read"
+  },
+  {
+    "tool": "growth_funnel_publish",
+    "kind": "mutating"
+  },
+  {
+    "tool": "growth_list",
+    "kind": "read"
+  },
+  {
+    "tool": "growth_page_generate",
+    "kind": "read"
+  },
+  {
+    "tool": "growth_page_publish",
+    "kind": "mutating"
+  },
+  {
+    "tool": "growth_page_save",
+    "kind": "mutating"
+  },
+  {
+    "tool": "improvement_decide",
+    "kind": "mutating"
+  },
+  {
+    "tool": "improvement_list",
+    "kind": "read"
+  },
+  {
+    "tool": "improvement_propose",
+    "kind": "mutating"
+  },
+  {
+    "tool": "list_event_kinds",
+    "kind": "read"
+  },
+  {
+    "tool": "list_subagents",
+    "kind": "read"
+  },
+  {
+    "tool": "marketplace_browse",
+    "kind": "read"
+  },
+  {
+    "tool": "member_grant_role",
+    "kind": "mutating"
+  },
+  {
+    "tool": "member_revoke_role",
+    "kind": "mutating"
+  },
+  {
+    "tool": "pipeline_archive_preview",
+    "kind": "read"
+  },
+  {
+    "tool": "pipeline_catalogue",
+    "kind": "read"
+  },
+  {
+    "tool": "pipeline_configure",
+    "kind": "mutating"
+  },
+  {
+    "tool": "pipeline_folder_archive_preview",
+    "kind": "read"
+  },
+  {
+    "tool": "plan_add_milestone",
+    "kind": "mutating"
+  },
+  {
+    "tool": "plan_assign_task",
+    "kind": "mutating"
+  },
+  {
+    "tool": "plan_create",
+    "kind": "mutating"
+  },
+  {
+    "tool": "plan_list",
+    "kind": "read"
+  },
+  {
+    "tool": "plan_remove_item",
+    "kind": "mutating"
+  },
+  {
+    "tool": "plan_set_reminder",
+    "kind": "mutating"
+  },
+  {
+    "tool": "plan_update_item",
+    "kind": "mutating"
+  },
+  {
+    "tool": "presence_is_online",
+    "kind": "read"
+  },
+  {
+    "tool": "presence_who_online",
+    "kind": "read"
+  },
+  {
+    "tool": "program_enroll",
+    "kind": "mutating"
+  },
+  {
+    "tool": "program_list",
+    "kind": "read"
+  },
+  {
+    "tool": "propose_action",
+    "kind": "read"
+  },
+  {
+    "tool": "propose_business_brief_update",
+    "kind": "mutating"
+  },
+  {
+    "tool": "save_to_knowledge_base",
+    "kind": "mutating"
+  },
+  {
+    "tool": "search_funding_marketplace",
+    "kind": "read"
+  },
+  {
+    "tool": "search_regional_lenders",
+    "kind": "read"
+  },
+  {
+    "tool": "search_sba_lenders",
+    "kind": "read"
+  },
+  {
+    "tool": "team_invite_member",
+    "kind": "mutating"
+  },
+  {
+    "tool": "team_invite_resend",
+    "kind": "mutating"
+  },
+  {
+    "tool": "team_invite_revoke",
+    "kind": "mutating"
+  },
+  {
+    "tool": "team_set_permission",
+    "kind": "mutating"
+  },
+  {
+    "tool": "team_set_work_profile",
+    "kind": "mutating"
+  },
+  {
+    "tool": "update_business_profile",
+    "kind": "mutating"
+  },
+  {
+    "tool": "update_client_data",
+    "kind": "mutating"
+  },
+  {
+    "tool": "web_fetch",
+    "kind": "read"
+  },
+  {
+    "tool": "web_search",
+    "kind": "read"
+  },
+  {
+    "tool": "zapier_list_actions",
+    "kind": "read"
+  },
+  {
+    "tool": "zapier_run_action",
+    "kind": "mutating"
+  }
+]

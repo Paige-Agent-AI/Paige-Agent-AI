@@ -22,7 +22,7 @@ Before editing for any customer-visible or behaviorally significant change, stat
 it in the change's evidence record (`docs/evidence/ui-delivery/*.md`) under these fields:
 
 - `OWNER_INTENT` — exact owner objective; target actor and user job; primary outcome; required
-  experience; required visual direction (the approved Claude Design pack — §00, never invented here);
+  experience; the visual direction CC decides under §00 (Flow-by-Flow, then Impeccable), citing any prior pack as reference (§18/§30) rather than as an authority above it;
   required interaction behavior; required platform/domain behavior.
 - `MUST_NOT_HAPPEN` — **mandatory.** The outcomes, regressions, and side effects that would mean the
   change failed even if it "works": what it must not break, remove, hide, reword, reframe, or charge.

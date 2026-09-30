@@ -122,6 +122,7 @@ export function StudioChat({
   const [attachments, setAttachments] = useState<GrowthAsset[]>([]); // reference images dropped in-chat
   const [attachmentsBusy, setAttachmentsBusy] = useState(false);
   const [queue, setQueue] = useState<QueuedBrief[]>([]); // briefs staged while the agent is busy (#155)
+  const failedIntentRef = useRef<{ text: string; id: string } | null>(null);
   const [queuePaused, setQueuePaused] = useState(false); // a turn failed — hold the rest, don't fire into a failing state (§13)
   const scrollRef = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
@@ -209,6 +210,8 @@ export function StudioChat({
     setMultiPicks(new Set());
     // Image-only turns still need words for the transcript + the model — give it a natural default.
     const modelText = trimmed || "Here's a reference image — use it as the starting point for what you build.";
+    const requestIntentId = opts?.queuedItem?.id
+      ?? (failedIntentRef.current?.text === modelText ? failedIntentRef.current.id : crypto.randomUUID());
     const shown = opts?.display ?? (trimmed || (hasImages ? `Shared ${turnAttachments.length} reference image${turnAttachments.length > 1 ? "s" : ""}` : trimmed));
     const next = [...messages, { role: "user" as const, content: shown }];
     // What the MODEL receives (canonical value); the transcript shows `shown`.
@@ -234,6 +237,7 @@ export function StudioChat({
         body: JSON.stringify({
           messages: modelMessages,
           threadId,
+          requestIntentId,
           attachments: hasImages
             ? turnAttachments.map((a) => ({ url: a.url, name: a.name, mimeType: a.mimeType, kind: a.kind }))
             : undefined,
@@ -329,13 +333,17 @@ export function StudioChat({
         setMessages([...next, { role: "assistant", content: "I didn't catch that — try saying it another way?" }]);
       }
       ok = true;
+      failedIntentRef.current = null;
     } catch (e) {
       setMessages(messages); // roll back the optimistic turn
       // §13 nothing lost. A MANUAL turn's text goes back into the composer. A QUEUED turn goes back to
       // the FRONT of the queue (never clobber whatever the customer may now be typing) — it stays a
       // visible chip and re-runs on Resume.
       if (opts?.queuedItem) setQueue((q) => [opts.queuedItem!, ...q]);
-      else setInput(trimmed);
+      else {
+        failedIntentRef.current = { text: modelText, id: requestIntentId };
+        setInput(trimmed);
+      }
       toast.error(e instanceof Error ? e.message : "The chat hit a snag.");
     } finally {
       setSending(false);

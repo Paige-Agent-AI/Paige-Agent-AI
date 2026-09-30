@@ -2,7 +2,11 @@ import { describe, it, expect, vi } from "vitest";
 import { randomBytes } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { redactSecretPath, redactSecretSearch } from "./useAnalytics";
+import {
+  looksLikeMintedCredential,
+  redactSecretPath,
+  redactSecretSearch,
+} from "./useAnalytics";
 
 /**
  * A CREDENTIAL CONTROL WITH A MEASURED ESCAPE RATE IS NOT A CONTROL.
@@ -84,4 +88,77 @@ describe("the real route table is not mangled", () => {
     }
     expect(mangled).toEqual([]);
   });
+});
+
+/**
+ * THE MINT-WIDTH TEST — the one that would have caught this.
+ *
+ * The redactor was written against "the two shapes this platform mints", taken on trust. The
+ * migrations mint SEVEN, and one of them — the invite token, `encode(gen_random_bytes(24),'base64')`
+ * with `+`->`-`, `/`->`_`, `=` stripped — is BASE64URL. The rule's separator disqualifier was
+ * waving 63.8% of those straight through, into the unhashed, directly-redeemable column behind
+ * `/join/:token`. A comment three lines above it asserted we minted none.
+ *
+ * So the mint inventory is no longer a belief. This reads the migrations, derives every shape they
+ * actually produce, generates real samples of each, and asserts the predicate catches them. A new
+ * mint of an uncovered width fails this test instead of leaking quietly.
+ */
+describe("every credential shape the migrations actually mint is covered", () => {
+  const MIGRATIONS = path.join(process.cwd(), "supabase", "migrations");
+
+  function mintsFoundInMigrations(): Array<{ bytes: number; encoding: string }> {
+    const found = new Map<string, { bytes: number; encoding: string }>();
+    for (const file of fs.readdirSync(MIGRATIONS)) {
+      if (!file.endsWith(".sql")) continue;
+      const sql = fs.readFileSync(path.join(MIGRATIONS, file), "utf8");
+      const re = /gen_random_bytes\(\s*(\d+)\s*\)\s*,\s*'(hex|base64)'/g;
+      let m: RegExpExecArray | null;
+      while ((m = re.exec(sql)) !== null) {
+        const bytes = Number(m[1]);
+        const encoding = m[2];
+        found.set(`${bytes}:${encoding}`, { bytes, encoding });
+      }
+    }
+    return [...found.values()].sort((a, b) => a.bytes - b.bytes);
+  }
+
+  const mints = mintsFoundInMigrations();
+
+  it("finds the mints at all — a zero-hit grep would make this test vacuous", () => {
+    expect(mints.length).toBeGreaterThan(0);
+  });
+
+  for (const { bytes, encoding } of mints) {
+    // Standard base64 is also re-encoded as base64url at four sites, and arrives `+`-as-space
+    // through URLSearchParams, so every base64 mint is asserted in all three forms.
+    const forms =
+      encoding === "hex"
+        ? [{ label: "hex", make: (b: Buffer) => b.toString("hex") }]
+        : [
+            { label: "std base64", make: (b: Buffer) => b.toString("base64") },
+            {
+              label: "base64url",
+              make: (b: Buffer) =>
+                b.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, ""),
+            },
+            {
+              label: "std base64 via URLSearchParams (+ became a space)",
+              make: (b: Buffer) => b.toString("base64").replace(/\+/g, " "),
+            },
+          ];
+
+    for (const form of forms) {
+      it(`catches gen_random_bytes(${bytes}) as ${form.label}`, () => {
+        const escapes: string[] = [];
+        for (let i = 0; i < 20000; i++) {
+          const token = form.make(randomBytes(bytes));
+          if (!looksLikeMintedCredential(token)) escapes.push(token);
+        }
+        // Report the actual escaping sample, not just a count — a bare number cannot be diagnosed.
+        expect(
+          escapes.length === 0 ? "" : `${escapes.length} escaped, e.g. ${JSON.stringify(escapes[0])}`,
+        ).toBe("");
+      });
+    }
+  }
 });

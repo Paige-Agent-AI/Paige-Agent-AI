@@ -1,0 +1,84 @@
+-- =============================================================================
+-- Paige's Rail receipt cannot be filed, because there are TWO of the function
+-- that files it.
+--
+-- WHAT IS ACTUALLY WRONG. `public.record_capability_run` exists TWICE on prod:
+--   record_capability_run(uuid,uuid,text,text,uuid,text)                       -- 6 args
+--   record_capability_run(uuid,uuid,text,text,uuid,text,text,uuid,text,jsonb)  -- 10 args
+-- The second was added by 20270107000000, whose own header calls it "backward
+-- compatible — existing grants and callers unchanged." That claim is false, and
+-- this migration exists because of it. `create or replace function` CANNOT
+-- replace across a differing argument list: it creates a SECOND function. No
+-- DROP was ever issued (searched `drop function public.record_capability_run`,
+-- `drop function if exists public.record_capability_run`, `DROP FUNCTION.*
+-- record_capability`, and `drop.*record_capability_run` across every migration —
+-- zero hits), so both have been live ever since.
+--
+-- WHY THAT BREAKS A CALL THAT LOOKS FINE. Every argument past the fifth carries
+-- a DEFAULT on both overloads, so a five-argument call satisfies BOTH and
+-- Postgres cannot choose. MEASURED ON PRODUCTION (xygzykjyynhzqytbqnzu), with a
+-- PREPARE that parses and plans but never executes, using the exact five named
+-- arguments `_shared/mcp-gateway/rail-receipt.ts:66` sends:
+--
+--   ERROR: 42725: function public.record_capability_run(_tenant_id => uuid,
+--     _actor_id => uuid, _capability_key => text, _outcome => text,
+--     _run_id => uuid) is not unique
+--   HINT: Could not choose a best candidate function.
+--
+-- Reproduced independently against a local Postgres 16.13 with the same two
+-- signatures: 5 positional args and 6 positional args are BOTH ambiguous; 7 or
+-- more resolves, because only the ten-arg can accept them.
+--
+-- WHY NOBODY NOTICED. All three affected callers swallow the failure:
+-- `rail-receipt.ts:74`, `mcp-outcome.ts:858` and `n8n-management.ts:147` each
+-- `console.error` and carry on, because a Rail write is best-effort and must
+-- never turn a completed action into a reported failure. Correct instinct,
+-- and it is exactly what kept a total filing failure invisible.
+--
+-- §37 PRODUCER INVENTORY — every caller, and what this DROP does to it.
+--   IN-DATABASE (2, enumerated from prod `pg_proc.prosrc`, not from the repo):
+--     · execute_crm_command(uuid,uuid,jsonb,text)
+--     · execute_crm_command_reversible(uuid,uuid,jsonb,text)
+--     Both pass TEN positional arguments (20270204000000:774 and :1536,
+--     20270320000000:263, 20270321000000:243), so both already resolve to the
+--     ten-arg overload and are untouched by this. Confirmed live: prod carries
+--     `crm_create_contact` and `crm_update_contact` Rail rows.
+--   POSTGREST, service-role (3, all sending exactly FIVE named arguments):
+--     · _shared/mcp-gateway/rail-receipt.ts:66   → capability_key mcp_connection_run
+--     · _shared/mcp-outcome.ts:851               → capability_key zapier_run_action
+--     · _shared/n8n-management.ts:145            → capability_key = the tool name
+--     All three are refused today. All three resolve after this.
+--   SIX-ARGUMENT CALLERS: NONE. No caller anywhere passes exactly six, which is
+--     the only arity this DROP could have stranded. That is the whole safety
+--     argument and it was checked before the DROP was written, not after.
+--
+-- IMPACT SO FAR, STATED HONESTLY (§13). None yet, and that is a fact about
+-- traffic rather than about the defect. Prod has ZERO `mcp_connection_run` and
+-- ZERO `zapier_run_action` Rail rows — but also ZERO rows in
+-- `mcp_connection_receipts`, so no MCP or Zapier run has ever executed. Nothing
+-- has been lost. The defect is LATENT, and Slice ④ — which puts sign-in and
+-- tool-check in front of an owner for the first time — is the change that makes
+-- the first real run reachable. It would have filed nothing.
+--
+-- WHY A DROP AND NOT A THIRD OVERLOAD. Adding is what caused this. The ten-arg
+-- body is a strict superset of the six-arg one: identical NULL validation,
+-- identical capability-key and outcome enums, identical active-member check,
+-- and the same `_record_workspace_rail_event` call with four appended nullable
+-- fields. Called with those four NULL — which is what a five-argument call
+-- does — it behaves exactly as the six-arg did. Grants match too: both carry
+-- `postgres=X/postgres | service_role=X/postgres` and both are SECURITY
+-- DEFINER owned by postgres, so removing one loses no privilege the survivor
+-- does not already hold.
+--
+-- §9/§59 UNCHANGED. This removes a duplicate; it does not widen authority. The
+-- surviving function keeps its own in-body guard — it RAISES
+-- CAPABILITY_RUN_FORBIDDEN (42501) unless the actor is an ACTIVE member of the
+-- tenant — and stays service_role-only. No grant is added here.
+-- =============================================================================
+
+-- Idempotent: safe to re-run, and safe on a fresh rebuild where only the
+-- ten-arg was ever created.
+drop function if exists public.record_capability_run(uuid, uuid, text, text, uuid, text);
+
+comment on function public.record_capability_run(uuid, uuid, text, text, uuid, text, text, uuid, text, jsonb) is
+  'The ONE canonical Rail receipt writer for a Paige capability run (§18). Records that PAIGE performed one workspace-level capability and how it turned out, into public.paige_workspace_events via _record_workspace_rail_event. Service-role callers only; RAISES CAPABILITY_RUN_FORBIDDEN (42501) unless the actor is an ACTIVE member of the tenant; idempotent per run id. The four trailing parameters (_job_attempt_id, _llm_trace_id, _release_id, _detail) are optional correlation fields added by 20270107000000; _detail is fenced at 16KB and must already be redacted by the caller. DO NOT ADD A SECOND OVERLOAD. 20270107000000 added its four parameters as a NEW signature rather than replacing the six-argument one, which left both live with defaults past the fifth argument — so every five-argument call, including all three service-role PostgREST callers, failed 42725 "function is not unique" and was swallowed into a console.error. 20270411090000 dropped the six-argument overload. A future field belongs on THIS signature, as another trailing default.';

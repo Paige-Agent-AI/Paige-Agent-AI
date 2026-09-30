@@ -28,6 +28,10 @@ interface Ticket {
   updated_at: string;
 }
 
+// The shape these profile reads are written against. The selects below name `email`, which the
+// generated types do not list on `profiles`; the cast keeps the reads exactly as they were.
+type ProfileNameRow = { user_id: string; full_name: string | null; email: string | null };
+
 interface AssignableUser {
   user_id: string;
   full_name: string | null;
@@ -72,12 +76,12 @@ export function AdminTicketPanel({ ticketId, adminUserId, open, onOpenChange, on
   }, [open, ticketId]);
 
   const loadAssignableUsers = async () => {
-    // Pull all admin + coach role rows, then their profiles
+    // Pull all admin role rows, then their profiles
     const { data: roles } = await supabase
       .from("user_roles")
       .select("user_id,role")
-      .in("role", ["admin", "coach"]);
-    const userIds = Array.from(new Set((roles ?? []).map((r: any) => r.user_id as string)));
+      .eq("role", "admin");
+    const userIds = Array.from(new Set((roles ?? []).map((r) => r.user_id)));
     if (userIds.length === 0) {
       setAssignableUsers([]);
       return;
@@ -87,12 +91,12 @@ export function AdminTicketPanel({ ticketId, adminUserId, open, onOpenChange, on
       .select("user_id,full_name,email")
       .in("user_id", userIds);
     const profMap = new Map<string, { full_name: string | null; email: string | null }>();
-    (profs ?? []).forEach((p: any) => profMap.set(p.user_id, { full_name: p.full_name, email: p.email }));
+    ((profs ?? []) as unknown as ProfileNameRow[]).forEach((p) => profMap.set(p.user_id, { full_name: p.full_name, email: p.email }));
     const merged: AssignableUser[] = userIds.map((uid) => ({
       user_id: uid,
       full_name: profMap.get(uid)?.full_name ?? null,
       email: profMap.get(uid)?.email ?? null,
-      role: ((roles ?? []).find((r: any) => r.user_id === uid) as any)?.role ?? "admin",
+      role: (roles ?? []).find((r) => r.user_id === uid)?.role ?? "admin",
     }));
     // Sort by display name
     merged.sort((a, b) => (a.full_name || a.email || "").localeCompare(b.full_name || b.email || ""));
@@ -120,8 +124,8 @@ export function AdminTicketPanel({ ticketId, adminUserId, open, onOpenChange, on
           .select("full_name,email")
           .eq("user_id", tk.user_id)
           .maybeSingle();
-        setClientName((prof as any)?.full_name ?? null);
-        setClientEmail((prof as any)?.email ?? null);
+        setClientName((prof as unknown as ProfileNameRow | null)?.full_name ?? null);
+        setClientEmail((prof as unknown as ProfileNameRow | null)?.email ?? null);
       }
     } finally {
       setLoading(false);
@@ -136,8 +140,8 @@ export function AdminTicketPanel({ ticketId, adminUserId, open, onOpenChange, on
       if (error) throw error;
       await load();
       onTicketUpdated();
-    } catch (err: any) {
-      toast.error(err?.message || "Could not update ticket");
+    } catch (err) {
+      toast.error((err instanceof Error ? err.message : null) || "Could not update ticket");
     } finally {
       setBusy(false);
     }
@@ -168,8 +172,8 @@ export function AdminTicketPanel({ ticketId, adminUserId, open, onOpenChange, on
       toast.success(assigneeName ? `Assigned to ${assigneeName}` : "Unassigned");
       await load();
       onTicketUpdated();
-    } catch (err: any) {
-      toast.error(err?.message || "Could not assign ticket");
+    } catch (err) {
+      toast.error((err instanceof Error ? err.message : null) || "Could not assign ticket");
     } finally {
       setBusy(false);
     }
@@ -190,8 +194,8 @@ export function AdminTicketPanel({ ticketId, adminUserId, open, onOpenChange, on
       setInternalNote("");
       toast.success("Internal note added");
       await load();
-    } catch (err: any) {
-      toast.error(err?.message || "Could not add note");
+    } catch (err) {
+      toast.error((err instanceof Error ? err.message : null) || "Could not add note");
     } finally {
       setBusy(false);
     }
@@ -236,8 +240,8 @@ export function AdminTicketPanel({ ticketId, adminUserId, open, onOpenChange, on
       toast.success("Reply sent to client");
       await load();
       onTicketUpdated();
-    } catch (err: any) {
-      toast.error(err?.message || "Could not send reply");
+    } catch (err) {
+      toast.error((err instanceof Error ? err.message : null) || "Could not send reply");
     } finally {
       setBusy(false);
     }
@@ -272,8 +276,8 @@ export function AdminTicketPanel({ ticketId, adminUserId, open, onOpenChange, on
       toast.success("Ticket resolved");
       await load();
       onTicketUpdated();
-    } catch (err: any) {
-      toast.error(err?.message || "Could not resolve ticket");
+    } catch (err) {
+      toast.error((err instanceof Error ? err.message : null) || "Could not resolve ticket");
     } finally {
       setBusy(false);
     }

@@ -348,10 +348,32 @@ Both buffered and streaming requests include `enable_logging=false`; the account
 eligibility for Zero Retention Mode remains unverified, so this is not provider proof or
 activation. The active OpenAI read-aloud profile is unchanged.
 
+**2026-09-24 admission correction (INT-104, migration `20270420000000`):** Live admission was an
+identity predicate — a singleton readiness row pinning the speaker to one stored user id who also
+had to hold `super_admin` — so no other Solo account could reach Live at all. It is now a
+platform-owned, service-role-only allowlist (`public.paige_live_pilot_subjects`, RLS on, no
+anon/authenticated policy, missing row refuses) with per-subject acceptance and an `expires_at`
+lifetime.
+
+**2026-09-24 audience correction (migration `20270422000000`), same day, one layer down:** that
+allowlist's only production writer admitted the authenticated operator themselves, so the set of
+people who could ever be admitted was still one login. Eligibility now derives from the tenant's TIER
+and *who may speak today* is a single stored setting. NAME only, values stated because they are a
+closed enum and not a secret: `public.paige_voice_readiness.pilot_rollout_scope`, `'off' | 'solo_tier'`,
+**ships `'off'`**. It cannot name a person, a login or a workspace by construction. The operator turns
+it through `paige-voice-profile-admin`'s `set-live-rollout-scope` action (platform-owner gated;
+widening requires the default-provider-retention acceptance restated in the same request), and the
+global disable now closes the audience with it. **NAMES only, no values, and nothing was activated:** the allowlist ships empty, the
+ElevenLabs provider gate is unchanged and still shut, `ELEVENLABS_API_KEY` was neither read nor
+tested by this change, verified zero retention remains `UNAVAILABLE`, and physical speaker identity
+is still unenforced (#1417). Both database function signatures were preserved, so **no edge function
+was redeployed** — `paige-live-session`, `paige-live-relay`, `paige-ai-chat` and
+`paige-voice-profile-admin` are byte-for-byte unchanged.
+
 | System | Voice resolution | Current state |
 |---|---|---|
 | Paige message playback | `paige-tts` → service-only profile resolver → provider-neutral router | Deployed; authenticated runtime proof owed |
-| Paige Live Conversation | immutable profile revision in `paige_live_sessions`; provider transport disabled | UI/control plane deployed on `f8eb2362`; realtime audio `PROOF OWED`; authenticated owner E2E `UNVERIFIED` |
+| Paige Live Conversation | immutable profile revision in `paige_live_sessions`; provider transport disabled | UI/control plane deployed on `f8eb2362`; eligibility derives from the tenant's TIER (`live_conversation_tier_allows`), and *who may speak today* is one setting — `paige_voice_readiness.pilot_rollout_scope`, `'off' | 'solo_tier'`, **shipping `'off'`** — so no account is admitted; realtime audio `PROOF OWED`; authenticated owner E2E `UNVERIFIED`; no surface calls `paige_live_accept_terms()` yet |
 | Studio voiceover | request-selected provider voice removed; model-router fails closed | `UNAVAILABLE` until this lane uses the same Paige Voice Profile/readiness resolver |
 | Hosted ElevenLabs agent | none | `UNAVAILABLE` and intentionally outside Paige ownership |
 
@@ -384,8 +406,17 @@ exist — do not follow references to them.)
 | `deploy-migrations.yml` | push (to `main`) | `supabase db push` → `migration list` verify → moves `db-live` tag (§32 persisted-apply) |
 | `deploy-edge-functions.yml` | push (to `main`) | Deploys only changed functions (follows `_shared` imports via `.github/scripts/edge-affected.py`); moves `edge-live` tag (§24) |
 | `migration-lint.yml` | pull_request | Migration shape lint (§208/§213) |
-| `premerge-migration-proof.yml` | pull_request | Pre-merge `BEGIN..ROLLBACK` migration proof (§32.a) |
+| `premerge-migration-proof.yml` | pull_request — **DISABLED** (manually, no run since 2026-08-24) | Pre-merge migration proof (§32.a). Does not run: a proof "owed" to it is not owed to anything. Fail-closed rework is #574; re-enable or delete is an owner decision |
 | `security-audit.yml` ("Security Audit") | pull_request + push | Security audit gate |
+
+**Security scanning (2026-09-27).** `codeql.yml` ("CodeQL Advanced") and `codacy.yml` ("Codacy Security
+Scan") were **removed** on owner authorization: CodeQL Advanced failed on every run because GitHub's
+CodeQL *default setup* (a repository setting, not a file — dynamic workflow `github-code-scanning/codeql`)
+is enabled and refuses advanced-configuration results; Codacy failed on every run. The default setup
+still scans `actions`, `javascript-typescript` and `python` on every PR and push and is green. The
+`github-advanced-security` PR check ("Code scanning AI findings", dynamic agent) is also a repository
+setting; it fails on an unsupported model and can only be switched off in repository settings. A
+replacement scanning decision is being made separately; do not add a scanner here without it.
 
 **RLS anon/cross-tenant-reach drift guards (npm scripts wired into `ci.yml`):**
 
@@ -393,8 +424,9 @@ exist — do not follow references to them.)
 |---|---|---|
 | `lint:views` | Fails any migration that lets a VIEW drift to `security_invoker=off` (the #116 11-view anon/cross-tenant leak class). | PR #447 / §9 P0 #116 |
 | `lint:definer-fns` (`scripts/ci/definer-fn-lint.mjs`) | Fails any migration granting a new public `SECURITY DEFINER` function to `anon`/`PUBLIC` without an inline `-- definer-anon-exempt: <reason>` escape (the #117 owner-bypass fn class). Sibling of `lint:views`. | PR #448 / §9 P0 #117 |
+| `lint:title-authority` (`scripts/ci/title-authority-guard.mjs`, baseline `scripts/ci/title-authority-baseline.json`) | Fails CI when a permission decision reads a title (`job_title` / `responsibilities`): a policy (direct, dynamic or through a function or view), an authorization helper, an unreviewed or changed title reader, an unclassified column added to `tenant_members` or `tenant_invite_tokens` (or a title column renamed or dropped), or a TypeScript gate. `lint:title-authority:test` proves each rule bites. | F1 (2026-09-26), owner ruling: roles authorize, titles describe |
 
-Repo: **`mrmogulmaker-bot/paige-agent-ai`** (✅ this is the accessible repo for GitHub MCP; a
+Repo: **`Paige-Agent-AI/Paige-Agent-AI`** (✅ this is the accessible repo for GitHub MCP; a
 `mrmogulmaker/paige-agent-ai` path is **not** configured for the session). Default branch `main`.
 `GITHUB_TOKEN`, `GITHUB_REPO` also appear as edge secret names (Paige→GitHub seam).
 

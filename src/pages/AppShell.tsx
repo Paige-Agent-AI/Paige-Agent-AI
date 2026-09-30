@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/resizable";
 import { trackEvent } from "@/hooks/useAnalytics";
 import { resolveLandingRoute } from "@/lib/auth/resolveLandingRoute";
+import { shouldOfferOnboarding } from "@/lib/onboardingOffer";
 import { RequiredConsentsGate } from "@/components/legal/RequiredConsentsGate";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { setScopedUserId } from "@/lib/scopedUser";
@@ -92,17 +93,11 @@ const AppShell = () => {
     } catch {
       // Continue when browser storage is unavailable.
     }
-    supabase
-      .from("profiles")
-      .select("full_name, phone, address")
-      .eq("user_id", user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        // Show onboarding if profile is mostly empty (new user)
-        if (data && !data.phone && !data.address) {
-          setShowOnboarding(true);
-        }
-      });
+    // Show onboarding if the profile is mostly empty (new user): no address and no primary phone
+    // contact method. An unreadable contact list is not "no phone" — nothing is offered then.
+    void shouldOfferOnboarding(user.id).then((offer) => {
+      if (offer) setShowOnboarding(true);
+    });
   }, [user?.id]);
 
   // Fire feature_visit on every /app/* route change.

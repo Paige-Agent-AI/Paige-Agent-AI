@@ -8,7 +8,19 @@ license: Project-owned overlay; pinned upstream licenses are retained under vend
 
 Use this skill after Flow-by-Flow and before design or implementation whenever a change affects a visible interface.
 
-This skill does not grant visual authority. Under `CLAUDE.md` §00, implementation agents must source visual direction from the approved Claude Design pack, record it, and port it faithfully. They may not invent, substitute, critique, or override it.
+**Visual authority (corrected 2026-09-24).** The paragraph that stood here required implementation
+agents to source visual direction from an approved Claude Design pack and forbade them from inventing,
+substituting, critiquing or overriding it. `CLAUDE.md` §00 was reversed by owner ruling on 2026-09-22:
+Claude Design is out of the loop, and CC owns the interface — design and engineering both — executed as
+**Flow-by-Flow first, then Impeccable**. §00 states that any rule handing interface authority to a party
+other than CC and the owner "is void and is DELETED on sight rather than reconciled", so it is deleted
+here rather than left to contradict the root doctrine.
+
+What replaces it: run `impeccable` (installed at `.agents/skills/impeccable/`, npm `impeccable@4.1.0`)
+for direction, craft floor and audit, and run its detector over the files you touch — CI does the same
+on every PR. See `docs/OPS-impeccable.md`. The modules below remain the delivery contract; a prior
+pack, where one exists, is reference material and a starting point (§18/§30), not an authority that
+outranks CC's judgement.
 
 ## Read first
 
@@ -27,7 +39,7 @@ The vendored core is pinned and read-only. Paige-specific rules in this skill an
 For any visible, interactive, user-flow, domain-contract, or behaviorally significant change, this skill routes to five mandatory composable modules, in order. Each points back to `docs/doctrine/paige-ui-delivery-standard.md` and the references above; none forks a new standard.
 
 1. `paige-owner-intent-fidelity` — the pre-edit Owner Intent & Experience Contract (what must happen, what must NOT happen, what must be preserved, acceptance criteria).
-2. `paige-visual-immersive-quality` — the premium visual bar and purposeful motion, faithful to the approved Claude Design pack.
+2. `paige-visual-immersive-quality` — the premium visual bar and purposeful motion, held to Impeccable's craft floor (§00, 2026-09-22).
 3. `paige-interaction-geometry-accessibility` — real interaction proof, accessibility, and the four Solo viewports PAIGE-open and closed.
 4. `paige-protected-behavior-regression` — the protected-seam declaration; test every impacted seam, name every unaffected one.
 5. `paige-release-acceptance-evidence` — evidence separated by class with truthful labels; nothing is LIVE because it merely compiles, renders, or passes a structural harness.

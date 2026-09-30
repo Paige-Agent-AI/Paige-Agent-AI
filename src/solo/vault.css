@@ -794,3 +794,61 @@
     transition: none !important;
   }
 }
+/* Paige Secure Browser account metadata stays visually inside the existing Vault system. */
+.bv-connected-boundary {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.bv-connected-boundary h2,
+.bv-connected-empty strong {
+  margin: 0;
+}
+
+.bv-connected-safety {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0;
+  color: var(--pg-ink-2);
+  font-size: 13px;
+}
+
+.bv-connected-empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 34px 18px;
+  text-align: center;
+  color: var(--pg-ink-2);
+}
+
+.bv-connected-empty p {
+  margin: 0;
+}
+
+.bv-connected-account {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  border-top: 1px solid var(--pg-line);
+}
+
+.bv-connected-account small {
+  display: block;
+  margin-top: 4px;
+  color: var(--pg-muted);
+}
+
+@media (max-width: 900px) {
+  .bv-connected-account {
+    grid-template-columns: 1fr auto;
+  }
+
+  .bv-connected-account .bv-record__actions {
+    grid-column: 1 / -1;
+  }
+}

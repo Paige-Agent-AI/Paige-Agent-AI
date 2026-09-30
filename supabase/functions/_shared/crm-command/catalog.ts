@@ -1,6 +1,8 @@
 import { confirmFingerprint } from "../confirm-fingerprint.ts";
 import { classifyAction } from "../action-risk.ts";
 import { canonicalizePersonName } from "../canonical-person-name.ts";
+import { CRM_PATCH_FIELDS } from "./patch-fields.generated.ts";
+import { normalizeClientRef } from "../client-ref.ts";
 
 export const CRM_ACTION_CAPABILITY = {
   "contact.create": "crm_create_contact", "contact.update": "crm_update_contact",
@@ -23,6 +25,11 @@ export const CRM_ACTION_CAPABILITY = {
 
 export type CrmAction = keyof typeof CRM_ACTION_CAPABILITY;
 export type CrmCapability = typeof CRM_ACTION_CAPABILITY[CrmAction];
+export const CRM_TOOL_TO_ACTION = Object.freeze(Object.fromEntries(
+  Object.entries(CRM_ACTION_CAPABILITY).map(([action, capability]) => [capability, action]),
+)) as Readonly<Record<CrmCapability, CrmAction>>;
+export const CRM_COMMAND_TOOL_NAMES = new Set<CrmCapability>(Object.keys(CRM_TOOL_TO_ACTION) as CrmCapability[]);
+
 declare const canonicalCrmCommandBrand: unique symbol;
 export type CanonicalCrmCommand<T extends Record<string, unknown> = Record<string, unknown>> =
   T & { readonly [canonicalCrmCommandBrand]: true };
@@ -237,6 +244,7 @@ export function crmContactCreateNameIssue(
   return null;
 }
 
+
 // Canonical stable subject used only to disambiguate one command inside the operator's already-
 // approved same-tool set. The subject is always a required opaque record id (or the exact bulk set)
 // when the action has one. Consequential argument drift is safe because the stored proposal executes;
@@ -244,19 +252,25 @@ export function crmContactCreateNameIssue(
 // actions have no pre-existing record id, so they fall back to the normalized full proposed command.
 export async function crmApprovalSubject(action: CrmAction, command: Record<string, unknown>): Promise<string> {
   const canonicalCommand = canonicalizeCrmCommand(command);
+  // A contact is named by the client_ref Paige was shown, or by its id. The reference wins when
+  // present so the proposing call (Paige's arguments) and the approving call (the same arguments,
+  // before crm-command resolves them) key on the same value.
+  const contact = normalizeClientRef(canonicalCommand.client_ref) ?? canonicalCommand.contact_id ?? null;
   let identity: unknown;
   if (action === "contact.bulk_update") {
-    identity = Array.isArray(canonicalCommand.target_ids) ? [...canonicalCommand.target_ids].map(String).sort() : null;
+    identity = Array.isArray(canonicalCommand.target_client_refs)
+      ? [...canonicalCommand.target_client_refs].map((ref) => normalizeClientRef(ref) ?? String(ref)).sort()
+      : Array.isArray(canonicalCommand.target_ids) ? [...canonicalCommand.target_ids].map(String).sort() : null;
   } else if (action.startsWith("contact.") && !["contact.create"].includes(action)) {
-    identity = canonicalCommand.contact_id ?? null;
+    identity = contact;
   } else if (action === "company.create") {
-    identity = canonicalCommand.contact_id ?? null;
+    identity = contact;
   } else if (action.startsWith("company.")) {
     identity = canonicalCommand.company_id ?? null;
   } else if (action.startsWith("task.") && action !== "task.create") {
     identity = canonicalCommand.task_id ?? null;
   } else if (action === "activity.log") {
-    identity = canonicalCommand.contact_id ?? null;
+    identity = contact;
   } else if (action.startsWith("deal.") && action !== "deal.create") {
     identity = canonicalCommand.deal_id ?? null;
   } else {
@@ -270,50 +284,44 @@ const CONTACT_LIFECYCLE_STAGES = [
   "client_active", "client_paused", "client_churned", "client_funded", "client_alumni",
 ] as const;
 
-const contactCreatePatch = {
-  type: "object",
-  description: "Canonical fields for the new contact. The current contact record requires both a first and last name; ask the operator for the missing part before calling this tool.",
-  additionalProperties: false,
-  required: ["first_name", "last_name"],
-  properties: {
-    first_name: { type: "string", description: "First name. Split a supplied full person name into first_name and last_name." },
-    last_name: { type: "string", description: "Last name. Ask the operator when it was not supplied; never invent a placeholder." },
-    email: { type: "string" },
-    phone: { type: "string" },
-    entity_name: { type: "string", description: "Company or business name." },
-    entity_type: { type: "string" },
-    title: { type: "string", description: "Job title or role." },
-    lifecycle_stage: { type: "string", enum: CONTACT_LIFECYCLE_STAGES },
-    source: { type: "string" },
-    tags: { type: "array", maxItems: 50, items: { type: "string" } },
-    primary_offer: { type: "string" },
-    notes: { type: "string", maxLength: 10000 },
-    do_not_contact: { type: "boolean" },
-    website: { type: "string" },
-    linkedin_url: { type: "string" },
-    street_address: { type: "string" },
-    city: { type: "string" },
-    state: { type: "string" },
-    zip_code: { type: "string" },
-    funding_goal: { type: "number" },
-    monthly_revenue: { type: "number" },
-  },
-} as const;
+// INT-140: contact creation requires both name parts and tells the model how to split a full
+// name - never to invent a missing part. The field allowlist stays the generated registry
+// (patchSchemaFor) so the schema cannot drift from the executor's accepted fields.
+function contactCreatePatchSchema() {
+  const base = patchSchemaFor("contact.create");
+  return {
+    ...base,
+    required: ["first_name", "last_name"],
+    properties: Object.fromEntries(Object.entries(base.properties).map(([name, spec]) => {
+      if (name === "first_name") return [name, { ...spec, type: "string", description: "First name. Split a supplied full person name into first_name and last_name." }];
+      if (name === "last_name") return [name, { ...spec, type: "string", description: "Last name. Ask the operator when it was not supplied; never invent a placeholder." }];
+      if (name === "lifecycle_stage") return [name, { ...spec, type: "string", enum: CONTACT_LIFECYCLE_STAGES }];
+      return [name, spec];
+    })),
+  };
+}
 
 const properties = {
   idempotency_key: { type: "string", maxLength: 192, description: "Optional stable retry key. Paige may omit it; the server settles one." },
-  contact_id: { type: ["string", "null"], description: "Exact contact UUID from a current CRM read." },
-  loser_contact_id: { type: "string", description: "Exact losing contact UUID for merge." },
+  client_ref: { type: "string", description: "The contact's client_ref, exactly as crm_search_contacts returned it. This is how you name a contact." },
+  loser_client_ref: { type: "string", description: "The losing contact's client_ref for a merge, exactly as crm_search_contacts returned it." },
+  contact_id: { type: ["string", "null"], description: "Only when a read gave you a contact's UUID rather than its client_ref (a deal's contact_client_id). Otherwise name the contact with client_ref." },
+  loser_contact_id: { type: "string", description: "Only when a read gave you the losing contact's UUID. Otherwise use loser_client_ref." },
   company_id: { type: "string", description: "Exact company UUID from a current CRM read." },
   task_id: { type: "string", description: "Exact task UUID from a current CRM read." },
   deal_id: { type: "string", description: "Exact deal UUID from a current Pipeline read." },
   pipeline_id: { type: "string" }, stage_id: { type: "string" }, target_stage_id: { type: "string" },
   owner_user_id: { type: ["string", "null"], description: "Exact active member UUID. Null unassigns only where supported." },
-  expected_updated_at: { type: "string", description: "Exact updated_at returned by the latest read." },
+  expected_updated_at: { type: "string", description: "Exact updated_at returned by the latest read of this record (crm_search_contacts returns it for a contact)." },
   expected_loser_updated_at: { type: "string", description: "Exact losing-contact updated_at returned by the latest read." },
   expected_version: { type: "integer", minimum: 1 }, expected_target_version: { type: "integer", minimum: 1 },
-  target_ids: { type: "array", minItems: 1, maxItems: 200, items: { type: "string" } },
+  target_client_refs: { type: "array", minItems: 1, maxItems: 200, items: { type: "string" }, description: "The client_refs of every contact a bulk update touches, exactly as crm_search_contacts returned them." },
+  target_ids: { type: "array", minItems: 1, maxItems: 200, items: { type: "string" }, description: "Only when a read gave you contact UUIDs. Otherwise use target_client_refs; never send both." },
   resolutions: { type: "object", additionalProperties: { type: "string", enum: ["survivor", "loser"] } },
+  // The OPEN patch, kept only for the actions whose database branch enforces no allowlist —
+  // `task.assign`, `task.reschedule` and `activity.log` read specific keys and ignore the rest, so
+  // closing them here would invent a constraint prod does not have. Every action that DOES carry an
+  // allowlist gets a closed, derived schema instead; see `patchSchemaFor` below.
   patch: { type: "object", description: "Only fields the operator asked to change." },
   title: { type: "string" }, value_cents: { type: "integer", minimum: 0 }, currency: { type: "string" },
   expected_close_date: { type: "string" }, offer_type: { type: "string" }, tags: { type: "array", items: { type: "string" } },
@@ -322,26 +330,31 @@ const properties = {
 } as const;
 
 const required: Record<CrmAction, string[]> = {
-  "contact.create": ["patch"], "contact.update": ["contact_id","expected_updated_at","patch"],
-  "contact.archive": ["contact_id","expected_updated_at"], "contact.restore": ["contact_id","expected_updated_at"],
-  "contact.link_company": ["contact_id","company_id","expected_updated_at"], "contact.unlink_company": ["contact_id","expected_updated_at"],
-  "contact.assign_coach": ["contact_id","owner_user_id","expected_updated_at"], "contact.assign_owner": ["contact_id","owner_user_id","expected_updated_at"],
-  "contact.merge": ["contact_id","loser_contact_id","expected_updated_at","expected_loser_updated_at"],
-  "contact.hard_delete": ["contact_id","expected_updated_at"], "contact.bulk_update": ["target_ids","patch"],
-  "company.create": ["contact_id","patch"], "company.update": ["company_id","expected_updated_at","patch"],
+  "contact.create": ["patch"], "contact.update": ["client_ref","expected_updated_at","patch"],
+  "contact.archive": ["client_ref","expected_updated_at"], "contact.restore": ["client_ref","expected_updated_at"],
+  "contact.link_company": ["client_ref","company_id","expected_updated_at"], "contact.unlink_company": ["client_ref","expected_updated_at"],
+  "contact.assign_coach": ["client_ref","owner_user_id","expected_updated_at"], "contact.assign_owner": ["client_ref","owner_user_id","expected_updated_at"],
+  "contact.merge": ["client_ref","loser_client_ref","expected_updated_at","expected_loser_updated_at"],
+  "contact.hard_delete": ["client_ref","expected_updated_at"], "contact.bulk_update": ["target_client_refs","patch"],
+  "company.create": ["client_ref","patch"], "company.update": ["company_id","expected_updated_at","patch"],
   "company.archive": ["company_id","expected_updated_at"], "company.restore": ["company_id","expected_updated_at"],
   "task.create": ["patch"], "task.update": ["task_id","expected_updated_at","patch"], "task.assign": ["task_id","expected_updated_at","patch"],
   "task.reschedule": ["task_id","expected_updated_at","patch"], "task.complete": ["task_id","expected_updated_at"],
   "task.reopen": ["task_id","expected_updated_at"], "task.cancel": ["task_id","expected_updated_at"], "task.delete": ["task_id","expected_updated_at"],
-  "activity.log": ["contact_id","patch"],
+  "activity.log": ["client_ref","patch"],
   "deal.create": ["title","pipeline_id","stage_id"], "deal.update": ["deal_id","expected_version"],
-  "deal.assign_owner": ["deal_id","owner_user_id","expected_version"], "deal.assign_contact": ["deal_id","contact_id","expected_version"],
+  "deal.assign_owner": ["deal_id","owner_user_id","expected_version"], "deal.assign_contact": ["deal_id","client_ref","expected_version"],
   "deal.move": ["deal_id","pipeline_id","target_stage_id","expected_version","expected_target_version"],
   "deal.close": ["deal_id","expected_version","outcome_type"], "deal.reopen": ["deal_id","expected_version","target_stage_id"],
   "deal.delete": ["deal_id","expected_version"],
 };
 
-const labels: Record<CrmAction, string> = {
+/**
+ * The operator-readable name of each action. Primarily the model-facing tool description, so some
+ * entries carry a trailing "; <caveat>" clause. A surface quoting one to a PERSON takes the leading
+ * clause only (`.split(";")[0]`) — see the CRM approval refusal in paige-ai-chat.
+ */
+export const CRM_ACTION_LABEL: Record<CrmAction, string> = {
   "contact.create":"create a contact", "contact.update":"edit a contact", "contact.archive":"archive a contact", "contact.restore":"restore a contact",
   "contact.link_company":"link a contact to a company", "contact.unlink_company":"unlink a contact from a company", "contact.assign_coach":"change a contact's coach",
   "contact.assign_owner":"change a contact's owner", "contact.merge":"merge two contacts after reviewing conflicts and dependencies",
@@ -355,16 +368,53 @@ const labels: Record<CrmAction, string> = {
   "deal.reopen":"reopen a deal", "deal.delete":"permanently delete a deal",
 };
 
+/**
+ * The `patch` schema for one action, built from the database's OWN allowlist.
+ *
+ * On 2026-09-25 an approved contact create reached the executor and threw
+ * `CRM_PATCH_FIELDS_INVALID:company_name,zip`. Paige had sent `company_name` and `zip`; the
+ * database accepts `entity_name` and `zip_code`. The schema above described `patch` as a bare
+ * `{ type: "object" }`, so she had no way to learn the real names and used the ones a person would.
+ *
+ * The field names below are GENERATED from the `k not in (...)` allowlist inside the plpgsql
+ * function that enforces them (`scripts/ci/crm-patch-field-gen.mjs`), never hand-typed here, and
+ * `npm run lint:crm-patch-fields` fails if the two drift apart. The seven allowlists are NOT one
+ * list — `contact.create` takes `notes` where `contact.update` takes `current_notes`, and
+ * `task.create` takes six fields `task.update` rejects — so each action is looked up separately.
+ *
+ * NAMES ONLY, DELIBERATELY. The allowlist yields field names, not types, so no `type` is asserted
+ * per field. Guessing types here would put a constraint in front of the database that the database
+ * does not impose, and a wrong guess would refuse a legitimate patch at the schema boundary — a
+ * worse failure than the one being fixed, because it would be invisible to the executor's errors.
+ *
+ * An action with no entry keeps the open patch: its database branch has no allowlist at all.
+ */
+function patchSchemaFor(action: CrmAction) {
+  const fields = CRM_PATCH_FIELDS[action];
+  if (!fields?.length) return properties.patch;
+  return {
+    type: "object",
+    description:
+      "Only fields the operator asked to change. These exact field names are the complete set the "
+      + "server accepts for this action; any other key is refused. Map what the operator said onto "
+      + "these names rather than inventing one.",
+    properties: Object.fromEntries(
+      fields.map((field) => [field.name, field.description ? { description: field.description } : {}]),
+    ),
+    additionalProperties: false,
+  };
+}
+
 export const CRM_COMMAND_TOOLS = (Object.entries(CRM_ACTION_CAPABILITY) as [CrmAction, CrmCapability][]).map(([action, capability]) => ({
   type: "function",
   function: {
     name: capability,
-    description: `Governed CRM: ${labels[action]}. Resolve exact IDs and version fields from a current read. Tenant, actor, role, account, authority and approval are always resolved by the server. Returns durable readback, receipt state and a route locator; destructive and ownership operations require the rendered approval card.`,
+    description: `Governed CRM: ${CRM_ACTION_LABEL[action]}. Resolve exact IDs and version fields from a current read. Tenant, actor, role, account, authority and approval are always resolved by the server. Returns durable readback, receipt state and a route locator; destructive and ownership operations require the rendered approval card.`,
     parameters: {
       type: "object",
       properties: {
         ...properties,
-        patch: action === "contact.create" ? contactCreatePatch : properties.patch,
+        patch: action === "contact.create" ? contactCreatePatchSchema() : patchSchemaFor(action),
         confirm: {
           type: "boolean",
           description: classifyAction(capability) === "high"

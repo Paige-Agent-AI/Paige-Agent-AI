@@ -18,6 +18,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { supabase } from "@/integrations/supabase/client";
+import { CLIENT_CONTACT_METHODS_EMBED, primaryAddressesOf, type ContactMethodRow } from "@/lib/contact-methods";
+
+// The picker's six identity columns; the email is the contact's primary, from its contact methods.
+// Widened to string: the generated types do not know the contact-methods embed yet.
+const CLIENT_CONTACT_METHODS_TABLE = "client_contact_methods";
+const AGREEMENT_CLIENT_SELECT: string = `id,first_name,last_name,entity_name,entity_type,${CLIENT_CONTACT_METHODS_EMBED}`;
 
 /** Mirrors `tenant_client_agreements_term_kind_check`. */
 export type TermKind = "one_time" | "recurring" | "installment" | "deposit" | "custom_quote";
@@ -384,8 +390,11 @@ export function useSoloAgreements(): AgreementsState {
           // closes the third.
           supabase
             .from("clients")
-            .select("id,first_name,last_name,entity_name,entity_type,email")
+            .select(AGREEMENT_CLIENT_SELECT)
             .eq("tenant_id", activeTenantId)
+            // Identity only: of the contact's methods, just its primary email (the name fallback).
+            .eq(`${CLIENT_CONTACT_METHODS_TABLE}.kind`, "email")
+            .eq(`${CLIENT_CONTACT_METHODS_TABLE}.is_primary`, true)
             .order("created_at", { ascending: false })
             .limit(250),
           callerId
@@ -439,7 +448,7 @@ export function useSoloAgreements(): AgreementsState {
           const entityType = toText(row.entity_type)?.trim();
           const name = company && (Boolean(entityType) || !full)
             ? company
-            : full || company || toText(row.email)?.trim() || "Unnamed contact";
+            : full || company || primaryAddressesOf(row.client_contact_methods as ContactMethodRow[] | null).email?.trim() || "Unnamed contact";
           return { id: String(row.id), name };
         });
 

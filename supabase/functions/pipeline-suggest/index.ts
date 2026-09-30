@@ -58,11 +58,11 @@ serve(async (req: Request) => {
     const { data: { user }, error: userErr } = await authed.auth.getUser();
     if (userErr || !user) throw new Error("Unauthorized");
 
-    // Role gate: admin or coach only.
+    // Role gate: admin only.
     const { data: roleRows } = await authed.from("user_roles").select("role").eq("user_id", user.id);
     const roles = (roleRows || []).map((r: any) => r.role);
-    if (!roles.some((r: string) => r === "admin" || r === "super_admin" || r === "coach")) {
-      return new Response(JSON.stringify({ error: "Admin or coach access required." }), {
+    if (!roles.some((r: string) => r === "admin" || r === "super_admin")) {
+      return new Response(JSON.stringify({ error: "Admin access required." }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

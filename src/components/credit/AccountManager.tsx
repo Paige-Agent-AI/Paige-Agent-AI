@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json, Tables, TablesUpdate } from "@/integrations/supabase/types";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +20,9 @@ import {
   Trash2, X, XCircle,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+
+// credit_accounts carries no masked number column; the read tolerates one if a row has it.
+type CreditAccountRow = Tables<"credit_accounts"> & { account_number_masked?: string | null };
 
 interface AccountRecord {
   id: string;
@@ -42,7 +46,7 @@ interface AccountRecord {
 interface AccountManagerProps {
   isOpen: boolean;
   onClose: () => void;
-  userRole?: "client" | "coach" | "admin";
+  userRole?: "client" | "admin";
   targetUserId?: string;
   initialMergeIds?: string[];
 }
@@ -80,7 +84,7 @@ export function AccountManager({ isOpen, onClose, userRole = "client", targetUse
       ]);
 
       const records: AccountRecord[] = [];
-      (creditAccounts || []).forEach((a: any) => {
+      (creditAccounts || []).forEach((a: CreditAccountRow) => {
         records.push({
           id: a.id, creditor: a.creditor, type: a.type,
           amount: a.balance ?? a.current_balance, balance: a.balance,
@@ -90,7 +94,7 @@ export function AccountManager({ isOpen, onClose, userRole = "client", targetUse
           table_source: "credit_accounts", account_number_masked: a.account_number_masked,
         });
       });
-      (negItems || []).forEach((n: any) => {
+      (negItems || []).forEach((n: Tables<"credit_negative_items">) => {
         records.push({
           id: n.id, creditor: n.creditor_name || "Unknown", type: n.item_type,
           bureau: n.bureau, amount: n.amount, status: n.status,
@@ -173,32 +177,32 @@ export function AccountManager({ isOpen, onClose, userRole = "client", targetUse
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
       const table = record.table_source;
-      const prevValues: Record<string, any> = {};
-      const newValues: Record<string, any> = {};
+      const prevValues: Record<string, Json | undefined> = {};
+      const newValues: Record<string, Json | undefined> = {};
 
       if (table === "credit_accounts") {
-        const updatePayload: Record<string, any> = {};
+        const updatePayload: TablesUpdate<"credit_accounts"> = {};
         if (updates.creditor !== undefined) { prevValues.creditor = record.creditor; newValues.creditor = updates.creditor; updatePayload.creditor = updates.creditor; }
-        if (updates.type !== undefined) { prevValues.type = record.type; newValues.type = updates.type; updatePayload.type = updates.type; }
+        if (updates.type !== undefined) { prevValues.type = record.type; newValues.type = updates.type; updatePayload.type = updates.type as TablesUpdate<"credit_accounts">["type"]; }
         if (updates.status !== undefined) { prevValues.status = record.status; newValues.status = updates.status; updatePayload.status = updates.status; }
         if (updates.credit_limit !== undefined) { prevValues.credit_limit = record.credit_limit; newValues.credit_limit = updates.credit_limit; updatePayload.credit_limit = updates.credit_limit; }
         updatePayload.updated_at = new Date().toISOString();
-        await supabase.from("credit_accounts").update(updatePayload as any).eq("id", record.id);
+        await supabase.from("credit_accounts").update(updatePayload).eq("id", record.id);
       } else {
-        const updatePayload: Record<string, any> = {};
+        const updatePayload: TablesUpdate<"credit_negative_items"> = {};
         if (updates.creditor !== undefined) { prevValues.creditor_name = record.creditor; newValues.creditor_name = updates.creditor; updatePayload.creditor_name = updates.creditor; }
         if (updates.type !== undefined) { prevValues.item_type = record.type; newValues.item_type = updates.type; updatePayload.item_type = updates.type; }
         if (updates.bureau !== undefined) { prevValues.bureau = record.bureau; newValues.bureau = updates.bureau; updatePayload.bureau = updates.bureau; }
         if (updates.amount !== undefined) { prevValues.amount = record.amount; newValues.amount = updates.amount; updatePayload.amount = updates.amount; }
         if (updates.status !== undefined) { prevValues.status = record.status; newValues.status = updates.status; updatePayload.status = updates.status; }
         updatePayload.updated_at = new Date().toISOString();
-        await supabase.from("credit_negative_items").update(updatePayload as any).eq("id", record.id);
+        await supabase.from("credit_negative_items").update(updatePayload).eq("id", record.id);
 
       }
 
       await supabase.from("audit_logs").insert({
         user_id: session.user.id, entity: "account_modification", action: "edit", entity_id: record.id,
-        data: { previous_value: prevValues, new_value: newValues, table, source: userRole === "admin" ? "admin_ui" : userRole === "coach" ? "coach_ui" : "client_ui" },
+        data: { previous_value: prevValues, new_value: newValues, table, source: userRole === "admin" ? "admin_ui" : "client_ui" },
       });
     },
     onSuccess: () => {
@@ -230,7 +234,7 @@ export function AccountManager({ isOpen, onClose, userRole = "client", targetUse
       }
       await supabase.from("audit_logs").insert({
         user_id: session.user.id, entity: "account_modification", action: "mark_not_mine", entity_id: record.id,
-        data: { creditor: record.creditor, table, source: userRole === "admin" ? "admin_ui" : userRole === "coach" ? "coach_ui" : "client_ui" },
+        data: { creditor: record.creditor, table, source: userRole === "admin" ? "admin_ui" : "client_ui" },
       });
     },
     onSuccess: () => {
@@ -267,7 +271,7 @@ export function AccountManager({ isOpen, onClose, userRole = "client", targetUse
           data: {
             merged_into: mergePreview.primaryId, creditor: record.creditor, table,
             merged_accounts: selectedAccounts.map(a => a.creditor).join(", "),
-            source: userRole === "admin" ? "admin_ui" : userRole === "coach" ? "coach_ui" : "client_ui",
+            source: userRole === "admin" ? "admin_ui" : "client_ui",
           },
         });
       }
@@ -287,7 +291,7 @@ export function AccountManager({ isOpen, onClose, userRole = "client", targetUse
     },
   });
 
-  // Delete (admin/coach only)
+  // Delete (admin only)
   const deleteMutation = useMutation({
     mutationFn: async (record: AccountRecord) => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -299,7 +303,7 @@ export function AccountManager({ isOpen, onClose, userRole = "client", targetUse
       }
       await supabase.from("audit_logs").insert({
         user_id: session.user.id, entity: "account_modification", action: "delete", entity_id: record.id,
-        data: { creditor: record.creditor, type: record.type, table: record.table_source, source: userRole === "admin" ? "admin_ui" : "coach_ui" },
+        data: { creditor: record.creditor, type: record.type, table: record.table_source, source: "admin_ui" },
       });
     },
     onSuccess: () => {
@@ -469,7 +473,7 @@ export function AccountManager({ isOpen, onClose, userRole = "client", targetUse
                                 <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Not My Account" onClick={() => setNotMineDialogId(record.id)}>
                                   <Flag className="w-3.5 h-3.5" />
                                 </Button>
-                                {(userRole === "admin" || userRole === "coach") && (
+                                {userRole === "admin" && (
                                   <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive" title="Delete" onClick={() => deleteMutation.mutate(record)}>
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </Button>

@@ -7,6 +7,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenantContext } from "@/hooks/useTenantContext";
+import { CLIENT_CONTACT_METHODS_EMBED, primaryAddressesOf, type WithClientContactMethods } from "@/lib/contact-methods";
+
+// Widened to string: the generated types do not know the contact-methods embed yet.
+const THREAD_CONTACT_SELECT: string = `id, first_name, last_name, account_number, ${CLIENT_CONTACT_METHODS_EMBED}`;
 
 export interface ConversationThread {
   id: string;
@@ -127,9 +131,11 @@ export function useConversations() {
       if (contactIds.length) {
         const csRes = await supabase
           .from("clients")
-          .select("id, first_name, last_name, account_number, email")
+          .select(THREAD_CONTACT_SELECT)
           .in("id", contactIds);
-        contacts = ((csRes.data ?? null) as RawContact[] | null) ?? [];
+        // `email` is each contact's PRIMARY address, from its contact methods.
+        contacts = (((csRes.data ?? null) as unknown as Array<Omit<RawContact, "email"> & WithClientContactMethods> | null) ?? [])
+          .map((row) => ({ ...row, email: primaryAddressesOf(row.client_contact_methods).email }));
       }
       const contactMap = new Map(contacts.map((c) => [c.id, c]));
 

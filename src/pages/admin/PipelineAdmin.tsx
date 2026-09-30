@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { loadAssignableStaff } from "@/lib/team/assignableStaff";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,14 +44,8 @@ export default function PipelineAdmin() {
     if (error) { toast.error(error.message); setLoading(false); return; }
     setPipelines(data || []);
     if (data && data.length) setActivePipelineId(data[0].id);
-    // load coaches once
-    const { data: roles } = await supabase.from("user_roles").select("user_id").eq("role", "coach");
-    const ids = ((roles || []) as { user_id: string }[]).map((r) => r.user_id);
-    if (ids.length) {
-      const { data: profs } = await supabase.from("profiles").select("user_id, full_name").in("user_id", ids);
-      setCoaches(((profs || []) as { user_id: string; full_name: string | null }[])
-        .map((p) => ({ user_id: p.user_id, name: p.full_name || "Coach" })));
-    }
+    // load the workspace's assignable staff once
+    setCoaches(await loadAssignableStaff());
     setLoading(false);
   };
 

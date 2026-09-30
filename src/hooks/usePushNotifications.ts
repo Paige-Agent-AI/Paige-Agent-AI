@@ -8,13 +8,13 @@ let cachedVapidKey: string | null = null;
 
 const isIOSDevice = (): boolean => {
   const ua = navigator.userAgent;
-  return /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
+  return /iPad|iPhone|iPod/.test(ua) && !('MSStream' in window);
 };
 
 const isStandalone = (): boolean => {
   return (
     window.matchMedia('(display-mode: standalone)').matches ||
-    (window.navigator as any).standalone === true
+    (window.navigator as Navigator & { standalone?: boolean }).standalone === true
   );
 };
 
@@ -120,7 +120,9 @@ export const usePushNotifications = () => {
           is_active: true,
           last_used_at: new Date().toISOString(),
         },
-        { onConflict: 'user_id,endpoint' }
+        // One subscription per device per business; the business is recorded by the database from
+        // the business the person is working in.
+        { onConflict: 'user_id,endpoint,tenant_id' }
       );
 
       if (error) {

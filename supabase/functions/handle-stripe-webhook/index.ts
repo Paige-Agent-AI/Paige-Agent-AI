@@ -4,6 +4,7 @@
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { adminClient, corsHeaders } from "../_shared/adminAuth.ts";
 import { fireAndForgetBridge } from "../_shared/mmaOsBridge.ts";
+import { findSoleClientByEmailAnyWorkspace } from "../_shared/contact-methods.ts";
 
 const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
 const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
@@ -71,8 +72,7 @@ Deno.serve(async (req) => {
     const customer = await stripe.customers.retrieve(customerId);
     const email = (customer as Stripe.Customer).email;
     if (email) {
-      const c = await admin.from("clients").select("id").ilike("email", email).maybeSingle();
-      if (c.data) contactId = c.data.id;
+      contactId = (await findSoleClientByEmailAnyWorkspace(admin, email, "handle-stripe-webhook"))?.id ?? null;
     }
   }
 

@@ -14,6 +14,9 @@
  * Run: node --import ./scripts/client-memory-authz/register.mjs scripts/client-memory-authz/check.mjs
  */
 
+import { AsyncLocalStorage } from "node:async_hooks";
+const modelTurnState = new AsyncLocalStorage();
+
 const USER    = "44444444-4444-4444-8444-444444444444";
 const OWN     = "55555555-5555-4555-8555-555555555555"; // a client this caller may read
 const FOREIGN = "66666666-6666-4666-8666-666666666666"; // another tenant's client
@@ -21,6 +24,7 @@ const NULLTEN = "77777777-7777-4777-8777-777777777777"; // client row with tenan
 const OTHERTEN = "88888888-8888-4888-8888-888888888888"; // visible via a non-tenant policy, other workspace
 const CALLER_TENANT = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const OTHER_TENANT  = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+const LIVE_TEST_SIGNING_KEY = "local-harness-only-live-signing-key-000000000000";
 
 /** Tenant-neutral on purpose: survives `sanitizeClientContextForTier` for a non-funding tenant,
  *  so a missing block means the GUARD dropped it, not the sanitizer. */
@@ -40,6 +44,7 @@ globalThis.Deno = {
     SUPABASE_URL: "https://test.supabase.co", SUPABASE_ANON_KEY: "anon-key",
     SUPABASE_SERVICE_ROLE_KEY: "service-role-key", VOYAGE_API_KEY: "test-voyage-key",
     ANTHROPIC_API_KEY: "test-anthropic-key",
+    PAIGE_LIVE_STREAM_SIGNING_KEY: LIVE_TEST_SIGNING_KEY,
   })[k] ?? "" },
 };
 
@@ -55,26 +60,43 @@ let modelStub = false;
 let readCheckReply = { can_read_document: false, document_kind: "other", first_five_account_names: [] };
 /** When set, the FIRST streamed round emits a tool call instead of an answer. */
 let toolCallOnce = false;
+/** The text PAIGE's streamed answer carries. "ok" unless a scenario scripts what she says — which is
+ *  how a check sees a reply at all: every other check here is about what she was SENT. */
+let scriptedReply = "ok";
+/** What the credit report's structured extraction returns this drive; null answers "ok", as before. */
+let extractionReplyText = null;
 /** When set, the model stub asserts `confirm: true` the moment it is told approval is needed —
  *  a model approving on the operator's behalf, which is the thing the gate has to survive. */
 let selfApprove = false;
 let selfApproveReplays = 0;
 let toolCallSpec = { name: "update_client_data", args: {} };
+/** What the model writes BEFORE its tool call in that round — her narration, which becomes a thought
+ *  line. Empty unless a scenario scripts one. */
+let toolRoundText = "";
 /** Every request body sent to the model this turn — the real prompt/model EGRESS surface. */
 let modelEgress = [];
 /** Every non-model outbound call this turn — the sibling-function surface (write-back, sync). */
 let outboundCalls = [];
+/** How `paige-write-back` answers this drive, as `{ status, body }`; unset, it answers success. */
+let writeBackAnswer = null;
+/** How `fetch-url-content` answers this drive, as `{ status, body }`; unset, it answers a bare success. */
+let fetchUrlAnswer = null;
 /**
  * An Anthropic-native tool_use stream. `gatewayCompat` converts it to OpenAI-compat deltas, so
  * the handler's agentic loop sees a real tool call. Without this the whole tool loop — where
  * Paige acts on the focused client — was unreachable by any check.
  */
-const sseToolCallReply = (name, args) =>
+const sseToolCallReply = (name, args, text = "", id = "toolu_test") =>
   new Response(
     [
       `event: message_start\ndata: ${JSON.stringify({ type: "message_start", message: { usage: { input_tokens: 1, output_tokens: 1 } } })}\n\n`,
-      `event: content_block_start\ndata: ${JSON.stringify({ type: "content_block_start", index: 0, content_block: { type: "tool_use", id: "toolu_test", name } })}\n\n`,
-      `event: content_block_delta\ndata: ${JSON.stringify({ type: "content_block_delta", index: 0, delta: { type: "input_json_delta", partial_json: JSON.stringify(args) } })}\n\n`,
+      ...(text ? [
+        `event: content_block_start\ndata: ${JSON.stringify({ type: "content_block_start", index: 0, content_block: { type: "text", text: "" } })}\n\n`,
+        `event: content_block_delta\ndata: ${JSON.stringify({ type: "content_block_delta", index: 0, delta: { type: "text_delta", text } })}\n\n`,
+        `event: content_block_stop\ndata: ${JSON.stringify({ type: "content_block_stop", index: 0 })}\n\n`,
+      ] : []),
+      `event: content_block_start\ndata: ${JSON.stringify({ type: "content_block_start", index: text ? 1 : 0, content_block: { type: "tool_use", id, name } })}\n\n`,
+      `event: content_block_delta\ndata: ${JSON.stringify({ type: "content_block_delta", index: text ? 1 : 0, delta: { type: "input_json_delta", partial_json: JSON.stringify(args) } })}\n\n`,
       `event: message_delta\ndata: ${JSON.stringify({ type: "message_delta", delta: { stop_reason: "tool_use" } })}\n\n`,
       `event: message_stop\ndata: ${JSON.stringify({ type: "message_stop" })}\n\n`,
     ].join(""),
@@ -103,7 +125,10 @@ globalThis.fetch = async (url, init) => {
   if (href.includes("anthropic.com")) modelEgress.push(String(init?.body ?? ""));
   else if (!href.includes("voyageai.com")) {
     outboundCalls.push({ url: href, body: String(init?.body ?? "") });
-    return new Response(JSON.stringify({ success: true }), { status: 200, headers: { "Content-Type": "application/json" } });
+    const answer = href.includes("paige-write-back") && writeBackAnswer ? writeBackAnswer
+      : href.includes("fetch-url-content") && fetchUrlAnswer ? fetchUrlAnswer
+      : { status: 200, body: { success: true } };
+    return new Response(JSON.stringify(answer.body), { status: answer.status, headers: { "Content-Type": "application/json" } });
   }
   if (modelStub && href.includes("anthropic.com")) {
     const wantsStream = (() => {
@@ -123,8 +148,17 @@ globalThis.fetch = async (url, init) => {
           return sseToolCallReply(toolCallSpec.name, { ...toolCallSpec.args, confirm: true });
         }
       }
-      if (toolCallOnce) { toolCallOnce = false; return sseToolCallReply(toolCallSpec.name, toolCallSpec.args); }
-      return sseModelReply("ok");
+      const turn = modelTurnState.getStore();
+      if (turn ? turn.toolCallOnce : toolCallOnce) {
+        // A scripted turn may call several tools, one per round, in order (`toolCall` as a list).
+        const spec = turn?.next ?? toolCallSpec;
+        const id = turn?.round ? `toolu_test_${turn.round}` : "toolu_test";
+        if (turn?.queue?.length) { turn.next = turn.queue.shift(); turn.round += 1; }
+        else if (turn) turn.toolCallOnce = false;
+        else toolCallOnce = false;
+        return sseToolCallReply(spec.name, spec.args, toolRoundText, id);
+      }
+      return sseModelReply(scriptedReply);
     }
     // Answer the document READ-CHECK with the JSON it expects, so `isCreditReportPdf` can be
     // true and the credit-report upload branch is reachable at all. Match on the outbound body:
@@ -132,7 +166,8 @@ globalThis.fetch = async (url, init) => {
     // caller's `response_format` is gone by here and cannot be used to identify the call. The
     // reply must be Anthropic-shaped too — the gateway converts it back to `choices[0].message`.
     const isReadCheck = String(init?.body ?? "").includes("verify that you can literally read the PDF");
-    const text = isReadCheck ? JSON.stringify(readCheckReply) : "ok";
+    const isExtraction = String(init?.body ?? "").includes("Extract the structured data into the required JSON format");
+    const text = isReadCheck ? JSON.stringify(readCheckReply) : isExtraction && extractionReplyText !== null ? extractionReplyText : "ok";
     return new Response(
       JSON.stringify({
         id: "msg_test", type: "message", role: "assistant", model: "test",
@@ -150,6 +185,8 @@ const fake = await import("./fake-supabase.mjs");
 await import("../../supabase/functions/paige-ai-chat/index.ts");
 const { capturedHandler } = await import("./stub-serve.mjs");
 const handler = capturedHandler();
+const issuedApproval = (row) => row?.fingerprint && /^[0-9a-f]{8}-[0-9a-f-]{27}$/.test(row.issued_in_request ?? "")
+  ? `${row.fingerprint}:${row.issued_in_request}` : row?.fingerprint;
 
 const MEMORY_TEXT = "SECRET-CLIENT-MEMORY-CONTENT";
 
@@ -188,29 +225,50 @@ async function drive({
   /** Extra RLS-emulating tables merged over the defaults — needed for the confirm store, whose
    *  rows a scenario has to author because they model a claim that mutates as it is read. */
   tablesExtra = {},
+  /** Answers for `functions.invoke`, by function name — `{ data, error }` as supabase-js returns. */
+  functionsExtra = {},
   /** Inject a postgrest error for a specific table, to drive the "the write was REJECTED" path. */
   tableErrorsExtra = {},
   /** Drive a model that asserts approval itself, with NO human and no request-body echo. */
   selfApproving = false,
   /** Called synchronously on every insert, so a scenario can model read-your-own-write. */
   onInsert = undefined,
+  concurrentRequests = 1,
+  /** How `paige-write-back` answers, as `{ status, body }` — to drive a write that answered badly. */
+  writeBack = null,
+  /** How `fetch-url-content` answers, as `{ status, body }` — to drive a page that was really read. */
+  fetchedPage = null,
+  /** What PAIGE's streamed answer says this drive. Default "ok", so every existing check is unchanged. */
+  replyText = "ok",
+  /** What she writes before her tool call, which becomes a thought line. Default none. */
+  toolRoundNarration = "",
+  /** What the credit report's structured extraction returns, so the pipeline can get past its
+   *  parse and validation to the writes after them. Default null: "ok", which fails the parse. */
+  extractionReply = null,
 }) {
   const logged = [];
   embedCount = 0;
   modelEgress = [];
   outboundCalls = [];
+  writeBackAnswer = writeBack;
+  fetchUrlAnswer = fetchedPage;
   modelStub = stream;
   readCheckReply = readCheck;
-  toolCallOnce = !!toolCall;
-  if (toolCall) toolCallSpec = toolCall;
+  const toolCalls = Array.isArray(toolCall) ? toolCall : toolCall ? [toolCall] : [];
+  toolCallOnce = toolCalls.length > 0;
+  if (toolCalls.length) toolCallSpec = toolCalls[0];
   selfApprove = selfApproving;
   selfApproveReplays = 0;
+  scriptedReply = replyText;
+  toolRoundText = toolRoundNarration;
+  extractionReplyText = extractionReply;
   const origError = console.error, origWarn = console.warn;
   console.error = (...a) => logged.push({ level: "error", msg: a.join(" ") });
   console.warn = (...a) => logged.push({ level: "warn", msg: a.join(" ") });
 
   const rec = fake.setScenario({
     onInsert,
+    functions: functionsExtra,
     authUser: { id: USER, email: "owner@example.test" },
     rpcs: {
       check_rate_limit: { data: true, error: null },
@@ -258,9 +316,10 @@ async function drive({
     },
   });
 
-  let status = null, bodyText = "";
-  try {
-    const res = await handler(new Request("http://local/paige-ai-chat", {
+  const responses = await Promise.all(Array.from({ length: concurrentRequests }, () => modelTurnState.run({ toolCallOnce: toolCalls.length > 0, queue: toolCalls.slice(1), round: 0 }, async () => {
+    let status = null, bodyText = "";
+    try {
+      const res = await handler(new Request("http://local/paige-ai-chat", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: authorization },
       body: JSON.stringify({
@@ -271,17 +330,24 @@ async function drive({
         ...(extraBody ?? {}),
       }),
     }));
-    status = res.status;
-    try { bodyText = await res.text(); } catch { /* streamed */ }
-  } catch (e) { status = "throw:" + (e?.message ?? e); }
+      status = res.status;
+      try { bodyText = await res.text(); } catch { /* streamed */ }
+    } catch (e) { status = "throw:" + (e?.message ?? e); }
+    return { status, bodyText };
+  })));
+  const status = responses[0]?.status ?? null;
+  const bodyText = responses.map((response) => response.bodyText).join("\n");
   modelStub = false;
   toolCallOnce = false;
   selfApprove = false;
+  scriptedReply = "ok";
+  toolRoundText = "";
+  extractionReplyText = null;
 
   console.error = origError; console.warn = origWarn;
   const memoryReads = rec.from.filter((f) => f.table === "client_memory" && f.op === "select");
   const memoryRpc = rec.rpc.filter((r) => r.name === "match_paige_memory");
-  return { rec, status, bodyText, logged, embeds: embedCount, memoryReads, memoryRpc, modelEgress: [...modelEgress], outboundCalls: [...outboundCalls], selfApproveReplays };
+  return { rec, status, bodyText, responses, logged, embeds: embedCount, memoryReads, memoryRpc, modelEgress: [...modelEgress], outboundCalls: [...outboundCalls], selfApproveReplays };
 }
 
 console.log("\nauthorized paths still work (no regression)");
@@ -810,68 +876,42 @@ console.log("\nthe TOOL loop does not retarget a refused subject at the caller")
  * scenario can model consecutive REQUESTS against one database.
  */
 function makeConfirmStore(seed = []) {
-  // Existing seeded happy paths represent trusted proposals; untrusted tests explicitly set marker null.
   const rows = seed.map((r, i) => ({ id: `row-seed-${i}`, consumed: false, tenant_id:null, thread_id:'cccccccc-cccc-4ccc-8ccc-cccccccccccc', scoped_client_id:r.args?.client_id??null, expires_at:'2099-01-01T00:00:00Z', server_issued_at:'2026-01-01T00:00:00Z', ...r }));
-  const matches=(r,filters)=>filters.every(([op,col,value,extra])=>{const v=col==='consumed_at'?(r.consumed?'consumed':null):r[col];if(op==='eq')return v===value;if(op==='neq')return v!=null&&v!==value;if(op==='is')return value===null?v==null:v===value;if(op==='not'&&value==='is'&&extra===null)return v!=null;if(op==='gt')return v!=null&&v>value;if(op==='in')return value.includes(v);return true;});
+  // `consumed_at` is a real time: the handler's own claim stamps it, and a row seeded consumed was
+  // consumed long before any request a check drives (the approval outcome asks which came first).
+  const consumedAt = (r) => (r.consumed ? r.consumedAt ?? "2026-01-01T00:00:00.000Z" : null);
+  const matches = (r, filters) => filters.every(([op, col, value, extra]) => {
+    const v = col === "consumed_at" ? consumedAt(r) : r[col];
+    if (op === "eq") return v === value;
+    if (op === "filter") return value === "eq" && col.startsWith("args->>") && String(r.args?.[col.slice(7)]) === String(extra);
+    if (op === "neq") return v != null && v !== value;
+    if (op === "is") return value === null ? v == null : v === value;
+    if (op === "not" && value === "is" && extra === null) return v != null;
+    if (op === "gt") return v != null && v > value;
+    if (op === "gte") return v != null && v >= value;
+    if (op === "lt") return v != null && v < value;
+    if (op === "lte") return v != null && v <= value;
+    if (op === "in") return value.includes(v);
+    return true;
+  });
   return {
     rows,
     table: (filters) => {
-      const f = (op, c) => filters.find((x) => x[0] === op && x[1] === c)?.[2];
-      const notFrom = f("neq", "issued_in_request");
-      // Faithful to postgrest: `.not(col,"is",null)` drops NULL rows, and `neq` against a NULL
-      // column value is NULL — not a match — rather than true.
-      const excludesNull = filters.some((x) => x[0] === "not" && x[1] === "issued_in_request");
-      const fromEarlier = (r) => (!excludesNull || r.issued_in_request != null)
-        && (notFrom === undefined || (r.issued_in_request != null && r.issued_in_request !== notFrom));
-
-      // Read-only exact-card lookup. Unlike decline's .in(), this must not consume rows.
-      if (filters.some((x) => x[0] === "select" && x[1] === "fingerprint")) {
-        const submitted = f("in", "fingerprint") ?? [];
-        return rows.filter((r) => matches(r,filters) && submitted.includes(r.fingerprint) && fromEarlier(r)
-          && ["user_id", "tool_name", "tenant_id", "thread_id", "scoped_client_id"].every((key) => {
-            const eq = f("eq", key); const nil = filters.some((x) => x[0] === "is" && x[1] === key);
-            return eq !== undefined ? r[key] === eq : !nil || r[key] == null;
-          }))
-          .slice(0, 2).map((r) => ({ fingerprint: r.fingerprint }));
+      const update = filters.find(([op]) => op === "update")?.[1];
+      const columns = filters.find(([op]) => op === "select")?.[1];
+      if (!update && columns === undefined) return [];
+      const hits = rows.filter((row) => matches(row, filters))
+        .slice(0, filters.find(([op]) => op === "limit")?.[1] ?? rows.length);
+      if (update) for (const row of hits) {
+        if (Object.hasOwn(update, "consumed_at")) { row.consumed = update.consumed_at !== null; row.consumedAt = update.consumed_at; }
+        for (const [key, value] of Object.entries(update)) if (key !== "consumed_at") row[key] = value;
       }
-
-      // The DECLINE leg: `update(...).in("fingerprint", [...])`. Modelled because without it a
-      // cancelled row stays live in the fixture and the check would pass or fail for reasons that
-      // have nothing to do with the handler.
-      const declined = filters.find((x) => x[0] === "in" && x[1] === "fingerprint")?.[2];
-      if (Array.isArray(declined)) {
-        const hit = rows.filter((r) => matches(r,filters) && declined.includes(r.fingerprint));
-        hit.forEach((r) => { r.consumed = true; });
-        return hit.map((r) => ({ id: r.id }));
-      }
-
-      // The claim-by-id leg of the scope path.
-      const byId = f("eq", "id");
-      if (byId !== undefined) {
-        const hit = rows.find((r) => matches(r,filters) && r.id === byId);
-        if (!hit) return [];
-        hit.consumed = true;
-        return [{ args: hit.args }];
-      }
-
-      const fp = f("eq", "fingerprint");
-      const tool = f("eq", "tool_name");
-      if (fp !== undefined) {
-        // A filter the code STOPPED sending must stop narrowing here too, or a mutation that
-        // deletes it would be masked by the fixture rather than caught.
-        const hit = rows.find((r) => matches(r,filters) && r.fingerprint === fp && fromEarlier(r)
-          && (tool === undefined || r.tool_name === tool));
-        if (!hit) return [];
-        hit.consumed = true;
-        return [{ args: hit.args }];
-      }
-
-      // The lookup leg of the scope path: every live prior-request proposal for this tool.
-      if (tool !== undefined) {
-        return rows.filter((r) => matches(r,filters) && r.tool_name === tool && fromEarlier(r))
-          .map((r) => ({ id: r.id }));
-      }
-      return [];
+      return hits.map((row) => {
+        if (columns === "*") return JSON.parse(JSON.stringify(row));
+        return Object.fromEntries(String(columns ?? "id").split(",").map((key) => [key,
+          key === "consumed_at" ? consumedAt(row) : structuredClone(row[key]),
+        ]));
+      });
     },
   };
 }
@@ -882,7 +922,7 @@ function makeConfirmStore(seed = []) {
 const mirrorConfirms = (st) => (t, row) => {
   if (t !== "paige_pending_confirmations") return;
   const clash = st.rows.some((r) => r.server_issued_at!=null && row.server_issued_at!=null && !r.consumed && r.fingerprint === row.fingerprint
-    && r.tool_name === row.tool_name && r.user_id === row.user_id);
+    && r.user_id === row.user_id);
   // Return the real constraint violation rather than quietly dropping the row: the handler must
   // read this as "exists", never as "created", and a fixture that just skips makes those two
   // outcomes look identical from the handler's side.
@@ -901,10 +941,7 @@ const mirrorConfirms = (st) => (t, row) => {
 // any tool carrying model-written free text. Thirteen separate mutations to that code left every
 // suite green, which is the real finding: the mechanism had no coverage at all.
 //
-// The repair that followed introduced a `confirm_token`, and section 18 records why that is now
-// gone. What remains are two channels: a surface echo (a rendered card, unforgeable by a model)
-// and `confirm: true` (the model's word, refused for the high-risk set). Both redeem the STORED
-// call, and neither is redeemable inside the request that proposed it.
+// Approval-path hardening. Detailed evidence retained privately.
 //
 // So each check below names the exact mutation it kills. A check that cannot name one is decoration.
 {
@@ -927,7 +964,7 @@ const mirrorConfirms = (st) => (t, row) => {
     return {
       present: true,
       raw: all,
-      fingerprint: (all.match(/"confirm_fingerprint":"([0-9a-f]{16})"/) ?? [])[1] ?? null,
+      fingerprint: (all.match(/"confirm_fingerprint":"([0-9a-f]{16}(?::[0-9a-f-]{36})?)"/) ?? [])[1] ?? null,
       summary: (all.match(/"confirm_summary":"([^"]{0,160})/) ?? [])[1] ?? "",
       note: (all.match(/"note":"([^"]{0,600})/) ?? [])[1] ?? "",
     };
@@ -948,7 +985,7 @@ const mirrorConfirms = (st) => (t, row) => {
 
   // ── 13.2 …and the proposal is PERSISTED, with the arguments that will actually run.
   // Kills: deleting the `recordConfirmation` call, or storing a summary instead of the args.
-  const stored = proposed.rec.inserts.find((i) => i.table === "paige_pending_confirmations")?.row;
+  const stored = proposed.rec.inserts.find((i) => i.table === "paige_pending_confirmations" && !i.update)?.row;
   assert("13.2 the proposed call is persisted with its exact arguments",
     !!stored && stored.tool_name === TOOL
       && JSON.stringify(stored.args?.updates) === JSON.stringify({ goal: "buy a house" }),
@@ -980,7 +1017,8 @@ const mirrorConfirms = (st) => (t, row) => {
   // spendable. Kills: reinstating `confirm_token` in the refusal, which is the whole of section 18.
   const refusal = refusalOf(proposed.modelEgress);
   assert("13.5 the refusal explains how to approve and hands back no spendable key",
-    !!refusal && refusal.summary.length > 0 && /confirm: true/.test(refusal.note)
+    !!refusal && refusal.summary.length > 0 && /click Approve/.test(refusal.note)
+      && /cannot approve this action/.test(refusal.note) && !/confirm: true/.test(refusal.note)
       && !/confirm_token/.test(refusal.raw),
     JSON.stringify(refusal ?? null));
 
@@ -990,11 +1028,10 @@ const mirrorConfirms = (st) => (t, row) => {
   // send the drifted arguments to write-back; and reverting to the echo-only gate, which would
   // refuse this turn outright.
   const st2 = makeConfirmStore([{
-    user_id: USER, tool_name: TOOL, fingerprint: refusal?.fingerprint ?? "0".repeat(16),
-    args: PROPOSED, issued_in_request: EARLIER,
+    ...st1.rows[0], args: PROPOSED,
   }]);
   const approved = await drive({
-    clientId: OWN, stream: true, extraBody: { threadId: THREAD },
+    clientId: OWN, stream: true, extraBody: { threadId: THREAD, approvedConfirmations: [refusal.fingerprint] },
     toolCall: { name: TOOL, args: { client_id: OWN, updates: { goal: "SOMETHING ELSE ENTIRELY" }, confirm: true } },
     ...CONFIRM,
     tablesExtra: { paige_pending_confirmations: st2.table },
@@ -1009,7 +1046,8 @@ const mirrorConfirms = (st) => (t, row) => {
   // tool name alone. Kills: dropping the tenant / thread / focused-client predicates from the
   // lookup, which would let a drifted approval reach across a switch — the thing S2 exists to stop.
   const lookupQ = approved.rec.from.find(
-    (f) => f.table === "paige_pending_confirmations" && f.op === "select");
+    (f) => f.table === "paige_pending_confirmations" && f.op === "select"
+      && f.filters.some((x) => x[0] === "in" && x[1] === "fingerprint"));
   const lf = (op, col) => lookupQ?.filters.some((x) => x[0] === op && x[1] === col);
   assert("13.6b the scope lookup re-checks user, tenant, expiry, thread and focused client",
     !!lookupQ && lf("eq", "user_id") && lf("gt", "expires_at")
@@ -1026,13 +1064,15 @@ const mirrorConfirms = (st) => (t, row) => {
     { user_id: USER, tool_name: TOOL, fingerprint: "2".repeat(16), args: { client_id: OWN, updates: { goal: "a different plan" } }, issued_in_request: EARLIER },
   ]);
   const ambiguous = await drive({
-    clientId: OWN, stream: true, extraBody: { threadId: THREAD },
+    clientId: OWN, stream: true, extraBody: { threadId: THREAD, approvedConfirmations: ["1".repeat(16), "2".repeat(16)] },
     toolCall: { name: TOOL, args: { client_id: OWN, updates: { goal: "drifted" }, confirm: true } },
     ...CONFIRM,
     tablesExtra: { paige_pending_confirmations: st2b.table },
   });
-  assert("13.6c an ambiguous yes redeems nothing and asks again",
-    !ambiguous.outboundCalls.some((c) => c.url.includes("paige-write-back")),
+  assert("13.6c approval-path hardening",
+    !ambiguous.outboundCalls.some((c) => c.url.includes("paige-write-back"))
+      && st2b.rows.every((row) => !row.consumed)
+      && ambiguous.modelEgress.some((body) => body.includes("execution_unavailable")),
     JSON.stringify(ambiguous.outboundCalls.map((c) => c.body)));
 
   // ── 13.7 The claim is a COMPARE-AND-SET, so one approval cannot execute twice.
@@ -1042,8 +1082,7 @@ const mirrorConfirms = (st) => (t, row) => {
   // Driven down the SURFACE-ECHO path, where the arguments are identical and the claim is by
   // fingerprint, so the exact-match leg gets its own coverage rather than sharing 13.6's.
   const st2c = makeConfirmStore([{
-    user_id: USER, tool_name: TOOL, fingerprint: refusal?.fingerprint ?? "0".repeat(16),
-    args: PROPOSED, issued_in_request: EARLIER,
+    ...st1.rows[0], args: PROPOSED,
   }]);
   const cardApproved = await drive({
     clientId: OWN, stream: true,
@@ -1087,7 +1126,7 @@ const mirrorConfirms = (st) => (t, row) => {
     args: { amount: 1 }, issued_in_request: EARLIER,
   }]);
   const wrongTool = await drive({
-    clientId: OWN, stream: true, extraBody: { threadId: THREAD },
+    clientId: OWN, stream: true, extraBody: { threadId: THREAD, approvedConfirmations: ["abcdef0123456789"] },
     toolCall: { name: TOOL, args: { client_id: OWN, updates: { goal: "x" }, confirm: true } },
     ...CONFIRM,
     tablesExtra: { paige_pending_confirmations: st3.table },
@@ -1117,7 +1156,7 @@ const mirrorConfirms = (st) => (t, row) => {
   });
   const again = refusalOf(reProposed.modelEgress);
   assert("13.9b re-proposing an unanswered action says they have not answered, not the same ask",
-    !!again && /ALREADY asked them/.test(again.note),
+    !!again && /pending/.test(again.note) && /Do NOT call this tool again/.test(again.note),
     JSON.stringify(again?.note ?? null));
   assert("13.9b2 …and does not mint a second live proposal for the same call",
     st3b.rows.length === 1, JSON.stringify(st3b.rows.map((r) => r.fingerprint)));
@@ -1143,8 +1182,17 @@ const mirrorConfirms = (st) => (t, row) => {
     !declined.outboundCalls.some((c) => c.url.includes("paige-write-back")),
     JSON.stringify(declined.outboundCalls.map((c) => c.body)));
 
+  const declinedReplay = await drive({
+    clientId: OWN, stream: true,
+    extraBody: { threadId: THREAD, approvedConfirmations: ["dddddddddddddddd"] },
+    toolCall: { name: TOOL, args: { ...PROPOSED, confirm: true } }, ...CONFIRM,
+    tablesExtra: { paige_pending_confirmations: st5.table },
+  });
+  assert("13.H1", st5.rows[0].consumed
+    && !declinedReplay.outboundCalls.some((call) => call.url.includes("paige-write-back")));
+
   const cancelQ = declined.rec.from.find((f) => f.table === "paige_pending_confirmations"
-    && f.op === "update" && f.filters.some((x) => x[0] === "in" && x[1] === "fingerprint"));
+    && f.op === "update" && f.filters.some((x) => x[0] === "eq" && x[1] === "issued_in_request"));
   assert("13.11b the decline is a scoped compare-and-set, not a blind update",
     !!cancelQ && cancelQ.client === "service"
       && cancelQ.filters.some((x) => x[0] === "eq" && x[1] === "user_id")
@@ -1234,16 +1282,18 @@ const mirrorConfirms = (st) => (t, row) => {
   // keep asserting approval and keep being refused, and the person will be told it is pending
   // forever. Kills: the one-branch description that says the same thing to every tool.
   const offeredHighRisk = highRisk.filter((t) => declared.includes(t));
-  const notWarned = offeredHighRisk.filter((t) => !/not enough on its own/.test(blockFor(t)));
+  const { CRM_COMMAND_TOOL_NAMES } = await import("../../supabase/functions/_shared/crm-command/catalog.ts");
+  const notWarned = offeredHighRisk.filter((t) => !(CRM_COMMAND_TOOL_NAMES.has(t)
+    ? /not enough on its own/ : /workspace approval control/).test(blockFor(t)));
   assert("14.4 every high-risk tool tells the model its word is not enough",
     highRisk.length >= 10 && offeredHighRisk.length >= 5 && notWarned.length === 0,
     JSON.stringify({ highRisk: highRisk.length, offered: offeredHighRisk.length, notWarned }));
 
   // ── 14.5 …and an ORDINARY gated tool is not given that warning, or 14.4 would be satisfied by
   // printing it everywhere, which tells the model nothing about which acts are different.
-  assert("14.5 …and an ordinary gated tool is not given that warning",
-    declared.includes("crm_create_task") && !/not enough on its own/.test(blockFor("crm_create_task")),
-    JSON.stringify({ sawTool: declared.includes("crm_create_task") }));
+  assert("14.5 approval-path hardening",
+    declared.includes("update_client_data") && /workspace approval control/.test(blockFor("update_client_data")),
+    JSON.stringify({ sawTool: declared.includes("update_client_data") }));
 
   // ── 14.6 THE SET IS A RULE, NOT A HAND-LIST. Mutation-testing found that deleting three tools
   // from HIGH_RISK_CONFIRM_TOOLS failed nothing: 18.6 drives one member, and a count threshold
@@ -1665,34 +1715,7 @@ const mirrorConfirms = (st) => (t, row) => {
     (settled.bodyText ?? "").slice(0, 200));
 }
 
-// ── 18. THE MODEL CANNOT APPROVE ITSELF ──────────────────────────────────────────────────────
-//
-// THE PROPERTY, AND HOW IT WAS LOST TWICE.
-//
-// Originally the re-entry test read `approvedConfirmations`, which comes only from the validated
-// REQUEST BODY. A model cannot write the request body, so self-approval was impossible by
-// construction — not by instruction. But five of the six chat surfaces send no such echo, so that
-// version was an outage: on those surfaces nothing could ever be approved.
-//
-// The first repair handed the model a `confirm_token` in the tool result. The tool loop pushes
-// tool results back into `convo`, so the token landed in the model's own context one round before
-// any human saw anything. A per-request nonce then stopped it being spent in the SAME request —
-// and that much held. What did not hold: the token is the fingerprint of the ACTION, not a secret,
-// so any LATER request that re-proposed the same call was handed it straight back and could spend
-// it immediately. A request whose human message was "no, cancel that" executed the stored write
-// and raised an autonomy grant from `confirm` to `auto`. Driven, not read.
-//
-// Every check in section 13 passed throughout both losses, because each supplies approval the way
-// a SURFACE would and none of them drives two requests against one store. 18.5 does, and is the
-// check that would have caught it.
-//
-// THE DESIGN NOW. Approval arrives down two channels of different worth, and the code says so:
-//   1. `approvedConfirmations` — a card a surface RENDERED and a human clicked. Unforgeable by a
-//      model, because a model cannot put anything in an HTTP request body.
-//   2. `confirm: true` — the model's WORD that the operator answered yes. Kept, because without it
-//      five surfaces can approve nothing; refused outright for HIGH_RISK_CONFIRM_TOOLS, where the
-//      model's word is not an acceptable basis for an irreversible, permission-changing,
-//      outward-facing or money-spending act.
+// ── 18. APPROVAL-PATH HARDENING ───────────────────────────────────────────────────────────
 {
   const CONFIRM = { rpcOverrides: {
     resolve_tool_autonomy: { data: "confirm", error: null },
@@ -1701,6 +1724,523 @@ const mirrorConfirms = (st) => (t, row) => {
   const THREAD = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
   const AUTOMATION = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
   const wroteBack = (r) => r.outboundCalls.some((c) => c.url.includes("paige-write-back"));
+
+  const hardeningStore = makeConfirmStore();
+  const hardeningArgs = { client_id: OWN, updates: { goal: "approval-path-check" } };
+  const hardeningDrive = (args, body = {}) => drive({
+    stream: true, clientId: OWN, extraBody: { threadId: THREAD, ...body },
+    toolCall: { name: "update_client_data", args }, ...CONFIRM,
+    tablesExtra: { paige_pending_confirmations: hardeningStore.table },
+    onInsert: mirrorConfirms(hardeningStore),
+  });
+  const hardeningProposal = await hardeningDrive(hardeningArgs);
+  const hardeningFrames = hardeningProposal.bodyText.split("\n")
+    .filter((line) => line.startsWith("data: ") && line !== "data: [DONE]")
+    .map((line) => JSON.parse(line.slice(6)));
+  const hardeningCard = hardeningFrames.find((frame) => frame.paige_confirm)?.paige_confirm;
+  assert("18.H1", !wroteBack(hardeningProposal)
+    && hardeningStore.rows.length === 1
+    && /^[0-9a-f]{16}:[0-9a-f-]{36}$/.test(hardeningCard?.fingerprint ?? "")
+    && hardeningCard.fingerprint === issuedApproval(hardeningStore.rows[0]));
+  const hardeningUnselected = await hardeningDrive({ ...hardeningArgs, confirm: true });
+  assert("18.H2", !wroteBack(hardeningUnselected));
+  assert("18.H3", hardeningStore.rows.length === 1 && !hardeningStore.rows[0].consumed);
+  const hardeningSelected = await hardeningDrive(
+    { ...hardeningArgs, updates: { goal: "different-value" }, confirm: true },
+    { approvedConfirmations: [hardeningCard?.fingerprint] },
+  );
+  assert("18.H4", hardeningSelected.outboundCalls.filter((call) => call.url.includes("paige-write-back")).length === 1
+    && hardeningSelected.outboundCalls.some((call) => call.body.includes("approval-path-check"))
+    && !hardeningSelected.outboundCalls.some((call) => call.body.includes("different-value")));
+  const hardeningReplay = await hardeningDrive(hardeningArgs, { approvedConfirmations: [hardeningCard?.fingerprint] });
+  assert("18.H5", !wroteBack(hardeningReplay));
+  const hardeningReplayAgain = await hardeningDrive(hardeningArgs, { approvedConfirmations: [hardeningCard?.fingerprint] });
+  assert("18.H6", !wroteBack(hardeningReplayAgain));
+  const hardeningNext = await hardeningDrive(hardeningArgs);
+  const hardeningNextCard = hardeningNext.bodyText.split("\n")
+    .filter((line) => line.startsWith("data: ") && line !== "data: [DONE]")
+    .map((line) => JSON.parse(line.slice(6))).find((frame) => frame.paige_confirm)?.paige_confirm;
+  assert("18.H7", !!hardeningNextCard?.fingerprint && hardeningNextCard.fingerprint !== hardeningCard?.fingerprint);
+  const hardeningOld = await hardeningDrive(hardeningArgs, { approvedConfirmations: [hardeningCard?.fingerprint] });
+  assert("18.H8", !wroteBack(hardeningOld)
+    && hardeningStore.rows.some((row) => issuedApproval(row) === hardeningNextCard?.fingerprint && !row.consumed));
+  const hardeningNextSelected = await hardeningDrive(hardeningArgs, { approvedConfirmations: [hardeningNextCard?.fingerprint] });
+  assert("18.H9", hardeningNextSelected.outboundCalls.filter((call) => call.url.includes("paige-write-back")).length === 1);
+  for (let retry = 0; retry < 3; retry++) {
+    const result = await hardeningDrive(hardeningArgs, { approvedConfirmations: [hardeningNextCard?.fingerprint] });
+    assert("18.H10." + retry, !wroteBack(result));
+  }
+  const hardeningLegacy = makeConfirmStore([
+    { ...hardeningStore.rows[0], fingerprint: "eeeeeeeeeeeeeeee", consumed: true },
+    { ...hardeningStore.rows[0], fingerprint: "eeeeeeeeeeeeeeee", id: "legacy-pending", consumed: false, issued_in_request: "legacy-request" },
+  ]);
+  const hardeningLegacyResult = await drive({
+    stream: true, clientId: OWN,
+    extraBody: { threadId: THREAD, approvedConfirmations: [hardeningLegacy.rows[0].fingerprint] },
+    toolCall: { name: "update_client_data", args: hardeningArgs }, ...CONFIRM,
+    tablesExtra: { paige_pending_confirmations: hardeningLegacy.table },
+    onInsert: mirrorConfirms(hardeningLegacy),
+  });
+  assert("18.H11", !wroteBack(hardeningLegacyResult) && !hardeningLegacy.rows[1].consumed);
+
+  const batchStore = makeConfirmStore();
+  const batchDrive = (args, body = {}) => drive({
+    stream: true, clientId: OWN, extraBody: { threadId: THREAD, ...body },
+    toolCall: { name: "update_client_data", args }, ...CONFIRM,
+    tablesExtra: { paige_pending_confirmations: batchStore.table },
+    onInsert: mirrorConfirms(batchStore),
+  });
+  const batchArgs = ["one", "two", "three"].map((goal) => ({ client_id: OWN, updates: { goal } }));
+  for (const args of batchArgs) await batchDrive(args);
+  const batchSelected = await batchDrive({ ...batchArgs[2], confirm: true }, {
+    approvedConfirmations: batchStore.rows.map(issuedApproval),
+  });
+  assert("18.H12", batchStore.rows.length === 3
+    && batchStore.rows.filter((row) => row.consumed).length === 1
+    && batchStore.rows[2].consumed
+    && batchSelected.outboundCalls.filter((call) => call.url.includes("paige-write-back")).length === 1);
+  const legacyFresh = hardeningLegacy.rows.find((row) => !row.consumed
+    && row.fingerprint !== hardeningLegacy.rows[0].fingerprint);
+  assert("18.H13", !!legacyFresh);
+  if (legacyFresh) {
+    const legacySelected = await drive({
+      stream: true, clientId: OWN,
+      extraBody: { threadId: THREAD, approvedConfirmations: [issuedApproval(legacyFresh)] },
+      toolCall: { name: "update_client_data", args: hardeningArgs }, ...CONFIRM,
+      tablesExtra: { paige_pending_confirmations: hardeningLegacy.table },
+      onInsert: mirrorConfirms(hardeningLegacy),
+    });
+    assert("18.H14", wroteBack(legacySelected));
+  }
+
+  const subjectStore = makeConfirmStore();
+  const subjectDrive = (args, body = {}) => drive({
+    stream: true, extraBody: { threadId: THREAD, ...body },
+    toolCall: { name: "action_advance", args }, ...CONFIRM,
+    tablesExtra: { paige_pending_confirmations: subjectStore.table, user_roles: [{ role: "admin" }] },
+    onInsert: mirrorConfirms(subjectStore),
+  });
+  const subjectArgs = [OWN, FOREIGN].map((action_id) => ({ action_id, to_status: "dismissed", decision_rationale: "original note" }));
+  for (const args of subjectArgs) await subjectDrive(args);
+  const subjectSelected = await subjectDrive({ ...subjectArgs[1], decision_rationale: "different note", confirm: true }, {
+    approvedConfirmations: subjectStore.rows.map(issuedApproval),
+  });
+  assert("18.H15", subjectStore.rows.length === 2 && !subjectStore.rows[0].consumed && subjectStore.rows[1].consumed
+    && subjectSelected.rec.rpc.filter((call) => call.name === "advance_action").length === 1
+    && subjectSelected.rec.rpc.some((call) => call.name === "advance_action"
+      && call.args.p_action_id === FOREIGN && call.args.p_decision_rationale === "original note"));
+
+  // 18.ID1–ID8 — AN ID THE EXECUTOR CANNOT ADDRESS NEVER BECOMES A CARD, never spends an approval,
+  // and never reaches advance_action. 2026-09-13: Paige sent a shortened action id, the approval was
+  // claimed, and advance_action failed its uuid cast — 13 proposals, 0 dismissals. The §39 peer-gate
+  // on #1458 drove the first version of the check here and found that a MISSING subject and a
+  // shortened invocation_id still became cards; these pin the fix on the real handler.
+  {
+    const frames = (r) => r.bodyText.split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
+      .map((l) => { try { return JSON.parse(l.slice(6)); } catch { return null; } }).filter(Boolean);
+    const cardOf = (r) => frames(r).find((f) => f.paige_confirm)?.paige_confirm;
+    const advanced = (r) => r.rec.rpc.filter((c) => c.name === "advance_action");
+    const toldModel = (r) => r.modelEgress.map((b) => b.replace(/\\"/g, '"')).join("\n");
+    const audited = (r) => (r.rec.inserts ?? []).filter((i) => i.table === "paige_audit_log");
+    const WHOLE = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11";
+    const AUTO = { rpcOverrides: {
+      resolve_tool_autonomy: { data: "auto", error: null },
+      get_actor_access: { data: { tier: "tenant" }, error: null },
+    } };
+    const idDrive = (store, args, lane) => drive({
+      stream: true, extraBody: { threadId: THREAD },
+      toolCall: { name: "action_advance", args }, ...lane,
+      tablesExtra: { paige_pending_confirmations: store.table, user_roles: [{ role: "admin" }] },
+      onInsert: mirrorConfirms(store),
+    });
+
+    for (const [id, label, args] of [
+      ["18.ID1", "a shortened subject (the 2026-09-13 value)", { action_id: "424b85ac", to_status: "dismissed" }],
+      ["18.ID2", "a missing subject", { to_status: "dismissed" }],
+      ["18.ID3", "a blank subject", { action_id: "   ", to_status: "dismissed" }],
+      ["18.ID4", "a subject that is not a string", { action_id: 424, to_status: "dismissed" }],
+      ["18.ID5", "a shortened invocation_id", { action_id: WHOLE, to_status: "drafted", invocation_id: "3f2a91c0" }],
+    ]) {
+      const store = makeConfirmStore();
+      const r = await idDrive(store, args, CONFIRM);
+      assert(`${id} ${label}: no card, nothing to spend, and advance_action is never called`,
+        store.rows.length === 0 && !cardOf(r) && advanced(r).length === 0 && /id_not_addressable/.test(toldModel(r)),
+        JSON.stringify({ rows: store.rows.length, card: !!cardOf(r), rpc: advanced(r).length }));
+    }
+
+    const wholeStore = makeConfirmStore();
+    const whole = await idDrive(wholeStore, { action_id: WHOLE, to_status: "dismissed" }, CONFIRM);
+    assert("18.ID6 a complete id still becomes a card — the check refuses only what cannot run",
+      wholeStore.rows.length === 1 && !!cardOf(whole) && advanced(whole).length === 0,
+      JSON.stringify({ rows: wholeStore.rows.length, card: !!cardOf(whole) }));
+
+    const autoStore = makeConfirmStore();
+    const auto = await idDrive(autoStore, { action_id: "424b85ac", to_status: "dismissed" }, AUTO);
+    const steps = frames(auto).filter((f) => f.paige_step).map((f) => f.paige_step.label);
+    assert("18.ID7 the auto lane is refused at dispatch too, and the trace says the action did not move",
+      advanced(auto).length === 0 && /id_not_addressable/.test(toldModel(auto))
+        && steps.includes("Couldn't move that action") && !steps.includes("Moving that action forward"),
+      JSON.stringify({ rpc: advanced(auto).length, steps }));
+    assert("18.ID8 …and a refusal that never ran is not written to the audit trail as a failed write",
+      !audited(auto).some((row) => JSON.stringify(row).includes("id_not_addressable")),
+      JSON.stringify(audited(auto)).slice(0, 300));
+  }
+
+  const h16Store = makeConfirmStore();
+  let h16Arrivals = 0;
+  let h16Release;
+  let h16Timeout;
+  const h16Ready = new Promise((resolve, reject) => {
+    h16Release = () => { clearTimeout(h16Timeout); resolve(); };
+    h16Timeout = setTimeout(() => reject(new Error("18.H16")), 3000);
+  });
+  const h16Table = async (filters) => {
+    const snapshot = h16Store.table(filters);
+    if (h16Arrivals < 2 && filters.some(([op, columns]) => op === "select" && String(columns).includes("fingerprint"))) {
+      h16Arrivals += 1;
+      if (h16Arrivals === 2) h16Release();
+      await h16Ready;
+    }
+    return snapshot;
+  };
+  const h16Result = await drive({
+    concurrentRequests: 2, stream: true, clientId: OWN,
+    extraBody: { threadId: THREAD }, toolCall: { name: "update_client_data", args: hardeningArgs },
+    ...CONFIRM, tablesExtra: { paige_pending_confirmations: h16Table }, onInsert: mirrorConfirms(h16Store),
+  });
+  const h16Cards = h16Result.bodyText.split("\n")
+    .filter((line) => line.startsWith("data: ") && line !== "data: [DONE]")
+    .map((line) => JSON.parse(line.slice(6))).filter((frame) => frame.paige_confirm).map((frame) => frame.paige_confirm);
+  assert("18.H16", h16Arrivals === 2 && h16Cards.length === 2 && h16Store.rows.length === 1
+    && h16Cards[0].fingerprint === h16Cards[1].fingerprint && !wroteBack(h16Result)
+    && h16Result.responses.every((response) => response.status === 200
+      && response.bodyText.split("\n").filter((line) => line.startsWith("data: ") && line.includes('"paige_confirm":')).length === 1));
+
+  const hCards = (result) => result.bodyText.split("\n")
+    .filter((line) => line.startsWith("data: ") && line !== "data: [DONE]")
+    .map((line) => JSON.parse(line.slice(6))).filter((frame) => frame.paige_confirm).map((frame) => frame.paige_confirm);
+  const hDrive = (store, body = {}, extra = {}) => drive({
+    stream: true, clientId: OWN, extraBody: { threadId: THREAD, ...body },
+    toolCall: { name: "update_client_data", args: hardeningArgs }, ...CONFIRM,
+    tablesExtra: { paige_pending_confirmations: store.table }, onInsert: mirrorConfirms(store), ...extra,
+  });
+  let h17Arrivals = 0;
+  let h17Release;
+  let h17Timeout;
+  const h17Ready = new Promise((resolve, reject) => {
+    h17Release = () => { clearTimeout(h17Timeout); resolve(); };
+    h17Timeout = setTimeout(() => reject(new Error("18.H17")), 3000);
+  });
+  const h17Table = async (filters) => {
+    const snapshot = h16Store.table(filters);
+    if (h17Arrivals < 2 && !filters.some(([op]) => op === "update")
+      && filters.some(([op, columns]) => op === "select" && String(columns).includes("tool_name"))) {
+      h17Arrivals += 1;
+      if (h17Arrivals === 2) h17Release();
+      await h17Ready;
+    }
+    return snapshot;
+  };
+  const h17Result = await hDrive(h16Store, { approvedConfirmations: [h16Cards[0]?.fingerprint] }, {
+    concurrentRequests: 2, tablesExtra: { paige_pending_confirmations: h17Table },
+  });
+  assert("18.H17", h17Arrivals === 2 && h17Result.responses.every((response) => response.status === 200)
+    && h17Result.outboundCalls.filter((call) => call.url.includes("paige-write-back")).length === 1
+    && h16Store.rows.filter((row) => row.consumed).length === 1);
+
+  const h18Store = makeConfirmStore();
+  const h18Issued = await hDrive(h18Store);
+  const h18Token = hCards(h18Issued)[0]?.fingerprint;
+  const h18Stripped = h18Token?.split(":")[0];
+  const h18Approved = await hDrive(h18Store, { approvedConfirmations: [h18Stripped] });
+  const h18Declined = await hDrive(h18Store, { declinedConfirmations: [h18Stripped] }, { toolCall: null });
+  assert("18.H18", !!h18Token?.includes(":") && h18Store.rows.length === 1 && !h18Store.rows[0].consumed
+    && !wroteBack(h18Approved) && !wroteBack(h18Declined));
+  const h19Token = `${h18Stripped}:11111111-1111-4111-8111-111111111111`;
+  const h19Approved = await hDrive(h18Store, { approvedConfirmations: [h19Token] });
+  const h19Declined = await hDrive(h18Store, { declinedConfirmations: [h19Token] }, { toolCall: null });
+  assert("18.H19", !h18Store.rows[0].consumed && !wroteBack(h19Approved) && !wroteBack(h19Declined));
+
+  h18Store.rows[0].expires_at = "2000-01-01T00:00:00Z";
+  const h20Issued = await hDrive(h18Store);
+  const h20Token = hCards(h20Issued)[0]?.fingerprint;
+  assert("18.H20", h18Store.rows.length === 2 && h18Store.rows[0].consumed && !h18Store.rows[1].consumed
+    && h18Store.rows[0].fingerprint === h18Store.rows[1].fingerprint && !!h20Token && h20Token !== h18Token);
+  const h21Approved = await hDrive(h18Store, { approvedConfirmations: [h18Token] });
+  const h21Declined = await hDrive(h18Store, { declinedConfirmations: [h18Token] }, { toolCall: null });
+  assert("18.H21", !wroteBack(h21Approved) && !wroteBack(h21Declined) && !h18Store.rows[1].consumed);
+  const h22Approved = await hDrive(h18Store, { approvedConfirmations: [h20Token] });
+  assert("18.H22", h18Store.rows[1].consumed
+    && h22Approved.outboundCalls.filter((call) => call.url.includes("paige-write-back")).length === 1);
+
+  const h23Store = makeConfirmStore();
+  await hDrive(h23Store);
+  await hDrive(h23Store, { threadId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd" });
+  assert("18.H23", h23Store.rows.length === 2 && h23Store.rows.every((row) => !row.consumed)
+    && h23Store.rows[0].fingerprint !== h23Store.rows[1].fingerprint);
+
+  const h24Store = makeConfirmStore();
+  const h24Issued = await hDrive(h24Store, {}, {
+    toolCall: { name: "update_client_data", args: { ...hardeningArgs, confirm: true, confirm_token: "legacy-value" } },
+  });
+  const h24Token = hCards(h24Issued)[0]?.fingerprint;
+  const h24Approved = await hDrive(h24Store, { approvedConfirmations: [h24Token] });
+  assert("18.H24", !!h24Token && h24Store.rows.length === 1 && h24Store.rows[0].consumed
+    && !Object.hasOwn(h24Store.rows[0].args, "confirm") && !Object.hasOwn(h24Store.rows[0].args, "confirm_token")
+    && h24Approved.outboundCalls.filter((call) => call.url.includes("paige-write-back")).length === 1
+    && !h24Approved.outboundCalls.some((call) => call.body.includes("legacy-value")));
+
+  const { crmApprovalSubject } = await import("../../supabase/functions/_shared/crm-command/catalog.ts");
+  const h25Args = { patch: { first_name: "Test", last_name: "Contact" } };
+  const h25Row = { user_id: USER, tenant_id: CALLER_TENANT, thread_id: null, scoped_client_id: null,
+    tool_name: "crm_create_contact", fingerprint: "abababababababab", issued_in_request: "previous-crm-request",
+    args: { approval_subject: await crmApprovalSubject("contact.create", { action: "contact.create", ...h25Args }) } };
+  const h25Drive = (store, body, toolCall = { name: "crm_create_contact", args: h25Args }) => drive({
+    stream: true, extraBody: { threadId: THREAD, ...body }, toolCall,
+    rpcOverrides: { ...CONFIRM.rpcOverrides, get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT }], error: null } },
+    tablesExtra: { paige_pending_confirmations: store.table, user_roles: [{ role: "admin" }] }, onInsert: mirrorConfirms(store),
+  });
+  const h25Composite = `${h25Row.fingerprint}:11111111-1111-4111-8111-111111111111`;
+  const h25Store = makeConfirmStore([h25Row]);
+  const h25Wrong = await h25Drive(h25Store, { approvedConfirmations: [h25Composite] });
+  await h25Drive(h25Store, { declinedConfirmations: [h25Composite] }, null);
+  assert("18.H25", !h25Wrong.rec.functions.some((call) => call.name === "crm-command") && !h25Store.rows[0].consumed);
+  const h26Mixed = await h25Drive(h25Store, { approvedConfirmations: [h25Composite, h25Row.fingerprint] });
+  assert("18.H26", h26Mixed.rec.functions.filter((call) => call.name === "crm-command").length === 1
+    && h26Mixed.rec.functions.some((call) => call.name === "crm-command" && call.body.approved_fingerprint === h25Row.fingerprint));
+  await h25Drive(h25Store, { declinedConfirmations: [h25Composite, h25Row.fingerprint] }, null);
+  assert("18.H27", h25Store.rows[0].consumed);
+
+  // 18.OUT1–OUT12 — THE CARD IS TOLD WHAT BECAME OF EACH APPROVAL, and only what the server knows.
+  // Owner-approved recovery design, 2026-09-26: the card that asked stays on screen and reports
+  // each action as ran, didn't run, or couldn't confirm, in a sentence the server writes. These
+  // drive the real handler through every door that can spend or refuse an approval, including the
+  // answers that never come back.
+  {
+    const { executorFailureSpeech } = await import("../../supabase/functions/_shared/crm-command/executor-error.ts");
+    const outcomeOf = (r) => r.bodyText.split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
+      .map((l) => { try { return JSON.parse(l.slice(6)); } catch { return null; } })
+      .filter((f) => f && f.paige_approval_outcome).map((f) => f.paige_approval_outcome);
+    const toldModel = (r) => r.modelEgress.map((b) => b.replace(/\\"/g, '"')).join("\n");
+    const show = (r) => JSON.stringify(outcomeOf(r));
+
+    // OUT1/OUT2 — the general gate: an approved write that ran, and a turn with no approvals.
+    const o1Store = makeConfirmStore();
+    const o1Issued = await hDrive(o1Store);
+    const o1Token = hCards(o1Issued)[0]?.fingerprint;
+    const o1 = await hDrive(o1Store, { approvedConfirmations: [o1Token] });
+    assert("18.OUT1 an approval that ran is reported ran, with nothing to explain",
+      wroteBack(o1) && outcomeOf(o1).length === 1
+        && JSON.stringify(outcomeOf(o1)[0]) === JSON.stringify({ actions: [{ fingerprint: o1Token, outcome: "ran" }] }), show(o1));
+    assert("18.OUT2 a turn that carried no approvals sends no outcome", !!o1Token && outcomeOf(o1Issued).length === 0, show(o1Issued));
+
+    // OUT3 — the general gate's ambiguous terminal: said once, for the whole card, and nothing ran.
+    const o3Store = makeConfirmStore([
+      { user_id: USER, tool_name: "update_client_data", fingerprint: "3".repeat(16), args: hardeningArgs, issued_in_request: "an-earlier-request" },
+      { user_id: USER, tool_name: "update_client_data", fingerprint: "4".repeat(16), args: { client_id: OWN, updates: { goal: "a different plan" } }, issued_in_request: "an-earlier-request" },
+    ]);
+    const o3 = await drive({
+      stream: true, clientId: OWN, extraBody: { threadId: THREAD, approvedConfirmations: ["3".repeat(16), "4".repeat(16)] },
+      toolCall: { name: "update_client_data", args: { client_id: OWN, updates: { goal: "drifted" }, confirm: true } }, ...CONFIRM,
+      tablesExtra: { paige_pending_confirmations: o3Store.table },
+    });
+    const o3Frame = outcomeOf(o3)[0];
+    assert("18.OUT3 an ambiguous approval is reported not run, once for the whole card",
+      !wroteBack(o3) && o3Store.rows.every((row) => !row.consumed)
+        && o3Frame?.note === "Nothing changed. More than one approval was waiting, so Paige stopped rather than guess."
+        && o3Frame.actions.length === 2 && o3Frame.actions.every((a) => a.outcome === "not_run" && !("note" in a)), show(o3));
+
+    // OUT4–OUT8 — the CRM door, one answer from crm-command at a time.
+    const crmDrive = (store, approved, answer) => drive({
+      stream: true, extraBody: { threadId: THREAD, approvedConfirmations: approved },
+      toolCall: { name: "crm_create_contact", args: h25Args },
+      rpcOverrides: { ...CONFIRM.rpcOverrides, get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT }], error: null } },
+      tablesExtra: { paige_pending_confirmations: store.table, user_roles: [{ role: "admin" }] }, onInsert: mirrorConfirms(store),
+      functionsExtra: answer ? { "crm-command": answer } : {},
+    });
+    const httpError = (body) => ({ data: null, error: { name: "FunctionsHttpError", message: "Edge Function returned a non-2xx status code", context: { json: async () => body } } });
+    const crmRow = { ...h25Row, fingerprint: "5".repeat(16) };
+    const crmSpent = (r) => r.rec.functions.some((call) => call.name === "crm-command" && call.body.approved_fingerprint === crmRow.fingerprint);
+    const unconfirmedOne = "This may have gone through. Check before asking again, so it doesn't happen twice.";
+
+    const o4 = await crmDrive(makeConfirmStore([crmRow]), [crmRow.fingerprint],
+      { data: { ok: true, outcome: "succeeded", readback: { id: "aaaa1111-2222-4333-8444-555566667777" }, receipt_recorded: true }, error: null });
+    assert("18.OUT4 a contact the CRM door created is reported ran",
+      crmSpent(o4) && JSON.stringify(outcomeOf(o4)[0]) === JSON.stringify({ actions: [{ fingerprint: crmRow.fingerprint, outcome: "ran" }] }), show(o4));
+
+    const o5 = await crmDrive(makeConfirmStore([crmRow]), [crmRow.fingerprint], { data: null, error: Object.assign(
+      new Error("Failed to send a request to the Edge Function"), { name: "FunctionsFetchError", context: new TypeError("fetch failed") }) });
+    assert("18.OUT5 when crm-command's answer never came back, the card says it may have gone through, and so does Paige",
+      crmSpent(o5) && outcomeOf(o5)[0]?.actions?.[0]?.outcome === "unconfirmed" && outcomeOf(o5)[0]?.note === unconfirmedOne
+        && /"outcome_unknown":\s*true/.test(toldModel(o5)) && /could not confirm whether it went through/.test(toldModel(o5))
+        && !/Nothing should be claimed as changed/.test(toldModel(o5)), show(o5));
+
+    const o6 = await crmDrive(makeConfirmStore([crmRow]), [crmRow.fingerprint], httpError({ ok: false, outcome: "refused",
+      code: "CRM_READBACK_UNAVAILABLE", ...executorFailureSpeech("CRM_READBACK_UNAVAILABLE", [], "unproven") }));
+    assert("18.OUT6 crm-command's own 'could not confirm the earlier attempt' is reported as could not confirm",
+      crmSpent(o6) && outcomeOf(o6)[0]?.actions?.[0]?.outcome === "unconfirmed" && outcomeOf(o6)[0]?.note === unconfirmedOne, show(o6));
+
+    const o7 = await crmDrive(makeConfirmStore([crmRow]), [crmRow.fingerprint], httpError({ ok: false, outcome: "failed", code: "CRM_CONTACT_ALREADY_EXISTS" }));
+    assert("18.OUT7 a change crm-command refused is reported as not gone through, and never as 'nothing changed'",
+      crmSpent(o7) && outcomeOf(o7)[0]?.actions?.[0]?.outcome === "not_run" && outcomeOf(o7)[0]?.note === "It didn't go through."
+        && !/"outcome_unknown"/.test(toldModel(o7)), show(o7));
+
+    const o8Composite = `${crmRow.fingerprint}:11111111-1111-4111-8111-111111111111`;
+    const o8 = await crmDrive(makeConfirmStore([crmRow]), [o8Composite]);
+    assert("18.OUT8 an approval the CRM door could not claim is reported not run, with that reason",
+      !o8.rec.functions.some((call) => call.name === "crm-command")
+        && JSON.stringify(outcomeOf(o8)[0]) === JSON.stringify({ actions: [{ fingerprint: o8Composite, outcome: "not_run" }],
+          note: "Nothing changed. That approval no longer matches anything Paige can run." }), show(o8));
+
+    // OUT9–OUT11 — action_advance: a card minted before the id check, and the RPC's two failure kinds.
+    const advDrive = (store, approved, args, rpc = {}) => drive({
+      stream: true, extraBody: { threadId: THREAD, approvedConfirmations: approved },
+      toolCall: { name: "action_advance", args: { ...args, confirm: true } },
+      rpcOverrides: { ...CONFIRM.rpcOverrides, ...rpc },
+      tablesExtra: { paige_pending_confirmations: store.table, user_roles: [{ role: "admin" }] }, onInsert: mirrorConfirms(store),
+    });
+    const advRow = (fingerprint, args) => ({ user_id: USER, tool_name: "action_advance", fingerprint, args, issued_in_request: "an-earlier-request" });
+    const shortArgs = { action_id: "424b85ac", to_status: "dismissed" };
+    const o9Store = makeConfirmStore([advRow("6".repeat(16), shortArgs)]);
+    const o9 = await advDrive(o9Store, ["6".repeat(16)], shortArgs);
+    assert("18.OUT9 a card minted before the id check is refused before it runs, and reported as such",
+      o9Store.rows[0].consumed && !o9.rec.rpc.some((call) => call.name === "advance_action")
+        && outcomeOf(o9)[0]?.actions?.[0]?.outcome === "not_run"
+        && outcomeOf(o9)[0]?.note === "Nothing changed. Paige couldn't tell exactly which item this was, so she stopped.", show(o9));
+
+    const wholeArgs = { action_id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11", to_status: "dismissed" };
+    const o10Store = makeConfirmStore([advRow("7".repeat(16), wholeArgs)]);
+    const o10 = await advDrive(o10Store, ["7".repeat(16)], wholeArgs,
+      { advance_action: { data: null, error: { code: "", message: "TypeError: fetch failed", details: "", hint: "" } } });
+    assert("18.OUT10 a database call whose answer was lost in transit is reported as could not confirm, never as failed",
+      o10Store.rows[0].consumed && o10.rec.rpc.some((call) => call.name === "advance_action")
+        && outcomeOf(o10)[0]?.actions?.[0]?.outcome === "unconfirmed" && outcomeOf(o10)[0]?.note === unconfirmedOne
+        && /could not confirm whether it went through/.test(toldModel(o10)), show(o10));
+
+    const o11Store = makeConfirmStore([advRow("8".repeat(16), wholeArgs)]);
+    const o11 = await advDrive(o11Store, ["8".repeat(16)], wholeArgs,
+      { advance_action: { data: null, error: { code: "P0001", message: "ACTION_NOT_FOUND", details: "", hint: "" } } });
+    assert("18.OUT11 a database refusal is reported as not gone through",
+      o11Store.rows[0].consumed && outcomeOf(o11)[0]?.actions?.[0]?.outcome === "not_run"
+        && outcomeOf(o11)[0]?.note === "It didn't go through." && !/could not confirm whether/.test(toldModel(o11)), show(o11));
+
+    // OUT12 — a batch that ended two ways: each row carries its own sentence, and only the one
+    // that did not run carries one.
+    const o12Store = makeConfirmStore([advRow("9".repeat(16), wholeArgs)]);
+    const o12Issued = await hDrive(o12Store);
+    const o12Token = hCards(o12Issued)[0]?.fingerprint;
+    const o12 = await hDrive(o12Store, { approvedConfirmations: [o12Token, "9".repeat(16)] });
+    assert("18.OUT12 a mixed batch reports each approval in the order sent, with a sentence only where one did not run",
+      wroteBack(o12) && !o12Store.rows.find((row) => row.fingerprint === "9".repeat(16))?.consumed
+        && JSON.stringify(outcomeOf(o12)[0]) === JSON.stringify({ actions: [
+          { fingerprint: o12Token, outcome: "ran" },
+          { fingerprint: "9".repeat(16), outcome: "not_run", note: "Nothing changed. Paige didn't run this." },
+        ] }), show(o12));
+
+    // OUT13 — the general gate could not look the approval up: our side's failure, and nothing ran.
+    // Only the approved-set lookup fails (it asks for UNconsumed rows); the look for an earlier use
+    // (consumed rows) answers normally.
+    const lookupFails = ({ op, filters }) => op === "select"
+      && filters.some(([o, c, v]) => o === "is" && c === "consumed_at" && v === null)
+      && filters.some(([o, c]) => o === "in" && c === "fingerprint")
+      ? { code: "57014", message: "canceling statement due to statement timeout" } : undefined;
+    const o13Store = makeConfirmStore([
+      { user_id: USER, tool_name: "update_client_data", fingerprint: "a1".repeat(8), args: hardeningArgs, issued_in_request: "an-earlier-request" },
+    ]);
+    const o13 = await drive({
+      stream: true, clientId: OWN, extraBody: { threadId: THREAD, approvedConfirmations: ["a1".repeat(8)] },
+      toolCall: { name: "update_client_data", args: { client_id: OWN, updates: { goal: "drifted" }, confirm: true } }, ...CONFIRM,
+      tablesExtra: { paige_pending_confirmations: o13Store.table },
+      tableErrorsExtra: { "paige_pending_confirmations:select": lookupFails },
+    });
+    assert("18.OUT13 an approval the general gate could not look up is reported not run, as our side's failure",
+      !wroteBack(o13) && !o13Store.rows[0].consumed
+        && JSON.stringify(outcomeOf(o13)[0]) === JSON.stringify({ actions: [{ fingerprint: "a1".repeat(8), outcome: "not_run" }],
+          note: "Nothing changed. Something went wrong on our side while checking your approval." }), show(o13));
+
+    // OUT14 — the look for an earlier use itself fails: nobody knows, and the card says only that.
+    const earlierLookFails = ({ op, filters }) => op === "select" && filters.some(([o, c]) => o === "lt" && c === "consumed_at")
+      ? { code: "57014", message: "canceling statement due to statement timeout" } : undefined;
+    const o14Store = makeConfirmStore([
+      { user_id: USER, tool_name: "update_client_data", fingerprint: "3".repeat(16), args: hardeningArgs, issued_in_request: "an-earlier-request" },
+      { user_id: USER, tool_name: "update_client_data", fingerprint: "4".repeat(16), args: { client_id: OWN, updates: { goal: "a different plan" } }, issued_in_request: "an-earlier-request" },
+    ]);
+    const o14 = await drive({
+      stream: true, clientId: OWN, extraBody: { threadId: THREAD, approvedConfirmations: ["3".repeat(16), "4".repeat(16)] },
+      toolCall: { name: "update_client_data", args: { client_id: OWN, updates: { goal: "drifted" }, confirm: true } }, ...CONFIRM,
+      tablesExtra: { paige_pending_confirmations: o14Store.table },
+      tableErrorsExtra: { "paige_pending_confirmations:select": earlierLookFails },
+    });
+    assert("18.OUT14 when the server cannot look for an earlier use, it says only that it couldn't confirm",
+      !wroteBack(o14) && outcomeOf(o14)[0]?.actions?.length === 2 && outcomeOf(o14)[0].actions.every((a) => a.outcome === "unconfirmed")
+        && outcomeOf(o14)[0]?.note === "These may have gone through. Check before asking again, so nothing happens twice.", show(o14));
+
+    // OUT15 — an approval used before this request (the row is already consumed): "didn't run" is
+    // true of THIS request and says nothing about the earlier one, which may have done the work.
+    const usedNote = "That approval can't be used any more. Check before asking again, so it doesn't happen twice.";
+    const o15Row = { ...crmRow, fingerprint: "c".repeat(16), consumed: true };
+    const o15 = await crmDrive(makeConfirmStore([o15Row]), [o15Row.fingerprint],
+      httpError({ ok: false, outcome: "refused", code: "CRM_APPROVAL_CLAIM_INVALID" }));
+    const o15bStore = makeConfirmStore([
+      { user_id: USER, tool_name: "update_client_data", fingerprint: "d".repeat(16), args: hardeningArgs, issued_in_request: "an-earlier-request", consumed: true },
+    ]);
+    const o15b = await drive({
+      stream: true, clientId: OWN, extraBody: { threadId: THREAD, approvedConfirmations: ["d".repeat(16)] },
+      toolCall: { name: "update_client_data", args: { client_id: OWN, updates: { goal: "drifted" }, confirm: true } }, ...CONFIRM,
+      tablesExtra: { paige_pending_confirmations: o15bStore.table }, onInsert: mirrorConfirms(o15bStore),
+    });
+    assert("18.OUT15 an approval already used before this request is reported as unusable, never as didn't run — at either door",
+      JSON.stringify(outcomeOf(o15)[0]) === JSON.stringify({ actions: [{ fingerprint: o15Row.fingerprint, outcome: "unconfirmed" }], note: usedNote })
+        && !wroteBack(o15b)
+        && JSON.stringify(outcomeOf(o15b)[0]) === JSON.stringify({ actions: [{ fingerprint: "d".repeat(16), outcome: "unconfirmed" }], note: usedNote }),
+      `${show(o15)} ${show(o15b)}`);
+
+    // OUT16 — a write that answered only with an error, no success claim: never "done", and Paige
+    // is told the same as the card before she answers.
+    const o16Store = makeConfirmStore();
+    const o16Issued = await hDrive(o16Store);
+    const o16Token = hCards(o16Issued)[0]?.fingerprint;
+    const o16 = await hDrive(o16Store, { approvedConfirmations: [o16Token] }, { writeBack: { status: 403, body: { error: "Forbidden" } } });
+    assert("18.OUT16 a write that answered only with an error is never reported done, and Paige is told she couldn't confirm",
+      wroteBack(o16) && outcomeOf(o16)[0]?.actions?.[0]?.outcome === "unconfirmed" && outcomeOf(o16)[0]?.note === unconfirmedOne
+        && /could not confirm whether it went through/.test(toldModel(o16)), show(o16));
+
+    // OUT17 — a change the CRM door reports as not applied carries that fact to the card, so a
+    // refusal reads "didn't run" and offers asking again; the same refusal without it would not.
+    assert("18.OUT17 crm-command's answered refusal is marked not applied, and a lost answer is not",
+      /"not_applied":\s*true/.test(toldModel(o7)) && !/"not_applied"/.test(toldModel(o5)) && !/"not_applied"/.test(toldModel(o6)), "");
+  }
+
+  const h28Store = makeConfirmStore();
+  const h28First = await hDrive(h28Store);
+  h28Store.rows[0].args = { updates: { goal: hardeningArgs.updates.goal }, client_id: OWN };
+  const h28Second = await hDrive(h28Store);
+  const h28Token = hCards(h28First)[0]?.fingerprint;
+  const h28Approved = await hDrive(h28Store, { approvedConfirmations: [h28Token] });
+  assert("18.H28", h28Store.rows.length === 1 && hCards(h28Second)[0]?.fingerprint === h28Token
+    && wroteBack(h28Approved) && h28Store.rows[0].consumed);
+
+  for (const [label, operation] of [["18.H29", "approve"], ["18.H30", "decline"]]) {
+    const store = makeConfirmStore();
+    const first = await hDrive(store);
+    const token = hCards(first)[0]?.fingerprint;
+    const table = store.table;
+    let changed = false;
+    store.table = (filters) => {
+      const snapshot = table(filters);
+      if (!changed && !filters.some(([op]) => op === "update")
+        && filters.some(([op, columns]) => op === "select" && String(columns).includes("tool_name"))) {
+        changed = true;
+        store.rows[0].issued_in_request = "22222222-2222-4222-8222-222222222222";
+      }
+      return snapshot;
+    };
+    const result = await hDrive(store, operation === "approve"
+      ? { approvedConfirmations: [token] } : { declinedConfirmations: [token] }, operation === "decline" ? { toolCall: null } : {});
+    assert(label, changed && !wroteBack(result) && !store.rows[0].consumed
+      && result.rec.from.some((call) => call.table === "paige_pending_confirmations" && call.op === "update"
+        && call.filters.some(([op, column]) => op === "eq" && column === "issued_in_request")));
+  }
 
   // ── 18.1/18.2 — WITHIN ONE REQUEST. The nonce leg. ─────────────────────────────────────────
   const st = makeConfirmStore();
@@ -1750,8 +2290,8 @@ const mirrorConfirms = (st) => (t, row) => {
     ...CONFIRM,
     tablesExtra: { paige_pending_confirmations: st3.table },
   });
-  assert("18.3 an approval in a LATER request still redeems, so approval still works",
-    laterTurn.outboundCalls.some((c) => c.url.includes("paige-write-back") && c.body.includes("buy a house")),
+  assert("18.3 approval-path hardening",
+    !wroteBack(laterTurn) && !st3.rows[0].consumed,
     JSON.stringify(laterTurn.outboundCalls.map((c) => c.body)));
   assert("18.3b …and what runs is the STORED call, never the drifted one it was re-sent with",
     !laterTurn.outboundCalls.some((c) => c.body.includes("drifted wording")),
@@ -1764,7 +2304,7 @@ const mirrorConfirms = (st) => (t, row) => {
     args: { client_id: OWN, updates: { goal: "legacy" } }, issued_in_request: null,
   }]);
   const legacy = await drive({
-    stream: true, clientId: OWN, extraBody: { threadId: THREAD },
+    stream: true, clientId: OWN, extraBody: { threadId: THREAD, approvedConfirmations: ["beefbeefbeefbeef"] },
     toolCall: { name: "update_client_data", args: { client_id: OWN, updates: { goal: "legacy" }, confirm: true } },
     ...CONFIRM,
     tablesExtra: { paige_pending_confirmations: st4.table },
@@ -1781,8 +2321,7 @@ const mirrorConfirms = (st) => (t, row) => {
   // still-live token from request A, which the model spent one round later. Nothing in request B
   // represents the human's answer, so nothing could stop it.
   //
-  // The property now: a plain re-proposal yields nothing to redeem. Approval requires either the
-  // surface echo or an explicit `confirm: true`, and neither is present when the human said no.
+  // Approval-path hardening. Detailed evidence retained privately.
   const st5 = makeConfirmStore();
   const requestA = await drive({
     stream: true, clientId: OWN, extraBody: { threadId: THREAD },
@@ -1892,7 +2431,7 @@ const mirrorConfirms = (st) => (t, row) => {
 
   const highRiskCard = await drive({
     stream: true,
-    extraBody: { threadId: THREAD, approvedConfirmations: [st8.rows[0]?.fingerprint] },
+    extraBody: { threadId: THREAD, approvedConfirmations: [issuedApproval(st8.rows[0])] },
     toolCall: { name: GRANT_TOOL, args: GRANT_ARGS }, ...CONFIRM,
     tablesExtra: { paige_pending_confirmations: st8.table, ...asAdmin },
     onInsert: mirrorConfirms(st8),
@@ -1906,7 +2445,7 @@ const mirrorConfirms = (st) => (t, row) => {
     tablesExtra:{paige_pending_confirmations:driftStore.table,...asAdmin},onInsert:mirrorConfirms(driftStore)});
   const approvedRow = {...driftStore.rows[0]};
   const driftArgs = {...GRANT_ARGS, role:"model-changed-role", confirm:true};
-  const driveCard = (store, body={}) => drive({stream:true,extraBody:{threadId:THREAD,approvedConfirmations:[approvedRow.fingerprint],...body},
+  const driveCard = (store, body={}) => drive({stream:true,extraBody:{threadId:THREAD,approvedConfirmations:[issuedApproval(approvedRow)],...body},
     toolCall:{name:GRANT_TOOL,args:driftArgs},...CONFIRM,tablesExtra:{paige_pending_confirmations:store.table,...asAdmin},onInsert:mirrorConfirms(store)});
   const driftApproved = await driveCard(driftStore);
   assert("18.7d clicked high-risk card survives model argument drift",granted(driftApproved));
@@ -1919,7 +2458,7 @@ const mirrorConfirms = (st) => (t, row) => {
     assert("18.7g drifted card refuses " + label,!granted(refused));
   }
   const ambiguous=makeConfirmStore([{...approvedRow,consumed:false},{...approvedRow,fingerprint:"f".repeat(16),consumed:false}]);
-  const ambiguousReply=await driveCard(ambiguous,{approvedConfirmations:[approvedRow.fingerprint,"f".repeat(16)]});
+  const ambiguousReply=await driveCard(ambiguous,{approvedConfirmations:[issuedApproval(approvedRow),"f".repeat(16)]});
   assert("18.7h ambiguous submitted proposals do not pick an arbitrary call",!granted(ambiguousReply));
 
   // ── 18.7b — OWNER-ONLY IS REFUSED DOWN BOTH CHANNELS, INCLUDING THE CARD. This is the property
@@ -1940,9 +2479,9 @@ const mirrorConfirms = (st) => (t, row) => {
     tablesExtra: { paige_pending_confirmations: st9.table, ...automationTable, ...asAdmin },
     onInsert: mirrorConfirms(st9),
   });
-  const liveFp = st9.rows[0]?.fingerprint;
+  const liveFp = issuedApproval(st9.rows[0]);
   assert("18.7b0 the echo channel is genuinely open in this drive (guards 18.7b)",
-    typeof liveFp === "string" && /^[0-9a-f]{16}$/.test(liveFp),
+    typeof liveFp === "string" && /^[0-9a-f]{16}:[0-9a-f-]{36}$/.test(liveFp),
     JSON.stringify({ rows: st9.rows.length, egress: echoProbe.modelEgress.length }));
 
   const ownerOnlyCard = await drive({
@@ -2069,7 +2608,7 @@ const mirrorConfirms = (st) => (t, row) => {
 
   const approved = await drive({
     clientId: OWN, stream: true,
-    extraBody: { threadId: THREAD, approvedConfirmations: [st.rows[0]?.fingerprint] },
+    extraBody: { threadId: THREAD, approvedConfirmations: [issuedApproval(st.rows[0])] },
     toolCall: { name: "update_client_data", args: { client_id: OWN, updates: { goal: "buy a house" } } },
     ...CONFIRM,
     tablesExtra: { paige_pending_confirmations: st.table },
@@ -2330,7 +2869,7 @@ const mirrorConfirms = (st) => (t, row) => {
   // ── 21.3 On approval the note is filed — tenant stamped, author the REAL person, not Paige.
   const approved = await drive({
     clientId: OWN, stream: true,
-    extraBody: { threadId: THREAD, approvedConfirmations: [st.rows[0]?.fingerprint] },
+    extraBody: { threadId: THREAD, approvedConfirmations: [issuedApproval(st.rows[0])] },
     toolCall: { name: "crm_add_note", args: { contact_id: OWN_CONTACT, body: "Wants to close before year end." } },
     ...CONFIRM,
     tablesExtra: { paige_pending_confirmations: st.table, ...CRM }, serviceTablesExtra: { ...CRM },
@@ -2423,13 +2962,17 @@ const mirrorConfirms = (st) => (t, row) => {
   const proposed=await drive({...base,toolCall:{name:"n8n_create_workflow",args:sdk}});
   const acquired=r=>r.rec.rpc.filter(c=>c.name==="n8n_oauth_service"&&c.args._operation==="acquire");
   assert("22.1 n8n never acquires provider credentials before the approval card",acquired(proposed).length===0&&st.rows.length===1);
-  const approved=await drive({...base,extraBody:{threadId:THREAD,approvedConfirmations:[st.rows[0].fingerprint]},toolCall:{name:"n8n_create_workflow",args:{...sdk,code:"",confirm:true}}});
+  const approved=await drive({...base,extraBody:{threadId:THREAD,approvedConfirmations:[issuedApproval(st.rows[0])]},toolCall:{name:"n8n_create_workflow",args:{...sdk,code:"",confirm:true}}});
   assert("22.2 Solo owner without global CRM roles reaches real n8n adapter after clicked card",acquired(approved).length===1);
   assert("22.3 real adapter validates stored SDK code instead of model's invalid replacement",acquired(approved)[0]?.args._input.session_id===SESSION&&acquired(approved)[0]?.args._input.tenant_id===CALLER_TENANT);
   const audit=approved.rec.inserts.find(i=>i.table==="paige_audit_log"&&i.row.action==="n8n_create_workflow")?.row;
   assert("22.4 refused n8n adapter result is audited as failed with safe reason",audit?.payload.outcome==="failed"&&audit?.payload.error==="forbidden",JSON.stringify(audit));
+  // The n8n tools report in `ok`, and refuse before writing unless they say outcome_unknown: the
+  // card reads that as didn't run. Read as any other tool, the same answer would be couldn't confirm.
+  const n8nOutcome=approved.bodyText.split("\n").filter(l=>l.startsWith("data: ")&&l!=="data: [DONE]").map(l=>{try{return JSON.parse(l.slice(6))}catch{return null}}).find(f=>f&&f.paige_approval_outcome)?.paige_approval_outcome;
+  assert("22.4b the card reports an approved n8n change the adapter refused as didn't run",JSON.stringify(n8nOutcome)===JSON.stringify({actions:[{fingerprint:issuedApproval(st.rows[0]),outcome:"not_run"}],note:"It didn't go through."}),JSON.stringify(n8nOutcome));
   assert("22.5 audit excludes SDK code and provider input",!JSON.stringify(audit).includes("export default")&&!JSON.stringify(audit).includes("Owner approved design"));
-  const replay=await drive({...base,extraBody:{threadId:THREAD,approvedConfirmations:[st.rows[0].fingerprint]},toolCall:{name:"n8n_create_workflow",args:{...sdk,code:"",confirm:true}}});
+  const replay=await drive({...base,extraBody:{threadId:THREAD,approvedConfirmations:[issuedApproval(st.rows[0])]},toolCall:{name:"n8n_create_workflow",args:{...sdk,code:"",confirm:true}}});
   assert("22.6 clicked n8n approval cannot acquire again on replay",acquired(replay).length===0);
   const clientSeat=await drive({...base,rpcOverrides:{...base.rpcOverrides,get_actor_access:{data:{tier:"client"},error:null}},toolCall:{name:"n8n_list_workflows",args:{}}});
   assert("22.7 client portal seat never reaches n8n owner adapter",acquired(clientSeat).length===0);
@@ -2449,27 +2992,27 @@ console.log('\n23. canonical server-issued proposal integrity');
  assert('23.1 issuance is marked and performed by service',!!issued?.server_issued_at && first.rec.from.some(x=>x.table==='paige_pending_confirmations'&&x.op==='insert'&&x.client==='service'));
  if(issued){
   const untrusted=makeConfirmStore([{...issued,server_issued_at:null,consumed:false}]);
-  const refused=await run(untrusted,{extraBody:{threadId:THREAD,approvedConfirmations:[issued.fingerprint]},toolCall:{name:'update_client_data',args:{...args,updates:{goal:'DRIFT'}}}});
+  const refused=await run(untrusted,{extraBody:{threadId:THREAD,approvedConfirmations:[issuedApproval(issued)]},toolCall:{name:'update_client_data',args:{...args,updates:{goal:'DRIFT'}}}});
   assert('23.2 unmarked submitted proposal cannot recover or execute',writes(refused).length===0&&!untrusted.rows[0].consumed);
   assert('23.3 same-fingerprint trusted reproposal leaves legacy record intact',untrusted.rows.length===2&&untrusted.rows[0].server_issued_at===null&&!!untrusted.rows[1].server_issued_at);
   // Exact original args produces the same fingerprint; the old record must not block it.
   const old=makeConfirmStore([{...issued,server_issued_at:null,consumed:false}]);await run(old);
-  assert('23.3b untrusted live uniqueness does not block same-call reissue',old.rows.length===2&&old.rows[0].fingerprint===old.rows[1].fingerprint);
-  const success=await run(old,{extraBody:{threadId:THREAD,approvedConfirmations:[issued.fingerprint]}});
+  assert('23.3b approval-path hardening',old.rows.length===2&&old.rows[0].fingerprint===old.rows[1].fingerprint&&old.rows[0].issued_in_request!==old.rows[1].issued_in_request&&!!old.rows[1].server_issued_at);
+  const success=await run(old,{extraBody:{threadId:THREAD,approvedConfirmations:[issuedApproval(old.rows[1])]}});
   assert('23.4 trusted replacement executes stored args once',writes(success).length===1&&writes(success)[0].body.includes('EXACT-STORED-INTEGRITY')&&!old.rows[0].consumed&&old.rows[1].consumed);
-  const replay=await run(old,{extraBody:{threadId:THREAD,approvedConfirmations:[issued.fingerprint]}});
+  const replay=await run(old,{extraBody:{threadId:THREAD,approvedConfirmations:[issuedApproval(old.rows[1])]}});
   assert('23.5 replacement cannot replay',writes(replay).length===0);
   for(const key of ['user_id','tenant_id','thread_id','scoped_client_id','tool_name','expires_at','issued_in_request','server_issued_at']){
-   const st=makeConfirmStore([{...issued,consumed:false}]);const table=st.table;let raced=false;
-   st.table=filters=>{const result=table(filters);if(!raced&&filters.some(x=>x[0]==='select'&&x[1]==='id')){raced=true;st.rows[0][key]=key==='server_issued_at'?null:key==='expires_at'?'2000-01-01T00:00:00Z':key==='issued_in_request'?filters.find(x=>x[0]==='neq'&&x[1]===key)?.[2]:FOREIGN;}return result;};
-   const r=await run(st,{toolCall:{name:'update_client_data',args:{...args,confirm:true,updates:{goal:'drifted fallback'}}}});
-   assert('23.6 final CAS repeats '+key,raced&&writes(r).length===0&&!st.rows[0].consumed);
-   const cas=r.rec.from.find(x=>x.table==='paige_pending_confirmations'&&x.op==='update'&&x.filters.some(f=>f[0]==='eq'&&f[1]==='id'));
+   const st=makeConfirmStore([{...issued,consumed:false}]);const table=st.table;let raced=false;let claimRows=null;
+   st.table=filters=>{const claim=!raced&&filters.some(x=>x[0]==='update')&&filters.some(x=>x[0]==='eq'&&x[1]==='issued_in_request');if(claim){raced=true;st.rows[0][key]=key==='server_issued_at'?null:key==='expires_at'?'2000-01-01T00:00:00Z':FOREIGN;}const result=table(filters);if(claim)claimRows=result.length;return result;};
+   const r=await run(st,{extraBody:{threadId:THREAD,approvedConfirmations:[issuedApproval(issued)]},toolCall:{name:'update_client_data',args:{...args,confirm:true,updates:{goal:'changed-value'}}}});
+   assert('23.6 final CAS repeats '+key,raced&&claimRows===0&&writes(r).length===0&&(key==='expires_at'||!st.rows[0].consumed));
+   const cas=r.rec.from.find(x=>x.table==='paige_pending_confirmations'&&x.op==='update'&&x.filters.some(f=>f[0]==='eq'&&f[1]==='issued_in_request'));
    assert('23.6b final CAS actually reached '+key,!!cas&&cas.client==='service');
   }
   for(const [key,value] of [['user_id',FOREIGN],['tenant_id',OTHER_TENANT],['thread_id',FOREIGN],['scoped_client_id',FOREIGN]]){
    const st=makeConfirmStore([{...issued,consumed:false},{...issued,id:'foreign-row',consumed:false,[key]:value}]);
-   await run(st,{extraBody:{threadId:THREAD,declinedConfirmations:[issued.fingerprint]},toolCall:null,text:'Do not run it.'});
+   await run(st,{extraBody:{threadId:THREAD,declinedConfirmations:[issuedApproval(issued)]},toolCall:null,text:'Do not run it.'});
    assert('23.7 cancellation scopes '+key,st.rows[0].consumed&&!st.rows[1].consumed);
   }
  }
@@ -2509,15 +3052,15 @@ console.log('\n24. proposal authority requires proven current scope and durable 
  for(const operation of ['issue','claim','recover','cancel']){
  const st=makeConfirmStore(operation==='issue'?[]:[{...issued,consumed:false}]);let n=0;
  const resolver=()=>rpc([++n===1?tenant:{tenant_id:OTHER_TENANT}]);
- const body={threadId:THREAD,...(operation==='claim'||operation==='recover'?{approvedConfirmations:[issued.fingerprint]}:{}),...(operation==='cancel'?{declinedConfirmations:[issued.fingerprint]}:{})};
+ const body={threadId:THREAD,...(operation==='claim'||operation==='recover'?{approvedConfirmations:[issuedApproval(issued)]}:{}),...(operation==='cancel'?{declinedConfirmations:[issuedApproval(issued)]}:{})};
  const r=await run(st,resolver,{extraBody:body,toolCall:{name:'update_client_data',args:operation==='recover'?{updates:{goal:'DRIFT'},confirm:true}:args}});
  assert('24.4 fresh scope mismatch stops '+operation,n>1&&writes(r).length===0&&pending(r).length===0&&(operation==='issue'?st.rows.length===0:!st.rows[0].consumed));
  }
  for(const mode of ['confirm','auto']){
  const st=makeConfirmStore([{...issued,consumed:false}]);let cancelled=false;
- const failure=({filters})=>{if(filters.some(x=>x[0]==='in'&&x[1]==='fingerprint')){cancelled=true;return {code:'57014',message:'cancel write failed'};}return null;};
- const r=await run(st,()=>rpc([tenant]),{extraBody:{threadId:THREAD,approvedConfirmations:[issued.fingerprint],declinedConfirmations:[issued.fingerprint]},toolCall:{name:'update_client_data',args:{...args,confirm:true}},rpcOverrides:{get_paige_persona_context:()=>rpc([tenant]),resolve_tool_autonomy:rpc(mode),get_actor_access:rpc({tier:'tenant'})},tableErrorsExtra:{'paige_pending_confirmations:update':failure}});
- assert('24.5 failed cancellation blocks claim reproposal and '+mode+' mutation',cancelled&&writes(r).length===0&&!st.rows[0].consumed&&!pending(r).some(x=>x.op==='insert'||(x.op==='update'&&!x.filters.some(f=>f[0]==='in'))));
+ const failure=({filters})=>{if(filters.some(x=>x[0]==='eq'&&x[1]==='issued_in_request')){cancelled=true;return {code:'57014',message:'cancel write failed'};}return null;};
+ const r=await run(st,()=>rpc([tenant]),{extraBody:{threadId:THREAD,approvedConfirmations:[issuedApproval(issued)],declinedConfirmations:[issuedApproval(issued)]},toolCall:{name:'update_client_data',args:{...args,confirm:true}},rpcOverrides:{get_paige_persona_context:()=>rpc([tenant]),resolve_tool_autonomy:rpc(mode),get_actor_access:rpc({tier:'tenant'})},tableErrorsExtra:{'paige_pending_confirmations:update':failure}});
+ assert('24.5 failed cancellation blocks claim reproposal and '+mode+' mutation',cancelled&&writes(r).length===0&&!st.rows[0].consumed&&pending(r).filter(x=>x.op==='update').length===1&&!pending(r).some(x=>x.op==='insert'));
  }
  }
 }
@@ -2527,7 +3070,7 @@ console.log('\n24. proposal authority requires proven current scope and durable 
  await drive({...base,tablesExtra:{paige_pending_confirmations:st.table},onInsert:mirrorConfirms(st)});
  if(st.rows[0])for(const op of ['claim','recover','cancel']){
  const store=makeConfirmStore([{...st.rows[0],consumed:false}]);
- const r=await drive({...base,rpcOverrides:{...base.rpcOverrides,get_paige_persona_context:{data:null,error:{message:'scope failed'}}},extraBody:{threadId:THREAD,...(op==='cancel'?{declinedConfirmations:[st.rows[0].fingerprint]}:{approvedConfirmations:[st.rows[0].fingerprint]})},toolCall:{name:'update_client_data',args:op==='recover'?{updates:{goal:'drift'},confirm:true}:args},tablesExtra:{paige_pending_confirmations:store.table},onInsert:mirrorConfirms(store)});
+ const r=await drive({...base,rpcOverrides:{...base.rpcOverrides,get_paige_persona_context:{data:null,error:{message:'scope failed'}}},extraBody:{threadId:THREAD,...(op==='cancel'?{declinedConfirmations:[issuedApproval(st.rows[0])]}:{approvedConfirmations:[issuedApproval(st.rows[0])]})},toolCall:{name:'update_client_data',args:op==='recover'?{updates:{goal:'drift'},confirm:true}:args},tablesExtra:{paige_pending_confirmations:store.table},onInsert:mirrorConfirms(store)});
  assert('24.6 unknown scope never becomes operator-null '+op,!store.rows[0].consumed&&!r.rec.from.some(x=>x.table==='paige_pending_confirmations')&&!r.outboundCalls.some(x=>x.url.includes('paige-write-back')));
  }
  const read=await drive({stream:true,extraBody:{threadId:THREAD,declinedConfirmations:['1234567890abcdef']},toolCall:{name:'pipeline_catalogue',args:{}},rpcOverrides:{get_paige_persona_context:{data:[{tenant_id:CALLER_TENANT}],error:null},get_actor_access:{data:{tier:'tenant'},error:null},get_pipeline_catalogue:{data:{items:[]},error:null}},tablesExtra:{user_roles:()=>[{role:'admin'}]},tableErrorsExtra:{'paige_pending_confirmations:update':{code:'57014',message:'cancel failed'}}});
@@ -2536,10 +3079,9 @@ console.log('\n24. proposal authority requires proven current scope and durable 
 // ── 25. THE COMMS / CRM TOOL GATE — Super Admin admitted, platform_admin NOT, others unchanged ──
 //
 // `paige-ai-chat` gates the eight `comms_*` tools (with the CRM operator tools) on
-// `roles.includes("admin") || roles.includes("coach")`. A God-tier Super Admin's `user_roles`
-// row is `super_admin` — neither — so every comms tool refused with "restricted to admins and
-// coaches". Slice B admits super_admin WITHOUT widening to `platform_admin` (a distinct role
-// string) or any tenant role. These drive the REAL handler.
+// `roles.includes("admin") || roles.includes("super_admin")`. Slice B admitted super_admin WITHOUT
+// widening to `platform_admin` (a distinct role string) or any tenant role; the retired coach role
+// was then removed from the gate (coach removal, slice 1b). These drive the REAL handler.
 //
 // Observables: an ADMITTED `comms_connection_summary` (acting INSIDE a tenant) reaches its
 // readiness RPC (`tenant_comms_readiness` in rec.rpc); a DENIED one never does and the gate refusal
@@ -2549,7 +3091,7 @@ console.log('\n24. proposal authority requires proven current scope and durable 
 // documented `tenant_not_resolved`, never an opaque "Unknown error" from the readiness RAISE.
 console.log("\ncomms/CRM tool gate — Super Admin admitted, platform_admin denied, no widening");
 {
-  const GATE_REFUSAL = "restricted to admins and coaches";
+  const GATE_REFUSAL = "restricted to admins";
   const COMMS_THREAD = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
   const commsRpcs = {
     // Clear the EARLIER client-seat gate (:7532) so the ROLE gate (:8888) — the thing Slice B
@@ -2587,8 +3129,8 @@ console.log("\ncomms/CRM tool gate — Super Admin admitted, platform_admin deni
   assert("25.3 a tenant admin is still admitted (unchanged)",
     readinessRan(admin) && !refused(admin), JSON.stringify({ readiness: readinessRan(admin), refused: refused(admin) }));
   const coach = await driveGate("coach");
-  assert("25.4 a coach is still admitted (unchanged)",
-    readinessRan(coach) && !refused(coach), JSON.stringify({ readiness: readinessRan(coach), refused: refused(coach) }));
+  assert("25.4 the retired coach role is denied",
+    !readinessRan(coach) && refused(coach), JSON.stringify({ readiness: readinessRan(coach), refused: refused(coach) }));
 
   const member = await driveGate("member");
   assert("25.5 a tenant member is denied", !readinessRan(member) && refused(member),
@@ -2643,6 +3185,1157 @@ console.log("\ncomms/CRM tool gate — Super Admin admitted, platform_admin deni
       !readinessRan(r) && egressHas(r, "tenant_not_resolved") && !egressHas(r, "Unknown error"),
       JSON.stringify({ readiness: readinessRan(r), tenant_not_resolved: egressHas(r, "tenant_not_resolved"), unknown_error: egressHas(r, "Unknown error") }));
   }
+}
+
+console.log("\nsigned Live runtime admission (real handler and real signed challenge)");
+{
+  const { createLiveRuntimeProof, liveRuntimeDigest, sameLiveRuntimeScope } = await import("../../supabase/functions/_shared/paige-live-runtime-proof.ts");
+  const proof = createLiveRuntimeProof(LIVE_TEST_SIGNING_KEY);
+  const threadId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+  const sessionId = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+  const transcript = "Check my communication connection status.";
+  const scope = { sessionId, tenantId: CALLER_TENANT, actorId: USER, threadId, epoch: "test-epoch", turnId: "test-turn" };
+  const historyMarker = "Earlier authenticated conversation about this workspace.";
+  const liveDrive = async ({ authority = { data: true, error: null }, scopeOverride = {}, bodyOverride = {} } = {}) => {
+    const issued = await proof.issue({ ...scope, ...scopeOverride }, transcript);
+    const session = { id: sessionId, tenant_id: issued.scope.tenantId, actor_user_id: issued.scope.actorId,
+      thread_id: threadId, context_epoch: issued.scope.epoch, availability: "LIVE", state: "thinking",
+      provider_session_ref: `runtime:${await liveRuntimeDigest(issued.token)}` };
+    let claims = 0;
+    const initialRef = session.provider_session_ref;
+    const matches = (row, filters) => filters.every(([op, key, value]) =>
+      op === "eq" ? row[key] === value : op === "in" ? value.includes(row[key]) : true);
+    const result = await drive({
+      text: transcript, stream: true,
+      extraBody: { threadId, liveRuntimeChallenge: issued.token, ...bodyOverride },
+      toolCall: { name: "comms_connection_summary", args: {} },
+      rpcOverrides: {
+        paige_live_pilot_authorized_internal: authority,
+        get_actor_access: { data: { tier: "tenant" }, error: null },
+        get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: "T", playbook_config: null,
+          playbook_slug: null, funding_enabled: false, brand: null }], error: null },
+        tenant_comms_readiness: { data: { can_send_sms: false, blocked_reason: null, number: "absent", number_e164: null, a2p: "absent" }, error: null },
+        list_tool_autonomy: { data: [], error: null },
+      },
+      tablesExtra: {
+        user_roles: () => [{ role: "admin" }],
+        paige_chat_threads: (filters) => {
+          const row = { id: threadId, tenant_id: CALLER_TENANT, caller_user_id: USER, contact_id: null };
+          return matches(row, filters) ? [row] : [];
+        },
+        paige_chat_turns: () => [{ role: "user", content: historyMarker, seq: 1 }],
+      },
+      serviceTablesExtra: {
+        paige_live_tenant_availability: (filters) => {
+          const row = { tenant_id: CALLER_TENANT, enabled: true };
+          return matches(row, filters) ? [row] : [];
+        },
+        paige_live_sessions: (filters) => {
+          if (!matches(session, filters)) return [];
+          const update = filters.find(([op]) => op === "update")?.[1];
+          if (update) { claims += 1; Object.assign(session, update); }
+          return [{ ...session }];
+        },
+      },
+    });
+    return { ...result, claims, session, initialRef, issued };
+  };
+  const authorized = await liveDrive();
+  const authorityCalls = (r) => r.rec.rpc.filter((c) => c.name === "paige_live_pilot_authorized_internal");
+  assert("26.1 literal true admits the signed Live request and consumes its challenge once",
+    authorized.status === 200 && authorized.claims === 1 && authorized.session.provider_session_ref === null,
+    JSON.stringify({ status: authorized.status, claims: authorized.claims, logged: authorized.logged }));
+  assert("26.2 authorization uses the authenticated actor and canonical tenant on the service boundary",
+    authorityCalls(authorized).length === 1 && authorityCalls(authorized).every((c) => c.client === "service" &&
+      c.args._actor_user_id === USER && c.args._tenant_id === CALLER_TENANT), JSON.stringify(authorityCalls(authorized)));
+  assert("26.3 admitted Live reads stored history, reaches the model, and executes the read tool",
+    authorized.rec.from.some((c) => c.table === "paige_chat_turns") &&
+      authorized.modelEgress.some((body) => body.includes(historyMarker)) &&
+      authorized.rec.rpc.some((c) => c.name === "tenant_comms_readiness"), JSON.stringify(authorized.logged));
+  const tokens = authorized.bodyText.split("\n").flatMap((line) => {
+    if (!line.startsWith("data: ")) return [];
+    try { const value = JSON.parse(line.slice(6)); return value.paige_live_output ? [value.paige_live_output] : []; } catch { return []; }
+  });
+  const output = await Promise.all(tokens.map((token) => proof.readOutput(token)));
+  assert("26.4 admitted response carries valid signed output through completion for the issued scope",
+    output.some((frame) => frame?.kind === "done") && output.every((frame) => frame && sameLiveRuntimeScope(frame.scope, authorized.issued.scope)),
+    JSON.stringify({ status: authorized.status, outputKinds: output.map((frame) => frame?.kind), logged: authorized.logged }));
+
+  for (const [name, options, reachesAuthority] of [
+    ["false authorization", { authority: { data: false, error: null } }, true],
+    ["missing authorization", { authority: { data: null, error: null } }, true],
+    ["errored authorization even with true data", { authority: { data: true, error: { message: "unavailable" } } }, true],
+    ["nonboolean authorization", { authority: { data: "true", error: null } }, true],
+    ["another signed actor", { scopeOverride: { actorId: FOREIGN } }, false],
+    ["another signed tenant", { scopeOverride: { tenantId: OTHER_TENANT } }, false],
+    ["body-supplied identity cannot override authorization", { authority: { data: false, error: null },
+      bodyOverride: { actorId: FOREIGN, user_id: FOREIGN, tenantId: OTHER_TENANT, tenant_id: OTHER_TENANT } }, true],
+  ]) {
+    const denied = await liveDrive(options);
+    assert(`26 ${name}: refuses`, denied.status === 403 && denied.bodyText === '{"error":"live_runtime_unavailable"}', denied.bodyText);
+    assert(`26 ${name}: no challenge consumption or session update`, denied.claims === 0 &&
+      denied.session.provider_session_ref === denied.initialRef &&
+      !denied.rec.inserts.some((c) => c.table === "paige_live_sessions"));
+    assert(`26 ${name}: no history, memory, model, tools, or downstream writes`,
+      !denied.rec.from.some((c) => ["paige_chat_turns", "client_memory"].includes(c.table)) &&
+      denied.rec.inserts.length === 0 && denied.modelEgress.length === 0 && denied.embeds === 0 &&
+      denied.outboundCalls.length === 0 && denied.rec.functions.length === 0 &&
+      !denied.rec.rpc.some((c) => ["tenant_comms_readiness", "match_paige_memory"].includes(c.name)));
+    assert(`26 ${name}: canonical authority boundary`, reachesAuthority
+      ? authorityCalls(denied).length === 1 && authorityCalls(denied).every((c) =>
+        c.args._actor_user_id === USER && c.args._tenant_id === CALLER_TENANT && c.client === "service")
+      : authorityCalls(denied).length === 0, JSON.stringify(authorityCalls(denied)));
+  }
+}
+
+// ── 27. PAIGE HEARS ROLE AND TITLE AS TWO LABELLED FACTS ─────────────────────────────────────
+//
+// Owner ruling, 2026-09-26: roles authorize, titles describe. The platform role answers "can they?"
+// and the title answers "who are they and what do they do?". Both reach her on every person, under
+// their own keys, and neither is allowed to pass for the other: a title that reads like an access
+// word ("Admin") stays a title, and a legacy seat ("coach") is reported exactly as the server holds
+// it. These read the block's own JSON, parsed out of the request she was sent — not a loose match.
+console.log("\nteam context — platform role and title reach her as two labelled facts");
+{
+  const THREAD = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+  const HEAD = "TEAM CONTEXT — REFERENCE DATA ONLY", END = "END TEAM CONTEXT";
+  // The word is read from its one home, so a switch to the alternative on record ("customized
+  // role") moves this section with it. No fallback: a missing or broken module fails loudly here.
+  const { TITLE_WORD: TITLE } = await import("../../supabase/functions/_shared/team-vocabulary.ts");
+  const seat = (user_id, name, permission, job_title) => ({
+    user_id, name, email: `${name.split(" ")[0].toLowerCase()}@example.test`, permission, job_title, responsibilities: null,
+  });
+  const FOUNDER = seat(USER, "Quinn Ellis", "owner", "Founder");
+  const TRAINER = seat("e1e1e1e1-e1e1-4e1e-8e1e-e1e1e1e1e1e1", "Rowan Park", "member", "Head Trainer");
+  const UNTITLED = seat("e2e2e2e2-e2e2-4e2e-8e2e-e2e2e2e2e2e2", "Casey Lin", "admin", null);
+  const LOOKALIKE = seat("e3e3e3e3-e3e3-4e3e-8e3e-e3e3e3e3e3e3", "Jordan Diaz", "member", "Admin");
+  const LEGACY = seat("e4e4e4e4-e4e4-4e4e-8e4e-e4e4e4e4e4e4", "Morgan Hale", "coach", "Coach");
+  const INVITE = {
+    id: "e5e5e5e5-e5e5-4e5e-8e5e-e5e5e5e5e5e5", email: "desk@example.test", permission: "member",
+    status: "pending", job_title: "Front Desk", responsibilities: null,
+    created_at: "2026-09-20T10:00:00Z", expires_at: "2026-10-04T10:00:00Z",
+  };
+  const people = [FOUNDER, TRAINER, UNTITLED, LOOKALIKE, LEGACY];
+  const TEAM = {
+    tenant_id: CALLER_TENANT, tenant_name: "T", speaker: FOUNDER,
+    member_count: people.length, truncated: false, members: people,
+    invitation_count: 1, invitations_truncated: false, invitations: [INVITE],
+  };
+  const teamTurn = (payload) => drive({
+    stream: true, extraBody: { threadId: THREAD },
+    rpcOverrides: {
+      get_actor_access: { data: { tier: "tenant" }, error: null },
+      get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: "T", playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null },
+      get_paige_team_context: { data: payload, error: null },
+    },
+  });
+  // Every string in every request body, found by PARSING the body, then each block cut at its own
+  // markers. The block's data is the single JSON line directly above END; the rest is her guidance.
+  const strings = (v) => (typeof v === "string" ? [v] : v && typeof v === "object" ? Object.values(v).flatMap(strings) : []);
+  const blocksIn = (r) => r.modelEgress
+    .flatMap((body) => { try { return strings(JSON.parse(body)); } catch { return []; } })
+    .flatMap((s) => {
+      const found = [];
+      for (let at = s.indexOf(HEAD); at !== -1; at = s.indexOf(HEAD, at + HEAD.length)) {
+        const end = s.indexOf(END, at);
+        if (end !== -1) found.push(s.slice(at, end).trimEnd());
+      }
+      return found;
+    });
+  const dataOf = (block) => { try { return JSON.parse(block.split("\n").pop()); } catch { return null; } };
+  const guidanceOf = (block) => block.split("\n").slice(0, -1).join("\n");
+  const has = (o, k) => !!o && typeof o === "object" && Object.prototype.hasOwnProperty.call(o, k);
+  const teamRead = (r) => r.rec.rpc.some((c) => c.name === "get_paige_team_context");
+
+  const turn = await teamTurn(TEAM);
+  const blocks = blocksIn(turn);
+  const team = blocks.length ? dataOf(blocks[0]) : null;
+  const entry = (id) => team?.confirmed_active_members?.find((m) => m?.user_id === id) ?? null;
+
+  assert("27.0 the team read is actually made and its block reaches the turn (guards this section)",
+    teamRead(turn) && blocks.length > 0 && !!team,
+    JSON.stringify({ read: teamRead(turn), blocks: blocks.length, parsed: !!team }));
+
+  // ── 27.1 TWO LAYERS, ONE ENTRY. Kills: folding the title into the role (or the reverse), dropping
+  // either key, or attaching one person's title to another person's entry.
+  const misread = people.filter((p) => {
+    const e = entry(p.user_id);
+    return !(has(e, "platform_role") && has(e, TITLE) && e.platform_role === p.permission && e[TITLE] === p.job_title);
+  });
+  const speaker = team?.speaker ?? null;
+  assert("27.1 every person's platform_role and title reach the turn as separate keys on the same entry",
+    !!team && misread.length === 0 && has(speaker, "platform_role") && has(speaker, TITLE)
+      && speaker.platform_role === "owner" && speaker[TITLE] === "Founder",
+    JSON.stringify({ misread: misread.map((p) => ({ sent: [p.permission, p.job_title], got: entry(p.user_id) })), speaker }));
+
+  // ── 27.2 An unset title is still a fact she is handed. Kills: omitting the key when it is empty,
+  // which leaves her to guess whether the person has no title or the title was never sent.
+  const untitled = entry(UNTITLED.user_id);
+  assert("27.2 an admin with no title still carries the title key, as null — both layers always reach her",
+    has(untitled, TITLE) && untitled[TITLE] === null && untitled.platform_role === "admin",
+    JSON.stringify(untitled));
+
+  // ── 27.3 A title spelled like an access level grants nothing. Kills: reading "Admin" as the role.
+  const lookalike = entry(LOOKALIKE.user_id);
+  assert("27.3 a title that reads like an access word stays a title: \"Admin\" is still a member",
+    lookalike?.platform_role === "member" && lookalike?.[TITLE] === "Admin",
+    JSON.stringify(lookalike));
+
+  // ── 27.4 The role is reported as enforced, never tidied. Kills: mapping a legacy value onto the
+  // current three, or moving it into the title because it reads like a job. The cases differ on
+  // purpose, so a copy in either direction shows.
+  const legacy = entry(LEGACY.user_id);
+  assert("27.4 a legacy seat reports platform_role \"coach\" exactly as enforced, and its title separately",
+    legacy?.platform_role === "coach" && legacy?.[TITLE] === "Coach",
+    JSON.stringify(legacy));
+
+  const invite = team?.team_invitations?.find((i) => i?.invitation_id === INVITE.id) ?? null;
+  assert("27.5 an invitation carries proposed_platform_role and its title as separate keys",
+    has(invite, "proposed_platform_role") && has(invite, TITLE) && invite.proposed_platform_role === "member"
+      && invite[TITLE] === "Front Desk" && invite.invitation_status === "pending",
+    JSON.stringify(invite));
+
+  // ── 27.6 The guidance, not the data: a tenant-authored string in the JSON cannot satisfy this.
+  const guidance = blocks.length ? guidanceOf(blocks[0]) : "";
+  assert("27.6 she is told a title never decides access, and to ask once when an instruction could mean either",
+    guidance.includes("never decides access") && guidance.includes("ask once"),
+    JSON.stringify({ neverDecidesAccess: guidance.includes("never decides access"), askOnce: guidance.includes("ask once") }));
+
+  // ── 27.7 ONE VOCABULARY. Kills: a half-renamed block, where the prose says one word and the data
+  // another, or where an old key survives beside its replacement.
+  const stale = blocks.flatMap((b) => b.match(/\b(?:enforced_permission|proposed_permission|job_title)\b/g) ?? []);
+  assert("27.7 the old keys enforced_permission / proposed_permission / job_title are gone from the block",
+    blocks.length > 0 && stale.length === 0,
+    JSON.stringify(blocks.length ? [...new Set(stale)] : "no block to inspect"));
+
+  // ── 27.8 FAIL CLOSED. A payload for another tenant renders nothing, not a partial block. The read
+  // and the model call are both required, so an absent block cannot pass by the turn never running.
+  const foreign = await teamTurn({ ...TEAM, tenant_id: OTHER_TENANT });
+  const leaked = foreign.modelEgress.some((b) => b.includes(HEAD) || b.includes("Head Trainer")) || blocksIn(foreign).length > 0;
+  assert("27.8 a team payload for ANOTHER tenant produces no team block at all",
+    teamRead(foreign) && foreign.modelEgress.length > 0 && !leaked,
+    JSON.stringify({ read: teamRead(foreign), egress: foreign.modelEgress.length, leaked }));
+}
+
+// ── 28. THE TEAM TOOLS AND THE CARD A PERSON APPROVES SAY "TITLE" ─────────────────────────────
+//
+// Owner ruling: owner, admin and member are the only roles; everything else people call each other
+// is a title, and the word is "title", not "job title" or "customized role". Section 27 proves the
+// block PAIGE reads. This proves the rest of what reaches a person or steers her: the card the owner
+// approves before a title is saved, the team tools' descriptions, and what the executed tools hand
+// back to her. The word is read from its one home, so these move with it.
+console.log("\nteam tools — the approval card, the tool descriptions and the results say title");
+{
+  const { TITLE_WORD: TITLE } = await import("../../supabase/functions/_shared/team-vocabulary.ts");
+  const THREAD = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+  const MEMBER = "e6e6e6e6-e6e6-4e6e-8e6e-e6e6e6e6e6e6";
+  const ROSTER = {
+    tenant_id: CALLER_TENANT, tenant_name: "T", viewer_permission: "owner",
+    members: [{ user_id: MEMBER, full_name: "Rowan Park", email: "rowan@example.test", permission: "member",
+      is_owner: false, job_title: "Trainer", responsibilities: "Mornings" }],
+    invitations: [],
+  };
+  const frames = (r) => r.bodyText.split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
+    .map((l) => { try { return JSON.parse(l.slice(6)); } catch { return null; } }).filter(Boolean);
+  const cardOf = (r) => frames(r).find((f) => f.paige_confirm)?.paige_confirm;
+  // What an executed tool handed back to her: the tool-result strings in the follow-up request,
+  // found by parsing, never by matching the whole request (which also carries the call's own
+  // arguments, whose key is job_title on purpose, and other tools' descriptions).
+  const strings = (v) => (typeof v === "string" ? [v] : v && typeof v === "object" ? Object.values(v).flatMap(strings) : []);
+  const toolResults = (r) => r.modelEgress
+    .flatMap((b) => { try { return strings(JSON.parse(b)); } catch { return []; } })
+    .flatMap((str) => { try { const v = JSON.parse(str); return v && typeof v === "object" && v.success === true ? [v] : []; } catch { return []; } });
+  // The persona resolves this workspace, so the card names the person (the card an owner normally
+  // sees) and the team seam's workspace check passes. Without it every card reads "that teammate".
+  const TEAM_RPC = {
+    resolve_tool_autonomy: { data: "confirm", error: null },
+    get_actor_access: { data: { tier: "tenant" }, error: null },
+    get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: "T", playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null },
+    get_solo_team_workspace: { data: ROSTER, error: null },
+    set_solo_team_member_work_profile: { data: { job_title: "Head Trainer", responsibilities: "Runs the morning classes" }, error: null },
+    set_solo_team_member_permission: { data: null, error: null },
+  };
+  const teamDrive = (store, name, args, body = {}) => drive({
+    stream: true, extraBody: { threadId: THREAD, ...body },
+    toolCall: { name, args: { member_user_id: MEMBER, ...args } },
+    rpcOverrides: TEAM_RPC,
+    tablesExtra: { paige_pending_confirmations: store.table, user_roles: [{ role: "admin" }] },
+    onInsert: mirrorConfirms(store),
+  });
+
+  const titledStore = makeConfirmStore();
+  const titled = await teamDrive(titledStore, "team_set_work_profile", { job_title: "Head Trainer", responsibilities: "Runs the morning classes" });
+  const titledCard = cardOf(titled);
+  assert(`28.1 the approval card names the person and their new ${TITLE} with the shared word, never "job title"`,
+    titledCard?.tool === "team_set_work_profile"
+      && titledCard.summary.startsWith(`Save work details for Rowan Park (rowan@example.test): ${TITLE} "Head Trainer",`)
+      && !/job title/i.test(titledCard.summary),
+    JSON.stringify(titledCard));
+
+  const cleared = await teamDrive(makeConfirmStore(), "team_set_work_profile", { job_title: "", responsibilities: "Mornings" });
+  const clearedCard = cardOf(cleared);
+  assert(`28.2 clearing it reads "no ${TITLE}" on the named card`,
+    !!clearedCard && clearedCard.summary.startsWith(`Save work details for Rowan Park (rowan@example.test): no ${TITLE},`)
+      && !/job title/i.test(clearedCard.summary),
+    JSON.stringify(clearedCard));
+
+  const longTitle = "A".repeat(130);
+  const longCard = cardOf(await teamDrive(makeConfirmStore(), "team_set_work_profile", { job_title: longTitle, responsibilities: "Mornings" }));
+  assert(`28.3 a ${TITLE} too long to show is marked as cut, never silently shortened`,
+    !!longCard && longCard.summary.includes(`${TITLE} "${"A".repeat(120)}…" (showing the first 120 of 130 characters)`),
+    JSON.stringify(longCard?.summary?.slice(0, 80)));
+
+  // The tool list PAIGE is handed, parsed out of the request body rather than matched loosely.
+  const toolsSent = titled.modelEgress.flatMap((body) => {
+    try { const parsed = JSON.parse(body); return Array.isArray(parsed.tools) ? parsed.tools : []; } catch { return []; }
+  });
+  const tool = (name) => toolsSent.find((t) => (t.name ?? t.function?.name) === name);
+  const descriptionOf = (t) => t?.description ?? t?.function?.description ?? "";
+  const argOf = (t, key) => (t?.input_schema ?? t?.parameters ?? t?.function?.parameters)?.properties?.[key]?.description ?? "";
+  const profileTool = tool("team_set_work_profile");
+  assert(`28.4 the work-details tool she is handed says "${TITLE}" in its description and its argument`,
+    descriptionOf(profileTool).includes(`a teammate's ${TITLE} and/or responsibilities`)
+      && argOf(profileTool, "job_title").startsWith(`Their ${TITLE}, 120 characters`)
+      && !/job title/i.test(descriptionOf(profileTool) + argOf(profileTool, "job_title")),
+    JSON.stringify({ found: !!profileTool, arg: argOf(profileTool, "job_title") }));
+
+  const inviteTool = tool("team_invite_member");
+  assert(`28.5 the invitation tool's argument says "${TITLE}", so she does not echo its key back`,
+    argOf(inviteTool, "job_title").startsWith(`Optional. Their ${TITLE}: what they will be called.`),
+    JSON.stringify({ found: !!inviteTool, arg: argOf(inviteTool, "job_title") }));
+
+  const permissionTool = tool("team_set_permission");
+  assert(`28.6 the permission tool sends a ${TITLE} change to the work-details tool in the product's word`,
+    descriptionOf(permissionTool).includes(`change someone's ${TITLE}, that is team_set_work_profile`)
+      && !/job title|describe someone's job/i.test(descriptionOf(permissionTool)),
+    JSON.stringify({ found: !!permissionTool }));
+
+  // The argument KEY stays job_title on purpose: approvals already queued carry it, and renaming it
+  // would break them for nothing a person sees. The word is the product's; the key is internal.
+  assert("28.7 the argument key stays job_title, so approvals already queued still match",
+    !!(profileTool?.input_schema ?? profileTool?.parameters ?? profileTool?.function?.parameters)?.properties?.job_title,
+    JSON.stringify(Object.keys((profileTool?.input_schema ?? profileTool?.parameters ?? {}).properties ?? {})));
+
+  // Executed, not proposed: approve the card and read what the tool hands back to her.
+  const profileArgs = { job_title: "Head Trainer", responsibilities: "Runs the morning classes" };
+  const saved = await teamDrive(titledStore, "team_set_work_profile", { ...profileArgs, confirm: true },
+    { approvedConfirmations: [titledCard?.fingerprint] });
+  const savedResult = toolResults(saved).find((v) => v.member_user_id === MEMBER && "responsibilities" in v);
+  assert(`28.8 the saved work details come back to her under "${TITLE}", the key the team block uses`,
+    savedResult?.[TITLE] === "Head Trainer" && !("job_title" in savedResult),
+    JSON.stringify(savedResult ?? null));
+
+  const permissionStore = makeConfirmStore();
+  const permissionArgs = { permission: "admin" };
+  const proposedAccess = cardOf(await teamDrive(permissionStore, "team_set_permission", permissionArgs));
+  const changedAccess = await teamDrive(permissionStore, "team_set_permission", { ...permissionArgs, confirm: true },
+    { approvedConfirmations: [proposedAccess?.fingerprint] });
+  const accessResult = toolResults(changedAccess).find((v) => v.member_user_id === MEMBER && v.permission === "admin");
+  assert(`28.9 after an access change she is told their ${TITLE} is untouched, in the shared word`,
+    accessResult?.note === `Access changed. Their ${TITLE} and responsibilities are untouched.`,
+    JSON.stringify({ card: !!proposedAccess, result: accessResult ?? null }));
+}
+
+// ── 29. WHAT SHE SAYS IS READ FOR INTERNAL TEXT, WITH A VOCABULARY TAKEN FROM WHAT SHE WAS SENT ──
+//
+// "Nothing internal reaches a customer" needs a detector that knows what internal IS on that turn,
+// and a harness that can make her say something other than "ok". This drives a real, approved team
+// turn with a scripted reply and reads it with `_shared/internal-vocabulary.ts`, whose vocabulary is
+// derived from the final request the handler sent the model: its tool definitions, its system text
+// and the tool result. Never from the user's own words or the model's own turns.
+//
+// THE HONEST LIMIT, restated where the proof is: this catches known internal vocabulary, not a
+// paraphrase. And today nothing acts on a finding — 29.5 records that a leaky reply still streams
+// unchanged. The slices that hold or rewrite a reply (portal chat, drafts, owner chat) turn 29.5
+// around; this section is the instrument they will be proven with.
+console.log("\ninternal text — the detector reads her reply with a vocabulary derived from what she was sent");
+{
+  const { deriveInternalVocabulary, findInternalLeaks } = await import("../../supabase/functions/_shared/internal-vocabulary.ts");
+  const { buildTenantTeamContextBlock } = await import("../../supabase/functions/_shared/team-context.ts");
+  const THREAD = "abababab-abab-4bab-8bab-abababababab";
+  const MEMBER = "e7e7e7e7-e7e7-4e7e-8e7e-e7e7e7e7e7e7";
+  // A tenant-authored title and responsibilities that LOOK like identifiers, on purpose: the team
+  // block and the roster both carry them, and neither may make them "internal".
+  const seat = (user_id, name, permission, job_title, responsibilities = null) => ({
+    user_id, name, email: `${name.split(" ")[0].toLowerCase()}@example.test`, permission, job_title, responsibilities,
+  });
+  const FOUNDER = seat(USER, "Quinn Ellis", "owner", "Founder");
+  const OPS = seat(MEMBER, "Rowan Park", "member", "ops_lead", "Runs the vip_plan intake");
+  const TEAM = {
+    tenant_id: CALLER_TENANT, tenant_name: "T", speaker: FOUNDER, member_count: 2, truncated: false,
+    members: [FOUNDER, OPS], invitation_count: 0, invitations_truncated: false, invitations: [],
+  };
+  const ROSTER = {
+    tenant_id: CALLER_TENANT, tenant_name: "T", viewer_permission: "owner", invitations: [],
+    members: [{ user_id: MEMBER, full_name: "Rowan Park", email: "rowan@example.test", permission: "member",
+      is_owner: false, job_title: "ops_lead", responsibilities: "Runs the vip_plan intake" }],
+  };
+  const RPC = {
+    resolve_tool_autonomy: { data: "confirm", error: null },
+    get_actor_access: { data: { tier: "tenant" }, error: null },
+    get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: "T", playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null },
+    get_paige_team_context: { data: TEAM, error: null },
+    get_solo_team_workspace: { data: ROSTER, error: null },
+    set_solo_team_member_work_profile: { data: { job_title: "Head Trainer", responsibilities: "Runs the morning classes" }, error: null },
+  };
+  const ARGS = { member_user_id: MEMBER, job_title: "Head Trainer", responsibilities: "Runs the morning classes" };
+  const frames = (r) => r.bodyText.split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
+    .map((l) => { try { return JSON.parse(l.slice(6)); } catch { return null; } }).filter(Boolean);
+  // What the person receives: the streamed answer text, frame by frame, joined.
+  const replyOf = (r) => frames(r).map((f) => f.choices?.[0]?.delta?.content).filter((c) => typeof c === "string").join("");
+  // What the server sent the model on the turn that produced the answer: the LAST request. Keys and
+  // block names come only from text the server VOUCHES it wrote end to end, never from the whole system
+  // prompt, which also carries the tenant's persona. The one block vouched here is the team block,
+  // rebuilt with the real builder from the same fixture and required to appear verbatim in what she was
+  // sent: its prose is platform code and every tenant string in it is a JSON value
+  // (_shared/team-context.ts, buildTenantTeamContextBlock).
+  const TEAM_BLOCK = buildTenantTeamContextBlock(TEAM, CALLER_TENANT);
+  const sentOf = (r) => {
+    const last = (() => { try { return JSON.parse(r.modelEgress.at(-1) ?? "null"); } catch { return null; } })();
+    const system = typeof last?.system === "string" ? [last.system]
+      : Array.isArray(last?.system) ? last.system.map((b) => b?.text ?? "") : [];
+    const toolResults = (last?.messages ?? []).flatMap((m) => Array.isArray(m.content)
+      ? m.content.filter((c) => c?.type === "tool_result")
+        .map((c) => typeof c.content === "string" ? c.content : (c.content ?? []).map((b) => b?.text ?? "").join("\n"))
+      : []);
+    const vouchedTexts = system.some((text) => text.includes(TEAM_BLOCK)) ? [TEAM_BLOCK] : [];
+    return { tools: last?.tools ?? [], vouchedTexts, toolResults, system };
+  };
+
+  // Propose, approve, and let the approved turn end in a scripted answer.
+  const store = makeConfirmStore();
+  const turn = (args, body, replyText) => drive({
+    stream: true, extraBody: { threadId: THREAD, ...body },
+    toolCall: { name: "team_set_work_profile", args }, rpcOverrides: RPC,
+    tablesExtra: { paige_pending_confirmations: store.table, user_roles: [{ role: "admin" }] },
+    onInsert: mirrorConfirms(store), replyText,
+  });
+  const card = frames(await turn(ARGS)).find((f) => f.paige_confirm)?.paige_confirm;
+  const approvedTurn = (replyText) => turn({ ...ARGS, confirm: true }, { approvedConfirmations: [card?.fingerprint] }, replyText);
+
+  // One planted leak per kind that can reach a chat answer, each in the words a leaky model uses.
+  const LEAKY = [
+    "Done — I called team_set_work_profile for Rowan.",
+    "Their platform_role is still member.",
+    "According to my TEAM CONTEXT, Rowan runs mornings.",
+    `Saved to record ${MEMBER}.`,
+    'If it fails you may see: new row violates row-level security policy for table "tenant_members".',
+    "That setting lives in MMA OS.",
+  ].join(" ");
+  const CLEAN = [
+    "Done — Rowan Park is now your Head Trainer, and still runs the vip_plan intake as ops_lead.",
+    "Reach them at rowan@example.test or (415) 555-0132.",
+    `Their booking page: https://book.example.test/s/${MEMBER}/intro_call`,
+    "You have 3 clients and 5 tasks today; your team context is two trainers and a front desk.",
+    "Their title describes the work; their access is member, and only you can change it.",
+  ].join(" ");
+
+  const leaky = await approvedTurn(LEAKY);
+  const sent = sentOf(leaky);
+  const vocabulary = deriveInternalVocabulary(sent);
+  const leakyReply = replyOf(leaky);
+
+  assert("29.0 the approved turn ran, the scripted answer reached the person verbatim, and the vocabulary came from the real request (guards this section)",
+    !!card?.fingerprint && leakyReply === LEAKY && sent.vouchedTexts.length === 1
+      && sent.toolResults.some((t) => t.includes('"member_user_id"'))
+      && vocabulary.toolNames.has("team_set_work_profile") && vocabulary.keys.has("platform_role")
+      && vocabulary.markers.has("TEAM CONTEXT") && vocabulary.toolNames.size >= 20,
+    JSON.stringify({ card: !!card, reply: leakyReply.slice(0, 60), results: sent.toolResults.length,
+      tools: vocabulary.toolNames.size, keys: vocabulary.keys.size, markers: [...vocabulary.markers] }));
+
+  const found = findInternalLeaks(leakyReply, vocabulary).map((leak) => `${leak.kind}:${leak.text}`);
+  assert("29.1 every planted kind is found in what the person received, in reading order",
+    JSON.stringify(found) === JSON.stringify([
+      "tool_name:team_set_work_profile",
+      "internal_key:platform_role",
+      "context_marker:TEAM CONTEXT",
+      `record_id:${MEMBER}`,
+      "database_error:violates row-level security policy",
+      "operator_jargon:MMA OS",
+    ]),
+    JSON.stringify(found));
+
+  const clean = await approvedTurn(CLEAN);
+  const cleanFound = findInternalLeaks(replyOf(clean), deriveInternalVocabulary(sentOf(clean)));
+  assert("29.2 an ordinary answer passes clean: titles (even one spelled like an identifier), contact details, a link with an id in it, and everyday words",
+    replyOf(clean) === CLEAN && cleanFound.length === 0,
+    JSON.stringify(cleanFound));
+
+  // The team block and the roster both carried the tenant's own strings. They are data, not ours.
+  assert("29.3 the tenant's own words never become vocabulary, though they were in what she was sent",
+    sent.system.some((t) => t.includes("ops_lead")) && sent.system.some((t) => t.includes("vip_plan"))
+      && ["ops_lead", "vip_plan"].every((word) => !vocabulary.keys.has(word) && !vocabulary.toolNames.has(word)),
+    JSON.stringify({ inContext: sent.system.some((t) => t.includes("ops_lead")) }));
+
+  // The user's own message is not the server's: a word they typed is never "internal" because they
+  // typed it. Here they type it in the one shape the derivation reads — a quoted JSON key — so the
+  // check fails if the user's words are ever treated as server text.
+  const typed = await drive({
+    stream: true, text: 'Can you set {"my_custom_field": 1} for Rowan?', extraBody: { threadId: THREAD },
+    rpcOverrides: RPC, replyText: "Sure — which value should my_custom_field hold?",
+  });
+  const typedVocabulary = deriveInternalVocabulary(sentOf(typed));
+  assert("29.4 a word the user typed is not internal because they typed it, though it reached the model",
+    typed.modelEgress.some((b) => b.includes("my_custom_field"))
+      && !typedVocabulary.keys.has("my_custom_field") && !typedVocabulary.toolNames.has("my_custom_field")
+      && findInternalLeaks(replyOf(typed), typedVocabulary).length === 0,
+    JSON.stringify({ reached: typed.modelEgress.some((b) => b.includes("my_custom_field")), reply: replyOf(typed) }));
+
+  // AUTHORSHIP IS DECLARED, NEVER INFERRED. A tenant's persona is pasted into the system prompt as prose,
+  // and a tenant can write what looks exactly like the server's own text into it: a comma, a quoted word
+  // and a real JSON value, or a heading with its END line. Derived from the whole prompt, both became
+  // vocabulary and a reply repeating the tenant's own words read as a leak. Derived from what the server
+  // vouches for, neither does, and the vouched block still catches its own.
+  const PERSONA_RPC = { ...RPC, get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: "T", playbook_slug: null, funding_enabled: false, brand: null,
+    playbook_config: { persona: { name: "Paige", role: "your coach's assistant" }, journey: [
+      { key: "basic", label: "Basic", description: 'We offer basic, "gold_tier": true for premium customers.' },
+      { key: "vip", label: "VIP", description: "Members book first.\nVIP PLAN\nPriority booking, every week.\nEND VIP PLAN" },
+    ] } }], error: null } };
+  const TENANT_WORDS = "Your gold_tier plan includes early booking — that's part of the VIP PLAN.";
+  const persona = await drive({ stream: true, extraBody: { threadId: THREAD }, rpcOverrides: PERSONA_RPC, replyText: TENANT_WORDS });
+  const personaSent = sentOf(persona);
+  const wholePrompt = deriveInternalVocabulary({ tools: personaSent.tools, vouchedTexts: personaSent.system, toolResults: personaSent.toolResults });
+  const personaVocabulary = deriveInternalVocabulary(personaSent);
+  assert("29.6 CONTROL: the persona reached the model, and read as if the server wrote it, its words become vocabulary",
+    personaSent.system.some((t) => t.includes('"gold_tier": true') && t.includes("END VIP PLAN"))
+      && wholePrompt.keys.has("gold_tier") && wholePrompt.markers.has("VIP PLAN"),
+    JSON.stringify({ keys: wholePrompt.keys.has("gold_tier"), markers: [...wholePrompt.markers] }));
+  assert("29.7 derived from what the server vouches for, a tenant's persona words are never vocabulary, and repeating them is clean",
+    !personaVocabulary.keys.has("gold_tier") && !personaVocabulary.markers.has("VIP PLAN")
+      && findInternalLeaks(replyOf(persona), personaVocabulary).length === 0 && replyOf(persona) === TENANT_WORDS,
+    JSON.stringify({ found: findInternalLeaks(replyOf(persona), personaVocabulary) }));
+
+  // WHERE THINGS STAND, stated as a check so it cannot be forgotten: no filter exists on this path
+  // yet, so the leaky answer streamed exactly as the model wrote it. The owner-chat slice flips this.
+  assert("29.5 today the leaky answer streams unchanged — nothing on this path acts on a finding yet",
+    leakyReply === LEAKY,
+    leakyReply.slice(0, 80));
+}
+
+// ── 30. A CLIENT SEAT READS NOTHING THAT HAS NOT BEEN READ FIRST (R3) ─────────────────────────────
+//
+// A client is the person a business serves, signed in to that business's portal. Everything the model
+// wrote that a client can read on a turn — the answer and each thought line — is read with the
+// section-29 detector before release, on both release points (the agentic stream and the document
+// stream). On a finding the whole turn is withheld and the client reads one fixed sentence, which
+// invents no answer. An owner's turn is untouched here; that is R4's.
+console.log("\nclient seat — her answer is read for internal text before a client can read it");
+{
+  const { withheldReplyForClient } = await import("../../supabase/functions/_shared/client-seat-reply.ts");
+  const THREAD = "cdcdcdcd-cdcd-4dcd-8dcd-cdcdcdcdcdcd";
+  const RECORD = "5a5a5a5a-5a5a-4a5a-8a5a-5a5a5a5a5a5a";
+  const BUSINESS = "Northside Fitness";
+  const PERSONA = { get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: BUSINESS, playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null } };
+  const AS_CLIENT = { ...PERSONA, get_actor_access: { data: { tier: "client" }, error: null } };
+  const AS_OWNER = { ...PERSONA, get_actor_access: { data: { tier: "tenant" }, error: null } };
+  const WITHHELD = withheldReplyForClient(BUSINESS);
+  const frames = (r) => r.bodyText.split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
+    .map((l) => { try { return JSON.parse(l.slice(6)); } catch { return null; } }).filter(Boolean);
+  const replyOf = (r) => frames(r).map((f) => f.choices?.[0]?.delta?.content).filter((c) => typeof c === "string").join("");
+  const thoughtsOf = (r) => frames(r).filter((f) => f.paige_step?.kind === "thought").map((f) => f.paige_step.label);
+  const personaCalls = (r) => r.rec.rpc.filter((c) => c.name === "get_paige_persona_context").length;
+  const persisted = (r) => r.rec.rpc.filter((c) => c.name === "paige_chat_turn_append" && c.args?.p_role === "assistant").map((c) => c.args.p_content);
+
+  // Each planted kind a client-seat turn can carry: a tool name from the definitions she was sent, a
+  // record id, Postgres error text and the operator codename.
+  const LEAKY_PARTS = [
+    "Done, I ran update_client_data for you.",
+    `Your record is ${RECORD}.`,
+    'It said: new row violates row-level security policy for table "clients".',
+    `That setting lives in ${["MMA", "OS"].join(" ")}.`,
+  ];
+  const LEAKY = LEAKY_PARTS.join(" ");
+  const CLEAN = [
+    `Thanks, Jordan. Your next session with ${BUSINESS} is Tuesday at 10am.`,
+    "Reach the front desk at desk@northside.example or (415) 555-0132.",
+    `Your booking page: https://book.example.test/s/${RECORD}/intro_call`,
+    "You have 3 open tasks, and your coach's title is Head Trainer.",
+  ].join(" ");
+
+  // No memory on these two, so the owner's turn carries no evidence and is genuinely ordinary: the only
+  // thing left to hold the client's is that it is a client's.
+  const NO_MEMORY = { tablesExtra: { client_memory: () => [] }, serviceTablesExtra: { client_memory: () => [] } };
+  const cleanClient = await drive({ stream: true, rpcOverrides: { ...AS_CLIENT, match_paige_memory: { data: [], error: null } }, replyText: CLEAN, ...NO_MEMORY });
+  const cleanOwner = await drive({ stream: true, rpcOverrides: { ...AS_OWNER, match_paige_memory: { data: [], error: null } }, replyText: CLEAN, ...NO_MEMORY });
+  assert("30.0 a clean answer reaches a client verbatim, and a client turn carrying no evidence pays no scope re-check, exactly as an owner's ordinary turn",
+    replyOf(cleanClient) === CLEAN && personaCalls(cleanClient) === 1 && personaCalls(cleanOwner) === 1,
+    JSON.stringify({ reply: replyOf(cleanClient).slice(0, 60), client: personaCalls(cleanClient), owner: personaCalls(cleanOwner) }));
+
+  // HOLDING IS NOT EVIDENCE. A client turn is held so it can be read, but the scope re-check protects
+  // retrieved evidence, so a lookup that fails after the turn began cannot refuse an ordinary client
+  // answer. The control proves the re-check is still live: the same failing lookup on a client turn
+  // that carries evidence (memory) is refused before the model is called.
+  const flakyPersona = () => {
+    let calls = 0;
+    return { ...AS_CLIENT, get_paige_persona_context: () => (++calls === 1 ? PERSONA.get_paige_persona_context : { data: null, error: { message: "temporarily unavailable" } }) };
+  };
+  const flakyPlain = await drive({ stream: true, rpcOverrides: { ...flakyPersona(), match_paige_memory: { data: [], error: null } }, replyText: CLEAN, ...NO_MEMORY });
+  const flakyEvidence = await drive({ stream: true, rpcOverrides: flakyPersona(), replyText: CLEAN });
+  assert("30.30 a lookup that fails mid-turn does not refuse a client answer that carried no evidence (control: with evidence it still does)",
+    flakyPlain.status === 200 && replyOf(flakyPlain) === CLEAN
+      && flakyEvidence.status === 409 && flakyEvidence.bodyText.includes("ACTIVE_ACCOUNT_CHANGED") && !flakyEvidence.bodyText.includes(CLEAN),
+    JSON.stringify({ plain: [flakyPlain.status, replyOf(flakyPlain).slice(0, 40)], evidence: [flakyEvidence.status, flakyEvidence.bodyText.slice(0, 80)] }));
+
+  // A CLIENT TURN IS HELD BECAUSE IT IS A CLIENT'S, NOT BECAUSE IT CARRIES EVIDENCE. Every other leaky
+  // client check drives the default fixture, whose memory is evidence and would hold the turn anyway.
+  // This one carries none (the control: no scope re-check ran), and the leak is still withheld whole.
+  const bareLeak = await drive({ stream: true, rpcOverrides: { ...AS_CLIENT, match_paige_memory: { data: [], error: null } }, replyText: LEAKY, ...NO_MEMORY });
+  assert("30.31 a client turn that carries no evidence is still held and read: its leaky answer is withheld whole",
+    personaCalls(bareLeak) === 1 && replyOf(bareLeak) === WITHHELD && !bareLeak.bodyText.includes(RECORD) && !bareLeak.bodyText.includes("update_client_data"),
+    JSON.stringify({ lookups: personaCalls(bareLeak), reply: replyOf(bareLeak).slice(0, 60) }));
+
+  // A CONFIRM CARD'S SUMMARY IS READ TOO. It names the fields the model asked to save, from the model's
+  // own arguments, and it is held with the answer; unread, a clean answer would release it as written.
+  // The control proves the card is built and released when its fields are ordinary.
+  const CONFIRM_CLIENT = { ...AS_CLIENT, resolve_tool_autonomy: { data: "confirm", error: null } };
+  const confirmsOf = (r) => frames(r).filter((f) => f.paige_confirm).map((f) => f.paige_confirm.summary);
+  const plainCard = await drive({ stream: true, rpcOverrides: CONFIRM_CLIENT, toolCall: { name: "update_client_data", args: { updates: { phone: "(415) 555-0132" } } }, replyText: "I've asked you to confirm the change." });
+  const leakyCard = await drive({ stream: true, rpcOverrides: CONFIRM_CLIENT, toolCall: { name: "update_client_data", args: { updates: { [`platform_role ${RECORD}`]: "x" } } }, replyText: "I've asked you to confirm the change." });
+  assert("30.32 a confirm card whose summary carries internal text withholds the turn (control: an ordinary card is released with its answer)",
+    confirmsOf(plainCard).some((c) => /\(phone\)/.test(c)) && replyOf(plainCard) === "I've asked you to confirm the change."
+      && replyOf(leakyCard) === WITHHELD && confirmsOf(leakyCard).length === 0 && !leakyCard.bodyText.includes(RECORD),
+    JSON.stringify({ plain: confirmsOf(plainCard), leaky: confirmsOf(leakyCard), reply: replyOf(leakyCard).slice(0, 50) }));
+
+  const leakyClient = await drive({ stream: true, rpcOverrides: AS_CLIENT, replyText: LEAKY });
+  const leaked = LEAKY_PARTS.filter((part) => leakyClient.bodyText.includes(part.split(" ").find((w) => /_|-|MMA|violates/.test(w)) ?? part));
+  assert("30.1 a leaky answer never reaches a client: the client reads exactly the withheld sentence, and nothing of what was written",
+    replyOf(leakyClient) === WITHHELD && leaked.length === 0
+      && !leakyClient.bodyText.includes("update_client_data") && !leakyClient.bodyText.includes(RECORD)
+      && !leakyClient.bodyText.includes("row-level security"),
+    JSON.stringify({ reply: replyOf(leakyClient).slice(0, 80), leaked }));
+
+  const leakyOwner = await drive({ stream: true, rpcOverrides: AS_OWNER, replyText: LEAKY });
+  assert("30.2 an owner's turn is untouched by this: the same answer still streams to an owner as written (R4 owns that)",
+    replyOf(leakyOwner) === LEAKY,
+    replyOf(leakyOwner).slice(0, 80));
+
+  const warned = leakyClient.logged.filter((l) => l.msg.includes("client-seat answer withheld"));
+  assert("30.3 the finding is logged by kind and count, never by what was written",
+    warned.length === 1 && /"tool_name":1/.test(warned[0].msg) && /"record_id":1/.test(warned[0].msg)
+      && /"database_error":1/.test(warned[0].msg) && /"operator_jargon":1/.test(warned[0].msg)
+      && !warned[0].msg.includes("update_client_data") && !warned[0].msg.includes(RECORD),
+    JSON.stringify(warned.map((w) => w.msg)));
+
+  // A THOUGHT LINE IS READ TOO. The existing thought filter drops a line with an identifier or a
+  // record id in it, but Postgres error text in words passes it — so the thought, not the answer, is
+  // what carries the leak here. The control proves this shape really does show a thought.
+  const NARRATION_CLEAN = "Let me update your phone number now.";
+  const NARRATION_LEAKY = "That save was refused: new row violates row-level security policy.";
+  const tool = { name: "update_client_data", args: { phone: "(415) 555-0132" } };
+  const thoughtControl = await drive({ stream: true, rpcOverrides: AS_CLIENT, toolCall: tool, toolRoundNarration: NARRATION_CLEAN, replyText: "Saved." });
+  const thoughtLeak = await drive({ stream: true, rpcOverrides: AS_CLIENT, toolCall: tool, toolRoundNarration: NARRATION_LEAKY, replyText: "Saved." });
+  assert("30.4 CONTROL: this shape shows a client her thought line, with the answer",
+    thoughtsOf(thoughtControl).includes(NARRATION_CLEAN) && replyOf(thoughtControl) === "Saved.",
+    JSON.stringify({ thoughts: thoughtsOf(thoughtControl), reply: replyOf(thoughtControl) }));
+  assert("30.5 a leak in a thought line alone withholds the turn, and the thought never reaches the client",
+    replyOf(thoughtLeak) === WITHHELD && thoughtsOf(thoughtLeak).length === 0 && !thoughtLeak.bodyText.includes("row-level security"),
+    JSON.stringify({ thoughts: thoughtsOf(thoughtLeak), reply: replyOf(thoughtLeak).slice(0, 60) }));
+
+  // THE THREAD KEEPS WHAT THE WIRE CARRIED. A reload must never show a client the answer they were told
+  // was not sent.
+  const threadLeak = await drive({ stream: true, rpcOverrides: AS_CLIENT, replyText: LEAKY, extraBody: { threadId: THREAD } });
+  const threadClean = await drive({ stream: true, rpcOverrides: AS_CLIENT, replyText: CLEAN, extraBody: { threadId: THREAD } });
+  assert("30.6 CONTROL: a client's clean answer is saved to the thread as sent",
+    JSON.stringify(persisted(threadClean)) === JSON.stringify([CLEAN]),
+    JSON.stringify(persisted(threadClean)).slice(0, 120));
+  assert("30.7 a withheld answer is saved as the withheld sentence, never as what was written",
+    JSON.stringify(persisted(threadLeak)) === JSON.stringify([WITHHELD]) && replyOf(threadLeak) === WITHHELD,
+    JSON.stringify(persisted(threadLeak)).slice(0, 120));
+
+  // THE DOCUMENT PATH is a second, independent stream with its own release point.
+  const doc = { fileName: "intake.pdf", base64: "JVBERi0xLjQK", mimeType: "application/pdf" };
+  const docClean = await drive({ stream: true, rpcOverrides: AS_CLIENT, document: doc, text: "here is my intake form", replyText: "Got it, I've read your intake form." });
+  const docLeak = await drive({ stream: true, rpcOverrides: AS_CLIENT, document: doc, text: "here is my intake form", replyText: `Got it. I saved it to record ${RECORD} with update_client_data.` });
+  const docOwner = await drive({ stream: true, rpcOverrides: AS_OWNER, document: doc, text: "here is my intake form", replyText: `Got it. I saved it to record ${RECORD} with update_client_data.` });
+  assert("30.8 CONTROL: a client's clean answer about a document arrives as written",
+    replyOf(docClean) === "Got it, I've read your intake form.",
+    JSON.stringify({ status: docClean.status, reply: replyOf(docClean).slice(0, 60) }));
+  assert("30.9 on the document path a leaky answer never reaches a client either",
+    replyOf(docLeak) === WITHHELD && !docLeak.bodyText.includes(RECORD) && !docLeak.bodyText.includes("update_client_data"),
+    JSON.stringify({ reply: replyOf(docLeak).slice(0, 80) }));
+  assert("30.10 ...and an owner's document turn is untouched",
+    replyOf(docOwner).includes(RECORD),
+    replyOf(docOwner).slice(0, 80));
+  const docThread = await drive({ stream: true, rpcOverrides: AS_CLIENT, document: doc, text: "here is my intake form", replyText: `Got it. I saved it to record ${RECORD}.`, extraBody: { threadId: THREAD } });
+  const docThreadClean = await drive({ stream: true, rpcOverrides: AS_CLIENT, document: doc, text: "here is my intake form", replyText: "Got it, I've read your intake form.", extraBody: { threadId: THREAD } });
+  assert("30.14 on the document path too, the thread keeps the withheld sentence, never what was written (the control saves a clean answer as sent)",
+    JSON.stringify(persisted(docThread)) === JSON.stringify([WITHHELD])
+      && JSON.stringify(persisted(docThreadClean)) === JSON.stringify(["Got it, I've read your intake form."]),
+    JSON.stringify({ leak: persisted(docThread), clean: persisted(docThreadClean) }).slice(0, 200));
+
+  // EACH SOURCE OF THE VOCABULARY IS LOAD-BEARING. A key the tool result's own envelope carried, and a
+  // block name only the server's document instruction carried: each is caught only if that source is
+  // read. The controls prove each word was really in what she was sent, and only there.
+  const sentTo = (r) => (r.modelEgress.at(-1) ?? "");
+  const resultKey = await drive({ stream: true, rpcOverrides: AS_CLIENT, toolCall: tool, replyText: "I queued it; needs_confirm is set, so tap approve." });
+  assert("30.11 a key from the tool result she was sent is caught in a client's answer",
+    sentTo(resultKey).includes('\\"needs_confirm\\"') && replyOf(resultKey) === WITHHELD,
+    JSON.stringify({ inResult: sentTo(resultKey).includes('\\"needs_confirm\\"'), reply: replyOf(resultKey).slice(0, 60) }));
+  const creditRead = { can_read_document: true, document_kind: "credit_report", first_five_account_names: ["ACCOUNT ONE"] };
+  const MARKER = "CREDIT REPORT ANALYSIS INSTRUCTIONS";
+  const docMarker = await drive({ stream: true, rpcOverrides: AS_CLIENT, document: { fileName: "report.pdf", base64: "JVBERi0xLjQK", mimeType: "application/pdf" }, readCheck: creditRead, text: "here is my report", replyText: `Per my ${MARKER}, your report has three accounts.` });
+  // The request that produced the answer is the streamed one; the credit path makes other model calls
+  // after it (the read check, the extraction).
+  const answered = docMarker.modelEgress.find((body) => { try { return JSON.parse(body).stream === true; } catch { return false; } }) ?? "";
+  const docSystem = (() => { try { const b = JSON.parse(answered); return typeof b.system === "string" ? b.system : JSON.stringify(b.system ?? ""); } catch { return ""; } })();
+  // Only text the handler VOUCHES for, where it built it, gives block names and keys. The team authority
+  // block is vouched (constant header and footer, sentences from a fixed switch), so its name is caught.
+  const AUTHORITY = "YOUR AUTHORITY IN THIS WORKSPACE";
+  const systemMarker = await drive({ stream: true, rpcOverrides: AS_CLIENT, replyText: `Per ${AUTHORITY}, you are a member here.` });
+  const systemOf = (r) => { try { const b = JSON.parse(r.modelEgress.find((x) => { try { return JSON.parse(x).stream === true; } catch { return false; } }) ?? "null"); return typeof b?.system === "string" ? b.system : JSON.stringify(b?.system ?? ""); } catch { return ""; } };
+  assert("30.13 the name of a vouched block (the team authority block) is caught in a client's answer",
+    systemOf(systemMarker).includes(`=== ${AUTHORITY}`) && replyOf(systemMarker) === WITHHELD,
+    JSON.stringify({ inSystem: systemOf(systemMarker).includes(`=== ${AUTHORITY}`), reply: replyOf(systemMarker).slice(0, 60) }));
+
+  // A TENANT'S OWN WORDS NEVER WITHHOLD THEIR CLIENT'S ANSWER. The persona is pasted into the system
+  // prompt as prose and is never vouched, and a tenant can write what looks exactly like the server's
+  // own text into it: a comma, a quoted word and a real JSON value, or a heading with its END line. Each
+  // phrasing, repeated in a client's answer, reaches the client and is saved as written. The control
+  // proves the persona really reached the model, and that read as the server's it would have withheld.
+  const { deriveInternalVocabulary: vocabularyOf, findInternalLeaks: leaksIn } = await import("../../supabase/functions/_shared/internal-vocabulary.ts");
+  const AS_CLIENT_WITH_PERSONA = { ...AS_CLIENT, get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: BUSINESS, playbook_slug: null, funding_enabled: false, brand: null,
+    playbook_config: { persona: { name: "Paige", role: "your coach's assistant" }, journey: [
+      { key: "basic", label: "Basic", description: 'We offer basic, "gold_tier": true for premium customers.' },
+      { key: "vip", label: "VIP", description: "Members book first.\nVIP PLAN\nPriority booking, every week.\nEND VIP PLAN" },
+    ] } }], error: null } };
+  for (const [id, words] of [["30.27", "Your gold_tier plan includes early booking on weekdays."], ["30.28", "You're on the VIP PLAN, so you book first every week."]]) {
+    const turn = await drive({ stream: true, rpcOverrides: AS_CLIENT_WITH_PERSONA, replyText: words, extraBody: { threadId: THREAD } });
+    const sentSystem = systemOf(turn);
+    const personaSent = sentSystem.includes('"gold_tier": true') && sentSystem.includes("END VIP PLAN");
+    const asIfServer = leaksIn(words, vocabularyOf({ vouchedTexts: [sentSystem] })).map((leak) => leak.text);
+    assert(`${id} a client's answer repeating the tenant's own persona words reaches the client and is saved as written (${words.slice(0, 22)}…)`,
+      personaSent && asIfServer.length > 0 && replyOf(turn) === words && persisted(turn).at(-1) === words,
+      JSON.stringify({ personaSent, asIfServer, reply: replyOf(turn).slice(0, 60), saved: persisted(turn).at(-1)?.slice(0, 60) }));
+  }
+
+  // A TOOL THE SEAT MAY NOT USE RENDERS NO STEP. Action steps go to the wire as they happen and are
+  // not read, so a refused owner tool must not become one: it would show a client an owner's action,
+  // and buying a number shows the model's own argument, which a client can ask the model to fill with
+  // anything. The control proves the call was made and refused, not skipped.
+  const stepsOf = (r) => frames(r).filter((f) => f.paige_step?.kind === "action").map((f) => f.paige_step);
+  const planted = `update_client_data ${RECORD}`;
+  const refused = await drive({ stream: true, rpcOverrides: AS_CLIENT, toolCall: { name: "comms_buy_number", args: { phone_number: planted } }, replyText: "Sorry, I can't do that here." });
+  const refusedReached = refused.modelEgress.some((body) => body.includes("forbidden_seat"));
+  assert("30.29 a tool a client seat may not use is refused and renders no step, so the model's own argument never reaches the client",
+    refusedReached && stepsOf(refused).length === 0 && !refused.bodyText.includes(planted) && !refused.bodyText.includes(RECORD)
+      && replyOf(refused) === "Sorry, I can't do that here.",
+    JSON.stringify({ refusedReached, steps: stepsOf(refused), reply: replyOf(refused).slice(0, 60) }));
+  // A WITHHELD ANSWER IS NOT EXTRACTED FROM. On the credit path the answer is the extraction's input,
+  // and the extraction writes a report summary, an analysis and a review proposal; none of that may be
+  // made from an answer the client was not shown. The control proves the clean turn does extract.
+  const EXTRACTS = "Here is the credit report analysis I just produced";
+  const creditClean = await drive({ stream: true, rpcOverrides: AS_CLIENT, document: { fileName: "report.pdf", base64: "JVBERi0xLjQK", mimeType: "application/pdf" }, readCheck: creditRead, text: "here is my report", replyText: "Your report has three accounts." });
+  // R3b — A SYNC THAT FAILED IS TOLD IN A SENTENCE. The harness's extraction cannot produce a
+  // report, so the pipeline fails the way a real one does; the uploader reads a fixed sentence, never
+  // the pipeline's own error text or step name.
+  const syncOf = (r) => frames(r).filter((f) => f.sync_status).map((f) => f.sync_status);
+  const SYNC_BEFORE_ANY_WRITE = `I read your report, but I couldn't pull out its details for you to review, and none of them were added to your profile. You can try uploading it again, or ask ${BUSINESS} to take a look.`;
+  const SYNC_DID_NOT_FINISH = `I read your report, but I couldn't finish pulling out its details for you to review. You can ask ${BUSINESS} to take a look.`;
+  const syncSeen = syncOf(creditClean);
+  assert("30.33 a credit-report sync that did not complete reaches the uploader as a fixed sentence, with no step and no pipeline text",
+    syncSeen.length === 1 && syncSeen[0].success === false && !("step" in syncSeen[0])
+      && syncSeen[0].error === SYNC_BEFORE_ANY_WRITE && syncSeen[0].uploader_sentence === true
+      && !/Failed to|Validation failed|extraction|pipeline|Unknown/.test(JSON.stringify(syncSeen[0]))
+      // "none of them were added" is only true because nothing was: no memory note, no upload stamp.
+      && !creditClean.rec.inserts.some((i) => i.table === "client_memory" || (i.table === "credit_report_uploads" && i.update)),
+    JSON.stringify({ sync: syncSeen, writes: creditClean.rec.inserts.map((i) => `${i.table}${i.update ? ":update" : ""}`) }));
+  // ...AND A SYNC THAT STOPPED AFTER ITS FIRST WRITE NEVER SAYS NOTHING WAS ADDED. Given a report the
+  // extraction can read, the pipeline writes a client memory note before it stamps the upload; when the
+  // stamp is refused, that note is already kept, so the uploader reads only that it did not finish.
+  // The control proves the same report, unrefused, reaches the proposal.
+  const REPORT = JSON.stringify({ is_credit_report: true, extraction_verified: true, report_type: "consumer", scores: { equifax: 700, experian: 705, transunion: 698 },
+    negative_items: [{ creditor_name: "ACCOUNT ONE", account_type: "revolving", status: "charge_off", balance: 500 }], positive_accounts: [], hard_inquiries: [] });
+  const reportDrive = (extra = {}) => drive({ stream: true, rpcOverrides: AS_CLIENT, document: { fileName: "report.pdf", base64: "JVBERi0xLjQK", mimeType: "application/pdf" },
+    readCheck: creditRead, text: "here is my report", replyText: "Your report has three accounts.", extractionReply: REPORT,
+    // The upload record the portal's upload writes, read back by its id, so the pipeline has a record to stamp.
+    serviceTablesExtra: { credit_report_uploads: () => [{ id: "7e7e7e7e-7e7e-4e7e-8e7e-7e7e7e7e7e7e" }] },
+    tablesExtra: { credit_report_uploads: () => [{ id: "7e7e7e7e-7e7e-4e7e-8e7e-7e7e7e7e7e7e" }] }, ...extra });
+  const proposed = await reportDrive();
+  assert("30.34 CONTROL: a report the extraction can read reaches the proposal, after a client memory note is written",
+    frames(proposed).some((f) => f.extraction_proposal) && proposed.rec.inserts.some((i) => i.table === "client_memory")
+      && syncOf(proposed).every((st) => st.awaiting_review === true),
+    JSON.stringify({ proposal: frames(proposed).some((f) => f.extraction_proposal), inserts: proposed.rec.inserts.map((i) => i.table), sync: syncOf(proposed) }));
+  // A report the extraction reads but validation refuses stops before its first write too.
+  const notReport = await reportDrive({ extractionReply: JSON.stringify({ ...JSON.parse(REPORT), is_credit_report: false }) });
+  const notReportSync = syncOf(notReport);
+  assert("30.36 a report refused by validation tells the uploader nothing was added, and nothing was: no memory note, no upload stamp",
+    notReportSync.length === 1 && notReportSync[0].error === SYNC_BEFORE_ANY_WRITE && notReportSync[0].uploader_sentence === true && !("step" in notReportSync[0])
+      && !/Validation failed|Not identified|is_credit_report/.test(JSON.stringify(notReportSync))
+      && !notReport.rec.inserts.some((i) => i.table === "client_memory" || (i.table === "credit_report_uploads" && i.update)),
+    JSON.stringify({ sync: notReportSync, writes: notReport.rec.inserts.map((i) => `${i.table}${i.update ? ":update" : ""}`) }));
+  const stampRefused = await reportDrive({ tableErrorsExtra: { "credit_report_uploads:update": { message: "new row violates check constraint", code: "23514" } } });
+  const refusedSync = syncOf(stampRefused);
+  assert("30.35 a sync refused after its client memory note was written tells the uploader it did not finish, never that nothing was added",
+    stampRefused.rec.inserts.some((i) => i.table === "client_memory")
+      && refusedSync.length === 1 && refusedSync[0].success === false && !("step" in refusedSync[0]) && !("write" in refusedSync[0])
+      && refusedSync[0].error === SYNC_DID_NOT_FINISH && refusedSync[0].uploader_sentence === true
+      && !/credit_report_uploads|check constraint|23514|write_rejected/.test(JSON.stringify(refusedSync))
+      && stampRefused.logged.some((l) => l.level === "warn" && l.msg.includes("credit report sync did not complete") && l.msg.includes("write_rejected")),
+    JSON.stringify({ inserts: stampRefused.rec.inserts.map((i) => i.table), sync: refusedSync, warns: stampRefused.logged.filter((l) => l.level === "warn").map((l) => l.msg.slice(0, 120)) }));
+  assert("30.15 CONTROL: a client's clean credit-report answer is extracted from, as before",
+    creditClean.modelEgress.some((body) => body.includes(EXTRACTS)) && replyOf(creditClean) === "Your report has three accounts.",
+    JSON.stringify({ calls: creditClean.modelEgress.length }));
+  assert("30.16 a withheld credit-report answer is never extracted from, so nothing is written from it",
+    !docMarker.modelEgress.some((body) => body.includes(EXTRACTS))
+      && !docMarker.rec.inserts.some((i) => i.table === "audit_logs" || i.table === "client_memory"),
+    JSON.stringify({ extracted: docMarker.modelEgress.some((body) => body.includes(EXTRACTS)), inserts: docMarker.rec.inserts.map((i) => i.table) }));
+
+  // "[DONE]" INSIDE AN ANSWER IS TEXT. Only the whole payload `[DONE]` ends a stream; an answer that
+  // contains it was dropped from what the check read and what the thread saved, while its bytes still
+  // reached the person.
+  const doneLeak = await drive({ stream: true, rpcOverrides: AS_CLIENT, replyText: "Done, I ran update_client_data for you. [DONE]" });
+  assert("30.17 an answer that contains the text [DONE] is still read, and withheld when it leaks",
+    replyOf(doneLeak) === WITHHELD && !doneLeak.bodyText.includes("update_client_data"),
+    replyOf(doneLeak).slice(0, 80));
+  const doneOwner = await drive({ stream: true, rpcOverrides: AS_OWNER, replyText: "All set. Reply [DONE] when you have read it.", extraBody: { threadId: THREAD } });
+  assert("30.18 ...and on any seat the thread now saves what the person received, [DONE] and all",
+    replyOf(doneOwner) === "All set. Reply [DONE] when you have read it."
+      && JSON.stringify(persisted(doneOwner)) === JSON.stringify(["All set. Reply [DONE] when you have read it."]),
+    JSON.stringify({ reply: replyOf(doneOwner), saved: persisted(doneOwner) }));
+
+  const doneDoc = await drive({ stream: true, rpcOverrides: AS_OWNER, document: doc, text: "here is my intake form", replyText: "Got it. Reply [DONE] once you've checked it.", extraBody: { threadId: THREAD } });
+  assert("30.21 ...on the document path too: the answer is delivered and saved in full",
+    replyOf(doneDoc) === "Got it. Reply [DONE] once you've checked it."
+      && JSON.stringify(persisted(doneDoc)) === JSON.stringify(["Got it. Reply [DONE] once you've checked it."]),
+    JSON.stringify({ reply: replyOf(doneDoc), saved: persisted(doneDoc) }));
+
+  // WHEN SOMETHING WAS SAVED, THE SENTENCE SAYS SO — and only then. A client who reads "ask me another
+  // way" after their phone number was stored would send it again. "Saved" is the write's own report:
+  // the client-data write-back answers `success: true` for the request and lists each field's own
+  // outcome, so a request whose every field failed saved nothing.
+  const WITHHELD_SAVED = withheldReplyForClient(BUSINESS, { savedSomething: true });
+  const AUTO_CLIENT = { ...AS_CLIENT, resolve_tool_autonomy: { data: "auto", error: null } };
+  const phoneTool = { name: "update_client_data", args: { updates: [{ field_path: "phone", value: "(415) 555-0132" }] } };
+  const savedLeak = await drive({ stream: true, rpcOverrides: AUTO_CLIENT, toolCall: phoneTool, replyText: LEAKY,
+    writeBack: { status: 200, body: { success: true, results: [{ field_path: "phone", success: true }] } } });
+  const failedLeak = await drive({ stream: true, rpcOverrides: AUTO_CLIENT, toolCall: phoneTool, replyText: LEAKY,
+    writeBack: { status: 200, body: { success: true, results: [{ field_path: "phone", success: false, error: "Field not in whitelist" }] } } });
+  const pendingLeak = await drive({ stream: true, rpcOverrides: { ...AS_CLIENT, resolve_tool_autonomy: { data: "confirm", error: null } }, toolCall: phoneTool, replyText: LEAKY });
+  const wroteBack = (r) => r.outboundCalls.some((c) => c.url.includes("paige-write-back"));
+  assert("30.22 a save that landed on the turn is named in the withheld sentence, so the client does not send it again",
+    wroteBack(savedLeak) && replyOf(savedLeak) === WITHHELD_SAVED,
+    JSON.stringify({ wrote: wroteBack(savedLeak), reply: replyOf(savedLeak).slice(0, 160) }));
+  assert("30.23 a write that ran but saved no field is not called saved: the approved sentence, word for word",
+    wroteBack(failedLeak) && replyOf(failedLeak) === WITHHELD,
+    JSON.stringify({ wrote: wroteBack(failedLeak), reply: replyOf(failedLeak).slice(0, 160) }));
+  assert("30.24 a save still waiting on approval is not called saved either",
+    !wroteBack(pendingLeak) && replyOf(pendingLeak) === WITHHELD,
+    JSON.stringify({ wrote: wroteBack(pendingLeak), reply: replyOf(pendingLeak).slice(0, 160) }));
+
+  // A READ SAVES NOTHING. A client seat's other tool fetches a page; a fetch that succeeded is not
+  // "something I'd already finished", so it never earns the saved clause. The control proves the page
+  // really was read and handed to the model.
+  const readLeak = await drive({ stream: true, rpcOverrides: AUTO_CLIENT, toolCall: { name: "web_fetch", args: { url: "https://example.test/pricing" } }, replyText: LEAKY,
+    fetchedPage: { status: 200, body: { success: true, url: "https://example.test/pricing", title: "Pricing", content: "Plans start at $49 a month." } } });
+  assert("30.26 a page fetched on the turn is not a save: a withheld answer after it reads the approved sentence",
+    readLeak.modelEgress.some((body) => body.includes("Plans start at $49 a month.")) && replyOf(readLeak) === WITHHELD,
+    JSON.stringify({ read: readLeak.modelEgress.some((body) => body.includes("Plans start at $49 a month.")), reply: replyOf(readLeak).slice(0, 160) }));
+
+  // THE PORTAL IS TOLD. A withheld turn carries one frame saying so, which the portal reads to keep the
+  // sentence from being filed as a document's summary; a clean turn never carries it.
+  const withheldFlag = (r) => frames(r).some((f) => f.paige_withheld === true);
+  assert("30.25 every withheld turn, on both paths, tells the portal it was withheld; no delivered turn does",
+    [leakyClient, thoughtLeak, docLeak, savedLeak].every(withheldFlag)
+      && ![cleanClient, docClean, leakyOwner, docOwner].some(withheldFlag),
+    JSON.stringify({ withheld: [leakyClient, thoughtLeak, docLeak, savedLeak].map(withheldFlag), clean: [cleanClient, docClean, leakyOwner, docOwner].map(withheldFlag) }));
+
+  // THE CLIENT'S OWN WORDS NEVER BECOME VOCABULARY, even sent as a `system` message (the request schema
+  // accepts one) or written into a file name, which the server repeats in its document header.
+  const ownSystem = await drive({
+    stream: true, rpcOverrides: AS_CLIENT,
+    extraBody: { messages: [
+      { role: "system", content: '=== MY OWN NOTES ===\n{"favorite_color": "teal"}\n=== END MY OWN NOTES ===' },
+      { role: "user", content: "what did I note?" },
+    ] },
+    replyText: "Per MY OWN NOTES, your favorite_color is teal.",
+  });
+  assert("30.19 a client's own system message reached the model, and its words never withhold the client's answer",
+    ownSystem.modelEgress.some((body) => body.includes("favorite_color")) && replyOf(ownSystem) === "Per MY OWN NOTES, your favorite_color is teal.",
+    JSON.stringify({ reached: ownSystem.modelEgress.some((body) => body.includes("favorite_color")), reply: replyOf(ownSystem).slice(0, 60) }));
+  // The name is shaped as JSON grammar reads a key (a comma, a quoted word, a value), so the only thing
+  // keeping it out of the vocabulary is that the header naming the client's file is never vouched.
+  const FILE_NAME = 'plan, "family_plan": 2.pdf';
+  const nameWouldBeKey = vocabularyOf({ vouchedTexts: [`[Attached document: ${FILE_NAME} — PDF]`] }).keys.has("family_plan");
+  const ownFile = await drive({ stream: true, rpcOverrides: AS_CLIENT, document: { fileName: FILE_NAME, base64: "JVBERi0xLjQK", mimeType: "application/pdf" }, text: "here is my plan", replyText: "Your family_plan document is in." });
+  assert("30.20 a client's file name reached the model, and its words never withhold the client's answer",
+    nameWouldBeKey && ownFile.modelEgress.some((body) => body.includes("family_plan")) && replyOf(ownFile) === "Your family_plan document is in.",
+    JSON.stringify({ nameWouldBeKey, reached: ownFile.modelEgress.some((body) => body.includes("family_plan")), reply: replyOf(ownFile).slice(0, 60) }));
+  assert("30.12 a block name only the server's document instruction carried is caught on the document path",
+    answered.includes(`=== ${MARKER} ===`) && !docSystem.includes(MARKER) && replyOf(docMarker) === WITHHELD,
+    JSON.stringify({ inRequest: answered.includes(`=== ${MARKER} ===`), inSystem: docSystem.includes(MARKER), reply: replyOf(docMarker).slice(0, 60) }));
+}
+
+console.log("\noutbound drafts — a draft PAIGE files for a customer is read for internal text before it can be filed or sent");
+{
+  const THREAD = "cececece-cece-4ece-8ece-cececececece";
+  const RECORD = "5a5a5a5a-5a5a-4a5a-8a5a-5a5a5a5a5a5a";
+  const CALENDAR = "c1c1c1c1-c1c1-4c1c-8c1c-c1c1c1c1c1c1";
+  const ACTION = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11";
+  const PERSONA = { get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: "Northside Fitness", playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null } };
+  const lane = (mode) => ({ rpcOverrides: { ...PERSONA, get_actor_access: { data: { tier: "tenant" }, error: null }, resolve_tool_autonomy: { data: mode, error: null },
+    calendar_link_shareable: { data: [{ shareable: true, slug: "intro", title: "Intro call", reason: null }], error: null } } });
+  const ADMIN = { user_roles: [{ role: "admin" }], paige_pending_approvals: () => [{ id: "b0b0b0b0-b0b0-4b0b-8b0b-b0b0b0b0b0b0" }] };
+  const frames = (r) => r.bodyText.split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
+    .map((l) => { try { return JSON.parse(l.slice(6)); } catch { return null; } }).filter(Boolean);
+  const cardOf = (r) => frames(r).find((f) => f.paige_confirm)?.paige_confirm;
+  const toldModel = (r) => r.modelEgress.map((b) => b.replace(/\\"/g, '"')).join("\n");
+  const refusedAsInternal = (r) => toldModel(r).includes("internal_text_in_draft");
+  const approvalsFiled = (r) => (r.rec.inserts ?? []).filter((i) => i.table === "paige_pending_approvals");
+  const sends = (r) => r.outboundCalls.filter((c) => c.url.includes("/functions/v1/send-message"));
+  const rpcsNamed = (r, name) => r.rec.rpc.filter((c) => c.name === name);
+  // Each kind the detector needs no conversation for, planted one at a time so a pass cannot ride on
+  // another kind: a declared tool's name, a record id, Postgres error text, the operator codename.
+  const PLANTS = [
+    ["a tool name", "I ran update_client_data so your file is current."],
+    ["a record id", `Your file is ${RECORD}.`],
+    ["database error text", 'We saw: new row violates row-level security policy for table "clients".'],
+    ["the operator codename", `It is set in ${["MMA", "OS"].join(" ")}.`],
+  ];
+  // A customer's ordinary message: a link, an email address, a phone number and a merge tag, each the
+  // reader's to use, and single words that are also keys.
+  const CLEAN = "Hi {{first_name}}, you can book your next session here: https://paigeagent.ai/book/intro. Questions? Reply to desk@northside.example or call (415) 555-0132. Your title and tasks are all set.";
+
+  // propose_action is exempt from the confirm gate, so filing IS the moment to stop it.
+  const propose = (body, extra = {}) => drive({ stream: true, extraBody: { threadId: THREAD },
+    toolCall: { name: "propose_action", args: { action_type: "email", contact_id: OWN, subject: "Your next session", body, summary: "Email Dana about booking", ...extra } },
+    ...lane("confirm"), tablesExtra: ADMIN });
+  for (const [kind, plant] of PLANTS) {
+    const r = await propose(`${CLEAN} ${plant}`);
+    assert(`31.1 a drafted email carrying ${kind} is not filed, and PAIGE is told to rewrite it`,
+      approvalsFiled(r).length === 0 && refusedAsInternal(r),
+      JSON.stringify({ filed: approvalsFiled(r).length, refused: refusedAsInternal(r) }));
+  }
+  const subjectLeak = await propose(CLEAN, { subject: "Re: update_client_data" });
+  assert("31.2 ...and so is one whose subject line carries it", approvalsFiled(subjectLeak).length === 0 && refusedAsInternal(subjectLeak),
+    JSON.stringify({ filed: approvalsFiled(subjectLeak).length }));
+  const cleanDraft = await propose(CLEAN);
+  const filedRow = approvalsFiled(cleanDraft)[0]?.row;
+  assert("31.3 CONTROL: a customer's ordinary email files exactly as drafted",
+    approvalsFiled(cleanDraft).length === 1 && filedRow?.draft_content?.body === CLEAN && filedRow?.draft_content?.subject === "Your next session" && !refusedAsInternal(cleanDraft),
+    JSON.stringify({ filed: approvalsFiled(cleanDraft).length, body: filedRow?.draft_content?.body?.slice(0, 40) }));
+
+  // calendar_link_send is gated: a leaky message never becomes a card, and a card whose stored message
+  // carries internal text (one recorded before this check existed) sends nothing when approved.
+  const linkArgs = (message) => ({ calendarId: CALENDAR, contactId: OWN, channel: "email", subject: "Book a time", message });
+  const linkDrive = (store, args, body = {}) => drive({ stream: true, extraBody: { threadId: THREAD, ...body },
+    toolCall: { name: "calendar_link_send", args }, ...lane("confirm"),
+    tablesExtra: { paige_pending_confirmations: store.table, user_roles: [{ role: "admin" }] },
+    // The contact holds its addresses as contact methods; the send goes to the primary email.
+    serviceTablesExtra: { clients: () => [{ id: OWN, client_contact_methods: [{ kind: "email", value: "dana@example.test", is_primary: true }] }] },
+    onInsert: mirrorConfirms(store) });
+  const leakyLinkStore = makeConfirmStore();
+  const leakyLink = await linkDrive(leakyLinkStore, linkArgs(`Pick a time. ${PLANTS[1][1]}`));
+  assert("31.4 a booking-link message carrying internal text never becomes an approval card",
+    leakyLinkStore.rows.length === 0 && !cardOf(leakyLink) && refusedAsInternal(leakyLink) && sends(leakyLink).length === 0,
+    JSON.stringify({ cards: leakyLinkStore.rows.length, refused: refusedAsInternal(leakyLink) }));
+  const cleanLinkStore = makeConfirmStore();
+  const cleanLink = await linkDrive(cleanLinkStore, linkArgs("Pick a time that suits you."));
+  const cleanCard = cleanLinkStore.rows[0];
+  assert("31.5 CONTROL: a clean booking-link message becomes a card", cleanLinkStore.rows.length === 1 && !!cardOf(cleanLink) && !refusedAsInternal(cleanLink),
+    JSON.stringify({ cards: cleanLinkStore.rows.length }));
+  const approveLink = (store) => linkDrive(store, linkArgs("Pick a time that suits you."), { approvedConfirmations: [issuedApproval(store.rows[0])] });
+  const approvedClean = await approveLink(cleanLinkStore);
+  assert("31.6 CONTROL: approving the clean card sends it", sends(approvedClean).length === 1
+    && JSON.parse(sends(approvedClean)[0].body).body.includes("Pick a time that suits you."),
+    JSON.stringify({ sends: sends(approvedClean).length }));
+  // A card stored before this check existed: seeded the way section 18 seeds a stored card, a row whose
+  // token is its own fingerprint, so the approval redeems exactly the arguments it holds while the model
+  // re-sends a clean call. The control redeems the same card holding a clean message, and it sends.
+  const storedCard = (message) => makeConfirmStore([{ id: "stored-card", fingerprint: "dddddddddddddddd", issued_in_request: "legacy-request",
+    user_id: USER, tool_name: "calendar_link_send", tenant_id: CALLER_TENANT, thread_id: THREAD, scoped_client_id: null, args: linkArgs(message) }]);
+  const redeem = (store) => linkDrive(store, linkArgs("Pick a time that suits you."), { approvedConfirmations: ["dddddddddddddddd"] });
+  const storedCleanStore = storedCard("Pick a time that suits you.");
+  const storedClean = await redeem(storedCleanStore);
+  assert("31.6b CONTROL: a stored card with a clean message is redeemed and sends", storedCleanStore.rows[0].consumed && sends(storedClean).length === 1,
+    JSON.stringify({ consumed: storedCleanStore.rows[0].consumed, sends: sends(storedClean).length }));
+  const staleStore = storedCard(`Pick a time. ${PLANTS[0][1]}`);
+  const approvedStale = await redeem(staleStore);
+  assert("31.7 a stored card whose message carries internal text sends nothing when approved, and PAIGE is told why",
+    !!cleanCard && sends(approvedStale).length === 0 && refusedAsInternal(approvedStale) && toldModel(approvedStale).includes("Nothing went ahead."),
+    JSON.stringify({ consumed: staleStore.rows[0].consumed, sends: sends(approvedStale).length, refused: refusedAsInternal(approvedStale) }));
+  // The usual approval: the model re-sends the card's own arguments. The gate claims the card first, so the
+  // refusal is where it runs, and the card says so, rather than a refusal before the gate that leaves the
+  // card unclaimed and the owner told only that Paige didn't run it.
+  const sameStore = storedCard(`Pick a time. ${PLANTS[0][1]}`);
+  const approvedSame = await linkDrive(sameStore, linkArgs(`Pick a time. ${PLANTS[0][1]}`), { approvedConfirmations: ["dddddddddddddddd"] });
+  assert("31.7c ...and so does the usual approval, where PAIGE re-sends the card's own message",
+    sameStore.rows[0].consumed && sends(approvedSame).length === 0 && refusedAsInternal(approvedSame) && toldModel(approvedSame).includes("Nothing went ahead."),
+    JSON.stringify({ consumed: sameStore.rows[0].consumed, sends: sends(approvedSame).length, refused: refusedAsInternal(approvedSame) }));
+  // What the owner's card says for it: the server's one sentence, and the action marked as not run.
+  const staleOutcome = approvedStale.bodyText.split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
+    .map((l) => { try { return JSON.parse(l.slice(6)); } catch { return null; } })
+    .find((f) => f && f.paige_approval_outcome)?.paige_approval_outcome;
+  assert("31.7b ...and the card reports it as not run, in the sentence for a held-back message",
+    staleOutcome?.note === "Nothing changed. The message included internal system details, so Paige stopped before it went out. Ask her to rewrite it."
+      && staleOutcome?.actions?.length === 1 && staleOutcome.actions[0].outcome === "not_run",
+    JSON.stringify(staleOutcome));
+
+  // action_advance attaches a draft; in the auto lane it runs at once, so dispatch is where it stops.
+  const advance = (draft, mode) => { const store = makeConfirmStore(); return drive({ stream: true, extraBody: { threadId: THREAD },
+    toolCall: { name: "action_advance", args: { action_id: ACTION, to_status: "drafted", draft_content: draft } }, ...lane(mode),
+    tablesExtra: { paige_pending_confirmations: store.table, user_roles: [{ role: "admin" }] }, onInsert: mirrorConfirms(store) }).then((r) => ({ r, store })); };
+  for (const mode of ["auto", "confirm"]) {
+    const { r, store } = await advance({ channel: "email", subject: "Checking in", body: `Hi Dana. ${PLANTS[2][1]}` }, mode);
+    assert(`31.8 a bus draft carrying internal text is not attached (${mode} lane): no advance, no card`,
+      rpcsNamed(r, "advance_action").length === 0 && store.rows.length === 0 && refusedAsInternal(r),
+      JSON.stringify({ advanced: rpcsNamed(r, "advance_action").length, cards: store.rows.length, refused: refusedAsInternal(r) }));
+  }
+  const { r: cleanAdvance } = await advance({ channel: "email", subject: "Checking in", body: CLEAN }, "auto");
+  assert("31.9 CONTROL: a clean bus draft is attached exactly as written",
+    rpcsNamed(cleanAdvance, "advance_action").length === 1 && rpcsNamed(cleanAdvance, "advance_action")[0].args.p_draft_content?.body === CLEAN,
+    JSON.stringify({ advanced: rpcsNamed(cleanAdvance, "advance_action").length }));
+
+  // action_file: for a kind whose executor reaches a customer, the title and summary can be what the
+  // client reads (a portal recommendation with no draft shows them). An owner-only kind is not read.
+  const fileAction = (kind, executor, title) => drive({ stream: true, extraBody: { threadId: THREAD },
+    toolCall: { name: "action_file", args: { action_kind: kind, title, summary: "Next step for Dana", contact_id: OWN } }, ...lane("auto"),
+    tablesExtra: { user_roles: [{ role: "admin" }], paige_action_kinds: () => [{ executor }] },
+    serviceTablesExtra: { paige_action_kinds: () => [{ executor }] } });
+  const portalLeak = await fileAction("client.portal_recommendation", "surface_to_client", `Your next step. ${PLANTS[3][1]}`);
+  assert("31.10 a portal recommendation whose title carries internal text is not filed",
+    rpcsNamed(portalLeak, "file_action").length === 0 && refusedAsInternal(portalLeak),
+    JSON.stringify({ filed: rpcsNamed(portalLeak, "file_action").length, refused: refusedAsInternal(portalLeak) }));
+  const ownerOnly = await fileAction("owner.internal_note", "record_only", "Retry update_client_data for Dana");
+  assert("31.11 an owner-only action's title is not read here (it never reaches a customer)",
+    rpcsNamed(ownerOnly, "file_action").length === 1 && !refusedAsInternal(ownerOnly),
+    JSON.stringify({ filed: rpcsNamed(ownerOnly, "file_action").length }));
+  // The same backstop where a stored card runs the bus tools: the approved card's arguments, not the
+  // model's clean re-send, are what the check reads. Each control redeems the same card holding clean text.
+  const storedBusCard = (tool, args) => makeConfirmStore([{ id: `stored-${tool}`, fingerprint: "eeeeeeeeeeeeeeee", issued_in_request: "legacy-request",
+    user_id: USER, tool_name: tool, tenant_id: CALLER_TENANT, thread_id: THREAD, scoped_client_id: null, args }]);
+  const redeemBus = (store, tool, resent, extra = {}) => drive({ stream: true, extraBody: { threadId: THREAD, approvedConfirmations: ["eeeeeeeeeeeeeeee"] },
+    toolCall: { name: tool, args: resent }, ...lane("confirm"),
+    tablesExtra: { paige_pending_confirmations: store.table, user_roles: [{ role: "admin" }], ...extra }, onInsert: mirrorConfirms(store) });
+  const advanceArgs = (body) => ({ action_id: ACTION, to_status: "drafted", draft_content: { channel: "email", subject: "Checking in", body } });
+  for (const [label, body, expectRun] of [["CONTROL: a stored card with a clean bus draft runs", "Checking in on your week.", true],
+    ["a stored card whose bus draft carries internal text attaches nothing when approved", `Checking in. ${PLANTS[0][1]}`, false]]) {
+    const store = storedBusCard("action_advance", advanceArgs(body));
+    const r = await redeemBus(store, "action_advance", advanceArgs("Checking in on your week."));
+    assert(`31.13 ${label}`, store.rows[0].consumed && (expectRun
+      ? rpcsNamed(r, "advance_action").length === 1 && !refusedAsInternal(r)
+      : rpcsNamed(r, "advance_action").length === 0 && refusedAsInternal(r)),
+      JSON.stringify({ consumed: store.rows[0].consumed, advanced: rpcsNamed(r, "advance_action").length, refused: refusedAsInternal(r) }));
+  }
+  const fileArgs = (title) => ({ action_kind: "client.portal_recommendation", title, summary: "Next step for Dana", contact_id: OWN });
+  for (const [label, title, expectRun] of [["CONTROL: a stored card filing a clean portal recommendation runs", "Book your next session", true],
+    ["a stored card filing a portal recommendation with internal text files nothing when approved", `Your next step. ${PLANTS[1][1]}`, false]]) {
+    const store = storedBusCard("action_file", fileArgs(title));
+    const r = await redeemBus(store, "action_file", fileArgs("Book your next session"), { paige_action_kinds: () => [{ executor: "surface_to_client" }] });
+    assert(`31.14 ${label}`, store.rows[0].consumed && (expectRun
+      ? rpcsNamed(r, "file_action").length === 1 && !refusedAsInternal(r)
+      : rpcsNamed(r, "file_action").length === 0 && refusedAsInternal(r)),
+      JSON.stringify({ consumed: store.rows[0].consumed, filed: rpcsNamed(r, "file_action").length, refused: refusedAsInternal(r) }));
+  }
+  const portalClean = await fileAction("client.portal_recommendation", "surface_to_client", "Book your next session");
+  assert("31.12 CONTROL: a clean portal recommendation files", rpcsNamed(portalClean, "file_action").length === 1 && !refusedAsInternal(portalClean),
+    JSON.stringify({ filed: rpcsNamed(portalClean, "file_action").length }));
+
+  // A kind the registry cannot answer for is read, never waved through: one it does not list, and one
+  // whose lookup fails. The control files the same unlisted kind with clean text.
+  const unlisted = (title, extra = {}) => drive({ stream: true, extraBody: { threadId: THREAD },
+    toolCall: { name: "action_file", args: { action_kind: "client.unlisted_kind", title, summary: "Next step for Dana", contact_id: OWN } }, ...lane("auto"),
+    tablesExtra: { user_roles: [{ role: "admin" }], paige_action_kinds: () => [] }, serviceTablesExtra: { paige_action_kinds: () => [] }, ...extra });
+  const noRow = await unlisted(`Your next step. ${PLANTS[0][1]}`);
+  assert("31.15 an action whose kind the registry does not list is read: internal text in it is not filed",
+    rpcsNamed(noRow, "file_action").length === 0 && refusedAsInternal(noRow), JSON.stringify({ filed: rpcsNamed(noRow, "file_action").length }));
+  const lookupFails = await unlisted(`Your next step. ${PLANTS[0][1]}`, { tableErrorsExtra: { "paige_action_kinds:select": { message: "boom", code: "XX000" } } });
+  assert("31.15 ...and so is one whose kind could not be looked up",
+    rpcsNamed(lookupFails, "file_action").length === 0 && refusedAsInternal(lookupFails), JSON.stringify({ filed: rpcsNamed(lookupFails, "file_action").length }));
+  const unlistedClean = await unlisted("Book your next session");
+  assert("31.15 CONTROL: the unlisted kind with ordinary text files", rpcsNamed(unlistedClean, "file_action").length === 1 && !refusedAsInternal(unlistedClean),
+    JSON.stringify({ filed: rpcsNamed(unlistedClean, "file_action").length }));
+
+  // The vocabulary is the turn's: a key the server wrote into a result PAIGE was sent earlier in the turn
+  // is internal text in a draft she files after it. The control files the same draft as the turn's only
+  // call, where nothing has taught that key.
+  const KEY_BODY = "Hi Dana, your approval_id is ready.";
+  const proposal = (body, summary) => ({ name: "propose_action", args: { action_type: "email", contact_id: OWN, subject: "Your next session", body, summary } });
+  const sameTurn = await drive({ stream: true, extraBody: { threadId: THREAD },
+    toolCall: [proposal(CLEAN, "Email Dana about booking"), proposal(KEY_BODY, "Email Dana again")], ...lane("confirm"), tablesExtra: ADMIN });
+  const sameTurnFiled = approvalsFiled(sameTurn);
+  assert("31.16 a key from a result earlier in the turn is internal text in a draft filed after it",
+    sameTurnFiled.length === 1 && sameTurnFiled[0].row?.draft_content?.body === CLEAN && refusedAsInternal(sameTurn),
+    JSON.stringify({ filed: sameTurnFiled.length, refused: refusedAsInternal(sameTurn) }));
+  const alone = await propose(KEY_BODY);
+  assert("31.16 CONTROL: the same draft as the turn's only call files", approvalsFiled(alone).length === 1 && !refusedAsInternal(alone),
+    JSON.stringify({ filed: approvalsFiled(alone).length }));
+
+  // A refused draft did not run: it renders no step in the owner's chat and is not audited as a failed
+  // write. The control shows the step and the audit row a filed one does leave, so the readers work.
+  const actionSteps = (r) => frames(r).filter((f) => f.paige_step?.kind === "action").map((f) => f.paige_step.label);
+  const audited = (r) => (r.rec.inserts ?? []).filter((i) => i.table === "paige_audit_log");
+  const refusedFiling = await fileAction("client.portal_recommendation", "surface_to_client", `Your next step. ${PLANTS[0][1]}`);
+  const cleanFiling = await fileAction("client.portal_recommendation", "surface_to_client", "Book your next session");
+  assert("31.20 a refused draft renders no step and is not audited as a write",
+    refusedAsInternal(refusedFiling) && actionSteps(refusedFiling).length === 0 && audited(refusedFiling).length === 0,
+    JSON.stringify({ steps: actionSteps(refusedFiling), audited: audited(refusedFiling).length }));
+  assert("31.20 CONTROL: a filed one renders its step and is audited",
+    actionSteps(cleanFiling).length === 1 && audited(cleanFiling).length >= 1,
+    JSON.stringify({ steps: actionSteps(cleanFiling), audited: audited(cleanFiling).length }));
+
+  // A body sent as a list is read string by string: the queue would store it joined into one message.
+  const listed = await propose(["Hi Dana,", PLANTS[0][1]]);
+  assert("31.17 a drafted email whose body arrives as a list is read too, and not filed",
+    approvalsFiled(listed).length === 0 && refusedAsInternal(listed), JSON.stringify({ filed: approvalsFiled(listed).length }));
+
+  // A follow-up action is read for what advance_action delivers. Drafted, a kind that requires approval sends
+  // its draft through the approval lane WHATEVER its executor, so an owner-only kind that requires approval is
+  // read; one that needs none is not, and neither are a draft's ids and channel.
+  const advanceKnown = (row, kind, args, extra = {}) => drive({ stream: true, extraBody: { threadId: THREAD },
+    toolCall: { name: "action_advance", args: { action_id: ACTION, ...args } }, ...lane("auto"),
+    tablesExtra: { user_roles: [{ role: "admin" }], paige_actions: () => [{ id: ACTION, ...row }], paige_action_kinds: () => [kind] }, ...extra });
+  const leakyEmail = { channel: "email", contact_id: OWN, subject: "Checking in", body: `Hi Dana. ${PLANTS[0][1]}` };
+  const approvalLane = await advanceKnown({ status: "filed", action_kind: "curriculum.suggest_resource", title: "Suggest a resource" },
+    { executor: "record_only", requires_approval: true }, { to_status: "drafted", draft_content: leakyEmail });
+  assert("31.18 an owner-only kind that requires approval is read: its draft goes out as an email when approved",
+    rpcsNamed(approvalLane, "advance_action").length === 0 && refusedAsInternal(approvalLane),
+    JSON.stringify({ advanced: rpcsNamed(approvalLane, "advance_action").length, refused: refusedAsInternal(approvalLane) }));
+  const noApproval = await advanceKnown({ status: "filed", action_kind: "exec.compile_brief", title: "Weekly brief" },
+    { executor: "record_only", requires_approval: false }, { to_status: "drafted", draft_content: leakyEmail });
+  assert("31.18 CONTROL: the same draft on an owner-only kind that needs no approval is not read (it never reaches a customer)",
+    rpcsNamed(noApproval, "advance_action").length === 1 && !refusedAsInternal(noApproval),
+    JSON.stringify({ advanced: rpcsNamed(noApproval, "advance_action").length, refused: refusedAsInternal(noApproval) }));
+  const kindUnreadable = await advanceKnown({ status: "filed", action_kind: "exec.compile_brief", title: "Weekly brief" },
+    { executor: "record_only", requires_approval: false }, { to_status: "drafted", draft_content: leakyEmail },
+    { tableErrorsExtra: { "paige_action_kinds:select": { message: "boom", code: "XX000" } } });
+  assert("31.18 ...and when the kind cannot be looked up, the draft is read",
+    rpcsNamed(kindUnreadable, "advance_action").length === 0 && refusedAsInternal(kindUnreadable),
+    JSON.stringify({ advanced: rpcsNamed(kindUnreadable, "advance_action").length }));
+  const withIds = await advanceKnown({ status: "filed", action_kind: "sales.work_followup", title: "Follow up" },
+    { executor: "send_via_approval", requires_approval: true },
+    { to_status: "drafted", draft_content: { channel: "email", contact_id: OWN, subject: "Checking in", body: "Hi Dana, how was your week?" } });
+  assert("31.18 CONTROL: a customer email's contact id and channel are not read as its text",
+    rpcsNamed(withIds, "advance_action").length === 1 && !refusedAsInternal(withIds),
+    JSON.stringify({ advanced: rpcsNamed(withIds, "advance_action").length, refused: refusedAsInternal(withIds) }));
+
+  // Executing a portal action shows the client its STORED title and draft, which nothing attached now carries.
+  const surface = (title) => advanceKnown({ status: "drafted", action_kind: "client.portal_recommendation", title, summary: "Next step",
+    draft_content: { body: "Book your next session when it suits you." } }, { executor: "surface_to_client", requires_approval: false }, { to_status: "executing" });
+  const storedLeak = await surface(`Your next step. ${PLANTS[1][1]}`);
+  assert("31.19 executing a portal action whose stored title carries internal text shows the client nothing",
+    rpcsNamed(storedLeak, "advance_action").length === 0 && refusedAsInternal(storedLeak),
+    JSON.stringify({ advanced: rpcsNamed(storedLeak, "advance_action").length, refused: refusedAsInternal(storedLeak) }));
+  const surfacedClean = await surface("Your next step");
+  assert("31.19 CONTROL: executing a clean portal action runs", rpcsNamed(surfacedClean, "advance_action").length === 1 && !refusedAsInternal(surfacedClean),
+    JSON.stringify({ advanced: rpcsNamed(surfacedClean, "advance_action").length }));
+
+  // Depth and shape are no way past. String() flattens a body nested any depth into its strings before the
+  // queue stores it, and Postgres's ->> writes a portal action's object body out whole, keys and all.
+  let nested = ["Hi Dana,", PLANTS[0][1]];
+  for (let i = 0; i < 6; i += 1) nested = [nested];
+  const deep = await propose(nested);
+  assert("31.21 a drafted email whose body is a list nested six deep is read too, and not filed",
+    approvalsFiled(deep).length === 0 && refusedAsInternal(deep), JSON.stringify({ filed: approvalsFiled(deep).length }));
+  const objectBody = (body) => advanceKnown({ status: "drafted", action_kind: "client.portal_recommendation", title: "Your next step",
+    summary: "Next step", draft_content: { body } }, { executor: "surface_to_client", requires_approval: false }, { to_status: "executing" });
+  const keyed = await objectBody({ update_client_data: "Book your next session when it suits you." });
+  assert("31.21 executing a portal action whose stored body is an object with an internal key shows the client nothing",
+    rpcsNamed(keyed, "advance_action").length === 0 && refusedAsInternal(keyed),
+    JSON.stringify({ advanced: rpcsNamed(keyed, "advance_action").length, refused: refusedAsInternal(keyed) }));
+  const plainKeyed = await objectBody({ note: "Book your next session when it suits you." });
+  assert("31.21 CONTROL: an object body whose keys are ordinary words runs",
+    rpcsNamed(plainKeyed, "advance_action").length === 1 && !refusedAsInternal(plainKeyed),
+    JSON.stringify({ advanced: rpcsNamed(plainKeyed, "advance_action").length }));
 }
 
 console.log(`\n${checks - failures} passed, ${failures} failed`);

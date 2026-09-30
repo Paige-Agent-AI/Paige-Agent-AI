@@ -176,7 +176,8 @@ describe("the canonical governed delete remains the one tenant-safe path", () =>
 
   it("the governed tool is declared and mapped to contact.hard_delete", () => {
     expect(catalog).toContain('"contact.hard_delete": "crm_hard_delete_contact"');
-    expect(catalog).toContain('"contact.hard_delete": ["contact_id","expected_updated_at"]');
+    // Named by the client_ref Paige's reads return; crm-command resolves it inside the workspace.
+    expect(catalog).toContain('"contact.hard_delete": ["client_ref","expected_updated_at"]');
   });
 
   it("the governed tool stays classified high; the retired name carries NO stale classification (fail-closed on reintroduction)", () => {

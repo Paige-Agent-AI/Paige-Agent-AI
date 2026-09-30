@@ -16,13 +16,14 @@
 // single-token query produces exactly ONE or()-group — identical to the old behavior,
 // so short/one-word searches are unchanged.
 
-export const CONTACT_SEARCH_COLUMNS = [
-  "first_name",
-  "last_name",
-  "email",
-  "entity_name",
-  "phone",
-] as const;
+//
+// A contact's emails and phones are NOT columns of `clients`: they are its contact methods
+// (public.client_contact_methods), several of each. They are searched through
+// `contactIdsByAddressToken`, which matches whichever of the contact's addresses holds a token, and
+// folded into the filter as `id.in.(…)` via `addressMatches`.
+
+/** The name columns a contact is searched on; its addresses are searched through its methods. */
+export const CONTACT_NAME_SEARCH_COLUMNS = ["first_name", "last_name", "entity_name"] as const;
 
 /** Strip PostgREST `.or()`-grammar-significant chars from a token so a stray char can't
  *  break the filter string (comma separates conditions, parens group, % is our wildcard). */
@@ -44,9 +45,71 @@ export function contactSearchTokens(raw: string): string[] {
 /** The per-token PostgREST `or()`-group string (OR across the given columns). Pure. */
 export function contactSearchOrGroup(
   token: string,
-  columns: readonly string[] = CONTACT_SEARCH_COLUMNS,
+  columns: readonly string[] = CONTACT_NAME_SEARCH_COLUMNS,
+  addressMatches: readonly string[] = [],
 ): string {
-  return columns.map((c) => `${c}.ilike.%${token}%`).join(",");
+  const clauses = columns.map((c) => `${c}.ilike.%${token}%`);
+  if (addressMatches.length) clauses.push(`id.in.(${addressMatches.join(",")})`);
+  return clauses.join(",");
+}
+
+// deno-lint-ignore no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type MethodsClient = { from: (...args: any[]) => any };
+
+/**
+ * Which contacts an address search may reach: ONE workspace (its id), or every workspace. The
+ * every-workspace form is spelled out rather than implied by a missing id, so an unresolved tenant
+ * can never widen a search by accident; only a caller that has already established platform-owner
+ * reach passes it.
+ */
+export type AddressSearchScope = string | { anyWorkspace: true };
+
+/**
+ * The most contacts one search token's address matches fold into the filter. Each id adds about
+ * 37 characters to the request URL, so this bounds it (about 7KB per token) whatever the reach —
+ * the every-workspace search in particular, where a common token matches far more addresses.
+ */
+export const ADDRESS_MATCH_LIMIT = 200;
+
+/**
+ * For each search token, the contacts holding an email or phone that contains it — whichever of
+ * their addresses it is, not only the primary. A phone token also matches on its digits, so
+ * "555 0101" finds "+1 (555) 010-0101". A lookup failure is logged and reads as no address match;
+ * the name columns still search. An empty workspace id searches nothing.
+ */
+export async function contactIdsByAddressToken(
+  admin: MethodsClient,
+  scope: AddressSearchScope,
+  raw: string,
+  caller: string,
+): Promise<Map<string, string[]>> {
+  const byToken = new Map<string, string[]>();
+  const tenantId = typeof scope === "string" ? scope : null;
+  if (tenantId === "" || (tenantId === null && (scope as { anyWorkspace?: unknown })?.anyWorkspace !== true)) return byToken;
+  for (const token of contactSearchTokens(raw)) {
+    const digits = token.replace(/\D/g, "");
+    const clauses = [`value.ilike.%${token}%`];
+    if (digits.length >= 4) clauses.push(`match_key.ilike.%${digits}%`);
+    let query = admin.from("client_contact_methods").select("client_id");
+    if (tenantId !== null) query = query.eq("tenant_id", tenantId);
+    const { data, error } = await query.or(clauses.join(",")).limit(ADDRESS_MATCH_LIMIT + 1);
+    if (error) {
+      console.error(`[${caller}] contact_address_search_failed`, { code: error.code, message: error.message });
+      continue;
+    }
+    const rows = (data ?? []) as Array<{ client_id: string }>;
+    // More matches than the filter can carry: keep the first ADDRESS_MATCH_LIMIT and say so. The
+    // name columns still search in full; only a token as broad as a mail domain reaches this.
+    if (rows.length > ADDRESS_MATCH_LIMIT) {
+      console.warn(`[${caller}] contact_address_search_truncated`, {
+        reach: tenantId === null ? "every_workspace" : "workspace", limit: ADDRESS_MATCH_LIMIT,
+      });
+    }
+    const ids = [...new Set(rows.slice(0, ADDRESS_MATCH_LIMIT).map((row) => row.client_id))];
+    if (ids.length) byToken.set(token, ids);
+  }
+  return byToken;
 }
 
 export interface ContactSearchOpts {
@@ -59,8 +122,10 @@ export interface ContactSearchOpts {
    *   not zero out the result — surfaces candidates and the caller disambiguates.
    */
   mode?: "all" | "any";
-  /** Searchable columns (defaults to CONTACT_SEARCH_COLUMNS). */
+  /** Searchable columns (defaults to CONTACT_NAME_SEARCH_COLUMNS). */
   columns?: readonly string[];
+  /** Per token, contact ids whose addresses match it (contactIdsByAddressToken). */
+  addressMatches?: ReadonlyMap<string, readonly string[]>;
 }
 
 /**
@@ -70,7 +135,7 @@ export interface ContactSearchOpts {
  */
 export function applyContactSearchFilter<Q>(query: Q, raw: string, opts: ContactSearchOpts = {}): Q {
   const mode = opts.mode ?? "all";
-  const columns = opts.columns ?? CONTACT_SEARCH_COLUMNS;
+  const columns = opts.columns ?? CONTACT_NAME_SEARCH_COLUMNS;
   const tokens = contactSearchTokens(raw);
   // deno-lint-ignore no-explicit-any
   let q: any = query;
@@ -79,12 +144,14 @@ export function applyContactSearchFilter<Q>(query: Q, raw: string, opts: Contact
     // One OR-group over every token × column — natural-language tolerant (a stopword
     // token simply matches nothing rather than zeroing the whole result).
     const clauses = tokens.flatMap((t) => columns.map((c) => `${c}.ilike.%${t}%`));
+    const ids = [...new Set(tokens.flatMap((t) => [...(opts.addressMatches?.get(t) ?? [])]))].slice(0, ADDRESS_MATCH_LIMIT);
+    if (ids.length) clauses.push(`id.in.(${ids.join(",")})`);
     q = q.or(clauses.join(","));
   } else {
     // AND across tokens: each token is its own OR-group; chained `.or()` are
     // AND-combined by PostgREST, so every token must match some column.
     for (const token of tokens) {
-      q = q.or(contactSearchOrGroup(token, columns));
+      q = q.or(contactSearchOrGroup(token, columns, opts.addressMatches?.get(token) ?? []));
     }
   }
   return q as Q;

@@ -62,7 +62,7 @@
 //      tenant_id (JWT path); a service-role caller passes the tenant it already resolved. The body
 //      can never widen scope.
 //  §37 NEW PRODUCER of tenant_a2p_registrations. This upsert satisfies: the BEFORE-INSERT trigger
-//      (derives tenant_id), RLS insert/update (tenant_id = current_user_tenant_id() + admin/coach |
+//      (derives tenant_id), RLS insert/update (tenant_id = current_user_tenant_id() + admin |
 //      is_platform_owner()), and every NOT NULL / CHECK column — brand_status/campaign_status/status
 //      default 'pending' and are written with in-enum values; sample_messages is jsonb; use_case /
 //      campaign_description / optin_flow are nullable text.
@@ -200,8 +200,8 @@ Deno.serve(async (req: Request) => {
       }
       const roles = (roleRows || []).map((r: { role: string }) => r.role);
       // §37 gate↔RLS agreement: tenant_a2p_registrations RLS admits is_platform_owner() OR an
-      // admin/coach of the caller's OWN tenant — a bare super_admin is NOT in that set. Gate on the
-      // SAME authority so a platform-staff super_admin (not the owner, no admin/coach) gets a clean
+      // admin of the caller's OWN tenant — a bare super_admin is NOT in that set. Gate on the
+      // SAME authority so a platform-staff super_admin (not the owner, no admin) gets a clean
       // 403 HERE rather than an opaque RLS rejection surfacing as a 500 at the upsert. The platform
       // owner still passes via is_platform_owner() even if their only role is super_admin.
       const { data: ownerFlag } = await authed.rpc("is_platform_owner");
@@ -213,7 +213,7 @@ Deno.serve(async (req: Request) => {
       tenantId = str(resolved) || null;
       const { data: tenantAdmin } = await createClient(supabaseUrl, supabaseServiceKey)
         .rpc("is_tenant_admin_as", { _actor: user.id, _tenant: tenantId });
-      const canWrite = tenantAdmin === true || ownerFlag === true || roles.some((r: string) => r === "admin" || r === "coach");
+      const canWrite = tenantAdmin === true || ownerFlag === true || roles.includes("admin");
       if (!canWrite) return fail(403, "FORBIDDEN", "Workspace owner or administrator access required.");
       // JWT path: write through the caller's own JWT; the save RPC derives tenant_id
       // from current_user_tenant_id() — the body can never widen scope (§9).

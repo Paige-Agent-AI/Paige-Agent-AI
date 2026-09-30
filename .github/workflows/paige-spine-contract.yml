@@ -8,65 +8,11 @@ on:
   # branch runs the full contract against that branch's head. No job logic changes; no check is
   # weakened, skipped, or de-required — this only adds a way to TRIGGER the same gate on demand.
   workflow_dispatch:
+  # No `paths:` filter on pull_request, and no job-level `if:` either: both contract jobs run on
+  # EVERY pull request. They are required checks, and a required check that never starts leaves a
+  # PR waiting forever; a conditional job is also what team-removal-migration.test.ts refuses for
+  # the job carrying the team-removal proof. Running always is the one shape that satisfies both.
   pull_request:
-    paths:
-      - "supabase/functions/_shared/paige-spine/**"
-      - "supabase/migrations/**"
-      - "supabase/tests/mcp_gateway_endpoint_revokes_approvals.sql"
-      - "supabase/tests/mcp_gateway_durable_endpoint_bound_consent.sql"
-      - "supabase/tests/mcp_gateway_url_auth_configured.sql"
-      - "supabase/tests/mcp_gateway_endpoint_load_binding.sql"
-      - "supabase/tests/mcp_gateway_owner_only_visibility.sql"
-      - "supabase/tests/mcp_gateway_endpoint_setter.sql"
-      - "supabase/tests/mcp_gateway_connection_create.sql"
-      - "supabase/tests/mcp_gateway_oauth_state_and_hardenings.sql"
-      - "supabase/tests/mcp_gateway_oauth_grant_writer.sql"
-      - "supabase/tests/mcp_gateway_approval_future_expiry.sql"
-      - "scripts/proof/mcp-gateway-endpoint-consent-race.mjs"
-      - "supabase/functions/_shared/mcp-gateway/**"
-      - "supabase/functions/paige-tts/**"
-      - "supabase/tests/paige_voice_budget_control.sql"
-      - "supabase/tests/paige_live_pilot_feature_guard.sql"
-      - "scripts/proof/paige-voice-budget-concurrency.mjs"
-      - "supabase/tests/paige_spine_foundation.sql"
-      - "supabase/tests/governed_crm_commands.sql"
-      - "supabase/tests/media_credit_ledger.sql"
-      - "supabase/tests/business_context_readiness.sql"
-      - "supabase/tests/team_authority_readiness.sql"
-      - "supabase/tests/business_mission_foundation.sql"
-      - "supabase/tests/social_foundation.sql"
-      - "supabase/tests/social_foundation_rls.sql"
-      - "scripts/sql/social-foundation-legacy-shape-proof.sql"
-      - "scripts/sql/social-foundation-tenant-shaped-proof.sql"
-      - "supabase/tests/source_thread_link_scope.sql"
-      - "supabase/functions/_shared/source-thread-link.ts"
-      # The Solo Team invitation proof must re-run when the seam it proves changes,
-      # not only when a migration happens to touch it.
-      - "supabase/tests/solo_team_invite_workspace_authority.sql"
-      - "supabase/tests/solo_setup_completion_marker.sql"
-      - "supabase/tests/canonical_solo_provisioning.sql"
-      - "supabase/tests/solo_team_invite_recipient_binding.sql"
-      # Same reason for the removal proof: it must re-run when the seam changes.
-      - "supabase/tests/solo_team_removal_authority.sql"
-      - "supabase/functions/solo-team-invitations/**"
-      - "supabase/functions/handle-resend-webhook/**"
-      - "supabase/tests/resend_receipt_reliability.sql"
-      - "supabase/tests/promotional_solo_grant.sql"
-      # Layer C · C5 slice 2 — companion-minting + cancellation-sync + direct-approve guard + reconciler.
-      # Re-run when the proof or the orchestration seams it covers change, not only when a migration touches it.
-      - "supabase/tests/paige_orchestration_companion_minting.sql"
-      - "supabase/functions/_shared/paige-orchestration/**"
-      - "supabase/functions/execute-approval/**"
-      - "scripts/proof/resend-receipt-concurrency.mjs"
-      - "scripts/proof/business-mission-concurrency.mjs"
-      - "src/__tests__/paige-spine-*.test.ts"
-      - "src/__tests__/paige-orchestration-approve-executor.test.ts"
-      - "src/solo/paigeClientScope.ts"
-      - "src/solo/paigeClientScope.test.ts"
-      - "scripts/ci/paige-spine-registry-lint.mjs"
-      - "scripts/ci/chat-tool-registry-lint.mjs"
-      - "scripts/proof/paige-spine-local-proof.sql"
-      - ".github/workflows/paige-spine-contract.yml"
   push:
     branches: [main]
     paths:
@@ -82,14 +28,33 @@ on:
       - "supabase/tests/mcp_gateway_oauth_state_and_hardenings.sql"
       - "supabase/tests/mcp_gateway_oauth_grant_writer.sql"
       - "supabase/tests/mcp_gateway_approval_future_expiry.sql"
+      - "supabase/tests/integrations_surface_sees_mcp.sql"
+      - "supabase/tests/record_capability_run_single_overload.sql"
+      - "supabase/tests/mcp_tool_catalog_tenant_scope.sql"
+      - "supabase/tests/mcp_oauth_refuses_the_rest_facet.sql"
+      - "supabase/migrations/20270412090000_a_tenant_can_read_its_own_tool_catalog.sql"
+      - "supabase/migrations/20270411090000_one_record_capability_run_not_two.sql"
       - "scripts/proof/mcp-gateway-endpoint-consent-race.mjs"
       - "supabase/functions/_shared/mcp-gateway/**"
       - "supabase/functions/paige-tts/**"
       - "supabase/tests/paige_voice_budget_control.sql"
       - "supabase/tests/paige_live_pilot_feature_guard.sql"
+      - "supabase/tests/paige_live_runtime_claim.sql"
+      - "supabase/tests/paige_live_session_transition.sql"
       - "scripts/proof/paige-voice-budget-concurrency.mjs"
       - "supabase/tests/paige_spine_foundation.sql"
       - "supabase/tests/governed_crm_commands.sql"
+      - "supabase/tests/outbound_private_business_facts.sql"
+      - "supabase/tests/user_address_readers.sql"
+      - "supabase/tests/contact_methods_concurrency.sql"
+      - "scripts/proof/contact-methods-add-race.mjs"
+      - "supabase/tests/contact_create_with_methods.sql"
+      - "supabase/tests/user_primary_address.sql"
+      # The CRM patch-schema proof and the generator that writes it. (`supabase/migrations/**`
+      # above already re-runs this job when an allowlist itself changes, which is the case that
+      # matters most; these two cover a change to the proof or to how it is derived.)
+      - "supabase/tests/crm_patch_fields_match_database.sql"
+      - "scripts/ci/crm-patch-field-gen.mjs"
       - "supabase/tests/media_credit_ledger.sql"
       - "supabase/tests/business_context_readiness.sql"
       - "supabase/tests/team_authority_readiness.sql"
@@ -106,6 +71,7 @@ on:
       - "supabase/tests/solo_setup_completion_marker.sql"
       - "supabase/tests/canonical_solo_provisioning.sql"
       - "supabase/tests/solo_team_invite_recipient_binding.sql"
+      - "supabase/tests/solo_team_invite_accept_end_to_end.sql"
       # Same reason for the removal proof: it must re-run when the seam changes.
       - "supabase/tests/solo_team_removal_authority.sql"
       - "supabase/functions/solo-team-invitations/**"
@@ -125,6 +91,12 @@ on:
       - "scripts/ci/paige-spine-registry-lint.mjs"
       - "scripts/ci/chat-tool-registry-lint.mjs"
       - "scripts/proof/paige-spine-local-proof.sql"
+      # Everything the database-contract job runs must trigger it (18 files it ran were missing).
+      - "supabase/tests/**"
+      - ".github/scripts/prod-readonly-baseline.sh"
+      - "scripts/ci/reproduce-production-grants.*"
+      - "scripts/ci/grant-ordering-proof.sh"
+      - "scripts/proof/mcp-gateway-tools-action.mjs"
 
 permissions:
   contents: read
@@ -157,14 +129,114 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: 2.109.1
+      # The rebuilt database must hold production's API-role grants, or a proof exercising a policy
+      # as `authenticated` dies at the grant layer ("permission denied for table clients") before
+      # the policy runs. Most of production's grants came from project default privileges that no
+      # migration wrote, so no replay can produce them; they are read from production instead.
+      # READ-ONLY (pg_dump + ledger), through the one script CI uses to read production, BEFORE the
+      # local stack starts, and the project is unlinked again before any test SQL runs.
+      # A pull request from a fork gets no repository secrets, so it cannot read production's
+      # baseline, and it must never be given them. Say so plainly instead of failing on a missing
+      # token: a maintainer brings a fork contribution in by pushing its branch to this repository.
+      # (Owner ruling, 2026-09-27: fork PRs fail closed on this required check.)
+      - name: Refuse fork pull requests (no production access for forks)
+        env:
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          BASE_REPO: ${{ github.repository }}
+        run: |
+          if [ -n "$HEAD_REPO" ] && [ "$HEAD_REPO" != "$BASE_REPO" ]; then
+            echo "::error::database-contract reads production's schema and cannot run for a pull request from a fork ($HEAD_REPO). A maintainer must push this branch to $BASE_REPO and open the pull request from there."
+            exit 1
+          fi
+          echo "Pull request branch is in $BASE_REPO; the production baseline can be read."
+      - name: Read production's baseline (read-only)
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+        run: .github/scripts/prod-readonly-baseline.sh "$RUNNER_TEMP/prod"
       - run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector
-      - run: supabase db reset
+      # Production's grants are reproduced on the schema production actually has, and only then is
+      # the change under review applied on top — so its own grants and revokes, dynamic SQL,
+      # schema-wide ones and out-of-order migrations included, land exactly as written. Guessing
+      # which objects a pending migration touches was tried and fails both ways (§39 review on
+      # #1487). The sequence and its failure modes are documented in the script.
+      - name: Reproduce production's grants, then apply the change under review
+        run: scripts/ci/reproduce-production-grants.sh "$RUNNER_TEMP/prod"
+
       # Third-party speech availability is platform-owned, distinct from the
       # caller's existing tenant membership/role and Paige thread entitlement.
       - run: supabase test db supabase/tests/paige_live_pilot_feature_guard.sql
+      - run: supabase test db supabase/tests/paige_live_runtime_claim.sql
+      - run: supabase test db supabase/tests/paige_live_session_transition.sql
       # Governed CRM/Pipeline: tenant, authority, idempotency, destructive preview, readback, and Rail proof.
       - run: supabase test db supabase/tests/governed_crm_commands.sql
+        # Its fixtures write addresses as contact methods (20270519010000's lane); like the proofs
+        # below, it reports its own result so an earlier red step cannot hide it.
+        if: ${{ !cancelled() }}
+      # The patch field list Paige is SHOWN must equal the allowlist that REFUSES her patch. On
+      # 2026-09-25 it did not: she sent `company_name`/`zip`, the executor accepts
+      # `entity_name`/`zip_code`, and an approved contact create died as
+      # CRM_PATCH_FIELDS_INVALID:company_name,zip with nothing in the tool schema to tell her
+      # otherwise. `npm run lint:crm-patch-fields` already re-derives the seven lists by slicing
+      # migration TEXT; this proof is the half that asks POSTGRES instead, against the database
+      # `db reset` just replayed — so the definition Postgres actually resolves is the authority,
+      # not a filename-sort heuristic. Both artifacts are generated together, so they cannot
+      # disagree without one of the two guards going red.
+      # MEASURED 2026-09-26, and the reason this one step carries a condition its neighbours
+      # do not: this job has failed at its FIRST test step since 2026-09-24 (#1448 removed the
+      # Live pilot envelope and left paige_live_pilot_feature_guard.sql asserting it — 22/140,
+      # identical failures on main run 36034621731 and on this branch). `bash -e` aborts the job
+      # there, so all 28 proof steps after it, this one included, have not executed in CI for two
+      # days. A proof a workflow claims to gate and does not run is worse than one it never
+      # claimed — the comment twelve lines into the `contract` job above says exactly that. This
+      # makes THIS proof report its own result; it weakens nothing (a failure here still fails
+      # the job). The stale guard, and un-darkening the other 27, are filed as their own item
+      # rather than fixed from this lane.
+      - run: supabase test db supabase/tests/crm_patch_fields_match_database.sql
+        if: ${{ !cancelled() }}
+      # Contact methods: several labelled, ordered addresses per contact and per person, exactly one
+      # primary of each kind enforced by the tables, one contact per address per workspace, row
+      # access with the contact, and every matcher recognising a contact by ANY of its addresses.
+      # Reports its own result, like the step above, so an earlier red step cannot hide it.
+      - run: supabase test db supabase/tests/contact_methods.sql
+        if: ${{ !cancelled() }}
+      # A save built on a list that changed since it was loaded is refused, never overwrites: a
+      # person's list, a client's list (the People editor and Paige's MCP update_contact), and an
+      # address attached by inbound recognition moving the contact's version for CRM commands.
+      - run: supabase test db supabase/tests/contact_methods_concurrency.sql
+        if: ${{ !cancelled() }}
+      # And the race a single session cannot show: an address ADD issued while another transaction
+      # holds the contact (another add, or a checked whole-list replace) waits for it, then keeps that
+      # transaction's address instead of deleting it (20270519010000 locks before it reads). Two real
+      # sessions on committed rows, observed waiting on the lock before the holder commits.
+      # It ends its own sessions and exits 1 within its 90s budget on any failure; the step limit is
+      # a second fence so a stuck run can never sit on the job's 20 minutes.
+      - run: node scripts/proof/contact-methods-add-race.mjs
+        if: ${{ !cancelled() }}
+        timeout-minutes: 3
+        env:
+          CONTACT_METHODS_RACE_TEST_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      # A contact created from an inbound address and its first addresses are one transaction: a
+      # refused or taken address leaves no contact row and no contact.created event behind.
+      - run: supabase test db supabase/tests/contact_create_with_methods.sql
+        if: ${{ !cancelled() }}
+      # A person's primary address set by the server (provider webhooks, Paige's write-back): under
+      # the same per-person lock as a checked save, keeping every address and any relabel saved since.
+      - run: supabase test db supabase/tests/user_primary_address.sql
+        if: ${{ !cancelled() }}
+      # Public form intake: a visitor reads an active form only through growth_public_form (never the
+      # table, never the business/pipeline/alert columns), nobody inserts a submission from the
+      # browser, and a form's intake settings change only for its own business's owner/admin.
+      - run: supabase test db supabase/tests/public_form_intake.sql
+        if: ${{ !cancelled() }}
+      # Where the RAG ingest, the security canary and the funding report read a person's address:
+      # the old profiles.email read fails, the user_contact_methods reads they now send run as the
+      # service role, and every new account has exactly one primary email to send to.
+      - run: supabase test db supabase/tests/user_address_readers.sql
+        if: ${{ !cancelled() }}
       - run: supabase test db supabase/tests/paige_spine_foundation.sql
+        if: ${{ !cancelled() }}
       # Vibe Media Credit Ledger: append-only, closure math, anti-leakage release
       # gate, lazy mint, RLS, and the §59 service-role surface (2026-09-12).
       - run: supabase test db supabase/tests/media_credit_ledger.sql
@@ -180,6 +252,9 @@ jobs:
       - run: supabase test db supabase/tests/canonical_solo_provisioning.sql
       - run: supabase test db supabase/tests/solo_team_invite_workspace_authority.sql
       - run: supabase test db supabase/tests/solo_team_invite_recipient_binding.sql
+      # The owner's real send through create_solo_team_invite, accepted through accept_solo_team_invite,
+      # for Member and Admin across two businesses: no hand-written token.
+      - run: supabase test db supabase/tests/solo_team_invite_accept_end_to_end.sql
       - run: supabase test db supabase/tests/solo_team_removal_authority.sql
       - run: supabase test db supabase/tests/solo_team_invite_lifecycle.sql
       # Solo Beta acquisition rides the same freshly replayed database. These two files prove
@@ -206,6 +281,7 @@ jobs:
       # authenticated user of that same tenant). Rides this job for the same reason as the two
       # above — the expensive part is `supabase start` + `db reset` (§24).
       - run: supabase test db supabase/tests/business_context_readiness.sql
+      - run: supabase test db supabase/tests/secure_browser_control_plane_security.sql
       # The team.authority contract. Its load-bearing fixture is a caller who is the legal owner of
       # ANOTHER workspace while holding a plain member seat in their active one — the one shape that
       # makes a dropped is_tenant_owner() tenant argument, and a collapsed permission field, fail
@@ -217,6 +293,68 @@ jobs:
       - run: supabase test db supabase/tests/social_foundation.sql
       - run: supabase test db supabase/tests/social_foundation_rls.sql
       - run: supabase test db supabase/tests/social_connection_lifecycle.sql
+      # coach_clients status consistency (migration 20270426000000): six policies honour an
+      # assignment only while it is active, and reactivation restores access. Carries the same
+      # `!cancelled()` condition as the CRM patch proof above, for the same measured reason: the
+      # job's first test step is red on main, and without it this proof would never execute.
+      - run: supabase test db supabase/tests/coach_clients_status_consistency.sql
+        if: ${{ !cancelled() }}
+      # Assigned-staff relationships belong to exactly one tenant: structural client link, validated
+      # assignee, suspend/restore on membership change, and no direct writes outside assignment.
+      - run: supabase test db supabase/tests/assigned_staff_relationship_scope.sql
+        if: ${{ !cancelled() }}
+      # Client memory belongs to exactly one tenant: filled from the client record or the writer's
+      # active tenant, refused otherwise, fixed once written, and visible only within that tenant.
+      - run: supabase test db supabase/tests/client_memory_tenant_scope.sql
+        if: ${{ !cancelled() }}
+      # Report uploads and their stored files belong to exactly one tenant; staff reach a file only
+      # through its upload record, and file the record before the file.
+      - run: supabase test db supabase/tests/credit_report_upload_tenant_scope.sql
+        if: ${{ !cancelled() }}
+      # A device's push subscription belongs to one business; a subscription with no business
+      # matches none; the person manages their own.
+      - run: supabase test db supabase/tests/push_subscription_tenant_scope.sql
+        if: ${{ !cancelled() }}
+      # Staff name resolution carries only what callers show, is read-only, and stays inside the
+      # business.
+      - run: supabase test db supabase/tests/coach_client_profiles_safe_projection.sql
+        if: ${{ !cancelled() }}
+      # Assigned staff reach what they are assigned, inside the business, with no title role.
+      - run: supabase test db supabase/tests/assigned_staff_access_without_title_role.sql
+        if: ${{ !cancelled() }}
+      - run: supabase test db supabase/tests/title_role_beside_admin_retired.sql
+        if: ${{ !cancelled() }}
+      - run: supabase test db supabase/tests/title_role_retired_from_functions.sql
+        if: ${{ !cancelled() }}
+      - run: supabase test db supabase/tests/title_role_retired_from_finance.sql
+        if: ${{ !cancelled() }}
+      - run: supabase test db supabase/tests/title_role_grant_paths_closed.sql
+        if: ${{ !cancelled() }}
+      - run: supabase test db supabase/tests/title_role_value_forbidden.sql
+        if: ${{ !cancelled() }}
+      - run: supabase test db supabase/tests/title_role_read_nowhere.sql
+        if: ${{ !cancelled() }}
+      # A tenant-less operator's semantic memory recall matches their own NULL-tenant rows (R5), and
+      # a NULL tenant never reaches another user's rows or anyone's in-tenant rows.
+      - run: supabase test db supabase/tests/owner_memory_recall_no_tenant.sql
+        if: ${{ !cancelled() }}
+      # A1: the owner's registered address, business phone and website are found in any
+      # customer-bound draft, however they are written, unless the owner typed them; only the server
+      # may ask, and only about the tenant it names.
+      - run: supabase test db supabase/tests/outbound_private_business_facts.sql
+        if: ${{ !cancelled() }}
+      # One server answer to "is this person a platform operator, and at which tier", and the R0
+      # capability table behind "may this operator do X", including its super_admin-only default.
+      - run: supabase test db supabase/tests/operator_standing.sql
+        if: ${{ !cancelled() }}
+      # One act-as at a time, decided on the server: an enter over an open act-as is refused, and a
+      # repeated enter or exit (a second tab, a second press) writes no second receipt (#1547).
+      - run: supabase test db supabase/tests/operator_act_as_one_at_a_time.sql
+        if: ${{ !cancelled() }}
+      # An operator acting as a Solo workspace reads its Setup context read-only, through G1's
+      # tenant.act_as; every Setup write stays member-only (owner live drive 2026-09-28).
+      - run: supabase test db supabase/tests/operator_act_as_reads_solo_setup.sql
+        if: ${{ !cancelled() }}
       - run: psql -v ON_ERROR_STOP=1 -f scripts/sql/social-foundation-legacy-shape-proof.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
       - run: psql -v ON_ERROR_STOP=1 -f scripts/sql/social-foundation-tenant-shaped-proof.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
       # Trusted task↔thread link — RLS SET-ROLE proof that the edge's server-side validation read
@@ -278,6 +416,41 @@ jobs:
       # without clobbering the fresh config/catalog), and INT-153 (the writer bearer/header min-length floor
       # through create_mcp_connection, oauth exempt). Rides this replayed DB for the same §24 reason as above.
       - run: psql -v ON_ERROR_STOP=1 -f supabase/tests/mcp_gateway_oauth_state_and_hardenings.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      # Paige can SEE her MCP connections (migration 20270410214500). list_integration_surface read
+      # ONLY channel_connectors, so every MCP connection a tenant owned was invisible to her — absent,
+      # not stale. Proves: the channel_connectors half is untouched (§58, incl. from_address/
+      # inbound_address); a LIVE legacy row BEATS its own frozen projection and is listed exactly ONCE
+      # — precedence keys on the lineage columns the one-time backfill writes, NEVER on a provider
+      # name, because a projection is a stale snapshot OF the live row and letting it win reports a
+      # connection the owner just disconnected as still live; a NATIVE gateway row (legacy_source NULL)
+      # survives that suppression; the live n8n API-key facet likewise beats its projection, host-only;
+      # a LIVE legacy connection the backfill never projected is STILL listed — without it Paige
+      # answers "you are not connected" about a working connection; the owner_only gate survives being
+      # reached through a nested SECURITY DEFINER call (§9, proven from both the admin and the
+      # ordinary-member side); and no credential material crosses. Rides this replayed DB for the same
+      # §24 reason as above.
+      - run: psql -v ON_ERROR_STOP=1 -f supabase/tests/integrations_surface_sees_mcp.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      # There must be exactly ONE public.record_capability_run (migration 20270411090000).
+      # 20270107000000 added four trailing params as a NEW signature instead of replacing the
+      # old one, and issued no DROP — so BOTH were live with defaults past the fifth argument,
+      # and every five-argument call (which is what all three service-role edge callers send)
+      # failed 42725 "function is not unique" straight into a swallowed console.error. This
+      # counts the overloads and PREPAREs the real five-named and ten-positional calls, so the
+      # next migration that reaches for a second overload fails here instead of silently
+      # switching the Rail off again. Rides this replayed DB for the same §24 reason as above.
+      - run: psql -v ON_ERROR_STOP=1 -f supabase/tests/record_capability_run_single_overload.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      # Door 1 (migration 20270412090000): a tenant reads its OWN tool catalogue and nothing
+      # else. The obvious implementation — mirror get_mcp_connections_v2 — is WRONG and leaks
+      # every tenant to every other: v2's isolation lives in its WHERE tenant_id LIST filter,
+      # which a by-id read does not have, and _mcp_resolve_tenant scopes the CALLER, never the
+      # ROW. Proven live during the build: with the bind removed, a tenant-A member read tenant
+      # B's tools outright. This pins that bind, the owner_only re-check after it, one identical
+      # refusal for unknown/foreign/owner_only (no existence oracle), [] meaning ONLY "not probed
+      # yet", and that no pin/schema_hash/authority_hash/endpoint_hash/args_shape_hash/approver
+      # uuid crosses — checked by VALUE so a rename cannot defeat it.
+      - run: psql -v ON_ERROR_STOP=1 -f supabase/tests/mcp_tool_catalog_tenant_scope.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      # The OAuth flow must refuse the REST facet, or it overwrites an unrecoverable API key.
+      - run: psql -v ON_ERROR_STOP=1 -f supabase/tests/mcp_oauth_refuses_the_rest_facet.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
       # Connected MCP Gateway — Slice ② OAuth GRANT WRITER (migration 20270333000000): complete_mcp_oauth_grant
       # re-keys a 'none' shell to oauth (tokens ENCRYPTED, granted scopes recorded, status→pending_verification,
       # config_generation BUMPED, routing facts returned, loader round-trips); §9/§59 refuses a cross-tenant
@@ -300,9 +473,24 @@ jobs:
       # And the two-session concurrency proof that the approval-write vs endpoint-change RACE is closed:
       # set_mcp_connection_approval's FOR UPDATE row lock serializes it against a concurrent endpoint
       # change, so no approval is ever left bound to an endpoint the connection no longer has (#1262 finding 3).
+      # Door 1 — the `tools` action, driven against the REAL handler + effect policy. Pins that
+      # the approval decision is never re-derived (a send_* tool a provider labels "read" still
+      # requires approval), that a genuine declared read is honestly marked as needing nothing,
+      # that unknown/foreign/owner_only stay one indistinguishable refusal, and that an expired
+      # or pin-drifted approval is not counted as consent.
+      - run: node scripts/proof/mcp-gateway-tools-action.mjs
       - run: node scripts/proof/mcp-gateway-endpoint-consent-race.mjs
         env:
           MCP_GATEWAY_TEST_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
       - run: node scripts/proof/business-mission-concurrency.mjs
         env:
           BUSINESS_MISSION_TEST_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      # The grant reproduction must never overwrite the change under review. A migration production
+      # has not recorded is written at runtime (never committed); its GRANT and REVOKE must survive
+      # the job's rebuild → reproduce → apply sequence, and the reconcile alone must erase them
+      # (negative control). Last, because it rebuilds the database the proofs above used.
+      - name: Grant reproduction keeps the change under review (ordering proof)
+        if: ${{ !cancelled() }}
+        run: |
+          node scripts/ci/reproduce-production-grants.mjs --self-test
+          scripts/ci/grant-ordering-proof.sh "$RUNNER_TEMP/prod"

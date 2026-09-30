@@ -198,7 +198,7 @@ export type SessionArtifactKind = "page" | "form" | "funnel" | "content";
  *  store/kind). The renderer draws these blocks as a premium, book/one-pager-grade document on the studio
  *  canvas. Each doc_type has a distinct block skeleton (encoded in the document_generate tool) so a
  *  worksheet/ebook/proposal stops degrading into a generic guide. */
-export type StudioDocType = "guide" | "one_pager" | "ebook" | "checklist" | "worksheet" | "proposal" | "offer_letter" | "sales_offer";
+export type StudioDocType = "guide" | "one_pager" | "ebook" | "checklist" | "worksheet" | "proposal" | "offer_letter" | "sales_offer" | "agreement_draft";
 
 /** One designed unit of a document — the block vocabulary the agent authors and the renderer draws.
  *  A permissive shape (all fields optional beyond `type`) so a slightly-off block from the model

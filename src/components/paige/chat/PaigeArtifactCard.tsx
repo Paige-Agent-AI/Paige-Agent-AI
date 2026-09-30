@@ -82,6 +82,7 @@ const DOC_TYPE_LABEL: Record<StudioDocType, string> = {
   proposal: "Proposal",
   offer_letter: "Offer letter",
   sales_offer: "Sales offer",
+  agreement_draft: "Agreement draft",
 };
 
 // Thumbnail geometry — the tile is a fixed 80×96px page; the scaled DocumentPreview renders at an

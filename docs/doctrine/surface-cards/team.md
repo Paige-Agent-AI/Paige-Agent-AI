@@ -57,7 +57,7 @@ approval strength.** Applying it here would not have hardened the Team tools, it
 withdrawn PAIGE's ability to help an owner run their team, which is the opposite of the intent.
 `high` is the setting that means *she can do it, and only after you approve this exact call*.
 
-**`team_set_work_profile` stays `ordinary`**, because it changes only job title and
+**`team_set_work_profile` stays `ordinary`**, because it changes only title and
 responsibilities and cannot alter access. It still requires the normal compact confirmation and
 ordinary domain authorization. **It must never be represented as a permission change** — the RPC
 writes two text columns and cannot reach `permission`, and any copy suggesting otherwise is false.
@@ -73,6 +73,12 @@ invitation · approval binding · result · owner-visible evidence. It must be p
 
 Team stays `PARTIAL` until **both**: the owner can see a truthful, tenant-scoped outcome after PAIGE
 acts, **and** the live authenticated flow is proven. Writing a card does not move a truth label.
+
+### 4. Roles and titles (2026-09-26)
+
+Tenant permissions are exactly **owner · admin · member**. **Coach is removed as a permission** and survives only as a title. The Team screen's permission options and the `member_grant_role` / `member_revoke_role` tools will stop offering it in their own slices. **Nothing is removed by writing this down.**
+
+The *Title* field this card describes (labelled *Job title* until 2026-09-27; the owner made "title" the final word) is exactly the ruled **title**: descriptive only, never read by a permission decision. That matches the live code, which already writes it through a function that cannot reach `permission`. Authoritative: `docs/doctrine/role-taxonomy-and-matrix.md` §0.
 
 ### Related, and separately active: PR #728's post-merge follow-up
 
@@ -131,11 +137,24 @@ from the expanding rail (`openPaige` → `expandRail`), beside whatever screen i
 
 ## What PAIGE can read
 
-`get_paige_team_context()` → a sanitised block: roster with `user_id`, name, email, **enforced**
-permission, job title, responsibilities; invitations with `invitation_id`, address, proposed
-permission and lifecycle status. Control characters stripped, fields length-capped, **the invite
-token never included**. Marked `REFERENCE DATA ONLY`; tenant-authored work text explicitly confers
-no authority. Suppressed entirely when the block's tenant ≠ the conversation's tenant.
+`get_paige_team_context()` → a sanitised block with **two separately labelled facts per person**
+(F1, 2026-09-26). The roster carries `user_id`, name, email, `platform_role` (owner, admin or
+member, or an older value exactly as the server enforces it) and `title` (the business's own word,
+always present, `null` when unset), plus responsibilities. Invitations carry `invitation_id`, address,
+`proposed_platform_role`, `title` and lifecycle status. The old `enforced_permission`,
+`proposed_permission` and `job_title` keys are gone. The block tells PAIGE to name people by name and
+title, to describe access only as owner, admin or member, never to read a key name aloud, and to ask
+once when an instruction could mean either (for example "make Sam a manager").
+
+The word "title" comes from `_shared/team-vocabulary.ts` (`TITLE_WORD`). Control characters are
+stripped, fields are length-capped, and **the invite token is never included**. The block is marked
+`REFERENCE DATA ONLY`; tenant-authored work text confers no authority. It is suppressed entirely when
+the block's tenant ≠ the conversation's tenant.
+
+**Proof.** The unit test is `src/solo/paige-team-context.test.ts`. The real handler is driven in CI by
+`scripts/client-memory-authz` section 27 (27.0–27.8). `npm run lint:title-authority` (with its
+`--self-test`) fails CI when a policy, an authorization helper or a TypeScript gate reads a title. Whether
+a live model actually speaks this way is **UNVERIFIED** until an authenticated drive; see decision 4.
 
 ## What PAIGE can propose or perform
 

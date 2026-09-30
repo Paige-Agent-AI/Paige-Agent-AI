@@ -1,0 +1,37 @@
+/* The 3D presence occupies the same frame the flat presence defined — same width clamps, same
+   aspect ratio as its 320x310 viewBox, and the same full-column placement (granted in
+   paige-live-conversation.css, which keys on BOTH class names) — so nothing above it reflows when
+   one degrades to the other. The canvas is transparent and the stage's ground shows through. */
+.paige-presence-3d {
+  position: relative;
+  width: min(100%, 48vh, 36rem);
+  max-width: 100%;
+  aspect-ratio: 32 / 31;
+  flex: none;
+  border-radius: 24px;
+  overflow: hidden;
+  isolation: isolate;
+}
+/* A soft floor under her, so she reads as standing in the frame rather than pasted onto it.
+   THEME-AWARE, and the first draft was not: it was a 45%-opaque near-black ellipse with no light
+   variant, in a rule whose own comment claimed depth does not come from darkening. A shadow under a
+   figure is the figure's own contact shadow, so it derives from the foreground token and stays a
+   shadow in both themes instead of a dark blob on a bright stage. */
+.paige-presence-3d::after {
+  content: "";
+  position: absolute;
+  inset: auto 12% 6% 12%;
+  height: 14%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, hsl(var(--foreground) / 0.28), transparent);
+  pointer-events: none;
+  z-index: -1;
+}
+/* The flat presence, when it stands in, keeps its own intrinsic sizing inside this frame. */
+.paige-presence-3d__await { display: grid; place-items: center; width: 100%; height: 100%; }
+.paige-presence-3d__await .paige-presence { width: 82%; }
+.paige-presence-3d[data-presence-state="held"],
+.paige-presence-3d[data-presence-state="disconnected"] { opacity: .72; }
+.paige-presence-3d[data-presence-state="unavailable"] { opacity: .8; }
+@media (max-width: 800px) { .paige-presence-3d { width: min(72vw, 24rem); } }
+@media (max-height: 600px) and (min-width: 801px) { .paige-presence-3d { width: min(100%, 46vh); } }

@@ -1,6 +1,6 @@
 ---
 name: paige-visual-immersive-quality
-description: Module 2 of the Paige UI Delivery Standard. Hold every visible experience to Paige's premium product bar and to the approved Claude Design pack, with motion that serves a purpose — without inventing or overriding visual direction.
+description: Module 2 of the Paige UI Delivery Standard. Hold every visible experience to Paige's premium product bar and to Impeccable's craft floor, with motion that serves a purpose.
 ---
 
 # Visual & Immersive Quality
@@ -18,9 +18,9 @@ first:
 
 Claude Code has **zero** authority over visual design. This module does not rank options, propose a
 treatment, or render a taste verdict. It does two things that are correctness, not taste: (a) verify
-the approved **Claude Design pack** direction was ported faithfully (PACK-FIRST), and (b) verify the
+the direction CC set under §00 is held to **Impeccable's** craft floor, and (b) verify the
 listed quality properties hold as **measurements** (contrast ratios, token usage, state presence,
-reduced-motion behavior). What to change about any of them is Claude Design's call.
+reduced-motion behavior). What to change about any of them is CC's call, with the owner approving (§00).
 
 ## What this module verifies
 

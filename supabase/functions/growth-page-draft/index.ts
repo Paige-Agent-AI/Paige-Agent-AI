@@ -60,7 +60,7 @@
 //     400 EMPTY_BRIEF        brief missing or shorter than 5 characters
 //     400 INVALID_TENANT_ID  service-role caller passed a malformed tenant_id
 //     401 UNAUTHENTICATED    no / invalid bearer token
-//     403 FORBIDDEN          JWT caller lacks admin, coach or super_admin
+//     403 FORBIDDEN          JWT caller lacks admin or super_admin
 //     422 NO_VALID_BLOCKS    the model produced ZERO blocks that survive GrowthBlock
 //                            validation. Handing back a bare hero+form skeleton would dress a
 //                            failed generation up as a successful one (§13) — we refuse.
@@ -363,8 +363,8 @@ serve(async (req: Request) => {
         return fail(500, "INTERNAL", `Could not read your roles: ${rErr.message}`);
       }
       const roles = (roleRows || []).map((r: any) => r.role);
-      if (!roles.some((r: string) => r === "admin" || r === "super_admin" || r === "coach")) {
-        return fail(403, "FORBIDDEN", "Admin or coach access required.");
+      if (!roles.some((r: string) => r === "admin" || r === "super_admin")) {
+        return fail(403, "FORBIDDEN", "Admin access required.");
       }
 
       // The tenant pin. SECURITY DEFINER over auth.uid(), evaluated as the caller — it cannot

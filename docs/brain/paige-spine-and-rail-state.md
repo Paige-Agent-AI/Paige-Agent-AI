@@ -36,6 +36,12 @@ empty for a reason that looked like absence and was actually vocabulary.
 `20261212000000_paige_can_show_her_work.sql` adds that shape: `source_kind='capability_run'`,
 a `capability_key` column, five outcomes (`capability_succeeded` · `_failed` · `_refused` ·
 `_unreachable` · `_outcome_unknown`), and `record_capability_run(...)` for service-role callers.
+**That lock covers the 6-argument signature only.** The 10-argument overload at `20270107000000:94`
+is a separate `pg_proc` entry, was given no GRANT and no REVOKE, and so defaults to `EXECUTE TO
+PUBLIC`; its body never calls `auth.uid()`. `20270416000000` revokes it and re-asserts the 6-arg
+posture — in the repo; a `pg_proc.proacl` readback on prod is still owed.
+
+> MEASURED ON PROD 2026-09-24 (pg_proc.proacl): both signatures already read `{postgres=X/postgres,service_role=X/postgres}`, so the hole is NOT live. The migration is not applied and 20270107000000 carries no GRANT/REVOKE, so an out-of-band action set that ACL -- the migration's real job is making the lock REPRODUCIBLE from the repo.
 
 `20261220000000_an_act_that_landed_but_was_not_recorded.sql` adds a **sixth**,
 `capability_completed_unrecorded`, and the four Communications capability keys. The sixth exists
@@ -193,7 +199,7 @@ of workspace B and a TEAM MEMBER of workspace A holds a conversation scoped to B
 reads resolve A — and both Chat call sites gated only on "the persona has SOME tenant".
 
 The Team hydration path never had this hole, because `get_paige_team_context()` RETURNS its tenant and
-`_shared/team-context.ts:71` refuses on mismatch. The two readiness reads did not, so **the binding was
+`buildTenantTeamContextBlock` in `_shared/team-context.ts` refuses on mismatch. The two readiness reads did not, so **the binding was
 impossible rather than omitted** — which is why a call-site guard alone could not have fixed it.
 
 Both reads now return the workspace they resolved (`tenant_id` on every row, including refusals), and

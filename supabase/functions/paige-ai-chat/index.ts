@@ -1,7 +1,8 @@
 import { BUSINESS_MISSION_TOOLS } from '../_shared/paige-spine/domains/business_mission.ts';
 import { executeVerifiedMissionMutation, resolveBusinessMissionThreadContext, resolveSelectedBusinessMissionContext } from '../_shared/business-mission-tenant-brain.ts';
 import { CAMPAIGN_BRIEF_TOOLS } from '../_shared/paige-spine/domains/campaigns.ts';
-import { CRM_COMMAND_TOOLS, CRM_COMMAND_TOOL_NAMES, CRM_TOOL_TO_ACTION, canonicalizeCrmCommand, crmApprovalSubject, crmCommandFallbackIdempotencyKeys } from '../_shared/crm-command/catalog.ts';
+import { CRM_ACTION_LABEL, CRM_COMMAND_TOOLS, CRM_COMMAND_TOOL_NAMES, CRM_TOOL_TO_ACTION, canonicalizeCrmCommand, crmApprovalSubject, crmCommandFallbackIdempotencyKeys } from '../_shared/crm-command/catalog.ts';
+import { resolveCrmApprovedFingerprint, CRM_APPROVAL_CANDIDATE_LIMIT } from '../_shared/crm-command/approval-resolution.ts';
 import { executeVerifiedCampaignBriefMutation, resolveCampaignBriefListContext } from '../_shared/campaign-brief-tenant-brain.ts';
 import { CALENDAR_PRESET_TOOLS } from '../_shared/paige-spine/domains/calendar_preset.ts';
 import { executeVerifiedCalendarPresetMutation, resolveCalendarPresetListContext, type CalendarPresetMutationTool } from '../_shared/calendar-preset-tenant-brain.ts';
@@ -19,12 +20,16 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { gatewayCompat } from "../_shared/claude.ts";
 import { checkedWrite, writeOutcome } from "../_shared/checked-write.ts";
 import { classifyAction, clampLaneByRisk, mutatingTools, riskReason, unclassifiedWriteReason } from "../_shared/action-risk.ts";
-import { confirmFingerprint, CONFIRM_IDENTITY_KEY, confirmIdentityValue } from "../_shared/confirm-fingerprint.ts";
+import { confirmFingerprint, CONFIRM_IDENTITY_KEY, confirmIdentityValue, unaddressableConfirmArgs, unaddressableArgsRefusal } from "../_shared/confirm-fingerprint.ts";
+import { buildApprovalOutcome, classifySpentApproval, classifyUnspentApproval, invokeOutcomeUnknown, OUTCOME_UNKNOWN_NOTE, refusedByDatabase, sayWhatTheCardSays, settleUsedEarlier, thrownOutcomeUnknown, type ApprovalRefusalReason } from "../_shared/approval-outcome.ts";
 import { resolveSourceThreadLink } from "../_shared/source-thread-link.ts";
 import { buildCreditProposal, buildCreditSyncPayload } from "../_shared/credit-extraction-payload.ts";
 import { projectOutcomeForModel } from "../_shared/mcp-outcome.ts";
 import { embeddingsCompat } from "../_shared/voyage.ts";
-import { applyContactSearchFilter } from "../_shared/contact-search.ts";
+import { applyContactSearchFilter, CONTACT_NAME_SEARCH_COLUMNS, contactIdsByAddressToken } from "../_shared/contact-search.ts";
+import { resolveClientRef } from "../_shared/client-ref.ts";
+import { orderedContactMethods, primaryContactMethod } from "../_shared/contact-methods.ts";
+import { addedMethodsProblem, CLIENT_RECORD_COLUMNS, withAddedMethods, type ContactMethodInput } from "../_shared/paige-mcp/contact-method-edits.ts";
 import { readPipelineWorkspace } from "../_shared/pipelineWorkspaceRead.ts";
 import { isSpendableQuoteCents } from "../_shared/purchase-quote.ts";
 // Wave 3 · Communications — the owner can find out what Paige did with the business
@@ -43,6 +48,7 @@ import { classifyCrmRun } from "../_shared/crm-capability-outcome.ts";
 // not a success-shaped receipt. ONE pure home for that decision (§18); handlers wrap their
 // own success shape in it so the model, the status label and the artifact card all inherit it.
 import { artifactProduced, ARTIFACT_ABSENT_ERROR, usableDrafts, IMAGE_NOT_FILED_ERROR } from "../_shared/artifact-receipt.ts";
+import { classifyDocumentSubmissionError, validateDocumentBrief } from "../_shared/document-production.ts";
 // Wave 4 · 4a.3 — token-aware compaction trigger (§18 one home; smoke-tested per §32).
 import { estimateTokens, estimateTurnsTokens, shouldCompact, keepCountForFold, compactionPressurePct } from "../_shared/token-estimate.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
@@ -64,7 +70,7 @@ import { buildVpAddressBlock, detectVpAddress } from "../_shared/paige-context/v
 // §18 one home — the platform-default VOICE DNA lives in ONE shared module so both this
 // edge function AND the §2/§3 denylist test import the same text (§32: the assembled
 // voice is scannable). A tenant-authored persona still OVERRIDES it (read first below).
-import { PAIGE_VOICE_BLOCK } from "../_shared/paige-voice.ts";
+import { PAIGE_LIVE_SPOKEN_STYLE, PAIGE_VOICE_BLOCK } from "../_shared/paige-voice.ts";
 // INT-117 S1-replacement — the IDENTITY-FREE persona core: read-the-room registers +
 // the global distress-precedence rule + honesty/naming lines, ONE unconditional system
 // message for every seat (identity is established per-lane in an earlier message).
@@ -74,6 +80,7 @@ import { PAIGE_PERSONA_CORE } from "../_shared/paige-persona/core.ts";
 // below. NO-OP (returns null) for anyone but a seeded platform operator (the tenant-less God account).
 import { loadOwnerContextBlock } from "../_shared/owner-context.ts";
 import { buildTenantTeamContextBlock } from "../_shared/team-context.ts";
+import { TITLE_WORD } from "../_shared/team-vocabulary.ts";
 import {
   fenceUploadedFileText,
   RETRIEVED_KNOWLEDGE_UNTRUSTED_NOTICE,
@@ -92,6 +99,10 @@ import { buildStudioWhereYouAre, STUDIO_OPERATING_CORE } from "../_shared/design
 // Tier Rail Spine (Phase D): the SAME declared-rail tier resolver + client-seat
 // allowlist that paige-mcp uses, so a client-portal Paige seat is sealed here too.
 import { getActorTier, clientSeatToolAllowed, type Tier } from "../_shared/actorTier.ts";
+// R3 — what a client seat reads is read for internal text first.
+import { decodeChunks, internalTextForClient, leakKindCounts, readableFromFrames, syncStatusForClient, resultSavedSomething, WITHHELD_FRAME, withheldReplyForClient } from "../_shared/client-seat-reply.ts";
+// R2 — what PAIGE drafts for a customer is read for internal text before it is filed, carded or sent.
+import { customerBoundTexts, type DraftContext, draftRefusal, internalTextInDraft, OUTBOUND_DRAFT_TOOLS } from "../_shared/outbound-draft-check.ts";
 // Main Paige Operational Chat · P3 — truthful capability status (§13/§36/§70). The pure decision
 // core (resolver) + the MVP signal builder compose the honest "what can Paige do here?" answer;
 // the dispatch feeds them server-resolved facts (tier, clamped lane, Spine maturity). §18: one home.
@@ -114,7 +125,11 @@ import { resolveActiveMarketplaceTenant, retainActiveMarketplaceTenant } from ".
 // Redeploy trigger (2026-07-16): the git integration skipped this function on the #88 merge,
 // so the Studio funnel tools (growth_funnel_generate/build/publish) never went live. This
 // no-op comment forces a re-detect so the already-merged tool code deploys. Safe to remove.
-
+// Approval-path hardening.
+// Phase 1a / INT-180 relief: the production project is on the paid 400s
+// wall-clock tier. Keep 40s of platform headroom and keep this exactly symmetric
+// with PaigeAIChat's local fence. Durable work still needs the envelope.
+const PAIGE_INTERACTIVE_TURN_BUDGET_MS = 360_000;
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -155,6 +170,12 @@ function describeStep(
   // The regex above misses both: the `off` message says "is turned off for this workspace",
   // and a `needs_confirm` result carries no `error` at all.
   if (out?.needs_confirm === true || out?.disabled === true) return null;
+  // A tool refused because this seat may not use it (a client seat asked for an owner's tool) did
+  // not run. Rendering it would show a client an owner's action, and for some tools the model's own
+  // argument, on a channel the client-seat check does not read (R3). Nothing ran; nothing renders.
+  if (out?.forbidden_seat === true) return null;
+  // A draft for a customer refused for internal text (R2) did not run either: PAIGE rewrites it.
+  if (out?.error === "internal_text_in_draft") return null;
 
   switch (name) {
     case "comms_connection_summary":
@@ -202,7 +223,8 @@ function describeStep(
         : "Owner Ops";
       return { label: `Filing this to ${prettyDept}`, group: "owner", detail: "hand-off" };
     }
-    case "action_advance": return { label: "Moving that action forward", group: "owner" };
+    // A failed or refused move must not read as work in progress on the operator's trace.
+    case "action_advance": return { label: failed ? "Couldn't move that action" : "Moving that action forward", group: "owner" };
     case "action_list": return { label: "Checking the team's queue", group: "owner" };
     case "inbox_list": return { label: "Checking the inbox", group: "owner" };
     case "integrations_list": return { label: "Checking your connections", group: "owner" };
@@ -338,12 +360,9 @@ function describeStep(
   }
 }
 
+// One home for turning a client_ref into the contact it names, inside one workspace (_shared/client-ref.ts).
 async function resolveClientReference(admin: any, tenantId: string | null, clientRef: unknown): Promise<string | null> {
-  if (!tenantId || typeof clientRef !== "string" || !clientRef.trim()) return null;
-  const { data, error } = await admin.from("clients").select("id")
-    .eq("tenant_id", tenantId).eq("account_number", clientRef.trim().toUpperCase()).maybeSingle();
-  if (error || !data?.id) return null;
-  return data.id;
+  return await resolveClientRef(admin, tenantId, clientRef, "paige-ai-chat");
 }
 
 // Fire-and-forget analytics writer for Paige internals (RAG, Firecrawl, legal flags).
@@ -407,9 +426,12 @@ const railKindLabel = (k: string): string =>
 // byte-untouched, so no producer breaks (§37). No downstream code assumes content <= 50000
 // (index.ts:575/3660/3673/3678 pass `msg.content` straight through), and model-context management
 // happens downstream regardless.
+import { createLiveRuntimeProof, liveRuntimeDigest, type LiveRuntimeScope } from "../_shared/paige-live-runtime-proof.ts";
+
 const MAX_MESSAGE_CONTENT = 200_000;
 
 const messageSchema = z.object({
+  liveRuntimeChallenge: z.string().max(12_000).optional(),
   messages: z.array(
     z.object({
       role: z.enum(['user', 'assistant', 'system']),
@@ -484,6 +506,10 @@ const messageSchema = z.object({
   // Owner "Your Paige" multi-chat: the persisted conversation this turn belongs to.
   // When set, paige-ai-chat persists both turns + rehydrates recall server-side (#94).
   threadId: z.string().uuid().nullable().optional(),
+  // Stable for one user intent and reused by the browser on transport retry. Durable document
+  // submission uses this as its cross-request identity; a server-generated per-request UUID would
+  // recreate INT-180 by dispatching the same document again after a lost response.
+  requestIntentId: z.string().uuid().optional(),
   clientContext: z.string().max(100000).optional().transform((v) => (v && v.length > 50000 ? v.slice(0, 50000) : v)),
   // #292 — what's currently on the Studio canvas. Lets the model UPDATE that artifact in place
   // (stacking its version history) when a turn refines it, instead of minting a fresh sibling. The
@@ -502,11 +528,11 @@ const messageSchema = z.object({
    *  requires the call it is about to run to be one of these — a `confirm:true` flag on its own no
    *  longer opens it, because that flag says only that SOMETHING was approved, not what. Bounded
    *  and shaped so a body cannot smuggle anything else through this field. */
-  approvedConfirmations: z.array(z.string().regex(/^[0-9a-f]{16}$/)).max(16).optional(),
+  approvedConfirmations: z.array(z.string().regex(/^[0-9a-f]{16}(?::[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})?$/)).max(16).optional(),
   /** Fingerprints the person DECLINED on the confirm card. A refusal that lives only in the prose
    *  of the next message is a refusal the model has to interpret correctly — and the proposal it
    *  describes stays redeemable for its whole window. These are cancelled outright instead. */
-  declinedConfirmations: z.array(z.string().regex(/^[0-9a-f]{16}$/)).max(16).optional(),
+  declinedConfirmations: z.array(z.string().regex(/^[0-9a-f]{16}(?::[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})?$/)).max(16).optional(),
   // RETIRED HERE, 2026-09-02: `confirmedActions`, a second approval channel carrying a
   // pipeline-archive token, arrived from a parallel branch. It solved the same problem as the two
   // fields above — bind the approval to the exact thing approved — for exactly one action.
@@ -844,7 +870,74 @@ serve(async (req) => {
       throw error;
     }
 
-    const { messages, document: attachedDocument, attachments: turnAttachments, sessionDocumentContext, generateSessionSummary, sessionMessages, clientId: payloadClientId, businessMissionId: payloadBusinessMissionId, threadId: payloadThreadId, clientContext: rawClientContext, surfaceContext, userTime, userTimezone, userTimeFormatted } = validatedData;
+    let liveRuntimeScope: LiveRuntimeScope | null = null;
+    let liveProof: ReturnType<typeof createLiveRuntimeProof> | null = null;
+    if (validatedData.liveRuntimeChallenge) {
+      const signingKey = Deno.env.get("PAIGE_LIVE_STREAM_SIGNING_KEY") ?? "";
+      const refuseLive = () => new Response(JSON.stringify({ error: "live_runtime_unavailable" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+      if (signingKey.length < 32) return refuseLive();
+      liveProof = createLiveRuntimeProof(signingKey);
+      const scope = await liveProof.readChallenge(validatedData.liveRuntimeChallenge);
+      const input = validatedData.messages;
+      // Only the observed final utterance enters this mode. Speech cannot carry
+      // confirmation fingerprints, invented history, attachments or a summary job.
+      if (!scope || scope.actorId !== user.id || scope.threadId !== validatedData.threadId ||
+        input.length !== 1 || input[0].role !== "user" ||
+        await liveRuntimeDigest(input[0].content) !== scope.transcriptHash ||
+        validatedData.approvedConfirmations?.length || validatedData.declinedConfirmations?.length ||
+        validatedData.document || validatedData.attachments?.length || validatedData.generateSessionSummary ||
+        validatedData.sessionMessages || validatedData.sessionDocumentContext) return refuseLive();
+      const [{ data: tenant, error: tenantError }, { data: thread, error: threadError }] = await Promise.all([
+        supabaseClient.rpc("current_user_tenant_id"),
+        supabaseClient.from("paige_chat_threads").select("id,contact_id")
+          .eq("id", scope.threadId).eq("tenant_id", scope.tenantId).eq("caller_user_id", user.id).maybeSingle(),
+      ]);
+      if (tenantError || tenant !== scope.tenantId || threadError || !thread) return refuseLive();
+      // ONE HOME FOR "MAY THIS PERSON SPEAK" (§18). The paige_live_tenant_availability read that
+      // used to sit in the Promise.all above refused on a missing row, which contradicted the
+      // predicate once a missing row came to mean "follow the rollout scope". The predicate reads
+      // that table itself and honours both of its meanings.
+      const { data: authorizedPilot, error: authorizationError } = await supabase.rpc("paige_live_pilot_authorized_internal", {
+        _actor_user_id: user.id, _tenant_id: scope.tenantId,
+      });
+      if (authorizationError || authorizedPilot !== true) return refuseLive();
+      // Atomic consume BEFORE history writes, tools or model calls. The slot is
+      // service-only; concurrent replays cannot both obtain a row. A reconnect or
+      // newer turn replaces the digest, making the old challenge unusable.
+      const { data: claimed, error: claimError } = await supabase.from("paige_live_sessions")
+        .update({ provider_session_ref: null })
+        .eq("id", scope.sessionId).eq("tenant_id", scope.tenantId).eq("actor_user_id", user.id)
+        .eq("thread_id", scope.threadId).eq("context_epoch", scope.epoch)
+        .eq("provider_session_ref", `runtime:${await liveRuntimeDigest(validatedData.liveRuntimeChallenge)}`)
+        .eq("availability", "LIVE").in("state", ["listening", "thinking", "speaking", "interrupted", "held"])
+        .select("id").maybeSingle();
+      if (claimError || !claimed) return refuseLive();
+      const { data: history, error: historyError } = await supabaseClient.from("paige_chat_turns")
+        .select("role,content").eq("thread_id", scope.threadId).order("seq", { ascending: false }).limit(49);
+      if (historyError) return refuseLive();
+      const liveHistory = (history ?? []).reverse().filter((m: { role: string; content: string }) =>
+        (m.role === "user" || m.role === "assistant") && typeof m.content === "string" && m.content.length);
+      // A database window can begin halfway through an exchange. Trim that
+      // incomplete assistant prefix, then reuse canonical message validation.
+      const firstUser = liveHistory.findIndex((m: { role: string }) => m.role === "user");
+      validatedData.messages = messageSchema.shape.messages.parse([
+        ...liveHistory.slice(firstUser < 0 ? liveHistory.length : firstUser),
+        input[0],
+      ]);
+      // Context comes from the verified thread and existing runtime resolvers,
+      // never from browser-authored prompt blocks or canvas/mission overrides.
+      validatedData.clientId = thread.contact_id ?? null;
+      validatedData.clientContext = undefined;
+      validatedData.canvasArtifact = undefined;
+      validatedData.businessMissionId = undefined;
+      validatedData.surfaceContext = undefined;
+      liveRuntimeScope = scope;
+    }
+    const liveOutput = (stream: ReadableStream<Uint8Array>) => liveProof && liveRuntimeScope
+      ? liveProof.outputStream(stream, liveRuntimeScope) : stream;
+    const { messages, document: attachedDocument, attachments: turnAttachments, sessionDocumentContext, generateSessionSummary, sessionMessages, clientId: payloadClientId, businessMissionId: payloadBusinessMissionId, threadId: payloadThreadId, requestIntentId: payloadRequestIntentId, clientContext: rawClientContext, surfaceContext, userTime, userTimezone, userTimeFormatted } = validatedData;
     // canvasArtifact is a CLIENT request field, meaningful ONLY in a server-resolved Studio session.
     // Declared `let` so it can be neutralized for a dedicated (non-Studio) chat once studio_session_id
     // is resolved (Codex P2): a dedicated-chat client must not be able to drive the reuse clamp with a
@@ -865,6 +958,20 @@ serve(async (req) => {
      * about others.
      */
     const approvalChannel = new Map<string, string>();
+    // WHAT BECAME OF EACH APPROVAL THE OPERATOR SENT, reported back to the card that asked
+    // (`paige_approval_outcome`, _shared/approval-outcome.ts). Recorded where it happens, read once
+    // at the end of the turn: which call spent each approval, why a tool's approvals were refused,
+    // which tool an approval belongs to (where a lookup saw it), and what each call returned.
+    const approvalSpend = new Map<string, string>();
+    const approvalRefusals = new Map<string, ApprovalRefusalReason>();
+    const approvalTokenTool = new Map<string, string>();
+    const toolResultContent = new Map<string, string>();
+    // Before anything in this request can use an approval: one used before this moment was used by
+    // an earlier request, and whatever that was may have done the work.
+    const approvalRequestStartedAt = new Date().toISOString();
+    // A failed approved-set lookup cannot say which approvals it was checking — that is what failed —
+    // so the ones nothing else accounts for are reported as that failure, not as "not run".
+    let approvalLookupFailed = false;
 
     // ===== CLIENT SCOPE AUTHORIZATION — resolved ONCE, before ANY use of the body id =====
     //
@@ -955,6 +1062,16 @@ serve(async (req) => {
     const scopedClientRef: string | null = authorizedClientRef;
     /** True when a client was named but could not be authorized: do NO client-scoped work. */
     const clientScopeDenied: boolean = clientScopeRefusal !== null;
+    // `client_memory` rows carry a tenant. A row naming a client takes that client's tenant in the
+    // database; a row about the caller takes the caller's active tenant, which this service-role client
+    // cannot resolve, so it is read once per turn through the caller's own session. Null means no
+    // active tenant, and the database then refuses the row rather than guess one.
+    let callerActiveTenantRead: Promise<string | null> | null = null;
+    const callerActiveTenantId = (): Promise<string | null> =>
+      (callerActiveTenantRead ??= (async () => {
+        const { data, error } = await supabaseClient.rpc("current_user_tenant_id");
+        return error ? null : ((data ?? null) as string | null);
+      })());
       // THE SIX REFUSAL REASONS ARE NOT ONE KIND OF THING, and a consumer that treats them as one
     // asserts something false to the person. Two are PERMISSION verdicts — the read succeeded and
     // the answer was no. Four are UNKNOWN — an RPC blip, a failed read, a thrown exception —
@@ -1022,7 +1139,7 @@ serve(async (req) => {
           controller.close();
         },
       });
-      return new Response(refusalStream, {
+      return new Response(liveOutput(refusalStream), {
         headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive" },
       });
     }
@@ -1173,6 +1290,7 @@ JSON:`;
           metadata: { channel: "text" },
         };
         if (scopedClientId) memoryInsert.client_id = scopedClientId;
+        else memoryInsert.tenant_id = await callerActiveTenantId();
         await recordWrite("client_memory:turn", supabase.from("client_memory").insert(memoryInsert));
       }
 
@@ -1203,6 +1321,7 @@ JSON:`;
                 embedding: emb,
               };
               if (scopedClientId) milestoneMemory.client_id = scopedClientId;
+              else milestoneMemory.tenant_id = await callerActiveTenantId();
               await recordWrite("client_memory:milestone", supabase.from("client_memory").insert(milestoneMemory));
             }
           }
@@ -1247,6 +1366,7 @@ JSON:`;
                 metadata: { channel: "text", source: "auto_extracted" },
               };
               if (scopedClientId) factMemory.client_id = scopedClientId;
+              else factMemory.tenant_id = await callerActiveTenantId();
               await recordWrite(`client_memory:${memoryType}`, supabase.from("client_memory").insert(factMemory));
             }
           }
@@ -1407,10 +1527,21 @@ JSON:`;
                 file_path: storagePath,
                 file_size: bytes.length,
                 analysis_status: "processing",
+                // Uploads carry a tenant: a named client's comes from its record in the database; an
+                // upload about the caller carries the caller's active tenant.
+                ...(scopedClientId
+                  ? { client_id: scopedClientId }
+                  : { tenant_id: await callerActiveTenantId() }),
               })
               .select("id")
               .single();
-            if (!insertErr) paigeChatUploadId = uploadRec.id;
+            if (!insertErr) {
+              paigeChatUploadId = uploadRec.id;
+            } else {
+              // §13 — a refused record (for example, no tenant to place it in) leaves the stored file
+              // reachable by its owner only. Say so; never echo a path or an identifier.
+              console.error("[paige] credit-report upload record NOT saved", JSON.stringify({ code: insertErr.code ?? null }));
+            }
           }
           }
         } catch (storeErr) {
@@ -1768,6 +1899,7 @@ JSON:`;
               metadata: { source: "explicit_signal", channel: "text" },
             };
             if (scopedClientId) row.client_id = scopedClientId;
+            else row.tenant_id = await callerActiveTenantId();
             await recordWrite("client_memory:extracted", supabase.from("client_memory").insert(row));
           }
         }
@@ -2286,9 +2418,21 @@ JSON:`;
     // comment saying "one caller among several." A reviewer found both. Hence no count here:
     // grep for the callers, they cannot drift.
     let lateRetrievalProtected = false;
-    // Read through this, never off the entry value, so a tool round that lands mid-turn is seen
-    // by the emitter and the revalidation guard alike.
-    const turnCarriesProtectedContent = () => turnCarriesProtectedContentAtEntry || lateRetrievalProtected;
+    // A CLIENT SEAT'S TURN IS ALWAYS HELD, and not because it carries evidence (which is why this is
+    // not in the entry list above). Its reply is read for internal text before it is released
+    // (`_shared/client-seat-reply.ts`), and only a held reply can be withheld whole: a streamed one
+    // has already been read by the time a finding exists. Most client turns were already held, because
+    // the portal chat always sends page context (source 10); this makes it a rule instead of a
+    // coincidence of what the client happens to send. Holding does NOT by itself send the turn through
+    // the scope re-check below: that protects retrieved evidence, and a client turn carrying none has
+    // nothing to re-check, so a transient lookup error cannot refuse an ordinary client answer (owner
+    // ruling: a missed leak is preferable to a withheld ordinary answer).
+    const clientSeatReadsBeforeRelease = callerTier === "client";
+    // Read through these, never off the entry value, so a tool round that lands mid-turn is seen
+    // by the emitter and the revalidation guard alike. Evidence decides the re-check; evidence or a
+    // client seat decides the hold.
+    const turnCarriesEvidence = () => turnCarriesProtectedContentAtEntry || lateRetrievalProtected;
+    const turnCarriesProtectedContent = () => turnCarriesEvidence() || clientSeatReadsBeforeRelease;
     // INVERTED, deliberately: a tool result is EVIDENCE unless it is a write receipt. Classifying
     // the evidence-bearing tools instead would be an allowlist, and an allowlist is what has been
     // one round behind at every stage of this change — the safe error has to be "protected".
@@ -2480,9 +2624,10 @@ JSON:`;
     const turnScopeTenantId: string | null = personaCtx.tenant_id ?? null;
     const revalidateTenantKnowledgeScope = async (): Promise<boolean> => {
       if (tenantKnowledgeScopeRevoked) return false;
-      // An ordinary turn carries no protected evidence, so there is nothing to re-check and it
-      // pays no RPC — this is what keeps live streaming free of added latency.
-      if (!turnCarriesProtectedContent()) return true;
+      // A turn that carries no protected evidence has nothing to re-check and pays no RPC — this
+      // is what keeps live streaming free of added latency. A client seat's turn is held so its
+      // answer can be read (R3), but holding is not evidence.
+      if (!turnCarriesEvidence()) return true;
       try {
         const { data, error } = await supabaseClient.rpc("get_paige_persona_context");
         const row = Array.isArray(data) ? data[0] : data;
@@ -3150,7 +3295,7 @@ When you execute a write-back:
 DO NOT call update_client_data for:
 - Casual mentions without clear intent to store — e.g. "I'm thinking about getting a virtual office" is NOT an update
 - Sensitive fields like credit scores, SSN, or financial data — those are never writable through chat
-- Deleting accounts — Paige cannot delete records, only admins and coaches can
+- Deleting accounts — Paige cannot delete records, only admins can
 === END WRITE-BACK RULES ===
 
 === ACCOUNT MANAGEMENT & CLEANUP RULES ===
@@ -3773,23 +3918,6 @@ When a client describes having a document with relevant data ("I have my EIN let
 "If you have your EIN letter or formation documents handy, you can drop them right into this chat and I'll read them for you — no need to type everything out."
 
 === END CONVERSATIONAL DATA CAPTURE RULES ===
-
-=== VOICE SESSION RULES ===
-These rules apply ONLY when the request indicates a voice session (look for "VOICE_MODE: true" in the system context, or when responses will be spoken aloud).
-
-CONVERSATIONAL TONE RULE (VOICE)
-In voice sessions you use shorter sentences than in text. Speak naturally with quick acknowledgments — "Got it", "Right", "Exactly", "That makes sense" — before giving longer explanations. NEVER read out bullet points, numbered lists, headers, or markdown in voice — convert them to natural spoken language. Aim for 1-3 sentences per turn unless the client asks for more depth.
-
-VOICE PACING RULE
-When explaining complex topics (DSCR calculations, entity structure, capital stacks, dispute strategy), break them into conversational chunks and check in: "Does that make sense so far?" or "Want me to go deeper on that?" — never deliver a wall of information in voice. Pause naturally between concepts.
-
-HANDOFF RULE (VOICE END)
-When a voice session is wrapping up, close naturally with a warm sign-off: "I'll add a summary of what we discussed to your chat so you can reference it later. Talk soon, [first name]!" Do not list everything you discussed — that's what the summary handles.
-
-CONTEXT CARRY RULE (VOICE)
-Anything the client says aloud during voice — funding goals, EINs, business names, addresses, formation states — is captured in the transcript and processed by the same conversational extraction flow as text after the call ends. So when a client says their EIN or company name out loud, just acknowledge it naturally ("Got it — [company name], cool name") — the extraction card will appear in their chat after the call ends.
-
-=== END VOICE SESSION RULES ===
 
 =============================================================
 CAPITAL INFRASTRUCTURE INTELLIGENCE
@@ -4452,7 +4580,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       try {
         const { data } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
         const roles = (data || []).map((r: any) => r.role);
-        ownerOpsEligibleCache = roles.includes("admin") || roles.includes("coach") || roles.includes("super_admin");
+        ownerOpsEligibleCache = roles.includes("admin") || roles.includes("super_admin");
       } catch {
         ownerOpsEligibleCache = false;
       }
@@ -4677,6 +4805,24 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       traceCtx.agent_id = vpAddress.vp.slug;
     }
 
+    // R3 — what a client seat's reply check derives vocabulary from: text VOUCHED for where it is built,
+    // never by default and never inherited (_shared/internal-vocabulary.ts). Each entry is server-written
+    // end to end: platform constants, and wording the server chose, never a value it pasted in. A block
+    // that pastes in tenant, client, uploaded or fetched prose (persona, brand, address, business
+    // description, knowledge, the client's own messages) is never vouched, however server-shaped it
+    // looks, and is simply not read for vocabulary. Vouched today, each established by reading its
+    // builder:
+    //   - the team authority block: constant header and footer, and sentences chosen by a fixed switch
+    //     over the seat's role and ownership (_shared/paige-spine/domains/teamAuthorityChatEvidence.ts);
+    //   - the document instruction: UPLOADED_FILE_UNTRUSTED_NOTICE and fixed text. The header that names
+    //     the client's file is kept apart and not vouched.
+    // A new entry needs the same: someone establishes it is server-written end to end, and its PR says
+    // who and on what basis.
+    const clientSeatVouched: string[] = [];
+    const vouchForClientSeat = (text: string): string => {
+      clientSeatVouched.push(text);
+      return text;
+    };
     // Build message array — lead with the tenant's persona so identity is set first,
     // then the platform-default VOICE, THEN the task/tool operating core below.
     const aiMessages: any[] = [
@@ -4688,7 +4834,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       ...(tenantTeamContext ? [{ role: "system", content: tenantTeamContext }] : []),
       ...(businessContextReadinessBlock ? [{ role: "system", content: businessContextReadinessBlock }] : []),
       ...(publicPresenceContextBlock ? [{ role: "system", content: publicPresenceContextBlock }] : []),
-      ...(teamAuthorityBlock ? [{ role: "system", content: teamAuthorityBlock }] : []),
+      ...(teamAuthorityBlock ? [{ role: "system", content: vouchForClientSeat(teamAuthorityBlock) }] : []),
       ...(socialPresenceBlock ? [{ role: "system", content: socialPresenceBlock }] : []),
       ...(businessMissionContextBlock ? [{ role: "system", content: businessMissionContextBlock }] : []),
       ...(n8nReadinessBlock ? [{ role: "system", content: n8nReadinessBlock }] : []),
@@ -4698,6 +4844,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       // any general impression from the tool list or persona (P0 Defect-1, §13/§36/§70).
       ...(capabilityStatusBlock ? [{ role: "system", content: capabilityStatusBlock }] : []),
       { role: "system", content: systemPrompt },
+      ...(liveRuntimeScope ? [{ role: "system", content: PAIGE_LIVE_SPOKEN_STYLE }] : []),
       // "Watch Paige work" narration (#152): when she's about to USE tools, she first
       // writes one short backstage line saying what she's doing and why. It streams to
       // the operator's live reasoning panel — reassurance that she's really working —
@@ -5030,7 +5177,9 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // tab still saves it), then auto-title a new thread and refresh the summary.
     // bundle_ref stores the queued/confirm cards so the UI reconstructs them on reload.
     const persistAssistantTurn = async (finalText: string, meta: { surfaces?: string[] | null; bundleRef?: unknown; model?: string }) => {
-      if (!payloadThreadId || !finalText || !finalText.trim()) return;
+      // A receipt-only interrupted turn has real cards but no spoken prose.
+      // The canonical turn RPC accepts empty content; never invent an answer.
+      if (!payloadThreadId || (!finalText?.trim() && !meta.bundleRef)) return;
       try {
         await supabaseClient.rpc("paige_chat_turn_append", {
           p_thread_id: payloadThreadId, p_role: "assistant", p_content: finalText,
@@ -5056,8 +5205,8 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       } catch (e) { console.error("[paige] persist assistant turn failed:", (e as Error)?.message); }
     };
 
-    // === OPERATOR (admin/coach) CONTEXT INJECTION ===
-    // When the signed-in user is an admin or coach, Paige gets full CRM
+    // === OPERATOR (admin) CONTEXT INJECTION ===
+    // When the signed-in user is an admin, Paige gets full CRM
     // visibility tools (search contacts, read deals, list tasks, etc.).
     let isOperator = false;
     let operatorRoleLabel = "";
@@ -5067,11 +5216,10 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
         .select("role")
         .eq("user_id", user.id);
       const roles = (roleRows || []).map((r: any) => r.role);
-      isOperator = roles.includes("admin") || roles.includes("coach");
+      isOperator = roles.includes("admin");
       // A short, human role phrase for the identity line (#139): she should know
       // WHO she's talking to and in WHAT capacity, not just their name.
-      operatorRoleLabel = roles.includes("admin") ? "an admin/owner"
-        : roles.includes("coach") ? "a coach" : "";
+      operatorRoleLabel = roles.includes("admin") ? "an admin/owner" : "";
     } catch (e) {
       console.warn("[paige-ai-chat] role lookup failed:", e);
     }
@@ -5110,7 +5258,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
         role: "system",
         content: whoLine +
 `=== CRM OPERATOR MODE ===
-The current user is an ADMIN or COACH operating the Paige CRM. You have full read access to every contact, deal, task, and activity in the system through the crm_* tools. Use them proactively whenever the operator asks anything that requires looking across the customer base — for example:
+The current user is an ADMIN operating the Paige CRM. You have full read access to every contact, deal, task, and activity in the system through the crm_* tools. Use them proactively whenever the operator asks anything that requires looking across the customer base — for example:
 - "Who are my new leads this week?" → crm_search_contacts with lifecycle_stage=lead, sort by created_at desc.
 - "Show me [first name]'s clients" → crm_search_contacts filtered by coach.
 - "Which pipelines do I have?" / "Find BUILD-to-FUND" → pipeline_catalogue. It reads pipeline records even when there are zero deals. Show every same-name match with its exact PPL reference and compact metadata; never guess, merge duplicates, split a display name, or infer stages.
@@ -5157,7 +5305,7 @@ N8N AUTHORING — read n8n_get_sdk_reference before writing Workflow SDK code. V
 ADD SUB-AGENTS INTELLIGENTLY — one brain by default (give it tools, not more brains). Add a specialist sub-agent ("@n8n/n8n-nodes-langchain.agentTool") only when the work genuinely splits: a distinct expertise/persona is needed, two audiences at once (a Client-Experience agent for the client + an Owner-Ops agent for the coach — the action bus §8), more than ~6-8 tools on one agent, a stage needs its own memory/loop, or a long-horizon 90-day workflow (orchestrator decides "who's due today", a content sub-agent personalizes each touch). Tell the operator plainly: "one brain that can act, unless the work splits into different jobs or two audiences — then I give the brain a specialist teammate." Keep every generated automation coaching-generic (never funding/credit content in a default).
 
 BE A PROACTIVE ASSISTANT, NOT AN ORDER-TAKER. Never just execute the literal request and stop. Anticipate the natural next steps and offer them, and confirm before you commit anything. Three rules:
-1. PROPOSE → GET A YES → THEN ACT. For ANYTHING that creates or changes a record — a contact, a pipeline, a stage, a task, a booking, a role, saved content, an action — FIRST say in one plain line exactly what you intend to do and WAIT for the operator's yes. Do NOT silently call the tool to "just do it" and report after the fact — that is jumping the gun, and it is not allowed. The platform enforces this for you: when you call a mutating tool, it may come back with needs_confirm and a confirm_summary. When it does, read that summary back to the operator in plain words and ask them to confirm. ONLY after they have actually replied and said yes, call the SAME tool again with confirm: true — you do not need to reproduce the other arguments exactly, because the exact call they approved is already saved and is what runs. NEVER set confirm in the same reply where you proposed the action: you have not heard from them yet, and the platform will refuse it. If they ask for a change, call the tool again with the full new arguments and confirm left false, so they get a fresh summary to approve. Some actions cannot be approved by you reporting a yes at all — they come back saying so, and those need the operator to approve them in the workspace where the action can be shown to them; tell them that plainly instead of trying again. Some actions may be set to autopilot for this workspace (they run without the pause) — that is the operator's standing choice, never an assumption you make on your own. Anything outbound (an email, an SMS) is NEVER sent directly — you draft it and route it to the coach's approval lane.
+1. PROPOSE → REVIEW → THEN ACT. For an action that needs approval, describe exactly what you intend to do and wait for approval through the workspace's approval control. When a tool returns needs_confirm, read confirm_summary in plain language. If a Needs your OK card is visible in this conversation, the person can click Approve there. A spoken or typed yes alone does not complete this step. If this chat has no approval control, say the action is pending and cannot be approved here. They can request the action afresh in a Paige workspace with approval controls if their account has access, or ask an authorized workspace teammate to complete it. Never claim the pending action transferred to another conversation. Do not retry a pending action in the same reply. If the person changes the request, propose the new action for review. Existing workspace autopilot settings remain the operator's standing choice, never your assumption. Anything outbound (an email, an SMS) is NEVER sent directly — draft it and route it to the existing approval lane.
 2. CONFIRM THE RESULT — AND NEVER FAKE ONE. Only say you did something ("Done — created…", "reminder set", "task assigned", "added to your calendar") when a TOOL you called THIS turn actually returned success. A claim of completion with no tool call behind it is a lie, and it is the worst thing you can do here — it destroys trust. You DO have real tools for reminders, planning, tasks, and booking (plan_set_reminder, plan_create/plan_assign_task/plan_add_milestone, crm_create_task, calendar_book_meeting) — USE them, then confirm off the tool's success. If there is genuinely no tool for what they asked, DO NOT pretend — say plainly "I can't do that one from here yet" and offer what you genuinely can do, or file it on the action bus so it's tracked. "It'll show up in your reminders / Task Manager / calendar" is only true if a tool actually put it there — never say it otherwise. Once an action really commits, confirm plainly in one line; never leave them guessing. For anything that SENDS (SMS/email/outbound), this is bound by AUTOMATION HONESTY: report fired vs delivered, and only say "sent" when delivered:true — never off a bare fire. The test before every "done": "Did a tool call this turn return success for exactly this? If not, I do not claim it happened."
 3. PROBE, THEN DRIVE. Then surface the obvious next moves as a short, tight menu of questions (not a wall of text).
 
@@ -5324,9 +5472,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // vision surface (whose bytes cannot be text-wrapped) and clearly separates trusted instructions
         // from the untrusted document. The analysis instructions are unchanged — a legitimate document is
         // still read and analyzed; only obeying directives embedded IN the file is refused.
-        const baseInstruction = isCreditReportPdf
-          ? `[Attached document: ${attachedDocument.fileName}]\n\n${UPLOADED_FILE_UNTRUSTED_NOTICE}\n\n=== CREDIT REPORT ANALYSIS INSTRUCTIONS ===\nIf this document is a credit report (especially a tri-merge report), produce a STRUCTURED analysis. Tri-merge column order is TransUnion (left), Experian (middle), Equifax (right). Dashes (--) mean NOT reported at that bureau. Always identify document type and bureau in your response.`
-          : `[Attached document: ${attachedDocument.fileName} — ${docKind.toUpperCase()}]\n\n${UPLOADED_FILE_UNTRUSTED_NOTICE}\n\nThe client has shared a document. Acknowledge it briefly and naturally — e.g. "Got it — I've read through your [document type]." If you can identify what kind of document this is (EIN letter, articles of incorporation, business license, bank statement, ID, W-9, voided check, or other), name it. The system will offer the client a save dialog separately for any extracted fields, so do NOT recite them as a checklist; just confirm what you saw and ask what they'd like to do next.`;
+        // The header names the client's file; the instruction under it is the server's. Kept apart so
+        // R3 vouches for the instruction without vouching for the client's file name.
+        const documentHeader = isCreditReportPdf
+          ? `[Attached document: ${attachedDocument.fileName}]`
+          : `[Attached document: ${attachedDocument.fileName} — ${docKind.toUpperCase()}]`;
+        const documentInstruction = vouchForClientSeat(isCreditReportPdf
+          ? `${UPLOADED_FILE_UNTRUSTED_NOTICE}\n\n=== CREDIT REPORT ANALYSIS INSTRUCTIONS ===\nIf this document is a credit report (especially a tri-merge report), produce a STRUCTURED analysis. Tri-merge column order is TransUnion (left), Experian (middle), Equifax (right). Dashes (--) mean NOT reported at that bureau. Always identify document type and bureau in your response.`
+          : `${UPLOADED_FILE_UNTRUSTED_NOTICE}\n\nThe client has shared a document. Acknowledge it briefly and naturally — e.g. "Got it — I've read through your [document type]." If you can identify what kind of document this is (EIN letter, articles of incorporation, business license, bank statement, ID, W-9, voided check, or other), name it. The system will offer the client a save dialog separately for any extracted fields, so do NOT recite them as a checklist; just confirm what you saw and ask what they'd like to do next.`);
+        const baseInstruction = `${documentHeader}\n\n${documentInstruction}`;
 
         contentParts.push({
           type: "text",
@@ -5537,7 +5691,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_update_pipeline_stage",
-              description: "Admin/coach only. Move a client to a new pipeline stage. Use when the operator says things like 'move Jane to In Progress', 'mark this lead as closed', 'pause this client'.",
+              description: "Team only. Move a client to a new pipeline stage. Use when the operator says things like 'move Jane to In Progress', 'mark this lead as closed', 'pause this client'.",
               parameters: {
                 type: "object",
                 properties: {
@@ -5553,7 +5707,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_assign_coach",
-              description: "Admin/coach only. Assign a coach (by email) to one or more clients. Use when the operator says 'assign a coach to these 5 clients' or 'put this lead on my roster'.",
+              description: "Team only. Assign a coach (by email) to one or more clients. Use when the operator says 'assign a coach to these 5 clients' or 'put this lead on my roster'.",
               parameters: {
                 type: "object",
                 properties: {
@@ -5568,7 +5722,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_create_task",
-              description: "Admin/coach only. Create a task on the operator queue (or for an assigned user). Use for follow-ups, document collection, outreach reminders.",
+              description: "Team only. Create a task on the operator queue (or for an assigned user). Use for follow-ups, document collection, outreach reminders.",
               parameters: {
                 type: "object",
                 properties: {
@@ -5586,7 +5740,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_create_contact",
-              description: "Admin/coach only. Add a new contact (client) to the CRM. BEFORE calling this, confirm the details with the operator in one short line — e.g. \"Adding Jacqueline Turner, +1-310-661-1679 — want me to add her?\" — and only call the tool once they say yes. Missing fields like email are fine; add what you have and note they can fill the rest later. Returns the new contact id. DEDUP: if a contact with a very similar name (or the same email) already exists for this workspace, the tool does NOT create — it returns { needs_dedup_confirmation: true, matches: [...] }. When that happens, do NOT silently make a second record: show the operator the match(es) and ask whether it's the same person. If they want to update the existing one, call crm_update_contact with that contact_id. Only if they confirm it's a genuinely different, separate person do you call crm_create_contact again with confirm_new: true to force the new record.",
+              description: "Team only. Add a new contact (client) to the CRM. BEFORE calling this, confirm the details with the operator in one short line — e.g. \"Adding Jacqueline Turner, +1-310-661-1679 — want me to add her?\" — and only call the tool once they say yes. Missing fields like email are fine; add what you have and note they can fill the rest later. Returns the new contact id. DEDUP: if a contact with a very similar name (or the same email) already exists for this workspace, the tool does NOT create — it returns { needs_dedup_confirmation: true, matches: [...] }. When that happens, do NOT silently make a second record: show the operator the match(es) and ask whether it's the same person. If they want to update the existing one, call crm_update_contact with that contact_id. Only if they confirm it's a genuinely different, separate person do you call crm_create_contact again with confirm_new: true to force the new record.",
               parameters: {
                 type: "object",
                 properties: {
@@ -5611,15 +5765,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_update_contact",
-              description: "Admin/coach only. Update the owner-editable profile fields on an existing tenant contact. Resolve the contact first with crm_search_contacts to get its opaque client_ref. Only pass fields the operator wants changed; omitted fields stay unchanged and an empty string clears an optional text field. Tenant, linked-account, financial, consent, activity, and system-provenance fields are not writable here. Governed by the workspace autonomy policy: unless the operator has set this action to auto, PROPOSE the change first, get their yes, then call again with confirm:true (internal data, not outbound).",
+              description: "Team only. Update the owner-editable profile fields on an existing tenant contact. Resolve the contact first with crm_search_contacts to get its opaque client_ref. Only pass fields the operator wants changed; omitted fields stay unchanged and an empty string clears an optional text field. Tenant, linked-account, financial, consent, activity, and system-provenance fields are not writable here. Governed by the workspace autonomy policy: unless the operator has set this action to auto, PROPOSE the change first, get their yes, then call again with confirm:true (internal data, not outbound).",
               parameters: {
                 type: "object",
                 properties: {
                   client_ref: { type: "string", description: "Tenant-scoped client reference from crm_search_contacts." },
                   first_name: { type: "string" },
                   last_name: { type: "string" },
-                  email: { type: "string" },
-                  phone: { type: "string" },
+                  contact_methods: { type: "array", description: "The COMPLETE list of the contact's emails and phones, in display order; anything left out is removed. Read the current list first with crm_get_contact_summary and send it back as expected_contact_methods. Send this or add_contact_methods, not both.", items: { type: "object", properties: { kind: { type: "string", enum: ["email", "phone"] }, value: { type: "string" }, label: { type: "string" }, is_primary: { type: "boolean" } }, required: ["kind", "value"] } },
+                  add_contact_methods: { type: "array", description: "Emails or phones to add, keeping every one the contact already holds. Mark one is_primary to make it the primary of its kind.", items: { type: "object", properties: { kind: { type: "string", enum: ["email", "phone"] }, value: { type: "string" }, label: { type: "string" }, is_primary: { type: "boolean" } }, required: ["kind", "value"] } },
+                  expected_contact_methods: { type: "array", description: "Required with contact_methods: the contact's emails and phones exactly as crm_get_contact_summary returned them. The update is refused if the stored list has changed since.", items: { type: "object", properties: { kind: { type: "string", enum: ["email", "phone"] }, value: { type: "string" }, label: { type: ["string", "null"] }, is_primary: { type: "boolean" } }, required: ["kind", "value"] } },
                   entity_name: { type: "string" },
                   entity_type: { type: "string", description: "Business/entity classification. Use an empty string to clear it for a person record." },
                   title: { type: "string" },
@@ -5646,7 +5801,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "propose_business_brief_update",
-              description: "Admin/coach only. Stage a bounded suggestion for THIS workspace's Solo Setup business brief. This never changes confirmed business truth: it creates a visible proposal that an owner must review and save in Settings -> Setup. Use for business identity, existing active Team members designated as business representatives, offers, customers, direction, goals, constraints, brand voice, operating preferences, and do-not-assume boundaries. Resolve representative ids with crm_list_team; never invent ids or change Team membership/roles. Do not use for email/provider/payment configuration. PROPOSE FIRST in chat, get the operator's yes, then call with confirm:true unless Trust Compass already allows automatic proposal staging.",
+              description: "Team only. Stage a bounded suggestion for THIS workspace's Solo Setup business brief. This never changes confirmed business truth: it creates a visible proposal that an owner must review and save in Settings -> Setup. Use for business identity, existing active Team members designated as business representatives, offers, customers, direction, goals, constraints, brand voice, operating preferences, and do-not-assume boundaries. Resolve representative ids with crm_list_team; never invent ids or change Team membership/roles. Do not use for email/provider/payment configuration. PROPOSE FIRST in chat, get the operator's yes, then call with confirm:true unless Trust Compass already allows automatic proposal staging.",
               parameters: {
                 type: "object",
                 properties: {
@@ -5695,12 +5850,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "member_grant_role",
-              description: "Admin/coach only. Grant a staff role to a user by their auth user id (resolve via crm/admin lookup first). Roles: admin, coach, sales_rep, broker, cs_rep, finance, viewer. The server enforces the role hierarchy. Propose the grant first and call again with confirm:true once the operator approves — unless the workspace has set this action to auto.",
+              description: "Team only. Grant a staff role to a user by their auth user id (resolve via crm/admin lookup first). Roles: admin, sales_rep, broker, cs_rep, finance, viewer. 'Coach' is a title a business gives its people, never a role, so it cannot be granted. The server enforces the role hierarchy. Propose the grant first and call again with confirm:true once the operator approves — unless the workspace has set this action to auto.",
               parameters: {
                 type: "object",
                 properties: {
                   user_id: { type: "string", description: "auth.users.id of the person to grant the role to." },
-                  role: { type: "string", enum: ["admin", "coach", "sales_rep", "broker", "cs_rep", "finance", "viewer"] }
+                  role: { type: "string", enum: ["admin", "sales_rep", "broker", "cs_rep", "finance", "viewer"] }
                 },
                 required: ["user_id", "role"]
               }
@@ -5710,12 +5865,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "member_revoke_role",
-              description: "Admin/coach only. Remove a staff role from a user. The server enforces guards (can't remove the owner's admin, last-admin, coach-with-active-clients). Propose the change first and call again with confirm:true once the operator approves — unless the workspace has set this action to auto; returns {ok:false, reason:'active_clients'} if a coach still has assigned clients.",
+              description: "Team only. Remove a staff role from a user. The server enforces guards (can't remove the owner's admin or the last admin). Propose the change first and call again with confirm:true once the operator approves — unless the workspace has set this action to auto; returns {ok:false, reason:'active_clients'} if a coach still has assigned clients.",
               parameters: {
                 type: "object",
                 properties: {
                   user_id: { type: "string" },
-                  role: { type: "string", enum: ["admin", "coach", "sales_rep", "broker", "cs_rep", "finance", "viewer"] }
+                  role: { type: "string", enum: ["admin", "sales_rep", "broker", "cs_rep", "finance", "viewer"] }
                 },
                 required: ["user_id", "role"]
               }
@@ -5748,12 +5903,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "team_set_work_profile",
-              description: "Owner/admin only. Set a teammate's job title and/or responsibilities for THIS workspace — what they do, not what they may do. Takes the member_user_id from the team context block; never a name. This CANNOT change anyone's access, and saying it does would be untrue. Pass ONLY the field the operator asked to change and omit the other — an omitted field keeps whatever is stored. An empty string CLEARS a field, so send one only when they asked for it gone. Read the change back and get their yes, then call again with confirm:true.",
+              description: `Owner/admin only. Set a teammate's ${TITLE_WORD} and/or responsibilities for THIS workspace — what they do, not what they may do. Takes the member_user_id from the team context block; never a name. This CANNOT change anyone's access, and saying it does would be untrue. Pass ONLY the field the operator asked to change and omit the other — an omitted field keeps whatever is stored. An empty string CLEARS a field, so send one only when they asked for it gone. Read the change back and get their yes, then call again with confirm:true.`,
               parameters: {
                 type: "object",
                 properties: {
                   member_user_id: { type: "string", description: "The teammate's user_id, exactly as it appears in the team context block." },
-                  job_title: { type: "string", description: "Job title, 120 characters or fewer. OMIT it entirely to leave the current title alone; pass an empty string ONLY if they asked you to clear it." },
+                  job_title: { type: "string", description: `Their ${TITLE_WORD}, 120 characters or fewer. OMIT it entirely to leave the current ${TITLE_WORD} alone; pass an empty string ONLY if they asked you to clear it.` },
                   responsibilities: { type: "string", description: "What this person owns, decides and hands off. 2,000 characters or fewer. OMIT it entirely to leave the current text alone; pass an empty string ONLY if they asked you to clear it. Never retype what is already stored — omitting is how you keep it." },
                   confirm: { type: "boolean", description: "true once the operator has approved the exact change you read back." }
                 },
@@ -5765,7 +5920,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "team_set_permission",
-              description: "TENANT OWNER ONLY, and the server enforces that — an admin asking for this will be refused, so do not promise it. Changes what a teammate is ALLOWED TO DO in this workspace. Only 'admin' or 'member' can be set: the owner's own permission cannot be changed here, and nobody can be made an owner from chat. This is an access change, so state plainly what the person will be able to do afterwards, get an explicit yes, and only then call again with confirm:true. If the operator is really asking to describe someone's job differently, that is team_set_work_profile and it is not this.",
+              description: `TENANT OWNER ONLY, and the server enforces that — an admin asking for this will be refused, so do not promise it. Changes what a teammate is ALLOWED TO DO in this workspace. Only 'admin' or 'member' can be set: the owner's own permission cannot be changed here, and nobody can be made an owner from chat. This is an access change, so state plainly what the person will be able to do afterwards, get an explicit yes, and only then call again with confirm:true. If the operator is really asking to change someone's ${TITLE_WORD}, that is team_set_work_profile and it is not this.`,
               parameters: {
                 type: "object",
                 properties: {
@@ -5787,7 +5942,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 properties: {
                   email: { type: "string", description: "The person's email address." },
                   permission: { type: "string", enum: ["admin", "member"], description: "The access they get when they accept." },
-                  job_title: { type: "string", description: "Optional. What they will be called. Describes work; grants nothing." },
+                  job_title: { type: "string", description: `Optional. Their ${TITLE_WORD}: what they will be called. Describes work; grants nothing.` },
                   responsibilities: { type: "string", description: "Optional. What they will own and where they hand work off." },
                   confirm: { type: "boolean", description: "true once the operator has approved this exact invitation." }
                 },
@@ -5829,7 +5984,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "calendar_book_meeting",
-              description: "Admin/coach only. Book a one-on-one meeting on the operator's calendar. Because a booking is a real event, this is a TWO-STEP action: first call WITHOUT confirm to echo the details back, then call again with confirm:true only after the operator says yes. Provide start_at and end_at as ISO 8601 timestamps. If booking for a known contact, pass contact_id (guest name/email are filled from it).",
+              description: "Team only. Book a one-on-one meeting on the operator's calendar. Because a booking is a real event, this is a TWO-STEP action: first call WITHOUT confirm to echo the details back, then call again with confirm:true only after the operator says yes. Provide start_at and end_at as ISO 8601 timestamps. If booking for a known contact, pass contact_id (guest name/email are filled from it).",
               parameters: {
                 type: "object",
                 properties: {
@@ -5852,7 +6007,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "generate_image",
-              description: "Admin/coach only. Generate a marketing image from a text description (logos, social graphics, ad creative, hero images). Returns a public URL the operator can use or download. If image generation isn't configured, returns needs_config — tell the operator to add the image key. Safe to run; no side effects beyond storing the image.\n\nPICK THE BEST PROVIDER for the brief (omit to use the fast, cheap default): 'replicate' for premium photoreal/artistic HERO art (Flux — the top-quality option); 'ideogram' when the image must contain LEGIBLE TEXT — logos, typographic posters, ad creatives with words, thumbnails with a headline; 'gemini' for a fast, low-cost default (general marketing/social graphics); 'openai' for an alternate style when the default result isn't landing. If a chosen provider's key isn't set, generation auto-falls-back to a configured one and the result reports which provider actually served it.",
+              description: "Team only. Generate a marketing image from a text description (logos, social graphics, ad creative, hero images). Returns a public URL the operator can use or download. If image generation isn't configured, returns needs_config — tell the operator to add the image key. Safe to run; no side effects beyond storing the image.\n\nPICK THE BEST PROVIDER for the brief (omit to use the fast, cheap default): 'replicate' for premium photoreal/artistic HERO art (Flux — the top-quality option); 'ideogram' when the image must contain LEGIBLE TEXT — logos, typographic posters, ad creatives with words, thumbnails with a headline; 'gemini' for a fast, low-cost default (general marketing/social graphics); 'openai' for an alternate style when the default result isn't landing. If a chosen provider's key isn't set, generation auto-falls-back to a configured one and the result reports which provider actually served it.",
               parameters: {
                 type: "object",
                 properties: {
@@ -5870,7 +6025,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "draft_marketing_content",
-              description: "Admin/coach only. Draft marketing content for the tenant — social posts, ad copy, email campaigns, captions, blog outlines, or SMS broadcasts — in their brand voice. Returns draft text for the operator to review; drafting is safe and has no side effects (sending is a separate approval-gated step). Use when the operator asks you to write, create, or draft marketing/social/ad/email content.",
+              description: "Team only. Draft marketing content for the tenant — social posts, ad copy, email campaigns, captions, blog outlines, or SMS broadcasts — in their brand voice. Returns draft text for the operator to review; drafting is safe and has no side effects (sending is a separate approval-gated step). Use when the operator asks you to write, create, or draft marketing/social/ad/email content.",
               parameters: {
                 type: "object",
                 properties: {
@@ -5887,7 +6042,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "content_save",
-              description: "Admin/coach only. Save a piece of marketing content to the tenant's Content Studio library so the operator can reuse it later. Use after draft_marketing_content when the operator likes a draft and wants to keep it, or to save copy you wrote inline. Generated images auto-save, so use this for text/copy. Pure save; no sending.",
+              description: "Team only. Save a piece of marketing content to the tenant's Content Studio library so the operator can reuse it later. Use after draft_marketing_content when the operator likes a draft and wants to keep it, or to save copy you wrote inline. Generated images auto-save, so use this for text/copy. Pure save; no sending.",
               parameters: {
                 type: "object",
                 properties: {
@@ -5904,56 +6059,19 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "document_generate",
-              description: "Admin/coach only. Build a finished, on-brand LONG-FORM DOCUMENT — a guide, one-pager, ebook, checklist, worksheet, proposal, offer letter, or sales offer — and save it. Use when the operator/customer asks for a document, guide, ebook, PDF, one-pager, checklist, worksheet, proposal, quote, statement of work, lead magnet, offer letter, hiring/engagement offer, sales offer, offer sheet, or 'something they can hand out/download'. YOU author the whole document as an ordered list of design BLOCKS (below) — do NOT describe it, produce it. It renders on the studio canvas and the customer can Print / Save as PDF. Craft bar (never a 'Word dump'): the FIRST block is ALWAYS a 'cover'; lead every section with a benefit-stating header, not a bare label; vary the blocks — never more than ~3 'prose' blocks in a row without a callout/list/pull-quote/stat between them; short paragraphs; second person, active voice, one concrete example or number per section; exactly ONE primary 'cta'. Coaching-generic; never introduce credit/funding/finance framing unless the customer explicitly asked for it.\n\nMATCH THE BLOCK SHAPE TO THE doc_type — a worksheet is not a guide, an ebook is not a one-pager, a proposal is not a checklist:\n• guide — cover → optional toc → repeated (section-header + prose/callout/list/stat), ~3-6 sections → one cta. Teaching depth.\n• one_pager — cover → 1-2 section-headers → tight prose + a stat + a short list → one cta. Fits one page; no toc, no chapters.\n• ebook — cover → toc → per chapter: chapter-divider + prose/pull-quote/callout (3+ chapters) → cta. The chapter-divider OPENS each chapter — it is the ebook signature; a guide with no chapter-dividers is NOT an ebook.\n• checklist — cover → short intro prose → list(style:\"checklist\") grouped under section-headers → optional cta. Mostly checkable items.\n• worksheet — cover → brief prose per section → worksheet-field blocks the user FILLS IN (line/lines/box/scale/checkbox) → optional cta. A worksheet MUST contain worksheet-field blocks (real blanks); with none it is just a guide and is wrong.\n• proposal — cover (client + project) → prose (their goals / your understanding) → section-header 'Scope' + list → section-header 'Timeline' + prose/list with REAL dates → section-header 'Investment' + pricing-table (rows + total) → cta ('Approve & start'). A proposal MUST carry a pricing-table and real client name, scope, and dates.\n• offer_letter — cover (candidate name + role) → prose (a warm, specific why-you-fit opening) → section-header 'The Role' + prose → section-header 'Compensation' + pricing-table OR stat blocks (base / variable / equity or benefits summary) → section-header 'Start & Reporting' + prose (real start date + who they report to) → prose (engagement/at-will terms, coaching-generic) → worksheet-field signature lines (candidate + company) → one cta 'Accept'. An offer letter MUST carry the REAL candidate name, role, compensation, and start date — never [CANDIDATE]/[ROLE]/[SALARY]/[DATE] blanks.\n• sales_offer — cover (prospect + offer name) → prose (their goal and the outcome you deliver) → section-header 'What You Get' + list → pricing-table (packages/tiers + total) → section-header 'Terms' + prose (real expiration date) → pull-quote OR stat (a real result/proof you can stand behind, never invented) → one cta 'Accept this offer'. Direct-response, benefit-led copy; a real prospect name, real packages/prices, and a real expiration date — no placeholders.\n\nPROPOSALS NEED REAL SPECIFICS — NEVER ship [PLACEHOLDER]s. A proposal is worthless with [CLIENT NAME]/[SCOPE]/[AMOUNT]/[DATE] in it. Before building a proposal, make sure you actually know: the client's real name, what they're buying (scope), the price(s), and the start/delivery dates. Pull them from the brief/brand/contact when present; otherwise ASK the customer FIRST — use ask_choices for pricing tiers or packaging where you can offer 2-4 concrete options, or just ask in chat for the name and dates. The system REJECTS any document that still contains bracketed placeholder tokens (e.g. [CLIENT NAME], [DATE], [AMOUNT]) — resolve them from real data or by asking, never guess.",
+              description: "Team only. Submit a substantial private document for durable authoring. Use for guides, one-pagers, ebooks, checklists, worksheets, proposals, offer letters, sales offers, and attorney-review agreement drafts. Give the authoring worker a complete bounded brief and every real fact it must use; never invent missing names, prices, dates, legal terms, results, or sources. Ask the owner for material missing facts before calling. This call accepts work and returns immediately; the completed artifact is posted back into the same conversation after verified persistence, so never claim it is ready from the submission result alone. Ordinary offer letters and sales offers are non-signable draft documents: never request signature lines, an Accept button, or any other execution affordance. If the document is meant to be signed, use agreement_draft; it remains an attorney-review draft artifact and must enter the Agreements lifecycle before it can be sent or signed.",
               parameters: {
                 type: "object",
                 properties: {
-                  doc_type: { type: "string", enum: ["guide", "one_pager", "ebook", "checklist", "worksheet", "proposal", "offer_letter", "sales_offer"], description: "Which kind of document. Infer it from the request, then follow that type's block skeleton above." },
+                  doc_type: { type: "string", enum: ["guide", "one_pager", "ebook", "checklist", "worksheet", "proposal", "offer_letter", "sales_offer", "agreement_draft"], description: "The requested draft type. agreement_draft is the only signable-document-shaped type, but it is still not sendable or signable until promoted through Agreements." },
                   title: { type: "string", description: "The document's title (benefit-led and specific, not the bare topic). For a proposal, name the client + engagement." },
-                  brief: { type: "string", description: "Optional one-line brief/prompt that produced it." },
+                  brief: { type: "string", description: "A complete authoring brief: desired structure, depth, tone, constraints, and what the finished draft must accomplish. Maximum 12,000 characters." },
+                  audience: { type: "string", description: "Optional bounded description of the intended reader." },
+                  purpose: { type: "string", description: "Optional bounded description of how the private draft will be used." },
+                  required_facts: { type: "object", description: "Real scalar facts the draft must preserve exactly, such as client, candidate, scope, dates, compensation, packages, and prices. Never put placeholders here.", additionalProperties: { type: ["string", "number", "boolean"] } },
                   target_content_id: { type: "string", description: "Set to the on-canvas artifact's id (see CANVAS STATE) ONLY when the user is refining/revising the document already on the canvas — this updates that same document in place and keeps its version history. OMIT it to create a brand-new/additional document as a separate asset. Never pass an id for a genuinely new document." },
-                  export_format: { type: "string", enum: ["pdf", "docx", "pptx", "md"], description: "OPTIONAL. When the user asks for a downloadable FILE — 'give me the PDF/Word/PowerPoint/Markdown', 'download this', 'send me a copy' — set this and the saved document is ALSO rendered to that real file, returning a private download link (download_url). Omit it when the user just wants the document on the canvas; omitting it changes nothing. Markdown is the most reliable — it never fails; the other formats render when their libraries are available and otherwise return an honest needs-setup notice." },
-                  blocks: {
-                    type: "array",
-                    description: "The document as an ordered list of design blocks. The first block MUST be type 'cover'.",
-                    items: {
-                      type: "object",
-                      properties: {
-                        type: { type: "string", enum: ["cover", "section-header", "chapter-divider", "toc", "prose", "callout", "pull-quote", "list", "stat", "worksheet-field", "pricing-table", "cta"], description: "The block kind." },
-                        eyebrow: { type: "string", description: "cover: small kicker above the title." },
-                        title: { type: "string", description: "cover/section-header/chapter-divider: the heading. toc: optional heading (defaults to 'Contents')." },
-                        subhead: { type: "string", description: "cover/chapter-divider: one-line promise/outcome under the title." },
-                        kicker: { type: "string", description: "section-header/chapter-divider: small label above the heading." },
-                        number: { type: "number", description: "section-header/chapter-divider: optional section/chapter number." },
-                        entries: { type: "array", items: { type: "string" }, description: "toc: explicit contents lines. OMIT to auto-build the table of contents from your section-header/chapter-divider titles." },
-                        markdown: { type: "string", description: "prose: 1-4 short paragraphs of body copy (markdown)." },
-                        variant: { type: "string", enum: ["tip", "warning", "key-insight", "definition", "example", "do-this"], description: "callout: which kind of callout." },
-                        body: { type: "string", description: "callout: the callout text." },
-                        quote: { type: "string", description: "pull-quote: the quote." },
-                        attribution: { type: "string", description: "pull-quote: who said it (optional)." },
-                        style: { type: "string", enum: ["bullet", "numbered", "checklist"], description: "list: the list style." },
-                        items: { type: "array", items: { type: "string" }, description: "list: the list items." },
-                        value: { type: "string", description: "stat: the big number/value." },
-                        label: { type: "string", description: "stat: what the value measures. worksheet-field: the prompt/question printed above the blank." },
-                        field: { type: "string", enum: ["line", "lines", "box", "scale", "checkbox"], description: "worksheet-field: the kind of blank — 'lines' = N ruled lines (set lines:), 'box' = an open box, 'scale' = a numbered rating row (set scaleMin/scaleMax/minLabel/maxLabel), 'line' = one blank, 'checkbox' = a check + blank. Defaults to 'lines'." },
-                        helper: { type: "string", description: "worksheet-field: optional hint under the prompt." },
-                        lines: { type: "number", description: "worksheet-field (field:'lines'): how many ruled lines to draw (1-12; default 3)." },
-                        scaleMin: { type: "number", description: "worksheet-field (field:'scale'): low end of the scale (default 1)." },
-                        scaleMax: { type: "number", description: "worksheet-field (field:'scale'): high end of the scale (default 5)." },
-                        minLabel: { type: "string", description: "worksheet-field (field:'scale'): caption under the low end." },
-                        maxLabel: { type: "string", description: "worksheet-field (field:'scale'): caption under the high end." },
-                        caption: { type: "string", description: "pricing-table: optional label above the table (e.g. 'Investment')." },
-                        rows: { type: "array", description: "pricing-table: the line items.", items: { type: "object", properties: { item: { type: "string", description: "what the line is." }, detail: { type: "string", description: "optional sub-line detail." }, amount: { type: "string", description: "a plain currency string you set, e.g. '$2,500' or '$500/mo'. Generic pricing — never credit/lending/finance unless asked." } }, required: ["item", "amount"] } },
-                        total: { type: "string", description: "pricing-table: optional total row value (a currency string)." },
-                        headline: { type: "string", description: "cta: the call-to-action headline." },
-                        action: { type: "string", description: "cta: the button label (one imperative ask)." },
-                        href: { type: "string", description: "cta: optional link." }
-                      },
-                      required: ["type"]
-                    }
-                  }
                 },
-                required: ["doc_type", "title", "blocks"]
+                required: ["doc_type", "title", "brief"]
               }
             }
           },
@@ -5961,7 +6079,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "growth_list",
-              description: "Admin/coach only. List the tenant's landing pages (growth pages) with their slug, title, status (draft/published/archived), and — for published pages — the real public URL. Read-only; safe to run. Use when the operator asks 'what pages do I have?', 'show my landing pages', or before saving/publishing so you can reference an existing page by id.",
+              description: "Team only. List the tenant's landing pages (growth pages) with their slug, title, status (draft/published/archived), and — for published pages — the real public URL. Read-only; safe to run. Use when the operator asks 'what pages do I have?', 'show my landing pages', or before saving/publishing so you can reference an existing page by id.",
               parameters: { type: "object", properties: {} }
             }
           },
@@ -5969,7 +6087,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "growth_page_generate",
-              description: "Admin/coach only. Draft a branded landing page from a one-line brief — Paige designs the page blocks (hero, feature/phase cards, CTA, an embedded lead form) in the tenant's brand. Returns the draft blocks for the operator to review; drafting is safe and writes nothing (saving and publishing are separate steps). Defaults to a coaching-generic offer (webinar, strategy call, program, lead magnet) — never credit/funding framing unless the brief explicitly asks. Use when the operator asks you to build, design, or create a landing/sales/opt-in page.",
+              description: "Team only. Draft a branded landing page from a one-line brief — Paige designs the page blocks (hero, feature/phase cards, CTA, an embedded lead form) in the tenant's brand. Returns the draft blocks for the operator to review; drafting is safe and writes nothing (saving and publishing are separate steps). Defaults to a coaching-generic offer (webinar, strategy call, program, lead magnet) — never credit/funding framing unless the brief explicitly asks. Use when the operator asks you to build, design, or create a landing/sales/opt-in page.",
               parameters: {
                 type: "object",
                 properties: {
@@ -5984,7 +6102,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "growth_page_save",
-              description: "Admin/coach only. Save a landing page as a DRAFT to the tenant's growth pages (does not go live — publishing is a separate, approval-gated step). Use after growth_page_generate when the operator likes the draft, passing the reviewed blocks. Pass page_id to update an existing page, or omit it to create a new one keyed by slug.",
+              description: "Team only. Save a landing page as a DRAFT to the tenant's growth pages (does not go live — publishing is a separate, approval-gated step). Use after growth_page_generate when the operator likes the draft, passing the reviewed blocks. Pass page_id to update an existing page, or omit it to create a new one keyed by slug.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6003,7 +6121,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "growth_page_publish",
-              description: "Admin/coach only. Publish a saved landing page so it goes LIVE at its public URL. This is a going-live action — always confirm with the operator first, and on success report back the REAL public URL the publish returns (never claim it's live without the link). The page must already be saved as a draft (growth_page_save) and free of unfilled [PLACEHOLDER] prompts, which the publish step rejects.",
+              description: "Team only. Publish a saved landing page so it goes LIVE at its public URL. This is a going-live action — always confirm with the operator first, and on success report back the REAL public URL the publish returns (never claim it's live without the link). The page must already be saved as a draft (growth_page_save) and free of unfilled [PLACEHOLDER] prompts, which the publish step rejects.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6017,7 +6135,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "growth_funnel_generate",
-              description: "Admin/coach only. Draft a whole marketing FUNNEL from a one-line brief — Paige plans and drafts the entry landing page, an intake form, and a thank-you, wired together as a sequence. Returns the draft for the operator to review; drafting is safe and writes nothing (building and publishing are separate steps). Defaults to a coaching-generic offer — never credit/funding framing unless the brief explicitly asks. Use when the operator wants a funnel, a lead flow, an application flow, or a capture→qualify→confirm sequence (more than a single page).",
+              description: "Team only. Draft a whole marketing FUNNEL from a one-line brief — Paige plans and drafts the entry landing page, an intake form, and a thank-you, wired together as a sequence. Returns the draft for the operator to review; drafting is safe and writes nothing (building and publishing are separate steps). Defaults to a coaching-generic offer — never credit/funding framing unless the brief explicitly asks. Use when the operator wants a funnel, a lead flow, an application flow, or a capture→qualify→confirm sequence (more than a single page).",
               parameters: {
                 type: "object",
                 properties: {
@@ -6031,7 +6149,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "growth_funnel_build",
-              description: "Admin/coach only. Build a funnel into real DRAFT rows — the entry landing page, the intake form, and the wired funnel (does NOT go live; publishing is a separate step). Use after growth_funnel_generate when the operator likes the draft, passing the reviewed pieces. Pass funnel_id/page_id/form_id to update an existing funnel in place instead of creating new rows.",
+              description: "Team only. Build a funnel into real DRAFT rows — the entry landing page, the intake form, and the wired funnel (does NOT go live; publishing is a separate step). Use after growth_funnel_generate when the operator likes the draft, passing the reviewed pieces. Pass funnel_id/page_id/form_id to update an existing funnel in place instead of creating new rows.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6051,7 +6169,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "growth_funnel_publish",
-              description: "Admin/coach only. Publish a saved funnel so the WHOLE sequence goes live — publishes the entry page then the funnel, and returns the REAL public URL. This is a going-live action; always confirm with the operator first and report back the real link the publish returns (never claim it's live without it). The funnel must already be built (growth_funnel_build) and its entry page free of unfilled [PLACEHOLDER] prompts, which the publish step rejects.",
+              description: "Team only. Publish a saved funnel so the WHOLE sequence goes live — publishes the entry page then the funnel, and returns the REAL public URL. This is a going-live action; always confirm with the operator first and report back the real link the publish returns (never claim it's live without it). The funnel must already be built (growth_funnel_build) and its entry page free of unfilled [PLACEHOLDER] prompts, which the publish step rejects.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6065,7 +6183,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "action_file",
-              description: "Admin/coach only. File a unit of work from one of Paige's departments to the other on the action bus — e.g. Client Experience flags an at-risk client to Owner Ops, or Owner Ops queues a follow-up. This STARTS a tracked hand-off; it does not draft or send. Use action_advance next to draft/route it. action_kind must be one of the platform kinds (e.g. owner.followup_email, client.followup, client.at_risk, owner.task, owner.onboarding_nudge, client.portal_recommendation).",
+              description: "Team only. File a unit of work from one of Paige's departments to the other on the action bus — e.g. Client Experience flags an at-risk client to Owner Ops, or Owner Ops queues a follow-up. This STARTS a tracked hand-off; it does not draft or send. Use action_advance next to draft/route it. action_kind must be one of the platform kinds (e.g. owner.followup_email, client.followup, client.at_risk, owner.task, owner.onboarding_nudge, client.portal_recommendation).",
               parameters: {
                 type: "object",
                 properties: {
@@ -6084,15 +6202,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "action_advance",
-              description: "Admin/coach only. Move an action along its lifecycle: assign it to a sub-agent, attach a draft, route it, or dismiss it. Attaching a draft (to_status='drafted') to an approval-gated kind auto-files it into the coach's approval lane — it NEVER sends directly. Use to_status one of: assigned, drafting, drafted, executing, dismissed.",
+              description: "Team only. Move an action along its lifecycle: assign it to a sub-agent, attach a draft, route it, or dismiss it. Attaching a draft (to_status='drafted') to an approval-gated kind auto-files it into the coach's approval lane — it NEVER sends directly. Use to_status one of: assigned, drafting, drafted, executing, dismissed.",
               parameters: {
                 type: "object",
                 properties: {
-                  action_id: { type: "string", description: "The paige_actions id to advance." },
+                  action_id: { type: "string", description: "The COMPLETE paige_actions id, exactly as action_list returned it — a 36-character UUID. Never a shortened prefix, even if you shortened it when talking to the operator: a shortened id cannot be addressed and nothing will move." },
                   to_status: { type: "string", enum: ["assigned", "drafting", "drafted", "executing", "dismissed"] },
                   draft_content: { type: "object", description: "The drafted output, e.g. {channel,subject,body}. Required when to_status='drafted'." },
                   assigned_subagent_slug: { type: "string", description: "Sub-agent to assign, e.g. email-composer." },
-                  invocation_id: { type: "string", description: "The sub-agent invocation that produced this draft — attach it so the work is attributed to the team member who did it (§13/§14)." },
+                  invocation_id: { type: "string", description: "The sub-agent invocation that produced this draft — attach it so the work is attributed to the team member who did it (§13/§14). The complete id, exactly as it was returned to you; leave it out if you do not have it." },
                   decision_rationale: { type: "string", description: "Why, when dismissing." }
                 },
                 required: ["action_id"]
@@ -6153,7 +6271,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "action_list",
-              description: "Admin/coach only. List actions on Paige's bus — a department's queue or one client's — filed, drafting, waiting on approval, or done. Use to see her team's open work before deciding what to do next.",
+              description: "Team only. List actions on Paige's bus — a department's queue or one client's — filed, drafting, waiting on approval, or done. Use to see her team's open work before deciding what to do next.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6202,10 +6320,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "action_get",
-              description: "Admin/coach only. Fetch one action by id with its current status and links (the approval it waits on, the client-facing card it created).",
+              description: "Team only. Fetch one action by id with its current status and links (the approval it waits on, the client-facing card it created).",
               parameters: {
                 type: "object",
-                properties: { action_id: { type: "string", description: "The paige_actions id." } },
+                properties: { action_id: { type: "string", description: "The COMPLETE paige_actions id, exactly as action_list returned it — a 36-character UUID, never a shortened prefix." } },
                 required: ["action_id"]
               }
             }
@@ -6214,7 +6332,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_list_team",
-              description: "Admin/coach only. List the tenant's team members (coaches, brokers, admins, sales reps) with their names, roles, and user ids. Use this to resolve 'assign her to the coach named X' into a user_id before calling crm_assign_contact.",
+              description: "Team only. List the tenant's team members (coaches, brokers, admins, sales reps) with their names, roles, and user ids. Use this to resolve 'assign her to the coach named X' into a user_id before calling crm_assign_contact.",
               parameters: { type: "object", properties: {} }
             }
           },
@@ -6242,7 +6360,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_assign_contact",
-              description: "Admin/coach only. Assign a contact to a teammate. role picks the seat: 'coach' (default), 'owner'/'sales_rep' (lead owner), or 'cs' (client-success primary). Resolve the person via crm_list_team first to get their user_id. Confirm with the operator before assigning.",
+              description: "Team only. Assign a contact to a teammate. role picks the seat: 'coach' (default), 'owner'/'sales_rep' (lead owner), or 'cs' (client-success primary). Resolve the person via crm_list_team first to get their user_id. Confirm with the operator before assigning.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6258,7 +6376,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "program_list",
-              description: "Admin/coach only. List the programs and offers loaded for this tenant, priority/current-campaign first. Use to recommend the right program during onboarding and to resolve a program name to its id before enrolling.",
+              description: "Team only. List the programs and offers loaded for this tenant, priority/current-campaign first. Use to recommend the right program during onboarding and to resolve a program name to its id before enrolling.",
               parameters: { type: "object", properties: {} }
             }
           },
@@ -6266,7 +6384,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "program_enroll",
-              description: "Admin/coach only. Enroll a contact into a program/offer. Resolve the program via program_list first. Confirm with the operator before enrolling. Idempotent — re-enrolling returns the existing enrollment.",
+              description: "Team only. Enroll a contact into a program/offer. Resolve the program via program_list first. Confirm with the operator before enrolling. Idempotent — re-enrolling returns the existing enrollment.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6281,7 +6399,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_add_note",
-              description: "Admin/coach only. File a note onto a client's record — the notes panel their team reads, not the activity timeline. Use it when the operator tells you something worth keeping about a client ('note that Dana wants to close before year end', 'she's moving offices in March'), or dictates one. You must know WHICH client: resolve them with crm_search_contacts first and use that contact id — never guess, and never file against the client merely because they're the one in focus if the operator named someone else. The note is STAFF-ONLY: the client cannot see it, and you should say so plainly rather than implying they might. Propose it first and only file it once the operator says yes, unless the workspace set this to auto.",
+              description: "Team only. File a note onto a client's record — the notes panel their team reads, not the activity timeline. Use it when the operator tells you something worth keeping about a client ('note that Dana wants to close before year end', 'she's moving offices in March'), or dictates one. You must know WHICH client: resolve them with crm_search_contacts first and use that contact id — never guess, and never file against the client merely because they're the one in focus if the operator named someone else. The note is STAFF-ONLY: the client cannot see it, and you should say so plainly rather than implying they might. Propose it first and only file it once the operator says yes, unless the workspace set this to auto.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6298,7 +6416,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_list_documents",
-              description: "Admin/coach only. List the documents already uploaded onto client files, so you can name one before routing it. Returns the file id, filename, type, size, which client it is currently filed on, and who can see it. It does NOT return the document's contents or a download link — you cannot read what is inside these files, and you must not pretend to. Use this to find the file id that crm_file_document needs.",
+              description: "Team only. List the documents already uploaded onto client files, so you can name one before routing it. Returns the file id, filename, type, size, which client it is currently filed on, and who can see it. It does NOT return the document's contents or a download link — you cannot read what is inside these files, and you must not pretend to. Use this to find the file id that crm_file_document needs.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6313,7 +6431,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_file_document",
-              description: "Admin/coach only. Route a document that has ALREADY been uploaded onto the right client's file, and set who can see it. Use it when the operator says a file landed on the wrong client, or asks you to share an internal document with a client, or tells you where an upload belongs. You cannot upload a document and you cannot read one — the bytes must already exist, and you find the file with crm_list_documents first. You are deciding two things and must say both out loud before you do it: WHICH client it lands on, and WHETHER that client can see it. 'shared' means the client reads it in their own portal; 'internal' means only the team does. Never move a document the client uploaded themselves — that is their record of what they sent, and re-filing it misrepresents where it came from. Propose it and wait for the operator to approve.",
+              description: "Team only. Route a document that has ALREADY been uploaded onto the right client's file, and set who can see it. Use it when the operator says a file landed on the wrong client, or asks you to share an internal document with a client, or tells you where an upload belongs. You cannot upload a document and you cannot read one — the bytes must already exist, and you find the file with crm_list_documents first. You are deciding two things and must say both out loud before you do it: WHICH client it lands on, and WHETHER that client can see it. 'shared' means the client reads it in their own portal; 'internal' means only the team does. Never move a document the client uploaded themselves — that is their record of what they sent, and re-filing it misrepresents where it came from. Propose it and wait for the operator to approve.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6330,7 +6448,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_log_activity",
-              description: "Admin/coach only. Log a communication or activity (call, email, note, meeting) on a client's timeline.",
+              description: "Team only. Log a communication or activity (call, email, note, meeting) on a client's timeline.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6348,11 +6466,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_search_contacts",
-              description: "Admin/coach only. Search CRM contacts in the current server-resolved tenant only. Use to resolve names/emails to client_ref, list leads by lifecycle stage, filter by assigned coach, find recently added contacts, or browse the customer base. Returns up to 25 contacts with client_ref, name, email, phone, lifecycle_stage, source, assigned_coach_user_id, tags, lead_score, last_contacted_at, created_at.",
+              description: "Team only. Search CRM contacts in the current server-resolved tenant only. Use to resolve names, emails or phone numbers to client_ref, list leads by lifecycle stage, filter by assigned coach, find recently added contacts, or browse the customer base. An email or phone matches whichever of the contact's addresses it is. Returns up to 25 contacts with client_ref, name, contact_methods (every email then every phone, in the owner's order, each marked is_primary), lifecycle_stage, source, assigned_coach_user_id, tags, lead_score, last_contacted_at, created_at and updated_at. To change a contact, pass its client_ref and updated_at (as expected_updated_at) to the CRM tool.",
               parameters: {
                 type: "object",
                 properties: {
-                  query: { type: "string", description: "Free-text match on first/last name, email, entity_name, or phone." },
+                  query: { type: "string", description: "Free-text match on first/last name, entity_name, or any of the contact's email addresses and phone numbers." },
                   lifecycle_stage: { type: "string", enum: ["lead","mql","sql","opportunity","customer","evangelist","churned","archived"] },
                   status: { type: "string", enum: ["pending","active","inactive","archived"] },
                   assigned_coach_email: { type: "string", description: "Filter by the coach's email." },
@@ -6367,7 +6485,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_get_contact_summary",
-              description: "Admin/coach only. Deep-dive on a single contact: profile, lifecycle stage, assigned coach, open/won deals with value, recent activities (last 10), open tasks, and notes. Use after crm_search_contacts to brief the operator on a specific customer.",
+              description: "Team only. Deep-dive on a single contact: profile, lifecycle stage, assigned coach, open/won deals with value, recent activities (last 10), open tasks, and notes. Use after crm_search_contacts to brief the operator on a specific customer.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6381,7 +6499,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_list_deals",
-              description: "Admin/coach only. List deals on the sales pipeline. Filter by stage, status (open/won/lost), owner, or contact. Returns id, title, contact name, stage label, value_cents, expected_close_date, status, owner, updated_at.",
+              description: "Team only. List deals on the sales pipeline. Filter by stage, status (open/won/lost), owner, or contact. Returns id, title, contact name, stage label, value_cents, expected_close_date, status, owner, updated_at.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6398,7 +6516,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "deal_create",
-              description: "Admin/coach only. Add a NEW deal to a pipeline — the operator's individual opportunity (e.g. 'add a deal for Jane's onboarding, $3k, in Proposal'). Resolve the pipeline and (optionally) the stage first: call crm_pipeline_summary or crm_list_deals to see the tenant's pipelines/stages, and crm_search_contacts to resolve a named client to contact_client_id. If stage_id is omitted the deal lands on the pipeline's first stage. value_cents is in CENTS ($3,000 → 300000). PROPOSE FIRST: say what you'll add and get the operator's yes, then call again with confirm:true — unless the workspace autonomy policy has set this action to auto. Returns the new deal id.",
+              description: "Team only. Add a NEW deal to a pipeline — the operator's individual opportunity (e.g. 'add a deal for Jane's onboarding, $3k, in Proposal'). Resolve the pipeline and (optionally) the stage first: call crm_pipeline_summary or crm_list_deals to see the tenant's pipelines/stages, and crm_search_contacts to resolve a named client to contact_client_id. If stage_id is omitted the deal lands on the pipeline's first stage. value_cents is in CENTS ($3,000 → 300000). PROPOSE FIRST: say what you'll add and get the operator's yes, then call again with confirm:true — unless the workspace autonomy policy has set this action to auto. Returns the new deal id.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6418,7 +6536,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "deal_move_stage",
-              description: "Admin/coach only. Move an existing deal to a different pipeline stage (the chat equivalent of dragging a card across the board). Moving into a WON stage marks the deal won and stamps today's close date; a LOST stage marks it lost; any other stage returns it to open. Resolve the deal id and target stage_id first via crm_list_deals. Logs a timeline activity. PROPOSE FIRST and call again with confirm:true once the operator approves — unless the workspace has set this action to auto.",
+              description: "Team only. Move an existing deal to a different pipeline stage (the chat equivalent of dragging a card across the board). Moving into a WON stage marks the deal won and stamps today's close date; a LOST stage marks it lost; any other stage returns it to open. Resolve the deal id and target stage_id first via crm_list_deals. Logs a timeline activity. PROPOSE FIRST and call again with confirm:true once the operator approves — unless the workspace has set this action to auto.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6528,7 +6646,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_list_tasks",
-              description: "Admin/coach only. List operator tasks. Use for 'what's due today', 'overdue tasks', or 'tasks for [coach]'. Returns id, title, due_date, status, assignee user_id, track, deal_id.",
+              description: "Team only. List operator tasks. Use for 'what's due today', 'overdue tasks', or 'tasks for [coach]'. Returns id, title, due_date, status, assignee user_id, track, deal_id.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6545,7 +6663,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "crm_pipeline_summary",
-              description: "Admin/coach only. High-level CRM snapshot: total contacts by lifecycle stage, deals by stage with weighted forecast, open task count, and new contacts in the last 7/30 days. Use for 'how's the pipeline', 'state of the business', or any opening operator briefing.",
+              description: "Team only. High-level CRM snapshot: total contacts by lifecycle stage, deals by stage with weighted forecast, open task count, and new contacts in the last 7/30 days. Use for 'how's the pipeline', 'state of the business', or any opening operator briefing.",
               parameters: { type: "object", properties: {} }
             }
           },
@@ -6599,7 +6717,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "plan_add_milestone",
-              description: "Add a milestone (a dated checkpoint) to a plan — 'landing page live', 'first 10 clients onboarded'. Admin/coach only (milestones are team markers). Resolve the plan id first (plan_list). Optionally assign it to a specific teammate. Governed by the autonomy policy: unless auto, propose first, then confirm:true.",
+              description: "Add a milestone (a dated checkpoint) to a plan — 'landing page live', 'first 10 clients onboarded'. Team only (milestones are team markers). Resolve the plan id first (plan_list). Optionally assign it to a specific teammate. Governed by the autonomy policy: unless auto, propose first, then confirm:true.",
               parameters: {
                 type: "object",
                 properties: {
@@ -7146,41 +7264,102 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     };
 
 
+    const confirmationWasConsumed = async (fp: string, tool: string): Promise<boolean> => {
+      let previous = supabase.from("paige_pending_confirmations").select("id")
+        .eq("user_id", user.id).eq("fingerprint", fp).eq("tool_name", tool)
+        .not("consumed_at", "is", null);
+      previous = personaCtx?.tenant_id ? previous.eq("tenant_id", personaCtx.tenant_id) : previous.is("tenant_id", null);
+      previous = payloadThreadId ? previous.eq("thread_id", payloadThreadId) : previous.is("thread_id", null);
+      previous = scopedClientId ? previous.eq("scoped_client_id", scopedClientId) : previous.is("scoped_client_id", null);
+      const { data, error } = await previous.limit(1);
+      if (error) throw new Error("confirmation history unavailable");
+      return (data?.length ?? 0) > 0;
+    };
+
+    const confirmationArgs = (args: Record<string, unknown>) => Object.fromEntries(
+      Object.entries(args).filter(([k]) => k !== "confirm" && k !== "confirm_token"),
+    );
+    const scopedConfirmationFingerprint = (tool: string, intent: string) => confirmFingerprint(tool, {
+      intent, tenant: personaCtx?.tenant_id ?? null, thread: payloadThreadId ?? null,
+      client: scopedClientId ?? null,
+    });
+    type PendingConfirmation = { fingerprint: string; issued_in_request: string; args: Record<string, unknown>; summary?: string; tool_name?: string };
+    const confirmationToken = async (row: PendingConfirmation, tool: string): Promise<string | null> => {
+      if (!/^[0-9a-f]{16}$/.test(row.fingerprint) || !row.args || typeof row.args !== "object" || Array.isArray(row.args)) return null;
+      const scoped = await scopedConfirmationFingerprint(tool, await confirmFingerprint(tool, row.args));
+      if (row.fingerprint === scoped) {
+        return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(row.issued_in_request)
+          ? `${row.fingerprint}:${row.issued_in_request}` : null;
+      }
+      return await confirmationWasConsumed(row.fingerprint, tool) ? null : row.fingerprint;
+    };
+
     const recordConfirmation = async (
       fp: string, tool: string, args: Record<string, unknown>, summary: string,
-    ): Promise<"created" | "exists" | "failed"> => {
+    ): Promise<{ state: "created" | "exists" | "failed"; fingerprint?: string; summary?: string }> => {
       try {
-        if (!(await revalidateProposalScope())) return "failed";
+        if (!(await revalidateProposalScope())) return { state: "failed" };
+        const storedArgs = confirmationArgs(args);
+        const findReusable = async (): Promise<Array<{ fingerprint: string; summary: string }>> => {
+          let existing = supabase.from("paige_pending_confirmations")
+            .select("fingerprint,args,issued_in_request,summary").eq("user_id", user.id).eq("tool_name", tool)
+            .is("consumed_at", null)
+            .not("server_issued_at", "is", null).not("issued_in_request", "is", null)
+            .gt("expires_at", new Date().toISOString());
+          existing = personaCtx?.tenant_id ? existing.eq("tenant_id", personaCtx.tenant_id) : existing.is("tenant_id", null);
+          existing = payloadThreadId ? existing.eq("thread_id", payloadThreadId) : existing.is("thread_id", null);
+          existing = scopedClientId ? existing.eq("scoped_client_id", scopedClientId) : existing.is("scoped_client_id", null);
+          const { data: pending, error: pendingError } = await existing.limit(65);
+          if (pendingError || (pending?.length ?? 0) > 64) {
+            throw new Error("confirmation preparation unavailable");
+          }
+          const reusable: Array<{ fingerprint: string; summary: string }> = [];
+          for (const row of pending ?? []) {
+            if (!row?.args || typeof row.args !== "object" || Array.isArray(row.args)
+              || await confirmFingerprint(tool, row.args) !== fp) continue;
+            const token = await confirmationToken(row, tool);
+            if (token) reusable.push({ fingerprint: token, summary: typeof row.summary === "string" ? row.summary : summary });
+          }
+          return reusable;
+        };
+        const reusable = await findReusable();
+        if (reusable.length > 1) return { state: "failed" };
+        if (reusable.length === 1) return { state: "exists", ...reusable[0] };
+        if (!(await revalidateProposalScope())) return { state: "failed" };
+        const fingerprint = await scopedConfirmationFingerprint(tool, fp);
+        let expired = supabase.from("paige_pending_confirmations")
+          .update({ consumed_at: new Date().toISOString() }).eq("user_id", user.id)
+          .eq("fingerprint", fingerprint).eq("tool_name", tool).is("consumed_at", null)
+          .not("server_issued_at", "is", null).lte("expires_at", new Date().toISOString());
+        expired = personaCtx?.tenant_id ? expired.eq("tenant_id", personaCtx.tenant_id) : expired.is("tenant_id", null);
+        expired = payloadThreadId ? expired.eq("thread_id", payloadThreadId) : expired.is("thread_id", null);
+        expired = scopedClientId ? expired.eq("scoped_client_id", scopedClientId) : expired.is("scoped_client_id", null);
+        const { error: expiryError } = await expired;
+        if (expiryError) return { state: "failed" };
         const { error } = await supabase.from("paige_pending_confirmations").insert({
           user_id: user.id,
           tenant_id: personaCtx?.tenant_id ?? null,
           thread_id: payloadThreadId ?? null,
           scoped_client_id: scopedClientId ?? null,
           tool_name: tool,
-          fingerprint: fp,
+          fingerprint,
           issued_in_request: requestNonce,
           server_issued_at: new Date().toISOString(),
-          // `confirm` and `confirm_token` are stripped: they are the handshake, not the action, and
-          // storing them would mean re-executing the approval flag alongside the work.
-          args: Object.fromEntries(
-            Object.entries(args).filter(([k]) => k !== "confirm" && k !== "confirm_token"),
-          ),
+          args: storedArgs,
           summary,
         });
         if (error) {
-          // 23505 is the live-proposal unique index doing its job: this exact call is ALREADY
-          // proposed by an earlier request and still waiting. The person has a card open for it.
-          // It is NOT a failure — but it is emphatically not the same thing as having just
-          // proposed it either, and conflating the two is exactly how a model obtained a
-          // redeemable approval for a call the operator had already declined.
-          if (error.code === "23505") return "exists";
-          console.error("[paige] confirm proposal NOT recorded", JSON.stringify({ tool, code: error.code ?? null, message: error.message ?? null }));
-          return "failed";
+          if (error.code === "23505") {
+            const winner = await findReusable();
+            return winner.length === 1 ? { state: "exists", ...winner[0] } : { state: "failed" };
+          }
+          console.error("[paige] confirm proposal NOT recorded", JSON.stringify({ tool, code: error.code ?? null }));
+          return { state: "failed" };
         }
-        return "created";
-      } catch (e) {
-        console.error("[paige] confirm proposal threw", String(e));
-        return "failed";
+        return { state: "created", fingerprint: `${fingerprint}:${requestNonce}`, summary };
+      } catch {
+        console.error("[paige] confirmation preparation failed");
+        return { state: "failed" };
       }
     };
 
@@ -7204,34 +7383,55 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
      *
      *  Failure preserves read-only replies but blocks every mutation for this turn; prose alone
      *  must not stand in for recording the person's refusal. */
+    const selectedConfirmationNonce = async (token: string, tool?: string): Promise<string | null> => {
+      let selected = supabase.from("paige_pending_confirmations")
+        .select("fingerprint,args,issued_in_request,tool_name").eq("user_id", user.id)
+        .eq("fingerprint", token.split(":")[0]).is("consumed_at", null)
+        .not("server_issued_at", "is", null).not("issued_in_request", "is", null)
+        .gt("expires_at", new Date().toISOString());
+      if (tool) selected = selected.eq("tool_name", tool);
+      selected = personaCtx?.tenant_id ? selected.eq("tenant_id", personaCtx.tenant_id) : selected.is("tenant_id", null);
+      selected = payloadThreadId ? selected.eq("thread_id", payloadThreadId) : selected.is("thread_id", null);
+      selected = scopedClientId ? selected.eq("scoped_client_id", scopedClientId) : selected.is("scoped_client_id", null);
+      const { data, error } = await selected.limit(2);
+      if (error) throw new Error("confirmation selection unavailable");
+      const row = data?.length === 1 ? data[0] : null;
+      return row && typeof row.tool_name === "string" && await confirmationToken(row, row.tool_name) === token
+        ? row.issued_in_request : null;
+    };
     const cancelConfirmations = async (fps: string[]): Promise<boolean> => {
       if (fps.length === 0) return true;
       try {
         if (!(await revalidateProposalScope())) return false;
-        let cancellation = supabase.from("paige_pending_confirmations")
-          .update({ consumed_at: new Date().toISOString() })
-          .eq("user_id", user.id)
-          .in("fingerprint", fps)
-          .is("consumed_at", null)
-          .not("server_issued_at", "is", null);
-        cancellation = personaCtx?.tenant_id ? cancellation.eq("tenant_id", personaCtx.tenant_id) : cancellation.is("tenant_id", null);
-        cancellation = payloadThreadId ? cancellation.eq("thread_id", payloadThreadId) : cancellation.is("thread_id", null);
-        cancellation = scopedClientId ? cancellation.eq("scoped_client_id", scopedClientId) : cancellation.is("scoped_client_id", null);
-        const { error } = await cancellation;
-        if (error) {
-          console.error("[paige] confirm decline not recorded", JSON.stringify({ code: error.code ?? null }));
-          return false;
+        for (const token of fps) {
+          const nonce = await selectedConfirmationNonce(token);
+          if (!nonce) continue;
+          let cancellation = supabase.from("paige_pending_confirmations")
+            .update({ consumed_at: new Date().toISOString() })
+            .eq("user_id", user.id)
+            .eq("fingerprint", token.split(":")[0]).eq("issued_in_request", nonce)
+            .is("consumed_at", null)
+            .not("server_issued_at", "is", null);
+          cancellation = personaCtx?.tenant_id ? cancellation.eq("tenant_id", personaCtx.tenant_id) : cancellation.is("tenant_id", null);
+          cancellation = payloadThreadId ? cancellation.eq("thread_id", payloadThreadId) : cancellation.is("thread_id", null);
+          cancellation = scopedClientId ? cancellation.eq("scoped_client_id", scopedClientId) : cancellation.is("scoped_client_id", null);
+          const { error } = await cancellation;
+          if (error) {
+            console.error("[paige] confirm decline not recorded", JSON.stringify({ code: error.code ?? null }));
+            return false;
+          }
         }
         // CRM command proposals are intentionally action-door scoped (tenant + actor + exact
         // capability) and carry NULL thread/client scope because the Edge Function cannot trust
         // model/request-provided scope. Record an inline-card decline against that exact, server-
         // issued proposal too. The tool-name restriction prevents this fallback from consuming a
         // proposal owned by any other confirmation flow.
-        if (personaCtx?.tenant_id) {
+        const legacyFps = fps.filter((token) => /^[0-9a-f]{16}$/.test(token));
+        if (personaCtx?.tenant_id && legacyFps.length > 0) {
           const { error: crmCancellationError } = await supabase.from("paige_pending_confirmations")
             .update({ consumed_at: new Date().toISOString() })
             .eq("user_id", user.id).eq("tenant_id", personaCtx.tenant_id)
-            .in("fingerprint", fps).in("tool_name", [...CRM_COMMAND_TOOL_NAMES])
+            .in("fingerprint", legacyFps).in("tool_name", [...CRM_COMMAND_TOOL_NAMES])
             .is("thread_id", null).is("scoped_client_id", null).is("consumed_at", null)
             .not("server_issued_at", "is", null);
           if (crmCancellationError) {
@@ -7248,84 +7448,23 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     const cancellationsRecorded = await cancelConfirmations(declinedConfirmations);
 
     const claimConfirmation = async (
-      fp: string | null, tool: string,
+      fp: string, tool: string,
     ): Promise<Record<string, unknown> | null> => {
       try {
-        if (!cancellationsRecorded || !(await revalidateProposalScope())) return null;
-        // WHY `fp` MAY BE NULL — the livelock this exists to avoid.
-        //
-        // A surface that renders a card echoes the fingerprint of what it displayed, so it always
-        // has an exact `fp`. A surface with no card does not: there, "the operator said yes" is
-        // carried by the model re-calling the tool, and a tool whose arguments include model-written
-        // free text will not reproduce them byte-for-byte. The fingerprint drifts, no proposal
-        // matches, and the person is read a fresh summary — forever. That is the livelock the
-        // previous design fixed with a token, and the token is what leaked.
-        //
-        // So when the fingerprint drifts, fall back to identity by SCOPE rather than by content:
-        // the single live proposal for this tool, in this tenant, thread and focused client, made
-        // by an EARLIER request. If there is exactly one, it is unambiguously the thing the person
-        // was read and answered. If there are several, there is nothing to disambiguate with and
-        // this refuses — a fresh summary is the correct answer to a genuinely ambiguous yes.
-        //
-        // What executes is still the STORED arguments either way, so drift never reaches the write.
-        if (fp === null) {
-          let f = supabase.from("paige_pending_confirmations")
-            .select("id")
-            .eq("user_id", user.id)
-            .eq("tool_name", tool)
-            .is("consumed_at", null)
-            .not("server_issued_at", "is", null)
-            .gt("expires_at", new Date().toISOString())
-            .neq("issued_in_request", requestNonce)
-            .not("issued_in_request", "is", null);
-          f = personaCtx?.tenant_id ? f.eq("tenant_id", personaCtx.tenant_id) : f.is("tenant_id", null);
-          f = payloadThreadId ? f.eq("thread_id", payloadThreadId) : f.is("thread_id", null);
-          f = scopedClientId ? f.eq("scoped_client_id", scopedClientId) : f.is("scoped_client_id", null);
-          const { data: live, error: findErr } = await f.limit(2);
-          if (findErr) {
-            console.error("[paige] confirm lookup failed", JSON.stringify({ tool, code: findErr.code ?? null }));
-            return null;
-          }
-          const rows = (live ?? []) as Array<{ id?: string }>;
-          if (rows.length !== 1 || typeof rows[0]?.id !== "string") return null;
-          if (!(await revalidateProposalScope())) return null;
-          let claim = supabase
-            .from("paige_pending_confirmations")
-            .update({ consumed_at: new Date().toISOString() })
-            .eq("id", rows[0].id)
-            // Still a compare-and-set, so two tool_use blocks in one round cannot both win.
-            .is("consumed_at", null)
-            .eq("user_id", user.id)
-            .eq("tool_name", tool)
-            .gt("expires_at", new Date().toISOString())
-            .neq("issued_in_request", requestNonce)
-            .not("issued_in_request", "is", null)
-            .not("server_issued_at", "is", null);
-          claim = personaCtx?.tenant_id ? claim.eq("tenant_id", personaCtx.tenant_id) : claim.is("tenant_id", null);
-          claim = payloadThreadId ? claim.eq("thread_id", payloadThreadId) : claim.is("thread_id", null);
-          claim = scopedClientId ? claim.eq("scoped_client_id", scopedClientId) : claim.is("scoped_client_id", null);
-          const { data: claimed, error: claimErr } = await claim.select("args").maybeSingle();
-          if (claimErr) {
-            console.error("[paige] confirm claim failed", JSON.stringify({ tool, code: claimErr.code ?? null }));
-            return null;
-          }
-          const soleArgs = (claimed as { args?: unknown } | null)?.args;
-          return soleArgs && typeof soleArgs === "object" && !Array.isArray(soleArgs)
-            ? soleArgs as Record<string, unknown>
-            : null;
-        }
+        if (!cancellationsRecorded || !approvedConfirmations.has(fp) || !(await revalidateProposalScope())) return null;
+
+        const nonce = await selectedConfirmationNonce(fp, tool);
+        if (!nonce) return null;
 
         let q = supabase.from("paige_pending_confirmations")
           .update({ consumed_at: new Date().toISOString() })
           .eq("user_id", user.id)
-          .eq("fingerprint", fp)
+          .eq("fingerprint", fp.split(":")[0]).eq("issued_in_request", nonce)
           .eq("tool_name", tool)
           .is("consumed_at", null)
           .not("server_issued_at", "is", null)
           .gt("expires_at", new Date().toISOString())
-          // THE GATE. A token minted by THIS request is not redeemable by it, so a model replaying
-          // the token out of its own tool-result one round later claims nothing. A person sending
-          // another message is what makes it redeemable — and that is the part the model cannot do.
+          // A selected proposal must predate this request.
           .neq("issued_in_request", requestNonce)
           // REDUNDANT, AND KEPT ON PURPOSE — stated honestly because the first version of this
           // comment claimed it was load-bearing and mutation-testing proved it is not. Postgres
@@ -7360,38 +7499,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // every mutation once, CI proves the classification is exhaustive, and this reads it.
     const MUTATING_TOOLS = mutatingTools();
 
-    // ── HOW APPROVAL REACHES THIS GATE, AND WHY THE TWO CHANNELS ARE NOT EQUAL ──────────────
-    //
-    //   1. `approvedConfirmations` — the fingerprint of a card a surface actually RENDERED, sent up
-    //      in the request body when the person clicked Approve. The model cannot forge it: it
-    //      cannot start an HTTP request, so it cannot put anything in the body.
-    //   2. `confirm: true` in the tool arguments — the model REPORTING that the person said yes.
-    //      Five of the six chat surfaces render no card, so without this channel they could not
-    //      approve anything at all. But it is the model's own word, and a model that is confused,
-    //      or steered by content it just read, can produce it after the person said "no".
-    //
-    // Which channel an action requires is not decided here. `classifyAction` decides it, from the
-    // action alone, in `_shared/action-risk.ts`.
-    // EVERY GATED TOOL LEARNS HOW TO BE APPROVED.
-    //
-    // Only three of the fifty-one tools the gate governs ever declared a `confirm` parameter, so
-    // for the other forty-eight the model had no way to express "the operator said yes" even when
-    // they had. Declaring it on exactly the gated set — derived from `MUTATING_TOOLS` rather than
-    // hand-listed, so a tool added to the gate can never miss it — makes approval a first-class
-    // part of the contract instead of an undocumented convention.
-    //
-    // §13 — WHY THIS IS A FLAG AND NO LONGER A TOKEN. The previous design handed the model a
-    // `confirm_token` in the tool result. It was meant to be unusable in the request that minted
-    // it, and it was. It was NOT unusable in the next one: re-proposing the same call returned the
-    // same token, because the token is a fingerprint of the action rather than a secret, so any
-    // later request could ask for it back and immediately spend it — including a request whose
-    // human message was "no, cancel that". Driven, that executed arbitrary stored calls and raised
-    // an autonomy grant from `confirm` to `auto`. A key that anyone can ask for is not a key, so
-    // it is gone rather than patched, and what remains is a plain assertion that is treated as
-    // exactly what it is: the model's word, refused outright for the high-risk set above.
-    //
-    // Mutating `toolDefs` in place is safe: it is read at the two request sites below, both of which
-    // come after this point.
+    // Approval schema.
+    // Approval-path hardening.
     for (const t of toolDefs as Array<{ function?: { name?: string; parameters?: { properties?: Record<string, unknown> } } }>) {
       const name = t?.function?.name;
       if (!name || !MUTATING_TOOLS.has(name) || CRM_COMMAND_TOOL_NAMES.has(name as any)) continue;
@@ -7399,9 +7508,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       if (!props) continue;
       props.confirm = {
         type: "boolean",
-        description: classifyAction(name) === "high"
-          ? "Set true ONLY after the operator has actually replied and approved this exact action. For this action that is not enough on its own — it must be approved on a surface that can show it to them — but never set it before they have answered."
-          : "Set true ONLY after the operator has actually replied and approved. Never in the same reply where you proposed it — you have not heard back yet, and the platform will refuse it. You do not need to repeat the other arguments exactly: the exact call they were read is saved and is what runs. If they asked for ANY change, send the full new arguments and leave this false, so they get a fresh summary to approve.",
+        description: "Compatibility field only. Approval is completed through the workspace approval control. When approval is pending, follow the tool's guidance and do not retry in the same reply.",
       };
       delete props.confirm_token;
     }
@@ -7745,10 +7852,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           const tenantForCard = personaCtx?.tenant_id ?? null;
           if (UUIDISH.test(cidForCard) && tenantForCard) {
             try {
-              const { data } = await supabaseClient.from("clients").select("email, phone").eq("id", cidForCard).eq("tenant_id", tenantForCard).maybeSingle();
-              const addr = a?.channel === "sms"
-                ? (typeof data?.phone === "string" ? data.phone.trim() : "")
-                : (typeof data?.email === "string" ? data.email.trim() : "");
+              // The contact's PRIMARY address of the channel's kind — the one the send goes to.
+              const { data } = await supabaseClient.from("clients").select("client_contact_methods(kind, value, is_primary)").eq("id", cidForCard).eq("tenant_id", tenantForCard).maybeSingle();
+              const addr = (primaryContactMethod((data as { client_contact_methods?: Parameters<typeof primaryContactMethod>[0] } | null)?.client_contact_methods, a?.channel === "sms" ? "phone" : "email") ?? "").trim();
               if (addr) who = addr;
             } catch { /* fall through to "this contact" (§13 — better unnamed than wrongly named) */ }
           }
@@ -7765,7 +7871,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           return `Add contact ${[a?.first_name, a?.last_name].filter(Boolean).join(" ") || a?.email || "new contact"}${a?.email ? ` (${a.email})` : ""}.`;
         case "crm_update_contact": {
           const labels: Record<string, string> = {
-            first_name: "first name", last_name: "last name", email: "email", phone: "phone",
+            first_name: "first name", last_name: "last name",
+            contact_methods: "emails and phones (complete list)", add_contact_methods: "add emails or phones",
             entity_name: "company", entity_type: "record type", title: "title", website: "website",
             linkedin_url: "LinkedIn", street_address: "street address", city: "city", state: "state",
             zip_code: "ZIP / postal code", lifecycle_stage: "lifecycle stage", source: "source",
@@ -7774,7 +7881,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           };
           const shown = Object.keys(labels).filter((key) => Object.prototype.hasOwnProperty.call(a || {}, key)).map((key) => {
             const value = a[key];
-            const display = value === null || value === "" ? "clear" : Array.isArray(value) ? `[${value.join(", ")}]` : JSON.stringify(value);
+            // An address list reads as the addresses themselves, the primary of each kind marked.
+            const item = (entry: unknown) => entry && typeof entry === "object" && "value" in entry
+              ? `${String((entry as { value: unknown }).value ?? "")}${(entry as { is_primary?: unknown }).is_primary === true ? " (primary)" : ""}`
+              : String(entry);
+            const display = value === null || value === "" ? "clear" : Array.isArray(value) ? `[${value.map(item).join(", ")}]` : JSON.stringify(value);
             return `${labels[key]} = ${display}`;
           });
           return `Update contact ${a?.client_ref || "(missing client reference)"}: ${shown.join("; ") || "no changes"}.`;
@@ -7869,7 +7980,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // substitute for the person seeing what is being stored.
           const shown = resp.length > 200 ? `${resp.slice(0, 200)}…" (showing the first 200 of ${resp.length} characters)` : `${resp}"`;
           const parts: string[] = [];
-          parts.push(title ? `job title "${title.slice(0, 80)}"` : "no job title");
+          const titleShown = title.length > 120 ? `${title.slice(0, 120)}…" (showing the first 120 of ${title.length} characters)` : `${title}"`;
+          parts.push(title ? `${TITLE_WORD} "${titleShown}` : `no ${TITLE_WORD}`);
           parts.push(resp ? `responsibilities → "${shown}` : "responsibilities CLEARED");
           return `Save work details for ${who}: ${parts.join(", ")}. This describes what they do — it does NOT change what they can access.`;
         }
@@ -8131,6 +8243,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       }
     }
 
+    // Live uses the SAME governed tool loop, then the existing tools-free
+    // answer stream. Never speak speculative content from a tool-capable round.
+    const liveDecisionMessages = (messages: any[]) => liveRuntimeScope && !attachedDocument
+      ? [...messages, { role: "system", content: "This is the internal tool-decision phase of a Live turn. Select the tools needed under the existing authority rules. Do not draft the user-facing answer here. When no further tool is needed, reply only with Ready. The same runtime will then request the final spoken answer in a tools-free phase." }]
+      : messages;
     const response = await gatewayCompat("anthropic", {
       method: "POST",
       headers: {
@@ -8141,7 +8258,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // extended thinking is a real reasoning model, never Haiku; the doc-attach path already did.
         // #34 — substantiveTurn adds the reasoning tier for approval/creation intents (see above).
         model: (studioSessionId || attachedDocument || substantiveTurn) ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash",
-        messages: aiMessages,
+        messages: liveDecisionMessages(aiMessages),
         tools: toolDefs,
         tool_choice: "auto",
         stream: true,
@@ -8170,6 +8287,64 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       return new Response(JSON.stringify({ ...gwStructured, error: gwStructured.reason, errorId }), { status: gwStatus, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // R3 — THE ONE READ of what a client seat is about to see, called by both release points (the
+    // agentic stream and the document stream). The vocabulary comes from this turn's own request: the
+    // tool definitions, the text vouched for where it was built (clientSeatVouched, above), and every
+    // tool result. Never the client's own messages, the tenant's prose, or the model's own turns. Returns the sentence the client reads
+    // instead, or null when nothing internal was found; the finding is logged by kind and count only.
+    const withheldForClientSeat = (readable: readonly string[], options: { savedSomething?: boolean } = {}): string | null => {
+      if (!clientSeatReadsBeforeRelease) return null;
+      const leaks = internalTextForClient({
+        readable,
+        tools: toolDefs,
+        vouchedTexts: clientSeatVouched,
+        toolResults: [...toolResultContent.values()],
+      });
+      if (!leaks.length) return null;
+      console.warn("[paige] client-seat answer withheld: internal text", JSON.stringify({ kinds: leakKindCounts(leaks) }));
+      return withheldReplyForClient(personaCtx.tenant_name, options);
+    };
+
+    // R2 — A DRAFT PAIGE WRITES FOR A CUSTOMER IS READ BEFORE IT CAN BE FILED OR SENT, with the same
+    // vocabulary as R3: this turn's tool definitions, the text vouched for where it was built, and every
+    // tool result the model has been sent. Which fields reach a customer is outbound-draft-check's to say;
+    // this looks up what it needs to decide, under the caller's own session: the kind's executor, and for
+    // action_advance the action as stored. What it cannot find out is read, never waved through.
+    // Returns the refusal PAIGE reads, or null.
+    const outboundDraftRefusal = async (
+      tool: string, args: Record<string, unknown>, stage: "filing" | "approved",
+    ): Promise<Record<string, unknown> | null> => {
+      if (!OUTBOUND_DRAFT_TOOLS.has(tool)) return null;
+      const context: DraftContext = {};
+      if (tool === "action_file" || tool === "action_advance") {
+        try {
+          let kind = tool === "action_file" && typeof args.action_kind === "string" ? args.action_kind : "";
+          if (tool === "action_advance" && typeof args.action_id === "string" && args.action_id) {
+            const { data, error } = await supabaseClient.from("paige_actions")
+              .select("status, action_kind, title, summary, draft_content").eq("id", args.action_id).maybeSingle();
+            if (!error && data) {
+              context.stored = data;
+              kind = typeof (data as { action_kind?: unknown }).action_kind === "string" ? (data as { action_kind: string }).action_kind : "";
+            }
+          }
+          if (kind) {
+            const { data, error } = await supabaseClient.from("paige_action_kinds").select("executor, requires_approval").eq("slug", kind).maybeSingle();
+            const row = (error ? null : data) as { executor?: unknown; requires_approval?: unknown } | null;
+            if (typeof row?.executor === "string") context.executor = row.executor;
+            if (typeof row?.requires_approval === "boolean") context.requiresApproval = row.requires_approval;
+          }
+        } catch { /* what could not be found out stays unknown, and is read */ }
+      }
+      const leaks = internalTextInDraft(customerBoundTexts(tool, args, context), {
+        tools: toolDefs,
+        vouchedTexts: clientSeatVouched,
+        toolResults: [...toolResultContent.values()],
+      });
+      if (!leaks.length) return null;
+      console.warn("[paige] outbound draft refused: internal text", JSON.stringify({ tool, stage, kinds: leakKindCounts(leaks) }));
+      return draftRefusal(leaks, stage);
+    };
+
     // For non-document requests: check if streaming response contains tool calls
     // We need to accumulate first to detect tool calls, then handle accordingly
     if (!attachedDocument) {
@@ -8189,7 +8364,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // even though the raw bytes forward fine to the client. (#94 integrity.)
         let sseBuf = "";
         const handleLine = (line: string) => {
-          if (!line.startsWith("data: ") || line.includes("[DONE]")) return;
+          // The sentinel is the WHOLE payload. A reply that merely contains "[DONE]" is text, and
+          // skipping it here dropped it from the saved turn and from R3's read while its bytes
+          // still reached the person.
+          if (!line.startsWith("data: ") || line.slice(6).trim() === "[DONE]") return;
           try {
             const parsed = JSON.parse(line.slice(6));
             const c = parsed.choices?.[0]?.delta?.content;
@@ -8229,6 +8407,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // the guard is pushed to `executed` and gets EXACTLY ONE tool-result
       // (including the terminal Unknown-tool branch). Approvals accumulate into
       // the shared queuedApprovals passed in from the loop.
+      let documentCallOrdinal = 0;
       const executeToolCalls = async (toolCalls: any[], queuedApprovals: Array<{ id: string; summary: string; category: string; contact_id: string | null }>) => {
       const toolResults: any[] = [];
       const executed: any[] = [];
@@ -8309,28 +8488,141 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             ? suppliedKey
             : null;
           let approvedFingerprint: string | undefined;
-          let approvalResolutionFailed = false;
+          // Not a bare boolean: the operator is TOLD why, and the two causes are different facts.
+          // "More than one approval is waiting" is true of an ambiguous set and FALSE of a lookup
+          // that errored or threw — and the `note` below instructs the model to say the sentence
+          // verbatim, so a single shared message would have Paige state a cause that did not
+          // happen. That is the §13 failure this whole change is about, reappearing in the copy.
+          let approvalResolutionFailed: "" | "ambiguous" | "unclaimable" | "lookup_failed" = "";
           if (approvedConfirmations.size > 0 && personaCtx?.tenant_id) {
             const gateAdmin = createClient(supabaseUrl, supabaseServiceKey);
-            const approvalSubject = await crmApprovalSubject(action, canonicalCrmCommand);
-            // Narrow THIS call within the operator-echoed set by the canonical, full consequential
-            // command subject stored by crm-command. Two identical approved commands remain
-            // ambiguous and fail closed; arguments from the model never replace the stored call.
-            const { data: approvedRows, error: approvedRowsError } = await gateAdmin.from("paige_pending_confirmations")
-              .select("fingerprint").eq("tenant_id", personaCtx.tenant_id).eq("user_id", user.id)
-              .eq("tool_name", tc.function.name).in("fingerprint", [...approvedConfirmations])
-              .filter("args->>approval_subject", "eq", approvalSubject)
-              .is("thread_id", null).is("scoped_client_id", null).is("consumed_at", null)
-              .not("server_issued_at", "is", null).not("issued_in_request", "is", null)
-              .gt("expires_at", new Date().toISOString()).limit(2);
-            if (!approvedRowsError && approvedRows?.length === 1 && typeof approvedRows[0]?.fingerprint === "string") approvedFingerprint = approvedRows[0].fingerprint;
-            else approvalResolutionFailed = true;
+            // Narrow THIS call WITHIN the operator-echoed set. Every predicate below is the
+            // claimable boundary and none of them may be relaxed: the set itself, the tenant, the
+            // actor, the exact capability, the action-door scope (thread/client NULL), liveness
+            // (unconsumed, unexpired) and server issuance.
+            //
+            // The `.in(...)` SEARCHES on each echoed token's bare 16-hex prefix, exactly as the
+            // general gate does (`token.split(":")[0]`, ~L8760), because a stored CRM fingerprint is
+            // always bare while an echoed token may be scoped (`fp:uuid`). Searching on the raw
+            // token would simply MISS such a row — and "miss" resolves to `none`, which proceeds
+            // and re-proposes, i.e. the accumulate-another-card loop this whole change exists to
+            // end. Widening the SEARCH is not widening the CLAIM: the claim below re-checks
+            // `approvedConfirmations.has(...)` for the WHOLE token, so a scoped token can never
+            // spend a bare proposal. That is `18.H25`/`18.H26` in scripts/client-memory-authz, and
+            // an earlier revision of this block failed H25 for exactly this reason.
+            //
+            // WHAT CHANGED (2026-09-25). The subject equality used to be an SQL filter ON this
+            // query, computed from the MODEL's re-emitted arguments. A *.create has no stable record
+            // id, so `crmApprovalSubject` falls back to a hash of the WHOLE command — and the model
+            // is told on the approval turn that it need not reproduce the arguments. Any drift
+            // therefore returned ZERO rows, the approval was refused, and nothing was created. Prod
+            // shows exactly that split over 14 days: crm_update_contact (subject = contact_id,
+            // drift-proof) 2 asked / 0 stranded, crm_create_contact 4 asked / 3 stranded,
+            // deal_create 2 asked / 2 stranded. The subject is now a PREFERENCE applied over the
+            // candidates instead of a gate on them, and a single live approved proposal for this
+            // tool is claimable without it. That widens nothing — the set is still the human's
+            // echoed fingerprints — and drift still cannot reach the write, because crm-command
+            // claims the row atomically and executes its STORED args, never the re-emission.
+            try {
+              // INSIDE the guard: this hashes model-supplied arguments, so a throw here must reach
+              // the honest refusal like any other lookup failure rather than escaping the handler.
+              // It costs nothing to guard now that the subject is only a PREFERENCE — a failure to
+              // compute it degrades to the sole-candidate path, not to a wrong claim.
+              const approvalSubject = await crmApprovalSubject(action, { action, ...crmArgs });
+              const { data: approvedRows, error: approvedRowsError } = await gateAdmin.from("paige_pending_confirmations")
+                .select("fingerprint,args").eq("tenant_id", personaCtx.tenant_id).eq("user_id", user.id)
+                .eq("tool_name", tc.function.name).in("fingerprint", [...approvedConfirmations].map((token) => token.split(":")[0]))
+                .is("thread_id", null).is("scoped_client_id", null).is("consumed_at", null)
+                .not("server_issued_at", "is", null).not("issued_in_request", "is", null)
+                .gt("expires_at", new Date().toISOString()).limit(CRM_APPROVAL_CANDIDATE_LIMIT + 1);
+              // DELIBERATELY NOT `.neq("issued_in_request", requestNonce)`, which the general gate
+              // does carry. There it is load-bearing because that gate MINTS proposals itself,
+              // stamped with this very nonce, so a same-request mint could otherwise be claimed.
+              // CRM proposals are minted ONLY by the crm-command function, which stamps its own
+              // per-invocation nonce (crm-command/index.ts ~318 and ~469) — a value this handler's
+              // nonce can never equal — and this door `continue`s before the minting gate, so no CRM
+              // tool name ever reaches recordConfirmation. The predicate would exclude nothing, and
+              // a no-op that reads as a protection is worse than its absence. The self-approval
+              // hazard is closed upstream anyway: `approvedConfirmations` is a request-body field
+              // from the authenticated surface, which the model cannot author, so a fingerprint
+              // minted during this request cannot be in it.
+              if (approvedRowsError) {
+                // §68 — loud, so a persistent lookup break is never a silent dark failure.
+                console.error("[paige] CRM approved-set lookup failed — failing to the honest refusal", JSON.stringify({ tool: tc.function.name, correlation_id: requestNonce, message: approvedRowsError?.message ?? null }));
+                approvalResolutionFailed = "lookup_failed";
+              } else {
+                for (const row of approvedRows ?? []) {
+                  for (const token of approvedConfirmations) {
+                    if (token.split(":")[0] === row.fingerprint) approvalTokenTool.set(token, tc.function.name);
+                  }
+                }
+                // The count of THIS capability's calls in this turn decides whether the sole-candidate rule
+                // may fire at all (see the resolver). Counted from `toolCalls`, which the model authored
+                // but cannot use to widen anything — a larger count only makes the resolver stricter.
+                const sameToolCallsThisTurn = toolCalls.filter((call: any) => call?.function?.name === tc.function.name).length;
+                const resolved = resolveCrmApprovedFingerprint(approvedRows ?? [], approvalSubject, sameToolCallsThisTurn);
+                if (resolved.kind === "claim") {
+                  // The WHOLE echoed token must be present, not the bare prefix the search used —
+                  // this is what stops a scoped `fp:uuid` from spending a bare proposal (18.H25).
+                  // Its own label, because NOTHING here is ambiguous: the search found exactly one
+                  // row and the echoed token simply does not name it. Telling the operator "more
+                  // than one approval is waiting" would be the same §13 lie one branch over.
+                  if (approvedConfirmations.has(resolved.fingerprint)) approvedFingerprint = resolved.fingerprint;
+                  else approvalResolutionFailed = "unclaimable";
+                } else if (resolved.kind === "ambiguous") approvalResolutionFailed = "ambiguous";
+                // `none` — the operator's approvals are live for some OTHER tool, so this call is an
+                // ordinary unapproved one and goes on with no approved_fingerprint. Refusing here
+                // would deny a card the person never got to see, which is the second half of the
+                // report ("create contact is not available on all of my Solo accounts").
+                //
+                // WHAT DECIDES WHAT HAPPENS NEXT IS THE LANE, NOT THIS DOOR (§13 — an earlier draft
+                // of this comment asserted it "ends in its own Needs your OK card", which is true
+                // only at `confirm`). With no claim, decideGovernedExecution proposes on `confirm`
+                // and executes the model's arguments on `auto`. That is byte-for-byte what a turn
+                // carrying NO approvals already does for the same call, so this is not a new
+                // authority — the old refusal was an accidental extra brake that applied only when
+                // the operator happened to be approving something else, and being stricter there
+                // than on an ordinary turn was incoherent. The lane is the control surface, and
+                // §67/§68 govern it: today `trust_effective_rung()` = 1 clamps `auto` to `confirm`.
+              }
+            } catch (lookupThrow) {
+              // A THROWN failure is the same hazard as the returned error, and the entry guard means
+              // we are always mid-approval here — fail closed to the honest refusal, loudly (§68).
+              console.error("[paige] CRM approved-set lookup threw — failing to the honest refusal", JSON.stringify({ tool: tc.function.name, correlation_id: requestNonce, error: String(lookupThrow) }));
+              approvalResolutionFailed = "lookup_failed";
+            }
           }
+          // Why this tool's approvals were not spent, for the card that asked (approval-outcome.ts).
+          if (approvalResolutionFailed) approvalRefusals.set(tc.function.name, approvalResolutionFailed);
           if (approvalResolutionFailed) {
+            // THE RECOVERY MUST BE ONE THE SHIPPED CARD CAN PERFORM (§36/§70.1). The card has a
+            // SINGLE Approve button that submits every bound fingerprint at once
+            // (PaigeConfirmCard.tsx) — there is no per-row control, no checkbox, no slice. So
+            // "approve them one at a time", inherited from the general gate's terminal, instructed
+            // the operator to do something the interface does not offer and then blamed them for
+            // the wall. Its replacement here, "press Not now to clear them", was wrong the same way
+            // (corrected 2026-09-26): cancelConfirmations CAN consume these rows, but the card that
+            // carries Not now renders only on the LAST message (PaigeAIChat), pressing Approve sends
+            // a new message, and this refusal mints no card — so after Approve there is no Not now on
+            // screen to press. PaigeAIChat.approvalRecovery.test.tsx drives that and proves it. The one
+            // recovery the interface offers in this state is asking again. Name that, and name the
+            // change in the operator's words.
+            // Leading clause only: several labels carry a model-facing "; <caveat>" tail (see catalog.ts).
+            const actionLabel = (CRM_ACTION_LABEL[action] ?? "make this change").split(";")[0].trim();
+            const refusal = approvalResolutionFailed === "lookup_failed"
+              ? { error: "Nothing was created, changed or sent. Something went wrong on our side while checking your approval.",
+                  note: "Say this to the operator in ONE plain line: nothing happened, it was a problem on our side rather than anything they did, and they can ask you again. Do NOT tell them to approve it again or to press any button — the approval card is no longer on screen. Do NOT blame their approval, do NOT call this tool again in this reply and do NOT open a new approval card." }
+              : approvalResolutionFailed === "unclaimable"
+              ? { error: `Nothing was created, changed or sent. That approval no longer matches anything I can run to ${actionLabel}.`,
+                  note: "Say this to the operator in ONE plain line: nothing happened, that approval no longer matches anything you can run, and they can just ask you again for the one they want. Do NOT say anything is ambiguous, do NOT call this tool again in this reply and do NOT open a new approval card." }
+              : { error: `Nothing was created, changed or sent. More than one approval is waiting to ${actionLabel}, so it is not clear which one to run.`,
+                  note: "Say this to the operator in ONE plain line: nothing happened, more than one approval was waiting for that, and they can ask you again for the one they want. Do NOT tell them to approve one at a time or to press Not now or any other button — the approval card is no longer on screen, and it had a single Approve button. Do NOT call this tool again in this reply and do NOT open a new approval card." };
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, outcome: "refused",
-              error: "The approved CRM batch could not be matched to exactly one stored command. Nothing changed; reopen the approval card and review the individual actions." }) });
+              ...refusal, correlation_id: requestNonce }) });
             continue;
           }
+          // crm-command claims the stored row atomically; what it returns is this approval's outcome.
+          if (approvedFingerprint) approvalSpend.set(approvedFingerprint, tc.id);
           const { data: crmData, error: crmError } = await supabaseClient.functions.invoke("crm-command", {
             headers: { Authorization: authHeader },
             body: { command: canonicalCrmCommand, idempotency_key: idempotencyKey,
@@ -8340,6 +8632,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               ...(approvedFingerprint ? { approved_fingerprint: approvedFingerprint } : {}) },
           });
           let crmBody: Record<string, unknown> = crmData && typeof crmData === "object" && !Array.isArray(crmData) ? crmData as Record<string, unknown> : {};
+          // The status of an ANSWERED request only (FunctionsHttpError): a relay or fetch failure's
+          // context says nothing about whether the function ran.
+          const crmStatus = (crmError as any)?.name === "FunctionsHttpError" && typeof (crmError as any)?.context?.status === "number"
+            ? (crmError as any).context.status as number : undefined;
           if (crmError) {
             const ctx = (crmError as any)?.context;
             if (ctx && typeof ctx.json === "function") { try { crmBody = await ctx.json(); } catch { /* generic failure below */ } }
@@ -8353,8 +8649,21 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               requires_operator_approval: true, confirm_fingerprint: crmBody.fingerprint, confirm_summary: summary,
               preview: crmBody.preview ?? null, note: "Show the Needs your OK card. Nothing changed yet. Do not call this tool again in this reply." }) });
           } else if (crmError || crmBody.ok === false) {
+            // No answer from crm-command's own code (it always writes `ok`): the request failed in
+            // transit or the platform cut it off, so the write may have committed. Say "couldn't
+            // confirm", never "nothing changed" — the card reads the flag, the model the note.
+            const unanswered = invokeOutcomeUnknown(crmError, crmBody, crmStatus);
+            // Anything else is an ANSWER, and every answer but one says nothing was applied:
+            // crm-command refuses before it executes, its executor's refusals roll back, and the
+            // one case it cannot vouch for (a lost readback or execute answer) it marks
+            // `outcome_unknown` itself. The gateway turning the call away never started it.
+            const notApplied = !unanswered && crmBody.outcome_unknown !== true;
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, ...crmBody,
-              error: crmBody.message ?? crmBody.code ?? "The CRM action could not be completed. Nothing should be claimed as changed." }) });
+              error: crmBody.message ?? crmBody.code ?? (unanswered
+                ? "The CRM action's answer never arrived, so whether it completed is not known."
+                : "The CRM action could not be completed. Nothing should be claimed as changed."),
+              ...(notApplied ? { not_applied: true } : {}),
+              ...(unanswered ? { outcome_unknown: true, note: OUTCOME_UNKNOWN_NOTE } : {}) }) });
           } else {
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: true, ...crmBody,
               ...(action === "activity.log" ? { external_effect: false, note: "Logged internally only. No email or SMS was sent and no call was placed." } : {}) }) });
@@ -8701,67 +9010,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             continue;
           }
           if (autoMode === "confirm") {
-            // ── MERGE, 2026-09-02: main's `paige_tool_confirmations` binding (#711) meets this one.
-            //
-            // Both branches found the same hole independently — `gateArgs.confirm` is the model's
-            // own JSON — and both built a server-minted proposal that a later turn must spend. The
-            // two are kept apart rather than stacked, because two stateful single-use claim
-            // protocols in series deadlock the first time their notions of "the same action"
-            // disagree, and #711's own history is two peer-gate rounds spent on exactly that.
-            //
-            // This one is kept, and it is a superset of what #711 proves:
-            //   · proposal predates the turn — by REQUEST identity (`issued_in_request` vs the
-            //     nonce), which is stricter than a timestamp: a token minted by this request is
-            //     not redeemable by it, whatever the clock says.
-            //   · one approval, one execution — compare-and-set on `consumed_at`.
-            //   · fails closed — an unmatched claim returns null and refuses.
-            // …and adds the two #711 names as NOT done:
-            //   · IT EXECUTES THE STORED ARGUMENTS. #711 binds an identity SUBSET and then runs
-            //     whatever the model re-authored on the confirming turn, so the content that runs
-            //     need not be the content the operator was read. Here the write is the proposal.
-            //   · IT PROVES THE OPERATOR SAID YES. #711's honest bound is that any turn satisfies
-            //     it, "including 'no, don't'" — and that binding the approval CLICK "needs
-            //     per-surface UI work ... tracked separately". That work is this branch: the
-            //     fingerprint travels in the request BODY, which a model cannot author, and only
-            //     the Approve button puts it there. The surface with no card is not stranded — it
-            //     falls back to the single live proposal for this tool in this scope.
-            //
-            // #711's livelock worry is answered rather than inherited: a drifting fingerprint does
-            // not livelock here, because the fallback is by SCOPE and the stored arguments run.
-            // `_shared/toolConfirmation.ts`, its migration and its tests stay in the tree unwired,
-            // recorded in the decision log — the table is already on prod and removing it is a
-            // separate, deliberate act, not a merge side-effect (§58).
-            // THE APPROVAL IS BOUND TO THE CALL — AND THE MODEL NEVER RESTATES THE CALL.
-            //
-            // `gateArgs.confirm !== true` was once the entire re-entry test. A person read the
-            // summary, clicked Approve, the UI sent "Approved — run it.", and the model re-emitted
-            // the tool call from scratch with nothing tying the arguments it emitted the second
-            // time to the ones the summary described. Different amount, different recipient,
-            // different client: all approved.
-            //
-            // The first repair fingerprinted the call and demanded the surface echo the
-            // fingerprint back. Review found that shipped a worse failure than it fixed. Five of
-            // the six chat surfaces never send the echo, so every gated tool became permanently
-            // un-executable on them; the client-portal seat lost `update_client_data`, its ONLY
-            // write; forty-five of the forty-eight gated tools never declared a `confirm`
-            // parameter at all; and where the echo did work the model still had to re-author the
-            // arguments byte-identically from a transcript that truncates them — a livelock for
-            // any tool carrying model-written free text, where the person clicks Approve and gets
-            // the same card back forever.
-            //
-            // So the call is no longer something the model restates. It is persisted server-side
-            // in `paige_pending_confirmations` under its fingerprint, and approval carries a
-            // TOKEN. What executes below is the STORED arguments — the exact ones whose summary
-            // the person read. The model cannot drift them because it never repeats them, and it
-            // does not need to reproduce a document to say yes to one.
-            //
-            // If the person AMENDS the request, the model emits fresh arguments with no token.
-            // That fingerprints differently, finds no proposal, and becomes a NEW card with a NEW
-            // summary — which is right: a changed action deserves a fresh look.
-            // THE CLASSIFICATION, FROM THE ACTION ALONE. Nothing in `gateArgs`, the request body,
-            // or the calling surface is an input here — which is the point: an action's risk is a
-            // property of the action, and a request that could argue about its own risk would be
-            // negotiating its own permission.
             const risk = classifyAction(tc.function.name);
 
             // FAIL CLOSED. A write with no classification does not run — not as ordinary, not as
@@ -8791,18 +9039,20 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               continue;
             }
 
-            const fp = await confirmFingerprint(tc.function.name, gateArgs);
-            const highRisk = risk === "high";
+            const fp = await confirmFingerprint(tc.function.name, confirmationArgs(gateArgs));
 
             // CHANNEL 1 — the authenticated caller submits a selected proposal fingerprint.
             // The model cannot author this request field. This is not proof of a physical click;
             // the trusted stored proposal, exact scope and atomic claim define the effect.
             let approvedFingerprint: string | undefined = approvedConfirmations.has(fp) ? fp : undefined;
+            if (approvedFingerprint) approvalTokenTool.set(approvedFingerprint, tc.function.name);
             // FIX B signal (P0 containment): the operator approved proposal(s) for this tool, but this
             // re-emitted call could not be pinned to exactly one of them. Set below when the approved-set
             // lookup finds ≥1 live proposal yet resolves no single fingerprint — a genuinely ambiguous
             // approval that must end in a truthful terminal, never a fresh re-ask loop.
             let approvedSetAmbiguous = false;
+            // Which of the two the terminal below fired for, so the card names the true cause.
+            let approvedSetLookupFailed = false;
             // The card approves the stored call, not a model's byte-identical reconstruction.
             // Resolve only fingerprints the human submitted; never broaden to all pending calls.
             if (!approvedFingerprint && approvedConfirmations.size > 0 && await revalidateProposalScope()) {
@@ -8816,8 +9066,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 const identityKey = CONFIRM_IDENTITY_KEY[tc.function.name];
                 const identityVal = identityKey ? confirmIdentityValue(tc.function.name, gateArgs) : null;
                 let lookup = supabase.from("paige_pending_confirmations")
-                  .select("fingerprint").eq("user_id", user.id).eq("tool_name", tc.function.name)
-                  .in("fingerprint", [...approvedConfirmations]).is("consumed_at", null)
+                  .select("fingerprint,args,issued_in_request").eq("user_id", user.id).eq("tool_name", tc.function.name)
+                  .in("fingerprint", [...approvedConfirmations].map((token) => token.split(":")[0])).is("consumed_at", null)
                   .gt("expires_at", new Date().toISOString())
                   .not("server_issued_at", "is", null)
                   .neq("issued_in_request", requestNonce).not("issued_in_request", "is", null);
@@ -8831,9 +9081,28 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 // "eq", val)` jsonb-text form already proven across the edge tree (embed-client-financials,
                 // ingest-rag-outcome, rebuild-client-financial-brief) rather than `.eq` string shorthand.
                 if (identityVal !== null) lookup = lookup.filter(`args->>${identityKey}`, "eq", identityVal);
-                const { data: matches, error: lookupError } = await lookup.limit(2);
-                if (!lookupError && matches?.length === 1 && typeof matches[0]?.fingerprint === "string"
-                  && approvedConfirmations.has(matches[0].fingerprint)) approvedFingerprint = matches[0].fingerprint;
+                const { data: candidates, error: lookupError } = await lookup.limit(17);
+                const matches: Array<{ fingerprint: string; args: Record<string, unknown> }> = [];
+                if (!lookupError && (candidates?.length ?? 0) <= 16) {
+                  for (const row of candidates ?? []) {
+                    const token = await confirmationToken(row, tc.function.name);
+                    if (token && approvedConfirmations.has(token)) {
+                      matches.push({ fingerprint: token, args: row.args });
+                      approvalTokenTool.set(token, tc.function.name);
+                    }
+                  }
+                }
+                const exactMatches: Array<{ fingerprint: string }> = [];
+                if (!lookupError && (matches?.length ?? 0) <= 16) {
+                  for (const row of matches ?? []) {
+                    if (row?.args && typeof row.args === "object" && !Array.isArray(row.args)
+                      && await confirmFingerprint(tc.function.name, row.args) === fp) exactMatches.push(row);
+                  }
+                }
+                const selected = exactMatches.length === 1 ? exactMatches[0]
+                  : matches?.length === 1 ? matches[0] : undefined;
+                if (!lookupError && selected && typeof selected.fingerprint === "string"
+                  && approvedConfirmations.has(selected.fingerprint)) approvedFingerprint = selected.fingerprint;
                 // ≥1 approved proposal exists for this tool but no single one resolved to this call (a
                 // batch the subject id did not disambiguate, or a no-identity-key tool) — the ambiguous
                 // approval FIX B turns into a truthful terminal rather than a re-ask-and-accumulate loop.
@@ -8841,6 +9110,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 // subject-id narrow (identityVal) or the model asserting confirm. A no-identity tool's
                 // fresh `confirm:false` proposal that merely shares a tool with pending approvals is NOT
                 // an approval of them, so it must still get its own card, not the terminal.
+                else if (!lookupError && (candidates?.length ?? 0) > 16) approvedSetAmbiguous = true;
                 else if (!lookupError && (matches?.length ?? 0) >= 1
                          && (identityVal !== null || gateArgs.confirm === true)) approvedSetAmbiguous = true;
                 // A lookup FAILURE (a PostgREST error, or the jsonb `args->>…` path filter being
@@ -8855,6 +9125,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   // dark failure that strands every approval of that tool on the terminal.
                   console.error("[paige] confirm approved-set lookup failed — failing to the honest terminal", JSON.stringify({ tool: tc.function.name, correlation_id: requestNonce, message: lookupError?.message ?? null }));
                   approvedSetAmbiguous = true;
+                  approvedSetLookupFailed = true;
+                  approvalLookupFailed = true;
                 }
               } catch (lookupThrow) {
                 // A THROWN failure is the same hazard as the returned error above, and the entry
@@ -8862,26 +9134,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 // §68: log it loudly (same reason) so a systematic break is never a silent dark failure.
                 console.error("[paige] confirm approved-set lookup threw — failing to the honest terminal", JSON.stringify({ tool: tc.function.name, correlation_id: requestNonce, error: String(lookupThrow) }));
                 approvedSetAmbiguous = true;
+                approvedSetLookupFailed = true;
+                approvalLookupFailed = true;
               }
             }
-            const surfaceApproved = approvedFingerprint !== undefined;
-            // CHANNEL 2 — the model's word that the operator said yes. Necessary, because five of
-            // the six surfaces render no card and a rule only one caller can obey is not a rule,
-            // it is an outage. Refused outright when the policy classifies the action `high`.
-            const modelAsserted = gateArgs.confirm === true;
-            const claimBy: string | null | undefined = surfaceApproved
-              ? approvedFingerprint                   // exact stored call the card displayed
-              : (modelAsserted && !highRisk && approvedConfirmations.size === 0)
-                ? null                                // by scope — ONLY on a CARD-LESS surface (no echo).
-                                                      // GUARD (adversary #1): when the surface DID echo
-                                                      // approvals, the model's word must never claim an
-                                                      // unapproved leftover proposal; only the echoed
-                                                      // fingerprint (surfaceApproved) may. Drift there
-                                                      // routes to FIX B's terminal / a fresh card.
-                : undefined;                          // nothing to redeem
-
-            const approvedArgs = claimBy !== undefined
-              ? await claimConfirmation(claimBy, tc.function.name)
+            const approvedArgs = approvedFingerprint !== undefined
+              ? await claimConfirmation(approvedFingerprint, tc.function.name)
               : null;
 
             if (!approvedArgs) {
@@ -8893,25 +9151,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               // terminal state, record NOTHING, and let the operator decide. Nothing ran; nothing was
               // sent. (FIX A resolves the common batch BEFORE here; this is the honest floor when it
               // genuinely cannot — the state the owner required instead of a silent re-ask loop.)
-              let ambiguousApproval = approvedSetAmbiguous;
-              if (!ambiguousApproval && modelAsserted && !highRisk && approvedConfirmations.size === 0
-                  && await revalidateProposalScope()) {
-                // Typed-yes with no card echo: the by-scope claim refuses on ≥2 live proposals and
-                // would otherwise re-ask forever. Detect that ambiguity (≥2) the same way.
-                try {
-                  let pend = supabase.from("paige_pending_confirmations")
-                    .select("id").eq("user_id", user.id).eq("tool_name", tc.function.name)
-                    .is("consumed_at", null).gt("expires_at", new Date().toISOString())
-                    .not("server_issued_at", "is", null)
-                    .neq("issued_in_request", requestNonce).not("issued_in_request", "is", null);
-                  pend = personaCtx?.tenant_id ? pend.eq("tenant_id", personaCtx.tenant_id) : pend.is("tenant_id", null);
-                  pend = payloadThreadId ? pend.eq("thread_id", payloadThreadId) : pend.is("thread_id", null);
-                  pend = scopedClientId ? pend.eq("scoped_client_id", scopedClientId) : pend.is("scoped_client_id", null);
-                  const { data: pendRows, error: pendErr } = await pend.limit(2);
-                  if (!pendErr && (pendRows?.length ?? 0) >= 2) ambiguousApproval = true;
-                } catch { /* detection failure falls through to the normal re-ask; never executes */ }
-              }
+              const ambiguousApproval = approvedSetAmbiguous;
               if (ambiguousApproval) {
+                approvalRefusals.set(tc.function.name, approvedSetLookupFailed ? "lookup_failed" : "ambiguous");
                 const subjectRef = confirmIdentityValue(tc.function.name, gateArgs);
                 console.warn("[paige] confirm ambiguous-approval terminal", JSON.stringify({ tool: tc.function.name, correlation_id: requestNonce }));
                 toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
@@ -8920,47 +9162,42 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   error: "Action execution is temporarily unavailable; nothing changed or sent.",
                   ...(subjectRef ? { action_ref: subjectRef } : {}),
                   correlation_id: requestNonce,
-                  note: "Say this to the operator in ONE plain line: this action could not be completed right now, and nothing was changed or sent. Do NOT re-read an approval card and do NOT call this tool again in this reply. If they still want it, they can approve the actions one at a time.",
+                  note: "Say this to the operator in ONE plain line: this action could not be completed right now, nothing was changed or sent, and if they still want it they can ask you again. Do NOT tell them to approve one at a time or to press Not now or any other button — the approval card is no longer on screen, and it had a single Approve button. Do NOT re-read an approval card and do NOT call this tool again in this reply.",
                 }) });
                 continue;
               }
+              // AN ID THE EXECUTOR CANNOT ADDRESS NEVER BECOMES A CARD. 2026-09-13: Paige sent a
+              // shortened action id, the operator approved it, the approval was claimed, and the
+              // dismissal failed 22P02 on a cast that could only fail — 13 proposals, 0 dismissals, and
+              // the three actions are still pending. Refused here, before anything is recorded, while
+              // there is still nothing to lose: a missing or blank id as much as a shortened one, and
+              // every id the executor casts, not only the subject. The shape table
+              // (confirm-fingerprint.ts) is measured against what the executor accepts.
+              const idProblem = unaddressableConfirmArgs(tc.function.name, gateArgs);
+              if (idProblem) {
+                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(unaddressableArgsRefusal(idProblem, "proposal")) });
+                continue;
+              }
+              // R2 — NOR DOES A DRAFT FOR A CUSTOMER THAT CARRIES INTERNAL TEXT: nothing is recorded, and
+              // PAIGE is told to rewrite it. An approved card is read where it runs (the dispatch branches),
+              // because what runs is the card's stored arguments.
+              const draftProblem = await outboundDraftRefusal(tc.function.name, gateArgs, "filing");
+              if (draftProblem) {
+                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(draftProblem) });
+                continue;
+              }
               const summary = await describeConfirm(tc.function.name, gateArgs);
-              // Persist BEFORE answering, so that when the person does say yes there is something
-              // to redeem. If this write fails the gate still refuses, and says so honestly rather
-              // than telling them it is pending. Failing closed is the only acceptable direction.
+              // Persist before offering the existing approval control.
               const recorded = await recordConfirmation(fp, tc.function.name, gateArgs, summary);
-              // A high-risk action the model tried to approve by itself. Say plainly that the word
-              // of the model is not what is missing here — a person has to see it.
-              const refusedSelfApproval = modelAsserted && highRisk;
-              // §13 — WHY A MISMATCH IS A PLAIN RE-ASK RATHER THAN AN ACCUSATION. The
-              // overwhelmingly common cause is benign: the person amended something in their
-              // approval and the model faithfully carried the change. The right answer is a new
-              // summary and a new ask, which is exactly what this is.
-              const changed = modelAsserted && !highRisk;
               toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
                 success: false,
-                needs_confirm: recorded !== "failed",
-                ...(recorded !== "failed" ? { confirm_fingerprint: fp,
-                  requires_operator_approval: highRisk, confirm_summary: summary } : {}),
-                ...(recorded === "failed" ? { error: "confirmation_unavailable" } : {}),
-                note: recorded === "failed"
+                needs_confirm: recorded.state !== "failed",
+                ...(recorded.state !== "failed" ? { confirm_fingerprint: recorded.fingerprint,
+                  requires_operator_approval: true, confirm_summary: recorded.summary ?? summary } : {}),
+                ...(recorded.state === "failed" ? { error: "confirmation_unavailable" } : {}),
+                note: recorded.state === "failed"
                   ? "The approval could not be recorded. Nothing ran and there is no approval card to use yet. Explain the failure and retry only after the operator asks."
-                  : refusedSelfApproval
-                  ? "This action cannot be approved by you saying it was approved — it is irreversible, changes permissions, reaches outside this platform, or spends money, so it needs the operator to click Approve on the Needs your OK card in this conversation. A typed yes alone does not submit that approval. Read confirm_summary back, point to that card, and do NOT call this again in this reply."
-                  : changed
-                    ? (recorded === "exists"
-                      // The exact call is ALREADY a live proposal — a card is on screen for it — but a
-                      // typed "yes" carries no card fingerprint, so it cannot bind here (and a batch of
-                      // several pending actions is ambiguous to bind by word alone). Point the operator
-                      // to the card ONCE rather than re-reading and re-asking — that re-ask is the
-                      // approval loop this branch exists to stop (P0, dismissing a batch of drafts).
-                      ? "Not run. A typed 'yes' does not submit this — the action set you asked about is ALREADY waiting on the 'Needs your OK' card shown above. Tell the operator, in one line, to click Approve on THAT card once. Do NOT read it back again and do NOT call this tool again in this reply. (Only if they want a CHANGE: call it again with the full new arguments and confirm left false, for a fresh card.)"
-                      : "Not approved. Either you set confirm before actually hearing back from the operator — in which case you cannot approve on their behalf, so STOP and ask them — or the approval is spent, expired, or the action has changed since. Read the NEW confirm_summary back to them and wait for their answer.")
-                    : recorded === "exists"
-                      ? "You have ALREADY asked them this and they have not answered yet. Do not read the same thing to them again and do not call this tool again — say what you are waiting on, in one line, and then move on or wait."
-                      : (recorded === "created"
-                      ? "Do NOT retry yet. This needs the operator's approval. Read confirm_summary back in plain language — and name the SPECIFIC client, contact or program you're acting on by the name you just used, never 'the client'. ONLY after they have actually replied and approved, call this same tool again with confirm: true. You do not need to reproduce the other arguments exactly — the exact call they were read is saved and is what runs. If they ask for ANY change, call it again with the full new arguments and confirm left false, so they get a fresh summary to approve."
-                      : "Do NOT retry. This needs the operator's approval and the approval could not be recorded, so there is nothing for them to approve yet. Tell them plainly that the action could not be set up right now and don't pretend it is pending."),
+                  : "This action is pending; nothing has changed. If the Needs your OK card is visible in this conversation, click Approve there. If this chat has no approval card, it cannot approve this action. Request the action afresh in a Paige workspace with approval controls if your account has access, or ask an authorized workspace teammate to complete it. The pending action does not transfer to another conversation. Read confirm_summary once in plain language. Do NOT call this tool again in this reply.",
               }) });
               continue;
             }
@@ -8969,7 +9206,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // `tc.function.arguments`, so overwriting it here routes all fifty-one gated tools
             // through one seam rather than fifty-one per-tool edits.
             tc.function.arguments = JSON.stringify(approvedArgs);
-            approvalChannel.set(tc.id, surfaceApproved ? "operator_card" : "model_asserted");
+            approvalChannel.set(tc.id, "operator_card");
+            approvalSpend.set(approvedFingerprint as string, tc.id);
           } else {
             // `auto` — the operator's standing decision in their autonomy settings, not an
             // approval given in this conversation. Recorded as what it is, so a later reader can
@@ -9746,7 +9984,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               } else {
                 const FRIENDLY: Record<string, string> = {
                   NO_TENANT: "This can only be set up from inside a practice's workspace — it's not available here.",
-                  FORBIDDEN: "You need to be an admin or coach on this workspace to add a new activity kind. Let the operator know it's a staff-only setting.",
+                  FORBIDDEN: "You need to be an admin on this workspace to add a new activity kind. Let the operator know it's a staff-only setting.",
                   SLUG_RESERVED: "That name matches one of the standard activities every workspace already has, so it can't be reused. Suggest a more specific name for this practice's version.",
                   SLUG_TAKEN: "This practice already has an activity using that identifier. Pick a different short name for it.",
                   INVALID_LABEL: "It needs a clear display name. Ask the operator what to call this activity.",
@@ -9904,7 +10142,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           tc.function.name === "comms_registration_status" ||
           tc.function.name === "comms_draft_registration"
         ) {
-          // Role gate: admin or coach only
+          // Role gate: admin only
           const { data: roleRows } = await supabase
             .from("user_roles")
             .select("role")
@@ -9920,12 +10158,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // role string here is the same one `is_platform_owner()`/`is_super_admin()` gate on, and
           // `platform_admin` is a DISTINCT string that stays denied. Server-derived from the JWT
           // (user.id) — a caller-supplied role can never reach this array.
-          const allowed = N8N_MANAGEMENT_TOOL_NAMES.has(tc.function.name) || roles.includes("admin") || roles.includes("coach") || roles.includes("super_admin");
+          const allowed = N8N_MANAGEMENT_TOOL_NAMES.has(tc.function.name) || roles.includes("admin") || roles.includes("super_admin");
           if (!allowed) {
             toolResults.push({
               tool_call_id: tc.id,
               role: "tool",
-              content: JSON.stringify({ success: false, error: "CRM operator tools are restricted to admins and coaches." }),
+              content: JSON.stringify({ success: false, error: "CRM operator tools are restricted to admins." }),
             });
             continue;
           }
@@ -9949,6 +10187,20 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // JWT) every call returns `permission denied` as an `{error}` object rather
           // than throwing, so the feature would ship with every gate green and not one
           // row ever written. That is the whole reason this is wired at the executor.
+          //
+          // THAT GUARANTEE IS SIGNATURE-SCOPED. The paragraph above is true of the
+          // 6-argument signature. The 10-arg overload (`20270107000000:94`, bound
+          // whenever correlation or detail is passed) shipped with NO GRANT and NO
+          // REVOKE, so it defaults to `EXECUTE TO PUBLIC`, and its body never calls
+          // `auth.uid()` — it checks the ARGUMENT actor against the ARGUMENT tenant,
+          // which constrains the subject, not the caller. On that path the wrong client
+          // would succeed SILENTLY instead of failing loudly IF the overload were open.
+          // IT IS NOT, and that is measured rather than assumed: a `pg_proc.proacl` readback
+          // on prod (2026-09-24) returns `{postgres=X/postgres,service_role=X/postgres}` for
+          // BOTH signatures. `20270416000000` is NOT applied and `20270107000000` carries no
+          // GRANT/REVOKE, so an out-of-band action set that ACL and the repo cannot reproduce
+          // it -- which is what the migration is actually for. Rebuild this database from
+          // migrations alone and the overload WOULD be open.
           //
           // NO `agentSlug`. `_record_workspace_rail_event` resolves it against
           // `paige_subagents` for a label, and no subagent owns these four acts today.
@@ -10684,7 +10936,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               if (!crmTenantId) throw new Error("tenant_not_resolved");
               const contactPatch: Record<string, unknown> = {};
               const fields = [
-                "first_name", "last_name", "email", "phone", "entity_name", "entity_type", "title",
+                "first_name", "last_name", "entity_name", "entity_type", "title",
                 "website", "linkedin_url", "street_address", "city", "state", "zip_code",
                 "lifecycle_stage", "source", "tags", "primary_offer", "status",
                 "assigned_coach_user_id", "do_not_contact",
@@ -10693,6 +10945,35 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 if (Object.prototype.hasOwnProperty.call(args, field)) contactPatch[field] = args[field];
               }
               if (Object.prototype.hasOwnProperty.call(args, "notes")) contactPatch.current_notes = args.notes;
+              // Emails and phones travel as the contact's COMPLETE address list, the one form
+              // upsert_contact takes for them, together with the list that change was built on
+              // (expected_contact_methods). upsert_contact compares the two under the contact's
+              // row lock and refuses CONTACT_METHODS_STALE if the list changed in between, so a
+              // replacement never overwrites an address added meanwhile. An addition is merged
+              // onto the list the caller can read now (RLS decides, as the caller) and sent with
+              // that same list as the expected one.
+              if (Array.isArray(args.contact_methods) && Array.isArray(args.add_contact_methods)) {
+                throw new Error("CONTACT_METHODS_AMBIGUOUS: send contact_methods or add_contact_methods, not both");
+              }
+              if (Array.isArray(args.contact_methods)) {
+                if (!Array.isArray(args.expected_contact_methods)) {
+                  throw new Error("CONTACT_METHODS_EXPECTED_REQUIRED: send expected_contact_methods, the contact's list exactly as crm_get_contact_summary returned it");
+                }
+                contactPatch.contact_methods = args.contact_methods;
+                contactPatch.expected_contact_methods = args.expected_contact_methods;
+              } else if (Array.isArray(args.add_contact_methods)) {
+                const added = args.add_contact_methods as ContactMethodInput[];
+                const problem = addedMethodsProblem(added);
+                if (problem) throw new Error(problem);
+                const { data: held, error: heldErr } = await supabaseClient.from("clients")
+                  .select("client_contact_methods(kind, value, label, is_primary, position)")
+                  .eq("id", contactId).eq("tenant_id", crmTenantId).maybeSingle();
+                if (heldErr) throw heldErr;
+                if (!held) throw new Error("contact_not_found");
+                const current = orderedContactMethods((held as { client_contact_methods?: unknown }).client_contact_methods);
+                contactPatch.contact_methods = withAddedMethods(current, added);
+                contactPatch.expected_contact_methods = current;
+              }
               if (!Object.keys(contactPatch).length) throw new Error("No contact fields were provided");
               const { data: updatedId, error } = await supabaseClient.rpc("upsert_contact", {
                 p_patch: contactPatch,
@@ -10702,7 +10983,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 p_channel: "api",
               });
               if (error) throw error;
-              result = { success: true, client_ref: args.client_ref, updated_fields: Object.keys(contactPatch), updated: Boolean(updatedId) };
+              result = { success: true, client_ref: args.client_ref, updated_fields: Object.keys(contactPatch).filter((key) => key !== "expected_contact_methods"), updated: Boolean(updatedId) };
             } else if (tc.function.name === "propose_business_brief_update") {
               if (!crmTenantId) {
                 result = { success: false, error: "tenant_not_resolved" };
@@ -11171,7 +11452,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               result = {
                 success: true,
                 member_user_id: args.member_user_id,
-                job_title: (data as any)?.job_title ?? null,
+                [TITLE_WORD]: (data as any)?.job_title ?? null,
                 responsibilities: (data as any)?.responsibilities ?? null,
                 note: "Work details only. This changed nothing about what they can access.",
               };
@@ -11191,7 +11472,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 success: true,
                 member_user_id: args.member_user_id,
                 permission: args.permission,
-                note: "Access changed. Their job title and responsibilities are untouched.",
+                note: `Access changed. Their ${TITLE_WORD} and responsibilities are untouched.`,
               };
             } else if (
               tc.function.name === "team_invite_member" ||
@@ -11453,110 +11734,180 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 ? { success: true, content_id: cid }
                 : { success: false, error: ARTIFACT_ABSENT_ERROR.saved_id };
             } else if (tc.function.name === "document_generate") {
-              // #119/#292 — the agent authored the whole document as design blocks; persist it as a
-              // marketing_content row kind='document' (body = the block JSON). Keep only known block
-              // types so a slightly-off block degrades instead of breaking the render (§13); ensure a
-              // cover leads. Returns only what actually persisted.
-              const docType = ["guide", "one_pager", "ebook", "checklist", "worksheet", "proposal", "offer_letter", "sales_offer"].includes(args.doc_type) ? args.doc_type : "guide";
-              // Keep only blocks whose REQUIRED content field is the right type — a well-typed `type`
-              // with a mis-typed value (a list of objects, a non-string markdown) is dropped here so
-              // nothing malformed persists (§13; the renderer also coerces defensively).
-              const _s = (v: unknown) => typeof v === "string" && v.trim().length > 0;
-              const validDocBlock = (b: any): boolean => {
-                if (!b || typeof b !== "object") return false;
-                switch (b.type) {
-                  case "cover": return _s(b.title);
-                  case "section-header": return _s(b.title);
-                  case "chapter-divider": return _s(b.title);
-                  // toc auto-builds from the doc's own headings when it carries no explicit entries, so
-                  // it is always structurally valid; the renderer drops it if nothing resolves.
-                  case "toc": return true;
-                  case "prose": return _s(b.markdown);
-                  case "callout": return _s(b.body);
-                  case "pull-quote": return _s(b.quote);
-                  case "stat": return _s(b.value) || _s(b.label);
-                  case "list": return Array.isArray(b.items) && b.items.some((x: unknown) => _s(x));
-                  case "worksheet-field": return _s(b.label);
-                  case "pricing-table": return Array.isArray(b.rows) && b.rows.some((r: any) => _s(r?.item) || _s(r?.amount));
-                  case "cta": return _s(b.headline) || _s(b.action);
-                  default: return false;
-                }
-              };
-              let blocks = (Array.isArray(args.blocks) ? args.blocks : [])
-                .filter(validDocBlock)
-                .slice(0, 80);
-              // §15/§13 — a document must never ship with fill-in-the-blank placeholders. Bracketed
-              // ALL-CAPS tokens ([CLIENT NAME], [DATE], [AMOUNT], [SCOPE]) are the classic proposal
-              // failure: refuse and tell the agent to get the real specifics from the customer first.
-              // The `(?!\()` tail excludes markdown links like [Read more](url) — those are not placeholders.
-              // Keyword-anchored + case-INSENSITIVE: LLMs emit Title-Case blanks ([Client Name],
-              // [Your Company], [Date]) far more than ALL-CAPS, so an all-caps-only test (the earlier
-              // version) let the common form through. Anchoring to real placeholder words also drops the
-              // [NASDAQ]-style all-caps false-positive; the `(?!\()` tail still spares markdown links.
-              const PLACEHOLDER_RE = /\[[^\]]*\b(CLIENT|NAME|DATE|AMOUNT|SCOPE|COMPANY|PRICE|COST|ADDRESS|EMAIL|PHONE|YOUR|INSERT|TBD|TODO|XXX|ROLE|SALARY|CANDIDATE|COMPENSATION|EQUITY|BENEFITS|POSITION|MANAGER|PROSPECT|EXPIR)\b[^\]]*\](?!\()/i;
-              const hasPlaceholder = (v: unknown): boolean => {
-                if (typeof v === "string") return PLACEHOLDER_RE.test(v);
-                if (Array.isArray(v)) return v.some(hasPlaceholder);
-                if (v && typeof v === "object") return Object.values(v).some(hasPlaceholder);
-                return false;
-              };
-              // Scan the title too (the cover can be synthesized from args.title AFTER this guard).
-              if (blocks.length && (hasPlaceholder(args.title) || blocks.some((b: any) => hasPlaceholder(b)))) {
-                result = { success: false, error: "This still has fill-in-the-blank placeholders like [CLIENT NAME], [DATE], or [AMOUNT]. Get the real client name, scope, pricing, and dates from the customer first — ask them, then build it with the real details." };
-              } else if (!blocks.length) {
-                result = { success: false, error: "No document content was produced — try describing the document again." };
-              } else {
-                if (blocks[0].type !== "cover") blocks = [{ type: "cover", title: String(args.title ?? "Untitled document") }, ...blocks];
-                const docTitle = String(args.title ?? (blocks[0] as any).title ?? "Untitled document").slice(0, 200);
-                // #292 — reuse the on-canvas document row (stack its versions) ONLY when the model
-                // targets the exact document that's actually on the canvas; any other id → new asset
-                // (null), so a stray/echoed id can never overwrite a different artifact (§13 clamp).
-                const reuseDocId = (canvasArtifact?.kind === "document" && args.target_content_id === canvasArtifact.id)
-                  ? canvasArtifact.id : null;
-                const { data: cid, error } = await supabaseClient.rpc("save_marketing_content", {
-                  p_kind: "document",
-                  p_title: docTitle,
-                  p_body: JSON.stringify({ docType, title: docTitle, blocks }),
-                  p_brief: args.brief ?? null,
-                  p_id: reuseDocId,
-                  p_tenant_id: personaCtx?.tenant_id ?? null,
+              const currentDocumentCallOrdinal = documentCallOrdinal++;
+              const documentIntentId = payloadRequestIntentId
+                ? await stableRunId(["document_generate_intent", payloadRequestIntentId, String(currentDocumentCallOrdinal)])
+                : null;
+              // Phase 2 — the chat turn submits a BOUNDED brief and returns immediately. The durable
+              // worker owns long-form authoring, verified artifact persistence, the completion turn,
+              // and the terminal Rail receipt. This request never carries generated document bodies.
+              // Refusals before a work row exists cannot be receipted by that worker, so this entered
+              // branch records those outcomes itself with the service-role client. Nothing in the
+              // outer mega-catch records by tool name: a dispatch-prologue throw is not an invocation.
+              const recordDocumentSubmissionOutcome = async (code: string, outcome: CapabilityOutcome) => {
+                const runId = await stableRunId([
+                  "document_generate_submission",
+                  personaCtx?.tenant_id ?? null,
+                  user.id,
+                  documentIntentId ?? tc.id,
+                  code,
+                ]);
+                return recordCapabilityRun(supabase, {
+                  tenantId: personaCtx?.tenant_id ?? null,
+                  actorId: user.id,
+                  capabilityKey: "document_generate",
+                  outcome,
+                  runId,
                 });
-                if (error) throw error;
-                // §13/§70 — blocks/placeholder guards above prove the CONTENT is real; this proves it
-                // PERSISTED (a 200 with no returned id means it may not have saved).
-                if (!artifactProduced("saved_id", cid)) {
-                  result = { success: false, error: ARTIFACT_ABSENT_ERROR.saved_id };
-                } else {
-                  const base: Record<string, unknown> = { success: true, content_id: cid, title: docTitle, doc_type: docType, blocks: blocks.length };
-                  // §18/§70 — if the caller asked for a downloadable FILE, render it via the export-document
-                  // seam (doc-render lane → private studio-deliverables bucket → 30-day signed URL) and attach
-                  // the link. Behavior-preserving (§37): with no export_format this is skipped and the result is
-                  // byte-identical to before. Honest degrade (§13): a format the renderer can't produce comes
-                  // back needs_config → we attach export_status, never a fake/broken link. The export seam
-                  // re-derives the tenant from the caller's JWT (§9) — we pass only the content_id + format.
-                  const exportFormat = typeof args.export_format === "string" ? args.export_format.toLowerCase() : null;
-                  if (exportFormat && ["pdf", "docx", "pptx", "md"].includes(exportFormat) && personaCtx?.tenant_id) {
-                    try {
-                      const exResp = await fetch(`${supabaseUrl}/functions/v1/export-document`, {
-                        method: "POST",
-                        headers: { "Authorization": authHeader, "Content-Type": "application/json" },
-                        body: JSON.stringify({ content_id: cid, format: exportFormat }),
-                      });
-                      const ex = await exResp.json().catch(() => ({}));
-                      if (ex?.success && ex.download_url) {
-                        base.download_url = ex.download_url;
-                        base.download_format = exportFormat;
+              };
+              if (studioSessionId) {
+                await recordDocumentSubmissionOutcome("DURABLE_DOCUMENT_STUDIO_ASYNC_UNAVAILABLE", "capability_refused");
+                result = {
+                  success: false,
+                  error: "Long-form document authoring completes asynchronously in Paige chat. Open this request in Paige chat so the verified artifact can reconnect there.",
+                  code: "DURABLE_DOCUMENT_STUDIO_ASYNC_UNAVAILABLE",
+                };
+              } else if (!payloadThreadId || !payloadRequestIntentId || !documentIntentId) {
+                await recordDocumentSubmissionOutcome("DURABLE_DOCUMENT_IDENTITY_REQUIRED", "capability_refused");
+                result = {
+                  success: false,
+                  error: "Durable document work needs a saved conversation and a stable request identity. Reopen this chat and try again.",
+                  code: "DURABLE_DOCUMENT_IDENTITY_REQUIRED",
+                };
+              } else {
+                const requestedTarget = canvasArtifact?.kind === "document"
+                  && args.target_content_id === canvasArtifact.id
+                  ? canvasArtifact.id
+                  : null;
+                let expectedRevision: number | null = null;
+                let targetVerified = true;
+                if (requestedTarget && !personaCtx?.tenant_id) {
+                  targetVerified = false;
+                  await recordDocumentSubmissionOutcome("DURABLE_DOCUMENT_TARGET_NOT_VERIFIED", "capability_refused");
+                  result = {
+                    success: false,
+                    error: "That document could not be reopened in a verified workspace. Reopen it on the canvas before revising it.",
+                    code: "DURABLE_DOCUMENT_TARGET_NOT_VERIFIED",
+                  };
+                } else if (requestedTarget && personaCtx?.tenant_id) {
+                  const { data: target, error: targetError } = await supabaseClient
+                    .from("marketing_content")
+                    .select("id,document_revision")
+                    .eq("id", requestedTarget)
+                    .eq("tenant_id", personaCtx.tenant_id)
+                    .eq("kind", "document")
+                    .maybeSingle();
+                  if (targetError || !target?.id || !Number.isInteger(target.document_revision)) {
+                    targetVerified = false;
+                    await recordDocumentSubmissionOutcome("DURABLE_DOCUMENT_TARGET_NOT_VERIFIED", "capability_refused");
+                    result = {
+                      success: false,
+                      error: "That document could not be reopened at a verified revision. Reopen it on the canvas before revising it.",
+                      code: "DURABLE_DOCUMENT_TARGET_NOT_VERIFIED",
+                    };
+                  } else {
+                    expectedRevision = Number(target.document_revision);
+                  }
+                }
+
+                if (targetVerified) {
+                  const candidate = {
+                    version: 1,
+                    doc_type: args.doc_type,
+                    title: args.title,
+                    brief: args.brief,
+                    ...(args.audience !== undefined ? { audience: args.audience } : {}),
+                    ...(args.purpose !== undefined ? { purpose: args.purpose } : {}),
+                    ...(args.required_facts !== undefined ? { required_facts: args.required_facts } : {}),
+                    ...(requestedTarget && expectedRevision
+                      ? { target_content_id: requestedTarget, expected_revision: expectedRevision }
+                      : {}),
+                  };
+                  const validatedBrief = validateDocumentBrief(candidate);
+                  if (!validatedBrief.ok) {
+                    await recordDocumentSubmissionOutcome(validatedBrief.code, "capability_refused");
+                    result = { success: false, error: validatedBrief.message, code: validatedBrief.code };
+                  } else {
+                    const { data: submitted, error: submitError } = await supabaseClient.rpc(
+                      "submit_paige_document_work",
+                      {
+                        _intent_id: documentIntentId,
+                        _thread_id: payloadThreadId,
+                        _request_payload: validatedBrief.value,
+                      },
+                    );
+                    if (submitError) {
+                      // Any five-character PostgreSQL SQLSTATE proves the statement aborted and
+                      // rolled back, so refusal is honest. Gateway/transport codes may describe a
+                      // lost response after commit and must stay unknown;
+                      // the worker may still finish the same intent and file its terminal receipt.
+                      const submissionOutcome = classifyDocumentSubmissionError(submitError);
+                      await recordDocumentSubmissionOutcome(
+                        "DURABLE_DOCUMENT_SUBMIT_FAILED",
+                        submissionOutcome,
+                      );
+                      result = {
+                        success: false,
+                        error: submissionOutcome === "capability_refused"
+                          ? "The document request was refused before any work was accepted."
+                          : "Paige could not confirm whether the document request was accepted. Do not submit it again until this conversation reconnects and reconciles the same request.",
+                        code: "DURABLE_DOCUMENT_SUBMIT_FAILED",
+                      };
+                    } else {
+                      const accepted = Array.isArray(submitted) ? submitted[0] : submitted;
+                      if (accepted?.work_id) {
+                        const workStatus = String(accepted.work_status ?? "outcome_unknown");
+                        if (workStatus === "claimed") {
+                          result = {
+                            success: true,
+                            accepted: true,
+                            work_id: accepted.work_id,
+                            work_status: workStatus,
+                            resumed_existing: accepted.resumed_existing === true,
+                            note: accepted.resumed_existing
+                              ? "The active document job was safely re-awakened under the same work identity. Do not submit it again; the verified artifact will appear in this conversation when complete."
+                              : "Document authoring is underway. Do not claim the document is ready yet; the verified artifact will appear in this conversation when complete.",
+                          };
+                        } else if (workStatus === "succeeded") {
+                          result = {
+                            success: true,
+                            accepted: false,
+                            completed: true,
+                            work_id: accepted.work_id,
+                            work_status: workStatus,
+                            resumed_existing: false,
+                            note: "This document job already completed. Use the verified artifact already filed in this conversation; no new work was dispatched.",
+                          };
+                        } else {
+                          const needsReconciliation = workStatus === "outcome_unknown" || workStatus === "expired";
+                          result = {
+                            success: false,
+                            accepted: false,
+                            work_id: accepted.work_id,
+                            work_status: workStatus,
+                            resumed_existing: false,
+                            code: needsReconciliation
+                              ? "DURABLE_DOCUMENT_RECONCILIATION_REQUIRED"
+                              : workStatus === "blocked"
+                              ? "DURABLE_DOCUMENT_BLOCKED"
+                              : "DURABLE_DOCUMENT_TERMINAL",
+                            error: needsReconciliation
+                              ? "Paige cannot confirm this document job's outcome yet. It must be reconciled before any retry."
+                              : workStatus === "blocked"
+                              ? "This document job is blocked and cannot resume. Resolve the stated authority or version conflict, then start a new document request so Paige can use a fresh work identity and revision."
+                              : `This document job is already ${workStatus} and was not restarted. Start a new document request only if you intend new work.`,
+                          };
+                        }
                       } else {
-                        base.export_status = ex?.needs_config ? "needs_config" : (ex?.status ?? "unavailable");
-                        base.export_note = ex?.note ?? `The ${exportFormat.toUpperCase()} file could not be produced right now.`;
+                        await recordDocumentSubmissionOutcome("DURABLE_DOCUMENT_WORK_ID_MISSING", "capability_outcome_unknown");
+                        result = {
+                          success: false,
+                          error: "The document request returned no durable work identity. Nothing may be claimed as created.",
+                          code: "DURABLE_DOCUMENT_WORK_ID_MISSING",
+                        };
                       }
-                    } catch (exErr) {
-                      base.export_status = "failed";
-                      base.export_note = `Export to ${exportFormat.toUpperCase()} failed.`;
-                      console.error("[paige] document_generate export invoke failed:", (exErr as Error)?.message);
                     }
                   }
-                  result = base;
                 }
               }
             } else if (tc.function.name === "growth_list") {
@@ -11808,6 +12159,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               if (_pubFErr) throw _pubFErr;
               result = { success: true, ...(_pub as any) };
             } else if (tc.function.name === "action_file") {
+              // R2 — read where it runs: in the auto lane these are the model's arguments, and on an
+              // approval the card's stored ones.
+              const fileProblem = await outboundDraftRefusal("action_file", args, approvalChannel.get(tc.id) === "operator_card" ? "approved" : "filing");
+              if (fileProblem) {
+                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(fileProblem) });
+                continue;
+              }
               const { data, error } = await supabaseClient.rpc("file_action", {
                 p_action_kind: args.action_kind,
                 p_title: args.title,
@@ -11820,6 +12178,22 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               if (error) throw error;
               result = { success: true, ...(data as any) };
             } else if (tc.function.name === "action_advance") {
+              // The confirm gate refuses an id the executor cannot address before it can become a
+              // card. This is the same refusal for every path that reaches dispatch without the gate,
+              // and for a card minted before the gate checked, so no lane hands `advance_action` an id
+              // it can only fail to cast: neither `p_action_id` nor `p_invocation_id`.
+              const idProblem = unaddressableConfirmArgs("action_advance", args);
+              if (idProblem) {
+                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(unaddressableArgsRefusal(idProblem, "dispatch")) });
+                continue;
+              }
+              // R2 — read where it runs: in the auto lane these are the model's arguments, and on an
+              // approval the card's stored ones. With no draft attached, the stored action is what it delivers.
+              const draftProblem = await outboundDraftRefusal("action_advance", args, approvalChannel.get(tc.id) === "operator_card" ? "approved" : "filing");
+              if (draftProblem) {
+                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(draftProblem) });
+                continue;
+              }
               const { data, error } = await supabaseClient.rpc("advance_action", {
                 p_action_id: args.action_id,
                 p_to_status: args.to_status ?? null,
@@ -11829,7 +12203,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 p_decision_rationale: args.decision_rationale ?? null,
                 p_tenant_id: personaCtx?.tenant_id ?? null,
               });
-              if (error) throw error;
+              // One RPC: a refusal the database answered rolled it back whole (approval-outcome.ts).
+              if (error) throw refusedByDatabase(error);
               result = { success: true, ...(data as any) };
             } else if (tc.function.name === "social_post" || tc.function.name === "social_analytics" || tc.function.name === "social_accounts") {
               // Phase 0 containment. These legacy names are deliberately absent from the model's
@@ -11899,9 +12274,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               const { data: roleRows } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
               const roles = (roleRows || []).map((r: any) => r.role);
               const isAdmin = roles.includes("admin");
-              const isCoach = roles.includes("coach");
-              if (!(isAdmin || isCoach)) {
-                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Improvement proposals are restricted to admins and coaches.", note: "Nothing was filed. Tell the operator plainly you could not file this and nothing was recorded — do NOT say it was filed or logged." }) });
+              if (!isAdmin) {
+                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Improvement proposals are restricted to admins.", note: "Nothing was filed. Tell the operator plainly you could not file this and nothing was recorded — do NOT say it was filed or logged." }) });
                 continue;
               }
               if (tc.function.name === "improvement_decide" && !isAdmin) {
@@ -12035,7 +12409,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             } else if (tc.function.name === "crm_search_contacts") {
               const limit = Math.min(Math.max(Number(args.limit) || 25, 1), 100);
               let q = admin.from("clients").select(
-                "account_number, first_name, last_name, email, phone, entity_name, lifecycle_stage, status, source, tags, lead_score, assigned_coach_user_id, last_contacted_at, created_at"
+                "account_number, first_name, last_name, entity_name, lifecycle_stage, status, source, tags, lead_score, assigned_coach_user_id, last_contacted_at, created_at, updated_at, client_contact_methods(kind, value, label, is_primary, position)"
               ).eq("tenant_id", crmTenantId);
               if (args.lifecycle_stage) q = q.eq("lifecycle_stage", args.lifecycle_stage);
               if (args.status) q = q.eq("status", args.status);
@@ -12050,7 +12424,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 // false-negative: a multi-word query like "Tashia Anderson" now matches
                 // first_name=Tashia AND last_name=Anderson (separate columns), instead of
                 // the whole phrase against each single column (which matched 0 rows).
-                q = applyContactSearchFilter(q, String(args.query));
+                // An address token matches whichever of the contact's emails or phones holds it.
+                const addressMatches = crmTenantId
+                  ? await contactIdsByAddressToken(admin, crmTenantId, String(args.query), "paige-ai-chat")
+                  : new Map<string, string[]>();
+                q = applyContactSearchFilter(q, String(args.query), { columns: CONTACT_NAME_SEARCH_COLUMNS, addressMatches });
               }
               const sortMap: Record<string, [string, boolean]> = {
                 recent: ["created_at", false],
@@ -12061,7 +12439,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               const [col, asc] = sortMap[args.sort || "recent"] || sortMap.recent;
               const { data, error } = await q.order(col, { ascending: asc, nullsFirst: false }).limit(limit);
               if (error) throw error;
-              result = { success: true, count: data?.length || 0, contacts: (data || []).map(({ account_number, ...contact }: any) => ({ ...contact, client_ref: account_number })) };
+              result = { success: true, count: data?.length || 0, contacts: (data || []).map(({ account_number, client_contact_methods, ...contact }: any) => ({
+                ...contact, client_ref: account_number, contact_methods: orderedContactMethods(client_contact_methods),
+              })) };
             } else if (tc.function.name === "crm_get_contact_summary") {
               const id = await resolveClientReference(admin, crmTenantId, args.client_ref);
               // §9 IDOR FIX: scope the contact fetch to the caller's tenant so a
@@ -12070,7 +12450,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               // defense-in-depth; tasks/activities/comms derive from the now
               // tenant-verified contact/deal ids, so they inherit the scope.
               const [contact, deals, tasksRes, activities] = await Promise.all([
-                admin.from("clients").select("*").eq("id", id).eq("tenant_id", crmTenantId).maybeSingle(),
+                admin.from("clients").select(`${CLIENT_RECORD_COLUMNS}, client_contact_methods(kind, value, label, is_primary, position)`).eq("id", id).eq("tenant_id", crmTenantId).maybeSingle(),
                 admin.from("deals").select("id, title, status, value_cents, currency, stage_id, expected_close_date, updated_at").eq("contact_client_id", id).eq("tenant_id", crmTenantId).order("updated_at", { ascending: false }).limit(20),
                 admin.from("tasks").select("id, title, status, due_date, track").eq("biz_id", id).neq("status", "completed").order("due_date", { ascending: true, nullsFirst: false }).limit(20),
                 admin.from("deal_activities").select("id, deal_id, type, summary, created_at").in("deal_id", []).limit(1),
@@ -12086,9 +12466,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   recentActivity = a || [];
                 }
                 const { data: commLog } = await admin.from("communication_log").select("channel, message_type, subject, preview, created_at").eq("user_id", (contact.data as any)?.linked_user_id || "00000000-0000-0000-0000-000000000000").order("created_at", { ascending: false }).limit(10);
+                // Every address the contact holds, from its contact methods.
+                const { client_contact_methods: methodRows, ...profile } = contact.data as any;
                 result = {
                   success: true,
-                  contact: contact.data,
+                  contact: { ...profile, client_ref: profile.account_number ?? null, contact_methods: orderedContactMethods(methodRows) },
                   deals: deals.data || [],
                   open_tasks: tasksRes.data || [],
                   recent_deal_activity: recentActivity,
@@ -12295,20 +12677,30 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             await recordPipelineRun({ thrown: err, threw: true, writeAttempted: false });
             await recordCrmRun({ thrown: err, threw: true, writeAttempted: crmWriteAttempted });
 
+            // `outcome_unknown` when the answer never arrived (a transport failure, not a refusal):
+            // the write may have happened, and the approval card must say so rather than "didn't
+            // run", with a note so Paige's words match the card. The error text itself is
+            // untouched; that is #1456's to change.
             toolResults.push({
               tool_call_id: tc.id,
               role: "tool",
-              content: JSON.stringify({ success: false, error: err instanceof Error ? err.message : "Unknown error" }),
+              content: JSON.stringify({
+                success: false,
+                error: err instanceof Error ? err.message : "Unknown error",
+                // Only where the executor proved it (`refusedByDatabase`): nothing was applied.
+                ...((err as { not_applied?: unknown } | null)?.not_applied === true ? { not_applied: true } : {}),
+                ...(thrownOutcomeUnknown(err) ? { outcome_unknown: true, note: OUTCOME_UNKNOWN_NOTE } : {}),
+              }),
             });
           }
         } else if (tc.function.name === "list_subagents" || tc.function.name === "delegate_to_subagent") {
-          // Section 18: Orchestrator delegation. Role gate to admin/coach only.
+          // Section 18: Orchestrator delegation. Role gate to admin only.
           try {
             const { data: roleRows } = await supabase
               .from("user_roles").select("role").eq("user_id", user.id);
             const roles = (roleRows || []).map((r: any) => r.role);
-            if (!(roles.includes("admin") || roles.includes("coach"))) {
-              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Sub-agent delegation is restricted to admins and coaches." }) });
+            if (!roles.includes("admin")) {
+              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Sub-agent delegation is restricted to admins." }) });
               continue;
             }
             const args = JSON.parse(tc.function.arguments || "{}");
@@ -12341,8 +12733,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             const { data: roleRows } = await supabase
               .from("user_roles").select("role").eq("user_id", user.id);
             const roles = (roleRows || []).map((r: any) => r.role);
-            if (!(roles.includes("admin") || roles.includes("coach"))) {
-              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Creating new team specialists is restricted to admins and coaches." }) });
+            if (!roles.includes("admin")) {
+              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Creating new team specialists is restricted to admins." }) });
               continue;
             }
             const args = JSON.parse(tc.function.arguments || "{}");
@@ -12409,16 +12801,22 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // Propose→confirm: draft a consequential outbound action and FILE it as a
           // pending approval. Never sends here — the operator approves in the Live
           // desk, which runs execute-approval → send-message. Outbound comms are
-          // gated to admin|coach, matching send-message and the CRM operator tools.
+          // gated to admin, matching send-message and the CRM operator tools.
           try {
             const { data: roleRows } = await supabase
               .from("user_roles").select("role").eq("user_id", user.id);
             const roles = (roleRows || []).map((r: any) => r.role);
-            if (!(roles.includes("admin") || roles.includes("coach"))) {
-              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Proposing outbound client messages is restricted to admins and coaches." }) });
+            if (!roles.includes("admin")) {
+              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Proposing outbound client messages is restricted to admins." }) });
               continue;
             }
             const args = JSON.parse(tc.function.arguments || "{}");
+            // R2 — the draft is for a customer: one carrying internal text is not filed.
+            const draftProblem = await outboundDraftRefusal("propose_action", args, "filing");
+            if (draftProblem) {
+              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(draftProblem) });
+              continue;
+            }
             const actionType = String(args.action_type || "email").toLowerCase();
             const channel = actionType === "sms" ? "sms" : "email";
             const contactId = args.contact_id || scopedClientId || null;
@@ -12699,6 +13097,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(r) });
             } else {
               // calendar_link_send — the confirmed high-risk send. Forward the caller JWT to send-message.
+              // R2 — the message that goes out is read here: the card's stored one on an approval.
+              const sendProblem = await outboundDraftRefusal("calendar_link_send", args, approvalChannel.get(tc.id) === "operator_card" ? "approved" : "filing");
+              if (sendProblem) {
+                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(sendProblem) });
+                continue;
+              }
               const forwardedAuth = authHeader ?? ""; // string (the handler 401s above if the header is absent)
               const sendMessage: SendMessageFn = async (i) => {
                 try {
@@ -12738,7 +13142,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // service role `auth.uid()` is NULL, so `supabase` here would not read MORE — it would
           // read NOTHING and refuse. `supabaseClient` (anon key + caller JWT) is both the correct
           // and the only working choice. The admin client appears below for the receipt alone,
-          // because `record_capability_run` is granted to service_role only.
+          // because `record_capability_run` is granted to service_role only ON ITS 6-ARGUMENT
+          // SIGNATURE. The 10-arg overload (`20270107000000:94`, bound whenever correlation or
+          // detail is passed) shipped with NO ACL and defaults to PUBLIC EXECUTE; it never calls
+          // `auth.uid()`. MEASURED ON PROD 2026-09-24 (pg_proc.proacl): BOTH signatures already
+          // read `{postgres=X/postgres,service_role=X/postgres}`, so this is NOT an open hole.
+          // `20270416000000` is NOT applied and `20270107000000` carries no GRANT/REVOKE, so an
+          // out-of-band action set that ACL — the migration makes it reproducible from the repo.
           //
           // NO CONFIRM GATE, DELIBERATELY. These are reads: unclassified in action-risk.ts on
           // purpose, and their names carry no MUTATION_VERB segment, so `unclassifiedWriteReason`
@@ -12918,7 +13328,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // Bounded multi-round agentic loop. Round 0 reuses the first call already
       // issued above; each later round re-asks WITH tools so Paige can chain
       // actions, stopping on a natural (tool-less) reply or a safety bound.
-      const MAX_ROUNDS = 5, MAX_TOTAL_TOOL_CALLS = 12, WALL_CLOCK_MS = 45_000;
+      const MAX_ROUNDS = 5, MAX_TOTAL_TOOL_CALLS = 12;
+      const WALL_CLOCK_MS = PAIGE_INTERACTIVE_TURN_BUDGET_MS;
       // deep_research runs a full multi-hop investigation (its own ~60s clock) inside a
       // single tool call, so it counts as 3 against the turn's call budget — this keeps
       // two heavy deep runs from stacking in one turn while quick calls stay cheap.
@@ -13117,7 +13528,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         nav_pull_business_credit: "paige_business_credit_profiles",
         smartcredit_pull_snapshot: "paige_owner_credit_snapshots",
         coach_update_profile: "profiles",
-        coach_grant_role_globally: "user_roles", coach_revoke_role_globally: "user_roles",
         team_invite_mint: "invitations",
         agency_create_subaccount: "tenants", tenant_create: "tenants",
         tenant_set_status: "tenants", tenant_set_features: "tenants",
@@ -13197,8 +13607,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           if (risk === "unclassified" || risk === "owner_only") return;
           let args: any = {}; try { args = JSON.parse(tc?.function?.arguments ?? "{}"); } catch { /* ignore */ }
           let out: any = {}; try { out = JSON.parse(res?.content ?? "{}"); } catch { /* ignore */ }
-          // A proposal or a switched-off tool did not run.
-          if (out?.needs_confirm === true || out?.disabled === true) return;
+          // A proposal or a switched-off tool did not run, and neither did a refusal that says so
+          // (`refused_before_run`). Only refusals that declare it are skipped: the older terminals do
+          // not yet, and are still recorded as failed writes (#1460). NOT `executed: false`: an n8n
+          // management write returns that for a write that happened without a workflow run
+          // (_shared/n8n-management.ts), and it must stay on this trail.
+          if (out?.needs_confirm === true || out?.disabled === true || out?.refused_before_run === true) return;
+          // R2 — a draft for a customer refused for internal text never reached its write.
+          if (out?.error === "internal_text_in_draft") return;
           const n8nOutcome = N8N_MANAGEMENT_TOOL_NAMES.has(name);
           const failed = n8nOutcome ? out?.ok !== true : out?.success === false;
           const missionReplay = (name === "mission_create" || name === "mission_revise" || name === "mission_transition") && out?.replayed === true;
@@ -13304,15 +13720,34 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // to echo it back for the approval to bind to this exact call rather than to a boolean.
       const confirmTrace: Array<{ tool: string; summary: string; fingerprint?: string }> = [];
       const crmResultTrace: Array<Record<string, unknown>> = [];
+      // One authorization-neutral projection for success AND interrupted Live
+      // history. Never persist the live CRM readback, locator or contact payload.
+      const assistantTurnMetadata = () => ({
+        surfaces: stepTrace.filter((s) => s.kind !== "thought").map((s) => s.group).filter((v, i, a) => v && a.indexOf(v) === i),
+        bundleRef: (queuedApprovals.length || confirmTrace.length || crmResultTrace.length)
+          ? {
+              approval_queued: queuedApprovals,
+              paige_confirm: confirmTrace,
+              paige_crm_result: crmResultTrace.map((result) => ({
+                action: result.action,
+                outcome: result.outcome,
+                receipt_recorded: result.receipt_recorded,
+                ...(typeof result.external_effect === "boolean" ? { external_effect: result.external_effect } : {}),
+              })),
+            }
+          : null,
+      });
       const convo: any[] = [...aiMessages];
       let currentResponse = response;
       let totalToolCalls = 0;
       const seenSignatures = new Set<string>();
       let finalChunks: Uint8Array[] | null = null;
+      let liveAnswerPending = false;
       let forcedTermination = false;
       let tenantKnowledgeScopeInvalidated = false;
       // Accumulates Paige's final reply text so we can persist the turn (#94).
       let finalAssistantText = "";
+      let turnSavedSomething = false;
 
       // The agentic loop now runs INSIDE the response stream (#152) so Paige's
       // reasoning is watchable LIVE: each round streams her one-line narration
@@ -13323,8 +13758,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // guard, convo balance, and persistence are all preserved exactly.
       const enc = new TextEncoder();
       // NEUTRAL progress goes straight to the wire on every turn. An action step's label comes
-      // from a fixed vocabulary and its detail is a count — never source text, a title or a
-      // snippet — so it is safe to show while a protected answer is still being checked.
+      // from a fixed vocabulary and its detail is a fixed phrase or a count, with one exception:
+      // buying a number shows the number the model asked for. None of it is source text, a title
+      // or a snippet, so it is shown while a protected answer is still being checked. It is NOT
+      // read by the client-seat check (R3); on a client seat every tool the seat may not use is
+      // refused before it runs and renders no step, so the only step a client sees is the fixed
+      // label of the one write a client may make.
       const emitStep = (controller: ReadableStreamDefaultController, s: any) =>
         controller.enqueue(enc.encode(`data: ${JSON.stringify({ paige_step: s })}\n\n`));
       // PROTECTED content is held on a protected turn and released only after the final check.
@@ -13348,6 +13787,65 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         heldContent.length = 0;
       };
       const discardContent = () => { heldContent.length = 0; };
+      // WHAT BECAME OF EACH APPROVAL THE OPERATOR SENT, in the order they sent them — once per turn,
+      // however the turn ends (a reply, a changed workspace, a snag), so the card that asked never
+      // has to guess (_shared/approval-outcome.ts).
+      //
+      // DIRECT, not through `emitContent`, on the same line `emitStep` sits on: every sentence
+      // comes from a fixed vocabulary and every fingerprint is one the person's own screen sent,
+      // so nothing here quotes the evidence. Holding it with a protected reply would mean a turn
+      // whose reply is withheld also hides whether the person's approved change happened, and
+      // the card would then have to guess.
+      //
+      // It never throws. It runs on the exits that carry the turn's last word (a changed workspace,
+      // a snag, an interrupted Live answer), and nothing here may cost the client the frame it needs
+      // to settle — so a failure is logged, loudly, and the exit carries on.
+      let approvalOutcomeSent = false;
+      const emitApprovalOutcome = async (controller: ReadableStreamDefaultController) => {
+        if (approvalOutcomeSent || approvedConfirmations.size === 0) return;
+        approvalOutcomeSent = true;
+        try {
+          const tokens = [...approvedConfirmations];
+          const classified = tokens.map((token) => {
+            const spentBy = approvalSpend.get(token);
+            const tool = approvalTokenTool.get(token);
+            return spentBy !== undefined
+              ? classifySpentApproval(toolResultContent.get(spentBy), { reportsOk: tool !== undefined && N8N_MANAGEMENT_TOOL_NAMES.has(tool) })
+              : classifyUnspentApproval(tool ? approvalRefusals.get(tool) : approvalLookupFailed ? "lookup_failed" : undefined);
+          });
+          // An approval this request could not use may have been used before it, by a request that did
+          // the work — "didn't run" is then true of this request and false of the change. Only the
+          // stored row can say. If the look fails, nobody knows, and the card says so.
+          let usedEarlier: (token: string) => boolean | "unknown" = () => false;
+          const unrun = tokens.filter((_, i) => classified[i].outcome === "not_run");
+          if (unrun.length) {
+            try {
+              const { data, error } = await supabase.from("paige_pending_confirmations")
+                .select("fingerprint,issued_in_request")
+                .eq("user_id", user.id)
+                .in("fingerprint", [...new Set(unrun.map((token) => token.split(":")[0]))])
+                .not("consumed_at", "is", null)
+                .lt("consumed_at", approvalRequestStartedAt);
+              if (error) throw error;
+              const rows = (data ?? []) as Array<{ fingerprint: string; issued_in_request: string | null }>;
+              usedEarlier = (token) => {
+                const [fp, issued] = token.split(":");
+                return rows.some((row) => row.fingerprint === fp && (issued === undefined || row.issued_in_request === issued));
+              };
+            } catch (e) {
+              console.error("[paige] approval outcome: could not check for an earlier use", JSON.stringify({ correlation_id: requestNonce, message: (e as { message?: string })?.message ?? String(e) }));
+              usedEarlier = () => "unknown";
+            }
+          }
+          const approvalOutcome = buildApprovalOutcome(tokens.map((token, i) => ({
+            fingerprint: token,
+            ...settleUsedEarlier(classified[i], usedEarlier(token)),
+          })));
+          controller.enqueue(enc.encode(`data: ${JSON.stringify({ paige_approval_outcome: approvalOutcome })}\n\n`));
+        } catch (e) {
+          console.error("[paige] approval outcome frame not sent", JSON.stringify({ correlation_id: requestNonce, message: (e as { message?: string })?.message ?? String(e) }));
+        }
+      };
       const finalStream = new ReadableStream({
         async start(controller) {
          // §13/§36 — a client was named but could NOT be authorized, so this turn ran with no
@@ -13382,7 +13880,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               forcedTermination = true;
               break;
             }
-            if (!hasToolCall) { finalChunks = allChunks; finalAssistantText = content; break; }
+            if (!hasToolCall) {
+              if (liveRuntimeScope) liveAnswerPending = true;
+              else { finalChunks = allChunks; finalAssistantText = content; }
+              break;
+            }
             const realCalls = toolCalls.filter((tc: any) => tc && tc.function?.name);
             // #292 — ask_choices is a TURN-ENDER, not a backend call: the design agent is asking the
             // customer a clickable decision. Emit the chips as a paige_choices frame, persist the
@@ -13450,6 +13952,28 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             }
 
             const { toolResults, executed, scopeInvalidated } = await executeToolCalls(toolCalls, queuedApprovals);
+            // An approved call its card will report as "couldn't confirm" tells the model the same,
+            // before the model reads it, so Paige never says "that failed" beside a card that says
+            // check first (approval-outcome.ts).
+            if (approvalSpend.size) {
+              const spentBy = new Map([...approvalSpend].map(([token, callId]) => [callId, token]));
+              for (const r of toolResults) {
+                const token = spentBy.get(r.tool_call_id);
+                if (token === undefined) continue;
+                const tool = approvalTokenTool.get(token);
+                r.content = sayWhatTheCardSays(String(r.content ?? ""), { reportsOk: tool !== undefined && N8N_MANAGEMENT_TOOL_NAMES.has(tool) });
+              }
+            }
+            for (const r of toolResults) toolResultContent.set(r.tool_call_id, String(r.content ?? ""));
+            // R3 — whether anything on this turn was actually saved, by each write's own report, so a
+            // withheld answer can say so and the client does not send it again. Read after the
+            // rewrite above: a spent approval whose card will say "couldn't confirm" does not count.
+            for (const r of toolResults) {
+              const call = executed.find((c: any) => c?.id === r.tool_call_id);
+              if (call && MUTATING_TOOLS.has(call.function?.name) && resultSavedSomething(String(r.content ?? ""))) {
+                turnSavedSomething = true;
+              }
+            }
             if (scopeInvalidated) {
               tenantKnowledgeScopeInvalidated = true;
               forcedTermination = true;
@@ -13516,25 +14040,26 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             currentResponse = await gatewayCompat("anthropic", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ model: (studioSessionId || substantiveTurn) ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash", messages: convo, tools: toolDefs, tool_choice: "auto", stream: true }),
+              body: JSON.stringify({ model: (studioSessionId || substantiveTurn) ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash", messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto", stream: true }),
             }, traceFor("chat-tool-loop"));
             if (!currentResponse.ok) { forcedTermination = true; break; }
           }
 
-          // Hybrid final stream: replay a natural tool-less round verbatim, or issue a
-          // tools-less closing call when we terminated mid-flight.
+          // Text keeps its natural-round replay. Live streams the final answer
+          // only from this tools-free call, AFTER the governed tool decision.
+          // Protected turns still use emitContent's hold and final scope check.
           let finalStreamResponse: Response | null = null;
-          if (!finalChunks && forcedTermination && !tenantKnowledgeScopeInvalidated) {
+          if (!finalChunks && (forcedTermination || liveAnswerPending) && !tenantKnowledgeScopeInvalidated) {
             if (!(await revalidateTenantKnowledgeScope())) {
               tenantKnowledgeScopeInvalidated = true;
             }
           }
-          if (!finalChunks && forcedTermination && !tenantKnowledgeScopeInvalidated) {
+          if (!finalChunks && (forcedTermination || liveAnswerPending) && !tenantKnowledgeScopeInvalidated) {
             finalStreamResponse = await gatewayCompat("anthropic", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ model: (studioSessionId || substantiveTurn) ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash", messages: convo, stream: true }),
-            }, traceFor("chat-close"));
+            }, traceFor(liveAnswerPending ? "chat-live-answer" : "chat-close"));
           }
           // §13 — the wording matters here, and the previous wording was FALSE. Since the tool
           // dispatch guard became per-tool, a round can abort with earlier tools in the SAME
@@ -13544,6 +14069,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // already finished is saved" is true whether one tool ran or none did.
           if (tenantKnowledgeScopeInvalidated || !(await revalidateTenantKnowledgeScope())) {
             pendingTenantKbTelemetry = null;
+            // "Anything I'd already finished is saved" — and the card says which of the approvals that was.
+            await emitApprovalOutcome(controller);
             const changed = "Your active workspace changed, so I stopped here. Anything I'd already finished is saved. Try again in the current workspace.";
             controller.enqueue(enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: changed } }] })}\n\n`));
             controller.enqueue(enc.encode("data: [DONE]\n\n"));
@@ -13646,9 +14173,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // said. A refusal that leaves the summary of the answer visible is not a refusal.
           //
           // `emitStep` stays direct, and that distinction is the whole line: a step's label
-          // comes from a fixed vocabulary and its detail is a count, so it names an activity
-          // without ever quoting the evidence.
+          // comes from a fixed vocabulary and its detail is a fixed phrase or a count (buying a
+          // number shows the number asked for), so it names an activity without quoting the
+          // evidence.
           if (queuedApprovals.length) emitContent(controller, enc.encode(`data: ${JSON.stringify({ approval_queued: queuedApprovals })}\n\n`));
+          // What became of each approval the operator sent (see `emitApprovalOutcome`).
+          await emitApprovalOutcome(controller);
           for (const c of confirmTrace) emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_confirm: c })}\n\n`));
           for (const result of crmResultTrace) emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_crm_result: result })}\n\n`));
           // #292 — tell the Studio canvas the exact artifact this turn produced (server-authoritative;
@@ -13689,24 +14219,42 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // Buffer across reads so a `data:` record split over two reads still
             // contributes its delta to the persisted text (#94 integrity).
             let capBuf = "";
+            let finalStreamDone = false;
             const capLine = (line: string) => {
-              if (!line.startsWith("data: ") || line.includes("[DONE]")) return;
-              try { const c = JSON.parse(line.slice(6))?.choices?.[0]?.delta?.content; if (c) finalAssistantText += c; } catch { /* skip */ }
+              if (!line.startsWith("data: ") || (liveRuntimeScope && finalStreamDone)) return;
+              if (line.slice(6).trim() === "[DONE]") { finalStreamDone = true; return; }
+              try {
+                const parsed = JSON.parse(line.slice(6));
+                if (liveRuntimeScope && parsed.error) throw new Error("live_answer_failed");
+                const c = parsed?.choices?.[0]?.delta?.content;
+                if (liveRuntimeScope) emitContent(controller, new TextEncoder().encode(`${line}\n\n`));
+                if (c) finalAssistantText += c;
+              } catch (error) { if (liveRuntimeScope) throw error; }
             };
             try {
-              while (true) {
+              while (!liveRuntimeScope || !finalStreamDone) {
                 const { done, value } = await up.read();
                 if (done) break;
-                emitContent(controller, value);
+                if (!liveRuntimeScope) emitContent(controller, value);
                 capBuf += dec.decode(value, { stream: true });
                 let nl: number;
                 while ((nl = capBuf.indexOf("\n")) !== -1) { capLine(capBuf.slice(0, nl)); capBuf = capBuf.slice(nl + 1); }
               }
             } finally {
+              if (!liveRuntimeScope) {
+                capBuf += dec.decode();
+                if (capBuf) capLine(capBuf);
+              }
+            }
+            if (liveRuntimeScope) {
               capBuf += dec.decode();
               if (capBuf) capLine(capBuf);
+              if (!finalStreamDone || !finalAssistantText.trim()) throw new Error("live_answer_incomplete");
+              void up.cancel().catch(() => {});
+              emitContent(controller, new TextEncoder().encode("data: [DONE]\n\n"));
             }
           } else {
+            if (liveRuntimeScope) throw new Error("live_answer_unavailable");
             // Couldn't finish. Show the fallback AND persist it, so a reload
             // shows the same thing the user saw (not a question with no reply).
             const fallback = "I gathered what I could but couldn't finish that — mind trying again?";
@@ -13776,6 +14324,44 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             } catch { /* client already gone */ }
             return;
           }
+
+          // R3 — A CLIENT SEAT READS NOTHING THAT HAS NOT BEEN READ FIRST. What the portal renders from
+          // a held turn is the answer and each thought line, so those are what the check reads, from
+          // the held frames themselves: exactly what `releaseContent` would send, not a copy assembled
+          // beside them. The saved answer is read too: non-load-bearing today, because everything it holds
+          // also arrives as a frame (mutation-verified: reading the frames alone leaves the suite green),
+          // and kept so that a later edit which saves text it did not stream cannot put an unread answer
+          // in the thread. On a finding the whole held turn is dropped, not trimmed: what is
+          // left of a sentence once its internal words are cut out says something the model did not,
+          // and a client cannot tell. The client reads one fixed sentence instead, and that sentence
+          // is what the thread keeps, so a reload shows what the wire did. The cards held beside the
+          // answer go with it; the portal chat does not render cards today, and a card built from
+          // this turn is not trusted by a turn whose answer was not.
+          const withheld = withheldForClientSeat(clientSeatReadsBeforeRelease
+            ? [...readableFromFrames(decodeChunks(heldContent)), finalAssistantText]
+            : [], { savedSomething: turnSavedSomething });
+          if (withheld !== null) {
+            // Non-load-bearing today, as on the refusal path above: the `return` below means nothing
+            // held is flushed. Kept for the same reason, so a later edit that adds a flush here cannot
+            // release the withheld turn. Mutation-verified: removing it alone, or adding a release
+            // alone, leaves the suite green; both together do not.
+            discardContent();
+            pendingTenantKbTelemetry = null;
+            finalAssistantText = withheld;
+            try {
+              controller.enqueue(enc.encode(WITHHELD_FRAME));
+              controller.enqueue(enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: withheld } }] })}\n\n`));
+              controller.enqueue(enc.encode("data: [DONE]\n\n"));
+            } catch { /* client already gone */ }
+            if (payloadThreadId) {
+              try {
+                const p = persistAssistantTurn(withheld, { bundleRef: null });
+                // @ts-ignore — EdgeRuntime is available in Supabase Edge Functions runtime
+                if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(p); else await p;
+              } catch (e) { console.error("[paige] persist assistant turn failed:", (e as Error)?.message); }
+            }
+            return;
+          }
           releaseContent(controller);
 
           // The durable record follows that same single decision. It used to sit behind its own
@@ -13793,35 +14379,41 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // the check holds.
           if (payloadThreadId && finalAssistantText.trim()) {
             try {
-              const p = persistAssistantTurn(finalAssistantText, {
-                // Surfaces reflect executed WORK — thoughts (narration) don't count.
-                surfaces: stepTrace.filter((s) => s.kind !== "thought").map((s) => s.group).filter((v, i, a) => v && a.indexOf(v) === i),
-                // A live result may contain contact PII. Durable thread history is coach-owned and
-                // can outlive a later reassignment, so persist only the authorization-neutral
-                // receipt projection. The live card keeps its readback and locator for the
-                // currently-authorized request; a reload never becomes a stale access path.
-                bundleRef: (queuedApprovals.length || confirmTrace.length || crmResultTrace.length)
-                  ? {
-                      approval_queued: queuedApprovals,
-                      paige_confirm: confirmTrace,
-                      paige_crm_result: crmResultTrace.map((result) => ({
-                        action: result.action,
-                        outcome: result.outcome,
-                        receipt_recorded: result.receipt_recorded,
-                        ...(typeof result.external_effect === "boolean" ? { external_effect: result.external_effect } : {}),
-                      })),
-                    }
-                  : null,
-              });
+              const p = persistAssistantTurn(finalAssistantText, assistantTurnMetadata());
               // @ts-ignore — EdgeRuntime is available in Supabase Edge Functions runtime
               if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(p); else await p;
             } catch (e) { console.error("[paige] persist assistant turn failed:", (e as Error)?.message); }
           }
          } catch (e) {
+           if (liveRuntimeScope) {
+             // A partly spoken answer is not a successful turn. Keep exactly
+             // the released, unprotected text in this same thread; never save
+             // protected text that the caller has not received. No DONE means
+             // the signed-output wrapper cannot mint a success receipt.
+             console.error("[paige] Live answer interrupted");
+             discardContent();
+             const interruptedMeta = assistantTurnMetadata();
+             if (!turnCarriesProtectedContent() && payloadThreadId && (finalAssistantText.trim() || interruptedMeta.bundleRef)
+               && await revalidateTenantKnowledgeScope()) {
+               try {
+                 await persistAssistantTurn(finalAssistantText, interruptedMeta);
+               } catch { console.error("[paige] partial Live answer persistence failed"); }
+             }
+             // What became of the approvals, then the error frame the Live client settles on — each
+             // on its own, so the one can never cost the client the other.
+             await emitApprovalOutcome(controller);
+             try {
+               controller.enqueue(enc.encode(`data: ${JSON.stringify({ paige_live_error: "answer_interrupted" })}\n\n`));
+             } catch { /* caller already left */ }
+             return;
+           }
            // The live loop or final stream failed mid-flight. Never leave the client
            // with a truncated stream — emit a clean fallback reply and a [DONE].
            console.error("[paige] live reasoning stream failed:", (e as Error)?.message);
            const snag = "I hit a snag finishing that — mind trying again?";
+           // Before the invitation to try again: the card says what already ran, so trying again is
+           // never the way something happens twice.
+           await emitApprovalOutcome(controller);
            try {
              controller.enqueue(enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: snag } }] })}\n\n`));
              controller.enqueue(enc.encode("data: [DONE]\n\n"));
@@ -13840,7 +14432,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
          }
         },
       });
-      return new Response(finalStream, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
+      return new Response(liveOutput(finalStream), { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
     }
 
     // With document: intercept stream to accumulate response, then trigger background sync
@@ -13901,12 +14493,24 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           directSseBuf += decoder.decode(); // flush; process any trailing line
           if (directSseBuf) {
             for (const line of directSseBuf.split("\n")) {
-              if (!line.startsWith("data: ") || line.includes("[DONE]")) continue;
+              if (!line.startsWith("data: ") || line.slice(6).trim() === "[DONE]") continue;
               if (holdProtectedContent) directFrames.push(`${line}\n\n`);
               try { const c = JSON.parse(line.slice(6))?.choices?.[0]?.delta?.content; if (c) fullAssistantResponse += c; } catch { /* skip */ }
             }
             directSseBuf = "";
           }
+          // R3 — ON A CLIENT SEAT THE ANSWER IS READ HERE, before the close-out below, because the
+          // close-out reads it: the credit extraction takes this answer as its input and writes a
+          // report summary, an analysis and an awaiting-review proposal from it. An answer the client
+          // is not shown must not become rows, so on a finding nothing below extracts from it, and the
+          // release point after the close decision sends the one sentence instead. Read from the held
+          // frames themselves, as on the agentic path, and from the saved answer. This path streams no
+          // thought lines, so today the two carry the same text and either read alone leaves the suite
+          // green (mutation-verified); both are kept so neither the wire nor the thread can hold
+          // something the check did not read.
+          const clientSeatWithheld = withheldForClientSeat(clientSeatReadsBeforeRelease
+            ? [...readableFromFrames(directFrames.join("")), fullAssistantResponse]
+            : []);
           // The close-out frames below (`sync_status`, `extraction_proposal`) are PROTECTED
           // CONTENT and take the same buffer the reply takes, released by the same single close
           // decision. They were going straight to the wire, which meant a turn whose reply was
@@ -13927,7 +14531,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // NAMED client's report — scores, negative items, accounts — into the CALLER's own
           // credit records, unscoped. Storing the file under the caller (above) is a safe
           // degrade; synthesising another subject's credit profile into their file is not.
-          if (clientScopeDenied) {
+          if (clientSeatWithheld !== null) {
+            // Nothing is extracted from an answer that was withheld; the client can ask again.
+          } else if (clientScopeDenied) {
             console.error(
               "[paige] client scope REFUSED — credit extraction and sync SKIPPED",
               JSON.stringify({ reason: clientScopeRefusal }),
@@ -14015,11 +14621,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 // and never walked CONSUMERS of this frame. Both halves are the contract.
                 emitCloseFrame(`data: ${JSON.stringify({ sync_status: { success: false, awaiting_review: true, nothing_to_propose: true, error: "I read the document, but nothing in it was clear enough to be worth saving to the profile." } })}\n\n`);
               } else {
-                emitCloseFrame(`data: ${JSON.stringify({ sync_status: syncResult })}\n\n`);
+                // R3b — the uploader reads the panel's own fields and a fixed sentence, never the
+                // pipeline's exception text, validation messages or step name; those stay in the log.
+                if (syncResult?.success !== true) console.warn("[paige] credit report sync did not complete", JSON.stringify({ step: syncResult?.step ?? null }));
+                emitCloseFrame(`data: ${JSON.stringify({ sync_status: syncStatusForClient(syncResult, personaCtx.tenant_name) })}\n\n`);
               }
             } catch (err) {
               console.error("Extraction pipeline error:", err);
-              emitCloseFrame(`data: ${JSON.stringify({ sync_status: { success: false, error: err instanceof Error ? err.message : "Unknown extraction error" } })}\n\n`);
+              emitCloseFrame(`data: ${JSON.stringify({ sync_status: syncStatusForClient({ success: false, step: "pipeline_exception" }, personaCtx.tenant_name) })}\n\n`);
             }
           } else if (extractionProposal && extractionProposal.fields?.length > 0) {
             // General document path: emit extraction proposal for inline confirmation card.
@@ -14037,6 +14646,18 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // Returns `true` immediately, with no RPC, on any turn that retrieved no Knowledge, so
           // this costs nothing on the ordinary path.
           const scopeHeldAtClose = await revalidateTenantKnowledgeScope();
+
+          // R3 — THE RELEASE HALF of the decision made before the close-out. On a finding every held
+          // frame is replaced by the one sentence and the thread keeps that sentence, so the thread row,
+          // the analytics rows (which read `fullAssistantResponse`, the sentence by then) and the wire
+          // agree. The close frames go with the answer, as the cards do on the agentic path.
+          if (scopeHeldAtClose && clientSeatWithheld !== null) {
+            fullAssistantResponse = clientSeatWithheld;
+            pendingTenantKbTelemetry = null;
+            directFrames.length = 0;
+            directFrames.push(WITHHELD_FRAME);
+            directFrames.push(`data: ${JSON.stringify({ choices: [{ delta: { content: clientSeatWithheld } }] })}\n\n`);
+          }
 
           // Detect Paige's outputs for analytics: entity diagrams + legal flags.
           //
@@ -14166,7 +14787,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         while ((nl = directSseBuf.indexOf("\n")) !== -1) {
           const line = directSseBuf.slice(0, nl);
           directSseBuf = directSseBuf.slice(nl + 1);
-          if (!line.startsWith("data: ") || line.includes("[DONE]")) continue;
+          if (!line.startsWith("data: ") || line.slice(6).trim() === "[DONE]") continue;
           if (holdProtectedContent) directFrames.push(`${line}\n\n`);
           try {
             const parsed = JSON.parse(line.slice(6));
@@ -14179,7 +14800,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       },
     });
 
-    return new Response(stream, {
+    return new Response(liveOutput(stream), {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (error) {
@@ -14734,7 +15355,17 @@ export async function runStructuredExtractionAndSync(
       memory_type: "report_upload",
       content: memoryContent,
     };
-    if (clientId) memoryInsert.client_id = clientId;
+    if (clientId) {
+      memoryInsert.client_id = clientId;
+    } else {
+      // A row about the caller takes the caller's active tenant, read through the caller's own session
+      // (this client is service-role). Null leaves the database to refuse the row rather than guess.
+      const caller = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: callerTenant, error: callerTenantErr } = await caller.rpc("current_user_tenant_id");
+      memoryInsert.tenant_id = callerTenantErr ? null : (callerTenant ?? null);
+    }
     const remembered = await writeIfScopeCurrent("client_memory", () => supabase.from("client_memory").insert(memoryInsert));
     if (remembered !== "ok") return stoppedBy(remembered, "client_memory");
 

@@ -31,6 +31,8 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { tenantSwitchPersisted } from "@/lib/platform/fleetCommunications";
+import { ACCOUNT_SWITCH_NOTICE_KEY, forgetOperatorActAs, operatorActAsRecorded, recordOperatorActAs } from "@/lib/auth/workspaceEntry";
+import { registerSignOutActAsGuard } from "@/lib/auth/signOut";
 
 /**
  * #233 — on a GENUINE new sign-in, reset the active tenant to the user's HOME.
@@ -146,6 +148,44 @@ interface TenantContextState {
    */
   agencyShellEnabled: boolean;
   switchTenant: (tenantId: string | null) => Promise<boolean>;
+  /**
+   * End an operator act-as through the audited `operator_exit_tenant`, whatever this provider's own
+   * read concluded. For a destination whose account read failed: there `isPlatformStaff` is still
+   * false, so `switchTenant(null)` would take the member path and record no exit. The server gates
+   * the RPC on `is_platform_operator()`; a non-operator is simply refused.
+   */
+  exitOperatorActAs: () => Promise<boolean>;
+  /**
+   * End the act-as on the tenant this surface shows, and only that one. A stale tab whose tenant's
+   * act-as already ended — and another tenant's has since opened in another tab — gets `moved` and
+   * ends nothing; `refused` means the exit did not happen and the tenant is still open.
+   */
+  exitOperatorActAsFrom: (tenantId: string) => Promise<"exited" | "refused" | "moved">;
+  /**
+   * Begin an operator act-as through the audited `operator_enter_tenant`. A transport failure is not
+   * a refusal — the enter may have committed with its response lost — so on any error the caller's
+   * own pointer is read back: `entered` if it now holds the tenant, `refused` if it confirmably does
+   * not, `unknown` if even that read fails. Only `refused` may be reported as "nothing was recorded".
+   *
+   * The scope is read FIRST, so an entry is never recorded over an open act-as (the console shows
+   * platform scope after a reload, so a second press there would otherwise duplicate or overwrite
+   * it): already in this tenant lands with no new entry, another tenant open is `occupied`, and an
+   * unreadable scope is `unknown` with nothing sent.
+   */
+  enterOperatorActAs: (tenantId: string) => Promise<"entered" | "refused" | "unknown" | "occupied">;
+  /**
+   * Ask the server, afresh, whether the caller is an operator with an open act-as. For a destination
+   * whose account read failed and that holds no local record of the act-as (blocked storage, or a
+   * navigation that dropped the arrival flag). A failed read is `unknown`, never "not acting".
+   */
+  probeOperatorActAs: () => Promise<"acting" | "not_acting" | "unknown">;
+  /**
+   * Run before any sign-out a person chooses. Signing out clears this browser, not the server, so
+   * an operator's open act-as is ended through the audited exit first. `clear` means sign-out may
+   * proceed; `refused` means the exit did not happen; `unknown` means Paige could not tell whether
+   * an act-as is open. A member whose account context is loaded is `clear` with no network call.
+   */
+  endActAsBeforeSignOut: () => Promise<"clear" | "refused" | "unknown">;
   refresh: () => Promise<void>;
 }
 
@@ -172,6 +212,11 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   const subjectEpochRef = useRef(0);
   const sessionUidRef = useRef<string | null>(null);
   const hasAcceptedContextRef = useRef(false);
+  // Advanced by every successful scope change: an operator enter or exit, or a member's switch. A
+  // load that began before one answers with the scope as it was, so it must commit NOTHING — not the
+  // old active tenant, not the act-as record. Otherwise the browser reports a scope the server has
+  // already left, and a second exit could be recorded from it.
+  const scopeEpochRef = useRef(0);
   // The uid resolved by the last successful load — captured so the SIGNED_OUT
   // handler (whose session is already null) can clear THIS user's freshness
   // marker for the correct per-uid key (fold-fix #5).
@@ -193,6 +238,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   // the blocking loader (there's no prior state to preserve) so the gate resolves once.
   const load = useCallback(async (background = false) => {
     const loadId = ++nextLoadIdRef.current;
+    const scopeEpochAtStart = scopeEpochRef.current;
     let loadSubjectEpoch = subjectEpochRef.current;
     let acceptedThisLoad = false;
     if (!background) {
@@ -239,6 +285,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         acceptedThisLoad = true;
         activeUidRef.current = null;
         setActiveUserId(null);
+        forgetOperatorActAs();
         hasAcceptedContextRef.current = false;
         setTenants([]);
         setActiveTenantId(null);
@@ -288,12 +335,15 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       // last-SUCCESSFUL-read guard, not a last-started-read guard: a transiently
       // failed background refresh must not suppress a valid foreground result.
       if (loadSubjectEpoch !== subjectEpochRef.current || loadId < acceptedLoadIdRef.current) return;
+      // A scope change landed while this read was in flight: its answer is the scope as it was.
+      if (scopeEpochAtStart !== scopeEpochRef.current) return;
       acceptedLoadIdRef.current = loadId;
       acceptedThisLoad = true;
       activeUidRef.current = uid;
       setActiveUserId(uid);
       const stillAuthoritative = () =>
-        loadSubjectEpoch === subjectEpochRef.current && loadId === acceptedLoadIdRef.current;
+        loadSubjectEpoch === subjectEpochRef.current && loadId === acceptedLoadIdRef.current
+        && scopeEpochAtStart === scopeEpochRef.current;
 
       setIsPlatformOwner(Boolean(owner.data));
       setIsPlatformStaff(Boolean(staff.data));
@@ -324,6 +374,8 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         profileRes.data?.active_tenant_id ??
         (staff.data ? null : (tenantsRes.data?.[0] as unknown as TenantSummary | undefined)?.id ?? null);
       setActiveTenantId(baseActiveTenantId);
+      // The scope this load ends on, for the act-as record below.
+      let committedActiveTenantId = baseActiveTenantId;
 
       // --- #233: on a GENUINE new sign-in, reset the active tenant to the user's
       // HOME so a fresh login lands on home instead of wherever the last session
@@ -389,11 +441,19 @@ export function TenantProvider({ children }: { children: ReactNode }) {
             // Commit + invalidate ONLY after the write succeeds, then burn the
             // marker LAST (fold-fix #1) so the reset is never lost on a bail.
             setActiveTenantId(home);
+            committedActiveTenantId = home;
             queryClient.invalidateQueries();
             burnHandledSignIn(uid, lastSignInAt);
           }
         }
       }
+      // The act-as record follows the server whenever the server can be read: an operator with an
+      // active tenant holds one, anyone else holds none. Scope moves that bypass enter/exit (the
+      // fresh-login reset above, another tab, a duplicated tab's copied storage) cannot leave a
+      // stale record that would later offer an exit from an act-as that is not open.
+      // (A load that saw a scope change never reaches here: see the checks above.)
+      if (staff.data && committedActiveTenantId) recordOperatorActAs(uid, committedActiveTenantId);
+      else forgetOperatorActAs();
       hasAcceptedContextRef.current = true;
       setAccountContextStatus("ready");
     } catch {
@@ -438,6 +498,8 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         // uid captured on the last successful load, not a read-back of the session.
         const priorUid = activeUidRef.current;
         if (priorUid) clearHandledSignIn(priorUid);
+        // An act-as belongs to the session that opened it; the next person in this tab has none.
+        forgetOperatorActAs();
         activeUidRef.current = null;
         load(true);
         return;
@@ -455,6 +517,111 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     });
     return () => subscription.unsubscribe();
   }, [load]);
+
+  const readOwnScope = useCallback(async (): Promise<{ ok: true; activeTenantId: string | null } | { ok: false }> => {
+    const { data: auth } = await supabase.auth.getUser();
+    const uid = auth.user?.id;
+    if (!uid) return { ok: false };
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("active_tenant_id")
+      .eq("user_id", uid)
+      .maybeSingle();
+    if (error) return { ok: false };
+    return { ok: true, activeTenantId: (data as { active_tenant_id?: string | null } | null)?.active_tenant_id ?? null };
+  }, []);
+
+  const enterOperatorActAs = useCallback(async (tenantId: string) => {
+    const { data: auth } = await supabase.auth.getUser();
+    const uid = auth.user?.id;
+    if (!uid) return "refused" as const;
+    const before = await readOwnScope();
+    if (!before.ok) return "unknown" as const;
+    if (before.activeTenantId && before.activeTenantId !== tenantId) return "occupied" as const;
+    if (before.activeTenantId !== tenantId) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: rpcError } = await supabase.rpc("operator_enter_tenant" as any, { _tenant: tenantId });
+      if (rpcError) {
+        const scope = await readOwnScope();
+        if (!scope.ok) return "unknown" as const;
+        // Another tab can enter between the read above and this call; the server then refuses this
+        // one (operator_scope_occupied), and the pointer read back names the act-as that is open.
+        if (scope.activeTenantId && scope.activeTenantId !== tenantId) return "occupied" as const;
+        if (scope.activeTenantId !== tenantId) return "refused" as const;
+      }
+    }
+    scopeEpochRef.current += 1;
+    recordOperatorActAs(uid, tenantId);
+    setActiveTenantId(tenantId);
+    queryClient.invalidateQueries();
+    return "entered" as const;
+  }, [queryClient, readOwnScope]);
+
+  const probeOperatorActAs = useCallback(async (): Promise<"acting" | "not_acting" | "unknown"> => {
+    const [staff, scope] = await Promise.all([supabase.rpc("is_platform_admin"), readOwnScope()]);
+    if (staff.error) return "unknown";
+    if (staff.data !== true) return "not_acting";
+    if (!scope.ok) return "unknown";
+    return scope.activeTenantId ? "acting" : "not_acting";
+  }, [readOwnScope]);
+
+  const commitOperatorExit = useCallback(() => {
+    scopeEpochRef.current += 1;
+    forgetOperatorActAs();
+    // An "Acting as … recorded" notice still waiting for a shell that never mounted now announces an
+    // act-as that has ended; the next workspace opened must not show it.
+    try {
+      sessionStorage.removeItem(ACCOUNT_SWITCH_NOTICE_KEY);
+    } catch {
+      // Storage unavailable: then no notice was stored either.
+    }
+    setActiveTenantId(null);
+    queryClient.invalidateQueries();
+  }, [queryClient]);
+
+  const exitOperatorActAs = useCallback(async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: rpcError } = await supabase.rpc("operator_exit_tenant" as any);
+    if (rpcError) {
+      // The exit may have committed with its response lost; retrying would record a second, false
+      // exit. Read the pointer back and treat a confirmed empty scope as exited.
+      const scope = await readOwnScope();
+      if (!scope.ok || scope.activeTenantId) return false;
+    }
+    commitOperatorExit();
+    return true;
+  }, [commitOperatorExit, readOwnScope]);
+
+  const exitOperatorActAsFrom = useCallback(async (tenantId: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let { error: rpcError } = await supabase.rpc("operator_exit_tenant" as any, { _expected: tenantId });
+    if (rpcError?.code === "PGRST202") {
+      // The server does not have the bound exit yet (its migration is not applied). The operator's
+      // way out still works through the unbound exit every server has, but only after this client
+      // checks what the bound exit would have: a stale tab must not end the act-as another tab has
+      // opened since, and an act-as that already ended needs no second exit row. A tab can still
+      // enter between this read and the exit; the server closes that window once the migration is
+      // applied, and this branch is dormant from then on.
+      const scope = await readOwnScope();
+      if (!scope.ok) return "refused" as const;
+      if (scope.activeTenantId && scope.activeTenantId !== tenantId) return "moved" as const;
+      if (!scope.activeTenantId) {
+        commitOperatorExit();
+        return "exited" as const;
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ({ error: rpcError } = await supabase.rpc("operator_exit_tenant" as any));
+    }
+    if (rpcError) {
+      // Refused, lost, or the open act-as is another tenant's: the pointer read back says which.
+      const scope = await readOwnScope();
+      if (!scope.ok) return "refused" as const;
+      if (scope.activeTenantId && scope.activeTenantId !== tenantId) return "moved" as const;
+      if (scope.activeTenantId) return "refused" as const;
+    }
+    commitOperatorExit();
+    return "exited" as const;
+  }, [commitOperatorExit, readOwnScope]);
 
   const switchTenant = useCallback(async (tenantId: string | null) => {
     const { data: auth } = await supabase.auth.getUser();
@@ -476,17 +643,10 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     // so this branch is a convenience, never the authority — a non-operator who
     // reached it would simply be refused (§9/§59).
     if (isPlatformStaff) {
-      const { error: rpcError } = tenantId
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ? await supabase.rpc("operator_enter_tenant" as any, { _tenant: tenantId })
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        : await supabase.rpc("operator_exit_tenant" as any);
-      // Same failure contract as the direct write below: a refused or failed switch
-      // does NOT move client scope, so client and DB can never disagree (§9).
-      if (rpcError) return false;
-      setActiveTenantId(tenantId);
-      queryClient.invalidateQueries();
-      return true;
+      if (!tenantId) return exitOperatorActAs();
+      // Same failure contract as the direct write below: a refused switch does NOT move client
+      // scope, so client and DB can never disagree (§9). An unknown outcome moves nothing either.
+      return (await enterOperatorActAs(tenantId)) === "entered";
     }
 
     // Persist FIRST so a rejected profile write can never leave browser scope and
@@ -498,12 +658,13 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       .select("user_id")
       .maybeSingle();
     if (!tenantSwitchPersisted(uid, persisted, error)) return false;
+    scopeEpochRef.current += 1;
     // The one shared provider now commits the verified switch to every consumer.
     setActiveTenantId(tenantId);
     // Scope changed for everything — a broad invalidate is correct here (§9).
     queryClient.invalidateQueries();
     return true;
-  }, [queryClient, isPlatformStaff]);
+  }, [queryClient, isPlatformStaff, exitOperatorActAs, enterOperatorActAs]);
 
   const activeTenant = tenants.find((t) => t.id === activeTenantId) ?? null;
 
@@ -513,6 +674,23 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
   // §57 config-as-data: derive the Agency-shell flag from ONLY the active tenant's own
   // features (§51-safe — no cross-tenant read, no request param). Absent flag → false.
+  const endActAsBeforeSignOut = useCallback(async (): Promise<"clear" | "refused" | "unknown"> => {
+    // A member the server has confirmed has nothing to end, and pays for no network call — whatever
+    // this browser's record or a URL flag says, since a member cannot hold an act-as.
+    if (accountContextStatus === "ready" && !isPlatformStaff) return "clear";
+    const recorded = operatorActAsRecorded(activeUserId);
+    if (!recorded && !(accountContextStatus === "ready" && activeTenantId)) {
+      // An operator this tab believes is at rest, or anyone whose context did not load: ask the
+      // server, because another tab can have opened an act-as this provider has not seen.
+      const probed = await probeOperatorActAs().catch(() => "unknown" as const);
+      if (probed !== "acting") return probed === "not_acting" ? "clear" : "unknown";
+    }
+    return (await exitOperatorActAs()) ? "clear" : "refused";
+  }, [accountContextStatus, activeTenantId, activeUserId, exitOperatorActAs, isPlatformStaff, probeOperatorActAs]);
+
+  // Every sign-out, from any surface, runs this first (performSignOut consults it).
+  useEffect(() => registerSignOutActAsGuard(endActAsBeforeSignOut), [endActAsBeforeSignOut]);
+
   const agencyShellEnabled = activeTenant?.features?.agency_shell_enabled === true;
 
   const value: TenantContextState = {
@@ -528,6 +706,11 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     soloShellEnabled,
     agencyShellEnabled,
     switchTenant,
+    exitOperatorActAs,
+    exitOperatorActAsFrom,
+    enterOperatorActAs,
+    probeOperatorActAs,
+    endActAsBeforeSignOut,
     // Always a foreground refresh — wrapped so an event-handler caller (onClick={refresh})
     // can't pass its event as the `background` arg and silently skip the loader/commit.
     refresh: () => load(),
@@ -547,4 +730,14 @@ export function useTenantContext(): TenantContextState {
     throw new Error("useTenantContext must be used within a <TenantProvider> (see App.tsx).");
   }
   return ctx;
+}
+
+/**
+ * The shared tenant context, or null outside a <TenantProvider>. For shared data hooks that also
+ * render in isolation (tests, previews) and only need to NARROW a read to the active workspace —
+ * never for deciding who the caller is. Everything that needs the context to exist uses
+ * useTenantContext(), which throws on a mis-mount.
+ */
+export function useOptionalTenantContext(): TenantContextState | null {
+  return useContext(TenantContext);
 }

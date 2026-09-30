@@ -22,6 +22,10 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
+import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses, type WithClientContactMethods } from "@/lib/contact-methods";
+
+// Widened to string: the generated types do not know the contact-methods embed yet.
+const JOURNEY_CLIENT_SELECT: string = `id, first_name, last_name, linked_user_id, journey_stage_id, journey_stage_slug, journey_stage_entered_at, created_at, ${CLIENT_CONTACT_METHODS_EMBED}`;
 
 // Shape returned by get_tenant_journey_stages(): the tenant-authored journey when
 // one is installed, else the platform default. Slug is the source of truth; there
@@ -116,7 +120,7 @@ export default function ClientJourney() {
         // `as never`: RPC lands in generated types after the migration applies (types
         // regen is task #234); it's real on prod once this slice's migration ships.
         supabase.rpc("get_tenant_journey_stages" as never),
-        supabase.from("clients").select("id, first_name, last_name, email, linked_user_id, journey_stage_id, journey_stage_slug, journey_stage_entered_at, created_at").eq("id", contactId).maybeSingle(),
+        supabase.from("clients").select(JOURNEY_CLIENT_SELECT).eq("id", contactId).maybeSingle(),
       ]);
       if (stagesRes.error) throw stagesRes.error;
       if (contactRes.error) throw contactRes.error;
@@ -125,7 +129,10 @@ export default function ClientJourney() {
         .slice()
         .sort((a, b) => a.display_order - b.display_order);
       setStages(stageList);
-      setClient(contactRes.data as unknown as Client);
+      // `email` is the contact's PRIMARY address, from its contact methods. Everything below reads
+      // this derived row; the raw row carries no email.
+      const contact = withPrimaryAddresses(contactRes.data as unknown as Omit<Client, "email"> & WithClientContactMethods);
+      setClient(contact);
 
       const trRes = await supabase
         .from("paige_journey_stage_transitions")
@@ -137,7 +144,7 @@ export default function ClientJourney() {
       const tr = (trRes.data || []) as unknown as Transition[];
       setTransitions(tr);
 
-      const composed = await composeTimeline(contactRes.data as unknown as Client, tr, stageList);
+      const composed = await composeTimeline(contact, tr, stageList);
       setEvents(composed);
     } catch (e: unknown) {
       console.error(e);

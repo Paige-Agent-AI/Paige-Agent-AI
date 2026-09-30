@@ -20,7 +20,7 @@ across all Harness work is not live." Grounded:
   six-outcome vocabulary — `capability_succeeded | failed | refused | unreachable |
   outcome_unknown | completed_unrecorded` — where the sixth exists precisely so "the act
   landed but its record did not" (e.g. Twilio charged, row unwritten) is never collapsed
-  into `failed`. Membership-validated, `SECURITY DEFINER`, service-role-only.
+  into `failed`. Membership-validated **on the argument subject, not the caller**, `SECURITY DEFINER`, service-role-only — on the 6-argument signature. The 10-argument overload added by `20270107000000` carried no ACL until `20270416000000` (in the repo; MEASURED 2026-09-24 -- prod already service-role-only on both signatures, so the hole is not live).
 - **Recording happens at the executor, by design.** `_shared/capability-record.ts` is the
   one home for HOW (a design crew rejected the central-dispatch-hook alternative for four
   documented failure modes, including the anon-key permission-denied silence). Adopters:

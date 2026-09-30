@@ -6,6 +6,265 @@ RED-LINE index and the §-doctrine; this file is the fast-lookup version.
 
 ---
 
+### "Handled by another path" is a claim — name the path, or the case is open (2026-09-26)
+
+**Symptom.** #1458's first head refused a shortened id before it could become an approval card, and
+said a MISSING id was "the required-field path's to report." Its docstring and a test both said so.
+The §39 peer-gate searched for that path and found none: the handler has no required-argument check
+and tool calling is not strict. A missing, a blank and a numeric id each became a card, spent the
+approval, and failed at the executor, which is the incident's shape.
+
+**Rule.** A comment, docstring or test that hands a case to another path must name that path (file
+and function). If you cannot find it, the case is yours and it is open. The same review found the
+same class twice more. The shape table covered the subject but not the second `uuid` the executor
+casts. A copy guard matched two bad phrasings and missed a third ("they can approve it again").
+**Guard the class, not the instance you happened to see:** every id the executor casts, and every
+operator-facing terminal note read whole.
+
+### Consumed is not executed — and a recovery must name a control that exists in that state (2026-09-26)
+
+**Symptom.** `action_advance` showed 13 proposals and 1 consumed, which read as "mostly broken, once
+worked." It had never worked: the consumed approval was claimed and the action it approved failed on
+a shortened id. Separately, a refusal told the operator to "press Not now to clear them" — a fix for
+an earlier impossible instruction — while no card, and so no Not now, was on screen.
+
+**Root cause.** An approval being *claimed* was read as the action *running*. And a recovery was
+checked against the component that offers it (the card has a Not now button) instead of against the
+screen in the state where the instruction is spoken (after Approve, the card is gone).
+
+**Rule.** Confirm an approved action by reading the record it was meant to change — the action's
+status, the contact's row — never by the approval row alone. And prove a recovery instruction by
+rendering the real surface in the state it is given in, pressing what the person pressed, and
+asserting the named control is there. A recovery that is true only in some states is a trap.
+
+---
+
+### A red job is read STEP by step — and a step behind an aborting step never ran (2026-09-26)
+
+**Symptom.** PR #1454's `verify` job was red. The failing `Test` step was measured against an
+`origin/main` worktree — 20 failures, same five files on both sides — and the job was reported as
+pre-existing. A second failing step beside it, `ESLint (changed src)`, went unread; it was failing on
+a file the PR itself wrote, and merged red. In the same PR, a new pgTAP proof was reported as the
+evidence for the fix while it had never once executed: `database-contract` had been aborting at its
+first step for two days, and every step after it was skipped.
+
+**Root cause.** "Pre-existing" was established for the JOB instead of for each failing STEP, and
+"the proof exists" was allowed to stand in for "the proof ran". A lint scoped to changed files is by
+construction about the change, so it cannot be pre-existing — and under `bash -e` with no step
+conditions, one early failure silently darkens everything after it, including proofs owned by lanes
+that do not know.
+
+**Rule.** List the job's steps (`list_workflow_jobs` returns each step's conclusion) and account for
+EVERY failed and every skipped step by name before calling a red job someone else's. Cite a proof by
+run, job, step and result (master doc §0 *Executed proof*); a skipped proof step is absent, not green.
+
+---
+
+### Provider identity must never come from a field the tenant can edit (2026-09-24)
+
+**Symptom.** A de-duplication matcher, with 147 green tests and a real-Chromium render drive behind
+it, would let a generic MCP server a tenant named after a vendor claim that vendor's catalogue tile —
+opening an unrelated connection's drawer AND, because the parent suppresses a tile it believes is
+held, **removing the real vendor's setup path from the surface entirely**. Found by an external
+adversarial review at the merge gate, not by any of my own proof.
+
+**Root cause.** The matcher's last arm compared the connection's `label` — free text the tenant types
+— against the catalogue vendor's name, treating a display field as provenance. It was added as a
+"falls through to its name" convenience for catalogue entries carrying neither a provider key nor a
+URL, and the convenience was never weighed against what a hostile or merely careless label does.
+Worse, it never served the case that motivated it: the labels it was meant to match tokenized to
+values that never equalled the vendor keys, so the arm was load-bearing for nothing.
+
+**Rule.** Identity comes from a **stable** attribute — a provider key, a host, an id — never from a
+name, label, title, or any field a user can rename. When a heuristic can be wrong, decide which
+direction it fails in *before* writing it: here a missed de-duplication shows one extra tile
+(cosmetic) while a wrong match removes a capability (functional). Fail toward the cosmetic one. And
+when an arm is removed, check what actually depended on it — every existing test here matched
+through `provider_key` or `server_url_host`, which is how a supposedly load-bearing branch was
+proven to carry nothing.
+
+---
+
+### One flag answering two questions is a race (2026-09-24)
+
+**Symptom.** A drawer could render "Checked just now" directly above the action list it had read
+*before* the check — an older in-flight request overwriting a newer response.
+
+**Root cause.** A single `alive` boolean was asked both *"may I still call setState"* (an unmount
+question) and *"is this the latest read"* (a generation question). A reload tears the effect down and
+re-runs it immediately, so the boolean is false for an instant and **true again before the older
+request resolves** — the stale answer passes the guard. The tenant-scope check sitting beside it
+looked like protection but only catches a workspace switch, never a same-tenant reload.
+
+**Rule.** Unmount-safety and staleness are different questions; give them different variables. A
+monotonic generation claimed at call time and compared on resolve is the correct shape, and the
+effect's teardown must **increment** it so in-flight work is retired rather than left current. When
+testing it, hold every request and settle them by hand newest-first — real timing only sometimes
+produces the losing interleaving, so a test that relies on it passes over the bug.
+
+---
+
+### A stale local git tag will misreport deploy drift (2026-09-24)
+
+**Symptom.** Immediately after a successful `deploy-migrations` and `deploy-edge-functions`,
+`git diff edge-live..HEAD` listed six changed edge functions — reading as real drift on a deploy that
+had just succeeded.
+
+**Root cause.** `git fetch origin --tags` does **not** move a tag that already exists locally. Both
+`db-live` and `edge-live` were pinned to a commit from days earlier, so the diff was against ancient
+history rather than the deploy the pipeline had just recorded. `--tags --force` showed both tags at
+the new merge commit with zero drift.
+
+**Rule.** Force-refresh (`git fetch origin --tags --force`) before reading ANY deploy tag, and never
+report drift from a tag you have not just re-fetched. This is the same class as the "re-fetch
+origin/main before asserting anything about trunk" rule, and it bites in the more dangerous
+direction: it invents a problem on a healthy deploy, and the natural reaction to invented drift is a
+redundant redeploy.
+
+---
+
+### A restriction written into the identity model is indistinguishable from a single-user product (2026-09-24)
+
+**Symptom.** Live Conversation shipped as a multi-tenant capability with a 39-assertion suite fully
+green, and no Solo account other than the platform operator could use it. Each review looked correct:
+the edge callers resolved standing canonically, the tests passed, the privacy posture was honest.
+The repair that was drafted next made it worse — it kept the single-account shape and simply let the
+operator point it at one *other* membership.
+
+**Root cause.** A temporary rollout restriction was expressed as an **identity predicate**
+(`pilot_actor_user_id = _actor_user_id AND pilot_authorized_by = _actor_user_id AND
+is_platform_owner(...)` over a singleton row) instead of as **operational configuration**. Once
+eligibility is a stored user id, "restricted to one person today" and "built for one person" are the
+same code, and nothing downstream can tell them apart. The suite could not see it either: it asserted
+the restriction, and never drove a *different* active member of the *same* enabled workspace — so
+"only one person can use this" and "the rule works" were one observation, not two.
+
+**Rule.** Build the capability for the whole shell — every account of that type, resolving each
+authenticated person's own tenant, role, permissions, thread and memory — and enforce the current
+restriction as configuration: a flag, an allowlist, a gate, with each admitted subject carrying its
+own acceptance so nobody's consent stands as anybody else's authorization. Prove the refusal rather
+than asserting it, and make the negative subject a *legitimate* active member of a *legitimately*
+enabled workspace with the positive passing one line above; a negative taken against someone who
+lacks standing anyway would pass identically if the gate were never consulted. Both directions of
+this error are wrong: building for one account because a restriction exists, and assuming the
+restriction lifted because the build is multi-tenant.
+
+---
+
+### A test that has never been RUN is a test that proves nothing, however carefully it was written (2026-09-24)
+
+`supabase/tests/mcp_tool_catalog_tenant_scope.sql` was written with care, reviewed, committed, and
+wired into CI. Executed against Postgres for the first time it failed **three times** before it
+passed — `tenants.slug` is `NOT NULL`, a `BEFORE INSERT OR UPDATE` trigger refuses an
+already-expired approval so that fixture could not be written through the front door at all, and
+`_mcp_endpoint_hash` is REVOKEd from `authenticated` so an assertion could not call it after
+impersonating a tenant member. None of those are subtle. All three were invisible to reading.
+
+Worse than the three failures was what the passing version would have hidden: its connections
+carried no encrypted endpoint, so every assertion in it about a *live* approval was passing over
+consent the runtime verifier would have refused — the exact defect the file was written to catch,
+sitting inside the file. **Writing an assertion is not running it, and running it is what tells you
+which fixtures your production schema will actually accept.** Run the thing before you cite it.
+
+### `approved` is not `authorized`, and a weaker predicate in a READ becomes a lie in a SURFACE (2026-09-24)
+
+The MCP catalogue read returned `approved` from `a.tool_name IS NOT NULL` — an approval ROW exists.
+The function that decides whether Paige may actually run something refuses on **seven** conditions.
+The read modelled two. Everything downstream inherited the gap: the edge counted blocked rows as
+consent, and the drawer rendered *"You approved this"* over an approval bound to an endpoint the
+connection no longer used, with no control on that row because nothing looked wrong.
+
+**When a read backs a surface that states an authority fact, enumerate the authority function's
+refusal conditions and model every one the read can see — then say plainly which ones it cannot.**
+Here two genuinely cannot be known from a list (one compares against the endpoint a runner LOADED
+for a specific dispatch, the other against a specific call's arguments), and inventing inputs for
+them to "reuse the one function" would have fabricated the very values those guards exist to check.
+Naming the boundary is the honest move; silently modelling two of seven is not.
+
+### One catch-all in a test double can make an entire surface's test suite green over a broken render (2026-09-24)
+
+A `world()` helper served ONE resolved value to every edge action. The new `tools` call received a
+connection-shaped body, the hook found no array where it expected one, and the drawer rendered its
+degraded branch — **in all 52 tests that open a drawer, every one of them passing.** The same
+helper's rpc lane answered any unrecognised name with a connection-shaped success, which is exactly
+the shape the hook's acknowledgement guard accepts, so a renamed RPC would have been
+indistinguishable from the real writer working.
+
+**A test double should dispatch on what was actually asked and fail loudly on anything else.** The
+cost of the strict version is naming the three real RPCs and four real actions; the cost of the
+catch-all was a suite that could not fail.
+
+### "Backward compatible" is a claim about a REPLACE that `create or replace` may not have performed (2026-09-23)
+
+`create or replace function` cannot replace across a **differing argument list**. Given a new
+signature it creates a **SECOND** function and leaves the old one live. A migration that adds
+optional trailing parameters and describes itself as *"backward compatible — existing grants and
+callers unchanged"* has done the opposite unless it also DROPs what it superseded.
+
+`public.record_capability_run` is the live case: `20270107000000` added four trailing defaults as a
+new 10-argument signature next to the existing 6-argument one, with no DROP anywhere. Every
+parameter past the fifth defaults on **both**, so a five-argument call satisfies both and Postgres
+refuses it — `42725 function is not unique`, measured on production.
+
+**Three things made it invisible for months, and each is the reusable lesson:**
+
+1. **The callers were right to swallow it.** A Rail receipt is best-effort and must never turn a
+   completed action into a reported failure, so all three callers `console.error` and continue.
+   Correct design; it also means a total filing failure looks exactly like no traffic. When a write
+   is deliberately best-effort, something else has to assert it is *possible* — a test, a counter,
+   an alert. Otherwise "never fired" and "never worked" are the same observation.
+2. **Arity decided who noticed.** The two in-database callers pass ten positional arguments and
+   resolve fine, so the Rail had rows and looked healthy. Only the five-named-argument PostgREST
+   callers were refused. A partial break reads as a working system.
+3. **The check I said was impossible was one tool call away.** The prior entry recorded this as
+   *"production SQL is permission-denied to this session, so this is flagged, not measured."* The
+   Supabase MCP `execute_sql` tool reaches prod, and `PREPARE` parses and plans **without
+   executing**, so the exact failing call can be measured against production while writing nothing.
+   **Verify the blocker before recording one** — an unverified claim of inability is the §13
+   absence-claim failure wearing a different hat, and it is the reason this sat unmeasured.
+
+**The rule:** a migration that changes a function's signature says which overload it REPLACES and
+drops what it supersedes, or explains why two are wanted. Where a function must stay single, count
+it in a test — `supabase/tests/record_capability_run_single_overload.sql` does, and PREPAREs the
+real call shapes so the assertion is about resolution rather than about existence.
+## `git fetch --tags` does NOT move a tag that moved — a drift report built on it is fiction (2026-09-23)
+
+- **Symptom.** The INT-178 lane reported **"13 edge functions undeployed — 4 mine, 9 other lanes'"** and
+  concluded the platform had a deploy backlog: work merging green and never reaching production. The
+  owner reasonably treated that as a serious finding. **There was no backlog.** Other lanes' work had
+  deployed normally and `edge-live` was exactly where it should have been.
+- **Root cause.** `edge-live` and `db-live` are *moved*, not created. `git fetch --tags` **silently keeps
+  an existing local tag at its old value** — updating a moved tag requires `--force`. Every
+  `git fetch origin --tags` that session returned a stale `edge-live` of `186a978f` while the remote was
+  at `2a190b71`. Measured:
+
+  ```
+  $ git rev-parse --short edge-live            # local, after plain --tags fetch
+  186a978fe
+  $ git ls-remote --tags origin edge-live      # the truth
+  2a190b71a...
+  $ git fetch origin --tags --force && git rev-parse --short edge-live
+  2a190b71a
+  ```
+
+- **Why it is worse than it looks.** Here it failed in the *alarming* direction and invented a backlog,
+  which is embarrassing but self-correcting. The same mechanism fails in the *dangerous* direction just
+  as easily: a session that force-fetched once and then reads the cached ref later reports drift as
+  **ZERO when it is not** — the §32.a false-green this evidence standard exists to prevent, produced by
+  the very command that is supposed to establish it.
+- **Rule.** **Resolve a deploy tag from the REMOTE, never from a local ref.** Use
+  `git ls-remote --tags origin db-live edge-live`, or `git fetch --tags --force` immediately before
+  reading. A drift number obtained from a plain `git fetch --tags` is not evidence and must not be
+  reported as one. And **distinguish "tag behind" from "work undeployed"** — `db-live` legitimately lags
+  `main` whenever no migrations have landed, because the tag only moves when migrations actually run; a
+  lagging tag with zero migration drift is healthy, not a backlog.
+- **Corollary, same day, same seam.** A merge is not a ship. PR #1388 merged green at `7ebdd9fe` and its
+  `deploy-edge-functions` run then FAILED on a GHCR rate limit, so `Record deployed commit` was skipped
+  and `edge-live` did not move — merged, closed, **not live**, with nothing on the PR surface saying so.
+  Confirm the tag moved before calling anything shipped (#1391, #1393).
+
+---
+
 ## Flipping a draft STARTS a review; merging in the same breath KILLS it (2026-09-23)
 
 - **Symptom.** PR #1367 was flipped out of draft and merged ~15 seconds later. The draft flip triggered
@@ -51,6 +310,18 @@ RED-LINE index and the §-doctrine; this file is the fast-lookup version.
   history is never edited. Such a review names the PR **head** commit, not the squash commit — same
   tree, different SHA, worth stating precisely rather than claiming the merge commit was reviewed. And
   never let a `Running` badge stand as approval: say the review is *absent*, not clean.
+  **It happened again on 2026-09-26 (PR #1468, docs only), and this is the case against relying on
+  prose.** The lane had cited this entry in its own session summary as a rule it knew. It spent its
+  care on proving the red `verify` was inherited, then marked the PR Ready and merged two seconds
+  later: the review started at 20:45:18Z and the merge landed at 20:45:20Z. The failure was not
+  forgetting the rule. The lane attached "wait" to the CI checks it was already looking at, and "the
+  reviews" were not on that checklist. Each occurrence has come right after a long evidence-gathering
+  step that felt like the last gate. **The durable fix is mechanical, not another paragraph.** A merge
+  helper, or a required check, should refuse unless **both** reviews have positively *completed* on the
+  exact head: the auto-triggered one and a requested one. A review that is absent, failed or
+  cancelled counts as not done, never as clean. Blocking only on a `Running` status would pass all
+  three. The Codex summary comment is not the evidence. On #1468 and #1470 it replaced the
+  auto-triggered row with the manual request, so the guard has to read the review records themselves. §71's honest note already names this pattern.
 
 ## Two pacing rules, from the same lane (2026-09-23)
 
@@ -317,6 +588,16 @@ RED-LINE index and the §-doctrine; this file is the fast-lookup version.
   capabilities should become first-class Spine citizens; until then, don't fight the two lints — extend.
 
 ## 0a. A service_role-only RPC called from the anon+JWT seam writes NOTHING, and every gate stays green (2026-09-05)
+
+> **AMENDED 2027-04-11 — the lesson stands; the fact it rests on does not.** This entry was true
+> when written. On 2027-01-07, `20270107000000:94` added a TEN-argument overload of
+> `record_capability_run` with no GRANT and no REVOKE, so that signature defaults to `EXECUTE TO
+> PUBLIC`, and its body never calls `auth.uid()`. On that path the anon+JWT client does not get
+> `permission denied` — it WRITES THE ROW. The failure described below is loud only while the
+> signature actually invoked is locked. `20270416000000` restores the lock on both (in the repo;
+> MEASURED 2026-09-24: prod already service-role-only on both signatures; the hole is not live and the migration makes that lock reproducible). That makes the generalisation SHARPER, not weaker: check the grant against the
+> client **and against the exact signature the caller binds** — an overload is a new `pg_proc`
+> entry and inherits nothing.
 
 - **Symptom (caught in design, before it shipped).** The obvious way to make PAIGE's acts visible was
   to record once at `paige-ai-chat`'s single tool-dispatch seam, which every executed tool result
@@ -2685,3 +2966,308 @@ never the scope of what it points at.
 ### CRM mutation reach must be counted from the real command door, not tool names
 
 A Chat tool name, human CRUD screen, direct service-role branch or draft PR can all make an operation look present while bypassing tenant authority, risk, idempotency, readback or Rail. The recurrence guard is a shared action-to-tool catalogue plus contract tests proving every exposed CRM tool dispatches to the single authenticated `crm-command` door. Consequential operations need a server preview that binds exact targets, versions and dependency counts; a model `confirm` argument is never approval. Result UI must render server readback and router-owned links, not reconstructed model prose. Source-complete still is not LIVE until database/RLS, authenticated account-switch and deployment proof pass.
+### A route-level grep is not a guard audit — check the component before assigning severity
+
+**What happened (2026-09-23, Platform Reach census).** The census reported two production routes as
+carrying no auth guard: `/tenant-redesign` (`src/App.tsx:233`) and `/broker/app` (`:353`), both
+mounted with only `PageSuspense` where `/app` (`:260`) wraps in `RequireCompleteSignup`. The
+route-level observation was correct, and it was reported with an implied security severity that sent
+both onward as bug fixes. Reading the components reversed it:
+
+- `BrokerWorkspace.tsx:34-52` **guards itself** — `onAuthStateChange` bounces a signed-out visitor,
+  and `getSession()` returns to `/auth` *before* the `user_roles` read. Fails closed.
+- `src/prototype/TenantRedesign.tsx` is **deliberately public and dataless**; its own rendered copy
+  says so — *"This public design route never invents CRM records."*
+
+**The lesson (the class).** "Which routes lack a guard wrapper?" is a one-line grep and it produces a
+list that LOOKS like a security finding. It is not one until two further things are established:
+whether the component guards itself, and whether the data behind it is RLS-scoped server-side. A
+client-side `navigate("/auth")` never protects data either way — **RLS does**. So an unwrapped route
+is, on its own, a *consistency and reviewability* finding: the protection is invisible to anyone
+reading the router. It becomes a security finding only where the server-side scope is also absent.
+
+**How to catch it:** before assigning severity to any "surface X is ungated" finding, open the
+component and answer (a) does it self-guard, (b) does it hold authenticated data at all, and (c) is
+the server-side scope present. Report what you checked and name what you did not. The recurrence
+tell is a finding phrased as a property of a *route table* rather than of a *data path*.
+
+Recorded as [#1409](https://github.com/mrmogulmaker-bot/Paige-Agent-AI/issues/1409), which files the
+accurate, downgraded version and withdraws the overstatement rather than quietly restating it.
+
+## Do not measure a file an agent is still writing, then report it as your commit's state
+
+**2026-09-24, PR #1394.** I grepped `scripts/ci/tool-catalogue-lint.mjs` while a crew agent was
+mid-write, saw `await import("./tool-catalogue-lint.selftest.mjs")` at :217, confirmed that file did
+not exist, and concluded the self-test could not run. That was TRUE at the instant I measured it.
+
+By the time I ran `git add -A`, the agent had rewritten the file: `selfTest()` is now INLINE at :226
+and there is no external import. The self-test works and its negative fixtures bite. But my commit
+message on `1ffef5dd1` states the opposite as fact, and I repeated it to the owner.
+
+The same race produced a second defect in the same stretch. `git status` showed two changed paths, so
+I described the commit as two files. Between that check and the `git add -A`, the agent wrote two
+more — including a 524-line new lint. `1ffef5dd1` shipped four files. Then `32ed90b10`, whose message
+describes only an ACL correction, swept in 30 lines of `.github/workflows/ci.yml` and 3 of
+`package.json` that I never read before pushing. Four new CI steps entered the pipeline on a commit
+message about something else.
+
+**The rule:** a working tree with a live agent in it is not a snapshot. Either the agents write to a
+worktree of their own (`isolation: "worktree"`), or they return their work as data and the integrator
+applies it — which is what I asked for and then undercut by handing them a toolset with write access.
+`git add -A` against a moving tree is not staging; it is a gamble on timing.
+
+**And the narrower one:** never describe a commit from a `git status` taken before the work finished.
+Read `git show --stat` of what you actually committed, after committing, before writing the message
+into a report. The diff is the only account of a commit that cannot be stale.
+
+This is the same failure as the `20270412000000` citations and the receipt-ACL claim, in a third
+costume: acting on a stale read of something that moved underneath.
+
+## A migration version collision does not skip a file — it WEDGES the whole prod chain
+
+**2026-09-24, PR #1436.** Two files shared version `20270106000000`: the durable-job weekly-summary
+claims migration, which merged first and applied, and the Secure Browser control plane, which merged
+second in PR #1046. I reported this as the second file being "silently skipped," reasoning that
+`schema_migrations` is keyed on version alone so the later arrival is ignored.
+
+**That is not what happens, and the difference is the whole incident.** The deploy log:
+
+```
+Applying migration 20270106000000_paige_secure_browser_control_plane.sql...
+ERROR: duplicate key value violates unique constraint "schema_migrations_pkey" (SQLSTATE 23505)
+Key (version)=(20270106000000) already exists.
+At statement: 93
+##[error]Process completed with exit code 1.
+```
+
+`supabase db push` ran all 92 DDL statements, then failed on statement 93 — its own bookkeeping
+`INSERT` — and rolled the transaction back. Then it **exited 1**. Every migration queued behind it
+stopped. Production deploys had been failing for ~30 minutes across two merges, and the Long-Form
+durable document engine the owner merged himself was stuck behind a collision in someone else's
+feature. `main` carried 1079 distinct versions; production had 1077.
+
+**What made it invisible:** three separate green signals. Both branches passed
+`lint:migration-versions`, because `migration-version-collision-lint.mjs:97` resolves its base as
+`origin/main` — a branch only ever compares itself to trunk, never to another open branch (#1425).
+Both PRs' CI was green, because CI does not deploy. And the incident issue #198 exists and was
+commented on twice, but it is a dedup issue 29 comments deep, so a new failure looks like the old one.
+
+**The rules:**
+
+1. **A red `deploy-migrations` run is a production outage of the migration pipeline, not one
+   feature's problem.** Check it on any "why isn't this schema on prod" question before theorising.
+   The count comparison is two queries: distinct versions in `supabase/migrations/` versus rows in
+   `supabase_migrations.schema_migrations`. A gap is a wedge until proven otherwise.
+2. **Read the deploy log before explaining the mechanism.** My "silently skipped" story was coherent,
+   consistent with the evidence I had, and wrong. The log was one call away and said something
+   materially different — that the chain was blocked, not that one file was missing.
+3. **Un-wedging makes OTHER people's dormant SQL runnable.** Auditing my own migration was not
+   enough; the merge is what executes the two Long-Form migrations queued behind it. Audit
+   everything the unblock will run — destructive statements, dependency presence, and above all a
+   `UNIQUE` index on a pre-existing table. (Theirs was safe: partial, `where work_id is not null`, on
+   a column added in the same block, so zero rows were indexed at creation.)
+
+Same root as the entries above it: I explained from a plausible model instead of measuring the thing
+itself. The difference here is that the unmeasured part was not a detail in my account — it was the
+severity.
+
+## The trace's token counts exclude cached tokens, and the tenant-facing figure inherits it
+
+**2026-09-24.** Anthropic's `usage.input_tokens` is the **uncached remainder**, not the prompt size.
+True prompt = `input_tokens + cache_creation_input_tokens + cache_read_input_tokens`. Until
+`20270421000000` nothing in the repo read either cache field, so every token-volume figure derived
+from `paige_llm_trace` was an UNDERCOUNT on any cached turn.
+
+That is not confined to an internal table. `meter_llm_usage` writes
+`quantity = tokens_in + tokens_out` into `platform_usage_events` (`20261033000000:112,126`), and
+`src/solo/billing-contract.ts:611,636` renders that as the tenant-facing **"Used this period — N
+tokens"**. So a tenant on a heavily-cached workload is shown less usage than they actually drove.
+
+**Why this is deliberate and must stay deliberate.** Cache counts were given their own columns rather
+than folded into `tokens_in` precisely because that sum is the metered quantity. Widening `tokens_in`
+would have changed every tenant's metered number as a side effect of an observability fix — a pricing
+change nobody decided (§38/§17). The exclusion is a known, chosen position, not an oversight.
+
+**What makes it safe today and what changes that.** Nothing is charged for this usage — the card says
+so in its own copy. The undercount is therefore a truthfulness gap, not a billing harm. **It becomes a
+billing harm the moment metered usage is charged**, and whoever turns that on owns this decision:
+either cache tokens enter the billable quantity, or the tenant-facing label stops implying it counts
+everything.
+
+**The rule:** before reading any token or cost total off `paige_llm_trace` or
+`platform_usage_events`, ask whether cached tokens belong in the answer. For "what did this cost us"
+they do. For "what is the tenant metered at" they currently, deliberately, do not — and those two
+numbers are not the same number.
+
+## Two approval systems on one surface: the button ticked, the action never ran (2026-09-25)
+
+> **THE CAUSE IS NOW ESTABLISHED AND FIXED (2026-09-25, PR #1450, commits `c23d61a5f` +
+> `c504dd67c`).** Read this first; the two blocks below are the record of getting there wrong twice,
+> kept because how the misses happened is the reusable part.
+>
+> **The real defect lived in the CRM approval door in `paige-ai-chat`, not in the Solo client at
+> all.** `crmApprovalSubject` keys update-shaped actions on a stable record id, but a `*.create` has
+> none and fell back to hashing the WHOLE command. The door narrowed the operator's approved set
+> with an SQL equality on that subject **computed from the model's re-emitted arguments** — while
+> the model is explicitly told on the approval turn that it need not reproduce them. Any drift
+> returned zero rows, the approval was refused, and each refusal made Paige file another proposal,
+> which made the next approval genuinely ambiguous. Self-perpetuating.
+>
+> The production split is the proof, and it is the cleanest natural experiment in this file:
+> `crm_update_contact` (subject = `contact_id`, drift-proof) **2 asked / 0 stranded**, against
+> `crm_create_contact` **4 asked / 3 stranded** and `deal_create` **2 asked / 2 stranded**. Same
+> door, same tenant, same week — the only variable is whether the action had a stable id.
+>
+> **The general (non-CRM) gate was repaired for exactly this on 2026-09-13. The CRM door never got
+> the fix.** That is the reusable lesson: when a gate is repaired, enumerate every door that shares
+> its shape and port it, or write down why it does not apply. A fix applied to one of two twins is
+> a fix with a shelf life.
+>
+> **Three of the four findings that mattered came from RUNNING things, not reading them.** The
+> build's own reasoning was sound and its tests bit; what it could not see was (a) an `18.H25`
+> regression in `scripts/client-memory-authz` — found by running the harness and measuring 333/1
+> against the base's 334/0 — and (b) a §39 peer-gate finding that the fix reintroduced the exact lie
+> it exists to end: the sole-candidate rule claimed the one live approval regardless of which call
+> was being resolved, so approving "create John" and asking for Jane in the same turn made Jane's
+> call spend John's approval. The write stayed safe (stored args execute) but Paige would have
+> narrated a record the owner never got. **A fix for a lying-about-outcomes bug is exactly where to
+> look hardest for a new way to lie about outcomes.**
+>
+> **And one in the copy.** The refusal told the operator to "approve them one at a time" — the card
+> has a single Approve button and cannot do that. Correct diagnosis, correct code, and an
+> instruction the interface cannot obey (§36/§70.1). Check the recovery you name against the control
+> that exists.
+
+> **CORRECTED THE SAME DAY, before the entry was a day old (§58 — marked, never deleted).** The
+> diagnosis below is accurate as a reading of `src/solo/agent.tsx` + `useSoloChat.ts` and **wrong
+> about why the owner's approvals failed**, because THAT PAIR DOES NOT SHIP. Nothing in `src/`
+> imports `agent.tsx`; its strings are absent from `dist/`. The live Solo chat is
+> `SoloPaigeWorkspace` → `PaigeAIChat`, which has always carried the body-borne fingerprint echo.
+> The measurement (36 proposals in 30 days, 21 never consumed) stands; the cause named below does
+> not explain it.
+>
+> **What the re-measurement showed instead: the 21 were never one bug.** Three unconsumed
+> `n8n_create_workflow` rows carry `server_issued_at IS NULL` — the documented unrecoverable legacy
+> class, working as specified. Six are CRM-door tools whose `thread_id IS NULL` is deliberate (the
+> door stores and reads with null thread/client scope), and the same door shows `crm_update_contact`
+> at 4 asked / 0 unconsumed, so it is not broken per se. Twelve are `action_advance`, which the
+> 2026-09-13 batch-ambiguity terminal already explains. Two `team_invite_member` rows carry a null
+> thread WITHOUT being CRM-door tools, and the inline gate scopes `.eq("thread_id", payloadThreadId)`
+> — that pair is genuinely anomalous and remains unexplained.
+>
+> **The lesson the original entry missed, and the one worth keeping:** *is the surface REACHABLE?*
+> A file's folder and name are not evidence that it ships. `agent.tsx` sits in `src/solo/`, exports
+> `Agent` and `PaigePanel`, owns `useSoloChat`, and reads exactly like the Solo chat. It was edited,
+> tested, committed and pushed before anyone asked what imported it — by the same session that wrote
+> §71 that morning, which is why §71.1 now carries the reachability half, cited here.
+>
+> **A second method lesson from the same day:** proving "these failures are pre-existing" with
+> `git stash` on an already-clean tree stashes nothing, pops with "No stash entries found", and
+> compares a tree with itself. It cannot fail, so it measures nothing, and it looks exactly like a
+> passing check. A worktree at the base commit is the comparison that can disagree. The under-measured
+> claim ("19 across 4 files") was corrected to the real figure (21 across 6, identical both sides)
+> only because CI disagreed. §71.3 now carries both.
+>
+> The body below is left intact as the original reasoning, which is still correct about the code it
+> describes — and is the exact shape of a confident, well-evidenced, wrong root cause.
+
+**Symptom (owner-reported, production).** The owner pressed **Approve** in the Solo shell and the
+action did not happen. He pressed it eight times across two hours in one client session. Nothing
+executed once — no contact created, no document written, no email sent. The card was visibly there
+and visibly responded, which is why this read as "approvals are flaky" rather than as a seam bug.
+
+**Root cause — two disjoint systems, mistaken for one.** Solo's Approve button called
+`execute-approval`, which claims a row in **`paige_pending_approvals`**. The chat gate in
+`paige-ai-chat` executes a confirmation-required action only when the exact fingerprint of the
+stored call is echoed back in the **request body**, against **`paige_pending_confirmations`**.
+Nothing in the repo converts one into the other — `execute-approval` contains zero references to the
+confirmations table, and the only place both names meet is a pair of *independent* FK columns on
+`paige_social_jobs`, whose trigger validates each separately. So the rail ticked and the gate went
+on waiting.
+
+Three compounding defects made it invisible:
+
+1. **`useSoloChat` deleted the pending ask on arrival.** `if (parsed.paige_confirm?.summary)
+   continue;` — dropped on the stated grounds that confirms were *"already surfaced in the 'She
+   proposed today' rail"*. One wrong sentence in a comment. That rail is the other table, so the
+   drop routed the frame nowhere; it destroyed the only handle on the action.
+2. **The shared card was built to allow a dead button.** `fingerprints` was optional, and its own
+   doc-comment said a caller without it renders fine and *"that caller's approvals simply will not
+   open the gate."* The hazard was known, written down, and shipped as a type.
+3. **Summary and fingerprint were parallel arrays with one of them `.filter()`ed**, so a single
+   action missing a fingerprint shifted every later summary onto the wrong call.
+
+**The proof class that missed it.** Every existing test asserted the card **rendered** and the
+button **fired**. None asserted the **action ran**. That gap is invisible to unit tests, to
+typecheck, to a build, and to a screenshot — a button with no binding behind it renders,
+type-checks, and photographs exactly like one that works. It is only visible from the other end of
+the seam: does a row in `paige_pending_confirmations` ever reach `consumed_at`? Measured on
+production, it did not — **36 proposals in 30 days, 21 never acted on**, while the one surface wired
+correctly (`PaigeAIChat`, via `crm_update_contact`) showed 4 asked and 0 unanswered. The divergence
+between two surfaces' consumption rates was the signal, and no test could have produced it.
+
+**A second-order lesson about the fix that preceded it.** #1418 — the self-approval branch a model's
+own `confirm:true` could spend — was a real defect and its removal (`cda229c`, deployed
+2026-09-24 03:47:50 UTC) was correct. But that branch was also, by its own comment, *"necessary,
+because five of the six surfaces render no card"* — it was the compensation keeping the card-less
+surfaces working, scoped to them and refused for `high` risk. Removing it turned the acknowledged
+outage on. **A security fix that removes a compensation must measure what the compensation was
+holding up**; the write-up of the incident asserted the blast-radius measurement "does not need to
+be run", and it was exactly the thing that needed running.
+
+**The rules.**
+
+- **A control that cannot work must be unrepresentable, not merely discouraged.** An optional
+  binding with a warning comment is a loaded gun with a label on it. Make the type refuse: bind
+  per-action, and render no approve affordance when there is nothing to spend.
+- **Assert the effect, never the affordance.** "The button rendered and the handler fired" is not
+  evidence the action ran (§70). Where the effect crosses a seam, prove it at the far side.
+- **Two stores that answer the same question are a defect, not an architecture.** Before adding an
+  approval path, check which table the executing gate actually reads (§18 — the one home is
+  `docs/doctrine/one-approval-gate.md`).
+- **When a comment explains why a frame is safe to drop, verify the claim.** This one named a
+  destination that did not exist, and cost every Solo write path for a month.
+- **A per-tenant workaround is not a fix.** The account where this "worked" had ~60 tool-autonomy
+  rows set to skip asking; every other account had zero to three and defaulted to
+  `coalesce(_mode,'confirm')`. The seam repair is what makes a brand-new tenant work with no
+  configuration — the configured account was hiding the bug, not demonstrating the cure.
+
+## A replayed database is not production, and the gap hid in the grants (2026-09-27)
+
+- **Every RLS proof run against a rebuilt schema proves something about THAT database.** The
+  rebuild's default privileges differed from production's, so policies were tested against grants
+  production does not hold, and five proofs quietly hand-wrote grants to get past it. The fix was to
+  reproduce production's grants in CI and fail by name where the tree cannot — not to add a sixth
+  workaround.
+- **An unhandled error fails a vitest run whose every test passes.** Grepping only for failed tests
+  misses it; grep for `Errors` / `Unhandled` too. It was in every CI run and in no failure list.
+- **A disabled workflow is absent, and absent is not green.** Records spent a month naming
+  `premerge-migration-proof` as the owner of proofs it never ran. Before writing "proof owed to CI
+  X", confirm X is enabled and ran on that head.
+- **Check the worktree is clean before calling a run a baseline.** An uncommitted patch survived a
+  detached checkout and made a broken script look fixed upstream.
+- **A probe version computed with date arithmetic is not always older.** Migration versions here are
+  not always real dates (hour 35, day 48); the "out-of-order" probe rolled forward and tested
+  nothing. Integer arithmetic plus an assertion that the probe actually took the path.
+
+## Merge only after the repository's own review finishes (2026-09-27)
+
+- **AGENTS.md's merge gate is real and I missed it.** It requires the auto-triggered Codex review on
+  the exact head AND one requested review to COMPLETE before merge. #1487 was merged two seconds after
+  it went ready; Codex posted three findings two minutes later (two real, fixed in #1500). Read the
+  repository's AGENTS.md merge gate before the first merge of a lane, not after.
+- **A guard that parses YAML line by line will lose to the next spelling.** When the property you want
+  is "there is no filter", assert the key is absent; don't try to evaluate the filter.
+- **A path-filtered workflow cannot be a required check.** GitHub treats a check that never started as
+  pending forever. Either run it on every PR, or make skips explicit job results — and a repository
+  guard may forbid the second.
+
+## 2026-09-29 — A repository move silently stops Vercel deploys
+
+When the repository moved from `mrmogulmaker-bot` to the `Paige-Agent-AI` organisation, Vercel stopped
+receiving pushes: every merge after #1554 (#1552, #1551, #1560, #1562, #1559, #1561, #1563, #1569 and #1570) reached `main` with no deployment and no Vercel
+commit status, and production kept serving the last build for about 20 hours (2026-09-28 05:07 UTC to
+2026-09-29 01:27 UTC). Nothing failed loudly. The tell is a merge on
+`main` with **no** Vercel status at all (not a failed one); the API answers "The provided GitHub repository
+can't be found." The fix is granting Vercel's GitHub app access to the new organisation and relinking the
+project. After any repository transfer, check that the next merge produces a Vercel deployment.

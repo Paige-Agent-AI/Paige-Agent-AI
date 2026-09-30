@@ -181,7 +181,7 @@ Deno.serve(async (req: Request) => {
         return fail(500, "INTERNAL", `Could not read your roles: ${rErr.message}`);
       }
       const roles = (roleRows || []).map((r: { role: string }) => r.role);
-      // Gate on the SAME authority comms-a2p-submit enforces (is_platform_owner() OR admin/coach of
+      // Gate on the SAME authority comms-a2p-submit enforces (is_platform_owner() OR admin of
       // the caller's own tenant), so a caller who can DRAFT can also SUBMIT — no dead-end where a bare
       // super_admin drafts copy and then hits a 403/RLS wall at submit. The owner passes via
       // is_platform_owner() even when super_admin is their only role.
@@ -194,7 +194,7 @@ Deno.serve(async (req: Request) => {
       tenantId = str(resolved) || null;
       const { data: tenantAdmin } = await createClient(supabaseUrl, supabaseServiceKey)
         .rpc("is_tenant_admin_as", { _actor: user.id, _tenant: tenantId });
-      const canDraft = tenantAdmin === true || ownerFlag === true || roles.some((r: string) => r === "admin" || r === "coach");
+      const canDraft = tenantAdmin === true || ownerFlag === true || roles.includes("admin");
       if (!canDraft) return fail(403, "FORBIDDEN", "Workspace owner or administrator access required.");
     }
 
@@ -363,7 +363,7 @@ OUTPUT — return ONLY a single JSON object, no prose, no markdown fences:
     //    whole defect: nothing in this function wrote it down, so "prepare a
     //    registration" did not survive the call. The save goes through
     //    tenant_a2p_registration_save_draft, which derives the tenant server-side
-    //    for a JWT caller, re-enforces the same admin/coach authority in its body,
+    //    for a JWT caller, re-enforces the same admin authority in its body,
     //    and never sets submitted_at — so the canonical resolver reports `prepared`
     //    and can never report `submitted` because of this path.
     //

@@ -74,7 +74,7 @@ Design around the user's actual job, real data contracts, permissions, and compl
 
 **Owner UI principle — performance and interaction quality over wording.** Cut redundant banner and intro copy; do not repeat context the user already has from where they are. Prefer usable space for the real work over decorative headers. Motion must be purposeful and performant — animate `transform`/`opacity` only, and be reduced-motion safe (honor `prefers-reduced-motion`).
 
-The UI skill does not grant design authority. Follow `CLAUDE.md` §00: implementation agents record and faithfully port the approved Claude Design pack; they do not invent or override visual direction.
+Interface authority is `CLAUDE.md` §00 (owner ruling, 2026-09-22): Claude Code owns the interface, executed as Flow-by-Flow first, then Impeccable, and the owner approves the design before it ships. Claude Design is out of the loop; a prior design pack is reference material, not an authority that outranks Impeccable's craft floor. (This line previously said agents "faithfully port the approved Claude Design pack"; §00 voids that and it is struck here, as it was in `.agents/skills/paige-ui-design/SKILL.md` on 2026-09-24.)
 
 All states must be honest:
 
@@ -93,12 +93,12 @@ Before opening or closing a PR, merging, deploying, assigning a version, or desc
 
 ## Merge gate
 
-Marking a PR **Ready for review auto-triggers a repository Codex review on the exact head.** After marking Ready:
+**Independent review is the lane's own to run** (owner ruling, Antonio Cook, 2026-09-29): before asking to merge, the lane spawns a separate reviewer that did not write the code, and records it as such. Codex may review and its findings are handled like any reviewer's, but Codex is never a gate and no lane holds a merge waiting on one.
 
-1. **Wait for that auto-triggered exact-head review to COMPLETE before merging.** Never merge while it is running.
-2. **Disposition every finding** — fix it, or record a reasoned decline on the thread. If you push a fix, the head changed: repeat from step 1 **once**. If a further round would be needed, stop and escalate rather than merging.
-3. **"Exactly one review" means one REQUESTED review plus the auto-triggered exact-head review.** Never merge ahead of either.
-4. **Docs-only closeout PRs wait for the auto review too** — they are small and it is fast.
+1. **Run the independent review on the exact head, and let it COMPLETE before merging.** The reviewer is spawned separately, did not write the code, and reads the real diff. Never merge while it is running.
+2. **Disposition every finding** — fix it, or record a reasoned decline. If you push a fix, the head changed: have the reviewer re-check the new head, repeating from step 1 **once**. If a further round would be needed, stop and escalate rather than merging.
+3. **Record the review in the PR** — that the reviewer did not write the code, what it checked, and its verdict. Findings from Codex or any other reviewer that does report are dispositioned the same way; no step waits for one.
+4. **Docs-only closeout PRs get the independent review too** — they are small and it is fast.
 
 This is in addition to every existing gate (exact-head required CI green, mergeability, evidence). It exists because a PR marked Ready and merged seconds later has had real defects — including a P1 — surfaced by the auto review only after merge.
 

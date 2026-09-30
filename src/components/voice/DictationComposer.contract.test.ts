@@ -72,7 +72,7 @@ describe("dictation composer scope and send contract", () => {
     const paigeChat = read("src/components/app/PaigeChat.tsx");
     const conversations = read("src/pages/admin/conversations/shell/ConversationsRichComposer.tsx");
     expect(paigeAiChat).toContain("const composerSendBlocked = composerBlocked || dictationActive;");
-    expect(paigeAiChat).toContain("if (dictationActive || !originDraft) return;");
+    expect(paigeAiChat).toContain("if (dictationActive || !originDraft) { voiceSink?.failed(); return; }");
     expect(paigeChat).toContain("if (dictationActive) return;");
     expect(paigeChat).toContain("disabled={isLoading || dictationActive || (!input.trim() && !attachedDoc)}");
     expect(conversations).toContain("sendDisabled={sendDisabled || dictationActive}");

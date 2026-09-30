@@ -42,7 +42,28 @@ ALTER TABLE public.tenants ADD COLUMN IF NOT EXISTS account_type text NOT NULL D
 ALTER TABLE public.tenants ADD COLUMN IF NOT EXISTS parent_tenant_id uuid REFERENCES public.tenants(id);
 INSERT INTO public.tenants (id,name,account_type) VALUES
   ('dddddddd-0000-4000-8000-000000000004','Agency D','agency');
-INSERT INTO public.clients (id,tenant_id,email) VALUES
-  ('c1111111-0000-4000-8000-000000000001','aaaaaaaa-0000-4000-8000-000000000001','a-client@example.com'),
-  ('c2222222-0000-4000-8000-000000000002','bbbbbbbb-0000-4000-8000-000000000002','b-client@example.com'),
-  ('c4444444-0000-4000-8000-000000000004','dddddddd-0000-4000-8000-000000000004','d-client@example.com');
+INSERT INTO public.clients (id,tenant_id) VALUES
+  ('c1111111-0000-4000-8000-000000000001','aaaaaaaa-0000-4000-8000-000000000001'),
+  ('c2222222-0000-4000-8000-000000000002','bbbbbbbb-0000-4000-8000-000000000002'),
+  ('c4444444-0000-4000-8000-000000000004','dddddddd-0000-4000-8000-000000000004');
+-- A contact's addresses (20270515000000), reduced to the columns the counterparty trigger reads.
+CREATE TABLE public.client_contact_methods (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), tenant_id uuid NOT NULL,
+  client_id uuid NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE, kind text NOT NULL, value text NOT NULL,
+  label text, is_primary boolean NOT NULL DEFAULT false, position integer NOT NULL);
+INSERT INTO public.client_contact_methods (tenant_id,client_id,kind,value,is_primary,position) VALUES
+  ('aaaaaaaa-0000-4000-8000-000000000001','c1111111-0000-4000-8000-000000000001','email','a-client@example.com',true,0),
+  ('bbbbbbbb-0000-4000-8000-000000000002','c2222222-0000-4000-8000-000000000002','email','b-client@example.com',true,0),
+  ('dddddddd-0000-4000-8000-000000000004','c4444444-0000-4000-8000-000000000004','email','d-client@example.com',true,0);
+-- The one reader of a contact's primary address (20270516000000), verbatim: the counterparty
+-- trigger reads the signer's email through it.
+CREATE FUNCTION public.client_primary_address(_client_id uuid, _kind text)
+RETURNS text
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT m.value FROM public.client_contact_methods AS m
+   WHERE m.client_id = _client_id AND m.kind = _kind AND m.is_primary
+   ORDER BY m.position LIMIT 1
+$$;

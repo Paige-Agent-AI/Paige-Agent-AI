@@ -5,10 +5,9 @@
  * WHAT THIS DOES (repo-only; it NEVER connects to prod and NEVER writes schema_migrations):
  *   Prod's `supabase_migrations.schema_migrations` ledger has drifted ahead of the repo's
  *   `supabase/migrations/` directory (172 prod-only versions with no local file; 33 local
- *   files never recorded on prod). This script reconciles the REPO so a plain
- *   `supabase db push --include-all` (already correct in
- *   .github/workflows/deploy-migrations.yml — DO NOT replace it) sees a history that matches
- *   prod. It does exactly four repo-only mutations, then writes an audit report:
+ *   files never recorded on prod). This script reconciles the REPO so the pipeline's
+ *   `supabase db push` (.github/workflows/deploy-migrations.yml; plain since 2026-09-29, never
+ *   `--include-all`) sees a history that matches prod. It does exactly four repo-only mutations, then writes an audit report:
  *     1. RENAME (git mv) each local file that is a content-TWIN of a prod-only migration to
  *        prod's recorded version stamp — KEEPING the local file body as source-of-truth
  *        (owner call #4). Records a byte-fidelity drift signal; never overwrites with ledger SQL.

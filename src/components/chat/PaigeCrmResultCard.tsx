@@ -16,6 +16,11 @@ export type PaigeCrmResult = {
 
 export function PaigeCrmResultCard({ result }: { result: PaigeCrmResult }) {
   const absent = result.readback?.absent === true;
+  // A create is a new record, so it reads "Added" — "Updated: contact create" described an edit
+  // that never happened (owner ruling, 2026-09-26). Every *.create the executor runs inserts a new
+  // row, and contact.create refuses outright when the contact already existed, so this is true
+  // whenever the receipt is shown.
+  const created = !absent && result.action.endsWith(".create");
   const label = result.action.replace(/\./g, " ");
   const href = result.record_locator?.deep_link || result.record_locator?.surface_url || null;
   const exact = result.record_locator?.deep_link_status === "exact";
@@ -25,7 +30,7 @@ export function PaigeCrmResultCard({ result }: { result: PaigeCrmResult }) {
       <div className="flex items-start gap-2">
         <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium capitalize">{absent ? "Removed" : "Updated"}: {label}</p>
+          <p className="text-sm font-medium capitalize">{created ? "Added" : `${absent ? "Removed" : "Updated"}: ${label}`}</p>
           <p className="mt-0.5 break-words text-xs text-muted-foreground">{record}</p>
           <p className="mt-1 text-xs text-muted-foreground">
             {result.receipt_recorded ? "Recorded in Paige activity." : "Receipt was not confirmed."}

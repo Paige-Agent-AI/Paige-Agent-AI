@@ -2,6 +2,13 @@
 // Paige Secure Browser request boundary. The external worker path remains deliberately unavailable
 // until every vendor gate in the approved MVP plan is independently cleared.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+import { recordCapabilityRun } from "../_shared/capability-record.ts";
+import {
+  normalizeSecureBrowserTarget,
+  normalizeSecureBrowserPurpose,
+  validateSecureBrowserScope,
+  type SecureBrowserScope,
+} from "../_shared/secure-browser-contract.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,17 +22,6 @@ function json(body: unknown, status = 200) {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
-}
-
-function safeTarget(raw: unknown): string | null {
-  if (typeof raw !== "string" || !raw.trim()) return null;
-  try {
-    const u = new URL(raw.trim());
-    if (u.protocol !== "https:" && u.protocol !== "http:") return null;
-    return `${u.origin}${u.pathname}`.slice(0, 2048);
-  } catch {
-    return null;
-  }
 }
 
 Deno.serve(async (req) => {
@@ -52,11 +48,19 @@ Deno.serve(async (req) => {
   const tenantId = typeof profile?.active_tenant_id === "string" ? profile.active_tenant_id : null;
   if (!tenantId) return json({ error: "active_workspace_required" }, 403);
 
-  const [{ data: isAdmin, error: adminError }, { data: isAgencyManager, error: agencyError }] = await Promise.all([
+  const [
+    { data: membership, error: membershipError },
+    { data: isAdmin, error: adminError },
+    { data: isAgencyManager, error: agencyError },
+    { data: isPlatformOwner, error: platformOwnerError },
+  ] = await Promise.all([
+    admin.from("tenant_members").select("role,is_owner,status").eq("tenant_id", tenantId).eq("user_id", user.id).maybeSingle(),
     admin.rpc("is_tenant_admin_as", { _actor: user.id, _tenant: tenantId }),
     admin.rpc("agency_can_manage_child", { _child: tenantId, _actor: user.id }),
+    admin.rpc("is_platform_owner", { _user_id: user.id }),
   ]);
-  if ((adminError && agencyError) || (isAdmin !== true && isAgencyManager !== true)) {
+  if ((membershipError && adminError && agencyError && platformOwnerError) ||
+      (isAdmin !== true && isAgencyManager !== true && isPlatformOwner !== true)) {
     return json({ error: "not_authorized" }, 403);
   }
 
@@ -74,9 +78,26 @@ Deno.serve(async (req) => {
 
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return json({ error: "invalid_json" }, 400); }
-  const purpose = typeof body.goal === "string" ? body.goal.trim().slice(0, 1000) : "";
-  const startUrl = safeTarget(body.start_url);
-  if (!purpose || !startUrl) return json({ error: "purpose_and_valid_target_required" }, 400);
+  const purposeValue = body.purpose ?? body.goal;
+  const targetValue = body.target ?? body.start_url;
+  let purpose = "";
+  const threadId = typeof body.thread_id === "string" ? body.thread_id : "";
+  const idempotencyKey = typeof body.idempotency_key === "string" ? body.idempotency_key : "";
+  if (!threadId || !idempotencyKey) {
+    return json({ error: "purpose_thread_and_idempotency_required" }, 400);
+  }
+  let target: { origin: string; displayHost: string };
+  let scope: SecureBrowserScope;
+  try {
+    purpose = normalizeSecureBrowserPurpose(typeof purposeValue === "string" ? purposeValue : "");
+    target = normalizeSecureBrowserTarget(typeof targetValue === "string" ? targetValue : "");
+    scope = validateSecureBrowserScope(body.scope);
+    if (!scope.allowedOrigins.includes(target.origin)) {
+      return json({ error: "target_outside_scope" }, 400);
+    }
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "secure_browser_request_invalid" }, 400);
+  }
 
   const relatedContactId = typeof body.related_contact_id === "string" ? body.related_contact_id : null;
   const relatedBusinessId = typeof body.related_business_id === "string" ? body.related_business_id : null;
@@ -89,25 +110,48 @@ Deno.serve(async (req) => {
     if (!data) return json({ error: "related_business_outside_workspace" }, 403);
   }
 
-  const { data: session, error: insertError } = await admin.from("browser_use_sessions").insert({
-    tenant_id: tenantId,
-    goal: purpose,
-    start_url: startUrl,
-    steps: [],
-    related_contact_id: relatedContactId,
-    related_business_id: relatedBusinessId,
-    invoker_user_id: user.id,
-    invoker_kind: isAdmin === true ? "admin" : "agency",
-    status: "failed",
-    error: "secure_browser_worker_gated",
-    completed_at: new Date().toISOString(),
-  }).select("id").single();
-  if (insertError || !session) return json({ error: "request_record_failed" }, 500);
+  const directRole = membership?.status === "active" ? membership.role : null;
+  const actorKind = isPlatformOwner === true
+    ? "platform_owner"
+    : directRole === "owner" || membership?.is_owner === true
+      ? "owner"
+      : directRole === "admin" && isAdmin === true
+      ? "admin"
+      : isAgencyManager === true
+        ? "authorized_representative"
+        : null;
+  if (!actorKind) return json({ error: "not_authorized" }, 403);
+  const { data: result, error: requestError } = await admin.rpc("secure_browser_request_unavailable", {
+    p_tenant: tenantId,
+    p_actor: user.id,
+    p_actor_kind: actorKind,
+    p_thread: threadId,
+    p_purpose: purpose,
+    p_target_origin: target.origin,
+    p_target_display_host: target.displayHost,
+    p_scope: scope,
+    p_idempotency_key: idempotencyKey,
+  });
+  if (requestError || !result || typeof result !== "object") {
+    console.error("[secure-browser] request record failed", { reason: requestError?.message ?? "empty_result" });
+    return json({ error: "request_record_failed" }, 500);
+  }
+  const response = result as Record<string, unknown>;
+  const receiptId = typeof response.receiptId === "string" ? response.receiptId : null;
+  const railRecorded = receiptId
+    ? await recordCapabilityRun(admin, {
+        tenantId,
+        actorId: user.id,
+        capabilityKey: "paige_secure_browser",
+        outcome: "capability_unreachable",
+        runId: receiptId,
+      })
+    : false;
 
   return json({
-    session_id: session.id,
+    ...response,
     status: "unavailable",
-    reason: "secure_worker_under_setup",
+    railEvidence: railRecorded ? "recorded" : "not_recorded",
     message: "Paige Secure Browser is under setup for this workspace.",
-  }, 503);
+  });
 });

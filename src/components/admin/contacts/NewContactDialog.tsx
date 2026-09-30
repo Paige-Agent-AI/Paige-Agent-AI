@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { loadAssignableStaff } from "@/lib/team/assignableStaff";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { LIFECYCLE_STAGES, CONTACT_SOURCES } from "@/lib/contacts";
+import { LIFECYCLE_STAGES, CONTACT_SOURCES, contactIdsWithAddress } from "@/lib/contacts";
 import { useTenantOffers } from "@/hooks/useTenantOffers";
 
 type Coach = { user_id: string; name: string };
@@ -44,12 +45,7 @@ export function NewContactDialog({ open, onOpenChange, onCreated }: Props) {
     setPrimaryOffer("none"); setOfferCustom("");
     setTagsRaw(""); setNotes("");
     (async () => {
-      const { data: roles } = await supabase.from("user_roles").select("user_id").eq("role", "coach");
-      const ids = (roles || []).map((r: { user_id: string }) => r.user_id);
-      if (ids.length) {
-        const { data: profs } = await supabase.from("coach_client_profiles_safe").select("user_id, full_name").in("user_id", ids);
-        setCoaches((profs || []).map((p: { user_id: string; full_name: string | null }) => ({ user_id: p.user_id, name: p.full_name || "Unnamed Coach" })));
-      } else setCoaches([]);
+      setCoaches(await loadAssignableStaff());
     })();
   }, [open]);
 
@@ -92,12 +88,20 @@ export function NewContactDialog({ open, onOpenChange, onCreated }: Props) {
       // 23505 = unique_violation. Race with the pre-check above, or constraint on another column.
       if ((error as { code?: string }).code === "23505" || /duplicate key/i.test(error.message || "")) {
         if (em) {
-          const { data: existing } = await supabase
-            .from("clients")
-            .select("id")
-            .eq("created_by", user.id)
-            .eq("email", em)
-            .maybeSingle();
+          // The contact already holding this address — any of its addresses, matched as the
+          // database matches them — among the ones this user created.
+          const holders = await contactIdsWithAddress("email", em).catch((cause: unknown) => {
+            console.warn("[NewContactDialog] looking up the contact holding this email failed", cause);
+            return [] as string[];
+          });
+          const { data: existing } = holders.length
+            ? await supabase
+              .from("clients")
+              .select("id")
+              .eq("created_by", user.id)
+              .in("id", holders)
+              .maybeSingle()
+            : { data: null };
           if (existing) {
             toast.message("Contact already exists — opening it");
             onOpenChange(false);

@@ -21,7 +21,7 @@
 
 /** One recorded call, in order. */
 function mkRecorder() {
-  return { rpc: [], from: [], inserts: [], clients: [], uploads: [] };
+  return { rpc: [], from: [], inserts: [], clients: [], uploads: [], functions: [] };
 }
 
 class QueryBuilder {
@@ -63,10 +63,11 @@ class QueryBuilder {
     this._insertError = this._live().scenario.onInsert?.(this._table, row) ?? null;
     return this;
   }
-  update(row) { this._op = "update"; this._live().recorder.inserts.push({ table: this._table, row, update: true }); return this; }
+  update(row) { this._op = "update"; this._filters.push(["update", row]); this._live().recorder.inserts.push({ table: this._table, row, update: true }); return this; }
   upsert(row) { this._op = "upsert"; this._live().recorder.inserts.push({ table: this._table, row, upsert: true }); return this; }
   delete() { this._op = "delete"; return this; }
   eq(c, v) { this._filters.push(["eq", c, v]); return this; }
+  filter(c, op, v) { this._filters.push(["filter", c, op, v]); return this; }
   neq(c, v) { this._filters.push(["neq", c, v]); return this; }
   in(c, v) { this._filters.push(["in", c, v]); return this; }
   is(c, v) { this._filters.push(["is", c, v]); return this; }
@@ -128,11 +129,12 @@ class QueryBuilder {
     return typeof error === 'function' ? error({op:this._op,filters:this._filters,client:this._kind}) : error;
   }
 
-  maybeSingle() {
+  async maybeSingle() {
     this._record(true);
     const injected = this._injected();
     if (injected) return Promise.resolve({ data: null, error: injected });
-    const rows = this._rows();
+    const rows = await this._rows();
+    if (this._table === "paige_pending_confirmations" && rows.length > 1) return { data: null, error: { code: "PGRST116", message: "multiple rows" } };
     return Promise.resolve({ data: rows[0] ?? null, error: null });
   }
   single() { return this.maybeSingle(); }
@@ -141,8 +143,7 @@ class QueryBuilder {
     this._record(false);
     const injectedThen = this._injected();
     if (injectedThen) return Promise.resolve({ data: null, error: injectedThen, count: 0 }).then(res, rej);
-    const rows = this._rows();
-    return Promise.resolve({ data: rows, error: null, count: rows.length }).then(res, rej);
+    return Promise.resolve(this._rows()).then((rows) => ({ data: rows, error: null, count: rows.length })).then(res, rej);
   }
 }
 
@@ -172,7 +173,15 @@ class FakeClient {
         download: async () => ({ data: null, error: null }),
       }),
     };
-    this.functions = { invoke: async () => ({ data: null, error: null }) };
+    this.functions = { invoke: async (name, options) => {
+      this._live().recorder.functions.push({ name, ...options, client: this._kind });
+      // A scenario may answer for a function, as the full `{ data, error }` supabase-js returns
+      // (or a function of the invoke options returning one) — needed to drive what the caller
+      // does with each kind of answer, including the ones that never came back.
+      const configured = this._live().scenario.functions?.[name];
+      const result = typeof configured === "function" ? configured(options) : configured;
+      return result ?? { data: null, error: null };
+    } };
     this.channel = () => ({ send: async () => {}, subscribe: () => ({}), on: function () { return this; } });
     this.removeChannel = () => {};
   }

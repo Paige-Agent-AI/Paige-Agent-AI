@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   ArrowLeft, DollarSign, FileText, Mail, Brain, Upload,
   AlertTriangle, User, Building2, Phone, AtSign, Save, Archive, ArchiveRestore,
-  TrendingUp, ClipboardList, Database, MessageSquare, Trash2, Edit3
+  TrendingUp, ClipboardList, Database, MessageSquare, Trash2, Edit3, Loader2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportUploadTab } from "./ReportUploadTab";
@@ -22,6 +22,11 @@ import { FundingApplicationLog } from "./FundingApplicationLog";
 import { AdminAccountManagement } from "./AdminAccountManagement";
 import { AdminFactoryResetDialog, AdminChatHistory, AdminFundingOverride } from "./admin/AdminClientTools";
 import { toast } from "sonner";
+import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses, type ContactMethodRow, type WithClientContactMethods } from "@/lib/contact-methods";
+import { setContactPrimaryAddresses } from "@/lib/contacts";
+
+// Widened to string: the generated types do not know the contact-methods embed yet.
+const CLIENT_RECORD_SELECT: string = `*,${CLIENT_CONTACT_METHODS_EMBED}`;
 
 interface InternalClientFileViewProps {
   clientId: string;
@@ -30,10 +35,14 @@ interface InternalClientFileViewProps {
 
 interface ClientRecord {
   id: string;
+  /** The contact's workspace: the address write is scoped to it. */
+  tenant_id: string | null;
   first_name: string;
   last_name: string;
   email: string | null;
   phone: string | null;
+  /** Every address as read; the save names this list, so a change made since is refused. */
+  client_contact_methods?: readonly ContactMethodRow[] | null;
   entity_name: string | null;
   entity_type: string | null;
   funding_goal: number | null;
@@ -63,13 +72,15 @@ export function InternalClientFileView({ clientId, onBack }: InternalClientFileV
 
   const fetchClient = async () => {
     const { data } = await supabase
-      .from("clients" as any)
-      .select("*")
+      .from("clients")
+      .select(CLIENT_RECORD_SELECT)
       .eq("id", clientId)
       .maybeSingle();
     if (data) {
-      setClient(data as any);
-      setEditForm(data as any);
+      // `email` / `phone` are the contact's primary addresses, from its contact methods.
+      const record = withPrimaryAddresses(data as unknown as ClientRecord & WithClientContactMethods);
+      setClient(record);
+      setEditForm(record);
     }
   };
 
@@ -77,33 +88,43 @@ export function InternalClientFileView({ clientId, onBack }: InternalClientFileV
     const negRes = await supabase
       .from("credit_negative_items")
       .select("id", { count: "exact", head: true })
-      .eq("client_id", clientId as any);
+      .eq("client_id", clientId);
     setNegativeCount(negRes.count || 0);
   };
 
   const handleSave = async () => {
     setSaving(true);
     try {
+      // The primary email and phone live in the contact's methods. Set them first, so an address
+      // another contact already holds is refused before anything else on the record changes.
+      const addresses: { email?: string | null; phone?: string | null } = {};
+      if ((editForm.email?.trim() || null) !== (client?.email ?? null)) addresses.email = editForm.email?.trim() || null;
+      if ((editForm.phone?.trim() || null) !== (client?.phone ?? null)) addresses.phone = editForm.phone?.trim() || null;
+      if (Object.keys(addresses).length) {
+        await setContactPrimaryAddresses(clientId, addresses, {
+          tenantId: client?.tenant_id ?? null,
+          loaded: client?.client_contact_methods,
+        });
+      }
+
       const { error } = await supabase
-        .from("clients" as any)
+        .from("clients")
         .update({
           first_name: editForm.first_name,
           last_name: editForm.last_name,
-          email: editForm.email || null,
-          phone: editForm.phone || null,
           entity_name: editForm.entity_name || null,
           entity_type: editForm.entity_type || null,
           funding_goal: editForm.funding_goal,
           monthly_revenue: editForm.monthly_revenue,
           current_notes: editForm.current_notes || null,
-        } as any)
+        })
         .eq("id", clientId);
       if (error) throw error;
       toast.success("Client record updated");
       setEditing(false);
       fetchClient();
-    } catch (err: any) {
-      toast.error("Failed to save", { description: err.message });
+    } catch (err) {
+      toast.error("Failed to save", { description: (err as Error).message });
     } finally {
       setSaving(false);
     }
@@ -115,8 +136,8 @@ export function InternalClientFileView({ clientId, onBack }: InternalClientFileV
     // Optimistic update so the badge + dropdown reflect the new value instantly.
     setClient({ ...client, status: newStatus });
     const { error } = await supabase
-      .from("clients" as any)
-      .update({ status: newStatus } as any)
+      .from("clients")
+      .update({ status: newStatus })
       .eq("id", clientId);
     if (error) {
       setClient(previous);
@@ -144,8 +165,9 @@ export function InternalClientFileView({ clientId, onBack }: InternalClientFileV
 
   if (!client) {
     return (
-      <div className="flex items-center justify-center p-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      <div className="flex items-center justify-center p-12" role="status" aria-live="polite">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground motion-reduce:animate-none" aria-hidden="true" />
+        <span className="sr-only">Loading client</span>
       </div>
     );
   }

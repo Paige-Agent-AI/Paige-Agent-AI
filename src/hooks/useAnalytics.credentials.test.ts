@@ -235,3 +235,298 @@ describe("peer-gate regressions", () => {
     expect(out).toBe("/dashboard");
   });
 });
+
+/**
+ * THE ATTRIBUTION EXEMPTION — the hole the whole-payload scrub had in it.
+ *
+ * `scrubDeep` exempted every attribution key outright, on the stated reasoning that "attribution
+ * values are never credentials". They are read from a user-controlled query string and from
+ * caller-supplied `properties`, so that was an assertion about intent, not a property of the data.
+ * Three ways through, all measured against the emitted body before the fix:
+ *
+ *   A. `?utm_campaign=<invite token>` — arrived in its own dedicated column, in full. That column
+ *      is indexed (`idx_analytics_events_utm_campaign`), so a leaked token is an equality lookup.
+ *   B. `properties.utm_campaign = "https://app/sign/<token>"` — the exemption skipped `scrubString`,
+ *      so the URL was never structurally redacted.
+ *   C. `properties.utm_campaign = { nested: { deeper: <token> } }` — `out[k] = v` copied the OBJECT
+ *      whole and skipped recursion, the same defect already fixed at the depth cap below it.
+ *
+ * The last test is the counterweight: the general credential rule redacts EIGHT of twenty realistic
+ * campaign names, and that cost is what motivated the exemption. The narrow mint-shape rule has to
+ * keep those readable, or the exemption grows back.
+ */
+describe("attribution keys are scrubbed, not exempted", () => {
+  it("A — an invite token in ?utm_campaign= never reaches its column", async () => {
+    atLocation(`https://app.example.com/?utm_campaign=${encodeURIComponent(INVITE_TOKEN)}`);
+    const { trackEvent } = await import("./useAnalytics");
+    await trackEvent("page_view");
+    expect(sent.length).toBeGreaterThan(0);
+    expect(sent.join("\n")).not.toContain(INVITE_TOKEN);
+  });
+
+  it("B — a signing URL passed as properties.utm_campaign is redacted", async () => {
+    atLocation("https://app.example.com/dashboard");
+    const { trackEvent } = await import("./useAnalytics");
+    await trackEvent("cta_click", "engagement", {
+      utm_campaign: `https://app.example.com/sign/${SIGNING_TOKEN}`,
+    });
+    expect(sent.join("\n")).not.toContain(SIGNING_TOKEN);
+  });
+
+  it("C — an OBJECT under an attribution key is recursed, not copied whole", async () => {
+    atLocation("https://app.example.com/dashboard");
+    const { trackEvent } = await import("./useAnalytics");
+    await trackEvent("cta_click", "engagement", {
+      utm_campaign: { nested: { deeper: SIGNING_TOKEN } },
+    });
+    expect(sent.join("\n")).not.toContain(SIGNING_TOKEN);
+  });
+
+  it("utm_term and utm_content are reachable ONLY through properties — cover them too", async () => {
+    atLocation("https://app.example.com/dashboard");
+    const { trackEvent } = await import("./useAnalytics");
+    await trackEvent("cta_click", "engagement", {
+      utm_term: INVITE_TOKEN,
+      utm_content: SIGNING_TOKEN,
+    });
+    const body = sent.join("\n");
+    expect(body).not.toContain(INVITE_TOKEN);
+    expect(body).not.toContain(SIGNING_TOKEN);
+  });
+
+  it("still carries the campaign names the columns exist for", async () => {
+    atLocation("https://app.example.com/pricing?utm_campaign=BlackFridayPromo2026&utm_source=newsletter");
+    const { trackEvent } = await import("./useAnalytics");
+    await trackEvent("page_view");
+    const body = sent.join("\n");
+    expect(body).toContain("BlackFridayPromo2026");
+    expect(body).toContain("newsletter");
+  });
+});
+
+/**
+ * A credential-bearing URL NESTED INSIDE a query parameter. `looksLikeCredential` is a whole-value
+ * test over a strict base64 alphabet, so a URL's `:` and `.` disqualify it and the token in its
+ * path survived. This was live in the shipped redactor, on `page_path`'s search and on the
+ * referral sink's `landing_path` alike.
+ */
+describe("a credential nested inside a parameter value", () => {
+  it("redacts a signing URL carried in ?next=", () => {
+    const out = redactSecretSearch(
+      `?next=${encodeURIComponent(`https://app.example.com/sign/${SIGNING_TOKEN}`)}`,
+    );
+    expect(out).not.toContain(SIGNING_TOKEN);
+  });
+
+  it("redacts an invite URL carried in ?utm_campaign=", () => {
+    const out = redactSecretSearch(
+      `?utm_campaign=${encodeURIComponent(`https://app.example.com/join/${INVITE_TOKEN}`)}`,
+    );
+    expect(out).not.toContain(INVITE_TOKEN);
+  });
+
+  it("leaves an ordinary parameter alone", () => {
+    expect(redactSecretSearch("?utm_campaign=black_friday_2026_launch&ref=PARTNER1")).toBe(
+      "?utm_campaign=black_friday_2026_launch&ref=PARTNER1",
+    );
+  });
+});
+
+/**
+ * THE REAL INVITE SHAPE, and why the fixture above is not it.
+ *
+ * `INVITE_TOKEN` was written as standard base64 with `=` padding. A real invite is
+ * `encode(gen_random_bytes(24),'base64')` with `+`->`-`, `/`->`_` and `=` stripped — BASE64URL,
+ * never padded, minted at four migration sites into the unhashed `tenant_invite_tokens.token`.
+ * The fixture being wrong by exactly the characters that mattered is why the base64url gap
+ * survived a suite that looked like it covered invites.
+ *
+ * The second case is the other half: `URLSearchParams.get()` form-decodes `+` to a space, so a
+ * token pasted into a URL without percent-encoding reaches the scrubber space-mangled. Every
+ * earlier test used `encodeURIComponent`, which exercises only the half that was already safe.
+ */
+describe("the real minted invite shape, end to end", () => {
+  const REAL_INVITE = "kJ8vQ2mZ-xR7bN4wT1yH_cL6pA3dS9eQ"; // 32 chars, base64url, unpadded
+
+  it("never reaches the wire from ?utm_campaign=", async () => {
+    atLocation(`https://app.example.com/?utm_campaign=${REAL_INVITE}`);
+    const { trackEvent } = await import("./useAnalytics");
+    await trackEvent("page_view");
+    expect(sent.length).toBeGreaterThan(0);
+    expect(sent.join("\n")).not.toContain(REAL_INVITE);
+  });
+
+  it("never reaches the wire from an UNREGISTERED route", async () => {
+    atLocation(`https://app.example.com/some-future-flow/${REAL_INVITE}`);
+    const { trackEvent } = await import("./useAnalytics");
+    await trackEvent("page_view");
+    expect(sent.join("\n")).not.toContain(REAL_INVITE);
+  });
+
+  it("never reaches the wire from an unrecognised query parameter", async () => {
+    atLocation(`https://app.example.com/landing?handoff=${REAL_INVITE}`);
+    const { trackEvent } = await import("./useAnalytics");
+    await trackEvent("page_view", "engagement", { search: window.location.search });
+    expect(sent.join("\n")).not.toContain(REAL_INVITE);
+  });
+
+  it("survives the +-became-a-space form of a standard-base64 token", async () => {
+    const spaced = "kJ8vQ2mZ xR7bN4wT1yH/cL6pA3dS9eQ"; // what URLSearchParams.get() hands back
+    atLocation("https://app.example.com/dashboard");
+    const { trackEvent } = await import("./useAnalytics");
+    await trackEvent("cta_click", "engagement", { utm_campaign: spaced });
+    expect(sent.join("\n")).not.toContain(spaced);
+  });
+});
+
+/**
+ * A BASE64URL INVITE INSIDE A NESTED URL IN A QUERY PARAMETER.
+ *
+ * Found by review on the very commit that added the nested-parameter scan. The scan was a free-text
+ * run match, and `/` is in the base64 alphabet, so `https://app/join/<invite>` collapsed into the
+ * run `app/join/<invite>` — 41 characters, not the 32 the mint is pinned to — and the exact-width
+ * test missed. Widening the run alphabet does not fix it: the joined run then carries the `-`/`_`
+ * of a base64url token and the separator disqualifier rejects it.
+ *
+ * The path is therefore redacted structurally, segment by segment, where the token is a whole
+ * segment. The last two cases are the guard on that change: hex must stay covered, and an ordinary
+ * campaign parameter must come through byte-for-byte.
+ */
+describe("a nested URL inside a query parameter", () => {
+  const REAL_INVITE = "kJ8vQ2mZ-xR7bN4wT1yH_cL6pA3dS9eQ";
+
+  it("redacts a /join URL parked in utm_campaign", () => {
+    const out = redactSecretSearch(
+      `?utm_campaign=${encodeURIComponent(`https://app.example.com/join/${REAL_INVITE}`)}`,
+    );
+    expect(out).not.toContain(REAL_INVITE);
+  });
+
+  it("redacts a /join URL parked in an unrecognised parameter", () => {
+    const out = redactSecretSearch(
+      `?next=${encodeURIComponent(`https://app.example.com/join/${REAL_INVITE}`)}`,
+    );
+    expect(out).not.toContain(REAL_INVITE);
+  });
+
+  it("redacts a bare nested PATH, not just an absolute URL", () => {
+    const out = redactSecretSearch(`?next=${encodeURIComponent(`/join/${REAL_INVITE}`)}`);
+    expect(out).not.toContain(REAL_INVITE);
+  });
+
+  it("redacts a token in the nested URL's OWN query string", () => {
+    const out = redactSecretSearch(
+      `?next=${encodeURIComponent(`https://app.example.com/landing?handoff=${REAL_INVITE}`)}`,
+    );
+    expect(out).not.toContain(REAL_INVITE);
+  });
+
+  it("still covers the hex mint through the same path", () => {
+    const out = redactSecretSearch(
+      `?next=${encodeURIComponent(`https://app.example.com/sign/${SIGNING_TOKEN}`)}`,
+    );
+    expect(out).not.toContain(SIGNING_TOKEN);
+  });
+
+  it("leaves an ordinary campaign parameter byte-for-byte", () => {
+    expect(redactSecretSearch("?utm_campaign=black_friday_2026_launch&ref=PARTNER1")).toBe(
+      "?utm_campaign=black_friday_2026_launch&ref=PARTNER1",
+    );
+  });
+});
+
+/**
+ * NESTING, AND THE AUTHORITY — round three, both found by review on the round-two fix.
+ *
+ * The first fix redacted a nested URL's PATH structurally but left its own query string on the
+ * flat run scan, so a URL inside a URL put the credential one level below the guard:
+ * `?next=<https://outer/p?continue=https://app/join/<invite>>`. The run scan collapses
+ * `app/join/<invite>` into a single run, which is not the 32 characters the mint is pinned to, so
+ * the predicate rejects it and the invite ships. The tail is now parsed as what it is, with a
+ * bounded depth, rather than scanned as text.
+ *
+ * The second is the URL authority. Keeping `scheme://host` intact so the destination stays
+ * readable also kept `https://<invite>@example.com` intact — userinfo is a credential by
+ * definition — and a token used as a host label with it.
+ *
+ * The last two cases are the counterweight, and they are why this is not simply "redact more":
+ * an ordinary campaign parameter must still arrive byte-for-byte, and an ordinary destination URL
+ * must still be readable as a destination.
+ */
+describe("nested URLs and URL authorities", () => {
+  const INVITE = "kJ8vQ2mZ-xR7bN4wT1yH_cL6pA3dS9eQ";
+
+  it("redacts a credential two levels down — a URL inside a URL's query", () => {
+    const inner = `https://outer.example/p?continue=https://app.example/join/${INVITE}`;
+    expect(redactSecretSearch(`?next=${encodeURIComponent(inner)}`)).not.toContain(INVITE);
+  });
+
+  it("redacts a token in the USERINFO of a nested URL", () => {
+    const out = redactSecretSearch(`?next=${encodeURIComponent(`https://${INVITE}@example.com/p`)}`);
+    expect(out).not.toContain(INVITE);
+  });
+
+  it("redacts a token used as a HOST LABEL", () => {
+    const out = redactSecretSearch(
+      `?next=${encodeURIComponent(`https://${INVITE}.example.com/p`)}`,
+    );
+    expect(out).not.toContain(INVITE);
+  });
+
+  it("redacts a token in a nested FRAGMENT — the implicit-flow recovery shape", () => {
+    const inner = `https://app.example/landing#access_token=${INVITE}`;
+    expect(redactSecretSearch(`?next=${encodeURIComponent(inner)}`)).not.toContain(INVITE);
+  });
+
+  it("fails CLOSED past the nesting cap rather than handing back something unparsed", () => {
+    // Four levels of URL-in-URL; the cap is three.
+    let nested = `https://app.example/join/${INVITE}`;
+    for (let i = 0; i < 4; i++) nested = `https://h${i}.example/p?next=${encodeURIComponent(nested)}`;
+    expect(redactSecretSearch(`?next=${encodeURIComponent(nested)}`)).not.toContain(INVITE);
+  });
+
+  it("still carries an ordinary campaign parameter byte-for-byte", () => {
+    expect(redactSecretSearch("?utm_campaign=black_friday_2026_launch&ref=PARTNER1")).toBe(
+      "?utm_campaign=black_friday_2026_launch&ref=PARTNER1",
+    );
+  });
+
+  it("still leaves an ordinary destination URL readable as a destination", () => {
+    const out = redactSecretSearch(`?next=${encodeURIComponent("https://app.example.com/pricing")}`);
+    expect(decodeURIComponent(out)).toContain("app.example.com");
+    expect(decodeURIComponent(out)).toContain("pricing");
+  });
+});
+
+/**
+ * Round four, both found by review on the round-three fix. Two ways a URL avoided being read as a
+ * URL, which is the shape this whole sequence keeps taking.
+ *
+ *   · A SCHEME-RELATIVE reference — `//host/path` — was classified as a path because it starts with
+ *     `/`, so the authority was never parsed and `//<invite>@example.com/p` came back whole. That
+ *     is precisely the form a redirect parameter takes.
+ *   · A KEYLESS component — `?https%3A%2F%2F…` with no `=` at all — got only the whole-value shape
+ *     test, which a URL's own punctuation always fails.
+ */
+describe("URLs that avoided being read as URLs", () => {
+  const INVITE = "kJ8vQ2mZ-xR7bN4wT1yH_cL6pA3dS9eQ";
+
+  it("treats a scheme-relative reference as an authority, not a path", () => {
+    const out = redactSecretSearch(`?next=${encodeURIComponent(`//${INVITE}@example.com/p`)}`);
+    expect(out).not.toContain(INVITE);
+  });
+
+  it("redacts a token in a scheme-relative HOST label too", () => {
+    const out = redactSecretSearch(`?next=${encodeURIComponent(`//${INVITE}.example.com/p`)}`);
+    expect(out).not.toContain(INVITE);
+  });
+
+  it("scrubs a query component that has no key at all", () => {
+    const out = redactSecretSearch(`?${encodeURIComponent(`https://app.example/join/${INVITE}`)}`);
+    expect(out).not.toContain(INVITE);
+  });
+
+  it("still leaves an ordinary keyless flag alone", () => {
+    expect(redactSecretSearch("?debug&utm_campaign=spring_sale")).toBe("?debug&utm_campaign=spring_sale");
+  });
+});

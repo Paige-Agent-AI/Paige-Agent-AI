@@ -8,11 +8,20 @@ export interface SyncStatus {
   disputes_created?: number;
   credit_factors_recalculated?: boolean;
   funding_readiness_recalculated?: boolean;
+  /** On a failure, a sentence written for the person who uploaded the report, when `uploader_sentence`
+   *  says so (R3b). An older server sent the pipeline's own text here instead; that is never drawn. */
   error?: string;
-  step?: string;
+  /** Set by a server that writes `error` for the uploader. Without it a failure's `error` is not shown. */
+  uploader_sentence?: boolean;
   /** The document was read and a proposal is waiting on a person. Not a failure. */
   awaiting_review?: boolean;
 }
+
+/** What the panel says when a failure's text was not written for the uploader: a frame from an older
+ *  server, carrying the pipeline's own error. It is the server's did-not-finish sentence without the
+ *  business's name (which the panel does not have), so it claims nothing about what was saved. */
+export const SYNC_FAILURE_FALLBACK =
+  "I read your report, but I couldn't finish pulling out its details for you to review. You can ask the team you're working with to take a look.";
 
 interface SyncStatusPanelProps {
   syncStatus: SyncStatus | null;
@@ -59,6 +68,11 @@ export function SyncStatusPanel({ syncStatus, isLoading }: SyncStatusPanelProps)
     );
   }
 
+  // Only a sentence the server marks as written for the uploader is drawn; anything else in `error` is
+  // an older server's pipeline text, replaced by the fallback rather than shown.
+  const failureText = syncStatus.error
+    ? (syncStatus.uploader_sentence === true ? syncStatus.error : SYNC_FAILURE_FALLBACK)
+    : undefined;
   const scores = syncStatus.scores_synced;
   const items = [
     {
@@ -104,11 +118,7 @@ export function SyncStatusPanel({ syncStatus, isLoading }: SyncStatusPanelProps)
           </div>
         ))}
       </div>
-      {syncStatus.error && (
-        <div className="mt-2 text-xs text-destructive">
-          Error: {syncStatus.error} {syncStatus.step ? `(step: ${syncStatus.step})` : ''}
-        </div>
-      )}
+      {failureText && <div className="mt-2 text-xs text-destructive">{failureText}</div>}
     </div>
   );
 }

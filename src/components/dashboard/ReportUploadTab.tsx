@@ -146,14 +146,8 @@ export function ReportUploadTab({ clientUserId }: ReportUploadTabProps) {
       const targetUserId = clientUserId || currentUser.id;
       const filePath = `${targetUserId}/${Date.now()}_${file.name}`;
 
-      // Upload to storage
-      const { error: storageError } = await supabase.storage
-        .from('credit-report-uploads')
-        .upload(filePath, file);
-
-      if (storageError) throw storageError;
-
-      // Create upload record
+      // The record comes first: staff reach a stored file only through the upload record whose path
+      // it is, so the file is stored once that record exists.
       const { data: uploadRecord, error: insertError } = await supabase
         .from('credit_report_uploads')
         .insert({
@@ -168,6 +162,16 @@ export function ReportUploadTab({ clientUserId }: ReportUploadTabProps) {
         .single();
 
       if (insertError) throw insertError;
+
+      const { error: storageError } = await supabase.storage
+        .from('credit-report-uploads')
+        .upload(filePath, file);
+
+      if (storageError) {
+        // Withdraw the record where this user may; either way the failure is reported, not hidden.
+        await supabase.from('credit_report_uploads').delete().eq('id', uploadRecord.id);
+        throw storageError;
+      }
 
       toast.success('Report uploaded successfully. Starting AI analysis...');
       await fetchUploads();

@@ -1,8 +1,16 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { useTenantContext } from "@/hooks/useTenantContext";
-import { isInternal, useFleet, type FleetTenant } from "@/operator/data/useFleet";
+import {
+  ACCOUNT_SWITCH_NOTICE_KEY,
+  clearWorkspaceScopedState,
+  operatorArrivalAddress,
+  rememberWorkspaceEntered,
+} from "@/lib/auth/workspaceEntry";
+import { landAt, operatorLandingFor, readActAsTenant } from "@/operator/actAs";
+import { fleetDetailVisible, isInternal, useFleet, type FleetTenant } from "@/operator/data/useFleet";
+import { STATUS_META, trialDaysLeft, type TenantStatus } from "@/lib/platform/tenantLifecycle";
 
 /**
  * Fleet · Directory — authoritative v3 source:
@@ -15,7 +23,7 @@ import { isInternal, useFleet, type FleetTenant } from "@/operator/data/useFleet
  */
 
 type FleetKind = "Agency" | "Sub-account" | "Standalone" | "Internal" | "Enterprise";
-type Grade = "Nominal" | "At risk" | "Internal";
+type Grade = "Nominal" | "At risk" | "Internal" | "Not graded";
 
 type DirectoryRow = {
   tenant: FleetTenant;
@@ -41,19 +49,55 @@ function kindOf(tenant: FleetTenant, nested: boolean): FleetKind {
   return "Standalone";
 }
 
-function gradeOf(tenant: FleetTenant): Grade {
+/**
+ * `seatsRead` is whether this session could read seat counts at all. A tenant's status is always
+ * readable here, so a non-active status grades At risk at every tier; a seat count this session
+ * never read is not a zero and grades nothing (§13) — the row says Not graded instead.
+ */
+function gradeOf(tenant: FleetTenant, seatsRead: boolean): Grade {
   if (isInternal(tenant)) return "Internal";
-  if ((tenant.status && tenant.status !== "active") || tenant.seats === 0) return "At risk";
+  if (tenant.status && tenant.status !== "active") return "At risk";
+  if (!seatsRead) return "Not graded";
+  if (tenant.seats === 0) return "At risk";
   return "Nominal";
+}
+
+/**
+ * The tenant's status in words, only when it is not the default — "Active" on every row would be
+ * noise, and a non-active status is exactly what explains an At risk grade. Labels and trial maths
+ * come from the lifecycle module the rest of the platform already uses (§18), never restated here.
+ */
+function statusNote(tenant: FleetTenant): string | null {
+  const status = tenant.status;
+  if (!status || status === "active") return null;
+  const label = STATUS_META[status as TenantStatus]?.label ?? status;
+  if (status !== "trial") return label;
+  const left = trialDaysLeft(tenant.trialEndsAt);
+  if (left === null) return label;
+  if (left < 0) {
+    // `trialDaysLeft` rounds a lapsed trial DOWN (so it is never a deceptive 0), which overstates
+    // the elapsed time by up to a day. Elapsed whole days are counted here instead: 9.2 days ago
+    // reads "9 days ago", and under a day reads "today" — never a figure the record does not hold.
+    const ago = Math.floor((Date.now() - new Date(tenant.trialEndsAt as string).getTime()) / 86_400_000);
+    if (ago < 1) return `${label} · ended today`;
+    return `${label} · ended ${ago} ${ago === 1 ? "day" : "days"} ago`;
+  }
+  if (left === 0) return `${label} · ends today`;
+  return `${label} · ${left} ${left === 1 ? "day" : "days"} left`;
+}
+
+function countNote(n: number, one: string, many: string): string {
+  return n ? `${n} ${n === 1 ? one : many}` : `no ${many}`;
 }
 
 function gradeTone(grade: Grade): string {
   if (grade === "At risk") return "var(--pg-warning)";
   if (grade === "Internal") return "var(--pg-violet)";
+  if (grade === "Not graded") return "var(--pg-faint)";
   return "var(--pg-positive)";
 }
 
-function directoryRows(tenants: FleetTenant[]): DirectoryRow[] {
+function directoryRows(tenants: FleetTenant[], seatsRead: boolean): DirectoryRow[] {
   const children = new Map<string, FleetTenant[]>();
   const present = new Set(tenants.map((tenant) => tenant.id));
   for (const tenant of tenants) {
@@ -70,7 +114,7 @@ function directoryRows(tenants: FleetTenant[]): DirectoryRow[] {
     rows.push({
       tenant,
       kind: kindOf(tenant, false),
-      grade: gradeOf(tenant),
+      grade: gradeOf(tenant, seatsRead),
       depth: 0,
       last: false,
       note: nested.length ? `Parent of ${nested.length}` : "",
@@ -79,7 +123,7 @@ function directoryRows(tenants: FleetTenant[]): DirectoryRow[] {
       rows.push({
         tenant: child,
         kind: kindOf(child, true),
-        grade: gradeOf(child),
+        grade: gradeOf(child, seatsRead),
         depth: 1,
         last: index === nested.length - 1,
         note: "Under the agency",
@@ -92,12 +136,15 @@ function directoryRows(tenants: FleetTenant[]): DirectoryRow[] {
 export function FleetDirectoryView({
   tenants,
   classificationVisible,
+  detailVisible,
   loading = false,
   error = null,
   onEnter,
 }: {
   tenants: FleetTenant[];
   classificationVisible: boolean;
+  /** Seat/client counts readable by this session; null when the check did not answer. */
+  detailVisible: boolean | null;
   loading?: boolean;
   error?: string | null;
   onEnter: (tenant: FleetTenant) => void;
@@ -115,9 +162,13 @@ export function FleetDirectoryView({
     () => (showInternal || !classificationVisible ? tenants : live),
     [classificationVisible, live, showInternal, tenants],
   );
-  const rows = useMemo(() => directoryRows(shown), [shown]);
+  const seatsRead = detailVisible === true;
+  const rows = useMemo(() => directoryRows(shown, seatsRead), [shown, seatsRead]);
   const maxSeats = Math.max(...shown.map((tenant) => tenant.seats), 1);
-  const risk = classificationVisible ? live.filter((tenant) => gradeOf(tenant) === "At risk").length : null;
+  // Counted over the rows on screen, so the header can never disagree with the tags beneath it.
+  // At either tier the grade is built only from data this session read (status, and seats where
+  // they are readable), so this is a real count at both — never a dash standing in for one.
+  const risk = rows.filter((row) => row.grade === "At risk").length;
 
   const composition = useMemo(() => {
     const values = (["Agency", "Sub-account", "Standalone", "Internal"] as const).map((kind) => {
@@ -137,28 +188,29 @@ export function FleetDirectoryView({
         <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1.5">
           <b id="fleet-directory-title" className="text-[12px] font-medium">The fleet</b>
           <small className="min-w-0 text-[10.5px] text-[var(--pg-faint)]">
-            {loading
+            {loading || error
               ? "—"
-              : `${classificationVisible ? live.length : "—"} live · ${shown.length} shown · entering performs an audited act-as`}
+              : classificationVisible
+                ? `${live.length} live · ${shown.length} shown · entering performs an audited act-as`
+                : `${shown.length} ${shown.length === 1 ? "tenant" : "tenants"}, internal accounts included · entering performs an audited act-as`}
           </small>
-          <button
-            type="button"
-            disabled={!classificationVisible}
-            aria-pressed={showInternal}
-            onClick={() => setShowInternal((visible) => !visible)}
-            title={!classificationVisible ? "Internal classification is not readable at this access level." : undefined}
-            className="ml-auto min-h-[24px] flex-none whitespace-nowrap rounded-full border bg-transparent px-2.5 text-[10px] font-medium disabled:cursor-not-allowed"
-            style={{
-              borderColor: showInternal ? "var(--pg-violet)" : "var(--pg-line)",
-              color: showInternal ? "var(--pg-violet)" : "var(--pg-muted)",
-            }}
-          >
-            {classificationVisible
-              ? showInternal
-                ? "Hide internal"
-                : `Show ${internalCount ?? "—"} internal`
-              : "Show — internal"}
-          </button>
+          {/* Only offered when this session can tell internal accounts apart. A disabled chip that
+              can never act asserts a capability that is not there; the header line above already
+              says the count includes them. */}
+          {classificationVisible && (
+            <button
+              type="button"
+              aria-pressed={showInternal}
+              onClick={() => setShowInternal((visible) => !visible)}
+              className="ml-auto min-h-[24px] flex-none whitespace-nowrap rounded-full border bg-transparent px-2.5 text-[10px] font-medium"
+              style={{
+                borderColor: showInternal ? "var(--pg-violet)" : "var(--pg-line)",
+                color: showInternal ? "var(--pg-violet)" : "var(--pg-muted)",
+              }}
+            >
+              {showInternal ? "Hide internal" : `Show ${internalCount ?? "—"} internal`}
+            </button>
+          )}
         </div>
 
         <div className="mt-3 flex h-1.5 gap-px overflow-hidden rounded-full" aria-label="Fleet composition">
@@ -184,10 +236,18 @@ export function FleetDirectoryView({
               <small className="font-mono text-[10px] text-[var(--pg-faint)]">{item.count}</small>
             </span>
           ))}
-          <small className="ml-auto whitespace-nowrap text-[10.5px] font-medium" style={{ color: risk ? "var(--pg-warning)" : "var(--pg-faint)" }}>
-            {risk ?? "—"} at risk
+          <small className="ml-auto whitespace-nowrap text-[10.5px] font-medium" style={{ color: risk && !loading && !error ? "var(--pg-warning)" : "var(--pg-faint)" }}>
+            {loading || error ? "—" : risk} at risk{classificationVisible ? "" : ", internal included"}
           </small>
         </div>
+
+        {!loading && !error && !seatsRead && (
+          <p className="mt-2.5 text-[10.5px] leading-[1.5] text-[var(--pg-muted)]">
+            {detailVisible === false
+              ? "Seat and client counts are not visible to your role; only tenants whose status is not active are marked at risk."
+              : "Seat and client counts could not be confirmed; only tenants whose status is not active are marked at risk."}
+          </p>
+        )}
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto pt-0.5 [scrollbar-gutter:stable]">
@@ -239,19 +299,36 @@ export function FleetDirectoryView({
                   </small>
                 </span>
                 <span className="mt-[5px] flex min-w-0 flex-wrap items-center gap-x-3.5 gap-y-1">
-                  <span className="flex items-center gap-[7px]">
-                    <span className="h-[3px] w-[52px] flex-none overflow-hidden rounded-full bg-[var(--pg-line)]">
-                      <i
-                        className="block h-full bg-[var(--pg-gold-deep)]"
-                        style={{ width: row.tenant.seats ? `${Math.max(6, (row.tenant.seats / maxSeats) * 100)}%` : 0 }}
-                      />
+                  {seatsRead ? (
+                    <span className="flex items-center gap-[7px]">
+                      <span className="h-[3px] w-[52px] flex-none overflow-hidden rounded-full bg-[var(--pg-line)]">
+                        <i
+                          className="block h-full bg-[var(--pg-muted)]"
+                          style={{ width: row.tenant.seats ? `${Math.max(6, (row.tenant.seats / maxSeats) * 100)}%` : 0 }}
+                        />
+                      </span>
+                      <small className="whitespace-nowrap font-mono text-[10.5px] text-[var(--pg-muted)]">
+                        {row.tenant.seats ? `${row.tenant.seats} ${row.tenant.seats === 1 ? "seat" : "seats"}` : "no seats"}
+                      </small>
                     </span>
-                    <small className="whitespace-nowrap font-mono text-[10.5px] text-[var(--pg-muted)]">
-                      {row.tenant.seats ? `${row.tenant.seats} ${row.tenant.seats === 1 ? "seat" : "seats"}` : "no seats"}
+                  ) : (
+                    // Stated once in the header; the row carries only the absence, never a zero.
+                    <small className="whitespace-nowrap font-mono text-[10.5px] text-[var(--pg-faint)]">
+                      seats —
                     </small>
-                  </span>
-                  <small className="min-w-0 truncate text-[10.5px] text-[var(--pg-faint)]">{row.note}</small>
+                  )}
+                  {seatsRead && (
+                    <small className="whitespace-nowrap font-mono text-[10.5px] text-[var(--pg-muted)]">
+                      {countNote(row.tenant.customers, "client", "clients")}
+                    </small>
+                  )}
+                  {row.note && (
+                    <small className="min-w-0 truncate text-[10.5px] text-[var(--pg-faint)]">{row.note}</small>
+                  )}
                   <small className="whitespace-nowrap text-[10px] font-medium" style={{ color: gradeTone(row.grade) }}>{row.grade}</small>
+                  {statusNote(row.tenant) && (
+                    <small className="whitespace-nowrap text-[10.5px] text-[var(--pg-muted)]">{statusNote(row.tenant)}</small>
+                  )}
                   <small className="ml-auto whitespace-nowrap text-[10.5px] text-[var(--pg-faint)]">Enter →</small>
                 </span>
               </button>
@@ -260,7 +337,7 @@ export function FleetDirectoryView({
 
         {!loading && !error && (
           <p className="mt-[15px] max-w-[66ch] text-[10.5px] leading-[1.55] text-[var(--pg-faint)]">
-            Act-as grants no tenant_members row, and exit returns active_tenant_id to NULL. Seats read from the tenant record; grade counts zero active seats. Platform fixtures are hidden by default and revealed by the chip.
+            Entering a tenant is an audited act-as: it adds no membership, and leaving returns you to platform scope. A tenant is at risk when its status is not active{seatsRead ? " or it has no active seats" : ""}.{classificationVisible ? " Internal accounts are hidden by default; the chip reveals them." : ""}
           </p>
         )}
       </div>
@@ -268,26 +345,89 @@ export function FleetDirectoryView({
   );
 }
 
-export default function FleetConsole({ canSeeRevenue: _canSeeRevenue }: { canSeeRevenue: boolean }) {
-  const { tenants, classificationVisible, loading, error } = useFleet(true);
-  const { switchTenant } = useTenantContext();
+/**
+ * `isPlatformOwner` is the shell's one server answer (`useIsPlatformOwner`, re-asked on sign-in
+ * changes) — passed through rather than asked a second time here (§18).
+ */
+export default function FleetConsole({ isPlatformOwner }: { isPlatformOwner: boolean | null }) {
+  const { tenants, classificationVisible, detailReadFailed, loading, error } = useFleet(true);
+  const detailVisible = fleetDetailVisible(isPlatformOwner, detailReadFailed);
+  const { enterOperatorActAs, exitOperatorActAs, tenants: contextTenants, activeUserId } = useTenantContext();
+  // Entering is an audited act, so one press is one entry. A ref, because state re-renders too
+  // late to stop a second press in the same tick; production recorded paired entries.
+  const entering = useRef(false);
 
+  // An act-as completes on both sides or on neither (see `operator/actAs.ts`). The landing is
+  // resolved BEFORE the audited enter runs, so a tenant the operator cannot stand in is refused
+  // without recording an entry, and a recorded entry is always followed by the operator
+  // actually arriving in that tenant's workspace — whose header carries their way out.
   const enterTenant = useCallback(
     async (tenant: FleetTenant) => {
-      const entered = await switchTenant(tenant.id);
-      if (!entered) {
-        toast.error(`Couldn't enter ${tenant.name}.`);
+      if (entering.current) return;
+      entering.current = true;
+      // The provider's row, not the directory's: it carries the account number the address needs. A
+      // tenant newer than the provider's snapshot is read fresh rather than refused as missing.
+      const known = contextTenants.find((t) => t.id === tenant.id) ?? (await readActAsTenant(tenant.id));
+      const landing = operatorLandingFor(known);
+      if (landing.kind === "unavailable") {
+        entering.current = false;
+        toast.error(landing.reason);
         return;
       }
-      toast.success(`Acting as ${tenant.name}. Everything you do here is recorded.`);
+      let leaving = false;
+      try {
+        const outcome = await enterOperatorActAs(tenant.id);
+        if (outcome === "refused") {
+          toast.error(`Couldn't enter ${tenant.name}. Nothing was recorded and your scope is unchanged.`);
+          return;
+        }
+        if (outcome === "occupied") {
+          // An act-as is still open for this operator (the console shows platform scope after a
+          // reload). Entering over it would record a duplicate or silently replace it, so nothing is
+          // entered and the audited exit is offered right here.
+          toast.error("You're still acting in another tenant. Nothing was entered. End that act-as first.", {
+            action: {
+              label: "End it",
+              onClick: () => {
+                void exitOperatorActAs().then((exited) => {
+                  if (!exited) toast.error("Couldn't end it. Try again.");
+                });
+              },
+            },
+          });
+          return;
+        }
+        if (outcome === "unknown") {
+          // The enter may have committed with its response lost; claiming otherwise would be false.
+          toast.error(`Paige couldn't confirm whether you entered ${tenant.name}. Reload the console before trying again.`);
+          return;
+        }
+        // Nothing from the console may render under the tenant's heading.
+        clearWorkspaceScopedState();
+        rememberWorkspaceEntered(tenant.id);
+        // The toast would die with this page, so the tenant's shell says it on arrival
+        // (WorkspaceExitControl drains this key once): the operator is told the act-as is recorded.
+        try {
+          sessionStorage.setItem(ACCOUNT_SWITCH_NOTICE_KEY, `Acting as ${tenant.name}. Everything you do here is recorded.`);
+        } catch {
+          // Storage unavailable: the Exit tenant control in the header still says where they are.
+        }
+        leaving = true;
+        landAt.go(operatorArrivalAddress(landing.root, activeUserId));
+      } finally {
+        // Held once the landing has begun: a full load does not unload this page at once, and a
+        // second press in that gap would record a second entry.
+        if (!leaving) entering.current = false;
+      }
     },
-    [switchTenant],
+    [contextTenants, enterOperatorActAs, exitOperatorActAs, activeUserId],
   );
 
   return (
     <FleetDirectoryView
       tenants={tenants}
       classificationVisible={classificationVisible}
+      detailVisible={detailVisible}
       loading={loading}
       error={error}
       onEnter={(tenant) => void enterTenant(tenant)}

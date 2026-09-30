@@ -282,8 +282,12 @@ BEGIN
   IF (_r ? 'server_url') OR (_r ? 'auth_token') OR (_r ? 'refresh_token') OR (_r ? 'oauth_client_secret') THEN
     RAISE EXCEPTION '(A3) return leaked secret/url material: %', _r;
   END IF;
-  IF (SELECT count(*) FROM jsonb_object_keys(_r)) <> 4 THEN
-    RAISE EXCEPTION '(A3) return must have exactly 4 keys: %', _r;
+  IF (SELECT count(*) FROM jsonb_object_keys(_r)) <> 8
+     OR _r->>'address_configured' IS DISTINCT FROM 'true'
+     OR _r->>'credentials_configured' IS DISTINCT FROM 'false'
+     OR _r->>'custom_header_count' IS DISTINCT FROM '0'
+     OR (_r->>'config_generation')::bigint < 2 THEN
+    RAISE EXCEPTION '(A3) return must contain exactly the 8 safe persisted facts: %', _r;
   END IF;
 
   SELECT * INTO _row FROM public.mcp_connections WHERE connection_id = '0e900000-0000-0000-0000-0000000000c1';

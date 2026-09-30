@@ -87,6 +87,7 @@ export function makeRpcConnectionLoader(admin: Admin): ConnectionLoader {
         auth_token?: unknown;
         auth_kind?: unknown;
         auth_header_name?: unknown;
+        custom_headers?: unknown;
         transport?: unknown;
         expires_at?: unknown;
         config_generation?: unknown;

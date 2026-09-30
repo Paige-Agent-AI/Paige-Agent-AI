@@ -50,8 +50,10 @@ $smoke$;
 -- ---- PROOF 3: the corrected function end-to-end, rolled back -----------------
 BEGIN;
 
--- Apply the fix (identical to migration 20260730170000): only the two 'lead'
--- literals become 'new_lead'. Byte-identical 15-arg signature -> replaces in place.
+-- Apply the fix (migration 20260730170000): only the two 'lead' literals become 'new_lead'. Same
+-- 15-arg signature -> replaces in place. Since 20270519010000 a contact's addresses live only in
+-- client_contact_methods, so this restatement dedupes on, and attaches, contact methods instead of
+-- the retired clients.email / clients.phone columns; the lifecycle fallback it proves is unchanged.
 CREATE OR REPLACE FUNCTION public.create_contact(
   p_first_name text,
   p_last_name  text DEFAULT NULL,
@@ -92,23 +94,29 @@ BEGIN
     RAISE EXCEPTION 'CONTACT_NO_TENANT: a tenant context is required' USING ERRCODE = '22023';
   END IF;
   IF _email IS NOT NULL THEN
-    SELECT id INTO _existing FROM public.clients
-     WHERE created_by = _creator AND lower(email) = lower(_email) LIMIT 1;
+    SELECT c.id INTO _existing
+      FROM public.client_contact_methods AS m
+      JOIN public.clients AS c ON c.id = m.client_id
+     WHERE c.created_by = _creator AND m.kind = 'email'
+       AND m.match_key = public.contact_method_match_key('email', _email)
+     LIMIT 1;
     IF _existing IS NOT NULL THEN RETURN _existing; END IF;
   END IF;
   INSERT INTO public.clients (
-    first_name, last_name, email, phone, entity_name, title,
+    first_name, last_name, entity_name, title,
     lifecycle_stage, source, tags, primary_offer, current_notes,
     assigned_coach_user_id, status, created_by, tenant_id, created_by_channel_type
   ) VALUES (
     COALESCE(NULLIF(btrim(p_first_name), ''), NULLIF(split_part(COALESCE(_email,''), '@', 1), ''), 'New'),
     COALESCE(NULLIF(btrim(p_last_name), ''), 'Contact'),
-    _email, NULLIF(btrim(p_phone), ''), NULLIF(btrim(p_entity_name), ''), NULLIF(btrim(p_title), ''),
+    NULLIF(btrim(p_entity_name), ''), NULLIF(btrim(p_title), ''),
     COALESCE(NULLIF(p_lifecycle_stage, ''), 'new_lead'), COALESCE(NULLIF(p_source, ''), 'paige'),
     COALESCE(p_tags, '{}'), NULLIF(btrim(p_primary_offer), ''), NULLIF(btrim(p_notes), ''),
     p_assigned_coach_user_id, 'active', _creator, _tenant, NULLIF(btrim(p_channel), '')
   )
   RETURNING id INTO _id;
+  PERFORM public._attach_client_address(_tenant, _id, 'email', _email);
+  PERFORM public._attach_client_address(_tenant, _id, 'phone', p_phone);
   INSERT INTO public.audit_logs (user_id, entity, action, entity_id, data)
   VALUES (_creator, 'client', 'create_contact', _id,
           jsonb_build_object('tenant_id', _tenant, 'email', _email, 'source', p_source, 'channel', p_channel));

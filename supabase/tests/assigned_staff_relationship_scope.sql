@@ -11,7 +11,7 @@
 -- ============================================================================
 BEGIN;
 
-SELECT plan(16);
+SELECT plan(17);
 
 -- Production's API-role grants are reproduced in the rebuilt database by the database-contract job
 -- (scripts/ci/reproduce-production-grants.mjs), so this proof exercises the policies as production
@@ -37,10 +37,14 @@ BEGIN
   INSERT INTO public.tenant_members (tenant_id, user_id, role, status, is_owner) VALUES
     (_a, _sa, 'member', 'active', false),
     (_b, _sb, 'member', 'active', false);
-  INSERT INTO public.clients (id, tenant_id, created_by, first_name, last_name, account_number, linked_user_id, email) VALUES
-    ('a5500000-0000-0000-0000-00000000c1e1', _a, _sa, 'X', 'Client', 'ASX-1', _cx, 'as-client-x@example.test'),
-    ('a5500000-0000-0000-0000-00000000c1e2', _a, _sa, 'Z', 'Client', 'ASZ-1', _cz, NULL),
-    ('a5500000-0000-0000-0000-00000000c1e3', _b, _sb, 'Y', 'Client', 'ASY-1', _cy, NULL);
+  INSERT INTO public.clients (id, tenant_id, created_by, first_name, last_name, account_number, linked_user_id) VALUES
+    ('a5500000-0000-0000-0000-00000000c1e1', _a, _sa, 'X', 'Client', 'ASX-1', _cx),
+    ('a5500000-0000-0000-0000-00000000c1e2', _a, _sa, 'Z', 'Client', 'ASZ-1', _cz),
+    ('a5500000-0000-0000-0000-00000000c1e3', _b, _sb, 'Y', 'Client', 'ASY-1', _cy);
+  -- The address the invitations below are sent to is the client's SECOND one.
+  INSERT INTO public.client_contact_methods (tenant_id, client_id, kind, value, is_primary, position) VALUES
+    (_a, 'a5500000-0000-0000-0000-00000000c1e1', 'email', 'as-client-x-work@example.test', true, 0),
+    (_a, 'a5500000-0000-0000-0000-00000000c1e1', 'email', 'as-client-x@example.test', false, 1);
 END $$;
 
 -- 1–2. The tenant is part of the row.
@@ -115,7 +119,8 @@ SELECT is((SELECT count(*)::int FROM pg_policy
             WHERE polrelid = 'public.coach_clients'::regclass AND polcmd IN ('a', 'w', 'd', '*')), 0,
   'no policy lets a signed-in user write relationships directly');
 
--- 14–15. An invitation is visible to an assignee only within the assignment's tenant.
+-- 14–15. An invitation is visible to an assignee only within the assignment's tenant — and it is
+-- recognised by ANY of the client's addresses: this one goes to their second (20270519010000).
 -- An assignee holds no staff role here: the assignment and the business are the whole of the grant.
 INSERT INTO public.invitations (email, invited_by, tenant_id) VALUES
   ('as-client-x@example.test', 'a5500000-0000-0000-0000-0000000005a1', 'a5500000-0000-0000-0000-00000000000a'),
@@ -139,7 +144,15 @@ SELECT is(current_setting('as_scope.own')::int, 1,
 SELECT is(current_setting('as_scope.other')::int, 0,
   'and not a matching invitation in another tenant');
 
--- 16. Removing the client's link removes the relationship with it (structural).
+-- 16. The policy reads client_contact_methods, which an anonymous caller holds no privilege on; it is
+-- scoped to signed-in callers (the only ones it ever admitted), so an anonymous read still runs.
+SELECT set_config('request.jwt.claims', '', true);
+SET LOCAL ROLE anon;
+SELECT lives_ok($q$SELECT count(*) FROM public.invitations$q$,
+  'an anonymous read of invitations still runs rather than failing on the client''s addresses');
+RESET ROLE;
+
+-- 17. Removing the client's link removes the relationship with it (structural).
 DELETE FROM public.clients WHERE id = 'a5500000-0000-0000-0000-00000000c1e2';
 SELECT is((SELECT count(*)::int FROM public.coach_clients
             WHERE client_user_id = 'a5500000-0000-0000-0000-000000000c02'), 0,

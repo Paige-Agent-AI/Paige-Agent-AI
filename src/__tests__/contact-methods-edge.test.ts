@@ -1029,3 +1029,38 @@ describe("Paige's MCP update_contact never overwrites a list that changed", () =
     expect(hits).toEqual([]);
   });
 });
+
+describe("Paige's MCP data subject request names the tenant and the person it acts for", () => {
+  const source = readFileSync("supabase/functions/paige-mcp/index.ts", "utf8");
+  const start = source.indexOf('mcp.tool("handle_data_subject_request"');
+  const tool = source.slice(start, source.indexOf("mcp.tool(", start + 10));
+  const migration = readFileSync("supabase/migrations/20270519010000_contact_methods_dependents.sql", "utf8");
+  const fn = migration.slice(migration.indexOf("CREATE FUNCTION public.handle_data_subject_request("));
+
+  it("passes the tenant it resolved and the actor, because the service role carries no session", () => {
+    expect(start).toBeGreaterThan(-1);
+    expect(tool).toContain('admin.rpc("handle_data_subject_request", {');
+    expect(tool).toContain("_tenant_id: tenantId,");
+    expect(tool).toContain("_actor_user_id: currentActor().user_id,");
+  });
+
+  it("is met by a database function that accepts that actor only on the service path and re-checks it", () => {
+    expect(fn).toMatch(/^CREATE FUNCTION public\.handle_data_subject_request\([^)]*_actor_user_id uuid DEFAULT NULL::uuid\)/);
+    expect(migration).toContain("DROP FUNCTION IF EXISTS public.handle_data_subject_request(uuid, uuid, text, jsonb, text);");
+    expect(fn).toContain("_service boolean := auth.uid() IS NULL AND auth.role() = 'service_role';");
+    expect(fn).toContain("RAISE EXCEPTION 'actor_required");
+    expect(fn).toContain("RAISE EXCEPTION 'forbidden: a signed-in caller acts only as themselves'");
+    expect(fn).toMatch(/tm\.tenant_id = _tenant_id AND tm\.user_id = _actor\s+AND tm\.status = 'active' AND tm\.role IN \('owner','admin'\)/);
+    expect(migration).toContain(
+      "GRANT EXECUTE ON FUNCTION public.handle_data_subject_request(uuid, uuid, text, jsonb, text, uuid) TO authenticated, service_role;",
+    );
+  });
+
+  it("keeps the generated client types in step with the new argument", () => {
+    const types = readFileSync("src/integrations/supabase/types.ts", "utf8");
+    const at = types.indexOf("      handle_data_subject_request: {");
+    expect(at).toBeGreaterThan(-1);
+    expect(types.slice(at, types.indexOf("Returns: Json", at))).toContain("_actor_user_id?: string");
+  });
+});
+

@@ -262,5 +262,6 @@ longer exists).
 | Paige MCP door | marketplace/MCP/automation | `LIVE` | read | #47 approval channel; 13 unscoped reads (#46) |
 | n8n | marketplace/MCP/automation | `PARTIAL` | confirm | decideGovernedExecution wiring; first Rail row |
 | Zapier (MCP) | marketplace/MCP/automation | `PARTIAL` | confirm | unify risk gate across regimes |
+| Custom remote MCP | marketplace/MCP/automation | `PARTIAL` | confirm | canonical encrypted header bundle; migration authorization, shared owner form and production execution proof owed |
 | Browserbase | marketplace/MCP/automation | `PROPOSED` | prohibited | Secure Browser bootstrap browser-**worker** runtime (replaceable, behind a provider-neutral internal contract); review 2026-09-07 = **CONDITIONAL GO**, 7 vendor gates before wiring |
 | Paige browser + Firecrawl | marketplace/MCP/automation | `PARTIAL` | draft | G5/read-only egress deployed in #1042; DNS-rebinding + SSRF reconciliation and §32.c authenticated drive remain |

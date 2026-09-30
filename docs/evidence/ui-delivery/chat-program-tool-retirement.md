@@ -37,6 +37,13 @@ SOLO_900X1000_PAIGE_OPEN: NOT_APPLICABLE: no rendered surface changed in this re
 SOLO_900X1000_PAIGE_CLOSED: NOT_APPLICABLE: no rendered surface changed in this retirement; the recognized UI file in the diff is a data-map entry removal
 
 INTERNAL_BUILD_IDENTITY: product=bf827b7e517750a521b88d30cb38aad5b992aa03; current-main-sync=863f81c2b9fe1803323a6994595d62651b630d5c; base=863f81c2b9fe1803323a6994595d62651b630d5c; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat automated deployment after merge); evidence=retirement-focused-failing-first-and-production-readback
+RENDERED_EVIDENCE: NOT_APPLICABLE: no interface source, visual state, geometry, copy, motion or control changed
+BEHAVIORAL_EVIDENCE: PASS: controlled offline tests prove the retired tool is absent from every registry that could reintroduce it and that the governed deal tools remain declared; the failing-first run failed ten absence assertions on unchanged main and passes after the change
+AUTHENTICATED_RUNTIME: UNVERIFIED: the retired Edge bundle is not yet deployed and no authenticated enrollment round has run on this head; an enrollment request proposing the governed deal at the Enrolled stage and completing through its existing approval card is the post-merge acceptance
+KEYBOARD_FOCUS: NOT_APPLICABLE: no control or focus path changed
+ZOOM_REFLOW: NOT_APPLICABLE: no layout, content geometry or responsive behavior changed
+REDUCED_MOTION: NOT_APPLICABLE: no motion or reduced-motion behavior changed
+STATE_COVERAGE: PASS: the retired program tools are removed from every registry that could reintroduce them (manifest, dispatch, action-risk, capability map, four CI baselines) and the enrollment vocabulary resolves to the governed deal path; no intermediate or mixed state remains where chat proposes a program tool the door refuses
 TRUTHFUL_STATE_LABELS: PASS: no visible label changed; removing the retired tool's capability-map entry leaves every remaining knob fronting a live classified action, and the enrollment vocabulary points at the governed deal path whose pre-release behavior stays labeled by its own record
 UNVERIFIED: the merged Edge deployment identity and one authenticated enrollment round that proposes the governed deal at the Enrolled stage remain unverified until post-merge production acceptance
 RELEASE_NOTE_REQUIRED: NO: bounded tool retirement and vocabulary redirect with no new workflow, interface, action or customer instruction

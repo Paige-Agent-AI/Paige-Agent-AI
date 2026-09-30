@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { MessageSquarePlus, MoreHorizontal, Pencil, Archive, Trash2, MessagesSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,8 @@ interface ThreadRailProps {
   /** Mobile drawer control. Desktop ignores these (rail is always mounted). */
   mobileOpen?: boolean;
   onMobileOpenChange?: (open: boolean) => void;
+  /** Rendered below the list — an acting operator's door to members' conversations. */
+  footer?: ReactNode;
 }
 
 type Bucket = { label: string; items: PaigeThread[] };
@@ -168,7 +170,7 @@ function ThreadRow({
 }
 
 function ThreadList(props: Omit<ThreadRailProps, "mobileOpen" | "onMobileOpenChange">) {
-  const { threads, isLoading, activeThreadId, streamingThreadId, onSelect, onNewChat, onRename, onArchive, onDelete } = props;
+  const { threads, isLoading, activeThreadId, streamingThreadId, onSelect, onNewChat, onRename, onArchive, onDelete, footer } = props;
   const buckets = useMemo(() => groupByRecency(threads), [threads]);
 
   return (
@@ -227,6 +229,7 @@ function ThreadList(props: Omit<ThreadRailProps, "mobileOpen" | "onMobileOpenCha
           </div>
         )}
       </ScrollArea>
+      {footer}
     </div>
   );
 }

@@ -213,13 +213,13 @@ function SoloHistoryRail({ api }: { api: ChatRailApi }) {
   return (
     <>
       <aside data-solo-thread-rail="true" className="flex w-52 shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card" aria-label="PAIGE conversations">
-        {controls}{threadList}
+        {controls}{threadList}{api.memberConversations}
       </aside>
       {api.mobileOpen && (
         <div className="fixed inset-0 z-50 flex bg-background/70 p-3 backdrop-blur-sm" role="presentation" onMouseDown={() => api.onMobileOpenChange(false)}>
           <section ref={modalRef} role="dialog" aria-modal="true" aria-label="PAIGE conversations" className="flex h-full w-full max-w-xs flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xl" onMouseDown={(event) => event.stopPropagation()} onKeyDown={onModalKeyDown}>
             <header className="flex items-center justify-between border-b border-border px-3 py-2"><strong className="text-sm">Conversations</strong><button type="button" onClick={() => api.onMobileOpenChange(false)} aria-label="Close conversations" className="rounded p-1 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><X aria-hidden className="h-4 w-4" /></button></header>
-            {controls}{threadList}
+            {controls}{threadList}{api.memberConversations}
           </section>
         </div>
       )}

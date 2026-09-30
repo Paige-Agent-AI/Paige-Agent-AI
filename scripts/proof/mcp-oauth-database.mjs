@@ -167,6 +167,8 @@ ALTER TABLE public.tenant_members ADD COLUMN is_owner boolean NOT NULL DEFAULT f
   await psql(lines("20260714142258", 18, 31));
   await psql(lines("20260714051416", 30, 72));
   await psql(lines("20260714144656", 12, 35));
+  await psql(canonicalFunction("20260714144656", "guard_active_tenant_membership"));
+  await psql(lines("20260714142258", 170, 173));
   await psql(lines("20260629175341", 132, 155));
   await psql(lines("20260714235406", 42, 57));
   await psql(lines("20261005000000", 196, 232));

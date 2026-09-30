@@ -47,6 +47,31 @@ The `ghl_contact_id` input is only a compatibility spelling of external_id, not 
 - Local transcripts: `outputs/mcp-oauth-database/run-ZSiiFn` (15 PASS), `run-T518lq` (expected negative control), `run-sQfCE1` (baseline refusal). Successful and failed runners verify their owned database port stops. These contain only synthetic disposable data and are not product records.
 - Linux exact-head full-schema CI, preview, authenticated owner setup/revoke, real sender cutover, production sync and shared-governed Paige import are UNVERIFIED. No real account, provider or production write was exercised.
 
+### Fresh release recheck and database-proof correction (2026-09-30)
+
+At `485a83cb46ef76b4eb9a445a94aad115d914c718`, Linux `verify`, Security Audit,
+migration lint, Spine contract, web-fetch smoke and Supabase Preview passed. The
+database-contract job failed at `mcp_connection_contact_binding.sql:52`: the fixture
+changed an existing profile's active business before granting membership there.
+The canonical `guard_active_tenant_membership` correctly refused it (42501).
+Image-pull throttling earlier in the job recovered; it was not the failing step.
+
+The disposable runner now loads the real membership guard and trigger. An existing
+profile in the initial business reproduces Linux's UPDATE path. Failing-first run
+`outputs/mcp-oauth-database/run-N9Hypz` reproduced 42501 and stopped its owned server.
+The corrected fixture first proves an unauthorized switch is rejected, then adds
+real membership and switches. `run-4VtmPZ` passed all 15 PostgreSQL groups, including
+fixed-business ingestion and concurrent replay/revocation. No production guard,
+migration, provider or workflow was changed. Fresh Linux proof is still required.
+
+The recheck enumerated 51 open PR heads/files. Direct overlaps remain only the
+owner-parked #917/#754/#574 config documentation and #585 bridge router. #1591 is
+still open at `a958a41ca38e7ffe4c3c318a80c9de82080d1c52`; its earlier migration is
+not recorded in production. Main remains `cfcdc62001e677816dba4a4c915788ed117a65ff`.
+The owner authorized continuation through merge; that authorization does not turn
+the missing owner setup/prototype, sender transition, or failed checks into proof.
+The UI evidence guard correctly remains failed until that material flow is proved.
+
 ## Release hold and migration authorization
 
 Keep DRAFT. Do not deploy the bridge replacement without a working authenticated owner configuration path and prepared sender transition. Schema authorization alone does not waive this hold or grant production data/configuration writes.

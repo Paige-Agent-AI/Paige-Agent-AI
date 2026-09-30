@@ -9,6 +9,11 @@ INSERT INTO public.tenants(id,slug,name,status,account_type) VALUES
 INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner) VALUES
  ('20000000-0000-4000-8000-000000000011','20000000-0000-4000-8000-000000000001','owner','active',true),
  ('20000000-0000-4000-8000-000000000012','20000000-0000-4000-8000-000000000002','owner','active',true);
+-- Production creates a profile at signup. Keep that existing-row shape so switching
+-- exercises the canonical UPDATE membership guard in both local and Linux proof.
+INSERT INTO public.profiles(user_id,active_tenant_id) VALUES
+ ('20000000-0000-4000-8000-000000000001','20000000-0000-4000-8000-000000000011')
+ ON CONFLICT(user_id) DO UPDATE SET active_tenant_id=EXCLUDED.active_tenant_id;
 SET LOCAL request.jwt.claims='{"sub":"20000000-0000-4000-8000-000000000001","role":"authenticated"}';
 CREATE TEMP TABLE sync_proof(connection_id uuid);
 GRANT ALL ON sync_proof TO authenticated,service_role;
@@ -47,11 +52,15 @@ DO $$ DECLARE c uuid; h text; BEGIN
  PERFORM pg_temp.expect_sync_error(format('SELECT public.set_mcp_contact_sync(%L,false,NULL,1)',c),'42501');
  PERFORM set_config('request.jwt.claims','{"sub":"20000000-0000-4000-8000-000000000001","role":"authenticated"}',true);
 END $$;
-INSERT INTO public.profiles(user_id,active_tenant_id) VALUES
- ('20000000-0000-4000-8000-000000000001','20000000-0000-4000-8000-000000000012')
- ON CONFLICT(user_id) DO UPDATE SET active_tenant_id=EXCLUDED.active_tenant_id;
+-- A workspace switch must first have real membership; do not disable or bypass
+-- the guard to manufacture the account-switch state used by the ingestion proof.
+SELECT pg_temp.expect_sync_error(
+ 'UPDATE public.profiles SET active_tenant_id=''20000000-0000-4000-8000-000000000012'' WHERE user_id=''20000000-0000-4000-8000-000000000001''',
+ '42501');
 INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner) VALUES
  ('20000000-0000-4000-8000-000000000012','20000000-0000-4000-8000-000000000001','member','active',false);
+UPDATE public.profiles SET active_tenant_id='20000000-0000-4000-8000-000000000012'
+ WHERE user_id='20000000-0000-4000-8000-000000000001';
 DO $$ BEGIN
  IF public.current_user_tenant_id() IS DISTINCT FROM '20000000-0000-4000-8000-000000000012'::uuid THEN
    RAISE EXCEPTION 'account switch setup is not real resolver state'; END IF;

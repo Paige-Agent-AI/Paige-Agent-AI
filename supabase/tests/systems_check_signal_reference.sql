@@ -111,11 +111,13 @@ UPDATE public.profiles
  );
 
 INSERT INTO public.clients
-  (id, tenant_id, linked_user_id, created_by, first_name, last_name, email)
+  (id, tenant_id, linked_user_id, created_by, first_name, last_name)
 VALUES
   ('a1000000-0000-0000-0000-00000000c105', 'a1000000-0000-0000-0000-000000001111',
    'a1000000-0000-0000-0000-000000000005', 'a1000000-0000-0000-0000-000000000001',
-   'Linked', 'Client', 'signal-linked-client@tests.invalid');
+   'Linked', 'Client');
+INSERT INTO public.client_contact_methods (tenant_id, client_id, kind, value, is_primary, position) VALUES
+  ('a1000000-0000-0000-0000-000000001111', 'a1000000-0000-0000-0000-00000000c105', 'email', 'signal-linked-client@tests.invalid', true, 0);
 
 UPDATE public.paige_systems_check_registry
    SET check_name = 'SECRET_CHECK_NAME_DO_NOT_RETURN',

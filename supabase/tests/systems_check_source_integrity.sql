@@ -120,11 +120,13 @@ UPDATE public.profiles
  );
 
 INSERT INTO public.clients
-  (id, tenant_id, linked_user_id, created_by, first_name, last_name, email)
+  (id, tenant_id, linked_user_id, created_by, first_name, last_name)
 VALUES
   ('d1000000-0000-0000-0000-00000000c105', 'd1000000-0000-0000-0000-000000001111',
    'd1000000-0000-0000-0000-000000000005', 'd1000000-0000-0000-0000-000000000001',
-   'Linked', 'Client', 'integrity-linked-client@tests.invalid');
+   'Linked', 'Client');
+INSERT INTO public.client_contact_methods (tenant_id, client_id, kind, value, is_primary, position) VALUES
+  ('d1000000-0000-0000-0000-000000001111', 'd1000000-0000-0000-0000-00000000c105', 'email', 'integrity-linked-client@tests.invalid', true, 0);
 
 INSERT INTO public.paige_systems_check_run
   (id, tenant_id, scan_flavor, started_at, completed_at, check_count, pass_count, fail_count, triggered_by)

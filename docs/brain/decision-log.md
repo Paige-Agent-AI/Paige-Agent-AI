@@ -6101,3 +6101,40 @@ selected one, so each read failed with 42703. They now read `user_contact_method
   client sends itself is overwritten, and the sample is small. PR 3's live submission re-checks it.
 - Proofs: `supabase/functions/_shared/growth-intake.test.ts` (ci.yml),
   `supabase/tests/public_form_intake.sql` (database-contract).
+
+## 2026-09-29 — Contact methods lane 6e: database dependents read the address list; data subject requests run
+
+- **What it is:** `supabase/migrations/20270519010000_contact_methods_dependents.sql` moves every database
+  object that read or wrote `clients.email/phone` onto `client_contact_methods` (three views, the
+  invitations policy, `upsert_contact`, `update_contact`, `lookup_client_by_account_number`,
+  `create_internal_booking`, `seed_agreement_counterparty`, `start_client_impersonation`), so the later
+  column-drop PR breaks nothing. `upsert_contact` refuses the `email`/`phone` keys by name
+  (`CONTACT_ADDRESS_FIELDS_RETIRED`) and KEEPS 20270519000000's `expected_contact_methods` lost-update check.
+- **`handle_data_subject_request` had never run on production** (every branch raised on a column that does
+  not exist) and its one producer, Paige's MCP tool, calls with the service role, so it was refused anyway.
+  It now takes `_actor_user_id`: on the service path the named person must be a platform owner or an
+  active owner/admin of the tenant (re-checked in the body, §59); a signed-in caller acts only as
+  themselves. A platform-key MCP caller has no person and is refused `actor_required`.
+- **Deploy order:** the migration must reach production only after lane 6c's `paige-ai-chat`
+  `crm_update_contact` change (which stops sending `email`/`phone`) is deployed, and before the column drop.
+- **Removed:** `trg_clients_apollo_enrich` (it posted each new client's email to a foreign project with that
+  project's anon key and never enriched a contact here). Owner sign-off on 2026-09-29 explicitly
+  approves retiring this hook and making automatic enrichment honestly unavailable. The obsolete
+  switch/config writer and catalogue "on" claim are removed; manual lookup is unchanged. This is
+  product-behavior approval, not authorization to apply the migration to production.
+- **An address add could delete an address written a moment earlier.** `_add_client_contact_methods`
+  (live since 20270516000000) read the contact's list before it took the contact's row lock, then wrote
+  the merged list as a whole list. An address another transaction was writing at that moment (another
+  add, a checked replace, an inbound attach) was missing from the merge and was deleted by the write.
+  The same migration restates it to lock the contact first (by id and workspace, refusing
+  `CONTACT_NOT_FOUND_OR_FORBIDDEN` before any read); nothing else in it changed. Proven with two real
+  sessions: `scripts/proof/contact-methods-add-race.mjs` (database-contract job). Against production's
+  exact body (md5 `dd41f808…`) both scenarios lose the address; with the restatement both keep it.
+  A failed scenario used to leave its gate asleep (`pg_sleep(600)`) and its holder on the row lock, so
+  the next scenario and cleanup blocked for about ten minutes. Each scenario now ends its own gate,
+  holder and adder by pid in a `finally`, uses its own advisory key, and every waiting session carries
+  a lock/statement timeout; cleanup gives up on a lock after 5s and the run exits 1 past 90s. Forced
+  failures now end in about 1s (wrong expectation) or 21s (never observed waiting), not ten minutes.
+- **Proofs:** `supabase/tests/contact_methods.sql` (plan 101), `supabase/tests/contact_methods_concurrency.sql`,
+  `scripts/proof/contact-methods-add-race.mjs`, `scripts/contact-upsert-hotfix-smoke.sql`,
+  `scripts/agreements/run-integrity-proof.sh`, `src/__tests__/contact-methods-edge.test.ts`.

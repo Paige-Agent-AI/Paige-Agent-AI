@@ -18,6 +18,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ChevronRight, Plus, RefreshCw, Search, TriangleAlert, X } from "lucide-react";
 import { useTenantContext } from "@/hooks/useTenantContext";
+import { CreateIncomingContacts, IncomingContacts } from "./settings-integrations-incoming";
 import {
   APPROVAL_DEFAULT_LIFETIME_MINUTES,
   APPROVAL_LIFETIME_CHOICES,
@@ -344,22 +345,27 @@ function GatewayDrawer({
 }: {
   title: string;
   eyebrow: string;
-  dirty?: boolean;
+  dirty?: boolean | (() => boolean);
   onClose: () => void;
-  children: ReactNode;
+  children: ReactNode | ((requestClose: () => void) => ReactNode);
   footer?: ReactNode;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const [confirmingClose, setConfirmingClose] = useState(false);
   const requestClose = useCallback(() => {
-    if (dirty) { setConfirmingClose(true); return; }
+    if (typeof dirty === "function" ? dirty() : dirty) { setConfirmingClose(true); return; }
     onClose();
   }, [dirty, onClose]);
   useEffect(() => {
     const opener = document.activeElement as HTMLElement | null;
+    const connectionId = opener?.dataset.gatewayTool;
     closeRef.current?.focus();
-    return () => { if (opener && document.contains(opener)) opener.focus(); };
+    return () => {
+      if (opener && document.contains(opener)) opener.focus();
+      else if (connectionId) Array.from(document.querySelectorAll<HTMLElement>("[data-gateway-tool]"))
+        .find(node => node.dataset.gatewayTool === connectionId)?.focus();
+    };
   }, []);
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -399,7 +405,7 @@ function GatewayDrawer({
           {confirmingClose && (
             <DiscardPrompt label="Discard changes" onDiscard={onClose} onKeep={() => setConfirmingClose(false)} />
           )}
-          {children}
+          {typeof children === "function" ? children(requestClose) : children}
         </div>
         {footer && <footer className="ig-gw-foot">{footer}</footer>}
       </aside>
@@ -1137,16 +1143,21 @@ function ToolActions({ gw, tool, reloadKey }: { gw: UseMcpGateway; tool: Gateway
   );
 }
 
-function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = false }: {
+function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = false, uncertainGeneration, onUncertain }: {
   gw: UseMcpGateway;
   tool: GatewayConnection;
   onClose: () => void;
   /** Open this vendor's older setup panel. Absent for a vendor that has none. */
   onOlderSetup?: () => void;
   returnedFromSignIn?: boolean;
+  uncertainGeneration: number | null;
+  onUncertain: (id: string, generation: number | null) => void;
 }) {
   const [mode, setMode] = useState<"view" | "rekey" | "disconnect">("view");
   const [configurationDirty, setConfigurationDirty] = useState(false);
+  const incomingDirty = useRef(false);
+  const setIncomingDirty = useCallback((dirty: boolean) => { incomingDirty.current = dirty; }, []);
+  const [incomingEditing, setIncomingEditing] = useState(false);
   /** The last probe verdict, held so the person sees what the check FOUND rather than only a row
    *  that silently changed colour underneath them. Cleared when another action starts. */
   const [checked, setChecked] = useState<{ ok: boolean; message: string | null; toolCount: number | null; generation: number | null } | null>(null);
@@ -1160,6 +1171,7 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = fals
   const chip = statusChip(tool);
   const isRest = tool.authKind === "api_key";
   const isOAuth = tool.authKind === "oauth";
+  const noOutboundAddress = tool.addressConfigured === false;
   // A cancelled first sign-in leaves its canonical credential-free shell. The existing begin
   // contract can discover OAuth for that row; the return query is never eligibility evidence.
   const canStartSignIn = tool.configured && tool.transport === "http"
@@ -1196,7 +1208,7 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = fals
   // OAuth replacement first saves a credential-free shell, then offers explicit authorization.
 
   return (
-    <GatewayDrawer eyebrow="Connected MCP Gateway" title={tool.label} dirty={mode === "rekey" && (isRest || configurationDirty)} onClose={onClose}>
+    <GatewayDrawer eyebrow={noOutboundAddress ? "Integrations" : "Connected MCP Gateway"} title={tool.label} dirty={() => incomingDirty.current || (mode === "rekey" && (isRest || configurationDirty))} onClose={onClose}>
       {returnedFromSignIn && <p className="ig-gw-info" role="status">Returning from sign-in does not verify this tool. Review its saved status, then check it when you’re ready.</p>}
       <dl className="ig-facts">
         <div><dt>Endpoint</dt><dd>{tool.serverUrlHost ?? "—"}</dd></div>
@@ -1204,12 +1216,16 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = fals
         <div><dt>Address</dt><dd>{tool.addressConfigured === true ? "On file · kept private" : tool.addressConfigured === false ? "Not on file" : "Not confirmed"}</dd></div>
         <div><dt>Credentials</dt><dd>{tool.credentialsConfigured === true ? "On file · encrypted" : tool.credentialsConfigured === false ? (tool.authKind === "none" ? "Not used" : "Not on file") : "Not confirmed"}</dd></div>
         <div><dt>Additional headers</dt><dd>{tool.customHeaderCount == null ? "Not confirmed" : tool.customHeaderCount === 0 ? "None on file" : `${tool.customHeaderCount} on file · encrypted`}</dd></div>
-        <div><dt>Status</dt><dd><span className="ig-gw-chip" data-tone={chip.tone}>{chip.label}</span></dd></div>
-        <div><dt>Last checked</dt><dd>{tool.lastCheckedAt ? new Date(tool.lastCheckedAt).toLocaleString() : "No successful check yet"}</dd></div>
+        <div><dt>{noOutboundAddress ? "Outbound status" : "Status"}</dt><dd><span className="ig-gw-chip" data-tone={noOutboundAddress ? "neutral" : chip.tone}>{noOutboundAddress ? "No outbound address" : chip.label}</span></dd></div>
+        {!noOutboundAddress && <div><dt>Last checked</dt><dd>{tool.lastCheckedAt ? new Date(tool.lastCheckedAt).toLocaleString() : "No successful check yet"}</dd></div>}
       </dl>
 
       {mode === "view" && (
         <>
+          <IncomingContacts gw={gw} connectionId={tool.id} connectionEnabled={tool.enabled}
+            uncertainGeneration={uncertainGeneration} onUncertain={onUncertain}
+            onDirtyChange={setIncomingDirty} onEditingChange={setIncomingEditing} />
+          {!incomingEditing && <>
           {/* The probe's own verdict, when one has been run in this drawer. It leads, because it is
               the newest thing the person knows and the reason they pressed the button. */}
           {checked && checked.generation === tool.configGeneration && (
@@ -1224,10 +1240,10 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = fals
             <div className="ig-gw-info" role="status"><span>This tool is turned off. Re-key it to switch it back on.</span></div>
           )}
 
-          {tool.status === "pending_verification" && (
+          {!noOutboundAddress && tool.status === "pending_verification" && (
             <div className="ig-gw-info" role="status"><span>This tool hasn’t been checked yet. Paige can’t use it until she has reached it and you’ve approved what it may do.</span></div>
           )}
-          {tool.status === "error" && (
+          {!noOutboundAddress && tool.status === "error" && (
             <div className="ig-error" role="alert"><TriangleAlert aria-hidden size={14} /><span>Couldn’t reach it. Fix the address or re-key, then check it again.</span></div>
           )}
 
@@ -1242,14 +1258,14 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = fals
               into error still holds the approvals its owner granted, and hiding them would hide a
               decision they made. Where there is genuinely nothing to show, the list says which kind
               of nothing it is. */}
-          <ToolActions gw={gw} tool={tool} reloadKey={catalogueRead} />
+          {tool.addressConfigured !== false && <ToolActions gw={gw} tool={tool} reloadKey={catalogueRead} />}
 
           {/* Disabled rows replace configuration before checking or authorizing. */}
           <div className="ig-actions ig-gw-actions">
-            {gw.canWrite && tool.enabled && <button type="button" className="ig-btn" disabled={gw.saving} onClick={() => void check()}>{gw.saving ? "Checking…" : "Check now"}</button>}
+            {gw.canWrite && tool.enabled && tool.addressConfigured !== false && <button type="button" className="ig-btn" disabled={gw.saving} onClick={() => void check()}>{gw.saving ? "Checking…" : "Check now"}</button>}
             {gw.canWrite && tool.enabled && isOAuth && <button type="button" className="ig-btn" disabled={gw.saving} onClick={() => void signInAgain()}>Sign in again</button>}
             {gw.canWrite && tool.enabled && canStartSignIn && <button type="button" className="ig-btn" disabled={gw.saving} onClick={() => void signInAgain()}>Sign in</button>}
-            {gw.canWrite && <button type="button" className="ig-btn" onClick={() => setMode("rekey")}>Re-key</button>}
+            {gw.canWrite && <button type="button" className="ig-btn" disabled={gw.saving} onClick={() => setMode("rekey")}>{noOutboundAddress ? "Add outbound address" : "Re-key"}</button>}
             {gw.canWrite && <button type="button" className="ig-btn" data-danger onClick={() => setMode("disconnect")}>Disconnect</button>}
           </div>
           {/* The older panel for this vendor still does things this drawer cannot — saving and
@@ -1264,6 +1280,7 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = fals
               </button>
             </p>
           )}
+          </>}
         </>
       )}
 
@@ -1407,10 +1424,21 @@ function ScopedIntegrationsGatewaySection({
   const [drawer, setDrawer] = useState<
     | { kind: "catalogue" }
     | { kind: "add"; preset: AddPreset }
+    | { kind: "incoming-create" }
+    | { kind: "incoming-saved"; id: string }
     | { kind: "stop"; item: CatItem; via: "setup" | "zapier" }
     | { kind: "detail"; tool: GatewayConnection; scope: string; returnedFromSignIn?: boolean }
     | null
   >(null);
+  const [incomingCreateUncertain, setIncomingCreateUncertain] = useState(false);
+  const incomingDirty = useRef(false);
+  const setIncomingDirty = useCallback((dirty: boolean) => { incomingDirty.current = dirty; }, []);
+  const [uncertainIncoming, setUncertainIncoming] = useState<Record<string, number>>({});
+  const incomingUncertain = useCallback((id: string, generation: number | null) => setUncertainIncoming(previous => {
+    const next = { ...previous };
+    if (generation === null) delete next[id]; else next[id] = generation;
+    return next;
+  }), []);
   const close = useCallback(() => setDrawer(null), []);
   /** A write failure belongs to the tool it happened on. Clearing it at the drawer boundary stops
    *  one tool's refusal reappearing as a live alert on the next tool opened. */
@@ -1470,7 +1498,8 @@ function ScopedIntegrationsGatewaySection({
         </li>
       )}
       {gw.tools.map((c) => {
-        const chip = statusChip(c);
+        const noOutboundAddress = c.addressConfigured === false;
+        const chip = noOutboundAddress ? { tone: "neutral", label: "View incoming setup" } : statusChip(c);
         const title = connectionDisplayName(c);
         return (
           <li key={c.id}>
@@ -1481,13 +1510,13 @@ function ScopedIntegrationsGatewaySection({
               </span>
               <span className="ig-card-title">
                 <strong>{title}</strong>
-                {!usable(c) && <span className="ig-chip" data-warn>not usable yet</span>}
+                {!noOutboundAddress && !usable(c) && <span className="ig-chip" data-warn>not usable yet</span>}
               </span>
               <span className="ig-card-foot">
                 <span className="ig-card-state" data-tone={chip.tone === "ok" ? "ok" : chip.tone === "bad" ? "bad" : chip.tone === "warn" ? "warn" : "neutral"}>
                   <i aria-hidden />{chip.label}
                 </span>
-                <span className="ig-card-host">{c.serverUrlHost ? `${c.serverUrlHost} · ${facetName(c)}` : facetName(c)}</span>
+                <span className="ig-card-host">{noOutboundAddress ? "No outbound address" : c.serverUrlHost ? `${c.serverUrlHost} · ${facetName(c)}` : facetName(c)}</span>
               </span>
             </button>
           </li>
@@ -1514,6 +1543,26 @@ function ScopedIntegrationsGatewaySection({
         {tiles}
         {!gw.loading && !gw.error && mcpTiles}
       </ul>
+      {!gw.loading && !gw.error && gw.canWrite && <button type="button" className="ig-btn ig-incoming-add" aria-haspopup="dialog"
+        onClick={() => setDrawer({ kind: "incoming-create" })}>Add incoming contacts connection</button>}
+      {incomingCreateUncertain && <p className="ig-gw-warn" role="status">An incoming connection creation is unconfirmed. Refresh and inspect the current connection records before adding another; a matching name is not proof.</p>}
+
+      {drawer?.kind === "incoming-create" && !tenantLoading && <GatewayDrawer eyebrow="Integrations" title="Incoming contacts"
+        dirty={() => incomingDirty.current} onClose={close}>
+        {requestClose => <CreateIncomingContacts gw={gw} uncertain={incomingCreateUncertain} onUncertain={setIncomingCreateUncertain}
+          onDirtyChange={setIncomingDirty} onClose={requestClose} onCreated={id => {
+            setIncomingCreateUncertain(false); setIncomingDirty(false); setDrawer({ kind: "incoming-saved", id });
+          }} />}
+      </GatewayDrawer>}
+      {drawer?.kind === "incoming-saved" && !tenantLoading && (() => {
+        const tool = gw.tools.find(row => row.id === drawer.id);
+        return tool ? <ToolDetail key={`${scopeKey}:${tool.id}`} gw={gw} tool={tool} onClose={closeDetail}
+          uncertainGeneration={uncertainIncoming[tool.id] ?? null} onUncertain={incomingUncertain} />
+          : <GatewayDrawer eyebrow="Integrations" title="Incoming contacts" onClose={close}>
+            <p role="status">The connection was saved and confirmed. Reading its current list entry before setup…</p>
+            <button type="button" className="ig-btn" onClick={() => gw.reload()}>Refresh connection list</button>
+          </GatewayDrawer>;
+      })()}
 
       {drawer?.kind === "catalogue" && !tenantLoading && (
         <GatewayDrawer
@@ -1569,6 +1618,7 @@ function ScopedIntegrationsGatewaySection({
         const legacy: CatLegacy | null =
           live.providerKey === "n8n" ? "n8n" : live.providerKey === "zapier" ? "zapier" : null;
         return <ToolDetail key={`${scopeKey}:${live.id}`} gw={gw} tool={live} onClose={closeDetail}
+          uncertainGeneration={uncertainIncoming[live.id] ?? null} onUncertain={incomingUncertain}
           returnedFromSignIn={drawer.returnedFromSignIn}
           onOlderSetup={legacy ? () => openLegacy(legacy) : undefined} />;
       })()}

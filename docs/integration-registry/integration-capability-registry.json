@@ -136,7 +136,7 @@
       "connection_prerequisite": "Owner-supplied full endpoint and explicit authentication choice, canonical tenant-scoped connection, successful check and individual tool approval. Migration 20270520000000_mcp_connection_header_bundle.sql is applied in production (#1589, f6ffd73599201ff8382ee286b4d6434fcfbea60b); the shared owner-facing form requires fresh generation-matched safe readback before Saved. Authenticated owner save/reopen/check remains PROOF_OWED.",
       "required_scopes": ["Server-advertised scopes accepted by the owner; no universal provider scope inferred"],
       "safe_readable_context": "Saved-address and credential presence, header count, configuration generation and named readiness; never full secret-bearing URLs, tokens or header values.",
-      "allowed_writes_external_effects": "No new provider execution authority in the credential-bundle slice. An approved server tool still requires the shared governed execution path; production outbound proof remains owed.",
+      "allowed_writes_external_effects": "An approved server tool still requires the shared governed execution path; production outbound proof remains owed. Incoming contact create/update is implemented in the draft connection-bound contract, not released: a separately owner-configured hash-only incoming credential authorizes the fixed connection business, not the active workspace. Owner setup and sender cutover proof are still required; no implicit inbound grant follows an outbound connection.",
       "authority_lane": ["read", "draft", "confirm"],
       "m1_dependency": "M1 real-money spend control is required if a server tool can incur external spend; internal LLM-cost metering does not satisfy it.",
       "canonical_provider_receipt": "Server-specific authoritative readback/receipt, not a generic successful transport response; production proof owed.",
@@ -144,7 +144,7 @@
       "status": "PARTIAL",
       "owner": "Integrations workstream",
       "dependency": "Existing mcp_connections, platform_encrypt/platform_decrypt, canonical RPC writers, mcp-gateway and server-resolved tenant capability checks. No parallel secret store. Authenticated owner save/readback/check and governed execution remain unproven end to end.",
-      "next_slice": "Prove the shared preset/custom owner flow against a deployment, then individual revocation, connection-bound inbound routing and governed outbound execution; reconcile the catalogue with the canonical registry and delete legacy execution only after parity.",
+      "next_slice": "Named authorization received for unchanged 20270522000000_mcp_connection_contact_binding.sql; pending 20270521000000 must apply first. Owner-approved incoming drawer is implemented in draft #1595; finish browser, exact-head and authenticated incoming owner/sender-cutover proof before releasing the bridge replacement. Continue individual tool revocation, governed outbound execution, catalogue reconciliation and parity-proven legacy deletion. See docs/delivery/mcp-contact-binding.md.",
       "tier_eligibility": { "platform": "deferred", "solo": "eligible", "agency_future": "deferred", "enterprise_future": "deferred" },
       "expense_and_operations": {
         "cost_responsibility": "tenant_direct",
@@ -170,7 +170,8 @@
       "code_anchors": [
         { "path": "supabase/functions/_shared/mcp-client.ts", "role": "provider_adapter", "note": "One guarded MCP transport; code existence is not provider proof" },
         { "path": "supabase/functions/_shared/mcp-gateway/create.ts", "role": "fail_closed_containment", "note": "JWT-scoped canonical writer adapter" },
-        { "path": "supabase/functions/_shared/mcp-gateway/verify.ts", "role": "callback_readback", "note": "Actual server discovery with private-value reflection refusal" }
+        { "path": "supabase/functions/_shared/mcp-gateway/verify.ts", "role": "callback_readback", "note": "Actual server discovery with private-value reflection refusal" },
+        { "path": "supabase/functions/paige-bridge/contact-mirror.ts", "role": "fail_closed_containment", "note": "Draft incoming-contact adapter; one connection-bound transaction and safe acknowledgement, not released runtime proof" }
       ],
       "sources": ["supabase/migrations/20270520000000_mcp_connection_header_bundle.sql", "supabase/tests/mcp_connection_header_bundle.sql"]
     },

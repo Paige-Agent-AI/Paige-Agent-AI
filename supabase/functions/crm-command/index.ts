@@ -3,7 +3,16 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { z } from "https://esm.sh/zod@3.22.4";
 import { confirmFingerprint } from "../_shared/confirm-fingerprint.ts";
 import { decideGovernedExecution } from "../_shared/paige-spine/governedExecution.ts";
-import { CRM_ACTION_CAPABILITY as ACTION_CAPABILITY, crmApprovalSubject, type CrmAction } from "../_shared/crm-command/catalog.ts";
+import {
+  CRM_ACTION_CAPABILITY as ACTION_CAPABILITY,
+  canonicalizeCrmCommand,
+  crmContactCreateNameIssue,
+  crmApprovalSubject,
+  crmCommandExecutionPayload,
+  crmCommandLegacyReplaySource,
+  type CanonicalCrmCommand,
+  type CrmAction,
+} from "../_shared/crm-command/catalog.ts";
 import { parseExecutorError, executorFailureSpeech } from "../_shared/crm-command/executor-error.ts";
 import { databaseAnswered } from "../_shared/approval-outcome.ts";
 import { canonicalAppUrl, type CanonicalTier } from "../_shared/canonical-app-url.ts";
@@ -147,6 +156,9 @@ const commandSchema = z.object({
 
 const bodySchema = z.object({
   command: commandSchema,
+  legacy_command: commandSchema.optional(),
+  legacy_idempotency_key: z.string().regex(/^[0-9a-f]{16}$/).optional(),
+  legacy_supplied_idempotency_key: z.string().trim().min(1).max(192).optional(),
   idempotency_key: z.string().trim().min(1).max(192),
   approved_fingerprint: z.string().regex(/^[0-9a-f]{16}$/).optional(),
 }).strict();
@@ -237,9 +249,41 @@ serve(async (req) => {
   const { data: { user }, error: authError } = await caller.auth.getUser();
   if (authError || !user) return response(401, { ok: false, code: "CRM_AUTH_INVALID" });
 
-  let body: z.infer<typeof bodySchema>;
+  type ParsedBody = z.infer<typeof bodySchema>;
+  type CanonicalBody = Omit<ParsedBody, "command" | "legacy_command" | "legacy_idempotency_key" | "legacy_supplied_idempotency_key"> & {
+    command: CanonicalCrmCommand<ParsedBody["command"]>;
+    legacyCommand: Readonly<Record<string, unknown>> | null;
+    legacyIdempotencyKey: string | null;
+    legacySuppliedIdempotencyKey: string | null;
+  };
+  let body: CanonicalBody;
   try {
-    body = bodySchema.parse(await req.json());
+    const parsedBody = bodySchema.parse(await req.json());
+    const canonicalCommand = canonicalizeCrmCommand(parsedBody.command);
+    const legacyCommand = parsedBody.legacy_command
+      ? crmCommandLegacyReplaySource(canonicalCommand, parsedBody.legacy_command)
+      : null;
+    if (parsedBody.legacy_command && !legacyCommand) throw new TypeError("CRM_COMMAND_LEGACY_REPLAY_UNSUPPORTED");
+    if (parsedBody.legacy_idempotency_key && !legacyCommand) throw new TypeError("CRM_COMMAND_LEGACY_KEY_UNSUPPORTED");
+    if (parsedBody.legacy_supplied_idempotency_key && canonicalCommand.action !== "contact.create") {
+      throw new TypeError("CRM_COMMAND_LEGACY_SUPPLIED_KEY_UNSUPPORTED");
+    }
+    const contactNameIssue = crmContactCreateNameIssue(canonicalCommand);
+    if (contactNameIssue) {
+      throw new z.ZodError([{
+        code: z.ZodIssueCode.custom,
+        path: ["command", "patch", contactNameIssue],
+        message: `CRM_CONTACT_NAME_INCOMPLETE:${contactNameIssue}`,
+      }]);
+    }
+    body = {
+      command: canonicalCommand,
+      idempotency_key: parsedBody.idempotency_key,
+      ...(parsedBody.approved_fingerprint ? { approved_fingerprint: parsedBody.approved_fingerprint } : {}),
+      legacyCommand,
+      legacyIdempotencyKey: parsedBody.legacy_idempotency_key ?? null,
+      legacySuppliedIdempotencyKey: parsedBody.legacy_supplied_idempotency_key ?? null,
+    };
   } catch (error) {
     return response(400, {
       ok: false,
@@ -287,6 +331,7 @@ serve(async (req) => {
   }
   const capability = ACTION_CAPABILITY[body.command.action];
   const requestArgs = { command: body.command, idempotency_key: body.idempotency_key };
+  const readbackCommand = crmCommandExecutionPayload(body.command, body.legacyCommand);
   const successfulResultResponse = (resultObject: JsonObject, action: string): Response => {
     const readback = object(resultObject.readback);
     const destination = action.startsWith("deal.") ? "pipeline" : action.startsWith("task.") ? "tasks" : "contacts";
@@ -321,26 +366,33 @@ serve(async (req) => {
   // approve the already-completed action again. The service-only RPC revalidates the tenant,
   // active account, membership, actor, and exact command hash before returning anything.
   if (accessAllowed && await activeTenantStillMatches()) {
-    const { data: cachedData, error: cachedError } = await admin.rpc("read_crm_command_result", {
-      _tenant_id: tenantId,
-      _actor_id: user.id,
-      _command: body.command,
-      _idempotency_key: body.idempotency_key,
-    });
-    const cachedResult = object(cachedData);
-    if (!cachedError && cachedResult) return successfulResultResponse(cachedResult, body.command.action);
-    if (cachedError) {
-      const { code, detail } = parseExecutorError(cachedError.message, "CRM_READBACK_UNAVAILABLE");
-      const status = code === "CRM_IDEMPOTENCY_REUSE" || code === "CRM_ACTIVE_ACCOUNT_CHANGED"
-        ? 409
-        : code === "CRM_FORBIDDEN"
-        ? 403
-        : 503;
-      return response(status, {
-        ok: false, outcome: "refused", code,
-        ...(detail.length ? { detail } : {}),
-        ...executorFailureSpeech(code, detail, "unproven"),
+    const readbackKeys = [...new Set([
+      body.idempotency_key,
+      body.legacyIdempotencyKey,
+      body.legacySuppliedIdempotencyKey,
+    ].filter((key): key is string => Boolean(key)))];
+    for (const readbackKey of readbackKeys) {
+      const { data: cachedData, error: cachedError } = await admin.rpc("read_crm_command_result", {
+        _tenant_id: tenantId,
+        _actor_id: user.id,
+        _command: readbackCommand,
+        _idempotency_key: readbackKey,
       });
+      const cachedResult = object(cachedData);
+      if (!cachedError && cachedResult) return successfulResultResponse(cachedResult, body.command.action);
+      if (cachedError) {
+        const { code, detail } = parseExecutorError(cachedError.message, "CRM_READBACK_UNAVAILABLE");
+        const status = code === "CRM_IDEMPOTENCY_REUSE" || code === "CRM_ACTIVE_ACCOUNT_CHANGED"
+          ? 409
+          : code === "CRM_FORBIDDEN"
+          ? 403
+          : 503;
+        return response(status, {
+          ok: false, outcome: "refused", code,
+          ...(detail.length ? { detail } : {}),
+          ...executorFailureSpeech(code, detail, "unproven"),
+        });
+      }
     }
   }
 
@@ -564,10 +616,11 @@ serve(async (req) => {
   if (!(await activeTenantStillMatches())) {
     return response(409, { ok: false, outcome: "refused", code: "CRM_ACTIVE_ACCOUNT_CHANGED", message: "The active workspace changed. Nothing was executed; reopen the record in the current workspace." });
   }
-  const executionCommand = {
+  const canonicalExecutionCommand = canonicalizeCrmCommand({
     ...decidedCommand,
     approval_channel: decision.audit.laneEffective === "confirm" ? "operator_card" : "standing_autonomy_setting",
-  };
+  });
+  const executionCommand = crmCommandExecutionPayload(canonicalExecutionCommand, body.legacyCommand);
   const { data: result, error: commandError } = await admin.rpc("execute_crm_command", {
     _tenant_id: tenantId,
     _actor_id: user.id,

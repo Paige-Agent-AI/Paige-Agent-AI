@@ -16,7 +16,7 @@ KEYBOARD_FOCUS: UNVERIFIED: owner grant controls are not implemented; no existin
 ZOOM_REFLOW: UNVERIFIED: new owner path has no rendered proof.
 REDUCED_MOTION: UNVERIFIED: no new UI/motion authored; incoming owner path still owed.
 STATE_COVERAGE: PASS: backend initial disabled, grant/readback, stale save, wrong business, invalid credentials, replay, conflict, stale source, revoked membership, disconnect and atomic failure tested. Browser abandonment/account-switch rendering remains unverified.
-TRUTHFUL_STATE_LABELS: PASS: HTTP success requires a verified commit acknowledgement; unknown acknowledgement returns 503. Registry remains PARTIAL, with incoming release proof owed.
+TRUTHFUL_STATE_LABELS: PASS: HTTP success requires a verified commit acknowledgement; a malformed acknowledgement returns 503. Registry labels explicitly preserve the unreleased incoming-contract boundary.
 SOLO_UI: NO: backend contract only in this draft; the required Solo owner-facing configuration path is an explicit release blocker, not claimed available.
 UNVERIFIED: owner UI/prototype, authenticated permissions, sender reconfiguration and legacy identity reconciliation, production contacts, Paige governed import, Linux full-schema and preview evidence until separately executed. Never merge on this evidence record alone.
 
@@ -26,10 +26,10 @@ MUST_PRESERVE: canonical contact/address records, tenant isolation, unrelated Se
 ACCEPTANCE_CRITERIA: owner enables, receives, observes, rotates/revokes and safely retries incoming contacts through a proven authenticated product path; this draft does not yet satisfy the whole journey.
 MOTION_PURPOSE: NONE: no animation change.
 PROTECTED_SEAMS: canonical tenant/capability resolver, contact methods, assignment RLS and receipt transaction exercised; shared shell/Chat/Communications/Calendar untouched.
-INTERNAL_BUILD_IDENTITY: base=cfcdc62001e677816dba4a4c915788ed117a65ff; branch=codex/mcp-contact-binding; exact-head=PR; deployment=none; environment=disposable-local; migrations=not-applied-to-production; edge=not-deployed; evidence=docs/delivery/mcp-contact-binding.md
-RELEASE_CHANNEL: internal-only: draft contract verification, no production release or staged tenant exposure.
-RELEASE_CLASSIFICATION: partial-delivery: incoming database/adapter contract only, owner journey not yet usable.
+INTERNAL_BUILD_IDENTITY: source-head=71e48090e8cca9f288a5a0f3f60dd22cd283712f; branch=codex/mcp-contact-binding; deployment=none; environment=local; migrations=PROOF_OWED(named-authorization-for-20270522000000); edge=PROOF_OWED(owner-setup-and-sender-cutover); evidence=docs/delivery/mcp-contact-binding.md
+RELEASE_CHANNEL: development: disposable local contract verification, no production release or staged tenant exposure.
+RELEASE_CLASSIFICATION: internal-only: incoming database/adapter draft only, owner journey not yet usable.
 CUSTOMER_RELEASE_IDENTITY: none: no coherent production customer outcome is claimed.
 RELEASE_NOTE_REQUIRED: no: draft only; sender transition instructions are mandatory before eventual release.
-RELEASE_TRUTH_BOUNDARY: PARTIAL canonical connection capability; incoming production and owner path UNVERIFIED, never LIVE.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: canonical connection capability; incoming production and owner path UNVERIFIED, never LIVE.
 RELEASE_RECOVERY: position=retain contact evidence and forward-fix after use; reference=docs/delivery/mcp-contact-binding.md; never restore unsafe active-workspace contact routing.

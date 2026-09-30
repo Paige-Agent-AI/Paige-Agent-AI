@@ -1,4 +1,4 @@
--- INT-140 (20270411000000): one canonical identity projection for governed CRM replay hashing.
+-- INT-140 (20270523000000, renumbered from 20270411000000 after main took that version): one canonical identity projection for governed CRM replay hashing.
 --
 -- The authenticated Edge action door constructs __paige_canonical_identity_v1 only after its
 -- strict request parser and canonical command boundary. The executable command keeps the display
@@ -140,4 +140,4 @@ $migration$;
 comment on function public.crm_effective_command(jsonb) is
   'Server-only effective CRM command projection used by readback and execution idempotency hashes. Preserves executable display values while hashing the action-door-derived canonical identity.';
 comment on function public.crm_command_hash_matches(text,text,jsonb) is
-  'Server-only exact hash matcher with a narrow pre-20270411000000 contact-create replay fallback. The authenticated action door admits a legacy display projection only after proving it canonicalizes to the same command identity.';
+  'Server-only exact hash matcher with a narrow pre-rollout contact-create replay fallback (pre-20270523000000). The authenticated action door admits a legacy display projection only after proving it canonicalizes to the same command identity.';

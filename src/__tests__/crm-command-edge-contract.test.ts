@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 const edge = readFileSync("supabase/functions/crm-command/index.ts", "utf8");
 const catalog = readFileSync("supabase/functions/_shared/crm-command/catalog.ts", "utf8");
-const identityMigrationPath = "supabase/migrations/20270411000000_crm_contact_name_idempotency.sql";
+const identityMigrationPath = "supabase/migrations/20270523000000_crm_contact_name_idempotency.sql";
 const originalCrmMigration = readFileSync("supabase/migrations/20270204000000_governed_crm_contact_company_commands.sql", "utf8");
 
 describe("canonical CRM action door", () => {

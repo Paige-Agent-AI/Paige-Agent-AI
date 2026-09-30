@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { findDuplicates } from "@/lib/contacts";
+import { findDuplicates, type DuplicateContact } from "@/lib/contacts";
 
 type Props = {
   contactId: string;
@@ -12,14 +12,15 @@ type Props = {
 
 export function DuplicatesBanner({ contactId, email, phone }: Props) {
   const navigate = useNavigate();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- pre-existing type debt; hotfix changes only the retired route destination
-  const [dupes, setDupes] = useState<any[]>([]);
+  const [dupes, setDupes] = useState<DuplicateContact[]>([]);
 
   useEffect(() => {
     let cancel = false;
     (async () => {
       try {
-        const rows = await findDuplicates({ id: contactId, email, phone });
+        // Matches on every address this contact holds; `email`/`phone` (its primaries) re-run
+        // the check when an edit changes them.
+        const rows = await findDuplicates({ id: contactId });
         if (!cancel) setDupes(rows);
       } catch { /* silent */ }
     })();

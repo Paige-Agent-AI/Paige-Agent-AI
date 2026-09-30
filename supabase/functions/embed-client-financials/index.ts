@@ -22,6 +22,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { embeddingsCompat } from "../_shared/voyage.ts";
+import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses } from "../_shared/contact-methods.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 
 const corsHeaders = {
@@ -304,10 +305,11 @@ serve(async (req) => {
     // alias. Try clients first.
     const { data: client } = await admin
       .from("clients")
-      .select("full_name, email, linked_user_id, owner_user_id")
+      .select(`full_name, linked_user_id, owner_user_id, ${CLIENT_CONTACT_METHODS_EMBED}`)
       .eq("id", resolvedContactId)
       .maybeSingle();
-    const contact = client as any;
+    // `email` on the contact is its PRIMARY email.
+    const contact: any = withPrimaryAddresses(client);
     const clientUserId: string | null =
       contact?.linked_user_id ?? contact?.owner_user_id ?? null;
 

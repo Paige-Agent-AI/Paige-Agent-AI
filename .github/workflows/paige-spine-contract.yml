@@ -46,6 +46,10 @@ on:
       - "supabase/tests/governed_crm_commands.sql"
       - "supabase/tests/outbound_private_business_facts.sql"
       - "supabase/tests/user_address_readers.sql"
+      - "supabase/tests/contact_methods_concurrency.sql"
+      - "scripts/proof/contact-methods-add-race.mjs"
+      - "supabase/tests/contact_create_with_methods.sql"
+      - "supabase/tests/user_primary_address.sql"
       # The CRM patch-schema proof and the generator that writes it. (`supabase/migrations/**`
       # above already re-runs this job when an allowlist itself changes, which is the case that
       # matters most; these two cover a change to the proof or to how it is derived.)
@@ -167,6 +171,9 @@ jobs:
       - run: supabase test db supabase/tests/paige_live_session_transition.sql
       # Governed CRM/Pipeline: tenant, authority, idempotency, destructive preview, readback, and Rail proof.
       - run: supabase test db supabase/tests/governed_crm_commands.sql
+        # Its fixtures write addresses as contact methods (20270519010000's lane); like the proofs
+        # below, it reports its own result so an earlier red step cannot hide it.
+        if: ${{ !cancelled() }}
       # The patch field list Paige is SHOWN must equal the allowlist that REFUSES her patch. On
       # 2026-09-25 it did not: she sent `company_name`/`zip`, the executor accepts
       # `entity_name`/`zip_code`, and an approved contact create died as
@@ -194,6 +201,30 @@ jobs:
       # Reports its own result, like the step above, so an earlier red step cannot hide it.
       - run: supabase test db supabase/tests/contact_methods.sql
         if: ${{ !cancelled() }}
+      # A save built on a list that changed since it was loaded is refused, never overwrites: a
+      # person's list, a client's list (the People editor and Paige's MCP update_contact), and an
+      # address attached by inbound recognition moving the contact's version for CRM commands.
+      - run: supabase test db supabase/tests/contact_methods_concurrency.sql
+        if: ${{ !cancelled() }}
+      # And the race a single session cannot show: an address ADD issued while another transaction
+      # holds the contact (another add, or a checked whole-list replace) waits for it, then keeps that
+      # transaction's address instead of deleting it (20270519010000 locks before it reads). Two real
+      # sessions on committed rows, observed waiting on the lock before the holder commits.
+      # It ends its own sessions and exits 1 within its 90s budget on any failure; the step limit is
+      # a second fence so a stuck run can never sit on the job's 20 minutes.
+      - run: node scripts/proof/contact-methods-add-race.mjs
+        if: ${{ !cancelled() }}
+        timeout-minutes: 3
+        env:
+          CONTACT_METHODS_RACE_TEST_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      # A contact created from an inbound address and its first addresses are one transaction: a
+      # refused or taken address leaves no contact row and no contact.created event behind.
+      - run: supabase test db supabase/tests/contact_create_with_methods.sql
+        if: ${{ !cancelled() }}
+      # A person's primary address set by the server (provider webhooks, Paige's write-back): under
+      # the same per-person lock as a checked save, keeping every address and any relabel saved since.
+      - run: supabase test db supabase/tests/user_primary_address.sql
+        if: ${{ !cancelled() }}
       # Public form intake: a visitor reads an active form only through growth_public_form (never the
       # table, never the business/pipeline/alert columns), nobody inserts a submission from the
       # browser, and a form's intake settings change only for its own business's owner/admin.
@@ -205,6 +236,7 @@ jobs:
       - run: supabase test db supabase/tests/user_address_readers.sql
         if: ${{ !cancelled() }}
       - run: supabase test db supabase/tests/paige_spine_foundation.sql
+        if: ${{ !cancelled() }}
       # Vibe Media Credit Ledger: append-only, closure math, anti-leakage release
       # gate, lazy mint, RLS, and the §59 service-role surface (2026-09-12).
       - run: supabase test db supabase/tests/media_credit_ledger.sql

@@ -1,5 +1,16 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { CLIENT_CONTACT_METHODS_EMBED, primaryAddressesOf, type WithClientContactMethods } from "@/lib/contact-methods";
+import { contactIdsWithAddress } from "@/lib/contacts";
+
+// Widened to string: the generated types do not know the contact-methods embed yet.
+const ONBOARD_CLIENT_SELECT: string = `id, tenant_id, first_name, last_name, ${CLIENT_CONTACT_METHODS_EMBED}, entity_name, linked_user_id, onboarding_stage, lifecycle_stage`;
+
+/** `email` and `phone` are the contact's PRIMARY addresses, from its contact methods. */
+const toOnboardClient = (row: Omit<OnboardClient, "email" | "phone"> & WithClientContactMethods): OnboardClient => {
+  const { client_contact_methods: methods, ...rest } = row;
+  return { ...rest, ...primaryAddressesOf(methods) };
+};
 
 export interface OnboardClient {
   id: string;
@@ -7,6 +18,7 @@ export interface OnboardClient {
   first_name: string | null;
   last_name: string | null;
   email: string | null;
+  phone: string | null;
   entity_name: string | null;
   linked_user_id: string | null;
   onboarding_stage: string | null;
@@ -31,18 +43,25 @@ export function useOnboardingClient() {
       return;
     }
     // Match by linked_user_id first, then by email (so we can claim the row).
-    let { data: client } = await supabase
+    const { data: linked } = await supabase
       .from("clients")
-      .select("id, tenant_id, first_name, last_name, email, entity_name, linked_user_id, onboarding_stage, lifecycle_stage")
+      .select(ONBOARD_CLIENT_SELECT)
       .eq("linked_user_id", user.id)
       .maybeSingle();
+    let client = linked ? toOnboardClient(linked as unknown as Omit<OnboardClient, "email" | "phone"> & WithClientContactMethods) : null;
 
     if (!client && user.email) {
-      const { data: byEmail } = await supabase
-        .from("clients")
-        .select("id, tenant_id, first_name, last_name, email, entity_name, linked_user_id, onboarding_stage, lifecycle_stage")
-        .ilike("email", user.email.replace(/([%_\\])/g, "\\$1"))
-        .maybeSingle();
+      // The contact holding the sign-in address as ANY of its emails. Exactly one, or none: two
+      // contacts holding it (in different workspaces) is ambiguous, and nothing is claimed.
+      // A failed lookup claims nothing, and says why.
+      const holders = await contactIdsWithAddress("email", user.email, 2).catch((cause: unknown) => {
+        console.warn("[onboarding] looking up the contact by sign-in email failed", cause);
+        return [] as string[];
+      });
+      const { data: found } = holders.length === 1
+        ? await supabase.from("clients").select(ONBOARD_CLIENT_SELECT).eq("id", holders[0]).maybeSingle()
+        : { data: null };
+      const byEmail = found ? toOnboardClient(found as unknown as Omit<OnboardClient, "email" | "phone"> & WithClientContactMethods) : null;
       if (byEmail) {
         // Bind it.
         if (!byEmail.linked_user_id) {
@@ -63,7 +82,7 @@ export function useOnboardingClient() {
       return;
     }
 
-    setState({ loading: false, error: null, client: client as OnboardClient, userEmail: user.email ?? null });
+    setState({ loading: false, error: null, client, userEmail: user.email ?? null });
   };
 
   useEffect(() => { refresh(); }, []);

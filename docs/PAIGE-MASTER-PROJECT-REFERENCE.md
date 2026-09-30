@@ -1847,7 +1847,7 @@ used", never as "broken".
 public.get_solo_rail_activity(integer)` at migration version **`20261042000000`** with a body that
 reads **`paige_client_events` ONLY** — no workspace union. That version sorts BELOW the live
 `20261212000000`, so it is invisible on a fresh `db reset` (CI stays green, live def wins) but on
-**production** the deploy pipeline runs `db push --include-all` (`deploy-migrations.yml:153`), which
+**production** the deploy pipeline runs `db push --include-all` (`deploy-migrations.yml:153`) *[updated 2026-09-29: the pipeline now runs a plain `db push`, so this migration would be REFUSED and block every later migration deploy instead of overwriting the live function; it must be renumbered above production's newest before it can ship]*, which
 applies a behind-version migration LAST — its `CREATE OR REPLACE` then overwrites the live union and
 **deletes every `capability_run` row's visibility**: n8n runs, `zapier_run_action`, and #947's four
 Communications acts (§58 silent-removal, exactly the class §776's own PR body says it is guarding

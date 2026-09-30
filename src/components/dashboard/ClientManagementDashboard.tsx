@@ -24,6 +24,10 @@ import { useDashboardMode } from "@/contexts/DashboardModeContext";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { useTierFeatures } from "@/hooks/useTierFeatures";
 import { toast } from "sonner";
+import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses, type WithClientContactMethods } from "@/lib/contact-methods";
+
+// Widened to string: the generated types do not know the contact-methods embed yet.
+const INTERNAL_CLIENTS_SELECT: string = `*,${CLIENT_CONTACT_METHODS_EMBED}`;
 
 interface InternalClient {
   id: string;
@@ -183,11 +187,13 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
 
       const { data: intClients } = await supabase
         .from("clients" as any)
-        .select("*")
+        .select(INTERNAL_CLIENTS_SELECT)
         .eq("tenant_id", activeTenantId)
         .order("created_at", { ascending: false });
 
-      setInternalClients((intClients as any[] || []) as InternalClient[]);
+      // `email` / `phone` are each contact's primary addresses, from its contact methods.
+      setInternalClients(((intClients ?? []) as unknown as Array<InternalClient & WithClientContactMethods>)
+        .map((row) => withPrimaryAddresses(row)));
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;

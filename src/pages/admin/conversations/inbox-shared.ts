@@ -9,6 +9,7 @@ import {
   Mail, MessageSquare, MessageCircle, Instagram, Facebook, Phone,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { CLIENT_CONTACT_METHODS_EMBED, primaryAddressesOf, type WithClientContactMethods } from "@/lib/contact-methods";
 
 // ── message substrate (locked columns from public.messages) ────────────────────────
 export type ChannelType = "email" | "sms" | "whatsapp" | "instagram" | "facebook" | "voice";
@@ -56,7 +57,21 @@ export const MESSAGE_COLS =
   "id, thread_key, contact_id, connector_id, channel_type, direction, status, sender, recipients, " +
   "subject, body_text, body_html, attachments, provider_message_id, in_reply_to_provider_id, " +
   "action_id, error, scheduled_for, sent_at, created_at, call_duration_seconds, recording_url, transcript, " +
-  "clients(first_name, last_name, entity_name, email)";
+  `clients(first_name, last_name, entity_name, ${CLIENT_CONTACT_METHODS_EMBED})`;
+
+/**
+ * A `messages` pull as the inbox reads it: the joined contact's `email` is its PRIMARY address,
+ * taken from its contact methods (MESSAGE_COLS embeds them). Every inbox consumer reads
+ * `clients.email`, so it is set here, once, where the rows arrive.
+ */
+export function messageRowsFromDb(rows: unknown): MessageRow[] {
+  return ((rows ?? []) as Array<Omit<MessageRow, "clients"> & { clients: (Omit<ClientJoin, "email"> & WithClientContactMethods) | null }>)
+    .map((row) => {
+      if (!row.clients) return { ...row, clients: null };
+      const { client_contact_methods: methods, ...client } = row.clients;
+      return { ...row, clients: { ...client, email: primaryAddressesOf(methods).email } };
+    });
+}
 
 // ── C-1.5 threads aggregate (source of truth for order/unread/snooze/archive/labels) ─
 export type ThreadFilter = "active" | "snoozed" | "archived" | "all";
@@ -136,9 +151,24 @@ export const PAIGE_ACTION_COLS =
 export const THREAD_COLS =
   "id, thread_key, contact_id, snoozed_until, archived_at, labels, unread_count, " +
   "last_message_at, last_direction, " +
-  "clients:contact_id(id, first_name, last_name, entity_name, entity_type, title, email, phone, status, " +
+  "clients:contact_id(id, first_name, last_name, entity_name, entity_type, title, status, " +
   "lifecycle_stage, source, tags, last_contacted_at, assigned_coach_user_id, linked_user_id, " +
-  "timezone, created_at, created_by, created_by_channel_type, dnd_active, dnd_reason, dnd_until)";
+  "timezone, created_at, created_by, created_by_channel_type, dnd_active, dnd_reason, dnd_until, " +
+  `${CLIENT_CONTACT_METHODS_EMBED})`;
+
+/**
+ * A `threads` pull as the inbox reads it: the joined contact's `email` / `phone` are its PRIMARY
+ * addresses, taken from its contact methods (THREAD_COLS embeds them). The contact card, the
+ * composer's To, the call button and the portal invite all read these two fields.
+ */
+export function threadsFromDb(rows: unknown): DbThread[] {
+  return ((rows ?? []) as Array<Omit<DbThread, "clients"> & { clients: (Omit<ClientContact, "email" | "phone"> & WithClientContactMethods) | null }>)
+    .map((row) => {
+      if (!row.clients) return { ...row, clients: null };
+      const { client_contact_methods: methods, ...client } = row.clients;
+      return { ...row, clients: { ...client, ...primaryAddressesOf(methods) } };
+    });
+}
 
 // ── selected-view shape (R1): the DbThread + its loaded messages + all the fields the
 //    composer / approve / signature seams read. Typed once here, consumed in the page. ─

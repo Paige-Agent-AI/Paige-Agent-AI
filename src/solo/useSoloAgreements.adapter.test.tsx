@@ -99,9 +99,11 @@ const AGREEMENT_ROW = {
   updated_at: "2026-09-01T10:00:00Z",
 };
 
+// The picker reads each contact's primary email through its contact methods, filtered to it.
 const CLIENT_ROWS = [
-  { id: "c1", first_name: "Jordan", last_name: "Avery", entity_name: null, entity_type: null, email: "j@example.test" },
-  { id: "c2", first_name: null, last_name: null, entity_name: "Meridian Advisory", entity_type: "llc", email: null },
+  { id: "c1", first_name: "Jordan", last_name: "Avery", entity_name: null, entity_type: null, client_contact_methods: [{ id: "m1", kind: "email", value: "j@example.test", label: null, is_primary: true, position: 0 }] },
+  { id: "c2", first_name: null, last_name: null, entity_name: "Meridian Advisory", entity_type: "llc", client_contact_methods: [] },
+  { id: "c3", first_name: null, last_name: null, entity_name: null, entity_type: null, client_contact_methods: [{ id: "m3", kind: "email", value: "only-an-address@example.test", label: "Work", is_primary: true, position: 0 }] },
 ];
 
 beforeEach(() => {
@@ -136,15 +138,20 @@ describe("useSoloAgreements — what it actually asks the database for", () => {
     }
   });
 
-  it("asks for the six client columns the canonical display name is built from", async () => {
+  it("asks for the client columns the canonical display name is built from", async () => {
     await run();
     const select = call("clients")?.select ?? "";
-    // `entity_type` and `email` are NOT droppable. `clientName()` uses entity_type for the
-    // business-vs-person precedence and email as the last-resort fallback, so dropping either
+    // `entity_type` and the email are NOT droppable. `clientName()` uses entity_type for the
+    // business-vs-person precedence and the email as the last-resort fallback, so dropping either
     // makes Sales render a different name than Clients for the same row (§57).
-    for (const column of ["id", "first_name", "last_name", "entity_name", "entity_type", "email"]) {
+    for (const column of ["id", "first_name", "last_name", "entity_name", "entity_type", "client_contact_methods("]) {
       expect(select).toContain(column);
     }
+    // The email is the contact's PRIMARY address from its contact methods — never the retired
+    // `clients.email` column — and the embed is narrowed to exactly that one address.
+    expect(select).not.toMatch(/(^|,)\s*email\s*(,|$)/);
+    expect(call("clients")?.eq).toContainEqual(["client_contact_methods.kind", "email"]);
+    expect(call("clients")?.eq).toContainEqual(["client_contact_methods.is_primary", true]);
     // And nothing beyond identity. A picker has no business reading phone, address or notes.
     for (const forbidden of ["phone", "street_address", "current_notes", "funding_goal", "lead_score"]) {
       expect(select).not.toContain(forbidden);
@@ -156,7 +163,7 @@ describe("useSoloAgreements — what it actually asks the database for", () => {
     const names = latest!.clients.map((c) => c.name);
     // A person with no company keeps their own name; a company row with an entity_type shows the
     // company. Diverging from `useTenantRelationshipsData.clientName` here is the §57 defect.
-    expect(names).toEqual(["Jordan Avery", "Meridian Advisory"]);
+    expect(names).toEqual(["Jordan Avery", "Meridian Advisory", "only-an-address@example.test"]);
   });
 
   it("reads the agreement row back without inventing a figure", async () => {

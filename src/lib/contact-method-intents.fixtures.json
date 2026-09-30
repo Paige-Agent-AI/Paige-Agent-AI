@@ -1,0 +1,1839 @@
+{
+  "lists": {
+    "BUILT": [
+      {
+        "kind": "email",
+        "value": "jordan@reyesbuild.co",
+        "label": "Work",
+        "is_primary": true
+      },
+      {
+        "kind": "email",
+        "value": "ops@reyesbuild.co",
+        "label": "Ops",
+        "is_primary": false
+      },
+      {
+        "kind": "phone",
+        "value": "+1 (512) 555-0148",
+        "label": null,
+        "is_primary": true
+      }
+    ],
+    "BUILT_PLUS_BILLING": [
+      {
+        "kind": "email",
+        "value": "jordan@reyesbuild.co",
+        "label": "Work",
+        "is_primary": true
+      },
+      {
+        "kind": "email",
+        "value": "ops@reyesbuild.co",
+        "label": "Ops",
+        "is_primary": false
+      },
+      {
+        "kind": "email",
+        "value": "billing@reyesbuild.co",
+        "label": "Billing",
+        "is_primary": false
+      },
+      {
+        "kind": "phone",
+        "value": "+1 (512) 555-0148",
+        "label": null,
+        "is_primary": true
+      }
+    ],
+    "PRIMARY_SWITCHED": [
+      {
+        "kind": "email",
+        "value": "jordan@reyesbuild.co",
+        "label": "Work",
+        "is_primary": false
+      },
+      {
+        "kind": "email",
+        "value": "ops@reyesbuild.co",
+        "label": "Ops",
+        "is_primary": true
+      },
+      {
+        "kind": "phone",
+        "value": "+1 (512) 555-0148",
+        "label": null,
+        "is_primary": true
+      }
+    ],
+    "BUILT_PHONE_REFORMATTED": [
+      {
+        "kind": "email",
+        "value": "jordan@reyesbuild.co",
+        "label": "Work",
+        "is_primary": true
+      },
+      {
+        "kind": "email",
+        "value": "ops@reyesbuild.co",
+        "label": "Ops",
+        "is_primary": false
+      },
+      {
+        "kind": "phone",
+        "value": "512.555.0148",
+        "label": null,
+        "is_primary": true
+      }
+    ],
+    "PHONE_ONLY": [
+      {
+        "kind": "phone",
+        "value": "+1 (512) 555-0148",
+        "label": "Mobile",
+        "is_primary": true
+      }
+    ],
+    "NO_PRIMARY_FLAGGED": [
+      {
+        "kind": "email",
+        "value": "first@reyesbuild.co",
+        "label": null,
+        "is_primary": false
+      },
+      {
+        "kind": "email",
+        "value": "second@reyesbuild.co",
+        "label": null,
+        "is_primary": false
+      }
+    ],
+    "BUILT_AS_THE_DATABASE_SEES_IT": [
+      {
+        "kind": "phone",
+        "value": "　+1 (512) 555-0148 ",
+        "label": "  ",
+        "is_primary": false
+      },
+      {
+        "kind": "email",
+        "value": "​jordan@reyesbuild.co ",
+        "label": "﻿Work ",
+        "is_primary": true
+      },
+      {
+        "kind": "email",
+        "value": " ops@reyesbuild.co\t",
+        "label": "Ops",
+        "is_primary": false
+      }
+    ],
+    "BUILT_OPS_RELABELLED": [
+      {
+        "kind": "email",
+        "value": "jordan@reyesbuild.co",
+        "label": "Work",
+        "is_primary": true
+      },
+      {
+        "kind": "email",
+        "value": "ops@reyesbuild.co",
+        "label": "Operations",
+        "is_primary": false
+      },
+      {
+        "kind": "phone",
+        "value": "+1 (512) 555-0148",
+        "label": null,
+        "is_primary": true
+      }
+    ],
+    "BUILT_OPS_RECASED": [
+      {
+        "kind": "email",
+        "value": "jordan@reyesbuild.co",
+        "label": "Work",
+        "is_primary": true
+      },
+      {
+        "kind": "email",
+        "value": "Ops@reyesbuild.co",
+        "label": "Ops",
+        "is_primary": false
+      },
+      {
+        "kind": "phone",
+        "value": "+1 (512) 555-0148",
+        "label": null,
+        "is_primary": true
+      }
+    ],
+    "BUILT_PLUS_BILLING_REORDERED": [
+      {
+        "kind": "email",
+        "value": "jordan@reyesbuild.co",
+        "label": "Work",
+        "is_primary": true
+      },
+      {
+        "kind": "email",
+        "value": "billing@reyesbuild.co",
+        "label": "Billing",
+        "is_primary": false
+      },
+      {
+        "kind": "email",
+        "value": "ops@reyesbuild.co",
+        "label": "Ops",
+        "is_primary": false
+      },
+      {
+        "kind": "phone",
+        "value": "+1 (512) 555-0148",
+        "label": null,
+        "is_primary": true
+      }
+    ]
+  },
+  "plans": [
+    {
+      "name": "primary email: a new address takes the primary's place and keeps its label",
+      "intent": {
+        "op": "primary",
+        "values": {
+          "email": "jordan.reyes@reyesbuild.co"
+        }
+      },
+      "builtOn": "BUILT",
+      "heldNow": "BUILT",
+      "plan": {
+        "rpc": "_replace_client_contact_methods_checked",
+        "methods": [
+          {
+            "kind": "email",
+            "value": "jordan.reyes@reyesbuild.co",
+            "label": "Work",
+            "is_primary": true
+          },
+          {
+            "kind": "email",
+            "value": "ops@reyesbuild.co",
+            "label": "Ops",
+            "is_primary": false
+          },
+          {
+            "kind": "phone",
+            "value": "+1 (512) 555-0148",
+            "label": null,
+            "is_primary": true
+          }
+        ],
+        "expected": [
+          {
+            "kind": "email",
+            "value": "jordan@reyesbuild.co",
+            "label": "Work",
+            "is_primary": true
+          },
+          {
+            "kind": "email",
+            "value": "ops@reyesbuild.co",
+            "label": "Ops",
+            "is_primary": false
+          },
+          {
+            "kind": "phone",
+            "value": "+1 (512) 555-0148",
+            "label": null,
+            "is_primary": true
+          }
+        ]
+      },
+      "result": [
+        {
+          "kind": "email",
+          "value": "jordan.reyes@reyesbuild.co",
+          "label": "Work",
+          "is_primary": true
+        },
+        {
+          "kind": "email",
+          "value": "ops@reyesbuild.co",
+          "label": "Ops",
+          "is_primary": false
+        },
+        {
+          "kind": "phone",
+          "value": "+1 (512) 555-0148",
+          "label": null,
+          "is_primary": true
+        }
+      ]
+    },
+    {
+      "name": "primary email: an address already held is promoted, matched case-insensitively",
+      "intent": {
+        "op": "primary",
+        "values": {
+          "email": " OPS@reyesbuild.co "
+        }
+      },
+      "builtOn": "BUILT",
+      "heldNow": "BUILT",
+      "plan": {
+        "rpc": "_replace_client_contact_methods_checked",
+        "methods": [
+          {
+            "kind": "email",
+            "value": "jordan@reyesbuild.co",
+            "label": "Work",
+            "is_primary": false
+          },
+          {
+            "kind": "email",
+            "value": "OPS@reyesbuild.co",
+            "label": "Ops",
+            "is_primary": true
+          },
+          {
+            "kind": "phone",
+            "value": "+1 (512) 555-0148",
+            "label": null,
+            "is_primary": true
+          }
+        ],
+        "expected": [
+          {
+            "kind": "email",
+            "value": "jordan@reyesbuild.co",
+            "label": "Work",
+            "is_primary": true
+          },
+          {
+            "kind": "email",
+            "value": "ops@reyesbuild.co",
+            "label": "Ops",
+            "is_primary": false
+          },
+          {
+            "kind": "phone",
+            "value": "+1 (512) 555-0148",
+            "label": null,
+            "is_primary": true
+          }
+        ]
+      },
+      "result": [
+        {
+          "kind": "email",
+          "value": "jordan@reyesbuild.co",
+          "label": "Work",
+          "is_primary": false
+        },
+        {
+          "kind": "email",
+          "value": "OPS@reyesbuild.co",
+          "label": "Ops",
+          "is_primary": true
+        },
+        {
+          "kind": "phone",
+          "value": "+1 (512) 555-0148",
+          "label": null,
+          "is_primary": true
+        }
+      ]
+    },
+    {
+      "name": "primary email: null removes the primary and promotes the next",
+      "intent": {
+        "op": "primary",
+        "values": {
+          "email": null
+        }
+      },
+      "builtOn": "BUILT",
+      "heldNow": "BUILT",
+      "plan": {
+        "rpc": "_replace_client_contact_methods_checked",
+        "methods": [
+          {
+            "kind": "email",
+            "value": "ops@reyesbuild.co",
+            "label": "Ops",
+            "is_primary": true
+          },
+          {
+            "kind": "phone",
+            "value": "+1 (512) 555-0148",
+            "label": null,
+            "is_primary": true
+          }
+        ],
+        "expected": [
+          {
+            "kind": "email",
+            "value": "jordan@reyesbuild.co",
+            "label": "Work",
+            "is_primary": true
+          },
+          {
+            "kind": "email",
+            "value": "ops@reyesbuild.co",
+            "label": "Ops",
+            "is_primary": false
+          },
+          {
+            "kind": "phone",
+            "value": "+1 (512) 555-0148",
+            "label": null,
+            "is_primary": true
+          }
+        ]
+      },
+      "result": [
+        {
+          "kind": "email",
+          "value": "ops@reyesbuild.co",
+          "label": "Ops",
+          "is_primary": true
+        },
+        {
+          "kind": "phone",
+          "value": "+1 (512) 555-0148",
+          "label": null,
+          "is_primary": true
+        }
+      ]
+    },
+    {
+      "name": "primary email: an address added since the proposal makes it stale",
+      "intent": {
+        "op": "primary",
+        "values": {
+          "email": "jordan.reyes@reyesbuild.co"
+        }
+      },
+      "builtOn": "BUILT",
+      "heldNow": "BUILT_PLUS_BILLING",
+      "plan": {
+        "stale": "CONTACT_METHODS_STALE: this contact's emails or phones changed after the change was prepared, so nothing was written — prepare it again against the current list"
+      },
+      "result": [
+        {
+          "kind": "email",
+          "value": "jordan.reyes@reyesbuild.co",
+          "label": "Work",
+          "is_primary": true
+        },
+        {
+          "kind": "email",
+          "value": "ops@reyesbuild.co",
+          "label": "Ops",
+          "is_primary": false
+        },
+        {
+          "kind": "email",
+          "value": "billing@reyesbuild.co",
+          "label": "Billing",
+          "is_primary": false
+        },
+        {
+          "kind": "phone",
+          "value": "+1 (512) 555-0148",
+          "label": null,
+          "is_primary": true
+        }
+      ]
+    },
+    {
+      "name": "primary email: the primary switched since the proposal, so it is stale",
+      "intent": {
+        "op": "primary",
+        "values": {
+          "email": "jordan.reyes@reyesbuild.co"
+        }
+      },
+      "builtOn": "BUILT",
+      "heldNow": "PRIMARY_SWITCHED",
+      "plan": {
+        "stale": "CONTACT_METHODS_STALE: this contact's emails or phones changed after the change was prepared, so nothing was written — prepare it again against the current list"
+      },
+      "result": [
+        {
+          "kind": "email",
+          "value": "jordan@reyesbuild.co",
+          "label": "Work",
+          "is_primary": false
+        },
+        {
+          "kind": "email",
+          "value": "jordan.reyes@reyesbuild.co",
+          "label": "Ops",
+          "is_primary": true
+        },
+        {
+          "kind": "phone",
+          "value": "+1 (512) 555-0148",
+          "label": null,
+          "is_primary": true
+        }
+      ]
+    },
+    {
+      "name": "primary email: an address removed since the proposal makes it stale",
+      "intent": {
+        "op": "primary",
+        "values": {
+          "email": "jordan.reyes@reyesbuild.co"
+        }
+      },
+      "builtOn": "BUILT_PLUS_BILLING",
+      "heldNow": "BUILT",
+      "plan": {
+        "stale": "CONTACT_METHODS_STALE: this contact's emails or phones changed after the change was prepared, so nothing was written — prepare it again against the current list"
+      },
+      "result": [
+        {
+          "kind": "email",
+          "value": "jordan.reyes@reyesbuild.co",
+          "label": "Work",
+          "is_primary": true
+        },
+        {
+          "kind": "email",
+          "value": "ops@reyesbuild.co",
+          "label": "Ops",
+          "is_primary": false
+        },
+        {
+          "kind": "phone",
+          "value": "+1 (512) 555-0148",
+          "label": null,
+          "is_primary": true
+        }
+      ]
+    },
+    {
+      "name": "primary email: an address relabelled since the proposal makes it stale",
+      "intent": {
+        "op": "primary",
+        "values": {
+          "email": "jordan.reyes@reyesbuild.co"
+        }
+      },
+      "builtOn": "BUILT",
+      "heldNow": "BUILT_OPS_RELABELLED",
+      "plan": {
+        "stale": "CONTACT_METHODS_STALE: this contact's emails or phones changed after the change was prepared, so nothing was written — prepare it again against the current list"
+      },
+      "result": [
+        {
+          "kind": "email",
+          "value": "jordan.reyes@reyesbuild.co",
+          "label": "Work",
+          "is_primary": true
+        },
+        {
+          "kind": "email",
+          "value": "ops@reyesbuild.co",
+          "label": "Operations",
+          "is_primary": false
+        },
+        {
+          "kind": "phone",
+          "value": "+1 (512) 555-0148",
+          "label": null,
+          "is_primary": true
+        }
+      ]
+    },
+    {
+      "name": "primary email: addresses reordered within a kind since the proposal make it stale",
+      "intent": {
+        "op": "primary",
+        "values": {
+          "email": "jordan.reyes@reyesbuild.co"
+        }
+      },
+      "builtOn": "BUILT_PLUS_BILLING",
+      "heldNow": "BUILT_PLUS_BILLING_REORDERED",
+      "plan": {
+        "stale": "CONTACT_METHODS_STALE: this contact's emails or phones changed after the change was prepared, so nothing was written — prepare it again against the current list"
+      },
+      "result": [
+        {
+          "kind": "email",
+          "value": "jordan.reyes@reyesbuild.co",
+          "label": "Work",
+          "is_primary": true
+        },
+        {
+          "kind": "email",
+          "value": "billing@reyesbuild.co",
+          "label": "Billing",
+          "is_primary": false
+        },
+        {
+          "kind": "email",
+          "value": "ops@reyesbuild.co",
+          "label": "Ops",
+          "is_primary": false
+        },
+        {
+          "kind": "phone",
+          "value": "+1 (512) 555-0148",
+          "label": null,
+          "is_primary": true
+        }
+      ]
+    },
+    {
+      "name": "primary email: a value whose letter case changed since the proposal makes it stale",
+      "intent": {
+        "op": "primary",
+        "values": {
+          "email": "jordan.reyes@reyesbuild.co"
+        }
+      },
+      "builtOn": "BUILT",
+      "heldNow": "BUILT_OPS_RECASED",
+      "plan": {
+        "stale": "CONTACT_METHODS_STALE: this contact's emails or phones changed after the change was prepared, so nothing was written — prepare it again against the current list"
+      },
+      "result": [
+        {
+          "kind": "email",
+          "value": "jordan.reyes@reyesbuild.co",
+          "label": "Work",
+          "is_primary": true
+        },
+        {
+          "kind": "email",
+          "value": "Ops@reyesbuild.co",
+          "label": "Ops",
+          "is_primary": false
+        },
+        {
+          "kind": "phone",
+          "value": "+1 (512) 555-0148",
+          "label": null,
+          "is_primary": true
+        }
+      ]
+    },
+    {
+      "name": "primary email: a list differing only as the database ignores is the same list, so it is not stale",
+      "intent": {
+        "op": "primary",
+        "values": {
+          "email": "jordan.reyes@reyesbuild.co"
+        }
+      },
+      "builtOn": "BUILT",
+      "heldNow": "BUILT_AS_THE_DATABASE_SEES_IT",
+      "plan": {
+        "rpc": "_replace_client_contact_methods_checked",
+        "methods": [
+          {
+            "kind": "email",
+            "value": "jordan.reyes@reyesbuild.co",
+            "label": "﻿Work ",
+            "is_primary": true
+          },
+          {
+            "kind": "email",
+            "value": "ops@reyesbuild.co",
+            "label": "Ops",
+            "is_primary": false
+          },
+          {
+            "kind": "phone",
+            "value": "+1 (512) 555-0148",
+            "label": "  ",
+            "is_primary": true
+          }
+        ],
+        "expected": [
+          {
+            "kind": "email",
+            "value": "jordan@reyesbuild.co",
+            "label": "Work",
+            "is_primary": true
+          },
+          {
+            "kind": "email",
+            "value": "ops@reyesbuild.co",
+            "label": "Ops",
+            "is_primary": false
+          },
+          {
+            "kind": "phone",
+            "value": "+1 (512) 555-0148",
+            "label": null,
+            "is_primary": true
+          }
+        ]
+      },
+      "result": [
+        {
+          "kind": "email",
+          "value": "jordan.reyes@reyesbuild.co",
+          "label": "﻿Work ",
+          "is_primary": true
+        },
+        {
+          "kind": "email",
+          "value": "ops@reyesbuild.co",
+          "label": "Ops",
+          "is_primary": false
+        },
+        {
+          "kind": "phone",
+          "value": "+1 (512) 555-0148",
+          "label": "  ",
+          "is_primary": true
+        }
+      ]
+    },
+    {
+      "name": "primary phone: the same number written differently since the proposal makes it stale",
+      "intent": {
+        "op": "primary",
+        "values": {
+          "phone": "(512) 555-0199"
+        }
+      },
+      "builtOn": "BUILT_PHONE_REFORMATTED",
+      "heldNow": "BUILT",
+      "plan": {
+        "stale": "CONTACT_METHODS_STALE: this contact's emails or phones changed after the change was prepared, so nothing was written — prepare it again against the current list"
+      },
+      "result": [
+        {
+          "kind": "email",
+          "value": "jordan@reyesbuild.co",
+          "label": "Work",
+          "is_primary": true
+        },
+        {
+          "kind": "email",
+          "value": "ops@reyesbuild.co",
+          "label": "Ops",
+          "is_primary": false
+        },
+        {
+          "kind": "phone",
+          "value": "(512) 555-0199",
+          "label": null,
+          "is_primary": true
+        }
+      ]
+    },
+    {
+      "name": "primary phone: a change to the other kind since the proposal makes it stale too",
+      "intent": {
+        "op": "primary",
+        "values": {
+          "phone": "(512) 555-0199"
+        }
+      },
+      "builtOn": "BUILT",
+      "heldNow": "PRIMARY_SWITCHED",
+      "plan": {
+        "stale": "CONTACT_METHODS_STALE: this contact's emails or phones changed after the change was prepared, so nothing was written — prepare it again against the current list"
+      },
+      "result": [
+        {
+          "kind": "email",
+          "value": "jordan@reyesbuild.co",
+          "label": "Work",
+          "is_primary": false
+        },
+        {
+          "kind": "email",
+          "value": "ops@reyesbuild.co",
+          "label": "Ops",
+          "is_primary": true
+        },
+        {
+          "kind": "phone",
+          "value": "(512) 555-0199",
+          "label": null,
+          "is_primary": true
+        }
+      ]
+    },
+    {
+      "name": "primary email and phone together",
+      "intent": {
+        "op": "primary",
+        "values": {
+          "email": "new@reyesbuild.co",
+          "phone": "+1 512 555 0100"
+        }
+      },
+      "builtOn": "BUILT",
+      "heldNow": "BUILT",
+      "plan": {
+        "rpc": "_replace_client_contact_methods_checked",
+        "methods": [
+          {
+            "kind": "email",
+            "value": "new@reyesbuild.co",
+            "label": "Work",
+            "is_primary": true
+          },
+          {
+            "kind": "email",
+            "value": "ops@reyesbuild.co",
+            "label": "Ops",
+            "is_primary": false
+          },
+          {
+            "kind": "phone",
+            "value": "+1 512 555 0100",
+            "label": null,
+            "is_primary": true
+          }
+        ],
+        "expected": [
+          {
+            "kind": "email",
+            "value": "jordan@reyesbuild.co",
+            "label": "Work",
+            "is_primary": true
+          },
+          {
+            "kind": "email",
+            "value": "ops@reyesbuild.co",
+            "label": "Ops",
+            "is_primary": false
+          },
+          {
+            "kind": "phone",
+            "value": "+1 (512) 555-0148",
+            "label": null,
+            "is_primary": true
+          }
+        ]
+      },
+      "result": [
+        {
+          "kind": "email",
+          "value": "new@reyesbuild.co",
+          "label": "Work",
+          "is_primary": true
+        },
+        {
+          "kind": "email",
+          "value": "ops@reyesbuild.co",
+          "label": "Ops",
+          "is_primary": false
+        },
+        {
+          "kind": "phone",
+          "value": "+1 512 555 0100",
+          "label": null,
+          "is_primary": true
+        }
+      ]
+    },
+    {
+      "name": "primary email with no list to check against (an older proposal) plans on the list held now",
+      "intent": {
+        "op": "primary",
+        "values": {
+          "email": "jordan.reyes@reyesbuild.co"
+        }
+      },
+      "builtOn": null,
+      "heldNow": "PRIMARY_SWITCHED",
+      "plan": {
+        "rpc": "_replace_client_contact_methods_checked",
+        "methods": [
+          {
+            "kind": "email",
+            "value": "jordan@reyesbuild.co",
+            "label": "Work",
+            "is_primary": false
+          },
+          {
+            "kind": "email",
+            "value": "jordan.reyes@reyesbuild.co",
+            "label": "Ops",
+            "is_primary": true
+          },
+          {
+            "kind": "phone",
+            "value": "+1 (512) 555-0148",
+            "label": null,
+            "is_primary": true
+          }
+        ],
+        "expected": [
+          {
+            "kind": "email",
+            "value": "jordan@reyesbuild.co",
+            "label": "Work",
+            "is_primary": false
+          },
+          {
+            "kind": "email",
+            "value": "ops@reyesbuild.co",
+            "label": "Ops",
+            "is_primary": true
+          },
+          {
+            "kind": "phone",
+            "value": "+1 (512) 555-0148",
+            "label": null,
+            "is_primary": true
+          }
+        ]
+      },
+      "result": [
+        {
+          "kind": "email",
+          "value": "jordan@reyesbuild.co",
+          "label": "Work",
+          "is_primary": false
+        },
+        {
+          "kind": "email",
+          "value": "jordan.reyes@reyesbuild.co",
+          "label": "Ops",
+          "is_primary": true
+        },
+        {
+          "kind": "phone",
+          "value": "+1 (512) 555-0148",
+          "label": null,
+          "is_primary": true
+        }
+      ]
+    },
+    {
+      "name": "primary email on a contact holding no email adds it as the primary",
+      "intent": {
+        "op": "primary",
+        "values": {
+          "email": "first@reyesbuild.co"
+        }
+      },
+      "builtOn": "PHONE_ONLY",
+      "heldNow": "PHONE_ONLY",
+      "plan": {
+        "rpc": "_replace_client_contact_methods_checked",
+        "methods": [
+          {
+            "kind": "email",
+            "value": "first@reyesbuild.co",
+            "label": null,
+            "is_primary": true
+          },
+          {
+            "kind": "phone",
+            "value": "+1 (512) 555-0148",
+            "label": "Mobile",
+            "is_primary": true
+          }
+        ],
+        "expected": [
+          {
+            "kind": "phone",
+            "value": "+1 (512) 555-0148",
+            "label": "Mobile",
+            "is_primary": true
+          }
+        ]
+      },
+      "result": [
+        {
+          "kind": "email",
+          "value": "first@reyesbuild.co",
+          "label": null,
+          "is_primary": true
+        },
+        {
+          "kind": "phone",
+          "value": "+1 (512) 555-0148",
+          "label": "Mobile",
+          "is_primary": true
+        }
+      ]
+    },
+    {
+      "name": "primary email with none flagged displaces the first address",
+      "intent": {
+        "op": "primary",
+        "values": {
+          "email": "lead@reyesbuild.co"
+        }
+      },
+      "builtOn": "NO_PRIMARY_FLAGGED",
+      "heldNow": "NO_PRIMARY_FLAGGED",
+      "plan": {
+        "rpc": "_replace_client_contact_methods_checked",
+        "methods": [
+          {
+            "kind": "email",
+            "value": "lead@reyesbuild.co",
+            "label": null,
+            "is_primary": true
+          },
+          {
+            "kind": "email",
+            "value": "second@reyesbuild.co",
+            "label": null,
+            "is_primary": false
+          }
+        ],
+        "expected": [
+          {
+            "kind": "email",
+            "value": "first@reyesbuild.co",
+            "label": null,
+            "is_primary": false
+          },
+          {
+            "kind": "email",
+            "value": "second@reyesbuild.co",
+            "label": null,
+            "is_primary": false
+          }
+        ]
+      },
+      "result": [
+        {
+          "kind": "email",
+          "value": "lead@reyesbuild.co",
+          "label": null,
+          "is_primary": true
+        },
+        {
+          "kind": "email",
+          "value": "second@reyesbuild.co",
+          "label": null,
+          "is_primary": false
+        }
+      ]
+    },
+    {
+      "name": "add: every address held is kept and the new one appended",
+      "intent": {
+        "op": "add",
+        "methods": [
+          {
+            "kind": "email",
+            "value": "billing@reyesbuild.co",
+            "label": "Billing"
+          }
+        ]
+      },
+      "builtOn": "BUILT",
+      "heldNow": "PRIMARY_SWITCHED",
+      "plan": {
+        "rpc": "_add_client_contact_methods",
+        "methods": [
+          {
+            "kind": "email",
+            "value": "billing@reyesbuild.co",
+            "label": "Billing"
+          }
+        ]
+      },
+      "result": [
+        {
+          "kind": "email",
+          "value": "jordan@reyesbuild.co",
+          "label": "Work",
+          "is_primary": false
+        },
+        {
+          "kind": "email",
+          "value": "ops@reyesbuild.co",
+          "label": "Ops",
+          "is_primary": true
+        },
+        {
+          "kind": "email",
+          "value": "billing@reyesbuild.co",
+          "label": "Billing",
+          "is_primary": false
+        },
+        {
+          "kind": "phone",
+          "value": "+1 (512) 555-0148",
+          "label": null,
+          "is_primary": true
+        }
+      ]
+    },
+    {
+      "name": "add: an address already held is not duplicated, only promoted when marked primary",
+      "intent": {
+        "op": "add",
+        "methods": [
+          {
+            "kind": "email",
+            "value": "Ops@ReyesBuild.co",
+            "is_primary": true
+          },
+          {
+            "kind": "phone",
+            "value": "+1 512 555 0177",
+            "label": "Mobile"
+          }
+        ]
+      },
+      "builtOn": "BUILT",
+      "heldNow": "BUILT",
+      "plan": {
+        "rpc": "_add_client_contact_methods",
+        "methods": [
+          {
+            "kind": "email",
+            "value": "Ops@ReyesBuild.co",
+            "is_primary": true
+          },
+          {
+            "kind": "phone",
+            "value": "+1 512 555 0177",
+            "label": "Mobile"
+          }
+        ]
+      },
+      "result": [
+        {
+          "kind": "email",
+          "value": "jordan@reyesbuild.co",
+          "label": "Work",
+          "is_primary": false
+        },
+        {
+          "kind": "email",
+          "value": "ops@reyesbuild.co",
+          "label": "Ops",
+          "is_primary": true
+        },
+        {
+          "kind": "phone",
+          "value": "+1 (512) 555-0148",
+          "label": null,
+          "is_primary": true
+        },
+        {
+          "kind": "phone",
+          "value": "+1 512 555 0177",
+          "label": "Mobile",
+          "is_primary": false
+        }
+      ]
+    },
+    {
+      "name": "add: a contact with none of a kind takes its first new address as primary",
+      "intent": {
+        "op": "add",
+        "methods": [
+          {
+            "kind": "email",
+            "value": "a@reyesbuild.co"
+          },
+          {
+            "kind": "email",
+            "value": "b@reyesbuild.co"
+          }
+        ]
+      },
+      "builtOn": null,
+      "heldNow": "PHONE_ONLY",
+      "plan": {
+        "rpc": "_add_client_contact_methods",
+        "methods": [
+          {
+            "kind": "email",
+            "value": "a@reyesbuild.co"
+          },
+          {
+            "kind": "email",
+            "value": "b@reyesbuild.co"
+          }
+        ]
+      },
+      "result": [
+        {
+          "kind": "email",
+          "value": "a@reyesbuild.co",
+          "label": null,
+          "is_primary": true
+        },
+        {
+          "kind": "email",
+          "value": "b@reyesbuild.co",
+          "label": null,
+          "is_primary": false
+        },
+        {
+          "kind": "phone",
+          "value": "+1 (512) 555-0148",
+          "label": "Mobile",
+          "is_primary": true
+        }
+      ]
+    },
+    {
+      "name": "replace: refused as stale when the list changed since it was built on",
+      "intent": {
+        "op": "replace",
+        "methods": [
+          {
+            "kind": "email",
+            "value": "only@reyesbuild.co",
+            "label": null,
+            "is_primary": true
+          }
+        ]
+      },
+      "builtOn": "BUILT",
+      "heldNow": "BUILT_PLUS_BILLING",
+      "plan": {
+        "stale": "CONTACT_METHODS_STALE: this contact's emails or phones changed after the change was prepared, so nothing was written — prepare it again against the current list"
+      },
+      "result": [
+        {
+          "kind": "email",
+          "value": "only@reyesbuild.co",
+          "label": null,
+          "is_primary": true
+        }
+      ]
+    },
+    {
+      "name": "replace: the whole list, checked against the list it was built on",
+      "intent": {
+        "op": "replace",
+        "methods": [
+          {
+            "kind": "email",
+            "value": "only@reyesbuild.co",
+            "label": null,
+            "is_primary": true
+          }
+        ]
+      },
+      "builtOn": "BUILT",
+      "heldNow": "BUILT",
+      "plan": {
+        "rpc": "_replace_client_contact_methods_checked",
+        "methods": [
+          {
+            "kind": "email",
+            "value": "only@reyesbuild.co",
+            "label": null,
+            "is_primary": true
+          }
+        ],
+        "expected": [
+          {
+            "kind": "email",
+            "value": "jordan@reyesbuild.co",
+            "label": "Work",
+            "is_primary": true
+          },
+          {
+            "kind": "email",
+            "value": "ops@reyesbuild.co",
+            "label": "Ops",
+            "is_primary": false
+          },
+          {
+            "kind": "phone",
+            "value": "+1 (512) 555-0148",
+            "label": null,
+            "is_primary": true
+          }
+        ]
+      },
+      "result": [
+        {
+          "kind": "email",
+          "value": "only@reyesbuild.co",
+          "label": null,
+          "is_primary": true
+        }
+      ]
+    },
+    {
+      "name": "replace: a list differing only as the database ignores is the same list, checked against the list it was built on",
+      "intent": {
+        "op": "replace",
+        "methods": [
+          {
+            "kind": "email",
+            "value": "only@reyesbuild.co",
+            "label": null,
+            "is_primary": true
+          }
+        ]
+      },
+      "builtOn": "BUILT",
+      "heldNow": "BUILT_AS_THE_DATABASE_SEES_IT",
+      "plan": {
+        "rpc": "_replace_client_contact_methods_checked",
+        "methods": [
+          {
+            "kind": "email",
+            "value": "only@reyesbuild.co",
+            "label": null,
+            "is_primary": true
+          }
+        ],
+        "expected": [
+          {
+            "kind": "email",
+            "value": "jordan@reyesbuild.co",
+            "label": "Work",
+            "is_primary": true
+          },
+          {
+            "kind": "email",
+            "value": "ops@reyesbuild.co",
+            "label": "Ops",
+            "is_primary": false
+          },
+          {
+            "kind": "phone",
+            "value": "+1 (512) 555-0148",
+            "label": null,
+            "is_primary": true
+          }
+        ]
+      },
+      "result": [
+        {
+          "kind": "email",
+          "value": "only@reyesbuild.co",
+          "label": null,
+          "is_primary": true
+        }
+      ]
+    },
+    {
+      "name": "replace: with no list to check against, the list held now is named",
+      "intent": {
+        "op": "replace",
+        "methods": [
+          {
+            "kind": "phone",
+            "value": "+15125550148"
+          }
+        ]
+      },
+      "builtOn": null,
+      "heldNow": "BUILT",
+      "plan": {
+        "rpc": "_replace_client_contact_methods_checked",
+        "methods": [
+          {
+            "kind": "phone",
+            "value": "+15125550148"
+          }
+        ],
+        "expected": [
+          {
+            "kind": "email",
+            "value": "jordan@reyesbuild.co",
+            "label": "Work",
+            "is_primary": true
+          },
+          {
+            "kind": "email",
+            "value": "ops@reyesbuild.co",
+            "label": "Ops",
+            "is_primary": false
+          },
+          {
+            "kind": "phone",
+            "value": "+1 (512) 555-0148",
+            "label": null,
+            "is_primary": true
+          }
+        ]
+      },
+      "result": [
+        {
+          "kind": "phone",
+          "value": "+15125550148"
+        }
+      ]
+    }
+  ],
+  "storedIntents": [
+    {
+      "value": {
+        "op": "primary",
+        "values": {
+          "email": "x@y.co"
+        }
+      },
+      "intent": {
+        "op": "primary",
+        "values": {
+          "email": "x@y.co"
+        }
+      }
+    },
+    {
+      "value": {
+        "op": "primary",
+        "values": {
+          "phone": null
+        }
+      },
+      "intent": {
+        "op": "primary",
+        "values": {
+          "phone": null
+        }
+      }
+    },
+    {
+      "value": {
+        "op": "primary",
+        "values": {}
+      },
+      "intent": null
+    },
+    {
+      "value": {
+        "op": "primary",
+        "values": {
+          "fax": "123"
+        }
+      },
+      "intent": null
+    },
+    {
+      "value": {
+        "op": "primary",
+        "values": {
+          "email": 42
+        }
+      },
+      "intent": null
+    },
+    {
+      "value": {
+        "op": "add",
+        "methods": []
+      },
+      "intent": null
+    },
+    {
+      "value": {
+        "op": "add",
+        "methods": [
+          {
+            "kind": "email",
+            "value": "a@b.co"
+          },
+          {
+            "kind": "email",
+            "value": " A@B.CO"
+          }
+        ]
+      },
+      "intent": null
+    },
+    {
+      "value": {
+        "op": "add",
+        "methods": [
+          {
+            "kind": "email",
+            "value": "a@b.co",
+            "is_primary": true
+          },
+          {
+            "kind": "email",
+            "value": "c@b.co",
+            "is_primary": true
+          }
+        ]
+      },
+      "intent": null
+    },
+    {
+      "value": {
+        "op": "add",
+        "methods": [
+          {
+            "kind": "email",
+            "value": "a@b.co",
+            "label": "Work"
+          }
+        ]
+      },
+      "intent": {
+        "op": "add",
+        "methods": [
+          {
+            "kind": "email",
+            "value": "a@b.co",
+            "label": "Work"
+          }
+        ]
+      }
+    },
+    {
+      "value": {
+        "op": "replace",
+        "methods": []
+      },
+      "intent": {
+        "op": "replace",
+        "methods": []
+      }
+    },
+    {
+      "value": {
+        "op": "replace",
+        "methods": [
+          {
+            "kind": "email",
+            "value": "a@b.co",
+            "position": 0
+          }
+        ]
+      },
+      "intent": null
+    },
+    {
+      "value": {
+        "op": "replace",
+        "methods": [
+          {
+            "kind": "sms",
+            "value": "a@b.co"
+          }
+        ]
+      },
+      "intent": null
+    },
+    {
+      "value": {
+        "op": "rename",
+        "methods": []
+      },
+      "intent": null
+    },
+    {
+      "value": [],
+      "intent": null
+    },
+    {
+      "value": null,
+      "intent": null
+    },
+    {
+      "value": "primary",
+      "intent": null
+    }
+  ],
+  "storedLists": [
+    {
+      "value": null,
+      "list": null
+    },
+    {
+      "value": [],
+      "list": []
+    },
+    {
+      "value": [
+        {
+          "kind": "email",
+          "value": "a@b.co",
+          "label": null,
+          "is_primary": true
+        }
+      ],
+      "list": [
+        {
+          "kind": "email",
+          "value": "a@b.co",
+          "label": null,
+          "is_primary": true
+        }
+      ]
+    },
+    {
+      "value": [
+        {
+          "kind": "email",
+          "value": "a@b.co",
+          "id": "x"
+        }
+      ],
+      "list": null
+    },
+    {
+      "value": "not a list",
+      "list": null
+    }
+  ],
+  "rowPatches": [
+    {
+      "patch": {
+        "title": "Owner",
+        "first_name": "Jordan",
+        "funding_goal": 50000,
+        "tier": null
+      },
+      "problem": null
+    },
+    {
+      "patch": {
+        "email": "x@y.co"
+      },
+      "problem": "CONTACT_FIELD_FORBIDDEN: email"
+    },
+    {
+      "patch": {
+        "phone": "123"
+      },
+      "problem": "CONTACT_FIELD_FORBIDDEN: phone"
+    },
+    {
+      "patch": {
+        "contact_methods": []
+      },
+      "problem": "CONTACT_FIELD_FORBIDDEN: contact_methods"
+    },
+    {
+      "patch": {
+        "add_contact_methods": []
+      },
+      "problem": "CONTACT_FIELD_FORBIDDEN: add_contact_methods"
+    },
+    {
+      "patch": {
+        "lifecycle_stage": "customer"
+      },
+      "problem": "CONTACT_FIELD_INVALID: lifecycle_stage must be one of new_lead, qualified, nurturing, hot_lead, negotiating, won, client_active, client_paused, client_churned, client_funded, client_alumni"
+    },
+    {
+      "patch": {
+        "lifecycle_stage": "won"
+      },
+      "problem": null
+    },
+    {
+      "patch": {
+        "monthly_revenue": "5000"
+      },
+      "problem": "CONTACT_FIELD_INVALID: monthly_revenue must be a number or null"
+    },
+    {
+      "patch": {
+        "first_name": "  "
+      },
+      "problem": "CONTACT_FIELD_INVALID: first_name must be a non-empty string"
+    },
+    {
+      "patch": {
+        "tier": "gold"
+      },
+      "problem": "CONTACT_FIELD_INVALID: tier must be one of lead, standard, premium, vip, internal, staff, free, or null"
+    },
+    {
+      "patch": {
+        "website": 7
+      },
+      "problem": "CONTACT_FIELD_INVALID: website must be a string or null"
+    },
+    {
+      "patch": {
+        "status": "active"
+      },
+      "problem": "CONTACT_FIELD_FORBIDDEN: status"
+    }
+  ],
+  "fingerprints": [
+    {
+      "list": "BUILT",
+      "fingerprint": "[[\"email\",\"jordan@reyesbuild.co\",\"Work\",true],[\"email\",\"ops@reyesbuild.co\",\"Ops\",false],[\"phone\",\"+1 (512) 555-0148\",null,true]]"
+    },
+    {
+      "list": "BUILT_PLUS_BILLING",
+      "fingerprint": "[[\"email\",\"jordan@reyesbuild.co\",\"Work\",true],[\"email\",\"ops@reyesbuild.co\",\"Ops\",false],[\"email\",\"billing@reyesbuild.co\",\"Billing\",false],[\"phone\",\"+1 (512) 555-0148\",null,true]]"
+    },
+    {
+      "list": "PRIMARY_SWITCHED",
+      "fingerprint": "[[\"email\",\"ops@reyesbuild.co\",\"Ops\",true],[\"email\",\"jordan@reyesbuild.co\",\"Work\",false],[\"phone\",\"+1 (512) 555-0148\",null,true]]"
+    },
+    {
+      "list": "BUILT_PHONE_REFORMATTED",
+      "fingerprint": "[[\"email\",\"jordan@reyesbuild.co\",\"Work\",true],[\"email\",\"ops@reyesbuild.co\",\"Ops\",false],[\"phone\",\"512.555.0148\",null,true]]"
+    },
+    {
+      "list": "PHONE_ONLY",
+      "fingerprint": "[[\"phone\",\"+1 (512) 555-0148\",\"Mobile\",true]]"
+    },
+    {
+      "list": "NO_PRIMARY_FLAGGED",
+      "fingerprint": "[[\"email\",\"first@reyesbuild.co\",null,true],[\"email\",\"second@reyesbuild.co\",null,false]]"
+    },
+    {
+      "list": "BUILT_AS_THE_DATABASE_SEES_IT",
+      "fingerprint": "[[\"email\",\"jordan@reyesbuild.co\",\"Work\",true],[\"email\",\"ops@reyesbuild.co\",\"Ops\",false],[\"phone\",\"+1 (512) 555-0148\",null,true]]"
+    },
+    {
+      "list": "BUILT_OPS_RELABELLED",
+      "fingerprint": "[[\"email\",\"jordan@reyesbuild.co\",\"Work\",true],[\"email\",\"ops@reyesbuild.co\",\"Operations\",false],[\"phone\",\"+1 (512) 555-0148\",null,true]]"
+    },
+    {
+      "list": "BUILT_OPS_RECASED",
+      "fingerprint": "[[\"email\",\"jordan@reyesbuild.co\",\"Work\",true],[\"email\",\"Ops@reyesbuild.co\",\"Ops\",false],[\"phone\",\"+1 (512) 555-0148\",null,true]]"
+    },
+    {
+      "list": "BUILT_PLUS_BILLING_REORDERED",
+      "fingerprint": "[[\"email\",\"jordan@reyesbuild.co\",\"Work\",true],[\"email\",\"billing@reyesbuild.co\",\"Billing\",false],[\"email\",\"ops@reyesbuild.co\",\"Ops\",false],[\"phone\",\"+1 (512) 555-0148\",null,true]]"
+    },
+    {
+      "value": [],
+      "fingerprint": "[]"
+    },
+    {
+      "value": [
+        {
+          "kind": "EMAIL",
+          "value": "a@b.co"
+        }
+      ],
+      "fingerprint": "[[\"email\",\"a@b.co\",null,true]]"
+    },
+    {
+      "value": [
+        {
+          "kind": "email",
+          "value": "a@b.co",
+          "label": ""
+        },
+        {
+          "kind": "email",
+          "value": "b@b.co",
+          "label": null
+        }
+      ],
+      "fingerprint": "[[\"email\",\"a@b.co\",null,true],[\"email\",\"b@b.co\",null,false]]"
+    },
+    {
+      "value": [
+        {
+          "kind": "email",
+          "value": "b@b.co"
+        },
+        {
+          "kind": "email",
+          "value": "a@b.co",
+          "is_primary": true
+        }
+      ],
+      "fingerprint": "[[\"email\",\"a@b.co\",null,true],[\"email\",\"b@b.co\",null,false]]"
+    },
+    {
+      "value": [
+        {
+          "kind": "email",
+          "value": "a@b.co",
+          "is_primary": true
+        },
+        {
+          "kind": "email",
+          "value": "b@b.co"
+        }
+      ],
+      "fingerprint": "[[\"email\",\"a@b.co\",null,true],[\"email\",\"b@b.co\",null,false]]"
+    },
+    {
+      "value": [
+        {
+          "kind": "phone",
+          "value": " 555 "
+        },
+        {
+          "kind": "email",
+          "value": " A@b.co ",
+          "label": " x "
+        }
+      ],
+      "fingerprint": "[[\"email\",\"A@b.co\",\"x\",true],[\"phone\",\"555\",null,true]]"
+    },
+    {
+      "value": [
+        {
+          "kind": "email",
+          "value": " a@b.co",
+          "label": " Work",
+          "is_primary": true
+        }
+      ],
+      "fingerprint": "[[\"email\",\"a@b.co\",\"Work\",true]]"
+    },
+    {
+      "value": [
+        {
+          "kind": "email",
+          "value": " a@b.co",
+          "label": " Work",
+          "is_primary": true
+        }
+      ],
+      "fingerprint": "[[\"email\",\"a@b.co\",\"Work\",true]]"
+    },
+    {
+      "value": [
+        {
+          "kind": "email",
+          "value": " a@b.co",
+          "label": " Work",
+          "is_primary": true
+        }
+      ],
+      "fingerprint": "[[\"email\",\"a@b.co\",\"Work\",true]]"
+    },
+    {
+      "value": [
+        {
+          "kind": "email",
+          "value": "a@b.co",
+          "label": "Work",
+          "is_primary": true
+        }
+      ],
+      "fingerprint": "[[\"email\",\"a@b.co\",\"Work\",true]]"
+    }
+  ],
+  "staleMessage": "CONTACT_METHODS_STALE: this contact's emails or phones changed after the change was prepared, so nothing was written — prepare it again against the current list",
+  "proposableFields": [
+    "first_name",
+    "last_name",
+    "entity_name",
+    "entity_type",
+    "street_address",
+    "city",
+    "state",
+    "zip_code",
+    "funding_goal",
+    "monthly_revenue",
+    "primary_offer",
+    "lifecycle_stage",
+    "tier",
+    "source",
+    "title",
+    "website",
+    "current_notes"
+  ]
+}

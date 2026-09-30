@@ -93,7 +93,7 @@ export const MCP_CAPABILITY_POLICY: Readonly<Record<string, McpCapability>> = {
     canonical: "crm_contact_deletion_preview",
     effect: "read",
     category: "read",
-    evidence: "supabase/functions/paige-mcp/index.ts:1833-1908 — handler is preview-only. Reads clients at :1849 (.select id,tenant_id,name,email .in(contact_ids)), filters eligibility in JS. NO .delete()/.update() anywhere in the span. When confirm===true it writes ONE append-only audit row via audit() at :1890 (helper insert into paige_audit_log at :139) and then returns err() — nothing is destroyed. Inline comment at :1852-1872 documents the deletion was deliberately removed (issue #784) because a model-supplied `confirm` is not an approval.",
+    evidence: "supabase/functions/paige-mcp/index.ts:1833-1908 — handler is preview-only. Reads clients (.select id, tenant_id, first/last name and the embedded client_contact_methods .in(contact_ids)), filters eligibility in JS; each previewed row shows the contact's primary email and phone. NO .delete()/.update() anywhere in the span. When confirm===true it writes ONE append-only audit row via audit() at :1890 (helper insert into paige_audit_log at :139) and then returns err() — nothing is destroyed. Inline comment at :1852-1872 documents the deletion was deliberately removed (issue #784) because a model-supplied `confirm` is not an approval.",
     paigeHome: false,
   },
   get_coach_performance: {
@@ -390,7 +390,7 @@ export const MCP_CAPABILITY_POLICY: Readonly<Record<string, McpCapability>> = {
     canonical: "me_profile",
     effect: "read",
     category: "read",
-    evidence: "supabase/functions/paige-mcp/index.ts:4458 admin.from('clients').select('*').eq('id', me.id).maybeSingle(), where me.id comes from actorClient() (:4456). No writes, no rpc, no fetch, no audit().",
+    evidence: "supabase/functions/paige-mcp/index.ts:4707-4724 (me_get_profile) — at :4713-4714 admin.from('clients').select(CLIENT_RECORD_COLUMNS + embedded client_contact_methods).eq('id', me.id).maybeSingle(), where me.id comes from actorClient(). No writes, no rpc, no fetch, no audit().",
     paigeHome: false,
   },
   me_list_businesses: {
@@ -435,7 +435,7 @@ export const MCP_CAPABILITY_POLICY: Readonly<Record<string, McpCapability>> = {
     canonical: "crm_contact_fuzzy_search",
     effect: "read",
     category: "read",
-    evidence: "supabase/functions/paige-mcp/index.ts:2744-2795 — one .select() on clients at :2767 wrapped in applyContactSearchFilter (supabase/functions/_shared/contact-search.ts:71 — a pure PostgREST query-builder helper, verified to contain no insert/update/upsert/delete/fetch). No write, no rpc, no external call.",
+    evidence: "supabase/functions/paige-mcp/index.ts:2896-2954 (search_clients_fuzzy) — one .select() on client_contact_methods per token (contactIdsByAddressToken at :2923, _shared/contact-search.ts) and one .select() on clients wrapped in applyContactSearchFilter (a pure PostgREST query-builder helper). contact-search.ts verified to contain no insert/update/upsert/delete/rpc/fetch. No write, no rpc, no external call.",
     paigeHome: false,
   },
   search_contacts: {
@@ -552,7 +552,7 @@ export const MCP_CAPABILITY_POLICY: Readonly<Record<string, McpCapability>> = {
     canonical: "update_client_data",
     effect: "mutate",
     category: "low_mutation",
-    evidence: "supabase/functions/paige-mcp/index.ts:4481 admin.from('clients').update(clean).eq('id', me.id); audit at :4483. Writes are allowlisted to first_name/last_name/phone/entity_name/current_notes/funding_goal_amount (:4477-4479), so lifecycle_stage, assigned coach, tier and status cannot be touched, and the assigned-coach notify trigger cannot fire.",
+    evidence: "supabase/functions/paige-mcp/index.ts:4726-4787 (me_update_profile) — for `phone` (:4765) writeAddressIntent(admin, me.tenant_id, me.id, { op: 'primary', values: { phone } }) from _shared/paige-mcp/contact-method-edits.ts: the phone becomes the caller's primary, every other address kept, written through rpc _replace_client_contact_methods_checked against the list held at that moment; then admin.from('clients').update(clean).eq('id', me.id) (:4770), and if that fails the phone is put back (undoAddressWrite, checked) so the call is all-or-nothing; audit() at :4784 (and :4776 when the phone could not be put back). Row writes are limited to first_name/last_name/entity_name/current_notes and funding_goal (the funding_goal_amount input), checked by clientRowPatchProblem first, so lifecycle_stage, assigned coach, tier and status cannot be touched, and the assigned-coach notify trigger cannot fire.",
     paigeHome: true,
   },
   move_deal_stage: {
@@ -566,7 +566,7 @@ export const MCP_CAPABILITY_POLICY: Readonly<Record<string, McpCapability>> = {
     canonical: "crm_propose_contact_update",
     effect: "mutate",
     category: "low_mutation",
-    evidence: "Stages, does not apply. supabase/functions/paige-mcp/index.ts:2825 — recordProposal(...), whose body inserts a row into paige_ingestion_proposals at :2719. The clients read at :2818 is only for the diff; there is NO write to clients in this span (the apply happens later in confirm_proposal → applyProposal at :3084). Audit at :2838.",
+    evidence: "Stages, does not apply. supabase/functions/paige-mcp/index.ts:2825 — recordProposal(...), whose body inserts a row into paige_ingestion_proposals at :2719. The clients and client_contact_methods reads are only for the diff, and the one rpc (contact_methods_canonical, IMMUTABLE) only validates a proposed address list; there is NO write to clients or client_contact_methods in this span (the apply happens later in confirm_proposal → applyProposal). Audit follows the insert.",
     paigeHome: false,
   },
   reject_proposal: {
@@ -631,7 +631,7 @@ export const MCP_CAPABILITY_POLICY: Readonly<Record<string, McpCapability>> = {
     canonical: "ingest_confirm_proposal",
     effect: "mutate",
     category: "consequential",
-    evidence: "index.ts:3039 calls applyProposal(proposal_id); applyProposal (index.ts:3084-3212) writes: clients.update :3106, profiles.update :3122 (FICO fields), client_memory.insert :3131/:3150/:3180, manual_banking_entries.upsert :3161, paige_ingestion_proposals.update status='applied' :3207, audit insert :3209. The one-line handler body hides all of it.",
+    evidence: "index.ts:3225 calls applyProposal(proposal_id); applyProposal (index.ts:3270-3445) writes: for a proposed address change, client_contact_methods through writeAddressIntent :3314 (rpc _add_client_contact_methods, or _replace_client_contact_methods_checked against the list the proposal was built on), then clients.update :3324 (undone on failure), profiles.update :3353 (FICO fields), client_memory.insert :3362/:3381/:3410, manual_banking_entries.upsert :3391, paige_ingestion_proposals.update status='applied' :3441, audit insert :3443 (or :3435 with what landed when it fails). The one-line handler body hides all of it.",
     paigeHome: false,
   },
   create_admin_notification: {
@@ -925,7 +925,7 @@ export const MCP_CAPABILITY_POLICY: Readonly<Record<string, McpCapability>> = {
     canonical: "privacy_handle_request",
     effect: "mutate",
     category: "privacy",
-    evidence: "supabase/functions/paige-mcp/index.ts:4846 — admin.rpc(\"handle_data_subject_request\", ...). Followed into supabase/migrations/20260701200503_e5d7aa75-8385-4087-8e63-88cf52f943c4.sql: the function is VOLATILE plpgsql SECURITY DEFINER and on EVERY branch inserts pii_access_log and paige_audit_log; the 'correct' branch runs UPDATE public.clients (set first_name/email/phone/address...); the 'delete' branch runs UPDATE public.clients redacting PII to 'REDACTED'/NULL and lifecycle_stage='archived', then INSERTs data_deletion_requests. The export/portability branch returns the contact's full record plus notes, deals, files and memory. Edge handler adds audit() at :4821. annotations.destructiveHint set at :4809.",
+    evidence: "supabase/functions/paige-mcp/index.ts:4996 — admin.rpc(\"handle_data_subject_request\", ...) with the service role, passing the resolved tenant and currentActor().user_id as _actor_user_id. Followed into supabase/migrations/20270519010000_contact_methods_dependents.sql:611: VOLATILE plpgsql SECURITY DEFINER; the database re-checks that the named actor is a platform owner or an active owner/admin of the tenant, then on EVERY branch inserts pii_access_log and paige_audit_log; 'correct' updates public.clients and replaces the contact's address list through _replace_client_contact_methods_checked; 'delete' deletes the contact's client_contact_methods rows and redacts public.clients (names 'REDACTED', postal address NULL, status 'archived'). The export/portability branch returns the contact's full record plus contact methods, notes, deals, files and memory. Edge handler adds audit() after the call. annotations.destructiveHint is set.",
     paigeHome: false,
   },
 

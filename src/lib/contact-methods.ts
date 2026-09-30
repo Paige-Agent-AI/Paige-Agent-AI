@@ -90,6 +90,17 @@ export function toContactMethodsPayload(methods: readonly ContactMethod[]) {
   );
 }
 
+/**
+ * The list exactly as it was read, for a save to name what it replaces (`expected_contact_methods`,
+ * `p_expected`). Nothing is trimmed or cleaned: the server compares it with what it stores, and a
+ * cleaned copy of a value stored with a stray space would never match it.
+ */
+export function toLoadedContactMethodsPayload(methods: readonly ContactMethod[]) {
+  return (["email", "phone"] as const).flatMap((kind) =>
+    methodsOfKind(methods, kind).map((method) => ({ kind, value: method.value, label: method.label, is_primary: method.isPrimary })),
+  );
+}
+
 /** Makes `id` the primary of its kind and moves it to the top; the previous primary steps down. */
 export function makePrimary(methods: readonly ContactMethod[], id: string): ContactMethod[] {
   const target = methods.find((method) => method.id === id);
@@ -150,4 +161,81 @@ export function contactMethodErrorFor(methods: readonly ContactMethod[], message
     ? "Another contact in this workspace already uses this address. Remove it here, or remove it from that contact first."
     : code === "DUPLICATE" ? "Already listed above." : code === "INVALID_EMAIL" ? "That isn't a complete email address." : "A phone number needs 7 to 15 digits.";
   return { id: target.id, text };
+}
+
+/** A `clients` row read with CLIENT_CONTACT_METHODS_EMBED. */
+export interface WithClientContactMethods {
+  client_contact_methods?: readonly ContactMethodRow[] | null;
+}
+
+/** The primary email and phone of a record, from its methods. Null for a kind it has none of. */
+export function primaryAddressesOf(rows: readonly ContactMethodRow[] | null | undefined): { email: string | null; phone: string | null } {
+  const methods = orderContactMethods(rows);
+  return { email: primaryValue(methods, "email"), phone: primaryValue(methods, "phone") };
+}
+
+/**
+ * The row with `email` and `phone` set to its PRIMARY addresses — the two fields the screens that
+ * show one address read. Whatever the row carried under those names before is replaced.
+ */
+export function withPrimaryAddresses<T extends WithClientContactMethods>(row: T): T & { email: string | null; phone: string | null } {
+  return { ...row, ...primaryAddressesOf(row.client_contact_methods) };
+}
+
+/**
+ * Sets the primary of one kind to `value`, the way a single Email or Phone field always behaved:
+ * an empty value removes the primary (the next address of that kind takes its place); an address
+ * the record already holds becomes the primary; otherwise the primary's address is replaced (or,
+ * with none yet, the value is added as the primary). Every other address is kept.
+ */
+export function withPrimaryAddress(methods: readonly ContactMethod[], kind: ContactMethodKind, value: string | null | undefined): ContactMethod[] {
+  const next = value?.trim() || null;
+  const primary = methods.find((method) => method.kind === kind && method.isPrimary);
+  if (!next) return primary ? removeContactMethod(methods, primary.id) : [...methods];
+  if (primary?.value === next) return [...methods];
+  const key = contactMethodMatchKey(kind, next);
+  const same = methods.find((method) => method.kind === kind && contactMethodMatchKey(kind, method.value) === key);
+  if (same) return makePrimary(methods, same.id).map((method) => (method.id === same.id ? { ...method, value: next } : method));
+  if (primary) return methods.map((method) => (method.id === primary.id ? { ...method, value: next } : method));
+  const id = `new-${kind}-${Date.now().toString(36)}-${(localSeq += 1)}`;
+  return [
+    ...methods.filter((method) => method.kind !== kind),
+    { id, kind, value: next, label: null, isPrimary: true },
+    ...methodsOfKind(methods, kind),
+  ];
+}
+
+/** The number carriers need: E.164. Only formatting is removed — never a guessed country code. */
+export function e164Of(value: string): string | null {
+  const compact = value.replace(/[\s().-]/g, "");
+  return /^\+[1-9]\d{7,14}$/.test(compact) ? compact : null;
+}
+
+/** The database refuses a save built on a list that has since changed (CONTACT_METHODS_STALE). */
+export const isContactMethodsStale = (message: string) => /CONTACT_METHODS_STALE/.test(message);
+
+/** A save that reached a database function this page doesn't know: the page is older than the
+ *  server (a deploy in progress, or a tab left open across one). */
+export const isOutdatedPage = (message: string) => /Could not find the function|PGRST202/.test(message);
+
+/**
+ * After a stale refusal: the list as it is stored now, plus each address this person added in their
+ * draft that the stored list does not have. Only the person's own ADDITIONS carry over — an address
+ * that was in what they loaded and is gone now was removed by someone else, and stays removed. What
+ * they relabelled, reordered or removed is not replayed: they see the current list and redo it.
+ */
+export function rebaseContactMethods(
+  latest: readonly ContactMethod[],
+  loaded: readonly ContactMethod[],
+  draft: readonly ContactMethod[],
+): { methods: ContactMethod[]; carried: number } {
+  const keyOf = (method: ContactMethod) => `${method.kind}:${contactMethodMatchKey(method.kind, method.value)}`;
+  const known = new Set([...loaded, ...latest].map(keyOf));
+  const additions = draft.filter((method) => method.value.trim() && !known.has(keyOf(method)));
+  const methods = (["email", "phone"] as const).flatMap((kind) => {
+    const stored = methodsOfKind(latest, kind);
+    const added = methodsOfKind(additions, kind).map((method, i) => ({ ...method, isPrimary: stored.length === 0 && i === 0 }));
+    return [...stored, ...added];
+  });
+  return { methods, carried: additions.length };
 }

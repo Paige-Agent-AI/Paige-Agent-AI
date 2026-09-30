@@ -7,7 +7,7 @@ import {
   contactSearchTokens,
   contactSearchOrGroup,
   applyContactSearchFilter,
-  CONTACT_SEARCH_COLUMNS,
+  CONTACT_NAME_SEARCH_COLUMNS,
 } from "../../supabase/functions/_shared/contact-search";
 
 /** Minimal PostgREST-builder stand-in that records every `.or()` filter string. */
@@ -50,9 +50,9 @@ describe("contactSearchTokens", () => {
 });
 
 describe("contactSearchOrGroup", () => {
-  it("ORs a token across the default columns", () => {
+  it("ORs a token across the default columns — the name columns; addresses search through contact methods", () => {
     expect(contactSearchOrGroup("Tashia")).toBe(
-      "first_name.ilike.%Tashia%,last_name.ilike.%Tashia%,email.ilike.%Tashia%,entity_name.ilike.%Tashia%,phone.ilike.%Tashia%",
+      "first_name.ilike.%Tashia%,last_name.ilike.%Tashia%,entity_name.ilike.%Tashia%",
     );
   });
   it("honors a custom column list", () => {
@@ -87,7 +87,7 @@ describe("applyContactSearchFilter — 'any' mode (fuzzy / natural-language)", (
     const b = mockBuilder();
     applyContactSearchFilter(b, "Marcus from Atlanta", {
       mode: "any",
-      columns: [...CONTACT_SEARCH_COLUMNS, "city"],
+      columns: [...CONTACT_NAME_SEARCH_COLUMNS, "city"],
     });
     expect(b.ors).toHaveLength(1);
     const group = b.ors[0];

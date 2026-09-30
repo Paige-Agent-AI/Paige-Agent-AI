@@ -28,31 +28,35 @@ INSERT INTO public.profiles(user_id,active_tenant_id) VALUES
  ('c7100000-0000-4000-8000-000000000002','c7100000-0000-4000-8000-000000001111'),
  ('c7200000-0000-4000-8000-000000000001','c7200000-0000-4000-8000-000000002222')
 ON CONFLICT(user_id) DO UPDATE SET active_tenant_id=excluded.active_tenant_id;
-INSERT INTO public.clients(id,tenant_id,account_number,created_by,first_name,last_name,email,updated_at) VALUES
- ('c7100000-0000-4000-8000-00000000c101','c7100000-0000-4000-8000-000000001111','CLT-CGA-1','c7100000-0000-4000-8000-000000000001','Safe','Contact','before@tests.invalid','2026-09-13 00:00:00+00'),
- ('c7200000-0000-4000-8000-00000000c201','c7200000-0000-4000-8000-000000002222','CLT-CGB-1','c7200000-0000-4000-8000-000000000001','Other','Tenant','other@tests.invalid','2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c102','c7100000-0000-4000-8000-000000001111','CLT-CGA-2','c7100000-0000-4000-8000-000000000001','Delete','Fixture','delete@tests.invalid','2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c103','c7100000-0000-4000-8000-000000001111','CLT-CGA-3','c7100000-0000-4000-8000-000000000001','Merge','Fixture','merge@tests.invalid','2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c104','c7100000-0000-4000-8000-000000001111','CLT-CGA-4','c7100000-0000-4000-8000-000000000001','Bulk','Fixture','bulk@tests.invalid','2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c105','c7100000-0000-4000-8000-000000001111','CLT-CGA-5','c7100000-0000-4000-8000-000000000001','Coach','Fixture','coach@tests.invalid','2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c106','c7100000-0000-4000-8000-000000001111','CLT-CGA-6','c7100000-0000-4000-8000-000000000001','Unlink','Fixture','unlink@tests.invalid','2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c107','c7100000-0000-4000-8000-000000001111','CLT-CGA-7','c7100000-0000-4000-8000-000000000001','Identity','Survivor','survivor@tests.invalid','2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c108','c7100000-0000-4000-8000-000000001111','CLT-CGA-8','c7100000-0000-4000-8000-000000000001','Identity','Loser','loser@tests.invalid','2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c109','c7100000-0000-4000-8000-000000001111','CLT-CGA-9','c7100000-0000-4000-8000-000000000001','Recovery','Delete','recovery-delete@tests.invalid','2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c110','c7100000-0000-4000-8000-000000001111','CLT-CGA-10','c7100000-0000-4000-8000-000000000001','Coach Merge','Survivor','coach-merge-survivor@tests.invalid','2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c111','c7100000-0000-4000-8000-000000001111','CLT-CGA-11','c7100000-0000-4000-8000-000000000001','Coach Merge','Loser','coach-merge-loser@tests.invalid','2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c112','c7100000-0000-4000-8000-000000001111','CLT-CGA-12','c7100000-0000-4000-8000-000000000001','Null Identity','Survivor','null-survivor@tests.invalid','2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c113','c7100000-0000-4000-8000-000000001111','CLT-CGA-13','c7100000-0000-4000-8000-000000000001','Portal Identity','Loser','portal-loser@tests.invalid','2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c114','c7100000-0000-4000-8000-000000001111','CLT-CGA-14','c7100000-0000-4000-8000-000000000001','Auto Stub','Survivor','auto-stub-survivor@tests.invalid','2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c115','c7100000-0000-4000-8000-000000001111','CLT-CGA-15','c7100000-0000-4000-8000-000000000001','Auto Stub','Loser','auto-stub-loser@tests.invalid','2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c116','c7100000-0000-4000-8000-000000001111','CLT-CGA-16','c7100000-0000-4000-8000-000000000001','Email Transfer','Survivor',NULL,'2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c117','c7100000-0000-4000-8000-000000001111','CLT-CGA-17','c7100000-0000-4000-8000-000000000001','Email Transfer','Loser','merge-transfer@tests.invalid','2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c118','c7100000-0000-4000-8000-000000001111','CLT-CGA-18','c7100000-0000-4000-8000-000000000001','Explicit Survivor Email','Survivor',NULL,'2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c119','c7100000-0000-4000-8000-000000001111','CLT-CGA-19','c7100000-0000-4000-8000-000000000001','Explicit Survivor Email','Loser','keep-loser@tests.invalid','2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c120','c7100000-0000-4000-8000-000000001111','CLT-CGA-20','c7100000-0000-4000-8000-000000000001','Explicit Loser Email','Survivor','replace-me@tests.invalid','2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c121','c7100000-0000-4000-8000-000000001111','CLT-CGA-21','c7100000-0000-4000-8000-000000000001','Explicit Loser Email','Loser','explicit-loser@tests.invalid','2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c122','c7100000-0000-4000-8000-000000001111','CLT-CGA-22','c7100000-0000-4000-8000-000000000001','Explicit Loser Null Email','Survivor','present-survivor@tests.invalid','2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c123','c7100000-0000-4000-8000-000000001111','CLT-CGA-23','c7100000-0000-4000-8000-000000000001','Explicit Loser Null Email','Loser',NULL,'2026-09-13 00:00:00+00');
+-- The fixture pins each contact's version (updated_at) for the version checks below. Writing its
+-- addresses must not move that pin, so the address-change trigger is off
+-- while the fixture is built; every command under test runs with it on.
+ALTER TABLE public.client_contact_methods DISABLE TRIGGER client_contact_methods_touch_client;
+INSERT INTO public.clients(id,tenant_id,account_number,created_by,first_name,last_name,updated_at) VALUES
+ ('c7100000-0000-4000-8000-00000000c101','c7100000-0000-4000-8000-000000001111','CLT-CGA-1','c7100000-0000-4000-8000-000000000001','Safe','Contact','2026-09-13 00:00:00+00'),
+ ('c7200000-0000-4000-8000-00000000c201','c7200000-0000-4000-8000-000000002222','CLT-CGB-1','c7200000-0000-4000-8000-000000000001','Other','Tenant','2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c102','c7100000-0000-4000-8000-000000001111','CLT-CGA-2','c7100000-0000-4000-8000-000000000001','Delete','Fixture','2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c103','c7100000-0000-4000-8000-000000001111','CLT-CGA-3','c7100000-0000-4000-8000-000000000001','Merge','Fixture','2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c104','c7100000-0000-4000-8000-000000001111','CLT-CGA-4','c7100000-0000-4000-8000-000000000001','Bulk','Fixture','2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c105','c7100000-0000-4000-8000-000000001111','CLT-CGA-5','c7100000-0000-4000-8000-000000000001','Coach','Fixture','2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c106','c7100000-0000-4000-8000-000000001111','CLT-CGA-6','c7100000-0000-4000-8000-000000000001','Unlink','Fixture','2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c107','c7100000-0000-4000-8000-000000001111','CLT-CGA-7','c7100000-0000-4000-8000-000000000001','Identity','Survivor','2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c108','c7100000-0000-4000-8000-000000001111','CLT-CGA-8','c7100000-0000-4000-8000-000000000001','Identity','Loser','2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c109','c7100000-0000-4000-8000-000000001111','CLT-CGA-9','c7100000-0000-4000-8000-000000000001','Recovery','Delete','2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c110','c7100000-0000-4000-8000-000000001111','CLT-CGA-10','c7100000-0000-4000-8000-000000000001','Coach Merge','Survivor','2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c111','c7100000-0000-4000-8000-000000001111','CLT-CGA-11','c7100000-0000-4000-8000-000000000001','Coach Merge','Loser','2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c112','c7100000-0000-4000-8000-000000001111','CLT-CGA-12','c7100000-0000-4000-8000-000000000001','Null Identity','Survivor','2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c113','c7100000-0000-4000-8000-000000001111','CLT-CGA-13','c7100000-0000-4000-8000-000000000001','Portal Identity','Loser','2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c114','c7100000-0000-4000-8000-000000001111','CLT-CGA-14','c7100000-0000-4000-8000-000000000001','Auto Stub','Survivor','2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c115','c7100000-0000-4000-8000-000000001111','CLT-CGA-15','c7100000-0000-4000-8000-000000000001','Auto Stub','Loser','2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c116','c7100000-0000-4000-8000-000000001111','CLT-CGA-16','c7100000-0000-4000-8000-000000000001','Email Transfer','Survivor','2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c117','c7100000-0000-4000-8000-000000001111','CLT-CGA-17','c7100000-0000-4000-8000-000000000001','Email Transfer','Loser','2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c118','c7100000-0000-4000-8000-000000001111','CLT-CGA-18','c7100000-0000-4000-8000-000000000001','Explicit Survivor Email','Survivor','2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c119','c7100000-0000-4000-8000-000000001111','CLT-CGA-19','c7100000-0000-4000-8000-000000000001','Explicit Survivor Email','Loser','2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c120','c7100000-0000-4000-8000-000000001111','CLT-CGA-20','c7100000-0000-4000-8000-000000000001','Explicit Loser Email','Survivor','2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c121','c7100000-0000-4000-8000-000000001111','CLT-CGA-21','c7100000-0000-4000-8000-000000000001','Explicit Loser Email','Loser','2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c122','c7100000-0000-4000-8000-000000001111','CLT-CGA-22','c7100000-0000-4000-8000-000000000001','Explicit Loser Null Email','Survivor','2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c123','c7100000-0000-4000-8000-000000001111','CLT-CGA-23','c7100000-0000-4000-8000-000000000001','Explicit Loser Null Email','Loser','2026-09-13 00:00:00+00');
 UPDATE public.clients SET linked_user_id='c7100000-0000-4000-8000-000000000002' WHERE id='c7100000-0000-4000-8000-00000000c103';
 UPDATE public.clients SET linked_user_id='c7100000-0000-4000-8000-000000000001' WHERE id='c7100000-0000-4000-8000-00000000c113';
 UPDATE public.clients SET linked_user_id='c7100000-0000-4000-8000-000000000003' WHERE id='c7100000-0000-4000-8000-00000000c115';
@@ -67,23 +71,67 @@ INSERT INTO auth.users(id,aud,role,email) VALUES
 INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner,joined_at) VALUES
  ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000004','member','active',false,now()),
  ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000005','member','suspended',false,now());
-INSERT INTO public.clients(id,tenant_id,account_number,created_by,first_name,last_name,email,lead_owner_user_id,updated_at) VALUES
- ('c7100000-0000-4000-8000-00000000c124','c7100000-0000-4000-8000-000000001111','CLT-CGA-24','c7100000-0000-4000-8000-000000000001','Lead Owner Valid','Survivor','lo-valid-surv@tests.invalid',NULL,'2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c125','c7100000-0000-4000-8000-000000001111','CLT-CGA-25','c7100000-0000-4000-8000-000000000001','Lead Owner Valid','Loser','lo-valid-lose@tests.invalid','c7100000-0000-4000-8000-000000000004','2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c126','c7100000-0000-4000-8000-000000001111','CLT-CGA-26','c7100000-0000-4000-8000-000000000001','Lead Owner Removed','Survivor','lo-removed-surv@tests.invalid',NULL,'2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c127','c7100000-0000-4000-8000-000000001111','CLT-CGA-27','c7100000-0000-4000-8000-000000000001','Lead Owner Removed','Loser','lo-removed-lose@tests.invalid','c7100000-0000-4000-8000-000000000005','2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c128','c7100000-0000-4000-8000-000000001111','CLT-CGA-28','c7100000-0000-4000-8000-000000000001','Lead Owner Cross','Survivor','lo-cross-surv@tests.invalid',NULL,'2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c129','c7100000-0000-4000-8000-000000001111','CLT-CGA-29','c7100000-0000-4000-8000-000000000001','Lead Owner Cross','Loser','lo-cross-lose@tests.invalid','c7200000-0000-4000-8000-000000000001','2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c130','c7100000-0000-4000-8000-000000001111','CLT-CGA-30','c7100000-0000-4000-8000-000000000001','Lead Owner Null','Survivor','lo-null-surv@tests.invalid',NULL,'2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c131','c7100000-0000-4000-8000-000000001111','CLT-CGA-31','c7100000-0000-4000-8000-000000000001','Lead Owner Null','Loser','lo-null-lose@tests.invalid',NULL,'2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c132','c7100000-0000-4000-8000-000000001111','CLT-CGA-32','c7100000-0000-4000-8000-000000000001','Lead Owner Keep','Survivor','lo-keep-surv@tests.invalid','c7100000-0000-4000-8000-000000000004','2026-09-13 00:00:00+00'),
- ('c7100000-0000-4000-8000-00000000c133','c7100000-0000-4000-8000-000000001111','CLT-CGA-33','c7100000-0000-4000-8000-000000000001','Lead Owner Keep','Loser','lo-keep-lose@tests.invalid','c7100000-0000-4000-8000-000000000005','2026-09-13 00:00:00+00');
+INSERT INTO public.clients(id,tenant_id,account_number,created_by,first_name,last_name,lead_owner_user_id,updated_at) VALUES
+ ('c7100000-0000-4000-8000-00000000c124','c7100000-0000-4000-8000-000000001111','CLT-CGA-24','c7100000-0000-4000-8000-000000000001','Lead Owner Valid','Survivor',NULL,'2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c125','c7100000-0000-4000-8000-000000001111','CLT-CGA-25','c7100000-0000-4000-8000-000000000001','Lead Owner Valid','Loser','c7100000-0000-4000-8000-000000000004','2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c126','c7100000-0000-4000-8000-000000001111','CLT-CGA-26','c7100000-0000-4000-8000-000000000001','Lead Owner Removed','Survivor',NULL,'2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c127','c7100000-0000-4000-8000-000000001111','CLT-CGA-27','c7100000-0000-4000-8000-000000000001','Lead Owner Removed','Loser','c7100000-0000-4000-8000-000000000005','2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c128','c7100000-0000-4000-8000-000000001111','CLT-CGA-28','c7100000-0000-4000-8000-000000000001','Lead Owner Cross','Survivor',NULL,'2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c129','c7100000-0000-4000-8000-000000001111','CLT-CGA-29','c7100000-0000-4000-8000-000000000001','Lead Owner Cross','Loser','c7200000-0000-4000-8000-000000000001','2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c130','c7100000-0000-4000-8000-000000001111','CLT-CGA-30','c7100000-0000-4000-8000-000000000001','Lead Owner Null','Survivor',NULL,'2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c131','c7100000-0000-4000-8000-000000001111','CLT-CGA-31','c7100000-0000-4000-8000-000000000001','Lead Owner Null','Loser',NULL,'2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c132','c7100000-0000-4000-8000-000000001111','CLT-CGA-32','c7100000-0000-4000-8000-000000000001','Lead Owner Keep','Survivor','c7100000-0000-4000-8000-000000000004','2026-09-13 00:00:00+00'),
+ ('c7100000-0000-4000-8000-00000000c133','c7100000-0000-4000-8000-000000001111','CLT-CGA-33','c7100000-0000-4000-8000-000000000001','Lead Owner Keep','Loser','c7100000-0000-4000-8000-000000000005','2026-09-13 00:00:00+00');
+-- Each fixture contact's address is its primary email method. While the rollout mirror exists,
+-- writing a method re-stamps the contact's updated_at (to now(), the transaction's time), so the
+-- fixed version the optimistic-concurrency assertions expect is restored on the contacts that held
+-- it; the linked ones already carried now() from the link above, exactly as before.
+INSERT INTO public.client_contact_methods(tenant_id,client_id,kind,value,is_primary,position) VALUES
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c101','email','before@tests.invalid',true,0),
+ ('c7200000-0000-4000-8000-000000002222','c7200000-0000-4000-8000-00000000c201','email','other@tests.invalid',true,0),
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c102','email','delete@tests.invalid',true,0),
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c103','email','merge@tests.invalid',true,0),
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c104','email','bulk@tests.invalid',true,0),
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c105','email','coach@tests.invalid',true,0),
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c106','email','unlink@tests.invalid',true,0),
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c107','email','survivor@tests.invalid',true,0),
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c108','email','loser@tests.invalid',true,0),
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c109','email','recovery-delete@tests.invalid',true,0),
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c110','email','coach-merge-survivor@tests.invalid',true,0),
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c111','email','coach-merge-loser@tests.invalid',true,0),
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c112','email','null-survivor@tests.invalid',true,0),
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c113','email','portal-loser@tests.invalid',true,0),
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c114','email','auto-stub-survivor@tests.invalid',true,0),
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c115','email','auto-stub-loser@tests.invalid',true,0),
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c117','email','merge-transfer@tests.invalid',true,0),
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c119','email','keep-loser@tests.invalid',true,0),
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c120','email','replace-me@tests.invalid',true,0),
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c121','email','explicit-loser@tests.invalid',true,0),
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c122','email','present-survivor@tests.invalid',true,0),
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c124','email','lo-valid-surv@tests.invalid',true,0),
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c125','email','lo-valid-lose@tests.invalid',true,0),
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c126','email','lo-removed-surv@tests.invalid',true,0),
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c127','email','lo-removed-lose@tests.invalid',true,0),
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c128','email','lo-cross-surv@tests.invalid',true,0),
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c129','email','lo-cross-lose@tests.invalid',true,0),
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c130','email','lo-null-surv@tests.invalid',true,0),
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c131','email','lo-null-lose@tests.invalid',true,0),
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c132','email','lo-keep-surv@tests.invalid',true,0),
+ ('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-00000000c133','email','lo-keep-lose@tests.invalid',true,0);
+ALTER TABLE public.clients DISABLE TRIGGER update_clients_updated_at;
+UPDATE public.clients SET updated_at='2026-09-13 00:00:00+00' WHERE account_number LIKE 'CLT-CG%' AND linked_user_id IS NULL;
+ALTER TABLE public.clients ENABLE TRIGGER update_clients_updated_at;
 INSERT INTO public.businesses(id,tenant_id,owner_user_id,legal_name,is_active,is_primary,updated_at) VALUES
  ('c7100000-0000-4000-8000-00000000b101','c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001','Archived Fixture',false,false,'2026-09-13 00:00:00+00'),
  ('c7100000-0000-4000-8000-00000000b102','c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001','Coach Scope Fixture',true,false,'2026-09-13 00:00:00+00'),
  ('c7200000-0000-4000-8000-00000000b201','c7200000-0000-4000-8000-000000002222','c7200000-0000-4000-8000-000000000001','Archived Primary',false,true,'2026-09-13 00:00:00+00'),
  ('c7200000-0000-4000-8000-00000000b202','c7200000-0000-4000-8000-000000002222','c7200000-0000-4000-8000-000000000001','Active Primary',true,true,'2026-09-13 00:00:00+00');
 UPDATE public.clients SET entity_name='Unlink Fixture LLC',primary_business_id='c7100000-0000-4000-8000-00000000b102' WHERE id='c7100000-0000-4000-8000-00000000c106';
+-- The fixture's address rows leave the table's deferred checks pending, and a table with pending
+-- trigger events cannot be altered: run exactly those checks now, then defer them again as they were.
+SET CONSTRAINTS public.client_contact_methods_position_key, public.client_contact_methods_one_primary, public.client_contact_methods_require_primary IMMEDIATE;
+ALTER TABLE public.client_contact_methods ENABLE TRIGGER client_contact_methods_touch_client;
+SET CONSTRAINTS public.client_contact_methods_position_key, public.client_contact_methods_one_primary, public.client_contact_methods_require_primary DEFERRED;
 SELECT set_config('app.pipeline_created_through','paige',true);
 SELECT set_config('app.pipeline_requested_by','c7100000-0000-4000-8000-000000000001',true);
 INSERT INTO public.pipelines(tenant_id,name,is_default) VALUES
@@ -454,8 +502,8 @@ CREATE TEMP TABLE merge_email_transfer_result AS SELECT public.execute_crm_comma
  'c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',
  jsonb_build_object('approval_channel','operator_card','action','contact.merge','preview_id',(SELECT result->>'preview_id' FROM merge_email_transfer_preview)),
  'merge-email-transfer-1') result;
-SELECT is((SELECT email FROM public.clients WHERE id='c7100000-0000-4000-8000-00000000c116'),'merge-transfer@tests.invalid','atomic merge transfers the selected loser email to the survivor');
-SELECT is((SELECT email FROM public.clients WHERE id='c7100000-0000-4000-8000-00000000c117'),NULL::text,'atomic merge releases the losing email before the survivor update');
+SELECT is((SELECT value FROM public.client_contact_methods WHERE client_id='c7100000-0000-4000-8000-00000000c116' AND kind='email' AND is_primary),'merge-transfer@tests.invalid','atomic merge transfers the selected loser email to the survivor');
+SELECT is((SELECT value FROM public.client_contact_methods WHERE client_id='c7100000-0000-4000-8000-00000000c117' AND kind='email' AND is_primary),NULL::text,'atomic merge releases the losing email before the survivor update');
 SELECT is((SELECT (result->'readback'->>'loser_email_cleared')::boolean FROM merge_email_transfer_result),true,'default email transfer is preserved in durable merge readback');
 CREATE TEMP TABLE merge_explicit_survivor_email_preview AS SELECT public.preview_crm_command(
  'c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',
@@ -466,8 +514,8 @@ CREATE TEMP TABLE merge_explicit_survivor_email_result AS SELECT public.execute_
  'c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',
  jsonb_build_object('approval_channel','operator_card','action','contact.merge','preview_id',(SELECT result->>'preview_id' FROM merge_explicit_survivor_email_preview)),
  'merge-explicit-survivor-email-1') result;
-SELECT is((SELECT email FROM public.clients WHERE id='c7100000-0000-4000-8000-00000000c118'),'keep-loser@tests.invalid','a survivor with no email keeps the moved loser address, which is then its only and so its primary email');
-SELECT is((SELECT email FROM public.clients WHERE id='c7100000-0000-4000-8000-00000000c119'),NULL::text,'the archived loser holds no address after any merge, so inbound mail cannot attribute to it');
+SELECT is((SELECT value FROM public.client_contact_methods WHERE client_id='c7100000-0000-4000-8000-00000000c118' AND kind='email' AND is_primary),'keep-loser@tests.invalid','a survivor with no email keeps the moved loser address, which is then its only and so its primary email');
+SELECT is((SELECT value FROM public.client_contact_methods WHERE client_id='c7100000-0000-4000-8000-00000000c119' AND kind='email' AND is_primary),NULL::text,'the archived loser holds no address after any merge, so inbound mail cannot attribute to it');
 SELECT is((SELECT (result->'readback'->>'loser_email_cleared')::boolean FROM merge_explicit_survivor_email_result),true,'receipt truth agrees with the preview: the loser email left the loser');
 CREATE TEMP TABLE merge_explicit_loser_email_preview AS SELECT public.preview_crm_command(
  'c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',
@@ -478,10 +526,10 @@ CREATE TEMP TABLE merge_explicit_loser_email_result AS SELECT public.execute_crm
  'c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',
  jsonb_build_object('approval_channel','operator_card','action','contact.merge','preview_id',(SELECT result->>'preview_id' FROM merge_explicit_loser_email_preview)),
  'merge-explicit-loser-email-1') result;
-SELECT is((SELECT email FROM public.clients WHERE id='c7100000-0000-4000-8000-00000000c120'),'explicit-loser@tests.invalid','atomic merge makes the explicitly chosen loser email the survivor primary');
+SELECT is((SELECT value FROM public.client_contact_methods WHERE client_id='c7100000-0000-4000-8000-00000000c120' AND kind='email' AND is_primary),'explicit-loser@tests.invalid','atomic merge makes the explicitly chosen loser email the survivor primary');
 SELECT is((SELECT array_agg(value ORDER BY value) FROM public.client_contact_methods WHERE client_id='c7100000-0000-4000-8000-00000000c120' AND kind='email'),ARRAY['explicit-loser@tests.invalid','replace-me@tests.invalid'],'the survivor keeps both contacts'' email addresses; the resolution only chose the primary');
 SELECT is((SELECT count(*)::integer FROM public.client_contact_methods WHERE client_id='c7100000-0000-4000-8000-00000000c121'),0,'the merged-away contact keeps no contact methods');
-SELECT is((SELECT email FROM public.clients WHERE id='c7100000-0000-4000-8000-00000000c121'),NULL::text,'explicit loser email transfer clears the archived loser email');
+SELECT is((SELECT value FROM public.client_contact_methods WHERE client_id='c7100000-0000-4000-8000-00000000c121' AND kind='email' AND is_primary),NULL::text,'explicit loser email transfer clears the archived loser email');
 SELECT is((SELECT (result->'readback'->>'loser_email_cleared')::boolean FROM merge_explicit_loser_email_result),true,'receipt truth records loser email clearing for explicit loser choice');
 -- Regression: explicit loser selection when the loser email is already NULL and the survivor email is present.
 -- Selecting the loser value (survivor email becomes NULL) must NOT be reported as clearing an existing loser email;
@@ -495,8 +543,8 @@ CREATE TEMP TABLE merge_explicit_loser_null_email_result AS SELECT public.execut
  'c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',
  jsonb_build_object('approval_channel','operator_card','action','contact.merge','preview_id',(SELECT result->>'preview_id' FROM merge_explicit_loser_null_email_preview)),
  'merge-explicit-loser-null-email-1') result;
-SELECT is((SELECT email FROM public.clients WHERE id='c7100000-0000-4000-8000-00000000c122'),'present-survivor@tests.invalid','choosing a loser with no email discards nothing: the survivor keeps its own address');
-SELECT is((SELECT email FROM public.clients WHERE id='c7100000-0000-4000-8000-00000000c123'),NULL::text,'the archived loser email remains null after an explicit loser selection with no email to clear');
+SELECT is((SELECT value FROM public.client_contact_methods WHERE client_id='c7100000-0000-4000-8000-00000000c122' AND kind='email' AND is_primary),'present-survivor@tests.invalid','choosing a loser with no email discards nothing: the survivor keeps its own address');
+SELECT is((SELECT value FROM public.client_contact_methods WHERE client_id='c7100000-0000-4000-8000-00000000c123' AND kind='email' AND is_primary),NULL::text,'the archived loser email remains null after an explicit loser selection with no email to clear');
 SELECT is((SELECT (result->'readback'->>'loser_email_cleared')::boolean FROM merge_explicit_loser_null_email_result),false,'receipt truth records no loser email clearing when the selected loser email was already null, agreeing with the preview');
 CREATE TEMP TABLE merge_coach_preview AS SELECT public.preview_crm_command(
  'c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',
@@ -524,8 +572,8 @@ SELECT is((SELECT conflict->>'resolution' FROM merge_preview, pg_catalog.jsonb_a
 CREATE TEMP TABLE merge_result AS SELECT public.execute_crm_command('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',jsonb_build_object('approval_channel','operator_card','action','contact.merge','preview_id',(SELECT result->>'preview_id' FROM merge_preview)),'merge-execute-1') result;
 SELECT is((SELECT result->>'outcome' FROM merge_result),'succeeded','preview-bound synthetic merge succeeds atomically');
 SELECT is((SELECT (result->'readback'->>'loser_email_cleared')::boolean FROM merge_result),true,'a merge moves every address to the survivor, so the readback reports the losing contact''s email as cleared');
-SELECT is((SELECT email FROM public.clients WHERE id='c7100000-0000-4000-8000-00000000c101'),'after@tests.invalid','default non-transfer merge preserves the present survivor email');
-SELECT is((SELECT (SELECT email FROM public.clients WHERE id='c7100000-0000-4000-8000-00000000c103') IS NULL AND EXISTS (SELECT 1 FROM public.client_contact_methods WHERE client_id='c7100000-0000-4000-8000-00000000c101' AND kind='email' AND value='merge@tests.invalid' AND NOT is_primary)),true,'the archived loser''s email moves to the survivor as a secondary address; nothing is discarded');
+SELECT is((SELECT value FROM public.client_contact_methods WHERE client_id='c7100000-0000-4000-8000-00000000c101' AND kind='email' AND is_primary),'after@tests.invalid','default non-transfer merge preserves the present survivor email');
+SELECT is((SELECT (SELECT value FROM public.client_contact_methods WHERE client_id='c7100000-0000-4000-8000-00000000c103' AND kind='email' AND is_primary) IS NULL AND EXISTS (SELECT 1 FROM public.client_contact_methods WHERE client_id='c7100000-0000-4000-8000-00000000c101' AND kind='email' AND value='merge@tests.invalid' AND NOT is_primary)),true,'the archived loser''s email moves to the survivor as a secondary address; nothing is discarded');
 SELECT is((SELECT status FROM public.clients WHERE id='c7100000-0000-4000-8000-00000000c103'),'archived','merge archives the losing contact instead of erasing it');
 SELECT is((SELECT merged_into_contact_id FROM public.clients WHERE id='c7100000-0000-4000-8000-00000000c103'),'c7100000-0000-4000-8000-00000000c101'::uuid,'merge records the explicit survivor');
 SELECT is((SELECT count(*)::integer FROM public.paige_workspace_events WHERE capability_key='crm_merge_contacts' AND outcome='capability_succeeded' AND detail->>'idempotency_key'='merge-execute-1'),1,'merge writes the exact Rail capability receipt');
@@ -628,7 +676,7 @@ UPDATE public.tenant_members SET status='suspended' WHERE tenant_id='c7100000-00
 SET LOCAL ROLE service_role;
 SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);
 SELECT throws_ok($$SELECT public.execute_crm_command('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001','{"approval_channel":"operator_card","action":"contact.create","patch":{"first_name":"Denied","last_name":"Suspended"}}','suspended-denial-1')$$,'42501','CRM_FORBIDDEN','stale membership is revalidated at execution');
-SELECT is((SELECT email FROM public.clients WHERE id='c7200000-0000-4000-8000-00000000c201'),'other@tests.invalid','all refused attempts have no cross-tenant effect');
+SELECT is((SELECT value FROM public.client_contact_methods WHERE client_id='c7200000-0000-4000-8000-00000000c201' AND kind='email' AND is_primary),'other@tests.invalid','all refused attempts have no cross-tenant effect');
 
 SELECT * FROM finish();
 ROLLBACK;

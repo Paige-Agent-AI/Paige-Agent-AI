@@ -20828,6 +20828,7 @@ export type Database = {
       }
       handle_data_subject_request: {
         Args: {
+          _actor_user_id?: string
           _contact_id: string
           _corrections?: Json
           _reason?: string

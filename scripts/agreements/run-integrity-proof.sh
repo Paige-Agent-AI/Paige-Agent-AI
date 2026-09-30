@@ -83,7 +83,14 @@ psql -v ON_ERROR_STOP=1 -q -f "$MIGRATION2" 2>&1 | grep -iE "^psql.*error" && { 
 psql -v ON_ERROR_STOP=1 -q -f "$MIGRATION4" 2>&1 | grep -iE "^psql.*error" && { echo "FAIL — the signing-contract migration did not apply"; exit 1; }
 psql -v ON_ERROR_STOP=1 -q -f "$MIGRATION5" 2>&1 | grep -iE "^psql.*error" && { echo "FAIL — the signer-seam migration did not apply"; exit 1; }
 psql -v ON_ERROR_STOP=1 -q -f "$MIGRATION6" 2>&1 | grep -iE "^psql.*error" && { echo "FAIL — the view-tracking migration did not apply"; exit 1; }
-echo "migrations 20270401/02/04/05/07 applied to a clean database"
+# The counterparty trigger function as production runs it NOW, not as 20270405000000 first wrote
+# it: 20270519010000 moved it onto contact methods. Taken from the newest migration that defines
+# it, so a later restatement is exercised here without editing this runner.
+SEED_SRC="$(grep -l "FUNCTION public.seed_agreement_counterparty()" "$REPO"/supabase/migrations/*.sql | sort | tail -1)"
+awk '/^CREATE OR REPLACE FUNCTION public\.seed_agreement_counterparty\(\)/{p=1} p{print} p&&/^\$(function)?\$;/{exit}' "$SEED_SRC" > "$WORK/seed_counterparty.sql"
+grep -q '^\$\(function\)\?\$;' "$WORK/seed_counterparty.sql" || { echo "FAIL — could not read seed_agreement_counterparty from $SEED_SRC"; exit 1; }
+psql -v ON_ERROR_STOP=1 -q -f "$WORK/seed_counterparty.sql" 2>&1 | grep -iE "^psql.*error" && { echo "FAIL — the current counterparty trigger function did not apply"; exit 1; }
+echo "migrations 20270401/02/04/05/07 applied to a clean database, counterparty trigger from $(basename "$SEED_SRC")"
 echo
 
 OUT="$WORK/out.txt"

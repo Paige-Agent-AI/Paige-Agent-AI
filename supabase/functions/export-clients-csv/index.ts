@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { primaryPhonesForUsers } from "../_shared/user-contact-methods.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -37,10 +38,14 @@ serve(async (req) => {
     // Fetch profiles
     const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
-      .select("user_id, full_name, phone, address, city, state, postal_code, created_at, onboarding_completed, estimated_fico_tu, estimated_fico_ex, estimated_fico_eq")
+      .select("user_id, full_name, address, city, state, postal_code, created_at, onboarding_completed, estimated_fico_tu, estimated_fico_ex, estimated_fico_eq")
       .order("created_at", { ascending: false });
 
     if (profilesError) throw profilesError;
+
+    // Each person's primary phone. A failed read fails the export rather than shipping a file
+    // whose Phone column is silently empty.
+    const phoneMap = await primaryPhonesForUsers(supabase, (profiles || []).map((p) => p.user_id));
 
     // Fetch subscriptions
     const { data: subs } = await supabase
@@ -83,7 +88,7 @@ serve(async (req) => {
       const biz = bizMap.get(p.user_id);
       return [
         emailMap.get(p.user_id) || "",
-        p.full_name, p.phone, p.address, p.city, p.state, p.postal_code,
+        p.full_name, phoneMap.get(p.user_id) ?? "", p.address, p.city, p.state, p.postal_code,
         p.created_at ? new Date(p.created_at).toISOString().split("T")[0] : "",
         p.onboarding_completed ? "Yes" : "No",
         sub?.plan_slug || "", sub?.status || "",

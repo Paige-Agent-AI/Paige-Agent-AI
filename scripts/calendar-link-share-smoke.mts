@@ -73,7 +73,11 @@ function makeAdmin(tables: Record<string, { data: unknown; error: { message?: st
 // A clean admin: contact present (email only), no suppression, no consent (SMS blocks), no prefs.
 function cleanAdmin(over: Partial<{ email: string | null; phone: string | null; suppress: unknown[]; consent: unknown[] }> = {}) {
   return makeAdmin({
-    clients: { data: { email: over.email === undefined ? "guest@example.com" : over.email, phone: over.phone === undefined ? null : over.phone, dnd_active: false, dnd_until: null, dnd_reason: null, timezone: null }, error: null },
+    // A contact's addresses are its contact methods; the share reads the primary of each kind.
+    clients: { data: { client_contact_methods: [
+      ...((over.email === undefined ? "guest@example.com" : over.email) ? [{ kind: "email", value: over.email === undefined ? "guest@example.com" : over.email, is_primary: true }] : []),
+      ...(over.phone ? [{ kind: "phone", value: over.phone, is_primary: true }] : []),
+    ], dnd_active: false, dnd_until: null, dnd_reason: null, timezone: null }, error: null },
     paige_suppressions: { data: over.suppress ?? [], error: null },
     paige_consent_events: { data: over.consent ?? [], error: null },
     tenant_comms_preferences: { data: null, error: null },

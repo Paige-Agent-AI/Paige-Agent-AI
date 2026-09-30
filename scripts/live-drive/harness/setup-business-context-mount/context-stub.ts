@@ -20,6 +20,8 @@ const initial = {
     entityType: "llc",
     formationJurisdiction: "Example jurisdiction",
     representativeUserIds: ["harness-owner"],
+    authorizedRepresentativeUserId: "harness-owner",
+    authorizedRepresentativePhone: "+14045550188",
     currentPriority: "Build a trustworthy owner experience",
     provenance: { legalName: confirmed, publicName: confirmed },
   }),

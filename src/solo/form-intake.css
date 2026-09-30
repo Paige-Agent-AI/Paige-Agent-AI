@@ -1,0 +1,65 @@
+/* Form intake in the Catalog Details drawer (owner-approved design, 2026-09-29). Solo tokens only;
+   scoped under .campaigns-drawer, the drawer that mounts it (solo-campaigns.css). */
+.campaigns-drawer .intake-section{margin-top:18px}
+.campaigns-drawer .intake-section h3{font-size:13.5px;line-height:1.3;letter-spacing:-.01em}
+.campaigns-drawer .intake-lede{margin-top:3px;color:var(--ink-3);font-size:12px;line-height:1.5}
+.campaigns-drawer .intake-card{margin-top:10px;display:grid;gap:14px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2)}
+.campaigns-drawer .intake-toggle{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.campaigns-drawer .intake-toggle strong{display:block;font-size:12.5px;font-weight:600}
+.campaigns-drawer .intake-toggle small{display:block;margin-top:2px;color:var(--ink-3);font-size:11.5px;line-height:1.45}
+.campaigns-drawer .intake-switch{position:relative;flex:none;width:36px;height:20px;margin-top:1px;border-radius:99px;background:var(--line);transition:background .15s}
+.campaigns-drawer .intake-switch::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--surface);box-shadow:var(--sh-1);transition:transform .15s}
+.campaigns-drawer .intake-switch[aria-checked="true"]{background:var(--violet)}
+.campaigns-drawer .intake-switch[aria-checked="true"]::after{transform:translateX(16px)}
+.campaigns-drawer .intake-switch:disabled{opacity:.6;cursor:not-allowed}
+.campaigns-drawer .intake-switch:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+.campaigns-drawer .intake-route{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.campaigns-drawer .intake-card label{display:grid;gap:5px;min-width:0;font-size:12px;color:var(--ink-2)}
+.campaigns-drawer .intake-card label[for]{display:block;margin-bottom:-9px}
+.campaigns-drawer .intake-card select,.campaigns-drawer .intake-card input{width:100%;min-width:0;height:34px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);padding:0 10px;font:inherit;font-size:12.5px}
+.campaigns-drawer .intake-card input:focus-visible,.campaigns-drawer .intake-card select:focus-visible{outline:2px solid var(--violet);outline-offset:1px;border-color:var(--violet)}
+.campaigns-drawer .intake-card [aria-invalid="true"]{border-color:var(--bad)}
+.campaigns-drawer .intake-hint{font-size:11.5px;color:var(--ink-3);line-height:1.45}
+.campaigns-drawer .intake-error{font-size:11.5px;color:var(--bad);line-height:1.45}
+.campaigns-drawer .intake-divider{height:1px;background:var(--line-soft);margin:0 -14px}
+.campaigns-drawer .intake-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:28px}
+.campaigns-drawer .intake-actions{display:flex;gap:6px}
+.campaigns-drawer .intake-status{font-size:11.5px;color:var(--ink-3)}
+.campaigns-drawer .intake-status.is-ok{color:var(--ok)}
+.campaigns-drawer .intake-status.is-bad{color:var(--bad)}
+.campaigns-drawer .intake-readonly{gap:0}
+.campaigns-drawer .intake-readonly .campaigns-detail-row{padding:10px 0}
+.campaigns-drawer .intake-readonly .campaigns-detail-row:last-child{border-bottom:0}
+.campaigns-drawer .intake-skeleton{margin-top:18px;display:grid;gap:10px}
+.campaigns-drawer .intake-skeleton span{display:block;height:64px;border-radius:12px;background:var(--surface-sunk)}
+.campaigns-drawer .intake-skeleton span:first-child{height:150px}
+.campaigns-drawer .intake-problem{margin-top:18px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;border-radius:9px;background:var(--bad-tint);color:var(--bad);font-size:12px}
+.campaigns-drawer .subs-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.campaigns-drawer .subs-head small{color:var(--ink-3);font-size:11.5px}
+.campaigns-drawer .subs-list{margin-top:10px;display:grid;gap:8px}
+.campaigns-drawer .sub{border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.campaigns-drawer .sub>summary{list-style:none;display:grid;gap:7px;padding:11px 12px;cursor:pointer;color:var(--ink)}
+.campaigns-drawer .sub>summary::-webkit-details-marker{display:none}
+.campaigns-drawer .sub>summary:focus-visible{outline:2px solid var(--violet);outline-offset:-2px;border-radius:12px}
+.campaigns-drawer .sub-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.campaigns-drawer .sub-top strong{font-size:12.5px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.campaigns-drawer .sub-when{flex:none;display:flex;align-items:center;gap:8px}
+.campaigns-drawer .sub-when time{font:500 11px/1 var(--mono);color:var(--ink-3)}
+.campaigns-drawer .sub-states{display:flex;flex-wrap:wrap;gap:5px}
+.campaigns-drawer .sub .pill{height:20px;padding:0 8px;font-size:10.5px;letter-spacing:0}
+.campaigns-drawer .sub-chev{transition:transform .15s;color:var(--ink-3)}
+.campaigns-drawer .sub[open] .sub-chev{transform:rotate(90deg)}
+.campaigns-drawer .sub-answers{margin:0;padding:4px 12px 12px;display:grid;border-top:1px solid var(--line-soft)}
+.campaigns-drawer .sub-answers div{display:grid;grid-template-columns:minmax(0,38%) minmax(0,1fr);gap:12px;padding:8px 0;border-bottom:1px solid var(--line-soft);font-size:12px}
+.campaigns-drawer .sub-answers div:last-child{border-bottom:0}
+.campaigns-drawer .sub-answers dt{color:var(--ink-3)}
+.campaigns-drawer .sub-answers dt em{display:block;font-style:normal;font-size:10.5px}
+.campaigns-drawer .sub-answers dd{margin:0;color:var(--ink);overflow-wrap:anywhere;white-space:pre-line}
+.campaigns-drawer .sub-answers dd.is-empty{color:var(--ink-3);font-style:italic}
+.campaigns-drawer .sub-links{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px 12px}
+.campaigns-drawer .sub-links .btn{color:var(--violet)}
+.campaigns-drawer .subs-more{margin-top:10px;width:100%;justify-content:center}
+.campaigns-drawer .subs-empty{margin-top:10px;display:grid;gap:4px;padding:16px;border:1px dashed var(--line);border-radius:12px;font-size:12px;color:var(--ink-2);line-height:1.5}
+.campaigns-drawer .subs-empty strong{color:var(--ink);font-size:12.5px}
+@media(prefers-reduced-motion:reduce){.campaigns-drawer .intake-switch,.campaigns-drawer .intake-switch::after,.campaigns-drawer .sub-chev{transition:none}}
+@media(forced-colors:active){.campaigns-drawer .intake-switch{border:1px solid CanvasText}.campaigns-drawer .intake-switch[aria-checked="true"]{background:Highlight}}

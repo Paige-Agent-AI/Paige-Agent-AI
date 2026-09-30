@@ -23,6 +23,7 @@ import {
   type SoloOwner,
   type SoloOwnerPatch,
 } from "@/solo/data/useSoloOwner";
+import { CLIENT_CONTACT_METHODS_EMBED, primaryAddressesOf, type WithClientContactMethods } from "@/lib/contact-methods";
 
 /** One own-book contact reshaped for the agency clients/setup surfaces. REAL. */
 export interface AgencyContact {
@@ -67,13 +68,14 @@ export interface AgencyContactsData {
 
 const PREVIEW: AgencyContactsPreview = { signature: true, banking: true };
 
-interface ClientRow {
+// Widened to string: the generated types do not know the contact-methods embed yet.
+const AGENCY_CONTACT_SELECT: string = `id,first_name,last_name,entity_name,${CLIENT_CONTACT_METHODS_EMBED},status,lifecycle_stage,created_at`;
+
+interface ClientRow extends WithClientContactMethods {
   id: string;
   first_name: string | null;
   last_name: string | null;
   entity_name: string | null;
-  email: string | null;
-  phone: string | null;
   status: string | null;
   lifecycle_stage: string | null;
   created_at: string;
@@ -101,17 +103,15 @@ export function useAgencyContacts(
     queryFn: async (): Promise<AgencyContact[]> => {
       const { data, error } = await supabase
         .from("clients")
-        .select(
-          "id,first_name,last_name,entity_name,email,phone,status,lifecycle_stage,created_at",
-        )
+        .select(AGENCY_CONTACT_SELECT)
         .order("created_at", { ascending: false })
         .limit(500);
       if (error) throw error;
-      return ((data ?? []) as ClientRow[]).map((r): AgencyContact => ({
+      return ((data ?? []) as unknown as ClientRow[]).map((r): AgencyContact => ({
         id: r.id,
         name: displayName(r),
-        email: r.email ?? null,
-        phone: r.phone ?? null,
+        // The contact's PRIMARY email and phone, from its contact methods.
+        ...primaryAddressesOf(r.client_contact_methods),
         status: r.status ?? "unknown",
         lifecycleStage: r.lifecycle_stage ?? "unknown",
         createdAt: r.created_at,

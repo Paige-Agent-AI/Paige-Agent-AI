@@ -11,15 +11,48 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Button } from "@/components/ui/button";
 import { ChevronsUpDown, Loader2, UserPlus } from "lucide-react";
 import type { FocusedClient } from "./commandCenterTypes";
+import { CLIENT_CONTACT_METHODS_EMBED, primaryAddressesOf, type WithClientContactMethods } from "@/lib/contact-methods";
+import { clientContactMethodsTable } from "@/lib/contacts";
 
 interface ClientRow {
   id: string;
   first_name: string | null;
   last_name: string | null;
   entity_name: string | null;
+  /** The contact's primary email. */
   email: string | null;
   lifecycle_stage: string | null;
 }
+
+interface ClientQueryRow extends WithClientContactMethods {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  entity_name: string | null;
+  lifecycle_stage: string | null;
+  created_at: string | null;
+}
+
+const toClientRow = (row: ClientQueryRow): ClientRow => ({
+  id: row.id,
+  first_name: row.first_name,
+  last_name: row.last_name,
+  entity_name: row.entity_name,
+  email: primaryAddressesOf(row.client_contact_methods).email,
+  lifecycle_stage: row.lifecycle_stage,
+});
+
+// Widened to string: the generated types do not know the contact-methods embed yet.
+const CUSTOMER_SELECT: string = `id,first_name,last_name,entity_name,lifecycle_stage,created_at,${CLIENT_CONTACT_METHODS_EMBED}`;
+
+// §58 — see the effect below for why a NULL-tenant row is excluded.
+const clientsQuery = () =>
+  supabase
+    .from("clients")
+    .select(CUSTOMER_SELECT)
+    .not("tenant_id", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(50);
 
 function toFocused(c: ClientRow): FocusedClient {
   const name = `${c.first_name ?? ""} ${c.last_name ?? ""}`.trim() || (c.entity_name ?? "Unnamed");
@@ -72,24 +105,30 @@ export function CustomerSelector({ onSelect, onRequestCreate }: Props) {
       // §37 — this component is also the contact picker in the Conversations compose dialog
       // (`src/pages/admin/conversations/ComposeThreadDialog.tsx`), so the filter narrows that
       // surface too. Intended: an unowned client row is not a valid conversation target either.
-      let q = supabase
-        .from("clients")
-        .select("id, first_name, last_name, entity_name, email, lifecycle_stage")
-        .not("tenant_id", "is", null)
-        .order("created_at", { ascending: false })
-        .limit(50);
-
       const t = sanitize(term);
-      if (t) {
-        q = q.or(
-          `first_name.ilike.%${t}%,last_name.ilike.%${t}%,entity_name.ilike.%${t}%,email.ilike.%${t}%`,
-        );
-      }
+      const readClients = (filter: (query: ReturnType<typeof clientsQuery>) => ReturnType<typeof clientsQuery>) =>
+        filter(clientsQuery()).then(({ data }) => (data ?? []) as unknown as ClientQueryRow[]);
 
-      const { data } = await q;
+      // A search matches a name or company on the contact row, or ANY of the contact's email
+      // addresses (not only the primary), which live in its contact methods.
+      const [byName, byEmail] = await Promise.all([
+        readClients((query) => (t ? query.or(`first_name.ilike.%${t}%,last_name.ilike.%${t}%,entity_name.ilike.%${t}%`) : query)),
+        t
+          ? clientContactMethodsTable().select("client_id").eq("kind", "email").ilike("value", `%${t}%`).limit(50)
+            .then(({ data }) => [...new Set(((data ?? []) as { client_id: string }[]).map((row) => row.client_id))])
+          : Promise.resolve([] as string[]),
+      ]);
+      const seen = new Set(byName.map((row) => row.id));
+      const emailOnly = byEmail.filter((clientId) => !seen.has(clientId));
+      const extra = emailOnly.length ? await readClients((query) => query.in("id", emailOnly)) : [];
+      const merged = [...byName, ...extra]
+        .sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""))
+        .slice(0, 50)
+        .map(toClientRow);
+
       // Ignore stale responses so the latest keystroke always wins.
       if (id !== reqId.current) return;
-      setRows((data as ClientRow[] | null) ?? []);
+      setRows(merged);
       setLoading(false);
     }, 250);
 

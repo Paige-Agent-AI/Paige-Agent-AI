@@ -139,7 +139,7 @@ CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
  SELECT COALESCE(NULLIF(current_setting('request.jwt.claim.sub',true),''),NULLIF(current_setting('request.jwt.claims',true),'')::jsonb->>'sub')::uuid $$;
 CREATE TABLE auth.users(id uuid PRIMARY KEY,aud text,role text,email text);
 CREATE TABLE public.profiles(user_id uuid PRIMARY KEY,active_tenant_id uuid);
-CREATE TYPE public.app_role AS ENUM ('super_admin','platform_admin','admin','user');
+CREATE TYPE public.app_role AS ENUM ('super_admin','platform_admin','admin','user','sales_rep');
 CREATE TABLE public.user_roles(user_id uuid,role public.app_role);
 CREATE TABLE public.agency_team_members(agency_tenant_id uuid,user_id uuid,agency_role text,status text,scoped_subaccounts uuid[]);
 -- Unexercised compatibility tables. NO legacy data/backfill outcome is claimed.
@@ -170,7 +170,8 @@ ALTER TABLE public.tenant_members ADD COLUMN is_owner boolean NOT NULL DEFAULT f
     await psql(source(prefix));
   }
   await run("authored migration applies to real canonical MCP dependency chain", source("20270517000000"));
-  for (const file of ["mcp_gateway_oauth_state_and_hardenings.sql", "mcp_oauth_refuses_the_rest_facet.sql", "mcp_gateway_oauth_grant_writer.sql"]) {
+  await run("encrypted supplementary-header migration applies", source("20270520000000"));
+  for (const file of ["mcp_gateway_oauth_state_and_hardenings.sql", "mcp_oauth_refuses_the_rest_facet.sql", "mcp_gateway_oauth_grant_writer.sql", "mcp_gateway_endpoint_setter.sql", "mcp_gateway_connection_create.sql"]) {
     // \i preserves nested \ir resolution, unlike piping SQL as if it were the file.
     await run(file, `\\i '${join(root, "supabase/tests", file).replaceAll("\\", "/")}'`);
   }
@@ -203,7 +204,7 @@ INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner) VALUES
     }
     results.push({ label: `${role} cannot consume state or complete a grant`, status: "PASS" });
   }
-  console.log(`PASS ${results.length} PostgreSQL proof groups, including four SQL test files and real concurrent role sessions`);
+  console.log(`PASS ${results.length} PostgreSQL proof groups, including the nested header contract and real concurrent role sessions`);
 } catch (error) { failure = error.message; process.exitCode = 1; console.error(failure); }
 finally {
   await cleanup();

@@ -163,6 +163,48 @@ export function contactMethodErrorFor(methods: readonly ContactMethod[], message
   return { id: target.id, text };
 }
 
+/** A `clients` row read with CLIENT_CONTACT_METHODS_EMBED. */
+export interface WithClientContactMethods {
+  client_contact_methods?: readonly ContactMethodRow[] | null;
+}
+
+/** The primary email and phone of a record, from its methods. Null for a kind it has none of. */
+export function primaryAddressesOf(rows: readonly ContactMethodRow[] | null | undefined): { email: string | null; phone: string | null } {
+  const methods = orderContactMethods(rows);
+  return { email: primaryValue(methods, "email"), phone: primaryValue(methods, "phone") };
+}
+
+/**
+ * The row with `email` and `phone` set to its PRIMARY addresses — the two fields the screens that
+ * show one address read. Whatever the row carried under those names before is replaced.
+ */
+export function withPrimaryAddresses<T extends WithClientContactMethods>(row: T): T & { email: string | null; phone: string | null } {
+  return { ...row, ...primaryAddressesOf(row.client_contact_methods) };
+}
+
+/**
+ * Sets the primary of one kind to `value`, the way a single Email or Phone field always behaved:
+ * an empty value removes the primary (the next address of that kind takes its place); an address
+ * the record already holds becomes the primary; otherwise the primary's address is replaced (or,
+ * with none yet, the value is added as the primary). Every other address is kept.
+ */
+export function withPrimaryAddress(methods: readonly ContactMethod[], kind: ContactMethodKind, value: string | null | undefined): ContactMethod[] {
+  const next = value?.trim() || null;
+  const primary = methods.find((method) => method.kind === kind && method.isPrimary);
+  if (!next) return primary ? removeContactMethod(methods, primary.id) : [...methods];
+  if (primary?.value === next) return [...methods];
+  const key = contactMethodMatchKey(kind, next);
+  const same = methods.find((method) => method.kind === kind && contactMethodMatchKey(kind, method.value) === key);
+  if (same) return makePrimary(methods, same.id).map((method) => (method.id === same.id ? { ...method, value: next } : method));
+  if (primary) return methods.map((method) => (method.id === primary.id ? { ...method, value: next } : method));
+  const id = `new-${kind}-${Date.now().toString(36)}-${(localSeq += 1)}`;
+  return [
+    ...methods.filter((method) => method.kind !== kind),
+    { id, kind, value: next, label: null, isPrimary: true },
+    ...methodsOfKind(methods, kind),
+  ];
+}
+
 /** The number carriers need: E.164. Only formatting is removed — never a guessed country code. */
 export function e164Of(value: string): string | null {
   const compact = value.replace(/[\s().-]/g, "");

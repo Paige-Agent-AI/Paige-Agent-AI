@@ -1,121 +1,217 @@
 #!/usr/bin/env node
 /**
- * Renders the Connected MCP Gateway SIGN-IN flow — the surface Slice ④ added and the one three
- * review rounds have all been about — in both genuine themes.
- *
- * WHAT CLASS OF EVIDENCE THIS IS (§70.1). Structural/harness render, driven in a real Chromium
- * against the real components and the real stylesheets, with the Supabase transport stubbed. It
- * proves layout, theme, copy and state behaviour. It is NOT authenticated runtime proof: no real
- * session, no real database, no real provider. That drive stays owed and is reported as owed,
- * never implied by these frames.
- *
- * WHY IT EXISTS SEPARATELY FROM `integrations-fit-drive.mjs` (§18). That drive measures the
- * Integrations PAGE — geometry, scroll ownership, the legacy manage form. It never opens the
- * catalogue, so every state the gateway sign-in owns has gone un-rendered through four slices.
- * This adds those states and reuses the same mount, the same launcher resolution and the same
- * artifacts directory rather than forking any of them.
- *
- * Usage:
- *   npx vite --config scripts/live-drive/harness/integrations-mount/vite.config.ts   # port 5203
- *   node scripts/live-drive/integrations-signin-render.mjs
+ * Shared MCP configuration journey: actual SoloSettings/view/hooks, synthetic transport only.
+ * No provider, credential, real account, production save or authenticated capability proof.
+ * Replaces the provider-name OAuth drive. Owns and closes its local server on every exit.
  */
-import { mkdirSync, writeFileSync } from "node:fs";
+import fs from "node:fs";
+import net from "node:net";
 import path from "node:path";
-import { resolvePlaywright, resolveExecutablePath } from "./live-drive.mjs";
+import { spawn } from "node:child_process";
+import { chromium } from "playwright";
 
-const BASE = process.env.HARNESS_URL || "http://127.0.0.1:5203";
-const OUT = path.resolve("scripts/live-drive/artifacts/signin");
-mkdirSync(OUT, { recursive: true });
-
-const findings = [];
-const check = (pass, message) => {
-  findings.push(`${pass ? "PASS" : "FAIL"}  ${message}`);
-  console.log(`${pass ? "PASS" : "FAIL"}  ${message}`);
-  return pass;
+const PORT = 5417;
+const BASE = `http://127.0.0.1:${PORT}`;
+const OUT = path.resolve("scripts/live-drive/artifacts/shared-mcp");
+const frames = [[1536, 770], [1366, 768], [1024, 768], [900, 1000]];
+const results = [];
+const record = (name, pass, details = {}) => {
+  results.push({ name, status: pass ? "PASS" : "FAIL", details });
+  if (!pass) throw new Error(name + ": " + JSON.stringify(details));
+  console.log("PASS " + name);
 };
-
-/** Waits for every running animation to finish so a frame is never caught mid-transition. */
-const settle = async (page) => {
-  await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => {}))));
-  await page.waitForTimeout(80);
-};
-
-const shot = async (page, name) => {
-  await settle(page);
-  await page.screenshot({ path: path.join(OUT, `${name}.png`) });
-};
-
-/** Opens the catalogue and routes into a provider that signs in, the way a person reaches it. */
-async function openSignIn(page, provider) {
-  await page.click('.ig-card[data-provider="mcp-add"]');
-  await page.waitForSelector(".ig-gw-tile", { timeout: 15000 });
-  await page.click(`.ig-gw-tile:has(.ig-gw-tile-name:text-is("${provider}"))`);
-  await page.waitForSelector('label.ig-field:has(span:text-is("Name")) input', { timeout: 15000 });
+const portFree = () => new Promise((resolve, reject) => {
+  const server = net.createServer();
+  server.once("error", reject);
+  server.listen(PORT, "127.0.0.1", () => server.close(resolve));
+});
+async function stop(server) {
+  if (!server?.pid) return;
+  if (process.platform === "win32") {
+    await new Promise((resolve, reject) => {
+      const task = spawn("taskkill", ["/pid", String(server.pid), "/t", "/f"], { stdio: "ignore", windowsHide: true });
+      task.once("error", reject); task.once("exit", resolve);
+    });
+  } else { server.kill("SIGTERM"); await new Promise(resolve => server.once("exit", resolve)); }
 }
-
-const nameField = (page) => page.locator('label.ig-field:has(span:text-is("Name")) input');
-const addressField = (page) => page.locator('label.ig-field:has(span:text-is("Server address")) input');
-
-async function main() {
-  const { chromium } = await resolvePlaywright();
-  const executablePath = resolveExecutablePath();
-  const browser = await chromium.launch({ executablePath, args: ["--no-sandbox"] });
-
-  try {
-    for (const theme of ["light", "dark"]) {
-      // A refusal from oauth_begin is what makes the retry state reachable at all: a success
-      // navigates away to the provider, so the locked-name state would never paint.
-      const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
-      const page = await ctx.newPage();
-      await page.goto(`${BASE}/?theme=${theme}&data=signin-fail`, { waitUntil: "networkidle" });
-      await openSignIn(page, "Close");
-
-      // 1. The form as a person first meets it.
-      const freshDisabled = await nameField(page).isDisabled();
-      check(!freshDisabled, `${theme} · the name is editable before anything is saved`);
-      await shot(page, `${theme}-signin-form`);
-
-      await nameField(page).fill("My Close");
-      await addressField(page).fill("https://wrong.example.invalid/mcp");
-      await page.getByRole("button", { name: /^Sign in to Close$/ }).click();
-
-      // 2. The state after a refused begin: the row exists, so the name can no longer change.
-      await page.waitForSelector(".ig-error", { timeout: 15000 });
-      const lockedDisabled = await nameField(page).isDisabled();
-      check(lockedDisabled, `${theme} · the name LOCKS once the shell row exists`);
-      const kept = await nameField(page).inputValue();
-      check(kept === "My Close", `${theme} · the typed name is kept, not cleared (got ${JSON.stringify(kept)})`);
-      const addrEditable = !(await addressField(page).isDisabled());
-      check(addrEditable, `${theme} · the ADDRESS stays editable — it is the field a retry can apply`);
-      const text = await page.locator('[role="dialog"]').innerText();
-      check(
-        /remove it from Integrations and start again/.test(text),
-        `${theme} · the locked field says what to do instead of leaving it unexplained`,
-      );
-      check(
-        /saved under that name/i.test(text),
-        `${theme} · the failure copy tells the owner the row EXISTS (never "nothing happened")`,
-      );
-      check(!/non-2xx|undefined|null|MCP_[A-Z_]+/.test(text), `${theme} · no framework or database jargon reached the owner`);
-      await shot(page, `${theme}-signin-refused-name-locked`);
-
-      // 3. The address is genuinely correctable on the retry — the round-2 fix, rendered.
-      await addressField(page).fill("https://right.example.invalid/mcp");
-      const corrected = await addressField(page).inputValue();
-      check(corrected === "https://right.example.invalid/mcp", `${theme} · a corrected address is accepted on retry`);
-      await shot(page, `${theme}-signin-retry-address-corrected`);
-
-      await ctx.close();
-    }
-  } finally {
-    await browser.close();
+const field = (page, name) => page.getByLabel(name, { exact: true });
+async function openForm(page, name = "Any MCP server") {
+  await page.locator('.ig-card[data-provider="mcp-add"]').click();
+  await page.locator('.ig-gw-tile').filter({ has: page.locator('.ig-gw-tile-name', { hasText: name }) }).first().click();
+  await field(page, "Name").waitFor();
+}
+async function fill(page, auth = "Token + headers") {
+  await field(page, "Name").fill("Synthetic MCP example");
+  await field(page, "Server URL").fill("https://tools.example.com/api/mcp/");
+  await page.getByRole("button", { name: auth, exact: true }).click();
+  if (auth === "Token + headers" || auth === "Token") await field(page, "Token").fill("synthetic-browser-token");
+  if (auth === "Token + headers") {
+    await page.getByRole("button", { name: "Add header", exact: true }).click();
+    await field(page, "Header 1 name").fill("Workspace-Reference");
+    await field(page, "Header 1 value").fill("synthetic-workspace-reference");
   }
-
-  const failed = findings.filter((f) => f.startsWith("FAIL"));
-  writeFileSync(path.join(OUT, "signin-render-report.json"), JSON.stringify({ findings, failed: failed.length }, null, 2));
-  console.log(`\n${findings.length - failed.length}/${findings.length} checks passed`);
-  console.log(`frames → ${OUT}`);
-  if (failed.length) { console.log(`\n${failed.length} FAILURE(S)`); process.exitCode = 1; }
 }
-
-main().catch((e) => { console.error(e); process.exitCode = 1; });
+async function geometry(page, label) {
+  const audit = await page.evaluate(() => {
+    const owner = document.querySelector(".ig-panel-body");
+    const box = document.querySelector(".ig-panel")?.getBoundingClientRect();
+    return { width: innerWidth, height: innerHeight, dpr: devicePixelRatio,
+      documentWidth: document.documentElement.scrollWidth, documentHeight: document.documentElement.scrollHeight,
+      panel: box ? { left: box.left, right: box.right, top: box.top, bottom: box.bottom } : null,
+      owner: owner ? { scrollHeight: owner.scrollHeight, clientHeight: owner.clientHeight, scrollWidth: owner.scrollWidth, clientWidth: owner.clientWidth, overflowY: getComputedStyle(owner).overflowY } : null };
+  });
+  record(label + " geometry", audit.documentWidth <= audit.width + 1 && audit.documentHeight <= audit.height + 1 && audit.panel?.right <= audit.width + 1 && audit.panel?.bottom <= audit.height + 1 && audit.owner.scrollWidth <= audit.owner.clientWidth + 1, audit);
+  return audit;
+}
+async function main() {
+  await portFree(); fs.mkdirSync(OUT, { recursive: true });
+  const server = spawn(process.execPath, ["node_modules/vite/bin/vite.js", "--config", "scripts/live-drive/harness/integrations-mount/vite.config.ts", "--port", String(PORT)], { stdio: ["ignore", "pipe", "pipe"], windowsHide: true });
+  let serverLog = "";
+  const capture = chunk => { serverLog = (serverLog + String(chunk)).slice(-20000); };
+  server.stdout.on("data", capture); server.stderr.on("data", capture);
+  let browser;
+  let lastPage;
+  try {
+    let ready = false;
+    for (let attempt = 0; attempt < 60; attempt++) {
+      try { if ((await fetch(BASE)).ok) { ready = true; break; } } catch {}
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    if (!ready) throw new Error("Local harness did not start");
+    browser = await chromium.launch({ ignoreDefaultArgs: ["--hide-scrollbars"] });
+    for (const [width, height] of frames) for (const theme of ["light", "dark"]) for (const paige of ["closed", "open"]) {
+      const label = `${width}x${height}-${theme}-${paige}`;
+      const context = await browser.newContext({ viewport: { width, height }, colorScheme: theme, reducedMotion: "reduce" });
+      const page = await context.newPage();
+      lastPage = page;
+      const errors = [];
+      const external = [];
+      page.on("pageerror", error => errors.push(error.message));
+      await page.route("**/*", route => {
+        if (new URL(route.request().url()).origin === BASE) return route.continue();
+        // Existing public typography assets are not MCP/provider traffic. No auth or tenant data.
+        if (["fonts.googleapis.com", "fonts.gstatic.com"].includes(new URL(route.request().url()).hostname)) return route.continue();
+        external.push(new URL(route.request().url()).origin);
+        return route.abort();
+      });
+      await page.goto(`${BASE}/?theme=${theme}&data=empty&paige=${paige}`, { waitUntil: "networkidle" });
+      await openForm(page);
+      record(label + " explicit auth choices", await page.locator('[aria-label="Authentication"] button').count() === 4);
+      await fill(page);
+      const sameAuth = page.getByRole("button", { name: "Token + headers", exact: true });
+      await sameAuth.click(); await sameAuth.focus(); await page.keyboard.press("Enter");
+      record(label + " unchanged auth retains draft", await field(page, "Token").inputValue() === "synthetic-browser-token" && await field(page, "Header 1 value").inputValue() === "synthetic-workspace-reference");
+      await page.screenshot({ path: path.join(OUT, label + "-initial-form.png") });
+      const geometryResult = await geometry(page, label);
+      const owner = page.getByRole("region", { name: "Tool setup and details", exact: true });
+      record(label + " visible scroll affordance", await owner.evaluate(el => getComputedStyle(el).scrollbarWidth !== "none" && el.offsetWidth - el.clientWidth > 0));
+      if (geometryResult.owner.scrollHeight > geometryResult.owner.clientHeight + 1) {
+        await owner.focus();
+        await page.keyboard.press("End");
+        await page.waitForTimeout(150);
+        record(label + " End reaches terminal content", await owner.evaluate(el => el.scrollTop + el.clientHeight >= el.scrollHeight - 2));
+        await page.keyboard.press("Home");
+        await page.waitForTimeout(100);
+        await page.keyboard.press("PageDown");
+        await page.waitForTimeout(150);
+        record(label + " PageDown travels owner", await owner.evaluate(el => el.scrollTop > 0));
+        await page.keyboard.press("Home");
+        await page.waitForTimeout(100);
+        await page.keyboard.press("Space");
+        await page.waitForTimeout(150);
+        record(label + " Space travels owner", await owner.evaluate(el => el.scrollTop > 0));
+        await owner.hover(); await page.mouse.wheel(0, 650); await page.waitForTimeout(150);
+        record(label + " wheel travels owner", await owner.evaluate(el => el.scrollTop > 0));
+      }
+      await page.screenshot({ path: path.join(OUT, label + "-form.png") });
+      const save = page.getByRole("button", { name: "Save configuration", exact: true });
+      await save.focus();
+      record(label + " terminal action focus reachable", await save.evaluate(el => {
+        const r = el.getBoundingClientRect(); return document.activeElement === el && r.top >= 0 && r.bottom <= innerHeight;
+      }));
+      await page.keyboard.press("Enter");
+      await page.getByText("Saved — configuration confirmed.", { exact: true }).waitFor();
+      record(label + " receipt focus handoff", await page.locator('.ig-panel [role="status"]').evaluate(el => document.activeElement === el));
+      record(label + " no secret reflected", !(await page.locator(".ig-panel").innerHTML()).includes("synthetic-browser-token") && !(await page.locator(".ig-panel").innerHTML()).includes("synthetic-workspace-reference"));
+      record(label + " no automatic provider action", await page.evaluate(() => window.__mcpHarnessCalls.every(call => call.action === "create")));
+      await page.screenshot({ path: path.join(OUT, label + "-saved.png") });
+      await page.getByRole("button", { name: "Review saved tool", exact: true }).click();
+      record(label + " saved is not checked", (await page.locator(".ig-panel").innerText()).includes("Not checked yet"));
+      await page.getByRole("button", { name: "Check now", exact: true }).click();
+      await page.getByText(/Checked just now/).waitFor();
+      record(label + " explicit check shows returned empty catalogue", (await page.locator(".ig-panel").innerText()).includes("offered nothing"));
+      await page.keyboard.press("Escape");
+      record(label + " Escape exits drawer", await page.locator('[role="dialog"]').count() === 0);
+      record(label + " no runtime errors or external calls", errors.length === 0 && external.length === 0, { errors, external });
+      await context.close();
+    }
+    const context = await browser.newContext({ viewport: { width: 1024, height: 768 } });
+    const page = await context.newPage();
+    for (const width of [1024, 1366]) {
+      await page.setViewportSize({ width, height: 768 });
+      await page.goto(`${BASE}/?theme=dark&data=empty`);
+      await openForm(page);
+      await page.getByRole("button", { name: "Save configuration", exact: true }).focus();
+      await page.keyboard.press("Enter");
+      record(`${width} invalid field focus`, await field(page, "Name").evaluate(el => document.activeElement === el));
+      await fill(page);
+      for (let index = 0; index < 4; index++) await page.getByRole("button", { name: "Add header", exact: true }).click();
+      const cancel = page.getByRole("button", { name: "Cancel", exact: true });
+      await cancel.focus(); await page.keyboard.press("Enter");
+      const keep = page.getByRole("button", { name: "Keep editing", exact: true });
+      record(`${width} discard visible and focused`, await keep.evaluate(el => {
+        const r = el.closest('[role="alertdialog"]').getBoundingClientRect();
+        const owner = el.closest('.ig-panel-body').getBoundingClientRect();
+        return document.activeElement === el && r.top >= owner.top && r.bottom <= owner.bottom;
+      }));
+      await page.screenshot({ path: path.join(OUT, `${width}-discard.png`) });
+      await page.keyboard.press("Enter");
+      record(`${width} cancel focus restored`, await cancel.evaluate(el => document.activeElement === el));
+      await page.keyboard.press("Escape");
+      record(`${width} Escape guard focused`, await keep.evaluate(el => document.activeElement === el));
+      await page.keyboard.press("Escape");
+      record(`${width} Escape guard returns focus`, await cancel.evaluate(el => document.activeElement === el));
+      await page.keyboard.press("Escape");
+      await page.keyboard.press("Tab");
+      record(`${width} discard keyboard loop`, await page.getByRole("button", { name: "Discard them", exact: true }).evaluate(el => document.activeElement === el));
+      await page.keyboard.press("Enter");
+      record(`${width} discard exits`, await page.locator('[role="dialog"]').count() === 0);
+    }
+    for (const mode of ["gateway-save-fail", "readback-fail", "signin-fail"]) {
+      await page.goto(`${BASE}/?theme=light&data=${mode}`);
+      await openForm(page);
+      await fill(page, mode === "signin-fail" ? "OAuth" : "None");
+      await page.getByRole("button", { name: "Save configuration", exact: true }).click();
+      if (mode === "gateway-save-fail") {
+        await page.locator(".ig-panel [role=alert]").waitFor();
+        record("refused save stays editable", await field(page, "Server URL").inputValue() === "https://tools.example.com/api/mcp/");
+      } else if (mode === "readback-fail") {
+        await page.getByRole("button", { name: "Retry confirmation", exact: true }).waitFor();
+        await page.getByRole("button", { name: "Retry confirmation", exact: true }).click();
+        record("readback retry never creates twice", await page.evaluate(() => window.__mcpHarnessCalls.filter(call => call.action === "create").length === 1));
+      } else {
+        await page.getByRole("button", { name: "Authorize with server", exact: true }).click();
+        await page.getByText(/configuration is saved, but sign-in did not start/).waitFor();
+        await page.getByRole("button", { name: "Authorize with server", exact: true }).click();
+        record("OAuth retries reuse saved row", await page.evaluate(() => window.__mcpHarnessCalls.filter(call => call.action === "create").length === 1 && window.__mcpHarnessCalls.filter(call => call.action === "oauth_begin").length === 2));
+      }
+      await page.screenshot({ path: path.join(OUT, mode + ".png") });
+    }
+    await context.close();
+  } catch (error) {
+    results.push({ name: "drive interruption", status: "FAIL", detail: String(error) });
+    console.error(serverLog.slice(-6000));
+    if (lastPage && !lastPage.isClosed()) {
+      await lastPage.screenshot({ path: path.join(OUT, "failure.png") });
+      console.error((await lastPage.locator("body").innerText()).slice(0, 2500));
+    }
+    throw error;
+  } finally {
+    await browser?.close();
+    await stop(server);
+    await portFree();
+    results.push({ name: "server port cleanup", status: "PASS" });
+    fs.writeFileSync(path.join(OUT, "report.json"), JSON.stringify({ evidenceClass: "STRUCTURAL-RENDERED; synthetic transport, no authenticated/provider proof", results }, null, 2));
+  }
+}
+main().catch(error => { console.error(error); process.exitCode = 1; });

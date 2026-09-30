@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { readUserContactMethods } from "@/lib/userPrimaryContact";
 
 /**
  * downloadMyUserData — the ONE user-scoped personal-data export. Extracted
@@ -6,7 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
  * surface consumes the same implementation instead of forking it.
  *
  * Scope is exact and must stay honestly labeled wherever this is offered:
- * it exports the personal records tied to the caller's LOGIN (profile, build
+ * it exports the personal records tied to the caller's LOGIN (profile, every
+ * email and phone they keep (contact methods), build
  * scores/progress, owned businesses, recent chat messages, banking
  * relationships) via user_id-keyed RLS reads. It is NOT a workspace export —
  * business records (clients, deals, missions) are tenant data and are not
@@ -17,8 +19,10 @@ export async function downloadMyUserData(): Promise<void> {
   if (!user) throw new Error("Not signed in");
 
   // Fetch all user-owned data in parallel
-  const [profile, scores, fundability, businesses, sessions, financialProfile] = await Promise.all([
+  const [profile, contactMethods, scores, fundability, businesses, sessions, financialProfile] = await Promise.all([
     supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle(),
+    // Every email and phone the person keeps (their contact methods), not only the primary.
+    readUserContactMethods(user.id),
     supabase.from("build_scores").select("*").eq("user_id", user.id),
     supabase.from("build_progress").select("*").eq("user_id", user.id),
     supabase.from("businesses").select("*").eq("owner_user_id", user.id),
@@ -31,6 +35,17 @@ export async function downloadMyUserData(): Promise<void> {
     user_id: user.id,
     email: user.email,
     profile: profile.data ?? null,
+    // A read that failed is recorded as a failure — null plus the reason — never as an empty list,
+    // which would tell the person they keep no email or phone.
+    contact_methods: contactMethods.error
+      ? null
+      : contactMethods.methods.map((method) => ({
+          kind: method.kind,
+          value: method.value,
+          label: method.label,
+          is_primary: method.isPrimary,
+        })),
+    ...(contactMethods.error ? { contact_methods_error: `Your emails and phone numbers couldn't be read for this export: ${contactMethods.error}` } : {}),
     build_scores: scores.data ?? [],
     build_progress: fundability.data ?? [],
     businesses: businesses.data ?? [],

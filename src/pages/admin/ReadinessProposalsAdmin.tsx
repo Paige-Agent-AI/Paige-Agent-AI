@@ -12,6 +12,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { Check, X, DollarSign, Users, ScanLine } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { CLIENT_CONTACT_METHODS_EMBED, primaryAddressesOf, type WithClientContactMethods } from "@/lib/contact-methods";
+
+// Widened to string: the generated types do not know the contact-methods embed yet.
+const PROPOSAL_SELECT: string = "id, contact_id, status, readiness_delta_json, recommended_actions_json, proposed_at, approved_at, rejected_at, rejection_reason, expires_at, scan_run_id, " +
+  `clients(first_name, last_name, ${CLIENT_CONTACT_METHODS_EMBED})`;
 
 type Status = "all" | "pending" | "approved" | "rejected" | "expired" | "executed" | "insufficient_data";
 
@@ -65,7 +70,7 @@ export default function ReadinessProposalsAdmin() {
     setLoading(true);
     let q = supabase
       .from("paige_readiness_proposals")
-      .select("id, contact_id, status, readiness_delta_json, recommended_actions_json, proposed_at, approved_at, rejected_at, rejection_reason, expires_at, scan_run_id, clients(first_name, last_name, email)")
+      .select(PROPOSAL_SELECT)
       .order("proposed_at", { ascending: false })
       .limit(200);
     if (status !== "all") q = q.eq("status", status);
@@ -73,7 +78,14 @@ export default function ReadinessProposalsAdmin() {
       q,
       supabase.from("paige_readiness_scan_runs").select("*").order("started_at", { ascending: false }).limit(10),
     ]);
-    setRows((p ?? []) as unknown as Proposal[]);
+    // The contact's `email` is its PRIMARY address, from its contact methods.
+    setRows(((p ?? []) as unknown as Array<Omit<Proposal, "clients"> & { clients: ({ first_name: string | null; last_name: string | null } & WithClientContactMethods) | null }>)
+      .map((row) => ({
+        ...row,
+        clients: row.clients
+          ? { first_name: row.clients.first_name, last_name: row.clients.last_name, email: primaryAddressesOf(row.clients.client_contact_methods).email }
+          : null,
+      })));
     setRuns((r ?? []) as unknown as ScanRun[]);
     setLoading(false);
   }

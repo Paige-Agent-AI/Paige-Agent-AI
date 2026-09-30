@@ -36,7 +36,6 @@ type ConfigShape = {
   posthog_project_url: string | null;
   sentry_org_slug: string | null;
   cal_default_event_type_id: string | null;
-  apollo_auto_enrich: boolean | null;
   docusign_templates: Record<string, string> | null;
 };
 
@@ -67,7 +66,7 @@ const tiles = [
   { key: "cal", icon: CalendarClock, short: "Cal.com", title: "Cal.com", description: "Booking surface for VIP intros, DFY discovery and workshops.", long: "Paige turns your booking calendar into a front door for intros, discovery calls, and workshops, and keeps every slot in sync.", href: "/choose-account" },
   { key: "meta_pixel", icon: Share2, short: "Meta Pixel", title: "Meta Pixel + Conversions API", description: "Track ad conversions on Paige + external landing/webinar pages.", long: "Paige measures which ads actually turn into clients across your pages, so you spend on what works and cut what doesn't.", href: "/choose-account" },
   { key: "meta", icon: Share2, short: "Meta Graph", title: "Meta Graph (Facebook + Instagram)", description: "Provider connection and actions are not available yet.", long: "Meta remains unavailable until Paige can prove tenant-owned authorization, explicit account selection, provider readback, and governed action evidence.", href: "/choose-account" },
-  { key: "apollo", icon: UserSearch, short: "Apollo", title: "Apollo Enrichment", description: "Auto-enrich new contacts; manual lookup; prospect search.", long: "Paige enriches new contacts with the details that help you sell — and can look someone up on demand when you need it.", href: "/choose-account" },
+  { key: "apollo", icon: UserSearch, short: "Apollo", title: "Apollo Enrichment", description: "Manual lookup; automatic enrichment unavailable.", long: "Automatic enrichment when a contact is created is unavailable. Manual lookup is separate.", href: "/choose-account" },
   { key: "posthog", icon: BarChart3, short: "PostHog", title: "PostHog Analytics", description: "Product usage truth for internal + B2B rollout.", long: "Paige reads real product usage so you know what people actually do, not what you hope they do.", href: "/choose-account" },
   { key: "sentry", icon: Bug, short: "Sentry", title: "Sentry Errors", description: "Frontend + Edge Function error tracking with deep links.", long: "Paige catches errors across the app and functions the moment they happen, with a direct link to the cause.", href: "/choose-account" },
   { key: "nav", icon: Building2, short: "Nav", title: "Nav (Business Credit)", description: "Pull D&B / Experian / Equifax business profiles for capital readiness.", long: "Paige pulls your business's credit profile so you can see exactly where you stand before you go after capital.", href: "/choose-account" },
@@ -131,7 +130,7 @@ export default function IntegrationsHub() {
       const sb = supabase as any;
       const since = new Date(Date.now() - 7 * 86_400_000).toISOString();
       const [cfg, n8n, mcp, tg, sub, env, bkg, enr, email] = await Promise.all([
-        sb.from("paige_config").select("ghl_pit_ref, ghl_location_id, langsmith_project, posthog_project_url, sentry_org_slug, cal_default_event_type_id, apollo_auto_enrich, docusign_templates").eq("id", 1).maybeSingle(),
+        sb.from("paige_config").select("ghl_pit_ref, ghl_location_id, langsmith_project, posthog_project_url, sentry_org_slug, cal_default_event_type_id, docusign_templates").eq("id", 1).maybeSingle(),
         sb.rpc("get_tenant_n8n_connection"),
         sb.from("paige_mcp_connections").select("id", { count: "exact", head: true }).eq("enabled", true),
         sb.from("paige_telegram_config").select("default_admin_chat_id").eq("id", 1).maybeSingle(),
@@ -177,7 +176,7 @@ export default function IntegrationsHub() {
       case "docusign": return counts.envelopes > 0 ? { state: "success", label: `${counts.envelopes} envelope${counts.envelopes === 1 ? "" : "s"}` } : { state: "off", label: "Not configured" };
       case "cal": return counts.bookings > 0 ? { state: "success", label: `${counts.bookings} bookings (30d)` } : { state: "off", label: "Not configured" };
       case "meta": return { state: "off", label: "Unavailable" };
-      case "apollo": return config?.apollo_auto_enrich ? { state: "success", label: `Auto-enrich on • ${counts.enrichments} (7d)` } : { state: "off", label: "Auto-enrich off" };
+      case "apollo": return { state: "off", label: "Auto-enrich unavailable" };
       case "posthog": return hasPosthogKey ? { state: "success", label: "Connected" } : { state: "off", label: "Disabled" };
       case "sentry": return hasSentryDsn ? { state: "success", label: "Connected" } : { state: "off", label: "Disabled" };
       // No pixel/CAPI-specific signal in config yet — never claim "Connected" off
@@ -208,7 +207,7 @@ export default function IntegrationsHub() {
       case "cal": return [{ label: "Bookings (last 30 days)", value: String(counts.bookings) }];
       case "meta": return [];
       case "apollo": return [
-        { label: "Auto-enrich", value: config?.apollo_auto_enrich ? "On" : "Off" },
+        { label: "Auto-enrich", value: "Unavailable" },
         { label: "Enrichments (7d)", value: String(counts.enrichments) },
       ];
       default: return [];
@@ -558,7 +557,7 @@ export default function IntegrationsHub() {
                     </Button>
                   ) : (
                     <div className="rounded-[var(--radius)] border border-border bg-muted/40 px-4 py-3 text-center text-sm text-muted-foreground">
-                      Always on — no setup needed.
+                      {active.key === "apollo" ? "Automatic enrichment is unavailable." : "Always on — no setup needed."}
                     </div>
                   )}
                 </div>

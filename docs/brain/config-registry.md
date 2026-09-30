@@ -531,7 +531,9 @@ Values intentionally omitted.
   outbound provider token; it authenticates the sender into Paige, not Paige into the provider.
   No new environment secret or secret store. `mcp_connection_contacts` maps source identity to
   canonical contacts; `mcp_connection_receipts` retains safe transaction outcomes. Named migration
-  authorization, owner configuration UI and sender cutover remain release gates. See
+  authorization was received for the unchanged file; earlier migration order, authenticated owner
+  configuration and sender cutover remain release gates. The approved drawer is implemented in
+  draft #1595, not deployed or proven against a real sender. See
   `../delivery/mcp-contact-binding.md`. Unrelated legacy bridge verbs still use the existing global
   key and have NOT been certified tenant-safe by this change.
 - **Zapier MCP server address (verified live 2026-09-05):** the address a tenant pastes is

@@ -680,3 +680,17 @@ p.ig-gw-foot { margin: 0 0 10px; }
    The border firms up so the tile reads as theirs at a glance without a second colour or an
    accent stripe; nothing else about the tile changes, because nothing else should. */
 .ig-gw-tile[data-held] { border-color: var(--pg-line-strong); }
+/* Incoming setup stays inside the incumbent drawer's sole vertical scroll owner. */
+.ig-incoming { border-top: 1px solid var(--pg-line); margin-block: 20px; padding-top: 16px; }
+.ig-incoming h3 { font-size: 16px; line-height: 1.4; margin: 0 0 12px; }
+.ig-incoming p { margin-block: 12px; }
+.ig-incoming-consent { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.6; }
+.ig-incoming-consent input { flex: 0 0 auto; margin-top: 5px; accent-color: var(--pg-violet); }
+.ig-incoming-steps { padding-left: 20px; font-size: 13px; line-height: 1.65; }
+.ig-incoming-steps li + li { margin-top: 12px; }
+.ig-incoming-code { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; line-height: 1.6; padding: 12px; background: var(--pg-surface); color: var(--pg-ink); border-radius: 8px; }
+.ig-incoming details summary { cursor: pointer; font-size: 13px; padding-block: 8px; }
+.ig-incoming-reference { overflow-wrap: anywhere; font-size: 12px; }
+.ig-incoming-add { margin-top: 12px; }
+.ig-incoming :focus-visible { outline: 2px solid var(--pg-violet); outline-offset: 3px; }
+@media (forced-colors: active) { .ig-incoming :focus-visible { outline-color: Highlight; } }

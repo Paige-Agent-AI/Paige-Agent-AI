@@ -144,7 +144,7 @@
       "status": "PARTIAL",
       "owner": "Integrations workstream",
       "dependency": "Existing mcp_connections, platform_encrypt/platform_decrypt, canonical RPC writers, mcp-gateway and server-resolved tenant capability checks. No parallel secret store. Authenticated owner save/readback/check and governed execution remain unproven end to end.",
-      "next_slice": "Obtain named authorization for 20270522000000_mcp_connection_contact_binding.sql after pending 20270521000000; finish authenticated incoming owner configuration and sender cutover before releasing the bridge replacement. Continue individual tool revocation, governed outbound execution, catalogue reconciliation and parity-proven legacy deletion. See docs/delivery/mcp-contact-binding.md.",
+      "next_slice": "Named authorization received for unchanged 20270522000000_mcp_connection_contact_binding.sql; pending 20270521000000 must apply first. Owner-approved incoming drawer is implemented in draft #1595; finish browser, exact-head and authenticated incoming owner/sender-cutover proof before releasing the bridge replacement. Continue individual tool revocation, governed outbound execution, catalogue reconciliation and parity-proven legacy deletion. See docs/delivery/mcp-contact-binding.md.",
       "tier_eligibility": { "platform": "deferred", "solo": "eligible", "agency_future": "deferred", "enterprise_future": "deferred" },
       "expense_and_operations": {
         "cost_responsibility": "tenant_direct",

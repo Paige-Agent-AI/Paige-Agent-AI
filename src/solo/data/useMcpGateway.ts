@@ -58,6 +58,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { readFunctionErrorBody } from "@/lib/integrations/connectError";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { createSettingsRequestGate } from "../settings-contract";
+import { contactSyncFailure, readContactSyncRecord, type ContactSyncRecord, type ContactSyncResult } from "./mcpContactSync";
 
 export type GatewayStatus = "unconfigured" | "pending_verification" | "connected" | "error";
 export type GatewayHealth = "unknown" | "checking" | "healthy" | "needs_attention";
@@ -623,6 +624,9 @@ function readList(value: unknown): GatewayConnection[] | null {
 }
 
 export type UseMcpGateway = McpGatewayState & {
+  readContactSync: (connectionId: string) => Promise<ContactSyncResult>;
+  createIncoming: (label: string) => Promise<ContactSyncResult>;
+  setContactSync: (connectionId: string, enabled: boolean, secret: string | null, expectedGeneration: number) => Promise<ContactSyncResult>;
   /** Fresh canonical read; null means this exact saved configuration was not confirmed. */
   confirmSaved: (connectionId: string, generation: number | null) => Promise<GatewayConnection | null>;
   createMcp: (draft: CreateMcpDraft) => Promise<GatewayWriteResult>;
@@ -1180,6 +1184,48 @@ export function useMcpGateway(): UseMcpGateway {
     [runRpc],
   );
 
+  // Same hook, scope fence and mutation lock as the existing configuration writers. The expected
+  // business is a mismatch guard only; each RPC resolves and authorizes the actual business.
+  const contactRpc = useCallback(async (name: string, params: Record<string, unknown>) => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return rpcResult(await (supabase as any).rpc(name, { ...params, _tenant_id: activeTenantId }));
+    } catch { return { data: null, error: true }; }
+  }, [activeTenantId]);
+
+  const readContactSync = useCallback(async (connectionId: string): Promise<ContactSyncResult> => {
+    if (!activeTenantId || !activeUserId || tenantLoading) return contactSyncFailure("MCP_NOT_READY");
+    const answer = await contactRpc("get_mcp_contact_sync", { _connection_id: connectionId });
+    if (!mounted.current || scopeRef.current !== scope) return contactSyncFailure("MCP_STALE");
+    if (answer.error) return contactSyncFailure(extractCode(answer.error) ?? "MCP_CONTACT_READ_UNAVAILABLE");
+    const record = readContactSyncRecord(answer.data, activeTenantId, connectionId);
+    return record ? { ok: true, code: null, message: null, record } : contactSyncFailure("MCP_CONTACT_READ_UNAVAILABLE");
+  }, [activeTenantId, activeUserId, tenantLoading, contactRpc, scope]);
+
+  const writeContactSync = useCallback(async (name: string, params: Record<string, unknown>, expected?: { id: string; generation: number; enabled: boolean }): Promise<ContactSyncResult> => {
+    const result = await guarded<ContactSyncResult>(async () => {
+      const answer = await contactRpc(name, params);
+      if (answer.error) return { ok: false, code: extractCode(answer.error) ?? "MCP_CONTACT_OUTCOME_UNKNOWN", data: {} };
+      const ack = readContactSyncRecord(answer.data, activeTenantId ?? "", expected?.id);
+      if (!ack || (expected ? ack.generation !== expected.generation + 1 || ack.configuredEnabled !== expected.enabled
+        : ack.generation !== 0 || ack.configuredEnabled || ack.credentialConfigured))
+        return { ok: false, code: "MCP_CONTACT_OUTCOME_UNKNOWN", data: {} };
+      // A transport success is not a Saved claim. Confirm this exact committed version afresh.
+      const read = await readContactSync(ack.connectionId);
+      if (!read.ok || !read.record || JSON.stringify(read.record) !== JSON.stringify(ack))
+        return { ok: false, code: read.code === "MCP_STALE" ? "MCP_STALE" : "MCP_CONTACT_OUTCOME_UNKNOWN", data: {} };
+      return { ok: true, code: null, data: { record: read.record } };
+    }, data => ({ ok: true, code: null, message: null, record: data.record as ContactSyncRecord }));
+    return result.ok ? result : contactSyncFailure(result.code);
+  }, [guarded, contactRpc, activeTenantId, readContactSync]);
+
+  const createIncoming = useCallback((label: string) =>
+    writeContactSync("create_mcp_inbound_connection", { _label: label }), [writeContactSync]);
+  const setContactSync = useCallback((id: string, enabled: boolean, secret: string | null, expectedGeneration: number) =>
+    writeContactSync("set_mcp_contact_sync", { _connection_id: id, _enabled: enabled,
+      _secret: enabled ? secret : null, _expected_generation: expectedGeneration },
+    { id, enabled, generation: expectedGeneration }), [writeContactSync]);
+
   const reload = useCallback(() => {
     void load();
   }, [load]);
@@ -1197,6 +1243,9 @@ export function useMcpGateway(): UseMcpGateway {
 
   return {
     ...visible,
+    readContactSync,
+    createIncoming,
+    setContactSync,
     createMcp,
     confirmSaved,
     createRest,

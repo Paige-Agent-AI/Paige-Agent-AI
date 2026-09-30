@@ -8,10 +8,56 @@ Owner ruling, 2026-09-30: incoming contact sync is required; provider data must 
 
 ## Affected flows and collisions (pre-edit gate, refreshed before publication)
 
-1. **Configure:** authenticated Solo owner/admin enters Integrations for their server-resolved business and enables incoming contact create/update on its canonical connection. Expected-generation comparison refuses stale saves. Safe readback exposes grant/credential presence, never a secret. A new incoming-only record has no invented outbound endpoint. Owner-facing controls are not implemented in this draft: release BLOCKED, not a working-screen claim.
+### Owner-approved UI continuation, 2026-09-30
+
+The owner approved the read-only incoming-contact prototype with “You have my approval.”
+Approved artifact SHA-256: `DEC245DA605622F2DCD2F7744C3F8C8444F50D9B2483800052100A909ACB5703`
+(33,906 bytes; `outputs/mcp-incoming-contacts-flow-prototype.html` in the task's artifact directory,
+outside the product checkout). This is design/function approval, not production acceptance.
+
+Fresh pre-edit recheck: main remains `cfcdc62001e677816dba4a4c915788ed117a65ff`; draft #1595
+remains `7c86a3107f7f4863158a73ee16e2b8c53b1b7465`. All 51 open PR heads/file sets enumerated.
+Settings UI/config-doc overlaps are the expressly parked #917/#754/#574; bridge overlap is parked
+#585. The new UI/hook files have no active collision. #673 owns shared Connections harness
+transport: it is consumed unchanged, not edited. A separate test-only alias layers the incoming
+transport on the existing real Settings/shell mount. No product shell, Calendar or Connections
+file is changed. #1591's earlier migration and #1536's tenant-context dependency remain live.
+
+Affected owner flows (this subsection supersedes the earlier UI-not-implemented snapshot below):
+
+- Enter an existing Integrations drawer or add an incoming-only canonical connection. Read
+  its current grant and business; never derive scope from the route or a provider name.
+- Enable create/update with a dedicated owner-entered credential and explicit consent. Read
+  the same committed generation afresh before saying Saved; no outbound approval follows.
+- Replace/revoke using expected-generation comparison. Preserve contacts and outbound approvals;
+  warn that the old incoming credential stops working and the sender must be updated manually.
+- Failed reads remain unavailable, not off. Configured-but-inactive permission stays distinct
+  from effective access. Legacy writer refusal is explicit; no provider-name legacy inference.
+- Dirty cancel/close supports keep/discard. Close during a request does not claim server
+  cancellation; unresolved writes survive drawer reopening. Unknown creation never auto-retries.
+- Account/user/loading changes synchronously remount the scoped section; secret drafts disappear
+  and stale read/write completions are rejected. The server still owns authorization and binding.
+- Sender setup exposes only safe connection reference/version and request placeholders. It sends
+  nothing, reads no secret, and warns against unreviewed existing-source identity migration.
+
+Routing answers: (1) outcome is incoming contact connectivity; (2) Integrations owns configuration,
+Clients owns contacts; (3) existing Harness tenant/capability resolution, no new authority engine;
+(4) Spine chat-import capability remains UNAVAILABLE, not invented; (5) generic-remote-mcp canonical
+registry, n8n specialized; (6) authenticated `mcp.connections.manage` plus explicit bounded incoming
+grant, no budget or model execution authority; (7) existing receipt transaction, no new job bus;
+(8) safe generation/readback, never credential/payload; (9) existing Integrations drawer, binding
+ledger remains with its active owner; (10) authenticated owner configuration and owner-run sender
+proof are owed separately from local mock/browser/disposable-database evidence.
+
+Flow-by-Flow requires the complete state/exit proof before a green draft. Impeccable and the Paige
+UI standard constrain the extension to incumbent Mineral/Obsidian tokens, compact 432px drawer,
+one visible scroll owner, focus return, reduced motion, and exactly one existing PAIGE workspace.
+No prototype fixture logic is ported as product data. Migration content remains unchanged.
+
+1. **Configure:** authenticated Solo owner/admin enters Integrations for their server-resolved business and enables incoming contact create/update on its canonical connection. Expected-generation comparison refuses stale saves. Safe readback exposes grant/credential presence, never a secret. A new incoming-only record has no invented outbound endpoint. Owner-facing controls are implemented in this draft; local rendered proof is separate from authenticated production acceptance, which remains BLOCKED.
 2. **Receive:** an external sender presents its per-connection credential, connection reference, generation, stable event UUID, external contact ID and source timestamp. Neither target business nor owner may come from the request. Contact, addresses, optional assignment, external identity and safe receipt commit together. Same event/payload replays the existing receipt; changed content under that ID is refused. Older source data is refused. A lost acknowledgement retries the same event, never a fresh event to guess success.
 3. **Revoke/rotate/disconnect:** owner updates the generation under a row lock. Waiting writers re-check the committed credential/grant; old credentials cannot write. Grantor suspension/demotion also refuses new events. Re-enabling a connection does not restore a cleared incoming grant.
-4. **Switch/leave/retry:** an owner's active business is never the ingestion target. Wrong-business configuration calls fail. Leaving an unfinished configuration must not grant anything; the UI cancellation and late-response paths remain unimplemented/unverified here. Paige read/import from MCP through the shared governed tool path is still owed; this inbound sender contract is not a shortcut for Paige to grant herself authority.
+4. **Switch/leave/retry:** an owner's active business is never the ingestion target. Wrong-business configuration calls fail. Dirty cancellation requires keep/discard, clears discarded credentials, and does not dispatch a write. Account changes discard the old drawer and reject late completions. Unconfirmed saves require a fresh read and a deliberate new attempt against the current generation, never automatic resubmission. Unconfirmed creation requires record inspection and explicit separate-source intent before another creation. Paige read/import from MCP through the shared governed tool path is still owed; this inbound sender contract is not a shortcut for Paige to grant herself authority.
 
 Dependency/regression map: existing canonical `mcp_connections`, management capability/resolver, contact-method validators/writers and tenant constraints, assignment stamping/RLS, existing MCP receipt stream, bridge router/rate limiter, real PostgreSQL proof runner and existing Linux database-contract entrypoint. No second tenant lookup, connection store, scheduler, secret store, receipt stream, chat workspace, memory or authority engine.
 
@@ -26,7 +72,7 @@ Collision audit enumerated all 50 open PR heads/files. #585 is owner-parked, not
 - Authority: `mcp.connections.manage` for human grant/rotation/revocation; service-only incoming writer validates the connection-specific credential, generation and live grantor capability. No billing/spend authorization.
 - Durability: one PostgreSQL transaction and existing receipt idempotency; no new job queue. Governed outbound work/leases/reconciliation remain separate unfinished objective work.
 - Readback: committed contact ID/action plus replay bit, safe optional-phone warning. Raw contact data/credential never enters the receipt. No new Rail publication is claimed.
-- Visible surface/binding ledger: existing Integrations remains unchanged; no row-state upgrade. UI configuration and actual authenticated/runtime proof are still owed, not inferred from database tests.
+- Visible surface/binding ledger: the existing Integrations drawer owns the approved incoming configuration path; no new shell, store, or row-state upgrade. Actual authenticated/runtime proof is still owed, not inferred from database or synthetic-browser tests. The binding ledger remains with its active owner.
 
 ## Contract and deletions
 
@@ -36,7 +82,7 @@ Deleted: owner-email/active-workspace destination resolution for `upsert_contact
 
 The `ghl_contact_id` input is only a compatibility spelling of external_id, not vendor-specific routing. No existing legacy external ID is silently assigned to a connection. Legacy sender transition, including contacts whose email changed, must be reconciled with the owner before cutover; an email match alone is not proof of source identity.
 
-## Executed proof and limitations
+## Backend proof history and limitations
 
 - Failing-first: missing `create_mcp_inbound_connection` on the baseline (SQLSTATE 42883, exit 1); missing-name adapter test failed before its fix; restored legacy mirror constraint fails with SQLSTATE 23514.
 - Disposable PostgreSQL: `node scripts/proof/mcp-oauth-database.mjs`, 15 proof groups PASS. Real canonical permission helpers, address writers/table constraints, provenance constraint, stamping trigger and assignment policy are used; unrelated dependency shapes remain minimal, NOT a full production schema replay.
@@ -68,9 +114,11 @@ The recheck enumerated 51 open PR heads/files. Direct overlaps remain only the
 owner-parked #917/#754/#574 config documentation and #585 bridge router. #1591 is
 still open at `a958a41ca38e7ffe4c3c318a80c9de82080d1c52`; its earlier migration is
 not recorded in production. Main remains `cfcdc62001e677816dba4a4c915788ed117a65ff`.
-The owner authorized continuation through merge; that authorization does not turn
-the missing owner setup/prototype, sender transition, or failed checks into proof.
-The UI evidence guard correctly remains failed until that material flow is proved.
+At that historical checkpoint, owner setup/prototype and sender transition were
+missing, so the UI evidence guard correctly failed. The prototype has since been
+approved and the owner UI implemented; current evidence is recorded separately in
+docs/evidence/ui-delivery/mcp-contact-binding.md. Authorization does not turn missing
+authenticated configuration or sender-transition evidence into a pass.
 
 ## Release hold and migration authorization
 

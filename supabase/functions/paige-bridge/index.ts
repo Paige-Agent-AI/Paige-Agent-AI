@@ -10,7 +10,7 @@ import {
   findFirstClientByEmailAnyWorkspace,
   withPrimaryAddresses,
 } from "../_shared/contact-methods.ts";
-import { upsertContactMirror } from "./contact-mirror.ts";
+import { bridgeRateLimit, handleContactSyncRequest } from "./contact-mirror.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -40,29 +40,6 @@ function fail(verb: string, status: number, error: string, details?: unknown) {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
     status,
   });
-}
-
-function splitName(full?: string | null): { first: string; last: string } {
-  const s = (full ?? "").trim();
-  if (!s) return { first: "Unknown", last: "" };
-  const idx = s.indexOf(" ");
-  if (idx < 0) return { first: s, last: "" };
-  return { first: s.slice(0, idx), last: s.slice(idx + 1).trim() };
-}
-
-async function resolveOwnerUserId(): Promise<string | null> {
-  const { data: owner } = await supabase
-    .from("app_settings_owner")
-    .select("owner_email")
-    .limit(1)
-    .maybeSingle();
-  if (!owner?.owner_email) return null;
-  // auth admin lookup
-  const { data: list } = await supabase.auth.admin.listUsers();
-  const u = list?.users?.find(
-    (x) => (x.email ?? "").toLowerCase() === String(owner.owner_email).toLowerCase(),
-  );
-  return u?.id ?? null;
 }
 
 // ---------- verb schemas ----------
@@ -115,20 +92,6 @@ const LogMessageSendSchema = z.object({
 });
 
 const TierEnum = z.enum(["lead","standard","premium","vip","internal","staff","free"]);
-
-const UpsertContactMirrorSchema = z.object({
-  email: z.string().email(),
-  first_name: z.string().max(100).nullable().optional(),
-  last_name: z.string().max(100).nullable().optional(),
-  full_name: z.string().max(200).nullable().optional(),
-  phone: z.string().max(50).nullable().optional(),
-  source: z.string().max(50).nullable().optional(),
-  tier: TierEnum.nullable().optional(),
-  ghl_contact_id: z.string().max(100).nullable().optional(),
-  custom_fields: z.record(z.any()).optional(),
-  assigned_to_email: z.string().email().nullable().optional(),
-  metadata: z.record(z.any()).optional(),
-});
 
 const NotifyAdminSchema = z.object({
   severity: z.enum(["info", "warning", "urgent"]).default("info"),
@@ -198,6 +161,12 @@ Deno.serve(async (req) => {
   let verb = "unknown";
 
   try {
+    const body = await req.json().catch(() => null) as { verb?: string; payload?: unknown } | null;
+    if (body?.verb === "upsert_contact_mirror") {
+      // No legacy global-key fallback: the transactional writer authenticates this connection
+      // and resolves its fixed business. Unrelated legacy verbs retain their current routing.
+      return await handleContactSyncRequest(supabase, req, body.payload);
+    }
     if (!BRIDGE_API_KEY) return fail(verb, 500, "Bridge not configured");
 
     const auth = req.headers.get("Authorization") ?? "";
@@ -211,28 +180,8 @@ Deno.serve(async (req) => {
     }
 
 
-    // Coarse rate limit per-IP (best-effort; reuses api_rate_limits sentinel uuid).
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "0.0.0.0";
-    try {
-      // Sentinel user id derived from ip for bucketing
-      const enc = new TextEncoder().encode(ip);
-      const hash = await crypto.subtle.digest("SHA-256", enc);
-      const bytes = new Uint8Array(hash).slice(0, 16);
-      // Make a deterministic uuid v4-ish
-      bytes[6] = (bytes[6] & 0x0f) | 0x40;
-      bytes[8] = (bytes[8] & 0x3f) | 0x80;
-      const hex = Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
-      const sentinel = `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-      const { data: allowed } = await supabase.rpc("check_rate_limit", {
-        _user_id: sentinel,
-        _function_name: "paige-bridge",
-        _max_requests: 600,
-        _window_minutes: 1,
-      });
-      if (allowed === false) return fail(verb, 429, "Rate limit exceeded");
-    } catch { /* swallow rate-limit errors */ }
+    if (!(await bridgeRateLimit(supabase, req))) return fail(verb, 429, "Rate limit exceeded");
 
-    const body = await req.json().catch(() => null) as { verb?: string; payload?: unknown } | null;
     if (!body || typeof body.verb !== "string") {
       return fail(verb, 400, "Body must be { verb, payload }");
     }
@@ -355,45 +304,6 @@ Deno.serve(async (req) => {
           .single();
         if (error) throw error;
         return ok(verb, data);
-      }
-
-      // -----------------------------------------------------------------
-      case "upsert_contact_mirror": {
-        const p = UpsertContactMirrorSchema.parse(payload);
-        const emailLower = p.email.toLowerCase();
-        const fallback = splitName(p.full_name);
-        const first = (p.first_name ?? fallback.first ?? "Unknown").trim();
-        const last = (p.last_name ?? fallback.last ?? "").trim();
-
-        const ownerId = await resolveOwnerUserId();
-        if (!ownerId) return fail(verb, 500, "Platform owner not resolvable for created_by");
-
-        const { data: ownerProfile } = await supabase.from("profiles")
-          .select("active_tenant_id").eq("user_id", ownerId).maybeSingle();
-        const tenantId = ownerProfile?.active_tenant_id ?? null;
-        if (!tenantId) return fail(verb, 409, "tenant_not_resolved");
-
-        const nowIso = new Date().toISOString();
-
-        // Resolve assigned user mapping (auth.users by email)
-        let assignedUserId: string | null = null;
-        if (p.assigned_to_email) {
-          const { data: list } = await supabase.auth.admin.listUsers();
-          const u = list?.users?.find(
-            (x) => (x.email ?? "").toLowerCase() === p.assigned_to_email!.toLowerCase(),
-          );
-          assignedUserId = u?.id ?? null;
-        }
-
-        // Match by the external CRM id, then by ANY email a contact here holds; update it, or create
-        // the contact with its addresses in one transaction (contact-mirror.ts).
-        const mirrored = await upsertContactMirror(supabase, {
-          tenantId, ownerId, emailLower, first, last,
-          phone: p.phone ?? null, tier: p.tier ?? null, ghlContactId: p.ghl_contact_id ?? null,
-          source: p.source ?? null, assignedUserId, nowIso,
-        });
-        if (!mirrored.ok) return fail(verb, 409, mirrored.error, mirrored.details);
-        return ok(verb, mirrored.data);
       }
 
       // -----------------------------------------------------------------

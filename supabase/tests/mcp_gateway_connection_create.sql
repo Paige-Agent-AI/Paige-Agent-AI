@@ -716,3 +716,5 @@ ROLLBACK;
 
 -- Keep the supplementary-header contract in this already-executed Linux database CI entry.
 \ir mcp_connection_header_bundle.sql
+-- Fixed-business intake is part of the same canonical connection contract, not a new CI workflow.
+\ir mcp_connection_contact_binding.sql

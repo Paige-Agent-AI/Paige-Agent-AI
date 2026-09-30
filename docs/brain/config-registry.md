@@ -436,7 +436,7 @@ Repo: **`Paige-Agent-AI/Paige-Agent-AI`** (✅ this is the accessible repo for G
 
 - **Supabase MCP** — project `xygzykjyynhzqytbqnzu`; used for all prod queries above. ✅ connected.
 - **Stripe MCP** — read; account `acct_1TvndiLUcYKxolNa`. ✅ connected.
-- **GitHub MCP** — repo `mrmogulmaker-bot/paige-agent-ai`. ✅ connected.
+- **GitHub MCP** — repo `Paige-Agent-AI/Paige-Agent-AI`; organization repository confirmed during the 2026-09-30 Integrations grounding.
 - **ElevenLabs MCP** — ⚠ **disconnected** this session (voice facts sourced from repo instead).
 - No `.mcp.json` committed in-repo (✅ checked) — MCP wiring is session/host-level, not repo config.
 - Other connectors surfaced but **not authorized** this session (OAuth required, non-interactive):
@@ -522,6 +522,18 @@ Values intentionally omitted.
 - **Observability:** Sentry (`SENTRY_DSN`), PostHog (`POSTHOG_API_KEY`/`POSTHOG_HOST`).
 - **Zapier bridge:** `call-zapier-action` edge fn (Paige→Zapier). Platform/bridge keys:
   `PAIGE_MCP_PLATFORM_KEY`, `PAIGE_BRIDGE_API_KEY`, `PAIGE_OS_CLAUDE_PLATFORM_KEY`.
+- **Incoming contact binding (draft; NOT deployed):** `paige-bridge` contact ingestion is replaced
+  by `sync_mcp_connection_contact`, bound to `mcp_connections.connection_id/tenant_id` rather than
+  an owner's open workspace. `get_mcp_contact_sync`, `create_mcp_inbound_connection` and
+  `set_mcp_contact_sync` use the existing server-resolved management capability. Incoming credential
+  values are never returned: only `inbound_contact_secret_hash` is retained on that same canonical
+  connection, with grantor, generation and enabled state. This credential is distinct from an
+  outbound provider token; it authenticates the sender into Paige, not Paige into the provider.
+  No new environment secret or secret store. `mcp_connection_contacts` maps source identity to
+  canonical contacts; `mcp_connection_receipts` retains safe transaction outcomes. Named migration
+  authorization, owner configuration UI and sender cutover remain release gates. See
+  `../delivery/mcp-contact-binding.md`. Unrelated legacy bridge verbs still use the existing global
+  key and have NOT been certified tenant-safe by this change.
 - **Zapier MCP server address (verified live 2026-09-05):** the address a tenant pastes is
   **`https://mcp.zapier.com/api/v1/connect`** — OAuth, HTTP transport, and the copy-to-clipboard
   form carries a query string. The older `/api/mcp/s/<secret>/mcp` shape is token-auth and still

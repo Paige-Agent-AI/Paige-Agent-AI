@@ -25,7 +25,7 @@ import {
   primaryPhonesForUsers,
   setUserPrimaryAddress,
 } from "../../supabase/functions/_shared/user-contact-methods";
-import { isUsableMirroredPhone, upsertContactMirror } from "../../supabase/functions/paige-bridge/contact-mirror";
+import { upsertContactMirror } from "../../supabase/functions/paige-bridge/contact-mirror";
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -289,292 +289,90 @@ describe("Paige's MCP create_contact creates a contact and its addresses togethe
   });
 });
 
-type MirrorCall = { table: string; op: string; payload?: unknown; filters: Array<[string, unknown]> };
-type HeldMethod = { kind: "email" | "phone"; value: string; label: string | null; is_primary: boolean; position: number };
-
-// A stand-in for the service client paige-bridge holds: `clients` answers the ghl-id lookup,
-// client_id_for_address answers the any-address lookup, `client_contact_methods` answers with the
-// list the contact holds, and every write and rpc is recorded. `writeError` refuses the
-// address-writing rpcs; `createError` refuses only the one-transaction create; `updateError`
-// refuses the contact-row update; `undoError` refuses the checked replace that puts a list back
-// (the second checked replace of a call). `byGhl` / `byEmail` may be a list: one answer per
-// lookup, in order. `ghlElsewhere` answers whether another workspace holds the external id.
-function bridgeDb(opts: {
-  byGhl?: string | null | Array<string | null>;
-  ghlElsewhere?: string | null;
-  byEmail?: string | null | Array<string | null>;
-  held?: HeldMethod[];
-  writeError?: { code: string; message: string } | null;
-  createError?: { code: string; message: string } | null;
-  updateError?: { code?: string; message: string } | null;
-  undoError?: { message: string } | null;
-} = {}) {
-  const calls: MirrorCall[] = [];
-  let checkedReplaces = 0;
-  let lookups = 0;
-  let ghlLookups = 0;
-  const rpc = vi.fn(async (fn: string, args: Record<string, unknown>) => {
-    if (fn === "client_id_for_address") {
-      calls.push({ table: fn, op: "lookup", payload: args, filters: [] });
-      const answer = Array.isArray(opts.byEmail) ? opts.byEmail[lookups] : opts.byEmail;
-      lookups += 1;
-      return { data: answer ?? null, error: null };
-    }
-    calls.push({ table: fn, op: "rpc", payload: args, filters: [] });
-    if (fn === "_replace_client_contact_methods_checked") {
-      checkedReplaces += 1;
-      if (checkedReplaces > 1 && opts.undoError) return { data: null, error: opts.undoError };
-    }
-    if (opts.writeError) return { data: null, error: opts.writeError };
-    if (fn === "_create_client_with_contact_methods") {
-      return opts.createError ? { data: null, error: opts.createError } : { data: "created-id", error: null };
-    }
-    if (fn === "_replace_client_contact_methods_checked") {
-      const methods = args._methods as Array<Omit<HeldMethod, "position">>;
-      return { data: methods.map((m, position) => ({ ...m, position })), error: null };
-    }
-    return { data: null, error: null };
-  });
-  const from = vi.fn((table: string) => {
-    const filters: Array<[string, unknown]> = [];
-    let op = "select";
-    let payload: unknown;
-    const answer = () => {
-      if (op === "update" && table === "clients" && opts.updateError) return { data: null, error: opts.updateError };
-      if (op !== "select") return { data: null, error: null };
-      if (table === "clients" && filters.some(([c]) => c === "tenant_id!=")) {
-        return { data: opts.ghlElsewhere ? { id: opts.ghlElsewhere } : null, error: null };
-      }
-      if (table === "clients") {
-        const id = Array.isArray(opts.byGhl) ? opts.byGhl[ghlLookups] : opts.byGhl;
-        ghlLookups += 1;
-        return { data: id ? { id } : null, error: null };
-      }
-      if (table === "client_contact_methods") return { data: opts.held ?? [], error: null };
-      return { data: null, error: null };
-    };
-    const q: Record<string, unknown> = {
-      select: () => q, limit: () => q, order: () => q,
-      eq: (c: string, v: unknown) => { filters.push([c, v]); return q; },
-      neq: (c: string, v: unknown) => { filters.push([`${c}!=`, v]); return q; },
-      in: (c: string, v: unknown) => { filters.push([c, v]); return q; },
-      maybeSingle: () => Promise.resolve(answer()),
-      insert: (p: unknown) => { op = "insert"; payload = p; calls.push({ table, op, payload, filters }); return q; },
-      update: (p: unknown) => { op = "update"; payload = p; calls.push({ table, op, payload, filters }); return q; },
-      upsert: (p: unknown) => { op = "upsert"; payload = p; calls.push({ table, op, payload, filters }); return q; },
-      delete: () => { op = "delete"; calls.push({ table, op, filters }); return q; },
-      then: (res: (v: unknown) => unknown) => Promise.resolve(answer()).then(res),
-    };
-    return q;
-  });
-  return { db: { rpc, from }, calls };
-}
-
-describe("paige-bridge mirrors an external contact through its contact methods", () => {
-  const base = {
-    tenantId: "t1", ownerId: "owner-1", emailLower: "ada@example.test", first: "Ada", last: "Lovelace",
-    phone: "555-010-0101", tier: "premium", ghlContactId: null, source: null, assignedUserId: "coach-1",
-    nowIso: "2026-09-29T00:00:00.000Z",
+// Atomic address preservation, phone validation, assignment rollback and event replay require
+// real transaction proof in supabase/tests/mcp_connection_contact_binding.sql.
+// These adapter tests prove delegation and safe acknowledgement only.
+describe("paige-bridge delegates a connection-bound contact sync", () => {
+  const input = {
+    connectionId: "20000000-0000-4000-8000-000000000021",
+    credential: "test-incoming-secret-not-a-real-credential",
+    generation: 3,
+    eventId: "20000000-0000-4000-8000-000000000031",
+    externalId: "external-contact-1",
+    sourceUpdatedAt: "2026-09-29T00:00:00.000Z",
+    contact: { email: "ada@example.test", first_name: "Ada", last_name: "Lovelace",
+      phone: "555-010-0101", tier: "premium", source: "connection_sync", assigned_to_email: "owner@example.test" },
   };
-  const held: HeldMethod[] = [
-    { kind: "email", value: "ada@example.test", label: null, is_primary: true, position: 0 },
-    { kind: "phone", value: "555-000-0000", label: "work", is_primary: true, position: 0 },
-    { kind: "phone", value: "555-999-9999", label: null, is_primary: false, position: 1 },
-  ];
+  const receipt = { client_id: "20000000-0000-4000-8000-000000000041", action: "created", replayed: false };
 
-  it("creates a new contact with its email and phone in ONE call, never an email on the clients row", async () => {
-    const { db, calls } = bridgeDb();
-    const out = await upsertContactMirror(db, base);
-    expect(out).toEqual({ ok: true, data: { client_id: "created-id", action: "created" } });
-    const create = calls.find((c) => c.table === "_create_client_with_contact_methods");
-    expect(create?.payload).toEqual({
-      _tenant_id: "t1",
-      _client: {
-        first_name: "Ada", last_name: "Lovelace", mirror_source: "mma_os", last_mirrored_at: base.nowIso, tier: "premium",
-        created_by: "owner-1", status: "active", source: "mma_bridge", lifecycle_stage: "new_lead", created_by_channel_type: "import",
-      },
-      _methods: [{ kind: "email", value: "ada@example.test" }, { kind: "phone", value: "555-010-0101" }],
+  it("sends exactly one transactional RPC and supplies no caller-selected tenant or actor", async () => {
+    const db = { rpc: vi.fn().mockResolvedValue({ data: receipt, error: null }), from: vi.fn() };
+    expect(await upsertContactMirror(db, input)).toEqual({ ok: true, data: receipt });
+    expect(db.rpc).toHaveBeenCalledExactlyOnceWith("sync_mcp_connection_contact", {
+      _connection_id: input.connectionId, _secret: input.credential, _generation: input.generation,
+      _event_id: input.eventId, _external_id: input.externalId,
+      _source_updated_at: input.sourceUpdatedAt, _contact: input.contact,
     });
-    // One create: no contact row written on its own, no address written after it.
-    expect(calls.filter((c) => c.table === "clients" && c.op !== "select")).toEqual([]);
-    expect(calls.filter((c) => c.op === "rpc").map((c) => c.table)).toEqual(["_create_client_with_contact_methods"]);
-    // The coach is assigned to the contact that was created.
-    expect(calls.find((c) => c.table === "paige_coach_assignments")).toMatchObject({
-      op: "insert", payload: { contact_id: "created-id", assigned_role: "lead_owner", rep_user_id: "coach-1" },
-    });
+    expect(db.from).not.toHaveBeenCalled();
   });
 
-  it("creates a new contact without an unusable phone, and says the phone was not saved", async () => {
-    const { db, calls } = bridgeDb();
-    const out = await upsertContactMirror(db, { ...base, phone: "12" });
-    expect(out).toEqual({ ok: true, data: { client_id: "created-id", action: "created", phone_not_saved: "not a usable phone number" } });
-    expect((calls.find((c) => c.table === "_create_client_with_contact_methods")?.payload as { _methods: unknown })._methods)
-      .toEqual([{ kind: "email", value: "ada@example.test" }]);
-  });
-
-  it("matches a contact by ANY email it holds, and makes the phone its primary in place, keeping the rest", async () => {
-    const { db, calls } = bridgeDb({ byEmail: "held-id", held });
-    const out = await upsertContactMirror(db, base);
-    expect(out).toEqual({ ok: true, data: { client_id: "held-id", action: "updated" } });
-    expect(calls.some((c) => c.table === "_create_client_with_contact_methods")).toBe(false);
-    // The new number takes the primary's place (and its label); the other number and the email
-    // stay; the write names the list it was built on, so a concurrent change is never overwritten.
-    expect(calls.find((c) => c.table === "_replace_client_contact_methods_checked")?.payload).toEqual({
-      _tenant_id: "t1", _client_id: "held-id",
-      _methods: [
-        { kind: "email", value: "ada@example.test", label: null, is_primary: true },
-        { kind: "phone", value: "555-010-0101", label: "work", is_primary: true },
-        { kind: "phone", value: "555-999-9999", label: null, is_primary: false },
-      ],
-      _expected: held.map(({ position: _p, ...m }) => m),
-    });
-    expect(calls.some((c) => c.table === "_add_client_contact_methods")).toBe(false);
-    const update = calls.find((c) => c.table === "clients" && c.op === "update");
-    expect(update?.payload).not.toHaveProperty("phone");
-    expect(update?.payload).not.toHaveProperty("email");
-    expect(update?.filters).toEqual([["id", "held-id"], ["tenant_id", "t1"]]);
-    expect(calls.find((c) => c.table === "paige_coach_assignments")).toMatchObject({ op: "upsert", payload: { contact_id: "held-id" } });
-  });
-
-  it("matches by the external CRM id first", async () => {
-    const { db, calls } = bridgeDb({ byGhl: "ghl-match", byEmail: "other" });
-    const out = await upsertContactMirror(db, { ...base, ghlContactId: "g-1", phone: null });
-    expect(out).toEqual({ ok: true, data: { client_id: "ghl-match", action: "updated" } });
-    expect(calls.some((c) => c.op === "rpc" || c.op === "lookup")).toBe(false);
-  });
-
-  it("still mirrors a held contact when its phone is unusable, writes no phone, and says so", async () => {
-    const { db, calls } = bridgeDb({ byEmail: "held-id", held });
-    const out = await upsertContactMirror(db, { ...base, phone: "12" });
-    expect(out).toEqual({ ok: true, data: { client_id: "held-id", action: "updated", phone_not_saved: "not a usable phone number" } });
-    expect(calls.some((c) => c.op === "rpc")).toBe(false);
-    expect(calls.find((c) => c.table === "clients" && c.op === "update")).toBeDefined();
-  });
-
-  it("refuses, writing no contact update, when the database refuses a usable phone", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const { db, calls } = bridgeDb({ byEmail: "held-id", held, writeError: { code: "23505", message: "CONTACT_METHOD_TAKEN" } });
-    const out = await upsertContactMirror(db, base);
-    expect(out).toEqual({ ok: false, error: "contact_methods_not_saved: CONTACT_METHOD_TAKEN" });
-    expect(calls.filter((c) => c.table === "clients" && c.op !== "select")).toEqual([]);
-  });
-
-  it("puts the phone back when the contact-row update fails after it was written", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const { db, calls } = bridgeDb({ byEmail: "held-id", held, updateError: { message: "row refused" } });
-    await expect(upsertContactMirror(db, base)).rejects.toMatchObject({ message: "row refused" });
-    const replaces = calls.filter((c) => c.table === "_replace_client_contact_methods_checked");
-    expect(replaces).toHaveLength(2);
-    const [write, undo] = replaces.map((c) => c.payload as { _methods: unknown; _expected: unknown });
-    expect(undo._methods).toEqual(write._expected);
-    expect(undo._expected).toEqual((write._methods as Array<Record<string, unknown>>).map((m) => ({ ...m })));
-  });
-
-  it("says the phone was saved when the row update fails and the phone cannot be put back", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const { db } = bridgeDb({ byEmail: "held-id", held, updateError: { message: "row refused" }, undoError: { message: "CONTACT_METHODS_STALE" } });
-    const out = await upsertContactMirror(db, base);
-    expect(out).toEqual({ ok: false, error: "contact_update_failed_phone_saved: row refused", details: { client_id: "held-id" } });
-  });
-
-  // A refused create writes nothing: the create is the only write call, no contact-row update, and
-  // no coach assignment.
-  const wroteNothingButTheCreate = (calls: MirrorCall[]) => {
-    expect(calls.filter((c) => c.op !== "select" && c.op !== "lookup").map((c) => c.table))
-      .toEqual(["_create_client_with_contact_methods"]);
-  };
-
-  it("answers a create refused because an address is not a usable address as not saved (409), writing nothing else", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const message = "CONTACT_METHOD_INVALID_EMAIL: a@b";
-    const { db, calls } = bridgeDb({ createError: { code: "22023", message } });
-    const out = await upsertContactMirror(db, base);
-    expect(out).toEqual({ ok: false, error: `contact_methods_not_saved: ${message}` });
-    wroteNothingButTheCreate(calls);
-  });
-
-  it("updates the contact another writer created meanwhile when the create clashes on its email", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const { db, calls } = bridgeDb({
-      byEmail: [null, "raced-id"], held,
-      createError: { code: "23505", message: "CONTACT_METHOD_TAKEN: ada@example.test already belongs to another contact in this workspace" },
-    });
-    const out = await upsertContactMirror(db, base);
-    expect(out).toEqual({ ok: true, data: { client_id: "raced-id", action: "updated" } });
-    // Looked up twice (before the create, and after its clash), then the update path ran.
-    expect(calls.filter((c) => c.op === "lookup")).toHaveLength(2);
-    expect(calls.find((c) => c.table === "_replace_client_contact_methods_checked")?.payload).toMatchObject({ _client_id: "raced-id" });
-    expect(calls.find((c) => c.table === "clients" && c.op === "update")?.filters).toEqual([["id", "raced-id"], ["tenant_id", "t1"]]);
-    expect(calls.find((c) => c.table === "paige_coach_assignments")).toMatchObject({ op: "upsert", payload: { contact_id: "raced-id" } });
-  });
-
-  const ghlClash = { code: "23505", message: 'duplicate key value violates unique constraint "clients_ghl_contact_id_uniq"' };
-
-  it("updates the contact another writer created meanwhile when the create clashes on its external id", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const { db, calls } = bridgeDb({ byGhl: [null, "raced-ghl"], held, createError: ghlClash });
-    const out = await upsertContactMirror(db, { ...base, ghlContactId: "g-1" });
-    expect(out).toEqual({ ok: true, data: { client_id: "raced-ghl", action: "updated" } });
-    expect(calls.find((c) => c.table === "clients" && c.op === "update")?.filters).toEqual([["id", "raced-ghl"], ["tenant_id", "t1"]]);
-  });
-
-  it("answers 409 when another workspace's contact holds the external id — sending it again cannot succeed", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const { db, calls } = bridgeDb({ ghlElsewhere: "other-workspace-contact", createError: ghlClash });
-    const out = await upsertContactMirror(db, { ...base, ghlContactId: "g-elsewhere" });
-    // Says which case, never which workspace or contact.
-    expect(out).toEqual({ ok: false, error: "ghl_contact_id_held_elsewhere" });
-    expect(calls.filter((c) => c.op === "lookup")).toHaveLength(2);
-    wroteNothingButTheCreate(calls);
-  });
-
-  it("fails loudly (500, so the caller retries) when a unique clash finds no contact here and nothing holds the external id elsewhere", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const message = 'duplicate key value violates unique constraint "clients_tenant_account_number_uniq"';
-    const { db, calls } = bridgeDb({ createError: { code: "23505", message } });
-    await expect(upsertContactMirror(db, { ...base, ghlContactId: "g-1" })).rejects.toThrow(`contact_create_failed: ${message}`);
-    // It did look again before giving up.
-    expect(calls.filter((c) => c.op === "lookup")).toHaveLength(2);
-    wroteNothingButTheCreate(calls);
-  });
-
-  it("answers 409 when updating a held contact clashes on an external id another workspace holds, and puts the phone back", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const { db, calls } = bridgeDb({ byEmail: "held-id", held, ghlElsewhere: "other-workspace-contact", updateError: ghlClash });
-    const out = await upsertContactMirror(db, { ...base, ghlContactId: "g-elsewhere" });
-    expect(out).toEqual({ ok: false, error: "ghl_contact_id_held_elsewhere" });
-    expect(calls.filter((c) => c.table === "_replace_client_contact_methods_checked")).toHaveLength(2);
-  });
-
-  it("fails loudly (500) when a held contact's phone loses the race twice over, writing no contact update", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const { db, calls } = bridgeDb({ byEmail: "held-id", held, writeError: { code: "40001", message: "CONTACT_METHODS_STALE: the list changed" } });
-    await expect(upsertContactMirror(db, base)).rejects.toThrow(/contact_methods_write_failed: CONTACT_METHODS_STALE/);
-    expect(calls.filter((c) => c.table === "clients" && c.op !== "select")).toEqual([]);
+  it.each(["created", "updated"])("preserves the database %s and replay acknowledgement", async (action) => {
+    const data = { ...receipt, action, replayed: true, phone_not_saved: "not a usable phone number" };
+    const db = { rpc: vi.fn().mockResolvedValue({ data, error: null }), from: vi.fn() };
+    expect(await upsertContactMirror(db, input)).toEqual({ ok: true, data });
+    expect(db.rpc).toHaveBeenCalledTimes(1);
+    expect(db.from).not.toHaveBeenCalled();
   });
 
   it.each([
-    ["a refusal that is not about an address", "22023", "CONTACT_NO_TENANT: no workspace"],
-    ["a timeout", "57014", "canceling statement due to statement timeout"],
-  ])("fails loudly on %s, writing nothing else and assigning no coach", async (_why, code, message) => {
-    vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const { db, calls } = bridgeDb({ createError: { code, message } });
-    await expect(upsertContactMirror(db, base)).rejects.toThrow(`contact_create_failed: ${message}`);
-    wroteNothingButTheCreate(calls);
+    null, [], {}, { client_id: receipt.client_id }, { ...receipt, client_id: "" },
+    { ...receipt, action: "deleted" }, { ...receipt, replayed: undefined },
+    { ...receipt, replayed: "false" }, { ...receipt, client_id: 12 },
+  ])("never reports success for malformed database readback %#", async (data) => {
+    const db = { rpc: vi.fn().mockResolvedValue({ data, error: null }), from: vi.fn() };
+    const result = await upsertContactMirror(db, input);
+    expect(result).toMatchObject({ ok: false, status: 503 });
+    expect(db.from).not.toHaveBeenCalled();
   });
 
-  it("paige-bridge's upsert_contact_mirror verb runs through it, and answers a refusal with 409", () => {
-    const bridge = readFileSync("supabase/functions/paige-bridge/index.ts", "utf8");
-    const verb = bridge.slice(bridge.indexOf('case "upsert_contact_mirror"'), bridge.indexOf('case "notify_admin"'));
-    expect(verb).toContain("await upsertContactMirror(supabase, {");
-    expect(verb).toContain("if (!mirrored.ok) return fail(verb, 409, mirrored.error, mirrored.details);");
-    expect(verb).toContain("return ok(verb, mirrored.data);");
-    expect(verb).not.toMatch(/from\("clients"\)/);
+  it("projects only the safe acknowledgement, dropping raw database fields", async () => {
+    const db = { rpc: vi.fn().mockResolvedValue({
+      data: { ...receipt, credential: input.credential, tenant_id: "private-tenant", raw: "private-db-canary" }, error: null,
+    }), from: vi.fn() };
+    const result = await upsertContactMirror(db, input);
+    expect(result).toEqual({ ok: true, data: receipt });
+    expect(JSON.stringify(result)).not.toMatch(/private-|test-incoming-secret/);
   });
 
-  it("uses the database's own phone bounds to decide a phone is unusable", () => {
-    for (const phone of ["555-0101", "+1 (555) 010-0101", "123456789012345"]) expect(isUsableMirroredPhone(phone), phone).toBe(true);
-    for (const phone of [null, "12", "123456", "1234567890123456", `555-010-0101${" ".repeat(40)}`]) expect(isUsableMirroredPhone(phone), String(phone)).toBe(false);
+  it.each([
+    ["42501", "MCP_CONTACT_SYNC_FORBIDDEN", 401, "contact_sync_not_authorized"],
+    ["22023", "MCP_CONTACT_SOURCE_STALE", 409, "MCP_CONTACT_SOURCE_STALE"],
+    ["22023", "MCP_CONTACT_EVENT_CONFLICT", 409, "MCP_CONTACT_EVENT_CONFLICT"],
+    ["22023", "MCP_CONTACT_FIELDS_REFUSED", 409, "MCP_CONTACT_FIELDS_REFUSED"],
+    ["23505", "CONTACT_METHOD_TAKEN: private-db-canary", 409, "contact_sync_conflict"],
+    ["57014", "private-db-canary", 503, "contact_sync_unavailable"],
+  ] as const)(
+    "returns a closed refusal for %s/%s without raw database details or logs", async (code, message, status, error) => {
+      const logs = [vi.spyOn(console, "error"), vi.spyOn(console, "warn"), vi.spyOn(console, "log")];
+      const db = { rpc: vi.fn().mockResolvedValue({
+        data: receipt, error: { code, message, details: "private-db-canary", hint: input.credential },
+      }), from: vi.fn() };
+      const result = await upsertContactMirror(db, input);
+      expect(result).toEqual({ ok: false, status, error });
+      expect(JSON.stringify(result)).not.toMatch(/private-db-canary|test-incoming-secret|details|hint/);
+      expect(db.rpc).toHaveBeenCalledTimes(1);
+      expect(db.from).not.toHaveBeenCalled();
+      for (const log of logs) expect(log).not.toHaveBeenCalled();
+    },
+  );
+
+  it("contains rejected RPC promises without leaking or retrying a write", async () => {
+    const logs = [vi.spyOn(console, "error"), vi.spyOn(console, "warn"), vi.spyOn(console, "log")];
+    const db = { rpc: vi.fn().mockRejectedValue(new Error("private-db-canary")), from: vi.fn() };
+    expect(await upsertContactMirror(db, input)).toMatchObject({ ok: false, status: 503 });
+    expect(db.rpc).toHaveBeenCalledTimes(1);
+    expect(db.from).not.toHaveBeenCalled();
+    for (const log of logs) expect(log).not.toHaveBeenCalled();
   });
 });
 
@@ -978,18 +776,14 @@ describe("Paige's tools never overwrite an address list that changed", () => {
     expect(slice(mcp, 'mcp.tool("create_contact"', 'mcp.tool("update_contact"')).toContain("await createClientWithContactMethods(");
   });
 
-  it("mirrors an external CRM's contact without overwriting addresses, and creates no address-less contact", () => {
+  it("delegates external contact and address writes to one connection-bound transaction", () => {
     const mirror = read("supabase/functions/paige-bridge/contact-mirror.ts");
-    // An existing contact: the phone is written checked against the list held, and put back if the
-    // contact-row update then fails.
-    expect(mirror).toContain('writeAddressIntent(db, tenantId, existingId, { op: "primary", values: { phone } }, null, 2)');
-    expect(mirror).toContain("undoAddressWrite(db, tenantId, existingId, addressWrite)");
-    // A new contact: created WITH its addresses in one transaction — never inserted, then addressed,
-    // then deleted again on a refusal.
-    expect(mirror).toContain("await insertClientWithAddresses(");
-    expect(mirror).not.toMatch(/from\("clients"\)\s*\.(insert|upsert|delete)\(/);
-    expect(mirror).not.toContain("_replace_client_contact_methods\"");
-    expect(mirror).not.toContain("addClientAddresses");
+    expect(mirror).toContain('"sync_mcp_connection_contact"');
+    expect(mirror).not.toMatch(/\b(?:db|supabase)\s*\.\s*from\(/);
+    expect(mirror).not.toContain("writeAddressIntent");
+    expect(mirror).not.toContain("undoAddressWrite");
+    expect(mirror).not.toContain("insertClientWithAddresses");
+    // Persistence and rollback assertions belong to the real SQL proof, not a mock call count.
   });
 
   it("pins the address list, not a single email or phone, on a contact-edit approval", () => {

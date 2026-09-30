@@ -55,6 +55,16 @@ function lines(prefix, first, last) {
   sources.at(-1).lines = [first, last];
   return sql;
 }
+function canonicalFunction(prefix, name) {
+  const sql = source(prefix);
+  const start = sql.search(new RegExp(`CREATE (?:OR REPLACE )?FUNCTION public\\.${name}\\(`));
+  assert(start >= 0, `canonical function ${name} exists`);
+  const tail = sql.slice(start), tag = tail.match(/AS (\$[a-zA-Z_]*\$)/);
+  assert(tag, `function delimiter ${name}`);
+  const end = tail.indexOf(`${tag[1]};`, tag.index + tag[0].length);
+  assert(end > 0, `function end ${name}`);
+  return tail.slice(0, end + tag[1].length + 1);
+}
 const run = async (label, sql) => { await psql(sql); results.push({ label, status: "PASS" }); console.log(`PASS ${label}`); };
 async function portOpen() {
   return new Promise(resolve => {
@@ -88,7 +98,7 @@ for (const signal of ["SIGINT", "SIGTERM"]) process.once(signal, () => {
   void cleanup().finally(() => { report(); process.exit(signal === "SIGINT" ? 130 : 143); });
 });
 
-async function contended(cid, sql) {
+async function contended(cid, sql, release = "COMMIT;\n") {
   let holder, ready;
   const locked = new Promise(resolve => ready = resolve);
   const holding = psql(`BEGIN; SELECT connection_id FROM public.mcp_connections WHERE connection_id='${cid}' FOR UPDATE;\n\\echo LOCK_HELD\n`, {
@@ -105,7 +115,7 @@ async function contended(cid, sql) {
       assert(Date.now() < deadline, "both callback sessions must reach the lock barrier");
       await new Promise(resolve => setTimeout(resolve, 50));
     }
-    holder.stdin.end("COMMIT;\n");
+    holder.stdin.end(release);
     await holding;
     return await Promise.all(first);
   } finally {
@@ -157,6 +167,8 @@ ALTER TABLE public.tenant_members ADD COLUMN is_owner boolean NOT NULL DEFAULT f
   await psql(lines("20260714142258", 18, 31));
   await psql(lines("20260714051416", 30, 72));
   await psql(lines("20260714144656", 12, 35));
+  await psql(canonicalFunction("20260714144656", "guard_active_tenant_membership"));
+  await psql(lines("20260714142258", 170, 173));
   await psql(lines("20260629175341", 132, 155));
   await psql(lines("20260714235406", 42, 57));
   await psql(lines("20261005000000", 196, 232));
@@ -171,6 +183,35 @@ ALTER TABLE public.tenant_members ADD COLUMN is_owner boolean NOT NULL DEFAULT f
   }
   await run("authored migration applies to real canonical MCP dependency chain", source("20270517000000"));
   await run("encrypted supplementary-header migration applies", source("20270520000000"));
+  {
+    // Real canonical address writers; unrelated CRM columns/triggers are minimal.
+    await psql(`CREATE TABLE public.clients(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),tenant_id uuid NOT NULL,
+      created_by uuid,first_name text,last_name text,tier text,source text,status text,lifecycle_stage text,
+      created_by_channel_type text,mirror_source text,last_mirrored_at timestamptz,created_at timestamptz DEFAULT now(),UNIQUE(id,tenant_id));
+      CREATE TABLE public.paige_coach_assignments(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),tenant_id uuid,contact_id uuid,
+      assigned_role text,rep_user_id uuid,active boolean,metadata jsonb);
+      CREATE UNIQUE INDEX paige_coach_assignments_unique_active ON public.paige_coach_assignments(contact_id,assigned_role) WHERE active=true;`);
+    await psql(lines("20260628021641", 9, 15));
+    await psql(canonicalFunction("20260629180214", "stamp_tenant_id"));
+    await psql(canonicalFunction("20251009234919", "has_role"));
+    await psql(`CREATE TRIGGER trg_stamp_tenant_id BEFORE INSERT ON public.paige_coach_assignments
+      FOR EACH ROW EXECUTE FUNCTION public.stamp_tenant_id();
+      ALTER TABLE public.paige_coach_assignments ENABLE ROW LEVEL SECURITY;
+      GRANT SELECT,UPDATE ON public.paige_coach_assignments TO authenticated;
+      CREATE POLICY "Admins and coaches write coach assignments" ON public.paige_coach_assignments FOR ALL TO authenticated USING(false);`);
+    await psql(lines("20270503000000", 75, 79));
+    await psql(canonicalFunction("20270515000000", "contact_method_match_key"));
+    // Use the real table constraints/indexes, not a loose surrogate that hides uniqueness failures.
+    await psql(lines("20270515000000", 57, 87));
+    for (const name of ["contact_methods_canonical", "_client_contact_methods_json", "_replace_client_contact_methods", "client_id_for_address"])
+      await psql(canonicalFunction("20270515000000", name));
+    await psql(canonicalFunction("20270519010000", "_add_client_contact_methods"));
+    await psql(canonicalFunction("20270519005000", "_create_client_with_contact_methods"));
+    if (!process.argv.includes("--contact-baseline"))
+      await run("connection-bound contact migration applies", source("20270522000000"));
+    if (process.argv.includes("--inject-legacy-mirror-constraint")) await psql(lines("20260628021641", 13, 15));
+    await run("fixed-business incoming contact contract", `\\i '${join(root, "supabase/tests/mcp_connection_contact_binding.sql").replaceAll("\\", "/")}'`);
+  }
   for (const file of ["mcp_gateway_oauth_state_and_hardenings.sql", "mcp_oauth_refuses_the_rest_facet.sql", "mcp_gateway_oauth_grant_writer.sql", "mcp_gateway_endpoint_setter.sql", "mcp_gateway_connection_create.sql"]) {
     // \i preserves nested \ir resolution, unlike piping SQL as if it were the file.
     await run(file, `\\i '${join(root, "supabase/tests", file).replaceAll("\\", "/")}'`);
@@ -203,6 +244,25 @@ INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner) VALUES
       assert.equal(denied.code, 3); assert.match(denied.stderr, /permission denied for function/);
     }
     results.push({ label: `${role} cannot consume state or complete a grant`, status: "PASS" });
+  }
+  {
+    const contactId = (await psql(`${claims} SELECT public.create_mcp_inbound_connection('test-contact-concurrency')->>'connection_id';`)).stdout.trim();
+    await psql(`${claims} SELECT public.set_mcp_contact_sync('${contactId}',true,'test-race-incoming-secret-not-a-credential',0);`);
+    const sync = `SET ROLE service_role; SELECT public.sync_mcp_connection_contact('${contactId}',
+      'test-race-incoming-secret-not-a-credential',1,'20000000-0000-4000-8000-000000000201',
+      'test-race-contact','2026-09-01T12:00:00Z','{"email":"test-race-contact@example.test"}')->>'replayed';`;
+    const replay = await contended(contactId,sync);
+    assert(replay.every(result => result.code===0), JSON.stringify(replay));
+    assert.deepEqual(replay.map(result => result.stdout.trim()).sort(),["false","true"]);
+    assert.equal((await psql(`SELECT count(*) FROM public.mcp_connection_receipts WHERE connection_id='${contactId}' AND tool_name='paige.inbound.contacts.sync';`)).stdout.trim(),"1");
+    results.push({ label: "two real service-role sessions commit one contact and one replay receipt", status: "PASS" });
+    // Both old-credential writers reach the row lock BEFORE the holder revokes and commits.
+    // No timing-based assumption: the helper observes both sessions waiting on PostgreSQL locks.
+    const denied = await contended(contactId,sync.replace("000000000201","000000000202"),
+      `${claims} SELECT public.set_mcp_contact_sync('${contactId}',false,NULL,1); COMMIT;\n`);
+    assert(denied.every(result => result.code===3 && /MCP_CONTACT_SYNC_FORBIDDEN/.test(result.stderr)),JSON.stringify(denied));
+    assert.equal((await psql(`SELECT count(*) FROM public.mcp_connection_receipts WHERE connection_id='${contactId}' AND tool_name='paige.inbound.contacts.sync';`)).stdout.trim(),"1");
+    results.push({ label: "revocation commits before waiting writers; both old credentials fail without writes", status: "PASS" });
   }
   console.log(`PASS ${results.length} PostgreSQL proof groups, including the nested header contract and real concurrent role sessions`);
 } catch (error) { failure = error.message; process.exitCode = 1; console.error(failure); }

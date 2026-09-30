@@ -34,3 +34,13 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 
 Ordinary-extension boundary: no new DESIGN.md or durable visual-system change; preserve incumbent
 tokens. Screenshots are synthetic structural proof, not authenticated/provider proof. No raster ships.
+
+## Incoming-contact extension (owner approved 2026-09-30)
+
+Approved flow artifact SHA-256: DEC245DA605622F2DCD2F7744C3F8C8444F50D9B2483800052100A909ACB5703.
+Reuse this drawer and one scroll owner for safe grant readback, owner-entered dedicated credential,
+create/update consent, replacement, revocation and sender instructions. Business, effective permission,
+credential presence and saved version are separate facts. Uncertain requests never say Saved or
+automatically repeat; read current state and obtain a new deliberate decision. Dirty editor exits
+preserve Keep editing, scope changes clear secrets immediately, and sender instructions do not execute.
+The incoming-only entry has no invented outbound address or false unavailable-outbound-as-incoming status.

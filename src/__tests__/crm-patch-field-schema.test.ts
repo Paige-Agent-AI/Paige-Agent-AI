@@ -37,7 +37,12 @@ function validate(toolName: string, patch: Record<string, unknown>) {
   if (!schema) throw new Error(`no CRM tool named ${toolName} carries a patch schema`);
   const ajv = new Ajv({ allErrors: true, strict: false });
   const v = ajv.compile(schema);
-  const ok = v(patch);
+  v(patch);
+  // This file validates ALLOWLIST MEMBERSHIP — which fields a tool's patch may carry. Field
+  // requiredness is a separate contract (contact.create requires both name parts; pinned by the
+  // chat-adoption suite and by the executor's incomplete-name refusal), so a `required` error on
+  // a deliberately partial fixture is not an allowlist verdict.
+  const ok = (v.errors ?? []).every((e: ErrorObject) => e.keyword === "required");
   const offending = (v.errors ?? [])
     .filter((e: ErrorObject) => e.keyword === "additionalProperties")
     .map((e: ErrorObject) => String(e.params.additionalProperty));

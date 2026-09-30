@@ -170,9 +170,13 @@ describe("relaxing the narrow cannot let model argument drift reach the write", 
     // The atomic compare-and-set claim reads the stored args back...
     expect(CRM_COMMAND).toMatch(/\.eq\("fingerprint", body\.approved_fingerprint\)[\s\S]{0,600}?\.select\("args"\)/);
     expect(CRM_COMMAND).toContain("if (!claimError && stored) claimedArgs = stored;");
-    // ...and what executes is the DECIDED command, never `body.command`.
+    // ...and what executes is the DECIDED command, never `body.command`. The INT-140 canonical
+    // boundary wraps the decided command (display-form name normalization plus the identity
+    // envelope the replay hash reads) — decidedCommand stays the sole basis and the request
+    // body still never reaches the executor.
     expect(CRM_COMMAND).toContain("const decidedCommand = object(decidedArgs?.command);");
-    expect(CRM_COMMAND).toMatch(/const executionCommand = \{\s*\.\.\.decidedCommand,/);
+    expect(CRM_COMMAND).toMatch(/const canonicalExecutionCommand = canonicalizeCrmCommand\(\{\s*\.\.\.decidedCommand,/);
+    expect(CRM_COMMAND).toContain("const executionCommand = crmCommandExecutionPayload(canonicalExecutionCommand, body.legacyCommand);");
     expect(CRM_COMMAND).toContain("_command: executionCommand,");
   });
 });

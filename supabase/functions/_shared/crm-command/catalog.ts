@@ -284,7 +284,14 @@ const CONTACT_LIFECYCLE_STAGES = [
 // name - never to invent a missing part. The field allowlist stays the generated registry
 // (patchSchemaFor) so the schema cannot drift from the executor's accepted fields.
 function contactCreatePatchSchema() {
-  const base = patchSchemaFor("contact.create");
+  // contact.create always has registry fields, so the union's bare-fallback arm is unreachable
+  // here; narrow once rather than weakening patchSchemaFor's return type for every action.
+  const base = patchSchemaFor("contact.create") as {
+    type: string;
+    description?: string;
+    additionalProperties?: boolean;
+    properties: Record<string, Record<string, unknown>>;
+  };
   return {
     ...base,
     required: ["first_name", "last_name"],

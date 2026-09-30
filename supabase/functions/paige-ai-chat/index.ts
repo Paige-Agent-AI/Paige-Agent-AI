@@ -323,8 +323,6 @@ function describeStep(
     case "presence_who_online": return { label: "Checking who's online", group: "owner" };
     case "presence_is_online": return { label: "Checking if someone's online", group: "owner" };
     case "crm_assign_contact": return { label: "Assigning the contact", group: "owner" };
-    case "program_list": return { label: "Reviewing your programs", group: "owner" };
-    case "program_enroll": return { label: "Enrolling them in the program", group: "client" };
     // Pipeline (owner)
     case "pipeline_create": return { label: "Building your pipeline", group: "owner" };
     case "pipeline_add_stage": return { label: "Adding a pipeline stage", group: "owner" };
@@ -2458,7 +2456,7 @@ JSON:`;
       // and therefore protect the turn. Legacy non-command receipts remain ids/argument echoes only.
       "update_business_profile", "crm_update_pipeline_stage", "crm_assign_contact",
       "pipeline_create", "pipeline_add_stage",
-      "member_grant_role", "member_revoke_role", "calendar_book_meeting", "program_enroll",
+      "member_grant_role", "member_revoke_role", "calendar_book_meeting",
       // Action bus, plans, marketplace, authoring — ids and acknowledgements.
       "action_file", "action_advance",
       "mission_create", "mission_revise", "mission_transition",
@@ -5268,6 +5266,8 @@ The current user is an ADMIN operating the Paige CRM. You have full read access 
 - "Archive that pipeline" → require one exact PPL reference. Call pipeline_archive_preview, state the returned exact name, reference, deal count, and consequence, wait for the owner's confirmation, then call pipeline_configure with the same token and confirmed reference. Archive never inherits auto mode and hard delete is unavailable.
 - "Organize my pipelines" → pipeline_catalogue returns tenant folders (including empty folders), virtual Unfiled, and each exact pipeline/folder binding even with zero deals. Use pipeline_configure to create, rename, restore, or move exact pipelines by id + PPL reference. Folder archive is owner-only and always confirm-gated: call pipeline_folder_archive_preview for the exact folder id, state its returned name, pipeline count, and consequence, wait for the owner confirmation card, then pass the same token/id/name to pipeline_configure. Folders are one level only and never alter stages, deals, or pipeline identity.
 - "Add a deal for Jane, $3k, in Proposal" → resolve the exact pipeline, stage, and contact from current CRM reads, then call deal_create with value in cents.
+- "Enroll this client in my program" → enrollment IS deal_create: add their deal in that program's pipeline at its Enrolled stage, resolved from current reads.
+- More than one active pipeline carrying the program's exact name → show every pipeline with the same name and its PPL reference, then ask which one to use — never guess, merge, or create the enrollment before the operator picks.
 - "Move the Acme deal to Won" → read the exact deal and target stage, including their current version fields, then call deal_move_stage.
 - For any CRM mutation, use only the governed crm_* or deal_* command tool currently exposed in this turn. Never reuse remembered IDs or versions, invent an approval, or retry an unknown outcome with changed arguments.
 - Ownership, close/reopen, merge, hard-delete, bulk, and permanent task/deal deletion are approval-card operations. Explain the exact preview and wait; the operator's prose alone is not an approval token.
@@ -6369,29 +6369,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   role: { type: "string", enum: ["coach", "owner", "sales_rep", "cs"], description: "Which seat to fill. Default coach." }
                 },
                 required: ["contact_id", "user_id"]
-              }
-            }
-          },
-          {
-            type: "function",
-            function: {
-              name: "program_list",
-              description: "Team only. List the programs and offers loaded for this tenant, priority/current-campaign first. Use to recommend the right program during onboarding and to resolve a program name to its id before enrolling.",
-              parameters: { type: "object", properties: {} }
-            }
-          },
-          {
-            type: "function",
-            function: {
-              name: "program_enroll",
-              description: "Team only. Enroll a contact into a program/offer. Resolve the program via program_list first. Confirm with the operator before enrolling. Idempotent — re-enrolling returns the existing enrollment.",
-              parameters: {
-                type: "object",
-                properties: {
-                  contact_id: { type: "string", description: "clients.id of the contact." },
-                  program_id: { type: "string", description: "programs.id from program_list." }
-                },
-                required: ["contact_id", "program_id"]
               }
             }
           },
@@ -7560,7 +7537,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       member_grant_role: "granting a staff role",
       member_revoke_role: "revoking a staff role",
       calendar_book_meeting: "booking a meeting",
-      program_enroll: "enrolling a client in a program",
       draft_marketing_content: "drafting marketing content",
       generate_image: "generating an image",
       content_save: "saving content",
@@ -8026,8 +8002,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           return `Revoke the "${a?.role || ""}" role from a team member.`;
         case "calendar_book_meeting":
           return `Book "${a?.title || "meeting"}"${a?.start_at ? ` at ${a.start_at}` : ""}${a?.end_at ? `–${a.end_at}` : ""}${a?.timezone ? ` (${a.timezone})` : ""}.`;
-        case "program_enroll":
-          return `Enroll the client in this program.`;
         case "draft_marketing_content":
           return `Draft ${a?.variations || 1} ${a?.channel || "content"} piece(s).`;
         case "generate_image":
@@ -10119,8 +10093,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           tc.function.name === "presence_who_online" ||
           tc.function.name === "presence_is_online" ||
           tc.function.name === "crm_assign_contact" ||
-          tc.function.name === "program_list" ||
-          tc.function.name === "program_enroll" ||
           N8N_MANAGEMENT_TOOL_NAMES.has(tc.function.name) ||
           tc.function.name === "zapier_list_actions" ||
           tc.function.name === "zapier_run_action" ||
@@ -12376,20 +12348,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               });
               if (error) throw error;
               result = { success: true, ...(data as any) };
-            } else if (tc.function.name === "program_list") {
-              const { data, error } = await supabaseClient.rpc("list_tenant_programs", {
-                p_tenant_id: personaCtx?.tenant_id ?? null,
-              });
-              if (error) throw error;
-              result = { success: true, count: (data as any[])?.length ?? 0, programs: data ?? [] };
-            } else if (tc.function.name === "program_enroll") {
-              const { data, error } = await supabaseClient.rpc("enroll_contact_in_program", {
-                p_contact_id: args.contact_id,
-                p_program_id: args.program_id,
-                p_tenant_id: personaCtx?.tenant_id ?? null,
-              });
-              if (error) throw error;
-              result = { success: true, ...(data as any) };
             } else if (tc.function.name === "crm_log_activity") {
               crmWriteAttempted = true; // slice 3 (F05): dispatching the external write
               const { data: row, error } = await admin
@@ -13353,7 +13311,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // jargon-free wording so the rail reads like the live trace.
       const RAIL_CRM_TOOLS = new Set([
         "crm_update_contact", "crm_create_contact", "crm_log_activity",
-        "crm_assign_contact", "crm_assign_coach", "crm_update_pipeline_stage", "program_enroll",
+        "crm_assign_contact", "crm_assign_coach", "crm_update_pipeline_stage",
       ]);
       const RAIL_ACTION_TOOLS = new Set(["calendar_book_meeting", "crm_create_task", "crm_add_note", "crm_file_document"]);
       /**
@@ -13400,7 +13358,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         crm_update_task: "tasks", crm_assign_task: "tasks", crm_reschedule_task: "tasks",
         crm_complete_task: "tasks", crm_reopen_task: "tasks", crm_cancel_task: "tasks", crm_delete_task: "tasks",
         crm_assign_contact: "clients", crm_assign_coach: "clients", crm_update_pipeline_stage: "clients",
-        program_enroll: "clients", update_client_data: "clients",
+        update_client_data: "clients",
         crm_log_activity: "client_notes", crm_add_note: "client_notes", crm_file_document: "client_files", crm_create_task: "tasks", plan_assign_task: "tasks",
         update_business_profile: "tenants",
         pipeline_create: "pipelines", pipeline_add_stage: "pipelines",

@@ -135,7 +135,6 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   // ── high: becomes visible to a client, or goes public ─────────────────────────────────────
   ["growth_page_publish", "high", "puts a page live at a public URL"],
   ["growth_funnel_publish", "high", "puts a whole sequence live"],
-  ["program_enroll", "high", "enrols a real person into a programme"],
   // The evaluation loop's DECIDE leg (Runway 4 / #1123), the sign-off half of the `improvement_propose`
   // pair above. It records the owner's approve/reject on a `paige_improvement_proposals` row and
   // applies nothing (there is no auto-apply path — it flips status, decided_by, rationale only). It

@@ -122,6 +122,41 @@ authenticated configuration or sender-transition evidence into a pass.
 
 ## Release hold and migration authorization
 
+### Approved incoming owner UI: current proof
+
+Product revision `97298887c409f87138bcdaa030278c95d4e09a05` extends the existing drawer,
+not the shell or provider transport. A failed/lost save never says Saved. Unknown creation
+never repeats automatically; the owner must inspect current records and explicitly choose a
+separate source. Unknown grants require a fresh read and a newly consented CAS attempt.
+An earlier request winning the race makes the second attempt stale, not a duplicate grant.
+The entered credential is cleared at dispatch and is never read back or logged.
+
+The browser drive found two issues missed by the initial rendered tests: removing an action
+could leave focus on body and send Escape to the shell; passive dirty-state propagation could
+let immediate input/Escape discard an unsaved draft. Both have failing-first regression tests
+and bounded corrections. Focus returns to the incoming heading only when a removed control
+leaves body active. Dirty state is reported synchronously from incoming input events and read
+by the existing drawer before closing; unrelated boolean dirty callers retain their contract.
+
+Deleted in this UI addition: false outbound check/readiness presentation for canonical records
+with no outbound address, and effect-delayed incoming dirty-state propagation. No alternative
+provider transport, sender, secret store, authority engine or legacy execution path was added.
+
+Executed commands (exit 0 unless explicitly stated):
+
+- `npx vitest run src/solo/settings-integrations-incoming.test.tsx src/solo/settings-integrations-gateway.test.tsx src/solo/data/useMcpGateway.tenant.test.tsx src/solo/data/useMcpContactSync.test.tsx src/__tests__/mcp-contact-binding.test.ts src/__tests__/contact-methods-edge.test.ts src/solo/settings.rendered-copy.test.tsx src/solo/settings-contract.test.ts`: 335 tests, eight files PASS.
+- `node scripts/proof/mcp-oauth-database.mjs`: 15 PostgreSQL groups PASS; fresh `outputs/mcp-oauth-database/run-oso0z3/report.json` records started=true/stopped=true. No production connection.
+- `npx eslint` on the six owned frontend/test files: zero errors; three inherited gateway warnings. New hook/UI/test files are warning-free.
+- `node scripts/ci/integration-registry-lint.mjs`: 29 providers, six groups, 74 valid anchors. `node scripts/ci/migration-version-collision-lint.mjs`: 1120 unique versions.
+- `node scripts/ci/regression-lint.mjs` and `git diff --check`: PASS. The UI evidence guard validates an attestation, not runtime capability.
+- Independent non-writer reviewer `incoming_ui_adversarial`: bounded product PASS at the exact revision above; separately ran 202 tests for the initial corrections and 132 tests for the dirty-state repair. No source finding remains in that reviewed scope. Sender/production release holds are separate.
+
+Fresh dependency audit still FAILS on inherited advisories (seven affected package entries,
+two high/four moderate/one low); exact advisory identifiers and installed versions were filed
+on issue #1565. Neither manifest nor lockfile changes here. Findings are routed, not resolved
+or waived; no unrelated dependency upgrade is absorbed. Whole bridge lint's five baseline
+errors remain separately recorded rather than misrepresented as a globally clean lint result.
+
 Keep DRAFT. Do not deploy the bridge replacement without a working authenticated owner configuration path and prepared sender transition. Schema authorization alone does not waive this hold or grant production data/configuration writes.
 
 Production's newest applied migration was read live as `20270520000000_mcp_connection_header_bundle` on 2026-09-30. Pending #1591 has `20270521000000`; sequencing must preserve it before this draft's `20270522000000`. Refresh open migrations and production ledger immediately before any release. Never use `--include-all` or renumber another lane.

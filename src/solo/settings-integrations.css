@@ -461,6 +461,23 @@ p.ig-gw-foot { margin: 0 0 10px; }
 .ig-field-bad input { border-color: var(--pg-negative); }
 
 .ig-gw-seg { display: flex; flex-wrap: wrap; gap: 5px; margin: 0 0 12px; }
+.ig-gw-config-fields { display: grid; gap: 12px; border: 0; padding: 0; margin: 0; min-inline-size: 0; }
+.ig-gw-info.ig-gw-saved { display: block; }
+.ig-gw-saved p { margin: 8px 0 0; }
+.ig-gw-config-fields .ig-gw-seg-auth { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ig-gw-config-fields .ig-gw-seg-auth button { min-height: 40px; }
+.ig-gw-header-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; margin-block: 14px; padding-block: 12px; border-block-start: 1px solid var(--pg-line); }
+.ig-gw-header-row .ig-field { min-width: 0; margin: 0; }
+.ig-gw-header-row > .ig-btn { grid-column: 1 / -1; justify-self: end; }
+.ig-gw-config-fields :disabled { cursor: not-allowed; }
+.ig-layer[data-mcp-gateway] .ig-panel-body { overscroll-behavior-y: contain; scrollbar-width: thin; scrollbar-color: var(--pg-muted) var(--pg-surface); scrollbar-gutter: stable; }
+.ig-layer[data-mcp-gateway] .ig-panel-body::-webkit-scrollbar { width: 10px; height: 10px; }
+.ig-layer[data-mcp-gateway] .ig-panel-body::-webkit-scrollbar-thumb { background: var(--pg-muted); border: 2px solid var(--pg-surface); border-radius: 8px; }
+.ig-layer[data-mcp-gateway] .ig-panel-body::-webkit-scrollbar-track { background: var(--pg-surface); }
+.ig-layer[data-mcp-gateway] .ig-panel-body:focus-visible { outline: 2px solid var(--pg-violet); outline-offset: -2px; }
+@media (forced-colors: active) {
+  .ig-layer[data-mcp-gateway] .ig-panel-body { scrollbar-color: auto; }
+}
 .ig-gw-seg button { min-height: 28px; padding: 0 11px; border: 1px solid var(--pg-line); border-radius: 8px; background: var(--pg-surface); color: var(--pg-muted); font: 650 10.5px/1 var(--pg-font-data); cursor: pointer; transition: border-color .14s ease, color .14s ease, background .14s ease; }
 .ig-gw-seg button:hover { color: var(--pg-ink); border-color: var(--pg-line-strong); }
 .ig-gw-seg button.on { color: var(--pg-ink); border-color: color-mix(in srgb, var(--pg-violet) 62%, var(--pg-line)); background: color-mix(in srgb, var(--pg-violet) 12%, var(--pg-raised)); }

@@ -33,14 +33,9 @@ import {
   type UseMcpGateway,
 } from "./data/useMcpGateway";
 
-/* ── Provider catalogue (browse the gateway) ──────────────────────────────────
-   Ported from the approved pack: each vendor's connect-mode reflects its real MCP capability
-   (researched 2026-09-22). mode: connect = one-click sign-in, WIRED as of Slice ④ (it runs the
-   gateway's oauth_begin door; it read "coming soon" only while no browser could reach that door);
-   key = paste a key/token; setup = platform pre-registration pending; zapier = no direct path,
-   bridge via Zapier. `legacy` routes n8n/Zapier/social tiles to
-   the existing live drawers rather than the gateway add flow. `verify` is a research-only tag and is
-   never rendered to a tenant. */
+/* Catalogue classifications are entry hints, never authentication decisions.
+ * Executable MCP entries open the same explicit-choice form. Canonical registry reconciliation
+ * remains a separately scoped part of the owner-approved full objective. */
 type CatMode = "connect" | "key" | "setup" | "zapier" | "review";
 /** The three catalogue entries whose connect flow is already shipped elsewhere on this
  *  surface. Their tiles route to the live drawers rather than reimplementing them (§58). */
@@ -171,8 +166,8 @@ const CATALOGUE: ReadonlyArray<CatItem> = [
 ];
 
 const MODE_LABEL: Record<CatMode, string> = {
-  connect: "Sign in",
-  key: "Paste key",
+  connect: "Configure MCP",
+  key: "Configure MCP",
   setup: "Setup needed",
   zapier: "Use Zapier",
   review: "Not cleared yet",
@@ -312,6 +307,33 @@ export function connectionDisplayName(c: GatewayConnection): string {
 /* ── Drawer wrapper (matches the incumbent .ig-panel dialog idiom) ─────────────
    Same focus trap, Escape, focus-restore and dirty-guard as LegacyProviderPanel/N8nDrawer, so this
    surface's overlays behave identically to the ones already shipped. */
+function focusVisible(element: HTMLElement | null) {
+  element?.focus({ preventScroll: true });
+  element?.scrollIntoView?.({ block: "nearest", behavior: "instant" });
+}
+
+function DiscardPrompt({ label, onDiscard, onKeep }: {
+  label: string; onDiscard: () => void; onKeep: () => void;
+}) {
+  const keepRef = useRef<HTMLButtonElement>(null);
+  const returnRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (!returnRef.current) returnRef.current = document.activeElement as HTMLElement | null;
+    focusVisible(keepRef.current);
+    keepRef.current?.closest('[role="alertdialog"]')?.scrollIntoView?.({ block: "nearest", behavior: "instant" });
+  }, []);
+  const keepEditing = () => {
+    onKeep();
+    if (returnRef.current?.isConnected) focusVisible(returnRef.current);
+  };
+  return <div className="ig-confirm-close" role="alertdialog" aria-label={label}>
+    <p>Discard these unsaved details?</p><div className="ig-actions">
+      <button type="button" className="ig-btn" data-danger onClick={onDiscard}>{label === "Discard changes" ? "Discard them" : "Discard details"}</button>
+      <button ref={keepRef} type="button" className="ig-btn" data-keep-editing onClick={keepEditing}>Keep editing</button>
+    </div>
+  </div>;
+}
+
 function GatewayDrawer({
   title,
   eyebrow,
@@ -341,41 +363,41 @@ function GatewayDrawer({
   }, []);
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") { requestClose(); return; }
+      if (event.key === "Escape") {
+        event.preventDefault();
+        const keep = panelRef.current?.querySelector<HTMLButtonElement>("[data-keep-editing]");
+        if (keep) keep.click(); else requestClose();
+        return;
+      }
       if (event.key !== "Tab") return;
       const panel = panelRef.current;
       if (!panel) return;
+      const focusScope = panel.querySelector<HTMLElement>('[role="alertdialog"]') ?? panel;
       const focusable = Array.from(
-        panel.querySelectorAll<HTMLElement>('button, input, select, textarea, a[href], [tabindex]:not([tabindex="-1"])'),
-      ).filter((el) => !el.hasAttribute("disabled") && el.offsetParent !== null);
+        focusScope.querySelectorAll<HTMLElement>('button, input, select, textarea, a[href], [tabindex]:not([tabindex="-1"])'),
+      ).filter((el) => !el.matches(":disabled") && el.offsetParent !== null);
       if (focusable.length === 0) return;
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
       const active = document.activeElement;
       if (!event.shiftKey && active === last) { event.preventDefault(); first.focus(); }
       else if (event.shiftKey && active === first) { event.preventDefault(); last.focus(); }
-      else if (!panel.contains(active)) { event.preventDefault(); first.focus(); }
+      else if (!focusScope.contains(active)) { event.preventDefault(); first.focus(); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [requestClose]);
   return (
-    <div className="ig-layer" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) requestClose(); }}>
+    <div className="ig-layer" data-mcp-gateway role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) requestClose(); }}>
       <aside className="ig-panel" ref={panelRef} role="dialog" aria-modal="true" aria-labelledby="ig-gw-title">
         <header>
           <span className="ss-provider-mark" data-provider-mark="mcp" aria-hidden>gw</span>
           <div><span className="ig-gw-eyebrow">{eyebrow}</span><h2 id="ig-gw-title">{title}</h2></div>
           <button ref={closeRef} type="button" className="ig-close" onClick={requestClose} aria-label={`Close ${title}`}><X aria-hidden size={16} /></button>
         </header>
-        <div className="ig-panel-body">
+        <div className="ig-panel-body" tabIndex={0} role="region" aria-label="Tool setup and details">
           {confirmingClose && (
-            <div className="ig-confirm-close" role="alertdialog" aria-label="Discard changes">
-              <p>You have unsaved details here. Close anyway?</p>
-              <div className="ig-actions">
-                <button type="button" className="ig-btn" data-danger onClick={onClose}>Discard them</button>
-                <button type="button" className="ig-btn" onClick={() => setConfirmingClose(false)}>Keep editing</button>
-              </div>
-            </div>
+            <DiscardPrompt label="Discard changes" onDiscard={onClose} onKeep={() => setConfirmingClose(false)} />
           )}
           {children}
         </div>
@@ -385,299 +407,196 @@ function GatewayDrawer({
   );
 }
 
-/* ── Add flow ─────────────────────────────────────────────────────────────────
-   The catalogue IS the add path (§18). A tile picks the facet + prefills the endpoint; the form then
-   collects only the credential that auth_kind uses. OAuth ("connect") is an honest stop until the
-   sign-in step ships; Zapier/n8n route to the existing live panel; "setup" is an honest stop. */
-type AddPreset = { facet: "generic-remote" | "n8n-rest"; authKind: GatewayAuthKind; label?: string; url?: string };
-const AUTH_KINDS: ReadonlyArray<{ k: GatewayAuthKind; label: string }> = [
-  { k: "bearer", label: "Bearer token" },
-  { k: "header", label: "Custom header" },
-  { k: "url", label: "URL only" },
-  { k: "none", label: "No key" },
+/* Shared owner-chosen configuration; no provider-name authentication routing. */
+type AddPreset = { label?: string; url?: string };
+type AuthenticationChoice = "oauth" | "bearer" | "headers" | "none";
+const AUTH_CHOICES: ReadonlyArray<{ value: AuthenticationChoice; label: string }> = [
+  { value: "oauth", label: "OAuth" },
+  { value: "bearer", label: "Token" },
+  { value: "headers", label: "Token + headers" },
+  { value: "none", label: "None" },
 ];
 
-function AddToolForm({ gw, preset, onDirtyChange, onDone }: { gw: UseMcpGateway; preset: AddPreset; onDirtyChange: (dirty: boolean) => void; onDone: () => void }) {
-  const [facet, setFacet] = useState(preset.facet);
-  const [authKind, setAuthKind] = useState<GatewayAuthKind>(preset.authKind);
-  const [label, setLabel] = useState(preset.label ?? "");
-  const [url, setUrl] = useState(preset.url ?? "");
+/** One configuration form for preset/custom entry and replacement. A host is never an endpoint.
+ * The encrypted address stays private; replacement deliberately requires its complete value.
+ * Acknowledgement, durable readback, OAuth and provider checking are separate transitions. */
+function ConnectionForm({ gw, preset = {}, tool, onDirtyChange, onCancel, onSaved }: {
+  gw: UseMcpGateway;
+  preset?: AddPreset;
+  tool?: GatewayConnection;
+  onDirtyChange: (dirty: boolean) => void;
+  onCancel: () => void;
+  onSaved: (connection: GatewayConnection) => void;
+}) {
+  const [label, setLabel] = useState(tool?.label ?? preset.label ?? "");
+  const [url, setUrl] = useState(tool ? "" : preset.url ?? "");
+  // New connections require an explicit choice, even when opened from a named preset.
+  const initialAuth: AuthenticationChoice | null = tool
+    ? tool.authKind === "oauth" ? "oauth" : tool.authKind === "bearer"
+      ? (tool.customHeaderCount ? "headers" : "bearer") : tool.authKind === "header" ? "headers" : "none"
+    : null;
+  const [auth, setAuth] = useState<AuthenticationChoice | null>(initialAuth);
   const [token, setToken] = useState("");
-  const [headerName, setHeaderName] = useState("");
-  const [bad, setBad] = useState<Record<string, boolean>>({});
+  const [primaryHeader, setPrimaryHeader] = useState(tool?.authKind === "header" ? "" : "Authorization");
+  const [headers, setHeaders] = useState<Array<{ name: string; value: string }>>([]);
   const [message, setMessage] = useState<string | null>(null);
-
-  const isRest = facet === "n8n-rest";
-  const needsKey = isRest || authKind === "bearer" || authKind === "header";
-  // Dirty means the owner typed something, not merely that the form is open: warning about
-  // discarding an untouched form trains people to click through the warning that matters.
-  const dirty =
-    label.trim() !== (preset.label ?? "").trim() ||
-    url.trim() !== (preset.url ?? "").trim() ||
-    token.trim() !== "" ||
-    headerName.trim() !== "";
+  const [busy, setBusy] = useState(false);
+  const [ack, setAck] = useState<{ id: string; generation: number | null } | null>(null);
+  const [confirmed, setConfirmed] = useState<GatewayConnection | null>(null);
+  const [validation, setValidation] = useState<Record<string, string>>({});
+  const [discarding, setDiscarding] = useState(false);
+  const formRef = useRef<HTMLDivElement>(null);
+  const receiptRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (ack) focusVisible(receiptRef.current); }, [ack, confirmed]);
+  useEffect(() => {
+    if (Object.keys(validation).length) {
+      focusVisible(formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]') ?? null);
+    }
+  }, [validation]);
+  const alive = useRef(true);
+  const pending = useRef(false);
+  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
+  const dirty = !ack && (Boolean(token) || headers.length > 0 || auth !== initialAuth
+    || url !== (tool ? "" : preset.url ?? "") || label !== (tool?.label ?? preset.label ?? ""));
   useEffect(() => { onDirtyChange(dirty); }, [dirty, onDirtyChange]);
-  const isHttps = (v: string) => /^https:\/\/[^\s]+\.[^\s]+/i.test(v.trim());
-  /** Host-only, so a path or a version segment ("/v1.10.2/") can never be read as a private address.
-   *  This mirrors the server's own endpoint guard; the server remains the authority. */
-  const isPrivate = (v: string) => {
-    const raw = v.trim();
-    if (/^http:/i.test(raw)) return true;
-    let host: string;
-    try { host = new URL(raw).hostname.toLowerCase(); } catch { return false; }
-    return (
-      host === "localhost" ||
-      host.endsWith(".local") ||
-      host.endsWith(".internal") ||
-      /^127\./.test(host) ||
-      /^10\./.test(host) ||
-      /^192\.168\./.test(host) ||
-      /^169\.254\./.test(host) ||
-      /^172\.(1[6-9]|2\d|3[01])\./.test(host)
-    );
-  };
-
-  const submit = async () => {
-    const next: Record<string, boolean> = {};
-    if (!label.trim()) next.label = true;
-    if (!isHttps(url) || isPrivate(url)) next.url = true;
-    if (needsKey && !token.trim()) next.token = true;
-    // INT-153, mirrored client-side: the server refuses a bearer/header credential under 12 chars
-    // with MCP_CREDENTIAL_TOO_SHORT. Saying so in the field beats spending a round trip to be told.
-    // Deliberately keyed on the REAL auth kind, so the n8n API-key facet — which the server does not
-    // gate — is never refused here for a rule that does not apply to it.
-    if (!isRest && needsKey && token.trim() && credentialTooShort(authKind, token)) next.short = true;
-    if (facet === "generic-remote" && authKind === "header" && !headerName.trim()) next.header = true;
-    setBad(next);
-    if (Object.keys(next).length) { setMessage(null); return; }
-    const result = isRest
-      ? await gw.createRest({ label: label.trim(), baseUrl: url.trim(), apiKey: token.trim() })
-      : await gw.createMcp({ providerKey: "generic-remote", label: label.trim(), serverUrl: url.trim(), authKind, authToken: token.trim() || null, authHeaderName: headerName.trim() || null });
-    if (result.ok) { onDone(); return; }
-    // Dropped or not-yet-ready is not a refusal — nothing was sent, so claim nothing (§13).
-    if (result.code === "MCP_BUSY" || result.code === "MCP_NOT_READY") return;
-    setMessage(result.message ?? "That didn’t go through. Check the details and try again.");
-  };
-
-  return (
-    <>
-      {message && <div className="ig-error" role="alert"><TriangleAlert aria-hidden size={14} /><span>{message}</span></div>}
-      <div className="ig-gw-seg" role="group" aria-label="How should Paige reach this tool?">
-        <button type="button" className={facet === "generic-remote" ? "on" : ""} aria-pressed={facet === "generic-remote"} onClick={() => { setFacet("generic-remote"); setAuthKind("bearer"); }}>Remote MCP server</button>
-        <button type="button" className={facet === "n8n-rest" ? "on" : ""} aria-pressed={facet === "n8n-rest"} onClick={() => { setFacet("n8n-rest"); setAuthKind("bearer"); }}>n8n — API key</button>
-      </div>
-      <label className={`ig-field${bad.label ? " ig-field-bad" : ""}`}><span>Name</span>
-        <input type="text" autoComplete="off" placeholder="e.g. HighLevel" value={label} onChange={(e) => setLabel(e.target.value)} aria-invalid={bad.label || undefined} aria-describedby={bad.label ? "ig-gw-add-label-err" : undefined} />
-        {bad.label && <small className="ig-gw-err" id="ig-gw-add-label-err">Enter a name.</small>}
-      </label>
-      <label className={`ig-field${bad.url ? " ig-field-bad" : ""}`}><span>{isRest ? "Base URL" : "Server URL"}</span>
-        <input type="url" autoComplete="off" spellCheck={false} placeholder={isRest ? "https://your-instance.app.n8n.cloud" : "https://services.example.com/mcp"} value={url} onChange={(e) => setUrl(e.target.value)} aria-invalid={bad.url || undefined} aria-describedby={bad.url ? "ig-gw-add-url-note ig-gw-add-url-err" : "ig-gw-add-url-note"} />
-        <small id="ig-gw-add-url-note">Only public https:// addresses work. Local, private and non-HTTPS addresses are refused.</small>
-        {bad.url && <small className="ig-gw-err" id="ig-gw-add-url-err">Enter a public https:// address.</small>}
-      </label>
-      {!isRest && (
-        <div className="ig-gw-seg ig-gw-seg-auth" role="group" aria-label="How does it authenticate?">
-          {AUTH_KINDS.map((a) => (
-            <button key={a.k} type="button" className={authKind === a.k ? "on" : ""} aria-pressed={authKind === a.k} onClick={() => setAuthKind(a.k)}>{a.label}</button>
-          ))}
-        </div>
-      )}
-      {(isRest || authKind === "header") && authKind === "header" && !isRest && (
-        <label className={`ig-field${bad.header ? " ig-field-bad" : ""}`}><span>Header name</span>
-          <input type="text" autoComplete="off" placeholder="X-Api-Key" value={headerName} onChange={(e) => setHeaderName(e.target.value)} aria-invalid={bad.header || undefined} aria-describedby={bad.header ? "ig-gw-add-header-err" : undefined} />
-          {bad.header && <small className="ig-gw-err" id="ig-gw-add-header-err">Enter the header name.</small>}
-        </label>
-      )}
-      {needsKey && (
-        <label className={`ig-field${bad.token ? " ig-field-bad" : ""}`}><span>{isRest ? "API key" : authKind === "header" ? "Value" : "Bearer token"}</span>
-          <input type="password" autoComplete="off" placeholder={isRest ? "n8n_api_…" : "token…"} value={token} onChange={(e) => setToken(e.target.value)} aria-invalid={bad.token || bad.short || undefined} aria-describedby={bad.token || bad.short ? "ig-gw-add-token-note ig-gw-add-token-err" : "ig-gw-add-token-note"} />
-          <small id="ig-gw-add-token-note">Stored encrypted. Paige never shows it back — to change it later you replace it.</small>
-          {bad.token && <small className="ig-gw-err" id="ig-gw-add-token-err">Enter the {isRest ? "API key" : "token"}.</small>}
-          {bad.short && <small className="ig-gw-err" id="ig-gw-add-token-err">That looks too short. Paste the full {isRest ? "key" : "token"} — it needs at least {MCP_CREDENTIAL_MIN_LENGTH} characters.</small>}
-        </label>
-      )}
-      <div className="ig-actions ig-gw-actions">
-        <button type="button" className="ig-btn" onClick={onDone}>Cancel</button>
-        <button type="button" className="ig-btn" data-primary disabled={gw.saving} onClick={() => void submit()}>{gw.saving ? "Adding…" : "Add tool"}</button>
-      </div>
-    </>
-  );
-}
-
-/* ── Sign in with the provider (the Slice ② OAuth spine, reached at last) ─────
-   WHY THIS SHAPE, AND WHY IT IS TWO STEPS.
-
-   `oauth_begin` acts on a connection that already EXISTS — it reads that row's server URL, runs the
-   OAuth 2.1 discovery spine against it (RFC 9728 protected-resource → RFC 8414 metadata → RFC 7591
-   dynamic client registration), stores a PKCE flow, and hands back one authorize URL. So a provider
-   the tenant has never added has to become a row first.
-
-   The row is created with `auth_kind: "none"`, and that is deliberate rather than a placeholder.
-   `get_mcp_connection_secret` treats a row as configured when it has an endpoint AND either a stored
-   credential or an auth kind of `none`/`url` (migration 20270326000000). So a `none` row with a
-   server URL is configured — which is exactly what `oauth_begin` requires and refuses without
-   (`connection_unconfigured`). Creating it as `oauth` instead is impossible on purpose: that bundle
-   REQUIRES a token, an issuer and a client id up front, and those are the very things the sign-in is
-   about to produce. The grant itself lands out of band in the JWT-less `mcp-oauth-callback`, which is
-   where the provider redirects.
-
-   This is why every "connect" tile in the catalogue used to be an honest stop reading "Sign-in soon".
-   The flow existed on the backend; no browser could reach it. Now it can. */
-/** No `onDone`: a successful begin NAVIGATES away, so there is no success state to return to here.
- *  The person comes back through the provider redirect, not through this component. */
-function SignInFlow({ gw, item, onCancel }: { gw: UseMcpGateway; item: CatItem; onCancel: () => void }) {
-  const [label, setLabel] = useState(item.n);
-  const [url, setUrl] = useState(item.url ?? "");
-  const [bad, setBad] = useState<Record<string, boolean>>({});
-  const [message, setMessage] = useState<string | null>(null);
-  const [step, setStep] = useState<"form" | "starting">("form");
-  /** The row created by a previous attempt whose `oauth_begin` then failed. Kept so a retry
-   *  RESUMES that shell instead of trying to create it again. Without this a transient
-   *  discovery/DCR failure was unrecoverable in place: re-creating hits MCP_DUPLICATE_LABEL on
-   *  the same label, Re-key renders no key field for a credential-less row, and the saved row's
-   *  drawer offers "Sign in again" only for `auth_kind === "oauth"` — so the only recovery that
-   *  actually worked was deleting the connection and starting over. Caught in review. */
-  const [shellId, setShellId] = useState<string | null>(null);
-  /** The address the shell was created with, so an edited one can actually be applied on retry. */
-  const [shellUrl, setShellUrl] = useState<string | null>(null);
-  const isHttps = (v: string) => /^https:\/\/[^\s]+\.[^\s]+/i.test(v.trim());
-
-  const begin = async () => {
-    const next: Record<string, boolean> = {};
-    if (!label.trim()) next.label = true;
-    if (!isHttps(url)) next.url = true;
-    setBad(next);
-    if (Object.keys(next).length) { setMessage(null); return; }
+  const choose = (choice: AuthenticationChoice) => {
+    if (choice === auth) return;
+    setAuth(choice);
+    setToken("");
+    setPrimaryHeader("Authorization");
+    setHeaders([]);
+    setValidation({});
     setMessage(null);
-    setStep("starting");
-
-    // 1. The row. `none` carries no credential, which is what makes it creatable before sign-in.
-    //    A retry after a failed begin RESUMES the shell it already made rather than creating a
-    //    second one, which would only earn MCP_DUPLICATE_LABEL on the same label.
-    let connectionId = shellId;
-    if (connectionId && shellUrl !== null && shellUrl !== url.trim()) {
-      // The owner took the advice and corrected the address. Re-key the saved shell BEFORE
-      // discovery, or the retry would run against the same bad endpoint and fail identically —
-      // making "fix the address and press Sign in again" another instruction with nothing behind
-      // it, which is the very defect the retry fix was closing. Caught in review.
-      const rekeyed = await gw.rekeyMcp(connectionId, url.trim(), "none");
-      if (!rekeyed.ok) {
-        setStep("form");
-        if (rekeyed.code === "MCP_BUSY" || rekeyed.code === "MCP_NOT_READY") return;
-        setMessage(rekeyed.message ?? "That new address couldn't be saved. Check it and try again.");
-        return;
-      }
-      setShellUrl(url.trim());
-    }
-    if (!connectionId) {
-      const created = await gw.createMcp({
-        providerKey: "generic-remote",
-        label: label.trim(),
-        serverUrl: url.trim(),
-        authKind: "none",
-      });
-      if (!created.ok || !created.connectionId) {
-        setStep("form");
-        // A dropped or not-yet-ready write was never refused, so claiming a failure would be a lie (§13).
-        if (created.code === "MCP_BUSY" || created.code === "MCP_NOT_READY") return;
-        setMessage(created.message ?? "That didn't go through. Check the details and try again.");
-        return;
-      }
-      connectionId = created.connectionId;
-      setShellId(connectionId);
-      setShellUrl(url.trim());
-    }
-
-    // 2. The flow. The tool now EXISTS either way — if discovery fails the owner keeps a real row
-    //    they can re-key by hand, which is why this reports rather than silently rolling back.
-    const flow = await gw.beginOAuth(connectionId);
-    if (!flow.ok || !flow.authorizeUrl) {
-      setStep("form");
-      if (flow.code === "MCP_BUSY" || flow.code === "MCP_NOT_READY") return;
-      // The row EXISTS now, so the copy must not imply nothing happened — but it must also not
-      // name a control this row does not have. It was created with NO credential, and Re-key
-      // renders no key field for a credential-less tool (its `needsKey` is false) and cannot
-      // change a tool's sign-in type at all. Telling the owner to "add a key instead" was an
-      // instruction with nothing behind it (§70.1) — caught by the peer-gate before it shipped.
-      //
-      // THE ROW-EXISTS CLAUSE IS UNCONDITIONAL, and that is the whole point. It used to be the
-      // `??` FALLBACK, reached only when the edge supplied no message — so for every refusal that
-      // DID map, including the ones this retry path exists for, the owner was told "That didn't
-      // go through" while the Name field directly below read "Saved under this name." Two
-      // statements, opposite meanings, one panel. The banner was the one that was wrong: the
-      // connection was written, only the sign-in failed, and an owner who believed the banner
-      // would later find a tool in their list that they were told was never created.
-      // Every unit test passed straight through this; a rendered frame is what caught it.
-      //
-      // The shared map cannot fix it, because it serves callers for whom a refusal genuinely
-      // means no write occurred. So the reason comes from the map and the consequence comes from
-      // here — and its generic line is swapped out, being false on this path by construction.
-      const why =
-        !flow.message || flow.message === MCP_GATEWAY_GENERIC_REFUSAL
-          ? mcpGatewayMessage("oauth_begin_failed")
-          : flow.message;
-      setMessage(
-        `${why} ${label.trim() || item.n} is saved under that name — correct the address and press Sign in again, or remove it.`,
-      );
+  };
+  const confirm = async (saved: { id: string; generation: number | null }) => {
+    const row = await gw.confirmSaved(saved.id, saved.generation);
+    if (!alive.current) return;
+    if (!row) {
+      setMessage("We could not confirm the saved configuration. Retry confirmation before saving again or checking this tool.");
       return;
     }
-
-    // 3. Leave. The callback returns to Integrations using routing facts held in single-use,
-    // server-owned PKCE state. No browser return address or account identity supplies authority.
-    window.location.assign(flow.authorizeUrl);
+    setConfirmed(row);
+    setMessage(null);
+  };
+  const retryConfirmation = async () => {
+    if (!ack || pending.current) return;
+    pending.current = true; setBusy(true);
+    try { await confirm(ack); } finally { pending.current = false; if (alive.current) setBusy(false); }
+  };
+  const save = async () => {
+    if (pending.current || ack) return;
+    const errors: Record<string, string> = {};
+    if (!label.trim()) errors.label = "Enter a name.";
+    try {
+      const parsed = new URL(url.trim());
+      if (parsed.protocol !== "https:" || parsed.username || parsed.password || parsed.hash
+        || !parsed.hostname.includes(".") || /(^localhost$|\.local$|\.internal$|^127\.|^10\.|^192\.168\.|^169\.254\.|^172\.(1[6-9]|2\d|3[01])\.)/i.test(parsed.hostname)) throw new Error("address");
+    } catch { errors.url = "Enter the full public https:// address."; }
+    if (!auth) errors.auth = "Choose how this server authenticates.";
+    const needsToken = auth === "bearer" || auth === "headers";
+    if (needsToken && credentialTooShort("bearer", token)) errors.token = `Enter the full token (at least ${MCP_CREDENTIAL_MIN_LENGTH} characters).`;
+    if (needsToken && !token.trim()) errors.token = "Enter the token.";
+    const namePattern = /^[!#$%&'*+.^_`|~0-9a-z-]+$/i;
+    if (auth === "headers" && (!primaryHeader.trim() || !namePattern.test(primaryHeader.trim()))) errors.primaryHeader = "Enter a valid credential header name.";
+    const extra: Record<string, string> = Object.create(null);
+    const seen = new Set([primaryHeader.trim().toLowerCase()]);
+    for (const header of headers) {
+      const name = header.name.trim();
+      if (!namePattern.test(name) || seen.has(name.toLowerCase()) || !header.value || /[^\x20-\x7e]/.test(header.value)) {
+        errors.headers = "Give each additional header a unique name and a non-empty, single-line value.";
+      }
+      seen.add(name.toLowerCase());
+      extra[name] = header.value;
+    }
+    if (headers.length > 16 || new TextEncoder().encode(JSON.stringify(extra)).length > 16384) errors.headers = "Use at most 16 headers and 16 KB of header data.";
+    setValidation(errors); setMessage(null);
+    if (Object.keys(errors).length || !auth) return;
+    pending.current = true; setBusy(true);
+    try {
+      // OAuth starts from the existing credential-free canonical shell. Discovery runs only
+      // after durable readback and a separate explicit Authorize click, never because of a brand.
+      const kind: GatewayAuthKind = auth === "oauth" || auth === "none" ? "none"
+        : auth === "headers" && primaryHeader.trim().toLowerCase() !== "authorization" ? "header" : "bearer";
+      const result = tool
+        ? await gw.rekeyMcp(tool.id, url.trim(), kind, needsToken ? token.trim() : null, kind === "header" ? primaryHeader.trim() : null, extra)
+        : await gw.createMcp({ providerKey: "generic-remote", label: label.trim(), serverUrl: url.trim(),
+          authKind: kind, authToken: needsToken ? token.trim() : null, authHeaderName: kind === "header" ? primaryHeader.trim() : null, customHeaders: extra });
+      if (!alive.current) return;
+      if (!result.ok || !result.connectionId) {
+        setMessage(result.message ?? "The save was not confirmed. Your details remain here; try again.");
+        return;
+      }
+      const saved = { id: result.connectionId, generation: result.configGeneration ?? null };
+      setAck(saved);
+      // Secrets never survive a successful write in local form state, even if readback fails.
+      setToken(""); setHeaders([]); setUrl("");
+      onDirtyChange(false);
+      await confirm(saved);
+    } finally { pending.current = false; if (alive.current) setBusy(false); }
+  };
+  const authorize = async () => {
+    if (!confirmed || pending.current) return;
+    pending.current = true; setBusy(true); setMessage(null);
+    try {
+      const result = await gw.beginOAuth(confirmed.id);
+      if (!alive.current) return;
+      if (!result.ok || !result.authorizeUrl) {
+        setMessage(`The configuration is saved, but sign-in did not start. ${result.message ?? "Try authorizing again, or review the saved tool to replace its configuration."}`);
+        return;
+      }
+      window.location.assign(result.authorizeUrl);
+    } finally { pending.current = false; if (alive.current) setBusy(false); }
   };
 
-  return (
-    <>
-      <p className="ig-lede">
-        Paige will send you to {item.n} to sign in. You approve what she may do there, and she never sees your password.
-      </p>
-      {message && <div className="ig-error" role="alert"><TriangleAlert aria-hidden size={14} /><span>{message}</span></div>}
-      {/* LOCKED once the shell row exists, because from that moment this control cannot do
-          anything. A retry re-keys the SAVED row through `set_mcp_connection_endpoint`, whose
-          twelve arguments are an endpoint and a credential bundle and NOT a label — and no
-          relabel door exists anywhere: searched `rename`, `set_label`, `connection_label`,
-          `p_label` and `update_label` across every migration and the whole `_shared/mcp-gateway`
-          module, and enumerated all 51 mcp-named public functions; the only one that ever accepts
-          a label is `create_mcp_connection`, at creation. Left editable it would take the owner's
-          correction, accept it, and silently discard it — the same class of defect as a save that
-          reports success and writes nothing (§70.1). The note says what to do instead. Caught in
-          review. */}
-      <label className={`ig-field${bad.label ? " ig-field-bad" : ""}`}><span>Name</span>
-        <input
-          type="text"
-          autoComplete="off"
-          value={label}
-          onChange={(e) => setLabel(e.target.value)}
-          disabled={shellId !== null}
-          aria-invalid={bad.label || undefined}
-          aria-describedby={shellId !== null ? "ig-gw-signin-label-note" : undefined}
-        />
-        {shellId !== null && (
-          <small id="ig-gw-signin-label-note">
-            Saved under this name. To use a different one, remove it from Integrations and start again.
-          </small>
-        )}
-        {bad.label && <small className="ig-gw-err">Enter a name.</small>}
-      </label>
-      <label className={`ig-field${bad.url ? " ig-field-bad" : ""}`}><span>Server address</span>
-        <input type="url" autoComplete="off" spellCheck={false} value={url} onChange={(e) => setUrl(e.target.value)} aria-invalid={bad.url || undefined} aria-describedby="ig-gw-signin-url-note" />
-        <small id="ig-gw-signin-url-note">
-          {item.url ? "This is the address Paige knows for this tool. Change it only if yours is different." : "Enter the tool's public https:// MCP address."}
-        </small>
-        {bad.url && <small className="ig-gw-err">Enter a public https:// address.</small>}
-      </label>
-      <div className="ig-actions ig-gw-actions">
-        <button type="button" className="ig-btn" onClick={onCancel} disabled={step === "starting"}>Cancel</button>
-        <button type="button" className="ig-btn" data-primary disabled={step === "starting" || gw.saving} onClick={() => void begin()}>
-          {step === "starting" ? "Starting sign-in…" : `Sign in to ${item.n}`}
-        </button>
+  return <div ref={formRef}>
+    {tool && !ack && <p className="ig-gw-warn">Replacing configuration clears this tool’s approvals. Enter the full address and every credential/header you want retained, then check it and approve its tools again.</p>}
+    {message && <p className="ig-error" role="alert">{message}</p>}
+    {discarding && <DiscardPrompt label="Discard configuration" onDiscard={onCancel} onKeep={() => setDiscarding(false)} />}
+    {ack ? <>
+      <div ref={receiptRef} tabIndex={-1} role="status" className={confirmed ? "ig-gw-info ig-gw-saved" : undefined}>
+      {confirmed ? <>
+        <strong>Saved — configuration confirmed.</strong>
+        <p>Address on file · kept private. {confirmed.credentialsConfigured ? "Credentials on file · encrypted." : "No credential on file."}</p>
+        <p>{confirmed.customHeaderCount ?? 0} additional headers on file. Saving does not check the server or grant tool approval.</p>
+      </> : <p>{busy ? "Confirming saved configuration…" : "The server acknowledged the write; its current configuration still needs confirmation."}</p>}
       </div>
-      <p className="ig-note">
-        Nothing is shared until you approve it on {item.n}'s own screen. You can disconnect at any time.
-      </p>
-    </>
-  );
+      <div className="ig-actions ig-gw-actions">
+        <button type="button" className="ig-btn" onClick={onCancel} disabled={busy}>Close</button>
+        {!confirmed && <button type="button" className="ig-btn" data-primary disabled={busy} onClick={() => void retryConfirmation()}>Retry confirmation</button>}
+        {confirmed && <button type="button" className="ig-btn" data-primary={auth !== "oauth" ? "" : undefined} disabled={busy} onClick={() => onSaved(confirmed)}>Review saved tool</button>}
+        {confirmed && auth === "oauth" && <button type="button" className="ig-btn" data-primary disabled={busy} onClick={() => void authorize()}>{busy ? "Starting authorization…" : "Authorize with server"}</button>}
+      </div>
+    </> : <>
+      <fieldset disabled={busy || gw.saving || !gw.canWrite} className="ig-gw-config-fields">
+        {!tool && <label className="ig-field"><span id="ig-config-name-label">Name</span><input autoComplete="off" value={label} onChange={e => setLabel(e.target.value)} aria-labelledby="ig-config-name-label" aria-invalid={!!validation.label} aria-describedby={validation.label ? "ig-config-name-error" : undefined} />{validation.label && <small id="ig-config-name-error" className="ig-gw-err">{validation.label}</small>}</label>}
+        <label className="ig-field"><span id="ig-config-address-label">{tool ? "Full address" : "Server URL"}</span><input type="url" spellCheck={false} autoComplete="off" value={url} placeholder="https://tools.example.com/mcp" onChange={e => setUrl(e.target.value)} aria-labelledby="ig-config-address-label" aria-invalid={!!validation.url} aria-describedby="ig-config-address-note" />
+          <small id="ig-config-address-note">{validation.url ?? (tool ? "The saved address is kept private. Enter the full address from your provider, including its path." : "Enter the complete public HTTPS address, including its path. Its contents stay private after saving.")}</small></label>
+        <div className="ig-gw-seg ig-gw-seg-auth" role="group" aria-label="Authentication">
+          {AUTH_CHOICES.map(choice => <button type="button" key={choice.value} aria-invalid={!!validation.auth} aria-pressed={auth === choice.value} className={auth === choice.value ? "on" : ""} onClick={() => choose(choice.value)}>{choice.label}</button>)}
+        </div>
+        {validation.auth && <p className="ig-gw-err" role="alert">{validation.auth}</p>}
+        {auth === "oauth" && <p className="ig-note">Save first, then choose Authorize with server. You’ll leave this page only after that choice. Server support determines whether authorization is available.</p>}
+        {(auth === "bearer" || auth === "headers") && <>
+          {auth === "headers" && <label className="ig-field"><span id="ig-config-header-label">Credential header</span><input autoComplete="off" value={primaryHeader} onChange={e => setPrimaryHeader(e.target.value)} aria-labelledby="ig-config-header-label" aria-describedby="ig-config-header-note" aria-invalid={!!validation.primaryHeader} /><small id="ig-config-header-note">{validation.primaryHeader ?? "Authorization sends a Bearer token. Use another header name only when your server requires it."}</small></label>}
+          <label className="ig-field"><span id="ig-config-token-label">Token</span><input type="password" autoComplete="new-password" value={token} onChange={e => setToken(e.target.value)} aria-labelledby="ig-config-token-label" aria-invalid={!!validation.token} aria-describedby="ig-config-token-note" /><small id="ig-config-token-note">{validation.token ?? "Stored encrypted and never shown back. Enter the token only, without a Bearer prefix."}</small></label>
+        </>}
+        {auth === "headers" && <>
+          <p className="ig-note">Additional headers are encrypted too. Replacement removes previously saved headers not entered here.</p>
+          {headers.map((header, index) => <div className="ig-gw-header-row" key={index}>
+            <label className="ig-field"><span>Header {index + 1} name</span><input autoComplete="off" aria-invalid={!!validation.headers} value={header.name} onChange={e => setHeaders(items => items.map((item, at) => at === index ? { ...item, name: e.target.value } : item))} /></label>
+            <label className="ig-field"><span>Header {index + 1} value</span><input type="password" autoComplete="new-password" aria-invalid={!!validation.headers} value={header.value} onChange={e => setHeaders(items => items.map((item, at) => at === index ? { ...item, value: e.target.value } : item))} /></label>
+            <button type="button" className="ig-btn" aria-label={`Remove header ${index + 1}`} onClick={() => setHeaders(items => items.filter((_, at) => at !== index))}>Remove</button>
+          </div>)}
+          {validation.headers && <p className="ig-gw-err" role="alert">{validation.headers}</p>}
+          <button type="button" className="ig-btn" disabled={headers.length >= 16} onClick={() => setHeaders(items => [...items, { name: "", value: "" }])}>Add header</button>
+        </>}
+      </fieldset>
+      <div className="ig-actions ig-gw-actions">
+        <button type="button" className="ig-btn" onClick={() => dirty ? setDiscarding(true) : onCancel()} disabled={busy}>Cancel</button>
+        <button type="button" className="ig-btn" data-primary disabled={busy || gw.saving || !gw.canWrite} onClick={() => void save()}>{busy ? "Saving and confirming…" : "Save configuration"}</button>
+      </div>
+    </>}
+  </div>;
 }
 
 /* ── Catalogue browse (the one catalogue, folded into the add path) ────────────
@@ -690,14 +609,13 @@ const MANUAL_ENTRY: CatItem = {
   c: "Your own",
   m: "key",
   g: "URL",
-  d: "Point Paige at any public MCP server by its address — or an n8n instance by API key.",
+  d: "Use your server’s full address and choose its authentication method.",
   auth: "bearer",
   manual: true,
 };
 
 function Catalogue({
   onPick,
-  onSignIn,
   onSetup,
   onZapier,
   onLegacy,
@@ -705,8 +623,6 @@ function Catalogue({
   onOpenConnection,
 }: {
   onPick: (item: CatItem) => void;
-  /** A provider whose sign-in Paige can actually run — routed to the real OAuth flow. */
-  onSignIn: (item: CatItem) => void;
   onSetup: (item: CatItem) => void;
   onZapier: (item: CatItem) => void;
   onLegacy: (which: CatLegacy) => void;
@@ -747,10 +663,8 @@ function Catalogue({
     if (p.legacy && p.legacy !== "social") return onLegacy(p.legacy);
     if (p.legacy === "social") return onLegacy("social");
     if (p.m === "key") return onPick(p);
-    // Slice ④: the gateway's oauth_begin door is reachable from the browser now, so a "connect"
-    // provider runs a real sign-in instead of stopping. A tile with no known address is routed the
-    // same way — SignInFlow asks for one rather than refusing the whole provider.
-    if (p.m === "connect") return onSignIn(p);
+    // A preset supplies a name/address, never an instruction to initiate sign-in.
+    if (p.m === "connect") return onPick(p);
     if (p.m === "review") return onSetup(p); // no capability record yet — honest stop
     if (p.m === "setup") return onSetup(p);
     return onZapier(p);
@@ -1232,10 +1146,12 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = fals
   returnedFromSignIn?: boolean;
 }) {
   const [mode, setMode] = useState<"view" | "rekey" | "disconnect">("view");
+  const [configurationDirty, setConfigurationDirty] = useState(false);
   /** The last probe verdict, held so the person sees what the check FOUND rather than only a row
    *  that silently changed colour underneath them. Cleared when another action starts. */
-  const [checked, setChecked] = useState<{ ok: boolean; message: string | null; toolCount: number | null } | null>(null);
+  const [checked, setChecked] = useState<{ ok: boolean; message: string | null; toolCount: number | null; generation: number | null } | null>(null);
   const [signInMessage, setSignInMessage] = useState<string | null>(null);
+  useEffect(() => { setChecked(null); setSignInMessage(null); }, [tool.configGeneration]);
   /** Bumped after a check that came back OK, so the action list re-reads. A check is
    *  exactly the thing that rewrites the catalogue — discovery replaces it wholesale —
    *  so without this the drawer would announce "found 12 actions" directly above a list
@@ -1256,7 +1172,7 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = fals
     // Nothing was sent, so there is nothing to report — saying "failed" would claim a refusal that
     // never happened (§13).
     if (result.code === "MCP_BUSY" || result.code === "MCP_NOT_READY") return;
-    setChecked({ ok: result.ok, message: result.message, toolCount: result.toolCount ?? null });
+    setChecked({ ok: result.ok, message: result.message, toolCount: result.toolCount ?? null, generation: tool.configGeneration });
     // Only on success: a failed probe leaves the catalogue exactly as it was (it
     // passes no tool array), so re-reading would spend a round trip to render the
     // same rows back.
@@ -1276,17 +1192,18 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = fals
     // No browser-stored return address or tenant identity participates.
     window.location.assign(flow.authorizeUrl);
   };
-  /** An OAuth tool's credential is issued by its provider's sign-in, not pasted here, so this
-   *  surface has no honest way to re-key one. Offering the control would be offering a button
-   *  the server refuses every time (§70.1 — never render a control that cannot act). */
-  const rekeyable = tool.authKind !== "oauth";
+  // The canonical setter replaces the bundle regardless of its previous authentication kind.
+  // OAuth replacement first saves a credential-free shell, then offers explicit authorization.
 
   return (
-    <GatewayDrawer eyebrow="Connected MCP Gateway" title={tool.label} dirty={mode === "rekey"} onClose={onClose}>
+    <GatewayDrawer eyebrow="Connected MCP Gateway" title={tool.label} dirty={mode === "rekey" && (isRest || configurationDirty)} onClose={onClose}>
       {returnedFromSignIn && <p className="ig-gw-info" role="status">Returning from sign-in does not verify this tool. Review its saved status, then check it when you’re ready.</p>}
       <dl className="ig-facts">
         <div><dt>Endpoint</dt><dd>{tool.serverUrlHost ?? "—"}</dd></div>
         <div><dt>Type</dt><dd>{facetName(tool)}</dd></div>
+        <div><dt>Address</dt><dd>{tool.addressConfigured === true ? "On file · kept private" : tool.addressConfigured === false ? "Not on file" : "Not confirmed"}</dd></div>
+        <div><dt>Credentials</dt><dd>{tool.credentialsConfigured === true ? "On file · encrypted" : tool.credentialsConfigured === false ? (tool.authKind === "none" ? "Not used" : "Not on file") : "Not confirmed"}</dd></div>
+        <div><dt>Additional headers</dt><dd>{tool.customHeaderCount == null ? "Not confirmed" : tool.customHeaderCount === 0 ? "None on file" : `${tool.customHeaderCount} on file · encrypted`}</dd></div>
         <div><dt>Status</dt><dd><span className="ig-gw-chip" data-tone={chip.tone}>{chip.label}</span></dd></div>
         <div><dt>Last checked</dt><dd>{tool.lastCheckedAt ? new Date(tool.lastCheckedAt).toLocaleString() : "No successful check yet"}</dd></div>
       </dl>
@@ -1295,22 +1212,16 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = fals
         <>
           {/* The probe's own verdict, when one has been run in this drawer. It leads, because it is
               the newest thing the person knows and the reason they pressed the button. */}
-          {checked && (
+          {checked && checked.generation === tool.configGeneration && (
             checked.ok
               ? <div className="ig-gw-info" role="status"><span>Checked just now — Paige reached it{checked.toolCount === null ? "" : ` and found ${checked.toolCount} ${checked.toolCount === 1 ? "action" : "actions"}`}.</span></div>
               : <div className="ig-error" role="alert"><TriangleAlert aria-hidden size={14} /><span>{checked.message ?? "Paige couldn’t use it. Check the address and the key."}</span></div>
           )}
           {signInMessage && <div className="ig-error" role="alert"><TriangleAlert aria-hidden size={14} /><span>{signInMessage}</span></div>}
 
-          {/* A turned-off row has exactly one honest recovery, and WHICH one depends on the row.
-              Re-key restores enabled=true, so for a re-keyable tool that is the path. An OAuth tool
-              is not re-keyable, and turning it off nulled its credential, so there is nothing to
-              re-key with — the only way back is to add it again. A single sentence in the error map
-              could not be true for both, which is exactly how the first fix here went wrong. */}
+          {/* Replacement is the recovery for a disabled canonical connection. */}
           {!tool.enabled && (
-            <div className="ig-gw-info" role="status"><span>{rekeyable
-              ? "This tool is turned off. Re-key it to switch it back on."
-              : "This tool is turned off, and its sign-in was cleared when you turned it off — switching it back on means removing it and adding it again."}</span></div>
+            <div className="ig-gw-info" role="status"><span>This tool is turned off. Re-key it to switch it back on.</span></div>
           )}
 
           {tool.status === "pending_verification" && (
@@ -1333,19 +1244,12 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = fals
               of nothing it is. */}
           <ToolActions gw={gw} tool={tool} reloadKey={catalogueRead} />
 
-          {/* Check now and Sign in again are gated on `enabled` because on a turned-off row they can
-              ONLY refuse: the server answers connection_disabled to both. Rendering a control whose
-              single outcome is a refusal is the §70.1 failure, not a safety net.
-              Re-key is deliberately NOT gated — it is the enable path. A successful re-key restores
-              enabled=true (P1(a) in the endpoint setter), so it must stay on screen for a turned-off
-              row that has one. An OAuth row does not: `rekeyable` is false for it, and soft-disable
-              nulls its credential without changing its auth_kind, so it can never be re-keyed back
-              on. That asymmetry is why the banner above names a different path for each. */}
+          {/* Disabled rows replace configuration before checking or authorizing. */}
           <div className="ig-actions ig-gw-actions">
             {gw.canWrite && tool.enabled && <button type="button" className="ig-btn" disabled={gw.saving} onClick={() => void check()}>{gw.saving ? "Checking…" : "Check now"}</button>}
             {gw.canWrite && tool.enabled && isOAuth && <button type="button" className="ig-btn" disabled={gw.saving} onClick={() => void signInAgain()}>Sign in again</button>}
             {gw.canWrite && tool.enabled && canStartSignIn && <button type="button" className="ig-btn" disabled={gw.saving} onClick={() => void signInAgain()}>Sign in</button>}
-            {gw.canWrite && rekeyable && <button type="button" className="ig-btn" onClick={() => setMode("rekey")}>Re-key</button>}
+            {gw.canWrite && <button type="button" className="ig-btn" onClick={() => setMode("rekey")}>Re-key</button>}
             {gw.canWrite && <button type="button" className="ig-btn" data-danger onClick={() => setMode("disconnect")}>Disconnect</button>}
           </div>
           {/* The older panel for this vendor still does things this drawer cannot — saving and
@@ -1363,7 +1267,9 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = fals
         </>
       )}
 
-      {mode === "rekey" && <RekeyForm gw={gw} tool={tool} isRest={isRest} onDone={onClose} onCancel={() => setMode("view")} />}
+      {mode === "rekey" && (isRest
+        ? <RestRekeyForm gw={gw} tool={tool} onDone={onClose} onCancel={() => setMode("view")} />
+        : <ConnectionForm gw={gw} tool={tool} onDirtyChange={setConfigurationDirty} onSaved={() => setMode("view")} onCancel={() => setMode("view")} />)}
       {mode === "disconnect" && <DisconnectConfirm gw={gw} tool={tool} onDone={onClose} onCancel={() => setMode("view")} />}
     </GatewayDrawer>
   );
@@ -1380,63 +1286,33 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = fals
  * credential bundle per auth kind — `header` needs its header name, `url` and `none` carry no
  * credential at all — so the form collects exactly what the chosen kind requires and nothing else.
  */
-function RekeyForm({ gw, tool, isRest, onDone, onCancel }: { gw: UseMcpGateway; tool: GatewayConnection; isRest: boolean; onDone: () => void; onCancel: () => void }) {
-  const authKind = ((tool.authKind as GatewayAuthKind) ?? "bearer") as GatewayAuthKind;
-  const needsKey = isRest || authKind === "bearer" || authKind === "header";
-  const needsHeaderName = !isRest && authKind === "header";
+/** n8n API keys retain their specialized REST writer; they are not generic MCP credentials. */
+function RestRekeyForm({ gw, tool, onDone, onCancel }: { gw: UseMcpGateway; tool: GatewayConnection; onDone: () => void; onCancel: () => void }) {
   const [url, setUrl] = useState("");
   const [key, setKey] = useState("");
-  const [headerName, setHeaderName] = useState("");
-  const [bad, setBad] = useState<Record<string, boolean>>({});
   const [message, setMessage] = useState<string | null>(null);
-  const isHttps = (v: string) => /^https:\/\/[^\s]+\.[^\s]+/i.test(v.trim());
-
+  const [busy, setBusy] = useState(false);
   const submit = async () => {
-    const next: Record<string, boolean> = {};
-    if (!isHttps(url)) next.url = true;
-    if (needsKey && !key.trim()) next.key = true;
-    if (needsHeaderName && !headerName.trim()) next.header = true;
-    setBad(next);
-    if (Object.keys(next).length) { setMessage(null); return; }
-    const result = isRest
-      ? await gw.rekeyRest(tool.id, url.trim(), key.trim())
-      : await gw.rekeyMcp(tool.id, url.trim(), authKind, needsKey ? key.trim() : null, needsHeaderName ? headerName.trim() : null);
-    if (result.ok) { onDone(); return; }
-    // A dropped or not-yet-ready write carries no message: it was never refused, so saying it
-    // failed would claim a rejection that did not happen (§13).
-    if (result.code === "MCP_BUSY" || result.code === "MCP_NOT_READY") return;
-    setMessage(result.message ?? "That didn’t go through. Check the details and try again.");
+    if (busy) return;
+    try { if (new URL(url.trim()).protocol !== "https:" || !key.trim()) throw new Error("fields"); }
+    catch { setMessage("Enter the full public https:// address and the new API key."); return; }
+    setBusy(true);
+    try {
+      const result = await gw.rekeyRest(tool.id, url.trim(), key.trim());
+      if (result.ok) { onDone(); return; }
+      setMessage(result.message ?? "That didn’t go through. Check the details and try again.");
+    } finally { setBusy(false); }
   };
-
-  return (
-    <>
-      <div className="ig-gw-warn" role="note"><span>Re-keying resets this tool: Paige checks it again and its approvals are cleared, so you’ll approve its actions once more.</span></div>
-      {message && <div className="ig-error" role="alert"><TriangleAlert aria-hidden size={14} /><span>{message}</span></div>}
-      <label className={`ig-field${bad.url ? " ig-field-bad" : ""}`}><span>{isRest ? "Base URL" : "Full address"}</span>
-        <input type="url" autoComplete="off" spellCheck={false} value={url} onChange={(e) => setUrl(e.target.value)} aria-invalid={bad.url || undefined} aria-describedby={bad.url ? "ig-gw-rekey-url-note ig-gw-rekey-url-err" : "ig-gw-rekey-url-note"} />
-        <small id="ig-gw-rekey-url-note">The saved address is kept private. Enter the full address from your provider, including its path.</small>
-        {bad.url && <small className="ig-gw-err" id="ig-gw-rekey-url-err">Enter the full public https:// address.</small>}
-      </label>
-      {needsHeaderName && (
-        <label className={`ig-field${bad.header ? " ig-field-bad" : ""}`}><span>Header name</span>
-          <input type="text" autoComplete="off" placeholder="X-Api-Key" value={headerName} onChange={(e) => setHeaderName(e.target.value)} aria-invalid={bad.header || undefined} aria-describedby={bad.header ? "ig-gw-rekey-header-err" : undefined} />
-          {bad.header && <small className="ig-gw-err" id="ig-gw-rekey-header-err">Enter the header name.</small>}
-        </label>
-      )}
-      {needsKey ? (
-        <label className={`ig-field${bad.key ? " ig-field-bad" : ""}`}><span>{isRest ? "New API key" : "New key / value"}</span>
-          <input type="password" autoComplete="off" placeholder="new value…" value={key} onChange={(e) => setKey(e.target.value)} aria-invalid={bad.key || undefined} aria-describedby={bad.key ? "ig-gw-rekey-key-err" : undefined} />
-          {bad.key && <small className="ig-gw-err" id="ig-gw-rekey-key-err">Enter the new {isRest ? "API key" : "value"}.</small>}
-        </label>
-      ) : (
-        <div className="ig-gw-info" role="status"><span>This tool carries no key, so only its address changes here.</span></div>
-      )}
-      <div className="ig-actions ig-gw-actions">
-        <button type="button" className="ig-btn" onClick={onCancel}>Cancel</button>
-        <button type="button" className="ig-btn" data-primary disabled={gw.saving} onClick={() => void submit()}>{gw.saving ? "Saving…" : "Save & re-check"}</button>
-      </div>
-    </>
-  );
+  return <>
+    <p className="ig-gw-warn">Replacing this API key clears its approvals.</p>
+    {message && <p className="ig-error" role="alert">{message}</p>}
+    <label className="ig-field"><span>Base URL</span><input type="url" autoComplete="off" value={url} onChange={e => setUrl(e.target.value)} /><small>The saved address is kept private. Enter the full address from your provider, including its path.</small></label>
+    <label className="ig-field"><span>New API key</span><input type="password" autoComplete="new-password" value={key} onChange={e => setKey(e.target.value)} /></label>
+    <div className="ig-actions ig-gw-actions">
+      <button type="button" className="ig-btn" disabled={busy} onClick={onCancel}>Cancel</button>
+      <button type="button" className="ig-btn" data-primary disabled={busy || gw.saving} onClick={() => void submit()}>Save API configuration</button>
+    </div>
+  </>;
 }
 
 function DisconnectConfirm({ gw, tool, onDone, onCancel }: { gw: UseMcpGateway; tool: GatewayConnection; onDone: () => void; onCancel: () => void }) {
@@ -1496,7 +1372,14 @@ function DisconnectConfirm({ gw, tool, onDone, onCancel }: { gw: UseMcpGateway; 
  * one repeatable "MCP server" tile that starts an add, and a tile per server already added. One
  * group, one home (§18); nothing that shipped here was removed (§58).
  */
-export function IntegrationsGatewaySection({
+export function IntegrationsGatewaySection(props: Parameters<typeof ScopedIntegrationsGatewaySection>[0]) {
+  const { activeTenantId, activeUserId, loading } = useTenantContext();
+  // Every local draft, pending continuation and drawer belongs to one resolved actor/workspace.
+  // Remount synchronously on a scope boundary; never wait for an effect to hide private fields.
+  return <ScopedIntegrationsGatewaySection key={`${activeUserId ?? ""}:${activeTenantId ?? ""}:${loading}`} {...props} />;
+}
+
+function ScopedIntegrationsGatewaySection({
   onOpenLegacy,
   gw,
   group,
@@ -1524,7 +1407,6 @@ export function IntegrationsGatewaySection({
   const [drawer, setDrawer] = useState<
     | { kind: "catalogue" }
     | { kind: "add"; preset: AddPreset }
-    | { kind: "signin"; item: CatItem }
     | { kind: "stop"; item: CatItem; via: "setup" | "zapier" }
     | { kind: "detail"; tool: GatewayConnection; scope: string; returnedFromSignIn?: boolean }
     | null
@@ -1624,7 +1506,7 @@ export function IntegrationsGatewaySection({
       {gw.loading ? (
         <p className="ig-state" role="status"><RefreshCw className="ig-spin" aria-hidden />Loading your tools…</p>
       ) : gw.error ? (
-        <div className="ig-state" role="alert"><TriangleAlert aria-hidden /><span>Your tools couldn’t be read just now. Nothing was changed.</span><button type="button" className="ig-btn" onClick={() => gw.reload()}>Try again</button></div>
+        <div className="ig-state" role="alert"><TriangleAlert aria-hidden /><span>Your tools couldn’t be read just now. Try again to see their current saved state.</span><button type="button" className="ig-btn" onClick={() => gw.reload()}>Try again</button></div>
       ) : null}
       {!tenantLoading && returnMissing === scopeKey && <p className="ig-state" role="status">That tool is not available in this workspace. Review the tools listed here or return to the workspace where you started.</p>}
 
@@ -1633,7 +1515,7 @@ export function IntegrationsGatewaySection({
         {!gw.loading && !gw.error && mcpTiles}
       </ul>
 
-      {drawer?.kind === "catalogue" && (
+      {drawer?.kind === "catalogue" && !tenantLoading && (
         <GatewayDrawer
           eyebrow="Connected MCP Gateway"
           title="Add a tool"
@@ -1644,8 +1526,7 @@ export function IntegrationsGatewaySection({
           footer={<span>Give Paige an outside tool to work with. She can use it once you’ve verified it and approved what it may do.</span>}
         >
           <Catalogue
-            onPick={(item) => setDrawer({ kind: "add", preset: { facet: item.legacy === "n8n" ? "n8n-rest" : "generic-remote", authKind: item.auth ?? "bearer", label: item.manual ? undefined : item.n, url: item.url } })}
-            onSignIn={(item) => setDrawer({ kind: "signin", item })}
+            onPick={(item) => setDrawer({ kind: "add", preset: { label: item.manual ? undefined : item.n, url: item.url } })}
             onSetup={(item) => setDrawer({ kind: "stop", item, via: "setup" })}
             onZapier={(item) => setDrawer({ kind: "stop", item, via: "zapier" })}
             onLegacy={openLegacy}
@@ -1655,19 +1536,14 @@ export function IntegrationsGatewaySection({
         </GatewayDrawer>
       )}
 
-      {drawer?.kind === "add" && (
+      {drawer?.kind === "add" && !tenantLoading && (
         <GatewayDrawer eyebrow="Connected MCP Gateway" title={drawer.preset.label ? `Add ${drawer.preset.label}` : "Add a tool"} dirty={addDirty} onClose={close}>
-          <AddToolForm gw={gw} preset={drawer.preset} onDirtyChange={setAddDirty} onDone={close} />
+          <ConnectionForm key={scopeKey} gw={gw} preset={drawer.preset} onDirtyChange={setAddDirty} onCancel={close}
+            onSaved={(tool) => setDrawer({ kind: "detail", tool, scope: scopeKey })} />
         </GatewayDrawer>
       )}
 
-      {drawer?.kind === "signin" && (
-        <GatewayDrawer eyebrow={drawer.item.n} title={`Sign in to ${drawer.item.n}`} onClose={close}>
-          <SignInFlow gw={gw} item={drawer.item} onCancel={close} />
-        </GatewayDrawer>
-      )}
-
-      {drawer?.kind === "stop" && (
+      {drawer?.kind === "stop" && !tenantLoading && (
         <GatewayDrawer
           eyebrow={drawer.item.n}
           title={drawer.via === "setup" ? (drawer.item.m === "review" ? "Not cleared for use yet" : "Setup needed") : "Not available yet"}
@@ -1684,15 +1560,7 @@ export function IntegrationsGatewaySection({
         </GatewayDrawer>
       )}
 
-      {/* Re-derive the open row from the LIVE list rather than rendering the snapshot taken when the
-          drawer opened. Slice ④ is the first change to add a write that leaves this drawer open —
-          "Check now" reloads gw.tools while the drawer is still on screen — so a frozen snapshot now
-          contradicts itself in front of the owner: the verdict banner says "Checked just now" while
-          the facts list above it still reads "Not checked yet" with no last-checked time. Re-key and
-          disconnect both closed the drawer, which is why this could not show before.
-          The snapshot remains the fallback: a row that has just been hard-deleted leaves the list,
-          and keeping its last-known identity on screen for the moment before the drawer closes beats
-          blanking the dialog out from under the person. */}
+      {/* Re-read scoped metadata after save/check; captured identity is only a loading fallback. */}
       {drawer?.kind === "detail" && !tenantLoading && drawer.scope === scopeKey && (() => {
         const live = gw.tools.find((t) => t.id === drawer.tool.id) ?? drawer.tool;
         // The older setup panel for this vendor, when one exists. Derived from the registry's own

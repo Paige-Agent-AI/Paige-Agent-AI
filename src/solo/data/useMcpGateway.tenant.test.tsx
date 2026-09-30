@@ -116,6 +116,161 @@ afterEach(() => {
 });
 
 describe("useMcpGateway", () => {
+  it("confirms a save only from fresh same-connection, same-generation safe readback", async () => {
+    await mount();
+    h.rpc.mockImplementation(defaultRpc({ list: { data: [row("A", {
+      config_generation: 3, address_configured: true, credentials_configured: true,
+    })], error: null } }));
+    let confirmed;
+    await act(async () => { confirmed = await latest().confirmSaved("id-A", 3); });
+    expect(confirmed).toMatchObject({ id: "id-A", configGeneration: 3, addressConfigured: true });
+    await act(async () => { confirmed = await latest().confirmSaved("id-A", 4); });
+    expect(confirmed).toBeNull();
+    await act(async () => { confirmed = await latest().confirmSaved("id-missing", 3); });
+    expect(confirmed).toBeNull();
+    await act(async () => { confirmed = await latest().confirmSaved("id-A", null); });
+    expect(confirmed).toBeNull();
+    expect(h.invoke).not.toHaveBeenCalled();
+  });
+
+  it("failed or missing persisted readback cannot confirm a saved connection", async () => {
+    await mount();
+    for (const list of [{ data: null, error: { code: "offline" } }, { data: [], error: null }]) {
+      h.rpc.mockImplementation(defaultRpc({ list }));
+      let confirmed;
+      await act(async () => { confirmed = await latest().confirmSaved("id-A", 3); });
+      expect(confirmed).toBeNull();
+    }
+    expect(h.invoke).not.toHaveBeenCalled();
+  });
+
+  it.each(["tenant", "user"] as const)("rejects late saved readback after a %s switch", async (field) => {
+    await mount();
+    let resolve!: (value: unknown) => void;
+    const deferred = new Promise((done) => { resolve = done; });
+    h.rpc.mockImplementation((name: string) => name === "get_mcp_connections_v2"
+      ? deferred : builder({ data: true, error: null }));
+    let pending!: ReturnType<UseMcpGateway["confirmSaved"]>;
+    await act(async () => { pending = latest().confirmSaved("id-A", 3); });
+    h[field] = "next";
+    h.rpc.mockImplementation(defaultRpc({ list: listOk(["B"]) }));
+    await rerender();
+    let confirmed;
+    await act(async () => {
+      resolve({ data: [row("A", { config_generation: 3, address_configured: true })], error: null });
+      confirmed = await pending;
+    });
+    expect(confirmed).toBeNull();
+    expect(latest().tools.map((tool) => tool.label)).toEqual(["B"]);
+    expect(h.invoke).not.toHaveBeenCalled();
+  });
+
+  it("retains only safe credential presence and generation from canonical readback", async () => {
+    await mount();
+    h.rpc.mockImplementation(defaultRpc({ list: { data: [row("A", {
+      address_configured: true, credentials_configured: false, custom_header_count: 2,
+      config_generation: 4, server_url: "https://services.example.com/private-path",
+      custom_headers: { "X-Private": "not-for-readback" }, auth_token: "not-for-readback",
+    })], error: null } }));
+    await act(async () => latest().reload());
+    expect(latest().tools[0]).toMatchObject({
+      addressConfigured: true, credentialsConfigured: false, customHeaderCount: 2, configGeneration: 4,
+    });
+    expect(JSON.stringify(latest().tools)).not.toMatch(/private-path|not-for-readback|X-Private/);
+  });
+
+  it("does not invent credential presence when older readback omits it", async () => {
+    await mount();
+    expect(latest().tools[0]).toMatchObject({
+      addressConfigured: null, credentialsConfigured: null, customHeaderCount: null, configGeneration: null,
+    });
+  });
+
+  it("sends supplementary headers through the canonical create and replacement writers", async () => {
+    await mount();
+    const customHeaders = { "X-Workspace": "test-workspace", "X-Access": "test-only-value" };
+    h.invoke.mockResolvedValue(edgeOk({ connection_id: "id-A", status: "pending_verification" }));
+    await act(async () => {
+      await latest().createMcp({ providerKey: "generic-remote", label: "A",
+        serverUrl: "https://services.example.com/mcp/", authKind: "bearer",
+        authToken: "test-token-not-real", customHeaders });
+    });
+    expect(h.invoke.mock.calls.at(-1)![1].body).toMatchObject({
+      action: "create", server_url: "https://services.example.com/mcp/", custom_headers: customHeaders,
+    });
+    h.rpc.mockImplementation((name: string) => name === "set_mcp_connection_endpoint"
+      ? builder({ data: { connection_id: "id-A", status: "pending_verification" }, error: null })
+      : defaultRpc()(name));
+    await act(async () => {
+      await latest().rekeyMcp("id-A", "https://services.example.com/mcp/", "bearer", "test-token-not-real", null, customHeaders);
+    });
+    expect(h.rpc.mock.calls.find(c => c[0] === "set_mcp_connection_endpoint")![1])
+      .toMatchObject({ _custom_headers: customHeaders, _tenant_id: "a" });
+    expect(JSON.stringify(latest().tools)).not.toContain("test-only-value");
+  });
+
+  it("does not accept a rejected write just because it includes an id", async () => {
+    await mount();
+    h.invoke.mockResolvedValue(edgeOk({ ok: false, connection_id: "id-A" }));
+    let result: Awaited<ReturnType<UseMcpGateway["createMcp"]>> | undefined;
+    await act(async () => {
+      result = await latest().createMcp({ providerKey: "generic-remote", label: "A",
+        serverUrl: "https://services.example.com/mcp/", authKind: "none" });
+    });
+    expect(result!.ok).toBe(false);
+  });
+
+  it("reports a rejected replacement and leaves retry available", async () => {
+    await mount();
+    h.rpc.mockImplementation((name: string) => name === "set_mcp_connection_endpoint"
+      ? builder({ data: { ok: false, connection_id: "id-A" }, error: null }) : defaultRpc()(name));
+    await act(async () => {
+      expect((await latest().rekeyMcp("id-A", "https://services.example.com/mcp/", "none", null, null, {})).ok).toBe(false);
+    });
+    expect(latest().writeError).toBeTruthy();
+    expect(latest().saving).toBe(false);
+    h.rpc.mockImplementation((name: string) => name === "set_mcp_connection_endpoint"
+      ? builder({ data: { connection_id: "id-A" }, error: null }) : defaultRpc()(name));
+    await act(async () => {
+      expect((await latest().rekeyMcp("id-A", "https://services.example.com/mcp/", "none", null, null, {})).ok).toBe(true);
+    });
+    expect(latest().writeError).toBeNull();
+  });
+
+  it("clears prior workspace write feedback immediately while the next workspace resolves", async () => {
+    await mount();
+    h.invoke.mockResolvedValue(edgeRefusal("MCP_BAD_CUSTOM_HEADERS"));
+    await act(async () => {
+      await latest().createMcp({ providerKey: "generic-remote", label: "A", serverUrl: "https://services.example.com/mcp/", authKind: "none" });
+    });
+    expect(latest().writeError).toMatch(/header names/i);
+    h.tenant = "b";
+    h.loading = true;
+    await rerender();
+    expect(latest().tools).toEqual([]);
+    expect(latest().writeError).toBeNull();
+    expect(latest().saving).toBe(false);
+  });
+
+  it("rejects a late credential replacement response after account switching", async () => {
+    await mount();
+    let resolveWrite!: (answer: unknown) => void;
+    const delayed = new Promise(resolve => { resolveWrite = resolve; });
+    h.rpc.mockImplementation((name: string) => name === "set_mcp_connection_endpoint" ? delayed : defaultRpc()(name));
+    let pending!: ReturnType<UseMcpGateway["rekeyMcp"]>;
+    await act(async () => {
+      pending = latest().rekeyMcp("id-A", "https://services.example.com/mcp/", "bearer", "test-token-not-real", null, { "X-Workspace": "test-workspace" });
+    });
+    h.tenant = "b";
+    h.rpc.mockImplementation(defaultRpc({ list: listOk(["B"]) }));
+    await rerender();
+    await act(async () => { resolveWrite({ data: { connection_id: "id-A" }, error: null }); });
+    expect((await pending).code).toBe("MCP_STALE");
+    expect(latest().tools.map(tool => tool.id)).toEqual(["id-B"]);
+    expect(latest().writeError).toBeNull();
+    expect(latest().saving).toBe(false);
+  });
+
   it("reads the list with NO tenant argument (server-derived tenant)", async () => {
     await mount();
     const listCalls = h.rpc.mock.calls.filter((c) => c[0] === "get_mcp_connections_v2");

@@ -26,14 +26,14 @@ function Section({ onOpenLegacy, oauthReturn }: { onOpenLegacy?: (which: "n8n" |
   return <IntegrationsGatewaySection onOpenLegacy={onOpenLegacy} gw={gw} group={GROUP} tiles={null} oauthReturn={oauthReturn} />;
 }
 
-const context = vi.hoisted(() => ({ tenantId: "tenant-a" as string | null, loading: false }));
+const context = vi.hoisted(() => ({ tenantId: "tenant-a" as string | null, userId: "user-a", loading: false }));
 const rpc = vi.hoisted(() => vi.fn());
 const invoke = vi.hoisted(() => vi.fn());
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 vi.mock("@/hooks/useTenantContext", () => ({
-  useTenantContext: () => ({ activeTenantId: context.tenantId, activeUserId: "user-a", loading: context.loading }),
+  useTenantContext: () => ({ activeTenantId: context.tenantId, activeUserId: context.userId, loading: context.loading }),
 }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc, functions: { invoke } } }));
 
@@ -133,10 +133,19 @@ function world(over: {
    *  a drawer fires on OPEN — sharing the write lane is what hid it. */
   tools?: { data?: unknown; error?: unknown };
 } = {}) {
-  rpc.mockImplementation((name: string) => {
-    if (name === "get_mcp_connections_v2") return builder({ data: over.rows ?? [], error: null });
+  let persisted = over.rows ?? [];
+  rpc.mockImplementation((name: string, args: Record<string, unknown>) => {
+    if (name === "get_mcp_connections_v2") return builder({ data: persisted, error: null });
     if (name === "is_current_user_tenant_admin") return builder({ data: over.admin !== false, error: null });
     if (WRITE_RPCS.has(name)) {
+      if (!over.rpcWrite && name === "set_mcp_connection_endpoint") {
+        persisted = persisted.map(item => item.connection_id !== args._connection_id ? item : {
+          ...item, config_generation: Number(item.config_generation ?? 0) + 1, address_configured: true,
+          credentials_configured: Boolean(args._auth_token), custom_header_count: Object.keys(args._custom_headers as object ?? {}).length,
+          auth_kind: args._auth_kind, status: "pending_verification", enabled: true,
+        });
+        return builder({ data: { connection_id: args._connection_id, config_generation: persisted.find(item => item.connection_id === args._connection_id)?.config_generation }, error: null });
+      }
       return builder(over.rpcWrite ?? { data: { connection_id: "conn-new", status: "pending_verification" }, error: null });
     }
     // A catch-all here answered ANY name with a connection-shaped success, and that
@@ -153,6 +162,15 @@ function world(over: {
     // where it expected one, and the drawer rendered its degraded branch — in every
     // test that opens a drawer. Fifty-two of them passed that way.
     if (action === "tools") return Promise.resolve(over.tools ?? emptyToolsAnswer);
+    if (action === "create" && !over.write) {
+      const draft = opts.body!;
+      const created = row({ connection_id: "conn-new", label: draft.label, auth_kind: draft.auth_kind,
+        config_generation: 1, address_configured: true, credentials_configured: Boolean(draft.auth_token),
+        custom_header_count: Object.keys(draft.custom_headers as object ?? {}).length,
+        status: "pending_verification", server_url_host: new URL(String(draft.server_url)).hostname });
+      persisted = [...persisted, created];
+      return Promise.resolve({ data: { connection_id: "conn-new", config_generation: 1 }, error: null });
+    }
     if (EDGE_ACTIONS.has(action)) {
       return Promise.resolve(over.write ?? { data: { connection_id: "conn-new", status: "pending_verification" }, error: null });
     }
@@ -215,11 +233,249 @@ const openAddForm = async (host: HTMLElement) => {
 };
 
 beforeEach(() => {
+  context.userId = "user-a";
   context.tenantId = "tenant-a";
   context.loading = false;
   rpc.mockReset();
   invoke.mockReset();
   document.body.innerHTML = "";
+});
+
+describe("MCP configuration keyboard handoffs", () => {
+  it("focuses the first invalid field rather than leaving its error above the viewport", async () => {
+    world({ rows: [] });
+    const { host } = await render();
+    await openAddForm(host);
+    byText(host, "Save configuration")!.focus();
+    await click(byText(host, "Save configuration"));
+    expect(document.activeElement).toBe(fieldFor(host, "Name"));
+    expect(edgeCalls("create")).toHaveLength(0);
+  });
+
+  it("hands keyboard focus to the persisted receipt", async () => {
+    world({ rows: [] });
+    const { host } = await render();
+    await openAddForm(host);
+    await type(fieldFor(host, "Name"), "Test tool");
+    await type(fieldFor(host, "Server URL"), "https://tools.example.com/mcp");
+    await click(byText(host, "None"));
+    byText(host, "Save configuration")!.focus();
+    await click(byText(host, "Save configuration"));
+    expect(document.activeElement?.textContent).toContain("Saved — configuration confirmed.");
+    expect(document.activeElement?.getAttribute("role")).toBe("status");
+  });
+
+  it("focuses the safe discard choice and restores Cancel on Keep editing", async () => {
+    world({ rows: [] });
+    const { host } = await render();
+    await openAddForm(host);
+    await type(fieldFor(host, "Name"), "Unsaved tool");
+    const cancel = byText(host, "Cancel")!;
+    cancel.focus();
+    await click(cancel);
+    expect(document.activeElement).toBe(byText(host, "Keep editing"));
+    await click(byText(host, "Keep editing"));
+    expect(document.activeElement).toBe(cancel);
+  });
+
+  it("focuses the dirty Escape guard and returns to the interrupted field", async () => {
+    world({ rows: [] });
+    const { host } = await render();
+    await openAddForm(host);
+    await type(fieldFor(host, "Name"), "Unsaved tool");
+    const field = fieldFor(host, "Name")!;
+    field.focus();
+    await act(async () => window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
+    expect(document.activeElement).toBe(byText(host, "Keep editing"));
+    await click(byText(host, "Keep editing"));
+    expect(document.activeElement).toBe(field);
+  });
+});
+
+describe("one explicit MCP configuration journey", () => {
+  it("retains credentials when the already-selected authentication choice is activated", async () => {
+    world({ rows: [] });
+    const { host } = await render();
+    await openAddForm(host);
+    await click(byText(host, "Token + headers"));
+    await type(fieldFor(host, "Token"), "synthetic-retained-token");
+    await type(fieldFor(host, "Credential header"), "X-Api-Key");
+    await click(byText(host, "Add header"));
+    await type(fieldFor(host, "Header 1 name"), "Workspace-Reference");
+    await type(fieldFor(host, "Header 1 value"), "synthetic-reference");
+    await click(byText(host, "Token + headers"));
+    expect(fieldFor(host, "Token")?.value).toBe("synthetic-retained-token");
+    expect(fieldFor(host, "Credential header")?.value).toBe("X-Api-Key");
+    expect(fieldFor(host, "Header 1 value")?.value).toBe("synthetic-reference");
+    await click(buttons(host).find(button => button.textContent === "Token"));
+    expect(fieldFor(host, "Token")?.value).toBe("");
+    expect(fieldFor(host, "Header 1 name")).toBeUndefined();
+  });
+  it("saves a token and printable per-connection headers without reflecting their values", async () => {
+    world();
+    const { host } = await render();
+    await openAddForm(host);
+    await type(fieldFor(host, "Name"), "Example tool");
+    await type(fieldFor(host, "Server URL"), "https://tools.example.com/api/mcp/");
+    await click(buttons(host).find(b => b.textContent === "Token + headers"));
+    await type(fieldFor(host, "Token"), "synthetic-token-for-test");
+    await click(byText(host, "Add header"));
+    await type(fieldFor(host, "Header 1 name"), "Workspace-Reference");
+    await type(fieldFor(host, "Header 1 value"), "synthetic-location-123");
+    await click(byText(host, "Save configuration"));
+    expect(edgeCalls("create")[0]?.[1].body).toMatchObject({ auth_kind: "bearer", custom_headers: { "Workspace-Reference": "synthetic-location-123" }, server_url: "https://tools.example.com/api/mcp/" });
+    expect(dialog(host)?.textContent).toMatch(/Saved.*confirmed/i);
+    expect(dialog(host)?.textContent).toContain("1 additional headers on file");
+    expect(host.innerHTML).not.toContain("synthetic-token-for-test");
+    expect(host.innerHTML).not.toContain("synthetic-location-123");
+    expect(edgeCalls("oauth_begin")).toHaveLength(0);
+  });
+
+  it.each(["https://10.0.0.1/mcp", "https://example.local/mcp", "https://192.168.2.1/mcp", "https://127.0.0.1/mcp"])("rejects private endpoint %s before any write", async endpoint => {
+    world(); const { host } = await render(); await openAddForm(host);
+    await type(fieldFor(host, "Name"), "Private tool");
+    await type(fieldFor(host, "Server URL"), endpoint);
+    await click(buttons(host).find(b => b.textContent === "None"));
+    await click(byText(host, "Save configuration"));
+    expect(edgeCalls("create")).toHaveLength(0);
+    expect(dialog(host)?.textContent).toMatch(/public https:\/\/ address/i);
+  });
+
+  it.each(["tenant", "actor"])("clears a draft and rejects a late save after a %s switch", async kind => {
+    world(); const { host, root } = await render(); await openAddForm(host);
+    await type(fieldFor(host, "Name"), "Private draft A");
+    await type(fieldFor(host, "Server URL"), "https://tools.example.com/mcp");
+    await click(buttons(host).find(b => b.textContent === "Token"));
+    await type(fieldFor(host, "Token"), "synthetic-secret-draft-a");
+    let finish!: (value: unknown) => void;
+    invoke.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    await click(byText(host, "Save configuration"));
+    if (kind === "tenant") context.tenantId = "tenant-b"; else context.userId = "user-b";
+    await act(async () => root.render(<Section />));
+    expect(dialog(host)).toBeNull();
+    expect(host.innerHTML).not.toContain("synthetic-secret-draft-a");
+    await act(async () => finish({ data: { connection_id: "old-a", config_generation: 1 }, error: null }));
+    expect(dialog(host)).toBeNull();
+    expect(host.textContent).not.toContain("Saved");
+    expect(edgeCalls("oauth_begin")).toHaveLength(0);
+  });
+
+  it("clears the old successful check after replacing a configuration", async () => {
+    world({ rows: [row({ config_generation: 1, address_configured: true })], write: { data: { ok: true, connection_id: "conn-1", tool_count: 0 }, error: null } });
+    const { host } = await render();
+    await click(host.querySelector('[data-gateway-tool="conn-1"]'));
+    await click(byText(host, "Check now"));
+    expect(dialog(host)?.textContent).toContain("Checked just now");
+    await click(byText(host, "Re-key"));
+    await type(fieldFor(host, "Full address"), "https://tools.example.com/new/mcp");
+    await click(buttons(host).find(b => b.textContent === "None"));
+    await click(byText(host, "Save configuration"));
+    await click(byText(host, "Review saved tool"));
+    expect(dialog(host)?.textContent).not.toContain("Checked just now");
+    expect(dialog(host)?.textContent).toMatch(/hasn’t been checked yet/i);
+    expect(edgeCalls("verify")).toHaveLength(1);
+  });
+
+  it("offers the same explicit authentication choices from a preset and a custom server", async () => {
+    world();
+    const { host, root } = await render();
+    await openCatalogue(host);
+    await click(tile(host, "Close"));
+    for (const name of ["OAuth", "Token", "Token + headers", "None"]) {
+      expect(buttons(host).find(b => b.textContent === name), name).toBeDefined();
+    }
+    expect(edgeCalls("oauth_begin")).toHaveLength(0);
+    expect(edgeCalls("create")).toHaveLength(0);
+    await act(async () => root.unmount());
+  });
+
+  it("does not claim Saved when the acknowledged configuration cannot be read back", async () => {
+    world({ write: { data: { connection_id: "conn-new", config_generation: 1 }, error: null } });
+    const { host, root } = await render();
+    await openAddForm(host);
+    await type(fieldFor(host, "Name"), "Example server");
+    await type(fieldFor(host, "Server URL"), "https://tools.example.com/api/mcp");
+    await click(buttons(host).find(b => b.textContent === "None"));
+    await click(byText(host, "Save configuration"));
+    expect(edgeCalls("create")).toHaveLength(1);
+    expect(dialog(host)?.textContent).toMatch(/could not confirm the saved configuration/i);
+    expect(byText(host, "Retry confirmation")).toBeDefined();
+    expect(edgeCalls("verify")).toHaveLength(0);
+    expect(edgeCalls("oauth_begin")).toHaveLength(0);
+    await click(byText(host, "Retry confirmation"));
+    expect(edgeCalls("create")).toHaveLength(1);
+    await act(async () => root.unmount());
+  });
+
+  it("keeps a confirmed save visible and never checks or signs in automatically", async () => {
+    world({ rows: [row({ connection_id: "conn-new", auth_kind: "none", config_generation: 1, address_configured: true, credentials_configured: false, custom_header_count: 0 })], write: { data: { connection_id: "conn-new", config_generation: 1 }, error: null } });
+    const { host, root } = await render();
+    await openAddForm(host);
+    await type(fieldFor(host, "Name"), "Example server");
+    await type(fieldFor(host, "Server URL"), "https://tools.example.com/api/mcp");
+    await click(buttons(host).find(b => b.textContent === "None"));
+    await click(byText(host, "Save configuration"));
+    expect(dialog(host)?.textContent).toMatch(/Saved.*confirmed/i);
+    expect(byText(host, "Review saved tool")).toBeDefined();
+    expect(edgeCalls("verify")).toHaveLength(0);
+    expect(edgeCalls("oauth_begin")).toHaveLength(0);
+    await act(async () => root.unmount());
+  });
+});
+
+describe("saved configuration is visible without disclosing its contents", () => {
+  it("shows canonical address, credential and header presence separately from readiness", async () => {
+    world({ rows: [row({
+      address_configured: true, credentials_configured: true, custom_header_count: 2,
+      status: "pending_verification", health: "unknown", last_checked_at: null,
+      server_url: "https://services.example.com/private-path/mcp",
+      auth_token: "test-only-secret-never-render",
+      custom_headers: { "X-Private": "test-only-header-never-render" },
+    })] });
+    const { host, root } = await render();
+    await click(host.querySelector('[data-gateway-tool]'));
+    const facts = dialog(host)?.querySelector(".ig-facts")?.textContent;
+    expect(facts).toContain("AddressOn file · kept private");
+    expect(facts).toContain("CredentialsOn file · encrypted");
+    expect(facts).toContain("Additional headers2 on file · encrypted");
+    expect(facts).toContain("Not checked yet");
+    expect(host.textContent).not.toContain("private-path");
+    expect(host.textContent).not.toContain("test-only-secret-never-render");
+    expect(host.textContent).not.toContain("test-only-header-never-render");
+    expect(edgeCalls("verify")).toHaveLength(0);
+    await act(async () => root.unmount());
+  });
+
+  it.each(["none", "bearer", "url"])("reports absent credentials without treating %s as proof of a key", async (authKind) => {
+    world({ rows: [row({ auth_kind: authKind, address_configured: authKind !== "url", credentials_configured: false, custom_header_count: 0 })] });
+    const { host, root } = await render();
+    await click(host.querySelector('[data-gateway-tool]'));
+    const facts = dialog(host)?.querySelector(".ig-facts")?.textContent;
+    expect(facts).toContain(authKind === "none" ? "CredentialsNot used" : "CredentialsNot on file");
+    expect(facts).toContain("Additional headersNone on file");
+    await act(async () => root.unmount());
+  });
+
+  it.each(["bearer", "url"])("does not turn unavailable %s readback into an absent configuration claim", async (authKind) => {
+    world({ rows: [row({ auth_kind: authKind })] });
+    const { host, root } = await render();
+    await click(host.querySelector('[data-gateway-tool]'));
+    const facts = dialog(host)?.querySelector(".ig-facts")?.textContent;
+    expect(facts).toContain("AddressNot confirmed");
+    expect(facts).toContain("CredentialsNot confirmed");
+    expect(facts).toContain("Additional headersNot confirmed");
+    await act(async () => root.unmount());
+  });
+
+  it("reports URL-carried credentials on file without showing the private address", async () => {
+    world({ rows: [row({ auth_kind: "url", address_configured: true, credentials_configured: true,
+      server_url: "https://services.example.com/private-test-value/mcp" })] });
+    const { host, root } = await render();
+    await click(host.querySelector('[data-gateway-tool]'));
+    expect(dialog(host)?.querySelector(".ig-facts")?.textContent).toContain("CredentialsOn file · encrypted");
+    expect(host.textContent).not.toContain("private-test-value");
+    await act(async () => root.unmount());
+  });
 });
 
 describe("OAuth return is a navigation hint, never connection authority", () => {
@@ -285,104 +541,52 @@ describe("OAuth return is a navigation hint, never connection authority", () => 
   });
 });
 
-describe("Sign-in retry after a failed start", () => {
-  /** REGRESSION (Codex P2, 2026-09-23). `oauth_begin` failing after `create` used to strand the
-   *  owner: the shell row existed, so pressing the button again re-ran `create` with the same
-   *  label and earned MCP_DUPLICATE_LABEL, while the saved row's drawer offers "Sign in again"
-   *  only for an `oauth` row — so a transient discovery/DCR failure could only be escaped by
-   *  deleting the connection. A retry must RESUME the shell it already made. */
-  it("resumes the shell it already created instead of creating a second one", async () => {
-    world();
-    invoke.mockImplementation((_fn: string, opts: { body?: Record<string, unknown> }) => {
-      const action = opts?.body?.action;
-      if (action === "create") return Promise.resolve({ data: { connection_id: "shell-1" }, error: null });
-      if (action === "oauth_begin") return Promise.resolve(edgeRefusal("discovery_failed"));
-      return Promise.resolve({ data: {}, error: null });
-    });
-
+describe("explicit OAuth retry after confirmed persistence", () => {
+  async function savedOAuth() {
+    world({ rows: [row({ connection_id: "conn-oauth", auth_kind: "none", config_generation: 1, address_configured: true })] });
     const { host } = await render();
     await openCatalogue(host);
     await click(tile(host, "Close"));
-    await type(fieldFor(host, "Name"), "My Close");
-    await type(fieldFor(host, "Server address"), "https://mcp.close.com/mcp");
+    await click(buttons(host).find(b => b.textContent === "OAuth"));
+    invoke.mockResolvedValueOnce({ data: { connection_id: "conn-oauth", config_generation: 1 }, error: null });
+    await click(byText(host, "Save configuration"));
+    expect(dialog(host)?.textContent).toMatch(/Saved.*confirmed/i);
+    expect(edgeCalls("oauth_begin")).toHaveLength(0);
+    return host;
+  }
 
-    await click(byText(host, "Sign in to Close"));
-    expect(edgeCalls("create").length).toBe(1);
-    expect(edgeCalls("oauth_begin").length).toBe(1);
-
-    // The owner presses it again after the honest failure message.
-    await click(byText(host, "Sign in to Close"));
-
-    // ONE row was ever created; the retry re-used it.
-    expect(edgeCalls("create").length).toBe(1);
-    expect(edgeCalls("oauth_begin").length).toBe(2);
-    const ids = edgeCalls("oauth_begin").map((c) => (c[1]?.body as Record<string, unknown>).connection_id);
-    expect(ids).toEqual(["shell-1", "shell-1"]);
+  it("retries authorization on the existing row without a duplicate create or replacement", async () => {
+    const host = await savedOAuth();
+    invoke.mockResolvedValue(edgeRefusal("oauth_begin_failed", 502));
+    await click(byText(host, "Authorize with server"));
+    expect(dialog(host)?.textContent).toMatch(/configuration is saved, but sign-in did not start/i);
+    await click(byText(host, "Authorize with server"));
+    expect(edgeCalls("create")).toHaveLength(1);
+    expect(edgeCalls("oauth_begin")).toHaveLength(2);
+    expect(edgeCalls("oauth_begin").every(c => c[1].body.connection_id === "conn-oauth")).toBe(true);
+    expect(rpc.mock.calls.filter(c => c[0] === "set_mcp_connection_endpoint")).toHaveLength(0);
   });
 
-  /** REGRESSION (Codex P1/P2 round 2, 2026-09-23). Keeping the shell made the retry possible but
-   *  ignored an edited address, so "correct the address and press Sign in again" would have run
-   *  discovery against the same bad endpoint — the fix re-creating the defect it was closing. */
-  it("applies a corrected address to the saved shell before retrying", async () => {
-    world();
-    invoke.mockImplementation((_fn: string, opts: { body?: Record<string, unknown> }) => {
-      const action = opts?.body?.action;
-      if (action === "create") return Promise.resolve({ data: { connection_id: "shell-1" }, error: null });
-      if (action === "oauth_begin") return Promise.resolve(edgeRefusal("discovery_failed"));
-      return Promise.resolve({ data: {}, error: null });
+  it("routes an address correction through replacement of the saved row, never re-creates it", async () => {
+    const host = await savedOAuth();
+    await click(byText(host, "Review saved tool"));
+    await click(byText(host, "Re-key"));
+    expect(fieldFor(host, "Full address")).toHaveProperty("value", "");
+    await type(fieldFor(host, "Full address"), "https://corrected.example.com/api/mcp");
+    await click(buttons(host).find(b => b.textContent === "None"));
+    await click(byText(host, "Save configuration"));
+    expect(rpc.mock.calls.find(c => c[0] === "set_mcp_connection_endpoint")?.[1]).toMatchObject({
+      _connection_id: "conn-oauth", _server_url: "https://corrected.example.com/api/mcp",
     });
-
-    const { host } = await render();
-    await openCatalogue(host);
-    await click(tile(host, "Close"));
-    await type(fieldFor(host, "Server address"), "https://wrong.example/mcp");
-    await click(byText(host, "Sign in to Close"));
-
-    // The owner corrects the address and presses again.
-    await type(fieldFor(host, "Server address"), "https://right.example/mcp");
-    await click(byText(host, "Sign in to Close"));
-
-    // The saved shell was re-keyed to the NEW address before discovery re-ran.
-    const rekeys = rpc.mock.calls.filter((c) => c[0] === "set_mcp_connection_endpoint");
-    expect(rekeys.length).toBe(1);
-    expect(rekeys[0][1]).toMatchObject({ _connection_id: "shell-1", _server_url: "https://right.example/mcp" });
-    // Still exactly one row ever created.
-    expect(edgeCalls("create").length).toBe(1);
+    expect(edgeCalls("create")).toHaveLength(1);
   });
 
-  /** REGRESSION (Codex P2 round 3, 2026-09-23). The address became correctable on retry; the NAME
-   *  did not, and stayed editable anyway. `set_mcp_connection_endpoint` takes an endpoint and a
-   *  credential bundle and no label, and no relabel door exists in the schema at all, so an owner
-   *  who corrected the name on retry would have their edit accepted into the field and then
-   *  silently dropped — a control that looks like it saves and does not (§70.1). It locks once
-   *  the shell row exists, and says what to do instead. */
-  it("locks the name once the shell row exists rather than accepting an edit it cannot apply", async () => {
-    world();
-    invoke.mockImplementation((_fn: string, opts: { body?: Record<string, unknown> }) => {
-      const action = opts?.body?.action;
-      if (action === "create") return Promise.resolve({ data: { connection_id: "shell-1" }, error: null });
-      if (action === "oauth_begin") return Promise.resolve(edgeRefusal("discovery_failed"));
-      return Promise.resolve({ data: {}, error: null });
-    });
-
-    const { host } = await render();
-    await openCatalogue(host);
-    await click(tile(host, "Close"));
-    await type(fieldFor(host, "Name"), "My Close");
-    await type(fieldFor(host, "Server address"), "https://mcp.close.com/mcp");
-
-    // Editable before anything is saved.
-    expect((fieldFor(host, "Name") as HTMLInputElement).disabled).toBe(false);
-
-    await click(byText(host, "Sign in to Close"));
-
-    // The row now exists, so the name is fixed — and the surface says so instead of pretending.
-    const name = fieldFor(host, "Name") as HTMLInputElement;
-    expect(name.disabled).toBe(true);
-    expect(name.value).toBe("My Close");
-    expect(host.textContent).toContain("remove it from Integrations and start again");
-    // The create carried the name the owner actually typed.
-    expect((edgeCalls("create")[0][1]?.body as Record<string, unknown>).label).toBe("My Close");
+  it("never exposes an editable name after creation when no rename contract exists", async () => {
+    const host = await savedOAuth();
+    expect(fieldFor(host, "Name")).toBeUndefined();
+    await click(byText(host, "Review saved tool"));
+    await click(byText(host, "Re-key"));
+    expect(fieldFor(host, "Name")).toBeUndefined();
   });
 });
 
@@ -474,8 +678,9 @@ describe("Adding a tool", () => {
     await click(tile(host, "Any MCP server"));
     await type(fieldFor(host, "Name"), "Scheduling tool");
     await type(fieldFor(host, "Server URL"), "https://services.example.com/mcp");
-    await type(fieldFor(host, "Bearer token"), "tok_live_value_123");
-    await click(byText(host, "Add tool"));
+    await click(buttons(host).find(b => b.textContent === "Token"));
+    await type(fieldFor(host, "Token"), "tok_live_value_123");
+    await click(byText(host, "Save configuration"));
 
     // The write goes to the ONE gateway door, dispatched on action — not to the writer RPC.
     expect(edgeCalls("create").length).toBe(1);
@@ -483,7 +688,8 @@ describe("Adding a tool", () => {
     // The write carries the caller's own tenant as an expected-tenant guard.
     expect(lastEdgeBody().expected_tenant_id).toBe("tenant-a");
     // Success closes the drawer and the list is re-read from the server, never patched locally.
-    expect(dialog(host)).toBeNull();
+    expect(dialog(host)?.textContent).toMatch(/Saved.*confirmed/i);
+    expect(edgeCalls("verify")).toHaveLength(0);
     expect(rpc.mock.calls.filter((c) => c[0] === "get_mcp_connections_v2").length).toBeGreaterThan(1);
   });
 
@@ -493,8 +699,9 @@ describe("Adding a tool", () => {
     await openAddForm(host);
     await type(fieldFor(host, "Name"), "Internal tool");
     await type(fieldFor(host, "Server URL"), "http://localhost:5678/mcp");
-    await type(fieldFor(host, "Bearer token"), "tok");
-    await click(byText(host, "Add tool"));
+    await click(buttons(host).find(b => b.textContent === "Token"));
+    await type(fieldFor(host, "Token"), "tok");
+    await click(byText(host, "Save configuration"));
     expect(host.textContent).toMatch(/public https:\/\/ address/i);
     expect(rpc.mock.calls.some((c) => c[0] === "create_mcp_connection")).toBe(false);
   });
@@ -503,7 +710,7 @@ describe("Adding a tool", () => {
     world({ rows: [] });
     const { host } = await render();
     await openAddForm(host);
-    await click(byText(host, "Add tool"));
+    await click(byText(host, "Save configuration"));
     expect(host.textContent).toMatch(/enter a name/i);
     expect(rpc.mock.calls.some((c) => c[0] === "create_mcp_connection")).toBe(false);
     // aria-invalid says THAT a field is wrong; the message has to be reachable from it, or a
@@ -516,17 +723,14 @@ describe("Adding a tool", () => {
     expect(messages.join(" ")).toMatch(/enter a name/i);
   });
 
-  it("sends the n8n API-key shape through the REST writer with named parameters", async () => {
-    world({ rows: [] });
-    const { host } = await render();
-    await openAddForm(host);
-    await click(byText(host, "n8n — API key"));
-    await type(fieldFor(host, "Name"), "Workflow bridge");
-    await type(fieldFor(host, "Base URL"), "https://team.app.n8n.cloud");
-    await type(fieldFor(host, "API key"), "n8n_api_value_1");
-    await click(byText(host, "Add tool"));
-    // The REST facet is named explicitly — never inferred from the auth kind.
-    expect(lastEdgeBody()).toMatchObject({ action: "create", facet: "rest", provider_key: "n8n", label: "Workflow bridge", base_url: "https://team.app.n8n.cloud" });
+  it("keeps n8n API setup on its specialized owner rather than treating it as generic MCP", async () => {
+    world();
+    const onLegacy = vi.fn();
+    const { host } = await render(onLegacy);
+    await openCatalogue(host);
+    await click(tile(host, "n8n"));
+    expect(onLegacy).toHaveBeenCalledWith("n8n");
+    expect(edgeCalls("create")).toHaveLength(0);
   });
 
   it("reports a refused write in the product's own words and keeps the details on screen", async () => {
@@ -535,96 +739,41 @@ describe("Adding a tool", () => {
     await openAddForm(host);
     await type(fieldFor(host, "Name"), "Scheduling tool");
     await type(fieldFor(host, "Server URL"), "https://services.example.com/mcp");
-    await type(fieldFor(host, "Bearer token"), "tok_live_value_123");
-    await click(byText(host, "Add tool"));
+    await click(buttons(host).find(b => b.textContent === "Token"));
+    await type(fieldFor(host, "Token"), "tok_live_value_123");
+    await click(byText(host, "Save configuration"));
     expect(dialog(host)).toBeTruthy();
     expect(host.textContent).not.toContain("42501");
     expect(host.textContent).not.toContain("permission denied for function");
     expect((fieldFor(host, "Name") as HTMLInputElement).value).toBe("Scheduling tool");
   });
 
-  it("runs a REAL sign-in for a connect provider — the honest stop is no longer the answer", async () => {
-    // This test used to assert "Sign-in coming soon". The gateway's oauth_begin door is reachable
-    // from the browser now, so the stop would be a lie about our own capability. What it guards
-    // instead is the two-step shape the door actually requires.
-    world({ rows: [] });
-    const { host } = await render();
-    await openCatalogue(host);
-    const connectTile = host.querySelector<HTMLButtonElement>('.ig-gw-tile[data-mode="connect"]');
-    expect(connectTile).toBeTruthy();
-    await click(connectTile);
-    expect(dialog(host)?.textContent).toMatch(/sign in to/i);
-    expect(dialog(host)?.textContent).not.toMatch(/coming soon/i);
-  });
-
-  it("creates the row as `none` first, because an oauth row cannot exist before its token does", async () => {
-    world({ rows: [] });
+  it("a preset does not infer OAuth or contact a provider", async () => {
+    world();
     const { host } = await render();
     await openCatalogue(host);
     await click(host.querySelector<HTMLButtonElement>('.ig-gw-tile[data-mode="connect"]'));
-    // Two answers in order: the create, then the flow.
-    invoke
-      .mockResolvedValueOnce({ data: { connection_id: "conn-oauth", status: "pending_verification" }, error: null })
-      .mockResolvedValueOnce({ data: { ok: true, authorize_url: "https://provider.example/authorize" }, error: null });
-    await click(host.querySelector(".ig-gw-actions button[data-primary]"));
-
-    const create = edgeCalls("create")[0]?.[1].body as Record<string, unknown>;
-    expect(create).toMatchObject({ action: "create", facet: "mcp" });
-    // `none` is what makes the row creatable before sign-in AND configured enough for oauth_begin.
-    // Creating it as `oauth` is impossible: that bundle requires the very token sign-in produces.
-    expect(create.auth_kind).toBe("none");
-    expect(create.auth_token).toBeNull();
-    // Then the flow, on the row that now exists.
-    expect((edgeCalls("oauth_begin")[0]?.[1].body as Record<string, unknown>)?.connection_id).toBe("conn-oauth");
+    expect(dialog(host)?.querySelectorAll('[aria-label="Authentication"] button')).toHaveLength(4);
+    expect(dialog(host)?.querySelector('[aria-pressed="true"]')).toBeNull();
+    expect(edgeCalls("oauth_begin")).toHaveLength(0);
+    expect(edgeCalls("create")).toHaveLength(0);
   });
 
-  it("keeps the tool it just made when the provider offers no usable sign-in", async () => {
-    world({ rows: [] });
+  it.each(["oauth_begin_failed", "unmapped_refusal"])("keeps Saved distinct from an authorization failure: %s", async (code) => {
+    world({ rows: [row({ connection_id: "conn-oauth", auth_kind: "none", config_generation: 1, address_configured: true })] });
     const { host } = await render();
-    await openCatalogue(host);
-    await click(host.querySelector<HTMLButtonElement>('.ig-gw-tile[data-mode="connect"]'));
-    invoke
-      .mockResolvedValueOnce({ data: { connection_id: "conn-oauth", status: "pending_verification" }, error: null })
-      .mockResolvedValueOnce(edgeRefusal("oauth_begin_failed", 502));
-    await click(host.querySelector(".ig-gw-actions button[data-primary]"));
-    // The row EXISTS either way, so the copy must not imply nothing happened — it points at the
-    // thing the owner can still do with it.
-    expect(dialog(host)?.textContent).toMatch(/didn.t offer a sign-in/i);
-    // …and it must NOT point at a control this row does not have. The row was created with no
-    // credential, Re-key renders no key field for a credential-less tool, and re-keying cannot
-    // change a tool's sign-in type — so "add a key instead" was an instruction with nothing behind
-    // it (§70.1). The peer-gate caught it; this pins the fix.
-    expect(dialog(host)?.textContent).not.toMatch(/add a key/i);
-    // The advice moved from the shared map to the call site, and names the control that exists:
-    // the Sign in button the owner is looking at, not a vague "try again".
-    expect(dialog(host)?.textContent).toMatch(/correct the address and press Sign in again, or remove it/i);
-    // REGRESSION (found by a rendered frame, 2026-09-23). The comment above has always claimed
-    // "the copy must not imply nothing happened" — and never checked it. It didn't: the
-    // row-exists sentence was the `??` fallback, so any refusal the map ANSWERED (this one
-    // included) replaced it entirely, leaving a banner that said the write failed above a Name
-    // field that said the row was saved. Now unconditional, and pinned on both paths.
-    expect(dialog(host)?.textContent).toMatch(/is saved under that name/i);
-  });
-
-  /** REGRESSION (rendered frame, 2026-09-23) — the OTHER path into the same contradiction. When
-   *  the edge answers with a code the map has nothing for, the message is the generic
-   *  "That didn't go through", which on this path is simply false: the connection was written and
-   *  only the sign-in failed. The generic must be swapped for the step's own reason, and the
-   *  row-exists sentence must still arrive. */
-  it("never tells the owner nothing happened when the refusal code is unmapped", async () => {
-    world({ rows: [] });
-    const { host } = await render();
-    await openCatalogue(host);
-    await click(host.querySelector<HTMLButtonElement>('.ig-gw-tile[data-mode="connect"]'));
-    invoke
-      .mockResolvedValueOnce({ data: { connection_id: "conn-oauth", status: "pending_verification" }, error: null })
-      .mockResolvedValueOnce(edgeRefusal("a_code_the_map_has_never_heard_of", 502));
-    await click(host.querySelector(".ig-gw-actions button[data-primary]"));
-
-    const text = dialog(host)?.textContent ?? "";
-    expect(text).not.toMatch(/That didn't go through/i);
-    expect(text).toMatch(/didn.t offer a sign-in/i);
-    expect(text).toMatch(/is saved under that name/i);
+    await openAddForm(host);
+    await type(fieldFor(host, "Name"), "Example OAuth");
+    await type(fieldFor(host, "Server URL"), "https://tools.example.com/mcp");
+    await click(buttons(host).find(b => b.textContent === "OAuth"));
+    invoke.mockResolvedValueOnce({ data: { connection_id: "conn-oauth", config_generation: 1 }, error: null });
+    await click(byText(host, "Save configuration"));
+    expect(edgeCalls("create")[0][1].body).toMatchObject({ auth_kind: "none", auth_token: null });
+    invoke.mockResolvedValueOnce(edgeRefusal(code, 502));
+    await click(byText(host, "Authorize with server"));
+    expect(dialog(host)?.textContent).toMatch(/configuration is saved, but sign-in did not start/i);
+    expect(byText(host, "Authorize with server")).toBeDefined();
+    expect(byText(host, "Review saved tool")).toBeDefined();
   });
 
   it("narrows the catalogue by search and still leaves a way to finish", async () => {
@@ -648,14 +797,15 @@ describe("Adding a tool", () => {
     expect((fieldFor(host, "Name") as HTMLInputElement).value).toBe("");
     await type(fieldFor(host, "Name"), "Ops server");
     await type(fieldFor(host, "Server URL"), "https://ops.example.com/mcp");
-    await type(fieldFor(host, "Bearer token"), "tok_value_123456");
-    await click(byText(host, "Add tool"));
+    await click(buttons(host).find(b => b.textContent === "Token"));
+    await type(fieldFor(host, "Token"), "tok_value_123456");
+    await click(byText(host, "Save configuration"));
     expect(lastEdgeBody()).toMatchObject({ action: "create", label: "Ops server" });
   });
 });
 
 describe("Writes reach the server", () => {
-  it("sends the write through the gateway edge and closes on a confirmed answer", async () => {
+  it("sends the write through the gateway edge and retains its confirmed result", async () => {
     // The builder-shape regression this once guarded now lives on the RETAINED rpc lane (re-key and
     // disconnect), which still calls `supabase.rpc()` directly — see the disconnect test below and
     // the hook suite. Creates no longer touch the builder at all.
@@ -664,10 +814,11 @@ describe("Writes reach the server", () => {
     await openAddForm(host);
     await type(fieldFor(host, "Name"), "Ops server");
     await type(fieldFor(host, "Server URL"), "https://ops.example.com/mcp");
-    await type(fieldFor(host, "Bearer token"), "tok_value_123456");
-    await click(byText(host, "Add tool"));
+    await click(buttons(host).find(b => b.textContent === "Token"));
+    await type(fieldFor(host, "Token"), "tok_value_123456");
+    await click(byText(host, "Save configuration"));
     expect(edgeCalls("create").length).toBe(1);
-    expect(dialog(host)).toBeNull();
+    expect(dialog(host)?.textContent).toMatch(/Saved.*confirmed/i);
   });
 
   it("never renders a tool whose identity the server did not state", async () => {
@@ -706,11 +857,12 @@ describe("Writes reach the server", () => {
     await openAddForm(host);
     await type(fieldFor(host, "Name"), "Unacknowledged tool");
     await type(fieldFor(host, "Server URL"), "https://unacked.example.com/mcp");
-    await type(fieldFor(host, "Bearer token"), "harness-token-not-a-real-secret");
+    await click(buttons(host).find(b => b.textContent === "Token"));
+    await type(fieldFor(host, "Token"), "harness-token-not-a-real-secret");
     // A VALID envelope with no confirmation in it: 2xx, no error, and a body carrying no
     // connection_id. Every create acknowledges with one, so this did not confirm the write.
     invoke.mockResolvedValue({ data: {}, error: null });
-    await click(byText(host, "Add tool"));
+    await click(byText(host, "Save configuration"));
     expect(dialog(host)).toBeTruthy();
   });
 
@@ -723,10 +875,11 @@ describe("Writes reach the server", () => {
     await openAddForm(host);
     await type(fieldFor(host, "Name"), "Unconfirmed tool");
     await type(fieldFor(host, "Server URL"), "https://unconfirmed.example.com/mcp");
-    await type(fieldFor(host, "Bearer token"), "harness-token-not-a-real-secret");
+    await click(buttons(host).find(b => b.textContent === "Token"));
+    await type(fieldFor(host, "Token"), "harness-token-not-a-real-secret");
     // An adapter that resolves with a non-object carries no acknowledgement at all.
     invoke.mockResolvedValue(undefined);
-    await click(byText(host, "Add tool"));
+    await click(byText(host, "Save configuration"));
     // The drawer stays open on the details, and the owner is told it did not go through.
     expect(dialog(host)).toBeTruthy();
     expect(host.textContent).not.toMatch(/Unconfirmed tool.*added/i);
@@ -738,10 +891,11 @@ describe("Writes reach the server", () => {
     await openAddForm(host);
     await type(fieldFor(host, "Name"), "Ops server");
     await type(fieldFor(host, "Server URL"), "https://ops.example.com/mcp");
-    await type(fieldFor(host, "Bearer token"), "tok_value_123456");
-    await click(byText(host, "Add tool"));
+    await click(buttons(host).find(b => b.textContent === "Token"));
+    await type(fieldFor(host, "Token"), "tok_value_123456");
+    await click(byText(host, "Save configuration"));
     // The submit control must come back — a write that failed once must not disable the surface.
-    const submit = byText(host, "Add tool") as HTMLButtonElement;
+    const submit = byText(host, "Save configuration") as HTMLButtonElement;
     expect(submit.disabled).toBe(false);
   });
 
@@ -751,8 +905,9 @@ describe("Writes reach the server", () => {
     await openAddForm(host);
     await type(fieldFor(host, "Name"), "Versioned tool");
     await type(fieldFor(host, "Server URL"), "https://api.example.com/v1.10.2/mcp");
-    await type(fieldFor(host, "Bearer token"), "tok_value_123456");
-    await click(byText(host, "Add tool"));
+    await click(buttons(host).find(b => b.textContent === "Token"));
+    await type(fieldFor(host, "Token"), "tok_value_123456");
+    await click(byText(host, "Save configuration"));
     expect(edgeCalls("create").length).toBe(1);
   });
 });
@@ -986,16 +1141,21 @@ describe("A turned-off tool offers only the recovery it actually has", () => {
     expect(byText(host, "Disconnect")).toBeTruthy();
   });
 
-  it("tells an OAuth tool the truth: it cannot be re-keyed back on", async () => {
+  it("allows an OAuth tool to replace its cleared configuration through the canonical setter", async () => {
     // Soft-disable nulls the credential and never changes auth_kind, so an OAuth row stays OAuth,
     // `rekeyable` stays false, and Re-key never renders. Naming it would be an instruction with
     // nothing behind it — the exact defect the first fix for this string introduced.
     world({ rows: [row({ enabled: false, status: "unconfigured", auth_kind: "oauth" })] });
     const { host } = await render();
     await click(host.querySelector('[data-gateway-tool="conn-1"]'));
-    expect(byText(host, "Re-key")).toBeUndefined();
-    expect(dialog(host)?.textContent).toMatch(/removing it and adding it again/i);
-    expect(dialog(host)?.textContent).not.toMatch(/Re-key it to switch it back on/i);
+    expect(byText(host, "Re-key")).toBeDefined();
+    await click(byText(host, "Re-key"));
+    await type(fieldFor(host, "Full address"), "https://tools.example.com/mcp");
+    await click(buttons(host).find(b => b.textContent === "Token"));
+    await type(fieldFor(host, "Token"), "synthetic-new-token");
+    await click(byText(host, "Save configuration"));
+    expect(rpc.mock.calls.find(c => c[0] === "set_mcp_connection_endpoint")?.[1]).toMatchObject({ _auth_kind: "bearer", _auth_token: "synthetic-new-token" });
+    expect(edgeCalls("oauth_begin")).toHaveLength(0);
   });
 
   it("names Re-key for a turned-off tool that genuinely has it", async () => {
@@ -1106,10 +1266,10 @@ describe("Managing a tool", () => {
     await click(host.querySelector('[data-gateway-tool="conn-1"]'));
     await click(byText(host, "Re-key"));
     if (authKind === "bearer" || authKind === "header") {
-      await type(fieldFor(host, "New key / value"), "test-replacement-value");
+      await type(fieldFor(host, "Token"), "test-replacement-value");
     }
-    if (authKind === "header") await type(fieldFor(host, "Header name"), "X-Api-Key");
-    await click(byText(host, "Save & re-check"));
+    if (authKind === "header") await type(fieldFor(host, "Credential header"), "X-Api-Key");
+    await click(byText(host, "Save configuration"));
     expect(rpc.mock.calls.filter((call) => WRITE_RPCS.has(call[0]))).toEqual([]);
     expect(edgeCalls("verify")).toHaveLength(0);
     expect(fieldFor(host, "Full address")).toHaveProperty("value", "");
@@ -1125,10 +1285,10 @@ describe("Managing a tool", () => {
     expect(dialog(host)?.textContent).toContain("services.example.com");
 
     await click(byText(host, "Re-key"));
-    expect(host.textContent).toMatch(/approvals are cleared/i);
+    expect(host.textContent).toMatch(/clears this tool’s approvals/i);
     await type(fieldFor(host, "Full address"), "https://services.example.com/mcp");
-    await type(fieldFor(host, "New key / value"), "new_token_value");
-    await click(byText(host, "Save & re-check"));
+    await type(fieldFor(host, "Token"), "new_token_value");
+    await click(byText(host, "Save configuration"));
     const write = rpc.mock.calls.find((c) => c[0] === "set_mcp_connection_endpoint");
     expect(write?.[1]).toMatchObject({ _connection_id: "conn-1", _tenant_id: "tenant-a" });
   });
@@ -1140,11 +1300,11 @@ describe("Managing a tool", () => {
     await click(byText(host, "Re-key"));
     const endpoint = "https://services.example.com/api/mcp/team%2Ftools/?region=test";
     await type(fieldFor(host, "Full address"), endpoint);
-    if (authKind === "bearer" || authKind === "header") await type(fieldFor(host, "New key / value"), "test-replacement-value");
-    if (authKind === "header") await type(fieldFor(host, "Header name"), "X-Api-Key");
-    await click(byText(host, "Save & re-check"));
+    if (authKind === "bearer" || authKind === "header") await type(fieldFor(host, "Token"), "test-replacement-value");
+    if (authKind === "header") await type(fieldFor(host, "Credential header"), "X-Api-Key");
+    await click(byText(host, "Save configuration"));
     expect(rpc.mock.calls.find((call) => call[0] === "set_mcp_connection_endpoint")?.[1]).toMatchObject({
-      _connection_id: "conn-1", _server_url: endpoint, _auth_kind: authKind,
+      _connection_id: "conn-1", _server_url: endpoint, _auth_kind: authKind === "url" ? "none" : authKind,
     });
   });
 
@@ -1154,10 +1314,10 @@ describe("Managing a tool", () => {
     await click(host.querySelector('[data-gateway-tool="conn-1"]'));
     await click(byText(host, "Re-key"));
     await type(fieldFor(host, "New API key"), "test-replacement-value");
-    await click(byText(host, "Save & re-check"));
+    await click(byText(host, "Save API configuration"));
     expect(rpc.mock.calls.filter((call) => WRITE_RPCS.has(call[0]))).toEqual([]);
     await type(fieldFor(host, "Base URL"), "https://services.example.com/automation/");
-    await click(byText(host, "Save & re-check"));
+    await click(byText(host, "Save API configuration"));
     expect(rpc.mock.calls.find((call) => call[0] === "set_mcp_rest_connection_endpoint")?.[1]).toMatchObject({
       _connection_id: "conn-1", _base_url: "https://services.example.com/automation/",
     });
@@ -1185,12 +1345,12 @@ describe("Managing a tool", () => {
     await click(byText(host, "Re-key"));
     const endpoint = "https://services.example.com/mcp/";
     await type(fieldFor(host, "Full address"), endpoint);
-    await click(byText(host, "Save & re-check"));
+    await click(byText(host, "Save configuration"));
     expect(fieldFor(host, "Full address")).toHaveProperty("value", endpoint);
     expect(dialog(host)?.querySelector('[role="alert"]')).toBeTruthy();
     expect(edgeCalls("verify")).toHaveLength(0);
     world({ rows: [row({ auth_kind: "none" })] });
-    await click(byText(host, "Save & re-check"));
+    await click(byText(host, "Save configuration"));
     expect(rpc.mock.calls.filter((call) => call[0] === "set_mcp_connection_endpoint")).toHaveLength(2);
   });
 
@@ -1200,8 +1360,8 @@ describe("Managing a tool", () => {
     await click(host.querySelector('[data-gateway-tool="conn-1"]'));
     await click(byText(host, "Re-key"));
     await type(fieldFor(host, "Full address"), "https://services.example.com/mcp");
-    await click(byText(host, "Save & re-check"));
-    expect(host.textContent).toMatch(/enter the new value/i);
+    await click(byText(host, "Save configuration"));
+    expect(host.textContent).toMatch(/enter the token/i);
     expect(rpc.mock.calls.some((c) => c[0] === "set_mcp_connection_endpoint")).toBe(false);
   });
 
@@ -1239,7 +1399,7 @@ describe("Managing a tool", () => {
     const { host } = await render();
     await click(host.querySelector('[data-gateway-tool="conn-1"]'));
     await click(byText(host, "Re-key"));
-    await type(fieldFor(host, "New key / value"), "half-typed");
+    await type(fieldFor(host, "Token"), "half-typed");
     await click(host.querySelector(".ig-close"));
     expect(host.querySelector('[role="alertdialog"]')).toBeTruthy();
     await click(byText(host, "Keep editing"));
@@ -1267,8 +1427,8 @@ describe("Managing a tool", () => {
     const address = fieldFor(host, "Full address") as HTMLInputElement;
     expect(address).toBeTruthy();
     await type(address, "https://services.example.com/mcp/v2");
-    await type(fieldFor(host, "New key / value"), "new_token_value");
-    await click(byText(host, "Save & re-check"));
+    await type(fieldFor(host, "Token"), "new_token_value");
+    await click(byText(host, "Save configuration"));
     expect(rpc.mock.calls.find((c) => c[0] === "set_mcp_connection_endpoint")?.[1])
       .toMatchObject({ _server_url: "https://services.example.com/mcp/v2" });
   });
@@ -1278,20 +1438,20 @@ describe("Managing a tool", () => {
     const { host } = await render();
     await click(host.querySelector('[data-gateway-tool="conn-1"]'));
     await click(byText(host, "Re-key"));
-    await type(fieldFor(host, "Header name"), "X-Api-Key");
+    await type(fieldFor(host, "Credential header"), "X-Api-Key");
     await type(fieldFor(host, "Full address"), "https://services.example.com/mcp");
-    await type(fieldFor(host, "New key / value"), "new_value");
-    await click(byText(host, "Save & re-check"));
+    await type(fieldFor(host, "Token"), "synthetic-new-value");
+    await click(byText(host, "Save configuration"));
     // Without the header name the server refuses the bundle every time and the typed key is lost.
     expect(rpc.mock.calls.find((c) => c[0] === "set_mcp_connection_endpoint")?.[1])
-      .toMatchObject({ _auth_header_name: "X-Api-Key", _auth_token: "new_value" });
+      .toMatchObject({ _auth_header_name: "X-Api-Key", _auth_token: "synthetic-new-value" });
   });
 
-  it("offers no re-key for a tool whose credential is issued by a provider sign-in", async () => {
+  it("offers shared replacement without reading back the OAuth credential", async () => {
     world({ rows: [row({ auth_kind: "oauth" })] });
     const { host } = await render();
     await click(host.querySelector('[data-gateway-tool="conn-1"]'));
-    expect(byText(host, "Re-key")).toBeUndefined();
+    expect(byText(host, "Re-key")).toBeDefined();
     expect(byText(host, "Disconnect")).toBeTruthy();
   });
 

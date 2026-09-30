@@ -345,7 +345,7 @@ function GatewayDrawer({
 }: {
   title: string;
   eyebrow: string;
-  dirty?: boolean;
+  dirty?: boolean | (() => boolean);
   onClose: () => void;
   children: ReactNode | ((requestClose: () => void) => ReactNode);
   footer?: ReactNode;
@@ -354,7 +354,7 @@ function GatewayDrawer({
   const closeRef = useRef<HTMLButtonElement>(null);
   const [confirmingClose, setConfirmingClose] = useState(false);
   const requestClose = useCallback(() => {
-    if (dirty) { setConfirmingClose(true); return; }
+    if (typeof dirty === "function" ? dirty() : dirty) { setConfirmingClose(true); return; }
     onClose();
   }, [dirty, onClose]);
   useEffect(() => {
@@ -1155,7 +1155,8 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = fals
 }) {
   const [mode, setMode] = useState<"view" | "rekey" | "disconnect">("view");
   const [configurationDirty, setConfigurationDirty] = useState(false);
-  const [incomingDirty, setIncomingDirty] = useState(false);
+  const incomingDirty = useRef(false);
+  const setIncomingDirty = useCallback((dirty: boolean) => { incomingDirty.current = dirty; }, []);
   const [incomingEditing, setIncomingEditing] = useState(false);
   /** The last probe verdict, held so the person sees what the check FOUND rather than only a row
    *  that silently changed colour underneath them. Cleared when another action starts. */
@@ -1207,7 +1208,7 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = fals
   // OAuth replacement first saves a credential-free shell, then offers explicit authorization.
 
   return (
-    <GatewayDrawer eyebrow={noOutboundAddress ? "Integrations" : "Connected MCP Gateway"} title={tool.label} dirty={incomingDirty || (mode === "rekey" && (isRest || configurationDirty))} onClose={onClose}>
+    <GatewayDrawer eyebrow={noOutboundAddress ? "Integrations" : "Connected MCP Gateway"} title={tool.label} dirty={() => incomingDirty.current || (mode === "rekey" && (isRest || configurationDirty))} onClose={onClose}>
       {returnedFromSignIn && <p className="ig-gw-info" role="status">Returning from sign-in does not verify this tool. Review its saved status, then check it when you’re ready.</p>}
       <dl className="ig-facts">
         <div><dt>Endpoint</dt><dd>{tool.serverUrlHost ?? "—"}</dd></div>
@@ -1430,7 +1431,8 @@ function ScopedIntegrationsGatewaySection({
     | null
   >(null);
   const [incomingCreateUncertain, setIncomingCreateUncertain] = useState(false);
-  const [incomingDirty, setIncomingDirty] = useState(false);
+  const incomingDirty = useRef(false);
+  const setIncomingDirty = useCallback((dirty: boolean) => { incomingDirty.current = dirty; }, []);
   const [uncertainIncoming, setUncertainIncoming] = useState<Record<string, number>>({});
   const incomingUncertain = useCallback((id: string, generation: number | null) => setUncertainIncoming(previous => {
     const next = { ...previous };
@@ -1546,7 +1548,7 @@ function ScopedIntegrationsGatewaySection({
       {incomingCreateUncertain && <p className="ig-gw-warn" role="status">An incoming connection creation is unconfirmed. Refresh and inspect the current connection records before adding another; a matching name is not proof.</p>}
 
       {drawer?.kind === "incoming-create" && !tenantLoading && <GatewayDrawer eyebrow="Integrations" title="Incoming contacts"
-        dirty={incomingDirty} onClose={close}>
+        dirty={() => incomingDirty.current} onClose={close}>
         {requestClose => <CreateIncomingContacts gw={gw} uncertain={incomingCreateUncertain} onUncertain={setIncomingCreateUncertain}
           onDirtyChange={setIncomingDirty} onClose={requestClose} onCreated={id => {
             setIncomingCreateUncertain(false); setIncomingDirty(false); setDrawer({ kind: "incoming-saved", id });

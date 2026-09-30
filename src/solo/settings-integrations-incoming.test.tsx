@@ -275,3 +275,31 @@ it("keeps focus in the drawer when unconfirmed creation replaces Save", async ()
   button("Save connection").focus(); await click("Save connection");
   expect(host.querySelector('[role="dialog"]')!.contains(document.activeElement)).toBe(true);
 });
+
+it("protects incoming text against Escape in the same input turn, before passive effects", async () => {
+  await open(); await click("Set up incoming contacts");
+  await act(async () => {
+    const field = host.querySelector<HTMLInputElement>('input[type="password"]')!;
+    field.focus();
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(field, "synthetic-unsaved-credential-12345678");
+    field.dispatchEvent(new Event("input", { bubbles: true }));
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+  });
+  expect(host.querySelector('[role="dialog"]')).not.toBeNull();
+  expect(host.textContent).toContain("Discard these unsaved details?");
+  await click("Keep editing");
+  expect(host.querySelector<HTMLInputElement>('input[type="password"]')!.value).toBe("synthetic-unsaved-credential-12345678");
+});
+
+it("protects a new source name against Escape before passive effects", async () => {
+  await click("Add incoming contacts connection");
+  await act(async () => {
+    const field = host.querySelector<HTMLInputElement>('input[name="incoming-name"]')!;
+    field.focus();
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(field, "Unsaved external source");
+    field.dispatchEvent(new Event("input", { bubbles: true }));
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+  });
+  expect(host.querySelector('[role="dialog"]')).not.toBeNull();
+  expect(host.textContent).toContain("Discard these unsaved details?");
+});

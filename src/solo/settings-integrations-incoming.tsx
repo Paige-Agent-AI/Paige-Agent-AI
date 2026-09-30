@@ -42,7 +42,7 @@ export function IncomingContacts({ gw, connectionId, connectionEnabled, uncertai
     if (document.activeElement === document.body) section.current?.querySelector<HTMLElement>("h3")?.focus();
   });
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
-  useEffect(() => { onDirtyChange(Boolean(credential || consent)); }, [credential, consent, onDirtyChange]);
+  useEffect(() => { onDirtyChange(false); return () => onDirtyChange(false); }, [onDirtyChange]);
   useEffect(() => { onEditingChange(mode !== "view"); }, [mode, onEditingChange]);
 
   const read = async () => {
@@ -70,7 +70,7 @@ export function IncomingContacts({ gw, connectionId, connectionEnabled, uncertai
   }, [connectionId]);
 
   const changeMode = (next: typeof mode) => {
-    setCredential(""); setConsent(false); setMessage(null); setSaved(null); setMode(next);
+    setCredential(""); setConsent(false); onDirtyChange(false); setMessage(null); setSaved(null); setMode(next);
     // The drawer remains the sole focus/scroll owner. Move focus into the new state, not to body.
     requestAnimationFrame(() => section.current?.querySelector<HTMLElement>('input, h3')?.focus());
   };
@@ -85,7 +85,7 @@ export function IncomingContacts({ gw, connectionId, connectionEnabled, uncertai
     onUncertain(connectionId, generation);
     const resultPromise = gw.setContactSync(connectionId, enabled, enabled ? credential : null, generation);
     // Write-only material is not kept for retry, readback, history, clipboard or logs.
-    setCredential(""); setConsent(false);
+    setCredential(""); setConsent(false); onDirtyChange(false);
     const result = await resultPromise;
     if (!alive.current || result.code === "MCP_STALE") return;
     setBusy(false);
@@ -138,10 +138,15 @@ export function IncomingContacts({ gw, connectionId, connectionEnabled, uncertai
         {record.configuredEnabled && <p className="ig-gw-warn">The current credential stops working when this saves. Pause your sender first; update its credential and saved version before resuming.</p>}
         <label className="ig-field"><span>{record.configuredEnabled ? "New sync credential" : "Incoming sync credential"}</span>
           <input type="password" autoComplete="new-password" spellCheck={false} maxLength={512} value={credential}
-            disabled={busy} onChange={e => setCredential(e.target.value)} />
+            disabled={busy} onChange={e => {
+              // Close/keyboard handling must see unsaved input in this event, not after an effect.
+              onDirtyChange(Boolean(e.target.value || consent)); setCredential(e.target.value);
+            }} />
           <small>Use a strong, unique value of 32–512 characters, without spaces. Keep it in your password manager and sender. Paige never reads it back.</small>
         </label>
-        <label className="ig-incoming-consent"><input type="checkbox" checked={consent} disabled={busy} onChange={e => setConsent(e.target.checked)} />
+        <label className="ig-incoming-consent"><input type="checkbox" checked={consent} disabled={busy} onChange={e => {
+          onDirtyChange(Boolean(credential || e.target.checked)); setConsent(e.target.checked);
+        }} />
           <span>I allow this source to create and update contacts in {business}, and I will configure the sender with this connection’s details.</span></label>
         <div className="ig-actions ig-gw-actions">
           <button type="button" className="ig-btn" disabled={busy} onClick={() => credential || consent ? setCancelRequested(true) : changeMode("view")}>Cancel</button>
@@ -209,7 +214,7 @@ export function CreateIncomingContacts({ gw, uncertain, onUncertain, onDirtyChan
     if (document.activeElement === document.body) heading.current?.focus();
   });
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
-  useEffect(() => { onDirtyChange(Boolean(name)); }, [name, onDirtyChange]);
+  useEffect(() => { onDirtyChange(false); return () => onDirtyChange(false); }, [onDirtyChange]);
   const create = async () => {
     if (busy || gw.saving || !name.trim() || uncertain) return;
     setBusy(true); setError(null);
@@ -218,8 +223,8 @@ export function CreateIncomingContacts({ gw, uncertain, onUncertain, onDirtyChan
     const result = await gw.createIncoming(name.trim());
     if (!alive.current || result.code === "MCP_STALE") return;
     setBusy(false);
-    if (result.ok && result.record) { setName(""); onCreated(result.record.connectionId); return; }
-    if (result.code === "MCP_CONTACT_OUTCOME_UNKNOWN") { setName(""); return; }
+    if (result.ok && result.record) { setName(""); onDirtyChange(false); onCreated(result.record.connectionId); return; }
+    if (result.code === "MCP_CONTACT_OUTCOME_UNKNOWN") { setName(""); onDirtyChange(false); return; }
     onUncertain(false);
     setError(result.message ?? "No connection was confirmed. Try again when the settings are available.");
   };
@@ -230,12 +235,14 @@ export function CreateIncomingContacts({ gw, uncertain, onUncertain, onDirtyChan
     <label className="ig-incoming-consent"><input type="checkbox" checked={separateSource} onChange={e => setSeparateSource(e.target.checked)} />
       <span>I have reviewed the connection list. I want to add a separate source, not retry the unconfirmed creation.</span></label>
     <button type="button" className="ig-btn" disabled={!separateSource} onClick={() => {
-      setName(""); setSeparateSource(false); onUncertain(false);
+      setName(""); onDirtyChange(false); setSeparateSource(false); onUncertain(false);
     }}>Start a separate connection</button>
   </>;
   return <>
     <h3 ref={heading} tabIndex={-1}>Add incoming contacts</h3><p>Use one connection for your external contact source. It will belong to <strong>{activeTenant?.name ?? "this business"}</strong>.</p>
-    <label className="ig-field"><span>Connection name</span><input name="incoming-name" autoComplete="off" maxLength={120} value={name} disabled={busy} onChange={e => setName(e.target.value)} /></label>
+    <label className="ig-field"><span>Connection name</span><input name="incoming-name" autoComplete="off" maxLength={120} value={name} disabled={busy} onChange={e => {
+      onDirtyChange(Boolean(e.target.value)); setName(e.target.value);
+    }} /></label>
     <p>This creates the connection only. Incoming contacts remain off until you explicitly enable them.</p>
     {error && <p className="ig-error" role="alert">{error}</p>}
     <div className="ig-actions ig-gw-actions">

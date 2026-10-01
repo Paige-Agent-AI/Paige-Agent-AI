@@ -31,7 +31,7 @@
 --   40001  concurrency — untouched; the surface keys `stale` off this exact constant and offers
 --          RELOAD rather than retry, because a retry would overwrite the other writer
 --
--- `PA001` is already taken, by the agreements provenance refusal in 20270413000000. The CLASS is
+-- `PA001` is already taken, by the agreements provenance refusal in 20270532110000 (this PR's own link-provenance migration, which applies after this file). The CLASS is
 -- the signal, not the number.
 --
 -- THE INTERPOLATED VALUES ARE NOW BOUNDED, and this is the one change here that is not cosmetic.
@@ -339,7 +339,7 @@ BEGIN
 
   _status := nullif(btrim(coalesce(_status, '')), '');
   IF _status IS NULL OR _status NOT IN ('draft','active','paused','completed','cancelled') THEN
-    RAISE EXCEPTION 'that is not a state an agreement can be in: %', coalesce(_status, 'nothing') USING ERRCODE = 'PA002';
+    RAISE EXCEPTION 'that is not a state an agreement can be in: %', left(coalesce(_status, 'nothing'), 40) USING ERRCODE = 'PA002';
   END IF;
 
   -- A cancelled or completed agreement is HISTORY. Reopening it would rewrite what a client owed
@@ -375,10 +375,10 @@ BEGIN
       RAISE EXCEPTION 'that agreement is not in this workspace' USING ERRCODE = '42501';
     END IF;
     IF _row.starts_on IS NULL THEN
-      RAISE EXCEPTION 'give this a start date before making it %', _status USING ERRCODE = 'PA002';
+      RAISE EXCEPTION 'give this a start date before making it %', left(_status, 40) USING ERRCODE = 'PA002';
     END IF;
     IF _row.price_basis = 'quote_pending' THEN
-      RAISE EXCEPTION 'this is still awaiting its quote, so it cannot be made % yet', _status USING ERRCODE = 'PA002';
+      RAISE EXCEPTION 'this is still awaiting its quote, so it cannot be made % yet', left(_status, 40) USING ERRCODE = 'PA002';
     END IF;
     _row := NULL;
   END IF;

@@ -220,6 +220,8 @@ export type AgreementSendFailure =
   | "not_a_draft"
   | "needs_setup"
   | "document_problem"
+  | "stale_document"
+  | "not_delivered"
   | "nobody_reachable"
   | "unavailable";
 
@@ -239,6 +241,10 @@ const SEND_MESSAGES: Record<AgreementSendFailure, string> = {
     "Something this agreement needs is missing, so nothing was sent. It may have no signer yet, or the workspace may have no contact address for signers to reach. Open the agreement in Sales — it will say which.",
   document_problem:
     "The document for that agreement could not be prepared, so nothing was sent and nobody was emailed. The agreement is unchanged.",
+  stale_document:
+    "The document stored for that agreement is not the file that was uploaded, so nothing was sent. Create a new agreement from that document and send that instead.",
+  not_delivered:
+    "No signer could be reached, so the send did not complete — and in the case where an email went out but its link could not be activated, that email may already be in their inbox. The door names each signer and why; a resend is the fix for a dead link.",
   nobody_reachable:
     "Nothing reached anybody. No message went out, so this agreement is unchanged and nobody has been asked to sign.",
   unavailable:
@@ -295,15 +301,27 @@ export async function sendAgreement(input: {
     if (reply.status === 403) return sendFail("refused");
     if (reply.status === 404) return sendFail("bad_agreement_id");
     if (reply.status === 409) {
-      // The 409 family carries two different remedies, and the body distinguishes them: a missing
-      // workspace contact address is `needs_config`, which a person fixes, while an agreement that
-      // has already gone is not a retry at all.
-      return sendFail(body.status === "needs_config" ? "needs_setup" : "not_a_draft");
+      // The 409 family carries three different remedies, and the body distinguishes them: a missing
+      // workspace contact address is `needs_config`, which a person fixes; a row whose frozen bytes
+      // are not the uploaded file is a STALE DOCUMENT that only a new agreement fixes; an agreement
+      // that has already gone is not a retry at all.
+      if (body.status === "needs_config") return sendFail("needs_setup");
+      if (typeof body.error === "string" && body.error.includes("not the file that was uploaded")) {
+        return sendFail("stale_document");
+      }
+      return sendFail("not_a_draft");
     }
     // The id is validated above, so a 400 on a well-formed id is the "add at least one signer" case
     // rather than a malformed request — actionable, and named as such.
     if (reply.status === 400) return sendFail("needs_setup");
-    if (reply.status === 422 || reply.status === 502) return sendFail("document_problem");
+    if (reply.status === 422) return sendFail("document_problem");
+    if (reply.status === 502) {
+      // The door's own document failures all happen BEFORE any send, so "nobody was emailed" is
+      // true for them. The `not_sent` answer is different: it means no signer completed delivery,
+      // and one named case is an email that DID go out with a link that could not be activated —
+      // claiming nobody was emailed there would be false in the direction that matters.
+      return sendFail(body.status === "not_sent" ? "not_delivered" : "document_problem");
+    }
     return sendFail("unavailable");
   }
 

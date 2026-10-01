@@ -10,7 +10,7 @@ CREATE TABLE public.tenant_client_agreements(
   catalog_price_snapshot_at timestamptz, title text, notes text, term_kind text,
   billing_interval text, interval_count integer, installments_total integer, payment_schedule text,
   price_basis text, starts_on date, renews_on date, ends_on date, created_by uuid);
-CREATE TABLE public.tenant_prices(id uuid, tenant_id uuid, product_id uuid, unit_amount integer, currency text, interval text, price_kind text);
+CREATE TABLE public.tenant_prices(id uuid, tenant_id uuid, product_id uuid, unit_amount integer, currency text, billing_interval text, kind text);
 CREATE TABLE public.tenant_products(id uuid, tenant_id uuid);
 CREATE TABLE public.clients(id uuid, tenant_id uuid);
 INSERT INTO public.clients VALUES ('c1111111-0000-4000-8000-000000000001','aaaaaaaa-0000-4000-8000-000000000001');

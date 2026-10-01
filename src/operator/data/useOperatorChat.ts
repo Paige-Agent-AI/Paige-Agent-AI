@@ -58,7 +58,12 @@ const SSE_PREFIX = "data: ";
 /** The server's own shape for a fingerprint: `z.array(z.string().regex(...)).max(16)`. A single
  *  malformed entry fails the WHOLE request body, taking the operator's message down with the
  *  approval, so the shape is enforced here rather than hoped for. */
-const FINGERPRINT_RE = /^[0-9a-f]{16}$/;
+// The server's confirm gate returns BOTH forms: a bare 16-hex fingerprint, and the scoped
+// `${fingerprint}:${requestNonce}` token a freshly-created proposal carries. Filtering on the
+// bare form alone drops every fresh card's token, leaving the plate to render summaries with no
+// Approve control — the high-risk action becomes unreachable (§70). Accept the full shape the
+// request schema itself models.
+const FINGERPRINT_RE = /^[0-9a-f]{16}(?::[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})?$/;
 const MAX_FINGERPRINTS = 16;
 
 type EngineMessage = { role: "user" | "assistant"; content: string };

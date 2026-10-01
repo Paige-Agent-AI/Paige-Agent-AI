@@ -111,17 +111,22 @@ describe("INT-178 · agreements are reachable from the Spine", () => {
     expect(names).toEqual(["agreement_list", "agreement_status", "agreement_draft", "agreement_send"]);
     // The registered chatTool and the model-facing schema must be the same string, or the model
     // calls a name the dispatcher does not answer to and the capability is registered-but-dead.
-    // The three Spine-registered ones must agree with their schemas. `agreement_send` is
-    // deliberately NOT Spine-registered — its executor is an edge function, and the validator
-    // requires an exact `public.<symbol>`; widening that allowlist is a change to the Spine
-    // contract for no added enforcement. It is governed by action-risk + the confirm gate + the
-    // function's own admin check, which is the same boundary `calendar_link_send` sits on.
-    expect(names.slice(0, 3)).toEqual(
-      ["agreement.list", "agreement.status", "agreement.draft"].map(
+    // All four Spine-registered chatTools must agree with their schemas. `agreement_send` IS
+    // registered — and registered STRONGER than the original design, which left it undeclared
+    // because its orchestrator is an edge function and the validator demands a public symbol.
+    // This PR ships that symbol: the durable server-side act of the send is
+    // public.issue_agreement_signing_link (redefined here with the provenance test), and the
+    // capability declares the send as an external_effect under high risk, which is the class the
+    // declaration guard requires for a mutating tool that emails real people.
+    expect(names).toEqual(
+      ["agreement.list", "agreement.status", "agreement.draft", "agreement.send"].map(
         (k) => getSpineCapability(k)?.action?.chatTool,
       ),
     );
-    expect(getSpineCapability("agreement.send")).toBeUndefined();
+    const sendCapability = getSpineCapability("agreement.send");
+    expect(sendCapability?.action?.classification).toBe("external_effect");
+    expect(sendCapability?.action?.executor).toBe("public.issue_agreement_signing_link");
+    expect(sendCapability?.action?.riskPolicyKey).toBe("high");
 
     const reads = AGREEMENT_TOOLS.filter(
       (t) => t.function.name === "agreement_list" || t.function.name === "agreement_status",

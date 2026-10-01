@@ -62,7 +62,14 @@ export const AGREEMENT_DRAFT = {
   chatBinding:"LIVE",mindBinding:"UNAVAILABLE",sharedPrimitiveChange:"NONE",maturity:"PARTIAL",
 } as const satisfies SpineCapability;
 
-export const AGREEMENT_CAPABILITIES = [AGREEMENT_LIST, AGREEMENT_STATUS, AGREEMENT_DRAFT] as const;
+export const AGREEMENT_SEND = {
+  key:"agreement.send",domain:"agreement",owner:"agreements-engine",humanSurface:"/solo/:account/sales",
+  action:{classification:"external_effect",executor:"public.issue_agreement_signing_link",chatTool:"agreement_send",riskPolicyKey:"high",approvalAuthority:"chat-canonical",idempotency:"Outward and consequential: the send emails each signer, freezes the presented document, and leaves draft in one move, so it can never be safely retried blind. The Chat confirmation fingerprint (paige_pending_confirmations) is the execute-once guard; a retry after an ambiguous outcome must re-read the agreement's status before proposing anything, and the frozen-document provenance refusal stops a pre-fix row from being re-sent as the wrong bytes."},
+  outcome:{kinds:["capability_run"],projector:"public.record_capability_run",railVisibility:"owner_internal"},
+  chatBinding:"LIVE",mindBinding:"UNAVAILABLE",sharedPrimitiveChange:"NONE",maturity:"PARTIAL",
+} as const satisfies SpineCapability;
+
+export const AGREEMENT_CAPABILITIES = [AGREEMENT_LIST, AGREEMENT_STATUS, AGREEMENT_DRAFT, AGREEMENT_SEND] as const;
 
 // Model-facing tool JSON. Authored COMPACT (single-line objects, `name:"…"` never alone on its own
 // line) so `chat-tool-registry-lint` does not count these as inline hand-wired Chat tools — they

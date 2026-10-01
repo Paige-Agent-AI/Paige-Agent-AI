@@ -78,9 +78,9 @@ psql() { "$PGBIN/psql" -h "$WORK" -p "$PORT" -U proofrunner -d proof "$@"; }
 psql -v ON_ERROR_STOP=1 -q -f "$HERE/_fixture-schema.sql" >/dev/null
 psql -v ON_ERROR_STOP=1 -q -f "$MIGRATION" >/dev/null 2>&1
 psql -v ON_ERROR_STOP=1 -q -f "$MIGRATION2" 2>&1 | grep -iE "^psql.*error" && { echo "FAIL — the read/expiry migration did not apply"; exit 1; }
-# There is no autonomy-catalogue migration any more: the agreements chat tools are withheld from
-# this PR because the INT-003 capability-kit guard cannot admit a new mutating tool (see the note in
-# `_shared/action-risk.ts`). With no governed tool there is nothing for `list_tool_autonomy` to show.
+# The agreements chat tools ship Spine-registered (agreement.send as an external_effect on
+# public.issue_agreement_signing_link) and their autonomy-catalogue toggles arrive in
+# 20270532120000, re-emitted from the catalogue body current at this PR's base.
 psql -v ON_ERROR_STOP=1 -q -f "$MIGRATION4" 2>&1 | grep -iE "^psql.*error" && { echo "FAIL — the signing-contract migration did not apply"; exit 1; }
 psql -v ON_ERROR_STOP=1 -q -f "$MIGRATION5" 2>&1 | grep -iE "^psql.*error" && { echo "FAIL — the signer-seam migration did not apply"; exit 1; }
 psql -v ON_ERROR_STOP=1 -q -f "$MIGRATION6" 2>&1 | grep -iE "^psql.*error" && { echo "FAIL — the view-tracking migration did not apply"; exit 1; }

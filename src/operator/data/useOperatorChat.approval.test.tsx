@@ -138,6 +138,48 @@ describe("the platform operator can approve a gated action from the spine", () =
     vi.unstubAllGlobals();
   });
 
+  it("draws Approve for the SCOPED fingerprint a freshly-created proposal carries", async () => {
+    // The general confirm gate returns `${fingerprint}:${requestNonce}` for a fresh proposal; a
+    // filter that accepts only the bare 16-hex form drops it and the plate renders summaries with
+    // no control — the high-risk action becomes unreachable. Found by independent review.
+    const controllers: ReadableStreamDefaultController<Uint8Array>[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (_u: string, _init?: RequestInit) => {
+      const stream = new ReadableStream<Uint8Array>({ start: (c) => { controllers.push(c); } });
+      return new Response(stream, { status: 200 });
+    }));
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    const root = createRoot(host);
+    await act(async () => { root.render(<Harness />); });
+    const enc = new TextEncoder();
+    await act(async () => {
+      host.querySelector<HTMLButtonElement>("button[data-ask]")!.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    const scoped = "a1b2c3d4e5f60718:9f8e7d6c-5b4a-4321-9cde-0123456789ab";
+    await act(async () => {
+      controllers[0].enqueue(enc.encode('data: {"choices":[{"delta":{"content":"One change to approve."}}]}\n'));
+      controllers[0].enqueue(enc.encode(
+        'data: {"paige_confirm":{"tool":"agreement_send","summary":"Send the uploaded contract to the signer.","fingerprint":"' + scoped + '"}}\n',
+      ));
+      await Promise.resolve();
+    });
+    await act(async () => {
+      controllers[0].enqueue(enc.encode("data: [DONE]\n"));
+      controllers[0].close();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(host.textContent).toContain("Send the uploaded contract");
+    const approve = [...host.querySelectorAll<HTMLButtonElement>("button")]
+      .find((b) => b.textContent?.trim() === "Approve");
+    expect(approve).toBeDefined();
+    await act(async () => root.unmount());
+    host.remove();
+    vi.unstubAllGlobals();
+  });
+
   it("asks once when the agent gates the same call twice in one turn", async () => {
     const bodies: string[] = [];
     const controllers: ReadableStreamDefaultController<Uint8Array>[] = [];

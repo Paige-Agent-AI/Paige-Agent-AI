@@ -25,7 +25,7 @@ CUSTOMER_RELEASE_IDENTITY: none: no deployed human flow.
 RELEASE_NOTE_REQUIRED: NO: staged capability.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: authenticated deployment and all privileged consumer adoption; lifecycle Spine capabilities remain UNAVAILABLE.
 RELEASE_RECOVERY: position=retain lifecycle freeze and revoke review RPC execute if containment is required without restoring wildcard projections over internal columns; reference=0149180e9d752d9077b7c8991a3c614d329c25ed
-INTERNAL_BUILD_IDENTITY: base=0149180e9d752d9077b7c8991a3c614d329c25ed; branch=codex/knowledge-review-foundation; exact change identity=Git commit containing this evidence; deployment=NOT_APPLICABLE; environment=local; migrations=PROOF_OWED(real Supabase application of 20270527000000_knowledge_review_foundation); edge=NOT_APPLICABLE; evidence=scripts/knowledge-service/review-check.py
+INTERNAL_BUILD_IDENTITY: base=0149180e9d752d9077b7c8991a3c614d329c25ed; branch=codex/knowledge-review-foundation; exact change identity=Git commit containing this evidence; deployment=NOT_APPLICABLE; environment=local; migrations=PROOF_OWED(real Supabase application of 20270530400000_knowledge_review_foundation); edge=NOT_APPLICABLE; evidence=scripts/knowledge-service/review-check.py
 
 ## Ten routing answers (recorded before implementation)
 
@@ -71,6 +71,6 @@ Deletion remains compatible: its definer lookup and CAS can remove canonical doc
 - review-check.py --psql <PostgreSQL16 psql path>: 48 actual SQL role/behavior assertions, migration replay twice.
 - review-check.py --suite metadata and --suite delete: existing SQL behavior suites pass with foundation applied twice.
 - Each harness creates/drops only a unique disposable database on localhost:55439; no cluster reset, external database or provider call.
-- Supabase CLI generated the migration; filename moved forward after 20270526000000.
+- Supabase CLI generated the migration; filename moved forward after 20270530200000.
 - No TypeScript, UI, Chat, worker, DOCX, durable-job or staging-generation changes. No full app compile/build was needed or claimed.
 - Independent review is parent-owned and pending. No push, PR, merge, deployment or production proof.

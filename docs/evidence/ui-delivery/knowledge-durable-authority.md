@@ -25,7 +25,7 @@ CUSTOMER_RELEASE_IDENTITY: none: no deployed human flow.
 RELEASE_NOTE_REQUIRED: NO: staged capability.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: authenticated deployment and all privileged consumer adoption; lifecycle Spine capabilities remain UNAVAILABLE.
 RELEASE_RECOVERY: position=retain Knowledge lifecycle freeze and disable any future Knowledge submission adapter while reviewing authority changes without altering existing native work records; reference=198b53c595c1353d9f86c6c80d95cd093287d34c
-INTERNAL_BUILD_IDENTITY: base=198b53c595c1353d9f86c6c80d95cd093287d34c; branch=codex/knowledge-durable-authority; deployment=NOT_APPLICABLE; environment=local; migrations=PROOF_OWED(real Supabase application of 20270528000000_knowledge_durable_authority); edge=NOT_APPLICABLE; evidence=scripts/knowledge-service/durable-check.py
+INTERNAL_BUILD_IDENTITY: base=198b53c595c1353d9f86c6c80d95cd093287d34c; branch=codex/knowledge-durable-authority; deployment=NOT_APPLICABLE; environment=local; migrations=PROOF_OWED(real Supabase application of 20270530600000_knowledge_durable_authority); edge=NOT_APPLICABLE; evidence=scripts/knowledge-service/durable-check.py
 
 
 ## Ten routing answers (pre-edit)
@@ -66,7 +66,7 @@ The regression deliberately confirms that the new auth.users ban check does not 
 - Failing first: durable-check.py --baseline failed because knowledge_actor_authorized was missing.
 - durable-check.py --psql <PostgreSQL16 psql path>: 47 SQL assertions and one concurrent selected-profile race; migration replay twice. pg_stat_activity confirms the competing profile update reached its locked wait before creation starts.
 - Test databases are unique disposable names on localhost:55439 and are dropped afterward. Existing cluster is not reset.
-- Migration generated using Supabase CLI then ordered after foundation as 20270528000000.
+- Migration generated using Supabase CLI then ordered after foundation as 20270530600000.
 - No TypeScript or UI files changed; no full build/compile. Independent review is parent-owned and pending.
 - No push, PR, merge, deployment, source binding, draft submission or Knowledge lifecycle activation.
 

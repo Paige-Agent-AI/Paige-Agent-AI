@@ -215,12 +215,15 @@ serve(async (req: Request) => {
 
     // ── Ingest into the tenant's OWN KB (source='sync' + category='studio' provenance, private) ──
     const sourceUrl = `studio://${artifactType}/${artifactId}`;
-    // Snapshot predecessors BEFORE ingest. Never delete another in-flight save
-    // merely because it shares this source. A failed snapshot permits no cleanup.
+    // Snapshot predecessors with reconciled persisted chunks BEFORE ingest.
+    // Core inserts pending rows at count=0: never retire those in-flight saves.
+    // A positive count is not a claim of complete coverage (partial docs can also
+    // have chunks). Only a complete replacement may retire this captured set.
+    // A failed or capped snapshot permits no cleanup.
     let priorIds: string[] | null = null;
     try {
       const prior = await admin.from("tenant_knowledge_docs").select("id", { count: "exact" })
-        .eq("tenant_id", tenantId).eq("source_url", sourceUrl);
+        .eq("tenant_id", tenantId).eq("source_url", sourceUrl).gt("chunk_count", 0);
       if (!prior.error && Array.isArray(prior.data) && prior.count === prior.data.length) priorIds = prior.data.map((row) => row.id);
     } catch { /* Leave replacement unverified; retain every predecessor. */ }
     const truncated = content.length > 400_000;
@@ -248,7 +251,7 @@ serve(async (req: Request) => {
     if (priorIds?.length) {
       try {
         const removed = await admin.from("tenant_knowledge_docs").delete()
-          .eq("tenant_id", tenantId).eq("source_url", sourceUrl).in("id", priorIds);
+          .eq("tenant_id", tenantId).eq("source_url", sourceUrl).in("id", priorIds).gt("chunk_count", 0);
         const remaining = await admin.from("tenant_knowledge_docs").select("id")
           .eq("tenant_id", tenantId).eq("source_url", sourceUrl).in("id", priorIds).limit(1);
         replaced = !removed.error && !remaining.error && Array.isArray(remaining.data) && remaining.data.length === 0;

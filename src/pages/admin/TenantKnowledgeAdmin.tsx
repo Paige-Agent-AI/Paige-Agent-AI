@@ -105,7 +105,7 @@ export default function TenantKnowledgeAdmin() {
           <DialogTrigger asChild>
             <Button><Plus className="w-4 h-4 mr-1.5" /> Add Document</Button>
           </DialogTrigger>
-          <AddDocDialog tenantId={activeTenantId ?? undefined} onClose={() => { setOpen(false); load(); }} />
+          {open && <AddDocDialog key={activeTenantId} tenantId={activeTenantId ?? undefined} onClose={() => { setOpen(false); load(); }} />}
         </Dialog>
       </div>
 

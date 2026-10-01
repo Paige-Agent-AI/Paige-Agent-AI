@@ -3,6 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import ts from "typescript";
 import { z } from "zod";
+const { embeddingsCompat } = vi.hoisted(() => ({ embeddingsCompat: vi.fn() }));
+vi.mock("../../supabase/functions/_shared/voyage", () => ({ VOYAGE_DIMS: 1024, embeddingsCompat }));
+const corePath = "../../supabase/functions/_shared/kb-ingest-core.ts";
+const { ingestDoc: realIngestDoc } = await import(corePath);
 
 // Execute the real edge handler with injected boundary adapters. This is not
 // authenticated/provider proof; imports alone are replaced, not handler logic.
@@ -81,6 +85,7 @@ function studio(result: Record<string, unknown>, fault = "") {
     const q = { select: (v: string) => { fields = v; return q; }, eq: (k: string, v: unknown) => { filters.push([k, v]); return q; },
       neq: (k: string, v: unknown) => { filters.push([`neq:${k}`, v]); return q; },
       in: (k: string, v: unknown) => { filters.push([`in:${k}`, v]); return q; },
+      gt: (k: string, v: unknown) => { filters.push([`gt:${k}`, v]); return q; },
       delete: () => { op = "delete"; return q; }, limit: () => q, maybeSingle: () => q,
       then: (resolve: (value: unknown) => void, reject: (reason: unknown) => void) => Promise.resolve().then(() => {
         if (table === "growth_pages") return { data: fields === "blocks_json" ? { blocks_json: [] } : { id: "artifact", tenant_id: "00000000-0000-4000-a000-000000000001", title: "Reference", status: "published" } };
@@ -131,4 +136,64 @@ describe("Studio replacement truth", () => {
     expect(writes[0].filters).toContainEqual(["tenant_id", "00000000-0000-4000-a000-000000000001"]);
     expect(s.calls.at(-1)?.op).toBe("read");
   });
+});
+
+it("a completing Studio ingest never deletes a peer paused after its real doc insertion", async () => {
+  type Row = Record<string, unknown>;
+  const tenantId = "00000000-0000-4000-a000-000000000001";
+  const artifactId = "00000000-0000-4000-a000-000000000002";
+  const docs: Row[] = [{ id: "prior", tenant_id: tenantId, source_url: `studio://page/${artifactId}`, chunk_count: 2 }];
+  const chunks: Row[] = [];
+  let serial = 0;
+  const db = { rpc: async () => ({ data: "auto" }), from(table: string) {
+    let op = "read", value: Row | Row[] = {}, single = false, low = 0, high = Infinity;
+    const filters: Array<(row: Row) => boolean> = [];
+    const q = {
+      select: () => q, insert: (v: Row | Row[]) => { op = "insert"; value = v; return q; },
+      update: (v: Row) => { op = "update"; value = v; return q; }, delete: () => { op = "delete"; return q; },
+      eq: (k: string, v: unknown) => { filters.push(r => r[k] === v); return q; },
+      neq: (k: string, v: unknown) => { filters.push(r => r[k] !== v); return q; },
+      in: (k: string, v: unknown[]) => { filters.push(r => v.includes(r[k])); return q; },
+      gt: (k: string, v: number) => { filters.push(r => typeof r[k] === "number" && r[k] > v); return q; },
+      not: (k: string) => { filters.push(r => r[k] != null); return q; }, order: () => q,
+      range: (a: number, b: number) => { low = a; high = b; return q; }, limit: (n: number) => { high = n - 1; return q; },
+      single: () => { single = true; return q; }, maybeSingle: () => { single = true; return q; },
+      then: (resolve: (v: unknown) => void, reject: (e: unknown) => void) => Promise.resolve().then(() => {
+        if (table === "growth_pages") return { data: { id: artifactId, tenant_id: tenantId, title: "Reference", status: "published", blocks_json: [] } };
+        const rows = table.endsWith("chunks") ? chunks : docs;
+        const match = (r: Row) => filters.every(f => f(r));
+        if (op === "insert") {
+          const inserted = (Array.isArray(value) ? value : [value]).map(r => table.endsWith("docs") ? { ...r, id: `new-${++serial}` } : r);
+          if (table.endsWith("chunks") && inserted.some(r => !docs.some(d => d.id === r.doc_id))) return { error: { message: "missing parent" } };
+          rows.push(...inserted);
+          return { data: single ? inserted[0] : inserted, error: null };
+        }
+        if (op === "update") rows.filter(match).forEach(r => Object.assign(r, value));
+        if (op === "delete") for (let i = rows.length - 1; i >= 0; i--) if (match(rows[i])) rows.splice(i, 1);
+        const found = rows.filter(match);
+        return { data: single ? found[0] ?? null : found.slice(low, high + 1), count: found.length, error: null };
+      }).then(resolve, reject),
+    }; return q;
+  } };
+  let resume!: () => void, started!: () => void;
+  const paused = new Promise<void>(r => { resume = r; });
+  const inserted = new Promise<void>(r => { started = r; });
+  let calls = 0;
+  embeddingsCompat.mockImplementation(async () => {
+    if (++calls === 1) { started(); await paused; }
+    return new Response(JSON.stringify({ data: [{ embedding: Array(1024).fill(0.1) }] }));
+  });
+  const run = handler("studio-learn-from-artifact", { createClient: () => db, ingestDoc: realIngestDoc,
+    flattenBlocks: () => "The approved methodology contains enough content to index.", flattenFormSchema: () => "", atob: () => '{"role":"service_role"}' });
+  const a = run({ artifact_type: "page", artifact_id: artifactId });
+  await inserted;
+  expect(docs.find(d => d.id === "new-1")?.chunk_count).toBe(0);
+  const b = await run({ artifact_type: "page", artifact_id: artifactId });
+  expect(await b.json()).toMatchObject({ learned: true });
+  const pendingPreserved = docs.some(d => d.id === "new-1");
+  resume();
+  const firstResult = await (await a).json();
+  expect(pendingPreserved).toBe(true);
+  expect(firstResult).toMatchObject({ ok: true, learned: true });
+  expect(docs.map(d => d.id).sort()).toEqual(["new-1", "new-2"]);
 });

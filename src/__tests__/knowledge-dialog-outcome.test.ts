@@ -7,7 +7,7 @@ import { knowledgeInvokeOutcome } from "../lib/knowledge/ingest-outcome";
 type Element = { type: string; props: Record<string, unknown>; children: unknown[] };
 // Execute the actual component's event handlers with a deterministic hook adapter.
 // This covers caller transitions; it deliberately makes no DOM/a11y/runtime claim.
-function dialog(reply: unknown, initialMode = "paste") {
+function dialog(reply: unknown, initialMode = "paste", seed = true) {
   let cursor = 0;
   const states: unknown[] = [];
   const useState = (initial: unknown) => {
@@ -20,8 +20,9 @@ function dialog(reply: unknown, initialMode = "paste") {
   const invoke = vi.fn().mockResolvedValue(reply);
   const remove = vi.fn();
   const onClose = vi.fn(), onIngested = vi.fn(), onReview = vi.fn(), success = vi.fn();
+  let effectMounted = false, cleanup: (() => void) | undefined;
   const primitives = Object.fromEntries("Brain Plus Trash2 Share2 Clock CheckCircle2 XCircle DialogContent DialogHeader DialogTitle Label Input Textarea Switch Button".split(" ").map(n => [n, n]));
-  const env = { exports: {} as Record<string, (...args: unknown[]) => Element>, React: { createElement, Fragment: "fragment" }, useState, useRef, useEffect: () => {}, useCallback: (fn: unknown) => fn,
+  const env = { exports: {} as Record<string, (...args: unknown[]) => Element>, React: { createElement, Fragment: "fragment" }, useState, useRef, useEffect: (effect: () => () => void) => { if (!effectMounted) { cleanup = effect(); effectMounted = true; } }, useCallback: (fn: unknown) => fn,
     ...primitives, knowledgeInvokeOutcome, toast: { success, error: vi.fn() }, supabase: { functions: { invoke }, storage: { from: () => ({ upload: async () => ({ error: null }), remove }) } } };
   const src = readFileSync(new URL("../pages/admin/TenantKnowledgeAdmin.tsx", import.meta.url), "utf8").replace(/^import .*;\r?\n/gm, "");
   const js = ts.transpileModule(src, { compilerOptions: { jsx: ts.JsxEmit.React, target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
@@ -36,11 +37,11 @@ function dialog(reply: unknown, initialMode = "paste") {
   };
   const find = (predicate: (el: Element) => boolean) => elements(render()).find(predicate)!;
   const change = (placeholder: string, value: string) => (find(el => el.props.placeholder === placeholder).props.onChange as (event: unknown) => void)({ target: { value } });
-  change("e.g. Discovery call script", "Reference");
-  if (initialMode === "paste") change("Paste the doc body — Paige chunks and learns it automatically.", "Business methodology");
-  if (initialMode === "file") (find(el => el.props.type === "file").props.onChange as (e: unknown) => void)({ target: { files: [{ name: "reference.txt", size: 60, type: "text/plain" }] } });
+  if (seed) change("e.g. Discovery call script", "Reference");
+  if (seed && initialMode === "paste") change("Paste the doc body — Paige chunks and learns it automatically.", "Business methodology");
+  if (seed && initialMode === "file") (find(el => el.props.type === "file").props.onChange as (e: unknown) => void)({ target: { files: [{ name: "reference.txt", size: 60, type: "text/plain" }] } });
   const submit = () => (find(el => el.type === "Button" && el.children.includes("Add & teach")).props.onClick as () => Promise<void>)();
-  return { props, render, find, invoke, remove, onClose, onIngested, onReview, success, submit };
+  return { props, render, find, change, dispose: () => cleanup?.(), invoke, remove, onClose, onIngested, onReview, success, submit };
 }
 describe("AddDocDialog outcome behavior", () => {
   it("only complete verified success closes and notifies the workspace", async () => {
@@ -85,5 +86,39 @@ describe("AddDocDialog outcome behavior", () => {
     await pending;
     expect(d.onIngested).not.toHaveBeenCalled();
     expect(d.onClose).not.toHaveBeenCalled();
+  });
+  for (const data of [{ ok: true, doc_id: "test-doc", chunk_count: 1, embedded: false }, { ok: false, error: "persistence_unverified" }]) {
+    it(`review then reopen starts an intentional empty attempt after ${JSON.stringify(data)}`, async () => {
+      const old = dialog({ data, error: null });
+      await old.submit();
+      (old.find(el => el.type === "Button" && el.children.includes("Review knowledge")).props.onClick as () => void)();
+      old.dispose();
+      const fresh = dialog({ data: { ok: true, doc_id: "different-doc", chunk_count: 1, embedded: true }, error: null }, "paste", false);
+      expect(fresh.find(el => el.type === "Textarea").props.value).toBe("");
+      expect(fresh.find(el => el.props.placeholder === "e.g. Discovery call script").props.value).toBe("");
+      fresh.change("e.g. Discovery call script", "Different reference");
+      fresh.change("Paste the doc body — Paige chunks and learns it automatically.", "A different document");
+      await fresh.submit();
+      expect(fresh.onIngested).toHaveBeenCalledWith("Different reference", "different-doc");
+      expect(old.invoke).toHaveBeenCalledOnce();
+    });
+  }
+  it("does not notify after closing an in-flight attempt", async () => {
+    const d = dialog(null);
+    let resolve!: (v: unknown) => void;
+    d.invoke.mockImplementation(() => new Promise(r => { resolve = r; }));
+    const pending = d.submit();
+    d.dispose();
+    resolve({ data: { ok: true, doc_id: "test-doc", chunk_count: 2, embedded: true }, error: null });
+    await pending;
+    expect(d.onClose).not.toHaveBeenCalled();
+    expect(d.onIngested).not.toHaveBeenCalled();
+    expect(d.success).not.toHaveBeenCalled();
+  });
+  it("all four real owners unmount closed attempts and key them by workspace", () => {
+    for (const [path, names] of [["../pages/admin/TenantKnowledgeAdmin.tsx", ["open"]], ["../components/paige/KnowledgePanel.tsx", ["pasteOpen", "linkOpen", "fileOpen"]]] as const) {
+      const source = readFileSync(new URL(path, import.meta.url), "utf8");
+      for (const name of names) expect(source).toMatch(new RegExp(`\\{${name} && <AddDocDialog\\s+key=\\{activeTenantId\\}`));
+    }
   });
 });

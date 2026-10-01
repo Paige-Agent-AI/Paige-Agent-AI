@@ -197,13 +197,18 @@ export function SoloMindWorkspace({ accountContext, openPaige, preferenceScope, 
   }, [records]);
 
   useEffect(() => {
+    if (requestedKnowledgeId && knowledge.requestedDocumentState !== 'available') {
+      setSelected(null);
+      handledLink.current = null;
+      return;
+    }
     if (knowledge.loading) { handledLink.current = null; return; }
     if (!requestedKnowledgeId || handledLink.current === requestedKnowledgeId) return;
     handledLink.current = requestedKnowledgeId;
     const record = records.find(r => r.id === `knowledge:${requestedKnowledgeId}`);
     setSelected(record ?? null);
     if (record) setDomainFilter('knowledge');
-  }, [knowledge.loading, requestedKnowledgeId, records]);
+  }, [knowledge.loading, knowledge.requestedDocumentState, requestedKnowledgeId, records]);
 
   // Restore focus to whatever opened the drawer. If that element was removed while the drawer was
   // open (the canvas re-mounting on a background data refresh detaches the stored `.mind-canvas`
@@ -467,7 +472,7 @@ export function SoloMindWorkspace({ accountContext, openPaige, preferenceScope, 
                         ? "No records are loaded here yet. No sample records or invented relationships are substituted."
                         : `${MIND_DOMAINS.find((d) => d.key === domainFilter)?.name}: ${domains.find((d) => d.def.key === domainFilter)?.empty?.body ?? "Nothing on file yet."}`)
                 }</p>}
-                {requestedKnowledgeId && !knowledge.loading && !records.some(r => r.id === `knowledge:${requestedKnowledgeId}`) && <p role="status">{knowledge.requestedDocumentError || knowledge.error ? 'This Knowledge source could not be read. Refresh to try again.' : 'This Knowledge source was not found in the active workspace.'}</p>}
+                {requestedKnowledgeId && !knowledge.loading && ['missing', 'error'].includes(knowledge.requestedDocumentState) && <p role="status">{knowledge.requestedDocumentState === 'error' ? 'This Knowledge source could not be read. Refresh to try again.' : 'This Knowledge source was not found in the active workspace.'}</p>}
                 {knowledge.hasMore && <button type="button" className="mind-records-restore" disabled={knowledge.loading} onClick={() => void knowledge.loadMore()}>Load more knowledge</button>}
                 {dismissedCount > 0 && (
                   <button type="button" className="mind-records-restore" onClick={restoreDismissed}>

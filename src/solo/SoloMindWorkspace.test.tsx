@@ -61,13 +61,29 @@ function records() { return [...host.querySelectorAll("[data-mind-record]")] as 
 
 describe("Solo Mind workspace — orb port", () => {
   it('opens only the exact canonical source named by the Knowledge deep link', () => {
+    harness.knowledge.mockReturnValue({ ...knowledge, requestedDocumentState: 'available' });
     act(() => root.render(<SoloMindWorkspace requestedKnowledgeId="doc-2" />));
     expect(harness.knowledge).toHaveBeenCalledWith('doc-2');
     expect(host.querySelector('.mind-drawer')?.textContent).toContain('Brand voice');
   });
   it('reports a resolved missing Knowledge deep link without choosing another record', () => {
+    harness.knowledge.mockReturnValue({ ...knowledge, requestedDocumentState: 'missing' });
     act(() => root.render(<SoloMindWorkspace requestedKnowledgeId="missing" />));
     expect(host.textContent).toContain('not found in the active workspace');
+    expect(host.querySelector('.mind-drawer')).toBeNull();
+  });
+  for (const state of ['missing', 'error']) it(`exact-source ${state} takes precedence over a stale list row`, () => {
+    harness.knowledge.mockReturnValue({ ...knowledge, requestedDocumentState: state, requestedDocumentError: state === 'error' ? 'Read failed' : null });
+    act(() => root.render(<SoloMindWorkspace requestedKnowledgeId="doc-2" />));
+    expect(host.querySelector('.mind-drawer')).toBeNull();
+    expect(host.textContent).toContain(state === 'missing' ? 'not found in the active workspace' : 'could not be read');
+  });
+  it('closes an earlier source drawer when the requested source changes to a missing one', () => {
+    harness.knowledge.mockReturnValue({ ...knowledge, requestedDocumentState: 'available' });
+    act(() => root.render(<SoloMindWorkspace requestedKnowledgeId="doc-2" />));
+    expect(host.querySelector('.mind-drawer')).not.toBeNull();
+    harness.knowledge.mockReturnValue({ ...knowledge, requestedDocumentState: 'missing' });
+    act(() => root.render(<SoloMindWorkspace requestedKnowledgeId="missing" />));
     expect(host.querySelector('.mind-drawer')).toBeNull();
   });
   it("keeps exactly one accessible Mind heading", () => {

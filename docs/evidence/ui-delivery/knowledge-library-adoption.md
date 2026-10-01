@@ -85,3 +85,13 @@ RELEASE_RECOVERY: position=revert this consumer adoption to prior readers if nee
 Parent approved the additional narrow route seam: CommandCenter passes `?knowledge=<id>` into Mind; useSoloKnowledge performs an exact canonical read for that source even beyond the first100 list items. Invalid/missing sources do not select another record. Existing network state validates existing schema enum. Network/deletion legacy writes are tenant-filtered and feedback-fenced here; governed deletion is the parallel parent's integration packet, not delivered by this patch. No DB, edge handler, Spine registration, provider registry, source-content mutation or ingest outcome implementation changed. AddDocDialog has only inherited type/regex lint cleanup; integrate PR1601's full truthful-ingest implementation rather than replacing it with this checkout's old ingestion behavior.
 
 Final generated-table cleanup typecheck: PASS baseline12/current12. CSS proof: knowledge-library-adoption/css-proof.json confirms full dist/assets CSS URL returned200 and computed fixed dialog typography/geometry.
+
+
+## Independent review repair batch
+
+Review at d8511e5e found two P2 defects. Six failing-first tests reproduced them before the repair:
+
+1. A list snapshot could revive a requested source after the exact source read returned no row or failed. The exact read now has explicit idle/loading/available/missing/error state; it removes conflicting list metadata and exclusively controls deep-link selection and absence/error feedback. Changing to a missing source also closes the earlier drawer.
+2. Review filtered only the first page and offered neither later-page access nor error reload. Review now exposes Load more documents, reports absence only among loaded documents, and exposes Reload Knowledge after a read error. An actual Review-body test loads a shared101st record through the canonical hook.
+
+Verification: seven focused test files87PASS, followed by final Mind-only regression20PASS after the source-change guard. Affected source/test ESLint and diff check PASS. No full compiler/build rerun in this batch: parent owns the active Settings compiler slot and integrated validation. Existing16 rendered editor cases are unaffected; no new rendered/full-shell/authenticated claim for these two repairs. Parent coordinates the sole independent recheck at the repair commit.

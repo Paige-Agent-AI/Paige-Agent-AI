@@ -3,11 +3,13 @@ import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useKnowledgeDocuments } from '../hooks/useKnowledgeDocuments';
+import { useSoloKnowledge } from '../solo/data/useSoloKnowledge';
 import { KnowledgeMetadataEditor } from '../components/knowledge/KnowledgeMetadataEditor';
 import { KnowledgeServiceError, type KnowledgeDocument } from '../lib/knowledge-service';
 const api = vi.hoisted(() => ({ read: vi.fn(), update: vi.fn() }));
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 vi.mock('@/integrations/supabase/client', () => ({ supabase: {} }));
+vi.mock('@/hooks/useTenantContext', () => ({ useOptionalTenantContext: () => ({ activeTenantId: 'tenant-a' }) }));
 vi.mock('@/lib/knowledge-service', async importOriginal => ({ ...await importOriginal<object>(), readKnowledge: api.read, updateKnowledgeMetadata: api.update }));
 vi.mock('@/components/ui/dialog', () => ({ DialogContent: 'section', DialogHeader: 'header', DialogTitle: 'h2', DialogDescription: 'p' }));
 const doc: KnowledgeDocument = { id:'doc-a', tenant_id:'tenant-a', revision:1, title:'Reference', summary:null, category:null, tags:[], source:'paste', source_url:null, chunk_count:1, created_at:'2026-09-30', updated_at:'2026-09-30', share_to_network:false, network_review_status:'none' };
@@ -26,6 +28,16 @@ describe('canonical Knowledge read lifecycle',()=>{
  it('reads a requested source by exact id independently of its list position',async()=>{api.read.mockResolvedValue([doc]);await mount(createElement(View,{tenant:'tenant-a',id:'doc-a'}));expect(api.read).toHaveBeenCalledWith(expect.anything(),'tenant-a',{documentId:'doc-a',limit:100,offset:0});});
  it('rejects a mismatched source in a targeted response',async()=>{api.read.mockResolvedValue([doc]);await mount(createElement(View,{tenant:'tenant-a',id:'different'}));expect(value.docs).toEqual([]);expect(value.error).toBeTruthy();});
  it('fences changed document requests as well as changed tenants',async()=>{const old=deferred<KnowledgeDocument[]>();api.read.mockReturnValueOnce(old.promise).mockResolvedValueOnce([{...doc,id:'doc-b'}]);await mount(createElement(View,{tenant:'tenant-a',id:'doc-a'}));await act(async()=>root.render(createElement(View,{tenant:'tenant-a',id:'doc-b'})));await act(async()=>old.resolve([doc]));expect(value.docs[0].id).toBe('doc-b');});
+});
+describe('Solo exact-source truth', () => {
+ let value: ReturnType<typeof useSoloKnowledge>;
+ function View() { value = useSoloKnowledge('doc-a'); return null; }
+ for (const failure of [false, true]) it(`does not revive stale list metadata after exact read ${failure ? 'fails' : 'returns empty'}`, async () => {
+   api.read.mockImplementation((_client, _tenant, options) => options.documentId ? (failure ? Promise.reject(new Error('offline')) : Promise.resolve([])) : Promise.resolve([doc]));
+   await mount(createElement(View));
+   expect(value.docs.some(row => row.id === 'doc-a')).toBe(false);
+   expect(value.requestedDocumentState).toBe(failure ? 'error' : 'missing');
+ });
 });
 describe('revision-bound metadata editor',()=>{
  const onSaved=vi.fn(),onClose=vi.fn();

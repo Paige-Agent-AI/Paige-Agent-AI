@@ -88,6 +88,10 @@ describe("same-name pipeline creation is intentional", () => {
     expect(migration).toMatch(/pipeline_catalogue[\s\S]{0,200}PPL reference/i);
   });
 
+  it("the governed command schema declares allowSameName so the escape hatch is emittable", () => {
+    expect(chat).toMatch(/allowSameName: \{ type: "boolean"/);
+  });
+
   it("the tool description teaches the same-name rule", () => {
     expect(chat).toMatch(/same name[\s\S]{0,220}allowSameName/i);
   });

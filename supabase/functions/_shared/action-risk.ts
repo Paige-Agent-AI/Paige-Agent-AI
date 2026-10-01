@@ -198,8 +198,9 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   // of billing, connections, provider actions and client-visible changes.
   ["comms_name_number", "ordinary", "renames a number in the workspace's own list"],
   ["comms_draft_registration", "ordinary", "drafts carrier copy; submitting it is a separate act"],
-  // `pipeline_create` / `pipeline_add_stage` were classified here and are NOT tools — they exist
-  // only in a label switch. The tool that exists is `pipeline_configure`, and it was omitted, so
+  // `pipeline_create` / `pipeline_add_stage` were classified here historically and are now fully
+  // retired (removed from the runtime surface). The tool that exists is `pipeline_configure`, and
+  // it was once omitted, so
   // deriving the gated set from this policy silently UNGATED a previously-gated write (§58). The
   // lint could not see it: `configure` was not a mutation verb, so the backstop read it as a query.
   // Both halves are fixed — the entry below, and `configure` added to MUTATION_VERB.

@@ -928,30 +928,40 @@ export function useSoloCampaigns(): SoloCampaignsState {
   useEffect(() => {
     if (!activeTenantId || accountContextLoading) return;
     let disposed = false;
+    // Coalesce event bursts: one bulk write over N deals fires N change events, and each must not
+    // trigger its own full reload. A short trailing window collapses a burst into one reload of
+    // current truth.
+    let reloadTimer: ReturnType<typeof setTimeout> | undefined;
+    const scheduleReload = () => {
+      if (disposed) return;
+      clearTimeout(reloadTimer);
+      reloadTimer = setTimeout(() => { if (!disposed) retry(); }, 200);
+    };
     const channel = supabase
       .channel(`solo-pipeline-board:${activeTenantId}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "deals", filter: `tenant_id=eq.${activeTenantId}` },
-        () => { if (!disposed) retry(); },
+        () => scheduleReload(),
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "pipelines", filter: `tenant_id=eq.${activeTenantId}` },
-        () => { if (!disposed) retry(); },
+        () => scheduleReload(),
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "pipeline_stages", filter: `tenant_id=eq.${activeTenantId}` },
-        () => { if (!disposed) retry(); },
+        () => scheduleReload(),
       )
       .subscribe((status) => {
         // A channel that (re)connects refetches once: recovery reads current truth instead
         // of trusting the state left from before the disconnect.
-        if (status === "SUBSCRIBED" && !disposed) retry();
+        if (status === "SUBSCRIBED" && !disposed) scheduleReload();
       });
     return () => {
       disposed = true;
+      clearTimeout(reloadTimer);
       supabase.removeChannel(channel);
     };
   }, [activeTenantId, accountContextLoading, retry]);

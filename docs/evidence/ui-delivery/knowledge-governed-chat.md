@@ -7,11 +7,11 @@ MATERIAL_FLOW_CHANGE: YES: canonical Knowledge read/update/delete becomes callab
 FLOW_PROTOTYPE: PASS: owner approved knowledge-flow-prototype.html and explicitly cleared final shared Chat integration in the active Knowledge handoff on 2026-09-30.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: owner reads and governs exact workspace Knowledge records without another store or authority model.
 VISUAL_DIRECTION: NOT_APPLICABLE: no layout/style/component change.
-AUTOMATED_EVIDENCE: PASS: 38 focused adapter/service tests (17 new adapter cases); actual Chat handler harness 534 checks; catalogue/Anthropic contract 9 checks; six PostgreSQL catalogue assertions and migration replay twice.
+AUTOMATED_EVIDENCE: PASS: 78 focused adapter/service/approval tests; actual Chat scope harness 534 checks and actual approved-path/authz harness 488 checks; catalogue/Anthropic contract 9 checks; six PostgreSQL catalogue assertions and migration replay twice.
 STATIC_EVIDENCE: PASS: strict standalone TypeScript for new adapter/domain; focused ESLint; action-risk, Chat registry, Spine registry, write-target, governed-execution, receipt-coverage and tool-catalogue checks. Full Deno check is UNVERIFIED because Deno is not installed locally.
 RENDERED_EVIDENCE: UNVERIFIED: no rendered approval interaction exercised in this backend slice.
 BEHAVIORAL_EVIDENCE: PASS: actual handler with module-boundary synthetic caller/provider; read-after-empty-search then raw account switch blocks next provider/reply/summary. SQL fixture preserves previous catalogue rows, default confirm, grants, tenant mismatch and stored off mode.
-AUTHENTICATED_RUNTIME: UNVERIFIED: no live Supabase caller, deployed migrations, actual approval-card redemption, production receipt readback or full-shell account switch.
+AUTHENTICATED_RUNTIME: UNVERIFIED: no live Supabase caller, deployed migrations, authenticated rendered approval-card redemption, production receipt readback or full-shell account switch.
 KEYBOARD_FOCUS: NOT_APPLICABLE: no controls changed.
 ZOOM_REFLOW: NOT_APPLICABLE: no layout changed.
 REDUCED_MOTION: NOT_APPLICABLE: no motion changed.
@@ -59,3 +59,15 @@ Coordinator explicitly cleared only catalogue migration 20270529000000 after dis
 Read returns at most 20 rows, at most 12k detail characters and less than 16k serialized context, with explicit truncation. Mutation responses expose ids/revision/outcome rather than document content. SQL is the sole operation receipt owner. The request-local uncertain-document fence stops model re-attempts after uncertain or unrecorded outcomes, even when it changes the patch; a new request requires operator review. This is retry containment, not a second approval path.
 
 Successful rendered high-risk card redemption and authenticated SQL execution remain proof owed. No merge, deployment, release, create/reindex authority, or Memory promotion is claimed.
+
+## Independent review repair — one batch
+
+Parent independent review of ccf48c34 found two P2 defects: the existing spent-approval classifier replaced a verified committed-but-unrecorded outcome with uncertain wording; exact SQL rollback refusals also appeared uncertain because they omitted not_applied. Both are fixed in the single authorized batch under SCR-2026-09-30-KNOWLEDGE-OUTCOME (canonical packet in docs/architecture/paige-spine-foundation.md).
+
+The existing classifier interprets the committed/missing-receipt combination only for the explicit Knowledge caller opt-in; other domains retain prior behavior. Existing frame kinds are unchanged. Fixed singular/plural notes state completion and the missing activity record, and say not to repeat it. Uncertain transport precedence remains. Only a known exact Knowledge SQL error plus its matching SQLSTATE sets not_applied; missing or unfamiliar codes remain uncertain. No lane/token/approval authority change.
+
+Failing-first new adapter/classifier run: 3 FAIL/18 PASS. Final tests: 78 PASS across Knowledge adapter, canonical service/delete and shared approval-outcome tests. Actual Chat scope harness: 534 PASS. Actual Chat authz harness: 488 PASS, including existing other-domain approval cases plus newly issued/stored/redeemed Knowledge approvals for completed_unrecorded, conflict, forbidden, transport and successful high-risk delete. These assert exact JWT RPC dispatch once, correct card outcome, accurate model note and no duplicate Chat audit. PostgreSQL assertions and rendered/authenticated limits above remain unchanged.
+
+Separate CI fixture reconciliation 522aab297a1829a9c7f85c4271226eff7007df42 is composed as d526b5f3: independent raw active workspace fixture and stronger anchor-query assertion. This was based on pre-summary/base comparison and changes no handler security check.
+
+Final strict standalone tsc includes the shared outcome module; affected ESLint, registry/action-risk/governance checks and diff check pass. Sole independent exact-head recheck is pending; no push/merge/deployment.

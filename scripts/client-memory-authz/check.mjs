@@ -4348,5 +4348,32 @@ for (const raw of [OTHER_TENANT, null]) {
   assert(`32 raw workspace ${raw}: no tool dispatch`,!result.rec.rpc.some(c=>c.name==="tenant_comms_readiness"));
 }
 
+console.log("33. Knowledge through actual spent approval and card/model outcome projection");
+{
+ const THREAD="cccccccc-cccc-4ccc-8ccc-cccccccccccc", id="55555555-5555-4555-8555-555555555555";
+ const doc={id,tenant_id:CALLER_TENANT,revision:3,title:"Guide",summary:null,category:null,tags:[],source:"paste",source_url:null,chunk_count:1};
+ const cases=[
+  {name:"unrecorded",tool:"knowledge_update",rpc:"update_tenant_knowledge_metadata",answer:{data:{tenant_id:CALLER_TENANT,document:doc,outcome:"capability_completed_unrecorded",run_id:id},error:null},outcome:"ran",note:"The change completed, but its activity record is missing. Do not repeat it."},
+  {name:"conflict",tool:"knowledge_update",rpc:"update_tenant_knowledge_metadata",answer:{data:null,error:{code:"40001",message:"KNOWLEDGE_REVISION_CONFLICT"}},outcome:"not_run",note:"It didn't go through."},
+  {name:"forbidden",tool:"knowledge_delete",rpc:"delete_tenant_knowledge",answer:{data:null,error:{code:"42501",message:"KNOWLEDGE_FORBIDDEN"}},outcome:"not_run",note:"It didn't go through."},
+  {name:"transport",tool:"knowledge_update",rpc:"update_tenant_knowledge_metadata",answer:{data:null,error:{message:"network lost"}},outcome:"unconfirmed",note:"This may have gone through. Check before asking again, so it doesn't happen twice."},
+  {name:"delete",tool:"knowledge_delete",rpc:"delete_tenant_knowledge",answer:{data:{tenant_id:CALLER_TENANT,document_id:id,deleted_revision:2,document_absent:true,chunks_absent:true,source_cleanup:{status:"not_attempted",reason:"canonical_source_binding_unavailable"},outcome:"capability_succeeded",run_id:id},error:null},outcome:"ran"},
+ ];
+ for(const test of cases) {
+  const st=makeConfirmStore();
+  const args={document_id:id,expected_revision:2,...(test.tool==="knowledge_update" ? {patch:{title:"Guide"}} : {})};
+  const base={stream:true,extraBody:{threadId:THREAD},rpcOverrides:{resolve_tool_autonomy:{data:"confirm",error:null},get_actor_access:{data:{tier:"tenant"},error:null},get_paige_persona_context:{data:[{tenant_id:CALLER_TENANT}],error:null},[test.rpc]:test.answer},tablesExtra:{paige_pending_confirmations:st.table},onInsert:mirrorConfirms(st)};
+  const proposed=await drive({...base,toolCall:{name:test.tool,args}});
+  assert(`33 ${test.name}: issued existing canonical proposal without write`,st.rows.length===1&&!proposed.rec.rpc.some(c=>c.name===test.rpc));
+  const token=issuedApproval(st.rows[0]);
+  const approved=await drive({...base,extraBody:{threadId:THREAD,approvedConfirmations:[token]},toolCall:{name:test.tool,args:{...args,confirm:true}}});
+  const frame=approved.bodyText.split("\n").filter(l=>l.startsWith("data: ")).map(l=>{try{return JSON.parse(l.slice(6));}catch{return null;}}).find(f=>f?.paige_approval_outcome)?.paige_approval_outcome;
+  assert(`33 ${test.name}: exact JWT RPC once after approval`,approved.rec.rpc.filter(c=>c.name===test.rpc&&c.client==="jwt"&&c.args.p_doc_id===id&&c.args.p_expected_revision===2).length===1);
+  assert(`33 ${test.name}: card preserves operation truth`,JSON.stringify(frame)===JSON.stringify({actions:[{fingerprint:token,outcome:test.outcome}],...(test.note?{note:test.note}:{})}),JSON.stringify(frame));
+  assert(`33 ${test.name}: no second Chat audit`,!approved.rec.inserts.some(i=>i.table==="paige_audit_log"&&i.row.action===test.tool));
+  if(test.name==="unrecorded") assert("33 unrecorded: model retains verified change and missing receipt",approved.modelEgress.some(body=>body.includes("Canonical change verified, but its Rail receipt was not recorded"))&&!approved.modelEgress.some(body=>body.includes("you could not confirm whether it went through")));
+ }
+}
+
 console.log(`\n${checks - failures} passed, ${failures} failed`);
 process.exit(failures === 0 ? 0 : 1);

@@ -28,7 +28,12 @@ export function normalizeKnowledgeArgs(tool: KnowledgeTool, raw: unknown): Recor
   }
   return out;
 }
-const refusalCodes = ['KNOWLEDGE_UNAUTHENTICATED','KNOWLEDGE_SCOPE_CHANGED','KNOWLEDGE_FORBIDDEN','KNOWLEDGE_PAGE_INVALID','KNOWLEDGE_PATCH_INVALID','KNOWLEDGE_NOT_FOUND','KNOWLEDGE_REVISION_CONFLICT','KNOWLEDGE_CHILD_SCOPE_INVALID','KNOWLEDGE_DELETE_NOT_VERIFIED'];
+// Only these exact SQL errors prove the single canonical transaction rolled back.
+const refusalCodes: Readonly<Record<string,string>> = {
+ KNOWLEDGE_UNAUTHENTICATED:'42501',KNOWLEDGE_SCOPE_CHANGED:'42501',KNOWLEDGE_FORBIDDEN:'42501',
+ KNOWLEDGE_PAGE_INVALID:'22023',KNOWLEDGE_PATCH_INVALID:'22023',KNOWLEDGE_NOT_FOUND:'P0002',
+ KNOWLEDGE_REVISION_CONFLICT:'40001',KNOWLEDGE_CHILD_SCOPE_INVALID:'42501',KNOWLEDGE_DELETE_NOT_VERIFIED:'P0001',
+};
 const failure = (code: string, uncertain = false) => ({success:false, verified:false, railRecorded:false, code, mutationMayHavePersisted:uncertain, note:uncertain ? 'The operation may have committed. Read the current Knowledge record before proposing another change; do not automatically retry.' : 'No change was verified. Resolve the refusal before proposing another operation.'});
 function safeDoc(raw: unknown, tenant: string): Record<string, unknown> {
   if (!object(raw) || raw.tenant_id !== tenant || typeof raw.id !== 'string' || !uuid.test(raw.id) || !validRevision(raw.revision) || typeof raw.title !== 'string' || !Number.isSafeInteger(raw.chunk_count) || Number(raw.chunk_count) < 0) throw new Error('KNOWLEDGE_RESPONSE_INVALID');
@@ -48,7 +53,7 @@ export async function executeKnowledgeTool(input: {caller: KnowledgeRpcPort; exp
   else Object.assign(params,{p_expected_revision:args.expected_revision,...(input.tool === 'knowledge_update' ? {p_patch:args.patch} : {})});
   try {
     const {data,error}=await input.caller.rpc(rpc,params);
-    if (error) { const code=refusalCodes.find(c=>error.message === c); return failure(code ?? 'KNOWLEDGE_OUTCOME_UNVERIFIED',mutation && !code); }
+    if (error) { const code=error.message && Object.hasOwn(refusalCodes,error.message) && typeof error.code === 'string' && refusalCodes[error.message] === error.code ? error.message : undefined; return {...failure(code ?? 'KNOWLEDGE_OUTCOME_UNVERIFIED',mutation && !code),...(code ? {not_applied:true} : {})}; }
     if (!object(data) || data.tenant_id !== tenant) return failure('KNOWLEDGE_RESPONSE_INVALID',mutation);
     if (!mutation) {
       if (!Array.isArray(data.documents) || data.documents.length > Number(params.p_limit)) return failure('KNOWLEDGE_RESPONSE_INVALID');

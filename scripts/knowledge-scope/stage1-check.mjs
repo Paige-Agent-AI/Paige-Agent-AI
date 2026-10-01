@@ -3867,7 +3867,7 @@ group("30 Knowledge canonical tools on the actual Chat gate");
     const r=await drive({personaTenant:CHILD,memberships:[CHILD],provider:[{tool,args},"text"],rpcExtras:{resolve_tool_autonomy:{data:mode,error:null}}});
     assert(`30 ${tool} ${mode}: canonical lane refuses dispatch`,!r.rec.rpc.some(x=>x.name==="update_tenant_knowledge_metadata" || x.name==="delete_tenant_knowledge"));
   }
-  for(const result of [{data:null,error:{message:"network lost"}},{data:null,error:{message:"KNOWLEDGE_REVISION_CONFLICT"}}]) {
+  for(const result of [{data:null,error:{message:"network lost"}},{data:null,error:{code:"40001",message:"KNOWLEDGE_REVISION_CONFLICT"}}]) {
     const call={tool:"knowledge_update",args:{document_id:docId,expected_revision:2,patch:{title:"Guide"}}};
     const uncertain=result.error.message==="network lost";
     const r=await drive({personaTenant:CHILD,memberships:[CHILD],provider:uncertain ? [call,{...call,args:{...call.args,patch:{title:"Other"}}},"text"] : [call,"text"],rpcExtras:{resolve_tool_autonomy:{data:"auto",error:null},update_tenant_knowledge_metadata:result}});

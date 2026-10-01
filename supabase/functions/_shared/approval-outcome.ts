@@ -43,7 +43,8 @@ type NoteKey =
   | "failed"
   | "unconfirmed"
   | "unusable"
-  | "started";
+  | "started"
+  | "completed_unrecorded";
 
 export type ApprovalOutcomeAction = {
   fingerprint: string;
@@ -84,6 +85,9 @@ const NOTES: Record<NoteKey, (many: boolean) => string> = {
   unusable: (many) => many
     ? "Those approvals can't be used any more. Check before asking again, so nothing happens twice."
     : "That approval can't be used any more. Check before asking again, so it doesn't happen twice.",
+  completed_unrecorded: (many) => many
+    ? "The changes completed, but their activity records are missing. Do not repeat them."
+    : "The change completed, but its activity record is missing. Do not repeat it.",
   started: (many) => many ? "They started, and finish on their own." : "It started, and finishes on its own.",
 };
 
@@ -104,7 +108,7 @@ export const APPROVAL_OUTCOME_SENTENCES: ReadonlySet<string> = new Set(
  */
 export function classifySpentApproval(
   content: string | undefined,
-  opts: { reportsOk?: boolean } = {},
+  opts: { reportsOk?: boolean; reportsKnowledge?: boolean } = {},
 ): Classified {
   if (content === undefined) return { outcome: "unconfirmed", reason: "unconfirmed" };
   let out: Record<string, unknown> = {};
@@ -124,6 +128,15 @@ export function classifySpentApproval(
   if (out.disabled === true) return { outcome: "not_run", reason: "not_attempted" };
   if (out.outcome_unknown === true || (opts.reportsOk && out.error === "outcome_unknown")) {
     return { outcome: "unconfirmed", reason: "unconfirmed" };
+  }
+  // SCR-2026-09-30-KNOWLEDGE-OUTCOME: only the canonical Knowledge consumer
+  // opts in. Data completion and receipt persistence are separate verified facts.
+  // Keep the existing frame kinds; a fixed note prevents "ran" implying full evidence.
+  if (opts.reportsKnowledge && out.outcome === "capability_completed_unrecorded") {
+    return out.verified === true && out.railRecorded === false && out.success === false &&
+        out.not_applied !== true && out.ok !== true
+      ? { outcome: "ran", reason: "completed_unrecorded" }
+      : { outcome: "unconfirmed", reason: "unconfirmed" };
   }
   const succeeded = opts.reportsOk ? out.ok === true : out.success === true || out.ok === true;
   // `ok: false` beside a success claim is still a failure, whichever field the tool uses.
@@ -157,7 +170,7 @@ export function settleUsedEarlier(classified: Classified, usedEarlier: boolean |
  * offers to try again) beside a card telling the person to check first. The tool's own `error`
  * stays: it is the reason, and the audit row keeps it. Returns the content unchanged otherwise.
  */
-export function sayWhatTheCardSays(content: string, opts: { reportsOk?: boolean } = {}): string {
+export function sayWhatTheCardSays(content: string, opts: { reportsOk?: boolean; reportsKnowledge?: boolean } = {}): string {
   if (classifySpentApproval(content, opts).outcome !== "unconfirmed") return content;
   let out: Record<string, unknown>;
   try { out = JSON.parse(content); } catch { return content; }

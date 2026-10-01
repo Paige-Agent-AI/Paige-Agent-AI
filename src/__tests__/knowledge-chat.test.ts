@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { executeKnowledgeTool, normalizeKnowledgeArgs } from '../../supabase/functions/_shared/knowledge-tenant-brain';
+import { classifySpentApproval, sayWhatTheCardSays, buildApprovalOutcome } from '../../supabase/functions/_shared/approval-outcome';
 import { confirmFingerprint } from '../../supabase/functions/_shared/confirm-fingerprint';
 const tenant='11111111-1111-4111-8111-111111111111';
 const id='22222222-2222-4222-8222-222222222222';
@@ -27,7 +28,7 @@ describe('governed Knowledge adapter',()=>{
   expect(result).toMatchObject({success:false,verified:true,railRecorded:false});expect(caller.rpc).toHaveBeenCalledTimes(1);
  });
  it.each(['KNOWLEDGE_REVISION_CONFLICT','KNOWLEDGE_FORBIDDEN','KNOWLEDGE_SCOPE_CHANGED'])('reports explicit refusal %s without retry',async(code)=>{
-  const caller=port(null,{message:code,code:'40001'});
+  const caller=port(null,{message:code,code:code==='KNOWLEDGE_REVISION_CONFLICT'?'40001':'42501'});
   expect(await executeKnowledgeTool({caller,expectedTenantId:tenant,tool:'knowledge_delete',args:{document_id:id,expected_revision:2}})).toMatchObject({success:false,mutationMayHavePersisted:false,code});expect(caller.rpc).toHaveBeenCalledTimes(1);
  });
  it('treats missing acknowledgement as uncertain, not unsaved',async()=>{
@@ -53,6 +54,29 @@ describe('governed Knowledge adapter',()=>{
  it('bounds a metadata-heavy detail without losing its identity',async()=>{
   const result=await executeKnowledgeTool({caller:port({tenant_id:tenant,documents:[{...row,content:'x'.repeat(20000),summary:'s'.repeat(2000),tags:Array(20).fill('t'.repeat(60)),source_url:'u'.repeat(1000)}]}),expectedTenantId:tenant,tool:'knowledge_read',args:{document_id:id}});
   expect(result.success).toBe(true);expect(JSON.stringify(result).length).toBeLessThan(16000);expect(result.documents).toHaveLength(1);
+ });
+
+ it('preserves verified-but-unrecorded truth through the spent approval classifier',async()=>{
+  const result=await executeKnowledgeTool({caller:port({tenant_id:tenant,document:{...row,revision:3},outcome:'capability_completed_unrecorded',run_id:id}),expectedTenantId:tenant,tool:'knowledge_update',args:{document_id:id,expected_revision:2,patch:{title:'Guide'}}});
+  const content=sayWhatTheCardSays(JSON.stringify(result),{reportsKnowledge:true});
+  expect(JSON.parse(content).outcome_unknown).not.toBe(true);
+  const classified=classifySpentApproval(content,{reportsKnowledge:true});
+  expect(classified).toEqual({outcome:'ran',reason:'completed_unrecorded'});
+  expect(buildApprovalOutcome([{fingerprint:'test',...classified}]).note).toContain('activity record is missing');
+ });
+ it('known canonical SQL rollback stays not-run after spent approval',async()=>{
+  const result=await executeKnowledgeTool({caller:port(null,{code:'40001',message:'KNOWLEDGE_REVISION_CONFLICT'}),expectedTenantId:tenant,tool:'knowledge_delete',args:{document_id:id,expected_revision:2}});
+  expect(result.not_applied).toBe(true);
+  expect(classifySpentApproval(sayWhatTheCardSays(JSON.stringify(result)),{reportsKnowledge:true})).toEqual({outcome:'not_run',reason:'failed'});
+ });
+ it('a refusal-shaped transport error without SQLSTATE does not prove rollback',async()=>{
+  const result=await executeKnowledgeTool({caller:port(null,{message:'KNOWLEDGE_REVISION_CONFLICT'}),expectedTenantId:tenant,tool:'knowledge_delete',args:{document_id:id,expected_revision:2}});
+  expect(result).toMatchObject({mutationMayHavePersisted:true});expect(result.not_applied).not.toBe(true);
+ });
+ it('only the canonical Knowledge opt-in may interpret the verified receipt outcome',()=>{
+  const raw=JSON.stringify({success:false,verified:true,railRecorded:false,outcome:'capability_completed_unrecorded'});
+  expect(classifySpentApproval(raw)).toMatchObject({outcome:'unconfirmed'});
+  expect(classifySpentApproval(JSON.stringify({...JSON.parse(raw),outcome_unknown:true}),{reportsKnowledge:true})).toMatchObject({outcome:'unconfirmed'});
  });
 
 });

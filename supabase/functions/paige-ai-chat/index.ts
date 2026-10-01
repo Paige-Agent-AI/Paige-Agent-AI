@@ -13850,7 +13850,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             const spentBy = approvalSpend.get(token);
             const tool = approvalTokenTool.get(token);
             return spentBy !== undefined
-              ? classifySpentApproval(toolResultContent.get(spentBy), { reportsOk: tool !== undefined && N8N_MANAGEMENT_TOOL_NAMES.has(tool) })
+              ? classifySpentApproval(toolResultContent.get(spentBy), { reportsOk: tool !== undefined && N8N_MANAGEMENT_TOOL_NAMES.has(tool), reportsKnowledge: tool === "knowledge_update" || tool === "knowledge_delete" })
               : classifyUnspentApproval(tool ? approvalRefusals.get(tool) : approvalLookupFailed ? "lookup_failed" : undefined);
           });
           // An approval this request could not use may have been used before it, by a request that did
@@ -14001,7 +14001,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 const token = spentBy.get(r.tool_call_id);
                 if (token === undefined) continue;
                 const tool = approvalTokenTool.get(token);
-                r.content = sayWhatTheCardSays(String(r.content ?? ""), { reportsOk: tool !== undefined && N8N_MANAGEMENT_TOOL_NAMES.has(tool) });
+                r.content = sayWhatTheCardSays(String(r.content ?? ""), { reportsOk: tool !== undefined && N8N_MANAGEMENT_TOOL_NAMES.has(tool), reportsKnowledge: tool === "knowledge_update" || tool === "knowledge_delete" });
               }
             }
             for (const r of toolResults) toolResultContent.set(r.tool_call_id, String(r.content ?? ""));

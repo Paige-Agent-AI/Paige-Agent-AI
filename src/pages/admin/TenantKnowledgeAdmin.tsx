@@ -2,7 +2,8 @@
 // Each tenant manages their own corpus here. Docs are RLS-scoped to their
 // tenant. Opt-in `share_to_network` flag routes the doc into the platform-
 // owner review queue (Network Insights) for potential promotion to global canon.
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { knowledgeInvokeOutcome, type KnowledgeIngestOutcome } from "@/lib/knowledge/ingest-outcome";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { useConfirm } from "@/hooks/useConfirm";
@@ -104,7 +105,7 @@ export default function TenantKnowledgeAdmin() {
           <DialogTrigger asChild>
             <Button><Plus className="w-4 h-4 mr-1.5" /> Add Document</Button>
           </DialogTrigger>
-          <AddDocDialog tenantId={activeTenantId ?? undefined} onClose={() => { setOpen(false); load(); }} />
+          {open && <AddDocDialog key={activeTenantId} tenantId={activeTenantId ?? undefined} onClose={() => { setOpen(false); load(); }} />}
         </Dialog>
       </div>
 
@@ -198,11 +199,13 @@ type AddMode = "paste" | "url" | "file";
 export function AddDocDialog({
   onClose,
   onIngested,
+  onReview,
   initialMode = "paste",
   tenantId,
 }: {
   onClose: () => void;
   onIngested?: (title: string, docId?: string) => void;
+  onReview?: () => void;
   initialMode?: AddMode;
   tenantId?: string;
 }) {
@@ -217,22 +220,32 @@ export function AddDocDialog({
   const [share, setShare] = useState(false);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
+  const [outcome, setOutcome] = useState<KnowledgeIngestOutcome | null>(null);
+  const currentTenant = useRef({ tenantId });
+  if (currentTenant.current.tenantId !== tenantId) currentTenant.current = { tenantId };
+  const mounted = useRef(true);
+  const pending = useRef(false);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
 
   const tagList = () => tags.split(",").map((t) => t.trim()).filter(Boolean);
 
-  // supabase.functions.invoke surfaces a generic "non-2xx status" message on a
-  // FunctionsHttpError; the useful message (e.g. "That page had no readable
-  // text", "Only HTTPS URLs are allowed") is in the JSON body. Prefer it.
-  const serverError = async (e: any, fallback: string): Promise<string> => {
-    try {
-      const body = await e?.context?.json?.();
-      if (body?.error && typeof body.error === "string") return body.error;
-    } catch { /* body wasn't JSON */ }
-    return e?.message || fallback;
+  const present = async (data: unknown, error: unknown, label: string, submittedTenant: typeof currentTenant.current) => {
+    const result = await knowledgeInvokeOutcome(data, error);
+    if (!mounted.current || currentTenant.current !== submittedTenant) return;
+    setOutcome(result);
+    if (result.kind === "complete") {
+      toast.success(result.message);
+      onIngested?.(label, result.docId);
+      onClose();
+    }
   };
 
   const submitPaste = async () => {
+    if (pending.current) return;
     if (!title.trim() || !content.trim()) return toast.error("Title and content required");
+    pending.current = true;
+    const submittedTenant = currentTenant.current;
+    setOutcome(null);
     setBusy(true);
     setProgress("Teaching Paige…");
     try {
@@ -247,26 +260,26 @@ export function AddDocDialog({
           share_to_network: share,
         },
       });
-      if (error) throw error;
-      toast.success(`Indexed (${data?.chunk_count ?? 0} chunks)`);
-      onIngested?.(title.trim(), data?.doc_id);
-      onClose();
-    } catch (e: any) {
-      toast.error(await serverError(e, "Couldn't index — retry"));
+      await present(data, error, title.trim(), submittedTenant);
+    } catch (error: unknown) {
+      await present(null, error, title.trim(), submittedTenant);
     } finally {
+      pending.current = false;
       setBusy(false);
       setProgress(null);
     }
   };
 
   const submitUrl = async () => {
+    if (pending.current) return;
     const u = url.trim();
     if (!u) return toast.error("Add a link to fetch");
     if (!/^https:\/\//i.test(u)) return toast.error("Only secure https:// links can be added");
+    pending.current = true;
+    const submittedTenant = currentTenant.current;
+    setOutcome(null);
     setBusy(true);
-    setProgress("Fetching page…");
-    // Two honest stages — the fetch happens first server-side, then indexing.
-    const stageTimer = setTimeout(() => setProgress("Teaching Paige…"), 1200);
+    setProgress("Fetching and indexing…");
     try {
       const { data, error } = await supabase.functions.invoke("kb-ingest-url", {
         body: {
@@ -277,34 +290,35 @@ export function AddDocDialog({
           share_to_network: share,
         },
       });
-      if (error) throw error;
-      toast.success(`Indexed (${data?.chunk_count ?? 0} chunks)`);
-      onIngested?.(title.trim() || u, data?.doc_id);
-      onClose();
-    } catch (e: any) {
-      toast.error(await serverError(e, "Couldn't fetch or index that link — retry"));
+      await present(data, error, title.trim() || u, submittedTenant);
+    } catch (error: unknown) {
+      await present(null, error, title.trim() || u, submittedTenant);
     } finally {
-      clearTimeout(stageTimer);
+      pending.current = false;
       setBusy(false);
       setProgress(null);
     }
   };
 
   const submitFile = async () => {
+    if (pending.current) return;
     if (!file) return toast.error("Choose a file to upload");
     if (!tenantId) return toast.error("Switch into a workspace first — there's nowhere to store this.");
     if (file.size > 26214400) return toast.error("That file is over 25 MB — try a smaller one.");
+    pending.current = true;
+    const submittedTenant = currentTenant.current;
+    setOutcome(null);
     setBusy(true);
     setProgress("Uploading…");
     const safe = file.name.replace(/[^\w.\-]/g, "_");
     const path = `${tenantId}/${crypto.randomUUID()}_${safe}`;
-    let uploaded = false;
+    let ingestionStarted = false;
     try {
       const { error: upErr } = await supabase.storage.from("tenant-knowledge").upload(path, file);
       if (upErr) throw upErr;
-      uploaded = true;
-
+      if (!mounted.current || currentTenant.current !== submittedTenant) return;
       setProgress("Reading the file…");
+      ingestionStarted = true;
       const { data, error } = await supabase.functions.invoke("kb-ingest-file", {
         body: {
           path,
@@ -316,25 +330,20 @@ export function AddDocDialog({
           share_to_network: share,
         },
       });
-      if (error) throw error;
-      toast.success(
-        data?.truncated
-          ? `Indexed the first part (${data?.chunk_count ?? 0} chunks) — it's a big one, split it for the rest.`
-          : `Indexed (${data?.chunk_count ?? 0} chunks)`,
-      );
-      onIngested?.(title.trim() || file.name, data?.doc_id);
-      onClose();
-    } catch (e: any) {
-      // Don't orphan the uploaded object if indexing failed — best-effort prune.
-      if (uploaded) supabase.storage.from("tenant-knowledge").remove([path]).then(() => {}, () => {});
-      toast.error(await serverError(e, "Couldn't read or index that file — retry"));
+      await present(data, error, title.trim() || file.name, submittedTenant);
+    } catch (error: unknown) {
+      // A failed acknowledgement may follow a committed save. Keep the source;
+      // storage cleanup belongs to a reconciled lifecycle, not a browser catch.
+      await present(ingestionStarted ? null : { ok: false, error: "ingestion_not_started" }, ingestionStarted ? error : null, title.trim() || file.name, submittedTenant);
     } finally {
+      pending.current = false;
       setBusy(false);
       setProgress(null);
     }
   };
 
   const submit = mode === "url" ? submitUrl : mode === "file" ? submitFile : submitPaste;
+  const review = () => { onReview?.(); onClose(); };
 
   return (
     <DialogContent className="max-w-2xl">
@@ -428,10 +437,11 @@ export function AddDocDialog({
           </div>
           <Switch checked={share} onCheckedChange={setShare} />
         </div>
+        {outcome && outcome.kind !== "complete" && <p role="status" className="text-sm text-foreground">{outcome.message}</p>}
         <div className="flex items-center justify-end gap-2">
-          {progress && <span className="text-xs text-muted-foreground mr-auto">{progress}</span>}
+          {progress && <span role="status" className="text-xs text-muted-foreground mr-auto">{progress}</span>}
           <Button variant="outline" onClick={onClose} disabled={busy}>Cancel</Button>
-          <Button onClick={submit} disabled={busy}>{busy ? (progress ?? "Working…") : "Add & teach"}</Button>
+          <Button onClick={outcome?.kind === "partial" || outcome?.kind === "unknown" ? review : submit} disabled={busy}>{busy ? (progress ?? "Working…") : outcome?.kind === "partial" || outcome?.kind === "unknown" ? "Review knowledge" : "Add & teach"}</Button>
         </div>
       </div>
     </DialogContent>

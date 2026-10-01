@@ -12,6 +12,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { z } from "https://esm.sh/zod@3.22.4";
 import { assertPublicHttpUrl, SsrfError } from "../_shared/ssrfGuard.ts";
+import { bindKnowledgeIngestScope, KnowledgeIngestScopeError } from "../_shared/knowledge-ingest-scope.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -24,7 +25,7 @@ const BodySchema = z.object({
   category: z.string().max(100).optional(),
   tags: z.array(z.string().max(60)).max(20).optional(),
   share_to_network: z.boolean().optional(),
-  tenant_id: z.string().uuid().optional(), // platform-owner override
+  tenant_id: z.string().uuid().optional(), // equality precondition against the selected workspace
 });
 
 // Document-grade cap — well under kb-ingest-doc's content.max(500_000), large
@@ -39,7 +40,8 @@ const MAX_CONTENT = 200_000;
 // AND every redirect hop below (see safeFetch).
 
 function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
+  const result = body && typeof body === "object" && "error" in body && !("ok" in body) ? { ...body, ingestion_started: false } : body;
+  return new Response(JSON.stringify(result), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
@@ -70,10 +72,11 @@ function ssrfResponse(err: SsrfError): { message: string; status: number } {
 // would chase a 302 → http://169.254.169.254 without re-checking). The guard now
 // resolves DNS + validates every IP numerically per hop, so a public hostname that
 // rebinds to a private address (or an encoded-IP literal) is refused, not followed.
-async function safeFetch(startUrl: string, maxHops = 5): Promise<Response> {
+async function safeFetch(startUrl: string, maxHops = 5, authorize?: () => Promise<void>): Promise<Response> {
   let current = startUrl;
   for (let hop = 0; hop <= maxHops; hop++) {
     await assertPublicHttpUrl(current); // throws SsrfError on a non-public / non-https target
+    await authorize?.();
     const res = await fetch(current, {
       headers: { "User-Agent": "Paige-AI-Bot/1.0" },
       redirect: "manual",
@@ -103,13 +106,12 @@ function stripToText(html: string): string {
     .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "")
     .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, MAX_CONTENT);
+    .trim();
 }
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-
+  let ingestionStarted = false;
   try {
     const auth = req.headers.get("Authorization");
     if (!auth?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
@@ -119,12 +121,12 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: auth } } },
     );
-    const { data: { user }, error: authErr } = await supabase.auth.getUser();
-    if (authErr || !user) return json({ error: "Invalid authentication token" }, 401);
 
     const parsed = BodySchema.safeParse(await req.json());
     if (!parsed.success) return json({ error: parsed.error.flatten() }, 400);
     const { url, title, category, tags, share_to_network, tenant_id } = parsed.data;
+
+    const scope = await bindKnowledgeIngestScope(supabase, tenant_id);
 
     // Parse for the hostname title-fallback. The SSRF/HTTPS guard runs inside safeFetch
     // (the initial URL AND every redirect hop) via assertPublicHttpUrl.
@@ -138,8 +140,9 @@ serve(async (req) => {
     // Fetch the page (SSRF-guarded on the initial URL and re-validated per redirect hop).
     let res: Response;
     try {
-      res = await safeFetch(url);
+      res = await safeFetch(url, 5, scope.assert);
     } catch (e) {
+      if (e instanceof KnowledgeIngestScopeError) throw e;
       if (e instanceof SsrfError) {
         const { message, status } = ssrfResponse(e);
         return json({ error: message }, status);
@@ -157,7 +160,7 @@ serve(async (req) => {
       derivedTitle = extractTitle(html);
       content = stripToText(html);
     } else if (contentType.includes("text/plain") || contentType.includes("application/json")) {
-      content = (await res.text()).replace(/\s+/g, " ").trim().slice(0, MAX_CONTENT);
+      content = (await res.text()).replace(/\s+/g, " ").trim();
     } else {
       return json({ error: "Unsupported page type. Only HTML, plain text, and JSON pages can be indexed." }, 400);
     }
@@ -166,11 +169,15 @@ serve(async (req) => {
       return json({ error: "That page had no readable text to teach Paige." }, 400);
     }
 
+    const truncated = content.length > MAX_CONTENT;
+    content = content.slice(0, MAX_CONTENT);
     const finalTitle = (title?.trim() || derivedTitle || parsedUrl.hostname).slice(0, 300);
 
     // Hand off to kb-ingest-doc, forwarding the caller's JWT so the doc is
     // created + chunked + embedded under the SAME tenant via RLS. Keeping the
     // chunk/embed pipeline single-sourced (one function owns it).
+    await scope.assert();
+    ingestionStarted = true;
     const ingestRes = await fetch(
       `${Deno.env.get("SUPABASE_URL")!}/functions/v1/kb-ingest-doc`,
       {
@@ -190,17 +197,17 @@ serve(async (req) => {
           source: "url",
           source_url: url,
           share_to_network: share_to_network ?? false,
-          ...(tenant_id ? { tenant_id } : {}),
+          tenant_id: scope.tenantId,
         }),
       },
     );
-    const ingestBody = await ingestRes.json().catch(() => ({}));
-    if (!ingestRes.ok) {
-      return json({ error: (ingestBody as any)?.error ?? "Indexing failed" }, ingestRes.status);
-    }
-    return json(ingestBody, 200);
+    const ingestBody = await ingestRes.json();
+    await scope.assert();
+    if (!ingestBody || typeof ingestBody !== "object" || Array.isArray(ingestBody)) throw new Error("Invalid ingestion response");
+    return json({ ...ingestBody, truncated }, ingestRes.status);
   } catch (error) {
+    if (error instanceof KnowledgeIngestScopeError && !ingestionStarted) return json({ ok: false, error: error.message, ingestion_started: false }, error.status);
     console.error("[kb-ingest-url] error:", error);
-    return json({ error: error instanceof Error ? error.message : "Failed to ingest URL" }, 500);
+    return json({ ok: false, error: ingestionStarted ? "persistence_unverified" : "ingestion_not_started", detail: ingestionStarted ? "The save could not be verified. Check your knowledge before retrying." : "The page could not be read. Nothing was indexed." }, 500);
   }
 });

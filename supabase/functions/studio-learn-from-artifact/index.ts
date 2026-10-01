@@ -64,7 +64,7 @@ function parseJwtClaims(token: string): Record<string, unknown> | null {
 
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-
+  let ingestionStarted = false;
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) return json(401, { error: "A bearer token is required." });
@@ -215,6 +215,19 @@ serve(async (req: Request) => {
 
     // ── Ingest into the tenant's OWN KB (source='sync' + category='studio' provenance, private) ──
     const sourceUrl = `studio://${artifactType}/${artifactId}`;
+    // Snapshot predecessors with reconciled persisted chunks BEFORE ingest.
+    // Core inserts pending rows at count=0: never retire those in-flight saves.
+    // A positive count is not a claim of complete coverage (partial docs can also
+    // have chunks). Only a complete replacement may retire this captured set.
+    // A failed or capped snapshot permits no cleanup.
+    let priorIds: string[] | null = null;
+    try {
+      const prior = await admin.from("tenant_knowledge_docs").select("id", { count: "exact" })
+        .eq("tenant_id", tenantId).eq("source_url", sourceUrl).gt("chunk_count", 0);
+      if (!prior.error && Array.isArray(prior.data) && prior.count === prior.data.length) priorIds = prior.data.map((row) => row.id);
+    } catch { /* Leave replacement unverified; retain every predecessor. */ }
+    const truncated = content.length > 400_000;
+    ingestionStarted = true;
     const result = await ingestDoc(admin, {
       tenantId,
       title: `Studio — ${artifactTitle}`,
@@ -228,27 +241,38 @@ serve(async (req: Request) => {
     });
 
     if (!result.ok) {
-      return json(200, { ok: false, error: result.error, message: result.detail || "That couldn't be saved to your knowledge base." });
+      return json(200, { ...result, learned: false, message: result.detail || "The save could not be verified. Check your knowledge before retrying." });
     }
-
-    // ── Dedup AFTER a proven-good ingest (§5 idempotency, §13 honesty) ──────────
-    // Re-publishing REPLACES the prior Studio doc for this artifact — but only once the NEW doc
-    // is safely written. Delete-first would mean a re-publish during an embedding outage silently
-    // destroys the previously-learned copy and replaces it with nothing (ingestDoc deletes its own
-    // orphan and returns ok:false). Scoping the delete to source_url with id <> the new doc_id makes
-    // it a clean swap: the fresh doc survives, only stale duplicates for this artifact are removed.
-    await admin.from("tenant_knowledge_docs").delete()
-      .eq("tenant_id", tenantId).eq("source_url", sourceUrl).neq("id", result.doc_id);
+    if (!result.embedded || truncated) {
+      return json(200, { ...result, learned: false, partial: true, truncated,
+        message: `Only part of this ${artifactType} was indexed. Earlier knowledge was kept. Review your knowledge before retrying.` });
+    }
+    let replaced = priorIds !== null;
+    if (priorIds?.length) {
+      try {
+        const removed = await admin.from("tenant_knowledge_docs").delete()
+          .eq("tenant_id", tenantId).eq("source_url", sourceUrl).in("id", priorIds).gt("chunk_count", 0);
+        const remaining = await admin.from("tenant_knowledge_docs").select("id")
+          .eq("tenant_id", tenantId).eq("source_url", sourceUrl).in("id", priorIds).limit(1);
+        replaced = !removed.error && !remaining.error && Array.isArray(remaining.data) && remaining.data.length === 0;
+      } catch { replaced = false; }
+    }
+    if (!replaced) {
+      return json(200, { ...result, learned: false, error: "replacement_unverified",
+        message: `This ${artifactType} was indexed, but replacement of earlier knowledge could not be verified. Review your knowledge before retrying.` });
+    }
 
     return json(200, {
       ok: true,
       doc_id: result.doc_id,
       chunk_count: result.chunk_count,
+      embedded: result.embedded,
       learned: true,
-      message: `Saved this ${artifactType} to your Paige's knowledge — your next drafts will pull from it.`,
+      message: `Saved this ${artifactType} to your Paige's knowledge for use in future drafts.`,
     });
   } catch (e) {
     console.error("studio-learn-from-artifact: unhandled error:", e);
-    return json(500, { error: (e as Error)?.message || "Failed to learn from the artifact." });
+    return json(500, { ok: false, learned: false, error: ingestionStarted ? "persistence_unverified" : "ingestion_not_started",
+      message: ingestionStarted ? "Learning could not be verified. Check your knowledge before retrying." : "The artifact could not be read for learning. Nothing was indexed." });
   }
 });

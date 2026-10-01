@@ -1708,12 +1708,16 @@ const PaigeAIChatInner = ({
           // The general gate's cards carry a SCOPED token (fingerprint:requestNonce) while the
           // stored row's column is the bare 16-hex fingerprint — the server's own claim path
           // splits the same way. Look up by the bare form.
-          const { data: row, error: rowError } = await supabase
+          // The chain is cast through `as never` (the board's own rpc pattern): the generated
+          // types instantiate excessively deep on a fourth filter, and the ratchet holds the
+          // baseline — the runtime shape is pinned by the suite.
+          const rowQuery = supabase
             .from("paige_pending_confirmations")
             .select("args,tenant_id,expires_at,tool_name")
             .eq("fingerprint", item.fingerprint.split(":")[0])
             .eq("tool_name", "pipeline_configure")
-            .maybeSingle();
+            .is("consumed_at", null);
+          const { data: row, error: rowError } = await (rowQuery as unknown as { maybeSingle: () => Promise<{ data: Record<string, unknown> | null; error: { message: string } | null }> }).maybeSingle();
           const stored = row && typeof row === "object" ? row as { args?: Record<string, unknown>; tenant_id?: string; expires_at?: string } : null;
           const argsObj = stored && typeof stored.args === "object" && stored.args !== null ? stored.args as Record<string, unknown> : null;
           const expired = !stored?.expires_at || new Date(String(stored.expires_at)).getTime() <= Date.now();

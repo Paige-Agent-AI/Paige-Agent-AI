@@ -48,6 +48,8 @@ describe("the approved pipeline card executes its stored proposal", () => {
     // The card carries fingerprint:requestNonce; the column is bare 16-hex. Without the split,
     // every pipeline approval refuses "could not be read" and strands (the review's P1).
     expect(ui).toContain('.eq("fingerprint", item.fingerprint.split(":")[0])');
+    // ...and only the LIVE row: the server's claim path filters consumed twins the same way.
+    expect(ui).toContain('.is("consumed_at", null)');
   });
 
   it("strips executed pipeline fingerprints from the model echo — no re-emission", () => {
@@ -72,7 +74,7 @@ describe("the approved pipeline card executes its stored proposal", () => {
     // handleSend, never from message text. Pin: its loop reads the approved set.
     // The pipeline collector lives inside the approvedFingerprints-guarded block and reads the
     // approved card confirmations, not message text.
-    expect(ui).toMatch(/echoFingerprints\?\.length\) \{[\s\S]{0,900}pipeline_configure[\s\S]{0,900}paige_pending_confirmations/);
+    expect(ui).toMatch(/echoFingerprints\?\.length\) \{[\s\S]{0,1100}pipeline_configure[\s\S]{0,1100}paige_pending_confirmations/);
     expect(ui).toMatch(/for \(const m of messages\) \{[\s\S]{0,400}echoFingerprints\.includes\(c\.fingerprint\)/);
   });
 });

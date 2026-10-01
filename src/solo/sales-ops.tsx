@@ -38,7 +38,7 @@ import {
   DECLARED_PROCESSORS,
   DECLARED_METHODS,
 } from "./useSoloSalesOps";
-import { useSoloAgreements } from "./useSoloAgreements";
+import { useSoloCommercialTerms } from "./useSoloCommercialTerms";
 import { useSoloAgreementSignings, TRAIL_LIMIT } from "./useSoloAgreementSignings";
 import { useTierFeatures } from "@/hooks/useTierFeatures";
 import "./sales-ops.css";
@@ -1718,7 +1718,7 @@ function ScenarioLab({ offers, deals, stages, onAskPaige }) {
 
 export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages = [], submissions = [], submissionsPhase = "ready", submissionsRetry, onOpenCatalog, onOpenClients, onOpenPipeline, truth }) {
   const sales = useSoloSalesOps();
-  const agreements = useSoloAgreements();
+  const agreements = useSoloCommercialTerms();
   const signings = useSoloAgreementSignings();
   // §60 — the feature DECLARES its tiers in the one home and this reads the answer, never an inline
   // `account_type` compare. The Growth hub around this surface already requires `growth`, so this

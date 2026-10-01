@@ -341,6 +341,14 @@ function OperatorShellBody() {
             onOpenCompass={() => navigate("/operator/analytics/autonomy")}
             turns={chat.transcript}
             onSend={chat.send}
+            /* THE EXECUTION STRIP, GIVEN A REAL STATE. The pack computes `busy` from what is
+               actually running ('On the call' · 'Sweeping the fleet' · 'Requesting a runtime',
+               L10824-10828); a turn in flight is one of those, and `chat.busy` had been returned
+               by the hook and consumed by nothing. It matters more now that the approval plate
+               exists: `run` refuses while a turn is in flight, so without this the operator could
+               click Approve during a stream and see nothing happen at all. NOT `readOnly` — that
+               is the pack's authority state (`s.scope === 1`), not an in-flight one. */
+            busy={chat.busy ? ["Answering"] : []}
             /**
              * THE FOLD, WIRED. Owner, live, 2026-08-24: *"I cannot fold Paige's chat in."*
              *

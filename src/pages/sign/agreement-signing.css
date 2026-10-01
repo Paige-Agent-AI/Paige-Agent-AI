@@ -167,9 +167,12 @@
   flex: 1; height: 5px; border-radius: 99px; background: var(--surface-sunk); overflow: hidden; min-width: 60px;
   box-shadow: inset 0 1px 2px color-mix(in srgb, var(--ink) 12%, transparent);
 }
-/* Violet to gold, so finishing the document visually ARRIVES at the act it unlocks. */
+/* Violet to gold, so finishing the document visually ARRIVES at the act it unlocks.
+   The bar is a full-width element scaled on X (transform-only) rather than an animated
+   width — layout never re-runs while the signer scrolls. */
 .ags-prog i {
-  display: block; height: 100%; width: 0; border-radius: 99px; transition: width .18s linear;
+  display: block; height: 100%; width: 100%; border-radius: 99px;
+  transform: scaleX(0); transform-origin: left center; transition: transform .18s linear;
   background: linear-gradient(90deg, var(--violet-2), var(--violet) 40%, var(--gold) 92%, var(--gold-bright));
   box-shadow: 0 0 8px color-mix(in srgb, var(--violet) 60%, transparent);
 }
@@ -286,7 +289,7 @@
   content: ""; position: absolute; left: 24px; right: 24px; top: 0; height: 2px;
   background: linear-gradient(90deg, var(--ok), color-mix(in srgb, var(--gold-bright) 70%, transparent) 55%, transparent);
 }
-.ags-orb { position: relative; width: 76px; height: 76px; flex: none; display: grid; place-items: center; animation: ags-pop .55s cubic-bezier(.34,1.56,.64,1) both; }
+.ags-orb { position: relative; width: 76px; height: 76px; flex: none; display: grid; place-items: center; animation: ags-pop .55s cubic-bezier(.22,1,.36,1) both; }
 .ags-orb i { position: absolute; inset: 0; border-radius: 50%; }
 .ags-orb .halo { inset: -8%; background: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--ok) 26%, transparent), transparent 66%); }
 .ags-orb .body {
@@ -328,4 +331,20 @@
   .ags-orb, .ags-orb .ring { animation: none; }
   .ags *, .ags *::before, .ags *::after { transition-duration: .01ms !important; }
   .ags-doc-body { scroll-behavior: auto; }
+}
+
+/* A2 — the uploaded document itself, streamed by agreement-document. The viewer owns the
+   slot's height so a PDF never collapses to a sliver; the note lines match the body's
+   leading so loading and failure read as part of the document, not as an error banner. */
+.ags-doc-pdf {
+  width: 100%;
+  min-height: 62vh;
+  border: 0;
+  background: #fff;
+}
+.ags-doc-note {
+  margin: 0;
+  padding: 1.25rem 0;
+  color: inherit;
+  opacity: 0.85;
 }

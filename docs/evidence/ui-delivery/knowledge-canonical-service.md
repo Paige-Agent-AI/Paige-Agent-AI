@@ -58,4 +58,4 @@ A retry with the old revision refuses, rather than claiming idempotent replay. A
 
 INTERNAL_BUILD_IDENTITY: 6230e6087e7fb693af4f0b53935f59ed90f65229; deployment=none; environment=development; migrations=PROOF_OWED(20270531100000_knowledge_canonical_metadata, isolated fixture only); edge=NOT_APPLICABLE; evidence=scripts/knowledge-service/check.py and src/__tests__/knowledge-service.test.ts
 
-The migration is renumbered to 20270531100000, strictly above main's newest recorded migration at renumber time, so the deploy push applies it in order with no skipped version.
+The migration is renumbered to 20270531100000, strictly above main's newest recorded migration at renumber time, so the deploy push applies it in order with no skipped version. The fixture runner references the final filename.

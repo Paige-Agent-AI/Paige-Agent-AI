@@ -52,6 +52,7 @@ MIGRATION2="$REPO/supabase/migrations/20270402000000_agreements_read_and_expiry.
 MIGRATION4="$REPO/supabase/migrations/20270404000000_agreement_signing_contract.sql"
 MIGRATION5="$REPO/supabase/migrations/20270405000000_agreement_signer_seam.sql"
 MIGRATION6="$REPO/supabase/migrations/20270407000000_agreement_view_tracking.sql"
+MIGRATION7="$REPO/supabase/migrations/20270532110000_agreement_link_provenance.sql"
 WORK="$(mktemp -d)"
 PORT="${PGPORT:-55432}"
 
@@ -77,9 +78,9 @@ psql() { "$PGBIN/psql" -h "$WORK" -p "$PORT" -U proofrunner -d proof "$@"; }
 psql -v ON_ERROR_STOP=1 -q -f "$HERE/_fixture-schema.sql" >/dev/null
 psql -v ON_ERROR_STOP=1 -q -f "$MIGRATION" >/dev/null 2>&1
 psql -v ON_ERROR_STOP=1 -q -f "$MIGRATION2" 2>&1 | grep -iE "^psql.*error" && { echo "FAIL — the read/expiry migration did not apply"; exit 1; }
-# There is no autonomy-catalogue migration any more: the agreements chat tools are withheld from
-# this PR because the INT-003 capability-kit guard cannot admit a new mutating tool (see the note in
-# `_shared/action-risk.ts`). With no governed tool there is nothing for `list_tool_autonomy` to show.
+# The agreements chat tools ship Spine-registered (agreement.send as an external_effect on
+# public.issue_agreement_signing_link) and their autonomy-catalogue toggles arrive in
+# 20270532120000, re-emitted from the catalogue body current at this PR's base.
 psql -v ON_ERROR_STOP=1 -q -f "$MIGRATION4" 2>&1 | grep -iE "^psql.*error" && { echo "FAIL — the signing-contract migration did not apply"; exit 1; }
 psql -v ON_ERROR_STOP=1 -q -f "$MIGRATION5" 2>&1 | grep -iE "^psql.*error" && { echo "FAIL — the signer-seam migration did not apply"; exit 1; }
 psql -v ON_ERROR_STOP=1 -q -f "$MIGRATION6" 2>&1 | grep -iE "^psql.*error" && { echo "FAIL — the view-tracking migration did not apply"; exit 1; }
@@ -90,7 +91,8 @@ SEED_SRC="$(grep -l "FUNCTION public.seed_agreement_counterparty()" "$REPO"/supa
 awk '/^CREATE OR REPLACE FUNCTION public\.seed_agreement_counterparty\(\)/{p=1} p{print} p&&/^\$(function)?\$;/{exit}' "$SEED_SRC" > "$WORK/seed_counterparty.sql"
 grep -q '^\$\(function\)\?\$;' "$WORK/seed_counterparty.sql" || { echo "FAIL — could not read seed_agreement_counterparty from $SEED_SRC"; exit 1; }
 psql -v ON_ERROR_STOP=1 -q -f "$WORK/seed_counterparty.sql" 2>&1 | grep -iE "^psql.*error" && { echo "FAIL — the current counterparty trigger function did not apply"; exit 1; }
-echo "migrations 20270401/02/04/05/07 applied to a clean database, counterparty trigger from $(basename "$SEED_SRC")"
+psql -v ON_ERROR_STOP=1 -q -f "$MIGRATION7" 2>&1 | grep -iE "^psql.*error" && { echo "FAIL — the link-provenance migration did not apply"; exit 1; }
+echo "migrations 20270401/02/04/05/07/11 applied to a clean database, counterparty trigger from $(basename "$SEED_SRC")"
 echo
 
 OUT="$WORK/out.txt"
@@ -106,12 +108,18 @@ psql -v ON_ERROR_STOP=1 -q -f "$HERE/contract-proof.sql" 2>&1 | sed -E 's/^.*NOT
 echo
 psql -v ON_ERROR_STOP=1 -q -f "$HERE/signer-seam-proof.sql" 2>&1 | sed -E 's/^.*NOTICE:  //' | grep -E '^(N[0-9]|---)' | tee -a "$OUT"
 echo
+psql -v ON_ERROR_STOP=1 -q -f "$HERE/link-provenance-proof.sql" 2>&1 | sed -E 's/^.*NOTICE:  //' | grep -E '^(L[0-9]|---)' | tee -a "$OUT"
+echo
 
 if grep -qE 'NO ERROR - GUARANTEE IS FALSE|UNEXPECTED|SUCCEEDED - INTEGRITY CLAIM IS FALSE' "$OUT"; then
   echo "FAIL — at least one integrity guarantee did not hold."
   exit 1
 fi
-if [ "$(grep -c 'PASS' "$OUT")" -lt 25 ]; then
+# The floor exists so a suite that silently SHRANK cannot pass by asserting less. It was written at
+# 25 against a suite that produced 30, and it was not raised when rows were added — by the time the
+# suite produced 35 it tolerated 10 vanished negatives instead of 5. Raise it with the suite, or it
+# stops being a floor and becomes a formality. Count at the time of writing: 35.
+if [ "$(grep -c 'PASS' "$OUT")" -lt 33 ]; then
   echo "FAIL — fewer negatives ran than expected; the proof itself is broken."
   exit 1
 fi
@@ -181,6 +189,29 @@ if ! grep -q 'N7 agreement viewed_at set = PASS' "$OUT"; then
 fi
 if ! grep -q 'N7 viewed_at is FIRST not latest = PASS' "$OUT"; then
   echo "FAIL — a later opening rewrote viewed_at; it records the FIRST open."; exit 1
+fi
+# #1395's twin door. `agreement-send` refuses a document frozen before the uploaded-document fix;
+# so must the manual link, or the owner simply uses the other control and the signer sees the blank
+# page anyway. The positive controls are load-bearing: without L2 and L4 a function that refused
+# every agreement would satisfy every negative below it.
+for row in 'L1 pre-fix blank refused' 'L3 frozen-without-key refused' 'L7 lookalike key refused'; do
+  grep -qF "$row" "$OUT" && grep -F "$row" "$OUT" | grep -q 'PASS' \
+    || { echo "FAIL — the manual link path still issues a link for a document frozen before the fix: [$row]"; exit 1; }
+done
+if ! grep -q 'L1b token_hash_still_null = true' "$OUT"; then
+  echo "FAIL — the refusal minted a token before raising."; exit 1
+fi
+if ! grep -q 'L2 token_is_64_hex = true' "$OUT"; then
+  echo "FAIL — an upload frozen by the FIXED path was refused a link; the refusals above prove nothing."; exit 1
+fi
+if ! grep -q 'L4 token_is_64_hex = true' "$OUT"; then
+  echo "FAIL — an ordinary text agreement was refused a link; the new check is catching everything."; exit 1
+fi
+if ! grep -F 'L5 unsent upload -> send path' "$OUT" | grep -q 'PASS'; then
+  echo "FAIL — an unsent upload was told its document predates the fix; the new refusal shadowed the old one."; exit 1
+fi
+if ! grep -F 'L6 document refusal precedes signer' "$OUT" | grep -q 'PASS'; then
+  echo "FAIL — an owner was sent to add a signer to an agreement that can never be sent."; exit 1
 fi
 if ! grep -q 'C1 .*signed' "$OUT" || ! grep -q 'C2 .*signed' "$OUT"; then
   echo "FAIL — positive controls did not succeed, so the negatives prove nothing."

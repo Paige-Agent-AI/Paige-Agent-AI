@@ -134,9 +134,9 @@
       "business_reason": "A Solo owner may configure multiple remote MCP servers through one canonical connection contract; provider presets are conveniences, not an execution whitelist.",
       "paige_use_cases": ["Read safe connection facts and server-discovered tool metadata; execution requires the existing approval and governed execution contracts."],
       "connection_prerequisite": "Owner-supplied full endpoint and explicit authentication choice, canonical tenant-scoped connection, successful check and individual tool approval. Migration 20270520000000_mcp_connection_header_bundle.sql is applied in production (#1589, f6ffd73599201ff8382ee286b4d6434fcfbea60b); the shared owner-facing form requires fresh generation-matched safe readback before Saved. Authenticated owner save/reopen/check remains PROOF_OWED.",
-      "required_scopes": ["Server-advertised scopes accepted by the owner; no universal provider scope inferred"],
+      "required_scopes": ["Canonical OAuth selects the current Bearer challenge scope, then protected-resource metadata scopes_supported, otherwise omits scope. Authorization-server-wide scopes_supported is not a requested permission set. Registration, consent and persisted PKCE state use the same selected set. Provider acceptance and owner consent remain PROOF_OWED; no universal or vendor-specific scope inferred."],
       "safe_readable_context": "Saved-address and credential presence, header count, configuration generation and named readiness; never full secret-bearing URLs, tokens or header values.",
-      "allowed_writes_external_effects": "An approved server tool still requires the shared governed execution path; production outbound proof remains owed. Incoming contact create/update is implemented in the draft connection-bound contract, not released: a separately owner-configured hash-only incoming credential authorizes the fixed connection business, not the active workspace. Owner setup and sender cutover proof are still required; no implicit inbound grant follows an outbound connection.",
+      "allowed_writes_external_effects": "An approved server tool still requires the shared governed execution path; production outbound proof remains owed. Incoming contact create/update merged in #1595 (43e2b7cb76382016c3c36bb2366bebe6359f809e): a separately owner-configured hash-only incoming credential authorizes the fixed connection business, not the active workspace. Merge is not authenticated runtime proof. Owner setup and sender cutover proof are still required; no implicit inbound grant follows an outbound connection.",
       "authority_lane": ["read", "draft", "confirm"],
       "m1_dependency": "M1 real-money spend control is required if a server tool can incur external spend; internal LLM-cost metering does not satisfy it.",
       "canonical_provider_receipt": "Server-specific authoritative readback/receipt, not a generic successful transport response; production proof owed.",
@@ -144,7 +144,7 @@
       "status": "PARTIAL",
       "owner": "Integrations workstream",
       "dependency": "Existing mcp_connections, platform_encrypt/platform_decrypt, canonical RPC writers, mcp-gateway and server-resolved tenant capability checks. No parallel secret store. Authenticated owner save/readback/check and governed execution remain unproven end to end.",
-      "next_slice": "Named authorization received for unchanged 20270522000000_mcp_connection_contact_binding.sql; pending 20270521000000 must apply first. Owner-approved incoming drawer is implemented in draft #1595; finish browser, exact-head and authenticated incoming owner/sender-cutover proof before releasing the bridge replacement. Continue individual tool revocation, governed outbound execution, catalogue reconciliation and parity-proven legacy deletion. See docs/delivery/mcp-contact-binding.md.",
+      "next_slice": "Prove the generic OAuth resource-scope correction in deployment; it does not prove acceptance by a provider that advertises invalid scopes. Obtain authenticated incoming owner/sender-cutover proof for merged #1595. Continue individual tool revocation, governed outbound execution, catalogue reconciliation and parity-proven legacy deletion. See docs/evidence/ui-delivery/mcp-oauth-resource-scopes.md and docs/delivery/mcp-contact-binding.md.",
       "tier_eligibility": { "platform": "deferred", "solo": "eligible", "agency_future": "deferred", "enterprise_future": "deferred" },
       "expense_and_operations": {
         "cost_responsibility": "tenant_direct",
@@ -171,7 +171,8 @@
         { "path": "supabase/functions/_shared/mcp-client.ts", "role": "provider_adapter", "note": "One guarded MCP transport; code existence is not provider proof" },
         { "path": "supabase/functions/_shared/mcp-gateway/create.ts", "role": "fail_closed_containment", "note": "JWT-scoped canonical writer adapter" },
         { "path": "supabase/functions/_shared/mcp-gateway/verify.ts", "role": "callback_readback", "note": "Actual server discovery with private-value reflection refusal" },
-        { "path": "supabase/functions/paige-bridge/contact-mirror.ts", "role": "fail_closed_containment", "note": "Draft incoming-contact adapter; one connection-bound transaction and safe acknowledgement, not released runtime proof" }
+        { "path": "supabase/functions/paige-bridge/contact-mirror.ts", "role": "fail_closed_containment", "note": "Incoming-contact adapter merged in #1595; one connection-bound transaction and safe acknowledgement, not authenticated runtime proof" },
+        { "path": "supabase/functions/_shared/mcp-gateway/oauth.ts", "role": "provider_adapter", "note": "Canonical resource-selected OAuth scopes; guarded header-only challenge discovery, resource identity validation and persisted scope binding. No provider-specific permission list." }
       ],
       "sources": ["supabase/migrations/20270520000000_mcp_connection_header_bundle.sql", "supabase/tests/mcp_connection_header_bundle.sql"]
     },

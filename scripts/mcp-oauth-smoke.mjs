@@ -93,6 +93,78 @@ routes.set("mcp.example/.well-known/oauth-protected-resource/mcp", (_q, res) =>
     server.tokenEndpoint === `${ISSUER}/token` && server.authorizationEndpoint === `${ISSUER}/authorize`);
 }
 
+// A resource's permissions are not the authorization server's global catalogue.
+routes.set("mcp.example/.well-known/oauth-protected-resource/mcp", (_q, res) =>
+  json(res, { resource: RESOURCE_SERVER, authorization_servers: [ISSUER], scopes_supported: ["records.read"] }));
+{
+  const pr = await oauth.discoverProtectedResource(RESOURCE_SERVER);
+  check("resource discovery retains its own scope set", JSON.stringify(pr.scopesSupported) === '["records.read"]');
+}
+routes.set("mcp.example/.well-known/oauth-protected-resource/mcp", (_q, res) =>
+  json(res, { resource: RESOURCE_SERVER, authorization_servers: [ISSUER] }));
+check("absent resource scopes are explicitly empty, never AS-wide permissions",
+  JSON.stringify((await oauth.discoverProtectedResource(RESOURCE_SERVER)).scopesSupported) === "[]");
+
+const resourceMetadata = { resource: RESOURCE_SERVER, authorization_servers: [ISSUER], scopes_supported: ["records.read"] };
+routes.set("mcp.example/metadata", (_q, res) => json(res, resourceMetadata));
+const challenge = value => routes.set("mcp.example/mcp", (_q, res) => {
+  res.writeHead(401, { "WWW-Authenticate": value }).end();
+});
+challenge('Basic realm="private, service", Bearer resource_metadata="https://mcp.example/metadata", scope="records.write"');
+{
+  const pr = await oauth.discoverProtectedResource(RESOURCE_SERVER, { requestChallenge: true });
+  check("challenge chooses the advertised metadata URL", JSON.stringify(pr.scopesSupported) === '["records.read"]');
+  check("challenge scopes remain authoritative even outside metadata scopes", JSON.stringify(pr.challengeScopes) === '["records.write"]');
+}
+challenge('Bearer resource_metadata="https://mcp.example/metadata"');
+check("absent challenge scope allows resource scope fallback",
+  (await oauth.discoverProtectedResource(RESOURCE_SERVER, { requestChallenge: true })).challengeScopes === null);
+for (const resource of [undefined, "https://unrelated.example/api"]) {
+  routes.set("mcp.example/metadata", (_q, res) => json(res, { ...resourceMetadata, resource }));
+  check("challenge metadata cannot omit or retarget the requested resource",
+    await codeOf(() => oauth.discoverProtectedResource(RESOURCE_SERVER, { requestChallenge: true })) === "malformed_metadata");
+}
+routes.set("mcp.example/metadata", (_q, res) => json(res, resourceMetadata));
+challenge('Bearer resource_metadata="https://127.0.0.1/private", scope="records.read"');
+check("a private challenge metadata URL is refused before fetching",
+  await codeOf(() => oauth.discoverProtectedResource(RESOURCE_SERVER, { requestChallenge: true })) === "discovery_failed");
+for (const value of [
+  'Bearer scope="records.read", scope="records.write"',
+  'Bearer scope="records.read", Bearer scope="records.write"',
+  'Bearer scope="unterminated',
+  'Bearer scope=""',
+]) {
+  challenge(value);
+  check("ambiguous or malformed challenge is refused without permission guessing",
+    await codeOf(() => oauth.discoverProtectedResource(RESOURCE_SERVER, { requestChallenge: true })) === "malformed_metadata");
+}
+routes.delete("mcp.example/mcp");
+routes.set("mcp.example/mcp", (_q, res) => {
+  res.writeHead(200, { "Content-Type": "text/event-stream" });
+  res.flushHeaders(); // A real GET stream is allowed to stay open indefinitely.
+});
+{
+  const started = Date.now();
+  let streamingResource;
+  try { streamingResource = await oauth.discoverProtectedResource(RESOURCE_SERVER, { requestChallenge: true }); } catch {}
+  check("an open SSE response does not stall OAuth metadata discovery", !!streamingResource && Date.now() - started < 3000);
+}
+routes.delete("mcp.example/mcp");
+routes.delete("mcp.example/.well-known/oauth-protected-resource/mcp");
+routes.set("mcp.example/.well-known/oauth-protected-resource", (_q, res) => json(res, resourceMetadata));
+check("explicit OAuth discovery falls back from missing path metadata to root",
+  JSON.stringify((await oauth.discoverProtectedResource(RESOURCE_SERVER, { requestChallenge: true })).scopesSupported) === '["records.read"]');
+check("specialized resource-only discovery retains its existing no-root-fallback behavior",
+  await codeOf(() => oauth.discoverProtectedResource(RESOURCE_SERVER)) === "discovery_failed");
+routes.delete("mcp.example/.well-known/oauth-protected-resource");
+routes.set("mcp.example/.well-known/oauth-protected-resource/mcp", (_q, res) => json(res, resourceMetadata));
+for (const value of [null, "records.read", ["records.read", 1], ["records.read records.write"]]) {
+  routes.set("mcp.example/.well-known/oauth-protected-resource/mcp", (_q, res) => json(res, { ...resourceMetadata, scopes_supported: value }));
+  check("malformed resource scopes are refused, not silently filtered",
+    await codeOf(() => oauth.discoverProtectedResource(RESOURCE_SERVER)) === "malformed_metadata");
+}
+routes.set("mcp.example/.well-known/oauth-protected-resource/mcp", (_q, res) => json(res, { resource: RESOURCE_SERVER, authorization_servers: [ISSUER] }));
+
 // The check that makes discovery meaningful: a server may not claim another's identity.
 routes.set("evil.example/.well-known/oauth-authorization-server", (_q, res) => json(res, goodMetadata()));
 check("a server claiming someone else's issuer is refused",
@@ -164,6 +236,13 @@ console.log("\n— the consent URL —");
   check("...and never the verifier", !url.toString().includes(pkce.verifier));
   check("...and binds the token to this resource", url.searchParams.get("resource") === RESOURCE_SERVER);
   check("...and is at the discovered authorization endpoint", url.origin + url.pathname === `${ISSUER}/authorize`);
+  const defaultUrl = new URL(oauth.buildAuthorizationUrl({
+    server: { ...server, authorizationEndpoint: `${ISSUER}/authorize?scope=admin&audience=preserved` },
+    clientId: "client-123", redirectUri: REDIRECT, state, challenge: pkce.challenge,
+    scopes: [], resource: RESOURCE_SERVER,
+  }));
+  check("omitted scope cannot inherit a permission from the authorization endpoint query", !defaultUrl.searchParams.has("scope"));
+  check("unrelated provider endpoint query parameters are preserved", defaultUrl.searchParams.get("audience") === "preserved");
 }
 
 console.log("\n— registration, exchange, refresh, revoke —");

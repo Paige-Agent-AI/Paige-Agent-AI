@@ -142,12 +142,16 @@ export async function runOauthBegin(deps: OauthBeginDeps, input: OauthBeginInput
     // OAuth 2.1 discovery spine (all issuer-verified, all safeFetch): ask the MCP server which
     // authorization servers protect it (RFC 9728), then read the first one's metadata (RFC 8414,
     // issuer must match, S256 required). Nothing here is hardcoded to a provider.
-    const { resource, authorizationServers } = await discoverProtectedResource(serverUrl);
+    const { resource, authorizationServers, scopesSupported, challengeScopes } =
+      await discoverProtectedResource(serverUrl, { requestChallenge: true });
     const server = await discoverAuthorizationServer(authorizationServers[0]);
+    // MCP scope selection: current challenge, then resource metadata, otherwise omit scope.
+    // The AS catalogue may cover unrelated APIs; it is never the requested permission set.
+    const requestedScopes = challengeScopes ?? scopesSupported;
 
     // One client registration per connection (RFC 7591 DCR, public client) — never a shared platform
     // credential. A server that issues a secret anyway has it kept encrypted.
-    const registration = await registerClient({ server, redirectUri, clientName: "Paige" });
+    const registration = await registerClient({ server, redirectUri, clientName: "Paige", scopes: requestedScopes });
 
     const pkce = await createPkce();
     const state = createState();
@@ -166,7 +170,7 @@ export async function runOauthBegin(deps: OauthBeginDeps, input: OauthBeginInput
       _client_secret: registration.clientSecret,
       _actor: actor,
       _expected_generation: row.config_generation,
-      _requested_scopes: server.scopesSupported,
+      _requested_scopes: requestedScopes,
     });
     if (bErr) return { httpStatus: 500, body: { error: "oauth_begin_failed" } };
 
@@ -182,7 +186,7 @@ export async function runOauthBegin(deps: OauthBeginDeps, input: OauthBeginInput
           redirectUri,
           state,
           challenge: pkce.challenge,
-          scopes: server.scopesSupported,
+          scopes: requestedScopes,
           resource,
         }),
       },

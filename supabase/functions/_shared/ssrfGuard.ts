@@ -197,6 +197,8 @@ export type SafeFetchOptions = {
   timeoutMs?: number;
   /** Hard ceiling on the bytes we will read. Reading stops at the cap, it never buffers past it. */
   maxBytes?: number;
+  /** Inspect status/headers only, then abort the unused stream (e.g. an OAuth challenge). */
+  headersOnly?: boolean;
 };
 
 const DEFAULT_TIMEOUT_MS = 15_000;
@@ -249,6 +251,14 @@ export async function safeFetch(
       throw new SsrfError("url_redirect_refused");
     }
 
+    if (opts.headersOnly) {
+      // MCP GET can be an endless SSE stream. Header discovery must not wait for its EOF.
+      // Abort closes the actual request; cancellation releases the unused body. All URL,
+      // redirect and deadline checks above are identical to ordinary body-reading calls.
+      controller.abort();
+      try { await res.body?.cancel(); } catch { /* abort may have already closed it */ }
+      return { status: res.status, headers: res.headers, body: "", truncated: res.body !== null };
+    }
     const { body, truncated } = await readBounded(res, maxBytes, controller);
     return { status: res.status, headers: res.headers, body, truncated };
   } finally {

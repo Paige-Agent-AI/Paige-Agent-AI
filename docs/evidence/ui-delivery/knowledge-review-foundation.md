@@ -71,6 +71,6 @@ Deletion remains compatible: its definer lookup and CAS can remove canonical doc
 - review-check.py --psql <PostgreSQL16 psql path>: 48 actual SQL role/behavior assertions, migration replay twice.
 - review-check.py --suite metadata and --suite delete: existing SQL behavior suites pass with foundation applied twice.
 - Each harness creates/drops only a unique disposable database on localhost:55439; no cluster reset, external database or provider call.
-- Supabase CLI generated the migration; filename moved forward after 20270526000000.
+- Supabase CLI generated the migration; filename moved forward after 20270530200000.
 - No TypeScript, UI, Chat, worker, DOCX, durable-job or staging-generation changes. No full app compile/build was needed or claimed.
 - Independent review is parent-owned and pending. No push, PR, merge, deployment or production proof.

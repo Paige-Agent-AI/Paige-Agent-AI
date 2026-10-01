@@ -264,7 +264,7 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
         </div>
         {(() => {
           const shared = docs.filter((d) => d.share_to_network);
-          if (readError) return <p role="status">{readError}</p>;
+          if (readError) return <p role="status">{readError} <Button variant="outline" onClick={() => void load()}>Reload Knowledge</Button></p>;
           if (loading) {
             return (
               <div className="flex items-center gap-2 text-sm text-muted-foreground py-8 justify-center">
@@ -275,7 +275,7 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
           if (shared.length === 0) {
             return (
               <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-                You haven't shared anything to the network yet. When you do, it'll show here with its review status.
+                No shared sources in the loaded documents.{hasMore ? ' Load more documents to check older sources.' : ''}
               </div>
             );
           }
@@ -297,6 +297,7 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
             </div>
           );
         })()}
+        {hasMore && !readError && <Button variant="outline" disabled={loading} onClick={() => void loadMore()}>Load more documents</Button>}
       </TabsContent>
 
       <AlertDialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)}>

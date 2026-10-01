@@ -35,6 +35,7 @@ export interface SoloKnowledgeData {
   hasMore: boolean;
   loadMore: () => Promise<void>;
   requestedDocumentError: string | null;
+  requestedDocumentState: 'idle' | 'loading' | 'available' | 'missing' | 'error';
 }
 
 /** The raw row shape from the RLS-scoped select (mirrors KnowledgePanel's TenantDoc). */
@@ -121,11 +122,19 @@ export function useSoloKnowledge(requestedDocumentId?: string | null): SoloKnowl
   const tenantId = useOptionalTenantContext()?.activeTenantId ?? null;
   const { docs: rows, loading, error, reload, hasMore, loadMore } = useKnowledgeDocuments(tenantId);
   const requested = useKnowledgeDocuments(requestedDocumentId ? tenantId : null, requestedDocumentId);
-  const docs = useMemo(() => Array.from(new Map([...rows, ...(requestedDocumentId ? requested.docs : [])].map(row => [row.id, row])).values()).map(toDoc), [rows, requested.docs, requestedDocumentId]);
+  // The targeted read is newer, independent evidence. A list snapshot cannot revive a
+  // requested source which that read could not find or could not authorize/read.
+  const requestedDocumentState: SoloKnowledgeData['requestedDocumentState'] = !requestedDocumentId ? 'idle'
+    : requested.loading ? 'loading' : requested.error ? 'error'
+      : requested.docs.some(doc => doc.id === requestedDocumentId) ? 'available' : 'missing';
+  const docs = useMemo(() => Array.from(new Map([
+    ...rows.filter(row => row.id !== requestedDocumentId),
+    ...(requestedDocumentState === 'available' ? requested.docs : []),
+  ].map(row => [row.id, row])).values()).map(toDoc), [rows, requested.docs, requestedDocumentId, requestedDocumentState]);
   const recentlyLearned = useMemo(() => docs.slice(0, RECENT_LIMIT), [docs]);
   const pending = loading || (!!requestedDocumentId && requested.loading);
   return { loading: pending, error, docs, recentlyLearned, documentsIndexed: docs.filter(doc => doc.chunkCount > 0).length,
     empty: !pending && !error && docs.length === 0,
     refresh: () => { void reload(); if (requestedDocumentId) void requested.reload(); }, hasMore, loadMore,
-    requestedDocumentError: requestedDocumentId ? requested.error : null };
+    requestedDocumentError: requestedDocumentId ? requested.error : null, requestedDocumentState };
 }

@@ -33,6 +33,18 @@ SELECT public.test_assert((SELECT count(*)=1 FROM public.get_paige_durable_work(
 SELECT set_config('test.actor','10000000-0000-0000-0000-000000000004',false);
 SELECT public.test_assert((SELECT count(*)=0 FROM public.get_paige_durable_work((SELECT id FROM public.test_work WHERE name='member'))),'ordinary member cannot read another member work');
 RESET ROLE;
+UPDATE public.tenant_members SET is_owner=true WHERE user_id='10000000-0000-0000-0000-000000000004';
+SET ROLE authenticated;
+SELECT public.test_assert((SELECT count(*)=1 FROM public.get_paige_durable_work((SELECT id FROM public.test_work WHERE name='member'))),'active member owner flag can read another member Knowledge work');
+RESET ROLE;
+UPDATE public.tenant_members SET status='inactive' WHERE user_id='10000000-0000-0000-0000-000000000004';
+SET ROLE authenticated;
+SELECT public.test_assert((SELECT count(*)=0 FROM public.get_paige_durable_work((SELECT id FROM public.test_work WHERE name='member'))),'inactive owner flag cannot read Knowledge work');
+RESET ROLE;
+UPDATE public.tenant_members SET status='active',is_owner=false WHERE user_id='10000000-0000-0000-0000-000000000004';
+SET ROLE authenticated;
+SELECT public.test_assert((SELECT count(*)=0 FROM public.get_paige_durable_work((SELECT id FROM public.test_work WHERE name='member'))),'ordinary member without owner flag still refused');
+RESET ROLE;
 UPDATE public.tenant_members SET role='admin' WHERE user_id='10000000-0000-0000-0000-000000000004';
 SET ROLE authenticated;
 SELECT public.test_assert((SELECT count(*)=1 FROM public.get_paige_durable_work((SELECT id FROM public.test_work WHERE name='member'))),'tenant admin can read workspace work');

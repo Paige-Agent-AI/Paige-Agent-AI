@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: staged backend/client seam; current consumers and Chat
 FLOW_PROTOTYPE: NOT_REQUIRED: no interface implementation in this slice.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: align future Knowledge jobs with existing member, owner and company-operator authority without broadening other durable work.
 VISUAL_DIRECTION: NOT_APPLICABLE: no visual change.
-AUTOMATED_EVIDENCE: PASS: 44 SQL role/behavior assertions plus one database-observed two-connection workspace-switch race; migration replay twice; old document submit/replay/status/start exercised.
+AUTOMATED_EVIDENCE: PASS: 47 SQL role/behavior assertions plus one database-observed two-connection workspace-switch race; migration replay twice; old document submit/replay/status/start exercised.
 STATIC_EVIDENCE: PASS: unchanged non-Knowledge authorization branches copied from native migration; canonical actor-helper composition inspected; diff and evidence checks.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no UI adoption here.
 BEHAVIORAL_EVIDENCE: PASS: PostgreSQL16 executes actual envelope and document-authoring migrations plus new migration. Roles, grants, row locks and immutable-intent behavior exercised; external dependency helpers are explicit local models.
@@ -49,7 +49,7 @@ The canonical is_tenant_member predicate permits company operators independently
 
 create_paige_durable_work keeps all existing validation, active-tenant guard, thread ownership, immutable identity, replay and service-only ACLs. Only exact pairs knowledge_extract/knowledge.extract and knowledge_publish/knowledge.publish enter the new branch. A reserved kind with the wrong capability, or reserved capability with a different kind, is refused. Before checking new authority it locks the actor profile with FOR SHARE and requires that selected tenant. Every other kind retains the original literal-active-membership check.
 
-get_paige_durable_work keeps the same safe return columns. Knowledge pairs additionally require current raw selection and the new active actor predicate. Visibility remains initiating actor, platform owner, or canonical tenant admin (including company operator). An ordinary member cannot see another member's work. Every other kind retains its original platform-owner or active member/initiator/owner/admin predicate, including its original selection behavior.
+get_paige_durable_work keeps the same safe return columns. Knowledge pairs additionally require current raw selection and the new active actor predicate. Visibility remains initiating actor, platform owner, canonical tenant admin (including company operator), or an active exact-tenant membership with is_owner=true. An ordinary member cannot see another member's work. Every other kind retains its original platform-owner or active member/initiator/owner/admin predicate, including its original selection behavior.
 
 These changes do not make authority_context reusable permission or scope_epoch a monotonic selection version. Later Knowledge start/complete/recover adapters must recheck authority, freeze source/content/revision identity and fence each attempt. Generic heartbeat/transition functions are unchanged. The existing document worker rejects Knowledge kinds; no accidental document execution occurs.
 
@@ -64,8 +64,12 @@ The regression deliberately confirms that the new auth.users ban check does not 
 ## Executed checks
 
 - Failing first: durable-check.py --baseline failed because knowledge_actor_authorized was missing.
-- durable-check.py --psql <PostgreSQL16 psql path>: 44 SQL assertions and one concurrent selected-profile race; migration replay twice. pg_stat_activity confirms the competing profile update reached its locked wait before creation starts.
+- durable-check.py --psql <PostgreSQL16 psql path>: 47 SQL assertions and one concurrent selected-profile race; migration replay twice. pg_stat_activity confirms the competing profile update reached its locked wait before creation starts.
 - Test databases are unique disposable names on localhost:55439 and are dropped afterward. Existing cluster is not reset.
 - Migration generated using Supabase CLI then ordered after foundation as 20270528000000.
 - No TypeScript or UI files changed; no full build/compile. Independent review is parent-owned and pending.
 - No push, PR, merge, deployment, source binding, draft submission or Knowledge lifecycle activation.
+
+## Independent review repair
+
+The parent identified that the Knowledge status branch omitted the existing membership is_owner=true alternative when role remains member/coach. The actual SQL test first failed for an active member owner flag reading another member's Knowledge work. Added that exact-tenant active-owner alternative under the unchanged current Knowledge actor/selection guard. Tests also refuse the inactive owner flag and ordinary membership without the flag. All 47 SQL assertions plus the concurrent switch race and old document regression pass after the repair.

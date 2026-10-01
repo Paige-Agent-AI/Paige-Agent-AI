@@ -167,7 +167,10 @@ language sql security definer stable set search_path = '' as $$
          or (w.work_kind='knowledge_publish' and w.capability_key='knowledge.publish'))
        and public.knowledge_actor_authorized(auth.uid(),w.tenant_id)
        and (w.initiating_user_id=auth.uid() or public.is_platform_owner(auth.uid())
-            or public.is_tenant_admin_as(auth.uid(),w.tenant_id))
+            or public.is_tenant_admin_as(auth.uid(),w.tenant_id)
+            or exists (select 1 from public.tenant_members m
+              where m.tenant_id=w.tenant_id and m.user_id=auth.uid()
+                and m.status='active' and m.is_owner=true))
      else (
        public.is_platform_owner()
        or exists (

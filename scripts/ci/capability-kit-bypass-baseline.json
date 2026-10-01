@@ -647,11 +647,6 @@
   {
     "rule": "direct-risk-entry",
     "path": "supabase/functions/_shared/action-risk.ts",
-    "symbol": "program_enroll"
-  },
-  {
-    "rule": "direct-risk-entry",
-    "path": "supabase/functions/_shared/action-risk.ts",
     "symbol": "propose_business_brief_update"
   },
   {
@@ -1418,16 +1413,6 @@
     "rule": "direct-tool-definition",
     "path": "supabase/functions/paige-ai-chat/index.ts",
     "symbol": "presence_who_online"
-  },
-  {
-    "rule": "direct-tool-definition",
-    "path": "supabase/functions/paige-ai-chat/index.ts",
-    "symbol": "program_enroll"
-  },
-  {
-    "rule": "direct-tool-definition",
-    "path": "supabase/functions/paige-ai-chat/index.ts",
-    "symbol": "program_list"
   },
   {
     "rule": "direct-tool-definition",

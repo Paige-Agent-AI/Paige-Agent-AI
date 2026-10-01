@@ -142,7 +142,6 @@
     "plan_update_item",
     "platform_post_notification",
     "privacy_handle_request",
-    "program_enroll",
     "propose_business_brief_update",
     "readiness_approve_proposal",
     "readiness_reject_proposal",
@@ -808,11 +807,6 @@
     },
     {
       "tool": "privacy_handle_request",
-      "risk": "high",
-      "receipt": "seeded_undeclared"
-    },
-    {
-      "tool": "program_enroll",
       "risk": "high",
       "receipt": "seeded_undeclared"
     },

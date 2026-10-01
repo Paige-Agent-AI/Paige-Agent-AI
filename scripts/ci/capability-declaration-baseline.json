@@ -280,14 +280,6 @@
     "kind": "read"
   },
   {
-    "tool": "program_enroll",
-    "kind": "mutating"
-  },
-  {
-    "tool": "program_list",
-    "kind": "read"
-  },
-  {
     "tool": "propose_action",
     "kind": "read"
   },

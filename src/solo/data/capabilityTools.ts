@@ -106,7 +106,6 @@ export const TOOL_MAP: Readonly<Record<string, { capability: CapabilityKey; risk
   deal_create: { capability: "pipeline", risk: "ordinary" },
   deal_move_stage: { capability: "pipeline", risk: "ordinary" },
   pipeline_configure: { capability: "pipeline", risk: "ordinary" },
-  program_enroll: { capability: "pipeline", risk: "high" },
   plan_create: { capability: "pipeline", risk: "ordinary" },
   plan_add_milestone: { capability: "pipeline", risk: "ordinary" },
   plan_assign_task: { capability: "pipeline", risk: "ordinary" },

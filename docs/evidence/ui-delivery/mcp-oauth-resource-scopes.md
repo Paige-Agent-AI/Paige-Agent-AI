@@ -8,8 +8,8 @@ FLOW_PROTOTYPE: NOT_REQUIRED: ordinary correctness repair within the owner-appro
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: a Solo owner explicitly chooses OAuth for a remote MCP connection and receives resource-specific consent, not unrelated authorization-server permissions.
 VISUAL_DIRECTION: PASS: incumbent Mineral/Obsidian drawer, typography, controls and scroll tokens unchanged; Impeccable audit applied to regression evidence only.
 AUTOMATED_EVIDENCE: PASS: OAuth smoke 84; gateway smoke 392 plus 11 callback cases; transport 104; n8n SSRF 33; registry smoke 19; shared-form tests 115 and account-fencing tests 36.
-STATIC_EVIDENCE: PARTIAL: production build passes; TypeScript ratchet passes with 12 inherited errors; changed-file ESLint reports two inherited explicit-any errors in untouched gateway dependency types. Exact-head remote checks required separately.
-RENDERED_EVIDENCE: PASS: local structural-rendered report scripts/live-drive/artifacts/shared-mcp/report.json; 16 frame/theme/dock geometry variants. Real SoloSettings, synthetic transport, reconstructed shell and placeholder dock, not authenticated runtime.
+STATIC_EVIDENCE: UNVERIFIED: full lint is not green: two inherited explicit-any errors in untouched gateway dependency types. Production build and TypeScript ratchet pass (12 inherited type errors); exact-head remote checks required separately.
+RENDERED_EVIDENCE: PASS: local structural-rendered report scripts/live-drive/artifacts/shared-mcp/report.json; 16 frame/theme/dock geometry variants. Real SoloSettings, synthetic transport, reconstructed shell and simulated dock, not authenticated runtime.
 BEHAVIORAL_EVIDENCE: PASS: 258 local browser assertions cover explicit auth, save/readback, failed-save recovery, OAuth retry, cancellation, focus, scroll and cleanup. This does not prove a provider accepts consent.
 AUTHENTICATED_RUNTIME: UNVERIFIED: no real owner account or provider consent exercised; live save, token/header check, OAuth acceptance and execution require owner-performed proof.
 KEYBOARD_FOCUS: PASS: structural drive verifies saved-confirmation focus, discard return, Escape, scroll keyboard input and reachable controls; assistive technology unverified.
@@ -36,13 +36,13 @@ RELEASE_TRUTH_BOUNDARY: PARTIAL: canonical client selection repaired locally. PR
 RELEASE_RECOVERY: position=forward-fix or revert this isolated code patch before any further release; reference=this record; no migration or data conversion to undo.
 
 SOLO_1536X770_PAIGE_CLOSED: PASS: 1536x770-light-closed-form.png and dark equivalent; structural drawer geometry, reachability and no document overflow.
-SOLO_1536X770_PAIGE_OPEN: PASS: 1536x770-light-open-form.png and dark equivalent; placeholder dock geometry only, not real PAIGE runtime.
+SOLO_1536X770_PAIGE_OPEN: PASS: 1536x770-light-open-form.png and dark equivalent; simulated dock geometry only, not real PAIGE runtime.
 SOLO_1366X768_PAIGE_CLOSED: PASS: 1366x768-light-closed-form.png and dark equivalent; structural drawer geometry and scroll controls.
-SOLO_1366X768_PAIGE_OPEN: PASS: 1366x768-light-open-form.png and dark equivalent; placeholder dock geometry and no horizontal overflow.
+SOLO_1366X768_PAIGE_OPEN: PASS: 1366x768-light-open-form.png and dark equivalent; simulated dock geometry and no horizontal overflow.
 SOLO_1024X768_PAIGE_CLOSED: PASS: 1024x768-light-closed-form.png and dark equivalent; structural keyboard/scroll reachability.
-SOLO_1024X768_PAIGE_OPEN: PASS: 1024x768-light-open-form.png and dark equivalent; placeholder dock geometry and reachable primary action.
+SOLO_1024X768_PAIGE_OPEN: PASS: 1024x768-light-open-form.png and dark equivalent; simulated dock geometry and reachable primary action.
 SOLO_900X1000_PAIGE_CLOSED: PASS: 900x1000-light-closed-form.png and dark equivalent; structural no document overflow.
-SOLO_900X1000_PAIGE_OPEN: PASS: 900x1000-light-open-form.png and dark equivalent; placeholder dock geometry, form fit and reachable save.
+SOLO_900X1000_PAIGE_OPEN: PASS: 900x1000-light-open-form.png and dark equivalent; simulated dock geometry, form fit and reachable save.
 
 ## Affected flow, ownership and collision packet
 

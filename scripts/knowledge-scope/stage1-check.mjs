@@ -236,6 +236,9 @@ globalThis.fetch = async (url, init) => {
   }
   if (href === "https://api.anthropic.com/v1/messages") {
     providerCalls.push(JSON.parse(String(init?.body ?? "{}")));
+    if (JSON.stringify(providerCalls.at(-1)).includes("Maintain a rolling memory")) {
+      return new Response(JSON.stringify({ content: [{ type: "text", text: "FOLDED-PRIVATE-MARKER" }], model: "test", usage: { input_tokens: 1, output_tokens: 1 } }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
     const next = providerPlan.shift() ?? "text";
     // An extraction that parses but FAILS validation, so the `logSyncFailure` path is reached
     // with the full `structured` payload — the write 14b.1/14b.2 are about.
@@ -333,13 +336,15 @@ const handler = capturedHandler();
  * ordered so its FIRST row is NOT the active tenant. That is the whole trap: a correct
  * handler must ignore this ordering entirely.
  */
-async function drive({ personaTenant, personaSequence = null, memberships, kbRejects = false, ragHits = false, bodyExtras = {}, noAuth = false, unauthenticated = false, chunkTitle = "PRIVATE-CHUNKTITLE-MARKER", chunkContent = "x", provider = ["text"], rpcExtras = {}, tableExtras = {}, functionExtras = {}, fundingEnabled = false, throwOnSync = false, activeTenantId = "__USE_PERSONA__", userMessage = "what does my onboarding process look like?" }) {
+async function drive({ background = false, afterResponse = null, personaTenant, personaSequence = null, memberships, kbRejects = false, ragHits = false, bodyExtras = {}, noAuth = false, unauthenticated = false, chunkTitle = "PRIVATE-CHUNKTITLE-MARKER", chunkContent = "x", provider = ["text"], rpcExtras = {}, tableExtras = {}, functionExtras = {}, fundingEnabled = false, throwOnSync = false, activeTenantId = "__USE_PERSONA__", userMessage = "what does my onboarding process look like?" }) {
   // `profiles.active_tenant_id` is an INDEPENDENT axis from the persona-resolved tenant. It
   // defaults to `personaTenant` so every existing scenario is byte-identical (persona and active
   // agree). A check overrides it to model the case current_user_tenant_id() hides: a null or
   // stale active_tenant_id where the persona tenant is the COALESCE oldest-membership fallback.
   const declaredActiveTenant = activeTenantId === "__USE_PERSONA__" ? personaTenant : activeTenantId;
   const logged = [];
+  const tasks = [];
+  if (background) globalThis.EdgeRuntime = { waitUntil: (p) => tasks.push(p) };
   syncThrows = throwOnSync;
   resetEmbeds();
   const origWarn = console.warn;
@@ -427,6 +432,8 @@ async function drive({ personaTenant, personaSequence = null, memberships, kbRej
     );
     status = res?.status ?? null;
     if (res?.body) responseText = await res.text();
+    afterResponse?.();
+    await Promise.allSettled(tasks);
   } catch {
     // A downstream failure (no model key configured) is expected and irrelevant — the
     // retrieval call under test happens well before any model call.
@@ -435,6 +442,7 @@ async function drive({ personaTenant, personaSequence = null, memberships, kbRej
     console.error = origError;
     console.log = origLog;
     syncThrows = false;
+    if (background) delete globalThis.EdgeRuntime;
   }
 
   const kbCall = rec.rpc.find((r) => r.name === "match_tenant_knowledge");
@@ -1802,7 +1810,12 @@ const nonNeutralFrames = (text) => text.split("\n").filter((l) => {
   if (k === "choices") return !/workspace changed/.test(raw);
   return true;
 });
-const personaCallsOf = (r) => r.rec.rpc.filter((c) => c.name === "get_paige_persona_context").length;
+// Count turn authority checks before the post-turn compactor starts. Its independent
+// checks must not move tests targeting the final response gate into background work.
+const personaCallsOf = (r) => {
+  const end = r.rec.rpc.findIndex((c) => c.name === "paige_chat_turn_append" && c.args?.p_role === "assistant");
+  return (end < 0 ? r.rec.rpc : r.rec.rpc.slice(0, end)).filter((c) => c.name === "get_paige_persona_context").length;
+};
 
 group("safety-first streaming: protected turns buffer, ordinary turns stream");
 {
@@ -2281,7 +2294,7 @@ group("safety-first streaming: the sources the first enumeration missed");
     provider: ["ask-choices"],
     bodyExtras: { threadId: STUDIO_THREAD, requestIntentId: "66666666-6666-4666-8666-666666666666" },
     // `ask_choices` is Studio-gated, and studioSessionId is read off the thread row.
-    tableExtras: { paige_chat_threads: () => [{ summary: null, studio_session_id: "studio-sess-1" }] },
+    tableExtras: { paige_chat_threads: () => [{ id: STUDIO_THREAD, caller_user_id: USER, tenant_id: CHILD, summary: null, studio_session_id: "studio-sess-1" }] },
   };
   const choiceClean = await drive({
     personaTenant: CHILD, personaSequence: [CHILD], memberships: [CHILD], ...choiceOpts,
@@ -2386,7 +2399,7 @@ group("safety-first streaming: the sources the first enumeration missed");
     },
     tableExtras: {
       user_roles: () => [{ role: "admin" }],
-      paige_chat_threads: () => [{ summary: null, studio_session_id: "studio-sess-1" }],
+      paige_chat_threads: () => [{ id: STUDIO_THREAD, caller_user_id: USER, tenant_id: CHILD, summary: null, studio_session_id: "studio-sess-1" }],
     },
   };
   const studioClean = await drive({
@@ -2852,7 +2865,7 @@ group("safety-first streaming: the sources the first enumeration missed");
     provider: ["private-text"],
     bodyExtras: { threadId: SUMMARY_THREAD },
     tableExtras: {
-      paige_chat_threads: () => [{ summary: "Earlier we discussed PRIVATE-SUMMARY-MARKER.", studio_session_id: null }],
+      paige_chat_threads: () => [{ id: SUMMARY_THREAD, caller_user_id: USER, tenant_id: CHILD, summary: "Earlier we discussed PRIVATE-SUMMARY-MARKER.", studio_session_id: null }],
     },
   };
   const sumClean = await drive({
@@ -3196,7 +3209,7 @@ group("safety-first streaming: the sources the first enumeration missed");
     chunkContent: "PRIVATE-KB-SOURCE-MARKER",
     provider: ["private-text"],
     bodyExtras: { threadId: AGENTIC_THREAD },
-    tableExtras: { paige_chat_threads: () => [{ summary: null, studio_session_id: null }] },
+    tableExtras: { paige_chat_threads: () => [{ id: AGENTIC_THREAD, caller_user_id: USER, tenant_id: CHILD, summary: null, studio_session_id: null }] },
   };
   const assistantAppends = (r) => r.rec.rpc.filter(
     (c) => c.name === "paige_chat_turn_append" && c.args?.p_role === "assistant");
@@ -3701,6 +3714,117 @@ for (const [label, next] of [
   assert("28 late clear: one authorized initial provider call", r.providerCalls.length === 1);
   assert("28 late clear: buffered answer refused", r.responseText.includes("active workspace changed"));
   assert("28 late clear: no telemetry", !r.telemetry);
+}
+
+// Compactor uses the real preflight and post-turn paths, with long stored turns.
+group("rolling summary thread and workspace scope");
+const FOLD_THREAD = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+const isFold = (c) => JSON.stringify(c).includes("Maintain a rolling memory");
+for (const phase of ["pre", "post"]) {
+  for (const mode of ["valid", "missing", "foreign-owner", "foreign-tenant", "clear-before", "clear-after", "owner-after", "tenant-after", "missing-after", "resolved-before", "resolved-after", "malformed-before", "throw-before", "zero-write", "readback-clear"]) {
+    let appended = false, transcriptRead = false, written = false;
+    const r = await drive({ personaTenant: CHILD, memberships: [CHILD, AGENCY], kbRejects: true,
+      bodyExtras: { threadId: FOLD_THREAD },
+      rpcExtras: {
+        get_paige_persona_context: () => ({ data: [{ tenant_id: (mode === "resolved-before" && transcriptRead) || (mode === "resolved-after" && providerCalls.some(isFold)) ? AGENCY : CHILD }], error: null }),
+        paige_chat_turn_append: (args) => { if (args.p_role === "assistant") appended = true; return { data: "turn", error: null }; }
+      },
+      tableExtras: {
+        profiles: () => {
+          if (mode === "throw-before" && transcriptRead) throw new Error("profile unavailable");
+          return [{ active_tenant_id: mode === "malformed-before" && transcriptRead ? 42 :
+          (mode === "clear-before" && transcriptRead) ||
+          (mode === "clear-after" && providerCalls.some(isFold)) ||
+          (mode === "readback-clear" && written) ? null : CHILD }]; },
+        paige_chat_threads: (filters) => {
+          if (filters.some(([op, cols]) => op === "select" && cols === "id") && providerCalls.some(isFold)) written = true;
+          if (mode === "missing" || (mode === "missing-after" && providerCalls.some(isFold)) || (mode === "zero-write" && written)) return [];
+          return [{ id: FOLD_THREAD, caller_user_id: mode === "foreign-owner" || (mode === "owner-after" && providerCalls.some(isFold)) ? AGENCY : USER,
+            tenant_id: mode === "foreign-tenant" || (mode === "tenant-after" && providerCalls.some(isFold)) ? AGENCY : CHILD, message_count: phase === "post" && !appended ? 12 : 24,
+            summary: null, summary_through_seq: 0, last_compacted_at: null, title: "Existing", studio_session_id: null }];
+        },
+        paige_chat_turns: () => { transcriptRead = true; return Array.from({ length: 24 }, (_, n) => ({ role: n % 2 ? "assistant" : "user", content: "PRIVATE-FOLD-TRANSCRIPT", seq: n + 1 })); },
+      },
+    });
+    const folds = r.providerCalls.filter(isFold);
+    const writes = r.rec.inserts.filter((i) => i.table === "paige_chat_threads" && i.row.summary);
+    if (["missing", "foreign-owner", "foreign-tenant", "clear-before", "resolved-before", "malformed-before", "throw-before"].includes(mode)) {
+      assert(`29 ${phase} ${mode}: no summary egress`, folds.length === 0);
+      assert(`29 ${phase} ${mode}: no summary write`, writes.length === 0);
+    } else if (["clear-after", "owner-after", "tenant-after", "missing-after", "resolved-after"].includes(mode)) {
+      assert(`29 ${phase} ${mode}: initial summary egress exercised`, folds.length === 1);
+      assert(`29 ${phase} ${mode}: no stale summary write`, writes.length === 0);
+    } else {
+      assert(`29 ${phase} ${mode}: summary egress exercised`, folds.length > 0);
+      assert(`29 ${phase} ${mode}: scoped summary stored`, writes.length > 0);
+    }
+    if (mode === "valid") {
+      const updates = r.rec.from.filter((q) => q.table === "paige_chat_threads" && q.op === "update");
+      assert(`29 ${phase}: summary write pins owner, tenant and watermark`, updates.some((q) =>
+        [["eq", "id", FOLD_THREAD], ["eq", "caller_user_id", USER], ["eq", "tenant_id", CHILD], ["eq", "summary_through_seq", 0]]
+          .every((f) => q.filters.some((v) => JSON.stringify(v) === JSON.stringify(f)))));
+    }
+    if (["readback-clear", "zero-write"].includes(mode)) assert(`29 ${phase}: refused readback never announces compaction done`, !r.responseText.includes('"state":"done"'));
+    if (phase === "post") assert(`29 post ${mode}: parent answer survives compactor skip`, r.status === 200 && r.responseText.includes("[DONE]"));
+  }
+}
+
+for (const tenant of [null, CHILD]) {
+  for (const owner of [true, false, "true"]) {
+    const r = await drive({ personaTenant: tenant, memberships: tenant ? [tenant] : [], kbRejects: true,
+      bodyExtras: { threadId: FOLD_THREAD }, rpcExtras: { is_platform_owner: { data: owner, error: null } },
+      tableExtras: {
+        paige_chat_threads: () => [{ id: FOLD_THREAD, caller_user_id: USER, tenant_id: null, message_count: 24, summary_through_seq: 0, title: "Platform" }],
+        paige_chat_turns: () => Array.from({ length: 24 }, (_, n) => ({ role: "user", content: "PLATFORM-PRIVATE-MARKER", seq: n + 1 })),
+      },
+    });
+    assert(`29 platform ${tenant ?? "tenantless"} owner=${owner}: exact owner authority`, r.providerCalls.some(isFold) === (owner === true));
+    assert(`29 platform ${tenant ?? "tenantless"} owner=${owner}: parent completes`, r.status === 200 && r.responseText.includes("[DONE]"));
+  }
+}
+// Delay the post-turn append until AFTER the streamed parent response closes. The
+// waitUntil task must resolve fresh authority, rather than trust the finished turn.
+for (const clear of [false, true]) {
+  let release, disposed = false;
+  const appended = new Promise((resolve) => { release = resolve; });
+  const r = await drive({ background: true, afterResponse: () => { disposed = true; release(); },
+    personaTenant: CHILD, memberships: [CHILD], kbRejects: true, bodyExtras: { threadId: FOLD_THREAD },
+    rpcExtras: { paige_chat_turn_append: async (args) => { if (args.p_role === "assistant") await appended; return { data: "turn", error: null }; } },
+    tableExtras: {
+      profiles: () => [{ active_tenant_id: clear && disposed ? null : CHILD }],
+      paige_chat_threads: () => [{ id: FOLD_THREAD, caller_user_id: USER, tenant_id: CHILD, message_count: disposed ? 24 : 12, summary_through_seq: 0, title: "Existing" }],
+      paige_chat_turns: () => Array.from({ length: 24 }, (_, n) => ({ role: "user", content: "PRIVATE-WAITUNTIL-MARKER", seq: n + 1 })),
+    },
+  });
+  assert(`29 waitUntil clear=${clear}: lifecycle exercised`, disposed && r.status === 200 && r.responseText.includes("[DONE]"));
+  assert(`29 waitUntil clear=${clear}: fresh authority controls summary`, r.providerCalls.some(isFold) === !clear);
+  assert(`29 waitUntil clear=${clear}: fresh authority controls persistence`, r.rec.inserts.some((i) => i.table === "paige_chat_threads" && i.row.summary) === !clear);
+}
+
+for (const late of [false, true]) {
+  const r = await drive({ personaTenant: CHILD, memberships: [CHILD], kbRejects: true,
+    provider: ["private-text"], bodyExtras: { threadId: FOLD_THREAD },
+    tableExtras: { paige_chat_threads: () => [{ id: FOLD_THREAD, caller_user_id: late && providerCalls.length ? AGENCY : USER,
+      tenant_id: CHILD, message_count: 2, summary: "PRIVATE-RECALLED-SUMMARY", summary_through_seq: 0, title: "Existing" }] },
+  });
+  assert(`29 recall late owner change=${late}: summary use exercised`, r.providerCalls.some((c) => JSON.stringify(c).includes("PRIVATE-RECALLED-SUMMARY")));
+  assert(`29 recall late owner change=${late}: response follows fresh binding`, r.responseText.includes("CHILD-PRIVATE-MARKER") === !late);
+  if (late) assert("29 recall revoked ownership: refusal is explicit", r.responseText.includes("active workspace changed"));
+}
+
+for (const phase of ["before", "after"]) {
+  let transcriptRead = false;
+  const r = await drive({ personaTenant: null, memberships: [], kbRejects: true, bodyExtras: { threadId: FOLD_THREAD },
+    rpcExtras: { is_platform_owner: { data: true, error: null } },
+    tableExtras: {
+      profiles: () => [{ active_tenant_id: phase === "before" ? (transcriptRead ? CHILD : null) : (providerCalls.some(isFold) ? CHILD : null) }],
+      paige_chat_threads: () => [{ id: FOLD_THREAD, caller_user_id: USER, tenant_id: null, message_count: 24, summary_through_seq: 0, title: "Platform" }],
+      paige_chat_turns: () => { transcriptRead = true; return Array.from({ length: 24 }, (_, n) => ({ role: "user", content: "PLATFORM-PRIVATE-MARKER", seq: n + 1 })); },
+    },
+  });
+  assert(`29 platform raw workspace changes ${phase}: provider boundary`, r.providerCalls.filter(isFold).length === (phase === "before" ? 0 : 1));
+  assert(`29 platform raw workspace changes ${phase}: no stale write`, !r.rec.inserts.some((i) => i.table === "paige_chat_threads" && i.row.summary));
+  assert(`29 platform raw workspace changes ${phase}: parent remains usable`, r.status === 200 && r.responseText.includes("[DONE]"));
 }
 
 console.log(`\n${checks - failures} passed, ${failures} failed`);

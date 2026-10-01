@@ -41,7 +41,7 @@ RELEASE_CLASSIFICATION: patch: a defect correction with no new capability and no
 CUSTOMER_RELEASE_IDENTITY: none: pre-launch, no customers are on the platform and no customer-facing release identity is earned by a defect fix
 RELEASE_NOTE_REQUIRED: no: pre-launch with no customers to notify; the correction is recorded in PR #1398 and issue #1395
 RELEASE_TRUTH_BOUNDARY: LIVE: nothing — this is not deployed. PARTIAL: the send path's correctness is established by source trace, unit and contract tests, a bite proof, and the agreements integrity proof, all at the exit codes recorded above. PROOF OWED: every authenticated runtime claim listed under UNVERIFIED, plus the existence of the tenant-agreements bucket row in production. UNAVAILABLE: rendered and browser-driven evidence, for want of a browser in this session.
-RELEASE_RECOVERY: position=both migrations are additive function redeclarations, so reverting the commit restores the prior bodies; no data transformation and no irreversible write is involved, and the frozen-document columns are written only where they were already written; reference=PR #1398
+RELEASE_RECOVERY: position=revert the commit — the migrations are additive function and catalogue redeclarations, so reverting restores the prior bodies and drops the two toggles, with no data transformation and no irreversible write involved; reference=#1398
 
 ## Scope and collisions
 

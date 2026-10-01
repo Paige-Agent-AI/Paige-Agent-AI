@@ -58,7 +58,8 @@ onMouseEnter={e=>{if(!on)e.currentTarget.style.background='rgba(255,255,255,.05)
 <span style={{display:'flex',color:on?'var(--gold-bright)':'inherit'}}>{Icn()}</span>
 {!collapsed&&<span className="grow trunc" style={{fontSize:13.4,fontWeight:on?600:450,textAlign:'left'}}>{label}</span>}
 {!collapsed&&k==='home'&&homeCount>0&&<span className="pill" style={{background:'var(--gold-bright)',color:'#2A1C00',height:19,padding:'0 7px'}}>{homeCount}</span>}</button>};
-return <nav style={{width:w,flex:'none',background:'var(--rail)',display:'flex',flexDirection:'column',padding:collapsed?'16px 12px':'16px 14px',transition:'width .22s',overflowX:'hidden',overflowY:'auto'}}>
+return <div style={{flex:'none',display:'grid',gridTemplateColumns:w,transition:'grid-template-columns .22s'}}>
+<nav style={{width:'100%',background:'var(--rail)',display:'flex',flexDirection:'column',padding:collapsed?'16px 12px':'16px 14px',overflowX:'hidden',overflowY:'auto'}}>
 <div className="row" style={{gap:10,padding:collapsed?'0 0 18px':'2px 4px 18px',justifyContent:collapsed?'center':'flex-start'}}>
 <Logo size={collapsed?24:26}/>{!collapsed&&<div className="grow" style={{minWidth:0}}>
 <div style={{color:'#fff',fontWeight:600,fontSize:14.5,letterSpacing:'-.02em'}}>Paige Agent AI</div>
@@ -74,7 +75,7 @@ copy with no backend seam, so it is stripped rather than replaced. "Solo plan" i
 tier-accurate on this shell and stays. */}
 <div className="row" style={{gap:7,color:'var(--gold-bright)',fontSize:12,fontWeight:600}}><Ic.bolt size={13}/>Solo plan</div></div>}
 <button onClick={()=>setCollapsed(!collapsed)} className="row" style={{width:'100%',justifyContent:'center',padding:9,borderRadius:10,color:'var(--rail-text)'}}>
-<span style={{display:'flex',transform:collapsed?'':'rotate(180deg)',transition:'.2s'}}><Ic.chev size={15}/></span></button></div></nav>};
+ <span style={{display:'flex',transform:collapsed?'':'rotate(180deg)',transition:'.2s'}}><Ic.chev size={15}/></span></button></div></nav></div>};
 
 const TopBar=({theme,setTheme,openPaige,route,go})=>{const title=[...NAV,...NAV2].find(n=>n[0]===route)?.[1]||'';
 const[menu,setMenu]=React.useState(false);

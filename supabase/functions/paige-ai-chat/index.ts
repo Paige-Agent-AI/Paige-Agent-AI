@@ -2581,15 +2581,9 @@ JSON:`;
     // exact same active account at that moment. Missing, changed, malformed, or
     // revoked scope fails closed before model egress.
     //
-    // SCOPE OF THAT CLAIM, STATED EXACTLY (§13). "Every provider boundary" means every one on
-    // the CHAT TURN's own path: initial egress, each loop continuation, the closing call, tool
-    // dispatch, response emission, and the durable telemetry write. It does NOT cover
-    // `foldThreadSummary` (the rolling-summary compactor, defined below and also invoked
-    // post-turn via `maybeRefreshSummary`). That makes its own `gatewayCompat` call carrying the
-    // thread transcript — text DERIVED from prior-account Knowledge, though not the chunks
-    // themselves — with no revalidation on either invocation. It is a real gap in the general
-    // claim and it is tracked rather than silently widened into this change, because the
-    // compactor is a separate subsystem with its own post-turn/waitUntil lifecycle.
+    // The rolling-summary compactor also forces this authority check before its
+    // provider call and persistence, including in its post-turn waitUntil lifecycle.
+    // Those checks do not add evidence to the normal turn's protected latch.
     //
     // ONCE REFUSED, ALWAYS REFUSED — and this flag is what makes that true.
     //
@@ -2620,12 +2614,13 @@ JSON:`;
     // exactly how document-derived content escaped the check. A protected turn always has a
     // scope; whether the KB matched is a separate question.
     const turnScopeTenantId: string | null = personaCtx.tenant_id ?? null;
-    const revalidateTenantKnowledgeScope = async (): Promise<boolean> => {
+    let revalidateSummaryBinding: (() => Promise<boolean>) | null = null;
+    const revalidateTenantKnowledgeScope = async (force = false): Promise<boolean> => {
       if (tenantKnowledgeScopeRevoked) return false;
       // A turn that carries no protected evidence has nothing to re-check and pays no RPC — this
       // is what keeps live streaming free of added latency. A client seat's turn is held so its
       // answer can be read (R3), but holding is not evidence.
-      if (!turnCarriesEvidence()) return true;
+      if (!force && !turnCarriesEvidence()) return true;
       try {
         const { data, error } = await supabaseClient.rpc("get_paige_persona_context");
         const row = Array.isArray(data) ? data[0] : data;
@@ -2659,16 +2654,17 @@ JSON:`;
         const currentTenantId = typeof tid === "string" ? tid : null;
         // The resolver may fall back to the oldest membership after active scope
         // clears. Re-read the selected workspace itself at the same protected
-        // boundary. Tenantless operator turns retain their existing resolver path.
+        // boundary. Ordinary tenantless turns retain their existing resolver path;
+        // summary work also verifies that their declared workspace remains null.
         let declaredScopeMatches = turnScopeTenantId === null;
-        if (turnScopeTenantId !== null) {
+        if (turnScopeTenantId !== null || force || revalidateSummaryBinding) {
           const { data: declaredProfile, error: declaredError } = await supabaseClient
             .from("profiles").select("active_tenant_id").eq("user_id", user.id).maybeSingle();
-          declaredScopeMatches = !declaredError &&
-            typeof declaredProfile?.active_tenant_id === "string" &&
+          declaredScopeMatches = !declaredError && !!declaredProfile &&
             declaredProfile.active_tenant_id === turnScopeTenantId;
         }
-        if (resolved && currentTenantId === turnScopeTenantId && declaredScopeMatches) return true;
+        if (resolved && currentTenantId === turnScopeTenantId && declaredScopeMatches &&
+            (force || !revalidateSummaryBinding || await revalidateSummaryBinding())) return true;
         console.error(
           "[paige] active account changed after Knowledge retrieval — provider dispatch cancelled",
           JSON.stringify({ retrieved_tenant_id: tenantKbScopeTenantId, current_tenant_id: currentTenantId, code: (error as any)?.code ?? null }),
@@ -2676,6 +2672,9 @@ JSON:`;
       } catch (error) {
         console.error("[paige] active-account Knowledge revalidation failed — provider dispatch cancelled", (error as Error)?.message);
       }
+      // A background fold owns its refusal state; it must not retroactively alter
+      // the parent turn. Normal protected-turn checks retain their sticky refusal.
+      if (force) return false;
       tenantKnowledgeScopeRevoked = true;
       tenantKbContext = "";
       tenantKbScopeTenantId = null;
@@ -4938,9 +4937,39 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // makes a thread of long turns compact BEFORE its live context overflows, not only on count cadence.
     //
     // `emit` (pre-flight only) is an OPTIONAL progress sink; when absent (the post-turn fallback) the
-    // fold is byte-for-byte the prior silent behavior. Returns a status the pre-flight uses to decide
+    // fold remains silent. Returns a status the pre-flight uses to decide
     // what it streamed. NEVER dead-ends (§13): any fold error emits {state:"skipped"} and the caller
     // continues the turn UNCOMPACTED.
+    // Keep this binding live through the post-turn waitUntil callback. It uses the
+    // same scope resolver as the parent turn without changing its evidence latch.
+    let summaryScopeRefused = false;
+    let summaryThreadTenant: string | null | undefined;
+    const readSummaryThread = async (threadId: string, checkWorkspace = true) => {
+      if (summaryScopeRefused) return null;
+      try {
+        let query = supabaseClient.from("paige_chat_threads")
+          .select("id, caller_user_id, tenant_id, message_count, summary, summary_through_seq, last_compacted_at, studio_session_id, last_image_content_id, last_image_anchor_at")
+          .eq("id", threadId).eq("caller_user_id", user.id);
+        if (summaryThreadTenant !== undefined) query = summaryThreadTenant === null ? query.is("tenant_id", null) : query.eq("tenant_id", summaryThreadTenant);
+        const { data: row, error } = await query.maybeSingle();
+        if (error || !row || row.id !== threadId || row.caller_user_id !== user.id ||
+            !(row.tenant_id === null || typeof row.tenant_id === "string") ||
+            (summaryThreadTenant !== undefined && row.tenant_id !== summaryThreadTenant)) throw new Error("Summary thread binding unavailable");
+        // Existing append SQL (20261020100000) preserves an operator's own NULL
+        // platform thread even while entered into a tenant. No foreign thread is admitted.
+        if (row.tenant_id === null) {
+          const { data: owner, error: ownerError } = await supabaseClient.rpc("is_platform_owner");
+          if (ownerError || owner !== true) throw new Error("Platform thread authority unavailable");
+        } else if (row.tenant_id !== turnScopeTenantId) throw new Error("Summary thread workspace mismatch");
+        if (checkWorkspace && !(await revalidateTenantKnowledgeScope(true))) throw new Error("Summary workspace changed");
+        summaryThreadTenant = row.tenant_id;
+        return row;
+      } catch (error) {
+        summaryScopeRefused = true;
+        console.warn("[paige] summary scope refused:", (error as Error).message);
+        return null;
+      }
+    };
     const foldThreadSummary = async (
       threadId: string,
       opts?: { emit?: (payload: Record<string, unknown>) => void },
@@ -4961,9 +4990,9 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       const KEEP = 12, EVERY = 8, TAIL_TOKEN_BUDGET = 6000, KEEP_FLOOR = 5, MIN_COMPACTION_INTERVAL = 4;
       const APPROACH_RATIO = 0.8;
       try {
-        const { data: th } = await supabaseClient.from("paige_chat_threads")
-          .select("message_count, summary, summary_through_seq, last_compacted_at").eq("id", threadId).maybeSingle();
-        if (!th || th.message_count <= KEEP) return "not_needed";
+        const th = await readSummaryThread(threadId);
+        if (!th) { emit?.({ state: "skipped" }); return "skipped"; }
+        if (th.message_count <= KEEP) return "not_needed";
         // The un-summarized verbatim tail (seq past the watermark) is exactly what loads into the
         // model context, so weigh only that — fetch it via the (thread_id, seq) index and estimate.
         // created_at rides along ONLY for the min-interval guard below.
@@ -5010,6 +5039,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
         const cutoffSeq = toFold[toFold.length - 1].seq;
         const transcript = toFold.map((t: any) => `${t.role === "user" ? "Owner" : "Paige"}: ${t.content}`).join("\n").slice(0, 12000);
         const prompt = `Maintain a rolling memory of a long working chat between a business owner and their assistant Paige. Update the summary so nothing important is lost as older turns scroll off. PRESERVE explicitly: the owner's name & preferences, decisions made, tasks/actions Paige took or QUEUED, any PENDING approvals still open, names of clients/contacts, dates, numbers, and open loops. 4-8 tight sentences, flowing prose, no bullets.\n\nPRIOR SUMMARY:\n${th.summary ?? "(none)"}\n\nOLDER TURNS TO FOLD IN:\n${transcript}\n\nUPDATED SUMMARY:`;
+        if (!(await readSummaryThread(threadId))) { emit?.({ state: "skipped" }); return "skipped"; }
         emit?.({ state: "progress", pct: 35 }); // cheap-model summarizer call dispatched
         const resp = await gatewayCompat("anthropic", {
           method: "POST",
@@ -5024,9 +5054,16 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
           // Reporting compaction for a summary that was rejected would leave the thread believing
           // its history is folded when the next turn will re-send all of it — a silent regression
           // in both cost and behaviour, and invisible because postgrest resolves rather than throws.
-          const stored = await recordWrite("paige_chat_threads:summary", supabaseClient.from("paige_chat_threads")
-            .update({ summary, summary_through_seq: cutoffSeq, last_compacted_at: new Date().toISOString() }).eq("id", threadId));
-          if (!stored) { emit?.({ state: "skipped" }); return "skipped"; }
+          if (!(await readSummaryThread(threadId))) { emit?.({ state: "skipped" }); return "skipped"; }
+          let update = supabaseClient.from("paige_chat_threads")
+            .update({ summary, summary_through_seq: cutoffSeq, last_compacted_at: new Date().toISOString() })
+            .eq("id", threadId).eq("caller_user_id", user.id).eq("summary_through_seq", th.summary_through_seq ?? 0);
+          update = th.tenant_id === null ? update.is("tenant_id", null) : update.eq("tenant_id", th.tenant_id);
+          const result = await update.select("id");
+          const stored = await recordWrite("paige_chat_threads:summary", Promise.resolve(result));
+          if (!stored || result.data?.length !== 1 || result.data[0].id !== threadId || !(await readSummaryThread(threadId))) {
+            emit?.({ state: "skipped" }); return "skipped";
+          }
           emit?.({ state: "progress", pct: 100 });
           emit?.({ state: "done" });
           return "compacted";
@@ -5072,8 +5109,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       // `thread-summary-fold` rows under two different agent ids, contradicting the very comment
       // that says to keep them in step. Found by an independent reviewer driving a Studio turn.
       {
-        const { data: pre } = await supabaseClient
-          .from("paige_chat_threads").select("studio_session_id").eq("id", payloadThreadId).maybeSingle();
+        const pre = await readSummaryThread(payloadThreadId);
         if (pre?.studio_session_id) traceCtx.agent_id = "studio-design-agent";
       }
       await foldThreadSummary(payloadThreadId, {
@@ -5081,8 +5117,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       });
 
       try {
-        const { data: th } = await supabaseClient
-          .from("paige_chat_threads").select("summary, studio_session_id, last_image_content_id, last_image_anchor_at").eq("id", payloadThreadId).maybeSingle();
+        const th = await readSummaryThread(payloadThreadId);
         // STUDIO SESSION → swap Paige's persona (aiMessages[0]) for her design-studio specialist's
         // identity (#292). Gated on studio_session_id, which is NULL for EVERY Your-Paige/contact
         // thread — so the main chat's identity is provably untouched by this branch.
@@ -5161,7 +5196,10 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
             content: `LAST IMAGE — you generated an image earlier in this conversation (content id ${refineImageAnchor.id}). If the user is refining, adjusting, or regenerating THAT image (e.g. "make it brighter", "change the background"), pass target_content_id:"${refineImageAnchor.id}" to generate_image so it updates in place and keeps its version history. If they want a brand-new/additional image, OMIT target_content_id so it's created as a separate asset.`,
           });
         }
-        if (th?.summary) {
+        if (th?.summary && await readSummaryThread(payloadThreadId)) {
+          // Following provider/reply boundaries must keep verifying the thread as
+          // well as the workspace after its summary becomes turn evidence.
+          revalidateSummaryBinding = async () => !!(await readSummaryThread(payloadThreadId, false));
           // THE ROLLING SUMMARY IS PROTECTED, and it is the strongest case of the lot. This
           // branch's own close-out comment says a persisted reply is folded into it by
           // `maybeRefreshSummary` — so it carries forward, verbatim and durably, exactly the

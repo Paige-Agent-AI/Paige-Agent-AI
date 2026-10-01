@@ -130,7 +130,7 @@ class FakeClient {
     // function returning one. Never a bare payload that this fake then wraps: wrapping
     // silently produced `{ data: { data: … } }`, which the handler read as null and which
     // made a real assertion look like a code defect. Be strict rather than convenient (§13).
-    const result = typeof configured === "function" ? configured(args) : configured;
+    const result = await (typeof configured === "function" ? configured(args) : configured);
     if (result === undefined) return { data: null, error: null };
     if (result === null || typeof result !== "object" || !("data" in result || "error" in result)) {
       throw new Error(

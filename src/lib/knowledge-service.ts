@@ -64,3 +64,35 @@ export async function updateKnowledgeMetadata(client: KnowledgeRpcClient, tenant
   }
   return {document:saved,outcome:data.outcome,runId:data.run_id};
 }
+
+export interface KnowledgeDeleteResult {
+  tenant_id: string;
+  document_id: string;
+  deleted_revision: number;
+  document_absent: true;
+  chunks_absent: true;
+  source_cleanup: {status: 'not_attempted'; reason: 'canonical_source_binding_unavailable'};
+  outcome: 'capability_succeeded' | 'capability_completed_unrecorded';
+  run_id: string;
+}
+
+/** Deletes only canonical records. A lost acknowledgement requires scoped readback.
+ * Missing rows on a later call are not evidence that this attempt performed the deletion.
+ */
+export async function deleteKnowledge(
+  client: KnowledgeRpcClient, tenant: string, id: string, expectedRevision: number,
+): Promise<KnowledgeDeleteResult> {
+  const data = await call(client, 'delete_tenant_knowledge', {
+    p_expected_tenant: tenant, p_doc_id: id, p_expected_revision: expectedRevision,
+  }, tenant);
+  if (data.document_id !== id || data.deleted_revision !== expectedRevision
+    || !Number.isInteger(data.deleted_revision) || expectedRevision < 1
+    || data.document_absent !== true || data.chunks_absent !== true
+    || (data.outcome !== 'capability_succeeded' && data.outcome !== 'capability_completed_unrecorded')
+    || typeof data.run_id !== 'string' || !data.run_id.trim()
+    || !object(data.source_cleanup) || data.source_cleanup.status !== 'not_attempted'
+    || data.source_cleanup.reason !== 'canonical_source_binding_unavailable') {
+    throw new KnowledgeServiceError('KNOWLEDGE_RESPONSE_INVALID', 'The deletion could not be verified.');
+  }
+  return data as unknown as KnowledgeDeleteResult;
+}

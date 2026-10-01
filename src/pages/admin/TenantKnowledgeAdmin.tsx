@@ -5,6 +5,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { knowledgeInvokeOutcome, type KnowledgeIngestOutcome } from "@/lib/knowledge/ingest-outcome";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { useConfirm } from "@/hooks/useConfirm";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -20,20 +21,12 @@ import { Brain, Plus, Trash2, Share2, Clock, CheckCircle2, XCircle } from "lucid
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
-interface TenantDoc {
-  id: string;
-  title: string;
-  summary: string | null;
-  category: string | null;
-  tags: string[] | null;
-  source: string;
-  share_to_network: boolean;
-  network_review_status: "none" | "pending" | "approved" | "rejected";
-  chunk_count: number;
-  created_at: string;
-}
+type TenantDoc = Pick<Database["public"]["Tables"]["tenant_knowledge_docs"]["Row"],
+  "id" | "title" | "summary" | "category" | "tags" | "source" |
+  "share_to_network" | "network_review_status" | "chunk_count" | "created_at"
+>;
 
-const REVIEW_BADGE: Record<string, { label: string; cls: string; icon: any }> = {
+const REVIEW_BADGE: Record<string, { label: string; cls: string; icon: typeof Brain }> = {
   none:     { label: "Private",          cls: "bg-muted text-muted-foreground", icon: Brain },
   pending:  { label: "Pending review",   cls: "bg-amber-500/15 text-amber-700 dark:text-amber-300", icon: Clock },
   approved: { label: "In global canon",  cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300", icon: CheckCircle2 },
@@ -50,11 +43,11 @@ export default function TenantKnowledgeAdmin() {
   const load = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from("tenant_knowledge_docs" as any)
+      .from("tenant_knowledge_docs")
       .select("id, title, summary, category, tags, source, share_to_network, network_review_status, chunk_count, created_at")
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
-    setDocs((data as any) ?? []);
+    setDocs(data ?? []);
     setLoading(false);
   }, []);
 
@@ -62,7 +55,7 @@ export default function TenantKnowledgeAdmin() {
 
   const toggleShare = async (doc: TenantDoc, next: boolean) => {
     const { error } = await supabase
-      .from("tenant_knowledge_docs" as any)
+      .from("tenant_knowledge_docs")
       .update({
         share_to_network: next,
         network_review_status: next ? "pending" : "none",
@@ -81,7 +74,7 @@ export default function TenantKnowledgeAdmin() {
       destructive: true,
     });
     if (!ok) return;
-    const { error } = await supabase.from("tenant_knowledge_docs" as any).delete().eq("id", doc.id);
+    const { error } = await supabase.from("tenant_knowledge_docs").delete().eq("id", doc.id);
     if (error) return toast.error(error.message);
     toast.success("Deleted");
     load();
@@ -310,7 +303,7 @@ export function AddDocDialog({
     setOutcome(null);
     setBusy(true);
     setProgress("Uploading…");
-    const safe = file.name.replace(/[^\w.\-]/g, "_");
+    const safe = file.name.replace(/[^\w.-]/g, "_");
     const path = `${tenantId}/${crypto.randomUUID()}_${safe}`;
     let ingestionStarted = false;
     try {

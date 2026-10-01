@@ -62,7 +62,7 @@ SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: full shell with PAIGE open not exercised.
 SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: isolated editor checked at this size; full shell closed not exercised.
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: full shell with PAIGE open not exercised.
 UNVERIFIED: real Supabase deployment/RLS and receipt integration, full shell/themes/zoom, reader-role authenticated route, production acceptance; bounded slice does not complete the approved library design.
-INTERNAL_BUILD_IDENTITY: 44d62e77c595e1b09148b6d09eb3108215c04ac2; base identity; final head supplied by commit/review; deployment=none; environment=development; migrations=unchanged; edge=unchanged; evidence=this record and accompanying report
+INTERNAL_BUILD_IDENTITY: 44d62e77c595e1b09148b6d09eb3108215c04ac2; base identity; final head supplied by commit/review; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record and accompanying report
 RELEASE_CHANNEL: development: local isolated component and service-adapter tests.
 RELEASE_CLASSIFICATION: internal-only: bounded consumer adoption pending integration.
 CUSTOMER_RELEASE_IDENTITY: none: no deployment or customer release claim.

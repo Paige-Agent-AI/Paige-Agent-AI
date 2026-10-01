@@ -1,9 +1,11 @@
 // @vitest-environment node
 import {describe,it,expect,vi} from 'vitest';
 import {readKnowledge,updateKnowledgeMetadata} from '../lib/knowledge-service';
-const doc={id:'doc-a',tenant_id:'tenant-a',revision:2,title:'Updated',summary:null,category:null,tags:[],source:'paste',source_url:null,chunk_count:0,created_at:'2026-09-30',updated_at:'2026-09-30'};
+const doc={id:'doc-a',tenant_id:'tenant-a',revision:2,title:'Updated',summary:null,category:null,tags:[],source:'paste',source_url:null,chunk_count:0,created_at:'2026-09-30',updated_at:'2026-09-30',share_to_network:false,network_review_status:'none'};
 function client(data: unknown,error: {message:string;code?:string}|null=null) { return {rpc:vi.fn().mockResolvedValue({data,error})}; }
 describe('canonical Knowledge adapter',()=>{
+ it('rejects invented network state',async()=>{await expect(readKnowledge(client({tenant_id:'tenant-a',documents:[{...doc,network_review_status:'private'}]}),'tenant-a')).rejects.toThrow();});
+ it('rejects absent network sharing truth',async()=>{await expect(readKnowledge(client({tenant_id:'tenant-a',documents:[{...doc,share_to_network:undefined}]}),'tenant-a')).rejects.toThrow();});
  it('refuses unresolved workspace without requesting',async()=>{const c=client(null);await expect(readKnowledge(c,'')).rejects.toThrow('Select a workspace');expect(c.rpc).not.toHaveBeenCalled();});
  it('binds and returns the requested page',async()=>{const c=client({tenant_id:'tenant-a',documents:[doc]});expect(await readKnowledge(c,'tenant-a',{offset:50})).toEqual([doc]);expect(c.rpc).toHaveBeenCalledWith('read_tenant_knowledge',expect.objectContaining({p_expected_tenant:'tenant-a',p_offset:50}));});
  it('rejects a wrong-tenant row even in a scoped envelope',async()=>{await expect(readKnowledge(client({tenant_id:'tenant-a',documents:[{...doc,tenant_id:'tenant-b'}]}),'tenant-a')).rejects.toThrow('requested workspace');});

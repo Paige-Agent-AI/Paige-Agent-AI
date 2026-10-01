@@ -41,16 +41,16 @@ describe("buildMindDomains — reconciliation", () => {
     ]);
   });
 
-  it("maps knowledge docs to the Knowledge domain as owner-confirmed LIVE records", () => {
+  it("maps knowledge docs to the Knowledge domain without inferring owner confirmation", () => {
     const knowledge = byKey(FULL).get("knowledge")!;
-    expect(knowledge.verdict).toBe("LIVE");
+    expect(knowledge.verdict).toBe("PARTIAL");
     expect(knowledge.records).toHaveLength(2);
     expect(knowledge.records[0]).toMatchObject({
-      domain: "knowledge", state: "owner_confirmed", truth: "LIVE SOURCE", id: "knowledge:doc1",
+      domain: "knowledge", state: "needs_confirmation", truth: "PARTIAL", id: "knowledge:doc1",
     });
     // singular/plural chunk copy is honest
-    expect(knowledge.records[1].evidence).toContain("1 indexed chunk");
-    expect(knowledge.records[0].evidence).toContain("12 indexed chunks");
+    expect(knowledge.records[1].evidence).toContain("1 recorded chunk");
+    expect(knowledge.records[0].evidence).toContain("12 recorded chunks");
   });
 
   it("maps n8n readiness to Connected sources (status only), never Rail history", () => {
@@ -119,7 +119,7 @@ describe("buildOrbRecords — one bright node per governed record (Synapse)", ()
     // knowledge docs are grounded (LIVE SOURCE); the pending decision is partial
     const know = nodes.filter((n) => n.domain === "knowledge");
     expect(know).toHaveLength(2);
-    expect(know.every((n) => n.tier === "grounded")).toBe(true);
+    expect(know.every((n) => n.tier === "partial")).toBe(true);
     expect(nodes.find((n) => n.id === "decision:a1")?.tier).toBe("partial");
     // deterministic
     expect(buildOrbRecords(buildMindDomains(FULL)).map((n) => n.id)).toEqual(nodes.map((n) => n.id));
@@ -144,10 +144,10 @@ describe("truthToTier — the owner-approved 6→3 orb legend", () => {
 describe("groundedCount — grounded (LIVE SOURCE) only, never the total", () => {
   it("counts only LIVE SOURCE records and is strictly below the total held", () => {
     const domains = buildMindDomains(FULL);
-    // FULL held = 5: 2 knowledge (LIVE) + n8n api source_refreshed (LIVE) + n8n mcp needs_confirmation
-    // (PARTIAL) + 1 approval (PARTIAL). Grounded = 3.
+    // FULL held = 5: 2 knowledge (PARTIAL) + n8n api source_refreshed (LIVE) + n8n mcp needs_confirmation
+    // (PARTIAL) + 1 approval (PARTIAL). Grounded = 1.
     expect(allRecords(domains)).toHaveLength(5);
-    expect(groundedCount(domains)).toBe(3);
+    expect(groundedCount(domains)).toBe(1);
     expect(groundedCount(domains)).toBeLessThan(allRecords(domains).length);
   });
 

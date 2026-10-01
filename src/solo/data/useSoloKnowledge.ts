@@ -1,39 +1,9 @@
-/**
- * useSoloKnowledge — the Solo Paige › "Knowledge" adapter (§18: composes the EXISTING
- * `tenant_knowledge_docs` read the KnowledgePanel/TenantKnowledgeAdmin already ship,
- * never a new query family).
- *
- * A THIN read layer. It surfaces the tenant's REAL indexed documents so the solo
- * Knowledge surface can populate its doc list + the "Recently learned" feed + the
- * documents-indexed stat — from live data instead of the `KC` design fixture.
- *
- * Seam reused (data only):
- *   • supabase.from("tenant_knowledge_docs").select(...).order(created_at desc)
- *     — the SAME RLS-tenant-scoped select KnowledgePanel uses (id, title, summary,
- *     category, tags, source, chunk_count, created_at).
- *
- * §9 TENANT ISOLATION: passes NO tenant_id — RLS on `tenant_knowledge_docs` scopes
- * the read to the caller's tenant (current_user_tenant_id()), so a sub-account sees
- * ITS OWN docs only, never the parent's. Do not re-widen.
- *
- * §13/§31 HONESTY — what is LIVE vs Preview:
- *   • docs / recentlyLearned → LIVE   real rows, ordered created_at desc
- *   • documentsIndexed       → LIVE   real COUNT of the tenant's docs
- *   • color (per doc)        → PREVIEW presentation only (category → domain color)
- *   • empty ("Nothing indexed yet") → HONEST when the tenant has 0 docs; NEVER a
- *     fabricated doc/count is emitted.
- *
- * EXPLICITLY NOT SOURCED (stay design fixture / Preview in the UI — real docs can
- * populate a LIST, not a 3D clustering, and there is no seam for these):
- *   • the 6-domain BrainCanvas graph + per-domain "trained Xh ago"
- *   • the g4 stat tiles other than "Documents indexed": Citations this week,
- *     Gaps she flagged, Retrieval accuracy — Preview unless a real source exists.
- */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+/** Canonical tenant Knowledge projection. Document presence does not prove indexing coverage or Memory confirmation. */
+import { useMemo } from "react";
+import { useKnowledgeDocuments } from "@/hooks/useKnowledgeDocuments";
 import { useOptionalTenantContext } from "@/hooks/useTenantContext";
 
-/** One indexed document, reshaped for the solo Knowledge surface. */
+/** One saved document, reshaped for the solo Knowledge surface. */
 export interface SoloKnowledgeDoc {
   id: string;
   title: string;
@@ -53,15 +23,18 @@ export interface SoloKnowledgeDoc {
 export interface SoloKnowledgeData {
   loading: boolean;
   error: string | null;
-  /** Every indexed doc, newest first — LIVE. */
+  /** Loaded saved documents, newest first. */
   docs: SoloKnowledgeDoc[];
   /** Top-N newest docs for the "Recently learned" feed — LIVE. */
   recentlyLearned: SoloKnowledgeDoc[];
-  /** Real COUNT of the tenant's indexed documents — LIVE. */
+  /** Loaded documents with recorded chunks; not a total or complete indexing guarantee. */
   documentsIndexed: number;
-  /** True (and only true) when the tenant has genuinely nothing indexed. */
+  /** True only when a successful canonical read returned no documents. */
   empty: boolean;
   refresh: () => void;
+  hasMore: boolean;
+  loadMore: () => Promise<void>;
+  requestedDocumentError: string | null;
 }
 
 /** The raw row shape from the RLS-scoped select (mirrors KnowledgePanel's TenantDoc). */
@@ -144,69 +117,15 @@ function toDoc(r: KnowledgeDocRow): SoloKnowledgeDoc {
   };
 }
 
-export function useSoloKnowledge(): SoloKnowledgeData {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  // The documents, and the workspace they were read for. Returned only for that workspace, so a
-  // switch never shows the previous workspace's documents while the new read is in flight.
-  const [loaded, setLoaded] = useState<{ tenant: string | null; docs: SoloKnowledgeDoc[] }>({ tenant: null, docs: [] });
-  // Only the latest read may write: a switch starts a second read, and the first can land late.
-  const generation = useRef(0);
-
-  const activeTenantId = useOptionalTenantContext()?.activeTenantId ?? null;
-
-  const load = useCallback(async () => {
-    const mine = ++generation.current;
-    setLoading(true);
-    setError(null);
-    // RLS decides what the caller MAY read (§9). It is not enough to decide what this workspace
-    // IS: a super_admin acting as one workspace is admitted to every workspace's documents, and a
-    // member of several workspaces to all of theirs. So the read is also bound to the active
-    // workspace — a narrowing, never a grant. The generated types don't carry this recent table,
-    // so the select is cast, mirroring KnowledgePanel/NetworkKbInsights.
-    let query = supabase
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .from("tenant_knowledge_docs" as any)
-      .select("id, title, summary, category, tags, source, chunk_count, created_at")
-      .order("created_at", { ascending: false });
-    if (activeTenantId) query = query.eq("tenant_id", activeTenantId);
-    const { data, error: selErr } = await query;
-    if (mine !== generation.current) return;
-    if (selErr) {
-      setError(selErr.message);
-      setLoaded({ tenant: activeTenantId, docs: [] });
-      setLoading(false);
-      return;
-    }
-    const rows = ((data as unknown as KnowledgeDocRow[] | null) ?? []).filter(
-      (r): r is KnowledgeDocRow => !!r && typeof r.id === "string" && typeof r.title === "string",
-    );
-    setLoaded({ tenant: activeTenantId, docs: rows.map(toDoc) });
-    setLoading(false);
-  }, [activeTenantId]);
-
-  const docs = useMemo(
-    () => (loaded.tenant === activeTenantId ? loaded.docs : []),
-    [loaded, activeTenantId],
-  );
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
+export function useSoloKnowledge(requestedDocumentId?: string | null): SoloKnowledgeData {
+  const tenantId = useOptionalTenantContext()?.activeTenantId ?? null;
+  const { docs: rows, loading, error, reload, hasMore, loadMore } = useKnowledgeDocuments(tenantId);
+  const requested = useKnowledgeDocuments(requestedDocumentId ? tenantId : null, requestedDocumentId);
+  const docs = useMemo(() => Array.from(new Map([...rows, ...(requestedDocumentId ? requested.docs : [])].map(row => [row.id, row])).values()).map(toDoc), [rows, requested.docs, requestedDocumentId]);
   const recentlyLearned = useMemo(() => docs.slice(0, RECENT_LIMIT), [docs]);
-
-  const refresh = useCallback(() => {
-    void load();
-  }, [load]);
-
-  return {
-    loading,
-    error,
-    docs,
-    recentlyLearned,
-    documentsIndexed: docs.length,
-    empty: !loading && !error && docs.length === 0,
-    refresh,
-  };
+  const pending = loading || (!!requestedDocumentId && requested.loading);
+  return { loading: pending, error, docs, recentlyLearned, documentsIndexed: docs.filter(doc => doc.chunkCount > 0).length,
+    empty: !pending && !error && docs.length === 0,
+    refresh: () => { void reload(); if (requestedDocumentId) void requested.reload(); }, hasMore, loadMore,
+    requestedDocumentError: requestedDocumentId ? requested.error : null };
 }

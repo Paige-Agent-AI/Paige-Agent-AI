@@ -1,8 +1,11 @@
+import { useKnowledgeDocuments } from "@/hooks/useKnowledgeDocuments";
+import { KnowledgeMetadataEditor } from "@/components/knowledge/KnowledgeMetadataEditor";
+import type { KnowledgeDocument } from "@/lib/knowledge-service";
 // Tenant-private Knowledge Base admin.
 // Each tenant manages their own corpus here. Docs are RLS-scoped to their
 // tenant. Opt-in `share_to_network` flag routes the doc into the platform-
 // owner review queue (Network Insights) for potential promotion to global canon.
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { useConfirm } from "@/hooks/useConfirm";
@@ -19,20 +22,9 @@ import { Brain, Plus, Trash2, Share2, Clock, CheckCircle2, XCircle } from "lucid
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
-interface TenantDoc {
-  id: string;
-  title: string;
-  summary: string | null;
-  category: string | null;
-  tags: string[] | null;
-  source: string;
-  share_to_network: boolean;
-  network_review_status: "none" | "pending" | "approved" | "rejected";
-  chunk_count: number;
-  created_at: string;
-}
+type TenantDoc = KnowledgeDocument;
 
-const REVIEW_BADGE: Record<string, { label: string; cls: string; icon: any }> = {
+const REVIEW_BADGE: Record<string, { label: string; cls: string; icon: typeof Brain }> = {
   none:     { label: "Private",          cls: "bg-muted text-muted-foreground", icon: Brain },
   pending:  { label: "Pending review",   cls: "bg-amber-500/15 text-amber-700 dark:text-amber-300", icon: Clock },
   approved: { label: "In global canon",  cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300", icon: CheckCircle2 },
@@ -41,33 +33,24 @@ const REVIEW_BADGE: Record<string, { label: string; cls: string; icon: any }> = 
 
 export default function TenantKnowledgeAdmin() {
   const { activeTenant, activeTenantId } = useTenantContext();
-  const [docs, setDocs] = useState<TenantDoc[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { docs, loading, error: readError, reload: load, hasMore, loadMore, isCurrent } = useKnowledgeDocuments(activeTenantId);
+  const [editing, setEditing] = useState<TenantDoc | null>(null);
+  useEffect(() => { setEditing(null); }, [activeTenantId]);
   const [open, setOpen] = useState(false);
   const { confirm, dialog: confirmDialog } = useConfirm();
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("tenant_knowledge_docs" as any)
-      .select("id, title, summary, category, tags, source, share_to_network, network_review_status, chunk_count, created_at")
-      .order("created_at", { ascending: false });
-    if (error) toast.error(error.message);
-    setDocs((data as any) ?? []);
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { load(); }, [load, activeTenantId]);
 
   const toggleShare = async (doc: TenantDoc, next: boolean) => {
+    if (!activeTenantId || doc.tenant_id !== activeTenantId || !isCurrent()) return;
     const { error } = await supabase
-      .from("tenant_knowledge_docs" as any)
+      .from("tenant_knowledge_docs")
       .update({
         share_to_network: next,
         network_review_status: next ? "pending" : "none",
       })
-      .eq("id", doc.id);
-    if (error) return toast.error(error.message);
+      .eq("id", doc.id).eq("tenant_id", activeTenantId!);
+    if (!isCurrent()) return;
+    if (error) return toast.error("The change could not be confirmed. Reload Knowledge before trying again.");
     toast.success(next ? "Submitted for network review" : "Removed from network queue");
     load();
   };
@@ -79,9 +62,10 @@ export default function TenantKnowledgeAdmin() {
       actionLabel: "Delete",
       destructive: true,
     });
-    if (!ok) return;
-    const { error } = await supabase.from("tenant_knowledge_docs" as any).delete().eq("id", doc.id);
-    if (error) return toast.error(error.message);
+    if (!ok || !activeTenantId || doc.tenant_id !== activeTenantId || !isCurrent()) return;
+    const { error } = await supabase.from("tenant_knowledge_docs").delete().eq("id", doc.id).eq("tenant_id", activeTenantId!);
+    if (!isCurrent()) return;
+    if (error) return toast.error("The change could not be confirmed. Reload Knowledge before trying again.");
     toast.success("Deleted");
     load();
   };
@@ -89,6 +73,9 @@ export default function TenantKnowledgeAdmin() {
   return (
     <div className="space-y-6 p-6">
       {confirmDialog}
+      <Dialog open={!!editing && editing.tenant_id === activeTenantId} onOpenChange={o => !o && setEditing(null)}>
+        {editing && activeTenantId === editing.tenant_id && <KnowledgeMetadataEditor key={`${activeTenantId}:${editing.id}`} document={editing} tenantId={activeTenantId} onClose={() => setEditing(null)} onSaved={() => void load()} />}
+      </Dialog>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold flex items-center gap-2">
@@ -110,13 +97,13 @@ export default function TenantKnowledgeAdmin() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Documents ({docs.length})</CardTitle>
+          <CardTitle>Documents loaded ({docs.length})</CardTitle>
           <CardDescription>
-            Embedded chunks: {docs.reduce((s, d) => s + (d.chunk_count ?? 0), 0)}
+            Recorded chunks: {docs.reduce((s, d) => s + (d.chunk_count ?? 0), 0)}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {readError ? <p role="status" className="text-sm">{readError} <Button variant="outline" onClick={() => void load()}>Reload Knowledge</Button></p> : loading ? (
             <p className="text-sm text-muted-foreground">Loading…</p>
           ) : docs.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
@@ -160,6 +147,7 @@ export default function TenantKnowledgeAdmin() {
                         {formatDistanceToNow(new Date(d.created_at), { addSuffix: true })}
                       </TableCell>
                       <TableCell className="flex items-center gap-2 justify-end">
+                        <Button variant="ghost" onClick={() => setEditing(d)}>Edit metadata</Button>
                         <div className="flex items-center gap-1.5" title="Share to Network">
                           <Share2 className="w-3.5 h-3.5 text-muted-foreground" />
                           <Switch
@@ -178,6 +166,7 @@ export default function TenantKnowledgeAdmin() {
               </TableBody>
             </Table>
           )}
+          {hasMore && <Button variant="outline" disabled={loading} onClick={() => void loadMore()}>Load more documents</Button>}
         </CardContent>
       </Card>
     </div>
@@ -223,12 +212,13 @@ export function AddDocDialog({
   // supabase.functions.invoke surfaces a generic "non-2xx status" message on a
   // FunctionsHttpError; the useful message (e.g. "That page had no readable
   // text", "Only HTTPS URLs are allowed") is in the JSON body. Prefer it.
-  const serverError = async (e: any, fallback: string): Promise<string> => {
+  const serverError = async (error: unknown, fallback: string): Promise<string> => {
+    const e = error as { context?: { json?: () => Promise<{ error?: unknown }> }; message?: unknown } | null;
     try {
       const body = await e?.context?.json?.();
       if (body?.error && typeof body.error === "string") return body.error;
     } catch { /* body wasn't JSON */ }
-    return e?.message || fallback;
+    return typeof e?.message === "string" && e.message ? e.message : fallback;
   };
 
   const submitPaste = async () => {
@@ -251,7 +241,7 @@ export function AddDocDialog({
       toast.success(`Indexed (${data?.chunk_count ?? 0} chunks)`);
       onIngested?.(title.trim(), data?.doc_id);
       onClose();
-    } catch (e: any) {
+    } catch (e) {
       toast.error(await serverError(e, "Couldn't index — retry"));
     } finally {
       setBusy(false);
@@ -281,7 +271,7 @@ export function AddDocDialog({
       toast.success(`Indexed (${data?.chunk_count ?? 0} chunks)`);
       onIngested?.(title.trim() || u, data?.doc_id);
       onClose();
-    } catch (e: any) {
+    } catch (e) {
       toast.error(await serverError(e, "Couldn't fetch or index that link — retry"));
     } finally {
       clearTimeout(stageTimer);
@@ -296,7 +286,7 @@ export function AddDocDialog({
     if (file.size > 26214400) return toast.error("That file is over 25 MB — try a smaller one.");
     setBusy(true);
     setProgress("Uploading…");
-    const safe = file.name.replace(/[^\w.\-]/g, "_");
+    const safe = file.name.replace(/[^\w.-]/g, "_");
     const path = `${tenantId}/${crypto.randomUUID()}_${safe}`;
     let uploaded = false;
     try {
@@ -324,7 +314,7 @@ export function AddDocDialog({
       );
       onIngested?.(title.trim() || file.name, data?.doc_id);
       onClose();
-    } catch (e: any) {
+    } catch (e) {
       // Don't orphan the uploaded object if indexing failed — best-effort prune.
       if (uploaded) supabase.storage.from("tenant-knowledge").remove([path]).then(() => {}, () => {});
       toast.error(await serverError(e, "Couldn't read or index that file — retry"));

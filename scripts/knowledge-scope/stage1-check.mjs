@@ -3669,5 +3669,39 @@ group("a turn that stops on a changed workspace still says what became of each a
     JSON.stringify(outcomes));
 }
 
+// Fresh-main #591 gap: the resolver may keep its oldest-membership fallback
+// after the caller clears their declared active workspace. Query-aware profile
+// answers model that independent state, without changing persona call counts.
+group("declared active workspace is rechecked after retrieval");
+for (const [label, next] of [
+  ["cleared", null], ["changed", AGENCY], ["malformed", 42],
+  ["missing row", "missing"], ["read throws", "throws"],
+]) {
+  let reads = 0;
+  const r = await drive({ personaTenant: CHILD, memberships: [CHILD, AGENCY],
+    chunkContent: "DECLARED-SCOPE-PRIVATE-MARKER", tableExtras: { profiles: (filters) => {
+      if (filters.some(([op, cols]) => op === "select" && cols === "active_tenant_id")) reads++;
+      if (reads <= 1) return [{ active_tenant_id: CHILD }];
+      if (next === "throws") throw new Error("profile read unavailable");
+      if (next === "missing") return [];
+      return [{ active_tenant_id: next }];
+    } },
+  });
+  assert(`28 ${label}: initial scoped retrieval occurred`, !!r.kbCall);
+  assert(`28 ${label}: fallback cannot permit provider egress`, r.providerCalls.length === 0);
+  assert(`28 ${label}: telemetry is suppressed`, !r.telemetry);
+  assert(`28 ${label}: refusal is explicit`, r.status === 409 && JSON.parse(r.responseText).code === "ACTIVE_ACCOUNT_CHANGED");
+}
+{
+  const r = await drive({ personaTenant: CHILD, memberships: [CHILD, AGENCY],
+    chunkContent: "DECLARED-SCOPE-PRIVATE-MARKER", tableExtras: { profiles: () =>
+      [{ active_tenant_id: providerCalls.length ? null : CHILD }],
+    },
+  });
+  assert("28 late clear: one authorized initial provider call", r.providerCalls.length === 1);
+  assert("28 late clear: buffered answer refused", r.responseText.includes("active workspace changed"));
+  assert("28 late clear: no telemetry", !r.telemetry);
+}
+
 console.log(`\n${checks - failures} passed, ${failures} failed`);
 process.exit(failures === 0 ? 0 : 1);

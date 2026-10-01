@@ -98,7 +98,7 @@ type Message = {
    *  them back so the gate runs that call and not whatever the model re-emits — see the gate's own
    *  note. Optional: a rehydrated turn has summaries but no live fingerprints, which is correct,
    *  because a past decision must never be re-fired (§15). */
-  confirm?: Array<{ tool: string; summary: string; fingerprint?: string }>;
+  confirm?: Array<{ tool: string; summary: string; fingerprint?: string; command?: Record<string, unknown>; idempotency_key?: string }>;
   /** True on turns rehydrated from history: their confirm cards render settled,
    *  not as a live Approve button (§15 — never re-fire a past action). */
   confirmResolved?: boolean;
@@ -792,7 +792,7 @@ const PaigeAIChatInner = ({
           // Rehydrated summaries only. Deliberately NOT typed with `fingerprint`: a stored turn
           // carries no live fingerprint, and `confirmResolved` below renders it settled, so there
           // is nothing here that could re-fire a decision already taken (§15).
-          ? (b.paige_confirm as Array<{ tool: string; summary: string }>)
+          ? (b.paige_confirm as Array<{ tool: string; summary: string; fingerprint?: string; command?: Record<string, unknown>; idempotency_key?: string }>)
           : undefined;
         const crmResults = Array.isArray(b.paige_crm_result) ? b.paige_crm_result as PaigeCrmResult[] : undefined;
         const artifacts = Array.isArray(b.paige_artifact)
@@ -1409,7 +1409,7 @@ const PaigeAIChatInner = ({
             }
             // Structured event: Paige is asking to confirm a mutating action → render an approve/deny card.
             if (parsed.paige_confirm?.summary) {
-              confirmThisTurn.push({ tool: String(parsed.paige_confirm.tool || "action"), summary: String(parsed.paige_confirm.summary), ...(parsed.paige_confirm.fingerprint ? { fingerprint: String(parsed.paige_confirm.fingerprint) } : {}) });
+              confirmThisTurn.push({ tool: String(parsed.paige_confirm.tool || "action"), summary: String(parsed.paige_confirm.summary), ...(parsed.paige_confirm.fingerprint ? { fingerprint: String(parsed.paige_confirm.fingerprint) } : {}), ...(parsed.paige_confirm.command && typeof parsed.paige_confirm.command === "object" ? { command: parsed.paige_confirm.command as Record<string, unknown> } : {}), ...(parsed.paige_confirm.idempotency_key ? { idempotency_key: String(parsed.paige_confirm.idempotency_key) } : {}) });
               setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: [...confirmThisTurn], crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
               continue;
             }
@@ -1602,20 +1602,65 @@ const PaigeAIChatInner = ({
     dictationGenerationRef.current += 1;
     setDictationGeneration(dictationGenerationRef.current);
     const rollback = messages;
-    const userContent = text || (currentDoc ? `Analyze this document: ${currentDoc.name}` : "");
+    let userContent = text || (currentDoc ? `Analyze this document: ${currentDoc.name}` : "");
     // Solo: the card that asked settles into a record of the answer, in place. `rollback` keeps the
     // live card, so a decision that never leaves puts it back exactly as it was.
     const decision = soloTenantSafety
       ? approvedFingerprints?.length ? "approved" as const : declinedFingerprints?.length ? "declined" as const : undefined
       : undefined;
     const decided = approvedFingerprints?.length ? approvedFingerprints : declinedFingerprints ?? [];
+    // PR 2b — the approved card executes the STORED proposal. A CRM-door confirmation carries
+    // its canonical command; the door claims the stored row atomically and executes the decided
+    // args, so the model is never the source of execution arguments after approval. Executed
+    // confirmations are stripped from the model turn's echo: there is nothing left to re-dispatch.
+    const executedOutcomes: Array<{ fingerprint: string; summary: string; tool: string; outcome: "ran" | "not_run" | "unconfirmed"; note?: string }> = [];
+    let echoFingerprints = approvedFingerprints ? [...approvedFingerprints] : undefined;
+    if (echoFingerprints?.length) {
+      const actionable = new Map<string, { command: Record<string, unknown>; idempotency_key: string; summary: string; tool: string }>();
+      for (const m of messages) {
+        for (const c of m.confirm ?? []) {
+          if (c.fingerprint && echoFingerprints.includes(c.fingerprint) && c.command && c.idempotency_key && !actionable.has(c.fingerprint)) {
+            actionable.set(c.fingerprint, { command: c.command, idempotency_key: c.idempotency_key, summary: c.summary, tool: c.tool });
+          }
+        }
+      }
+      for (const [fingerprint, item] of actionable) {
+        try {
+          const { data, error } = await supabase.functions.invoke("crm-command", {
+            body: { command: item.command, idempotency_key: item.idempotency_key, approved_fingerprint: fingerprint },
+          });
+          const body = data && typeof data === "object" && !Array.isArray(data) ? data as Record<string, unknown> : {};
+          executedOutcomes.push({
+            fingerprint, summary: item.summary, tool: item.tool,
+            outcome: !error && body.outcome === "succeeded" ? "ran" : "not_run",
+            note: typeof body.message === "string" ? body.message.slice(0, 200) : undefined,
+          });
+        } catch {
+          executedOutcomes.push({ fingerprint, summary: item.summary, tool: item.tool, outcome: "unconfirmed" });
+        }
+      }
+      if (executedOutcomes.length) {
+        const executed = new Set(executedOutcomes.map((o) => o.fingerprint));
+        echoFingerprints = echoFingerprints.filter((f) => !executed.has(f));
+        if (!echoFingerprints.length) echoFingerprints = undefined;
+      }
+    }
+    // The turn carries the card's verified result so the model narrates from the outcome, never
+    // from an assumption that approval implies execution.
+    if (executedOutcomes.length) {
+      userContent += ` [Card result — ${executedOutcomes.map((o) => `${o.summary.split(".")[0]}: ${o.outcome === "ran" ? "ran" : o.outcome === "not_run" ? "didn't run" : "couldn't confirm"}`).join("; ")}]`;
+    }
     let askedAt = -1;
     for (let i = messages.length - 1; decision && i >= 0 && askedAt < 0; i -= 1) {
       const m = messages[i];
       if (m.role === "assistant" && !m.confirmResolved
         && m.confirm?.some((c) => !!c.fingerprint && decided.includes(c.fingerprint))) askedAt = i;
     }
-    const shown = askedAt >= 0 ? messages.map((m, i) => (i === askedAt ? { ...m, confirmDecision: decision } : m)) : messages;
+    const executedStamp = executedOutcomes.length ? {
+      reported: true as const,
+      actions: executedOutcomes.map((o) => ({ fingerprint: o.fingerprint, summary: o.summary, tool: o.tool, outcome: o.outcome, ...(o.note ? { note: o.note } : {}) })),
+    } : undefined;
+    const shown = askedAt >= 0 ? messages.map((m, i) => (i === askedAt ? { ...m, confirmDecision: decision, ...(executedStamp ? { approvalOutcome: executedStamp } : {}) } : m)) : messages;
     const base = [
       ...shown,
       mkMsg({
@@ -1632,7 +1677,7 @@ const PaigeAIChatInner = ({
       userContent,
       currentDoc,
       originDraft,
-      approvedFingerprints,
+      echoFingerprints,
       declinedFingerprints,
       trackedVoiceSink,
     );

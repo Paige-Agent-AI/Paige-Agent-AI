@@ -227,8 +227,36 @@ function summaryFor(command: z.infer<typeof commandSchema>, preview?: JsonObject
       return `Assign task ${target} to ${String(commandPatch?.assignee_user_id ?? "unassigned")}.`;
     case "task.cancel":
       return `Cancel task ${target}${command.reason ? `; reason: ${command.reason}` : ""}.`;
-    default:
-      return `${command.action.replaceAll("_", " ")} for ${target}`;
+    case "deal.create":
+      return `Add a deal "${typeof command.title === "string" && command.title.trim() ? command.title.trim().slice(0, 80) : "Untitled"}" to the pipeline.`;
+    case "contact.create": {
+      const patch = object(command.patch) ?? {};
+      const named = [patch.first_name, patch.last_name].filter((v) => typeof v === "string" && String(v).trim()).map((v) => String(v).trim()).join(" ");
+      const who = named || (typeof patch.entity_name === "string" && patch.entity_name.trim() ? patch.entity_name.trim() : "") || "a new contact";
+      return `Add ${who} as a new contact.`;
+    }
+    case "company.create": {
+      const patch = object(command.patch) ?? {};
+      const name = typeof patch.name === "string" && patch.name.trim() ? patch.name.trim().slice(0, 80) : "a new company";
+      return `Add "${name}" as a new company.`;
+    }
+    case "task.create":
+      return `Create a task "${typeof command.title === "string" && command.title.trim() ? command.title.trim().slice(0, 80) : "Untitled"}"${command.due_date ? ` due ${command.due_date}` : ""}.`;
+    default: {
+      // Never render the raw internal verb ("deal.create for …"). Compose from the action's
+      // domain and verb so every catalogue action reads as a human sentence about the object.
+      const [domain, verb] = command.action.split(".");
+      const DOMAIN_NOUN: Record<string, string> = { contact: "contact", company: "company", task: "task", deal: "deal", activity: "record" };
+      const VERB_PHRASE: Record<string, string> = {
+        create: "Create a new", update: "Update the", move: "Move the", close: "Close the", reopen: "Reopen the",
+        delete: "Delete the", archive: "Archive the", restore: "Restore the", merge: "Merge the",
+        hard_delete: "Permanently delete the", bulk_update: "Bulk-update the", link: "Link the", unlink: "Unlink the",
+        assign: "Assign the", assign_owner: "Reassign the", assign_coach: "Reassign the", assign_contact: "Reassign the",
+        reschedule: "Reschedule the", complete: "Complete the", cancel: "Cancel the", log: "Log on the",
+      };
+      const noun = DOMAIN_NOUN[domain] ?? "record";
+      return `${VERB_PHRASE[verb] ?? "Apply the requested change to"} ${noun} ${target}.`;
+    }
   }
 }
 
@@ -599,6 +627,7 @@ serve(async (req) => {
       ok: false,
       outcome: "approval_required",
       fingerprint,
+      idempotency_key: body.idempotency_key,
       summary: proposal.summary ?? summary,
       expires_at: proposal.expires_at ?? null,
       revalidate: decision.revalidate,

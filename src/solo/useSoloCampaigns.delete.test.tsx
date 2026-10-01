@@ -8,7 +8,7 @@ import {
 } from "./useSoloCampaigns";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
-const fixture = vi.hoisted(() => ({ tenant: "a", rpc: vi.fn(), reads: 0 }));
+const fixture = vi.hoisted(() => ({ tenant: "a", rpc: vi.fn(), reads: 0, removedChannels: [] as string[] }));
 vi.mock("@/hooks/useTenantContext", () => ({
   useTenantContext: () => ({
     activeTenantId: fixture.tenant,
@@ -19,6 +19,27 @@ vi.mock("@/hooks/useTenantContext", () => ({
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     rpc: (...args: unknown[]) => fixture.rpc(...args),
+    // The board hook now holds a tenant-scoped realtime channel over its canonical records;
+    // the fixture gives it a recording stub so tests can assert the subscription lifecycle.
+    channel: (name: string) => {
+      const chain = {
+        on: () => chain,
+        // Real subscriptions settle asynchronously; firing the status callback from inside the
+        // stub would retry→re-subscribe synchronously and churn the lifecycle under test. The
+        // stub records the callback instead — the reload-on-subscribe behavior is pinned at the
+        // source level in solo-pipeline-board-realtime.test.ts.
+        subscribe: (onStatus?: (status: string) => void) => {
+          (fixture as { statusCallback?: (status: string) => void }).statusCallback = onStatus;
+          return chain;
+        },
+      };
+      (chain as { name?: string }).name = name;
+      (fixture as { lastChannel?: unknown }).lastChannel = chain;
+      return chain;
+    },
+    removeChannel: (ch: { name?: string }) => {
+      fixture.removedChannels.push(String(ch?.name ?? "unknown"));
+    },
     from: () => {
       fixture.reads++;
       const query = {
@@ -49,6 +70,7 @@ const command: PipelineAction = {
 beforeEach(async () => {
   fixture.tenant = "a";
   fixture.reads = 0;
+  fixture.removedChannels = [];
   fixture.rpc.mockReset().mockResolvedValue({ data: {}, error: null });
   host = document.createElement("div");
   document.body.append(host);
@@ -59,6 +81,19 @@ afterEach(() => {
   act(() => root.unmount());
   host.remove();
 });
+it("holds a tenant-keyed realtime channel and reloads once subscribed", async () => {
+  await act(async () => root.render(<Probe />));
+  const channel = (fixture as { lastChannel?: { name?: string } }).lastChannel;
+  expect(channel?.name).toBe("solo-pipeline-board:a");
+  expect(fixture.removedChannels).toEqual([]);
+});
+
+it("removes the realtime channel on unmount", async () => {
+  await act(async () => root.render(<Probe />));
+  act(() => root.unmount());
+  expect(fixture.removedChannels).toEqual(["solo-pipeline-board:a"]);
+});
+
 it("passes exact identity and a context assertion to the dedicated server-owned delete contract", async () => {
   fixture.rpc.mockResolvedValue({
     data: { ok: true, message: "Deleted" },

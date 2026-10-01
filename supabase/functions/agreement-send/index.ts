@@ -194,7 +194,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   //
   // REFUSED BEFORE ANYTHING IS RENDERED, and keyed on the frozen DIGEST rather than on "has both
   // columns" — because that is the predicate `issue_agreement_signing_link` applies
-  // (`20270413000000`), and two doors that refuse *nearly* the same set are two doors that will
+  // (`20270532110000`), and two doors that refuse *nearly* the same set are two doors that will
   // drift. A digest with no key took the freeze branch below under the older shape and died on the
   // write-once trigger with a database error; it now gets the same honest 409 the link path gives.
   if (contentHash && agreement.body_source === "tenant_upload"

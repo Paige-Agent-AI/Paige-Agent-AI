@@ -22,7 +22,7 @@ if [ "$(id -u)" -eq 0 ]; then
   id "$RUNNER" >/dev/null 2>&1 || useradd -m "$RUNNER" >/dev/null 2>&1 || true
   [ "${PROOF_REEXEC:-}" = "1" ] && { echo "re-executed and still root — refusing to run postgres as root"; exit 2; }
   MIG_COPY=/var/tmp/commercial-terms-proof-migration.sql
-  cp "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/supabase/migrations/20270412000000_commercial_terms_refusals_reach_the_operator.sql" "$MIG_COPY"
+  cp "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/supabase/migrations/20270532100000_commercial_terms_refusals_reach_the_operator.sql" "$MIG_COPY"
   chmod 644 "$MIG_COPY"
   export PROOF_REEXEC=1
   exec su "$RUNNER" -s /bin/bash -c "PROOF_REEXEC=1 PGBIN='${PGBIN:-}' MIGRATION='$MIG_COPY' TMPDIR=/var/tmp $(printf '%q' "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")")"
@@ -35,7 +35,7 @@ fi
 [ -x "$PGBIN/initdb" ] || { echo "FAIL — no PostgreSQL server binaries (PGBIN='$PGBIN'). Deliberately NOT skipped: a skipped proof reads exactly like a passing one."; exit 2; }
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-MIGRATION="${MIGRATION:-$HERE/../../supabase/migrations/20270412000000_commercial_terms_refusals_reach_the_operator.sql}"
+MIGRATION="${MIGRATION:-$HERE/../../supabase/migrations/20270532100000_commercial_terms_refusals_reach_the_operator.sql}"
 [ -f "$MIGRATION" ] || { echo "migration not found: $MIGRATION"; exit 2; }
 WORK="$(mktemp -d -p "${TMPDIR:-/tmp}")"; PORT="${PGPORT:-55450}"
 cleanup() { "$PGBIN/pg_ctl" -D "$WORK/d" stop -m immediate >/dev/null 2>&1 || true; rm -rf "$WORK"; }

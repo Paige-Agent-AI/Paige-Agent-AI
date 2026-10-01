@@ -24,7 +24,7 @@ RELEASE_CLASSIFICATION: internal-only: no customer release.
 CUSTOMER_RELEASE_IDENTITY: none: staged capability, no deployed human flow.
 RELEASE_NOTE_REQUIRED: NO: service foundation only.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: deployed schema, authenticated tenant flows and UI adoption. Proposed knowledge.read/update remain UNAVAILABLE as governed Paige capabilities.
-RELEASE_RECOVERY: position=do not deploy until reviewed; forward-fix or revoke new RPC grants if activation needs containment; retain revision values to avoid stale-client ambiguity; reference=20270525000000_knowledge_canonical_metadata.sql.
+RELEASE_RECOVERY: position=revoke new RPC grants if activation needs containment and retain revision values to avoid stale-client ambiguity; reference=6230e6087e7fb693af4f0b53935f59ed90f65229
 
 ## Ten routing answers
 

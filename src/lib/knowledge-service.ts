@@ -15,6 +15,8 @@ export interface KnowledgeDocument {
   chunk_count: number;
   created_at: string;
   updated_at: string;
+  share_to_network: boolean;
+  network_review_status: 'none' | 'pending' | 'approved' | 'rejected';
   content?: string;
 }
 export type KnowledgeMetadataPatch = Partial<Pick<KnowledgeDocument, 'title' | 'summary' | 'category'>> & {tags?: string[]};
@@ -32,6 +34,8 @@ function document(value: unknown, tenant: string): KnowledgeDocument {
     || !['source','created_at','updated_at'].every(key => typeof value[key] === 'string')
     || !(value.tags === null || (Array.isArray(value.tags) && value.tags.every(tag => typeof tag === 'string')))
     || !Number.isInteger(value.chunk_count) || Number(value.chunk_count) < 0
+    || typeof value.share_to_network !== 'boolean'
+    || typeof value.network_review_status !== 'string' || !['none','pending','approved','rejected'].includes(value.network_review_status)
     || (value.content !== undefined && typeof value.content !== 'string')) {
     throw new KnowledgeServiceError('KNOWLEDGE_RESPONSE_INVALID', 'Knowledge response did not match the requested workspace.');
   }

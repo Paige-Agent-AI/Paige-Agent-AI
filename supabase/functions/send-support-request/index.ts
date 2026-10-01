@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { primaryPhonesForUsers } from "../_shared/user-contact-methods.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -122,13 +123,13 @@ async function resolvePlanSlug(
   supabase: ReturnType<typeof createClient>,
   userId: string,
 ): Promise<string> {
-  // Staff bypass — admins and coaches get full (enterprise) support entitlement.
+  // Staff bypass — admins get full (enterprise) support entitlement.
   const { data: roleRows } = await supabase
     .from("user_roles")
     .select("role")
     .eq("user_id", userId);
   const roles = (roleRows ?? []).map((r: { role?: string }) => r.role);
-  if (roles.includes("admin") || roles.includes("coach")) return "enterprise";
+  if (roles.includes("admin")) return "enterprise";
 
   // Complimentary access — Pro-level (premium) support without Stripe.
   const { data: profileRow } = await supabase
@@ -188,11 +189,20 @@ serve(async (req) => {
     // Get user profile for additional context
     const { data: profile } = await supabaseClient
       .from("profiles")
-      .select("full_name, phone")
+      .select("full_name")
       .eq("user_id", user.id)
       .single();
 
     const userName = profile?.full_name || user.email;
+
+    // The requester's primary phone, read under their own session (a person reads their own
+    // addresses). An unreadable phone leaves the line off the request, loudly.
+    let userPhone: string | null = null;
+    try {
+      userPhone = (await primaryPhonesForUsers(supabaseClient, [user.id])).get(user.id) ?? null;
+    } catch (e) {
+      console.error("[SEND-SUPPORT-REQUEST] phone_read_failed", (e as Error).message);
+    }
 
     // Resolve the plan SERVER-SIDE (never from the request body) and read its
     // support entitlement as config data — this closes both the drifted-ladder
@@ -269,9 +279,9 @@ serve(async (req) => {
                 <div class="info-label">Email:</div>
                 <div>${user.email}</div>
                 
-                ${profile?.phone ? `
+                ${userPhone ? `
                 <div class="info-label">Phone:</div>
-                <div>${profile.phone}</div>
+                <div>${userPhone}</div>
                 ` : ''}
                 
                 <div class="info-label">Plan:</div>

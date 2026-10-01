@@ -1,10 +1,17 @@
-# Paige Durable Job Contract — PROPOSAL (owner sign-off pending)
+# Paige Durable Job Contract — ADOPTED
 
-> **Status:** PROPOSAL. Documentation only. This delivery changes no runtime code, no capability
-> state, no customer release identity. It extends the Paige Runtime Harness doctrine in
-> `docs/PAIGE-MASTER-PROJECT-REFERENCE.md` §3 ("Durable work" responsibility #5) the way
-> `paige-memory-contract.md` extends the Memory responsibility — it owns no Spine, Rail, Brain,
-> or registry facts and creates no new system of record.
+> **Status:** ADOPTED. The 2026-09-23 coordinator ruling replaced the adapter-only substrate
+> decision with one governed cross-capability work envelope. Migration
+> `20270417000000_paige_durable_work_envelope.sql` is the single home for work identity; this
+> contract remains the execution mechanism layered on it. It owns no Spine, Brain, Memory, or
+> capability registry facts. Existing capability run tables remain their domain records and carry
+> a nullable `work_id` reference; the Rail remains `record_capability_run`.
+>
+> **Capability status:** `SUBSTRATE PROVEN`, not `DONE` or `LIVE`. The table, migration, transition
+> contract, and local single-claim concurrency property are proven. Disconnect survival, client
+> resume without duplicate dispatch, persisted deployment, and authenticated owner readback remain
+> unproven. Until those land, this is a governed schema and execution contract—not yet a durable-work
+> capability Paige can rely on in production.
 >
 > **Routing per Master §3:** written after reading Master §3 (Harness), `paige-brain-wiring-standard.md`,
 > and `paige-spine-and-rail-state.md`. Collision-mapped against #917 (orchestration/tools),
@@ -64,8 +71,9 @@ silently retried. `expired` and `outcome_unknown` attempts reconcile first; only
 
 **Required mechanics — every substrate adapter must provide or adopt:**
 
-1. **Idempotency key.** Deterministic per unit of work: `(substrate, row_id, intent)` — the same
-   key can never produce two side effects.
+1. **Idempotency key.** Opaque and server-issued once per accepted work identity. A stable caller
+   intent folds a lost-response retry onto that identity, so the same user intent cannot mint two
+   dispatch keys or produce two side effects.
 2. **Atomic claim.** One statement: select due work `FOR UPDATE SKIP LOCKED` (or a
    `SECURITY DEFINER` RPC observing §59 caller-scope-in-body), stamp `claimed_at` + `lease_until`
    + `attempt++`. Claim and side-effect intent land in the same transaction.
@@ -83,29 +91,59 @@ silently retried. `expired` and `outcome_unknown` attempts reconcile first; only
    + named waiter (`blocked`) + reconciliation duty (`expired`/`outcome_unknown`). "Done" is never
    claimed without verified readback.
 
-## 3. Adapter-first rollout (no forced migration)
+### Approval lifetime across durable work
 
-Existing tables keep their schemas and RLS. Each gains a small adapter module that (a) maps native
-statuses to canonical states, (b) adds the missing claim mechanics where absent (lease columns or
-a claim RPC per substrate — schema additions are per-substrate and minimal, committed same-beat
-per §47).
+The envelope records the authority context under which work was accepted for audit and replay
+comparison. That snapshot is **not** durable permission and cannot extend or revive an approval.
+Every consequential step must redeem a current, exact-call approval immediately before external
+dispatch, while also revalidating current tenant membership, scope, autonomy, and budget.
 
-1. **Seam module:** `supabase/functions/_shared/durable-job/` — canonical states, claim/lease
-   helpers, reconciliation helpers. No tables of its own.
-2. **First adopter:** `weekly-summary-cron` — live surface with a real no-dedupe
-   double-send risk (any re-fire re-emailed every opted-in user), immediate verifiable
-   win. *(Correction 2026-09-10: this doc originally named `coaching-reminder-cron`;
-   survey found `coaching_appointments` exists in no migration — that cron is dormant.
-   Delivered as #1084 against `weekly-summary-cron`.)*
-3. **Then:** remaining crons, then `paige_actions` execution steps (bridging business state to
-   attempt state), then the systems-check family.
-4. **New work rule:** from contract adoption forward, any new scheduled/durable work must use the
-   seam — no new bespoke job substrate is created.
+- If the required approval expires before dispatch, the same work becomes nonterminal `blocked`
+  with `blocked_reason = 'approval_expired'`. Its safe summary names the need for fresh owner
+  approval. This is deliberately not `failed`: the work did not malfunction, and the audit record
+  must distinguish expired authority from execution failure.
+- Fresh approval resumes the existing work identity. It must not create a second envelope or
+  blindly repeat a prior attempt.
+- Once a live approval has been redeemed and the external effect has been dispatched, later expiry
+  does not retroactively invalidate that dispatch. If the provider result is ambiguous, the work
+  moves to `outcome_unknown` and must reconcile before any retry; it must not re-ask for approval
+  and then risk duplicating an effect whose result is unknown.
+- A later consequential step is a new exact call and requires its own current approval. Observe-only
+  work carries no approval, but it remains subject to the same server-side authority checks.
 
-**Maturity gate.** The contract is `PROOF OWED` until: claim atomicity under concurrent fires,
-lease expiry → reconciliation, attempt ceilings honored, `outcome_unknown` blocking retry, and
-receipt correlation are each proven in the first adopter with authenticated evidence. Until then
-nothing may claim the platform has "one job contract."
+This section fixes the Phase 1 contract only. Approval claim/re-approval wiring begins when submit,
+status, or cancel become agent-accessible tools and therefore crosses the Phase 2 Spine/registry
+relay. No approval token or expiry is persisted as reusable authority in this table slice.
+
+## 3. One envelope, adapter-projected detail
+
+Existing tables keep their schemas, native business lifecycle, and RLS. They gain only a nullable
+foreign key to `paige_durable_work`, while the canonical row owns tenant, initiating user, optional
+thread, immutable authority context, scope epoch, server-issued idempotency key, status, lease,
+attempt ceiling, and terminal evidence. A caller-stable intent UUID folds a lost-response retry
+onto the same server-issued work identity; a replay that changes immutable scope fails closed.
+
+1. **Canonical identity:** `public.paige_durable_work`, created and transitioned only by the
+   service-role seams in migration `20270417000000`.
+2. **Mechanism:** `supabase/functions/_shared/durable-job/` remains the canonical state, lease,
+   reconciliation, idempotency-window, and receipt-correlation contract.
+3. **Capability detail:** existing `*_runs`, `*_jobs`, and execution ledgers keep their schemas and
+   gain `work_id`; document production, deep research, and governed browsing adopt the same row.
+4. **Owner-safe read:** `get_paige_durable_work` exposes only bounded status and safe summaries.
+   Raw authority, documents, web content, provider payloads, idempotency material, and reasoning
+   are not returned and never become Mind state.
+5. **New work rule:** every new durable capability uses this envelope. A second universal work
+   table, scheduler, lease implementation, or capability-specific envelope is prohibited.
+
+**Maturity gate.** Source contract tests cover retry folding, scope binding,
+reconciliation-before-retry, attempt ceilings, verified-readback success, and terminal
+immutability. `npm run proof:paige-durable-work` passed on PostgreSQL 16.14 against a disposable
+minimal dependency schema. It exercises the real migration and rollback proof, then races two
+independent service-role sessions against one blocked row: exactly one advances it to `claimed`,
+the loser fails closed with `DURABLE_WORK_TRANSITION_INVALID`, and one row remains at attempt 2.
+Full-repository migration replay, persisted apply, first-capability receipt correlation,
+disconnect/resume, and authenticated owner readback remain `PROOF OWED`. Until those pass, the
+platform has one governed envelope in code but may not claim durable long-form work is `LIVE`.
 
 ## 4. Collision assessment
 

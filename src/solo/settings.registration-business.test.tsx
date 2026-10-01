@@ -56,7 +56,7 @@ const READINESS = {
 vi.mock("@/hooks/useUserRoles", () => ({
   useUserRoles: () => ({
     loading: false, userId: "u1", roles: state.isAdmin ? ["admin"] : [],
-    isAdmin: state.isAdmin === true, isCoach: false, isClient: false, isBroker: false,
+    isAdmin: state.isAdmin === true, isClient: false, isBroker: false,
     isStaff: state.isAdmin === true,
   }),
 }));

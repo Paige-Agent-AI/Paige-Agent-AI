@@ -10,6 +10,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { embeddingsCompat } from "../_shared/voyage.ts";
+import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses } from "../_shared/contact-methods.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 
 const corsHeaders = {
@@ -56,11 +57,13 @@ function pick(obj: any, ...keys: string[]): unknown {
 }
 
 async function rebuildOne(admin: any, openaiKey: string, contactId: string) {
-  const { data: contact } = await admin
+  const { data: row } = await admin
     .from("clients")
-    .select("full_name, email, linked_user_id, owner_user_id")
+    .select(`full_name, linked_user_id, owner_user_id, ${CLIENT_CONTACT_METHODS_EMBED}`)
     .eq("id", contactId)
     .maybeSingle();
+  // `email` below is the contact's PRIMARY email.
+  const contact = withPrimaryAddresses(row);
   if (!contact) return { contact_id: contactId, skipped: "contact_missing" };
 
   const who = contact.full_name || contact.email || "Client";

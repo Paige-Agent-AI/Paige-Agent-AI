@@ -341,6 +341,144 @@ class of lie as a fabricated metric (§13).
 
 Legend: **✓** live · **—** not built · **N/A** tier not opened yet · **403** denied at the route gate.
 
+### Public forms take submissions for every business (PR #1573, 2026-09-29)
+
+| Surface | God / Super Admin | Agency | Standalone (Solo) | Sub-account | Client | Anonymous | Status |
+|---|---|---|---|---|---|---|---|
+| `growth-public-submit` (submit a public form) · `growth_public_form()` (read one) | same as any visitor | same as any visitor | same as any visitor | same as any visitor | same as any visitor | **Seam ✓, product ✓ (#1580)** — the endpoints accept active forms of a `trial`/`active`/`past_due` business (origin, bot trap and rate limits apply), and `/form/:id`, form embeds and funnel form steps read and submit only through them. | **LIVE on production (#1580, `fb674e84`; deployment and live bundle read back in the #1581 closeout); PROOF OWED:** a real visitor submission on production (PR 3). Writes only through the service role; nobody inserts a submission from the browser. |
+| `growth_form_set_intake()` (route leads to a pipeline, set the alert address) | **— refused** (`is_tenant_admin` is membership only; act-as confers none) | **—** no Growth surface (§60 exception). The seam itself is not tier-gated: an agency tenant's own owner/admin could call it on a form that tenant owns; an agency manager acting in a sub-account is refused (no membership there). | ✓ owner/admin — **Solo UI:** Growth → Catalog → a form's Details (pipeline → stage, alert email; a member sees them read-only), with that form's submissions, labelled answers and links to the contact and deal (PR 2b) | ✓ owner/admin of that sub-account (the seam; same Solo surface) | — refused | — not granted | **Seam live; Solo UI ships with PR 2b; PROOF OWED:** an owner saving it on production. A member who is not owner/admin cannot change the alert address directly either (guard trigger). |
+
+### A draft for a customer that carries internal text is never filed or sent (R2, branch `claude/practical-wright-nskq1n`, 2026-09-27)
+
+The owner-seat half of "nothing internal reaches a customer": what PAIGE drafts for a customer in the chat. Before a
+draft is filed, carded or sent, its customer-bound fields are read with `_shared/internal-vocabulary.ts` against the
+turn's own vocabulary (the tool definitions, the vouched blocks, every tool result PAIGE was sent):
+propose_action's body (and an email's subject), calendar_link_send's message (and an email's subject), action_file's
+title and summary for a kind the client's portal shows, and what action_advance delivers: a draft whose kind requires
+approval, whatever its executor, and at executing a portal action's stored title and body (an unlisted kind, or one
+whose lookup fails, is read). A value that isn't a string is read at any depth, its keys too, as `String()` and Postgres's
+`->>` would show it. The fields per tool live in `_shared/outbound-draft-check.ts`. A refused draft is not filed and
+never becomes a card, and PAIGE is told to rewrite it. A card stored before this check existed is read again where it
+runs; nothing is sent or filed, and the owner's card says Didn't run with its one next step. Drafts that never pass
+through the chat (the Live desk's approve path, send-message, other drafters) are R2b; other chat tools that carry
+PAIGE's words outside the workspace are #1530.
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|
+| A customer-bound draft PAIGE writes in the chat (email or text, booking-link message, follow-up action, portal recommendation) is read for internal text before it is filed, carded, sent or shown in the client's portal; a stored card that carries it sends nothing and says Didn't run (R2) | **PROOF OWED** (the same shared handler; not driven on this seat) | **PROOF OWED** (the same shared handler; parked, not driven) | **PROOF OWED** (ships on merge; not live until proven) | **PROOF OWED** (the same shared handler; parked, not driven) | — (a client seat may call none of these tools; refused before the check) | 403 | **PROOF OWED:** `paige-ai-chat` redeploys on merge and is byte-verified in the closeout; no authenticated Solo drive and no live model reply yet |
+
+Honest note (§13): a clean result means none of the known vocabulary, not "nothing internal", and a paraphrase
+passes. A draft sent without passing through the chat is not read here (R2b).
+
+### A client reads nothing internal in PAIGE's answer (R3, branch `claude/practical-wright-nskq1n`, 2026-09-27)
+
+The server half of "nothing internal reaches a customer", for the one seat that is a customer: a **client seat**
+(`callerTier === "client"` in `paige-ai-chat`, a business's client signed in to its portal, whose chat is
+`PaigeChat` on `/app`). Every client turn is held until the final check. The answer and each thought line are
+read with `_shared/internal-vocabulary.ts` against a vocabulary taken from what the server sent the model on that
+turn: the tool definitions, every tool result, and the text the handler vouches for where it built it (the team
+authority block and the document instruction). The tenant's persona and every other block that pastes in tenant
+or client prose are never vouched, so a tenant's own words never withhold their client's answer. On any finding
+the whole turn is withheld and the client reads one fixed sentence (`_shared/client-seat-reply.ts`), which the
+thread keeps. Owner and teammate seats are unchanged; they are R4's.
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|
+| A client's answer and thought lines are read for internal text before release, on the chat and document paths; a finding withholds the turn | — (unchanged; R4) | — (unchanged; R4) | — (unchanged; R4) | — (unchanged; R4) | **PROOF OWED** (ships on merge; not live until proven) | 403 | **PROOF OWED:** `paige-ai-chat` redeploys on merge and is byte-verified in the closeout; no authenticated client-seat drive and no live model reply yet |
+| A credit report whose sync did not complete tells the uploader in one of two fixed sentences (nothing added, or did not finish), never claiming nothing was kept after the first write; the pipeline's error text and step name stay in the server log (R3b) | — (unchanged; the panel renders only in the portal chat) | — (unchanged) | — (unchanged) | — (unchanged) | **PROOF OWED** (ships on merge; not live until proven) | 403 | **PROOF OWED:** `paige-ai-chat` redeploys on merge and is byte-verified in the closeout; no authenticated upload drive yet |
+
+Honest note (§13): a clean result means none of the known vocabulary, not "nothing internal". A paraphrase passes,
+and so does a key or block name that appears only in a block nobody has vouched for yet (the owner-side context
+blocks a client's turn is sent today are among them; what a client's turn is sent is its own slice). So does
+server text the client reads that the model did not write (a document's `sync_status` error text is
+one; it is recorded as its own follow-up, not covered here). A caller whose tier cannot be resolved falls back to
+a client seat, so their turn is held and read too.
+
+### Approval recovery — after Approve, the card answers for what happened (branch `claude/festive-tesla-n0cjrc`, 2026-09-26)
+
+Owner-approved design, **Solo only by ruling** ("Nothing else changes. Solo only. No pilot gating."). The client
+behaviour is gated on the one mount that passes `soloTenantSafety` (`SoloPaigeWorkspace` → `PaigeAIChat`), not on a
+tier flag: the gate is the surface, and only the standalone Solo shell (`/solo/{account}`) mounts it. Sub-accounts
+enter through `BusinessEntry` → `AgencyApp mode="subaccount"`, which does not. The server half (the
+`paige_approval_outcome` frame) is emitted on every turn that carries approvals, for every caller; every surface
+other than the Solo chat consumes it as a no-op.
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|
+| After Approve: record where the card was, Running…, then Done / Didn't run / mixed / Couldn't confirm | — (unchanged) | — (unchanged) | ✓ on merge | — (unchanged) | — (no approval card) | 403 | **PROOF OWED:** frontend ships on merge; authenticated Solo drive owed |
+| `paige_approval_outcome` frame from the chat handler | emitted, ignored | emitted, ignored | emitted, rendered | emitted, ignored | — | 403 | **PROOF OWED:** `paige-ai-chat` redeploys on merge; byte-verify owed |
+| CRM receipt reads "Added" for a created record (owner copy ruling) | ✓ | ✓ | ✓ | ✓ | — | 403 | frontend, every chat mount that shows the receipt |
+
+Honest note (§13): the outcome is not persisted, so a reload shows the older settled line ("Earlier, Paige asked you
+to confirm: …") and no outcome card. The rendered evidence is a harness of the real chat component tree
+(`docs/evidence/ui-delivery/solo-approval-recovery/`), not a drive of the deployed shell (§32.c/§70.1 owed).
+
+### Live Conversation — admission is rollout configuration, not identity (INT-104, 2026-09-24)
+
+**§66, same commit as the ship.** Live Conversation is one shared capability. Any account whose
+authenticated actor resolves canonical standing in its own workspace and owns the thread is
+*eligible* by construction — the admission predicate no longer pins the product to one stored user
+id who also had to hold `super_admin`. Separately, and deliberately not collapsed into the same row,
+*who may actually speak today* is an operational allowlist that ships empty.
+
+| Capability | God | Agency | Enterprise | Solo | Sub-account | Client | Anon | Deploy state |
+|---|---|---|---|---|---|---|---|---|
+| Live Conversation — product eligibility (own tenant, role, thread, memory) | — (no tenant book) | — (refused by tier) | ✓ | ✓ | — (release DEFERRED) | — | 403 | migration `20270422000000`; the three admission edge callers redeploy |
+| Live Conversation — admitted to the rollout today | — | — | — | — | — | — | 403 | `pilot_rollout_scope` ships `'off'`; no account admitted |
+
+**The two rows say different things on purpose.** One ✓ per tier that conflated "every Solo account
+is eligible" with "who may speak today" would re-commit in this ledger exactly the conflation the
+migration just removed from the database. Eligibility is the product; admission is configuration.
+
+**A `getTierFeatureSet` flag NOW EXISTS, and it is the UI half only.** `live_conversation` joins the
+`Feature` union and `SOLO_FEATURES` (`src/lib/tier/tierFeatures.ts`), read at
+`SoloPaigeWorkspace.tsx` → `PaigeAIChat.tsx`. It decides whether the entry point RENDERS; it grants
+nothing. The server answers separately: `live_conversation_tier_allows(uuid)` inside
+`paige_live_pilot_authorized_internal`, which the three deployed edge consumers call.
+`getTierFeatureSet` is frontend-only and not server-importable, so that SQL predicate is a
+deliberate twin of `SOLO_FEATURES` — the same pattern as `trg_agreement_tier` — and the two are
+pinned to each other by a test rather than left to drift. An adversarial read of the first draft
+caught them already disagreeing about Enterprise, which is why the pin exists.
+
+**The edge functions no longer hold a second opinion, and that correction IS this change.** Each of
+`paige-live-session`, `paige-ai-chat` and `paige-live-relay` used to read
+`paige_live_tenant_availability` itself and refuse on a missing row, before asking the predicate.
+Once a missing row came to mean "follow the rollout scope", that second answer contradicted the
+first — a brand-new Solo account would have been refused at the edge without the predicate ever
+being consulted, making the whole change inert in every product path. The reads are gone; the
+predicate is the one home, and it honours both of the row's meanings (enabled = true admits a
+workspace the tier would refuse; enabled = false is a per-workspace kill switch).
+
+**What is NOT live, stated plainly.** The provider gate is shut. ElevenLabs retention is unresolved
+and verified zero retention remains `UNAVAILABLE`. Physical speaker identity is not enforced (#1417).
+Nobody has been admitted, so the second row is `—` for every tier, and broadening the product did
+not broaden the audience.
+
+**§61 EXCEPTION, deliberately — the same shape as `trust_compass` and for the same reason.** Solo,
+plus Enterprise through the Solo union. Sub-account delivery is DEFERRED under the standing owner
+ruling of 2026-09-06 ("no subaccount delivery without explicit release"), which already governs
+`trust_compass` in the same file. Agency has no direct book to speak about (§61 default:
+Agency = RESELL, no operator flag). God is the platform operator, not a tenant with clients of its
+own. Recorded as an exception rather than followed silently — and no new owner question was raised,
+because an existing standing ruling already answered it.
+
+**§58, named rather than left to be discovered.** The eligibility row above previously read ✓ for
+God, Agency, Enterprise and Sub-account. `live_conversation_tier_allows` now refuses Agency and
+Sub-account, and the UI entry point is gated to the Solo shell. Nobody loses a working capability —
+the admission row was `—` for every tier, and production carries 0 admitted subjects and 0 enabled
+workspaces (queried 2026-09-24) — but the ledger said ✓ and now does not, so the narrowing is stated
+here rather than found later. The per-workspace `enabled = true` path still admits a workspace the
+tier refuses, so an operator retains a way to include one, and that is proven in the suite against
+the agency fixture rather than asserted.
+
+**One setting, and now the owner can turn it.** `paige_voice_readiness.pilot_rollout_scope`
+(`'off' | 'solo_tier'`) is the whole audience decision, and it names no person, login or workspace.
+`paige-voice-profile-admin` gains one additive action, `set-live-rollout-scope`, behind the
+platform-owner gate already there — because a setting only an engineer can turn with raw SQL is not
+a setting the owner has (§70). Widening it requires the default-provider-retention acceptance to be
+restated in the same request; closing it never does. The global disable now closes the audience with
+it, so re-enabling cannot silently re-open the tier.
+
 ### Agreements engine — PAIGE-native e-signature (INT-163, PR #1352, 2026-09-22)
 
 PAIGE's own signing lifecycle: a tenant sends a document to one of their own clients, that person
@@ -359,7 +497,7 @@ on. Recorded as an exception rather than followed silently.
 | `agreement_signing` tier flag | — | **— (refused)** | ✓ | ✓ | — | — | **flag LIVE on merge, and now ENFORCED** at the database — see the correction below |
 | Records + integrity triggers (`paige_agreements`, `_signers`, `_events`) | ✓ (operator read) | **— (refused by `trg_agreement_tier`)** | ✓ | ✓ | — (no policy grants it) | — (`anon` holds no grant) | **code MERGED, prod apply PENDING** — migrations `20270401000000`/`20270402000000`/`20270403000000`/`20270404000000`/`20270405000000` |
 | Counterparty signer derived from the client (`trg_agreement_seed_counterparty`) | ✓ act-as | — | ✓ | ✓ | — | — | **code MERGED, prod apply PENDING** — `20270405000000` |
-| Agreement RPC seams (`save_paige_agreement` · `add_agreement_signer` · `create_agreement_signing` · `issue_agreement_signing_link` · `void_paige_agreement` · `paige_agreement_overview`) | ✓ act-as, **EXCEPT `paige_agreement_overview`** — corrected 2026-09-23 (INT-178) | **refused at the database** | ✓ | ✓ | — | 403 | **LIVE on merge** — these are the §10 callable seams. **§13 correction:** this row read a flat `✓ act-as`. `paige_agreement_overview` gates on `is_tenant_member()` (`20270402000000:63`), which checks `tenant_members` ONLY, and `20260924000000_operator_act_as.sql:25` states that act-as "grants NO membership at all" — so an operator in act-as resolves the tenant and is then refused `42501`. Pre-existing inaccuracy found by INT-178's peer-gate, not introduced by it; widening that gate to `OR is_platform_operator()` is a deliberate §53 decision and is NOT taken here. **Qualified 2026-09-23 (#1395, the manual-link twin):** `issue_agreement_signing_link` now REFUSES an agreement whose `body_source='tenant_upload'` when the frozen document was not produced by the uploaded-document path — the storage key lacks the `presented-source-` provenance marker (migration `20270413000000`, SQLSTATE `PA001`). No tier gains or loses the seam; the two tiers that hold a client book (Solo, Sub-account) will see the refusal on affected rows. It mirrors the refusal `agreement-send` already carries (`index.ts:316`). Such a row is permanently un-linkable — the content columns are write-once (`20270401000000:522`) — so the remedy is a new agreement from the same file, and REPAIR OF ALREADY-AFFECTED ROWS REMAINS OWED and is the owner's to rule on. |
+| Agreement RPC seams (`save_paige_agreement` · `add_agreement_signer` · `create_agreement_signing` · `issue_agreement_signing_link` · `void_paige_agreement` · `paige_agreement_overview`) | ✓ act-as, **EXCEPT `paige_agreement_overview`** — corrected 2026-09-23 (INT-178) | **refused at the database** | ✓ | ✓ | — | 403 | **LIVE on merge** — these are the §10 callable seams. **§13 correction:** this row read a flat `✓ act-as`. `paige_agreement_overview` gates on `is_tenant_member()` (`20270402000000:63`), which checks `tenant_members` ONLY, and `20260924000000_operator_act_as.sql:25` states that act-as "grants NO membership at all" — so an operator in act-as resolves the tenant and is then refused `42501`. Pre-existing inaccuracy found by INT-178's peer-gate, not introduced by it; widening that gate to `OR is_platform_operator()` is a deliberate §53 decision and is NOT taken here. **Qualified 2026-09-23 (#1395, the manual-link twin):** `issue_agreement_signing_link` now REFUSES an agreement whose `body_source='tenant_upload'` when the frozen document was not produced by the uploaded-document path — the storage key lacks the `presented-source-` provenance marker (migration `20270532110000`, SQLSTATE `PA001`). No tier gains or loses the seam; the two tiers that hold a client book (Solo, Sub-account) will see the refusal on affected rows. It mirrors the refusal `agreement-send` already carries (`index.ts:316`). Such a row is permanently un-linkable — the content columns are write-once (`20270401000000:522`) — so the remedy is a new agreement from the same file, and REPAIR OF ALREADY-AFFECTED ROWS REMAINS OWED and is the owner's to rule on. |
 | Outward send (`agreement-send`, authenticated) | **— refused.** Gates on `is_tenant_admin` under the CALLER's JWT (`index.ts:65`), which resolves through `tenant_members`; act-as grants no membership, so an operator is refused — same mechanism as `paige_agreement_overview` above. Read from `is_tenant_admin_as` (`20260714235406:48-52`); the plain overload was not read, so this cell is reasoned, not driven. | **— refused** with its own sentence at `index.ts:80` (§60/§61: a pure Agency holds no client book) | ✓ | ✓ | — | — | **LIVE on merge, and reachable for the first time as of this change.** Row added 2026-09-23: PR #1398 changed this function's gating and refusal set and wrote no ledger row, which is the §66 miss this row settles. **§13 correction, same day:** the first version of this row marked the Solo and Sub-account cells `✓` on the strength of reading the admin gate, and that gate could not resolve — `index.ts:65` passed `{_tenant_id}` to a function whose only argument is `_tenant` (`20260629175341:144`; one overload in the generated types at `src/integrations/supabase/types.ts:20987`), so PostgREST could not bind it and **every caller, owner included, was refused 403**. Fixed in the same PR and pinned by `src/__tests__/tenant-admin-rpc-argument.test.ts`. The `✓` cells are true from this commit forward and were false before it. Tier-relevant refusals: non-admin 403 (`:67`), top-level agency 403 (`:80`), no email provider 503 `needs_config` (`:96`), and a stored document that is not the uploaded file 409 (`:197`). **Not an exhaustive status list** — the function also answers 400/404/409/422/502 on request, state, document and delivery failures; enumerating them here is what made the first version of this row wrong, so it points at the function instead. |
 | Agreement PAIGE CHAT **MUTATION** tools (draft · add_signer · send · resend · void) | — | — | — | — | — | — | **STILL NOT SHIPPED — not blocked (updated 2026-09-23, PR #1367; narrowed by INT-178).** `status` has LEFT this row — it shipped as a read; see the row below. The INT-003 deadlock is resolved **for mutations**: neither `direct-risk-entry` nor `direct-tool-definition` fires for a key carrying a governed `defineCapability()` declaration, so a new mutating tool lands by classifying it in `action-risk.ts` AND declaring it, in one change. These five are simply not sequenced yet. **§13 CORRECTION — this row previously said "nothing in the guard stops them", and for a READ that is measured false.** `defineCapability()` requires `actionRiskKey: null` for `effect:"read"` (`capability-kit/defineCapability.ts:108-112`) and only a non-null `actionRiskKey` enters `declaredToolNames` (`capability-kit-lint.mjs:collectDeclaredCapabilityNames`), so a read tool schema can never clear `direct-tool-definition` through the kit. The lint's own comment states the consequence deliberately — a new read "needs a baseline entry". INT-178 measured this (2 findings, exit 1) and took that documented path; the underlying gap is routed as a platform question, not resolved here. |
 | Agreement PAIGE CHAT **READ** tools (`agreement_list` · `agreement_status`; Spine keys `agreement.list` / `agreement.status`) | **— refused.** Passes the chat role gate (`paige-ai-chat` admits `super_admin`) and is then refused by the executor: `paige_agreement_overview` requires `is_tenant_member()`, which act-as does not confer (see the correction two rows up). The Rail receipt is refused for the same reason (`record_capability_run` requires an active `tenant_members` row). | **✓ readable, and it answers HONESTLY rather than emptily.** No tier gate exists in the read, and `trg_agreement_tier` keeps a top-level agency from holding rows — so the read succeeds with zero rows. The adapter resolves that case and returns "this account type holds no client book", NOT "you have no agreements" (`_shared/agreements/chat-read.ts`). A tenant converted to an agency after drafting keeps and can read its own rows (`20270405000000:71-74`) — deliberate, not a leak. | ✓ | ✓ | — (client seat refused twice before the executor: the deny-by-default seat allowlist and the owner-ops role gate) | 403 | **edge-LIVE on merge** (INT-178). Read-only; NO new migration — composes the already-shipped `paige_agreement_overview` (`20270402000000`). Writes a `capability_run` Rail receipt per invocation via `recordCapabilityRun`, with **no `detail` payload** (`redactDetail` scrubs on key NAME only, so it is not a safety net for signer data). **No new `getTierFeatureSet` flag** — `getTierFeatureSet` is frontend-only and not server-importable, so availability is the chat role gate + the RPC's own member/tenant scope, per the precedent recorded below. Signer evidence (IP, user agent, signature image, token hash) is withheld by an allowlist projection, not a delete-list. **OWED (§32.c/§70):** the authenticated live drive — no session has yet confirmed the owner can ask PAIGE "where do my agreements stand" on the live platform and get a true answer. |
@@ -395,8 +533,22 @@ Paige chat tools (not nav surfaces), gated server-side to **admin / coach / supe
 | Capability | God (act-as) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
 |---|---|---|---|---|---|---|---|
 | `capability_status` (truthful "what can you do here?") | ✓ | ✓ (own book) | ✓ | ✓ | — (client seat sealed) | 403 | **edge-LIVE on merge** (uses already-live prod RPCs) |
-| `crm_create_contact` honest outcome + idempotency | ✓ | ✓ | ✓ | ✓ | — | 403 | edge logic LIVE; `create_contact_v2` signal deploy-pending #1147 |
+| `crm_create_contact` honest outcome + idempotency | ✓ | ✓ | ✓ | ✓ | — | 403 | edge logic LIVE; `create_contact_v2` signal deploy-pending #1147; **its APPROVAL path was dark until 2026-09-25 — see the CRM approval note below** |
 | `contact.created` native event + `contact_event_status` read | ✓ | ✓ | ✓ | ✓ | — | 403 | **code MERGED, prod activation PENDING #1147** (migration `20270119000000` sorts after the broken Social `20270117000000`); edge deploys inert until tables land |
+
+Honest note (§13), CRM approval door, added 2026-09-25 because the ledger above asserted something
+production falsified. "One approval executes exactly once" was recorded ✓ on every tier while, for
+the CRM door specifically, a class of approvals executed **zero** times. Fourteen days of
+`paige_pending_confirmations` measured before the repair: `crm_update_contact` 2 asked / 0 stranded,
+but `crm_create_contact` 4 asked / **3 stranded** and `deal_create` 2 asked / **2 stranded**. The
+cause was structural rather than per-tier — `crmApprovalSubject` keys update-shaped actions on a
+stable record id, but a `*.create` has none and fell back to hashing the whole command, which the
+model was not required to retype identically on the approval turn — so it stranded **identically on
+every tier**, which is also why no per-tier parity check caught it. Repaired 2026-09-25: the subject
+became a preference over the operator's echoed candidate set rather than an SQL gate on it
+(`_shared/crm-command/approval-resolution.ts`). **AUTHENTICATED RUNTIME PROOF IS OWED** — the repair
+is proven by unit, wiring and authorization-harness tests plus the production measurement of the
+defect, not yet by an owner drive of the deployed Solo shell (§32.c/§70.1).
 
 Honest note (§13): the `contact.created` substrate (tables, trigger, drainer, read RPC) is code-complete and reviewed (§39/§5, no blockers) but **not live on prod** until the Social workstream fixes #1147 so the prod migration queue advances past it; the read tool degrades to "not available yet" until then. Authenticated owner-drive §32.c/§70 OWED on all three. Hardening fast-follows: #1149.
 
@@ -593,6 +745,44 @@ restated, not a new one.
 | **Sub-account** | ✓ same gates, scoped to its own tenant | ✓ its own only | ✓ its own only |
 | **Client** | — never reaches the executors | **403** — reader raises `RAIL_FORBIDDEN` for a non-staff seat, and the rows are `visibility: owner_internal` | **403** |
 | **Anonymous** | — | **403** — `REVOKE ALL … FROM PUBLIC, anon` | **403** |
+
+### Paige's MCP connection VISIBILITY — `integrations_list` now includes MCP (migration `20270410214500`, 2026-09-23)
+
+`public.list_integration_surface()` — the executor behind the live `integrations_list` chat tool — read
+**only** `public.channel_connectors`, so every MCP connection a tenant owned was **invisible** to Paige.
+It now appends THREE MCP reads, **partitioned by LINEAGE so they cannot overlap**: the gateway registry's
+NATIVE rows only (`mcp_connections.legacy_source IS NULL`), then every live row from
+`get_tenant_mcp_connections`, then the n8n API-key facet from `get_tenant_n8n_connection`. Reading legacy
+at all is not optional politeness — the gateway registry came from a ONE-TIME backfill with no sync
+trigger while the legacy writers stay live, so gateway-only would give Paige a list with a hole in it, and
+a hole reads as an absence: a confident *"no, you aren't connected"* about a working connection (§13).
+**The partition key is lineage, NOT the provider name**, and that correction came from the §39 peer-gate:
+preferring the gateway wherever a provider string matched let a FROZEN backfill snapshot outrank the live
+record it was copied from, so a connection the owner disconnected an hour ago still read as connected. A
+projection is suppressed because it IS a projection (`legacy_source`/`legacy_provider`,
+`20270319000000:129-131`); its live original answers in its place.
+
+| Tier | Sees MCP connections via `integrations_list` | Sees an `owner_only` MCP connection | Why |
+|---|---|---|---|
+| **God / Super Admin** | — (tenant-less) | — | `current_user_tenant_id()` is NULL, so `WHERE tenant_id = NULL` matches nothing. `is_platform_owner()` keeps `_mcp_resolve_tenant` from raising, so it is an honest empty list, **not** an error |
+| **Agency** (agency-as-tenant) | ✓ its own tenant only | ✓ if `is_tenant_admin` | both halves resolve `current_user_tenant_id()`; no tenant value is ever accepted from the wire |
+| **Standalone Solo** | ✓ | ✓ if `is_tenant_admin` | same |
+| **Sub-account** | ✓ its own only, never the parent's | ✓ if `is_tenant_admin` | same resolver; a sub-account cannot reach the parent aggregate |
+| **Solo/Sub member (non-admin)** | ✓ ordinary connections | **✗ hidden** | `get_mcp_connections_v2`'s `_full` gate, which still evaluates against the REAL caller through the nested SECURITY DEFINER call — `auth.uid()` is preserved (measured, not assumed) |
+| **Client** | **— nothing** | — | not an active `tenant_members` row, so `_mcp_resolve_tenant` raises `MCP_FORBIDDEN`; the exception guard turns that into an empty MCP half. **Fail-closed** |
+| **Anonymous** | **— 403** | — | `REVOKE ALL … FROM PUBLIC, anon` on the function |
+
+**Two things recorded honestly rather than smoothed over (§13).** (1) The **channel_connectors** half is
+unchanged by this migration and its own Client exposure — whether a client seat resolves a tenant and sees
+channel connectors — is a **pre-existing** question this change neither introduces nor fixes; it is flagged
+here because the audit that produced this table is where it surfaced, and it is out of this slice's scope.
+(2) **Tool INVOCATION is NOT repointed** — `call-zapier-action:98` still resolves through the legacy
+registry. Four independent blockers, each sufficient: `MCP_GATEWAY_EXECUTE_ENABLED` is default OFF (an owner
+cloud-side flag); the gateway's loader does not refresh OAuth tokens and says so itself
+(`_shared/mcp-gateway/connection.ts:112-113`) while the refresher writes to the legacy table only, so a
+projected row goes stale in ~an hour and throws inside Paige's chat turn; no gateway discovery action exists,
+so `zapier_list_actions` would degrade a tool-NAME list to a count; and the gateway's response shares no
+field with what `projectOutcomeForModel` reads, so a SUCCESSFUL run would project to the model as a failure.
 
 **Recorded honestly (§13):** eleven capabilities are wired — `n8n_*` writes, `zapier_run_action`,
 and (2026-09-05) the four Communications write acts. The other ~43 classified actions still write
@@ -1462,7 +1652,7 @@ Legend as above: **✓** live · **—** not built · **N/A** tier not opened ye
 
 | Segment | What it is | State | Operator | Agency | Solo | Sub-account | Client |
 |---|---|---|---|---|---|---|---|
-| `integrations` → the tile wall, incl. **MCP servers** under Automation | One wall of tiles grouped into six named categories — Automation, Social, Finance, Documents, Client data, Developer — with the category named **once**, on its group heading, never restated under the tools inside it (owner ruling 2026-09-22). Social platforms and provider rows are merged into that one list rather than shown as two walls. Each tile leads with the vendor's own mark on the vendor's own colour, or an honest monogram where no licensed mark exists. The **Automation group is rendered by the MCP gateway component**, which emits the shipped automation tiles handed to it, a repeatable **MCP server** tile ("Add as many as you need") that opens the one catalogue (79 listed vendors plus an always-present *Any MCP server* entry), and a tile per server already added — each opening its own drawer to re-key or disconnect. The shared page-head is skipped on this leaf, as it already is on Connections, because the sub-tab row is the heading. §58: the Social drawer and the legacy n8n/Zapier drawers are untouched and the catalogue's n8n/Zapier/Social tiles route **into** them; the gateway's former empty state is replaced by an add path that is present always rather than only when the list is empty; two pieces of shipped copy moved verbatim rather than disappearing (the Social sign-in note to the Social group heading on its original condition, and "Give Paige an outside tool to work with…" to the add-drawer footer) | **PARTIAL, and deliberately narrower than the catalogue it shows.** Wired today: list, add (generic remote MCP — bearer/header/url/none — and n8n by API key), re-key, soft-disconnect and hard-delete, all through the G1a-1 `SECURITY DEFINER` RPCs with server-derived tenant scope. **Listed is never connected:** a vendor tile whose sign-in is not wired renders an honest stop, never a Connect that cannot connect, and a new or re-keyed row reads **Not checked yet** because the probe that would promote it is a later slice. OAuth start/callback, per-tool discovery and single-tool revoke are out of scope. The filter chips carry counts, and the counts are the counts: the gateway hook is owned by the surface so the bar counts the same list the Automation group renders, and counts nothing while that list is unread. Proof: 119 automated tests across four suites; rendered and measured in real Chromium at four Solo viewports in both themes — chip counts equal rendered tiles (6+11+3+1+1+1 = 23) and zero ragged rows across all six groups. **The authenticated live drive remains UNVERIFIED and owed to a session holding credentials** — this session holds Playwright and Chromium, but `LIVE_DRIVE_EMAIL`/`_PASSWORD` are unset, so the block is credentials, not capability (§32.c). Also owed, named rather than hidden: the add-drawer catalogue's 79 tiles still use initials plates (marks exist for 9 of them; nine coloured plates among seventy grey would read as broken, and inventing the other seventy is the failure this build corrected) | — | — | ✓ | ✓ | — |
+| `integrations` → the tile wall, incl. **MCP servers** under Automation | One wall of tiles grouped into six named categories — Automation, Social, Finance, Documents, Client data, Developer — with the category named **once**, on its group heading, never restated under the tools inside it (owner ruling 2026-09-22). Social platforms and provider rows are merged into that one list rather than shown as two walls. Each tile leads with the vendor's own mark on the vendor's own colour, or an honest monogram where no licensed mark exists. The **Automation group is rendered by the MCP gateway component**, which emits the shipped automation tiles handed to it, a repeatable **MCP server** tile ("Add as many as you need") that opens the one catalogue (79 listed vendors plus an always-present *Any MCP server* entry), and a tile per server already added — each opening its own drawer to re-key or disconnect. The shared page-head is skipped on this leaf, as it already is on Connections, because the sub-tab row is the heading. §58: the Social drawer and the legacy n8n/Zapier drawers are untouched and the catalogue's n8n/Zapier/Social tiles route **into** them; the gateway's former empty state is replaced by an add path that is present always rather than only when the list is empty; two pieces of shipped copy moved verbatim rather than disappearing (the Social sign-in note to the Social group heading on its original condition, and "Give Paige an outside tool to work with…" to the add-drawer footer) | **PARTIAL, and deliberately narrower than the catalogue it shows — but materially wider since Slice ④ (PR #1381).** Wired today: list, add (generic remote MCP — bearer/header/url/none — and n8n by API key), re-key, soft-disconnect and hard-delete, **provider sign-in (OAuth), an on-demand tool check, and re-sign-in for a lapsed grant**. **Slice ④ rebound the write path**: `create`/`verify`/`oauth_begin`/`approve` now go through the one `mcp-gateway` edge door (§18), while re-key, disconnect and the reads DELIBERATELY stay on their G1a-1 `SECURITY DEFINER` RPCs because the gateway has no door for them and routing shipped capability through a door that does not exist would delete it (§58). Tenant scope stays server-derived throughout; the edge additionally catches a mid-flight workspace switch server-side (`tenant_mismatch`), which the direct-RPC path could not. **Listed is still never connected**, but the honest stop is now much rarer: a `connect` vendor tile RUNS a real sign-in (create the row `auth_kind:"none"`, then `oauth_begin`, then the provider's own screen), and only `setup`/`review`/`zapier` tiles stop. A new or re-keyed row still reads **Not checked yet** until a probe promotes it — but **Check now** is a control the owner can press, not a promise. **THE PER-ACTION APPROVE SCREEN IS NOW SHIPPED (Door 1).** The drawer lists the actions a connected tool offers, each with whether Paige needs consent and why, and approves them one at a time for a chosen window. `get_mcp_connection_tools` (migration `20270412090000`) is the tenant-scoped read that made it possible — SECURITY DEFINER with the tenant bind INSIDE the lookup, granted to `authenticated` only, raising ONE refusal for unknown / foreign-tenant / owner_only-without-standing so the list cannot be used to probe for what exists; the gateway's `tools` action applies the ONE approval policy (`resolveEffectApproval`) to it, so the server's name floor still beats a provider's own claim. The read also reports `approval_blocked_reason`: five of the seven conditions `verify_mcp_connection_approval` refuses on, because `approved` means only that a row exists and a surface built on that alone tells an owner they are covered when the runner will decline. **Still honestly UNAVAILABLE and said so on the surface:** running an approved action is gated by `MCP_GATEWAY_EXECUTE_ENABLED`, off by default — so this records CONSENT and claims nothing more; single-tool revoke (no revoke RPC and no `revoke` edge action exist — every approval DELETE in the schema is connection-scoped); and an outbound provider-revoke on disconnect. For the same reasons the three legacy edge functions (`tenant-mcp-connect`, `tenant-n8n-oauth`, `tenant-n8n-api-connect`) are NOT retired and their cards remain reachable — the gateway's own `MCP_LEGACY_CONNECTION_READONLY` copy points the owner at exactly those cards. The filter chips carry counts, and the counts are the counts: the gateway hook is owned by the surface so the bar counts the same list the Automation group renders, and counts nothing while that list is unread. Proof: **139 automated tests across four suites** (Slice ④ added 20, all passing; gateway suites 69/69); rendered and measured in real Chromium at four Solo viewports in both themes — **Door 1's action list re-rendered 2026-09-24 via `scripts/live-drive/integrations-actions-render.mjs`, 54/54 checks, 12 frames, covering every row verdict, both empty meanings, a refused read, an approve, and one scroll owner per viewport. The Slice ④ sign-in controls were rendered separately by `integrations-signin-render.mjs`** — chip counts equal rendered tiles (6+11+3+1+1+1 = 23) and zero ragged rows across all six groups. **The authenticated live drive remains UNVERIFIED and owed to a session holding credentials** — this session holds Playwright and Chromium, but `LIVE_DRIVE_EMAIL`/`_PASSWORD` are unset, so the block is credentials, not capability (§32.c). Also owed, named rather than hidden: the add-drawer catalogue's 79 tiles still use initials plates (marks exist for 9 of them; nine coloured plates among seventy grey would read as broken, and inventing the other seventy is the failure this build corrected) | — | — | ✓ | ✓ | — |
 | `integrations/automations` (Zapier) | **Two independent connections behind one card**, on the accepted n8n tab pattern: an **API connection** (owner OAuth to Zapier's own API, read-only scopes) and **Paige tools (MCP)** (owner OAuth to Zapier's MCP server, per-tool approval, revocation, Zapier-scoped recent activity), plus a tenant-bound **Skool intake route** | **wired, and truthfully unavailable in part** — `tenant-zapier-api-connect` and `tenant-mcp-connect` both run; MCP tools are invisible to PAIGE until specifically approved, and an approval pins the tool's input schema **and** its authority (connected app, action type, effects), so a provider that moves a tool to a different account or turns a read into a send fails closed until re-approved. PAIGE drives it through the governed `zapier_list_actions` / `zapier_run_action` seam with Rail attribution; unknown effects fail closed as write authority. Intake resolves its tenant **only** from the route token, stores the payload encrypted and the token as a hash, and refuses a changed-payload key reuse. **The API tab renders `capability unavailable` on production** because `ZAPIER_API_CLIENT_ID`/`_SECRET` are not configured there — that is the honest state, not a failure. A live provider authorization and a real Skool payload proof are still owed (§32.c) | N/A | N/A | ✓ | N/A | — |
 
 ### PAIGE Chat — the document proposal seam, `/solo/{account}/paige/chat`
@@ -1526,6 +1716,7 @@ five of six surfaces without any ledger row noticing.
 | `update_client_data` completable by a client seat | n/a | n/a | n/a | n/a | n/a | ✓ | 403 |
 | `web_fetch` a public URL — SSRF-guarded + injection-fenced (read; functional PR #1227, was inert) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ (in `CLIENT_SEAT_ALLOW`) | 403 |
 | One approval executes exactly once | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | 403 |
+| …and an approval the operator gave actually RUNS — CRM door | ✓ | ✓ | ✓ | ✓ | n/a | 403 | **repaired 2026-09-25**; see the honest note below |
 | A declined proposal is cancelled, not left live | — | — | — | ✓ | ✓ | — | 403 |
 | Every executed write files an attribution row | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | 403 |
 | …and the actor can record their OWN action (`paige_audit_log` INSERT) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | 403 |
@@ -4207,3 +4398,14 @@ This is an acquisition constraint, not a deletion or migration of existing tenan
 | Workspace | Exactly one top-level `standalone` owner workspace; idempotent retry | Existing memberships remain selectable | No tenant authority |
 
 Production proof: migrations #1202/#1210 culminated in persisted version `20270201000000` (run `34743013452`). The Antonio Cook owner-authorized grant created one personal workspace and one owner membership; retry returned `already_granted` with workspace, platform-subscription, usage-receipt, and audit-receipt counts each still one. Antonio Daniel LLC membership was preserved; Antonio Daniel LLC and Mogul Maker Academy remained active promotional tenants. Authenticated browser sign-in, rendered Billing status, and account switching remain `PROOF OWED`.
+
+### Public site home page, route `/` (PR #1561, 2026-09-28)
+
+Anonymous-tier marketing surface only: no auth, no tenant read, no RPC; the two acts are links into
+the unchanged enrollment seams (`/auth?mode=signup&plan=solo&billing=monthly`, `/auth`, `/pricing`).
+Styles are scoped to `.pa-site` so no tenant or operator surface changes.
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|
+| Public home page (`/`): COO positioning, capability map from `capabilities.ts`, stack calculator, Solo trial and login links | N/A — public page, same for every visitor | N/A — public page | N/A — public page | N/A — public page | N/A — public page | **LIVE** — signed-out production drive 2026-09-29 (evidence record, Post-deploy proof) | LIVE on paigeagent.ai, first live in `dpl_88F55qQSHtfRuUpivMcfQZZDZ8jr` (2026-09-29); carried by every later production deploy of `main` |
+

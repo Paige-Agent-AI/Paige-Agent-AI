@@ -43,7 +43,17 @@ const valid: CapabilityDefinition = {
     source: "server",
     tenantResolver: "current_user_tenant_id",
     actorResolver: "authenticated_user",
-    revalidateAt: ["before_execution"],
+    // ALL THREE authority seams. `defineCapability()` requires every one
+    // (defineCapability.ts:178-183); a subset throws "Capability tenant scope must revalidate at
+    // every authority seam." This read `["before_execution"]` from the day it shipped, so the one
+    // worked example in the repo — the file a first adopter copies — did not construct. It was
+    // invisible because `CapabilityTenantScope.revalidateAt` is typed as a plain readonly array
+    // (types.ts:59-63) rather than a 3-tuple, so the type contract accepted it; because this file
+    // lives under `scripts/` and the lint's SCAN_ROOTS are `supabase/functions` and `src`, so no
+    // rule ever read it; and because nothing imports it, so `defineCapability(valid)` at the bottom
+    // was never EXECUTED — only typechecked. Three layers of checking, none of which ran the
+    // constructor. The paired-invariant test now does exactly that, so this cannot silently rot again.
+    revalidateAt: ["before_availability", "before_execution", "before_receipt"],
   },
   availability: { resolver: "paige-capability-status", states: ["live", "unavailable"] },
   providerBinding: { kind: "internal", operation: "documents.read", connectionResolver: null },

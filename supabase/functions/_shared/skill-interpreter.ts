@@ -139,7 +139,7 @@ export async function interpretSkill(deps: InterpretDeps, ctx: InterpretCtx): Pr
     try {
       const { data: contact } = await deps.admin
         .from("clients")
-        .select("id, first_name, last_name, email, tenant_id")
+        .select("id, first_name, last_name, tenant_id")
         .eq("id", contactId)
         .eq("tenant_id", tenantId) // §9 — only the caller's own tenant's contact
         .maybeSingle();
@@ -461,7 +461,7 @@ export async function interpretSkill(deps: InterpretDeps, ctx: InterpretCtx): Pr
       // requires an OPERATOR role (assertTenantScope, model-router-gates.ts) and forces the §2
       // finance-in-default ban + §3 platform-voice rewrite on the OUTPUT. Mapping scoping='platform'
       // → is_platform_default=true (the pre-#135 bug) made assertTenantScope THROW §9 for every real
-      // caller (skill-runner passes actorRole 'admin'/'mcp'/'coach'/'paige'/'system' — none operator),
+      // caller (skill-runner passes actorRole 'admin'/'mcp'/'member'/'paige'/'system' — none operator),
       // so EVERY seeded platform-baseline skill failed at runtime. It was also a latent §2 over-reach:
       // the finance ban is a PLATFORM-DEFAULT rule, but finance/credit is an ALLOWED per-tenant OPT-IN
       // (§2 clarification) — forcing the default-scan on a tenant's own run would wrongly block a

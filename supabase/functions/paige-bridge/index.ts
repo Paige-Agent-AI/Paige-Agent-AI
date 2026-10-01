@@ -5,6 +5,12 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { z } from "npm:zod@3.23.8";
+import {
+  CLIENT_CONTACT_METHODS_EMBED,
+  findFirstClientByEmailAnyWorkspace,
+  withPrimaryAddresses,
+} from "../_shared/contact-methods.ts";
+import { bridgeRateLimit, handleContactSyncRequest } from "./contact-mirror.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -34,29 +40,6 @@ function fail(verb: string, status: number, error: string, details?: unknown) {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
     status,
   });
-}
-
-function splitName(full?: string | null): { first: string; last: string } {
-  const s = (full ?? "").trim();
-  if (!s) return { first: "Unknown", last: "" };
-  const idx = s.indexOf(" ");
-  if (idx < 0) return { first: s, last: "" };
-  return { first: s.slice(0, idx), last: s.slice(idx + 1).trim() };
-}
-
-async function resolveOwnerUserId(): Promise<string | null> {
-  const { data: owner } = await supabase
-    .from("app_settings_owner")
-    .select("owner_email")
-    .limit(1)
-    .maybeSingle();
-  if (!owner?.owner_email) return null;
-  // auth admin lookup
-  const { data: list } = await supabase.auth.admin.listUsers();
-  const u = list?.users?.find(
-    (x) => (x.email ?? "").toLowerCase() === String(owner.owner_email).toLowerCase(),
-  );
-  return u?.id ?? null;
 }
 
 // ---------- verb schemas ----------
@@ -109,20 +92,6 @@ const LogMessageSendSchema = z.object({
 });
 
 const TierEnum = z.enum(["lead","standard","premium","vip","internal","staff","free"]);
-
-const UpsertContactMirrorSchema = z.object({
-  email: z.string().email(),
-  first_name: z.string().max(100).nullable().optional(),
-  last_name: z.string().max(100).nullable().optional(),
-  full_name: z.string().max(200).nullable().optional(),
-  phone: z.string().max(50).nullable().optional(),
-  source: z.string().max(50).nullable().optional(),
-  tier: TierEnum.nullable().optional(),
-  ghl_contact_id: z.string().max(100).nullable().optional(),
-  custom_fields: z.record(z.any()).optional(),
-  assigned_to_email: z.string().email().nullable().optional(),
-  metadata: z.record(z.any()).optional(),
-});
 
 const NotifyAdminSchema = z.object({
   severity: z.enum(["info", "warning", "urgent"]).default("info"),
@@ -192,6 +161,12 @@ Deno.serve(async (req) => {
   let verb = "unknown";
 
   try {
+    const body = await req.json().catch(() => null) as { verb?: string; payload?: unknown } | null;
+    if (body?.verb === "upsert_contact_mirror") {
+      // No legacy global-key fallback: the transactional writer authenticates this connection
+      // and resolves its fixed business. Unrelated legacy verbs retain their current routing.
+      return await handleContactSyncRequest(supabase, req, body.payload);
+    }
     if (!BRIDGE_API_KEY) return fail(verb, 500, "Bridge not configured");
 
     const auth = req.headers.get("Authorization") ?? "";
@@ -205,28 +180,8 @@ Deno.serve(async (req) => {
     }
 
 
-    // Coarse rate limit per-IP (best-effort; reuses api_rate_limits sentinel uuid).
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "0.0.0.0";
-    try {
-      // Sentinel user id derived from ip for bucketing
-      const enc = new TextEncoder().encode(ip);
-      const hash = await crypto.subtle.digest("SHA-256", enc);
-      const bytes = new Uint8Array(hash).slice(0, 16);
-      // Make a deterministic uuid v4-ish
-      bytes[6] = (bytes[6] & 0x0f) | 0x40;
-      bytes[8] = (bytes[8] & 0x3f) | 0x80;
-      const hex = Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
-      const sentinel = `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-      const { data: allowed } = await supabase.rpc("check_rate_limit", {
-        _user_id: sentinel,
-        _function_name: "paige-bridge",
-        _max_requests: 600,
-        _window_minutes: 1,
-      });
-      if (allowed === false) return fail(verb, 429, "Rate limit exceeded");
-    } catch { /* swallow rate-limit errors */ }
+    if (!(await bridgeRateLimit(supabase, req))) return fail(verb, 429, "Rate limit exceeded");
 
-    const body = await req.json().catch(() => null) as { verb?: string; payload?: unknown } | null;
     if (!body || typeof body.verb !== "string") {
       return fail(verb, 400, "Body must be { verb, payload }");
     }
@@ -244,13 +199,7 @@ Deno.serve(async (req) => {
         const p = CreatePendingApprovalSchema.parse(payload);
         let contactId = p.contact_id ?? null;
         if (!contactId && p.contact_email) {
-          const { data: c } = await supabase
-            .from("clients")
-            .select("id")
-            .ilike("email", p.contact_email)
-            .limit(1)
-            .maybeSingle();
-          contactId = c?.id ?? null;
+          contactId = (await findFirstClientByEmailAnyWorkspace(supabase, p.contact_email, "paige-bridge"))?.id ?? null;
         }
         const { data, error } = await supabase
           .from("paige_pending_approvals")
@@ -358,116 +307,6 @@ Deno.serve(async (req) => {
       }
 
       // -----------------------------------------------------------------
-      case "upsert_contact_mirror": {
-        const p = UpsertContactMirrorSchema.parse(payload);
-        const emailLower = p.email.toLowerCase();
-        const fallback = splitName(p.full_name);
-        const first = (p.first_name ?? fallback.first ?? "Unknown").trim();
-        const last = (p.last_name ?? fallback.last ?? "").trim();
-
-        const ownerId = await resolveOwnerUserId();
-        if (!ownerId) return fail(verb, 500, "Platform owner not resolvable for created_by");
-
-        const { data: ownerProfile } = await supabase.from("profiles")
-          .select("active_tenant_id").eq("user_id", ownerId).maybeSingle();
-        const tenantId = ownerProfile?.active_tenant_id ?? null;
-        if (!tenantId) return fail(verb, 409, "tenant_not_resolved");
-
-        const nowIso = new Date().toISOString();
-
-        // Resolve assigned user mapping (auth.users by email)
-        let assignedUserId: string | null = null;
-        if (p.assigned_to_email) {
-          const { data: list } = await supabase.auth.admin.listUsers();
-          const u = list?.users?.find(
-            (x) => (x.email ?? "").toLowerCase() === p.assigned_to_email!.toLowerCase(),
-          );
-          assignedUserId = u?.id ?? null;
-        }
-
-        // Try by ghl_contact_id first, then by email
-        let existingId: string | null = null;
-        if (p.ghl_contact_id) {
-          const { data: byGhl } = await supabase
-            .from("clients")
-            .select("id")
-            .eq("ghl_contact_id", p.ghl_contact_id)
-            .eq("tenant_id", tenantId)
-            .limit(1)
-            .maybeSingle();
-          existingId = byGhl?.id ?? null;
-        }
-        if (!existingId) {
-          const { data: byEmail } = await supabase
-            .from("clients")
-            .select("id")
-            .ilike("email", emailLower)
-            .eq("tenant_id", tenantId)
-            .limit(1)
-            .maybeSingle();
-          existingId = byEmail?.id ?? null;
-        }
-
-        const sharedPatch: Record<string, unknown> = {
-          first_name: first || "Unknown",
-          last_name: last,
-          mirror_source: "mma_os",
-          last_mirrored_at: nowIso,
-        };
-        if (p.phone) sharedPatch.phone = p.phone;
-        if (p.tier) sharedPatch.tier = p.tier;
-        if (p.ghl_contact_id) sharedPatch.ghl_contact_id = p.ghl_contact_id;
-        if (p.source) sharedPatch.source = p.source;
-
-        if (existingId) {
-          const { error } = await supabase.from("clients").update(sharedPatch).eq("id", existingId).eq("tenant_id", tenantId);
-          if (error) throw error;
-          if (assignedUserId) {
-            await supabase
-              .from("paige_coach_assignments")
-              .upsert(
-                {
-                  contact_id: existingId,
-                  assigned_role: "lead_owner",
-                  rep_user_id: assignedUserId,
-                  active: true,
-                  metadata: { source: "mma_os_assigned_to" },
-                },
-                { onConflict: "contact_id,assigned_role" } as any,
-              );
-          }
-          return ok(verb, { client_id: existingId, action: "updated" });
-        }
-
-        const { data, error } = await supabase
-          .from("clients")
-          .insert({
-            ...sharedPatch,
-            created_by: ownerId,
-            tenant_id: tenantId,
-            email: emailLower,
-            status: "active",
-            source: p.source ?? "mma_bridge",
-            lifecycle_stage: "new_lead", // #172: 'lead' violates clients_lifecycle_stage_chk (23514)
-            created_by_channel_type: "import", // #10 channel-of-origin (external CRM mirror/sync)
-          })
-          .select("id")
-          .single();
-        if (error) throw error;
-
-        if (assignedUserId) {
-          await supabase.from("paige_coach_assignments").insert({
-            contact_id: data.id,
-            assigned_role: "lead_owner",
-            rep_user_id: assignedUserId,
-            active: true,
-            metadata: { source: "mma_os_assigned_to" },
-          });
-        }
-        return ok(verb, { client_id: data.id, action: "created" });
-      }
-
-      // -----------------------------------------------------------------
       case "notify_admin": {
         const p = NotifyAdminSchema.parse(payload);
         const { data, error } = await supabase
@@ -512,12 +351,7 @@ Deno.serve(async (req) => {
       // -----------------------------------------------------------------
       case "get_coach_for_client": {
         const p = GetCoachForClientSchema.parse(payload);
-        const { data: client } = await supabase
-          .from("clients")
-          .select("id, email")
-          .ilike("email", p.email)
-          .limit(1)
-          .maybeSingle();
+        const client = await findFirstClientByEmailAnyWorkspace(supabase, p.email, "paige-bridge");
         if (!client?.id) return ok(verb, { client_id: null, assignments: [] });
 
         const { data: rows, error } = await supabase
@@ -547,8 +381,7 @@ Deno.serve(async (req) => {
       // -----------------------------------------------------------------
       case "get_opportunities_for_contact": {
         const p = GetOpportunitiesForContactSchema.parse(payload);
-        const { data: client } = await supabase
-          .from("clients").select("id").ilike("email", p.email).limit(1).maybeSingle();
+        const client = await findFirstClientByEmailAnyWorkspace(supabase, p.email, "paige-bridge");
         if (!client?.id) return ok(verb, { client_id: null, deals: [] });
 
         const { data, error } = await supabase
@@ -582,13 +415,16 @@ Deno.serve(async (req) => {
         const p = ListModifiedClientsSinceSchema.parse(payload);
         const { data, error } = await supabase
           .from("clients")
-          .select("id, email, first_name, last_name, phone, tier, ghl_contact_id, lifecycle_stage, lead_score, tags, updated_at, mirror_source")
+          .select(`id, first_name, last_name, tier, ghl_contact_id, lifecycle_stage, lead_score, tags, updated_at, mirror_source, ${CLIENT_CONTACT_METHODS_EMBED}`)
           .gt("updated_at", p.since)
           .or("mirror_source.is.null,mirror_source.neq.mma_os")
           .order("updated_at", { ascending: true })
           .limit(p.limit);
         if (error) throw error;
-        return ok(verb, { count: data?.length ?? 0, clients: data ?? [] });
+        // Each contact's PRIMARY email and phone, read from its contact methods (an address change
+        // moves the contact's updated_at, so it is picked up here too).
+        const clients = (data ?? []).map((row: { client_contact_methods?: unknown }) => withPrimaryAddresses(row));
+        return ok(verb, { count: clients.length, clients });
       }
 
       // -----------------------------------------------------------------
@@ -642,9 +478,7 @@ Deno.serve(async (req) => {
         // Resolve client_id
         let clientId = p.client_id ?? null;
         if (!clientId && p.client_email) {
-          const { data: c } = await supabase
-            .from("clients").select("id").ilike("email", p.client_email).limit(1).maybeSingle();
-          clientId = c?.id ?? null;
+          clientId = (await findFirstClientByEmailAnyWorkspace(supabase, p.client_email, "paige-bridge"))?.id ?? null;
         }
         if (!clientId) return fail(verb, 404, "client_not_found");
 

@@ -35,6 +35,7 @@
 import type { SupabaseAdminLike } from "./twilio.ts";
 import type { ChannelType } from "./channel-adapters.ts";
 import { runPreSend } from "./pre-send-pipeline.ts";
+import { primaryContactMethod } from "./contact-methods.ts";
 
 type RpcError = { message?: string } | null;
 
@@ -223,16 +224,19 @@ async function readContactAddresses(
   contactId: string,
 ): Promise<{ email: string | null; phone: string | null } | null> {
   try {
+    // The contact's PRIMARY email and phone — a contact holds several of each
+    // (public.client_contact_methods), and a share goes to the primary of its channel's kind.
     const { data, error } = await admin
       .from("clients")
-      .select("email, phone")
+      .select("id, client_contact_methods(kind, value, is_primary)")
       .eq("id", contactId)
       .eq("tenant_id", tenantId) // §9 defense-in-depth: a cross-tenant id matches no row
       .maybeSingle();
     if (error || !data) return null;
+    const methods = (data as Record<string, unknown>).client_contact_methods as Parameters<typeof primaryContactMethod>[0];
     return {
-      email: stringValue((data as Record<string, unknown>).email),
-      phone: stringValue((data as Record<string, unknown>).phone),
+      email: stringValue(primaryContactMethod(methods, "email")),
+      phone: stringValue(primaryContactMethod(methods, "phone")),
     };
   } catch {
     return null;

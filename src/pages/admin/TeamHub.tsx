@@ -63,7 +63,7 @@ function TeamFloor() {
   const handoffs = useHandoffQueue(activeTenantId);
 
   const canManagePresence =
-    isPlatformOwner || roles.includes("admin") || roles.includes("coach") || roles.includes("manager");
+    isPlatformOwner || roles.includes("admin") || roles.includes("manager");
 
   // "My Queue" handoff filter (client-side; never a tenant param, never widens a lower role).
   const handoffItems = useMemo(() => {
@@ -79,7 +79,7 @@ function TeamFloor() {
   const ownerUnscoped = isPlatformOwner && !activeTenantId;
   const hasHandoffs = handoffItems.length > 0;
 
-  // H2: /admin/coaches redirects to /admin/team?role=coach — open the roster coach-filtered.
+  // ?role=<filter> opens the roster pre-filtered; a value the roster does not know shows everyone.
   const [params] = useSearchParams();
   const roleParam = params.get("role");
 
@@ -161,7 +161,7 @@ export default function TeamHub() {
   // The whole floor is staff-only; Members & Roles inside stays admin-only (its own gate).
   // A non-staff user gets RoleGate's default "Restricted area" panel.
   return (
-    <RoleGate allow={["admin", "coach", "sales_rep", "cs_rep", "finance", "manager", "owner", "viewer"]}>
+    <RoleGate allow={["admin", "sales_rep", "cs_rep", "finance", "manager", "owner", "viewer"]}>
       <TeamFloor />
     </RoleGate>
   );

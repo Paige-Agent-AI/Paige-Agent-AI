@@ -17,6 +17,26 @@ describe("PaigeCrmResultCard", () => {
     expect(html).toContain("Open exact record");
   });
 
+  it("says Added for a record it created, never Updated", () => {
+    for (const action of ["contact.create", "company.create", "task.create", "deal.create"]) {
+      const html = renderToStaticMarkup(<PaigeCrmResultCard result={{
+        action,
+        outcome: "succeeded",
+        readback: { id: "rec-1", client_ref: "John Coleman" },
+        receipt_recorded: true,
+        record_locator: null,
+      }} />);
+      expect(html).toContain(">Added</p>");
+      expect(html).not.toMatch(/Updated|create/);
+      expect(html).toContain("John Coleman");
+    }
+    // Everything else keeps saying what it did.
+    const updated = renderToStaticMarkup(<PaigeCrmResultCard result={{
+      action: "contact.update", outcome: "succeeded", readback: { id: "rec-1" }, receipt_recorded: true, record_locator: null,
+    }} />);
+    expect(updated).toContain("Updated: contact update");
+  });
+
   it("labels activity as internal-only and does not invent a link", () => {
     const html = renderToStaticMarkup(<PaigeCrmResultCard result={{
       action: "activity.log",

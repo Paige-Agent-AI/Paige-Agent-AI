@@ -200,7 +200,7 @@ describe("PaigeAIChat ComposerScopeState integration", () => {
       let expireTurn: (() => void) | undefined;
       const realSetTimeout = window.setTimeout.bind(window);
       vi.spyOn(window, "setTimeout").mockImplementation(((fn: TimerHandler, delay?: number, ...args: unknown[]) => {
-        if (delay === 45_000) expireTurn = fn as () => void;
+        if (delay === 360_000) expireTurn = fn as () => void;
         return realSetTimeout(fn, delay, ...args);
       }) as typeof window.setTimeout);
       vi.mocked(fetch).mockResolvedValueOnce(response);

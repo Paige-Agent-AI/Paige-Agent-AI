@@ -16,7 +16,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Users, Search, TrendingUp, UserCheck, UserPlus, Upload, Building2, MoreHorizontal, Trash2, UserCog, ArrowRightLeft, Mail, Send, Eye, LogOut, Sparkles, Layers } from "lucide-react";
+import { Users, Search, TrendingUp, UserCheck, UserPlus, Upload, Building2, MoreHorizontal, Trash2, UserCog, ArrowRightLeft, Mail, Send, Eye, LogOut, Sparkles, Layers, Loader2 } from "lucide-react";
 import { AddClientDialog } from "./AddClientDialog";
 import { AddInternalClientDialog } from "./AddInternalClientDialog";
 import { QuickUploadReportModal } from "./QuickUploadReportModal";
@@ -24,6 +24,10 @@ import { useDashboardMode } from "@/contexts/DashboardModeContext";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { useTierFeatures } from "@/hooks/useTierFeatures";
 import { toast } from "sonner";
+import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses, type WithClientContactMethods } from "@/lib/contact-methods";
+
+// Widened to string: the generated types do not know the contact-methods embed yet.
+const INTERNAL_CLIENTS_SELECT: string = `*,${CLIENT_CONTACT_METHODS_EMBED}`;
 
 interface InternalClient {
   id: string;
@@ -67,7 +71,7 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
   const { setMode } = useDashboardMode();
   const { activeTenantId } = useTenantContext();
   // §60 tier lock (owner-ruled 2026-08-11): the consumer/client ("Client" role)
-  // portal invite is solo + sub_account ONLY. Staff-role invites (coach/admin/…)
+  // portal invite is solo + sub_account ONLY. Staff-role invites (admin/…)
   // are untouched — an Agency legitimately invites staff, just not a direct
   // consumer client book.
   const { has: hasTierFeature } = useTierFeatures();
@@ -95,8 +99,9 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   // §60: default to the consumer "Client" role only where it's available; on
-  // Agency/Enterprise/God the "Client" option is hidden, so default to "coach".
-  const [inviteRole, setInviteRole] = useState<string>(canInvitePortal ? "user" : "coach");
+  // Agency/Enterprise/God the "Client" option is hidden, so default to the least-privileged
+  // staff option, "moderator".
+  const [inviteRole, setInviteRole] = useState<string>(canInvitePortal ? "user" : "moderator");
   const [inviteSending, setInviteSending] = useState(false);
 
   // Business-limit override dialog state
@@ -182,11 +187,13 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
 
       const { data: intClients } = await supabase
         .from("clients" as any)
-        .select("*")
+        .select(INTERNAL_CLIENTS_SELECT)
         .eq("tenant_id", activeTenantId)
         .order("created_at", { ascending: false });
 
-      setInternalClients((intClients as any[] || []) as InternalClient[]);
+      // `email` / `phone` are each contact's primary addresses, from its contact methods.
+      setInternalClients(((intClients ?? []) as unknown as Array<InternalClient & WithClientContactMethods>)
+        .map((row) => withPrimaryAddresses(row)));
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -227,7 +234,7 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
   });
   const teamUsers = authClients.filter((c) => {
     const r = c.roles || [];
-    return r.some((role) => ["admin", "coach", "moderator"].includes(role));
+    return r.some((role) => ["admin", "moderator"].includes(role));
   });
 
   const filteredInternal = internalClients.filter((c) => {
@@ -262,16 +269,14 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
     (acc, u) => {
       const r = u.roles || [];
       if (r.includes("admin")) acc.admin++;
-      if (r.includes("coach")) acc.coach++;
       if (r.includes("moderator")) acc.moderator++;
       return acc;
     },
-    { admin: 0, coach: 0, moderator: 0 },
+    { admin: 0, moderator: 0 },
   );
   const teamRoleSummary =
     [
       teamRoleCounts.admin ? `${teamRoleCounts.admin} Admin` : null,
-      teamRoleCounts.coach ? `${teamRoleCounts.coach} Coach` : null,
       teamRoleCounts.moderator ? `${teamRoleCounts.moderator} Mod` : null,
     ]
       .filter(Boolean)
@@ -462,7 +467,7 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
             : `Client portal invite sent to ${inviteEmail}`,
         );
       } else {
-        // Staff roles (coach/moderator/admin/affiliate) keep the admin path.
+        // Staff roles (moderator/admin/affiliate) keep the admin path.
         const { data: { session } } = await supabase.auth.getSession();
         const { data, error } = await supabase.functions.invoke("send-admin-invitation", {
           body: { email: inviteEmail.trim(), role: inviteRole },
@@ -472,7 +477,7 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
         if (data?.error) throw new Error(data.error);
 
         const roleLabels: Record<string, string> = {
-          admin: "Administrator", coach: "Coach", moderator: "Moderator",
+          admin: "Administrator", moderator: "Moderator",
           affiliate: "Affiliate", user: "Client",
         };
         toast.success(`Invitation sent to ${inviteEmail} as ${roleLabels[inviteRole] || inviteRole}`);
@@ -482,7 +487,7 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
       // §60: mirror the initial default — never reset to "user" (Client) on a tier
       // where that option is hidden, which would leave the Select bound to an
       // invisible value (blank trigger) on the next open.
-      setInviteRole(canInvitePortal ? "user" : "coach");
+      setInviteRole(canInvitePortal ? "user" : "moderator");
     } catch (err: any) {
       console.error("Error sending invite:", err);
       toast.error(err.message || "Failed to send invitation");
@@ -505,7 +510,6 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
     const roleNoun = (role: string) => {
       switch (role) {
         case "admin": return "admin";
-        case "coach": return "coach";
         case "moderator": return "moderator";
         case "affiliate": return "affiliate";
         default: return "member";
@@ -602,7 +606,6 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="user">User</SelectItem>
-                      <SelectItem value="coach">Coach</SelectItem>
                       <SelectItem value="moderator">Moderator</SelectItem>
                       <SelectItem value="admin">Admin</SelectItem>
                       <SelectItem value="affiliate">Affiliate</SelectItem>
@@ -669,7 +672,6 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="user">User</SelectItem>
-                          <SelectItem value="coach">Coach</SelectItem>
                           <SelectItem value="moderator">Moderator</SelectItem>
                           <SelectItem value="admin">Admin</SelectItem>
                           <SelectItem value="affiliate">Affiliate</SelectItem>
@@ -693,7 +695,7 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden />
       </div>
     );
   }
@@ -1112,7 +1114,6 @@ export function ClientManagementDashboard({ onViewClient, onViewInternalClient }
                 <SelectContent>
                   {/* §60: consumer "Client" invite — solo + sub_account only. */}
                   {canInvitePortal && <SelectItem value="user">Client</SelectItem>}
-                  <SelectItem value="coach">Coach</SelectItem>
                   <SelectItem value="moderator">Moderator</SelectItem>
                   <SelectItem value="admin">Administrator</SelectItem>
                   <SelectItem value="affiliate">Affiliate Partner</SelectItem>

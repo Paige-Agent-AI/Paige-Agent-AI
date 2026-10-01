@@ -32,6 +32,7 @@ import {
 } from "../_shared/paige-skill/email-approval.ts";
 import { confirmFingerprint } from "../_shared/confirm-fingerprint.ts";
 import { classifyBusinessVerifyResponse } from "../_shared/business-verify-outcome.ts";
+import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses } from "../_shared/contact-methods.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -315,8 +316,8 @@ async function resolveSkillCaller(
     // protection; a stricter staff-only access policy is a separate §51 decision, out of this slice.
     access: { allowed: true },
     isApprovingAuthority,
-    // 'admin' | 'coach' — both non-operator, which the interpreter's provenance gate requires.
-    actorRole: isApprovingAuthority ? "admin" : "coach",
+    // 'admin' | 'member' — both non-operator, which the interpreter's provenance gate requires.
+    actorRole: isApprovingAuthority ? "admin" : "member",
   };
 }
 
@@ -368,9 +369,11 @@ async function runDraftAndEmailDocument(
 
   // §9 — look up the contact SCOPED to the caller's resolved tenant. A cross-tenant contact_id returns
   // nothing, which the pure flow then denies before any draft or send.
-  const { data: contact } = await admin
-    .from("clients").select("id, first_name, last_name, email, tenant_id")
+  // The draft goes to the contact's PRIMARY email.
+  const { data: contactRow } = await admin
+    .from("clients").select(`id, first_name, last_name, tenant_id, ${CLIENT_CONTACT_METHODS_EMBED}`)
     .eq("id", contactId).eq("tenant_id", callerTenantId).maybeSingle();
+  const contact = withPrimaryAddresses(contactRow);
 
   const docType = (body.inputs?.doc_type as string) ?? "summary";
   const prompt = (body.inputs?.prompt as string) ?? "";
@@ -855,7 +858,10 @@ Deno.serve(async (req) => {
           if (!contact_id) throw new Error("contact_id required");
           // §9 — scope the contact to the CALLER's resolved tenant. A cross-tenant contact_id returns
           // nothing and is refused BEFORE any memory is read or written under another tenant's client.
-          const { data: contact } = await admin.from("clients").select("*").eq("id", contact_id).eq("tenant_id", callerTenantId).maybeSingle();
+          // The contact's PRIMARY email and phone ride along as `email` / `phone`, read from its
+          // contact methods (the clients row holds no address).
+          const { data: contactRow } = await admin.from("clients").select(`*, ${CLIENT_CONTACT_METHODS_EMBED}`).eq("id", contact_id).eq("tenant_id", callerTenantId).maybeSingle();
+          const contact = withPrimaryAddresses(contactRow);
           if (!contact) throw new Error("contact not found in your workspace");
           // client_memory carries no tenant_id; the contact above is already proven to be the caller's,
           // so its memory (keyed by client_id) is in-tenant by construction.

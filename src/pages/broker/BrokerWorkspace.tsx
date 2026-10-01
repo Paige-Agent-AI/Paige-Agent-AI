@@ -30,7 +30,7 @@ const BrokerWorkspaceInner = () => {
   const { toast } = useToast();
   const [isStaff, setIsStaff] = useState(false);
 
-  // Bounce signed-out users to /auth and detect admin/coach role for "Back to Admin" button.
+  // Bounce signed-out users to /auth and detect the admin role for the "Back to Admin" button.
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_evt, sess) => {
       if (!sess) navigate("/auth", { replace: true });
@@ -44,9 +44,8 @@ const BrokerWorkspaceInner = () => {
         .from("user_roles")
         .select("role")
         .eq("user_id", session.user.id);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- pre-existing type debt; hotfix changes only the retired route destination
-      const roleList = (roles || []).map((r: any) => r.role);
-      setIsStaff(roleList.includes("admin") || roleList.includes("coach"));
+      const roleList = (roles || []).map((r: { role: string }) => r.role);
+      setIsStaff(roleList.includes("admin"));
     });
     return () => subscription.unsubscribe();
   }, [navigate]);

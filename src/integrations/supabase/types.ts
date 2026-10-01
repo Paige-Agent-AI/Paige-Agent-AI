@@ -19223,95 +19223,30 @@ export type Database = {
       }
       coach_client_profiles_safe: {
         Row: {
-          active_tenant_id: string | null
           avatar_url: string | null
-          business_name: string | null
-          created_at: string | null
-          dashboard_mode: string | null
-          experience_level: string | null
           full_name: string | null
-          goal_timeline: string | null
-          has_broker_access: boolean | null
           id: string | null
-          intake_completed: boolean | null
-          intake_completed_at: string | null
-          is_complimentary: boolean | null
-          onboarding_completed: boolean | null
-          onboarding_step: string | null
-          pme_phase: string | null
-          primary_goal: string | null
-          primary_goal_category: string | null
-          staff_notes: string | null
           suspended_at: string | null
           suspended_reason: string | null
-          updated_at: string | null
           user_id: string | null
-          website_url: string | null
-          work_email: string | null
         }
         Insert: {
-          active_tenant_id?: string | null
           avatar_url?: string | null
-          business_name?: string | null
-          created_at?: string | null
-          dashboard_mode?: string | null
-          experience_level?: string | null
           full_name?: string | null
-          goal_timeline?: string | null
-          has_broker_access?: boolean | null
           id?: string | null
-          intake_completed?: boolean | null
-          intake_completed_at?: string | null
-          is_complimentary?: boolean | null
-          onboarding_completed?: boolean | null
-          onboarding_step?: string | null
-          pme_phase?: string | null
-          primary_goal?: string | null
-          primary_goal_category?: string | null
-          staff_notes?: string | null
           suspended_at?: string | null
           suspended_reason?: string | null
-          updated_at?: string | null
           user_id?: string | null
-          website_url?: string | null
-          work_email?: string | null
         }
         Update: {
-          active_tenant_id?: string | null
           avatar_url?: string | null
-          business_name?: string | null
-          created_at?: string | null
-          dashboard_mode?: string | null
-          experience_level?: string | null
           full_name?: string | null
-          goal_timeline?: string | null
-          has_broker_access?: boolean | null
           id?: string | null
-          intake_completed?: boolean | null
-          intake_completed_at?: string | null
-          is_complimentary?: boolean | null
-          onboarding_completed?: boolean | null
-          onboarding_step?: string | null
-          pme_phase?: string | null
-          primary_goal?: string | null
-          primary_goal_category?: string | null
-          staff_notes?: string | null
           suspended_at?: string | null
           suspended_reason?: string | null
-          updated_at?: string | null
           user_id?: string | null
-          website_url?: string | null
-          work_email?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_active_tenant_id_fkey"
-            columns: ["active_tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       contact_deal_rollup: {
         Row: {
@@ -19635,7 +19570,6 @@ export type Database = {
         Args: { p_actions: Json; p_contact_id: string }
         Returns: Json
       }
-      admin_remove_coach_role: { Args: { _user_id: string }; Returns: Json }
       admin_resume_customer_subscription: {
         Args: { _subscription_id: string }
         Returns: undefined
@@ -20894,6 +20828,7 @@ export type Database = {
       }
       handle_data_subject_request: {
         Args: {
+          _actor_user_id?: string
           _contact_id: string
           _corrections?: Json
           _reason?: string

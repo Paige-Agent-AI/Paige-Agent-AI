@@ -50,6 +50,14 @@ vi.mock("./data/useBusinessGamePlanMissions", async () => {
   return { ...actual, useBusinessGamePlanMissions: () => harness.mission };
 });
 
+// The approvals strip in the rail (#1129) reads tenant context and opens a live approvals
+// subscription. Its contract is proven in GamePlanApprovals.test.tsx; here it is a marker, and
+// the first test asserts the marker is still mounted in the rail, so the stub cannot hide the
+// strip being dropped.
+vi.mock("./GamePlanApprovals", () => ({
+  GamePlanApprovals: () => <div data-testid="game-plan-approvals" />,
+}));
+
 import { SoloGamePlanWorkspace } from "./SoloGamePlanWorkspace";
 import { getPaigeBusinessPlanScope, clearPaigeSurfaceScope } from "./paigeClientScope";
 
@@ -77,6 +85,7 @@ function click(label: string) {
 describe("Business Game Plan owner-complete vertical", () => {
   it("preserves Set your plan and replaces generic system/activity material with Plan in Motion", () => {
     render();
+    expect(host.querySelector('.sd-rail [data-testid="game-plan-approvals"]')).toBeTruthy();
     expect(host.textContent).toContain("Set your plan");
     expect(host.textContent).toContain("Current-quarter focus");
     expect(host.textContent).toContain("Success criteria");

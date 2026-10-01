@@ -19,6 +19,16 @@ import { describe, expect, it } from "vitest";
  *
  * So this guard is about the MODEL, not a style rule: a hard navigate inside the operator console
  * means someone has re-introduced "go somewhere else" as the shape of act-as.
+ *
+ * AMENDED 2026-09-27 — the one exception, and why it is not the old one-way door. Enter under the
+ * scope-only model recorded an audited act-as and left the operator on the directory: no tenant
+ * view, no exit, a band still reading "No tenant", and an audit row asserting access nobody had.
+ * The owner's defect report (2026-09-27) is that the operator must actually arrive in the tenant.
+ * `operator/actAs.ts` now lands them in that tenant's OWN workspace, and it may do so only because
+ * the far side now carries the audited exit (`WorkspaceExitControl` → `operator_exit_tenant`) in
+ * every shell an operator can land in; tenants whose shell cannot hold an operator are refused
+ * before anything is recorded. That module is the ONLY one allowed to navigate. Any other hard
+ * navigate under src/operator is still the old one-way door and still fails here.
  */
 describe("act-as changes scope, it does not navigate", () => {
   const OPERATOR = path.resolve(__dirname);
@@ -34,8 +44,12 @@ describe("act-as changes scope, it does not navigate", () => {
       return /\.tsx?$/.test(e.name) && !/\.test\.tsx?$/.test(e.name) ? [full] : [];
     });
 
-  it("no module under src/operator performs a hard navigate", () => {
+  // The act-as landing, paired with the exit on the far side. See the amendment above.
+  const LANDING = path.join(OPERATOR, "actAs.ts");
+
+  it("no module under src/operator performs a hard navigate, except the act-as landing", () => {
     const offenders = files(OPERATOR)
+      .filter((f) => f !== LANDING)
       .filter((f) => /window\s*\.\s*location\s*\.\s*(assign|replace)\s*\(|window\s*\.\s*location\s*\.\s*href\s*=/
         .test(stripComments(fs.readFileSync(f, "utf8"))))
       .map((f) => path.relative(OPERATOR, f));
@@ -47,5 +61,10 @@ describe("act-as changes scope, it does not navigate", () => {
     expect(/window\s*\.\s*location\s*\.\s*assign\s*\(/.test(stripComments(prose))).toBe(false);
     const real = `export function go() { window.location.assign("/admin"); }`;
     expect(/window\s*\.\s*location\s*\.\s*assign\s*\(/.test(stripComments(real))).toBe(true);
+  });
+
+  it("the act-as landing is the one navigate, and it exists", () => {
+    const src = stripComments(fs.readFileSync(LANDING, "utf8"));
+    expect(src.match(/window\s*\.\s*location\s*\.\s*assign\s*\(/g)?.length).toBe(1);
   });
 });

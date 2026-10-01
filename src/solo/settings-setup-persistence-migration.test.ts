@@ -58,7 +58,7 @@ describe("Solo Setup persistence repair migration", () => {
   });
 
   it("checks in a real-caller rollback proof for the full permission and privacy matrix", () => {
-    for (const marker of ["owner readback", "admin save", "member write", "anonymous read", "cross-tenant write", "missing version", "Vault exact value", "private PAIGE projection", "sensitive legal SELECT", "direct legal UPDATE", "first-use private contact readback", "first-use legal name durable readback", "inactive member safe legal SELECT", "legacy direct save EXECUTE"]) {
+    for (const marker of ["owner readback", "admin save", "member write", "anonymous read", "cross-tenant write", "missing version", "Vault exact value", "private PAIGE projection", "customer-bound draft", "confirmed in Setup", "sensitive legal SELECT", "direct legal UPDATE", "first-use private contact readback", "first-use legal name durable readback", "inactive member safe legal SELECT", "legacy direct save EXECUTE"]) {
       expect(rollbackProbe).toContain(marker);
     }
   });

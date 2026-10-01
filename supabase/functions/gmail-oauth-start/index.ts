@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // §9: only a tenant admin/coach may START a connect that provisions the tenant-wide
+    // §9: only a tenant admin may START a connect that provisions the tenant-wide
     // Gmail SENDING identity — connect and disconnect (gmail-disconnect) MUST require the
     // same role, else a low-privilege member could bind their personal mailbox as the
     // tenant's outbound sender. has_role is global, so the callback binds to the caller's
@@ -102,8 +102,7 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
     const { data: isAdmin } = await admin.rpc("has_role", { _user_id: user.id, _role: "admin" });
-    const { data: isCoach } = await admin.rpc("has_role", { _user_id: user.id, _role: "coach" });
-    if (!isAdmin && !isCoach) {
+    if (!isAdmin) {
       return new Response(JSON.stringify({ error: "forbidden" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

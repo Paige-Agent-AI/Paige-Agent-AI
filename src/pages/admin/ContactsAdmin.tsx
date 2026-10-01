@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { loadAssignableStaff } from "@/lib/team/assignableStaff";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,10 @@ import {
   resolvePersona, TEAM_VIEW_ENABLED, type CommandCenterView,
 } from "@/lib/roleViews/commandCenterRegistry";
 import { ClientsViewToggle } from "@/components/clients/ClientsViewToggle";
+import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses, type WithClientContactMethods } from "@/lib/contact-methods";
+
+// Widened to string: the generated types do not know the contact-methods embed yet.
+const CONTACTS_SELECT: string = `*,${CLIENT_CONTACT_METHODS_EMBED}`;
 
 type ClientRow = {
   id: string;
@@ -256,9 +261,9 @@ export default function ContactsAdmin() {
         return;
       }
 
-      const [clientsRes, rolesRes, typesRes] = await Promise.all([
-        supabase.from("clients").select("*").eq("tenant_id", activeTenantId).order("created_at", { ascending: false }),
-        supabase.from("user_roles").select("user_id").eq("role", "coach"),
+      const [clientsRes, staff, typesRes] = await Promise.all([
+        supabase.from("clients").select(CONTACTS_SELECT).eq("tenant_id", activeTenantId).order("created_at", { ascending: false }),
+        loadAssignableStaff(),
         // client_types HAS its own tenant_id (server-derived from the parent client),
         // so it takes the same explicit active-tenant filter (§9).
         fromUntyped("client_types").select("contact_id,type").eq("tenant_id", activeTenantId),
@@ -267,7 +272,9 @@ export default function ContactsAdmin() {
       // `as unknown as` (not `as any`, lint-clean): generated types.ts still lacks the
       // 1c-viii-a clients.temperature column, so the row shape doesn't overlap ClientRow
       // until types.ts is regenerated (tracked #234). The column exists at runtime.
-      const tenantClients = (clientsRes.data || []) as unknown as ClientRow[];
+      // `email` / `phone` are each contact's primary addresses, read from its contact methods.
+      const tenantClients = ((clientsRes.data || []) as unknown as Array<ClientRow & WithClientContactMethods>)
+        .map((row) => withPrimaryAddresses(row));
       setClients(tenantClients);
       const tenantClientIds = new Set(tenantClients.map((c) => c.id));
 
@@ -280,14 +287,7 @@ export default function ContactsAdmin() {
       });
       setPartnerIds(partnerSet);
 
-      const coachIds = (rolesRes.data || []).map((r) => r.user_id);
-      if (coachIds.length) {
-        const { data: profs } = await supabase
-          .from("profiles").select("user_id, full_name").in("user_id", coachIds);
-        setCoaches((profs || []).map((p) => ({
-          user_id: p.user_id, name: p.full_name || "Unnamed Coach",
-        })));
-      }
+      setCoaches(staff);
 
       // contact_deal_rollup is a security_invoker VIEW with NO tenant_id column, so under
       // the clients owner-bypass an unbounded read returns cross-tenant rows — for the

@@ -21,6 +21,12 @@ const ownerHarness = vi.hoisted(() => ({ conversations: 0, calendars: 0, portals
 const editorHarness = vi.hoisted(() => ({
   rpc: vi.fn(async (..._args: unknown[]) => ({ data: [] })),
   upsert: vi.fn(async (..._args: unknown[]) => "saved-contact"),
+  // What `clients` answers when the editor re-reads a contact after a stale refusal.
+  latest: { data: null as unknown, error: null as unknown },
+  from: vi.fn((_table: string) => {
+    const chain = { select: () => chain, eq: () => chain, maybeSingle: async () => editorHarness.latest };
+    return chain;
+  }),
 }));
 
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => useTenantContext() }));
@@ -56,7 +62,7 @@ vi.mock("@/lib/routing/useSubtabRoute", () => ({ useSubtabRoute: (...args: unkno
 vi.mock("./useTenantRelationshipsData", () => ({
   useTenantRelationshipsData: (...args: unknown[]) => useTenantRelationshipsData(...args),
 }));
-vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: editorHarness.rpc } }));
+vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: editorHarness.rpc, from: editorHarness.from } }));
 vi.mock("./contactUpsert", () => ({
   upsertRelationshipContact: (...args: unknown[]) => editorHarness.upsert(...args),
 }));
@@ -66,11 +72,17 @@ vi.mock("./contactUpsert", () => ({
 const baseData = {
   people: [{
     id: "p-1",
+    firstName: "Supplied",
+    lastName: "Person",
     name: "Supplied Person",
     recordType: "person",
     company: "Supplied Co",
     email: "person@example.test",
     phone: "+1 202 555 0142",
+    contactMethods: [
+      { id: "m-e1", kind: "email", value: "person@example.test", label: "Work", isPrimary: true },
+      { id: "m-p1", kind: "phone", value: "+1 202 555 0142", label: "Mobile", isPrimary: true },
+    ],
     title: "Founder",
     website: "https://example.test",
     location: "Atlanta, GA",
@@ -115,7 +127,10 @@ describe("tenant Relationships / Clients workspace", () => {
     useSubtabRoute.mockReset();
     useTenantRelationshipsData.mockReset();
     editorHarness.rpc.mockClear();
-    editorHarness.upsert.mockClear();
+    editorHarness.upsert.mockReset();
+    editorHarness.upsert.mockImplementation(async () => "saved-contact");
+    editorHarness.from.mockClear();
+    editorHarness.latest = { data: null, error: null };
     useTenantContext.mockReturnValue({
       activeTenantId: "tenant-solo",
       activeTenant: { id: "tenant-solo", name: "Supplied Workspace", account_type: "standalone", parent_tenant_id: null },
@@ -321,6 +336,270 @@ describe("tenant Relationships / Clients workspace", () => {
     await act(async () => Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((button) => button.textContent === "Return to saved contact")?.click());
     expect(host.querySelector("[data-contact-editor]")).toBeNull();
     expect(host.textContent).toContain("Avery Contact");
+    act(() => root.unmount());
+    host.remove();
+  });
+
+  it("edits every address of an existing contact and saves the complete ordered list", async () => {
+    useSubtabRoute.mockImplementation((_tier: string, _branch: string, initial: string) => React.useState(initial));
+    useTenantRelationshipsData.mockReturnValue(baseData);
+    editorHarness.upsert.mockResolvedValueOnce("p-1");
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    const type = async (input: HTMLInputElement | null | undefined, value: string) => act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(input, value);
+      input?.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    const button = (label: string) => Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((b) => b.textContent === label || b.getAttribute("aria-label") === label);
+    await act(async () => root.render(<MemoryRouter initialEntries={["/solo/42/clients/people?person=p-1"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>));
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-contact-editor-origin="record-edit"]')?.click());
+
+    // The saved addresses open in the editor, primary first with its orb.
+    const emailRows = () => Array.from(host.querySelectorAll<HTMLElement>('[data-ctm-list="email"] [data-ctm-id]'));
+    expect(emailRows().map((row) => row.querySelector("input")?.value)).toEqual(["person@example.test"]);
+    expect(emailRows()[0].querySelector("[data-ctm-orb]")).not.toBeNull();
+
+    // Add a second email; it lands as a secondary with focus in it.
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-ctm-add="email"]')?.click());
+    const added = emailRows()[1];
+    expect(document.activeElement).toBe(added.querySelector("input"));
+    expect(added.classList.contains("is-primary")).toBe(false);
+    await type(added.querySelector("input"), "person.home@example.test");
+
+    // Make it primary: it moves to the top and the old primary steps down.
+    await act(async () => button("Make primary: person.home@example.test")?.click());
+    expect(emailRows().map((row) => `${row.querySelector("input")?.value}${row.classList.contains("is-primary") ? "*" : ""}`))
+      .toEqual(["person.home@example.test*", "person@example.test"]);
+    await vi.waitFor(() => expect(host.textContent).toContain("person.home@example.test is now the primary email; person@example.test is kept as a secondary."));
+
+    // Relabel it from the label list with the keyboard.
+    await act(async () => emailRows()[0].querySelector<HTMLButtonElement>("[data-ctm-label]")?.click());
+    const options = () => Array.from(host.querySelectorAll<HTMLLIElement>('[role="option"]'));
+    expect(options().map((o) => o.textContent)).toEqual(["Work", "Personal", "Billing", "Other", "No label"]);
+    await act(async () => options().find((o) => o.textContent === "Personal")?.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true })));
+    expect(host.querySelector('[role="listbox"]')).toBeNull();
+
+    const finalStep = Array.from(host.querySelectorAll<HTMLButtonElement>('.trc-contact-editor-steps [role="tab"]')).find((b) => b.textContent?.includes("Relationship & consent"));
+    await act(async () => finalStep?.click());
+    await act(async () => button("Save changes")?.click());
+    await vi.waitFor(() => expect(editorHarness.upsert).toHaveBeenCalled());
+    const { patch, contactId } = editorHarness.upsert.mock.lastCall?.[0] as { patch: Record<string, unknown>; contactId: string };
+    expect(contactId).toBe("p-1");
+    expect(patch).not.toHaveProperty("email");
+    expect(patch).not.toHaveProperty("phone");
+    expect(patch.contact_methods).toEqual([
+      { kind: "email", value: "person.home@example.test", label: "Personal", is_primary: true },
+      { kind: "email", value: "person@example.test", label: "Work", is_primary: false },
+      { kind: "phone", value: "+1 202 555 0142", label: "Mobile", is_primary: true },
+    ]);
+    // Replacing the list names the list the editor loaded, so a change made elsewhere is refused.
+    expect(patch.expected_contact_methods).toEqual([
+      { kind: "email", value: "person@example.test", label: "Work", is_primary: true },
+      { kind: "phone", value: "+1 202 555 0142", label: "Mobile", is_primary: true },
+    ]);
+    act(() => root.unmount());
+    host.remove();
+  });
+
+  it("refuses to overwrite a change made elsewhere, shows what is saved and keeps what was added", async () => {
+    useSubtabRoute.mockImplementation((_tier: string, _branch: string, initial: string) => React.useState(initial));
+    useTenantRelationshipsData.mockReturnValue(baseData);
+    editorHarness.upsert
+      .mockRejectedValueOnce(new Error("CONTACT_METHODS_STALE: this contact changed since it was loaded"))
+      .mockResolvedValueOnce("p-1");
+    // Meanwhile an inbound message attached a second email to this contact.
+    editorHarness.latest = {
+      data: {
+        client_contact_methods: [
+          { id: "m-e1", kind: "email", value: "person@example.test", label: "Work", is_primary: true, position: 0 },
+          { id: "m-e2", kind: "email", value: "inbound@example.test", label: null, is_primary: false, position: 1 },
+          { id: "m-p1", kind: "phone", value: "+1 202 555 0142", label: "Mobile", is_primary: true, position: 0 },
+        ],
+      },
+      error: null,
+    };
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    await act(async () => root.render(<MemoryRouter initialEntries={["/solo/42/clients/people?person=p-1"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>));
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-contact-editor-origin="record-edit"]')?.click());
+    const lastName = host.querySelector<HTMLInputElement>("#trc-last-name");
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(lastName, "Personson");
+      lastName?.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-ctm-add="email"]')?.click());
+    const added = host.querySelectorAll<HTMLElement>('[data-ctm-list="email"] [data-ctm-id]')[1];
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(added.querySelector("input"), "mine@example.test");
+      added.querySelector("input")?.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    const toLastStep = async () => {
+      const finalStep = Array.from(host.querySelectorAll<HTMLButtonElement>('.trc-contact-editor-steps [role="tab"]')).find((b) => b.textContent?.includes("Relationship & consent"));
+      await act(async () => finalStep?.click());
+    };
+    const save = () => Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((b) => b.textContent === "Save changes" || b.textContent === "Retry save");
+    await toLastStep();
+    await act(async () => save()?.click());
+
+    await vi.waitFor(() => expect(host.textContent).toContain("Not saved. Someone else changed this contact after you opened it."));
+    expect(host.textContent).toContain("with the address you added kept at the end");
+    expect(host.textContent).not.toContain("CONTACT_METHODS_STALE");
+    // Back on Identity: what is saved now, then this person's addition. The rest of the draft stands.
+    const values = () => Array.from(host.querySelectorAll<HTMLElement>('[data-ctm-list="email"] [data-ctm-id] input')).map((i) => (i as HTMLInputElement).value);
+    expect(values()).toEqual(["person@example.test", "inbound@example.test", "mine@example.test"]);
+    expect(host.querySelector<HTMLInputElement>("#trc-last-name")?.value).toBe("Personson");
+
+    // Saving again is built on the list just read, and keeps the address that arrived meanwhile.
+    await toLastStep();
+    await act(async () => save()?.click());
+    await vi.waitFor(() => expect(editorHarness.upsert).toHaveBeenCalledTimes(2));
+    const { patch } = editorHarness.upsert.mock.lastCall?.[0] as { patch: Record<string, unknown> };
+    expect((patch.expected_contact_methods as Array<{ value: string }>).map((m) => m.value)).toEqual(["person@example.test", "inbound@example.test", "+1 202 555 0142"]);
+    expect((patch.contact_methods as Array<{ value: string }>).map((m) => m.value)).toEqual(["person@example.test", "inbound@example.test", "mine@example.test", "+1 202 555 0142"]);
+    expect(patch).toMatchObject({ last_name: "Personson" });
+    act(() => root.unmount());
+    host.remove();
+  });
+
+  it("a second Save after a saved address change sends nothing stale", async () => {
+    useSubtabRoute.mockImplementation((_tier: string, _branch: string, initial: string) => React.useState(initial));
+    useTenantRelationshipsData.mockReturnValue(baseData);
+    editorHarness.upsert.mockResolvedValue("p-1");
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    await act(async () => root.render(<MemoryRouter initialEntries={["/solo/42/clients/people?person=p-1"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>));
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-contact-editor-origin="record-edit"]')?.click());
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-ctm-add="email"]')?.click());
+    const added = host.querySelectorAll<HTMLElement>('[data-ctm-list="email"] [data-ctm-id]')[1];
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(added.querySelector("input"), "second@example.test");
+      added.querySelector("input")?.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    const finalStep = Array.from(host.querySelectorAll<HTMLButtonElement>('.trc-contact-editor-steps [role="tab"]')).find((b) => b.textContent?.includes("Relationship & consent"));
+    await act(async () => finalStep?.click());
+    const save = () => Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((b) => b.textContent === "Save changes");
+    await act(async () => save()?.click());
+    await vi.waitFor(() => expect(editorHarness.upsert).toHaveBeenCalledTimes(1));
+    // The saved overlay leaves the footer live; a second click is a no-op on addresses, never a
+    // replacement named against the list the editor opened with.
+    await act(async () => save()?.click());
+    await vi.waitFor(() => expect(editorHarness.upsert).toHaveBeenCalledTimes(2));
+    const { patch } = editorHarness.upsert.mock.lastCall?.[0] as { patch: Record<string, unknown> };
+    expect(patch).not.toHaveProperty("contact_methods");
+    expect(patch).not.toHaveProperty("expected_contact_methods");
+    act(() => root.unmount());
+    host.remove();
+  });
+
+  it("does not send the address list when a save leaves the addresses unchanged", async () => {
+    useSubtabRoute.mockImplementation((_tier: string, _branch: string, initial: string) => React.useState(initial));
+    useTenantRelationshipsData.mockReturnValue(baseData);
+    editorHarness.upsert.mockResolvedValueOnce("p-1");
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    await act(async () => root.render(<MemoryRouter initialEntries={["/solo/42/clients/people?person=p-1"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>));
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-contact-editor-origin="record-edit"]')?.click());
+    const lastName = host.querySelector<HTMLInputElement>("#trc-last-name");
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(lastName, "Personson");
+      lastName?.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    const finalStep = Array.from(host.querySelectorAll<HTMLButtonElement>('.trc-contact-editor-steps [role="tab"]')).find((b) => b.textContent?.includes("Relationship & consent"));
+    await act(async () => finalStep?.click());
+    await act(async () => Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((b) => b.textContent === "Save changes")?.click());
+    await vi.waitFor(() => expect(editorHarness.upsert).toHaveBeenCalled());
+    const { patch } = editorHarness.upsert.mock.lastCall?.[0] as { patch: Record<string, unknown> };
+    // Addresses that arrived after the editor opened (a merge, Paige, an inbound match) must survive.
+    expect(patch).not.toHaveProperty("contact_methods");
+    expect(patch).not.toHaveProperty("expected_contact_methods");
+    expect(patch).toMatchObject({ last_name: "Personson" });
+    act(() => root.unmount());
+    host.remove();
+  });
+
+  it("searches every address, and treats only phone-like queries as digits", async () => {
+    useSubtabRoute.mockImplementation((_tier: string, _branch: string, initial: string) => React.useState(initial));
+    useTenantRelationshipsData.mockReturnValue({
+      ...baseData,
+      people: [
+        { ...baseData.people[0], contactMethods: [...baseData.people[0].contactMethods, { id: "m-e9", kind: "email", value: "billing@supplied.test", label: "Billing", isPrimary: false }] },
+        { ...baseData.people[0], id: "p-2", firstName: "Other", lastName: "Client", name: "Other Client", company: "Elsewhere", email: "x@y.test", phone: null, contactMethods: [{ id: "m-x", kind: "email", value: "x@y.test", label: null, isPrimary: true }] },
+      ],
+    });
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    await act(async () => root.render(<MemoryRouter initialEntries={["/solo/42/clients/people"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>));
+    const search = async (value: string) => {
+      const input = host.querySelector<HTMLInputElement>('input[placeholder^="Search name"]');
+      await act(async () => {
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(input, value);
+        input?.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+      return Array.from(host.querySelectorAll(".trc-person-select strong, [data-person-id] strong, strong")).map((n) => n.textContent).filter((t) => t === "Supplied Person" || t === "Other Client");
+    };
+    expect(await search("billing@supplied")).toEqual(["Supplied Person"]);
+    expect(await search("(202) 555")).toEqual(["Supplied Person"]);
+    expect(await search("202-555-0142")).toEqual(["Supplied Person"]);
+    expect(await search("a2b0c2")).toEqual([]);
+    act(() => root.unmount());
+    host.remove();
+  });
+
+  it("puts an address another contact holds back on its row and keeps the draft", async () => {
+    useSubtabRoute.mockImplementation((_tier: string, _branch: string, initial: string) => React.useState(initial));
+    useTenantRelationshipsData.mockReturnValue(baseData);
+    editorHarness.upsert.mockRejectedValueOnce(new Error("CONTACT_METHOD_TAKEN: taken@example.test already belongs to another contact in this workspace"));
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    await act(async () => root.render(<MemoryRouter initialEntries={["/solo/42/clients/people?person=p-1"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()} /></MemoryRouter>));
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-contact-editor-origin="record-edit"]')?.click());
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-ctm-add="email"]')?.click());
+    const row = host.querySelectorAll<HTMLElement>('[data-ctm-list="email"] [data-ctm-id]')[1];
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(row.querySelector("input"), "Taken@example.test");
+      row.querySelector("input")?.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    // An empty address blocks the save on its own row before anything is sent.
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-ctm-add="phone"]')?.click());
+    const finalStep = Array.from(host.querySelectorAll<HTMLButtonElement>('.trc-contact-editor-steps [role="tab"]')).find((b) => b.textContent?.includes("Relationship & consent"));
+    await act(async () => finalStep?.click());
+    const save = () => Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((b) => b.textContent === "Save changes" || b.textContent === "Retry save");
+    await act(async () => save()?.click());
+    expect(editorHarness.upsert).not.toHaveBeenCalled();
+    expect(host.textContent).toContain("Enter a phone number, or remove this row.");
+    const blankPhone = host.querySelectorAll<HTMLElement>('[data-ctm-list="phone"] [data-ctm-id]')[1];
+    await act(async () => blankPhone.querySelector<HTMLButtonElement>("[data-ctm-remove]")?.click());
+
+    const lastStep = Array.from(host.querySelectorAll<HTMLButtonElement>('.trc-contact-editor-steps [role="tab"]')).find((b) => b.textContent?.includes("Relationship & consent"));
+    await act(async () => lastStep?.click());
+    await act(async () => save()?.click());
+    await vi.waitFor(() => expect(host.textContent).toContain("Another contact in this workspace already uses this address."));
+    const refused = host.querySelectorAll<HTMLElement>('[data-ctm-list="email"] [data-ctm-id]')[1];
+    expect(refused.classList.contains("has-err")).toBe(true);
+    expect(refused.querySelector("input")?.getAttribute("aria-invalid")).toBe("true");
+    expect(refused.querySelector("input")?.value).toBe("Taken@example.test");
+    await vi.waitFor(() => expect(document.activeElement).toBe(refused.querySelector("input")));
+    expect(host.textContent).not.toContain("Contact saved");
+
+    // Editing a different row leaves the refusal where it is; changing the refused row clears it.
+    const primary = host.querySelectorAll<HTMLElement>('[data-ctm-list="email"] [data-ctm-id]')[0];
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(primary.querySelector("input"), "person+1@example.test");
+      primary.querySelector("input")?.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    expect(host.querySelectorAll<HTMLElement>('[data-ctm-list="email"] [data-ctm-id]')[1].classList.contains("has-err")).toBe(true);
+    await act(async () => {
+      const again = host.querySelectorAll<HTMLElement>('[data-ctm-list="email"] [data-ctm-id]')[1].querySelector("input");
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(again, "someone.new@example.test");
+      again?.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    expect(host.querySelectorAll<HTMLElement>('[data-ctm-list="email"] [data-ctm-id]')[1].classList.contains("has-err")).toBe(false);
     act(() => root.unmount());
     host.remove();
   });
@@ -587,7 +866,7 @@ describe("tenant Relationships / Clients workspace", () => {
         ...baseData,
         people: [
           baseData.people[0],
-          { ...baseData.people[0], id: "p-2", name: "Second Supplied Person", email: "second@example.test" },
+          { ...baseData.people[0], id: "p-2", name: "Second Supplied Person", email: "second@example.test", contactMethods: [{ id: "m-e2", kind: "email", value: "second@example.test", label: "Work", isPrimary: true }] },
         ],
       });
       document.body.append(host);
@@ -661,7 +940,7 @@ describe("tenant Relationships / Clients workspace", () => {
     }));
     useTenantRelationshipsData.mockImplementation(({ activeTenantId }: { activeTenantId: string }) => activeTenantId === "tenant-a"
       ? baseData
-      : { ...baseData, people: [{ ...baseData.people[0], id: "p-b", name: "Second Account Client", email: "second@example.test" }] });
+      : { ...baseData, people: [{ ...baseData.people[0], id: "p-b", name: "Second Account Client", email: "second@example.test", contactMethods: [{ id: "m-eb", kind: "email", value: "second@example.test", label: "Work", isPrimary: true }] }] });
     const host = document.createElement("div");
     document.body.append(host);
     const root = createRoot(host);

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { runSeparationAudit, type SeparationResult } from "@/lib/separationAudit";
+import { readUserPrimaryAddresses } from "@/lib/userPrimaryContact";
 
 /**
  * Loads the data needed to run the personal/business separation audit
@@ -17,13 +18,14 @@ export function useSeparationAudit(userId?: string | null, businessId?: string |
     queryFn: async () => {
       if (!userId) return null;
 
-      // Personal identity from profile + auth email
-      const [{ data: profile }, { data: { user } }] = await Promise.all([
+      // Personal identity from profile + the person's primary phone + auth email
+      const [{ data: profile }, contact, { data: { user } }] = await Promise.all([
         supabase
           .from("profiles")
-          .select("address, city, state, postal_code, phone")
+          .select("address, city, state, postal_code")
           .eq("user_id", userId)
           .maybeSingle(),
+        readUserPrimaryAddresses(userId),
         supabase.auth.getUser(),
       ]);
 
@@ -51,17 +53,17 @@ export function useSeparationAudit(userId?: string | null, businessId?: string |
         personalCity: profile?.city ?? null,
         personalState: profile?.state ?? null,
         personalZip: profile?.postal_code ?? null,
-        personalPhone: profile?.phone ?? null,
+        personalPhone: contact.phone,
         personalEmail,
         businessName: biz.legal_name,
-        businessStreetAddress: (biz as any).business_street_address ?? null,
-        businessCity: (biz as any).business_city ?? null,
-        businessState: (biz as any).business_state ?? null,
-        businessZip: (biz as any).business_zip ?? null,
-        businessPhone: (biz as any).business_phone ?? null,
-        businessEmail: (biz as any).business_email ?? null,
-        businessAddressType: (biz as any).business_address_type ?? null,
-        phone411Listed: (biz as any).phone_411_listed ?? null,
+        businessStreetAddress: biz.business_street_address ?? null,
+        businessCity: biz.business_city ?? null,
+        businessState: biz.business_state ?? null,
+        businessZip: biz.business_zip ?? null,
+        businessPhone: biz.business_phone ?? null,
+        businessEmail: biz.business_email ?? null,
+        businessAddressType: biz.business_address_type ?? null,
+        phone411Listed: biz.phone_411_listed ?? null,
         websiteUrl: presence?.website_url ?? null,
         websiteLive: presence?.website_live ?? null,
       });

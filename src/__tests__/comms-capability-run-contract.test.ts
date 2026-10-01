@@ -145,7 +145,7 @@ describe("Communications capability runs — the wiring that makes them exist", 
   const chat = readFileSync("supabase/functions/paige-ai-chat/index.ts", "utf8");
 
   // The failure this guards is the reason the whole feature is wired at the executor:
-  // `record_capability_run` is service_role-only, and the anon+JWT client returns
+  // `record_capability_run` is service_role-only ON ITS 6-ARG SIGNATURE, and the anon+JWT client returns
   // `permission denied` as a value rather than a throw. Swap the client and the feature
   // ships green, writes nothing, and nobody finds out.
   it("hands the recorder the SERVICE-ROLE client, not the caller's", () => {

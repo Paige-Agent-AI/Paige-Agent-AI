@@ -3,6 +3,7 @@
 import { corsHeaders } from "../_shared/adminAuth.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { fireAndForgetBridge } from "../_shared/mmaOsBridge.ts";
+import { findSoleClientByEmailAnyWorkspace } from "../_shared/contact-methods.ts";
 import { verifyHmacSha256Hex } from "../_shared/webhookSig.ts";
 
 Deno.serve(async (req) => {
@@ -23,11 +24,7 @@ Deno.serve(async (req) => {
   const contactEmail = event.email as string | undefined;
   if (!contactEmail) return new Response("no_email", { status: 200 });
 
-  const { data: contact } = await admin
-    .from("clients")
-    .select("id")
-    .ilike("email", contactEmail)
-    .maybeSingle();
+  const contact = await findSoleClientByEmailAnyWorkspace(admin, contactEmail, "handle-smartcredit-alert-webhook");
   if (!contact) return new Response("no_contact", { status: 200 });
 
   const { data: latest } = await admin

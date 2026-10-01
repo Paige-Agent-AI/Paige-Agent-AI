@@ -24,6 +24,7 @@
 // provisions an inbound email connector.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { fireAndForgetBridge } from "../_shared/mmaOsBridge.ts";
+import { findClientIdByAddress, insertClientWithAddresses } from "../_shared/contact-methods.ts";
 import {
   getInboundAdapter,
   registerInboundAdapter,
@@ -294,17 +295,9 @@ Deno.serve(async (req) => {
   const tenantId = connector.tenant_id;
 
   // -- 4. Upsert the contact in public.clients, tenant-scoped (§9). ---------------
-  let contactId: string | null = null;
-  const { data: existing } = await admin
-    .from("clients")
-    .select("id")
-    .eq("tenant_id", tenantId)
-    .ilike("email", fromEmail)
-    .limit(1)
-    .maybeSingle();
-  if (existing?.id) {
-    contactId = existing.id;
-  } else {
+  // A sender writing from ANY of a contact's addresses is that contact.
+  let contactId: string | null = await findClientIdByAddress(admin, tenantId, "email", fromEmail, "handle-inbound-email");
+  if (!contactId) {
     // clients.created_by is NOT NULL. Use the tenant's owner; fall back to the
     // platform owner user only if the tenant has no owner set.
     const { data: tenantRow } = await admin
@@ -329,24 +322,23 @@ Deno.serve(async (req) => {
     if (createdBy) {
       const localPart = fromEmail.split("@")[0];
       const firstName = msg.sender?.display_name?.trim() || localPart || "Inbound";
-      const { data: created, error: contactErr } = await admin
-        .from("clients")
-        .insert({
+      // The sender's address becomes the new contact's first (primary) email. A failed create,
+      // or one whose address cannot be attached, is logged by the helper and writes nothing.
+      const { data: created } = await insertClientWithAddresses(
+        admin,
+        {
           tenant_id: tenantId, // §9 — explicit; never inferred cross-tenant.
           created_by: createdBy,
           first_name: firstName,
           last_name: "",
-          email: fromEmail,
           lifecycle_stage: "new_lead", // #172: 'lead' violates clients_lifecycle_stage_chk (23514)
           source: "inbound_email",
           status: "active",
           created_by_channel_type: "email", // #10 channel-of-origin
-        })
-        .select("id")
-        .single();
-      if (contactErr) {
-        console.error("[handle-inbound-email] contact_insert_error", contactErr);
-      }
+        },
+        { email: fromEmail },
+        "handle-inbound-email",
+      );
       contactId = created?.id ?? null;
     } else {
       console.warn("[handle-inbound-email] no_created_by_for_tenant", { tenantId });

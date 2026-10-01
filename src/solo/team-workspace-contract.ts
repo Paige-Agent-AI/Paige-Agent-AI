@@ -1,4 +1,4 @@
-export type TeamPermission = "owner" | "admin" | "coach" | "member" | string;
+export type TeamPermission = "owner" | "admin" | "member" | string;
 export type InviteLifecycle = "pending" | "accepted" | "expired" | "revoked";
 
 export type TeamMemberRecord = {
@@ -106,6 +106,15 @@ export type TeamWorkspaceRecord = {
   invitations: TeamInviteRecord[];
 };
 
+/** Who may change this person's addresses. The server decides for real (`set_user_contact_methods`);
+ *  this only decides what to offer, and mirrors the same rule: yourself; an owner or an admin, anyone
+ *  on the team, the owner included (an admin holds the owner's powers except removing the owner). */
+export function contactAccess(member: Pick<TeamMemberRecord, "user_id">, workspace: Pick<TeamWorkspaceRecord, "viewer_permission">, viewerId: string | null): "edit" | "hidden" {
+  if (viewerId && member.user_id === viewerId) return "edit";
+  if (workspace.viewer_permission === "owner" || workspace.viewer_permission === "admin") return "edit";
+  return "hidden";
+}
+
 export function memberVisibleIdentity(member: Pick<TeamMemberRecord, "full_name" | "email">): { primary: string; secondary: string | null } {
   const verifiedName = member.full_name?.trim();
   const email = member.email?.trim();
@@ -202,7 +211,7 @@ export function removalRefusal(raw: string | null | undefined, personName: strin
 
 export function validateWorkProfile(title: string, responsibilities: string): { title?: string; responsibilities?: string } {
   const errors: { title?: string; responsibilities?: string } = {};
-  if (title.trim().length > 120) errors.title = "Keep the job title to 120 characters or fewer.";
+  if (title.trim().length > 120) errors.title = "Keep the title to 120 characters or fewer.";
   if (responsibilities.trim().length > 2_000) errors.responsibilities = "Keep responsibilities to 2,000 characters or fewer.";
   return errors;
 }

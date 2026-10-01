@@ -135,7 +135,6 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   // ── high: becomes visible to a client, or goes public ─────────────────────────────────────
   ["growth_page_publish", "high", "puts a page live at a public URL"],
   ["growth_funnel_publish", "high", "puts a whole sequence live"],
-  ["program_enroll", "high", "enrols a real person into a programme"],
   // The evaluation loop's DECIDE leg (Runway 4 / #1123), the sign-off half of the `improvement_propose`
   // pair above. It records the owner's approve/reject on a `paige_improvement_proposals` row and
   // applies nothing (there is no auto-apply path — it flips status, decided_by, rationale only). It
@@ -199,8 +198,9 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   // of billing, connections, provider actions and client-visible changes.
   ["comms_name_number", "ordinary", "renames a number in the workspace's own list"],
   ["comms_draft_registration", "ordinary", "drafts carrier copy; submitting it is a separate act"],
-  // `pipeline_create` / `pipeline_add_stage` were classified here and are NOT tools — they exist
-  // only in a label switch. The tool that exists is `pipeline_configure`, and it was omitted, so
+  // `pipeline_create` / `pipeline_add_stage` were classified here historically and are now fully
+  // retired (removed from the runtime surface). The tool that exists is `pipeline_configure`, and
+  // it was once omitted, so
   // deriving the gated set from this policy silently UNGATED a previously-gated write (§58). The
   // lint could not see it: `configure` was not a mutation verb, so the backstop read it as a query.
   // Both halves are fixed — the entry below, and `configure` added to MUTATION_VERB.
@@ -412,17 +412,6 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   ["coach_update_profile", "high", "edits another person's profile and whether new clients route to them"],
   // create_team_invitation
   ["team_invite_mint", "high", "mints workspace access and hands back a live invitation link"],
-  // add_coach_role, remove_coach_role
-  //
-  // NOT `member_grant_role` / `member_revoke_role`, and the peer gate was right to refuse that
-  // reuse. Those keys name Chat's act, which runs `grant_tenant_member_role` — a tenant-scoped RPC
-  // that requires `auth.uid()`, gates on operator-or-tenant-admin, blocks the protected roles, and
-  // writes the workspace ROSTER alongside the role. The MCP tools do none of that: they upsert and
-  // delete `user_roles` directly on the service-role client, and `user_roles` carries no
-  // `tenant_id`, so the grant is fleet-global. An approval card reading "grants a staff role" would
-  // describe the guarded act and authorise the unguarded one, which is the reuse hazard exactly.
-  ["coach_grant_role_globally", "high", "grants the coach role across the platform, outside any workspace roster"],
-  ["coach_revoke_role_globally", "high", "removes the coach role across the platform, outside any workspace roster"],
   // upsert_email_template
   ["comms_upsert_email_template", "high", "overwrites a shared template every future send renders from"],
   // send_btf_template_email, send_transactional_email, send_composed_email

@@ -222,6 +222,7 @@ function lifecycleServer(resultFor) {
     // Terminating a session is a DELETE carrying no body; parsing one as JSON throws.
     if (req.method === "DELETE") {
       deleted.push(req.headers["mcp-session-id"] ?? null);
+      deletedHeaders.push(req.headers);
       res.writeHead(204).end();
       return;
     }
@@ -270,6 +271,7 @@ let lastRequest = null;
 let initialized = false;
 let exchange = [];
 let deleted = [];
+let deletedHeaders = [];
 let ackFailDeleted = [];
 let pagedCursors = [];
 let loopPages = 0;
@@ -312,6 +314,40 @@ const bearer = { kind: "bearer", token: "super-secret-token-1234" };
   // DELETE every probe, discovery and action leaks one until the provider expires it.
   check("the session is released when the work is done", deleted.includes(SESSION_ID),
     JSON.stringify(deleted));
+}
+
+// Supplementary headers belong to the same canonical auth bundle, on every request.
+{
+  const headers = { "X-Workspace": "test-scope-not-a-secret", "X-Region": "us" };
+  const auth = mcp.authFromSecret({ server_url: "https://public.example/mcp-json",
+    auth_kind: "bearer", auth_token: bearer.token, custom_headers: headers });
+  check("canonical loader retains supplementary headers", JSON.stringify(auth?.headers) === JSON.stringify(headers));
+  exchange = [];
+  await mcp.mcpListTools({ serverUrl: "https://public.example/mcp-json", auth });
+  check("supplementary headers accompany initialize, acknowledgment and discovery",
+    exchange.length === 3 && exchange.every(e => e.headers["x-workspace"] === headers["X-Workspace"] && e.headers["x-region"] === "us"));
+  check("supplementary credentials accompany session cleanup", deletedHeaders.at(-1)?.["x-workspace"] === headers["X-Workspace"]);
+  exchange = [];
+  await mcp.mcpRequest({ serverUrl: "https://public.example/mcp-json", auth, method: "tools/call", params: { name: "test_local_only", arguments: {} } });
+  check("supplementary headers accompany tool dispatch and its handshake",
+    exchange.length === 3 && exchange.at(-1).body.method === "tools/call" && exchange.every(e => e.headers["x-workspace"] === headers["X-Workspace"]));
+  for (const bad of [null, [], { Authorization: "override" }, { Host: "other.example" },
+    { "X-Key": "one", "x-key": "two" }, { "X-Key": "bad\r\nvalue" }, { "X-Key": 4 },
+    { "X-Key": "" }, { "X-Key": "\u0100" }, { "X-Forwarded-Host": "other.example" }]) {
+    const candidate = { kind: "bearer", token: bearer.token, headers: bad };
+    check("invalid supplementary header bundle fails closed before dispatch", !mcp.authUsable(candidate));
+  }
+  check("primary custom auth header cannot collide case-insensitively",
+    !mcp.authUsable({ kind: "header", name: "X-Key", token: bearer.token, headers: { "x-key": "another" } }));
+  for (const bad of [Object.fromEntries(Array.from({ length: 17 }, (_, i) => [`X-${i}`, "x"])),
+    { ["X".repeat(65)]: "x" }, { "X-Key": "x".repeat(4097) },
+    Object.fromEntries(Array.from({ length: 5 }, (_, i) => [`X-${i}`, "x".repeat(4000)]))]) {
+    check("supplementary header cardinality/name/value/total bounds enforced", !mcp.authUsable({ ...bearer, headers: bad }));
+  }
+  exchange = [];
+  const refused = await reasonOf(() => mcp.mcpRequest({ serverUrl: "https://public.example/mcp-json",
+    auth: { ...bearer, headers: { Host: "other.example" } }, method: "tools/list" }));
+  check("invalid bundle never reaches local server", refused === "mcp_protocol_error" && exchange.length === 0);
 }
 
 // ── Which stored connections are usable, and as what ──────────────────────────────

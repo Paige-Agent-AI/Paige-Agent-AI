@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // §9: provisioning the tenant-wide Gmail SENDING identity is an admin/coach action —
+    // §9: provisioning the tenant-wide Gmail SENDING identity is an admin action —
     // the SAME gate gmail-oauth-start and gmail-disconnect apply. Without it, a low-privilege
     // member who completes the Google consent could bind their personal mailbox as the
     // tenant's outbound sender. has_role is global; tenant is bound server-side below.
@@ -112,8 +112,7 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
     const { data: isAdmin } = await admin.rpc("has_role", { _user_id: user.id, _role: "admin" });
-    const { data: isCoach } = await admin.rpc("has_role", { _user_id: user.id, _role: "coach" });
-    if (!isAdmin && !isCoach) {
+    if (!isAdmin) {
       return new Response(JSON.stringify({ error: "forbidden" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -8,6 +8,6 @@ import { PlanningHub } from "@/components/planning/PlanningHub";
  * non-staff seat sees only their own items (plan_list enforces this server-side).
  */
 export default function Planning() {
-  const { isCoachOrAdmin } = useDashboardMode();
-  return <PlanningHub staff={isCoachOrAdmin} />;
+  const { isAdmin } = useDashboardMode();
+  return <PlanningHub staff={isAdmin} />;
 }

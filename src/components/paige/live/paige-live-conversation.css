@@ -9,10 +9,37 @@
 .plc-stage__identity span { color: hsl(var(--muted-foreground)); font-size: .72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .plc-stage__header-actions { gap: .35rem; }
 .plc-stage__header-actions svg,.plc-controls svg,.plc-card__actions svg { width: .95rem; height: .95rem; }
-.plc-stage__main { min-height: 0; overflow: auto; display: grid; grid-template-columns: minmax(0,1.2fr) minmax(0,.8fr); gap: clamp(1rem,2.5vw,2.5rem); padding: clamp(.9rem,1.8vw,1.5rem); }
-.plc-presence { min-width: 0; display: grid; grid-template-columns: minmax(0,.8fr) minmax(0,1.2fr); align-content: center; align-items: start; justify-items: center; column-gap: .75rem; text-align: center; }
-.plc-presence > .paige-presence,.plc-state,.plc-context { grid-column: 1 / -1; }
-.plc-presence > .plc-working,.plc-presence > .plc-notice { width: 100%; margin-top: .8rem; }
+/* THE STAGE NEVER SCROLLS. A live call is a fixed frame: the moment this region scrolls, the
+   controls leave the viewport and the person is dragging a page while trying to talk. It was
+   `overflow: auto`, which produced a real page scrollbar the owner reported on sight, and pushed the
+   consent panel down behind the footer where it was unreachable. Every region inside now owns its
+   own overflow, and this one owns none. */
+.plc-stage__main { min-height: 0; overflow: hidden; display: grid; grid-template-columns: minmax(0,1.2fr) minmax(0,.8fr); gap: clamp(1rem,2.5vw,2.5rem); padding: clamp(.9rem,1.8vw,1.5rem); }
+/* Rows, not a centred stack: the wave takes whatever height is left (1fr), the labels and panels
+   take what they need, and nothing can push a sibling out of the frame. */
+.plc-presence { min-width: 0; min-height: 0; overflow: hidden; display: grid; grid-template-columns: minmax(0,.8fr) minmax(0,1.2fr); grid-template-rows: minmax(11rem,1fr) auto auto auto; align-items: start; justify-items: center; column-gap: .75rem; text-align: center; }
+/* BOTH presences span the full column. The 3D wrapper has its own class, so when it replaced the
+   flat one as the mounted component it stopped matching this rule and was auto-placed into the
+   narrow .8fr track — rendering Paige at ~61% of her size and off-axis from the "Listening" label
+   directly beneath her, which still spans 1/-1. Worse, the no-WebGL path returns the bare flat
+   presence and DID match, so a device without WebGL got the correct design and a device with it got
+   the broken one. Nothing could catch this: jsdom computes no layout and the headless smoke never
+   mounts React. Named here so the next person who swaps the component knows this rule exists. */
+.plc-presence > .paige-presence,.plc-presence > .paige-presence-3d,.plc-state,.plc-context { grid-column: 1 / -1; }
+/* The wave owns row 1 and fills it, so it grows into whatever height the panels leave rather than
+   being a fixed block the rest has to fit around. */
+.plc-presence > .paige-presence,.plc-presence > .paige-presence-3d { grid-row: 1; width: 100%; height: 100%; min-height: 0; }
+.plc-state { grid-row: 2; }
+.plc-context { grid-row: 3; }
+/* Row 4 carries the two panels side by side, and it is `auto` with the panels capped — not a
+   fraction, and not unbounded content height. Both of those were wrong for different reasons.
+   Unbounded (the original) let a ~500px consent notice take whatever it wanted and starved the orb's
+   row above it, collapsing the presence to a dot. A fraction fixed that but introduced the opposite
+   fault: an fr track keeps its share of free space even when it holds nothing, so the moment Live is
+   actually open and the notice disappears, the orb would be left staring at a dead gap. `auto`
+   collapses to zero when there is no panel and gives the whole column back to the presence, while
+   the cap keeps a long notice inside its own scroll. */
+.plc-presence > .plc-working,.plc-presence > .plc-notice { grid-row: 4; width: 100%; min-height: 0; max-height: 34vh; overflow-y: auto; margin-top: .8rem; }
 .plc-state { margin-top: 1rem; display: flex; align-items: center; gap: .5rem; font-weight: 650; }
 .plc-state span { width: .55rem; height: .55rem; border-radius: 50%; background: hsl(var(--muted-foreground)); }
 [data-live-state="listening"] .plc-state span,[data-live-state="speaking"] .plc-state span { background: hsl(var(--primary)); }
@@ -24,8 +51,17 @@
 .plc-working strong { font-size: .82rem; }
 .plc-notice { width: min(100%,28rem); margin-top: .8rem; padding: .9rem; border: 1px solid hsl(var(--border)); border-radius: .8rem; text-align: left; background: hsl(var(--muted)/.65); }
 .plc-notice > strong { font-size: .68rem; letter-spacing: .08em; }
+/* The terms a person agrees to before Paige can hear them. Token-only, AA in both themes, and
+   deliberately unhurried: this is a consent surface, not a banner, so it earns its height by
+   saying the two things that are actually true about the audio. */
+.plc-terms { margin: .75rem 0 .9rem; padding-top: .75rem; border-top: 1px solid hsl(var(--border)); display: grid; gap: .5rem; }
+.plc-terms__lede { font-weight: 600; font-size: .82rem; color: hsl(var(--foreground)); }
+.plc-terms__list { margin: 0; padding-left: 1.05rem; display: grid; gap: .4rem; font-size: .8rem; line-height: 1.45; color: hsl(var(--muted-foreground)); }
+.plc-terms__list > li::marker { color: hsl(var(--muted-foreground)); }
+.plc-terms__scope { font-size: .76rem; line-height: 1.45; color: hsl(var(--muted-foreground)); }
+.plc-terms > button { justify-self: start; margin-top: .15rem; }
 .plc-notice p { margin: .3rem 0 .7rem; font-size: .78rem; line-height: 1.45; }
-.plc-workspace { min-width: 0; min-height: 0; display: grid; grid-template-rows: minmax(10rem,1fr) auto; gap: .9rem; }
+.plc-workspace { min-width: 0; min-height: 0; display: grid; grid-template-rows: minmax(0,1fr) auto; gap: .9rem; }
 .plc-transcript,.plc-card-layer { min-width: 0; overflow: auto; border: 1px solid hsl(var(--border)/.9); border-radius: 1rem; background: hsl(var(--card)/.76); box-shadow: 0 1rem 3rem hsl(var(--foreground)/.04); }
 .plc-transcript { padding: 1rem; }
 .plc-card-layer { max-height: 46vh; padding: 1rem; }
@@ -64,13 +100,39 @@
 .plc-stage button:focus-visible,.plc-stage input:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 3px; }
 .plc-turn p,.plc-card,.plc-notice,.plc-working { overflow-wrap: anywhere; }
 @keyframes plc-pulse { 0%,100% { opacity: .45; transform: scale(.85); } 50% { opacity: 1; transform: scale(1); } }
+
+/* ENTERING THE STAGE IS ONE CONTINUOUS ACT (§22), not four things appearing at once. The ground
+   settles, then Paige, then the workspace, then the controls — about a third of a second end to end,
+   which reads as the surface arriving rather than as a wait. Spring-shaped easing, transform and
+   opacity only, so nothing here can cost a layout pass. Every one of these is disabled outright
+   under prefers-reduced-motion below. */
+@keyframes plc-stage-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes plc-rise { from { opacity: 0; transform: translateY(14px) scale(.985); } to { opacity: 1; transform: none; } }
+.plc-stage { animation: plc-stage-in .22s ease-out both; }
+.plc-presence { animation: plc-rise .42s cubic-bezier(.22,1,.36,1) both; animation-delay: .04s; }
+.plc-workspace { animation: plc-rise .42s cubic-bezier(.22,1,.36,1) both; animation-delay: .1s; }
+.plc-controls { animation: plc-rise .38s cubic-bezier(.22,1,.36,1) both; animation-delay: .16s; }
+/* The terms are a consent surface: they arrive a beat later and unhurried, so the control is not
+   under the cursor before the sentence above it has been read. */
+.plc-terms { animation: plc-rise .44s cubic-bezier(.22,1,.36,1) both; animation-delay: .06s; }
+/* Controls answer the pointer. Gold stays on the act; this is only lift and edge. */
+.plc-controls button, .plc-terms button { transition: transform .16s cubic-bezier(.22,1,.36,1), box-shadow .16s ease-out; }
+.plc-controls button:hover:not(:disabled), .plc-terms button:hover:not(:disabled) { transform: translateY(-1px); }
+.plc-controls button:active:not(:disabled), .plc-terms button:active:not(:disabled) { transform: translateY(0); }
 @media (max-width: 800px) {
-  .plc-stage__main { grid-template-columns: 1fr; grid-template-rows: auto minmax(0,1fr); padding: .8rem; gap: .8rem; }
-  .plc-presence { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
+  /* The fixed frame holds on a phone too. This block used to set the inner regions to
+     `overflow: visible` and let the page grow, which worked only because .plc-stage__main scrolled —
+     and that scroll is exactly what was removed. Left as it was, a phone would clip the transcript
+     and the controls with no way to reach them. Both rows are bounded and scroll internally. */
+  .plc-stage__main { grid-template-columns: 1fr; grid-template-rows: minmax(0,1.05fr) minmax(0,1fr); padding: .8rem; gap: .8rem; }
+  .plc-presence { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 0; overflow: hidden; }
+  /* In a flex column the canvas would otherwise collapse to nothing, since it has no intrinsic height. */
+  .plc-presence > .paige-presence,.plc-presence > .paige-presence-3d { flex: 1 1 auto; min-height: 7rem; width: 100%; }
   .plc-context { display: none; }
-  .plc-working,.plc-notice { margin-top: .55rem; }
-  .plc-workspace { display: flex; flex-direction: column; min-height: auto; }
-  .plc-transcript,.plc-card-layer { overflow: visible; max-height: none; flex: none; }
+  .plc-working,.plc-notice { flex: 0 1 auto; min-height: 0; overflow-y: auto; margin-top: .55rem; }
+  .plc-workspace { display: flex; flex-direction: column; min-height: 0; }
+  .plc-transcript { flex: 1 1 auto; min-height: 0; overflow: auto; }
+  .plc-card-layer { flex: 0 1 auto; min-height: 0; max-height: 40%; overflow: auto; }
 }
 @media (max-width: 560px) {
   .plc-stage__identity span { display: none; }
@@ -82,6 +144,36 @@
 }
 @media (prefers-reduced-motion: reduce) {
   [data-live-state] .plc-state span { animation: none; }
+  /* The stage arrives, it does not animate in. Written per-primitive rather than relying on the
+     blanket transition-duration rule below, because an animation-delay with `both` fill would
+     otherwise hold each element invisible for its delay and then snap it in. */
+  .plc-stage, .plc-presence, .plc-workspace, .plc-controls, .plc-terms { animation: none !important; }
+  .plc-controls button, .plc-terms button { transition: none !important; }
+  .plc-controls button:hover:not(:disabled), .plc-terms button:hover:not(:disabled) { transform: none; }
   .plc-stage * { scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }
 @media (forced-colors: active) { .plc-stage,.plc-transcript,.plc-card-layer,.plc-working,.plc-notice { border-color: CanvasText; } }
+
+/* NO SCROLLBARS ON THE LIVE SCREEN (owner ruling, 2026-09-24).
+   Nobody should be dragging a scrollbar while they are talking. The regions that need to scroll
+   still do — the transcript auto-follows the newest turn and keeps its "Jump to latest" control, so
+   scrolling is never something a person HAS to do — but the bar itself is an unstyled browser
+   surface, and the craft floor is explicit that those belong to no design system. It is removed
+   here rather than themed because on this surface the honest answer is that it should not exist. */
+.plc-stage *::-webkit-scrollbar { width: 0; height: 0; }
+.plc-stage * { scrollbar-width: none; -ms-overflow-style: none; }
+
+/* The refusal that replaces the consent button once the database has said no. It reads as an
+   outcome, not as a disabled control: a greyed-out gold button would still look like something to
+   press, which is the confusion this whole branch exists to end. */
+.plc-terms__blocked { margin-top: .15rem; padding: .6rem .7rem; border-left: 1px solid hsl(var(--border)); border-radius: .35rem; background: hsl(var(--muted)/.5); font-size: .78rem; line-height: 1.5; color: hsl(var(--muted-foreground)); }
+
+/* CONTROLS SHOW THEIR OWN STATE. A footer of five identical outline buttons cannot tell anyone that
+   they are muted, that the session is held, or that Paige is talking right now — the person has to
+   infer all of it from somewhere else on the screen. Engaged toggles carry indigo, because being
+   muted or on hold is a STATE. The one control that carries gold is Interrupt, and only while she is
+   actually speaking: gold means exactly one thing on this surface, so the wave turning gold and the
+   control that stops her lighting up are the same signal in two places rather than two accents
+   competing for it (§11). */
+.plc-controls button[aria-pressed="true"] { border-color: hsl(var(--primary)/.55); background: hsl(var(--primary)/.13); color: hsl(var(--primary)); font-weight: 600; }
+.plc-controls button[data-act="available"] { border-color: hsl(var(--accent)/.75); background: hsl(var(--accent)/.13); color: hsl(var(--gold-dark)); font-weight: 600; }

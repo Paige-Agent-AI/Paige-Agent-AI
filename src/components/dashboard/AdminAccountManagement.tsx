@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json, Tables, TablesUpdate } from "@/integrations/supabase/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -46,8 +47,8 @@ interface AuditEntry {
   modification_type: string;
   modification_source: string;
   modified_by_user_id: string;
-  previous_value: any;
-  new_value: any;
+  previous_value: Json;
+  new_value: Json;
   notes: string | null;
   created_at: string;
   modifier_name?: string;
@@ -65,8 +66,12 @@ type FilterKey = "all" | "negatives" | "good_standing" | "disputed" | "duplicate
 interface AdminAccountManagementProps {
   clientUserId: string;
   clientId?: string; // internal client id
-  userRole: "admin" | "coach";
+  userRole: "admin" | "member";
 }
+
+// The stored label for an edit made by a staff member who is not an admin. 'coach_ui' is the value the
+// modification-log CHECK constraint accepts; it is a data label, not a role.
+const STAFF_UI_SOURCE = "coach_ui";
 
 const ACCOUNT_TYPES = ["credit_card", "auto_loan", "personal_loan", "mortgage", "student_loan", "collections", "other"];
 const BUREAUS = ["Experian", "TransUnion", "Equifax"];
@@ -108,7 +113,7 @@ export function AdminAccountManagement({ clientUserId, clientId, userRole }: Adm
       ]);
 
       const records: AccountRecord[] = [];
-      (creditAccounts || []).forEach((a: any) => {
+      (creditAccounts || []).forEach((a: Tables<"credit_accounts">) => {
         records.push({
           id: a.id, creditor: a.creditor, type: a.type,
           amount: a.balance ?? a.current_balance, balance: a.balance,
@@ -118,7 +123,7 @@ export function AdminAccountManagement({ clientUserId, clientId, userRole }: Adm
           table_source: "credit_accounts", account_number_masked: null, updated_at: a.updated_at,
         });
       });
-      (negItems || []).forEach((n: any) => {
+      (negItems || []).forEach((n: Tables<"credit_negative_items">) => {
         records.push({
           id: n.id, creditor: n.creditor_name || "Unknown", type: n.item_type,
           bureau: n.bureau, amount: n.amount, status: n.status,
@@ -136,22 +141,22 @@ export function AdminAccountManagement({ clientUserId, clientId, userRole }: Adm
     queryKey: ["admin-audit-log", clientUserId],
     queryFn: async () => {
       const { data } = await supabase
-        .from("account_modifications" as any)
+        .from("account_modifications")
         .select("*")
         .eq("user_id", clientUserId)
         .order("created_at", { ascending: false })
         .limit(200);
 
       // Resolve modifier names
-      const entries = (data || []) as any[];
+      const entries = data || [];
       const modifierIds = [...new Set(entries.map(e => e.modified_by_user_id).filter(Boolean))];
-      let nameMap: Record<string, string> = {};
+      const nameMap: Record<string, string> = {};
       if (modifierIds.length > 0) {
         const { data: profiles } = await supabase
           .from("profiles")
           .select("user_id, full_name")
           .in("user_id", modifierIds);
-        (profiles || []).forEach((p: any) => { nameMap[p.user_id] = p.full_name || "Unknown"; });
+        (profiles || []).forEach((p) => { nameMap[p.user_id] = p.full_name || "Unknown"; });
       }
 
       return entries.map(e => ({
@@ -232,34 +237,34 @@ export function AdminAccountManagement({ clientUserId, clientId, userRole }: Adm
     mutationFn: async ({ record, updates }: { record: AccountRecord; updates: Partial<AccountRecord> }) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
-      const prev: Record<string, any> = {};
-      const next: Record<string, any> = {};
+      const prev: Record<string, Json | undefined> = {};
+      const next: Record<string, Json | undefined> = {};
 
       if (record.table_source === "credit_accounts") {
-        const payload: Record<string, any> = { updated_at: new Date().toISOString() };
+        const payload: TablesUpdate<"credit_accounts"> = { updated_at: new Date().toISOString() };
         if (updates.creditor !== undefined) { prev.creditor = record.creditor; next.creditor = updates.creditor; payload.creditor = updates.creditor; }
-        if (updates.type !== undefined) { prev.type = record.type; next.type = updates.type; payload.type = updates.type; }
+        if (updates.type !== undefined) { prev.type = record.type; next.type = updates.type; payload.type = updates.type as TablesUpdate<"credit_accounts">["type"]; }
         if (updates.status !== undefined) { prev.status = record.status; next.status = updates.status; payload.status = updates.status; }
         if (updates.credit_limit !== undefined) { prev.credit_limit = record.credit_limit; next.credit_limit = updates.credit_limit; payload.credit_limit = updates.credit_limit; }
-        await supabase.from("credit_accounts").update(payload as any).eq("id", record.id);
+        await supabase.from("credit_accounts").update(payload).eq("id", record.id);
       } else {
-        const payload: Record<string, any> = { updated_at: new Date().toISOString() };
+        const payload: TablesUpdate<"credit_negative_items"> = { updated_at: new Date().toISOString() };
         if (updates.creditor !== undefined) { prev.creditor_name = record.creditor; next.creditor_name = updates.creditor; payload.creditor_name = updates.creditor; }
         if (updates.type !== undefined) { prev.item_type = record.type; next.item_type = updates.type; payload.item_type = updates.type; }
         if (updates.bureau !== undefined) { prev.bureau = record.bureau; next.bureau = updates.bureau; payload.bureau = updates.bureau; }
         if (updates.amount !== undefined) { prev.amount = record.amount; next.amount = updates.amount; payload.amount = updates.amount; }
         if (updates.status !== undefined) { prev.status = record.status; next.status = updates.status; payload.status = updates.status; }
-        await supabase.from("credit_negative_items").update(payload as any).eq("id", record.id);
+        await supabase.from("credit_negative_items").update(payload).eq("id", record.id);
 
       }
 
-      await supabase.from("account_modifications" as any).insert({
+      await supabase.from("account_modifications").insert({
         account_id: record.id, account_table: record.table_source,
         user_id: clientUserId, client_id: clientId || null,
         modified_by_user_id: session.user.id,
-        modification_type: "edit", modification_source: userRole === "admin" ? "admin_ui" : "coach_ui",
+        modification_type: "edit", modification_source: userRole === "admin" ? "admin_ui" : STAFF_UI_SOURCE,
         previous_value: prev, new_value: next,
-      } as any);
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-account-mgmt"] });
@@ -284,13 +289,13 @@ export function AdminAccountManagement({ clientUserId, clientId, userRole }: Adm
       } else {
         await supabase.from("credit_accounts").update({ is_disputed_ownership: true, status: "disputed_ownership" }).eq("id", record.id);
       }
-      await supabase.from("account_modifications" as any).insert({
+      await supabase.from("account_modifications").insert({
         account_id: record.id, account_table: record.table_source,
         user_id: clientUserId, client_id: clientId || null,
         modified_by_user_id: session.user.id,
-        modification_type: "mark_not_mine", modification_source: userRole === "admin" ? "admin_ui" : "coach_ui",
+        modification_type: "mark_not_mine", modification_source: userRole === "admin" ? "admin_ui" : STAFF_UI_SOURCE,
         previous_value: { status: record.status }, new_value: { is_disputed_ownership: true },
-      } as any);
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-account-mgmt"] });
@@ -313,13 +318,13 @@ export function AdminAccountManagement({ clientUserId, clientId, userRole }: Adm
       } else {
         await supabase.from("credit_accounts").update({ duplicate_of_id: primaryId }).eq("id", duplicateId);
       }
-      await supabase.from("account_modifications" as any).insert({
+      await supabase.from("account_modifications").insert({
         account_id: duplicateId, account_table: record.table_source,
         user_id: clientUserId, client_id: clientId || null,
         modified_by_user_id: session.user.id,
-        modification_type: "merge", modification_source: userRole === "admin" ? "admin_ui" : "coach_ui",
+        modification_type: "merge", modification_source: userRole === "admin" ? "admin_ui" : STAFF_UI_SOURCE,
         previous_value: { creditor: record.creditor }, new_value: { duplicate_of_id: primaryId },
-      } as any);
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-account-mgmt"] });
@@ -342,13 +347,13 @@ export function AdminAccountManagement({ clientUserId, clientId, userRole }: Adm
       } else {
         await supabase.from("credit_accounts").delete().eq("id", record.id);
       }
-      await supabase.from("account_modifications" as any).insert({
+      await supabase.from("account_modifications").insert({
         account_id: record.id, account_table: record.table_source,
         user_id: clientUserId, client_id: clientId || null,
         modified_by_user_id: session.user.id,
         modification_type: "delete", modification_source: "admin_ui",
         previous_value: { creditor: record.creditor, type: record.type }, new_value: null,
-      } as any);
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-account-mgmt"] });
@@ -687,7 +692,7 @@ export function AdminAccountManagement({ clientUserId, clientId, userRole }: Adm
                         type: "system" as const,
                         title: "Are these the same account?",
                         message: `Your advisor wants to know: Are "${s.primary.creditor}" and "${s.duplicate.creditor}" the same account? Please confirm in your Account Manager.`,
-                        metadata: { primary_id: s.primary.id, duplicate_id: s.duplicate.id } as any,
+                        metadata: { primary_id: s.primary.id, duplicate_id: s.duplicate.id },
                       });
                       toast.success("Notification sent to client.");
                     }}>

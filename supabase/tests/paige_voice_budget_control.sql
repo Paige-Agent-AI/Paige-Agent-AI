@@ -2,10 +2,13 @@
 -- Synthetic fixtures only; every write rolls back.
 --
 -- Proves:
---   * all budget configuration defaults to zero/disabled and emergency-stop ON;
+--   * the shipped platform defaults are the bounded starting values set by #1447 (migration
+--     20270424000000): enabled, emergency-stop off, a $100 monthly cap, a $0.30 per-1,000-char
+--     ceiling, a per-tenant default; no tenant row is written implicitly;
 --   * tenant budget authority is a server-resolved capability held only by that tenant's owner/admin;
 --   * a platform role cannot write inside a tenant, while the platform owner alone may set the global cap;
---   * both OpenAI and ElevenLabs reservations consume the same tenant + platform monthly budgets;
+--   * reservations against the active profile (ElevenLabs Jessica since #1447) and a second active
+--     revision consume the same tenant + platform monthly budgets;
 --   * exact cap succeeds, over-cap fails, idempotency is scope-bound, old months do not consume this
 --     month, and ambiguous post-dispatch outcomes remain charged until explicitly reconciled;
 --   * the reservation implementation owns both lock rows and guarded counters. A separate two-session
@@ -40,10 +43,10 @@ SELECT ok(NOT has_function_privilege('anon', 'public.set_paige_voice_platform_bu
 SELECT ok(has_function_privilege('authenticated', 'public.set_paige_voice_platform_budget(boolean,boolean,numeric,numeric)', 'EXECUTE'), 'authenticated callers reach the platform capability gate');
 SELECT ok(NOT has_function_privilege('service_role', 'public.set_paige_voice_platform_budget(boolean,boolean,numeric,numeric)', 'EXECUTE'), 'service role has no silent platform cap-setting grant');
 
-SELECT is((SELECT enabled FROM public.paige_voice_platform_budget WHERE singleton), false, 'platform budget defaults disabled');
-SELECT is((SELECT emergency_disabled FROM public.paige_voice_platform_budget WHERE singleton), true, 'emergency disable defaults on');
-SELECT is((SELECT monthly_limit_usd FROM public.paige_voice_platform_budget WHERE singleton), 0::numeric, 'platform monthly cap defaults to zero');
-SELECT is((SELECT max_usd_per_1000_chars FROM public.paige_voice_platform_budget WHERE singleton), 0::numeric, 'platform unit-price ceiling defaults to zero');
+SELECT is((SELECT enabled FROM public.paige_voice_platform_budget WHERE singleton), true, 'platform budget ships enabled (20270424000000)');
+SELECT is((SELECT emergency_disabled FROM public.paige_voice_platform_budget WHERE singleton), false, 'emergency disable ships off (20270424000000)');
+SELECT is((SELECT monthly_limit_usd FROM public.paige_voice_platform_budget WHERE singleton), 100::numeric, 'platform monthly cap ships bounded at $100');
+SELECT is((SELECT max_usd_per_1000_chars FROM public.paige_voice_platform_budget WHERE singleton), 0.30::numeric, 'platform unit-price ceiling ships bounded at $0.30 per 1,000 chars');
 SELECT is((SELECT count(*)::integer FROM public.paige_voice_tenant_budgets), 0, 'no tenant receives an implicit budget');
 
 INSERT INTO auth.users(id,aud,role,email) VALUES
@@ -112,7 +115,7 @@ SELECT lives_ok(
 RESET ROLE;
 SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);
 SELECT throws_ok(
-  $$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000001','10400000-0000-4000-8000-0000000000a1','openai-fallback-r1','10400000-0000-4000-8000-000000000100',1)$$,
+  $$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000001','10400000-0000-4000-8000-0000000000a1','elevenlabs-jessica-r1','10400000-0000-4000-8000-000000000100',1)$$,
   '55000','PAIGE_VOICE_BUDGET_DISABLED','emergency disable refuses before any provider dispatch'
 );
 SET LOCAL ROLE authenticated;
@@ -121,32 +124,33 @@ SELECT lives_ok($$SELECT public.set_paige_voice_platform_budget(true,false,0.30,
 RESET ROLE;
 SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);
 
--- OpenAI is the seeded active profile. Exact tenant cap = two 1,000-char reservations at $0.10.
-SELECT lives_ok($$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000001','10400000-0000-4000-8000-0000000000a1','openai-fallback-r1','10400000-0000-4000-8000-000000000101',1000)$$, 'first OpenAI reservation succeeds');
-SELECT lives_ok($$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000001','10400000-0000-4000-8000-0000000000a1','openai-fallback-r1','10400000-0000-4000-8000-000000000102',1000)$$, 'exact tenant cap succeeds');
-SELECT throws_ok($$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000001','10400000-0000-4000-8000-0000000000a1','openai-fallback-r1','10400000-0000-4000-8000-000000000103',1)$$, '54000','PAIGE_VOICE_TENANT_COST_LIMIT','one character over the tenant cap fails');
+-- ElevenLabs Jessica is the active profile (20270424000000). Exact tenant cap = two 1,000-char
+-- reservations at the $0.10 ceiling set above; the arithmetic is the ceiling's, not the provider's.
+SELECT lives_ok($$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000001','10400000-0000-4000-8000-0000000000a1','elevenlabs-jessica-r1','10400000-0000-4000-8000-000000000101',1000)$$, 'first reservation on the active profile succeeds');
+SELECT lives_ok($$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000001','10400000-0000-4000-8000-0000000000a1','elevenlabs-jessica-r1','10400000-0000-4000-8000-000000000102',1000)$$, 'exact tenant cap succeeds');
+SELECT throws_ok($$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000001','10400000-0000-4000-8000-0000000000a1','elevenlabs-jessica-r1','10400000-0000-4000-8000-000000000103',1)$$, '54000','PAIGE_VOICE_TENANT_COST_LIMIT','one character over the tenant cap fails');
 
 -- Tenant B has independent headroom, but its first reservation reaches the shared platform cap exactly.
-SELECT lives_ok($$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000005','10400000-0000-4000-8000-0000000000b1','openai-fallback-r1','10400000-0000-4000-8000-000000000104',1000)$$, 'a second tenant may use its own budget up to the exact global cap');
-SELECT throws_ok($$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000005','10400000-0000-4000-8000-0000000000b1','openai-fallback-r1','10400000-0000-4000-8000-000000000105',1)$$, '54000','PAIGE_VOICE_PLATFORM_COST_LIMIT','one character over the global cap fails');
+SELECT lives_ok($$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000005','10400000-0000-4000-8000-0000000000b1','elevenlabs-jessica-r1','10400000-0000-4000-8000-000000000104',1000)$$, 'a second tenant may use its own budget up to the exact global cap');
+SELECT throws_ok($$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000005','10400000-0000-4000-8000-0000000000b1','elevenlabs-jessica-r1','10400000-0000-4000-8000-000000000105',1)$$, '54000','PAIGE_VOICE_PLATFORM_COST_LIMIT','one character over the global cap fails');
 
 SELECT is(
-  (public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000001','10400000-0000-4000-8000-0000000000a1','openai-fallback-r1','10400000-0000-4000-8000-000000000101',1000)->>'reservation_id'),
+  (public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000001','10400000-0000-4000-8000-0000000000a1','elevenlabs-jessica-r1','10400000-0000-4000-8000-000000000101',1000)->>'reservation_id'),
   (SELECT id::text FROM public.paige_voice_cost_reservations WHERE request_ref='10400000-0000-4000-8000-000000000101'),
   'idempotent replay returns the original reservation'
 );
-SELECT throws_ok($$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000005','10400000-0000-4000-8000-0000000000b1','openai-fallback-r1','10400000-0000-4000-8000-000000000101',1000)$$, '23505','PAIGE_VOICE_COST_IDEMPOTENCY_MISMATCH','idempotency key cannot cross tenants');
+SELECT throws_ok($$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000005','10400000-0000-4000-8000-0000000000b1','elevenlabs-jessica-r1','10400000-0000-4000-8000-000000000101',1000)$$, '23505','PAIGE_VOICE_COST_IDEMPOTENCY_MISMATCH','idempotency key cannot cross tenants');
 
 -- Monthly reset: prior-month committed spend does not consume the new month's caps.
 UPDATE public.paige_voice_cost_reservations SET budget_month=(date_trunc('month',now() AT TIME ZONE 'UTC')::date - 1) WHERE tenant_id='10400000-0000-4000-8000-0000000000a1';
 UPDATE public.paige_voice_platform_monthly_usage SET budget_month=(date_trunc('month',now() AT TIME ZONE 'UTC')::date - 1);
 UPDATE public.paige_voice_tenant_monthly_usage SET budget_month=(date_trunc('month',now() AT TIME ZONE 'UTC')::date - 1) WHERE tenant_id='10400000-0000-4000-8000-0000000000a1';
-SELECT lives_ok($$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000001','10400000-0000-4000-8000-0000000000a1','openai-fallback-r1','10400000-0000-4000-8000-000000000106',2000)$$, 'prior-month spend does not consume the current-month tenant cap');
+SELECT lives_ok($$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000001','10400000-0000-4000-8000-0000000000a1','elevenlabs-jessica-r1','10400000-0000-4000-8000-000000000106',2000)$$, 'prior-month spend does not consume the current-month tenant cap');
 
 -- Ambiguous dispatch stays charged; explicit reconciliation can release it later.
 SELECT lives_ok($$SELECT public.settle_paige_voice_cost_internal((SELECT id FROM public.paige_voice_cost_reservations WHERE request_ref='10400000-0000-4000-8000-000000000106'),'10400000-0000-4000-8000-000000000001','ambiguous')$$, 'post-dispatch ambiguity settles to an explicit counted state');
 SELECT is((SELECT state FROM public.paige_voice_cost_reservations WHERE request_ref='10400000-0000-4000-8000-000000000106'),'ambiguous','ambiguous reservation is durable');
-SELECT throws_ok($$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000001','10400000-0000-4000-8000-0000000000a1','openai-fallback-r1','10400000-0000-4000-8000-000000000107',1)$$, '54000','PAIGE_VOICE_TENANT_COST_LIMIT','ambiguous spend continues to consume the cap');
+SELECT throws_ok($$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000001','10400000-0000-4000-8000-0000000000a1','elevenlabs-jessica-r1','10400000-0000-4000-8000-000000000107',1)$$, '54000','PAIGE_VOICE_TENANT_COST_LIMIT','ambiguous spend continues to consume the cap');
 SELECT lives_ok($$SELECT public.settle_paige_voice_cost_internal((SELECT id FROM public.paige_voice_cost_reservations WHERE request_ref='10400000-0000-4000-8000-000000000106'),'10400000-0000-4000-8000-000000000001','released')$$, 'an internal reconciliation may release proven-no-charge ambiguous spend');
 
 -- Switch only the synthetic active profile identity to prove the same reservation path covers ElevenLabs.

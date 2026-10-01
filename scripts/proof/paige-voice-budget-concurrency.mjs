@@ -58,7 +58,7 @@ const invoke = (requestRef) => new Promise((resolve, reject) => {
     DO $$ BEGIN
       INSERT INTO voice_budget_race_result
       SELECT public.reserve_paige_voice_cost_internal(
-        '${actor}','${tenant}','openai-fallback-r1','${requestRef}',2000
+        '${actor}','${tenant}','elevenlabs-jessica-r1','${requestRef}',2000
       )::text;
     EXCEPTION WHEN OTHERS THEN
       INSERT INTO voice_budget_race_result VALUES(SQLSTATE||':'||SQLERRM);

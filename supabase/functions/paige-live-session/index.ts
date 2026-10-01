@@ -3,7 +3,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { z } from "https://esm.sh/zod@3.22.4";
-import { isLiveAudioPilotEnabled, issueRelayTicket, liveContextEpochTenant } from "../_shared/paige-live-ticket.ts";
+import { issueRelayTicket, liveContextEpochTenant } from "../_shared/paige-live-ticket.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -86,12 +86,20 @@ serve(async (req: Request) => {
   if (!thread) return (await endStaleSession()) ?? json({ code: "thread_scope_mismatch" }, 403);
 
   if (parsed.data.action === "relay") {
-    const { data: tenantPilot, error: pilotError } = await admin.from("paige_live_tenant_availability")
-      .select("enabled").eq("tenant_id", tenantId).maybeSingle();
-    if (pilotError || !isLiveAudioPilotEnabled(tenantPilot)) {
+    // ONE HOME FOR "MAY THIS PERSON SPEAK" (§18). This used to read
+    // paige_live_tenant_availability here and refuse on a missing row, which made it a SECOND
+    // answer to a question the database already answers — and, once a missing row came to mean
+    // "follow the rollout scope" rather than "refused", a second answer that CONTRADICTED the
+    // first. A brand-new Solo account would have been refused here without the predicate ever
+    // being asked. The predicate below reads that same table itself and honours both of its
+    // meanings: enabled = true admits a workspace outright, enabled = false is a kill switch.
+    const { data: authorizedPilot, error: authorizationError } = await admin.rpc("paige_live_pilot_authorized_internal", {
+      _actor_user_id: user.id, _tenant_id: tenantId,
+    });
+    if (authorizationError || authorizedPilot !== true) {
       return json({
         ok: false, session_id: null, availability: "UNAVAILABLE", code: "live_audio_not_enabled",
-        explanation: "Live audio isn't available for this workspace yet. You can keep working with Paige in chat.",
+        explanation: "Live audio isn't available for this account yet. You can keep working with Paige in chat.",
       });
     }
     // This is a first-party ticket, not a provider token. Existing sessions

@@ -1,9 +1,18 @@
-import { useEffect } from "react";
-import { LogOut } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { CornerUpLeft, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTenantContext } from "@/hooks/useTenantContext";
-import { WORKSPACE_CHOOSER_PATH, reachableWorkspaceCount } from "@/lib/auth/workspaceEntry";
+import {
+  ACCOUNT_SWITCH_NOTICE_KEY,
+  WORKSPACE_CHOOSER_PATH,
+  clearWorkspaceScopedState,
+  forgetWorkspaceEntered,
+  operatorActAsRecorded,
+  reachableWorkspaceCount,
+} from "@/lib/auth/workspaceEntry";
+import { GOD_CONSOLE } from "@/lib/auth/operatorTarget";
+import { landAt } from "@/operator/actAs";
 import { shouldOfferAccountPicker } from "@/lib/auth/accountSelection";
 import { allowAccountSwitch } from "@/lib/auth/accountSwitchGuard";
 import { toast } from "sonner";
@@ -50,8 +59,150 @@ import { toast } from "sonner";
  * genuinely multi-context person: a single-workspace owner has nothing to
  * choose. Platform staff always have Platform as a distinct context, so they
  * may leave a tenant shell for the same deliberate chooser used at sign-in.
+ *
+ * A PLATFORM OPERATOR ACTING AS A TENANT GETS THE EXIT ITSELF, NOT A DETOUR. For them this
+ * shell is an audited act-as, and the way out is the audited `operator_exit_tenant` (reached through
+ * `exitOperatorActAsFrom`, naming the tenant this shell shows), which records the exit and returns
+ * them to the console. The chooser detour reached the same exit two screens later under a label ("Switch workspace")
+ * that never said the act-as was still open — and the sub-account shell had no way out at all,
+ * only a "Back to agency" link into a route that bounces operators while leaving the act-as open.
+ * An operator inside a tenant always has a visible exit that actually ends the session.
  */
 export function WorkspaceExitControl() {
+  const { isPlatformStaff, activeTenantId } = useTenantContext();
+  // Both, for an operator acting as a tenant: Exit ends the act-as; Switch workspace stays
+  // because it is staff's only in-app route to workspaces they genuinely belong to — the console
+  // links nowhere near the chooser, so removing it would strand them there (§58).
+  if (isPlatformStaff && activeTenantId) {
+    return (
+      <>
+        <OperatorExitControl />
+        <MemberExitControl />
+      </>
+    );
+  }
+  return <MemberExitControl />;
+}
+
+/**
+ * The operator's exit from an act-as. One press is one exit; a refused exit leaves them where
+ * they are and says so, because the scope has not changed.
+ */
+function OperatorExitControl() {
+  const navigate = useNavigate();
+  const { activeTenant, activeTenantId, exitOperatorActAsFrom } = useTenantContext();
+  const [leaving, setLeaving] = useState(false);
+  // Taken synchronously, BEFORE the guard is asked: state set after an await lets a second press
+  // through, and the server records an exit even from no tenant, so one gesture would leave two
+  // receipts. Held after a successful exit, released on either refusal.
+  const exiting = useRef(false);
+  const name = activeTenant?.name ?? "this tenant";
+
+  const exit = async () => {
+    if (exiting.current) return;
+    exiting.current = true;
+    // Unsaved work lives in this shell, so the guard runs here, for the same reason as below.
+    const allowed = await allowAccountSwitch({
+      fromTenantId: activeTenantId ?? null,
+      toTenantId: null,
+      toTenantName: "Platform",
+    });
+    if (!allowed) {
+      exiting.current = false;
+      return;
+    }
+    setLeaving(true);
+    // The exit names the tenant this shell shows: a stale tab must not end an act-as another tab has
+    // opened since (the server refuses, and this surface says so).
+    const outcome = activeTenantId ? await exitOperatorActAsFrom(activeTenantId) : "refused";
+    if (outcome !== "exited") {
+      exiting.current = false;
+      setLeaving(false);
+      toast.error(outcome === "moved"
+        ? `${name}'s act-as already ended in another tab, and another tenant is open now. Reload to see where you are.`
+        : `Couldn't leave ${name}. You are still acting as this tenant.`);
+      return;
+    }
+    clearWorkspaceScopedState();
+    forgetWorkspaceEntered();
+    navigate(GOD_CONSOLE, { replace: true });
+  };
+
+  return (
+    <Button
+      data-operator-exit
+      variant="outline"
+      size="sm"
+      disabled={leaving}
+      onClick={() => void exit()}
+      aria-label={`Stop acting as ${name} and return to the platform`}
+    >
+      {/* Its own mark: it RETURNS to the platform and ends the act-as, where "Switch workspace"
+          beside it leaves for the chooser. The same icon on both read as two doors to one place. */}
+      <CornerUpLeft className="mr-1.5 h-4 w-4" />
+      {leaving ? "Leaving…" : "Exit tenant"}
+    </Button>
+  );
+}
+
+/**
+ * The operator's exit on a destination that could not load its account context — the Solo and
+ * business "Couldn't verify your workspace" screens, which render before any shell (and so before
+ * `OperatorExitControl`) can mount. Offered only when this browser session opened an act-as; the
+ * exit itself is the audited RPC, and the server decides whether the caller may use it.
+ *
+ * No unsaved-work guard: nothing in a shell that never mounted can hold unsaved work. The return
+ * is a full load, because the provider that failed to read here is the one the console needs.
+ */
+export function StrandedOperatorExit() {
+  const { activeUserId, exitOperatorActAs, probeOperatorActAs } = useTenantContext();
+  const [leaving, setLeaving] = useState(false);
+  const exiting = useRef(false);
+  // This user's own record or arrival flag answers at once; without either, ask the server afresh,
+  // because client-side signals can be lost (blocked storage, navigation that drops the flag).
+  const recordedHere = operatorActAsRecorded(activeUserId);
+  const [serverSaysActing, setServerSaysActing] = useState(false);
+  useEffect(() => {
+    if (recordedHere || !probeOperatorActAs) return;
+    let live = true;
+    probeOperatorActAs()
+      .then((answer) => { if (live) setServerSaysActing(answer === "acting"); })
+      .catch(() => {});
+    return () => { live = false; };
+  }, [recordedHere, probeOperatorActAs]);
+  if (!recordedHere && !serverSaysActing) return null;
+
+  const exit = async () => {
+    if (exiting.current) return;
+    exiting.current = true;
+    setLeaving(true);
+    const exited = await exitOperatorActAs();
+    if (!exited) {
+      exiting.current = false;
+      setLeaving(false);
+      toast.error("Couldn't leave this tenant. Try again.");
+      return;
+    }
+    clearWorkspaceScopedState();
+    forgetWorkspaceEntered();
+    landAt.go(GOD_CONSOLE);
+  };
+
+  return (
+    <Button
+      data-operator-exit
+      variant="outline"
+      disabled={leaving}
+      onClick={() => void exit()}
+      aria-label="Stop acting as this tenant and return to the platform"
+    >
+      <CornerUpLeft className="mr-1.5 h-4 w-4" />
+      {leaving ? "Leaving…" : "Exit tenant"}
+    </Button>
+  );
+}
+
+function MemberExitControl() {
   const navigate = useNavigate();
   const { tenants = [], isPlatformStaff, activeTenantId } = useTenantContext();
 
@@ -60,9 +211,9 @@ export function WorkspaceExitControl() {
   // still delivered once, rather than lingering in session storage forever.
   useEffect(() => {
     try {
-      const notice = sessionStorage.getItem("paige.accountSwitch.notice");
+      const notice = sessionStorage.getItem(ACCOUNT_SWITCH_NOTICE_KEY);
       if (!notice) return;
-      sessionStorage.removeItem("paige.accountSwitch.notice");
+      sessionStorage.removeItem(ACCOUNT_SWITCH_NOTICE_KEY);
       toast.success(notice);
     } catch {
       // Feedback is best-effort when session storage is unavailable.

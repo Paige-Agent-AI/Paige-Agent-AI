@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { phoneNotSavedMessage, setUserPrimaryAddress } from "../_shared/user-contact-methods.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -54,7 +55,6 @@ Deno.serve(async (req) => {
         .from("profiles")
         .update({
           full_name: `${first_name} ${last_name}`,
-          phone: phone || null,
           ghl_contact_id: contact_id || null,
           pme_phase: pmePhase || null,
         })
@@ -62,6 +62,19 @@ Deno.serve(async (req) => {
 
       if (profileErr) {
         return json(400, { success: false, message: profileErr.message });
+      }
+
+      // A phone in the webhook becomes the person's primary phone; the numbers they already
+      // hold stay. (A webhook without a phone no longer erases theirs.)
+      // The profile update above has already committed, so a refused phone is recorded in the
+      // audit row and reported as exactly that — never as a failed update, and never with the
+      // database's own text (it stays in the log).
+      let phoneError: unknown = null;
+      try {
+        await setUserPrimaryAddress(supabase, existingUser.id, "phone", phone ? String(phone) : null);
+      } catch (e) {
+        phoneError = e;
+        console.error("[webhook-inbound] phone_write_failed", { user_id: existingUser.id, message: (e as Error).message });
       }
 
       // Log the webhook event
@@ -77,8 +90,18 @@ Deno.serve(async (req) => {
           ghl_pipeline_id,
           ghl_opportunity_id,
           location_id,
+          ...(phoneError ? { phone_saved: false } : {}),
         },
       });
+
+      if (phoneError) {
+        return json(422, {
+          success: false,
+          action: "profile_updated",
+          user_id: existingUser.id,
+          message: `The profile was updated. ${phoneNotSavedMessage(phoneError)}`,
+        });
+      }
 
       return json(201, {
         success: true,

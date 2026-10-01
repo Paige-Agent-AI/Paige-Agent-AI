@@ -4,6 +4,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { encode as encodeBase64Url } from "https://deno.land/std@0.168.0/encoding/base64url.ts";
+import { isAuthorizedInternalCaller } from "../_shared/systems-check-http.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -284,8 +285,17 @@ serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Required: user_id, category, title, body
+    // Sending is internal-only: a service-role bearer or a valid cron token. The public key above is
+    // the one open action; nothing a browser holds may push to a person's devices.
+    if (!(await isAuthorizedInternalCaller(req, supabase))) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Required: tenant_id (the sending business), user_id, category, title, body
     const {
+      tenant_id,
       user_id,
       category, // 'dispute_updates' | 'funding_matches' | 'credit_score_changes' | 'task_reminders' | 'general'
       title,
@@ -295,8 +305,8 @@ serve(async (req) => {
       tag,
     } = body;
 
-    if (!user_id || !category || !title || !msgBody) {
-      return new Response(JSON.stringify({ error: "Missing required fields: user_id, category, title, body" }), {
+    if (!tenant_id || !user_id || !category || !title || !msgBody) {
+      return new Response(JSON.stringify({ error: "Missing required fields: tenant_id, user_id, category, title, body" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -343,11 +353,13 @@ serve(async (req) => {
       });
     }
 
-    // Fetch active subscriptions
+    // A notification belongs to exactly one business and reaches only the devices registered for it.
+    // A subscription with no business matches no sender.
     const { data: subs } = await supabase
       .from("push_subscriptions")
       .select("id, endpoint, p256dh_key, auth_key")
       .eq("user_id", user_id)
+      .eq("tenant_id", tenant_id)
       .eq("is_active", true);
 
     if (!subs || subs.length === 0) {

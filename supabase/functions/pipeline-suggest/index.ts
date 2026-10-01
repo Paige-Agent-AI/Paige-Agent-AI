@@ -1,6 +1,6 @@
 // pipeline-suggest — Paige reads a tenant's program and proposes a sales/delivery
 // pipeline with ordered stages tailored to it. Read/propose only; the actual
-// create happens through create_pipeline_with_stages on the tenant's approval
+// create happens through the governed pipeline_configure command on the tenant's approval
 // (§8 propose→confirm). Tenant-generic: no funding/credit framing unless the
 // tenant's OWN program is explicitly about it (§2/§9).
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
@@ -58,11 +58,11 @@ serve(async (req: Request) => {
     const { data: { user }, error: userErr } = await authed.auth.getUser();
     if (userErr || !user) throw new Error("Unauthorized");
 
-    // Role gate: admin or coach only.
+    // Role gate: admin only.
     const { data: roleRows } = await authed.from("user_roles").select("role").eq("user_id", user.id);
     const roles = (roleRows || []).map((r: any) => r.role);
-    if (!roles.some((r: string) => r === "admin" || r === "super_admin" || r === "coach")) {
-      return new Response(JSON.stringify({ error: "Admin or coach access required." }), {
+    if (!roles.some((r: string) => r === "admin" || r === "super_admin")) {
+      return new Response(JSON.stringify({ error: "Admin access required." }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

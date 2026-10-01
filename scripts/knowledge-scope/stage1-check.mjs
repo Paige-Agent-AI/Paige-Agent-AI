@@ -96,19 +96,16 @@ function anthropicStream(kind = "text") {
     // tool has run and every later tool in the same round still executes on stale scope.
     // Distinct `limit` args make the two dispatches individually identifiable in the RPC
     // recorder — `plan_list` maps straight through to a `plan_list` RPC with `p_limit`.
-    // A round that calls `document_generate` with valid blocks and a real title. That tool
-    // persists via `save_marketing_content` and, outside a Studio session, pushes a
-    // `chatArtifacts` entry whose `title` is the model's own words — so the turn emits a
-    // `paige_artifact` frame carrying model-authored, evidence-derived text. Nothing else in
-    // this harness produces one, and without it an assertion that artifact frames are withheld
-    // would pass against a fixture that never makes one (the group-20 thought-frame lesson).
+    // A round that calls durable `document_generate` with a bounded brief and a real title.
+    // Submission must acknowledge the durable work identity without pretending the later
+    // worker-owned artifact already exists or echoing the model-authored title to the wire.
     : kind === "doc-artifact"
     ? [
         { type: "message_start", message: { usage: { input_tokens: 1 } } },
         { type: "content_block_start", index: 0, content_block: { type: "text", text: "" } },
         { type: "content_block_delta", index: 0, delta: { type: "text_delta", text: "Writing that up from the private note." } },
         { type: "content_block_start", index: 0, content_block: { type: "tool_use", id: "tool-1", name: "document_generate" } },
-        { type: "content_block_delta", index: 0, delta: { type: "input_json_delta", partial_json: JSON.stringify({ title: "CHILD-PRIVATE-MARKER onboarding guide", doc_type: "guide", confirm: true, blocks: [{ type: "prose", markdown: "Body text." }] }) } },
+        { type: "content_block_delta", index: 0, delta: { type: "input_json_delta", partial_json: JSON.stringify({ title: "CHILD-PRIVATE-MARKER onboarding guide", doc_type: "guide", brief: "Create an onboarding guide from the verified private note.", confirm: true }) } },
         { type: "message_delta", delta: { stop_reason: "tool_use" }, usage: { output_tokens: 1 } },
         { type: "message_stop" },
       ]
@@ -392,6 +389,13 @@ async function drive({ personaTenant, personaSequence = null, memberships, kbRej
       match_rag_documents: () => (ragHits
         ? { data: [{ id: "rag-1", title: "PRIVATE-RAGTITLE-MARKER outcomes", summary: "PRIVATE-RAG-SOURCE-MARKER", content: "", similarity: 0.88 }], error: null }
         : { data: [], error: null }),
+      // THE CALLER IS AN OWNER unless a scenario says otherwise. Unstubbed, the tier resolver fails
+      // closed to a client seat, and a client seat's turn is always held so its answer can be read
+      // before release (R3). With that default every drive here was held whatever evidence it
+      // carried, and the checks that prove each evidence source holds the turn passed whether or
+      // not it did: an independent review removed two sources from the entry list and this file
+      // stayed green. A scenario that means a client says so, as 21.ac2 does.
+      get_actor_access: { data: { tier: "tenant" }, error: null },
       // Scenario-specific RPCs (e.g. the `save_marketing_content` a `document_generate` tool
       // call persists through). Last, so a scenario can also override a default above.
       ...rpcExtras,
@@ -1742,6 +1746,7 @@ group("a document turn withholds its reply at every scope boundary, including a 
 //
 // So it is read out of this file's own source at startup. Add a fixture with a new `*-MARKER`
 // token and it is covered the moment it exists; there is nothing to remember.
+const { APPROVAL_OUTCOME_SENTENCES } = await import("../../supabase/functions/_shared/approval-outcome.ts");
 const HARNESS_SOURCE = (await import("node:fs")).readFileSync(new URL(import.meta.url), "utf8");
 const DISCOVERED_MARKERS = [...new Set(HARNESS_SOURCE.match(/\b[A-Z][A-Z0-9-]*MARKER[A-Z0-9-]*\b/g) ?? [])]
   .filter((m) => !/^(PROTECTED_MARKERS|DISCOVERED_MARKERS)$/.test(m));
@@ -1782,6 +1787,17 @@ const nonNeutralFrames = (text) => text.split("\n").filter((l) => {
   if (k === "paige_phase") return typeof v !== "string" || v.length > 24;
   if (k === "paige_compacting") return Object.keys(v ?? {}).some((x) => x !== "state" && x !== "pct");
   if (k === "client_scope") return typeof v?.reason !== "string" || v.reason.length > 64;
+  // What became of the person's approvals. Neutral ONLY in its exact shape: fingerprints their own
+  // screen sent, one of three outcomes, and sentences from the server's closed set — never free
+  // text, which is the one way a model's words or evidence could ride along on it.
+  if (k === "paige_approval_outcome") {
+    const closed = (note) => note === undefined || APPROVAL_OUTCOME_SENTENCES.has(note);
+    if (!v || typeof v !== "object" || Object.keys(v).some((x) => x !== "actions" && x !== "note") || !closed(v.note)) return true;
+    return !Array.isArray(v.actions) || v.actions.some((a) => !a || typeof a !== "object"
+      || Object.keys(a).some((x) => x !== "fingerprint" && x !== "outcome" && x !== "note")
+      || typeof a.fingerprint !== "string" || !/^[0-9a-f]{16}(?::[0-9a-f-]{36})?$/.test(a.fingerprint)
+      || !["ran", "not_run", "unconfirmed"].includes(a.outcome) || !closed(a.note));
+  }
   // The refusal sentence itself, and nothing else wearing `choices`.
   if (k === "choices") return !/workspace changed/.test(raw);
   return true;
@@ -2081,21 +2097,21 @@ group("safety-first streaming: the sources the first enumeration missed");
     JSON.stringify(nonNeutralFrames(sessionAtGate.responseText)).slice(0, 300),
   );
 
-  // 21.b — THE ARTIFACT HANDOFF CARD. `paige_artifact` carries a model-authored `title` written
-  // out of the same Knowledge-bearing prompt as the reply, and it went straight to the wire.
-  // A turn that correctly withheld its answer still put a card on screen naming, in the previous
-  // workspace's words, the document it had just made from that workspace's evidence.
+  // 21.b — DURABLE DOCUMENT SUBMISSION. The request now creates durable work; the worker owns
+  // the later artifact and completion turn. This request must therefore prove it submitted the
+  // model-authored title while emitting neither a premature artifact nor that private title.
   const artifactOpts = {
     chunkContent: "PRIVATE-KB-SOURCE-MARKER",
     provider: ["doc-artifact", "private-text"],
+    bodyExtras: { threadId: "99999999-9999-4999-8999-999999999999", requestIntentId: "77777777-7777-4777-8777-777777777777" },
     rpcExtras: {
       // A real tenant seat: without it the actor resolves to the most-restricted `client` tier
       // and `document_generate` is refused before it can produce anything to assert about.
       get_actor_access: { data: { tier: "tenant" }, error: null },
       // §16 lane. The default is `confirm`, which returns a needs_confirm result instead of
-      // running the tool, so no artifact is ever produced to hold or leak.
+      // submitting durable work.
       resolve_tool_autonomy: { data: "auto", error: null },
-      save_marketing_content: { data: "content-abc", error: null },
+      submit_paige_document_work: { data: [{ work_id: "88888888-8888-4888-8888-888888888888", work_status: "claimed", resumed_existing: false }], error: null },
     },
     // The creative tools sit behind an admin/coach role gate; without a role the call is
     // refused and dropped from the trace, so nothing is produced to hold or leak.
@@ -2104,15 +2120,16 @@ group("safety-first streaming: the sources the first enumeration missed");
   const artifactClean = await drive({
     personaTenant: CHILD, personaSequence: [CHILD], memberships: [CHILD], ...artifactOpts,
   });
+  const durableSubmit = artifactClean.rec.rpc.find((call) => call.name === "submit_paige_document_work");
   assert(
-    "21.b CONTROL — the tool shape really does emit an artifact frame when the turn completes",
-    artifactFrames(artifactClean.responseText).length > 0,
-    artifactClean.responseText.slice(0, 400),
+    "21.b CONTROL — the tool shape really does submit durable document work",
+    durableSubmit?.args?._request_payload?.title === "CHILD-PRIVATE-MARKER onboarding guide",
+    JSON.stringify(durableSubmit ?? artifactClean.rec.rpc).slice(0, 400),
   );
   assert(
-    "21.b CONTROL — and that frame carries the model-authored title",
-    artifactFrames(artifactClean.responseText).join("").includes("CHILD-PRIVATE-MARKER"),
-    artifactFrames(artifactClean.responseText).join("").slice(0, 300),
+    "21.b CONTROL — accepted work emits no premature artifact",
+    artifactFrames(artifactClean.responseText).length === 0,
+    artifactClean.responseText.slice(0, 400),
   );
   const artifactTotal = personaCallsOf(artifactClean);
   const artifactAtGate = await drive({
@@ -2262,7 +2279,7 @@ group("safety-first streaming: the sources the first enumeration missed");
   const choiceOpts = {
     chunkContent: "PRIVATE-KB-SOURCE-MARKER",
     provider: ["ask-choices"],
-    bodyExtras: { threadId: STUDIO_THREAD },
+    bodyExtras: { threadId: STUDIO_THREAD, requestIntentId: "66666666-6666-4666-8666-666666666666" },
     // `ask_choices` is Studio-gated, and studioSessionId is read off the thread row.
     tableExtras: { paige_chat_threads: () => [{ summary: null, studio_session_id: "studio-sess-1" }] },
   };
@@ -2355,17 +2372,17 @@ group("safety-first streaming: the sources the first enumeration missed");
     JSON.stringify(nonNeutralFrames(syncAtGate.responseText)).slice(0, 300),
   );
 
-  // 21.h — THE STUDIO CANVAS ARTIFACT. `studioLinked` is the Studio twin of `chatArtifacts` and
-  // is emitted from its own line one above it; the two are mutually exclusive, so 21.b can never
-  // reach this one. Without this case, reverting the Studio line alone left the whole suite
-  // green — a guard on an adjacent line is not a guard on this one.
+  // 21.h — STUDIO FAILS CLOSED BEFORE DURABLE SUBMISSION. The worker cannot yet link an
+  // asynchronously completed document into the Studio canvas, so Studio must refuse instead
+  // of accepting work whose artifact would be unreachable.
   const studioOpts = {
     chunkContent: "PRIVATE-KB-SOURCE-MARKER",
     provider: ["doc-artifact", "private-text"],
-    bodyExtras: { threadId: STUDIO_THREAD },
+    bodyExtras: { threadId: STUDIO_THREAD, requestIntentId: "66666666-6666-4666-8666-666666666666" },
     rpcExtras: {
       get_actor_access: { data: { tier: "tenant" }, error: null },
-      save_marketing_content: { data: "content-studio", error: null },
+      resolve_tool_autonomy: { data: "auto", error: null },
+      submit_paige_document_work: { data: [{ work_id: "55555555-5555-4555-8555-555555555555", work_status: "claimed", resumed_existing: false }], error: null },
     },
     tableExtras: {
       user_roles: () => [{ role: "admin" }],
@@ -2375,15 +2392,16 @@ group("safety-first streaming: the sources the first enumeration missed");
   const studioClean = await drive({
     personaTenant: CHILD, personaSequence: [CHILD], memberships: [CHILD], ...studioOpts,
   });
+  const studioSubmit = studioClean.rec.rpc.find((call) => call.name === "submit_paige_document_work");
   assert(
-    "21.h CONTROL — a Studio turn really does emit a canvas artifact frame",
-    artifactFrames(studioClean.responseText).length > 0,
-    studioClean.responseText.slice(0, 500),
+    "21.h CONTROL — Studio refuses before durable document submission",
+    studioSubmit === undefined,
+    JSON.stringify(studioClean.rec.rpc).slice(0, 400),
   );
   assert(
-    "21.h CONTROL — and that frame carries the model-authored title",
-    artifactFrames(studioClean.responseText).join("").includes("CHILD-PRIVATE-MARKER"),
-    artifactFrames(studioClean.responseText).join("").slice(0, 300),
+    "21.h CONTROL — Studio emits no premature canvas artifact",
+    artifactFrames(studioClean.responseText).length === 0,
+    studioClean.responseText.slice(0, 500),
   );
   const studioTotal = personaCallsOf(studioClean);
   const studioAtGate = await drive({
@@ -3608,6 +3626,47 @@ group("the neutral-frame classifier itself");
     !isNeutral("data: {not json\n\n"), "");
   assert("22.21 an unknown frame key is protected by default",
     !isNeutral(f({ some_new_frame: { title: "anything" } })), "");
+
+  // The approval outcome: neutral in its exact shape, and protected the moment it carries anything
+  // that is not a fingerprint, an outcome, or one of the server's own sentences.
+  const outcome = (o) => f({ paige_approval_outcome: o });
+  assert("22.22 an approval outcome in its own words is neutral",
+    isNeutral(outcome({ note: "It didn't go through.", actions: [{ fingerprint: "a".repeat(16), outcome: "not_run" }] }))
+      && isNeutral(outcome({ actions: [{ fingerprint: `${"b".repeat(16)}:11111111-1111-4111-8111-111111111111`, outcome: "ran" },
+        { fingerprint: "c".repeat(16), outcome: "unconfirmed", note: "This may have gone through. Check before asking again, so it doesn't happen twice." }] })), "");
+  assert("22.23 an approval outcome carrying words of its own is protected",
+    !isNeutral(outcome({ note: "Here is what your file says.", actions: [{ fingerprint: "a".repeat(16), outcome: "not_run" }] }))
+      && !isNeutral(outcome({ actions: [{ fingerprint: "a".repeat(16), outcome: "ran", note: "Done — your notes say the fee is $900." }] })), "");
+  assert("22.24 an approval outcome growing a field, or naming something that is not a fingerprint, is protected",
+    !isNeutral(outcome({ actions: [{ fingerprint: "a".repeat(16), outcome: "ran", summary: "Add Maya" }] }))
+      && !isNeutral(outcome({ actions: [], title: "x" }))
+      && !isNeutral(outcome({ actions: [{ fingerprint: "Add Maya Ortiz", outcome: "ran" }] }))
+      && !isNeutral(outcome({ actions: [{ fingerprint: "a".repeat(16), outcome: "maybe" }] })), "");
+}
+
+group("a turn that stops on a changed workspace still says what became of each approval");
+{
+  // A protected turn (Knowledge evidence), an approval the person sent, and the workspace changing
+  // at the tool-dispatch boundary: the turn ends on "your active workspace changed", which says
+  // anything already finished is saved. The card that asked is owed the same — which of the
+  // approvals that was — or it can only guess.
+  const token = "e".repeat(16);
+  const r = await drive({
+    personaTenant: CHILD, personaSequence: [CHILD, CHILD, CHILD, AGENCY], memberships: [AGENCY, CHILD],
+    chunkContent: "CHILD-PRIVATE-MARKER", provider: ["tool", "text"],
+    bodyExtras: { approvedConfirmations: [token] },
+  });
+  const outcomes = r.responseText.split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
+    .map((l) => { try { return JSON.parse(l.slice(6)); } catch { return null; } })
+    .filter((frame) => frame?.paige_approval_outcome).map((frame) => frame.paige_approval_outcome);
+  assert("27.1 the turn ends on the changed-workspace sentence",
+    r.responseText.includes("active workspace changed"), r.responseText.slice(0, 300));
+  assert("27.2 …and still reports the approval, once, in the order it was sent",
+    outcomes.length === 1 && outcomes[0].actions?.length === 1 && outcomes[0].actions[0].fingerprint === token,
+    JSON.stringify(outcomes));
+  assert("27.3 …as a frame that carries no evidence",
+    outcomes.length === 1 && nonNeutralFrames(`data: ${JSON.stringify({ paige_approval_outcome: outcomes[0] })}\n\n`).length === 0,
+    JSON.stringify(outcomes));
 }
 
 console.log(`\n${checks - failures} passed, ${failures} failed`);

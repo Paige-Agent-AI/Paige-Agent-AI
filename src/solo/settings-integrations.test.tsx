@@ -8,9 +8,9 @@
  * empty, manage, reconnect, disconnect, reload, permission, invalid input,
  * retry, dirty abandonment, and tenant isolation.
  */
-import { act } from "react";
+import { act, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SoloIntegrationsView } from "./settings-integrations";
 import { n8nWriteMessage } from "./data/useN8nConnection";
@@ -136,6 +136,62 @@ beforeEach(() => {
   invoke.mockReset();
   invoke.mockResolvedValue({ data: { ok: true, status: "connected", toolCount: 4 }, error: null });
   document.body.innerHTML = "";
+});
+
+describe("canonical OAuth return through the real Integrations route", () => {
+  const id = "00000000-0000-4000-8000-000000000021";
+  const savedTool = { connection_id: id, provider_key: "generic-remote", label: "Test service",
+    transport: "http", auth_kind: "none", configured: true, enabled: true,
+    status: "pending_verification", health: "unknown", server_url_host: "service.example" };
+  async function route() {
+    const host = document.createElement("div"); document.body.appendChild(host);
+    const root = createRoot(host);
+    let search = "";
+    function LocationProbe() { search = useLocation().search; return null; }
+    const tree = <StrictMode><MemoryRouter initialEntries={[`/solo/10000001/settings/integrations?mcp=cancelled&connection=${id}&mcp_detail=untrusted-provider-prose&keep=yes`]}><LocationProbe /><SoloIntegrationsView /></MemoryRouter></StrictMode>;
+    await act(async () => root.render(tree));
+    return { host, root, search: () => search, rerender: async () => { await act(async () => root.render(<StrictMode><MemoryRouter initialEntries={["/unused"]}><LocationProbe /><SoloIntegrationsView /></MemoryRouter></StrictMode>)); } };
+  }
+  const providerCalls = () => invoke.mock.calls.filter((c) => c[0] === "mcp-gateway" && ["verify", "oauth_begin", "create", "run"].includes(c[1]?.body?.action));
+  it("waits for account resolution, strips one-shot hints, and opens only the saved row", async () => {
+    world({ gateway: [savedTool] }); context.loading = true;
+    const view = await route();
+    expect(view.host.querySelector('[role="dialog"]')).toBeNull();
+    context.loading = false; await view.rerender();
+    expect(view.search()).toBe("?keep=yes");
+    expect(view.host.querySelector('[role="dialog"]')?.textContent).toContain("Test service");
+    expect(view.host.textContent).not.toContain("untrusted-provider-prose");
+    expect(providerCalls()).toHaveLength(0);
+    await act(async () => view.root.unmount());
+  });
+  it("retains the hint across a failed canonical read and permits an explicit read retry", async () => {
+    world({ gateway: [savedTool] }); const original = rpc.getMockImplementation()!;
+    let failed = true;
+    rpc.mockImplementation((name: string, ...args: unknown[]) => name === "get_mcp_connections_v2" && failed
+      ? Promise.resolve({ data: null, error: { message: "test-read-unavailable" } }) : original(name, ...args));
+    const view = await route();
+    expect(view.search()).toBe("?keep=yes");
+    expect(view.host.querySelector('[role="dialog"]')).toBeNull();
+    expect(view.host.textContent).toContain("Your tools couldn’t be read");
+    failed = false; await click(byText(view.host, "Try again"));
+    expect(view.host.querySelector('[role="dialog"]')?.textContent).toContain("Test service");
+    expect(providerCalls()).toHaveLength(0);
+    await act(async () => view.root.unmount());
+  });
+  it("rejects the previous account's late tool read after an account switch", async () => {
+    world(); const original = rpc.getMockImplementation()!;
+    const pending = deferred<{ data: unknown; error: null }>();
+    rpc.mockImplementation((name: string, ...args: unknown[]) => name === "get_mcp_connections_v2" && context.tenantId === "tenant-a"
+      ? pending.promise : original(name, ...args));
+    const view = await route();
+    context.loading = true; await view.rerender();
+    context.tenantId = "tenant-b"; context.loading = false; await view.rerender();
+    await act(async () => pending.resolve({ data: [savedTool], error: null }));
+    expect(view.host.querySelector('[role="dialog"]')).toBeNull();
+    expect(view.host.textContent).not.toContain("Test service");
+    expect(providerCalls()).toHaveLength(0);
+    await act(async () => view.root.unmount());
+  });
 });
 
 describe("Truth boundary", () => {
@@ -993,5 +1049,74 @@ describe("Social tenant-owned connection flow", () => {
     expect(invoke.mock.calls.some(([name, options]) =>
       name === "paige-social" && Object.prototype.hasOwnProperty.call(options?.body ?? {}, "callback_token")
     )).toBe(false);
+  });
+});
+
+/* ── One tool, one tile (owner ruling 2026-09-24) ─────────────────────────────
+   The shipped provider tiles and the gateway's connection tiles come from two
+   sources that never compared notes, so a tenant who had connected n8n saw n8n
+   twice — once here offering setup, once beside it as the connection they had.
+   With Zapier doing the same, two connections read as six tiles. */
+describe("a connected tool does not also render as a tile offering to set it up", () => {
+  const conn = (over: Record<string, unknown> = {}) => ({
+    connection_id: "c1", provider_key: "n8n", label: "n8n (API)", transport: "http",
+    auth_kind: "api_key", configured: true, enabled: true, status: "connected",
+    health: "healthy", last_checked_at: "2026-09-20T10:00:00Z",
+    server_url_host: "team.app.n8n.cloud", tool_count: 3, approved_count: 0, ...over,
+  });
+
+  it("drops the duplicate once the tenant holds that vendor", async () => {
+    world({ gateway: [conn()] });
+    const { host } = await render();
+    expect(host.querySelector('.ig-card[data-provider="n8n"]')).toBeNull();
+    // and the connection itself is still on screen, so nothing was lost by dropping it
+    expect(host.querySelector('[data-owner="gateway"][data-gateway-tool]')).toBeTruthy();
+  });
+
+  it("keeps the tile for a vendor the tenant has NOT connected", async () => {
+    world({ gateway: [conn({ provider_key: "n8n" })] });
+    const { host } = await render();
+    // n8n is covered; Zapier is not, so its shipped tile stays exactly where it was
+    expect(host.querySelector('.ig-card[data-provider="mcp"]')).toBeTruthy();
+  });
+
+  it("changes nothing at all for a tenant with no connections", async () => {
+    world({ gateway: [] });
+    const { host } = await render();
+    expect(host.querySelector('.ig-card[data-provider="n8n"]')).toBeTruthy();
+    expect(host.querySelector('.ig-card[data-provider="mcp"]')).toBeTruthy();
+  });
+
+  it("suppresses nothing while the connection list is unread", async () => {
+    // An unread list must never make a shipped tile vanish: that would hide setup from
+    // someone whose read merely failed. Empty gateway data is the same shape as loading.
+    world({ gateway: [] });
+    const { host } = await render();
+    expect(host.querySelector('.ig-card[data-provider="n8n"]')).toBeTruthy();
+  });
+
+  it("counts what is actually on screen", async () => {
+    // The "All" chip and the Automation chip both had to stop counting a tile that no longer
+    // renders, or the number disagrees with the grid underneath it. Read from the filter bar,
+    // which is where those counts actually live — an assertion aimed at the wrong element
+    // passes whatever the code does, which is worse than having no assertion at all.
+    const countOnChip = (host: HTMLElement, label: string) => {
+      const chip = Array.from(host.querySelectorAll<HTMLElement>('.ig-bar button'))
+        .find((b) => b.textContent?.includes(label));
+      return Number(chip?.querySelector("em")?.textContent ?? "-1");
+    };
+    world({ gateway: [] });
+    const bare = await render();
+    const beforeAll = countOnChip(bare.host, "All");
+    const beforeAuto = countOnChip(bare.host, "Automation");
+    expect(beforeAll).toBeGreaterThan(0);
+    bare.root.unmount();
+
+    world({ gateway: [conn()] });
+    const { host } = await render();
+    // One shipped tile suppressed, one connection tile gained: both chips hold steady. Without
+    // the suppression each would have climbed by one while the grid showed the same tools twice.
+    expect(countOnChip(host, "All")).toBe(beforeAll);
+    expect(countOnChip(host, "Automation")).toBe(beforeAuto);
   });
 });

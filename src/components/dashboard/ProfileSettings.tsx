@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesUpdate } from "@/integrations/supabase/types";
+import type { UserIdentity } from "@supabase/supabase-js";
 import { AvatarUploader, isAvatarBucketUrl, removeAvatarObject } from "@/components/ui/avatar-uploader";
 import { Loader2, User, Building2, Eye, EyeOff, Monitor, UserCircle, Link2, ShieldOff } from "lucide-react";
 import { AccountSecurityPanel } from "@/components/settings/AccountSecurityPanel";
@@ -19,11 +21,14 @@ import { CalendarConnectorsPanel } from "@/components/admin/settings/CalendarCon
 import { z } from "zod";
 import { Switch } from "@/components/ui/switch";
 import { useDashboardMode } from "@/contexts/DashboardModeContext";
+import { readUserContactMethods, saveUserPrimaryAddresses, type UserContactMethodsRead } from "@/lib/userPrimaryContact";
+import { isContactMethodsStale, primaryValue, type ContactMethod } from "@/lib/contact-methods";
+import { userContactMethodsRefusal } from "@/components/contact-methods/useUserContactMethods";
 
 const ssnSchema = z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/, "Invalid SSN format (XXX-XX-XXXX)");
 
 const ConnectedAccountsSection = () => {
-  const [identities, setIdentities] = useState<any[]>([]);
+  const [identities, setIdentities] = useState<UserIdentity[]>([]);
   const [isLinking, setIsLinking] = useState(false);
   const { toast } = useToast();
   useEffect(() => {
@@ -75,7 +80,7 @@ export const ProfileSettings = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isEditingPersonal, setIsEditingPersonal] = useState(false);
   const { toast } = useToast();
-  const { mode, setMode, isCoachOrAdmin } = useDashboardMode();
+  const { mode, setMode, isAdmin } = useDashboardMode();
 
   // Honor a `?tab=` deep link (e.g. the post-connect redirect lands clients on
   // ?tab=accounts). Falls back to Personal for unknown/gated values.
@@ -86,7 +91,7 @@ export const ProfileSettings = () => {
     requestedTab === "business" ||
     requestedTab === "accounts" ||
     requestedTab === "privacy" ||
-    (requestedTab === "preferences" && isCoachOrAdmin);
+    (requestedTab === "preferences" && isAdmin);
   const [activeTab, setActiveTab] = useState(isValidTab ? (requestedTab as string) : "personal");
 
   // Realtime sync indicator state
@@ -103,7 +108,15 @@ export const ProfileSettings = () => {
 
   // Personal Info
   const [fullName, setFullName] = useState("");
+  // The person's primary phone from their contact methods; `savedPhone` is what is stored, so a
+  // save only writes the list when the number actually changed.
   const [phone, setPhone] = useState("");
+  const [savedPhone, setSavedPhone] = useState("");
+  // Every email and phone the person keeps, as last read: a phone save names this list as the one it
+  // replaces. Null until it has been read, and after a read that failed — the phone is then unknown,
+  // not blank, and is neither shown as empty nor saved over.
+  const [contactMethods, setContactMethods] = useState<ContactMethod[] | null>(null);
+  const [phoneLoadError, setPhoneLoadError] = useState<string | null>(null);
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
@@ -169,6 +182,20 @@ export const ProfileSettings = () => {
     };
   }, [isEditingPersonal, isEditingSSN, isEditingDOB]);
 
+  /** Shows the phone the server stores. A failed read says so instead of showing no phone. */
+  const showStoredPhone = (contact: UserContactMethodsRead) => {
+    if (contact.error) {
+      setContactMethods(null);
+      setPhoneLoadError("Your phone number couldn't be loaded. Reload the page to see it and change it.");
+      return;
+    }
+    const stored = primaryValue(contact.methods, "phone") ?? "";
+    setContactMethods(contact.methods);
+    setPhoneLoadError(null);
+    setPhone(stored);
+    setSavedPhone(stored);
+  };
+
   const loadProfileData = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -181,14 +208,17 @@ export const ProfileSettings = () => {
       const profile = Array.isArray(profileRows) ? profileRows[0] : profileRows;
 
       // Avatar isn't part of the PII RPC surface — read it directly (own row).
-      const { data: av } = await supabase
-        .from("profiles").select("avatar_url").eq("user_id", user.id).maybeSingle();
+      const [{ data: av }, contact] = await Promise.all([
+        supabase.from("profiles").select("avatar_url").eq("user_id", user.id).maybeSingle(),
+        readUserContactMethods(user.id),
+      ]);
       setAvatarUrl(av?.avatar_url || "");
       setSavedAvatarUrl(av?.avatar_url || "");
+      // Phone is the person's primary phone contact method, not a profile column.
+      showStoredPhone(contact);
 
       if (profile) {
         setFullName(profile.full_name || "");
-        setPhone(profile.phone || "");
         setAddress(profile.address || "");
         setCity(profile.city || "");
         setState(profile.state || "");
@@ -203,8 +233,8 @@ export const ProfileSettings = () => {
         }
         
         // Use the dedicated ssn_last_4 column for display (never derive from encrypted blob)
-        if ((profile as any).ssn_last_4) {
-          setSsnLast4((profile as any).ssn_last_4);
+        if (profile.ssn_last_4) {
+          setSsnLast4(profile.ssn_last_4);
           setSsn(""); // Never load full SSN into client state
           setIsEditingSSN(false);
         } else if (profile.ssn_encrypted) {
@@ -257,10 +287,30 @@ export const ProfileSettings = () => {
         }
       }
 
+      // Phone first: it is the one part of this form the server may refuse (an invalid number, or a
+      // contact list someone else changed since this page read it), and a refusal here leaves
+      // nothing saved. It is the primary phone in the person's contact methods; only that entry
+      // changes, and the save names the list this page read as the one it replaces.
+      if (phone.trim() !== savedPhone.trim()) {
+        if (!contactMethods) {
+          throw new Error("Your phone number couldn't be loaded, so nothing was saved. Reload the page and try again.");
+        }
+        const saved = await saveUserPrimaryAddresses(user.id, { phone }, contactMethods);
+        if (saved.ok === false) {
+          if (isContactMethodsStale(saved.error)) {
+            showStoredPhone(await readUserContactMethods(user.id));
+            throw new Error(`${userContactMethodsRefusal(saved.error)} Your phone now shows what is saved; check it and save again.`);
+          }
+          throw new Error(userContactMethodsRefusal(saved.error));
+        }
+        // Show what the server stored as the primary phone, not what was typed: clearing the number
+        // promotes the next phone the person keeps.
+        showStoredPhone({ methods: saved.methods, error: null });
+      }
+
       // Update non-sensitive fields directly
-      const updateData: any = {
+      const updateData: TablesUpdate<"profiles"> = {
         full_name: fullName,
-        phone,
         address,
         city,
         state,
@@ -412,7 +462,7 @@ export const ProfileSettings = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className={`grid w-full ${isCoachOrAdmin ? "grid-cols-5" : "grid-cols-4"}`}>
+        <TabsList className={`grid w-full ${isAdmin ? "grid-cols-5" : "grid-cols-4"}`}>
           <TabsTrigger value="personal" className="gap-2">
             <User className="w-4 h-4" />
             Personal Info
@@ -429,7 +479,7 @@ export const ProfileSettings = () => {
             <ShieldOff className="w-4 h-4" />
             Data &amp; Privacy
           </TabsTrigger>
-          {isCoachOrAdmin && (
+          {isAdmin && (
             <TabsTrigger value="preferences" className="gap-2">
               <Monitor className="w-4 h-4" />
               Preferences
@@ -442,7 +492,7 @@ export const ProfileSettings = () => {
         </TabsContent>
 
 
-        {isCoachOrAdmin && (
+        {isAdmin && (
           <TabsContent value="preferences">
             <Card className="p-6">
               <div className="space-y-6">
@@ -511,7 +561,12 @@ export const ProfileSettings = () => {
                       <p className="font-medium">{fullName}</p>
                     </div>
                   )}
-                  {phone && (
+                  {phoneLoadError ? (
+                    <div>
+                      <Label className="text-muted-foreground">Phone</Label>
+                      <p role="status" className="text-sm text-muted-foreground">{phoneLoadError}</p>
+                    </div>
+                  ) : phone && (
                     <div>
                       <Label className="text-muted-foreground">Phone</Label>
                       <p className="font-medium">{phone}</p>
@@ -568,10 +623,15 @@ export const ProfileSettings = () => {
                 <Label htmlFor="phone">Phone Number</Label>
                 <Input
                   id="phone"
-                  value={phone}
+                  value={phoneLoadError ? "" : phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="(555) 123-4567"
+                  placeholder={phoneLoadError ? "Couldn't load" : "(555) 123-4567"}
+                  disabled={Boolean(phoneLoadError)}
+                  aria-describedby={phoneLoadError ? "phone-load-error" : undefined}
                 />
+                {phoneLoadError && (
+                  <p id="phone-load-error" role="status" className="text-sm text-muted-foreground">{phoneLoadError}</p>
+                )}
               </div>
 
               <div className="space-y-2">

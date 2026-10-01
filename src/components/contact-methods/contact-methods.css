@@ -1,0 +1,135 @@
+/* Contact methods — approved comp A (2026-09-28). Tokens only; both themes come from [data-pg].
+   Input rules are scoped under .ctm-editor so a host's element rules (a modal's `input`, a form's
+   `label`) cannot restyle the editor wherever it is mounted.
+   The orb is the "on" state of a primary, the one place champagne appears in this component. */
+.ctm-editor { --ctm-orb: var(--pg-gold); --ctm-orb-ring: color-mix(in srgb, var(--pg-gold-fill) 24%, transparent);
+  display: grid; align-content: start; gap: 26px; min-width: 0; container-type: inline-size; }
+[data-pg="light"] .ctm-editor { --ctm-orb: var(--pg-gold-fill); --ctm-orb-ring: color-mix(in srgb, var(--pg-gold-deep) 26%, transparent); }
+
+.ctm-sec { display: grid; gap: 10px; min-width: 0; }
+.ctm-sec-h { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 14px; padding-left: 30px; }
+.ctm-sec-h :is(h3, h4) { margin: 0; font: 600 16px/1.2 var(--pg-font-display); letter-spacing: -.01em; color: var(--pg-ink); }
+.ctm-n { margin-left: 8px; color: var(--pg-faint); font: 500 12px var(--pg-font-data); }
+.ctm-sec-h p { margin: 0; color: var(--pg-muted); font-size: 12.5px; }
+
+/* The circuit: one hairline threads every address of a kind; each row hangs off it on a node. */
+.ctm-list { position: relative; display: grid; gap: 7px; margin: 0; padding: 0 0 0 30px; list-style: none; }
+.ctm-list::before { position: absolute; top: 30px; bottom: 26px; left: 9px; width: 1px; content: ""; background: var(--pg-line); }
+.ctm-row { position: relative; display: grid; grid-template-columns: 30px minmax(0, 1fr) 108px 204px; align-items: center; gap: 10px 14px; min-height: 48px;
+  padding: 8px 12px 8px 14px; border: 1px solid var(--pg-line-soft); border-radius: 11px; background: var(--pg-surface); transition: border-color .2s, background .2s, box-shadow .3s; }
+.ctm-row::before { position: absolute; z-index: 1; top: calc(50% - 4.5px); left: -25px; width: 9px; height: 9px; content: ""; border: 1px solid var(--pg-line-strong); border-radius: 50%; background: var(--pg-workspace); transition: background .3s, border-color .3s, box-shadow .3s; }
+.ctm-row::after { position: absolute; top: 50%; left: -16px; width: 16px; height: 1px; content: ""; background: var(--pg-line); }
+.ctm-row:hover { border-color: var(--pg-line); }
+.ctm-row:focus-within { border-color: var(--pg-line-strong); }
+.ctm-row.is-primary { grid-template-columns: 30px minmax(0, 1fr) 108px auto; min-height: 84px; padding: 14px 16px 14px 18px; border-color: var(--pg-line); background: var(--pg-raised); box-shadow: var(--pg-lift-1); }
+.ctm-row.has-err { border-color: var(--pg-negative); }
+.ctm-row.is-new { animation: ctm-row-in .26s cubic-bezier(.22,1,.36,1); }
+@keyframes ctm-row-in { from { opacity: 0; transform: translateY(-4px); } }
+
+.ctm-mark { display: grid; width: 30px; height: 30px; place-items: center; color: var(--pg-muted); }
+.ctm-mark svg { width: 17px; height: 17px; stroke-width: 1.7; }
+.ctm-orb { display: block; width: 22px; height: 22px; border-radius: 50%; background: var(--ctm-orb); box-shadow: 0 0 0 5px var(--ctm-orb-ring), inset 0 1px 0 color-mix(in srgb, var(--pg-raised) 35%, transparent); }
+/* On Mineral the champagne orb is pale against a light row; a gold-deep edge keeps it above 3:1. */
+[data-pg="light"] .ctm-orb { box-shadow: 0 0 0 1.5px var(--pg-gold-deep), 0 0 0 5px var(--ctm-orb-ring); }
+.ctm-body { display: grid; min-width: 0; gap: 3px; }
+.ctm-editor .ctm-in { width: 100%; min-width: 0; min-height: 0; margin-left: -7px; padding: 4px 7px; border: 1px solid transparent; border-radius: 7px; color: var(--pg-ink); background: transparent; font: 400 15px/1.35 var(--pg-font-ui); transition: border-color .15s, background .15s; }
+.ctm-editor .ctm-in.is-mono, .ctm-val.is-mono { font-family: var(--pg-font-data); font-size: 14.5px; font-variant-numeric: tabular-nums; }
+.is-primary .ctm-in, .is-primary .ctm-val { font: 500 clamp(19px, 2vw, 25px)/1.2 var(--pg-font-ui); letter-spacing: -.015em; }
+.is-primary .ctm-in.is-mono, .is-primary .ctm-val.is-mono { font: 500 clamp(18px, 1.9vw, 24px)/1.2 var(--pg-font-data); letter-spacing: 0; }
+.ctm-editor .ctm-in:hover:not(:disabled) { border-color: var(--pg-line-soft); background: var(--pg-well, var(--pg-canvas)); }
+.ctm-editor .ctm-in:focus { border-color: var(--pg-line-strong); outline: none; background: var(--pg-well, var(--pg-canvas)); box-shadow: none; }
+.ctm-editor .ctm-in:focus-visible { outline: 2px solid var(--pg-violet); outline-offset: 1px; }
+.ctm-editor .ctm-in::placeholder { color: var(--pg-faint); }
+.ctm-editor .ctm-in:disabled { color: var(--pg-ink); background: transparent; }
+.ctm-val { overflow-wrap: anywhere; color: var(--pg-ink); font-size: 15px; }
+.ctm-meta { color: var(--pg-muted); font-size: 12.5px; }
+.ctm-meta b { color: var(--pg-ink-2); font-weight: 600; }
+.ctm-err { color: var(--pg-negative); font-size: 12.5px; }
+
+.ctm-label { position: relative; }
+.ctm-tag { display: inline-flex; width: 100%; min-height: 30px; align-items: center; justify-content: space-between; gap: 6px; padding: 0 10px 0 12px;
+  border: 1px solid var(--pg-line); border-radius: 7px; color: var(--pg-ink-2); background: var(--pg-canvas); font-size: 12.5px; font-weight: 500; white-space: nowrap; }
+button.ctm-tag { cursor: pointer; }
+button.ctm-tag:hover:not(:disabled), button.ctm-tag[aria-expanded="true"] { border-color: var(--pg-line-strong); color: var(--pg-ink); }
+span.ctm-tag { justify-content: center; }
+.ctm-tag svg { width: 12px; height: 12px; color: var(--pg-faint); }
+.ctm-lb { position: absolute; z-index: 5; top: calc(100% + 6px); right: 0; min-width: 150px; margin: 0; padding: 5px; list-style: none; border: 1px solid var(--pg-line); border-radius: 11px; background: var(--pg-raised); box-shadow: var(--pg-lift-2); animation: ctm-lb-in .16s cubic-bezier(.22,1,.36,1); }
+@keyframes ctm-lb-in { from { opacity: 0; transform: translateY(-4px); } }
+.ctm-lb li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 10px; border-radius: 7px; color: var(--pg-ink-2); font-size: 13px; cursor: pointer; }
+.ctm-lb li:hover, .ctm-lb li:focus { outline: none; color: var(--pg-ink); background: var(--pg-surface); }
+.ctm-lb li:focus-visible { box-shadow: inset 0 0 0 2px var(--pg-violet); }
+.ctm-lb li[aria-selected="true"] { color: var(--pg-ink); font-weight: 600; }
+.ctm-lb li.is-none { margin-top: 4px; border-top: 1px solid var(--pg-line-soft); border-radius: 0 0 7px 7px; color: var(--pg-muted); }
+.ctm-lb li svg { width: 14px; height: 14px; }
+
+.ctm-acts { display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
+.ctm-mk { padding: 6px 9px; border: 0; border-radius: 7px; color: var(--pg-muted); background: transparent; font-size: 13px; white-space: nowrap; cursor: pointer; }
+.ctm-mk:hover:not(:disabled) { color: var(--pg-ink); background: var(--pg-raised); }
+.ctm-tools { display: flex; align-items: center; gap: 2px; opacity: 0; transition: opacity .15s; }
+.ctm-row:hover .ctm-tools, .ctm-row:focus-within .ctm-tools { opacity: 1; }
+@media (hover: none) { .ctm-tools { opacity: 1; } }
+.ctm-ib { display: inline-grid; width: 30px; height: 30px; padding: 0; place-items: center; border: 0; border-radius: 7px; color: var(--pg-muted); background: transparent; cursor: pointer; }
+.ctm-ib svg { width: 15px; height: 15px; }
+.ctm-ib:hover:not(:disabled) { color: var(--pg-ink); background: var(--pg-raised); }
+.ctm-ib.is-rm:hover:not(:disabled) { color: var(--pg-negative); }
+.ctm-ib:disabled, .ctm-mk:disabled, .ctm-tag:disabled { opacity: .35; cursor: default; }
+.ctm-editor button:focus-visible { outline: 2px solid var(--pg-violet); outline-offset: 1px; }
+
+/* Adding sits on the circuit too, so it reads as extending the same line. */
+.ctm-addrow, .ctm-slot { padding: 0; border-style: dashed; background: transparent; }
+.ctm-addrow::before, .ctm-slot::before { border-style: dashed; }
+.ctm-add { display: grid; width: 100%; min-height: 46px; grid-column: 1 / -1; grid-template-columns: 30px 1fr; align-items: center; gap: 14px; padding: 6px 14px;
+  border: 0; border-radius: 11px; color: var(--pg-muted); background: transparent; font-size: 14.5px; text-align: left; cursor: pointer; }
+.ctm-add:hover:not(:disabled) { color: var(--pg-ink); background: var(--pg-surface); }
+.ctm-add:disabled { opacity: .5; cursor: not-allowed; }
+.ctm-ring { display: grid; width: 26px; height: 26px; margin-left: 2px; place-items: center; border: 1px dashed var(--pg-line-strong); border-radius: 50%; }
+.ctm-ring svg { width: 13px; height: 13px; }
+.ctm-slot { min-height: 84px; border-color: var(--pg-line); }
+.ctm-slot .ctm-add { min-height: 84px; padding: 14px 18px; }
+.ctm-slot .ctm-ring { width: 22px; height: 22px; margin-left: 4px; border: 1.5px dashed var(--pg-line-strong); }
+.ctm-slot strong { display: block; color: var(--pg-ink); font: 500 18px/1.25 var(--pg-font-ui); letter-spacing: -.01em; }
+.ctm-slot small { display: block; margin-top: 3px; color: var(--pg-muted); font-size: 12.5px; }
+.ctm-cap { margin: 0; padding-left: 30px; color: var(--pg-muted); font-size: 12.5px; }
+
+.is-readonly .ctm-row { grid-template-columns: 30px minmax(0, 1fr) auto; }
+
+/* Choosing one address (Setup → representative phone): the same circuit, each row a radio. The orb
+   marks the chosen number; the rest carry an empty ring. The native radio stays in the row, hidden,
+   so arrow keys and form semantics are the platform's own. */
+.ctm-row.is-choice { display: block; padding: 0; }
+/* A host form may style every `label`; the choice row is a label, so it resets to the editor's own type. */
+.ctm-editor .ctm-choice { color: var(--pg-ink); font: 400 13px/1.4 var(--pg-font-ui); letter-spacing: normal; text-transform: none; }
+.ctm-choice { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: center; gap: 10px 14px; min-height: 48px; padding: 8px 12px 8px 14px; border-radius: 11px; cursor: pointer; }
+.ctm-row.is-choice:hover { border-color: var(--pg-line); }
+.ctm-row.is-choice.is-chosen { border-color: var(--pg-line-strong); background: var(--pg-raised); box-shadow: var(--pg-lift-1); }
+.ctm-row.is-choice:has(input:focus-visible) { outline: 2px solid var(--pg-violet); outline-offset: 1px; }
+.ctm-row.is-choice.is-unusable .ctm-choice { cursor: not-allowed; }
+.ctm-row.is-choice.is-unusable .ctm-val { color: var(--pg-muted); }
+.ctm-ring0 { display: block; width: 18px; height: 18px; margin-left: 2px; border: 1.5px solid var(--pg-line-strong); border-radius: 50%; }
+.ctm-cap-plain { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; color: var(--pg-muted); font-size: 12.5px; }
+.ctm-cap-plain svg { width: 13px; height: 13px; }
+.ctm-link { padding: 0; border: 0; color: var(--pg-violet); background: transparent; font: inherit; text-decoration: underline; cursor: pointer; }
+.is-choices { gap: 10px; }
+.is-readonly .ctm-label { min-width: 88px; }
+
+@container (max-width: 640px) {
+  .ctm-row { grid-template-columns: 30px 96px minmax(0, 1fr); grid-template-areas: "mark body body" "mark label acts"; gap: 8px; padding: 10px 8px 10px 12px; }
+  .ctm-row.is-primary { min-height: 0; padding: 12px 8px 12px 12px; }
+  .ctm-mark { grid-area: mark; align-self: start; } .ctm-body { grid-area: body; } .ctm-label { grid-area: label; } .ctm-acts { grid-area: acts; flex-wrap: wrap; gap: 0; }
+  .ctm-mk { padding: 6px 4px; font-size: 12.5px; } .ctm-ib { width: 26px; }
+  .is-readonly .ctm-row { grid-template-columns: 30px minmax(0, 1fr); grid-template-areas: "mark body" "mark label"; }
+}
+@container (max-width: 520px) {
+  .ctm-sec-h, .ctm-cap { padding-left: 0; }
+  .ctm-list { padding-left: 0; }
+  .ctm-list::before, .ctm-row::before, .ctm-row::after { display: none; }
+}
+/* Reduced motion: every animation and transition this component adds, at a specificity that beats
+   the rules that declare them (so it holds wherever the editor is mounted, not only inside People). */
+@media (prefers-reduced-motion: reduce) {
+  .ctm-editor .ctm-row, .ctm-editor .ctm-row.is-new, .ctm-editor .ctm-row::before, .ctm-editor .ctm-lb,
+  .ctm-editor .ctm-tools, .ctm-editor .ctm-in, .ctm-editor .ctm-add, .ctm-editor .ctm-mk, .ctm-editor .ctm-ib,
+  .ctm-editor .ctm-tag, .ctm-editor .ctm-choice { animation: none; transition: none; }
+  /* Inherited colour changes (a hovered button's icon and ring) must not ease either. */
+  .ctm-editor *, .ctm-editor *::before, .ctm-editor *::after { animation: none; transition: none; }
+}

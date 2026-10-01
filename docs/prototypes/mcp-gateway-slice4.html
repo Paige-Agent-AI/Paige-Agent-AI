@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Slice ④ — MCP gateway sign-in &amp; check</title>
+<!--
+  Throwaway flow-prototype for MCP Gateway Slice ④ (PR #1381).
+
+  WHY IT EXISTS. §69/paige-ui-design require a flow-prototype surface for a material flow change,
+  and adding a provider sign-in is exactly that ("connection flows" is named in terms). It is also
+  the only way THIS session can satisfy §00's "CC SHOWS THE WORK" — the build ran headless with no
+  browser, so no authenticated frame could be captured. This is something the owner can open and
+  click.
+
+  WHAT IT IS, HONESTLY. Static HTML. Every transition is scripted; nothing here talks to Supabase,
+  to the gateway edge, or to any provider. It shows the SHAPE of the flow and the exact copy, so
+  the wording and the step order can be judged before anyone logs in. It is NOT runtime proof and
+  must never be cited as one.
+
+  FIDELITY. The `--pg-*` tokens are copied verbatim from src/index.css (dark :245-256, light
+  :291-302) and the `.ig-*` structure mirrors settings-integrations-gateway.tsx, so what is judged
+  here is what ships. No visual direction is invented (§00).
+-->
+<style>
+  :root{
+    --pg-env:#08070b; --pg-canvas:#100e14; --pg-spine:#121017; --pg-surface:#19161e; --pg-raised:#211d27;
+    --pg-line-soft:rgba(244,237,222,.115); --pg-line:rgba(244,237,222,.195);
+    --pg-ink:#f6f2ea; --pg-ink-2:#d6d0c9; --pg-muted:#aca69d; --pg-faint:#969089;
+    --pg-gold-core:#fff0cf; --pg-gold:#ead5aa; --pg-gold-deep:#c7a978;
+    --pg-violet:#9b8de0; --pg-positive:#8fd1ae; --pg-warning:#edc17f; --pg-negative:#eda093;
+    --pg-e1:inset 0 1px rgba(255,255,255,.025); --pg-e2:0 1px 2px rgba(0,0,0,.45);
+    --pg-r-chip:8px; --pg-r-plate:14px;
+  }
+  :root[data-theme="light"]{
+    --pg-env:#e8e5df; --pg-canvas:#fbf9f5; --pg-spine:#f1eee8; --pg-surface:#f5f2ec; --pg-raised:#fffdf8;
+    --pg-line-soft:rgba(45,40,50,.105); --pg-line:rgba(45,40,50,.185);
+    --pg-ink:#201e23; --pg-ink-2:#3d3941; --pg-muted:#67616b; --pg-faint:#6a646e;
+    --pg-gold-core:#6f5636; --pg-gold:#8b7049; --pg-gold-deep:#7a5c2e;
+    --pg-violet:#655a96; --pg-positive:#327458; --pg-warning:#986322; --pg-negative:#a5483d;
+    --pg-e1:inset 0 1px rgba(255,255,255,.7); --pg-e2:0 1px 2px rgba(45,40,50,.10);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--pg-env);color:var(--pg-ink);
+    font:15px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:24px 16px 64px}
+  header.top{display:flex;flex-wrap:wrap;gap:12px;align-items:baseline;justify-content:space-between;
+    padding-bottom:16px;border-bottom:1px solid var(--pg-line-soft);margin-bottom:24px}
+  h1{font-size:19px;margin:0;letter-spacing:-.01em}
+  .sub{color:var(--pg-muted);font-size:13px;margin:4px 0 0}
+  .controls{display:flex;gap:8px;flex-wrap:wrap}
+  button{font:inherit;cursor:pointer}
+  .ig-btn{background:var(--pg-surface);color:var(--pg-ink);border:1px solid var(--pg-line);
+    border-radius:var(--pg-r-chip);padding:8px 14px;box-shadow:var(--pg-e1)}
+  .ig-btn:hover{border-color:var(--pg-ink-2)}
+  .ig-btn:focus-visible{outline:2px solid var(--pg-violet);outline-offset:2px}
+  .ig-btn[data-primary]{background:var(--pg-gold-deep);border-color:var(--pg-gold-deep);color:#17130c;font-weight:600}
+  :root[data-theme="light"] .ig-btn[data-primary]{color:#fffdf8}
+  .ig-btn[data-danger]{color:var(--pg-negative);border-color:color-mix(in srgb,var(--pg-negative) 45%,transparent)}
+  .ig-btn[disabled]{opacity:.55;cursor:not-allowed}
+  .panel{background:var(--pg-surface);border:1px solid var(--pg-line-soft);border-radius:var(--pg-r-plate);
+    box-shadow:var(--pg-e1),var(--pg-e2);padding:20px;max-width:560px}
+  .eyebrow{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--pg-faint);display:block;margin-bottom:3px}
+  .panel h2{margin:0 0 14px;font-size:17px;letter-spacing:-.01em}
+  .ig-lede{color:var(--pg-ink-2);margin:0 0 16px;font-size:14px}
+  .ig-field{display:block;margin-bottom:14px}
+  .ig-field>span{display:block;font-size:12px;color:var(--pg-muted);margin-bottom:5px}
+  .ig-field input{width:100%;padding:9px 11px;border-radius:var(--pg-r-chip);
+    border:1px solid var(--pg-line);background:var(--pg-canvas);color:var(--pg-ink);font:inherit}
+  .ig-field input:focus-visible{outline:2px solid var(--pg-violet);outline-offset:1px;border-color:var(--pg-violet)}
+  .ig-field-bad input{border-color:var(--pg-negative)}
+  .ig-field small{display:block;margin-top:5px;font-size:12px;color:var(--pg-faint)}
+  .ig-gw-err{color:var(--pg-negative)!important}
+  .ig-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
+  .ig-note{font-size:12px;color:var(--pg-faint);margin:14px 0 0}
+  .ig-gw-info,.ig-error,.ig-gw-warn{display:flex;gap:9px;padding:11px 13px;border-radius:var(--pg-r-chip);
+    font-size:13px;margin-bottom:13px;line-height:1.5;align-items:flex-start}
+  .ig-gw-info{background:color-mix(in srgb,var(--pg-violet) 11%,transparent);
+    border:1px solid color-mix(in srgb,var(--pg-violet) 30%,transparent);color:var(--pg-ink-2)}
+  .ig-error{background:color-mix(in srgb,var(--pg-negative) 12%,transparent);
+    border:1px solid color-mix(in srgb,var(--pg-negative) 36%,transparent);color:var(--pg-ink)}
+  .ig-gw-ok{background:color-mix(in srgb,var(--pg-positive) 12%,transparent);
+    border:1px solid color-mix(in srgb,var(--pg-positive) 34%,transparent);color:var(--pg-ink);
+    display:flex;gap:9px;padding:11px 13px;border-radius:var(--pg-r-chip);font-size:13px;margin-bottom:13px}
+  dl.ig-facts{margin:0 0 16px;display:grid;gap:9px}
+  dl.ig-facts>div{display:flex;justify-content:space-between;gap:16px;font-size:13px;
+    padding-bottom:8px;border-bottom:1px solid var(--pg-line-soft)}
+  dt{color:var(--pg-muted)} dd{margin:0;text-align:right;color:var(--pg-ink)}
+  .chip{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:600;
+    border:1px solid var(--pg-line)}
+  .chip[data-tone="pending"]{color:var(--pg-warning);border-color:color-mix(in srgb,var(--pg-warning) 45%,transparent)}
+  .chip[data-tone="ok"]{color:var(--pg-positive);border-color:color-mix(in srgb,var(--pg-positive) 45%,transparent)}
+  .chip[data-tone="bad"]{color:var(--pg-negative);border-color:color-mix(in srgb,var(--pg-negative) 45%,transparent)}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:11px;list-style:none;padding:0;margin:0}
+  .tile{width:100%;text-align:left;background:var(--pg-raised);border:1px solid var(--pg-line-soft);
+    border-radius:var(--pg-r-plate);padding:13px;display:flex;flex-direction:column;gap:7px;color:inherit;
+    box-shadow:var(--pg-e1)}
+  .tile:hover{border-color:var(--pg-violet);transform:translateY(-1px);transition:transform .16s,border-color .16s}
+  @media (prefers-reduced-motion:reduce){.tile:hover{transform:none;transition:none}}
+  .tile-name{font-weight:600;font-size:14px}
+  .tile-desc{font-size:12px;color:var(--pg-muted);line-height:1.45}
+  .badge{align-self:flex-start;font-size:11px;padding:2px 8px;border-radius:999px;
+    border:1px solid var(--pg-line);color:var(--pg-ink-2)}
+  .badge[data-m="connect"]{color:var(--pg-violet);border-color:color-mix(in srgb,var(--pg-violet) 45%,transparent)}
+  .step{display:flex;gap:11px;align-items:flex-start;font-size:13px;color:var(--pg-ink-2);margin-bottom:11px}
+  .step i{flex:none;width:21px;height:21px;border-radius:50%;border:1px solid var(--pg-line);
+    display:grid;place-items:center;font-style:normal;font-size:11px;color:var(--pg-muted)}
+  .step[data-on] i{border-color:var(--pg-positive);color:var(--pg-positive)}
+  .scene{display:none} .scene[data-on]{display:block}
+  .legend{margin:28px 0 0;padding:16px 18px;background:var(--pg-spine);border:1px solid var(--pg-line-soft);
+    border-radius:var(--pg-r-plate);font-size:13px;color:var(--pg-ink-2);max-width:760px}
+  .legend h3{margin:0 0 8px;font-size:13px;color:var(--pg-ink);letter-spacing:.02em}
+  .legend p{margin:0 0 9px;line-height:1.6}
+  .legend strong{color:var(--pg-ink)}
+  .navrow{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:22px}
+  .navrow button{background:transparent;border:1px solid var(--pg-line-soft);color:var(--pg-muted);
+    border-radius:999px;padding:6px 13px;font-size:12.5px}
+  .navrow button[aria-pressed="true"]{background:var(--pg-raised);color:var(--pg-ink);border-color:var(--pg-line)}
+  .navrow button:focus-visible{outline:2px solid var(--pg-violet);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Slice ④ — provider sign-in &amp; tool check</h1>
+      <p class="sub">Settings → Integrations → Automation. Static prototype: nothing here contacts a real server.</p>
+    </div>
+    <div class="controls">
+      <button class="ig-btn" id="theme">Light theme</button>
+    </div>
+  </header>
+
+  <nav class="navrow" aria-label="Scenes">
+    <button data-go="catalogue" aria-pressed="true">1 · Catalogue</button>
+    <button data-go="signin" aria-pressed="false">2 · Sign in</button>
+    <button data-go="signin-fail" aria-pressed="false">3 · No usable sign-in</button>
+    <button data-go="detail" aria-pressed="false">4 · Check now</button>
+    <button data-go="checked-bad" aria-pressed="false">5 · Check found a problem</button>
+    <button data-go="shortkey" aria-pressed="false">6 · Key too short</button>
+    <button data-go="off" aria-pressed="false">7 · Turned off</button>
+  </nav>
+
+  <!-- 1 ── The catalogue tile that used to be an honest stop -->
+  <section class="scene" id="catalogue" data-on>
+    <div class="panel" style="max-width:720px">
+      <span class="eyebrow">Connected MCP Gateway</span>
+      <h2>Add a tool</h2>
+      <p class="ig-lede">The badge is the change. Every one of these read <em>“Sign-in soon”</em> before this slice,
+        because the OAuth spine had shipped but nothing in a browser could start it.</p>
+      <ul class="tiles">
+        <li><button class="tile" data-go="signin">
+          <span class="tile-name">Calendly</span>
+          <span class="tile-desc">Availability, event types, booking.</span>
+          <span class="badge" data-m="connect">Sign in</span></button></li>
+        <li><button class="tile" data-go="signin">
+          <span class="tile-name">Notion</span>
+          <span class="tile-desc">Search, create and update pages + databases.</span>
+          <span class="badge" data-m="connect">Sign in</span></button></li>
+        <li><button class="tile" data-go="shortkey">
+          <span class="tile-name">Any MCP server</span>
+          <span class="tile-desc">Point Paige at any public MCP server by its address.</span>
+          <span class="badge">Paste key</span></button></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 2 ── The sign-in flow -->
+  <section class="scene" id="signin">
+    <div class="panel">
+      <span class="eyebrow">Calendly</span>
+      <h2>Sign in to Calendly</h2>
+      <p class="ig-lede">Paige will send you to Calendly to sign in. You approve what she may do there,
+        and she never sees your password.</p>
+      <label class="ig-field"><span>Name</span><input value="Calendly"></label>
+      <label class="ig-field"><span>Server address</span>
+        <input value="https://mcp.calendly.com">
+        <small>This is the address Paige knows for this tool. Change it only if yours is different.</small>
+      </label>
+      <div class="ig-actions">
+        <button class="ig-btn" data-go="catalogue">Cancel</button>
+        <button class="ig-btn" data-primary id="begin">Sign in to Calendly</button>
+      </div>
+      <p class="ig-note">Nothing is shared until you approve it on Calendly’s own screen.
+        You can disconnect at any time.</p>
+      <div id="steps" hidden style="margin-top:18px;padding-top:16px;border-top:1px solid var(--pg-line-soft)">
+        <div class="step" id="s1"><i>1</i><span>Saving the tool…</span></div>
+        <div class="step" id="s2"><i>2</i><span>Asking Calendly how to sign in…</span></div>
+        <div class="step" id="s3"><i>3</i><span>Taking you to Calendly…</span></div>
+      </div>
+    </div>
+    <div class="legend">
+      <h3>Why two steps, and why the row is created with no key</h3>
+      <p><code>oauth_begin</code> acts on a connection that already exists — it reads that row’s address
+        to run discovery against it. So the row is created first, with <strong>no credential at all</strong>.</p>
+      <p>That is not a placeholder. A row counts as <em>configured</em> when it has an address and an auth kind
+        of <code>none</code>/<code>url</code> — which is exactly what <code>oauth_begin</code> requires and refuses
+        without. Creating it as <code>oauth</code> up front is <strong>impossible on purpose</strong>: that bundle
+        demands a token, an issuer and a client id, and those are the very things signing in is about to produce.</p>
+    </div>
+  </section>
+
+  <!-- 3 ── Discovery failed, and the row survives -->
+  <section class="scene" id="signin-fail">
+    <div class="panel">
+      <span class="eyebrow">Calendly</span>
+      <h2>Sign in to Calendly</h2>
+      <div class="ig-error" role="alert"><span>⚠</span><span>That provider didn’t offer a sign-in Paige can use.
+        Check the address and try again, or remove it.</span></div>
+      <label class="ig-field"><span>Name</span><input value="Calendly"></label>
+      <label class="ig-field"><span>Server address</span><input value="https://mcp.calendly.com"></label>
+      <div class="ig-actions">
+        <button class="ig-btn" data-go="catalogue">Cancel</button>
+        <button class="ig-btn" data-primary data-go="signin">Sign in to Calendly</button>
+      </div>
+    </div>
+    <div class="legend">
+      <h3>The half-made row is named, not hidden — and the advice has to be true</h3>
+      <p>Step 1 succeeded and step 2 failed, so a real tool now exists. Saying “that didn’t work” would be false
+        and would leave the owner with a row they did not know about.</p>
+      <p>This copy said <em>“open it and add a key instead”</em> until an adversarial review caught it. The row was
+        created with <strong>no credential</strong>, Re-key shows no key field for a credential-less tool, and
+        re-keying cannot change a tool’s sign-in type — so the instruction named a control that does not exist.
+        It now points at the two things that are actually there.</p>
+    </div>
+  </section>
+
+  <!-- 4 ── Check now -->
+  <section class="scene" id="detail">
+    <div class="panel">
+      <span class="eyebrow">Connected MCP Gateway</span>
+      <h2>Calendly</h2>
+      <dl class="ig-facts">
+        <div><dt>Endpoint</dt><dd>mcp.calendly.com</dd></div>
+        <div><dt>Type</dt><dd>Remote MCP · oauth</dd></div>
+        <div><dt>Status</dt><dd><span class="chip" data-tone="pending" id="chip">Not checked yet</span></dd></div>
+        <div><dt>Last checked</dt><dd id="last">No successful check yet</dd></div>
+      </dl>
+      <div id="verdict"></div>
+      <div class="ig-gw-info" role="status"><span>ℹ</span><span id="pending">This tool hasn’t been checked yet.
+        Paige can’t use it until she has reached it and you’ve approved what it may do.</span></div>
+      <div class="ig-actions">
+        <button class="ig-btn" id="check">Check now</button>
+        <button class="ig-btn">Sign in again</button>
+        <button class="ig-btn" data-danger>Disconnect</button>
+      </div>
+    </div>
+    <div class="legend">
+      <h3>“Paige will check this tool” was a promise with no control behind it</h3>
+      <p>The probe existed from Slice ①; the surface could only describe it. <strong>Check now</strong> runs it and
+        reports what it found. <em>Sign in again</em> re-runs a lapsed grant. Press Check now to watch the state move.</p>
+    </div>
+  </section>
+
+  <!-- 5 ── A probe that reached a broken server -->
+  <section class="scene" id="checked-bad">
+    <div class="panel">
+      <span class="eyebrow">Connected MCP Gateway</span>
+      <h2>Ops server</h2>
+      <dl class="ig-facts">
+        <div><dt>Endpoint</dt><dd>ops.example.com</dd></div>
+        <div><dt>Status</dt><dd><span class="chip" data-tone="bad">Couldn’t reach it</span></dd></div>
+      </dl>
+      <div class="ig-error" role="alert"><span>⚠</span><span>This server sent your key back inside its own tool list,
+        so Paige refused it. Replace the key and check with the provider before using it.</span></div>
+      <div class="ig-actions">
+        <button class="ig-btn">Check now</button>
+        <button class="ig-btn">Re-key</button>
+        <button class="ig-btn" data-danger>Disconnect</button>
+      </div>
+    </div>
+    <div class="legend">
+      <h3>A probe that reached a broken server is a verdict, not a failure to check</h3>
+      <p>The server answered; what it answered was unusable. That distinction is carried all the way to the copy,
+        because “we couldn’t check it” and “we checked it and it did something alarming” need different actions
+        from the owner. This particular case — a server echoing the credential back — is refused outright rather
+        than stored.</p>
+    </div>
+  </section>
+
+  <!-- 6 ── The credential floor -->
+  <section class="scene" id="shortkey">
+    <div class="panel">
+      <span class="eyebrow">Connected MCP Gateway</span>
+      <h2>Add a tool</h2>
+      <label class="ig-field"><span>Name</span><input value="Ops server"></label>
+      <label class="ig-field"><span>Server URL</span><input value="https://ops.example.com/mcp"></label>
+      <label class="ig-field ig-field-bad"><span>Bearer token</span>
+        <input type="password" value="tok_short">
+        <small>Stored encrypted. Paige never shows it back — to change it later you replace it.</small>
+        <small class="ig-gw-err">That looks too short. Paste the full token — it needs at least 12 characters.</small>
+      </label>
+      <div class="ig-actions">
+        <button class="ig-btn" data-go="catalogue">Cancel</button>
+        <button class="ig-btn" data-primary>Add tool</button>
+      </div>
+    </div>
+    <div class="legend">
+      <h3>The server’s own rule, said earlier</h3>
+      <p>The writer refuses a bearer or header credential under 12 characters. Before this slice that came back as
+        a generic “that didn’t go through” after a round trip, because the code had no copy mapped to it at all.</p>
+      <p>The guard is scoped <strong>exactly</strong> as the server scopes it — bearer and header only. It is not
+        applied to an OAuth token (provider-minted, and the server deliberately does not gate it) nor to an n8n API
+        key (which never reaches that check). Guarding either would be the client inventing a rule the backend
+        does not have.</p>
+    </div>
+  </section>
+
+  <!-- 7 ── A turned-off tool, where the recovery depends on the row -->
+  <section class="scene" id="off">
+    <div class="panel">
+      <span class="eyebrow">Connected MCP Gateway</span>
+      <h2>Calendly</h2>
+      <dl class="ig-facts">
+        <div><dt>Endpoint</dt><dd>mcp.calendly.com</dd></div>
+        <div><dt>Type</dt><dd>Remote MCP · oauth</dd></div>
+        <div><dt>Status</dt><dd><span class="chip">Turned off</span></dd></div>
+      </dl>
+      <div class="ig-gw-info" role="status"><span>ℹ</span><span>This tool is turned off, and its sign-in was
+        cleared when you turned it off — switching it back on means removing it and adding it again.</span></div>
+      <div class="ig-actions">
+        <button class="ig-btn" data-danger>Disconnect</button>
+      </div>
+    </div>
+    <div class="legend">
+      <h3>One sentence could not be honest for both kinds of tool</h3>
+      <p>Turning a tool off clears its key but leaves its sign-in <em>type</em> alone. For a tool you signed into,
+        that means Re-key never appears — there is nothing left to re-key with. For a tool you pasted a key into,
+        Re-key is exactly how you switch it back on.</p>
+      <p>So the advice moved out of the shared error message and into the panel, which is the only place that knows
+        which tool it is holding. <strong>Check now</strong> and <strong>Sign in again</strong> are gone from this
+        screen too: on a turned-off tool the server can only refuse them, and a button whose one outcome is a
+        refusal is worse than no button.</p>
+    </div>
+  </section>
+
+  <div class="legend" style="max-width:760px">
+    <h3>What this prototype is, and is not</h3>
+    <p><strong>Is:</strong> the flow shape, the step order, the state set, and the exact owner-facing copy — enough
+      to judge the wording and the journey before anyone signs in anywhere.</p>
+    <p><strong>Is not:</strong> runtime proof. Every transition here is scripted. Nothing contacts Supabase, the
+      gateway edge, or a provider. The authenticated drive on the live platform is still owed and is recorded as
+      <code>PROOF OWED</code> in the PR — this page does not discharge it.</p>
+  </div>
+</div>
+
+<script>
+  const $ = (s) => document.querySelector(s);
+  const scenes = [...document.querySelectorAll(".scene")];
+  const navs = [...document.querySelectorAll(".navrow button")];
+  function go(id){
+    scenes.forEach(s => s.toggleAttribute("data-on", s.id === id));
+    navs.forEach(b => b.setAttribute("aria-pressed", String(b.dataset.go === id)));
+    window.scrollTo({top:0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"});
+  }
+  document.addEventListener("click", (e) => {
+    const t = e.target.closest("[data-go]");
+    if (t) go(t.dataset.go);
+  });
+
+  $("#theme").addEventListener("click", () => {
+    const light = document.documentElement.dataset.theme === "light";
+    document.documentElement.dataset.theme = light ? "dark" : "light";
+    $("#theme").textContent = light ? "Light theme" : "Dark theme";
+  });
+
+  // Scripted only — the real flow awaits two network calls. Reduced motion collapses the beats to
+  // an instant cut rather than leaving a person watching a fake delay they cannot skip.
+  const instant = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+  $("#begin").addEventListener("click", () => {
+    const steps = $("#steps");
+    steps.hidden = false;
+    $("#begin").disabled = true;
+    $("#begin").textContent = "Starting sign-in…";
+    const beats = ["#s1", "#s2", "#s3"];
+    beats.forEach((sel, i) => setTimeout(() => $(sel).setAttribute("data-on", ""), instant() ? 0 : 520 * (i + 1)));
+    setTimeout(() => {
+      $("#begin").textContent = "Sign in to Calendly";
+      $("#begin").disabled = false;
+      steps.hidden = true;
+      beats.forEach((sel) => $(sel).removeAttribute("data-on"));
+      alert("In the real flow the browser now leaves for Calendly's own sign-in screen.\n\nThis prototype stops here — it contacts nothing.");
+    }, instant() ? 60 : 2100);
+  });
+
+  $("#check").addEventListener("click", () => {
+    const btn = $("#check");
+    btn.disabled = true; btn.textContent = "Checking…";
+    setTimeout(() => {
+      btn.disabled = false; btn.textContent = "Check now";
+      $("#chip").textContent = "Ready"; $("#chip").dataset.tone = "ok";
+      $("#last").textContent = "just now";
+      $("#pending").textContent = "4 of 11 actions approved.";
+      $("#verdict").innerHTML =
+        '<div class="ig-gw-ok" role="status"><span>✓</span><span>Checked just now — Paige reached it and found 11 actions.</span></div>';
+    }, instant() ? 40 : 900);
+  });
+</script>
+</body>
+</html>

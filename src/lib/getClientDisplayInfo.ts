@@ -1,5 +1,26 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { CLIENT_CONTACT_METHODS_EMBED, primaryAddressesOf, type ContactMethodRow } from "@/lib/contact-methods";
+import { readUserPrimaryAddress } from "@/lib/contacts";
+import type { Tables } from "@/integrations/supabase/types";
+
+// Widened to string: the generated types do not know the contact-methods embed yet.
+const DISPLAY_CLIENT_SELECT: string = `first_name, last_name, ${CLIENT_CONTACT_METHODS_EMBED}, entity_name, street_address, city, state, zip_code`;
+
+/** The row DISPLAY_CLIENT_SELECT reads from `clients`. */
+type DisplayClientRow = Pick<
+  Tables<"clients">,
+  "first_name" | "last_name" | "entity_name" | "street_address" | "city" | "state" | "zip_code"
+> & { client_contact_methods?: ContactMethodRow[] | null };
+
+/** The profile fields read for display. Not every one is a `profiles` column, so each may be absent. */
+interface DisplayProfileFields {
+  full_name?: string | null;
+  street_address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip_code?: string | null;
+}
 
 /**
  * Standardized client display info returned by getClientDisplayInfo.
@@ -53,12 +74,14 @@ export async function getClientDisplayInfo(opts: {
   if (opts.clientId) {
     const { data } = await supabase
       .from("clients")
-      .select("first_name, last_name, email, phone, entity_name, street_address, city, state, zip_code")
+      .select(DISPLAY_CLIENT_SELECT)
       .eq("id", opts.clientId)
       .maybeSingle();
 
     if (data) {
-      const d = data as any;
+      const d = data as unknown as DisplayClientRow;
+      // The contact's PRIMARY email and phone, from its contact methods.
+      const primary = primaryAddressesOf(d.client_contact_methods as ContactMethodRow[] | null);
       const address_complete = !!(d.street_address && d.city && d.state && d.zip_code);
       const formatted_address = address_complete
         ? `${d.street_address}\n${d.city}, ${d.state} ${d.zip_code}`
@@ -68,8 +91,8 @@ export async function getClientDisplayInfo(opts: {
         full_name: `${d.first_name || ""} ${d.last_name || ""}`.trim() || "Consumer",
         first_name: d.first_name || "",
         last_name: d.last_name || "",
-        email: d.email || null,
-        phone: d.phone || null,
+        email: primary.email,
+        phone: primary.phone,
         entity_name: d.entity_name || null,
         street_address: d.street_address || null,
         city: d.city || null,
@@ -83,10 +106,10 @@ export async function getClientDisplayInfo(opts: {
 
   // --- Auth user (profiles table) ---
   if (opts.userId) {
-    const [{ data: profile }, { data: businesses }] = await Promise.all([
+    const [{ data: profile }, { data: businesses }, phone] = await Promise.all([
       supabase
         .from("profiles")
-        .select("full_name, phone, street_address, city, state, zip_code")
+        .select("full_name, street_address, city, state, zip_code")
         .eq("user_id", opts.userId)
         .maybeSingle(),
       supabase
@@ -94,13 +117,15 @@ export async function getClientDisplayInfo(opts: {
         .select("legal_name")
         .eq("owner_user_id", opts.userId)
         .limit(1),
+      // The person's PRIMARY phone, from their contact methods.
+      readUserPrimaryAddress(opts.userId, "phone"),
     ]);
 
     // Get email from auth user
     const { data: { user } } = await supabase.auth.getUser();
     const email = user?.id === opts.userId ? user?.email || null : null;
 
-    const p = (profile || {}) as any;
+    const p = (profile || {}) as DisplayProfileFields;
     const nameParts = (p.full_name || "").split(" ");
     const address_complete = !!(p.street_address && p.city && p.state && p.zip_code);
     const formatted_address = address_complete
@@ -112,7 +137,7 @@ export async function getClientDisplayInfo(opts: {
       first_name: nameParts[0] || "",
       last_name: nameParts.slice(1).join(" ") || "",
       email,
-      phone: p.phone || null,
+      phone,
       entity_name: businesses?.[0]?.legal_name || null,
       street_address: p.street_address || null,
       city: p.city || null,

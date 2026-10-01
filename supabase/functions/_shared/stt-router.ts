@@ -69,6 +69,10 @@ export interface DeepgramStreamOpts {
   language?: string; // default "en-US"
   /** Deepgram endpointing (ms of silence to finalize an utterance). Omitted when undefined. */
   endpointing?: number;
+  /** Flux (v2) only: confidence required to declare end of turn. Lower ends turns sooner. */
+  eotThreshold?: number;
+  /** Flux (v2) only: hard cap on silence before a turn is forced to end, in ms. */
+  eotTimeoutMs?: number;
 }
 
 /** PURE builder for a Deepgram streaming URL. MIP opt-out is mandatory for both routes. */
@@ -79,6 +83,11 @@ export function buildDeepgramStreamUrl(cell: SttRouteCell, opts: DeepgramStreamO
   if (cell.host.endsWith("/v2/listen")) {
     p.set("encoding", opts.encoding ?? "linear16");
     p.set("sample_rate", String(opts.sampleRate ?? 16000));
+    // Turn detection was left entirely at Deepgram's defaults, so a turn could sit open for the
+    // default timeout before Paige was allowed to answer. These two put the wait under our
+    // control rather than leaving it implicit.
+    if (opts.eotThreshold !== undefined) p.set("eot_threshold", String(opts.eotThreshold));
+    if (opts.eotTimeoutMs !== undefined) p.set("eot_timeout_ms", String(opts.eotTimeoutMs));
   } else {
     p.set("encoding", opts.encoding ?? "mulaw");
     p.set("sample_rate", String(opts.sampleRate ?? 8000));
@@ -152,8 +161,15 @@ export function extractDeepgramFluxTurn(raw: string | ArrayBuffer | Uint8Array):
   try { frame = JSON.parse(text); } catch { return null; }
   if (!frame || typeof frame !== "object" || Array.isArray(frame)) return null;
   const turn = frame as Record<string, unknown>;
-  if (turn.type !== "TurnInfo" || typeof turn.transcript !== "string" || !turn.transcript.trim() ||
+  if (turn.type !== "TurnInfo" || typeof turn.transcript !== "string" ||
     typeof turn.event !== "string" || typeof turn.turn_index !== "number" || typeof turn.sequence_id !== "number") return null;
+  // StartOfTurn is Flux announcing that the speaker has BEGUN, before a word has been
+  // transcribed -- so it necessarily carries an empty transcript. Requiring non-empty text here
+  // silently dropped every one of them, which made the ears' startOfTurn dispatch dead code and
+  // left barge-in waiting for Deepgram to transcribe actual words before Paige would stop
+  // talking. That delay is the whole reason interrupting her did not feel like a conversation.
+  // Every OTHER event still needs real text: an empty Update or EndOfTurn carries nothing.
+  if (turn.event !== "StartOfTurn" && !turn.transcript.trim()) return null;
   return {
     transcript: turn.transcript,
     isFinal: turn.event === "EndOfTurn",

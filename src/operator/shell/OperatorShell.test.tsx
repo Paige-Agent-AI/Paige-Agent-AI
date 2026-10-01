@@ -19,7 +19,7 @@ import { OPERATOR_SLOTS } from "@/operator/ia/operatorIA";
 import { resolveOperatorAddress, viewPath } from "@/operator/shell/operatorAddress";
 import { SPINE_REGIONS, spineHasContent } from "@/operator/shell/OperatorSpine";
 
-vi.mock("@/lib/auth/signOut", () => ({ performSignOut: vi.fn() }));
+vi.mock("@/lib/auth/signOut", () => ({ performSignOut: vi.fn(), registerSignOutActAsGuard: vi.fn(() => () => undefined) }));
 
 import OperatorShell from "./OperatorShell";
 

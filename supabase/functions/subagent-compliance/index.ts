@@ -5,6 +5,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses } from "../_shared/contact-methods.ts";
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -73,11 +74,13 @@ Deno.serve(async (req) => {
   // Contact-level checks
   let contactSummary: Record<string, unknown> | null = null;
   if (contactId) {
-    const { data: client } = await supabase
+    // `email` in the summary is the contact's PRIMARY email.
+    const { data: row } = await supabase
       .from("clients")
-      .select("id,first_name,last_name,email,do_not_contact,agreement_signed_at,linked_user_id,tenant_id")
+      .select(`id,first_name,last_name,do_not_contact,agreement_signed_at,linked_user_id,tenant_id,${CLIENT_CONTACT_METHODS_EMBED}`)
       .eq("id", contactId)
       .maybeSingle();
+    const client = withPrimaryAddresses(row);
 
     if (!client) {
       findings.push({ severity: "blocker", message: `Contact ${contactId} not found.` });

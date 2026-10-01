@@ -17,6 +17,7 @@ import {
 } from "../../supabase/functions/_shared/paige-capability-status/resolver.ts";
 import { classifyAction, mutatingTools } from "../../supabase/functions/_shared/action-risk.ts";
 import { parsePolicy } from "../ci/action-risk-lint.mjs";
+import { scanSource } from "../ci/capability-kit-lint.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const FIXTURES = join(HERE, "..", "fixtures", "capability-kit");
@@ -393,6 +394,134 @@ for (const fixture of invalidCases) {
     assert.throws(() => defineCapability(candidate));
   });
 }
+
+/* ────────────────────────────────────────────────────────────────────────────────────────────────
+ * THE PAIRED INVARIANT: a declaration the LINT passes must be one the CONSTRUCTOR accepts.
+ *
+ * `defineCapability()` throws at MODULE LOAD, so a contradictory declaration takes the whole edge
+ * function down. CI's job is to catch that in review, and for a long time it could not: the lint
+ * read exactly one field out of a declaration and checked none of the constructor's risk predicates.
+ * Measured before the rule below existed — seven distinct shapes were lint-green and threw on import.
+ *
+ * The predicates now live in two languages (a dependency-free `.mjs` scanner and a TypeScript
+ * constructor) because the lint cannot import the kit. Two homes for one rule drift, so this pins
+ * them together: one corpus, both readers, and a failure the moment their verdicts diverge. Add a
+ * predicate to the constructor without adding it here and the bite case fails; tighten the lint too
+ * far and the no-false-accusation case fails.
+ * ──────────────────────────────────────────────────────────────────────────────────────────────── */
+
+const RISK_POLICY = new Map(
+  ["crm_create_contact", "crm_merge_contacts", "automation_set_grant"].map((key) => [key, classifyAction(key)]),
+);
+
+const lintFlags = (source) =>
+  scanSource(source, "paired-invariant.ts", { strictOnly: true, riskPolicy: RISK_POLICY })
+    .filter((finding) => finding.rule === "declaration-contradicts-constructor");
+
+const constructorRejects = (build) => {
+  try { defineCapability(build()); return false; } catch { return true; }
+};
+
+/** A complete, correct declaration. Every corpus case is this with one thing changed. */
+const soundRead = () => ({
+  identity: { id: "knowledge.documents.read", version: 1, domain: "knowledge", owner: "Knowledge", humanSurface: null, description: "Read one governed document." },
+  input: objectInputSchema({ properties: { documentId: { type: "string", minLength: 1 } }, required: ["documentId"] }),
+  effect: "read",
+  governance: { actionRiskKey: null, risk: "read_only", approval: "none", requiredPermission: ownerGrantablePermission("knowledge.documents.read") },
+  tenantScope: { source: "server", tenantResolver: "current_user_tenant_id", actorResolver: "authenticated_user", revalidateAt: ["before_availability", "before_execution", "before_receipt"] },
+  availability: { resolver: "paige-capability-status", states: ["live", "unavailable"] },
+  providerBinding: { kind: "internal", operation: "documents.read", connectionResolver: null },
+  idempotency: { mode: "not_applicable" },
+  receipt: { rail: true, recorder: "record_capability_run", redaction: "tenant_safe", visibility: "owner_internal" },
+  outcome: { projector: "capability-record" },
+});
+const soundMutation = () => ({
+  ...soundRead(),
+  effect: "mutation",
+  governance: { actionRiskKey: "crm_create_contact", risk: "ordinary", approval: "confirm", requiredPermission: ownerGrantablePermission("crm.contacts.create") },
+  availability: { resolver: "paige-capability-status", states: ["live", "needs_approval"] },
+  idempotency: { mode: "required", key: "tenant+actor+request", readback: "canonical_record", replay: "return_recorded_result" },
+});
+
+const SEAMS = `tenantScope:{source:"server",tenantResolver:"current_user_tenant_id",actorResolver:"authenticated_user",revalidateAt:["before_availability","before_execution","before_receipt"]}`;
+const REST = `identity:{},input:{},availability:{},providerBinding:{},receipt:{},outcome:{}`;
+const readSrc = (over) => `defineCapability({effect:"read",governance:{actionRiskKey:null,risk:"read_only",approval:"none"},idempotency:{mode:"not_applicable"},${SEAMS},${REST},${over ?? ""}})`;
+
+/** Each case: the SOURCE the lint reads, and the OBJECT the constructor builds. Same declaration. */
+const CORPUS = [
+  { name: "a sound read", bite: false,
+    source: readSrc(), build: soundRead },
+  { name: "a sound mutation", bite: false,
+    source: `defineCapability({effect:"mutation",governance:{actionRiskKey:"crm_create_contact",risk:"ordinary",approval:"confirm"},idempotency:{mode:"required",replay:"return_recorded_result"},${SEAMS},${REST}})`,
+    build: soundMutation },
+  { name: "risk contradicts the canonical policy", bite: true,
+    source: `defineCapability({effect:"mutation",governance:{actionRiskKey:"crm_merge_contacts",risk:"ordinary",approval:"confirm"},idempotency:{mode:"required",replay:"return_recorded_result"},${SEAMS},${REST}})`,
+    build: () => ({ ...soundMutation(), governance: { actionRiskKey: "crm_merge_contacts", risk: "ordinary", approval: "confirm", requiredPermission: ownerGrantablePermission("crm.contacts.merge") } }) },
+  { name: "approval contradicts the canonical policy", bite: true,
+    source: `defineCapability({effect:"mutation",governance:{actionRiskKey:"crm_create_contact",risk:"ordinary",approval:"none"},idempotency:{mode:"required",replay:"return_recorded_result"},${SEAMS},${REST}})`,
+    build: () => ({ ...soundMutation(), governance: { ...soundMutation().governance, approval: "none" } }) },
+  { name: "owner_only declared as confirm", bite: true,
+    source: `defineCapability({effect:"mutation",governance:{actionRiskKey:"automation_set_grant",risk:"owner_only",approval:"confirm"},idempotency:{mode:"required",replay:"return_recorded_result"},${SEAMS},${REST}})`,
+    build: () => ({ ...soundMutation(), governance: { actionRiskKey: "automation_set_grant", risk: "owner_only", approval: "confirm", requiredPermission: ownerGrantablePermission("automation.grant.set") } }) },
+  { name: "an external effect that is not high", bite: true,
+    source: `defineCapability({effect:"external_effect",governance:{actionRiskKey:"crm_create_contact",risk:"ordinary",approval:"confirm"},idempotency:{mode:"required",replay:"return_recorded_result"},${SEAMS},${REST}})`,
+    build: () => ({ ...soundMutation(), effect: "external_effect" }) },
+  { name: "an action-risk key absent from the canonical policy", bite: true,
+    source: `defineCapability({effect:"mutation",governance:{actionRiskKey:"widget_purge",risk:"high",approval:"confirm"},idempotency:{mode:"required",replay:"return_recorded_result"},${SEAMS},${REST}})`,
+    build: () => ({ ...soundMutation(), governance: { actionRiskKey: "widget_purge", risk: "high", approval: "confirm", requiredPermission: ownerGrantablePermission("widget.purge.run") } }) },
+  { name: "a read carrying an action-risk key", bite: true,
+    source: `defineCapability({effect:"read",governance:{actionRiskKey:"crm_merge_contacts",risk:"high",approval:"confirm"},idempotency:{mode:"not_applicable"},${SEAMS},${REST}})`,
+    build: () => ({ ...soundRead(), governance: { actionRiskKey: "crm_merge_contacts", risk: "high", approval: "confirm", requiredPermission: ownerGrantablePermission("knowledge.documents.read") } }) },
+  { name: "revalidateAt missing two authority seams (the shape the shipped fixture had)", bite: true,
+    source: `defineCapability({effect:"read",governance:{actionRiskKey:null,risk:"read_only",approval:"none"},idempotency:{mode:"not_applicable"},tenantScope:{source:"server",tenantResolver:"current_user_tenant_id",actorResolver:"authenticated_user",revalidateAt:["before_execution"]},${REST}})`,
+    build: () => ({ ...soundRead(), tenantScope: { ...soundRead().tenantScope, revalidateAt: ["before_execution"] } }) },
+  { name: "a mutation declaring read_only risk", bite: true,
+    source: `defineCapability({effect:"mutation",governance:{actionRiskKey:"crm_create_contact",risk:"read_only",approval:"confirm"},idempotency:{mode:"required",replay:"return_recorded_result"},${SEAMS},${REST}})`,
+    build: () => ({ ...soundMutation(), governance: { ...soundMutation().governance, risk: "read_only" } }) },
+];
+
+for (const entry of CORPUS) {
+  test(`lint and constructor agree: ${entry.name}`, () => {
+    const flagged = lintFlags(entry.source).length > 0;
+    const rejected = constructorRejects(entry.build);
+
+    // THE LOAD-BEARING DIRECTION. A guard that accuses a legitimate declaration gets switched off
+    // rather than fixed, so this must never fire: if the constructor accepts it, the lint is silent.
+    if (!rejected) {
+      assert.equal(flagged, false,
+        `the constructor ACCEPTS "${entry.name}" but the lint flags it:\n    ` +
+        lintFlags(entry.source).map((f) => f.symbol).join("\n    "));
+    }
+
+    // THE BITE. Every shape this rule exists to catch must be caught by BOTH readers. A case that
+    // the constructor rejects while the lint stays silent is the "lint green, throws on import"
+    // failure this whole pairing exists to end.
+    if (entry.bite) {
+      assert.equal(rejected, true, `expected the constructor to reject "${entry.name}"`);
+      assert.equal(flagged, true, `the constructor rejects "${entry.name}" but the lint passes it — the gap is back`);
+    }
+  });
+}
+
+test("the shipped canonical example is a declaration the constructor would accept", () => {
+  // THE REGRESSION THIS EXISTS FOR. `scripts/fixtures/capability-kit/type-contract.fixture.ts` is
+  // the one worked example in the repo — the file a first adopter copies — and it shipped declaring
+  // `revalidateAt: ["before_execution"]`, which the constructor refuses. Nothing caught it: the type
+  // permits a partial array (types.ts:59-63), the lint's SCAN_ROOTS are `supabase/functions` and
+  // `src` so no rule ever read it, and nothing imports it so its own `defineCapability(valid)` call
+  // was never executed. It cannot simply be imported here either — it deliberately contains three
+  // `@ts-expect-error` NEGATIVE cases that throw at runtime. So the rule is run over its real source.
+  const source = readFileSync(join(FIXTURES, "type-contract.fixture.ts"), "utf8");
+  const findings = scanSource(source, "scripts/fixtures/capability-kit/type-contract.fixture.ts", {
+    strictOnly: true,
+    riskPolicy: RISK_POLICY,
+  }).filter((finding) => finding.rule === "declaration-contradicts-constructor");
+
+  // The three negatives spread `...valid` and change ONE field each, none of which this rule reads
+  // statically, so a sound `valid` means zero findings for the whole file.
+  assert.deepEqual(findings.map((f) => f.symbol), [],
+    "the repo's canonical capability example does not construct — fix the fixture, not this test");
+});
 
 console.log(
   `\n✓ capability-kit focused tests passed — ${passed} cases; ` +

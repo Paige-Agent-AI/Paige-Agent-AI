@@ -1,0 +1,949 @@
+{
+  "_README": [
+    "RECEIPT-COVERAGE LEDGER. Every mutation classified in _shared/action-risk.ts must appear here",
+    "with its receipt posture declared. Risk classification already fails closed and is CI-enforced;",
+    "evidence coverage did not, so a lane could add a write tool, forget the receipt, and nothing",
+    "would say so. This ledger is the gate that says so.",
+    "",
+    "receipt values:",
+    "  emits              - this capability writes a capability receipt. `evidence` names where.",
+    "  exempt             - deliberately writes none. `reason` must say why, and must be a real",
+    "                       architectural reason (e.g. the outbound record has one home elsewhere),",
+    "                       not 'not done yet'.",
+    "  seeded_undeclared  - FROZEN DEBT, seeded 2027-04-11. Nobody has decided yet. A NEW tool may",
+    "                       NOT use this value; the lint rejects it. It exists only so the gate",
+    "                       could be installed without 147 guesses about existing behaviour.",
+    "",
+    "Honest scope: `emits` here is asserted only for the nine tools named in the three declarative",
+    "*_WRITE_CAPABILITIES sets, which are exact. It is NOT a claim that the other 147 emit nothing \u2014",
+    "several demonstrably do (missions, campaign briefs, calendar presets, social, orchestration).",
+    "Their posture was simply never written down, and a detector that guessed would be wrong often",
+    "enough to get this guard switched off. Converting seeded_undeclared -> emits/exempt is ordinary",
+    "work for whoever owns each capability."
+  ],
+  "seeded_at": "2027-04-11",
+  "seeded_tools": [
+    "action_advance",
+    "action_file",
+    "agency_create_subaccount",
+    "agency_enter_subaccount",
+    "agency_exit_subaccount",
+    "approval_claim",
+    "approval_comment",
+    "approval_create",
+    "approval_decide",
+    "author_event_kind",
+    "automation_draft",
+    "automation_rule_create",
+    "automation_rule_delete",
+    "automation_rule_update",
+    "automation_set_grant",
+    "automation_set_state",
+    "billing_create_invoice",
+    "billing_send_invoice",
+    "booking_preset_archive",
+    "booking_preset_create",
+    "booking_preset_duplicate",
+    "booking_preset_pause",
+    "booking_preset_publish",
+    "booking_preset_restore",
+    "booking_preset_revise",
+    "business_create",
+    "business_update",
+    "business_verify",
+    "calendar_link_send",
+    "campaign_brief_create",
+    "campaign_brief_revise",
+    "client_log_progress",
+    "coach_grant_role_globally",
+    "coach_revoke_role_globally",
+    "coach_update_profile",
+    "comms_add_email_domain",
+    "comms_draft_email",
+    "comms_send_bulk_email",
+    "comms_send_email",
+    "comms_send_email_choosing_the_sender",
+    "comms_set_primary_email_domain",
+    "comms_upsert_email_template",
+    "content_save",
+    "crm_add_note",
+    "crm_advance_journey_stage",
+    "crm_append_contact_notes",
+    "crm_archive_company",
+    "crm_archive_contact",
+    "crm_assign_coach",
+    "crm_assign_contact",
+    "crm_assign_contact_owner",
+    "crm_assign_deal_contact",
+    "crm_assign_deal_owner",
+    "crm_assign_task",
+    "crm_bulk_update_contacts",
+    "crm_cancel_task",
+    "crm_close_deal",
+    "crm_complete_task",
+    "crm_create_company",
+    "crm_delete_deal",
+    "crm_delete_task",
+    "crm_file_document",
+    "crm_hard_delete_contact",
+    "crm_link_contact_company",
+    "crm_merge_contacts",
+    "crm_propose_contact_update",
+    "crm_reopen_deal",
+    "crm_reopen_task",
+    "crm_reschedule_task",
+    "crm_restore_company",
+    "crm_restore_contact",
+    "crm_unlink_contact_company",
+    "crm_update_company",
+    "crm_update_contact",
+    "crm_update_deal",
+    "crm_update_lifecycle_stage",
+    "crm_update_pipeline_stage",
+    "crm_update_task",
+    "deal_create",
+    "delegate_to_subagent",
+    "document_generate",
+    "draft_marketing_content",
+    "forge_subagent",
+    "generate_image",
+    "growth_funnel_build",
+    "growth_funnel_publish",
+    "growth_page_publish",
+    "growth_page_save",
+    "improvement_decide",
+    "improvement_propose",
+    "ingest_banking_snapshot",
+    "ingest_client_memory",
+    "ingest_confirm_proposal",
+    "ingest_credit_scores",
+    "ingest_reject_proposal",
+    "marketplace_install",
+    "marketplace_uninstall",
+    "member_grant_role",
+    "member_revoke_role",
+    "mission_create",
+    "mission_revise",
+    "mission_transition",
+    "n8n_activate_workflow",
+    "n8n_archive_workflow",
+    "n8n_create_workflow",
+    "n8n_deactivate_workflow",
+    "n8n_delete_workflow",
+    "n8n_run_workflow",
+    "n8n_update_workflow",
+    "nav_pull_business_credit",
+    "pipeline_configure",
+    "plan_add_milestone",
+    "plan_assign_task",
+    "plan_create",
+    "plan_remove_item",
+    "plan_set_reminder",
+    "plan_update_item",
+    "platform_post_notification",
+    "privacy_handle_request",
+    "propose_business_brief_update",
+    "readiness_approve_proposal",
+    "readiness_reject_proposal",
+    "save_to_knowledge_base",
+    "skill_run",
+    "smartcredit_pull_snapshot",
+    "social_account_select",
+    "social_connection_disconnect",
+    "social_connection_start",
+    "subagent_approve_proposal",
+    "subagent_create",
+    "team_invite_member",
+    "team_invite_mint",
+    "team_invite_resend",
+    "team_invite_revoke",
+    "team_set_permission",
+    "team_set_work_profile",
+    "tenant_create",
+    "tenant_set_features",
+    "tenant_set_status",
+    "update_business_profile",
+    "update_client_data",
+    "update_social_accounts",
+    "workflow_cancel_run",
+    "workflow_register",
+    "workflow_run",
+    "zapier_run_action"
+  ],
+  "entries": [
+    {
+      "tool": "action_advance",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "action_file",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "agency_create_subaccount",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "agency_enter_subaccount",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "agency_exit_subaccount",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "approval_claim",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "approval_comment",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "approval_create",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "approval_decide",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "author_event_kind",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "automation_draft",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "automation_rule_create",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "automation_rule_delete",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "automation_rule_update",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "automation_set_grant",
+      "risk": "owner_only",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "automation_set_state",
+      "risk": "owner_only",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "billing_create_invoice",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "billing_send_invoice",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "booking_preset_archive",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "booking_preset_create",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "booking_preset_duplicate",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "booking_preset_pause",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "booking_preset_publish",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "booking_preset_restore",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "booking_preset_revise",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "business_create",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "business_update",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "business_verify",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "calendar_book_meeting",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "named in CRM_WRITE_CAPABILITIES (_shared/crm-capability-outcome.ts); the chat executor calls recordCapabilityRun for it"
+    },
+    {
+      "tool": "calendar_link_send",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "campaign_brief_create",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "campaign_brief_revise",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "client_log_progress",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "coach_update_profile",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "comms_add_email_domain",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "comms_buy_number",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "named in COMMS_WRITE_CAPABILITIES (_shared/comms-capability-outcome.ts); the chat executor calls recordCapabilityRun for it"
+    },
+    {
+      "tool": "comms_draft_email",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "comms_draft_registration",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "named in COMMS_WRITE_CAPABILITIES (_shared/comms-capability-outcome.ts); the chat executor calls recordCapabilityRun for it"
+    },
+    {
+      "tool": "comms_name_number",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "named in COMMS_WRITE_CAPABILITIES (_shared/comms-capability-outcome.ts); the chat executor calls recordCapabilityRun for it"
+    },
+    {
+      "tool": "comms_send_bulk_email",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "comms_send_email",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "comms_send_email_choosing_the_sender",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "comms_set_primary_email_domain",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "comms_set_primary_number",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "named in COMMS_WRITE_CAPABILITIES (_shared/comms-capability-outcome.ts); the chat executor calls recordCapabilityRun for it"
+    },
+    {
+      "tool": "comms_upsert_email_template",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "content_save",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_add_note",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_advance_journey_stage",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_append_contact_notes",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_archive_company",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_archive_contact",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_assign_coach",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_assign_contact",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_assign_contact_owner",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_assign_deal_contact",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_assign_deal_owner",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_assign_task",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_bulk_update_contacts",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_cancel_task",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_close_deal",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_complete_task",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_create_company",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_create_contact",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "named in CRM_WRITE_CAPABILITIES (_shared/crm-capability-outcome.ts); the chat executor calls recordCapabilityRun for it"
+    },
+    {
+      "tool": "crm_create_task",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "named in CRM_WRITE_CAPABILITIES (_shared/crm-capability-outcome.ts); the chat executor calls recordCapabilityRun for it"
+    },
+    {
+      "tool": "crm_delete_deal",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_delete_task",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_file_document",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_hard_delete_contact",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_link_contact_company",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_log_activity",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "named in CRM_WRITE_CAPABILITIES (_shared/crm-capability-outcome.ts); the chat executor calls recordCapabilityRun for it"
+    },
+    {
+      "tool": "crm_merge_contacts",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_propose_contact_update",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_reopen_deal",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_reopen_task",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_reschedule_task",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_restore_company",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_restore_contact",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_unlink_contact_company",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_update_company",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_update_contact",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_update_deal",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_update_lifecycle_stage",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_update_pipeline_stage",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "crm_update_task",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "deal_create",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "deal_move_stage",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "named in PIPELINE_WRITE_CAPABILITIES (_shared/pipeline-capability-outcome.ts); the chat executor calls recordCapabilityRun for it"
+    },
+    {
+      "tool": "delegate_to_subagent",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "document_generate",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "draft_marketing_content",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "forge_subagent",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "generate_image",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "growth_funnel_build",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "growth_funnel_publish",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "growth_page_publish",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "growth_page_save",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "improvement_decide",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "improvement_propose",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "ingest_banking_snapshot",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "ingest_client_memory",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "ingest_confirm_proposal",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "ingest_credit_scores",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "ingest_reject_proposal",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "marketplace_install",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "marketplace_uninstall",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "member_grant_role",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "member_revoke_role",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "mission_create",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "mission_revise",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "mission_transition",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "n8n_activate_workflow",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "n8n_archive_workflow",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "n8n_create_workflow",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "n8n_deactivate_workflow",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "n8n_delete_workflow",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "n8n_run_workflow",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "n8n_update_workflow",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "nav_pull_business_credit",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "pipeline_configure",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "plan_add_milestone",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "plan_assign_task",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "plan_create",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "plan_remove_item",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "plan_set_reminder",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "plan_update_item",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "platform_post_notification",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "privacy_handle_request",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "propose_business_brief_update",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "readiness_approve_proposal",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "readiness_reject_proposal",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "save_to_knowledge_base",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "skill_run",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "smartcredit_pull_snapshot",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "social_account_select",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "social_connection_disconnect",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "social_connection_start",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "subagent_approve_proposal",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "subagent_create",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "team_invite_member",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "team_invite_mint",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "team_invite_resend",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "team_invite_revoke",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "team_set_permission",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "team_set_work_profile",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "tenant_create",
+      "risk": "owner_only",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "tenant_set_features",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "tenant_set_status",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "update_business_profile",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "update_client_data",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "update_social_accounts",
+      "risk": "ordinary",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "workflow_cancel_run",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "workflow_register",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "workflow_run",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "zapier_run_action",
+      "risk": "high",
+      "receipt": "seeded_undeclared"
+    }
+  ]
+}

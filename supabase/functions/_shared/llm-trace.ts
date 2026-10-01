@@ -150,6 +150,11 @@ export interface TraceRow {
   status: "success" | "error" | "needs_config";
   tokens_in?: number | null;
   tokens_out?: number | null;
+  /** Anthropic prompt-cache counts. DELIBERATELY separate from tokens_in: input_tokens is the uncached
+   *  remainder, and meter_llm_usage bills quantity = tokens_in + tokens_out, so folding these in would
+   *  change every tenant's metered quantity. null = provider did not report; 0 = reported zero. */
+  cache_read_input_tokens?: number | null;
+  cache_creation_input_tokens?: number | null;
   latency_ms?: number | null;
   cost_estimate_usd?: number | null;
   /** Raw input payload — scrubbed + truncated here, never stored raw. */
@@ -200,6 +205,8 @@ export function traceLLMCall(row: TraceRow): void {
     // NULL, never 0, when the provider didn't report — null cost/tokens ≠ zero (S4).
     tokens_in: row.tokens_in ?? null,
     tokens_out: row.tokens_out ?? null,
+    cache_read_input_tokens: row.cache_read_input_tokens ?? null,
+    cache_creation_input_tokens: row.cache_creation_input_tokens ?? null,
     latency_ms: row.latency_ms ?? null,
     cost_estimate_usd: costEstimate,
     cost_basis: costEstimate == null ? null : COST_BASIS,
@@ -221,7 +228,36 @@ export function traceLLMCall(row: TraceRow): void {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 5000); // bounded so a locked insert can't keep the isolate alive
     try {
-      await admin.from("paige_llm_trace").insert(record).abortSignal(ctrl.signal);
+      // supabase-js RESOLVES a PostgREST rejection into { error } rather than throwing, so the catch
+      // below only ever saw network/abort faults — a row the database refused was previously silent.
+      const { error } = await admin.from("paige_llm_trace").insert(record).abortSignal(ctrl.signal);
+      if (error) {
+        // PGRST204 = no such column. That is what happens if this writer deploys ahead of the migration
+        // adding the cache columns, and because the record inserts whole it would cost EVERY trace row
+        // on EVERY path — not just the cache fields. deploy-migrations.yml and deploy-edge-functions.yml
+        // are independent path-triggered jobs with no ordering guarantee, so that race is real. Shed the
+        // two optional columns and retry once: observability degrades instead of disappearing.
+        // Trigger ONLY when the column the database NAMES is one of ours. Keying on the code alone
+        // misattributes any other missing column to the cache fields — it logs a false cause and
+        // spends the retry still carrying the offending field. Measured: a PGRST204 naming
+        // working_context_tenant_id produced two attempts and a log line blaming the cache columns.
+        const msg = error.message ?? "";
+        const missingCacheColumn = /cache_(read|creation)_input_tokens/.test(msg) &&
+          ((error as { code?: string }).code === "PGRST204" || /column .* does not exist/i.test(msg));
+        if (missingCacheColumn) {
+          const withoutCache = { ...record } as Record<string, unknown>;
+          delete withoutCache.cache_read_input_tokens;
+          delete withoutCache.cache_creation_input_tokens;
+          // NOTE: the retry shares the original 5s abort budget rather than extending it — a slow
+          // first attempt leaves it little, and an already-fired signal sends it to the outer catch.
+          // That is the intended bound: a trace write must not lengthen to chase its own retry.
+          console.error("paige_llm_trace: cache columns absent, retrying without them:", msg);
+          const retry = await admin.from("paige_llm_trace").insert(withoutCache).abortSignal(ctrl.signal);
+          if (retry.error) console.error("paige_llm_trace: write failed after retry:", retry.error.message);
+        } else {
+          console.error("paige_llm_trace: write rejected:", error.message);
+        }
+      }
     } catch (e) {
       // Best-effort: a trace hiccup must NEVER surface to the caller. Log loudly, never rethrow (an
       // unhandled rejection in a detached promise can crash the isolate on some runtimes).

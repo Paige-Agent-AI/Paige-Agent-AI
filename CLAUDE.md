@@ -2630,3 +2630,117 @@ flow bound to a real write with tests, and reported the work ~90% pre-delivered.
 intended outcome — *I can use this on my own platform* — was never checked against a rendered
 result. Driven, four flows failed, including a save that reports "Saved." and discards the write.
 The prior report was the artifact of the miss, not a finding about it.
+
+## 71. GROUND BEFORE YOU BUILD — four questions, each answered with an artifact, before the first edit.
+
+> **OWNER-RULED 2026-09-25.** *"Is there a standing rule that you can add somewhere inside of our Git
+> repo to make sure that the agents, when they do their grounding, always apply it the same way…?
+> I've been telling every single agent to do this exact same thing, but no one seems to be able to
+> build it in the same direction."* Binding immediately, on every task.
+
+§69 says run Flow-by-Flow. §13 says report honestly. §32 says a green build is not a working render.
+§70 says the deliverable is a human finishing the job. **All of that is about how you WORK and how
+you REPORT. §71 is about the four minutes before any of it**, and it exists because a session can
+satisfy every one of those sections while building the wrong thing, or rebuilding something that
+already shipped.
+
+Each question below is answered with an **artifact** — a query result, a deploy log, a diff, a
+failing test — pasted into the work. **A belief is not an answer.** "I checked" with nothing shown
+is the thing this section exists to stop.
+
+### 1. IS IT ACTUALLY BROKEN, AND IS IT STILL BROKEN? *(artifact: a deploy log or a live query)*
+
+Before repairing a reported defect, prove it is live **now**. A report is a snapshot; the fix may
+have landed between the report and you. Check `git log` for the repair, `git merge-base
+--is-ancestor <fix> origin/main` for whether it shipped, and the **deploy run for that commit** for
+whether it reached production — CI moves the `edge-live` tag, and `/edge-drift` reads it.
+
+The anchoring case is this section's own: a hand-off named a live self-approval hole as the first
+piece of work. It had been fixed and deployed to prod **fourteen hours earlier** (`cda229c`, deploy
+run #363, `✓ deployed paige-ai-chat`). Building the named fix would have been a no-op on a hole that
+was already closed, while the real live regression — caused by that very fix removing a
+compensation — went unbuilt. **A fix without this check can be a day of work that changes nothing.**
+
+**AND IS THE SURFACE REACHABLE?** *(artifact: the import graph, and the built bundle)* — added
+2026-09-25, because the first version of this section did not ask it and its own author walked
+straight into the gap hours later. A file's path and name are not evidence that it ships. Before
+editing a surface, prove something mounts it: `grep` for imports of it, and `grep` the built bundle
+for a string only it contains. In the same session that wrote this section, `src/solo/agent.tsx` —
+in the Solo folder, exporting `Agent` and `PaigePanel`, owning `useSoloChat`, reading exactly like
+the Solo chat — was edited, tested, committed and pushed before anyone asked what imported it.
+**Nothing did**, and its strings are absent from `dist/`. The live Solo chat was
+`SoloPaigeWorkspace` → `PaigeAIChat` the entire time, and the diagnosis built on the dead file was
+wrong. A test that passes against unreachable code passes exactly as convincingly as one that
+does not (§70 — the deliverable is a human completing the task, and nobody can reach dead code).
+
+### 2. WHAT DOES PRODUCTION ACTUALLY SAY? *(artifact: a real query result)*
+
+Reason from the live system before reasoning from the source. Source tells you what CAN happen;
+production tells you what DID. Read-only queries against real tables cost nothing and routinely
+overturn the diagnosis.
+
+Concretely: count the thing that should have happened and did not. Rows that never reached a
+terminal state; sends whose last row predates the complaint; a feature configured on one tenant and
+no other. In the anchoring case, `paige_pending_confirmations` over 30 days showed **36 proposals,
+21 never acted on** — and the ONE surface with a 0-unanswered rate identified the working code path
+by contrast. No amount of source reading produces that number, and the number is what made the
+defect precise.
+
+### 3. HAVE I PROVEN THE BASELINE, OR AM I ASSERTING IT? *(artifact: a measured before/after)*
+
+**"Those failures are pre-existing" is a measurement, not an observation.** Run the same command on
+the base commit and on the change, whole suite both sides, and record both numbers. Same for a
+lint, a typecheck count, a timing. A session that writes "pre-existing" without both runs is
+guessing in the one place a reader will believe it, and it is how a real regression ships inside a
+known-red suite.
+
+**USE A WORKTREE, NOT `git stash`** (added 2026-09-25, from this section's author failing it). A
+`git stash` on an ALREADY-CLEAN tree stashes nothing, `stash pop` answers "No stash entries found",
+and the "before" run is the same tree as the "after" run — **a comparison that cannot fail, and
+therefore measures nothing.** It looks exactly like a passing check. `git worktree add /tmp/base
+<base-sha>` with `node_modules` symlinked in gives a comparison that can actually disagree with you.
+
+**And measure the WHOLE suite, not the subset you were looking at.** A partial run generalised into
+a whole-suite claim is the same error wearing a number: the same session reported "19 across 4
+files" from a `src/solo/`-only run when the true figure was 21 across 6, and only found out because
+CI disagreed. The conclusion survived; the evidence had never reached it.
+
+### 4. DOES MY TEST BITE? *(artifact: the test failing on purpose)*
+
+Write the test, then **reinstate the defect and watch it fail**, then restore. A test that passes
+against broken code proves nothing and actively harms: it converts an unproven claim into a green
+check that the next reader trusts.
+
+This is not §39's peer-gate — that is a second pair of eyes on the real diff, and it stays required.
+§71.4 is the author falsifying their own assertion before anyone else sees it.
+
+### For anything the owner will SEE, two more, and they are not optional
+
+- **RENDER IT AND LOOK AT IT.** Not a description, not a code reading — the real component, the real
+  tokens, both themes, an image in the reply (§00: CC shows the work). Three defects in the
+  anchoring case were invisible to 11 passing tests and obvious in one frame: identical icons on
+  rows that behaved differently, no size step between heading and summary, and a refusal that said
+  itself twice.
+- **SEPARATE THE EVIDENCE CLASSES AND NAME THE ONE YOU DID NOT REACH.** Automated · static ·
+  rendered · behavioural · authenticated-runtime · `UNVERIFIED`. A jsdom click is not a browser
+  drive; a rendered harness is not the app; and saying so costs nothing next to being caught at it
+  (§13/§32/§70.1).
+
+### The test, every time
+
+*"Can I point at an artifact for all four — that it is still broken, what production says, the
+measured baseline, and my test failing on purpose — or am I about to start building on four beliefs?"*
+If any answer is a belief, you have not grounded; you have guessed with extra steps.
+
+**HONEST NOTE, and it binds the next session that reads this.** This repo has written down
+repeatedly that *"a standing rule stated in chat evaporates on the next reset"* and that *"prose
+alone has failed this rule more than once"* (§1, §18, §51). §71 is prose. It will be skipped the
+same way unless the four artifacts become things a gate can see — the ratchet, `lint:*` and the UI
+evidence validator are the model, and the evidence record (`docs/evidence/ui-delivery/`) is already
+the place three of these could be asserted and checked. **Building that gate is the durable version
+of this section; treat this text as the interim.**
+
+**Cross-references:** §69 (the process this runs in front of) · §13 (what an unfalsifiable claim is)
+· §32 (compiled ≠ ran) · §70/§70.1 (a human finishing the job) · §39 (the peer-gate §71.4 does not
+replace) · §BRAIN.1 (read the record first — §71 is what to do when the record is silent) · §24
+(automate the repeat — the note above).

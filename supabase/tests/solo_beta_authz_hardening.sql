@@ -87,9 +87,9 @@ VALUES
 
 INSERT INTO public.tenant_members (tenant_id, user_id, role, status, is_owner, joined_at) VALUES
   ('b1900000-0000-0000-0000-00000000aaaa', 'b1900000-0000-0000-0000-000000000001', 'owner',  'active',  true,  now()),
-  ('b1900000-0000-0000-0000-00000000aaaa', 'b1900000-0000-0000-0000-000000000002', 'coach',  'active',  false, now()),
+  ('b1900000-0000-0000-0000-00000000aaaa', 'b1900000-0000-0000-0000-000000000002', 'member',  'active',  false, now()),
   ('b1900000-0000-0000-0000-00000000bbbb', 'b1900000-0000-0000-0000-000000000003', 'owner',  'active',  true,  now()),
-  ('b1900000-0000-0000-0000-00000000aaaa', 'b1900000-0000-0000-0000-000000000004', 'coach',  'revoked', false, now());
+  ('b1900000-0000-0000-0000-00000000aaaa', 'b1900000-0000-0000-0000-000000000004', 'member',  'revoked', false, now());
 
 INSERT INTO public.profiles (user_id, active_tenant_id) VALUES
   ('b1900000-0000-0000-0000-000000000001', 'b1900000-0000-0000-0000-00000000aaaa'),
@@ -103,9 +103,9 @@ ON CONFLICT (user_id) DO UPDATE SET active_tenant_id = EXCLUDED.active_tenant_id
 
 INSERT INTO public.user_roles (user_id, role) VALUES
   ('b1900000-0000-0000-0000-000000000001', 'user'),
-  ('b1900000-0000-0000-0000-000000000002', 'coach'),
+  ('b1900000-0000-0000-0000-000000000002', 'user'),
   ('b1900000-0000-0000-0000-000000000003', 'admin'),
-  ('b1900000-0000-0000-0000-000000000004', 'coach')
+  ('b1900000-0000-0000-0000-000000000004', 'user')
 ON CONFLICT DO NOTHING;
 
 -- A fresh Solo provisioner grants only the base global role. Tenant-scoped

@@ -54,5 +54,9 @@ export interface ProviderCallResult {
   model: string;
   tokens_in?: number;
   tokens_out?: number;
+  /** Anthropic prompt-cache counts, best-effort. Kept OUT of tokens_in on purpose: input_tokens is the
+   *  uncached remainder, and the meter bills tokens_in + tokens_out. Undefined where unreported. */
+  cache_read_input_tokens?: number;
+  cache_creation_input_tokens?: number;
   latency_ms: number;
 }

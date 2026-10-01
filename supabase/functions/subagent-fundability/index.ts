@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
   const { data: client, error: clientErr } = await supabase
     .from("clients")
     .select(
-      "id,first_name,last_name,email,entity_name,entity_type,funding_goal,linked_user_id,street_address,city,state,zip_code,onboarding_stage,agreement_signed_at,journey_stage_id,tier,primary_offer",
+      "id,first_name,last_name,entity_name,entity_type,funding_goal,linked_user_id,street_address,city,state,zip_code,onboarding_stage,agreement_signed_at,journey_stage_id,tier,primary_offer",
     )
     .eq("id", contactId)
     .maybeSingle();

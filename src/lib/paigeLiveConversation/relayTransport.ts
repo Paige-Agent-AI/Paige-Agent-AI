@@ -60,6 +60,9 @@ export function connectPaigeLiveRelay(input: Readonly<{
   let activeSources = new Set<AudioBufferSourceNode>();
   let pendingPlayback = 0;
   let playbackEpoch = 0;
+  let interruptSequence = 0;
+  let pendingInterrupt: number | null = null;
+  let interruptTimer: ReturnType<typeof setTimeout> | undefined;
   let stopped = false;
   let terminal = false;
   let runtimeDone = false;
@@ -74,6 +77,12 @@ export function connectPaigeLiveRelay(input: Readonly<{
   const notifyOutput = () => outputListeners.forEach((listener) => listener());
   const outputPlaying = () => speaking && !held && !stopped && !terminal && context?.state === "running";
 
+  const clearInterrupt = () => {
+    clearTimeout(interruptTimer);
+    interruptTimer = undefined;
+    pendingInterrupt = null;
+  };
+
   const clearPlayback = () => {
     playbackEpoch++;
     pendingPlayback = 0;
@@ -87,6 +96,7 @@ export function connectPaigeLiveRelay(input: Readonly<{
   const stop = () => {
     if (stopped) return;
     stopped = true;
+    clearInterrupt();
     recorder?.stop();
     recorder = null;
     clearPlayback();
@@ -141,6 +151,7 @@ export function connectPaigeLiveRelay(input: Readonly<{
     } catch {
       if (!stopped && !terminal) {
         terminal = true;
+        clearInterrupt();
         clearPlayback();
         input.onState({ kind: "unavailable", message: "Live audio stopped before Paige could speak. You can continue in chat." });
         if (socket.readyState === WebSocket.OPEN) socket.close(1011, "playback_failed");
@@ -152,12 +163,15 @@ export function connectPaigeLiveRelay(input: Readonly<{
 
   socket.onmessage = (event) => {
     if (stopped || terminal) return;
-    if (event.data instanceof ArrayBuffer) { void playPcm(event.data); return; }
+    // Old PCM already in flight must not restart playback after a local interrupt.
+    // The matching server acknowledgement is an ordered cancellation barrier.
+    if (event.data instanceof ArrayBuffer) { if (pendingInterrupt === null) void playPcm(event.data); return; }
     if (typeof event.data !== "string") return;
     let frame: Record<string, unknown>;
     try { frame = JSON.parse(event.data) as Record<string, unknown>; } catch { return; }
     if (frame.type === "unavailable" || frame.type === "error") {
       terminal = true;
+      clearInterrupt();
       recorder?.stop();
       recorder = null;
       clearPlayback();
@@ -191,7 +205,9 @@ export function connectPaigeLiveRelay(input: Readonly<{
       input.onVoiceTurn?.(frame.text, frame.turn_id, frame.challenge);
     } else if (frame.type === "runtime.cancel" && typeof frame.turn_id === "string") {
       input.onRuntimeCancel?.(frame.turn_id);
-    } else if (frame.type === "runtime.done") {
+    } else if (frame.type === "interrupt.ack") {
+      if (pendingInterrupt !== null && frame.request_id === pendingInterrupt) clearInterrupt();
+    } else if (frame.type === "runtime.done" && pendingInterrupt === null) {
       runtimeDone = true;
       maybePlaybackDone();
     } else if (frame.type === "clear_playback") {
@@ -202,6 +218,7 @@ export function connectPaigeLiveRelay(input: Readonly<{
   socket.onclose = () => {
     const unexpected = !stopped && !terminal;
     terminal = true;
+    clearInterrupt();
     recorder?.stop();
     recorder = null;
     clearPlayback();
@@ -233,9 +250,20 @@ export function connectPaigeLiveRelay(input: Readonly<{
         socket.send(JSON.stringify({ type: "runtime.failed", turn_id: turnId }));
     },
     interrupt() {
+      if (stopped || terminal) return;
       held = false;
+      if (interruptSequence === Number.MAX_SAFE_INTEGER) { stop(); input.onState({ kind: "disconnected" }); return; }
+      clearInterrupt();
+      const requestId = ++interruptSequence;
+      pendingInterrupt = requestId;
+      // A stalled peer or an older relay cannot leave this conversation silently muted.
+      interruptTimer = setTimeout(() => {
+        if (pendingInterrupt !== requestId || stopped || terminal) return;
+        stop();
+        input.onState({ kind: "disconnected" });
+      }, 5_000);
       clearPlayback();
-      if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: "interrupt" }));
+      if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: "interrupt", request_id: pendingInterrupt }));
     },
     stop,
   };

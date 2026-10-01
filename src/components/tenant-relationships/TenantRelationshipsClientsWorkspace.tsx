@@ -7,10 +7,8 @@ import {
   CalendarDays,
   ExternalLink,
   FileText,
-  Mail,
   MapPin,
   MessageSquare,
-  Phone,
   Pencil,
   Plus,
   RefreshCw,
@@ -35,6 +33,7 @@ import {
 } from "./workspaceModel";
 import { TenantCanonicalCalendarWorkspace } from "@/components/tenant-calendar/TenantCanonicalCalendarWorkspace";
 import { PeopleContactEditor } from "./PeopleContactEditor";
+import { ContactMethodsList } from "@/components/contact-methods/ContactMethodsEditor";
 import "./tenant-relationships-clients-workspace.css";
 
 const CanonicalConversations = lazy(() => import("@/pages/admin/ClientsConversations"));
@@ -72,6 +71,14 @@ function BoundedState({
       )}
     </section>
   );
+}
+
+/** A search matches any of a person's emails, or — when the query is written like a phone number —
+ *  any phone by its digits whatever the formatting. "a1b2c3" is not a phone query. */
+function matchesContactMethod(person: { contactMethods: { kind: string; value: string }[] }, query: string) {
+  const digits = /^[\d\s()+.-]+$/.test(query) ? query.replace(/\D/g, "") : "";
+  return person.contactMethods.some((method) => method.value.toLowerCase().includes(query)
+    || (method.kind === "phone" && digits.length >= 3 && method.value.replace(/\D/g, "").includes(digits)));
 }
 
 function formatDate(value: string | null, fallback = "Not recorded") {
@@ -248,7 +255,7 @@ function PeopleView({ variant, data, openPaige, selectedContactId, onSelectConta
   const people = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) return data.people;
-    return data.people.filter((person) => [person.name, person.company, person.email, person.relationship, person.owner]
+    return data.people.filter((person) => [person.name, person.company, ...person.contactMethods.map((method) => method.value), person.relationship, person.owner]
       .some((value) => value?.toLowerCase().includes(query)));
   }, [data.people, search]);
   const selected = people.find(({ id }) => id === selectedContactId) ?? null;
@@ -340,8 +347,8 @@ function SoloPeopleView({
   const query = search.trim().toLowerCase();
   const people = useMemo(() => {
     if (!query) return data.people;
-    return data.people.filter((person) => [person.name, person.company, person.email, person.phone, person.relationship, person.owner, person.source, ...person.tags]
-      .some((value) => value?.toLowerCase().includes(query)));
+    return data.people.filter((person) => [person.name, person.company, person.relationship, person.owner, person.source, ...person.tags]
+      .some((value) => value?.toLowerCase().includes(query)) || matchesContactMethod(person, query));
   }, [data.people, query]);
 
   useEffect(() => {
@@ -449,7 +456,9 @@ function SoloPeopleView({
     setEditorOpen(next);
   };
   const handleSaved = async (contactId: string) => {
-    await data.retryPeople();
+    // The record may come from the list or from the deep-link read (a contact outside the first
+    // 250); both are re-read so the next edit opens on what was actually saved.
+    await Promise.all([data.retryPeople(), data.retryDeepLink?.()]);
     selectPerson(contactId);
   };
 
@@ -497,7 +506,7 @@ function SoloPeopleView({
         </label>
         <span className="trc-people-actions">
           {search && <button type="button" onClick={() => setSearch("")}>Clear search</button>}
-          <RoleGate allow={["admin", "super_admin", "coach"]} fallback={<ProofPill>Read only</ProofPill>}>
+          <RoleGate allow={["admin", "super_admin"]} fallback={<ProofPill>Read only</ProofPill>}>
             <button type="button" data-contact-editor-origin="toolbar-new" onClick={openNewContact}><Plus aria-hidden /> New contact</button>
           </RoleGate>
         </span>
@@ -548,7 +557,7 @@ function SoloPeopleView({
               <strong>{query ? "No matching people" : "No people here yet"}</strong>
               <span>{query ? "The loaded list is unchanged. Clear search to see every loaded record." : "Create the first tenant-scoped Person or Business record."}</span>
               {query ? <button type="button" onClick={() => setSearch("")}>Clear search</button> : (
-                <RoleGate allow={["admin", "super_admin", "coach"]} fallback={<ProofPill>Read only</ProofPill>}>
+                <RoleGate allow={["admin", "super_admin"]} fallback={<ProofPill>Read only</ProofPill>}>
                   <button type="button" data-contact-editor-origin="empty-new" onClick={openNewContact}><Plus aria-hidden /> New contact</button>
                 </RoleGate>
               )}
@@ -607,7 +616,7 @@ function ClientRecord({
           <ProofPill tone="live">Record · LIVE</ProofPill>
         </div>
         <div className="trc-record-actions">
-          <RoleGate allow={["admin", "super_admin", "coach"]} fallback={null}>
+          <RoleGate allow={["admin", "super_admin"]} fallback={null}>
             <button type="button" data-contact-editor-origin="record-edit" onClick={onEdit}><Pencil aria-hidden /> Edit contact</button>
           </RoleGate>
           <button type="button" onClick={openPaige}><Sparkles aria-hidden /> Open PAIGE workspace</button>
@@ -631,9 +640,8 @@ function ClientRecord({
 
         <section className="trc-record-section">
           <header><div><span>Identity</span><h3>{isBusiness ? "Organization details" : "Contact details"}</h3></div><ProofPill tone="live">Owner-editable · LIVE</ProofPill></header>
+          <div className="trc-record-methods"><ContactMethodsList methods={person.contactMethods} headingLevel={4} /></div>
           <div className="trc-contact-lines">
-            <div><Mail aria-hidden /><span><small>Email</small>{person.email || "Not recorded"}</span></div>
-            <div><Phone aria-hidden /><span><small>Phone</small>{person.phone || "Not recorded"}</span></div>
             <div><MapPin aria-hidden /><span><small>Location</small>{person.location || "Not recorded"}</span></div>
             <div><Building2 aria-hidden /><span><small>Company</small>{person.company || "Not recorded"}</span></div>
             <div><ExternalLink aria-hidden /><span><small>Website</small>{person.website || "Not recorded"}</span></div>

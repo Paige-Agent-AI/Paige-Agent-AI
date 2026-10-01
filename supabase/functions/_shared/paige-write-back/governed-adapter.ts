@@ -7,7 +7,7 @@
  *
  *   1. `authorizeWriteBackTarget` — the §9/§53/§59 authority decision for "may this caller write to
  *      THIS target's record?". Its dependencies are INJECTED, so the whole refusal matrix (self,
- *      platform owner, same-tenant admin, assigned coach, cross-tenant admin DENIED) is a unit test rather
+ *      platform owner, same-tenant admin, cross-tenant admin DENIED) is a unit test rather
  *      than an integration ceremony. This is the security core.
  *   2. `decideWriteBack` — a pure wrapper over `decideGovernedExecution` that makes `paige-write-back`
  *      a first-class governed door. It takes the authority verdict from (1) as its `access` input and
@@ -20,19 +20,19 @@
  * `paige-write-back` authenticates the caller on an anon client, then writes sensitive tenant data
  * (businesses, profiles, intake.*, foundation.ein, credit_negative_items, credit_accounts) through a
  * SERVICE-ROLE client — RLS bypassed. For `target_user_id !== caller`, the old authz consulted the
- * GLOBAL `user_roles` table for an `admin`/`coach` role. `user_roles` carries NO tenant predicate
+ * GLOBAL `user_roles` table for an `admin` role. `user_roles` carries NO tenant predicate
  * (the §53/§59 global-role trap), so a tenant-A admin could write to a tenant-B user's record — a §9
  * cross-tenant write IDOR on credit/identity data.
  *
  * THE FIX. A cross-user write is permitted only when:
  *   - the caller is a PLATFORM OWNER (`is_platform_owner()` — super_admin ONLY per §53 — the one
  *     sanctioned cross-tenant PII-write caller, JWT-derived, never a body field), OR
- *   - the caller's authority over their SERVER-RESOLVED active workspace is admin/coach, AND the
- *     target shares that workspace, AND — for a coach — an active `coach_clients` assignment exists.
- *     Authority is resolved TENANT-SCOPED: a DIRECT `tenant_members.role` (owner/admin → admin; coach)
+ *   - the caller's authority over their SERVER-RESOLVED active workspace is admin, AND the target
+ *     shares that workspace. A client assignment grants no write.
+ *     Authority is resolved TENANT-SCOPED: a DIRECT `tenant_members.role` (owner/admin → admin)
  *     for `current_user_tenant_id()`, OR — when the caller holds no direct role — agency DELEGATION
  *     (`agency_can_manage_child()`, admin-equivalent over a managed child). NOT the tenant-agnostic
- *     `user_roles`, so a global admin/coach who is only a plain member of the active workspace cannot
+ *     `user_roles`, so a global admin who is only a plain member of the active workspace cannot
  *     write there — the residual §53/§59 trap a global-role check leaves open; the tenant bond still
  *     gates the target. (Same correction as migration 20261180000000, which replaced `has_role()` with
  *     tenant-scoped `is_tenant_admin()` for this class.) The agency-delegation path mirrors exactly how
@@ -65,7 +65,7 @@
  *
  * WHY THE LANE IS `auto`. The caller here is a person acting with standing authority over data the
  * authorization gate above has already proven they may write (their platform-owner standing, or their
- * same-tenant admin/coach relationship). That verdict is the `access` input; the lane is the
+ * same-tenant admin relationship). That verdict is the `access` input; the lane is the
  * workspace's standing grant for an `ordinary` in-tenant edit. `auto` + `ordinary` → `execute`,
  * which preserves the current behaviour for every legitimate caller. The class is the backstop: if a
  * future slice ever raises this act to `high`, the seam clamps `auto` → `confirm` automatically.
@@ -104,14 +104,13 @@ export type WriteBackAuthzBasis =
   | "platform_owner"
   | "same_tenant_admin"
   | "agency_manager"
-  | "assigned_coach"
   | "denied";
 
 export type WriteBackAuthz = {
   allowed: boolean;
   /** A caller-facing reason. It surfaces as the seam's `access_denied` message for every refusal that
    *  carries a resolved `tenantId` — the role-insufficient, cross-tenant ("different workspace"), and
-   *  coach-unassigned denials (all resolve the workspace first now). Only the unresolved-workspace
+   *  (all resolve the workspace first now). Only the unresolved-workspace
    *  denial returns `tenantId: null`, so the seam's tenancy gate (which runs before the access gate)
    *  reports THAT one as `tenant_unresolved`; it is still a 403 with `authz_basis: "denied"` recorded,
    *  so forensics are intact. */
@@ -142,7 +141,6 @@ export type WriteBackAuthz = {
  *   - `resolveTargetTenant` — the workspace a target belongs to, for the platform-owner path's audit scope.
  *   - `targetSharesTenant` — whether the target is a member (auth user) or a CRM client of the
  *     caller's active workspace. This is the §9 boundary the write is gated on.
- *   - `coachAssigned` — an active `coach_clients(coach, client)` bond. Kept for the coach path.
  */
 export type WriteBackAuthzDeps = {
   isPlatformOwner: () => Promise<boolean>;
@@ -155,7 +153,6 @@ export type WriteBackAuthzDeps = {
   callerManagesTenantViaAgency: (callerTenantId: string) => Promise<boolean>;
   resolveTargetTenant: (targetUserId: string) => Promise<string | null>;
   targetSharesTenant: (callerTenantId: string, targetUserId: string) => Promise<boolean>;
-  coachAssigned: (coachUserId: string, targetUserId: string) => Promise<boolean>;
 };
 
 /**
@@ -196,24 +193,22 @@ export async function authorizeWriteBackTarget(
   // STAFF — resolved TENANT-SCOPED, never from a global role (§53/§59). The caller's authority is
   // their role in THIS workspace (`tenant_members.role` for callerTenantId), not a `user_roles` row
   // they may hold for some other tenant. This closes the residual global-role trap: a global
-  // admin/coach of tenant A who is only a plain member of tenant B, with B as their active workspace,
+  // admin of tenant A who is only a plain member of tenant B, with B as their active workspace,
   // resolves 'member' here and is denied — where a global-role check would have let them write B's
   // client records. `current_user_tenant_id()` admits an active membership at ANY role, so the role
   // MUST be re-read per tenant. A global role is never sufficient; the tenant-scoped role is.
   const tenantRole = await deps.callerRoleInTenant(callerTenantId);
   const directAdmin = tenantRole === "owner" || tenantRole === "admin";
-  const isCoach = tenantRole === "coach";
   // AGENCY DELEGATION. An agency owner/admin (or scoped team specialist) managing this workspace as a
   // CHILD holds their membership on the PARENT, so `callerRoleInTenant` is null for them — yet
   // `current_user_tenant_id()` already let them operate in the child via `agency_can_manage_child()`.
   // That delegation is admin-equivalent authority over the child; resolving it here restores the
   // legitimate agency-operator write that a direct-membership-only check wrongly denied, WITHOUT
   // re-opening the §53/§59 escalation — a plain member does NOT manage the child. Consulted only when
-  // there is no direct admin role (so it also elevates an agency operator who happens to hold a coach
-  // row over the coach path), which keeps it off the common direct-admin path.
+  // there is no direct admin role, which keeps it off the common direct-admin path.
   const agencyAdmin = directAdmin ? false : await deps.callerManagesTenantViaAgency(callerTenantId);
   const isAdmin = directAdmin || agencyAdmin;
-  if (!isAdmin && !isCoach) {
+  if (!isAdmin) {
     return {
       allowed: false,
       reason: "Not authorized to update this user's data in this workspace.",
@@ -225,30 +220,13 @@ export async function authorizeWriteBackTarget(
   // THE TENANT BOND — the target must belong to that SAME workspace (the IDOR close).
   const sameTenant = await deps.targetSharesTenant(callerTenantId, targetUserId);
   if (!sameTenant) {
-    // The cross-tenant refusal: a tenant-A admin/coach acting on a tenant-B target.
+    // The cross-tenant refusal: a tenant-A admin acting on a tenant-B target.
     return {
       allowed: false,
       reason: "This record belongs to a different workspace.",
       tenantId: callerTenantId,
       basis: "denied",
     };
-  }
-
-  // A coach (not also an admin) additionally needs the direct `coach_clients` assignment. Kept
-  // exactly as the prior guard had it (the old code ran the same `coach_clients` check) — now behind
-  // the same-tenant bond above, so an assignment can never authorise a write across workspaces. (An
-  // admin does NOT need an assignment; the admin path returns below.)
-  if (isCoach && !isAdmin) {
-    const assigned = await deps.coachAssigned(callerUserId, targetUserId);
-    if (!assigned) {
-      return {
-        allowed: false,
-        reason: "Not assigned to this client.",
-        tenantId: callerTenantId,
-        basis: "denied",
-      };
-    }
-    return { allowed: true, reason: "assigned coach", tenantId: callerTenantId, basis: "assigned_coach" };
   }
 
   if (agencyAdmin) {

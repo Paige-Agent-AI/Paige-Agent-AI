@@ -95,8 +95,9 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
     const caught = find((n) => ts.isCatchClause(n) && n.getText(source).includes('[paige] live reasoning stream failed:')) as ts.CatchClause;
     const meta = { surfaces: ["client"], bundleRef: { approval_queued: [{ id: "approval" }], paige_confirm: [{ tool: "governed_write" }], paige_crm_result: [{ outcome: "success", receipt_recorded: true }] } };
     const persisted: unknown[] = [];
+    // The catch also reports what became of the turn's approvals (emitApprovalOutcome); a no-op here.
     const run = new Function("finalAssistantText", "assistantTurnMetadata", "persistAssistantTurn", "turnCarriesProtectedContent", "revalidateTenantKnowledgeScope", "console",
-      js(`return (async()=>{const liveRuntimeScope={},payloadThreadId='thread',enc=new TextEncoder(),controller={enqueue(){}},discardContent=()=>{};try{throw Error('fixture')}catch(e)${caught.block.getText(source)}})();`));
+      js(`return (async()=>{const liveRuntimeScope={},payloadThreadId='thread',enc=new TextEncoder(),controller={enqueue(){}},discardContent=()=>{},emitApprovalOutcome=async()=>{};try{throw Error('fixture')}catch(e)${caught.block.getText(source)}})();`));
     await run(text, () => meta, async (content: string, metadata: unknown) => persisted.push({ content, metadata }), () => false, async () => true, { error() {} });
     expect(persisted).toEqual([{ content: text, metadata: meta }]);
     for (const [protectedTurn, validScope] of [[true, true], [false, false]]) {
@@ -133,11 +134,15 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
     const hasStream = !["non-ok", "bodyless"].includes(ending);
     const response = hasStream ? new Response(new ReadableStream<Uint8Array>({ start(c) { upstream = c; } }))
       : new Response(null, { status: ending === "non-ok" ? 503 : 200 });
-    const run = new Function("finalStreamResponse", "controller", "emitContent", "turnCarriesProtectedContent", "discardContent", "persistAssistantTurn", "revalidateTenantKnowledgeScope", "console", "assistantTurnMetadata",
+    // An interrupted Live answer still says what became of the turn's approvals, before the error
+    // frame the Live client settles on (paige_approval_outcome, _shared/approval-outcome.ts).
+    const outcomeReports: string[] = [];
+    const run = new Function("finalStreamResponse", "controller", "emitContent", "turnCarriesProtectedContent", "discardContent", "persistAssistantTurn", "revalidateTenantKnowledgeScope", "console", "assistantTurnMetadata", "emitApprovalOutcome",
       js(`return (async()=>{let finalAssistantText='';const liveRuntimeScope={},payloadThreadId='thread',enc=new TextEncoder();try{${body}}catch(e)${caught.block.getText(source)}})();`));
     const settled = run(response, { enqueue(c: Uint8Array) { emitted.push(c); } },
       ending === "enqueue-reject" ? () => { throw new Error("fixture-enqueue-rejected"); } : emit, () => protectedTurn,
-      () => { heldContent.length = 0; }, async (text: string) => { persisted.push(text); }, async () => true, { error() {} }, () => ({ surfaces: [], bundleRef: null }));
+      () => { heldContent.length = 0; }, async (text: string) => { persisted.push(text); }, async () => true, { error() {} }, () => ({ surfaces: [], bundleRef: null }),
+      async () => { outcomeReports.push(emitted.map((c) => new TextDecoder().decode(c)).join("")); });
     if (hasStream) {
       const content = ending === "empty-done" ? "" : ending === "whitespace-done" ? "   " : "First sentence.";
       upstream.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ choices: [{ delta: { content } }] })}\n\n`));
@@ -155,6 +160,9 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
     expect(persisted).toEqual(protectedTurn || !hasStream || ending === "enqueue-reject" || ending.endsWith("-done") ? [] : ["First sentence."]);
     expect(heldContent).toEqual([]);
     expect(wire.includes('paige_live_error')).toBe(true);
+    // Once, and before the error frame: the card that asked is answered before the answer ends.
+    expect(outcomeReports).toHaveLength(1);
+    expect(outcomeReports[0].includes('paige_live_error')).toBe(false);
   });
 });
 

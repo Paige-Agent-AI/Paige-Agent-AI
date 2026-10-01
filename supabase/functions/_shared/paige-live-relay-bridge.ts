@@ -183,7 +183,18 @@ export class PaigeLiveRelayBridge {
       return;
     }
     if (!this.started) { this.fail("audio_not_ready"); return; }
-    if (frame.type === "interrupt") { this.interrupt(); return; }
+    if (frame.type === "interrupt") {
+      const hasRequestId = Object.hasOwn(frame, "request_id");
+      if (hasRequestId && (typeof frame.request_id !== "number" || !Number.isSafeInteger(frame.request_id) || frame.request_id <= 0)) {
+        this.fail("invalid_live_frame"); return;
+      }
+      this.interrupt();
+      // Cancel/abort and playback-clear effects run synchronously before this
+      // ordered barrier. Already-interrupted turns still acknowledge each tap.
+      // Older clients omit the ID and keep their existing protocol.
+      if (hasRequestId) this.send({ type: "interrupt.ack", request_id: frame.request_id });
+      return;
+    }
     if (frame.type === "end") { this.end(); return; }
     if (frame.type === "playback.complete") {
       const turn = this.state.currentTurn;
@@ -445,10 +456,10 @@ export class PaigeLiveRelayBridge {
   }
 
   private maybeSendRuntimeDone(): void {
-    if (!this.runtimeEndRequested || this.runtimeEndSent || this.ended) return;
+    if (!this.runtimeEndRequested || this.runtimeEndSent || this.ended || this.state.currentTurn?.interrupted) return;
     const generation = this.speechGeneration;
     void this.speechQueue.then(() => {
-      if (this.ended || generation !== this.speechGeneration ||
+      if (this.ended || generation !== this.speechGeneration || this.state.currentTurn?.interrupted ||
         !this.state.currentTurn?.runtimeDone || this.state.currentTurn.pendingSpeech.length) return;
       this.runtimeEndSent = true;
       this.send({ type: "runtime.done", turn_id: this.state.currentTurn.id });

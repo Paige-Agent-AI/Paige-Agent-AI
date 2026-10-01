@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { loadAssignableStaff } from "@/lib/team/assignableStaff";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -55,15 +56,8 @@ export function DealDrawer({ deal, stages, open, onOpenChange, onChanged }: Prop
     setTitleDraft(deal.title);
     setCloseDateDraft(deal.expected_close_date ?? "");
     (async () => {
-      // Load coaches
-      const { data: roles } = await supabase.from("user_roles").select("user_id").eq("role", "coach");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- pre-existing type debt; hotfix changes only the retired route destination
-      const coachIds = (roles || []).map((r: any) => r.user_id);
-      if (coachIds.length) {
-        const { data: profs } = await supabase.from("coach_client_profiles_safe").select("user_id, full_name").in("user_id", coachIds);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- pre-existing type debt; hotfix changes only the retired route destination
-        setCoaches((profs || []).map((p: any) => ({ user_id: p.user_id, name: p.full_name || "Unnamed Coach" })));
-      }
+      // The workspace's assignable staff (admins), for the owner picker.
+      setCoaches(await loadAssignableStaff());
       // Load contact
       if (deal.contact_client_id) {
         const { data: c } = await supabase.from("clients").select("id, first_name, last_name, entity_name, linked_user_id").eq("id", deal.contact_client_id).maybeSingle();

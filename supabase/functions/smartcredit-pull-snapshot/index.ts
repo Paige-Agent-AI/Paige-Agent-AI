@@ -28,6 +28,7 @@ import {
   fundingGateAuditRow,
   recordFundingGateDecision,
 } from "../_shared/funding-coaching-gate.ts";
+import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses } from "../_shared/contact-methods.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -126,11 +127,13 @@ Deno.serve(async (req) => {
 
   // Resolve the CONTACT's workspace (server-side, never the body) — both the Funding & Coaching Tools
   // gate scope and the provider call need it. The caller is already authorized for this contact above.
-  const { data: contact } = await admin
+  // The provider is asked about the contact's PRIMARY email.
+  const { data: contactRow } = await admin
     .from("clients")
-    .select("id, email, first_name, last_name, tenant_id")
+    .select(`id, first_name, last_name, tenant_id, ${CLIENT_CONTACT_METHODS_EMBED}`)
     .eq("id", contact_id)
     .maybeSingle();
+  const contact = withPrimaryAddresses(contactRow);
   if (!contact) return jsonResponse({ error: "contact not found" }, 404);
   const contactTenantId = (contact.tenant_id ?? null) as string | null;
 

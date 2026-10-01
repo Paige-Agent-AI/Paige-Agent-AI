@@ -3,6 +3,16 @@ import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 import { resolveTenantEmailContext } from '../_shared/email/branding.ts'
+import { decideSendAuthority, safeFromDisplayName } from '../_shared/email/send-authority.ts'
+import { isAuthorizedInternalCaller, adminClient, operatorUserId } from '../_shared/systems-check-http.ts'
+import { overRateLimit } from '../_shared/rateLimit.ts'
+import { createClient as createLimiterClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+// The shared public rate limiter is typed against its own supabase-js build.
+const limiterClient = () =>
+  createLimiterClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, {
+    auth: { persistSession: false },
+  })
 
 // Configuration baked in at scaffold time — do NOT change these manually.
 // To update, re-run the email domain setup flow.
@@ -43,9 +53,11 @@ async function sha256Hex(input: string): Promise<string> {
     .join('')
 }
 
-// Auth note: this function uses verify_jwt = true in config.toml, so Supabase's
-// gateway validates the caller's JWT (anon or service_role) before the request
-// reaches this code. No in-function auth check is needed.
+// Auth: the gateway's verify_jwt accepts ANY validly signed token, including the publishable key
+// that ships in the public site, so it is not an authorization check. Every request is decided
+// in-body by `decideSendAuthority` (_shared/email/send-authority.ts) before anything is rendered,
+// logged or sent: internal platform callers may send any template; a verified person may send only
+// the templates listed there, to a recipient bound on the server; everyone else is refused.
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -78,6 +90,7 @@ Deno.serve(async (req) => {
   let fromOverride: string | null = null
   let replyToOverride: string | null = null
   let soloFulfillmentEventId: string | null = null
+  let ticketId: string | null = null
   try {
     const body = await req.json()
     templateName = body.templateName || body.template_name
@@ -92,6 +105,7 @@ Deno.serve(async (req) => {
     fromOverride = body.fromOverride || body.from_override || null
     replyToOverride = body.replyToOverride || body.reply_to_override || null
     soloFulfillmentEventId = body.fulfillmentEventId || body.fulfillment_event_id || null
+    ticketId = body.ticketId || body.ticket_id || null
   } catch {
     return new Response(
       JSON.stringify({ error: 'Invalid JSON in request body' }),
@@ -100,6 +114,62 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     )
+  }
+
+  const authority = await decideSendAuthority(
+    { templateName, recipientEmail: recipientEmail || null, recipientUserId, ticketId },
+    {
+      isInternalCaller: () => isAuthorizedInternalCaller(req, adminClient()),
+      verifiedUserId: async () => {
+        const authorization = req.headers.get('Authorization') ?? ''
+        if (!authorization.startsWith('Bearer ')) return null
+        const anonKey = Deno.env.get('SUPABASE_ANON_KEY')
+        if (!anonKey) return null
+        const caller = createClient(supabaseUrl, anonKey, {
+          global: { headers: { Authorization: authorization } },
+          auth: { persistSession: false },
+        })
+        const { data, error } = await caller.auth.getUser()
+        return error ? null : data?.user?.id ?? null
+      },
+      callerIsOperator: async () => (await operatorUserId(req)) !== null,
+      signInEmail: async (userId) => {
+        const { data } = await adminClient().auth.admin.getUserById(userId)
+        return data?.user?.email ?? null
+      },
+      ownTicket: async (userId, id) => {
+        const { data } = await adminClient()
+          .from('support_tickets')
+          .select('ticket_number, category, priority')
+          .eq('id', id)
+          .eq('user_id', userId)
+          .maybeSingle()
+        const t = data as { ticket_number?: string | null; category?: string | null; priority?: string | null } | null
+        return t
+          ? { ticketNumber: t.ticket_number ?? null, category: t.category ?? null, priority: t.priority ?? null }
+          : null
+      },
+      overHourlyLimit: (userId, template, max) =>
+        overRateLimit(limiterClient(), `ste:${template}:${userId}`, max, 3600, true),
+      overPlatformHourlyLimit: (template, max) =>
+        overRateLimit(limiterClient(), `ste:${template}:all`, max, 3600, true),
+    },
+  )
+  if (!authority.ok) {
+    return new Response(JSON.stringify({ error: authority.error }), {
+      status: authority.status,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+  if (authority.kind === 'user') {
+    // A person never chooses where the mail goes (beyond what their policy allows), who it claims
+    // to be from, where replies land, or whose brand it wears.
+    recipientEmail = authority.recipientEmail
+    recipientUserId = authority.recipientUserId
+    fromOverride = null
+    replyToOverride = null
+    tenantId = null
+    if (authority.templateData) templateData = authority.templateData
   }
 
   // Solo Beta welcome is an internal mode of the existing transactional sender.
@@ -350,8 +420,8 @@ Deno.serve(async (req) => {
 
   // 1b. Affiliate-program preference gate.
   // Only enforced when caller passed recipientUserId (e.g., approved/conversion/paid/monthly).
-  // Public submissions like elite-waitlist or application-received from anon visitors
-  // skip this check because there is no authenticated user yet.
+  // A confirmation for someone with no account yet (an affiliate application, sent by
+  // affiliate-application-confirm on the applicant's behalf) skips it: there is no user to look up.
   const isAffiliateTemplate = templateName.startsWith('affiliate-') || templateName === 'elite-waitlist-confirmed'
   if (isAffiliateTemplate && recipientUserId) {
     try {
@@ -475,7 +545,9 @@ Deno.serve(async (req) => {
   // shared Paige default (§6/§9). Caller-provided tenantId always wins; otherwise
   // resolve from the recipient's profile / active membership. Runs BEFORE the render
   // so the tenant brand can thread into the template props below.
-  if (!tenantId) {
+  // NEVER for a person's own send: there the "recipient" is the caller, so resolving
+  // would hand the caller's own tenant name and reply-to to mail they triggered.
+  if (!tenantId && authority.kind !== 'user') {
     try {
       let uid = recipientUserId
       if (!uid) {
@@ -578,15 +650,17 @@ Deno.serve(async (req) => {
     const sender = (senderRow ?? null) as
       | { from_name?: string; from_address?: string; reply_to?: string; tenant_name?: string }
       | null
-    if (sender?.from_name && sender?.from_address) {
-      const candidate = `${sender.from_name} <${sender.from_address}>`
+    // A tenant names itself, so its From name is a plain, short label or the platform's.
+    const tenantFromName = safeFromDisplayName(sender?.from_name)
+    if (tenantFromName && sender?.from_address) {
+      const candidate = `${tenantFromName} <${sender.from_address}>`
       if (fromAddressAligns(candidate)) {
         resolvedFrom = candidate
         resolvedReplyTo = sender.reply_to ?? null
       } else {
         // Address domain isn't verified for sending, but we can still honor
         // the tenant's display name by swapping in the aligned fallback address.
-        const displayName = sender.from_name || sender.tenant_name || SITE_NAME
+        const displayName = tenantFromName || safeFromDisplayName(sender.tenant_name) || SITE_NAME
         resolvedFrom = `${displayName} <notifications@${FROM_DOMAIN}>`
         resolvedReplyTo = sender.reply_to ?? null
         console.warn('tenant from-address unaligned — kept tenant display name with default address', {

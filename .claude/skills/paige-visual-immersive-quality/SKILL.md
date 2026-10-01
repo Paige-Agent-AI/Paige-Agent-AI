@@ -1,6 +1,6 @@
 ---
 name: paige-visual-immersive-quality
-description: Module 2 of the Paige UI Delivery Standard — the premium visual bar and purposeful motion, faithful to the approved Claude Design pack (no invented or overridden visual direction).
+description: Module 2 of the Paige UI Delivery Standard — the premium visual bar and purposeful motion, held to Impeccable's craft floor (§00: CC owns the interface, the owner approves).
 ---
 
 # Visual & Immersive Quality router

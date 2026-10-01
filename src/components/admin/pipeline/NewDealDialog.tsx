@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { loadAssignableStaff } from "@/lib/team/assignableStaff";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ import { toast } from "sonner";
 import { Pipeline, PipelineStage, dollarsToCents, logDealActivity } from "@/lib/pipelines";
 import { useTenantOffers } from "@/hooks/useTenantOffers";
 import { NewContactDialog } from "@/components/admin/contacts/NewContactDialog";
+import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses, type WithClientContactMethods } from "@/lib/contact-methods";
 
 type Props = {
   open: boolean;
@@ -25,6 +27,9 @@ type Props = {
 };
 
 type ContactOption = { id: string; label: string; email?: string | null };
+
+// Widened to string: the generated types do not know the contact-methods embed yet.
+const DEAL_CONTACT_SELECT: string = `id,first_name,last_name,entity_name,${CLIENT_CONTACT_METHODS_EMBED}`;
 type CoachOption = { user_id: string; name: string };
 
 export function NewDealDialog({ open, onOpenChange, pipeline, stages, defaultStageId, defaultContactId, onCreated }: Props) {
@@ -48,13 +53,14 @@ export function NewDealDialog({ open, onOpenChange, pipeline, stages, defaultSta
   const loadContacts = async () => {
     const { data: cs } = await supabase
       .from("clients")
-      .select("id, first_name, last_name, entity_name, email")
+      .select(DEAL_CONTACT_SELECT)
       .order("created_at", { ascending: false })
       .limit(500);
-    setContacts((cs || []).map((c: any) => ({
+    const rows = (cs ?? []) as unknown as Array<{ id: string; first_name: string | null; last_name: string | null; entity_name: string | null } & WithClientContactMethods>;
+    setContacts(rows.map((c) => ({
       id: c.id,
       label: `${c.first_name ?? ""} ${c.last_name ?? ""}`.trim() + (c.entity_name ? ` · ${c.entity_name}` : ""),
-      email: c.email,
+      email: withPrimaryAddresses(c).email,
     })));
   };
 
@@ -64,14 +70,7 @@ export function NewDealDialog({ open, onOpenChange, pipeline, stages, defaultSta
       const { data: { user } } = await supabase.auth.getUser();
       setMeId(user?.id ?? null);
       await loadContacts();
-      const { data: roles } = await supabase.from("user_roles").select("user_id").eq("role", "coach");
-      const coachIds = (roles || []).map((r: any) => r.user_id);
-      if (coachIds.length) {
-        const { data: profs } = await supabase.from("coach_client_profiles_safe").select("user_id, full_name").in("user_id", coachIds);
-        setCoaches((profs || []).map((p: any) => ({ user_id: p.user_id, name: p.full_name || "Unnamed Coach" })));
-      } else {
-        setCoaches([]);
-      }
+      setCoaches(await loadAssignableStaff());
       setStageId(defaultStageId || stages[0]?.id || "");
       setTitle("");
       setContactId(defaultContactId || "none");

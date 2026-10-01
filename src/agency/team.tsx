@@ -78,7 +78,7 @@ const AGENCY_ROLES = [
   ["agency_owner", "Owner"], ["agency_admin", "Admin"], ["agency_manager", "Manager"],
   ["agency_biller", "Billing"], ["agency_specialist", "Specialist"], ["agency_viewer", "Viewer"],
 ];
-const INVITE_ROLES = [["member", "Member"], ["coach", "Coach"], ["admin", "Admin"], ["owner", "Owner"]];
+const INVITE_ROLES = [["member", "Member"], ["admin", "Admin"], ["owner", "Owner"]];
 
 const STATUS_META = {
   active: { label: "Live", tone: TONE.green, bg: "var(--ok-tint)" },

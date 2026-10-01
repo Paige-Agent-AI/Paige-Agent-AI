@@ -59,18 +59,10 @@ export async function submitAffiliateApplication(
   if (error) throw error;
   const app = data as AffiliateApplication;
 
-  // Fire confirmation email (non-blocking)
-  void supabase.functions.invoke("send-transactional-email", {
-    body: {
-      templateName: "affiliate-application-received",
-      recipientEmail: app.email,
-      idempotencyKey: `aff-app-received-${app.id}`,
-      recipientUserId: app.user_id ?? undefined,
-      templateData: {
-        name: app.full_name?.split(" ")[0] ?? null,
-        tierKey: app.requested_tier_key,
-      },
-    },
+  // Confirmation email (non-blocking). The server sends it to the address on this application —
+  // the browser only names which application was just submitted.
+  void supabase.functions.invoke("affiliate-application-confirm", {
+    body: { applicationId: app.id },
   }).catch((e) => console.warn("application received email failed", e));
 
   return app;

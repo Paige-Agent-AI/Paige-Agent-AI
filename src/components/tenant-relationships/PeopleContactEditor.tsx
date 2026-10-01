@@ -9,6 +9,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { CONTACT_SOURCES, LIFECYCLE_STAGES } from "@/lib/contacts";
+import { ContactMethodsEditor } from "@/components/contact-methods/ContactMethodsEditor";
+import {
+  CLIENT_CONTACT_METHODS_EMBED,
+  contactMethodErrorFor,
+  isContactMethodsStale,
+  isOutdatedPage,
+  methodsOfKind,
+  orderContactMethods,
+  rebaseContactMethods,
+  toContactMethodsPayload,
+  toLoadedContactMethodsPayload,
+  validateContactMethods,
+  type ContactMethod,
+  type ContactMethodRow,
+} from "@/lib/contact-methods";
 import type { RelationshipPerson } from "./useTenantRelationshipsData";
 import { upsertRelationshipContact, type ContactUpsertPatch } from "./contactUpsert";
 
@@ -21,8 +36,7 @@ type FormState = {
   lastName: string;
   entityName: string;
   title: string;
-  email: string;
-  phone: string;
+  contactMethods: ContactMethod[];
   website: string;
   linkedinUrl: string;
   streetAddress: string;
@@ -47,8 +61,7 @@ const EMPTY_FORM: FormState = {
   lastName: "",
   entityName: "",
   title: "",
-  email: "",
-  phone: "",
+  contactMethods: [],
   website: "",
   linkedinUrl: "",
   streetAddress: "",
@@ -71,8 +84,7 @@ const formFor = (contact: RelationshipPerson | null): FormState => contact ? {
   lastName: contact.lastName,
   entityName: contact.company ?? "",
   title: contact.title ?? "",
-  email: contact.email ?? "",
-  phone: contact.phone ?? "",
+  contactMethods: contact.contactMethods.map((method) => ({ ...method })),
   website: contact.website ?? "",
   linkedinUrl: contact.linkedinUrl ?? "",
   streetAddress: contact.streetAddress ?? "",
@@ -105,6 +117,9 @@ export function PeopleContactEditor({
   onSaved: (contactId: string) => Promise<void> | void;
 }) {
   const [form, setForm] = useState<FormState>(() => formFor(contact));
+  // The address list this form was built on. A save that replaces the list names it; the database
+  // refuses the save if the stored list is no longer this one (CONTACT_METHODS_STALE).
+  const [basis, setBasis] = useState<ContactMethod[]>(() => contact?.contactMethods ?? []);
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [step, setStep] = useState<EditorStep>(0);
   const [saving, setSaving] = useState(false);
@@ -113,6 +128,14 @@ export function PeopleContactEditor({
   const [confirmClose, setConfirmClose] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [methodErrors, setMethodErrors] = useState<Record<string, string>>({});
+  // The value each shown error was raised against: an error stays until THAT row changes.
+  const erroredValues = useRef<Record<string, string>>({});
+  const showMethodErrors = (errors: Record<string, string>, methods: ContactMethod[]) => {
+    erroredValues.current = Object.fromEntries(Object.keys(errors).map((id) => [id, methods.find((m) => m.id === id)?.value ?? ""]));
+    setMethodErrors(errors);
+  };
+  const [announcement, setAnnouncement] = useState("");
   const [offline, setOffline] = useState(() => typeof navigator !== "undefined" && !navigator.onLine);
   const headingRef = useRef<HTMLHeadingElement | null>(null);
   const overlayRef = useRef<HTMLHeadingElement | HTMLButtonElement | null>(null);
@@ -121,11 +144,14 @@ export function PeopleContactEditor({
   useEffect(() => {
     if (!open) return;
     setForm(formFor(contact));
+    setBasis(contact?.contactMethods ?? []);
     setStep(0);
     setDirty(false);
     setConfirmClose(false);
     setSaved(false);
     setError(null);
+    setMethodErrors({});
+    erroredValues.current = {};
     setSaving(false);
     let current = true;
     void (async () => {
@@ -133,7 +159,7 @@ export function PeopleContactEditor({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data } = await (supabase as any).rpc("get_tenant_assignable_members");
       if (current) setCoaches((data ?? [])
-        .filter(({ roles }: { roles?: string[] }) => (roles ?? []).some((role) => ["coach", "admin", "super_admin"].includes(role)))
+        .filter(({ roles }: { roles?: string[] }) => (roles ?? []).some((role) => ["admin", "super_admin"].includes(role)))
         .map(({ user_id, full_name }: { user_id: string; full_name: string | null }) => ({ user_id, name: full_name || "Unnamed coach" })));
     })();
     const focusTimer = window.setTimeout(() => headingRef.current?.focus(), 0);
@@ -180,8 +206,36 @@ export function PeopleContactEditor({
     setError(null);
   };
 
+  const setMethods = (contactMethods: ContactMethod[]) => {
+    set("contactMethods", contactMethods);
+    // A row's problem clears when that row changes and the change fixes it; every other row keeps
+    // its problem — including a refusal from the server, which the client's own checks cannot see.
+    setMethodErrors((previous) => {
+      const fresh = validateContactMethods(contactMethods);
+      return Object.fromEntries(Object.entries(previous).filter(([id, text]) => {
+        const row = contactMethods.find((method) => method.id === id);
+        if (!row) return false;
+        if (row.value === erroredValues.current[id]) return true;
+        return Boolean(fresh[id]) && fresh[id] === text;
+      }));
+    });
+  };
+
+  const announce = (message: string) => {
+    setAnnouncement("");
+    window.setTimeout(() => setAnnouncement(message), 30);
+  };
+
   const validateIdentity = () => {
-    const hasIdentity = Boolean(form.firstName.trim() || form.lastName.trim() || form.entityName.trim() || form.email.trim());
+    const rowErrors = validateContactMethods(form.contactMethods);
+    if (Object.keys(rowErrors).length) {
+      setStep(0);
+      showMethodErrors(rowErrors, form.contactMethods);
+      setError("Some addresses need attention. Your draft is unchanged.");
+      window.setTimeout(() => document.getElementById(`ctm-value-${Object.keys(rowErrors)[0]}`)?.focus(), 0);
+      return false;
+    }
+    const hasIdentity = Boolean(form.firstName.trim() || form.lastName.trim() || form.entityName.trim() || methodsOfKind(form.contactMethods, "email").length);
     if (!hasIdentity) {
       setStep(0);
       setError("Add at least a name, business, or email. Your draft is unchanged.");
@@ -197,6 +251,35 @@ export function PeopleContactEditor({
     return true;
   };
 
+  // Someone changed this contact after the editor opened. Nothing was saved. The addresses become
+  // what is stored now plus what this person added; every other field of the draft is untouched.
+  const takeLatestAddresses = async (contactId: string) => {
+    setStep(0);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the embed awaits generated types
+    const { data, error: readError } = await (supabase as any)
+      .from("clients")
+      .select(CLIENT_CONTACT_METHODS_EMBED)
+      .eq("id", contactId)
+      .maybeSingle();
+    const row = data as { client_contact_methods: ContactMethodRow[] | null } | null;
+    if (readError || !row) {
+      const shown = "Not saved. Someone else changed this contact after you opened it. Your draft is unchanged. To see their change, close the contact and open it again; closing discards this draft.";
+      setError(shown);
+      toast.error(shown);
+      return;
+    }
+    const latest = orderContactMethods(row.client_contact_methods);
+    const { methods, carried } = rebaseContactMethods(latest, basis, form.contactMethods);
+    setBasis(latest);
+    setForm((previous) => ({ ...previous, contactMethods: methods }));
+    setMethodErrors({});
+    erroredValues.current = {};
+    const shown = `Not saved. Someone else changed this contact after you opened it. The addresses now show what is saved${carried ? `, with ${carried === 1 ? "the address" : "the addresses"} you added kept at the end` : ""}; the rest of your draft is unchanged. Check them and save again.`;
+    setError(shown);
+    // The message line is itself a status region; announcing it again would read it twice.
+    toast.error("Not saved: this contact changed since you opened it");
+  };
+
   const save = async () => {
     if (!validateIdentity()) return;
     if (offline) {
@@ -209,8 +292,6 @@ export function PeopleContactEditor({
       entity_name: optional(form.entityName),
       entity_type: form.recordType === "business" ? (contact?.entityType || "business") : null,
       title: optional(form.title),
-      email: optional(form.email),
-      phone: optional(form.phone),
       website: optional(form.website),
       linkedin_url: optional(form.linkedinUrl),
       street_address: optional(form.streetAddress),
@@ -226,18 +307,48 @@ export function PeopleContactEditor({
       assigned_coach_user_id: form.assignedCoachUserId === "unassigned" ? null : form.assignedCoachUserId,
       do_not_contact: form.doNotContact,
     };
+    // The address list replaces what is stored, so it is sent only when the person changed it (or
+    // for a new contact). A save of notes or tags must never overwrite addresses that arrived after
+    // this editor opened — a merge, Paige, or an inbound match can add one in the meantime.
+    const methodsPayload = toContactMethodsPayload(form.contactMethods);
+    if (!contact || JSON.stringify(methodsPayload) !== JSON.stringify(toContactMethodsPayload(basis))) {
+      patch.contact_methods = methodsPayload;
+      if (contact) patch.expected_contact_methods = toLoadedContactMethodsPayload(basis);
+    }
     setSaving(true);
     setError(null);
     try {
       const contactId = await upsertRelationshipContact({ tenantId, contactId: contact?.id, patch });
+      // What is stored now: a second click of Save (the saved overlay leaves the footer live) must
+      // compare against this list, not the one this editor opened with.
+      if (patch.contact_methods) setBasis(form.contactMethods);
       await onSaved(contactId);
       setDirty(false);
       setSaved(true);
       toast.success(editing ? "Contact updated" : "Contact created");
     } catch (saveError) {
       const message = saveError instanceof Error ? saveError.message : "Contact save failed";
-      setError(message);
-      toast.error(message);
+      if (contact && isContactMethodsStale(message)) {
+        await takeLatestAddresses(contact.id);
+        return;
+      }
+      const onRow = contactMethodErrorFor(form.contactMethods, message);
+      if (onRow) {
+        setStep(0);
+        showMethodErrors({ [onRow.id]: onRow.text }, form.contactMethods);
+        setError("Not saved. One address needs attention. Your draft is unchanged.");
+        window.setTimeout(() => document.getElementById(`ctm-value-${onRow.id}`)?.focus(), 0);
+      } else {
+        // A refusal code the rows cannot place (a label, the per-kind cap, a missing primary) never
+        // reaches the screen as a raw code: it is named in plain words, and the draft is kept.
+        const shown = /^CONTACT_METHODS?_/.test(message)
+          ? "Not saved. The addresses could not be accepted as entered; check each row and try again. Your draft is unchanged."
+          : isOutdatedPage(message)
+            ? "Not saved: this page is out of date. Reload the page and save again; copy anything you typed first."
+            : message;
+        setError(shown);
+        toast.error(shown);
+      }
     } finally {
       setSaving(false);
     }
@@ -319,19 +430,25 @@ export function PeopleContactEditor({
         <header>
           <div>
             <h2>{STEPS[step]}</h2>
-            <p>{step === 0 ? "Identify the tenant-owned contact." : step === 1 ? "Add business and lifecycle context." : "Review notes, tags, and communication controls."}</p>
+            <p>{step === 0 ? "Who this is, and every address they use." : step === 1 ? "Add business and lifecycle context." : "Review notes, tags, and communication controls."}</p>
           </div>
           <span>Draft retained locally</span>
         </header>
 
         {step === 0 && (
-          <div className="trc-contact-editor-fields">
-            <Field label="Record type"><Select value={form.recordType} onValueChange={(value) => set("recordType", value as FormState["recordType"])}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="person">Person</SelectItem><SelectItem value="business">Business</SelectItem></SelectContent></Select></Field>
-            <Field label="First name"><Input value={form.firstName} onChange={(event) => set("firstName", event.target.value)} /></Field>
-            <Field label="Last name"><Input value={form.lastName} onChange={(event) => set("lastName", event.target.value)} /></Field>
-            <Field label="Business / company"><Input value={form.entityName} onChange={(event) => set("entityName", event.target.value)} /></Field>
-            <Field label="Email" className="trc-contact-editor-span-2"><Input type="email" value={form.email} onChange={(event) => set("email", event.target.value)} /></Field>
-            <Field label="Phone" className="trc-contact-editor-span-2"><Input value={form.phone} onChange={(event) => set("phone", event.target.value)} /></Field>
+          <div className="trc-identity">
+            <IdentityPlate form={form} set={set} dirty={dirty} />
+            <ContactMethodsEditor
+              methods={form.contactMethods}
+              onChange={setMethods}
+              errors={methodErrors}
+              disabled={saving}
+              announce={announce}
+              copy={{
+                email: { empty: "It becomes the primary: the address Paige sends to. Add every address they write from." },
+                phone: { empty: "It becomes the primary: the number Paige texts. Add their mobile and any work line." },
+              }}
+            />
           </div>
         )}
 
@@ -364,8 +481,6 @@ export function PeopleContactEditor({
           </div>
         )}
 
-        {(offline || error) && <div className="trc-contact-editor-message" role="status">{error ?? "You are offline. This draft remains available; saving is unavailable."}</div>}
-
         {confirmClose && (
           <div className="trc-contact-editor-overlay" role="alertdialog" aria-modal="true" aria-labelledby="trc-contact-close-title">
             <div>
@@ -396,6 +511,10 @@ export function PeopleContactEditor({
         )}
       </section>
 
+      {/* Outside the chapter panel, which scrolls: a refusal stays in view above the actions, on every step. */}
+      {(offline || error) && <div className="trc-contact-editor-message" role="status">{error ?? "You are offline. This draft remains available; saving is unavailable."}</div>}
+      {/* Outside the chapter panel, which is itself a live region: one announcement per change. */}
+      <div className="sr-only" aria-live="polite">{announcement}</div>
       <footer className="trc-contact-editor-footer">
         <Button type="button" variant="outline" onClick={requestClose} disabled={saving}>Cancel</Button>
         <span>
@@ -403,6 +522,60 @@ export function PeopleContactEditor({
           <Button type="button" onClick={continueFlow} disabled={saving || offline}>{step < 2 ? "Continue" : error ? "Retry save" : editing ? "Save changes" : "Create contact"}</Button>
         </span>
       </footer>
+    </div>
+  );
+}
+
+function initialsOf(form: FormState) {
+  const letters = form.recordType === "business" && form.entityName.trim()
+    ? form.entityName.trim().split(/\s+/).slice(0, 2).map((word) => word[0])
+    : [form.firstName.trim()[0], form.lastName.trim()[0]];
+  return letters.filter(Boolean).join("").toUpperCase();
+}
+
+/** The identity plate (approved comp A): who this is, edited in place, and what Paige will recognise. */
+function IdentityPlate({ form, set, dirty }: { form: FormState; set: <K extends keyof FormState>(key: K, value: FormState[K]) => void; dirty: boolean }) {
+  const initials = initialsOf(form);
+  const emails = methodsOfKind(form.contactMethods, "email").filter((method) => method.value.trim()).length;
+  const phones = methodsOfKind(form.contactMethods, "phone").filter((method) => method.value.trim()).length;
+  const total = emails + phones;
+  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+  const types = [["person", "Person"], ["business", "Business"]] as const;
+  return (
+    <div className="trc-plate">
+      <div className={initials ? "trc-plate-tile" : "trc-plate-tile is-blank"} aria-hidden>{initials || "?"}</div>
+      <div className="trc-plate-names">
+        <label className="sr-only" htmlFor="trc-first-name">First name</label>
+        <input id="trc-first-name" className="trc-plate-in" value={form.firstName} placeholder="First name" autoComplete="off" onChange={(event) => set("firstName", event.target.value)} />
+        <label className="sr-only" htmlFor="trc-last-name">Last name</label>
+        <input id="trc-last-name" className="trc-plate-in" value={form.lastName} placeholder="Last name" autoComplete="off" onChange={(event) => set("lastName", event.target.value)} />
+        <label className="sr-only" htmlFor="trc-entity-name">{form.recordType === "business" ? "Business name" : "Business or company"}</label>
+        <input id="trc-entity-name" className="trc-plate-in is-org" value={form.entityName} placeholder={form.recordType === "business" ? "Business name" : "Business (optional)"} autoComplete="off" onChange={(event) => set("entityName", event.target.value)} />
+      </div>
+      <div className="trc-plate-seg" role="radiogroup" aria-label="Record type">
+        {types.map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            role="radio"
+            aria-checked={form.recordType === value}
+            tabIndex={form.recordType === value ? 0 : -1}
+            onClick={() => set("recordType", value)}
+            onKeyDown={(event) => {
+              if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
+              event.preventDefault();
+              const next = form.recordType === "person" ? "business" : "person";
+              set("recordType", next);
+              (event.currentTarget.parentElement?.querySelector(`[data-type="${next}"]`) as HTMLButtonElement | null)?.focus();
+            }}
+            data-type={value}
+          >{label}</button>
+        ))}
+      </div>
+      <hr className="trc-plate-rule" />
+      <p className="trc-plate-stats" aria-live="off">
+        {total ? <><b>{plural(emails, "email")} · {plural(phones, "phone")}</b><br /><span>{dirty ? `Paige will recognise ${total === 1 ? "it" : `all ${total}`} once saved` : `Paige recognises ${total === 1 ? "it" : `all ${total}`}`}</span></> : <span>No addresses yet</span>}
+      </p>
     </div>
   );
 }

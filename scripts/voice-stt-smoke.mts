@@ -301,9 +301,29 @@ if (openedFlux.ok) {
   fakeFlux.receive({ type: "TurnInfo", event: "EndOfTurn", turn_index: 0, sequence_id: 3, transcript: "Hello Paige." });
   fakeFlux.receive({ type: "TurnInfo", event: "EndOfTurn", turn_index: 0, sequence_id: 3, transcript: "duplicate" });
   check("Flux start, partial and final preserve ordering without duplicate turns", seenFlux.join("|") === "start:Hello|partial:Hello Paige|final:Hello Paige.");
+  // BARGE-IN. Flux announces StartOfTurn the moment a speaker begins, BEFORE a word is
+  // transcribed, so the event necessarily carries an empty transcript. The extractor used to
+  // require non-empty text and dropped every one, which made the ears' startOfTurn dispatch dead
+  // code: Paige kept talking until Deepgram had transcribed actual words. This is the assertion
+  // that the earliest possible "they started speaking" signal now reaches the turn state machine.
+  fakeFlux.receive({ type: "TurnInfo", event: "StartOfTurn", turn_index: 1, sequence_id: 4, transcript: "" });
+  check("empty StartOfTurn reaches the bridge, so barge-in fires on speech not on transcription",
+    seenFlux[seenFlux.length - 1] === "start:");
+  // The relaxation is scoped to StartOfTurn only. An empty Update or EndOfTurn still carries
+  // nothing and must not be promoted into a turn.
+  const beforeEmpty = seenFlux.length;
+  fakeFlux.receive({ type: "TurnInfo", event: "Update", turn_index: 1, sequence_id: 5, transcript: "   " });
+  fakeFlux.receive({ type: "TurnInfo", event: "EndOfTurn", turn_index: 1, sequence_id: 6, transcript: "" });
+  check("an empty Update or EndOfTurn is still dropped", seenFlux.length === beforeEmpty);
+  // Turn detection is no longer left at the provider's defaults.
+  check("Flux turn detection is explicitly bounded, not left implicit",
+    new URL(plannedFluxUrl).searchParams.get("eot_threshold") === "0.6" &&
+    new URL(plannedFluxUrl).searchParams.get("eot_timeout_ms") === "2000");
   openedFlux.ears.close();
   check("clean end sends Flux CloseStream without treating it as a provider failure", fakeFlux.sent.some((value) => value === '{"type":"CloseStream"}') && !seenFlux.includes("unavailable"));
-  fakeFlux.receive({ type: "TurnInfo", event: "Update", turn_index: 1, sequence_id: 4, transcript: "Trailing thought" });
+  // sequence_id 7 because the barge-in assertions above legitimately consume 4-6; Flux sequence
+  // ids are monotonic per socket, so a trailing flush necessarily follows them.
+  fakeFlux.receive({ type: "TurnInfo", event: "Update", turn_index: 1, sequence_id: 7, transcript: "Trailing thought" });
   fakeFlux.close(1005, true);
   check("CloseStream flush Update becomes one final utterance on close", seenFlux.at(-1) === "final:Trailing thought");
 }

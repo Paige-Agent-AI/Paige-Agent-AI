@@ -5,9 +5,9 @@ import { PaigeCommandMark } from "@/components/brand/PaigeCommandMark";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PAIGE_LIVE_CONVERSATION_ENABLED, type LiveConversationCard } from "@/lib/paigeLiveConversation/contract";
-import { renewPaigeLiveRelayTicket, startPaigeLiveConversation, transitionPaigeLiveConversation, type PaigeLiveEntryMode, type PaigeLiveStartResult } from "@/lib/paigeLiveConversation/client";
+import { acceptPaigeLiveTerms, renewPaigeLiveRelayTicket, startPaigeLiveConversation, transitionPaigeLiveConversation, type PaigeLiveEntryMode, type PaigeLiveStartResult } from "@/lib/paigeLiveConversation/client";
 import { connectPaigeLiveRelay, type RelayTransport } from "@/lib/paigeLiveConversation/relayTransport";
-import { PaigePresence } from "./PaigePresence";
+import { PaigePresence3D } from "./PaigePresence3D";
 import { usePaigeOutput } from "./usePaigeOutput";
 import { resolvePresenceState } from "@/lib/paigeLiveConversation/presence";
 import { createAnchoredTranscriptScroll, messageScrollAnchorKey } from "@/components/chat/anchoredTranscriptScroll";
@@ -149,6 +149,13 @@ export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensure
   const [explanation, setExplanation] = useState("Live audio setup is being verified. Paige will not request microphone access until it is authorized.");
   const [portalDocument, setPortalDocument] = useState<Document | null>(null);
   const [announcement, setAnnouncement] = useState("");
+  // The refusal CODE, kept because one of them is the only one a person can act on themselves.
+  const [reason, setReason] = useState<string | null>(null);
+  const [acceptingTerms, setAcceptingTerms] = useState(false);
+  // Set once the database has refused an acceptance from THIS person. It is the difference between
+  // "we have not asked yet" and "we asked, and their consent is not what is missing" — and without
+  // it the surface re-offers a control that has already proven it cannot do anything.
+  const [consentRefused, setConsentRefused] = useState(false);
   const [pinned, setPinned] = useState(true);
   const [scrollController] = useState(() => createAnchoredTranscriptScroll({ storagePrefix: "paige-live-reading", onPinnedChange: setPinned }));
   const scrollContext = `${contextEpoch}:${threadId ?? "new"}`;
@@ -299,6 +306,9 @@ export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensure
           stopPlayback.current();
           stopRelay();
           setState("unavailable");
+          // A reconnect failure is not something a person accepts their way out of, so the audio
+          // consent panel must not be left standing under it from an earlier refusal.
+          setReason(null);
           setAvailability("UNAVAILABLE");
           setExplanation("Paige could not reconnect live audio. You can continue in chat.");
           setAnnouncement("Live audio unavailable. Paige could not reconnect live audio. You can continue in chat.");
@@ -322,15 +332,19 @@ export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensure
       sessionIdRef.current = result.sessionId;
       setSessionId(result.sessionId);
       if (result.ok && result.sessionId && result.ticket) {
+        setReason(null);
         connectResult(result, generation);
         return;
       }
       setAvailability(result.availability);
       setExplanation(result.explanation);
+      setReason(result.code);
       setState(result.code === "microphone_permission_denied" ? "permission-denied" : "unavailable");
       setAnnouncement(`${result.availability}. ${result.explanation}`);
     } catch (error) {
       if (!mounted.current || generation !== requestGeneration.current) return;
+      // Not a refusal anyone can accept their way out of, so the consent panel must not appear.
+      setReason(null);
       setAvailability("UNAVAILABLE");
       setState("unavailable");
       setExplanation(error instanceof Error && error.message === "session_expired"
@@ -344,6 +358,7 @@ export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensure
       stopPlayback.current();
       stopRelay();
       setState("unavailable");
+      setReason(null);
       setAvailability("UNAVAILABLE");
       setExplanation(result.explanation);
       setAnnouncement(`UNAVAILABLE. ${result.explanation}`);
@@ -395,16 +410,19 @@ export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensure
         } else if (next.kind === "permission-denied") {
           relayReadyRef.current = false;
           setState("permission-denied");
+          setReason(null);
           setAvailability("UNAVAILABLE");
           setExplanation("Microphone access is off. Allow it in your browser settings, then try again.");
         } else if (next.kind === "disconnected") {
           relayReadyRef.current = false;
           setState("reconnecting");
+          setReason(null);
           setAvailability("UNAVAILABLE");
           setExplanation("The live connection ended. Try again or continue in chat.");
         } else {
           relayReadyRef.current = false;
           setState("unavailable");
+          setReason(null);
           setAvailability("UNAVAILABLE");
           setExplanation(next.message);
         }
@@ -417,10 +435,63 @@ export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensure
 
   const retry = async () => {
     if (disabled) return;
+    // Clear the last refusal BEFORE re-asking. It is written on every refusal and was cleared in
+    // only one place, so after the first "not open yet" it stayed set through retries and reopens —
+    // and any LATER, different failure (a dropped socket, an expired session) would still render
+    // the audio-retention consent panel underneath it, inviting someone to accept provider
+    // retention in order to fix a network error. begin() sets it again if the answer is unchanged.
+    setReason(null);
     transitionCurrent("end");
     sessionIdRef.current = null;
     sessionScopeRef.current = null;
     await begin();
+  };
+
+  /**
+   * The person accepts Live's terms for themselves, then we try again.
+   *
+   * §70 — this is the difference between a capability that exists and one someone can finish. The
+   * database has always been willing to take an acceptance; until this control existed there was no
+   * way in the product to give one, so an open rollout still left a Solo user with nothing to press.
+   *
+   * §13 — the RPC refuses when the rollout does not cover this caller, writes nothing, and says so.
+   * We surface that refusal as the same honest unavailable state, never as an error and never as a
+   * success we are hoping for. It takes no identity argument: the subject is the signed-in person.
+   */
+  const acceptTerms = async () => {
+    if (disabled || acceptingTerms) return;
+    setAcceptingTerms(true);
+    setAnnouncement("Turning on Live Conversation.");
+    try {
+      const outcome = await acceptPaigeLiveTerms();
+      if (!mounted.current) return;
+      if (!outcome.accepted) {
+        // THE BUG THIS REPLACES. The old branch set the explanation to the byte-for-byte sentence
+        // already on screen and left the consent panel and its button exactly as they were, so a
+        // press produced NO visible change whatsoever and was indistinguishable from a dead control.
+        // The owner pressed it and reported it broken, which is precisely §70: the code path ran and
+        // a person could not tell. A refusal is an outcome and has to look like one.
+        setConsentRefused(true);
+        setReason(outcome.code ?? "live_audio_not_enabled");
+        setExplanation("Live audio is not open on this platform yet. Your acceptance was not what was missing, so nothing was recorded, sent, or saved. Paige stays available in this conversation.");
+        setAnnouncement("Live audio is not open on this platform yet. Nothing was recorded or sent. Paige stays available in this conversation.");
+        return;
+      }
+      setConsentRefused(false);
+      setReason(null);
+      await retry();
+    } catch {
+      // A press that does nothing and says nothing is the failure this whole control exists to
+      // remove, so it cannot be the way this control itself fails. The reachable case is ordinary:
+      // acceptPaigeLiveTerms dynamically imports the Supabase client, and a hashed chunk goes stale
+      // the moment a deploy lands under an open tab — which, shipping straight to main, is the
+      // common case rather than the exotic one.
+      if (!mounted.current) return;
+      setExplanation("Paige could not turn Live on just now. Nothing was recorded, sent, or saved. Reload the page and try again, or keep working in this conversation.");
+      setAnnouncement("Paige could not turn Live on. Nothing was recorded or sent.");
+    } finally {
+      if (mounted.current) setAcceptingTerms(false);
+    }
   };
 
   const toggleHold = () => {
@@ -502,12 +573,52 @@ export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensure
       </header>
       <main className="plc-stage__main">
         <section className="plc-presence" aria-label="Paige Presence and live audio status" data-live-state={state}>
-          <PaigePresence state={presenceState} readEnergy={output.readEnergy} />
+          <PaigePresence3D state={presenceState} visible={open} readEnergy={output.readEnergy} />
           <p className="plc-state"><span />{output.playing ? "Speaking" : state === "listening" && muted ? "Muted" : STATE_LABEL[state]}</p>
           <p id="plc-description" className="plc-context">Working in this exact Paige thread. Nothing here creates a second assistant or a separate memory.</p>
           <div className="plc-working" aria-live="polite"><span>Paige is working on</span><strong>{working ? (workingLabel || "your current request") : "No active work"}</strong></div>
           {(state !== "checking" && availability !== "LIVE") && (
-            <div className="plc-notice" role="status"><strong>{availability}</strong><p>{explanation}</p><Button variant="outline" size="sm" disabled={disabled} onClick={() => void retry()}><RefreshCw aria-hidden />Retry setup check</Button></div>
+            <div className="plc-notice">
+              {/* Only the availability line is a live region. It used to wrap the whole notice,
+                  which was fine when that was a heading, a sentence and one static button — but the
+                  terms added ~90 words and a button whose label changes on press, and any mutation
+                  inside a live region re-announces the WHOLE region. Pressing "I understand" would
+                  have re-read the availability, the explanation, both bullets and both buttons, on
+                  top of the separate polite announcement this same action already makes. */}
+              <div role="status">
+                <strong>{availability}</strong>
+                <p>{explanation}</p>
+              </div>
+              {reason === "live_audio_not_enabled" && (
+                <div className="plc-terms">
+                  {/* Said plainly, before anyone speaks, because it is true and because a person
+                      cannot agree to something they were not told. No claim is made here that is
+                      not also enforced in the database. */}
+                  <p className="plc-terms__lede">Before Paige can hear you, two things you should know:</p>
+                  <ul className="plc-terms__list">
+                    <li>Your voice is sent to the speech provider and kept under their default retention. Paige has not verified a zero-retention arrangement, so do not assume one.</li>
+                    <li>Paige treats the microphone as one speaker — you. She cannot tell voices apart, so anyone else in the room is heard as you.</li>
+                  </ul>
+                  <p className="plc-terms__scope">This is your own decision for your own account. Nobody can make it on your behalf, and you can stop at any time.</p>
+                  {consentRefused ? (
+                    // Once the database has refused, offering the button again would be asking the
+                    // person to repeat an act that cannot succeed. Say what is actually blocking and
+                    // who can move it, and stop pretending this is theirs to unlock (§36/§70).
+                    <p className="plc-terms__blocked">
+                      Live audio has not been opened on this platform yet, so there is nothing for you
+                      to accept right now. This is not something you can turn on from here — it is
+                      released centrally once the speech provider’s data-retention review is settled.
+                      Paige will ask you again when it is.
+                    </p>
+                  ) : (
+                    <Button variant="gold" size="sm" disabled={disabled || acceptingTerms} onClick={() => void acceptTerms()}>
+                      <ShieldCheck aria-hidden />{acceptingTerms ? "Turning on Live…" : "I understand — turn on Live"}
+                    </Button>
+                  )}
+                </div>
+              )}
+              <Button variant="outline" size="sm" disabled={disabled} onClick={() => void retry()}><RefreshCw aria-hidden />Retry setup check</Button>
+            </div>
           )}
         </section>
         <section className="plc-workspace" aria-label="Live conversation workspace">
@@ -525,7 +636,7 @@ export function PaigeLiveConversation({ disabled, contextEpoch, threadId, ensure
         {!pinned && <Button variant="outline" onClick={() => scrollController.jumpToBottom("auto")}>Jump to latest</Button>}
         <Button variant="outline" disabled={controlsDisabled && !output.playing && !muted} aria-pressed={muted} onClick={() => { relayRef.current?.setMuted(state === "held" || !muted); setMuted((value) => !value); }}>{muted ? <MicOff aria-hidden /> : <Mic aria-hidden />}{muted ? "Unmute" : "Mute"}</Button>
         <Button variant="outline" disabled={controlsDisabled && !output.playing} aria-pressed={state === "held"} onClick={toggleHold}><CirclePause aria-hidden />{state === "held" ? "Resume" : "Hold"}</Button>
-        <Button variant="outline" disabled={controlsDisabled && !output.playing} onClick={() => { stopPlayback.current(); relayRef.current?.interrupt(); relayRef.current?.setMuted(mutedRef.current); if (activeVoiceTurnRef.current) { activeVoiceTurnRef.current = null; voiceCallbacksRef.current.onVoiceInterrupt(); } setState(relayReadyRef.current ? "listening" : "interrupted"); setAnnouncement("Paige stopped speaking. You can continue in this conversation."); }}><Hand aria-hidden />Interrupt</Button>
+        <Button variant="outline" data-act={state === "speaking" ? "available" : undefined} disabled={controlsDisabled && !output.playing} onClick={() => { stopPlayback.current(); relayRef.current?.interrupt(); relayRef.current?.setMuted(mutedRef.current); if (activeVoiceTurnRef.current) { activeVoiceTurnRef.current = null; voiceCallbacksRef.current.onVoiceInterrupt(); } setState(relayReadyRef.current ? "listening" : "interrupted"); setAnnouncement("Paige stopped speaking. You can continue in this conversation."); }}><Hand aria-hidden />Interrupt</Button>
         <Button variant="outline" onClick={() => closeStage("minimize")}><Minimize2 aria-hidden />Minimize</Button>
         <Button variant="destructive" onClick={() => closeStage("end")}><PhoneOff aria-hidden />End</Button>
       </footer>

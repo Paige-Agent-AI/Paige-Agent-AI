@@ -239,7 +239,16 @@ export interface ClaudeResult {
   text: string;                 // concatenated text blocks ("" if none)
   toolUses: ClaudeToolUse[];    // tool_use blocks ([] if none)
   stopReason: string | null;
-  usage: { input_tokens?: number; output_tokens?: number } | null;
+  // Anthropic's own usage object, passed through verbatim (see the `usage: data?.usage` return below).
+  // input_tokens is the UNCACHED REMAINDER — the real prompt size is
+  // input_tokens + cache_creation_input_tokens + cache_read_input_tokens. The cache fields were always
+  // present at runtime; this type was the only thing hiding them.
+  usage: {
+    input_tokens?: number;
+    output_tokens?: number;
+    cache_read_input_tokens?: number;
+    cache_creation_input_tokens?: number;
+  } | null;
   raw: unknown;
 }
 
@@ -299,6 +308,8 @@ export async function callClaude(opts: ClaudeCallOpts): Promise<ClaudeResult> {
         status: "success",
         tokens_in: data?.usage?.input_tokens ?? null,
         tokens_out: data?.usage?.output_tokens ?? null,
+        cache_read_input_tokens: data?.usage?.cache_read_input_tokens ?? null,
+        cache_creation_input_tokens: data?.usage?.cache_creation_input_tokens ?? null,
         latency_ms: Date.now() - t0,
         input: opts.messages,
         output: text,
@@ -445,8 +456,21 @@ export async function chatCompletionCompat(body: OpenAIStyleBody, tierOverride?:
         ...(tool_calls.length ? { tool_calls } : {}),
       },
     }],
+    // Cache counts ride ALONGSIDE the OpenAI-shaped pair and are never folded into prompt_tokens:
+    // input_tokens is the uncached remainder, and meter_llm_usage bills tokens_in + tokens_out, so
+    // widening prompt_tokens would change every tenant's metered quantity. Additive only — every
+    // consumer reads NAMED keys, so adding two cannot break one: model-router emit, gatewayCompat
+    // trace, eval scorers, and paige-context-router:316 — which reads `usage.total_tokens`, a field
+    // this compat object has NEVER emitted, so its token counter has always been zero. Named here
+    // because an inventory that omits a consumer is worth less than no inventory at all; the dead
+    // read is pre-existing and tracked separately, not introduced or fixed here.
     usage: result.usage
-      ? { prompt_tokens: result.usage.input_tokens, completion_tokens: result.usage.output_tokens }
+      ? {
+          prompt_tokens: result.usage.input_tokens,
+          completion_tokens: result.usage.output_tokens,
+          cache_read_input_tokens: result.usage.cache_read_input_tokens,
+          cache_creation_input_tokens: result.usage.cache_creation_input_tokens,
+        }
       : undefined,
   };
 }
@@ -558,6 +582,9 @@ async function streamAnthropicAsOpenAI(
       // input_tokens on message_start and cumulative output_tokens on message_delta).
       let inTok: number | null = null;
       let outTok: number | null = null;
+      // Cache counts ride the SAME message_start usage object that input_tokens does.
+      let cacheReadTok: number | null = null;
+      let cacheCreateTok: number | null = null;
       let outText = "";
       let streamErrored = false;
       send(controller, { choices: [{ index: 0, delta: { role: "assistant" }, finish_reason: null }] });
@@ -577,6 +604,9 @@ async function streamAnthropicAsOpenAI(
             try { ev = JSON.parse(js); } catch { continue; }
             if (ev.type === "message_start") {
               inTok = ev.message?.usage?.input_tokens ?? inTok;
+              // `?? previous`, never `?? null`: an absent field must not erase a reported value.
+              cacheReadTok = ev.message?.usage?.cache_read_input_tokens ?? cacheReadTok;
+              cacheCreateTok = ev.message?.usage?.cache_creation_input_tokens ?? cacheCreateTok;
             } else if (ev.type === "content_block_start" && ev.content_block?.type === "tool_use") {
               toolIndex++;
               blockToTool.set(ev.index, toolIndex);
@@ -603,6 +633,10 @@ async function streamAnthropicAsOpenAI(
             } else if (ev.type === "message_delta") {
               if (ev.delta?.stop_reason) stopReason = ev.delta.stop_reason;
               if (ev.usage?.output_tokens != null) outTok = ev.usage.output_tokens; // cumulative final count
+              // Opportunistic secondary read — message_delta is NOT documented to echo cache counts.
+              // Explicit null-checks so an absent field keeps the message_start value.
+              if (ev.usage?.cache_read_input_tokens != null) cacheReadTok = ev.usage.cache_read_input_tokens;
+              if (ev.usage?.cache_creation_input_tokens != null) cacheCreateTok = ev.usage.cache_creation_input_tokens;
             } else if (ev.type === "message_stop") {
               send(controller, { choices: [{ index: 0, delta: {}, finish_reason: stopReason === "tool_use" ? "tool_calls" : "stop" }] });
             }
@@ -626,6 +660,8 @@ async function streamAnthropicAsOpenAI(
             status: streamErrored ? "error" : "success",
             tokens_in: inTok,
             tokens_out: outTok,
+            cache_read_input_tokens: cacheReadTok,
+            cache_creation_input_tokens: cacheCreateTok,
             latency_ms: Date.now() - streamStarted,
             input: (reqBody as { messages?: unknown }).messages,
             output: outText,
@@ -712,6 +748,8 @@ export async function gatewayCompat(
       status: "success",
       tokens_in: usage.prompt_tokens ?? null,
       tokens_out: usage.completion_tokens ?? null,
+      cache_read_input_tokens: usage.cache_read_input_tokens ?? null,
+      cache_creation_input_tokens: usage.cache_creation_input_tokens ?? null,
       latency_ms: Date.now() - started,
       input: parsed.messages,
       output: data?.choices?.[0]?.message?.content ?? null,

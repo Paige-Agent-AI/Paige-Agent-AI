@@ -1,0 +1,95 @@
+{
+  "harness": "paige-chat-mount",
+  "results": [
+    {
+      "name": "withheld-1536x770-light: the client reads the whole sentence, nothing scrolls sideways, no page error",
+      "ok": true,
+      "detail": "{\"found\":true,\"docOverflow\":0,\"clipped\":0,\"width\":581,\"height\":102,\"inViewport\":true,\"errors\":[]}"
+    },
+    {
+      "name": "saved-1536x770-light: the client reads the whole sentence, nothing scrolls sideways, no page error",
+      "ok": true,
+      "detail": "{\"found\":true,\"docOverflow\":0,\"clipped\":0,\"width\":581,\"height\":122,\"inViewport\":true,\"errors\":[]}"
+    },
+    {
+      "name": "withheld-1366x768-light: the client reads the whole sentence, nothing scrolls sideways, no page error",
+      "ok": true,
+      "detail": "{\"found\":true,\"docOverflow\":0,\"clipped\":0,\"width\":513,\"height\":102,\"inViewport\":true,\"errors\":[]}"
+    },
+    {
+      "name": "saved-1366x768-light: the client reads the whole sentence, nothing scrolls sideways, no page error",
+      "ok": true,
+      "detail": "{\"found\":true,\"docOverflow\":0,\"clipped\":0,\"width\":513,\"height\":142,\"inViewport\":true,\"errors\":[]}"
+    },
+    {
+      "name": "withheld-1366x768-dark: the client reads the whole sentence, nothing scrolls sideways, no page error",
+      "ok": true,
+      "detail": "{\"found\":true,\"docOverflow\":0,\"clipped\":0,\"width\":513,\"height\":102,\"inViewport\":true,\"errors\":[]}"
+    },
+    {
+      "name": "saved-1366x768-dark: the client reads the whole sentence, nothing scrolls sideways, no page error",
+      "ok": true,
+      "detail": "{\"found\":true,\"docOverflow\":0,\"clipped\":0,\"width\":513,\"height\":142,\"inViewport\":true,\"errors\":[]}"
+    },
+    {
+      "name": "withheld-1024x768-light: the client reads the whole sentence, nothing scrolls sideways, no page error",
+      "ok": true,
+      "detail": "{\"found\":true,\"docOverflow\":0,\"clipped\":0,\"width\":377,\"height\":142,\"inViewport\":true,\"errors\":[]}"
+    },
+    {
+      "name": "saved-1024x768-light: the client reads the whole sentence, nothing scrolls sideways, no page error",
+      "ok": true,
+      "detail": "{\"found\":true,\"docOverflow\":0,\"clipped\":0,\"width\":377,\"height\":182,\"inViewport\":true,\"errors\":[]}"
+    },
+    {
+      "name": "withheld-390x844-light: the client reads the whole sentence, nothing scrolls sideways, no page error",
+      "ok": true,
+      "detail": "{\"found\":true,\"docOverflow\":0,\"clipped\":0,\"width\":365,\"height\":145,\"inViewport\":true,\"errors\":[]}"
+    },
+    {
+      "name": "saved-390x844-light: the client reads the whole sentence, nothing scrolls sideways, no page error",
+      "ok": true,
+      "detail": "{\"found\":true,\"docOverflow\":0,\"clipped\":0,\"width\":365,\"height\":166,\"inViewport\":true,\"errors\":[]}"
+    },
+    {
+      "name": "withheld-390x844-dark: the client reads the whole sentence, nothing scrolls sideways, no page error",
+      "ok": true,
+      "detail": "{\"found\":true,\"docOverflow\":0,\"clipped\":0,\"width\":365,\"height\":145,\"inViewport\":true,\"errors\":[]}"
+    },
+    {
+      "name": "saved-390x844-dark: the client reads the whole sentence, nothing scrolls sideways, no page error",
+      "ok": true,
+      "detail": "{\"found\":true,\"docOverflow\":0,\"clipped\":0,\"width\":365,\"height\":166,\"inViewport\":true,\"errors\":[]}"
+    },
+    {
+      "name": "200% zoom of 1366x768: the sentence reflows and nothing scrolls sideways",
+      "ok": true,
+      "detail": "{\"found\":true,\"docOverflow\":0,\"clipped\":0,\"width\":650,\"height\":82,\"inViewport\":true}"
+    },
+    {
+      "name": "200% zoom of 1536x770: the sentence reflows and nothing scrolls sideways",
+      "ok": true,
+      "detail": "{\"found\":true,\"docOverflow\":0,\"clipped\":0,\"width\":274,\"height\":182,\"inViewport\":true}"
+    },
+    {
+      "name": "keyboard: Tab reaches the message box (focus visible), Enter sends, and the sentence arrives",
+      "ok": true,
+      "detail": "{\"reached\":true,\"focusVisible\":true}"
+    },
+    {
+      "name": "reduced motion: after the sentence arrives, no animation is running",
+      "ok": true,
+      "detail": "running=0"
+    },
+    {
+      "name": "document turn: the withheld sentence is shown and not kept as the document's summary",
+      "ok": true,
+      "detail": "[]"
+    },
+    {
+      "name": "CONTROL document turn: a delivered answer is kept as the document's summary",
+      "ok": true,
+      "detail": "[{\"fileName\":\"intake.pdf\",\"summary\":\"Got it. Your next session is Tuesday at 10am with Sam, and your plan has two sessio"
+    }
+  ]
+}

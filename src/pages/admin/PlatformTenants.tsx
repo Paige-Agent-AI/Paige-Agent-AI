@@ -27,6 +27,7 @@ import {
 import { TenantDetailSheet, type FleetTenant } from "@/components/admin/platform/TenantDetailSheet";
 import { ProvisionTenantDialog } from "@/components/admin/platform/ProvisionTenantDialog";
 import RevenueIntegrityAudit from "@/components/admin/platform/RevenueIntegrityAudit";
+import LiveRolloutControl from "@/components/admin/platform/LiveRolloutControl";
 import PlatformOverview from "./PlatformOverview";
 
 // Status tone → state-pill state. Attention tones (warn/critical) collapse to the
@@ -293,6 +294,11 @@ export default function PlatformTenants() {
           the DB trigger guarantees no tenant can rest at revenue_class='paid' without a
           signed agreement AND a live Stripe subscription. */}
       {isPlatformOwner && <RevenueIntegrityAudit />}
+
+      {/* Live Conversation rollout (INT-104) — the one setting that decides who may speak today,
+          and the state around it. Owner-only on both layers: this gate, and a server-side RAISE in
+          paige_live_rollout_status() plus the edge function's own is_platform_owner check. */}
+      {isPlatformOwner && <LiveRolloutControl />}
 
       <Toolbar>
         <h2 className="font-display text-base font-semibold text-foreground">All tenants</h2>

@@ -2,12 +2,18 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
-/** Roles allowed to access authenticated staff surfaces of the platform. */
+/**
+ * Roles allowed to access authenticated staff surfaces of the platform.
+ *
+ * Both §53 operator tiers belong here. `platform_admin` was once missing, so an account holding
+ * only that role was classed as a client and bounced from every `/operator` address to `/app` —
+ * locked out of the console the server already admits it to (`is_platform_admin()`).
+ */
 const STAFF_ROLES = new Set([
   "admin",
   "super_admin",
+  "platform_admin",
   "owner",
-  "coach",
   "sales_rep",
   "broker",
   "broker_team_member",

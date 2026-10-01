@@ -11,7 +11,7 @@
 //
 // AUTH (compliance H2): the tenant is DERIVED SERVER-SIDE from the verified JWT
 // via resolveTenantForUser — a body-supplied tenant_id is ignored entirely
-// (§59: the auth subject is always auth.uid(); user_roles admin/coach is
+// (§59: the auth subject is always auth.uid(); user_roles admin is
 // tenant-AGNOSTIC and never authorizes cross-tenant action).
 //
 // FAIL-CLOSED LADDER (owner ruling): music → truthful unavailable; video →
@@ -76,8 +76,8 @@ serve(async (req: Request) => {
     if (uErr || !user) return json({ error: "Unauthorized" }, 401);
     const { data: roleRows } = await authed.from("user_roles").select("role").eq("user_id", user.id);
     const roles = (roleRows || []).map((r: { role: string }) => r.role);
-    if (!roles.some((r: string) => r === "admin" || r === "super_admin" || r === "coach")) {
-      return json({ error: "Admin or coach access required." }, 403);
+    if (!roles.some((r: string) => r === "admin" || r === "super_admin")) {
+      return json({ error: "Admin access required." }, 403);
     }
 
     const admin = createClient(supabaseUrl, supabaseServiceKey);

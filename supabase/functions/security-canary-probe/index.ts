@@ -7,6 +7,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 // drivable by anyone who can reach the URL. Reuses the ONE cron/service gate (§18) rather than
 // growing a second copy of the security logic.
 import { isAuthorizedInternalCaller, adminClient } from "../_shared/systems-check-http.ts";
+import { primaryEmailsForUsers } from "../_shared/user-contact-methods.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -153,20 +154,25 @@ Deno.serve(async (req) => {
       scope: "admin",
     });
 
-    // Notify the admin email list. Pull every user whose role is owner /
-    // super_admin / admin and resolve their email from profiles.
+    // Email the platform operators (§53: super_admin + platform_admin) at their primary address.
+    // Not the tenant-level `admin` role: this alert describes the platform's own column grants,
+    // and a tenant admin is not the audience for it. A failed read is logged below, loudly.
     try {
-      const { data: roleRows } = await admin
+      const { data: roleRows, error: roleErr } = await admin
         .from("user_roles")
         .select("user_id")
-        .in("role", ["owner", "super_admin", "admin"]);
-      const userIds = [...new Set((roleRows ?? []).map((r: any) => r.user_id).filter(Boolean))];
-      if (userIds.length > 0) {
-        const { data: profileRows } = await admin
-          .from("profiles")
-          .select("user_id, email, full_name")
-          .in("user_id", userIds);
-        const recipients = (profileRows ?? []).filter((p: any) => p?.email);
+        .in("role", ["super_admin", "platform_admin"]);
+      if (roleErr) throw new Error(`operator role read failed: ${roleErr.message}`);
+      const userIds = [...new Set((roleRows ?? []).map((r: any) => r.user_id).filter(Boolean))] as string[];
+      const emails = await primaryEmailsForUsers(admin, userIds);
+      const { data: nameRows } = userIds.length
+        ? await admin.from("profiles").select("user_id, full_name").in("user_id", userIds)
+        : { data: [] };
+      const nameOf = new Map((nameRows ?? []).map((p: any) => [p.user_id, p.full_name as string | null]));
+      const recipients = userIds
+        .filter((id) => emails.has(id))
+        .map((id) => ({ user_id: id, email: emails.get(id)!, full_name: nameOf.get(id) ?? null }));
+      if (recipients.length > 0) {
         const runAt = new Date().toISOString();
         const emailRegressions = regressions.map((r) => ({
           target: r.target,
@@ -194,11 +200,11 @@ Deno.serve(async (req) => {
                   reviewUrl: "https://paigeagent.ai/operator/settings/governance/security",
                 },
               }),
-            }).catch((e) => console.error("canary_email_send_failed", p.email, e)),
+            }).catch((e) => console.error("canary_email_send_failed", p.user_id, e)),
           ),
         );
       } else {
-        console.warn("canary: no admin recipients found for regression email");
+        console.error("canary: no platform operator has a primary email; regression email not sent");
       }
     } catch (e) {
       console.error("canary_email_dispatch_failed", e);

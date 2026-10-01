@@ -30,7 +30,16 @@ export async function openFluxEars(
   events: FluxEarsEvents,
   options: { opener?: (url: string) => WebSocket | null; openTimeoutMs?: number; closeTimeoutMs?: number } = {},
 ): Promise<FluxEarsOpenResult> {
-  const plan = planSttStream("flux-realtime", { encoding: "linear16", sampleRate: 16_000 });
+  // Turn detection is what decides how long Paige waits after you stop talking. Left unset,
+  // Deepgram's own defaults govern it and a turn can stay open for seconds of silence. These are
+  // deliberately a little eager: in a spoken conversation, answering a beat early reads as
+  // attentive, while answering a beat late reads as lag.
+  const plan = planSttStream("flux-realtime", {
+    encoding: "linear16",
+    sampleRate: 16_000,
+    eotThreshold: 0.6,
+    eotTimeoutMs: 2_000,
+  });
   if (!plan.ok) return { ok: false, code: "stt_not_configured" };
   let socket: WebSocket | null;
   try { socket = (options.opener ?? openDeepgramSocket)(plan.url); }

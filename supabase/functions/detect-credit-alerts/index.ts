@@ -365,12 +365,22 @@ serve(async (req) => {
     // === EMAIL + PUSH NOTIFICATIONS FOR CRITICAL ALERTS ===
     const criticalAlerts = insertedAlerts.filter(a => a.alert_severity === "critical");
     if (criticalAlerts.length > 0) {
+      // A push belongs to the business that holds this client and reaches only the devices
+      // registered for it. With no single business to name, no push is sent.
+      const { data: pushClientRow } = await supabase
+        .from("clients")
+        .select("tenant_id")
+        .eq("linked_user_id", client_id)
+        .maybeSingle();
+      const pushTenantId = (pushClientRow as { tenant_id?: string | null } | null)?.tenant_id ?? null;
+      if (!pushTenantId) console.warn("[detect-credit-alerts] no single business for this client; push skipped");
       // Fire push notifications (one per critical alert) — non-blocking
-      for (const alert of criticalAlerts) {
+      for (const alert of pushTenantId ? criticalAlerts : []) {
         try {
           const isScoreChange = alert.alert_type?.includes("score");
           await supabase.functions.invoke("send-push-notification", {
             body: {
+              tenant_id: pushTenantId,
               user_id: client_id,
               category: isScoreChange ? "credit_score_changes" : "dispute_updates",
               title: alert.alert_title,

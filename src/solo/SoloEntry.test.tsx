@@ -24,12 +24,17 @@ const tc = vi.hoisted(() => ({
     isPlatformStaff: false,
     activeTenant: null as Tenant | null,
     refresh: async () => {},
+    activeUserId: "op" as string | null,
+    exitOperatorActAs: (async () => true) as () => Promise<boolean>,
+    probeOperatorActAs: (async () => "not_acting") as () => Promise<"acting" | "not_acting" | "unknown">,
   },
 }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => tc.ctx }));
 vi.mock("@/solo/SoloApp", () => ({ default: () => <div data-mounted="solo-shell" /> }));
 
 import SoloEntry from "./SoloEntry";
+import { landAt } from "@/operator/actAs";
+import { recordOperatorActAs } from "@/lib/auth/workspaceEntry";
 
 function LocationProbe() {
   const loc = useLocation();
@@ -104,5 +109,108 @@ describe("/solo/* tier gate", () => {
     const { html } = await renderAt("/solo/1971670/command-center");
     expect(html).not.toContain("solo-shell");
     expect(host.textContent).toContain("Couldn't verify your workspace");
+  });
+
+  // Codex review of #1547 (2026-09-27): an operator whose Enter succeeded but whose arrival could
+  // not load its account context was left here with only "Try again" — inside an open act-as.
+  describe("an operator stranded on the verify screen", () => {
+    let go: ReturnType<typeof vi.spyOn>;
+    const exitButton = () =>
+      Array.from(host.querySelectorAll("button")).find((b) => b.textContent?.includes("Exit tenant"));
+
+    beforeEach(() => {
+      sessionStorage.clear();
+      tc.ctx.accountContextStatus = "error";
+      tc.ctx.exitOperatorActAs = vi.fn(async () => true);
+      go = vi.spyOn(landAt, "go").mockImplementation(() => {});
+    });
+    afterEach(() => {
+      go.mockRestore();
+      sessionStorage.clear();
+      tc.ctx.exitOperatorActAs = async () => true;
+    });
+
+    it("offers the audited exit when this session opened an act-as", async () => {
+      recordOperatorActAs("op", "t1");
+      await renderAt("/solo/1971670/command-center");
+      expect(exitButton()?.hasAttribute("data-operator-exit")).toBe(true);
+      await act(async () => { exitButton()?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(tc.ctx.exitOperatorActAs).toHaveBeenCalledTimes(1);
+      expect(go).toHaveBeenCalledWith("/operator/fleet/directory");
+    });
+
+    it("stays, and keeps the exit, when the server refuses it", async () => {
+      recordOperatorActAs("op", "t1");
+      tc.ctx.exitOperatorActAs = vi.fn(async () => false);
+      await renderAt("/solo/1971670/command-center");
+      await act(async () => { exitButton()?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+      expect(go).not.toHaveBeenCalled();
+      expect(exitButton()?.hasAttribute("disabled")).toBe(false);
+    });
+
+    it("offers nothing extra to someone who opened no act-as", async () => {
+      await renderAt("/solo/1971670/command-center");
+      expect(host.textContent).toContain("Try again");
+      expect(exitButton()).toBeFalsy();
+    });
+
+    // Codex review of 88b651b8: storage blocked by policy silently dropped the record, and with it
+    // the only way out. Where storage cannot be used, the arrival address carries the flag instead.
+    it("still offers the exit when storage is blocked and the arrival carries the flag", async () => {
+      const blocked = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("blocked"); });
+      window.history.replaceState(null, "", "/?acting-as=op");
+      try {
+        await renderAt("/solo/1971670/command-center");
+        expect(exitButton()).toBeTruthy();
+      } finally {
+        blocked.mockRestore();
+        window.history.replaceState(null, "", "/");
+      }
+    });
+
+    // Codex review of b22716a6: the flag survives a sign-out redirect, so it must name its operator.
+    it("ignores an address flag that names a different user", async () => {
+      const blocked = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("blocked"); });
+      window.history.replaceState(null, "", "/?acting-as=someone-else");
+      try {
+        await renderAt("/solo/1971670/command-center");
+        expect(exitButton()).toBeFalsy();
+      } finally {
+        blocked.mockRestore();
+        window.history.replaceState(null, "", "/");
+      }
+    });
+
+    // Codex review of 221ffbc5: storage can look usable yet have failed to hold the record, so this
+    // operator's own flag counts whenever their record is absent.
+    it("honours this operator's flag when storage holds no record for them", async () => {
+      window.history.replaceState(null, "", "/?acting-as=op");
+      try {
+        await renderAt("/solo/1971670/command-center");
+        expect(exitButton()).toBeTruthy();
+      } finally {
+        window.history.replaceState(null, "", "/");
+      }
+    });
+
+    // Codex review of e29f174c: client-side signals can be lost (blocked storage, navigation that
+    // drops the arrival flag). Where neither is present, the server is asked directly.
+    it("offers the exit when the server says this operator is acting, with no local record", async () => {
+      tc.ctx.probeOperatorActAs = vi.fn(async () => "acting" as const);
+      await renderAt("/solo/1971670/command-center");
+      await act(async () => {});
+      expect(exitButton()).toBeTruthy();
+      tc.ctx.probeOperatorActAs = async () => "not_acting" as const;
+    });
+
+    // Independent review of 88b651b8: an act-as left in this tab by a user who signed out must not
+    // be offered to the next person who signs in here.
+    it("offers nothing to a different user than the one who opened the act-as", async () => {
+      recordOperatorActAs("op", "t1");
+      tc.ctx.activeUserId = "next-person";
+      await renderAt("/solo/1971670/command-center");
+      expect(exitButton()).toBeFalsy();
+      tc.ctx.activeUserId = "op";
+    });
   });
 });

@@ -1,7 +1,7 @@
 /**
  * Node ESM loader hooks that let the REAL `paige-ai-chat` Deno handler run under Node.
  *
- * Only the MODULE BOUNDARY is stubbed — never the logic under test. Concretely:
+ * Normal runs stub only the MODULE BOUNDARY — never the logic under test. Concretely:
  *
  *   • every local `.ts` under `supabase/functions/**` is transpiled by esbuild and
  *     loaded AS-IS, so the tenant-resolution code the checks assert on is the real
@@ -16,6 +16,8 @@
  *
  * §13 — a stub that swallows a real failure is worse than no test. Anything NOT in
  * the three cases above is a hard resolve error rather than a silent no-op.
+ * PAIGE_LIVE_ADMISSION_NEGATIVE_CONTROL=1 explicitly removes the Live admission
+ * refusal only in the evaluated module, to prove the Live checks fail without it.
  */
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { readFile } from "node:fs/promises";
@@ -50,7 +52,14 @@ export async function resolve(specifier, context, nextResolve) {
 export async function load(url, context, nextLoad) {
   if (url.startsWith("file://") && url.endsWith(".ts")) {
     const filePath = fileURLToPath(url);
-    const source = await readFile(filePath, "utf8");
+    let source = await readFile(filePath, "utf8");
+    // Opt-in negative control: mutate only the evaluated module, never a product file.
+    if (process.env.PAIGE_LIVE_ADMISSION_NEGATIVE_CONTROL === "1" &&
+        filePath.replaceAll("\\", "/").endsWith("/paige-ai-chat/index.ts")) {
+      const guard = "if (authorizationError || authorizedPilot !== true) return refuseLive();";
+      if (source.split(guard).length !== 2) throw new Error("Live admission negative control no longer matches exactly once");
+      source = source.replace(guard, "if (false) return refuseLive();");
+    }
     const esbuild = await import("esbuild");
     const out = await esbuild.transform(source, {
       loader: "ts",

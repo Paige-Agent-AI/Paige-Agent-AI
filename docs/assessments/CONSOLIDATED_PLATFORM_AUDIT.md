@@ -176,6 +176,34 @@ Each finding records exact source evidence, reachable boundary, current ownershi
 - **Smallest next step / proof:** repository owner supplies the private handoff to an authorized repairer; any rotation, containment and verification sequence remains an owner decision. Public closeout reveals no secret or sensitive reproduction detail.
 - **Lesson/control:** separate disclosed metadata from withheld security facts; a private credential finding never authorizes guessed scope or automatic rotation.
 
+### Routed findings after the pinned reconciliation
+
+#### PH-EVIDENCE-18 — Paige scroll-stability drive dies before its interaction (`VERIFIED` locally; Platform Health)
+
+- **Evidence / boundary:** on branch head `6303012b0cf552540f68fc5d4ce775011966d922`, `node scripts/live-drive/paige-scroll-stability-react-drive.mjs` timed out after 30 seconds at `openTenant` line 112 while waiting for at least 40 hydrated transcript message nodes. The run reached 0/1 checks and never exercised the chat timeout interaction. Evidence harness → every lane relying on this rendered-flow signal.
+- **Status / owner / collision:** routed to Platform Health under its trunk-signal trustworthiness charge. The Long-Form lane records the failure and does not repair the shared harness under park-and-route.
+- **Smallest next step / proof:** reproduce from current `main`, identify why tenant hydration no longer reaches the script's fixed transcript precondition, and prove the repaired drive reaches its intended interaction at every declared viewport. Do not weaken the assertion merely to make the script green.
+- **Lesson/control:** a rendered-evidence script that fails before the affected interaction is a harness defect, not evidence that the product change failed or passed.
+
+#### PH-EVIDENCE-19 — Required app typecheck has an undocumented 12-error trunk baseline (`VERIFIED` locally; Platform Health)
+
+- **Evidence / boundary:** `npx tsc --noEmit -p tsconfig.app.json --pretty false` exits 2 with exactly 12 diagnostics on current `main` `6bd8849d4b9bad7c8d331458cab03c00c61b87aa` and the Long-Form candidate. The identical set is two `StudioShell.tsx` TS2339 errors plus one each in `PaigeWorkspaceContext.tsx`, `useClientPortalBrand.ts`, `useMyActions.ts`, two in `customFields.ts`, and one each in `planning.ts`, `tenantLifecycle.ts`, `playbook/resolve.ts`, `CalendarAdmin.tsx`, and `Step1Welcome.tsx`. The lane introduced zero diagnostic drift.
+- **Status / owner / collision:** routed to Platform Health as a trunk-signal defect. The Long-Form lane records the exact baseline and does not repair unrelated files under park-and-route.
+- **Smallest next step / proof:** establish an owned baseline artifact or repair the 12 diagnostics on trunk, then require the app-config command in CI. The root `tsconfig.json` remains non-evidence because it checks no files.
+
+#### PH-EVIDENCE-20 — Deno-ratchet self-test is not trustworthy on this Windows host (`VERIFIED` locally; Platform Health)
+
+- **Evidence / boundary:** `npm run test:deno-ratchet` fails on both exact `main` and the Long-Form candidate. Deno-backed runner cases are abandoned with `spawnSync deno ENOENT`; an independent path-normalization assertion also fails because the same repo file is keyed twice under Windows worktree roots. The candidate changes no ratchet code.
+- **Status / owner / collision:** routed to Platform Health; this lane does not install shared tooling or modify the cross-lane ratchet harness.
+- **Smallest next step / proof:** provision the declared Deno executable for the test process, normalize repository-relative Windows paths once, and prove the complete self-test passes from both a normal checkout and a linked worktree.
+
+#### PH-EVIDENCE-21 — Shared model router was not Deno-clean under its declared Tier vocabulary (`LOCALLY REPAIRED`; persisted release proof owed)
+
+- **Evidence / boundary:** on current `main` `7ebdd9fea9832572e9d479b27e2a9c88e27b75ee` and the Long-Form candidate, `npx --yes deno-bin check --allow-import --node-modules-dir=none supabase/functions/paige-document-worker/index.ts` reaches the unchanged required dependency `supabase/functions/_shared/model-router.ts:888` and fails TS2367: `Tier` (`"frontier" | "open-fast" | "open-flexible"`) cannot equal `"reasoning"`. The new worker imports the canonical router as required; it does not fork provider invocation to evade this diagnostic.
+- **Status / owner / collision:** the owner explicitly returned the repair to the Long-Form lane. Commit `d247abba47e386fa7426179a52c449550c41f7c4` changes only the impossible `tier === "reasoning"` comparison to the canonical `tier === "frontier"` mapping. No provider route, ceiling, or sensitive-call precedence changed.
+- **Proof / remaining boundary:** real Deno checks return exit 0 with zero diagnostics for `_shared/model-router.ts`, existing `export-document/index.ts`, and new `paige-document-worker/index.ts`; focused router-budget plus document-production tests pass 20/20. The wider existing-consumer sweep still exposes five unrelated pre-existing Supabase generic diagnostics in `studio-visual-critique`; those are not attributed to this one-line repair and do not block the document worker. Persisted merge/Edge evidence remains owed.
+- **Lesson/control:** a ratchet can preserve an inherited shared diagnostic for existing functions, but a new governed adopter exposes it as a release blocker. Repair the shared vocabulary and check the new adopter directly; do not bypass the router or hide the import graph to manufacture a green result.
+
 ### Proposed or local remediation — non-shipped
 
 No runtime, schema, credential, provider, deployment or production change was made. This documentation PR can make the reconciliation canonical, but it does not ship any security repair or change the health claims above. Any local/proposed security patch remains explicitly non-shipped until separately merged and verified; this PR contains no such patch. Candidate repairs remain open; active PR #1173 is not absorbed. Merged #1175 is incorporated as current doctrine.

@@ -149,7 +149,7 @@ generation → real artifact.
 | Stable stored approval identity | `confirmFingerprint` + `paige_pending_confirmations` (#1166) | **LIVE** | confirm‑fingerprint | batch‑approve auth drive |
 | "Approved—run it" binds once / executes once / no loop | channel‑1 card fingerprints + `claimConfirmation` compare‑and‑set + non‑loop repair (#1166) | **LIVE** | `paige_pending_confirmations` | double‑submit auth drive |
 | Reads back before success | per‑tool Rail mirror on genuine success; **no universal post‑write read‑back** | **PARTIAL** | `record_rail_event`/`record_capability_run` | per‑capability readback wiring |
-| Governed execution seam convergence | `decideGovernedExecution` exists, door‑blind, but **chat uses a parallel inline gate** (seam adopted only by the MCP adapter) | **PARTIAL** | `_shared/paige-spine/governedExecution.ts` | converge chat + durable jobs + subagent/skill onto the one seam |
+| Governed execution seam convergence | `decideGovernedExecution` exists, door‑blind, but **chat uses a parallel inline gate**; the seam has **7 callers** (`crm-command` directly, plus write‑back, social, skill‑runner, MCP, native‑event‑dispatch, execute‑approval via adapters) — *corrected 2026‑09‑23, this row previously said "adopted only by the MCP adapter"* | **PARTIAL** | `_shared/paige-spine/governedExecution.ts` | **scoped — see `governance-seam-convergence-plan.md`** (one chokepoint at `paige-ai-chat/index.ts:8295`; chat already delegates its 33 CRM tools to the seam at `:8336`) |
 | Rail / receipt evidence | chat emits Rail/`record_capability_run` per tool | **PROOF_OWED** | Rail/receipt contract | 0 prod rows — a real action→Rail‑row drive |
 
 ---
@@ -165,8 +165,15 @@ generation → real artifact.
    secure‑browser are honest UNAVAILABLE; the two missing dispositions (`proof_owed`,
    `no_applicable_capability`) are first‑class; and the dropped `integrations.n8n_run_workflow` signal
    was re‑added. The grounding analysis above is retained as the snapshot that motivated the slice.
-2. **`decideGovernedExecution` is not the chat runtime path** — chat runs a parallel inline gate; the seam
-   is adopted only by the MCP adapter. "One pathway, whichever door" is unrealized for chat.
+2. **`decideGovernedExecution` is not the chat runtime path** — chat runs a parallel inline gate.
+   "One pathway, whichever door" is unrealized for chat.
+   **→ SCOPED (2026‑09‑23):** `docs/delivery/governance-seam-convergence-plan.md` carries the plan —
+   the chokepoint, the divergence table ranked by migration risk, a parity phase before any
+   behaviour moves, and the three decisions that are not a lane's to make. **§13 correction:** this
+   finding previously said the seam "is adopted only by the MCP adapter." It has **seven** callers;
+   chat itself already routes its 33 CRM tools through it (`paige-ai-chat/index.ts:8336` →
+   `crm-command/index.ts:342`). The convergence is finishing a started job, not beginning one.
+   *Recorded rather than silently corrected, per §58.*
 3. **The Gateway governs only 2 reads** — the ~51 mutating tools' admissibility is still inline.
 4. **Uncited‑knowledge risk** — retrieved tenant knowledge reaches the owner with no source/date; the RAG
    rule weaves it as uncited natural assertion. Fabrication is fenced; attribution is not.

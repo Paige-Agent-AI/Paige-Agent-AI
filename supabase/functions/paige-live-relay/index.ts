@@ -16,7 +16,7 @@ import { envKey } from "../_shared/env-key.ts";
 import { openFluxEars } from "../_shared/paige-live-flux-ears.ts";
 import { LiveRelayAdmission, PaigeLiveRelayBridge } from "../_shared/paige-live-relay-bridge.ts";
 import { createLiveRuntimeProof, liveRuntimeDigest } from "../_shared/paige-live-runtime-proof.ts";
-import { consumeRelayTicket, hasLiveWorkspaceStanding, isLiveAudioPilotEnabled, isLiveWorkspaceCurrent } from "../_shared/paige-live-ticket.ts";
+import { consumeRelayTicket, hasLiveWorkspaceStanding, isLiveWorkspaceCurrent } from "../_shared/paige-live-ticket.ts";
 
 const waitUntil = (promise: Promise<unknown>): void => {
   const runtime = (globalThis as unknown as { EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void } }).EdgeRuntime;
@@ -74,56 +74,34 @@ Deno.serve(async (req) => {
   // Read back the one corrected Jessica candidate. Active read-aloud stays on
   // OpenAI; neither a browser value nor a tenant preference selects a voice.
   const { data: voice, error: voiceError } = await admin.from("paige_voice_profiles")
-    .select("provider,provider_voice_ref,revision,active,approved,status,provider_verification_id,provider_verification_receipt_ref,approved_at")
+    .select("provider,provider_voice_ref,revision,active")
     .eq("slot", "candidate").maybeSingle();
   const voiceReady = !voiceError && voice?.provider === "elevenlabs" &&
     voice.provider_voice_ref === APPROVED_PAIGE_ELEVENLABS_VOICE_ID &&
-    voice.revision === "elevenlabs-jessica-take5-r1" && voice.active === false &&
-    voice.approved === true && voice.status === "approved" && !!voice.approved_at &&
-    !!voice.provider_verification_id && !!voice.provider_verification_receipt_ref;
-  const { data: readiness, error: readinessError } = await admin.from("paige_voice_readiness")
-    .select("key_scope_verified,voice_authorized,retention_policy_approved,zero_retention_confirmed,provider_verification_id,account_verification_receipt_ref,account_verified_at")
-    .eq("singleton", true).maybeSingle();
-  const { data: verification, error: verificationError } = voice?.provider_verification_id
-    ? await admin.from("paige_voice_provider_verifications")
-      .select("provider,provider_voice_ref,evidence_ref,key_scope_verified,voice_authorized,retention_policy_approved,zero_retention_confirmed")
-      .eq("id", voice.provider_verification_id).maybeSingle()
-    : { data: null, error: null };
-  // Pilot rollout is not provider/privacy approval. Reuse the canonical proof
-  // records; never infer entitlement or retention from a present API key. No
-  // legacy quota/rate/ceiling fields participate: costs belong to the Budget lane.
-  const privacyReady = !readinessError && !verificationError &&
-    readiness?.provider_verification_id === voice?.provider_verification_id &&
-    !!readiness?.account_verification_receipt_ref && !!readiness?.account_verified_at &&
-    verification?.provider === "elevenlabs" &&
-    verification?.provider_voice_ref === APPROVED_PAIGE_ELEVENLABS_VOICE_ID &&
-    verification?.evidence_ref === voice?.provider_verification_receipt_ref &&
-    verification?.evidence_ref === readiness?.account_verification_receipt_ref &&
-    [readiness, verification].every((row) => row?.key_scope_verified === true &&
-      row.voice_authorized === true && row.retention_policy_approved === true && row.zero_retention_confirmed === true);
+    voice.revision === "elevenlabs-jessica-take5-r1" && voice.active === false;
+  // The service-only scoped admission below joins the existing readiness,
+  // candidate and inspection receipt. Pilot authorization accepts default
+  // retention; it is not a legacy profile approval or a zero-retention claim.
   const modelReady = resolveElevenLabsModel() !== null;
-  // Account-level Deepgram training opt-out is an operational fact, not
-  // inferred from the per-request flag. This server-side switch stays OFF
-  // until the owner has checked the account setting; no tenant can set it.
-  const mipAccountVerified = envKey("DEEPGRAM_MIP_ACCOUNT_VERIFIED") === "true";
+  // Deepgram opt-out is mandatory per request in the existing STT router.
+  // There is no project-level MIP switch to attest through an environment key.
   const runtimeSigningKey = envKey("PAIGE_LIVE_STREAM_SIGNING_KEY") ?? "";
   const unavailableCode = !voiceReady ? "approved_voice_unavailable"
-    : !privacyReady ? "audio_privacy_not_verified"
     : !modelReady || !envKey("ELEVENLABS_API_KEY") ? "mouth_not_configured"
     : !envKey("DEEPGRAM_API_KEY") ? "ears_not_configured"
-    : !mipAccountVerified ? "audio_privacy_not_verified"
     : runtimeSigningKey.length < 32 ? "runtime_not_configured"
     : null;
     return { voice, runtimeSigningKey, unavailableCode };
   };
 
   const checkCurrentAdmission = async (recheckProvider = true): Promise<Response | null> => {
-  // The platform's canonical transport switch is independent of tenant pilot
-  // rollout and provider proof. Re-read it on the existing admission monitor,
-  // so disabling live audio also stops an already-connected relay.
-  const { data: transport, error: transportError } = await admin.from("paige_voice_readiness")
-    .select("transport_enabled").eq("singleton", true).maybeSingle();
-  if (transportError || transport?.transport_enabled !== true) {
+  // One database predicate owns scoped authorization and provider inspection.
+  // It is mandatory even if legacy global transport is enabled. Reuse it on
+  // renewal/PCM checks so revocation stops an already-connected relay.
+  const { data: authorizedPilot, error: authorizationError } = await admin.rpc("paige_live_pilot_authorized_internal", {
+    _actor_user_id: session.actor_user_id, _tenant_id: session.tenant_id,
+  });
+  if (authorizationError || authorizedPilot !== true) {
     if (!await markUnavailable("live_audio_not_enabled")) return new Response("relay_unavailable", { status: 503 });
     return new Response("live_audio_not_enabled", { status: 403 });
   }
@@ -217,13 +195,12 @@ Deno.serve(async (req) => {
     if (!await markUnavailable("membership_inactive")) return new Response("relay_unavailable", { status: 503 });
     return new Response("membership_inactive", { status: 403 });
   }
-  const { data: tenantPilot, error: pilotError } = await admin.from("paige_live_tenant_availability")
-    .select("enabled").eq("tenant_id", session.tenant_id).maybeSingle();
-  const pilotEnabled = !pilotError && isLiveAudioPilotEnabled(tenantPilot);
-  if (!pilotEnabled) {
-    if (!await markUnavailable("live_audio_not_enabled")) return new Response("relay_unavailable", { status: 503 });
-    return new Response("live_audio_not_enabled", { status: 403 });
-  }
+  // ONE HOME FOR "MAY THIS PERSON SPEAK" (§18). A second paige_live_tenant_availability read
+  // stood here and refused on a missing row. The predicate called at the top of this same
+  // function already owns that question and honours both meanings of the row, so this was a
+  // duplicate answer that would have contradicted it for any workspace admitted by tier rather
+  // than by a hand-written row. Revocation still stops a connected relay: it is the predicate,
+  // re-run on every renewal and PCM check, that does the stopping.
   // Provider approval is revocable just like workspace authority. Reuse the
   // same canonical proof on every monitor decision and before further speech.
   if (recheckProvider) {
@@ -294,9 +271,23 @@ Deno.serve(async (req) => {
     () => bridge.unavailable("live_admission_changed"),
   );
   const runtimeProof = createLiveRuntimeProof(runtimeSigningKey);
+  let outputBlocked = false;
   const bridge = new PaigeLiveRelayBridge({
     sessionId: session.id, epoch: session.context_epoch,
-    send(frame) { if (socket.readyState === WebSocket.OPEN) socket.send(frame); },
+    send(frame) {
+      if (outputBlocked || socket.readyState !== WebSocket.OPEN) return;
+      const bytes = typeof frame === "string" ? new TextEncoder().encode(frame).byteLength : frame.byteLength;
+      if (socket.bufferedAmount + bytes > 262_144) {
+        // Transport memory bound, not a usage cap. Set first: failure notification uses this sender.
+        outputBlocked = true;
+        bridge.unavailable("live_output_backpressure");
+        return;
+      }
+      try { socket.send(frame); } catch {
+        outputBlocked = true;
+        bridge.unavailable("live_output_unavailable");
+      }
+    },
     close(code, reason) {
       if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
         try { socket.close(code, reason); } catch { /* already closed */ }
@@ -308,6 +299,8 @@ Deno.serve(async (req) => {
       const response = await elevenlabsSpeechStream({
         text, voiceId: APPROVED_PAIGE_ELEVENLABS_VOICE_ID,
         modelId: resolveElevenLabsModel() ?? "",
+        // check(true) above proves the stored scoped default-retention authorization.
+        retentionPolicy: "default_provider_retention",
       }, signal);
       if (!response.body) throw new Error("mouth_stream_missing");
       return response.body;

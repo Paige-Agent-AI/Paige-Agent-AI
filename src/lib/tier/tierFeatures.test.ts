@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, it, expect } from "vitest";
 import {
   getTierFeatureSet,
@@ -138,6 +139,72 @@ describe("§60 other load-bearing cells", () => {
     expect(hasFeature(SUB, "trust_compass")).toBe(false);
     expect(hasFeature(AGENCY, "trust_compass")).toBe(false);
     expect(hasFeature(GOD, "trust_compass")).toBe(false);
+  });
+
+  it("§60 live_conversation — SOLO-ONLY for now; sub-account DEFERRED (same posture as trust_compass)", () => {
+    // The owner named Solo when he asked for Live ("available for my solo tier for all of my
+    // users", 2026-09-23), and the standing 2026-09-06 ruling defers sub-account delivery until
+    // an explicit release. Enterprise inherits via the Solo union; agency has no direct book to
+    // speak about and god is the operator, not a tenant.
+    expect(hasFeature(SOLO, "live_conversation")).toBe(true);
+    expect(hasFeature(ENTERPRISE, "live_conversation")).toBe(true);
+    expect(hasFeature(SUB, "live_conversation")).toBe(false);
+    expect(hasFeature(AGENCY, "live_conversation")).toBe(false);
+    expect(hasFeature(GOD, "live_conversation")).toBe(false);
+  });
+
+  it("§60 live_conversation is a WHOLE-SHELL answer — every Solo classification gets it, including one whose account_type has not settled", () => {
+    // The failure this guards is the one the owner named: a brand-new Solo signup arriving with a
+    // capability its neighbours have. resolveTierKey fail-safes an unset account_type to solo, and
+    // the server predicate (live_conversation_tier_allows) makes the same reading, so a freshly
+    // provisioned tenant is eligible on both layers with no operator action and no per-account row.
+    const freshlyProvisioned = cls(null);
+    expect(hasFeature(freshlyProvisioned, "live_conversation")).toBe(true);
+    // And it is never per-account: two different Solo tenants resolve identically.
+    expect(getTierFeatureSet(SOLO)).toBe(getTierFeatureSet(freshlyProvisioned));
+  });
+
+  // §18/§60 — the SQL twin and this map must give the same answer, and this pin exists because they
+  // already disagreed once. getTierFeatureSet is frontend-only and not server-importable, so the
+  // server needs its own predicate (the same pattern as trg_agreement_tier); a twin nobody pins is
+  // just a fork with a nicer name. The first draft of live_conversation_tier_allows excluded
+  // 'enterprise' while ENTERPRISE_FEATURES spreads SOLO_FEATURES and therefore included it — a
+  // disagreement with no observable symptom today (0 enterprise tenants; Enterprise renders the
+  // agency shell), which is exactly how it would have survived. An adversarial read caught it; this
+  // test is what catches the next one.
+  it("§18 the SQL tier predicate agrees with this map about live_conversation", () => {
+    const sql = readFileSync(
+      "supabase/migrations/20270422000000_live_conversation_is_a_solo_tier_capability.sql",
+      "utf8",
+    );
+    // The predicate's shape: top-level AND account_type NOT IN (<excluded>).
+    const excluded = sql.match(/coalesce\(t\.account_type, 'standalone'\) NOT IN \(([^)]*)\)/);
+    expect(excluded, "the predicate's account_type exclusion list could not be located").not.toBeNull();
+    const sqlExcludes = new Set(
+      excluded![1].split(",").map((part) => part.trim().replace(/^'|'$/g, "")),
+    );
+    // What the SQL would answer for a TOP-LEVEL tenant of each account_type.
+    const sqlAllows = (accountType: string) => !sqlExcludes.has(accountType);
+    expect(sqlAllows("standalone")).toBe(hasFeature(SOLO, "live_conversation"));
+    expect(sqlAllows("enterprise")).toBe(hasFeature(ENTERPRISE, "live_conversation"));
+    expect(sqlAllows("agency")).toBe(hasFeature(AGENCY, "live_conversation"));
+    expect(sqlAllows("sub_account")).toBe(hasFeature(SUB, "live_conversation"));
+    // And the unsettled account_type both sides fail-safe to solo.
+    expect(sqlAllows("standalone")).toBe(hasFeature(cls(null), "live_conversation"));
+  });
+
+  // The predicate must also refuse every PARENTED tenant outright (§51: a child is never a manager
+  // tier), which is the half the account_type list above cannot express.
+  it("§51 the SQL tier predicate refuses any parented tenant before it looks at account_type", () => {
+    const sql = readFileSync(
+      "supabase/migrations/20270422000000_live_conversation_is_a_solo_tier_capability.sql",
+      "utf8",
+    );
+    expect(sql).toMatch(/t\.parent_tenant_id IS NULL\s*\n?\s*AND coalesce\(t\.account_type/);
+    // Mirrors resolveTierKey's parent-first check, so a legacy sub-account still typed 'standalone'
+    // is refused by both layers rather than only by one.
+    expect(resolveTierKey(cls("standalone", { parent: "agency-uuid" }))).toBe("sub_account");
+    expect(hasFeature(cls("standalone", { parent: "agency-uuid" }), "live_conversation")).toBe(false);
   });
 
   it("enterprise is a superset of agency (never falls below it — even after the growth/studio split)", () => {

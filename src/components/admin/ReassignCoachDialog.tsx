@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { loadAssignableStaff } from "@/lib/team/assignableStaff";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -29,19 +30,15 @@ export function ReassignCoachDialog({ open, onOpenChange, fromCoachId, fromCoach
   useEffect(() => {
     if (!open || !fromCoachId) return;
     (async () => {
-      const [{ data: roleRows }, { count: assignedCount }] = await Promise.all([
-        supabase.from("user_roles").select("user_id").eq("role", "coach"),
+      const [staff, { count: assignedCount }] = await Promise.all([
+        loadAssignableStaff(),
         supabase.from("clients").select("id", { count: "exact", head: true })
           .eq("assigned_coach_user_id", fromCoachId),
       ]);
       setCount(assignedCount || 0);
-      const ids = (roleRows || []).map((r: any) => r.user_id).filter((id: string) => id !== fromCoachId);
-      if (ids.length === 0) { setCoaches([]); return; }
-      const { data: profs } = await supabase
-        .from("profiles")
-        .select("user_id, email, full_name")
-        .in("user_id", ids);
-      setCoaches(((profs || []) as any[]).map(p => ({ user_id: p.user_id, email: p.full_name || p.email || p.user_id })));
+      setCoaches(staff
+        .filter((s) => s.user_id !== fromCoachId)
+        .map((s) => ({ user_id: s.user_id, email: s.name })));
     })();
   }, [open, fromCoachId]);
 
@@ -58,8 +55,8 @@ export function ReassignCoachDialog({ open, onOpenChange, fromCoachId, fromCoach
       toast.success(`Reassigned ${data ?? 0} client(s)`);
       onOpenChange(false);
       onReassigned?.();
-    } catch (e: any) {
-      toast.error(e.message || "Reassignment failed");
+    } catch (e) {
+      toast.error((e instanceof Error ? e.message : null) || "Reassignment failed");
     } finally {
       setSubmitting(false);
     }

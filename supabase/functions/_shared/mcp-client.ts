@@ -1,6 +1,6 @@
 // _shared/mcp-client.ts — the ONE Model Context Protocol client (§18).
 //
-// Both tenant MCP providers speak the same wire protocol, so they share one client
+// Remote MCP servers speak the same wire protocol, so they share one client
 // rather than one inline copy each. The provider differences that actually exist are
 // narrow and expressed as arguments: how the request is authorised (a Bearer token, or
 // a provider-named header), and how the response is framed (a JSON body, or a
@@ -18,14 +18,14 @@
 import { safeFetch, SsrfError, type SsrfReason } from "./ssrfGuard.ts";
 
 /** How a provider expects the tenant's credential to be presented. */
-export type McpAuth =
+export type McpAuth = (
   | { kind: "bearer"; token: string }
   | { kind: "header"; name: string; token: string }
   // The endpoint itself carries the credential, so there is no header to send. Zapier's
   // per-user MCP server is this shape: the secret is a path segment of the URL. Modelled
   // as its own kind rather than a bearer with an empty token, so a missing credential can
   // never be mistaken for a deliberate one.
-  | { kind: "none" };
+  | { kind: "none" }) & { headers?: Record<string, string> };
 
 export type McpErrorCode =
   | SsrfReason
@@ -82,11 +82,34 @@ export function isUsableHeaderName(name: string): boolean {
   return HEADER_NAME_RE.test(name) && !RESERVED_HEADERS.has(name.toLowerCase());
 }
 
+/** Same bounded wire contract as _mcp_assert_custom_headers. Values are private: never returned
+ * in validation errors. Reject transport/routing overrides and duplicate names BEFORE fetch. */
+export function customHeadersUsable(headers: unknown, primaryName?: string): headers is Record<string, string> {
+  if (!headers || typeof headers !== "object" || Array.isArray(headers)) return false;
+  const entries = Object.entries(headers);
+  if (entries.length > 16) return false;
+  const seen = new Set<string>();
+  let bytes = 0;
+  for (const [name, value] of entries) {
+    const lower = name.toLowerCase();
+    if (name.length > 64 || !isUsableHeaderName(name) || seen.has(lower)
+      || lower === primaryName?.toLowerCase()
+      || /^(proxy-|sec-|x-forwarded-)/.test(lower)
+      || ["forwarded", "via", "origin", "referer", "cookie", "set-cookie", "te", "trailer", "upgrade", "accept-encoding"].includes(lower)
+      || typeof value !== "string" || value.length < 1 || value.length > 4096
+      || !/^[\x20-\x7e]+$/.test(value) || value.trim() !== value) return false;
+    seen.add(lower);
+    bytes += name.length + value.length;
+  }
+  return bytes <= 16384;
+}
+
 /** Whether this resolved auth can actually be PRESENTED by the client. A `header` auth whose name is
  *  invalid or reserved cannot (authHeaders throws on it at dispatch), so a caller that resolves a
  *  connection should refuse it up front rather than let `prepare` affirm what `execute` will reject.
  *  bearer/none are always presentable. */
 export function authUsable(auth: McpAuth): boolean {
+  if (auth.headers !== undefined && !customHeadersUsable(auth.headers, auth.kind === "header" ? auth.name : undefined)) return false;
   if (auth.kind === "header") return isUsableHeaderName(auth.name);
   return true;
 }
@@ -97,6 +120,7 @@ export type StoredMcpSecret = {
   auth_token?: unknown;
   auth_kind?: unknown;
   auth_header_name?: unknown;
+  custom_headers?: unknown;
 };
 
 /**
@@ -115,21 +139,28 @@ export type StoredMcpSecret = {
  */
 export function authFromSecret(secret: StoredMcpSecret | null | undefined): McpAuth | null {
   if (!secret || typeof secret.server_url !== "string" || !secret.server_url) return null;
+  const headers = secret.custom_headers;
+  if (headers !== undefined && !customHeadersUsable(headers,
+    secret.auth_kind === "header" && typeof secret.auth_header_name === "string" ? secret.auth_header_name : undefined)) return null;
+  const extra = headers === undefined ? {} : { headers: headers as Record<string, string> };
   // The address carries the credential; there is no header to send and no token to want.
-  if (secret.auth_kind === "url") return { kind: "none" };
+  if (secret.auth_kind === "url") return { kind: "none", ...extra };
   // A public MCP server carries no credential at all — schema-supported `auth_kind='none'`, which
   // `get_mcp_connection_secret` returns as configured with null tokens and the client drives with no
   // auth header. Map it to tokenless auth BEFORE the token guard, or a valid public server would be
   // wrongly rejected here as "no credential".
-  if (secret.auth_kind === "none") return { kind: "none" };
+  if (secret.auth_kind === "none") return { kind: "none", ...extra };
   if (typeof secret.auth_token !== "string" || !secret.auth_token) return null;
   if (secret.auth_kind === "header" && typeof secret.auth_header_name === "string" && secret.auth_header_name) {
-    return { kind: "header", name: secret.auth_header_name, token: secret.auth_token };
+    return { kind: "header", name: secret.auth_header_name, token: secret.auth_token, ...extra };
   }
-  return { kind: "bearer", token: secret.auth_token };
+  return { kind: "bearer", token: secret.auth_token, ...extra };
 }
 
 function authHeaders(auth: McpAuth): Record<string, string> {
+  if (auth.headers !== undefined && !customHeadersUsable(auth.headers, auth.kind === "header" ? auth.name : undefined)) {
+    throw new McpError("mcp_protocol_error", "invalid supplementary headers");
+  }
   // A custom header name is tenant-supplied, so it is constrained to the RFC 9110 token
   // grammar. Without this a newline in the name would let a tenant inject headers.
   if (auth.kind === "header") {
@@ -139,10 +170,10 @@ function authHeaders(auth: McpAuth): Record<string, string> {
     if (RESERVED_HEADERS.has(auth.name.toLowerCase())) {
       throw new McpError("mcp_protocol_error", "reserved header name");
     }
-    return { [auth.name]: auth.token };
+    return { ...auth.headers, [auth.name]: auth.token };
   }
-  if (auth.kind === "none") return {};
-  return { Authorization: `Bearer ${auth.token}` };
+  if (auth.kind === "none") return { ...auth.headers };
+  return { ...auth.headers, Authorization: `Bearer ${auth.token}` };
 }
 
 export type McpSessionOptions = {

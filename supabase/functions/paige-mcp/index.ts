@@ -21,7 +21,14 @@ import { McpServer, StreamableHttpTransport } from "https://esm.sh/mcp-lite@0.10
 import { z } from "https://esm.sh/zod@3.25.76";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { resolveOperatorIdentity } from "../_shared/operator-identity.ts";
-import { applyContactSearchFilter, contactSearchTokens, CONTACT_SEARCH_COLUMNS } from "../_shared/contact-search.ts";
+import { applyContactSearchFilter, contactSearchTokens, CONTACT_NAME_SEARCH_COLUMNS, contactIdsByAddressToken } from "../_shared/contact-search.ts";
+import { createClientWithContactMethods, findClientIdByAddress, orderedContactMethods, primaryContactMethod } from "../_shared/contact-methods.ts";
+import {
+  CLIENT_RECORD_COLUMNS, clientRowPatchProblem, intentResult, PROPOSABLE_CLIENT_FIELDS, proposedAddressIntent,
+  storedAddressIntent, storedMethodList, undoAddressWrite, writeAddressIntent, type AddressWriteResult,
+  type ContactMethodInput,
+} from "../_shared/paige-mcp/contact-method-edits.ts";
+import { resolveClientRef } from "../_shared/client-ref.ts";
 import { canonicalAppUrl, type CanonicalDestination, type CanonicalTier } from "../_shared/canonical-app-url.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -92,6 +99,50 @@ function ok(payload: unknown) {
 }
 function err(message: string) {
   return { content: [{ type: "text" as const, text: JSON.stringify({ error: message }) }], isError: true };
+}
+
+// ── Contact methods: a contact's emails and phones, several of each, one primary per kind ──────
+const CONTACT_METHOD_SELECT = "client_contact_methods(kind, value, label, is_primary, position)";
+const contactMethodInput = z.object({
+  kind: z.enum(["email", "phone"]),
+  value: z.string(),
+  // Nullable: get_contact returns an unlabelled address as label: null, and a list read there is
+  // sent back as it came.
+  label: z.string().nullable().optional(),
+  is_primary: z.boolean().optional(),
+}).strict();
+const contactMethodsInput = z.array(contactMethodInput).max(20);
+
+/** A contact row as a reader sees it: its client_ref and every address. */
+// deno-lint-ignore no-explicit-any
+function contactForReader(row: any) {
+  const { account_number, client_contact_methods, ...rest } = row ?? {};
+  return { ...rest, client_ref: account_number, contact_methods: orderedContactMethods(client_contact_methods) };
+}
+
+/**
+ * A row read with CONTACT_METHOD_SELECT, keeping the `email` / `phone` fields its readers already
+ * use — each now the contact's PRIMARY address of that kind — and dropping the embed.
+ */
+function withPrimaryAddressFields<T extends { client_contact_methods?: unknown }>(row: T) {
+  const { client_contact_methods, ...rest } = row ?? ({} as T);
+  return {
+    ...rest,
+    email: primaryContactMethod(client_contact_methods as Parameters<typeof primaryContactMethod>[0], "email"),
+    phone: primaryContactMethod(client_contact_methods as Parameters<typeof primaryContactMethod>[0], "phone"),
+  };
+}
+
+/** A contact's addresses as the writers take them back, in the owner's order. */
+function heldMethods(rows: unknown): ContactMethodInput[] {
+  return orderedContactMethods(rows);
+}
+
+/** Why an address write was refused, in words an operator can act on. */
+function contactMethodsError(message: string | undefined): string {
+  const text = message ?? "contact_methods_write_failed";
+  if (text.includes("CONTACT_METHOD_TAKEN")) return text.slice(text.indexOf("CONTACT_METHOD_TAKEN"));
+  return text;
 }
 
 // Per-request actor context (set by the HTTP route before invoking the MCP transport).
@@ -364,9 +415,9 @@ async function deriveTier(actor: ActorCtx): Promise<McpTier> {
 // ---------- Contacts ----------
 mcp.tool("search_contacts", {
   description:
-    "Search Paige contacts (clients table) by name, email, phone, or company. Returns up to `limit` matches with safe CRM metadata and client_ref. Use client_ref for later contact tools.",
+    "Search Paige contacts (clients table) by name, email, phone, or company. An email or phone matches whichever of the contact's addresses it is. Returns up to `limit` matches with safe CRM metadata, client_ref and contact_methods (every email and phone, each marked is_primary). Use client_ref for later contact tools.",
   inputSchema: z.object({
-    query: z.string().describe("Free-text match across first/last name, email, phone, entity_name."),
+    query: z.string().describe("Free-text match across first/last name, entity_name, and every email and phone the contact holds."),
     lifecycle_stage: z.string().optional().describe("Optional filter, e.g. 'qualifying', 'self_serve', 'active'."),
     limit: z.number().int().optional().describe("1-50, default 20."),
   }),
@@ -379,31 +430,33 @@ mcp.tool("search_contacts", {
     let q = applyContactSearchFilter(
       admin
         .from("clients")
-        .select("account_number, first_name, last_name, email, phone, entity_name, lifecycle_stage, tier, status, assigned_coach_user_id, updated_at")
+        .select(`account_number, first_name, last_name, entity_name, lifecycle_stage, tier, status, assigned_coach_user_id, updated_at, ${CONTACT_METHOD_SELECT}`)
         .eq("tenant_id", tenantId),
       String(args.query),
+      // An email or phone matches whichever of the contact's addresses holds it.
+      { columns: CONTACT_NAME_SEARCH_COLUMNS, addressMatches: await contactIdsByAddressToken(admin, tenantId, String(args.query), "paige-mcp") },
     );
     if (args.lifecycle_stage) q = q.eq("lifecycle_stage", args.lifecycle_stage);
     const { data, error } = await q.order("updated_at", { ascending: false }).limit(limit);
     if (error) return err(error.message);
-    return ok({ items: (data ?? []).map(({ account_number, ...item }) => ({ ...item, client_ref: account_number })), count: (data ?? []).length });
+    return ok({ items: (data ?? []).map(contactForReader), count: (data ?? []).length });
   },
 });
 
 mcp.tool("get_contact", {
   description:
-    "Fetch a single contact's full Paige profile, including business details, address, owner/coach assignments, and notes.",
+    "Fetch a single contact's full Paige profile, including business details, address, owner/coach assignments, notes, and contact_methods (every email and phone, each marked is_primary).",
   inputSchema: z.object({ client_ref: z.string().describe("Tenant-scoped client reference, for example CLT-A1B2C3D4E5F6.") }),
   handler: async ({ client_ref }) => {
     const tenantId = await actorTenantId();
     if (!tenantId) return err("tenant_not_resolved");
     const { data, error } = await admin.from("clients")
-      .select("account_number, first_name, last_name, email, phone, entity_name, lifecycle_stage, status, source, tags, last_contacted_at, created_at")
+      .select(`account_number, first_name, last_name, entity_name, lifecycle_stage, status, source, tags, last_contacted_at, created_at, updated_at, ${CONTACT_METHOD_SELECT}`)
       .eq("account_number", client_ref.trim().toUpperCase()).eq("tenant_id", tenantId).maybeSingle();
     if (error) return err(error.message);
     if (!data) return err("contact_not_found");
     const paigeUrl = await externalActorDestination(tenantId, "contacts");
-    return ok({ contact: { ...data, client_ref: data.account_number, account_number: undefined }, ...(paigeUrl ? { paige_url: paigeUrl } : {}) });
+    return ok({ contact: contactForReader(data), ...(paigeUrl ? { paige_url: paigeUrl } : {}) });
   },
 });
 
@@ -417,12 +470,12 @@ mcp.tool("lookup_contact_by_account_number", {
     const tenantId = await actorTenantId();
     if (!tenantId) return err("tenant_not_resolved");
     const { data, error } = await admin.from("clients")
-      .select("account_number, first_name, last_name, email, phone, entity_name, lifecycle_stage, status, source, tags, last_contacted_at, created_at")
+      .select(`account_number, first_name, last_name, entity_name, lifecycle_stage, status, source, tags, last_contacted_at, created_at, updated_at, ${CONTACT_METHOD_SELECT}`)
       .eq("account_number", account_number.trim().toUpperCase()).eq("tenant_id", tenantId).maybeSingle();
     if (error) return err(error.message);
     if (!data) return err("contact_not_found");
     const paigeUrl = await externalActorDestination(tenantId, "contacts");
-    return ok({ contact: { ...data, client_ref: data.account_number, account_number: undefined }, ...(paigeUrl ? { paige_url: paigeUrl } : {}) });
+    return ok({ contact: contactForReader(data), ...(paigeUrl ? { paige_url: paigeUrl } : {}) });
   },
 });
 
@@ -1139,23 +1192,36 @@ mcp.tool("assign_coach", {
 
 // ---------- Coach Ops ----------
 mcp.tool("list_coaches", {
-  description: "List all coaches with their profile metadata (specialties, capacity, accepting-new-clients) and live client counts.",
+  description: "List everyone in your business who has clients assigned to them, directly or through an active client relationship, with their profile metadata (specialties, capacity, accepting-new-clients) and client counts. \"Coach\" is a title, so this is decided by assignment, never by a role. active_clients/total_clients count direct assignments; relationship_clients counts active relationships, which may cover some of the same clients.",
   inputSchema: z.object({
-    accepting_only: z.boolean().optional().describe("If true, return only coaches accepting new clients."),
+    accepting_only: z.boolean().optional().describe("If true, return only people accepting new clients."),
     specialty: z.string().optional().describe("Filter by a single specialty tag, e.g. 'personal_credit'."),
   }),
   handler: async ({ accepting_only, specialty }) => {
-    const { data: roles, error: rolesErr } = await admin.from("user_roles").select("user_id").eq("role", "coach");
-    if (rolesErr) return err(rolesErr.message);
-    const ids = (roles ?? []).map((r: any) => r.user_id);
-    if (!ids.length) return ok({ items: [] });
-    const [profilesRes, clientsRes] = await Promise.all([
-      admin.from("profiles").select("user_id, full_name, coach_specialties, coach_capacity, coach_accepting_clients, coach_bio, coach_timezone, suspended_at").in("user_id", ids),
-      admin.from("clients").select("assigned_coach_user_id, status").in("assigned_coach_user_id", ids),
+    // Scoped to the caller's own business: an assignment in another business is never listed.
+    const tenantId = await actorTenantId();
+    if (!tenantId) return err("tenant_not_resolved");
+    const [directRes, relationshipRes] = await Promise.all([
+      admin.from("clients").select("assigned_coach_user_id, status")
+        .eq("tenant_id", tenantId).not("assigned_coach_user_id", "is", null),
+      admin.from("coach_clients").select("coach_user_id")
+        .eq("tenant_id", tenantId).eq("status", "active"),
     ]);
+    if (directRes.error) return err(directRes.error.message);
+    if (relationshipRes.error) return err(relationshipRes.error.message);
+    const direct = (directRes.data ?? []) as Array<{ assigned_coach_user_id: string; status: string | null }>;
+    const relationships = (relationshipRes.data ?? []) as Array<{ coach_user_id: string }>;
+    const ids = [...new Set([
+      ...direct.map((c) => c.assigned_coach_user_id),
+      ...relationships.map((r) => r.coach_user_id),
+    ])];
+    if (!ids.length) return ok({ items: [] });
+    const profilesRes = await admin.from("profiles")
+      .select("user_id, full_name, coach_specialties, coach_capacity, coach_accepting_clients, coach_bio, coach_timezone, suspended_at")
+      .in("user_id", ids);
     const items = ids.map((id) => {
       const p: any = (profilesRes.data || []).find((x: any) => x.user_id === id) || {};
-      const assigned = (clientsRes.data || []).filter((c: any) => c.assigned_coach_user_id === id);
+      const assigned = direct.filter((c) => c.assigned_coach_user_id === id);
       return {
         user_id: id,
         full_name: p.full_name ?? null,
@@ -1165,8 +1231,9 @@ mcp.tool("list_coaches", {
         bio: p.coach_bio ?? null,
         timezone: p.coach_timezone ?? null,
         suspended: !!p.suspended_at,
-        active_clients: assigned.filter((c: any) => (c.status ?? "active") === "active").length,
+        active_clients: assigned.filter((c) => (c.status ?? "active") === "active").length,
         total_clients: assigned.length,
+        relationship_clients: relationships.filter((r) => r.coach_user_id === id).length,
       };
     }).filter((c) => {
       if (accepting_only && !c.accepting_clients) return false;
@@ -1174,30 +1241,6 @@ mcp.tool("list_coaches", {
       return true;
     });
     return ok({ items });
-  },
-});
-
-mcp.tool("add_coach_role", {
-  description: "Grant the 'coach' role to an existing user. Idempotent.",
-  inputSchema: z.object({ user_id: z.string() }),
-  annotations: { destructiveHint: true },
-  handler: async ({ user_id }) => {
-    const { error } = await admin.from("user_roles").upsert({ user_id, role: "coach" }, { onConflict: "user_id,role" });
-    if (error) return err(error.message);
-    await audit("add_coach_role", "user", user_id, {});
-    return ok({ ok: true });
-  },
-});
-
-mcp.tool("remove_coach_role", {
-  description: "Revoke the 'coach' role. Blocked if the coach still has active clients — reassign them first via assign_coach or bulk_assign_clients_to_coach.",
-  inputSchema: z.object({ user_id: z.string() }),
-  annotations: { destructiveHint: true },
-  handler: async ({ user_id }) => {
-    const { data, error } = await admin.rpc("admin_remove_coach_role", { _user_id: user_id });
-    if (error) return err(error.message);
-    await audit("remove_coach_role", "user", user_id, { result: data });
-    return ok(data);
   },
 });
 
@@ -1287,11 +1330,11 @@ mcp.tool("get_coach_performance", {
 
 mcp.tool("create_team_invitation", {
   description:
-    "Create a team invitation row for an internal tenant team member (admin | coach | sales_rep | cs_rep). Does NOT send the email — pair with the send-admin-invitation function for that. Platform (super_admin/platform_admin) and agency_* roles are NOT grantable here — those go through the platform-invite and agency-team flows.",
+    "Create a team invitation row for an internal tenant team member (admin | sales_rep | cs_rep). Does NOT send the email — pair with the send-admin-invitation function for that. Platform (super_admin/platform_admin) and agency_* roles are NOT grantable here — those go through the platform-invite and agency-team flows.",
   inputSchema: z.object({
     email: z.string(),
-    role: z.enum(["admin", "coach", "sales_rep", "cs_rep"])
-      .describe("Tenant staff role. Valid app_role staff labels only: admin | coach | sales_rep | cs_rep."),
+    role: z.enum(["admin", "sales_rep", "cs_rep"])
+      .describe("Tenant staff role. Valid app_role staff labels only: admin | sales_rep | cs_rep."),
     invited_by_user_id: z.string().optional(),
     template_name: z.string().optional(),
   }),
@@ -1311,7 +1354,7 @@ mcp.tool("create_team_invitation", {
     // DB-valid app_role staff labels only. Deny-by-default: super_admin,
     // platform_admin, agency_*, finance, moderator, developer, broker*, etc. are
     // NOT grantable through this generic tenant-invite tool.
-    const ALLOWED_TENANT_INVITE_ROLES = new Set(["admin", "coach", "sales_rep", "cs_rep"]);
+    const ALLOWED_TENANT_INVITE_ROLES = new Set(["admin", "sales_rep", "cs_rep"]);
     if (!ALLOWED_TENANT_INVITE_ROLES.has(args.role)) return err("role_not_allowed");
     const tenantId = await actorTenantId();
     if (!tenantId) return err("tenant_not_resolved");
@@ -1693,13 +1736,12 @@ const DOCTRINE_111_LIFECYCLE_STAGES = [
 
 mcp.tool("create_contact", {
   description:
-    "Create a new contact (clients row) in the caller's tenant. Returns the new contact_id. Tenant is auto-resolved from the caller (user's active tenant, or MMA for platform callers). All optional fields map 1:1 to the underlying clients columns so Claude/ChatGPT can populate everything a human form would. Lifecycle stage follows Doctrine §111: new_lead, qualified, nurturing, hot_lead, negotiating, won, client_active, client_paused, client_churned, client_funded, client_alumni.",
+    "Create a new contact (clients row) in the caller's tenant. Returns the new contact_id and client_ref. Emails and phones go in contact_methods: [{ kind: \"email\" | \"phone\", value, label?, is_primary? }], one primary per kind (the first of each kind when none is marked). Tenant is auto-resolved from the caller (user's active tenant, or MMA for platform callers). All optional fields map 1:1 to the underlying clients columns so Claude/ChatGPT can populate everything a human form would. Lifecycle stage follows Doctrine §111: new_lead, qualified, nurturing, hot_lead, negotiating, won, client_active, client_paused, client_churned, client_funded, client_alumni.",
   inputSchema: z.object({
     // identity
     first_name: z.string(),
     last_name: z.string().optional(),
-    email: z.string().optional(),
-    phone: z.string().optional(),
+    contact_methods: contactMethodsInput.optional().describe("Every email and phone for the contact, in display order."),
     title: z.string().optional(),
     // business
     entity_name: z.string().optional(),
@@ -1729,9 +1771,23 @@ mcp.tool("create_contact", {
     notes: z.string().optional().describe("Seeded into current_notes."),
     // tenant override
     tenant_id: z.string().optional().describe("Override the auto-resolved tenant_id (platform-only)."),
-  }),
+  }).strict(),
   handler: async (args) => {
     const tenant_id = await resolveTenantId(args.tenant_id ?? null);
+    // A contact belongs to a workspace (clients.tenant_id is NOT NULL).
+    if (!tenant_id) return err("tenant_not_resolved");
+    // Addresses are checked first so the usual refusal names the address plainly; the create
+    // below is one transaction either way.
+    const methods = args.contact_methods ?? [];
+    if (methods.length) {
+      const { error: shapeError } = await admin.rpc("contact_methods_canonical", { _methods: methods });
+      if (shapeError) return err(contactMethodsError(shapeError.message));
+      for (const method of methods) {
+        if (await findClientIdByAddress(admin, tenant_id, method.kind, method.value, "paige-mcp")) {
+          return err(`CONTACT_METHOD_TAKEN: ${method.value} already belongs to another contact in this workspace`);
+        }
+      }
+    }
     const actor = currentActor();
     let createdBy: string | null = actor.user_id ?? null;
     if (!createdBy && tenant_id) {
@@ -1743,8 +1799,6 @@ mcp.tool("create_contact", {
     const row: Record<string, unknown> = {
       first_name: args.first_name,
       last_name: args.last_name ?? null,
-      email: args.email ?? null,
-      phone: args.phone ?? null,
       title: args.title ?? null,
       entity_name: args.entity_name ?? null,
       entity_type: args.entity_type ?? null,
@@ -1768,27 +1822,44 @@ mcp.tool("create_contact", {
       cs_primary_user_id: args.cs_primary_user_id ?? null,
       status: "active",
       current_notes: args.notes ?? null,
-      tenant_id,
       created_by: createdBy,
       created_by_channel_type: "api", // #10 channel-of-origin (Paige/MCP programmatic create)
     };
-    const { data, error } = await admin.from("clients").insert(row).select("id, created_at").single();
-    if (error) return err(error.message);
-    await audit("create_contact", "client", data.id, { email: args.email ?? null, tenant_id });
-    return ok({ ok: true, contact_id: data.id, created_at: data.created_at, tenant_id, created_by: createdBy });
+    // The contact and its addresses are ONE transaction (20270519005000): an address another
+    // writer took since the check above refuses the whole create, so no contact — and no
+    // contact.created event — is left behind without the addresses it was created with.
+    const { data: created, error } = await createClientWithContactMethods(
+      admin, { ...row, tenant_id }, methods, "paige-mcp create_contact",
+    );
+    if (error || !created) return err(contactMethodsError(error?.message));
+    const { data, error: readError } = await admin.from("clients")
+      .select("id, account_number, created_at").eq("id", created.id).eq("tenant_id", tenant_id).maybeSingle();
+    if (readError || !data) {
+      // The contact IS created; only reading back its reference failed. Say so rather than fail it.
+      console.error("[paige-mcp] create_contact read-back failed", { contact_id: created.id, message: readError?.message });
+    }
+    await audit("create_contact", "client", created.id, { contact_methods: methods.length, tenant_id }, tenant_id);
+    return ok({
+      ok: true, contact_id: created.id, client_ref: data?.account_number ?? null, created_at: data?.created_at ?? null,
+      tenant_id, created_by: createdBy,
+    });
   },
 });
 
 mcp.tool("update_contact", {
   description:
-    "Update any combination of fields on an existing contact (clients row). Only fields you pass are updated; omit a field to leave it unchanged. Scoped to caller's tenant. For lifecycle moves prefer `update_lifecycle_stage` (it writes a transition audit). For notes prefer `add_contact_note` (it appends instead of replacing).",
+    "Update any combination of fields on an existing contact (clients row), named by its client_ref (or contact_id). Only fields you pass are updated; omit a field to leave it unchanged. Emails and phones: contact_methods REPLACES the whole list and needs expected_contact_methods, the list exactly as get_contact returned it; if the stored list changed since, the update is refused as CONTACT_METHODS_STALE and nothing is written (read it again and redo the change). add_contact_methods adds to the list and keeps what is there, and needs no expected list; send one or the other. Scoped to caller's tenant. For lifecycle moves prefer `update_lifecycle_stage` (it writes a transition audit). For notes prefer `add_contact_note` (it appends instead of replacing).",
   inputSchema: z.object({
-    contact_id: z.string(),
+    client_ref: z.string().optional().describe("The contact's client_ref, as search_contacts or get_contact returned it."),
+    contact_id: z.string().optional().describe("Only when you hold the contact's UUID rather than its client_ref."),
     // identity
     first_name: z.string().optional(),
     last_name: z.string().optional(),
-    email: z.string().nullable().optional(),
-    phone: z.string().nullable().optional(),
+    contact_methods: contactMethodsInput.optional().describe("The COMPLETE list of the contact's emails and phones; anything left out is removed. Requires expected_contact_methods."),
+    expected_contact_methods: z.array(z.object({
+      kind: z.string(), value: z.string(), label: z.string().nullable().optional(), is_primary: z.boolean().optional(),
+    }).passthrough()).max(40).optional().describe("With contact_methods: the contact's contact_methods exactly as get_contact returned them. The update is refused if the stored list is no longer this one."),
+    add_contact_methods: contactMethodsInput.min(1).optional().describe("Emails or phones to add, keeping every one the contact already has."),
     title: z.string().nullable().optional(),
     // business
     entity_name: z.string().nullable().optional(),
@@ -1818,13 +1889,24 @@ mcp.tool("update_contact", {
     primary_business_id: z.string().nullable().optional(),
     // notes (REPLACES current_notes — use add_contact_note to append)
     current_notes: z.string().nullable().optional(),
-  }),
+  }).strict(),
   handler: async (args) => {
     const tenant_id = await actorTenantId();
     if (!tenant_id) return err("tenant_not_resolved");
-    const { contact_id, ...rest } = args;
+    const { client_ref, contact_id: suppliedId, contact_methods, add_contact_methods, expected_contact_methods, ...rest } = args;
+    if (contact_methods && add_contact_methods) return err("CONTACT_METHODS_AMBIGUOUS: send contact_methods or add_contact_methods, not both");
+    // Replacing the list must name the list it replaces, or a change made in between is lost.
+    if (contact_methods && !expected_contact_methods) return err("CONTACT_METHODS_EXPECTED_REQUIRED: send expected_contact_methods, the contact's contact_methods as get_contact returned them");
 
-    // Tenant scope check
+    // The contact, named inside the caller's own workspace only.
+    let contact_id = suppliedId ?? null;
+    if (client_ref !== undefined) {
+      const resolved = await resolveClientRef(admin, tenant_id, client_ref, "paige-mcp");
+      if (!resolved) return err("contact_not_found");
+      if (contact_id && contact_id.toLowerCase() !== resolved.toLowerCase()) return err("contact_reference_mismatch");
+      contact_id = resolved;
+    }
+    if (!contact_id) return err("client_ref_required");
     const { data: existing, error: exErr } = await admin
       .from("clients").select("id, tenant_id").eq("id", contact_id).maybeSingle();
     if (exErr) return err(exErr.message);
@@ -1836,14 +1918,30 @@ mcp.tool("update_contact", {
     for (const [k, v] of Object.entries(rest)) {
       if (v !== undefined) patch[k] = v;
     }
-    if (Object.keys(patch).length === 0) {
+    const methods = contact_methods ?? add_contact_methods;
+    if (Object.keys(patch).length === 0 && !methods) {
       return ok({ ok: true, contact_id, updated_fields: [], note: "no fields supplied" });
     }
 
-    const { error: uErr } = await admin.from("clients").update(patch).eq("id", contact_id);
-    if (uErr) return err(uErr.message);
-    await audit("update_contact", "client", contact_id, { fields: Object.keys(patch) });
-    return ok({ ok: true, contact_id, updated_fields: Object.keys(patch) });
+    // Addresses first: they are the part that can be refused (a changed list, a malformed or
+    // already-used address), and the database checks the whole list before it writes any of it.
+    if (methods) {
+      const target = { _tenant_id: tenant_id, _client_id: contact_id, _methods: methods };
+      const { error: methodsError } = contact_methods
+        ? await admin.rpc("_replace_client_contact_methods_checked", { ...target, _expected: expected_contact_methods })
+        : await admin.rpc("_add_client_contact_methods", target);
+      if (methodsError) return err(contactMethodsError(methodsError.message));
+    }
+    if (Object.keys(patch).length) {
+      const { error: uErr } = await admin.from("clients").update(patch).eq("id", contact_id).eq("tenant_id", tenant_id);
+      if (uErr) return err(uErr.message);
+    }
+    const updatedFields = [...Object.keys(patch), ...(contact_methods ? ["contact_methods"] : add_contact_methods ? ["add_contact_methods"] : [])];
+    await audit("update_contact", "client", contact_id, { fields: updatedFields }, tenant_id);
+    const { data: after } = await admin.from("clients")
+      .select(`account_number, updated_at, ${CONTACT_METHOD_SELECT}`).eq("id", contact_id).eq("tenant_id", tenant_id).maybeSingle();
+    return ok({ ok: true, contact_id, client_ref: after?.account_number ?? null, updated_fields: updatedFields,
+      contact_methods: orderedContactMethods(after?.client_contact_methods), updated_at: after?.updated_at ?? null });
   },
 });
 
@@ -1864,11 +1962,11 @@ mcp.tool("bulk_delete_contacts", {
     // Resolve which ids actually belong to caller's tenant.
     const { data: rows, error: rErr } = await admin
       .from("clients")
-      .select("id, tenant_id, first_name, last_name, email")
+      .select(`id, tenant_id, first_name, last_name, ${CONTACT_METHOD_SELECT}`)
       .in("id", contact_ids);
     if (rErr) return err(rErr.message);
 
-    const eligible = (rows ?? []).filter((r) => r.tenant_id === tenant_id);
+    const eligible = (rows ?? []).filter((r) => r.tenant_id === tenant_id).map(withPrimaryAddressFields);
     const eligibleIds = eligible.map((r) => r.id as string);
     const skipped = contact_ids.filter((id) => !eligibleIds.includes(id));
 
@@ -2628,8 +2726,10 @@ mcp.tool("send_invoice", {
     if (!inv) return err("invoice_not_found");
     if (inv.status !== "draft") return err(`invoice_not_draft:${inv.status}`);
 
-    const { data: contact } = await admin
-      .from("clients").select("email, first_name, last_name").eq("id", inv.contact_id).maybeSingle();
+    // The invoice goes to the contact's PRIMARY email, whichever of their addresses that is.
+    const { data: contactRow } = await admin
+      .from("clients").select(`first_name, last_name, ${CONTACT_METHOD_SELECT}`).eq("id", inv.contact_id).maybeSingle();
+    const contact = contactRow ? withPrimaryAddressFields(contactRow) : null;
     if (!contact?.email) return err("contact_email_missing");
 
     // Stripe Connect hosted URL — placeholder fallback (BYPASS_STRIPE_CONNECT) when not configured.
@@ -2816,24 +2916,32 @@ mcp.tool("search_clients_fuzzy", {
     // so a natural-language query ("Marcus from Atlanta") surfaces candidates (stopwords
     // just match nothing) AND a full name ("Tashia Anderson") is no longer missed because
     // first/last live in separate columns. Includes `city` for the "from <place>" pattern.
-    let q = applyContactSearchFilter(
-      admin
-        .from("clients")
-        .select("id, first_name, last_name, email, phone, entity_name, city, state, lifecycle_stage, tenant_id, updated_at"),
-      String(query),
-      { mode: "any", columns: [...CONTACT_SEARCH_COLUMNS, "city"] },
-    );
     // Only the platform owner searches across every tenant; everyone else
     // (including agencies) is hard-scoped to their own tenant here (§9).
     // Fail CLOSED: a non-god with no resolvable tenant gets nothing, never an
     // unscoped cross-tenant search.
-    if (!isGod) {
-      if (!tid) return err("tenant_not_resolved");
-      q = q.eq("tenant_id", tid);
-    }
+    if (!isGod && !tid) return err("tenant_not_resolved");
+    // An email or phone token matches whichever of the contact's addresses holds it, inside the
+    // same reach as the name search (the caller's workspace; every workspace for the owner).
+    const addressMatches = await contactIdsByAddressToken(
+      admin, isGod ? { anyWorkspace: true } : tid!, String(query), "paige-mcp",
+    );
+    let q = applyContactSearchFilter(
+      admin
+        .from("clients")
+        .select(`id, first_name, last_name, entity_name, city, state, lifecycle_stage, tenant_id, updated_at, ${CONTACT_METHOD_SELECT}`),
+      String(query),
+      { mode: "any", columns: [...CONTACT_NAME_SEARCH_COLUMNS, "city"], addressMatches },
+    );
+    if (!isGod) q = q.eq("tenant_id", tid);
     const { data, error } = await q.order("updated_at", { ascending: false }).limit(max);
     if (error) return err(error.message);
-    const items = data ?? [];
+    // Each candidate keeps its `email` / `phone` (now its primary of each kind) and carries every
+    // address it holds, so a teammate can recognise the person by any of them.
+    const items = (data ?? []).map((row) => ({
+      ...withPrimaryAddressFields(row),
+      contact_methods: orderedContactMethods(row.client_contact_methods),
+    }));
     return ok({
       items,
       count: items.length,
@@ -2853,7 +2961,7 @@ mcp.tool("propose_client_update", {
     "Stage a free-form update against a single contact. DOES NOT WRITE. Returns a proposal_id and a diff that the connected LLM MUST read back to the teammate before calling `confirm_proposal`. Use this for ad-hoc changes that don't have a dedicated ingest_* tool.",
   inputSchema: z.object({
     client_id: z.string(),
-    updates: z.record(z.any()).describe("Partial fields on clients (whitelisted): first_name, last_name, email, phone, entity_name, entity_type, street_address, city, state, zip_code, funding_goal, monthly_revenue, primary_offer, lifecycle_stage, tier, source, title, website, current_notes."),
+    updates: z.record(z.any()).describe("Partial fields on clients (whitelisted): first_name, last_name, entity_name, entity_type, street_address, city, state, zip_code, funding_goal, monthly_revenue, primary_offer, lifecycle_stage, tier, source, title, website, current_notes. Emails and phones are the contact's contact methods, changed with ONE of: `email` / `phone` (makes that address the primary of its kind, replacing the current primary; every other address is kept), `add_contact_methods` ([{ kind: \"email\" | \"phone\", value, label?, is_primary? }] — adds, keeping every address already held), or `contact_methods` (the COMPLETE list; anything left out is removed)."),
     confidence: z.enum(CONFIDENCE).describe("high = teammate confirmed verbatim, medium = paraphrased, low = unsure/approximate."),
     external_llm_model: z.string().optional(),
     review_reason: z.string().optional().describe("Why this might need human review."),
@@ -2861,19 +2969,45 @@ mcp.tool("propose_client_update", {
   handler: async ({ client_id, updates, confidence, external_llm_model, review_reason }) => {
     const scope = await tenantScopedClient(client_id);
     if (!scope.ok) return err(scope.reason ?? "scope_denied");
-    const ALLOWED = new Set([
-      "first_name","last_name","email","phone","entity_name","entity_type",
-      "street_address","city","state","zip_code","funding_goal","monthly_revenue",
-      "primary_offer","lifecycle_stage","tier","source","title","website","current_notes",
-    ]);
+    const ALLOWED = new Set(PROPOSABLE_CLIENT_FIELDS);
     const clean: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(updates ?? {})) if (ALLOWED.has(k)) clean[k] = v;
-    if (Object.keys(clean).length === 0) return err("no_whitelisted_fields");
+    // The row half is checked now, exactly as the contact row would check it, so a proposal that
+    // the database would refuse is never staged — and never half-applied on confirm.
+    const rowProblem = clientRowPatchProblem(clean);
+    if (rowProblem) return err(rowProblem);
 
-    const { data: current } = await admin.from("clients").select(Object.keys(clean).join(",")).eq("id", client_id).maybeSingle();
+    // Addresses: the proposal records the address change the teammate ASKED for (make primary /
+    // add / replace) and the list it was built on — never a frozen copy of the whole resulting
+    // list. On confirm (writeAddressIntent) an addition merges onto the list held then; a new
+    // primary or replacement lands only if the list is still the one it was built on (the preview).
+    const addressIntent = proposedAddressIntent(updates ?? {});
+    if ("error" in addressIntent) return err(addressIntent.error);
+    if (Object.keys(clean).length === 0 && !addressIntent.intent) return err("no_whitelisted_fields");
+
     const diff: Record<string, { from: unknown; to: unknown }> = {};
-    for (const [k, v] of Object.entries(clean)) {
-      diff[k] = { from: (current as Record<string, unknown> | null)?.[k] ?? null, to: v };
+    if (Object.keys(clean).length) {
+      const { data: current } = await admin.from("clients").select(Object.keys(clean).join(",")).eq("id", client_id).maybeSingle();
+      for (const [k, v] of Object.entries(clean)) {
+        diff[k] = { from: (current as Record<string, unknown> | null)?.[k] ?? null, to: v };
+      }
+    }
+    let builtOn: ContactMethodInput[] | undefined;
+    if (addressIntent.intent) {
+      const { data: held, error: heldErr } = await admin.from("client_contact_methods")
+        .select("kind, value, label, is_primary, position").eq("client_id", client_id);
+      if (heldErr) return err(heldErr.message);
+      builtOn = heldMethods(held);
+      const preview = intentResult(addressIntent.intent, builtOn);
+      // Refused here, before anything is staged, exactly as the write would refuse it.
+      const checks = addressIntent.intent.op === "add"
+        ? [addressIntent.intent.methods, preview]
+        : [preview];
+      for (const list of checks) {
+        const { error: shapeError } = await admin.rpc("contact_methods_canonical", { _methods: list });
+        if (shapeError) return err(contactMethodsError(shapeError.message));
+      }
+      diff.contact_methods = { from: builtOn, to: preview };
     }
 
     const needsReview = confidence === "low" || !!review_reason;
@@ -2881,7 +3015,7 @@ mcp.tool("propose_client_update", {
       client_id,
       tool_name: "propose_client_update",
       target_table: "clients",
-      payload: { updates: clean },
+      payload: { updates: clean, ...(addressIntent.intent ? { address_intent: addressIntent.intent, contact_methods_built_on: builtOn } : {}) },
       diff,
       confidence,
       source: "mcp:field_ops",
@@ -2890,7 +3024,7 @@ mcp.tool("propose_client_update", {
       auto_status: needsReview ? "needs_review" : "pending",
     });
     if (!proposal) return err("proposal_insert_failed");
-    await audit("propose_client_update", "client", client_id, { proposal_id: proposal.id, fields: Object.keys(clean) });
+    await audit("propose_client_update", "client", client_id, { proposal_id: proposal.id, fields: Object.keys(diff) });
     return ok({
       proposal_id: proposal.id,
       client_id,
@@ -3157,10 +3291,55 @@ async function applyProposal(proposal_id: string): Promise<{ ok: boolean; applie
   try {
     switch (prop.tool_name) {
       case "propose_client_update": {
-        const updates = payload.updates ?? {};
-        const { error: upErr } = await admin.from("clients").update(updates).eq("id", prop.client_id);
-        if (upErr) throw upErr;
-        applied.clients = { id: prop.client_id, updated_fields: Object.keys(updates) };
+        const updates = (payload.updates ?? {}) as Record<string, unknown>;
+        // Checked again before anything is written: a proposal the row would refuse is sent back
+        // for review whole, rather than failing after its addresses have landed.
+        const rowProblem = clientRowPatchProblem(updates);
+        if (rowProblem) throw new Error(rowProblem);
+        const intent = payload.address_intent === undefined ? null : storedAddressIntent(payload.address_intent);
+        if (payload.address_intent !== undefined && !intent) throw new Error("address_change_unreadable: propose it again");
+        if (Array.isArray(payload.contact_methods)) throw new Error("address_change_format_retired: propose it again");
+        const builtOn = storedMethodList(payload.contact_methods_built_on);
+        if (intent && intent.op !== "add" && !builtOn) throw new Error("address_change_unreadable: propose it again");
+
+        const { data: owner, error: ownerErr } = await admin.from("clients")
+          .select("tenant_id").eq("id", prop.client_id).maybeSingle();
+        if (ownerErr) throw ownerErr;
+        if (!owner?.tenant_id) throw new Error("contact_not_found");
+
+        // Addresses first: they are the part that can still be refused now — the list changed
+        // since it was proposed (CONTACT_METHODS_STALE), or another contact holds an address — and
+        // a refusal there writes nothing at all. The change is applied to the list held NOW: an
+        // addition merges under the database's rules, and a replacement or new primary is checked
+        // against the list the proposal was built on.
+        let addressWrite: Extract<AddressWriteResult, { ok: true }> | null = null;
+        if (intent) {
+          const written = await writeAddressIntent(admin, owner.tenant_id, prop.client_id, intent, builtOn);
+          if (!written.ok) {
+            throw new Error(written.stale
+              ? "contact_methods_changed_since_proposal: the contact's emails or phones changed after this was proposed, so nothing was written — propose it again against the current list"
+              : contactMethodsError(written.error));
+          }
+          addressWrite = written;
+          applied.contact_methods = { client_id: prop.client_id, count: written.after.length };
+        }
+        if (Object.keys(updates).length) {
+          const { error: upErr } = await admin.from("clients").update(updates)
+            .eq("id", prop.client_id).eq("tenant_id", owner.tenant_id);
+          if (upErr) {
+            // Put the addresses back so the proposal is all-or-nothing. The undo is itself checked:
+            // if someone changed the list in the meantime it refuses, and the audit says so.
+            if (addressWrite) {
+              const undoErr = await undoAddressWrite(admin, owner.tenant_id, prop.client_id, addressWrite);
+              if (undoErr) {
+                throw new Error(`apply_partial: the address change was saved and could not be undone (${undoErr}); the field update failed: ${upErr.message}`);
+              }
+              delete applied.contact_methods;
+            }
+            throw upErr;
+          }
+        }
+        applied.clients = { id: prop.client_id, updated_fields: [...Object.keys(updates), ...(intent ? ["contact_methods"] : [])] };
         break;
       }
       case "ingest_credit_scores": {
@@ -3254,6 +3433,9 @@ async function applyProposal(proposal_id: string): Promise<{ ok: boolean; applie
       .from("paige_ingestion_proposals")
       .update({ status: "needs_review", review_reason: `apply_failed: ${msg}` })
       .eq("id", proposal_id);
+    // What actually landed before the failure (empty when nothing did), so the record never says
+    // less than the database holds.
+    await audit("apply_proposal_failed", "proposal", proposal_id, { tool: prop.tool_name, reason: msg, landed: applied });
     return { ok: false, reason: `apply_failed:${msg}` };
   }
 
@@ -4382,9 +4564,11 @@ mcp.tool("bulk_send_template_email", {
     if (!fromAddress) return err("from_address_not_resolved");
     const fromHeader = fromName ? `${fromName} <${fromAddress}>` : fromAddress;
 
-    const { data: contacts, error: cErr } = await admin.from("clients")
-      .select("id, email, first_name, last_name, entity_name").in("id", contact_ids);
+    // Each contact is mailed at their PRIMARY email, whichever of their addresses that is.
+    const { data: contactRows, error: cErr } = await admin.from("clients")
+      .select(`id, first_name, last_name, entity_name, ${CONTACT_METHOD_SELECT}`).in("id", contact_ids);
     if (cErr) return err(cErr.message);
+    const contacts = (contactRows ?? []).map(withPrimaryAddressFields);
 
     const interp = (s: string, vars: Record<string, unknown>) =>
       s.replace(/\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g, (_, k) => String(vars[k] ?? ""));
@@ -4529,9 +4713,16 @@ mcp.tool("me_get_profile", {
   handler: async () => {
     const me = await actorClient();
     if (!me) return err("no_linked_client_record");
-    const { data, error } = await admin.from("clients").select("*").eq("id", me.id).maybeSingle();
+    const { data, error } = await admin.from("clients")
+      .select(`${CLIENT_RECORD_COLUMNS}, ${CONTACT_METHOD_SELECT}`).eq("id", me.id).maybeSingle();
     if (error) return err(error.message);
-    return ok({ profile: data });
+    // The column list is built at runtime, so the row's type is stated rather than inferred.
+    const record = data as unknown as ({ client_contact_methods?: unknown } & Record<string, unknown>) | null;
+    // `email` / `phone` stay on the profile, each now the caller's PRIMARY of that kind; every
+    // address they hold comes with it.
+    return ok({
+      profile: record ? { ...withPrimaryAddressFields(record), contact_methods: orderedContactMethods(record.client_contact_methods) } : record,
+    });
   },
 });
 
@@ -4548,14 +4739,53 @@ mcp.tool("me_update_profile", {
   handler: async (patch) => {
     const me = await actorClient();
     if (!me) return err("no_linked_client_record");
-    const ALLOWED = ["first_name","last_name","phone","entity_name","current_notes","funding_goal_amount"];
+    // Each self-editable input, and the contact-row column it writes. `funding_goal_amount` is the
+    // tool's input name; the column is `funding_goal` (there is no funding_goal_amount column, so
+    // writing the input name straight through failed every time it was sent).
+    const COLUMNS: Record<string, string> = {
+      first_name: "first_name", last_name: "last_name", entity_name: "entity_name",
+      current_notes: "current_notes", funding_goal_amount: "funding_goal",
+    };
+    const input = patch as Record<string, unknown>;
     const clean: Record<string, unknown> = {};
-    for (const k of ALLOWED) if ((patch as any)[k] !== undefined) clean[k] = (patch as any)[k];
-    if (Object.keys(clean).length === 0) return err("no_updatable_fields");
-    const { error } = await admin.from("clients").update(clean).eq("id", me.id);
-    if (error) return err(error.message);
-    await audit("me_update_profile", "contact", me.id, { fields: Object.keys(clean) });
-    return ok({ updated: true, fields: Object.keys(clean) });
+    for (const [field, column] of Object.entries(COLUMNS)) if (input[field] !== undefined) clean[column] = input[field];
+    const phone = (patch as { phone?: string }).phone;
+    if (Object.keys(clean).length === 0 && phone === undefined) return err("no_updatable_fields");
+    const rowProblem = clientRowPatchProblem(clean);
+    if (rowProblem) return err(rowProblem);
+    const fieldsOf = (row: boolean, address: boolean) => [
+      ...(row ? Object.keys(COLUMNS).filter((f) => input[f] !== undefined) : []),
+      ...(address ? ["phone"] : []),
+    ];
+
+    // A phone is one of the caller's contact methods: it becomes their PRIMARY phone, taking the
+    // current primary's place, and every other address they hold is kept. It is written first —
+    // it is the part the database can refuse, and a refusal writes nothing — against the list held
+    // at that moment, checked, so an address added concurrently is never overwritten.
+    let addressWrite: Extract<AddressWriteResult, { ok: true }> | null = null;
+    if (phone !== undefined) {
+      if (!me.tenant_id) return err("tenant_not_resolved");
+      const written = await writeAddressIntent(admin, me.tenant_id, me.id, { op: "primary", values: { phone } }, null, 2);
+      if (!written.ok) return err(contactMethodsError(written.error));
+      addressWrite = written;
+    }
+    if (Object.keys(clean).length) {
+      const { error } = await admin.from("clients").update(clean).eq("id", me.id);
+      if (error) {
+        // All-or-nothing: put the phone back, checked against the list this call left.
+        if (addressWrite && me.tenant_id) {
+          const undoErr = await undoAddressWrite(admin, me.tenant_id, me.id, addressWrite);
+          if (undoErr) {
+            await audit("me_update_profile", "contact", me.id, { fields: fieldsOf(false, true), failed_fields: fieldsOf(true, false), reason: error.message });
+            return err(`${error.message} (your phone was saved and could not be put back: ${undoErr})`);
+          }
+        }
+        return err(error.message);
+      }
+    }
+    const fields = fieldsOf(true, phone !== undefined);
+    await audit("me_update_profile", "contact", me.id, { fields });
+    return ok({ updated: true, fields });
   },
 });
 
@@ -4917,12 +5147,17 @@ mcp.tool("handle_data_subject_request", {
   handler: async ({ contact_id, request_type, corrections, reason }) => {
     const tenantId = await actorTenantId();
     if (!tenantId) return err("tenant_not_resolved");
+    // The call runs with the service role, so the database has no session to know who is acting:
+    // it is told, and it re-checks that this person is a platform owner or an owner/admin of the
+    // tenant resolved above (20270519010000). A platform-key caller has no person to name and is
+    // refused there as actor_required: an erasure or correction needs someone accountable for it.
     const { data, error } = await admin.rpc("handle_data_subject_request", {
       _tenant_id: tenantId,
       _contact_id: contact_id,
       _request_type: request_type,
       _corrections: corrections ?? null,
       _reason: reason ?? null,
+      _actor_user_id: currentActor().user_id,
     });
     if (error) return err(error.message);
     await audit("handle_data_subject_request", "clients", contact_id, { request_type, reason });
@@ -5162,8 +5397,6 @@ const TOOL_SCOPE: Record<string, Scope> = {
   send_invoice: "crm.write",
   // Coach Ops
   list_coaches: "admin.read",
-  add_coach_role: "admin.write",         // Tenant Admin can add
-  remove_coach_role: "admin.delete",     // Tenant Owner only (permanent role removal)
   update_coach_profile: "admin.write",
   bulk_assign_clients_to_coach: "admin.write",
   get_coach_performance: "admin.read",

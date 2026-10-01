@@ -1,6 +1,7 @@
 // Unified notification dispatcher — checks preferences and routes to email + SMS.
 // Triggers (DB hooks, cron, app code) call this single function.
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { isAuthorizedInternalCaller, adminClient } from '../_shared/systems-check-http.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -57,6 +58,15 @@ async function logComm(
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders })
+  // Internal only. This function forwards to send-transactional-email (and, here, SMS) with the
+  // service key, so an open door here was an open relay there: anyone holding the publishable key could pick the template, the content and the user. Its callers are the platform's
+  // own crons and database triggers, which all send the service key.
+  if (!(await isAuthorizedInternalCaller(req, adminClient()))) {
+    return new Response(JSON.stringify({ error: 'forbidden' }), {
+      status: 403,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!

@@ -1,0 +1,53 @@
+.pa-mark { display: block; flex: none; overflow: visible; }
+.pa-mark__slash,
+.pa-mark__ghost {
+  stroke-width: 3.2;
+  stroke-linejoin: round;
+}
+.pa-mark__slash {
+  fill: var(--pa-slash, #c9860c);
+  stroke: var(--pa-slash, #c9860c);
+  transition: fill 180ms cubic-bezier(0.22, 1, 0.36, 1), stroke 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.pa-mark__orb {
+  fill: var(--pa-orb, #e9a83a);
+  transition: fill 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.pa-mark__ghost {
+  fill: var(--pa-slash, #c9860c);
+  stroke: var(--pa-slash, #c9860c);
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Dormant: graphite at rest. */
+.pa-mark--dormant .pa-mark__slash { fill: var(--pa-graphite); stroke: var(--pa-graphite); }
+.pa-mark--dormant .pa-mark__orb { fill: var(--pa-graphite); }
+
+/* Charged: champagne crossfade, one bloom (never loops). */
+.pa-mark--charged { animation: pa-mark-bloom 620ms ease-out 1; transform-origin: 50% 50%; }
+@keyframes pa-mark-bloom {
+  0% { transform: scale(0.7); }
+  55% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+/* Executed: two ghost slashes stream off — the act, once. */
+.pa-mark--executed .pa-mark__ghost--1 { animation: pa-mark-ghost 520ms cubic-bezier(0.16, 1, 0.3, 1) 1 both; }
+.pa-mark--executed .pa-mark__ghost--2 { animation: pa-mark-ghost 520ms cubic-bezier(0.16, 1, 0.3, 1) 90ms 1 both; }
+.pa-mark--executed .pa-mark__orb { fill: var(--pa-champagne-hi, #f5c266); }
+@keyframes pa-mark-ghost {
+  0% { opacity: 0.55; transform: translateX(0) scale(1); }
+  100% { opacity: 0; transform: translateX(-26px) scale(1.6); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pa-mark--charged { animation: none; }
+  .pa-mark--executed .pa-mark__ghost { animation: none; opacity: 0; }
+  /* The act still resolves as an instant state change (identity doc §3). */
+  .pa-mark--executed .pa-mark__orb { fill: #fff6e2; }
+  .pa-mark--executed .pa-mark__slash { fill: var(--pa-champagne, #e6ac41); stroke: var(--pa-champagne, #e6ac41); }
+}
+
+.pa-lockup { display: inline-flex; align-items: center; gap: 0.62em; line-height: 1; }

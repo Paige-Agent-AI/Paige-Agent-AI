@@ -122,8 +122,8 @@ async function resolveAgencyLanding(userId: string): Promise<string | null> {
     //
     // The agency-team-invitee branch further down already returns bare `/agency` for
     // exactly this reason — but it is UNREACHABLE for these users, because the
-    // `admin`/`coach` branch above calls this resolver first, and `admin`/`coach` are
-    // GLOBAL roles (`user_roles` has no tenant_id, §59), so anyone running their own
+    // `admin` branch above calls this resolver first, and `admin` is a
+    // GLOBAL role (`user_roles` has no tenant_id, §59), so anyone running their own
     // tenant carries one. This check is what makes that stated protection real.
     //
     // Tested by VISIBILITY, not by re-deriving the predicate: we ask for the agency row
@@ -159,7 +159,7 @@ async function resolveAgencyLanding(userId: string): Promise<string | null> {
  * onboarding stage so the workspace + onboarding gates accept them.
  *
  * Priority:
- *   1. admin / coach   → /admin
+ *   1. admin           → /admin
  *   2. broker / broker_team_member → /broker/app
  *   3. linked client (clients.linked_user_id = user.id) → /onboard/<stage> or /workspace
  *   4. tenant owner/member with no synced role yet → /admin
@@ -247,7 +247,7 @@ export async function resolveLandingRoute(userId: string): Promise<string> {
     }
     // Tenant/agency operators may prefer to land on their /agency side (#191);
     // a non-agency operator, or one who prefers 'last_account', falls to /admin.
-    if (roles.includes("admin") || roles.includes("coach")) {
+    if (roles.includes("admin")) {
       const agencyRoute = await resolveAgencyLanding(userId);
       return agencyRoute ?? "/choose-account";
     }

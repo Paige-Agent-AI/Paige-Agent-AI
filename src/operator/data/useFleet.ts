@@ -89,14 +89,55 @@ export type FleetData = {
    * uses it to say what it cannot see instead of filtering on an answer it never got.
    */
   classificationVisible: boolean;
+  /**
+   * True when the seat or client read FAILED (a timeout, a 5xx) or came back TRUNCATED at the row
+   * cap (`rowReadComplete`). The rows then carry
+   * `seats: 0` / `customers: 0` that were never read, so the surface must treat the counts as
+   * unknown — never as zeros to display or grade (§13). See `fleetDetailVisible`.
+   */
+  detailReadFailed: boolean;
   loading: boolean;
   /** True when the read failed — the surface says so rather than rendering an empty fleet. */
   error: string | null;
 };
 
+/**
+ * Whether this session's per-tenant SEAT and CLIENT counts are real — `true`, `false`, or `null`
+ * when that cannot be established.
+ *
+ * Full-fleet reads of `tenant_members` and `clients` are granted to the platform owner
+ * (`is_platform_owner()`, i.e. super_admin) and otherwise only within tenants the caller belongs to
+ * or administers. A tenant-less `platform_admin` therefore receives no rows, and every tenant
+ * arrives with `seats: 0` — a zero that was never read. So a count is shown and graded only when
+ * the server has said this session is the owner AND both reads succeeded. A platform_admin who
+ * administers some tenant could read that one tenant's rows; the directory still treats its counts
+ * as not visible, which can only understate, never overstate. If who may read these rows changes,
+ * this rule changes with it.
+ *
+ * `isPlatformOwner` is the server's answer from `useIsPlatformOwner` (null = not answered yet).
+ */
+export function fleetDetailVisible(isPlatformOwner: boolean | null, readFailed: boolean): boolean | null {
+  if (readFailed || isPlatformOwner === null) return null;
+  return isPlatformOwner;
+}
+
+/**
+ * Whether a row read returned EVERY row the server matched. PostgREST caps an unpaginated read at
+ * the project's max-rows and returns the first page without saying so, so per-tenant counts built
+ * from that page would undercount — and could print "no clients" for a tenant whose rows were cut —
+ * the moment the fleet outgrows the cap. The read therefore asks the server for the exact match
+ * count, and a count the page does not cover, or a count the server did not give, is treated as a
+ * failed read: the surface then says the counts could not be confirmed (§13). A server-side grouped
+ * count would remove the cap altogether; that is a backend change, filed rather than made here.
+ */
+export function rowReadComplete(rowsReturned: number, matched: number | null): boolean {
+  return matched !== null && matched <= rowsReturned;
+}
+
 export function useFleet(enabled: boolean): FleetData {
   const [tenants, setTenants] = useState<FleetTenant[]>([]);
   const [classificationVisible, setClassificationVisible] = useState(false);
+  const [detailReadFailed, setDetailReadFailed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -108,14 +149,19 @@ export function useFleet(enabled: boolean): FleetData {
       setLoading(true);
       setError(null);
       try {
-        const [{ data: rows, error: tErr }, { data: members }, { data: clients }, { data: revenue }] =
+        const [
+          { data: rows, error: tErr },
+          { data: members, error: membersErr, count: membersMatched },
+          { data: clients, error: clientsErr, count: clientsMatched },
+          { data: revenue },
+        ] =
           await Promise.all([
             supabase
               .from("tenants")
               .select("id, slug, name, status, account_type, parent_tenant_id, plan_offer, trial_ends_at")
               .order("created_at", { ascending: true }),
-            supabase.from("tenant_members").select("tenant_id").eq("status", "active"),
-            supabase.from("clients").select("tenant_id"),
+            supabase.from("tenant_members").select("tenant_id", { count: "exact" }).eq("status", "active"),
+            supabase.from("clients").select("tenant_id", { count: "exact" }),
             // Operator-internal revenue axis. RLS is owner-only, so a scoped platform_admin
             // reads 0 rows and every tenant simply shows no class — a narrower view, never a
             // leak and never a wrong number (§9).
@@ -143,6 +189,11 @@ export function useFleet(enabled: boolean): FleetData {
         // Any row at all proves the read is permitted for this session. None proves nothing
         // either way, so we report it as not-visible rather than as an empty classification.
         setClassificationVisible((revenue ?? []).length > 0);
+        setDetailReadFailed(
+          Boolean(membersErr || clientsErr) ||
+            !rowReadComplete((members ?? []).length, membersMatched ?? null) ||
+            !rowReadComplete((clients ?? []).length, clientsMatched ?? null),
+        );
         const classBy = new Map<string, string>(
           ((revenue ?? []) as unknown as Array<{ tenant_id: string; revenue_class: string }>).map(
             (r) => [r.tenant_id, r.revenue_class],
@@ -177,5 +228,5 @@ export function useFleet(enabled: boolean): FleetData {
     };
   }, [enabled]);
 
-  return { tenants, classificationVisible, loading, error };
+  return { tenants, classificationVisible, detailReadFailed, loading, error };
 }

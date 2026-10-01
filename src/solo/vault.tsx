@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenantContext } from "@/hooks/useTenantContext";
+import { useTenantFeature } from "@/hooks/useTenantFeature";
 import {
   buildVaultContractMutation,
   summarizeContinuityPulse,
@@ -40,6 +41,7 @@ import {
   type VaultRecord,
 } from "./vault/vault-contract";
 import { useBusinessVault } from "./vault/useBusinessVault";
+import { SecureBrowserConnectedAccounts } from "./vault/SecureBrowserConnectedAccounts";
 import "./vault.css";
 
 const TABS = [
@@ -51,6 +53,7 @@ const TABS = [
   ["relationships", "Relationships"],
   ["intake", "Intake & Review"],
   ["security", "Access & Security"],
+  ["connected_accounts", "Connected Accounts"],
   ["archive", "Archive"],
 ] as const;
 type Tab = (typeof TABS)[number][0];
@@ -1097,6 +1100,8 @@ function MetadataDialog({
 function VaultWorkspace({ openPaige }: { openPaige?: () => void }) {
   const vault = useBusinessVault();
   const [tab, setTab] = useState<Tab>("overview");
+  const { enabled: secureBrowserEnabled, loading: secureBrowserFlagLoading } =
+    useTenantFeature("secure_browser");
   const [uploadOpen, setUploadOpen] = useState(false);
   const [replaceRecord, setReplaceRecord] = useState<VaultRecord | null>(null);
   const [selected, setSelected] = useState<VaultRecord | null>(null);
@@ -1116,6 +1121,15 @@ function VaultWorkspace({ openPaige }: { openPaige?: () => void }) {
     () => summarizeContinuityPulse(vault.snapshot?.obligations || []),
     [vault.snapshot],
   );
+  const visibleTabs = useMemo(
+    () => TABS.filter(([id]) => id !== "connected_accounts" || secureBrowserEnabled),
+    [secureBrowserEnabled],
+  );
+  useEffect(() => {
+    if (!secureBrowserFlagLoading && !secureBrowserEnabled && tab === "connected_accounts") {
+      setTab("overview");
+    }
+  }, [secureBrowserEnabled, secureBrowserFlagLoading, tab]);
 
   if (vault.state === "loading")
     return (
@@ -1191,14 +1205,14 @@ function VaultWorkspace({ openPaige }: { openPaige?: () => void }) {
           value={tab}
           onChange={(event) => setTab(event.target.value as Tab)}
         >
-          {TABS.map(([id, label]) => (
+          {visibleTabs.map(([id, label]) => (
             <option key={id} value={id}>
               {label}
             </option>
           ))}
         </select>
         <div>
-          {TABS.map(([id, label]) => (
+          {visibleTabs.map(([id, label]) => (
             <button
               key={id}
               aria-current={tab === id ? "page" : undefined}
@@ -1690,6 +1704,7 @@ function VaultWorkspace({ openPaige }: { openPaige?: () => void }) {
             </section>
           </div>
         )}
+        {tab === "connected_accounts" && secureBrowserEnabled && <SecureBrowserConnectedAccounts />}
       </main>
       {uploadOpen && (
         <UploadDialog

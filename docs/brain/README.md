@@ -124,7 +124,7 @@ All figures below were checked live this session; how each was verified is in `c
   `is_active`); **live Stripe active prices = Solo + Agency only** (Enterprise has no active Stripe
   price yet — see `config-registry.md`).
 - **CI pipelines:** 6 — `ci`, `deploy-migrations`, `deploy-edge-functions`, `migration-lint`,
-  `premerge-migration-proof`, `security-audit` (verified: `.github/workflows/`). Plus two RLS
+  `premerge-migration-proof` (**DISABLED** since 2026-08-24 — does not run; #574), `security-audit` (verified: `.github/workflows/`). Plus two RLS
   drift-guard npm scripts wired into `ci.yml`: **`lint:views`** (VIEW `security_invoker` drift, #116/PR #447)
   + **`lint:definer-fns`** (`SECURITY DEFINER` fn granted to anon w/o exempt escape, #117/PR #448) —
   the anon/cross-tenant-reach class is now guarded at both Postgres object types. See `config-registry.md` → CI.
@@ -132,6 +132,22 @@ All figures below were checked live this session; how each was verified is in `c
   immutable session revision. Historical literal/request overrides were superseded by the
   2026-09-07 Live Conversation delivery. Provider-backed realtime audio remains `PROOF OWED`; see
   `config-registry.md` → Voice.
+- **Live Conversation admission (2026-09-24, migrations `20270420000000` then `20270422000000`):**
+  eligibility is a question about the tenant's TIER (`live_conversation_tier_allows`, the server twin
+  of `SOLO_FEATURES`, pinned to it by a test), so every Solo account satisfies it the moment it is
+  provisioned — no per-account row, no operator action, and a MISSING `paige_live_tenant_availability`
+  row now means "follow the scope" rather than "refused". *Who may speak today* is ONE setting,
+  `paige_voice_readiness.pilot_rollout_scope` (`'off' | 'solo_tier'`), which names no person, login or
+  workspace and ships `'off'`; `paige-voice-profile-admin` has one additive action to turn it. The
+  three admission edge functions used to read the availability row themselves and refuse before ever
+  consulting the predicate, which made the tier change inert in every product path until an
+  adversarial read caught it; those duplicate reads are gone and the predicate is the one home.
+  HONEST GAP: no surface calls `paige_live_accept_terms()` yet, so opening the scope gives a Solo user
+  nothing to press. Admission used to be an identity predicate pinned to one `super_admin` user id,
+  which made every other Solo account structurally incapable of Live — see
+  `lessons-learned.md` and
+  [the evidence record](../evidence/ui-delivery/int-104-live-rollout-is-configuration.md). The
+  provider gate is unchanged and still shut; a multi-tenant build is not the restriction lifting.
 - **Operator Communications:** live on prod — PR #408 (`2ee92903`), §32.a confirmed
   (`operator_conversations`/`operator_messages`). Inert until A2P MG SID + inbound token pasted.
 - **Wave 4a:** CLOSED — 4a.1 Agent right-rail (#405) · 4a.2 L8 Memory Fabric (#406) · 4a.3 chat

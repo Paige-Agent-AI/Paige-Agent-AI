@@ -8,6 +8,7 @@ import { Check, X, Mic, Sparkles, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { useTenantFeature } from "@/hooks/useTenantFeature";
+import { applyClientUpdateProposal } from "./applyClientUpdateProposal";
 
 type Proposal = {
   id: string;
@@ -132,7 +133,10 @@ export default function FieldIngestionTab() {
           metadata: { proposal_id: p.id, admin_approved: true },
         });
       } else if (p.tool_name === "propose_client_update" && p.client_id) {
-        await supabase.from("clients").update(payload.updates ?? {}).eq("id", p.client_id);
+        // Addresses are the contact's methods (the address change the proposal asked for, planned
+        // on the list held now, as confirm_proposal plans it); every other field is a column on the
+        // contact row. Any refusal or failure throws, so the proposal is never marked applied.
+        await applyClientUpdateProposal({ client_id: p.client_id, tenant_id: p.tenant_id, payload: p.payload, diff: p.diff });
       } else if (p.tool_name === "ingest_banking_snapshot" && p.client_id) {
         const { data: cli } = await supabase
           .from("clients")

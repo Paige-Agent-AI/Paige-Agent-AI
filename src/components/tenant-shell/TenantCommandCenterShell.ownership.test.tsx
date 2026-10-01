@@ -20,6 +20,25 @@ afterEach(() => {
   themeMock.setTheme.mockReset();
   window.localStorage.removeItem("paige.tenantShell.navExpanded");
 });
+// The Vibe Studio tests below mount the real SoloApp, whose media-jobs hook subscribes to a realtime
+// channel. Unmocked, that opened a live WebSocket from jsdom to whatever VITE_SUPABASE_URL names, and
+// undici's "open" event is rejected by Node's EventTarget under jsdom ("The event argument must be an
+// instance of Event"): an uncaught exception that failed CI's Test step after every test had passed.
+// No assertion here depends on realtime, so the channel is inert; everything else is the real client.
+vi.mock("@/integrations/supabase/client", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/integrations/supabase/client")>();
+  const channel = { on: () => channel, subscribe: () => channel, unsubscribe: async () => "ok" as const };
+  return {
+    ...actual,
+    supabase: new Proxy(actual.supabase, {
+      get(target, prop, receiver) {
+        if (prop === "channel") return () => channel;
+        if (prop === "removeChannel") return async () => "ok" as const;
+        return Reflect.get(target, prop, receiver);
+      },
+    }),
+  };
+});
 vi.mock("@/components/admin/AdminBridgeBell", () => ({ AdminBridgeBell: () => null }));
 vi.mock("@/components/admin/voice/DialPadTrigger", () => ({ DialPadTrigger: () => null }));
 vi.mock("@/components/ui/paige", () => ({
@@ -167,7 +186,7 @@ describe("tenant shell owns one PAIGE surface", () => {
     const renderTenant = (
       accountNumber: string,
       accountName: string,
-      userRole: "admin" | "coach",
+      userRole: "admin" | "member",
     ) => {
       window.localStorage.setItem("paige.tenantShell.navExpanded", "true");
       const host = document.createElement("div");
@@ -203,7 +222,7 @@ describe("tenant shell owns one PAIGE surface", () => {
     };
 
     const affectedTenant = renderTenant("410001", "First example business", "admin");
-    const knownGoodTenant = renderTenant("410002", "Second example business", "coach");
+    const knownGoodTenant = renderTenant("410002", "Second example business", "member");
 
     expect({ ...affectedTenant, workspaceClaim: undefined }).toEqual({
       ...knownGoodTenant,
@@ -221,7 +240,14 @@ describe("tenant shell owns one PAIGE surface", () => {
   it("derives the Solo workspace claim from server-resolved tenant ownership", () => {
     const owner = source("src/solo/SoloApp.tsx");
     expect(owner).not.toContain('userRole="admin"');
-    expect(owner).toContain("activeTenant?.owner_user_id === activeUserId");
+    // Pins BOTH halves of the claim, which is stronger than the single substring this used to
+    // assert. That substring stopped matching when SoloApp.tsx:205 was correctly hardened to
+    // `activeTenant?.owner_user_id != null && activeTenant.owner_user_id === activeUserId` — a
+    // source-coupled assertion going red against a STRICTER implementation. Asserting the guard
+    // and the comparison separately survives that reformatting and additionally pins the null
+    // guard, so a regression that dropped it would now be caught rather than merely tolerated.
+    expect(owner).toContain("activeTenant?.owner_user_id != null");
+    expect(owner).toContain("activeTenant.owner_user_id === activeUserId");
   });
 
   it.each([
@@ -281,9 +307,13 @@ describe("tenant shell owns one PAIGE surface", () => {
     expect(sharedOwner).not.toContain("<PaigePanel");
   });
 
-  it("keeps the legacy panel available only for non-v3 hosts", () => {
-    expect(source("src/solo/agent.tsx")).toContain("export const PaigePanel=");
-  });
+  // REMOVED 2026-09-25 — "keeps the legacy panel available only for non-v3 hosts" asserted that
+  // `src/solo/agent.tsx` contained `export const PaigePanel=`. There were no non-v3 hosts: nothing
+  // in src/ imported that file, no route lazy-loaded it, and its unique strings were absent from
+  // dist/assets while the live chat's were present. The test passed green for as long as the file
+  // shipped nothing, which is the §71.1 reachability trap in miniature — an export is not a mount.
+  // The file and its hook are deleted; §58 is satisfied because no shipped capability went with
+  // them. The live Solo chat is SoloPaigeWorkspace -> PaigeAIChat, covered by the tests below.
 
   it("owns one accessible Solo brand-home link at the server-resolved Command Center container", async () => {
     const { default: SoloApp } = await import("@/solo/SoloApp");

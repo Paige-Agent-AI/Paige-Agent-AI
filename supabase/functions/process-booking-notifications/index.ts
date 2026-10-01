@@ -7,6 +7,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // Shared sender + templating (§12): the Twilio path and merge-field renderer
 // live in one place, reused by public-booking and booking-manage too.
 import { renderTemplate, sendSms } from "../_shared/bookingNotify.ts";
+import { primaryPhonesForUsers } from "../_shared/user-contact-methods.ts";
 
 // The pg_cron trigger token lives ONLY in Supabase Vault (task #145) — never in
 // source or env. The request handler authorizes each trigger by calling the
@@ -198,8 +199,8 @@ Deno.serve(async (req) => {
     else await admin.from("booking_notifications_sent").delete().eq("booking_id", bookingId).eq("notif_key", key); // let it retry
   }
 
-  // Host contact for host-targeted reminders (email from auth, phone from the
-  // profile). Memoized per run so a busy host is resolved once, not per booking.
+  // Host contact for host-targeted reminders (email from auth, phone = the host's
+  // primary phone). Memoized per run so a busy host is resolved once, not per booking.
   const hostContactCache = new Map<string, { email: string; phone: string }>();
   async function hostContact(uid: string | null): Promise<{ email: string; phone: string }> {
     if (!uid) return { email: "", phone: "" };
@@ -211,9 +212,11 @@ Deno.serve(async (req) => {
       email = (u as { user?: { email?: string } } | null)?.user?.email ?? "";
     } catch { /* unreachable host email — send just skips that channel */ }
     try {
-      const { data: p } = await admin.from("profiles").select("phone").eq("user_id", uid).maybeSingle();
-      phone = String((p as { phone?: string } | null)?.phone ?? "");
-    } catch { /* no profile phone — SMS-to-host skips cleanly */ }
+      phone = (await primaryPhonesForUsers(admin, [uid])).get(uid) ?? "";
+    } catch (e) {
+      // An unreadable phone skips SMS-to-host for this run — loudly, never the email leg.
+      console.error("[process-booking-notifications] host_phone_read_failed", (e as Error).message);
+    }
     const rec = { email, phone };
     hostContactCache.set(uid, rec);
     return rec;

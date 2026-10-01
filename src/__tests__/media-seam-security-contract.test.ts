@@ -92,7 +92,7 @@ describe("correction #4 — no resurrection of terminal jobs", () => {
 describe("correction #4 — paige-media auth precedence (no unauthenticated submit)", () => {
   it("auth + role gate + server-derived tenant precede every action handler", () => {
     const authAt = mediaSrc.indexOf("auth.getUser()");
-    const roleAt = mediaSrc.indexOf('"admin" || r === "super_admin" || r === "coach"');
+    const roleAt = mediaSrc.indexOf('r === "admin" || r === "super_admin")');
     const tenantAt = mediaSrc.indexOf("resolveTenantForUser(admin, user.id)");
     const firstActionAt = mediaSrc.indexOf('action === "capabilities"');
     expect(authAt).toBeGreaterThan(-1);
@@ -130,7 +130,8 @@ describe("correction #4 — paige-media auth precedence (no unauthenticated subm
 describe("correction #4 — generate-image audit (existing authorized behavior, no silent bypass)", () => {
   it("generate-image keeps its own user-JWT auth + role gate + tenant membership check", () => {
     expect(generateImageSrc).toContain("auth.getUser()");
-    expect(generateImageSrc).toContain('"admin" || r === "super_admin" || r === "coach"');
+    expect(generateImageSrc).toContain('r === "admin" || r === "super_admin")');
+    expect(generateImageSrc).not.toContain('r === "coach"');
     expect(generateImageSrc).toContain("is_tenant_member");
   });
 

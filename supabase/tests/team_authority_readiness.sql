@@ -83,7 +83,7 @@ ON CONFLICT (user_id) DO UPDATE SET active_tenant_id = EXCLUDED.active_tenant_id
 -- against has_any_role() would ADMIT this caller as staff of a workspace where they are a member.
 -- Without this row the member assertions below would pass for the wrong reason (§59 global-role trap).
 INSERT INTO public.user_roles (user_id, role) VALUES
-  ('d1000000-0000-0000-0000-000000000002', 'coach'),
+  ('d1000000-0000-0000-0000-000000000002', 'sales_rep'),
   ('d1000000-0000-0000-0000-000000000009', 'admin')
 ON CONFLICT DO NOTHING;
 

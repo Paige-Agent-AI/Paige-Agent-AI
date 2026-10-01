@@ -14,17 +14,24 @@ import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { LIFECYCLE_STAGES, CONTACT_SOURCES, updateContact, type ContactPatch } from "@/lib/contacts";
+import { LIFECYCLE_STAGES, CONTACT_SOURCES, setContactPrimaryAddresses, updateContact, type ContactPatch } from "@/lib/contacts";
+import { primaryAddressesOf, type ContactMethodRow } from "@/lib/contact-methods";
 import { TagPicker } from "./TagPicker";
 
 type Coach = { user_id: string; name: string };
 
 type Contact = {
   id: string;
+  /** The contact's workspace, for the address write; the caller's current workspace when absent. */
+  tenant_id?: string | null;
   first_name: string;
   last_name: string;
+  /** The contact's PRIMARY email and phone. Editing one sets that primary; other addresses stay. */
   email: string | null;
   phone: string | null;
+  /** Every address the contact held when the page read it. A save names this list, so a change
+   *  someone made since is refused rather than overwritten. Read at save time when absent. */
+  client_contact_methods?: readonly ContactMethodRow[] | null;
   entity_name: string | null;
   title: string | null;
   funding_goal: number | null;
@@ -61,11 +68,20 @@ export function EditContactDialog({
     if (!form.first_name?.trim()) { toast.error("First name is required"); return; }
     setSaving(true);
     try {
+      // Addresses first: they are the write most likely to be refused (an address another contact
+      // in the workspace already holds), and a refusal then leaves the rest of the record as it was.
+      const nextEmail = form.email?.trim() || null;
+      const nextPhone = form.phone?.trim() || null;
+      const addresses: { email?: string | null; phone?: string | null } = {};
+      if (nextEmail !== (contact?.email?.trim() || null)) addresses.email = nextEmail;
+      if (nextPhone !== (contact?.phone?.trim() || null)) addresses.phone = nextPhone;
+      const methods = Object.keys(addresses).length
+        ? await setContactPrimaryAddresses(form.id, addresses, { tenantId: form.tenant_id ?? null, loaded: contact?.client_contact_methods })
+        : contact?.client_contact_methods;
+
       const patch: ContactPatch = {
         first_name: form.first_name.trim(),
         last_name: form.last_name?.trim() || "",
-        email: form.email?.trim() || null,
-        phone: form.phone?.trim() || null,
         entity_name: form.entity_name?.trim() || null,
         title: form.title?.trim() || null,
         lifecycle_stage: form.lifecycle_stage || "new_lead",
@@ -77,7 +93,10 @@ export function EditContactDialog({
       };
       const updated = await updateContact(form.id, patch);
       toast.success("Contact saved");
-      onSaved({ ...form, ...(updated as any) });
+      // The primaries as stored: clearing a primary promotes the next address, which the field
+      // alone cannot know.
+      const primaries = methods ? primaryAddressesOf(methods) : { email: nextEmail, phone: nextPhone };
+      onSaved({ ...form, ...(updated as any), ...primaries, client_contact_methods: methods });
       onOpenChange(false);
     } catch (e: any) {
       toast.error(e.message || "Save failed");

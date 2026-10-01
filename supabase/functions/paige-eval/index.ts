@@ -3,7 +3,7 @@
 // set of scorers and record a run + per-case results. This is how a change to Paige's intelligence is
 // measured as BETTER or WORSE on real data — the L1 traces are the substrate this scores over.
 //
-// SHIPS INERT / OPT-IN: this endpoint exists and is directly invokable by an admin/coach JWT (or the
+// SHIPS INERT / OPT-IN: this endpoint exists and is directly invokable by an admin JWT (or the
 // service-role headless agent), but NOTHING auto-triggers it — no cron, no wire into paige-deep-research.
 // An eval only runs when a caller POSTs here.
 //
@@ -104,8 +104,8 @@ serve(async (req: Request) => {
       actorUserId = user.id;
       const { data: roleRows } = await authed.from("user_roles").select("role").eq("user_id", user.id);
       const roles = (roleRows || []).map((r: Record<string, unknown>) => r.role);
-      if (!roles.some((r) => r === "admin" || r === "super_admin" || r === "coach")) {
-        return json(403, { error: "Admin or coach access required." });
+      if (!roles.some((r) => r === "admin" || r === "super_admin")) {
+        return json(403, { error: "Admin access required." });
       }
       isPlatformActor = roles.includes("super_admin");
       const { data: activeTenant } = await authed.rpc("current_user_tenant_id");

@@ -30,7 +30,9 @@ function tokenSet(values: Array<string | null | undefined>): RegExp[] {
     if (seen.has(key)) continue;
     seen.add(key);
     const escaped = v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    rxs.push(new RegExp(`\\b${escaped}\\b`, "gi"));
+    // Whole-token boundaries by lookaround, not \b: \b never matches before a leading "+" or "(",
+    // so an international number like "+44 20 7946 0958" would pass through unscrubbed.
+    rxs.push(new RegExp(`(?<![\\w+])${escaped}(?!\\w)`, "gi"));
   }
   return rxs;
 }
@@ -39,8 +41,9 @@ export interface AnonymizeIdentity {
   fullName?: string | null;
   firstName?: string | null;
   lastName?: string | null;
-  email?: string | null;
-  phone?: string | null;
+  /** Every address the person holds (user_contact_methods), so a non-standard one is still caught. */
+  emails?: string[];
+  phones?: string[];
   businessLegalName?: string | null;
   businessDba?: string | null;
   street?: string | null;
@@ -58,8 +61,8 @@ export function anonymize(text: string, identity: AnonymizeIdentity = {}): strin
     identity.businessDba,
     identity.firstName,
     identity.lastName,
-    identity.email,
-    identity.phone,
+    ...(identity.emails ?? []),
+    ...(identity.phones ?? []),
     identity.street,
     identity.city,
   ]).sort((a, b) => b.source.length - a.source.length);

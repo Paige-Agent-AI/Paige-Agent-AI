@@ -14,6 +14,9 @@ import { callAdminAccountAction } from "@/lib/functions/adminAccountActions";
 import { AvatarUploader, isAvatarBucketUrl, removeAvatarObject } from "@/components/ui/avatar-uploader";
 import { useTenantFeature } from "@/hooks/useTenantFeature";
 import { cn } from "@/lib/utils";
+import { readUserContactMethods, saveUserPrimaryAddresses } from "@/lib/userPrimaryContact";
+import { primaryValue, type ContactMethod } from "@/lib/contact-methods";
+import { userContactMethodsRefusal } from "@/components/contact-methods/useUserContactMethods";
 
 // Coaching-generic specialties every tenant can assign (§2/§9).
 const BASE_SPECIALTY_OPTIONS = [{ value: "entity", label: "Entity Setup" }];
@@ -59,12 +62,14 @@ interface Props {
   initialEdit?: boolean;
   onSaved?: () => void;
   /** Coach-management fields for this member (parent-resolved via the gated RPC).
-   *  When the member has the coach role, a "Coaching" section renders and saves
+   *  When the parent resolves them, a "Coaching" section renders and saves
    *  through set_coach_fields (own-record-or-tenant-admin), NOT the broad upsert. */
   coachFields?: CoachFields | null;
   onCoachSaved?: () => void;
 }
 
+/** `phone` / `work_email` are the member's PRIMARY phone and email contact methods
+ *  (`user_contact_methods`), read and saved apart from the profile row. */
 interface ProfileFields {
   full_name: string;
   first_name: string;
@@ -102,6 +107,10 @@ export function MemberProfileDrawer({ member, open, onOpenChange, initialEdit = 
   const [confirmWipe, setConfirmWipe] = useState(false);
   const [confirmSignout, setConfirmSignout] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  // The member's emails and phones as read when the drawer opened: a save names this list as the one
+  // it replaces. Null when the read failed — their email and phone are then unknown, not blank.
+  const [contactMethods, setContactMethods] = useState<ContactMethod[] | null>(null);
+  const [contactLoadFailed, setContactLoadFailed] = useState(false);
 
   // --- Coaching section (coach-only) — saved via the gated set_coach_fields RPC ---
   const { enabled: fundingEnabled } = useTenantFeature("funding_readiness");
@@ -137,23 +146,26 @@ export function MemberProfileDrawer({ member, open, onOpenChange, initialEdit = 
     (async () => {
       setLoading(true);
       try {
-        const [{ data: prof }, clientsRes, invitesRes, tenantRes] = await Promise.all([
+        const [{ data: prof }, clientsRes, invitesRes, tenantRes, contact] = await Promise.all([
           supabase.from("profiles")
-            .select("full_name, first_name, middle_initial, last_name, phone, work_email, business_name, website_url, address, city, state, postal_code, coach_bio, staff_notes, avatar_url")
+            .select("full_name, first_name, middle_initial, last_name, business_name, website_url, address, city, state, postal_code, coach_bio, staff_notes, avatar_url")
             .eq("user_id", member.user_id).maybeSingle(),
           supabase.from("clients").select("id", { count: "exact", head: true }).eq("assigned_coach_user_id", member.user_id),
           supabase.from("invitations").select("id", { count: "exact", head: true }).eq("invited_by", member.user_id),
           supabase.from("tenant_members").select("tenants(name)").eq("user_id", member.user_id),
+          readUserContactMethods(member.user_id),
         ]);
         if (cancelled) return;
+        setContactMethods(contact.error ? null : contact.methods);
+        setContactLoadFailed(Boolean(contact.error));
         const p = (prof ?? {}) as Partial<Record<keyof ProfileFields, string | null>>;
         const next: ProfileFields = {
           full_name: p.full_name ?? member.full_name ?? "",
           first_name: p.first_name ?? "",
           middle_initial: p.middle_initial ?? "",
           last_name: p.last_name ?? "",
-          phone: p.phone ?? "",
-          work_email: p.work_email ?? "",
+          phone: primaryValue(contact.methods, "phone") ?? "",
+          work_email: primaryValue(contact.methods, "email") ?? "",
           business_name: p.business_name ?? "",
           website_url: p.website_url ?? "",
           address: p.address ?? "",
@@ -189,7 +201,22 @@ export function MemberProfileDrawer({ member, open, onOpenChange, initialEdit = 
   const handleSave = async () => {
     setSaving(true);
     try {
-      const payload = { user_id: member.user_id, ...fields, updated_at: new Date().toISOString() };
+      const { phone, work_email, ...profileFields } = fields;
+      // Phone and work email are the member's primary contact methods: only the one that changed
+      // is written, every other address they keep stays as it is, and the save names the list read
+      // when the drawer opened — so a change made elsewhere since is refused, not overwritten.
+      const contactChanges: { phone?: string; email?: string } = {};
+      if (phone.trim() !== original.phone.trim()) contactChanges.phone = phone;
+      if (work_email.trim() !== original.work_email.trim()) contactChanges.email = work_email;
+      let storedContact: { phone: string; work_email: string } | null = null;
+      if (Object.keys(contactChanges).length > 0) {
+        if (!contactMethods) throw new Error("Their email and phone couldn't be loaded, so nothing was saved. Close this and open it again.");
+        const saved = await saveUserPrimaryAddresses(member.user_id, contactChanges, contactMethods);
+        if (saved.ok === false) throw new Error(userContactMethodsRefusal(saved.error));
+        setContactMethods(saved.methods);
+        storedContact = { phone: primaryValue(saved.methods, "phone") ?? "", work_email: primaryValue(saved.methods, "email") ?? "" };
+      }
+      const payload = { user_id: member.user_id, ...profileFields, updated_at: new Date().toISOString() };
       const { error } = await supabase.from("profiles").upsert(payload, { onConflict: "user_id" });
       if (error) throw error;
       // Now that the new photo is persisted, tidy the replaced file (never
@@ -198,7 +225,10 @@ export function MemberProfileDrawer({ member, open, onOpenChange, initialEdit = 
         void removeAvatarObject(original.avatar_url);
       }
       toast.success("Profile saved");
-      setOriginal(fields);
+      // Show the email and phone the server stored as primary, not what was typed.
+      const savedFields = storedContact ? { ...fields, ...storedContact } : fields;
+      setFields(savedFields);
+      setOriginal(savedFields);
       setEditing(false);
       onSaved?.();
     } catch (e) {
@@ -313,7 +343,7 @@ export function MemberProfileDrawer({ member, open, onOpenChange, initialEdit = 
             </div>
           </div>
 
-          {member.roles.includes("coach") && (
+          {coachFields && (
             <>
               <Separator />
               {/* Coaching — capacity/specialties/availability. Saved via the gated
@@ -434,8 +464,16 @@ export function MemberProfileDrawer({ member, open, onOpenChange, initialEdit = 
             ) : (
               <Field label="Name" value={fields.full_name} editing={false} onChange={() => {}} />
             )}
-            <Field label="Phone" value={fields.phone} editing={editing} onChange={v => set("phone", v)} placeholder="+1 555 555 5555" />
-            <Field label="Work email" value={fields.work_email} editing={editing} onChange={v => set("work_email", v)} placeholder="work@company.com" />
+            {contactLoadFailed ? (
+              <p role="status" className="text-sm text-muted-foreground">
+                Their phone and work email couldn&apos;t be loaded. Close this and open it again to see and change them.
+              </p>
+            ) : (
+              <>
+                <Field label="Phone" value={fields.phone} editing={editing} onChange={v => set("phone", v)} placeholder="+1 555 555 5555" />
+                <Field label="Work email" value={fields.work_email} editing={editing} onChange={v => set("work_email", v)} placeholder="work@company.com" />
+              </>
+            )}
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Mail className="w-3.5 h-3.5" /> Login email: <span className="text-foreground">{member.email || "—"}</span>
             </div>

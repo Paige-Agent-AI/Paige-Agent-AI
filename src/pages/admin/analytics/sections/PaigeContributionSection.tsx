@@ -38,14 +38,14 @@ const fmtPct = (n: number) => `${(n * 100).toFixed(0)}%`;
 
 export function PaigeContributionSection({ start, end }: { start: string; end: string }) {
   const data = usePaigeContribution(start, end);
-  const { roles, isAdmin, isCoach } = useUserRoles();
+  const { roles, isAdmin } = useUserRoles();
   const { toast } = useToast();
   const [filing, setFiling] = useState(false);
 
   // file_action() requires admin/super_admin/coach (action_bus.sql). Only show
   // the callable-seam affordance to a role that can actually call it — other
   // reopened-route roles would just get a 42501.
-  const canFileAction = isAdmin || isCoach || roles.includes("super_admin");
+  const canFileAction = isAdmin || roles.includes("super_admin");
 
   const anomaly = useMemo(
     // Total action-bus volume (Paige- AND human-filed) — labeled honestly as

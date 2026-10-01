@@ -35,7 +35,7 @@ describe("first-party Live relay transport", () => {
     recorder.start.mockClear();
     recorder.stop.mockClear();
   });
-  afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
+  afterEach(() => { vi.clearAllTimers(); vi.useRealTimers(); vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 
   it("uses only the first-party WSS URL and never captures on provider-free unavailable", () => {
     const states: unknown[] = [];
@@ -56,7 +56,7 @@ describe("first-party Live relay transport", () => {
     const transport = connectPaigeLiveRelay({ sessionId: "session-2", ticket: "opaque-2", onState: () => undefined });
     const socket = FakeSocket.instances[0];
     transport.interrupt();
-    expect(socket.sent).toContain(JSON.stringify({ type: "interrupt" }));
+    expect(socket.sent).toContain(JSON.stringify({ type: "interrupt", request_id: 1 }));
     transport.stop();
     expect(socket.readyState).toBe(3);
   });
@@ -78,7 +78,113 @@ describe("first-party Live relay transport", () => {
     socket.receive(JSON.stringify({ type: "runtime.cancel", turn_id: "turn-1" }));
     expect(cancelled).toEqual(["turn-1"]);
     transport.interrupt();
-    expect(socket.sent).toContain(JSON.stringify({ type: "interrupt" }));
+    expect(socket.sent).toContain(JSON.stringify({ type: "interrupt", request_id: 1 }));
+    transport.stop();
+  });
+
+  it.each([false, true])("fences stale PCM and completion through repeated interrupt barriers: %s", (repeat) => {
+    const starts = vi.fn(), stops = vi.fn();
+    vi.stubGlobal("AudioContext", class {
+      state = "running"; currentTime = 0; destination = {};
+      close = vi.fn(async () => undefined);
+      createBuffer(_n: number, length: number) { return { duration: length / 16000, getChannelData: () => new Float32Array(length) }; }
+      createBufferSource() { return { buffer: null, onended: null, connect() {}, start: starts, stop: stops }; }
+    });
+    const transport = connectPaigeLiveRelay({ sessionId: "barrier", ticket: "opaque", onState() {} });
+    const socket = FakeSocket.instances[0];
+    const pcm = () => socket.receive(new Int16Array([100, 200]).buffer);
+    const ack = (id: unknown) => socket.receive(JSON.stringify({ type: "interrupt.ack", request_id: id }));
+    pcm(); expect(starts).toHaveBeenCalledOnce();
+    transport.interrupt(); expect(stops).toHaveBeenCalledOnce();
+    if (repeat) transport.interrupt();
+    const latest = repeat ? 2 : 1;
+    pcm(); socket.receive(JSON.stringify({ type: "runtime.done" }));
+    socket.receive(JSON.stringify({ type: "clear_playback" })); pcm();
+    for (const id of [0, null, String(latest), latest + 1, ...(repeat ? [1, 1] : [])]) { ack(id); pcm(); }
+    expect(starts).toHaveBeenCalledOnce();
+    expect(socket.sent).not.toContain(JSON.stringify({ type: "playback.complete" }));
+    expect(socket.sent).toContain(JSON.stringify({ type: "interrupt", request_id: latest }));
+    ack(latest); pcm(); expect(starts).toHaveBeenCalledTimes(2);
+    transport.interrupt(); ack(latest); pcm(); expect(starts).toHaveBeenCalledTimes(2);
+    ack(latest + 1); pcm(); expect(starts).toHaveBeenCalledTimes(3);
+    transport.stop();
+  });
+
+  it("missing interrupt acknowledgement disconnects within five seconds and stops capture", async () => {
+    vi.useFakeTimers();
+    const states: unknown[] = [];
+    const transport = connectPaigeLiveRelay({ sessionId: "no-ack", ticket: "opaque", onState: state => states.push(state) });
+    const socket = FakeSocket.instances[0];
+    socket.receive(JSON.stringify({ type: "ready" }));
+    await Promise.resolve(); await Promise.resolve();
+    transport.interrupt();
+    await vi.advanceTimersByTimeAsync(4999);
+    expect(socket.readyState).toBe(FakeSocket.OPEN);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(socket.readyState).toBe(3);
+    expect(states.at(-1)).toEqual({ kind: "disconnected" });
+    expect(states.filter(state => (state as { kind: string }).kind === "disconnected")).toHaveLength(1);
+    expect(recorder.stop).toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(0);
+    socket.receive(JSON.stringify({ type: "interrupt.ack", request_id: 1 }));
+    socket.receive(JSON.stringify({ type: "runtime.done" }));
+    expect(states.at(-1)).toEqual({ kind: "disconnected" });
+  });
+
+  it("repeated interruption restarts the deadline and stale acknowledgements cannot clear it", async () => {
+    vi.useFakeTimers();
+    const states: unknown[] = [];
+    const transport = connectPaigeLiveRelay({ sessionId: "repeat-ack", ticket: "opaque", onState: state => states.push(state) });
+    const socket = FakeSocket.instances[0];
+    transport.interrupt();
+    await vi.advanceTimersByTimeAsync(4000);
+    transport.interrupt();
+    socket.receive(JSON.stringify({ type: "interrupt.ack", request_id: 1 }));
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(socket.readyState).toBe(FakeSocket.OPEN);
+    await vi.advanceTimersByTimeAsync(4000);
+    expect(socket.readyState).toBe(3);
+    expect(states).toEqual([{ kind: "disconnected" }]);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it.each(["matching acknowledgement", "stop", "socket close", "unavailable"])("%s clears the interrupt deadline", async (finish) => {
+    vi.useFakeTimers();
+    const states: unknown[] = [];
+    const transport = connectPaigeLiveRelay({ sessionId: "clear-ack", ticket: "opaque", onState: state => states.push(state) });
+    const socket = FakeSocket.instances[0];
+    transport.interrupt();
+    expect(vi.getTimerCount()).toBe(1);
+    if (finish === "matching acknowledgement") socket.receive(JSON.stringify({ type: "interrupt.ack", request_id: 1 }));
+    else if (finish === "stop") transport.stop();
+    else if (finish === "socket close") socket.close();
+    else socket.receive(JSON.stringify({ type: "unavailable" }));
+    expect(vi.getTimerCount()).toBe(0);
+    const before = [...states];
+    await vi.advanceTimersByTimeAsync(10000);
+    expect(states).toEqual(before);
+    if (finish === "matching acknowledgement") expect(socket.readyState).toBe(FakeSocket.OPEN);
+    transport.stop();
+  });
+
+  it("old asynchronous PCM cannot resume after interruption and its acknowledgement", async () => {
+    let finishResume!: () => void;
+    const resume = new Promise<void>(resolve => { finishResume = resolve; });
+    const starts = vi.fn();
+    vi.stubGlobal("AudioContext", class {
+      state = "suspended"; currentTime = 0; destination = {};
+      resume = () => resume; close = vi.fn(async () => undefined);
+      createBuffer(_n: number, length: number) { return { duration: length / 16000, getChannelData: () => new Float32Array(length) }; }
+      createBufferSource() { return { buffer: null, onended: null, connect() {}, start: starts, stop() {} }; }
+    });
+    const transport = connectPaigeLiveRelay({ sessionId: "async-barrier", ticket: "opaque", onState() {} });
+    const socket = FakeSocket.instances[0];
+    socket.receive(new Int16Array([1, 2]).buffer);
+    transport.interrupt();
+    socket.receive(JSON.stringify({ type: "interrupt.ack", request_id: 1 }));
+    finishResume(); await Promise.resolve(); await Promise.resolve();
+    expect(starts).not.toHaveBeenCalled();
+    expect(socket.sent).not.toContain(JSON.stringify({ type: "playback.complete" }));
     transport.stop();
   });
 

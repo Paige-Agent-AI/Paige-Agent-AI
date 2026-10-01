@@ -47,7 +47,7 @@
 //     400 EMPTY_BRIEF        brief missing or shorter than 5 characters
 //     400 INVALID_TENANT_ID  service-role caller passed a malformed tenant_id
 //     401 UNAUTHENTICATED    no / invalid bearer token
-//     403 FORBIDDEN          JWT caller lacks admin, coach or super_admin
+//     403 FORBIDDEN          JWT caller lacks admin or super_admin
 //     422 NO_VALID_PAGE      the composed page drafter produced no usable page — a funnel
 //                            with no live entry page captures nothing, so we refuse rather
 //                            than hand back a dead funnel wearing a 200 (§13).
@@ -205,8 +205,8 @@ serve(async (req: Request) => {
         return fail(500, "INTERNAL", `Could not read your roles: ${rErr.message}`);
       }
       const roles = (roleRows || []).map((r: any) => r.role);
-      if (!roles.some((r: string) => r === "admin" || r === "super_admin" || r === "coach")) {
-        return fail(403, "FORBIDDEN", "Admin or coach access required.");
+      if (!roles.some((r: string) => r === "admin" || r === "super_admin")) {
+        return fail(403, "FORBIDDEN", "Admin access required.");
       }
       const { data: resolved, error: tErr } = await authed.rpc("current_user_tenant_id");
       if (tErr) {

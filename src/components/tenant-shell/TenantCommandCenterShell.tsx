@@ -56,7 +56,7 @@ export interface TenantCommandCenterShellProps {
   accountName: string;
   accountType?: string | null;
   providedBy?: string | null;
-  userRole: "admin" | "coach";
+  userRole: "admin" | "member";
   accountControls?: ReactNode;
   onSignOut: () => void;
   signingOut?: boolean;

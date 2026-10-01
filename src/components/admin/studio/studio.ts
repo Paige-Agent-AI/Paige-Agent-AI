@@ -138,7 +138,7 @@ function errText(err: unknown): string {
 
 /**
  * A message is only shown verbatim when it is genuinely operator-safe. The edge functions
- * write real, useful sentences ("Admin or coach access required.") and those beat any generic
+ * write real, useful sentences ("Admin access required.") and those beat any generic
  * we could invent — but a Postgres raise, a Rollup stack, or a driver string carries machinery
  * the operator must never read (§11). When in doubt, the mapped copy wins; the raw cause is
  * always preserved on the StudioError and logged.
@@ -2810,7 +2810,7 @@ export async function loadDocument(tenantId: string, contentId: string): Promise
     const parsed = JSON.parse(data.body) as { docType?: string; title?: string; blocks?: unknown };
     const blocks = Array.isArray(parsed.blocks) ? (parsed.blocks as StudioDocBlock[]) : [];
     if (!blocks.length) return null;
-    const docType = (["guide", "one_pager", "ebook", "checklist", "worksheet", "proposal", "offer_letter", "sales_offer"].includes(String(parsed.docType))
+    const docType = (["guide", "one_pager", "ebook", "checklist", "worksheet", "proposal", "offer_letter", "sales_offer", "agreement_draft"].includes(String(parsed.docType))
       ? parsed.docType : "guide") as StudioDocType;
     return { id: data.id, title: data.title || parsed.title || "Untitled document", docType, blocks };
   } catch {

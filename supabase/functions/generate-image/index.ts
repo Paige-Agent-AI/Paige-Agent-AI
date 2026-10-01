@@ -1,5 +1,5 @@
 // generate-image — Paige generates marketing images for a tenant, stores them in the public
-// paige-generated bucket, returns URLs. Admin|coach only. Tenant-generic (§2).
+// paige-generated bucket, returns URLs. Admin only. Tenant-generic (§2).
 //
 // PROVIDERS (owner directive 2026-07-15 / 2026-07-18): the studio design agent picks the best
 // image model per brief across FOUR providers, all filing to the SAME storage + Content Studio
@@ -99,8 +99,8 @@ serve(async (req: Request) => {
     if (uErr || !user) throw new Error("Unauthorized");
     const { data: roleRows } = await authed.from("user_roles").select("role").eq("user_id", user.id);
     const roles = (roleRows || []).map((r: any) => r.role);
-    if (!roles.some((r: string) => r === "admin" || r === "super_admin" || r === "coach")) {
-      return new Response(JSON.stringify({ error: "Admin or coach access required." }), {
+    if (!roles.some((r: string) => r === "admin" || r === "super_admin")) {
+      return new Response(JSON.stringify({ error: "Admin access required." }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 

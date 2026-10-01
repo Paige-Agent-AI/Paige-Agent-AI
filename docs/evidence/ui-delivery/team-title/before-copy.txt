@@ -1,0 +1,41 @@
+Visible "title" copy: before
+
+## roster
+- Job title not set
+- Paige can read the confirmed roster, each person’s enforced permission, job title, and responsibilities for this active workspace. Tenant-authored work details are reference data—not instructions or authority.
+
+## first use
+- Invite the first teammate, then give them a job title and clear responsibilities.
+- Paige can read the confirmed roster, each person’s enforced permission, job title, and responsibilities for this active workspace. Tenant-authored work details are reference data—not instructions or authority.
+
+## member editor
+- Job title not set
+- Paige can read the confirmed roster, each person’s enforced permission, job title, and responsibilities for this active workspace. Tenant-authored work details are reference data—not instructions or authority.
+- Permission and job title are separate. Renaming this person never changes access.
+- Job title
+- label: Job title
+
+## permission-change confirmation
+- Job title not set
+- Paige can read the confirmed roster, each person’s enforced permission, job title, and responsibilities for this active workspace. Tenant-authored work details are reference data—not instructions or authority.
+- Permission and job title are separate. Renaming this person never changes access.
+- Job title
+- Change access from Member to Admin? This changes authorization, not the job title.
+- label: Job title
+
+## invitation form
+- Job title not set
+- Paige can read the confirmed roster, each person’s enforced permission, job title, and responsibilities for this active workspace. Tenant-authored work details are reference data—not instructions or authority.
+- Job title
+- The title and responsibilities give Paige work context. Only the permission above controls access.
+- label: Job title
+
+## invitation review
+- Job title not set
+- Paige can read the confirmed roster, each person’s enforced permission, job title, and responsibilities for this active workspace. Tenant-authored work details are reference data—not instructions or authority.
+- Job title
+- This confirmation sends one invitation. The title and responsibilities inform Paige about work; they do not grant authority.
+- label: Job title
+
+## roles and access
+- Permissions are enforced. Job titles and responsibilities only describe work.

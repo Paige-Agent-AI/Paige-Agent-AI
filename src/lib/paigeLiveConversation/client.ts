@@ -35,6 +35,45 @@ async function callControlPlane(body: Record<string, unknown>): Promise<Record<s
   return payload;
 }
 
+export type PaigeLiveTermsResult = Readonly<{
+  accepted: boolean;
+  /** True when an acceptance was already on file, so nothing was written. */
+  unchanged: boolean;
+  code: string | null;
+}>;
+
+/**
+ * The person accepts Live's terms FOR THEMSELVES.
+ *
+ * The RPC takes no arguments on purpose: the subject is `auth.uid()` and the workspace is the
+ * canonical resolver's answer, so no account identifier is ever supplied by a caller, typed by an
+ * operator, or stored anywhere a mistake could point it at someone else. An operator calling this
+ * accepts for themselves and nobody else, and the database has a CHECK that makes inherited consent
+ * unrepresentable rather than merely discouraged.
+ *
+ * It refuses while the rollout does not cover the caller, so this is safe to offer before knowing
+ * whether Live is open — the refusal is the honest answer, not an error, and nothing is written.
+ */
+export async function acceptPaigeLiveTerms(): Promise<PaigeLiveTermsResult> {
+  const { supabase } = await import("@/integrations/supabase/client");
+  // The generated types are produced from the live schema, and this function's migration has not
+  // been applied yet, so the RPC name is not in their union. Same shim the repo already uses for a
+  // function that ships alongside its migration (useProviderAttribution, usePortalConfig).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- new RPC, not yet in generated types
+  const { data, error } = await supabase.rpc("paige_live_accept_terms" as any);
+  if (error) {
+    // Report the refusal, never a hoped-for acceptance (§13). The caller shows the same honest
+    // unavailable state it shows for every other reason Live is not open.
+    return { accepted: false, unchanged: false, code: "live_audio_not_enabled" };
+  }
+  const payload = (data ?? {}) as Record<string, unknown>;
+  return {
+    accepted: payload.accepted === true,
+    unchanged: payload.unchanged === true,
+    code: typeof payload.code === "string" ? payload.code : null,
+  };
+}
+
 export async function startPaigeLiveConversation(input: Readonly<{
   threadId: string;
   contextEpoch: string;

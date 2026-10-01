@@ -1,0 +1,61 @@
+# Governed Knowledge Chat binding
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: active workspace read -> existing approval -> exact revision metadata/delete RPC -> SQL verified result and receipt -> protected response.
+PAIGE_UI_DESIGN: NOT_APPLICABLE: existing Chat controls and approved Knowledge UI unchanged; backend binding only.
+MATERIAL_FLOW_CHANGE: YES: canonical Knowledge read/update/delete becomes callable from governed Chat.
+FLOW_PROTOTYPE: PASS: owner approved knowledge-flow-prototype.html and explicitly cleared final shared Chat integration in the active Knowledge handoff on 2026-09-30.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: owner reads and governs exact workspace Knowledge records without another store or authority model.
+VISUAL_DIRECTION: NOT_APPLICABLE: no layout/style/component change.
+AUTOMATED_EVIDENCE: PASS: 17 adapter tests; actual Chat handler harness 534 checks; catalogue/Anthropic contract 9 checks; six PostgreSQL catalogue assertions and migration replay twice.
+STATIC_EVIDENCE: PASS: strict standalone TypeScript for new adapter/domain; focused ESLint; action-risk, Chat registry, Spine registry, write-target, governed-execution, receipt-coverage and tool-catalogue checks. Full Deno check is UNVERIFIED because Deno is not installed locally.
+RENDERED_EVIDENCE: UNVERIFIED: no rendered approval interaction exercised in this backend slice.
+BEHAVIORAL_EVIDENCE: PASS: actual handler with module-boundary synthetic caller/provider; read-after-empty-search then raw account switch blocks next provider/reply/summary. SQL fixture preserves previous catalogue rows, default confirm, grants, tenant mismatch and stored off mode.
+AUTHENTICATED_RUNTIME: UNVERIFIED: no live Supabase caller, deployed migrations, actual approval-card redemption, production receipt readback or full-shell account switch.
+KEYBOARD_FOCUS: NOT_APPLICABLE: no controls changed.
+ZOOM_REFLOW: NOT_APPLICABLE: no layout changed.
+REDUCED_MOTION: NOT_APPLICABLE: no motion changed.
+STATE_COVERAGE: PASS: client-seat refusal, model confirmation refusal, high action clamp despite auto, off lane, title normalization/CAS fingerprint, conflict, malformed response, uncertain acknowledgement and retry fence, completed_unrecorded, no duplicate Chat receipt.
+TRUTHFUL_STATE_LABELS: PASS: canonical document existence and recorded chunk count never imply indexing completeness or owner-confirmed Memory; uploaded source deletion is explicitly not attempted.
+SOLO_UI: NO: backend/domain/catalogue only; existing UI unchanged.
+UNVERIFIED: full Deno check, live deployment, authenticated approval redemption and receipts, rendered user acceptance. Read/create/reindex beyond the declared tools remains outside this slice.
+INTERNAL_BUILD_IDENTITY: branch=codex/knowledge-governed-crud; base=c5a4fe0cf2d2b725bdff11cf53bab39e2e073e70; exact head=Git commit containing this evidence; deployment=none; environment=local fixtures; migrations=PROOF_OWED(20270529000000); edge=PROOF_OWED(paige-ai-chat); evidence=knowledge-governed-chat.md
+RELEASE_CHANNEL: development: local fixture execution only.
+RELEASE_CLASSIFICATION: internal-only: no deployed customer outcome.
+CUSTOMER_RELEASE_IDENTITY: none: production proof and owner release approval remain owed.
+RELEASE_NOTE_REQUIRED: NO: draft implementation only.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: registered Chat bindings are source-wired; maturity remains PARTIAL and production capability is unverified.
+RELEASE_RECOVERY: position=disable domain tool bindings and contain new catalogue entries through a reviewed forward fix; never undo Knowledge data through an inferred rollback; reference=c5a4fe0cf2d2b725bdff11cf53bab39e2e073e70
+
+## Pre-edit routing
+
+1. Owner outcome: Paige reads the active workspace Knowledge and updates metadata or deletes the exact reviewed revision through the existing approval flow.
+2. Knowledge domain; parent owns Settings integration. No UI, worker, scheduler, Memory, or shared authority redesign.
+3. Existing caller identity, canonical Chat confirmation, transactional Knowledge RPC and capability receipt machinery are the dependencies. No substitute Harness.
+4. knowledge.read/update/delete are proposed and absent before this slice. Actual JWT dispatch will accompany registration.
+5. Native Knowledge uses the existing database. Registry excluded delivery infrastructure applies; no invented external provider or connection.
+6. Read is read_only/none; update is ordinary/update; delete high/delete. Existing Chat canonical gate and normalized document/revision/patch fingerprint. No new approval evidence.
+7. Synchronous existing RPCs; no new durable job/event system.
+8. SQL checks readback and owns Rail. completed_unrecorded is verified change with incomplete evidence; transport uncertainty requires readback before a new proposal, never automatic retry.
+9. Existing Chat, Settings Setup and Mind ledger boundaries remain partial/unverified. No UI layout change or Memory promotion.
+10. Required proof: real handler with module-boundary fixtures, adapter refusal/revision/uncertainty tests, registry checks. Authenticated production seat/account-switch/receipt/UI proof remains UNVERIFIED.
+
+Flow-by-Flow skill and routed orchestration/delivery/audit/build/verification references applied. Existing approved design is unchanged; Impeccable layout review is not applicable to backend-only dispatch.
+
+Base c5a4fe0c; composed fresh canonical service/deletion ancestry through 0149180e, not historical PR591. Shipped log N/A: no main merge.
+
+## Reproducible commands and limits
+
+- `npx vitest run src/__tests__/knowledge-chat.test.ts --maxWorkers 1` — 17 PASS. Initially failed missing adapter. Exact normalized fingerprints vary by document, revision and patch.
+- `node --import ./scripts/knowledge-scope/register.mjs scripts/knowledge-scope/stage1-check.mjs` — 534 PASS / 0 FAIL. Pre-binding handler comparison with the initial new checks: 518 PASS / 10 FAIL; current source restored in finally. New cases execute actual handler, not a copied gate. Synthetic JWT/module/provider boundary is not authenticated proof.
+- `python scripts/knowledge-service/catalogue-check.py --psql <local psql>` — PostgreSQL16, disposable database, six assertions PASS, migration replay twice. Existing rows/predicates/grants preserved; not full Supabase migration replay.
+- `node scripts/ci/tool-catalogue-lint.mjs` — PASS, includes actual manifest/Anthropic schema 9 PASS.
+- `node scripts/ci/action-risk-lint.mjs`, `node scripts/ci/chat-tool-registry-lint.mjs`, `node --import ./scripts/knowledge-scope/register.mjs scripts/ci/paige-spine-registry-lint.mjs`, `node scripts/ci/write-target-lint.mjs`, `node scripts/ci/governed-execution-lint.mjs` — PASS.
+- Existing receipt guard has a Windows entrypoint URL mismatch. Executed it by setting process.argv[1] to the module file URL minus file:// before import; 155 classified mutations all declared. Guard source unchanged.
+- Strict standalone tsc for new adapter and Spine domain and focused ESLint PASS. Actual handler is transpiled/executed by the runtime harness; this does not replace the Deno diagnostic gate.
+
+Coordinator explicitly cleared only catalogue migration 20270529000000 after discovery. Read-only comparison proved that removing its two added rows reproduces predecessor function including predicates, defaults and ACL verbatim. Automatic review initially rejected local composition/catalogue writing, then accepted the same bounded operations after ancestry/diff proof. No authority algorithm, worker, shared scheduler, or UI edit.
+
+Read returns at most 20 rows, at most 12k detail characters and less than 16k serialized context, with explicit truncation. Mutation responses expose ids/revision/outcome rather than document content. SQL is the sole operation receipt owner. The request-local uncertain-document fence stops model re-attempts after uncertain or unrecorded outcomes, even when it changes the patch; a new request requires operator review. This is retry containment, not a second approval path.
+
+Successful rendered high-risk card redemption and authenticated SQL execution remain proof owed. No merge, deployment, release, create/reindex authority, or Memory promotion is claimed.

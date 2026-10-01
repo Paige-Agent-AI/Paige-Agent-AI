@@ -36,6 +36,7 @@ function definitionFromFixture(fixture) {
       owner: "Capability Kit fixture",
       humanSurface: null,
       description: "Contract fixture only.",
+      chatTool: effect === "read" ? "fixture_documents_read" : null,
     },
     input: objectInputSchema(fixture.input),
     effect,
@@ -424,7 +425,7 @@ const constructorRejects = (build) => {
 
 /** A complete, correct declaration. Every corpus case is this with one thing changed. */
 const soundRead = () => ({
-  identity: { id: "knowledge.documents.read", version: 1, domain: "knowledge", owner: "Knowledge", humanSurface: null, description: "Read one governed document." },
+  identity: { id: "knowledge.documents.read", version: 1, domain: "knowledge", owner: "Knowledge", humanSurface: null, description: "Read one governed document.", chatTool: "knowledge_documents_read" },
   input: objectInputSchema({ properties: { documentId: { type: "string", minLength: 1 } }, required: ["documentId"] }),
   effect: "read",
   governance: { actionRiskKey: null, risk: "read_only", approval: "none", requiredPermission: ownerGrantablePermission("knowledge.documents.read") },
@@ -437,6 +438,7 @@ const soundRead = () => ({
 });
 const soundMutation = () => ({
   ...soundRead(),
+  identity: { ...soundRead().identity, chatTool: null },
   effect: "mutation",
   governance: { actionRiskKey: "crm_create_contact", risk: "ordinary", approval: "confirm", requiredPermission: ownerGrantablePermission("crm.contacts.create") },
   availability: { resolver: "paige-capability-status", states: ["live", "needs_approval"] },
@@ -444,8 +446,12 @@ const soundMutation = () => ({
 });
 
 const SEAMS = `tenantScope:{source:"server",tenantResolver:"current_user_tenant_id",actorResolver:"authenticated_user",revalidateAt:["before_availability","before_execution","before_receipt"]}`;
+// REST carries `identity:{}` for mutations (no chatTool is correct there). A read's source must
+// NOT also carry the trailing empty `identity:{}` — in an object literal the LAST key wins, so
+// it would silently override the read's chatTool binding and the lint would rightly flag it.
 const REST = `identity:{},input:{},availability:{},providerBinding:{},receipt:{},outcome:{}`;
-const readSrc = (over) => `defineCapability({effect:"read",governance:{actionRiskKey:null,risk:"read_only",approval:"none"},idempotency:{mode:"not_applicable"},${SEAMS},${REST},${over ?? ""}})`;
+const REST_CORE = `input:{},availability:{},providerBinding:{},receipt:{},outcome:{}`;
+const readSrc = (over) => `defineCapability({effect:"read",identity:{chatTool:"knowledge_documents_read"},governance:{actionRiskKey:null,risk:"read_only",approval:"none"},idempotency:{mode:"not_applicable"},${SEAMS},${REST_CORE},${over ?? ""}})`;
 
 /** Each case: the SOURCE the lint reads, and the OBJECT the constructor builds. Same declaration. */
 const CORPUS = [
@@ -454,6 +460,12 @@ const CORPUS = [
   { name: "a sound mutation", bite: false,
     source: `defineCapability({effect:"mutation",governance:{actionRiskKey:"crm_create_contact",risk:"ordinary",approval:"confirm"},idempotency:{mode:"required",replay:"return_recorded_result"},${SEAMS},${REST}})`,
     build: soundMutation },
+  { name: "a read without its chat-tool binding", bite: true,
+    source: `defineCapability({effect:"read",governance:{actionRiskKey:null,risk:"read_only",approval:"none"},idempotency:{mode:"not_applicable"},${SEAMS},${REST}})`,
+    build: () => { const read = soundRead(); return { ...read, identity: { ...read.identity, chatTool: undefined } }; } },
+  { name: "a mutation binding a chat tool by name", bite: true,
+    source: `defineCapability({effect:"mutation",identity:{chatTool:"widget_send"},governance:{actionRiskKey:"crm_create_contact",risk:"ordinary",approval:"confirm"},idempotency:{mode:"required",replay:"return_recorded_result"},${SEAMS},${REST_CORE}})`,
+    build: () => ({ ...soundMutation(), identity: { ...soundMutation().identity, chatTool: "widget_send" } }) },
   { name: "risk contradicts the canonical policy", bite: true,
     source: `defineCapability({effect:"mutation",governance:{actionRiskKey:"crm_merge_contacts",risk:"ordinary",approval:"confirm"},idempotency:{mode:"required",replay:"return_recorded_result"},${SEAMS},${REST}})`,
     build: () => ({ ...soundMutation(), governance: { actionRiskKey: "crm_merge_contacts", risk: "ordinary", approval: "confirm", requiredPermission: ownerGrantablePermission("crm.contacts.merge") } }) },

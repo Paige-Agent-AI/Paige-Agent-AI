@@ -51,6 +51,8 @@ const KIT_FILES = [
 function collectDeclaredCapabilityNames(files, resolver) {
   const riskKeys = new Set();
   const toolNames = new Set();
+  const readToolNames = new Set();
+  const spineReadTools = new Set();
   for (const file of files) {
     const sourceFile = resolver.sourceFile(file);
     if (!sourceFile) continue;
@@ -62,6 +64,11 @@ function collectDeclaredCapabilityNames(files, resolver) {
         // (see HEURISTIC LIMITS at the top) and will read as undeclared — which fails CLOSED.
         const argument = unwrapExpression(node.arguments[0]);
         if (argument && ts.isObjectLiteralExpression(argument)) {
+          const root = objectProperties(argument, sourceFile);
+          const effect = literalProperty(root, "effect");
+          const identity = nestedProperties(root, "identity", sourceFile);
+          const chatTool = identity ? literalProperty(identity, "chatTool") : null;
+          const governance = nestedProperties(root, "governance", sourceFile);
           for (const property of argument.properties) {
             if (!ts.isPropertyAssignment(property)) continue;
             const section = propertyName(property.name, sourceFile);
@@ -84,11 +91,39 @@ function collectDeclaredCapabilityNames(files, resolver) {
               // and `configure` — see the notes in action-risk.ts). So the only thing that clears a
               // tool schema is a key classified as a mutation in the canonical policy, which forces
               // it through `classifyAction()` and into the runtime gate.
+              //
+              // READS are the one deliberate exception, and they buy their way in through a
+              // SECOND contract rather than a looser first one: `identity.chatTool` names the tool,
+              // `effect` must be the literal "read", `governance.actionRiskKey` must be the literal
+              // null — and the per-tool rule additionally requires the SPINE REGISTRY to classify
+              // that same tool name as a read (`action.classification:"read"` + `action.chatTool`)
+              // while every write heuristic stays silent. A destructive tool hiding behind a read
+              // declaration must therefore also defeat the registry cross-check, the MUTATION_VERB
+              // floor, and the canonical policy — and its executor still routes through the
+              // read-only SQL seam the Spine names. See the HONEST LIMIT note at the per-tool rule.
               if (section === "governance" && name === "actionRiskKey") {
                 riskKeys.add(field.initializer.text);
                 toolNames.add(field.initializer.text);
               }
             }
+          }
+          if (effect === "read" && chatTool !== null &&
+            governance !== null && isLiteralNull(governance, "actionRiskKey")) {
+            readToolNames.add(chatTool);
+          }
+        }
+      }
+      // The Spine registry half of the read contract: a domains/*.ts capability literal that
+      // classifies a chat tool as a read and names its executor. Parsed from the same AST walk;
+      // a registry entry without a matching kit read declaration clears nothing by itself.
+      if (ts.isObjectLiteralExpression(node)) {
+        const action = nestedProperties(objectProperties(node, sourceFile), "action", sourceFile);
+        if (action) {
+          const classification = literalProperty(action, "classification");
+          const chatTool = literalProperty(action, "chatTool");
+          const executor = literalProperty(action, "executor");
+          if (classification === "read" && chatTool !== null && executor !== null) {
+            spineReadTools.add(chatTool);
           }
         }
       }
@@ -96,7 +131,7 @@ function collectDeclaredCapabilityNames(files, resolver) {
     };
     visit(sourceFile);
   }
-  return { riskKeys, toolNames };
+  return { riskKeys, toolNames, readToolNames, spineReadTools };
 }
 
 /**
@@ -107,6 +142,31 @@ function collectDeclaredCapabilityNames(files, resolver) {
  * this lint is dependency-free `.mjs` and `action-risk.ts` is TypeScript; parsing is what the file
  * already does, so this adds a column rather than a mechanism.
  */
+/**
+ * The MUTATION_VERB fail-safe floor, read from the same file for the same reason. The read-tool
+ * clearance consults it so a write-shaped tool name can never clear through a read declaration,
+ * whatever its declarations claim.
+ */
+function collectMutationVerb(files, resolver) {
+  for (const file of files) {
+    if (relative(file) !== "supabase/functions/_shared/action-risk.ts") continue;
+    const sourceFile = resolver.sourceFile(file);
+    if (!sourceFile) continue;
+    for (const statement of sourceFile.statements) {
+      if (!ts.isVariableStatement(statement)) continue;
+      for (const declaration of statement.declarationList.declarations) {
+        if (!ts.isIdentifier(declaration.name) || declaration.name.text !== "MUTATION_VERB" || !declaration.initializer) continue;
+        if (!ts.isRegularExpressionLiteral(declaration.initializer)) continue;
+        const match = /^\/(.*)\/([a-z]*)$/s.exec(declaration.initializer.getText(sourceFile));
+        if (match) {
+          try { return new RegExp(match[1], match[2]); } catch { return null; }
+        }
+      }
+    }
+  }
+  return null;
+}
+
 function collectRiskPolicy(files, resolver) {
   const policy = new Map();
   for (const file of files) {
@@ -213,6 +273,8 @@ function checkDeclarationConstructs(argument, sourceFile, normalized, riskPolicy
   const approval = governance ? literalProperty(governance, "approval") : null;
   const actionRiskKey = governance ? literalProperty(governance, "actionRiskKey") : null;
   const actionRiskKeyIsNull = governance ? isLiteralNull(governance, "actionRiskKey") : false;
+  const identity = nestedProperties(root, "identity", sourceFile);
+  const chatTool = identity ? literalProperty(identity, "chatTool") : null;
 
   if (risk !== null && !RISK_CLASSES.has(risk)) flag(`governance.risk "${risk}" is not a risk class`);
 
@@ -231,6 +293,11 @@ function checkDeclarationConstructs(argument, sourceFile, normalized, riskPolicy
     const mode = idem ? literalProperty(idem, "mode") : null;
     if (mode !== null && mode !== "not_applicable") {
       flag(`a read declares idempotency.mode "${mode}" — a read must declare not_applicable`);
+    }
+    // defineCapability.ts — a read has no action-risk key for the anti-bypass rule to match on,
+    // so it must bind the chat tool it clears by exact name instead.
+    if (chatTool === null) {
+      flag("a read does not bind identity.chatTool — a read must name the chat tool it clears");
     }
   } else {
     // defineCapability.ts:131-152
@@ -251,6 +318,9 @@ function checkDeclarationConstructs(argument, sourceFile, normalized, riskPolicy
       }
     }
     if (risk === "read_only") flag(`a ${effect} declares governance.risk read_only — only a read may`);
+    if (chatTool !== null) {
+      flag(`a ${effect} binds identity.chatTool "${chatTool}" — only a read may; a mutation clears through its canonical action-risk key`);
+    }
     if (effect === "external_effect" && risk !== null && risk !== "high") {
       flag(`an external_effect declares governance.risk "${risk}" — an external effect must be high`);
     }
@@ -651,6 +721,9 @@ export function scanSource(source, file = "fixture.ts", options = {}) {
   const strictOnly = options.strictOnly === true;
   const declaredRiskKeys = options.declaredRiskKeys ?? new Set();
   const declaredToolNames = options.declaredToolNames ?? new Set();
+  const readToolNames = options.readToolNames ?? new Set();
+  const spineReadTools = options.spineReadTools ?? new Set();
+  const mutationVerb = options.mutationVerb ?? null;
   // Absent (a bare scanSource call, e.g. the self-test) means the policy-membership and
   // class-agreement predicates cannot run. They are SKIPPED rather than guessed — fewer checks
   // without the policy, never a false accusation with it.
@@ -748,12 +821,23 @@ export function scanSource(source, file = "fixture.ts", options = {}) {
         // the risk rule left the deadlock half-standing. A tool whose name carries a governed
         // declaration is declared, not hand-rolled; one without a declaration still fails.
         //
-        // HONEST LIMIT: only a MUTATION clears this, because only `governance.actionRiskKey` is
-        // admitted (see the collector). A brand-new READ tool schema therefore still lands on this
-        // ledger and needs a baseline entry. That is deliberate — INT-003 was a deadlock on new
-        // MUTATING tools, and widening the escape to reads reopened a destructive-write hole.
+        // HONEST LIMIT, REVISED (reads bought in through a second contract): a MUTATION still
+        // clears only through `governance.actionRiskKey`, because only that forces
+        // `classifyAction()` and the runtime approval gate. A READ clears through a STRICTER
+        // combination than any mutation needs: a kit declaration whose `identity.chatTool` names
+        // this tool with `effect:"read"` and a literal-null action-risk key, AND a Spine registry
+        // entry classifying this same tool name as a read with its executor — while every write
+        // heuristic stays silent (no canonical action-risk key of this name, no MUTATION_VERB
+        // spelling). The widget_purge hijack therefore still fails: it must defeat the registry
+        // cross-check AND the verb floor AND the canonical policy in the same change, and its
+        // executor still routes to the read-only SQL seam the Spine names. A read with only one
+        // of the two declarations, or any write-shaped residue, lands on the ledger as before.
         const toolName = literalProperty(props, "name") ?? "<dynamic>";
-        if (!declaredToolNames.has(toolName)) {
+        const readCleared = readToolNames.has(toolName) && spineReadTools.has(toolName)
+          && !declaredRiskKeys.has(toolName)
+          && !(riskPolicy && riskPolicy.has(toolName))
+          && !(mutationVerb && mutationVerb.test(toolName));
+        if (!declaredToolNames.has(toolName) && !readCleared) {
           findings.push(violation("direct-tool-definition", normalized, toolName));
         }
       }
@@ -867,14 +951,21 @@ function scanRepository() {
   const files = SCAN_ROOTS.flatMap((root) => walk(path.join(ROOT, root)))
     .filter((file) => !relative(file).startsWith(MCP_GATEWAY_EXEMPT));
   const resolver = createAstResolver(files);
-  const { riskKeys: declaredRiskKeys, toolNames: declaredToolNames } = collectDeclaredCapabilityNames(files, resolver);
+  const {
+    riskKeys: declaredRiskKeys, toolNames: declaredToolNames,
+    readToolNames, spineReadTools,
+  } = collectDeclaredCapabilityNames(files, resolver);
   const riskPolicy = collectRiskPolicy(files, resolver);
+  const mutationVerb = collectMutationVerb(files, resolver);
   for (const file of files) {
     const rel = relative(file);
     const sourceFile = resolver.sourceFile(file);
     if (!sourceFile) throw new Error(`TypeScript did not load ${rel}.`);
     if (!rel.startsWith(KIT_DIR)) {
-      const shared = { sourceFile, resolver, declaredRiskKeys, declaredToolNames, riskPolicy };
+      const shared = {
+        sourceFile, resolver, declaredRiskKeys, declaredToolNames, riskPolicy,
+        readToolNames, spineReadTools, mutationVerb,
+      };
       strictFindings.push(...scanSource(sourceFile.text, rel, { ...shared, strictOnly: true }));
       debtFindings.push(...scanSource(sourceFile.text, rel, shared));
     }
@@ -1039,6 +1130,65 @@ function runSelfTest() {
     failed += 1;
     console.error("  FAIL direct-tool-definition still fired for a tool the collector read as declared");
   } else console.log("  ok   direct-tool-definition clears through the same collected declaration");
+
+  // READ-TOOL CLEARANCE — the two-contract policy, driven through the REAL collector exactly as
+  // scanRepository() drives it. A read has no action-risk key, so it clears ONLY when its kit
+  // declaration binds the tool by exact name AND the Spine registry classifies that same name as
+  // a read, with every write heuristic silent. Each case below removes or poisons one leg.
+  const readDeclarationFile = "supabase/functions/probe/read-declaration.ts";
+  const readRegistryFile = "supabase/functions/_shared/paige-spine/domains/probe.ts";
+  const readDeclarationSource = `
+    defineCapability({ idempotency: {}, receipt: {}, outcome: {}, effect: "read",
+      identity: { chatTool: "widget_inspect" },
+      governance: { actionRiskKey: null, risk: "read_only", approval: "none" } });
+    defineCapability({ idempotency: {}, receipt: {}, outcome: {}, effect: "read",
+      identity: { chatTool: "widget_send" },
+      governance: { actionRiskKey: null, risk: "read_only", approval: "none" } });
+  `;
+  const readRegistrySource = `
+    const CAPABILITY = { key: "widget.inspect", action: { classification: "read", chatTool: "widget_inspect", executor: "public.read_tenant_widget" } } as const;
+    const EVASION = { key: "widget.evasion", action: { classification: "read", chatTool: "widget_send", executor: "public.read_tenant_widget" } } as const;
+  `;
+  const readFiles = [readDeclarationFile, readRegistryFile];
+  const readResolver = {
+    sourceFile: (file) => file === readDeclarationFile
+      ? ts.createSourceFile(file, readDeclarationSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+      : file === readRegistryFile
+        ? ts.createSourceFile(file, readRegistrySource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+        : null,
+  };
+  const readCollected = collectDeclaredCapabilityNames(readFiles, readResolver);
+  const verbFloor = /(^|_)(send|create|update|delete)(_|$)/;
+  const readToolFixture = (name) => `const t = { name: "${name}", description: "x", parameters: { type: "object" } };`;
+  const readOptions = (extra = {}) => ({
+    readToolNames: readCollected.readToolNames,
+    spineReadTools: readCollected.spineReadTools,
+    mutationVerb: verbFloor,
+    ...extra,
+  });
+  const readCleared = scanSource(readToolFixture("widget_inspect"), "src/probe.ts", readOptions())
+    .filter((item) => item.rule === "direct-tool-definition");
+  if (readCleared.length !== 0) {
+    failed += 1;
+    console.error("  FAIL direct-tool-definition fired for a read cleared by both the kit binding and the Spine registry");
+  } else console.log("  ok   a read clears through kit binding + Spine registry agreement");
+  const readNoSpine = scanSource(readToolFixture("widget_inspect"), "src/probe.ts", readOptions({ spineReadTools: new Set() }))
+    .filter((item) => item.rule === "direct-tool-definition");
+  if (readNoSpine.some((item) => item.rule === "direct-tool-definition") === false) {
+    failed += 1;
+    console.error("  FAIL direct-tool-definition cleared a read with no Spine registry agreement — the second contract was optional");
+  } else console.log("  ok   a read without Spine registry agreement still lands on the ledger");
+  const readNoKit = scanSource(readToolFixture("widget_inspect"), "src/probe.ts", readOptions({ readToolNames: new Set() }));
+  if (readNoKit.some((item) => item.rule === "direct-tool-definition") === false) {
+    failed += 1;
+    console.error("  FAIL direct-tool-definition cleared a read with no kit chatTool binding — the first contract was optional");
+  } else console.log("  ok   a read without a kit chatTool binding still lands on the ledger");
+  const writeShapedEvader = scanSource(readToolFixture("widget_send"), "src/probe.ts", readOptions())
+    .filter((item) => item.rule === "direct-tool-definition");
+  if (writeShapedEvader.length === 0) {
+    failed += 1;
+    console.error("  FAIL direct-tool-definition CLEARED widget_send despite lying read declarations — the verb floor was bypassed");
+  } else console.log("  ok   a write-shaped tool name cannot clear through lying read declarations");
   // A cast must not hide an incomplete declaration from the strict rule. Before the shared
   // unwrap, `as any` escaped this check entirely — and once a collector read through casts, that
   // escape also minted governance clearance for the tool name.

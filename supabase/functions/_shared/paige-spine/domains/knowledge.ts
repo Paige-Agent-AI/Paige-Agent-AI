@@ -30,7 +30,7 @@ export const KNOWLEDGE_TOOLS = [
 // The schema builder expresses nullable fields with anyOf. Non-empty patches are
 // additionally enforced by normalizeKnowledgeArgs and the canonical SQL RPC.
 export const KNOWLEDGE_READ_KIT = defineCapability({
- identity:{id:"knowledge.read",version:1,domain:"knowledge",owner:"knowledge-system",humanSurface:"/solo/:account/settings/setup/knowledge-bucket",description:"Canonical Knowledge read through the existing governed Chat and caller-JWT SQL seam."},
+ identity:{id:"knowledge.read",version:1,domain:"knowledge",owner:"knowledge-system",humanSurface:"/solo/:account/settings/setup/knowledge-bucket",description:"Canonical Knowledge read through the existing governed Chat and caller-JWT SQL seam.",chatTool:"knowledge_read"},
  input:objectInputSchema({properties:{document_id:{type:"string",format:"uuid"},limit:{type:"integer",minimum:1,maximum:20},offset:{type:"integer",minimum:0}}}),
  effect:"read",
  governance:{actionRiskKey:null,risk:"read_only",approval:"none",requiredPermission:ownerGrantablePermission("knowledge.documents.read")},
@@ -42,7 +42,7 @@ export const KNOWLEDGE_READ_KIT = defineCapability({
  outcome:{projector:"capability-record"},
 });
 export const KNOWLEDGE_UPDATE_KIT = defineCapability({
- identity:{id:"knowledge.update",version:1,domain:"knowledge",owner:"knowledge-system",humanSurface:"/solo/:account/settings/setup/knowledge-bucket",description:"Canonical Knowledge update through the existing governed Chat and caller-JWT SQL seam."},
+ identity:{id:"knowledge.update",version:1,domain:"knowledge",owner:"knowledge-system",humanSurface:"/solo/:account/settings/setup/knowledge-bucket",description:"Canonical Knowledge update through the existing governed Chat and caller-JWT SQL seam.",chatTool:null},
  input:objectInputSchema({properties:{document_id:{type:"string",format:"uuid"},expected_revision:{type:"integer",minimum:1},patch:{type:"object",additionalProperties:false,properties:{title:{type:"string",minLength:1,maxLength:300},summary:{anyOf:[{type:"string",maxLength:2000},{type:"null"}]},category:{anyOf:[{type:"string",maxLength:100},{type:"null"}]},tags:{type:"array",maxItems:20,items:{type:"string",maxLength:60}}}}},required:["document_id","expected_revision","patch"]}),
  effect:"mutation",
  governance:{actionRiskKey:"knowledge_update",risk:"ordinary",approval:"confirm",requiredPermission:ownerGrantablePermission("knowledge.documents.update")},
@@ -54,7 +54,7 @@ export const KNOWLEDGE_UPDATE_KIT = defineCapability({
  outcome:{projector:"capability-record"},
 });
 export const KNOWLEDGE_DELETE_KIT = defineCapability({
- identity:{id:"knowledge.delete",version:1,domain:"knowledge",owner:"knowledge-system",humanSurface:"/solo/:account/settings/setup/knowledge-bucket",description:"Canonical Knowledge delete through the existing governed Chat and caller-JWT SQL seam."},
+ identity:{id:"knowledge.delete",version:1,domain:"knowledge",owner:"knowledge-system",humanSurface:"/solo/:account/settings/setup/knowledge-bucket",description:"Canonical Knowledge delete through the existing governed Chat and caller-JWT SQL seam.",chatTool:null},
  input:objectInputSchema({properties:{document_id:{type:"string",format:"uuid"},expected_revision:{type:"integer",minimum:1}},required:["document_id","expected_revision"]}),
  effect:"mutation",
  governance:{actionRiskKey:"knowledge_delete",risk:"high",approval:"confirm",requiredPermission:ownerGrantablePermission("knowledge.documents.delete")},

@@ -95,3 +95,9 @@ Review at d8511e5e found two P2 defects. Six failing-first tests reproduced them
 2. Review filtered only the first page and offered neither later-page access nor error reload. Review now exposes Load more documents, reports absence only among loaded documents, and exposes Reload Knowledge after a read error. An actual Review-body test loads a shared101st record through the canonical hook.
 
 Verification: seven focused test files87PASS, followed by final Mind-only regression20PASS after the source-change guard. Affected source/test ESLint and diff check PASS. No full compiler/build rerun in this batch: parent owns the active Settings compiler slot and integrated validation. Existing16 rendered editor cases are unaffected; no new rendered/full-shell/authenticated claim for these two repairs. Parent coordinates the sole independent recheck at the repair commit.
+
+## CI regression fixture repair (release held)
+
+Remote CI at 7c1d570695407e43ed228aa6bcbe2f107121ee6b reported two failures in tenantScopedCounts.test.tsx; 6,559 other tests passed. Both failing tests still intercepted the retired direct-table read, so they never observed the canonical RPC. The fixture now exercises the real readKnowledge adapter and asserts read_tenant_knowledge with the exact expected tenant, no request without active scope, and rejection of the previous workspace's late response. No product behavior changed. Targeted four tests PASS. Full local suite is recorded separately; it is not claimed green from this result.
+
+The independent review and sole recheck at 7c1d5706 were already used. This further CI fixture-only change is RELEASE HELD for coordinator disposition under AGENTS.md, rather than silently expanding the review budget. No merge or deployment requested.

@@ -45,7 +45,7 @@ RELEASE_NOTE_REQUIRED: NO: bounded presentation repair on the existing signing f
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: the wiring pins and suite are proven offline; the authenticated signer round and deployed frontend are not yet proven
 RELEASE_RECOVERY: position=revert this bounded slice if the signing page regresses for text agreements or the viewer misbehaves, restoring the prior slot from the merge parent before any forward fix; reference=#1399
 
-INTERNAL_BUILD_IDENTITY: product=380670c59846f6c05018f54dd2265e83fa43882f; current-main-sync=380670c59846f6c05018f54dd2265e83fa43882f; base=b8cb2065c; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE(agreement-document already deployed; the change is frontend only); evidence=failing-first-wiring-pins-and-impeccable-context
+INTERNAL_BUILD_IDENTITY: product=92658415d0d6e59da8da3a36855789bae2af55fb; current-main-sync=380670c59846f6c05018f54dd2265e83fa43882f; base=b8cb2065c; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE(agreement-document already deployed; the change is frontend only); evidence=failing-first-wiring-pins-and-impeccable-context
 RELEASE_CHANNEL: development: exact product-code head on the draft branch; production promotion remains merge automation only
 RELEASE_CLASSIFICATION: patch: the signer's document becomes visible on the existing signing flow
 CUSTOMER_RELEASE_IDENTITY: none: no owner-approved customer release identity was assigned to this bounded repair

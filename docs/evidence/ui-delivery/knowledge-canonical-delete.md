@@ -25,7 +25,7 @@ CUSTOMER_RELEASE_IDENTITY: none: no deployed human flow.
 RELEASE_NOTE_REQUIRED: NO: staged capability.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: authenticated deployment and consumer adoption; knowledge.delete remains UNAVAILABLE in Spine.
 RELEASE_RECOVERY: position=revoke new RPC execute grant to contain activation; deletion has no undo or tombstone and recovering deleted data requires a separately authorized verified backup restore; reference=44d62e77c595e1b09148b6d09eb3108215c04ac2
-INTERNAL_BUILD_IDENTITY: base=44d62e77c595e1b09148b6d09eb3108215c04ac2; branch=codex/knowledge-delete-service; exact change identity=Git commit containing this evidence; deployment=none; migration=20270526000000_knowledge_canonical_delete
+INTERNAL_BUILD_IDENTITY: base=44d62e77c595e1b09148b6d09eb3108215c04ac2; branch=codex/knowledge-delete-service; exact change identity=Git commit containing this evidence; deployment=none; migration=20270530200000_knowledge_canonical_delete
 
 ## Ten routing answers (recorded before implementation)
 
@@ -58,7 +58,7 @@ source_cleanup is always {status: not_attempted, reason: canonical_source_bindin
 - `npx --no-install tsc --noEmit --strict --skipLibCheck --target ES2022 --module ESNext --moduleResolution Bundler src/lib/knowledge-service.ts`: exit 0.
 - `python scripts/knowledge-service/delete-check.py --psql <PostgreSQL16 psql path>`: 26 SQL assertions + four two-connection races, exit 0. Creates/drops only a unique disposable DB on localhost:55439; does not reset the cluster. Migration applied twice. pg_stat_activity confirms the first transaction reached its locked wait before the competing operation starts.
 - `python scripts/knowledge-service/check.py --psql <PostgreSQL16 psql path>`: existing read/metadata SQL suite and concurrent CAS passed.
-- Migration generated with Supabase CLI then moved forward to 20270526000000, after the existing 20270525000000 service migration.
+- Migration generated with Supabase CLI then moved forward to 20270530200000, after the existing 20270530100000 service migration.
 - Shipped Delivery Log: N/A, no main merge. Independent review is parent-owned and pending; this implementation is not independently approved.
 
 Supabase functions guidance checked: https://supabase.com/docs/guides/database/functions (empty definer search_path and explicit grants). Changelog checked 2026-10-01; no new extension or client version is introduced.

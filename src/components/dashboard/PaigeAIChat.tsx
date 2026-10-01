@@ -1627,16 +1627,19 @@ const PaigeAIChatInner = ({
       for (const [fingerprint, item] of actionable) {
         let body: Record<string, unknown> = {};
         let transportFailed = false;
+        let errorPresent = false;
         try {
           const { data, error } = await supabase.functions.invoke("crm-command", {
             body: { command: item.command, idempotency_key: item.idempotency_key, approved_fingerprint: fingerprint },
           });
           if (data && typeof data === "object" && !Array.isArray(data)) body = data as Record<string, unknown>;
           if (error) {
+            errorPresent = true;
             // An ANSWERED refusal or failure still carries the door's structured body on the
-            // FunctionsHttpError context — the same source the chat handler parses. Only a
-            // transport-level failure (no answer at all) leaves the outcome genuinely
-            // unconfirmed; the door's own outcome_unknown answers say so explicitly.
+            // FunctionsHttpError context — the same source the chat handler parses. A body without
+            // the door's own marker (a gateway or relay answer, or none at all) leaves the
+            // command's outcome genuinely unconfirmed; the door marks possibly-committed answers
+            // explicitly, and foreign answers never downgrade to did-not-run.
             const ctx = (error as { context?: { json?: () => Promise<unknown> } }).context;
             if (ctx && typeof ctx.json === "function") {
               try {
@@ -1655,9 +1658,14 @@ const PaigeAIChatInner = ({
         const reproposed = body.outcome === "approval_required" && typeof body.fingerprint === "string" && body.fingerprint !== fingerprint
           ? { fingerprint: String(body.fingerprint), summary: typeof body.summary === "string" ? body.summary : item.summary }
           : undefined;
-        const outcome = body.outcome === "succeeded" && !transportFailed
+        // The shared answered/unanswered rule (approval-outcome.ts), client-side: an error whose
+        // parsed body carries the door's own `ok` marker is an ANSWER (its outcome classes stand);
+        // an error with a foreign body — a gateway or relay answer, or none at all — may hide a
+        // committed command, so it reports as could-not-confirm, never as did-not-run.
+        const doorAnswered = !transportFailed && body.ok !== undefined;
+        const outcome = body.outcome === "succeeded" && !errorPresent && !transportFailed
           ? "ran"
-          : body.outcome_unknown === true || transportFailed
+          : body.outcome_unknown === true || transportFailed || (errorPresent && !doorAnswered)
           ? "unconfirmed"
           : "not_run";
         executedOutcomes.push({
@@ -2193,7 +2201,7 @@ const PaigeAIChatInner = ({
                             ))}
                           </div>
                         )}
-                        {!!message.confirm?.length && !message.confirmResolved && !message.confirmDecision && index === messages.length - 1 && !isLoading && (
+                        {!!message.confirm?.length && !message.confirmResolved && !message.confirmDecision && (index === messages.length - 1 || (message.approvalOutcome?.reported === true && message.confirm.some((c) => !!c.fingerprint && !(message.approvalOutcome?.actions ?? []).some((a) => a.fingerprint === c.fingerprint)))) && !isLoading && (
                           <PaigeConfirmCard
                             // Summary and fingerprint stay PAIRED. The previous version built two
                             // parallel arrays and `.filter()`ed the fingerprints, so one action

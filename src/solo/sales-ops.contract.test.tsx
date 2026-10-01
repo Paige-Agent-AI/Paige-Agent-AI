@@ -91,9 +91,9 @@ vi.mock("./useSoloSalesOps", async (importOriginal) => {
   const actual = await importOriginal<typeof import("./useSoloSalesOps")>();
   return { ...actual, useSoloSalesOps: () => harness.sales };
 });
-vi.mock("./useSoloAgreements", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("./useSoloAgreements")>();
-  return { ...actual, useSoloAgreements: () => harness.agreements };
+vi.mock("./useSoloCommercialTerms", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./useSoloCommercialTerms")>();
+  return { ...actual, useSoloCommercialTerms: () => harness.agreements };
 });
 // Same split as the sales adapter above: this file proves the SURFACE. What the signings adapter
 // sends — the tenant filter, the refusal-only expected tenant, the "a promise without a token is

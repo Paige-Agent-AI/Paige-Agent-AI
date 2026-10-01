@@ -77,7 +77,7 @@ const AGREEMENTS = [
 
 
 // Local browser fixtures only. Never imported by production or used as persistence proof.
-import type { AgreementDraft, ClientAgreement, AgreementStatus } from "../../../../src/solo/useSoloAgreements";
+import type { AgreementDraft, ClientAgreement, AgreementStatus } from "../../../../src/solo/useSoloCommercialTerms";
 const STORAGE_PREFIX = "paige-sales-local-fixture:tenant-harness:";
 let fixtureTenant = "harness-tenant";
 let epoch = 0;
@@ -177,7 +177,7 @@ function snapshot() {
     default: return base;
   }
 }
-export function useSoloAgreements() {
+export function useSoloCommercialTerms() {
   const React = (globalThis as { __React?: typeof import("react") }).__React!;
   const [, force] = React.useState(0);
   React.useEffect(() => {

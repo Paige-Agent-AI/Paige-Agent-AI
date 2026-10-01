@@ -733,6 +733,16 @@ jobs:
           # SQLSTATE of every refusal, plus positive controls. It needs no credentials.
           ./scripts/agreements/run-integrity-proof.sh
 
+      - name: Commercial terms — every refusal announces itself with a code (Sales)
+        if: ${{ !cancelled() }}
+        run: |
+          # `tenant_client_agreements` had zero rows in production and nobody could say why: 30 of
+          # the 38 refusals in its two writers were bare RAISE EXCEPTION, defaulting to P0001, which
+          # the surface maps to nothing. This drives the real functions on a throwaway cluster and
+          # asserts the SQLSTATE each refusal class must carry, plus the raise-site clamp on the
+          # values they echo back. It needs no credentials.
+          ./scripts/sales/commercial-terms-refusal-proof.sh
+
       - name: A user's address is read from user_contact_methods (RAG ingest, canary, funding report)
         if: ${{ !cancelled() }}
         run: |

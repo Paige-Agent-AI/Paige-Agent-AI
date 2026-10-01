@@ -290,9 +290,25 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   // passes CI and throws on import. Not filed as a tracked task; recorded at
   // `scripts/ci/capability-kit-lint.mjs`'s `direct-risk-entry` comment with its falsifying input.
   //
-  // So the entries below are landable whenever the agreements chat-tool work is sequenced. They are
-  // still absent because that wiring is its own slice, not because anything blocks it. The
-  // agreements engine already ships its RPC seams (§10 — Paige-callable).
+  // SEQUENCED, 2026-09-24; the send landed with the agreements PR. `agreement_draft` was the first
+  // production `defineCapability()` declaration in this repository, and `agreement_send` is now
+  // Spine-registered as an external_effect on public.issue_agreement_signing_link. The remaining
+  // three (add_signer, resend, void) stay absent for the same reason the READ half shipped first:
+  // each outward-facing key earns its own slice, its own confirm copy and its own proof.
+  //
+  // `agreement_draft` is `ordinary` on the reasoning already given above: a draft is visible to
+  // nobody outside the workspace, the RPC re-proves tenant and membership in its own body, and the
+  // tier trigger refuses a workspace whose plan does not carry agreement signing. It mints rather
+  // than converges, which is a truthfulness problem for its idempotency sentence and not a risk one —
+  // the confirm fingerprint is what stops a second draft, and that is stated where callers read it.
+  // OUTWARD-FACING AND TERMINAL-ADJACENT. A send puts a signable document in a named person's inbox
+  // and moves the agreement one way out of draft; the document it freezes becomes the integrity
+  // record of what that person was shown. `high` means the model's own "they said yes" channel is
+  // refused outright — only a fingerprint echoed from a rendered card runs it — which is the
+  // correct floor for the one action in this domain that reaches someone outside the workspace.
+  // Deliberately NOT accompanied by `agreement_resend` or `agreement_void`: each is its own slice.
+  ["agreement_send", "high", "emails a signable link for this agreement to its signers — outward-facing, and it reaches a real person outside the platform; the send freezes the document as the integrity record of what the signer was shown, moves the agreement one way out of draft, and cannot be recalled once delivered, so it never runs on the model's word alone"],
+  ["agreement_draft", "ordinary", "drafts or revises an agreement inside the workspace — nothing is sent, no signing link is minted, and nobody outside the tenant can see it; the RPC re-proves tenant and membership under the caller's own JWT, and a blind retry with no agreement id mints a second draft rather than converging, which the confirm card is what prevents"],
   ["calendar_link_send", "high", "sends a published calendar's public booking link to a real contact by email or SMS — outward-facing; the server refuses a non-public calendar and the comms seam refuses a cross-tenant, suppressed, or unconsented recipient, and it never posts to social or books a meeting"],
   ["deal_create", "ordinary", "adds an opportunity"],
   ["deal_move_stage", "ordinary", "moves a deal between stages"],

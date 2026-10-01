@@ -2,12 +2,12 @@
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: active workspace read -> existing approval -> exact revision metadata/delete RPC -> SQL verified result and receipt -> protected response.
-PAIGE_UI_DESIGN: NOT_APPLICABLE: existing Chat controls and approved Knowledge UI unchanged; backend binding only.
+PAIGE_UI_DESIGN: PASS: .agents/skills/paige-ui-design/SKILL.md and protected-behavior/release modules applied to scope, refusal and evidence truth. Existing Chat controls and approved Knowledge UI unchanged; rendered proof remains separately owed.
 MATERIAL_FLOW_CHANGE: YES: canonical Knowledge read/update/delete becomes callable from governed Chat.
 FLOW_PROTOTYPE: PASS: owner approved knowledge-flow-prototype.html and explicitly cleared final shared Chat integration in the active Knowledge handoff on 2026-09-30.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: owner reads and governs exact workspace Knowledge records without another store or authority model.
 VISUAL_DIRECTION: NOT_APPLICABLE: no layout/style/component change.
-AUTOMATED_EVIDENCE: PASS: 17 adapter tests; actual Chat handler harness 534 checks; catalogue/Anthropic contract 9 checks; six PostgreSQL catalogue assertions and migration replay twice.
+AUTOMATED_EVIDENCE: PASS: 38 focused adapter/service tests (17 new adapter cases); actual Chat handler harness 534 checks; catalogue/Anthropic contract 9 checks; six PostgreSQL catalogue assertions and migration replay twice.
 STATIC_EVIDENCE: PASS: strict standalone TypeScript for new adapter/domain; focused ESLint; action-risk, Chat registry, Spine registry, write-target, governed-execution, receipt-coverage and tool-catalogue checks. Full Deno check is UNVERIFIED because Deno is not installed locally.
 RENDERED_EVIDENCE: UNVERIFIED: no rendered approval interaction exercised in this backend slice.
 BEHAVIORAL_EVIDENCE: PASS: actual handler with module-boundary synthetic caller/provider; read-after-empty-search then raw account switch blocks next provider/reply/summary. SQL fixture preserves previous catalogue rows, default confirm, grants, tenant mismatch and stored off mode.
@@ -25,7 +25,7 @@ RELEASE_CLASSIFICATION: internal-only: no deployed customer outcome.
 CUSTOMER_RELEASE_IDENTITY: none: production proof and owner release approval remain owed.
 RELEASE_NOTE_REQUIRED: NO: draft implementation only.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: registered Chat bindings are source-wired; maturity remains PARTIAL and production capability is unverified.
-RELEASE_RECOVERY: position=disable domain tool bindings and contain new catalogue entries through a reviewed forward fix; never undo Knowledge data through an inferred rollback; reference=c5a4fe0cf2d2b725bdff11cf53bab39e2e073e70
+RELEASE_RECOVERY: position=disable domain tool bindings and contain new catalogue entries through a reviewed forward fix, never undo Knowledge data through an inferred rollback; reference=c5a4fe0cf2d2b725bdff11cf53bab39e2e073e70
 
 ## Pre-edit routing
 

@@ -28,7 +28,7 @@ const PIPELINE_TOOLS = /pipeline_configure/;
 describe("the approved pipeline card executes its stored proposal", () => {
   it("reads the stored proposal by fingerprint from the approval store", () => {
     expect(ui).toMatch(/paige_pending_confirmations[\s\S]{0,200}(args|expires_at|tenant_id)/);
-    expect(ui).toMatch(/\.eq\("fingerprint",/);
+    expect(ui).toContain('.eq("fingerprint" as never, item.fingerprint.split(":")[0] as never)');
   });
 
   it("executes through the existing human door under the user's own session", () => {
@@ -47,9 +47,9 @@ describe("the approved pipeline card executes its stored proposal", () => {
   it("looks the row up by the BARE fingerprint — the general gate's card token is scoped", () => {
     // The card carries fingerprint:requestNonce; the column is bare 16-hex. Without the split,
     // every pipeline approval refuses "could not be read" and strands (the review's P1).
-    expect(ui).toContain('.eq("fingerprint", item.fingerprint.split(":")[0])');
+    expect(ui).toContain('.eq("fingerprint" as never, item.fingerprint.split(":")[0] as never)');
     // ...and only the LIVE row: the server's claim path filters consumed twins the same way.
-    expect(ui).toContain('.is("consumed_at", null)');
+    expect(ui).toContain('.is("consumed_at" as never, null as never)');
   });
 
   it("strips executed pipeline fingerprints from the model echo — no re-emission", () => {

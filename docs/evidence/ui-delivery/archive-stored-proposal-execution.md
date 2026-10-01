@@ -45,7 +45,7 @@ RELEASE_NOTE_REQUIRED: NO: bounded execution-path port on the existing approval 
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: the wiring pins, mutation proofs and paired suites are proven offline; the authenticated archive round and deployed frontend are not yet proven
 RELEASE_RECOVERY: position=revert this bounded port if a pipeline approval misexecutes or misreports, restoring the model-echo path from the merge parent before any forward fix; reference=PACKAGE-B
 
-INTERNAL_BUILD_IDENTITY: product=bd91dc0de40a3cf968495f81609e63efc7fda727; current-main-sync=bd91dc0de40a3cf968495f81609e63efc7fda727; base=a1c4a6fae; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE(client only; the human door RPC is already deployed); evidence=failing-first-mutation-proven-wiring-pins
+INTERNAL_BUILD_IDENTITY: product=bd91dc0de40a3cf968495f81609e63efc7fda727; current-main-sync=bd91dc0de40a3cf968495f81609e63efc7fda727; base=a1c4a6fae; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=failing-first-mutation-proven-wiring-pins
 RELEASE_CHANNEL: development: exact product-code head on the draft branch; production promotion remains merge automation only
 RELEASE_CLASSIFICATION: patch: execution-path port of the stored-proposal invariant onto the existing pipeline approval flow
 CUSTOMER_RELEASE_IDENTITY: none: no owner-approved customer release identity was assigned to this bounded repair

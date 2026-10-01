@@ -451,7 +451,7 @@ export default function AgreementSigning() {
             {row?.document_body ? (
               <>
                 <span>Read {pct}%</span>
-                <span className="ags-prog"><i style={{ width: `${pct}%` }} /></span>
+                <span className="ags-prog"><i style={{ transform: `scaleX(${pct / 100})` }} /></span>
               </>
             ) : (
               <span>{docPhase === "ready" ? "Document shown — review it in full before signing." : docPhase === "failed" ? "Document unavailable." : "Opening the document…"}</span>

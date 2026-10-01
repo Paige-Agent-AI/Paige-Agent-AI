@@ -27,7 +27,7 @@ const TABS = [
 // feed's own request guard behind it.
 const CommandCenter = ({ accountContext, openPaige, workspaceId }) => <SoloSystemsCheckWorkspace accountContext={accountContext} openPaige={openPaige} workspaceId={workspaceId} />;
 
-const CommandHub = ({ account, accountContext, openPaige }) => {
+const CommandHub = ({ account, accountContext, openPaige }: { account?: string | null; accountContext?: { accountName?: string | null; accountType?: string | null } | null; openPaige?: () => void } = {}) => {
   const [tab, setTab] = useSubtabRoute("solo", "command-center", "plan");
   const { activeTenantId, activeUserId } = useTenantContext();
   // §60 Solo-only gate for the Trust Compass sub-tab (owner ruling 2026-09-06 —

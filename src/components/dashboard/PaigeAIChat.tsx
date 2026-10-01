@@ -1711,13 +1711,14 @@ const PaigeAIChatInner = ({
           // The table is internal to the approval machinery and absent from the generated
           // types, so the board's `as never` pattern types the whole chain off — the runtime
           // shape is pinned by the suite.
-          const { data: row, error: rowError } = await supabase
+          const rowPromise = supabase
             .from("paige_pending_confirmations" as never)
             .select("args,tenant_id,expires_at,tool_name" as never)
             .eq("fingerprint" as never, item.fingerprint.split(":")[0] as never)
             .eq("tool_name" as never, "pipeline_configure" as never)
             .is("consumed_at" as never, null as never)
             .maybeSingle() as unknown as Promise<{ data: Record<string, unknown> | null; error: { message: string } | null }>;
+          const { data: row, error: rowError } = await rowPromise;
           const stored = row && typeof row === "object" ? row as { args?: Record<string, unknown>; tenant_id?: string; expires_at?: string } : null;
           const argsObj = stored && typeof stored.args === "object" && stored.args !== null ? stored.args as Record<string, unknown> : null;
           const expired = !stored?.expires_at || new Date(String(stored.expires_at)).getTime() <= Date.now();

@@ -1,5 +1,6 @@
 # Knowledge ingestion: verified persistence (slice 1a)
 
+UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: existing-project repair; chunk write -> searchable-row readback -> count reconciliation -> truthful result; failures are exercised by src/__tests__/kb-ingest-persistence.test.ts.
 PAIGE_UI_DESIGN: PASS: reviewed the repository skill and routing during the approved knowledge prototype; this patch changes only backend persistence and adds no interface layout.
 MATERIAL_FLOW_CHANGE: NO: repairs the existing ingestion result contract; adds no entry point or authority.
@@ -23,7 +24,7 @@ RELEASE_CHANNEL: development: isolated branch and injected-adapter tests only.
 RELEASE_CLASSIFICATION: internal-only: first repair slice, no customer capability release.
 CUSTOMER_RELEASE_IDENTITY: none: no completed owner-visible capability or production release.
 RELEASE_NOTE_REQUIRED: NO: internal foundation repair only.
-RELEASE_TRUTH_BOUNDARY: PROOF OWED for real ingestion; no LIVE claim. The approved knowledge feature remains incomplete.
+RELEASE_TRUTH_BOUNDARY: UNVERIFIED: real ingestion requires authenticated provider and database proof; no LIVE claim. The approved knowledge feature remains incomplete.
 RELEASE_RECOVERY: position=revert this isolated patch before deployment; reference=3d0f12dd3ebe18bda491baa60a1583d179ec6ed0; no schema/data migration.
 
 ## Routing and scope

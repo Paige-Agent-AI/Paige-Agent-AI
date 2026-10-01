@@ -241,7 +241,7 @@ function summaryFor(command: z.infer<typeof commandSchema>, preview?: JsonObject
       return `Add "${name}" as a new company.`;
     }
     case "task.create":
-      return `Create a task "${typeof command.title === "string" && command.title.trim() ? command.title.trim().slice(0, 80) : "Untitled"}"${command.due_date ? ` due ${command.due_date}` : ""}.`;
+      return `Create a task "${typeof command.title === "string" && command.title.trim() ? command.title.trim().slice(0, 80) : "Untitled"}".`;
     default: {
       // Never render the raw internal verb ("deal.create for …"). Compose from the action's
       // domain and verb so every catalogue action reads as a human sentence about the object.

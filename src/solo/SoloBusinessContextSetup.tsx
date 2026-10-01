@@ -56,6 +56,7 @@ import {
   type SoloSetupTab,
 } from "./settings-business-context-contract";
 import "./settings-setup.css";
+import { KnowledgeLibrary } from "./knowledge/KnowledgeLibrary";
 import { RepresentativePhonePicker } from "./setup-representative-phone";
 import { resolveSetupSubtabRoute, setupSubtabPath } from "./setup-subtab-route";
 import { settingsScrollOwner } from "./settings-scroll-owner";
@@ -1493,6 +1494,11 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
               </>
             )}{" "}
             {tab === "knowledge-bucket" && (
+              <>
+              <KnowledgeLibrary tenantId={data.activeTenantId} account={account} />
+              <details className="setup-knowledge-references">
+              <summary>Saved Setup references ({sources.length})</summary>
+              <p>These references are separate from indexed documents. Adding a reference here does not ingest its content.</p>
               <KnowledgeBucket
                 sources={sources}
                 owner={owner}
@@ -1507,6 +1513,8 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
                   setSources((now) => now.filter((_, i) => i !== index))
                 }
               />
+              </details>
+              </>
             )}{" "}
             {tab === "direction" && (
               <Section

@@ -1680,6 +1680,95 @@ const PaigeAIChatInner = ({
         if (!echoFingerprints.length) echoFingerprints = undefined;
       }
     }
+
+    // PACKAGE B — the approved PIPELINE card executes its stored proposal through the human
+    // door. The general gate mints pipeline proposals into paige_pending_confirmations with the
+    // model's exact arguments; on the approve click we read THAT row (never the model's re-
+    // emission) and run it through configure_tenant_pipeline — the same executor the board
+    // calls — under the clicking user's own session with _actor_kind "human", because the human
+    // clicking Approve is the authority executing it. The stored idempotency key makes a double
+    // click a replay (the door returns the cached result; the action runs once), and an expired
+    // row refuses honestly. A typed "yes" never reaches this path: it reads only the approved
+    // card fingerprints. The chat handler is untouched (Knowledge #1615 owns that seam).
+    if (echoFingerprints?.length) {
+      const pipelineItems: Array<{ fingerprint: string; summary: string; tool: string }> = [];
+      for (const m of messages) {
+        for (const c of m.confirm ?? []) {
+          if (c.fingerprint && echoFingerprints.includes(c.fingerprint) && c.tool === "pipeline_configure" && !pipelineItems.some((x) => x.fingerprint === c.fingerprint)) {
+            pipelineItems.push({ fingerprint: c.fingerprint, summary: c.summary, tool: c.tool });
+          }
+        }
+      }
+      for (const item of pipelineItems) {
+        let ran: "ran" | "not_run" | "unconfirmed" = "unconfirmed";
+        let note: string | undefined;
+        try {
+          // The stored proposal IS the authority: args, tenant and expiry come from the row the
+          // server minted, scoped to this user by row-level security.
+          // The general gate's cards carry a SCOPED token (fingerprint:requestNonce) while the
+          // stored row's column is the bare 16-hex fingerprint — the server's own claim path
+          // splits the same way. Look up by the bare form.
+          // The table is internal to the approval machinery and absent from the generated
+          // types, so the board's `as never` pattern types the whole chain off — the runtime
+          // shape is pinned by the suite.
+          const rowPromise = supabase
+            .from("paige_pending_confirmations" as never)
+            .select("args,tenant_id,expires_at,tool_name" as never)
+            .eq("fingerprint" as never, item.fingerprint.split(":")[0] as never)
+            .eq("tool_name" as never, "pipeline_configure" as never)
+            .is("consumed_at" as never, null as never)
+            .maybeSingle() as unknown as Promise<{ data: Record<string, unknown> | null; error: { message: string } | null }>;
+          const { data: row, error: rowError } = await rowPromise;
+          const stored = row && typeof row === "object" ? row as { args?: Record<string, unknown>; tenant_id?: string; expires_at?: string } : null;
+          const argsObj = stored && typeof stored.args === "object" && stored.args !== null ? stored.args as Record<string, unknown> : null;
+          const expired = !stored?.expires_at || new Date(String(stored.expires_at)).getTime() <= Date.now();
+          if (rowError || !stored || !argsObj || typeof stored.tenant_id !== "string"
+              || typeof argsObj.command !== "object" || typeof argsObj.idempotency_key !== "string") {
+            ran = "not_run";
+            note = "The stored approval could not be read. Ask Paige to propose the action again.";
+          } else if (expired) {
+            ran = "not_run";
+            note = "That approval expired. Ask Paige to propose the action again.";
+          } else {
+            const { data, error } = await supabase.rpc("configure_tenant_pipeline" as never, {
+              _tenant_id: stored.tenant_id,
+              _command: argsObj.command,
+              _idempotency_key: argsObj.idempotency_key,
+              _actor_kind: "human",
+            } as never);
+            const body = data && typeof data === "object" && !Array.isArray(data) ? data as Record<string, unknown> : {};
+            // supabase.rpc answers refusals as {error} with the message inline — an ANSWER, so
+            // its outcome class stands; a transport failure stays could-not-confirm.
+            if (error) {
+              // A 4xx is the door ANSWERING (a governed refusal, rolled back); a 5xx or an
+              // unclassed failure may hide a committed command behind a lost response — the
+              // same answered-or-ambiguous rule the CRM lane applies, never a false did-not-run.
+              const status = typeof (error as { status?: number }).status === "number" ? (error as { status?: number }).status : 0;
+              if (status >= 400 && status < 500) {
+                ran = "not_run";
+                note = typeof error.message === "string" ? error.message.slice(0, 200) : undefined;
+              } else {
+                ran = "unconfirmed";
+                note = typeof error.message === "string" ? error.message.slice(0, 200) : undefined;
+              }
+            } else if (body.ok === false) {
+              ran = "not_run";
+              note = typeof body.message === "string" ? body.message.slice(0, 200) : undefined;
+            } else {
+              ran = "ran";
+            }
+          }
+        } catch {
+          ran = "unconfirmed";
+        }
+        executedOutcomes.push({ fingerprint: item.fingerprint, summary: item.summary, tool: item.tool, outcome: ran, ...(note ? { note } : {}) });
+      }
+      if (executedOutcomes.length) {
+        const executed = new Set(executedOutcomes.map((o) => o.fingerprint));
+        echoFingerprints = echoFingerprints.filter((f) => !executed.has(f));
+        if (!echoFingerprints.length) echoFingerprints = undefined;
+      }
+    }
     // The turn carries the card's verified result so the model narrates from the outcome, never
     // from an assumption that approval implies execution.
     if (executedOutcomes.length) {

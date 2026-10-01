@@ -16,7 +16,7 @@ try:
  run(['-d',db,'-c',"CREATE FUNCTION public.current_user_tenant_id() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT active_tenant_id FROM profiles WHERE user_id=auth.uid() $$; CREATE TABLE tenant_tool_autonomy(tenant_id uuid,tool_key text,mode text,updated_at timestamptz);"])
  run(['-d',db,'-f','supabase/migrations/20270524000000_retire_program_enroll_catalogue.sql'])
  run(['-d',db,'-c',"CREATE TABLE old_catalogue AS SELECT * FROM public.list_tool_autonomy('00000000-0000-0000-0000-000000000001');"])
- for _ in range(2): run(['-d',db,'-f','supabase/migrations/20270530800000_knowledge_tool_catalogue.sql'])
+ for _ in range(2): run(['-d',db,'-f','supabase/migrations/20270531800000_knowledge_tool_catalogue.sql'])
  run(['-d',db,'-c',"""
  SELECT public.test_assert(NOT EXISTS((SELECT * FROM old_catalogue EXCEPT SELECT * FROM list_tool_autonomy('00000000-0000-0000-0000-000000000001'))),'all previous rows preserved');
  SELECT public.test_assert((SELECT count(*)=2 FROM list_tool_autonomy('00000000-0000-0000-0000-000000000001') WHERE tool_key IN ('knowledge_update','knowledge_delete') AND mode='confirm' AND is_default AND category='Knowledge'),'two visible default-confirm Knowledge rows');

@@ -19,7 +19,7 @@ STATE_COVERAGE: PASS: client-seat refusal, model confirmation refusal, high acti
 TRUTHFUL_STATE_LABELS: PASS: canonical document existence and recorded chunk count never imply indexing completeness or owner-confirmed Memory; uploaded source deletion is explicitly not attempted.
 SOLO_UI: NO: backend/domain/catalogue only; existing UI unchanged.
 UNVERIFIED: full Deno check, live deployment, authenticated approval redemption and receipts, rendered user acceptance. Read/create/reindex beyond the declared tools remains outside this slice.
-INTERNAL_BUILD_IDENTITY: branch=codex/knowledge-governed-crud; base=c5a4fe0cf2d2b725bdff11cf53bab39e2e073e70; exact head=Git commit containing this evidence; deployment=none; environment=local fixtures; migrations=PROOF_OWED(20270530800000); edge=PROOF_OWED(paige-ai-chat); evidence=knowledge-governed-chat.md
+INTERNAL_BUILD_IDENTITY: branch=codex/knowledge-governed-crud; base=c5a4fe0cf2d2b725bdff11cf53bab39e2e073e70; exact head=Git commit containing this evidence; deployment=none; environment=local fixtures; migrations=PROOF_OWED(20270531800000); edge=PROOF_OWED(paige-ai-chat); evidence=knowledge-governed-chat.md
 RELEASE_CHANNEL: development: local fixture execution only.
 RELEASE_CLASSIFICATION: internal-only: no deployed customer outcome.
 CUSTOMER_RELEASE_IDENTITY: none: production proof and owner release approval remain owed.
@@ -54,7 +54,7 @@ Base c5a4fe0c; composed fresh canonical service/deletion ancestry through 014918
 - Existing receipt guard has a Windows entrypoint URL mismatch. Executed it by setting process.argv[1] to the module file URL minus file:// before import; 155 classified mutations all declared. Guard source unchanged.
 - Strict standalone tsc for new adapter and Spine domain and focused ESLint PASS. Actual handler is transpiled/executed by the runtime harness; this does not replace the Deno diagnostic gate.
 
-Coordinator explicitly cleared only catalogue migration 20270530800000 after discovery. Read-only comparison proved that removing its two added rows reproduces predecessor function including predicates, defaults and ACL verbatim. Automatic review initially rejected local composition/catalogue writing, then accepted the same bounded operations after ancestry/diff proof. No authority algorithm, worker, shared scheduler, or UI edit.
+Coordinator explicitly cleared only catalogue migration 20270531800000 after discovery. Read-only comparison proved that removing its two added rows reproduces predecessor function including predicates, defaults and ACL verbatim. Automatic review initially rejected local composition/catalogue writing, then accepted the same bounded operations after ancestry/diff proof. No authority algorithm, worker, shared scheduler, or UI edit.
 
 Read returns at most 20 rows, at most 12k detail characters and less than 16k serialized context, with explicit truncation. Mutation responses expose ids/revision/outcome rather than document content. SQL is the sole operation receipt owner. The request-local uncertain-document fence stops model re-attempts after uncertain or unrecorded outcomes, even when it changes the patch; a new request requires operator review. This is retry containment, not a second approval path.
 

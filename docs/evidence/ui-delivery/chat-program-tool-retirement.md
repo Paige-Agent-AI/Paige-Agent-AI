@@ -11,7 +11,7 @@ exit changes.
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 SOLO_UI: YES: the recognized UI data map src/solo/data/capabilityTools.ts changed (one knob entry removed); no rendered component, layout or copy changed
-FLOW_BY_FLOW: WAIVED: owner-decision=INT-083 go-live ruling 2026-09-20; reason=the Flow-by-Flow skill is not installed at the account level in this environment, whose account-level skill directory holds impeccable alone, so a flow-by-flow pass is genuinely unavailable here; the affected-flow packet is grounded from source in STATIC_EVIDENCE
+FLOW_BY_FLOW: PASS: takeover read the installed skill and orchestration, delivery, audit, build, review and verification routes; owner outcome remains bounded retirement with governed deal_create preserved
 PAIGE_UI_DESIGN: PASS: .agents/skills/paige-ui-design/SKILL.md and its routed references were read completely; no visual design, component, copy, geometry, motion, focus, action, state or exit changes — the sole UI-recognized file in this diff is the data map src/solo/data/capabilityTools.ts, which loses one knob entry fronting the retired tool
 IMPECCABLE: PASS: the installed Impeccable skill and its craft floor were read; no UI artifact is in scope and every rendered control and wording is unchanged
 MATERIAL_FLOW_CHANGE: NO: a chat tool wired to a permanently empty legacy table is removed and its vocabulary redirected to the existing governed deal path; no working user goal, choice, step, state, transition, confirmation, exit, recovery path or side effect changes
@@ -53,3 +53,22 @@ RELEASE_RECOVERY: position=revert this bounded retirement if any registry guard 
 RELEASE_CHANNEL: development: exact product-code head on the draft branch; production promotion remains merge automation only
 RELEASE_CLASSIFICATION: patch: removes dead plumbing and redirects vocabulary to the existing governed path without a new workflow or interface
 CUSTOMER_RELEASE_IDENTITY: none: no owner-approved customer release identity was assigned to this bounded retirement
+
+## Takeover correction (2026-10-01 UTC)
+
+The original head e582ecb failed CI: its retirement test omitted Vitest imports
+(36 new TypeScript diagnostics), and list_tool_autonomy still returned the dead
+program_enroll switch. Those failures invalidate the earlier touched-file typecheck
+claim above. The takeover adds the imports and a forward catalogue migration,
+20270524000000_retire_program_enroll_catalogue.sql. The migration is the latest
+catalogue body (20270511010000) with exactly the program_enroll VALUES row removed;
+caller/tenant checks, every other row, defaults and ACL are preserved. Stored
+preferences and legacy program data are retained. The removed catalogue switch is
+a visible affordance change; earlier blanket claims of no control change are too
+broad. No layout or new interaction design is introduced.
+
+Proof remains bounded: source assertions and local/CI checks establish retirement
+and catalogue preservation, not an authenticated enrollment. Deployment identity,
+forward migration apply/readback and authenticated enrollment through the existing
+approval/readback/Rail path remain UNVERIFIED. No production write or deployment
+was performed. Shipped Delivery Log: N/A, this PR has not reached main.

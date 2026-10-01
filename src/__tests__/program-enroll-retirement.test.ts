@@ -17,6 +17,7 @@
  * tool without its classification fails here AND at dispatch.
  */
 import { readFileSync } from "node:fs";
+import { describe, expect, it } from "vitest";
 import { join } from "node:path";
 
 const root = join(__dirname, "..", "..");
@@ -88,4 +89,13 @@ describe("the CI registries agree with the retirement", () => {
   it("drops program_enroll from the receipt coverage ledger", () => {
     expect(read("scripts/ci/receipt-coverage-ledger.json")).not.toContain('"program_enroll"');
   });
+});
+
+it("retires only the dead catalogue row and preserves tenant resolution, defaults and grants", () => {
+  const previous = read("supabase/migrations/20270511010000_catalogue_drops_title_role_removal.sql");
+  const next = read("supabase/migrations/20270524000000_retire_program_enroll_catalogue.sql");
+  const body = (sql: string) => sql.slice(sql.indexOf("CREATE OR REPLACE FUNCTION")).replace(/\r\n/g, "\n");
+  expect(body(previous)).toContain("('program_enroll',");
+  expect(body(next)).toBe(body(previous).replace(/^.*\('program_enroll',.*\n/m, ""));
+  expect(next).toContain("catalogue-removal-ok: program_enroll");
 });

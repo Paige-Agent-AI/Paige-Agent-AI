@@ -12,7 +12,7 @@ CREATE OR REPLACE FUNCTION public.configure_tenant_pipeline_core_identity_pre_co
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'public'
-AS $function$
+AS $$
 declare
   _caller uuid:=auth.uid();
   _tenant uuid:=coalesce(_tenant_id,public.current_user_tenant_id());

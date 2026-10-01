@@ -43,7 +43,7 @@ RELEASE_NOTE_REQUIRED: NO: bounded truthfulness corrections on the existing path
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: wiring pins, mutation proof and the suite families are proven offline; authenticated edge-case rounds and deployed lineage are not yet proven
 RELEASE_RECOVERY: position=revert this bounded correction if any outcome class misreports, restoring the prior mapping from the merge parent before any forward fix; reference=PR-FIXFORWARD-REVIEW
 
-INTERNAL_BUILD_IDENTITY: product=d0a93bfc885a4e6fee23427107b1d9c2740bdde2; current-main-sync=d0a93bfc885a4e6fee23427107b1d9c2740bdde2; base=4c9db36aa; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat automated deployment after merge); evidence=wiring-pins-and-mutation-proof
+INTERNAL_BUILD_IDENTITY: product=d0983fe969d9f69b2c1fe14e9fc5f0e8df865bfc; current-main-sync=d0a93bfc885a4e6fee23427107b1d9c2740bdde2; base=4c9db36aa; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat automated deployment after merge); evidence=wiring-pins-and-mutation-proof
 RELEASE_CHANNEL: development: exact product-code head on the draft branch; production promotion remains merge automation only
 RELEASE_CLASSIFICATION: patch: truthfulness corrections on the existing approval outcome path
 CUSTOMER_RELEASE_IDENTITY: none: no owner-approved customer release identity was assigned to this bounded repair

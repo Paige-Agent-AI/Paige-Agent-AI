@@ -1,0 +1,282 @@
+[
+  {
+    "width": 1536,
+    "height": 770,
+    "outcome": "success",
+    "geometry": {
+      "top": 120,
+      "bottom": 650,
+      "left": 480,
+      "right": 1056,
+      "overflow": false,
+      "status": "Metadata saved.",
+      "calls": "1",
+      "saved": "yes",
+      "scrollOwner": false
+    },
+    "focus": "Open metadata",
+    "errors": []
+  },
+  {
+    "width": 1536,
+    "height": 770,
+    "outcome": "conflict",
+    "geometry": {
+      "top": 38.5,
+      "bottom": 731.5,
+      "left": 480,
+      "right": 1056,
+      "overflow": false,
+      "status": "This document changed since you opened it. Read the current version before editing again. Your draft is still here.",
+      "calls": "1",
+      "scrollOwner": true
+    },
+    "focus": "Open metadata",
+    "errors": []
+  },
+  {
+    "width": 1536,
+    "height": 770,
+    "outcome": "uncertain",
+    "geometry": {
+      "top": 38.5,
+      "bottom": 731.5,
+      "left": 480,
+      "right": 1056,
+      "overflow": false,
+      "status": "We could not confirm this save. Read the current version before deciding what to do next. Do not repeat the save.",
+      "calls": "1",
+      "scrollOwner": true
+    },
+    "focus": "Open metadata",
+    "errors": []
+  },
+  {
+    "width": 1536,
+    "height": 770,
+    "outcome": "unrecorded",
+    "geometry": {
+      "top": 120,
+      "bottom": 650,
+      "left": 480,
+      "right": 1056,
+      "overflow": false,
+      "status": "Metadata saved. The activity receipt could not be recorded. Do not repeat this save.",
+      "calls": "1",
+      "saved": "yes",
+      "scrollOwner": false
+    },
+    "focus": "Open metadata",
+    "errors": []
+  },
+  {
+    "width": 1366,
+    "height": 768,
+    "outcome": "success",
+    "geometry": {
+      "top": 119,
+      "bottom": 649,
+      "left": 395,
+      "right": 971,
+      "overflow": false,
+      "status": "Metadata saved.",
+      "calls": "1",
+      "saved": "yes",
+      "scrollOwner": false
+    },
+    "focus": "Open metadata",
+    "errors": []
+  },
+  {
+    "width": 1366,
+    "height": 768,
+    "outcome": "conflict",
+    "geometry": {
+      "top": 38.40625,
+      "bottom": 729.59375,
+      "left": 395,
+      "right": 971,
+      "overflow": false,
+      "status": "This document changed since you opened it. Read the current version before editing again. Your draft is still here.",
+      "calls": "1",
+      "scrollOwner": true
+    },
+    "focus": "Open metadata",
+    "errors": []
+  },
+  {
+    "width": 1366,
+    "height": 768,
+    "outcome": "uncertain",
+    "geometry": {
+      "top": 38.40625,
+      "bottom": 729.59375,
+      "left": 395,
+      "right": 971,
+      "overflow": false,
+      "status": "We could not confirm this save. Read the current version before deciding what to do next. Do not repeat the save.",
+      "calls": "1",
+      "scrollOwner": true
+    },
+    "focus": "Open metadata",
+    "errors": []
+  },
+  {
+    "width": 1366,
+    "height": 768,
+    "outcome": "unrecorded",
+    "geometry": {
+      "top": 119,
+      "bottom": 649,
+      "left": 395,
+      "right": 971,
+      "overflow": false,
+      "status": "Metadata saved. The activity receipt could not be recorded. Do not repeat this save.",
+      "calls": "1",
+      "saved": "yes",
+      "scrollOwner": false
+    },
+    "focus": "Open metadata",
+    "errors": []
+  },
+  {
+    "width": 1024,
+    "height": 768,
+    "outcome": "success",
+    "geometry": {
+      "top": 119,
+      "bottom": 649,
+      "left": 224,
+      "right": 800,
+      "overflow": false,
+      "status": "Metadata saved.",
+      "calls": "1",
+      "saved": "yes",
+      "scrollOwner": false
+    },
+    "focus": "Open metadata",
+    "errors": []
+  },
+  {
+    "width": 1024,
+    "height": 768,
+    "outcome": "conflict",
+    "geometry": {
+      "top": 38.40625,
+      "bottom": 729.59375,
+      "left": 224,
+      "right": 800,
+      "overflow": false,
+      "status": "This document changed since you opened it. Read the current version before editing again. Your draft is still here.",
+      "calls": "1",
+      "scrollOwner": true
+    },
+    "focus": "Open metadata",
+    "errors": []
+  },
+  {
+    "width": 1024,
+    "height": 768,
+    "outcome": "uncertain",
+    "geometry": {
+      "top": 38.40625,
+      "bottom": 729.59375,
+      "left": 224,
+      "right": 800,
+      "overflow": false,
+      "status": "We could not confirm this save. Read the current version before deciding what to do next. Do not repeat the save.",
+      "calls": "1",
+      "scrollOwner": true
+    },
+    "focus": "Open metadata",
+    "errors": []
+  },
+  {
+    "width": 1024,
+    "height": 768,
+    "outcome": "unrecorded",
+    "geometry": {
+      "top": 119,
+      "bottom": 649,
+      "left": 224,
+      "right": 800,
+      "overflow": false,
+      "status": "Metadata saved. The activity receipt could not be recorded. Do not repeat this save.",
+      "calls": "1",
+      "saved": "yes",
+      "scrollOwner": false
+    },
+    "focus": "Open metadata",
+    "errors": []
+  },
+  {
+    "width": 900,
+    "height": 1000,
+    "outcome": "success",
+    "geometry": {
+      "top": 235,
+      "bottom": 765,
+      "left": 162,
+      "right": 738,
+      "overflow": false,
+      "status": "Metadata saved.",
+      "calls": "1",
+      "saved": "yes",
+      "scrollOwner": false
+    },
+    "focus": "Open metadata",
+    "errors": []
+  },
+  {
+    "width": 900,
+    "height": 1000,
+    "outcome": "conflict",
+    "geometry": {
+      "top": 96.5,
+      "bottom": 903.5,
+      "left": 162,
+      "right": 738,
+      "overflow": false,
+      "status": "This document changed since you opened it. Read the current version before editing again. Your draft is still here.",
+      "calls": "1",
+      "scrollOwner": false
+    },
+    "focus": "Open metadata",
+    "errors": []
+  },
+  {
+    "width": 900,
+    "height": 1000,
+    "outcome": "uncertain",
+    "geometry": {
+      "top": 96.5,
+      "bottom": 903.5,
+      "left": 162,
+      "right": 738,
+      "overflow": false,
+      "status": "We could not confirm this save. Read the current version before deciding what to do next. Do not repeat the save.",
+      "calls": "1",
+      "scrollOwner": false
+    },
+    "focus": "Open metadata",
+    "errors": []
+  },
+  {
+    "width": 900,
+    "height": 1000,
+    "outcome": "unrecorded",
+    "geometry": {
+      "top": 235,
+      "bottom": 765,
+      "left": 162,
+      "right": 738,
+      "overflow": false,
+      "status": "Metadata saved. The activity receipt could not be recorded. Do not repeat this save.",
+      "calls": "1",
+      "saved": "yes",
+      "scrollOwner": false
+    },
+    "focus": "Open metadata",
+    "errors": []
+  }
+]

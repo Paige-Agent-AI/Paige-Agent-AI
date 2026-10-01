@@ -25,7 +25,7 @@ CUSTOMER_RELEASE_IDENTITY: none: no deployed human flow.
 RELEASE_NOTE_REQUIRED: NO: staged capability.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: authenticated deployment and all privileged consumer adoption; lifecycle Spine capabilities remain UNAVAILABLE.
 RELEASE_RECOVERY: position=disable kb-extract-submit and Knowledge worker branch while retaining canonical content and pending review records for reconciliation; reference=2f74af35bcaca6abbd547e9f851ed969d7f42df2
-INTERNAL_BUILD_IDENTITY: base=2f74af35bcaca6abbd547e9f851ed969d7f42df2; branch=codex/knowledge-extraction-work; deployment=NOT_APPLICABLE; environment=local; migrations=PROOF_OWED(real Supabase application of 20270530000000_knowledge_extraction_work); edge=PROOF_OWED(kb-extract-submit and paige-document-worker deployment); evidence=scripts/knowledge-service/extraction-check.py
+INTERNAL_BUILD_IDENTITY: base=2f74af35bcaca6abbd547e9f851ed969d7f42df2; branch=codex/knowledge-extraction-work; deployment=NOT_APPLICABLE; environment=local; migrations=PROOF_OWED(real Supabase application of 20270531000000_knowledge_extraction_work); edge=PROOF_OWED(kb-extract-submit and paige-document-worker deployment); evidence=scripts/knowledge-service/extraction-check.py
 
 
 

@@ -115,11 +115,14 @@ function collectDeclaredCapabilityNames(files, resolver) {
             // it through `classifyAction()` and into the runtime gate.
             //
             // READS are the one deliberate exception, and they buy their way in through a
-            // SECOND REVIEWD contract rather than a looser first one: `identity.chatTool` names
+            // SECOND REVIEWED contract rather than a looser first one: `identity.chatTool` names
             // the tool, `effect` must be the literal "read", `governance.actionRiskKey` must be
             // the literal null — and the per-tool rule additionally requires a Spine REGISTRY
-            // entry (collected only from _shared/paige-spine/, the modules the registry lints
-            // validate) classifying that same tool name as a read, while every write heuristic
+            // entry (collected only from _shared/paige-spine/ — a directory scope, which the
+            // COMPOSED registry does not exactly bound: a stray uncomposed file there still mints,
+            // held downstream by capability-declaration-lint's baseline; harvesting from the
+            // composed registry array is the tracked follow-up) classifying that same tool name
+            // as a read, while every write heuristic
             // stays silent. The runtime chat dispatch is hand-wired, so this is a STATIC
             // two-contract agreement plus the verb floor — never claim it routes execution.
             riskKeys.add(actionRiskNode.initializer.text);
@@ -334,6 +337,20 @@ function checkDeclarationConstructs(argument, sourceFile, normalized, riskPolicy
     if (risk === "read_only") flag(`a ${effect} declares governance.risk read_only — only a read may`);
     if (identity && !identity.has("chatTool")) {
       flag(`a ${effect} omits identity.chatTool — the constructor's exact-keys check throws at module load unless it is an explicit null`);
+    }
+    // The key may also be PRESENT with a non-literal value (`chatTool: undefined` passes the
+    // presence check above while the constructor throws at defineCapability's null check) —
+    // only a string literal or the literal null keyword constructs.
+    if (identity) {
+      const chatToolNode = identity.get("chatTool");
+      if (chatToolNode && ts.isPropertyAssignment(chatToolNode)) {
+        const init = chatToolNode.initializer;
+        const isString = ts.isStringLiteralLike(init);
+        const isNull = init.kind === ts.SyntaxKind.NullKeyword;
+        if (!isString && !isNull) {
+          flag(`a ${effect} declares identity.chatTool as a non-literal — only a string name or the literal null constructs`);
+        }
+      }
     }
     if (chatTool !== null) {
       flag(`a ${effect} binds identity.chatTool "${chatTool}" — only a read may; a mutation clears through its canonical action-risk key`);
@@ -843,8 +860,9 @@ export function scanSource(source, file = "fixture.ts", options = {}) {
         // `classifyAction()` and the runtime approval gate. A READ clears through a STRICTER
         // combination than any mutation needs: a kit declaration whose `identity.chatTool` names
         // this tool with `effect:"read"` and a literal-null action-risk key, AND a Spine registry
-        // entry — collected ONLY from _shared/paige-spine/, the modules the registry lints
-        // validate — classifying this same tool name as a read, while every write heuristic
+        // entry — collected ONLY from _shared/paige-spine/ (a directory scope, not exactly the
+        // composed registry: see the collector's note and the tracked follow-up) classifying
+        // this same tool name as a read, while every write heuristic
         // stays silent (no canonical action-risk key of this name, no MUTATION_VERB spelling).
         // The runtime chat dispatch is HAND-WIRED by tool name, so this is a static two-contract
         // agreement plus the verb floor, not an execution-routing guarantee: a reviewer must

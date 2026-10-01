@@ -275,3 +275,11 @@ describe("Solo Mind workspace — orb port", () => {
     expect(host.textContent).toContain("partial coverage");
   });
 });
+
+
+it("links the selected canonical Knowledge source back to Settings", () => {
+  harness.knowledge.mockReturnValue({...knowledge, requestedDocumentState:"available"});
+  act(() => root.render(<SoloMindWorkspace account="test-account" requestedKnowledgeId="doc-1"/>));
+  const link=host.querySelector('a[href*="settings/setup/knowledge-bucket"]');
+  expect(link?.getAttribute("href")).toBe("/solo/test-account/settings/setup/knowledge-bucket?knowledge=doc-1");
+});

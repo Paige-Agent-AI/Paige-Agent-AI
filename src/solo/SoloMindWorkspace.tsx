@@ -57,13 +57,14 @@ const DOMAIN_ICON: Record<MindDomainKey, string> = {
 };
 
 type Props = {
+  account?: string;
   accountContext?: { accountName?: string | null; accountType?: string | null } | null;
   openPaige?: () => void;
   preferenceScope?: MindOrbitPreferenceScope | null;
   requestedKnowledgeId?: string | null;
 };
 
-export function SoloMindWorkspace({ accountContext, openPaige, preferenceScope, requestedKnowledgeId }: Props) {
+export function SoloMindWorkspace({ account, accountContext, openPaige, preferenceScope, requestedKnowledgeId }: Props) {
   const knowledge = useSoloKnowledge(requestedKnowledgeId);
   const handledLink = useRef<string | null>(null);
   const command = useCommandCenter();
@@ -501,7 +502,7 @@ export function SoloMindWorkspace({ accountContext, openPaige, preferenceScope, 
             <section><h3>Record contract</h3><p>{selected.summary}</p></section>
             <section><h3>Source and provenance</h3><dl><dt>Current owner</dt><dd>{selected.owner}</dd><dt>Source</dt><dd>{selected.source}</dd><dt>Signal</dt><dd>{SIGNAL_LABEL[selected.state]}</dd><dt>Evidence</dt><dd>{selected.evidence}</dd><dt>Recorded</dt><dd>{selected.when}</dd></dl></section>
             <section><h3>Honesty boundary</h3><p>Mind indexes this attributable record. It does not infer private reasoning, causal relationships, or unavailable history.</p></section>
-            <section><h3>Next safe action</h3><button type="button" className="mind-button" onClick={closeInspector}><ChevronLeft size={14} />Back to the orb</button><button type="button" className="mind-button mind-button--paige" onClick={openExistingPaige}><ExternalLink size={14} />Open PAIGE · PARTIAL</button></section>
+            <section><h3>Next safe action</h3>{account && selected.id.startsWith("knowledge:") && <a className="mind-button" href={`/solo/${encodeURIComponent(account)}/settings/setup/knowledge-bucket?knowledge=${encodeURIComponent(selected.id.slice("knowledge:".length))}`}>Open source in Settings</a>}<button type="button" className="mind-button" onClick={closeInspector}><ChevronLeft size={14} />Back to the orb</button><button type="button" className="mind-button mind-button--paige" onClick={openExistingPaige}><ExternalLink size={14} />Open PAIGE · PARTIAL</button></section>
           </div>
         </aside>
       )}

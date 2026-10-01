@@ -1131,7 +1131,7 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
         {!data.canEdit && (
           <div className="setup-notice" data-tone="bad">
             This workspace is read-only for Setup. Owner access is required for
-            legal, ownership, email, knowledge, and Paige voice context.
+            legal, ownership, email, saved Setup references, and Paige voice context. Canonical Knowledge follows your workspace permissions.
           </div>
         )}
         {data.accessScope === "admin_operational" && (
@@ -1495,7 +1495,13 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
             )}{" "}
             {tab === "knowledge-bucket" && (
               <>
-              <KnowledgeLibrary tenantId={data.activeTenantId} account={account} />
+              <KnowledgeLibrary tenantId={data.activeTenantId} account={account}
+                requestedDocumentId={new URLSearchParams(location.search).get("knowledge")}
+                onDocumentChange={(id) => {
+                  const search = new URLSearchParams(location.search);
+                  if (id) search.set("knowledge", id); else search.delete("knowledge");
+                  navigate({ pathname: location.pathname, search: search.toString() }, { replace: true, state: location.state });
+                }} />
               <details className="setup-knowledge-references">
               <summary>Saved Setup references ({sources.length})</summary>
               <p>These references are separate from indexed documents. Adding a reference here does not ingest its content.</p>

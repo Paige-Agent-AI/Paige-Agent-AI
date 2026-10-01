@@ -157,6 +157,7 @@ const CommandHub = ({ accountContext, openPaige }) => {
         ) : activeTenantId ? (
           <div role="tabpanel" id="command-panel-mind" aria-labelledby="command-tab-mind" style={{ height: "100%" }}>
             <SoloMindWorkspace
+              account={account}
               key={`${activeUserId ?? "resolving"}:${activeTenantId}`}
               accountContext={accountContext}
               openPaige={openPaige}

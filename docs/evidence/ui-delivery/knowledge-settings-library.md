@@ -63,3 +63,11 @@ Implementation and verification are in progress. This is not a release/completio
 ## Render and review boundary
 
 The first isolated run used display theme names instead of actual light/dark selectors; it is not theme evidence. The final20-case run uses the correct selectors and verifies stylesheet HTTP200, computed typography/colors, no horizontal overflow and real document scrolling. Wide/narrow containers are proxies, never labeled actual Paige open/closed shell proof. Source detail and list use the existing Settings scroll owner. Impeccable inspection checked hierarchy, spacing, readable body text, restrained actions and both themes. Independent review is pending; Shipped Delivery Log N/A because no main merge.
+
+## Independent review repair batch
+
+Independent review at d12d1ab found P2 dialog focus loss, P2 missing same-source Settings/Mind return, and P3 misleading owner-only host copy. All accepted in one batch. Add/Edit now use real Radix triggers; the existing confirmation hook has an optional connected return-focus callback without changing callers that omit it. Settings supplies the removal trigger or heading. After actual dialog teardown, browser checks pass for Add, Edit, removal cancellation and verified removal heading focus.
+
+Settings records source identity in its query route and rereads that exact canonical source on revisit. Mind provides the corresponding Settings link. Missing, failed and wrong-workspace reads do not select a stale list entry. Regression coverage includes exact missing/error/retry, wrong workspace, query change/back and Mind link identity. The host now distinguishes owner-only Setup references from canonical Knowledge permissions.
+
+PASS: repaired full type ratchet12/12;29 targeted Settings/Mind tests; final20 viewport/theme/state browser scenarios; focus-report.json proves teardown and exact-source reload. This is component/route-contract proof, not authenticated full-shell navigation. Final build/reviewer results are recorded in PR after checks finish. The first rerun of focus proof failed because local harness encoding prevented installing query-state setup; corrected UTF-8 harness rerun passes. No product waiver.

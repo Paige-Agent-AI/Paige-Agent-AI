@@ -47,6 +47,10 @@ deno.lock
 # Rendered pack/app screenshots — regenerate with scripts/live-drive/pack-shoot.mjs
 scripts/live-drive/artifacts/
 
+# Vite writes a timestamped config shim next to any harness `vite.config.ts` it loads, so running
+# ANY mount leaves one behind. It is a build temp, never a deliverable.
+scripts/live-drive/harness/**/vite.config.ts.timestamp-*.mjs
+
 # Harness scratch — one-off diagnostic scripts a render pass writes while it is running.
 # Not deliverables: the harness's real outputs are its assertions and its labelled frames,
 # and its frames already land in scripts/live-drive/artifacts/ above.

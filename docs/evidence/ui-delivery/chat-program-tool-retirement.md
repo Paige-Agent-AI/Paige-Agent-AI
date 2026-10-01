@@ -1,0 +1,74 @@
+# UI delivery evidence: chat program-tool retirement — enrollment is the governed deal at the Enrolled stage
+
+Production grounding (2026-09-30, read-only): the legacy `programs` and
+`program_enrollments` tables have never held a row for any tenant. Every
+`program_enroll` invocation therefore raised `ENROLL_PROGRAM_NOT_IN_TENANT`
+after the operator's approval had already been consumed, which the chat
+narrated as an ambiguous outcome. This retirement removes the dead tools and
+redirects the enrollment vocabulary to the existing governed `deal_create`
+path. No interface source, layout, copy, control, state, action, transition or
+exit changes.
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+SOLO_UI: YES: the recognized UI data map src/solo/data/capabilityTools.ts changed (one knob entry removed); no rendered component, layout or copy changed
+FLOW_BY_FLOW: PASS: takeover read the installed skill and orchestration, delivery, audit, build, review and verification routes; owner outcome remains bounded retirement with governed deal_create preserved
+PAIGE_UI_DESIGN: PASS: .agents/skills/paige-ui-design/SKILL.md and its routed references were read completely; no visual design, component, copy, geometry, motion, focus, action, state or exit changes — the sole UI-recognized file in this diff is the data map src/solo/data/capabilityTools.ts, which loses one knob entry fronting the retired tool
+IMPECCABLE: PASS: the installed Impeccable skill and its craft floor were read; no UI artifact is in scope and every rendered control and wording is unchanged
+MATERIAL_FLOW_CHANGE: NO: a chat tool wired to a permanently empty legacy table is removed and its vocabulary redirected to the existing governed deal path; no working user goal, choice, step, state, transition, confirmation, exit, recovery path or side effect changes
+FLOW_PROTOTYPE: NOT_REQUIRED: bounded retirement of a never-functional tool plus prompt-contract copy; the enrollment journey already exists as the governed deal path with its existing approval card
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: a Solo owner asks Paige to enroll a client in a program; Paige resolves the program's pipeline by exact reference from a current read, proposes the governed deal at the Enrolled stage, and the owner approves the existing confirmation card or holds standing authority
+VISUAL_DIRECTION: PASS: the canonical Solo shell, PAIGE Chat composer, confirmation card, Trust Compass and existing tokens/layout/copy remain untouched
+AUTOMATED_EVIDENCE: PASS: the retirement suite failed 10 of 11 tests on unchanged main and passes 11 of 11 after the change (the eleventh is the non-vacuous canary proving the governed deal tools remain declared); crm-command-chat-adoption passes 22 of 22; the chat-tool-registry, capability-declaration and receipt-coverage guards each pass after their baselines were updated in the same commit
+STATIC_EVIDENCE: PASS: production read-back showed zero rows in programs and program_enrollments across every tenant and a consumed program_enroll confirmation with no enrollment row; the retired tool is absent from the chat manifest, dispatch, handler, card text, verb phrases, rail sets and subject maps; removing the action-risk classification is the fail-closed reintroduction guard because an unclassified tool is refused at dispatch; TypeScript reports zero errors in touched files
+OWNER_INTENT: retire a dead capability honestly and route enrollment through the one governed path the platform already proves, per the owner's Spine architecture ruling of 2026-09-30
+MUST_NOT_HAPPEN: no new chat-side execution logic; no tenant-specific branch; no approval bypass or lane change; no production data write during pre-merge proof; no customer content in committed evidence
+MUST_PRESERVE: the governed deal.create door, its approval cards, autonomy lanes, canonical readback and Rail receipts; the duplicate-name honesty rule (show every same-name pipeline with its reference and ask); every existing Solo visual and wording
+ACCEPTANCE_CRITERIA: the model surface exposes no program_enroll or program_list; classifyAction refuses the retired name; the Solo capability map carries no knob for it; the operator prompt teaches enrollment as the governed deal at the Enrolled stage with the ask-when-duplicated refusal; all four registry guards pass on the updated baselines
+MOTION_PURPOSE: NONE: no motion was added or changed
+PROTECTED_SEAMS: affected and tested = chat tool manifest, dispatch and handler chains, action-risk classification, Solo capability map, CI tool registries; explicitly unaffected = the governed CRM command door, deal executors, approval machinery, autonomy resolution, UI components, navigation, billing, providers, Mind/Memory and outbound communications
+
+SOLO_1024X768_PAIGE_OPEN: NOT_APPLICABLE: no rendered surface changed in this retirement; the recognized UI file in the diff is a data-map entry removal
+SOLO_1024X768_PAIGE_CLOSED: NOT_APPLICABLE: no rendered surface changed in this retirement; the recognized UI file in the diff is a data-map entry removal
+SOLO_1366X768_PAIGE_OPEN: NOT_APPLICABLE: no rendered surface changed in this retirement; the recognized UI file in the diff is a data-map entry removal
+SOLO_1366X768_PAIGE_CLOSED: NOT_APPLICABLE: no rendered surface changed in this retirement; the recognized UI file in the diff is a data-map entry removal
+SOLO_1536X770_PAIGE_OPEN: NOT_APPLICABLE: no rendered surface changed in this retirement; the recognized UI file in the diff is a data-map entry removal
+SOLO_1536X770_PAIGE_CLOSED: NOT_APPLICABLE: no rendered surface changed in this retirement; the recognized UI file in the diff is a data-map entry removal
+SOLO_900X1000_PAIGE_OPEN: NOT_APPLICABLE: no rendered surface changed in this retirement; the recognized UI file in the diff is a data-map entry removal
+SOLO_900X1000_PAIGE_CLOSED: NOT_APPLICABLE: no rendered surface changed in this retirement; the recognized UI file in the diff is a data-map entry removal
+
+INTERNAL_BUILD_IDENTITY: product=bf827b7e517750a521b88d30cb38aad5b992aa03; current-main-sync=863f81c2b9fe1803323a6994595d62651b630d5c; base=863f81c2b9fe1803323a6994595d62651b630d5c; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat automated deployment after merge); evidence=retirement-focused-failing-first-and-production-readback
+RENDERED_EVIDENCE: NOT_APPLICABLE: no interface source, visual state, geometry, copy, motion or control changed
+BEHAVIORAL_EVIDENCE: PASS: controlled offline tests prove the retired tool is absent from every registry that could reintroduce it and that the governed deal tools remain declared; the failing-first run failed ten absence assertions on unchanged main and passes after the change
+AUTHENTICATED_RUNTIME: UNVERIFIED: the retired Edge bundle is not yet deployed and no authenticated enrollment round has run on this head; an enrollment request proposing the governed deal at the Enrolled stage and completing through its existing approval card is the post-merge acceptance
+KEYBOARD_FOCUS: NOT_APPLICABLE: no control or focus path changed
+ZOOM_REFLOW: NOT_APPLICABLE: no layout, content geometry or responsive behavior changed
+REDUCED_MOTION: NOT_APPLICABLE: no motion or reduced-motion behavior changed
+STATE_COVERAGE: PASS: the retired program tools are removed from every registry that could reintroduce them (manifest, dispatch, action-risk, capability map, four CI baselines) and the enrollment vocabulary resolves to the governed deal path; no intermediate or mixed state remains where chat proposes a program tool the door refuses
+TRUTHFUL_STATE_LABELS: PASS: no visible label changed; removing the retired tool's capability-map entry leaves every remaining knob fronting a live classified action, and the enrollment vocabulary points at the governed deal path whose pre-release behavior stays labeled by its own record
+UNVERIFIED: the merged Edge deployment identity and one authenticated enrollment round that proposes the governed deal at the Enrolled stage remain unverified until post-merge production acceptance
+RELEASE_NOTE_REQUIRED: NO: bounded tool retirement and vocabulary redirect with no new workflow, interface, action or customer instruction
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: the failing-first retirement suite, adoption suite and four registry guards are proven offline; authenticated production behavior and deployed bundle lineage are not yet proven
+RELEASE_RECOVERY: position=revert this bounded retirement if any registry guard or the chat surface regresses, then restore the prior tool wiring from the merge parent before any forward fix; reference=PR-1598
+
+RELEASE_CHANNEL: development: exact product-code head on the draft branch; production promotion remains merge automation only
+RELEASE_CLASSIFICATION: patch: removes dead plumbing and redirects vocabulary to the existing governed path without a new workflow or interface
+CUSTOMER_RELEASE_IDENTITY: none: no owner-approved customer release identity was assigned to this bounded retirement
+
+## Takeover correction (2026-10-01 UTC)
+
+The original head e582ecb failed CI: its retirement test omitted Vitest imports
+(36 new TypeScript diagnostics), and list_tool_autonomy still returned the dead
+program_enroll switch. Those failures invalidate the earlier touched-file typecheck
+claim above. The takeover adds the imports and a forward catalogue migration,
+20270524000000_retire_program_enroll_catalogue.sql. The migration is the latest
+catalogue body (20270511010000) with exactly the program_enroll VALUES row removed;
+caller/tenant checks, every other row, defaults and ACL are preserved. Stored
+preferences and legacy program data are retained. The removed catalogue switch is
+a visible affordance change; earlier blanket claims of no control change are too
+broad. No layout or new interaction design is introduced.
+
+Proof remains bounded: source assertions and local/CI checks establish retirement
+and catalogue preservation, not an authenticated enrollment. Deployment identity,
+forward migration apply/readback and authenticated enrollment through the existing
+approval/readback/Rail path remain UNVERIFIED. No production write or deployment
+was performed. Shipped Delivery Log: N/A, this PR has not reached main.

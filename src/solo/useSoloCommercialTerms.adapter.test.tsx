@@ -52,15 +52,15 @@ vi.mock("@/integrations/supabase/client", () => ({
 
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => tenant }));
 
-const { useSoloAgreements } = await import("./useSoloAgreements");
+const { useSoloCommercialTerms } = await import("./useSoloCommercialTerms");
 
 let host: HTMLDivElement;
 let root: Root;
-let latest: ReturnType<typeof useSoloAgreements> | null = null;
-const renders: Array<ReturnType<typeof useSoloAgreements>> = [];
+let latest: ReturnType<typeof useSoloCommercialTerms> | null = null;
+const renders: Array<ReturnType<typeof useSoloCommercialTerms>> = [];
 
 function Probe() {
-  latest = useSoloAgreements();
+  latest = useSoloCommercialTerms();
   renders.push(latest);
   return null;
 }
@@ -127,7 +127,7 @@ afterEach(() => {
   host?.remove();
 });
 
-describe("useSoloAgreements — what it actually asks the database for", () => {
+describe("useSoloCommercialTerms — what it actually asks the database for", () => {
   it("scopes EVERY read to the active tenant", async () => {
     await run();
     // Not one of these is redundant with RLS. `is_platform_owner()` is a disjunct in both the
@@ -376,7 +376,10 @@ it("does not treat an empty write response as confirmation", async () => {
   let outcome: { ok: boolean; message?: string } | undefined;
   await act(async () => { outcome = await latest!.setAgreementStatus("a1", "paused", null, "tenant-1"); });
   expect(outcome?.ok).toBe(false);
-  expect(outcome?.message).toContain("could not be confirmed");
+  // The sentence changed on purpose. An empty response is NOT a refusal: the write may have landed,
+  // so the copy no longer tells anyone to try again, and no longer shares a string with a refusal.
+  expect(outcome?.message).toContain("did not confirm what it saved");
+  expect(outcome?.message).not.toContain("try");
 });
 
 
@@ -406,4 +409,81 @@ it("contains an agreement-save rejection and withholds a late successful agreeme
   expect(outcome?.ok).toBe(false);
   expect(outcome).not.toHaveProperty("result");
   expect(calls.length).toBe(readsBefore);
+});
+
+
+/**
+ * THE DEFECT THESE COVER. `save_client_agreement` and `set_client_agreement_status` carry 32
+ * refusals between them whose messages are written for the operator — "an instalment arrangement
+ * needs to say how many instalments (two or more)" — and every one of them arrived as "The save
+ * could not be confirmed. Refresh and check your records before trying again." The feature never
+ * saved a row in production, and this is why nobody could see the reason.
+ *
+ * The fix is a reserved SQLSTATE class, not a relaxation of the no-echo rule: `PA###` means the
+ * sentence was authored for a person. Everything else still gets safe coded copy.
+ */
+const draftFor = (over: Record<string, unknown> = {}) => ({
+  tenantId: "tenant-1", id: null, contactId: "c1", offerId: "o1",
+  termKind: "installment" as const, priceBasis: "negotiated" as const, catalogPriceId: null,
+  agreedAmountMinor: 100000, agreedCurrency: "usd", billingInterval: null, intervalCount: null,
+  installmentsTotal: 4, paymentSchedule: null, startsOn: "2026-09-23",
+  renewsOn: null, endsOn: null, title: null, notes: null, expectedUpdatedAt: null,
+  ...over,
+});
+
+it("shows the operator the sentence the server wrote for them, sentence-cased", async () => {
+  await run();
+  rpcResult = { data: null, error: { code: "PA002", message: "an instalment arrangement needs to say how many instalments (two or more)" } };
+  let outcome: { ok: boolean; message?: string } | undefined;
+  await act(async () => { outcome = await latest!.saveAgreement(draftFor()); });
+  expect(outcome?.ok).toBe(false);
+  expect(outcome?.message).toBe("An instalment arrangement needs to say how many instalments (two or more).");
+});
+
+it("still refuses to echo a message that carries no operator-readable code", async () => {
+  await run();
+  // P0001 is what a bare `RAISE EXCEPTION` defaults to. Whatever it says, it is not vouched for,
+  // so the no-echo rule holds and the safe copy is used instead.
+  rpcResult = { data: null, error: { code: "P0001", message: "relation private_ledger does not exist" } };
+  let outcome: { ok: boolean; message?: string } | undefined;
+  await act(async () => { outcome = await latest!.saveAgreement(draftFor()); });
+  expect(outcome?.ok).toBe(false);
+  expect(outcome?.message).not.toContain("private_ledger");
+  expect(outcome?.message).toContain("could not be confirmed");
+});
+
+it("keeps the coded copy for permission and concurrency refusals", async () => {
+  await run();
+  rpcResult = { data: null, error: { code: "42501", message: "only an owner or admin may record an agreement with a client" } };
+  let denied: { ok: boolean; message?: string } | undefined;
+  await act(async () => { denied = await latest!.saveAgreement(draftFor()); });
+  expect(denied?.message).toContain("permission or workspace changed");
+
+  rpcResult = { data: null, error: { code: "40001", message: "someone else changed this agreement while you were editing it" } };
+  let stale: { ok: boolean; stale?: boolean; message?: string } | undefined;
+  await act(async () => { stale = await latest!.saveAgreement(draftFor()); });
+  expect(stale?.stale).toBe(true);
+  expect(stale?.message).toContain("Close and reopen");
+});
+
+it("falls back to safe copy rather than rendering an empty or oversized refusal", async () => {
+  await run();
+  rpcResult = { data: null, error: { code: "PA002", message: "   " } };
+  let blank: { message?: string } | undefined;
+  await act(async () => { blank = await latest!.saveAgreement(draftFor()); });
+  expect(blank?.message).toContain("could not be confirmed");
+
+  rpcResult = { data: null, error: { code: "PA002", message: "x".repeat(401) } };
+  let huge: { message?: string } | undefined;
+  await act(async () => { huge = await latest!.saveAgreement(draftFor()); });
+  expect(huge?.message).toContain("could not be confirmed");
+});
+
+it("carries the operator sentence on the status writer too, not only the save", async () => {
+  await run();
+  rpcResult = { data: null, error: { code: "PA002", message: "a paused agreement cannot be paused again" } };
+  let outcome: { ok: boolean; message?: string } | undefined;
+  await act(async () => { outcome = await latest!.setAgreementStatus("a1", "paused", null, "tenant-1"); });
+  expect(outcome?.ok).toBe(false);
+  expect(outcome?.message).toBe("A paused agreement cannot be paused again.");
 });

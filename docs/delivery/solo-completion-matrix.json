@@ -1481,7 +1481,7 @@
       "current_state": "PARTIAL",
       "reachability": "active_routed",
       "canonical_owner": "sales ops",
-      "frontend_asset": "src/solo/sales-ops.tsx, src/solo/useSoloSalesOps.ts, src/solo/useSoloAgreements.ts",
+      "frontend_asset": "src/solo/sales-ops.tsx, src/solo/useSoloSalesOps.ts, src/solo/useSoloCommercialTerms.ts",
       "backend_seam": "tenant_orders/tenant_members reads + tenant_client_agreements/clients",
       "authority_model": "tenant-scoped reads",
       "provider_dependency": "none",

@@ -4,7 +4,7 @@
 // annualized, and honest emptiness under no data.
 import { describe, it, expect } from "vitest";
 import { deriveSalesCommand, paymentReady, type SalesCommandInput } from "./deriveSalesCommand";
-import type { ClientAgreement } from "../useSoloAgreements";
+import type { ClientAgreement } from "../useSoloCommercialTerms";
 import type { PipelineDeal, PipelineStage } from "../useSoloCampaigns";
 
 const NOW = new Date("2026-09-05T00:00:00Z");

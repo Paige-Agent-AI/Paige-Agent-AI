@@ -63,7 +63,8 @@ serve(async (req) => {
 
     const { data: doc, error: docErr } = await admin
       .from("tenant_knowledge_docs")
-      .select("*")
+      .select("id,tenant_id,title,content,summary,category,tags,source,source_url,share_to_network,created_by")
+      .eq("record_state", "canonical")
       .eq("id", body.data.doc_id)
       .maybeSingle();
     if (docErr || !doc) {

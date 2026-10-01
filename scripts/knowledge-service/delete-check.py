@@ -61,6 +61,6 @@ try:
  d=seed(14)
  race(actor+delete(d),f"INSERT INTO public.tenant_knowledge_chunks VALUES('30000000-0000-0000-0000-000000000014','{tenant}','{d}',0,'late chunk');",'violates foreign key constraint','parent lock prevents late orphan chunk')
  run(['-d',db,'-c',f"SELECT public.test_assert(NOT EXISTS(SELECT 1 FROM public.tenant_knowledge_chunks WHERE doc_id='{d}'),'late chunk absent');"])
- print('PASS: deletion migration replay twice, 26 role/behavior checks, four real concurrent races')
+ print('PASS: deletion migration replay twice, role/behavior checks, four real concurrent races')
 finally:
  run(['-d','postgres','-c','DROP DATABASE '+db],check=False)

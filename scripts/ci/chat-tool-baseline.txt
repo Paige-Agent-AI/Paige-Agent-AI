@@ -127,8 +127,6 @@ plan_set_reminder
 plan_update_item
 presence_is_online
 presence_who_online
-program_enroll
-program_list
 propose_action
 propose_business_brief_update
 save_to_knowledge_base

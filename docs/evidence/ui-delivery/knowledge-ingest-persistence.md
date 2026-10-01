@@ -55,4 +55,3 @@ Existing result keys and partial-success semantics are retained. A verified subs
 - npm audit --json: exit1,2high/4moderate/1low; package and lockfile unchanged. High: brace-expansion, vite; moderate: ajv, fast-uri, react-router, react-router-dom; low: dompurify. Existing dependency PRs1593/1596/1558/1544/1542 own relevant updates. No advisory is waived or fixed by this slice.
 
 The independent specification reviewer found all-zero vectors could falsely count as searchable. The correction validates float32-representable, nonzero vectors, with zero, underflow and overflow tests. Final exact-head independent review is recorded in the PR. No full-suite, real-database, migration-replay, screen-reader, deployment or authenticated proof is claimed.
-

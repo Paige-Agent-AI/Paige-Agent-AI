@@ -30,6 +30,9 @@ const valid: CapabilityDefinition = {
     owner: "Knowledge",
     humanSurface: null,
     description: "Read one governed document.",
+    // A read has no action-risk key to clear the anti-bypass rule, so it binds the
+    // chat tool it clears by exact name here (see defineCapability.ts).
+    chatTool: "knowledge_documents_read",
   },
   input,
   effect: "read",

@@ -154,3 +154,19 @@ A Spine Change Request and coordinated owner review are required for registry sh
 ### Required handoff packet
 
 Every agent leaves: exact base/head; active-owner heads inspected; affected-flow and collision map; changed files; registry key and domain owner; human surface; Rail/source and safe adapter; roles and denial cases; consumer/deployment identity; test commands and results; runtime/authenticated evidence; remaining BLOCKED, FAIL, and UNVERIFIED items; and explicit merge/deployment authority. That packet lets the next agent continue without relying on a particular person's memory.
+
+## SCR-2026-09-30-KNOWLEDGE-OUTCOME
+
+Requested change: preserve the canonical Knowledge contract's verified committed change with missing receipt through the existing approval outcome classifier and fixed card copy. This adds no approval channel, lane, token, grant, resolver or store. Exact SQL rollback refusals continue to use the existing not_applied signal; transport uncertainty stays unconfirmed.
+
+Authority: bounded implementation under the owner's approved Knowledge CRUD/Spine/Rail plan, green light to finish, and explicit shared-handler clearance ("You have authority to work on it if needed"). This records that existing Gate 1 approval and coordinator scope ruling, not a fictional separate owner approval. Release remains a separate gate.
+
+Collision packet: Knowledge source head ccf48c34de9588afa6fd68a1ce279b2b30f181cd; separate fixture repair 522aab297a1829a9c7f85c4271226eff7007df42 composed as d526b5f3. Parent coordinates Chat integration and independent exact-head review. Settings and worker writers are unaffected.
+
+Affected flow: approved knowledge_update/delete -> canonical SQL receipt result -> existing sayWhatTheCardSays/classifySpentApproval -> same approval outcome frame. The read declaration is unchanged. Knowledge-specific interpretation is opt-in at those existing calls; CRM, n8n and other domains retain prior behavior. No registry schema change; mutation declarations reference this request.
+
+Tenant/sensitivity: no new tenant input or content reaches the outcome frame. Fixed copy says the change completed but its activity record is missing, and forbids repeating the operation. No free-text Knowledge title/body is added. Caller JWT, active tenant, revision CAS and existing SQL receipt ownership remain.
+
+Compatibility/migration: no new outcome-kind enum or UI contract. Existing ran outcome can carry its already-supported fixed note. No database migration for this shared change. Only exact named Knowledge refusal plus matching SQLSTATE proves no change.
+
+Tests/rollback: failing-first classifier cases reproduce both defects; real handler tests issue/store/redeem approvals for committed-unrecorded, conflict, forbidden, transport and high-risk deletion, with other-domain approval regression tests retained. Rollback is removal of the Knowledge opt-in and declaration reference through a reviewed forward fix; do not repeat or undo a verified data operation. Authenticated production approval/receipt proof remains owed.

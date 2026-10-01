@@ -36,7 +36,7 @@ const EXPECTED_KEYS = Object.freeze({
     "receipt",
     "outcome",
   ],
-  identity: ["id", "version", "domain", "owner", "humanSurface", "description"],
+  identity: ["id", "version", "domain", "owner", "humanSurface", "description", "chatTool"],
   governance: ["actionRiskKey", "risk", "approval", "requiredPermission"],
   tenantScope: ["source", "tenantResolver", "actorResolver", "revalidateAt"],
   availability: ["resolver", "states"],
@@ -106,7 +106,18 @@ export function defineCapability(definition: CapabilityDefinition): DefinedCapab
     if (governance.actionRiskKey !== null || governance.risk !== "read_only" || governance.approval !== "none") {
       throw new TypeError("Read capabilities must declare no action-risk key, read_only risk, and no approval.");
     }
+    // A read binds its chat tool HERE because it has no action-risk key for the anti-bypass
+    // guard to match on. The binding is name-exact and the guard cross-checks it against the
+    // Spine registry's own read classification before it clears anything (capability-kit-lint).
+    if (typeof identity.chatTool !== "string" || !/^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)+$/.test(identity.chatTool)) {
+      throw new TypeError("Read capabilities must bind their chat tool by exact name in identity.chatTool.");
+    }
   } else {
+    if (identity.chatTool !== null) {
+      throw new TypeError(
+        "Only read capabilities bind a chat tool by name; mutations clear through their canonical action-risk key.",
+      );
+    }
     /**
      * THE CANONICAL ACTION-RISK POLICY DECIDES WHAT IS AN ACTION HERE — NOT A VERB PATTERN.
      * `classifyAction()` is a lookup into a hand-curated table in which every entry carries a written

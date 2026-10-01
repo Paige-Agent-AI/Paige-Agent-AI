@@ -267,6 +267,13 @@ if (chatSrc.includes('...CAMPAIGN_BRIEF_TOOLS')) {
   if (!campaignTools.length) throw new Error('Campaign Brief catalog could not be parsed');
   importedTools.push(...campaignTools);
 }
+if (chatSrc.includes('...KNOWLEDGE_TOOLS')) {
+  if (!/import\s*\{[^}]*KNOWLEDGE_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/paige-spine\/domains\/knowledge\.ts['"]/.test(chatSrc)) throw new Error('Unresolved Knowledge catalog import');
+  const source = fs.readFileSync('supabase/functions/_shared/paige-spine/domains/knowledge.ts', 'utf8');
+  const calendarTools = [...source.matchAll(/\bname:\s*"(knowledge_[a-z_]+)"/g)].map(m => m[1]);
+  if (!calendarTools.length) throw new Error('Knowledge catalog could not be parsed');
+  importedTools.push(...calendarTools);
+}
 if (chatSrc.includes('...CALENDAR_PRESET_TOOLS')) {
   if (!/import\s*\{[^}]*CALENDAR_PRESET_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/paige-spine\/domains\/calendar_preset\.ts['"]/.test(chatSrc)) throw new Error('Unresolved Calendar Preset catalog import');
   const source = fs.readFileSync('supabase/functions/_shared/paige-spine/domains/calendar_preset.ts', 'utf8');

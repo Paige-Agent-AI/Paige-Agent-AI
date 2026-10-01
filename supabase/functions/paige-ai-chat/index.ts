@@ -1,3 +1,5 @@
+import { KNOWLEDGE_TOOLS } from "../_shared/paige-spine/domains/knowledge.ts";
+import { executeKnowledgeTool, normalizeKnowledgeArgs, type KnowledgeTool } from "../_shared/knowledge-tenant-brain.ts";
 import { BUSINESS_MISSION_TOOLS } from '../_shared/paige-spine/domains/business_mission.ts';
 import { executeVerifiedMissionMutation, resolveBusinessMissionThreadContext, resolveSelectedBusinessMissionContext } from '../_shared/business-mission-tenant-brain.ts';
 import { CAMPAIGN_BRIEF_TOOLS } from '../_shared/paige-spine/domains/campaigns.ts';
@@ -4555,6 +4557,8 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // same cached resolver — one home, one cache (§18). Depends only on supabaseClient + personaCtx,
     // both resolved above; nothing between here and the old site referenced it.
     const autonomyModeCache = new Map<string, string>();
+    // A lost Knowledge acknowledgement is never retried by the model in this turn.
+    const uncertainKnowledgeDocuments = new Set<string>();
     const resolveToolAutonomy = async (toolKey: string): Promise<string> => {
       if (autonomyModeCache.has(toolKey)) return autonomyModeCache.get(toolKey)!;
       let mode = "confirm"; // safe default — never assume autopilot
@@ -6696,6 +6700,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           ...BUSINESS_MISSION_TOOLS,
           ...CAMPAIGN_BRIEF_TOOLS,
           ...CALENDAR_PRESET_TOOLS,
+          ...KNOWLEDGE_TOOLS,
           ...CALENDAR_LINK_TOOLS,
           ...AGREEMENT_TOOLS,
           {
@@ -7556,6 +7561,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       booking_preset_archive: "archiving a booking calendar",
       booking_preset_restore: "restoring a booking calendar",
       booking_preset_list: "checking your booking calendars",
+      knowledge_read: "reading workspace Knowledge", knowledge_update: "updating Knowledge metadata", knowledge_delete: "deleting a Knowledge document",
       calendar_link_prepare: "preparing a booking link to share",
       calendar_link_send: "sending a booking link to a contact",
       calendar_link_social_copy: "preparing social post copy for a booking link",
@@ -7840,6 +7846,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           return `Save a campaign brief "${String(a?.name || "Untitled").slice(0, 120)}" for this workspace — a planning record of the campaign's intent. This launches, sends, and publishes nothing.`;
         case "campaign_brief_revise":
           return `Revise the campaign brief you just read${a?.expectedVersion ? ` (version ${a.expectedVersion})` : ""} — a change to the planning record only. It launches, sends, and publishes nothing.`;
+        case "knowledge_update":
+          return `Update Knowledge document ${a.document_id} at revision ${a.expected_revision}: ${JSON.stringify(a.patch)}.`;
+        case "knowledge_delete":
+          return `Permanently delete Knowledge document ${a.document_id} at revision ${a.expected_revision} and its chunks. Uploaded source files remain.`;
         case "booking_preset_create":
           return `Create a booking calendar "${String(a?.name || "Untitled").slice(0, 80)}"${a?.model ? ` (${String(a.model).replaceAll("_", " ")})` : ""} as a PRIVATE DRAFT. Its public /book page is NOT live — publishing is a separate, explicit step.`;
         case "booking_preset_duplicate": {
@@ -8760,6 +8770,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           try { gateArgs = JSON.parse(tc.function.arguments || "{}"); } catch { gateArgs = {}; }
           if ((tc.function.name === "mission_create" || tc.function.name === "mission_revise" || tc.function.name === "mission_transition") && !gateArgs.request_key) {
             gateArgs.request_key = crypto.randomUUID();
+            tc.function.arguments = JSON.stringify(gateArgs);
+          }
+          // Domain validation/normalization precedes the existing fingerprint and stored proposal.
+          if (tc.function.name === "knowledge_update" || tc.function.name === "knowledge_delete") {
+            try { gateArgs = normalizeKnowledgeArgs(tc.function.name, gateArgs); }
+            catch {
+              toolResults.push({tool_call_id:tc.id,role:"tool",content:JSON.stringify({success:false,not_applied:true,error:"KNOWLEDGE_ARGUMENTS_INVALID",note:"Read the document and clarify its exact revision and metadata before proposing a change."})});
+              continue;
+            }
             tc.function.arguments = JSON.stringify(gateArgs);
           }
           // Campaign briefs get a stable idempotency key SETTLED HERE, before the fingerprint, for
@@ -13005,6 +13024,17 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           } catch (e) {
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success:false, error:"The campaign brief was not saved.", note:"No work ran and no campaign result may be claimed." }) });
           }
+        } else if (tc.function.name === "knowledge_read" || tc.function.name === "knowledge_update" || tc.function.name === "knowledge_delete") {
+          // Existing gate above owns approval; the caller JWT RPC owns scope, CAS and Rail.
+          let knowledgeArgs: unknown;
+          try { knowledgeArgs = JSON.parse(tc.function.arguments || "{}"); } catch { knowledgeArgs = null; }
+          const documentId = knowledgeArgs && typeof knowledgeArgs === "object" && "document_id" in knowledgeArgs ? String(knowledgeArgs.document_id).toLowerCase() : "";
+          const result: Record<string, unknown> = tc.function.name !== "knowledge_read" && uncertainKnowledgeDocuments.has(documentId)
+            ? {success:false,verified:false,not_applied:true,code:"KNOWLEDGE_REVIEW_REQUIRED",note:"A previous operation on this document is uncertain or lacks its receipt. Stop this turn's writes; inspect the current record with the operator before another request."}
+            : await executeKnowledgeTool({caller:supabaseClient,expectedTenantId:personaCtx?.tenant_id ?? null,tool:tc.function.name as KnowledgeTool,args:knowledgeArgs});
+          if (result.success !== true && result.mutationMayHavePersisted === true) uncertainKnowledgeDocuments.add(documentId);
+          if (tc.function.name === "knowledge_read" && result.success === true) markProtectedLate("tool:knowledge_read");
+          toolResults.push({tool_call_id:tc.id,role:"tool",content:JSON.stringify(result)});
         } else if (
           tc.function.name === "booking_preset_create" || tc.function.name === "booking_preset_revise" ||
           tc.function.name === "booking_preset_publish" || tc.function.name === "booking_preset_pause" ||
@@ -13395,6 +13425,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // Values that are deliberately NOT tables are declared as such in that guard, not left to be
       // guessed from context.
       const WRITE_TARGET: Record<string, string> = {
+        knowledge_update: "tenant_knowledge_docs", knowledge_delete: "tenant_knowledge_docs",
         crm_create_contact: "clients", crm_update_contact: "clients",
         crm_archive_contact: "clients", crm_restore_contact: "clients",
         crm_link_contact_company: "clients", crm_unlink_contact_company: "clients",
@@ -13608,6 +13639,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       const auditWriteForTool = (tc: any, res: any): void => {
         try {
           const name: string = tc?.function?.name ?? "";
+          // Canonical Knowledge SQL alone owns receipts, including completed_unrecorded truth.
+          if (name === "knowledge_update" || name === "knowledge_delete") return;
           const risk = classifyAction(name);
           // Never executed, so never a write: an unclassified or owner-only call is refused
           // before dispatch and there is nothing to attribute.
@@ -13817,7 +13850,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             const spentBy = approvalSpend.get(token);
             const tool = approvalTokenTool.get(token);
             return spentBy !== undefined
-              ? classifySpentApproval(toolResultContent.get(spentBy), { reportsOk: tool !== undefined && N8N_MANAGEMENT_TOOL_NAMES.has(tool) })
+              ? classifySpentApproval(toolResultContent.get(spentBy), { reportsOk: tool !== undefined && N8N_MANAGEMENT_TOOL_NAMES.has(tool), reportsKnowledge: tool === "knowledge_update" || tool === "knowledge_delete" })
               : classifyUnspentApproval(tool ? approvalRefusals.get(tool) : approvalLookupFailed ? "lookup_failed" : undefined);
           });
           // An approval this request could not use may have been used before it, by a request that did
@@ -13968,7 +14001,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 const token = spentBy.get(r.tool_call_id);
                 if (token === undefined) continue;
                 const tool = approvalTokenTool.get(token);
-                r.content = sayWhatTheCardSays(String(r.content ?? ""), { reportsOk: tool !== undefined && N8N_MANAGEMENT_TOOL_NAMES.has(tool) });
+                r.content = sayWhatTheCardSays(String(r.content ?? ""), { reportsOk: tool !== undefined && N8N_MANAGEMENT_TOOL_NAMES.has(tool), reportsKnowledge: tool === "knowledge_update" || tool === "knowledge_delete" });
               }
             }
             for (const r of toolResults) toolResultContent.set(r.tool_call_id, String(r.content ?? ""));

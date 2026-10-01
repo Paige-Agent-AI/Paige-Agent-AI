@@ -83,7 +83,15 @@ function anthropicStream(kind = "text") {
     : kind === "lender-text"
     ? "CHILD-PRIVATE-MARKER — consider: Summit Capital. This is not legal advice."
     : "Scoped response.";
-  const events = kind === "tool"
+  const events = kind && typeof kind === "object" && kind.tool
+    ? [
+        {type:"message_start",message:{usage:{input_tokens:1}}},
+        {type:"content_block_start",index:0,content_block:{type:"tool_use",id:"knowledge-tool",name:kind.tool}},
+        {type:"content_block_delta",index:0,delta:{type:"input_json_delta",partial_json:JSON.stringify(kind.args ?? {})}},
+        {type:"message_delta",delta:{stop_reason:"tool_use"},usage:{output_tokens:1}},
+        {type:"message_stop"},
+      ]
+    : kind === "tool"
     ? [
         { type: "message_start", message: { usage: { input_tokens: 1 } } },
         { type: "content_block_start", index: 0, content_block: { type: "tool_use", id: "tool-1", name: "plan_list" } },
@@ -3825,6 +3833,54 @@ for (const phase of ["before", "after"]) {
   assert(`29 platform raw workspace changes ${phase}: provider boundary`, r.providerCalls.filter(isFold).length === (phase === "before" ? 0 : 1));
   assert(`29 platform raw workspace changes ${phase}: no stale write`, !r.rec.inserts.some((i) => i.table === "paige_chat_threads" && i.row.summary));
   assert(`29 platform raw workspace changes ${phase}: parent remains usable`, r.status === 200 && r.responseText.includes("[DONE]"));
+}
+
+group("30 Knowledge canonical tools on the actual Chat gate");
+{
+  const docId="55555555-5555-4555-8555-555555555555";
+  const doc={id:docId,tenant_id:CHILD,revision:2,title:"CHILD-PRIVATE-MARKER",summary:null,category:null,tags:[],source:"paste",source_url:null,chunk_count:1,content:"CHILD-PRIVATE-MARKER"};
+  for (const switchAfterRead of [false,true]) {
+    let read=false;
+    const r=await drive({personaTenant:CHILD,memberships:[CHILD],provider:[{tool:"knowledge_read",args:{document_id:docId}},"private-text"],rpcExtras:{
+      match_tenant_knowledge:{data:[],error:null},
+      read_tenant_knowledge:()=>{read=true;return {data:{tenant_id:CHILD,documents:[doc]},error:null};},
+    },tableExtras:{profiles:()=>[{active_tenant_id:switchAfterRead && read ? AGENCY : CHILD}]}});
+    assert(`30 read ${switchAfterRead}: JWT canonical RPC`,r.rec.rpc.some(x=>x.name==="read_tenant_knowledge" && x.args.p_expected_tenant===CHILD && x.client==="jwt"));
+    assert(`30 read ${switchAfterRead}: late protected evidence`,r.logged.some(x=>x.msg.includes("tool:knowledge_read")));
+    assert(`30 read ${switchAfterRead}: no stale next provider`,r.providerCalls.length===(switchAfterRead ? 1 : 2),r.providerCalls.length);
+    assert(`30 read ${switchAfterRead}: response scope`,switchAfterRead ? !r.responseText.includes("CHILD-PRIVATE-MARKER") : r.responseText.includes("CHILD-PRIVATE-MARKER"));
+    if(switchAfterRead) assert("30 read switch: no stale summary",!r.rec.inserts.some(x=>x.table==="paige_chat_threads" && x.row.summary));
+  }
+  for(const tool of ["knowledge_read","knowledge_update","knowledge_delete"]) {
+    const args=tool==="knowledge_read" ? {} : {document_id:docId,expected_revision:2,...(tool==="knowledge_update" ? {patch:{title:"Guide"}} : {}),confirm:true};
+    const r=await drive({personaTenant:CHILD,memberships:[CHILD],provider:[{tool,args},"text"],rpcExtras:{get_actor_access:{data:{tier:"client"},error:null},resolve_tool_autonomy:{data:"auto",error:null}}});
+    assert(`30 ${tool}: client seat refused`,!r.rec.rpc.some(x=>["read_tenant_knowledge","update_tenant_knowledge_metadata","delete_tenant_knowledge"].includes(x.name)));
+  }
+  for(const tool of ["knowledge_update","knowledge_delete"]) {
+    const args={document_id:docId,expected_revision:2,...(tool==="knowledge_update" ? {patch:{title:"Guide"}} : {}),confirm:true};
+    const r=await drive({personaTenant:CHILD,memberships:[CHILD],provider:[{tool,args},"text"]});
+    assert(`30 ${tool}: model confirm alone cannot write`,!r.rec.rpc.some(x=>x.name==="update_tenant_knowledge_metadata" || x.name==="delete_tenant_knowledge"));
+  }
+  for(const [tool,mode] of [["knowledge_delete","auto"],["knowledge_update","off"]]) {
+    const args={document_id:docId,expected_revision:2,patch:{title:"Guide"},confirm:true};
+    if(tool==="knowledge_delete") delete args.patch;
+    const r=await drive({personaTenant:CHILD,memberships:[CHILD],provider:[{tool,args},"text"],rpcExtras:{resolve_tool_autonomy:{data:mode,error:null}}});
+    assert(`30 ${tool} ${mode}: canonical lane refuses dispatch`,!r.rec.rpc.some(x=>x.name==="update_tenant_knowledge_metadata" || x.name==="delete_tenant_knowledge"));
+  }
+  for(const result of [{data:null,error:{message:"network lost"}},{data:null,error:{code:"40001",message:"KNOWLEDGE_REVISION_CONFLICT"}}]) {
+    const call={tool:"knowledge_update",args:{document_id:docId,expected_revision:2,patch:{title:"Guide"}}};
+    const uncertain=result.error.message==="network lost";
+    const r=await drive({personaTenant:CHILD,memberships:[CHILD],provider:uncertain ? [call,{...call,args:{...call.args,patch:{title:"Other"}}},"text"] : [call,"text"],rpcExtras:{resolve_tool_autonomy:{data:"auto",error:null},update_tenant_knowledge_metadata:result}});
+    assert(`30 ${result.error.message}: one attempt`,r.rec.rpc.filter(x=>x.name==="update_tenant_knowledge_metadata").length===1);
+    assert(`30 ${result.error.message}: structured refusal reaches provider`,JSON.stringify(r.providerCalls).includes(uncertain ? "KNOWLEDGE_REVIEW_REQUIRED" : "KNOWLEDGE_REVISION_CONFLICT"));
+  }
+  for(const outcome of ["capability_succeeded","capability_completed_unrecorded"]) {
+    const r=await drive({personaTenant:CHILD,memberships:[CHILD],provider:[{tool:"knowledge_update",args:{document_id:docId,expected_revision:2,patch:{title:" Guide "}}},"text"],rpcExtras:{resolve_tool_autonomy:{data:"auto",error:null},update_tenant_knowledge_metadata:{data:{tenant_id:CHILD,document:{...doc,title:"Guide",revision:3},outcome,run_id:docId},error:null}}});
+    const writes=r.rec.rpc.filter(x=>x.name==="update_tenant_knowledge_metadata");
+    assert(`30 ${outcome}: exact normalized CAS dispatched once`,writes.length===1 && writes[0].args.p_expected_revision===2 && writes[0].args.p_patch.title==="Guide",writes);
+    assert(`30 ${outcome}: no duplicate Chat receipt`,!r.rec.rpc.some(x=>x.name==="record_capability_run") && !r.rec.inserts.some(x=>x.table==="paige_audit_log" && x.row.action==="knowledge_update"));
+    assert(`30 ${outcome}: structured result reaches provider`,JSON.stringify(r.providerCalls).includes(outcome));
+  }
 }
 
 console.log(`\n${checks - failures} passed, ${failures} failed`);

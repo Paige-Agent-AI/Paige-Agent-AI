@@ -43,6 +43,13 @@ export type CapabilityIdentity = Readonly<{
   owner: string;
   humanSurface: string | null;
   description: string;
+  /**
+   * The chat tool this capability clears, by exact name. Read capabilities bind their tool here
+   * because they carry no action-risk key (nothing to gate); mutation and external-effect
+   * capabilities must leave it null — their tool clears through the canonical action-risk key,
+   * which routes the write through classifyAction() and the runtime approval gate.
+   */
+  chatTool: string | null;
 }>;
 
 export type CapabilityGovernance = Readonly<{

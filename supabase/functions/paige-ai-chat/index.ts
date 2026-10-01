@@ -2654,7 +2654,18 @@ JSON:`;
         const tid = hasRow ? (row as any).tenant_id : null;
         const resolved = !error && (!hasRow || tid === null || typeof tid === "string");
         const currentTenantId = typeof tid === "string" ? tid : null;
-        if (resolved && currentTenantId === turnScopeTenantId) return true;
+        // The resolver may fall back to the oldest membership after active scope
+        // clears. Re-read the selected workspace itself at the same protected
+        // boundary. Tenantless operator turns retain their existing resolver path.
+        let declaredScopeMatches = turnScopeTenantId === null;
+        if (turnScopeTenantId !== null) {
+          const { data: declaredProfile, error: declaredError } = await supabaseClient
+            .from("profiles").select("active_tenant_id").eq("user_id", user.id).maybeSingle();
+          declaredScopeMatches = !declaredError &&
+            typeof declaredProfile?.active_tenant_id === "string" &&
+            declaredProfile.active_tenant_id === turnScopeTenantId;
+        }
+        if (resolved && currentTenantId === turnScopeTenantId && declaredScopeMatches) return true;
         console.error(
           "[paige] active account changed after Knowledge retrieval — provider dispatch cancelled",
           JSON.stringify({ retrieved_tenant_id: tenantKbScopeTenantId, current_tenant_id: currentTenantId, code: (error as any)?.code ?? null }),

@@ -24,7 +24,7 @@ RELEASE_CHANNEL: development: isolated branch and injected-adapter tests only.
 RELEASE_CLASSIFICATION: internal-only: first repair slice, no customer capability release.
 CUSTOMER_RELEASE_IDENTITY: none: no completed owner-visible capability or production release.
 RELEASE_NOTE_REQUIRED: NO: internal foundation repair only.
-RELEASE_TRUTH_BOUNDARY: UNVERIFIED: real ingestion requires authenticated provider and database proof; no LIVE claim. The approved knowledge feature remains incomplete.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: real ingestion requires authenticated provider and database proof; no LIVE claim. The approved knowledge feature remains incomplete.
 RELEASE_RECOVERY: position=revert this isolated patch before deployment; reference=3d0f12dd3ebe18bda491baa60a1583d179ec6ed0; no schema/data migration.
 
 ## Routing and scope
@@ -55,3 +55,4 @@ Existing result keys and partial-success semantics are retained. A verified subs
 - npm audit --json: exit1,2high/4moderate/1low; package and lockfile unchanged. High: brace-expansion, vite; moderate: ajv, fast-uri, react-router, react-router-dom; low: dompurify. Existing dependency PRs1593/1596/1558/1544/1542 own relevant updates. No advisory is waived or fixed by this slice.
 
 The independent specification reviewer found all-zero vectors could falsely count as searchable. The correction validates float32-representable, nonzero vectors, with zero, underflow and overflow tests. Final exact-head independent review is recorded in the PR. No full-suite, real-database, migration-replay, screen-reader, deployment or authenticated proof is claimed.
+

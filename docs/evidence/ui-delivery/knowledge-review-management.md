@@ -62,3 +62,21 @@ Failing first: management-check.py --baseline failed because list_tenant_knowled
 Command: python scripts/knowledge-service/management-check.py --psql "C:/Program Files/PostgreSQL/16/bin/psql.exe". Unique disposable database only; existing cluster retained. The fixture models canonical auth dependencies, not live Supabase authorization or full production schema replay.
 
 No full application compiler/build, provider calls, production writes, push, merge or deployment. Independent review pending.
+
+## Independent review repair batch (2026-10-01)
+
+Independent review of e988f0e93be4979528dc38723c90f579025b5c60 returned FAIL with one P2: the save validation
+counted PostgreSQL characters while the typed consumer validates reviewed content by UTF-16 code units
+(480000) plus UTF-8 bytes, so 240001 emoji fit both old caps yet could never be read back. Repair:
+
+- save_tenant_knowledge_review now enforces knowledge_utf16_length(content) between 1 and 480000;
+  the helper counts code points plus astral-plane matches and is revoked from PUBLIC/anon/authenticated/
+  service_role with grants mirroring knowledge_review_metadata_valid.
+- Every multi-signature REVOKE/GRANT in this migration is split into one statement per exact signature so
+  the definer-signature-acl guard can attribute each ACL (same grants, no baseline change).
+- management-behavior.sql adds the non-BMP boundary: 240001 emoji refused (KNOWLEDGE_REVIEW_INVALID),
+  exactly 480000 units saved and read back exactly, 480001 units refused.
+
+Re-run on the repaired tree: management-check.py full suite PASS (all SQL assertions, four two-session
+races, migration replayed twice). Head changed with this repair; the sole independent recheck still owed
+on the new head. In-flight discard refusal, pause/resume/cancel and authenticated proof remain owed.

@@ -17,6 +17,13 @@ ALTER TABLE public.tenant_knowledge_docs ADD CONSTRAINT knowledge_review_managem
  public.knowledge_review_metadata_valid(pending_review_metadata)
  AND (last_review_operation IS NULL OR (jsonb_typeof(last_review_operation)='object' AND octet_length(last_review_operation::text)<=1024)));
 -- Internal fields stay outside all existing authenticated column grants.
+-- UTF-16 code units, not PostgreSQL characters: the typed review consumer validates content()
+-- by UTF-16 units (JS string length) plus UTF-8 bytes, so a save the consumer cannot read back
+-- is not a valid save (independent review 2026-10-01, P2).
+CREATE OR REPLACE FUNCTION public.knowledge_utf16_length(v text) RETURNS integer
+LANGUAGE sql IMMUTABLE PARALLEL SAFE SET search_path='' AS $$
+ SELECT (length(v)+(SELECT count(*) FROM regexp_matches(v,'[\U00010000-\U0010FFFF]','g')))::integer
+$$;
 CREATE OR REPLACE FUNCTION public.guard_knowledge_review_management() RETURNS trigger
 LANGUAGE plpgsql SET search_path='' AS $$
 BEGIN
@@ -33,7 +40,11 @@ BEGIN
 END $$;
 DROP TRIGGER IF EXISTS knowledge_review_management_guard ON public.tenant_knowledge_docs;
 CREATE TRIGGER knowledge_review_management_guard BEFORE INSERT OR UPDATE ON public.tenant_knowledge_docs FOR EACH ROW EXECUTE FUNCTION public.guard_knowledge_review_management();
-REVOKE ALL ON FUNCTION public.guard_knowledge_review_management(),public.knowledge_review_metadata_valid(jsonb) FROM PUBLIC,anon,authenticated,service_role;
+-- One ACL statement per signature: the definer-signature-acl guard reads single-function
+-- REVOKE/GRANT lists and cannot attribute a shared statement past its first entry.
+REVOKE ALL ON FUNCTION public.guard_knowledge_review_management() FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public.knowledge_review_metadata_valid(jsonb) FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public.knowledge_utf16_length(text) FROM PUBLIC,anon,authenticated,service_role;
 
 -- Safe public projection uses the existing native visibility predicate. No raw payload.
 CREATE OR REPLACE FUNCTION public.knowledge_pending_projection(d public.tenant_knowledge_docs,detail boolean)
@@ -104,7 +115,7 @@ DECLARE d public.tenant_knowledge_docs; run uuid; outcome text:='capability_succ
 BEGIN
  d:=public.lock_knowledge_review_target(p_expected_tenant,p_doc_id,p_work_id,p_expected_revision);
  IF d.pending_review IS NULL OR NOT EXISTS(SELECT 1 FROM public.paige_durable_work WHERE id=p_work_id AND status='succeeded') THEN RAISE EXCEPTION 'KNOWLEDGE_REVIEW_NOT_READY' USING ERRCODE='55000'; END IF;
- IF p_content IS NULL OR length(p_content) NOT BETWEEN 1 AND 480000 OR octet_length(p_content)>2097152 OR p_metadata IS NULL OR NOT public.knowledge_review_metadata_valid(p_metadata) THEN RAISE EXCEPTION 'KNOWLEDGE_REVIEW_INVALID' USING ERRCODE='22023'; END IF;
+ IF p_content IS NULL OR public.knowledge_utf16_length(p_content) NOT BETWEEN 1 AND 480000 OR octet_length(p_content)>2097152 OR p_metadata IS NULL OR NOT public.knowledge_review_metadata_valid(p_metadata) THEN RAISE EXCEPTION 'KNOWLEDGE_REVIEW_INVALID' USING ERRCODE='22023'; END IF;
  run:=md5('knowledge_review_save:'||p_expected_tenant::text||':'||p_doc_id::text||':'||(d.revision+1)::text)::uuid;
  BEGIN PERFORM public.record_capability_run(p_expected_tenant,auth.uid(),'knowledge_review_save','capability_succeeded',run,NULL::text,NULL::text,NULL::uuid,NULL::text,jsonb_build_object('document_id',d.id,'revision',d.revision+1,'work_id',p_work_id));
  EXCEPTION WHEN OTHERS THEN outcome:='capability_completed_unrecorded'; END;
@@ -138,8 +149,15 @@ BEGIN
  END IF;
  RETURN jsonb_build_object('contract_version',1,'verified_readback',true,'tenant_id',p_expected_tenant,'document_id',p_doc_id,'work_id',p_work_id,'revision',d.revision,'operation','review_discarded','document_removed',removed,'work_cancelled',false,'outcome',outcome,'run_id',run,'source_cleanup',jsonb_build_object('status','not_attempted','reason','retained_by_policy'));
 END $$;
-REVOKE ALL ON FUNCTION public.list_tenant_knowledge_pending(uuid,uuid,integer),public.read_tenant_knowledge_pending(uuid,uuid),public.save_tenant_knowledge_review(uuid,uuid,uuid,integer,text,jsonb),public.discard_tenant_knowledge_review(uuid,uuid,uuid,integer) FROM PUBLIC,anon,service_role;
-GRANT EXECUTE ON FUNCTION public.list_tenant_knowledge_pending(uuid,uuid,integer),public.read_tenant_knowledge_pending(uuid,uuid),public.save_tenant_knowledge_review(uuid,uuid,uuid,integer,text,jsonb),public.discard_tenant_knowledge_review(uuid,uuid,uuid,integer) TO authenticated;
+REVOKE ALL ON FUNCTION public.list_tenant_knowledge_pending(uuid,uuid,integer) FROM PUBLIC,anon,service_role;
+REVOKE ALL ON FUNCTION public.read_tenant_knowledge_pending(uuid,uuid) FROM PUBLIC,anon,service_role;
+REVOKE ALL ON FUNCTION public.save_tenant_knowledge_review(uuid,uuid,uuid,integer,text,jsonb) FROM PUBLIC,anon,service_role;
+REVOKE ALL ON FUNCTION public.discard_tenant_knowledge_review(uuid,uuid,uuid,integer) FROM PUBLIC,anon,service_role;
+GRANT EXECUTE ON FUNCTION public.list_tenant_knowledge_pending(uuid,uuid,integer) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.read_tenant_knowledge_pending(uuid,uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.save_tenant_knowledge_review(uuid,uuid,uuid,integer,text,jsonb) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.discard_tenant_knowledge_review(uuid,uuid,uuid,integer) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.knowledge_review_metadata_valid(jsonb) TO authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.knowledge_utf16_length(text) TO authenticated,service_role;
 
 CREATE INDEX IF NOT EXISTS knowledge_pending_discovery_idx ON public.tenant_knowledge_docs(tenant_id,id) WHERE extraction_work_id IS NOT NULL;

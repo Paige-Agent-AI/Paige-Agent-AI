@@ -25,7 +25,14 @@ SELECT public.test_denied($q$SELECT public.test_save('new',3,'')$q$,'KNOWLEDGE_R
 SELECT public.test_denied(format('SELECT public.save_tenant_knowledge_review(%L,%L,%L,3,%L,%L::jsonb)','00000000-0000-0000-0000-000000000001',(SELECT result->>'document_id' FROM public.extract_test WHERE name='new'),(SELECT result->>'work_id' FROM public.extract_test WHERE name='new'),'text','{"title":"x","summary":null,"category":null,"tags":[],"share_to_network":true}'),'KNOWLEDGE_REVIEW_INVALID');
 SELECT public.test_denied(format('SELECT public.save_tenant_knowledge_review(%L,%L,%L,3,%L,%L::jsonb)','00000000-0000-0000-0000-000000000001',(SELECT result->>'document_id' FROM public.extract_test WHERE name='new'),(SELECT result->>'work_id' FROM public.extract_test WHERE name='replacement'),'text','{"title":"x","summary":null,"category":null,"tags":[]}'),'KNOWLEDGE_REVISION_CONFLICT');
 SELECT public.test_denied($q$SELECT public.test_save('new',3,repeat('a',480001))$q$,'KNOWLEDGE_REVIEW_INVALID');
-SELECT public.test_assert(public.test_save('replacement',3)->>'revision'='4','replacement review saved');
+-- Non-BMP boundary parity with the typed consumer (independent review 2026-10-01): the save
+-- limit is UTF-16 code units, so 240001 emoji fit the old character and byte caps but exceed
+-- the consumer's 480000-unit read limit and must be refused, while exactly 480000 units save
+-- and remain exactly readable.
+SELECT public.test_denied($q$SELECT public.test_save('new',3,repeat(U&'\+01F600',240001))$q$,'KNOWLEDGE_REVIEW_INVALID');
+SELECT public.test_assert(public.test_save('replacement',3,repeat(U&'\+01F600',240000))->>'revision'='4','non-BMP boundary review saved at the consumer unit limit');
+SELECT public.test_assert(public.test_review('replacement')->'pending_review'->>'reviewed_content'=repeat(U&'\+01F600',240000),'saved non-BMP review remains exactly readable');
+SELECT public.test_denied($q$SELECT public.test_save('replacement',4,repeat(U&'\+01F600',240000)||'x')$q$,'KNOWLEDGE_REVIEW_INVALID');
 RESET ROLE;
 SELECT public.test_assert((SELECT title='A' AND content='private A' AND summary IS NULL AND source_binding IS NULL FROM public.tenant_knowledge_docs WHERE id='20000000-0000-0000-0000-000000000001'),'replacement canonical metadata content source unchanged');
 SELECT public.test_assert((SELECT content='A chunk' FROM public.tenant_knowledge_chunks WHERE doc_id='20000000-0000-0000-0000-000000000001'),'replacement chunks unchanged');

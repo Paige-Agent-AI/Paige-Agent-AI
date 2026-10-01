@@ -446,10 +446,11 @@ const soundMutation = () => ({
 });
 
 const SEAMS = `tenantScope:{source:"server",tenantResolver:"current_user_tenant_id",actorResolver:"authenticated_user",revalidateAt:["before_availability","before_execution","before_receipt"]}`;
-// REST carries `identity:{}` for mutations (no chatTool is correct there). A read's source must
-// NOT also carry the trailing empty `identity:{}` — in an object literal the LAST key wins, so
-// it would silently override the read's chatTool binding and the lint would rightly flag it.
-const REST = `identity:{},input:{},availability:{},providerBinding:{},receipt:{},outcome:{}`;
+// REST carries `identity:{chatTool:null}` for mutations (the explicit null the constructor's
+// exact-keys check demands). A read's source must NOT also carry a trailing `identity` — in an
+// object literal the LAST key wins, so an empty one would silently override the read's chatTool
+// binding and the lint would rightly flag it.
+const REST = `identity:{chatTool:null},input:{},availability:{},providerBinding:{},receipt:{},outcome:{}`;
 const REST_CORE = `input:{},availability:{},providerBinding:{},receipt:{},outcome:{}`;
 const readSrc = (over) => `defineCapability({effect:"read",identity:{chatTool:"knowledge_documents_read"},governance:{actionRiskKey:null,risk:"read_only",approval:"none"},idempotency:{mode:"not_applicable"},${SEAMS},${REST_CORE},${over ?? ""}})`;
 
@@ -466,6 +467,9 @@ const CORPUS = [
   { name: "a mutation binding a chat tool by name", bite: true,
     source: `defineCapability({effect:"mutation",identity:{chatTool:"widget_send"},governance:{actionRiskKey:"crm_create_contact",risk:"ordinary",approval:"confirm"},idempotency:{mode:"required",replay:"return_recorded_result"},${SEAMS},${REST_CORE}})`,
     build: () => ({ ...soundMutation(), identity: { ...soundMutation().identity, chatTool: "widget_send" } }) },
+  { name: "a mutation omitting identity.chatTool", bite: true,
+    source: `defineCapability({effect:"mutation",identity:{},governance:{actionRiskKey:"crm_create_contact",risk:"ordinary",approval:"confirm"},idempotency:{mode:"required",replay:"return_recorded_result"},${SEAMS},${REST_CORE}})`,
+    build: () => { const mutation = soundMutation(); return { ...mutation, identity: { ...mutation.identity, chatTool: undefined } }; } },
   { name: "risk contradicts the canonical policy", bite: true,
     source: `defineCapability({effect:"mutation",governance:{actionRiskKey:"crm_merge_contacts",risk:"ordinary",approval:"confirm"},idempotency:{mode:"required",replay:"return_recorded_result"},${SEAMS},${REST}})`,
     build: () => ({ ...soundMutation(), governance: { actionRiskKey: "crm_merge_contacts", risk: "ordinary", approval: "confirm", requiredPermission: ownerGrantablePermission("crm.contacts.merge") } }) },

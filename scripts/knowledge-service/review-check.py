@@ -10,7 +10,7 @@ def run(args):
 run(['-d','postgres','-c','CREATE DATABASE '+db])
 try:
  files=['scripts/knowledge-service/fixture.sql','scripts/knowledge-service/delete-fixture.sql','scripts/knowledge-service/review-fixture.sql','supabase/migrations/20270525000000_knowledge_canonical_metadata.sql','supabase/migrations/20270526000000_knowledge_canonical_delete.sql']
- if not a.baseline: files+=['supabase/migrations/20270527000000_knowledge_review_foundation.sql']*2
+ if not a.baseline: files+=['supabase/migrations/20270530400000_knowledge_review_foundation.sql']*2
  files+=['scripts/knowledge-service/'+{'review':'review-behavior.sql','metadata':'behavior.sql','delete':'delete-behavior.sql'}[a.suite]]
  for file in files: run(['-d',db,'-f',file])
  print('PASS: review foundation real SQL behavior and migration replay')

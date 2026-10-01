@@ -9,8 +9,8 @@ def run(args):
  if r.returncode: raise RuntimeError('SQL check failed')
 run(['-d','postgres','-c','CREATE DATABASE '+db])
 try:
- files=['scripts/knowledge-service/fixture.sql','scripts/knowledge-service/delete-fixture.sql','scripts/knowledge-service/review-fixture.sql','supabase/migrations/20270530100000_knowledge_canonical_metadata.sql','supabase/migrations/20270530200000_knowledge_canonical_delete.sql']
- if not a.baseline: files+=['supabase/migrations/20270530400000_knowledge_review_foundation.sql']*2
+ files=['scripts/knowledge-service/fixture.sql','scripts/knowledge-service/delete-fixture.sql','scripts/knowledge-service/review-fixture.sql','supabase/migrations/20270531100000_knowledge_canonical_metadata.sql','supabase/migrations/20270531200000_knowledge_canonical_delete.sql']
+ if not a.baseline: files+=['supabase/migrations/20270531400000_knowledge_review_foundation.sql']*2
  files+=['scripts/knowledge-service/'+{'review':'review-behavior.sql','metadata':'behavior.sql','delete':'delete-behavior.sql'}[a.suite]]
  for file in files: run(['-d',db,'-f',file])
  print('PASS: review foundation real SQL behavior and migration replay')

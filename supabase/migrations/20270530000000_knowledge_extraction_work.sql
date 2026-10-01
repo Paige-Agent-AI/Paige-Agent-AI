@@ -1,4 +1,13 @@
 -- Native extraction only: pending review, never publication or embeddings.
+-- UTF-16 code units, not PostgreSQL characters: every typed consumer validates Knowledge text
+-- by UTF-16 units (JS string length) plus UTF-8 bytes, so SQL that accepts more units than the
+-- consumer can read back is not a valid accept (same alignment as the review-save contract).
+CREATE OR REPLACE FUNCTION public.knowledge_utf16_length(v text) RETURNS integer
+LANGUAGE sql IMMUTABLE PARALLEL SAFE SET search_path='' AS $$
+ SELECT (length(v)+(SELECT count(*) FROM regexp_matches(v,'[\U00010000-\U0010FFFF]','g')))::integer
+$$;
+REVOKE ALL ON FUNCTION public.knowledge_utf16_length(text) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.knowledge_utf16_length(text) TO authenticated,service_role;
 ALTER TABLE public.tenant_knowledge_docs
  ADD COLUMN IF NOT EXISTS extraction_input text,
  ADD COLUMN IF NOT EXISTS extraction_source_binding jsonb,
@@ -6,7 +15,7 @@ ALTER TABLE public.tenant_knowledge_docs
  ADD COLUMN IF NOT EXISTS extraction_revision integer;
 ALTER TABLE public.tenant_knowledge_docs DROP CONSTRAINT IF EXISTS knowledge_extraction_shape;
 ALTER TABLE public.tenant_knowledge_docs ADD CONSTRAINT knowledge_extraction_shape CHECK (
- (extraction_input IS NULL OR length(extraction_input) BETWEEN 1 AND 480000)
+ (extraction_input IS NULL OR public.knowledge_utf16_length(extraction_input) BETWEEN 1 AND 480000)
  AND public.knowledge_source_binding_valid(extraction_source_binding,tenant_id)
  AND (extraction_revision IS NULL OR extraction_revision>0));
 -- Preserve all legacy explicit writes, but table privileges must not override the
@@ -65,7 +74,7 @@ BEGIN
  IF _intent IS NULL OR _title IS NULL OR length(btrim(_title)) NOT BETWEEN 1 AND 300
    OR (_doc_id IS NULL)<>(_expected_revision IS NULL) THEN RAISE EXCEPTION 'KNOWLEDGE_INPUT_INVALID' USING ERRCODE='22023'; END IF;
  IF _source IS NULL THEN
-  IF _input IS NULL OR length(_input) NOT BETWEEN 1 AND 480000 OR octet_length(_input)>2097152 THEN RAISE EXCEPTION 'KNOWLEDGE_INPUT_INVALID' USING ERRCODE='22023'; END IF;
+  IF _input IS NULL OR public.knowledge_utf16_length(_input) NOT BETWEEN 1 AND 480000 OR octet_length(_input)>2097152 THEN RAISE EXCEPTION 'KNOWLEDGE_INPUT_INVALID' USING ERRCODE='22023'; END IF;
   input_hash:=encode(sha256(convert_to(_input,'UTF8')),'hex');
  ELSE
   IF _input IS NOT NULL OR NOT public.knowledge_source_binding_valid(_source,_tenant)
@@ -134,7 +143,7 @@ BEGIN
  IF w.status='succeeded' THEN RETURN w.terminal_outcome; END IF;
  IF w.status<>'claimed' OR w.lease_until<=now() THEN RAISE EXCEPTION 'KNOWLEDGE_LEASE_EXPIRED' USING ERRCODE='55000'; END IF;
  IF _revision IS NULL OR _revision IS DISTINCT FROM (w.request_payload->>'revision')::integer
-  OR _content IS NULL OR length(_content) NOT BETWEEN 1 AND 480000 OR octet_length(_content)>2097152
+  OR _content IS NULL OR public.knowledge_utf16_length(_content) NOT BETWEEN 1 AND 480000 OR octet_length(_content)>2097152
   OR _hash IS DISTINCT FROM w.request_payload->>'input_hash'
   OR encode(sha256(convert_to(_content,'UTF8')),'hex') IS DISTINCT FROM _hash THEN RAISE EXCEPTION 'KNOWLEDGE_OUTPUT_INVALID' USING ERRCODE='22023'; END IF;
  SELECT * INTO d FROM public.tenant_knowledge_docs WHERE id=(w.request_payload->>'document_id')::uuid AND tenant_id=w.tenant_id AND extraction_work_id=w.id FOR UPDATE;

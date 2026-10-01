@@ -98,3 +98,16 @@ SET ROLE service_role;
 SELECT public.test_assert((SELECT public.complete_knowledge_extraction((result->>'work_id')::uuid,started->>'server_key',1,1,'File bytes',started->>'input_hash')->>'phase'='awaiting_review' FROM public.extract_test WHERE name='file'),'file frozen hash produces pending review only');
 RESET ROLE;
 SELECT public.test_assert((SELECT source_binding IS NULL AND extraction_source_binding->>'sha256'=encode(sha256(convert_to('File bytes','UTF8')),'hex') FROM public.tenant_knowledge_docs WHERE id=(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='file')),'candidate source binding does not claim published source');
+
+-- Non-BMP boundary parity with the typed consumer: extraction input and output validate by
+-- UTF-16 units, so 240001 emoji fit the old character and byte caps but exceed the consumer's
+-- 480000-unit read limit and are refused at both doors; exactly 480000 units submit, complete
+-- under the frozen hash, and read back exactly.
+SET ROLE service_role;
+SELECT public.test_denied($q$SELECT public.test_extract(gen_random_uuid(),NULL,NULL,repeat(U&'\+01F600',240001))$q$,'KNOWLEDGE_INPUT_INVALID');
+INSERT INTO public.extract_test VALUES('emoji',public.test_extract(gen_random_uuid(),NULL,NULL,repeat(U&'\+01F600',240000)),NULL);
+UPDATE public.extract_test SET started=public.start_knowledge_extraction((result->>'work_id')::uuid) WHERE name='emoji';
+SELECT public.test_denied(format('SELECT public.complete_knowledge_extraction(%L,%L,1,1,%L,%L)',(SELECT result->>'work_id' FROM public.extract_test WHERE name='emoji'),(SELECT started->>'server_key' FROM public.extract_test WHERE name='emoji'),repeat(U&'\+01F600',240001),encode(sha256(convert_to(repeat(U&'\+01F600',240001),'UTF8')),'hex')),'KNOWLEDGE_OUTPUT_INVALID');
+SELECT public.test_assert((SELECT public.complete_knowledge_extraction((result->>'work_id')::uuid,started->>'server_key',1,1,repeat(U&'\+01F600',240000),started->>'input_hash')->>'phase'='awaiting_review' FROM public.extract_test WHERE name='emoji'),'non-BMP extraction completes at the consumer unit limit');
+RESET ROLE;
+SELECT public.test_assert((SELECT pending_review->>'extracted_content'=repeat(U&'\+01F600',240000) FROM public.tenant_knowledge_docs WHERE id=(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='emoji')),'non-BMP extracted content read back exactly');

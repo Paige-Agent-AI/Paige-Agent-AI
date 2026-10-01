@@ -41,11 +41,12 @@ MUST_PRESERVE: the general gate's minting and expiry; the human door's authority
 ACCEPTANCE_CRITERIA: a pipeline card is minted; the owner approves; the stored proposal executes regardless of any model rewording or silence; the action runs once with retries as replays; the executor's readback reports the outcome; an expired or unreadable proposal refuses honestly; a typed yes never executes
 MOTION_PURPOSE: NONE: no motion was added or changed
 PROTECTED_SEAMS: affected and tested = the client approve path's pipeline lane; explicitly unaffected = the shared chat handler (Knowledge seam), the general gate's minting, the pipeline executor and its core, the CRM door
+REVIEW_DISPOSITION: the independent review found one P1 (the row lookup used the CRM lane's bare-fingerprint assumption against the general gate's scoped card token — every pipeline approval would have refused and stranded) and two P2s (rpc errors were all classed as answers; one vacuous pin and no pin on the split). All three fixed in-head: the lookup splits the token exactly as the server's own claim path does (mutation-proven), rpc failures now split 4xx-answered from 5xx-ambiguous, and the pins bind the split, the stripping and the classification.
 RELEASE_NOTE_REQUIRED: NO: bounded execution-path port on the existing approval flow
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: the wiring pins, mutation proofs and paired suites are proven offline; the authenticated archive round and deployed frontend are not yet proven
 RELEASE_RECOVERY: position=revert this bounded port if a pipeline approval misexecutes or misreports, restoring the model-echo path from the merge parent before any forward fix; reference=PACKAGE-B
 
-INTERNAL_BUILD_IDENTITY: product=bd91dc0de40a3cf968495f81609e63efc7fda727; current-main-sync=bd91dc0de40a3cf968495f81609e63efc7fda727; base=a1c4a6fae; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=failing-first-mutation-proven-wiring-pins
+INTERNAL_BUILD_IDENTITY: product=bd91dc0de40a3cf968495f81609e63efc7fda727; current-main-sync=a1c4a6fae; base=a1c4a6fae; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=failing-first-mutation-proven-wiring-pins
 RELEASE_CHANNEL: development: exact product-code head on the draft branch; production promotion remains merge automation only
 RELEASE_CLASSIFICATION: patch: execution-path port of the stored-proposal invariant onto the existing pipeline approval flow
 CUSTOMER_RELEASE_IDENTITY: none: no owner-approved customer release identity was assigned to this bounded repair

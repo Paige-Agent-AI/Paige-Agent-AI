@@ -1705,10 +1705,13 @@ const PaigeAIChatInner = ({
         try {
           // The stored proposal IS the authority: args, tenant and expiry come from the row the
           // server minted, scoped to this user by row-level security.
+          // The general gate's cards carry a SCOPED token (fingerprint:requestNonce) while the
+          // stored row's column is the bare 16-hex fingerprint — the server's own claim path
+          // splits the same way. Look up by the bare form.
           const { data: row, error: rowError } = await supabase
             .from("paige_pending_confirmations")
             .select("args,tenant_id,expires_at,tool_name")
-            .eq("fingerprint", item.fingerprint)
+            .eq("fingerprint", item.fingerprint.split(":")[0])
             .eq("tool_name", "pipeline_configure")
             .maybeSingle();
           const stored = row && typeof row === "object" ? row as { args?: Record<string, unknown>; tenant_id?: string; expires_at?: string } : null;
@@ -1732,8 +1735,17 @@ const PaigeAIChatInner = ({
             // supabase.rpc answers refusals as {error} with the message inline — an ANSWER, so
             // its outcome class stands; a transport failure stays could-not-confirm.
             if (error) {
-              ran = "not_run";
-              note = typeof error.message === "string" ? error.message.slice(0, 200) : undefined;
+              // A 4xx is the door ANSWERING (a governed refusal, rolled back); a 5xx or an
+              // unclassed failure may hide a committed command behind a lost response — the
+              // same answered-or-ambiguous rule the CRM lane applies, never a false did-not-run.
+              const status = typeof (error as { status?: number }).status === "number" ? (error as { status?: number }).status : 0;
+              if (status >= 400 && status < 500) {
+                ran = "not_run";
+                note = typeof error.message === "string" ? error.message.slice(0, 200) : undefined;
+              } else {
+                ran = "unconfirmed";
+                note = typeof error.message === "string" ? error.message.slice(0, 200) : undefined;
+              }
             } else if (body.ok === false) {
               ran = "not_run";
               note = typeof body.message === "string" ? body.message.slice(0, 200) : undefined;

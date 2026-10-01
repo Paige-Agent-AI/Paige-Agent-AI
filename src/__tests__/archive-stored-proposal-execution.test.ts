@@ -44,9 +44,21 @@ describe("the approved pipeline card executes its stored proposal", () => {
     expect(ui).toMatch(PIPELINE_TOOLS);
   });
 
+  it("looks the row up by the BARE fingerprint — the general gate's card token is scoped", () => {
+    // The card carries fingerprint:requestNonce; the column is bare 16-hex. Without the split,
+    // every pipeline approval refuses "could not be read" and strands (the review's P1).
+    expect(ui).toContain('.eq("fingerprint", item.fingerprint.split(":")[0])');
+  });
+
   it("strips executed pipeline fingerprints from the model echo — no re-emission", () => {
-    // The CRM lane's stripping pattern extended: pipeline executions leave the echo with nothing.
-    expect(ui).toMatch(/pipeline(Executed|Fingerprints|Outcomes)?[\s\S]{0,400}echoFingerprints/);
+    // The exact stripping statement inside the pipeline block (the CRM block's own stripping
+    // would satisfy a looser match).
+    expect(ui).toMatch(/for \(const item of pipelineItems\)[\s\S]{0,4200}echoFingerprints = echoFingerprints\.filter/);
+  });
+
+  it("classifies rpc failures by the answered-or-ambiguous rule", () => {
+    expect(ui).toContain("status >= 400 && status < 500");
+    expect(ui).toMatch(/ran = "unconfirmed"[\s\S]{0,200}note = typeof error\.message/);
   });
 
   it("refuses expired or unfetchable proposals honestly", () => {

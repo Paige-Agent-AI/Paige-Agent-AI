@@ -8,7 +8,7 @@ FLOW_PROTOTYPE: PASS: owner approved knowledge-flow-prototype.html and explicitl
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: owner reads and governs exact workspace Knowledge records without another store or authority model.
 VISUAL_DIRECTION: NOT_APPLICABLE: no layout/style/component change.
 AUTOMATED_EVIDENCE: PASS: 78 focused adapter/service/approval tests; actual Chat scope harness 534 checks and actual approved-path/authz harness 488 checks; catalogue/Anthropic contract 9 checks; six PostgreSQL catalogue assertions and migration replay twice.
-STATIC_EVIDENCE: PASS: strict standalone TypeScript for new adapter/domain; focused ESLint; action-risk, Chat registry, Spine registry, write-target, governed-execution, receipt-coverage and tool-catalogue checks. Full Deno check is UNVERIFIED because Deno is not installed locally.
+STATIC_EVIDENCE: FAIL: capability-kit guard still rejects the properly declared knowledge_read tool under its deliberate read limitation; no baseline or guard waiver. TypeScript ratchet, focused ESLint, action-risk, Chat registry, Spine registry/self-test and tool-catalogue checks pass. Full Deno check remains UNVERIFIED.
 RENDERED_EVIDENCE: UNVERIFIED: no rendered approval interaction exercised in this backend slice.
 BEHAVIORAL_EVIDENCE: PASS: actual handler with module-boundary synthetic caller/provider; read-after-empty-search then raw account switch blocks next provider/reply/summary. SQL fixture preserves previous catalogue rows, default confirm, grants, tenant mismatch and stored off mode.
 AUTHENTICATED_RUNTIME: UNVERIFIED: no live Supabase caller, deployed migrations, authenticated rendered approval-card redemption, production receipt readback or full-shell account switch.
@@ -71,3 +71,30 @@ Failing-first new adapter/classifier run: 3 FAIL/18 PASS. Final tests: 78 PASS a
 Separate CI fixture reconciliation 522aab297a1829a9c7f85c4271226eff7007df42 is composed as d526b5f3: independent raw active workspace fixture and stronger anchor-query assertion. This was based on pre-summary/base comparison and changes no handler security check.
 
 Final strict standalone tsc includes the shared outcome module; affected ESLint, registry/action-risk/governance checks and diff check pass. Sole independent exact-head recheck is pending; no push/merge/deployment.
+
+## CI repair routing — 2026-10-01 (pre-edit)
+
+1. Outcome: preserve governed Knowledge read/update/delete while repairing CI contract violations.
+2. Knowledge owns this bounded repair; parent owns Settings and release disposition.
+3. Existing Harness A/B/F, Capability Kit constructor, Chat gate and SQL authority remain the only seams. Kit read-tool anti-bypass clearance is absent; no substitute.
+4. Existing knowledge.read, knowledge.update, knowledge.delete declarations retain exact RPC dispatch.
+5. Native database operations; no provider connection or new registry.
+6. Read remains read_only/none, update ordinary/update, delete high/delete, through the same Chat gate.
+7. No durable work or scheduler changes.
+8. SQL remains sole receipt owner; known local non-dispatch uses not_applied; unknown persistence remains unknown.
+9. Existing Chat/Settings/Mind ledger state unchanged; no UI edits or new LIVE claim.
+10. Focused unit, actual handler, factory, census, registry and TS checks required; deployed/authenticated proof remains UNVERIFIED.
+
+Release HOLD: independent review allowance is exhausted. This repair is not another review round or merge authority. Baseline reproduced five kit failures (three tools, two risk entries). The guard deliberately has no clearance for a new read tool with actionRiskKey:null; preserve that failure for coordinator disposition, never add baseline debt or misclassify a read.
+
+### CI repair result and coordinator disposition packet
+
+Base: 1be4be73c67c132d15bbc8648968c45cbb9695d5. Replaced unsupported Object.hasOwn with the target-compatible own-property call; appended Knowledge to preserve every prior registry position; local argument/scope/refused-retry results use existing not_applied, without claiming the confirmation gate's sole refused_before_run marker. Transport/malformed/ambiguous RPC results still never set not_applied. SQL and all receipt behavior are unchanged. Constructor-branded read/update/delete contracts use the native Capability Kit and canonical action-risk keys. These contracts grant no permissions and create no execution engine. Their existing runtime authority remains caller-JWT SQL plus the Chat gate.
+
+Failing-first: new factory/order/local-refusal tests 3 FAIL. After repair: 93/93 tests across knowledge-kit, knowledge-chat, approval-outcome, paige-spine-registry and confirm-gate-containment-wiring. The unchanged census uses grep: default Windows shell failed to locate it; rerun with ComSpec pointing to installed Git Bash passed the entire suite. Actual Chat scope 534/0; actual Chat authz 488/0, including spent approval conflict/unknown/unrecorded/delete outcomes. TypeScript ratchet PASS (12 baseline/12 current). Focused ESLint and diff-check PASS. Factory contract tests 39 PASS, 155 classified keys constructible; kit guard self-test 31 PASS; Spine registry 75 and self-test PASS; action-risk 155 PASS; Chat registry 96 baseline unchanged; catalogue and actual Anthropic tool manifest 9 PASS.
+
+Remaining CI FAIL: exactly `direct-tool-definition | supabase/functions/_shared/paige-spine/domains/knowledge.ts | knowledge_read`. The guard's lines749-755 explicitly admit only mutation actionRiskKey, while defineCapability requires reads to use null. The guard comments suggest a baseline entry but the same guard rejects baseline growth. Read remains correctly classified and present. No syntactic evasion, baseline growth, or shared-guard change. Coordinator must resolve this policy seam separately with proper authority.
+
+Fresh-main compatibility inspection (read-only): fetched main030e31b8ff886136bb2143685e35cbf87a7b18c1 containing #1600/6d411df. No merge during this repair. Command-bearing CRM cards execute through crm-command; Knowledge carries only a fingerprint and correctly stays in echoFingerprints. However the new global prompt forbids re-emitting any approved action, conflicting with the remaining Knowledge fingerprint pathway. A bounded composition must scope that prompt rule to command-bearing CRM approvals and prove mixed-card behavior; Knowledge must not be sent into the CRM command schema. Deterministic execution for all non-CRM tools would be a separate contract change.
+
+RELEASE HOLD remains: exhausted independent review allowance, unresolved read guard and fresh-main approval compatibility. No second review round, push, merge, deployment, or production acceptance is claimed. Shipped-log N/A.

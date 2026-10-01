@@ -43,8 +43,8 @@ function safeDoc(raw: unknown, tenant: string): Record<string, unknown> {
 }
 export async function executeKnowledgeTool(input: {caller: KnowledgeRpcPort; expectedTenantId: string | null; tool: KnowledgeTool; args: unknown}): Promise<Record<string, unknown>> {
   let args: Record<string, unknown>;
-  try { args=normalizeKnowledgeArgs(input.tool,input.args); } catch { return {...failure('KNOWLEDGE_ARGUMENTS_INVALID'),refused_before_run:true}; }
-  if (!input.expectedTenantId || !uuid.test(input.expectedTenantId)) return {...failure('KNOWLEDGE_SCOPE_REQUIRED'),refused_before_run:true};
+  try { args=normalizeKnowledgeArgs(input.tool,input.args); } catch { return {...failure('KNOWLEDGE_ARGUMENTS_INVALID'),not_applied:true}; }
+  if (!input.expectedTenantId || !uuid.test(input.expectedTenantId)) return {...failure('KNOWLEDGE_SCOPE_REQUIRED'),not_applied:true};
   const tenant=input.expectedTenantId;
   const mutation=input.tool !== 'knowledge_read';
   const rpc=input.tool === 'knowledge_read' ? 'read_tenant_knowledge' : input.tool === 'knowledge_update' ? 'update_tenant_knowledge_metadata' : 'delete_tenant_knowledge';
@@ -53,7 +53,7 @@ export async function executeKnowledgeTool(input: {caller: KnowledgeRpcPort; exp
   else Object.assign(params,{p_expected_revision:args.expected_revision,...(input.tool === 'knowledge_update' ? {p_patch:args.patch} : {})});
   try {
     const {data,error}=await input.caller.rpc(rpc,params);
-    if (error) { const code=error.message && Object.hasOwn(refusalCodes,error.message) && typeof error.code === 'string' && refusalCodes[error.message] === error.code ? error.message : undefined; return {...failure(code ?? 'KNOWLEDGE_OUTCOME_UNVERIFIED',mutation && !code),...(code ? {not_applied:true} : {})}; }
+    if (error) { const code=error.message && Object.prototype.hasOwnProperty.call(refusalCodes,error.message) && typeof error.code === 'string' && refusalCodes[error.message] === error.code ? error.message : undefined; return {...failure(code ?? 'KNOWLEDGE_OUTCOME_UNVERIFIED',mutation && !code),...(code ? {not_applied:true} : {})}; }
     if (!object(data) || data.tenant_id !== tenant) return failure('KNOWLEDGE_RESPONSE_INVALID',mutation);
     if (!mutation) {
       if (!Array.isArray(data.documents) || data.documents.length > Number(params.p_limit)) return failure('KNOWLEDGE_RESPONSE_INVALID');

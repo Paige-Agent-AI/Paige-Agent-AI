@@ -8776,7 +8776,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           if (tc.function.name === "knowledge_update" || tc.function.name === "knowledge_delete") {
             try { gateArgs = normalizeKnowledgeArgs(tc.function.name, gateArgs); }
             catch {
-              toolResults.push({tool_call_id:tc.id,role:"tool",content:JSON.stringify({success:false,refused_before_run:true,error:"KNOWLEDGE_ARGUMENTS_INVALID",note:"Read the document and clarify its exact revision and metadata before proposing a change."})});
+              toolResults.push({tool_call_id:tc.id,role:"tool",content:JSON.stringify({success:false,not_applied:true,error:"KNOWLEDGE_ARGUMENTS_INVALID",note:"Read the document and clarify its exact revision and metadata before proposing a change."})});
               continue;
             }
             tc.function.arguments = JSON.stringify(gateArgs);
@@ -13030,7 +13030,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           try { knowledgeArgs = JSON.parse(tc.function.arguments || "{}"); } catch { knowledgeArgs = null; }
           const documentId = knowledgeArgs && typeof knowledgeArgs === "object" && "document_id" in knowledgeArgs ? String(knowledgeArgs.document_id).toLowerCase() : "";
           const result: Record<string, unknown> = tc.function.name !== "knowledge_read" && uncertainKnowledgeDocuments.has(documentId)
-            ? {success:false,verified:false,refused_before_run:true,code:"KNOWLEDGE_REVIEW_REQUIRED",note:"A previous operation on this document is uncertain or lacks its receipt. Stop this turn's writes; inspect the current record with the operator before another request."}
+            ? {success:false,verified:false,not_applied:true,code:"KNOWLEDGE_REVIEW_REQUIRED",note:"A previous operation on this document is uncertain or lacks its receipt. Stop this turn's writes; inspect the current record with the operator before another request."}
             : await executeKnowledgeTool({caller:supabaseClient,expectedTenantId:personaCtx?.tenant_id ?? null,tool:tc.function.name as KnowledgeTool,args:knowledgeArgs});
           if (result.success !== true && result.mutationMayHavePersisted === true) uncertainKnowledgeDocuments.add(documentId);
           if (tc.function.name === "knowledge_read" && result.success === true) markProtectedLate("tool:knowledge_read");

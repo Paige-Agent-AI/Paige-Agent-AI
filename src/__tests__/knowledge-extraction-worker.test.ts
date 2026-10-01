@@ -5,7 +5,8 @@ vi.mock('../../supabase/functions/_shared/systems-check-http.ts',()=>({adminClie
 vi.mock('../../supabase/functions/_shared/model-router.ts',()=>({callModel:state.model}));
 vi.mock('../../supabase/functions/_shared/document-production.ts',()=>({validateDocumentBrief:()=>({ok:true,value:{}}),buildDocumentAuthoringPrompt:()=>[],parseDocumentModelOutput:()=>({docType:'guide',title:'Guide',blocks:[]})}));
 const work='70000000-0000-0000-0000-000000000001';const doc='20000000-0000-0000-0000-000000000001';
-beforeEach(async()=>{vi.resetModules();state.rpc.mockReset();state.model.mockReset();state.authorized=true;vi.stubGlobal('Deno',{env:{get:()=> 'local-test-only'},serve:(handler:typeof state.handler)=>{state.handler=handler;}});await import('../../supabase/functions/paige-document-worker/index');});
+beforeEach(async()=>{vi.resetModules();state.rpc.mockReset();state.model.mockReset();state.authorized=true;vi.stubGlobal('Deno',{env:{get:()=> 'local-test-only'},serve:(handler:typeof state.handler)=>{state.handler=handler;}});// Execute the real worker handler through Vitest's mocked runtime. Its Deno module graph is typechecked by the affected-edge CI gate, not the browser TS project.
+const edgeHandlerPath='../../supabase/functions/paige-document-worker/index.ts';await import(/* @vite-ignore */ edgeHandlerPath);});
 afterEach(()=>vi.unstubAllGlobals());
 const request=(body:unknown)=>new Request('https://worker.invalid',{method:'POST',body:JSON.stringify(body)});
 describe('actual native worker handler with fake ports',()=>{

@@ -184,8 +184,18 @@ BEGIN
   END IF;
  END LOOP;
 END $$;
-REVOKE ALL ON FUNCTION public.submit_knowledge_extraction(uuid,uuid,uuid,uuid,integer,text,text,jsonb),public.start_knowledge_extraction(uuid),public.complete_knowledge_extraction(uuid,text,integer,integer,text,text),public.settle_knowledge_extraction_failure(uuid,text,integer,text,boolean),public.recover_knowledge_extraction(integer) FROM PUBLIC,anon,authenticated;
-GRANT EXECUTE ON FUNCTION public.submit_knowledge_extraction(uuid,uuid,uuid,uuid,integer,text,text,jsonb),public.start_knowledge_extraction(uuid),public.complete_knowledge_extraction(uuid,text,integer,integer,text,text),public.settle_knowledge_extraction_failure(uuid,text,integer,text,boolean),public.recover_knowledge_extraction(integer) TO service_role;
+-- One ACL statement per signature: the definer-signature-acl guard reads single-function
+-- REVOKE/GRANT lists and cannot attribute a shared statement past its first entry.
+REVOKE ALL ON FUNCTION public.submit_knowledge_extraction(uuid,uuid,uuid,uuid,integer,text,text,jsonb) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.start_knowledge_extraction(uuid) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.complete_knowledge_extraction(uuid,text,integer,integer,text,text) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.settle_knowledge_extraction_failure(uuid,text,integer,text,boolean) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.recover_knowledge_extraction(integer) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.submit_knowledge_extraction(uuid,uuid,uuid,uuid,integer,text,text,jsonb) TO service_role;
+GRANT EXECUTE ON FUNCTION public.start_knowledge_extraction(uuid) TO service_role;
+GRANT EXECUTE ON FUNCTION public.complete_knowledge_extraction(uuid,text,integer,integer,text,text) TO service_role;
+GRANT EXECUTE ON FUNCTION public.settle_knowledge_extraction_failure(uuid,text,integer,text,boolean) TO service_role;
+GRANT EXECUTE ON FUNCTION public.recover_knowledge_extraction(integer) TO service_role;
 
 CREATE OR REPLACE FUNCTION public.read_tenant_knowledge_review(p_expected_tenant uuid,p_doc_id uuid)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$

@@ -10,7 +10,10 @@ export class ExtractionError extends Error { constructor(public code: string) { 
 function fail(code: string): never { throw new ExtractionError(code); }
 function record(value: unknown): Record<string, unknown> { if (!value || typeof value !== 'object' || Array.isArray(value)) return fail('input_invalid'); return value as Record<string, unknown>; }
 export async function sourceHash(bytes: Uint8Array): Promise<string> {
-  const hash = await crypto.subtle.digest('SHA-256', bytes.slice().buffer);
+  // Digest the TypedArray view, never its .buffer: Node's SubtleCrypto brands an
+  // ArrayBuffer from another realm (jsdom/vm test environments) as invalid while
+  // accepting the view, and the slice keeps the input frozen during the digest.
+  const hash = await crypto.subtle.digest('SHA-256', bytes.slice());
   return [...new Uint8Array(hash)].map(v => v.toString(16).padStart(2,'0')).join('');
 }
 async function rpc(client: ExtractionRpc, name: string, args: Record<string, unknown>): Promise<unknown> {

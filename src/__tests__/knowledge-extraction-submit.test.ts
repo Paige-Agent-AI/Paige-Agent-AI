@@ -3,7 +3,8 @@ const s=vi.hoisted(()=>({rpc:vi.fn(),handler:null as null|((r:Request)=>Promise<
 const tenant='00000000-0000-0000-0000-000000000001', actor='10000000-0000-0000-0000-000000000001', intent='70000000-0000-0000-0000-000000000001', doc='20000000-0000-0000-0000-000000000001';
 vi.mock('https://esm.sh/@supabase/supabase-js@2.75.0',()=>({createClient:()=>({auth:{getUser:async()=>({data:{user:{id:actor}},error:null})},from:()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:{active_tenant_id:tenant},error:null})})})}),rpc:async()=>({data:true,error:null})})}));
 vi.mock('../../supabase/functions/_shared/systems-check-http.ts',()=>({adminClient:()=>({rpc:s.rpc}),json:(status:number,body:unknown)=>new Response(JSON.stringify(body),{status})}));
-beforeEach(async()=>{vi.resetModules();s.rpc.mockReset();vi.stubGlobal('Deno',{env:{get:()=> 'local-test-only'},serve:(handler:typeof s.handler)=>{s.handler=handler;}});await import('../../supabase/functions/kb-extract-submit/index');});
+beforeEach(async()=>{vi.resetModules();s.rpc.mockReset();vi.stubGlobal('Deno',{env:{get:()=> 'local-test-only'},serve:(handler:typeof s.handler)=>{s.handler=handler;}});// Execute the real Edge handler through Vitest's mocked runtime. Its Deno module graph is typechecked by the affected-edge CI gate, not the browser TS project.
+const edgeHandlerPath='../../supabase/functions/kb-extract-submit/index.ts';await import(/* @vite-ignore */ edgeHandlerPath);});
 afterEach(()=>vi.unstubAllGlobals());
 const body={intent_id:intent,expected_tenant:tenant,title:'Source',kind:'paste',content:'Text'};
 const send=()=>s.handler!(new Request('https://intake.invalid',{method:'POST',headers:{Authorization:'Bearer verified-fixture'},body:JSON.stringify(body)}));

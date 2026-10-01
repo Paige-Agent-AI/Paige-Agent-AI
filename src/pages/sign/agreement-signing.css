@@ -337,7 +337,7 @@
   width: 100%;
   min-height: 62vh;
   border: 0;
-  background: var(--ags-paper, #fff);
+  background: #fff;
 }
 .ags-doc-note {
   margin: 0;

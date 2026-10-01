@@ -215,7 +215,8 @@ export default function AgreementSigning() {
         // §13: only bytes that actually arrived are a document; the door answers every refusal
         // with the same JSON shape, so anything that is not a non-empty Blob is a failure.
         if (error || !(data instanceof Blob) || data.size === 0) { setDocPhase("failed"); return; }
-        setDocUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return URL.createObjectURL(data); });
+        const url = URL.createObjectURL(data);
+        setDocUrl(url);
         setDocPhase("ready");
       } catch {
         if (!revoked) setDocPhase("failed");
@@ -463,17 +464,17 @@ export default function AgreementSigning() {
             {docGateOpen ? (
               <>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
-                <span>You have read the whole agreement. You can sign it now.</span>
+                <span>{uploadedDoc ? "The document is shown above. You can sign it now." : "You have read the whole agreement. You can sign it now."}</span>
               </>
             ) : (
               <>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-                <span>Scroll to the end of the agreement above to sign it.</span>
+                <span>{uploadedDoc ? (docPhase === "failed" ? "The document could not be shown, so signing stays locked." : "The document is being shown above. Signing opens once it is.") : "Scroll to the end of the agreement above to sign it."}</span>
               </>
             )}
           </div>
 
-          <div style={read ? undefined : { pointerEvents: "none" }} aria-hidden={!read}>
+          <div style={docGateOpen ? undefined : { pointerEvents: "none" }} aria-hidden={!docGateOpen}>
             <div className="ags-tabs" role="group" aria-label="How to sign">
               <button type="button" aria-pressed={mode === "type"} onClick={() => setMode("type")}>Type it</button>
               <button type="button" aria-pressed={mode === "draw"} onClick={() => setMode("draw")}>Draw it</button>

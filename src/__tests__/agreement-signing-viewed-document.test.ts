@@ -36,16 +36,21 @@ describe("the signing page presents the uploaded document", () => {
   });
 
   it("keeps signing locked until the viewer loaded, with an honest failure line", () => {
-    expect(page).toMatch(/docPhase|docStatus|docLoaded/);
+    // The gate EXPRESSION, not a state name: every consumer the old read flag fed must key on
+    // docGateOpen — reverting any one of them (canSign, data-locked, the pointer-events
+    // wrapper) turns this pin red.
+    expect(page).toContain("const docGateOpen = uploadedDoc ? docPhase === \"ready\" : read;");
+    expect(page).toContain("const canSign = docGateOpen && named && consentRead && consentEsign && !busy;");
+    expect(page).toContain('style={docGateOpen ? undefined : { pointerEvents: "none" }} aria-hidden={!docGateOpen}');
     expect(page).toMatch(/could not be (loaded|shown)/i);
-    expect(page).toMatch(/docPhase === "ready"|docStatus === "ready"|docLoaded/);
   });
 
   it("attests review for uploaded documents, never a fabricated read percentage", () => {
-    // The percentage indicator belongs to the text body's measured scroll only; the
-    // uploaded-document branch must not render "Read {pct}%" over a PDF.
-    expect(page).toMatch(/document_body\s*\?|row\.document_body \?/);
-    expect(page).toMatch(/reviewed the document|review it in full|Read it in full below/);
+    // The percentage indicator is BRANCHED away for uploaded documents, and the branch's own
+    // attestation string is present — a pin that survives on main's shared hero copy binds nothing.
+    expect(page).toMatch(/\{row\?\.document_body \? \([\s\S]{0,200}Read \{pct\}%|row\.document_body \? \(\)[\s\S]{0,80}Read \{pct\}%/);
+    expect(page).toContain("Document shown — review it in full before signing.");
+    expect(page).toContain("The document is shown above. You can sign it now.");
   });
 
   it("is not a vacuous check: the text body path and its scroll gate remain", () => {

@@ -29,7 +29,7 @@ import { CALENDAR_LINK_CAPABILITIES } from "./domains/calendar_link.ts";
 // session exactly like a fact. What registers now is the two READS (list, status), both executing
 // the clean `public.paige_agreement_overview` seam.
 //
-// Still NOT registered, each for a stated reason rather than an oversight: SEND and RESEND execute
+// Registered as of the agreements PR: SEND (external_effect) and DRAFT; formerly unregistered, each for a stated reason rather than an oversight: SEND and RESEND execute
 // the `agreement-send` EDGE function, which this file's validator rejects, so they are governed by
 // _shared/action-risk.ts + the inline confirm gate exactly as calendar_link_send is; DRAFT and VOID
 // have clean `public.*` executors but are mutations, held back deliberately so the read half lands

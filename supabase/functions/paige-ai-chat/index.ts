@@ -13163,12 +13163,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                     switch (r.reason) {
                       case "unavailable":
                       case "nobody_reachable":
-                      case "document_problem": return "capability_failed";
+                      case "document_problem":
+                      case "not_delivered": return "capability_failed";
                       case "refused":
                       case "not_a_draft":
                       case "needs_setup":
                       case "no_workspace":
-                      case "bad_agreement_id": return "capability_refused";
+                      case "bad_agreement_id":
+                      case "stale_document": return "capability_refused";
                       default: { const _never: never = r.reason; return "capability_refused"; }
                     }
                   })()

@@ -223,6 +223,12 @@ Deno.test("each refusal maps to the remedy that actually applies", async () => {
     [400, { error: "Add at least one signer before sending." }, "needs_setup"],
     [422, { error: "The uploaded document could not be read, so nothing was sent." }, "document_problem"],
     [502, { error: "The document could not be stored, so nothing was sent." }, "document_problem"],
+    // The provenance refusal (409, no status field): the frozen bytes are not the uploaded file.
+    // The door's exact sentence is the discriminator the mapper keys on.
+    [409, { error: "The document stored for this agreement is not the file that was uploaded, so nothing was sent. Create a new agreement from that document and send that instead." }, "stale_document"],
+    // The all-signers-failed 502 carries status not_sent — including the case where an email went
+    // out with a dead link — and must NEVER map to nobody-was-emailed copy.
+    [502, { status: "not_sent", error: "No signer could be reached, so this agreement is still a draft." }, "not_delivered"],
     [500, { error: "boom" }, "unavailable"],
   ];
   for (const [status, body, expected] of cases) {

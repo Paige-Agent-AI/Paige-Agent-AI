@@ -11,7 +11,7 @@ import { defineCapability, objectInputSchema, ownerGrantablePermission } from ".
 // capabilities, so PAIGE could not see an agreement at all. The comment described intent that was
 // never delivered, and this file is the first half of delivering it.
 //
-// WHY ONLY THE READS ARE HERE — the same seam boundary `calendar_link.ts` documents, for the same
+// WHY THE READS CAME FIRST — the same seam boundary `calendar_link.ts` documents, for the same
 // reason. The Spine validator requires an action's executor to be an exact `public.<symbol>`
 // present in migration history. SEND and RESEND execute the `agreement-send` EDGE FUNCTION, which
 // that validator rejects, so registering them would mean widening the shared executor allowlist —
@@ -26,7 +26,7 @@ import { defineCapability, objectInputSchema, ownerGrantablePermission } from ".
 // tenant and membership in its own body under the caller's JWT (§59). Nothing there can read
 // another workspace.
 //
-// THE FIRST WRITE THROUGH THIS BOUNDARY (2026-09-24) — `agreement.draft`, and only that one. The
+// THE FIRST WRITE THROUGH THIS BOUNDARY (2026-09-24) — `agreement.draft`, later joined by `agreement.send`. The
 // read-first reasoning above is unchanged and still governs: the send path has a real client on the
 // other end of it, so each outward-facing key earns its own slice. A draft is the opposite — it is
 // visible to nobody outside the workspace, mints no signing link, and sends nothing.
@@ -173,7 +173,7 @@ export const AGREEMENT_DRAFT_CAPABILITY = defineCapability({
  *     is our own infrastructure, not a third party. (`"edge"` is not a kind — I tried it, and the
  *     constructor refused it at import, which is the behaviour this declaration exists for.)
  *
- * DELIBERATELY NOT A SpineCapability. The Spine validator requires an executor to be an exact
+// Registered as of this PR: AGREEMENT_SEND (external_effect on public.issue_agreement_signing_link).
  * `public.<symbol>` present in migration history, and widening that allowlist for an edge function
  * is a change to the Spine contract itself — for no added enforcement, since what actually clamps a
  * send is `action-risk.ts` plus the Chat confirm gate plus the function's own admin check. That is

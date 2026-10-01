@@ -15,9 +15,9 @@ def run(args,check=True):
 run(['-d','postgres','-c','CREATE DATABASE '+db])
 try:
  for file in ['scripts/knowledge-service/fixture.sql','scripts/knowledge-service/delete-fixture.sql',
-              'supabase/migrations/20270525000000_knowledge_canonical_metadata.sql',
-              'supabase/migrations/20270526000000_knowledge_canonical_delete.sql',
-              'supabase/migrations/20270526000000_knowledge_canonical_delete.sql',
+              'supabase/migrations/20270530100000_knowledge_canonical_metadata.sql',
+              'supabase/migrations/20270530200000_knowledge_canonical_delete.sql',
+              'supabase/migrations/20270530200000_knowledge_canonical_delete.sql',
               'scripts/knowledge-service/delete-behavior.sql']:
   run(['-d',db,'-f',file])
  # Separate connections with a database-observed barrier: first reaches pg_sleep

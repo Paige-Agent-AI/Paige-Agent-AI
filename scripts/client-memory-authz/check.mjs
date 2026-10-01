@@ -198,6 +198,8 @@ const MEMORY_TEXT = "SECRET-CLIENT-MEMORY-CONTENT";
  */
 async function drive({
   authorization = "Bearer test-jwt",
+  // Raw selected workspace is independent from persona RPC overrides. Never auto-follow it.
+  activeTenantId = CALLER_TENANT,
   clientId,
   clientsError = null,
   memoryReadError = null,
@@ -291,6 +293,7 @@ async function drive({
       ...serviceTablesExtra,
     },
     tables: {
+      profiles: () => [{ user_id: USER, active_tenant_id: activeTenantId }],
       // RLS emulation: only rows this caller may see, and only when the filters match.
       clients: (filters) => {
         const idEq = filters.find((f) => f[0] === "eq" && f[1] === "id")?.[2];
@@ -4336,6 +4339,13 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
   assert("31.21 CONTROL: an object body whose keys are ordinary words runs",
     rpcsNamed(plainKeyed, "advance_action").length === 1 && !refusedAsInternal(plainKeyed),
     JSON.stringify({ advanced: rpcsNamed(plainKeyed, "advance_action").length }));
+}
+
+console.log("32. independent declared workspace fixture remains load-bearing");
+for (const raw of [OTHER_TENANT, null]) {
+  const result=await drive({stream:true,activeTenantId:raw,toolCall:{name:"comms_connection_summary",args:{}},rpcOverrides:{get_paige_persona_context:{data:[{tenant_id:CALLER_TENANT}],error:null},get_actor_access:{data:{tier:"tenant"},error:null}}});
+  assert(`32 raw workspace ${raw}: no provider after protected memory`,result.modelEgress.length===0);
+  assert(`32 raw workspace ${raw}: no tool dispatch`,!result.rec.rpc.some(c=>c.name==="tenant_comms_readiness"));
 }
 
 console.log(`\n${checks - failures} passed, ${failures} failed`);

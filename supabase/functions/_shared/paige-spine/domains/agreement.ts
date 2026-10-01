@@ -14,12 +14,11 @@ import { defineCapability, objectInputSchema, ownerGrantablePermission } from ".
 // WHY THE READS CAME FIRST — the same seam boundary `calendar_link.ts` documents, for the same
 // reason. The Spine validator requires an action's executor to be an exact `public.<symbol>`
 // present in migration history. SEND and RESEND execute the `agreement-send` EDGE FUNCTION, which
-// that validator rejects, so registering them would mean widening the shared executor allowlist —
-// a change to the Spine contract itself — for zero added enforcement, since what actually clamps a
-// send is `_shared/action-risk.ts` plus the inline Chat confirm gate. DRAFT and VOID do have clean
-// `public.*` executors (`save_paige_agreement`, `void_paige_agreement`) and are deliberately NOT
-// registered here either: they are mutations, and this slice is read-first on purpose, because the
-// send path has a real client on the other end of it.
+// That objection is settled as of the agreements PR: the send's durable server-side act IS the
+// public symbol `issue_agreement_signing_link`, so AGREEMENT_SEND registers as an external_effect
+// against it, and AGREEMENT_DRAFT registers against `save_paige_agreement`. add_signer, resend and
+// void remain unregistered because they remain unshipped — each outward-facing key earns its own
+// slice, its own confirm copy and its own proof.
 //
 // SCOPE, STATED HONESTLY (§13). Registering a capability does not grant one. The two READ entries
 // are `read` / `read_only` / no approval authority, and the RPC they name re-proves the caller's
@@ -173,11 +172,11 @@ export const AGREEMENT_DRAFT_CAPABILITY = defineCapability({
  *     is our own infrastructure, not a third party. (`"edge"` is not a kind — I tried it, and the
  *     constructor refused it at import, which is the behaviour this declaration exists for.)
  *
-// Registered as of this PR: AGREEMENT_SEND (external_effect on public.issue_agreement_signing_link).
- * `public.<symbol>` present in migration history, and widening that allowlist for an edge function
- * is a change to the Spine contract itself — for no added enforcement, since what actually clamps a
- * send is `action-risk.ts` plus the Chat confirm gate plus the function's own admin check. That is
- * the same boundary `calendar_link_send` sits on, and it is drawn deliberately rather than skipped.
+ * Registered as of the agreements PR: AGREEMENT_SEND declares an external_effect on
+ * public.issue_agreement_signing_link — the durable server-side act of the send — so the old
+ * objection (the orchestrator is an edge function the Spine validator rejects) no longer applies;
+ * the edge orchestration around the RPC stays clamped by action-risk, the confirm gate and the
+ * function's own admin check.
  */
 export const AGREEMENT_SEND_CAPABILITY = defineCapability({
   identity: {

@@ -290,11 +290,11 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   // passes CI and throws on import. Not filed as a tracked task; recorded at
   // `scripts/ci/capability-kit-lint.mjs`'s `direct-risk-entry` comment with its falsifying input.
   //
-  // SEQUENCED, 2026-09-24. `agreement_draft` is landed below — the first of the five, and the first
-  // production `defineCapability()` declaration in this repository, so the contract this note states
-  // is now walked rather than described. The remaining four stay absent for the same reason the READ
-  // half shipped first (domains/agreement.ts:19-21): the send path has a real client on the other end
-  // of it, and each outward-facing key earns its own slice, its own confirm copy and its own proof.
+  // SEQUENCED, 2026-09-24; the send landed with the agreements PR. `agreement_draft` was the first
+  // production `defineCapability()` declaration in this repository, and `agreement_send` is now
+  // Spine-registered as an external_effect on public.issue_agreement_signing_link. The remaining
+  // three (add_signer, resend, void) stay absent for the same reason the READ half shipped first:
+  // each outward-facing key earns its own slice, its own confirm copy and its own proof.
   //
   // `agreement_draft` is `ordinary` on the reasoning already given above: a draft is visible to
   // nobody outside the workspace, the RPC re-proves tenant and membership in its own body, and the

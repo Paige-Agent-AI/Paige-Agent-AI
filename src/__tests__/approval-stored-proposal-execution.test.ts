@@ -83,6 +83,41 @@ describe("the client executes the stored proposal on Approve", () => {
     expect(ui).toContain("approved_fingerprint: fingerprint");
   });
 
+  it("reads the door's structured body from the FunctionsHttpError context", () => {
+    const ui = read(CHAT_UI);
+    expect(ui).toContain("error as { context?: { json?: () => Promise<unknown> } }).context");
+    expect(ui).toContain("await ctx.json()");
+  });
+
+  it("maps the door's outcome_unknown answers and transport failures to could-not-confirm", () => {
+    const ui = read(CHAT_UI);
+    expect(ui).toContain('body.outcome_unknown === true || transportFailed');
+    expect(ui).toContain('? "unconfirmed"');
+  });
+
+  it("carries a re-proposed fingerprint so a spent or raced approval re-renders the live card", () => {
+    const ui = read(CHAT_UI);
+    expect(ui).toContain('body.outcome === "approval_required"');
+    expect(ui).toContain("reproposedAny");
+    expect(ui).toContain("confirmDecision: decision && !reproposedAny ? decision : undefined");
+  });
+
+  it("applies the shared answered-or-not rule: a foreign error body never downgrades to did-not-run", () => {
+    const ui = read(CHAT_UI);
+    expect(ui).toContain("const doorAnswered = !transportFailed && body.ok !== undefined;");
+    expect(ui).toContain("(errorPresent && !doorAnswered)");
+  });
+
+  it("a re-proposed card renders live even when it is not the last message", () => {
+    const ui = read(CHAT_UI);
+    expect(ui).toContain("message.approvalOutcome?.reported === true && message.confirm.some((c) => !!c.fingerprint && !(message.approvalOutcome?.actions ?? []).some((a) => a.fingerprint === c.fingerprint))");
+  });
+
+  it("never rolls a directly-executed approval back to a live Approve control", () => {
+    const ui = read(CHAT_UI);
+    expect(ui).toContain("const effectiveRollback = executedOutcomes.length ? shown : rollback;");
+  });
+
   it("is not a vacuous wiring check: the legacy approval echo path still exists", () => {
     const ui = read(CHAT_UI);
     expect(ui).toContain("approvedConfirmations");

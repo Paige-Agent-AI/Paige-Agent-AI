@@ -6587,6 +6587,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                       targetStageId: { type: "string", description: "Active stage id in the deal's current pipeline." },
                       expectedVersion: { type: "integer", minimum: 1, description: "Version read immediately before proposing this write." },
                       name: { type: "string" },
+                      allowSameName: { type: "boolean", description: "Set true ONLY when the owner has seen the existing same-name pipelines and explicitly wants a second pipeline with that exact name. The create refuses without it when an active pipeline already carries the name." },
                       description: { type: "string" },
                       label: { type: "string" },
                       movePolicy: { type: "string", enum: ["direct", "approval"] },

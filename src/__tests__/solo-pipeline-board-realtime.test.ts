@@ -35,7 +35,8 @@ describe("the board subscribes to its tenant's pipeline records", () => {
   });
 
   it("events resolve through the existing canonical reload, not a second cache", () => {
-    expect(hook).toMatch(/postgres_changes[\s\S]{0,400}?retry\(\)/);
+    // Events route through the coalesced scheduler whose timer fires the canonical retry().
+    expect(hook).toMatch(/postgres_changes[\s\S]{0,400}?scheduleReload\(\)/);
   });
 
   it("tears the channel down on change and unmount", () => {
@@ -43,7 +44,13 @@ describe("the board subscribes to its tenant's pipeline records", () => {
   });
 
   it("refetches once when the channel (re)subscribes, so recovery is truthful", () => {
-    expect(hook).toMatch(/SUBSCRIBED[\s\S]{0,200}?retry\(\)/);
+    expect(hook).toMatch(/SUBSCRIBED[\s\S]{0,200}?scheduleReload\(\)/);
+  });
+
+  it("coalesces event bursts into one trailing reload, and teardown clears the timer", () => {
+    expect(hook).toContain("const scheduleReload = () => {");
+    expect(hook).toMatch(/clearTimeout\(reloadTimer\);[\s\S]{0,120}setTimeout\(\(\) => \{ if \(!disposed\) retry\(\); \}, 200\)/);
+    expect(hook).toMatch(/return \(\) => \{\s*disposed = true;\s*clearTimeout\(reloadTimer\);/);
   });
 
   it("is not a vacuous check: the hook still exposes the retry the board already uses", () => {

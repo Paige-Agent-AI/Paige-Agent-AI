@@ -31,9 +31,8 @@
  *   • owner_only — never performed from an assistant at any approval strength; this is the owner's
  *                  call in Settings, so the knob is read-only ("Your call").
  *
- * are not real tools (they exist only in a label switch and are `unclassified` in the risk policy,
- * so the runtime refuses them, fail-closed). Mapping them would put a knob in front of an action
- * that can never run. The drift test asserts they stay out.
+ * The retired legacy pipeline tools (pipeline_create / pipeline_add_stage) stay unmapped: they
+ * are removed from the runtime surface entirely; the governed capability is pipeline_configure.
  */
 
 /** The three governed lanes, same literal union the backend uses. */

@@ -324,8 +324,6 @@ function describeStep(
     case "presence_is_online": return { label: "Checking if someone's online", group: "owner" };
     case "crm_assign_contact": return { label: "Assigning the contact", group: "owner" };
     // Pipeline (owner)
-    case "pipeline_create": return { label: "Building your pipeline", group: "owner" };
-    case "pipeline_add_stage": return { label: "Adding a pipeline stage", group: "owner" };
     case "pipeline_configure": return { label: "Configuring your pipeline", group: "owner" };
     case "deal_create": return { label: "Adding the deal", group: "owner" };
     case "deal_move_stage": return { label: "Moving the deal", group: "owner" };
@@ -2455,7 +2453,6 @@ JSON:`;
       // Canonical CRM command results are deliberately absent: they contain durable tenant readback
       // and therefore protect the turn. Legacy non-command receipts remain ids/argument echoes only.
       "update_business_profile", "crm_update_pipeline_stage", "crm_assign_contact",
-      "pipeline_create", "pipeline_add_stage",
       "member_grant_role", "member_revoke_role", "calendar_book_meeting",
       // Action bus, plans, marketplace, authoring — ids and acknowledgements.
       "action_file", "action_advance",
@@ -6570,7 +6567,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "pipeline_configure",
-              description: "Admin only. The governed pipeline-owning capability shared with the Campaigns Pipeline workspace. Read with pipeline_catalogue, then create, rename, describe, activate, archive, or restore a pipeline; create, edit, reorder, archive, or restore a stage; move a deal; or create, rename, archive, restore, and organize one-level tenant folders. Hard delete is unavailable here. create-pipeline may include explicit editable stages or no stages for a blank draft; it never substitutes presets. Pipeline archive requires pipeline_archive_preview plus owner confirmation of that exact reference. Folder archive always requires owner confirmation of the exact selected folder name and moves every assigned pipeline to Unfiled without changing its lifecycle status. Never INFER stage meaning, revenue, ROI, payment, client health, or portal engagement. Setting `stageType` is the one exception and it is not an inference: send it only when the owner has told you a stage means won or lost, never because a label looks like it.",
+              description: "Admin only. The governed pipeline-owning capability shared with the Campaigns Pipeline workspace. Read with pipeline_catalogue, then create, rename, describe, activate, archive, or restore a pipeline; create, edit, reorder, archive, or restore a stage; move a deal; or create, rename, archive, restore, and organize one-level tenant folders. Hard delete is unavailable here. create-pipeline may include explicit editable stages or no stages for a blank draft; it never substitutes presets. Pipeline archive requires pipeline_archive_preview plus owner confirmation of that exact reference. Folder archive always requires owner confirmation of the exact selected folder name and moves every assigned pipeline to Unfiled without changing its lifecycle status. Creating a pipeline refuses when an active pipeline already carries the exact same name: read pipeline_catalogue, show every same-name match with its PPL reference, and ask — the create command may carry allowSameName true only when the owner explicitly wants a second pipeline with that exact name. Never INFER stage meaning, revenue, ROI, payment, client health, or portal engagement. Setting `stageType` is the one exception and it is not an inference: send it only when the owner has told you a stage means won or lost, never because a label looks like it.",
               parameters: {
                 type: "object",
                 properties: {
@@ -7529,8 +7526,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       crm_log_activity: "logging an activity",
     crm_add_note: "adding a note to a client's record",
       crm_file_document: "filing a document on a client's record",
-      pipeline_create: "creating a pipeline",
-      pipeline_add_stage: "adding a pipeline stage",
       pipeline_configure: "configuring the pipeline",
       deal_create: "adding a deal",
       deal_move_stage: "moving a deal",
@@ -7774,10 +7769,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           return `Make that number the one this business calls and texts from — it is what clients will see.`;
         case "comms_draft_registration":
           return `Have Paige write your carrier registration copy and save it as prepared. This replaces any copy already saved. It does not file anything.`;
-        case "pipeline_create":
-          return `Create a pipeline "${a?.name || "Untitled"}"${Array.isArray(a?.stages) && a.stages.length ? ` with ${a.stages.length} stage${a.stages.length === 1 ? "" : "s"}${a.stages.map((s: any) => s?.label).filter(Boolean).length ? ` (${a.stages.map((s: any) => s?.label).filter(Boolean).join(" → ")})` : ""}` : ""}.`;
-        case "pipeline_add_stage":
-          return `Add stage "${a?.label || ""}" to the pipeline.`;
         case "pipeline_configure":
           if (a?.command?.type === "archive-pipeline" && a?._archive) {
             return `Archive "${a._archive.name}" (${a._archive.short_ref}) with ${a._archive.deal_count} deal${a._archive.deal_count === 1 ? "" : "s"}. This removes it from active selection; it does not hard-delete the pipeline or its history.`;
@@ -10055,8 +10046,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           tc.function.name === "crm_update_contact" ||
           tc.function.name === "propose_business_brief_update" ||
           tc.function.name === "update_business_profile" ||
-          tc.function.name === "pipeline_create" ||
-          tc.function.name === "pipeline_add_stage" ||
           tc.function.name === "pipeline_catalogue" ||
           tc.function.name === "pipeline_archive_preview" ||
           tc.function.name === "pipeline_folder_archive_preview" ||
@@ -11092,32 +11081,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   };
                 }
               }
-            } else if (tc.function.name === "pipeline_create") {
-              const stagesIn = Array.isArray(args.stages) ? args.stages : [];
-              const { data: pid, error } = await supabaseClient.rpc("create_pipeline_with_stages", {
-                _tenant_id: personaCtx?.tenant_id ?? null,
-                _name: args.name,
-                _stages: stagesIn.map((s: any, i: number) => ({
-                  label: s?.label ?? `Stage ${i + 1}`,
-                  order_index: i + 1,
-                  probability: Math.max(0, Math.min(100, Number(s?.probability) || 0)),
-                  stage_type: ["open", "won", "lost"].includes(s?.stage_type) ? s.stage_type : "open",
-                })),
-                _description: args.description ?? null,
-                _is_default: args.is_default === true,
-                _created_by: user.id,
-              });
-              if (error) throw error;
-              result = { success: true, pipeline_id: pid };
-            } else if (tc.function.name === "pipeline_add_stage") {
-              const { data: sid, error } = await supabaseClient.rpc("add_pipeline_stage", {
-                _pipeline_id: args.pipeline_id,
-                _label: args.label,
-                _probability: Math.max(0, Math.min(100, Number(args.probability) || 0)),
-                _stage_type: ["open", "won", "lost"].includes(args.stage_type) ? args.stage_type : "open",
-              });
-              if (error) throw error;
-              result = { success: true, stage_id: sid };
             } else if (tc.function.name === "deal_create") {
               // Add a deal to a pipeline. Tenant-scoped by construction: the stage must belong to
               // THIS tenant's pipeline, and the row is stamped with the caller's tenant_id — a deal
@@ -13365,7 +13328,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         update_client_data: "clients",
         crm_log_activity: "client_notes", crm_add_note: "client_notes", crm_file_document: "client_files", crm_create_task: "tasks", plan_assign_task: "tasks",
         update_business_profile: "tenants",
-        pipeline_create: "pipelines", pipeline_add_stage: "pipelines",
         deal_create: "deals", deal_move_stage: "deals",
         member_grant_role: "user_roles", member_revoke_role: "user_roles",
         // The Solo Team seam. Work details and permission both land on the membership row; the

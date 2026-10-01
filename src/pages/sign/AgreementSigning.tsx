@@ -163,6 +163,11 @@ export default function AgreementSigning() {
   const [failure, setFailure] = useState<string | null>(null);
 
   const [read, setRead] = useState(false);
+  // The uploaded document's frozen bytes, streamed by agreement-document through this signer's
+  // own token. "ready" is the only state that satisfies the read gate for an uploaded document:
+  // a signer cannot consent to a document they cannot see, so loading and failure both hold it.
+  const [docPhase, setDocPhase] = useState<"idle" | "loading" | "ready" | "failed">("idle");
+  const [docUrl, setDocUrl] = useState<string | null>(null);
   const [pct, setPct] = useState(0);
   const [mode, setMode] = useState<"type" | "draw">("type");
   const [typed, setTyped] = useState("");
@@ -196,6 +201,37 @@ export default function AgreementSigning() {
     return () => { cancelled = true; };
   }, [token]);
 
+  useEffect(() => {
+    if (phase !== "ready" || !row?.document_path || row?.document_body) { setDocPhase("idle"); return; }
+    let revoked = false;
+    setDocPhase("loading");
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke(
+          `agreement-document?token=${encodeURIComponent(token)}`,
+          { method: "GET" },
+        );
+        if (revoked) return;
+        // §13: only bytes that actually arrived are a document; the door answers every refusal
+        // with the same JSON shape, so anything that is not a non-empty Blob is a failure.
+        if (error || !(data instanceof Blob) || data.size === 0) { setDocPhase("failed"); return; }
+        const url = URL.createObjectURL(data);
+        setDocUrl(url);
+        setDocPhase("ready");
+      } catch {
+        if (!revoked) setDocPhase("failed");
+      }
+    })();
+    return () => { revoked = true; };
+  }, [phase, row?.document_path, row?.document_body, token]);
+  useEffect(() => () => { if (docUrl) URL.revokeObjectURL(docUrl); }, [docUrl]);
+
+  // The read gate's two honest modes: a text body is measured by scrolling it; an uploaded
+  // document is satisfied only by the viewer actually showing it. No percentage is claimed over
+  // a PDF the product cannot measure.
+  const uploadedDoc = !!row?.document_path && !row?.document_body;
+  const docGateOpen = uploadedDoc ? docPhase === "ready" : read;
+
   /* THE READ GATE.
    * It must never unlock before the document has actually been read to the end, and it must never
    * DEADLOCK on a document short enough not to scroll. Both halves matter: an early build of this
@@ -219,7 +255,7 @@ export default function AgreementSigning() {
   }, [phase, row?.document_body, evaluate]);
 
   const named = mode === "type" ? typed.trim().length > 1 : !!drawn;
-  const canSign = read && named && consentRead && consentEsign && !busy;
+  const canSign = docGateOpen && named && consentRead && consentEsign && !busy;
 
   const sign = async () => {
     if (!canSign) return;
@@ -390,35 +426,55 @@ export default function AgreementSigning() {
             className="ags-doc-body"
             tabIndex={0}
             role="region"
-            aria-label="Agreement text — read to the end to enable signing"
+            aria-label={row?.document_body ? "Agreement text — read to the end to enable signing" : "The document you are signing — shown in full to enable signing"}
             onScroll={evaluate}
           >
-            {row?.document_body
-              ? row.document_body
-              : "This agreement was sent as a file. Ask the business to resend it as text if you cannot read it here."}
+            {row?.document_body ? row.document_body : uploadedDoc ? (
+              docPhase === "ready" && docUrl ? (
+                <iframe
+                  src={docUrl}
+                  title="The document you are signing"
+                  className="ags-doc-pdf"
+                  aria-label="The document you are signing — review it in full before signing"
+                />
+              ) : docPhase === "failed" ? (
+                <p className="ags-doc-note" role="alert">
+                  The document could not be shown. Ask the sender for a new link — signing stays
+                  locked until the document itself is on this page.
+                </p>
+              ) : (
+                <p className="ags-doc-note">Opening the document you are signing…</p>
+              )
+            ) : null}
           </div>
           <div className="ags-doc-foot">
-            <span>Read {pct}%</span>
-            <span className="ags-prog"><i style={{ width: `${pct}%` }} /></span>
+            {row?.document_body ? (
+              <>
+                <span>Read {pct}%</span>
+                <span className="ags-prog"><i style={{ transform: `scaleX(${pct / 100})` }} /></span>
+              </>
+            ) : (
+              <span>{docPhase === "ready" ? "Document shown — review it in full before signing." : docPhase === "failed" ? "Document unavailable." : "Opening the document…"}</span>
+            )}
           </div>
         </div>
 
-        <div className="ags-gate" data-locked={!read}>
-          <div className="ags-lock" data-open={read}>
-            {read ? (
+        <div className="ags-gate" data-locked={!docGateOpen}>
+          <div className="ags-lock" data-open={docGateOpen}>
+            {docGateOpen ? (
               <>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
-                <span>You have read the whole agreement. You can sign it now.</span>
+                <span>{uploadedDoc ? "The document is shown above. You can sign it now." : "You have read the whole agreement. You can sign it now."}</span>
               </>
             ) : (
               <>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-                <span>Scroll to the end of the agreement above to sign it.</span>
+                <span>{uploadedDoc ? (docPhase === "failed" ? "The document could not be shown, so signing stays locked." : "The document is being shown above. Signing opens once it is.") : "Scroll to the end of the agreement above to sign it."}</span>
               </>
             )}
           </div>
 
-          <div style={read ? undefined : { pointerEvents: "none" }} aria-hidden={!read}>
+          <div style={docGateOpen ? undefined : { pointerEvents: "none" }} aria-hidden={!docGateOpen}>
             <div className="ags-tabs" role="group" aria-label="How to sign">
               <button type="button" aria-pressed={mode === "type"} onClick={() => setMode("type")}>Type it</button>
               <button type="button" aria-pressed={mode === "draw"} onClick={() => setMode("draw")}>Draw it</button>

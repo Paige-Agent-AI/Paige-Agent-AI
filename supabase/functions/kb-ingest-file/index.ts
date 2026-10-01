@@ -59,7 +59,8 @@ function imageMediaType(mime: string | undefined, ext: string): string {
 }
 
 function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
+  const result = body && typeof body === "object" && "error" in body && !("ok" in body) ? { ...body, ingestion_started: false } : body;
+  return new Response(JSON.stringify(result), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
@@ -97,7 +98,7 @@ const EXTRACT_PROMPT =
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-
+  let ingestionStarted = false;
   try {
     const auth = req.headers.get("Authorization");
     if (!auth?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
@@ -174,6 +175,7 @@ serve(async (req) => {
 
     // Hand off to kb-ingest-doc, forwarding the caller's JWT so the doc is
     // created + chunked + embedded under the SAME tenant via RLS.
+    ingestionStarted = true;
     const ingestRes = await fetch(
       `${Deno.env.get("SUPABASE_URL")!}/functions/v1/kb-ingest-doc`,
       {
@@ -195,14 +197,12 @@ serve(async (req) => {
         }),
       },
     );
-    const ingestBody = await ingestRes.json().catch(() => ({}));
-    if (!ingestRes.ok) {
-      return json({ error: (ingestBody as any)?.error ?? "Indexing failed" }, ingestRes.status);
-    }
-    return json({ ...ingestBody, source: cls.source, truncated }, 200);
+    const ingestBody = await ingestRes.json();
+    if (!ingestBody || typeof ingestBody !== "object" || Array.isArray(ingestBody)) throw new Error("Invalid ingestion response");
+    return json({ ...ingestBody, source: cls.source, truncated }, ingestRes.status);
   } catch (error) {
     // Never surface raw provider/internal error text to the tenant UI; log it.
     console.error("[kb-ingest-file] error:", error);
-    return json({ error: "Something went wrong reading that file. Please try again." }, 500);
+    return json({ ok: false, error: ingestionStarted ? "persistence_unverified" : "ingestion_not_started", detail: ingestionStarted ? "The save could not be verified. Keep the uploaded file and check your knowledge before retrying." : "The file could not be read. Nothing was indexed." }, 500);
   }
 });

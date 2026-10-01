@@ -29,11 +29,11 @@ const BodySchema = z.object({
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-
+  let ingestionStarted = false;
   try {
     const auth = req.headers.get("Authorization");
     if (!auth?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      return new Response(JSON.stringify({ error: "Unauthorized", ingestion_started: false }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -51,7 +51,7 @@ serve(async (req) => {
     const token = auth.replace("Bearer ", "");
     const { data: claims, error: claimsErr } = await supabase.auth.getClaims(token);
     if (claimsErr || !claims?.claims) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      return new Response(JSON.stringify({ error: "Unauthorized", ingestion_started: false }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -59,7 +59,7 @@ serve(async (req) => {
 
     const body = BodySchema.safeParse(await req.json());
     if (!body.success) {
-      return new Response(JSON.stringify({ error: body.error.flatten() }), {
+      return new Response(JSON.stringify({ error: body.error.flatten(), ingestion_started: false }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -72,7 +72,7 @@ serve(async (req) => {
       tenantId = prof?.active_tenant_id ?? null;
     }
     if (!tenantId) {
-      return new Response(JSON.stringify({ error: "No active tenant for this user" }), {
+      return new Response(JSON.stringify({ error: "No active tenant for this user", ingestion_started: false }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -80,6 +80,7 @@ serve(async (req) => {
     // Full chunk→embed→write pipeline (shared, §12). docClient = the user-scoped client so the
     // doc-row INSERT is RLS-enforced (the caller can only write into a tenant they belong to);
     // chunks/cleanup/reconcile run on admin exactly as before.
+    ingestionStarted = true;
     const result = await ingestDoc(admin, {
       tenantId,
       title: body.data.title,
@@ -93,30 +94,15 @@ serve(async (req) => {
       created_by: userId,
     }, { docClient: supabase });
 
-    // HONESTY (§13): nothing embedded → not a real save. Preserve the original 200-with-guidance
-    // response so the UI/Paige can tell the truth (root cause is usually a missing VOYAGE_API_KEY).
-    if (!result.ok && result.error === "embedding_failed") {
-      return new Response(JSON.stringify({
-        ok: false,
-        error: "embedding_failed",
-        detail: result.detail ?? "The entry could not be embedded, so it wouldn't be searchable — nothing was saved.",
-      }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-    if (!result.ok) {
-      return new Response(JSON.stringify({ error: result.error ?? "insert failed", detail: result.detail }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    return new Response(JSON.stringify({
-      ok: true,
-      doc_id: result.doc_id,
-      chunk_count: result.chunk_count,
-      embedded: result.embedded,
-    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    // Preserve every core outcome field, including the document to inspect when
+    // persistence is uncertain. Keep the legacy embedding-failure HTTP status.
+    return new Response(JSON.stringify(result), {
+      status: result.ok || result.error === "embedding_failed" ? 200 : 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (e) {
     console.error("[kb-ingest] error:", e);
-    return new Response(JSON.stringify({ error: (e as Error).message }), {
+    return new Response(JSON.stringify({ ok: false, error: ingestionStarted ? "persistence_unverified" : "ingestion_not_started", detail: ingestionStarted ? "The save could not be verified. Check your knowledge before retrying." : "The request could not be read. Nothing was indexed." }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

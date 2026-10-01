@@ -7,6 +7,7 @@
 // Save (spec §1.7).
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -35,18 +36,10 @@ const NETWORK_STATUS: Record<string, { label: string; tone: string }> = {
   rejected: { label: "Not accepted", tone: "text-muted-foreground" },
 };
 
-interface TenantDoc {
-  id: string;
-  title: string;
-  summary: string | null;
-  category: string | null;
-  tags: string[] | null;
-  source: string;
-  share_to_network: boolean;
-  network_review_status: "none" | "pending" | "approved" | "rejected";
-  chunk_count: number;
-  created_at: string;
-}
+type TenantDoc = Pick<Database["public"]["Tables"]["tenant_knowledge_docs"]["Row"],
+  "id" | "title" | "summary" | "category" | "tags" | "source" |
+  "share_to_network" | "network_review_status" | "chunk_count" | "created_at"
+>;
 
 const SOURCE_GLYPH: Record<string, typeof FileText> = {
   paste: FileText,
@@ -69,11 +62,11 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
   const load = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from("tenant_knowledge_docs" as any)
+      .from("tenant_knowledge_docs")
       .select("id, title, summary, category, tags, source, share_to_network, network_review_status, chunk_count, created_at")
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
-    setDocs((data as any) ?? []);
+    setDocs(data ?? []);
     setLoading(false);
     refreshCounts();
   }, [refreshCounts]);
@@ -82,7 +75,7 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
 
   const toggleShare = async (doc: TenantDoc, next: boolean) => {
     const { error } = await supabase
-      .from("tenant_knowledge_docs" as any)
+      .from("tenant_knowledge_docs")
       .update({ share_to_network: next, network_review_status: next ? "pending" : "none" })
       .eq("id", doc.id);
     if (error) return toast.error(error.message);
@@ -94,7 +87,7 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
     const doc = pendingDelete;
     if (!doc) return;
     setPendingDelete(null);
-    const { error } = await supabase.from("tenant_knowledge_docs" as any).delete().eq("id", doc.id);
+    const { error } = await supabase.from("tenant_knowledge_docs").delete().eq("id", doc.id);
     if (error) return toast.error(error.message);
     toast.success("Removed from what Paige knows");
     load();
@@ -135,12 +128,14 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
                 <FileText className="w-4 h-4 mr-1.5" /> Paste text
               </Button>
             </DialogTrigger>
-            <AddDocDialog
+            {pasteOpen && <AddDocDialog
+              key={activeTenantId}
               initialMode="paste"
               tenantId={activeTenantId ?? undefined}
               onClose={() => setPasteOpen(false)}
               onIngested={handleIngested}
-            />
+              onReview={load}
+            />}
           </Dialog>
 
           <Dialog open={linkOpen} onOpenChange={setLinkOpen}>
@@ -149,12 +144,14 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
                 <Link2 className="w-4 h-4 mr-1.5" /> Add a link
               </Button>
             </DialogTrigger>
-            <AddDocDialog
+            {linkOpen && <AddDocDialog
+              key={activeTenantId}
               initialMode="url"
               tenantId={activeTenantId ?? undefined}
               onClose={() => setLinkOpen(false)}
               onIngested={handleIngested}
-            />
+              onReview={load}
+            />}
           </Dialog>
 
           <Dialog open={fileOpen} onOpenChange={setFileOpen}>
@@ -163,12 +160,14 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
                 <Paperclip className="w-4 h-4 mr-1.5" /> Upload a file
               </Button>
             </DialogTrigger>
-            <AddDocDialog
+            {fileOpen && <AddDocDialog
+              key={activeTenantId}
               initialMode="file"
               tenantId={activeTenantId ?? undefined}
               onClose={() => setFileOpen(false)}
               onIngested={handleIngested}
-            />
+              onReview={load}
+            />}
           </Dialog>
         </div>
 

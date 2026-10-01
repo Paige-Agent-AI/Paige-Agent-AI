@@ -95,3 +95,9 @@ Service-role remains trusted and can access internal rows directly. This slice a
 - Focused ESLint across all changed/new TypeScript and strict standalone compilation of the extraction core/scope helper pass. No full compiler/build overlap.
 - Evidence validator and git diff checks pass. No live DB, Storage, model, embedding, deployment or external mutation.
 - Independent review is parent-owned and pending. No push, merge or release authorization inferred.
+
+## Independent review repair: intake acknowledgement
+
+Review of f975f44f found an uncertain submission was reported as rejected and malformed RPC replies could report success. Actual kb-extract-submit handler tests first reproduced five failures (three controls passed). The repair validates work/document IDs, native status, replay flag and fresh revision, returns only the acknowledgement projection, and identifies only explicit known SQL refusals as rejected. Lost, transport-error or malformed post-submit replies return HTTP 503 with submission_outcome_unknown, the original intent_id and reconciliation=replay_same_intent. No automatic retry or new intent is created. The original frozen input must be retained for explicit reconciliation.
+
+Repair verification: 90 focused Vitest tests across six files, focused ESLint and strict core TypeScript. Migration and SQL behavior unchanged; existing 36 SQL assertions and concurrent completion race were independently rerun at the reviewed base. No live provider or Supabase runtime claim.

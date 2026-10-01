@@ -1,10 +1,11 @@
 import { bindKnowledgeIngestScope } from './knowledge-ingest-scope.ts';
 
-export type ExtractionRpc = { rpc(name: string, args: Record<string, unknown>): PromiseLike<{data: unknown; error: {message?: string} | null}> };
+export type ExtractionRpc = { rpc(name: string, args: Record<string, unknown>): PromiseLike<{data: unknown; error: {message?: string; code?: string} | null}> };
 export type TextSource = {text: string; sha256: string; byte_size: number; mime_type: string};
 const MAX_BYTES = 2 * 1024 * 1024;
 const MAX_CHARS = 480000;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export class ExtractionSubmissionUnknown extends Error { constructor(public intentId: string) { super('submission_outcome_unknown'); } }
 export class ExtractionError extends Error { constructor(public code: string) { super(code); } }
 function fail(code: string): never { throw new ExtractionError(code); }
 function record(value: unknown): Record<string, unknown> { if (!value || typeof value !== 'object' || Array.isArray(value)) return fail('input_invalid'); return value as Record<string, unknown>; }
@@ -61,7 +62,25 @@ export async function submitKnowledgeExtraction(input: unknown, caller: Paramete
     source={...identity,sha256:bytes.sha256,byte_size:bytes.byte_size,mime_type:bytes.mime_type,bound_at:new Date().toISOString()};
   }
   await scope.assert();
-  return rpc(admin,'submit_knowledge_extraction',{_actor:scope.userId,_tenant:scope.tenantId,_intent:b.intent_id,_doc_id:b.doc_id??null,_expected_revision:b.expected_revision??null,_title:b.title.trim(),_input:b.kind==='paste'? b.content:null,_source:source});
+  let acknowledgement: Awaited<ReturnType<ExtractionRpc['rpc']>>;
+  try {
+    acknowledgement=await admin.rpc('submit_knowledge_extraction',{_actor:scope.userId,_tenant:scope.tenantId,_intent:b.intent_id,_doc_id:b.doc_id??null,_expected_revision:b.expected_revision??null,_title:b.title.trim(),_input:b.kind==='paste'? b.content:null,_source:source});
+  } catch { throw new ExtractionSubmissionUnknown(b.intent_id); }
+  // Only explicit SQL refusals prove that this transaction did not commit.
+  const refusalCodes: Record<string,string>={KNOWLEDGE_SCOPE_CHANGED:'42501',KNOWLEDGE_INPUT_INVALID:'22023',KNOWLEDGE_SOURCE_INVALID:'22023',KNOWLEDGE_SOURCE_CHANGED:'40001',DURABLE_WORK_INTENT_REPLAY_MISMATCH:'22023',KNOWLEDGE_NOT_FOUND:'P0002',KNOWLEDGE_REVISION_CONFLICT:'40001',KNOWLEDGE_REVIEW_PENDING:'55000'};
+  if(acknowledgement?.error){
+    if(refusalCodes[acknowledgement.error.message??'']===acknowledgement.error.code && acknowledgement.error.code) throw new Error('extraction_not_accepted');
+    throw new ExtractionSubmissionUnknown(b.intent_id);
+  }
+  const value=acknowledgement?.data;
+  if(!value || typeof value!=='object' || Array.isArray(value)) throw new ExtractionSubmissionUnknown(b.intent_id);
+  const a=value as Record<string,unknown>;
+  const statuses=['claimed','blocked','expired','succeeded','failed','cancelled','outcome_unknown'];
+  if(typeof a.work_id!=='string' || !UUID.test(a.work_id) || typeof a.document_id!=='string' || !UUID.test(a.document_id)
+    || (b.doc_id!==undefined && a.document_id!==b.doc_id) || typeof a.replayed!=='boolean' || typeof a.status!=='string' || !statuses.includes(a.status)
+    || (!a.replayed && (a.status!=='claimed' || !Number.isInteger(a.revision) || Number(a.revision)<1))
+    || (a.revision!==undefined && (!Number.isInteger(a.revision) || Number(a.revision)<1))) throw new ExtractionSubmissionUnknown(b.intent_id);
+  return {work_id:a.work_id,document_id:a.document_id,status:a.status,replayed:a.replayed,...(a.revision!==undefined?{revision:a.revision}:{})};
 }
 
 export async function runKnowledgeExtraction(admin: ExtractionRpc, workId: string, download: (path:string)=>Promise<TextSource>): Promise<Record<string,unknown>> {

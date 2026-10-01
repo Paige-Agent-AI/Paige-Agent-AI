@@ -92,3 +92,39 @@ describe('ingestion persistence truth', () => {
     }
   });
 });
+
+describe('ingestion authorization checkpoints', () => {
+  for (const [stop, allowedEmbeds, expectedWrites] of [[1, 0, 0], [2, 0, 0], [3, 1, 0], [4, 2, 0], [5, 2, 1], [6, 2, 1]] as const) {
+    it(`fails closed at checkpoint ${stop} and cleans only its own new row`, async () => {
+      const { client, state } = database(); let calls = 0;
+      const result = await ingestDoc(client, params, { authorize: async () => { if (++calls === stop) throw Error('scope revoked'); } });
+      expect(result.ok).toBe(false);
+      expect(embeddingsCompat).toHaveBeenCalledTimes(allowedEmbeds);
+      expect(state.calls.filter(c => c.table.endsWith('chunks') && c.op === 'insert')).toHaveLength(expectedWrites);
+      expect(state.docs).toHaveLength(0); expect(state.chunks).toHaveLength(0);
+      expect(result.error).toBe(stop === 1 ? 'ingestion_not_started' : 'persistence_failed');
+    });
+  }
+  it('a real workspace revalidation stops a switch during embedding before more egress or writes', async () => {
+    const scopePath = '../../supabase/functions/_shared/knowledge-ingest-scope.ts';
+    const { bindKnowledgeIngestScope } = await import(scopePath);
+    let active = '00000000-0000-4000-a000-000000000001';
+    const caller = { auth: { getUser: async () => ({ data: { user: { id: 'actor' } } }) },
+      rpc: async (name: string) => ({ data: name === 'is_tenant_member' }),
+      from: () => { const q = { select: () => q, eq: () => q, maybeSingle: async () => ({ data: { active_tenant_id: active } }) }; return q; },
+    };
+    const scope = await bindKnowledgeIngestScope(caller);
+    embeddingsCompat.mockImplementation(async () => { active = '00000000-0000-4000-a000-000000000002'; return new Response(JSON.stringify({ data: [{ embedding: vector() }] })); });
+    const { client, state } = database();
+    const result = await ingestDoc(client, { ...params, tenantId: scope.tenantId }, { authorize: scope.assert });
+    expect(result).toMatchObject({ ok: false, error: 'persistence_failed' });
+    expect(embeddingsCompat).toHaveBeenCalledOnce();
+    expect(state.calls.some(c => c.table.endsWith('chunks') && c.op === 'insert')).toBe(false);
+    expect(state.docs).toHaveLength(0);
+  });
+  it('authorization loss with unproven cleanup remains uncertain', async () => {
+    const { client } = database('cleanup'); let calls = 0;
+    expect(await ingestDoc(client, params, { authorize: async () => { if (++calls > 1) throw Error('revoked'); } }))
+      .toMatchObject({ ok: false, error: 'persistence_unverified', doc_id: 'test-doc' });
+  });
+});

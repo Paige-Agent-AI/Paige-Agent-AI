@@ -94,7 +94,7 @@ export async function ingestDoc(
   admin: any,
   params: IngestDocParams,
   // deno-lint-ignore no-explicit-any
-  opts?: { docClient?: any },
+  opts?: { docClient?: any; authorize?: () => Promise<void> },
 ): Promise<IngestResult> {
   const docClient = opts?.docClient ?? admin;
   const chunks = chunkText(params.content);
@@ -102,6 +102,10 @@ export async function ingestDoc(
     return { ok: false, chunk_count: 0, embedded: false, error: "empty_content", detail: "Nothing to save — the content was empty after cleanup." };
   }
 
+  const authorized = async () => {
+    try { await opts?.authorize?.(); return true; } catch { return false; }
+  };
+  if (!await authorized()) return { ok: false, chunk_count: 0, embedded: false, error: "ingestion_not_started" };
   const share = params.share_to_network ?? false;
   const { data: doc, error: docErr } = await docClient
     .from("tenant_knowledge_docs")
@@ -145,6 +149,7 @@ export async function ingestDoc(
 
   const rows: Record<string, unknown>[] = [];
   for (let i = 0; i < chunks.length; i++) {
+    if (!await authorized()) return fail("persistence_failed");
     try {
       const vec = await embed(chunks[i]);
       rows.push({ tenant_id: doc.tenant_id, doc_id: doc.id, chunk_index: i,
@@ -157,6 +162,7 @@ export async function ingestDoc(
   if (!rows.length) return fail("embedding_failed");
 
   try {
+    if (!await authorized()) return fail("persistence_failed");
     const { error: chunkError } = await admin.from("tenant_knowledge_chunks").insert(rows);
     if (chunkError) return fail("chunk_write_failed");
 
@@ -178,6 +184,7 @@ export async function ingestDoc(
     }
     if (seen.size !== rows.length) return fail("chunk_readback_failed");
 
+    if (!await authorized()) return fail("persistence_failed");
     const { error: updateError } = await admin.from("tenant_knowledge_docs")
       .update({ chunk_count: seen.size }).eq("tenant_id", params.tenantId).eq("id", doc.id);
     if (updateError) return fail("count_reconcile_failed");
@@ -186,6 +193,7 @@ export async function ingestDoc(
     if (docReadError || saved?.id !== doc.id || saved?.tenant_id !== params.tenantId ||
         saved?.chunk_count !== seen.size) return fail("count_readback_failed");
 
+    if (!await authorized()) return fail("persistence_failed");
     return { ok: true, doc_id: doc.id, chunk_count: seen.size, embedded: seen.size === chunks.length };
   } catch {
     return fail("persistence_failed");

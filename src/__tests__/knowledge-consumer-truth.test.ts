@@ -5,6 +5,8 @@ import ts from "typescript";
 import { z } from "zod";
 const { embeddingsCompat } = vi.hoisted(() => ({ embeddingsCompat: vi.fn() }));
 vi.mock("../../supabase/functions/_shared/voyage", () => ({ VOYAGE_DIMS: 1024, embeddingsCompat }));
+const scopePath = "../../supabase/functions/_shared/knowledge-ingest-scope.ts";
+const { bindKnowledgeIngestScope, KnowledgeIngestScopeError } = await import(scopePath);
 const corePath = "../../supabase/functions/_shared/kb-ingest-core.ts";
 const { ingestDoc: realIngestDoc } = await import(corePath);
 
@@ -15,15 +17,15 @@ function handler(path: string, adapters: Record<string, unknown>) {
     .replace(/^import .*;\r?\n/gm, "");
   const compiled = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None } }).outputText;
   let run: (req: Request) => Promise<Response>;
-  const env = { serve: (fn: typeof run) => { run = fn; }, Deno: { env: { get: (key: string) => key } }, z, ...adapters };
+  const env = { serve: (fn: typeof run) => { run = fn; }, Deno: { env: { get: (key: string) => key } }, z, bindKnowledgeIngestScope, KnowledgeIngestScopeError, ...adapters };
   new Function(...Object.keys(env), compiled)(...Object.values(env));
   return (body: unknown) => run(new Request("https://local.test/ingest", { method: "POST", headers: { Authorization: "Bearer test.token.signature" }, body: JSON.stringify(body) }));
 }
 const complete = { ok: true, doc_id: "new-doc", chunk_count: 2, embedded: true };
 const uncertain = { ok: false, error: "persistence_unverified", detail: "Check knowledge before retrying.", doc_id: "new-doc", chunk_count: 0, embedded: false };
 function client() {
-  const q = { select: () => q, eq: () => q, maybeSingle: async () => ({ data: { active_tenant_id: "test-tenant-a" } }) };
-  return { from: () => q, auth: { getClaims: async () => ({ data: { claims: { sub: "test-user" } } }), getUser: async () => ({ data: { user: { id: "test-user" } } }) }, storage: { from: () => ({ download: async () => ({ data: new Blob(["A long enough reference document."]) }) }) } };
+  const q = { select: () => q, eq: () => q, maybeSingle: async () => ({ data: { active_tenant_id: "00000000-0000-4000-a000-000000000001" } }) };
+  return { rpc: async (name: string) => ({ data: name === "is_tenant_member", error: null }), from: () => q, auth: { getClaims: async () => ({ data: { claims: { sub: "test-user" } } }), getUser: async () => ({ data: { user: { id: "test-user" } } }) }, storage: { from: () => ({ download: async () => ({ data: new Blob(["A long enough reference document."]) }) }) } };
 }
 describe("ingestion adapter response truth", () => {
   it("doc preserves uncertain persistence identity and zero verified count", async () => {
@@ -48,7 +50,7 @@ describe("ingestion adapter response truth", () => {
   });
   it("file preserves non-2xx uncertainty through the nested invocation", async () => {
     const run = handler("kb-ingest-file", { createClient: client, callClaude: vi.fn(), fetch: async () => new Response(JSON.stringify(uncertain), { status: 400 }) });
-    const res = await run({ path: "test-tenant-a/file.txt", filename: "file.txt" });
+    const res = await run({ path: "00000000-0000-4000-a000-000000000001/file.txt", filename: "file.txt" });
     expect(res.status).toBe(400);
     expect(await res.json()).toMatchObject(uncertain);
   });
@@ -62,11 +64,11 @@ describe("ingestion adapter response truth", () => {
   });
   it("malformed nested acknowledgement stays uncertain", async () => {
     const run = handler("kb-ingest-file", { createClient: client, callClaude: vi.fn(), fetch: async () => new Response("invalid JSON") });
-    expect(await (await run({ path: "test-tenant-a/file.txt" })).json()).toMatchObject({ ok: false, error: "persistence_unverified" });
+    expect(await (await run({ path: "00000000-0000-4000-a000-000000000001/file.txt" })).json()).toMatchObject({ ok: false, error: "persistence_unverified" });
   });
   it("failure before ingestion is identified as not started", async () => {
     const run = handler("kb-ingest-file", { createClient: () => { throw Error("auth unavailable"); }, callClaude: vi.fn() });
-    expect(await (await run({ path: "test-tenant-a/file.txt" })).json()).toMatchObject({ ok: false, error: "ingestion_not_started" });
+    expect(await (await run({ path: "00000000-0000-4000-a000-000000000001/file.txt" })).json()).toMatchObject({ ok: false, error: "ingestion_not_started" });
   });
   it("URL extraction truncation remains visible on a verified save", async () => {
     const fetch = vi.fn().mockResolvedValueOnce(new Response("x".repeat(200_001), { headers: { "Content-Type": "text/plain" } }))

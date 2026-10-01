@@ -56,6 +56,6 @@ A retry with the old revision refuses, rather than claiming idempotent replay. A
 - SQL returned a revision conflict for a duplicate lost-ack retry and competing writer; one mutation/receipt survived. Company operator write committed with explicit unrecorded outcome.
 - Shipped Delivery Log: N/A, no main merge. Independent exact-head review is requested separately; not yet claimed complete.
 
-INTERNAL_BUILD_IDENTITY: 6230e6087e7fb693af4f0b53935f59ed90f65229; deployment=none; environment=development; migrations=PROOF_OWED(20270530100000_knowledge_canonical_metadata, isolated fixture only); edge=NOT_APPLICABLE; evidence=scripts/knowledge-service/check.py and src/__tests__/knowledge-service.test.ts
+INTERNAL_BUILD_IDENTITY: 6230e6087e7fb693af4f0b53935f59ed90f65229; deployment=none; environment=development; migrations=PROOF_OWED(20270531100000_knowledge_canonical_metadata, isolated fixture only); edge=NOT_APPLICABLE; evidence=scripts/knowledge-service/check.py and src/__tests__/knowledge-service.test.ts
 
-The migration was created with the Supabase CLI, then moved forward to 20270530100000 because current main already reaches 20270523000000 and the coordinated Chat lane reserves 20270524000000. No out-of-order deployment is required. The fixture runner references the final filename.
+The migration is renumbered to 20270531100000, strictly above main's newest recorded migration at renumber time, so the deploy push applies it in order with no skipped version. The fixture runner references the final filename.

@@ -16,7 +16,7 @@ def run(args,check=True):
 run(['-d','postgres','-c','CREATE DATABASE '+db])
 try:
  run(['-d',db,'-f','scripts/knowledge-service/fixture.sql'])
- migration='supabase/migrations/20270530100000_knowledge_canonical_metadata.sql'
+ migration='supabase/migrations/20270531100000_knowledge_canonical_metadata.sql'
  run(['-d',db,'-f',migration]);run(['-d',db,'-f',migration])
  run(['-d',db,'-f','scripts/knowledge-service/behavior.sql'])
  run(['-d',db,'-c',"UPDATE public.profiles SET active_tenant_id='00000000-0000-0000-0000-000000000001'; UPDATE public.test_members SET active=true;"])

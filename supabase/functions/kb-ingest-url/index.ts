@@ -39,7 +39,8 @@ const MAX_CONTENT = 200_000;
 // AND every redirect hop below (see safeFetch).
 
 function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
+  const result = body && typeof body === "object" && "error" in body && !("ok" in body) ? { ...body, ingestion_started: false } : body;
+  return new Response(JSON.stringify(result), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
@@ -103,13 +104,12 @@ function stripToText(html: string): string {
     .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "")
     .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, MAX_CONTENT);
+    .trim();
 }
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-
+  let ingestionStarted = false;
   try {
     const auth = req.headers.get("Authorization");
     if (!auth?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
@@ -157,7 +157,7 @@ serve(async (req) => {
       derivedTitle = extractTitle(html);
       content = stripToText(html);
     } else if (contentType.includes("text/plain") || contentType.includes("application/json")) {
-      content = (await res.text()).replace(/\s+/g, " ").trim().slice(0, MAX_CONTENT);
+      content = (await res.text()).replace(/\s+/g, " ").trim();
     } else {
       return json({ error: "Unsupported page type. Only HTML, plain text, and JSON pages can be indexed." }, 400);
     }
@@ -166,11 +166,14 @@ serve(async (req) => {
       return json({ error: "That page had no readable text to teach Paige." }, 400);
     }
 
+    const truncated = content.length > MAX_CONTENT;
+    content = content.slice(0, MAX_CONTENT);
     const finalTitle = (title?.trim() || derivedTitle || parsedUrl.hostname).slice(0, 300);
 
     // Hand off to kb-ingest-doc, forwarding the caller's JWT so the doc is
     // created + chunked + embedded under the SAME tenant via RLS. Keeping the
     // chunk/embed pipeline single-sourced (one function owns it).
+    ingestionStarted = true;
     const ingestRes = await fetch(
       `${Deno.env.get("SUPABASE_URL")!}/functions/v1/kb-ingest-doc`,
       {
@@ -194,13 +197,11 @@ serve(async (req) => {
         }),
       },
     );
-    const ingestBody = await ingestRes.json().catch(() => ({}));
-    if (!ingestRes.ok) {
-      return json({ error: (ingestBody as any)?.error ?? "Indexing failed" }, ingestRes.status);
-    }
-    return json(ingestBody, 200);
+    const ingestBody = await ingestRes.json();
+    if (!ingestBody || typeof ingestBody !== "object" || Array.isArray(ingestBody)) throw new Error("Invalid ingestion response");
+    return json({ ...ingestBody, truncated }, ingestRes.status);
   } catch (error) {
     console.error("[kb-ingest-url] error:", error);
-    return json({ error: error instanceof Error ? error.message : "Failed to ingest URL" }, 500);
+    return json({ ok: false, error: ingestionStarted ? "persistence_unverified" : "ingestion_not_started", detail: ingestionStarted ? "The save could not be verified. Check your knowledge before retrying." : "The page could not be read. Nothing was indexed." }, 500);
   }
 });

@@ -1624,12 +1624,18 @@ export function StudioShell({
   // 'confirm', so the common path is needs_confirm → a transient toast that asks first (§15) and
   // only saves on the tenant's explicit click. 'learned' reports the real win; 'blocked'/'error'
   // say nothing (never claim a save that didn't happen).
+  const learnWorkspace = useRef({ tenantId });
+  if (learnWorkspace.current.tenantId !== tenantId) learnWorkspace.current = { tenantId };
   const runLearn = useCallback(
     async (artifactType: LibraryKind, artifactId: string, confirmed = false) => {
       if (!tenantId || !artifactId) return;
+      const submittedWorkspace = learnWorkspace.current;
       const res = await learnFromArtifact({ tenantId, artifactType, artifactId, confirmed });
+      if (learnWorkspace.current !== submittedWorkspace) return;
       if (res.kind === "learned") {
         toast({ title: "Paige learned from this", description: res.message });
+      } else if (res.kind === "partial" || res.kind === "uncertain") {
+        toast({ title: res.kind === "partial" ? "Knowledge partially indexed" : "Review knowledge", description: res.message });
       } else if (res.kind === "needs_confirm") {
         toast({
           title: "Teach your Paige from this?",

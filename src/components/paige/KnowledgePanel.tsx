@@ -140,6 +140,7 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
               tenantId={activeTenantId ?? undefined}
               onClose={() => setPasteOpen(false)}
               onIngested={handleIngested}
+              onReview={load}
             />
           </Dialog>
 
@@ -154,6 +155,7 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
               tenantId={activeTenantId ?? undefined}
               onClose={() => setLinkOpen(false)}
               onIngested={handleIngested}
+              onReview={load}
             />
           </Dialog>
 
@@ -168,6 +170,7 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
               tenantId={activeTenantId ?? undefined}
               onClose={() => setFileOpen(false)}
               onIngested={handleIngested}
+              onReview={load}
             />
           </Dialog>
         </div>

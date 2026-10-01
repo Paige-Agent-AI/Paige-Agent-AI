@@ -329,3 +329,19 @@
   .ags *, .ags *::before, .ags *::after { transition-duration: .01ms !important; }
   .ags-doc-body { scroll-behavior: auto; }
 }
+
+/* A2 — the uploaded document itself, streamed by agreement-document. The viewer owns the
+   slot's height so a PDF never collapses to a sliver; the note lines match the body's
+   leading so loading and failure read as part of the document, not as an error banner. */
+.ags-doc-pdf {
+  width: 100%;
+  min-height: 62vh;
+  border: 0;
+  background: var(--ags-paper, #fff);
+}
+.ags-doc-note {
+  margin: 0;
+  padding: 1.25rem 0;
+  color: inherit;
+  opacity: 0.85;
+}

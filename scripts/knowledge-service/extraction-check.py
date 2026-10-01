@@ -9,7 +9,7 @@ run(['-d','postgres','-c','CREATE DATABASE '+db])
 try:
  files=['scripts/knowledge-service/fixture.sql','scripts/knowledge-service/delete-fixture.sql','scripts/knowledge-service/review-fixture.sql','scripts/knowledge-service/durable-fixture.sql','supabase/migrations/20270417000000_paige_durable_work_envelope.sql','supabase/migrations/20270418000000_paige_durable_document_work.sql','supabase/migrations/20270530100000_knowledge_canonical_metadata.sql','supabase/migrations/20270530200000_knowledge_canonical_delete.sql','supabase/migrations/20270530400000_knowledge_review_foundation.sql']
  files+=['supabase/migrations/20270530600000_knowledge_durable_authority.sql']
- if not a.baseline: files+=['supabase/migrations/20270531000000_knowledge_extraction_work.sql']*2
+ if not a.baseline: files+=['supabase/migrations/20270532000000_knowledge_extraction_work.sql']*2
  files+=['scripts/knowledge-service/extraction-behavior.sql']
  for f in files: run(['-d',db,'-f',f])
  # Two actual connections prove completion replay cannot duplicate pending writes or receipts.

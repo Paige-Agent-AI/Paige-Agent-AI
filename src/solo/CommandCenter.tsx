@@ -160,6 +160,7 @@ const CommandHub = ({ accountContext, openPaige }) => {
               key={`${activeUserId ?? "resolving"}:${activeTenantId}`}
               accountContext={accountContext}
               openPaige={openPaige}
+              requestedKnowledgeId={new URLSearchParams(location.search).get("knowledge")}
               preferenceScope={activeUserId ? { userId: activeUserId, tenantId: activeTenantId } : null}
             />
           </div>

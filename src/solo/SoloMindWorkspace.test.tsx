@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const harness = vi.hoisted(() => ({ knowledge: vi.fn(), command: vi.fn(), n8n: vi.fn() }));
 vi.mock("./data/useN8nSpineReadiness", () => ({ useN8nSpineReadiness: () => harness.n8n() }));
-vi.mock("./data/useSoloKnowledge", () => ({ useSoloKnowledge: () => harness.knowledge() }));
+vi.mock("./data/useSoloKnowledge", () => ({ useSoloKnowledge: (id?: string | null) => harness.knowledge(id) }));
 vi.mock("./data/useCommandCenter", () => ({ useCommandCenter: () => harness.command() }));
 
 import { SoloMindWorkspace } from "./SoloMindWorkspace";
@@ -60,6 +60,32 @@ function button(name: string) { return buttons().find((b) => b.textContent?.incl
 function records() { return [...host.querySelectorAll("[data-mind-record]")] as HTMLButtonElement[]; }
 
 describe("Solo Mind workspace — orb port", () => {
+  it('opens only the exact canonical source named by the Knowledge deep link', () => {
+    harness.knowledge.mockReturnValue({ ...knowledge, requestedDocumentState: 'available' });
+    act(() => root.render(<SoloMindWorkspace requestedKnowledgeId="doc-2" />));
+    expect(harness.knowledge).toHaveBeenCalledWith('doc-2');
+    expect(host.querySelector('.mind-drawer')?.textContent).toContain('Brand voice');
+  });
+  it('reports a resolved missing Knowledge deep link without choosing another record', () => {
+    harness.knowledge.mockReturnValue({ ...knowledge, requestedDocumentState: 'missing' });
+    act(() => root.render(<SoloMindWorkspace requestedKnowledgeId="missing" />));
+    expect(host.textContent).toContain('not found in the active workspace');
+    expect(host.querySelector('.mind-drawer')).toBeNull();
+  });
+  for (const state of ['missing', 'error']) it(`exact-source ${state} takes precedence over a stale list row`, () => {
+    harness.knowledge.mockReturnValue({ ...knowledge, requestedDocumentState: state, requestedDocumentError: state === 'error' ? 'Read failed' : null });
+    act(() => root.render(<SoloMindWorkspace requestedKnowledgeId="doc-2" />));
+    expect(host.querySelector('.mind-drawer')).toBeNull();
+    expect(host.textContent).toContain(state === 'missing' ? 'not found in the active workspace' : 'could not be read');
+  });
+  it('closes an earlier source drawer when the requested source changes to a missing one', () => {
+    harness.knowledge.mockReturnValue({ ...knowledge, requestedDocumentState: 'available' });
+    act(() => root.render(<SoloMindWorkspace requestedKnowledgeId="doc-2" />));
+    expect(host.querySelector('.mind-drawer')).not.toBeNull();
+    harness.knowledge.mockReturnValue({ ...knowledge, requestedDocumentState: 'missing' });
+    act(() => root.render(<SoloMindWorkspace requestedKnowledgeId="missing" />));
+    expect(host.querySelector('.mind-drawer')).toBeNull();
+  });
   it("keeps exactly one accessible Mind heading", () => {
     render();
     const h1 = [...host.querySelectorAll("h1")].filter((h) => h.id === "mind-title");
@@ -76,17 +102,17 @@ describe("Solo Mind workspace — orb port", () => {
     const text = host.textContent ?? "";
     expect(text).not.toMatch(/\$\d/); // no invented money figures
     expect(text.toLowerCase()).not.toContain("chain-of-thought");
-    expect(text).toContain("LIVE SOURCE"); // knowledge is owner-confirmed live
+    expect(text).toContain("PARTIAL"); // saved Knowledge does not imply owner-confirmed Memory
     expect(text).toContain("without hidden reasoning");
   });
 
   it("headline counts GROUNDED records only and labels the total 'held', never 'grounded' (ruling #2)", () => {
     render();
-    // mock: 2 owner-confirmed knowledge docs (grounded) + 1 approval (partial), n8n null → 2 grounded of 3 held
+    // mock: 2 saved knowledge docs (partial) + 1 approval (partial), n8n null → 0 grounded of 3 held
     const count = host.querySelector(".mind-mind-count");
     expect(count).toBeTruthy();
     const txt = count?.textContent ?? "";
-    expect(txt).toContain("2"); // grounded subset
+    expect(txt).toContain("0"); // grounded subset
     expect(txt.toLowerCase()).toContain("grounded");
     expect(txt).toContain("3"); // total held
     expect(txt.toLowerCase()).toContain("held");
@@ -240,7 +266,7 @@ describe("Solo Mind workspace — orb port", () => {
     harness.command.mockReturnValue({ ...command, approvals: [] });
     render();
     expect(records()).toHaveLength(0);
-    expect(host.textContent).toContain("Nothing durable is indexed here yet");
+    expect(host.textContent).toContain("No records are loaded here yet");
 
     act(() => root.unmount()); root = createRoot(host);
     harness.knowledge.mockReturnValue({ ...knowledge, error: new Error("read failed") });

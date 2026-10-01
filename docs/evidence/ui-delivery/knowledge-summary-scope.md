@@ -49,3 +49,11 @@ Owner cleared the handler; coordinator assigned this separate compactor slice. P
 `npm run test:knowledge-scope`: 508 PASS. The same final harness with the base handler temporarily substituted (restored in finally) reports 454 PASS /54 FAIL. Original pre-implementation run reports 421 PASS /19 FAIL. `npm run test:checked-write`:15 PASS. `node --check` both edited harness files and `git diff --check`: PASS.
 
 This is synthetic actual-handler proof with no provider/database traffic. Native Deno typecheck, authenticated account transitions, real RLS enforcement and deployed parity remain UNVERIFIED. Sequential authority reads do not lock a workspace across HTTP/provider calls, and a switch away and back between checkpoints cannot be detected. The watermark predicate prevents overwriting a newer fold; no general retry/idempotency redesign is claimed. No full application build or compiler was run for this backend-only slice. Independent review is required after commit; no push, PR, merge or deployment authorized in this task.
+
+## CI fixture reconciliation (2026-10-01 UTC)
+
+The client-memory-authz suite uses a persona override and current_user_tenant_id but originally omitted profiles.active_tenant_id. Exact-base comparison with identical fixtures: 07c80230 reports 463 PASS/0 FAIL; 96f4b8ea and c5a4fe0c each fail 28 assertions then stop at the missing n8n audit assertion. The defect predates summary compaction and follows the intentionally stricter raw-workspace guard. No production guard was loosened.
+
+The fixture now supplies an independent activeTenantId (defaulting to its existing caller workspace). It does not follow persona RPC changes and remains overridable independently. Added null/mismatched declared-workspace controls assert zero provider egress and zero tool dispatch. Actual-handler suite: 467 PASS/0 FAIL. The existing missing-audit assertion remains intact.
+
+The image-refine anchor test's old exact column-list assertion also failed on c5a4. It now requires the actual owned-thread query, all retained anchor columns, caller/id validation, tenant pin and forced workspace check. All nine anchor tests PASS. These are fixture/assertion repairs only; no handler change, deployment or authenticated proof claimed.

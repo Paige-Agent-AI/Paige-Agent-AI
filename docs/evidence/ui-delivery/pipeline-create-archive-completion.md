@@ -10,7 +10,7 @@ duplicate same-name pipelines), and nothing anywhere was intentional about same-
 creation — the governed create inserted silently.
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
-SOLO_UI: NO: this diff changes the chat function, two migrations, a CI registry and a test; the autonomy settings surface loses two toggles that governed nothing; no shell, page, Chat component or rendered control changes
+SOLO_UI: YES: the recognized UI data map src/solo/data/capabilityTools.ts changed (the two retired tool entries removed, so the map fronts no ghost); no shell, page, Chat component or rendered control changes
 FLOW_BY_FLOW: WAIVED: owner-decision=INT-083 go-live ruling 2026-09-20; reason=the Flow-by-Flow skill is not installed at the account level in this environment, whose account-level skill directory holds impeccable alone, so a flow-by-flow pass is genuinely unavailable here; the affected seam is grounded from source in STATIC_EVIDENCE
 PAIGE_UI_DESIGN: PASS: the repository paige-ui-design skill body and its routed references were read completely; no visual design, component, copy, geometry, motion, focus, action, state or exit changes
 IMPECCABLE: PASS: the installed Impeccable skill and its craft floor were read; no UI artifact is in scope
@@ -20,7 +20,7 @@ PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: a Solo owner asks Paige to set up a pipel
 VISUAL_DIRECTION: PASS: no rendered surface, token or layout changed
 AUTOMATED_EVIDENCE: PASS: the governance suite failed 6 of 9 on unchanged main and passes 9 of 9; the stored-proposal and adoption suites stay green (39 of 39 across the three); tool-catalogue, migration-version and definer-fn guards pass after the shadow baseline shed the two retired phantom rows and the canonical removal migration carried its removal-ok lines
 STATIC_EVIDENCE: PASS: the legacy handlers, dispatch entries, labels, card cases, verb phrases and rail maps are gone from the chat function together with their direct RPC calls; the autonomy catalogue drops both rows by the canonical removal migration; the shared core gains PIPELINE_NAME_EXISTS — an exception, so nothing idempotency-caches under the refused key — raised when an active pipeline carries the exact name and the command does not explicitly carry allowSameName, naming the catalogue read and the owner choice; the governed archive contract is pinned unchanged (preview token, exact reference, confirmation, never auto, no hard delete); TypeScript reports zero errors in touched files
-RENDERED_EVIDENCE: NOT_APPLICABLE: no rendered surface changed; the autonomy settings surface loses two switches that governed nothing
+RENDERED_EVIDENCE: NOT_APPLICABLE: no rendered surface changed; the autonomy settings surface loses two switches that governed nothing and the capability map drops the matching ghost entries
 BEHAVIORAL_EVIDENCE: PASS: source-level pins prove the retirement at every site class, the refusal and its explicit override in the core migration, and the intact archive flow; the non-vacuous canaries prove the governed tools remain
 AUTHENTICATED_RUNTIME: UNVERIFIED: the remaining behavior is a live same-name create refusing with the matches shown and an explicit-choice create succeeding, owed on a real workspace after merge
 KEYBOARD_FOCUS: NOT_APPLICABLE: no control or focus path changed

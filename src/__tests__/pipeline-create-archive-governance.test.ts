@@ -16,7 +16,7 @@
  *    pipeline already carries the exact name, unless the command explicitly says
  *    allowSameName, and the refusal names the catalogue read that shows every match.
  */
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 
@@ -25,7 +25,6 @@ const read = (p: string) => readFileSync(join(root, p), "utf8");
 const chat = read("supabase/functions/paige-ai-chat/index.ts");
 
 function latestCatalogueMigration(): string {
-  const { readdirSync } = require("node:fs") as typeof import("node:fs");
   const dir = join(root, "supabase/migrations");
   const files = readdirSync(dir).filter((f) => /^2027\d{10}/.test(f)).sort();
   for (let i = files.length - 1; i >= 0; i -= 1) {
@@ -35,7 +34,6 @@ function latestCatalogueMigration(): string {
   return "";
 }
 function latestConfigureMigration(): string {
-  const { readdirSync } = require("node:fs") as typeof import("node:fs");
   const dir = join(root, "supabase/migrations");
   const files = readdirSync(dir).filter((f) => /^2027\d{10}/.test(f)).sort();
   for (let i = files.length - 1; i >= 0; i -= 1) {

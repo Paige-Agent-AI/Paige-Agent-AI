@@ -93,37 +93,65 @@ SET ROLE authenticated;
 SELECT public.test_assert(public.delete_tenant_knowledge('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='bound'),4)->'source_cleanup'->>'reason'='retained_by_policy','bound canonical source reports retained_by_policy');
 RESET ROLE;
 SELECT public.test_assert((SELECT count(*)=1 FROM storage.objects WHERE id='40000000-0000-0000-0000-000000000002'),'uploaded source object retained after delete');
--- P2b: retired-generation invisibility — publish the same doc twice; old generation vanishes.
+-- P2b: TRUE second publication of an already-published doc; the FIRST generation retires.
 RESET ROLE;
+GRANT SELECT ON public.paige_durable_work TO service_role;
 SET ROLE service_role;
 SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',false);
-DELETE FROM public.extract_test WHERE name IN ('repub','repub2');
-INSERT INTO public.extract_test VALUES('repub',public.test_extract('70000000-0000-0000-0000-000000000023',NULL,NULL,'Replacement reviewed text v2'),NULL);
+DELETE FROM public.extract_test WHERE name='repub';
+-- First publication.
+INSERT INTO public.extract_test VALUES('repub',public.test_extract('70000000-0000-0000-0000-000000000023',NULL,NULL,'Publication text v1'),NULL);
 UPDATE public.extract_test SET started=public.start_knowledge_extraction((result->>'work_id')::uuid) WHERE name='repub';
-SELECT (public.complete_knowledge_extraction((result->>'work_id')::uuid,started->>'server_key',1,1,'Replacement reviewed text v2',started->>'input_hash'))->>'phase' FROM public.extract_test WHERE name='repub';
+SELECT (public.complete_knowledge_extraction((result->>'work_id')::uuid,started->>'server_key',1,1,'Publication text v1',started->>'input_hash'))->>'phase' FROM public.extract_test WHERE name='repub';
 RESET ROLE;
 SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',false);
 SET ROLE authenticated;
-SELECT public.test_assert(public.save_tenant_knowledge_review('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='repub'),(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='repub'),2,'Replacement reviewed text v2','{"title":"Republished","summary":null,"category":null,"tags":[]}')->>'revision'='3','replacement review saved');
+SELECT public.test_assert(public.save_tenant_knowledge_review('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='repub'),(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='repub'),2,'Publication text v1','{"title":"V1","summary":null,"category":null,"tags":[]}')->>'revision'='3','v1 review saved');
 RESET ROLE;
-DO $rsub$
+DO $sub1$
 DECLARE ans jsonb;
 BEGIN
- ans:=public.submit_tenant_knowledge_publication('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='repub'),(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='repub'),3,'60000000-0000-0000-0000-000000000023',encode(sha256(convert_to('Replacement reviewed text v2','UTF8')),'hex'));
-END $rsub$;
-DO $rdrive$
+ ans:=public.submit_tenant_knowledge_publication('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='repub'),(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='repub'),3,'60000000-0000-0000-0000-000000000023',encode(sha256(convert_to('Publication text v1','UTF8')),'hex'));
+END $sub1$;
+DO $drive1$
 DECLARE w uuid:=(SELECT id FROM public.paige_durable_work WHERE work_kind='knowledge_publish' AND request_payload->>'extraction_work_id'=(SELECT result->>'work_id' FROM public.extract_test WHERE name='repub'));
- s jsonb:=public.start_knowledge_publication(w); c jsonb; r jsonb; oldgen uuid;
+ s jsonb:=public.start_knowledge_publication(w); c jsonb; r jsonb;
 BEGIN
- oldgen:=(SELECT active_generation_id FROM public.tenant_knowledge_docs WHERE id=(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='repub'));
  FOR c IN SELECT * FROM jsonb_array_elements(s->'chunks') LOOP
   PERFORM public.stage_knowledge_publication(w,s->>'server_key',(s->>'attempt')::int,(s->>'revision')::int,jsonb_build_array(jsonb_build_object('index',(c->>'index')::int,'sha256',c->>'sha256','embedding',(SELECT jsonb_agg(0.5 ORDER BY g) FROM generate_series(1,1024) g))));
  END LOOP;
  r:=public.complete_knowledge_publication(w,s->>'server_key',(s->>'attempt')::int,(s->>'revision')::int);
- CREATE TABLE IF NOT EXISTS public.pub_probe(old_generation uuid); TRUNCATE public.pub_probe; INSERT INTO public.pub_probe VALUES(oldgen);
-END $rdrive$;
+END $drive1$;
+-- Second publication: replacement extraction on the SAME canonical doc.
+SET ROLE service_role;
+INSERT INTO public.extract_test VALUES('repub2',public.test_extract('70000000-0000-0000-0000-000000000026',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='repub'),4,'Publication text v2'),NULL);
+UPDATE public.extract_test SET started=public.start_knowledge_extraction((result->>'work_id')::uuid) WHERE name='repub2';
+SELECT (public.complete_knowledge_extraction((result->>'work_id')::uuid,started->>'server_key',1,(started->>'revision')::int,'Publication text v2',started->>'input_hash'))->>'phase' FROM public.extract_test WHERE name='repub2';
 RESET ROLE;
-SELECT public.test_assert((SELECT count(*)=0 FROM public.match_tenant_knowledge('00000000-0000-0000-0000-000000000001',(SELECT ARRAY(SELECT 0.5::double precision FROM generate_series(1,1024))::extensions.vector),20) m JOIN public.tenant_knowledge_chunks c ON c.id=m.chunk_id WHERE c.generation_id=(SELECT old_generation FROM public.pub_probe)),'retired generation chunks vanish from search after republication');
+SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',false);
+SET ROLE authenticated;
+SELECT public.test_assert(public.save_tenant_knowledge_review('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='repub'),(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='repub2'),6,'Publication text v2','{"title":"V2","summary":null,"category":null,"tags":[]}')->>'revision'='7','v2 review saved');
+RESET ROLE;
+CREATE TABLE IF NOT EXISTS public.pub_probe(old_generation uuid);
+TRUNCATE public.pub_probe;
+INSERT INTO public.pub_probe SELECT active_generation_id FROM public.tenant_knowledge_docs WHERE id=(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='repub');
+SELECT public.test_assert((SELECT old_generation IS NOT NULL FROM public.pub_probe),'first generation captured before republication');
+DO $sub2$
+DECLARE ans jsonb;
+BEGIN
+ ans:=public.submit_tenant_knowledge_publication('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='repub'),(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='repub2'),7,'60000000-0000-0000-0000-000000000026',encode(sha256(convert_to('Publication text v2','UTF8')),'hex'));
+END $sub2$;
+DO $drive2$
+DECLARE w uuid:=(SELECT id FROM public.paige_durable_work WHERE work_kind='knowledge_publish' AND request_payload->>'extraction_work_id'=(SELECT result->>'work_id' FROM public.extract_test WHERE name='repub2'));
+ s jsonb:=public.start_knowledge_publication(w); c jsonb; r jsonb;
+BEGIN
+ FOR c IN SELECT * FROM jsonb_array_elements(s->'chunks') LOOP
+  PERFORM public.stage_knowledge_publication(w,s->>'server_key',(s->>'attempt')::int,(s->>'revision')::int,jsonb_build_array(jsonb_build_object('index',(c->>'index')::int,'sha256',c->>'sha256','embedding',(SELECT jsonb_agg(0.5 ORDER BY g) FROM generate_series(1,1024) g))));
+ END LOOP;
+ r:=public.complete_knowledge_publication(w,s->>'server_key',(s->>'attempt')::int,(s->>'revision')::int);
+END $drive2$;
+SELECT public.test_assert((SELECT active_generation_id IS DISTINCT FROM old_generation FROM public.tenant_knowledge_docs,pub_probe WHERE id=(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='repub')),'second publication switched the active generation');
+SELECT public.test_assert((SELECT count(*)=0 FROM public.match_tenant_knowledge('00000000-0000-0000-0000-000000000001',(SELECT ARRAY(SELECT 0.5::double precision FROM generate_series(1,1024))::extensions.vector),20) m JOIN public.tenant_knowledge_chunks c ON c.id=m.chunk_id WHERE c.generation_id=(SELECT old_generation FROM public.pub_probe)),'retired generation chunks vanish from search after the second publication');
 DROP TABLE IF EXISTS public.pub_probe;
 SELECT public.test_assert((SELECT count(*)>0 AND bool_and(content IS NOT NULL AND content<>'') FROM public.tenant_knowledge_chunks WHERE generation_id IS NOT NULL),'published chunk content is materialized and non-empty');
 -- P2c: replay, settle-failure, and recover proofs.

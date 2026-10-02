@@ -1134,12 +1134,6 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
             legal, ownership, email, saved Setup references, and Paige voice context. Canonical Knowledge follows your workspace permissions.
           </div>
         )}
-        {data.accessScope === "admin_operational" && (
-          <div className="setup-notice">
-            Admin editing is limited to the non-legal operating direction
-            supported by current policy.
-          </div>
-        )}
         {notice && (
           <div
             ref={errorSummary}

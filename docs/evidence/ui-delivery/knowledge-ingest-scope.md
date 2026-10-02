@@ -17,7 +17,7 @@ ZOOM_REFLOW: UNVERIFIED: no UI edits; inherited layout not re-driven.
 REDUCED_MOTION: NOT_APPLICABLE: no motion changes.
 STATE_COVERAGE: PASS: mismatched explicit workspace, null/malformed active workspace, revoked/malformed authority, deleted actor, cross-membership path, download/extraction/embedding switches, downstream response switches, private success, owner authority and uncertain cleanup exercised.
 TRUTHFUL_STATE_LABELS: PASS: pre-ingestion denial is retry-safe and identifies no indexing; after possible writes, core verifies removal or returns uncertainty. Late scope changes suppress success.
-SOLO_UI: NO: only backend authorization and tests change; the canonical Solo interface remains untouched.
+SOLO_UI: YES: the ingest-scope guard protects Solo Knowledge intake surfaces (Settings bucket and Paige panel), identical for every tenant
 UNVERIFIED: real caller/database/provider, full UI/account switch, Deno typecheck, deployment and production acceptance. Checkpoint validation is not atomic across HTTP/provider/database calls and cannot detect a switch away and back between observations. Trusted core callers such as Studio keep their existing authorization until separately adopted.
 OWNER_INTENT: Continue the approved Knowledge capability with server-derived workspace binding for paste, file and URL intake; supplied tenant identifiers are equality preconditions and cannot override authority.
 MUST_NOT_HAPPEN: no cross-workspace source download or provider/write after observed invalidation; no fabricated success or rollback; no role-name fork or schema/UI/Chat changes.
@@ -51,3 +51,11 @@ File source prefix must match the pinned workspace before download. Extractor tr
 - No UI, schema, reserved paige-ai-chat handler, Studio authorization, automatic retry or idempotency changes. Source storage lifecycle remains separate.
 - No atomic revocation guarantee: authority can change between checkpoints, or change away and back without detection. Cleanup uses service-role scope only for the newly created row; no existing knowledge is pruned.
 - Shipped Delivery Log N/A: no merge or deployment. Independent review is owed on the final exact commit; the author does not approve their own work.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: scope-guard backend slice; authenticated full-shell render owed at the Knowledge finish line
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: scope-guard backend slice; authenticated full-shell render owed at the Knowledge finish line
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: scope-guard backend slice; authenticated full-shell render owed at the Knowledge finish line
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: scope-guard backend slice; authenticated full-shell render owed at the Knowledge finish line
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: scope-guard backend slice; authenticated full-shell render owed at the Knowledge finish line
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: scope-guard backend slice; authenticated full-shell render owed at the Knowledge finish line
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: scope-guard backend slice; authenticated full-shell render owed at the Knowledge finish line
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: scope-guard backend slice; authenticated full-shell render owed at the Knowledge finish line

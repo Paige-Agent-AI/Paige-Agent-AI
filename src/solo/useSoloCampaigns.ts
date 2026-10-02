@@ -919,6 +919,53 @@ export function useSoloCampaigns(): SoloCampaignsState {
     };
   }, [accountContextLoading, activeTenantId, activeTenant?.slug, refreshKey]);
 
+  // Realtime pipeline board: one tenant-keyed subscription over the records the canonical
+  // load already reads. Events and (re)subscriptions resolve through `retry()` — a full
+  // reload of current truth under whatever tenant is active — so there is no second cache
+  // to drift, stale events cannot overwrite fresher state, and a late event from a previous
+  // workspace can only cause a refetch scoped to the current one. The effect re-runs on
+  // tenant change: the old channel is removed before a new one is opened.
+  useEffect(() => {
+    if (!activeTenantId || accountContextLoading) return;
+    let disposed = false;
+    // Coalesce event bursts: one bulk write over N deals fires N change events, and each must not
+    // trigger its own full reload. A short trailing window collapses a burst into one reload of
+    // current truth.
+    let reloadTimer: ReturnType<typeof setTimeout> | undefined;
+    const scheduleReload = () => {
+      if (disposed) return;
+      clearTimeout(reloadTimer);
+      reloadTimer = setTimeout(() => { if (!disposed) retry(); }, 200);
+    };
+    const channel = supabase
+      .channel(`solo-pipeline-board:${activeTenantId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "deals", filter: `tenant_id=eq.${activeTenantId}` },
+        () => scheduleReload(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "pipelines", filter: `tenant_id=eq.${activeTenantId}` },
+        () => scheduleReload(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "pipeline_stages", filter: `tenant_id=eq.${activeTenantId}` },
+        () => scheduleReload(),
+      )
+      .subscribe((status) => {
+        // A channel that (re)connects refetches once: recovery reads current truth instead
+        // of trusting the state left from before the disconnect.
+        if (status === "SUBSCRIBED" && !disposed) scheduleReload();
+      });
+    return () => {
+      disposed = true;
+      clearTimeout(reloadTimer);
+      supabase.removeChannel(channel);
+    };
+  }, [activeTenantId, accountContextLoading, retry]);
+
   const synchronousTenantId = activeTenantId ?? null;
   const visibleState =
     state.tenantId === synchronousTenantId

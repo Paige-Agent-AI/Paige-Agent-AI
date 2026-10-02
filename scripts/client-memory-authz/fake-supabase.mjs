@@ -99,6 +99,24 @@ class QueryBuilder {
     const fn = this._live().scenario.tables?.[this._table];
     if (typeof fn === "function") return fn(this._filters) ?? [];
     if (Array.isArray(fn)) return fn;
+    // The declared-scope guard (chat-scope PR) reads the caller's declared active tenant from
+    // `profiles` on evidence-carrying turns. Scenarios do not script that table, and an
+    // unscripted read returns no row — which the guard CORRECTLY fails closed on, refusing
+    // every otherwise-legitimate turn in this smoke. Default the row to AGREE with whatever
+    // tenant the scenario's persona RPC resolves, so the honest default is a matching scope.
+    // A scenario that wants a declared/resolved mismatch still scripts `tables.profiles`
+    // explicitly and overrides this default.
+    if (this._table === "profiles" && this._op === "select") {
+      const persona = this._live().scenario.rpcs?.get_paige_persona_context;
+      const resolved = typeof persona === "function" ? undefined : persona?.data?.[0]?.tenant_id;
+      const declared = resolved !== undefined ? resolved
+        : this._live().scenario.declaredActiveTenantId ?? null;
+      if (resolved !== undefined || this._live().scenario.declaredActiveTenantId !== undefined) {
+        const uid = this._filters.find((f) => f[0] === "eq" && f[1] === "user_id")?.[2]
+          ?? this._live().scenario.authUser?.id ?? null;
+        return [{ user_id: uid, active_tenant_id: declared }];
+      }
+    }
     return [];
   }
 

@@ -56,7 +56,14 @@ serve(async (req) => {
       });
     }
 
-    const scope = await bindKnowledgeIngestScope(supabase, body.data.tenant_id);
+    // Plain-function adapter for the shared scope port: relating supabase-js's generic
+    // from()/rpc() signatures to a structural caller trips TS2345 under deno check.
+    const scopeCaller = {
+      auth: supabase.auth,
+      readActiveTenant: (userId: string) => supabase.from("profiles").select("active_tenant_id").eq("user_id", userId).maybeSingle(),
+      rpc: (name: string, args?: Record<string, unknown>) => supabase.rpc(name, args as never),
+    };
+    const scope = await bindKnowledgeIngestScope(scopeCaller, body.data.tenant_id);
     const { tenantId, userId } = scope;
 
     // Full chunk→embed→write pipeline (shared, §12). docClient = the user-scoped client so the

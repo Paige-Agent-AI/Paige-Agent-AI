@@ -14,6 +14,7 @@ import { prepareCalendarLinkShare, sendCalendarLink, calendarLinkSocialCopy, typ
 // (`public.paige_agreement_overview`); the send stays on `agreement-send` behind the confirm gate.
 import { AGREEMENT_TOOLS } from '../_shared/paige-spine/domains/agreement.ts';
 import { readAgreements } from '../_shared/agreements/chat-read.ts';
+import { draftAgreement, sendAgreement } from '../_shared/agreements/chat-write.ts';
 import { N8N_MANAGEMENT_TOOLS, runN8nManagement } from '../_shared/n8n-management.ts';
 const N8N_MANAGEMENT_TOOL_NAMES = new Set(N8N_MANAGEMENT_TOOLS.map(tool => tool.function.name));
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -284,6 +285,31 @@ function describeStep(
     case "calendar_link_social_copy": return { label: "Prepared social post copy", group: "owner", detail: "copy-ready · nothing posted" };
     // Agreements (INT-178) — both are READS, so neither can report a send. The detail says how many
     // were read, never that anything was delivered or signed.
+    // THE OUTWARD-FACING ONE. This chip is read by someone deciding whether their client has been
+    // asked to sign, so it reports RECIPIENTS, never a bare "sent".
+    case "agreement_send": {
+      if (failed) return { label: "Couldn't send that agreement", group: "owner", detail: "nothing went out" };
+      const to = typeof out?.sentTo === "number" ? out.sentTo : 0;
+      const missed = typeof out?.notDelivered === "number" ? out.notDelivered : 0;
+      return {
+        label: to === 1 ? "Sent the agreement for signature" : `Sent the agreement to ${to} signers`,
+        group: "owner",
+        // A partial send is the case an owner most needs to see, so it is never rounded away.
+        detail: missed > 0 ? `${missed} could not be reached` : undefined,
+      };
+    }
+    // The other agreement WRITE. It drafts; it never sends, so this chip must never read as delivery.
+    case "agreement_draft": {
+      if (failed) return { label: "Couldn't draft that agreement", group: "owner" };
+      // CREATED vs REVISED, because a silently-created duplicate is this tool's likeliest mistake
+      // and the chip is where the person would first notice it.
+      const made = out?.created === true;
+      return {
+        label: made ? "Drafted a new agreement" : "Revised the draft agreement",
+        group: "owner",
+        detail: typeof out?.title === "string" ? `${out.title} — not sent` : "Not sent",
+      };
+    }
     case "agreement_list":
     case "agreement_status": {
       if (failed) return { label: "Couldn't read your agreements", group: "owner" };
@@ -323,11 +349,7 @@ function describeStep(
     case "presence_who_online": return { label: "Checking who's online", group: "owner" };
     case "presence_is_online": return { label: "Checking if someone's online", group: "owner" };
     case "crm_assign_contact": return { label: "Assigning the contact", group: "owner" };
-    case "program_list": return { label: "Reviewing your programs", group: "owner" };
-    case "program_enroll": return { label: "Enrolling them in the program", group: "client" };
     // Pipeline (owner)
-    case "pipeline_create": return { label: "Building your pipeline", group: "owner" };
-    case "pipeline_add_stage": return { label: "Adding a pipeline stage", group: "owner" };
     case "pipeline_configure": return { label: "Configuring your pipeline", group: "owner" };
     case "deal_create": return { label: "Adding the deal", group: "owner" };
     case "deal_move_stage": return { label: "Moving the deal", group: "owner" };
@@ -2457,8 +2479,7 @@ JSON:`;
       // Canonical CRM command results are deliberately absent: they contain durable tenant readback
       // and therefore protect the turn. Legacy non-command receipts remain ids/argument echoes only.
       "update_business_profile", "crm_update_pipeline_stage", "crm_assign_contact",
-      "pipeline_create", "pipeline_add_stage",
-      "member_grant_role", "member_revoke_role", "calendar_book_meeting", "program_enroll",
+      "member_grant_role", "member_revoke_role", "calendar_book_meeting",
       // Action bus, plans, marketplace, authoring — ids and acknowledgements.
       "action_file", "action_advance",
       "mission_create", "mission_revise", "mission_transition",
@@ -2659,7 +2680,18 @@ JSON:`;
         const tid = hasRow ? (row as any).tenant_id : null;
         const resolved = !error && (!hasRow || tid === null || typeof tid === "string");
         const currentTenantId = typeof tid === "string" ? tid : null;
-        if (resolved && currentTenantId === turnScopeTenantId) return true;
+        // The resolver may fall back to the oldest membership after active scope
+        // clears. Re-read the selected workspace itself at the same protected
+        // boundary. Tenantless operator turns retain their existing resolver path.
+        let declaredScopeMatches = turnScopeTenantId === null;
+        if (turnScopeTenantId !== null) {
+          const { data: declaredProfile, error: declaredError } = await supabaseClient
+            .from("profiles").select("active_tenant_id").eq("user_id", user.id).maybeSingle();
+          declaredScopeMatches = !declaredError &&
+            typeof declaredProfile?.active_tenant_id === "string" &&
+            declaredProfile.active_tenant_id === turnScopeTenantId;
+        }
+        if (resolved && currentTenantId === turnScopeTenantId && declaredScopeMatches) return true;
         console.error(
           "[paige] active account changed after Knowledge retrieval — provider dispatch cancelled",
           JSON.stringify({ retrieved_tenant_id: tenantKbScopeTenantId, current_tenant_id: currentTenantId, code: (error as any)?.code ?? null }),
@@ -5268,6 +5300,8 @@ The current user is an ADMIN operating the Paige CRM. You have full read access 
 - "Archive that pipeline" → require one exact PPL reference. Call pipeline_archive_preview, state the returned exact name, reference, deal count, and consequence, wait for the owner's confirmation, then call pipeline_configure with the same token and confirmed reference. Archive never inherits auto mode and hard delete is unavailable.
 - "Organize my pipelines" → pipeline_catalogue returns tenant folders (including empty folders), virtual Unfiled, and each exact pipeline/folder binding even with zero deals. Use pipeline_configure to create, rename, restore, or move exact pipelines by id + PPL reference. Folder archive is owner-only and always confirm-gated: call pipeline_folder_archive_preview for the exact folder id, state its returned name, pipeline count, and consequence, wait for the owner confirmation card, then pass the same token/id/name to pipeline_configure. Folders are one level only and never alter stages, deals, or pipeline identity.
 - "Add a deal for Jane, $3k, in Proposal" → resolve the exact pipeline, stage, and contact from current CRM reads, then call deal_create with value in cents.
+- "Enroll this client in my program" → enrollment IS deal_create: add their deal in that program's pipeline at its Enrolled stage, resolved from current reads.
+- More than one active pipeline carrying the program's exact name → show every pipeline with the same name and its PPL reference, then ask which one to use — never guess, merge, or create the enrollment before the operator picks.
 - "Move the Acme deal to Won" → read the exact deal and target stage, including their current version fields, then call deal_move_stage.
 - For any CRM mutation, use only the governed crm_* or deal_* command tool currently exposed in this turn. Never reuse remembered IDs or versions, invent an approval, or retry an unknown outcome with changed arguments.
 - Ownership, close/reopen, merge, hard-delete, bulk, and permanent task/deal deletion are approval-card operations. Explain the exact preview and wait; the operator's prose alone is not an approval token.
@@ -5305,7 +5339,7 @@ N8N AUTHORING — read n8n_get_sdk_reference before writing Workflow SDK code. V
 ADD SUB-AGENTS INTELLIGENTLY — one brain by default (give it tools, not more brains). Add a specialist sub-agent ("@n8n/n8n-nodes-langchain.agentTool") only when the work genuinely splits: a distinct expertise/persona is needed, two audiences at once (a Client-Experience agent for the client + an Owner-Ops agent for the coach — the action bus §8), more than ~6-8 tools on one agent, a stage needs its own memory/loop, or a long-horizon 90-day workflow (orchestrator decides "who's due today", a content sub-agent personalizes each touch). Tell the operator plainly: "one brain that can act, unless the work splits into different jobs or two audiences — then I give the brain a specialist teammate." Keep every generated automation coaching-generic (never funding/credit content in a default).
 
 BE A PROACTIVE ASSISTANT, NOT AN ORDER-TAKER. Never just execute the literal request and stop. Anticipate the natural next steps and offer them, and confirm before you commit anything. Three rules:
-1. PROPOSE → REVIEW → THEN ACT. For an action that needs approval, describe exactly what you intend to do and wait for approval through the workspace's approval control. When a tool returns needs_confirm, read confirm_summary in plain language. If a Needs your OK card is visible in this conversation, the person can click Approve there. A spoken or typed yes alone does not complete this step. If this chat has no approval control, say the action is pending and cannot be approved here. They can request the action afresh in a Paige workspace with approval controls if their account has access, or ask an authorized workspace teammate to complete it. Never claim the pending action transferred to another conversation. Do not retry a pending action in the same reply. If the person changes the request, propose the new action for review. Existing workspace autopilot settings remain the operator's standing choice, never your assumption. Anything outbound (an email, an SMS) is NEVER sent directly — draft it and route it to the existing approval lane.
+1. PROPOSE → REVIEW → THEN ACT. For an action that needs approval, describe exactly what you intend to do and wait for approval through the workspace's approval control. When a tool returns needs_confirm, read confirm_summary in plain language. If a Needs your OK card is visible in this conversation, the person can click Approve there. A spoken or typed yes alone does not complete this step. If this chat has no approval control, say the action is pending and cannot be approved here. They can request the action afresh in a Paige workspace with approval controls if their account has access, or ask an authorized workspace teammate to complete it. Never claim the pending action transferred to another conversation. Do not retry a pending action in the same reply. An approved card executes the stored proposal exactly as it was shown — never re-construct, re-word, or re-emit an action the person already approved; after an approval, report the outcome the surface shows and nothing more, and use success words only after that verified outcome. Resolve every required identity — the contact, the pipeline, the stage, and their exact references — from current reads BEFORE proposing an approval; when a name is ambiguous, ask before you propose, never after. If the person changes the request, propose the new action for review. Existing workspace autopilot settings remain the operator's standing choice, never your assumption. Anything outbound (an email, an SMS) is NEVER sent directly — draft it and route it to the existing approval lane.
 2. CONFIRM THE RESULT — AND NEVER FAKE ONE. Only say you did something ("Done — created…", "reminder set", "task assigned", "added to your calendar") when a TOOL you called THIS turn actually returned success. A claim of completion with no tool call behind it is a lie, and it is the worst thing you can do here — it destroys trust. You DO have real tools for reminders, planning, tasks, and booking (plan_set_reminder, plan_create/plan_assign_task/plan_add_milestone, crm_create_task, calendar_book_meeting) — USE them, then confirm off the tool's success. If there is genuinely no tool for what they asked, DO NOT pretend — say plainly "I can't do that one from here yet" and offer what you genuinely can do, or file it on the action bus so it's tracked. "It'll show up in your reminders / Task Manager / calendar" is only true if a tool actually put it there — never say it otherwise. Once an action really commits, confirm plainly in one line; never leave them guessing. For anything that SENDS (SMS/email/outbound), this is bound by AUTOMATION HONESTY: report fired vs delivered, and only say "sent" when delivered:true — never off a bare fire. The test before every "done": "Did a tool call this turn return success for exactly this? If not, I do not claim it happened."
 3. PROBE, THEN DRIVE. Then surface the obvious next moves as a short, tight menu of questions (not a wall of text).
 
@@ -6375,29 +6409,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           {
             type: "function",
             function: {
-              name: "program_list",
-              description: "Team only. List the programs and offers loaded for this tenant, priority/current-campaign first. Use to recommend the right program during onboarding and to resolve a program name to its id before enrolling.",
-              parameters: { type: "object", properties: {} }
-            }
-          },
-          {
-            type: "function",
-            function: {
-              name: "program_enroll",
-              description: "Team only. Enroll a contact into a program/offer. Resolve the program via program_list first. Confirm with the operator before enrolling. Idempotent — re-enrolling returns the existing enrollment.",
-              parameters: {
-                type: "object",
-                properties: {
-                  contact_id: { type: "string", description: "clients.id of the contact." },
-                  program_id: { type: "string", description: "programs.id from program_list." }
-                },
-                required: ["contact_id", "program_id"]
-              }
-            }
-          },
-          {
-            type: "function",
-            function: {
               name: "crm_add_note",
               description: "Team only. File a note onto a client's record — the notes panel their team reads, not the activity timeline. Use it when the operator tells you something worth keeping about a client ('note that Dana wants to close before year end', 'she's moving offices in March'), or dictates one. You must know WHICH client: resolve them with crm_search_contacts first and use that contact id — never guess, and never file against the client merely because they're the one in focus if the operator named someone else. The note is STAFF-ONLY: the client cannot see it, and you should say so plainly rather than implying they might. Propose it first and only file it once the operator says yes, unless the workspace set this to auto.",
               parameters: {
@@ -6593,7 +6604,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "pipeline_configure",
-              description: "Admin only. The governed pipeline-owning capability shared with the Campaigns Pipeline workspace. Read with pipeline_catalogue, then create, rename, describe, activate, archive, or restore a pipeline; create, edit, reorder, archive, or restore a stage; move a deal; or create, rename, archive, restore, and organize one-level tenant folders. Hard delete is unavailable here. create-pipeline may include explicit editable stages or no stages for a blank draft; it never substitutes presets. Pipeline archive requires pipeline_archive_preview plus owner confirmation of that exact reference. Folder archive always requires owner confirmation of the exact selected folder name and moves every assigned pipeline to Unfiled without changing its lifecycle status. Never INFER stage meaning, revenue, ROI, payment, client health, or portal engagement. Setting `stageType` is the one exception and it is not an inference: send it only when the owner has told you a stage means won or lost, never because a label looks like it.",
+              description: "Admin only. The governed pipeline-owning capability shared with the Campaigns Pipeline workspace. Read with pipeline_catalogue, then create, rename, describe, activate, archive, or restore a pipeline; create, edit, reorder, archive, or restore a stage; move a deal; or create, rename, archive, restore, and organize one-level tenant folders. Hard delete is unavailable here. create-pipeline may include explicit editable stages or no stages for a blank draft; it never substitutes presets. Pipeline archive requires pipeline_archive_preview plus owner confirmation of that exact reference. Folder archive always requires owner confirmation of the exact selected folder name and moves every assigned pipeline to Unfiled without changing its lifecycle status. Creating a pipeline refuses when an active pipeline already carries the exact same name: read pipeline_catalogue, show every same-name match with its PPL reference, and ask — the create command may carry allowSameName true only when the owner explicitly wants a second pipeline with that exact name. Never INFER stage meaning, revenue, ROI, payment, client health, or portal engagement. Setting `stageType` is the one exception and it is not an inference: send it only when the owner has told you a stage means won or lost, never because a label looks like it.",
               parameters: {
                 type: "object",
                 properties: {
@@ -6613,6 +6624,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                       targetStageId: { type: "string", description: "Active stage id in the deal's current pipeline." },
                       expectedVersion: { type: "integer", minimum: 1, description: "Version read immediately before proposing this write." },
                       name: { type: "string" },
+                      allowSameName: { type: "boolean", description: "Set true ONLY when the owner has seen the existing same-name pipelines and explicitly wants a second pipeline with that exact name. The create refuses without it when an active pipeline already carries the name." },
                       description: { type: "string" },
                       label: { type: "string" },
                       movePolicy: { type: "string", enum: ["direct", "approval"] },
@@ -7533,6 +7545,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       calendar_link_prepare: "preparing a booking link to share",
       calendar_link_send: "sending a booking link to a contact",
       calendar_link_social_copy: "preparing social post copy for a booking link",
+      agreement_draft: "drafting an agreement",
+      agreement_send: "sending an agreement for signature",
       agreement_list: "checking where your agreements stand",
       agreement_status: "checking a client's agreement",
       update_client_data: "saving details to a client's file",
@@ -7552,15 +7566,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       crm_log_activity: "logging an activity",
     crm_add_note: "adding a note to a client's record",
       crm_file_document: "filing a document on a client's record",
-      pipeline_create: "creating a pipeline",
-      pipeline_add_stage: "adding a pipeline stage",
       pipeline_configure: "configuring the pipeline",
       deal_create: "adding a deal",
       deal_move_stage: "moving a deal",
       member_grant_role: "granting a staff role",
       member_revoke_role: "revoking a staff role",
       calendar_book_meeting: "booking a meeting",
-      program_enroll: "enrolling a client in a program",
       draft_marketing_content: "drafting marketing content",
       generate_image: "generating an image",
       content_save: "saving content",
@@ -7798,10 +7809,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           return `Make that number the one this business calls and texts from — it is what clients will see.`;
         case "comms_draft_registration":
           return `Have Paige write your carrier registration copy and save it as prepared. This replaces any copy already saved. It does not file anything.`;
-        case "pipeline_create":
-          return `Create a pipeline "${a?.name || "Untitled"}"${Array.isArray(a?.stages) && a.stages.length ? ` with ${a.stages.length} stage${a.stages.length === 1 ? "" : "s"}${a.stages.map((s: any) => s?.label).filter(Boolean).length ? ` (${a.stages.map((s: any) => s?.label).filter(Boolean).join(" → ")})` : ""}` : ""}.`;
-        case "pipeline_add_stage":
-          return `Add stage "${a?.label || ""}" to the pipeline.`;
         case "pipeline_configure":
           if (a?.command?.type === "archive-pipeline" && a?._archive) {
             return `Archive "${a._archive.name}" (${a._archive.short_ref}) with ${a._archive.deal_count} deal${a._archive.deal_count === 1 ? "" : "s"}. This removes it from active selection; it does not hard-delete the pipeline or its history.`;
@@ -7840,6 +7847,39 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         case "booking_preset_restore": {
           const p = await bookingPreset(a?.presetId);
           return `Restore the archived booking calendar ${p.label} — bring it back to Draft or Paused. It does NOT go back on the air; publishing is a separate step.`;
+        }
+        // THE AGREEMENT SEND CARD. This is the one place a person sees what they are authorising
+        // before a client is emailed, so it names BOTH halves of the consequence: which document,
+        // and to whom. A card reading "send this agreement" approves an unnamed thing to an unnamed
+        // person, which is not consent (§70).
+        //
+        // Read in-tenant under the CALLER's JWT, so RLS scopes it and a forged or cross-tenant id
+        // simply returns no row and the card falls back to unnamed wording rather than guessing.
+        case "agreement_send": {
+          const aid = typeof a?.agreementId === "string" ? a.agreementId.trim() : "";
+          const tenantForCard = personaCtx?.tenant_id ?? null;
+          let title = "this agreement";
+          let who = "its signers";
+          if (UUIDISH.test(aid) && tenantForCard) {
+            try {
+              const { data: ag } = await supabaseClient
+                .from("paige_agreements").select("title")
+                .eq("id", aid).eq("tenant_id", tenantForCard).maybeSingle();
+              if (typeof ag?.title === "string" && ag.title.trim()) title = `"${ag.title.trim()}"`;
+              const { data: sg } = await supabaseClient
+                .from("paige_agreement_signers").select("email")
+                .eq("agreement_id", aid).eq("tenant_id", tenantForCard);
+              const addrs = Array.isArray(sg)
+                ? sg.map((r) => (typeof r?.email === "string" ? r.email.trim() : "")).filter(Boolean)
+                : [];
+              // Name every recipient when there are few enough to read. Beyond that the count is
+              // the honest summary — a truncated list reads as the whole list.
+              if (addrs.length === 1) who = addrs[0];
+              else if (addrs.length === 2) who = `${addrs[0]} and ${addrs[1]}`;
+              else if (addrs.length > 2) who = `${addrs.length} signers`;
+            } catch { /* fall through to unnamed wording — §13, better unnamed than wrongly named */ }
+          }
+          return `Email ${title} to ${who} for signature. They get a link they can sign, and once it has gone it cannot be recalled.`;
         }
         case "calendar_link_send": {
           const p = await bookingPreset(a?.calendarId);
@@ -8026,8 +8066,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           return `Revoke the "${a?.role || ""}" role from a team member.`;
         case "calendar_book_meeting":
           return `Book "${a?.title || "meeting"}"${a?.start_at ? ` at ${a.start_at}` : ""}${a?.end_at ? `–${a.end_at}` : ""}${a?.timezone ? ` (${a.timezone})` : ""}.`;
-        case "program_enroll":
-          return `Enroll the client in this program.`;
         case "draft_marketing_content":
           return `Draft ${a?.variations || 1} ${a?.channel || "content"} piece(s).`;
         case "generate_image":
@@ -8647,6 +8685,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // these exact fingerprint fields; do not fabricate a passive approval-queue row/id.
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, needs_confirm: true,
               requires_operator_approval: true, confirm_fingerprint: crmBody.fingerprint, confirm_summary: summary,
+              // The approved card executes the STORED proposal: these let the surface invoke the
+              // door directly with the exact command it minted, so execution never depends on the
+              // model re-emitting the arguments.
+              confirm_command: canonicalCrmCommand, confirm_idempotency_key: idempotencyKey,
               preview: crmBody.preview ?? null, note: "Show the Needs your OK card. Nothing changed yet. Do not call this tool again in this reply." }) });
           } else if (crmError || crmBody.ok === false) {
             // No answer from crm-command's own code (it always writes `ok`): the request failed in
@@ -10077,8 +10119,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           tc.function.name === "crm_update_contact" ||
           tc.function.name === "propose_business_brief_update" ||
           tc.function.name === "update_business_profile" ||
-          tc.function.name === "pipeline_create" ||
-          tc.function.name === "pipeline_add_stage" ||
           tc.function.name === "pipeline_catalogue" ||
           tc.function.name === "pipeline_archive_preview" ||
           tc.function.name === "pipeline_folder_archive_preview" ||
@@ -10119,8 +10159,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           tc.function.name === "presence_who_online" ||
           tc.function.name === "presence_is_online" ||
           tc.function.name === "crm_assign_contact" ||
-          tc.function.name === "program_list" ||
-          tc.function.name === "program_enroll" ||
           N8N_MANAGEMENT_TOOL_NAMES.has(tc.function.name) ||
           tc.function.name === "zapier_list_actions" ||
           tc.function.name === "zapier_run_action" ||
@@ -11116,32 +11154,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   };
                 }
               }
-            } else if (tc.function.name === "pipeline_create") {
-              const stagesIn = Array.isArray(args.stages) ? args.stages : [];
-              const { data: pid, error } = await supabaseClient.rpc("create_pipeline_with_stages", {
-                _tenant_id: personaCtx?.tenant_id ?? null,
-                _name: args.name,
-                _stages: stagesIn.map((s: any, i: number) => ({
-                  label: s?.label ?? `Stage ${i + 1}`,
-                  order_index: i + 1,
-                  probability: Math.max(0, Math.min(100, Number(s?.probability) || 0)),
-                  stage_type: ["open", "won", "lost"].includes(s?.stage_type) ? s.stage_type : "open",
-                })),
-                _description: args.description ?? null,
-                _is_default: args.is_default === true,
-                _created_by: user.id,
-              });
-              if (error) throw error;
-              result = { success: true, pipeline_id: pid };
-            } else if (tc.function.name === "pipeline_add_stage") {
-              const { data: sid, error } = await supabaseClient.rpc("add_pipeline_stage", {
-                _pipeline_id: args.pipeline_id,
-                _label: args.label,
-                _probability: Math.max(0, Math.min(100, Number(args.probability) || 0)),
-                _stage_type: ["open", "won", "lost"].includes(args.stage_type) ? args.stage_type : "open",
-              });
-              if (error) throw error;
-              result = { success: true, stage_id: sid };
             } else if (tc.function.name === "deal_create") {
               // Add a deal to a pipeline. Tenant-scoped by construction: the stage must belong to
               // THIS tenant's pipeline, and the row is stamped with the caller's tenant_id — a deal
@@ -12376,20 +12388,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               });
               if (error) throw error;
               result = { success: true, ...(data as any) };
-            } else if (tc.function.name === "program_list") {
-              const { data, error } = await supabaseClient.rpc("list_tenant_programs", {
-                p_tenant_id: personaCtx?.tenant_id ?? null,
-              });
-              if (error) throw error;
-              result = { success: true, count: (data as any[])?.length ?? 0, programs: data ?? [] };
-            } else if (tc.function.name === "program_enroll") {
-              const { data, error } = await supabaseClient.rpc("enroll_contact_in_program", {
-                p_contact_id: args.contact_id,
-                p_program_id: args.program_id,
-                p_tenant_id: personaCtx?.tenant_id ?? null,
-              });
-              if (error) throw error;
-              result = { success: true, ...(data as any) };
             } else if (tc.function.name === "crm_log_activity") {
               crmWriteAttempted = true; // slice 3 (F05): dispatching the external write
               const { data: row, error } = await admin
@@ -13133,6 +13131,131 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           } catch (e) {
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success:false, error:"The booking link was not shared.", note:"No send ran and no delivery may be claimed." }) });
           }
+        } else if (tc.function.name === "agreement_send") {
+          // INT-178 — THE OUTWARD-FACING ACTION. This emails a real person a link they can sign.
+          //
+          // IT REACHES THE EDGE FUNCTION, AND IT FORWARDS THE CALLER'S JWT. `agreement-send` runs
+          // its OWN owner-or-admin check against that token — the check that could not bind until
+          // recently, so no send had ever succeeded for anyone. Forwarding the caller's
+          // authorization is what makes that check mean something; a service-role call would
+          // bypass the gate this depends on.
+          //
+          // THE CONFIRM GATE IS NOT OPTIONAL HERE. `agreement_send` is `high`, so the model's own
+          // "they said yes" channel is refused outright — only a fingerprint echoed from a card a
+          // person actually saw reaches this line.
+          try {
+            const args = JSON.parse(tc.function.arguments || "{}");
+            const tid = personaCtx?.tenant_id ?? null;
+            const forwardedAuth = authHeader ?? "";
+            const r = await sendAgreement({
+              expectedTenantId: tid,
+              agreementId: args.agreementId ?? null,
+              send: async (agreementId) => {
+                const resp = await fetch(`${supabaseUrl}/functions/v1/agreement-send`, {
+                  method: "POST",
+                  headers: { "Authorization": forwardedAuth, "apikey": supabaseKey, "Content-Type": "application/json" },
+                  body: JSON.stringify({ agreementId }),
+                });
+                let parsed: unknown = {};
+                try { parsed = await resp.json(); } catch { /* non-JSON → an unknown outcome, handled below */ }
+                return { ok: resp.ok, status: resp.status, body: parsed };
+              },
+            });
+            await recordCapabilityRun(supabase, {
+              tenantId: tid,
+              actorId: user.id,
+              capabilityKey: tc.function.name,
+              // EXHAUSTIVE over `AgreementSendFailure`. `unavailable` and `nobody_reachable` are
+              // FAILURES rather than refusals: in the first the outcome is genuinely unknown, and
+              // in the second the function ran and nobody got their link — neither is the workspace
+              // declining to do something, and the Rail must not read as though it were.
+              outcome: !r.success
+                ? ((): "capability_refused" | "capability_failed" => {
+                    switch (r.reason) {
+                      case "unavailable":
+                      case "nobody_reachable":
+                      case "document_problem":
+                      case "not_delivered": return "capability_failed";
+                      case "refused":
+                      case "not_a_draft":
+                      case "needs_setup":
+                      case "no_workspace":
+                      case "bad_agreement_id":
+                      case "stale_document": return "capability_refused";
+                      default: { const _never: never = r.reason; return "capability_refused"; }
+                    }
+                  })()
+                : "capability_succeeded",
+            });
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(r) });
+          } catch (e) {
+            console.error("[agreements] send dispatch threw", { reason: e instanceof Error ? e.message : "unknown" });
+            // THE OUTCOME IS UNKNOWN, and this says so. A send that did reach someone cannot be
+            // recalled, so this must never imply nothing happened or invite a blind retry.
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success:false, error:"I could not confirm what happened to that send. Check the agreement's status before trying again — if it did go out, it cannot be recalled." }) });
+          }
+        } else if (tc.function.name === "agreement_draft") {
+          // INT-178 — AGREEMENTS, the first WRITE. It executes the ONE governed seam
+          // (`public.save_paige_agreement`) through `_shared/agreements/chat-write.ts`.
+          //
+          // IT DRAFTS, AND IT DOES NOT SEND. No signing link is minted and nothing reaches the
+          // client. The outward-facing keys stay unbuilt until each earns its own slice.
+          //
+          // THE CALLER'S CLIENT, NOT THE ADMIN ONE — the same reasoning as the read below, and it
+          // matters more here because this writes. The RPC is SECURITY DEFINER and re-proves
+          // authentication, the expected tenant, owner-or-admin, and the client's membership from
+          // `auth.uid()` in its own body (§59); every one of those is NULL under the service role,
+          // so `supabase` here would refuse everything rather than permit more.
+          //
+          // THE CONFIRM GATE IS NOT SKIPPED. Unlike the reads, `agreement_draft` is classified in
+          // action-risk.ts, so it is in MUTATING_TOOLS and reaches this dispatch only once the gate
+          // has cleared it — which is also what stops a blind retry minting a second draft, since
+          // nothing in the RPC dedupes a create.
+          try {
+            const args = JSON.parse(tc.function.arguments || "{}");
+            const tid = personaCtx?.tenant_id ?? null;
+            const r = await draftAgreement({
+              caller: supabaseClient,
+              expectedTenantId: tid,
+              contactId: args.contactId ?? null,
+              title: args.title ?? null,
+              bodyMarkdown: args.bodyMarkdown ?? null,
+              agreementId: args.agreementId,
+            });
+            await recordCapabilityRun(supabase, {
+              tenantId: tid,
+              actorId: user.id,
+              capabilityKey: tc.function.name,
+              // EXHAUSTIVE over `AgreementWriteFailure`, for the reason the read states: a failure
+              // mode added later must be a compile error here rather than silently inheriting
+              // "refused" and writing a falsehood into the one artifact whose job is truth.
+              // `no_readback` is deliberately `capability_failed` — the write MAY have landed, and
+              // recording it as a refusal would assert something nobody established.
+              outcome: !r.success
+                ? ((): "capability_refused" | "capability_failed" => {
+                    switch (r.reason) {
+                      case "unavailable":
+                      case "no_readback": return "capability_failed";
+                      case "refused":
+                      case "conflict":
+                      case "already_sent":
+                      case "no_workspace":
+                      case "empty_title":
+                      case "empty_body":
+                      case "bad_agreement_id":
+                      case "bad_contact_id": return "capability_refused";
+                      default: { const _never: never = r.reason; return "capability_refused"; }
+                    }
+                  })()
+                : "capability_succeeded",
+              // Deliberately NO `detail`, for the same reason the read gives: `redactDetail` scrubs
+              // on KEY NAME only, and an agreement's title is the client's business.
+            });
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(r) });
+          } catch (e) {
+            console.error("[agreements] draft dispatch threw", { reason: e instanceof Error ? e.message : "unknown" });
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success:false, error:"That agreement could not be drafted just now. Nothing was written, and nothing was sent." }) });
+          }
         } else if (tc.function.name === "agreement_list" || tc.function.name === "agreement_status") {
           // INT-178 — AGREEMENTS, the READ half. Both tools execute the ONE governed seam
           // (`public.paige_agreement_overview`) through `_shared/agreements/chat-read.ts`.
@@ -13353,7 +13476,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // jargon-free wording so the rail reads like the live trace.
       const RAIL_CRM_TOOLS = new Set([
         "crm_update_contact", "crm_create_contact", "crm_log_activity",
-        "crm_assign_contact", "crm_assign_coach", "crm_update_pipeline_stage", "program_enroll",
+        "crm_assign_contact", "crm_assign_coach", "crm_update_pipeline_stage",
       ]);
       const RAIL_ACTION_TOOLS = new Set(["calendar_book_meeting", "crm_create_task", "crm_add_note", "crm_file_document"]);
       /**
@@ -13388,6 +13511,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // Values that are deliberately NOT tables are declared as such in that guard, not left to be
       // guessed from context.
       const WRITE_TARGET: Record<string, string> = {
+        agreement_draft: "paige_agreements", agreement_send: "paige_agreements",
         crm_create_contact: "clients", crm_update_contact: "clients",
         crm_archive_contact: "clients", crm_restore_contact: "clients",
         crm_link_contact_company: "clients", crm_unlink_contact_company: "clients",
@@ -13400,10 +13524,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         crm_update_task: "tasks", crm_assign_task: "tasks", crm_reschedule_task: "tasks",
         crm_complete_task: "tasks", crm_reopen_task: "tasks", crm_cancel_task: "tasks", crm_delete_task: "tasks",
         crm_assign_contact: "clients", crm_assign_coach: "clients", crm_update_pipeline_stage: "clients",
-        program_enroll: "clients", update_client_data: "clients",
+        update_client_data: "clients",
         crm_log_activity: "client_notes", crm_add_note: "client_notes", crm_file_document: "client_files", crm_create_task: "tasks", plan_assign_task: "tasks",
         update_business_profile: "tenants",
-        pipeline_create: "pipelines", pipeline_add_stage: "pipelines",
         deal_create: "deals", deal_move_stage: "deals",
         member_grant_role: "user_roles", member_revoke_role: "user_roles",
         // The Solo Team seam. Work details and permission both land on the membership row; the
@@ -13718,7 +13841,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // render an Approve/Deny card instead of Paige asking in prose.
       // Carries the FINGERPRINT alongside the summary, because the surface that shows the card has
       // to echo it back for the approval to bind to this exact call rather than to a boolean.
-      const confirmTrace: Array<{ tool: string; summary: string; fingerprint?: string }> = [];
+      const confirmTrace: Array<{ tool: string; summary: string; fingerprint?: string; command?: Record<string, unknown>; idempotency_key?: string }> = [];
       const crmResultTrace: Array<Record<string, unknown>> = [];
       // One authorization-neutral projection for success AND interrupted Live
       // history. Never persist the live CRM readback, locator or contact payload.
@@ -13993,7 +14116,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   ok = parsed?.success !== false;
                   // Capture a pending confirmation so the client renders an approve card.
                   if (parsed?.needs_confirm && parsed?.confirm_summary) {
-                    confirmTrace.push({ tool: parsed.tool || tc.function?.name || "action", summary: String(parsed.confirm_summary), ...(parsed.confirm_fingerprint ? { fingerprint: String(parsed.confirm_fingerprint) } : {}) });
+                    confirmTrace.push({ tool: parsed.tool || tc.function?.name || "action", summary: String(parsed.confirm_summary), ...(parsed.confirm_fingerprint ? { fingerprint: String(parsed.confirm_fingerprint) } : {}), ...(parsed.confirm_command && typeof parsed.confirm_command === "object" ? { command: parsed.confirm_command as Record<string, unknown> } : {}), ...(parsed.confirm_idempotency_key ? { idempotency_key: String(parsed.confirm_idempotency_key) } : {}) });
                   }
                   if (CRM_COMMAND_TOOL_NAMES.has(tc.function?.name) && parsed?.success === true) {
                     crmResultTrace.push({

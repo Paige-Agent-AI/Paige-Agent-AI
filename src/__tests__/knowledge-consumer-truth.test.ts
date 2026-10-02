@@ -25,7 +25,7 @@ const complete = { ok: true, doc_id: "new-doc", chunk_count: 2, embedded: true }
 const uncertain = { ok: false, error: "persistence_unverified", detail: "Check knowledge before retrying.", doc_id: "new-doc", chunk_count: 0, embedded: false };
 function client() {
   const q = { select: () => q, eq: () => q, maybeSingle: async () => ({ data: { active_tenant_id: "00000000-0000-4000-a000-000000000001" } }) };
-  return { rpc: async (name: string) => ({ data: name === "is_tenant_member", error: null }), from: () => q, auth: { getClaims: async () => ({ data: { claims: { sub: "test-user" } } }), getUser: async () => ({ data: { user: { id: "test-user" } } }) }, storage: { from: () => ({ download: async () => ({ data: new Blob(["A long enough reference document."]) }) }) } };
+  return { rpc: async (name: string) => ({ data: name === "is_tenant_member", error: null }), from: () => q, readActiveTenant: async () => ({ data: { active_tenant_id: "00000000-0000-4000-a000-000000000001" }, error: null }), auth: { getClaims: async () => ({ data: { claims: { sub: "test-user" } } }), getUser: async () => ({ data: { user: { id: "test-user" } } }) }, storage: { from: () => ({ download: async () => ({ data: new Blob(["A long enough reference document."]) }) }) } };
 }
 describe("ingestion adapter response truth", () => {
   it("doc preserves uncertain persistence identity and zero verified count", async () => {

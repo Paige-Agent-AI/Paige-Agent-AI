@@ -142,7 +142,6 @@
     "plan_update_item",
     "platform_post_notification",
     "privacy_handle_request",
-    "program_enroll",
     "propose_business_brief_update",
     "readiness_approve_proposal",
     "readiness_reject_proposal",
@@ -196,6 +195,18 @@
       "tool": "agency_exit_subaccount",
       "risk": "ordinary",
       "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "agreement_draft",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch records the run via the agreements chat-write seam's recordRun -> recordCapabilityRun (capability_succeeded / failed / refused by outcome)"
+    },
+    {
+      "tool": "agreement_send",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch records the run through the exhaustive AgreementSendFailure outcome switch -> recordCapabilityRun (succeeded / capability_failed incl. not_delivered / capability_refused incl. stale_document)"
     },
     {
       "tool": "approval_claim",
@@ -808,11 +819,6 @@
     },
     {
       "tool": "privacy_handle_request",
-      "risk": "high",
-      "receipt": "seeded_undeclared"
-    },
-    {
-      "tool": "program_enroll",
       "risk": "high",
       "receipt": "seeded_undeclared"
     },

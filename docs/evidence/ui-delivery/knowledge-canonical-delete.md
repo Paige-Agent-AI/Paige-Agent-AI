@@ -2,7 +2,7 @@
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: active workspace -> selected document/revision -> transactional deletion -> doc/chunk absence readback -> existing Rail receipt.
-PAIGE_UI_DESIGN: NOT_APPLICABLE: no visible consumer or interface change.
+PAIGE_UI_DESIGN: PASS: applicability reviewed against the repository paige-ui-design skill; this slice changes no visible interface (canonical deletion service behind the existing governed seams only).
 MATERIAL_FLOW_CHANGE: NO: staged backend/client seam; current consumers and Chat unchanged.
 FLOW_PROTOTYPE: NOT_REQUIRED: no interface implementation in this slice.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: active members delete the exact reviewed canonical revision without deleting a later edit or another workspace's content.
@@ -24,8 +24,8 @@ RELEASE_CLASSIFICATION: internal-only: no customer release.
 CUSTOMER_RELEASE_IDENTITY: none: no deployed human flow.
 RELEASE_NOTE_REQUIRED: NO: staged capability.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: authenticated deployment and consumer adoption; knowledge.delete remains UNAVAILABLE in Spine.
-RELEASE_RECOVERY: position=revoke new RPC execute grant to contain activation; deletion has no undo or tombstone and recovering deleted data requires a separately authorized verified backup restore; reference=44d62e77c595e1b09148b6d09eb3108215c04ac2
-INTERNAL_BUILD_IDENTITY: base=44d62e77c595e1b09148b6d09eb3108215c04ac2; branch=codex/knowledge-delete-service; exact change identity=Git commit containing this evidence; deployment=none; migration=20270531200000_knowledge_canonical_delete
+RELEASE_RECOVERY: position=revoke the new RPC execute grant to contain activation (deletion has no undo, so recovery is a separately authorized verified backup restore); reference=0149180e9d752d9077b7c8991a3c614d329c25ed
+INTERNAL_BUILD_IDENTITY: 0149180e9d752d9077b7c8991a3c614d329c25ed; deployment=none; environment=development; migrations=PROOF_OWED(20270531200000_knowledge_canonical_delete, isolated fixture only); edge=NOT_APPLICABLE; evidence=scripts/knowledge-service/delete-check.py and src/__tests__/knowledge-delete.test.ts
 
 ## Ten routing answers (recorded before implementation)
 

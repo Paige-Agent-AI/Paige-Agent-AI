@@ -120,7 +120,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // §9 posture, and the exact inverse of `docusign-send-envelope`.
     const { data: tenantId } = await caller.rpc("current_user_tenant_id");
     if (!tenantId) return refuse();
-    const { data: isAdmin } = await caller.rpc("is_tenant_admin", { _tenant_id: tenantId });
+    const { data: isAdmin } = await caller.rpc("is_tenant_admin", { _tenant: tenantId });
     if (isAdmin !== true) return refuse();
 
     const { data: agreement } = await db.from("paige_agreements")

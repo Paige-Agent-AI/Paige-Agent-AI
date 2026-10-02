@@ -112,6 +112,7 @@ describe('ingestion authorization checkpoints', () => {
     const caller = { auth: { getUser: async () => ({ data: { user: { id: 'actor' } } }) },
       rpc: async (name: string) => ({ data: name === 'is_tenant_member' }),
       from: () => { const q = { select: () => q, eq: () => q, maybeSingle: async () => ({ data: { active_tenant_id: active } }) }; return q; },
+      readActiveTenant: async () => ({ data: { active_tenant_id: active }, error: null }),
     };
     const scope = await bindKnowledgeIngestScope(caller);
     embeddingsCompat.mockImplementation(async () => { active = '00000000-0000-4000-a000-000000000002'; return new Response(JSON.stringify({ data: [{ embedding: vector() }] })); });

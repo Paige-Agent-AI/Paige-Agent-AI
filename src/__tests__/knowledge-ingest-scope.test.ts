@@ -12,6 +12,7 @@ function setup(kind: string, options: { active?: unknown; member?: unknown; owne
   const client = { auth: { getUser: async () => ({ data: { user: options.userMissing ? null : { id: "actor" } }, error: null }), getClaims: async () => ({ data: { claims: { sub: "actor" } } }) },
     rpc: async (name: string) => ({ data: name === "is_platform_owner" ? ("owner" in options ? options.owner : false) : ("member" in options ? options.member : true), error: options.authorityError ? { message: "lookup failed" } : null }),
     from: () => { const q = { select: () => q, eq: () => q, maybeSingle: async () => ({ data: { active_tenant_id: active }, error: null }) }; return q; },
+    readActiveTenant: async () => ({ data: { active_tenant_id: active }, error: null }),
     storage: { from: () => ({ download: async () => { calls.download(); if (options.downloadSwitch) active = B; return { data: new Blob(["Readable private knowledge document" ]), error: null }; } }) },
   };
   let run!: (r: Request) => Promise<Response>;

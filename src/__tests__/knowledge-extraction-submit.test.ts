@@ -1,0 +1,17 @@
+import {beforeEach,afterEach,it,expect,vi} from 'vitest';
+const s=vi.hoisted(()=>({rpc:vi.fn(),handler:null as null|((r:Request)=>Promise<Response>)}));
+const tenant='00000000-0000-0000-0000-000000000001', actor='10000000-0000-0000-0000-000000000001', intent='70000000-0000-0000-0000-000000000001', doc='20000000-0000-0000-0000-000000000001';
+vi.mock('https://esm.sh/@supabase/supabase-js@2.75.0',()=>({createClient:()=>({auth:{getUser:async()=>({data:{user:{id:actor}},error:null})},from:()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:{active_tenant_id:tenant},error:null})})})}),rpc:async()=>({data:true,error:null})})}));
+vi.mock('../../supabase/functions/_shared/systems-check-http.ts',()=>({adminClient:()=>({rpc:s.rpc}),json:(status:number,body:unknown)=>new Response(JSON.stringify(body),{status})}));
+beforeEach(async()=>{vi.resetModules();s.rpc.mockReset();vi.stubGlobal('Deno',{env:{get:()=> 'local-test-only'},serve:(handler:typeof s.handler)=>{s.handler=handler;}});// Execute the real Edge handler through Vitest's mocked runtime. Its Deno module graph is typechecked by the affected-edge CI gate, not the browser TS project.
+const edgeHandlerPath='../../supabase/functions/kb-extract-submit/index.ts';await import(/* @vite-ignore */ edgeHandlerPath);});
+afterEach(()=>vi.unstubAllGlobals());
+const body={intent_id:intent,expected_tenant:tenant,title:'Source',kind:'paste',content:'Text'};
+const send=()=>s.handler!(new Request('https://intake.invalid',{method:'POST',headers:{Authorization:'Bearer verified-fixture'},body:JSON.stringify(body)}));
+it.each([null,{}, {work_id:intent,document_id:doc,status:'invented',replayed:false}, {work_id:intent,document_id:doc,status:'claimed',replayed:false}])('malformed acknowledgement is unknown: %j',async data=>{s.rpc.mockResolvedValue({data,error:null});const r=await send();expect(r.status).toBe(503);expect(await r.json()).toMatchObject({ok:false,error:'submission_outcome_unknown',intent_id:intent,reconciliation:'replay_same_intent'});expect(s.rpc).toHaveBeenCalledTimes(1);});
+it('lost acknowledgement is unknown with original intent',async()=>{s.rpc.mockRejectedValue(new Error('connection lost'));const r=await send();expect(r.status).toBe(503);expect(await r.json()).toMatchObject({error:'submission_outcome_unknown',intent_id:intent});expect(s.rpc).toHaveBeenCalledTimes(1);});
+it('proven SQL refusal remains refused',async()=>{s.rpc.mockResolvedValue({data:null,error:{code:'40001',message:'KNOWLEDGE_REVISION_CONFLICT'}});const r=await send();expect(r.status).toBe(409);expect(await r.json()).toMatchObject({error:'extraction_not_accepted'});});
+it.each([false,true])('valid fresh/replay acknowledgement: %s',async replayed=>{s.rpc.mockResolvedValue({data:{work_id:intent,document_id:doc,status:'claimed',replayed,...(!replayed?{revision:1}:{})},error:null});const r=await send();expect(r.status).toBe(200);expect(await r.json()).toMatchObject({ok:true,work_id:intent,document_id:doc,replayed});});
+
+it('unproven transport error response is unknown',async()=>{s.rpc.mockResolvedValue({data:null,error:{message:'fetch failed'}});const r=await send();expect(r.status).toBe(503);expect(await r.json()).toMatchObject({intent_id:intent,reconciliation:'replay_same_intent'});});
+it('invalid input is rejected before submit',async()=>{const r=await s.handler!(new Request('https://intake.invalid',{method:'POST',headers:{Authorization:'Bearer verified-fixture'},body:JSON.stringify({...body,actor_id:actor})}));expect(r.status).toBe(400);expect(s.rpc).not.toHaveBeenCalled();});

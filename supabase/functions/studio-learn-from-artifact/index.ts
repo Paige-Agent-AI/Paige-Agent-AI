@@ -101,7 +101,7 @@ serve(async (req: Request) => {
       .maybeSingle();
     if (aErr) return json(500, { error: `Could not read the ${artifactType}: ${aErr.message}` });
     if (!artifact) return json(404, { error: `That ${artifactType} doesn't exist.` });
-    const tenantId = str((artifact as Record<string, unknown>).tenant_id);
+    const tenantId = str((artifact as unknown as Record<string, unknown>).tenant_id);
     if (!UUID_RE.test(tenantId)) return json(500, { error: "Artifact has no valid tenant." });
 
     // Live-status gate applies ONLY to the publish-triggered kinds. A draft page/funnel is unfinished
@@ -113,7 +113,7 @@ serve(async (req: Request) => {
     // housekeeping, not a live state).
     if (artifactType === "page" || artifactType === "funnel") {
       const liveStatus = artifactType === "page" ? "published" : "active";
-      if (str((artifact as Record<string, unknown>).status) !== liveStatus) {
+      if (str((artifact as unknown as Record<string, unknown>).status) !== liveStatus) {
         return json(200, {
           ok: false, error: "not_published",
           message: `Publish this ${artifactType} first — I only learn from work you've shipped, not drafts.`,
@@ -166,7 +166,7 @@ serve(async (req: Request) => {
 
     // ── Extract the artifact's copy (§12 shared extractors) ────────────────────
     const fallbackTitle: Record<string, string> = { page: "Published page", funnel: "Funnel", form: "Form", image: "Image", copy: "Copy" };
-    const artifactTitle = str((artifact as Record<string, unknown>)[src.titleCol]).trim() || fallbackTitle[artifactType];
+    const artifactTitle = str((artifact as unknown as Record<string, unknown>)[src.titleCol]).trim() || fallbackTitle[artifactType];
     let content = "";
     if (artifactType === "page") {
       const { data: page } = await admin.from("growth_pages").select("blocks_json").eq("id", artifactId).maybeSingle();

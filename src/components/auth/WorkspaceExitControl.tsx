@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { CornerUpLeft, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { StatePill } from "@/components/ui/page/StatePill";
+import { STATUS_META, tenantStatusNote, type TenantStatus } from "@/lib/platform/tenantLifecycle";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import {
   ACCOUNT_SWITCH_NOTICE_KEY,
@@ -128,7 +130,20 @@ function OperatorExitControl() {
     navigate(GOD_CONSOLE, { replace: true });
   };
 
+  // An account in an unusual state says so for as long as the operator stands in it (owner ruling
+  // 2026-09-28): what is safe to do differs by state. Same words as the Fleet directory, from the one
+  // lifecycle helper; nothing is shown for an active account.
+  const state = tenantStatusNote(activeTenant?.status);
+  const tone = STATUS_META[activeTenant?.status as TenantStatus]?.tone;
   return (
+    <>
+    {state && (
+      <span data-operator-scope className="inline-flex items-center self-center">
+        <StatePill state={tone === "critical" ? "error" : tone === "warn" ? "warning" : tone === "notice" ? "pending" : "off"}>
+          <span className="sr-only">This workspace is </span>{state}
+        </StatePill>
+      </span>
+    )}
     <Button
       data-operator-exit
       variant="outline"
@@ -140,8 +155,11 @@ function OperatorExitControl() {
       {/* Its own mark: it RETURNS to the platform and ends the act-as, where "Switch workspace"
           beside it leaves for the chooser. The same icon on both read as two doors to one place. */}
       <CornerUpLeft className="mr-1.5 h-4 w-4" />
-      {leaving ? "Leaving…" : "Exit tenant"}
+      {/* "tenant" drops at phone width (tenant-command-center-shell.css) so the account's state
+          and the command field keep their room; the accessible name above never shortens. */}
+      {leaving ? "Leaving…" : <span>Exit<span className="tcs-exit-long"> tenant</span></span>}
     </Button>
+    </>
   );
 }
 

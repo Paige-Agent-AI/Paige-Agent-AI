@@ -80,11 +80,55 @@ function validateN8nTypeScript(chatText, managementText) {
   return {findings,tools};
 }
 const tsProof=validateN8nTypeScript(readFileSync(chatSourcePath,'utf8'),readFileSync(managementSourcePath,'utf8'));
-function provenTypeScriptSymbol(capability,role,symbol,proof){
-  const tool=capability.action?.chatTool;const spec=proof?.tools.get(tool);
-  if(!proof||proof.findings.length||!spec||capability.key!==`integrations.${tool}`)return false;
-  if(capability.action.classification!==(spec.write?'external_effect':'read')||capability.action.riskPolicyKey!==(spec.write?'high':'read_only')||capability.action.approvalAuthority!==(spec.write?'chat-canonical':'none'))return false;
-  return role==='executor'&&symbol==='edge.paige-ai-chat'||role==='projector'&&symbol==='n8n-management.project';
+
+// The Zapier twin of the n8n extension (same owner approval, same rigor, different wiring):
+// the two zapier tools are hand-declared in the Chat manifest and dispatched to the
+// call-zapier-action edge — there is no in-module catalog/executor to verify, so the proof
+// pins the wiring that makes the Spine's declarations TRUE: manifest declaration, the
+// role-gated + dispatch mentions, the ONE provider door, the read/run body split, and the
+// projection boundary (an MCP provider's answer is untrusted input — it must pass through
+// projectOutcomeForModel, never be forwarded raw).
+function validateZapierTypeScript(chatText) {
+  const chat=ts.createSourceFile('paige-ai-chat.ts',chatText,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
+  const findings=[]; const requireProof=(ok,label)=>{if(!ok)findings.push(`zapier TypeScript binding: ${label}`)};
+  requireProof(!chat.parseDiagnostics.length,'source must parse');
+  const manifestNames=nodes(chat,n=>ts.isPropertyAssignment(n)&&nameOf(n.name)==='name'&&n.initializer&&ts.isStringLiteral(n.initializer)&&['zapier_list_actions','zapier_run_action'].includes(n.initializer.text)&&n.parent&&ts.isObjectLiteralExpression(n.parent)&&field(n.parent,'description'));
+  for(const tool of ['zapier_list_actions','zapier_run_action'])requireProof(manifestNames.some(n=>n.initializer.text===tool),`manifest declares ${tool} with governed description`);
+  // Both names must reach the model ONLY through the admin role gate and the dispatch guard:
+  // each appears in >=2 exact `tc.function.name === "<tool>"` comparisons.
+  for(const tool of ['zapier_list_actions','zapier_run_action'])requireProof(nodes(chat,n=>ts.isBinaryExpression(n)&&n.operatorToken.kind===ts.SyntaxKind.EqualsEqualsEqualsToken&&normalized(n.left)==='tc.function.name'&&n.right&&ts.isStringLiteral(n.right)&&n.right.text===tool).length>=2,`${tool} referenced by role gate and dispatch`);
+  const guard=nodes(chat,ts.isIfStatement).find(n=>normalized(n.expression)==='tc.function.name==="zapier_list_actions"||tc.function.name==="zapier_run_action"');
+  requireProof(!!guard,'dispatch guard selects exactly the two zapier tools');
+  const block=guard?.thenStatement;
+  if(block){
+    const invokes=nodes(block,n=>ts.isCallExpression(n)&&normalized(n.expression)==='supabaseClient.functions.invoke'&&n.arguments.length>0&&ts.isStringLiteral(n.arguments[0])&&n.arguments[0].text==='call-zapier-action');
+    requireProof(invokes.length===1,'one provider door (call-zapier-action)');
+    const split=nodes(block,ts.isConditionalExpression).find(n=>normalized(n.condition)==='tc.function.name==="zapier_list_actions"'&&normalized(n.whenTrue)==='{action:"list"}');
+    requireProof(!!split,'read tool sends action:list; run tool sends its tool_name');
+    requireProof(nodes(block,ts.isCallExpression).some(n=>normalized(n.expression)==='projectOutcomeForModel'&&n.arguments.length===1&&normalized(n.arguments[0])==='zapData'),'provider result enters the outcome projection');
+    requireProof(!nodes(block,n=>ts.isBinaryExpression(n)&&n.operatorToken.kind===ts.SyntaxKind.EqualsToken&&normalized(n.left)==='result'&&normalized(n.right)==='zapData').length,'raw provider result not forwarded');
+  } else requireProof(false,'dispatch block resolved');
+  return {findings,tools:new Map([['zapier_list_actions',{write:false}],['zapier_run_action',{write:true}]])};
+}
+const zapierProof=validateZapierTypeScript(readFileSync(chatSourcePath,'utf8'));
+
+// One registry of the exact TS symbol pairs each proof may vouch for. A proof only vouches
+// for capabilities whose chatTool it actually verified, with the declared classification,
+// risk policy, and approval authority matching the verified write kind field-for-field.
+const TS_SYMBOL_PROOFS=[
+  {proof:tsProof,executor:'edge.paige-ai-chat',projector:'n8n-management.project'},
+  {proof:zapierProof,executor:'edge.paige-ai-chat',projector:'mcp-outcome.projectOutcomeForModel'},
+];
+function provenTypeScriptSymbol(capability,role,symbol){
+  const tool=capability.action?.chatTool;
+  for(const entry of TS_SYMBOL_PROOFS){
+    const spec=entry.proof?.tools.get(tool);
+    if(!entry.proof||entry.proof.findings.length||!spec||capability.key!==`integrations.${tool}`)continue;
+    if(capability.action.classification!==(spec.write?'external_effect':'read')||capability.action.riskPolicyKey!==(spec.write?'high':'read_only')||capability.action.approvalAuthority!==(spec.write?'chat-canonical':'none'))continue;
+    if(role==='executor'&&symbol===entry.executor)return true;
+    if(role==='projector'&&symbol===entry.projector)return true;
+  }
+  return false;
 }
 
 function lint(capabilities, sql, chatGuard, classifyAction, proof = null) {
@@ -93,7 +137,7 @@ function lint(capabilities, sql, chatGuard, classifyAction, proof = null) {
     const symbols = [["adapter",capability.evidence?.adapter], ["executor",capability.action?.executor], ["projector",capability.outcome?.projector]].filter(([,symbol])=>!!symbol);
     for (const [role,symbol] of symbols) {
       // Never bypass a public SQL symbol, even on a verified TS capability.
-      if (!symbol.startsWith("public.") && provenTypeScriptSymbol(capability,role,symbol,proof)) continue;
+      if (!symbol.startsWith("public.") && provenTypeScriptSymbol(capability,role,symbol)) continue;
       const bare = symbol.replace(/^public\./, "");
       if (!new RegExp(`create\\s+or\\s+replace\\s+function\\s+public\\.${bare}\\s*\\(`, "i").test(sql)) findings.push(`${capability.key}: registered server symbol is absent from migration history: ${symbol}`);
     }
@@ -121,9 +165,9 @@ if (process.argv.includes("--self-test")) {
   const later = migrations + "\ncreate or replace function public.future_domain_adapter() returns void language sql as $$ select $$;";
   const future = [{ ...PAIGE_SPINE_CAPABILITIES[0], key: "future.safe_evidence", domain: "future", owner: "future-domain", evidence: { ...PAIGE_SPINE_CAPABILITIES[0].evidence, adapter: "public.future_domain_adapter" }, action: undefined, outcome: undefined }];
   if (lint(future, later, null, null).length) { console.error("PAIGE Spine registry lint rejected a coherent additive later-domain migration"); process.exit(1); }
-  if(tsProof.findings.length){console.error(tsProof.findings);process.exit(1);}
+  if(tsProof.findings.length||zapierProof.findings.length){console.error(tsProof.findings.concat(zapierProof.findings));process.exit(1);}
   const originalChat=readFileSync(chatSourcePath,'utf8'),originalManagement=readFileSync(managementSourcePath,'utf8');
-  const negatives=[
+  const n8nNegatives=[
     ['wrong import',originalChat.replace("../_shared/n8n-management.ts","../_shared/untrusted.ts"),originalManagement],
     ['unmounted catalog',originalChat.replace('...N8N_MANAGEMENT_TOOLS','...OTHER_TOOLS'),originalManagement],
     ['caller change',originalChat.replace('userId: user.id','userId: args.user_id'),originalManagement],
@@ -135,7 +179,14 @@ if (process.argv.includes("--self-test")) {
     ['lease bypass',originalChat,originalManagement.replace("await rpc('check');","await Promise.resolve();")],
     ['approval guard removed',originalChat,originalManagement.replace('spec.write&&input.mutationApproved!==true','false')],
   ];
-  for(const [name,chat,management]of negatives)if(!validateN8nTypeScript(chat,management).findings.length){console.error(`AST negative failed: ${name}`);process.exit(1);}
+  for(const [name,chat,management]of n8nNegatives)if(!validateN8nTypeScript(chat,management).findings.length){console.error(`AST negative failed: ${name}`);process.exit(1);}
+  const zapierNegatives=[
+    ['zapier manifest tool removed',originalChat.replace('name: "zapier_run_action"','name: "zapier_other_action"')],
+    ['zapier provider door retargeted',originalChat.replace('functions.invoke("call-zapier-action"','functions.invoke("other-provider"')],
+    ['zapier dispatch guard weakened',originalChat.replace('tc.function.name === "zapier_list_actions" || tc.function.name === "zapier_run_action"','true')],
+    ['zapier raw provider forward',originalChat.replace('result = projectOutcomeForModel(zapData);','result = zapData;')],
+  ];
+  for(const [name,chat]of zapierNegatives)if(!validateZapierTypeScript(chat).findings.length){console.error(`Zapier AST negative failed: ${name}`);process.exit(1);}
   const native=PAIGE_SPINE_CAPABILITIES.find(c=>c.action?.executor==='edge.paige-ai-chat');
   for(const [label,capability]of [['missing SQL',{...native,outcome:{...native.outcome,projector:'public.missing_sql_projector'}}],['unknown TS',{...native,outcome:{...native.outcome,projector:'other.project'}}],['unregistered TS',{...native,key:'integrations.unknown'}]]){
     if(!lint([capability],migrations,'supabase/functions/_shared/paige-spine/registry.ts',()=> 'high',tsProof).length){console.error(`symbol negative failed: ${label}`);process.exit(1);}
@@ -149,6 +200,6 @@ if (existsSync(actionRiskPath)) {
   const policy = await import(pathToFileURL(actionRiskPath).href);
   classifyAction = typeof policy.classifyAction === "function" ? policy.classifyAction : null;
 }
-const findings = [...tsProof.findings,...lint(PAIGE_SPINE_CAPABILITIES, migrations, chatGuard, classifyAction,tsProof)];
+const findings = [...tsProof.findings,...zapierProof.findings,...lint(PAIGE_SPINE_CAPABILITIES, migrations, chatGuard, classifyAction)];
 if (findings.length) { console.error("PAIGE Spine registry lint: FAIL"); for (const finding of findings) console.error(`- ${finding}`); process.exit(1); }
 console.log(`PAIGE Spine registry lint: PASS (${PAIGE_SPINE_CAPABILITIES.length} capability)`);

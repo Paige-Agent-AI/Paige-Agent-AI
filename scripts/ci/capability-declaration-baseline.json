@@ -338,13 +338,5 @@
   {
     "tool": "web_search",
     "kind": "read"
-  },
-  {
-    "tool": "zapier_list_actions",
-    "kind": "read"
-  },
-  {
-    "tool": "zapier_run_action",
-    "kind": "mutating"
   }
 ]

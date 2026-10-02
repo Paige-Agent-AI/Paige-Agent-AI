@@ -76,6 +76,18 @@ describe('native Knowledge publication worker', () => {
     expect(await runKnowledgePublication(admin, WORK)).toMatchObject({ ok: false, status: 'failed', error_code: 'provider_unavailable' });
     expect(log[log.length - 1].args).toMatchObject({ _code: 'provider_unavailable', _unknown: false });
   });
+  it('stage revision refusal (KNOWLEDGE_REVISION_CONFLICT) settles revision_changed', async () => {
+    // 'KNOWLEDGE_REVISION_CONFLICT' contains neither 'REVIEW_CONFLICT' nor any other mapped
+    // substring; without its own arm it fell through to the old unlisted 'input_invalid'.
+    const log: Call[] = [];
+    const admin = port((name) => {
+      if (name === 'start_knowledge_publication') return { ...START };
+      if (name === 'stage_knowledge_publication') return new Error('KNOWLEDGE_REVISION_CONFLICT');
+      return { settled: true };
+    }, log);
+    expect(await runKnowledgePublication(admin, WORK)).toMatchObject({ ok: false, status: 'failed', error_code: 'revision_changed' });
+    expect(log[log.length - 1].args).toMatchObject({ _code: 'revision_changed', _unknown: false });
+  });
   it('malformed chunk escapes without settling (no unlisted settle code possible)', async () => {
     const log: Call[] = [];
     const bad = { ...START, chunks: [{ index: 0, text: 5 as unknown as string, sha256: 'a'.repeat(64) }] };

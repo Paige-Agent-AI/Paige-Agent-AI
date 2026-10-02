@@ -139,11 +139,6 @@ BEGIN
    AND status IN ('claimed','blocked','expired','outcome_unknown') AND request_payload->>'document_id'=d.id::text) THEN RAISE EXCEPTION 'KNOWLEDGE_PUBLICATION_PENDING' USING ERRCODE='55000'; END IF;
  SELECT * INTO created FROM public.create_paige_durable_work(p_expected_tenant,actor,p_intent_id,NULL,'knowledge.publish','knowledge_publish',jsonb_build_object('tenant_id',p_expected_tenant,'actor_user_id',actor,'source','knowledge_publication'),'tenant:'||p_expected_tenant::text,60,3);
  UPDATE public.paige_durable_work SET request_payload=jsonb_build_object('version',1,'document_id',d.id,'extraction_work_id',p_work_id,'revision',p_expected_revision,'review_hash',p_review_hash,'manifest',manifest,'source',d.extraction_source_binding,'request_hash',request_hash),safe_summary='Knowledge publication is queued.',version=version+1 WHERE id=created.work_id;
- -- Same worker and cron recovery path as extraction: the missed wake never loses the
- -- envelope, and recover reconciles rather than re-embedding (added with worker adoption).
- BEGIN
-  PERFORM net.http_post(url:='https://xygzykjyynhzqytbqnzu.supabase.co/functions/v1/paige-document-worker',headers:=jsonb_build_object('Content-Type','application/json','x-cron-token',public.cron_token_header()),body:=jsonb_build_object('mode','knowledge-publish','work_id',created.work_id));
- EXCEPTION WHEN OTHERS THEN NULL; END;
  -- The intent hash lives in the work payload alone: any doc UPDATE here would fire the
  -- canonical revision-bump trigger and desynchronize the frozen revision (found by the
  -- publication behavior proof: docrev drifted 3->4 and start correctly refused).

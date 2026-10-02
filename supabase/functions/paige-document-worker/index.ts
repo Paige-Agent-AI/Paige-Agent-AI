@@ -192,8 +192,9 @@ Deno.serve(async (req) => {
         catch { knowledgeResults.push({ ok: false, work_id: row.work_id, status: "outcome_unknown" }); }
       }
     }
-    // Publication recovery reconciles lost acknowledgements (and expired leases) without a
-    // second automatic embed; committed generations are recorded as succeeded.
+    // Publication recovery reconciles lost acknowledgements (never re-embedding a started
+    // dispatch), requeues missed wakes for this same re-drive, and records committed
+    // generations as succeeded.
     const publicationResults: Array<Record<string, unknown>> = [];
     const publication = await admin.rpc("recover_knowledge_publication", { _limit: 10 });
     if (!publication.error) {

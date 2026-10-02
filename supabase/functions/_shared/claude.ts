@@ -258,6 +258,16 @@ function apiKey(): string {
   return k;
 }
 
+// The per-call model deadline (2026-10-02 incident: a chat turn's third model call stalled with
+// NO signal anywhere on the gatewayCompat → chatCompletionCompat/streamAnthropicAsOpenAI →
+// callClaude chain; the turn hung silently until the edge's ~400s wall clock killed it, losing
+// the whole turn — the assistant turn persists only at close — and surfacing as the UI's
+// six-minute-window error). A bounded call fails FAST and HONESTLY (TimeoutError traces as an
+// error row; the turn errors visibly in ~2 minutes) instead of hanging to the wall clock.
+// 120s covers legitimate long reasoning streams (a 2048-token stream runs 30–90s) while keeping
+// three bounded rounds inside the edge wall clock. A caller-provided signal always wins.
+const MODEL_CALL_DEADLINE_MS = 120_000;
+
 export async function callClaude(opts: ClaudeCallOpts): Promise<ClaudeResult> {
   const model = opts.model ?? tierModel(opts.tier ?? "reasoning");
   const body: Record<string, unknown> = {
@@ -281,7 +291,7 @@ export async function callClaude(opts: ClaudeCallOpts): Promise<ClaudeResult> {
         "anthropic-version": ANTHROPIC_VERSION,
       },
       body: JSON.stringify(body),
-      signal: opts.signal,
+      signal: opts.signal ?? AbortSignal.timeout(MODEL_CALL_DEADLINE_MS),
     });
 
     if (!resp.ok) {
@@ -542,6 +552,9 @@ async function streamAnthropicAsOpenAI(
       "anthropic-version": ANTHROPIC_VERSION,
     },
     body: JSON.stringify({ ...reqBody, stream: true }),
+    // The fetch signal bounds the stream's body consumption too, so a stalled stream dies at
+    // the deadline (streamErrored → honest error trace + [DONE]) rather than hanging the turn.
+    signal: AbortSignal.timeout(MODEL_CALL_DEADLINE_MS),
   });
   if (!resp.ok || !resp.body) {
     // §34 L1.1 — a rejected STREAMING request (400/429/500) early-returns before the ReadableStream (and

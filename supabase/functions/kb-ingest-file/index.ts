@@ -120,7 +120,14 @@ serve(async (req) => {
       return json({ error: "Unsupported file type. Upload a PDF, image (png/jpg/webp), or text/markdown file." }, 400);
     }
 
-    const scope = await bindKnowledgeIngestScope(supabase, tenant_id, path);
+    // Plain-function adapter for the shared scope port: relating supabase-js's generic
+    // from()/rpc() signatures to a structural caller trips TS2345 under deno check.
+    const scopeCaller = {
+      auth: supabase.auth,
+      readActiveTenant: (userId: string) => supabase.from("profiles").select("active_tenant_id").eq("user_id", userId).maybeSingle(),
+      rpc: (name: string, args?: Record<string, unknown>) => supabase.rpc(name, args as never),
+    };
+    const scope = await bindKnowledgeIngestScope(scopeCaller, tenant_id, path);
 
     // Download via the caller's JWT so bucket RLS enforces tenant ownership —
     // a caller can only read files under their own tenant's folder.

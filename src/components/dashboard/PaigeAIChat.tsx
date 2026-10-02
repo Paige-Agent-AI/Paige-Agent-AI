@@ -1525,6 +1525,11 @@ const PaigeAIChatInner = ({
       if (decisionTurn) retryTurnRef.current = null;
       if (soloTenantSafety) setConnectionIssue("server");
     } finally {
+      // C2 — the no-stuck-working safety net: the fence release is idempotent (it checks
+      // the ticket first), so calling it here catches any exit path that missed it. Without
+      // this, an unexpected exception between the specific handlers leaves the working
+      // indicator on with no stream behind it — the exact fake-working state C2 forbids.
+      releaseRequestBusy(requestTicket);
       if (timeoutId !== null) window.clearTimeout(timeoutId);
       if (businessMissionId && ticketAccepted(requestTicket)) {
         window.dispatchEvent(new CustomEvent("business-mission:refresh", { detail: { missionId: businessMissionId } }));
@@ -2290,7 +2295,13 @@ const PaigeAIChatInner = ({
                             ))}
                           </div>
                         )}
-                        {!!message.confirm?.length && !message.confirmResolved && !message.confirmDecision && (index === messages.length - 1 || (message.approvalOutcome?.reported === true && message.confirm.some((c) => !!c.fingerprint && !(message.approvalOutcome?.actions ?? []).some((a) => a.fingerprint === c.fingerprint)))) && !isLoading && (
+                        {/* C2 — the card renders MID-STREAM: removing the !isLoading gate means
+                            the card appears the instant the server mints it, not after [DONE].
+                            With C1's continuation loop keeping the stream alive through the
+                            task, the old gate hid cards for the entire multi-round duration.
+                            Clicking Approve mid-stream supersedes the model's turn (the
+                            approval click aborts the current stream and dispatches directly). */}
+                        {!!message.confirm?.length && !message.confirmResolved && !message.confirmDecision && (index === messages.length - 1 || (message.approvalOutcome?.reported === true && message.confirm.some((c) => !!c.fingerprint && !(message.approvalOutcome?.actions ?? []).some((a) => a.fingerprint === c.fingerprint)))) && (
                           <PaigeConfirmCard
                             // Summary and fingerprint stay PAIRED. The previous version built two
                             // parallel arrays and `.filter()`ed the fingerprints, so one action

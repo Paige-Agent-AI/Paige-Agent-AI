@@ -39,13 +39,23 @@ step 1.
 
 ### Step 1 — connect
 
+The live proof runs over the **`mcp` facet** (the executable MCP endpoint):
+
 ```json
-{ "action": "create", "facet": "rest", "label": "n8n primary", "base_url": "https://<n8n-host>", "api_key": "<n8n-api-key>" }
+{ "action": "create", "facet": "mcp", "server_url": "https://<n8n-host>/mcp-server/http", "auth_kind": "bearer", "auth_token": "<token>" }
 ```
 
-(The `rest` facet pins `provider_key='n8n'` server-side via `create_mcp_rest_connection`; the `mcp`
-facet variant uses `server_url` + `auth_kind` via `create_mcp_connection`.) Expect
-`{ "connection_id": "<uuid>", "status": "pending_verification", "auth_token_last4": "…" }` —
+`auth_kind` may be `oauth`, `bearer`, `header`, `url`, or `none` — whatever your n8n MCP endpoint
+takes. (If you omit `provider_key`, the edge defaults it to `n8n` for this facet; the RPC only
+checks the descriptor exists.)
+
+> **Do not use the REST/api-key facet for this proof.** `facet: "rest"` + `api_key` creates a
+> connection that is **deliberately non-MCP-executable** — `verify` on it resolves to
+> `{ ok: false, status: "error", health: "needs_attention", error_code: "connection_unusable" }`
+> and steps 2–6 are unreachable from it. That facet is for the REST management lane, not the MCP
+> dispatch path.
+
+Expect `{ "connection_id": "<uuid>", "status": "pending_verification", "auth_token_last4": "…" }` —
 **no secret is ever echoed beyond last4.**
 
 ### Step 2 — verify (the only writer of connected/healthy)
@@ -84,10 +94,12 @@ client-visible) and records the durable, endpoint-bound approval. Optional harde
 { "action": "execute", "connection_id": "<CONNECTION_ID>", "tool_name": "<TOOL_NAME>", "args": {}, "mode": "prepare" }
 ```
 
-Expect `{ "outcome": "prepared", "code": null, "run_id": "…", "recorded": null }`. `prepare` proves
-the full pre-dispatch chain — loader, authority, consent, capability resolution — without contacting
-n8n. If prepare refuses here, **do not proceed**; the refusal code (`approval_required`,
-`contract_changed`, `not_found`, …) says which link is missing.
+Expect `{ "outcome": "prepared", "code": null, "run_id": "…", "recorded": false }`. `prepare` proves
+the pre-dispatch chain **up to but not including consent** — loader, tenant/authority, owner_only
+capability resolution. The durable-consent check runs only inside the execute session (after the
+prepare short-circuit), so a prepare success does NOT prove the approval will be spent. If prepare
+refuses here, **do not proceed**; the refusal code (`not_found`, `tenant_mismatch`, `bad_*`) says
+which link is missing.
 
 ### Step 6 — execute (flip the owner go)
 
@@ -96,13 +108,17 @@ Functions → mcp-gateway → Secrets, or `supabase secrets set`), then repeat s
 `"mode": "execute"`.
 
 Expect `{ "outcome": "read_observed", "code": null, "run_id": "…", "recorded": true }` for a read
-tool (`"executed"` for a mutation). Then:
+tool (`"executed"` for a mutation — note a mutation tool's **different args shape** needs its own
+step-4 approval; consent binds the shape). Then:
 
 - **observe the Rail**: the run files one canonical row via `record_capability_run`
-  (`capability_succeeded` / `capability_failed` / `capability_refused` / `capability_outcome_unknown`)
-  — this is the owner-visible truth in the workspace events feed;
-- **`recorded: false`** means the outcome happened but the Rail row is owed — investigate, don't
-  retry blind;
+  (`capability_succeeded` / `capability_failed` / `capability_refused` /
+  `capability_outcome_unknown` / `capability_unreachable`) — this is the owner-visible truth in
+  the workspace events feed;
+- **`recorded` semantics**: `true` = the Rail row persisted; `false` = the outcome is real but its
+  Rail row is owed (for `prepared`, `false` is the honest no-row-owed answer, not a fault) — in the
+  production wiring `recorded` is only ever `true` or `false`. A `false` on an executed/read
+  outcome means investigate, don't retry blind;
 - **`outcome: "outcome_unknown"`** means the dispatch landed but the landing is uncertain —
   **check the provider side before running again**; a blind retry could double-apply an effect
   (this is why it returns HTTP 200, not 5xx).
@@ -120,6 +136,6 @@ when the governed-execute UI (later milestone) ships, not by accident today.
 | `execute_not_enabled` | the owner go is OFF — the gate held; nothing was dispatched |
 | `not_found` | you cannot prove you own this connection (uniform for foreign/disabled/unusable — no cross-tenant oracle) |
 | `tenant_mismatch` | your session switched workspaces after launch (409) |
-| `approval_required` | no durable approval for this (connection, tool) — do step 4 |
-| `contract_changed` / `no_longer_offered` | the tool changed since verification — re-verify, re-approve |
+| `approval_required` | no durable approval for this (connection, tool) — do step 4 (execute-mode refusal; prepare never reaches the consent check) |
+| `contract_changed` / `no_longer_offered` | the tool changed since verification — re-verify, re-approve (execute-mode refusals) |
 | `provider_unavailable` / `tool_error` | n8n side (502); the body carries the closed code, never provider prose |

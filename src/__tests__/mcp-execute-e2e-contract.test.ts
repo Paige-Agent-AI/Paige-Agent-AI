@@ -73,9 +73,8 @@ describe("the Rail receipt records the full governed execution", () => {
     expect(railReceipt).toContain("export function makeCanonicalRailReceipt");
   });
 
-  it("the receipt records tenantId and actorId (never from the request body)", () => {
-    expect(execute).toContain("tenantId");
-    expect(execute).toContain("actorId");
+  it("the receipt context derives tenant/actor from the JWT-resolved values, never the body", () => {
+    expect(execute).toContain("makeCanonicalRailReceipt(admin, { tenantId, actorId: actor })");
   });
 });
 

@@ -94,7 +94,9 @@ async function main() {
         external.push(new URL(route.request().url()).origin);
         return route.abort();
       });
-      await page.goto(`${BASE}/?theme=${theme}&data=empty&paige=${paige}`, { waitUntil: "networkidle" });
+      // Readiness is the actual control below, not global network silence (Vite HMR and
+      // optional typography requests can outlive a usable page).
+      await page.goto(`${BASE}/?theme=${theme}&data=empty&paige=${paige}`, { waitUntil: "domcontentloaded", timeout: 60000 });
       await openForm(page);
       record(label + " explicit auth choices", await page.locator('[aria-label="Authentication"] button').count() === 4);
       await fill(page);

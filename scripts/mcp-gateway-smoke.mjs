@@ -1334,7 +1334,7 @@ console.log("\n— slice ②: oauth_begin (runOauthBegin) —");
   routes.set("/.well-known/oauth-protected-resource/mcp-oauth-srv", (_req, res) => {
     discoveryCalls++;
     res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ resource: OSRV, authorization_servers: [ISSUER] }));
+    res.end(JSON.stringify({ resource: OSRV, authorization_servers: [ISSUER], scopes_supported: ["mcp.read"] }));
   });
   routes.set("/.well-known/oauth-authorization-server", (_req, res) => {
     discoveryCalls++;
@@ -1391,7 +1391,10 @@ console.log("\n— slice ②: oauth_begin (runOauthBegin) —");
       u.searchParams.get("client_id") === "client-xyz" && u.searchParams.get("resource") === OSRV && u.searchParams.get("redirect_uri") === REDIRECT,
       okBegin.body.authorize_url);
     check("authorize_url NEVER carries the PKCE verifier (only the challenge)", !!beginCalls[0]?._verifier && !okBegin.body.authorize_url.includes(beginCalls[0]._verifier));
+    check("consent requests the resource scope, not every AS-advertised permission", u.searchParams.get("scope") === "mcp.read");
   }
+  check("PKCE state persists exactly the resource-requested scopes", JSON.stringify(beginCalls[0]?._requested_scopes) === '["mcp.read"]');
+  check("DCR and consent use the same resource scope", regCalls[0]?.scope === "mcp.read");
   check("oauth_begin registered a PUBLIC client (auth_method=none) whose redirect is OUR callback",
     regCalls.length === 1 && regCalls[0].token_endpoint_auth_method === "none" && Array.isArray(regCalls[0].redirect_uris) && regCalls[0].redirect_uris[0] === REDIRECT, JSON.stringify(regCalls[0]));
   check("oauth_begin stored the flow BEFORE returning (verifier+issuer+resource+client_id; tenant+connection from the gates, actor recorded)",
@@ -1399,6 +1402,40 @@ console.log("\n— slice ②: oauth_begin (runOauthBegin) —");
     beginCalls[0]._issuer === ISSUER && beginCalls[0]._resource === OSRV && beginCalls[0]._client_id === "client-xyz" &&
     beginCalls[0]._redirect_uri === REDIRECT && beginCalls[0]._actor === "user-1", JSON.stringify(Object.keys(beginCalls[0] ?? {})));
   check("oauth_begin response leaks NO verifier", !JSON.stringify(okBegin.body).includes(beginCalls[0]._verifier));
+
+  // The selected set must stay identical across registration, stored state and the browser URL.
+  routes.set("/mcp-oauth-srv", (_req, res) => {
+    res.writeHead(401, { "WWW-Authenticate": `Bearer resource_metadata="${ISSUER}/resource-metadata", scope="mcp.dynamic"` });
+    res.end();
+  });
+  routes.set("/resource-metadata", (_req, res) => {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ resource: OSRV, authorization_servers: [ISSUER], scopes_supported: ["mcp.read"] }));
+  });
+  const challenged = await oauthMod.runOauthBegin({ userClient: makeUser(), admin: makeAdmin() }, beginInput());
+  check("current challenge overrides resource and AS scopes without intersection",
+    challenged.httpStatus === 200 && new URL(challenged.body.authorize_url).searchParams.get("scope") === "mcp.dynamic");
+  check("challenge set is frozen in DCR and PKCE state",
+    regCalls.at(-1)?.scope === "mcp.dynamic" && JSON.stringify(beginCalls.at(-1)?._requested_scopes) === '["mcp.dynamic"]');
+  routes.delete("/mcp-oauth-srv");
+  routes.set("/.well-known/oauth-protected-resource/mcp-oauth-srv", (_req, res) => {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ resource: OSRV, authorization_servers: [ISSUER] }));
+  });
+  const defaultScope = await oauthMod.runOauthBegin({ userClient: makeUser(), admin: makeAdmin() }, beginInput());
+  check("no scope guidance omits consent scope despite a broad AS catalogue",
+    defaultScope.httpStatus === 200 && !new URL(defaultScope.body.authorize_url).searchParams.has("scope"));
+  check("no scope guidance omits DCR scope and persists an empty requested set",
+    !Object.hasOwn(regCalls.at(-1), "scope") && JSON.stringify(beginCalls.at(-1)?._requested_scopes) === "[]");
+  const writesBeforeMalformed = beginCalls.length, registrationsBeforeMalformed = regCalls.length;
+  routes.set("/mcp-oauth-srv", (_req, res) => {
+    res.writeHead(401, { "WWW-Authenticate": 'Bearer scope="mcp.read", scope="mcp.write"' }); res.end();
+  });
+  const malformedChallenge = await oauthMod.runOauthBegin({ userClient: makeUser(), admin: makeAdmin() }, beginInput());
+  check("malformed scope guidance refuses before registration or state write",
+    malformedChallenge.httpStatus === 502 && malformedChallenge.body.code === "malformed_metadata" &&
+    beginCalls.length === writesBeforeMalformed && regCalls.length === registrationsBeforeMalformed);
+  routes.delete("/mcp-oauth-srv");
 
   // §9 authority refusals — every one returns BEFORE any network/discovery (the security-critical gates).
   const badId = await oauthMod.runOauthBegin({ userClient: makeUser(), admin: makeAdmin() }, beginInput({ connectionId: "nope" }));

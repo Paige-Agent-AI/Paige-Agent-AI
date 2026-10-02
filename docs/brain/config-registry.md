@@ -606,3 +606,19 @@ Owner direction authorizes implementation through green-gated release for reusab
 The first repair closes a confirmed A2P workspace-switch defect. The editor is keyed by workspace, delayed responses are fenced, handlers pass a captured-workspace precondition, prompt context is explicitly tenant-scoped, and the save/insert trigger rejects a changed tenant rather than redirecting the write. Ordinary Solo owners/admins gain the same captured-tenant preparation authority using is_tenant_admin_as and a current-workspace SELECT policy. Carrier submission is still absent; this repair does not make SMS registration ready.
 
 Automated evidence: UI and actual-handler tests with injected database/model ports; isolated PostgreSQL role, replay and lock-wait race tests. Independent adversarial source review passed after two additional races were corrected. Authenticated production owner-flow proof remains owed. No real customer record, workflow, campaign, carrier submission or sender identity was changed to produce proof.
+
+### Canonical remote MCP OAuth scope wiring — 2026-09-30 (candidate)
+
+The explicit OAuth entry in `supabase/functions/_shared/mcp-gateway/oauth.ts` selects the current
+Bearer challenge's scope, otherwise the protected resource's `scopes_supported`, otherwise no
+scope parameter. It does not request the authorization server's global scope catalogue. The same
+set goes into client registration, consent and the existing encrypted PKCE transaction. An existing
+scope query on an authorization endpoint cannot defeat omission. Discovery validates resource
+identity and uses the existing SSRF guard; its header-only probe aborts an unused SSE body instead
+of waiting for EOF. Specialized n8n resource-only discovery does not gain this probe.
+
+No environment variable, secret store, schema, migration, tenant authority or execution gate is
+added. The connection remains PARTIAL: this corrects client scope selection, not provider-side
+scope registration, consent or outbound execution. Automated and synthetic-browser evidence,
+independent review, and the exact remaining proof boundary are in
+`../evidence/ui-delivery/mcp-oauth-resource-scopes.md`.

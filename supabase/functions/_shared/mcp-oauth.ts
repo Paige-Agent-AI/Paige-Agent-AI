@@ -118,20 +118,101 @@ const str = (v: unknown): string | null => (typeof v === "string" && v.trim() ? 
 const strArray = (v: unknown): string[] =>
   Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
 
+/** RFC 6749 scope-token. Do not silently turn malformed provider metadata into a grant. */
+function metadataScopes(value: unknown): string[] {
+  if (value === undefined) return [];
+  if (!Array.isArray(value) || value.length > 512 || !value.every(scope =>
+    typeof scope === "string" && /^[\x21\x23-\x5B\x5D-\x7E]+$/.test(scope)) ||
+    value.join(" ").length > 16384) throw new OAuthError("malformed_metadata");
+  return [...new Set(value as string[])];
+}
+
+/** Parse an HTTP challenge list without mistaking quoted commas or other schemes for Bearer.
+ * Duplicate Bearer challenges/parameters are ambiguous; fail closed rather than merge grants.
+ * Nothing from this header is logged or returned to the owner. */
+function bearerChallenge(header: string | null): Record<string, string> | null {
+  if (!header) return null;
+  if (header.length > 32768 || /[\r\n]/.test(header)) throw new OAuthError("malformed_metadata");
+  const parts: string[] = [];
+  let start = 0, quoted = false, escaped = false;
+  for (let i = 0; i < header.length; i++) {
+    const char = header[i];
+    if (escaped) { escaped = false; continue; }
+    if (quoted && char === "\\") { escaped = true; continue; }
+    if (char === '"') quoted = !quoted;
+    if (char === "," && !quoted) { parts.push(header.slice(start, i).trim()); start = i + 1; }
+  }
+  if (quoted || escaped) throw new OAuthError("malformed_metadata");
+  parts.push(header.slice(start).trim());
+  let bearer: Record<string, string> | null = null;
+  let scheme = "";
+  for (let part of parts) {
+    if (!part) continue; // HTTP list grammar permits empty elements.
+    const opening = /^([!#$%&'*+.^_`|~0-9a-z-]+)(?:[ \t]+(.*))?$/i.exec(part);
+    if (opening && !opening[2]?.trimStart().startsWith("=")) {
+      scheme = opening[1].toLowerCase();
+      part = opening[2] ?? "";
+      if (scheme === "bearer") {
+        if (bearer) throw new OAuthError("malformed_metadata");
+        bearer = Object.create(null) as Record<string, string>;
+      }
+    }
+    if (scheme !== "bearer" || !part) continue;
+    const parameter = /^([!#$%&'*+.^_`|~0-9a-z-]+)\s*=\s*(?:"((?:[^"\\]|\\.)*)"|([!#$%&'*+.^_`|~0-9a-z-]+))$/i.exec(part);
+    if (!parameter || !bearer) throw new OAuthError("malformed_metadata");
+    const key = parameter[1].toLowerCase();
+    if (Object.hasOwn(bearer, key)) throw new OAuthError("malformed_metadata");
+    bearer[key] = parameter[2] === undefined ? parameter[3] : parameter[2].replace(/\\(.)/g, "$1");
+  }
+  return bearer;
+}
+
 /**
  * RFC 9728. Asks the MCP server itself which authorization servers protect it, rather than
  * assuming one. The `resource` it declares is carried into the token request so a token
  * minted for this resource cannot be replayed against another.
  */
-export async function discoverProtectedResource(serverUrl: string): Promise<{ resource: string; authorizationServers: string[] }> {
+export async function discoverProtectedResource(serverUrl: string, options: { requestChallenge?: boolean } = {}): Promise<{
+  resource: string; authorizationServers: string[]; scopesSupported: string[]; challengeScopes: string[] | null;
+}> {
   const u = new URL(serverUrl);
+  // Only the explicit canonical OAuth entry asks the endpoint for a challenge. Existing
+  // resource-only readers and specialized n8n discovery retain their no-probe contract.
+  let challenge: Record<string, string> | null = null;
+  if (options.requestChallenge) {
+    let response;
+    try {
+      response = await safeFetch(serverUrl, { method: "GET", headers: { Accept: "application/json, text/event-stream" } },
+        { timeoutMs: DISCOVERY_TIMEOUT_MS, headersOnly: true });
+    } catch { throw new OAuthError("discovery_failed"); }
+    if (response.status === 401) challenge = bearerChallenge(response.headers.get("www-authenticate"));
+    else if (![200, 204, 404, 405].includes(response.status)) throw new OAuthError("discovery_failed", response.status);
+  }
+  const challengeScopes = challenge && Object.hasOwn(challenge, "scope")
+    ? metadataScopes(challenge.scope.split(" ")) : null;
   // RFC 9728 §3.1: the path is appended to the well-known segment, so a server hosted at
   // a sub-path advertises its own metadata rather than the origin's.
   const path = u.pathname === "/" ? "" : u.pathname.replace(/\/$/, "");
-  const metadata = await getJson(`${u.origin}/.well-known/oauth-protected-resource${path}`);
+  let metadata;
+  if (challenge && Object.hasOwn(challenge, "resource_metadata")) {
+    // safeFetch applies the same HTTPS/public-address/no-redirect boundary to this URL.
+    // An explicit advertised document failing is an error, not permission to guess another.
+    metadata = await getJson(challenge.resource_metadata);
+  } else {
+    try { metadata = await getJson(`${u.origin}/.well-known/oauth-protected-resource${path}`); }
+    catch (error) {
+      if (!options.requestChallenge || !path || !(error instanceof OAuthError) || error.httpStatus !== 404) throw error;
+      metadata = await getJson(`${u.origin}/.well-known/oauth-protected-resource`);
+    }
+  }
   const authorizationServers = strArray(metadata.authorization_servers);
   if (authorizationServers.length === 0) throw new OAuthError("no_authorization_server");
-  return { resource: str(metadata.resource) ?? `${u.origin}${path}`, authorizationServers };
+  // RFC 9728: metadata must describe the resource we are connecting, not nominate another
+  // token audience. Apply to the explicit canonical flow; do not change legacy resource-only
+  // consumers as a side effect of this repair. Root fallback still describes this MCP endpoint.
+  if (options.requestChallenge && metadata.resource !== serverUrl) throw new OAuthError("malformed_metadata");
+  return { resource: str(metadata.resource) ?? `${u.origin}${path}`, authorizationServers,
+    scopesSupported: metadataScopes(metadata.scopes_supported), challengeScopes };
 }
 
 /**
@@ -211,6 +292,8 @@ export async function registerClient(opts: {
   server: AuthorizationServer;
   redirectUri: string;
   clientName: string;
+  /** Same resource-selected set as consent; omission preserves specialized callers. */
+  scopes?: string[];
 }): Promise<ClientRegistration> {
   if (!opts.server.registrationEndpoint) throw new OAuthError("registration_unsupported");
   let res;
@@ -226,6 +309,7 @@ export async function registerClient(opts: {
         // No client secret is wanted. PKCE is the proof, and a public client keeps us
         // from holding a credential we would then have to protect and rotate.
         token_endpoint_auth_method: "none",
+        ...(opts.scopes?.length ? { scope: opts.scopes.join(" ") } : {}),
       }),
     }, { timeoutMs: TOKEN_TIMEOUT_MS, maxBytes: 262_144 });
   } catch { throw new OAuthError("registration_failed"); }
@@ -258,6 +342,7 @@ export function buildAuthorizationUrl(opts: {
   url.searchParams.set("code_challenge_method", "S256");
   // RFC 8707. Binds the token to this MCP server so it cannot be replayed at another.
   url.searchParams.set("resource", opts.resource);
+  url.searchParams.delete("scope"); // Omission must not inherit a provider endpoint's query grant.
   if (opts.scopes.length) url.searchParams.set("scope", opts.scopes.join(" "));
   return url.toString();
 }

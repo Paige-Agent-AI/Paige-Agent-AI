@@ -29,7 +29,7 @@ SOLO_1024X768_PAIGE_CLOSED: NOT_APPLICABLE: the pipeline desk is a workspace sur
 SOLO_1366X768_PAIGE_OPEN: NOT_APPLICABLE: the pipeline desk is a workspace surface
 SOLO_1366X768_PAIGE_CLOSED: NOT_APPLICABLE: the pipeline desk is a workspace surface
 SOLO_1536X770_PAIGE_OPEN: NOT_APPLICABLE: the pipeline desk is a workspace surface
-SOLO_1536X770_PAIGE_CLOSED: NOT_APPLICPLICABLE: the pipeline desk is a workspace surface
+SOLO_1536X770_PAIGE_CLOSED: NOT_APPLICABLE: the pipeline desk is a workspace surface
 SOLO_900X1000_PAIGE_OPEN: NOT_APPLICABLE: the pipeline desk is a workspace surface
 SOLO_900X1000_PAIGE_CLOSED: NOT_APPLICABLE: the pipeline desk is a workspace surface
 OWNER_INTENT: archived pipelines have a visible home with restore and delete, per the completion-lane assignment package E

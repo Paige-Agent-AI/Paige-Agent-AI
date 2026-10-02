@@ -10,6 +10,7 @@ try:
  files=['scripts/knowledge-service/fixture.sql','scripts/knowledge-service/delete-fixture.sql','scripts/knowledge-service/review-fixture.sql','scripts/knowledge-service/durable-fixture.sql','supabase/migrations/20270417000000_paige_durable_work_envelope.sql','supabase/migrations/20270418000000_paige_durable_document_work.sql','supabase/migrations/20270531100000_knowledge_canonical_metadata.sql','supabase/migrations/20270531200000_knowledge_canonical_delete.sql','supabase/migrations/20270531400000_knowledge_review_foundation.sql','supabase/migrations/20270531600000_knowledge_durable_authority.sql','supabase/migrations/20270532000000_knowledge_extraction_work.sql','supabase/migrations/20270532010000_knowledge_review_management.sql']
  files+=['supabase/migrations/20270533000000_knowledge_publication.sql']*2
  files+=['supabase/migrations/20270533100000_knowledge_publication_worker_adoption.sql']*2
+ files+=['supabase/migrations/20270533200000_knowledge_submit_activation.sql']*2
  files+=['scripts/knowledge-service/extraction-behavior.sql','scripts/knowledge-service/publication-behavior.sql']
  for f in files: run(['-d',db,'-f',f])
  print('PASS: native Knowledge publication SQL')

@@ -101,3 +101,36 @@ export async function deleteKnowledge(
   }
   return data as unknown as KnowledgeDeleteResult;
 }
+
+export interface KnowledgePublicationSubmission {
+  work_id: string;
+  document_id: string;
+  status: string;
+  replayed: boolean;
+  revision?: number;
+}
+
+/** Submits the SAVED exact review for atomic publication (the worker drives embedding).
+ * The response carries no tenant envelope — the document echo is the scope anchor — and a
+ * creation must echo the frozen revision. Exact intent replay is the SAME publication, not
+ * a second one; a lost acknowledgement is reconciled by recovery, never by a new intent.
+ */
+export async function submitKnowledgePublication(
+  client: KnowledgeRpcClient, tenant: string, documentId: string, extractionWorkId: string,
+  expectedRevision: number, intentId: string, reviewHash: string,
+): Promise<KnowledgePublicationSubmission> {
+  if (!tenant) throw new KnowledgeServiceError('KNOWLEDGE_SCOPE_REQUIRED', 'Select a workspace first.');
+  const {data, error} = await client.rpc('submit_tenant_knowledge_publication', {
+    p_expected_tenant: tenant, p_doc_id: documentId, p_work_id: extractionWorkId,
+    p_expected_revision: expectedRevision, p_intent_id: intentId, p_review_hash: reviewHash,
+  });
+  if (error) throw new KnowledgeServiceError(error.code ?? 'KNOWLEDGE_REQUEST_FAILED', error.message);
+  if (!object(data) || data.document_id !== documentId
+    || typeof data.work_id !== 'string' || !data.work_id
+    || typeof data.status !== 'string' || !data.status
+    || typeof data.replayed !== 'boolean'
+    || (data.replayed === false && data.revision !== expectedRevision)) {
+    throw new KnowledgeServiceError('KNOWLEDGE_RESPONSE_INVALID', 'The publication submission could not be verified.');
+  }
+  return data as unknown as KnowledgePublicationSubmission;
+}

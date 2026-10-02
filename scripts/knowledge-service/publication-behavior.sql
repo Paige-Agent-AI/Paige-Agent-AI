@@ -16,14 +16,20 @@ SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',false);
 SELECT public.test_assert((SELECT revision=2 FROM public.tenant_knowledge_docs WHERE id=(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='pub')),'completion advanced revision to 2');
 SET ROLE authenticated;
 SELECT public.test_assert(public.save_tenant_knowledge_review('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='pub'),(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='pub'),2,'Reviewed publication text','{"title":"Reviewed publication","summary":null,"category":null,"tags":["pub"]}')->>'revision'='3','review saved advances CAS to 3');
--- Dormant boundary: submit refuses authenticated callers.
-SELECT public.test_denied($q$SELECT public.submit_tenant_knowledge_publication('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='pub'),(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='pub'),3,gen_random_uuid(),encode(sha256(convert_to('Reviewed publication text','UTF8')),'hex'))$q$,'permission denied');
+-- Activation (20270533200000): submit is the JWT-caller seam. The authenticated caller
+-- with workspace authority submits the SAVED exact review; exact intent replay returns the
+-- same publication; a different intent for the same unresolved publication is refused; a
+-- tenant the caller has not selected is refused by the authority gate; anon stays revoked.
+SELECT public.test_assert((SELECT public.submit_tenant_knowledge_publication('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='pub'),(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='pub'),3,'60000000-0000-0000-0000-000000000011',encode(sha256(convert_to('Reviewed publication text','UTF8')),'hex')))->>'status'='claimed','authenticated caller submits the saved review for publication');
+SELECT public.test_assert((SELECT public.submit_tenant_knowledge_publication('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='pub'),(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='pub'),3,'60000000-0000-0000-0000-000000000011',encode(sha256(convert_to('Reviewed publication text','UTF8')),'hex')))->>'replayed'='true','exact intent replay returns the same publication');
+SELECT public.test_denied($q$SELECT public.submit_tenant_knowledge_publication('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='pub'),(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='pub'),3,'60000000-0000-0000-0000-000000000012',encode(sha256(convert_to('Reviewed publication text','UTF8')),'hex'))$q$,'KNOWLEDGE_PUBLICATION_PENDING');
+SELECT public.test_denied($q$SELECT public.submit_tenant_knowledge_publication('00000000-0000-0000-0000-000000000002','20000000-0000-0000-0000-000000000002','00000000-0000-0000-0000-000000000099',1,'60000000-0000-0000-0000-000000000013',encode(sha256(convert_to('other tenant','UTF8')),'hex'))$q$,'KNOWLEDGE_SCOPE_CHANGED');
+SELECT public.test_denied($q$SELECT public.submit_tenant_knowledge_publication('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='pub'),(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='pub'),99,'60000000-0000-0000-0000-000000000016',encode(sha256(convert_to('Reviewed publication text','UTF8')),'hex'))$q$,'KNOWLEDGE_REVISION_CONFLICT');
 RESET ROLE;
-DO $sub$
-DECLARE ans jsonb;
-BEGIN
- ans:=public.submit_tenant_knowledge_publication('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='pub'),(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='pub'),3,'60000000-0000-0000-0000-000000000011',encode(sha256(convert_to('Reviewed publication text','UTF8')),'hex'));
-END $sub$;
+-- The work table itself is owner-visible only in this fixture; count it as the owner.
+SELECT public.test_assert((SELECT count(*)=1 FROM public.paige_durable_work WHERE work_kind='knowledge_publish'),'replay created no second publication work');
+SET ROLE anon;
+SELECT public.test_denied($q$SELECT public.submit_tenant_knowledge_publication(NULL,NULL,NULL,NULL,NULL,NULL)$q$,'permission denied');
 RESET ROLE;
 SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',false);
 SET ROLE authenticated;
@@ -52,6 +58,15 @@ BEGIN
 END $complete$;
 SELECT public.test_assert((SELECT record_state='canonical' AND content='Reviewed publication text' AND active_generation_id IS NOT NULL AND pending_review IS NULL AND chunk_count>0 AND publication_manifest->>'version'='unicode-1000-150-v1' FROM public.tenant_knowledge_docs WHERE id=(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='pub')),'atomic promotion switches state+content+generation+manifest together');
 SELECT public.test_assert((SELECT count(*)>0 FROM public.match_tenant_knowledge('00000000-0000-0000-0000-000000000001',(SELECT ARRAY(SELECT 0.5::double precision FROM generate_series(1,1024))::extensions.vector),20)),'active generation is searchable');
+-- Post-publication authenticated boundary: promotion consumes the review and severs the
+-- extraction binding (extraction_work_id=NULL), so the old extraction pair can never
+-- resubmit — a re-publication requires the fresh extraction/review the second-publication
+-- scenario below exercises.
+RESET ROLE;
+SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',false);
+SET ROLE authenticated;
+SELECT public.test_denied($q$SELECT public.submit_tenant_knowledge_publication('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='pub'),(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='pub'),4,'60000000-0000-0000-0000-000000000014',encode(sha256(convert_to('Reviewed publication text','UTF8')),'hex'))$q$,'KNOWLEDGE_NOT_FOUND');
+RESET ROLE;
 SET ROLE service_role;
 SELECT public.test_denied($q$INSERT INTO public.tenant_knowledge_chunks(id,doc_id,tenant_id,chunk_index,content) VALUES(gen_random_uuid(),(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='pub'),'00000000-0000-0000-0000-000000000001',99,'legacy overwrite attempt')$q$,'KNOWLEDGE_GENERATION_MANAGED');
 RESET ROLE;
@@ -285,9 +300,8 @@ END $ladrive$;
 SELECT public.test_assert((SELECT count(*)>=1 FROM public.recover_knowledge_publication(10)),'lost-ack recover runs');
 SELECT public.test_assert((SELECT status='outcome_unknown' AND error_code='completion_unknown' FROM public.paige_durable_work WHERE work_kind='knowledge_publish' AND request_payload->>'extraction_work_id'=(SELECT result->>'work_id' FROM public.extract_test WHERE name='lostack')),'started dispatch with lost ack reconciles to outcome_unknown, never re-driven');
 RESET ROLE;
--- service_role (with the fixture actor) so the RPC executes past its ACL and the pending
--- refusal itself is what denies — authenticated callers are already ACL-denied (proven above).
-SET ROLE service_role;
+-- The natural caller: the pending refusal itself is what denies an authenticated resubmit.
 SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',false);
+SET ROLE authenticated;
 SELECT public.test_denied($q$SELECT public.submit_tenant_knowledge_publication('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='lostack'),(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='lostack'),3,'60000000-0000-0000-0000-000000000029',encode(sha256(convert_to('Lost ack publication text','UTF8')),'hex'))$q$,'KNOWLEDGE_PUBLICATION_PENDING');
 RESET ROLE;

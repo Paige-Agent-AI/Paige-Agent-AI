@@ -1,4 +1,5 @@
 import { downloadKnowledgeText, runKnowledgeExtraction } from '../_shared/knowledge-extraction.ts';
+import { runKnowledgePublication } from '../_shared/knowledge-publication-worker.ts';
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { callModel } from "../_shared/model-router.ts";
 import {
@@ -135,6 +136,10 @@ async function runOne(admin: SupabaseClient, workId: string): Promise<Record<str
   }
 }
 
+async function runPublication(admin: SupabaseClient, workId: string): Promise<Record<string, unknown>> {
+  return runKnowledgePublication(admin, workId);
+}
+
 async function runKnowledge(admin: SupabaseClient, workId: string): Promise<Record<string, unknown>> {
   const url = Deno.env.get("SUPABASE_URL")!;
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -142,6 +147,12 @@ async function runKnowledge(admin: SupabaseClient, workId: string): Promise<Reco
     `${url}/storage/v1/object/authenticated/tenant-knowledge/${path.split("/").map(encodeURIComponent).join("/")}`,
     { Authorization: `Bearer ${key}`, apikey: key },
   ));
+}
+
+async function rpc0(admin: SupabaseClient, name: string, args: Record<string, unknown>): Promise<Record<string, unknown> | null> {
+  const { data, error } = await admin.rpc(name, args);
+  if (error) return null;
+  return (data ?? null) as Record<string, unknown> | null;
 }
 
 Deno.serve(async (req) => {
@@ -154,6 +165,10 @@ Deno.serve(async (req) => {
   if (body.mode === "knowledge-run" && typeof body.work_id === "string") {
     try { return json(200, await runKnowledge(admin, body.work_id)); }
     catch { return json(409, { ok: false, work_id: body.work_id, error: "knowledge_work_not_claimable" }); }
+  }
+  if (body.mode === "knowledge-publish" && typeof body.work_id === "string") {
+    try { return json(200, await runPublication(admin, body.work_id)); }
+    catch { return json(409, { ok: false, work_id: body.work_id, error: "knowledge_publication_not_claimable" }); }
   }
   if (body.mode === "run" && typeof body.work_id === "string") {
     try { return json(200, await runOne(admin, body.work_id)); }
@@ -177,7 +192,21 @@ Deno.serve(async (req) => {
         catch { knowledgeResults.push({ ok: false, work_id: row.work_id, status: "outcome_unknown" }); }
       }
     }
-    return json(200, { ok: true, recovered: ids.length, results, knowledge_results: knowledgeResults, knowledge_recovery_available: !knowledge.error });
+    // Publication recovery reconciles lost acknowledgements (and expired leases) without a
+    // second automatic embed; committed generations are recorded as succeeded.
+    const publicationResults: Array<Record<string, unknown>> = [];
+    const publication = await admin.rpc("recover_knowledge_publication", { _limit: 10 });
+    if (!publication.error) {
+      for (const row of Array.isArray(publication.data) ? publication.data : []) {
+        const w = await rpc0(admin, "start_knowledge_publication", { _work_id: String(row.work_id) });
+        // Only re-drive rows still claimable after reconciliation; committed ones returned above.
+        if (w?.status === "claimed") {
+          try { publicationResults.push(await runPublication(admin, String(row.work_id))); }
+          catch { publicationResults.push({ ok: false, work_id: row.work_id, status: "outcome_unknown" }); }
+        }
+      }
+    }
+    return json(200, { ok: true, recovered: ids.length, results, knowledge_results: knowledgeResults, knowledge_recovery_available: !knowledge.error, publication_results: publicationResults, publication_recovery_available: !publication.error });
   }
   return json(400, { ok: false, error: "invalid_request" });
 });

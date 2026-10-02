@@ -33,7 +33,7 @@ SOLO_1024X768_PAIGE_CLOSED: NOT_APPLICABLE: no rendered layout changed
 SOLO_1366X768_PAIGE_OPEN: NOT_APPLICABLE: no rendered layout changed
 SOLO_1366X768_PAIGE_CLOSED: NOT_APPLICABLE: no rendered layout changed
 SOLO_1536X770_PAIGE_OPEN: NOT_APPLICABLE: no rendered layout changed
-SOLO_1536X768_PAIGE_CLOSED: NOT_APPLICABLE: no rendered layout changed
+SOLO_1536X770_PAIGE_CLOSED: NOT_APPLICABLE: no rendered layout changed
 SOLO_900X1000_PAIGE_OPEN: NOT_APPLICABLE: no rendered layout changed
 SOLO_900X1000_PAIGE_CLOSED: NOT_APPLICABLE: no rendered layout changed
 OWNER_INTENT: the card appears immediately and the working state is truthful, per the completion-lane assignment package C2
@@ -46,7 +46,7 @@ RELEASE_NOTE_REQUIRED: NO: bounded gate removal and safety-net addition
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: the gate pins and the safety-net pin are proven offline; the authenticated mid-stream card appearance and deployed frontend are not yet proven
 RELEASE_RECOVERY: position=revert this bounded change if a card misrenders mid-stream or the working indicator sticks, restoring the isLoading gate from the merge parent; reference=PACKAGE-C2
 
-INTERNAL_BUILD_IDENTITY: product=87eb7a012762c7b0935b05ebe82a2c9d80d2f2dd; current-main-sync=87eb7a012762c7b0935b05ebe82a2c9d80d2f2dd; base=1bb7f08d2; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE client only; evidence=failing-first-gate-pins
+INTERNAL_BUILD_IDENTITY: product=87eb7a012762c7b0935b05ebe82a2c9d80d2f2dd; current-main-sync=87eb7a012762c7b0935b05ebe82a2c9d80d2f2dd; base=1bb7f08d2; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=failing-first-gate-pins
 RELEASE_CHANNEL: development: exact product-code head on the draft branch; production promotion remains merge automation only
 RELEASE_CLASSIFICATION: patch: gate removal and safety-net addition on the existing card and working indicator
 CUSTOMER_RELEASE_IDENTITY: none: no owner-approved customer release identity was assigned to this bounded repair

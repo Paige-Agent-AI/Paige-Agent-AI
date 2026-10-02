@@ -42,12 +42,13 @@ step 1.
 The live proof runs over the **`mcp` facet** (the executable MCP endpoint):
 
 ```json
-{ "action": "create", "facet": "mcp", "server_url": "https://<n8n-host>/mcp-server/http", "auth_kind": "bearer", "auth_token": "<token>" }
+{ "action": "create", "facet": "mcp", "provider_key": "n8n", "server_url": "https://<n8n-host>/mcp-server/http", "auth_kind": "bearer", "auth_token": "<token>" }
 ```
 
 `auth_kind` may be `oauth`, `bearer`, `header`, `url`, or `none` — whatever your n8n MCP endpoint
-takes. (If you omit `provider_key`, the edge defaults it to `n8n` for this facet; the RPC only
-checks the descriptor exists.)
+takes. **`provider_key` is required on the `mcp` facet** (a null key is refused `MCP_BAD_PROVIDER`;
+the edge's `?? "n8n"` default applies only to the `rest` facet). A `label` is also required by the
+writer — pass one you recognize.
 
 > **Do not use the REST/api-key facet for this proof.** `facet: "rest"` + `api_key` creates a
 > connection that is **deliberately non-MCP-executable** — `verify` on it resolves to

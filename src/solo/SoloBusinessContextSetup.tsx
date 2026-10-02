@@ -56,6 +56,7 @@ import {
   type SoloSetupTab,
 } from "./settings-business-context-contract";
 import "./settings-setup.css";
+import { KnowledgeLibrary } from "./knowledge/KnowledgeLibrary";
 import { RepresentativePhonePicker } from "./setup-representative-phone";
 import { resolveSetupSubtabRoute, setupSubtabPath } from "./setup-subtab-route";
 import { settingsScrollOwner } from "./settings-scroll-owner";
@@ -1130,13 +1131,7 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
         {!data.canEdit && (
           <div className="setup-notice" data-tone="bad">
             This workspace is read-only for Setup. Owner access is required for
-            legal, ownership, email, knowledge, and Paige voice context.
-          </div>
-        )}
-        {data.accessScope === "admin_operational" && (
-          <div className="setup-notice">
-            Admin editing is limited to the non-legal operating direction
-            supported by current policy.
+            legal, ownership, email, saved Setup references, and Paige voice context. Canonical Knowledge follows your workspace permissions.
           </div>
         )}
         {notice && (
@@ -1493,6 +1488,17 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
               </>
             )}{" "}
             {tab === "knowledge-bucket" && (
+              <>
+              <KnowledgeLibrary tenantId={data.activeTenantId} account={account}
+                requestedDocumentId={new URLSearchParams(location.search).get("knowledge")}
+                onDocumentChange={(id) => {
+                  const search = new URLSearchParams(location.search);
+                  if (id) search.set("knowledge", id); else search.delete("knowledge");
+                  navigate({ pathname: location.pathname, search: search.toString() }, { replace: true, state: location.state });
+                }} />
+              <details className="setup-knowledge-references">
+              <summary>Saved Setup references ({sources.length})</summary>
+              <p>These references are separate from indexed documents. Adding a reference here does not ingest its content.</p>
               <KnowledgeBucket
                 sources={sources}
                 owner={owner}
@@ -1507,6 +1513,8 @@ export function SoloBusinessContextSetup({ account, openPaige }: { account: stri
                   setSources((now) => now.filter((_, i) => i !== index))
                 }
               />
+              </details>
+              </>
             )}{" "}
             {tab === "direction" && (
               <Section

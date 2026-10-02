@@ -98,7 +98,7 @@ type Message = {
    *  them back so the gate runs that call and not whatever the model re-emits — see the gate's own
    *  note. Optional: a rehydrated turn has summaries but no live fingerprints, which is correct,
    *  because a past decision must never be re-fired (§15). */
-  confirm?: Array<{ tool: string; summary: string; fingerprint?: string }>;
+  confirm?: Array<{ tool: string; summary: string; fingerprint?: string; command?: Record<string, unknown>; idempotency_key?: string }>;
   /** True on turns rehydrated from history: their confirm cards render settled,
    *  not as a live Approve button (§15 — never re-fire a past action). */
   confirmResolved?: boolean;
@@ -792,7 +792,7 @@ const PaigeAIChatInner = ({
           // Rehydrated summaries only. Deliberately NOT typed with `fingerprint`: a stored turn
           // carries no live fingerprint, and `confirmResolved` below renders it settled, so there
           // is nothing here that could re-fire a decision already taken (§15).
-          ? (b.paige_confirm as Array<{ tool: string; summary: string }>)
+          ? (b.paige_confirm as Array<{ tool: string; summary: string; fingerprint?: string; command?: Record<string, unknown>; idempotency_key?: string }>)
           : undefined;
         const crmResults = Array.isArray(b.paige_crm_result) ? b.paige_crm_result as PaigeCrmResult[] : undefined;
         const artifacts = Array.isArray(b.paige_artifact)
@@ -1409,7 +1409,7 @@ const PaigeAIChatInner = ({
             }
             // Structured event: Paige is asking to confirm a mutating action → render an approve/deny card.
             if (parsed.paige_confirm?.summary) {
-              confirmThisTurn.push({ tool: String(parsed.paige_confirm.tool || "action"), summary: String(parsed.paige_confirm.summary), ...(parsed.paige_confirm.fingerprint ? { fingerprint: String(parsed.paige_confirm.fingerprint) } : {}) });
+              confirmThisTurn.push({ tool: String(parsed.paige_confirm.tool || "action"), summary: String(parsed.paige_confirm.summary), ...(parsed.paige_confirm.fingerprint ? { fingerprint: String(parsed.paige_confirm.fingerprint) } : {}), ...(parsed.paige_confirm.command && typeof parsed.paige_confirm.command === "object" ? { command: parsed.paige_confirm.command as Record<string, unknown> } : {}), ...(parsed.paige_confirm.idempotency_key ? { idempotency_key: String(parsed.paige_confirm.idempotency_key) } : {}) });
               setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: [...confirmThisTurn], crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
               continue;
             }
@@ -1525,6 +1525,11 @@ const PaigeAIChatInner = ({
       if (decisionTurn) retryTurnRef.current = null;
       if (soloTenantSafety) setConnectionIssue("server");
     } finally {
+      // C2 — the no-stuck-working safety net: the fence release is idempotent (it checks
+      // the ticket first), so calling it here catches any exit path that missed it. Without
+      // this, an unexpected exception between the specific handlers leaves the working
+      // indicator on with no stream behind it — the exact fake-working state C2 forbids.
+      releaseRequestBusy(requestTicket);
       if (timeoutId !== null) window.clearTimeout(timeoutId);
       if (businessMissionId && ticketAccepted(requestTicket)) {
         window.dispatchEvent(new CustomEvent("business-mission:refresh", { detail: { missionId: businessMissionId } }));
@@ -1602,20 +1607,205 @@ const PaigeAIChatInner = ({
     dictationGenerationRef.current += 1;
     setDictationGeneration(dictationGenerationRef.current);
     const rollback = messages;
-    const userContent = text || (currentDoc ? `Analyze this document: ${currentDoc.name}` : "");
+    let userContent = text || (currentDoc ? `Analyze this document: ${currentDoc.name}` : "");
     // Solo: the card that asked settles into a record of the answer, in place. `rollback` keeps the
     // live card, so a decision that never leaves puts it back exactly as it was.
     const decision = soloTenantSafety
       ? approvedFingerprints?.length ? "approved" as const : declinedFingerprints?.length ? "declined" as const : undefined
       : undefined;
     const decided = approvedFingerprints?.length ? approvedFingerprints : declinedFingerprints ?? [];
+    // PR 2b — the approved card executes the STORED proposal. A CRM-door confirmation carries
+    // its canonical command; the door claims the stored row atomically and executes the decided
+    // args, so the model is never the source of execution arguments after approval. Executed
+    // confirmations are stripped from the model turn's echo: there is nothing left to re-dispatch.
+    const executedOutcomes: Array<{ fingerprint: string; summary: string; tool: string; outcome: "ran" | "not_run" | "unconfirmed"; note?: string; reproposed?: { fingerprint: string; summary: string } }> = [];
+    let echoFingerprints = approvedFingerprints ? [...approvedFingerprints] : undefined;
+    if (echoFingerprints?.length) {
+      const actionable = new Map<string, { command: Record<string, unknown>; idempotency_key: string; summary: string; tool: string }>();
+      for (const m of messages) {
+        for (const c of m.confirm ?? []) {
+          if (c.fingerprint && echoFingerprints.includes(c.fingerprint) && c.command && c.idempotency_key && !actionable.has(c.fingerprint)) {
+            actionable.set(c.fingerprint, { command: c.command, idempotency_key: c.idempotency_key, summary: c.summary, tool: c.tool });
+          }
+        }
+      }
+      for (const [fingerprint, item] of actionable) {
+        let body: Record<string, unknown> = {};
+        let transportFailed = false;
+        let errorPresent = false;
+        try {
+          const { data, error } = await supabase.functions.invoke("crm-command", {
+            body: { command: item.command, idempotency_key: item.idempotency_key, approved_fingerprint: fingerprint },
+          });
+          if (data && typeof data === "object" && !Array.isArray(data)) body = data as Record<string, unknown>;
+          if (error) {
+            errorPresent = true;
+            // An ANSWERED refusal or failure still carries the door's structured body on the
+            // FunctionsHttpError context — the same source the chat handler parses. A body without
+            // the door's own marker (a gateway or relay answer, or none at all) leaves the
+            // command's outcome genuinely unconfirmed; the door marks possibly-committed answers
+            // explicitly, and foreign answers never downgrade to did-not-run.
+            const ctx = (error as { context?: { json?: () => Promise<unknown> } }).context;
+            if (ctx && typeof ctx.json === "function") {
+              try {
+                const parsed = await ctx.json();
+                if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) body = parsed as Record<string, unknown>;
+              } catch { /* the answer itself failed to decode: treat as transport */ transportFailed = true; }
+            } else {
+              transportFailed = true;
+            }
+          }
+        } catch {
+          transportFailed = true;
+        }
+        // A spent or raced fingerprint makes the door mint a FRESH single-use proposal; carry it
+        // so the card can re-render the new approval instead of dead-ending on the consumed one.
+        const reproposed = body.outcome === "approval_required" && typeof body.fingerprint === "string" && body.fingerprint !== fingerprint
+          ? { fingerprint: String(body.fingerprint), summary: typeof body.summary === "string" ? body.summary : item.summary }
+          : undefined;
+        // The shared answered/unanswered rule (approval-outcome.ts), client-side: an error whose
+        // parsed body carries the door's own `ok` marker is an ANSWER (its outcome classes stand);
+        // an error with a foreign body — a gateway or relay answer, or none at all — may hide a
+        // committed command, so it reports as could-not-confirm, never as did-not-run.
+        const doorAnswered = !transportFailed && body.ok !== undefined;
+        const outcome = body.outcome === "succeeded" && !errorPresent && !transportFailed
+          ? "ran"
+          : body.outcome_unknown === true || transportFailed || (errorPresent && !doorAnswered)
+          ? "unconfirmed"
+          : "not_run";
+        executedOutcomes.push({
+          fingerprint, summary: item.summary, tool: item.tool, outcome,
+          note: typeof body.message === "string" ? body.message.slice(0, 200) : undefined,
+          ...(reproposed ? { reproposed } : {}),
+        });
+      }
+      if (executedOutcomes.length) {
+        const executed = new Set(executedOutcomes.map((o) => o.fingerprint));
+        echoFingerprints = echoFingerprints.filter((f) => !executed.has(f));
+        if (!echoFingerprints.length) echoFingerprints = undefined;
+      }
+    }
+
+    // PACKAGE B — the approved PIPELINE card executes its stored proposal through the human
+    // door. The general gate mints pipeline proposals into paige_pending_confirmations with the
+    // model's exact arguments; on the approve click we read THAT row (never the model's re-
+    // emission) and run it through configure_tenant_pipeline — the same executor the board
+    // calls — under the clicking user's own session with _actor_kind "human", because the human
+    // clicking Approve is the authority executing it. The stored idempotency key makes a double
+    // click a replay (the door returns the cached result; the action runs once), and an expired
+    // row refuses honestly. A typed "yes" never reaches this path: it reads only the approved
+    // card fingerprints. The chat handler is untouched (Knowledge #1615 owns that seam).
+    if (echoFingerprints?.length) {
+      const pipelineItems: Array<{ fingerprint: string; summary: string; tool: string }> = [];
+      for (const m of messages) {
+        for (const c of m.confirm ?? []) {
+          if (c.fingerprint && echoFingerprints.includes(c.fingerprint) && c.tool === "pipeline_configure" && !pipelineItems.some((x) => x.fingerprint === c.fingerprint)) {
+            pipelineItems.push({ fingerprint: c.fingerprint, summary: c.summary, tool: c.tool });
+          }
+        }
+      }
+      for (const item of pipelineItems) {
+        let ran: "ran" | "not_run" | "unconfirmed" = "unconfirmed";
+        let note: string | undefined;
+        try {
+          // The stored proposal IS the authority: args, tenant and expiry come from the row the
+          // server minted, scoped to this user by row-level security.
+          // The general gate's cards carry a SCOPED token (fingerprint:requestNonce) while the
+          // stored row's column is the bare 16-hex fingerprint — the server's own claim path
+          // splits the same way. Look up by the bare form.
+          // The table is internal to the approval machinery and absent from the generated
+          // types, so the board's `as never` pattern types the whole chain off — the runtime
+          // shape is pinned by the suite.
+          const rowPromise = supabase
+            .from("paige_pending_confirmations" as never)
+            .select("args,tenant_id,expires_at,tool_name" as never)
+            .eq("fingerprint" as never, item.fingerprint.split(":")[0] as never)
+            .eq("tool_name" as never, "pipeline_configure" as never)
+            .is("consumed_at" as never, null as never)
+            .maybeSingle() as unknown as Promise<{ data: Record<string, unknown> | null; error: { message: string } | null }>;
+          const { data: row, error: rowError } = await rowPromise;
+          const stored = row && typeof row === "object" ? row as { args?: Record<string, unknown>; tenant_id?: string; expires_at?: string } : null;
+          const argsObj = stored && typeof stored.args === "object" && stored.args !== null ? stored.args as Record<string, unknown> : null;
+          const expired = !stored?.expires_at || new Date(String(stored.expires_at)).getTime() <= Date.now();
+          if (rowError || !stored || !argsObj || typeof stored.tenant_id !== "string"
+              || typeof argsObj.command !== "object" || typeof argsObj.idempotency_key !== "string") {
+            ran = "not_run";
+            note = "The stored approval could not be read. Ask Paige to propose the action again.";
+          } else if (expired) {
+            ran = "not_run";
+            note = "That approval expired. Ask Paige to propose the action again.";
+          } else {
+            const { data, error } = await supabase.rpc("configure_tenant_pipeline" as never, {
+              _tenant_id: stored.tenant_id,
+              _command: argsObj.command,
+              _idempotency_key: argsObj.idempotency_key,
+              _actor_kind: "human",
+            } as never);
+            const body = data && typeof data === "object" && !Array.isArray(data) ? data as Record<string, unknown> : {};
+            // supabase.rpc answers refusals as {error} with the message inline — an ANSWER, so
+            // its outcome class stands; a transport failure stays could-not-confirm.
+            if (error) {
+              // A 4xx is the door ANSWERING (a governed refusal, rolled back); a 5xx or an
+              // unclassed failure may hide a committed command behind a lost response — the
+              // same answered-or-ambiguous rule the CRM lane applies, never a false did-not-run.
+              const status = typeof (error as { status?: number }).status === "number" ? (error as { status?: number }).status : 0;
+              if (status >= 400 && status < 500) {
+                ran = "not_run";
+                note = typeof error.message === "string" ? error.message.slice(0, 200) : undefined;
+              } else {
+                ran = "unconfirmed";
+                note = typeof error.message === "string" ? error.message.slice(0, 200) : undefined;
+              }
+            } else if (body.ok === false) {
+              ran = "not_run";
+              note = typeof body.message === "string" ? body.message.slice(0, 200) : undefined;
+            } else {
+              ran = "ran";
+            }
+          }
+        } catch {
+          ran = "unconfirmed";
+        }
+        executedOutcomes.push({ fingerprint: item.fingerprint, summary: item.summary, tool: item.tool, outcome: ran, ...(note ? { note } : {}) });
+      }
+      if (executedOutcomes.length) {
+        const executed = new Set(executedOutcomes.map((o) => o.fingerprint));
+        echoFingerprints = echoFingerprints.filter((f) => !executed.has(f));
+        if (!echoFingerprints.length) echoFingerprints = undefined;
+      }
+    }
+    // The turn carries the card's verified result so the model narrates from the outcome, never
+    // from an assumption that approval implies execution.
+    if (executedOutcomes.length) {
+      userContent += ` [Card result — ${executedOutcomes.map((o) => `${o.summary.split(".")[0]}: ${o.outcome === "ran" ? "ran" : o.outcome === "not_run" ? "didn't run" : "couldn't confirm"}`).join("; ")}]`;
+    }
     let askedAt = -1;
     for (let i = messages.length - 1; decision && i >= 0 && askedAt < 0; i -= 1) {
       const m = messages[i];
       if (m.role === "assistant" && !m.confirmResolved
         && m.confirm?.some((c) => !!c.fingerprint && decided.includes(c.fingerprint))) askedAt = i;
     }
-    const shown = askedAt >= 0 ? messages.map((m, i) => (i === askedAt ? { ...m, confirmDecision: decision } : m)) : messages;
+    const executedStamp = executedOutcomes.length ? {
+      reported: true as const,
+      actions: executedOutcomes.map((o) => ({ fingerprint: o.fingerprint, summary: o.summary, tool: o.tool, outcome: o.outcome, ...(o.note ? { note: o.note } : {}) })),
+    } : undefined;
+    const reproposedAny = executedOutcomes.some((o) => o.reproposed);
+    const shown = askedAt >= 0 ? messages.map((m, i) => {
+      if (i !== askedAt) return m;
+      return {
+        ...m,
+        // A re-proposed confirmation replaces its consumed twin with the fresh fingerprint, and
+        // the decision marker lifts so the live Approve renders for the NEW single-use proposal.
+        ...(reproposedAny && m.confirm?.length ? {
+          confirm: m.confirm.map((c) => {
+            const o = executedOutcomes.find((x) => x.fingerprint === c.fingerprint);
+            return o?.reproposed ? { ...c, fingerprint: o.reproposed.fingerprint, summary: o.reproposed.summary } : c;
+          }),
+        } : {}),
+        confirmDecision: decision && !reproposedAny ? decision : undefined,
+        ...(executedStamp ? { approvalOutcome: executedStamp } : {}),
+      };
+    }) : messages;
     const base = [
       ...shown,
       mkMsg({
@@ -1626,13 +1816,18 @@ const PaigeAIChatInner = ({
     ];
     setMessages(base);
     if (currentDoc) setAttachedDoc(null);
+    // Once the stored proposal has EXECUTED, the rollback snapshot is the post-decision state:
+    // a later stream failure may not resurrect the live Approve button for an action that
+    // already ran (a second click self-heals via idempotency readback, but the surface must
+    // never falsely assert nothing happened).
+    const effectiveRollback = executedOutcomes.length ? shown : rollback;
     await streamTurn(
       base,
-      rollback,
+      effectiveRollback,
       userContent,
       currentDoc,
       originDraft,
-      approvedFingerprints,
+      echoFingerprints,
       declinedFingerprints,
       trackedVoiceSink,
     );
@@ -2100,7 +2295,13 @@ const PaigeAIChatInner = ({
                             ))}
                           </div>
                         )}
-                        {!!message.confirm?.length && !message.confirmResolved && !message.confirmDecision && index === messages.length - 1 && !isLoading && (
+                        {/* C2 — the card renders MID-STREAM: removing the !isLoading gate means
+                            the card appears the instant the server mints it, not after [DONE].
+                            With C1's continuation loop keeping the stream alive through the
+                            task, the old gate hid cards for the entire multi-round duration.
+                            Clicking Approve mid-stream supersedes the model's turn (the
+                            approval click aborts the current stream and dispatches directly). */}
+                        {!!message.confirm?.length && !message.confirmResolved && !message.confirmDecision && (index === messages.length - 1 || (message.approvalOutcome?.reported === true && message.confirm.some((c) => !!c.fingerprint && !(message.approvalOutcome?.actions ?? []).some((a) => a.fingerprint === c.fingerprint)))) && (
                           <PaigeConfirmCard
                             // Summary and fingerprint stay PAIRED. The previous version built two
                             // parallel arrays and `.filter()`ed the fingerprints, so one action

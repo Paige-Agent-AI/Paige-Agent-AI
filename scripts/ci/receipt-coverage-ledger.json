@@ -197,6 +197,18 @@
       "receipt": "seeded_undeclared"
     },
     {
+      "tool": "agreement_draft",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch records the run via the agreements chat-write seam's recordRun -> recordCapabilityRun (capability_succeeded / failed / refused by outcome)"
+    },
+    {
+      "tool": "agreement_send",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch records the run through the exhaustive AgreementSendFailure outcome switch -> recordCapabilityRun (succeeded / capability_failed incl. not_delivered / capability_refused incl. stale_document)"
+    },
+    {
       "tool": "approval_claim",
       "risk": "ordinary",
       "receipt": "seeded_undeclared"

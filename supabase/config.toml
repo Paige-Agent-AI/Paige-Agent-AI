@@ -630,3 +630,6 @@ verify_jwt = true
 # re-verifies in-body that the connection is in that tenant (§9/§59). Answers only with a 302 to a clean
 # app URL — code/state never enter an analytics-instrumented React surface (the #1355 structural fix).
 verify_jwt = false
+
+[functions.kb-extract-submit]
+verify_jwt = true

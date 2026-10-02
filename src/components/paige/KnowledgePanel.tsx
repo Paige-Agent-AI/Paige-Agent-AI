@@ -1,3 +1,8 @@
+import { useKnowledgeRemoval, knowledgeRemovalDescription } from "@/hooks/useKnowledgeRemoval";
+import { KnowledgeRemovalStatus } from "@/components/knowledge/KnowledgeRemovalStatus";
+import { useKnowledgeDocuments } from "@/hooks/useKnowledgeDocuments";
+import { KnowledgeMetadataEditor } from "@/components/knowledge/KnowledgeMetadataEditor";
+import type { KnowledgeDocument } from "@/lib/knowledge-service";
 // "What Paige knows" — the payoff tier of the Customize Paige console (spec §1.6).
 // Folds in BOTH tenant-KB (the "Knowledge" tab) and Knowledge Review / network
 // curation (the "Review" tab, reusing NetworkKbInsights). The KB tab re-skins the
@@ -5,7 +10,7 @@
 // honest ingest status, a gold "she got smarter" pulse, and a live tie-back
 // footer. Knowledge commits per-doc immediately — never gated behind the header
 // Save (spec §1.7).
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,18 +40,7 @@ const NETWORK_STATUS: Record<string, { label: string; tone: string }> = {
   rejected: { label: "Not accepted", tone: "text-muted-foreground" },
 };
 
-interface TenantDoc {
-  id: string;
-  title: string;
-  summary: string | null;
-  category: string | null;
-  tags: string[] | null;
-  source: string;
-  share_to_network: boolean;
-  network_review_status: "none" | "pending" | "approved" | "rejected";
-  chunk_count: number;
-  created_at: string;
-}
+type TenantDoc = KnowledgeDocument;
 
 const SOURCE_GLYPH: Record<string, typeof FileText> = {
   paste: FileText,
@@ -57,47 +51,37 @@ const SOURCE_GLYPH: Record<string, typeof FileText> = {
 };
 
 export function KnowledgePanel({ tenantName }: { tenantName: string }) {
-  const { counts, notifyKnowledgeAdded, refreshCounts, activeTenantId } = usePaigeWorkspace();
-  const [docs, setDocs] = useState<TenantDoc[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { notifyKnowledgeAdded, activeTenantId } = usePaigeWorkspace();
+  const { docs, loading, error: readError, reload: load, hasMore, loadMore, isCurrent } = useKnowledgeDocuments(activeTenantId);
+  const removal = useKnowledgeRemoval(activeTenantId, isCurrent, load);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const removalTrigger = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => { if (removal.message.startsWith("Document removed.")) heading.current?.focus(); }, [removal.message]);
+  const [editing, setEditing] = useState<TenantDoc | null>(null);
+  useEffect(() => { setEditing(null); }, [activeTenantId]);
   const [pasteOpen, setPasteOpen] = useState(false);
   const [linkOpen, setLinkOpen] = useState(false);
   const [fileOpen, setFileOpen] = useState(false);
   const [pulseId, setPulseId] = useState<string | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<TenantDoc | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<NonNullable<ReturnType<typeof removal.begin>> | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("tenant_knowledge_docs" as any)
-      .select("id, title, summary, category, tags, source, share_to_network, network_review_status, chunk_count, created_at")
-      .order("created_at", { ascending: false });
-    if (error) toast.error(error.message);
-    setDocs((data as any) ?? []);
-    setLoading(false);
-    refreshCounts();
-  }, [refreshCounts]);
-
-  useEffect(() => { load(); }, [load]);
 
   const toggleShare = async (doc: TenantDoc, next: boolean) => {
+    if (!activeTenantId || doc.tenant_id !== activeTenantId || !isCurrent()) return;
     const { error } = await supabase
-      .from("tenant_knowledge_docs" as any)
+      .from("tenant_knowledge_docs")
       .update({ share_to_network: next, network_review_status: next ? "pending" : "none" })
-      .eq("id", doc.id);
-    if (error) return toast.error(error.message);
+      .eq("id", doc.id).eq("tenant_id", activeTenantId!);
+    if (!isCurrent()) return;
+    if (error) return toast.error("The change could not be confirmed. Reload Knowledge before trying again.");
     toast.success(next ? "Submitted for network review" : "Removed from network queue");
     load();
   };
 
   const confirmDelete = async () => {
-    const doc = pendingDelete;
-    if (!doc) return;
+    const intent = pendingDelete;
     setPendingDelete(null);
-    const { error } = await supabase.from("tenant_knowledge_docs" as any).delete().eq("id", doc.id);
-    if (error) return toast.error(error.message);
-    toast.success("Removed from what Paige knows");
-    load();
+    if (intent) await removal.remove(intent);
   };
 
   // On a successful add: pulse the new card, tell the workspace (vitals + banner).
@@ -112,6 +96,10 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
 
   return (
     <Tabs defaultValue="knowledge" className="space-y-4">
+      <Dialog open={!!editing && editing.tenant_id === activeTenantId} onOpenChange={o => !o && setEditing(null)}>
+        {editing && activeTenantId === editing.tenant_id && <KnowledgeMetadataEditor key={`${activeTenantId}:${editing.id}`} document={editing} tenantId={activeTenantId} onClose={() => setEditing(null)} onSaved={() => void load()} />}
+      </Dialog>
+      <KnowledgeRemovalStatus removal={removal} />
       <TabsList>
         <TabsTrigger value="knowledge">Knowledge</TabsTrigger>
         <TabsTrigger value="review">Review</TabsTrigger>
@@ -120,7 +108,7 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
       {/* ── KB tab ─────────────────────────────────────────────── */}
       <TabsContent value="knowledge" className="space-y-4">
         <div className="space-y-1">
-          <h3 className="text-base font-semibold">What Paige knows</h3>
+          <h3 ref={heading} tabIndex={-1} className="text-base font-semibold">What Paige knows</h3>
           <p className="text-sm text-muted-foreground">
             Paige answers {tenantName}'s clients from what you teach her here. Add your
             playbooks, scripts, and reference docs — she uses them the moment they finish indexing.
@@ -135,12 +123,14 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
                 <FileText className="w-4 h-4 mr-1.5" /> Paste text
               </Button>
             </DialogTrigger>
-            <AddDocDialog
+            {pasteOpen && <AddDocDialog
+              key={activeTenantId}
               initialMode="paste"
               tenantId={activeTenantId ?? undefined}
               onClose={() => setPasteOpen(false)}
               onIngested={handleIngested}
-            />
+              onReview={load}
+            />}
           </Dialog>
 
           <Dialog open={linkOpen} onOpenChange={setLinkOpen}>
@@ -149,12 +139,14 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
                 <Link2 className="w-4 h-4 mr-1.5" /> Add a link
               </Button>
             </DialogTrigger>
-            <AddDocDialog
+            {linkOpen && <AddDocDialog
+              key={activeTenantId}
               initialMode="url"
               tenantId={activeTenantId ?? undefined}
               onClose={() => setLinkOpen(false)}
               onIngested={handleIngested}
-            />
+              onReview={load}
+            />}
           </Dialog>
 
           <Dialog open={fileOpen} onOpenChange={setFileOpen}>
@@ -163,17 +155,19 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
                 <Paperclip className="w-4 h-4 mr-1.5" /> Upload a file
               </Button>
             </DialogTrigger>
-            <AddDocDialog
+            {fileOpen && <AddDocDialog
+              key={activeTenantId}
               initialMode="file"
               tenantId={activeTenantId ?? undefined}
               onClose={() => setFileOpen(false)}
               onIngested={handleIngested}
-            />
+              onReview={load}
+            />}
           </Dialog>
         </div>
 
         {/* Doc cards */}
-        {loading ? (
+        {readError ? <p role="status" className="text-sm">{readError} <Button variant="outline" onClick={() => void load()}>Reload Knowledge</Button></p> : loading ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground py-8 justify-center">
             <Loader2 className="w-4 h-4 animate-spin" /> Loading what Paige knows…
           </div>
@@ -202,11 +196,11 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
                       {ready ? (
                         <span className="inline-flex items-center gap-1 text-xs text-accent">
                           <span className="h-1.5 w-1.5 rounded-full bg-gradient-gold" />
-                          Ready · {d.chunk_count} {d.chunk_count === 1 ? "passage" : "passages"}
+                          Recorded · {d.chunk_count} {d.chunk_count === 1 ? "passage" : "passages"}
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground animate-pulse">
-                          <Loader2 className="w-3 h-3 animate-spin" /> Teaching Paige…
+                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                          Indexing not verified
                         </span>
                       )}
                     </div>
@@ -229,11 +223,12 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" aria-label="Document options">
+                      <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" aria-label="Document options" onClick={event => { removalTrigger.current = event.currentTarget; }}>
                         <MoreHorizontal className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-52">
+                      <DropdownMenuItem onClick={() => setEditing(d)}>Edit metadata</DropdownMenuItem>
                       <div className="flex items-center justify-between px-2 py-1.5 text-sm">
                         <span className="flex items-center gap-2"><Share2 className="w-3.5 h-3.5" /> Share to network</span>
                         <Switch
@@ -242,7 +237,7 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
                           disabled={d.network_review_status === "approved"}
                         />
                       </div>
-                      <DropdownMenuItem className="text-destructive" onClick={() => setPendingDelete(d)}>
+                      <DropdownMenuItem className="text-destructive" disabled={removal.blocked} onClick={() => setPendingDelete(removal.begin(d))}>
                         <Trash2 className="w-4 h-4 mr-2" /> Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -253,11 +248,11 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
           </div>
         )}
 
+        {hasMore && <Button variant="outline" disabled={loading} onClick={() => void loadMore()}>Load more documents</Button>}
         {/* Tie-back footer */}
         <div className="border-t pt-3 space-y-0.5">
           <p className="text-sm">
-            Paige has indexed <span className="font-medium">{counts.docs}</span> {counts.docs === 1 ? "source" : "sources"}{" "}
-            (<span className="font-medium">{counts.chunks}</span> passages) she can draw on.
+            {docs.length} sources loaded · {docs.reduce((count, doc) => count + doc.chunk_count, 0)} recorded passages. Full indexing coverage is not verified here.
           </p>
           <p className="text-xs text-muted-foreground">Knowledge saves as you add it — no need to hit Save.</p>
         </div>
@@ -277,6 +272,7 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
         </div>
         {(() => {
           const shared = docs.filter((d) => d.share_to_network);
+          if (readError) return <p role="status">{readError} <Button variant="outline" onClick={() => void load()}>Reload Knowledge</Button></p>;
           if (loading) {
             return (
               <div className="flex items-center gap-2 text-sm text-muted-foreground py-8 justify-center">
@@ -287,7 +283,7 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
           if (shared.length === 0) {
             return (
               <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-                You haven't shared anything to the network yet. When you do, it'll show here with its review status.
+                No shared sources in the loaded documents.{hasMore ? ' Load more documents to check older sources.' : ''}
               </div>
             );
           }
@@ -309,14 +305,15 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
             </div>
           );
         })()}
+        {hasMore && !readError && <Button variant="outline" disabled={loading} onClick={() => void loadMore()}>Load more documents</Button>}
       </TabsContent>
 
-      <AlertDialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)}>
-        <AlertDialogContent>
+      <AlertDialog open={!!pendingDelete && pendingDelete.isCurrent()} onOpenChange={(open) => { if (!open && pendingDelete) { removal.cancel(pendingDelete); setPendingDelete(null); } }}>
+        <AlertDialogContent onCloseAutoFocus={event => { const target = removalTrigger.current?.isConnected ? removalTrigger.current : heading.current; if (target) { event.preventDefault(); target.focus(); } }}>
           <AlertDialogHeader>
             <AlertDialogTitle>Remove this from what Paige knows?</AlertDialogTitle>
             <AlertDialogDescription>
-              {pendingDelete ? `"${pendingDelete.title}" and everything Paige learned from it will be removed. This can't be undone.` : ""}
+              {pendingDelete ? `"${pendingDelete.document.title}". ${knowledgeRemovalDescription}` : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

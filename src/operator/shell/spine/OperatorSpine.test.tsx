@@ -105,6 +105,19 @@ describe("the chrome the pack draws", () => {
                   body: "a real question",
                   ask: [{ label: "An option", note: "what it does" }],
                 },
+                {
+                  id: "c",
+                  who: "Paige — needs your OK · 2 actions",
+                  body: "",
+                  tone: "gold",
+                  actItems: [
+                    "Create a contact named a real person",
+                    "Move a real account to Proposal",
+                  ],
+                  act: "Approve all",
+                  onAct: () => {},
+                  onDismiss: () => {},
+                },
               ]}
             />
           ),
@@ -116,6 +129,32 @@ describe("the chrome the pack draws", () => {
   it("carries the header lockup and its state line", () => {
     expect(html).toContain("PAIGE");
     expect(html).toContain("Ready");
+  });
+
+  /**
+   * THE APPROVAL PLATE, ASSERTED ON WHAT IS DRAWN. Counting that a turn resolved proves the
+   * tree is addressed and proves nothing about what the operator sees — this console has
+   * shipped that exact false green twice (`src/operator/CLAUDE.md`). So each summary string,
+   * the act label and the pack's own "Not now" are asserted in the RENDERED markup.
+   *
+   * It matters because the summaries ARE the thing being approved: a plate that draws its act
+   * button but not its list asks the operator to agree to something they cannot read.
+   */
+  describe("the approval plate", () => {
+    it("draws every summary it is approving, not just the act", () => {
+      expect(html).toContain("Create a contact named a real person");
+      expect(html).toContain("Move a real account to Proposal");
+    });
+
+    it("carries the act label and the pack's own refusal control", () => {
+      expect(html).toContain("Approve all");
+      expect(html).toContain("Not now");
+    });
+
+    it("qualifies the speaker line with how many actions are pending", () => {
+      expect(html).toContain("needs your OK");
+      expect(html).toContain("2 actions");
+    });
   });
 
   /**
@@ -178,9 +217,21 @@ describe("the chrome the pack draws", () => {
   });
 
   it("spends gold on the act and nowhere else in the column", () => {
-    // The act ramp appears exactly once — `Send`. A turn carrying an act would add one more,
-    // and this fixture has none.
-    expect(html.split("linear-gradient(180deg,var(--pg-gold-core)").length - 1).toBe(1);
+    // ONE RAMP PER ACT MOMENT, AND NOTHING ELSE (§11). The rule is not "gold appears once" —
+    // it is "gold appears only where something is being DONE". This fixture now holds two such
+    // moments: the composer's `Send`, and the approval plate's `Approve all`. The pack draws
+    // both with the same ACT_BUTTON ramp, so two is the correct count here, and the count moves
+    // only when an act does. The earlier `toBe(1)` was this same rule measured against a fixture
+    // that happened to carry no act turn — its own comment said so.
+    const acts = ["Send", "Approve all"];
+    expect(html.split("linear-gradient(180deg,var(--pg-gold-core)").length - 1).toBe(acts.length);
+    // ...and the plate's refusal is NOT an act: "Not now" is a bare ghost control, so it must
+    // never pick up the ramp. Asserted directly, because a count alone cannot tell which two
+    // elements carried it.
+    expect(html).toContain("Not now");
+    const notNow = html.indexOf("Not now");
+    const ramp = "linear-gradient(180deg,var(--pg-gold-core)";
+    expect(html.slice(Math.max(0, notNow - 400), notNow)).not.toContain(ramp);
   });
 });
 

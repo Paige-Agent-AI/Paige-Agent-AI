@@ -20,6 +20,7 @@
 //   3. The publish path ALWAYS saves and THEN publishes. The save is what auto-authors the form
 //      behind the signup section, which is what makes publish's lead-capture guard pass.
 import { supabase } from "@/integrations/supabase/client";
+import { knowledgeIngestOutcome } from "@/lib/knowledge/ingest-outcome";
 import type { GrowthAsset, GrowthAssetKind, GrowthBlock, GrowthField, GrowthFormSchema, GrowthPageTheme, GrowthSuccessAction } from "@/lib/growth";
 import { detectGrowthAssetKind, growthUploadContentType, GROWTH_ASSET_MAX_BYTES } from "@/lib/growth";
 import { GROWTH_BRAND_FLOOR, buildGrowthBrandFloor } from "@/components/growth/growth-theme";
@@ -1254,15 +1255,16 @@ export async function publishAndSave(
 // The brain's LEARN direction — studio-learn-from-artifact (#310, §7/§8/§15)
 // ═══════════════════════════════════════════════════════════════════════════════════════
 
-/** The four honest outcomes of asking Paige to learn from a published artifact. Mirrors the
+/** The outcomes of asking Paige to learn from a published artifact. Mirrors the
  *  edge function's documented 200 shapes 1:1 so the caller can be truthful (§13):
  *   - learned      → it was actually saved to the tenant's KB (report the win)
  *   - needs_confirm → §15: the tenant must say yes first (default autonomy is 'confirm')
  *   - blocked      → the tenant turned learning off; say nothing
- *   - error        → nothing was saved (not published yet, no text, embed down, or a network
- *                    failure) — NEVER claim a save that didn't happen. */
+ *   - partial / uncertain → review Knowledge; never imply full learning or retry automatically
+ *   - error        → learning did not complete; publication is independent. */
 export type LearnResult =
   | { kind: "learned"; docId?: string; chunkCount?: number; message: string }
+  | { kind: "partial" | "uncertain"; docId?: string; message: string }
   | { kind: "needs_confirm"; proposal: string }
   | { kind: "blocked" }
   | { kind: "error" };
@@ -1302,6 +1304,9 @@ export async function learnFromArtifact(input: {
       | {
           ok?: boolean;
           learned?: boolean;
+          embedded?: boolean;
+          partial?: boolean;
+          error?: unknown;
           needs_confirm?: boolean;
           blocked?: boolean;
           proposal?: unknown;
@@ -1310,25 +1315,29 @@ export async function learnFromArtifact(input: {
           chunk_count?: unknown;
         }
       | null;
-    if (!body || typeof body !== "object") return { kind: "error" };
+    if (!body || typeof body !== "object") return { kind: "uncertain", message: "Learning could not be verified. Check your knowledge before retrying." };
 
-    if (body.ok === true && body.learned) {
+    if (res.ok && body.needs_confirm === true && typeof body.proposal === "string") {
+      return { kind: "needs_confirm", proposal: body.proposal };
+    }
+    if (res.ok && body.blocked === true) return { kind: "blocked" };
+    if (res.ok && body.ok === false && (body.error === "not_published" || body.error === "no_content")) return { kind: "error" };
+    const outcome = knowledgeIngestOutcome(body);
+    if (res.ok && outcome.kind === "complete" && body.learned === true && body.partial !== true && !body.error) {
       return {
         kind: "learned",
-        docId: typeof body.doc_id === "string" ? body.doc_id : undefined,
-        chunkCount: typeof body.chunk_count === "number" ? body.chunk_count : undefined,
+        docId: outcome.docId,
+        chunkCount: outcome.chunkCount,
         message: typeof body.message === "string" ? body.message : "Saved to your Paige's knowledge.",
       };
     }
-    if (body.needs_confirm && typeof body.proposal === "string") {
-      return { kind: "needs_confirm", proposal: body.proposal };
-    }
-    if (body.blocked) return { kind: "blocked" };
-    return { kind: "error" }; // not_published / no_content / embedding_failed / 4xx — nothing saved (§13)
+    if (res.ok && (outcome.kind === "partial" || (outcome.kind === "complete" && body.partial === true))) return { kind: "partial", docId: outcome.docId, message: typeof body.message === "string" ? body.message : outcome.message };
+    if (outcome.kind === "failed") return { kind: "error" };
+    return { kind: "uncertain", docId: outcome.docId, message: typeof body.message === "string" ? body.message : "Learning could not be verified. Check your knowledge before retrying." };
   } catch {
-    // Aborts and network failures are non-events for the tenant — they published fine; learning
-    // is a follow-on. Swallow to a silent error so this can never regress the publish (§13).
-    return { kind: "error" };
+    // A lost acknowledgement can follow a committed write. Keep publication
+    // independent while asking the owner to inspect Knowledge before retrying.
+    return { kind: "uncertain", message: "Learning could not be verified. Check your knowledge before retrying." };
   }
 }
 

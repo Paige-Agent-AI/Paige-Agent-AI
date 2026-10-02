@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React from "react";
+import { PipelineDelete } from "./PipelineDelete";
 
 const fmt = (value) => {
   if (!value) return "Not recorded";
@@ -184,6 +185,9 @@ export function PipelineCommandDesk({
   const workspace = data.pipelineWorkspace;
   const activePipelines = workspace.pipelines.filter(
     (item) => item.lifecycleStatus !== "archived",
+  );
+  const archivedPipelines = workspace.pipelines.filter(
+    (item) => item.lifecycleStatus === "archived",
   );
   const visiblePipelines = activePipelines.filter(
     (item) =>
@@ -569,6 +573,51 @@ export function PipelineCommandDesk({
         <p className="pipeline-move-status" role="status">
           {notice}
         </p>
+      )}
+      {archivedPipelines.length > 0 && (
+        <section className="pipeline-archived" aria-label="Archived pipelines">
+          <header>
+            <h2>Archived</h2>
+            <p>
+              {archivedPipelines.length} pipeline{archivedPipelines.length === 1 ? "" : "s"} filed
+              away. Restoring returns a pipeline to the active list; deleting is permanent and only
+              possible when nothing depends on it.
+            </p>
+          </header>
+          <ul>
+            {archivedPipelines.map((pipeline) => (
+              <li key={pipeline.id} className="pipeline-archived-row">
+                <div className="pipeline-archived-info">
+                  <strong>{pipeline.name}</strong>
+                  <span className="pipeline-archived-ref">{pipeline.shortRef}</span>
+                </div>
+                <div className="pipeline-archived-actions">
+                  <button
+                    className="btn btn-s pipeline-action-restore"
+                    disabled={!workspace.canManage || pending}
+                    onClick={() => {
+                      void data.pipelineAction({
+                        type: "restore-pipeline",
+                        pipelineId: pipeline.id,
+                        expectedVersion: pipeline.version,
+                      });
+                    }}
+                  >
+                    Restore
+                  </button>
+                  <PipelineDelete
+                    pipeline={pipeline}
+                    canDelete={workspace.canManage}
+                    run={data.pipelineAction}
+                    onDeleted={(_id, message) => {
+                      setNotice(message);
+                    }}
+                  />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
       {workspace.pipelines.length === 0 ? (
         <div className="pipeline-desk-empty">

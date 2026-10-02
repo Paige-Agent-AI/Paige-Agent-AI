@@ -1,0 +1,418 @@
+[
+  {
+    "width": 1536,
+    "height": 770,
+    "theme": "pearl",
+    "rail": false,
+    "geometry": {
+      "overflow": false,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "ink": "rgb(32, 30, 35)",
+      "theme": "light",
+      "focus": "Cancel",
+      "writes": 0
+    },
+    "css": [
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-service/dist/assets/main-D3xkbBzI.css",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-settings/src/solo/knowledge/knowledge-library.css",
+        "status": 200
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 1536,
+    "height": 770,
+    "theme": "pearl",
+    "rail": true,
+    "geometry": {
+      "overflow": false,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "ink": "rgb(32, 30, 35)",
+      "theme": "light",
+      "focus": "Cancel",
+      "writes": 0
+    },
+    "css": [
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-service/dist/assets/main-D3xkbBzI.css",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-settings/src/solo/knowledge/knowledge-library.css",
+        "status": 200
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 1536,
+    "height": 770,
+    "theme": "obsidian",
+    "rail": false,
+    "geometry": {
+      "overflow": false,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "ink": "rgb(246, 242, 234)",
+      "theme": "dark",
+      "focus": "Cancel",
+      "writes": 0
+    },
+    "css": [
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-service/dist/assets/main-D3xkbBzI.css",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-settings/src/solo/knowledge/knowledge-library.css",
+        "status": 200
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 1536,
+    "height": 770,
+    "theme": "obsidian",
+    "rail": true,
+    "geometry": {
+      "overflow": false,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "ink": "rgb(246, 242, 234)",
+      "theme": "dark",
+      "focus": "Cancel",
+      "writes": 0
+    },
+    "css": [
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-service/dist/assets/main-D3xkbBzI.css",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-settings/src/solo/knowledge/knowledge-library.css",
+        "status": 200
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 1366,
+    "height": 768,
+    "theme": "pearl",
+    "rail": false,
+    "geometry": {
+      "overflow": false,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "ink": "rgb(32, 30, 35)",
+      "theme": "light",
+      "focus": "Cancel",
+      "writes": 0
+    },
+    "css": [
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-service/dist/assets/main-D3xkbBzI.css",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-settings/src/solo/knowledge/knowledge-library.css",
+        "status": 200
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 1366,
+    "height": 768,
+    "theme": "pearl",
+    "rail": true,
+    "geometry": {
+      "overflow": false,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "ink": "rgb(32, 30, 35)",
+      "theme": "light",
+      "focus": "Cancel",
+      "writes": 0
+    },
+    "css": [
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-service/dist/assets/main-D3xkbBzI.css",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-settings/src/solo/knowledge/knowledge-library.css",
+        "status": 200
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 1366,
+    "height": 768,
+    "theme": "obsidian",
+    "rail": false,
+    "geometry": {
+      "overflow": false,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "ink": "rgb(246, 242, 234)",
+      "theme": "dark",
+      "focus": "Cancel",
+      "writes": 0
+    },
+    "css": [
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-service/dist/assets/main-D3xkbBzI.css",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-settings/src/solo/knowledge/knowledge-library.css",
+        "status": 200
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 1366,
+    "height": 768,
+    "theme": "obsidian",
+    "rail": true,
+    "geometry": {
+      "overflow": false,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "ink": "rgb(246, 242, 234)",
+      "theme": "dark",
+      "focus": "Cancel",
+      "writes": 0
+    },
+    "css": [
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-service/dist/assets/main-D3xkbBzI.css",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-settings/src/solo/knowledge/knowledge-library.css",
+        "status": 200
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 1024,
+    "height": 768,
+    "theme": "pearl",
+    "rail": false,
+    "geometry": {
+      "overflow": false,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "ink": "rgb(32, 30, 35)",
+      "theme": "light",
+      "focus": "Cancel",
+      "writes": 0
+    },
+    "css": [
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-service/dist/assets/main-D3xkbBzI.css",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-settings/src/solo/knowledge/knowledge-library.css",
+        "status": 200
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 1024,
+    "height": 768,
+    "theme": "pearl",
+    "rail": true,
+    "geometry": {
+      "overflow": false,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "ink": "rgb(32, 30, 35)",
+      "theme": "light",
+      "focus": "Cancel",
+      "writes": 0
+    },
+    "css": [
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-service/dist/assets/main-D3xkbBzI.css",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-settings/src/solo/knowledge/knowledge-library.css",
+        "status": 200
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 1024,
+    "height": 768,
+    "theme": "obsidian",
+    "rail": false,
+    "geometry": {
+      "overflow": false,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "ink": "rgb(246, 242, 234)",
+      "theme": "dark",
+      "focus": "Cancel",
+      "writes": 0
+    },
+    "css": [
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-service/dist/assets/main-D3xkbBzI.css",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-settings/src/solo/knowledge/knowledge-library.css",
+        "status": 200
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 1024,
+    "height": 768,
+    "theme": "obsidian",
+    "rail": true,
+    "geometry": {
+      "overflow": false,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "ink": "rgb(246, 242, 234)",
+      "theme": "dark",
+      "focus": "Cancel",
+      "writes": 0
+    },
+    "css": [
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-service/dist/assets/main-D3xkbBzI.css",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-settings/src/solo/knowledge/knowledge-library.css",
+        "status": 200
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 900,
+    "height": 1000,
+    "theme": "pearl",
+    "rail": false,
+    "geometry": {
+      "overflow": false,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "ink": "rgb(32, 30, 35)",
+      "theme": "light",
+      "focus": "Cancel",
+      "writes": 0
+    },
+    "css": [
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-service/dist/assets/main-D3xkbBzI.css",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-settings/src/solo/knowledge/knowledge-library.css",
+        "status": 200
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 900,
+    "height": 1000,
+    "theme": "pearl",
+    "rail": true,
+    "geometry": {
+      "overflow": false,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "ink": "rgb(32, 30, 35)",
+      "theme": "light",
+      "focus": "Cancel",
+      "writes": 0
+    },
+    "css": [
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-service/dist/assets/main-D3xkbBzI.css",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-settings/src/solo/knowledge/knowledge-library.css",
+        "status": 200
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 900,
+    "height": 1000,
+    "theme": "obsidian",
+    "rail": false,
+    "geometry": {
+      "overflow": false,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "ink": "rgb(246, 242, 234)",
+      "theme": "dark",
+      "focus": "Cancel",
+      "writes": 0
+    },
+    "css": [
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-service/dist/assets/main-D3xkbBzI.css",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-settings/src/solo/knowledge/knowledge-library.css",
+        "status": 200
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 900,
+    "height": 1000,
+    "theme": "obsidian",
+    "rail": true,
+    "geometry": {
+      "overflow": false,
+      "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+      "ink": "rgb(246, 242, 234)",
+      "theme": "dark",
+      "focus": "Cancel",
+      "writes": 0
+    },
+    "css": [
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-service/dist/assets/main-D3xkbBzI.css",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:8773/@fs/C:/Users/tonig/Documents/Codex/2026-09-30/all-right-just-had-a-conversation/work/knowledge-settings/src/solo/knowledge/knowledge-library.css",
+        "status": 200
+      }
+    ],
+    "errors": []
+  },
+  {
+    "state": "empty",
+    "result": "PASS"
+  },
+  {
+    "state": "error",
+    "result": "PASS"
+  },
+  {
+    "state": "uncertain",
+    "result": "PASS"
+  },
+  {
+    "state": "unrecorded",
+    "result": "PASS"
+  }
+]

@@ -137,13 +137,19 @@ describe("the continuation loop's structural wiring", () => {
     expect(chat).toMatch(/callerTier === "client"\s*.*return false/);
   });
 
-  it("the continuation runs in its OWN bounded for loop after the main loop exits — no leak", () => {
-    // The post-loop restructure means the continuation's inner loop has its own
-    // `for (let round = 0; round < MAX_ROUNDS; round++)` — inherently bounded, and
-    // the main loop's `!hasToolCall` block is byte-identical to main (the n5 Live
-    // test extracts and executes it synchronously; any await inside breaks it).
+  it("the continuation re-enters the SAME for loop via a while wrapper — no duplicated tool logic", () => {
+    // The while wrapper re-enters the SAME for loop with the continuation response,
+    // eliminating the duplicated executeToolCalls/gatewayCompat call sites that caused
+    // the Deno ratchet's type artifacts. The `!hasToolCall` block is byte-identical
+    // to main (the n5 Live extraction test runs it synchronously).
     expect(chat).toMatch(/POST-LOOP CONTINUATION CHECK/);
-    expect(chat).toMatch(/for \(let round = 0; round < MAX_ROUNDS; round\+\+\) \{[\s\S]{0,200}consumeRound\(currentResponse\)/);
+    expect(chat).toContain("let continueContinuation = false;");
+    expect(chat).toContain("while (true) {");
+    expect(chat).toContain("if (continueContinuation) { continueContinuation = false; continue; }");
+    expect(chat).toContain("end the C1 while wrapper");
+    // Exactly ONE for-loop consuming rounds (not two — the duplicated inner loop is gone).
+    const roundLoops = chat.match(/for \(let round = 0; round < MAX_ROUNDS; round\+\+\)/g) ?? [];
+    expect(roundLoops).toHaveLength(1);
   });
 
   it("budget exhaustion produces the honest blockage sentence, not a narration replay", () => {

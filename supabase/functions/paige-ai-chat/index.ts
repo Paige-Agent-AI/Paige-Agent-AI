@@ -14020,6 +14020,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
          // fallback + [DONE] rather than a broken stream (§13). The outer handler's
          // try/catch can no longer see in here.
          try {
+          // C1 — the while wrapper: when the for loop exits on a narration dead-end, the
+          // post-loop continuation check sets `continueContinuation` and this wrapper re-enters
+          // the SAME for loop with the continuation response. No duplicated tool logic, no new
+          // type scopes, no second executeToolCalls call site. A hard budget stops it.
+          let continueContinuation = false;
+          while (true) {
           for (let round = 0; round < MAX_ROUNDS; round++) {
             const { content, toolCalls, allChunks, hasToolCall } = await consumeRound(currentResponse);
             // The active account can change while a streamed provider round is in
@@ -14200,21 +14206,18 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // with NO terminal state — nothing executed, no card minted, the prose itself is not
           // a refusal, clarification or blockage — and the user's request carried action intent,
           // the task is fed back: the prose and the continuation instruction enter the
-          // conversation, the provider is re-called through the existing gateway, and the for
-          // loop re-enters with the new response. A hard budget of MAX_CONTINUATIONS stops it.
-          // The `!hasToolCall` block above is byte-identical to main: this check runs AFTER it,
-          // on the finalChunks it set, so the INT-104 extraction test and every Live path are
-          // untouched.
+          // conversation, the provider is re-called through the existing gateway, and the SAME
+          // for loop re-enters with the new response (via the while wrapper). A hard budget
+          // of MAX_CONTINUATIONS stops it. The `!hasToolCall` block is byte-identical to main.
           if (finalChunks && !liveRuntimeScope && !forcedTermination && !tenantKnowledgeScopeInvalidated
               && isActionIntent && continuationsUsed < MAX_CONTINUATIONS && !studioSessionId) {
             const proseTerminal = typeof finalAssistantText === "string"
               && (PROSE_TERMINAL_RE.test(finalAssistantText) || finalAssistantText.includes("?"));
-            const terminalState = totalToolCalls > 0
+            const signalTerminal = totalToolCalls > 0
               || queuedApprovals.length > 0
               || confirmTrace.length > 0
-              || crmResultTrace.length > 0
-              || proseTerminal;
-            if (!terminalState) {
+              || crmResultTrace.length > 0;
+            if (!signalTerminal && !proseTerminal) {
               continuationsUsed += 1;
               convo.push({ role: "assistant", content: finalAssistantText || "" });
               convo.push({ role: "user", content: "The requested task is still unresolved. Continue using available current platform resources. Complete it, request required approval or clarification, or state the concrete blockage. Do not narrate intent without acting." });
@@ -14225,32 +14228,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   body: JSON.stringify({ model: substantiveTurn ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash", messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto", stream: true }),
                 }, traceFor("chat-continuation"));
                 if (continuationResponse.ok) {
-                  // Re-enter the for loop with the continuation response, resetting the round
-                  // counter so the continuation gets the full MAX_ROUNDS budget.
                   currentResponse = continuationResponse;
                   finalChunks = null; finalAssistantText = "";
-                  for (let round = 0; round < MAX_ROUNDS; round++) {
-                    const { content: c2, toolCalls: tc2, allChunks: ac2, hasToolCall: htc2 } = await consumeRound(currentResponse);
-                    if (!(await revalidateTenantKnowledgeScope())) { tenantKnowledgeScopeInvalidated = true; forcedTermination = true; break; }
-                    if (!htc2) { finalChunks = ac2; finalAssistantText = c2; break; }
-                    const realCalls2 = tc2.filter((tc: any) => tc && tc.function?.name);
-                    const sig2 = JSON.stringify(realCalls2.map((tc: any) => [tc.function.name, tc.function.arguments]));
-                    if (seenSignatures.has(sig2)) { forcedTermination = true; break; }
-                    totalToolCalls += realCalls2.length;
-                    // `as never` on the second arg: the continuation's scope resolves the
-                    // supabase client to a type parameter Deno rejects (the main loop's
-                    // identical call at the same seam passes; this is a scope-resolution
-                    // artifact, not a functional difference).
-                    const executed2 = await executeToolCalls(realCalls2 as any, queuedApprovals as any);
-                    convo.push({ role: "assistant", content: c2 || null, tool_calls: executed2.executed });
-                    convo.push(...executed2.toolResults);
-                    currentResponse = await gatewayCompat("anthropic", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ model: substantiveTurn ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash", messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto", stream: true }),
-                    }, traceFor("chat-tool-loop"));
-                    if (!currentResponse.ok) { forcedTermination = true; break; }
-                  }
+                  continueContinuation = true;
                 }
               } catch { /* budget-exceeded or a transport throw: the prose we already have stands */ }
             }
@@ -14266,6 +14246,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             finalAssistantText = exhausted;
             emitContent(controller, enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: exhausted } }] })}\n\n`));
           }
+          if (continueContinuation) { continueContinuation = false; continue; }
+          break;
+          } // ── end the C1 while wrapper ──
 
           // Text keeps its natural-round replay. Live streams the final answer
           // only from this tools-free call, AFTER the governed tool decision.

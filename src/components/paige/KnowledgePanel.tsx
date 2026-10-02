@@ -121,12 +121,14 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
                 <FileText className="w-4 h-4 mr-1.5" /> Paste text
               </Button>
             </DialogTrigger>
-            <AddDocDialog
+            {pasteOpen && <AddDocDialog
+              key={activeTenantId}
               initialMode="paste"
               tenantId={activeTenantId ?? undefined}
               onClose={() => setPasteOpen(false)}
               onIngested={handleIngested}
-            />
+              onReview={load}
+            />}
           </Dialog>
 
           <Dialog open={linkOpen} onOpenChange={setLinkOpen}>
@@ -135,12 +137,14 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
                 <Link2 className="w-4 h-4 mr-1.5" /> Add a link
               </Button>
             </DialogTrigger>
-            <AddDocDialog
+            {linkOpen && <AddDocDialog
+              key={activeTenantId}
               initialMode="url"
               tenantId={activeTenantId ?? undefined}
               onClose={() => setLinkOpen(false)}
               onIngested={handleIngested}
-            />
+              onReview={load}
+            />}
           </Dialog>
 
           <Dialog open={fileOpen} onOpenChange={setFileOpen}>
@@ -149,12 +153,14 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
                 <Paperclip className="w-4 h-4 mr-1.5" /> Upload a file
               </Button>
             </DialogTrigger>
-            <AddDocDialog
+            {fileOpen && <AddDocDialog
+              key={activeTenantId}
               initialMode="file"
               tenantId={activeTenantId ?? undefined}
               onClose={() => setFileOpen(false)}
               onIngested={handleIngested}
-            />
+              onReview={load}
+            />}
           </Dialog>
         </div>
 

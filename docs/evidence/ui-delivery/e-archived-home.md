@@ -42,7 +42,7 @@ RELEASE_NOTE_REQUIRED: NO: bounded UI addition on the existing pipeline desk
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: the wiring pins and the pipeline family are proven offline; the authenticated archive → restore round and deployed frontend are not yet proven
 RELEASE_RECOVERY: position=revert this bounded addition if the pipeline desk misrenders, restoring the pre-E file from the merge parent; reference=PACKAGE-E
 
-INTERNAL_BUILD_IDENTITY: PENDING; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=failing-first-wiring-pins
+INTERNAL_BUILD_IDENTITY: product=77ef346634381d2924b58199989c879c6609d1cf; current-main-sync=77ef346634381d2924b58199989c879c6609d1cf; base=75d119947; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=failing-first-wiring-pins
 RELEASE_CHANNEL: development: exact product-code head on the draft branch; production promotion remains merge automation only
 RELEASE_CLASSIFICATION: patch: UI addition of the Archived section on the existing pipeline desk
 CUSTOMER_RELEASE_IDENTITY: none: no owner-approved customer release identity was assigned

@@ -137,8 +137,13 @@ describe("the continuation loop's structural wiring", () => {
     expect(chat).toMatch(/callerTier === "client"\s*.*return false/);
   });
 
-  it("the round guard prevents a last-round continuation leaking an unconsumed response", () => {
-    expect(chat).toContain("round < MAX_ROUNDS - 1");
+  it("the continuation runs in its OWN bounded for loop after the main loop exits — no leak", () => {
+    // The post-loop restructure means the continuation's inner loop has its own
+    // `for (let round = 0; round < MAX_ROUNDS; round++)` — inherently bounded, and
+    // the main loop's `!hasToolCall` block is byte-identical to main (the n5 Live
+    // test extracts and executes it synchronously; any await inside breaks it).
+    expect(chat).toMatch(/POST-LOOP CONTINUATION CHECK/);
+    expect(chat).toMatch(/for \(let round = 0; round < MAX_ROUNDS; round\+\+\) \{[\s\S]{0,200}consumeRound\(currentResponse\)/);
   });
 
   it("budget exhaustion produces the honest blockage sentence, not a narration replay", () => {

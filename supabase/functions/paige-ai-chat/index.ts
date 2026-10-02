@@ -14031,48 +14031,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               break;
             }
             if (!hasToolCall) {
-              // ── C1: THE CONTINUATION CHECK ────────────────────────────────────────────
-              // Terminal states, any ONE of which ends the turn honestly: something executed
-              // (totalToolCalls), a card was minted (queuedApprovals / confirmTrace), a governed
-              // CRM action ran (crmResultTrace), the scope changed, or this is Live (which has
-              // its own answer contract). Otherwise, if the user asked for an action and the
-              // budget holds, the task is fed back — narration is not completion.
-              // Any question mark in the model's prose is a clarification ask — the \? arm
-              // cannot live inside a \b group (no boundary after "?"), so it is checked here.
-              const proseTerminal = typeof content === "string" && (PROSE_TERMINAL_RE.test(content) || content.includes("?"));
-              const terminalState = totalToolCalls > 0
-                || queuedApprovals.length > 0
-                || confirmTrace.length > 0
-                || crmResultTrace.length > 0
-                || liveRuntimeScope
-                || proseTerminal;
-              if (!terminalState && isActionIntent && continuationsUsed < MAX_CONTINUATIONS && !studioSessionId && round < MAX_ROUNDS - 1) {
-                continuationsUsed += 1;
-                // Push the model's own prose (so the continuation sees what it said), then the
-                // continuation instruction. The instruction is the assignment's wording.
-                convo.push({ role: "assistant", content: content || "" });
-                convo.push({ role: "user", content: "The requested task is still unresolved. Continue using available current platform resources. Complete it, request required approval or clarification, or state the concrete blockage. Do not narrate intent without acting." });
-                try {
-                  currentResponse = await gatewayCompat("anthropic", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ model: substantiveTurn ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash", messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto", stream: true }),
-                  }, traceFor("chat-continuation"));
-                  if (currentResponse.ok) continue;
-                } catch { /* budget-exceeded or a transport throw: fall through to the prose */ }
-                // The continuation call itself failed — fall through to the prose we already
-                // have rather than dead-ending the turn on an infrastructure error.
-              }
               if (liveRuntimeScope) liveAnswerPending = true;
-              else if (isActionIntent && !terminalState && continuationsUsed >= MAX_CONTINUATIONS) {
-                // Budget exhausted on an unresolved action: the honest blockage sentence, not
-                // a replay of the last narration. THE WIRE AND THE TRANSCRIPT CARRY THE SAME
-                // SENTENCE (§13/§94): the exhausted sentence is what streams AND what persists —
-                // swapping only the persisted text would make a reload disagree with the live view.
-                const exhausted = "I wasn't able to complete that request. The task may need a different approach or a capability that isn't available here yet — could you try asking again, or check what's possible from this workspace?";
-                finalChunks = null; finalAssistantText = exhausted;
-                emitContent(controller, enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: exhausted } }] })}\n\n`));
-              }
               else { finalChunks = allChunks; finalAssistantText = content; }
               break;
             }
@@ -14234,6 +14193,74 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               body: JSON.stringify({ model: (studioSessionId || substantiveTurn) ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash", messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto", stream: true }),
             }, traceFor("chat-tool-loop"));
             if (!currentResponse.ok) { forcedTermination = true; break; }
+          }
+
+          // ── C1: THE POST-LOOP CONTINUATION CHECK ─────────────────────────────────────────
+          // The for-loop has exited. If it exited via the prose-only branch (`!hasToolCall`)
+          // with NO terminal state — nothing executed, no card minted, the prose itself is not
+          // a refusal, clarification or blockage — and the user's request carried action intent,
+          // the task is fed back: the prose and the continuation instruction enter the
+          // conversation, the provider is re-called through the existing gateway, and the for
+          // loop re-enters with the new response. A hard budget of MAX_CONTINUATIONS stops it.
+          // The `!hasToolCall` block above is byte-identical to main: this check runs AFTER it,
+          // on the finalChunks it set, so the INT-104 extraction test and every Live path are
+          // untouched.
+          if (finalChunks && !liveRuntimeScope && !forcedTermination && !tenantKnowledgeScopeInvalidated
+              && isActionIntent && continuationsUsed < MAX_CONTINUATIONS && !studioSessionId) {
+            const proseTerminal = typeof finalAssistantText === "string"
+              && (PROSE_TERMINAL_RE.test(finalAssistantText) || finalAssistantText.includes("?"));
+            const terminalState = totalToolCalls > 0
+              || queuedApprovals.length > 0
+              || confirmTrace.length > 0
+              || crmResultTrace.length > 0
+              || proseTerminal;
+            if (!terminalState) {
+              continuationsUsed += 1;
+              convo.push({ role: "assistant", content: finalAssistantText || "" });
+              convo.push({ role: "user", content: "The requested task is still unresolved. Continue using available current platform resources. Complete it, request required approval or clarification, or state the concrete blockage. Do not narrate intent without acting." });
+              try {
+                const continuationResponse = await gatewayCompat("anthropic", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ model: substantiveTurn ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash", messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto", stream: true }),
+                }, traceFor("chat-continuation"));
+                if (continuationResponse.ok) {
+                  // Re-enter the for loop with the continuation response, resetting the round
+                  // counter so the continuation gets the full MAX_ROUNDS budget.
+                  currentResponse = continuationResponse;
+                  finalChunks = null; finalAssistantText = "";
+                  for (let round = 0; round < MAX_ROUNDS; round++) {
+                    const { content: c2, toolCalls: tc2, allChunks: ac2, hasToolCall: htc2 } = await consumeRound(currentResponse);
+                    if (!(await revalidateTenantKnowledgeScope())) { tenantKnowledgeScopeInvalidated = true; forcedTermination = true; break; }
+                    if (!htc2) { finalChunks = ac2; finalAssistantText = c2; break; }
+                    const realCalls2 = toolCalls.filter((tc: any) => tc && tc.function?.name);
+                    const sig2 = JSON.stringify(realCalls2.map((tc: any) => [tc.function.name, tc.function.arguments]));
+                    if (seenSignatures.has(sig2)) { forcedTermination = true; break; }
+                    totalToolCalls += realCalls2.length;
+                    const toolResults2 = await executeToolCalls(realCalls2, queuedApprovals);
+                    convo.push({ role: "assistant", content: c2 || null, tool_calls: realCalls2.filter((tc: any) => tc && tc.function?.name) });
+                    convo.push(...toolResults2);
+                    currentResponse = await gatewayCompat("anthropic", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ model: substantiveTurn ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash", messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto", stream: true }),
+                    }, traceFor("chat-tool-loop"));
+                    if (!currentResponse.ok) { forcedTermination = true; break; }
+                  }
+                }
+              } catch { /* budget-exceeded or a transport throw: the prose we already have stands */ }
+            }
+          }
+          // Budget exhausted on an unresolved action: the honest blockage sentence, not
+          // a replay of the last narration. THE WIRE AND THE TRANSCRIPT CARRY THE SAME
+          // SENTENCE (§13/§94).
+          if (finalChunks && !liveRuntimeScope && !forcedTermination && isActionIntent
+              && continuationsUsed >= MAX_CONTINUATIONS && totalToolCalls === 0
+              && queuedApprovals.length === 0 && confirmTrace.length === 0 && crmResultTrace.length === 0
+              && !studioSessionId) {
+            const exhausted = "I wasn't able to complete that request. The task may need a different approach or a capability that isn't available here yet — could you try asking again, or check what's possible from this workspace?";
+            finalAssistantText = exhausted;
+            emitContent(controller, enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: exhausted } }] })}\n\n`));
           }
 
           // Text keeps its natural-round replay. Live streams the final answer

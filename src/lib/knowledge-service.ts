@@ -75,7 +75,7 @@ export interface KnowledgeDeleteResult {
   deleted_revision: number;
   document_absent: true;
   chunks_absent: true;
-  source_cleanup: {status: 'not_attempted'; reason: 'canonical_source_binding_unavailable'};
+  source_cleanup: {status: 'not_attempted'; reason: 'canonical_source_binding_unavailable' | 'retained_by_policy'};
   outcome: 'capability_succeeded' | 'capability_completed_unrecorded';
   run_id: string;
 }
@@ -95,7 +95,8 @@ export async function deleteKnowledge(
     || (data.outcome !== 'capability_succeeded' && data.outcome !== 'capability_completed_unrecorded')
     || typeof data.run_id !== 'string' || !data.run_id.trim()
     || !object(data.source_cleanup) || data.source_cleanup.status !== 'not_attempted'
-    || data.source_cleanup.reason !== 'canonical_source_binding_unavailable') {
+    || (data.source_cleanup.reason !== 'canonical_source_binding_unavailable'
+      && data.source_cleanup.reason !== 'retained_by_policy')) {
     throw new KnowledgeServiceError('KNOWLEDGE_RESPONSE_INVALID', 'The deletion could not be verified.');
   }
   return data as unknown as KnowledgeDeleteResult;

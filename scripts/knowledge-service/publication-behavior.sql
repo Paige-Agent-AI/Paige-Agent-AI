@@ -93,3 +93,102 @@ SET ROLE authenticated;
 SELECT public.test_assert(public.delete_tenant_knowledge('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='bound'),4)->'source_cleanup'->>'reason'='retained_by_policy','bound canonical source reports retained_by_policy');
 RESET ROLE;
 SELECT public.test_assert((SELECT count(*)=1 FROM storage.objects WHERE id='40000000-0000-0000-0000-000000000002'),'uploaded source object retained after delete');
+-- P2b: retired-generation invisibility — publish the same doc twice; old generation vanishes.
+RESET ROLE;
+SET ROLE service_role;
+SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',false);
+DELETE FROM public.extract_test WHERE name IN ('repub','repub2');
+INSERT INTO public.extract_test VALUES('repub',public.test_extract('70000000-0000-0000-0000-000000000023',NULL,NULL,'Replacement reviewed text v2'),NULL);
+UPDATE public.extract_test SET started=public.start_knowledge_extraction((result->>'work_id')::uuid) WHERE name='repub';
+SELECT (public.complete_knowledge_extraction((result->>'work_id')::uuid,started->>'server_key',1,1,'Replacement reviewed text v2',started->>'input_hash'))->>'phase' FROM public.extract_test WHERE name='repub';
+RESET ROLE;
+SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',false);
+SET ROLE authenticated;
+SELECT public.test_assert(public.save_tenant_knowledge_review('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='repub'),(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='repub'),2,'Replacement reviewed text v2','{"title":"Republished","summary":null,"category":null,"tags":[]}')->>'revision'='3','replacement review saved');
+RESET ROLE;
+DO $rsub$
+DECLARE ans jsonb;
+BEGIN
+ ans:=public.submit_tenant_knowledge_publication('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='repub'),(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='repub'),3,'60000000-0000-0000-0000-000000000023',encode(sha256(convert_to('Replacement reviewed text v2','UTF8')),'hex'));
+END $rsub$;
+DO $rdrive$
+DECLARE w uuid:=(SELECT id FROM public.paige_durable_work WHERE work_kind='knowledge_publish' AND request_payload->>'extraction_work_id'=(SELECT result->>'work_id' FROM public.extract_test WHERE name='repub'));
+ s jsonb:=public.start_knowledge_publication(w); c jsonb; r jsonb; oldgen uuid;
+BEGIN
+ oldgen:=(SELECT active_generation_id FROM public.tenant_knowledge_docs WHERE id=(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='repub'));
+ FOR c IN SELECT * FROM jsonb_array_elements(s->'chunks') LOOP
+  PERFORM public.stage_knowledge_publication(w,s->>'server_key',(s->>'attempt')::int,(s->>'revision')::int,jsonb_build_array(jsonb_build_object('index',(c->>'index')::int,'sha256',c->>'sha256','embedding',(SELECT jsonb_agg(0.5 ORDER BY g) FROM generate_series(1,1024) g))));
+ END LOOP;
+ r:=public.complete_knowledge_publication(w,s->>'server_key',(s->>'attempt')::int,(s->>'revision')::int);
+ CREATE TABLE IF NOT EXISTS public.pub_probe(old_generation uuid); TRUNCATE public.pub_probe; INSERT INTO public.pub_probe VALUES(oldgen);
+END $rdrive$;
+RESET ROLE;
+SELECT public.test_assert((SELECT count(*)=0 FROM public.match_tenant_knowledge('00000000-0000-0000-0000-000000000001',(SELECT ARRAY(SELECT 0.5::double precision FROM generate_series(1,1024))::extensions.vector),20) m JOIN public.tenant_knowledge_chunks c ON c.id=m.chunk_id WHERE c.generation_id=(SELECT old_generation FROM public.pub_probe)),'retired generation chunks vanish from search after republication');
+DROP TABLE IF EXISTS public.pub_probe;
+SELECT public.test_assert((SELECT count(*)>0 AND bool_and(content IS NOT NULL AND content<>'') FROM public.tenant_knowledge_chunks WHERE generation_id IS NOT NULL),'published chunk content is materialized and non-empty');
+-- P2c: replay, settle-failure, and recover proofs.
+RESET ROLE;
+SET ROLE service_role;
+SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',false);
+DELETE FROM public.extract_test WHERE name='failpub';
+INSERT INTO public.extract_test VALUES('failpub',public.test_extract('70000000-0000-0000-0000-000000000024',NULL,NULL,'Failing publication text'),NULL);
+UPDATE public.extract_test SET started=public.start_knowledge_extraction((result->>'work_id')::uuid) WHERE name='failpub';
+SELECT (public.complete_knowledge_extraction((result->>'work_id')::uuid,started->>'server_key',1,1,'Failing publication text',started->>'input_hash'))->>'phase' FROM public.extract_test WHERE name='failpub';
+RESET ROLE;
+SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',false);
+SET ROLE authenticated;
+SELECT public.test_assert(public.save_tenant_knowledge_review('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='failpub'),(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='failpub'),2,'Failing publication text','{"title":"F","summary":null,"category":null,"tags":[]}')->>'revision'='3','failing review saved');
+RESET ROLE;
+DO $fsub$
+DECLARE ans jsonb;
+BEGIN
+ ans:=public.submit_tenant_knowledge_publication('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='failpub'),(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='failpub'),3,'60000000-0000-0000-0000-000000000024',encode(sha256(convert_to('Failing publication text','UTF8')),'hex'));
+END $fsub$;
+-- Replay: the identical intent + hash returns the SAME work (replayed), never a second one.
+DO $freplay$
+DECLARE a jsonb; b jsonb;
+BEGIN
+ a:=public.submit_tenant_knowledge_publication('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='failpub'),(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='failpub'),3,'60000000-0000-0000-0000-000000000024',encode(sha256(convert_to('Failing publication text','UTF8')),'hex'));
+ b:=public.submit_tenant_knowledge_publication('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='failpub'),(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='failpub'),3,'60000000-0000-0000-0000-000000000024',encode(sha256(convert_to('Failing publication text','UTF8')),'hex'));
+ IF (b->>'replayed')::boolean IS NOT TRUE OR (b->>'work_id')::uuid IS DISTINCT FROM (a->>'work_id')::uuid THEN RAISE EXCEPTION 'replay assertion failed'; END IF;
+ CREATE TABLE IF NOT EXISTS public.pub_probe2(w uuid); INSERT INTO public.pub_probe2 VALUES((a->>'work_id')::uuid);
+END $freplay$;
+DO $fdrive$
+DECLARE w uuid:=(SELECT id FROM public.paige_durable_work WHERE work_kind='knowledge_publish' AND request_payload->>'extraction_work_id'=(SELECT result->>'work_id' FROM public.extract_test WHERE name='failpub'));
+ s jsonb:=public.start_knowledge_publication(w);
+BEGIN
+ PERFORM public.settle_knowledge_publication_failure(w,s->>'server_key',(s->>'attempt')::int,'embedding_failed',false);
+END $fdrive$;
+SELECT public.test_assert((SELECT status='failed' FROM public.paige_durable_work WHERE work_kind='knowledge_publish' AND request_payload->>'extraction_work_id'=(SELECT result->>'work_id' FROM public.extract_test WHERE name='failpub')),'settle-failure marks the work failed');
+SELECT public.test_assert((SELECT record_state='draft' AND pending_review IS NOT NULL FROM public.tenant_knowledge_docs WHERE id=(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='failpub')),'failed publication preserves the prior state');
+-- recover: simulate a lost acknowledgement — the generation committed (owner-side wiring
+-- of active_generation_id, as a crashed worker's mid-flight state would leave it) while the
+-- work row stays claimed with an expired lease. recover must record terminal truth without
+-- re-dispatching.
+RESET ROLE;
+SET ROLE service_role;
+SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',false);
+DELETE FROM public.extract_test WHERE name='recoverpub';
+INSERT INTO public.extract_test VALUES('recoverpub',public.test_extract('70000000-0000-0000-0000-000000000025',NULL,NULL,'Recovered publication text'),NULL);
+UPDATE public.extract_test SET started=public.start_knowledge_extraction((result->>'work_id')::uuid) WHERE name='recoverpub';
+SELECT (public.complete_knowledge_extraction((result->>'work_id')::uuid,started->>'server_key',1,1,'Recovered publication text',started->>'input_hash'))->>'phase' FROM public.extract_test WHERE name='recoverpub';
+RESET ROLE;
+SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',false);
+SET ROLE authenticated;
+SELECT public.test_assert(public.save_tenant_knowledge_review('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='recoverpub'),(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='recoverpub'),2,'Recovered publication text','{"title":"R","summary":null,"category":null,"tags":[]}')->>'revision'='3','recover review saved');
+RESET ROLE;
+DO $covsub$
+DECLARE ans jsonb;
+BEGIN
+ ans:=public.submit_tenant_knowledge_publication('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='recoverpub'),(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='recoverpub'),3,'60000000-0000-0000-0000-000000000025',encode(sha256(convert_to('Recovered publication text','UTF8')),'hex'));
+END $covsub$;
+DO $covclaim$
+DECLARE w uuid:=(SELECT id FROM public.paige_durable_work WHERE work_kind='knowledge_publish' AND request_payload->>'extraction_work_id'=(SELECT result->>'work_id' FROM public.extract_test WHERE name='recoverpub'));
+ s jsonb:=public.start_knowledge_publication(w);
+BEGIN
+ UPDATE public.paige_durable_work SET lease_until=now()-interval '1 minute' WHERE id=w;
+ UPDATE public.tenant_knowledge_docs SET active_generation_id=w,publication_manifest=(SELECT request_payload->'manifest' FROM public.paige_durable_work WHERE id=w) WHERE id=(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='recoverpub');
+END $covclaim$;
+SELECT public.test_assert((SELECT count(*)>=1 FROM public.recover_knowledge_publication(10)),'recover runs');
+SELECT public.test_assert((SELECT status='succeeded' AND terminal_outcome->>'reconciled'='true' FROM public.paige_durable_work WHERE work_kind='knowledge_publish' AND request_payload->>'extraction_work_id'=(SELECT result->>'work_id' FROM public.extract_test WHERE name='recoverpub')),'recover reconciles a committed generation to succeeded');
+SELECT public.test_assert((SELECT count(*)=1 FROM public.paige_durable_work WHERE work_kind='knowledge_publish' AND request_payload->>'extraction_work_id'=(SELECT result->>'work_id' FROM public.extract_test WHERE name='recoverpub')),'recover never re-dispatched (still one work)');

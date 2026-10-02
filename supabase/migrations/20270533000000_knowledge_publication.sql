@@ -128,13 +128,15 @@ BEGIN
  IF manifest IS NULL OR NOT public.knowledge_publication_manifest_valid(manifest) THEN RAISE EXCEPTION 'KNOWLEDGE_OUTPUT_INVALID' USING ERRCODE='22023'; END IF;
  request_hash:=encode(sha256(convert_to(jsonb_build_object('document',d.id,'revision',p_expected_revision,'review',p_review_hash,'manifest',manifest,'source',d.extraction_source_binding-'bound_at')::text,'UTF8')),'hex');
  PERFORM pg_advisory_xact_lock(hashtextextended(p_expected_tenant::text||':'||d.id::text||':publish',0));
- IF EXISTS(SELECT 1 FROM public.paige_durable_work WHERE tenant_id=p_expected_tenant AND work_kind='knowledge_publish'
-   AND status IN ('claimed','blocked') AND request_payload->>'document_id'=d.id::text) THEN RAISE EXCEPTION 'KNOWLEDGE_PUBLICATION_PENDING' USING ERRCODE='55000'; END IF;
+ -- Exact intent replay is checked BEFORE the single-unresolved rule: an identical replay of
+ -- a live intent IS that publication, not a second one (independent recheck catch).
  SELECT * INTO x FROM public.paige_durable_work WHERE tenant_id=p_expected_tenant AND initiating_user_id=actor AND intent_id=p_intent_id AND work_kind='knowledge_publish' FOR UPDATE;
  IF FOUND THEN
   IF x.request_payload->>'request_hash' IS DISTINCT FROM request_hash THEN RAISE EXCEPTION 'DURABLE_WORK_INTENT_REPLAY_MISMATCH' USING ERRCODE='22023'; END IF;
   RETURN jsonb_build_object('work_id',x.id,'document_id',d.id::text,'status',x.status,'replayed',true);
  END IF;
+ IF EXISTS(SELECT 1 FROM public.paige_durable_work WHERE tenant_id=p_expected_tenant AND work_kind='knowledge_publish'
+   AND status IN ('claimed','blocked','expired','outcome_unknown') AND request_payload->>'document_id'=d.id::text) THEN RAISE EXCEPTION 'KNOWLEDGE_PUBLICATION_PENDING' USING ERRCODE='55000'; END IF;
  SELECT * INTO created FROM public.create_paige_durable_work(p_expected_tenant,actor,p_intent_id,NULL,'knowledge.publish','knowledge_publish',jsonb_build_object('tenant_id',p_expected_tenant,'actor_user_id',actor,'source','knowledge_publication'),'tenant:'||p_expected_tenant::text,60,3);
  UPDATE public.paige_durable_work SET request_payload=jsonb_build_object('version',1,'document_id',d.id,'extraction_work_id',p_work_id,'revision',p_expected_revision,'review_hash',p_review_hash,'manifest',manifest,'source',d.extraction_source_binding,'request_hash',request_hash),safe_summary='Knowledge publication is queued.',version=version+1 WHERE id=created.work_id;
  -- The intent hash lives in the work payload alone: any doc UPDATE here would fire the
@@ -172,7 +174,7 @@ GRANT EXECUTE ON FUNCTION public.start_knowledge_publication(uuid) TO service_ro
 CREATE OR REPLACE FUNCTION public.stage_knowledge_publication(
  _work_id uuid,_server_key text,_attempt integer,_revision integer,_chunks jsonb
 ) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
-DECLARE w public.paige_durable_work; d public.tenant_knowledge_docs; c jsonb; i integer; n integer; hashes jsonb; vec double precision[]; existing record; staged integer:=0;
+DECLARE w public.paige_durable_work; d public.tenant_knowledge_docs; c jsonb; i integer; n integer; hashes jsonb; vec double precision[]; piece text; staged integer:=0;
 BEGIN
  SELECT * INTO w FROM public.paige_durable_work WHERE id=_work_id FOR UPDATE;
  IF NOT FOUND OR w.work_kind<>'knowledge_publish' OR w.capability_key<>'knowledge.publish' OR w.idempotency_key IS DISTINCT FROM _server_key THEN RAISE EXCEPTION 'KNOWLEDGE_WORK_NOT_FOUND' USING ERRCODE='42501'; END IF;
@@ -192,8 +194,13 @@ BEGIN
    OR EXISTS(SELECT 1 FROM jsonb_array_elements(c->'embedding') e WHERE jsonb_typeof(e)<>'number' OR (e#>>'{}')::double precision IN ('NaN'::double precision,'Infinity'::double precision,'-Infinity'::double precision)) THEN RAISE EXCEPTION 'KNOWLEDGE_STAGE_INVALID' USING ERRCODE='22023'; END IF;
   SELECT array_agg((e#>>'{}')::double precision ORDER BY ord) INTO vec FROM jsonb_array_elements(c->'embedding') WITH ORDINALITY e(e,ord);
   i:=(c->>'index')::int;
+  -- Content is the SERVER-derived canonical chunk text, never caller-supplied and never
+  -- empty: retrieval reads c.content directly, so an unstored text would silently degrade
+  -- every published generation to title-only matches (independent review P2).
+  SELECT chunk_text INTO piece FROM public.knowledge_publication_chunks(d.pending_review->>'reviewed_content') WHERE chunk_index=i;
+  IF piece IS NULL THEN RAISE EXCEPTION 'KNOWLEDGE_STAGE_INVALID' USING ERRCODE='22023'; END IF;
   INSERT INTO public.tenant_knowledge_chunks(id,doc_id,tenant_id,chunk_index,content,embedding,generation_id)
-   VALUES(md5(d.id::text||':'||w.id::text||':'||i)::uuid,d.id,w.tenant_id,i,'',vec,w.id)
+   VALUES(md5(d.id::text||':'||w.id::text||':'||i)::uuid,d.id,w.tenant_id,i,piece,vec,w.id)
    ON CONFLICT DO NOTHING;
   staged:=staged+1;
  END LOOP;
@@ -272,7 +279,9 @@ BEGIN
    AND status IN ('claimed','expired') AND (lease_until IS NULL OR lease_until<=now()) ORDER BY updated_at LIMIT least(coalesce(_limit,10),25) FOR UPDATE SKIP LOCKED LOOP
   BEGIN
    SELECT * INTO d FROM public.tenant_knowledge_docs WHERE id=(w.request_payload->>'document_id')::uuid AND tenant_id=w.tenant_id FOR UPDATE;
-   IF d IS NOT NULL AND d.active_generation_id=w.id THEN
+   -- FOUND, not "d IS NOT NULL": a composite with any NULL column reads as NULL in plpgsql,
+   -- so the committed-generation branch silently never fired (caught by the recover proof).
+   IF FOUND AND d.active_generation_id=w.id THEN
     -- Committed generation, lost acknowledgement: record the terminal truth, never re-dispatch.
     n:=(SELECT count(*) FROM public.tenant_knowledge_chunks WHERE doc_id=d.id AND generation_id=w.id);
     result:=jsonb_build_object('verified_readback',true,'document_id',d.id,'revision',d.revision,'generation_id',w.id,'chunk_count',n,'outcome','capability_succeeded','phase','published','reconciled',true);
@@ -329,10 +338,12 @@ END
 $function$;
 GRANT EXECUTE ON FUNCTION public.match_tenant_knowledge(uuid, extensions.vector, integer) TO authenticated, service_role;
 
--- Direct authenticated chunk reads see only the active generation of a canonical parent.
+-- Generation invisibility for direct reads is enforced by this RESTRICTIVE policy intersected with
+-- the landed permissive membership policy; the definer match RPC independently enforces it
+-- for search. (Independent review P3: comment previously overpromised RLS alone.)
 DROP POLICY IF EXISTS knowledge_canonical_chunk_read ON public.tenant_knowledge_chunks;
 CREATE POLICY knowledge_canonical_chunk_read ON public.tenant_knowledge_chunks
- FOR SELECT TO authenticated
+ AS RESTRICTIVE FOR SELECT TO authenticated
  USING (tenant_id = public.current_user_tenant_id()
    AND EXISTS(SELECT 1 FROM public.tenant_knowledge_docs d
     WHERE d.id = tenant_knowledge_chunks.doc_id
@@ -363,27 +374,62 @@ REVOKE ALL ON FUNCTION public.guard_knowledge_generation_writes() FROM PUBLIC,an
 
 -- ─── Delete-reason compatibility: a bound canonical source is retained by policy, not
 -- "unavailable". Both browser validators update with this slice per the packet. ─────────
-CREATE OR REPLACE FUNCTION public.delete_tenant_knowledge(p_expected_tenant uuid,p_doc_id uuid,p_expected_revision integer)
-RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
-DECLARE d public.tenant_knowledge_docs; run uuid; outcome text:='capability_succeeded'; removed boolean; chunks integer;
+CREATE OR REPLACE FUNCTION public.delete_tenant_knowledge(
+  p_expected_tenant uuid, p_doc_id uuid, p_expected_revision integer
+) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE
+  v_actor uuid := auth.uid();
+  v_tenant uuid;
+  v_doc public.tenant_knowledge_docs;
+  v_child_tenant uuid;
+  v_deleted uuid;
+  v_run uuid;
+  v_outcome text := 'capability_succeeded';
 BEGIN
- SELECT * INTO d FROM public.tenant_knowledge_docs WHERE id=p_doc_id AND tenant_id=p_expected_tenant FOR UPDATE;
- IF NOT FOUND THEN RAISE EXCEPTION 'KNOWLEDGE_NOT_FOUND' USING ERRCODE='P0002'; END IF;
- IF d.revision<>p_expected_revision THEN RAISE EXCEPTION 'KNOWLEDGE_REVISION_CONFLICT' USING ERRCODE='40001'; END IF;
- removed:=d.record_state='canonical';
- IF removed THEN
-  SELECT count(*) INTO chunks FROM public.tenant_knowledge_chunks WHERE doc_id=d.id AND tenant_id=p_expected_tenant;
- END IF;
- run:=md5('knowledge_delete:'||p_expected_tenant::text||':'||p_doc_id::text||':'||p_expected_revision::text)::uuid;
- BEGIN
-  PERFORM public.record_capability_run(p_expected_tenant,auth.uid(),'knowledge_delete','capability_succeeded',run,NULL::text,NULL::text,NULL::uuid,NULL::text,jsonb_build_object('document_id',d.id,'revision',d.revision));
- EXCEPTION WHEN OTHERS THEN outcome:='capability_completed_unrecorded'; END;
- DELETE FROM public.tenant_knowledge_docs WHERE id=d.id;
- IF EXISTS(SELECT 1 FROM public.tenant_knowledge_docs WHERE id=d.id) OR EXISTS(SELECT 1 FROM public.tenant_knowledge_chunks WHERE doc_id=d.id) THEN RAISE EXCEPTION 'KNOWLEDGE_READBACK_FAILED'; END IF;
- RETURN jsonb_build_object('contract_version',1,'verified_readback',true,'tenant_id',p_expected_tenant,'document_id',p_doc_id,'revision',d.revision,
-  'operation','document_delete','document_absent',true,'chunks_absent',true,'run_id',run,'outcome',outcome,
-  'source_cleanup',jsonb_build_object('status','not_attempted','reason',
-   CASE WHEN d.source_binding IS NULL THEN 'canonical_source_binding_unavailable' ELSE 'retained_by_policy' END));
+  IF v_actor IS NULL THEN RAISE EXCEPTION 'KNOWLEDGE_UNAUTHENTICATED' USING ERRCODE='42501'; END IF;
+  SELECT active_tenant_id INTO v_tenant FROM public.profiles WHERE user_id=v_actor FOR SHARE;
+  IF v_tenant IS NULL OR p_expected_tenant IS DISTINCT FROM v_tenant THEN
+    RAISE EXCEPTION 'KNOWLEDGE_SCOPE_CHANGED' USING ERRCODE='42501';
+  END IF;
+  IF NOT (COALESCE(public.is_platform_owner(),false) OR COALESCE(public.is_tenant_member(v_tenant),false)) THEN
+    RAISE EXCEPTION 'KNOWLEDGE_FORBIDDEN' USING ERRCODE='42501';
+  END IF;
+  SELECT * INTO v_doc FROM public.tenant_knowledge_docs WHERE tenant_id=v_tenant AND id=p_doc_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'KNOWLEDGE_NOT_FOUND' USING ERRCODE='P0002'; END IF;
+  IF p_expected_revision IS NULL OR p_expected_revision < 1 OR v_doc.revision <> p_expected_revision THEN
+    RAISE EXCEPTION 'KNOWLEDGE_REVISION_CONFLICT' USING ERRCODE='40001';
+  END IF;
+  -- Parent FOR UPDATE blocks new FK references. Lock children before checking their
+  -- tenant: the existing FK covers doc_id only, so a cascade alone is insufficient.
+  FOR v_child_tenant IN
+    SELECT tenant_id FROM public.tenant_knowledge_chunks WHERE doc_id=p_doc_id ORDER BY id FOR UPDATE
+  LOOP
+    IF v_child_tenant IS DISTINCT FROM v_tenant THEN
+      RAISE EXCEPTION 'KNOWLEDGE_CHILD_SCOPE_INVALID' USING ERRCODE='42501';
+    END IF;
+  END LOOP;
+  DELETE FROM public.tenant_knowledge_docs
+  WHERE tenant_id=v_tenant AND id=p_doc_id AND revision=p_expected_revision RETURNING id INTO v_deleted;
+  IF NOT FOUND THEN RAISE EXCEPTION 'KNOWLEDGE_DELETE_NOT_VERIFIED' USING ERRCODE='P0001'; END IF;
+  IF EXISTS (SELECT 1 FROM public.tenant_knowledge_docs WHERE id=p_doc_id)
+     OR EXISTS (SELECT 1 FROM public.tenant_knowledge_chunks WHERE doc_id=p_doc_id) THEN
+    RAISE EXCEPTION 'KNOWLEDGE_DELETE_NOT_VERIFIED' USING ERRCODE='P0001';
+  END IF;
+  v_run := md5('knowledge_delete:'||v_tenant::text||':'||p_doc_id::text||':'||v_doc.revision::text)::uuid;
+  BEGIN
+    PERFORM public.record_capability_run(v_tenant,v_actor,'knowledge_delete','capability_succeeded',v_run,
+      NULL::text,NULL::text,NULL::uuid,NULL::text,
+      jsonb_build_object('document_id',p_doc_id,'revision',v_doc.revision,
+        'operation','document_delete','source_cleanup','not_attempted'));
+  EXCEPTION WHEN OTHERS THEN
+    v_outcome := 'capability_completed_unrecorded';
+  END;
+  -- The ONLY delta from the landed 20270531200000 body: a bound canonical source is
+  -- retained by policy, not falsely unavailable. Envelope and authority unchanged.
+  RETURN jsonb_build_object('tenant_id',v_tenant,'document_id',p_doc_id,'deleted_revision',v_doc.revision,
+    'document_absent',true,'chunks_absent',true,'outcome',v_outcome,'run_id',v_run,
+    'source_cleanup',jsonb_build_object('status','not_attempted','reason',
+      CASE WHEN v_doc.source_binding IS NULL THEN 'canonical_source_binding_unavailable' ELSE 'retained_by_policy' END));
 END $$;
-REVOKE ALL ON FUNCTION public.delete_tenant_knowledge(uuid,uuid,integer) FROM PUBLIC,anon,service_role;
+REVOKE ALL ON FUNCTION public.delete_tenant_knowledge(uuid,uuid,integer) FROM PUBLIC, anon, service_role;
 GRANT EXECUTE ON FUNCTION public.delete_tenant_knowledge(uuid,uuid,integer) TO authenticated;

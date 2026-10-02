@@ -23,6 +23,10 @@ describe('canonical Knowledge deletion', () => {
   ])('rejects an unverified deletion %j', async (override) => {
     await expect(deleteKnowledge(client({...result,...override}),'tenant-a','doc-a',3)).rejects.toThrow();
   });
+  it('accepts a bound canonical source retained by policy', async () => {
+    const c=client({...result,source_cleanup:{status:'not_attempted',reason:'retained_by_policy'}});
+    expect((await deleteKnowledge(c,'tenant-a','doc-a',3)).source_cleanup.reason).toBe('retained_by_policy');
+  });
   it('returns completed-unrecorded without retrying', async () => {
     const c=client({...result,outcome:'capability_completed_unrecorded'});
     expect((await deleteKnowledge(c,'tenant-a','doc-a',3)).outcome).toBe('capability_completed_unrecorded');

@@ -220,3 +220,74 @@ END $covclaim$;
 SELECT public.test_assert((SELECT count(*)>=1 FROM public.recover_knowledge_publication(10)),'recover runs');
 SELECT public.test_assert((SELECT status='succeeded' AND terminal_outcome->>'reconciled'='true' FROM public.paige_durable_work WHERE work_kind='knowledge_publish' AND request_payload->>'extraction_work_id'=(SELECT result->>'work_id' FROM public.extract_test WHERE name='recoverpub')),'recover reconciles a committed generation to succeeded');
 SELECT public.test_assert((SELECT count(*)=1 FROM public.paige_durable_work WHERE work_kind='knowledge_publish' AND request_payload->>'extraction_work_id'=(SELECT result->>'work_id' FROM public.extract_test WHERE name='recoverpub')),'recover never re-dispatched (still one work)');
+-- Missed wake (round-2 recheck): the submit dispatch never landed and the lease expired
+-- before any start. Recovery must requeue the row for the sweep — extraction's missed-wake
+-- path — and the requeued row must still drive to a real publication. A dispatch that DID
+-- start (lost ack, nothing committed) still reconciles to outcome_unknown and blocks a new
+-- publication for that document.
+RESET ROLE;
+SET ROLE service_role;
+SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',false);
+DELETE FROM public.extract_test WHERE name='missedwake';
+INSERT INTO public.extract_test VALUES('missedwake',public.test_extract('70000000-0000-0000-0000-000000000027',NULL,NULL,'Missed wake publication text'),NULL);
+UPDATE public.extract_test SET started=public.start_knowledge_extraction((result->>'work_id')::uuid) WHERE name='missedwake';
+SELECT (public.complete_knowledge_extraction((result->>'work_id')::uuid,started->>'server_key',1,1,'Missed wake publication text',started->>'input_hash'))->>'phase' FROM public.extract_test WHERE name='missedwake';
+RESET ROLE;
+SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',false);
+SET ROLE authenticated;
+SELECT public.test_assert(public.save_tenant_knowledge_review('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='missedwake'),(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='missedwake'),2,'Missed wake publication text','{"title":"M","summary":null,"category":null,"tags":[]}')->>'revision'='3','missed-wake review saved');
+RESET ROLE;
+DO $mwsub$
+DECLARE ans jsonb;
+BEGIN
+ ans:=public.submit_tenant_knowledge_publication('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='missedwake'),(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='missedwake'),3,'60000000-0000-0000-0000-000000000027',encode(sha256(convert_to('Missed wake publication text','UTF8')),'hex'));
+END $mwsub$;
+-- Simulate the wake never landing: age the lease without any start (dispatch_started_attempt stays 0).
+UPDATE public.paige_durable_work SET lease_until=now()-interval '1 minute' WHERE work_kind='knowledge_publish' AND request_payload->>'extraction_work_id'=(SELECT result->>'work_id' FROM public.extract_test WHERE name='missedwake');
+SELECT public.test_assert((SELECT count(*)>=1 FROM public.recover_knowledge_publication(10)),'missed-wake recover runs');
+SELECT public.test_assert((SELECT status='claimed' AND attempt_count=2 AND dispatch_started_attempt<attempt_count FROM public.paige_durable_work WHERE work_kind='knowledge_publish' AND request_payload->>'extraction_work_id'=(SELECT result->>'work_id' FROM public.extract_test WHERE name='missedwake')),'missed wake is requeued claimable, not reconciled');
+DO $mwdrive$
+DECLARE w uuid:=(SELECT id FROM public.paige_durable_work WHERE work_kind='knowledge_publish' AND request_payload->>'extraction_work_id'=(SELECT result->>'work_id' FROM public.extract_test WHERE name='missedwake'));
+ s jsonb:=public.start_knowledge_publication(w); c jsonb; r jsonb;
+BEGIN
+ FOR c IN SELECT * FROM jsonb_array_elements(s->'chunks') LOOP
+  PERFORM public.stage_knowledge_publication(w,s->>'server_key',(s->>'attempt')::int,(s->>'revision')::int,jsonb_build_array(jsonb_build_object('index',(c->>'index')::int,'sha256',c->>'sha256','embedding',(SELECT jsonb_agg(0.5 ORDER BY g) FROM generate_series(1,1024) g))));
+ END LOOP;
+ r:=public.complete_knowledge_publication(w,s->>'server_key',(s->>'attempt')::int,(s->>'revision')::int);
+END $mwdrive$;
+SELECT public.test_assert((SELECT record_state='canonical' AND active_generation_id IS NOT NULL FROM public.tenant_knowledge_docs WHERE id=(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='missedwake')),'requeued missed-wake row drives to a real publication');
+SELECT public.test_assert((SELECT status='succeeded' FROM public.paige_durable_work WHERE work_kind='knowledge_publish' AND request_payload->>'extraction_work_id'=(SELECT result->>'work_id' FROM public.extract_test WHERE name='missedwake')),'requeued publication work settles succeeded');
+-- Started dispatch with a lost acknowledgement (nothing committed) reconciles to
+-- outcome_unknown and is never re-driven; a fresh intent for that document is refused.
+RESET ROLE;
+SET ROLE service_role;
+SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',false);
+DELETE FROM public.extract_test WHERE name='lostack';
+INSERT INTO public.extract_test VALUES('lostack',public.test_extract('70000000-0000-0000-0000-000000000028',NULL,NULL,'Lost ack publication text'),NULL);
+UPDATE public.extract_test SET started=public.start_knowledge_extraction((result->>'work_id')::uuid) WHERE name='lostack';
+SELECT (public.complete_knowledge_extraction((result->>'work_id')::uuid,started->>'server_key',1,1,'Lost ack publication text',started->>'input_hash'))->>'phase' FROM public.extract_test WHERE name='lostack';
+RESET ROLE;
+SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',false);
+SET ROLE authenticated;
+SELECT public.test_assert(public.save_tenant_knowledge_review('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='lostack'),(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='lostack'),2,'Lost ack publication text','{"title":"L","summary":null,"category":null,"tags":[]}')->>'revision'='3','lost-ack review saved');
+RESET ROLE;
+DO $lasub$
+DECLARE ans jsonb;
+BEGIN
+ ans:=public.submit_tenant_knowledge_publication('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='lostack'),(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='lostack'),3,'60000000-0000-0000-0000-000000000028',encode(sha256(convert_to('Lost ack publication text','UTF8')),'hex'));
+END $lasub$;
+DO $ladrive$
+DECLARE w uuid:=(SELECT id FROM public.paige_durable_work WHERE work_kind='knowledge_publish' AND request_payload->>'extraction_work_id'=(SELECT result->>'work_id' FROM public.extract_test WHERE name='lostack'));
+ s jsonb:=public.start_knowledge_publication(w);
+BEGIN
+ UPDATE public.paige_durable_work SET lease_until=now()-interval '1 minute' WHERE id=w;
+END $ladrive$;
+SELECT public.test_assert((SELECT count(*)>=1 FROM public.recover_knowledge_publication(10)),'lost-ack recover runs');
+SELECT public.test_assert((SELECT status='outcome_unknown' AND error_code='completion_unknown' FROM public.paige_durable_work WHERE work_kind='knowledge_publish' AND request_payload->>'extraction_work_id'=(SELECT result->>'work_id' FROM public.extract_test WHERE name='lostack')),'started dispatch with lost ack reconciles to outcome_unknown, never re-driven');
+RESET ROLE;
+-- service_role (with the fixture actor) so the RPC executes past its ACL and the pending
+-- refusal itself is what denies — authenticated callers are already ACL-denied (proven above).
+SET ROLE service_role;
+SELECT set_config('test.actor','10000000-0000-0000-0000-000000000001',false);
+SELECT public.test_denied($q$SELECT public.submit_tenant_knowledge_publication('00000000-0000-0000-0000-000000000001',(SELECT (result->>'document_id')::uuid FROM public.extract_test WHERE name='lostack'),(SELECT (result->>'work_id')::uuid FROM public.extract_test WHERE name='lostack'),3,'60000000-0000-0000-0000-000000000029',encode(sha256(convert_to('Lost ack publication text','UTF8')),'hex'))$q$,'KNOWLEDGE_PUBLICATION_PENDING');
+RESET ROLE;

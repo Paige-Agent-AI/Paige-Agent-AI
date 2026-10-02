@@ -13874,7 +13874,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // performs. A question (ending in "?"), a greeting, or a bare statement is a terminal
       // state — the assignment forbids continuing after a genuine question that needs the
       // user's answer, and over-matching turns every reply into a loop.
-      const ACTION_INTENT_RE = /\b(?:creat(?:e|ed|ing)|send|sent|archive[d]?|restore[d]?|enroll(?:ed)?|enrol(?:l)?ed|delet(?:e|ed)|remov(?:e|ed)|assign[d]?|schedul(?:e|ed)|book(?:ed)?|invit(?:e|ed|ation)|draft(?:ed)?|renam(?:e|ed)|publish(?:ed)?|submit(?:ted)?|subscrib(?:e|ed)|pay(?:ed)?|remind(?:ed)?|cancel(?:l?ed)?|approv(?:e|ed)|confirm(?:ed)?|go ahead|do it|run it|ship it|sign (?:\w+ )?up|set (?:up|it|this|that|the)|make (?:a|an|the|this|that|it|her|him|sure)|(?:add|updat|chang|mov|complet|fil)[a-z]* (?:a|an|the|this|that|it|her|him|them|my|our) |please (?:add|updat|chang|mov|complet|fil|mak|set|send|creat|delet|enroll|archive|restor|assign|schedul|draft|publish|submitt|subscrib|pay|remind|cancel|approv|confirm|book|invit|renam|sign|do|run|go))\b|^(?:add|updat|chang|mov|set|mak|complet|fil|creat|send|delet|enroll|archive|restor|assign|schedul|draft|publish|submitt|pay|remind|cancel|approv|confirm|book|invit|renam|sign)\b/i;
+      const ACTION_INTENT_RE = /(?:^|[.!?\n]\s*|,\s*)(?:add|updat|chang|mov|set|mak|complet|fil|creat|send|delet|enroll|archive|restor|assign|schedul|draft|publish|submitt|pay|remind|cancel|approv|confirm|book|invit|renam|sign|remov|subscrib)(?:e|es|ed|ing|ion|ions)?\b|\b(?:can|could|need|want|let|like)\s+(?:you\s+)?(?:to\s+)?(?:add|updat|chang|mov|creat|send|delet|enroll|archive|restor|assign|schedul|draft|publish|submitt|pay|remind|cancel|approv|confirm|book|invit|renam|sign|remov|set|mak|complet|fil)(?:e|es|ed|ing)?\b|\b(?:go ahead|do it|run it|ship it|sign (?:\w+ )?up|enroll(?:ed)? (?:her|him|them|this)|archive[d]? (?:that|the|this)|delet(?:e|ed) (?:that|the|this|it)|(?:add|updat|chang|mov|complet|fil)[a-z]* (?:a|an|the|this|that|it|her|him|them|my|our) |please (?:add|updat|chang|mov|complet|fil|mak|set|send|creat|delet|enroll|archive|restor|assign|schedul|draft|publish|submitt|subscrib|pay|remind|cancel|approv|confirm|book|invit|renam|sign|do|run|go))\b/i;
       const isActionIntent = (() => {
         if (callerTier === "client") return false; // client seats' tools are deny-by-default
         const lastUser = [...aiMessages].reverse().find((m: any) => m?.role === "user");
@@ -13888,7 +13888,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // refuse in prose, ask the clarification the platform's own prompt rules demand, or state
       // the honest blockage. The prompt REQUIRES these sentences, so continuing over them
       // pressures the model toward fabrication — each is a legitimate end.
-      const PROSE_TERMINAL_RE = /\b(?:i (?:can'?t|cannot|am not able to|wasn'?t able to|weren'?t able to|don'?t have (?:access|a way|the ability)|won'?t be able to)|i(?:'m| am) unable to|not (?:something i can|available from (?:here|chat|this))|isn'?t (?:available|possible|supported) (?:here|yet|from)|which (?:one|pipeline|contact|deal|stage|account)|what(?:'s| is) (?:your|the|their)|do you (?:want|mean|prefer)|should i (?:use|add|create|move)|there (?:is no|are no) (?:tool|pipeline|contact|stage|way)|no (?:tool|pipeline|contact) (?:for|exists|available)|\?)\b/i;
+      const PROSE_TERMINAL_RE = /(?:^|[.!?]\s+)(?:which (?:one|pipeline|contact|deal|stage|account)|what(?:'s| is) (?:your|the|their)|do you (?:want|mean|prefer)|should (?:i|we) (?:use|add|create|move|proceed)|are you sure|want me to|would you like|how (?:about|do i|do you))|(?:^|[.!?]\s+|\b)(?:i (?:can'?t|cannot|am not able to|wasn'?t able to|weren'?t able to|don'?t have (?:access|a way|the ability)|won'?t be able to)|i(?:'m| am) unable to|not (?:something i can|available from (?:here|chat|this))|isn'?t (?:available|possible|supported) (?:here|yet|from)|there (?:is no|are no) (?:tool|pipeline|contact|stage|way)|no (?:tool|pipeline|contact|contacts|pipelines|tools) (?:for|exists|exist|available)|i wasn'?t able to complete)/i;
       let totalToolCalls = 0;
       const seenSignatures = new Set<string>();
       let finalChunks: Uint8Array[] | null = null;
@@ -14037,7 +14037,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               // CRM action ran (crmResultTrace), the scope changed, or this is Live (which has
               // its own answer contract). Otherwise, if the user asked for an action and the
               // budget holds, the task is fed back — narration is not completion.
-              const proseTerminal = typeof content === "string" && PROSE_TERMINAL_RE.test(content);
+              // Any question mark in the model's prose is a clarification ask — the \? arm
+              // cannot live inside a \b group (no boundary after "?"), so it is checked here.
+              const proseTerminal = typeof content === "string" && (PROSE_TERMINAL_RE.test(content) || content.includes("?"));
               const terminalState = totalToolCalls > 0
                 || queuedApprovals.length > 0
                 || confirmTrace.length > 0
@@ -14064,9 +14066,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               if (liveRuntimeScope) liveAnswerPending = true;
               else if (isActionIntent && !terminalState && continuationsUsed >= MAX_CONTINUATIONS) {
                 // Budget exhausted on an unresolved action: the honest blockage sentence, not
-                // a replay of the last narration (the failure mode this loop exists to end).
+                // a replay of the last narration. THE WIRE AND THE TRANSCRIPT CARRY THE SAME
+                // SENTENCE (§13/§94): the exhausted sentence is what streams AND what persists —
+                // swapping only the persisted text would make a reload disagree with the live view.
                 const exhausted = "I wasn't able to complete that request. The task may need a different approach or a capability that isn't available here yet — could you try asking again, or check what's possible from this workspace?";
-                finalChunks = allChunks; finalAssistantText = exhausted;
+                finalChunks = null; finalAssistantText = exhausted;
+                emitContent(controller, enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: exhausted } }] })}\n\n`));
               }
               else { finalChunks = allChunks; finalAssistantText = content; }
               break;

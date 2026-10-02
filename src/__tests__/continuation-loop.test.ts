@@ -35,6 +35,11 @@ describe("action intent — the reviewer's false-positive class is dead", () => 
     "Completely agree with your plan",
     "Good morning Paige",
     "Okay sounds good",
+    "That report you sent was really helpful, thanks",
+    "Friday is booked, see you then",
+    "Thanks for getting that scheduled",
+    "I confirmed with her on the phone",
+    "We're all set up and ready to go",
   ];
   for (const msg of NOT_ACTIONS) {
     it(`does NOT continue on "${msg}"`, () => {
@@ -57,6 +62,9 @@ describe("action intent — the real action requests fire", () => {
     "Rename the Acme deal",
     "Sign her up for the program",
     "yes please add her",
+    "Can you add Jacqueline to the intake pipeline",
+    "I need you to add John to the team",
+    "could you add Marcus to that stage please",
   ];
   for (const msg of ACTIONS) {
     it(`continues on "${msg}"`, () => {
@@ -85,16 +93,27 @@ describe("prose terminal states — refusals, clarifications and blockages end t
     "I don't have access to that feature",
     "That isn't available from chat yet",
     "I wasn't able to complete that request.",
+    "Would Friday at 3 work for you?",
+    "Are you sure you want me to delete it?",
+    "Should we proceed with the Acme one?",
+    "Want me to send it to her work email instead?",
+    "Sure?",
+    "There are no contacts matching that name",
   ];
   for (const prose of TERMINAL_PROSE) {
     it(`treats "${prose.slice(0, 40)}..." as terminal`, () => {
-      expect(proseTerminal.test(prose)).toBe(true);
+      // The full check: the regex OR any question mark (the \? arm cannot live inside \b).
+      const terminal = proseTerminal.test(prose) || prose.includes("?");
+      expect(terminal).toBe(true);
     });
   }
   it("narration of intent is NOT terminal (the Jacqueline pattern)", () => {
     expect(proseTerminal.test("Let me try without the contact reference — just the deal itself.")).toBe(false);
     expect(proseTerminal.test("Pulling up Afonso's details and creating his deal now.")).toBe(false);
     expect(proseTerminal.test("I'll get that done for you right away.")).toBe(false);
+    // Indirect-question narration is NOT a clarification (the reviewer's P2-C).
+    expect(proseTerminal.test("Let me check which pipeline she's in first.")).toBe(false);
+    expect(proseTerminal.test("I'm checking which stage she is in right now.")).toBe(false);
   });
 });
 

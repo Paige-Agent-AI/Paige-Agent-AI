@@ -147,14 +147,8 @@ function FunnelVisual({
     </div>;
   }
 
-  const stages = ["Qualified lead", "Proposal", "Commitment", "Confirmed outcome"];
-  return <div className="anr-chart-stage" role="group" aria-label="Empty sales funnel stages. No volume or conversion is implied.">
-    <div className="anr-cylinder-funnel" role="list" aria-label="Unavailable funnel stages">
-      {stages.map((stage, index) => <div className="anr-cylinder-stage" data-stage={index + 1} key={stage} role="listitem" tabIndex={0} aria-label={`${stage}: no proved count`}>
-        <div><strong>{stage}</strong><span>No proved count</span></div>
-      </div>)}
-    </div>
-    <p className="anr-watermark">Empty cylinder stages · no implied volume or conversion</p>
+  return <div className="anr-chart-stage anr-chart-stage--message" role="group" aria-label="No proved pipeline stages for this account. No stage, volume, or conversion is implied.">
+    <div><strong>No proved pipeline stages to show</strong><p>No canonical stage definition has been issued for this account, so no stage name, volume, or conversion can be shown here.</p></div>
   </div>;
 }
 

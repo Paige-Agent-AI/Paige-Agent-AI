@@ -29,6 +29,8 @@
     "lint:rail-grants:test": "node scripts/ci/rail-browser-grant-lint.mjs --self-test",
     "lint:ssrf-fork": "node scripts/ci/ssrf-fork-lint.mjs",
     "lint:managed-schema": "node scripts/ci/managed-schema-ownership-lint.mjs",
+    "lint:doc-citations": "node scripts/ci/doc-citation-lint.mjs docs/delivery/analytics-lane-register.md docs/delivery/analytics-solo-metric-dictionary-proposal.md",
+    "lint:doc-citations:test": "node scripts/ci/doc-citation-lint.mjs --self-test",
     "lint:tier-features": "node scripts/ci/tier-feature-lint.mjs",
     "lint:tier-features:test": "node scripts/ci/tier-feature-lint.mjs --self-test",
     "lint:legacy-mark": "node scripts/ci/legacy-mark-lint.mjs",

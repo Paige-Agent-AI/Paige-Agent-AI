@@ -34,7 +34,7 @@ const baseCommand = {
     id: "approval-1", dept: "Finance", title: "Approve payment reminder",
     preview: "Review the reminder before it is sent.", type: "Email draft", urgency: "today", aging: "2h",
   }],
-  metrics: [{ k: "Active clients", v: "12" }, { k: "Pipeline value", v: "$48,000" }],
+  metrics: [{ k: "Active contacts", v: "12" }, { k: "Pipeline value", v: "$48,000" }],
   attention: { at_risk_clients: 1, follow_ups_due: 2 },
   departments: [{
     slug: "operations", name: "Operations", displayOrder: 1, openCount: 3,
@@ -249,7 +249,7 @@ describe("Solo Systems Check workspace", () => {
     expect(host.textContent).toContain("Systems Check");
     expect(host.querySelector("[data-tenant-account-name]")?.textContent).toBe("First Sterling Capital");
     expect(host.querySelector("[data-tenant-account-tier]")?.textContent).toBe("Solo");
-    expect(host.textContent).toContain("Active clients");
+    expect(host.textContent).toContain("Active contacts");
     expect(host.textContent).toContain("Live read from your own records");
     expect(host.textContent).toContain("Payment connection needs attention");
     // The Departments panel went with the radial: it listed names beside the words
@@ -544,7 +544,7 @@ describe("Solo Systems Check workspace", () => {
   it("labels retained metrics as last available when the current operating read fails", () => {
     harness.command.mockReturnValue({ ...baseCommand, isError: true });
     render();
-    expect(host.textContent).toContain("Active clients");
+    expect(host.textContent).toContain("Active contacts");
     expect(host.textContent).toContain("this may not be today's number");
     expect(host.textContent).not.toContain("Live read from your own records");
   });

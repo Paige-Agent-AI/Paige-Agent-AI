@@ -13,7 +13,7 @@
  *    the governed tool surface lands only after the first real connection's discovery
  *    shows GHL's actual tool names (the M3 pattern: register what exists).
  */
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 
@@ -48,10 +48,17 @@ describe("the gohighlevel provider descriptor is seeded", () => {
     expect(seed).not.toContain("gohighlevel");
   });
 
-  it("the frontier discipline holds — the migration numbers above the recorded frontier", () => {
-    expect(ghlMigration.length).toBeGreaterThan(0);
-    // lexical filename ordering puts 20270534000000 after the recorded 20270533200000 frontier
-    expect("20270534000000_gohighlevel_mcp_provider.sql" > "20270533200000_knowledge_submit_activation.sql").toBe(true);
+  it("the frontier discipline holds — the migration exists on disk and numbers above the recorded frontier", () => {
+    const migrations = readdirSync(join(root, "supabase/migrations")).filter((n) => n.endsWith(".sql")).sort();
+    // The file must actually be on disk (db push picks up exactly this directory).
+    expect(migrations).toContain("20270534000000_gohighlevel_mcp_provider.sql");
+    // And it must sort above the recorded production frontier at authoring time — an
+    // interleaved lower number would apply beneath already-recorded history.
+    const frontier = "20270533200000_knowledge_submit_activation.sql";
+    expect(migrations).toContain(frontier);
+    expect(migrations.indexOf("20270534000000_gohighlevel_mcp_provider.sql")).toBeGreaterThan(
+      migrations.indexOf(frontier),
+    );
   });
 });
 

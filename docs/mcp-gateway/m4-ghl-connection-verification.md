@@ -15,10 +15,12 @@
    the tenant's GHL MCP settings at connect time — the same per-tenant-endpoint model as Zapier,
    unlike n8n's self-hosted instance).
 2. **Two executable auth kinds:**
-   - `oauth` — the GHL marketplace-app flow (issuer `marketplace.leadconnectorhq.com`) through
-     the same gateway OAuth doors as every provider. The M2 fix governs scope selection:
-     challenge scope → protected-resource metadata → omit; a GHL marketplace app's broad scope
-     catalogue is never requested by default.
+   - `oauth` — the GHL marketplace-app flow (issuer `marketplace.leadconnectorhq.com`,
+     per GHL's marketplace docs — confirm at the first `oauth_begin`; the gateway discovers
+     the real issuer via RFC 8414 metadata, nothing is hard-coded) through the same gateway
+     OAuth doors as every provider. The M2 fix governs scope selection: challenge scope →
+     protected-resource metadata → omit; a GHL marketplace app's broad scope catalogue is
+     never requested by default.
    - `bearer` — a location/company API token presented as the MCP bearer credential (the quick
      path; the token is stored encrypted, shown only as last4, and a disconnect scrubs it).
 3. **The governed unit is CRM data, not workflows or actions** — contacts, conversations

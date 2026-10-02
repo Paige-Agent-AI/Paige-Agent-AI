@@ -1318,7 +1318,7 @@
         "cost_responsibility": "tenant_direct",
         "billing_owner": "tenant (the tenant's own GHL subscription — per-location plans)",
         "operational_owner": "Integrations workstream",
-        "pricing_model": "fixed_subscription",
+        "pricing_model": "per_location",
         "pricing_source_url": "https://www.gohighlevel.com/pricing",
         "pricing_checked_as_of": null,
         "pricing_note": "Per-location subscription tiers; the tenant bears its own GHL cost. Mutable — verify at source; no figure recorded (§13).",

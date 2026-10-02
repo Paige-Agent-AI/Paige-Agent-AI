@@ -22,7 +22,7 @@ export const ZAPIER_LIST_ACTIONS = {
  humanSurface: "/solo/:account/settings/integrations",
  action: { classification: "read", executor: "edge.paige-ai-chat", chatTool: "zapier_list_actions", riskPolicyKey: "read_only", approvalAuthority: "none",
  idempotency: "Read-only MCP tools/list provider call recorded in Rail; no app action is ever run by discovery." },
- outcome: { kinds: ["verified", "refused", "unknown"], projector: "zapier-management.project", railVisibility: "Connection test and action-discovery outcomes file governed Chat action audit rows; provider payloads stay in the encrypted tenant-scoped store, never the Rail." },
+ outcome: { kinds: ["verified", "refused", "unknown"], projector: "mcp-outcome.projectOutcomeForModel", railVisibility: "Connection test and action-discovery outcomes file governed Chat action audit rows; provider payloads stay in the encrypted tenant-scoped store, never the Rail." },
  chatBinding: "LIVE", mindBinding: "UNAVAILABLE", sharedPrimitiveChange: "SCR-ZAPIER-MANAGEMENT", maturity: "PARTIAL",
 } as const satisfies SpineCapability;
 export const ZAPIER_RUN_ACTION = {
@@ -30,7 +30,7 @@ export const ZAPIER_RUN_ACTION = {
  humanSurface: "/solo/:account/settings/integrations",
  action: { classification: "external_effect", executor: "edge.paige-ai-chat", chatTool: "zapier_run_action", riskPolicyKey: "high", approvalAuthority: "chat-canonical",
  idempotency: "Caller-scoped one-time confirmation for writes; provider actions are never automatically retried after uncertain results." },
- outcome: { kinds: ["verified", "refused", "unknown"], projector: "zapier-management.project", railVisibility: "Every executed action files the governed outcome the operator sees; the provider's answer is returned as an opaque encrypted reference, never raw prose." },
+ outcome: { kinds: ["verified", "refused", "unknown"], projector: "mcp-outcome.projectOutcomeForModel", railVisibility: "Every executed action files the governed outcome the operator sees; the provider's answer is returned as an opaque encrypted reference, never raw prose." },
  chatBinding: "LIVE", mindBinding: "UNAVAILABLE", sharedPrimitiveChange: "SCR-ZAPIER-MANAGEMENT", maturity: "PARTIAL",
 } as const satisfies SpineCapability;
 export const ZAPIER_MANAGEMENT_CAPABILITIES = [ZAPIER_LIST_ACTIONS, ZAPIER_RUN_ACTION] as const;

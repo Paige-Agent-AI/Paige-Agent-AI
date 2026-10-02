@@ -56,7 +56,9 @@ describe("the Spine registers the live zapier chat surface", () => {
     expect(spineRegistry).toContain(
       "const EDGE_CHAT_EXECUTOR_CAPABILITIES = [...N8N_MANAGEMENT_CAPABILITIES, ...ZAPIER_MANAGEMENT_CAPABILITIES] as const;",
     );
-    expect(spineRegistry).toContain("EDGE_CHAT_EXECUTOR_CAPABILITIES.some(entry => entry.key === capability.key");
+    expect(spineRegistry).toContain(
+      "EDGE_CHAT_EXECUTOR_CAPABILITIES.some(entry => entry.key === capability.key && entry.action.chatTool === action.chatTool && entry.action.classification === action.classification && entry.action.riskPolicyKey === action.riskPolicyKey && entry.action.approvalAuthority === action.approvalAuthority)",
+    );
   });
 
   it("discovery is read-only; RUN is an external effect behind chat-canonical approval", () => {
@@ -87,6 +89,10 @@ describe("the chat manifest carries the governed zapier tools", () => {
   it("both tools have dispatch handlers in the tool loop", () => {
     expect(chatCore).toContain('case "zapier_run_action":');
     expect(chatCore).toContain('tc.function.name === "zapier_list_actions"');
+  });
+
+  it("the chat core invokes the governed zapier edge (the lane's one dispatch door)", () => {
+    expect(chatCore).toContain('await supabaseClient.functions.invoke("call-zapier-action"');
   });
 });
 

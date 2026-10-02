@@ -62,9 +62,10 @@ and the URL-shaped credential:
 From there the M1 runbook (`m1-execute-verification.md`) applies verbatim: `verify` (the only
 writer of connected/healthy; discovers the tenant's enabled actions), `tools` (the catalogue),
 `approve` (per-tool durable consent — tenant-admin), `execute` with `mode:"prepare"` first, and
-the owner-gated `mode:"execute"` last. A Zapier action's args shape binds to its approval; a
-different shape needs its own consent. The Rail receipt, the `recorded` truth semantics, and the
-uniform `not_found` collapse are all the same provider-agnostic machinery.
+the owner-gated `mode:"execute"` last. An approval *may* bind an args shape (the optional
+`args_shape_hash` hardening field from the M1 runbook); when it does, a different shape needs its
+own consent — pass it for consequential actions. The Rail receipt, the `recorded` truth semantics,
+and the uniform `not_found` collapse are all the same provider-agnostic machinery.
 
 ## What M3 did NOT change (scope discipline)
 

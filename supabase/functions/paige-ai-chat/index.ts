@@ -13862,6 +13862,33 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       });
       const convo: any[] = [...aiMessages];
       let currentResponse = response;
+      // ── C1: THE BOUNDED CONTINUATION LOOP ─────────────────────────────────────────────
+      // A turn may NOT dead-end on narration. When the user's request carries action intent
+      // and the model's round produced prose with NO terminal state — no tool executed, no
+      // approval card minted, no governed refusal or blockage stated — the task is fed back
+      // through a continuation inside THIS turn, through the same gateway, authority and
+      // event machinery. No second runner, no unbounded loop: a hard budget stops it.
+      const MAX_CONTINUATIONS = 3;
+      let continuationsUsed = 0;
+      // Action intent is CONSERVATIVE on purpose: imperative mutations the platform actually
+      // performs. A question (ending in "?"), a greeting, or a bare statement is a terminal
+      // state — the assignment forbids continuing after a genuine question that needs the
+      // user's answer, and over-matching turns every reply into a loop.
+      const ACTION_INTENT_RE = /(?:^|[.!?\n]\s*|,\s*)(?:add|updat|chang|mov|set|mak|complet|fil|creat|send|delet|enroll|archive|restor|assign|schedul|draft|publish|submitt|pay|remind|cancel|approv|confirm|book|invit|renam|sign|remov|subscrib)(?:e|es|ed|ing|ion|ions)?\b|\b(?:can|could|need|want|let|like)\s+(?:you\s+)?(?:to\s+)?(?:add|updat|chang|mov|creat|send|delet|enroll|archive|restor|assign|schedul|draft|publish|submitt|pay|remind|cancel|approv|confirm|book|invit|renam|sign|remov|set|mak|complet|fil)(?:e|es|ed|ing)?\b|\b(?:go ahead|do it|run it|ship it|sign (?:\w+ )?up|enroll(?:ed)? (?:her|him|them|this)|archive[d]? (?:that|the|this)|delet(?:e|ed) (?:that|the|this|it)|(?:add|updat|chang|mov|complet|fil)[a-z]* (?:a|an|the|this|that|it|her|him|them|my|our) |please (?:add|updat|chang|mov|complet|fil|mak|set|send|creat|delet|enroll|archive|restor|assign|schedul|draft|publish|submitt|subscrib|pay|remind|cancel|approv|confirm|book|invit|renam|sign|do|run|go))\b/i;
+      const isActionIntent = (() => {
+        if (callerTier === "client") return false; // client seats' tools are deny-by-default
+        const lastUser = [...aiMessages].reverse().find((m: any) => m?.role === "user");
+        const text = typeof lastUser?.content === "string" ? lastUser.content.trim() : "";
+        if (!text || text.length < 3) return false;
+        // A question mark anywhere in a short message means the user asked, not commanded.
+        if (text.includes("?")) return false;
+        return ACTION_INTENT_RE.test(text);
+      })();
+      // A prose round can itself be a terminal state the signal flags cannot see: the model may
+      // refuse in prose, ask the clarification the platform's own prompt rules demand, or state
+      // the honest blockage. The prompt REQUIRES these sentences, so continuing over them
+      // pressures the model toward fabrication — each is a legitimate end.
+      const PROSE_TERMINAL_RE = /(?:^|[.!?]\s+)(?:which (?:one|pipeline|contact|deal|stage|account)|what(?:'s| is) (?:your|the|their)|do you (?:want|mean|prefer)|should (?:i|we) (?:use|add|create|move|proceed)|are you sure|want me to|would you like|how (?:about|do i|do you))|(?:^|[.!?]\s+|\b)(?:i (?:can'?t|cannot|am not able to|wasn'?t able to|weren'?t able to|don'?t have (?:access|a way|the ability)|won'?t be able to)|i(?:'m| am) unable to|not (?:something i can|available from (?:here|chat|this))|isn'?t (?:available|possible|supported) (?:here|yet|from)|there (?:is no|are no) (?:tool|pipeline|contact|stage|way)|no (?:tool|pipeline|contact|contacts|pipelines|tools) (?:for|exists|exist|available)|i wasn'?t able to complete)/i;
       let totalToolCalls = 0;
       const seenSignatures = new Set<string>();
       let finalChunks: Uint8Array[] | null = null;
@@ -13993,6 +14020,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
          // fallback + [DONE] rather than a broken stream (§13). The outer handler's
          // try/catch can no longer see in here.
          try {
+          // C1 — the while wrapper: when the for loop exits on a narration dead-end, the
+          // post-loop continuation check sets `continueContinuation` and this wrapper re-enters
+          // the SAME for loop with the continuation response. No duplicated tool logic, no new
+          // type scopes, no second executeToolCalls call site. A hard budget stops it.
+          let continueContinuation = false;
+          while (true) {
           for (let round = 0; round < MAX_ROUNDS; round++) {
             const { content, toolCalls, allChunks, hasToolCall } = await consumeRound(currentResponse);
             // The active account can change while a streamed provider round is in
@@ -14167,6 +14200,55 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             }, traceFor("chat-tool-loop"));
             if (!currentResponse.ok) { forcedTermination = true; break; }
           }
+
+          // ── C1: THE POST-LOOP CONTINUATION CHECK ─────────────────────────────────────────
+          // The for-loop has exited. If it exited via the prose-only branch (`!hasToolCall`)
+          // with NO terminal state — nothing executed, no card minted, the prose itself is not
+          // a refusal, clarification or blockage — and the user's request carried action intent,
+          // the task is fed back: the prose and the continuation instruction enter the
+          // conversation, the provider is re-called through the existing gateway, and the SAME
+          // for loop re-enters with the new response (via the while wrapper). A hard budget
+          // of MAX_CONTINUATIONS stops it. The `!hasToolCall` block is byte-identical to main.
+          if (finalChunks && !liveRuntimeScope && !forcedTermination && !tenantKnowledgeScopeInvalidated
+              && isActionIntent && continuationsUsed < MAX_CONTINUATIONS && !studioSessionId) {
+            const proseTerminal = typeof finalAssistantText === "string"
+              && (PROSE_TERMINAL_RE.test(finalAssistantText) || finalAssistantText.includes("?"));
+            const signalTerminal = totalToolCalls > 0
+              || queuedApprovals.length > 0
+              || confirmTrace.length > 0
+              || crmResultTrace.length > 0;
+            if (!signalTerminal && !proseTerminal) {
+              continuationsUsed += 1;
+              convo.push({ role: "assistant", content: finalAssistantText || "" });
+              convo.push({ role: "user", content: "The requested task is still unresolved. Continue using available current platform resources. Complete it, request required approval or clarification, or state the concrete blockage. Do not narrate intent without acting." });
+              try {
+                const continuationResponse = await gatewayCompat("anthropic", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ model: substantiveTurn ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash", messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto", stream: true }),
+                }, traceFor("chat-continuation"));
+                if (continuationResponse.ok) {
+                  currentResponse = continuationResponse;
+                  finalChunks = null; finalAssistantText = "";
+                  continueContinuation = true;
+                }
+              } catch { /* budget-exceeded or a transport throw: the prose we already have stands */ }
+            }
+          }
+          // Budget exhausted on an unresolved action: the honest blockage sentence, not
+          // a replay of the last narration. THE WIRE AND THE TRANSCRIPT CARRY THE SAME
+          // SENTENCE (§13/§94).
+          if (finalChunks && !liveRuntimeScope && !forcedTermination && isActionIntent
+              && continuationsUsed >= MAX_CONTINUATIONS && totalToolCalls === 0
+              && queuedApprovals.length === 0 && confirmTrace.length === 0 && crmResultTrace.length === 0
+              && !studioSessionId) {
+            const exhausted = "I wasn't able to complete that request. The task may need a different approach or a capability that isn't available here yet — could you try asking again, or check what's possible from this workspace?";
+            finalAssistantText = exhausted;
+            emitContent(controller, enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: exhausted } }] })}\n\n`));
+          }
+          if (continueContinuation) { continueContinuation = false; continue; }
+          break;
+          } // ── end the C1 while wrapper ──
 
           // Text keeps its natural-round replay. Live streams the final answer
           // only from this tools-free call, AFTER the governed tool decision.

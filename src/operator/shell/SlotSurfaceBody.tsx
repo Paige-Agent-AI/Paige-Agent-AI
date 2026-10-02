@@ -21,7 +21,7 @@ import { viewSource } from "@/operator/ia/viewSources";
 import { getPanelSpec } from "@/operator/surfaces/panelSpecs";
 import { useCompass } from "@/operator/data/useCompass";
 import { useKnowledge } from "@/operator/data/useKnowledge";
-import { useIsPlatformOwner } from "@/operator/data/useIsPlatformOwner";
+import { isOwnerTier, useOperatorStanding } from "@/lib/auth/operatorStanding";
 
 /**
  * ELEVATION IS DISTANCE FROM `--pg-env` (the console's token rule; first written up as the v3
@@ -138,7 +138,11 @@ export default function SlotSurfaceBody({ slot, view }: { slot: OperatorSlot; vi
   const src = active ? viewSource(slot.id, viewSlug(active)) : null;
   const bespoke = src?.bespoke;
 
-  const isOwner = useIsPlatformOwner();
+  // Is this session the platform owner? The one server answer, through the one client home.
+  // null = not answered yet (resolving, or could not verify): callers wait, never read it as "no".
+  const standing = useOperatorStanding();
+  const isOwner =
+    standing.phase === "known" ? isOwnerTier(standing.standing) : standing.phase === "signed_out" ? false : null;
   const compass = useCompass(bespoke === "TrustCompass");
   const knowledge = useKnowledge(bespoke === "KnowledgeSurface");
 

@@ -114,7 +114,7 @@ export type FleetData = {
  * as not visible, which can only understate, never overstate. If who may read these rows changes,
  * this rule changes with it.
  *
- * `isPlatformOwner` is the server's answer from `useIsPlatformOwner` (null = not answered yet).
+ * `isPlatformOwner` is the server's answer from `useOperatorStanding` (null = not answered yet).
  */
 export function fleetDetailVisible(isPlatformOwner: boolean | null, readFailed: boolean): boolean | null {
   if (readFailed || isPlatformOwner === null) return null;

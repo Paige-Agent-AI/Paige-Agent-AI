@@ -20,6 +20,7 @@ import { PaigeCommandMark } from "@/components/brand/PaigeCommandMark";
 import { PLATFORM } from "@/lib/platform/identity";
 import { LANDING_ROUTE_RETRY, resolveLandingRoute } from "@/lib/auth/resolveLandingRoute";
 import { operatorChooserTarget } from "@/lib/auth/operatorTarget";
+import { fetchOperatorStanding, isOperator as holdsOperatorTier } from "@/lib/auth/operatorStanding";
 
 export default function OperatorLogin() {
   const navigate = useNavigate();
@@ -39,20 +40,16 @@ export default function OperatorLogin() {
     setRouting(true);
     setRoutingError(null);
     try {
-      // WHICH PREDICATE, AND WHY IT IS NOT `is_platform_owner`. This door must admit exactly
-      // who `RequireOperator` admits, or the `?next=` round-trip it sets up is a trap.
-      // `is_platform_owner()` is super_admin ONLY (deliberately frozen, §53); the operator
-      // tier is `is_platform_admin()` = platform_admin OR super_admin — the same predicate
-      // behind `isPlatformStaff`, which is what the guard checks. Gating here on the OWNER
-      // predicate meant a platform_admin who opened a bookmarked /operator/fleet got bounced
-      // to this door, signed in, had their `next` silently discarded, and then fell through
-      // `resolveLandingRoute` — which has no platform_admin branch at all — to a tenant
-      // surface. Caught by the §39 peer-gate; verified against both migrations before fixing.
+      // WHICH ANSWER. This door must admit exactly who `RequireOperator` admits, or the
+      // `?next=` round-trip it sets up is a trap — so both read the one server answer,
+      // `operator_standing()`, through the one client home. An earlier version gated here on
+      // the OWNER predicate, and a platform_admin who opened a bookmarked /operator/fleet was
+      // bounced here, signed in, lost their `next`, and fell through to a tenant surface.
       //
       // A timeout or error is UNKNOWN, not a denial. Unknown authority may enter
       // the chooser's recovery state but must never bypass deliberate selection.
       const isOperator = await Promise.race<boolean | null>([
-        supabase.rpc("is_platform_admin").then(({ data, error }) => error ? null : data === true),
+        fetchOperatorStanding().then((s) => (s ? holdsOperatorTier(s) : null)),
         new Promise<null>((r) => setTimeout(() => r(null), 4000)),
       ]);
       if (isOperator === null) {

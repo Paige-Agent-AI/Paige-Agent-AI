@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { OperatorTier } from "@/lib/auth/operatorStanding";
 
 /**
  * Fleet Console — Team Pulse (CD's `P.pulse`, `fleetSpecs.ts`'s `fleet/team-pulse` entry).
@@ -17,7 +18,8 @@ export type PlatformSeat = {
   userId: string;
   email: string;
   fullName: string | null;
-  role: "super_admin" | "platform_admin";
+  /** The seat's operator tier, as the server reports it. Which roles are tiers is server data. */
+  role: OperatorTier;
 };
 
 export function useTeamPulse(enabled: boolean): {
@@ -50,7 +52,7 @@ export function useTeamPulse(enabled: boolean): {
           userId: r.user_id,
           email: r.email,
           fullName: r.full_name,
-          role: r.role as "super_admin" | "platform_admin",
+          role: String(r.role),
         })),
       );
       setLoading(false);

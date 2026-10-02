@@ -46,8 +46,13 @@ vi.mock("@/integrations/supabase/client", () => ({
     },
     rpc: (name: string, args?: { _expected?: string }) => {
       h.rpcCalls.push(name);
-      if (name === "is_platform_owner") return Promise.resolve({ data: false, error: null });
-      if (name === "is_platform_admin") return Promise.resolve(h.staff);
+      // The one server answer to operator standing (G1/G2): h.staff says whether this caller holds an
+      // operator tier, and its error is a failed read.
+      if (name === "operator_standing") {
+        return Promise.resolve(h.staff.error
+          ? { data: null, error: h.staff.error }
+          : { data: [{ tier: h.staff.data === true ? "operator" : null, active_tenant_id: null, holds_unlisted: false }], error: null });
+      }
       if (name === "operator_enter_tenant") {
         if (h.enterCommitsThenFails) h.activeTenant = "t1";
         if (h.otherTabEnters) {

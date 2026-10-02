@@ -5347,6 +5347,8 @@ YOUR OWN WORDS ARE NEVER EVIDENCE — a claim that something happened (created, 
 
 SEARCH BEFORE SAYING NO — before you tell the operator "the platform can't do that" or "that tool doesn't exist" or "that's not available", check the tools you actually have in this turn. Remembered historical tools or your own earlier narration about what's available can never outrank the live tool list in front of you. If you have not checked, say "let me check what I can do" and look.
 
+CHECK YOUR OWN HANDS BEFORE DESCRIBING THEM — when the operator asks what you can or cannot do (with n8n, Zapier, an integration, a data source, anything), your answer comes from the LIVE TOOL MANIFEST in this turn, enumerated before you speak — never from memory, never from an earlier turn's narration. A connection/readiness block describes STATE (connected or not, approved counts, last check), never CAPABILITY: "0 approved workflows" does not mean you lack workflow tools — it means no standing pre-approval exists, and your management tools are still in your hands, running propose-first (you offer, the operator approves the specific action right here). Stating "I can't" or "I don't have the ability" about a domain your manifest carries tools for — without having checked the manifest this turn — is a fabrication with the operator's trust as its cost: they take your first word as the truth. If asked "what can we do with X?", the correct move is to enumerate X's tools from the manifest AND run the cheapest read to prove the lane live, then answer from what came back. This is NOT limited to direct questions: when the operator so much as MENTIONS connecting, changing, or using an integration — even in passing ("I just connected my n8n account") — that is your cue to ground yourself the same way: check the manifest for that domain's tools, prove the lane live with the cheapest read, and proactively offer what you can now do, rather than waiting to be asked or describing limits you have not checked.
+
 STABLE vs MUTABLE references — a stable identity like a client_ref or PPL reference stays valid across turns; you do not need to re-read it just because it was mentioned earlier. But mutable state (version, membership, status) changes and must be re-read from a current source before you build a consequential proposal on it. Re-read what can have changed; reuse what cannot.
 
 THE INNOVATIVE ASSISTANT — probe for specifics, weigh the client's experience, propose the better idea. You serve the human team; you don't silently guess what only a human knows, and you never hand over half-finished work full of [PLACEHOLDER]s as if it were done.
@@ -13887,7 +13889,29 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           return { ...m, content: m.content + "\n\n[SYSTEM NOTE: This turn claimed an action occurred, but no tool result in this conversation supports it. Treat the claim as unverified — do not build on it as fact.]" };
         });
       };
-      const convo: any[] = [...flagUnverifiedOutcomes(aiMessages)];
+      // D2 — the under-claim twin (owner report 2026-10-02: asked "can you read your n8n
+      // connection?", Paige answered "I can't execute workflows until you approve" from the
+      // readiness block without ever looking at her manifest — the n8n management tools were
+      // in her hands the whole time; only operator pushback made her check). A prior turn
+      // that claims INABILITY about a tool domain with no tool call anywhere in the
+      // conversation is an ungrounded capability claim, and the next turn inherits it as
+      // truth unless it is flagged. This marks narration-only under-claims so the current
+      // turn re-checks the live manifest before restating any limit. Applies to open chats
+      // on their next message (history is re-scanned every request) and to every Solo
+      // account, current and future — the chat core is shared.
+      const UNDERCLAIM_RE = /\b(?:i can'?t|i cannot|i don'?t have (?:the ability|access to)|i'?m (?:not able|unable) to|i won'?t be able to|you(?:'ll| will) need to [^.!]{0,60}before i can|not something i can|isn'?t something i can do)\b/i;
+      const TOOL_DOMAIN_RE = /\b(?:n8n|zapier|workflow|automation|integration|highlevel|gohighlevel|leadconnector|mcp|tool|connect)\b/i;
+      const flagUngroundedCapabilityClaims = (messages: any[]): any[] => {
+        const anyToolCall = messages.some((fm) =>
+          fm?.role === "tool" || (fm?.role === "assistant" && Array.isArray(fm?.tool_calls) && fm.tool_calls.length > 0));
+        return messages.map((m) => {
+          if (m?.role !== "assistant" || typeof m?.content !== "string") return m;
+          if (anyToolCall) return m; // she checked something this conversation — claims may be grounded in results
+          if (!UNDERCLAIM_RE.test(m.content) || !TOOL_DOMAIN_RE.test(m.content)) return m;
+          return { ...m, content: m.content + "\n\n[SYSTEM NOTE: This turn claimed an inability about a tool domain, but no tool call in this conversation grounds it — it was stated from memory or a connection-state block, not from your live tool manifest. Before restating any limit, enumerate the manifest for THIS turn: the earlier claim may understate what you can do. If the manifest carries tools for the domain, offer them propose-first instead of describing limits, and prove the lane live with the cheapest read.]" };
+        });
+      };
+      const convo: any[] = [...flagUnverifiedOutcomes(flagUngroundedCapabilityClaims(aiMessages))];
       let currentResponse = response;
       // ── C1: THE BOUNDED CONTINUATION LOOP ─────────────────────────────────────────────
       // A turn may NOT dead-end on narration. When the user's request carries action intent

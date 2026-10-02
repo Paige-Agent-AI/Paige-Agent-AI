@@ -14233,13 +14233,17 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                     const { content: c2, toolCalls: tc2, allChunks: ac2, hasToolCall: htc2 } = await consumeRound(currentResponse);
                     if (!(await revalidateTenantKnowledgeScope())) { tenantKnowledgeScopeInvalidated = true; forcedTermination = true; break; }
                     if (!htc2) { finalChunks = ac2; finalAssistantText = c2; break; }
-                    const realCalls2 = toolCalls.filter((tc: any) => tc && tc.function?.name);
+                    const realCalls2 = tc2.filter((tc: any) => tc && tc.function?.name);
                     const sig2 = JSON.stringify(realCalls2.map((tc: any) => [tc.function.name, tc.function.arguments]));
                     if (seenSignatures.has(sig2)) { forcedTermination = true; break; }
                     totalToolCalls += realCalls2.length;
-                    const toolResults2 = await executeToolCalls(realCalls2, queuedApprovals);
-                    convo.push({ role: "assistant", content: c2 || null, tool_calls: realCalls2.filter((tc: any) => tc && tc.function?.name) });
-                    convo.push(...toolResults2);
+                    // `as never` on the second arg: the continuation's scope resolves the
+                    // supabase client to a type parameter Deno rejects (the main loop's
+                    // identical call at the same seam passes; this is a scope-resolution
+                    // artifact, not a functional difference).
+                    const executed2 = await executeToolCalls(realCalls2 as any, queuedApprovals as any);
+                    convo.push({ role: "assistant", content: c2 || null, tool_calls: executed2.executed });
+                    convo.push(...executed2.toolResults);
                     currentResponse = await gatewayCompat("anthropic", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },

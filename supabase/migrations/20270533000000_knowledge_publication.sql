@@ -327,7 +327,7 @@ BEGIN
   LIMIT p_match_count;
 END
 $function$;
-GRANT EXECUTE ON FUNCTION public.match_tenant_knowledge(uuid, extensions.vector, integer) TO authenticated, service_role, anon;
+GRANT EXECUTE ON FUNCTION public.match_tenant_knowledge(uuid, extensions.vector, integer) TO authenticated, service_role;
 
 -- Direct authenticated chunk reads see only the active generation of a canonical parent.
 DROP POLICY IF EXISTS knowledge_canonical_chunk_read ON public.tenant_knowledge_chunks;

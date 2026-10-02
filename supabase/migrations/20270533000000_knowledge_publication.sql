@@ -58,3 +58,47 @@ ALTER TABLE public.tenant_knowledge_docs ADD CONSTRAINT knowledge_publication_sh
 -- Legacy rows carry NULL in all three publication fields, so the constraint holds without
 -- a rewrite; the validator itself rejects NULL manifests because only published documents
 -- (which always carry one) may set them.
+
+-- ─── Canonical chunker: unicode-1000-150-v1 ──────────────────────────────────────────────
+-- Precisely specified: collapse each whitespace run to one space, trim; if the cleaned text
+-- fits 1000 code points emit one chunk; else emit 1000-char substrings stepping back 150
+-- from each boundary (the final chunk is the remainder). PostgreSQL substring counts Unicode
+-- code points; this is DELIBERATELY not the JS UTF-16 slicer (packet decision), and the
+-- version string pins the semantics for every manifest it stamps.
+CREATE OR REPLACE FUNCTION public.knowledge_publication_chunks(v text)
+RETURNS TABLE(chunk_index integer, chunk_text text, chunk_sha256 text)
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE SET search_path='' AS $$
+DECLARE clean text; n integer; i integer := 0; idx integer := 0; piece text;
+BEGIN
+ clean:=btrim(regexp_replace(v,'\s+',' ','g'));
+ IF clean IS NULL OR clean='' THEN RETURN; END IF;
+ n:=length(clean);
+ IF n<=1000 THEN
+  idx:=0; piece:=clean;
+  chunk_index:=idx; chunk_text:=piece; chunk_sha256:=encode(sha256(convert_to(piece,'UTF8')),'hex'); RETURN NEXT; RETURN;
+ END IF;
+ WHILE i<n LOOP
+  piece:=substr(clean,i+1,least(1000,n-i));
+  chunk_index:=idx; chunk_text:=piece; chunk_sha256:=encode(sha256(convert_to(piece,'UTF8')),'hex');
+  RETURN NEXT;
+  idx:=idx+1;
+  EXIT WHEN i+1000>=n;
+  i:=i+1000-150;
+ END LOOP;
+END $$;
+REVOKE ALL ON FUNCTION public.knowledge_publication_chunks(text) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.knowledge_publication_chunks(text) TO service_role;
+
+-- Manifest for a review text: version, model, dims, ordered hashes.
+CREATE OR REPLACE FUNCTION public.knowledge_publication_manifest(v text, _model text)
+RETURNS jsonb LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE SET search_path='' AS $$
+DECLARE hashes jsonb:='[]'::jsonb; c record; n integer:=0;
+BEGIN
+ FOR c IN SELECT * FROM public.knowledge_publication_chunks(v) LOOP
+  hashes:=hashes||to_jsonb(c.chunk_sha256); n:=n+1;
+ END LOOP;
+ IF n=0 THEN RETURN NULL; END IF;
+ RETURN jsonb_build_object('version','unicode-1000-150-v1','model',_model,'dimensions',1024,'chunk_count',n,'chunk_hashes',hashes);
+END $$;
+REVOKE ALL ON FUNCTION public.knowledge_publication_manifest(text,text) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.knowledge_publication_manifest(text,text) TO service_role;

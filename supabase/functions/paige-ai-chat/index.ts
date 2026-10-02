@@ -13874,15 +13874,21 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // performs. A question (ending in "?"), a greeting, or a bare statement is a terminal
       // state — the assignment forbids continuing after a genuine question that needs the
       // user's answer, and over-matching turns every reply into a loop.
-      const ACTION_INTENT_RE = /(?:add|create|make|send|archive|restore|move|enroll|enrol|delete|remove|update|change|set|assign|schedule|book|invite|draft|file|log|complete|approve|confirm|go ahead|do it|run it|yes.*please|please.*(?:add|create|send|do|move))/i;
+      const ACTION_INTENT_RE = /\b(?:creat(?:e|ed|ing)|send|sent|archive[d]?|restore[d]?|enroll(?:ed)?|enrol(?:l)?ed|delet(?:e|ed)|remov(?:e|ed)|assign[d]?|schedul(?:e|ed)|book(?:ed)?|invit(?:e|ed|ation)|draft(?:ed)?|renam(?:e|ed)|publish(?:ed)?|submit(?:ted)?|subscrib(?:e|ed)|pay(?:ed)?|remind(?:ed)?|cancel(?:l?ed)?|approv(?:e|ed)|confirm(?:ed)?|go ahead|do it|run it|ship it|sign (?:\w+ )?up|set (?:up|it|this|that|the)|make (?:a|an|the|this|that|it|her|him|sure)|(?:add|updat|chang|mov|complet|fil)[a-z]* (?:a|an|the|this|that|it|her|him|them|my|our) |please (?:add|updat|chang|mov|complet|fil|mak|set|send|creat|delet|enroll|archive|restor|assign|schedul|draft|publish|submitt|subscrib|pay|remind|cancel|approv|confirm|book|invit|renam|sign|do|run|go))\b|^(?:add|updat|chang|mov|set|mak|complet|fil|creat|send|delet|enroll|archive|restor|assign|schedul|draft|publish|submitt|pay|remind|cancel|approv|confirm|book|invit|renam|sign)\b/i;
       const isActionIntent = (() => {
+        if (callerTier === "client") return false; // client seats' tools are deny-by-default
         const lastUser = [...aiMessages].reverse().find((m: any) => m?.role === "user");
         const text = typeof lastUser?.content === "string" ? lastUser.content.trim() : "";
         if (!text || text.length < 3) return false;
         // A question mark anywhere in a short message means the user asked, not commanded.
-        if (/\?\s*$/.test(text) || (text.length < 120 && text.includes("?"))) return false;
+        if (text.includes("?")) return false;
         return ACTION_INTENT_RE.test(text);
       })();
+      // A prose round can itself be a terminal state the signal flags cannot see: the model may
+      // refuse in prose, ask the clarification the platform's own prompt rules demand, or state
+      // the honest blockage. The prompt REQUIRES these sentences, so continuing over them
+      // pressures the model toward fabrication — each is a legitimate end.
+      const PROSE_TERMINAL_RE = /\b(?:i (?:can'?t|cannot|am not able to|wasn'?t able to|weren'?t able to|don'?t have (?:access|a way|the ability)|won'?t be able to)|i(?:'m| am) unable to|not (?:something i can|available from (?:here|chat|this))|isn'?t (?:available|possible|supported) (?:here|yet|from)|which (?:one|pipeline|contact|deal|stage|account)|what(?:'s| is) (?:your|the|their)|do you (?:want|mean|prefer)|should i (?:use|add|create|move)|there (?:is no|are no) (?:tool|pipeline|contact|stage|way)|no (?:tool|pipeline|contact) (?:for|exists|available)|\?)\b/i;
       let totalToolCalls = 0;
       const seenSignatures = new Set<string>();
       let finalChunks: Uint8Array[] | null = null;
@@ -14031,27 +14037,37 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               // CRM action ran (crmResultTrace), the scope changed, or this is Live (which has
               // its own answer contract). Otherwise, if the user asked for an action and the
               // budget holds, the task is fed back — narration is not completion.
+              const proseTerminal = typeof content === "string" && PROSE_TERMINAL_RE.test(content);
               const terminalState = totalToolCalls > 0
                 || queuedApprovals.length > 0
                 || confirmTrace.length > 0
                 || crmResultTrace.length > 0
-                || liveRuntimeScope;
-              if (!terminalState && isActionIntent && continuationsUsed < MAX_CONTINUATIONS && !studioSessionId) {
+                || liveRuntimeScope
+                || proseTerminal;
+              if (!terminalState && isActionIntent && continuationsUsed < MAX_CONTINUATIONS && !studioSessionId && round < MAX_ROUNDS - 1) {
                 continuationsUsed += 1;
                 // Push the model's own prose (so the continuation sees what it said), then the
                 // continuation instruction. The instruction is the assignment's wording.
                 convo.push({ role: "assistant", content: content || "" });
                 convo.push({ role: "user", content: "The requested task is still unresolved. Continue using available current platform resources. Complete it, request required approval or clarification, or state the concrete blockage. Do not narrate intent without acting." });
-                currentResponse = await gatewayCompat("anthropic", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ model: (studioSessionId || substantiveTurn) ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash", messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto", stream: true }),
-                }, traceFor("chat-continuation"));
-                if (currentResponse.ok) continue;
+                try {
+                  currentResponse = await gatewayCompat("anthropic", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ model: substantiveTurn ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash", messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto", stream: true }),
+                  }, traceFor("chat-continuation"));
+                  if (currentResponse.ok) continue;
+                } catch { /* budget-exceeded or a transport throw: fall through to the prose */ }
                 // The continuation call itself failed — fall through to the prose we already
                 // have rather than dead-ending the turn on an infrastructure error.
               }
               if (liveRuntimeScope) liveAnswerPending = true;
+              else if (isActionIntent && !terminalState && continuationsUsed >= MAX_CONTINUATIONS) {
+                // Budget exhausted on an unresolved action: the honest blockage sentence, not
+                // a replay of the last narration (the failure mode this loop exists to end).
+                const exhausted = "I wasn't able to complete that request. The task may need a different approach or a capability that isn't available here yet — could you try asking again, or check what's possible from this workspace?";
+                finalChunks = allChunks; finalAssistantText = exhausted;
+              }
               else { finalChunks = allChunks; finalAssistantText = content; }
               break;
             }

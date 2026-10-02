@@ -10,6 +10,7 @@ vi.mock("@/lib/knowledge-service", () => ({ readKnowledge: state.read, deleteKno
 vi.mock("@/hooks/useConfirm", () => ({ useConfirm: () => ({ confirm: state.confirm, dialog: null }) }));
 vi.mock("@/components/knowledge/KnowledgeMetadataEditor", () => ({ KnowledgeMetadataEditor: () => null }));
 vi.mock("@/pages/admin/TenantKnowledgeAdmin", () => ({ AddDocDialog: () => null }));
+vi.mock("@/solo/knowledge/AddKnowledgeFlow", () => ({ AddKnowledgeFlow: () => null }));
 import { KnowledgeLibrary } from "@/solo/knowledge/KnowledgeLibrary";
 const doc = { id:"document-a", tenant_id:"test-tenant-a", revision:2, title:"Intake guide", summary:"Eligibility and stages", category:"Program", tags:["qualification"], source:"paste", source_url:null, chunk_count:2, created_at:"2026-09-01", updated_at:"2026-09-01", content:"Private methodology" };
 let container: HTMLDivElement, root: Root;

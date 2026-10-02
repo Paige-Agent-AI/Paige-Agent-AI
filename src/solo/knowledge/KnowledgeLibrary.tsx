@@ -1,8 +1,9 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, BookOpen, BrainCircuit, FileText, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
+import { ArrowLeft, BookOpen, BrainCircuit, FileText, Link2, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { KnowledgeMetadataEditor } from "@/components/knowledge/KnowledgeMetadataEditor";
 import { AddDocDialog } from "@/pages/admin/TenantKnowledgeAdmin";
+import { AddKnowledgeFlow } from "@/solo/knowledge/AddKnowledgeFlow";
 import { useKnowledgeDocuments } from "@/hooks/useKnowledgeDocuments";
 import { useConfirm } from "@/hooks/useConfirm";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +28,7 @@ function WorkspaceLibrary({ tenantId, account, requestedDocumentId, onDocumentCh
   const [detailError, setDetailError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [linking, setLinking] = useState(false);
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [uncertainDelete, setUncertainDelete] = useState(false);
@@ -125,7 +127,7 @@ function WorkspaceLibrary({ tenantId, account, requestedDocumentId, onDocumentCh
         </aside>
       </div>
     </> : <>
-      <header className="knowledge-library__header"><div><h2 ref={heading} tabIndex={-1}>Knowledge</h2><p>Documents and notes Paige can use for this business.</p></div><Dialog open={adding} onOpenChange={setAdding}><DialogTrigger asChild><button className="knowledge-library__primary"><Plus aria-hidden /> Add Knowledge</button></DialogTrigger>{adding && <AddDocDialog key={tenantId} tenantId={tenantId} initialMode="file" onClose={() => { setAdding(false); void library.reload(); }} onReview={() => void library.reload()} />}</Dialog></header>
+      <header className="knowledge-library__header"><div><h2 ref={heading} tabIndex={-1}>Knowledge</h2><p>Knowledge Paige can use for this business.</p></div><div className="knowledge-library__actions">{/* Link ingestion stays on the legacy direct path until governed URL extraction ships with format parity. */}<Dialog open={linking} onOpenChange={setLinking}><DialogTrigger asChild><button className="knowledge-library__secondary" aria-label="Add a web link"><Link2 aria-hidden /> Link</button></DialogTrigger>{linking && <AddDocDialog key={`${tenantId}:link`} tenantId={tenantId} initialMode="url" onClose={() => { setLinking(false); void library.reload(); }} onReview={() => void library.reload()} />}</Dialog><Dialog open={adding} onOpenChange={setAdding}><DialogTrigger asChild><button className="knowledge-library__primary"><Plus aria-hidden /> Add Knowledge</button></DialogTrigger>{adding && <AddKnowledgeFlow key={tenantId} tenantId={tenantId} onClose={() => { setAdding(false); void library.reload(); }} onPublished={() => { setAdding(false); void library.reload(); }} />}</Dialog></div></header>
       <div className="knowledge-library__tools"><label><span>Search documents</span><div className="knowledge-library__search"><Search aria-hidden /><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Title, summary or tag" /></div></label><label><span>Category</span><select value={category} onChange={e => setCategory(e.target.value)}><option value="">All categories</option>{categories.map(c => <option key={c}>{c}</option>)}</select></label><button onClick={() => void library.reload()} disabled={library.loading} aria-label="Refresh knowledge"><RefreshCw aria-hidden /></button></div>
       {library.error && <div className="knowledge-library__notice" role="alert"><p>Knowledge could not be loaded. Check your workspace and try again.</p><button onClick={() => void library.reload()} disabled={library.loading}>Retry library</button></div>}
       {library.loading && !library.docs.length ? <p role="status">Loading knowledge…</p> : !library.error && !library.docs.length ? <div className="knowledge-library__empty"><BookOpen aria-hidden /><h3>Your business knowledge starts here</h3><p>Add a document, a link or a short note.</p></div> : <>

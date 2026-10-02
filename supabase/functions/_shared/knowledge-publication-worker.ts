@@ -47,7 +47,7 @@ export async function runKnowledgePublication(admin: PublicationRpc, workId: str
       _work_id: workId, _server_key: started.server_key, _attempt: started.attempt,
       _revision: started.revision, _chunks: batch,
     }) as Record<string, unknown>;
-    if (Number(staged?.total_expected) !== batch.length) throw new PublicationError('stage_incomplete');
+    if (Number(staged?.total_expected) !== batch.length) throw new Error('KNOWLEDGE_STAGE_INCOMPLETE');
     completionDispatched = true;
     const completed = await rpc(admin, 'complete_knowledge_publication', {
       _work_id: workId, _server_key: started.server_key, _attempt: started.attempt, _revision: started.revision,
@@ -58,17 +58,23 @@ export async function runKnowledgePublication(admin: PublicationRpc, workId: str
     }
     return { ok: true, status: 'succeeded', ...completed };
   } catch (error) {
+    // Pre-staging contract violations are the caller's own shape problem: escape without
+    // settling (there is nothing work-shaped to record, and no whitelisted code fits).
+    if (error instanceof PublicationError) throw error;
     const message = error instanceof Error ? error.message : '';
-    const deterministic = error instanceof PublicationError
-      || /KNOWLEDGE_(STAGE_INVALID|STAGE_INCOMPLETE|REVIEW_CONFLICT|REVISION_CONFLICT|SCOPE_CHANGED)/.test(message)
+    const deterministic = /KNOWLEDGE_(STAGE_INVALID|STAGE_INCOMPLETE|REVIEW_CONFLICT|REVISION_CONFLICT|SCOPE_CHANGED)/.test(message)
       || message === 'invalid_embedding' || /^embed \d+/.test(message);
-    const code = error instanceof PublicationError ? error.code
-      : message.includes('STAGE_INVALID') ? 'stage_invalid'
+    // Every code here must be in the landed settle whitelist (embedding_failed,
+    // stage_invalid, stage_incomplete, provider_unavailable, authority_changed,
+    // revision_changed, completion_unknown) — an unlisted code makes settle itself throw
+    // KNOWLEDGE_ERROR_INVALID, and the inner catch would mask a deterministic failure as
+    // outcome_unknown (independent review P2).
+    const code = message.includes('STAGE_INVALID') ? 'stage_invalid'
       : message.includes('STAGE_INCOMPLETE') ? 'stage_incomplete'
-      : message.includes('REVIEW_CONFLICT') ? 'revision_changed'
+      : message.includes('REVIEW_CONFLICT') || message.includes('REVISION_CONFLICT') ? 'revision_changed'
       : message.includes('SCOPE_CHANGED') ? 'authority_changed'
       : message === 'invalid_embedding' || /^embed \d+/.test(message) ? 'embedding_failed'
-      : message === 'stage_incomplete' ? 'stage_incomplete' : 'input_invalid';
+      : 'provider_unavailable';
     // A completion whose acknowledgement was lost is reconciled by recover, never re-driven
     // from here — the same no-duplicate-dispatch contract as extraction.
     const unknown = completionDispatched && !deterministic;

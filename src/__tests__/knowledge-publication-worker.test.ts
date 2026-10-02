@@ -66,6 +66,24 @@ describe('native Knowledge publication worker', () => {
     await expect(runKnowledgePublication(admin, WORK)).rejects.toThrow('input_invalid');
     expect(embed).not.toHaveBeenCalled();
   });
+  it('unmapped stage-phase error settles provider_unavailable, never an unlisted code', async () => {
+    const log: Call[] = [];
+    const admin = port((name) => {
+      if (name === 'start_knowledge_publication') return { ...START };
+      if (name === 'stage_knowledge_publication') return new Error('some unexpected rpc failure');
+      return { settled: true };
+    }, log);
+    expect(await runKnowledgePublication(admin, WORK)).toMatchObject({ ok: false, status: 'failed', error_code: 'provider_unavailable' });
+    expect(log[log.length - 1].args).toMatchObject({ _code: 'provider_unavailable', _unknown: false });
+  });
+  it('malformed chunk escapes without settling (no unlisted settle code possible)', async () => {
+    const log: Call[] = [];
+    const bad = { ...START, chunks: [{ index: 0, text: 5 as unknown as string, sha256: 'a'.repeat(64) }] };
+    const admin = port((name) => name === 'start_knowledge_publication' ? bad : null, log);
+    await expect(runKnowledgePublication(admin, WORK)).rejects.toThrow();
+    expect(log.some((c) => c.name === 'settle_knowledge_publication_failure')).toBe(false);
+    expect(embed).not.toHaveBeenCalled();
+  });
 
   it('provider failure before staging settles failed with embedding_failed, no completion call', async () => {
     vi.mocked(embed).mockRejectedValue(new Error('embed 503: upstream'));
@@ -123,6 +141,18 @@ describe('native Knowledge publication worker', () => {
   });
 
   it('settle transport loss surfaces outcome_unknown rather than inventing a verdict', async () => {
+    const log: Call[] = [];
+    const admin = port((name) => {
+      if (name === 'start_knowledge_publication') return { ...START };
+      if (name === 'stage_knowledge_publication') return new Error('KNOWLEDGE_REVIEW_CONFLICT');
+      if (name === 'settle_knowledge_publication_failure') return new Error('connection lost');
+      return null;
+    }, log);
+    expect(await runKnowledgePublication(admin, WORK)).toMatchObject({ ok: false, status: 'outcome_unknown' });
+    expect(log.filter((c) => c.name === 'start_knowledge_publication')).toHaveLength(1);
+    expect(log.some((c) => c.name === 'complete_knowledge_publication')).toBe(false);
+  });
+  it('SQL refusal at stage settles deterministic revision_changed (whitelisted codes only)', async () => {
     const log: Call[] = [];
     const admin = port((name) => {
       if (name === 'start_knowledge_publication') return { ...START };

@@ -17,11 +17,13 @@
  * This suite pins:
  *  1. the prompt rule (CHECK YOUR OWN HANDS) — including the preemptive-comment trigger;
  *  2. the state-not-capability distinction (readiness blocks describe standing approvals,
- *     never which tools she holds — propose-first is the "can");
+ *     never which tools she holds — reads ungated, writes propose-first);
  *  3. the readiness block's own interpretive line;
  *  4. the mechanical under-claim flag — a prior turn claiming inability about a tool domain
- *     with no tool call anywhere in the conversation is marked so the next turn re-checks
- *     the manifest (this is what corrects ALREADY-OPEN chats on their next message);
+ *     with no tool call anywhere in the conversation is marked for the rounds that read
+ *     flagged history (round-2+, continuations, the final tools-free answer; the FIRST
+ *     model call reads unflagged history — a pre-existing property — so single-round
+ *     answers are covered by the prompt rule and readiness line, injected every request);
  *  5. the flag's regexes actually match the incident's transcript phrasings.
  */
 import { readFileSync } from "node:fs";
@@ -49,8 +51,8 @@ describe("the capability self-check prompt rule", () => {
     expect(chat).toMatch(/"0 approved workflows" does not mean you lack workflow tools/i);
   });
 
-  it("propose-first is the 'can': the tools run per-action approval in the conversation", () => {
-    expect(chat).toMatch(/running propose-first \(you offer, the operator approves the specific action right here\)/i);
+  it("propose-first is the 'can' for WRITES; reads run ungated so the cheapest read is free", () => {
+    expect(chat).toMatch(/reads run ungated; their writes run propose-first — you offer, the operator approves the specific action right here/i);
   });
 
   it("an ungrounded 'I can't' is named a fabrication at the operator's trust's cost", () => {

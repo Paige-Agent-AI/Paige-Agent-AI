@@ -126,7 +126,14 @@ serve(async (req) => {
     if (!parsed.success) return json({ error: parsed.error.flatten() }, 400);
     const { url, title, category, tags, share_to_network, tenant_id } = parsed.data;
 
-    const scope = await bindKnowledgeIngestScope(supabase, tenant_id);
+    // Plain-function adapter for the shared scope port: relating supabase-js's generic
+    // from()/rpc() signatures to a structural caller trips TS2345 under deno check.
+    const scopeCaller = {
+      auth: supabase.auth,
+      readActiveTenant: (userId: string) => supabase.from("profiles").select("active_tenant_id").eq("user_id", userId).maybeSingle(),
+      rpc: (name: string, args?: Record<string, unknown>) => supabase.rpc(name, args as never),
+    };
+    const scope = await bindKnowledgeIngestScope(scopeCaller, tenant_id);
 
     // Parse for the hostname title-fallback. The SSRF/HTTPS guard runs inside safeFetch
     // (the initial URL AND every redirect hop) via assertPublicHttpUrl.

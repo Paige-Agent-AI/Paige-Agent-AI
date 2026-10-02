@@ -6,8 +6,15 @@ export class KnowledgeIngestScopeError extends Error {
   }
 }
 
-// deno-lint-ignore no-explicit-any
-export async function bindKnowledgeIngestScope(caller: any, suppliedTenant?: string, path?: string) {
+export type KnowledgeScopeCaller = {
+  auth: { getUser(): PromiseLike<{ data: { user: { id: string } | null }; error: unknown }> };
+  // Plain function members, not client pieces: relating supabase-js's generic from()/rpc()
+  // signatures to a structural port trips TS2589 under deno check, so the edge fn passes the
+  // one profiles read it needs as an already-instantiated query.
+  readActiveTenant(userId: string): PromiseLike<{data: {active_tenant_id?: unknown} | null; error: unknown}>;
+  rpc(name: string,args?: Record<string,unknown>): PromiseLike<{data: unknown; error: unknown}>;
+};
+export async function bindKnowledgeIngestScope(caller: KnowledgeScopeCaller, suppliedTenant?: string, path?: string) {
   let actorId: string | undefined;
   let tenantId: string | undefined;
   const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -16,7 +23,7 @@ export async function bindKnowledgeIngestScope(caller: any, suppliedTenant?: str
     const identity = await caller.auth.getUser();
     const userId = identity?.data?.user?.id;
     if (identity?.error || typeof userId !== "string" || !userId || (actorId && actorId !== userId)) throw new KnowledgeIngestScopeError(401);
-    const profile = await caller.from("profiles").select("active_tenant_id").eq("user_id", userId).maybeSingle();
+    const profile = await caller.readActiveTenant(userId);
     const active = profile?.data?.active_tenant_id;
     if (profile?.error || typeof active !== "string" || !uuid.test(active) ||
         (tenantId && tenantId !== active) || (suppliedTenant !== undefined && suppliedTenant !== active)) throw denied();

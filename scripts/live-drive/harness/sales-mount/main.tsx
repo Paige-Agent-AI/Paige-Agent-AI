@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { GrowthHub } from "@/solo/growth2";
 import { setSalesHarnessMode, type Mode } from "./useSoloSalesOps-stub";
-import { setAgreementsHarnessMode, type AgreementsMode } from "./useSoloAgreements-stub";
+import { setAgreementsHarnessMode, type AgreementsMode } from "./useSoloCommercialTerms-stub";
 import { setCampaignsHarnessMode, type CampaignsMode } from "./useSoloCampaigns-stub";
 import { setSigningsHarnessMode, type SigningsMode } from "./useSoloAgreementSignings-stub";
 import "@/index.css";

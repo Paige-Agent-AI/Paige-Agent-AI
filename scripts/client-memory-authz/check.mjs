@@ -270,6 +270,11 @@ async function drive({
     onInsert,
     functions: functionsExtra,
     authUser: { id: USER, email: "owner@example.test" },
+    // The declared-scope guard reads profiles.active_tenant_id on evidence-carrying turns.
+    // This smoke's resolver DRIFTS by design (scope-mismatch cases script it per call), but the
+    // user's DECLARED workspace stays put — so the unscripted profiles read defaults to the
+    // caller tenant and a mismatch is always resolver-side, never an accident of the harness.
+    declaredActiveTenantId: CALLER_TENANT,
     rpcs: {
       check_rate_limit: { data: true, error: null },
       current_user_tenant_id: { data: CALLER_TENANT, error: null },

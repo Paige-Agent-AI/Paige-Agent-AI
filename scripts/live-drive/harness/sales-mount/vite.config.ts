@@ -11,7 +11,7 @@ export default defineConfig({
   resolve: {
     alias: [
       { find: "./useSoloSalesOps", replacement: path.join(import.meta.dirname, "useSoloSalesOps-stub.ts") },
-      { find: "./useSoloAgreements", replacement: path.join(import.meta.dirname, "useSoloAgreements-stub.ts") },
+      { find: "./useSoloCommercialTerms", replacement: path.join(import.meta.dirname, "useSoloCommercialTerms-stub.ts") },
       { find: "./useSoloAgreementSignings", replacement: path.join(import.meta.dirname, "useSoloAgreementSignings-stub.ts") },
       { find: "./useCatalogOffers", replacement: path.join(import.meta.dirname, "useCatalogOffers-stub.ts") },
       { find: "./useSoloCampaigns", replacement: path.join(import.meta.dirname, "useSoloCampaigns-stub.ts") },

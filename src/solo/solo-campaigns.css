@@ -268,3 +268,20 @@
 @container desk (max-width:620px){.rd-grid{grid-template-columns:1fr}.pf-main{grid-template-columns:auto minmax(0,1fr)}.pf-end{grid-column:1/-1;align-items:flex-start;text-align:left;flex-direction:row;flex-wrap:wrap}.cmd-search{min-width:100%}}
 @media(prefers-reduced-motion:reduce){.dw,.campaign-toast,.dw-scrim{animation:none}.loop-node:hover{transform:none}}
 @media(forced-colors:active){.cmd,.loop,.pf,.rd,.wm,.loop-node,.fr-step,.dw{border:1px solid CanvasText}}
+
+/* E — the Archived home. Muted and secondary to the active board: archived pipelines are
+   filed away, not front-and-center. The section uses the shell's own surface tokens with
+   reduced opacity, a hairline top border to separate it from the active list, and the same
+   small-button scale as the folder organizer. */
+.pipeline-archived{margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid var(--line,#d4d0e4);opacity:.82}
+.pipeline-archived header{display:flex;flex-direction:column;gap:.25rem;margin-bottom:.75rem}
+.pipeline-archived h2{font-size:.9375rem;font-weight:600;margin:0;color:var(--ink-2,#4a4566)}
+.pipeline-archived p{font-size:.8125rem;margin:0;color:var(--ink-3,#6e688e);line-height:1.4}
+.pipeline-archived ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.5rem}
+.pipeline-archived-row{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.625rem .75rem;background:var(--surface,#faf9fc);border:1px solid var(--line,#e4e1f0);border-radius:.5rem}
+.pipeline-archived-info{display:flex;align-items:baseline;gap:.625rem;min-width:0}
+.pipeline-archived-info strong{font-size:.875rem;font-weight:600;color:var(--ink-2,#4a4566);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pipeline-archived-ref{font-size:.75rem;color:var(--ink-3,#6e688e);font-family:ui-monospace,monospace;flex-shrink:0}
+.pipeline-archived-actions{display:flex;align-items:center;gap:.5rem;flex-shrink:0}
+.pipeline-action-restore{color:var(--ink-2,#4a4566)}
+@media(prefers-reduced-motion:reduce){.pipeline-archived-row{transition:none}}

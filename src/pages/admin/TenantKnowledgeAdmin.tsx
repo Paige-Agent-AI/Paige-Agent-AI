@@ -1,3 +1,5 @@
+import { useKnowledgeRemoval, knowledgeRemovalDescription } from "@/hooks/useKnowledgeRemoval";
+import { KnowledgeRemovalStatus } from "@/components/knowledge/KnowledgeRemovalStatus";
 import { knowledgeInvokeOutcome, type KnowledgeIngestOutcome } from "@/lib/knowledge/ingest-outcome";
 import { useKnowledgeDocuments } from "@/hooks/useKnowledgeDocuments";
 import { KnowledgeMetadataEditor } from "@/components/knowledge/KnowledgeMetadataEditor";
@@ -35,6 +37,10 @@ const REVIEW_BADGE: Record<string, { label: string; cls: string; icon: typeof Br
 export default function TenantKnowledgeAdmin() {
   const { activeTenant, activeTenantId } = useTenantContext();
   const { docs, loading, error: readError, reload: load, hasMore, loadMore, isCurrent } = useKnowledgeDocuments(activeTenantId);
+  const removal = useKnowledgeRemoval(activeTenantId, isCurrent, load);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const confirmationScope = useRef<(() => boolean) | null>(null);
+  useEffect(() => { if (removal.message.startsWith("Document removed.")) heading.current?.focus(); }, [removal.message]);
   const [editing, setEditing] = useState<TenantDoc | null>(null);
   useEffect(() => { setEditing(null); }, [activeTenantId]);
   const [open, setOpen] = useState(false);
@@ -57,29 +63,31 @@ export default function TenantKnowledgeAdmin() {
   };
 
   const remove = async (doc: TenantDoc) => {
+    const intent = removal.begin(doc);
+    if (!intent) return;
+    confirmationScope.current = intent.isCurrent;
+    const trigger = document.activeElement as HTMLElement | null;
     const ok = await confirm({
       title: `Delete "${doc.title}"?`,
-      description: "This removes the document and every embedded chunk. Paige will no longer draw on it.",
+      description: knowledgeRemovalDescription,
       actionLabel: "Delete",
       destructive: true,
+      returnFocus: () => trigger?.isConnected && !(trigger as HTMLButtonElement).disabled ? trigger : heading.current,
     });
-    if (!ok || !activeTenantId || doc.tenant_id !== activeTenantId || !isCurrent()) return;
-    const { error } = await supabase.from("tenant_knowledge_docs").delete().eq("id", doc.id).eq("tenant_id", activeTenantId!);
-    if (!isCurrent()) return;
-    if (error) return toast.error("The change could not be confirmed. Reload Knowledge before trying again.");
-    toast.success("Deleted");
-    load();
+    if (!ok) { removal.cancel(intent); return; }
+    await removal.remove(intent);
   };
 
   return (
     <div className="space-y-6 p-6">
-      {confirmDialog}
+      {confirmationScope.current?.() && confirmDialog}
+      <KnowledgeRemovalStatus removal={removal} />
       <Dialog open={!!editing && editing.tenant_id === activeTenantId} onOpenChange={o => !o && setEditing(null)}>
         {editing && activeTenantId === editing.tenant_id && <KnowledgeMetadataEditor key={`${activeTenantId}:${editing.id}`} document={editing} tenantId={activeTenantId} onClose={() => setEditing(null)} onSaved={() => void load()} />}
       </Dialog>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold flex items-center gap-2">
+          <h1 ref={heading} tabIndex={-1} className="text-2xl font-semibold flex items-center gap-2">
             <Brain className="w-6 h-6" /> Knowledge Base
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -157,7 +165,7 @@ export default function TenantKnowledgeAdmin() {
                             disabled={d.network_review_status === "approved"}
                           />
                         </div>
-                        <Button variant="ghost" size="icon" onClick={() => remove(d)}>
+                        <Button variant="ghost" size="icon" aria-label={`Delete ${d.title}`} disabled={removal.blocked} onClick={() => remove(d)}>
                           <Trash2 className="w-4 h-4 text-destructive" />
                         </Button>
                       </TableCell>

@@ -1,3 +1,5 @@
+import { useKnowledgeRemoval, knowledgeRemovalDescription } from "@/hooks/useKnowledgeRemoval";
+import { KnowledgeRemovalStatus } from "@/components/knowledge/KnowledgeRemovalStatus";
 import { useKnowledgeDocuments } from "@/hooks/useKnowledgeDocuments";
 import { KnowledgeMetadataEditor } from "@/components/knowledge/KnowledgeMetadataEditor";
 import type { KnowledgeDocument } from "@/lib/knowledge-service";
@@ -8,7 +10,7 @@ import type { KnowledgeDocument } from "@/lib/knowledge-service";
 // honest ingest status, a gold "she got smarter" pulse, and a live tie-back
 // footer. Knowledge commits per-doc immediately — never gated behind the header
 // Save (spec §1.7).
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -51,13 +53,17 @@ const SOURCE_GLYPH: Record<string, typeof FileText> = {
 export function KnowledgePanel({ tenantName }: { tenantName: string }) {
   const { notifyKnowledgeAdded, activeTenantId } = usePaigeWorkspace();
   const { docs, loading, error: readError, reload: load, hasMore, loadMore, isCurrent } = useKnowledgeDocuments(activeTenantId);
+  const removal = useKnowledgeRemoval(activeTenantId, isCurrent, load);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const removalTrigger = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => { if (removal.message.startsWith("Document removed.")) heading.current?.focus(); }, [removal.message]);
   const [editing, setEditing] = useState<TenantDoc | null>(null);
   useEffect(() => { setEditing(null); }, [activeTenantId]);
   const [pasteOpen, setPasteOpen] = useState(false);
   const [linkOpen, setLinkOpen] = useState(false);
   const [fileOpen, setFileOpen] = useState(false);
   const [pulseId, setPulseId] = useState<string | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<TenantDoc | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<NonNullable<ReturnType<typeof removal.begin>> | null>(null);
 
 
   const toggleShare = async (doc: TenantDoc, next: boolean) => {
@@ -73,14 +79,9 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
   };
 
   const confirmDelete = async () => {
-    const doc = pendingDelete;
-    if (!doc || !activeTenantId || doc.tenant_id !== activeTenantId || !isCurrent()) return;
+    const intent = pendingDelete;
     setPendingDelete(null);
-    const { error } = await supabase.from("tenant_knowledge_docs").delete().eq("id", doc.id).eq("tenant_id", activeTenantId!);
-    if (!isCurrent()) return;
-    if (error) return toast.error("The change could not be confirmed. Reload Knowledge before trying again.");
-    toast.success("Removed from what Paige knows");
-    load();
+    if (intent) await removal.remove(intent);
   };
 
   // On a successful add: pulse the new card, tell the workspace (vitals + banner).
@@ -98,6 +99,7 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
       <Dialog open={!!editing && editing.tenant_id === activeTenantId} onOpenChange={o => !o && setEditing(null)}>
         {editing && activeTenantId === editing.tenant_id && <KnowledgeMetadataEditor key={`${activeTenantId}:${editing.id}`} document={editing} tenantId={activeTenantId} onClose={() => setEditing(null)} onSaved={() => void load()} />}
       </Dialog>
+      <KnowledgeRemovalStatus removal={removal} />
       <TabsList>
         <TabsTrigger value="knowledge">Knowledge</TabsTrigger>
         <TabsTrigger value="review">Review</TabsTrigger>
@@ -106,7 +108,7 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
       {/* ── KB tab ─────────────────────────────────────────────── */}
       <TabsContent value="knowledge" className="space-y-4">
         <div className="space-y-1">
-          <h3 className="text-base font-semibold">What Paige knows</h3>
+          <h3 ref={heading} tabIndex={-1} className="text-base font-semibold">What Paige knows</h3>
           <p className="text-sm text-muted-foreground">
             Paige answers {tenantName}'s clients from what you teach her here. Add your
             playbooks, scripts, and reference docs — she uses them the moment they finish indexing.
@@ -221,7 +223,7 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" aria-label="Document options">
+                      <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" aria-label="Document options" onClick={event => { removalTrigger.current = event.currentTarget; }}>
                         <MoreHorizontal className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -235,7 +237,7 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
                           disabled={d.network_review_status === "approved"}
                         />
                       </div>
-                      <DropdownMenuItem className="text-destructive" onClick={() => setPendingDelete(d)}>
+                      <DropdownMenuItem className="text-destructive" disabled={removal.blocked} onClick={() => setPendingDelete(removal.begin(d))}>
                         <Trash2 className="w-4 h-4 mr-2" /> Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -306,12 +308,12 @@ export function KnowledgePanel({ tenantName }: { tenantName: string }) {
         {hasMore && !readError && <Button variant="outline" disabled={loading} onClick={() => void loadMore()}>Load more documents</Button>}
       </TabsContent>
 
-      <AlertDialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)}>
-        <AlertDialogContent>
+      <AlertDialog open={!!pendingDelete && pendingDelete.isCurrent()} onOpenChange={(open) => { if (!open && pendingDelete) { removal.cancel(pendingDelete); setPendingDelete(null); } }}>
+        <AlertDialogContent onCloseAutoFocus={event => { const target = removalTrigger.current?.isConnected ? removalTrigger.current : heading.current; if (target) { event.preventDefault(); target.focus(); } }}>
           <AlertDialogHeader>
             <AlertDialogTitle>Remove this from what Paige knows?</AlertDialogTitle>
             <AlertDialogDescription>
-              {pendingDelete ? `"${pendingDelete.title}" and everything Paige learned from it will be removed. This can't be undone.` : ""}
+              {pendingDelete ? `"${pendingDelete.document.title}". ${knowledgeRemovalDescription}` : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

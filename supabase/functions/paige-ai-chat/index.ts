@@ -13862,6 +13862,27 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       });
       const convo: any[] = [...aiMessages];
       let currentResponse = response;
+      // ── C1: THE BOUNDED CONTINUATION LOOP ─────────────────────────────────────────────
+      // A turn may NOT dead-end on narration. When the user's request carries action intent
+      // and the model's round produced prose with NO terminal state — no tool executed, no
+      // approval card minted, no governed refusal or blockage stated — the task is fed back
+      // through a continuation inside THIS turn, through the same gateway, authority and
+      // event machinery. No second runner, no unbounded loop: a hard budget stops it.
+      const MAX_CONTINUATIONS = 3;
+      let continuationsUsed = 0;
+      // Action intent is CONSERVATIVE on purpose: imperative mutations the platform actually
+      // performs. A question (ending in "?"), a greeting, or a bare statement is a terminal
+      // state — the assignment forbids continuing after a genuine question that needs the
+      // user's answer, and over-matching turns every reply into a loop.
+      const ACTION_INTENT_RE = /(?:add|create|make|send|archive|restore|move|enroll|enrol|delete|remove|update|change|set|assign|schedule|book|invite|draft|file|log|complete|approve|confirm|go ahead|do it|run it|yes.*please|please.*(?:add|create|send|do|move))/i;
+      const isActionIntent = (() => {
+        const lastUser = [...aiMessages].reverse().find((m: any) => m?.role === "user");
+        const text = typeof lastUser?.content === "string" ? lastUser.content.trim() : "";
+        if (!text || text.length < 3) return false;
+        // A question mark anywhere in a short message means the user asked, not commanded.
+        if (/\?\s*$/.test(text) || (text.length < 120 && text.includes("?"))) return false;
+        return ACTION_INTENT_RE.test(text);
+      })();
       let totalToolCalls = 0;
       const seenSignatures = new Set<string>();
       let finalChunks: Uint8Array[] | null = null;
@@ -14004,6 +14025,32 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               break;
             }
             if (!hasToolCall) {
+              // ── C1: THE CONTINUATION CHECK ────────────────────────────────────────────
+              // Terminal states, any ONE of which ends the turn honestly: something executed
+              // (totalToolCalls), a card was minted (queuedApprovals / confirmTrace), a governed
+              // CRM action ran (crmResultTrace), the scope changed, or this is Live (which has
+              // its own answer contract). Otherwise, if the user asked for an action and the
+              // budget holds, the task is fed back — narration is not completion.
+              const terminalState = totalToolCalls > 0
+                || queuedApprovals.length > 0
+                || confirmTrace.length > 0
+                || crmResultTrace.length > 0
+                || liveRuntimeScope;
+              if (!terminalState && isActionIntent && continuationsUsed < MAX_CONTINUATIONS && !studioSessionId) {
+                continuationsUsed += 1;
+                // Push the model's own prose (so the continuation sees what it said), then the
+                // continuation instruction. The instruction is the assignment's wording.
+                convo.push({ role: "assistant", content: content || "" });
+                convo.push({ role: "user", content: "The requested task is still unresolved. Continue using available current platform resources. Complete it, request required approval or clarification, or state the concrete blockage. Do not narrate intent without acting." });
+                currentResponse = await gatewayCompat("anthropic", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ model: (studioSessionId || substantiveTurn) ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash", messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto", stream: true }),
+                }, traceFor("chat-continuation"));
+                if (currentResponse.ok) continue;
+                // The continuation call itself failed — fall through to the prose we already
+                // have rather than dead-ending the turn on an infrastructure error.
+              }
               if (liveRuntimeScope) liveAnswerPending = true;
               else { finalChunks = allChunks; finalAssistantText = content; }
               break;

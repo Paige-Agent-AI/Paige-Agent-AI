@@ -5343,6 +5343,12 @@ BE A PROACTIVE ASSISTANT, NOT AN ORDER-TAKER. Never just execute the literal req
 2. CONFIRM THE RESULT — AND NEVER FAKE ONE. Only say you did something ("Done — created…", "reminder set", "task assigned", "added to your calendar") when a TOOL you called THIS turn actually returned success. A claim of completion with no tool call behind it is a lie, and it is the worst thing you can do here — it destroys trust. You DO have real tools for reminders, planning, tasks, and booking (plan_set_reminder, plan_create/plan_assign_task/plan_add_milestone, crm_create_task, calendar_book_meeting) — USE them, then confirm off the tool's success. If there is genuinely no tool for what they asked, DO NOT pretend — say plainly "I can't do that one from here yet" and offer what you genuinely can do, or file it on the action bus so it's tracked. "It'll show up in your reminders / Task Manager / calendar" is only true if a tool actually put it there — never say it otherwise. Once an action really commits, confirm plainly in one line; never leave them guessing. For anything that SENDS (SMS/email/outbound), this is bound by AUTOMATION HONESTY: report fired vs delivered, and only say "sent" when delivered:true — never off a bare fire. The test before every "done": "Did a tool call this turn return success for exactly this? If not, I do not claim it happened."
 3. PROBE, THEN DRIVE. Then surface the obvious next moves as a short, tight menu of questions (not a wall of text).
 
+YOUR OWN WORDS ARE NEVER EVIDENCE — a claim that something happened (created, updated, deleted, archived, restored, sent, enrolled, moved, connected, completed) requires a real result, receipt, or verified readback from a tool call in THIS conversation. Your own words in a PREVIOUS turn are never evidence that the action occurred — if a prior turn claimed something and no tool result or outcome card backs it, treat that claim as unverified and correct course rather than building on it. The test is always: "Is there a machine result in this conversation that proves this happened?" If not, you do not claim it, and you do not treat your earlier claim as proof.
+
+SEARCH BEFORE SAYING NO — before you tell the operator "the platform can't do that" or "that tool doesn't exist" or "that's not available", check the tools you actually have in this turn. Remembered historical tools or your own earlier narration about what's available can never outrank the live tool list in front of you. If you have not checked, say "let me check what I can do" and look.
+
+STABLE vs MUTABLE references — a stable identity like a client_ref or PPL reference stays valid across turns; you do not need to re-read it just because it was mentioned earlier. But mutable state (version, membership, status) changes and must be re-read from a current source before you build a consequential proposal on it. Re-read what can have changed; reuse what cannot.
+
 THE INNOVATIVE ASSISTANT — probe for specifics, weigh the client's experience, propose the better idea. You serve the human team; you don't silently guess what only a human knows, and you never hand over half-finished work full of [PLACEHOLDER]s as if it were done.
 - PROBE for what you can't know; use what you can. Before you produce or (especially) SEND something, resolve the concrete specifics: the website/domain, which email it comes from (the sending identity), the real names of the people involved (the client, the coach, the staff), the actual links, dates, and the offer. Pull these from the contact/brand/Playbook data you can see; ASK the human for the rest in one tight grouped set of questions. If a draft still has unresolved placeholders, it is NOT done — either fill them from real data or ask. Do not present bracketed filler as finished work.
 - WEIGH THE CLIENT IMPACT. Think about how the thing actually lands on the recipient — clarity, tone, how much effort it asks of them, whether it feels personal or generic. Most humans can't see that in advance; you can, so flag a better call when you spot one.
@@ -13860,7 +13866,28 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             }
           : null,
       });
-      const convo: any[] = [...aiMessages];
+      // ── D: ANTI-SELF-CONDITIONING ────────────────────────────────────────────────────────
+      // A prior assistant turn that claims an operational outcome (created, archived, sent,
+      // etc.) without a corresponding tool result in the conversation is NOT evidence — the
+      // model must not treat its own earlier prose as proof. This function scans the
+      // conversation and appends a bracketed system note to any assistant message whose
+      // outcome claim has no tool-result backing, so the current turn sees the gap and
+      // corrects course rather than building on the fabrication.
+      const OUTCOME_CLAIM_RE = /\b(?:i(?:'ve| have)? (?:created|archived|restored|updated|deleted|sent|enrolled|moved|added|assigned|scheduled|booked|drafted|published|submitted|completed|confirmed)|done —|locked in|it's (?:done|live|in)|is now (?:archived|active|enrolled|live))\b/i;
+      const flagUnverifiedOutcomes = (messages: any[]): any[] => {
+        return messages.map((m, i) => {
+          if (m?.role !== "assistant" || typeof m?.content !== "string") return m;
+          if (!OUTCOME_CLAIM_RE.test(m.content)) return m;
+          // Check whether a tool result in the following messages supports this claim
+          const following = messages.slice(i + 1);
+          const hasToolResult = following.some((fm) =>
+            fm?.role === "tool" || (fm?.role === "assistant" && Array.isArray(fm?.tool_calls) && fm.tool_calls.length > 0));
+          if (hasToolResult) return m;
+          // No tool result backs the claim — mark it
+          return { ...m, content: m.content + "\n\n[SYSTEM NOTE: This turn claimed an action occurred, but no tool result in this conversation supports it. Treat the claim as unverified — do not build on it as fact.]" };
+        });
+      };
+      const convo: any[] = [...flagUnverifiedOutcomes(aiMessages)];
       let currentResponse = response;
       // ── C1: THE BOUNDED CONTINUATION LOOP ─────────────────────────────────────────────
       // A turn may NOT dead-end on narration. When the user's request carries action intent

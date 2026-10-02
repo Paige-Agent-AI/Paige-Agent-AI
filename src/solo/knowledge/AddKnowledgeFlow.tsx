@@ -118,7 +118,7 @@ export function AddKnowledgeFlow({ tenantId, onPublished, onClose }: {
     if (mode === "paste" && !content.trim()) { setNotice("Paste the text Paige should read."); return; }
     if (mode === "file" && !file) { setNotice("Choose a text file for Paige to read."); return; }
     if (mode === "file" && file && !/\.(txt|md|markdown|csv|json)$/i.test(file.name)) { setNotice("Paige reads .txt, .md, .markdown, .csv and .json files. Other formats arrive with expanded format support."); return; }
-    if (mode === "file" && file && file.size > 26214400) { setNotice("That file is over 25 MB — try a smaller one."); return; }
+    if (mode === "file" && file && file.size > 2097152) { setNotice("Paige reads text files up to 2 MB — try a smaller one."); return; }
     busy.current = true; setHalt(null); setNotice("Sending to Paige…"); setStep("extracting");
     try {
       if (!extractIntent.current) extractIntent.current = crypto.randomUUID();
@@ -186,7 +186,7 @@ export function AddKnowledgeFlow({ tenantId, onPublished, onClose }: {
       setTimeout(() => void watchPublication(submission.work_id, 0, run), 800);
     } catch (error) {
       if (!current()) return;
-      if (error instanceof KnowledgeServiceError && error.code === "55000") {
+      if (error instanceof KnowledgeServiceError && error.code === "55000" && error.message.includes("KNOWLEDGE_PUBLICATION_PENDING")) {
         stop({ title: "Already publishing", message: "A publication for this source is already in flight. It will appear in Knowledge when it completes — do not start another.", action: null });
       } else if (error instanceof KnowledgeServiceError) {
         stop({ title: "Publication refused", message: plainRefusal(error), action: null });

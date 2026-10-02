@@ -129,7 +129,7 @@ export async function submitKnowledgePublication(
     || typeof data.work_id !== 'string' || !data.work_id
     || typeof data.status !== 'string' || !data.status
     || typeof data.replayed !== 'boolean'
-    || (data.replayed === false && data.revision !== expectedRevision)) {
+    || (data.replayed === false && (data.status !== 'claimed' || data.revision !== expectedRevision))) {
     throw new KnowledgeServiceError('KNOWLEDGE_RESPONSE_INVALID', 'The publication submission could not be verified.');
   }
   return data as unknown as KnowledgePublicationSubmission;

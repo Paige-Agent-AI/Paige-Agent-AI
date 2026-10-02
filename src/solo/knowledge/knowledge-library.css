@@ -11,6 +11,7 @@
 .knowledge-library__header{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:22px}
 .knowledge-library__header p,.knowledge-library__count,.knowledge-library__empty p,.knowledge-library__list p,.knowledge-library dt{color:var(--pg-muted);font-size:13px}
 .knowledge-library button.knowledge-library__primary{background:var(--pg-violet);border-color:var(--pg-violet);color:white;flex:none}
+.knowledge-library__actions{display:flex;align-items:center;gap:10px;flex:none}.knowledge-library__secondary{min-height:40px}
 .knowledge-library__tools{display:flex;align-items:end;gap:12px;margin-bottom:18px;flex-wrap:wrap}
 .knowledge-library__tools label{display:grid;gap:6px;font-size:12px;font-weight:550;min-width:0}
 .knowledge-library__tools label:first-child{flex:1;min-width:170px}

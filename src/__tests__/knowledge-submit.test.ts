@@ -30,6 +30,7 @@ describe('canonical Knowledge publication submission', () => {
   it.each([
     {document_id:'doc-b'}, {work_id:''}, {status:''}, {replayed:'true'},
     {...created, revision:4},
+    {...created, status:'queued'},
   ])('rejects an unverified submission %j', async (override) => {
     await expect(submitKnowledgePublication(client({...created, ...override}), 'tenant-a', 'doc-a', 'extract-work-a', 3, 'intent-a', 'a'.repeat(64)))
       .rejects.toThrow('could not be verified');

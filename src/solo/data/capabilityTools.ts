@@ -127,8 +127,6 @@ export const TOOL_MAP: Readonly<Record<string, { capability: CapabilityKey; risk
   growth_page_publish: { capability: "content", risk: "high" },
   growth_funnel_build: { capability: "content", risk: "ordinary" },
   growth_funnel_publish: { capability: "content", risk: "high" },
-  growth_form_save: { capability: "content", risk: "ordinary" },
-  growth_form_publish: { capability: "content", risk: "high" },
 
   // ── Automations & connected apps ──────────────────────────────────────────────────────────
   n8n_run_workflow: { capability: "autos", risk: "high" },

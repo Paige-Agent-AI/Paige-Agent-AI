@@ -1,7 +1,11 @@
 import { Component, StrictMode, type ErrorInfo, type ReactNode } from "react";
 import * as React from "react";
 import { createRoot } from "react-dom/client";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, MemoryRouter, Route, Routes } from "react-router-dom";
+import { ThemeProvider } from 'next-themes';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AgentPresenceProvider } from '@/components/ui/paige/AgentPresenceContext';
+import { TenantCommandCenterShell } from '@/components/tenant-shell/TenantCommandCenterShell';
 import { GrowthHub } from "@/solo/growth2";
 import { setSalesHarnessMode, type Mode } from "./useSoloSalesOps-stub";
 import { setAgreementsHarnessMode, type AgreementsMode } from "./useSoloCommercialTerms-stub";
@@ -95,6 +99,18 @@ class HarnessBoundary extends Component<{ children: ReactNode }, { error: Error 
   }
 }
 
+const params = new URLSearchParams(location.search);
+const theme = params.get('theme') === 'dark' ? 'dark' : 'light';
+localStorage.setItem('paige.agentRail.collapsed', String(params.get('paige') !== 'open'));
+localStorage.setItem('paige.tenantShell.navExpanded', 'false');
+const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+function FullShellHarness() {
+  return <QueryClientProvider client={queryClient}><ThemeProvider attribute="class" defaultTheme={theme} storageKey={`sales-harness-theme-${theme}`} enableSystem={false}><AgentPresenceProvider launcherEnabled={false} hasChatBody={false}><BrowserRouter>
+    <TenantCommandCenterShell accountName="Synthetic Sales review workspace" accountType="standalone" userRole="admin" onSignOut={() => undefined} soloPaigeWorkspace={<div style={{ padding: 16 }}><strong>PAIGE review slot</strong><p>Transport unavailable in this local fixture. No messages, provider facts or actions are connected.</p></div>}>
+      <div className="paige-solo" data-theme={theme} style={{ height: '100%', minHeight: 0 }}><Routes><Route path="/solo/:account/*" element={<GrowthHub />} /></Routes></div>
+    </TenantCommandCenterShell><div data-harness-chrome style={{ position: 'fixed', bottom: 4, left: 4, zIndex: 200, fontSize: 10, background: '#111', color: '#fff', padding: 4 }}>LOCAL FIXTURES · AUTH/PROVIDERS UNVERIFIED</div>
+  </BrowserRouter></AgentPresenceProvider></ThemeProvider></QueryClientProvider>;
+}
 createRoot(document.getElementById("root")!).render(
-  <StrictMode><HarnessBoundary><Harness /></HarnessBoundary></StrictMode>,
+  <StrictMode><HarnessBoundary>{params.has('full-shell') ? <FullShellHarness /> : <Harness />}</HarnessBoundary></StrictMode>,
 );

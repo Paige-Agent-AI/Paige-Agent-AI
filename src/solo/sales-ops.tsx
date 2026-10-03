@@ -42,6 +42,7 @@ import { useSoloCommercialTerms } from "./useSoloCommercialTerms";
 import { useSoloAgreementSignings, TRAIL_LIMIT } from "./useSoloAgreementSignings";
 import { useTierFeatures } from "@/hooks/useTierFeatures";
 import "./sales-ops.css";
+import { SalesBillingWorkspace } from "./sales/SalesBillingWorkspace";
 import { SalesDialogPortal, useSalesDraftExit } from "./sales-dialog";
 import { useLocation, useNavigate } from "react-router-dom";
 import { deriveSalesCommand } from "./sales/deriveSalesCommand";
@@ -1383,13 +1384,15 @@ function SignatureSender({ signings, signing, clientName, agreedLabel, tenantId,
  * from the Campaigns snapshot rather than a fifth tenant read.
  */
 // ── Sales Command Desk — presentational helpers (file-local) ─────────────────────────────────
-// The four Sales views. IDs are the `?view=` values; the shell six-tab nav is untouched.
+// Approved billing destinations. Legacy operating views remain secondary; outer six tabs stay.
 const SALES_VIEWS = [
-  ["command", "Sales Command"],
-  ["terms", "Commercial Terms"],
-  ["revenue", "Revenue & Collections"],
-  ["scenarios", "Sales Scenarios"],
+  ["overview", "Overview"],
+  ["payments", "Payments"],
+  ["invoices", "Invoices"],
+  ["recurring", "Recurring"],
+  ["terms", "Agreements"],
 ];
+const LEGACY_SALES_VIEWS = ["command", "revenue", "scenarios"];
 const EC_LABEL = { actual: "Actual", contracted: "Contracted", dated: "Dated", open: "Open", modeled: "Modeled", unknown: "Unknown" };
 // The evidence class of a FIGURE — separate from the surface TRUTH label. Never gold (§11).
 /* ── 5 · COMPLETED ────────────────────────────────────────────────────────────────────────────
@@ -1742,13 +1745,13 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
   const location = useLocation();
   const navigate = useNavigate();
   // The Sales-internal view lives in a Sales-local `?view=` param — deep-linkable and testable,
-  // and it never touches the shell's `useSubtabRoute` growth-subtab registry. `command` is the bare
-  // default, so the desk opens on the operating view with no query.
+  // and it never touches the shell's `useSubtabRoute` growth-subtab registry. Overview is the bare
+  // default; existing command/revenue/scenarios deep links remain supported.
   const rawView = new URLSearchParams(location.search).get("view");
-  const view = SALES_VIEWS.some(([id]) => id === rawView) ? rawView : "command";
+  const view = SALES_VIEWS.some(([id]) => id === rawView) || LEGACY_SALES_VIEWS.includes(rawView) ? rawView : "overview";
   const setView = React.useCallback((next) => {
     const q = new URLSearchParams(location.search);
-    if (next === "command") q.delete("view"); else q.set("view", next);
+    if (next === "overview") q.delete("view"); else q.set("view", next);
     q.delete("resume");
     const search = q.toString();
     navigate({ pathname: location.pathname, search: search ? `?${search}` : "" });
@@ -2043,7 +2046,7 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
   const contractedCurrency = model?.facts.contractedCurrency || "usd";
 
   return (
-    <div className="so">
+    <div className={LEGACY_SALES_VIEWS.includes(view) || view === "terms" ? "so" : "so so-billing"}>
       {success && <div className="so-success" role="status">{success}<button className="btn btn-p" onClick={() => onOpenCatalog()}>Continue setup in Catalog</button></div>}
       {editor === "payment" && sales.canManage ? <PaymentEditor data={sales} onClose={() => setEditor(null)} /> : null}
       {editor === "offer" && offers.canManage ? (
@@ -2098,8 +2101,10 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
       ) : null}
 
       <SubNav view={view} setView={setView} />
-      <div id="sales-view-panel" role="tabpanel" aria-labelledby={`sales-view-${view}`} className="so-view">
+      <div className="sb-actions" aria-label="Additional sales tools"><button className="btn btn-s" onClick={() => setView("command")}>Sales Command</button><button className="btn btn-s" onClick={() => setView("scenarios")}>Sales Scenarios</button><button className="btn btn-s" onClick={() => setView("revenue")}>Recorded commercial activity</button></div>
+      <div id="sales-view-panel" role="tabpanel" aria-labelledby={LEGACY_SALES_VIEWS.includes(view) ? undefined : `sales-view-${view}`} aria-label={LEGACY_SALES_VIEWS.includes(view) ? view === "command" ? "Sales Command" : view === "scenarios" ? "Sales Scenarios" : "Recorded commercial activity" : undefined} className="so-view">
 
+      {["overview", "payments", "invoices", "recurring"].includes(view) && <SalesBillingWorkspace key={view} view={view} integrationsPath={location.pathname.split("/").slice(0, 3).join("/") + "/settings/integrations"} />}
       {view === "command" && (
         <div className="so-cmd">
           <header className="so-cmd-head">

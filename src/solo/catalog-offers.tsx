@@ -540,6 +540,8 @@ export function CatalogOffers({ setDetail }) {
   // everything while claiming a count of its own. Unreachable until 2B ships the write seam;
   // fixed here rather than left for the slice that makes it reachable.
   const [category, setCategory] = React.useState(null);
+  const [search, setSearch] = React.useState("");
+  const searchRef = React.useRef(null);
   // The editor's own state. `draft === null` is closed; a draft with a null id is a create.
   const [draft, setDraft] = React.useState(null);
   const [busy, setBusy] = React.useState(false);
@@ -599,6 +601,7 @@ export function CatalogOffers({ setDetail }) {
 
   React.useEffect(() => {
     setCategory(null);
+    setSearch("");
     setDraft(null);
     setNotice(null);
   }, [data.tenantId]);
@@ -649,9 +652,13 @@ export function CatalogOffers({ setDetail }) {
   }
 
   const categories = [...new Set(data.offers.map((offer) => offer.category).filter(Boolean))];
-  const shown = category === null
+  const inCategory = category === null
     ? data.offers
     : data.offers.filter((offer) => offer.category === category);
+  const term = search.trim().toLocaleLowerCase();
+  const shown = term
+    ? inCategory.filter((offer) => offer.name.toLocaleLowerCase().includes(term))
+    : inCategory;
   const tally = shown.length === data.offers.length
     ? `${data.offers.length} offer${data.offers.length === 1 ? "" : "s"}`
     : `${shown.length} of ${data.offers.length} shown`;
@@ -724,6 +731,15 @@ export function CatalogOffers({ setDetail }) {
     <>
       {editor}
       <div className="co-filters">
+        <label className="co-search">
+          <span>Find offer</span>
+          <input ref={searchRef} type="search" aria-label="Search offers by name"
+            value={search} maxLength={200} placeholder="Search by name"
+            onChange={(event) => setSearch(event.target.value)} />
+        </label>
+        {search && <button type="button" className="btn btn-s" onClick={() => {
+          setSearch(""); searchRef.current?.focus();
+        }}>Clear search</button>}
         <button
           type="button"
           className="co-filter"
@@ -771,6 +787,10 @@ export function CatalogOffers({ setDetail }) {
 
       <div className="co-list">
         {shown.map((offer) => <OfferRow key={offer.id} offer={offer} onOpen={openDetail} />)}
+        {!shown.length && <p className="co-search-empty" role="status">
+          No offers match{term ? " this name" : ""}{category !== null ? " in this category" : ""}.
+          {term ? " Clear search or try another name." : " Choose Everything to see all offers."}
+        </p>}
       </div>
 
       <p className="co-note">
@@ -781,7 +801,7 @@ export function CatalogOffers({ setDetail }) {
 
       <div className="co-foot">
         <small>An offer is what this business sells · availability, presentation and delivery travel together</small>
-        <small className="mono">{tally}</small>
+        <small className="mono" role="status" aria-live="polite">{tally}</small>
       </div>
     </>
   );

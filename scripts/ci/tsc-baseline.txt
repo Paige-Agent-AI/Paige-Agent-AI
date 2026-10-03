@@ -1,5 +1,4 @@
 
-2	src/components/admin/studio/StudioShell.tsx: error TS2339: Property 'page' does not exist on type '{ kind: "page"; type: StudioArtifactType; ref: SessionArtifactRef; page: LoadedPageDraft; } | { kind: SessionArtifactKind; type: StudioArtifactType; ref: SessionArtifactRef; missing?: boolean; }'.
 1	src/components/paige/PaigeWorkspaceContext.tsx: error TS2352: Conversion of type '(SelectQueryError<"Invalid Relationships cannot infer result type"> | SelectQueryError<"Invalid RelationName cannot infer result type">)[]' to type '{ chunk_count: number; }[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
 1	src/hooks/useClientPortalBrand.ts: error TS2339: Property 'catch' does not exist on type 'PromiseLike<void>'.
 1	src/hooks/useMyActions.ts: error TS2352: Conversion of type 'GenericStringError[]' to type 'CustomerAction[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.

@@ -28,7 +28,7 @@ function load() {
   return out;
 }
 
-const { artifactProduced, ARTIFACT_ABSENT_ERROR, usableDrafts, IMAGE_NOT_FILED_ERROR } = load();
+const { artifactProduced, ARTIFACT_ABSENT_ERROR, usableDrafts } = load();
 
 describe("artifactProduced — a real artifact vs a 200-with-empty-payload (§13/§70)", () => {
   describe("file_url (images — the artifact is a stored file)", () => {
@@ -122,15 +122,6 @@ describe("usableDrafts — a non-empty array is not proof of usable copy (§13/�
   });
 });
 
-describe("IMAGE_NOT_FILED_ERROR — honest Studio-only partial copy (§13/§70, Codex P2)", () => {
-  it("is a non-empty, non-leaky string", () => {
-    expect(typeof IMAGE_NOT_FILED_ERROR).toBe("string");
-    expect(IMAGE_NOT_FILED_ERROR.trim().length).toBeGreaterThan(0);
-    expect(IMAGE_NOT_FILED_ERROR).not.toMatch(/marketing_content|content_id|save_marketing_content|studio_artifact|paige_/i);
-    expect(IMAGE_NOT_FILED_ERROR.toLowerCase()).not.toContain("success");
-  });
-});
-
 describe("WIRING — each creation handler wraps its success in the honesty guard (§13/§70)", () => {
   const src = readFileSync("supabase/functions/paige-ai-chat/index.ts", "utf8");
 
@@ -138,7 +129,6 @@ describe("WIRING — each creation handler wraps its success in the honesty guar
     expect(src).toMatch(/import\s*\{[^}]*artifactProduced[^}]*\}\s*from\s*["']\.\.\/_shared\/artifact-receipt\.ts["']/);
     expect(src).toContain("ARTIFACT_ABSENT_ERROR");
     expect(src).toContain("usableDrafts");
-    expect(src).toContain("IMAGE_NOT_FILED_ERROR");
   });
 
   // Each handler must reference the guard for the artifact shape it produces. These assert the
@@ -146,12 +136,16 @@ describe("WIRING — each creation handler wraps its success in the honesty guar
   it("generate_image guards the file url", () => {
     expect(src).toMatch(/artifactProduced\(\s*["']file_url["']/);
   });
-  it("generate_image requires content_id in a Studio session (Codex P2 — canvas linkage)", () => {
-    // The Studio-only final guard: when studioSessionId is set, an unfiled image (no content_id)
-    // is not a usable success (the canvas linkage needs the persisted id). Tolerant of the
-    // intervening `.success` check between the studio gate and the saved_id guard.
-    expect(src).toMatch(/studioSessionId[\s\S]{0,140}!artifactProduced\(\s*["']saved_id["']/);
-    expect(src).toContain("IMAGE_NOT_FILED_ERROR");
+  it("a Studio session's image goes through the metered media seam and is never reported finished", () => {
+    // Studio images run as media jobs (credits, budget, approval, Paige's model pick), finish
+    // later, and are filed and linked by the seam. The turn reports a job in progress, never an
+    // image it has not seen; the direct generator is for ordinary chat only.
+    const h = src.slice(src.indexOf('tc.function.name === "generate_image") {'));
+    const studio = h.slice(h.indexOf("if (studioSessionId) {"), h.indexOf('functions.invoke("generate-image"'));
+    expect(studio).toContain('functions.invoke("paige-media"');
+    expect(studio).toMatch(/studio_session_id:\s*studioSessionId/);
+    expect(studio).toMatch(/pending:\s*true/);
+    expect(studio).not.toMatch(/url:\s*mj/);
   });
   it("draft_marketing_content filters to usable drafts before guarding (Codex P2)", () => {
     expect(src).toMatch(/usableDrafts\(/);

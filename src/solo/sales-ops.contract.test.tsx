@@ -33,6 +33,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GrowthHub } from "./growth2";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+vi.mock('./useSalesInvoiceDrafts', () => ({ useSalesInvoiceDrafts: () => ({ tenantId: 'test-tenant-billing', phase: 'ready', rows: [], hasMore: false, nextCursor: null, message: '', save: vi.fn(), retry: vi.fn() }) }));
+vi.mock('./sales/useInvoiceBillingSources',()=>({useInvoiceBillingSources:()=>({tenantId:'test-tenant-billing',phase:'ready',customers:[],agreements:[]})}));
 vi.mock('./useSalesBillingDrafts', () => ({ useSalesBillingDrafts: () => ({ tenantId: 'test-tenant-billing', phase: 'ready', rows: [], hasMore: false, nextCursor: null, message: '', save: vi.fn(), retry: vi.fn() }) }));
 
 const ROUTED = {
@@ -314,8 +316,8 @@ describe("Sales Command — the operating desk (new)", () => {
     act(() => invoiceTab.click());
     expect(lastLocation).toContain('view=invoices');
     expect(host.textContent).toContain('Start with a client and an offer');
-    const command = [...host.querySelectorAll('button')].find(button => button.textContent === 'Sales Command') as HTMLButtonElement;
-    act(() => command.click());
+    expect(host.querySelector('[aria-label="Additional sales tools"]')).toBeNull();
+    renderAt('/solo/42/growth/sales?view=command');
     expect(host.textContent).toContain('Turn agreed value into received value');
   });
   it("opens on Sales Command with an evidence-classed pulse and no representative-data claim", () => {

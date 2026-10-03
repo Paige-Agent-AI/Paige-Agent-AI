@@ -10,6 +10,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GrowthHub } from "./growth2";
+import { CatalogOffers } from "./catalog-offers";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -512,6 +513,53 @@ describe("Catalog Offers — the migration is additive", () => {
 });
 
 describe("Catalog Offers — rendered flows", () => {
+  it("resets search and category when the resolved tenant changes without remounting", () => {
+    setCampaigns(); setOffers();
+    renderAt("/solo/4471/growth/catalog");
+    act(() => root.render(<CatalogOffers setDetail={vi.fn()} />));
+    const input = host.querySelector('input[type="search"]') as HTMLInputElement;
+    act(() => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, "foundations");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      [...host.querySelectorAll("button")].find(b => b.textContent?.startsWith("Programs"))!.click();
+    });
+    setOffers({tenantId:"test-tenant-other", offers:[offer({id:"new",name:"New tenant offer",category:"Other"})]});
+    act(() => root.render(<CatalogOffers setDetail={vi.fn()} />));
+    expect((host.querySelector('input[type="search"]') as HTMLInputElement).value).toBe("");
+    expect(host.textContent).toContain("New tenant offer");
+    expect(host.textContent).not.toContain("Foundations Coaching Program");
+    expect(host.querySelector('.co-filter[aria-pressed="true"]')?.textContent).toContain("Everything");
+  });
+
+  it("searches names literally across lifecycle states and combines with category, then clears", () => {
+    setCampaigns(); setOffers({ offers: [
+      offer({ id: "a", name: "Coaching 50%_*(Plan)", category: "Programs", availability: "draft" }),
+      offer({ id: "b", name: "Coaching consult", category: "Consulting", availability: "paused" }),
+      offer({ id: "c", name: "Other", category: "Programs", availability: "archived" }),
+    ] });
+    renderAt("/solo/4471/growth/catalog");
+    const search = host.querySelector('input[aria-label="Search offers by name"]') as HTMLInputElement;
+    expect(search).toBeTruthy();
+    const type = (value: string) => act(() => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(search, value);
+      search.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    type(" COACHING ");
+    expect(host.querySelectorAll(".co-row")).toHaveLength(2);
+    act(() => [...host.querySelectorAll("button")].find(b => b.textContent?.startsWith("Programs"))!.click());
+    expect(host.querySelectorAll(".co-row")).toHaveLength(1);
+    type("50%_*(plan)");
+    expect(host.querySelectorAll(".co-row")).toHaveLength(1);
+    type("no match");
+    expect(host.textContent).toContain("No offers match");
+    expect(host.textContent).not.toContain("Your catalog starts");
+    act(() => [...host.querySelectorAll("button")].find(b => b.textContent === "Clear search")!.click());
+    expect(search.value).toBe("");
+    expect(host.querySelectorAll(".co-row")).toHaveLength(2);
+    expect(harness.offers.saveOffer).not.toHaveBeenCalled();
+    expect(harness.offers.setOfferStatus).not.toHaveBeenCalled();
+  });
+
   it("opens on Offers, and keeps the approved six tabs", () => {
     setCampaigns(); setOffers();
     renderAt("/solo/4471/growth/catalog");

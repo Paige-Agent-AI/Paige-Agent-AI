@@ -11,6 +11,8 @@ export default defineConfig({
   resolve: {
     alias: [
       { find: '@/components/admin/voice/DialPadTrigger', replacement: path.resolve(import.meta.dirname, '../marketplace-mount/shell-stubs.tsx') },
+      { find: '../useSalesInvoiceDrafts', replacement: path.join(import.meta.dirname, 'useSalesInvoiceDrafts-stub.ts') },
+      { find: './useInvoiceBillingSources', replacement: path.join(import.meta.dirname, 'useInvoiceBillingSources-stub.ts') },
       { find: '../useSalesBillingDrafts', replacement: path.join(import.meta.dirname, 'useSalesBillingDrafts-stub.ts') },
       { find: '../useSoloCommercialTerms', replacement: path.join(import.meta.dirname, 'useSoloCommercialTerms-stub.ts') },
       { find: '../useCatalogOffers', replacement: path.join(import.meta.dirname, 'useCatalogOffers-stub.ts') },

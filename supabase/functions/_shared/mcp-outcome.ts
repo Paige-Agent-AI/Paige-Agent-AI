@@ -345,28 +345,41 @@ export function verifyApprovalPins(
 }
 
 /**
- * Discovery, reduced the same way. A tool's own name and description are provider-written
- * text, so what is offered back is the intersection with what the workspace has already
- * approved — never the provider's list, and never its prose.
+ * Discovery, reduced the same way. A tool's own DESCRIPTION is provider prose and never
+ * crosses; a tool's NAME is a bounded identifier, and it now crosses for BOTH halves —
+ * approved and unapproved. The unapproved names are what the operator needs to see to
+ * grant approval: on 2026-10-02 the owner asked "which of the 17 unapproved actions should
+ * I approve?" and Paige could only answer with the count, because the names were dropped
+ * here. A name that fails the identifier grammar stays COUNTED only — never truncated,
+ * never sanitized into a different identity — so unapproved_count can exceed the named
+ * list's length, and that gap is the honest signal that some names were unshapeable.
  */
 export function projectDiscovery(
   discovered: ReadonlyArray<{ name: string }>,
   approvedCapabilities: readonly string[],
-): { approved: string[]; unapproved_count: number } {
+): { approved: string[]; unapproved: string[]; unapproved_count: number } {
   const approvedSet = new Set(approvedCapabilities);
+  const NAME = /^[A-Za-z0-9_.:-]{1,64}$/;
   const seen = new Set<string>();
+  const seenUnapproved = new Set<string>();
   const approved: string[] = [];
-  let unapproved = 0;
+  const unapproved: string[] = [];
+  let unapprovedCount = 0;
   for (const tool of discovered) {
     if (approvedSet.has(tool.name)) {
       // De-duplicated so a provider cannot pad the list with repeats.
       if (!seen.has(tool.name)) { seen.add(tool.name); approved.push(tool.name); }
     } else {
-      unapproved += 1;
+      unapprovedCount += 1;
+      if (NAME.test(tool.name) && !seenUnapproved.has(tool.name)) {
+        seenUnapproved.add(tool.name);
+        unapproved.push(tool.name);
+      }
     }
   }
-  // Sorted so the order is ours rather than the provider's.
-  return { approved: approved.sort(), unapproved_count: unapproved };
+  // Sorted so the order is ours rather than the provider's; capped with the model-side
+  // gate's own 200 so a provider cannot pad an unbounded list past it.
+  return { approved: approved.sort(), unapproved: unapproved.sort().slice(0, 200), unapproved_count: unapprovedCount };
 }
 
 function safeStringify(value: unknown): string {
@@ -438,8 +451,16 @@ export function projectOutcomeForModel(raw: unknown): Record<string, unknown> {
         .filter((a): a is string => typeof a === "string" && CAPABILITY_NAME.test(a))
         .slice(0, 200),
       approved_count: typeof d.approved_count === "number" ? d.approved_count : 0,
+      // The unapproved NAMES — identifier-shaped only, re-asserted here exactly as the
+      // approved names are — so the operator can be told precisely what is waiting. A
+      // provider cannot pad past the cap or smuggle prose through the grammar.
+      unapproved: Array.isArray(d.unapproved)
+        ? (d.unapproved as unknown[])
+            .filter((a): a is string => typeof a === "string" && CAPABILITY_NAME.test(a))
+            .slice(0, 200)
+        : [],
       unapproved_count: typeof d.unapproved_count === "number" ? d.unapproved_count : 0,
-      note: "These are the capabilities this workspace has approved. Anything else is not available.",
+      note: "These are the capabilities this workspace has approved. The unapproved names are the actions waiting on the operator's approval — name them so the operator can choose which to grant; anything not in either list is not available.",
     };
   }
 

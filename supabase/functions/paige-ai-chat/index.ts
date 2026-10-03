@@ -365,7 +365,7 @@ function describeStep(
     // Content (shared)
     case "draft_marketing_content": return { label: "Drafting your content", group: "shared" };
     case "content_save": return { label: "Saving that to your library", group: "shared" };
-    case "generate_image": return { label: "Creating the image", group: "shared", detail: failed ? undefined : "image ready" };
+    case "generate_image": return { label: "Creating the image", group: "shared", detail: failed ? undefined : out?.pending === true ? (out?.awaiting_approval === true ? "waiting for your approval" : "in progress") : "image ready" };
     // Landing pages / growth (owner)
     case "growth_list": return { label: "Checking your pages", group: "owner" };
     case "growth_page_generate": return { label: "Designing your landing page", group: "owner" };
@@ -6236,7 +6236,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "growth_funnel_publish",
-              description: "Team only. Publish a saved funnel so the WHOLE sequence goes live — publishes the entry page then the funnel, and returns the REAL public URL. This is a going-live action; always confirm with the operator first and report back the real link the publish returns (never claim it's live without it). The funnel must already be built (growth_funnel_build) and its entry page free of unfilled [PLACEHOLDER] prompts, which the publish step rejects.",
+              description: "Team only. Publish a saved funnel so the WHOLE sequence goes live — the funnel and every page and form it uses go live together, and it returns the REAL public URL. This is a going-live action; always confirm with the operator first and report back the real link the publish returns (never claim it's live without it). The funnel must already be built (growth_funnel_build) and its entry page free of unfilled [PLACEHOLDER] prompts, which the publish step rejects.",
               parameters: {
                 type: "object",
                 properties: {
@@ -11694,8 +11694,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                     model: "auto",
                     aspect_ratio: aspect,
                     reference_content_ids: reuseImageId ? [reuseImageId] : [],
+                    // The refined image becomes the next version of the one on the canvas.
+                    reuse_content_id: reuseImageId,
                     studio_session_id: studioSessionId,
-                    request_id: `studio-chat-${tc.id}`,
+                    // One job per tool call of this thread: a retried call replays it, never a second.
+                    request_id: await stableRunId(["studio-chat-image", payloadThreadId ?? "", tc.id]),
                   },
                 });
                 // A refusal (no credits, budget, daily limit) arrives as a non-2xx: read its own words.
@@ -12095,10 +12098,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   .from("growth_forms").select("id, slug").eq("tenant_id", (row as any).tenant_id).in("slug", _formSlugs);
                 pageForms = (fr ?? []) as Array<{ id: string; slug: string }>;
               }
-              const formsCreated = pageForms.map((f) => f.slug);
               // §13/§70 — a 200 with no returned row id means the page draft may not have saved.
               result = artifactProduced("saved_id", (row as any)?.id)
-                ? { success: true, page_id: (row as any)?.id, slug: (row as any)?.slug, status: (row as any)?.status, forms_created: formsCreated, form_ids: pageForms.map((f) => f.id) }
+                ? { success: true, page_id: (row as any)?.id, slug: (row as any)?.slug, status: (row as any)?.status, forms_on_page: pageForms.map((f) => f.slug), form_ids: pageForms.map((f) => f.id) }
                 : { success: false, error: ARTIFACT_ABSENT_ERROR.saved_id };
             } else if (tc.function.name === "growth_page_publish") {
               // Going-live action (confirm-gated by the autonomy gate above). The RPC
@@ -12118,14 +12120,37 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               if (!built.ok) {
                 result = { success: false, error: built.error };
               } else {
-                // In a Studio session, update in place only the form that is on the canvas (§13 clamp,
-                // the same rule images follow): an echoed id can never rewrite a different form.
-                const formId = studioSessionId
-                  ? (canvasArtifact?.kind === "form" && args.form_id === canvasArtifact.id ? canvasArtifact.id : null)
-                  : (typeof args.form_id === "string" ? args.form_id : null);
+                // Which form may this save change? In a Studio session only one of the session's own
+                // forms (the one on the canvas, or one this session linked, e.g. a page's sign-up form):
+                // an echoed id can never rewrite a different form (§13 clamp, the rule images follow).
+                const _ftid = personaCtx?.tenant_id ?? null;
+                let formId: string | null = typeof args.form_id === "string" && args.form_id ? args.form_id : null;
+                if (formId && studioSessionId && !(canvasArtifact?.kind === "form" && canvasArtifact.id === formId)) {
+                  const { data: _sess } = await supabaseClient.from("studio_sessions").select("artifact_refs").eq("id", studioSessionId).maybeSingle();
+                  const _refs = Array.isArray((_sess as any)?.artifact_refs) ? (_sess as any).artifact_refs : [];
+                  if (!_refs.some((r: any) => r?.kind === "form" && r?.id === formId)) formId = null;
+                }
+                // An edit keeps the form's address: renaming it would orphan the pages that embed it
+                // and break any link already shared. Only a NEW form takes a slug, made clean and
+                // unique in this workspace so it can never land on top of another form.
+                let _formSlug = "";
+                if (formId && _ftid) {
+                  const { data: _exForm } = await supabaseClient.from("growth_forms").select("slug").eq("id", formId).eq("tenant_id", _ftid).maybeSingle();
+                  if ((_exForm as any)?.slug) _formSlug = String((_exForm as any).slug);
+                  else formId = null;
+                }
+                if (!formId) {
+                  const _base = String(args.slug || args.name || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48) || "form";
+                  _formSlug = _base;
+                  if (_ftid) {
+                    const { data: _taken } = await supabaseClient.from("growth_forms").select("slug").eq("tenant_id", _ftid).like("slug", `${_base}%`);
+                    const _set = new Set((_taken || []).map((r: any) => r.slug));
+                    for (let n = 2; _set.has(_formSlug) && n < 500; n++) _formSlug = `${_base}-${n}`;
+                  }
+                }
                 const { data: row, error } = await supabaseClient.rpc("growth_form_upsert", {
-                  p_tenant_id: personaCtx?.tenant_id ?? null,
-                  p_slug: String(args.slug ?? ""),
+                  p_tenant_id: _ftid,
+                  p_slug: _formSlug,
                   p_name: String(args.name ?? ""),
                   p_schema_json: built.schema,
                   p_success_action_json: typeof args.thank_you === "string" && args.thank_you.trim()
@@ -12281,21 +12306,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 note: "Funnel saved as a draft — the entry page, the intake form, and the flow are wired. Publish it to take the whole sequence live.",
               };
             } else if (tc.function.name === "growth_funnel_publish") {
-              // Going-live (confirm-gated above). Publish the funnel's page steps first — the
-              // funnel-publish RPC guard refuses unpublished pages — then publish the funnel,
-              // which returns the REAL public url. Surface it verbatim; never claim live without it.
+              // Going-live (confirm-gated above). One call: the funnel publish puts every page and
+              // form the funnel uses live with it, in one transaction, so a refusal leaves nothing
+              // half-live. It returns the REAL public url; surface it verbatim, never claim live without it.
               const _fpTid = personaCtx?.tenant_id ?? null;
-              // §9 defense-in-depth: pin both reads to the caller's tenant. The publish RPCs are
-              // DEFINER + tenant-pinned and would refuse a cross-tenant id anyway, but the growth
-              // funnel/step public-read RLS would otherwise let this read another tenant's ids.
-              const { data: _stepRows } = await supabaseClient.from("growth_funnel_steps").select("page_id").eq("funnel_id", args.funnel_id).eq("tenant_id", _fpTid).eq("step_type", "page");
-              const { data: _funRow0 } = await supabaseClient.from("growth_funnels").select("entry_page_id").eq("id", args.funnel_id).eq("tenant_id", _fpTid).maybeSingle();
-              const _pageIds = Array.from(new Set([(_funRow0 as any)?.entry_page_id, ...((_stepRows || []).map((s: any) => s.page_id))].filter(Boolean)));
-              for (const _pid of _pageIds) {
-                const { error: _pubErr } = await supabaseClient.rpc("growth_page_publish", { p_tenant_id: _fpTid, p_id: _pid });
-                // Re-publishing an already-live page is a no-op we tolerate; any other error is real.
-                if (_pubErr && !/already|published/i.test(_pubErr.message || "")) throw _pubErr;
-              }
               const { data: _pub, error: _pubFErr } = await supabaseClient.rpc("growth_funnel_publish", { p_tenant_id: _fpTid, p_id: args.funnel_id });
               if (_pubFErr) throw _pubFErr;
               result = { success: true, ...(_pub as any) };

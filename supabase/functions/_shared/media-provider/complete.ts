@@ -25,6 +25,7 @@ import { recordCapabilityRun } from "../capability-record.ts";
 import { idempotencyKey } from "../durable-job/mod.ts";
 import { COMMERCIAL_USE_DISCLOSURE, MEDIA_NON_TERMINAL_STATES as NON_TERMINAL_STATES, MEDIA_TERMINAL_STATES } from "./mod.ts";
 import { consumeMediaCredits, estimateCredits, releaseMediaCredits } from "./credits.ts";
+import { linkStudioArtifact } from "./studio-link.ts";
 
 export interface CompletableJob {
   id: string;
@@ -169,7 +170,9 @@ export async function completeMediaJob(
       p_size: typeof job.params?.aspect_ratio === "string" ? job.params.aspect_ratio : null,
       p_brief: prompt.slice(0, 500),
       p_meta: meta,
-      p_id: null,
+      // A Studio refine names the canvas image (verified at submit): the result becomes its next
+      // version instead of a separate image.
+      p_id: typeof job.params?.reuse_content_id === "string" ? job.params.reuse_content_id : null,
       p_tenant_id: job.tenant_id,
     });
     if (saveErr) throw new Error(`library save failed: ${saveErr.message}`);
@@ -207,23 +210,7 @@ export async function completeMediaJob(
       },
     });
 
-    // VIBE STUDIO: a job started from a Studio session lands on that session's canvas and timeline.
-    // The session was verified as this tenant's at submit; the RPCs re-check it (service path names
-    // the tenant). Non-fatal and logged: the image is already filed and the job already succeeded.
-    const studioSessionId = typeof job.params?.studio_session_id === "string" ? (job.params.studio_session_id as string) : null;
-    if (studioSessionId && contentId) {
-      const { error: linkErr } = await admin.rpc("link_session_artifact", {
-        p_session_id: studioSessionId, p_kind: "content", p_artifact_id: contentId, p_tenant_id: job.tenant_id,
-      });
-      if (linkErr) {
-        console.error("[media-complete] studio session link failed:", linkErr.message);
-      } else {
-        const { error: verErr } = await admin.rpc("save_artifact_version", {
-          p_session_id: studioSessionId, p_kind: "content", p_artifact_id: contentId, p_tenant_id: job.tenant_id,
-        });
-        if (verErr) console.error("[media-complete] studio version save failed:", verErr.message);
-      }
-    }
+    await linkStudioArtifact(admin, job, (contentId as string) ?? null);
 
     // CREDIT RECONCILIATION: convert the hold into a consume for the actual
     // draw (idempotent per job; a low estimate is clamped honestly by the RPC).

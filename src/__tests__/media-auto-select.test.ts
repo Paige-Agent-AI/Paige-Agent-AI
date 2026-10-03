@@ -54,6 +54,11 @@ describe("Paige picks the model from the brief", () => {
     expect(r.reason).toMatch(/video is switched off/i);
   });
 
+  it("does not read an orientation as a request for premium", () => {
+    expect(pick("A portrait-format flyer for the workshop").model).toBe("img-std");
+    expect(pick("A professional portrait photo for my about page").model).toBe("img-pro");
+  });
+
   it("does not mistake an ordinary word for a video request", () => {
     expect(pick("An image for my video course landing page").model).toBe("img-std");
   });

@@ -14,6 +14,8 @@ describe("Studio form receipts", () => {
     expect(classifyGrowthFormRun({ capability: "growth_form_save", threw: true, thrown: { code: "22023", message: "GROWTH_FORM_LIVE_SLUG" } })).toBe("capability_refused");
     expect(classifyGrowthFormRun({ capability: "growth_form_save", threw: true, thrown: { code: "XX000", message: "boom" } })).toBe("capability_failed");
     expect(classifyGrowthFormRun({ capability: "growth_form_save", threw: true, thrown: new Error("TypeError: fetch failed") })).toBe("capability_outcome_unknown");
+    // The shape postgrest-js actually throws when the request never got an answer.
+    expect(classifyGrowthFormRun({ capability: "growth_form_publish", threw: true, thrown: { code: "", message: "TypeError: fetch failed", details: "", hint: "" } })).toBe("capability_outcome_unknown");
   });
   it("ignores every other tool", () => {
     expect(classifyGrowthFormRun({ capability: "growth_page_save", result: { success: true } })).toBeNull();

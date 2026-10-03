@@ -31,6 +31,7 @@ import { recordCapabilityRun } from "../_shared/capability-record.ts";
 import { getMediaAdapter, allMediaAdapters } from "../_shared/media-provider/registry.ts";
 import { falAdapter } from "../_shared/media-provider/fal.ts";
 import { selectMediaModel, type AutoSelectResult } from "../_shared/media-provider/auto-select.ts";
+import type { MediaModelInfo } from "../_shared/media-provider/mod.ts";
 import {
   loadMediaConfig,
   resolveMediaCeiling,
@@ -48,6 +49,7 @@ import {
   holdMediaCredits,
 } from "../_shared/media-provider/credits.ts";
 import { failMediaJob } from "../_shared/media-provider/complete.ts";
+import { linkStudioArtifact } from "../_shared/media-provider/studio-link.ts";
 import { NeedsConfigError } from "../_shared/provider-types.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -78,7 +80,22 @@ function resolveAutoModel(prompt: string, requested: string, hasReferences: bool
       return { model: `${name}:auto`, label: name, auto: true, reason: `Using ${name}, the image provider connected to this workspace.` };
     }
   }
-  return selectMediaModel({ prompt, catalog: falAdapter.getCapabilities().models, hasReferences, videoAvailable });
+  // Nothing connected: there is no honest pick to make.
+  return null;
+}
+
+type LegacyProvider = "gemini" | "openai" | "replicate" | "ideogram";
+// Legacy image providers stay first-class (owner: preserve them). Their model field is
+// '<provider>:auto'; the executor picks the concrete model. One home for the entry, so the
+// estimate and the submit agree.
+function legacyEntry(model: string): { provider: LegacyProvider; configured: boolean; entry: MediaModelInfo } | null {
+  if (!/^(gemini|openai|replicate|ideogram):/.test(model)) return null;
+  const provider = model.split(":")[0] as LegacyProvider;
+  return {
+    provider,
+    configured: getMediaAdapter(provider)?.isConfigured() === true,
+    entry: { id: model, label: model, mode: "image", tier: "standard", estCostPerUnitUsd: provider === "replicate" ? 0.04 : 0.03, unit: "image" },
+  };
 }
 
 serve(async (req: Request) => {
@@ -187,9 +204,28 @@ serve(async (req: Request) => {
     if (action === "estimate") {
       const picked = resolveAutoModel(String(body?.prompt ?? ""), String(body?.model ?? ""),
         Array.isArray(body?.reference_content_ids) && body.reference_content_ids.length > 0, config.videoEnabled);
-      const model = picked?.model ?? String(body?.model ?? "");
+      const requested = String(body?.model ?? "");
+      if ((!requested || requested === "auto") && !picked) {
+        return json({ error: "No image provider is connected to this workspace yet.", needs_config: true });
+      }
+      const model = picked?.model ?? requested;
       const adapter = falAdapter;
       const catalog = adapter.getCapabilities().models;
+      const legacy = legacyEntry(model);
+      if (legacy) {
+        if (!legacy.configured) return json({ error: `The ${legacy.provider} image provider isn't configured on this account.`, needs_config: true });
+        const policy = resolveApprovalPolicy({ mode: "image", tier: "standard", estimatedCostUsd: legacy.entry.estCostPerUnitUsd, draftAllowanceUsd: config.draftAllowanceUsd });
+        return json({
+          model: legacy.entry.id,
+          model_choice: picked,
+          mode: "image",
+          tier: "standard",
+          estimated_cost_usd: legacy.entry.estCostPerUnitUsd,
+          basis: "flat per-image estimate for this provider",
+          approval: policy,
+          license: adapter.getLicenseClass(),
+        });
+      }
       const entry = catalog.find((m) => m.id === model);
       if (!entry) return json({ error: `Unknown media model "${model}".` }, 400);
       const videoSeconds = typeof body?.video_seconds === "number" ? body.video_seconds : undefined;
@@ -248,26 +284,16 @@ serve(async (req: Request) => {
       let entry = catalog.find((m) => m.id === model);
       let provider: "fal" | "gemini" | "openai" | "replicate" | "ideogram" = "fal";
 
-      // Legacy image providers stay first-class (owner: preserve them). Their
-      // model field is '<provider>:auto'; the executor picks the concrete model.
-      if (!entry && /^(gemini|openai|replicate|ideogram):/.test(model)) {
-        const legacyName = model.split(":")[0] as "gemini" | "openai" | "replicate" | "ideogram";
-        const legacy = getMediaAdapter(legacyName);
-        if (!legacy?.isConfigured()) {
+      const legacy = entry ? null : legacyEntry(model);
+      if (legacy) {
+        if (!legacy.configured) {
           return json({
-            error: `The ${legacyName} image provider isn't configured on this account.`,
+            error: `The ${legacy.provider} image provider isn't configured on this account.`,
             needs_config: true,
           });
         }
-        provider = legacyName;
-        entry = {
-          id: model,
-          label: model,
-          mode: "image",
-          tier: "standard",
-          estCostPerUnitUsd: legacyName === "replicate" ? 0.04 : 0.03,
-          unit: "image",
-        };
+        provider = legacy.provider;
+        entry = legacy.entry;
       }
       if (!entry) return json({ error: `Unknown media model "${model}".` }, 400);
 
@@ -360,6 +386,18 @@ serve(async (req: Request) => {
         studioSessionId = String(sess.id);
       }
 
+      // A Studio refine stacks onto the image already on the canvas (one artifact, many versions),
+      // the way it did before images ran as jobs. Only an unpublished image of this workspace can
+      // take a new version; a published one is left as it is and the result is filed as a new image.
+      let reuseContentId: string | null = null;
+      if (studioSessionId && typeof body?.reuse_content_id === "string" && body.reuse_content_id) {
+        const { data: target, error: targetErr } = await admin
+          .from("marketing_content").select("id, status, kind")
+          .eq("id", body.reuse_content_id).eq("tenant_id", tenantId).maybeSingle();
+        if (targetErr) return json({ error: "Couldn't read the image to update." }, 500);
+        if (target && target.kind === "image" && target.status !== "published") reuseContentId = String(target.id);
+      }
+
       // Idempotency: caller-minted request id (stable across retries of ONE
       // intentional request; a fresh request mints a fresh id).
       const requestId = typeof body?.request_id === "string" && body.request_id.length >= 8
@@ -377,6 +415,7 @@ serve(async (req: Request) => {
         reference_urls: referenceUrls,
         model_choice: picked ? { auto: picked.auto, label: picked.label, reason: picked.reason } : null,
         studio_session_id: studioSessionId,
+        reuse_content_id: entry.mode === "video" ? null : reuseContentId,
         video_seconds: entry.mode === "video" ? (videoSeconds ?? 5) : undefined,
       };
 
@@ -711,6 +750,7 @@ async function dispatchJob(
       outcome: "capability_succeeded",
       detail: { provider, model: result.model, mode: job.mode, estimated_cost_usd: job.estimated_cost_usd, content_id: result.contentId },
     });
+    await linkStudioArtifact(admin, job, result.contentId);
     return json({ job: updated ?? { ...job, state: "succeeded", content_id: result.contentId }, asset_url: result.artifactUrl, dispatched: true });
   } catch (e) {
     const message = e instanceof Error ? e.message : "generation failed";

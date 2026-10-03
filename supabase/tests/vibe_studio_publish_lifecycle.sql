@@ -3,7 +3,7 @@
 -- funnel publishes what it needs, and only the workspace's owner or admin does any of it.
 -- Synthetic fixtures; always rolled back.
 BEGIN;
-SELECT plan(62);
+SELECT plan(65);
 
 -- Owner of the studio workspace; a plain member of it who also owns another workspace and holds a
 -- GLOBAL admin role (§59: neither makes them an admin here); and the owner of a second workspace.
@@ -161,7 +161,16 @@ SELECT is((SELECT status FROM public.growth_pages WHERE id = (SELECT id FROM pg_
 SELECT is((public.studio_image_publish(NULL, '5d5d0000-0000-4000-8000-00000000c001'))->>'status', 'published', 'the owner publishes an image to the Catalog');
 SELECT throws_ok($$UPDATE public.marketing_content SET status = 'draft' WHERE id = '5d5d0000-0000-4000-8000-00000000c001'$$,
   '42501', NULL, 'signed-in users cannot change an image''s published state directly (the table is not theirs to write)');
+SELECT throws_like($$SELECT public.save_marketing_content(p_kind => 'image', p_title => 'Swapped banner',
+  p_image_url => 'https://img.tests.invalid/b.png', p_id => '5d5d0000-0000-4000-8000-00000000c001')$$,
+  '%GROWTH_PUBLISH_STATE_GUARDED%', 'not even the owner-run save can swap the file of a published image');
 SELECT is((public.studio_image_unpublish(NULL, '5d5d0000-0000-4000-8000-00000000c001'))->>'status', 'draft', 'and unpublishes it');
+SELECT lives_ok($$SELECT public.save_marketing_content(p_kind => 'image', p_title => 'Swapped banner',
+  p_image_url => 'https://img.tests.invalid/b.png', p_id => '5d5d0000-0000-4000-8000-00000000c001')$$,
+  'once unpublished, the image takes a new version again');
+SELECT throws_like($$SELECT public.growth_page_upsert(NULL, 'renamed-offer', 'Offer', '[]'::jsonb, NULL, NULL,
+  (SELECT id FROM pg_temp.ids WHERE k='offer'))$$,
+  '%GROWTH_PAGE_LIVE_SLUG%', 'a live page''s address cannot change without unpublishing it');
 SELECT throws_ok($$SELECT public.studio_image_publish(NULL, '5d5d0000-0000-4000-8000-00000000c002')$$,
   '22023', NULL, 'only an image can be published as one');
 

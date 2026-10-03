@@ -28,7 +28,7 @@ const VIDEO = /\b(video|videos|clip|clips|reel|reels|animate|animated|animation|
 // "video" inside a phrase about something else ("my video course", "video call") is not a request
 // for motion.
 const VIDEO_NOUN_USE = /\bvideo\s+(course|call|calls|series|library|lesson|lessons|training|program|programme|tutorial|tutorials)\b/i;
-const PREMIUM = /\b(photo-?real(istic)?|realistic|lifelike|product (photo|shot)|headshot|portrait|cinematic|high[- ]detail|highly detailed|premium|studio[- ]quality|print[- ]ready|magazine|editorial photo)\b/i;
+const PREMIUM = /\b(photo-?real(istic)?|realistic|lifelike|product (photo|shot)|headshot|portrait photo|cinematic|high[- ]detail|highly detailed|premium|studio[- ]quality|print[- ]ready|magazine|editorial photo)\b/i;
 
 function byMode(catalog: readonly MediaModelInfo[], mode: MediaModelInfo["mode"], tier?: MediaModelInfo["tier"]) {
   return catalog.find((m) => m.mode === mode && (tier ? m.tier === tier : true))

@@ -32,6 +32,10 @@ ALTER TABLE public.growth_forms
   ADD COLUMN IF NOT EXISTS draft_success_action_json jsonb,
   ADD COLUMN IF NOT EXISTS published_at timestamptz;
 ALTER TABLE public.growth_forms ALTER COLUMN status SET DEFAULT 'draft';
+-- The backfill below is bookkeeping, not an edit: hold the updated_at triggers so it doesn't move
+-- every form and live funnel to the top of the Catalog.
+ALTER TABLE public.growth_forms DISABLE TRIGGER trg_growth_forms_updated;
+ALTER TABLE public.growth_funnels DISABLE TRIGGER trg_growth_funnels_updated;
 UPDATE public.growth_forms SET
   draft_schema_json = COALESCE(draft_schema_json, schema_json),
   draft_success_action_json = COALESCE(draft_success_action_json, success_action_json),
@@ -42,6 +46,8 @@ WHERE draft_schema_json IS NULL OR draft_success_action_json IS NULL
 ALTER TABLE public.growth_funnels ADD COLUMN IF NOT EXISTS published_at timestamptz;
 UPDATE public.growth_funnels SET published_at = updated_at
   WHERE status = 'active' AND published_at IS NULL;
+ALTER TABLE public.growth_forms ENABLE TRIGGER trg_growth_forms_updated;
+ALTER TABLE public.growth_funnels ENABLE TRIGGER trg_growth_funnels_updated;
 
 -- Images Vibe Studio makes can be published to the Catalog too.
 ALTER TABLE public.marketing_content ADD COLUMN IF NOT EXISTS published_at timestamptz;
@@ -112,13 +118,22 @@ LANGUAGE plpgsql
 SET search_path TO 'public'
 AS $$
 BEGIN
-  IF current_user NOT IN ('authenticated', 'anon') THEN
-    IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
-    RETURN NEW;
+  -- Pages, forms and funnels: a signed-in or anonymous caller writes nothing directly. The Studio
+  -- functions (owner-run) and server callers are let through, and enforce the rules themselves.
+  IF TG_TABLE_NAME <> 'marketing_content' THEN
+    IF current_user NOT IN ('authenticated', 'anon') THEN
+      IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
+      RETURN NEW;
+    END IF;
+    RAISE EXCEPTION 'GROWTH_PUBLISH_STATE_GUARDED: pages, forms and funnels change through Vibe Studio' USING ERRCODE = '42501';
   END IF;
 
-  IF TG_TABLE_NAME <> 'marketing_content' THEN
-    RAISE EXCEPTION 'GROWTH_PUBLISH_STATE_GUARDED: pages, forms and funnels change through Vibe Studio' USING ERRCODE = '42501';
+  -- Images: publish state, and a published image's file and text, belong to studio_image_publish /
+  -- studio_image_unpublish for EVERY caller — including the owner-run save functions — so nothing
+  -- swaps out a picture people are already looking at. Those two functions mark their own write.
+  IF current_setting('app.studio_publish_op', true) = 'on' THEN
+    IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
+    RETURN NEW;
   END IF;
 
   IF TG_OP = 'INSERT' THEN
@@ -128,7 +143,9 @@ BEGIN
     RETURN NEW;
   END IF;
   IF TG_OP = 'DELETE' THEN
-    IF OLD.status = 'published' THEN
+    -- Only a signed-in or anonymous caller is held here: a server clean-up or a cascade from a
+    -- deleted workspace (which runs as the table owner) still removes its images.
+    IF OLD.status = 'published' AND current_user IN ('authenticated', 'anon') THEN
       RAISE EXCEPTION 'GROWTH_PUBLISH_STATE_GUARDED: unpublish this image before deleting it' USING ERRCODE = '42501';
     END IF;
     RETURN OLD;
@@ -136,7 +153,7 @@ BEGIN
   IF NEW.published_at IS DISTINCT FROM OLD.published_at
      OR (NEW.status IS DISTINCT FROM OLD.status AND (NEW.status = 'published' OR OLD.status = 'published'))
      OR (OLD.status = 'published' AND (NEW.image_url IS DISTINCT FROM OLD.image_url OR NEW.body IS DISTINCT FROM OLD.body)) THEN
-    RAISE EXCEPTION 'GROWTH_PUBLISH_STATE_GUARDED: publishing goes through Vibe Studio' USING ERRCODE = '42501';
+    RAISE EXCEPTION 'GROWTH_PUBLISH_STATE_GUARDED: this image is published — unpublish it in Vibe Studio before changing it' USING ERRCODE = '42501';
   END IF;
   RETURN NEW;
 END;
@@ -512,6 +529,11 @@ BEGIN
   END IF;
 
   IF p_id IS NOT NULL THEN
+    -- A live page's address is what visitors and shared links use; it changes only after the page
+    -- is unpublished (the same rule as forms and funnels).
+    IF EXISTS (SELECT 1 FROM public.growth_pages WHERE id = p_id AND tenant_id = _tenant AND status = 'published' AND slug IS DISTINCT FROM _slug) THEN
+      RAISE EXCEPTION 'GROWTH_PAGE_LIVE_SLUG: this page is live — unpublish it to change its address' USING ERRCODE = '22023';
+    END IF;
     UPDATE public.growth_pages SET
       slug = _slug, title = COALESCE(NULLIF(btrim(p_title), ''), title),
       draft_blocks_json = p_blocks_json,
@@ -974,8 +996,10 @@ BEGIN
     RAISE EXCEPTION 'GROWTH_NOT_AN_IMAGE: only a finished image can be published' USING ERRCODE = '22023';
   END IF;
   IF _row.status = 'archived' THEN RAISE EXCEPTION 'GROWTH_ARCHIVED: this image is archived' USING ERRCODE = '22023'; END IF;
+  PERFORM set_config('app.studio_publish_op', 'on', true);
   UPDATE public.marketing_content SET status = 'published', published_at = now()
    WHERE id = _row.id AND tenant_id = _tenant RETURNING * INTO _row;
+  PERFORM set_config('app.studio_publish_op', 'off', true);
   INSERT INTO public.audit_logs (user_id, entity, action, entity_id, data)
   VALUES (auth.uid(), 'marketing_content', 'studio_image_publish', _row.id, jsonb_build_object('tenant_id', _tenant));
   RETURN jsonb_build_object('id', _row.id, 'status', _row.status, 'published_at', _row.published_at, 'url', _row.image_url);
@@ -996,7 +1020,9 @@ BEGIN
   IF _row.status <> 'published' THEN
     RETURN jsonb_build_object('id', _row.id, 'status', _row.status);
   END IF;
+  PERFORM set_config('app.studio_publish_op', 'on', true);
   UPDATE public.marketing_content SET status = 'draft' WHERE id = _row.id AND tenant_id = _tenant RETURNING * INTO _row;
+  PERFORM set_config('app.studio_publish_op', 'off', true);
   INSERT INTO public.audit_logs (user_id, entity, action, entity_id, data)
   VALUES (auth.uid(), 'marketing_content', 'studio_image_unpublish', _row.id, jsonb_build_object('tenant_id', _tenant));
   RETURN jsonb_build_object('id', _row.id, 'status', _row.status);

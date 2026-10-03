@@ -25,7 +25,8 @@ export function classifyGrowthFormRun(input: {
     return "capability_refused";
   }
   const e = input.thrown as { code?: unknown; message?: unknown } | null | undefined;
-  if (e && typeof e.code === "string") return REFUSAL_CODES.has(e.code) ? "capability_refused" : "capability_failed";
+  // postgrest-js reports a fetch that never got an answer as { code: "" }: that is no server code.
+  if (e && typeof e.code === "string" && e.code !== "") return REFUSAL_CODES.has(e.code) ? "capability_refused" : "capability_failed";
   if (e && typeof e.message === "string" && TRANSPORT.test(e.message)) return "capability_outcome_unknown";
   return "capability_failed";
 }

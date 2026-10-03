@@ -341,6 +341,10 @@ class of lie as a fabricated metric (§13).
 
 Legend: **✓** live · **—** not built · **N/A** tier not opened yet · **403** denied at the route gate.
 
+### Vibe Studio build view, in-project saving, approval cards (2026-10-03)
+
+Same tiers as the layout C workspace below; no new seam. The Studio designer saves drafts in the same turn; held saves surface as approval cards; an unnamed project is renamed through the existing `rename_studio_session` (workspace owner/admin or the project's creator). LIVE on merge; authenticated drive owed.
+
 ### Solo Vibe Studio workspace — layout C (2026-10-03)
 
 Frontend over the #1658 seams. The Studio opens from Solo Campaigns; authority is unchanged and stays with the RPCs.

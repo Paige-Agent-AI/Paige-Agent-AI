@@ -1,5 +1,7 @@
 # Decision Log — chronological one-liners
 
+- **Vibe Studio build view and in-project saving (2026-10-03).** Owner direction (Antonio Cook): "We should have something there that actually shows that it's being built"; "once I selected that, it should have updated the title"; Impeccable is the priority skill for the interface. Engineering choices: in a Studio project Paige saves designed drafts in the same turn instead of asking (drafts are private until published); the build view's shape comes only from the steps the stream reports; an unsaved draft is shown as not saved, never as saved; approval cards are violet (a draft save), gold stays on Publish and money approvals.
+
 - **Solo Vibe Studio workspace, layout C (2026-10-03).** Owner rulings (Antonio Cook):
   - **Layout C "Chat, stage, timeline" approved: "Approved. Build it as shown."** One brief starts a project; the project holds whatever Paige builds; no artifact-type picker or tabs (§18/§21).
   - **Studio flow:** prompt → workspace where Paige builds → at most one grouped question → full studio with chat or manual edits (manual editing lands in 3b/3c).

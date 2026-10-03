@@ -93,3 +93,28 @@
 .solo-campaigns[data-campaigns-view="sales"] .so-billing .sb-workspace,.solo-campaigns[data-campaigns-view="sales"] .so-billing .sb-editor{height:auto;flex:1;min-height:0}
 .solo-campaigns[data-campaigns-view="sales"] .so-billing .sb-detail-grid{flex:0 1 230px}
 @media(max-width:520px),(max-height:600px){.solo-campaigns[data-campaigns-view="sales"]:has(.so-billing)>.campaigns-scroll{padding:10px}.solo-campaigns[data-campaigns-view="sales"] .so-billing .sb-detail-grid{flex:none}}
+
+/* Agreements shares the billing desk vocabulary without restyling legacy Sales. */
+.so.so-agreements{--sd-panel:var(--surface);--sd-ring-v:none;--sd-ring-g:none;--sd-cast:none}
+.so-agreements>.so-view{overflow:auto;overscroll-behavior:contain;scrollbar-color:var(--line) var(--surface)}
+.so.so-agreements .so-terms{border-top-width:1px;flex:1;min-height:0;margin:0;padding:0;border-color:var(--sb-outline);border-radius:var(--r-m);background:var(--surface);box-shadow:none;animation:none;overflow:visible}
+.so-agreements .so-terms::after,.so-agreements .so-band-head h3::before{display:none}
+.so-agreements .so-terms>.so-band-head{padding:18px 22px;margin:0;border-bottom:1px solid color-mix(in srgb,var(--violet) 24%,var(--line));background:var(--surface-2);border-radius:var(--r-m) var(--r-m) 0 0}
+.so-agreements .so-band-head h3{padding-left:0;font-size:16px;font-weight:650}
+.so-agreements .so-terms>.so-filters,.so-agreements .so-terms>.so-absent,.so-agreements .so-terms>.so-page-controls{margin:16px 22px}
+.so-agreements .so-blank{padding:40px 22px;max-width:58ch}
+.so-agreements .btn,.so-editor.so-agreement-editor .btn{min-height:36px;font-weight:600;border:1px solid color-mix(in srgb,var(--ink) 42%,var(--line));box-shadow:var(--sh-2);transition:transform 160ms ease-out,background-color 160ms ease-out}
+.so-agreements .btn:hover:not(:disabled),.so-editor.so-agreement-editor .btn:hover:not(:disabled){transform:translateY(-1px)}
+.so-agreements .btn:active:not(:disabled),.so-editor.so-agreement-editor .btn:active:not(:disabled){transform:translateY(1px);box-shadow:var(--sh-1)}
+.so-agreements .btn:disabled,.so-editor.so-agreement-editor .btn:disabled{box-shadow:none;transform:none;opacity:.55;cursor:not-allowed;background:var(--surface-2);color:var(--ink-2);border-color:var(--line)}
+.so-editor.so-agreement-editor{--sb-outline:color-mix(in srgb,var(--violet) 46%,var(--line));background:var(--canvas);border-color:var(--sb-outline)}
+.so-editor.so-agreement-editor::after{display:none}
+@container sodesk (max-width:650px){.so-agreements .so-terms>.so-band-head{padding:16px}.so-agreements .so-terms>.so-band-head small{flex-basis:100%}.so-agreements .so-blank{padding:32px 16px}}
+@media(prefers-reduced-motion:reduce){.so-agreements .btn,.so-editor.so-agreement-editor .btn{transition:none}.so-agreements .btn:hover:not(:disabled),.so-agreements .btn:active:not(:disabled),.so-editor.so-agreement-editor .btn:active:not(:disabled){transform:none}}
+@media(forced-colors:active){.so-agreements .so-terms,.so-agreements .so-terms>.so-band-head{border-color:CanvasText}.so-agreements .btn,.so-editor.so-agreement-editor .btn{border-color:ButtonText;box-shadow:none}.so-agreements .btn:disabled,.so-editor.so-agreement-editor .btn:disabled{border-color:GrayText;color:GrayText;opacity:1}}
+
+.so-editor.so-agreement-editor .btn.btn-p{background:var(--violet);border-color:var(--violet);color:var(--ink-inv)}
+.so-editor.so-agreement-editor .btn.btn-p:disabled{background:var(--surface-2);border-color:var(--line);color:var(--ink-2)}
+.so-editor.so-agreement-editor :focus-visible{outline:2px solid var(--violet);outline-offset:3px}
+@media(prefers-reduced-motion:reduce){.so-editor.so-agreement-editor .btn:hover:not(:disabled),.so-editor.so-agreement-editor .btn:active:not(:disabled){transform:none}}
+@media(forced-colors:active){.so-editor.so-agreement-editor{border-color:CanvasText}.so-editor.so-agreement-editor .btn{border-color:ButtonText;box-shadow:none}.so-editor.so-agreement-editor .btn:disabled{border-color:GrayText;color:GrayText;opacity:1}.so-editor.so-agreement-editor :focus-visible{outline-color:Highlight}}

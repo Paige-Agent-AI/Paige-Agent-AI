@@ -5,10 +5,11 @@
 -- cannot turn it off. ghl_run_action (running a tool in the tenant's GoHighLevel CRM — reads
 -- contacts/conversations, writes move real CRM records and send real messages) joins the
 -- Automations category beside its n8n/zapier siblings. The full catalogue body is carried
--- verbatim per this chain's convention (each successor carries the complete catalog), with
--- the one new row added after zapier_run_action.
+-- verbatim per this chain's convention, rebased onto the CURRENT latest catalogue body
+-- (20270537000000_vibe_studio_publish_lifecycle.sql), with the one new row added.
 --
--- SOURCE: 20270532120000_catalogue_adds_agreement_tools.sql (the current body), one row added.
+-- NUMBERED 20270538000000 — the original 20270537000000 collided with the Vibe Studio
+-- publish migration that merged concurrently.
 
 CREATE OR REPLACE FUNCTION public.list_tool_autonomy(_tenant_id uuid DEFAULT NULL)
 RETURNS TABLE (
@@ -78,6 +79,8 @@ BEGIN
       ('growth_page_publish',           'Publish a landing page', 'Studio'),
       ('growth_funnel_build',           'Build a funnel', 'Studio'),
       ('growth_funnel_publish',         'Publish a funnel', 'Studio'),
+      ('growth_form_save',              'Save a form draft', 'Studio'),
+      ('growth_form_publish',           'Publish a form', 'Studio'),
       ('action_file',                   'File an action', 'Action bus'),
       ('action_advance',                'Advance an action', 'Action bus'),
       ('update_client_data',            'Save details to a client''s file', 'Client file'),
@@ -240,3 +243,5 @@ $$;
 -- function's ACL, so this changes nothing on a database that already ran an earlier grant.
 REVOKE ALL ON FUNCTION public.list_tool_autonomy(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.list_tool_autonomy(uuid) TO authenticated, service_role;
+
+COMMIT;

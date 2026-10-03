@@ -8,3 +8,5 @@ Ten capability answers: (1) owner reaches the intended real Sales owner from cur
 
 Protected: auth tier resolution, current account isolation, invoice/terms draft exit gates, Sales seven-tab contract, Marketing five core tabs, legacy queryviews, Catalog source return, revenue declaration/order source. No provider/write/store/engine/Marketing redesign. Tests failing-first: each mapped view, account/hash/query preservation, external-return/authority query dropped, unknown fallback, replace-history semantics, no legacy readers during redirect, no Offers/Sales/Pipeline visible Marketing tabs, canonical invoice dirty Keep/Discard, existing Marketing route regressions. Runtime: actual source host at fourviewports/twothemes/dockstates targeted navigation+screenshots, not repeated sevenviewmatrix.
 
+
+Fresh-main integration: mount1673 merged2b873d0f38a758bc8a26caa8103f5b5f930947c7. Cutover source77f6ac55a7bb74768413baa55e8b907f6666f63c replayed cleanly, preserving concurrent Vibe build-view changes. Independent review and exact-head CI required; no authenticated production claim. Status=open stage drilldown repair stays separate per coordinator ruling.

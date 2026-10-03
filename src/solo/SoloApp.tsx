@@ -153,7 +153,7 @@ const route = urlDriven ? (legacySettingsDestination?'settings':branchBySlug("so
 // Own instance (unique realtime topic via the hook's useId); scope:'all' matches
 // the Command Center's own read so the badge and the queue agree.
 const{items:railApprovals}=usePendingApprovals({scope:'all'});
-// Setup renders the shell's OWN designed Setup (setup.tsx) IN-SHELL — never the
+// Setup renders the shell's OWN Setup (settings.tsx, SoloSettings) IN-SHELL — never the
 // old /admin/setup view (owner directive 2026-08-16). Every nav item drives the shell.
 const go = (k) => {
   if (urlDriven) {

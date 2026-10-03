@@ -8,7 +8,7 @@ FLOW_PROTOTYPE: NOT_REQUIRED: existing approved flow preserved; owner approved o
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: workspace owner/admin prepares, reviews, saves and reopens a canonical invoice draft
 VISUAL_DIRECTION: PASS: approved Operate reconciliation direction, defined violet group boundaries, raised controls, invoice table and restrained due-now emphasis
 AUTOMATED_EVIDENCE: PASS: 41 focused tests; two failing-first real SDK receiver/construction regressions now pass; no SQL changes
-STATIC_EVIDENCE: UNVERIFIED: final TypeScript rerun not complete; focused ESLint and diff check passed; repair needs independent review
+STATIC_EVIDENCE: PASS: final TypeScript ratchet baseline12/current12, focused ESLint and diff check; nonauthor source review41170527 and mechanical integration19ba4042 PASS
 RENDERED_EVIDENCE: PASS: production-built actual shell with real source hook and real SDK/mock fetch; Overview/Invoices ready and injected construction-error cases render with zero pageerrors; prior unchanged-layout matrix supporting only
 BEHAVIORAL_EVIDENCE: PASS: local component/hook lifecycle, known contact/manual/snapshot, Catalog repricing/search/reference paging, stacked items, dirty exits and frozen original retry; hosted authenticated lifecycle UNVERIFIED
 AUTHENTICATED_RUNTIME: UNVERIFIED: Windows browser ACL blocks hosted account drive; fixture tenant and route IDs are not account proof
@@ -25,8 +25,8 @@ MUST_PRESERVE: existing agreements, catalog and declaration records; platform su
 ACCEPTANCE_CRITERIA: real canonical snapshot writer/readers; tenant-safe contact and agreement refs; search/paging retain selected facts; checked item aggregate and cadence; immutable unknown operation; approved form fit and visual boundaries
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: tenant/RLS/CAS guarded; no shared Harness, Rail, Chat, Analytics or Memory write added
-INTERNAL_BUILD_IDENTITY: ee5219d5c04066143b643c7cf4b7a278c36a79a3; deployment=local-production-build; environment=development; migrations=APPLIED(20270536000001_sales_invoice_snapshot_v2); edge=NOT_APPLICABLE; evidence=scripts/live-drive/sales-refined-invoice-shell-drive.mjs and scripts/live-drive/artifacts/sales-refined-invoice-shell/geometry.json
-RELEASE_CHANNEL: development: repair pending review/CI/release; prior UI production: observed READY exact squash SHA; required exact-head PR checks PASS; authenticated UI proof remains owed
+INTERNAL_BUILD_IDENTITY: a288a3a6c0a4215cf759e1b282d1f86677d2fc24; deployment=dpl_GJ7QPbYeG4RohfpJg6WR7Dr43R21; environment=production; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=scripts/live-drive/sales-receiver-build-drive.mjs and scripts/live-drive/artifacts/sales-receiver-build-proof/result.json
+RELEASE_CHANNEL: production: observed READY exact squash and expected aliases; required exact-head checks PASS; owner confirmed default Sales renders after hard reload; broader authenticated lifecycle remains UNVERIFIED
 RELEASE_CLASSIFICATION: internal-only: refined canonical draft UI, complete billing remains PARTIAL
 CUSTOMER_RELEASE_IDENTITY: none: no customer update publication
 RELEASE_NOTE_REQUIRED: no: internal dependency only
@@ -51,7 +51,7 @@ The refined UI uses the ordinary-session canonical save/list RPC. Invoice contac
 
 Processor/method/channel values are draft intent only. Merchant setup belongs in Integrations and verified eligibility has no proven read contract here. Email/SMS review does not send; iMessage and street lookup remain unavailable. The full approved issuance/delivery/linked mixed-billing rollout remains outstanding and is not narrowed by this dependency release.
 
-## Observed production closeout — 2026-10-03
+## Supporting prior UI production closeout — 2026-10-03
 
 PR #1659 reviewed head `3f3cc826880179e59c7573e72536a773f8f7c944` merged as `ee5219d5c04066143b643c7cf4b7a278c36a79a3` after all required exact-head checks passed. Vercel `dpl_5bukxhYByoU9e2zEv2EW4X1oBSUP` is READY for that exact squash; public, app, inbound and main Vercel aliases were observed. Both public/app `/version.json` report `ee5219d5c04066143b643c7cf4b7a278c36a79a3-musm8c9k`, customerUpdate null. No migration or Edge deployment belongs to this UI PR; the applied schema2 dependency is separately recorded at #1656. No customer release identity or publication is assigned.
 
@@ -65,4 +65,6 @@ Observed source defect: the customer reader detached SupabaseClient.from; the ac
 
 Automated repair proof: 41 focused lifecycle/editor/source tests PASS, including real createClient with mocked fetch and tenant/client predicates. Production-built actual shell proof uses the real source hook/SDK plus synthetic tenant/network fixtures: Overview and Invoices ready/error cases all render without pageerrors; construction failures show the source error notice. Reproduce `vite build --config scripts/live-drive/harness/sales-mount/vite.receiver.config.ts`, preview that config at5247, then `node scripts/live-drive/sales-receiver-build-drive.mjs`; results/screenshots in `scripts/live-drive/artifacts/sales-receiver-build-proof/`. This is production-mode bundling proof, not hosted authenticated account proof. Signed-out live navigation redirected to auth; owner-specific authenticated crash remains unverified by this agent.
 
-Repair release remains development/preview pending independent exact-head review, CI and coordinator release. Migration/Edge NOT_APPLICABLE. Recovery is revert/forward-fix bounded reader/notice, preserving applied snapshots and dispatch refusal. No new customer release identity/publication.
+Repair PR #1661 merged as `a288a3a6c0a4215cf759e1b282d1f86677d2fc24` after required exact-head checks PASS (eight success conclusions; appropriate Supabase Preview SKIPPED). Independent nonauthor review PASS covers 41 tests and four production-compiled fixture cases; mechanical `19ba40426e363e2d083ec0869a023c6ba93336f7` review preserves all 12 reviewed Sales/Analytics blobs, with combined 121 tests PASS. Migration/Edge NOT_APPLICABLE. Recovery is revert/forward-fix bounded reader/notice, preserving applied snapshots and dispatch refusal. No new customer release identity/publication.
+
+Observed repair production: Vercel `dpl_GJ7QPbYeG4RohfpJg6WR7Dr43R21` READY exact `a288a3a6c0a4215cf759e1b282d1f86677d2fc24`, expected public/app/inbound/main Vercel aliases. Both public/app `/version.json` report `a288a3a6c0a4215cf759e1b282d1f86677d2fc24-musrlele`, customerUpdate null. OWNER_CONFIRMED authenticated default Sales render after Ctrl+Shift+R: owner said “Yes, Sales loads now”. This is human page-load confirmation only, not independent signed-JWT, CRM data, draft save/read, permission, delivery or provider proof. Earlier development shell fixtures replaced the source hook and masked this defect; compiled real-reader proof repairs that test gap but does not establish hosted signed-in behavior.

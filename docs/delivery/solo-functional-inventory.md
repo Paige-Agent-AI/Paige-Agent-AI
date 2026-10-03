@@ -2,7 +2,7 @@
 
 **Program:** PAIGE Solo Completion — PR4 of the canonical-parity train.
 **Grounded on:** `main` @ `9f548334` (merge of PR #1271, 2026-09-17). Read-only source trace; no runtime claim below depends on a delivery note.
-**Machine-readable authority:** [`docs/delivery/solo-completion-matrix.json`](./solo-completion-matrix.json) — 85 capability rows, 23 orphan-registry entries, 12 acceptance scenarios. Counts in this doc are **derived** from that file by [`src/__tests__/solo-completion-matrix.test.ts`](../../src/__tests__/solo-completion-matrix.test.ts); nothing hand-written here is authoritative.
+**Machine-readable authority:** [`docs/delivery/solo-completion-matrix.json`](./solo-completion-matrix.json) — 85 capability rows, 22 orphan-registry entries, 12 acceptance scenarios. Counts in this doc are **derived** from that file by [`src/__tests__/solo-completion-matrix.test.ts`](../../src/__tests__/solo-completion-matrix.test.ts); nothing hand-written here is authoritative.
 
 **Mission:** determine exactly what remains before the owner can say "the Solo product is where I want it to be" — inventorying the rendered customer-facing product, not its routing shell.
 
@@ -26,7 +26,7 @@ The words "done" and "mostly done" do not appear as verdicts anywhere in this pr
 
 ## 2. Headline counts
 
-<!-- solo-inventory:totals total=85 LIVE=48 PARTIAL=20 UNAVAILABLE=7 NOT_CONNECTED=2 PROOF_OWED=2 BLOCKED=3 NOT_APPLICABLE=3 P0=0 P1=2 P2=10 P3=12 orphans=23 -->
+<!-- solo-inventory:totals total=85 LIVE=48 PARTIAL=20 UNAVAILABLE=7 NOT_CONNECTED=2 PROOF_OWED=2 BLOCKED=3 NOT_APPLICABLE=3 P0=0 P1=2 P2=10 P3=12 orphans=22 -->
 
 **85 capabilities inventoried** across shell, Command Center, PAIGE workspace, Settings (setup/team/billing/security/vault/connections/integrations), comms/phone, CRM/sales, calendar, work/actions/approvals, Mind/memory, growth/campaigns/social/vibe/marketplace, analytics, artifacts/files, and research — plus one row for the certification capability itself.
 

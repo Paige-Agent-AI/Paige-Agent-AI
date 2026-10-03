@@ -669,7 +669,7 @@ function ClientRecord({
           <header><div><span>Owned capabilities</span><h3>Relationship connections</h3></div><ProofPill>Canonical handoffs</ProofPill></header>
           <div className="trc-capability-list">
             <article><div><strong>Conversations · PARTIAL</strong><span>The canonical Conversations owner remains the only inbox. Selected-client context handoff is not yet proven.</span></div></article>
-            <article><div><strong>Campaigns owns pipeline · PARTIAL</strong><span>No stage, campaign membership, product association, or assignment is inferred here.</span></div></article>
+            <article><div><strong>Sales owns pipeline · PARTIAL</strong><span>No stage, campaign membership, product association, or assignment is inferred here.</span></div></article>
             <article><div><strong>Portal access · PARTIAL</strong><span>Configuration and invitations remain in existing Portal owners; this record does not prove their role gates.</span></div></article>
             <article><div><strong>Client files · PARTIAL</strong><span>The existing client-files seam remains separate from the business Vault; upload is not exposed here.</span></div></article>
           </div>

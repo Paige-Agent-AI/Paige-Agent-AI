@@ -189,10 +189,10 @@ describe("Vibe Studio — the 18 owner-required states, rendered", () => {
     expect(backCount).toBe(2);
   });
 
-  it("opens on Studio home: one brief composer, no artifact-type picker, and Back to Campaigns", () => {
+  it("opens on Studio home: one brief composer, no artifact-type picker, and Back to Marketing", () => {
     renderAt(baseMedia(), "home");
     expect(text()).toContain("What should Paige build?");
-    expect(text()).toContain("Back to Campaigns");
+    expect(text()).toContain("Back to Marketing");
     expect(host.querySelector("#vs-brief")).toBeTruthy();
     for (const tab of ["Page", "Form", "Funnel", "Copy"]) {
       expect([...host.querySelectorAll("button")].some((b) => b.textContent === tab)).toBe(false);

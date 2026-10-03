@@ -21,7 +21,13 @@ async function open(query, w, h, opts = {}) {
   const page = await browser.newPage({ viewport: { width: w, height: h }, reducedMotion: opts.reducedMotion ?? "no-preference" });
   page.on("pageerror", (e) => errors.push(`${query}: ${e}`));
   await page.goto(`${base}?${query}`);
-  await page.getByRole("button", { name: "Details" }).first().click();
+  // The form's routing lives in Marketing › Lead capture now (owner ruling 2026-10-03), as a row
+  // action on the right. Below 1080px PAIGE is an overlay over the right of the column, so with
+  // PAIGE open that control sits under it, like every right-aligned Solo control. Keyboard reaches it
+  // regardless, so the drive opens it the way a keyboard user would.
+  const routing = page.getByRole("button", { name: "Routing and submissions" }).first();
+  await routing.focus();
+  await page.keyboard.press("Enter");
   await page.waitForSelector(".campaigns-drawer .intake-section");
   return page;
 }

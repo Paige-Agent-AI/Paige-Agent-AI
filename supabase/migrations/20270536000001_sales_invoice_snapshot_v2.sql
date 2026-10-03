@@ -366,4 +366,3 @@ END;
 $$;
 REVOKE ALL ON FUNCTION public.save_sales_billing_draft(uuid,uuid,bigint,uuid,jsonb) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.save_sales_billing_draft(uuid,uuid,bigint,uuid,jsonb) TO authenticated;
-

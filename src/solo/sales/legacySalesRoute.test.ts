@@ -1,5 +1,9 @@
 import { expect, it } from "vitest";
 import { legacySalesRoute } from "./legacySalesRoute";
+it.each(["", "command", "invoices", "recurring", "payments", "revenue", "scenarios", "unknown"])("prioritizes Clients terms resume over legacy view %s", (view) => {
+  const search = `?resume=terms${view ? `&view=${view}` : ""}&person=person-a`;
+  expect(legacySalesRoute("test-account", "sales", search, "#terms")).toBe("/solo/test-account/sales/agreements?resume=terms&person=person-a#terms");
+});
 it.each([["", "overview", ""], ["command", "overview", ""], ["terms", "agreements", ""], ["agreements", "agreements", ""], ["invoices", "payments", "view=invoices"], ["recurring", "payments", "view=recurring"], ["payments", "payments", "view=payments"], ["revenue", "payments", "view=revenue"], ["scenarios", "payments", "view=scenarios"], ["unknown", "overview", ""]])("preserves legacy Sales view %s", (view, destination, query) => {
   expect(legacySalesRoute("test-account", "sales", view ? `?view=${view}` : "", "")).toBe(`/solo/test-account/sales/${destination}${query ? `?${query}` : ""}`);
 });

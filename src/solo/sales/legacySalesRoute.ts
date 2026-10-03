@@ -7,8 +7,11 @@ export function legacySalesRoute(account: string | null, segment: string, search
   let destination = segment === "pipeline" ? "pipeline" : segment === "catalog" ? "offers" : "overview";
   if (segment === "sales") {
     const view = query.get("view");
-    if (view === "terms" || view === "agreements") destination = "agreements";
-    if (["invoices", "recurring", "payments", "revenue", "scenarios"].includes(view ?? "")) destination = "payments";
+    // Clients returns and unfinished editor handoffs take precedence over a stale view.
+    if (query.get("resume") === "terms" || view === "terms" || view === "agreements") {
+      destination = "agreements";
+      query.delete("view");
+    } else if (["invoices", "recurring", "payments", "revenue", "scenarios"].includes(view ?? "")) destination = "payments";
     else query.delete("view");
   }
   const suffix = query.toString();

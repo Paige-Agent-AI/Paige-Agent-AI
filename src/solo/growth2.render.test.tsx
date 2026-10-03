@@ -118,6 +118,13 @@ afterEach(() => {
 });
 
 describe("Solo Campaigns rendered flows", () => {
+  it.each(["?resume=terms", "?view=invoices&resume=terms"])("preserves mounted Clients editor return intent %s", (search) => {
+    const before=harness.readCalls;
+    renderAt(`/solo/42/growth/sales${search}`);
+    expect(harness.readCalls).toBe(before);
+    expect(host.querySelector("[data-location]")?.textContent).toBe("/solo/42/sales/agreements?resume=terms");
+    expect(host.querySelector("[data-location]")?.getAttribute("data-navigation-type")).toBe("REPLACE");
+  });
   it("replaces legacy commercial addresses before Marketing readers mount", () => {
     const before=harness.readCalls;
     renderAt("/solo/42/growth/sales?view=revenue&theme=dark#record");

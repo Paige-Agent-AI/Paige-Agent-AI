@@ -75,6 +75,8 @@ export type AgreementClient = {
    * this does not add a third opinion.
    */
   readonly name: string;
+  /** Canonical primary CRM email; absent/null never falls back to a secondary address. */
+  readonly primaryEmail?: string | null;
 };
 
 export type ClientAgreement = {
@@ -498,7 +500,7 @@ export function useSoloCommercialTerms(): AgreementsState {
           const name = company && (Boolean(entityType) || !full)
             ? company
             : full || company || primaryAddressesOf(row.client_contact_methods as ContactMethodRow[] | null).email?.trim() || "Unnamed contact";
-          return { id: String(row.id), name };
+          return { id: String(row.id), name, primaryEmail: primaryAddressesOf(row.client_contact_methods as ContactMethodRow[] | null).email?.trim() || null };
         });
 
         const role = typeof roleResponse.data?.role === "string" ? roleResponse.data.role : null;

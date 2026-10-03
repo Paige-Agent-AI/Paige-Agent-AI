@@ -487,3 +487,11 @@ it("carries the operator sentence on the status writer too, not only the save", 
   expect(outcome?.ok).toBe(false);
   expect(outcome?.message).toBe("A paused agreement cannot be paused again.");
 });
+
+it("exposes only the canonical primary email for billing, never secondary or legacy addresses", async () => {
+  results.clients = {data: [CLIENT_ROWS[0], {...CLIENT_ROWS[1], email: "legacy@example.test", client_contact_methods: [{id:"secondary",kind:"email",value:"secondary@example.test",is_primary:false,position:0}]}],error:null};
+  await run();
+  expect(latest!.clients[0]).toMatchObject({id:"c1",primaryEmail:"j@example.test"});
+  expect(latest!.clients[1]).toMatchObject({id:"c2",primaryEmail:null});
+  expect(call("clients")?.eq).toContainEqual(["tenant_id","tenant-1"]);
+});

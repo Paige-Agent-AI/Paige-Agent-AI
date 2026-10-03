@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { resolvePlaywright, buildLaunchOptions } from './live-drive.mjs';
+const baseUrl = process.env.SALES_BILLING_BASE_URL || 'http://127.0.0.1:5217';
 const out = path.resolve('scripts/live-drive/artifacts/sales-billing-shell');
 fs.mkdirSync(out, { recursive: true });
 const { chromium } = await resolvePlaywright();
@@ -27,7 +28,7 @@ try {
   for (const theme of process.env.SALES_BILLING_ZOOM_ONLY === '1' ? [] : ['light', 'dark']) for (const [width, height] of [[1536, 770], [1366, 768], [1024, 768], [900, 1000]]) for (const paige of ['closed', 'open']) {
     const name = `${width}-${height}-${paige}-${theme}`;
     await page.setViewportSize({ width, height });
-    await page.goto(`http://127.0.0.1:5217/solo/test-account/growth/sales?full-shell=1&billing-fixture=populated&theme=${theme}&paige=${paige}&view=invoices`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${baseUrl}/solo/test-account/growth/sales?full-shell=1&billing-fixture=populated&theme=${theme}&paige=${paige}&view=invoices`, { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: 'Create invoice', exact: true }).waitFor();
     await page.waitForFunction(({ theme, paige }) => { const shell = document.querySelector('[data-tenant-shell]'); return shell?.getAttribute('data-pg') === theme && shell?.getAttribute('data-paige') === paige; }, { theme, paige });
     await page.evaluate(async () => { await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); await Promise.all(document.querySelector('[data-tenant-shell]').getAnimations().map(animation => animation.finished.catch(() => undefined))); });
@@ -58,6 +59,13 @@ try {
     const readingRegionFocused = await page.getByRole('region', { name: 'Billing details and summary', exact: true }).evaluate(el => el === document.activeElement);
     await page.keyboard.press('Tab');
     const clientFocused = await page.locator('.sb-fields select').first().evaluate(el => el === document.activeElement);
+    const emailField = page.getByLabel('Billing email', { exact: true });
+    if (await emailField.inputValue() !== 'billing@example.test') throw new Error('Saved billing email was overwritten by CRM');
+    await page.locator('.sb-fields select').first().selectOption('c2');
+    if (await emailField.inputValue() !== '') throw new Error('Missing primary kept another client email');
+    await page.locator('.sb-fields select').first().selectOption('c1');
+    if (await emailField.inputValue() !== 'jordan-primary@example.test') throw new Error('Canonical primary was not prefilled');
+    await emailField.fill('manual-billing@example.test');
     const unitValue = await page.getByLabel('Unit price · USD').inputValue();
     if (unitValue !== '150.00') throw new Error(`Current Catalog unit mismatch: ${unitValue}`);
     await page.locator('.sb-summary [role="status"]').waitFor();
@@ -77,7 +85,10 @@ try {
     const review = await geometry();
     await page.screenshot({ path: path.join(out, `${name}-review.png`) });
     if (overlay) await page.getByRole('button', { name: 'Fold PAIGE conversation', exact: true }).last().click();
-    observations.push({ name, register, tabs, selection, editor, review, catalogRepricing: { unitValue, reviewUnit, savedUnit: '$100.00' }, keyboard: { headingFocused, backFocused, readingRegionFocused, clientFocused }, internalDirtyExit: 'PASS', overlay: overlay ? 'PAIGE blocks underlying pointer actions by design; folded for editing and dirty-exit checks' : false, proof: 'real production shell and components; synthetic network/auth data and unavailable PAIGE slot' });
+    await page.getByRole('button', { name: 'Save draft', exact: true }).click();
+    await catalogRow.getByRole('button', { name: 'Edit', exact: true }).click();
+    if (await page.getByLabel('Billing email', { exact: true }).inputValue() !== 'manual-billing@example.test') throw new Error('Saved manual billing snapshot did not reopen');
+    observations.push({ name, register, tabs, selection, editor, review, customerEmail: 'PASS: saved snapshot, missing-primary switch, canonical prefill, manual save/reopen; synthetic only', catalogRepricing: { unitValue, reviewUnit, savedUnit: '$100.00' }, keyboard: { headingFocused, backFocused, readingRegionFocused, clientFocused }, internalDirtyExit: 'PASS', overlay: overlay ? 'PAIGE blocks underlying pointer actions by design; folded for editing and dirty-exit checks' : false, proof: 'real production shell and components; synthetic network/auth data and unavailable PAIGE slot' });
   }
   // CSS layout dimensions equivalent to 200% browser zoom at these physical window sizes.
   // Device scale factor preserves the physical screenshot size; this is reflow evidence,
@@ -88,7 +99,7 @@ try {
     const context = await browser.newContext({ viewport, deviceScaleFactor: 2 });
     const zoomPage = await context.newPage();
     zoomPage.setDefaultTimeout(15000);
-    await zoomPage.goto(`http://127.0.0.1:5217/solo/test-account/growth/sales?full-shell=1&billing-fixture=populated&theme=light&paige=${paige}&view=invoices`, { waitUntil: 'domcontentloaded' });
+    await zoomPage.goto(`${baseUrl}/solo/test-account/growth/sales?full-shell=1&billing-fixture=populated&theme=light&paige=${paige}&view=invoices`, { waitUntil: 'domcontentloaded' });
     await zoomPage.getByRole('button', { name: 'Create invoice', exact: true }).waitFor();
     await zoomPage.waitForFunction(paige => document.querySelector('[data-tenant-shell]')?.getAttribute('data-paige') === paige, paige);
     await zoomPage.evaluate(async () => { await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); await Promise.all(document.querySelector('[data-tenant-shell]').getAnimations().map(animation => animation.finished.catch(() => undefined))); });
@@ -155,7 +166,7 @@ try {
     if (restoredTabs !== 5) throw new Error(`${name}:Back did not restore the Sales destinations`);
     // A fresh read-only Catalog mount proves selector scope; this is not a claim
     // about the draft abandonment/navigation flow (covered separately above).
-    await zoomPage.goto(`http://127.0.0.1:5217/solo/test-account/growth/catalog?full-shell=1&theme=light&paige=closed`, { waitUntil: 'domcontentloaded' });
+    await zoomPage.goto(`${baseUrl}/solo/test-account/growth/catalog?full-shell=1&theme=light&paige=closed`, { waitUntil: 'domcontentloaded' });
     await zoomPage.waitForFunction(() => document.querySelector('.solo-campaigns')?.getAttribute('data-campaigns-view') === 'catalog');
     const otherViewWrap = await zoomPage.locator('.campaigns-tabs').evaluate(el => getComputedStyle(el).flexWrap);
     if (otherViewWrap !== 'nowrap') throw new Error(`${name}:Sales-scoped wrap affects another Campaigns view`);

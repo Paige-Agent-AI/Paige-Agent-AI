@@ -4,12 +4,12 @@ UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: client/known contacts -> invoice-only address -> stacked Catalog/custom items -> deposit/monthly guards -> optional agreement -> method/channel intent -> review -> canonical save/edit/recovery
 PAIGE_UI_DESIGN: PASS: approved invoice-refinement layout absorbed into actual Sales; five primary tabs and six outer tabs preserved
 MATERIAL_FLOW_CHANGE: NO: approved refined multi-item/contact invoice editor replaces the single-item editor; legacy shortcut row removed, legacy routes preserved
-FLOW_PROTOTYPE: NOT_APPLICABLE: existing approved flow preserved; owner approved outputs/invoice-refinement.html and address/items/review captures before production implementation
+FLOW_PROTOTYPE: NOT_REQUIRED: existing approved flow preserved; owner approved outputs/invoice-refinement.html and address/items/review captures before production implementation
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: workspace owner/admin prepares, reviews, saves and reopens a canonical invoice draft
 VISUAL_DIRECTION: PASS: approved Operate reconciliation direction, defined violet group boundaries, raised controls, invoice table and restrained due-now emphasis
-AUTOMATED_EVIDENCE: PASS: 200 focused tests and production-verified canonical SQL dependency; local SQL roundtrip/concurrency separately proven
-STATIC_EVIDENCE: PASS: focused ESLint; TypeScript ratchet 12 baseline/current; independent exact-head source/finish review PASS at 3f3cc826880179e59c7573e72536a773f8f7c944 (130 independently rerun tests and 20 fixture observations)
-RENDERED_EVIDENCE: PASS: actual TenantCommandCenterShell/GrowthHub/Sales production components rendered with local auth/network fixtures; 16 normal light/dark open/closed and four equivalent reflow cases; register, all five tabs, edit/review/create
+AUTOMATED_EVIDENCE: PASS: 41 focused tests; two failing-first real SDK receiver/construction regressions now pass; no SQL changes
+STATIC_EVIDENCE: PASS: focused ESLint and diff check; final TypeScript and independent repair review pending
+RENDERED_EVIDENCE: PASS: production-built actual shell with real source hook and real SDK/mock fetch; Overview/Invoices ready and injected construction-error cases render with zero pageerrors; prior unchanged-layout matrix supporting only
 BEHAVIORAL_EVIDENCE: PASS: local component/hook lifecycle, known contact/manual/snapshot, Catalog repricing/search/reference paging, stacked items, dirty exits and frozen original retry; hosted authenticated lifecycle UNVERIFIED
 AUTHENTICATED_RUNTIME: UNVERIFIED: Windows browser ACL blocks hosted account drive; fixture tenant and route IDs are not account proof
 KEYBOARD_FOCUS: PASS: heading focus and dirty-exit focus trap; actual keyboard Review scrolling traverses all financial/contact/intent content in local shell fixtures
@@ -25,7 +25,7 @@ MUST_PRESERVE: existing agreements, catalog and declaration records; platform su
 ACCEPTANCE_CRITERIA: real canonical snapshot writer/readers; tenant-safe contact and agreement refs; search/paging retain selected facts; checked item aggregate and cadence; immutable unknown operation; approved form fit and visual boundaries
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: tenant/RLS/CAS guarded; no shared Harness, Rail, Chat, Analytics or Memory write added
-INTERNAL_BUILD_IDENTITY: ee5219d5c04066143b643c7cf4b7a278c36a79a3; deployment=dpl_5bukxhYByoU9e2zEv2EW4X1oBSUP; environment=production; migrations=APPLIED(20270536000001_sales_invoice_snapshot_v2); edge=NOT_APPLICABLE; evidence=scripts/live-drive/sales-refined-invoice-shell-drive.mjs and scripts/live-drive/artifacts/sales-refined-invoice-shell/geometry.json
+INTERNAL_BUILD_IDENTITY: ee5219d5c04066143b643c7cf4b7a278c36a79a3; deployment=local-production-build; environment=development; migrations=APPLIED(20270536000001_sales_invoice_snapshot_v2); edge=NOT_APPLICABLE; evidence=scripts/live-drive/sales-refined-invoice-shell-drive.mjs and scripts/live-drive/artifacts/sales-refined-invoice-shell/geometry.json
 RELEASE_CHANNEL: development: repair pending review/CI/release; prior UI production: observed READY exact squash SHA; required exact-head PR checks PASS; authenticated UI proof remains owed
 RELEASE_CLASSIFICATION: internal-only: refined canonical draft UI, complete billing remains PARTIAL
 CUSTOMER_RELEASE_IDENTITY: none: no customer update publication

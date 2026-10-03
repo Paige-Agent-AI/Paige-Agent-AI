@@ -353,6 +353,14 @@ export function verifyApprovalPins(
  * here. A name that fails the identifier grammar stays COUNTED only — never truncated,
  * never sanitized into a different identity — so unapproved_count can exceed the named
  * list's length, and that gap is the honest signal that some names were unshapeable.
+ *
+ * RESIDUAL RISK, recorded rather than implied: an APPROVED name crossing here carries the
+ * human control that a tenant admin approved this exact identifier; an UNAPPROVED name
+ * carries the grammar alone. An identifier like IGNORE_PRIOR_INSTRUCTIONS can still cross
+ * unreviewed — bounded, deduped, capped, but never human-seen. That is the accepted cost
+ * of naming what waits (the operator must see the names to grant them), and it is why the
+ * grammar and the 200 cap are re-asserted at the model-side gate below rather than trusted
+ * from this projection.
  */
 export function projectDiscovery(
   discovered: ReadonlyArray<{ name: string }>,

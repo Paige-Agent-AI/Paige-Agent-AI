@@ -98,6 +98,13 @@ describe("projectDiscovery names the waiting actions (behavioral, the REAL funct
     expect(r.unapproved_count).toBe(1);
   });
 
+  it("the projection's own 200-name cap bites (defense in depth with the model-side gate)", () => {
+    const tools = Array.from({ length: 250 }, (_, i) => ({ name: `action_${String(i).padStart(3, "0")}` }));
+    const r = projectDiscovery(tools, []);
+    expect(r.unapproved).toHaveLength(200);
+    expect(r.unapproved_count).toBe(250); // the count stays the whole truth
+  });
+
   it("the incident's shape: 17 unapproved become 17 NAMES the operator can act on", () => {
     const tools = Array.from({ length: 17 }, (_, i) => ({ name: `action_${String(i).padStart(2, "0")}` }));
     const r = projectDiscovery(tools, []);

@@ -1757,21 +1757,21 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
     const search = q.toString();
     navigate({ pathname: location.pathname, search: search ? `?${search}` : "" });
   }, [navigate, location.pathname, location.search, onViewChange]);
+  // A workspace switch clears anything half-typed. Without this, a draft opened against one
+  // workspace stays on screen under the next one. Both tenant ids are watched because each hook
+  // guards its own synchronously, and the agreements drawer holds the more sensitive draft — a
+  // client name bound to a negotiated amount.
+  React.useEffect(() => { setEditor(null); setEditing(null); setSending(null); setCompleted(null); setSuccess(""); setTermSearch(""); setTermStatus("all"); setTermPage(0); }, [sales.tenantId, agreements.tenantId, signings.tenantId]);
+
   React.useEffect(() => {
-    if (new URLSearchParams(location.search).get("resume") === "terms" && agreements.phase === "ready" && offers.phase === "ready") {
+    if (new URLSearchParams(location.search).get("resume") === "terms" && agreements.phase === "ready" && offers.phase === "ready" && agreements.tenantId && agreements.tenantId === offers.tenantId && agreements.tenantId === sales.tenantId) {
       setEditor("agreement");
       // Land on Commercial Terms so the editor opens over its own view, and strip the one-shot param.
       const q = new URLSearchParams(location.search);
       q.delete("resume"); q.set("view", "terms");
       navigate({ pathname: location.pathname, search: `?${q.toString()}` }, { replace: true });
     }
-  }, [location.search, agreements.phase, offers.phase, navigate, location.pathname]);
-
-  // A workspace switch clears anything half-typed. Without this, a draft opened against one
-  // workspace stays on screen under the next one. Both tenant ids are watched because each hook
-  // guards its own synchronously, and the agreements drawer holds the more sensitive draft — a
-  // client name bound to a negotiated amount.
-  React.useEffect(() => { setEditor(null); setEditing(null); setSending(null); setCompleted(null); setSuccess(""); setTermSearch(""); setTermStatus("all"); setTermPage(0); }, [sales.tenantId, agreements.tenantId, signings.tenantId]);
+  }, [location.search, agreements.phase, offers.phase, agreements.tenantId, offers.tenantId, sales.tenantId, navigate, location.pathname]);
 
   // Hooks must run in the same order while the production adapters advance from loading to ready.
   // Keeping this memo above every phase return prevents React from aborting the Sales route on the

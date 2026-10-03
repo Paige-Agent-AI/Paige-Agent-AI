@@ -5,12 +5,13 @@
 // "exactly four tenant-scoped reads" assertion is a guard worth leaving sharp rather than editing.
 import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useParams, Link } from "react-router-dom";
 import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GrowthHub } from "./growth2";
 import { CatalogOffers } from "./catalog-offers";
+import { SalesWorkspace } from "./SalesWorkspace";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -68,6 +69,10 @@ vi.mock("./useCatalogOffers", () => ({ useCatalogOffers: () => harness.offers })
 
 let host: HTMLDivElement;
 let root: Root;
+function CanonicalCatalogOwner() {
+  const params=useParams();
+  return params["*"].startsWith("growth") ? <GrowthHub/> : <SalesWorkspace/>;
+}
 
 function renderAt(path: string) {
   // Tear the previous tree down FIRST. Each call used to append a new host and leave the old one
@@ -82,7 +87,7 @@ function renderAt(path: string) {
   root = createRoot(host);
   act(() => root.render(
     <MemoryRouter initialEntries={[path]}>
-      <Routes><Route path="/solo/:account/*" element={<GrowthHub />} /></Routes>
+      <Link data-offers-owner to="/solo/4471/sales/offers">Sales offer owner</Link><Link data-assets-owner to="/solo/4471/growth/lead-capture?type=form">Marketing asset owner</Link><Routes><Route path="/solo/:account/*" element={<CanonicalCatalogOwner />} /></Routes>
     </MemoryRouter>,
   ));
 }
@@ -562,13 +567,13 @@ describe("Catalog Offers — rendered flows", () => {
     expect(harness.offers.setOfferStatus).not.toHaveBeenCalled();
   });
 
-  it("opens on Offers, inside the approved Marketing tabs", () => {
+  it("opens legacy Offers inside the canonical seven-tab Sales owner", () => {
     setCampaigns(); setOffers();
     renderAt("/solo/4471/growth/catalog");
-    const tabs = [...host.querySelectorAll('.campaigns-tabs button')].map((b) => b.textContent?.trim());
-    expect(tabs).toEqual(["Overview", "Campaigns", "Lead capture", "Social", "Analytics", "Offers", "Sales", "Pipeline"]);
+    const tabs = [...host.querySelectorAll('.sales-tabs button')].map((b) => b.textContent?.trim());
+    expect(tabs).toEqual(["Overview", "Opportunities", "Pipeline", "Offers", "Terms & Agreements", "Payments", "Performance"]);
     expect(host.textContent).toContain("Foundations Coaching Program");
-    expect(host.textContent).toContain("What this business sells");
+    expect(host.querySelector(".co-list")).not.toBeNull();
   });
 
   it("shows first use rather than an empty table when nothing is defined", () => {
@@ -732,9 +737,8 @@ describe("Catalog Offers — rendered flows", () => {
     setCampaigns(); setOffers();
     renderAt("/solo/4471/growth/catalog?type=form");
     expect(host.textContent).toContain("Created and published in Vibe Studio.");
-    const tab = [...host.querySelectorAll('[role="tab"]')].find((b) => b.textContent === "Offers");
-    act(() => { tab?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
-    expect(host.textContent).toContain("What this business sells");
+    act(() => (host.querySelector("[data-offers-owner]") as HTMLAnchorElement).click());
+    expect(host.querySelector(".co-list")).not.toBeNull();
     expect(host.textContent).not.toContain("Created and published in Vibe Studio.");
   });
 
@@ -751,7 +755,7 @@ describe("Catalog Offers — rendered flows", () => {
     setOffers({ tenantId: "tenant-2", offers: [] });
     act(() => root.render(
       <MemoryRouter initialEntries={["/solo/4471/growth/catalog"]}>
-        <Routes><Route path="/solo/:account/*" element={<GrowthHub />} /></Routes>
+        <Link data-offers-owner to="/solo/4471/sales/offers">Sales offer owner</Link><Link data-assets-owner to="/solo/4471/growth/lead-capture?type=form">Marketing asset owner</Link><Routes><Route path="/solo/:account/*" element={<CanonicalCatalogOwner />} /></Routes>
       </MemoryRouter>,
     ));
     expect(document.querySelector('[role="dialog"]')).toBeNull();
@@ -943,7 +947,7 @@ describe("Catalog Offers — rendered flows", () => {
     setOffers({ tenantId: "tenant-2", offers: [] });
     act(() => root.render(
       <MemoryRouter initialEntries={["/solo/4471/growth/catalog"]}>
-        <Routes><Route path="/solo/:account/*" element={<GrowthHub />} /></Routes>
+        <Link data-offers-owner to="/solo/4471/sales/offers">Sales offer owner</Link><Link data-assets-owner to="/solo/4471/growth/lead-capture?type=form">Marketing asset owner</Link><Routes><Route path="/solo/:account/*" element={<CanonicalCatalogOwner />} /></Routes>
       </MemoryRouter>,
     ));
     expect(document.querySelector(".co-editor")).toBeNull();
@@ -1088,8 +1092,7 @@ describe("Catalog Offers — rendered flows", () => {
     renderAt("/solo/4471/growth/catalog");
     expect(host.textContent).toContain("Foundations Coaching Program");
     expect(host.textContent).not.toContain("Published form");
-    const toCapture = [...host.querySelectorAll('[role="tab"]')].find((b) => b.textContent === "Lead capture");
-    act(() => { toCapture?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+    act(() => (host.querySelector("[data-assets-owner]") as HTMLAnchorElement).click());
     expect(host.textContent).toContain("Published form");
     expect(host.textContent).not.toContain("Foundations Coaching Program");
   });

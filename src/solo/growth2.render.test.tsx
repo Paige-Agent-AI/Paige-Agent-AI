@@ -1,13 +1,15 @@
 import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation, useParams, useNavigationType } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { GrowthHub } from "./growth2";
+import { SalesWorkspace } from "./SalesWorkspace";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 const harness = vi.hoisted(() => ({
   // Owner briefs the Marketing Overview and Analytics read. Empty unless a test sets them.
+  readCalls: 0,
   briefs: [] as Array<Record<string, unknown>>,
   state: {
     tenantId: "tenant-1",
@@ -42,7 +44,7 @@ type PipelineWorkspaceFixture = {
   }>;
 };
 
-vi.mock("./useSoloCampaigns", () => ({ useSoloCampaigns: () => harness.state }));
+vi.mock("./useSoloCampaigns", () => ({ useSoloCampaigns: () => { harness.readCalls++; return harness.state; } }));
 
 // Overview is now the Campaign Command Desk, which reads owner briefs through its own tenant-scoped
 // adapter (`useSoloCampaignBriefs`). This file proves the shell (tab order, error/unavailable
@@ -86,16 +88,22 @@ function renderAt(path: string) {
   host = document.createElement("div");
   document.body.appendChild(host);
   root = createRoot(host);
-  act(() => root.render(<MemoryRouter initialEntries={[path]}><Routes><Route path="/solo/:account/growth/sales" element={<LocationProbe/>}/><Route path="/solo/:account/*" element={<><GrowthHub/><LocationProbe/></>}/></Routes></MemoryRouter>));
+  act(() => root.render(<MemoryRouter initialEntries={[path]}><Routes><Route path="/solo/:account/*" element={<CanonicalSalesOwner/>}/></Routes></MemoryRouter>));
 }
 
 function rerenderAt(path: string) {
-  act(() => root.render(<MemoryRouter initialEntries={[path]}><Routes><Route path="/solo/:account/growth/sales" element={<LocationProbe/>}/><Route path="/solo/:account/*" element={<><GrowthHub/><LocationProbe/></>}/></Routes></MemoryRouter>));
+  act(() => root.render(<MemoryRouter initialEntries={[path]}><Routes><Route path="/solo/:account/*" element={<CanonicalSalesOwner/>}/></Routes></MemoryRouter>));
+}
+
+function CanonicalSalesOwner() {
+  const params=useParams();
+  return <>{(params["*"] === "growth" || params["*"].startsWith("growth/")) ? <GrowthHub/> : params["*"].startsWith("sales/pipeline") ? <SalesWorkspace/> : null}<LocationProbe/></>;
 }
 
 function LocationProbe() {
   const location = useLocation();
-  return <output data-location>{location.pathname}{location.search}</output>;
+  const navigationType=useNavigationType();
+  return <output data-location data-navigation-type={navigationType}>{location.pathname}{location.search}{location.hash}</output>;
 }
 
 afterEach(() => {
@@ -110,12 +118,27 @@ afterEach(() => {
 });
 
 describe("Solo Campaigns rendered flows", () => {
+  it.each(["?resume=terms", "?view=invoices&resume=terms"])("preserves mounted Clients editor return intent %s", (search) => {
+    const before=harness.readCalls;
+    renderAt(`/solo/42/growth/sales${search}`);
+    expect(harness.readCalls).toBe(before);
+    expect(host.querySelector("[data-location]")?.textContent).toBe("/solo/42/sales/agreements?resume=terms");
+    expect(host.querySelector("[data-location]")?.getAttribute("data-navigation-type")).toBe("REPLACE");
+  });
+  it("replaces legacy commercial addresses before Marketing readers mount", () => {
+    const before=harness.readCalls;
+    renderAt("/solo/42/growth/sales?view=revenue&theme=dark#record");
+    expect(harness.readCalls).toBe(before);
+    const destination=host.querySelector("[data-location]");
+    expect(destination?.textContent).toBe("/solo/42/sales/payments?view=revenue&theme=dark#record");
+    expect(destination?.getAttribute("data-navigation-type")).toBe("REPLACE");
+  });
   it("renders a board-first Pipeline and opens contextual deal detail without financial claims", () => {
     renderAt("/solo/42/growth/pipeline");
     expect(host.textContent).toContain("Client onboarding");
     expect(host.textContent).toContain("Onboarding work");
     expect(host.textContent).toContain("Review intake");
-    expect(host.textContent).not.toMatch(/revenue|ROI|payment/i);
+    expect(host.querySelector(".pipeline-surface")?.textContent).not.toMatch(/revenue|ROI|payment/i);
     const card = host.querySelector(".pipeline-card-open") as HTMLButtonElement;
     act(() => card.click());
     expect(host.querySelector('[role="dialog"]')?.textContent).toContain("No portal activity source connected");
@@ -371,7 +394,7 @@ describe("Solo Campaigns rendered flows", () => {
     act(() => ([...host.querySelectorAll("button")].find((button)=>button.textContent==="New pipeline") as HTMLButtonElement).click());
     expect(host.querySelector('.pipeline-config-workspace')).not.toBeNull();
     harness.state.tenantId = "tenant-2";
-    act(() => root.render(<MemoryRouter initialEntries={["/solo/42/growth/pipeline"]}><Routes><Route path="/solo/:account/growth/sales" element={<LocationProbe/>}/><Route path="/solo/:account/*" element={<><GrowthHub/><LocationProbe/></>}/></Routes></MemoryRouter>));
+    act(() => root.render(<MemoryRouter initialEntries={["/solo/42/growth/pipeline"]}><Routes><Route path="/solo/:account/*" element={<CanonicalSalesOwner/>}/></Routes></MemoryRouter>));
     expect(host.querySelector('.pipeline-config-workspace')).toBeNull();
   });
 
@@ -477,7 +500,7 @@ describe("Solo Campaigns rendered flows", () => {
       const retry = harness.state.retry as ReturnType<typeof vi.fn>;
       retry.mockClear();
       act(() => ([...host.querySelectorAll('[role="dialog"] button')].find((button) => button.textContent === "Open deal") as HTMLButtonElement).click());
-      expect(host.querySelector("[data-location]")?.textContent).toBe("/solo/42/growth/pipeline?deal=deal-1");
+      expect(host.querySelector("[data-location]")?.textContent).toBe("/solo/42/sales/pipeline?deal=deal-1");
       // deal-1 is already in the workspace read, so nothing is re-read.
       expect(retry).not.toHaveBeenCalled();
     } finally {
@@ -496,7 +519,7 @@ describe("Solo Campaigns rendered flows", () => {
       const openDeals = [...host.querySelectorAll('[role="dialog"] button')].filter((button) => button.textContent === "Open deal") as HTMLButtonElement[];
       act(() => openDeals[1].click());
       expect(retry).toHaveBeenCalledTimes(1);
-      expect(host.querySelector("[data-location]")?.textContent).toBe("/solo/42/growth/pipeline?deal=deal-arrived-later");
+      expect(host.querySelector("[data-location]")?.textContent).toBe("/solo/42/sales/pipeline?deal=deal-arrived-later");
     } finally {
       harness.state.artifacts = artifacts;
     }
@@ -504,10 +527,7 @@ describe("Solo Campaigns rendered flows", () => {
 
   it("offers a same-account return from Catalog to unfinished commercial terms", () => {
     renderAt("/solo/42/growth/catalog?origin=sales&resume=terms&returnTo=https://wrong.test");
-    const back = [...host.querySelectorAll("button")].find((button) => button.textContent === "Return to commercial terms");
-    expect(back).toBeDefined();
-    act(() => back!.click());
-    expect(host.querySelector("[data-location]")?.textContent).toBe("/solo/42/growth/sales?resume=terms");
+    expect(host.querySelector("[data-location]")?.textContent).toBe("/solo/42/sales/offers?origin=sales&resume=terms");
   });
   it("removes detached detail and its inert background after a workspace switch", () => {
     renderAt("/solo/42/growth/catalog?type=page");
@@ -535,12 +555,12 @@ describe("Solo Campaigns rendered flows", () => {
   it("renders the exact tab order and moves route plus focus with arrow keys", () => {
     renderAt("/solo/42/growth/overview");
     const tabs = [...host.querySelectorAll('[role="tab"]')] as HTMLButtonElement[];
-    expect(tabs.map((tab) => tab.textContent)).toEqual(["Overview", "Campaigns", "Lead capture", "Social", "Analytics", "Offers", "Sales", "Pipeline"]);
+    expect(tabs.map((tab) => tab.textContent)).toEqual(["Overview", "Campaigns", "Lead capture", "Social", "Analytics"]);
     expect(host.querySelector('[role="tablist"]')?.getAttribute("aria-label")).toBe("Marketing views");
     // One divider, placed before the Sales lane's three tabs.
     const dividers = [...host.querySelectorAll(".campaigns-tab-divider")];
-    expect(dividers).toHaveLength(1);
-    expect(dividers[0].nextElementSibling?.textContent).toBe("Offers");
+    expect(dividers).toHaveLength(0);
+
     tabs[0].focus();
     act(() => tabs[0].dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true })));
     expect((host.querySelector("[data-location]") as HTMLOutputElement).value).toBe("/solo/42/growth/campaigns");
@@ -687,7 +707,7 @@ describe("Solo Marketing department views", () => {
     // One gold act on the surface: the header does not repeat the first-use action.
     expect(host.querySelectorAll(".btn-g")).toHaveLength(1);
     act(() => button("Offers")!.click());
-    expect(location()).toBe("/solo/42/growth/catalog");
+    expect(location()).toBe("/solo/42/sales/offers");
   });
 
   it("Lead capture lists published and unpublished work, and each submission's tracking tag", () => {
@@ -703,7 +723,7 @@ describe("Solo Marketing department views", () => {
     const finish = button("Finish in Vibe Studio")!;
     expect(finish.hasAttribute("data-solo-vibe-studio-launcher")).toBe(true);
     act(() => button("Open deal")!.click());
-    expect(location()).toBe("/solo/42/growth/pipeline?deal=deal-1");
+    expect(location()).toBe("/solo/42/sales/pipeline?deal=deal-1");
   });
 
   it("Lead capture's type filter hides what does not match", () => {
@@ -734,7 +754,7 @@ describe("Solo Marketing department views", () => {
       ["/solo/42/growth/performance", "/solo/42/growth/analytics"],
       ["/solo/42/growth/active", "/solo/42/growth/campaigns"],
       ["/solo/42/growth/catalog?type=form", "/solo/42/growth/lead-capture?type=form"],
-      ["/solo/42/growth/catalog", "/solo/42/growth/catalog"],
+      ["/solo/42/growth/catalog", "/solo/42/sales/offers"],
     ]) {
       renderAt(from);
       expect(location(), from).toBe(to);

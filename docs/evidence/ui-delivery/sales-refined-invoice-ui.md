@@ -8,7 +8,7 @@ FLOW_PROTOTYPE: PASS: owner approved outputs/invoice-refinement.html and address
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: workspace owner/admin prepares, reviews, saves and reopens a canonical invoice draft
 VISUAL_DIRECTION: PASS: approved Operate reconciliation direction, defined violet group boundaries, raised controls, invoice table and restrained due-now emphasis
 AUTOMATED_EVIDENCE: PASS: 200 focused tests and production-verified canonical SQL dependency; local SQL roundtrip/concurrency separately proven
-STATIC_EVIDENCE: PASS: focused ESLint; TypeScript ratchet 12 baseline/current; independent exact-head review pending
+STATIC_EVIDENCE: PASS: focused ESLint; TypeScript ratchet 12 baseline/current; independent exact-head source/finish review PASS at 3f3cc826880179e59c7573e72536a773f8f7c944 (130 independently rerun tests and 20 fixture observations)
 RENDERED_EVIDENCE: PASS: actual TenantCommandCenterShell/GrowthHub/Sales production components rendered with local auth/network fixtures; 16 normal light/dark open/closed and four equivalent reflow cases; register, all five tabs, edit/review/create
 BEHAVIORAL_EVIDENCE: PASS: local component/hook lifecycle, known contact/manual/snapshot, Catalog repricing/search/reference paging, stacked items, dirty exits and frozen original retry; hosted authenticated lifecycle UNVERIFIED
 AUTHENTICATED_RUNTIME: UNVERIFIED: Windows browser ACL blocks hosted account drive; fixture tenant and route IDs are not account proof
@@ -25,12 +25,12 @@ MUST_PRESERVE: existing agreements, catalog and declaration records; platform su
 ACCEPTANCE_CRITERIA: real canonical snapshot writer/readers; tenant-safe contact and agreement refs; search/paging retain selected facts; checked item aggregate and cadence; immutable unknown operation; approved form fit and visual boundaries
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: tenant/RLS/CAS guarded; no shared Harness, Rail, Chat, Analytics or Memory write added
-INTERNAL_BUILD_IDENTITY: 33b32deeacc1a0ca11d1234a58cc9eee4934aca3; deployment=local-render; environment=development; migrations=APPLIED(20270536000001_sales_invoice_snapshot_v2); edge=NOT_APPLICABLE; evidence=scripts/live-drive/sales-refined-invoice-shell-drive.mjs and scripts/live-drive/artifacts/sales-refined-invoice-shell/geometry.json
-RELEASE_CHANNEL: development: approved UI writer depends on production-verified backend; production anticipated after exact review and CI
+INTERNAL_BUILD_IDENTITY: ee5219d5c04066143b643c7cf4b7a278c36a79a3; deployment=dpl_5bukxhYByoU9e2zEv2EW4X1oBSUP; environment=production; migrations=APPLIED(20270536000001_sales_invoice_snapshot_v2); edge=NOT_APPLICABLE; evidence=scripts/live-drive/sales-refined-invoice-shell-drive.mjs and scripts/live-drive/artifacts/sales-refined-invoice-shell/geometry.json
+RELEASE_CHANNEL: production: observed READY exact squash SHA; required exact-head PR checks PASS; authenticated UI proof remains owed
 RELEASE_CLASSIFICATION: internal-only: refined canonical draft UI, complete billing remains PARTIAL
 CUSTOMER_RELEASE_IDENTITY: none: no customer update publication
 RELEASE_NOTE_REQUIRED: no: internal dependency only
-RELEASE_TRUTH_BOUNDARY: PARTIAL: production backend identity and local UI/source subset proven; authenticated UI PROOF OWED; issuing/delivery/collection UNAVAILABLE
+RELEASE_TRUTH_BOUNDARY: PARTIAL: production UI/backend identities and local UI/source subset proven; authenticated UI PROOF OWED; issuing/delivery/collection UNAVAILABLE
 RELEASE_RECOVERY: position=revert UI routing/component/hooks while retaining applied snapshot migration, records and managed dispatch refusal; reference=SalesBillingWorkspace.tsx and 20270536000001_sales_invoice_snapshot_v2.sql
 SOLO_1536X770_PAIGE_CLOSED: PASS: actual production shell local fixtures; no document overflow or checked navigation/action clipping; internal register/editor scroll owner
 SOLO_1536X770_PAIGE_OPEN: PASS: actual production shell local fixtures; no document overflow or checked navigation/action clipping; internal register/editor scroll owner
@@ -50,3 +50,11 @@ Run `node scripts/live-drive/sales-refined-invoice-shell-drive.mjs` with the sal
 The refined UI uses the ordinary-session canonical save/list RPC. Invoice contact edits never write CRM. Canonical primary selections and readable secondary methods remain explicit; missing unit/country stay unknown. Customer and Catalog searches/pages plus exact selected client/product/agreement reads prevent bounded lists from asserting older records are absent. Catalog prices re-resolve on explicit save; unknown saves retain the original operation/request and frozen source amounts.
 
 Processor/method/channel values are draft intent only. Merchant setup belongs in Integrations and verified eligibility has no proven read contract here. Email/SMS review does not send; iMessage and street lookup remain unavailable. The full approved issuance/delivery/linked mixed-billing rollout remains outstanding and is not narrowed by this dependency release.
+
+## Observed production closeout — 2026-10-03
+
+PR #1659 reviewed head `3f3cc826880179e59c7573e72536a773f8f7c944` merged as `ee5219d5c04066143b643c7cf4b7a278c36a79a3` after all required exact-head checks passed. Vercel `dpl_5bukxhYByoU9e2zEv2EW4X1oBSUP` is READY for that exact squash; public, app, inbound and main Vercel aliases were observed. Both public/app `/version.json` report `ee5219d5c04066143b643c7cf4b7a278c36a79a3-musm8c9k`, customerUpdate null. No migration or Edge deployment belongs to this UI PR; the applied schema2 dependency is separately recorded at #1656. No customer release identity or publication is assigned.
+
+Independent source/finish review PASS covered 130 rerun tests and 20 local fixture observations; author focused suite passed 200 tests, final TypeScript ratchet 12/12 and evidence grammar. The earlier backend-main CI run `37135622346` initially failed one unchanged Team ordered-email timing assertion under suite load; independent isolated 10/10 passed and the failed-job rerun subsequently passed verify and web-smoke before UI release. This chronology is not a Team product fix or authenticated Sales proof.
+
+Typed proof boundary: scope=authenticated_runtime (current/second Solo tenant contact selection, snapshot save/read/reopen, permissions and recovery); blocker=browser_environment (Windows sandboxhelper startup read ACL); excluded LIVE claim=hosted canonical CRM-to-invoice lifecycle. Native zoom and merchant eligibility/issue/send/collection remain UNVERIFIED or UNAVAILABLE as stated above. Recovery remains UI revert/forward fix preserving applied storage and managed dispatch refusal.

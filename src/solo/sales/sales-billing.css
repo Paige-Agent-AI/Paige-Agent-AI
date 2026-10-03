@@ -17,7 +17,7 @@
 @media(max-width:650px){.sb-fields{grid-template-columns:1fr}.sb-full{grid-column:auto}.sb-register{overflow-x:auto}.sb-register table{min-width:560px}.sb-search{width:100%}.sb-search input{flex:1}}
 @media(prefers-reduced-motion:reduce){.sb-workspace .btn,.sb-editor .btn{transition:none}.sb-workspace .btn:hover:not(:disabled),.sb-editor .btn:hover:not(:disabled){transform:none}}
 .sb-editor{height:calc(100dvh - 250px);min-height:260px}.sb-editor-grid{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-color:var(--line) var(--surface);scrollbar-width:thin}
-.sb-workspace{height:calc(100dvh - 280px);min-height:0}.sb-workspace>.sb-toolbar{flex:none}.sb-workspace>.sb-panel{display:flex;flex-direction:column;flex:1;min-height:0}.sb-workspace>.sb-panel>header{flex:none}.sb-workspace>.sb-panel>.sb-empty{overflow:auto;min-height:0}
+.sb-workspace{height:calc(100dvh - 280px);min-height:0}.sb-workspace>.sb-toolbar{flex:none}.sb-records>.sb-panel{display:flex;flex-direction:column;flex:1;min-height:0}.sb-records>.sb-panel>header{flex:none}.sb-records>.sb-panel>.sb-empty{overflow:auto;min-height:0}
 .sb-register{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-color:var(--line) var(--surface)}
 .sb-detail-grid{flex:0 1 190px;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-color:var(--line) var(--surface)}
 
@@ -25,4 +25,36 @@
 @container sales-billing (max-width:520px){.so-billing .so-subnav{flex-wrap:wrap}.so-billing .so-subnav button{flex:1 1 80px;padding-inline:6px}}
 
 .sb-fixed-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:13px;font-variant-numeric:tabular-nums;background:var(--surface);padding:10px 14px;border:1px solid var(--line);border-radius:var(--r-s)}
-@media(max-height:600px){.sb-workspace{height:auto}.sb-workspace>.sb-panel{flex:none}.sb-register{max-height:210px}.sb-detail-grid{flex:none;max-height:190px}}
+@media(max-height:600px){.sb-workspace{height:auto}.sb-records>.sb-panel{flex:none}.sb-register{max-height:210px}.sb-detail-grid{flex:none;max-height:190px}}
+
+/* Only the active billing desk adapts its parent navigation. Other Campaigns
+ * destinations and the approved normal-size shell retain their existing layout. */
+@media(max-width:520px){
+  .solo-campaigns[data-campaigns-view="sales"]:has(.so-billing) .campaigns-tabs{flex-wrap:wrap;overflow:visible;row-gap:0}
+  .solo-campaigns[data-campaigns-view="sales"]:has(.so-billing) .campaigns-tabs button{min-height:40px}
+  .solo-campaigns[data-campaigns-view="sales"]:has(.so-billing) .campaigns-nav{min-height:80px}
+  .solo-campaigns[data-campaigns-view="sales"]:has(.so-billing) .campaigns-studio{font-size:0;width:34px;padding:0;gap:0}
+}
+@media(max-width:520px),(max-height:600px){
+  .solo-campaigns[data-campaigns-view="sales"]:has(.so-billing)>.campaigns-scroll{display:flex;flex-direction:column;padding-bottom:12px}
+  .solo-campaigns[data-campaigns-view="sales"] .campaigns-surface:has(>.so-billing){display:flex;flex-direction:column;flex:1;min-height:0;width:100%}
+  .solo-campaigns[data-campaigns-view="sales"] .so.so-billing{display:flex;flex-direction:column;flex:1;min-height:0;width:100%}
+  .solo-campaigns[data-campaigns-view="sales"] .so-billing>.so-view{display:flex;flex-direction:column;flex:1;min-height:0}
+  .solo-campaigns[data-campaigns-view="sales"] .so-billing>.so-subnav,
+  .solo-campaigns[data-campaigns-view="sales"] .so-billing>.sb-actions{flex:none}
+  .solo-campaigns[data-campaigns-view="sales"] .sb-workspace,
+  .solo-campaigns[data-campaigns-view="sales"] .sb-editor{height:auto;flex:1;min-height:0;margin-top:12px;gap:10px}
+  .solo-campaigns[data-campaigns-view="sales"] .sb-records>.sb-panel{flex:1;min-height:0}
+  .solo-campaigns[data-campaigns-view="sales"] .sb-register{max-height:none}
+  .solo-campaigns[data-campaigns-view="sales"] .sb-detail-grid{flex:0 1 100px;max-height:35%}
+  .solo-campaigns[data-campaigns-view="sales"] .sb-editor>.sb-toolbar,
+  .solo-campaigns[data-campaigns-view="sales"] .sb-editor>.sb-fixed-footer{flex:none}
+}
+
+.sb-records{display:contents}
+@media(max-width:520px),(max-height:600px){
+ .solo-campaigns[data-campaigns-view="sales"] .sb-records{display:flex;flex-direction:column;gap:10px;flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
+ .solo-campaigns[data-campaigns-view="sales"] .sb-records>.sb-panel{flex:none}
+ .solo-campaigns[data-campaigns-view="sales"] .sb-records .sb-register{max-height:210px}
+ .solo-campaigns[data-campaigns-view="sales"] .sb-records .sb-detail-grid{flex:none;max-height:none}
+}

@@ -89,6 +89,7 @@ try {
     await zoomPage.goto(`http://127.0.0.1:5217/solo/test-account/growth/sales?full-shell=1&billing-fixture=populated&theme=light&paige=${paige}&view=invoices`, { waitUntil: 'domcontentloaded' });
     await zoomPage.getByRole('button', { name: 'Create invoice', exact: true }).waitFor();
     await zoomPage.waitForFunction(paige => document.querySelector('[data-tenant-shell]')?.getAttribute('data-paige') === paige, paige);
+    await zoomPage.evaluate(async () => { await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); await Promise.all(document.querySelector('[data-tenant-shell]').getAnimations().map(animation => animation.finished.catch(() => undefined))); });
     const name = `${physical[0]}-${physical[1]}-${paige}-200pct-reflow`;
     const register = await geometry(zoomPage);
     await zoomPage.screenshot({ path: path.join(out, `${name}-register.png`) });
@@ -97,9 +98,23 @@ try {
     await catalogRow.getByRole('button', { name: 'Edit', exact: true }).click();
     await zoomPage.getByRole('button', { name: 'Review draft', exact: true }).click();
     const review = await geometry(zoomPage);
+    for (const [state, snapshot] of Object.entries({ register, review })) {
+      if (snapshot.controls.some(control => control.clipped)) throw new Error(`${name}:${state} clips a navigation/footer control`);
+      if (snapshot.scrollOwners.some(owner => owner.class === 'campaigns-scroll')) throw new Error(`${name}:${state} scrolls the Campaigns parent`);
+    }
+    await zoomPage.emulateMedia({ reducedMotion: 'reduce' });
+    await zoomPage.locator('.sb-fixed-footer .btn').first().hover();
+    const motion = await zoomPage.locator('.sb-fixed-footer .btn').first().evaluate(el => ({ duration: getComputedStyle(el).transitionDuration, transform: getComputedStyle(el).transform }));
+    if (motion.transform !== 'none') throw new Error(`${name}:reduced motion still lifts a control`);
     await zoomPage.screenshot({ path: path.join(out, `${name}-review.png`) });
     const unit = await zoomPage.locator('.sb-paper dt').filter({ hasText: /^Unit price$/ }).evaluate(el => el.nextElementSibling.textContent);
-    zoomCases.push({ name, physical, cssViewport: viewport, deviceScaleFactor: 2, register, review, reviewUnit: unit, accessibleReviewAction: true, method: '200% equivalent CSS layout reflow; browser chrome zoom unverified' });
+    // A fresh read-only Catalog mount proves selector scope; this is not a claim
+    // about the draft abandonment/navigation flow (covered separately above).
+    await zoomPage.goto(`http://127.0.0.1:5217/solo/test-account/growth/catalog?full-shell=1&theme=light&paige=closed`, { waitUntil: 'domcontentloaded' });
+    await zoomPage.waitForFunction(() => document.querySelector('.solo-campaigns')?.getAttribute('data-campaigns-view') === 'catalog');
+    const otherViewWrap = await zoomPage.locator('.campaigns-tabs').evaluate(el => getComputedStyle(el).flexWrap);
+    if (otherViewWrap !== 'nowrap') throw new Error(`${name}:Sales-scoped wrap affects another Campaigns view`);
+    zoomCases.push({ name, physical, cssViewport: viewport, deviceScaleFactor: 2, register, review, reviewUnit: unit, accessibleReviewAction: true, reducedMotion: motion, otherCampaignsViewWrap: otherViewWrap, method: '200% equivalent CSS layout reflow; browser chrome zoom unverified' });
     await context.close();
   }
   fs.writeFileSync(path.join(out, 'zoom-reflow.json'), JSON.stringify(zoomCases, null, 2));

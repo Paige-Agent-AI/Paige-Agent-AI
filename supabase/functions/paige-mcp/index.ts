@@ -2720,10 +2720,17 @@ mcp.tool("send_invoice", {
   handler: async (args) => {
     const { data: inv, error: iErr } = await admin
       .from("paige_invoices")
-      .select("id, tenant_id, contact_id, status, invoice_number, amount_total_cents, currency, hosted_invoice_url, memo")
+      // Wildcard keeps this guard deployable before the managed-draft columns exist.
+      // The row stays internal; only the explicit legacy response below is returned.
+      .select("*")
       .eq("id", args.invoice_id).maybeSingle();
     if (iErr) return err(iErr.message);
     if (!inv) return err("invoice_not_found");
+    // Managed drafts have no issue/send contract yet. Refuse BEFORE contact reads,
+    // sender resolution or delivery; a later DB constraint cannot undo an email.
+    if (inv.billing_draft_version != null || inv.billing_draft != null) {
+      return err("managed_billing_draft_dispatch_unavailable");
+    }
     if (inv.status !== "draft") return err(`invoice_not_draft:${inv.status}`);
 
     // The invoice goes to the contact's PRIMARY email, whichever of their addresses that is.

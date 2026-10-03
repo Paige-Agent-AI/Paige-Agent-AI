@@ -15,20 +15,37 @@ document.documentElement.setAttribute("data-pg", theme);
 document.documentElement.classList.toggle("dark", theme === "dark");
 document.documentElement.setAttribute("data-theme", theme);
 
-const frames = [
-  { paige_step: { id: "a", label: "Read your form", detail: "6 questions, routed to Sales" } },
-  { paige_step: { id: "b", label: "Added a budget question" } },
-  { paige_step: { id: "c", label: "Saved the working copy", detail: "Visitors see it after you publish" } },
-  { paige_artifact: { kind: "form", id: "f-1", title: "New client intake" } },
-  { choices: [{ delta: { content: "Added “What's your budget for this?” after the goal question. It's saved as a draft change; publish when you're ready." } }] },
-];
+// ?stream=default | build (holds after the first page step) | preview (designed, held for approval)
+const mode = params.get("stream") ?? "default";
+const frames: Array<Record<string, unknown> | "HOLD"> =
+  mode === "build" ? [{ paige_step: { id: "a", label: "Designing your landing page" } }, "HOLD"]
+  : mode === "start" ? ["HOLD"]
+  : mode === "preview" ? [
+    { paige_step: { id: "a", label: "Designing your landing page" } },
+    { paige_preview: { kind: "page", title: "Referral workshop", theme: null, blocks: [
+      { type: "hero", eyebrow: "Live workshop · Nov 14", title: "Turn your next ten clients into a referral engine", subtitle: "Ninety minutes, one plan you can run on Monday.", cta_label: "Save my seat", cta_href: "#form" },
+      { type: "feature_grid", title: "What you'll leave with", items: [{ title: "A referral ask that lands", body: "The exact words, timed to the moment a client is happiest." }, { title: "A follow-up rhythm", body: "Three touches that keep you top of mind." }, { title: "A simple scorecard", body: "Know which clients refer, and why." }] },
+    ] } },
+    { paige_confirm: { tool: "growth_page_save", summary: "Save the page draft “Referral workshop”", fingerprint: "0123456789abcdef" } },
+    { choices: [{ delta: { content: "Your workshop page is designed. **It's waiting on your approval to save** — approve it and it lands in this project." } }] },
+  ]
+  : [
+    { paige_step: { id: "a", label: "Read your form", detail: "6 questions, routed to Sales" } },
+    { paige_step: { id: "b", label: "Added a budget question" } },
+    { paige_step: { id: "c", label: "Saved the working copy", detail: "Visitors see it after you publish" } },
+    { paige_artifact: { kind: "form", id: "f-1", title: "New client intake" } },
+    { choices: [{ delta: { content: "Added “What's your budget for this?” after the goal question. It's saved as a draft change; publish when you're ready." } }] },
+  ];
 const realFetch = window.fetch.bind(window);
 window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   if (String(input).includes("/functions/v1/paige-ai-chat")) {
     const enc = new TextEncoder();
     const body = new ReadableStream<Uint8Array>({
       async start(c) {
-        for (const f of frames) { c.enqueue(enc.encode(`data: ${JSON.stringify(f)}\n\n`)); await new Promise((r) => setTimeout(r, 60)); }
+        for (const f of frames) {
+          if (f === "HOLD") { await new Promise(() => {}); }
+          c.enqueue(enc.encode(`data: ${JSON.stringify(f)}\n\n`)); await new Promise((r) => setTimeout(r, 60));
+        }
         c.enqueue(enc.encode("data: [DONE]\n\n")); c.close();
       },
     });

@@ -9,6 +9,10 @@ export interface BuildStep { id: string; label: string; detail?: string; status:
 export interface ChoiceOption { label: string; value: string; description?: string }
 export interface Choices { prompt: string; options: ChoiceOption[]; multi: boolean; allowOther: boolean }
 export interface ProducedArtifact { kind: ArtifactKind; id: string; title: string }
+/** An action Paige proposed that the owner's settings hold for approval (the paige_confirm frame). */
+export interface PendingConfirm { tool: string; summary: string; fingerprint: string }
+/** A page Paige designed this turn but did not save (the paige_preview frame). */
+export interface DraftPreview { kind: "page" | "funnel"; title: string; blocks: unknown[]; theme: unknown }
 
 /** What the stream says was produced. "form" now arrives too; older kinds pass through. */
 function toArtifact(raw: unknown): ProducedArtifact | null {
@@ -28,8 +32,12 @@ export interface StudioChatState {
   steps: BuildStep[];
   status: string | null;
   choices: Choices | null;
+  confirms: PendingConfirm[];
+  preview: DraftPreview | null;
   sendError: string | null;
-  send: (text: string, opts?: { display?: string }) => Promise<void>;
+  send: (text: string, opts?: { display?: string; approved?: string[]; declined?: string[] }) => Promise<void>;
+  /** Approve or decline one held action; the server runs only the exact call it fingerprinted. */
+  decide: (fingerprint: string, approve: boolean) => Promise<void>;
 }
 
 export function useStudioChat(opts: {
@@ -48,6 +56,8 @@ export function useStudioChat(opts: {
   const [steps, setSteps] = React.useState<BuildStep[]>([]);
   const [status, setStatus] = React.useState<string | null>(null);
   const [choices, setChoices] = React.useState<Choices | null>(null);
+  const [confirms, setConfirms] = React.useState<PendingConfirm[]>([]);
+  const [preview, setPreview] = React.useState<DraftPreview | null>(null);
   const [sendError, setSendError] = React.useState<string | null>(null);
   const cb = React.useRef(opts);
   cb.current = opts;
@@ -59,7 +69,7 @@ export function useStudioChat(opts: {
 
   React.useEffect(() => {
     let live = true;
-    setThreadId(null); setReady(false); setTurns([]); setSteps([]); setChoices(null); setLoadError(null); setSendError(null);
+    setThreadId(null); setReady(false); setTurns([]); setSteps([]); setChoices(null); setConfirms([]); setPreview(null); setLoadError(null); setSendError(null);
     if (!sessionId) return;
     (async () => {
       try {
@@ -74,10 +84,10 @@ export function useStudioChat(opts: {
     return () => { live = false; };
   }, [sessionId]);
 
-  const send = React.useCallback(async (text: string, sendOpts?: { display?: string }) => {
+  const send = React.useCallback(async (text: string, sendOpts?: { display?: string; approved?: string[]; declined?: string[] }) => {
     const trimmed = text.trim();
     if (!trimmed || sending || !threadId) return;
-    setSendError(null); setChoices(null); setStatus(null); setSteps([]);
+    setSendError(null); setChoices(null); setConfirms([]); setStatus(null); setSteps([]);
     const requestIntentId = failedIntent.current?.text === trimmed ? failedIntent.current.id : crypto.randomUUID();
     const before = turns;
     const shown = [...before, { role: "user" as const, content: sendOpts?.display ?? trimmed }];
@@ -99,6 +109,8 @@ export function useStudioChat(opts: {
           threadId,
           requestIntentId,
           canvasArtifact: cb.current.canvas ? { id: cb.current.canvas.id, kind: cb.current.canvas.kind } : undefined,
+          ...(sendOpts?.approved?.length ? { approvedConfirmations: sendOpts.approved } : {}),
+          ...(sendOpts?.declined?.length ? { declinedConfirmations: sendOpts.declined } : {}),
         }),
       });
       if (!resp.ok) throw new Said(resp.status === 429 ? "Give it a moment — too many requests." : "Paige couldn't take that just now. Try again.");
@@ -109,6 +121,7 @@ export function useStudioChat(opts: {
       let done = false;
       let gotChoices = false;
       let sawStep = false;
+      let sawConfirm = false;
       while (reader && !done) {
         const { done: end, value } = await reader.read();
         if (end) break;
@@ -151,6 +164,22 @@ export function useStudioChat(opts: {
             continue;
           }
           if (parsed.paige_artifact) { produced = toArtifact(parsed.paige_artifact) ?? produced; continue; }
+          if (parsed.paige_confirm && typeof parsed.paige_confirm === "object") {
+            const c = parsed.paige_confirm as Record<string, unknown>;
+            if (typeof c.summary === "string" && typeof c.fingerprint === "string") {
+              const pc = { tool: String(c.tool ?? "action"), summary: c.summary, fingerprint: c.fingerprint };
+              sawConfirm = true;
+              setConfirms((prev) => (prev.some((x) => x.fingerprint === pc.fingerprint) ? prev : [...prev, pc]));
+            }
+            continue;
+          }
+          if (parsed.paige_preview && typeof parsed.paige_preview === "object") {
+            const pv = parsed.paige_preview as Record<string, unknown>;
+            if (Array.isArray(pv.blocks) && pv.blocks.length) {
+              setPreview({ kind: pv.kind === "funnel" ? "funnel" : "page", title: typeof pv.title === "string" ? pv.title : "Draft", blocks: pv.blocks, theme: pv.theme ?? null });
+            }
+            continue;
+          }
           const choicesArr = parsed.choices as { delta?: { content?: unknown } }[] | undefined;
           const delta = choicesArr?.[0]?.delta?.content;
           if (typeof delta === "string" && delta) {
@@ -159,9 +188,10 @@ export function useStudioChat(opts: {
           }
         }
       }
-      if (!reply.trim() && !gotChoices && !produced && !sawStep) setTurns([...shown, { role: "assistant", content: "I didn't catch that. Try saying it another way?" }]);
+      if (!reply.trim() && !gotChoices && !produced && !sawStep && !sawConfirm) setTurns([...shown, { role: "assistant", content: "I didn't catch that. Try saying it another way?" }]);
       failedIntent.current = null;
-      if (produced) cb.current.onArtifact(produced);
+      // A saved piece replaces any unsaved preview: the stage now shows the real thing.
+      if (produced) { setPreview(null); cb.current.onArtifact(produced); }
     } catch (e) {
       if (abort.current?.signal.aborted) return;
       setTurns(before);
@@ -187,5 +217,11 @@ export function useStudioChat(opts: {
     void send(brief);
   }, [sessionId, ready, sending, turns.length, seedBrief, send]);
 
-  return { ready, loadError, turns, sending, steps, status, choices, sendError, send };
+  const decide = React.useCallback(async (fingerprint: string, approve: boolean) => {
+    // The same words and fields the main Paige chat sends from its approval card: the gate runs
+    // only a call whose fingerprint is in approvedConfirmations, and a decline cancels the proposal.
+    await send(approve ? "Approved — run it." : "Hold off — skip that one.", approve ? { approved: [fingerprint] } : { declined: [fingerprint] });
+  }, [send]);
+
+  return { ready, loadError, turns, sending, steps, status, choices, confirms, preview, sendError, send, decide };
 }

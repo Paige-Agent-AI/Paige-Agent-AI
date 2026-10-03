@@ -5,7 +5,7 @@ import React from "react";
 import { ArrowUp, FileText, Filter, Image as ImageIcon, LayoutTemplate, Sparkles, Images } from "lucide-react";
 import { Ic, Logo } from "../_shared";
 import { VsStars } from "./VsStars";
-import { createSession, loadBrand, plainError, type StudioSession } from "./studio-data";
+import { createSession, loadBrand, plainError, sessionName, type StudioSession } from "./studio-data";
 import { loadArtifact, type Brand, type LoadedArtifact } from "./artifact-state";
 import { buildGrowthBrandFloor } from "@/components/growth/growth-theme";
 
@@ -106,7 +106,7 @@ export function StudioRail({ view, sessions, onBack, onHome, onMedia, onOpen }: 
         : sessions.length === 0 ? <span className="vs-rail-note" style={{ marginTop: 0 }}>Nothing yet.</span>
         : sessions.slice(0, 12).map((s) => (
           <button key={s.id} type="button" className="vs-rail-item" data-draft="" onClick={() => onOpen(s)}>
-            <SessionIcon s={s} /><span className="vs-trunc">{s.title}</span>
+            <SessionIcon s={s} /><span className="vs-trunc">{sessionName(s)}</span>
           </button>
         ))}
       <p className="vs-rail-note">Published work is in your Catalog.</p>
@@ -180,7 +180,7 @@ export function StudioHome({ sessions, sessionsError, tenantSlug, onOpen }: {
               {sessions.slice(0, 8).map((s) => (
                 <button key={s.id} type="button" className="vs-card" onClick={() => onOpen(s.id, null)}>
                   <CardPreview s={s} brand={brand} />
-                  <div className="vs-card-body"><b className="vs-trunc">{s.title}</b><span>{describe(s)}</span></div>
+                  <div className="vs-card-body"><b className="vs-trunc">{sessionName(s)}</b><span>{describe(s)}</span></div>
                 </button>
               ))}
             </div>

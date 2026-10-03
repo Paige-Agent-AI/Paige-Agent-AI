@@ -107,6 +107,25 @@ export async function openSession(id: string): Promise<StudioSession> {
   return toSession(row);
 }
 
+/** Names the project. The server keeps it to the active workspace's owner/admin or the project's creator. */
+export async function renameSession(id: string, title: string): Promise<void> {
+  const t = title.trim().replace(/\s+/g, " ").slice(0, 80);
+  if (!t) return;
+  const { error } = await rpc("rename_studio_session", { p_id: id, p_title: t, p_tenant_id: null });
+  if (error) throw error;
+}
+
+/** What to call a project: its name, or, until it has one, what was asked for. */
+export function sessionName(s: { title: string | null; seedBrief: string | null }): string {
+  if (!isUnnamed(s.title)) return String(s.title);
+  return s.seedBrief ? s.seedBrief.replace(/\s+/g, " ").slice(0, 60) : "New project";
+}
+
+/** A project nobody has named yet. */
+export function isUnnamed(title: string | null | undefined): boolean {
+  return !title || !title.trim() || /^untitled( project)?$/i.test(title.trim());
+}
+
 // ── Chat thread ────────────────────────────────────────────────────────────────
 export interface ChatTurn { role: "user" | "assistant"; content: string }
 

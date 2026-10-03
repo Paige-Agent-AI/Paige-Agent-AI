@@ -1,6 +1,7 @@
 // What the stage is showing, loaded from the saved work, and the two facts the top bar needs about
 // it: is it live, and does it have saved changes visitors don't see yet.
 import type { GrowthPageTheme } from "@/lib/growth";
+import type { BuildStep } from "./useStudioChat";
 import {
   loadForm, loadFunnel, loadImage, loadPage,
   type ArtifactRef, type StudioForm, type StudioFunnel, type StudioImage, type StudioPage,
@@ -35,3 +36,17 @@ export function isLive(a: LoadedArtifact): boolean {
 export function hasPendingChanges(a: LoadedArtifact): boolean {
   return a.kind === "form" ? a.form.changesPending : a.kind === "page" ? a.page.changesPending : false;
 }
+
+export type BuildShape = "sheet" | "page" | "form" | "funnel" | "image";
+
+export function shapeFromSteps(steps: BuildStep[]): BuildShape {
+  for (let i = steps.length - 1; i >= 0; i--) {
+    const l = steps[i].label.toLowerCase();
+    if (l.includes("funnel")) return "funnel";
+    if (l.includes("landing page") || l.includes("page")) return "page";
+    if (l.includes("form")) return "form";
+    if (l.includes("image")) return "image";
+  }
+  return "sheet";
+}
+

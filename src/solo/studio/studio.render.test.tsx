@@ -32,6 +32,8 @@ const h = vi.hoisted(() => ({
   fetchBodies: [] as Rec[],
   versionReads: 0,
   content: null as Rec | null,
+  openTitle: "Client intake",
+  renamed: [] as Array<[string, string]>,
 }));
 
 vi.mock("@/hooks/useTenantContext", () => ({
@@ -54,7 +56,8 @@ vi.mock("./studio-data", async (orig) => {
     ...real,
     listSessions: async () => h.sessions,
     createSession: async (brief: string) => { h.created.push(brief); return session("s-new", brief, brief); },
-    openSession: async (id: string) => session(id, "Client intake", "An intake form for new clients"),
+    openSession: async (id: string) => session(id, h.openTitle, "An intake form for new clients"),
+    renameSession: async (id: string, title: string) => { h.renamed.push([id, title]); h.openTitle = title; },
     ensureThread: async () => "th-1",
     loadTurns: async () => [],
     loadBrand: async () => ({ floor: {}, name: "Northwind Studio", logoUrl: null }),
@@ -111,7 +114,7 @@ function type(el: HTMLTextAreaElement, value: string) {
 }
 
 beforeEach(() => {
-  Object.assign(h, { sessions: [], created: [], manifest: [], form: null, versions: [], restored: [], published: [], publishError: null, sse: [], status: 200, fetchBodies: [], versionReads: 0, content: null });
+  Object.assign(h, { sessions: [], created: [], manifest: [], form: null, versions: [], restored: [], published: [], publishError: null, sse: [], status: 200, fetchBodies: [], versionReads: 0, content: null, openTitle: "Client intake", renamed: [] });
   backs = 0;
   host = document.createElement("div");
   document.body.appendChild(host);
@@ -343,5 +346,80 @@ describe("Vibe Studio project workspace", () => {
     expect(text()).toContain("Paige couldn't take that just now. Check your connection and try again.");
     expect(text()).not.toContain("network connection was lost");
     expect(text()).not.toContain("Started the budget question");
+  });
+
+  it("while Paige works, the stage shows the sheet taking the shape of what her steps say she is making", async () => {
+    // The stream holds after the first step so the in-progress stage can be read.
+    let release: () => void = () => {};
+    const gate = new Promise<void>((r) => { release = r; });
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init: RequestInit) => {
+      h.fetchBodies.push(JSON.parse(String(init.body)));
+      const enc = new TextEncoder();
+      return new Response(new ReadableStream<Uint8Array>({
+        async start(c) {
+          c.enqueue(enc.encode(`data: ${JSON.stringify({ paige_step: { id: "a", label: "Designing your landing page" } })}\n\n`));
+          await gate;
+          c.enqueue(enc.encode("data: [DONE]\n\n")); c.close();
+        },
+      }), { status: 200 });
+    }));
+    await startProject("A landing page for my workshop");
+    const build = host.querySelector(".vs-build");
+    expect(build?.getAttribute("data-shape")).toBe("page");
+    expect(host.querySelector(".vs-build-now")?.textContent).toBe("Designing your landing page");
+    expect(host.querySelector(".vs-wire-page")).toBeTruthy();
+    await act(async () => { release(); });
+    await flush();
+    expect(host.querySelector(".vs-build")).toBeNull();
+  });
+
+  it("a page designed but not saved shows on the stage as not saved, never as an empty stage", async () => {
+    h.sse = [
+      JSON.stringify({ paige_step: { id: "a", label: "Designing your landing page" } }),
+      JSON.stringify({ paige_preview: { kind: "page", title: "Workshop", blocks: [{ type: "hero", title: "Turn ten clients into referrals" }], theme: null } }),
+      JSON.stringify({ choices: [{ delta: { content: "Here it is." } }] }),
+      "[DONE]",
+    ];
+    await startProject("A landing page for my workshop");
+    expect(text()).toContain("Designed, not saved yet.");
+    expect(host.querySelector("[data-testid='live-preview']")).toBeTruthy();
+    expect(text()).not.toContain("Nothing on the stage yet");
+  });
+
+  it("an action held for approval shows a card, and Approve sends exactly that action's fingerprint", async () => {
+    h.sse = [
+      JSON.stringify({ paige_confirm: { tool: "growth_page_save", summary: "Save the page draft “Workshop”", fingerprint: "0123456789abcdef" } }),
+      JSON.stringify({ choices: [{ delta: { content: "It's waiting on your approval." } }] }),
+      "[DONE]",
+    ];
+    await startProject("A landing page for my workshop");
+    expect(text()).toContain("Waiting for your approval");
+    expect(text()).toContain("Save the page draft “Workshop”");
+    h.sse = [JSON.stringify({ choices: [{ delta: { content: "Saved." } }] }), "[DONE]"];
+    await act(async () => { button("Approve")!.click(); });
+    await flush();
+    expect(h.fetchBodies.at(-1)).toMatchObject({ approvedConfirmations: ["0123456789abcdef"] });
+    expect((h.fetchBodies.at(-1)!.messages as Rec[]).at(-1)).toEqual({ role: "user", content: "Approved — run it." });
+    expect(text()).not.toContain("Waiting for your approval");
+  });
+
+  it("Paige's reply is formatted, not shown with raw markdown", async () => {
+    h.sse = [JSON.stringify({ choices: [{ delta: { content: "**The structure:**\n\n- A hero\n- A proof block" } }] }), "[DONE]"];
+    await startProject("A landing page for my workshop");
+    expect(text()).not.toContain("**");
+    expect(host.querySelector(".vs-md strong")?.textContent).toBe("The structure:");
+    expect(host.querySelectorAll(".vs-md li")).toHaveLength(2);
+  });
+
+  it("an unnamed project shows what was asked for, and takes the name of the first piece Paige saves", async () => {
+    h.openTitle = "Untitled project";
+    h.sse = [
+      JSON.stringify({ paige_artifact: { kind: "form", id: "f-1", title: "New client intake" } }),
+      JSON.stringify({ choices: [{ delta: { content: "Done." } }] }),
+      "[DONE]",
+    ];
+    await startProject("An intake form for new clients");
+    expect(h.renamed).toEqual([["s-new", "New client intake"]]);
+    expect(host.querySelector(".vs-crumbs b")?.textContent).toBe("New client intake");
   });
 });

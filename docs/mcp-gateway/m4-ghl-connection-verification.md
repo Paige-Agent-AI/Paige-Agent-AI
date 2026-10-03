@@ -52,6 +52,13 @@ sub-account's location id. Save, then Check — the verify handshake discovers G
 tool catalogue (`search`, `fetch`, `search_operations`, `describe_operation`,
 `execute_operation`, `list_locations` per their docs) into the connection's tool list.
 
+> **Provider tagging, honestly:** the drawer registers every custom connection under the
+> generic-remote provider (its canonical shape); a drawer-created GHL connection executes
+> IDENTICALLY — the gateway is provider-agnostic and the M1-pinned path serves it the same.
+> The API body below additionally tags it `gohighlevel` for provider-specific governance and
+> the descriptor's honesty gate. Either path works; pick the drawer for speed, the API body
+> for the tagged lane.
+
 The API equivalent (the runbook's canonical body):
 
 ```json

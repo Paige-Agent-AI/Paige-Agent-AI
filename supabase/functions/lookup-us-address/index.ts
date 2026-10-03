@@ -5,7 +5,7 @@ Deno.serve(async(req:Request)=>{
  const url=Deno.env.get('SUPABASE_URL')??'',anon=Deno.env.get('SUPABASE_ANON_KEY')??'';
  // Constructing a caller client is not a service-role or provider operation.
  const caller=createClient(url,anon,{global:{headers:{Authorization:req.headers.get('Authorization')??''}},auth:{persistSession:false}});
- let admin:ReturnType<typeof createClient>|null=null;
+ let admin:typeof caller|null=null;
  return handleAddressLookup(req,{
   verifiedUser:async()=>{const{data,error}=await caller.auth.getUser();return !error&&data.user?{id:data.user.id,anonymous:data.user.is_anonymous===true}:null},
   currentTenant:async()=>{const{data,error}=await caller.rpc('current_user_tenant_id');if(error)throw Error('tenant_unavailable');return data},

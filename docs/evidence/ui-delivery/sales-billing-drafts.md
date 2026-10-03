@@ -25,13 +25,13 @@ MUST_PRESERVE: existing agreements, catalog and declaration records; platform su
 ACCEPTANCE_CRITERIA: server resolves tenant/client/catalog; wrong access fails; retry retains identity; edit requires current version; source subset proven
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: tenant/RLS/CAS guarded; no shared Harness, Rail, Chat, Analytics or Memory write added
-INTERNAL_BUILD_IDENTITY: 112dc88848d3788e591506b426153ba6ff6ce985; deployment=none; environment=local; migrations=PROOF_OWED(20270535000000_sales_billing_drafts hosted application unperformed); edge=NOT_APPLICABLE; evidence=docs/evidence/sales-billing/local-draft-proof.txt
+INTERNAL_BUILD_IDENTITY: 112dc88848d3788e591506b426153ba6ff6ce985; deployment=none; environment=local; migrations=PROOF_OWED(20270535000001_sales_billing_drafts hosted application unperformed); edge=NOT_APPLICABLE; evidence=docs/evidence/sales-billing/local-draft-proof.txt
 RELEASE_CHANNEL: development: local source only
 RELEASE_CLASSIFICATION: internal-only: draft persistence dependency without enabled UI
 CUSTOMER_RELEASE_IDENTITY: none: no owner-visible hosted capability delivered
 RELEASE_NOTE_REQUIRED: no: internal dependency only
 RELEASE_TRUTH_BOUNDARY: PARTIAL: source implementation; hosted draft flow PROOF OWED; provider issue/send UNAVAILABLE
-RELEASE_RECOVERY: position=unapplied migration can be withheld; reference=20270535000000_sales_billing_drafts.sql
+RELEASE_RECOVERY: position=unapplied migration can be withheld; reference=20270535000001_sales_billing_drafts.sql
 SOLO_1536X770_PAIGE_CLOSED: NOT_APPLICABLE: backend slice has no enabled UI consumer
 SOLO_1536X770_PAIGE_OPEN: NOT_APPLICABLE: backend slice has no enabled UI consumer
 SOLO_1366X768_PAIGE_CLOSED: NOT_APPLICABLE: backend slice has no enabled UI consumer

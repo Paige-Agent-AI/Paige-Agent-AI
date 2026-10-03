@@ -28,13 +28,14 @@ describe("tenant Command Center shell routing", () => {
     expect(TENANT_SHELL_DESTINATIONS.some(({ label }) => label === "Fleet")).toBe(false);
   });
 
-  it("gives Solo the approved six durable work homes without a top-level Studio", () => {
+  it("gives Solo the approved seven durable work homes without a top-level Studio", () => {
     const destinations = tenantShellDestinationsForPath("/solo/42/command-center", "standalone");
 
     expect(destinations.map(({ label }) => label)).toEqual([
       "Command Center",
       "Clients",
       "Campaigns",
+      "Sales",
       "Marketplace",
       "Analytics",
       "Settings",
@@ -43,6 +44,7 @@ describe("tenant Command Center shell routing", () => {
       ["command", "/solo/42/command-center"],
       ["clients", "/solo/42/clients"],
       ["campaigns", "/solo/42/growth"],
+      ["sales", "/solo/42/sales"],
       ["marketplace", "/solo/42/marketplace"],
       ["analytics", "/solo/42/analytics"],
       ["settings", "/solo/42/settings"],

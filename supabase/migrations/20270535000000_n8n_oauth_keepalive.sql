@@ -6,7 +6,8 @@
 -- Two objects:
 --   1. public.list_n8n_keepalive_targets() — the keepalive's target list: every enabled
 --      n8n OAuth connection with its tenant's CURRENT OWNER, resolved through the SAME
---      canonical authority check (is_tenant_owner) the lease fence itself enforces. The
+--      canonical authority check (_n8n_actor_is_current_owner — role AND active workspace)
+--      the lease fence itself enforces. The
 --      keepalive then drives the EXISTING governed lease (n8n_oauth_service acquire →
 --      refresh → rotate → probe → release) AS that owner — no new authority, no parallel
 --      refresh path, no credential access beyond the lease's own fenced read.
@@ -22,7 +23,10 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_catalog AS $$
   SELECT c.tenant_id,
          (SELECT m.user_id FROM public.tenant_members m
            WHERE m.tenant_id = c.tenant_id
-             AND public.is_tenant_owner(m.user_id, c.tenant_id)
+             -- The fence's OWN canonical check (owner by role AND active workspace pointing
+             -- here) — is_tenant_owner alone would pick owners whose resolved workspace is
+             -- elsewhere, whose every acquire then fails N8N_FORBIDDEN forever.
+             AND public._n8n_actor_is_current_owner(m.user_id, c.tenant_id)
            ORDER BY m.user_id LIMIT 1) AS owner_id
   FROM public.tenant_mcp_connections c
   WHERE c.provider = 'n8n' AND c.enabled AND c.auth_kind = 'oauth';

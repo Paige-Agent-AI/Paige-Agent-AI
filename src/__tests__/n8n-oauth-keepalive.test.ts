@@ -29,7 +29,7 @@ const config = readFileSync(join(root, "supabase/config.toml"), "utf8");
 describe("the gate: cron-invoked, fails closed to internal callers", () => {
   it("service-role bearer OR a verified x-cron-token — nothing else runs", () => {
     expect(fn).toContain('if (!(await internalCaller(req, admin))) return jsonResponse({ error: "unauthorized" }, 401);');
-    expect(fn).toContain('admin.rpc("verify_cron_token", { _token: cronToken })');
+    expect(fn).toContain('admin.rpc("verify_cron_token", { _token: cronToken } as never)');
     expect(config).toContain("[functions.n8n-oauth-keepalive]");
     expect(config.match(/verify_jwt = false/g)?.length).toBeGreaterThanOrEqual(1);
   });
@@ -38,7 +38,7 @@ describe("the gate: cron-invoked, fails closed to internal callers", () => {
 describe("one home: the keepalive drives the EXISTING governed lease", () => {
   it("targets come from the service-role-only RPC with owner resolution via the canonical check", () => {
     expect(fn).toContain('admin.rpc("list_n8n_keepalive_targets")');
-    expect(migration).toContain("public.is_tenant_owner(m.user_id, c.tenant_id)");
+    expect(migration).toContain("public._n8n_actor_is_current_owner(m.user_id, c.tenant_id)");
     expect(migration).toContain("GRANT EXECUTE ON FUNCTION public.list_n8n_keepalive_targets() TO service_role;");
     expect(migration).toContain("REVOKE ALL ON FUNCTION public.list_n8n_keepalive_targets() FROM PUBLIC, authenticated;");
   });
@@ -58,9 +58,20 @@ describe("one home: the keepalive drives the EXISTING governed lease", () => {
 });
 
 describe("the honest outcomes", () => {
-  it("a refused refresh records token_expired — the state the tile and readiness surface as reconnect-needed", () => {
+  it("a WITHDRAWN grant records token_expired — the state the tile and readiness surface as reconnect-needed", () => {
+    expect(fn).toContain("isGrantWithdrawn(e)");
     expect(fn).toContain('rpc("probe", { state: "token_expired" })');
     expect(fn).toContain('outcome = "reauthorization_required"');
+  });
+
+  it("a TRANSIENT failure (network blip, rotate hiccup) records provider_unavailable and NEVER a death — the isGrantWithdrawn split", () => {
+    expect(fn).toContain('rpc("probe", { state: "provider_unavailable" }).catch(() => undefined);');
+    expect(fn).toContain('outcome = "provider_unavailable";');
+    expect(fn).toContain("a stumble and a revocation look");
+  });
+
+  it("a successful refresh records RECOVERY (probe connected clears any stale death record)", () => {
+    expect(fn).toContain('rpc("probe", { state: "connected" })');
   });
 
   it("no refresh material is the same honest death, not an error", () => {
@@ -72,7 +83,7 @@ describe("the honest outcomes", () => {
   });
 
   it("the lease is ALWAYS released, even on failure", () => {
-    expect(fn).toContain('if (lease) await admin.rpc("n8n_oauth_service", { _operation: "release", _input: bound }).catch(() => undefined);');
+    expect(fn).toContain('try { await admin.rpc("n8n_oauth_service", { _operation: "release", _input: bound }); } catch { /* best-effort; the 2-minute lease expires on its own */ }');
   });
 });
 
@@ -84,7 +95,7 @@ describe("the response can never leak", () => {
   });
 
   it("the closed outcome vocabulary", () => {
-    expect(fn).toContain('["refreshed", "reauthorization_required", "skipped_uptodate", "skipped_no_owner", "skipped_busy", "error"]');
+    expect(fn).toContain('["refreshed", "reauthorization_required", "provider_unavailable", "skipped_uptodate", "skipped_no_owner", "skipped_busy", "error"]');
   });
 });
 

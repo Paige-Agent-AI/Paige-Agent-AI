@@ -80,13 +80,3 @@ export function usableDrafts(value: unknown): unknown[] {
       ((d as { content: string }).content).trim().length > 0,
   );
 }
-
-/**
- * A generated image that uploaded (a real URL) but whose best-effort save returned no
- * `content_id` is a usable success in REGULAR chat (the URL is a real, downloadable file) but
- * NOT in a STUDIO session: the canvas linkage requires the persisted id, so a created-but-unfiled
- * image would report success while nothing reaches the canvas (§13/§70, Codex P2). This is the
- * honest failure copy for that Studio-only partial.
- */
-export const IMAGE_NOT_FILED_ERROR =
-  "The image was created but couldn't be saved to your project, so it can't be added to the canvas. Try generating it again.";

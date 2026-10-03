@@ -1,5 +1,13 @@
 # Decision Log — chronological one-liners
 
+- **Vibe Studio publish lifecycle and owner/admin authority, [PR #1658](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/1658) (2026-10-03).** Owner rulings (Antonio Cook):
+  - **One publish rule for everything Vibe Studio makes:** new work starts unpublished and lives in the Studio; Publish and Unpublish are the only ways across to the Catalog; no parallel draft store.
+  - **Unpublishing a page or funnel leaves its forms live** (2026-09-30).
+  - **Migration `20270537000000_vibe_studio_publish_lifecycle.sql` authorized in writing by SHA-256** `d98a81084294c2187d0ed15043f72d24790609a6aed8259e19f59cea75a152cb` (2026-10-03).
+  - **Auto model pick:** Paige reads the brief and picks the image model, says why in one line, and an explicit choice still wins (2026-10-03).
+  - **What it changes:** growth writers and `studio_role_ok` require the owner/admin of the ACTIVE workspace (or the managing agency), not a global role (§59); forms gain a working copy; publishing cascades (page → its forms; funnel → all pages and forms, one transaction); live addresses and a live funnel's steps lock; a trigger keeps signed-in/anonymous callers off pages/forms/funnels and keeps image publish state with the two image functions for every caller; `list_artifact_versions` closed to signed-out visitors. Chat gains `growth_form_save`/`growth_form_publish` (Spine domain `growth_form` + `defineCapability`); Studio images run through `paige-media` (credits, budget, approval).
+  - **Left for the settlement:** an owner-run delete (`delete_marketing_content`, SECURITY DEFINER, global-admin cross-tenant) can still remove a published image; agency managers inside a sub-account cannot make Studio images; the legacy non-fal image path still requires a global admin role; published pages expose draft columns through the existing public read.
+
 - **A1-1a: the check that finds the owner's registered address, business phone and website in anything addressed to a customer, except what Setup confirms (2026-09-28).** Owner rulings:
   - **2026-09-27:** PAIGE may hold all three facts, owner-scoped, and use them when answering the owner.
   - **2026-09-28:** the exemption is keyed to Setup, never to the draft. A phone or website the owner confirmed in Setup is owner-supplied and may appear in customer-bound output. Anything not confirmed there is held back. The registered address needs a second state, publicly shareable, because confirming it states a legal fact, not consent. The approval card keeps its own job.

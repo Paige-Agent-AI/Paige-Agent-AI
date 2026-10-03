@@ -779,6 +779,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run test
 
+      - name: Human US address lookup — tenant-admin and no-egress contract
+        if: ${{ !cancelled() }}
+        run: node node_modules/vitest/vitest.mjs run --config vitest.address-lookup.config.ts
+
       # Provider-free relay proof: fake ears/runtime/mouth + UsageSink, plus
       # atomic one-use ticket and pre-upgrade auth boundary. No vendor call.
       - name: Smoke — Live Conversation relay contract and ticket (deterministic, provider-neutral)

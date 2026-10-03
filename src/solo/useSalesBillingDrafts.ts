@@ -16,12 +16,16 @@ export function useSalesBillingDrafts() {
     identity.current = { tenant: activeTenantId ?? null, resolving: accountContextLoading };
   }
   const [refresh, setRefresh] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [pageMessage, setPageMessage] = useState('');
+  const pageRequest = useRef<object | null>(null);
   const [view, setView] = useState<View>({ identity: identity.current, phase: 'loading', rows: [], hasMore: false, nextCursor: null, message: '' });
   const alive = useRef(true);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   useEffect(() => {
     const opened = identity.current;
     let cancelled = false;
+    pageRequest.current = null; setLoadingMore(false); setPageMessage('');
     setView({ identity: opened, phase: 'loading', rows: [], hasMore: false, nextCursor: null, message: '' });
     if (!opened.tenant || opened.resolving) return;
     void listBillingDrafts(rpc, opened.tenant).then(result => {
@@ -33,6 +37,20 @@ export function useSalesBillingDrafts() {
     return () => { cancelled = true; };
   }, [activeTenantId, accountContextLoading, refresh]);
   const retry = useCallback(() => setRefresh(n => n + 1), []);
+  const loadMore = useCallback(async () => {
+    const opened = identity.current;
+    if (!alive.current || opened.resolving || !opened.tenant || view.identity !== opened || view.phase !== 'ready' || !view.hasMore || !view.nextCursor || pageRequest.current) return;
+    const token = {};
+    pageRequest.current = token; setLoadingMore(true); setPageMessage('');
+    const result = await listBillingDrafts(rpc, opened.tenant, view.nextCursor);
+    if (!alive.current || identity.current !== opened || pageRequest.current !== token) return;
+    pageRequest.current = null; setLoadingMore(false);
+    if (result.ok === false) { setPageMessage('Further records could not be read. Retry loading more.'); return; }
+    setView(previous => previous.identity !== opened ? previous : {
+      ...previous, rows: [...previous.rows, ...result.value.rows.filter(row => !previous.rows.some(existing => existing.id === row.id))],
+      hasMore: result.value.hasMore, nextCursor: result.value.nextCursor,
+    });
+  }, [view]);
   const save = useCallback(async (request: DraftSaveRequest) => {
     const opened = identity.current;
     if (!alive.current || opened.resolving || request.openedTenantId !== opened.tenant) {
@@ -46,5 +64,5 @@ export function useSalesBillingDrafts() {
   const current = identity.current;
   // A->B->A is a new identity epoch too: never reveal the previous A response on return.
   const visible = view.identity === current ? view : { phase: 'loading' as const, rows: [], hasMore: false, nextCursor: null, message: '' };
-  return { ...visible, tenantId: current.tenant, phase: current.resolving ? 'resolving' as const : !current.tenant ? 'unavailable' as const : visible.phase, retry, save };
+  return { ...visible, tenantId: current.tenant, phase: current.resolving ? 'resolving' as const : !current.tenant ? 'unavailable' as const : visible.phase, retry, save, loadMore, loadingMore: view.identity === current && loadingMore, pageMessage: view.identity === current ? pageMessage : '' };
 }

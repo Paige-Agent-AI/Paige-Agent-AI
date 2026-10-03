@@ -20,6 +20,13 @@ const OFFERS: CatalogOffer[] = [
     prices: [],
   },
 ];
+/** Source-only fixture for saved-price/current-price re-opening. Never production Catalog data. */
+export const BILLING_CATALOG_FIXTURE: CatalogOffer = {
+  id: 'test-billing-offer', name: 'Catalog service', summary: 'Synthetic current price', description: null,
+  availability: 'active', billingCadence: 'one_time', kind: 'service', deliveryShape: 'digital',
+  pricePresentation: 'fixed', customerAction: 'enquire', category: null, imageUrl: null, updatedAt: null,
+  prices: [{ id: 'test-billing-price', nickname: 'Current', unitAmount: 15000, currency: 'usd', billingInterval: 'one_time', kind: 'one_time', installmentsTotal: null, active: true }],
+};
 
 // LOCAL FIXTURE ONLY: this store is never imported by the production adapter.
 // Sales and Catalog subscribe to the same fixture records to exercise the real return flow.
@@ -132,7 +139,7 @@ export function useCatalogOffers(options?: CatalogHarnessQuery): CatalogHarnessS
     return () => { listeners.delete(listener); };
   }, []);
   const hidden = ["empty", "error", "loading"].includes(mode);
-  const rows = hidden ? [] : readRows();
+  const rows = hidden ? [] : new URLSearchParams(location.search).get('billing-fixture') === 'populated' ? [...readRows(), BILLING_CATALOG_FIXTURE] : readRows();
   const search = (options?.search ?? "").trim().toLocaleLowerCase();
   const page = Number.isFinite(options?.page) ? Math.max(0, Math.floor(options!.page!)) : 0;
   const pageSize = Number.isFinite(options?.pageSize) ? Math.min(100, Math.max(1, Math.floor(options!.pageSize!))) : 5;

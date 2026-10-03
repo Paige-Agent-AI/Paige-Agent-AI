@@ -33,6 +33,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GrowthHub } from "./growth2";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+vi.mock('./useSalesBillingDrafts', () => ({ useSalesBillingDrafts: () => ({ tenantId: 'test-tenant-billing', phase: 'ready', rows: [], hasMore: false, nextCursor: null, message: '', save: vi.fn(), retry: vi.fn() }) }));
 
 const ROUTED = {
   id: "submission-routed",
@@ -142,7 +143,7 @@ function renderAt(path: string) {
   act(() => root!.render(appAt(path)));
 }
 // Each Sales view is a Sales-local `?view=` param; command is the bare default.
-const salesPath = (view?: string) => `/solo/42/growth/sales${view ? `?view=${view}` : ""}`;
+const salesPath = (view: string = "command") => `/solo/42/growth/sales${view ? `?view=${view}` : ""}`;
 const render = (view?: string) => renderAt(salesPath(view));
 
 beforeEach(() => {
@@ -306,6 +307,17 @@ describe("§58 — behaviour that shipped on Sales and must survive the command-
 });
 
 describe("Sales Command — the operating desk (new)", () => {
+  it("uses the approved five primary billing tabs and preserves secondary operating tools", () => {
+    renderAt('/solo/42/growth/sales');
+    expect([...host.querySelectorAll('.so-subnav [role="tab"]')].map(tab => tab.textContent)).toEqual(['Overview', 'Payments', 'Invoices', 'Recurring', 'Agreements']);
+    const invoiceTab = [...host.querySelectorAll('.so-subnav [role="tab"]')].find(tab => tab.textContent === 'Invoices') as HTMLButtonElement;
+    act(() => invoiceTab.click());
+    expect(lastLocation).toContain('view=invoices');
+    expect(host.textContent).toContain('Start with a client and an offer');
+    const command = [...host.querySelectorAll('button')].find(button => button.textContent === 'Sales Command') as HTMLButtonElement;
+    act(() => command.click());
+    expect(host.textContent).toContain('Turn agreed value into received value');
+  });
   it("opens on Sales Command with an evidence-classed pulse and no representative-data claim", () => {
     render();
     const text = host.textContent ?? "";
@@ -378,7 +390,7 @@ describe("Sales Command — the operating desk (new)", () => {
 
   it("deep-links each view through the Sales-local sub-nav", () => {
     render();
-    const toTerms = [...host.querySelectorAll('.so-subnav [role="tab"]')].find((b) => b.textContent === "Commercial Terms") as HTMLButtonElement;
+    const toTerms = [...host.querySelectorAll('.so-subnav [role="tab"]')].find((b) => b.textContent === "Agreements") as HTMLButtonElement;
     expect(toTerms).not.toBeUndefined();
     act(() => toTerms.click());
     expect(host.textContent).toContain("Agreements and terms");

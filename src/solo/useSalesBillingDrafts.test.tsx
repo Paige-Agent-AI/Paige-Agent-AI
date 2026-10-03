@@ -14,6 +14,21 @@ async function render() { await act(async () => { root.render(<Probe />); }); }
 beforeEach(() => { state.tenant = '11111111-1111-4111-8111-111111111111'; state.rpc.mockReset().mockResolvedValue(empty); host = document.createElement('div'); document.body.appendChild(host); root = createRoot(host); });
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); });
 describe('billing draft workspace lifecycle', () => {
+  it('loads older canonical records with the server cursor and preserves rows on failure', async () => {
+    const id = '33333333-3333-4333-8333-333333333333';
+    const row = { id, tenant_id: state.tenant, invoice_number: 'DRAFT-'+id, status: 'draft', billing_draft_version: 1, amount_total_cents: 1000, billing_draft: { client_id: '55555555-5555-4555-8555-555555555555', price_id: null, item: 'Service', unit_minor: 1000, quantity: 1, kind: 'one_time', deposit_basis_points: null, provider: 'stripe', currency: 'usd', due_date: null, recipient_email: null, memo: null, cadence: null, due_now_minor: 1000, remainder_minor: 0 } };
+    state.rpc.mockResolvedValueOnce({ data: { rows: [row], has_more: true, next_cursor: id }, error: null });
+    await render();
+    state.rpc.mockResolvedValueOnce({ data: null, error: { code: '42501' } });
+    await act(async () => latest.loadMore());
+    expect(latest.rows).toHaveLength(1); expect(latest.pageMessage).toContain('Retry');
+    const older = '22222222-2222-4222-8222-222222222222';
+    state.rpc.mockResolvedValueOnce({ data: { rows: [{ ...row, id: older }], has_more: false, next_cursor: null }, error: null });
+    await act(async () => latest.loadMore());
+    expect(latest.rows.map(record => record.id)).toEqual([id, older]);
+    expect(latest.hasMore).toBe(false);
+    expect(state.rpc.mock.calls[2][1]._before_id).toBe(id);
+  });
   it.each(['switch', 'unmount'])('returns unknown after a pending save loses its %s context', async mode => {
     await render();
     let settle!: (value: unknown) => void;

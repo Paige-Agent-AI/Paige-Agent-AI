@@ -65,3 +65,31 @@
 }
 
 @media(max-width:520px){.solo-campaigns[data-campaigns-view="sales"]:has(.so-billing .sb-editor) .campaigns-tabs button{min-height:32px}.solo-campaigns[data-campaigns-view="sales"]:has(.so-billing .sb-editor) .campaigns-nav{min-height:64px}}
+/* Mineral/Obsidian Sales: defined boundaries, expanded workspace, tactile controls. */
+.so.so-billing{--sb-outline:color-mix(in srgb,var(--violet) 46%,var(--line));border:1px solid var(--sb-outline);border-radius:var(--r-m)}
+.so-billing .so-subnav{border-color:var(--sb-outline);background:var(--surface-2);margin-bottom:10px}
+.so-billing .so-subnav button{font-weight:600;color:var(--ink-2);border:1px solid transparent}
+.so-billing .so-subnav button[aria-selected="true"]{border-color:var(--sb-outline);color:var(--ink);background:var(--violet-tint);box-shadow:var(--sh-1)}
+.so-billing .so-subnav button:hover{color:var(--ink);background:var(--surface-sunk)}
+.so-billing .sb-panel{border-color:var(--sb-outline)}
+.so-billing .sb-panel>header{border-bottom-color:color-mix(in srgb,var(--violet) 24%,var(--line));background:var(--surface-2)}
+.so-billing .sb-panel h2,.so-billing .sb-panel h3{font-weight:650;letter-spacing:-.015em}
+.so-billing .sb-workspace .btn,.so-billing .sb-editor .btn{font-weight:600;border-color:color-mix(in srgb,var(--ink) 42%,var(--line));box-shadow:var(--sh-2);transition:transform 160ms ease-out,background-color 160ms ease-out}
+.so-billing .sb-workspace .btn-p{background:var(--violet);border-color:var(--violet);color:var(--ink-inv)}
+.so-billing .sb-workspace .btn:hover:not(:disabled),.so-billing .sb-editor .btn:hover:not(:disabled){transform:translateY(-1px);background:var(--surface-sunk)}
+.so-billing .sb-workspace .btn-p:hover:not(:disabled){background:var(--violet)}
+.so-billing .sb-workspace .btn:active:not(:disabled),.so-billing .sb-editor .btn:active:not(:disabled){transform:translateY(1px);box-shadow:var(--sh-1)}
+.so-billing .sb-workspace .btn:disabled,.so-billing .sb-editor .btn:disabled{box-shadow:none;transform:none;opacity:.55;cursor:not-allowed;background:var(--surface-2);color:var(--ink-2);border-color:var(--line)}
+.so-billing :focus-visible{outline:2px solid var(--violet);outline-offset:3px}
+@media(prefers-reduced-motion:reduce){.so-billing .sb-workspace .btn,.so-billing .sb-editor .btn{transition:none}.so-billing .btn:hover:not(:disabled),.so-billing .btn:active:not(:disabled){transform:none}}
+@media(forced-colors:active){.so.so-billing,.so-billing .sb-panel,.so-billing .so-subnav{border-color:CanvasText}.so-billing .btn{border-color:ButtonText;box-shadow:none}.so-billing .btn:disabled{border-color:GrayText;color:GrayText;opacity:1}.so-billing :focus-visible{outline-color:Highlight}}
+
+/* Widen only the active Sales desk; outer six-tab navigation stays unchanged. */
+.solo-campaigns[data-campaigns-view="sales"]:has(.so-billing)>.campaigns-scroll{display:flex;flex-direction:column;padding:12px;overflow:hidden}
+.solo-campaigns[data-campaigns-view="sales"] .campaigns-surface:has(>.so-billing){display:flex;flex-direction:column;width:100%;max-width:none;flex:1;min-height:0;margin:0;border:0;box-shadow:none}
+.solo-campaigns[data-campaigns-view="sales"] .so.so-billing{display:flex;flex-direction:column;width:100%;flex:1;min-height:0}
+.solo-campaigns[data-campaigns-view="sales"] .so-billing>.so-subnav{flex:none}
+.solo-campaigns[data-campaigns-view="sales"] .so-billing>.so-view{display:flex;flex-direction:column;flex:1;min-height:0}
+.solo-campaigns[data-campaigns-view="sales"] .so-billing .sb-workspace,.solo-campaigns[data-campaigns-view="sales"] .so-billing .sb-editor{height:auto;flex:1;min-height:0}
+.solo-campaigns[data-campaigns-view="sales"] .so-billing .sb-detail-grid{flex:0 1 230px}
+@media(max-width:520px),(max-height:600px){.solo-campaigns[data-campaigns-view="sales"]:has(.so-billing)>.campaigns-scroll{padding:10px}.solo-campaigns[data-campaigns-view="sales"] .so-billing .sb-detail-grid{flex:none}}

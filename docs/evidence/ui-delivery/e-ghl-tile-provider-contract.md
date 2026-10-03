@@ -33,7 +33,7 @@ MUST_PRESERVE: the four-choice auth segmentation, the explicit-choice rule for c
 ACCEPTANCE_CRITERIA: clicking the HighLevel tile opens the form preselected to Token + headers at the universal GHL address; a save without the locationId header is refused naming the header; a complete save writes provider_key gohighlevel with the bearer PIT and the locationId custom header.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: NONE_AFFECTED: the gateway client (useMcpGateway) and edge writers are untouched; the create body shape is unchanged apart from the provider_key value the preset carries.
-INTERNAL_BUILD_IDENTITY: resolved at commit; deployment=none pending merge; migrations=20270536000000; edge=NOT_APPLICABLE; evidence=this record at the PR head.
+INTERNAL_BUILD_IDENTITY: efcdba609338af238caba66d84726dbd2cd1d10c; deployment=none; environment=local development candidate on ghl-corrections; migrations=PROOF_OWED(20270536000000 provider-row UPDATE + additive trigger — applied with the merge deploy); edge=NOT_APPLICABLE; evidence=this record and the exact candidate head efcdba609338af238caba66d84726dbd2cd1d10c.
 RELEASE_CHANNEL: development: pre-merge candidate.
 RELEASE_CLASSIFICATION: patch: provider-identity and required-header corrections to one catalogue tile's preset.
 CUSTOMER_RELEASE_IDENTITY: none: authenticated outcome not established.

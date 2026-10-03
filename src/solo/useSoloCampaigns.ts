@@ -421,7 +421,8 @@ const empty = {
   pipelineWorkspace: emptyPipeline,
 };
 
-export function useSoloCampaigns(): SoloCampaignsState {
+export function useSoloCampaigns({ scope = "campaigns" }: { scope?: "campaigns" | "pipeline" } = {}): SoloCampaignsState {
+  const pipelineOnly = scope === "pipeline";
   const { activeTenantId, activeTenant, accountContextLoading } =
     useTenantContext();
   const deletionContext = useRef({
@@ -616,7 +617,7 @@ export function useSoloCampaigns(): SoloCampaignsState {
     }
 
     setState((previous) =>
-      previous.tenantId === activeTenantId && previous.phase === "ready"
+      !pipelineOnly && previous.tenantId === activeTenantId && previous.phase === "ready"
         ? previous
         : { tenantId: activeTenantId, phase: "loading", ...empty },
     );
@@ -630,22 +631,22 @@ export function useSoloCampaigns(): SoloCampaignsState {
           routingResponse,
           pipelineResponse,
         ] = await Promise.all([
-          supabase
+          pipelineOnly ? Promise.resolve({ data: [], error: null }) : supabase
             .from("growth_pages")
             .select("id,slug,title,status,updated_at")
             .eq("tenant_id", activeTenantId)
             .order("updated_at", { ascending: false }),
-          supabase
+          pipelineOnly ? Promise.resolve({ data: [], error: null }) : supabase
             .from("growth_funnels")
             .select("id,slug,name,status,updated_at")
             .eq("tenant_id", activeTenantId)
             .order("updated_at", { ascending: false }),
-          supabase
+          pipelineOnly ? Promise.resolve({ data: [], error: null }) : supabase
             .from("growth_forms")
             .select("id,slug,name,status,updated_at")
             .eq("tenant_id", activeTenantId)
             .order("updated_at", { ascending: false }),
-          supabase
+          pipelineOnly ? Promise.resolve({ data: [], error: null }) : supabase
             .from("growth_form_submissions")
             .select(
               "id,form_id,source,processing_state,created_at,contact_id,deal_id",
@@ -653,7 +654,7 @@ export function useSoloCampaigns(): SoloCampaignsState {
             .eq("tenant_id", activeTenantId)
             .order("created_at", { ascending: false })
             .limit(200),
-          supabase.rpc(
+          pipelineOnly ? Promise.resolve({ data: [], error: null }) : supabase.rpc(
             "get_pipeline_routing_evidence" as never,
             { _tenant_id: activeTenantId } as never,
           ),
@@ -908,7 +909,7 @@ export function useSoloCampaigns(): SoloCampaignsState {
         console.error("[solo-campaigns] read failed", error);
         if (current)
           setState((previous) =>
-            previous.tenantId === activeTenantId && previous.phase === "ready"
+            !pipelineOnly && previous.tenantId === activeTenantId && previous.phase === "ready"
               ? previous
               : { tenantId: activeTenantId, phase: "error", ...empty },
           );
@@ -917,7 +918,7 @@ export function useSoloCampaigns(): SoloCampaignsState {
     return () => {
       current = false;
     };
-  }, [accountContextLoading, activeTenantId, activeTenant?.slug, refreshKey]);
+  }, [accountContextLoading, activeTenantId, activeTenant?.slug, refreshKey, pipelineOnly]);
 
   // Realtime pipeline board: one tenant-keyed subscription over the records the canonical
   // load already reads. Events and (re)subscriptions resolve through `retry()` — a full

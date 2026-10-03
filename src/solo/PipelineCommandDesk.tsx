@@ -181,6 +181,7 @@ export function PipelineCommandDesk({
   onFolders,
   focusDealId = null,
   onClearFocus = () => {},
+  createRequested = false,
 }) {
   const workspace = data.pipelineWorkspace;
   const activePipelines = workspace.pipelines.filter(
@@ -264,7 +265,9 @@ export function PipelineCommandDesk({
       else if (mode === "new") setMode("board");
     };
     window.addEventListener("popstate", closeFromBack);
-    if (hasOverlay && !overlayHistory.current) {
+    // Deep-linked overlays already own a real route history entry. A second same-URL
+    // entry would resurrect the focus query when the close handler navigates away.
+    if (hasOverlay && !overlayHistory.current && !focusDealId && !createRequested) {
       window.history.pushState(
         { ...window.history.state, __paigePipelineOverlay: true },
         "",
@@ -288,6 +291,8 @@ export function PipelineCommandDesk({
     move,
     detail,
     mode,
+    focusDealId,
+    createRequested,
   ]);
   React.useEffect(
     () => () => {
@@ -315,6 +320,9 @@ export function PipelineCommandDesk({
     setFocusedStageId("");
     setKeyboardMove(null);
   }, [data.tenantId, selected?.id]);
+  React.useEffect(() => {
+    if (createRequested && workspace.canManage && selected?.id && activeStages.length > 0) setMode("new");
+  }, [createRequested, workspace.canManage, selected?.id, activeStages.length]);
   React.useEffect(() => {
     if (!focusDealId) return;
     const requested = workspace.deals.find((item) => item.id === focusDealId);
@@ -873,7 +881,7 @@ export function PipelineCommandDesk({
           stages={activeStages}
           run={run}
           busy={busy}
-          onClose={() => setMode("board")}
+          onClose={() => { setMode("board"); if (createRequested) onClearFocus(); }}
         />
       )}
       {detail && !move && !outcome && (

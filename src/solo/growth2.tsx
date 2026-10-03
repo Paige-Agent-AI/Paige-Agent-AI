@@ -80,7 +80,7 @@ function SurfaceHead({ truthKey, title, description, action }) {
   return <div className="campaigns-surface-head"><div><div className="campaigns-heading-line"><h2>{title}</h2></div><p>{description}</p><small>{note}</small></div>{action}</div>;
 }
 
-function DetailDrawer({ detail, onClose }) {
+export function DetailDrawer({ detail, onClose }) {
   const closeRef = React.useRef(null);
   const drawerRef = React.useRef(null);
   React.useEffect(() => {
@@ -261,7 +261,7 @@ function PipelineFolderOrganizer({ workspace, run, onClose }) {
   </section></>;
 }
 
-function PipelineSurface({ data, setDetail, focusDealId, onClearFocus }) {
+export function PipelineSurface({ data, setDetail, focusDealId, onClearFocus, createRequested = false }) {
   const workspace=data.pipelineWorkspace;
   const mounted=React.useRef(false);
   React.useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
@@ -307,7 +307,7 @@ function PipelineSurface({ data, setDetail, focusDealId, onClearFocus }) {
   // the selected record's dialog before its own await resolves.
   const runConfig=async(action)=>{const result=await data.pipelineAction(action);if(mounted.current&&action.type==="delete-empty-pipeline"&&result.ok)deleted(action.pipelineId,result.message);return result;};
   if(view!=="board")return <section className="campaigns-surface pipeline-surface"><PipelineConfigWorkspace mode={view==="config-create"?"create":"edit"} pipeline={selected} stages={stages} canManage={workspace.canManage} canDelete={workspace.canDelete} run={runConfig} onBack={back} onCreated={created} onDeleted={()=>{}} newPipeline={newPipeline} setNewPipeline={setNewPipeline}/></section>;
-  return <section className="campaigns-surface pipeline-surface"><StateFrame phase={data.phase} retry={data.retry}><PipelineCommandDesk data={data} selectedId={selectedId} setSelectedId={setSelectedId} folderFilter={folderFilter} setFolderFilter={setFolderFilter} onCreatePipeline={(event)=>openConfig("config-create",event)} onManage={(event)=>openConfig("config-edit",event)} onFolders={()=>setFoldersOpen(true)} focusDealId={focusDealId} onClearFocus={onClearFocus}/></StateFrame>{data.phase==="ready"&&foldersOpen&&<PipelineFolderOrganizer workspace={workspace} run={data.pipelineAction} onClose={()=>setFoldersOpen(false)}/>}</section>;
+  return <section className="campaigns-surface pipeline-surface"><StateFrame phase={data.phase} retry={data.retry}><PipelineCommandDesk data={data} selectedId={selectedId} setSelectedId={setSelectedId} folderFilter={folderFilter} setFolderFilter={setFolderFilter} onCreatePipeline={(event)=>openConfig("config-create",event)} onManage={(event)=>openConfig("config-edit",event)} onFolders={()=>setFoldersOpen(true)} focusDealId={focusDealId} onClearFocus={onClearFocus} createRequested={createRequested}/></StateFrame>{data.phase==="ready"&&foldersOpen&&<PipelineFolderOrganizer workspace={workspace} run={data.pipelineAction} onClose={()=>setFoldersOpen(false)}/>}</section>;
 }
 
 // Social is now its own surface (./social-command.tsx) rather than a fixed panel here.

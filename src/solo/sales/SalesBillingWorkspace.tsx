@@ -22,7 +22,7 @@ function DraftEditor({row, recurring, store, sources, catalog, browse, onSelecti
   React.useEffect(() => {
     const intercept = (event: MouseEvent) => {
       if (allowNavigation.current || !(event.target instanceof Element)) return;
-      const target = event.target.closest<HTMLButtonElement>('.so-subnav button, .so > .sb-actions button, .solo-campaigns .campaigns-tabs button');
+      const target = event.target.closest<HTMLButtonElement>('.so-subnav button, .so > .sb-actions button, .solo-campaigns .campaigns-tabs button, .sales-tabs button, .sales-payments-tabs button');
       if (!target || target.disabled) return;
       event.preventDefault(); event.stopImmediatePropagation();
       requestExit(() => { allowNavigation.current = true; try { target.click(); } finally { allowNavigation.current = false; } });

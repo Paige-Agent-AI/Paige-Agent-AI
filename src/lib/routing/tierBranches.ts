@@ -198,6 +198,18 @@ export const SOLO_BRANCHES: Branch[] = [
     ],
   },
   {
+    slug: "sales", key: "sales", label: "Sales", group: "main",
+    subtabs: [
+      { slug: "overview", key: "overview", label: "Overview" },
+      { slug: "opportunities", key: "opportunities", label: "Opportunities" },
+      { slug: "pipeline", key: "pipeline", label: "Pipeline" },
+      { slug: "offers", key: "offers", label: "Offers" },
+      { slug: "agreements", key: "agreements", label: "Terms & Agreements" },
+      { slug: "payments", key: "payments", label: "Payments" },
+      { slug: "performance", key: "performance", label: "Performance" },
+    ],
+  },
+  {
     slug: "analytics", key: "analytics", label: "Analytics", group: "main",
     // Source: src/solo/analytics2.tsx.
     subtabs: [

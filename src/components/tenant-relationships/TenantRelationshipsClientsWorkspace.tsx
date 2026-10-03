@@ -124,7 +124,7 @@ export function TenantRelationshipsClientsWorkspace({
     if (!searchParams.has("person") && !clearSalesOrigin) return;
     const next = new URLSearchParams(searchParams);
     next.delete("person");
-    if (clearSalesOrigin) next.delete("origin");
+    if (clearSalesOrigin) { next.delete("origin"); next.delete("salesReturn"); }
     setSearchParams(next, { replace: true });
   }, [activeTenantId, searchParams, setSearchParams, routeTier]);
 
@@ -180,7 +180,7 @@ export function TenantRelationshipsClientsWorkspace({
     <section className={`trc-workspace${soloPeople ? " trc-workspace--people" : ""}${soloConversations ? " trc-workspace--conversations" : ""}${soloCalendar ? " trc-workspace--calendar" : ""}`} data-relationship-workspace data-variant={variant}>
       {routeTier === "solo" && soloClientRoute && !(previousTenantId.current && accountIsChanging) && searchParams.get("origin") === "sales" && (
         <div className="trc-sales-return" style={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:8,padding:"8px 18px",flexShrink:0,borderBottom:"1px solid var(--pg-line)"}}>
-          <button type="button" className="btn btn-s btn-p" onClick={() => navigate(`/solo/${soloClientRoute[1]}/growth/sales?resume=terms`)}>Return to commercial terms</button>
+          <button type="button" className="btn btn-s btn-p" onClick={() => navigate(`/solo/${soloClientRoute[1]}/${searchParams.get("salesReturn") === "department" ? "sales/agreements" : "growth/sales"}?resume=terms`)}>Return to commercial terms</button>
           <span>Create or choose a client here, then return to select them in Sales.</span>
         </div>
       )}

@@ -1,0 +1,11 @@
+import { useSyncExternalStore } from "react";
+let mode = "ready";
+const listeners = new Set<() => void>();
+export function setPipelineFixture(next: string) { mode = next; listeners.forEach(listener => listener()); }
+const stages = [{ id: "test-stage-a", pipelineId: "test-pipeline", label: "Discovery", description: "Owner-authored test stage", orderIndex: 0, archivedAt: null, movePolicy: "direct", stageType: "open", version: 1 }, { id: "test-stage-b", pipelineId: "test-pipeline", label: "Scope", description: "Owner-authored test stage", orderIndex: 1, archivedAt: null, movePolicy: "approval", stageType: "open", version: 1 }];
+const deals = [{ id: "test-deal-a", title: "Test discovery", pipelineId: "test-pipeline", stageId: "test-stage-a", clientId: "c1", clientName: "Test client", owner: "Workspace owner", status: "open", source: "Owner entry", nextAction: "Review scope", tags: [], notes: "Local fixture only", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), actualCloseDate: null, lostReason: null, outcomes: [], version: 1, history: [] }];
+export function useSoloCampaigns() {
+  const current = useSyncExternalStore(listener => { listeners.add(listener); return () => { listeners.delete(listener); }; }, () => mode);
+  const ready = current === "ready" || current === "readonly";
+  return { tenantId: "harness-tenant", phase: ready || current === "empty" ? "ready" : current, campaigns: [], artifacts: [], submissions: [], retry() { setPipelineFixture("ready"); }, pipelineAction: async () => ({ ok: false, message: "Local fixture has no persistence; no production write occurred." }), pipelineWorkspace: { canManage: current === "ready", canDelete: false, canArchiveFolders: false, canManageFolders: false, folders: [], pipelines: ready ? [{ id: "test-pipeline", name: "Test pipeline", description: "Local source fixture", shortRef: "TEST-1", lifecycleStatus: "active", folderId: null, version: 1, stageCount: stages.length, dealCount: deals.length, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }] : [], stages: ready ? stages : [], deals: ready ? deals : [], clients: [{ id: "c1", name: "Test client" }], automationRules: [] } };
+}

@@ -48,6 +48,26 @@
   ],
   "surfaces": [
     {
+      "id": "sales.department",
+      "surface": "Solo Sales — Overview, Opportunities, Pipeline, Offers, Terms & Agreements, Payments, Performance",
+      "group": "sales",
+      "tier_scope": ["solo standalone"],
+      "owner_component": "src/solo/SalesWorkspace.tsx; src/solo/sales/SalesOverview.tsx",
+      "canonical_source": "get_pipeline_workspace; tenant_products/tenant_prices; existing commercial terms, signing documents and invoice draft adapters; Analytics evidence contract",
+      "intended_capability": {
+        "read": "Inspect tenant-safe canonical commercial records with independent provenance and availability.",
+        "draft": "Use existing canonical deal, offer, terms and invoice draft editors.",
+        "auto": "Existing per-capability grants only; department navigation grants nothing.",
+        "confirm": "Existing consequence-specific action and signing confirmation gates remain unchanged.",
+        "prohibited": "Do not infer income, provider connectivity, joined deal-to-invoice chains, or authority from route queries.",
+        "completion_criterion": "Authenticated Solo owner completes source-backed commercial workflows and verifies recorded outcomes; fixture rendering does not meet this criterion."
+      },
+      "state": "PROOF_OWED",
+      "state_reason": "S1/S2 source mounts and independent Overview aggregation implemented in candidate branch. Canonical mutations reused without a second store. Authenticated tenant read/write/account-switch and provider outcomes remain unverified; PAIGE department context/action binding is not introduced.",
+      "evidence_class": ["source_read", "automated_test", "rendered_structural"],
+      "sources": ["src/solo/SalesWorkspace.tsx", "src/solo/useSoloCampaigns.ts", "docs/delivery/solo-sales-domain-mount.md", "docs/evidence/ui-delivery/solo-sales-domain-mount.md"]
+    },
+    {
       "id": "paige.workspace",
       "intended_capability": {
         "read": "The safe surface context handed to the workspace — surface id, public-safe record ref, readiness/provenance — never raw payload or authority.",

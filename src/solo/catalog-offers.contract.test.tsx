@@ -478,13 +478,15 @@ describe("Catalog Offers — truthfulness", () => {
     expect(host.textContent).toContain("not available on this deployment yet");
   });
 
-  it("returns a retired address to the Vibe-owned half, not to an empty offer list", () => {
+  it("returns a retired address to the Vibe-owned published work, not to an empty offer list", () => {
+    // The published Vibe work left Catalog for Marketing › Lead capture (owner ruling 2026-10-03);
+    // the retired creative addresses follow it there.
     setCampaigns(); setOffers({ offers: [] });
     renderAt("/solo/4471/growth/pages");
     expect(host.textContent).toContain("This address moved");
-    const back = [...host.querySelectorAll("button")].find((b) => b.textContent === "Return to Catalog");
+    const back = [...host.querySelectorAll("button")].find((b) => b.textContent === "Go to Lead capture");
     act(() => { back?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
-    expect(host.textContent).toContain("Read-only published outputs owned by Vibe Studio.");
+    expect(host.textContent).toContain("Created and published in Vibe Studio.");
     expect(host.textContent).not.toContain("Nothing is listed yet");
   });
 
@@ -560,11 +562,11 @@ describe("Catalog Offers — rendered flows", () => {
     expect(harness.offers.setOfferStatus).not.toHaveBeenCalled();
   });
 
-  it("opens on Offers, and keeps the approved six tabs", () => {
+  it("opens on Offers, inside the approved Marketing tabs", () => {
     setCampaigns(); setOffers();
     renderAt("/solo/4471/growth/catalog");
     const tabs = [...host.querySelectorAll('.campaigns-tabs button')].map((b) => b.textContent?.trim());
-    expect(tabs).toEqual(["Overview", "Catalog", "Sales", "Pipeline", "Social", "Performance"]);
+    expect(tabs).toEqual(["Overview", "Campaigns", "Lead capture", "Social", "Analytics", "Offers", "Sales", "Pipeline"]);
     expect(host.textContent).toContain("Foundations Coaching Program");
     expect(host.textContent).toContain("What this business sells");
   });
@@ -645,12 +647,12 @@ describe("Catalog Offers — rendered flows", () => {
     expect(host.textContent).not.toContain("Foundations Coaching Program");
   });
 
-  it("preserves the Vibe-owned half, and lands legacy addresses on it", () => {
+  it("preserves the Vibe-owned published work in Lead capture, and lands old Catalog addresses on it", () => {
     setCampaigns(); setOffers();
     renderAt("/solo/4471/growth/catalog?type=form");
-    expect(host.textContent).toContain("Read-only published outputs owned by Vibe Studio.");
+    expect(host.textContent).toContain("Created and published in Vibe Studio.");
     expect(host.textContent).toContain("Published form");
-    // The Vibe half must not be reframed as an offer.
+    // Published Vibe work must not be reframed as an offer.
     expect(host.textContent).not.toContain("What this business sells");
   });
 
@@ -724,16 +726,16 @@ describe("Catalog Offers — rendered flows", () => {
     expect(planRow!.textContent).toContain("Instalment plan — $500 × 6 / month");
   });
 
-  it("returns to Offers when the type query is dropped without unmounting", () => {
-    // Reachable by clicking the already-selected Catalog tab, or by history navigation: the bare
-    // route defines Offers as the default, so continuing to show Published assets contradicts it.
+  it("returns to Offers from published work without unmounting", () => {
+    // An old `?type=` address lands on Lead capture; the Offers tab must then show offers, not the
+    // published work it was redirected from.
     setCampaigns(); setOffers();
     renderAt("/solo/4471/growth/catalog?type=form");
-    expect(host.textContent).toContain("Read-only published outputs owned by Vibe Studio.");
-    const tab = [...host.querySelectorAll("button")].find((b) => b.textContent === "Catalog");
+    expect(host.textContent).toContain("Created and published in Vibe Studio.");
+    const tab = [...host.querySelectorAll('[role="tab"]')].find((b) => b.textContent === "Offers");
     act(() => { tab?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
     expect(host.textContent).toContain("What this business sells");
-    expect(host.textContent).not.toContain("Read-only published outputs owned by Vibe Studio.");
+    expect(host.textContent).not.toContain("Created and published in Vibe Studio.");
   });
 
   it("closes an open detail drawer when the workspace changes", () => {
@@ -1079,14 +1081,16 @@ describe("Catalog Offers — rendered flows", () => {
     expect(firstWriteAt).toBeGreaterThan(tierAt);
   });
 
-  it("switches between the two concepts without leaving the tab", () => {
+  it("keeps offers and published Vibe work in their own tabs, each listing only its own", () => {
+    // They shared one tab until the Marketing department ruling (2026-10-03). Offers is the Sales
+    // lane's; published Vibe work is measured in Marketing › Lead capture.
     setCampaigns(); setOffers();
     renderAt("/solo/4471/growth/catalog");
-    const toAssets = [...host.querySelectorAll("button")].find((b) => b.textContent === "Published assets");
-    act(() => { toAssets?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
-    expect(host.textContent).toContain("Read-only published outputs owned by Vibe Studio.");
-    const toOffers = [...host.querySelectorAll("button")].find((b) => b.textContent === "Offers");
-    act(() => { toOffers?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
     expect(host.textContent).toContain("Foundations Coaching Program");
+    expect(host.textContent).not.toContain("Published form");
+    const toCapture = [...host.querySelectorAll('[role="tab"]')].find((b) => b.textContent === "Lead capture");
+    act(() => { toCapture?.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+    expect(host.textContent).toContain("Published form");
+    expect(host.textContent).not.toContain("Foundations Coaching Program");
   });
 });

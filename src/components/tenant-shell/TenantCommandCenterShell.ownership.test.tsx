@@ -409,12 +409,12 @@ describe("tenant shell owns one PAIGE surface", () => {
     const launcher = Array.from(host.querySelectorAll<HTMLButtonElement>("button"))
       .find((button) => button.textContent?.trim() === "Vibe Studio");
     await act(async () => launcher?.click());
-    expect(host.textContent).toContain("Back to Campaigns");
+    expect(host.textContent).toContain("Back to Marketing");
 
     const brandHome = host.querySelector<HTMLAnchorElement>('[aria-label="PAIGE Solo home"]');
     await act(async () => brandHome?.click());
 
-    expect(host.textContent).not.toContain("Back to Campaigns");
+    expect(host.textContent).not.toContain("Back to Marketing");
     expect(host.querySelector("[data-route-probe]")?.textContent).toBe("/solo/42/command-center");
     expect(host.querySelectorAll('[aria-label="PAIGE Solo home"]')).toHaveLength(1);
     expect(host.querySelectorAll("#tenant-paige-workspace")).toHaveLength(1);
@@ -440,14 +440,14 @@ describe("tenant shell owns one PAIGE surface", () => {
     expect(campaigns).toContain("detail:{returnFocus:event.currentTarget}");
     expect(campaigns).toContain("data-solo-vibe-studio-launcher");
     expect(campaigns).toContain(">Vibe Studio</button>");
-    expect(campaigns).toContain('eyebrow="Campaigns"');
+    expect(campaigns).toContain('eyebrow="Marketing"');
     expect(campaigns).not.toContain('eyebrow="Growth & acquisition"');
     expect(solo).toContain("window.addEventListener('paige-studio',h)");
     expect(solo).toContain("<VibeStudio onBack={closeStudio}/>");
     expect(solo.match(/<VibeStudio/g)).toHaveLength(1);
     expect(vibe).toContain("<StudioRail");
     expect(vibe).toContain("onBack={onBack}");
-    expect(studioHome).toContain("Back to Campaigns");
+    expect(studioHome).toContain("Back to Marketing");
     expect(studioHome).not.toContain("Back to Growth");
   });
 
@@ -475,7 +475,7 @@ describe("tenant shell owns one PAIGE surface", () => {
     await act(async () => launcher?.click());
 
     const back = Array.from(host.querySelectorAll<HTMLButtonElement>("button"))
-      .find((button) => button.textContent?.includes("Back to Campaigns"));
+      .find((button) => button.textContent?.includes("Back to Marketing"));
     expect(back).toBeTruthy();
     back?.focus();
     expect(document.activeElement).toBe(back);
@@ -486,7 +486,7 @@ describe("tenant shell owns one PAIGE surface", () => {
       await act(async () => window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
     }
 
-    expect(host.textContent).not.toContain("Back to Campaigns");
+    expect(host.textContent).not.toContain("Back to Marketing");
     expect(document.activeElement).toBe(launcher);
     expect(host.querySelector("[data-route-probe]")?.textContent).toBe("/solo/42/growth");
 
@@ -553,7 +553,7 @@ describe("tenant shell owns one PAIGE surface", () => {
     expect(
       Array.from(host.querySelectorAll<HTMLElement>("[data-tenant-destination]"))
         .map((item) => item.textContent?.trim()),
-    ).toEqual(["Command Center", "Clients", "Campaigns", "Sales", "Marketplace", "Analytics", "Settings"]);
+    ).toEqual(["Command Center", "Clients", "Marketing", "Sales", "Marketplace", "Analytics", "Settings"]);
 
     await act(async () => root.unmount());
     host.remove();

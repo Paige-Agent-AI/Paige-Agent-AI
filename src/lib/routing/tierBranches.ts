@@ -183,18 +183,25 @@ export const SOLO_BRANCHES: Branch[] = [
     ],
   },
   {
-    slug: "growth", key: "growth", label: "Campaigns", group: "main",
-    // Campaigns owns six customer-facing reporting views. Vibe Studio remains the
-    // sole creative owner and opens through its existing side action. Retired
-    // creative slugs resolve to a Campaigns-owned compatibility landing, never a
-    // fabricated Vibe library or asset route.
+    slug: "growth", key: "growth", label: "Marketing", group: "main",
+    // Marketing is the department (owner ruling 2026-10-03, docs/product/solo-marketing-ia-proposal.md).
+    // Campaigns is one function inside it. Vibe Studio stays the only creative owner and opens
+    // through its existing side action; Lead capture measures how published Vibe work is USED.
+    // The slug stays `growth` until the canonical-URL slice (S5) so no copied link breaks.
+    //
+    // Offers, Sales and Pipeline belong to the Sales lane. They stay here, reachable and unchanged,
+    // only until the top-level Sales destination lands (S3); then they leave with replace redirects.
+    // Retired creative slugs still resolve to the compatibility landing, which now points at
+    // Lead capture instead of Catalog.
     subtabs: [
-      { slug: "overview", aliases: ["active"], key: "ov", label: "Overview" },
-      { slug: "catalog", aliases: ["brand-kit", "pages", "funnels", "forms", "builders"], key: "catalog", label: "Catalog" },
+      { slug: "overview", key: "overview", label: "Overview" },
+      { slug: "campaigns", aliases: ["active"], key: "campaigns", label: "Campaigns" },
+      { slug: "lead-capture", aliases: ["brand-kit", "pages", "funnels", "forms", "builders"], key: "capture", label: "Lead capture" },
+      { slug: "social", key: "social", label: "Social" },
+      { slug: "analytics", aliases: ["performance"], key: "analytics", label: "Analytics" },
+      { slug: "catalog", key: "catalog", label: "Offers" },
       { slug: "sales", key: "sales", label: "Sales" },
       { slug: "pipeline", key: "pipeline", label: "Pipeline" },
-      { slug: "social", key: "social", label: "Social" },
-      { slug: "performance", key: "performance", label: "Performance" },
     ],
   },
   {

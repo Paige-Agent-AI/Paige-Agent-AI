@@ -91,7 +91,8 @@ describe("buildMindDomains — reconciliation", () => {
     expect(map.get("people")!.empty?.body).toMatch(/governed|clients/i);
     const offers = map.get("offers")!;
     expect(offers.verdict).toBe("UNAVAILABLE");
-    expect(offers.empty?.body).toMatch(/campaigns/i);
+    expect(offers.empty?.body).toMatch(/live in Offers/);
+    expect(offers.empty?.body).not.toMatch(/campaigns/i); // the department is Marketing now (2026-10-03)
   });
 });
 

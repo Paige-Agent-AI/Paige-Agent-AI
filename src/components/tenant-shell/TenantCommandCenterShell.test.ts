@@ -34,7 +34,7 @@ describe("tenant Command Center shell routing", () => {
     expect(destinations.map(({ label }) => label)).toEqual([
       "Command Center",
       "Clients",
-      "Campaigns",
+      "Marketing",
       "Sales",
       "Marketplace",
       "Analytics",
@@ -188,7 +188,7 @@ describe("tenant Command Center shell routing", () => {
   it("keeps existing Solo capability addresses while presenting the approved labels", () => {
     expect(resolveTenantShellDestination("/solo/42/growth", "standalone")).toMatchObject({
       id: "campaigns",
-      label: "Campaigns",
+      label: "Marketing",
       href: "/solo/42/growth",
     });
     expect(resolveTenantShellDestination("/solo/42/marketplace", "standalone")).toMatchObject({

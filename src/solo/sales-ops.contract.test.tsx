@@ -274,12 +274,14 @@ describe("§58 — behaviour that shipped on Sales and must survive the command-
     expect(host.querySelector(".campaigns-skeleton")).not.toBeNull();
   });
 
-  it("keeps the six-tab strip in order, with Sales in place", () => {
+  it("keeps the strip in order, with Sales in place until the top-level Sales destination lands", () => {
+    // Campaigns became the Marketing department (owner ruling 2026-10-03). Sales stays reachable
+    // here, in the Sales lane's group, until its own top-level home ships.
     render();
-    const tabs = [...host.querySelectorAll('[role="tablist"][aria-label="Campaigns views"] [role="tab"]')]
+    const tabs = [...host.querySelectorAll('[role="tablist"][aria-label="Marketing views"] [role="tab"]')]
       .map((t) => t.textContent?.trim())
       .filter(Boolean);
-    expect(tabs).toEqual(["Overview", "Catalog", "Sales", "Pipeline", "Social", "Performance"]);
+    expect(tabs).toEqual(["Overview", "Campaigns", "Lead capture", "Social", "Analytics", "Offers", "Sales", "Pipeline"]);
   });
 
   it("keeps SalesOps' own four load phases distinct from the Campaigns snapshot's", () => {
@@ -831,8 +833,8 @@ describe("Sales operations — what an owner can actually do (§70.1)", () => {
     expect(headings.some((h) => /Sales/.test(h))).toBe(false);
   });
 
-  it("renders no masthead above the work on any of the six tabs, and moves truth onto the desk", () => {
-    for (const slug of ["overview", "catalog", "sales", "pipeline", "social", "performance"]) {
+  it("renders no masthead above the work on any tab, and moves truth onto the desk", () => {
+    for (const slug of ["overview", "campaigns", "lead-capture", "social", "analytics", "catalog", "sales", "pipeline"]) {
       renderAt(`/solo/42/growth/${slug}`);
       expect(host.querySelector(".pg-hd"), `masthead returned on ${slug}`).toBeNull();
     }

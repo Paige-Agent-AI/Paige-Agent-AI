@@ -90,7 +90,7 @@ export function FormSettings({ tenantId, formId, onClose, onSaved }: {
           </div>
           {draft.autoCreateDeal && (
             !loaded ? <div className="vs-rail-skel" role="status" aria-label="Loading your pipelines"><i /><i /></div>
-            : pipelines.length === 0 ? <p className="vs-inspector-note">You don't have a pipeline yet. Create one in Campaigns, then come back.</p>
+            : pipelines.length === 0 ? <p className="vs-inspector-note">You don't have a pipeline yet. Create one in Marketing › Pipeline, then come back.</p>
             : (
               <>
                 <label className="vs-field">

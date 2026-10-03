@@ -6,7 +6,8 @@ import type { InvoiceCustomerChoice, InvoiceAgreementChoice } from './InvoiceDra
 type ReadResult = {data:Record<string,unknown>[]|null;error:unknown};
 interface SourceQuery extends PromiseLike<ReadResult>{select(columns:string):SourceQuery;eq(column:string,value:string):SourceQuery;order(column:string,options:{ascending:boolean}):SourceQuery;limit(count:number):SourceQuery;range(from:number,to:number):SourceQuery;or(filters:string):SourceQuery;}
 // Keep the SDK receiver: SupabaseClient.from reads this.rest.
-const from = (table:string):SourceQuery => supabase.from(table) as unknown as SourceQuery;
+const client = supabase as unknown as {from(table:string):SourceQuery};
+const from = (table:string):SourceQuery => client.from(table);
 const text = (v: unknown) => typeof v === 'string' && v.trim() ? v.trim() : null;
 export function invoiceCustomerFromRow(row: Record<string, unknown>): InvoiceCustomerChoice {
   const methods = orderContactMethods(row.client_contact_methods as ContactMethodRow[] | null).map(m => ({...m,value:m.value.trim()}));

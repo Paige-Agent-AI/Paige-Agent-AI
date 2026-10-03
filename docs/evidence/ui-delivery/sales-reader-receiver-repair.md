@@ -1,10 +1,10 @@
-# UI delivery evidence: refined canonical invoice drafts
+# UI delivery evidence: Sales reader receiver crash repair
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: client/known contacts -> invoice-only address -> stacked Catalog/custom items -> deposit/monthly guards -> optional agreement -> method/channel intent -> review -> canonical save/edit/recovery
 PAIGE_UI_DESIGN: PASS: approved invoice-refinement layout absorbed into actual Sales; five primary tabs and six outer tabs preserved
-MATERIAL_FLOW_CHANGE: YES: approved refined multi-item/contact invoice editor replaces the single-item editor; legacy shortcut row removed, legacy routes preserved
-FLOW_PROTOTYPE: PASS: owner approved outputs/invoice-refinement.html and address/items/review captures before production implementation
+MATERIAL_FLOW_CHANGE: NO: approved refined multi-item/contact invoice editor replaces the single-item editor; legacy shortcut row removed, legacy routes preserved
+FLOW_PROTOTYPE: NOT_APPLICABLE: existing approved flow preserved; owner approved outputs/invoice-refinement.html and address/items/review captures before production implementation
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: workspace owner/admin prepares, reviews, saves and reopens a canonical invoice draft
 VISUAL_DIRECTION: PASS: approved Operate reconciliation direction, defined violet group boundaries, raised controls, invoice table and restrained due-now emphasis
 AUTOMATED_EVIDENCE: PASS: 200 focused tests and production-verified canonical SQL dependency; local SQL roundtrip/concurrency separately proven
@@ -26,7 +26,7 @@ ACCEPTANCE_CRITERIA: real canonical snapshot writer/readers; tenant-safe contact
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: tenant/RLS/CAS guarded; no shared Harness, Rail, Chat, Analytics or Memory write added
 INTERNAL_BUILD_IDENTITY: ee5219d5c04066143b643c7cf4b7a278c36a79a3; deployment=dpl_5bukxhYByoU9e2zEv2EW4X1oBSUP; environment=production; migrations=APPLIED(20270536000001_sales_invoice_snapshot_v2); edge=NOT_APPLICABLE; evidence=scripts/live-drive/sales-refined-invoice-shell-drive.mjs and scripts/live-drive/artifacts/sales-refined-invoice-shell/geometry.json
-RELEASE_CHANNEL: production: observed READY exact squash SHA; required exact-head PR checks PASS; authenticated UI proof remains owed
+RELEASE_CHANNEL: development: repair pending review/CI/release; prior UI production: observed READY exact squash SHA; required exact-head PR checks PASS; authenticated UI proof remains owed
 RELEASE_CLASSIFICATION: internal-only: refined canonical draft UI, complete billing remains PARTIAL
 CUSTOMER_RELEASE_IDENTITY: none: no customer update publication
 RELEASE_NOTE_REQUIRED: no: internal dependency only
@@ -58,3 +58,11 @@ PR #1659 reviewed head `3f3cc826880179e59c7573e72536a773f8f7c944` merged as `ee5
 Independent source/finish review PASS covered 130 rerun tests and 20 local fixture observations; author focused suite passed 200 tests, final TypeScript ratchet 12/12 and evidence grammar. The earlier backend-main CI run `37135622346` initially failed one unchanged Team ordered-email timing assertion under suite load; independent isolated 10/10 passed and the failed-job rerun subsequently passed verify and web-smoke before UI release. This chronology is not a Team product fix or authenticated Sales proof.
 
 Typed proof boundary: scope=authenticated_runtime (current/second Solo tenant contact selection, snapshot save/read/reopen, permissions and recovery); blocker=browser_environment (Windows sandboxhelper startup read ACL); excluded LIVE claim=hosted canonical CRM-to-invoice lifecycle. Native zoom and merchant eligibility/issue/send/collection remain UNVERIFIED or UNAVAILABLE as stated above. Recovery remains UI revert/forward fix preserving applied storage and managed dispatch refusal.
+
+## Sales blank-page receiver repair — 2026-10-03
+
+Observed source defect: the customer reader detached SupabaseClient.from; the actual SDK reads this.rest and throws before the previous Promise.all catch. Two failing-first real-SDK hook tests reproduced receiver loss and uncaught synchronous construction failure. Receiver-preserving invocation and deferred guarded construction now contain failures in the existing source error state, with a bounded visible retry notice. No query authority, data write, approved editor layout, schema or provider behavior changes.
+
+Automated repair proof: 41 focused lifecycle/editor/source tests PASS, including real createClient with mocked fetch and tenant/client predicates. Production-built actual shell proof uses the real source hook/SDK plus synthetic tenant/network fixtures: Overview and Invoices ready/error cases all render without pageerrors; construction failures show the source error notice. Reproduce `vite build --config scripts/live-drive/harness/sales-mount/vite.receiver.config.ts`, preview that config at5247, then `node scripts/live-drive/sales-receiver-build-drive.mjs`; results/screenshots in `scripts/live-drive/artifacts/sales-receiver-build-proof/`. This is production-mode bundling proof, not hosted authenticated account proof. Signed-out live navigation redirected to auth; owner-specific authenticated crash remains unverified by this agent.
+
+Repair release remains development/preview pending independent exact-head review, CI and coordinator release. Migration/Edge NOT_APPLICABLE. Recovery is revert/forward-fix bounded reader/notice, preserving applied snapshots and dispatch refusal. No new customer release identity/publication.

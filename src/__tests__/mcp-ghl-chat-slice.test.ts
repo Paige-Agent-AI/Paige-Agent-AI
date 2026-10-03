@@ -89,6 +89,15 @@ describe("the chat manifest and dispatch carry the governed lane", () => {
     expect(chat).toContain('mode: approvalChannel.has(tc.id) ? "execute" : "prepare"');
   });
 
+  it("gateway REFUSAL BODIES reach the model verbatim — never the generic transport sentence", () => {
+    // functions.invoke resolves a non-2xx to {data:null, error:FunctionsHttpError} whose
+    // message is a transport constant; the gateway's closed refusal vocabulary
+    // (execute_not_enabled, approval_required, not_found, bad_tool_name) lives in the BODY.
+    // Both GHL invoke sites read it with the in-file helper built for exactly this seam.
+    expect(chat.match(/readInvokeBody\(ghlErr, ghlData\)/g)?.length).toBe(2);
+    expect(chat).not.toMatch(/ghlErr\) throw ghlErr/);
+  });
+
   it("the catalogue names the waiting tools — never a bare count", () => {
     expect(chat).toContain("NAME the waiting tools so the operator can act");
   });

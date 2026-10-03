@@ -138,6 +138,11 @@ function validateGhlTypeScript(chatText) {
     requireProof(executeCalls.length===1,'one execute dispatch through the canonical gateway');
     requireProof(nodes(block,ts.isPropertyAssignment).some(n=>nameOf(n.name)==='mode'&&n.initializer&&ts.isConditionalExpression(n.initializer)&&normalized(n.initializer).includes('approvalChannel.has(tc.id)')&&normalized(n.initializer).includes('"execute"')&&normalized(n.initializer).includes('"prepare"')),'dispatch mode is prepare without the operator approval, execute with it');
     requireProof(nodes(block,ts.isPropertyAssignment).some(n=>nameOf(n.name)==='error'&&n.initializer&&ts.isStringLiteral(n.initializer)&&n.initializer.text==='not_connected'),'honest not_connected refusal when no canonical connection exists');
+    // THE TRANSPORT SEAM: a gateway refusal is a non-2xx whose BODY is the honest closed
+    // vocabulary (execute_not_enabled, approval_required, not_found); thrown verbatim the
+    // model would see only the generic transport sentence. Both invoke sites must read the
+    // body with the in-file helper built for exactly this trap.
+    requireProof(nodes(block,ts.isCallExpression).filter(n=>normalized(n.expression).includes('readInvokeBody')).length===2,'both gateway invoke sites read the refusal body (readInvokeBody), never throw the transport error');
   } else requireProof(false,'dispatch block resolved');
   return {findings,tools:new Map([['ghl_list_actions',{write:false}],['ghl_run_action',{write:true}]])};
 }
@@ -226,6 +231,7 @@ if (process.argv.includes("--self-test")) {
     ['ghl dispatch guard weakened',originalChat.replace('tc.function.name === "ghl_list_actions" || tc.function.name === "ghl_run_action"','true')],
     ['ghl prepare bypass (always execute)',originalChat.replace('mode: approvalChannel.has(tc.id) ? "execute" : "prepare"','mode: "execute"')],
     ['ghl honest not_connected removed',originalChat.replace('error: "not_connected",','error: "unavailable",')],
+    ['ghl refusal body dropped',originalChat.replace('const ghlRunBody = await readInvokeBody(ghlErr, ghlData);','if (ghlErr) throw ghlErr;')],
   ];
   for(const [name,chat]of ghlNegatives)if(!validateGhlTypeScript(chat).findings.length){console.error(`GHL AST negative failed: ${name}`);process.exit(1);}
   const native=PAIGE_SPINE_CAPABILITIES.find(c=>c.action?.executor==='edge.paige-ai-chat');

@@ -12662,22 +12662,31 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 const { data: ghlData, error: ghlErr } = await supabaseClient.functions.invoke("mcp-gateway", {
                   body: { action: "tools", connection_id: ghlConn.connection_id },
                 });
-                if (ghlErr) throw ghlErr;
-                // The gateway's catalogue is already closed-vocabulary (identifier-validated
-                // names, sanitized labels); project only what the model needs — the name,
-                // its approval state, and the counts — never display metadata.
-                const catalogue = ghlData as { tools?: Array<Record<string, unknown>>; tool_count?: number; approved_count?: number; observed_at?: string | null } | null;
-                const tools = Array.isArray(catalogue?.tools) ? catalogue!.tools! : [];
-                result = {
-                  success: true,
-                  connection: "gohighlevel",
-                  tool_count: typeof catalogue?.tool_count === "number" ? catalogue.tool_count : tools.length,
-                  approved_count: typeof catalogue?.approved_count === "number" ? catalogue.approved_count : 0,
-                  approved: tools.filter((t) => t?.approved === true).map((t) => String(t?.name ?? "")).filter(Boolean),
-                  // NAME the waiting tools so the operator can act — never a bare count.
-                  unapproved: tools.filter((t) => t?.approved !== true).map((t) => String(t?.name ?? "")).filter(Boolean),
-                  note: "The approved tools are ready to run via ghl_run_action. The unapproved names are waiting on the operator's per-tool approval (Settings → Integrations) — name them to the operator so they can choose which to grant.",
-                };
+                // READ THE BODY, DO NOT READ `error.message` — a gateway refusal arrives as a
+                // non-2xx whose CLOSED body (not_found, lookup_failed…) is the honest reason;
+                // the thrown transport constant would collapse them all into one opaque
+                // sentence (the trap this file documents at the social lanes; readInvokeBody
+                // exists for exactly this seam).
+                const ghlListBody = await readInvokeBody(ghlErr, ghlData);
+                if (ghlErr) {
+                  result = { success: false, error: String(ghlListBody.error ?? "gateway_refused") };
+                } else {
+                  // The gateway's catalogue is already closed-vocabulary (identifier-validated
+                  // names, sanitized labels); project only what the model needs — the name,
+                  // its approval state, and the counts — never display metadata.
+                  const catalogue = ghlData as { tools?: Array<Record<string, unknown>>; tool_count?: number; approved_count?: number; observed_at?: string | null } | null;
+                  const tools = Array.isArray(catalogue?.tools) ? catalogue!.tools! : [];
+                  result = {
+                    success: true,
+                    connection: "gohighlevel",
+                    tool_count: typeof catalogue?.tool_count === "number" ? catalogue.tool_count : tools.length,
+                    approved_count: typeof catalogue?.approved_count === "number" ? catalogue.approved_count : 0,
+                    approved: tools.filter((t) => t?.approved === true).map((t) => String(t?.name ?? "")).filter(Boolean),
+                    // NAME the waiting tools so the operator can act — never a bare count.
+                    unapproved: tools.filter((t) => t?.approved !== true).map((t) => String(t?.name ?? "")).filter(Boolean),
+                    note: "The approved tools are ready to run via ghl_run_action. The unapproved names are waiting on the operator's per-tool approval (Settings → Integrations) — name them to the operator so they can choose which to grant.",
+                  };
+                }
               } else {
                 // ghl_run_action: propose-first per the autonomy gate above. Without the
                 // operator's confirmation this dispatch PREPARES (the gateway contacts no
@@ -12694,8 +12703,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                     mode: approvalChannel.has(tc.id) ? "execute" : "prepare",
                   },
                 });
-                if (ghlErr) throw ghlErr;
-                result = ghlData as Record<string, unknown>;
+                // Same seam: the gateway's refusal bodies are the honest vocabulary —
+                // execute_not_enabled (the owner's gate is off), approval_required (the
+                // tool lacks its durable approval), not_found, bad_tool_name — and each
+                // must reach the model verbatim, never the generic transport sentence.
+                const ghlRunBody = await readInvokeBody(ghlErr, ghlData);
+                if (ghlErr) {
+                  result = { success: false, ...ghlRunBody, error: String(ghlRunBody.error ?? "gateway_refused") };
+                } else {
+                  result = ghlRunBody;
+                }
               }
             }
 

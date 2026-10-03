@@ -6180,3 +6180,5 @@ selected one, so each read failed with 42703. They now read `user_contact_method
   - `docs/prototypes/solo-marketing-ia.html`
   - `docs/evidence/ui-delivery/solo-marketing-department-s2.md`
   - the tier matrix surface ledger
+
+- 2026-10-03: Solo Sales supporting mount PR1673 merged main2b873d0f38a758bc8a26caa8103f5b5f930947c7 and coordinator verified READY Vercel dpl_Dde8pPCxbYUwatqvXThLHzjEpW1Z / matching alias build2b873d0f38a758bc8a26caa8103f5b5f930947c7-muszqtmg. Exact6199 CI verify run37159501649/job111309796428 and database run37159501670/job111309796155 PASS. PARTIAL production mount; authenticated owner/provider/department-binding proof remains PROOF_OWED; no customer release identity. Master section4.0 records full boundary. Separate commercial navigation cutover remains candidate until its own review/CI/merge.

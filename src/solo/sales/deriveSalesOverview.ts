@@ -37,3 +37,6 @@ export function deriveSalesOverview(input: SalesOverviewInput) {
     stages: ready(input.deals) ? input.stages.map(stage => ({ ...stage, count: deals.filter(row => row.status === "open" && row.stageId === stage.id).length })) : [],
   };
 }
+
+export const salesPeriodFromQuery = (value: string | null): SalesPeriod => value === "7d" || value === "30d" ? value : "all";
+export const salesStageQuery = (stageId: string, period: SalesPeriod) => `stage=${encodeURIComponent(stageId)}&period=${period}`;

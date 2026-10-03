@@ -10,10 +10,10 @@ S1/S2 controlled source presentations only. Existing Pipeline RPC/write/realtime
 Portfolio Sales/CRM + Performance. Binding Ledger sales.department PROOF_OWED. No Integration Registry, Spine, Harness or Rail change needed because existing contracts are reused. Department PAIGE action binding and authenticated proof remain owed.
 
 Evidence: docs/evidence/ui-delivery/solo-sales-domain-mount.md.
-- PASS 104 focused tests, changed-production ESLint (zero errors), production build.
+- PASS 105 focused tests, changed-production ESLint (zero errors), production build.
 - PASS112 rendered fixture geometry cases (seven source surfaces x four viewports x two themes x dock closed/open).
 - PASS8 queue/detail/create-open-close fixture flows; dirty invoice top-tab Keep/Discard proof.
-- App typecheck FAIL on12 unrelated baseline errors, exact paths recorded; changed source has no diagnostics.
+- Current-main tsc ratchet PASS baseline10/current10 with no new errors; plain app typecheck retains10 unrelated baseline errors. Rebased onto78ffc3bb preserving Vibe handoff change.
 - Authenticated tenants, provider/payment outcomes, zoom200 and runtime reduced-motion are UNVERIFIED.
 
 Actual source fixtures explicitly marked synthetic. Final action contrast snapshots and dirty exit artifacts in scripts/live-drive/artifacts/sales-domain; initial Overview screenshots superseded by overview-final.png. No LIVE capability claim.

@@ -10,16 +10,16 @@ import { CatalogOffers } from "./catalog-offers";
 import { SalesOps } from "./sales-ops";
 import { Analytics2 } from "./analytics2";
 import { SalesOverview } from "./sales/SalesOverview";
-import { dealInSalesPeriod, type SalesPeriod } from "./sales/deriveSalesOverview";
+import { dealInSalesPeriod, salesPeriodFromQuery, type SalesPeriod } from "./sales/deriveSalesOverview";
 import "./sales/sales-department.css";
 
 const TABS = [["overview", "Overview", BarChart3], ["opportunities", "Opportunities", LayoutList], ["pipeline", "Pipeline", GitBranch], ["offers", "Offers", Tag], ["agreements", "Terms & Agreements", FileText], ["payments", "Payments", Receipt], ["performance", "Performance", BarChart3]] as const;
 
-function Opportunities({ data, open, stage }: { data: ReturnType<typeof useSoloCampaigns>; open(tab: string, query?: string): void; stage: string | null }) {
+function Opportunities({ data, open, stage, initialPeriod }: { data: ReturnType<typeof useSoloCampaigns>; open(tab: string, query?: string): void; stage: string | null; initialPeriod: SalesPeriod }) {
   const [search, setSearch] = React.useState("");
-  const [period, setPeriod] = React.useState<SalesPeriod>("all");
+  const [period, setPeriod] = React.useState<SalesPeriod>(initialPeriod);
   const [stageFilter, setStageFilter] = React.useState(stage ?? "all");
-  React.useEffect(() => { setSearch(""); setStageFilter(stage ?? "all"); }, [data.tenantId, stage]);
+  React.useEffect(() => { setSearch(""); setStageFilter(stage ?? "all"); setPeriod(initialPeriod); }, [data.tenantId, stage, initialPeriod]);
   if (data.phase !== "ready") return <div className="sales-empty" role={data.phase === "error" ? "alert" : "status"}><h2>{data.phase === "error" ? "Opportunity records could not be read" : ["loading", "resolving"].includes(data.phase) ? "Reading this workspace’s opportunities…" : "Workspace read unavailable"}</h2><p>No deal records are inferred from a failed or unresolved read.</p>{data.phase === "error" && <button className="btn" onClick={data.retry}>Retry</button>}</div>;
   const stages = data.pipelineWorkspace.stages;
   const rows = data.pipelineWorkspace.deals.filter(deal => (stageFilter === "all" || deal.stageId === stageFilter) && dealInSalesPeriod(deal.createdAt, period, Date.now()) && `${deal.title} ${deal.clientName} ${deal.owner}`.toLowerCase().includes(search.toLowerCase()));
@@ -48,7 +48,7 @@ export function SalesWorkspace({ accountContext, accountEpoch, openPaige }: { ac
   const operations = (view: string) => <SalesOps controlledView={view} hideNavigation onViewChange={changeSalesView} setDetail={onDetail} deals={data.pipelineWorkspace.deals} dealsPhase={data.phase} stages={data.pipelineWorkspace.stages} submissions={data.submissions} submissionsPhase={data.phase} submissionsRetry={data.retry} onOpenCatalog={(resume = false) => open("offers", resume ? "resume=terms&origin=sales" : undefined)} onOpenClients={openClients} onOpenPipeline={() => open("pipeline")}/>;
   let body: React.ReactNode;
   if (tab === "overview") body = <SalesOverview key={data.tenantId ?? "unresolved"} data={data} onOpen={open}/>;
-  else if (tab === "opportunities") body = <Opportunities key={data.tenantId ?? "unresolved"} data={data} stage={query.get("stage")} open={open}/>;
+  else if (tab === "opportunities") body = <Opportunities key={data.tenantId ?? "unresolved"} data={data} stage={query.get("stage")} initialPeriod={salesPeriodFromQuery(query.get("period"))} open={open}/>;
   else if (tab === "pipeline") body = <PipelineSurface key={data.tenantId} data={data} setDetail={onDetail} focusDealId={query.get("deal")} createRequested={query.get("new") === "opportunity"} onClearFocus={() => open("pipeline")}/>;
   else if (tab === "offers") body = <>{query.get("resume") === "terms" && <div className="sales-return"><button className="btn" onClick={() => open("agreements", "resume=terms")}>Return to terms editor</button></div>}<CatalogOffers setDetail={onDetail}/></>;
   else if (tab === "agreements") body = operations("terms");

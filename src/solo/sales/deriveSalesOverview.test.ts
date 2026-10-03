@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deriveSalesOverview, type SalesOverviewInput } from "./deriveSalesOverview";
+import { deriveSalesOverview, salesPeriodFromQuery, salesStageQuery, type SalesOverviewInput } from "./deriveSalesOverview";
 
 const source = <T,>(rows: readonly T[], extra = {}) => ({ tenantId: "test-tenant-a", phase: "ready", readable: true, rows, ...extra });
 const input = (): SalesOverviewInput => ({ tenantId: "test-tenant-a", deals: source([{ id: "d1", title: "Discovery", clientName: "Test client", status: "open", stageId: "s1", nextAction: "Call", createdAt: "2026-10-01", updatedAt: "2026-10-02" }]), terms: source([{ id: "t1", contactId: "c1", status: "draft" }]), signings: source([{ id: "a1", documentTitle: "Scope", displayState: "sent" }]), invoices: source([{ id: "i1", number: "DRAFT-1", snapshot: { client_id: "c1", kind: "one_time" } }]), stages: [{ id: "s1", label: "Discovery" }], clients: [{ id: "c1", name: "Test client" }], period: "all", now: Date.parse("2026-10-03") });
@@ -32,3 +32,5 @@ describe("Sales operating Overview independent source truth", () => {
     expect(result.rows.some(row => row.source === "deals")).toBe(false);
   });
 });
+
+it("preserves the stage count period at register drilldown and validates query enum", () => { const query = new URLSearchParams(salesStageQuery("stage & scoped", "7d")); expect(query.get("stage")).toBe("stage & scoped"); expect(salesPeriodFromQuery(query.get("period"))).toBe("7d"); expect(salesPeriodFromQuery("arbitrary")).toBe("all"); });

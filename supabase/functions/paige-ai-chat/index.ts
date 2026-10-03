@@ -4954,6 +4954,11 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // thread; after that a refine mints a fresh image (the anchor's expiry clear).
     const IMAGE_REFINE_ANCHOR_WINDOW_MS = 30 * 60 * 1000;
     const studioLinked: Array<{ kind: string; id: string; title: string; url: string | null }> = [];
+    // A page designed in a Studio project but not saved this turn (the save waited on approval, or
+    // the model stopped short). The stage shows it, marked as not saved, instead of staying empty:
+    // it is the tenant's own draft, generated from their brief and brand, and nothing is claimed
+    // about it beyond "designed, not saved". Emitted with the other content frames at the end.
+    let studioPreview: { kind: "page" | "funnel"; title: string; blocks: unknown[]; theme: unknown } | null = null;
     // #29 — REGULAR-CHAT deliverables. Outside a Studio session there is no canvas to link to, but a
     // chat surface (PaigeChat/PaigeAIChat/BrokerPaigeSession) still earns the
     // Cowork-style "Created a file" handoff card. This collects the artifacts the agent PERSISTED
@@ -12077,6 +12082,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 theme_json: (gd as any)?.theme_json ?? null,
                 seo_json: (gd as any)?.seo_json ?? null,
               };
+              if (studioSessionId && Array.isArray((gd as any)?.blocks) && (gd as any).blocks.length) {
+                studioPreview = {
+                  kind: "page",
+                  title: String((gd as any)?.seo_json?.title ?? "Landing page draft").slice(0, 120),
+                  blocks: (gd as any).blocks,
+                  theme: (gd as any)?.theme_json ?? null,
+                };
+              }
             } else if (tc.function.name === "growth_page_save") {
               // p_tenant_id is IGNORED for JWT callers by the DEFINER RPC (no IDOR, §9) —
               // it pins to current_user_tenant_id(). Writes the DRAFT only; never goes live.
@@ -12086,6 +12099,18 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               if (args.page_id && personaCtx?.tenant_id) {
                 const { data: _exP } = await supabaseClient.from("growth_pages").select("slug").eq("id", args.page_id).eq("tenant_id", personaCtx.tenant_id).maybeSingle();
                 if ((_exP as any)?.slug) _pageSaveSlug = (_exP as any).slug;
+              } else if (personaCtx?.tenant_id) {
+                // A NEW page never takes a slug another page already has: the upsert is keyed on
+                // (tenant, slug), so a reused slug would overwrite that page's draft and title — and
+                // the Studio saves without asking. Same rule the funnel builder applies (`_uniqueSlug`).
+                const _base = String(args.slug || args.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48) || "page";
+                const { data: _taken } = await supabaseClient.from("growth_pages").select("slug").eq("tenant_id", personaCtx.tenant_id).like("slug", `${_base}%`);
+                const _set = new Set(((_taken ?? []) as Array<{ slug: string }>).map((r) => r.slug));
+                _pageSaveSlug = _base;
+                if (_set.has(_base)) {
+                  _pageSaveSlug = `${_base}-${Date.now()}`;
+                  for (let n = 2; n < 200; n++) { if (!_set.has(`${_base}-${n}`)) { _pageSaveSlug = `${_base}-${n}`; break; } }
+                }
               }
               const { data: row, error } = await supabaseClient.rpc("growth_page_upsert", {
                 p_tenant_id: personaCtx?.tenant_id ?? null,
@@ -12201,6 +12226,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 throw new Error(typeof e === "string" ? e : e?.message || "Funnel draft failed");
               }
               result = { success: true, name: (gd as any)?.name, goal: (gd as any)?.goal ?? null, page: (gd as any)?.page ?? null, form: (gd as any)?.form ?? null };
+              const _fpBlocks = (gd as any)?.page?.blocks ?? (gd as any)?.page?.blocks_json;
+              if (studioSessionId && Array.isArray(_fpBlocks) && _fpBlocks.length) {
+                studioPreview = { kind: "funnel", title: String((gd as any)?.name ?? "Funnel draft").slice(0, 120), blocks: _fpBlocks, theme: (gd as any)?.page?.theme_json ?? null };
+              }
             } else if (tc.function.name === "growth_funnel_build") {
               // Persist the funnel into REAL draft rows — entry page + intake form + wired
               // funnel — through the SAME DEFINER RPCs the client seam uses (§10/§18). JWT
@@ -14688,6 +14717,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // #292 — tell the Studio canvas the exact artifact this turn produced (server-authoritative;
           // the client opens THIS, never a guessed manifest index). Last visual wins if several built.
           if (studioLinked.length) emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_artifact: studioLinked[studioLinked.length - 1] })}\n\n`));
+          // Designed but not saved this turn: the stage shows the draft as "not saved" (see studioPreview).
+          // Suppressed only by a saved page or funnel — a form or image linked the same turn is not it.
+          if (studioPreview && !studioLinked.some((l) => l.kind === "page" || l.kind === "funnel")) {
+            emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_preview: studioPreview })}\n\n`));
+          }
           // #29 — REGULAR-CHAT handoff cards. Outside a Studio session, emit ONE paige_artifact frame
           // per deliverable the agent persisted this turn so the chat renders a Cowork-style "Created a
           // file" card. Same frame the Studio canvas consumes (backward-compatible: kind/id/title/url +

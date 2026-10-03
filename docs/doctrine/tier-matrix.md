@@ -341,6 +341,10 @@ class of lie as a fabricated metric (§13).
 
 Legend: **✓** live · **—** not built · **N/A** tier not opened yet · **403** denied at the route gate.
 
+### Vibe Studio build view, in-project saving, approval cards (2026-10-03)
+
+Same tiers as the layout C workspace below; no new seam. The Studio designer saves drafts in the same turn; held saves surface as approval cards; an unnamed project is renamed through the existing `rename_studio_session` (workspace owner/admin or the project's creator). LIVE on merge; authenticated drive owed.
+
 ### Solo Campaigns becomes the Marketing department — S2 "Marketing in place" (branch `claude/gifted-bell-qfezxb`, 2026-10-03)
 
 Owner ruling 2026-10-03, decisions D1–D5 (`docs/product/solo-marketing-ia-proposal.md`). Only the

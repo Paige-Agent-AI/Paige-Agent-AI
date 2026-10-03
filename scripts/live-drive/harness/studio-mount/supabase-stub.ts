@@ -23,6 +23,7 @@ const PAGE_BLOCKS = [
 const sessions: Record<string, unknown>[] = [
   { id: "s-form", title: "New client intake", seed_brief: "An intake form for new clients", artifact_refs: [{ kind: "form", id: "f-1", title: "New client intake" }], updated_at: ago(8) },
   { id: "s-page", title: "Referral workshop page", seed_brief: "A landing page for my November workshop", artifact_refs: [{ kind: "page", id: "p-1", title: "Referral workshop" }], updated_at: ago(90) },
+  { id: "s-blank", title: "Untitled project", seed_brief: "Design me a landing page for my referral workshop", artifact_refs: [], updated_at: ago(30) },
   { id: "s-funnel", title: "Free strategy call", seed_brief: "A funnel for a free consultation", artifact_refs: [], updated_at: ago(60 * 26) },
 ];
 let form: Record<string, unknown> = { id: "f-1", name: "New client intake", slug: "new-client-intake", status: "draft", schema_json: FORM_SCHEMA, draft_schema_json: FORM_SCHEMA,
@@ -76,6 +77,7 @@ export const supabase = {
       case "list_studio_sessions": return { data: sessions, error: null };
       case "create_studio_session": { const s = { id: "s-new", title: String(args.p_title), seed_brief: args.p_seed_brief, artifact_refs: [], updated_at: now }; sessions.unshift(s); return { data: s, error: null }; }
       case "touch_studio_session": return { data: sessions.find((s) => s.id === args.p_id) ?? null, error: null };
+      case "rename_studio_session": { const s = sessions.find((x) => x.id === args.p_id); if (s) s.title = String(args.p_title); return { data: s ?? null, error: null }; }
       case "paige_studio_thread_ensure": return { data: `th-${args.p_session_id}`, error: null };
       case "peek_tenant_portal_brand": return { data: [{ tenant_name: "Northwind Studio", primary_color: "#2F6B55", logo_url: null }], error: null };
       case "list_artifact_versions": return { data: args.p_kind === "form" ? versions : versions.slice(0, 1).map((v) => ({ ...v, is_current: true, title: "First draft" })), error: null };

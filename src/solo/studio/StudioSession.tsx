@@ -7,7 +7,8 @@ import { ArrowLeft, Monitor, Smartphone, MessageSquare, SlidersHorizontal, Arrow
 import { Logo } from "../_shared";
 import { buildGrowthBrandFloor } from "@/components/growth/growth-theme";
 import { useMediaJobs } from "../useMediaJobs";
-import { formFromRow, loadBrand, openSession, pageFromRow, plainError, type ArtifactRef, type StudioSession as Session, type StudioVersion } from "./studio-data";
+import { formFromRow, isUnnamed, sessionName, loadBrand, openSession, pageFromRow, plainError, renameSession, type ArtifactRef, type StudioSession as Session, type StudioVersion } from "./studio-data";
+import { MarkdownMessage } from "@/components/chat/MarkdownMessage";
 import { useStudioChat, type Choices } from "./useStudioChat";
 import { StudioStage } from "./StudioStage";
 import { artifactId, loadArtifact, hasPendingChanges, isLive, type Brand, type Device, type LoadedArtifact } from "./artifact-state";
@@ -67,11 +68,36 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBa
   const publishBtnRef = React.useRef<HTMLButtonElement | null>(null);
 
   const refs = session?.artifacts ?? [];
+  // Until it is named, a project is called by what was asked for.
+  const displayTitle = session ? sessionName(session) : "Project";
   const activeRef = refs.find((r) => r.id === activeId) ?? refs[0] ?? null;
 
+  const named = React.useRef<string | null>(null);
+  const renameFailed = React.useRef(false);
   const reloadSession = React.useCallback(async (select?: string) => {
     try {
-      const s = await openSession(sessionId);
+      let s = await openSession(sessionId);
+      // A project nobody named takes the name of the first thing Paige saves in it.
+      const first = s.artifacts.find((r) => r.id === select) ?? s.artifacts[0];
+      // A project is still unnamed while its name is a placeholder or just the brief it started from
+      // (Studio home titles a new project with its brief).
+      const placeholder = isUnnamed(s.title) || (!!s.seedBrief && s.title.trim() === s.seedBrief.trim().replace(/\s+/g, " ").slice(0, 60));
+      if (placeholder && named.current) {
+        // A reload that read the row before the rename landed keeps the name already given.
+        s = { ...s, title: named.current };
+      } else if (placeholder && first && !isUnnamed(first.title) && !renameFailed.current) {
+        // Two reloads end a turn (the produced piece and the turn itself); only one names it.
+        named.current = first.title.trim();
+        try {
+          await renameSession(sessionId, named.current);
+          s = { ...s, title: named.current };
+        } catch (e) {
+          // Only the creator or an admin may rename; anyone else keeps the brief as the name. Say so
+          // once and stop retrying on every reload.
+          console.warn("[studio] project rename refused:", e);
+          named.current = null; renameFailed.current = true;
+        }
+      }
       setSession(s);
       if (select) setActiveId(select);
     } catch (e) {
@@ -121,13 +147,14 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBa
 
   // On a narrow screen the chat is a drawer: it opens whenever Paige asks something or is working,
   // so her question is never hidden behind a closed panel.
-  React.useEffect(() => { if (chat.choices || chat.sending) setChatOpen(true); }, [chat.choices, chat.sending]);
+  const waitingCount = chat.confirms.filter((c) => !c.state).length;
+  React.useEffect(() => { if (chat.choices || chat.sending || waitingCount) setChatOpen(true); }, [chat.choices, chat.sending, waitingCount]);
   // Opening a project puts focus in the conversation (the card that opened it is gone).
   React.useEffect(() => { if (chat.ready) inputRef.current?.focus({ preventScroll: true }); }, [chat.ready]);
 
   React.useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
-  }, [chat.turns, chat.steps, chat.choices, pendingApprovals.length]);
+  }, [chat.turns, chat.steps, chat.choices, chat.confirms.length, pendingApprovals.length]);
 
   // Esc steps back out of the project, unless the owner has typed something or a panel is open (each
   // panel closes itself first).
@@ -165,7 +192,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBa
   const live = artifact ? isLive(artifact) : false;
   const pending = artifact ? hasPendingChanges(artifact) : false;
   const saveState = chat.sending ? { tone: "busy", text: chat.status ?? "Paige is building" }
-    : !artifact ? { tone: "idle", text: "Nothing built yet" }
+    : !artifact ? (chat.preview ? { tone: "idle", text: chat.confirms.some((c) => !c.state) ? "Designed · waiting for your approval" : "Designed · not saved" } : { tone: "idle", text: "Nothing built yet" })
     : live ? (pending ? { tone: "good", text: "Saved · changes not live yet" } : { tone: "good", text: "Live" })
     : { tone: "good", text: "Saved · draft" };
   const publishLabel = live ? (pending ? "Publish changes" : "Live · Manage") : "Publish";
@@ -188,7 +215,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBa
         <button type="button" className="vs-btn vs-chat-toggle" aria-expanded={chatOpen} onClick={() => setChatOpen((o) => !o)}><MessageSquare size={15} aria-hidden="true" />{chatOpen ? "Hide chat" : "Chat"}</button>
         <nav className="vs-crumbs" aria-label="Project">
           <span className="vs-crumb-studio">Studio /</span>
-          <b className="vs-trunc" style={{ maxWidth: 220 }}>{session?.title ?? "Project"}</b>
+          <b className="vs-trunc" style={{ maxWidth: 260 }} title={displayTitle}>{displayTitle}</b>
           {refs.length > 1 ? (
             <>
               <span aria-hidden="true">/</span>
@@ -237,10 +264,10 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBa
               <div key={i} className="vs-msg-you">{t.content}</div>
             ) : (
               <div key={i}>
-                {(t.content || (i === lastAssistant && chat.sending)) && (
+                {(t.content || (i === lastAssistant && chat.sending && chat.steps.length === 0)) && (
                   <div className="vs-msg-paige">
                     <Logo size={16} />
-                    <p>{t.content || (chat.status ?? "Working on it…")}</p>
+                    {t.content ? <MarkdownMessage content={t.content} className="vs-md" /> : <p>{chat.status ?? "Working on it…"}</p>}
                   </div>
                 )}
                 {i === lastAssistant && chat.steps.length > 0 && (
@@ -257,6 +284,20 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBa
               </div>
             ))}
             {chat.choices && <AskCard choices={chat.choices} disabled={chat.sending} onAnswer={(v, d) => void chat.send(v, { display: d })} />}
+            {chat.confirms.map((c) => (
+              <div key={c.fingerprint} className="vs-confirm" data-state={c.state ?? "waiting"} role="group" aria-label={c.state ? "Your decision" : "Paige is waiting for your approval"}>
+                <b>{!c.state ? "Waiting for your approval" : c.state === "declined" ? "Skipped" : c.state === "sent" ? "Approved" : c.state === "ran" ? "Done" : c.state === "not_run" ? "Didn't run" : "Not confirmed"}</b>
+                <span>{c.summary}</span>
+                {!c.state ? (
+                  <div className="vs-confirm-actions">
+                    <button type="button" className="vs-btn vs-btn-violet" disabled={chat.sending} onClick={() => void chat.decide(c.fingerprint, true)}>Approve</button>
+                    <button type="button" className="vs-btn vs-btn-quiet" disabled={chat.sending} onClick={() => void chat.decide(c.fingerprint, false)}>Not this</button>
+                  </div>
+                ) : c.state === "sent" ? (
+                  <small role="status">Paige is running it…</small>
+                ) : c.note ? <small role="status">{c.note}</small> : null}
+              </div>
+            ))}
             {pendingApprovals.map((job) => (
               <div key={job.id} className="vs-approval" role="group" aria-label="Image waiting for approval">
                 <b>An image needs your approval</b>
@@ -300,7 +341,11 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBa
             {artifactError ? (
               <div className="vs-stage-empty" role="alert"><b>This piece couldn't be loaded</b>{artifactError}</div>
             ) : (
-              <StudioStage artifact={previewArtifact ?? artifact} brand={brand} device={device} tenantId={tenantId} building={chat.sending && !artifact} />
+              <StudioStage
+                artifact={previewArtifact ?? artifact} brand={brand} device={device} tenantId={tenantId}
+                building={chat.sending && !previewing} steps={chat.steps} status={chat.status}
+                preview={previewing ? null : chat.preview} waitingApproval={chat.confirms.some((c) => !c.state)}
+              />
             )}
           </div>
           {settingsOpen && artifact?.kind === "form" && (

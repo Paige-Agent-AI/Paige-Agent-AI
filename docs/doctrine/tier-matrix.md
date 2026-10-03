@@ -341,6 +341,23 @@ class of lie as a fabricated metric (§13).
 
 Legend: **✓** live · **—** not built · **N/A** tier not opened yet · **403** denied at the route gate.
 
+### Solo Campaigns becomes the Marketing department — S2 "Marketing in place" (branch `claude/gifted-bell-qfezxb`, 2026-10-03)
+
+Owner ruling 2026-10-03, decisions D1–D5 (`docs/product/solo-marketing-ia-proposal.md`). Only the
+Solo tree changes: `SOLO_BRANCHES.growth`, the Solo rail and `src/solo/growth2.tsx`. Agency, Enterprise, Operator
+and the sub-account tree (`SUB_ACCOUNT_BRANCHES`, rendered by `AgencyApp mode="subaccount"`) are untouched.
+The URL slug stays `growth` until slice S5.
+
+| Surface | God / Super Admin | Agency | Standalone (Solo) | Sub-account | Client | Anonymous | Status |
+|---|---|---|---|---|---|---|---|
+| Menu item **Marketing** (was Campaigns), `/solo/{account}/growth` | as Solo, only with a tenant selected | **—** keeps its own "Growth" tree (unchanged) | **✓** | **— gap (D4):** still "Growth" on the Agency tree, until the `/business` → Solo-shell migration | — | — | PARTIAL: on merge; authenticated drive owed (§32.c) |
+| Marketing › **Overview** (department brief: briefs, capture points, 30-day leads, opportunities opened, unavailable channels named) | as Solo | — | **✓** | — (gap above) | — | — | PARTIAL: tenant reads only; no email/ads/spend source |
+| Marketing › **Campaigns** (the Campaign Command Desk, moved from Overview unchanged; `?brief=new` opens the builder) | as Solo | — | **✓** | — | — | — | as before (`campaign_briefs`) |
+| Marketing › **Lead capture** (published + draft pages/funnels/forms, form routing drawer, recent submissions with tracking tags; moved from Catalog's Published assets half) | as Solo | — | **✓** owner/admin edit routing; a member reads | — | — | — | PARTIAL: routing write unchanged (`growth_form_set_intake`) |
+| Marketing › **Analytics** (leads by `utm_source` / `utm_campaign`, first touch; replaces the static Performance cards) | as Solo | — | **✓** | — | — | — | PARTIAL: visits, spend, multi-touch and revenue-by-campaign UNAVAILABLE |
+| Offers · Sales · Pipeline (Sales lane; kept reachable in the Marketing strip behind a divider until top-level Sales lands, S3) | as Solo | — | **✓** unchanged | — | — | — | unchanged |
+| Solo **Analytics** branch (`/solo/{account}/analytics`) | — | — | **✓ unchanged** (retires in S4, after Sales hosts the sales-funnel evidence) | — | — | — | unchanged |
+
 ### Vibe Studio publish lifecycle and Studio chat forms (PR #1658, 2026-10-03)
 
 Database and edge seams only. The Solo Studio workspace UI that drives them is the next PR, so no new screen is LIVE here.

@@ -302,6 +302,11 @@ the next Strategy / Tactic / Action.
 - The Paige Runtime Harness is approved architecture, recorded as PARTIAL and distributed (master reference, "Paige Runtime Harness", 2026-09-08). Its canonical path ends in Spine authority, then verified readback, then receipt and Rail.
 - `campaign_briefs` already carries `mission_id`, which links to the business-mission substrate (`20260905221203_business_mission_foundation.sql`). Durable tasking (`20260811120000_wave4_4a3_durable_tasking_compaction.sql`) and durable jobs also exist.
 - The talent registry (`paige_subagents`) and the department/action-kind registry (`20260720153024_paige_subagents_talent.sql`, `20260720200830_org_departments_action_kinds.sql`) exist.
+- Existing contracts in the brain that M-A1 starts from:
+  - `docs/brain/paige-durable-job-contract.md`
+  - `docs/brain/paige-receipt-rail-contract.md`
+  - `docs/brain/paige-spine-and-rail-state.md`
+  - `docs/brain/paige-router-budget-contract.md` (computational budget)
 - **M-A1 must map all of these before proposing anything new.**
 - A "durable work envelope" migration exists only on an unmerged branch, not on `main`. Its status must be resolved in M-A1 rather than assumed.
 

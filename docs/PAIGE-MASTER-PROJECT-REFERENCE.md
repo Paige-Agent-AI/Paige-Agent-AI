@@ -761,6 +761,29 @@ Reference or any domain ledger; it governs how their facts become release and cu
 > **Established login workspace choice + stale-checkout recovery — shipped (2026-09-13).** PR #1219 (`4bc9cf771e992614701d6f4e1b94f1d5c3d513d6`) restores the existing server-derived account/workspace card after every fresh login for any identity with an active direct membership, including one-workspace legacy and promotional Solo identities. Multiple memberships remain separately selectable; Platform remains an explicit authorized peer context. Stale Solo intent and `/welcome?checkout=success|recovery` can no longer override established access, and one-workspace users are not silently auto-entered. The current production descendant `c287a4f86ad42f35903a7dc297012514e1480c8a` contains the repair unchanged; Vercel is `READY`, `solo-beta-enrollment-status` is deployed, and current `edge-live` `d33f67180f2a55691e55dec39fd807610d71fc63` is a descendant of the hotfix with no scoped Edge drift. Authenticated legacy/promotional sign-in, card selection, persisted switching, refresh, and repeat-login proof remain `PROOF OWED`; no Stripe, billing, entitlement, tenant, membership, migration, or unsupported-enrollment behavior changed. Authority: [login workspace-choice recovery evidence](evidence/ui-delivery/login-workspace-choice-recovery.md).
 
 ### 4.0 Shipped Delivery Log
+**2026-10-03 Solo Campaigns becomes the Marketing department (S2, "Marketing in place"). Release channel: `production` on merge; classification: `internal-only` IA reorganization, `PARTIAL`.** Owner ruling 2026-10-03, D1–D5 (`docs/product/solo-marketing-ia-proposal.md`). The Solo menu item and branch read **Marketing** (slug still `growth`). It has five Marketing tabs (Overview, Campaigns, Lead capture, Social, Analytics), then Offers · Sales · Pipeline, which stay reachable behind a divider until the Sales lane's top-level Sales lands (S3).
+- *What moved:*
+  - Overview is new. It is built from existing reads: briefs, published and draft capture points, 30-day submissions.
+  - The Campaign Command Desk is now the Campaigns tab.
+  - Catalog's Published assets and the form intake drawer are now Lead capture.
+  - The static Performance cards are now Analytics: first-touch leads by `utm_source` / `utm_campaign`. `useSoloCampaigns` now selects `utm_json` and returns drafts; it makes no new query.
+  - Old `/growth/active`, `/growth/performance` and `/growth/catalog?type=` addresses redirect.
+  - Fixed: the desk's "Open Vibe Studio" buttons were silently ignored by SoloApp.
+- *Proof:*
+  - vitest 2649 passed, 2 skipped (targeted).
+  - tsc ratchet 12/12.
+  - `scripts/live-drive/marketing-views-drive.mjs` 644/644.
+  - `campaigns-nav-fit-drive` 216/216.
+  - Impeccable detector clean.
+  - Evidence record: `docs/evidence/ui-delivery/solo-marketing-department-s2.md`.
+- *Observed deployment:* OWED after merge.
+- *Boundary:*
+  - Email, ads, spend, visits, multi-touch and revenue-by-campaign are UNAVAILABLE.
+  - Authenticated production behaviour is PROOF OWED (§32.c).
+  - Sub-accounts (`/business`, Agency tree) still read "Growth" (D4 gap).
+  - Solo Analytics is unchanged until S4.
+  - No migration or edge change.
+
 **2026-10-03 Agreements consistency with the widened Sales desk. Release channel: `production`; classification: `internal-only` visual patch, `PARTIAL`.** [PR #1669](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/1669), reviewed `1338c1b4a775e77983427315befd828b4360e01d`, squash `ac3d2a77e0beb577e14b6a4d4fb0ac437cd05daf`. Agreements now shares the live Sales frame, width and five-tab selection treatment; scoped solid surfaces, outlined headers and raised enabled controls preserve comfortable internal spacing and existing agreement behavior. An explicit AgreementEditor presentation class styles its portaled modal without changing other editors.
 
 - *Proof:* initial independent nonauthor review FAIL on `be3a1caa358fe31166a7853c2198e260873ce1c2` found unreachable modal ancestry selectors and an evidence EOF blank. One consolidated correction passed the changed-head source recheck ([initial review](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/1669#issuecomment-5972935051), [final PASS](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/1669#issuecomment-5972962771)); required exact-head CI green before merge. Final 16 expanded-sidebar local source cases cover four viewports, light/dark and PAIGE open/closed, empty/populated records, keyboard editor opening/Escape and computed modal background/pseudo-element/button assertions. Zero document overflow/page errors; lint zero errors with one pre-existing dependency warning at line 642.

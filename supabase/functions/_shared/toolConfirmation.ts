@@ -141,6 +141,7 @@ export const TOOL_IDENTITY_FIELDS: Readonly<Record<string, readonly string[]>> =
   n8n_update_workflow: ["workflow_id"],
   growth_page_publish: ["page_id"],
   growth_funnel_publish: ["funnel_id"],
+  growth_form_publish: ["form_id"],
   // pipeline_configure MULTIPLEXES eleven command types behind one tool name — archive-pipeline,
   // archive-stage, move-deal, update-pipeline and more. Unpinned, they all hashed identically, so
   // an approval for "Archive Sales Q3 (PPL-7) with 41 deals" could be spent on archive-stage: the

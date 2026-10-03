@@ -321,7 +321,8 @@ serve(async (req: Request) => {
       // If a reuse target went stale (row deleted mid-session → CONTENT_NOT_FOUND), don't orphan the
       // freshly-generated image: fall back to a fresh INSERT so it still lands tracked in the library
       // (it starts a new version lineage instead of stacking, which is the honest outcome, §13).
-      if (saveErr && reuseContentId && /CONTENT_NOT_FOUND/.test(saveErr.message)) {
+      // A published image is held still (GROWTH_PUBLISH_STATE_GUARDED): its refine is filed as a new image.
+      if (saveErr && reuseContentId && /CONTENT_NOT_FOUND|GROWTH_PUBLISH_STATE_GUARDED/.test(saveErr.message)) {
         ({ data: cid, error: saveErr } = await admin.rpc("save_marketing_content", { ...saveArgs, p_id: null }));
       }
       if (saveErr) console.error("library save failed:", saveErr.message);

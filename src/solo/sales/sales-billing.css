@@ -36,6 +36,11 @@
   .solo-campaigns[data-campaigns-view="sales"]:has(.so-billing) .campaigns-studio{font-size:0;width:34px;padding:0;gap:0}
 }
 @media(max-width:520px),(max-height:600px){
+  /* Back restores the desk navigation. During short-window editing, reserve
+   * usable reading space for financial facts instead of repeating destinations. */
+  .solo-campaigns[data-campaigns-view="sales"] .so-billing:has(.sb-editor)>.so-subnav,
+  .solo-campaigns[data-campaigns-view="sales"] .so-billing:has(.sb-editor)>.sb-actions{display:none}
+  .solo-campaigns[data-campaigns-view="sales"] .so-billing .sb-editor{margin-top:0}
   .solo-campaigns[data-campaigns-view="sales"]:has(.so-billing)>.campaigns-scroll{display:flex;flex-direction:column;padding-bottom:12px}
   .solo-campaigns[data-campaigns-view="sales"] .campaigns-surface:has(>.so-billing){display:flex;flex-direction:column;flex:1;min-height:0;width:100%}
   .solo-campaigns[data-campaigns-view="sales"] .so.so-billing{display:flex;flex-direction:column;flex:1;min-height:0;width:100%}

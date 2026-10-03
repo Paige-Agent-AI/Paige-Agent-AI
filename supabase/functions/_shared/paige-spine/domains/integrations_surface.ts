@@ -34,9 +34,9 @@ export const INTEGRATIONS_LIST = {
     safeSummary: "An integration's connection state and provider.",
     referencePrefix: "integrations:",
     factValues: {
-      channel: ["email", "sms", "calendar", "voice"],
+      channel: ["email", "sms", "calendar", "voice", "mcp"],
       status: ["active", "disabled", "pending"],
-      provider: ["resend", "twilio", "google", "calendly", "n8n", "zapier"],
+      provider: ["resend", "twilio", "google", "calendly", "n8n", "zapier", "gohighlevel"],
     },
   },
   action: {
@@ -53,8 +53,8 @@ export const INTEGRATIONS_LIST = {
     railVisibility: "owner_internal",
   },
   chatBinding: "PARTIAL",
-  mindBinding: "UNAVAILABLE",
-  sharedPrimitiveChange: "NONE",
+  mindBinding: "PARTIAL",
+  sharedPrimitiveChange: "SCR-INTEGRATIONS-MIND",
   maturity: "PARTIAL",
 } as const satisfies SpineCapability;
 
@@ -94,7 +94,7 @@ export const INTEGRATIONS_HEALTH = {
     railVisibility: "owner_internal",
   },
   chatBinding: "PARTIAL",
-  mindBinding: "UNAVAILABLE",
-  sharedPrimitiveChange: "NONE",
+  mindBinding: "PARTIAL",
+  sharedPrimitiveChange: "SCR-INTEGRATIONS-MIND",
   maturity: "PARTIAL",
 } as const satisfies SpineCapability;

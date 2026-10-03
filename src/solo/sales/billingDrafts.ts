@@ -48,7 +48,7 @@ export function readBillingDraft(value: unknown, expectedTenant: string): Billin
     totalMinor: value.amount_total_cents, facts: f as BillingDraftFacts, dueNowMinor: f.due_now_minor, remainderMinor: f.remainder_minor };
 }
 
-function failure(error: RpcResult['error']): DraftResult<never> {
+export function billingDraftFailure(error: RpcResult['error']): DraftResult<never> {
   if (error?.code === '42883' || error?.code === 'PGRST202') return { ok: false, outcome: 'unavailable', message: 'Billing draft storage is unavailable in this environment.' };
   if (error?.code && (/^PA/.test(error.code) || ['42501', '22023', '22P02', '22007', '22008', '40001', '23505'].includes(error.code))) {
     return { ok: false, outcome: 'refused', message: error.code === '40001' ? 'This draft changed. Reopen its current version before saving.' : 'The draft was refused. Check workspace, access and billing details.' };
@@ -64,21 +64,21 @@ export async function saveBillingDraft(rpc: BillingRpc, request: DraftSaveReques
       _expected_tenant_id: request.openedTenantId, _invoice_id: request.invoiceId,
       _expected_version: request.expectedVersion, _operation_id: request.operationId, _draft: request.draft,
     });
-    if (error) return failure(error);
+    if (error) return billingDraftFailure(error);
     const row = object(data) ? readBillingDraft(data.row, request.openedTenantId) : null;
-    if (!row || row.id !== request.invoiceId || row.version !== request.expectedVersion + 1) return failure(null);
+    if (!row || row.id !== request.invoiceId || row.version !== request.expectedVersion + 1) return billingDraftFailure(null);
     return { ok: true, value: row };
-  } catch { return failure(null); }
+  } catch { return billingDraftFailure(null); }
 }
 
 export async function listBillingDrafts(rpc: BillingRpc, tenantId: string, beforeId: string | null = null): Promise<DraftResult<{ rows: BillingDraft[]; hasMore: boolean; nextCursor: string | null }>> {
   if (!uuid.test(tenantId) || (beforeId !== null && !uuid.test(beforeId))) return { ok: false, outcome: 'refused', message: 'This workspace could not be resolved.' };
   try {
     const { data, error } = await rpc('list_sales_billing_drafts', { _expected_tenant_id: tenantId, _limit: 50, _before_id: beforeId });
-    if (error) return failure(error);
-    if (!object(data) || !Array.isArray(data.rows) || data.rows.length > 50 || typeof data.has_more !== 'boolean') return failure(null);
+    if (error) return billingDraftFailure(error);
+    if (!object(data) || !Array.isArray(data.rows) || data.rows.length > 50 || typeof data.has_more !== 'boolean') return billingDraftFailure(null);
     const rows = data.rows.map(row => readBillingDraft(row, tenantId));
-    if (rows.some(row => row === null) || (data.next_cursor !== null && (typeof data.next_cursor !== 'string' || !uuid.test(data.next_cursor)))) return failure(null);
+    if (rows.some(row => row === null) || (data.next_cursor !== null && (typeof data.next_cursor !== 'string' || !uuid.test(data.next_cursor)))) return billingDraftFailure(null);
     return { ok: true, value: { rows: rows as BillingDraft[], hasMore: data.has_more, nextCursor: data.next_cursor as string | null } };
-  } catch { return failure(null); }
+  } catch { return billingDraftFailure(null); }
 }

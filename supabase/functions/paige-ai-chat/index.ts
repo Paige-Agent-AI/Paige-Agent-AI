@@ -94,6 +94,7 @@ import { buildPublicPresenceContextBlock } from "../_shared/paige-spine/domains/
 import { buildTeamAuthorityBlock } from "../_shared/paige-spine/domains/teamAuthorityChatEvidence.ts";
 import { buildSocialPresenceBlock } from "../_shared/paige-spine/domains/socialPresenceChatEvidence.ts";
 import { loadN8nReadinessForChat, renderN8nReadinessForChat } from "../_shared/paige-spine/domains/n8nChatEvidence.ts";
+import { loadIntegrationsMindEvidence, renderIntegrationsMindEvidence } from "../_shared/paige-spine/domains/integrationsMindEvidence.ts";
 // #292 / #343 U1 — the Studio design-agent system-prompt WRAPPER (identity + operating core + the
 // generative-UI choice-card rule), externalized so it lives in one editable home (§9/§12/§18).
 import { buildStudioWhereYouAre, STUDIO_OPERATING_CORE } from "../_shared/design-agent-prompt.ts";
@@ -4783,6 +4784,15 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // A fixed unavailable notice carries no workspace facts; verified evidence does.
     if (n8nEvidence?.status === "available") markProtectedLate("n8n_readiness");
 
+    // SCR-INTEGRATIONS-MIND — the Integrations domain's bounded Mind projection (owner green
+    // light 2026-10-02): the tenant's REAL connection surface, closed-vocabulary facts with a
+    // citation and freshness word per line. One wording for Chat and Mind (§18); this is the
+    // block that answers "what am I connected to" from verified state — the incident class it
+    // prevents is real (2026-10-02: a capability question was answered from the wrong
+    // provider's readiness block because no integrations-wide verified state was in context).
+    const integrationsMind = personaCtx.tenant_id ? await loadIntegrationsMindEvidence(supabaseClient) : null;
+    const integrationsMindBlock = integrationsMind && integrationsMind.status === "recorded" ? renderIntegrationsMindEvidence(integrationsMind) : "";
+
     // Capability status block (P0 Defect-1 — truthful self-knowledge, §13/§36/§70). The per-turn,
     // authoritative answer to "what can you do here?", resolved server-side from the SAME gatherer
     // the capability_status tool uses (§18), so the prompt and the tool never disagree. Injected for
@@ -4870,6 +4880,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       ...(socialPresenceBlock ? [{ role: "system", content: socialPresenceBlock }] : []),
       ...(businessMissionContextBlock ? [{ role: "system", content: businessMissionContextBlock }] : []),
       ...(n8nReadinessBlock ? [{ role: "system", content: n8nReadinessBlock }] : []),
+      ...(integrationsMindBlock ? [{ role: "system", content: integrationsMindBlock }] : []),
       ...(spineEvidenceBlock ? [{ role: "system", content: spineEvidenceBlock }] : []),
       // Capability status sits LAST among the context blocks, right before the operating core, so
       // "what can you do here?" is answered from the live, workspace-resolved manifest that OVERRIDES

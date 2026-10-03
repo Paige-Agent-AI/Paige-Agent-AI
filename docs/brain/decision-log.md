@@ -1,5 +1,11 @@
 # Decision Log — chronological one-liners
 
+- **Solo Vibe Studio workspace, layout C (2026-10-03).** Owner rulings (Antonio Cook):
+  - **Layout C "Chat, stage, timeline" approved: "Approved. Build it as shown."** One brief starts a project; the project holds whatever Paige builds; no artifact-type picker or tabs (§18/§21).
+  - **Studio flow:** prompt → workspace where Paige builds → at most one grouped question → full studio with chat or manual edits (manual editing lands in 3b/3c).
+  - **Engineering choices recorded:** a brief is sent only when a project is created, never on reopen (threads are per person); a version is previewed on the stage before going back; documents and copy linked to a project are shown as such and are not publishable from the Studio; the Studio keeps its dark immersive world in both app themes (the previous Studio's world; the work itself renders on a light sheet in the tenant's brand) — a named §23 exception for the owner to overrule.
+  - **Deleted:** the unreachable legacy operator Studio (37 files).
+
 - **Vibe Studio publish lifecycle and owner/admin authority, [PR #1658](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/1658) (2026-10-03).** Owner rulings (Antonio Cook):
   - **One publish rule for everything Vibe Studio makes:** new work starts unpublished and lives in the Studio; Publish and Unpublish are the only ways across to the Catalog; no parallel draft store.
   - **Unpublishing a page or funnel leaves its forms live** (2026-09-30).

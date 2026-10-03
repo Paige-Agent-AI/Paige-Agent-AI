@@ -435,6 +435,7 @@ describe("tenant shell owns one PAIGE surface", () => {
     const solo = source("src/solo/SoloApp.tsx");
     const campaigns = source("src/solo/growth2.tsx");
     const vibe = source("src/solo/vibe.tsx");
+    const studioHome = source("src/solo/studio/StudioHome.tsx");
 
     expect(campaigns).toContain("detail:{returnFocus:event.currentTarget}");
     expect(campaigns).toContain("data-solo-vibe-studio-launcher");
@@ -444,8 +445,10 @@ describe("tenant shell owns one PAIGE surface", () => {
     expect(solo).toContain("window.addEventListener('paige-studio',h)");
     expect(solo).toContain("<VibeStudio onBack={closeStudio}/>");
     expect(solo.match(/<VibeStudio/g)).toHaveLength(1);
-    expect(vibe).toContain("Back to Marketing");
-    expect(vibe).not.toContain("Back to Growth");
+    expect(vibe).toContain("<StudioRail");
+    expect(vibe).toContain("onBack={onBack}");
+    expect(studioHome).toContain("Back to Marketing");
+    expect(studioHome).not.toContain("Back to Growth");
   });
 
   it.each(["back", "escape"])("restores the real Campaigns Vibe Studio launcher after %s closes the mounted owner", async (exit) => {

@@ -4,7 +4,7 @@ import { getSpineCapability, PAIGE_SPINE_CAPABILITIES, validateSpineRegistry } f
 
 const chat = readFileSync("supabase/functions/paige-ai-chat/index.ts", "utf8");
 const dashboard = readFileSync("src/components/dashboard/PaigeAIChat.tsx", "utf8");
-const studio = readFileSync("src/components/admin/studio/StudioChat.tsx", "utf8");
+const studio = readFileSync("src/solo/studio/useStudioChat.ts", "utf8");
 const worker = readFileSync("supabase/functions/paige-document-worker/index.ts", "utf8");
 
 describe("durable long-form Chat reach", () => {
@@ -60,7 +60,7 @@ describe("durable long-form Chat reach", () => {
     expect(chat).toContain('stableRunId(["document_generate_intent", payloadRequestIntentId, String(currentDocumentCallOrdinal)])');
     expect(chat).toContain("_intent_id: documentIntentId");
     expect(dashboard).toContain("retry.requestIntentId");
-    expect(studio).toContain("failedIntentRef.current.id");
+    expect(studio).toContain("failedIntent.current.id");
   });
 
   it("keeps ordinary documents visibly non-signable", () => {

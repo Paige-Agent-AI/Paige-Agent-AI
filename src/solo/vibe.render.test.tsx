@@ -26,6 +26,13 @@ const harness = vi.hoisted(() => ({
 }));
 
 vi.mock("./useMediaJobs", () => ({ useMediaJobs: () => harness.media }));
+vi.mock("@/hooks/useTenantContext", () => ({
+  useTenantContext: () => ({ activeTenantId: "t-synthetic", activeTenant: { slug: "northwind-studio" } }),
+}));
+vi.mock("./studio/studio-data", async (orig) => ({
+  ...(await orig<typeof import("./studio/studio-data")>()),
+  listSessions: async () => [],
+}));
 
 const { VibeStudio } = await import("./vibe");
 
@@ -33,7 +40,8 @@ let host: HTMLDivElement;
 let root: Root | null = null;
 let backCount = 0;
 
-function renderAt(media: Record<string, unknown>) {
+// The media tools live under "Images & video" in the Studio rail; the Studio opens on its home.
+function renderAt(media: Record<string, unknown>, view: "home" | "media" = "media") {
   harness.media = media;
   if (root) act(() => root!.unmount());
   host.remove();
@@ -43,6 +51,10 @@ function renderAt(media: Record<string, unknown>) {
   act(() => {
     root!.render(<VibeStudio onBack={() => { backCount++; }} />);
   });
+  if (view === "media") {
+    const tab = [...host.querySelectorAll("button")].find((b) => b.textContent === "Images & video");
+    act(() => { tab?.click(); });
+  }
 }
 afterEach(() => {
   if (root) act(() => root!.unmount());
@@ -164,12 +176,27 @@ describe("Vibe Studio — the 18 owner-required states, rendered", () => {
     expect(text()).toContain("deferred from this release — no music provider is connected");
   });
 
-  it("Escape closes the overlay (the SoloApp mount contract)", () => {
+  it("Escape closes the overlay (the SoloApp mount contract), from Images & video and from Studio home", () => {
     renderAt(baseMedia());
     act(() => {
       window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
     });
     expect(backCount).toBe(1);
+    renderAt(baseMedia(), "home");
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    });
+    expect(backCount).toBe(2);
+  });
+
+  it("opens on Studio home: one brief composer, no artifact-type picker, and Back to Marketing", () => {
+    renderAt(baseMedia(), "home");
+    expect(text()).toContain("What should Paige build?");
+    expect(text()).toContain("Back to Marketing");
+    expect(host.querySelector("#vs-brief")).toBeTruthy();
+    for (const tab of ["Page", "Form", "Funnel", "Copy"]) {
+      expect([...host.querySelectorAll("button")].some((b) => b.textContent === tab)).toBe(false);
+    }
   });
 
   it("empty state — no jobs yet renders guidance, not fake projects", () => {

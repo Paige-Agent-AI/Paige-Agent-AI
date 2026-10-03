@@ -16,6 +16,7 @@ import { AGREEMENT_TOOLS } from '../_shared/paige-spine/domains/agreement.ts';
 import { readAgreements } from '../_shared/agreements/chat-read.ts';
 import { draftAgreement, sendAgreement } from '../_shared/agreements/chat-write.ts';
 import { N8N_MANAGEMENT_TOOLS, runN8nManagement } from '../_shared/n8n-management.ts';
+import { GHL_MANAGEMENT_TOOLS } from '../_shared/ghl-management.ts';
 const N8N_MANAGEMENT_TOOL_NAMES = new Set(N8N_MANAGEMENT_TOOLS.map(tool => tool.function.name));
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { gatewayCompat } from "../_shared/claude.ts";
@@ -6933,6 +6934,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             }
           },
           ...N8N_MANAGEMENT_TOOLS,
+          ...GHL_MANAGEMENT_TOOLS,
           // ── The business phone line and its carrier registration ──────────────
           // These exist so Paige can DO this, not just describe it. Before them the
           // capability shipped as a surface only a human could click: she could not tell
@@ -7059,29 +7061,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 properties: {
                   tool_name: { type: "string", description: "The exact Zapier action name to run (from zapier_list_actions)." },
                   arguments: { type: "object", description: "The inputs the action expects (whatever zapier_list_actions describes for it, e.g. { channel: '#general', text: 'hi' })." }
-                },
-                required: ["tool_name"]
-              }
-            }
-          },
-          {
-            type: "function",
-            function: {
-              name: "ghl_list_actions",
-              description: "Admin only. Check the workspace's GoHighLevel (GHL) MCP connection and list its REAL tool catalogue — both the approved tools (ready to run) and the unapproved ones (waiting on the operator's approval, NAMED, never just a count). Read-only: a catalogue read through the canonical gateway, never a provider tool call. Resolve the exact tool_name here BEFORE running one with ghl_run_action. If the workspace has no canonical GHL connection the tool says so honestly — point to Settings → Integrations (the HighLevel tile).",
-              parameters: { type: "object", properties: {}, required: [] }
-            }
-          },
-          {
-            type: "function",
-            function: {
-              name: "ghl_run_action",
-              description: "Admin only. RUN a GoHighLevel (GHL) tool — your hands in the tenant's CRM: contacts (get/search/create/update), conversations (read/send), opportunities, calendars, payments. Resolve the exact tool_name from ghl_list_actions first, then pass the arguments that tool expects. Dispatch goes through the canonical MCP gateway: the specific tool must carry the workspace's durable approval (Settings → Integrations), and LIVE execution additionally requires the owner's gateway execute gate to be on — until then the call returns the honest prepare result (what WOULD run), not a fabricated outcome. Governed by the autonomy policy: unless the workspace set this to auto, PROPOSE first and call again with confirm:true once the operator approves. Writes to the CRM are real: running is doing — you report what GHL returned, never a hoped-for outcome. If no GHL connection exists the tool says so.",
-              parameters: {
-                type: "object",
-                properties: {
-                  tool_name: { type: "string", description: "The exact GHL tool name to run (from ghl_list_actions)." },
-                  arguments: { type: "object", description: "The inputs the tool expects (whatever ghl_list_actions describes for it)." }
                 },
                 required: ["tool_name"]
               }

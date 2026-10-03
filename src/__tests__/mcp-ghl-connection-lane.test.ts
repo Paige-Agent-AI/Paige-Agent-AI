@@ -144,8 +144,9 @@ describe("the lane LANDED (GHL-1, 2026-10-03) — declared from the real catalog
   it("the GHL chat tools exist BECAUSE the owner's live connection discovered the real 36", () => {
     // The M4 pins said: no ghl chat tool and no GHL spine capability UNTIL real discovery.
     // The owner's live connection (36 real tools) is that discovery; GHL-1 landed the lane.
-    expect(chatCore).toContain('name: "ghl_list_actions"');
-    expect(chatCore).toContain('name: "ghl_run_action"');
+    // The schemas live in the domain ADAPTER (the chat-tool-registry ruling); the chat
+    // handler mounts them by spread and routes by name.
+    expect(chatCore).toContain("...GHL_MANAGEMENT_TOOLS,");
     // The lane routes through the CANONICAL gateway (no legacy edge, no new authority).
     expect(chatCore).toContain('c?.provider_key === "gohighlevel"');
   });

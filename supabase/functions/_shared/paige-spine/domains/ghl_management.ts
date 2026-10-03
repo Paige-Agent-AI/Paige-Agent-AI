@@ -1,4 +1,5 @@
 import type { SpineCapability } from "../contracts.ts";
+import { defineCapability, objectInputSchema, ownerGrantablePermission } from "../../capability-kit/mod.ts";
 /**
  * The GHL governed chat lane (GHL-1) — declared from the REAL discovered tool catalogue.
  *
@@ -34,3 +35,74 @@ export const GHL_RUN_ACTION = {
  chatBinding: "LIVE", mindBinding: "UNAVAILABLE", sharedPrimitiveChange: "SCR-GHL-MANAGEMENT", maturity: "PARTIAL",
 } as const satisfies SpineCapability;
 export const GHL_MANAGEMENT_CAPABILITIES = [GHL_LIST_ACTIONS, GHL_RUN_ACTION] as const;
+
+/**
+ * WHAT THE `defineCapability()` DECLARATION BELOW IS, AND IS NOT (the agreements file's
+ * honesty, verbatim): NOTHING consumes a `DefinedCapability` at runtime — no registry, no
+ * resolver, no dispatch reads it. Its only runtime behaviour is to THROW on import if its
+ * declared risk contradicts the canonical policy. What it DOES do is satisfy the
+ * capability-kit anti-bypass contract: a classified mutating action carries its governed
+ * declaration, so the RISK entry is the declaration's dependency rather than bypass debt.
+ * The declaration's seams name the REAL homes — the canonical mcp-gateway (the one governed
+ * door this lane dispatches through) and its canonical Rail recorder.
+ */
+export const GHL_RUN_CAPABILITY = defineCapability({
+  identity: {
+    id: "integrations.ghl_run_action",
+    version: 1,
+    domain: "integrations",
+    owner: "solo-integrations",
+    humanSurface: "/solo/:account/settings/integrations",
+    description: "Run a tool in the tenant's GoHighLevel CRM through the canonical MCP gateway — reads contacts/conversations, writes move real CRM records and send real messages.",
+  },
+  input: objectInputSchema({
+    description: "Run one GHL tool, resolved from the workspace's discovered catalogue.",
+    properties: {
+      tool_name: { type: "string", minLength: 1, maxLength: 64 },
+      // The arguments passthrough: the exact shape is the discovered tool's own (each GHL
+      // tool's inputs differ); the gateway validates the resolved tool and its durable
+      // approval server-side.
+      // NOTE: the kit's schema contract forbids additionalProperties on nested objects, so
+      // the free-form arguments map is DECLARED as its JSON-serialized form here — the chat
+      // tool's own schema carries the native object; the gateway's per-tool consent and
+      // approval checks validate the real shape server-side.
+      arguments_json: { type: "string", minLength: 2, maxLength: 65536 },
+    },
+    required: ["tool_name"],
+  }),
+  effect: "external_effect",
+  governance: {
+    actionRiskKey: "ghl_run_action",
+    risk: "high",
+    approval: "confirm",
+    requiredPermission: ownerGrantablePermission("integrations.ghl.run"),
+  },
+  tenantScope: {
+    source: "server",
+    tenantResolver: "current_user_tenant_id",
+    actorResolver: "authenticated_user",
+    revalidateAt: ["before_availability", "before_execution", "before_receipt"],
+  },
+  availability: {
+    resolver: "paige-capability-status",
+    states: ["live", "needs_approval", "not_for_tier", "unavailable"],
+  },
+  providerBinding: {
+    kind: "mcp",
+    operation: "mcp-gateway.execute",
+    connectionResolver: "mcp-gateway",
+  },
+  idempotency: {
+    mode: "required",
+    key: "tenant + actor + the Chat confirmation fingerprint (paige_pending_confirmations) — the execute-once guard; the gateway's consent verifier additionally binds the per-tool durable approval, and provider actions are never auto-retried after uncertain results.",
+    readback: "the gateway's closed outcome vocabulary (outcome/code/run_id/recorded)",
+    replay: "return_recorded_result",
+  },
+  receipt: {
+    rail: true,
+    recorder: "record_capability_run",
+    redaction: "tenant_safe",
+    visibility: "owner_internal",
+  },
+  outcome: { projector: "capability-record" },
+});

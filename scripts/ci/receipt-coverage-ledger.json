@@ -15,7 +15,7 @@
     "                       could be installed without 147 guesses about existing behaviour.",
     "",
     "Honest scope: `emits` here is asserted only for the nine tools named in the three declarative",
-    "*_WRITE_CAPABILITIES sets, which are exact. It is NOT a claim that the other 147 emit nothing \u2014",
+    "*_WRITE_CAPABILITIES sets, which are exact. It is NOT a claim that the other 147 emit nothing —",
     "several demonstrably do (missions, campaign briefs, calendar presets, social, orchestration).",
     "Their posture was simply never written down, and a detector that guessed would be wrong often",
     "enough to get this guard switched off. Converting seeded_undeclared -> emits/exempt is ordinary",
@@ -956,6 +956,12 @@
       "tool": "zapier_run_action",
       "risk": "high",
       "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "ghl_run_action",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "the canonical mcp-gateway's execute action files the canonical Rail receipt (record_capability_run) for every dispatched outcome — the run body carries recorded:true/false/null honestly (supabase/functions/_shared/mcp-gateway/rail-receipt.ts; the M1 contract pins the wiring)"
     }
   ]
 }

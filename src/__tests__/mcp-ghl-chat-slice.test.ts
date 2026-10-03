@@ -27,6 +27,7 @@ const domain = readFileSync(join(root, "supabase/functions/_shared/paige-spine/d
 const registry = readFileSync(join(root, "supabase/functions/_shared/paige-spine/registry.ts"), "utf8");
 const lint = readFileSync(join(root, "scripts/ci/paige-spine-registry-lint.mjs"), "utf8");
 const chat = readFileSync(join(root, "supabase/functions/paige-ai-chat/index.ts"), "utf8");
+const adapter = readFileSync(join(root, "supabase/functions/_shared/ghl-management.ts"), "utf8");
 const actionRisk = readFileSync(join(root, "supabase/functions/_shared/action-risk.ts"), "utf8");
 
 describe("the GHL Spine domain is declared from the real catalogue", () => {
@@ -60,23 +61,34 @@ describe("the registry lint carries the GHL TypeScript proof", () => {
     expect(lint).toContain("projector:'mcp-gateway.execute'");
   });
 
-  it("the proof's five negatives are in the self-test (manifest, resolution, guard, prepare-bypass, not_connected)", () => {
+  it("the proof's seven negatives are in the self-test (adapter-tool, unmount, resolution, guard, prepare-bypass, not_connected, refusal-body)", () => {
     expect(lint).toContain("ghlNegatives=[");
-    expect(lint).toContain("['ghl manifest tool removed'");
+    expect(lint).toContain("['ghl adapter tool removed'");
+    expect(lint).toContain("['ghl adapter unmounted'");
     expect(lint).toContain("['ghl provider resolution weakened'");
     expect(lint).toContain("['ghl dispatch guard weakened'");
     expect(lint).toContain("['ghl prepare bypass (always execute)'");
     expect(lint).toContain("['ghl honest not_connected removed'");
+    expect(lint).toContain("['ghl refusal body dropped'");
+  });
+
+  it("the proof verifies the ADAPTER shape (specs catalog → derived catalog → spread mount)", () => {
+    expect(lint).toContain("adapter derives tools from a literal specs catalog");
+    expect(lint).toContain("catalog mounted in the handler toolDefs by spread (never re-declared inline)");
   });
 });
 
 describe("the chat manifest and dispatch carry the governed lane", () => {
-  it("both tools are declared with discovery-first + propose-first + gate-honest copy", () => {
-    expect(chat).toContain('name: "ghl_list_actions"');
-    expect(chat).toContain('name: "ghl_run_action"');
-    expect(chat).toContain("Resolve the exact tool_name here BEFORE running one with ghl_run_action");
-    expect(chat).toContain("until then the call returns the honest prepare result");
-    expect(chat).toContain("LIVE execution additionally requires the owner's gateway execute gate");
+  it("both tools are declared with discovery-first + propose-first + gate-honest copy (in the domain ADAPTER)", () => {
+    expect(adapter).toContain("ghl_list_actions: {");
+    expect(adapter).toContain("ghl_run_action: {");
+    expect(adapter).toContain("Resolve the exact tool_name here BEFORE running one with ghl_run_action");
+    expect(adapter).toContain("until then the call returns the honest prepare result");
+    expect(adapter).toContain("LIVE execution additionally requires the owner's gateway execute gate");
+    // The chat-handler ruling: mounted by spread, never re-declared inline.
+    expect(chat).toContain("...GHL_MANAGEMENT_TOOLS,");
+    expect(chat).not.toContain('name: "ghl_list_actions",');
+    expect(chat).not.toContain('name: "ghl_run_action",');
   });
 
   it("the dispatch resolves the canonical connection server-side — never a model-supplied id", () => {

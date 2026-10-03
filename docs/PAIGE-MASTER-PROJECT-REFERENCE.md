@@ -766,7 +766,7 @@ Reference or any domain ledger; it governs how their facts become release and cu
   - Overview is new. It is built from existing reads: briefs, published and draft capture points, 30-day submissions.
   - The Campaign Command Desk is now the Campaigns tab.
   - Catalog's Published assets and the form intake drawer are now Lead capture.
-  - The static Performance cards are now Analytics: first-touch leads by `utm_source` / `utm_campaign`. `useSoloCampaigns` now selects `utm_json` and returns drafts; it makes no new query.
+  - The static Performance cards are now Analytics: leads by the `utm_source` / `utm_campaign` tags on the link they submitted from. `useSoloCampaigns` now selects `utm_json` and returns drafts; it makes no new query.
   - Old `/growth/active`, `/growth/performance` and `/growth/catalog?type=` addresses redirect.
   - Fixed: the desk's "Open Vibe Studio" buttons were silently ignored by SoloApp.
 - *Proof:*

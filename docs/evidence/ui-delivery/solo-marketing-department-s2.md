@@ -13,7 +13,7 @@ PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: a Solo owner sees what is being marketed,
 VISUAL_DIRECTION: PASS: existing Solo Mineral/Obsidian tokens (src/solo/solo-tokens.css) and Campaigns geometry (src/solo/solo-campaigns.css); no hard-coded colour in new rules; gold spent only on Create campaign brief (.btn-g) and the existing selected-tab underline; lint:gold clean on changed files
 AUTOMATED_EVIDENCE: PASS: vitest src/lib/routing src/solo src/components/tenant-shell src/components/tenant-relationships = 156 files, 2649 passed, 2 skipped; 9 new render tests in growth2.render.test.tsx; two of them (window floor, Studio launcher) shown to fail with the defect reinstated and pass with it fixed; full-suite baseline on the parent commit: 499 files, 7382 passed, 2 skipped
 STATIC_EVIDENCE: PASS: node scripts/ci/tsc-ratchet.mjs = no new errors (12/12); eslint on changed ts/tsx = 0 errors (1 pre-existing warning, growth2.tsx GR export); gold-discipline lint clean; impeccable detect exit 0 on changed UI files
-RENDERED_EVIDENCE: PASS: scripts/live-drive/marketing-views-drive.mjs = 644/644 checks across Overview, Campaigns, Lead capture and Analytics × 4 viewports × 3 PAIGE postures × 2 themes, plus first-use / loading / error / read-only states; frames in scripts/live-drive/artifacts/marketing-views/; campaigns-nav-fit-drive = 216/216 for the eight-tab strip
+RENDERED_EVIDENCE: PASS: scripts/live-drive/marketing-views-drive.mjs = 740/740 checks (including a measured WCAG contrast check of every new pill, row detail, ledger label, link and the gold act in every frame) across Overview, Campaigns, Lead capture and Analytics × 4 viewports × 3 PAIGE postures × 2 themes, plus first-use / loading / error / read-only states; frames in scripts/live-drive/artifacts/marketing-views/; campaigns-nav-fit-drive = 216/216 for the eight-tab strip; catalog-offers-drive = 523/523 and form-intake-mount drive = all frames pass, both re-pointed to Lead capture
 BEHAVIORAL_EVIDENCE: PASS: render tests drive Create campaign brief → /growth/campaigns with the builder open; Lead capture Open deal → /growth/pipeline?deal=; tab arrow keys move route and focus; legacy /growth/pages → Go to Lead capture; redirects performance→analytics, active→campaigns, catalog?type=form→lead-capture?type=form; desk Open Vibe Studio now reaches the Studio handoff with a real launcher (previously ignored by SoloApp)
 AUTHENTICATED_RUNTIME: UNVERIFIED: this headless session cannot reach the deployed app with a tenant login; the render harness stubs only the three network reads (Campaigns snapshot, briefs, offers); the authenticated live check is owed to a browser-capable session (§32.c)
 KEYBOARD_FOCUS: PASS: tablist keeps roving tabindex and Arrow/Home/End; the divider is aria-hidden and outside tab order; Create campaign brief reached by Tab with a visible focus indicator (drive check); icon-only Vibe Studio launcher keeps its text as accessible name and a title
@@ -97,3 +97,32 @@ UNVERIFIED: authenticated production runtime (§32.c), owed to a browser-capable
 - `npx vitest run src/lib/routing src/solo src/components/tenant-shell src/components/tenant-relationships`: 2649 passed, 2 skipped.
 - `node scripts/ci/tsc-ratchet.mjs`: 12/12, no new errors.
 - **Fixtures** are a fictional business, never a real owner account (§63). They live in `scripts/live-drive/harness/marketing-mount/`.
+
+## Independent review (§5 / §39) and what changed because of it
+
+- **Peer-gate (adversarial verifier) on `ad2df870`.**
+  - Its one BLOCKING item was the missing evidence record (this file).
+  - Fixed because of it:
+    - focus returns to the Campaigns tab after a `?brief=new` builder closes, instead of dropping to `<body>`;
+    - "running" counts only active, unblocked briefs (approved has not launched);
+    - "Open Vibe Studio" pressed inside an open drawer returns focus to that button: desk Studio buttons carry the launcher marker and pass their event;
+    - PAIGE's social chat evidence now says "Marketing › Social";
+    - two live-drive tools that targeted the removed Catalog split were re-pointed.
+  - Confirmed clean: routes and redirects, query preservation, tenant switch, data truth and the window floor.
+- **Compliance officer.** Verdict: SHIP WITH FOLLOW-UPS. Fixed:
+  - AA contrast on the new pills, row details and the Overview act (now the desk's solid gold), now measured in the drive;
+  - "first touch" corrected everywhere to "the link they submitted from", because `readUtm()` reads the submitting page, not the first visit;
+  - `utm_*` named in brackets behind plain words;
+  - "tenant-scoped read" copy removed;
+  - links render as links, and the first-use step text flows inline;
+  - pill column fixed so titles align;
+  - duplicate counts removed (Overview's summary line; Analytics' cost-per-lead figure replaced by a real "tagged with a campaign" figure);
+  - "and N more" on the attention list;
+  - plain brief status words;
+  - Analytics' empty state teaches tagging and links to Lead capture;
+  - the 9px mono status tags replaced by the one pill vocabulary.
+- **Deferred, recorded rather than dropped:**
+  - **Campaign calendar view.** Proposal §4 and the S2 plan promised a calendar on brief timing. It is not built in S2; the desk's existing calendar button stays honestly disabled. Tracked for the next Marketing slice.
+  - **"Copy tracking link"** on a brief or capture point, so owners don't build tagged URLs by hand (§36/§70). Follow-up.
+  - **Sales-lane copy.** `catalog-offers.tsx` and `sales-ops.tsx` still say "Campaigns workspace" in their loading copy. They are Sales-lane files, left for S3.
+- **Proposal §8 deviation.** `growth/overview` now opens the new department Overview rather than the desk. Only `growth/active` aliases to Campaigns. No server link targets `growth/overview`; checked by the peer-gate.

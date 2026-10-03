@@ -354,7 +354,7 @@ The URL slug stays `growth` until slice S5.
 | Marketing › **Overview** (department brief: briefs, capture points, 30-day leads, opportunities opened, unavailable channels named) | as Solo | — | **✓** | — (gap above) | — | — | PARTIAL: tenant reads only; no email/ads/spend source |
 | Marketing › **Campaigns** (the Campaign Command Desk, moved from Overview unchanged; `?brief=new` opens the builder) | as Solo | — | **✓** | — | — | — | as before (`campaign_briefs`) |
 | Marketing › **Lead capture** (published + draft pages/funnels/forms, form routing drawer, recent submissions with tracking tags; moved from Catalog's Published assets half) | as Solo | — | **✓** owner/admin edit routing; a member reads | — | — | — | PARTIAL: routing write unchanged (`growth_form_set_intake`) |
-| Marketing › **Analytics** (leads by `utm_source` / `utm_campaign`, first touch; replaces the static Performance cards) | as Solo | — | **✓** | — | — | — | PARTIAL: visits, spend, multi-touch and revenue-by-campaign UNAVAILABLE |
+| Marketing › **Analytics** (leads by `utm_source` / `utm_campaign` from the link each lead submitted from; replaces the static Performance cards) | as Solo | — | **✓** | — | — | — | PARTIAL: visits, spend, multi-touch and revenue-by-campaign UNAVAILABLE |
 | Offers · Sales · Pipeline (Sales lane; kept reachable in the Marketing strip behind a divider until top-level Sales lands, S3) | as Solo | — | **✓** unchanged | — | — | — | unchanged |
 | Solo **Analytics** branch (`/solo/{account}/analytics`) | — | — | **✓ unchanged** (retires in S4, after Sales hosts the sales-funnel evidence) | — | — | — | unchanged |
 

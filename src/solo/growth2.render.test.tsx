@@ -633,12 +633,21 @@ describe("Solo Marketing department views", () => {
 
   it("Overview counts only real records, inside the stated window, and names what is unavailable", () => {
     useWorkspace();
-    harness.briefs = [brief("b1", "Spring advisory intake", { lifecycleStatus: "active", timing: "Weeks 1–4 of April" }), brief("b2", "Podcast series", { lifecycleStatus: "blocked", blocker: "No capture form chosen" })];
+    harness.briefs = [
+      brief("b1", "Spring advisory intake", { lifecycleStatus: "active", timing: "Weeks 1–4 of April" }),
+      brief("b2", "Podcast series", { lifecycleStatus: "blocked", blocker: "No capture form chosen" }),
+      // Approved is not running, and an active brief with a blocker is blocked, not running.
+      brief("b3", "Retainer upgrade", { lifecycleStatus: "approved" }),
+      brief("b4", "Referral push", { lifecycleStatus: "active", blocker: "Waiting on the offer" }),
+    ];
     renderAt("/solo/42/growth");
     const tiles = [...host.querySelectorAll(".mk-stat")].map((tile) => tile.textContent);
-    expect(tiles[0]).toContain("Campaigns2");
-    expect(tiles[0]).toContain("1 running · 1 blocked");
-    expect(tiles[1]).toContain("Live capture points1");
+    expect(tiles[0]).toContain("Campaigns4");
+    expect(tiles[0]).toContain("1 running · 2 blocked");
+    // Brief status reads in the desk's words, never the raw enum.
+    expect(host.textContent).toContain("Approved");
+    expect(host.textContent).not.toContain("ready_for_review");
+    expect(tiles[1]).toContain("Published work1");
     expect(tiles[1]).toContain("1 not published yet");
     // Three of the four submissions are inside 30 days; all three carry a tracking tag.
     expect(tiles[2]).toContain("Leads · last 30 days3");
@@ -710,7 +719,7 @@ describe("Solo Marketing department views", () => {
     renderAt("/solo/42/growth/analytics");
     const tiles = [...host.querySelectorAll(".mk-stat")].map((tile) => tile.textContent);
     expect(tiles[1]).toContain("3 of 3");
-    expect(tiles[3]).toContain("Cost per lead—");
+    expect(tiles[3]).toContain("Tagged with a campaign1 of 3");
     const bars = [...host.querySelectorAll(".mk-bars li")].map((row) => row.textContent);
     expect(bars).toContain("newsletter2");
     expect(bars).toContain("linkedin1");

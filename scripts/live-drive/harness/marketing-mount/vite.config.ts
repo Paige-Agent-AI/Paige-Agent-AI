@@ -22,5 +22,5 @@ export default defineConfig({
     "import.meta.env.VITE_SUPABASE_URL": JSON.stringify("http://harness.invalid"),
     "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify("harness-not-a-real-key"),
   },
-  server: { host: "127.0.0.1", port: 5215, strictPort: true },
+  server: { host: "127.0.0.1", port: 5224, strictPort: true },
 });

@@ -58,7 +58,7 @@ Source: `src/lib/routing/tierBranches.ts:185-211`, `src/solo/growth2.tsx:121-472
 - These rows exist: `campaign_briefs` 1, `growth_forms` 4, `growth_pages` 6, `marketing_content` 17, `tenant_products` 2.
 - These tables are empty: `growth_form_submissions`, `growth_funnels`, `paige_social_posts`, `paige_social_connections`, `analytics_evidence_reference`.
 - No `public` table matches segment, audience, broadcast, newsletter, utm, attribution, ads or lead.
-- `growth_form_submissions` already carries `source`, `utm_json`, `referrer` and `deal_id`. That is the real basis for first-touch marketing attribution and the hand-off to Sales.
+- `growth_form_submissions` already carries `source`, `utm_json`, `referrer` and `deal_id`. That is the real basis for marketing attribution (by the link a lead submitted from; earlier visits are not recorded) and the hand-off to Sales.
 
 ## 3. Proposed Solo main menu
 
@@ -83,7 +83,7 @@ by `TenantCommandCenterShell.ownership.test.tsx`. I recommend the minimal move.
 | Campaigns | The existing Campaign Command Desk: portfolio, brief builder, dossier, campaign loop, plus a calendar view | `campaign_briefs` | Calendar placement uses brief timing text, not scheduled dates |
 | Lead capture | Every published form, page and funnel, its submissions, and where they route | `growth_forms`, `growth_pages`, `growth_funnels`, `growth_form_submissions`, `growth_form_set_intake` | Drafts are listed as "not collecting until published". Creation and editing stay in Vibe Studio. |
 | Social | Today's Social Command, moved as is | `get_social_presence_evidence` | Publishing and scheduling stay unavailable (no live provider connection) |
-| Analytics | Leads by source (first touch), source coverage, hand-off to Sales, per-campaign matching through tracking tags | `growth_form_submissions.source / utm_json / deal_id` | Conversion rate, CPL, CAC and multi-touch attribution are unavailable; each card says what is missing |
+| Analytics | Leads by source (the link they submitted from), source coverage, hand-off to Sales, per-campaign matching through tracking tags | `growth_form_submissions.source / utm_json / deal_id` | Conversion rate, CPL, CAC and multi-touch attribution are unavailable; each card says what is missing |
 
 **Not recommended as tabs now (shown in the prototype under "Full candidate (9)" so you can judge):**
 
@@ -184,7 +184,8 @@ Every old address resolves through a deliberate `replace` redirect. `SoloApp` al
 | Old address | Stage 1 (labels change, slug stays `growth`) | Final (slug `marketing`) |
 |---|---|---|
 | `/solo/{a}/growth` | Marketing › Overview | `/solo/{a}/marketing` |
-| `growth/overview`, `growth/active` | Marketing › Campaigns (the desk moves) | `marketing/campaigns` |
+| `growth/overview` | Marketing › Overview (the new department brief; as built in S2) | `marketing/overview` |
+| `growth/active` | Marketing › Campaigns (the desk moves) | `marketing/campaigns` |
 | `growth/catalog?type=page\|funnel\|form`, `growth/{pages,funnels,forms,builders,brand-kit}` | Marketing › Lead capture | `marketing/lead-capture` |
 | `growth/catalog` (offers), `?origin=sales&resume=terms` | stays until Sales has Offers | `sales/offers` (Sales lane's slug) |
 | `growth/sales[?view=…]` | stays until Sales lands | `sales/…` with `view` preserved |
@@ -244,7 +245,7 @@ the implementation slices.
 | Slice | Lane | What ships | Gate |
 |---|---|---|---|
 | S1 (this PR) | Marketing | This proposal, the prototype and its drive, and the master-doc §13 correction. Docs only. | Owner review of IA |
-| S2 Marketing in place | Marketing | Branch label Campaigns → Marketing (slug stays `growth`); rail label. New Overview built from existing reads. The desk moves to a Campaigns tab, with a calendar view on brief timing. Lead capture takes Catalog's published-assets half and the intake drawer. Performance becomes Analytics (first-touch source from `growth_form_submissions`). Social is unchanged. **Sales, Pipeline and Catalog (Offers only) stay visible and working** until S3, so nothing becomes unreachable (§58). Also fix the "Open Studio" buttons in the desk, which appear to do nothing (`growth2.tsx:434` dispatches without the launcher the listener requires; inferred from source, not reproduced). | Owner approval of S1; CI; UI evidence record; §39 peer read |
+| S2 Marketing in place | Marketing | Branch label Campaigns → Marketing (slug stays `growth`); rail label. New Overview built from existing reads. The desk moves to a Campaigns tab, with a calendar view on brief timing. Lead capture takes Catalog's published-assets half and the intake drawer. Performance becomes Analytics (source from the tracking tags on the submitting link). Social is unchanged. **Sales, Pipeline and Catalog (Offers only) stay visible and working** until S3, so nothing becomes unreachable (§58). Also fix the "Open Studio" buttons in the desk, which appear to do nothing (`growth2.tsx:434` dispatches without the launcher the listener requires; inferred from source, not reproduced). | Owner approval of S1; CI; UI evidence record; §39 peer read |
 | S3 Sales extraction | **Sales lane builds Sales**; Marketing removes | After the Sales lane lands its top-level branch (with Offers, Pipeline, Sales performance), Marketing removes those three tabs and adds `replace` redirects. Systems Check destinations and server deep links move with it. | Sales branch merged |
 | S4 Analytics retirement | Marketing | Remove the Solo `analytics` branch and rail entry; add redirects per §6. Evidence infrastructure stays. Operator-analytics guard tests (§7) ship here. | S3 merged (Sales performance hosts the funnel) |
 | S5 Canonical URLs | Marketing | Slug `growth` → `marketing` with branch-level alias support, subtab slugs `campaigns`, `lead-capture`, `social`, `analytics`. All old addresses redirect. | S2–S4 stable |

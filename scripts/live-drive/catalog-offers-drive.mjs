@@ -194,10 +194,11 @@ async function main() {
         check(!populated.horizontal, `${id}: no horizontal scroll`);
         check(populated.overflowing === 0, `${id}: no child overflows its container`, `n=${populated.overflowing}`);
         check(
-          populated.tabs.join("|") === "Overview|Catalog|Sales|Pipeline|Social|Performance",
-          `${id}: six-tab lock intact`, populated.tabs.join("|"),
+          // The Marketing department strip (owner ruling 2026-10-03); Offers is the Sales lane's tab.
+          populated.tabs.join("|") === "Overview|Campaigns|Lead capture|Social|Analytics|Offers|Sales|Pipeline",
+          `${id}: Marketing tab lock intact`, populated.tabs.join("|"),
         );
-        check(populated.selectedTab === "Catalog", `${id}: Catalog is the selected tab`);
+        check(populated.selectedTab === "Offers", `${id}: Offers is the selected tab`);
         check(/What this business sells/.test(populated.text), `${id}: Offers is the default section`);
         check(
           !/\brevenue\b|\bconversion\b|in stock|units sold|\bratings?\b/i.test(populated.text),
@@ -300,7 +301,7 @@ async function main() {
         const restored = await measure(page);
         check(restored.rows > 0, `${id}: the workspace fills in once it resolves`, `rows=${restored.rows}`);
         check(!/Resolving/i.test(restored.text), `${id}: the resolving frame does not survive resolution`);
-        check(restored.selectedTab === "Catalog",
+        check(restored.selectedTab === "Offers",
           `${id}: the deep-linked destination survives the restore`, String(restored.selectedTab));
         check(!restored.horizontal, `${id}: the restored surface does not overflow`);
 
@@ -408,14 +409,15 @@ async function main() {
         check(/Offers could not load/.test(errored.text), `${id}: read failure is honest`);
         check(/Your records were not changed/.test(errored.text), `${id}: failure states nothing changed`);
 
-        // 6. The Vibe-owned half is preserved, not replaced.
+        // 6. Published Vibe work is preserved: it moved to Marketing › Lead capture (owner ruling
+        // 2026-10-03), so it is reached through that tab rather than a Catalog section switch.
         await setMode(page, "populated");
-        await page.click('.campaigns-segmented button:has-text("Published assets")');
+        await page.click('.campaigns-tabs [role="tab"]:has-text("Lead capture")');
         await page.waitForTimeout(70);
         const assets = await measure(page);
         check(
-          /Read-only published outputs owned by Vibe Studio/.test(assets.text),
-          `${id}: published assets preserved with its ownership sentence`,
+          /Created and published in Vibe Studio/.test(assets.text),
+          `${id}: published work preserved in Lead capture with its ownership sentence`,
         );
         check(/Foundations — application/.test(assets.text), `${id}: the published artifact still lists`);
         if (theme === "light" && frame.name === "1536x770") {

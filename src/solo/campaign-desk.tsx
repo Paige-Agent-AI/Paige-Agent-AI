@@ -133,7 +133,7 @@ function LoopMap({ data, focus, onClearFocus, onRoute, offerSignal }) {
           const failed = (seg.k === "pipeline" || seg.k === "offer") && stKey === "blocked";
           return (
             <div className="loop-seg" key={seg.k}>
-              <button className="loop-node" onClick={() => onRoute(seg.route)} aria-label={`${seg.name}: ${st.label}. Owned by ${seg.owner}. Open ${seg.owner}.`}>
+              <button className="loop-node" data-solo-vibe-studio-launcher={seg.route === "studio" ? "" : undefined} onClick={(event) => onRoute(seg.route, event)} aria-label={`${seg.name}: ${st.label}. Owned by ${seg.owner}. Open ${seg.owner}.`}>
                 <span className={`loop-ic ${st.cls}`} style={{ background: "var(--surface-sunk)" }}>{React.createElement(Ic[seg.ic], { size: 16 })}</span>
                 <span className="loop-name">{seg.name}</span>
                 {stateChip(stKey)}
@@ -178,7 +178,7 @@ function Readiness({ brief, onRoute }) {
               <div className="rk">{label}</div>
               <div className={`rs ${st.cls}`}><span className="sd"/>{st.label}</div>
               <div className="rmeta">{meta}</div>
-              {route !== "overview" && <button className="rroute" onClick={() => onRoute(route)}>Open {routeLabel(route)} <Ic.arrow size={11}/></button>}
+              {route !== "overview" && <button className="rroute" data-solo-vibe-studio-launcher={route === "studio" ? "" : undefined} onClick={(event) => onRoute(route, event)}>Open {routeLabel(route)} <Ic.arrow size={11}/></button>}
             </div>
           );
         })}
@@ -284,7 +284,13 @@ export default function CampaignOverview({ data, onRoute, autoOpenBrief = false,
   // refresh or Back does not reopen it. A member who cannot manage briefs is not shown a builder.
   React.useEffect(() => {
     if (!autoOpenBrief || worst !== "ready") return;
-    if (canManage) { lastFocus.current = document.activeElement; setDrawer({ kind: "brief" }); }
+    if (canManage) {
+      // The Overview button that asked for this has unmounted with the route change, so return focus
+      // to the Campaigns tab instead of dropping it on <body> when the builder closes.
+      const active = document.activeElement;
+      lastFocus.current = active instanceof HTMLElement && active !== document.body && active.isConnected ? active : document.getElementById("campaigns-tab-campaigns");
+      setDrawer({ kind: "brief" });
+    }
     onAutoOpenConsumed?.();
   }, [autoOpenBrief, worst, canManage, onAutoOpenConsumed]);
   if (worst === "resolving")
@@ -489,7 +495,7 @@ function FirstRun({ canManage, onNew, onRoute, data }) {
           <div className="fr-step" key={n}><span className="n">{n}</span><h4>{h}</h4><p>{p}</p>
             {route === "new"
               ? <button className="rroute" onClick={() => canManage && onNew()}>Start here <Ic.arrow size={12}/></button>
-              : <button className="rroute" onClick={() => onRoute(route)}>Open {routeLabel(route)} <Ic.arrow size={12}/></button>}
+              : <button className="rroute" data-solo-vibe-studio-launcher={route === "studio" ? "" : undefined} onClick={(event) => onRoute(route, event)}>Open {routeLabel(route)} <Ic.arrow size={12}/></button>}
           </div>
         ))}
       </div>
@@ -564,7 +570,7 @@ function DossierDrawer({ brief: b, canManage, onClose, onRoute, onAsk, onEdit, o
           <div className="dw-sec"><h4>Source-linked evidence</h4>
             <div className="dw-links">
               <button className="dw-link" onClick={() => onRoute("pipeline")}><Ic.trend size={14}/> {b.pipelineId ? `Linked to “${b.pipelineName || "a pipeline"}” · ${b.pipelineDealCount} deal${b.pipelineDealCount === 1 ? "" : "s"} (live).` : "Not routed to a pipeline."} <span className="rroute">Pipeline <Ic.arrow size={11}/></span></button>
-              <button className="dw-link" onClick={() => onRoute("studio")}><Ic.spark size={14}/> {b.contentNeeds ? "Content needs recorded; creative lives in Vibe Studio." : "No content needs recorded."} <span className="rroute">Vibe <Ic.arrow size={11}/></span></button>
+              <button className="dw-link" data-solo-vibe-studio-launcher onClick={(event) => onRoute("studio", event)}><Ic.spark size={14}/> {b.contentNeeds ? "Content needs recorded; creative lives in Vibe Studio." : "No content needs recorded."} <span className="rroute">Vibe <Ic.arrow size={11}/></span></button>
               <button className="dw-link" onClick={() => onRoute("analytics")}><Ic.chart size={14}/> Attribution: no order names a campaign. Revenue is never attributed here. <span className="rroute">Analytics <Ic.arrow size={11}/></span></button>
             </div>
           </div>
@@ -713,7 +719,7 @@ function BriefBuilder({ existing, data, onClose, onRoute, onSave, onRequestRevie
   </>;
   else if (stage === 6) body = <>
     <div className="bb-field"><label>Content / source-material needs</label><textarea value={d.contentNeeds} onChange={(e) => set({ contentNeeds: e.target.value })} placeholder="What creative this needs — a page, a funnel, a form, an email sequence."/><span className="help">Creative is made in <b>Vibe Studio</b>. This just records what’s needed.</span></div>
-    <div className="bb-link"><Ic.spark size={13}/> Create the creative in Vibe Studio. <button className="rroute" onClick={() => onRoute("studio")}>Open Studio <Ic.arrow size={11}/></button></div>
+    <div className="bb-link"><Ic.spark size={13}/> Create the creative in Vibe Studio. <button className="rroute" data-solo-vibe-studio-launcher onClick={(event) => onRoute("studio", event)}>Open Vibe Studio <Ic.arrow size={11}/></button></div>
   </>;
   else if (stage === 7) body = <>
     <div className="bb-field"><label>Conversion destination</label><input value={d.conversionDestination} onChange={(e) => set({ conversionDestination: e.target.value })} placeholder="Where the audience lands — a page, a form, a booking."/></div>

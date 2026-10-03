@@ -18,7 +18,7 @@ import http from "node:http";
 import { spawn } from "node:child_process";
 import { buildLaunchOptions, resolvePlaywright } from "./live-drive.mjs";
 
-const PORT = 5215;
+const PORT = 5224;
 const BASE = `http://127.0.0.1:${PORT}/`;
 const OUT = path.resolve(import.meta.dirname, "artifacts/marketing-views");
 const REPO = path.resolve(import.meta.dirname, "../..");
@@ -94,6 +94,21 @@ async function measure(page) {
       pushed,
       sideways: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
       innerScrollers: scrollers.map((el) => String(el.className).split(" ")[0]),
+      // WCAG contrast of the new small text against what is actually painted behind it.
+      contrast: (() => {
+        const ctx = document.createElement("canvas").getContext("2d");
+        const rgb = (value) => { ctx.clearRect(0, 0, 1, 1); ctx.fillStyle = "#000"; ctx.fillStyle = value; ctx.fillRect(0, 0, 1, 1); const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data; return { r, g, b, a: a / 255 }; };
+        const lum = ({ r, g, b }) => [r, g, b].map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }).reduce((t, v, i) => t + v * [0.2126, 0.7152, 0.0722][i], 0);
+        const bgOf = (el) => { for (let n = el; n; n = n.parentElement) { const c = rgb(getComputedStyle(n).backgroundColor); if (c.a > 0.9) return c; } return { r: 255, g: 255, b: 255 }; };
+        let worst = { ratio: 99, what: "" };
+        for (const el of document.querySelectorAll(".mk-flag, .mk-row-main small, .mk-stat dt, .mk-stat span, .mk-view .mk-link, .mk-view .btn-g")) {
+          const fg = rgb(getComputedStyle(el).color), bg = bgOf(el);
+          const [hi, lo] = [lum(fg), lum(bg)].sort((x, y) => y - x);
+          const ratio = (hi + 0.05) / (lo + 0.05);
+          if (ratio < worst.ratio) worst = { ratio: Math.round(ratio * 100) / 100, what: `${el.className || el.tagName}:${el.textContent.trim().slice(0, 24)}` };
+        }
+        return worst;
+      })(),
       // The Vibe Studio launcher must contain its own label (a collapsed launcher shows only the icon).
       launcherSpills: (() => { const b = document.querySelector(".campaigns-studio"); return b ? b.scrollWidth > b.clientWidth + 1 : false; })(),
       heading: document.querySelector(".campaigns-scroll h2, .campaigns-scroll .mk-command p")?.textContent?.trim().slice(0, 60) ?? "",
@@ -135,6 +150,7 @@ async function main() {
               check(m.pushed.length === 0, `${id}: nothing pushed past the right edge`, m.pushed.join(","));
               check(!m.sideways, `${id}: document does not scroll sideways`);
               check(!m.launcherSpills, `${id}: the Vibe Studio launcher contains its label`);
+              check(m.contrast.ratio >= 4.5, `${id}: new small text meets AA (4.5:1)`, `worst ${m.contrast.ratio} ${m.contrast.what}`);
               geometry.push({ id, width, overflowX: m.overflowX, innerScrollers: m.innerScrollers });
             }
             if (posture !== "wide" && frame.name !== "1024x768") {

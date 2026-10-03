@@ -39,7 +39,7 @@ ACCEPTANCE_CRITERIA: on the live app a Solo owner opens Marketing from the menu,
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: tested — Campaigns snapshot read (useSoloCampaigns, still 4 tenant-filtered reads, contract test), briefs write seam (unchanged, campaign-briefs.contract), form intake panel (growth2.render form tests), Vibe Studio handoff (shell ownership tests + new launcher test), Systems Check destinations (systems-check-destinations.contract). Unaffected and named — Sales ops internals, catalog-offers internals, Pipeline command desk, operator analytics tree (OPERATOR_BRANCHES unchanged), Agency/Enterprise/sub-account trees (AGENCY_BRANCHES and SUB_ACCOUNT_BRANCHES unchanged)
 
-INTERNAL_BUILD_IDENTITY: ad2df870; deployment=local-render; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=scripts/live-drive/marketing-views-drive.mjs
+INTERNAL_BUILD_IDENTITY: ad2df87005886c5e1b7362d955f10386bf9b331d; deployment=local-render; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=scripts/live-drive/marketing-views-drive.mjs
 RELEASE_CHANNEL: development: verified locally; production deployment follows the merge to main under the pre-launch stance (CLAUDE.md §4)
 RELEASE_CLASSIFICATION: internal-only: information-architecture reorganization of an existing Solo surface; no new capability promise
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement or version

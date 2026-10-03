@@ -253,6 +253,13 @@ if (chatSrc.includes('...N8N_MANAGEMENT_TOOLS')) {
   importedTools = [...source.matchAll(/^\s*(n8n_[a-z_]+):\{provider:/gm)].map(m => m[1]);
   if (!importedTools.length) throw new Error('n8n catalog could not be parsed');
 }
+if (chatSrc.includes('...GHL_MANAGEMENT_TOOLS')) {
+  if (!/import\s*\{[^}]*GHL_MANAGEMENT_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/ghl-management\.ts['"]/.test(chatSrc)) throw new Error('Unresolved GHL catalog import');
+  const source = fs.readFileSync('supabase/functions/_shared/ghl-management.ts', 'utf8');
+  const ghlTools = [...source.matchAll(/^\s*(ghl_[a-z_]+):\s*\{/gm)].map(m => m[1]);
+  if (!ghlTools.length) throw new Error('GHL catalog could not be parsed');
+  importedTools.push(...ghlTools);
+}
 if (chatSrc.includes('...BUSINESS_MISSION_TOOLS')) {
   if (!/import\s*\{[^}]*BUSINESS_MISSION_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/paige-spine\/domains\/business_mission\.ts['"]/.test(chatSrc)) throw new Error('Unresolved Business Mission catalog import');
   const source = fs.readFileSync('supabase/functions/_shared/paige-spine/domains/business_mission.ts', 'utf8');

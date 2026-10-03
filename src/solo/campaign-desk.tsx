@@ -38,16 +38,23 @@ const PHASE = {
 };
 // The 7 growth-loop stages and the subtab that OWNS each. Overview routes; it never does their work.
 const LOOP = [
-  { k: "offer",         name: "Offer",            ic: "grid",  owner: "Catalog",   route: "catalog",     src: "Catalog offers" },
+  { k: "offer",         name: "Offer",            ic: "grid",  owner: "Offers",    route: "catalog",     src: "Your offers" },
   { k: "audience",      name: "Audience",         ic: "users", owner: "Relationships", route: "clients", src: "Segments / People" },
   { k: "content",       name: "Content",          ic: "spark", owner: "Vibe Studio", route: "studio",    src: "Published Vibe assets" },
   { k: "distribution",  name: "Distribution",     ic: "send",  owner: "Social",    route: "social",      src: "No connected provider" },
   { k: "conversations", name: "Conversations",    ic: "mail",  owner: "Social",    route: "social",      src: "No connected provider" },
   { k: "pipeline",      name: "Pipeline",         ic: "trend", owner: "Pipeline",  route: "pipeline",    src: "Deal workspace" },
-  { k: "outcome",       name: "Recorded outcome", ic: "chart", owner: "Performance", route: "performance", src: "No campaign attribution" },
+  { k: "outcome",       name: "Recorded outcome", ic: "chart", owner: "Analytics", route: "analytics",   src: "No campaign attribution" },
 ];
 
-const truth = (s) => <span className={`campaigns-truth campaigns-truth--${s.toLowerCase()}`}>{s}</span>;
+// Owner ruling 2026-09-23: the four capability states are said in the customer's words on a tenant
+// surface, never as release vocabulary. Same mapping as growth2.tsx's PLAIN_STATE.
+const PLAIN_TRUTH = { LIVE: "Available", PARTIAL: "Partly available", PROPOSED: "Planned", UNAVAILABLE: "Not available" };
+// The name a person sees on each route's button. Offers was "Catalog" and Analytics was
+// "Performance" before the Marketing department (owner ruling 2026-10-03).
+const ROUTE_LABEL = { catalog: "Offers", analytics: "Analytics", studio: "Vibe Studio", clients: "Clients", social: "Social", pipeline: "Pipeline", sales: "Sales" };
+const routeLabel = (route) => ROUTE_LABEL[route] || route[0].toUpperCase() + route.slice(1);
+const truth = (s) => <span className={`campaigns-truth campaigns-truth--${s.toLowerCase()}`}>{PLAIN_TRUTH[s] || PLAIN_TRUTH.UNAVAILABLE}</span>;
 const stateChip = (k) => { const s = ST[k] || ST.unavail; return <span className={`loop-state ${s.cls}`}><span className="sd"/>{s.label}</span>; };
 const phasePill = (p) => { const [lbl, cls] = PHASE[p] || ["—", "st-unavail"]; return <span className={`phasepill ${cls}`}><span className="sd"/>{lbl}</span>; };
 const fmt = (v) => { if (!v) return "Not recorded"; const d = new Date(v); return Number.isNaN(d.getTime()) ? "Not recorded" : new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(d); };
@@ -93,9 +100,9 @@ function loopNeed(seg, stKey, b, data) {
     return `Linked to “${b.pipelineName || "a pipeline"}” · ${b.pipelineDealCount} deal${b.pipelineDealCount === 1 ? "" : "s"} read live from Pipeline.`;
   }
   if (seg.k === "pipeline" && stKey === "blocked") return "The pipeline read failed. Your records were not changed.";
-  if (seg.k === "offer" && stKey === "blocked") return "The Catalog read failed. Your records were not changed.";
-  if (seg.k === "offer" && stKey === "ready" && b) return `Linked offer: ${b.offerName || "recorded in Catalog"}.`;
-  if (seg.k === "offer" && stKey === "partial" && !b) return "Offers are recorded in Catalog. Link one to a brief to make the ask concrete.";
+  if (seg.k === "offer" && stKey === "blocked") return "Your offers could not be read. Your records were not changed.";
+  if (seg.k === "offer" && stKey === "ready" && b) return `Linked offer: ${b.offerName || "recorded in Offers"}.`;
+  if (seg.k === "offer" && stKey === "partial" && !b) return "Your offers are recorded. Link one to a brief to make the ask concrete.";
   if (seg.k === "distribution" || seg.k === "conversations") return "No connected provider. Connect one in Social — no reach, queue or schedule is shown.";
   if (seg.k === "outcome") return "Attribution needs a verified source; not available yet.";
   if (stKey === "ready") return "Source connected.";
@@ -146,14 +153,14 @@ function LoopMap({ data, focus, onClearFocus, onRoute, offerSignal }) {
 function readinessRows(b) {
   const loop = briefLoop(b);
   return [
-    ["Offer ready", loop.offer, "catalog", b.offerId ? `Linked: ${b.offerName || "recorded in Catalog"}` : "No offer linked to this brief."],
+    ["Offer ready", loop.offer, "catalog", b.offerId ? `Linked: ${b.offerName || "recorded in Offers"}` : "No offer linked to this brief."],
     ["Audience identified", loop.audience, "clients", b.audience ? `Recorded: ${b.audience}` : "No audience recorded."],
     ["Source content / creative ready", loop.content, "studio", b.contentNeeds ? "Content needs recorded; create it in Vibe Studio." : "No content needs recorded."],
     ["Target channels connected", "unavail", "social", "No customer-facing social / publishing provider is connected."],
     ["Publishing / distribution path", "unavail", "social", "Depends on a connected provider — not checked."],
     ["Conversations / follow-up path", "unavail", "social", "No connected messaging provider on this workspace."],
     ["Pipeline route ready", loop.pipeline, "pipeline", b.pipelineId ? `Linked to “${b.pipelineName || "a pipeline"}” · ${b.pipelineDealCount} deal${b.pipelineDealCount === 1 ? "" : "s"} (live).` : "Not routed to a pipeline."],
-    ["Tracking / attribution evidence", "unavail", "performance", "No order names a campaign, so revenue is never attributed to one."],
+    ["Tracking / attribution evidence", "unavail", "analytics", "Leads count toward a campaign only when their link carries its tag (see Analytics). No order names a campaign, so revenue is never attributed to one."],
     ["Approvals complete", b.lifecycleStatus === "approved" || b.lifecycleStatus === "active" ? "ready" : b.lifecycleStatus === "ready_for_review" ? "await" : "planned", "overview",
       b.lifecycleStatus === "ready_for_review" ? "Awaiting your review." : b.lifecycleStatus === "approved" || b.lifecycleStatus === "active" ? "Approved." : "Not sent for review yet."],
   ];
@@ -171,7 +178,7 @@ function Readiness({ brief, onRoute }) {
               <div className="rk">{label}</div>
               <div className={`rs ${st.cls}`}><span className="sd"/>{st.label}</div>
               <div className="rmeta">{meta}</div>
-              {route !== "overview" && <button className="rroute" onClick={() => onRoute(route)}>Open {route[0].toUpperCase() + route.slice(1)} <Ic.arrow size={11}/></button>}
+              {route !== "overview" && <button className="rroute" onClick={() => onRoute(route)}>Open {routeLabel(route)} <Ic.arrow size={11}/></button>}
             </div>
           );
         })}
@@ -180,7 +187,7 @@ function Readiness({ brief, onRoute }) {
   );
 }
 
-export default function CampaignOverview({ data, onRoute }) {
+export default function CampaignOverview({ data, onRoute, autoOpenBrief = false, onAutoOpenConsumed = undefined }) {
   const briefsState = useSoloCampaignBriefs();
   // A REAL tenant-scoped Catalog read — the honest backing for the workspace-scope "Offer" loop
   // stage (§13). Only EXISTENCE is needed here, so a single-row page is enough (never the whole
@@ -272,6 +279,14 @@ export default function CampaignOverview({ data, onRoute }) {
     if (both.includes("loading")) return "loading";
     return "ready";
   })();
+  // Marketing › Overview's "Create campaign brief" lands here with `?brief=new`. Open the builder once
+  // both reads are ready (the drawer portals into the mounted desk), then hand the request back so a
+  // refresh or Back does not reopen it. A member who cannot manage briefs is not shown a builder.
+  React.useEffect(() => {
+    if (!autoOpenBrief || worst !== "ready") return;
+    if (canManage) { lastFocus.current = document.activeElement; setDrawer({ kind: "brief" }); }
+    onAutoOpenConsumed?.();
+  }, [autoOpenBrief, worst, canManage, onAutoOpenConsumed]);
   if (worst === "resolving")
     return <div className="campaigns-state" role="status"><span className="campaigns-spinner"/>Resolving this account’s Campaigns workspace…</div>;
   if (worst === "unavailable")
@@ -317,7 +332,7 @@ export default function CampaignOverview({ data, onRoute }) {
         <section className="cmd" aria-label="Campaign command">
           <div className="cmd-brief">
             <div>
-              <div className="eyebrow"><Ic.bolt size={13}/> Campaign Command · Overview</div>
+              <div className="eyebrow"><Ic.bolt size={13}/> Marketing · Campaigns</div>
               <div className="cmd-line">{commandLine()}</div>
               <div className="cmd-meta">
                 <span><span className="dot" style={{ background: "var(--ok)" }}/>Live: Pipeline deals, published Vibe assets, recorded payments</span>
@@ -363,7 +378,7 @@ export default function CampaignOverview({ data, onRoute }) {
         </div>
 
         <div style={{ textAlign: "center", fontSize: 10.5, color: "var(--ink-3)", padding: "2px 0 6px" }}>
-          Overview coordinates the campaign across Catalog, Sales, Pipeline, Social, Performance and Vibe Studio. It does not recreate them — every value routes to the surface that owns it.
+          Campaigns coordinates each initiative across Offers, Sales, Pipeline, Social, Analytics and Vibe Studio. It does not recreate them — every value routes to the surface that owns it.
         </div>
       </div>
 
@@ -426,7 +441,7 @@ function WorkInMotion({ briefs, data, onDossier, onAsk }) {
   const drafting = briefs.find((b) => b.lifecycleStatus === "draft");
   if (drafting) items.push({ st: "partial", ic: "doc", t: "Draft in progress", s: `${drafting.name}`, src: "Owner brief · draft" });
   const artifacts = (data.artifacts || []).length;
-  if (artifacts) items.push({ st: "ready", ic: "spark", t: "Published creative", s: "Published Vibe assets are on record in this workspace.", src: "LIVE read · published pages/funnels/forms" });
+  if (artifacts) items.push({ st: "ready", ic: "spark", t: "Published creative", s: "Published Vibe assets are on record in this workspace.", src: "Read from your published pages, funnels and forms" });
   if (!items.length) items.push({ st: "planned", ic: "dots", t: "Nothing queued yet", s: "Real, attributable work appears here — a prepared brief, a review, a blocker, a completed outcome.", src: "No attributable work on record" });
   return (
     <section className="pf" aria-label="Work in motion">
@@ -460,7 +475,7 @@ function FirstRun({ canManage, onNew, onRoute, data }) {
   return (
     <div className="fr">
       <div className="fr-hero">
-        <div className="eyebrow"><Ic.bolt size={13}/> Campaign Command · Overview</div>
+        <div className="eyebrow"><Ic.bolt size={13}/> Marketing · Campaigns</div>
         <h2>Start your first growth initiative</h2>
         <p>This workspace has no campaigns yet. A campaign here is a <b>brief you author</b> — an objective, an offer, an audience, and a path through the loop. Nothing is invented for you. Build the first one step by step, or ask Paige to draft it.</p>
         <div className="fr-cta">
@@ -474,7 +489,7 @@ function FirstRun({ canManage, onNew, onRoute, data }) {
           <div className="fr-step" key={n}><span className="n">{n}</span><h4>{h}</h4><p>{p}</p>
             {route === "new"
               ? <button className="rroute" onClick={() => canManage && onNew()}>Start here <Ic.arrow size={12}/></button>
-              : <button className="rroute" onClick={() => onRoute(route)}>Open {route[0].toUpperCase() + route.slice(1)} <Ic.arrow size={12}/></button>}
+              : <button className="rroute" onClick={() => onRoute(route)}>Open {routeLabel(route)} <Ic.arrow size={12}/></button>}
           </div>
         ))}
       </div>
@@ -550,7 +565,7 @@ function DossierDrawer({ brief: b, canManage, onClose, onRoute, onAsk, onEdit, o
             <div className="dw-links">
               <button className="dw-link" onClick={() => onRoute("pipeline")}><Ic.trend size={14}/> {b.pipelineId ? `Linked to “${b.pipelineName || "a pipeline"}” · ${b.pipelineDealCount} deal${b.pipelineDealCount === 1 ? "" : "s"} (live).` : "Not routed to a pipeline."} <span className="rroute">Pipeline <Ic.arrow size={11}/></span></button>
               <button className="dw-link" onClick={() => onRoute("studio")}><Ic.spark size={14}/> {b.contentNeeds ? "Content needs recorded; creative lives in Vibe Studio." : "No content needs recorded."} <span className="rroute">Vibe <Ic.arrow size={11}/></span></button>
-              <button className="dw-link" onClick={() => onRoute("performance")}><Ic.chart size={14}/> Attribution: no order names a campaign. Revenue is never attributed here. <span className="rroute">Performance <Ic.arrow size={11}/></span></button>
+              <button className="dw-link" onClick={() => onRoute("analytics")}><Ic.chart size={14}/> Attribution: no order names a campaign. Revenue is never attributed here. <span className="rroute">Analytics <Ic.arrow size={11}/></span></button>
             </div>
           </div>
           <div className="dw-sec"><h4>Decision &amp; lifecycle</h4>
@@ -664,7 +679,7 @@ function BriefBuilder({ existing, data, onClose, onRoute, onSave, onRequestRevie
   </>;
   else if (stage === 1) body = <>
     <div className="bb-field"><label>Linked offer <span className="opt">Optional</span></label>
-      <input type="search" value={offerSearch} onChange={(e) => { setOfferSearch(e.target.value); setOfferPage(0); }} placeholder="Search your Catalog offers by name…" aria-label="Search offers"/>
+      <input type="search" value={offerSearch} onChange={(e) => { setOfferSearch(e.target.value); setOfferPage(0); }} placeholder="Search your offers by name…" aria-label="Search offers"/>
       <div className="bb-pagerow">
         <span role="status">{offers.phase === "ready" ? `Offer page ${offerPage + 1}` : offers.phase === "error" ? "Could not load offers" : "Loading offers…"}</span>
         {offers.phase === "error" && <button type="button" className="btn btn-s" onClick={offers.retry}>Retry</button>}
@@ -675,9 +690,9 @@ function BriefBuilder({ existing, data, onClose, onRoute, onSave, onRequestRevie
         <option value="">No offer linked</option>
         {offerRows.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
       </select>
-      <span className="help">Offers live in <b>Catalog</b>. The server validates the offer belongs to this workspace; an offer that isn’t yours is refused.</span></div>
-    {offers.phase === "ready" && !offerRows.length && !offerSearch && <div className="dw-note">This workspace has no offers yet. Create one in Catalog, then link it here.</div>}
-    <div className="bb-link"><Ic.plus size={13}/> Manage offers in Catalog. <button className="rroute" onClick={() => onRoute("catalog")}>Open Catalog <Ic.arrow size={11}/></button></div>
+      <span className="help">Offers live in <b>Offers</b>. The server validates the offer belongs to this workspace; an offer that isn’t yours is refused.</span></div>
+    {offers.phase === "ready" && !offerRows.length && !offerSearch && <div className="dw-note">This workspace has no offers yet. Create one in Offers, then link it here.</div>}
+    <div className="bb-link"><Ic.plus size={13}/> Manage your offers. <button className="rroute" onClick={() => onRoute("catalog")}>Open Offers <Ic.arrow size={11}/></button></div>
   </>;
   else if (stage === 2) body = <>
     <div className="bb-field"><label>Target audience</label><input value={d.audience} onChange={(e) => set({ audience: e.target.value })} placeholder="A saved segment, or describe who this reaches"/><span className="help">Segments live in <b>Relationships</b>. Sizing stays honest — a segment is never given a fabricated count.</span></div>

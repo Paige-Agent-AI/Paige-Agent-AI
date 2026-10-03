@@ -211,7 +211,7 @@ function RecordAccountsForm({ handles, canManage, onSave, onClose }) {
       <div className="social-dialog" role="dialog" aria-modal="true" aria-labelledby="social-record-title" ref={dialog}>
         <header>
           <div>
-            <span className="social-eyebrow">Campaigns · Social</span>
+            <span className="social-eyebrow">Marketing · Social</span>
             <h2 id="social-record-title">The accounts this business posts from</h2>
           </div>
           <button type="button" className="btn btn-s" onClick={onClose} disabled={saving}>

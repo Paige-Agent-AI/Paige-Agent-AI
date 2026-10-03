@@ -32,8 +32,14 @@
  * any ordinary laptop width, and the tabs kept their widest spacing in their narrowest column.
  * 700px is chosen so the compaction reaches the 685px docked-1366 case, where it is the difference
  * between all six tabs fitting and one of them scrolling. Proved by `npm run drive:campaigns-nav`. */
+/* Marketing carries eight tabs until the Sales lane's three leave (proposal §11, S3). In the docked
+ * laptop columns (797px at 1536, 685px at 1366) the strip fits only if the tab icons drop and the
+ * Vibe Studio launcher shows its icon alone; its text stays in the accessible name (font-size:0). */
+@container (max-width:860px){.campaigns-tabs button svg{display:none}.campaigns-tabs{gap:16px}.campaigns-nav .btn.campaigns-studio{width:34px;padding:0;justify-content:center;font-size:0;overflow:hidden}}
+/* `.paige-solo .btn` / `.btn-s` (0,2,0) set font-size and padding, so a bare `.campaigns-studio`
+ * (0,1,0) could never collapse the launcher: its label spilled out of a 34px box. (0,3,0) wins. */
 @container (max-width:700px){.campaigns-tabs{gap:14px}.campaigns-tabs button{font-size:12.5px}}
-@container (max-width:430px){.campaigns-tabs{gap:11px}.campaigns-studio{width:34px;padding:0;justify-content:center;font-size:0}}
+@container (max-width:430px){.campaigns-tabs{gap:11px}.campaigns-nav .btn.campaigns-studio{width:34px;padding:0;justify-content:center;font-size:0;overflow:hidden}}
 @media(prefers-reduced-motion:reduce){.solo-campaigns *{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 @media(forced-colors:active){.campaigns-truth,.campaigns-surface,.campaigns-compat,.campaigns-artifact,.campaigns-coverage article{border:1px solid CanvasText}.campaigns-tabs button[aria-selected="true"]{border-bottom:2px solid Highlight}.campaigns-drawer-scrim{background:Canvas}}
 
@@ -285,3 +291,58 @@
 .pipeline-archived-actions{display:flex;align-items:center;gap:.5rem;flex-shrink:0}
 .pipeline-action-restore{color:var(--ink-2,#4a4566)}
 @media(prefers-reduced-motion:reduce){.pipeline-archived-row{transition:none}}
+
+/* ── Marketing department views (owner ruling 2026-10-03; docs/product/solo-marketing-ia-proposal.md).
+   Token-only, both themes. Gold is spent only on the one act per surface (Create campaign brief, via
+   .btn-g) and the existing selected-tab underline; everything else is ink, line and semantic tone.
+   The scroll owner stays .campaigns-scroll; nothing here adds a nested scroller. */
+.campaigns-tab-divider{flex:none;align-self:center;width:1px;height:18px;background:var(--line)}
+/* .mk-view is the container the tiles and columns size against: the content column Solo hands this
+   surface shrinks when PAIGE docks or expands, and the window width does not show that. */
+.mk-view{max-width:1240px;margin:0 auto;display:grid;gap:14px;min-width:0;container-type:inline-size}
+.mk-view>.campaigns-surface{margin:0;max-width:none;width:100%}
+.mk-command{display:flex;align-items:center;justify-content:space-between;gap:12px 18px;flex-wrap:wrap;padding:12px 16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m)}
+.mk-command p{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;min-width:0;font-size:13.5px;color:var(--ink)}
+.mk-ledger{margin:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);box-shadow:var(--sh-1);overflow:hidden}
+.mk-stat{min-width:0;display:grid;align-content:start;gap:4px;padding:13px 16px;border-left:1px solid var(--line-soft)}
+.mk-stat:first-child{border-left:0}
+.mk-stat dt{font-size:12.5px;font-weight:500;color:var(--ink-2)}
+.mk-stat dd{margin:0;display:grid;gap:3px}
+.mk-stat strong{font-size:24px;line-height:1.1;font-weight:600;letter-spacing:-.025em;font-variant-numeric:tabular-nums;color:var(--ink)}
+.mk-stat span{font-size:12px;color:var(--ink-2)}
+.mk-two{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:14px;align-items:start}
+.mk-two>.campaigns-surface{margin:0;max-width:none}
+.mk-row{cursor:default}
+.mk-row:hover{background:transparent}
+.mk-row-main{flex:1;min-width:0}
+.mk-row-main strong,.mk-row-main small{overflow-wrap:anywhere}
+.mk-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mk-flag{flex:none;display:inline-flex;align-items:center;height:22px;padding:0 9px;border-radius:999px;font-size:11px;font-weight:600;background:var(--surface-sunk);color:var(--ink-2)}
+.mk-flag.is-live{background:var(--ok-tint);color:var(--ok)}
+.mk-flag.is-warn{background:var(--warn-tint);color:var(--warn)}
+.mk-flag.is-blocked{background:var(--bad-tint);color:var(--bad)}
+.mk-flag.is-review{background:var(--violet-tint);color:var(--violet)}
+.mk-handoff{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 19px;border-top:1px solid var(--line-soft);background:var(--surface-2);font-size:12.5px;color:var(--ink-2)}
+.mk-link{display:inline-flex;align-items:center;gap:4px;padding:0;color:var(--violet);font-weight:600;font-size:inherit}
+.mk-link:hover{color:var(--violet-2)}
+.mk-link:focus-visible,.mk-row .btn:focus-visible{outline:2px solid var(--violet);outline-offset:2px;border-radius:4px}
+.mk-first{display:grid;justify-items:start;gap:10px;padding:clamp(20px,4vw,34px)}
+.mk-first h2{font-size:18px}
+.mk-first>p{max-width:640px;color:var(--ink-2);font-size:13.5px}
+.mk-steps{display:grid;gap:8px;margin:2px 0 4px;padding:0;list-style:none;counter-reset:mk-step}
+.mk-steps li{counter-increment:mk-step;display:flex;gap:10px;align-items:baseline;font-size:13px;color:var(--ink-2)}
+.mk-steps li::before{content:counter(mk-step);flex:none;width:20px;height:20px;border-radius:50%;background:var(--surface-sunk);color:var(--ink-2);font-size:11px;font-weight:600;line-height:20px;font-variant-numeric:tabular-nums;text-align:center}
+.mk-bars{list-style:none;margin:0;padding:6px 0}
+.mk-bars li{display:grid;grid-template-columns:minmax(0,170px) minmax(0,1fr) 42px;align-items:center;gap:12px;padding:9px 19px;border-bottom:1px solid var(--line-soft)}
+.mk-bars li:last-child{border-bottom:0}
+.mk-bar-label{min-width:0}
+.mk-bar-label strong{display:block;font-size:13px;overflow-wrap:anywhere}
+.mk-bar-label small{display:block;font-size:11.5px;color:var(--ink-2)}
+.mk-bar-track{height:8px;border-radius:999px;background:var(--surface-sunk);overflow:hidden}
+.mk-bar-track i{display:block;height:100%;border-radius:999px;background:var(--violet)}
+.mk-bar-count{text-align:right;font-variant-numeric:tabular-nums;font-size:13px;color:var(--ink)}
+@container (max-width:900px){.mk-ledger{grid-template-columns:repeat(2,minmax(0,1fr))}.mk-stat:nth-child(3){border-left:0}.mk-stat:nth-child(n+3){border-top:1px solid var(--line-soft)}}
+@container (max-width:380px){.mk-ledger{grid-template-columns:minmax(0,1fr)}.mk-stat{border-left:0}.mk-stat+.mk-stat{border-top:1px solid var(--line-soft)}}
+@container (max-width:860px){.mk-two{grid-template-columns:minmax(0,1fr)}}
+@container (max-width:620px){.mk-row{flex-wrap:wrap}.mk-row .campaigns-row-end{width:100%}.mk-bars li{grid-template-columns:minmax(0,1fr) 42px}.mk-bar-track{grid-column:1 / -1;grid-row:2}}
+@media(forced-colors:active){.mk-ledger,.mk-command,.mk-flag{border:1px solid CanvasText}.mk-bar-track i{background:Highlight}}

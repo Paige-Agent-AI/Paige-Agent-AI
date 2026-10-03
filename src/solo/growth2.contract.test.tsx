@@ -33,16 +33,23 @@ const paigeChatSurface = readFileSync(resolve(process.cwd(), "src/components/das
 const paigeMcp = readFileSync(resolve(process.cwd(), "supabase/functions/paige-mcp/index.ts"), "utf8");
 
 describe("Solo Campaigns approved contract", () => {
-  it("renders exactly the approved six tabs in order", () => {
+  it("renders the approved Marketing tabs in order, with the Sales lane's three marked as leaving", () => {
+    // Owner ruling 2026-10-03 (docs/product/solo-marketing-ia-proposal.md): five Marketing tabs, then
+    // Offers · Sales · Pipeline, which stay reachable here only until the top-level Sales destination lands.
     const tabBlock = /const tabs=\[([\s\S]*?)\];/.exec(source)?.[1] ?? "";
     expect([...tabBlock.matchAll(/\['([^']+)','([^']+)'/g)].map((match) => match.slice(1, 3))).toEqual([
-      ["ov", "Overview"],
-      ["catalog", "Catalog"],
+      ["overview", "Overview"],
+      ["campaigns", "Campaigns"],
+      ["capture", "Lead capture"],
+      ["social", "Social"],
+      ["analytics", "Analytics"],
+      ["catalog", "Offers"],
       ["sales", "Sales"],
       ["pipeline", "Pipeline"],
-      ["social", "Social"],
-      ["performance", "Performance"],
     ]);
+    expect([...tabBlock.matchAll(/\['([^']+)','[^']+',\(\)=>[^,\]]+,'sales'\]/g)].map((match) => match[1])).toEqual(["catalog", "sales", "pipeline"]);
+    // No tab for channels that have no source in this workspace.
+    expect(tabBlock).not.toMatch(/'Audience'|'Content'|'Email'|'Ads'/);
     expect(tabBlock).not.toMatch(/Active|Brand Kit|Pages|Funnels|Forms|Builders/);
   });
 
@@ -59,7 +66,7 @@ describe("Solo Campaigns approved contract", () => {
       expect(source).toMatch(new RegExp(`(?:"${slug}"|\\b${slug}:)`));
     }
     expect(source).toContain("This address moved");
-    expect(source).toContain("Return to Catalog");
+    expect(source).toContain("Go to Lead capture");
     expect(source).toContain("Your workspace and account stay selected");
   });
 

@@ -264,3 +264,54 @@ the implementation slices.
 - **Raw truth labels in the desk.** `campaign-desk.tsx` still renders raw `LIVE/PARTIAL/UNAVAILABLE` labels, against the plain-words ruling at `growth2.tsx:50-53`. The contract test only scans `growth2.tsx`. Folded into S2.
 - **Stale master-doc description.** The master doc's Sales Command Desk row (around L1801–1859) describes four views. The code now has Overview / Payments / Invoices / Recurring / Agreements. This is the Sales lane's record to update.
 - **Missing tier-matrix rows.** The tier matrix has no ledger rows for Sales billing drafts (#1642/#1647/#1659) or for Solo Analytics.
+
+---
+
+## Owner decisions (ruled 2026-10-03)
+
+All five recommendations were approved as written:
+- **D1** five Marketing tabs.
+- **D2** minimal menu move.
+- **D3** Offers belong to Sales.
+- **D4** sub-accounts are left for the `/business` → Solo-shell migration and recorded as a gap.
+- **D5** the four empty Analytics lenses retire with a "moved" notice.
+
+Slice S2 ("Marketing in place") is the first implementation.
+
+## Next phase: Marketing execution architecture (INT-298), after S2–S5
+
+The owner set the backend direction on 2026-10-03 and preserved it as **INT-298**. It is recorded
+here so the backend phase starts from it rather than reconstructing it. **It authorizes no schema,
+table or capability now.** Its first slice (M-A1) is discovery: a gap map, returned before any schema.
+
+**The chain:**
+Strategy → Campaign → Tactic → Marketing Action → Orchestrator → Harness Run → Spine (capabilities) →
+Trust / Approval (autonomy) → Execution (provider / domain) → Rail and receipts (proof) → Domain outcome
+(Lead capture · Sales · Payment · Clients) → Mind (situational interpretation) → Agent Intelligence
+(evaluate · detect patterns · experiment · recommend) → Knowledge (only promoted, durable playbooks) →
+the next Strategy / Tactic / Action.
+
+**Who owns what:**
+- **Marketing** decides the strategy. Campaigns organize the initiative, tactics choose the play, and actions describe the work.
+- **Orchestration** decomposes the work and orders it by dependency.
+- **The Harness** governs each unit of work as a bounded run. Each run carries: intent, context, role, inputs, the capabilities resolved from the Spine, authority from Trust Compass and approvals, constraints, a computational and business budget, success criteria, evidence requirements, an evaluation, and a hand-off.
+- **Spine, approvals, Rail, Knowledge, Mind and Agent Intelligence** stay the canonical machinery. Marketing never builds a second executor, approval queue, receipt system, provider gateway, memory or analytics truth.
+- **Roles.** "Media Outreach", "Distribution" and similar are roles instantiated through the one Harness, not separately built agents (CLAUDE.md §14). They own no Brain, memory, authority, job system or tool access of their own.
+
+**Grounding already on `main` (2026-10-03):**
+- The Paige Runtime Harness is approved architecture, recorded as PARTIAL and distributed (master reference, "Paige Runtime Harness", 2026-09-08). Its canonical path ends in Spine authority, then verified readback, then receipt and Rail.
+- `campaign_briefs` already carries `mission_id`, which links to the business-mission substrate (`20260905221203_business_mission_foundation.sql`). Durable tasking (`20260811120000_wave4_4a3_durable_tasking_compaction.sql`) and durable jobs also exist.
+- The talent registry (`paige_subagents`) and the department/action-kind registry (`20260720153024_paige_subagents_talent.sql`, `20260720200830_org_departments_action_kinds.sql`) exist.
+- **M-A1 must map all of these before proposing anything new.**
+- A "durable work envelope" migration exists only on an unmerged branch, not on `main`. Its status must be resolved in M-A1 rather than assumed.
+
+**One doctrine fit to carry forward:** CLAUDE.md §67 grants autonomy to a repeatable *process*, never to a
+tool. A Marketing **Tactic** (for example "Podcast circuit", or "webinar follow-up within 24 hours") is
+exactly that unit. The Trust Compass grant naturally attaches at the Tactic, while each Action inside it
+still passes the per-capability floor and the account ceiling: `min(grant, floor, ceiling)`.
+
+**How S2 stays compatible:**
+- Overview's "Needs attention", "Channels" and "Campaigns in progress" are the slots where approvals, scheduled actions and outcomes will appear once real action and Rail state exist.
+- Campaigns remains the one home for the brief, and the brief already links offer, pipeline and mission.
+- Lead capture and Analytics read only canonical records.
+- Nothing in S2 invents action, schedule or outcome state.

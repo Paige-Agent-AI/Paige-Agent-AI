@@ -195,7 +195,7 @@ export const VibeStudio = ({ onBack }: { onBack: () => void }) => {
       {/* ── Left rail: identity + truthful capability rows ─────────────────── */}
       <div style={{ borderRight: `1px solid ${LINE}`, padding: "14px 14px 16px", display: "flex", flexDirection: "column", gap: 14, overflow: "auto" }}>
         <button onClick={onBack} className="row" style={{ gap: 8, color: DIM, fontSize: 12.5, padding: "2px 4px" }}>
-          <span style={{ transform: "rotate(180deg)", display: "flex" }}><Ic.chev size={14} style={{}} /></span>Back to Campaigns
+          <span style={{ transform: "rotate(180deg)", display: "flex" }}><Ic.chev size={14} style={{}} /></span>Back to Marketing
           <span className="mono" style={{ marginLeft: "auto", fontSize: 10.5, border: `1px solid ${LINE}`, borderRadius: 5, padding: "1px 5px" }}>Esc</span>
         </button>
         <div className="row" style={{ gap: 9, padding: "0 4px" }}>

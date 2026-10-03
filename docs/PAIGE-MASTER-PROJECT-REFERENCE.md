@@ -775,13 +775,19 @@ Reference or any domain ledger; it governs how their facts become release and cu
   - Old `/growth/active`, `/growth/performance` and `/growth/catalog?type=` addresses redirect.
   - Fixed: the desk's "Open Vibe Studio" buttons were silently ignored by SoloApp.
 - *Proof:*
-  - vitest 2649 passed, 2 skipped (targeted).
-  - tsc ratchet 12/12.
-  - `scripts/live-drive/marketing-views-drive.mjs` 644/644.
-  - `campaigns-nav-fit-drive` 216/216.
+  - Whole vitest suite 7405 passed, 2 skipped (PR head), and 7419 passed on the merged tree with #1662.
+  - tsc ratchet: no new errors (baseline 10, current 10).
+  - `scripts/live-drive/marketing-views-drive.mjs` 740/740 (the earlier 644 predates the per-frame contrast check).
+  - `campaigns-nav-fit-drive` 216/216; `catalog-offers-drive` 523/523.
   - Impeccable detector clean.
   - Evidence record: `docs/evidence/ui-delivery/solo-marketing-department-s2.md`.
-- *Observed deployment:* OWED after merge.
+- *Observed deployment:*
+  - Merged as squash `cab19aed` (PR #1671), directly on #1662's `228f473b`.
+  - Post-merge `ci` and PAIGE Spine contract are green on `cab19aed`.
+  - Vercel `dpl_HsWC47NRy2vRV2XThi9PMdwnhrX2` is READY. Both public and app `version.json` read `cab19aed4a70a5dc9f21cfd1f08b610ff7370cd9-musyvyzn`, `customerUpdate` null.
+  - Edge: `paige-ai-chat` is at v308 ACTIVE (it also carries #1662) and `edge-live` is at `cab19aed`. Migrations NOT_APPLICABLE.
+  - Authenticated runtime is PARTIAL: an owner screenshot proves the Marketing menu, tab strip and Pipeline reachability. The rest is owed (see the evidence record's post-merge closeout).
+- *S3 trigger (owner ruling 2026-10-03):* Offers, Sales and Pipeline stay behind the divider until Sales' top-level destination is LIVE in production. Only then does Marketing remove them and redirect.
 - *Boundary:*
   - Email, ads, spend, visits, multi-touch and revenue-by-campaign are UNAVAILABLE.
   - Authenticated production behaviour is PROOF OWED (§32.c).

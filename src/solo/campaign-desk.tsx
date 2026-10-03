@@ -126,7 +126,7 @@ function LoopMap({ data, focus, onClearFocus, onRoute, offerSignal }) {
           const failed = (seg.k === "pipeline" || seg.k === "offer") && stKey === "blocked";
           return (
             <div className="loop-seg" key={seg.k}>
-              <button className="loop-node" onClick={() => onRoute(seg.route)} aria-label={`${seg.name}: ${st.label}. Owned by ${seg.owner}. Open ${seg.owner}.`}>
+              <button className="loop-node" data-solo-vibe-studio-launcher={seg.route === "studio" ? "" : undefined} onClick={(e) => onRoute(seg.route, e)} aria-label={`${seg.name}: ${st.label}. Owned by ${seg.owner}. Open ${seg.owner}.`}>
                 <span className={`loop-ic ${st.cls}`} style={{ background: "var(--surface-sunk)" }}>{React.createElement(Ic[seg.ic], { size: 16 })}</span>
                 <span className="loop-name">{seg.name}</span>
                 {stateChip(stKey)}
@@ -171,7 +171,7 @@ function Readiness({ brief, onRoute }) {
               <div className="rk">{label}</div>
               <div className={`rs ${st.cls}`}><span className="sd"/>{st.label}</div>
               <div className="rmeta">{meta}</div>
-              {route !== "overview" && <button className="rroute" onClick={() => onRoute(route)}>Open {route[0].toUpperCase() + route.slice(1)} <Ic.arrow size={11}/></button>}
+              {route !== "overview" && <button className="rroute" data-solo-vibe-studio-launcher={route === "studio" ? "" : undefined} onClick={(e) => onRoute(route, e)}>Open {route[0].toUpperCase() + route.slice(1)} <Ic.arrow size={11}/></button>}
             </div>
           );
         })}
@@ -474,7 +474,7 @@ function FirstRun({ canManage, onNew, onRoute, data }) {
           <div className="fr-step" key={n}><span className="n">{n}</span><h4>{h}</h4><p>{p}</p>
             {route === "new"
               ? <button className="rroute" onClick={() => canManage && onNew()}>Start here <Ic.arrow size={12}/></button>
-              : <button className="rroute" onClick={() => onRoute(route)}>Open {route[0].toUpperCase() + route.slice(1)} <Ic.arrow size={12}/></button>}
+              : <button className="rroute" data-solo-vibe-studio-launcher={route === "studio" ? "" : undefined} onClick={(e) => onRoute(route, e)}>Open {route[0].toUpperCase() + route.slice(1)} <Ic.arrow size={12}/></button>}
           </div>
         ))}
       </div>
@@ -548,9 +548,9 @@ function DossierDrawer({ brief: b, canManage, onClose, onRoute, onAsk, onEdit, o
           <div className="dw-sec"><h4>Launch readiness</h4><Readiness brief={b} onRoute={onRoute}/></div>
           <div className="dw-sec"><h4>Source-linked evidence</h4>
             <div className="dw-links">
-              <button className="dw-link" onClick={() => onRoute("pipeline")}><Ic.trend size={14}/> {b.pipelineId ? `Linked to “${b.pipelineName || "a pipeline"}” · ${b.pipelineDealCount} deal${b.pipelineDealCount === 1 ? "" : "s"} (live).` : "Not routed to a pipeline."} <span className="rroute">Pipeline <Ic.arrow size={11}/></span></button>
-              <button className="dw-link" onClick={() => onRoute("studio")}><Ic.spark size={14}/> {b.contentNeeds ? "Content needs recorded; creative lives in Vibe Studio." : "No content needs recorded."} <span className="rroute">Vibe <Ic.arrow size={11}/></span></button>
-              <button className="dw-link" onClick={() => onRoute("performance")}><Ic.chart size={14}/> Attribution: no order names a campaign. Revenue is never attributed here. <span className="rroute">Performance <Ic.arrow size={11}/></span></button>
+              <button className="dw-link" onClick={(e) => onRoute("pipeline", e)}><Ic.trend size={14}/> {b.pipelineId ? `Linked to “${b.pipelineName || "a pipeline"}” · ${b.pipelineDealCount} deal${b.pipelineDealCount === 1 ? "" : "s"} (live).` : "Not routed to a pipeline."} <span className="rroute">Pipeline <Ic.arrow size={11}/></span></button>
+              <button className="dw-link" data-solo-vibe-studio-launcher="" onClick={(e) => onRoute("studio", e)}><Ic.spark size={14}/> {b.contentNeeds ? "Content needs recorded; creative lives in Vibe Studio." : "No content needs recorded."} <span className="rroute">Vibe <Ic.arrow size={11}/></span></button>
+              <button className="dw-link" onClick={(e) => onRoute("performance", e)}><Ic.chart size={14}/> Attribution: no order names a campaign. Revenue is never attributed here. <span className="rroute">Performance <Ic.arrow size={11}/></span></button>
             </div>
           </div>
           <div className="dw-sec"><h4>Decision &amp; lifecycle</h4>
@@ -677,7 +677,7 @@ function BriefBuilder({ existing, data, onClose, onRoute, onSave, onRequestRevie
       </select>
       <span className="help">Offers live in <b>Catalog</b>. The server validates the offer belongs to this workspace; an offer that isn’t yours is refused.</span></div>
     {offers.phase === "ready" && !offerRows.length && !offerSearch && <div className="dw-note">This workspace has no offers yet. Create one in Catalog, then link it here.</div>}
-    <div className="bb-link"><Ic.plus size={13}/> Manage offers in Catalog. <button className="rroute" onClick={() => onRoute("catalog")}>Open Catalog <Ic.arrow size={11}/></button></div>
+    <div className="bb-link"><Ic.plus size={13}/> Manage offers in Catalog. <button className="rroute" onClick={(e) => onRoute("catalog", e)}>Open Catalog <Ic.arrow size={11}/></button></div>
   </>;
   else if (stage === 2) body = <>
     <div className="bb-field"><label>Target audience</label><input value={d.audience} onChange={(e) => set({ audience: e.target.value })} placeholder="A saved segment, or describe who this reaches"/><span className="help">Segments live in <b>Relationships</b>. Sizing stays honest — a segment is never given a fabricated count.</span></div>
@@ -698,7 +698,7 @@ function BriefBuilder({ existing, data, onClose, onRoute, onSave, onRequestRevie
   </>;
   else if (stage === 6) body = <>
     <div className="bb-field"><label>Content / source-material needs</label><textarea value={d.contentNeeds} onChange={(e) => set({ contentNeeds: e.target.value })} placeholder="What creative this needs — a page, a funnel, a form, an email sequence."/><span className="help">Creative is made in <b>Vibe Studio</b>. This just records what’s needed.</span></div>
-    <div className="bb-link"><Ic.spark size={13}/> Create the creative in Vibe Studio. <button className="rroute" onClick={() => onRoute("studio")}>Open Studio <Ic.arrow size={11}/></button></div>
+    <div className="bb-link"><Ic.spark size={13}/> Create the creative in Vibe Studio. <button className="rroute" data-solo-vibe-studio-launcher="" onClick={(e) => onRoute("studio", e)}>Open Studio <Ic.arrow size={11}/></button></div>
   </>;
   else if (stage === 7) body = <>
     <div className="bb-field"><label>Conversion destination</label><input value={d.conversionDestination} onChange={(e) => set({ conversionDestination: e.target.value })} placeholder="Where the audience lands — a page, a form, a booking."/></div>

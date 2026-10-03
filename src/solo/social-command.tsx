@@ -285,7 +285,7 @@ function NextMove({ move, onRecord, onOpenStudio, onOpenCompass, onOpenPipeline,
         <h2 id="social-next-title">{move.headline}</h2>
         <p>{move.detail}</p>
       </div>
-      <button type="button" className="btn btn-s btn-g social-next-act" onClick={run}>
+      <button type="button" className="btn btn-s btn-g social-next-act" data-solo-vibe-studio-launcher={move.action.kind === "studio" ? "" : undefined} onClick={run}>
         <Ic.arrow size={13} />{move.action.label}
       </button>
     </section>

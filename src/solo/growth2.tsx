@@ -429,9 +429,10 @@ export const GrowthHub=()=>{
   // The Command Desk's single router. Overview coordinates; each target opens the subtab that OWNS
   // that stage of the loop (Vibe Studio opens through the existing handoff). Overview never does
   // their work — it routes.
-  const onRoute=React.useCallback((target)=>{
+  const onRoute=React.useCallback((target,event)=>{
     const account=params.account; if(!account) return;
-    if(target==="studio"){ window.dispatchEvent(new CustomEvent("paige-studio",{detail:{}})); return; }
+    // The Studio opens through the shell's handoff, which returns focus to the launcher on close.
+    if(target==="studio"){ window.dispatchEvent(new CustomEvent("paige-studio",{detail:{returnFocus:event?.currentTarget}})); return; }
     if(target==="clients"){ navigate(subtabPath("solo",account,"clients","people")); return; }
     // catalog · sales · pipeline · social · performance are Campaigns subtabs.
     navigate(subtabPath("solo",account,"growth",target));

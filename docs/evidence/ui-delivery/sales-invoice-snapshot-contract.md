@@ -25,13 +25,13 @@ MUST_PRESERVE: existing agreements, catalog and declaration records; platform su
 ACCEPTANCE_CRITERIA: server scopes all item/contact/agreement IDs; checked aggregate integer money; legacy and v2 readers; retry exact original request before mutable validations; CAS and concurrent create proven locally
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: tenant/RLS/CAS guarded; no shared Harness, Rail, Chat, Analytics or Memory write added
-INTERNAL_BUILD_IDENTITY: development: sales/invoice-snapshot-contract based on d6a6927fc74031de70877aaae5d4328f8d770582; deployment=none; environment=development; migrations=PENDING(20270536000001_sales_invoice_snapshot_v2); edge=NOT_APPLICABLE
+INTERNAL_BUILD_IDENTITY: d6a6927fc74031de70877aaae5d4328f8d770582; deployment=local-source; environment=development; migrations=PROOF_OWED(production application of 20270536000001_sales_invoice_snapshot_v2); edge=NOT_APPLICABLE; evidence=scripts/sql/sales-invoice-snapshot-proof.mjs and scripts/sql/sales-invoice-snapshot-concurrency.mjs
 RELEASE_CHANNEL: development: backend compatibility dependency, production anticipated after independent review and exact-head CI
 RELEASE_CLASSIFICATION: internal-only: versioned draft contract without enabled new UI writer
 CUSTOMER_RELEASE_IDENTITY: none: no customer update publication
 RELEASE_NOTE_REQUIRED: no: internal dependency only
 RELEASE_TRUTH_BOUNDARY: PARTIAL: local source/SQL proof only; hosted auth and production identity PROOF OWED; provider issue/send UNAVAILABLE
-RELEASE_RECOVERY: position=unapplied forward migration; preserve historical snapshots, managed dispatch refusal and restrictive constraint; reference=20270536000001_sales_invoice_snapshot_v2.sql
+RELEASE_RECOVERY: position=unapplied forward migration preserving historical snapshots, managed dispatch refusal and restrictive constraint; reference=20270536000001_sales_invoice_snapshot_v2.sql
 SOLO_1536X770_PAIGE_CLOSED: NOT_APPLICABLE: backend slice has no enabled UI consumer
 SOLO_1536X770_PAIGE_OPEN: NOT_APPLICABLE: backend slice has no enabled UI consumer
 SOLO_1366X768_PAIGE_CLOSED: NOT_APPLICABLE: backend slice has no enabled UI consumer

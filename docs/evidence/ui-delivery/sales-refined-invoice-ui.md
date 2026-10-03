@@ -17,7 +17,7 @@ ZOOM_REFLOW: PASS: equivalent CSS viewports 768x385,683x384,512x384,450x500, rea
 REDUCED_MOTION: PASS: scoped button transitions suppressed by prefers-reduced-motion; static rule and existing component tests, no new motion sequence
 STATE_COVERAGE: PASS: unavailable/empty/member/error/loading, known/missing/manual/saved contacts, late selected source, cross-tenant refusal, multi-item/invalid money, stale Catalog/agreement, dirty exits, unknown retry and workspace epochs locally; hosted lifecycle UNVERIFIED
 TRUTHFUL_STATE_LABELS: PASS: no issuing, sending, payment, revenue or connected-provider success inferred
-SOLO_UI: PASS: actual production shell local fixtures; no document overflow or checked navigation/action clipping; internal register/editor scroll owner
+SOLO_UI: YES: actual Campaigns Sales editor, register and source adapters within established shell
 UNVERIFIED: authenticated current/second tenant, signed-JWT save/read lifecycle, native zoom, verified merchant eligibility/issue/send/collection, street lookup, Rail/Mind/Memory ingestion
 OWNER_INTENT: both invoice/deposit and recurring, Stripe and PayPal together at launch; this is a dependency slice, not a reduced release
 MUST_NOT_HAPPEN: cross-tenant draft writes or reads; duplicate operation effects; legacy provider dispatch; fabricated revenue

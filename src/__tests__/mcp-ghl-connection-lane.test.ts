@@ -35,11 +35,22 @@ const registryJson = JSON.parse(
 ) as { providers: Array<{ id: string; status: string; dependency: string }> };
 
 describe("the gohighlevel provider descriptor is seeded", () => {
-  it("M4 seeds the row with exactly GHL's two executable auth kinds over http", () => {
+  it("M4 seeded the row (history); the 2026-10-03 correction makes it honest to GHL's REAL requirements", () => {
+    // History: the original seed (kept verbatim — immutable past migrations).
     expect(ghlMigration).toContain(
       "('gohighlevel', 'Go High Level', false, '{oauth,bearer}', '{http}', 'multi', NULL, '{}',",
     );
-    expect(ghlMigration).toContain("ON CONFLICT (provider_key) DO NOTHING");
+    // The correction: bearer ONLY (GHL offers no OAuth for MCP today), the GENERIC endpoint
+    // shape, and notes naming the PIT + locationId-header requirement.
+    const correction = readFileSync(
+      join(root, "supabase/migrations/20270536000000_ghl_provider_auth_honesty.sql"),
+      "utf8",
+    );
+    expect(correction).toContain("auth_kinds = '{bearer}'");
+    expect(correction).toContain("resource_url_shape = '/mcp/'");
+    expect(correction).toContain("locationId custom header");
+    expect(correction).toContain("planned for a future release");
+    expect(correction).toContain("WHERE provider_key = 'gohighlevel'");
   });
 
   it("the seed is additive — the original three providers are untouched", () => {
@@ -63,9 +74,17 @@ describe("the gohighlevel provider descriptor is seeded", () => {
 });
 
 describe("both of GHL's auth kinds are MCP-executable in the canonical loader", () => {
-  it("oauth and bearer are in the executable set; the REST-only api_key facet is not", () => {
+  it("bearer is in the executable set (GHL's kind); the REST-only api_key facet is not", () => {
     expect(connection).toContain('MCP_EXECUTABLE_AUTH_KINDS = new Set(["oauth", "bearer", "header", "url", "none"])');
     expect(connection).not.toContain('"api_key"');
+  });
+
+  it("the locationId requirement is met by the encrypted custom-header lane (no reserved-name collision)", () => {
+    const client = readFileSync(join(root, "supabase/functions/_shared/mcp-client.ts"), "utf8");
+    expect(client).toContain("customHeadersUsable");
+    // locationId is NOT a reserved transport header, so a GHL connection's custom header rides.
+    expect(client).not.toContain('"locationid"');
+    expect(client).not.toContain('"locationId"');
   });
 });
 
@@ -79,8 +98,11 @@ describe("the registry JSON carries the honest PARTIAL entry", () => {
 });
 
 describe("the catalogue names GHL's real MCP endpoint", () => {
-  it("the Integrations catalogue row carries the leadconnectorhq MCP URL", () => {
-    expect(catalogue).toContain("https://services.leadconnectorhq.com/mcp/anthropic/v2");
+  it("the Integrations catalogue row carries the GENERIC endpoint + the PIT connect instructions", () => {
+    expect(catalogue).toContain('url: "https://services.leadconnectorhq.com/mcp/"');
+    expect(catalogue).toContain("Private Integration token (Settings → Private Integrations) plus your locationId header");
+    // The client-shaped variant is NOT the custom-application endpoint.
+    expect(catalogue).not.toContain("/mcp/anthropic/v2");
   });
 });
 

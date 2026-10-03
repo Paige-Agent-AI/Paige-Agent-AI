@@ -7067,6 +7067,29 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           {
             type: "function",
             function: {
+              name: "ghl_list_actions",
+              description: "Admin only. Check the workspace's GoHighLevel (GHL) MCP connection and list its REAL tool catalogue — both the approved tools (ready to run) and the unapproved ones (waiting on the operator's approval, NAMED, never just a count). Read-only: a catalogue read through the canonical gateway, never a provider tool call. Resolve the exact tool_name here BEFORE running one with ghl_run_action. If the workspace has no canonical GHL connection the tool says so honestly — point to Settings → Integrations (the HighLevel tile).",
+              parameters: { type: "object", properties: {}, required: [] }
+            }
+          },
+          {
+            type: "function",
+            function: {
+              name: "ghl_run_action",
+              description: "Admin only. RUN a GoHighLevel (GHL) tool — your hands in the tenant's CRM: contacts (get/search/create/update), conversations (read/send), opportunities, calendars, payments. Resolve the exact tool_name from ghl_list_actions first, then pass the arguments that tool expects. Dispatch goes through the canonical MCP gateway: the specific tool must carry the workspace's durable approval (Settings → Integrations), and LIVE execution additionally requires the owner's gateway execute gate to be on — until then the call returns the honest prepare result (what WOULD run), not a fabricated outcome. Governed by the autonomy policy: unless the workspace set this to auto, PROPOSE first and call again with confirm:true once the operator approves. Writes to the CRM are real: running is doing — you report what GHL returned, never a hoped-for outcome. If no GHL connection exists the tool says so.",
+              parameters: {
+                type: "object",
+                properties: {
+                  tool_name: { type: "string", description: "The exact GHL tool name to run (from ghl_list_actions)." },
+                  arguments: { type: "object", description: "The inputs the tool expects (whatever ghl_list_actions describes for it)." }
+                },
+                required: ["tool_name"]
+              }
+            }
+          },
+          {
+            type: "function",
+            function: {
               name: "get_client_rail",
               description: "Read a client's recent Paige activity timeline — the messages, actions, automations, and updates that happened across every Paige surface (their portal, automations, calendar, other staff). Use this to ground an answer about what's been going on with a client before you reply. Read-only; it never changes anything. If you're already looking at a client's file you can omit contact_id and it uses that client automatically.",
               parameters: {
@@ -8119,6 +8142,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           return `PERMANENTLY delete the n8n automation ${a?.workflow_id || ""}. This can't be undone.`;
         case "zapier_run_action":
           return `Run the Zapier action "${a?.tool_name || ""}"${a?.arguments ? " with the prepared inputs" : ""} — this runs it live in the connected app.`;
+        case "ghl_run_action":
+          return `Run the GoHighLevel tool "${a?.tool_name || ""}"${a?.arguments ? " with the prepared inputs" : ""} — this touches the live CRM (a write changes real records; a send messages a real person).`;
         case "forge_subagent":
           return `${a?.runtime === "hard" ? "Propose a new (code-backed) specialist" : "Spin up a new specialist"} — "${a?.name || a?.slug || "agent"}" (${a?.domain || "general"}): ${String(a?.description || "").slice(0, 80)}.${a?.runtime === "hard" ? " Goes to an admin for sign-off." : " Joins the team right away."}`;
         case "save_to_knowledge_base":
@@ -10181,6 +10206,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           N8N_MANAGEMENT_TOOL_NAMES.has(tc.function.name) ||
           tc.function.name === "zapier_list_actions" ||
           tc.function.name === "zapier_run_action" ||
+          tc.function.name === "ghl_list_actions" ||
+          tc.function.name === "ghl_run_action" ||
           tc.function.name === "crm_log_activity" ||
           tc.function.name === "crm_add_note" ||
           tc.function.name === "crm_list_documents" ||
@@ -12610,6 +12637,66 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               // Spreading the response wholesale, as this once did, is what let a raw
               // JSON-RPC envelope of any size and content through.
               result = projectOutcomeForModel(zapData);
+            } else if (
+              tc.function.name === "ghl_list_actions" || tc.function.name === "ghl_run_action"
+            ) {
+              // Route GHL tools through the CANONICAL mcp-gateway with the caller's JWT
+              // (the gateway resolves the tenant server-side and is the single governed
+              // door: per-tool durable consent, the owner's execute gate, the canonical
+              // Rail receipt). The model NEVER supplies a connection id — the canonical
+              // gohighlevel connection is resolved server-side from the tenant's own
+              // registry rows (§9). ghl_run_action already cleared the autonomy gate
+              // above; the gateway's consent verifier and owner go are the remaining
+              // authorities, and its closed outcome vocabulary is all that returns.
+              const { data: ghlConns } = await supabaseClient.rpc("get_mcp_connections_v2");
+              const ghlConn = Array.isArray(ghlConns)
+                ? (ghlConns as Array<Record<string, unknown>>).find((c) => c?.provider_key === "gohighlevel" && c?.connection_id)
+                : null;
+              if (!ghlConn) {
+                result = {
+                  success: false,
+                  error: "not_connected",
+                  detail: "This workspace has no canonical GoHighLevel connection yet. Connect it in Settings → Integrations (the HighLevel tile: Private Integration token + locationId header); do not imply any GHL data was read.",
+                };
+              } else if (tc.function.name === "ghl_list_actions") {
+                const { data: ghlData, error: ghlErr } = await supabaseClient.functions.invoke("mcp-gateway", {
+                  body: { action: "tools", connection_id: ghlConn.connection_id },
+                });
+                if (ghlErr) throw ghlErr;
+                // The gateway's catalogue is already closed-vocabulary (identifier-validated
+                // names, sanitized labels); project only what the model needs — the name,
+                // its approval state, and the counts — never display metadata.
+                const catalogue = ghlData as { tools?: Array<Record<string, unknown>>; tool_count?: number; approved_count?: number; observed_at?: string | null } | null;
+                const tools = Array.isArray(catalogue?.tools) ? catalogue!.tools! : [];
+                result = {
+                  success: true,
+                  connection: "gohighlevel",
+                  tool_count: typeof catalogue?.tool_count === "number" ? catalogue.tool_count : tools.length,
+                  approved_count: typeof catalogue?.approved_count === "number" ? catalogue.approved_count : 0,
+                  approved: tools.filter((t) => t?.approved === true).map((t) => String(t?.name ?? "")).filter(Boolean),
+                  // NAME the waiting tools so the operator can act — never a bare count.
+                  unapproved: tools.filter((t) => t?.approved !== true).map((t) => String(t?.name ?? "")).filter(Boolean),
+                  note: "The approved tools are ready to run via ghl_run_action. The unapproved names are waiting on the operator's per-tool approval (Settings → Integrations) — name them to the operator so they can choose which to grant.",
+                };
+              } else {
+                // ghl_run_action: propose-first per the autonomy gate above. Without the
+                // operator's confirmation this dispatch PREPARES (the gateway contacts no
+                // provider); with it, it executes — live execution additionally requires
+                // the owner's gateway execute gate and the tool's durable approval, and
+                // the gateway's closed vocabulary (outcome/code/run_id/recorded) reports
+                // honestly which of those refused.
+                const { data: ghlData, error: ghlErr } = await supabaseClient.functions.invoke("mcp-gateway", {
+                  body: {
+                    action: "execute",
+                    connection_id: ghlConn.connection_id,
+                    tool_name: String(args.tool_name ?? ""),
+                    args: args.arguments && typeof args.arguments === "object" ? args.arguments : {},
+                    mode: approvalChannel.has(tc.id) ? "execute" : "prepare",
+                  },
+                });
+                if (ghlErr) throw ghlErr;
+                result = ghlData as Record<string, unknown>;
+              }
             }
 
             // STUDIO SESSION LINKAGE (#292) — when this chat IS a project's design session, attach

@@ -120,6 +120,7 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   ["n8n_run_workflow", "high", "fires an external automation with real effects"],
   ["n8n_archive_workflow", "high", "acts on the operator's provider account"],
   ["zapier_run_action", "high", "runs an action in a third-party app"],
+  ["ghl_run_action", "high", "runs a tool in the tenant's GoHighLevel CRM — reads contacts/conversations, writes can move real CRM records and send real messages"],
   ["calendar_book_meeting", "high", "books a real event with a real person"],
   ["social_connection_start", "high", "creates an external provider profile and begins authorization for a tenant Social identity"],
   ["social_connection_disconnect", "high", "revokes a tenant Social identity at the external provider"],

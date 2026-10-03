@@ -786,7 +786,7 @@ function AgreementEditor({ agreements, signings, offers, tenantId, existing, exi
   return (
     <SalesDialogPortal>
       <button className="so-editor-scrim" tabIndex={-1} aria-label="Close" onClick={close} />
-      <aside ref={panelRef} className="so-editor" role="dialog" aria-modal="true" aria-labelledby="so-agr-title">
+      <aside ref={panelRef} className="so-editor so-agreement-editor" role="dialog" aria-modal="true" aria-labelledby="so-agr-title">
         <header className="so-editor-head">
           <div style={{ flex: 1 }}>
             <h2 id="so-agr-title">{existing ? "Change these terms" : "New agreement"}</h2>
@@ -2046,7 +2046,7 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
   const contractedCurrency = model?.facts.contractedCurrency || "usd";
 
   return (
-    <div className={LEGACY_SALES_VIEWS.includes(view) || view === "terms" ? "so" : "so so-billing"}>
+    <div className={view === "terms" ? "so so-billing so-agreements" : LEGACY_SALES_VIEWS.includes(view) ? "so" : "so so-billing"}>
       {success && <div className="so-success" role="status">{success}<button className="btn btn-p" onClick={() => onOpenCatalog()}>Continue setup in Catalog</button></div>}
       {editor === "payment" && sales.canManage ? <PaymentEditor data={sales} onClose={() => setEditor(null)} /> : null}
       {editor === "offer" && offers.canManage ? (

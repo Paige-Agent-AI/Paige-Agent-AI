@@ -9,4 +9,3 @@ export default defineConfig({ ...base, root: import.meta.dirname, resolve: { ali
   { find: "../useSalesInvoiceDrafts", replacement: path.join(sales, "useSalesInvoiceDrafts-stub.ts") },
   ...base.resolve!.alias as { find: string; replacement: string }[],
 ] }, server: { host: "127.0.0.1", port: 5264, strictPort: true } });
-

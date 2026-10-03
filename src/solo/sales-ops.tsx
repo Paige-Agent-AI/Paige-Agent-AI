@@ -2101,7 +2101,6 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
       ) : null}
 
       <SubNav view={view} setView={setView} />
-      <div className="sb-actions" aria-label="Additional sales tools"><button className="btn btn-s" onClick={() => setView("command")}>Sales Command</button><button className="btn btn-s" onClick={() => setView("scenarios")}>Sales Scenarios</button><button className="btn btn-s" onClick={() => setView("revenue")}>Recorded commercial activity</button></div>
       <div id="sales-view-panel" role="tabpanel" aria-labelledby={LEGACY_SALES_VIEWS.includes(view) ? undefined : `sales-view-${view}`} aria-label={LEGACY_SALES_VIEWS.includes(view) ? view === "command" ? "Sales Command" : view === "scenarios" ? "Sales Scenarios" : "Recorded commercial activity" : undefined} className="so-view">
 
       {["overview", "payments", "invoices", "recurring"].includes(view) && <SalesBillingWorkspace key={view} view={view} integrationsPath={location.pathname.split("/").slice(0, 3).join("/") + "/settings/integrations"} />}

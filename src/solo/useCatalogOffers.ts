@@ -56,6 +56,7 @@ export type OfferPrice = {
   readonly unitAmount: number | null;
   readonly currency: string | null;
   readonly billingInterval: string | null;
+  readonly intervalCount?: number | null;
   readonly kind: OfferPlanKind | null;
   /** Number of instalments when `kind === "installment"`. `unitAmount` is then PER INSTALMENT. */
   readonly installmentsTotal: number | null;
@@ -372,7 +373,7 @@ export function useCatalogOffers(options?: CatalogOffersOptions): CatalogOffersS
         const readPrices = () => {
           if (bounded && productIds.length === 0) return Promise.resolve({ data: [], error: null });
           let query = supabase.from("tenant_prices")
-            .select("id,product_id,nickname,unit_amount,currency,billing_interval,kind,installments_total,active,sort_order")
+            .select("id,product_id,nickname,unit_amount,currency,billing_interval,interval_count,kind,installments_total,active,sort_order")
             .eq("tenant_id", activeTenantId).order("sort_order", { ascending: true });
           if (bounded) query = query.in("product_id", productIds);
           return query;
@@ -414,6 +415,7 @@ export function useCatalogOffers(options?: CatalogOffersOptions): CatalogOffersS
             unitAmount: typeof row.unit_amount === "number" ? row.unit_amount : null,
             currency: typeof row.currency === "string" ? row.currency : null,
             billingInterval: typeof row.billing_interval === "string" ? row.billing_interval : null,
+            intervalCount: typeof row.interval_count === "number" ? row.interval_count : null,
             kind: narrow(row.kind, PLAN_KINDS),
             installmentsTotal: typeof row.installments_total === "number" ? row.installments_total : null,
             active: row.active !== false,

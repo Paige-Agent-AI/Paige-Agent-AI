@@ -63,3 +63,5 @@
  .solo-campaigns[data-campaigns-view="sales"] .sb-records .sb-register{max-height:210px}
  .solo-campaigns[data-campaigns-view="sales"] .sb-records .sb-detail-grid{flex:none;max-height:none}
 }
+
+@media(max-width:520px){.solo-campaigns[data-campaigns-view="sales"]:has(.so-billing .sb-editor) .campaigns-tabs button{min-height:32px}.solo-campaigns[data-campaigns-view="sales"]:has(.so-billing .sb-editor) .campaigns-nav{min-height:64px}}

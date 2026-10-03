@@ -13,7 +13,7 @@ PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: a Solo owner sees what is being marketed,
 VISUAL_DIRECTION: PASS: existing Solo Mineral/Obsidian tokens (src/solo/solo-tokens.css) and Campaigns geometry (src/solo/solo-campaigns.css); no hard-coded colour in new rules; gold spent only on Create campaign brief (.btn-g) and the existing selected-tab underline; lint:gold clean on changed files
 AUTOMATED_EVIDENCE: PASS: vitest src/lib/routing src/solo src/components/tenant-shell src/components/tenant-relationships = 156 files, 2649 passed, 2 skipped; 9 new render tests in growth2.render.test.tsx; two of them (window floor, Studio launcher) shown to fail with the defect reinstated and pass with it fixed; full-suite baseline on the parent commit: 499 files, 7382 passed, 2 skipped
 STATIC_EVIDENCE: PASS: node scripts/ci/tsc-ratchet.mjs = no new errors (12/12); eslint on changed ts/tsx = 0 errors (1 pre-existing warning, growth2.tsx GR export); gold-discipline lint clean; impeccable detect exit 0 on changed UI files
-RENDERED_EVIDENCE: PASS: scripts/live-drive/marketing-views-drive.mjs = 740/740 checks (including a measured WCAG contrast check of every new pill, row detail, ledger label, link and the gold act in every frame) across Overview, Campaigns, Lead capture and Analytics × 4 viewports × 3 PAIGE postures × 2 themes, plus first-use / loading / error / read-only states; frames in scripts/live-drive/artifacts/marketing-views/; campaigns-nav-fit-drive = 216/216 for the eight-tab strip; catalog-offers-drive = 523/523 and form-intake-mount drive = all frames pass, both re-pointed to Lead capture
+RENDERED_EVIDENCE: PASS: re-measured on 023a0848 - scripts/live-drive/marketing-views-drive.mjs = 740/740 checks (including a measured WCAG contrast check of every new pill, row detail, ledger label, link and the gold act in every frame) across Overview, Campaigns, Lead capture and Analytics × 4 viewports × 3 PAIGE postures × 2 themes, plus first-use / loading / error / read-only states; frames in scripts/live-drive/artifacts/marketing-views/; campaigns-nav-fit-drive = 216/216 for the eight-tab strip; catalog-offers-drive = 523/523 and form-intake-mount drive = all frames pass, both re-pointed to Lead capture
 BEHAVIORAL_EVIDENCE: PASS: render tests drive Create campaign brief → /growth/campaigns with the builder open; Lead capture Open deal → /growth/pipeline?deal=; tab arrow keys move route and focus; legacy /growth/pages → Go to Lead capture; redirects performance→analytics, active→campaigns, catalog?type=form→lead-capture?type=form; desk Open Vibe Studio now reaches the Studio handoff with a real launcher (previously ignored by SoloApp)
 AUTHENTICATED_RUNTIME: UNVERIFIED: this headless session cannot reach the deployed app with a tenant login; the render harness stubs only the three network reads (Campaigns snapshot, briefs, offers); the authenticated live check is owed to a browser-capable session (§32.c)
 KEYBOARD_FOCUS: PASS: tablist keeps roving tabindex and Arrow/Home/End; the divider is aria-hidden and outside tab order; Create campaign brief reached by Tab with a visible focus indicator (drive check); icon-only Vibe Studio launcher keeps its text as accessible name and a title
@@ -39,7 +39,7 @@ ACCEPTANCE_CRITERIA: on the live app a Solo owner opens Marketing from the menu,
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: tested — Campaigns snapshot read (useSoloCampaigns, still 4 tenant-filtered reads, contract test), briefs write seam (unchanged, campaign-briefs.contract), form intake panel (growth2.render form tests), Vibe Studio handoff (shell ownership tests + new launcher test), Systems Check destinations (systems-check-destinations.contract). Unaffected and named — Sales ops internals, catalog-offers internals, Pipeline command desk, operator analytics tree (OPERATOR_BRANCHES unchanged), Agency/Enterprise/sub-account trees (AGENCY_BRANCHES and SUB_ACCOUNT_BRANCHES unchanged)
 
-INTERNAL_BUILD_IDENTITY: dd748ac0df23a77b87e3dbac3c3fc33e8659906d; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat redeploys on merge via deploy-edge-functions because the shared socialPresenceChatEvidence module changed - a copy-only label change from Campaigns to Marketing); evidence=scripts/live-drive/marketing-views-drive.mjs
+INTERNAL_BUILD_IDENTITY: 023a0848145689d79243f72f89cda87b655bbbbb; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat redeploys on merge via deploy-edge-functions because the shared socialPresenceChatEvidence module changed - a copy-only label change from Campaigns to Marketing); evidence=scripts/live-drive/marketing-views-drive.mjs
 RELEASE_CHANNEL: development: verified locally; production deployment follows the merge to main under the pre-launch stance (CLAUDE.md §4)
 RELEASE_CLASSIFICATION: internal-only: information-architecture reorganization of an existing Solo surface; no new capability promise
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement or version
@@ -92,10 +92,15 @@ UNVERIFIED: authenticated production runtime (§32.c), owed to a browser-capable
 
 ## Evidence index
 
-- `node scripts/live-drive/marketing-views-drive.mjs`: 644/644. Artifacts in `scripts/live-drive/artifacts/marketing-views/`, with `geometry.json` recording any inner scroller per frame.
-- `npm run drive:campaigns-nav`: 216/216.
-- `npx vitest run src/lib/routing src/solo src/components/tenant-shell src/components/tenant-relationships`: 2649 passed, 2 skipped.
-- `node scripts/ci/tsc-ratchet.mjs`: 12/12, no new errors.
+**Canonical identity and counts.** Every figure below was measured on `023a0848` (the PR head after the `main` merge of #1672 and the solo-parity snapshot refresh). That is the last commit that changes code, tests or CI data; the commit that edits this record changes only this file, so it cannot name its own SHA. The deployed identity is the merge commit, and it is recorded after merge, not inferred here. An earlier draft of this index said 644/644 for the marketing-views drive; that was its count on `ad2df870`, before `dd748ac0` added the measured contrast check to every frame (96 checks). 740/740 is the current count and supersedes it.
+
+- `node scripts/live-drive/marketing-views-drive.mjs`: 740/740 on `023a0848`. Artifacts in `scripts/live-drive/artifacts/marketing-views/`, with `geometry.json` recording any inner scroller per frame.
+- `node scripts/live-drive/campaigns-nav-fit-drive.mjs`: 216/216 on `023a0848`.
+- `node scripts/live-drive/catalog-offers-drive.mjs`: 523/523 on `023a0848`.
+- `node scripts/live-drive/harness/form-intake-mount/drive.mjs` (harness served on 5215): all frames pass, `errors: []`, on `023a0848`.
+- `npx vitest run` (whole suite): 500 files, 7405 passed, 2 skipped, measured on `a7c3cf84`; `023a0848` differs from it only by `scripts/ci/solo-parity-snapshot.json`, which no vitest test reads.
+- `node scripts/ci/tsc-ratchet.mjs`: baseline 10, current 10, no new errors, on `023a0848`.
+- `npm run lint:solo-parity` and `lint:solo-parity:test`: PASS on `023a0848` (this was the CI `verify` failure on `a7c3cf84`, SP5 nav snapshot 57 vs 55, fixed by regenerating the snapshot from `SOLO_BRANCHES`).
 - **Fixtures** are a fictional business, never a real owner account (§63). They live in `scripts/live-drive/harness/marketing-mount/`.
 
 ## Independent review (§5 / §39) and what changed because of it

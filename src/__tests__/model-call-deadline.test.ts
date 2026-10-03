@@ -35,11 +35,21 @@ describe("the per-call model deadline exists", () => {
     expect(claude).toMatch(/body: JSON\.stringify\(\{ \.\.\.reqBody, stream: true \}\),\s*\n\s*\/\/ The fetch signal bounds the stream's body consumption too[\s\S]{0,200}signal: AbortSignal\.timeout\(MODEL_CALL_DEADLINE_MS\),/);
   });
 
-  it("a caller-provided signal is still honored (the workflow abort site keeps its control)", () => {
-    // opts.signal first in the nullish chain — a provided signal (e.g. the wfController in
-    // paige-ai-chat) remains the call's authority; the deadline is only the default floor.
+  it("a caller-provided signal is still honored (the escape hatch for long-envelope callers)", () => {
+    // opts.signal first in the nullish chain — a provided signal (kb-ingest-file's 360s
+    // extraction envelope, growth-page-draft's 240s page envelope) remains the call's
+    // authority; the deadline is only the default floor.
     expect(claude).toContain("opts.signal ?? AbortSignal.timeout");
-    expect(claude).toContain("A caller-provided signal always wins.");
+    expect(claude).toContain("escape hatch always wins");
+  });
+
+  it("the two long-envelope callers carry their own deadlines instead of the floor", () => {
+    const kb = readFileSync(join(root, "supabase/functions/kb-ingest-file/index.ts"), "utf8");
+    expect(kb).toContain("signal: AbortSignal.timeout(360_000)");
+    // A deadline trip must NOT be reported as a bad file — the honest split-it message.
+    expect(kb).toContain("That document was too long to read in one pass");
+    const page = readFileSync(join(root, "supabase/functions/growth-page-draft/index.ts"), "utf8");
+    expect(page).toContain("AbortSignal.timeout(240_000)");
   });
 });
 

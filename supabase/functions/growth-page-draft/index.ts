@@ -567,6 +567,9 @@ REQUIRED for every page: the FIRST block MUST be a "hero", and the page MUST inc
         const retry = await chatCompletionCompat(
           { messages, response_format: { type: "json_object" }, max_tokens: PAGE_MAX_TOKENS },
           "reasoning",
+          // A full 9216-token page legitimately outlives the standard 120s model-call floor —
+          // this retry carries its own envelope instead of dying mid-page at the default.
+          AbortSignal.timeout(240_000),
         );
         raw = str(retry?.choices?.[0]?.message?.content);
       }

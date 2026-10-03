@@ -264,8 +264,10 @@ function apiKey(): string {
 // the whole turn — the assistant turn persists only at close — and surfacing as the UI's
 // six-minute-window error). A bounded call fails FAST and HONESTLY (TimeoutError traces as an
 // error row; the turn errors visibly in ~2 minutes) instead of hanging to the wall clock.
-// 120s covers legitimate long reasoning streams (a 2048-token stream runs 30–90s) while keeping
-// three bounded rounds inside the edge wall clock. A caller-provided signal always wins.
+// 120s covers legitimate long chat streams (a 2048-token stream runs 30–90s); a caller with a
+// genuinely longer envelope (document extraction, full-page drafts) passes its own signal —
+// that escape hatch always wins. If a thinking path with a >8k-token budget is ever enabled,
+// scale this floor with it.
 const MODEL_CALL_DEADLINE_MS = 120_000;
 
 export async function callClaude(opts: ClaudeCallOpts): Promise<ClaudeResult> {
@@ -417,7 +419,7 @@ export function resolveRequestTier(body: OpenAIStyleBody, tierOverride?: ClaudeT
   return base;
 }
 
-export async function chatCompletionCompat(body: OpenAIStyleBody, tierOverride?: ClaudeTier): Promise<any> {
+export async function chatCompletionCompat(body: OpenAIStyleBody, tierOverride?: ClaudeTier, signal?: AbortSignal): Promise<any> {
   // Extract system + translate messages (incl. assistant tool_calls -> tool_use).
   const { system: sys0, msgs } = splitMessages(body.messages as OaiMessage[]);
   let system = sys0;
@@ -445,6 +447,9 @@ export async function chatCompletionCompat(body: OpenAIStyleBody, tierOverride?:
     temperature: body.temperature,
     tools,
     toolChoice: body.tool_choice && tools?.length ? { type: "auto" } : undefined,
+    // A caller with a legitimately longer envelope (e.g. growth-page-draft's 9216-token
+    // pages) passes its own signal; everyone else gets the standard 120s floor.
+    signal,
   });
 
   const tool_calls = result.toolUses.map((tu) => ({

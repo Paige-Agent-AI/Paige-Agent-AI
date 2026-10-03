@@ -163,11 +163,19 @@ serve(async (req) => {
           maxTokens: 32000,
           messages: [{ role: "user", content: [block, { type: "text", text: EXTRACT_PROMPT }] }],
           trace: { tenant_id: scope.tenantId, agent_id: "kb-ingest-file", job_kind: "extract" },
+          // A long document's extraction legitimately runs minutes (32k-token envelope) — this
+          // caller carries its own deadline (~the edge wall clock) instead of the chat core's
+          // 120s floor, which would kill big files mid-read and report them as unreadable.
+          signal: AbortSignal.timeout(360_000),
         });
       } catch (e) {
-        // Don't leak the raw provider error to the tenant UI; log the detail.
+        // Don't leak the raw provider error to the tenant UI; log the detail. A deadline trip is
+        // NOT a bad file — say what actually happened so the tenant knows to retry or split it.
+        const timedOut = (e as Error)?.name === "TimeoutError" || /aborted/i.test(String((e as Error)?.message ?? ""));
         console.error("[kb-ingest-file] extraction failed:", (e as Error).message);
-        return json({ error: "Paige couldn't read that file. It may be corrupt, password-protected, or an unsupported format." }, 400);
+        return json(timedOut
+          ? { error: "That document was too long to read in one pass — the read timed out. Try splitting it into smaller sections." }
+          : { error: "Paige couldn't read that file. It may be corrupt, password-protected, or an unsupported format." }, 400);
       }
       content = (result.text || "").trim();
       // Honest truncation signal: if the model hit the output cap, we only have a

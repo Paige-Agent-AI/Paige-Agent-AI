@@ -2271,7 +2271,8 @@
       "taxonomy": "crm_calendar_communications",
       "business_reason": "Solo tenants live in GHL — contacts, conversations (SMS/email), opportunities, calendars, invoices. A governed MCP connection puts Paige's hands in the tenant's own CRM under the one approval path (the CRM lane the persona work named as ungrounded until exactly this exists).",
       "paige_use_cases": [
-        "(future, governed) read contacts/conversations/opportunities over MCP once a connection exists; every write is a draft until confirmed — no chat tool ships before the first live connection's tool discovery"
+        "(governed, LIVE 2026-10-03) check the connection and list the real tool catalogue via ghl_list_actions; run an approved GHL tool via ghl_run_action — propose-first, per-tool durable approval, live dispatch behind the owner's gateway execute gate",
+        "read GHL contacts/conversations/opportunities and, with the operator's approval, import or update them in the Paige CRM"
       ],
       "connection_prerequisite": "PAIGE's VERIFIED path: the universal endpoint https://services.leadconnectorhq.com/mcp/ with a Private Integration Token as the bearer credential (sub-account → Settings → Private Integrations; the PIT's scopes govern which MCP tools are offered) AND a locationId custom header — enforced server-side at the connection write (migration 20270536000000: the provider declares required_custom_headers and a trigger refuses a bearer/header write lacking them). GHL's client-specific OAuth surfaces (/mcp/<client>/v2) exist but are NOT YET VERIFIED for PAIGE — the descriptor carries the verified surface only (bearer).",
       "required_scopes": [
@@ -2289,8 +2290,8 @@
       "rail_mind_memory": "Rail: governed execution outcome (when the lane ships). Mind: only safe facts, none today. Memory: none of payloads.",
       "status": "PARTIAL",
       "owner": "Integrations workstream",
-      "dependency": "M4 seeded the provider descriptor (20270534000000); corrected 2026-10-03 (20270536000000) to the PAIGE-VERIFIED contract — bearer (PIT) + locationId header + the universal /mcp/ endpoint, with the required header enforced at the connection write via provider metadata — after the owner's OAuth attempt dead-ended in GHL's own lc-mcp marketplace consent (their metadata over-advertises 8 scopes their consent rejects). GHL's client-specific OAuth surfaces exist but are not yet verified for PAIGE; the facet returns only after an end-to-end proof. The runtime already supports the verified model (bearer executable; custom headers encrypted end-to-end); the HighLevel tile carries the gohighlevel provider identity into the create. Zero live GHL execution: no chat tool, no spine capability, no connection exists; the governed tool surface lands only after the first real connection's verify/discovery shows GHL's actual tool names (honest naming beats invented ones).",
-      "next_slice": "First live GHL connection: connect → verify → discover the real tool catalogue → then declare the spine/chat surface from what exists.",
+      "dependency": "M4 seeded the provider descriptor (20270534000000); corrected 2026-10-03 (20270536000000) to the PAIGE-VERIFIED contract — bearer (PIT) + locationId header + the universal /mcp/ endpoint, with the required header enforced at the connection write via provider metadata — after the owner's OAuth attempt dead-ended in GHL's own lc-mcp marketplace consent (their metadata over-advertises 8 scopes their consent rejects). GHL's client-specific OAuth surfaces exist but are not yet verified for PAIGE; the facet returns only after an end-to-end proof. The runtime already supports the verified model (bearer executable; custom headers encrypted end-to-end); the HighLevel tile carries the gohighlevel provider identity into the create. The owner's live connection (2026-10-03: bearer PIT, 36 real tools discovered — contacts_*, conversations_*, opportunities_*, calendars_*, payments_*, blogs_*, social-posting_*, emails_*, locations_*) satisfied the discovery gate, and GHL-1 landed the governed chat lane: ghl_list_actions (read) + ghl_run_action (external_effect/high/chat-canonical, propose-first) dispatching through the canonical mcp-gateway with per-tool durable approval and the owner's execute gate. Spine domain ghl_management.ts composed (SCR-GHL-MANAGEMENT).",
+      "next_slice": "The owner's live acceptance: reconnect through the fixed HighLevel tile for the canonical provider identity + locationId, approve the read tools, flip the gateway execute gate — then contact import orchestration (read from GHL → propose Paige CRM creates).",
       "tier_eligibility": {
         "platform": "eligible",
         "solo": "eligible",
@@ -2335,6 +2336,11 @@
           "path": "supabase/functions/_shared/mcp-gateway/connection.ts",
           "role": "fail_closed_containment",
           "note": "the canonical loader: SSRF-guarded credential resolution; refuses non-executable facets so a listed GHL connection can never mis-dispatch."
+        },
+        {
+          "path": "supabase/functions/_shared/paige-spine/domains/ghl_management.ts",
+          "role": "provider_adapter",
+          "note": "the GHL governed chat lane's Spine declarations (list=read, run=external_effect propose-first)."
         }
       ],
       "sources": [

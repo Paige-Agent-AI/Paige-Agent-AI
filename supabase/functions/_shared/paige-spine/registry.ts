@@ -1,5 +1,6 @@
 import { N8N_MANAGEMENT_CAPABILITIES } from './domains/n8n_management.ts';
 import { ZAPIER_MANAGEMENT_CAPABILITIES } from './domains/zapier_management.ts';
+import { GHL_MANAGEMENT_CAPABILITIES } from './domains/ghl_management.ts';
 import { BUSINESS_MISSION_CAPABILITIES } from "./domains/business_mission.ts";
 import { SPINE_ACTION_CLASSIFICATIONS, type SpineCapability } from "./contracts.ts";
 import { PIPELINE_CRM_ACTIONS, PIPELINE_DEAL_STAGE_EVIDENCE } from "./domains/pipeline.ts";
@@ -38,7 +39,7 @@ import { CALENDAR_LINK_CAPABILITIES } from "./domains/calendar_link.ts";
 import { AGREEMENT_CAPABILITIES } from "./domains/agreement.ts";
 import { LONG_FORM_CAPABILITIES } from "./domains/long_form.ts";
 
-export const PAIGE_SPINE_CAPABILITIES = [PIPELINE_DEAL_STAGE_EVIDENCE, BUSINESS_CONTEXT_READINESS, TEAM_AUTHORITY, SOCIAL_PRESENCE, N8N_CONNECTION_READINESS, ...N8N_MANAGEMENT_CAPABILITIES, ...ZAPIER_MANAGEMENT_CAPABILITIES, ...BUSINESS_MISSION_CAPABILITIES, ...CAMPAIGN_BRIEF_CAPABILITIES, ...CALENDAR_PRESET_CAPABILITIES, ...CALENDAR_LINK_CAPABILITIES, ...AGREEMENT_CAPABILITIES, ...LONG_FORM_CAPABILITIES, COMMS_MESSAGES_READ, INTEGRATIONS_LIST, INTEGRATIONS_HEALTH, CONTACT_EVENT_STATUS, ...PIPELINE_CRM_ACTIONS, ...CONTACT_CRM_ACTIONS] as const;
+export const PAIGE_SPINE_CAPABILITIES = [PIPELINE_DEAL_STAGE_EVIDENCE, BUSINESS_CONTEXT_READINESS, TEAM_AUTHORITY, SOCIAL_PRESENCE, N8N_CONNECTION_READINESS, ...N8N_MANAGEMENT_CAPABILITIES, ...ZAPIER_MANAGEMENT_CAPABILITIES, ...GHL_MANAGEMENT_CAPABILITIES, ...BUSINESS_MISSION_CAPABILITIES, ...CAMPAIGN_BRIEF_CAPABILITIES, ...CALENDAR_PRESET_CAPABILITIES, ...CALENDAR_LINK_CAPABILITIES, ...AGREEMENT_CAPABILITIES, ...LONG_FORM_CAPABILITIES, COMMS_MESSAGES_READ, INTEGRATIONS_LIST, INTEGRATIONS_HEALTH, CONTACT_EVENT_STATUS, ...PIPELINE_CRM_ACTIONS, ...CONTACT_CRM_ACTIONS] as const;
 
 const KEY_PATTERN = /^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$/;
 const SERVER_SYMBOL_PATTERN = /^public\.[a-z][a-z0-9_]*$/;
@@ -49,7 +50,7 @@ const MUTATING = new Set(["mutate", "external_effect"]);
 // capability may claim it ONLY by being a declared entry of one of the edge-executor domains
 // (n8n management, then zapier management — same guarantee: the entry's chatTool, classification,
 // risk policy, and approval authority must match the declared action field-for-field).
-const EDGE_CHAT_EXECUTOR_CAPABILITIES = [...N8N_MANAGEMENT_CAPABILITIES, ...ZAPIER_MANAGEMENT_CAPABILITIES] as const;
+const EDGE_CHAT_EXECUTOR_CAPABILITIES = [...N8N_MANAGEMENT_CAPABILITIES, ...ZAPIER_MANAGEMENT_CAPABILITIES, ...GHL_MANAGEMENT_CAPABILITIES] as const;
 
 export function validateSpineRegistry(capabilities: readonly SpineCapability[]): string[] {
   const findings: string[] = [];

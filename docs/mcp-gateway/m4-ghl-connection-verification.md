@@ -84,9 +84,18 @@ names. Until a real connection has been verified, Paige honestly has no GHL hand
 - Mind/knowledge binding stays out entirely (parked per owner direction; the integrations
   Mind projection covers connection STATE once a GHL row exists).
 
-## The finish line for this lane (next slice)
+## The finish line — LANDED (GHL-1, 2026-10-03)
 
-First live GHL connection: connect (PIT + locationId) → verify → read the discovered tool
-catalogue → then declare the Spine domain + chat tools from the real names (the M3 zapier
-shape: register what exists), with every CRM write behind the chat-canonical propose-first
-approval and the real-money track.
+The owner's live connection (bearer PIT, 36 real tools discovered: contacts_*, 
+conversations_*, opportunities_*, calendars_*, payments_*, blogs_*, social-posting_*,
+emails_*, locations_*) satisfied the discovery gate, and the GHL-1 slice landed the governed
+chat lane: `ghl_list_actions` (read — the catalogue with named approved AND unapproved
+tools) + `ghl_run_action` (external_effect/high/chat-canonical — propose-first, dispatching
+through the canonical mcp-gateway's execute action with per-tool durable approval and the
+owner's execute gate). The Spine domain `ghl_management.ts` declares both from the real
+catalogue (SCR-GHL-MANAGEMENT); the registry lint's GHL TypeScript proof vouches the wiring.
+
+REMAINING for the owner's first live import: reconnect through the fixed HighLevel tile
+(canonical provider identity + the enforced locationId header), approve the contact-read
+tools, and flip `MCP_GATEWAY_EXECUTE_ENABLED` — then "can you import one contact" answers
+itself in chat.

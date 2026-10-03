@@ -17,6 +17,7 @@ import { GROWTH_FORM_TOOLS } from '../_shared/paige-spine/domains/growth_form.ts
 import { readAgreements } from '../_shared/agreements/chat-read.ts';
 import { draftAgreement, sendAgreement } from '../_shared/agreements/chat-write.ts';
 import { N8N_MANAGEMENT_TOOLS, runN8nManagement } from '../_shared/n8n-management.ts';
+import { GHL_MANAGEMENT_TOOLS } from '../_shared/ghl-management.ts';
 const N8N_MANAGEMENT_TOOL_NAMES = new Set(N8N_MANAGEMENT_TOOLS.map(tool => tool.function.name));
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { gatewayCompat } from "../_shared/claude.ts";
@@ -6953,6 +6954,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             }
           },
           ...N8N_MANAGEMENT_TOOLS,
+          ...GHL_MANAGEMENT_TOOLS,
           // ── The business phone line and its carrier registration ──────────────
           // These exist so Paige can DO this, not just describe it. Before them the
           // capability shipped as a surface only a human could click: she could not tell
@@ -7631,6 +7633,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       n8n_archive_workflow: "archiving an automation",
       n8n_delete_workflow: "permanently deleting an automation",
       zapier_run_action: "running a Zapier action",
+      ghl_run_action: "running a GoHighLevel action",
       forge_subagent: "spinning up a new specialist agent",
       save_to_knowledge_base: "saving this to your knowledge base",
       plan_set_reminder: "setting a reminder",
@@ -8145,6 +8148,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           return `PERMANENTLY delete the n8n automation ${a?.workflow_id || ""}. This can't be undone.`;
         case "zapier_run_action":
           return `Run the Zapier action "${a?.tool_name || ""}"${a?.arguments ? " with the prepared inputs" : ""} — this runs it live in the connected app.`;
+        case "ghl_run_action":
+          return `Run the GoHighLevel tool "${a?.tool_name || ""}"${a?.arguments ? " with the prepared inputs" : ""} — this touches the live CRM (a write changes real records; a send messages a real person).`;
         case "forge_subagent":
           return `${a?.runtime === "hard" ? "Propose a new (code-backed) specialist" : "Spin up a new specialist"} — "${a?.name || a?.slug || "agent"}" (${a?.domain || "general"}): ${String(a?.description || "").slice(0, 80)}.${a?.runtime === "hard" ? " Goes to an admin for sign-off." : " Joins the team right away."}`;
         case "save_to_knowledge_base":
@@ -10209,6 +10214,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           N8N_MANAGEMENT_TOOL_NAMES.has(tc.function.name) ||
           tc.function.name === "zapier_list_actions" ||
           tc.function.name === "zapier_run_action" ||
+          tc.function.name === "ghl_list_actions" ||
+          tc.function.name === "ghl_run_action" ||
           tc.function.name === "crm_log_activity" ||
           tc.function.name === "crm_add_note" ||
           tc.function.name === "crm_list_documents" ||
@@ -12774,6 +12781,83 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               // Spreading the response wholesale, as this once did, is what let a raw
               // JSON-RPC envelope of any size and content through.
               result = projectOutcomeForModel(zapData);
+            } else if (
+              tc.function.name === "ghl_list_actions" || tc.function.name === "ghl_run_action"
+            ) {
+              // Route GHL tools through the CANONICAL mcp-gateway with the caller's JWT
+              // (the gateway resolves the tenant server-side and is the single governed
+              // door: per-tool durable consent, the owner's execute gate, the canonical
+              // Rail receipt). The model NEVER supplies a connection id — the canonical
+              // gohighlevel connection is resolved server-side from the tenant's own
+              // registry rows (§9). ghl_run_action already cleared the autonomy gate
+              // above; the gateway's consent verifier and owner go are the remaining
+              // authorities, and its closed outcome vocabulary is all that returns.
+              const { data: ghlConns } = await supabaseClient.rpc("get_mcp_connections_v2");
+              const ghlConn = Array.isArray(ghlConns)
+                ? (ghlConns as Array<Record<string, unknown>>).find((c) => c?.provider_key === "gohighlevel" && c?.connection_id)
+                : null;
+              if (!ghlConn) {
+                result = {
+                  success: false,
+                  error: "not_connected",
+                  detail: "This workspace has no canonical GoHighLevel connection yet. Connect it in Settings → Integrations (the HighLevel tile: Private Integration token + locationId header); do not imply any GHL data was read.",
+                };
+              } else if (tc.function.name === "ghl_list_actions") {
+                const { data: ghlData, error: ghlErr } = await supabaseClient.functions.invoke("mcp-gateway", {
+                  body: { action: "tools", connection_id: ghlConn.connection_id },
+                });
+                // READ THE BODY, DO NOT READ `error.message` — a gateway refusal arrives as a
+                // non-2xx whose CLOSED body (not_found, lookup_failed…) is the honest reason;
+                // the thrown transport constant would collapse them all into one opaque
+                // sentence (the trap this file documents at the social lanes; readInvokeBody
+                // exists for exactly this seam).
+                const ghlListBody = await readInvokeBody(ghlErr, ghlData);
+                if (ghlErr) {
+                  result = { success: false, error: String(ghlListBody.error ?? "gateway_refused") };
+                } else {
+                  // The gateway's catalogue is already closed-vocabulary (identifier-validated
+                  // names, sanitized labels); project only what the model needs — the name,
+                  // its approval state, and the counts — never display metadata.
+                  const catalogue = ghlData as { tools?: Array<Record<string, unknown>>; tool_count?: number; approved_count?: number; observed_at?: string | null } | null;
+                  const tools = Array.isArray(catalogue?.tools) ? catalogue!.tools! : [];
+                  result = {
+                    success: true,
+                    connection: "gohighlevel",
+                    tool_count: typeof catalogue?.tool_count === "number" ? catalogue.tool_count : tools.length,
+                    approved_count: typeof catalogue?.approved_count === "number" ? catalogue.approved_count : 0,
+                    approved: tools.filter((t) => t?.approved === true).map((t) => String(t?.name ?? "")).filter(Boolean),
+                    // NAME the waiting tools so the operator can act — never a bare count.
+                    unapproved: tools.filter((t) => t?.approved !== true).map((t) => String(t?.name ?? "")).filter(Boolean),
+                    note: "The approved tools are ready to run via ghl_run_action. The unapproved names are waiting on the operator's per-tool approval (Settings → Integrations) — name them to the operator so they can choose which to grant.",
+                  };
+                }
+              } else {
+                // ghl_run_action: propose-first per the autonomy gate above. Without the
+                // operator's confirmation this dispatch PREPARES (the gateway contacts no
+                // provider); with it, it executes — live execution additionally requires
+                // the owner's gateway execute gate and the tool's durable approval, and
+                // the gateway's closed vocabulary (outcome/code/run_id/recorded) reports
+                // honestly which of those refused.
+                const { data: ghlData, error: ghlErr } = await supabaseClient.functions.invoke("mcp-gateway", {
+                  body: {
+                    action: "execute",
+                    connection_id: ghlConn.connection_id,
+                    tool_name: String(args.tool_name ?? ""),
+                    args: args.arguments && typeof args.arguments === "object" ? args.arguments : {},
+                    mode: approvalChannel.has(tc.id) ? "execute" : "prepare",
+                  },
+                });
+                // Same seam: the gateway's refusal bodies are the honest vocabulary —
+                // execute_not_enabled (the owner's gate is off), approval_required (the
+                // tool lacks its durable approval), not_found, bad_tool_name — and each
+                // must reach the model verbatim, never the generic transport sentence.
+                const ghlRunBody = await readInvokeBody(ghlErr, ghlData);
+                if (ghlErr) {
+                  result = { success: false, ...ghlRunBody, error: String(ghlRunBody.error ?? "gateway_refused") };
+                } else {
+                  result = ghlRunBody;
+                }
+              }
             }
 
             // STUDIO SESSION LINKAGE (#292) — when this chat IS a project's design session, attach
@@ -13743,6 +13827,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         n8n_run_workflow: "n8n_workflow", n8n_archive_workflow: "n8n_workflow",
         n8n_delete_workflow: "n8n_workflow",
         zapier_run_action: "external_provider",
+        ghl_run_action: "external_provider",
         forge_subagent: "paige_subagents", delegate_to_subagent: "paige_subagents",
         save_to_knowledge_base: "knowledge_base",
         mission_create: "business_missions", mission_revise: "business_missions", mission_transition: "business_missions",

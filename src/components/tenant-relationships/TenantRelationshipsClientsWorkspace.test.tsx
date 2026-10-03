@@ -213,7 +213,7 @@ describe("tenant Relationships / Clients workspace", () => {
     expect(html).toContain("Relationship overview");
     expect(html).toContain("Contact details");
     expect(html).toContain("Relationship intelligence");
-    expect(html).toContain("Campaigns owns pipeline");
+    expect(html).toContain("Sales owns pipeline");
     expect(html).toContain("Portal access");
     expect(html).toContain("Client files");
     expect(html).toContain("PAIGE enrichment");

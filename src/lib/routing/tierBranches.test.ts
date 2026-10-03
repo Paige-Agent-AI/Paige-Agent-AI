@@ -208,12 +208,12 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
     expect(count("automations")).toBe(3);
     expect(count("clients")).toBe(6);
     expect(count("calendar")).toBe(6);
-    expect(count("growth")).toBe(6);
+    expect(count("growth")).toBe(8);
     expect(count("analytics")).toBe(6);
     expect(count("marketplace")).toBe(4);
     expect(count("settings")).toBe(7);
     const total = SOLO_BRANCHES.reduce((n, b) => n + (b.subtabs?.length ?? 0), 0);
-    expect(total).toBe(46);
+    expect(total).toBe(48);
     // first sub-tab is the screen's default (bare branch renders it) — now Business Game Plan.
     expect(defaultSubtabSlug("solo", "command-center")).toBe("business-game-plan");
     expect(defaultSubtabSlug("solo", "paige")).toBe("chat");
@@ -240,23 +240,32 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
     roundTrip("clients", "pipeline", "pipe");
     expect(subtabBySlug("solo", "calendar", "booking-links")?.key).toBe("booking");
     expect(subtabByKey("solo", "calendar", "booking")?.slug).toBe("booking-pages");
-    roundTrip("growth", "overview", "ov");
+    roundTrip("growth", "overview", "overview");
+    roundTrip("growth", "campaigns", "campaigns");
+    roundTrip("growth", "lead-capture", "capture");
+    roundTrip("growth", "social", "social");
+    roundTrip("growth", "analytics", "analytics");
     roundTrip("growth", "catalog", "catalog");
     roundTrip("growth", "sales", "sales");
     roundTrip("growth", "pipeline", "pipeline");
-    roundTrip("growth", "social", "social");
-    roundTrip("growth", "performance", "performance");
+    // Marketing department (owner ruling 2026-10-03). The last three are the Sales lane's, reachable
+    // here only until the top-level Sales destination lands.
+    expect(branchBySlug("solo", "growth")?.label).toBe("Marketing");
     expect(branchBySlug("solo", "growth")?.subtabs?.map(({ slug, label }) => [slug, label])).toEqual([
       ["overview", "Overview"],
-      ["catalog", "Catalog"],
+      ["campaigns", "Campaigns"],
+      ["lead-capture", "Lead capture"],
+      ["social", "Social"],
+      ["analytics", "Analytics"],
+      ["catalog", "Offers"],
       ["sales", "Sales"],
       ["pipeline", "Pipeline"],
-      ["social", "Social"],
-      ["performance", "Performance"],
     ]);
-    expect(subtabBySlug("solo", "growth", "active")?.key).toBe("ov");
+    // Previously shipped addresses keep resolving (§58).
+    expect(subtabBySlug("solo", "growth", "active")?.key).toBe("campaigns");
+    expect(subtabBySlug("solo", "growth", "performance")?.key).toBe("analytics");
     for (const legacy of ["brand-kit", "pages", "funnels", "forms", "builders"]) {
-      expect(subtabBySlug("solo", "growth", legacy)?.key, legacy).toBe("catalog");
+      expect(subtabBySlug("solo", "growth", legacy)?.key, legacy).toBe("capture");
     }
     roundTrip("analytics", "market-watch", "mkt");
     roundTrip("settings", "connections", "connections");
@@ -319,8 +328,7 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
       ["calendar", "schedule", "calendar", "calendar"],
       ["calendar", "requests", "agenda", "agenda"],
       ["calendar", "settings", "connections", "connections"],
-      ["growth", "overview", "ov", "overview"],
-      ["growth", "brand-kit", "catalog", "brand"],
+      ["growth", "brand-kit", "capture", "brand"],
       ["analytics", "retention", "ret", "retain"],
       ["analytics", "decisions", "dec", "decide"],
       ["analytics", "market-watch", "mkt", "market"],
@@ -333,9 +341,9 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
         expect(subtabBySlug("solo", branch, slug)?.key).not.toBe(agencyKey);
       }
     }
-    // Solo retired this creative tab into a Catalog compatibility landing while
+    // Solo retired this creative tab into a Lead capture compatibility landing while
     // Agency keeps its separate existing screen key.
-    expect(subtabBySlug("solo", "growth", "brand-kit")?.key).toBe("catalog");
+    expect(subtabBySlug("solo", "growth", "brand-kit")?.key).toBe("capture");
     expect(subtabBySlug("agency", "growth", "brand-kit")?.key).toBe("brand");
   });
 });

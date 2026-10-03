@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// The Campaigns tab strip: six locked tabs, none of them lost.
+// The Marketing tab strip (formerly Campaigns): eight locked tabs, none of them lost.
 //
 // WHY THIS EXISTS. A masthead removal moved the truth-key legend into `.campaigns-nav`, where it
 // was hidden by a VIEWPORT media query while the space it ate belonged to a container ~500px
@@ -29,7 +29,7 @@ const URL = `http://127.0.0.1:${PORT}/`;
 const OUT = path.resolve(import.meta.dirname, "artifacts/campaigns-nav-fit");
 const REPO = path.resolve(import.meta.dirname, "../..");
 
-const TABS = ["Overview", "Catalog", "Sales", "Pipeline", "Social", "Performance"];
+const TABS = ["Overview", "Campaigns", "Lead capture", "Social", "Analytics", "Offers", "Sales", "Pipeline"];
 
 // The four widths every Solo surface is proved at.
 const FRAMES = [
@@ -245,7 +245,7 @@ async function main() {
           // The locked six-tab structure, in order. Nothing about this fix may change it.
           check(
             nav.tabs.join("|") === TABS.join("|"),
-            `${id}: six-tab lock intact`, nav.tabs.join("|"),
+            `${id}: Marketing tab lock intact`, nav.tabs.join("|"),
           );
 
           // THE REGRESSION. When the strip has room, nothing may sit outside it.
@@ -294,7 +294,7 @@ async function main() {
           await page.waitForTimeout(200);
           const after = await measureNav(page);
           check(
-            after.selected === "Performance",
+            after.selected === "Pipeline",
             `${id}: last tab selects`, String(after.selected),
           );
           check(

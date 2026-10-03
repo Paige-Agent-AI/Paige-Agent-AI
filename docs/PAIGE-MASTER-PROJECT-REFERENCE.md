@@ -763,8 +763,32 @@ Reference or any domain ledger; it governs how their facts become release and cu
 ### 4.0 Shipped Delivery Log
 
 **2026-10-03 Vibe Studio: Paige visibly builds on the stage; drafts saved in-project; approval cards; projects named. Release channel: `production` (frontend + `paige-ai-chat`); classification: `internal-only`, `PARTIAL`.** From the owner's live report: a project stayed empty because Paige designed a page (`growth_page_generate`, writes nothing), described it and asked to save. Now the Studio designer is told to save in the same turn (`growth_page_save` / `growth_funnel_build`); a page designed but not saved reaches the stage as a `paige_preview` frame marked "not saved"; `paige_confirm` approval cards render in the Studio chat and send the exact fingerprint (the main chat's contract); while Paige works the stage shows the sheet assembling in the tenant's brand, its shape taken only from her real steps; an unnamed project takes its first piece's name (`rename_studio_session`); replies render through the shared `MarkdownMessage`.
-- *Proof:* 5 new jsdom tests that fail on main `78ffc3bb`, 2 edge contract tests, harness frames (`docs/evidence/ui-delivery/vibe-studio-build-view.md`); independent review.
+- *Proof:* 24 jsdom tests (the new ones fail on main `78ffc3bb`), 3 edge contract tests, full suite 503 files / 7,412 tests, harness frames (`docs/evidence/ui-delivery/vibe-studio-build-view.md`); independent review.
 - *Boundary:* whether the model now saves in the same turn on production, and the approval round-trip against the real gate, are `PROOF OWED` to an authenticated drive.
+
+**2026-10-03 Solo Campaigns becomes the Marketing department (S2, "Marketing in place"). Release channel: `production` on merge; classification: `internal-only` IA reorganization, `PARTIAL`.** Owner ruling 2026-10-03, D1–D5 (`docs/product/solo-marketing-ia-proposal.md`). The Solo menu item and branch read **Marketing** (slug still `growth`). It has five Marketing tabs (Overview, Campaigns, Lead capture, Social, Analytics), then Offers · Sales · Pipeline, which stay reachable behind a divider until the Sales lane's top-level Sales lands (S3).
+- *What moved:*
+  - Overview is new. It is built from existing reads: briefs, published and draft capture points, 30-day submissions.
+  - The Campaign Command Desk is now the Campaigns tab.
+  - Catalog's Published assets and the form intake drawer are now Lead capture.
+  - The static Performance cards are now Analytics: leads by the `utm_source` / `utm_campaign` tags on the link they submitted from. `useSoloCampaigns` now selects `utm_json` and returns drafts; it makes no new query.
+  - Old `/growth/active`, `/growth/performance` and `/growth/catalog?type=` addresses redirect.
+  - Fixed: the desk's "Open Vibe Studio" buttons were silently ignored by SoloApp.
+- *Proof:*
+  - vitest 2649 passed, 2 skipped (targeted).
+  - tsc ratchet 12/12.
+  - `scripts/live-drive/marketing-views-drive.mjs` 644/644.
+  - `campaigns-nav-fit-drive` 216/216.
+  - Impeccable detector clean.
+  - Evidence record: `docs/evidence/ui-delivery/solo-marketing-department-s2.md`.
+- *Observed deployment:* OWED after merge.
+- *Boundary:*
+  - Email, ads, spend, visits, multi-touch and revenue-by-campaign are UNAVAILABLE.
+  - Authenticated production behaviour is PROOF OWED (§32.c).
+  - Sub-accounts (`/business`, Agency tree) still read "Growth" (D4 gap).
+  - Solo Analytics is unchanged until S4.
+  - No migration or edge change.
+
 **2026-10-03 Agreements consistency with the widened Sales desk. Release channel: `production`; classification: `internal-only` visual patch, `PARTIAL`.** [PR #1669](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/1669), reviewed `1338c1b4a775e77983427315befd828b4360e01d`, squash `ac3d2a77e0beb577e14b6a4d4fb0ac437cd05daf`. Agreements now shares the live Sales frame, width and five-tab selection treatment; scoped solid surfaces, outlined headers and raised enabled controls preserve comfortable internal spacing and existing agreement behavior. An explicit AgreementEditor presentation class styles its portaled modal without changing other editors.
 
 - *Proof:* initial independent nonauthor review FAIL on `be3a1caa358fe31166a7853c2198e260873ce1c2` found unreachable modal ancestry selectors and an evidence EOF blank. One consolidated correction passed the changed-head source recheck ([initial review](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/1669#issuecomment-5972935051), [final PASS](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/1669#issuecomment-5972962771)); required exact-head CI green before merge. Final 16 expanded-sidebar local source cases cover four viewports, light/dark and PAIGE open/closed, empty/populated records, keyboard editor opening/Escape and computed modal background/pseudo-element/button assertions. Zero document overflow/page errors; lint zero errors with one pre-existing dependency warning at line 642.
@@ -4769,6 +4793,8 @@ DOCTRINE_190/191/192, 194, 197, 198 + Addendum, 200, 201, 202, 203, 205, 208, 21
 ---
 
 ## 10. §13 corrections log
+
+- **2026-10-03 · THE PLATFORM OPERATOR ANALYTICS ADDRESS IN THE MARKETING IA HANDOFF DOES NOT EXIST.** The owner handoff for the Solo Marketing reorganization names `/admin/platform/analytics` as the operator surface to protect. On `main` (`3fa9834`) there is no `/admin` route at all: `src/App.tsx` declares none, `src/pages/Admin.tsx` is gone, and `src/pages/admin/platform/PlatformAnalyticsAdmin.tsx` is imported by nothing. The only reference is the stale `docs/architecture/CANONICAL-SYSTEM-ARCHITECTURE-2026-08-08.md:133`, which still cites `Admin.tsx`. Searched `admin/platform/analytics`, `platform/analytics`, `PlatformAnalyticsAdmin`, `path="/admin` across `src/` and `docs/`. The live operator analytics is `/operator/analytics/{view}` (`App.tsx:234` → `OperatorEntry`; `OPERATOR_BRANCHES` analytics, ten views, `tierBranches.ts:513-526`). The owner's intent stands; only the address was wrong. The Solo Analytics retirement must leave `/operator/analytics/*` untouched, and its guard tests target that path. Recorded in `docs/product/solo-marketing-ia-proposal.md` §7.
 
 - **2026-09-27 · "PROOF OWED TO CI `premerge-migration-proof`" WAS WRITTEN INTO RECORDS FOR A MONTH WHILE THAT WORKFLOW DID NOT RUN.** The workflow's last run was #153 on 2026-08-24; it has been `disabled_manually` since, with no disable reason recorded in the repo (searched `disabled_manually`, `premerge proof`, `premerge-migration-proof` across `docs/`, `.github/`, `CLAUDE.md`). Its known defect is documented in #574: a failed baseline restore exited 0 and showed green without evaluating the migration. Records written after 2026-08-24 that name it as the owner of a migration's proof describe a proof that **never executed**: the Solo calendar reschedule/edit row and `docs/evidence/ui-delivery/solo-calendar-reschedule-edit.md` ("owed to CI"), `docs/evidence/ui-delivery/solo-pipeline-command-desk-mvp.md` ("the isolated database authority"), and — stronger, asserting it ran — `docs/evidence/match-paige-memory-authz.md` ("RUNS IN CI") and `docs/delivery/connected-mcp-gateway-phase-s.md` ("a real apply-against-real-shape proof"). Those records are not rewritten here (§11); this entry is their correction. The database proof that did run on those heads is `database-contract`, which since #1487 rebuilds with production's grants. Re-enabling or deleting the workflow is an owner decision tied to #574.
 - **2026-09-27 · A "BEFORE" RUN THAT SAID A BROKEN SCRIPT WAS ALREADY FIXED.** While preparing #1496 the bare run of `paige-chat-tool-contract-check.mjs` passed 9/9 on "clean main". It was not clean: an uncommitted copy of the patch had survived `git checkout --detach` in the worktree. Re-run on a genuinely clean tree it exits 1. Recorded because a convenient wrong baseline was one command from being banked as "already fixed upstream".

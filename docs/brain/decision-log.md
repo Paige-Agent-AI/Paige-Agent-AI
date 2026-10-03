@@ -6154,3 +6154,29 @@ selected one, so each read failed with 42703. They now read `user_contact_method
 - **Proofs:** `supabase/tests/contact_methods.sql` (plan 101), `supabase/tests/contact_methods_concurrency.sql`,
   `scripts/proof/contact-methods-add-race.mjs`, `scripts/contact-upsert-hotfix-smoke.sql`,
   `scripts/agreements/run-integrity-proof.sh`, `src/__tests__/contact-methods-edge.test.ts`.
+
+## 2026-10-03 — Solo Marketing becomes a department; Sales and Analytics move out (owner ruling, D1–D5)
+
+- **Ruling:** Campaigns becomes **Marketing**, a top-level Solo department, and Campaigns is one function inside it. Sales becomes its own top-level domain, built by the Sales lane. The current Solo Analytics UI retires once its useful consumers are re-homed, and its evidence infrastructure stays. Platform Operator analytics is untouched. Vibe Studio stays the only creator.
+- **Decisions (all approved as recommended):**
+  - **D1** five Marketing tabs: Overview, Campaigns, Lead capture, Social, Analytics. There are no Audience, Content, Email or Ads tabs until real data exists.
+  - **D2** minimal menu move: Command Center · Clients · Marketing · Sales · Marketplace · Settings.
+  - **D3** Offers belong to Sales.
+  - **D4** sub-accounts are left for the `/business` → Solo-shell migration and recorded as a gap.
+  - **D5** Revenue & profit, Retention, Brief and Decisions retire with a "moved" notice.
+- **Why five tabs, not nine:**
+  - Production has no segment, audience, broadcast, ads or attribution table (read-only query, 2026-10-03).
+  - Every CRM-backed competitor checked files segments under contacts.
+  - A rendered prototype measured nine tabs scrolling at every PAIGE-docked width.
+- **Correction (§13):** the handoff's `/admin/platform/analytics` does not exist. The live operator analytics is `/operator/analytics/*`.
+- **Sequence:**
+  - **S2** Marketing in place (this branch).
+  - **S3** the Sales lane lands top-level Sales; Offers, Sales and Pipeline then leave Marketing with redirects.
+  - **S4** Solo Analytics retires.
+  - **S5** the slug changes from `growth` to `marketing`.
+- **Next phase, recorded and not built:** INT-298, the Marketing execution architecture: Strategy → Campaign → Tactic → Action → Harness Run → Spine → approval → execution → Rail → outcome → Mind → Agent Intelligence → Knowledge. Its first slice (M-A1) is a gap map over `campaign_briefs.mission_id`, the business mission, durable tasking and durable jobs, `paige_subagents`, and the action-kind registry. One doctrine fit: a Tactic is the §67 "process" a Trust Compass grant attaches to.
+- **Records:**
+  - `docs/product/solo-marketing-ia-proposal.md`
+  - `docs/prototypes/solo-marketing-ia.html`
+  - `docs/evidence/ui-delivery/solo-marketing-department-s2.md`
+  - the tier matrix surface ledger

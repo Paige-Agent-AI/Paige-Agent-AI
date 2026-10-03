@@ -5,7 +5,9 @@ import { CLIENT_CONTACT_METHODS_EMBED, orderContactMethods, type ContactMethodRo
 import type { InvoiceCustomerChoice, InvoiceAgreementChoice } from './InvoiceDraftEditor';
 type ReadResult = {data:Record<string,unknown>[]|null;error:unknown};
 interface SourceQuery extends PromiseLike<ReadResult>{select(columns:string):SourceQuery;eq(column:string,value:string):SourceQuery;order(column:string,options:{ascending:boolean}):SourceQuery;limit(count:number):SourceQuery;range(from:number,to:number):SourceQuery;or(filters:string):SourceQuery;}
-const from = supabase.from as unknown as (table:string)=>SourceQuery;
+// Keep the SDK receiver: SupabaseClient.from reads this.rest.
+const client = supabase as unknown as {from(table:string):SourceQuery};
+const from = (table:string):SourceQuery => client.from(table);
 const text = (v: unknown) => typeof v === 'string' && v.trim() ? v.trim() : null;
 export function invoiceCustomerFromRow(row: Record<string, unknown>): InvoiceCustomerChoice {
   const methods = orderContactMethods(row.client_contact_methods as ContactMethodRow[] | null).map(m => ({...m,value:m.value.trim()}));
@@ -40,15 +42,20 @@ export function useInvoiceBillingSources(options:BillingSourceOptions={}){
  const queryKey=JSON.stringify([search,page,clientId,agreementPage,agreementId]);
  const [refresh,setRefresh]=useState(0);const [state,setState]=useState<State>({identity:identity.current,queryKey,phase:'loading',...empty});
  useEffect(()=>{const opened=identity.current;let cancelled=false;setState({identity:opened,queryKey,phase:'loading',...empty});if(!opened.tenant||opened.resolving)return;
+ void Promise.resolve().then(()=>{
+ if(cancelled||identity.current!==opened)return null;
  let customers=from('clients').select(customerColumns).eq('tenant_id',opened.tenant).order('created_at',{ascending:false}).order('id',{ascending:false});
  if(search)customers=customers.or(billingClientSearchFilter(search));
  const noRows:ReadResult={data:[],error:null};
- void Promise.all([
+ return Promise.all([
  customers.range(page*PAGE_SIZE,page*PAGE_SIZE+PAGE_SIZE),
  clientId?from('clients').select(customerColumns).eq('tenant_id',opened.tenant).eq('id',clientId).limit(1):Promise.resolve(noRows),
  clientId?from('paige_agreements').select(agreementColumns).eq('tenant_id',opened.tenant).eq('contact_id',clientId).order('created_at',{ascending:false}).order('id',{ascending:false}).range(agreementPage*PAGE_SIZE,agreementPage*PAGE_SIZE+PAGE_SIZE):Promise.resolve(noRows),
  clientId&&agreementId?from('paige_agreements').select(agreementColumns).eq('tenant_id',opened.tenant).eq('contact_id',clientId).eq('id',agreementId).limit(1):Promise.resolve(noRows),
- ]).then(([list,selected,agreements,selectedAgreement])=>{
+ ]);
+ }).then(results=>{
+ if(!results)return;
+ const [list,selected,agreements,selectedAgreement]=results;
  if(cancelled||identity.current!==opened)return;
  const all=[list,selected,agreements,selectedAgreement];
  if(all.some(result=>result.error)||(list.data??[]).some(row=>row.tenant_id!==opened.tenant)||(selected.data??[]).some(row=>row.tenant_id!==opened.tenant||row.id!==clientId)||[...(agreements.data??[]),...(selectedAgreement.data??[])].some(row=>row.tenant_id!==opened.tenant||row.contact_id!==clientId)||(selectedAgreement.data??[]).some(row=>row.id!==agreementId)){setState({identity:opened,queryKey,phase:'error',...empty});return;}

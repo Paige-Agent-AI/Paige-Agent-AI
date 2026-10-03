@@ -208,7 +208,6 @@ vi.mock("@/solo/marketplace", () => ({ Marketplace: () => null }));
 vi.mock("@/solo/vault", () => ({ VaultView: () => null }));
 vi.mock("@/solo/integrations", () => ({ Integrations: () => null }));
 vi.mock("@/solo/team", () => ({ TeamHub: () => null }));
-vi.mock("@/solo/setup", () => ({ Setup: () => null }));
 vi.mock("@/solo/vibe", () => ({ VibeStudio: () => null }));
 
 vi.mock("@/agency/paige", () => ({ default: () => null }));

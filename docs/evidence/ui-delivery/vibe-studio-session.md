@@ -1,0 +1,59 @@
+# UI delivery evidence: vibe-studio-session
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: pre-edit packet and flow map recorded in-session before the build (actor: Solo owner/admin; goals: start a project from one brief, watch Paige build it, change it by chat, publish it to the Catalog, go back to a saved version, reopen a draft later; exits: Back to Campaigns, Esc, Back to Studio); backend seams shipped first in PR #1658
+PAIGE_UI_DESIGN: PASS: impeccable SKILL.md, the Operate playbook and reference/craft-floor.md read before UI edits; the approved layout C prototype is the visual source; a render-and-inspect pass found and fixed six defects the jsdom suite could not see (listed under Review)
+MATERIAL_FLOW_CHANGE: YES: Vibe Studio was a media-only screen; it now opens on Studio home, where one brief starts a project, and the project is a workspace (chat, stage, timeline) with one Publish. Images & video keeps the previous media tools unchanged
+FLOW_PROTOTYPE: PASS: layout C "Chat, stage, timeline" prototype, owner choice "C · Chat, stage, timeline" and "Approved. Build it as shown." (2026-10-03)
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: for the Solo business owner or admin; primary action is describing what to build, then Publish when it is right; no artifact-type picker anywhere (§18/§21)
+VISUAL_DIRECTION: PASS: the approved prototype's immersive dark Studio (the same world as the previous Vibe Studio and its star field); gold only on Publish, Publish now, Publish changes and Approve and make it; violet for Paige's own actions (Build it, Use this, Save, Go back to this version); the form sheet renders in the workspace's own brand colour
+AUTOMATED_EVIDENCE: PASS: npx vitest run src/solo/studio/studio.render.test.tsx — 7/7 (brief → project → first build on the stage with Paige's steps; publish through the publish seam with the returned address only; a refused publish shows the server's sentence; timeline restore; Paige's grouped question answered as the next turn; a failed turn says so; Esc steps back then closes). Bite check: with the seed-brief send and the restore call removed, 4 of 7 fail. src/solo/vibe.render.test.tsx 11/11 (the 8 media-tool states now under Images & video, Studio home, Esc from home and media). Full suite: main 3fa98342 501 files / 7,380 passed, 2 skipped; this branch 502 files / 7,390 passed, 0 failed; Solo + shell re-run after the render fixes 156 files / 2,558 passed
+STATIC_EVIDENCE: PASS: tsc ratchet no new errors (baseline 10 → 10; the removed StudioShell entries left with the deleted file); eslint clean on every changed file (one pre-existing warning in growth2.tsx); every ci.yml command run locally (results in Review)
+RENDERED_EVIDENCE: PASS: docs/evidence/ui-delivery/assets/vibe-studio-session/*.png — the real VibeStudio, StudioSession, stage, publish panel, form settings and timeline with the real Solo CSS (.paige-solo + shell chrome) in Chromium on a local Vite build; Supabase, the workspace context, media jobs and the chat stream answered by stubs with synthetic rows (Northwind Studio). Frames: the Solo matrix on a form project, home at 1366 and 900, a finished turn, publish checks, published, form settings, timeline selection, a page and its phone preview, an image approval, dark app theme, the narrow chat drawer. Each carries "harness render · not live"
+BEHAVIORAL_EVIDENCE: PASS: harness drive (scripts/live-drive/harness/studio-mount/drive.mjs): a chat turn streamed three steps and a reply and left "Saved · draft"; Publish showed five checks read from the saved form, Publish now sent growth_form_publish {p_tenant_id: null, p_id: "f-1"} and showed the address the RPC returned; Esc closed the panel and stayed in the project; Go back to this version sent restore_artifact_version {p_version_id: "v1", p_tenant_id: null} and showed the notice; the image approval card rendered for this project's pending job; at 900 px the chat opens as a drawer with its input on screen; zero page errors
+AUTHENTICATED_RUNTIME: UNVERIFIED: no signed-in browser session in this build environment; paige-ai-chat building a form in a real project, publish against production RLS, and the Catalog showing the published item are owed to a credentialed drive after merge
+KEYBOARD_FOCUS: PASS: Studio home focuses the brief composer; in a project Tab goes Back to Studio → Form settings → Desktop → Phone → Publish → chat input; preview fields are not focus stops; the publish panel moves focus to Not yet and returns it to Publish on close; Esc closes the open panel first, then leaves the project, then closes the Studio; launchers in Campaigns pass returnFocus
+ZOOM_REFLOW: PASS: 900 px frames (equivalent to 150% on a 1366 screen) reflow: the home rail folds into a top bar that keeps Back to Campaigns, Build with Paige and Images & video; the project chat becomes a drawer behind a Show chat button; document overflowX 0 at every width
+REDUCED_MOTION: PASS: with prefers-reduced-motion: reduce, zero elements in the Studio carry an animation or transition longer than 10 ms (drawer slide, skeleton pulse, toggle all guarded)
+STATE_COVERAGE: PASS: home empty / loading / error / drafts; project opening / open failed; nothing on the stage / building skeleton / form / page / funnel step / image / piece failed to load; turn sending / steps / reply / grouped question / failed turn; publish checks / blocked / publishing / refused / live / unpublish; timeline empty / versions / selected / restoring / refused; form settings loading / saving / saved
+TRUTHFUL_STATE_LABELS: PASS: "Saved · draft", "Saved · changes not live yet" and "Live" derive from the saved row (status and working copy vs live columns); a published address is shown only from the publish RPC's return; Paige's steps are only the paige_step frames the stream sent
+SOLO_UI: YES: Solo Campaigns → Vibe Studio (src/solo/vibe.tsx and src/solo/studio/*)
+UNVERIFIED: authenticated runtime (above); a funnel with live steps rendered from production data; image generation inside a project (Paige starts it; the approval card is proven, the provider run is owner-gated by FAL_KEY and the prepaid ceiling)
+
+OWNER_INTENT: "prompt → workspace where Paige builds → at most one grouped question → full dev studio with chat or manual edits for all artifacts", in layout C, with one publish rule: unpublished work lives in the Studio, published work in the Catalog
+MUST_NOT_HAPPEN: no artifact-type tabs or picker; no second draft store; no publish that skips the publish RPCs; no address shown that the server did not return; the media tools must not disappear
+MUST_PRESERVE: the media tools (moved unchanged to Images & video); the paige-studio event and the SoloApp mount (<VibeStudio onBack={closeStudio}/>); Campaigns launchers; LivePreview, DocumentPreview and studio.ts, which live surfaces still use
+ACCEPTANCE_CRITERIA: an owner types a brief and Build it opens a project; Paige's build appears on the stage; a chat message changes it; Publish runs the checks and puts it live with its address; Go back to this version restores an earlier save; Back to Studio lists the project under Drafts
+MOTION_PURPOSE: the chat drawer slides in at narrow widths, the building skeleton pulses while Paige works and the settings toggle slides; all stop under reduced motion
+PROTECTED_SEAMS: growth publish RPCs and restore_artifact_version (exercised in the drive); growth_form_set_intake through the existing useFormIntake hook (unchanged); paige-ai-chat request shape (messages, threadId, requestIntentId, canvasArtifact); paige-media untouched
+
+INTERNAL_BUILD_IDENTITY: 3fa98342c plus this PR; deployment=local-vite-dev-server; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/assets/vibe-studio-session
+RELEASE_CHANNEL: production: pre-launch merge-on-verified (§4); frontend only
+RELEASE_CLASSIFICATION: internal-only: no customer release identity; Solo surface for promotional accounts
+CUSTOMER_RELEASE_IDENTITY: none: internal-only, PARTIAL until the authenticated drive
+RELEASE_NOTE_REQUIRED: no: internal-only build, no customer publication
+RELEASE_TRUTH_BOUNDARY: LIVE after merge: Studio home, projects, chat-built work on the stage, publish/unpublish, form settings, timeline restore. PARTIAL: manual editing of questions, page sections and funnel steps (next PRs). PROOF OWED: authenticated drive in production
+RELEASE_RECOVERY: position=forward-fix or revert of this frontend commit; reference=no migration or edge change in this PR
+
+## Scope and collisions
+
+- Classification: Solo UI rebuild over seams shipped in PR #1658.
+- Affected flows: open Studio from Campaigns; start a project; build and change by chat; publish/unpublish; form intake settings; restore a version; Images & video.
+- Neighboring regressions: Campaigns launchers (tests updated and passing); Catalog form drawer (unchanged); media tools (moved, tests pass).
+- Active-owner/file collisions: none on src/solo/studio; owner announced Marketing and Sales tabs are coming and Campaigns will fold into Marketing; the Studio returns through its opener, only the "Back to Campaigns" label will change.
+- Explicit exclusions: manual click-to-edit of form questions (3b), page/funnel editing (3c), Catalog images and Edit in Studio (3d).
+
+## User job and state map
+
+Studio home asks one question, "What should Paige build?", with a composer and four starting ideas; drafts are listed by name. A project opens on the conversation (left), the work itself rendered as visitors will see it (centre), and every saved version (bottom). Publish is the only gold act. Scroll owners: the chat log, the stage and the timeline row; the document never scrolls.
+
+## Evidence index
+
+- Harness: `npx vite --config scripts/live-drive/harness/studio-mount/vite.config.ts`, then `node scripts/live-drive/harness/studio-mount/drive.mjs` (port 5216), Chromium 1194, light app theme except the dark frame, 2026-10-03.
+- Tests: `src/solo/studio/studio.render.test.tsx`, `src/solo/vibe.render.test.tsx`, `src/components/tenant-shell/TenantCommandCenterShell.ownership.test.tsx`, `src/__tests__/paige-long-form-chat-reach.test.ts`.
+
+## Review and limitations
+
+Render-and-inspect findings fixed before review: the Solo reset `.paige-solo button` stripped every Studio button's fill and border (the gold Publish rendered as plain text); `.paige-solo main{overflow:hidden!important}` made the stage impossible to scroll with a wheel (the stage is no longer a `<main>`); `.paige-solo h1–h4` ink made two headings invisible on the dark surface; the home rail vanished below 980 px, taking the only visible way back; the breadcrumb repeated the title; preview fields were focus stops. FormSettings now reads pipelines for the active workspace only (RLS admits every workspace a person belongs to).
+
+Independent review: recorded in the PR.

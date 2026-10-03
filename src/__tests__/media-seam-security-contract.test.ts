@@ -90,15 +90,19 @@ describe("correction #4 — no resurrection of terminal jobs", () => {
 });
 
 describe("correction #4 — paige-media auth precedence (no unauthenticated submit)", () => {
-  it("auth + role gate + server-derived tenant precede every action handler", () => {
+  it("auth + server-derived active workspace + that workspace's owner/admin gate precede every action handler", () => {
     const authAt = mediaSrc.indexOf("auth.getUser()");
-    const roleAt = mediaSrc.indexOf('r === "admin" || r === "super_admin")');
-    const tenantAt = mediaSrc.indexOf("resolveTenantForUser(admin, user.id)");
+    const tenantAt = mediaSrc.indexOf('authed.rpc("current_user_tenant_id")');
+    const roleAt = mediaSrc.indexOf('authed.rpc("is_tenant_admin", { _tenant: tenantId })');
     const firstActionAt = mediaSrc.indexOf('action === "capabilities"');
     expect(authAt).toBeGreaterThan(-1);
-    expect(roleAt).toBeGreaterThan(authAt);
-    expect(tenantAt).toBeGreaterThan(roleAt);
-    expect(firstActionAt).toBeGreaterThan(tenantAt);
+    expect(tenantAt).toBeGreaterThan(authAt);
+    expect(roleAt).toBeGreaterThan(tenantAt);
+    expect(firstActionAt).toBeGreaterThan(roleAt);
+  });
+
+  it("a global role never opens the Studio (§59: user_roles admin is tenant-agnostic)", () => {
+    expect(mediaSrc).not.toContain('from("user_roles")');
   });
 
   it("the tenant is NEVER read from the request body (H2 — no cross-tenant primitive)", () => {

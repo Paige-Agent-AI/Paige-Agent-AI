@@ -135,6 +135,7 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   // ── high: becomes visible to a client, or goes public ─────────────────────────────────────
   ["growth_page_publish", "high", "puts a page live at a public URL"],
   ["growth_funnel_publish", "high", "puts a whole sequence live"],
+  ["growth_form_publish", "high", "puts a form live at a public URL where strangers can submit to the workspace"],
   // The evaluation loop's DECIDE leg (Runway 4 / #1123), the sign-off half of the `improvement_propose`
   // pair above. It records the owner's approve/reject on a `paige_improvement_proposals` row and
   // applies nothing (there is no auto-apply path — it flips status, decided_by, rationale only). It
@@ -320,6 +321,7 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   ["content_save", "ordinary", "saves to the workspace's own library"],
   ["growth_page_save", "ordinary", "saves a DRAFT; publishing is the separate high-risk act"],
   ["growth_funnel_build", "ordinary", "builds DRAFT rows; publishing is separate"],
+  ["growth_form_save", "ordinary", "saves a form DRAFT (a live form's edits wait in its working copy); publishing is separate"],
   // Produces the artefact; it does not hand it to anyone. "A client might be given this one day"
   // is true of most things the workspace holds, and classifying on what MIGHT later happen to an
   // artefact would put half the library in `high`. Giving it to a client is the separate act, and

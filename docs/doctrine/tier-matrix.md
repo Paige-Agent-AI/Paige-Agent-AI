@@ -341,6 +341,17 @@ class of lie as a fabricated metric (§13).
 
 Legend: **✓** live · **—** not built · **N/A** tier not opened yet · **403** denied at the route gate.
 
+### Vibe Studio publish lifecycle and Studio chat forms (PR #1658, 2026-10-03)
+
+Database and edge seams only. The Solo Studio workspace UI that drives them is the next PR, so no new screen is LIVE here.
+
+| Surface | God / Super Admin | Agency | Standalone (Solo) | Sub-account | Client | Anonymous | Status |
+|---|---|---|---|---|---|---|---|
+| Growth writers + publish/unpublish (`growth_form_*`, `growth_page_*`, `growth_funnel_*`, `studio_image_*`) | **— refused** with no tenant selected (authority is `is_tenant_admin` of the active workspace; act-as confers none) | seam reachable for a managed sub-account through `agency_can_manage_child`; **—** no Growth surface (§60 exception) | **Seam ✓** (owner/admin of the active workspace; a member is refused) | **Seam ✓** (its own owner/admin) | **— refused** | **— refused** (EXECUTE revoked) | PARTIAL: seams live on merge; Studio UI pending |
+| Paige chat `growth_form_save` / `growth_form_publish` | — (no tenant) | same as the seam | **✓** (publish always confirmed) | **✓** | — | — | PARTIAL: authenticated in-chat drive owed |
+| Studio chat images via `paige-media` (credits, budget, approval, auto model) | — | **— refused** (`is_tenant_admin` only; agency managers not admitted) | **✓** owner/admin | **✓** owner/admin | — | — | PARTIAL: authenticated drive owed |
+| Version history (`list_artifact_versions`) | — | — | ✓ own workspace | ✓ own workspace | — | **— refused** (was readable) | live on merge |
+
 ### Public forms take submissions for every business (PR #1573, 2026-09-29)
 
 | Surface | God / Super Admin | Agency | Standalone (Solo) | Sub-account | Client | Anonymous | Status |

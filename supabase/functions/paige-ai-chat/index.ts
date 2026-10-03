@@ -12073,9 +12073,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             } else if (tc.function.name === "growth_page_save") {
               // p_tenant_id is IGNORED for JWT callers by the DEFINER RPC (no IDOR, §9) —
               // it pins to current_user_tenant_id(). Writes the DRAFT only; never goes live.
+              // An edit keeps the page's address (a live page's is locked; an echoed slug must not
+              // move it or orphan a shared link). Only a new page takes the model's slug.
+              let _pageSaveSlug = args.slug;
+              if (args.page_id && personaCtx?.tenant_id) {
+                const { data: _exP } = await supabaseClient.from("growth_pages").select("slug").eq("id", args.page_id).eq("tenant_id", personaCtx.tenant_id).maybeSingle();
+                if ((_exP as any)?.slug) _pageSaveSlug = (_exP as any).slug;
+              }
               const { data: row, error } = await supabaseClient.rpc("growth_page_upsert", {
                 p_tenant_id: personaCtx?.tenant_id ?? null,
-                p_slug: args.slug,
+                p_slug: _pageSaveSlug,
                 p_title: args.title,
                 p_blocks_json: Array.isArray(args.blocks) ? args.blocks : [],
                 p_theme_json: args.theme ?? null,
@@ -12125,19 +12132,22 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 // an echoed id can never rewrite a different form (§13 clamp, the rule images follow).
                 const _ftid = personaCtx?.tenant_id ?? null;
                 let formId: string | null = typeof args.form_id === "string" && args.form_id ? args.form_id : null;
+                let _droppedFormId = false;
                 if (formId && studioSessionId && !(canvasArtifact?.kind === "form" && canvasArtifact.id === formId)) {
                   const { data: _sess } = await supabaseClient.from("studio_sessions").select("artifact_refs").eq("id", studioSessionId).maybeSingle();
                   const _refs = Array.isArray((_sess as any)?.artifact_refs) ? (_sess as any).artifact_refs : [];
-                  if (!_refs.some((r: any) => r?.kind === "form" && r?.id === formId)) formId = null;
+                  if (!_refs.some((r: any) => r?.kind === "form" && r?.id === formId)) { formId = null; _droppedFormId = true; }
                 }
                 // An edit keeps the form's address: renaming it would orphan the pages that embed it
                 // and break any link already shared. Only a NEW form takes a slug, made clean and
                 // unique in this workspace so it can never land on top of another form.
                 let _formSlug = "";
-                if (formId && _ftid) {
-                  const { data: _exForm } = await supabaseClient.from("growth_forms").select("slug").eq("id", formId).eq("tenant_id", _ftid).maybeSingle();
+                if (formId) {
+                  const { data: _exForm } = _ftid
+                    ? await supabaseClient.from("growth_forms").select("slug").eq("id", formId).eq("tenant_id", _ftid).maybeSingle()
+                    : { data: null };
                   if ((_exForm as any)?.slug) _formSlug = String((_exForm as any).slug);
-                  else formId = null;
+                  else { formId = null; _droppedFormId = true; }
                 }
                 if (!formId) {
                   const _base = String(args.slug || args.name || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48) || "form";
@@ -12160,7 +12170,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 if (error) throw error;
                 result = artifactProduced("saved_id", (row as any)?.id)
                   ? { success: true, form_id: (row as any).id, slug: (row as any).slug, title: (row as any).name, status: (row as any).status,
-                      live_changes_pending: (row as any).status === "active" }
+                      live_changes_pending: (row as any).status === "active",
+                      ...(_droppedFormId ? { note: "The form id given isn't one of this project's forms, so this was saved as a NEW form. Say so plainly; the other form was not changed." } : {}) }
                   : { success: false, error: ARTIFACT_ABSENT_ERROR.saved_id };
               }
             } else if (tc.function.name === "growth_form_publish") {

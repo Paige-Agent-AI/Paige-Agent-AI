@@ -20,13 +20,14 @@ import { defineCapability, objectInputSchema, ownerGrantablePermission } from ".
 // Who may do either is decided server-side: the workspace owner or an admin of the active tenant,
 // or an agency manager of that sub-account; never a member, never a caller-named tenant.
 //
-// IDEMPOTENCY, honestly (§13). save is slug-keyed: the same slug updates the same form, and a lost
-// insert race falls back to an update, so a replay converges. publish converges: publishing a live
+// IDEMPOTENCY, honestly (§13). With a form id, save converges on that form's working copy. Without
+// one it creates a NEW form under a slug no other form uses, so a blind retry makes a second form;
+// the Chat confirmation fingerprint and the Studio auto lane's one call per tool call are the guard. publish converges: publishing a live
 // form with no pending changes leaves its content as it is; published_at records the latest publish.
 
 export const GROWTH_FORM_SAVE = {
   key:"growth_form.save",domain:"growth_form",owner:"vibe-studio",humanSurface:"/solo/:account/growth",
-  action:{classification:"mutate",executor:"public.growth_form_upsert",chatTool:"growth_form_save",riskPolicyKey:"ordinary",approvalAuthority:"chat-canonical",idempotency:"Slug-keyed per tenant — the same slug updates the same form and a lost insert race falls back to an update, so a replay converges. A live form's working copy changes; its live version and address do not."},
+  action:{classification:"mutate",executor:"public.growth_form_upsert",chatTool:"growth_form_save",riskPolicyKey:"ordinary",approvalAuthority:"chat-canonical",idempotency:"With a form id it converges on that form's working copy (a live form's live version and address do not change). Without one it creates a new form under a slug no other form uses, so a blind retry makes a second form; the Chat confirmation fingerprint is the execute-once guard."},
   outcome:{kinds:["created","updated","refused","failed"],projector:"public.growth_form_upsert",railVisibility:"Records that a private working copy was saved — never that the form went live, took a submission, or sent anything."},
   chatBinding:"LIVE",mindBinding:"UNAVAILABLE",sharedPrimitiveChange:"NONE",maturity:"PARTIAL",
 } as const satisfies SpineCapability;
@@ -76,9 +77,28 @@ export const GROWTH_FORM_SAVE_CAPABILITY = defineCapability({
     properties: {
       name: { type: "string", minLength: 1, maxLength: 200 },
       slug: { type: "string", minLength: 1, maxLength: 80 },
+      intro: { type: "string", maxLength: 400 },
+      questions: {
+        type: "array",
+        minItems: 1,
+        maxItems: 40,
+        items: {
+          type: "object",
+          properties: {
+            label: { type: "string", minLength: 1, maxLength: 200 },
+            type: { type: "string", enum: ["text", "email", "tel", "number", "date", "textarea", "select", "radio", "checkbox"] },
+            required: { type: "boolean" },
+            options: { type: "array", maxItems: 30, items: { type: "string", maxLength: 120 } },
+          },
+          required: ["label", "type"],
+          additionalProperties: false,
+        },
+      },
+      submit_label: { type: "string", maxLength: 40 },
+      thank_you: { type: "string", maxLength: 500 },
       form_id: { type: "string", format: "uuid" },
     },
-    required: ["name", "slug"],
+    required: ["name", "slug", "questions"],
   }),
   effect: "mutation",
   governance: {
@@ -92,7 +112,7 @@ export const GROWTH_FORM_SAVE_CAPABILITY = defineCapability({
   providerBinding: { kind: "internal", operation: "public.growth_form_upsert", connectionResolver: null },
   idempotency: {
     mode: "required",
-    key: "tenant + slug. A new form gets a slug no other form in the workspace uses, so a replay updates the same form; with a form id the save converges on that form's working copy.",
+    key: "tenant + form id. With a form id the save converges on that form's working copy. Without one it creates a new form under a slug no other form uses, so a blind retry makes a second form; the Chat confirmation fingerprint is the execute-once guard.",
     readback: "public.growth_form_upsert",
     replay: "return_recorded_result",
   },

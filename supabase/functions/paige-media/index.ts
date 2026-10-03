@@ -223,7 +223,7 @@ serve(async (req: Request) => {
           estimated_cost_usd: legacy.entry.estCostPerUnitUsd,
           basis: "flat per-image estimate for this provider",
           approval: policy,
-          license: adapter.getLicenseClass(),
+          license: getMediaAdapter(legacy.provider)?.getLicenseClass() ?? adapter.getLicenseClass(),
         });
       }
       const entry = catalog.find((m) => m.id === model);

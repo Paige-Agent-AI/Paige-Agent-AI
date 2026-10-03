@@ -46,3 +46,15 @@ describe("linkStudioArtifact", () => {
     expect(complete).toMatch(/await linkStudioArtifact\(admin, job,/);
   });
 });
+
+describe("a refine whose target can no longer take a version is filed, not lost", () => {
+  it("both image paths fall back to a new image when the target is published or gone", async () => {
+    const { readFileSync } = await import("node:fs");
+    const complete = readFileSync("supabase/functions/_shared/media-provider/complete.ts", "utf8");
+    const legacy = readFileSync("supabase/functions/generate-image/index.ts", "utf8");
+    for (const src of [complete, legacy]) {
+      expect(src).toMatch(/CONTENT_NOT_FOUND\|GROWTH_PUBLISH_STATE_GUARDED/);
+    }
+    expect(complete).toMatch(/save_marketing_content", \{ \.\.\.saveArgs, p_id: null \}/);
+  });
+});

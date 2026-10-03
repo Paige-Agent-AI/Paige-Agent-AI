@@ -27,8 +27,8 @@ $$ SELECT $1=public.current_user_tenant_id() AND current_setting('test.admin',tr
 -- Deliberately permissive existing policy exposes whether restrictive guards work.
 CREATE POLICY proof_member_all ON public.paige_invoices FOR ALL TO authenticated
 USING (tenant_id=public.current_user_tenant_id()) WITH CHECK (tenant_id=public.current_user_tenant_id());
-\ir ../../supabase/migrations/20270535000000_sales_billing_drafts.sql
-\ir ../../supabase/migrations/20270535000000_sales_billing_drafts.sql
+\ir ../../supabase/migrations/20270535000001_sales_billing_drafts.sql
+\ir ../../supabase/migrations/20270535000001_sales_billing_drafts.sql
 GRANT USAGE ON SCHEMA public,auth TO authenticated,anon;
 GRANT SELECT ON public.tenant_members TO authenticated;
 INSERT INTO auth.users VALUES ('10000000-0000-0000-0000-000000000001');

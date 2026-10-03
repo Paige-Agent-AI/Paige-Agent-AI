@@ -6170,6 +6170,7 @@ selected one, so each read failed with 42703. They now read `user_contact_method
 - **Sequence:**
   - **S2** Marketing in place (this branch).
   - **S3** the Sales lane lands top-level Sales; Offers, Sales and Pipeline then leave Marketing with redirects.
+  - **S3 trigger (owner ruling, after S2 merged as `cab19aed`):** the owner asked to move Pipeline beside Campaigns, then withdrew it because Pipeline belongs to Sales ("Sales is moving them now themself"). The three Sales-lane tabs stay where they are until Sales is **live in production**. Only then does Marketing remove them and redirect ("Wait until Sales go live then we need to update the additional marketing sub tabs in their correct place").
   - **S4** Solo Analytics retires.
   - **S5** the slug changes from `growth` to `marketing`.
 - **Next phase, recorded and not built:** INT-298, the Marketing execution architecture: Strategy → Campaign → Tactic → Action → Harness Run → Spine → approval → execution → Rail → outcome → Mind → Agent Intelligence → Knowledge. Its first slice (M-A1) is a gap map over `campaign_briefs.mission_id`, the business mission, durable tasking and durable jobs, `paige_subagents`, and the action-kind registry. One doctrine fit: a Tactic is the §67 "process" a Trust Compass grant attaches to.

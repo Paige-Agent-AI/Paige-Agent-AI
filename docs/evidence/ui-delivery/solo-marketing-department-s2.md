@@ -131,3 +131,45 @@ UNVERIFIED: authenticated production runtime (§32.c), owed to a browser-capable
   - **"Copy tracking link"** on a brief or capture point, so owners don't build tagged URLs by hand (§36/§70). Follow-up.
   - **Sales-lane copy.** `catalog-offers.tsx` and `sales-ops.tsx` still say "Campaigns workspace" in their loading copy. They are Sales-lane files, left for S3.
 - **Proposal §8 deviation.** `growth/overview` now opens the new department Overview rather than the desk. Only `growth/active` aliases to Campaigns. No server link targets `growth/overview`; checked by the peer-gate.
+
+## Post-merge closeout (2026-10-03)
+
+Each level is proved on its own; none is inferred from the one before it. The pre-merge fields above
+(`INTERNAL_BUILD_IDENTITY` and `RELEASE_CHANNEL`) are left as the attestation of the reviewed build.
+
+- **Merged.** PR #1671 squashed as `cab19aed4a70a5dc9f21cfd1f08b610ff7370cd9`, pinned to the verified head `7dfed458`. Its diff against its parent is exactly the PR (42 files, +2206 / -215).
+  - It landed directly on `228f473b`, which is #1662 (GHL-1 chat slice), merged minutes earlier. That pairing was never CI-tested before the merge.
+  - The combined tree was then checked locally: whole vitest suite 7419 passed, 2 skipped (501 files); solo-parity, Spine registry, capability-kit, capability-declaration, action-risk, receipt-coverage and chat-tool-registry lints all pass.
+- **Post-merge CI on `main` at `cab19aed`.** All green:
+  - `ci` run 37158769571: `verify` and `web-fetch-hardening-smoke`.
+  - PAIGE Spine contract run 37158769533: `contract` and `database-contract`.
+  - ui-delivery-evidence run 37158769497.
+  - Security Audit run 37158769494.
+- **Deployed: frontend.**
+  - Vercel production deployment `dpl_HsWC47NRy2vRV2XThi9PMdwnhrX2` is READY at `cab19aed`.
+  - `https://paigeagent.ai/version.json` and `https://app.paigeagent.ai/version.json` both return `buildId` `cab19aed4a70a5dc9f21cfd1f08b610ff7370cd9-musyvyzn` with `customerUpdate: null`.
+  - The live bundle (305 chunks crawled) carries the S2 code: "Marketing views", `lead-capture`, `data-solo-vibe-studio-launcher`, `campaigns-tab-divider`, "Go to Lead capture" and "Back to Marketing". The route registry chunk carries the labels "Marketing", "Overview" and "Lead capture".
+- **Deployed: edge.**
+  - deploy-edge-functions run 37158769589 deployed exactly one function, `paige-ai-chat`, and moved `edge-live` from `228f473b` to `cab19aed`.
+  - The provider reports `paige-ai-chat` at version 308, `ACTIVE`, updated 2026-10-03 22:32:35 UTC.
+  - It answers: CORS preflight returns 200; an unauthenticated POST returns 401 `UNAUTHORIZED_NO_AUTH_HEADER`.
+  - That version also carries #1662's chat changes, not only S2's one copy label.
+- **Authenticated runtime, partial.**
+  - Owner-supplied screenshot of the live app, signed in on a Solo account at `/solo/{account}/growth/pipeline`. It shows:
+    - Marketing in the main menu;
+    - the tab strip in the approved order: Overview, Campaigns, Lead capture, Social, Analytics, the divider, then Offers, Sales, Pipeline;
+    - the Vibe Studio launcher;
+    - Pipeline reachable with its desk rendering real deal data.
+  - Still not driven against a real account:
+    - Overview contents;
+    - "Create campaign brief" opening the builder;
+    - Lead capture contents and routing;
+    - Analytics tracking tags;
+    - Open Vibe Studio;
+    - the legacy redirects;
+    - `/operator/analytics/*` unchanged.
+  - The building session had no account credentials, so this remains owed (§32.c).
+- **Owner acceptance.** Not yet given.
+
+**Owner ruling on the Sales-lane tabs (2026-10-03, after merge).** The owner first asked to move Pipeline next to Campaigns, then withdrew it on learning it belongs to Sales ("if it belongs in sales then don't move it"; "Sales is moving them now themself"). Then: "Wait until Sales go live then we need to update the additional marketing sub tabs in their correct place." Offers, Sales and Pipeline stay where they are, behind the divider. S3 starts only once Sales' top-level destination is live in production, verified on the live site, not merely merged. It then removes the three tabs and the divider, re-points the Marketing links that target them (for example Overview's hand-off line to Pipeline) to the Sales addresses, and redirects the old `growth/catalog`, `growth/sales` and `growth/pipeline` addresses there.
+

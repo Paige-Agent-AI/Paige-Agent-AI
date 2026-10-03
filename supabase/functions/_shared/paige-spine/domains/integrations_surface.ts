@@ -34,9 +34,9 @@ export const INTEGRATIONS_LIST = {
     safeSummary: "An integration's connection state and provider.",
     referencePrefix: "integrations:",
     factValues: {
-      channel: ["email", "sms", "calendar", "voice", "mcp"],
+      channel: ["email", "sms", "calendar", "voice", "mcp", "whatsapp", "instagram", "facebook"],
       status: ["active", "disabled", "pending"],
-      provider: ["resend", "twilio", "google", "calendly", "n8n", "zapier", "gohighlevel"],
+      provider: ["resend", "twilio", "google", "calendly", "n8n", "zapier", "gohighlevel", "generic-remote"],
     },
   },
   action: {
@@ -77,7 +77,7 @@ export const INTEGRATIONS_HEALTH = {
     safeSummary: "An integration's health (connected, degraded, or disconnected).",
     referencePrefix: "integrations:",
     factValues: {
-      health: ["healthy", "degraded", "disconnected", "unconfigured"],
+      health: ["healthy", "degraded", "disconnected", "unconfigured", "unknown"],
     },
   },
   action: {

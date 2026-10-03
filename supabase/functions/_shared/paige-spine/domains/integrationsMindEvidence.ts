@@ -24,10 +24,13 @@ import type { SpineEvidenceRpcClient, SpineRequestScope } from "../resolveEviden
 
 export const INTEGRATIONS_MIND_CAPABILITIES = ["integrations.list", "integrations.health"] as const;
 
-/** Closed vocabularies — exactly what public.list_integration_surface emits (20270410214500). */
-const CHANNELS = new Set(["email", "sms", "calendar", "voice", "mcp"]);
+/** The vocabularies the adapter can emit, in full (20270410214500's three health CASEs +
+ *  the 20260726190000 channel CHECK + the legacy half). channel and health are CLOSED sets;
+ *  provider is grammar-bounded only (any provider slug the gateway or connectors may add) —
+ *  the citation's shape, not a closed list, is what bounds it. */
+const CHANNELS = new Set(["email", "sms", "calendar", "voice", "mcp", "whatsapp", "instagram", "facebook"]);
 const STATUSES = new Set(["active", "disabled", "pending"]);
-const HEALTHS = new Set(["healthy", "degraded", "disconnected"]);
+const HEALTHS = new Set(["healthy", "degraded", "disconnected", "unconfigured", "unknown"]);
 /** The adapter's own freshness boundary: a row older than this is stale, not current. */
 const STALE_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
 const CITATION = /^integrations:[a-z]+:[a-z0-9_-]+$/;
@@ -60,12 +63,18 @@ export function projectIntegrationRow(row: unknown, now = Date.now()): Integrati
   const health = typeof r.health === "string" ? r.health : "";
   if (!CHANNELS.has(channel) || !STATUSES.has(status) || !HEALTHS.has(health) || !provider) return null;
   const occurredAt = typeof r.last_updated === "string" ? r.last_updated : "";
-  if (!occurredAt) return null;
-  const ageMs = now - Date.parse(occurredAt);
-  const freshness: MindFreshness = Number.isFinite(ageMs) && ageMs <= STALE_AFTER_MS ? "available" : "stale";
+  // Defence in depth: a timestamp that does not PARSE renders as stale at best and garbage at
+  // worst — refuse the row rather than project an unreadable moment as if it were verified.
+  const parsedAt = occurredAt ? Date.parse(occurredAt) : NaN;
+  if (!Number.isFinite(parsedAt)) return null;
+  const ageMs = now - parsedAt;
+  const freshness: MindFreshness = ageMs <= STALE_AFTER_MS ? "available" : "stale";
   const citation = `integrations:${channel}:${provider}`;
   // Defence in depth: the citation is the identity a reader acts on — it must be the exact
   // shape this projection promised, assembled only from values that passed the vocabularies.
+  // KNOWN LIMIT: the adapter deliberately emits BOTH n8n facets (gateway OAuth MCP and the
+  // REST api-key lane), which share the identity integrations:mcp:n8n — the citation names
+  // the provider lane, not the individual connection row.
   if (!CITATION.test(citation)) return null;
   return {
     occurredAt,

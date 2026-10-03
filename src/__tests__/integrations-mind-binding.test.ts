@@ -54,6 +54,20 @@ describe("the projection is bounded and fail-closed", () => {
     expect(projectIntegrationRow("n8n")).toBeNull();
   });
 
+  it("the adapter's REAL health vocabulary projects — unprobed and unconfigured rows included", () => {
+    // 2026-10-02 review: the projection's health set once omitted these, and the fail-closed
+    // loader then blanked the whole block for any tenant with an unprobed MCP connection —
+    // exactly the messy fresh-connection state the block exists for.
+    expect(projectIntegrationRow({ ...REAL_ROW, health: "unknown" })?.facts.health).toBe("unknown");
+    expect(projectIntegrationRow({ ...REAL_ROW, health: "unconfigured" })?.facts.health).toBe("unconfigured");
+    expect(projectIntegrationRow({ ...REAL_ROW, channel: "whatsapp", health: "degraded" })?.facts.channel).toBe("whatsapp");
+  });
+
+  it("a timestamp that does not parse refuses the row (never renders garbage as verified)", () => {
+    expect(projectIntegrationRow({ ...REAL_ROW, last_updated: "not-a-date" })).toBeNull();
+    expect(projectIntegrationRow({ ...REAL_ROW, last_updated: "" })).toBeNull();
+  });
+
   it("an old row is STALE, not current — the freshness boundary is the adapter's own", () => {
     const old = projectIntegrationRow({ ...REAL_ROW, last_updated: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() });
     expect(old?.freshness).toBe("stale");
@@ -105,9 +119,10 @@ describe("the registry declarations are honest", () => {
     expect(surface.match(/SCR-INTEGRATIONS-MIND/g)?.length).toBeGreaterThanOrEqual(2);
   });
 
-  it("the channel vocabulary now includes mcp (the adapter has emitted it since 20270410214500)", () => {
-    expect(surface).toContain('channel: ["email", "sms", "calendar", "voice", "mcp"]');
-    expect(surface).toContain('"gohighlevel"]');
+  it("the vocabulary debt is paid — the full adapter/checker sets the RPC can emit", () => {
+    expect(surface).toContain('channel: ["email", "sms", "calendar", "voice", "mcp", "whatsapp", "instagram", "facebook"]');
+    expect(surface).toContain('health: ["healthy", "degraded", "disconnected", "unconfigured", "unknown"]');
+    expect(surface).toContain('"gohighlevel", "generic-remote"]');
   });
 });
 

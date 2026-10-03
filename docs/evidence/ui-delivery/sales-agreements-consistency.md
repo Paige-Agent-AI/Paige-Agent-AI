@@ -8,7 +8,7 @@ FLOW_PROTOTYPE: NOT_REQUIRED: owner requested direct minor production CSS refine
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: owners/admins inspect Agreements and open the existing agreement editor
 VISUAL_DIRECTION: PASS: Mineral/Obsidian Operate; defined violet boundaries and tactile controls from existing semantic tokens
 AUTOMATED_EVIDENCE: PASS: rendered geometry/state drive guards document overflow and checked control bounds; no CSS-mirror unit tests
-STATIC_EVIDENCE: PASS: one presentation-only root class marker and scoped Agreements CSS; ESLint 0 errors with pre-existing line642 dependency warning, diff check PASS
+STATIC_EVIDENCE: PASS: one presentation-only root class marker and scoped Agreements CSS; ESLint 0 errors with pre-existing line642 dependency warning, diff check PASS; tsc ratchet baseline12/current12 PASS
 RENDERED_EVIDENCE: PASS: actual full Solo shell components local fixture drive at four required sizes, light/dark, PAIGE open/closed and compact/expanded sidebar, 32 cases total
 BEHAVIORAL_EVIDENCE: PASS: empty/populated Agreements, keyboard New agreement and Escape, forced-colors focus; narrow PAIGE overlay pointer occlusion remains existing shell behavior
 AUTHENTICATED_RUNTIME: UNVERIFIED: this polish has local fixture rendering only; no hosted signed-in tenant drive, owner screenshot is design input rather than implementation proof
@@ -50,4 +50,6 @@ Impeccable context/polish/Operate/craft-floor and routed Paige UI skills read. C
 
 Run node scripts/live-drive/sales-agreements-consistency-drive.mjs and --expanded against existing sales-mount Vite config at port5254. Artifacts under scripts/live-drive/artifacts/sales-agreements-consistency and -expanded. Compact16 initial cases PASS, zero page errors/document overflow; expanded16 final confirmation PASS. Existing PAIGE narrow overlay occludes pointer; keyboard drive remains possible. No new native zoom, screen-reader, real signed-in tenant/provider proof. Master closeout N/A until merge; root owns independent exact-head review and release.
 
+## Consolidated independent-review repair
 
+Initial review on be3a1caa found that the modal renders through SalesDialogPortal outside the desk ancestor, making the original modal overrides unreachable. The repair adds a presentation-only so-agreement-editor class to AgreementEditor and targets that portal root directly. Other Sales editors, signing behavior, focus/cancellation and all state/data contracts remain unchanged. Driver now asserts actual modal computed background, ::after display, button height/background, and disabled no-shadow in both themes and PAIGE states. EOF blank removed. One changed-head source recheck required; no merge asserted.

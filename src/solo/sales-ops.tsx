@@ -786,7 +786,7 @@ function AgreementEditor({ agreements, signings, offers, tenantId, existing, exi
   return (
     <SalesDialogPortal>
       <button className="so-editor-scrim" tabIndex={-1} aria-label="Close" onClick={close} />
-      <aside ref={panelRef} className="so-editor" role="dialog" aria-modal="true" aria-labelledby="so-agr-title">
+      <aside ref={panelRef} className="so-editor so-agreement-editor" role="dialog" aria-modal="true" aria-labelledby="so-agr-title">
         <header className="so-editor-head">
           <div style={{ flex: 1 }}>
             <h2 id="so-agr-title">{existing ? "Change these terms" : "New agreement"}</h2>

@@ -7045,7 +7045,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "zapier_list_actions",
-              description: "Admin only. Run a contained connection test and list the actions this workspace has enabled on its connected Zapier (MCP) account. This makes a real, read-only MCP tools/list provider call, records its safe success or failure in Rail, and never runs an app action. Use this FIRST to test the connection and see what's available before running one with zapier_run_action. Returns an honest 'not_connected' if this workspace has no Zapier MCP connection — point to Settings → Integrations and do not imply the separate API connection was tested.",
+              description: "Admin only. Run a contained connection test and list the actions this workspace has enabled on its connected Zapier (MCP) account. This makes a real, read-only MCP tools/list provider call, records its safe success or failure in Rail, and never runs an app action. Use this FIRST to test the connection and see what's available before running one with zapier_run_action. The result names BOTH the approved actions (ready to run) and the UNAPPROVED ones (waiting on the operator) — when there are unapproved actions, NAME them to the operator so they can choose which to grant; never describe waiting actions as just a count. Returns an honest 'not_connected' if this workspace has no Zapier MCP connection — point to Settings → Integrations and do not imply the separate API connection was tested.",
               parameters: { type: "object", properties: {}, required: [] }
             }
           },

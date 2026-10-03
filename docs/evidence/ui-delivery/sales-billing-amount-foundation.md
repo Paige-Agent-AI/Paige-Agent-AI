@@ -17,7 +17,7 @@ ZOOM_REFLOW: NOT_APPLICABLE: no UI change
 REDUCED_MOTION: NOT_APPLICABLE: no motion change
 STATE_COVERAGE: PASS: invalid precision, overflow, deposit bounds and cumulative allocation/refund tested
 TRUTHFUL_STATE_LABELS: PASS: helpers explicitly provide no issued bill or collected-payment evidence
-SOLO_UI: NO: unused domain helper does not render or change Solo UI
+SOLO_UI: YES: recognized Solo domain path; unused helper adds no rendered UI consumer
 UNVERIFIED: full Sales workflow is not delivered by arithmetic helpers
 OWNER_INTENT: complete invoice/deposit and recurring flows with both tenant-owned processors; foundation does not reduce that launch scope
 MUST_NOT_HAPPEN: fabricate payment or revenue facts from arithmetic
@@ -32,3 +32,11 @@ CUSTOMER_RELEASE_IDENTITY: none: no owner-visible capability delivered
 RELEASE_NOTE_REQUIRED: NO: internal dependency
 RELEASE_TRUTH_BOUNDARY: PARTIAL: arithmetic implementation only; full Sales delivery unverified
 RELEASE_RECOVERY: position=revert unused helpers without data effects; reference=docs/delivery/sales-billing-amount-foundation.md
+SOLO_1536X770_PAIGE_CLOSED: NOT_APPLICABLE: unused helper has no rendered consumer
+SOLO_1536X770_PAIGE_OPEN: NOT_APPLICABLE: unused helper has no rendered consumer
+SOLO_1366X768_PAIGE_CLOSED: NOT_APPLICABLE: unused helper has no rendered consumer
+SOLO_1366X768_PAIGE_OPEN: NOT_APPLICABLE: unused helper has no rendered consumer
+SOLO_1024X768_PAIGE_CLOSED: NOT_APPLICABLE: unused helper has no rendered consumer
+SOLO_1024X768_PAIGE_OPEN: NOT_APPLICABLE: unused helper has no rendered consumer
+SOLO_900X1000_PAIGE_CLOSED: NOT_APPLICABLE: unused helper has no rendered consumer
+SOLO_900X1000_PAIGE_OPEN: NOT_APPLICABLE: unused helper has no rendered consumer

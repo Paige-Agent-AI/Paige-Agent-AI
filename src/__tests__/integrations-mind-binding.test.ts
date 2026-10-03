@@ -20,7 +20,7 @@ import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 // The projection module's only import is type-only, so the test exercises the REAL module
 // (not a copy) — behavior and source pins can never drift apart.
-import { projectIntegrationRow } from "../../supabase/functions/_shared/paige-spine/domains/integrationsMindEvidence.ts";
+import { projectIntegrationRow, loadIntegrationsMindEvidence } from "../../supabase/functions/_shared/paige-spine/domains/integrationsMindEvidence.ts";
 
 const root = join(__dirname, "..", "..");
 const projectionPath = join(root, "supabase/functions/_shared/paige-spine/domains/integrationsMindEvidence.ts");
@@ -68,6 +68,34 @@ describe("the projection is bounded and fail-closed", () => {
     expect(projection).not.toContain('from "../mindEvidence.ts"');
     expect(projection).toContain("Spine Change Request");
     expect(projection).toContain("SCR-INTEGRATIONS-MIND");
+  });
+
+  it("the SCR marker is declared in the machine-scannable form the mind-contract guard requires", () => {
+    expect(projection).toContain("// mind-projection-scr: SCR-INTEGRATIONS-MIND");
+  });
+});
+
+describe("the loader never returns a partial answer (the three-state contract)", () => {
+  const clientOf = (rows: unknown, error: unknown = null) => ({ rpc: async () => ({ data: rows, error }) });
+
+  it("one un-projectable row fails the WHOLE projection to unavailable — never a filtered subset", async () => {
+    const evidence = await loadIntegrationsMindEvidence(clientOf([REAL_ROW, { ...REAL_ROW, channel: "mystery" }]) as never);
+    expect(evidence).toEqual({ status: "unavailable" });
+  });
+
+  it("an empty adapter result is no_evidence (honest absence), not an error", async () => {
+    const evidence = await loadIntegrationsMindEvidence(clientOf([]) as never);
+    expect(evidence).toEqual({ status: "no_evidence" });
+  });
+
+  it("a clean row set is recorded", async () => {
+    const evidence = await loadIntegrationsMindEvidence(clientOf([REAL_ROW]) as never);
+    expect(evidence.status).toBe("recorded");
+  });
+
+  it("an adapter error is unavailable", async () => {
+    const evidence = await loadIntegrationsMindEvidence(clientOf(null, { message: "rpc down" }) as never);
+    expect(evidence).toEqual({ status: "unavailable" });
   });
 });
 

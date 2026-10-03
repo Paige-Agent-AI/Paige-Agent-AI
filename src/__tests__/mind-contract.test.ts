@@ -56,8 +56,15 @@ describe("Mind three-state evidence contract (§18/§13/§00)", () => {
     expect(codes({ projections: [bad], chatAdapter: fixture("good-chat.ts"), canonicalPath: bad.path })).toContain("MC3");
   });
 
-  it("MC4 — exactly ONE Mind projection at the explicit canonical path; a second without a Spine Change Request is caught, and a shorter-pathed SCR'd projection does not falsely blame the canonical one", () => {
-    expect(real.projections.length).toBe(1);
+  it("MC4 — exactly ONE CANONICAL Mind projection at the explicit path; every other live projection carries an SCR marker; a second without one is caught, and a shorter-pathed SCR'd projection does not falsely blame the canonical one", () => {
+    // SCR era (SCR-INTEGRATIONS-MIND, 2026-10-02): a second, SCR-marked projection is a
+    // legitimate governed extension — the invariant is no longer "exactly one projection" but
+    // "exactly one CANONICAL home, and every other live projection is SCR-marked".
+    expect(real.projections.filter((p: { path: string }) => p.path === real.canonicalPath).length).toBe(1);
+    const unmarkedSeconds = real.projections.filter(
+      (p: { path: string; content: string }) => p.path !== real.canonicalPath && !/sharedPrimitiveChange\s*:\s*["'`]SCR-|\/\/\s*mind-projection-scr\s*:\s*\S+/.test(p.content),
+    );
+    expect(unmarkedSeconds).toEqual([]);
     expect(realViolations.map((v: { code: string }) => v.code)).not.toContain("MC4");
     // Failing-first: a second SCR-less Mind projection alongside the real one is flagged MC4.
     expect(codes({ projections: [...real.projections, fixture("bad-mc4-second-projection.ts")], chatAdapter: real.chatAdapter, canonicalPath: real.canonicalPath })).toContain("MC4");

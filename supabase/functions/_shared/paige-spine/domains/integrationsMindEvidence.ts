@@ -1,8 +1,9 @@
+// mind-projection-scr: SCR-INTEGRATIONS-MIND
 import type { SpineEvidenceRpcClient, SpineRequestScope } from "../resolveEvidence.ts";
 
 /**
- * The Integrations domain's MIND projection (SCR-INTEGRATIONS-MIND, owner green light
- * 2026-10-02 after the Knowledge lane landed).
+ * The Integrations domain's MIND projection (Spine Change Request SCR-INTEGRATIONS-MIND,
+ * owner green light 2026-10-02 after the Knowledge lane landed).
  *
  * SCOPE — read before reusing. This is NOT a generalisation of the Pipeline domain's Mind
  * primitive (mindEvidence.ts says a second domain needs a Spine Change Request, not an
@@ -82,11 +83,19 @@ export async function loadIntegrationsMindEvidence(
   const isCurrent = () => { try { return scope ? scope.isCurrent() : true; } catch { return false; } };
   if (!isCurrent()) return { status: "unavailable" };
   try {
-    const { data, error } = await client.rpc("list_integration_surface");
+    const { data, error } = await client.rpc("list_integration_surface", {});
     if (!isCurrent()) return { status: "unavailable" };
-    if (error || !Array.isArray(data)) return { status: "unavailable" };
-    const records = data.map((row) => projectIntegrationRow(row)).filter((r): r is IntegrationsMindRecord => r !== null);
-    return records.length ? { status: "recorded", records } : { status: "no_evidence" };
+    // Resolve to a three-state envelope FIRST (the canonical projector shape): a failed or
+    // malformed read is a non-available result, never a guess at the rows.
+    const envelope = error || !Array.isArray(data)
+      ? { status: "unavailable" as const, signals: [] as (IntegrationsMindRecord | null)[] }
+      : { status: "available" as const, signals: (data as unknown[]).map((row) => projectIntegrationRow(row)) };
+    if (envelope.status !== "available") return { status: "unavailable" };
+    // NO PARTIAL ANSWER: one un-projectable row fails the WHOLE projection. A filtered
+    // subset could imply the missing connectors' states were verified when they were not.
+    if (envelope.signals.some((signal) => signal === null)) return { status: "unavailable" };
+    if (!envelope.signals.length) return { status: "no_evidence" };
+    return { status: "recorded", records: envelope.signals as IntegrationsMindRecord[] };
   } catch {
     return isCurrent() ? { status: "unavailable" } : { status: "unavailable" };
   }
@@ -94,12 +103,13 @@ export async function loadIntegrationsMindEvidence(
 
 const HEADER = "=== INTEGRATIONS CONNECTION STATE — VERIFIED WORKSPACE SOURCE ===";
 const FOOTER = "=== END INTEGRATIONS CONNECTION STATE ===";
-const UNAVAILABLE = [HEADER, "Status: UNAVAILABLE. The connection surface could not be read. Do not claim anything is connected, disconnected, healthy, or unhealthy from this failed read.", FOOTER].join("\n");
 
 export function renderIntegrationsMindEvidence(evidence: IntegrationsMindEvidence): string {
-  if (evidence.status === "unavailable") return UNAVAILABLE;
+  if (evidence.status === "unavailable") {
+    return [HEADER, "Status: UNAVAILABLE. The connection surface could not be read. Infer nothing from this failed read — not connection, not disconnection, not health.", FOOTER].join("\n");
+  }
   if (evidence.status === "no_evidence") {
-    return [HEADER, "Status: NO INTEGRATIONS ON RECORD. This workspace has no connectors registered — that is unknown-freshness absence of evidence, not proof none can exist.", FOOTER].join("\n");
+    return [HEADER, "Status: NO INTEGRATIONS ON RECORD. This workspace has no connectors registered — absence of records here is not proof that none exist or none can be connected.", FOOTER].join("\n");
   }
   const lines = evidence.records.map((record) => {
     const facts = Object.entries(record.facts)

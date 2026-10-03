@@ -34,12 +34,12 @@ MUST_PRESERVE: Approved form-fit appearance and six outer/five inner tabs, exist
 ACCEPTANCE_CRITERIA: Canonical primary prefilled on explicit selection, missing selection clears prior client email, manual override retained through CRM refresh, saved snapshot reopens unchanged, unknown recovery repeats original request; authenticated owner acceptance remains owed
 MOTION_PURPOSE: NONE: this repair changes no CSS or motion; existing approved control behavior preserved
 PROTECTED_SEAMS: Affected: tenant/client isolation, canonical recipient snapshot/readback, recovery/idempotency, sensitive email; tested source classes. Geometry/accessibility regressions pending. Not affected: authentication/account choice implementation, entitlement/signup/provisioning/platform billing, approval/autonomy, Spine execution, Rail/audit/Memory, chat transport/history/scroll/popout, Live Conversation, Vault/Secure Browser, provider setup/external side effects, durable scheduling
-INTERNAL_BUILD_IDENTITY: 9b61508ed1ae16220b92d68ad0eac7b9e6493f3a base; deployment=none for this repair; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/sales-customer-email-prefill.md
-RELEASE_CHANNEL: development: source repair and local fixture proof only
+INTERNAL_BUILD_IDENTITY: d89d3550e5d3a74ebcbee6f37b7c911898478511; deployment=dpl_2x1nUxuRMe3TfYCRweYVarEMNkkg READY exact SHA; environment=production; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/sales-customer-email-prefill.md and Master section4.0
+RELEASE_CHANNEL: production: exact web identity verified; behavioral proof remains local synthetic fixtures and authenticated owner proof owed
 RELEASE_CLASSIFICATION: internal-only: bounded canonical primary-email mapping repair
 CUSTOMER_RELEASE_IDENTITY: none: no full billing customer release proven
 RELEASE_NOTE_REQUIRED: no: bounded repair, no announcement
-RELEASE_TRUTH_BOUNDARY: PARTIAL: source primary-email mapping repaired; authenticated owner workflow PROOF OWED; expanded contacts and provider delivery unavailable in this slice
+RELEASE_TRUTH_BOUNDARY: PARTIAL: primary-email mapping repair deployed; authenticated owner workflow PROOF OWED; expanded contacts and provider delivery unavailable in this slice
 RELEASE_RECOVERY: position=revert bounded mapping and client-selection handler; reference=existing stored recipient_email snapshots untouched
 
 
@@ -50,3 +50,5 @@ Solo People postal fields are nullable clients.street_address/city/state/zip_cod
 Commands: node node_modules/vitest/vitest.mjs run src/solo/sales/SalesBillingWorkspace.test.tsx src/solo/useSoloCommercialTerms.adapter.test.tsx src/solo/sales-ops.contract.test.tsx src/solo/sales/billingDrafts.test.ts --maxWorkers=1 --pool=threads.
 
 Rendered command: SALES_BILLING_BASE_URL=http://127.0.0.1:5223 node scripts/live-drive/sales-billing-shell-drive.mjs. Final run exit0: cases16, clipped[], errors[]; zoom-reflow.json holds four additional equivalent-layout cases. Initial cold Vite navigation timed out; an exact label locator included select option text and was corrected to the existing first field select. Final fresh run proves the source above, without native/auth/provider claims.
+
+Production closeout: #1653 reviewed823a37e7a6f76b517423ee7f3505383ea8a8529a independent PASS, all required exact-head checks PASS, merge d89d3550e5d3a74ebcbee6f37b7c911898478511. READY deployment dpl_2x1nUxuRMe3TfYCRweYVarEMNkkg matches that SHA; production aliases verified and public/app version.json return d89d3550e5d3a74ebcbee6f37b7c911898478511-musj7pwc, customerUpdate null. Authenticated_runtime scope=Solo CRM primary->draft save/read/reopen and role/tenant controls; blocker=browser_environment Windows sandboxhelper deny-read ACL; excluded LIVE claim=hosted universal customer mapping/persistence. No new provider action or customer publication.

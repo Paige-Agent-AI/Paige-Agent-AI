@@ -14,6 +14,7 @@ export default defineConfig({
     alias: [
       { find: "./useSoloCampaigns", replacement: path.join(here, "stubs.ts") },
       { find: "./useSoloCampaignBriefs", replacement: path.join(here, "briefs-stub.ts") },
+      { find: "./data/useSoloOwner", replacement: path.join(here, "owner-stub.ts") },
       { find: "./useCatalogOffers", replacement: path.join(here, "../catalog-mount/useCatalogOffers-stub.ts") },
       { find: "@", replacement: path.join(repo, "src") },
     ],

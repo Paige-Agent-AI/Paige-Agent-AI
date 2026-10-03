@@ -43,6 +43,7 @@ type PipelineWorkspaceFixture = {
 };
 
 vi.mock("./useSoloCampaigns", () => ({ useSoloCampaigns: () => harness.state }));
+vi.mock("./data/useSoloOwner", () => ({ useSoloOwner: () => ({ owner: { name: "Jordan Reyes" }, loading: false, error: null, refresh: vi.fn() }) }));
 
 // Overview is now the Campaign Command Desk, which reads owner briefs through its own tenant-scoped
 // adapter (`useSoloCampaignBriefs`). This file proves the shell (tab order, error/unavailable
@@ -631,7 +632,10 @@ describe("Solo Marketing department views", () => {
   const button = (label: string) => [...host.querySelectorAll("button")].find((item) => item.textContent?.trim() === label) as HTMLButtonElement | undefined;
   const location = () => host.querySelector("[data-location]")?.textContent;
 
-  it("Overview counts only real records, inside the stated window, and names what is unavailable", () => {
+  const stat = (label: string) => host.querySelector(`.mo-stat[aria-label^="${label}"]`)?.textContent ?? "";
+  const keys = () => [...host.querySelectorAll(".mo-keys li")].map((row) => row.textContent);
+
+  it("Overview counts only real records, inside the stated period, and names what is unavailable", () => {
     useWorkspace();
     harness.briefs = [
       brief("b1", "Spring advisory intake", { lifecycleStatus: "active", timing: "Weeks 1–4 of April" }),
@@ -641,32 +645,45 @@ describe("Solo Marketing department views", () => {
       brief("b4", "Referral push", { lifecycleStatus: "active", blocker: "Waiting on the offer" }),
     ];
     renderAt("/solo/42/growth");
-    const tiles = [...host.querySelectorAll(".mk-stat")].map((tile) => tile.textContent);
-    expect(tiles[0]).toContain("Campaigns4");
-    expect(tiles[0]).toContain("1 running · 2 blocked");
-    // Brief status reads in the desk's words, never the raw enum.
-    expect(host.textContent).toContain("Approved");
-    expect(host.textContent).not.toContain("ready_for_review");
-    expect(tiles[1]).toContain("Published work1");
-    expect(tiles[1]).toContain("1 not published yet");
-    // Three of the four submissions are inside 30 days; all three carry a tracking tag.
-    expect(tiles[2]).toContain("Leads · last 30 days3");
-    expect(tiles[2]).toContain("3 arrived with a tracking tag");
-    expect(tiles[3]).toContain("Became opportunities1");
+    expect(host.querySelector(".mo-head h2")?.textContent).toMatch(/^Good (morning|afternoon|evening), Jordan$/);
+    expect(stat("Active campaigns")).toContain("Active campaigns1");
+    expect(stat("Active campaigns")).toContain("4 briefs in total · 2 blocked");
+    expect(stat("Published work")).toContain("Published work1");
+    expect(stat("Published work")).toContain("1 not published yet");
+    // Three of the four submissions are inside 30 days. The fourth (40 days ago) is the whole
+    // previous period, which the read covers because it was not full.
+    expect(stat("Leads")).toContain("Leads (last 30 days)3");
+    expect(stat("Leads")).toContain("+200% vs previous 30 days");
+    // No previous opportunity, so the change is a count, never a percentage of zero.
+    expect(stat("Became opportunities")).toContain("Became opportunities1");
+    expect(stat("Became opportunities")).toContain("+1 vs previous 30 days");
+    // Sources are the tracking tags, merged; status reads in plain words, never the raw enum.
+    expect(keys()).toEqual(expect.arrayContaining(["newsletter267%", "linkedin133%", "Running1", "Approved, not launched1", "Blocked2"]));
     const text = host.textContent ?? "";
+    expect(text).not.toContain("ready_for_review");
     expect(text).toContain("No capture form chosen");
-    expect(text).toContain("Submissions are saved, but nothing is set to follow up on them.");
+    expect(text).toContain("Submissions are saved, but nothing follows up on them.");
     expect(text).toContain("It collects nothing until it is published.");
-    expect(text).toContain("Weeks 1–4 of April");
-    expect(text).toContain("Marketing email isn’t available yet.");
-    expect(text).toContain("No ad account can be connected yet");
+    expect(text).toContain("Email and paid ads aren’t connected, so they can’t appear here.");
+    expect(text).toContain("Discovery call request");
     expect(text).not.toMatch(/\$\d|reach of|followers|ROAS/i);
   });
 
-  it("a full submissions window is counted as a floor, never as an exact total", () => {
+  it("a full submissions read is counted as a floor and never compared with a period it cannot see", () => {
     useWorkspace({ submissions: Array.from({ length: 200 }, (_, index) => submission(`s${index}`, 1)) });
     renderAt("/solo/42/growth/overview");
-    expect([...host.querySelectorAll(".mk-stat")][2].textContent).toContain("200+");
+    expect(stat("Leads")).toContain("200+");
+    expect(stat("Leads")).not.toContain("vs previous");
+    expect(host.textContent).toContain("Showing the latest 200 submissions.");
+  });
+
+  it("the period switch recounts every figure for the chosen days", () => {
+    useWorkspace({ submissions: [submission("s1", 1), submission("s2", 12), submission("s3", 20)] });
+    renderAt("/solo/42/growth/overview");
+    expect(stat("Leads")).toContain("Leads (last 30 days)3");
+    act(() => button("Last 7 days")!.click());
+    expect(stat("Leads")).toContain("Leads (last 7 days)1");
+    expect(button("Last 7 days")!.getAttribute("aria-pressed")).toBe("true");
   });
 
   it("Overview's Create campaign brief opens the builder on the Campaigns desk, then clears the request", () => {
@@ -679,15 +696,24 @@ describe("Solo Marketing department views", () => {
     expect(dialog?.textContent).toContain("New campaign brief");
   });
 
+  it("Overview sends opportunities to Sales' Pipeline, and the next step to the work that needs it", () => {
+    useWorkspace();
+    harness.briefs = [brief("b1", "Q2 retainer upgrade", { lifecycleStatus: "ready_for_review" })];
+    renderAt("/solo/42/growth/overview");
+    expect(host.querySelector(".mo-next")?.textContent).toContain("“Q2 retainer upgrade” is waiting for your decision.");
+    act(() => button("View pipeline")!.click());
+    expect(location()).toBe("/solo/42/sales/pipeline");
+  });
+
   it("a brand-new workspace sees one guided start, not a wall of zeros", () => {
     useWorkspace({ artifacts: [], drafts: [], submissions: [] });
     renderAt("/solo/42/growth/overview");
     expect(host.textContent).toContain("Nothing is being marketed yet");
-    expect(host.querySelectorAll(".mk-stat")).toHaveLength(0);
+    expect(host.querySelectorAll(".mo-stat")).toHaveLength(0);
     // One gold act on the surface: the header does not repeat the first-use action.
     expect(host.querySelectorAll(".btn-g")).toHaveLength(1);
-    act(() => button("Offers")!.click());
-    expect(location()).toBe("/solo/42/growth/catalog");
+    act(() => (host.querySelector(".mk-first .mk-link") as HTMLButtonElement).click());
+    expect(location()).toBe("/solo/42/sales/offers");
   });
 
   it("Lead capture lists published and unpublished work, and each submission's tracking tag", () => {

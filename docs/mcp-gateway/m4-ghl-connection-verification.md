@@ -12,10 +12,13 @@
 1. **The endpoint is the GENERIC one: `https://services.leadconnectorhq.com/mcp/`.** The
    client-shaped variants (`/mcp/anthropic/v2`, `/mcp/openai/v2/`, `/mcp/muse/v2`) exist for
    named AI clients; a custom MCP application — ours — uses the generic endpoint.
-2. **Auth is a Private Integration Token (PIT), NOT OAuth.** Create it in the sub-account:
-   Settings → Private Integrations → Create New Integration → pick the scopes → copy the
-   token. GHL's own article says OAuth "is planned for a future release" — **it is not
-   offered for MCP today.**
+2. **PAIGE's verified auth is a Private Integration Token (PIT).** Create it in the
+   sub-account: Settings → Private Integrations → Create New Integration → pick the scopes
+   → copy the token — and the PIT's scopes govern which MCP tools are offered. GHL's
+   client-specific OAuth surfaces exist (their newer client endpoints use them), but they
+   are **not yet verified for PAIGE**: the facet stays off our descriptor until an
+   end-to-end proof lands. Re-adding it later is a one-line change verified against this
+   runbook first.
 3. **A `locationId` header rides alongside the bearer token** on every MCP call — the id of
    the sub-account the PIT belongs to.
 4. **Scopes are chosen at PIT creation, on GHL's side** (Contacts, Conversations,
@@ -33,33 +36,29 @@
 
 ### The correction (what was wrong)
 
-The original descriptor advertised an **oauth facet GHL does not offer**. The owner's OAuth
-attempt (2026-10-02) went through GHL's own `lc-mcp` marketplace app — a different surface
-from the official MCP path — and died at their consent with `Invalid scope(s)`: their
-resource metadata advertises ~180 scopes while their consent rejects the 8 newest
+The original descriptor advertised an **oauth facet before any PAIGE verification of it**.
+The owner's OAuth attempt (2026-10-02) went through GHL's own `lc-mcp` marketplace app — a
+client-specific surface — and died at their consent with `Invalid scope(s)`: their resource
+metadata advertises ~180 scopes while their consent rejects the 8 newest
 (`emails/templates.*`, `emails/campaigns.*`, `emails/stats.*`, `files.readonly`,
-`socialplanner/comments.*`). That is GHL's app-side inconsistency, on a door we should
-never have pointed at. The descriptor is now bearer-only (migration 20270536000000); if GHL
-ships MCP OAuth later, re-adding the facet is a one-line change verified against this
-runbook first.
+`socialplanner/comments.*`). That is GHL's app-side inconsistency on an unverified path.
+The descriptor is now the PAIGE-verified surface only (bearer; migration 20270536000000) —
+narrowed as a supported-surface decision, NOT a claim that GHL lacks OAuth.
 
 ## The connect path (works today through the Integrations drawer)
 
-In the drawer: paste **Server URL** `https://services.leadconnectorhq.com/mcp/`, choose
-**Headers** authentication, credential header stays `Authorization` (the drawer sends it as
-a Bearer), token = **the PIT**, then **Add header** → name `locationId`, value = your
-sub-account's location id. Save, then Check — the verify handshake discovers GHL's real
+In the drawer (the HighLevel tile preselects all of this): **Server URL**
+`https://services.leadconnectorhq.com/mcp/`, authentication **Token + headers**, the token
+= **the PIT** (the credential header stays Authorization and the drawer sends it as a
+Bearer), then **Add header** → name `locationId`, value = your sub-account's location id.
+The form refuses to save without the locationId header — the provider's declared contract. Save, then Check — the verify handshake discovers GHL's real
 tool catalogue (`search`, `fetch`, `search_operations`, `describe_operation`,
 `execute_operation`, `list_locations` per their docs) into the connection's tool list.
 
-> **Provider tagging, honestly:** the drawer registers every custom connection under the
-> generic-remote provider (its canonical shape); a drawer-created GHL connection executes
-> IDENTICALLY — the gateway is provider-agnostic and the M1-pinned path serves it the same.
-> The API body below additionally tags it `gohighlevel` for provider-specific governance and
-> the descriptor's honesty gate. Either path works; pick the drawer for speed, the API body
-> for the tagged lane.
-
-The API equivalent (the runbook's canonical body):
+The HighLevel tile now carries the provider identity (`gohighlevel`) into the create, so a
+drawer connection IS a canonical gohighlevel connection — with the server-side trigger
+(migration 20270536000000) refusing any gohighlevel bearer write that lacks the locationId
+header. The API equivalent:
 
 ```json
 { "action": "create", "facet": "mcp", "provider_key": "gohighlevel",

@@ -48,9 +48,25 @@ describe("the gohighlevel provider descriptor is seeded", () => {
     );
     expect(correction).toContain("auth_kinds = '{bearer}'");
     expect(correction).toContain("resource_url_shape = '/mcp/'");
-    expect(correction).toContain("locationId custom header");
-    expect(correction).toContain("planned for a future release");
+    expect(correction).toContain("required_custom_headers = '{locationId}'");
     expect(correction).toContain("WHERE provider_key = 'gohighlevel'");
+    // The DOCTRINE: narrowed as PAIGE's verified surface — never a claim GHL lacks OAuth.
+    expect(correction).toContain("NOT YET VERIFIED for PAIGE");
+    expect(correction).not.toContain("does not offer OAuth");
+  });
+
+  it("the server-side enforcement is provider METADATA + a trigger — no provider code branches", () => {
+    const correction = readFileSync(
+      join(root, "supabase/migrations/20270536000000_ghl_provider_auth_honesty.sql"),
+      "utf8",
+    );
+    expect(correction).toContain("ADD COLUMN IF NOT EXISTS required_custom_headers text[]");
+    expect(correction).toContain("CREATE TRIGGER trg_mcp_provider_required_headers");
+    expect(correction).toContain("MCP_MISSING_REQUIRED_HEADER");
+    // Only bearer/header facets carry the header contract; the trigger guards the decrypted
+    // bundle, and an error names header NAMES only — values are credential material.
+    expect(correction).toContain("IF NEW.auth_kind NOT IN ('bearer', 'header') THEN RETURN NEW; END IF;");
+    expect(correction).toContain("Names only: a header VALUE is credential material and never crosses into an error.");
   });
 
   it("the seed is additive — the original three providers are untouched", () => {
@@ -98,11 +114,29 @@ describe("the registry JSON carries the honest PARTIAL entry", () => {
 });
 
 describe("the catalogue names GHL's real MCP endpoint", () => {
-  it("the Integrations catalogue row carries the GENERIC endpoint + the PIT connect instructions", () => {
+  it("the catalogue row carries the GENERIC endpoint, the PIT instructions, AND the provider identity", () => {
     expect(catalogue).toContain('url: "https://services.leadconnectorhq.com/mcp/"');
     expect(catalogue).toContain("Private Integration token (Settings → Private Integrations) plus your locationId header");
-    // The client-shaped variant is NOT the custom-application endpoint.
     expect(catalogue).not.toContain("/mcp/anthropic/v2");
+    // The tile's create routes to the canonical gohighlevel descriptor — NOT generic-remote.
+    expect(catalogue).toContain('pk: "gohighlevel", req: ["locationId"]');
+  });
+
+  it("the drawer carries the provider identity into the create (the identity fix)", () => {
+    // The preset flows pk → providerKey; the create uses the preset's identity, falling
+    // back to generic-remote only for untagged presets.
+    expect(catalogue).toContain('providerKey: item.pk,');
+    expect(catalogue).toContain('providerKey: preset.providerKey ?? "generic-remote"');
+    // The presence checks prefer the explicit catalogue key over legacy/URL inference.
+    expect(catalogue).toContain("providerKey: p.pk ??");
+  });
+
+  it("the drawer enforces the preset's required headers before save", () => {
+    expect(catalogue).toContain("const missing = preset.requiredHeaders.filter((h) => !have.has(h.toLowerCase()));");
+    expect(catalogue).toContain("requires the ${missing.join(\", \")}");
+    // A preset with required headers preselects the Token + headers mode.
+    expect(catalogue).toContain('auth: item.pk && item.req?.length ? "headers" : undefined');
+    expect(catalogue).toContain(": preset.auth ?? null;");
   });
 });
 

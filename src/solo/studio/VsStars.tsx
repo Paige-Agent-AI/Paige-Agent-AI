@@ -24,7 +24,7 @@ export const VsStars = ({ n = 260 }: { n?: number }) => {
   return (
     <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} preserveAspectRatio="none" aria-hidden="true">
       {stars.map((s, i) => (
-        <circle key={i} cx={s.x + "%"} cy={s.y + "%"} r={s.s} fill={i % 9 === 0 ? "#F5C266" : "#fff"} opacity={s.o}>
+        <circle key={i} cx={s.x + "%"} cy={s.y + "%"} r={s.s} fill="#fff" opacity={s.o}>
           {!reduced && (
             <animate attributeName="opacity" values={`${s.o};${s.o * 0.25};${s.o}`} dur={`${4 + s.d}s`} repeatCount="indefinite" />
           )}

@@ -6,7 +6,7 @@ import React from "react";
 import { Check, X, Circle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { plainError, publishArtifact, unpublishArtifact, type ArtifactKind } from "./studio-data";
-import { hasPendingChanges, isLive, type LoadedArtifact } from "./artifact-state";
+import { artifactId, hasPendingChanges, isLive, type LoadedArtifact } from "./artifact-state";
 
 interface CheckRow { ok: boolean | null; label: string; note?: string; blocking: boolean }
 
@@ -44,13 +44,13 @@ function checksFor(a: LoadedArtifact, route: string | null): CheckRow[] {
         { ok: null, label: "Every page and form in it goes live together", blocking: false },
       ];
     default:
+      if (a.image.contentKind !== "image") {
+        return [{ ok: false, label: a.image.contentKind === "document" ? "Documents aren't published from the Studio" : "Copy isn't published from the Studio", note: "Use it in a page, an email or a post instead.", blocking: true }];
+      }
       return [{ ok: !!a.image.imageUrl, label: a.image.imageUrl ? "The image file is ready" : "The image has no file yet", blocking: true }];
   }
 }
 
-function idOf(a: LoadedArtifact): string {
-  return a.kind === "form" ? a.form.id : a.kind === "page" ? a.page.id : a.kind === "funnel" ? a.funnel.id : a.image.id;
-}
 
 export function PublishPanel({ artifact, onClose, onDone }: {
   artifact: LoadedArtifact;
@@ -84,7 +84,7 @@ export function PublishPanel({ artifact, onClose, onDone }: {
   const publish = async () => {
     setBusy(true); setError(null);
     try {
-      const res = await publishArtifact(kind, idOf(artifact));
+      const res = await publishArtifact(kind, artifactId(artifact));
       const full = res.url ? (res.url.startsWith("http") ? res.url : `${window.location.origin}${res.url}`) : null;
       setUrl(full);
       onDone(full ? `Live at ${full}` : "Published.");
@@ -97,7 +97,7 @@ export function PublishPanel({ artifact, onClose, onDone }: {
   const unpublish = async () => {
     setBusy(true); setError(null);
     try {
-      await unpublishArtifact(kind, idOf(artifact));
+      await unpublishArtifact(kind, artifactId(artifact));
       onDone("Unpublished. It's back to a draft here in the Studio.");
       onClose();
     } catch (e) {
@@ -120,10 +120,12 @@ export function PublishPanel({ artifact, onClose, onDone }: {
         <>
           <h2>This is live</h2>
           <p>Visitors see the published version. Unpublishing moves it back to a draft here; anything that depends on it stays as it is.</p>
+          {kind === "funnel" && <p>Changed one of its pages or forms? Publish again to put every step's latest saved version live.</p>}
           {error && <p className="vs-alert" role="alert">{error}</p>}
           <div className="vs-pop-foot">
             <button ref={firstRef} type="button" className="vs-btn vs-btn-quiet" onClick={onClose}>Close</button>
-            <button type="button" className="vs-btn vs-btn-danger" disabled={busy} onClick={unpublish}>{busy ? "Unpublishing…" : "Unpublish"}</button>
+            <button type="button" className="vs-btn vs-btn-danger" disabled={busy} onClick={unpublish}>{busy ? "Working…" : "Unpublish"}</button>
+            {kind === "funnel" && <button type="button" className="vs-btn vs-btn-gold" disabled={busy} onClick={publish}>Publish again</button>}
           </div>
         </>
       ) : (
@@ -133,7 +135,7 @@ export function PublishPanel({ artifact, onClose, onDone }: {
           <ul className="vs-checks">
             {checks.map((c) => (
               <li key={c.label}>
-                {c.ok === true ? <Check size={15} color="#4CC48C" aria-label="Done" /> : c.ok === false ? <X size={15} color="#EB576B" aria-label="Missing" /> : <Circle size={13} color="#8E89AD" aria-label="Optional" />}
+                {c.ok === true ? <Check size={15} color="var(--vs-good)" aria-label="Done" /> : c.ok === false ? <X size={15} color="var(--vs-bad)" aria-label="Missing" /> : <Circle size={13} color="var(--vs-faint)" aria-label="Optional" />}
                 <span>{c.label}{c.note && <small>{c.note}</small>}</span>
               </li>
             ))}

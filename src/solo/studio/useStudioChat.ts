@@ -3,7 +3,7 @@
 // produced arrive as their own frames; nothing here invents a step or a result the stream did not send.
 import React from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ensureThread, loadTurns, type ArtifactKind, type ChatTurn } from "./studio-data";
+import { ensureThread, loadTurns, plainError, Said, type ArtifactKind, type ChatTurn } from "./studio-data";
 
 export interface BuildStep { id: string; label: string; detail?: string; status: "done" | "error"; at: number }
 export interface ChoiceOption { label: string; value: string; description?: string }
@@ -15,7 +15,7 @@ function toArtifact(raw: unknown): ProducedArtifact | null {
   if (!raw || typeof raw !== "object") return null;
   const o = raw as Record<string, unknown>;
   const kind = String(o.kind ?? "");
-  const mapped: ArtifactKind | null = kind === "page" || kind === "form" || kind === "funnel" ? kind : kind === "content" || kind === "image" ? "content" : null;
+  const mapped: ArtifactKind | null = kind === "page" || kind === "form" || kind === "funnel" ? kind : kind === "content" || kind === "image" || kind === "document" || kind === "copy" ? "content" : null;
   if (!mapped || typeof o.id !== "string") return null;
   return { kind: mapped, id: o.id, title: typeof o.title === "string" && o.title ? o.title : "Untitled" };
 }
@@ -53,6 +53,9 @@ export function useStudioChat(opts: {
   cb.current = opts;
   const seeded = React.useRef<string | null>(null);
   const failedIntent = React.useRef<{ text: string; id: string } | null>(null);
+  // Leaving the project stops the stream; nothing is set on an unmounted workspace.
+  const abort = React.useRef<AbortController | null>(null);
+  React.useEffect(() => () => abort.current?.abort(), []);
 
   React.useEffect(() => {
     let live = true;
@@ -65,7 +68,7 @@ export function useStudioChat(opts: {
         if (!live) return;
         setThreadId(id); setTurns(history); setReady(true);
       } catch (e) {
-        if (live) setLoadError(e instanceof Error && e.message ? e.message : "This project's chat couldn't be opened.");
+        if (live) setLoadError(plainError(e, "This project's chat couldn't be opened. Try again in a moment."));
       }
     })();
     return () => { live = false; };
@@ -82,12 +85,15 @@ export function useStudioChat(opts: {
     setTurns([...shown, { role: "assistant", content: "" }]);
     setSending(true);
     let produced: ProducedArtifact | null = null;
+    const controller = new AbortController();
+    abort.current = controller;
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Please sign in again.");
+      if (!session) throw new Said("Please sign in again.");
       const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/paige-ai-chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        signal: controller.signal,
         body: JSON.stringify({
           messages: modelMessages,
           threadId,
@@ -95,13 +101,14 @@ export function useStudioChat(opts: {
           canvasArtifact: cb.current.canvas ? { id: cb.current.canvas.id, kind: cb.current.canvas.kind } : undefined,
         }),
       });
-      if (!resp.ok) throw new Error(resp.status === 429 ? "Give it a moment — too many requests." : "Paige couldn't take that just now. Try again.");
+      if (!resp.ok) throw new Said(resp.status === 429 ? "Give it a moment — too many requests." : "Paige couldn't take that just now. Try again.");
       const reader = resp.body?.getReader();
       const decoder = new TextDecoder();
       let reply = "";
       let buffer = "";
       let done = false;
       let gotChoices = false;
+      let sawStep = false;
       while (reader && !done) {
         const { done: end, value } = await reader.read();
         if (end) break;
@@ -115,11 +122,14 @@ export function useStudioChat(opts: {
           const payload = line.slice(6).trim();
           if (payload === "[DONE]") { done = true; break; }
           let parsed: Record<string, unknown>;
-          try { parsed = JSON.parse(payload); } catch { buffer = line + "\n" + buffer; break; }
+          // A line is only parsed once its newline has arrived, so a parse failure is a bad line,
+          // never a split one: skip it and keep reading.
+          try { parsed = JSON.parse(payload); } catch { continue; }
           if (parsed.paige_step && typeof parsed.paige_step === "object") {
             const ps = parsed.paige_step as Record<string, unknown>;
             if (typeof ps.label === "string" && ps.label) {
               const label = ps.label;
+              sawStep = true;
               setStatus(label);
               setSteps((prev) => {
                 const id = typeof ps.id === "string" && ps.id ? ps.id : `s:${prev.length}`;
@@ -149,17 +159,21 @@ export function useStudioChat(opts: {
           }
         }
       }
-      if (!reply.trim() && !gotChoices) setTurns([...shown, { role: "assistant", content: "I didn't catch that. Try saying it another way?" }]);
+      if (!reply.trim() && !gotChoices && !produced && !sawStep) setTurns([...shown, { role: "assistant", content: "I didn't catch that. Try saying it another way?" }]);
       failedIntent.current = null;
       if (produced) cb.current.onArtifact(produced);
     } catch (e) {
+      if (abort.current?.signal.aborted) return;
       setTurns(before);
+      setSteps([]);
       failedIntent.current = { text: trimmed, id: requestIntentId };
-      setSendError(e instanceof Error && e.message ? e.message : "Paige couldn't take that just now. Try again.");
+      setSendError(plainError(e, "Paige couldn't take that just now. Check your connection and try again."));
     } finally {
-      setSending(false);
-      setStatus(null);
-      cb.current.onTurnDone();
+      if (!controller.signal.aborted) {
+        setSending(false);
+        setStatus(null);
+        cb.current.onTurnDone();
+      }
     }
   }, [sending, threadId, turns]);
 

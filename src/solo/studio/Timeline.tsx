@@ -9,12 +9,14 @@ const time = (iso: string) => {
   return Number.isNaN(d.getTime()) ? "" : d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 };
 
-export function Timeline({ sessionId, target, refreshKey, building, onRestored }: {
+export function Timeline({ sessionId, target, refreshKey, building, onRestored, onPreview }: {
   sessionId: string;
   target: { kind: ArtifactKind; id: string } | null;
   refreshKey: number;
   building: string | null;
   onRestored: (message: string) => void;
+  /** The version picked for a look before going back to it (null when none is picked). */
+  onPreview: (version: StudioVersion | null) => void;
 }) {
   const [versions, setVersions] = React.useState<StudioVersion[]>([]);
   const [selected, setSelected] = React.useState<string | null>(null);
@@ -30,13 +32,17 @@ export function Timeline({ sessionId, target, refreshKey, building, onRestored }
       .then((v) => { if (live) setVersions([...v].sort((a, b) => a.versionNo - b.versionNo)); })
       .catch(() => { if (live) setVersions([]); });
     return () => { live = false; };
-  }, [sessionId, target, refreshKey]);
+  }, [sessionId, target?.kind, target?.id, refreshKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   React.useEffect(() => {
     rowRef.current?.scrollTo({ left: rowRef.current.scrollWidth });
   }, [versions.length, building]);
 
   const chosen = versions.find((v) => v.id === selected) ?? null;
+  React.useEffect(() => { setSelected(null); }, [target?.id, target?.kind]);
+  const preview = React.useRef(onPreview);
+  preview.current = onPreview;
+  React.useEffect(() => { preview.current(chosen && !chosen.isCurrent ? chosen : null); }, [chosen]);
   const restore = async () => {
     if (!chosen) return;
     setBusy(true); setError(null);
@@ -72,7 +78,7 @@ export function Timeline({ sessionId, target, refreshKey, building, onRestored }
           </button>
         ))}
         {building && (
-          <div className="vs-version" aria-live="polite" style={{ borderStyle: "dashed", cursor: "default" }}>
+          <div className="vs-version" style={{ borderStyle: "dashed", cursor: "default" }}>
             <span><span>Paige</span><time>now</time></span>
             <b className="vs-trunc">{building}</b>
           </div>
@@ -82,7 +88,7 @@ export function Timeline({ sessionId, target, refreshKey, building, onRestored }
         <div className="vs-version-actions">
           {chosen.isCurrent ? <span>This is the version you're working on.</span> : (
             <>
-              <span>Go back to version {chosen.versionNo}? Newer versions stay in the timeline.</span>
+              <span>Showing version {chosen.versionNo} on the stage. Go back to it? Newer versions stay in the timeline.</span>
               <button type="button" className="vs-btn vs-btn-violet" disabled={busy} onClick={restore}>{busy ? "Going back…" : "Go back to this version"}</button>
               <button type="button" className="vs-btn vs-btn-quiet" onClick={() => setSelected(null)}>Cancel</button>
             </>

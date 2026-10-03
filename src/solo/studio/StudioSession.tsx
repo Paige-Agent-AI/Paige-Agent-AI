@@ -7,15 +7,15 @@ import { ArrowLeft, Monitor, Smartphone, MessageSquare, SlidersHorizontal, Arrow
 import { Logo } from "../_shared";
 import { buildGrowthBrandFloor } from "@/components/growth/growth-theme";
 import { useMediaJobs } from "../useMediaJobs";
-import { loadBrand, openSession, plainError, type ArtifactRef, type StudioSession as Session } from "./studio-data";
+import { formFromRow, loadBrand, openSession, pageFromRow, plainError, type ArtifactRef, type StudioSession as Session, type StudioVersion } from "./studio-data";
 import { useStudioChat, type Choices } from "./useStudioChat";
 import { StudioStage } from "./StudioStage";
-import { loadArtifact, hasPendingChanges, isLive, type Brand, type Device, type LoadedArtifact } from "./artifact-state";
+import { artifactId, loadArtifact, hasPendingChanges, isLive, type Brand, type Device, type LoadedArtifact } from "./artifact-state";
 import { PublishPanel } from "./PublishPanel";
 import { FormSettings } from "./FormSettings";
 import { Timeline } from "./Timeline";
 
-const KIND_WORD: Record<ArtifactRef["kind"], string> = { form: "Form", page: "Page", funnel: "Funnel", content: "Image" };
+const KIND_WORD: Record<ArtifactRef["kind"], string> = { form: "Form", page: "Page", funnel: "Funnel", content: "Content" };
 
 function AskCard({ choices, disabled, onAnswer }: { choices: Choices; disabled: boolean; onAnswer: (value: string, display: string) => void }) {
   const [picked, setPicked] = React.useState<string[]>([]);
@@ -60,6 +60,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBa
   const [chatOpen, setChatOpen] = React.useState(false);
   const [notice, setNotice] = React.useState<string | null>(null);
   const [refreshKey, setRefreshKey] = React.useState(0);
+  const [previewing, setPreviewing] = React.useState<StudioVersion | null>(null);
   const [input, setInput] = React.useState("");
   const logRef = React.useRef<HTMLDivElement | null>(null);
   const inputRef = React.useRef<HTMLTextAreaElement | null>(null);
@@ -85,6 +86,8 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBa
     let live = true;
     setArtifactError(null);
     if (!activeRef) { setArtifact(null); return; }
+    // Never leave the previous piece on the stage (and under Publish) while another one loads.
+    setArtifact((a) => (a && artifactId(a) === activeRef.id ? a : null));
     loadArtifact(activeRef)
       .then((a) => { if (live) setArtifact(a); })
       .catch((e) => { if (live) { setArtifact(null); setArtifactError(plainError(e, "This piece couldn't be loaded.")); } });
@@ -96,7 +99,9 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBa
     seedBrief,
     canvas: activeRef ? { kind: activeRef.kind, id: activeRef.id } : null,
     onArtifact: (a) => { void reloadSession(a.id); },
-    onTurnDone: () => setRefreshKey((k) => k + 1),
+    // A turn can link pieces without a produced-artifact frame (a page's form, a document), so the
+    // manifest is re-read after every turn as well as the stage.
+    onTurnDone: () => { setRefreshKey((k) => k + 1); void reloadSession(); },
   });
 
   // Images Paige starts in this project run as media jobs: approvals land here, and a finished image
@@ -114,17 +119,24 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBa
     if (missing) void reloadSession(missing);
   }, [finishedIds, session, reloadSession]);
 
+  // On a narrow screen the chat is a drawer: it opens whenever Paige asks something or is working,
+  // so her question is never hidden behind a closed panel.
+  React.useEffect(() => { if (chat.choices || chat.sending) setChatOpen(true); }, [chat.choices, chat.sending]);
+  // Opening a project puts focus in the conversation (the card that opened it is gone).
+  React.useEffect(() => { if (chat.ready) inputRef.current?.focus({ preventScroll: true }); }, [chat.ready]);
+
   React.useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
   }, [chat.turns, chat.steps, chat.choices, pendingApprovals.length]);
 
-  // Esc steps back out of the project, unless the owner is typing or a panel is open (each panel
-  // closes itself first).
+  // Esc steps back out of the project, unless the owner has typed something or a panel is open (each
+  // panel closes itself first).
   React.useEffect(() => {
     const k = (e: KeyboardEvent) => {
       if (e.key !== "Escape" || e.defaultPrevented) return;
       const t = e.target as HTMLElement | null;
-      if (t && (t.tagName === "TEXTAREA" || t.tagName === "INPUT" || t.tagName === "SELECT" || t.isContentEditable)) return;
+      if (t && (t.tagName === "SELECT" || t.isContentEditable)) return;
+      if (t && (t.tagName === "TEXTAREA" || t.tagName === "INPUT") && (t as HTMLInputElement).value.trim()) return;
       if (publishOpen) { setPublishOpen(false); publishBtnRef.current?.focus(); return; }
       if (settingsOpen) { setSettingsOpen(false); return; }
       if (chatOpen) { setChatOpen(false); return; }
@@ -136,10 +148,19 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBa
 
   const submit = () => {
     const text = input.trim();
-    if (!text || chat.sending) return;
+    if (!text || chat.sending || !chat.ready) return;
     setInput("");
     void chat.send(text);
   };
+
+  // A picked version shows on the stage from its own snapshot until the owner goes back to it or
+  // picks again. Forms and pages carry everything needed; other kinds say so honestly.
+  const previewArtifact: LoadedArtifact | null = (() => {
+    if (!previewing?.snapshot || !artifact) return null;
+    if (artifact.kind === "form") return { kind: "form", form: formFromRow(previewing.snapshot) };
+    if (artifact.kind === "page") return { kind: "page", page: pageFromRow(previewing.snapshot) };
+    return null;
+  })();
 
   const live = artifact ? isLive(artifact) : false;
   const pending = artifact ? hasPendingChanges(artifact) : false;
@@ -147,7 +168,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBa
     : !artifact ? { tone: "idle", text: "Nothing built yet" }
     : live ? (pending ? { tone: "good", text: "Saved · changes not live yet" } : { tone: "good", text: "Live" })
     : { tone: "good", text: "Saved · draft" };
-  const publishLabel = live ? (pending ? "Publish changes" : "Live") : "Publish";
+  const publishLabel = live ? (pending ? "Publish changes" : "Live · Manage") : "Publish";
 
   const lastAssistant = (() => { for (let i = chat.turns.length - 1; i >= 0; i--) if (chat.turns[i].role === "assistant") return i; return -1; })();
 
@@ -164,7 +185,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBa
     <div className="vs-session">
       <header className="vs-top">
         <button type="button" className="vs-icon-btn" aria-label="Back to Studio" onClick={onBack}><ArrowLeft size={17} /></button>
-        <button type="button" className="vs-icon-btn vs-chat-toggle" aria-label={chatOpen ? "Hide chat" : "Show chat"} aria-expanded={chatOpen} onClick={() => setChatOpen((o) => !o)}><MessageSquare size={16} /></button>
+        <button type="button" className="vs-btn vs-chat-toggle" aria-expanded={chatOpen} onClick={() => setChatOpen((o) => !o)}><MessageSquare size={15} aria-hidden="true" />{chatOpen ? "Hide chat" : "Chat"}</button>
         <nav className="vs-crumbs" aria-label="Project">
           <span className="vs-crumb-studio">Studio /</span>
           <b className="vs-trunc" style={{ maxWidth: 220 }}>{session?.title ?? "Project"}</b>
@@ -192,6 +213,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBa
             className={live && !pending ? "vs-btn" : "vs-btn vs-btn-gold"}
             disabled={!artifact || chat.sending}
             aria-expanded={publishOpen}
+            aria-haspopup="dialog"
             onClick={() => setPublishOpen((o) => !o)}
           >
             {live && !pending && <Check size={14} />}{publishLabel}
@@ -225,7 +247,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBa
                   <ol className="vs-steps" aria-label="What Paige did">
                     {chat.steps.map((s) => (
                       <li key={s.id}>
-                        {s.status === "error" ? <AlertCircle size={14} color="#EB576B" aria-label="Didn't work" /> : <Check size={14} color="#4CC48C" aria-label="Done" />}
+                        {s.status === "error" ? <AlertCircle size={14} color="var(--vs-bad)" aria-label="Didn't work" /> : <Check size={14} color="var(--vs-good)" aria-label="Done" />}
                         <span>{s.label}{s.detail && <small>{s.detail}</small>}</span>
                         <time>{new Date(s.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</time>
                       </li>
@@ -239,7 +261,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBa
               <div key={job.id} className="vs-approval" role="group" aria-label="Image waiting for approval">
                 <b>An image needs your approval</b>
                 <span style={{ color: "var(--vs-dim)" }}>{String((job.params as Record<string, unknown>)?.prompt ?? "").slice(0, 90)}</span>
-                <span className="mono" style={{ color: "var(--vs-gold)" }}>Estimated ${Number(job.estimated_cost_usd ?? 0).toFixed(2)}</span>
+                <span className="mono" style={{ color: "var(--vs-text)" }}>Estimated ${Number(job.estimated_cost_usd ?? 0).toFixed(2)}</span>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button type="button" className="vs-btn vs-btn-gold" onClick={() => void media.decide(job.id, true)}>Approve and make it</button>
                   <button type="button" className="vs-btn vs-btn-quiet" onClick={() => void media.decide(job.id, false)}>Decline</button>
@@ -267,13 +289,18 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBa
 
         <div className="vs-stage-wrap">
           <div className="vs-stage" role="region" aria-label="Stage">
-            {notice && (
+            {notice && !publishOpen && (
               <p role="status" className="vs-notice">{notice} <button type="button" className="vs-link" onClick={() => setNotice(null)}>Dismiss</button></p>
+            )}
+            {previewing && (
+              <p role="status" className="vs-notice vs-notice-preview">
+                {previewArtifact ? `Showing version ${previewing.versionNo}. Your working copy is unchanged.` : `Version ${previewing.versionNo} can't be shown here, but going back restores it.`}
+              </p>
             )}
             {artifactError ? (
               <div className="vs-stage-empty" role="alert"><b>This piece couldn't be loaded</b>{artifactError}</div>
             ) : (
-              <StudioStage artifact={artifact} brand={brand} device={device} tenantId={tenantId} building={chat.sending && !artifact} />
+              <StudioStage artifact={previewArtifact ?? artifact} brand={brand} device={device} tenantId={tenantId} building={chat.sending && !artifact} />
             )}
           </div>
           {settingsOpen && artifact?.kind === "form" && (
@@ -287,7 +314,8 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBa
         target={activeRef ? { kind: activeRef.kind, id: activeRef.id } : null}
         refreshKey={refreshKey}
         building={chat.sending ? (chat.status ?? "Working on it") : null}
-        onRestored={(m) => { setNotice(m); setRefreshKey((k) => k + 1); }}
+        onRestored={(m) => { setPreviewing(null); setNotice(m); setRefreshKey((k) => k + 1); }}
+        onPreview={setPreviewing}
       />
     </div>
   );

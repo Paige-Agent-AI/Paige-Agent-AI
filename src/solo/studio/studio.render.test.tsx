@@ -30,6 +30,8 @@ const h = vi.hoisted(() => ({
   sse: [] as string[],
   status: 200,
   fetchBodies: [] as Rec[],
+  versionReads: 0,
+  content: null as Rec | null,
 }));
 
 vi.mock("@/hooks/useTenantContext", () => ({
@@ -57,7 +59,8 @@ vi.mock("./studio-data", async (orig) => {
     loadTurns: async () => [],
     loadBrand: async () => ({ floor: {}, name: "Northwind Studio", logoUrl: null }),
     loadForm: async () => { if (!h.form) throw new Error("missing"); return h.form; },
-    listVersions: async () => h.versions,
+    listVersions: async () => { h.versionReads += 1; return h.versions; },
+    loadImage: async () => { if (!h.content) throw new Error("missing"); return h.content; },
     restoreVersion: async (id: string) => { h.restored.push(id); },
     publishArtifact: async (kind: string, id: string) => {
       if (h.publishError) throw h.publishError;
@@ -88,7 +91,14 @@ const FORM = {
 function sseBody(frames: string[]) {
   const enc = new TextEncoder();
   return new ReadableStream<Uint8Array>({
-    start(c) { for (const f of frames) c.enqueue(enc.encode(`data: ${f}\n\n`)); c.close(); },
+    // "__BREAK__" drops the connection mid-turn, after whatever came before it was delivered.
+    start(c) {
+      for (const f of frames) {
+        if (f === "__BREAK__") { c.error(new TypeError("network connection was lost")); return; }
+        c.enqueue(enc.encode(`data: ${f}\n\n`));
+      }
+      c.close();
+    },
   });
 }
 
@@ -101,7 +111,7 @@ function type(el: HTMLTextAreaElement, value: string) {
 }
 
 beforeEach(() => {
-  Object.assign(h, { sessions: [], created: [], manifest: [], form: null, versions: [], restored: [], published: [], publishError: null, sse: [], status: 200, fetchBodies: [] });
+  Object.assign(h, { sessions: [], created: [], manifest: [], form: null, versions: [], restored: [], published: [], publishError: null, sse: [], status: 200, fetchBodies: [], versionReads: 0, content: null });
   backs = 0;
   host = document.createElement("div");
   document.body.appendChild(host);
@@ -249,5 +259,89 @@ describe("Vibe Studio project workspace", () => {
     expect(backs).toBe(0);
     await act(async () => { window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })); });
     expect(backs).toBe(1);
+  });
+
+  it("reopening a project never re-sends its brief, even when this person's thread is empty", async () => {
+    // Threads are per person: a teammate opening the project (or an expired thread) sees no turns
+    // while the project still carries its seed brief. That must not start a second build.
+    h.manifest = [{ kind: "form", id: "f-1", title: "New client intake" }];
+    h.form = FORM;
+    h.sessions = [{ id: "s-1", title: "Client intake", seedBrief: "An intake form for new clients", artifacts: h.manifest, thumbnailUrl: null, updatedAt: "2026-10-03T12:00:00Z" }];
+    await mount();
+    await act(async () => { [...host.querySelectorAll(".vs-card")][0]!.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+    await flush();
+    expect(host.querySelector(".vs-session")).toBeTruthy();
+    expect(h.fetchBodies).toHaveLength(0);
+  });
+
+  it("a malformed line in the stream is skipped and the rest of the turn still arrives", async () => {
+    h.sse = ["{not json", JSON.stringify({ paige_step: { id: "a", label: "Saved the form" } }), JSON.stringify({ choices: [{ delta: { content: "Done — it's on the stage." } }] }), "[DONE]"];
+    await startProject("An intake form for new clients");
+    expect(text()).toContain("Saved the form");
+    expect(text()).toContain("Done — it's on the stage.");
+  });
+
+  it("a streamed turn reads the timeline once when it ends, not on every word", async () => {
+    h.manifest = [{ kind: "form", id: "f-1", title: "New client intake" }];
+    h.form = FORM;
+    h.sessions = [{ id: "s-1", title: "Client intake", seedBrief: null, artifacts: h.manifest, thumbnailUrl: null, updatedAt: "2026-10-03T12:00:00Z" }];
+    await mount();
+    await act(async () => { [...host.querySelectorAll(".vs-card")][0]!.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+    await flush();
+    const before = h.versionReads;
+    h.sse = [...Array.from({ length: 30 }, (_, i) => JSON.stringify({ choices: [{ delta: { content: `w${i} ` } }] })), "[DONE]"];
+    type(host.querySelector<HTMLTextAreaElement>("#vs-chat-input")!, "Tighten the questions");
+    await act(async () => { host.querySelector<HTMLButtonElement>("button[aria-label='Send']")!.click(); });
+    await flush();
+    expect(text()).toContain("w29");
+    expect(h.versionReads - before).toBeLessThanOrEqual(2);
+  });
+
+  it("picking a version shows it on the stage before going back to it", async () => {
+    h.manifest = [{ kind: "form", id: "f-1", title: "New client intake" }];
+    h.form = FORM;
+    h.versions = [
+      { id: "v1", versionNo: 1, isCurrent: false, title: "First draft", thumbnailUrl: null, createdAt: "2026-10-03T11:00:00Z",
+        snapshot: { id: "f-1", name: "Old intake", status: "draft", schema_json: { sections: [{ fields: [{ key: "email", label: "Old email question", type: "email" }] }] } } },
+      { id: "v2", versionNo: 2, isCurrent: true, title: "Now", thumbnailUrl: null, createdAt: "2026-10-03T11:30:00Z", snapshot: null },
+    ];
+    h.sessions = [{ id: "s-1", title: "Client intake", seedBrief: null, artifacts: h.manifest, thumbnailUrl: null, updatedAt: "2026-10-03T12:00:00Z" }];
+    await mount();
+    await act(async () => { [...host.querySelectorAll(".vs-card")][0]!.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+    await flush();
+    expect(text()).not.toContain("Old email question");
+    const v1 = [...host.querySelectorAll(".vs-version")].find((b) => b.textContent?.includes("First draft")) as HTMLButtonElement;
+    await act(async () => { v1.click(); });
+    expect(text()).toContain("Old email question");
+    expect(text()).toContain("Showing version 1. Your working copy is unchanged.");
+    expect(h.restored).toEqual([]);
+  });
+
+  it("saved copy in the project is shown as words, not an empty image, and Publish refuses it in plain words", async () => {
+    h.manifest = [{ kind: "content", id: "c-1", title: "Client welcome guide" }];
+    h.content = { id: "c-1", title: "Client welcome guide", contentKind: "copy", imageUrl: null, body: "Welcome aboard.\n\nHere is how we work.", live: false };
+    h.sessions = [{ id: "s-1", title: "Welcome guide", seedBrief: null, artifacts: h.manifest, thumbnailUrl: null, updatedAt: "2026-10-03T12:00:00Z" }];
+    await mount();
+    await act(async () => { [...host.querySelectorAll(".vs-card")][0]!.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+    await flush();
+    expect(text()).toContain("Here is how we work.");
+    expect(text()).not.toContain("This image has no file yet");
+    await act(async () => { button("Publish")!.click(); });
+    expect(text()).toContain("Copy isn't published from the Studio");
+    expect(button("Publish now")!.disabled).toBe(true);
+  });
+
+  it("a failed turn clears its steps instead of hanging them under the previous reply", async () => {
+    h.sse = [JSON.stringify({ paige_step: { id: "a", label: "Wrote 3 questions" } }), JSON.stringify({ choices: [{ delta: { content: "First reply." } }] }), "[DONE]"];
+    await startProject("An intake form for new clients");
+    expect(text()).toContain("Wrote 3 questions");
+    // The next turn streams a step, then the connection drops.
+    h.sse = [JSON.stringify({ paige_step: { id: "b", label: "Started the budget question" } }), "__BREAK__"];
+    type(host.querySelector<HTMLTextAreaElement>("#vs-chat-input")!, "Add a budget question");
+    await act(async () => { host.querySelector<HTMLButtonElement>("button[aria-label='Send']")!.click(); });
+    await flush();
+    expect(text()).toContain("Paige couldn't take that just now. Check your connection and try again.");
+    expect(text()).not.toContain("network connection was lost");
+    expect(text()).not.toContain("Started the budget question");
   });
 });

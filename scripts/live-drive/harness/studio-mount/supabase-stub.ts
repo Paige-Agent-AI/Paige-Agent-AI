@@ -62,7 +62,9 @@ function from(table: string) {
   return chain;
 }
 const versions = [
-  { id: "v1", version_no: 1, is_current: false, title: "First draft · 4 questions", thumbnail_url: null, created_at: ago(40) },
+  { id: "v1", version_no: 1, is_current: false, title: "First draft · 4 questions", thumbnail_url: null, created_at: ago(40),
+    snapshot: { id: "f-1", name: "New client intake", status: "draft", success_action_json: { message: "Thanks — we'll be in touch." },
+      schema_json: { submit_label: "Send", sections: [{ description: "A few quick questions before we talk.", fields: FORM_SCHEMA.sections[0].fields.slice(0, 4) }] } } },
   { id: "v2", version_no: 2, is_current: false, title: "Added the goal question", thumbnail_url: null, created_at: ago(25) },
   { id: "v3", version_no: 3, is_current: true, title: "Routed to Sales → New lead", thumbnail_url: null, created_at: ago(8) },
 ];

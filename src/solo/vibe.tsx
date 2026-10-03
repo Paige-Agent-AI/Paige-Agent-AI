@@ -24,6 +24,8 @@ import "./studio/studio.css";
 
 export { VsStars } from "./studio/VsStars";
 
+// seedBrief is set ONLY when a project was just created from Studio home. Reopening a project never
+// passes it: threads are per person, so a teammate (or an expired thread) would otherwise rebuild it.
 type View = { name: "home" } | { name: "media" } | { name: "session"; id: string; seedBrief: string | null };
 
 export const VibeStudio = ({ onBack }: { onBack: () => void }) => {
@@ -54,8 +56,30 @@ export const VibeStudio = ({ onBack }: { onBack: () => void }) => {
     return () => window.removeEventListener("keydown", k);
   }, [onBack, view.name]);
 
+  // The Studio is a modal surface over the Solo shell: Tab and Shift+Tab wrap inside it instead of
+  // walking into the app hidden behind it.
+  const rootRef = React.useRef<HTMLDivElement | null>(null);
+  React.useEffect(() => {
+    const k = (e: KeyboardEvent) => {
+      const root = rootRef.current;
+      if (e.key !== "Tab" || !root) return;
+      const focusable = [...root.querySelectorAll<HTMLElement>("a[href], button, input, select, textarea, [tabindex]")]
+        .filter((el) => el.tabIndex >= 0 && !(el as HTMLButtonElement).disabled && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== "hidden");
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      const inside = !!active && root.contains(active);
+      if (!inside) { e.preventDefault(); (e.shiftKey ? last : first).focus(); return; }
+      if (e.shiftKey && active === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && active === last) { e.preventDefault(); first.focus(); }
+    };
+    window.addEventListener("keydown", k);
+    return () => window.removeEventListener("keydown", k);
+  }, []);
+
   return (
-    <div className="vs-studio" role="dialog" aria-modal="true" aria-label="Vibe Studio">
+    <div ref={rootRef} className="vs-studio" role="dialog" aria-modal="true" aria-label="Vibe Studio">
       {view.name === "session" && activeTenantId ? (
         <StudioSession
           key={view.id}
@@ -73,12 +97,12 @@ export const VibeStudio = ({ onBack }: { onBack: () => void }) => {
             onBack={onBack}
             onHome={() => setView({ name: "home" })}
             onMedia={() => setView({ name: "media" })}
-            onOpen={(s) => setView({ name: "session", id: s.id, seedBrief: s.seedBrief })}
+            onOpen={(s) => setView({ name: "session", id: s.id, seedBrief: null })}
           />
           {view.name === "media" ? (
             <div className="vs-main" data-vibe-scroll-owner><MediaTools /></div>
           ) : (
-            <StudioHome sessions={sessions} sessionsError={sessionsError} onOpen={(id, brief) => setView({ name: "session", id, seedBrief: brief })} />
+            <StudioHome sessions={sessions} sessionsError={sessionsError} tenantSlug={activeTenant?.slug ?? ""} onOpen={(id, brief) => setView({ name: "session", id, seedBrief: brief })} />
           )}
         </div>
       )}

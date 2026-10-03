@@ -25,6 +25,10 @@ export async function loadArtifact(ref: ArtifactRef): Promise<LoadedArtifact> {
   }
 }
 
+export function artifactId(a: LoadedArtifact): string {
+  return a.kind === "form" ? a.form.id : a.kind === "page" ? a.page.id : a.kind === "funnel" ? a.funnel.id : a.image.id;
+}
+
 export function isLive(a: LoadedArtifact): boolean {
   return a.kind === "form" ? a.form.live : a.kind === "page" ? a.page.live : a.kind === "funnel" ? a.funnel.live : a.image.live;
 }

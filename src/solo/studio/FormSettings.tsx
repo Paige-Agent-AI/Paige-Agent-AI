@@ -15,10 +15,14 @@ function usePipelines(tenantId: string): { pipelines: Pipeline[]; loaded: boolea
   React.useEffect(() => {
     let live = true;
     (async () => {
-      const [{ data: ps }, { data: ss }] = await Promise.all([
+      const [{ data: ps }] = await Promise.all([
         supabase.from("pipelines").select("id, name").eq("tenant_id", tenantId).order("name"),
-        supabase.from("pipeline_stages").select("id, label, pipeline_id, order_index").eq("tenant_id", tenantId).order("order_index"),
       ]);
+      // Stages follow their pipeline (some carry no tenant of their own), so read them by pipeline.
+      const ids = ((ps ?? []) as { id: string }[]).map((p) => p.id);
+      const { data: ss } = ids.length
+        ? await supabase.from("pipeline_stages").select("id, label, pipeline_id, order_index").in("pipeline_id", ids).order("order_index")
+        : { data: [] };
       if (!live) return;
       const stages = (ss ?? []) as { id: string; label: string; pipeline_id: string }[];
       setState({
@@ -53,6 +57,8 @@ export function FormSettings({ tenantId, formId, onClose, onSaved }: {
   }, [intake.settings]);
 
   const pipeline = pipelines.find((p) => p.id === draft.pipelineId) ?? null;
+  // Routing to a pipeline needs one to route to.
+  const cantSave = draft.autoCreateDeal && !pipeline;
   const save = async () => {
     setSaving(true); setMessage(null);
     const res = await intake.save({ ...draft, notifyEmail: draft.notifyEmail.trim() || null });
@@ -68,7 +74,7 @@ export function FormSettings({ tenantId, formId, onClose, onSaved }: {
         <button type="button" className="vs-icon-btn" aria-label="Close form settings" onClick={onClose}><X size={16} /></button>
       </header>
       {intake.phase === "loading" ? (
-        <p className="vs-inspector-note" role="status">Loading…</p>
+        <div className="vs-rail-skel" role="status" aria-label="Loading form settings" style={{ padding: "16px" }}><i /><i /><i /></div>
       ) : intake.phase !== "ready" ? (
         <p className="vs-alert" role="alert">These settings couldn't be loaded. <button type="button" className="vs-link" onClick={intake.retry}>Try again</button></p>
       ) : !intake.canEdit ? (
@@ -83,7 +89,7 @@ export function FormSettings({ tenantId, formId, onClose, onSaved }: {
             ><i aria-hidden="true" /></button>
           </div>
           {draft.autoCreateDeal && (
-            !loaded ? <p className="vs-inspector-note">Loading your pipelines…</p>
+            !loaded ? <div className="vs-rail-skel" role="status" aria-label="Loading your pipelines"><i /><i /></div>
             : pipelines.length === 0 ? <p className="vs-inspector-note">You don't have a pipeline yet. Create one in Campaigns, then come back.</p>
             : (
               <>
@@ -110,7 +116,7 @@ export function FormSettings({ tenantId, formId, onClose, onSaved }: {
           </label>
           <div className="vs-inspector-foot">
             {message && <span role={message.ok ? "status" : "alert"} className={message.ok ? "vs-ok" : "vs-alert"}>{message.text}</span>}
-            <button type="button" className="vs-btn vs-btn-violet" disabled={saving} onClick={save}>{saving ? "Saving…" : "Save"}</button>
+            <button type="button" className="vs-btn vs-btn-violet" disabled={saving || cantSave} onClick={save}>{saving ? "Saving…" : "Save"}</button>
           </div>
         </div>
       )}

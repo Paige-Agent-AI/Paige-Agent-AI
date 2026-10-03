@@ -123,6 +123,8 @@ for (const [w, h] of [[1366, 768], [900, 1000]]) {
   const page = await open("theme=light", 1366, 768);
   await openProject(page, "New client intake");
   await page.locator(".vs-version", { hasText: "First draft" }).click();
+  await page.waitForSelector(".vs-notice-preview");
+  results.push({ name: "version-preview", banner: await page.textContent(".vs-notice-preview"), questions: await page.locator(".vs-sheet .vs-q").count() });
   await shoot(page, "timeline-select-1366x768");
   await page.getByRole("button", { name: "Go back to this version" }).click();
   await page.waitForSelector(".vs-notice");
@@ -163,7 +165,7 @@ for (const [w, h] of [[1366, 768], [900, 1000]]) {
 {
   const page = await open("theme=light", 900, 1000);
   await openProject(page, "New client intake");
-  await page.getByRole("button", { name: "Show chat" }).click();
+  await page.getByRole("button", { name: "Chat", exact: true }).click();
   await page.waitForTimeout(300);
   results.push({ name: "chat-drawer-900", open: await page.evaluate(() => document.querySelector(".vs-chat")?.dataset.open), inputVisible: await page.evaluate(() => { const r = document.querySelector("#vs-chat-input").getBoundingClientRect(); return r.width > 0 && r.right <= innerWidth; }) });
   await shoot(page, "chat-drawer-900x1000");
@@ -174,13 +176,13 @@ for (const [w, h] of [[1366, 768], [900, 1000]]) {
 {
   const page = await open("theme=light", 1366, 768);
   await openProject(page, "New client intake");
-  await page.evaluate(() => document.activeElement?.blur());
-  const route = [];
-  for (let i = 0; i < 8; i += 1) {
+  await page.focus("button[aria-label='Back to Studio']");
+  const route = ["Back to Studio"];
+  for (let i = 0; i < 14; i += 1) {
     await page.keyboard.press("Tab");
     route.push(await page.evaluate(() => { const a = document.activeElement; return a.getAttribute("aria-label") || a.textContent?.trim().slice(0, 28) || a.tagName; }));
   }
-  results.push({ name: "keyboard", route });
+  results.push({ name: "keyboard", route, leftStudio: await page.evaluate(() => !document.querySelector(".vs-studio").contains(document.activeElement)) });
   await page.evaluate(() => document.activeElement?.blur());
   await page.keyboard.press("Escape");
   await page.waitForSelector(".vs-home");

@@ -19,6 +19,8 @@ export interface StudioSession {
   title: string;
   seedBrief: string | null;
   artifacts: ArtifactRef[];
+  /** A real image of the work, when one exists (a page's share image or a made image). */
+  thumbnailUrl: string | null;
   updatedAt: string;
 }
 
@@ -29,14 +31,26 @@ export interface StudioVersion {
   title: string | null;
   thumbnailUrl: string | null;
   createdAt: string;
+  /** The saved row as it was at this version (to_jsonb of the form/page/funnel/image row). */
+  snapshot: Record<string, unknown> | null;
 }
 
-/** A refusal the owner can read: the server's own sentence, without its machine code. */
+/** A sentence written for the owner. plainError passes it through unchanged. */
+export class Said extends Error {}
+
+/** A refusal the owner can read: our own sentence, or the server's without its machine code.
+ *  Anything else (a dropped connection, a raw database message) becomes the fallback. */
 export function plainError(err: unknown, fallback: string): string {
+  if (err instanceof Said) return err.message;
   const msg = typeof err === "object" && err && "message" in err ? String((err as { message?: unknown }).message ?? "") : "";
   if (!msg) return fallback;
   const m = /^(?:GROWTH|CONTENT|STUDIO)_[A-Z_]+:\s*(.+)$/s.exec(msg.trim());
-  if (m) return m[1].charAt(0).toUpperCase() + m[1].slice(1);
+  if (m) {
+    const code = msg.trim().slice(0, msg.trim().indexOf(":"));
+    if (/_FORBIDDEN$/.test(code)) return "Only this workspace's owner or an admin can do that.";
+    if (/_NO_TENANT$/.test(code)) return "Choose a workspace first, then try again.";
+    return m[1].charAt(0).toUpperCase() + m[1].slice(1);
+  }
   if (/permission denied|42501|forbidden/i.test(msg)) return "Only this workspace's owner or an admin can do that.";
   return fallback;
 }
@@ -61,6 +75,7 @@ function toSession(row: Record<string, unknown>): StudioSession {
     title: typeof row.title === "string" && row.title ? row.title : "Untitled project",
     seedBrief: typeof row.seed_brief === "string" ? row.seed_brief : null,
     artifacts: parseRefs(row.artifact_refs),
+    thumbnailUrl: typeof row.thumbnail_url === "string" && row.thumbnail_url ? row.thumbnail_url : null,
     updatedAt: String(row.updated_at ?? row.created_at ?? ""),
   };
 }
@@ -79,7 +94,7 @@ export async function createSession(brief: string): Promise<StudioSession> {
   });
   if (error) throw error;
   const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | null;
-  if (!row?.id) throw new Error("The project didn't save.");
+  if (!row?.id) throw new Said("The project didn't save.");
   return toSession(row);
 }
 
@@ -88,7 +103,7 @@ export async function openSession(id: string): Promise<StudioSession> {
   const { data, error } = await rpc("touch_studio_session", { p_id: id, p_tenant_id: null });
   if (error) throw error;
   const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | null;
-  if (!row?.id) throw new Error("That project isn't in this workspace.");
+  if (!row?.id) throw new Said("That project isn't in this workspace.");
   return toSession(row);
 }
 
@@ -98,7 +113,7 @@ export interface ChatTurn { role: "user" | "assistant"; content: string }
 export async function ensureThread(sessionId: string): Promise<string> {
   const { data, error } = await rpc("paige_studio_thread_ensure", { p_session_id: sessionId });
   if (error) throw error;
-  if (!data) throw new Error("This project's chat couldn't be opened.");
+  if (!data) throw new Said("This project's chat couldn't be opened.");
   return String(data);
 }
 
@@ -170,8 +185,12 @@ export async function loadForm(id: string): Promise<StudioForm> {
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
-  if (!data) throw new Error("That form isn't in this workspace.");
-  const r = data as unknown as Record<string, unknown>;
+  if (!data) throw new Said("That form isn't in this workspace.");
+  return formFromRow(data as unknown as Record<string, unknown>);
+}
+
+/** A growth_forms row (live, or a version's snapshot) as the Studio shows it. */
+export function formFromRow(r: Record<string, unknown>): StudioForm {
   const draft = r.draft_schema_json ?? r.schema_json;
   const success = (r.draft_success_action_json ?? r.success_action_json) as Record<string, unknown> | null;
   const read = readFields(draft);
@@ -208,23 +227,29 @@ export interface StudioPage {
 export async function loadPage(id: string): Promise<StudioPage> {
   const { data, error } = await supabase
     .from("growth_pages")
-    .select("id, title, slug, status, blocks_json, draft_blocks_json, theme_json, draft_theme_json")
+    .select("id, title, slug, status, blocks_json, draft_blocks_json, theme_json, draft_theme_json, seo_json, draft_seo_json")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
-  if (!data) throw new Error("That page isn't in this workspace.");
-  const r = data as Record<string, unknown>;
+  if (!data) throw new Said("That page isn't in this workspace.");
+  return pageFromRow(data as Record<string, unknown>);
+}
+
+/** A growth_pages row (live, or a version's snapshot) as the Studio shows it. */
+export function pageFromRow(r: Record<string, unknown>): StudioPage {
   const live = r.status === "published";
   const blocks = (r.draft_blocks_json ?? r.blocks_json) as GrowthBlock[] | null;
   return {
     id: String(r.id), title: String(r.title ?? "Page"), slug: String(r.slug ?? ""), live,
-    changesPending: live && r.draft_blocks_json != null && JSON.stringify(r.draft_blocks_json) !== JSON.stringify(r.blocks_json),
+    // Publishing a page puts its draft sections, theme and SEO live, so any of them differing is a change.
+    changesPending: live && (["blocks", "theme", "seo"] as const).some((k) =>
+      r[`draft_${k}_json`] != null && JSON.stringify(r[`draft_${k}_json`]) !== JSON.stringify(r[`${k}_json`])),
     blocks: Array.isArray(blocks) ? blocks : [],
     theme: ((r.draft_theme_json ?? r.theme_json) as GrowthPageTheme | null) ?? null,
   };
 }
 
-export interface FunnelStep { id: string; order: number; type: "page" | "form" | "thankyou"; pageId: string | null; formId: string | null }
+export interface FunnelStep { id: string; order: number; type: "page" | "form" | "payment" | "booking" | "thankyou"; pageId: string | null; formId: string | null }
 export interface StudioFunnel { id: string; name: string; slug: string; live: boolean; steps: FunnelStep[] }
 
 export async function loadFunnel(id: string): Promise<StudioFunnel> {
@@ -234,26 +259,39 @@ export async function loadFunnel(id: string): Promise<StudioFunnel> {
   ]);
   if (fe) throw fe;
   if (se) throw se;
-  if (!f) throw new Error("That funnel isn't in this workspace.");
+  if (!f) throw new Said("That funnel isn't in this workspace.");
   const r = f as Record<string, unknown>;
   return {
     id: String(r.id), name: String(r.name ?? "Funnel"), slug: String(r.slug ?? ""), live: r.status === "active",
     steps: ((steps ?? []) as Record<string, unknown>[]).map((s) => ({
       id: String(s.id), order: Number(s.order_index ?? 0),
-      type: (s.step_type === "form" ? "form" : s.step_type === "thankyou" ? "thankyou" : "page") as FunnelStep["type"],
+      type: (["form", "payment", "booking", "thankyou"].includes(String(s.step_type)) ? s.step_type : "page") as FunnelStep["type"],
       pageId: (s.page_id as string | null) ?? null, formId: (s.form_id as string | null) ?? null,
     })),
   };
 }
 
-export interface StudioImage { id: string; title: string; imageUrl: string | null; live: boolean }
+/** A marketing_content piece linked to the project: an image Paige made, a document, or saved copy.
+ *  Only an image is published from the Studio (studio_image_publish refuses anything else). */
+export interface StudioImage {
+  id: string;
+  title: string;
+  contentKind: "image" | "document" | "copy";
+  imageUrl: string | null;
+  body: string | null;
+  live: boolean;
+}
 
 export async function loadImage(id: string): Promise<StudioImage> {
-  const { data, error } = await supabase.from("marketing_content").select("id, title, image_url, status").eq("id", id).maybeSingle();
+  const { data, error } = await supabase.from("marketing_content").select("id, title, kind, image_url, body, status").eq("id", id).maybeSingle();
   if (error) throw error;
-  if (!data) throw new Error("That image isn't in this workspace.");
+  if (!data) throw new Said("That piece isn't in this workspace.");
   const r = data as Record<string, unknown>;
-  return { id: String(r.id), title: String(r.title ?? "Image"), imageUrl: (r.image_url as string | null) ?? null, live: r.status === "published" };
+  const contentKind = r.kind === "image" ? "image" : r.kind === "document" ? "document" : "copy";
+  return {
+    id: String(r.id), title: String(r.title ?? (contentKind === "image" ? "Image" : "Untitled")), contentKind,
+    imageUrl: (r.image_url as string | null) ?? null, body: (r.body as string | null) ?? null, live: r.status === "published",
+  };
 }
 
 /** The tenant's brand floor, through the same anon-safe read the published pages use. */
@@ -276,6 +314,7 @@ export async function listVersions(sessionId: string, kind: ArtifactKind, artifa
   return ((data as Record<string, unknown>[] | null) ?? []).map((v) => ({
     id: String(v.id), versionNo: Number(v.version_no ?? 0), isCurrent: v.is_current === true,
     title: (v.title as string | null) ?? null, thumbnailUrl: (v.thumbnail_url as string | null) ?? null, createdAt: String(v.created_at ?? ""),
+    snapshot: v.snapshot && typeof v.snapshot === "object" ? (v.snapshot as Record<string, unknown>) : null,
   }));
 }
 
@@ -283,7 +322,7 @@ export async function restoreVersion(versionId: string): Promise<void> {
   const { data, error } = await rpc("restore_artifact_version", { p_version_id: versionId, p_tenant_id: null });
   if (error) throw error;
   const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | null;
-  if (!row?.id) throw new Error("That version couldn't be restored.");
+  if (!row?.id) throw new Said("That version couldn't be restored.");
 }
 
 // ── Publish ────────────────────────────────────────────────────────────────────

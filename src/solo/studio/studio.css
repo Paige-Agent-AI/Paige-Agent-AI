@@ -1,6 +1,7 @@
 /* Solo Vibe Studio — session workspace (owner-locked layout C: chat, stage, timeline; 2026-10-03).
    Scoped to .vs-studio. The ink world stays; the artifact renders on a lit sheet in the tenant's
-   own brand. Violet marks selection and Paige's asks; gold is spent only on Publish. */
+   own brand. Violet marks selection, the current version and Paige's asks; gold is spent only on
+   the acts that put something live or spend money: Publish and Approve and make it. */
 .vs-studio {
   --vs-ink: #0A0818;
   --vs-ink-2: #110E24;
@@ -18,6 +19,12 @@
   --vs-bad: #EB576B;
   --vs-gold: var(--gold-bright, #F5C266);
   --vs-gold-ink: #2A1C00;
+  --vs-sheet: #F6F5F1;
+  --vs-sheet-ink: #1B1A22;
+  --vs-sheet-hint: #6E6A80;
+  --vs-sheet-line: #D9D6CE;
+  --vs-pop: #161230;
+  --vs-inspector: #120F26;
   position: fixed;
   inset: 0;
   z-index: 80;
@@ -92,10 +99,37 @@
 .vs-studio .vs-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
 .vs-studio .vs-card { border: 1px solid var(--vs-line); border-radius: 14px; overflow: hidden; background: var(--vs-ink-2); text-align: left; cursor: pointer; padding: 0; color: inherit; }
 .vs-studio .vs-card:hover { border-color: var(--vs-violet-line); }
-.vs-studio .vs-card-sheet { height: 96px; background: #ECEAE4; display: grid; align-content: start; gap: 7px; padding: 14px; }
-.vs-studio .vs-card-sheet i { display: block; height: 7px; border-radius: 4px; background: #CFCBC2; }
-.vs-studio .vs-card-sheet i:first-child { width: 62%; height: 9px; background: #2E2B3A; }
-.vs-studio .vs-card-sheet i:last-child { width: 34%; background: #4B4566; }
+/* Card pictures: a real image, a scaled render of the saved work, or an honest empty sheet. */
+.vs-studio .vs-card-shot { height: 120px; overflow: hidden; position: relative; background: var(--vs-panel); border-bottom: 1px solid var(--vs-line-soft); }
+.vs-studio .vs-card-shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.vs-studio .vs-card-empty { display: grid; place-items: center; color: var(--vs-faint); font-size: 12px; }
+.vs-studio .vs-card-form { background: var(--vs-sheet); }
+.vs-studio .vs-mini-sheet { display: grid; gap: 6px; padding: 12px 16px; color: var(--vs-sheet-ink); }
+.vs-studio .vs-mini-title { font-size: 12.5px; font-weight: 700; letter-spacing: -.02em; }
+.vs-studio .vs-mini-q { display: grid; gap: 3px; font-size: 9px; font-weight: 600; }
+.vs-studio .vs-mini-q i { display: block; height: 9px; border-radius: 3px; border: 1px solid var(--vs-sheet-line); background: #fff; }
+.vs-studio .vs-mini-submit { justify-self: start; margin-top: 2px; font-size: 8.5px; font-weight: 600; color: #fff; padding: 3px 8px; border-radius: 4px; background: var(--vs-violet); }
+.vs-studio .vs-card-copy { display: grid; align-content: center; gap: 4px; padding: 12px 16px; background: var(--vs-sheet); color: var(--vs-sheet-ink); }
+.vs-studio .vs-card-copy b { font-size: 12.5px; }
+.vs-studio .vs-card-copy span { font-size: 10.5px; color: var(--vs-sheet-hint); }
+.vs-studio .vs-doc-frame { width: min(820px, 100%); }
+.vs-studio .vs-copy p { margin: 0 0 12px; line-height: 1.6; font-size: 14.5px; }
+.vs-studio .vs-card-page { display: grid; align-content: center; justify-items: center; gap: 4px; padding: 12px 16px; text-align: center; color: #fff; background: var(--vs-violet); }
+.vs-studio .vs-card-page small { font-size: 9px; letter-spacing: .12em; text-transform: uppercase; opacity: .8; }
+.vs-studio .vs-card-page b { font-size: 13.5px; line-height: 1.2; letter-spacing: -.02em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.vs-studio .vs-card-page span { font-size: 10.5px; opacity: .75; }
+.vs-studio .vs-card-funnel { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 12px; flex-wrap: wrap; color: var(--vs-dim); font-size: 11.5px; }
+.vs-studio .vs-card-funnel i { font-style: normal; padding: 4px 8px; border-radius: 999px; border: 1px solid var(--vs-line); background: var(--vs-panel-2); color: var(--vs-text); }
+.vs-studio .vs-card-loading, .vs-studio .vs-card-skel .vs-card-body i, .vs-studio .vs-rail-skel i { background: var(--vs-panel-2); }
+.vs-studio .vs-card-skel { cursor: default; }
+.vs-studio .vs-card-skel .vs-card-body i { display: block; height: 9px; border-radius: 5px; width: 70%; margin-top: 4px; }
+.vs-studio .vs-card-skel .vs-card-body i + i { width: 40%; margin-top: 8px; }
+.vs-studio .vs-rail-skel { display: grid; gap: 8px; padding: 6px 8px; }
+.vs-studio .vs-rail-skel i { display: block; height: 9px; border-radius: 5px; width: 80%; }
+.vs-studio .vs-rail-skel i:nth-child(2) { width: 62%; }
+@media (prefers-reduced-motion: no-preference) {
+  .vs-studio .vs-card-loading, .vs-studio .vs-card-skel .vs-card-body i, .vs-studio .vs-rail-skel i { animation: vs-pulse 1.6s ease-in-out infinite; }
+}
 .vs-studio .vs-card-body { padding: 10px 12px 12px; }
 .vs-studio .vs-card-body b { display: block; font-size: 13px; }
 .vs-studio .vs-card-body span { font-size: 11.8px; color: var(--vs-faint); }
@@ -134,14 +168,14 @@
 .vs-studio .vs-chat-box textarea::placeholder { color: var(--vs-faint); }
 .vs-studio .vs-send { justify-self: end; width: 30px; height: 30px; border-radius: 8px; border: 0; display: grid; place-items: center; background: var(--vs-violet); color: #fff; cursor: pointer; }
 .vs-studio .vs-send:disabled { background: rgba(255, 255, 255, .12); color: var(--vs-faint); cursor: not-allowed; }
-.vs-studio .vs-approval { border: 1px solid rgba(245, 194, 102, .32); background: rgba(245, 194, 102, .06); border-radius: 12px; padding: 12px; display: grid; gap: 8px; font-size: 12.6px; }
+.vs-studio .vs-approval { border: 1px solid var(--vs-line); background: var(--vs-panel); border-radius: 12px; padding: 12px; display: grid; gap: 8px; font-size: 12.6px; }
 
 .vs-studio .vs-stage { position: relative; overflow: auto; min-width: 0;
   background-color: #0C0A1C;
   background-image: radial-gradient(rgba(255, 255, 255, .06) 1px, transparent 1px);
   background-size: 18px 18px; }
 .vs-studio .vs-stage-inner { padding: 24px 28px 40px; display: grid; justify-items: center; gap: 14px; }
-.vs-studio .vs-sheet { width: min(600px, 100%); background: #F6F5F1; color: #1B1A22; border-radius: 16px; box-shadow: 0 30px 80px -40px rgba(0, 0, 0, .7); padding: 32px 38px 36px; }
+.vs-studio .vs-sheet { width: min(600px, 100%); background: var(--vs-sheet); color: var(--vs-sheet-ink); border-radius: 16px; box-shadow: 0 30px 80px -40px rgba(0, 0, 0, .7); padding: 32px 38px 36px; }
 .vs-studio .vs-sheet[data-device="phone"] { width: 390px; padding: 24px 22px 28px; }
 .vs-studio .vs-sheet-brand { display: flex; align-items: center; gap: 9px; font-weight: 600; font-size: 13.2px; margin-bottom: 18px; }
 .vs-studio .vs-sheet-brand span { width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; color: #fff; font-size: 11.5px; }
@@ -152,7 +186,7 @@
 .vs-studio .vs-q label, .vs-studio .vs-q > span { font-size: 13.2px; font-weight: 600; }
 .vs-studio .vs-q em { color: #B3261E; font-style: normal; }
 .vs-studio .vs-q input, .vs-studio .vs-q select, .vs-studio .vs-q textarea { width: 100%; box-sizing: border-box; border: 1px solid #D9D6CE; border-radius: 9px; background: #fff; padding: 10px 12px; font: 13.5px var(--font); color: #1B1A22; }
-.vs-studio .vs-q input::placeholder, .vs-studio .vs-q textarea::placeholder { color: #807C90; }
+.vs-studio .vs-q input::placeholder, .vs-studio .vs-q textarea::placeholder { color: var(--vs-sheet-hint); }
 .vs-studio .vs-q-options { display: flex; flex-wrap: wrap; gap: 8px; }
 .vs-studio .vs-q-options span { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #D9D6CE; border-radius: 9px; background: #fff; padding: 8px 12px; font-size: 13px; font-weight: 400; }
 .vs-studio .vs-q-options i { width: 13px; height: 13px; border: 1.5px solid #8E8A9E; border-radius: 50%; display: inline-block; }
@@ -187,10 +221,11 @@
 .vs-studio .vs-version[aria-current="true"] { border-color: var(--vs-violet-line); background: var(--vs-violet-soft); }
 .vs-studio .vs-version span { display: flex; justify-content: space-between; gap: 10px; font-size: 11.3px; color: var(--vs-faint); }
 .vs-studio .vs-version b { font-size: 12.6px; font-weight: 500; }
-.vs-studio .vs-version-live { border-color: rgba(76, 196, 140, .45); }
+.vs-studio .vs-version-live { border-color: var(--vs-violet-line); }
+.vs-studio .vs-version[aria-current="true"] { background: var(--vs-violet-soft); border-color: var(--vs-violet-line); }
 .vs-studio .vs-version-actions { display: flex; align-items: center; gap: 10px; font-size: 12.4px; color: var(--vs-dim); }
 
-.vs-studio .vs-pop { position: absolute; top: 50px; right: 12px; width: 360px; z-index: 5; border: 1px solid var(--vs-line); border-radius: 14px; background: #161230; box-shadow: 0 24px 60px -24px rgba(0, 0, 0, .8); padding: 16px; display: grid; gap: 12px; }
+.vs-studio .vs-pop { position: absolute; top: 50px; right: 12px; width: 360px; z-index: 5; border: 1px solid var(--vs-line); border-radius: 14px; background: var(--vs-pop); box-shadow: 0 24px 60px -24px rgba(0, 0, 0, .8); padding: 16px; display: grid; gap: 12px; }
 .vs-studio .vs-pop h2 { margin: 0; font-size: 14.5px; }
 .vs-studio .vs-pop p { margin: 0; font-size: 12.4px; color: var(--vs-dim); line-height: 1.5; }
 .vs-studio .vs-checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
@@ -204,6 +239,8 @@
   .vs-studio .vs-body { grid-template-columns: minmax(0, 1fr); position: relative; }
   .vs-studio .vs-chat { position: absolute; inset: 0 auto 0 0; width: min(380px, 92vw); z-index: 4; transform: translateX(-102%); box-shadow: 20px 0 60px -30px rgba(0, 0, 0, .8); }
   .vs-studio .vs-chat[data-open="true"] { transform: none; }
+  /* Closed means out of reach too: off-screen alone would leave it in the Tab order. */
+  .vs-studio .vs-chat:not([data-open="true"]) { visibility: hidden; }
   .vs-studio .vs-chat-toggle { display: inline-flex; }
   .vs-studio .vs-crumbs .vs-crumb-studio { display: none; }
   /* The rail folds into a top bar: the way back and the two doors stay; drafts are the cards below. */
@@ -215,12 +252,13 @@
   .vs-studio .vs-home .vs-rail-item[data-draft], .vs-studio .vs-home .vs-rail-note { display: none; }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .vs-studio .vs-chat { transition: transform .22s cubic-bezier(.2, .8, .2, 1); }
+  .vs-studio .vs-chat { transition: transform .22s cubic-bezier(.2, .8, .2, 1), visibility 0s linear .22s; }
+  .vs-studio .vs-chat[data-open="true"] { transition-delay: 0s; }
 }
 
 /* ── Right-hand panel (form settings now; the question inspector joins it next) ── */
 .vs-studio .vs-stage-wrap { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; min-height: 0; min-width: 0; }
-.vs-studio .vs-inspector { width: 320px; margin: 14px 14px 14px 0; align-self: start; max-height: calc(100% - 28px); overflow: auto; border: 1px solid var(--vs-line); border-radius: 14px; background: #120F26; display: grid; }
+.vs-studio .vs-inspector { width: 320px; margin: 14px 14px 14px 0; align-self: start; max-height: calc(100% - 28px); overflow: auto; border: 1px solid var(--vs-line); border-radius: 14px; background: var(--vs-inspector); display: grid; }
 .vs-studio .vs-inspector header { display: flex; align-items: center; justify-content: space-between; padding: 10px 10px 10px 16px; border-bottom: 1px solid var(--vs-line-soft); font-size: 13.4px; }
 .vs-studio .vs-inspector-body { padding: 14px 16px 16px; display: grid; gap: 14px; }
 .vs-studio .vs-inspector-note { padding: 14px 16px; margin: 0; font-size: 12.6px; color: var(--vs-dim); line-height: 1.55; }
@@ -243,3 +281,4 @@
   .vs-studio .vs-inspector { position: absolute; top: 0; right: 0; bottom: 0; margin: 0; max-height: none; border-radius: 0; width: min(340px, 92vw); z-index: 3; }
 }
 .vs-studio .vs-notice { position: sticky; top: 12px; z-index: 2; margin: 12px auto 0; width: fit-content; max-width: min(640px, calc(100% - 32px)); padding: 8px 14px; border-radius: 10px; border: 1px solid rgba(76, 196, 140, .4); background: #12261F; font-size: 12.8px; color: #CFF3E2; display: flex; gap: 12px; align-items: center; }
+.vs-studio .vs-notice-preview { border-color: var(--vs-violet-line); background: var(--vs-pop); color: var(--vs-text); }

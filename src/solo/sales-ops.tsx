@@ -2046,7 +2046,7 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
   const contractedCurrency = model?.facts.contractedCurrency || "usd";
 
   return (
-    <div className={LEGACY_SALES_VIEWS.includes(view) || view === "terms" ? "so" : "so so-billing"}>
+    <div className={view === "terms" ? "so so-billing so-agreements" : LEGACY_SALES_VIEWS.includes(view) ? "so" : "so so-billing"}>
       {success && <div className="so-success" role="status">{success}<button className="btn btn-p" onClick={() => onOpenCatalog()}>Continue setup in Catalog</button></div>}
       {editor === "payment" && sales.canManage ? <PaymentEditor data={sales} onClose={() => setEditor(null)} /> : null}
       {editor === "offer" && offers.canManage ? (

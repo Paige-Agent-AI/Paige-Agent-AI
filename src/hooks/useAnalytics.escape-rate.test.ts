@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import {
   looksLikeMintedCredential,
+  redactAttributionValue,
   redactSecretPath,
   redactSecretSearch,
 } from "./useAnalytics";
@@ -161,4 +162,16 @@ describe("every credential shape the migrations actually mint is covered", () =>
       });
     }
   }
+});
+
+
+it("measures the privacy-first attribution collision budget deterministically",()=>{
+  const ordinary=Array.from({length:1000},(_,n)=>`campaign_launch_${n}`);
+  const ambiguous=Array.from({length:1000},(_,n)=>`CAMPAIGN${String(n).padStart(24,"0")}`);
+  const ordinaryRedacted=ordinary.filter(v=>redactAttributionValue(v)!==v).length;
+  const opaqueRedacted=ambiguous.filter(v=>redactAttributionValue(v)!==v).length;
+  expect(ordinaryRedacted).toBe(0);
+  expect(opaqueRedacted).toBe(1000);
+  // Synthetic explicit corpus, not a population estimate or a relaxed random escape threshold.
+  console.info(JSON.stringify({attributionCorpus:2000,ordinaryRedacted,ambiguousOpaque32Redacted:opaqueRedacted}));
 });

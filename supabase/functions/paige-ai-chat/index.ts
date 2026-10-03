@@ -12092,6 +12092,18 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               if (args.page_id && personaCtx?.tenant_id) {
                 const { data: _exP } = await supabaseClient.from("growth_pages").select("slug").eq("id", args.page_id).eq("tenant_id", personaCtx.tenant_id).maybeSingle();
                 if ((_exP as any)?.slug) _pageSaveSlug = (_exP as any).slug;
+              } else if (personaCtx?.tenant_id) {
+                // A NEW page never takes a slug another page already has: the upsert is keyed on
+                // (tenant, slug), so a reused slug would overwrite that page's draft and title — and
+                // the Studio saves without asking. Same rule the funnel builder applies (`_uniqueSlug`).
+                const _base = String(args.slug || args.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48) || "page";
+                const { data: _taken } = await supabaseClient.from("growth_pages").select("slug").eq("tenant_id", personaCtx.tenant_id).like("slug", `${_base}%`);
+                const _set = new Set(((_taken ?? []) as Array<{ slug: string }>).map((r) => r.slug));
+                _pageSaveSlug = _base;
+                if (_set.has(_base)) {
+                  _pageSaveSlug = `${_base}-${Date.now()}`;
+                  for (let n = 2; n < 200; n++) { if (!_set.has(`${_base}-${n}`)) { _pageSaveSlug = `${_base}-${n}`; break; } }
+                }
               }
               const { data: row, error } = await supabaseClient.rpc("growth_page_upsert", {
                 p_tenant_id: personaCtx?.tenant_id ?? null,
@@ -14621,7 +14633,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // the client opens THIS, never a guessed manifest index). Last visual wins if several built.
           if (studioLinked.length) emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_artifact: studioLinked[studioLinked.length - 1] })}\n\n`));
           // Designed but not saved this turn: the stage shows the draft as "not saved" (see studioPreview).
-          else if (studioPreview) emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_preview: studioPreview })}\n\n`));
+          // Suppressed only by a saved page or funnel — a form or image linked the same turn is not it.
+          if (studioPreview && !studioLinked.some((l) => l.kind === "page" || l.kind === "funnel")) {
+            emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_preview: studioPreview })}\n\n`));
+          }
           // #29 — REGULAR-CHAT handoff cards. Outside a Studio session, emit ONE paige_artifact frame
           // per deliverable the agent persisted this turn so the chat renders a Cowork-style "Created a
           // file" card. Same frame the Studio canvas consumes (backward-compatible: kind/id/title/url +

@@ -210,7 +210,7 @@ function PreviewView({ preview, waiting, brand, device, tenantId }: { preview: D
     <>
       <p className="vs-unsaved" role="status">
         <b>Designed, not saved yet.</b>
-        {waiting ? " Approve the save in the chat to keep it." : " Ask Paige to save it to keep it in this project."}
+        {waiting ? " Approve the save in the chat to keep it." : " Tell Paige to save it if you want to keep it in this project."}
       </p>
       <div className="vs-page-frame" style={device === "phone" ? { width: 390 } : undefined}>
         <LivePreview blocks={preview.blocks as GrowthBlock[]} theme={(preview.theme as GrowthPageTheme | null) ?? undefined} brandFloor={brand.floor} tenantId={tenantId} device={device === "phone" ? "mobile" : "desktop"} />
@@ -224,18 +224,20 @@ export function StudioStage({ artifact, brand, device, tenantId, building, steps
   steps?: BuildStep[]; status?: string | null; preview?: DraftPreview | null; waitingApproval?: boolean;
 }) {
   // Working on something already on the stage: it stays visible, with the light passing over it.
-  const reworking = building && !!artifact;
+  // Only once she is actually building (a step arrived); a plain question leaves the stage alone.
+  const reworking = building && !!artifact && steps.length > 0;
   return (
     <div className="vs-stage-inner" data-reworking={reworking || undefined}>
       {reworking && (
         <p className="vs-working" role="status" aria-live="polite">
           <span className="vs-build-orb" aria-hidden="true" />
-          <span key={steps[steps.length - 1]?.label ?? status ?? ""}>Paige is working: {steps[steps.length - 1]?.label ?? status ?? "on your changes"}</span>
+          <span key={steps[steps.length - 1]?.label ?? ""}>Paige is working: {steps[steps.length - 1]?.label}</span>
         </p>
       )}
-      {!artifact ? (
+      {preview && !building ? (
+        <PreviewView preview={preview} waiting={waitingApproval} brand={brand} device={device} tenantId={tenantId} />
+      ) : !artifact ? (
         building ? <BuildView steps={steps} status={status} brand={brand} />
-        : preview ? <PreviewView preview={preview} waiting={waitingApproval} brand={brand} device={device} tenantId={tenantId} />
         : <div className="vs-stage-empty"><b>Nothing on the stage yet</b>Tell Paige what to build, and it appears here as she makes it.</div>
       ) : artifact.kind === "form" ? (
         <FormSheet form={artifact.form} brand={brand} device={device} />

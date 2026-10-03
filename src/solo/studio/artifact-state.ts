@@ -42,6 +42,7 @@ export type BuildShape = "sheet" | "page" | "form" | "funnel" | "image";
 export function shapeFromSteps(steps: BuildStep[]): BuildShape {
   for (let i = steps.length - 1; i >= 0; i--) {
     const l = steps[i].label.toLowerCase();
+    if (l.startsWith("checking") || l.startsWith("looking")) continue; // reading, not building
     if (l.includes("funnel")) return "funnel";
     if (l.includes("landing page") || l.includes("page")) return "page";
     if (l.includes("form")) return "form";

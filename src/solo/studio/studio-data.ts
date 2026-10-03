@@ -147,6 +147,28 @@ export async function loadTurns(threadId: string): Promise<ChatTurn[]> {
   return ((data ?? []) as { role: "user" | "assistant"; content: string }[]).map((t) => ({ role: t.role, content: t.content }));
 }
 
+/** Approval cards the latest reply left waiting (its stored paige_confirm list), so a reload keeps
+ *  them. Only the latest turn counts: any later message has already answered or passed them. The
+ *  server still decides — an expired proposal comes back as "didn't run". */
+export async function loadHeldConfirms(threadId: string): Promise<Array<{ tool: string; summary: string; fingerprint: string }>> {
+  try {
+    const { data } = await supabase
+      .from("paige_chat_turns")
+      .select("role, bundle_ref, seq")
+      .eq("thread_id", threadId)
+      .order("seq", { ascending: false })
+      .limit(1);
+    const last = ((data ?? []) as Array<{ role: string; bundle_ref: Record<string, unknown> | null }>)[0];
+    if (!last || last.role !== "assistant") return [];
+    const list = Array.isArray(last.bundle_ref?.paige_confirm) ? (last.bundle_ref!.paige_confirm as Array<Record<string, unknown>>) : [];
+    return list
+      .filter((c) => typeof c.summary === "string" && typeof c.fingerprint === "string")
+      .map((c) => ({ tool: String(c.tool ?? "action"), summary: String(c.summary), fingerprint: String(c.fingerprint) }));
+  } catch {
+    return [];
+  }
+}
+
 // ── Artifacts ──────────────────────────────────────────────────────────────────
 export interface FormField {
   key: string;

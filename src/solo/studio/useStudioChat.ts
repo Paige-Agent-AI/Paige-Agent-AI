@@ -3,14 +3,19 @@
 // produced arrive as their own frames; nothing here invents a step or a result the stream did not send.
 import React from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ensureThread, loadTurns, plainError, Said, type ArtifactKind, type ChatTurn } from "./studio-data";
+import { ensureThread, loadHeldConfirms, loadTurns, plainError, Said, type ArtifactKind, type ChatTurn } from "./studio-data";
 
 export interface BuildStep { id: string; label: string; detail?: string; status: "done" | "error"; at: number }
 export interface ChoiceOption { label: string; value: string; description?: string }
 export interface Choices { prompt: string; options: ChoiceOption[]; multi: boolean; allowOther: boolean }
 export interface ProducedArtifact { kind: ArtifactKind; id: string; title: string }
 /** An action Paige proposed that the owner's settings hold for approval (the paige_confirm frame). */
-export interface PendingConfirm { tool: string; summary: string; fingerprint: string }
+export interface PendingConfirm {
+  tool: string; summary: string; fingerprint: string;
+  /** Unset while it waits. "sent" once decided; then the server's own answer (paige_approval_outcome). */
+  state?: "sent" | "ran" | "not_run" | "unconfirmed" | "declined";
+  note?: string;
+}
 /** A page Paige designed this turn but did not save (the paige_preview frame). */
 export interface DraftPreview { kind: "page" | "funnel"; title: string; blocks: unknown[]; theme: unknown }
 
@@ -74,9 +79,9 @@ export function useStudioChat(opts: {
     (async () => {
       try {
         const id = await ensureThread(sessionId);
-        const history = await loadTurns(id);
+        const [history, held] = await Promise.all([loadTurns(id), loadHeldConfirms(id)]);
         if (!live) return;
-        setThreadId(id); setTurns(history); setReady(true);
+        setThreadId(id); setTurns(history); setConfirms(held); setReady(true);
       } catch (e) {
         if (live) setLoadError(plainError(e, "This project's chat couldn't be opened. Try again in a moment."));
       }
@@ -87,7 +92,14 @@ export function useStudioChat(opts: {
   const send = React.useCallback(async (text: string, sendOpts?: { display?: string; approved?: string[]; declined?: string[] }) => {
     const trimmed = text.trim();
     if (!trimmed || sending || !threadId) return;
-    setSendError(null); setChoices(null); setConfirms([]); setStatus(null); setSteps([]);
+    setSendError(null); setChoices(null); setStatus(null); setSteps([]);
+    // A decision keeps its card on screen as "sent" until the server says what happened; any other
+    // message clears the cards it passes over. Either way the snapshot comes back if the send fails.
+    const confirmsBefore = confirms;
+    const decided = [...(sendOpts?.approved ?? []), ...(sendOpts?.declined ?? [])];
+    setConfirms(decided.length
+      ? confirmsBefore.filter((c) => decided.includes(c.fingerprint)).map((c) => ({ ...c, state: sendOpts?.declined?.includes(c.fingerprint) ? "declined" as const : "sent" as const }))
+      : []);
     const requestIntentId = failedIntent.current?.text === trimmed ? failedIntent.current.id : crypto.randomUUID();
     const before = turns;
     const shown = [...before, { role: "user" as const, content: sendOpts?.display ?? trimmed }];
@@ -173,6 +185,16 @@ export function useStudioChat(opts: {
             }
             continue;
           }
+          if (parsed.paige_approval_outcome && typeof parsed.paige_approval_outcome === "object") {
+            const o = parsed.paige_approval_outcome as { actions?: Array<{ fingerprint?: string; outcome?: string; note?: string }>; note?: string };
+            const byFp = new Map((o.actions ?? []).map((a) => [String(a.fingerprint), a]));
+            setConfirms((prev) => prev.map((c) => {
+              const a = byFp.get(c.fingerprint);
+              if (!a || (a.outcome !== "ran" && a.outcome !== "not_run" && a.outcome !== "unconfirmed")) return c;
+              return { ...c, state: a.outcome, note: a.note ?? o.note };
+            }));
+            continue;
+          }
           if (parsed.paige_preview && typeof parsed.paige_preview === "object") {
             const pv = parsed.paige_preview as Record<string, unknown>;
             if (Array.isArray(pv.blocks) && pv.blocks.length) {
@@ -196,6 +218,7 @@ export function useStudioChat(opts: {
       if (abort.current?.signal.aborted) return;
       setTurns(before);
       setSteps([]);
+      setConfirms(confirmsBefore);
       failedIntent.current = { text: trimmed, id: requestIntentId };
       setSendError(plainError(e, "Paige couldn't take that just now. Check your connection and try again."));
     } finally {
@@ -205,7 +228,7 @@ export function useStudioChat(opts: {
         cb.current.onTurnDone();
       }
     }
-  }, [sending, threadId, turns]);
+  }, [sending, threadId, turns, confirms]);
 
   // A brand-new project's first build: the brief from Studio home, sent once, the moment the
   // thread is ready and empty.

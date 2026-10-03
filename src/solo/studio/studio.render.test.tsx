@@ -34,6 +34,8 @@ const h = vi.hoisted(() => ({
   content: null as Rec | null,
   openTitle: "Client intake",
   renamed: [] as Array<[string, string]>,
+  held: [] as Array<{ tool: string; summary: string; fingerprint: string }>,
+  openBrief: "An intake form for new clients",
 }));
 
 vi.mock("@/hooks/useTenantContext", () => ({
@@ -56,7 +58,8 @@ vi.mock("./studio-data", async (orig) => {
     ...real,
     listSessions: async () => h.sessions,
     createSession: async (brief: string) => { h.created.push(brief); return session("s-new", brief, brief); },
-    openSession: async (id: string) => session(id, h.openTitle, "An intake form for new clients"),
+    openSession: async (id: string) => session(id, h.openTitle, h.openBrief),
+    loadHeldConfirms: async () => h.held,
     renameSession: async (id: string, title: string) => { h.renamed.push([id, title]); h.openTitle = title; },
     ensureThread: async () => "th-1",
     loadTurns: async () => [],
@@ -114,7 +117,7 @@ function type(el: HTMLTextAreaElement, value: string) {
 }
 
 beforeEach(() => {
-  Object.assign(h, { sessions: [], created: [], manifest: [], form: null, versions: [], restored: [], published: [], publishError: null, sse: [], status: 200, fetchBodies: [], versionReads: 0, content: null, openTitle: "Client intake", renamed: [] });
+  Object.assign(h, { sessions: [], created: [], manifest: [], form: null, versions: [], restored: [], published: [], publishError: null, sse: [], status: 200, fetchBodies: [], versionReads: 0, content: null, openTitle: "Client intake", renamed: [], held: [], openBrief: "An intake form for new clients" });
   backs = 0;
   host = document.createElement("div");
   document.body.appendChild(host);
@@ -421,5 +424,74 @@ describe("Vibe Studio project workspace", () => {
     await startProject("An intake form for new clients");
     expect(h.renamed).toEqual([["s-new", "New client intake"]]);
     expect(host.querySelector(".vs-crumbs b")?.textContent).toBe("New client intake");
+  });
+
+  it("declining sends exactly that fingerprint as declined, and the card says it was skipped", async () => {
+    h.sse = [JSON.stringify({ paige_confirm: { tool: "growth_page_save", summary: "Save the page draft", fingerprint: "0123456789abcdef" } }), "[DONE]"];
+    await startProject("A landing page for my workshop");
+    h.sse = [JSON.stringify({ choices: [{ delta: { content: "Okay, left it." } }] }), "[DONE]"];
+    await act(async () => { button("Not this")!.click(); });
+    await flush();
+    expect(h.fetchBodies.at(-1)).toMatchObject({ declinedConfirmations: ["0123456789abcdef"] });
+    expect(h.fetchBodies.at(-1)).not.toHaveProperty("approvedConfirmations");
+    expect(text()).toContain("Skipped");
+  });
+
+  it("an approval settles on the server's own outcome, not on Paige's words", async () => {
+    h.sse = [JSON.stringify({ paige_confirm: { tool: "growth_page_save", summary: "Save the page draft", fingerprint: "0123456789abcdef" } }), "[DONE]"];
+    await startProject("A landing page for my workshop");
+    h.sse = [
+      JSON.stringify({ paige_approval_outcome: { actions: [{ fingerprint: "0123456789abcdef", outcome: "not_run" }], note: "That approval had expired. Ask Paige again." } }),
+      JSON.stringify({ choices: [{ delta: { content: "All saved!" } }] }),
+      "[DONE]",
+    ];
+    await act(async () => { button("Approve")!.click(); });
+    await flush();
+    expect(text()).toContain("Didn't run");
+    expect(text()).toContain("That approval had expired. Ask Paige again.");
+  });
+
+  it("a failed Approve puts the card back so it can still be approved", async () => {
+    h.sse = [JSON.stringify({ paige_confirm: { tool: "growth_page_save", summary: "Save the page draft", fingerprint: "0123456789abcdef" } }), "[DONE]"];
+    await startProject("A landing page for my workshop");
+    h.status = 500;
+    await act(async () => { button("Approve")!.click(); });
+    await flush();
+    expect(text()).toContain("Paige couldn't take that just now");
+    expect(button("Approve")).toBeTruthy();
+    expect(text()).toContain("Waiting for your approval");
+  });
+
+  it("an approval still waiting when the project is reopened comes back", async () => {
+    h.manifest = [];
+    h.held = [{ tool: "growth_page_save", summary: "Save the page draft “Workshop”", fingerprint: "0123456789abcdef" }];
+    h.sessions = [{ id: "s-1", title: "Workshop", seedBrief: null, artifacts: [], thumbnailUrl: null, updatedAt: "2026-10-03T12:00:00Z" }];
+    await mount();
+    await act(async () => { [...host.querySelectorAll(".vs-card")][0]!.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+    await flush();
+    expect(text()).toContain("Save the page draft “Workshop”");
+    expect(button("Approve")).toBeTruthy();
+  });
+
+  it("a project started from Studio home (titled with its brief) is renamed to its first piece", async () => {
+    h.openTitle = "An intake form for new clients";
+    h.openBrief = "An intake form for new clients";
+    h.sse = [JSON.stringify({ paige_artifact: { kind: "form", id: "f-1", title: "New client intake" } }), "[DONE]"];
+    await startProject("An intake form for new clients");
+    expect(h.renamed).toEqual([["s-new", "New client intake"]]);
+  });
+
+  it("a redesign that was not saved shows over the saved piece, marked not saved", async () => {
+    h.manifest = [{ kind: "form", id: "f-1", title: "New client intake" }];
+    h.form = FORM;
+    h.sessions = [{ id: "s-1", title: "Client intake", seedBrief: null, artifacts: h.manifest, thumbnailUrl: null, updatedAt: "2026-10-03T12:00:00Z" }];
+    await mount();
+    await act(async () => { [...host.querySelectorAll(".vs-card")][0]!.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+    await flush();
+    h.sse = [JSON.stringify({ paige_preview: { kind: "page", title: "Workshop", blocks: [{ type: "hero", title: "Hi" }], theme: null } }), "[DONE]"];
+    type(host.querySelector<HTMLTextAreaElement>("#vs-chat-input")!, "Make me a page for this");
+    await act(async () => { host.querySelector<HTMLButtonElement>("button[aria-label='Send']")!.click(); });
+    await flush();
+    expect(text()).toContain("Designed, not saved yet.");
   });
 });

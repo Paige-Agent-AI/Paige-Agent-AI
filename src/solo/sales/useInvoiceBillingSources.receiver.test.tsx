@@ -1,0 +1,12 @@
+import React, {act} from 'react';
+import {createRoot} from 'react-dom/client';
+import {describe,it,expect,vi} from 'vitest';
+const h=vi.hoisted(()=>({fetch:vi.fn(),constructionFails:false}));
+vi.mock('@/hooks/useTenantContext',()=>({useTenantContext:()=>({activeTenantId:'tenant-a',accountContextLoading:false})}));
+vi.mock('@/integrations/supabase/client',async()=>{const {createClient}=await import('@supabase/supabase-js');const client=createClient('https://fixture.invalid','fixture-key',{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},global:{fetch:h.fetch}});const original=client.from;client.from=function(...args:Parameters<typeof original>){if(h.constructionFails)throw Error('source construction failed');return original.apply(this,args)} as typeof original;return {supabase:client};});
+import {useInvoiceBillingSources} from './useInvoiceBillingSources';
+globalThis.IS_REACT_ACT_ENVIRONMENT=true;
+describe('invoice sources with real Supabase client receiver',()=>{
+ it('constructs and executes tenant-filtered customer/agreement reads without losing the receiver',async()=>{h.constructionFails=false;const urls:string[]=[];h.fetch.mockImplementation(async(url:URL|string)=>{urls.push(String(url));return new Response('[]',{status:200,headers:{'Content-Type':'application/json'}})});let latest:ReturnType<typeof useInvoiceBillingSources>;function Probe(){latest=useInvoiceBillingSources({clientId:'client-a',agreementId:'agreement-a'});return null;}const root=createRoot(document.createElement('div'));await act(async()=>{root.render(<Probe/>);await new Promise(r=>setTimeout(r,50));});await act(async()=>{await new Promise(r=>setTimeout(r,50));});expect(latest!.phase).toBe('ready');expect(urls).toHaveLength(4);expect(urls.every(u=>new URL(u).searchParams.get('tenant_id')==='eq.tenant-a')).toBe(true);expect(urls.filter(u=>u.includes('/paige_agreements')).every(u=>new URL(u).searchParams.get('contact_id')==='eq.client-a')).toBe(true);await act(async()=>root.unmount());});
+ it('contains synchronous query construction failure in the source error state',async()=>{h.constructionFails=true;let latest:ReturnType<typeof useInvoiceBillingSources>;function Probe(){latest=useInvoiceBillingSources();return null;}const root=createRoot(document.createElement('div'));await act(async()=>root.render(<Probe/>));expect(latest!.phase).toBe('error');expect(latest!.customers).toEqual([]);await act(async()=>root.unmount());h.constructionFails=false;});
+});

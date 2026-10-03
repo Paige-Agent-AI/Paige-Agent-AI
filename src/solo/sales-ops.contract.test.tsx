@@ -55,7 +55,13 @@ const UNROUTED = {
 };
 
 const harness = vi.hoisted(() => ({
-  state: {} as Record<string, unknown>,
+  state: {} as {
+    tenantId: string; phase: string;
+    campaigns: unknown[]; artifacts: unknown[];
+    submissions: Array<{ id: string; source: string; createdAt: string; contactId: string | null; dealId: string | null }>;
+    pipelineWorkspace: { canManage: boolean; folders: unknown[]; pipelines: unknown[]; stages: unknown[]; deals: unknown[] };
+    pipelineAction: () => Promise<{ ok: boolean; message: string }>; retry: () => void;
+  },
   offers: {} as Record<string, unknown>,
   sales: {} as Record<string, unknown>,
   agreements: {} as Record<string, unknown>,

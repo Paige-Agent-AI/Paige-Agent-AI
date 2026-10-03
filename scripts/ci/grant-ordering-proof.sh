@@ -21,10 +21,9 @@ db=postgresql://postgres:postgres@127.0.0.1:54322/postgres
 tool=scripts/ci/reproduce-production-grants.mjs
 
 v="$(node "$tool" --reset-version --recorded "$prod/recorded_versions.txt" --aside-list /dev/null)"
-# One version below V, as an integer: versions in this tree are not always real dates (hour 35,
-# day 48), and date arithmetic rolled those forward, which made the "older" probe newer than V and
-# the out-of-order path silently untested (§39 final read on #1487).
-older="$(node -e 'process.stdout.write((BigInt(process.argv[1]) - 1n).toString().padStart(14, "0"))' "$v")"
+# Greatest unused integer below V: versions are not always dates, and adjacent versions can
+# already belong to a local migration or a production-only ledger entry. Never reuse either.
+older="$(node scripts/ci/grant-proof-unused-version.mjs "$v" supabase/migrations "$prod/recorded_versions.txt")"
 if [[ ! "$older" < "$v" ]]; then echo "::error::out-of-order probe $older is not older than $v"; exit 1; fi
 newer_probe=supabase/migrations/29991231235959_ci_grant_ordering_probe.sql
 older_probe="supabase/migrations/${older}_ci_grant_ordering_probe_out_of_order.sql"

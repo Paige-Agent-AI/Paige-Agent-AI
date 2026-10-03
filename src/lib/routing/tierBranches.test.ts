@@ -197,7 +197,7 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
     // redirects into the Command Center path. Vault is an owner-locked Settings destination.
     const noSub = SOLO_BRANCHES.filter((b) => !b.subtabs).map((b) => b.slug).sort();
     expect(noSub).toEqual([]);
-    expect(SOLO_BRANCHES.filter((b) => b.subtabs).length).toBe(9);
+    expect(SOLO_BRANCHES.filter((b) => b.subtabs).length).toBe(10);
     expect(branchBySlug("solo", "trust-compass")).toBeFalsy(); // no longer a top-level branch
   });
 
@@ -209,14 +209,16 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
     expect(count("clients")).toBe(6);
     expect(count("calendar")).toBe(6);
     expect(count("growth")).toBe(8);
+    expect(count("sales")).toBe(7);
     expect(count("analytics")).toBe(6);
     expect(count("marketplace")).toBe(4);
     expect(count("settings")).toBe(7);
     const total = SOLO_BRANCHES.reduce((n, b) => n + (b.subtabs?.length ?? 0), 0);
-    expect(total).toBe(48);
+    expect(total).toBe(55);
     // first sub-tab is the screen's default (bare branch renders it) — now Business Game Plan.
     expect(defaultSubtabSlug("solo", "command-center")).toBe("business-game-plan");
     expect(defaultSubtabSlug("solo", "paige")).toBe("chat");
+    expect(defaultSubtabSlug("solo", "sales")).toBe("overview");
     expect(defaultSubtabSlug("solo", "settings")).toBe("setup");
   });
 
@@ -378,6 +380,7 @@ describe("Solo sub-tab registry ↔ screen source contract (§39 #1)", () => {
     automations: "src/solo/automations-build.tsx",
     calendar: "src/pages/admin/CalendarAdmin.tsx",
     growth: "src/solo/growth2.tsx",
+    sales: "src/solo/SalesWorkspace.tsx",
     analytics: "src/solo/analytics2.tsx",
     marketplace: "src/solo/marketplace.tsx",
     settings: "src/solo/settings.tsx",
@@ -410,12 +413,12 @@ describe("Solo sub-tab registry ↔ screen source contract (§39 #1)", () => {
     ).exec(src);
     if (!hook) throw new Error(`no useSubtabRoute("solo","${branchSlug}") in ${file}`);
     const after = src.slice(hook.index);
-    if (branchSlug === "command-center") {
-      const tabs = /const\s+TABS\s*=\s*\[([\s\S]*?)\];/.exec(src)?.[1] ?? "";
+    if (branchSlug === "command-center" || branchSlug === "sales") {
+      const tabs = /const\s+TABS\s*=\s*\[([\s\S]*?)\]\s*(?:as const)?;/.exec(src)?.[1] ?? "";
       return [...tabs.matchAll(/\[\s*["']([A-Za-z0-9_-]+)["']/g)].map((match) => match[1]);
     }
     if (branchSlug === "paige") {
-      const tabs = /const\s+TABS[\s\S]*?=\s*\[([\s\S]*?)\];/.exec(src)?.[1] ?? "";
+      const tabs = /const\s+TABS[\s\S]*?=\s*\[([\s\S]*?)\]\s*(?:as const)?;/.exec(src)?.[1] ?? "";
       return [...tabs.matchAll(/\{\s*id:\s*["']([A-Za-z0-9_-]+)["']/g)].map((match) => match[1]);
     }
     // The strip is either `const tabs=[…]` or an inline `tabs={[…]}` (integrations).

@@ -142,17 +142,21 @@ describe("tenant Relationships / Clients workspace", () => {
     useTenantRelationshipsData.mockReturnValue(baseData);
   });
 
-  it("returns to the current Solo account without accepting a supplied return URL", () => {
+  it.each([
+    ["", "/solo/42/growth/sales?resume=terms"],
+    ["&salesReturn=department", "/solo/42/sales/agreements?resume=terms"],
+    ["&salesReturn=/solo/99/sales/agreements", "/solo/42/growth/sales?resume=terms"],
+  ])("returns to the current Solo account with enum handoff %s", (flag, expected) => {
     const host = document.createElement("div");
     document.body.append(host);
     const root = createRoot(host);
-    const view = <MemoryRouter initialEntries={["/solo/42/clients/people?origin=sales&returnTo=/solo/99/growth/sales"]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()}/><LocationProbe/></MemoryRouter>;
+    const view = <MemoryRouter initialEntries={[`/solo/42/clients/people?origin=sales&returnTo=/solo/99/growth/sales${flag}`]}><TenantRelationshipsClientsWorkspace routeTier="solo" openPaige={vi.fn()}/><LocationProbe/></MemoryRouter>;
     try {
       act(() => root.render(view));
       const back = host.querySelector(".trc-sales-return button") as HTMLButtonElement;
       expect(back).not.toBeNull();
       act(() => back.click());
-      expect(host.querySelector("[data-location]")?.textContent).toBe("/solo/42/growth/sales?resume=terms");
+      expect(host.querySelector("[data-location]")?.textContent).toBe(expected);
       expect(host.querySelector(".trc-sales-return")).toBeNull();
     } finally {
       act(() => root.unmount());

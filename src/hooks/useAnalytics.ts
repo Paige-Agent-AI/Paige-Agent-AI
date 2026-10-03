@@ -214,25 +214,22 @@ function looksLikeCredential(value: string): boolean {
  * `_` are ALPHABET here, not word breaks, and 63.8% of real invite tokens contain one. Instead:
  *   · EXACTLY 32 characters. 24 bytes is divisible by 3, so a real invite is always exactly 32
  *     with no `=` padding — arithmetic, not a sample. Pinning the width rather than using `>= 32`
- *     costs 1.3% of campaign names instead of 11.8%, measured, for identical escape.
- *   · MIXED CASE. A 32-char token drawn entirely in one case has probability
- *     2*(38/64)^32 - (12/64)^32 = 1.1e-7, about 1 in 8.8 million. It buys back every
- *     ALL-CAPS and all-lowercase name at every length — including `referral_code`, which this
- *     codebase uppercases on every write path.
+ *     bounds the attribution collision to this width instead of every long label.
+ *   · CASE-INDEPENDENT. Real random mints can be entirely uppercase or lowercase.
+ *     Owner privacy-first policy deliberately hides ambiguous opaque32 campaign/referral codes
+ *     rather than exempting a possible credential. Shorter and separated non-mint labels remain.
  *   · THE SPACE FORM TOO. `URLSearchParams.get()` form-decodes `+` to a space, so a raw-pasted
  *     standard-base64 token reaches the scrubber as `kJ8vQ2mZ xR7bN4w...` and fails every base64
  *     charset test. 39.6% of standard-base64 tokens contain a `+`.
  *
- * Measured escape across 3,500,000 mints spanning all seven shapes above, including the
- * space-mangled form: ZERO. The residual is a FUTURE mint of a non-hex width other than 32 — the
+ * Randomized escape gates remain at ZERO and deterministic single-case regressions supplement
+ * them. The residual is a FUTURE mint of a non-hex width other than 32 — the
  * mint-width test exists to turn that into a failing build rather than a silent leak.
  */
 function isMintWidthBase64(value: string): boolean {
   return (
     value.length === 32 &&
-    /^[A-Za-z0-9+/=_-]+$/.test(value) &&
-    /[a-z]/.test(value) &&
-    /[A-Z]/.test(value)
+    /^[A-Za-z0-9+/=_-]+$/.test(value)
   );
 }
 

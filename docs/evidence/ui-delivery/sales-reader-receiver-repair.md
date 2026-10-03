@@ -8,7 +8,7 @@ FLOW_PROTOTYPE: NOT_REQUIRED: existing approved flow preserved; owner approved o
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: workspace owner/admin prepares, reviews, saves and reopens a canonical invoice draft
 VISUAL_DIRECTION: PASS: approved Operate reconciliation direction, defined violet group boundaries, raised controls, invoice table and restrained due-now emphasis
 AUTOMATED_EVIDENCE: PASS: 41 focused tests; two failing-first real SDK receiver/construction regressions now pass; no SQL changes
-STATIC_EVIDENCE: PASS: focused ESLint and diff check; final TypeScript and independent repair review pending
+STATIC_EVIDENCE: UNVERIFIED: final TypeScript rerun not complete; focused ESLint and diff check passed; repair needs independent review
 RENDERED_EVIDENCE: PASS: production-built actual shell with real source hook and real SDK/mock fetch; Overview/Invoices ready and injected construction-error cases render with zero pageerrors; prior unchanged-layout matrix supporting only
 BEHAVIORAL_EVIDENCE: PASS: local component/hook lifecycle, known contact/manual/snapshot, Catalog repricing/search/reference paging, stacked items, dirty exits and frozen original retry; hosted authenticated lifecycle UNVERIFIED
 AUTHENTICATED_RUNTIME: UNVERIFIED: Windows browser ACL blocks hosted account drive; fixture tenant and route IDs are not account proof

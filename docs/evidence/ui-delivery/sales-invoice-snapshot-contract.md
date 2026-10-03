@@ -8,7 +8,7 @@ FLOW_PROTOTYPE: PASS: owner approved reconciliation prototype and final control 
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: workspace administrator persists a client billing draft
 VISUAL_DIRECTION: PASS: approved reconciliation direction remains controlling; no visual change here
 AUTOMATED_EVIDENCE: PASS: 169 focused tests; local SQL legacy plus 27 negative cases, maximum items, actual SQL-to-client create/edit/replay/mixed list and two-session CAS/concurrent create proof
-STATIC_EVIDENCE: PASS: focused ESLint and definer/ACL lint; TypeScript ratchet and independent exact-head review pending
+STATIC_EVIDENCE: PASS: focused ESLint and definer/ACL lint; TypeScript ratchet 12 baseline/current PASS; independent exact-head review PASS
 RENDERED_EVIDENCE: UNVERIFIED: production UI caller not enabled; prototype screenshots do not prove this slice
 BEHAVIORAL_EVIDENCE: UNVERIFIED: source/mock lifecycle and local SQL proof only; authenticated UI traversal not enabled
 AUTHENTICATED_RUNTIME: UNVERIFIED: local PostgreSQL role tests stub auth helpers; hosted workspace/auth integration pending
@@ -25,13 +25,13 @@ MUST_PRESERVE: existing agreements, catalog and declaration records; platform su
 ACCEPTANCE_CRITERIA: server scopes all item/contact/agreement IDs; checked aggregate integer money; legacy and v2 readers; retry exact original request before mutable validations; CAS and concurrent create proven locally
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: tenant/RLS/CAS guarded; no shared Harness, Rail, Chat, Analytics or Memory write added
-INTERNAL_BUILD_IDENTITY: d6a6927fc74031de70877aaae5d4328f8d770582; deployment=local-source; environment=development; migrations=PROOF_OWED(production application of 20270536000001_sales_invoice_snapshot_v2); edge=NOT_APPLICABLE; evidence=scripts/sql/sales-invoice-snapshot-proof.mjs and scripts/sql/sales-invoice-snapshot-concurrency.mjs
-RELEASE_CHANNEL: development: backend compatibility dependency, production anticipated after independent review and exact-head CI
+INTERNAL_BUILD_IDENTITY: 33b32deeacc1a0ca11d1234a58cc9eee4934aca3; deployment=dpl_JBx6LiNCQW2WqVJqrKQPU5R1dMj4 READY exact SHA; environment=production; migrations=APPLIED(20270536000001_sales_invoice_snapshot_v2); edge=NOT_APPLICABLE; evidence=deploy-migrations run 37135622333 SUCCESS and Master section 4.0 read-only production metadata verification
+RELEASE_CHANNEL: production: backend compatibility dependency applied and exact deployment identity verified
 RELEASE_CLASSIFICATION: internal-only: versioned draft contract without enabled new UI writer
 CUSTOMER_RELEASE_IDENTITY: none: no customer update publication
 RELEASE_NOTE_REQUIRED: no: internal dependency only
-RELEASE_TRUTH_BOUNDARY: PARTIAL: local source/SQL proof only; hosted auth and production identity PROOF OWED; provider issue/send UNAVAILABLE
-RELEASE_RECOVERY: position=unapplied forward migration preserving historical snapshots, managed dispatch refusal and restrictive constraint; reference=20270536000001_sales_invoice_snapshot_v2.sql
+RELEASE_TRUTH_BOUNDARY: PARTIAL: production source/RPC identity verified; hosted authenticated lifecycle PROOF OWED; provider issue/send UNAVAILABLE
+RELEASE_RECOVERY: position=applied migration requires forward fix preserving historical snapshots, managed dispatch refusal and restrictive constraint; reference=20270536000001_sales_invoice_snapshot_v2.sql
 SOLO_1536X770_PAIGE_CLOSED: NOT_APPLICABLE: backend slice has no enabled UI consumer
 SOLO_1536X770_PAIGE_OPEN: NOT_APPLICABLE: backend slice has no enabled UI consumer
 SOLO_1366X768_PAIGE_CLOSED: NOT_APPLICABLE: backend slice has no enabled UI consumer
@@ -60,3 +60,5 @@ Commands: `node scripts/sql/sales-invoice-snapshot-proof.mjs <psql.exe> 56219 po
 8. Canonical row, operation and CAS/list readback supply local provenance; Rail/Mind/Memory ingestion is not claimed.
 9. Existing campaigns.sales availability is unchanged; complete billing launch remains partial.
 10. Authenticated current/second-tenant, provider and native browser proof remain owed; Windows browser ACL blocker is not success evidence.
+
+Production identity observed by release coordinator: PR #1656 reviewed head a73d577b15b59411451ba0172198af88af5ad41e, all nine required checks PASS, squash33b32deeacc1a0ca11d1234a58cc9eee4934aca3. Both public/app version.json returned33b32deeacc1a0ca11d1234a58cc9eee4934aca3-musl3zhm with customerUpdate null. Ledger20270536000001, schema2 and delivery intents RPC branches, postgres/authenticated-only ACL, validated sales_billing_draft_shape and four restrictive authenticated policies verified read-only. Hosted authenticated lifecycle remains PROOF OWED.

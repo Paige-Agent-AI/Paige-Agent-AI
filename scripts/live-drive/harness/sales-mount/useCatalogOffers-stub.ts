@@ -9,7 +9,7 @@ const OFFERS: CatalogOffer[] = [
     deliveryShape: "program", pricePresentation: "fixed", customerAction: "apply",
     category: "Programs", imageUrl: null, updatedAt: "2026-08-28T12:00:00Z",
     prices: [{ id: "p1", nickname: "Standard", unitAmount: 240000, currency: "usd",
-               billingInterval: "month", kind: "recurring", installmentsTotal: null, active: true }],
+               billingInterval: "month", intervalCount:1, kind: "recurring", installmentsTotal: null, active: true }],
   },
   {
     id: "offer-2", name: "Onboarding toolkit", summary: null, description: null,
@@ -25,7 +25,7 @@ export const BILLING_CATALOG_FIXTURE: CatalogOffer = {
   id: 'test-billing-offer', name: 'Catalog service', summary: 'Synthetic current price', description: null,
   availability: 'active', billingCadence: 'one_time', kind: 'service', deliveryShape: 'digital',
   pricePresentation: 'fixed', customerAction: 'enquire', category: null, imageUrl: null, updatedAt: null,
-  prices: [{ id: 'test-billing-price', nickname: 'Current', unitAmount: 15000, currency: 'usd', billingInterval: 'one_time', kind: 'one_time', installmentsTotal: null, active: true }],
+  prices: [{ id: 'test-billing-price', nickname: 'Current', unitAmount: 15000, currency: 'usd', billingInterval: 'one_time', intervalCount:null, kind: 'one_time', installmentsTotal: null, active: true }],
 };
 
 // LOCAL FIXTURE ONLY: this store is never imported by the production adapter.

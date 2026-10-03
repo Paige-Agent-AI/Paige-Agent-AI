@@ -1,64 +1,92 @@
 # M4 — the Go High Level connection lane: the provider exists, and the honest path to Paige's hands in the tenant's CRM
 
-> **Status: the provider descriptor is seeded (migration 20270534000000).** Until this milestone
-> GHL could not exist in the canonical gateway at all — `create_mcp_connection` refuses an
-> unknown provider key (`MCP_BAD_PROVIDER`) and no GHL row was ever seeded. What ships here is
-> exactly the descriptor plus the verification path; **zero live GHL execution, no chat tool, no
-> Spine capability** — those land only after the first real connection's discovery shows GHL's
-> actual tool names. As with M1/M3, the canonical live dispatch stays fail-closed behind the
-> owner go (`MCP_GATEWAY_EXECUTE_ENABLED`, default OFF).
+> **Status: corrected 2026-10-03 after grounding GHL's own official setup article.** The
+> provider descriptor is live (migration 20270534000000 seeded it; 20270536000000 corrected
+> it to GHL's real requirements). **Zero live GHL execution, no chat tool, no Spine
+> capability** — those land only after the first real connection's discovery shows GHL's
+> actual tool names. The canonical live dispatch stays fail-closed behind the owner go
+> (`MCP_GATEWAY_EXECUTE_ENABLED`, default OFF).
 
-## GHL's own requirements (the third unique connection)
+## GHL's real requirements (from their official setup article, verified 2026-10-03)
 
-1. **The endpoint is the tenant's own MCP server on `services.leadconnectorhq.com`** (the
-   Integrations catalogue row names `/mcp/anthropic/v2`; the exact per-tenant path is copied from
-   the tenant's GHL MCP settings at connect time — the same per-tenant-endpoint model as Zapier,
-   unlike n8n's self-hosted instance).
-2. **Two executable auth kinds:**
-   - `oauth` — the GHL marketplace-app flow (issuer `marketplace.leadconnectorhq.com`,
-     per GHL's marketplace docs — confirm at the first `oauth_begin`; the gateway discovers
-     the real issuer via RFC 8414 metadata, nothing is hard-coded) through the same gateway
-     OAuth doors as every provider. The M2 fix governs scope selection: challenge scope →
-     protected-resource metadata → omit; a GHL marketplace app's broad scope catalogue is
-     never requested by default.
-   - `bearer` — a location/company API token presented as the MCP bearer credential (the quick
-     path; the token is stored encrypted, shown only as last4, and a disconnect scrubs it).
-3. **The governed unit is CRM data, not workflows or actions** — contacts, conversations
-   (SMS/email), opportunities, calendars, invoices. Reads carry PII; writes can move real money
-   (invoices, message credits). The lane's blast radius is exactly why nothing ships live: the
-   chat surface waits for real discovery.
+1. **The endpoint is the GENERIC one: `https://services.leadconnectorhq.com/mcp/`.** The
+   client-shaped variants (`/mcp/anthropic/v2`, `/mcp/openai/v2/`, `/mcp/muse/v2`) exist for
+   named AI clients; a custom MCP application — ours — uses the generic endpoint.
+2. **PAIGE's verified auth is a Private Integration Token (PIT).** Create it in the
+   sub-account: Settings → Private Integrations → Create New Integration → pick the scopes
+   → copy the token — and the PIT's scopes govern which MCP tools are offered. GHL's
+   client-specific OAuth surfaces exist (their newer client endpoints use them), but they
+   are **not yet verified for PAIGE**: the facet stays off our descriptor until an
+   end-to-end proof lands. Re-adding it later is a one-line change verified against this
+   runbook first.
+3. **A `locationId` header rides alongside the bearer token** on every MCP call — the id of
+   the sub-account the PIT belongs to.
+4. **Scopes are chosen at PIT creation, on GHL's side** (Contacts, Conversations,
+   Opportunities, Calendars, Payments, and view-scopes are their suggested set). Nothing
+   extra is needed from us.
 
-## The connect path (owner-gated, same doors as M1)
+### What our build already supports (verified in code, no changes needed)
+
+- `auth_kind: "bearer"` is MCP-executable in the canonical loader.
+- **Custom headers ride encrypted end-to-end**: stored in the connection's encrypted
+  header bundle, grammar-checked, rejected only if they collide with the transport's
+  reserved names (`locationId` does not), and forwarded on every MCP call the session
+  makes — exactly the `locationId` requirement.
+- The verify path (read-only handshake) and per-tool approval apply to any endpoint.
+
+### The correction (what was wrong)
+
+The original descriptor advertised an **oauth facet before any PAIGE verification of it**.
+The owner's OAuth attempt (2026-10-02) went through GHL's own `lc-mcp` marketplace app — a
+client-specific surface — and died at their consent with `Invalid scope(s)`: their resource
+metadata advertises ~180 scopes while their consent rejects the 8 newest
+(`emails/templates.*`, `emails/campaigns.*`, `emails/stats.*`, `files.readonly`,
+`socialplanner/comments.*`). That is GHL's app-side inconsistency on an unverified path.
+The descriptor is now the PAIGE-verified surface only (bearer; migration 20270536000000) —
+narrowed as a supported-surface decision, NOT a claim that GHL lacks OAuth.
+
+## The connect path (works today through the Integrations drawer)
+
+In the drawer (the HighLevel tile preselects all of this): **Server URL**
+`https://services.leadconnectorhq.com/mcp/`, authentication **Token + headers**, the token
+= **the PIT** (the credential header stays Authorization and the drawer sends it as a
+Bearer), then **Add header** → name `locationId`, value = your sub-account's location id.
+The form refuses to save without the locationId header — the provider's declared contract. Save, then Check — the verify handshake discovers GHL's real
+tool catalogue (`search`, `fetch`, `search_operations`, `describe_operation`,
+`execute_operation`, `list_locations` per their docs) into the connection's tool list.
+
+The HighLevel tile now carries the provider identity (`gohighlevel`) into the create, so a
+drawer connection IS a canonical gohighlevel connection — with the server-side trigger
+(migration 20270536000000) refusing any gohighlevel bearer write that lacks the locationId
+header. The API equivalent:
 
 ```json
 { "action": "create", "facet": "mcp", "provider_key": "gohighlevel",
-  "label": "GHL — <location or agency name>", "server_url": "https://services.leadconnectorhq.com/<your-mcp-path>",
-  "auth_kind": "bearer", "auth_token": "<ghl-access-token>" }
+  "label": "GHL — <location name>", "server_url": "https://services.leadconnectorhq.com/mcp/",
+  "auth_kind": "bearer", "auth_token": "<private-integration-token>",
+  "custom_headers": { "locationId": "<your-location-id>" } }
 ```
 
-`provider_key` is required (the `gohighlevel` descriptor seeded by migration 20270534000000);
-`auth_kind` is `bearer` for an API token or `oauth` to run the `oauth_begin` flow instead of
-passing a token. From there the M1 runbook (`m1-execute-verification.md`) applies verbatim:
-`verify` (the only writer of connected/healthy — and the step that discovers GHL's real tool
-catalogue into `mcp_connection_tools`), `tools` (the catalogue), `approve` (per-tool durable
-consent — tenant-admin; pass `args_shape_hash` for consequential tools), `execute` with
-`mode:"prepare"` first, then the owner-gated `mode:"execute"`.
+From there the M1 runbook (`m1-execute-verification.md`) applies verbatim: `verify` (the
+only writer of connected/healthy — and the step that proves the PIT + locationId pair
+against the real endpoint), `tools` (the catalogue), `approve` per tool (pass
+`args_shape_hash` for the consequential ones), `execute` with `mode:"prepare"` first, then
+the owner-gated `mode:"execute"`.
 
-**The discovery step is the gate for everything that follows.** GHL's MCP tool names are
-provider-owned and may change; the next slice (the governed chat/Spine surface) is declared
-from what `verify` actually returns — never from invented names. Until a real connection has
-been verified, Paige honestly has no GHL hands.
+**Discovery is the gate for everything that follows.** The next slice (the governed
+chat/Spine surface) is declared from what `verify` actually returns — never from invented
+names. Until a real connection has been verified, Paige honestly has no GHL hands.
 
 ## What M4 did NOT ship (scope discipline)
 
 - No chat tool, no Spine capability, no execution wiring, no sample data — the registry JSON
   entry (`gohighlevel-mcp`, PARTIAL) names the gap explicitly.
-- No changes to the integrations_surface fact vocabulary (that adapter reads
-  `channel_connectors`, a different store; GHL joins it when the lane is live).
-- Mind/knowledge binding stays out entirely (owner direction 2026-10-02).
+- Mind/knowledge binding stays out entirely (parked per owner direction; the integrations
+  Mind projection covers connection STATE once a GHL row exists).
 
 ## The finish line for this lane (next slice)
 
-First live GHL connection: connect → verify → read the discovered tool catalogue → then declare
-the Spine domain + chat tools from the real names (the M3 zapier shape: register what exists),
-with every CRM write behind the chat-canonical propose-first approval and the real-money track.
+First live GHL connection: connect (PIT + locationId) → verify → read the discovered tool
+catalogue → then declare the Spine domain + chat tools from the real names (the M3 zapier
+shape: register what exists), with every CRM write behind the chat-canonical propose-first
+approval and the real-money track.

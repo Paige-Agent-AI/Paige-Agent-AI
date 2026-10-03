@@ -32,7 +32,7 @@ import { SOLO_SETTINGS_DESTINATIONS } from "./settings-contract";
 import { canShowVaultNavigation, useVaultAccess } from "./vault/useBusinessVault";
 import { VibeStudio } from "./vibe";
 import { TenantCommandCenterShell } from "@/components/tenant-shell/TenantCommandCenterShell";
-import { resolveTenantAccountContext } from "@/components/tenant-shell/tenantShellRoutes";
+import { resolveTenantAccountContext, tenantShellDestinationsForPath } from "@/components/tenant-shell/tenantShellRoutes";
 import { AgentPresenceProvider, useAgentPresence } from "@/components/ui/paige";
 import { VoiceDeviceProvider } from "@/lib/voice/VoiceDeviceProvider";
 import { DialPadSurface } from "@/components/admin/voice/DialPadSurface";
@@ -341,7 +341,7 @@ React.useEffect(()=>{clearPaigeClientScope();clearPaigePublicPresenceScope()},[a
 const full=route==='paige'||route==='auto'||route==='cal'||route==='home'||route==='analytics'||route==='market';
 const accountContext=resolveTenantAccountContext({accountName:activeTenant?.name,accountType:activeTenant?.account_type,parentTenantId:activeTenant?.parent_tenant_id});
 const accountEpochKey=activeTenantId??'resolving';
-const screens={home:<CommandHub account={urlAccount} accountContext={accountContext} openPaige={openPaige}/>,auto:null,clients:<SoloClientsRoute openPaige={openPaige}/>,cal:<TenantCanonicalCalendarWorkspace tier="solo" openPaige={openPaige}/>,growth:<GrowthHub/>,sales:<SalesWorkspace accountContext={accountContext} accountEpoch={activeTenantId} openPaige={openPaige}/>,analytics:<Analytics2 accountContext={accountContext} accountEpoch={activeTenantId} openPaige={openPaige}/>,market:<Marketplace/>,settings:<SoloSettings openPaige={openPaige}/>};
+const screens={home:<CommandHub account={urlAccount} accountContext={accountContext} openPaige={openPaige}/>,auto:null,clients:<SoloClientsRoute openPaige={openPaige}/>,cal:<TenantCanonicalCalendarWorkspace tier="solo" openPaige={openPaige}/>,growth:<GrowthHub salesInShell={tenantShellDestinationsForPath(`/solo/${urlAccount??"account"}`,accountContext.accountType).some((destination)=>destination.id==="sales")}/>,sales:<SalesWorkspace accountContext={accountContext} accountEpoch={activeTenantId} openPaige={openPaige}/>,analytics:<Analytics2 accountContext={accountContext} accountEpoch={activeTenantId} openPaige={openPaige}/>,market:<Marketplace/>,settings:<SoloSettings openPaige={openPaige}/>};
 const settingsActive=urlBranchSlug==='settings'?(urlSplat.split('/')[1]||'setup'):(legacySettingsDestination||'setup');
 const contextualNavigation=route==='settings'&&urlDriven?{
   label:'Settings',

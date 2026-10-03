@@ -1,7 +1,7 @@
 // Marketing › Overview charts. Loaded lazily by growth2.tsx so recharts never sits on the path to
 // Marketing's first paint; the numbers beside each chart render without it.
 //
-// Colours are read from the Solo tokens at runtime (recharts writes SVG attributes, which do not
+// Colours are read from the Solo --chart-* tokens (solo-tokens.css) at runtime (recharts writes SVG attributes, which do not
 // resolve CSS variables) and re-read when the theme flips. The categorical order is fixed and was
 // validated for both themes with the dataviz palette checker: violet, aqua, orange, blue. Grey is
 // reserved for "Other sources" and "No tracking tag"; gold is never used in a chart (§11).
@@ -9,13 +9,13 @@ import React from "react";
 import { Bar, CartesianGrid, Cell, ComposedChart, Line, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { DailyPoint } from "./marketing-overview-model";
 
-const TOKENS = ["--mk-s1", "--mk-s2", "--mk-s3", "--mk-s4", "--mk-other", "--mk-untagged", "--ok", "--warn", "--bad", "--surface", "--line-soft", "--ink", "--ink-2", "--ink-3"] as const;
+const TOKENS = ["--chart-1", "--chart-2", "--chart-3", "--chart-4", "--chart-other", "--chart-untagged", "--ok", "--warn", "--bad", "--surface", "--line-soft", "--ink", "--ink-2", "--ink-3"] as const;
 type Token = (typeof TOKENS)[number];
 export type ChartColors = Record<Token, string>;
 
 const FALLBACK: ChartColors = {
-  "--mk-s1": "#5B3FD6", "--mk-s2": "#1baf7a", "--mk-s3": "#eb6834", "--mk-s4": "#2a78d6",
-  "--mk-other": "#7E7995", "--mk-untagged": "#C9C4D6", "--ok": "#1B7A52", "--warn": "#B4700A", "--bad": "#B93E37",
+  "--chart-1": "#5B3FD6", "--chart-2": "#1BAF7A", "--chart-3": "#EB6834", "--chart-4": "#2A78D6",
+  "--chart-other": "#7E7995", "--chart-untagged": "#CFCADB", "--ok": "#1B7A52", "--warn": "#B4700A", "--bad": "#B93E37",
   "--surface": "#FFFFFF", "--line-soft": "#EFECE4", "--ink": "#171331", "--ink-2": "#4A4566", "--ink-3": "#7E7995",
 };
 
@@ -28,7 +28,8 @@ function readColors(element: Element | null): ChartColors {
 /** The Solo theme tokens as concrete colours, kept current when the owner switches theme. */
 function useChartColors(ref: React.RefObject<Element | null>): ChartColors {
   const [colors, setColors] = React.useState<ChartColors>(FALLBACK);
-  React.useEffect(() => {
+  // Layout effect: read the theme before the first paint, so dark mode never flashes light colours.
+  React.useLayoutEffect(() => {
     const element = ref.current;
     setColors(readColors(element));
     const themed = element?.closest("[data-theme]");
@@ -67,20 +68,20 @@ export function LeadsOverTimeChart({ daily }: { daily: DailyPoint[] }) {
   const colors = useChartColors(ref);
   const reduced = useReducedMotion();
   const dense = daily.length > 14;
-  return <div ref={ref} className="mo-chart mo-chart-time">
+  return <div ref={ref} className="mo-chart mo-chart-time" aria-hidden="true">
     <ResponsiveContainer width="100%" height="100%">
-      <ComposedChart data={daily} margin={{ top: 8, right: 8, bottom: 0, left: -18 }} barCategoryGap={dense ? "22%" : "34%"}>
+      <ComposedChart accessibilityLayer={false} data={daily} margin={{ top: 8, right: 8, bottom: 0, left: -18 }} barCategoryGap={dense ? "22%" : "34%"}>
         <CartesianGrid vertical={false} stroke={colors["--line-soft"]} />
         <XAxis dataKey="label" tickLine={false} axisLine={false} interval={dense ? 2 : 0} minTickGap={8} tick={{ fill: colors["--ink-3"], fontSize: 11 }} />
         <YAxis allowDecimals={false} tickLine={false} axisLine={false} width={44} tick={{ fill: colors["--ink-3"], fontSize: 11 }} />
         <Tooltip
           cursor={{ fill: colors["--line-soft"], opacity: 0.6 }}
           content={({ active, payload, label }) => active && payload?.length
-            ? <TipBox title={String(label)} rows={(payload as unknown as TipRow[]).map((row) => ({ label: row.dataKey === "leads" ? "Leads" : "Became opportunities", value: row.value, color: row.dataKey === "leads" ? colors["--mk-s1"] : colors["--mk-s2"] }))} />
+            ? <TipBox title={String(label)} rows={(payload as unknown as TipRow[]).map((row) => ({ label: row.dataKey === "leads" ? "Leads" : "Became opportunities", value: row.value, color: row.dataKey === "leads" ? colors["--chart-1"] : colors["--chart-2"] }))} />
             : null}
         />
-        <Bar dataKey="leads" fill={colors["--mk-s1"]} radius={[4, 4, 0, 0]} maxBarSize={18} isAnimationActive={!reduced} />
-        <Line dataKey="opportunities" type="monotone" stroke={colors["--mk-s2"]} strokeWidth={2} dot={{ r: 3, fill: colors["--mk-s2"], stroke: colors["--surface"], strokeWidth: 2 }} activeDot={{ r: 5, stroke: colors["--surface"], strokeWidth: 2 }} isAnimationActive={!reduced} />
+        <Bar dataKey="leads" fill={colors["--chart-1"]} radius={[4, 4, 0, 0]} maxBarSize={18} isAnimationActive={!reduced} />
+        <Line dataKey="opportunities" type="monotone" stroke={colors["--chart-2"]} strokeWidth={2} dot={{ r: 3, fill: colors["--chart-2"], stroke: colors["--surface"], strokeWidth: 2 }} activeDot={{ r: 5, stroke: colors["--surface"], strokeWidth: 2 }} isAnimationActive={!reduced} />
       </ComposedChart>
     </ResponsiveContainer>
   </div>;
@@ -88,14 +89,14 @@ export function LeadsOverTimeChart({ daily }: { daily: DailyPoint[] }) {
 
 export type DonutSlice = { key: string; label: string; count: number; colorToken: Token };
 
-export function Donut({ slices, total, caption, label }: { slices: DonutSlice[]; total: number; caption: string; label: string }) {
+export function Donut({ slices, total, caption, label }: { slices: DonutSlice[]; total: number | string; caption: string; label: string }) {
   const ref = React.useRef<HTMLDivElement>(null);
   const colors = useChartColors(ref);
   const reduced = useReducedMotion();
   const shown = slices.filter((slice) => slice.count > 0);
   return <div ref={ref} className="mo-donut" role="img" aria-label={`${label}: ${shown.map((slice) => `${slice.label} ${slice.count}`).join(", ") || "none"}`}>
     <ResponsiveContainer width="100%" height="100%">
-      <PieChart>
+      <PieChart accessibilityLayer={false}>
         <Pie data={shown.length ? shown : [{ key: "none", label: "None", count: 1, colorToken: "--line-soft" }]} dataKey="count" nameKey="label" innerRadius="70%" outerRadius="100%" paddingAngle={shown.length > 1 ? 1.5 : 0} stroke={colors["--surface"]} strokeWidth={2} startAngle={90} endAngle={-270} isAnimationActive={!reduced}>
           {(shown.length ? shown : [{ key: "none", colorToken: "--line-soft" as Token }]).map((slice) => <Cell key={slice.key} fill={colors[slice.colorToken]} />)}
         </Pie>

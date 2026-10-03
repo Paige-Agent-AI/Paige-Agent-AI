@@ -138,13 +138,16 @@ async function main() {
       for (const frame of FRAMES) {
         for (const posture of POSTURES) {
           const width = contentWidth(frame.width, posture);
-          const ctx = await browser.newContext({ viewport: { width: frame.width, height: frame.height } });
+          // Reduced motion so the Overview charts paint their final state, not a frame of their entrance.
+          const ctx = await browser.newContext({ viewport: { width: frame.width, height: frame.height }, reducedMotion: "reduce" });
           for (const tab of TABS) {
             const page = await ctx.newPage();
             const errors = [];
             page.on("pageerror", (e) => errors.push(String(e.message)));
             await open(page, { tab, theme });
             await setContentWidth(page, width);
+            // The Overview's charts load lazily: wait until both donuts and the time chart have drawn.
+            if (tab === "overview") await page.waitForFunction(() => document.querySelectorAll(".mo-donut .recharts-pie-sector").length > 0 && document.querySelector(".mo-chart-time .recharts-bar-rectangle"), null, { timeout: 15000 }).catch(() => {});
             const id = `${theme}/${frame.name}/paige-${posture}@${width}px/${tab}`;
             const m = await measure(page);
             check(Boolean(m) && !m.crashed, `${id}: renders`);
@@ -154,8 +157,12 @@ async function main() {
               check(m.pushed.length === 0, `${id}: nothing pushed past the right edge`, m.pushed.join(","));
               check(!m.sideways, `${id}: document does not scroll sideways`);
               check(!m.launcherSpills, `${id}: the Vibe Studio launcher contains its label`);
+              if (tab === "overview") {
+                const drawn = await page.evaluate(() => ({ donuts: [...document.querySelectorAll(".mo-donut")].filter((d) => d.querySelector(".recharts-pie-sector")).length, bars: document.querySelectorAll(".mo-chart-time .recharts-bar-rectangle").length, line: Boolean(document.querySelector(".mo-chart-time .recharts-line-curve")) }));
+                check(drawn.donuts === 2 && drawn.bars > 0 && drawn.line, `${id}: both donuts, the bars and the opportunities line are drawn`, JSON.stringify(drawn));
+              }
               check(m.contrast.ratio >= 4.5, `${id}: new small text meets AA (4.5:1)`, `worst ${m.contrast.ratio} ${m.contrast.what}`);
-              geometry.push({ id, width, overflowX: m.overflowX, innerScrollers: m.innerScrollers });
+              geometry.push({ id, width, overflowX: m.overflowX, innerScrollers: m.innerScrollers, worstContrast: m.contrast });
             }
             if (posture !== "wide" && frame.name !== "1024x768") {
               await page.screenshot({ path: path.join(OUT, `${tab}-${theme}-${frame.name}-${posture}.png`) });

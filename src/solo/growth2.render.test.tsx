@@ -83,11 +83,11 @@ vi.mock("./useFormIntake", () => ({
 let host: HTMLDivElement;
 let root: Root;
 
-function renderAt(path: string) {
+function renderAt(path: string, { salesInShell = false }: { salesInShell?: boolean } = {}) {
   host = document.createElement("div");
   document.body.appendChild(host);
   root = createRoot(host);
-  act(() => root.render(<MemoryRouter initialEntries={[path]}><Routes><Route path="/solo/:account/growth/sales" element={<LocationProbe/>}/><Route path="/solo/:account/*" element={<><GrowthHub/><LocationProbe/></>}/></Routes></MemoryRouter>));
+  act(() => root.render(<MemoryRouter initialEntries={[path]}><Routes><Route path="/solo/:account/growth/sales" element={<LocationProbe/>}/><Route path="/solo/:account/*" element={<><GrowthHub salesInShell={salesInShell}/><LocationProbe/></>}/></Routes></MemoryRouter>));
 }
 
 function rerenderAt(path: string) {
@@ -648,6 +648,8 @@ describe("Solo Marketing department views", () => {
     expect(host.querySelector(".mo-head h2")?.textContent).toMatch(/^Good (morning|afternoon|evening), Jordan$/);
     expect(stat("Active campaigns")).toContain("Active campaigns1");
     expect(stat("Active campaigns")).toContain("4 briefs in total · 2 blocked");
+    // Brief timing, as written on each brief, is still shown read-only on Overview (§58).
+    expect(host.querySelector(".mo-briefs")?.textContent).toContain("Weeks 1–4 of April");
     expect(stat("Published work")).toContain("Published work1");
     expect(stat("Published work")).toContain("1 not published yet");
     // Three of the four submissions are inside 30 days. The fourth (40 days ago) is the whole
@@ -658,7 +660,7 @@ describe("Solo Marketing department views", () => {
     expect(stat("Became opportunities")).toContain("Became opportunities1");
     expect(stat("Became opportunities")).toContain("+1 vs previous 30 days");
     // Sources are the tracking tags, merged; status reads in plain words, never the raw enum.
-    expect(keys()).toEqual(expect.arrayContaining(["newsletter267%", "linkedin133%", "Running1", "Approved, not launched1", "Blocked2"]));
+    expect(keys()).toEqual(["newsletter267%", "linkedin133%", "Running1", "Approved, not launched1", "Draft0", "Blocked2"]);
     const text = host.textContent ?? "";
     expect(text).not.toContain("ready_for_review");
     expect(text).toContain("No capture form chosen");
@@ -674,6 +676,9 @@ describe("Solo Marketing department views", () => {
     renderAt("/solo/42/growth/overview");
     expect(stat("Leads")).toContain("200+");
     expect(stat("Leads")).not.toContain("vs previous");
+    // Every count drawn from that read is a floor, not only the headline.
+    expect(keys()).toEqual(["No tracking tag200+100%"]);
+    expect(host.querySelector(".mo-rank b")?.textContent).toBe("200+");
     expect(host.textContent).toContain("Showing the latest 200 submissions.");
   });
 
@@ -696,11 +701,19 @@ describe("Solo Marketing department views", () => {
     expect(dialog?.textContent).toContain("New campaign brief");
   });
 
-  it("Overview sends opportunities to Sales' Pipeline, and the next step to the work that needs it", () => {
+  it("Overview points the next step at the work that needs it, and keeps Pipeline in reach", () => {
     useWorkspace();
     harness.briefs = [brief("b1", "Q2 retainer upgrade", { lifecycleStatus: "ready_for_review" })];
     renderAt("/solo/42/growth/overview");
     expect(host.querySelector(".mo-next")?.textContent).toContain("“Q2 retainer upgrade” is waiting for your decision.");
+    // This account's menu has no Sales, so opportunities stay on Marketing's own Pipeline tab.
+    act(() => button("View pipeline")!.click());
+    expect(location()).toBe("/solo/42/growth/pipeline");
+  });
+
+  it("an account whose menu shows Sales is sent to Sales' Pipeline and Offers", () => {
+    useWorkspace();
+    renderAt("/solo/42/growth/overview", { salesInShell: true });
     act(() => button("View pipeline")!.click());
     expect(location()).toBe("/solo/42/sales/pipeline");
   });
@@ -713,7 +726,7 @@ describe("Solo Marketing department views", () => {
     // One gold act on the surface: the header does not repeat the first-use action.
     expect(host.querySelectorAll(".btn-g")).toHaveLength(1);
     act(() => (host.querySelector(".mk-first .mk-link") as HTMLButtonElement).click());
-    expect(location()).toBe("/solo/42/sales/offers");
+    expect(location()).toBe("/solo/42/growth/catalog");
   });
 
   it("Lead capture lists published and unpublished work, and each submission's tracking tag", () => {

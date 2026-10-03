@@ -358,24 +358,20 @@
 .mk-view .campaigns-state code{font-family:var(--mono);font-size:12px;padding:1px 5px;border-radius:5px;background:var(--surface-sunk);color:var(--ink)}
 
 /* ── Marketing › Overview (owner reference 2026-10-03) ─────────────────────────────────────────
-   Chart colours are a fixed categorical order validated for both themes (violet, aqua, orange,
-   blue); grey is reserved for "Other sources" / "No tracking tag". Gold stays on the act only. */
-.paige-solo .mo{--mk-s1:#5B3FD6;--mk-s2:#1BAF7A;--mk-s3:#EB6834;--mk-s4:#2A78D6;--mk-other:#7E7995;--mk-untagged:#CFCADB}
-.paige-solo[data-theme="dark"] .mo{--mk-s1:#8A72F5;--mk-s2:#199E70;--mk-s3:#D95926;--mk-s4:#3987E5;--mk-other:#7D779A;--mk-untagged:#3A3460}
+   Chart colours are the --chart-* tokens in solo-tokens.css. Gold stays on the act only. */
 .mo{gap:16px}
 .mo-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:4px 2px 2px}
 .mo-head h2{font-size:clamp(22px,2.6cqi,28px);font-weight:650;letter-spacing:-.03em;line-height:1.15;color:var(--ink);text-wrap:balance}
 .mo-head p{margin-top:5px;font-size:13.5px;color:var(--ink-2)}
 .mo-head-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .mo-head-actions .campaigns-segmented button{padding:6px 11px;font-size:12px}
-.paige-solo .mo .btn-g{background:var(--gold);border-color:var(--gold);color:#231a06}
 .mo-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
 .mo-stat{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:start;padding:18px;border:1px solid var(--line);border-radius:14px;background:var(--surface);box-shadow:var(--sh-1);min-width:0}
 .mo-plate{display:grid;place-items:center;width:44px;height:44px;border-radius:12px}
-.mo-plate.is-violet{background:var(--violet-tint);color:var(--mk-s1)}
-.mo-plate.is-aqua{background:color-mix(in srgb,var(--mk-s2) 16%,var(--surface));color:color-mix(in srgb,var(--mk-s2) 78%,var(--ink))}
-.mo-plate.is-blue{background:color-mix(in srgb,var(--mk-s4) 15%,var(--surface));color:color-mix(in srgb,var(--mk-s4) 84%,var(--ink))}
-.mo-plate.is-orange{background:color-mix(in srgb,var(--mk-s3) 15%,var(--surface));color:color-mix(in srgb,var(--mk-s3) 78%,var(--ink))}
+.mo-plate.is-violet{background:var(--violet-tint);color:var(--chart-1)}
+.mo-plate.is-aqua{background:color-mix(in srgb,var(--chart-2) 16%,var(--surface));color:color-mix(in srgb,var(--chart-2) 78%,var(--ink))}
+.mo-plate.is-blue{background:color-mix(in srgb,var(--chart-4) 15%,var(--surface));color:color-mix(in srgb,var(--chart-4) 84%,var(--ink))}
+.mo-plate.is-orange{background:color-mix(in srgb,var(--chart-3) 15%,var(--surface));color:color-mix(in srgb,var(--chart-3) 78%,var(--ink))}
 .mo-stat-body{min-width:0;display:grid;gap:2px}
 .mo-stat h3{font-size:12.5px;font-weight:550;color:var(--ink-2);letter-spacing:0}
 .mo-stat-value{font-size:30px;font-weight:650;letter-spacing:-.035em;line-height:1.1;color:var(--ink);font-variant-numeric:tabular-nums}
@@ -402,8 +398,8 @@
 .mo-legend{display:flex;gap:14px;list-style:none;margin:2px 0 0;padding:0;font-size:11.8px;color:var(--ink-2);white-space:nowrap}
 .mo-legend li{display:inline-flex;align-items:center;gap:6px}
 .mo-legend i{width:9px;height:9px;border-radius:3px}
-.mo-legend i.is-s1{background:var(--mk-s1)}
-.mo-legend i.is-s2{background:var(--mk-s2)}
+.mo-legend i.is-s1{background:var(--chart-1)}
+.mo-legend i.is-s2{background:var(--chart-2)}
 .mo-legend i.is-line{height:3px;width:14px;border-radius:2px}
 .mo-chart-time{height:240px;min-width:0}
 .mo-skel{border-radius:10px;background:linear-gradient(90deg,var(--surface-sunk),var(--surface-2),var(--surface-sunk));background-size:200% 100%;animation:mo-shimmer 1.4s ease-in-out infinite}
@@ -430,7 +426,7 @@
 .mo-rank li{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(60px,1fr) 3ch;align-items:center;gap:12px;font-size:12.8px;color:var(--ink)}
 .mo-rank-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mo-rank-bar{height:8px;border-radius:999px;background:var(--surface-sunk);overflow:hidden}
-.mo-rank-bar i{display:block;height:100%;border-radius:999px;background:var(--mk-s1)}
+.mo-rank-bar i{display:block;height:100%;border-radius:999px;background:var(--chart-1)}
 .mo-rank b{font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
 .mo-tasks{list-style:none;margin:0;padding:0;display:grid;gap:4px}
 .mo-tasks button{width:100%;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:11px;padding:8px;border-radius:10px;text-align:left;color:var(--ink);transition:background-color .16s cubic-bezier(.22,1,.36,1)}
@@ -444,7 +440,7 @@
 .mo-task-main small{font-size:11.8px;line-height:1.4;color:var(--ink-2)}
 .mo-tasks .mk-flag{min-width:0}
 .mo-next{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:14px;padding:14px 18px;border:1px solid var(--violet-line);border-radius:14px;background:linear-gradient(110deg,var(--violet-tint),var(--surface) 70%)}
-.mo-next-plate{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:var(--surface);color:var(--mk-s1);box-shadow:var(--sh-1)}
+.mo-next-plate{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:var(--surface);color:var(--chart-1);box-shadow:var(--sh-1)}
 .mo-next h2{font-size:13.5px;font-weight:650;color:var(--ink)}
 .mo-next p{margin-top:2px;font-size:12.8px;line-height:1.5;color:var(--ink-2)}
 @container (max-width:1100px){.mo-grid-b{grid-template-columns:repeat(2,minmax(0,1fr))}.mo-grid-b>.mo-panel:last-child{grid-column:1/-1}}
@@ -459,3 +455,8 @@
 .paige-solo .mo .mo-link{font-size:12px;font-weight:550;line-height:1.3}
 .paige-solo .mo .mo-stat h3{font-size:12.5px;font-weight:550;color:var(--ink-2);line-height:1.3}
 .paige-solo .mo .mo-panel-head h2{font-size:15.5px;font-weight:620}
+.mo-briefs{list-style:none;margin:0;padding:12px 0 0;border-top:1px solid var(--line-soft);display:grid;gap:8px}
+.mo-briefs li{display:flex;align-items:baseline;justify-content:space-between;gap:12px;min-width:0;font-size:12.6px}
+.mo-briefs strong{font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.mo-briefs small{flex:none;max-width:55%;font-size:11.8px;color:var(--ink-2);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mo-chart-failed{display:grid;place-items:center;padding:16px;text-align:center;font-size:12.5px;line-height:1.5;color:var(--ink-2);border:1px dashed var(--line);border-radius:10px;aspect-ratio:auto}

@@ -13,7 +13,7 @@ import { PipelineCommandDesk } from "./PipelineCommandDesk";
 import CampaignOverview from "./campaign-desk";
 import { useSoloCampaignBriefs } from "./useSoloCampaignBriefs";
 import { useSoloOwner } from "./data/useSoloOwner";
-import { PERIODS, deriveMarketingOverview, isBlockedBrief, salutationFor } from "./marketing-overview-model";
+import { PERIODS, SUBMISSION_READ_LIMIT, deriveMarketingOverview, isBlockedBrief, salutationFor, submissionsInPeriod } from "./marketing-overview-model";
 import { FormIntakePanel } from "./form-intake";
 import "./solo-campaigns.css";
 
@@ -313,15 +313,12 @@ function Social({ data, onOpenCompass, onOpenPipeline }) {
 // estimated. Email, ads, visits and spend have no source in this workspace, so they are named as
 // unavailable instead of shown as zero.
 
-const DAY_MS = 86400000;
 const LEAD_WINDOW_DAYS = 30;
-const SUBMISSION_READ_LIMIT = 200; // the bound on useSoloCampaigns' submissions read
 
+// The one definition of "last N days" (marketing-overview-model.ts), shared with Overview so the same
+// tenant never sees two different 30-day lead counts one click apart.
 function leadsInWindow(submissions) {
-  const since = Date.now() - LEAD_WINDOW_DAYS * DAY_MS;
-  const within = submissions.filter((submission) => { const at = Date.parse(submission.createdAt); return Number.isFinite(at) && at >= since; });
-  // The read returns the latest 200. If all 200 fall inside the window, older ones may be missing.
-  const capped = submissions.length >= SUBMISSION_READ_LIMIT && within.length === submissions.length;
+  const { within, capped } = submissionsInPeriod(submissions, LEAD_WINDOW_DAYS);
   return { within, capped };
 }
 
@@ -351,14 +348,26 @@ function MarketingStat({ label, value, foot }) {
 
 const LeadsOverTimeChart = React.lazy(() => import("./marketing-overview-charts").then((module) => ({ default: module.LeadsOverTimeChart })));
 const Donut = React.lazy(() => import("./marketing-overview-charts").then((module) => ({ default: module.Donut })));
-const SOURCE_TOKENS = ["--mk-s1", "--mk-s2", "--mk-s3", "--mk-s4"];
-const STATUS_TOKENS = { running: "--ok", approved: "--mk-s1", review: "--warn", draft: "--mk-untagged", paused: "--mk-other", blocked: "--bad", completed: "--mk-s4" };
-const sourceToken = (slice, index) => slice.kind === "untagged" ? "--mk-untagged" : slice.kind === "other" ? "--mk-other" : SOURCE_TOKENS[index] || "--mk-other";
+const SOURCE_TOKENS = ["--chart-1", "--chart-2", "--chart-3", "--chart-4"];
+const STATUS_TOKENS = { running: "--ok", approved: "--chart-1", review: "--warn", draft: "--ink-3", paused: "--chart-3", blocked: "--bad", completed: "--chart-4" };
+const sourceToken = (slice, index) => slice.kind === "untagged" ? "--chart-untagged" : slice.kind === "other" ? "--chart-other" : SOURCE_TOKENS[index] || "--chart-other";
 const NO_ROWS = []; // one stable empty list, so the model is not re-derived on every render
 const percentOf = (count, total) => total ? `${Math.round((count / total) * 100)}%` : "0%";
 
 function ChartSkeleton({ className }) {
   return <div className={`${className} mo-skel`} aria-hidden="true"/>;
+}
+
+// A chart is an enhancement over numbers already on the page: if its code fails to load (a stale
+// deploy, a dropped connection) it says so in place and logs why, and the rest of Marketing stays up.
+class ChartBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { failed: false }; }
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch(error) { console.error("[marketing-overview] chart failed to render", error); }
+  render() {
+    if (this.state.failed) return <p className={`${this.props.className} mo-chart-failed`}>This chart couldn’t load. The figures beside it are still current; reload the page to try again.</p>;
+    return <React.Suspense fallback={<ChartSkeleton className={this.props.className}/>}>{this.props.children}</React.Suspense>;
+  }
 }
 
 // A comparison only when the read covers the whole previous period (marketing-overview-model.ts).
@@ -382,7 +391,7 @@ function OverviewStat({ icon, tone, label, value, foot, link, onLink }) {
   </section>;
 }
 
-function MarketingOverview({ data, onGo, onCreateBrief }) {
+function MarketingOverview({ data, onGo, onCreateBrief, salesInShell = false }) {
   const navigate = useNavigate();
   const params = useParams();
   const briefsState = useSoloCampaignBriefs();
@@ -393,9 +402,12 @@ function MarketingOverview({ data, onGo, onCreateBrief }) {
   const drafts = data.drafts || NO_ROWS;
   const submissions = data.submissions || NO_ROWS;
   const [periodDays, setPeriodDays] = React.useState(30);
-  const model = React.useMemo(() => deriveMarketingOverview({ briefs, artifacts: data.artifacts, drafts, submissions, periodDays }), [briefs, data.artifacts, drafts, submissions, periodDays]);
-  // Offers and Pipeline live in Sales (owner ruling 2026-10-03); Marketing links there, not to its own tabs.
-  const toSales = (slug) => navigate(subtabPath("solo", params.account, "sales", slug));
+  const today = new Date().toDateString(); // re-derive when the day turns, not only when data changes
+  const model = React.useMemo(() => deriveMarketingOverview({ briefs, artifacts: data.artifacts, drafts, submissions, periodDays }), [briefs, data.artifacts, drafts, submissions, periodDays, today]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Offers and Pipeline belong to Sales (owner ruling 2026-10-03). Only an account whose menu shows
+  // Sales (SoloApp passes the shell's own answer) is sent there; every other account keeps
+  // Marketing's own Offers and Pipeline tabs, so no link lands on a department its tier hides.
+  const toSales = (slug) => salesInShell ? navigate(subtabPath("solo", params.account, "sales", slug)) : onGo(slug === "offers" ? "catalog" : "pipeline");
   const unrouted = data.artifacts.filter((artifact) => artifact.type === "form" && !artifact.routingConfigured);
   const firstUse = phase === "ready" && !briefs.length && !data.artifacts.length && !drafts.length && !submissions.length;
   const canCreate = briefsState.canManage;
@@ -422,13 +434,17 @@ function MarketingOverview({ data, onGo, onCreateBrief }) {
       : drafts.length
         ? { text: `“${drafts[0].name}” is built but not published, so it can’t collect anyone yet.`, label: "Finish in Vibe Studio", studio: true }
         : canCreate
-          ? { text: "Create a new campaign brief to keep the momentum going. PAIGE can help you plan it, build its assets and track the results.", label: "Create campaign brief", go: onCreateBrief }
+          ? { text: "Plan your next campaign: who it’s for, the offer, and where people land. PAIGE can draft the brief with you.", label: "Create campaign brief", go: onCreateBrief }
           : null;
 
   const sourceSlices = model.sources.map((slice, index) => ({ ...slice, colorToken: sourceToken(slice, index) }));
   const statusSlices = model.status.map((slice) => ({ ...slice, colorToken: STATUS_TOKENS[slice.key] }));
   const contentMax = model.topContent.reduce((max, row) => Math.max(max, row.count), 0);
   const periodLabel = `last ${periodDays} days`;
+  const floor = (count) => countLabel(count, model.capped);
+  const plural = (count, noun) => `${count} ${noun}${count === 1 ? "" : "s"}`;
+  const publishedParts = [model.published.pages && plural(model.published.pages, "page"), model.published.funnels && plural(model.published.funnels, "funnel"), model.published.forms && plural(model.published.forms, "form")].filter(Boolean);
+  const inProgress = briefs.filter((brief) => !["completed", "archived"].includes(brief.lifecycleStatus)).slice(0, 3);
 
   return <div className="mk-view mo"><StateFrame phase={phase} retry={retry} noun="marketing">
     {firstUse ? <section className="campaigns-surface mk-first">
@@ -452,13 +468,13 @@ function MarketingOverview({ data, onGo, onCreateBrief }) {
 
       <div className="mo-stats">
         <OverviewStat icon={<Ic.bolt size={18}/>} tone="is-violet" label="Active campaigns" value={model.campaigns.running}
-          foot={<span className="mo-delta">{model.campaigns.newInPeriod ? `${model.campaigns.newInPeriod} new in the ${periodLabel}` : `${model.campaigns.total} brief${model.campaigns.total === 1 ? "" : "s"} in total`}{model.campaigns.blocked ? ` · ${model.campaigns.blocked} blocked` : ""}</span>}
+          foot={<span className="mo-delta">{model.campaigns.newInPeriod ? `${plural(model.campaigns.newInPeriod, "brief")} created in the ${periodLabel}` : `${plural(model.campaigns.total, "brief")} in total`}{model.campaigns.blocked ? ` · ${model.campaigns.blocked} blocked` : ""}</span>}
           link="View all" onLink={() => onGo("campaigns")}/>
         <OverviewStat icon={<Ic.doc size={18}/>} tone="is-aqua" label="Published work" value={model.published.total}
-          foot={<span className="mo-delta">{model.published.drafts ? `${model.published.drafts} not published yet` : `${model.published.pages} pages · ${model.published.funnels} funnels · ${model.published.forms} forms`}</span>}
+          foot={<span className="mo-delta">{[...publishedParts, model.published.drafts && `${model.published.drafts} not published yet`].filter(Boolean).join(" · ") || "Nothing published yet"}</span>}
           link="View work" onLink={() => onGo("capture")}/>
         <OverviewStat icon={<Ic.users size={18}/>} tone="is-blue" label={`Leads (${periodLabel})`} value={leads}
-          foot={<DeltaLine delta={model.leads.delta} periodDays={periodDays} fallback={`${countLabel(model.leads.tagged, model.capped)} with a tracking tag`}/>}
+          foot={<DeltaLine delta={model.leads.delta} periodDays={periodDays} fallback={`${floor(model.leads.tagged)} with a tracking tag`}/>}
           link="View leads" onLink={() => onGo("capture")}/>
         <OverviewStat icon={<Ic.trend size={18}/>} tone="is-orange" label="Became opportunities" value={opportunities}
           foot={<DeltaLine delta={model.opportunities.delta} periodDays={periodDays} fallback={model.leads.count ? `${percentOf(model.opportunities.count, model.leads.count)} of leads` : "No leads yet"}/>}
@@ -469,7 +485,7 @@ function MarketingOverview({ data, onGo, onCreateBrief }) {
         <section className="campaigns-surface mo-panel">
           <div className="mo-panel-head"><div><h2>Leads over time</h2><p>Form submissions from every capture point, by the day they arrived.</p></div>
             <ul className="mo-legend" aria-hidden="true"><li><i className="is-s1"/>Leads</li><li><i className="is-s2 is-line"/>Became opportunities</li></ul></div>
-          {model.leads.count ? <React.Suspense fallback={<ChartSkeleton className="mo-chart mo-chart-time"/>}><LeadsOverTimeChart daily={model.daily}/></React.Suspense>
+          {model.leads.count ? <ChartBoundary className="mo-chart mo-chart-time"><LeadsOverTimeChart daily={model.daily}/></ChartBoundary>
             : <Empty title={`No leads in the ${periodLabel}`} detail="When someone submits a published form, the day it arrived shows here."/>}
           <table className="campaigns-sr-only"><caption>Leads and opportunities by day, {periodLabel}</caption><thead><tr><th>Day</th><th>Leads</th><th>Became opportunities</th></tr></thead><tbody>{model.daily.map((point) => <tr key={point.day}><td>{point.label}</td><td>{point.leads}</td><td>{point.opportunities}</td></tr>)}</tbody></table>
           {model.capped && <p className="mo-note">Showing the latest {SUBMISSION_READ_LIMIT} submissions. Earlier days in this period may be missing.</p>}
@@ -477,25 +493,26 @@ function MarketingOverview({ data, onGo, onCreateBrief }) {
         <section className="campaigns-surface mo-panel">
           <div className="mo-panel-head"><div><h2>Leads by source</h2><p>The tracking tag on the link each lead submitted from.</p></div><button className="mo-link" onClick={() => onGo("analytics")}>View all sources<Ic.arrow size={12}/></button></div>
           {model.leads.count ? <div className="mo-split">
-            <React.Suspense fallback={<ChartSkeleton className="mo-donut"/>}><Donut slices={sourceSlices} total={model.leads.count} caption="Total leads" label="Leads by source"/></React.Suspense>
-            <ul className="mo-keys">{sourceSlices.map((slice) => <li key={slice.key}><i style={{ background: `var(${slice.colorToken})` }} aria-hidden="true"/><span>{slice.label}</span><b>{slice.count}</b><em>{percentOf(slice.count, model.leads.count)}</em></li>)}</ul>
+            <ChartBoundary className="mo-donut"><Donut slices={sourceSlices} total={floor(model.leads.count)} caption="Total leads" label="Leads by source"/></ChartBoundary>
+            <ul className="mo-keys">{sourceSlices.map((slice) => <li key={slice.key}><i style={{ background: `var(${slice.colorToken})` }} aria-hidden="true"/><span>{slice.label}</span><b>{floor(slice.count)}</b><em>{percentOf(slice.count, model.leads.count)}</em></li>)}</ul>
           </div> : <Empty title="No sources yet" detail="Add ?utm_source= to the links you share and each lead will show where it came from."/>}
-          <p className="mo-note">Email and paid ads aren’t connected, so they can’t appear here.</p>
+          <p className="mo-note">{model.capped ? `Counted from the latest ${SUBMISSION_READ_LIMIT} submissions. ` : ""}Email and paid ads aren’t connected, so they can’t appear here.</p>
         </section>
       </div>
 
       <div className="mo-grid mo-grid-b">
         <section className="campaigns-surface mo-panel">
           <div className="mo-panel-head"><div><h2>Top capture points</h2><p>Leads per form in the {periodLabel}. Pages and funnels collect through their forms.</p></div><button className="mo-link" onClick={() => onGo("capture")}>View all<Ic.arrow size={12}/></button></div>
-          {model.topContent.length ? <ol className="mo-rank">{model.topContent.map((row) => <li key={row.id}><span className="mo-rank-name">{row.name}</span><span className="mo-rank-bar" aria-hidden="true"><i style={{ width: `${contentMax ? Math.max(4, (row.count / contentMax) * 100) : 0}%` }}/></span><b>{row.count}</b></li>)}</ol>
+          {model.topContent.length ? <ol className="mo-rank">{model.topContent.map((row) => <li key={row.id}><span className="mo-rank-name">{row.name}</span><span className="mo-rank-bar" aria-hidden="true"><i style={{ width: `${contentMax ? Math.max(4, (row.count / contentMax) * 100) : 0}%` }}/></span><b>{floor(row.count)}</b></li>)}</ol>
             : <Empty title="No form has collected a lead yet" detail="Publish a form from Vibe Studio and its leads are ranked here."/>}
         </section>
         <section className="campaigns-surface mo-panel">
           <div className="mo-panel-head"><div><h2>Campaign status</h2><p>Every campaign brief, by where it stands.</p></div><button className="mo-link" onClick={() => onGo("campaigns")}>View campaigns<Ic.arrow size={12}/></button></div>
           {model.campaigns.total ? <div className="mo-split">
-            <React.Suspense fallback={<ChartSkeleton className="mo-donut"/>}><Donut slices={statusSlices} total={model.campaigns.total} caption={model.campaigns.total === 1 ? "Brief" : "Briefs"} label="Campaign status"/></React.Suspense>
+            <ChartBoundary className="mo-donut"><Donut slices={statusSlices} total={model.campaigns.total} caption={model.campaigns.total === 1 ? "Brief" : "Briefs"} label="Campaign status"/></ChartBoundary>
             <ul className="mo-keys">{statusSlices.filter((slice) => slice.count > 0 || ["running", "draft", "blocked"].includes(slice.key)).map((slice) => <li key={slice.key} className={slice.count ? "" : "is-zero"}><i style={{ background: `var(${slice.colorToken})` }} aria-hidden="true"/><span>{slice.label}</span><b>{slice.count}</b></li>)}</ul>
           </div> : <Empty title="No campaign briefs yet" detail="Create a brief to plan your first campaign."/>}
+          {inProgress.length > 0 && <ul className="mo-briefs" aria-label="Campaigns in progress">{inProgress.map((brief) => <li key={brief.id}><strong>{brief.name}</strong><small>{brief.timing || "No timing written yet"}</small></li>)}</ul>}
         </section>
         <section className="campaigns-surface mo-panel">
           <div className="mo-panel-head"><div><h2>Needs your attention</h2><p>From your briefs and capture points.</p></div></div>
@@ -561,7 +578,9 @@ function MarketingAnalytics({ data, onGo }) {
   const campaignTagged = within.filter((submission) => submission.trackingCampaign).length;
   const opened = within.filter((submission) => submission.dealId).length;
   const group = (pick) => Object.entries(within.reduce((counts, submission) => { const key = pick(submission); if (key) counts[key] = (counts[key] || 0) + 1; return counts; }, {})).sort((a, b) => b[1] - a[1]);
-  const bySource = group((submission) => submission.trackingSource || "No tracking tag");
+  // Tags merge case-insensitively, as on Overview; the first spelling seen is the one shown.
+  const spelling = {};
+  const bySource = group((submission) => { const tag = submission.trackingSource?.trim(); if (!tag) return "No tracking tag"; return (spelling[tag.toLowerCase()] ??= tag); });
   const refs = Object.fromEntries((briefsState.briefs || []).filter((brief) => brief.shortRef).map((brief) => [brief.shortRef.toLowerCase(), brief.name]));
   const byCampaign = group((submission) => submission.trackingCampaign).map(([tag, count]) => [tag, count, refs[tag.toLowerCase()] ? `Brief: ${refs[tag.toLowerCase()]}` : "No brief uses this reference"]);
   return <>
@@ -639,7 +658,7 @@ export const Pipeline=()=>{
   return <div className="solo-campaigns"><div className="campaigns-scroll"><PageHead eyebrow="Marketing" title="Pipeline moved" sub="Pipeline now lives under Marketing until it moves to Sales."/><section className="campaigns-compat"><span className="campaigns-type">Compatibility address</span><h2>Open Pipeline</h2><p>This address is preserved so older links do not silently lose their destination.</p><div className="campaigns-compat-actions"><button className="btn btn-s btn-p" disabled={!account} onClick={()=>account&&navigate(`/solo/${account}/growth/pipeline`)}>Go to Pipeline <Ic.arrow size={13}/></button></div></section></div></div>;
 };
 
-export const GrowthHub=()=>{
+export const GrowthHub=({ salesInShell = false } = {})=>{
   const[tab,setTab]=useSubtabRoute("solo","growth","overview");
   // The 4th element marks the Sales-lane tabs. They stay reachable here until the top-level Sales
   // destination lands, then leave with replace redirects (proposal §11, slice S3).
@@ -755,7 +774,7 @@ export const GrowthHub=()=>{
     next.delete("brief");
     navigate({pathname:location.pathname,search:next.toString()},{replace:true});
   },[location.pathname,location.search,navigate]);
-  let body=<MarketingOverview data={data} onGo={goTo} onCreateBrief={createBrief}/>;
+  let body=<MarketingOverview data={data} onGo={goTo} onCreateBrief={createBrief} salesInShell={salesInShell}/>;
   if(legacy) body=<CompatibilityLanding legacy={legacy} returnToCapture={returnToCapture}/>;
   else if(tab==="campaigns") body=<Campaigns data={data} onRoute={onRoute} autoOpenBrief={query.get("brief")==="new"} onAutoOpenConsumed={clearBriefRequest}/>;
   else if(tab==="capture") body=<LeadCapture data={data} setDetail={setDetail} initialType={requestedType} onOpenContact={openContact} onOpenDeal={openDeal}/>;

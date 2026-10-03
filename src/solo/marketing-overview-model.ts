@@ -80,10 +80,27 @@ function dayKey(time: number): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-function startOfDay(time: number): number {
+/** Local midnight `offset` calendar days from `time`'s day. Built from the date, never by adding
+ * 24-hour blocks, so a daylight-saving change cannot shift a boundary off midnight. */
+function midnight(time: number, offset = 0): number {
   const d = new Date(time);
-  d.setHours(0, 0, 0, 0);
-  return d.getTime();
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + offset).getTime();
+}
+
+/**
+ * The submissions inside the last `periodDays` whole calendar days (today included). A row stamped
+ * slightly ahead of this device's clock still counts as today. This is the one definition of "last
+ * N days" for Marketing; Overview and Analytics both use it.
+ */
+export function submissionsInPeriod<T extends { createdAt: string }>(submissions: readonly T[], periodDays: number, now = Date.now()) {
+  const periodStart = midnight(now, -(periodDays - 1));
+  const dated = submissions.map((s) => ({ s, t: at(s.createdAt) })).filter((row): row is { s: T; t: number } => row.t !== null);
+  const within = dated.filter((row) => row.t >= periodStart).map((row) => row.s);
+  const oldest = dated.reduce((min, row) => Math.min(min, row.t), Number.POSITIVE_INFINITY);
+  // The read returns the latest SUBMISSION_READ_LIMIT. If none of them is older than the period,
+  // older ones in the period may exist beyond it, so the count is a floor.
+  const capped = submissions.length >= SUBMISSION_READ_LIMIT && oldest >= periodStart;
+  return { within, capped, periodStart, dated, oldest };
 }
 
 function deltaOf(current: number, previous: number): Delta {
@@ -101,16 +118,12 @@ export function deriveMarketingOverview(input: {
   const now = input.now ?? Date.now();
   const { briefs, artifacts, drafts, submissions, periodDays } = input;
   // The period is whole calendar days ending today, so the chart's first bar is a full day.
-  const periodStart = startOfDay(now) - (periodDays - 1) * DAY_MS;
-  const previousStart = periodStart - periodDays * DAY_MS;
-
-  const dated = submissions.map((s) => ({ s, t: at(s.createdAt) })).filter((row): row is { s: CampaignSubmission; t: number } => row.t !== null);
-  const within = dated.filter((row) => row.t >= periodStart && row.t <= now);
+  const { periodStart, dated, oldest, capped } = submissionsInPeriod(submissions, periodDays, now);
+  const previousStart = midnight(now, -(2 * periodDays - 1));
+  const within = dated.filter((row) => row.t >= periodStart);
   const previous = dated.filter((row) => row.t >= previousStart && row.t < periodStart);
   const full = submissions.length >= SUBMISSION_READ_LIMIT;
-  const capped = full && within.length === dated.length;
   // The previous period is complete only if the read was not full, or it reaches back past it.
-  const oldest = dated.reduce((min, row) => Math.min(min, row.t), Number.POSITIVE_INFINITY);
   const previousCovered = !full || oldest < previousStart;
 
   const leadsCount = within.length;
@@ -119,14 +132,15 @@ export function deriveMarketingOverview(input: {
   const daily: DailyPoint[] = [];
   const byDay = new Map<string, DailyPoint>();
   for (let i = 0; i < periodDays; i += 1) {
-    const time = periodStart + i * DAY_MS;
+    const time = midnight(now, i - (periodDays - 1));
     const point = { day: dayKey(time), label: new Date(time).toLocaleDateString(undefined, { month: "short", day: "numeric" }), leads: 0, opportunities: 0 };
     daily.push(point);
     byDay.set(point.day, point);
   }
+  const today = daily[daily.length - 1];
   for (const row of within) {
-    const point = byDay.get(dayKey(row.t));
-    if (!point) continue;
+    // Every counted lead lands on a bar: one stamped ahead of this clock goes on today.
+    const point = byDay.get(dayKey(row.t)) ?? today;
     point.leads += 1;
     if (row.s.dealId) point.opportunities += 1;
   }

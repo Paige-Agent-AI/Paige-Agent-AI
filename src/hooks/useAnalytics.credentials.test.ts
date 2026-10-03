@@ -530,3 +530,24 @@ describe("URLs that avoided being read as URLs", () => {
     expect(redactSecretSearch("?debug&utm_campaign=spring_sale")).toBe("?debug&utm_campaign=spring_sale");
   });
 });
+
+
+describe("privacy-first exact-width attribution credentials", () => {
+  // Synthetic sample emitted by CI's random mint gate; never an actual customer credential.
+  const escaped = "LDLTW1JT364LO3PITQCI9XD8217OQLAJ";
+  it.each([escaped, escaped.toLowerCase(), "Q".repeat(31)+"+", "q".repeat(31)+"+"])("removes single-case opaque32 from actual attribution sinks: %s", async token => {
+    expect(token).toHaveLength(32);
+    atLocation(`https://app.example.com/?utm_campaign=${token}`);
+    const { trackEvent, redactAttributionValue } = await import("./useAnalytics");
+    expect(redactAttributionValue(token)).not.toContain(token);
+    expect(redactAttributionValue(new URLSearchParams(`utm_campaign=${token}`).get("utm_campaign")!)).toBe("<redacted>");
+    await trackEvent("page_view", "engagement", {utm_campaign:token});
+    expect(sent.length).toBeGreaterThan(0);
+    expect(sent.join("\n")).not.toContain(token);
+    expect(sent.join("\n")).not.toContain(token.replace(/\+/g," "));
+  });
+  it("preserves UUIDs and ordinary shorter/separated attribution labels", async()=>{
+    const {redactAttributionValue}=await import("./useAnalytics");
+    for(const label of ["3f2504e0-4f89-11d3-9a0c-0305e82c3301","SUMMER20","BlackFridayPromo2026","black_friday_2026_launch","spring-into-growth-2026-cohort"]){expect(redactAttributionValue(label)).toBe(label);}
+  });
+});

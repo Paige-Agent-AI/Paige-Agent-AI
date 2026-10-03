@@ -30,12 +30,12 @@ export function setAgreementsHarnessMode(next: AgreementsMode) {
 }
 
 const CLIENTS = [
-  { id: "c1", name: "Jordan Avery" },
-  { id: "c2", name: "Meridian Advisory" },
+  { id: "c1", name: "Jordan Avery", primaryEmail: "jordan-primary@example.test" },
+  { id: "c2", name: "Meridian Advisory", primaryEmail: null },
   // The counterparty on the SIGNED document. Without this pair — this client and `a3` below — the
   // completed signing joins nothing and the terminal state of the whole flow renders in no frame,
   // which is how it stayed unreviewable until it was shot.
-  { id: "c3", name: "Delaney Okafor" },
+  { id: "c3", name: "Delaney Okafor", primaryEmail: "delaney-primary@example.test" },
 ];
 
 const AGREEMENTS = [

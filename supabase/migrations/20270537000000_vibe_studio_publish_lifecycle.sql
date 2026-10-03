@@ -35,11 +35,13 @@ ALTER TABLE public.growth_forms ALTER COLUMN status SET DEFAULT 'draft';
 UPDATE public.growth_forms SET
   draft_schema_json = COALESCE(draft_schema_json, schema_json),
   draft_success_action_json = COALESCE(draft_success_action_json, success_action_json),
-  published_at = CASE WHEN status = 'active' THEN COALESCE(published_at, updated_at, created_at) ELSE published_at END;
+  published_at = CASE WHEN status = 'active' THEN COALESCE(published_at, updated_at, created_at) ELSE published_at END
+WHERE draft_schema_json IS NULL OR draft_success_action_json IS NULL
+   OR (status = 'active' AND published_at IS NULL);
 
 ALTER TABLE public.growth_funnels ADD COLUMN IF NOT EXISTS published_at timestamptz;
-UPDATE public.growth_funnels SET published_at = COALESCE(published_at, updated_at)
-  WHERE status = 'active';
+UPDATE public.growth_funnels SET published_at = updated_at
+  WHERE status = 'active' AND published_at IS NULL;
 
 -- Images Vibe Studio makes can be published to the Catalog too.
 ALTER TABLE public.marketing_content ADD COLUMN IF NOT EXISTS published_at timestamptz;
@@ -62,10 +64,17 @@ DECLARE _tenant uuid;
 BEGIN
   IF auth.uid() IS NOT NULL THEN
     _tenant := public.current_user_tenant_id();
-    IF _tenant IS NULL OR NOT public.is_tenant_admin(_tenant) THEN
+    -- The workspace's own owner or admin; or the agency that manages this sub-account, exactly as
+    -- agency_can_manage_child scopes it (agency owner/admin/manager, a specialist only where
+    -- assigned). Never a global role.
+    IF _tenant IS NULL OR NOT (public.is_tenant_admin(_tenant) OR public.agency_can_manage_child(_tenant, auth.uid())) THEN
       RAISE EXCEPTION 'GROWTH_FORBIDDEN: the workspace owner or an admin is required' USING ERRCODE = '42501';
     END IF;
     RETURN _tenant;
+  END IF;
+  -- No signed-in user: only a server session may name the workspace.
+  IF NOT (COALESCE(auth.role(), '') = 'service_role' OR public.is_direct_server_context()) THEN
+    RAISE EXCEPTION 'GROWTH_FORBIDDEN: sign in to change this workspace' USING ERRCODE = '42501';
   END IF;
   IF p_tenant_id IS NULL THEN
     RAISE EXCEPTION 'GROWTH_NO_TENANT: a tenant context is required' USING ERRCODE = '22023';
@@ -84,16 +93,19 @@ SET search_path TO 'public'
 AS $$
   SELECT _caller IS NOT NULL
      AND _caller = auth.uid()
-     AND public.is_tenant_admin(public.current_user_tenant_id());
+     AND (public.is_tenant_admin(public.current_user_tenant_id())
+          OR public.agency_can_manage_child(public.current_user_tenant_id(), _caller));
 $$;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 3. Publish state changes only through the publish functions
 -- ─────────────────────────────────────────────────────────────────────────────
--- The growth tables are writable by any active member through RLS. That stays (it carries other
--- edits), but what visitors see — status, published_at and the live content columns — may only
--- change inside the SECURITY DEFINER functions below (which run as their owner, not as the
--- signed-in role) or from a server context.
+-- The growth tables are writable by any active member through RLS, which would let a member
+-- change what visitors see, rewrite a working copy that then goes live on the owner's next
+-- publish, or delete a live page out from under a funnel. Nothing in the app writes these tables
+-- directly (every write goes through the functions below, which run as their owner), so signed-in
+-- and anonymous roles may no longer write them directly at all. Images keep their existing
+-- writers; only their published state, and a published image's file, are held to Vibe Studio.
 CREATE OR REPLACE FUNCTION public.growth_publish_state_guard()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -105,82 +117,45 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- A live funnel's step list is only changed by the funnel functions.
-  IF TG_TABLE_NAME = 'growth_funnel_steps' THEN
-    IF TG_OP IN ('UPDATE', 'DELETE') AND EXISTS (
-         SELECT 1 FROM public.growth_funnels f WHERE f.id = OLD.funnel_id AND f.status = 'active') THEN
-      RAISE EXCEPTION 'GROWTH_PUBLISH_STATE_GUARDED: a live funnel''s steps change through Vibe Studio' USING ERRCODE = '42501';
-    END IF;
-    IF TG_OP IN ('INSERT', 'UPDATE') AND EXISTS (
-         SELECT 1 FROM public.growth_funnels f WHERE f.id = NEW.funnel_id AND f.status = 'active') THEN
-      RAISE EXCEPTION 'GROWTH_PUBLISH_STATE_GUARDED: a live funnel''s steps change through Vibe Studio' USING ERRCODE = '42501';
-    END IF;
-    IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
-    RETURN NEW;
+  IF TG_TABLE_NAME <> 'marketing_content' THEN
+    RAISE EXCEPTION 'GROWTH_PUBLISH_STATE_GUARDED: pages, forms and funnels change through Vibe Studio' USING ERRCODE = '42501';
   END IF;
 
   IF TG_OP = 'INSERT' THEN
-    IF NEW.published_at IS NOT NULL THEN
+    IF NEW.status = 'published' OR NEW.published_at IS NOT NULL THEN
       RAISE EXCEPTION 'GROWTH_PUBLISH_STATE_GUARDED: new work starts unpublished' USING ERRCODE = '42501';
-    END IF;
-    IF TG_TABLE_NAME = 'marketing_content' THEN
-      IF NEW.status = 'published' THEN
-        RAISE EXCEPTION 'GROWTH_PUBLISH_STATE_GUARDED: new work starts unpublished' USING ERRCODE = '42501';
-      END IF;
-    ELSIF NEW.status IS DISTINCT FROM 'draft' THEN
-      RAISE EXCEPTION 'GROWTH_PUBLISH_STATE_GUARDED: new work starts unpublished' USING ERRCODE = '42501';
-    END IF;
-    IF TG_TABLE_NAME = 'growth_pages' THEN
-      IF NEW.blocks_json IS NOT NULL AND NEW.blocks_json <> '[]'::jsonb THEN
-        RAISE EXCEPTION 'GROWTH_PUBLISH_STATE_GUARDED: a page''s live content is set by publishing it' USING ERRCODE = '42501';
-      END IF;
     END IF;
     RETURN NEW;
   END IF;
-
-  -- UPDATE
-  IF NEW.published_at IS DISTINCT FROM OLD.published_at THEN
+  IF TG_OP = 'DELETE' THEN
+    IF OLD.status = 'published' THEN
+      RAISE EXCEPTION 'GROWTH_PUBLISH_STATE_GUARDED: unpublish this image before deleting it' USING ERRCODE = '42501';
+    END IF;
+    RETURN OLD;
+  END IF;
+  IF NEW.published_at IS DISTINCT FROM OLD.published_at
+     OR (NEW.status IS DISTINCT FROM OLD.status AND (NEW.status = 'published' OR OLD.status = 'published'))
+     OR (OLD.status = 'published' AND (NEW.image_url IS DISTINCT FROM OLD.image_url OR NEW.body IS DISTINCT FROM OLD.body)) THEN
     RAISE EXCEPTION 'GROWTH_PUBLISH_STATE_GUARDED: publishing goes through Vibe Studio' USING ERRCODE = '42501';
-  END IF;
-  IF TG_TABLE_NAME = 'marketing_content' THEN
-    IF NEW.status IS DISTINCT FROM OLD.status AND (NEW.status = 'published' OR OLD.status = 'published') THEN
-      RAISE EXCEPTION 'GROWTH_PUBLISH_STATE_GUARDED: publishing goes through Vibe Studio' USING ERRCODE = '42501';
-    END IF;
-    RETURN NEW;
-  END IF;
-  IF NEW.status IS DISTINCT FROM OLD.status THEN
-    RAISE EXCEPTION 'GROWTH_PUBLISH_STATE_GUARDED: publishing goes through Vibe Studio' USING ERRCODE = '42501';
-  END IF;
-  IF TG_TABLE_NAME = 'growth_pages' THEN
-    IF NEW.blocks_json IS DISTINCT FROM OLD.blocks_json
-       OR NEW.theme_json IS DISTINCT FROM OLD.theme_json
-       OR NEW.seo_json IS DISTINCT FROM OLD.seo_json THEN
-      RAISE EXCEPTION 'GROWTH_PUBLISH_STATE_GUARDED: a page''s live content changes by publishing it' USING ERRCODE = '42501';
-    END IF;
-  ELSIF TG_TABLE_NAME = 'growth_forms' THEN
-    IF OLD.status = 'active' AND (NEW.schema_json IS DISTINCT FROM OLD.schema_json
-       OR NEW.success_action_json IS DISTINCT FROM OLD.success_action_json) THEN
-      RAISE EXCEPTION 'GROWTH_PUBLISH_STATE_GUARDED: a live form''s questions change by publishing it' USING ERRCODE = '42501';
-    END IF;
   END IF;
   RETURN NEW;
 END;
 $$;
 
 DROP TRIGGER IF EXISTS trg_growth_pages_publish_guard ON public.growth_pages;
-CREATE TRIGGER trg_growth_pages_publish_guard BEFORE INSERT OR UPDATE ON public.growth_pages
+CREATE TRIGGER trg_growth_pages_publish_guard BEFORE INSERT OR UPDATE OR DELETE ON public.growth_pages
   FOR EACH ROW EXECUTE FUNCTION public.growth_publish_state_guard();
 DROP TRIGGER IF EXISTS trg_growth_forms_publish_guard ON public.growth_forms;
-CREATE TRIGGER trg_growth_forms_publish_guard BEFORE INSERT OR UPDATE ON public.growth_forms
+CREATE TRIGGER trg_growth_forms_publish_guard BEFORE INSERT OR UPDATE OR DELETE ON public.growth_forms
   FOR EACH ROW EXECUTE FUNCTION public.growth_publish_state_guard();
 DROP TRIGGER IF EXISTS trg_growth_funnels_publish_guard ON public.growth_funnels;
-CREATE TRIGGER trg_growth_funnels_publish_guard BEFORE INSERT OR UPDATE ON public.growth_funnels
+CREATE TRIGGER trg_growth_funnels_publish_guard BEFORE INSERT OR UPDATE OR DELETE ON public.growth_funnels
   FOR EACH ROW EXECUTE FUNCTION public.growth_publish_state_guard();
 DROP TRIGGER IF EXISTS trg_growth_funnel_steps_publish_guard ON public.growth_funnel_steps;
 CREATE TRIGGER trg_growth_funnel_steps_publish_guard BEFORE INSERT OR UPDATE OR DELETE ON public.growth_funnel_steps
   FOR EACH ROW EXECUTE FUNCTION public.growth_publish_state_guard();
 DROP TRIGGER IF EXISTS trg_marketing_content_publish_guard ON public.marketing_content;
-CREATE TRIGGER trg_marketing_content_publish_guard BEFORE INSERT OR UPDATE ON public.marketing_content
+CREATE TRIGGER trg_marketing_content_publish_guard BEFORE INSERT OR UPDATE OR DELETE ON public.marketing_content
   FOR EACH ROW EXECUTE FUNCTION public.growth_publish_state_guard();
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -234,6 +209,12 @@ BEGIN
      OR COALESCE(_row.draft_seo_json::text, '') ~ '\[[A-Za-z0-9]*_[A-Za-z0-9_]*\]'
      OR COALESCE(_row.draft_seo_json::text, '') ~* '\[[^\]]*\y(add|paste|insert|enter|fill|tbd|placeholder|replace|example|your)\y[^\]]*\]' THEN
     RAISE EXCEPTION 'GROWTH_UNRESOLVED_PLACEHOLDER: page has unresolved editable placeholders (e.g. [ADD_WEBINAR_DATE]) — fill them before publishing' USING ERRCODE = '22023';
+  END IF;
+
+  -- A signup section with no form behind it would publish as an empty box.
+  IF EXISTS (SELECT 1 FROM jsonb_array_elements(_blocks) b
+              WHERE b->>'type' = 'embedded_form' AND NULLIF(btrim(COALESCE(b->>'form_slug', '')), '') IS NULL) THEN
+    RAISE EXCEPTION 'GROWTH_FORM_MISSING: a signup section on this page has no form — ask Paige to add one before publishing' USING ERRCODE = '22023';
   END IF;
 
   -- Publishing a page publishes the forms on it (owner ruling 2026-09-30).
@@ -403,7 +384,31 @@ BEGIN
     SELECT * INTO _existing FROM public.growth_forms WHERE tenant_id = _tenant AND slug = _slug;
   END IF;
 
+  IF _existing.id IS NULL THEN
+    _success := COALESCE(p_success_action_json,
+                         '{"type":"thank_you","message":"Thanks — we''ll be in touch."}'::jsonb);
+    INSERT INTO public.growth_forms (
+      tenant_id, slug, name, status, schema_json, success_action_json,
+      draft_schema_json, draft_success_action_json,
+      auto_create_contact, pipeline_id, stage_id, created_by
+    ) VALUES (
+      _tenant, _slug, COALESCE(NULLIF(btrim(p_name), ''), 'Lead form'), 'draft',
+      p_schema_json, _success, p_schema_json, _success,
+      COALESCE(p_auto_create_contact, true), p_pipeline_id, p_stage_id, _caller
+    )
+    ON CONFLICT (tenant_id, slug) DO NOTHING
+    RETURNING * INTO _row;
+    -- Lost a race with another save of the same slug: update that form instead.
+    IF _row.id IS NULL THEN
+      SELECT * INTO _existing FROM public.growth_forms WHERE tenant_id = _tenant AND slug = _slug;
+    END IF;
+  END IF;
+
   IF _existing.id IS NOT NULL THEN
+    -- Pages embed a form by its slug, so a live form's slug cannot change underneath them.
+    IF _existing.status = 'active' AND _existing.slug <> _slug THEN
+      RAISE EXCEPTION 'GROWTH_FORM_LIVE_SLUG: this form is live — unpublish it to change its address' USING ERRCODE = '22023';
+    END IF;
     _success := COALESCE(p_success_action_json, _existing.draft_success_action_json, _existing.success_action_json);
     -- A live form keeps what visitors see until it is published again; an unpublished form's
     -- live and working copies stay equal.
@@ -418,19 +423,6 @@ BEGIN
       pipeline_id               = COALESCE(p_pipeline_id, pipeline_id),
       stage_id                  = COALESCE(p_stage_id, stage_id)
     WHERE id = _existing.id AND tenant_id = _tenant
-    RETURNING * INTO _row;
-  ELSE
-    _success := COALESCE(p_success_action_json,
-                         '{"type":"thank_you","message":"Thanks — we''ll be in touch."}'::jsonb);
-    INSERT INTO public.growth_forms (
-      tenant_id, slug, name, status, schema_json, success_action_json,
-      draft_schema_json, draft_success_action_json,
-      auto_create_contact, pipeline_id, stage_id, created_by
-    ) VALUES (
-      _tenant, _slug, COALESCE(NULLIF(btrim(p_name), ''), 'Lead form'), 'draft',
-      p_schema_json, _success, p_schema_json, _success,
-      COALESCE(p_auto_create_contact, true), p_pipeline_id, p_stage_id, _caller
-    )
     RETURNING * INTO _row;
   END IF;
 
@@ -836,12 +828,22 @@ BEGIN
   -- first. Re-sending the same steps (a content-only rebuild) is fine.
   IF _existing_id IS NOT NULL AND _existing_status = 'active' AND p_steps IS NOT NULL THEN
     SELECT COALESCE(jsonb_agg(jsonb_build_object('order_index', s.order_index, 'step_type', s.step_type,
-             'page_id', s.page_id, 'form_id', s.form_id, 'config_json', s.config_json) ORDER BY s.order_index, s.id), '[]'::jsonb)
+             'page_id', s.page_id, 'form_id', s.form_id, 'config_json', s.config_json)
+             ORDER BY s.order_index, s.step_type, COALESCE(s.page_id::text, ''), COALESCE(s.form_id::text, '')), '[]'::jsonb)
       INTO _current_steps FROM public.growth_funnel_steps s WHERE s.funnel_id = _existing_id;
     IF _current_steps IS DISTINCT FROM (
-         SELECT COALESCE(jsonb_agg(x ORDER BY (x->>'order_index')::int), '[]'::jsonb) FROM jsonb_array_elements(_resolved_steps) x) THEN
+         SELECT COALESCE(jsonb_agg(x ORDER BY (x->>'order_index')::int, x->>'step_type',
+                  COALESCE(x->>'page_id', ''), COALESCE(x->>'form_id', '')), '[]'::jsonb)
+           FROM jsonb_array_elements(_resolved_steps) x) THEN
       RAISE EXCEPTION 'GROWTH_FUNNEL_LIVE_STRUCTURE: this funnel is live — unpublish it to add, remove or reorder steps' USING ERRCODE = '22023';
     END IF;
+  END IF;
+
+  IF _existing_id IS NOT NULL AND _existing_status = 'active' AND (
+       (p_entry_page_id IS NOT NULL AND p_entry_page_id IS DISTINCT FROM (SELECT entry_page_id FROM public.growth_funnels WHERE id = _existing_id))
+    OR (p_success_page_id IS NOT NULL AND p_success_page_id IS DISTINCT FROM (SELECT success_page_id FROM public.growth_funnels WHERE id = _existing_id))
+    OR _slug IS DISTINCT FROM (SELECT slug FROM public.growth_funnels WHERE id = _existing_id)) THEN
+    RAISE EXCEPTION 'GROWTH_FUNNEL_LIVE_STRUCTURE: this funnel is live — unpublish it to change its pages or address' USING ERRCODE = '22023';
   END IF;
 
   IF _existing_id IS NOT NULL THEN
@@ -1102,6 +1104,9 @@ BEGIN
       title             = COALESCE(_v.snapshot->>'title', title)
     WHERE id = _v.lineage_id AND tenant_id = _tenant;
   ELSIF _v.kind = 'content' THEN
+    IF EXISTS (SELECT 1 FROM public.marketing_content WHERE id = _v.lineage_id AND tenant_id = _tenant AND status = 'published') THEN
+      RAISE EXCEPTION 'GROWTH_PUBLISHED: this image is in your Catalog — unpublish it to go back to an earlier version' USING ERRCODE = '22023';
+    END IF;
     UPDATE public.marketing_content SET
       body      = _v.snapshot->>'body',
       image_url = _v.snapshot->>'image_url',
@@ -1203,5 +1208,240 @@ GRANT EXECUTE ON FUNCTION public.growth_page_edit_blocks(uuid, uuid, jsonb) TO a
 GRANT EXECUTE ON FUNCTION public.growth_page_publish(uuid, uuid) TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.growth_funnel_upsert(uuid, text, text, text, jsonb, uuid, uuid, uuid) TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.growth_funnel_publish(uuid, uuid) TO authenticated, service_role;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 11. The autonomy catalogue carries the Studio's two form tools
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Paige can now draft and publish a standalone form from the Studio chat (growth_form_save,
+-- growth_form_publish), so the operator's catalogue lists their toggles. This body is
+-- 20270532120000's, unchanged except for those two rows; no autonomy is granted and no row moves.
+CREATE OR REPLACE FUNCTION public.list_tool_autonomy(_tenant_id uuid DEFAULT NULL)
+RETURNS TABLE (
+  tool_key    text,
+  label       text,
+  category    text,
+  mode        text,
+  is_default  boolean,
+  updated_at  timestamptz
+)
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+DECLARE
+  _caller uuid := auth.uid();
+  _tenant uuid;
+BEGIN
+  IF _caller IS NOT NULL THEN
+    _tenant := public.current_user_tenant_id();
+    IF _tenant_id IS NOT NULL AND _tenant_id <> _tenant AND NOT public.is_platform_owner() THEN
+      RAISE EXCEPTION 'AUTONOMY_FORBIDDEN: tenant mismatch' USING ERRCODE = '42501';
+    END IF;
+    IF public.is_platform_owner() AND _tenant_id IS NOT NULL THEN _tenant := _tenant_id; END IF;
+  ELSE
+    _tenant := _tenant_id;
+  END IF;
+
+  RETURN QUERY
+  WITH catalog(tool_key, label, category) AS (
+    VALUES
+      ('agreement_draft',                    'Draft an agreement', 'Approvals'),
+      ('agreement_send',                     'Send an agreement for signature', 'Approvals'),
+      -- ── previously listed (23) ──
+      ('crm_update_contact',            'Update a contact', 'CRM'),
+      ('crm_create_contact',            'Add a contact', 'CRM'),
+      ('crm_delete_contact',            'Delete a contact', 'CRM'),
+      ('crm_update_pipeline_stage',     'Move a client''s stage', 'Pipeline'),
+      ('crm_assign_coach',              'Assign a coach', 'CRM'),
+      ('crm_assign_contact',            'Assign a contact', 'CRM'),
+      ('crm_create_task',               'Create a task', 'Tasks'),
+      ('crm_log_activity',              'Log an activity', 'CRM'),
+      ('crm_add_note',                  'Add a note to a client', 'CRM'),
+      ('crm_file_document',             'File a document on a client', 'CRM'),
+      ('member_grant_role',             'Grant a staff role', 'Team'),
+      ('member_revoke_role',            'Revoke a staff role', 'Team'),
+      ('calendar_book_meeting',         'Book a meeting', 'Calendar'),
+      -- ── added 2026-09-13 (E5): the governed booking-preset lifecycle. These edit a bookable
+      -- /book PAGE, not a booked meeting. publish/revise/archive are HIGH in action-risk.ts, so
+      -- no stored mode can bypass explicit confirmation; create/pause/duplicate/restore are ordinary.
+      ('booking_preset_create',         'Create a booking calendar', 'Calendar'),
+      ('booking_preset_revise',         'Change a booking calendar', 'Calendar'),
+      ('booking_preset_publish',        'Publish a booking calendar''s public page', 'Calendar'),
+      ('booking_preset_pause',          'Pause a booking calendar', 'Calendar'),
+      ('booking_preset_duplicate',      'Duplicate a booking calendar', 'Calendar'),
+      ('booking_preset_archive',        'Archive a booking calendar', 'Calendar'),
+      ('booking_preset_restore',        'Restore a booking calendar', 'Calendar'),
+      -- ── added 2026-09-13 (E7): the governed calendar-link SHARE. Sends a published calendar's
+      -- public /book link to a contact by email/SMS; HIGH in action-risk.ts (never bypassable by a
+      -- stored mode). The prepare/social-copy reads are not catalogued.
+      ('calendar_link_send',            'Send a booking link to a contact', 'Calendar'),
+      ('draft_marketing_content',       'Draft marketing content', 'Content'),
+      ('generate_image',                'Generate an image', 'Content'),
+      ('content_save',                  'Save marketing content', 'Content'),
+      ('growth_page_save',              'Save a landing page draft', 'Studio'),
+      ('growth_page_publish',           'Publish a landing page', 'Studio'),
+      ('growth_funnel_build',           'Build a funnel', 'Studio'),
+      ('growth_funnel_publish',         'Publish a funnel', 'Studio'),
+      ('growth_form_save',              'Save a form draft', 'Studio'),
+      ('growth_form_publish',           'Publish a form', 'Studio'),
+      ('action_file',                   'File an action', 'Action bus'),
+      ('action_advance',                'Advance an action', 'Action bus'),
+      ('update_client_data',            'Save details to a client''s file', 'Client file'),
+      ('delegate_to_subagent',          'Hand work to a specialist', 'Paige''s team'),
+      ('forge_subagent',                'Create a new specialist', 'Paige''s team'),
+      ('save_to_knowledge_base',        'Save something to your knowledge base', 'Knowledge'),
+      ('update_business_profile',       'Update your business profile', 'Business'),
+      ('deal_create',                   'Add a deal', 'Pipeline'),
+      ('deal_move_stage',               'Move a deal''s stage', 'Pipeline'),
+      ('document_generate',             'Generate a document', 'Content'),
+      ('author_event_kind',             'Add an activity kind', 'Action bus'),
+      ('n8n_run_workflow',              'Run an automation', 'Automations'),
+      ('n8n_activate_workflow',         'Turn an automation on', 'Automations'),
+      ('n8n_deactivate_workflow',       'Turn an automation off', 'Automations'),
+      ('n8n_create_workflow',           'Create an automation', 'Automations'),
+      ('n8n_update_workflow',           'Change an automation', 'Automations'),
+      ('n8n_archive_workflow',          'Archive an automation', 'Automations'),
+      ('n8n_delete_workflow',           'Delete an automation permanently', 'Automations'),
+      ('zapier_run_action',             'Run a connected app action', 'Automations'),
+      ('plan_set_reminder',             'Set a reminder', 'Planning'),
+      ('plan_create',                   'Create a plan', 'Planning'),
+      ('plan_add_milestone',            'Add a milestone', 'Planning'),
+      ('plan_assign_task',              'Assign a task from a plan', 'Planning'),
+      ('plan_update_item',              'Change a plan item', 'Planning'),
+      ('plan_remove_item',              'Remove a plan item', 'Planning'),
+      -- added by Phase 2: visible controls for governed Business Mission record changes
+      ('mission_create',                 'Create a Business Mission', 'Planning'),
+      ('mission_revise',                 'Revise a Business Mission brief', 'Planning'),
+      ('mission_transition',             'Change a Business Mission state', 'Planning'),
+      ('automation_draft',              'Set up a repeatable process', 'Automations'),
+      ('automation_set_grant',          'Change how much Paige runs alone', 'Automations'),
+      ('automation_set_state',          'Turn a process on or off', 'Automations'),
+      ('marketplace_install',           'Install from the marketplace', 'Marketplace'),
+      ('marketplace_uninstall',         'Remove a marketplace install', 'Marketplace'),
+      ('propose_business_brief_update', 'Propose a business brief update', 'CRM'),
+      ('pipeline_configure',            'Configure pipelines and stages', 'Pipeline'),
+      -- added 2026-09-06: the two governed campaign-brief PLANNING writes (Slice 2)
+      ('campaign_brief_create',         'Save a campaign brief', 'Campaigns'),
+      ('campaign_brief_revise',         'Revise a campaign brief', 'Campaigns'),
+      ('comms_buy_number',              'Buy a phone number (monthly charge)', 'Comms'),
+      ('comms_set_primary_number',      'Change which number you send from', 'Comms'),
+      ('comms_name_number',             'Rename a phone number', 'Comms'),
+      ('comms_draft_registration',      'Draft your carrier registration', 'Comms'),
+      -- ── added 2026-09-02: the Solo Team seam ──
+      ('team_set_work_profile',         'Update a teammate''s work details', 'Team'),
+      ('team_set_permission',           'Change what a teammate can access', 'Team'),
+      ('team_invite_member',            'Invite someone to the team', 'Team'),
+      ('team_invite_resend',            'Send a team invitation again', 'Team'),
+      ('team_invite_revoke',            'Withdraw a team invitation', 'Team'),
+      -- ── added 2026-09-05: the acts the inbound MCP door names (task #45) ──
+      ('tenant_create',                     'Create a new workspace', 'Platform'),
+      ('crm_append_contact_notes',          'Add notes to a client''s record', 'CRM'),
+      ('crm_delete_task',                   'Delete a task', 'Tasks'),
+      ('workflow_run',                      'Run a registered automation', 'Automations'),
+      ('workflow_cancel_run',               'Stop an automation that is running', 'Automations'),
+      ('workflow_register',                 'Register a new automation', 'Automations'),
+      ('automation_rule_create',            'Create a stage automation rule', 'Automations'),
+      ('automation_rule_update',            'Change a stage automation rule', 'Automations'),
+      ('automation_rule_delete',            'Delete a stage automation rule permanently', 'Automations'),
+      ('approval_decide',                   'Approve or reject something waiting for review', 'Approvals'),
+      ('approval_create',                   'File something for review', 'Approvals'),
+      ('readiness_approve_proposal',        'Approve a readiness item for a client', 'Approvals'),
+      ('coach_update_profile',              'Change a coach''s details and availability', 'Team'),
+      ('team_invite_mint',                  'Create a workspace invitation link', 'Team'),
+      ('comms_upsert_email_template',       'Save a shared email template', 'Comms'),
+      ('comms_send_email',                  'Send an email to a real person', 'Comms'),
+      ('comms_send_bulk_email',             'Send an email to many people at once', 'Comms'),
+      ('comms_add_email_domain',            'Add a sending domain', 'Comms'),
+      ('comms_set_primary_email_domain',    'Change which domain you send email from', 'Comms'),
+      ('billing_send_invoice',              'Send an invoice to a client', 'Billing'),
+      ('skill_run',                         'Run a skill', 'Paige''s team'),
+      ('subagent_create',                   'Propose a new specialist', 'Paige''s team'),
+      ('subagent_approve_proposal',         'Put a proposed specialist live', 'Paige''s team'),
+      ('business_verify',                   'Check a company against outside registries', 'Business'),
+      ('agency_create_subaccount',          'Create a sub-account', 'Agency'),
+      ('agency_enter_subaccount',           'Work inside a sub-account', 'Agency'),
+      ('privacy_handle_request',            'Act on a data request from a person', 'Privacy'),
+      ('tenant_set_status',                 'Suspend or restore a workspace', 'Platform'),
+      ('tenant_set_features',               'Turn capabilities on or off for a workspace', 'Platform'),
+      ('crm_update_lifecycle_stage',        'Move a client to another lifecycle stage', 'CRM'),
+      ('crm_advance_journey_stage',         'Move a client along their journey', 'CRM'),
+      ('crm_propose_contact_update',        'Propose a change to a client''s record', 'CRM'),
+      ('crm_update_task',                   'Change a task', 'Tasks'),
+      ('approval_claim',                    'Take ownership of something waiting for review', 'Approvals'),
+      ('approval_comment',                  'Comment on something waiting for review', 'Approvals'),
+      ('readiness_reject_proposal',         'Close a readiness item without approving it', 'Approvals'),
+      ('billing_create_invoice',            'Draft an invoice', 'Billing'),
+      ('comms_draft_email',                 'Draft an email', 'Comms'),
+      ('platform_post_notification',        'Post an operator notice', 'Platform'),
+      ('agency_exit_subaccount',            'Return to your own workspace', 'Agency'),
+      ('business_create',                   'Add a business you own', 'Business'),
+      ('business_update',                   'Update a business you own', 'Business'),
+      ('update_social_accounts',            'Record the accounts you post from', 'Business'),
+      ('ingest_client_memory',              'Remember something about a client', 'Client file'),
+      ('ingest_credit_scores',              'Record reported score figures on a client''s file', 'Client file'),
+      ('nav_pull_business_credit',          'Pull a paid NAV business credit report', 'Client file'),
+      ('smartcredit_pull_snapshot',         'Pull a paid SmartCredit snapshot', 'Client file'),
+      ('ingest_banking_snapshot',           'Record reported account figures on a client''s file', 'Client file'),
+      ('ingest_confirm_proposal',           'Confirm a staged change to a client''s file', 'Client file'),
+      ('ingest_reject_proposal',            'Discard a staged change to a client''s file', 'Client file'),
+      ('client_log_progress',               'Add a progress note to your own record', 'Client file'),
+      -- Added in the same branch, after the peer gate refused three reuses that merged different
+      -- acts under one key: the one send tool that also chooses which address the email appears
+      -- to come from.
+      ('comms_send_email_choosing_the_sender', 'Send an email and choose the sending address', 'Comms'),
+      -- ── added 2026-09-12: the action-risk classification repair (improvement loop + social) ──
+      ('improvement_propose',               'Propose an improvement to Paige', 'Paige''s team'),
+      ('improvement_decide',                'Approve or reject an improvement proposal', 'Paige''s team'),
+      ('social_post',                       'Post to social media', 'Content'),
+      -- Added with the tenant-owned Social connection lifecycle. These mutations remain high-risk
+      -- in action-risk.ts, so no stored autonomy mode can bypass explicit confirmation.
+      ('social_connection_start',           'Connect a Social identity', 'Automations'),
+      ('social_account_select',             'Select a Social account', 'Automations'),
+      ('social_connection_disconnect',      'Disconnect a Social identity', 'Automations'),
+      -- Governed CRM/Pipeline operational surface. These are the same keys classified by
+      -- action-risk.ts and emitted from the one shared CRM command catalogue.
+      ('crm_archive_contact',                'Archive a contact', 'CRM'),
+      ('crm_restore_contact',                'Restore a contact', 'CRM'),
+      ('crm_link_contact_company',           'Link a contact to a company', 'CRM'),
+      ('crm_unlink_contact_company',         'Unlink a contact from a company', 'CRM'),
+      ('crm_assign_contact_owner',           'Change a contact owner', 'CRM'),
+      ('crm_merge_contacts',                 'Merge contacts', 'CRM'),
+      ('crm_hard_delete_contact',            'Delete a contact permanently', 'CRM'),
+      ('crm_bulk_update_contacts',           'Update an exact set of contacts', 'CRM'),
+      ('crm_create_company',                 'Add a company', 'CRM'),
+      ('crm_update_company',                 'Update a company', 'CRM'),
+      ('crm_archive_company',                'Archive a company', 'CRM'),
+      ('crm_restore_company',                'Restore a company', 'CRM'),
+      ('crm_update_deal',                    'Update a deal', 'Pipeline'),
+      ('crm_assign_deal_owner',              'Change a deal owner', 'Pipeline'),
+      ('crm_assign_deal_contact',            'Change a deal contact', 'Pipeline'),
+      ('crm_close_deal',                     'Close a deal', 'Pipeline'),
+      ('crm_reopen_deal',                    'Reopen a deal', 'Pipeline'),
+      ('crm_delete_deal',                    'Delete a deal permanently', 'Pipeline'),
+      ('crm_assign_task',                    'Assign a task', 'Tasks'),
+      ('crm_reschedule_task',                'Reschedule a task', 'Tasks'),
+      ('crm_complete_task',                  'Complete a task', 'Tasks'),
+      ('crm_reopen_task',                    'Reopen a task', 'Tasks'),
+      ('crm_cancel_task',                    'Cancel a task', 'Tasks')
+  )
+  SELECT
+    c.tool_key,
+    c.label,
+    c.category,
+    COALESCE(t.mode, 'confirm')       AS mode,
+    (t.mode IS NULL)                  AS is_default,
+    t.updated_at
+  FROM catalog c
+  LEFT JOIN public.tenant_tool_autonomy t
+    ON t.tool_key = c.tool_key AND t.tenant_id = _tenant
+  ORDER BY c.category, c.label;
+END;
+$$;
+
+-- Re-asserted, as every predecessor in this chain does. `CREATE OR REPLACE` preserves an existing
+-- function's ACL, so this changes nothing on a database that already ran an earlier grant.
+REVOKE ALL ON FUNCTION public.list_tool_autonomy(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.list_tool_autonomy(uuid) TO authenticated, service_role;
 
 COMMIT;

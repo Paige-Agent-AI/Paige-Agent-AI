@@ -288,6 +288,13 @@ if (chatSrc.includes('...AGREEMENT_TOOLS')) {
   if (!agreementTools.length) throw new Error('Agreement catalog could not be parsed');
   importedTools.push(...agreementTools);
 }
+if (chatSrc.includes('...GROWTH_FORM_TOOLS')) {
+  if (!/import\s*\{[^}]*GROWTH_FORM_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/paige-spine\/domains\/growth_form\.ts['"]/.test(chatSrc)) throw new Error('Unresolved Growth Form catalog import');
+  const source = fs.readFileSync('supabase/functions/_shared/paige-spine/domains/growth_form.ts', 'utf8');
+  const formTools = [...source.matchAll(/\bname:\s*"(growth_form_[a-z_]+)"/g)].map(m => m[1]);
+  if (!formTools.length) throw new Error('Growth Form catalog could not be parsed');
+  importedTools.push(...formTools);
+}
 if (chatSrc.includes('...CRM_COMMAND_TOOLS')) {
   if (!/import\s*\{[^}]*CRM_COMMAND_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/crm-command\/catalog\.ts['"]/.test(chatSrc)) throw new Error('Unresolved CRM command catalog import');
   const source = fs.readFileSync(CRM_CATALOG, 'utf8');

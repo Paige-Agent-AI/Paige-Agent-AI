@@ -648,6 +648,18 @@
       "receipt": "seeded_undeclared"
     },
     {
+      "tool": "growth_form_publish",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch records the run via recordFormRun -> classifyGrowthFormRun (_shared/growth-form-outcome.ts) -> recordCapabilityRun (succeeded / refused / failed / outcome_unknown), keyed on the tool call"
+    },
+    {
+      "tool": "growth_form_save",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch records the run via recordFormRun -> classifyGrowthFormRun (_shared/growth-form-outcome.ts) -> recordCapabilityRun (succeeded / refused / failed / outcome_unknown), keyed on the tool call"
+    },
+    {
       "tool": "growth_funnel_build",
       "risk": "ordinary",
       "receipt": "seeded_undeclared"

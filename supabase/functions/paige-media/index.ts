@@ -9,10 +9,11 @@
 // generate-image executor (invoked with the CALLER'S JWT — compliance H4 — so
 // its auth/role/tenant/storage/library/memory tail runs unchanged).
 //
-// AUTH (compliance H2): the tenant is DERIVED SERVER-SIDE from the verified JWT
-// via resolveTenantForUser — a body-supplied tenant_id is ignored entirely
-// (§59: the auth subject is always auth.uid(); user_roles admin is
-// tenant-AGNOSTIC and never authorizes cross-tenant action).
+// AUTH (compliance H2): the tenant is DERIVED SERVER-SIDE from the verified JWT —
+// the caller's active workspace via current_user_tenant_id(), membership-checked —
+// and only that workspace's owner or an admin (is_tenant_admin) passes. A
+// body-supplied tenant_id is ignored entirely (§59: the auth subject is always
+// auth.uid(); a global user_roles admin is tenant-AGNOSTIC and authorizes nothing).
 //
 // FAIL-CLOSED LADDER (owner ruling): music → truthful unavailable; video →
 // flag + per-job approval + daily completed cap; fal → secret present AND the
@@ -26,10 +27,10 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
-import { resolveTenantForUser } from "../_shared/tenant-for-user.ts";
 import { recordCapabilityRun } from "../_shared/capability-record.ts";
 import { getMediaAdapter, allMediaAdapters } from "../_shared/media-provider/registry.ts";
 import { falAdapter } from "../_shared/media-provider/fal.ts";
+import { selectMediaModel, type AutoSelectResult } from "../_shared/media-provider/auto-select.ts";
 import {
   loadMediaConfig,
   resolveMediaCeiling,
@@ -65,6 +66,21 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
+// Paige picks the model from the brief when the owner left it on "Auto" (owner ask 2026-10-03).
+// fal's catalog when fal is switched on; otherwise the first connected image provider.
+function resolveAutoModel(prompt: string, requested: string, hasReferences: boolean, videoAvailable: boolean): AutoSelectResult | null {
+  if (requested && requested !== "auto") return null;
+  if (falAdapter.isConfigured()) {
+    return selectMediaModel({ prompt, catalog: falAdapter.getCapabilities().models, hasReferences, videoAvailable });
+  }
+  for (const name of ["gemini", "openai", "ideogram", "replicate"] as const) {
+    if (getMediaAdapter(name)?.isConfigured()) {
+      return { model: `${name}:auto`, label: name, auto: true, reason: `Using ${name}, the image provider connected to this workspace.` };
+    }
+  }
+  return selectMediaModel({ prompt, catalog: falAdapter.getCapabilities().models, hasReferences, videoAvailable });
+}
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
@@ -74,18 +90,22 @@ serve(async (req: Request) => {
     const authed = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: authHeader } } });
     const { data: { user }, error: uErr } = await authed.auth.getUser();
     if (uErr || !user) return json({ error: "Unauthorized" }, 401);
-    const { data: roleRows } = await authed.from("user_roles").select("role").eq("user_id", user.id);
-    const roles = (roleRows || []).map((r: { role: string }) => r.role);
-    if (!roles.some((r: string) => r === "admin" || r === "super_admin")) {
-      return json({ error: "Admin access required." }, 403);
+    // The workspace is the one the person is acting in (their active workspace, membership-checked
+    // server-side by current_user_tenant_id), and only its owner or an admin may use the Studio —
+    // never a global role, which is tenant-agnostic (§59).
+    const { data: activeTenant, error: tErr } = await authed.rpc("current_user_tenant_id");
+    if (tErr) return json({ error: "Couldn't confirm your workspace — try again." }, 500);
+    if (!activeTenant) {
+      return json({ error: "No active workspace for this account — open a workspace first." }, 403);
+    }
+    const tenantId = String(activeTenant);
+    const { data: isAdmin, error: aErr } = await authed.rpc("is_tenant_admin", { _tenant: tenantId });
+    if (aErr) return json({ error: "Couldn't confirm your access — try again." }, 500);
+    if (isAdmin !== true) {
+      return json({ error: "Only this workspace's owner or an admin can use the Studio.", forbidden: true }, 403);
     }
 
     const admin = createClient(supabaseUrl, supabaseServiceKey);
-    const resolved = await resolveTenantForUser(admin, user.id);
-    if (!resolved.tenantId) {
-      return json({ error: "No active workspace for this account — open a workspace first." }, 403);
-    }
-    const tenantId = resolved.tenantId;
 
     const body = await req.json().catch(() => ({}));
     const action = String(body?.action ?? "");
@@ -165,7 +185,9 @@ serve(async (req: Request) => {
 
     // ── estimate: cost + approval preview WITHOUT creating a job ─────────────
     if (action === "estimate") {
-      const model = String(body?.model ?? "");
+      const picked = resolveAutoModel(String(body?.prompt ?? ""), String(body?.model ?? ""),
+        Array.isArray(body?.reference_content_ids) && body.reference_content_ids.length > 0, config.videoEnabled);
+      const model = picked?.model ?? String(body?.model ?? "");
       const adapter = falAdapter;
       const catalog = adapter.getCapabilities().models;
       const entry = catalog.find((m) => m.id === model);
@@ -181,6 +203,7 @@ serve(async (req: Request) => {
       });
       return json({
         model: entry.id,
+        model_choice: picked ?? { model: entry.id, label: entry.label, auto: false, reason: `Using ${entry.label}, as you chose.` },
         mode: entry.mode,
         tier: entry.tier,
         estimated_cost_usd: estimate.estimatedCostUsd,
@@ -194,7 +217,7 @@ serve(async (req: Request) => {
     if (action === "submit") {
       const prompt = String(body?.prompt ?? "").trim();
       if (prompt.length < 4) return json({ error: "Describe what you want to create." }, 400);
-      const model = String(body?.model ?? "");
+      const requestedModel = String(body?.model ?? "");
       const aspectRatio = ["1:1", "2:3", "3:2", "16:9", "9:16"].includes(String(body?.aspect_ratio))
         ? String(body.aspect_ratio)
         : undefined;
@@ -212,6 +235,13 @@ serve(async (req: Request) => {
       if (String(body?.mode_hint ?? "") === "music") {
         return json({ error: "Music generation is deferred from this release — no music provider is connected.", unavailable: "music" }, 403);
       }
+
+      // "Auto" (or no model): Paige picks from the brief and says why.
+      const picked = resolveAutoModel(prompt, requestedModel, referenceIds.length > 0, config.videoEnabled);
+      if (!requestedModel || requestedModel === "auto") {
+        if (!picked) return json({ error: "No image provider is connected to this workspace yet.", needs_config: true });
+      }
+      const model = picked?.model ?? requestedModel;
 
       // fal catalog drives mode derivation (§18: the model decides, not a picker).
       const catalog = falAdapter.getCapabilities().models;
@@ -319,6 +349,17 @@ serve(async (req: Request) => {
         if (!referenceUrls.length) return json({ error: "The reference assets couldn't be found in this workspace." }, 404);
       }
 
+      // A job started inside a Vibe Studio session is filed onto that session when it completes.
+      // The session must be this workspace's; anything else is refused, never silently dropped.
+      let studioSessionId: string | null = null;
+      if (typeof body?.studio_session_id === "string" && body.studio_session_id) {
+        const { data: sess, error: sessErr } = await admin
+          .from("studio_sessions").select("id").eq("id", body.studio_session_id).eq("tenant_id", tenantId).maybeSingle();
+        if (sessErr) return json({ error: "Couldn't confirm the Studio session." }, 500);
+        if (!sess) return json({ error: "That Studio session isn't in this workspace." }, 404);
+        studioSessionId = String(sess.id);
+      }
+
       // Idempotency: caller-minted request id (stable across retries of ONE
       // intentional request; a fresh request mints a fresh id).
       const requestId = typeof body?.request_id === "string" && body.request_id.length >= 8
@@ -333,6 +374,9 @@ serve(async (req: Request) => {
         quality_tier: entry.tier,
         intent,
         reference_content_ids: referenceIds,
+        reference_urls: referenceUrls,
+        model_choice: picked ? { auto: picked.auto, label: picked.label, reason: picked.reason } : null,
+        studio_session_id: studioSessionId,
         video_seconds: entry.mode === "video" ? (videoSeconds ?? 5) : undefined,
       };
 
@@ -379,7 +423,7 @@ serve(async (req: Request) => {
       }
 
       if (policy.approvalRequired) {
-        return json({ job, awaiting_approval: true, reason: policy.reason, estimate });
+        return json({ job, awaiting_approval: true, reason: policy.reason, estimate, model_choice: picked });
       }
       return await dispatchJob(admin, job, { authHeader, webhookUrl: `${supabaseUrl}/functions/v1/paige-media-webhook` }, config);
     }

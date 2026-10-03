@@ -13,6 +13,7 @@ import { prepareCalendarLinkShare, sendCalendarLink, calendarLinkSocialCopy, typ
 // INT-178 — agreements, the READ half. Two reads over the one governed seam
 // (`public.paige_agreement_overview`); the send stays on `agreement-send` behind the confirm gate.
 import { AGREEMENT_TOOLS } from '../_shared/paige-spine/domains/agreement.ts';
+import { GROWTH_FORM_TOOLS } from '../_shared/paige-spine/domains/growth_form.ts';
 import { readAgreements } from '../_shared/agreements/chat-read.ts';
 import { draftAgreement, sendAgreement } from '../_shared/agreements/chat-write.ts';
 import { N8N_MANAGEMENT_TOOLS, runN8nManagement } from '../_shared/n8n-management.ts';
@@ -37,6 +38,7 @@ import { isSpendableQuoteCents } from "../_shared/purchase-quote.ts";
 // phone line. `capability-record` owns HOW a run is written; `comms-capability-outcome`
 // owns WHICH of the six outcomes these four acts landed in (§18: one home each).
 import { recordCapabilityRun, stableRunId, type CapabilityOutcome } from "../_shared/capability-record.ts";
+import { classifyGrowthFormRun } from "../_shared/growth-form-outcome.ts";
 import { classifyCommsRun } from "../_shared/comms-capability-outcome.ts";
 // Phase 2 · S1 — Pipeline write acts (starting deal_move_stage) record an honest outcome
 // through the SAME ratified pattern (#947): capability-record owns HOW, this owns WHICH.
@@ -48,7 +50,8 @@ import { classifyCrmRun } from "../_shared/crm-capability-outcome.ts";
 // no real artifact (null url, empty drafts, null saved id) must degrade to an honest failure,
 // not a success-shaped receipt. ONE pure home for that decision (§18); handlers wrap their
 // own success shape in it so the model, the status label and the artifact card all inherit it.
-import { artifactProduced, ARTIFACT_ABSENT_ERROR, usableDrafts, IMAGE_NOT_FILED_ERROR } from "../_shared/artifact-receipt.ts";
+import { artifactProduced, ARTIFACT_ABSENT_ERROR, usableDrafts } from "../_shared/artifact-receipt.ts";
+import { buildFormSchemaFromQuestions } from "../_shared/growth-form-build.ts";
 import { classifyDocumentSubmissionError, validateDocumentBrief } from "../_shared/document-production.ts";
 // Wave 4 · 4a.3 — token-aware compaction trigger (§18 one home; smoke-tested per §32).
 import { estimateTokens, estimateTurnsTokens, shouldCompact, keepCountForFold, compactionPressurePct } from "../_shared/token-estimate.ts";
@@ -368,6 +371,8 @@ function describeStep(
     case "growth_page_generate": return { label: "Designing your landing page", group: "owner" };
     case "growth_page_save": return { label: "Saving your page draft", group: "owner" };
     case "growth_page_publish": return { label: "Publishing your page", group: "owner" };
+    case "growth_form_save": return { label: "Saving your form draft", group: "owner" };
+    case "growth_form_publish": return { label: "Publishing your form", group: "owner" };
     // Scheduling (owner)
     case "calendar_book_meeting": return { label: "Booking the meeting", group: "owner" };
     // Team / orchestration (shared)
@@ -540,7 +545,7 @@ const messageSchema = z.object({
   // echoes an arbitrary id can never clobber another artifact (§13).
   canvasArtifact: z.object({
     id: z.string().uuid(),
-    kind: z.enum(["page", "funnel", "content", "document"]),
+    kind: z.enum(["page", "funnel", "form", "content", "document"]),
   }).nullable().optional(),
   // Client-provided local clock so Paige can greet/refer to time in the
   // user's actual timezone instead of server UTC.
@@ -2495,6 +2500,7 @@ JSON:`;
       // question from whether they MAKE a turn protected.)
       "content_save", "document_generate", "generate_image",
       "growth_page_save", "growth_page_publish",
+      "growth_form_save", "growth_form_publish",
     ]);
     // The general setter. Every below-the-latch source that reaches the model calls this; the
     // tool seam is one caller among several rather than the only one.
@@ -5166,6 +5172,14 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
           // growth_page_save/funnel save. The reuse id is clamped server-side to this exact row, so
           // the model can only ever refine what's actually on the canvas (§13/§18: the plan decides
           // reuse-vs-new, never a human toggle).
+          if (canvasArtifact && (canvasArtifact.kind === "page" || canvasArtifact.kind === "funnel" || canvasArtifact.kind === "form")) {
+            const idArg = canvasArtifact.kind === "page" ? "page_id" : canvasArtifact.kind === "funnel" ? "funnel_id" : "form_id";
+            const saveTool = canvasArtifact.kind === "page" ? "growth_page_save" : canvasArtifact.kind === "funnel" ? "growth_funnel_build" : "growth_form_save";
+            aiMessages.splice(2, 0, {
+              role: "system",
+              content: `CANVAS STATE — the artifact currently on the canvas is a ${canvasArtifact.kind} (id ${canvasArtifact.id}). If the user is changing THAT ${canvasArtifact.kind}, pass ${idArg}:"${canvasArtifact.id}" to ${saveTool} so it updates in place and keeps its timeline. If they want a new, separate ${canvasArtifact.kind}, omit ${idArg}.`,
+            });
+          }
           if (canvasArtifact && (canvasArtifact.kind === "content" || canvasArtifact.kind === "document")) {
             const canvasLabel = canvasArtifact.kind === "document" ? "document" : "image";
             const canvasTool = canvasArtifact.kind === "document" ? "document_generate" : "generate_image";
@@ -6703,6 +6717,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           ...CALENDAR_PRESET_TOOLS,
           ...CALENDAR_LINK_TOOLS,
           ...AGREEMENT_TOOLS,
+          ...GROWTH_FORM_TOOLS,
           {
             type: "function",
             function: {
@@ -7599,6 +7614,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       growth_page_publish: "publishing a landing page",
       growth_funnel_build: "building a funnel",
       growth_funnel_publish: "publishing a funnel",
+      growth_form_save: "saving a form draft",
+      growth_form_publish: "publishing a form",
       action_file: "filing an action",
       action_advance: "advancing an action",
       n8n_activate_workflow: "turning on an automation",
@@ -8099,6 +8116,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           return `Build the funnel "${a?.name || "Untitled"}" as a draft — a landing page${a?.form ? ", an intake form," : ""} and a thank-you, wired together. It stays private until you publish it.`;
         case "growth_funnel_publish":
           return `Publish the funnel ${a?.funnel_id || ""} so the whole sequence goes LIVE. I'll send you the real link once it's up.`;
+        case "growth_form_save":
+          return `Save the form "${a?.name || a?.slug || "Untitled"}" as a draft${a?.form_id ? " (updating the existing form)" : ""}. It stays private until you publish it.`;
+        case "growth_form_publish":
+          return `Publish the form ${a?.form_id || ""} so it goes LIVE and starts taking submissions. I'll send you the real link once it's up.`;
         case "action_file":
           return `File a "${a?.action_kind || "action"}" action${a?.title ? `: ${a.title}` : ""}.`;
         case "action_advance":
@@ -9010,7 +9031,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // reach this block and already run at auto; adding them here would be dead code.
           const STUDIO_AUTO_TOOLS = new Set([
             "generate_image", "content_save", "document_generate",
-            "growth_page_save", "growth_funnel_build",
+            "growth_page_save", "growth_funnel_build", "growth_form_save",
           ]);
           // …AND IT CAN NEVER LIFT A HIGH-RISK ACTION. This escalation is a fallback path — a way
           // for an action to run without the person answering — which is precisely what a high-risk
@@ -10160,6 +10181,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           tc.function.name === "growth_page_generate" ||
           tc.function.name === "growth_page_save" ||
           tc.function.name === "growth_page_publish" ||
+          tc.function.name === "growth_form_save" ||
+          tc.function.name === "growth_form_publish" ||
           tc.function.name === "action_file" ||
           tc.function.name === "action_advance" ||
           tc.function.name === "inbox_list" ||
@@ -10385,6 +10408,27 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               });
             } catch (e) {
               console.error("[paige] crm capability run not recorded:", (e as Error)?.message);
+            }
+          };
+          // Studio forms (save / publish) file the same honest receipt. Attributed to the tenant the
+          // RPC acted on (current_user_tenant_id(), like the CRM recorder), keyed on this tool call so
+          // a retried turn folds to one row. Never fails the turn.
+          const recordFormRun = async (
+            input: { result?: unknown; thrown?: unknown; threw?: boolean },
+          ): Promise<void> => {
+            try {
+              const outcome: CapabilityOutcome | null = classifyGrowthFormRun({ capability: tc.function.name, ...input });
+              if (!outcome) return;
+              const formTenant = await resolveActorTenant();
+              await recordCapabilityRun(supabase, {
+                tenantId: formTenant,
+                actorId: user.id,
+                capabilityKey: tc.function.name,
+                outcome,
+                runId: await stableRunId([tc.function.name, formTenant ?? "", `${payloadThreadId ?? ""}:${tc.id}`]),
+              });
+            } catch (e) {
+              console.error("[paige] form capability run not recorded:", (e as Error)?.message);
             }
           };
           // Pre/post-write boundary for the pipeline capability recorder (Codex P2, 2026-09-05):
@@ -11636,6 +11680,51 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   .eq("tenant_id", personaCtx.tenant_id);
                 if (clearErr) console.warn("[task#15] refine anchor pre-clear failed:", clearErr.message);
               }
+              if (studioSessionId) {
+                // STUDIO: images go through the media seam, the same one the Studio's own controls
+                // use, so credits, the budget, the approval rule and Paige's model pick all apply.
+                // It is asynchronous: the job finishes later, and on success the seam files the image
+                // and links it to this session. So this turn reports a job in progress, never a
+                // finished image it has not seen. The image on the canvas is the reference to edit.
+                const aspect = args.size === "portrait" ? "2:3" : args.size === "landscape" ? "3:2" : "1:1";
+                const { data: mj, error: mjErr } = await supabaseClient.functions.invoke("paige-media", {
+                  body: {
+                    action: "submit",
+                    prompt: String(args.prompt ?? ""),
+                    model: "auto",
+                    aspect_ratio: aspect,
+                    reference_content_ids: reuseImageId ? [reuseImageId] : [],
+                    studio_session_id: studioSessionId,
+                    request_id: `studio-chat-${tc.id}`,
+                  },
+                });
+                // A refusal (no credits, budget, daily limit) arrives as a non-2xx: read its own words.
+                let mjBody: any = mj;
+                if (mjErr && (mjErr as any)?.context && typeof (mjErr as any).context.json === "function") {
+                  try { mjBody = await (mjErr as any).context.json(); } catch { mjBody = null; }
+                }
+                const mjJob = mjBody?.job;
+                if (!mjJob?.id) {
+                  if (mjBody?.error) result = { success: false, error: String(mjBody.error) };
+                  else throw (mjErr ?? new Error("The image request didn't go through."));
+                } else if (mjJob.state === "failed" || mjBody?.error) {
+                  result = { success: false, error: String(mjBody?.error ?? mjJob.error ?? "The image couldn't be made."), job_id: mjJob.id };
+                } else {
+                  const choice = mjBody?.model_choice ?? null;
+                  result = {
+                    success: true,
+                    pending: true,
+                    job_id: mjJob.id,
+                    awaiting_approval: mjBody?.awaiting_approval === true,
+                    model: choice?.label ?? mjJob.model,
+                    model_reason: choice?.reason ?? null,
+                    estimated_cost_usd: mjJob.estimated_cost_usd ?? null,
+                    note: mjBody?.awaiting_approval
+                      ? "This one needs the owner's approval before it runs; it is waiting in the Studio. Say so plainly, with the estimate."
+                      : "The image is being made now and will appear in the Studio when it's ready. Do not describe it as finished.",
+                  };
+                }
+              } else {
               const { data: img, error } = await supabaseClient.functions.invoke("generate-image", {
                 body: {
                   prompt: args.prompt,
@@ -11696,17 +11785,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 // BOTH this path and the Vibe Studio frontend capture (§18 one home). Capturing here too
                 // would double-write.
               }
-              // §13/§70 (Codex P2) — FINAL Studio check, after any §33 critique regeneration. In a
-              // STUDIO session the image must be FILED (content_id) to reach the canvas — the linkage
-              // below (link_session_artifact / save_artifact_version) requires r.content_id — so a
-              // created-but-unfiled image (url present, best-effort save failed → content_id null, from
-              // the first gen OR a regen) would report success while the canvas gets nothing. Fail
-              // honestly. REGULAR chat keeps a null-content_id url as a usable success (the URL is a
-              // real downloadable file), so this is Studio-only; running it AFTER the critique loop
-              // lets a rescue regeneration that DID file count as a real success.
-              if (studioSessionId && (result as any)?.success === true && !artifactProduced("saved_id", (result as any)?.content_id)) {
-                result = { success: false, error: IMAGE_NOT_FILED_ERROR };
-              }
+              } // end non-Studio image path (a Studio image is filed and linked by the media seam)
               // Task #15 — ADVANCE the server-owned refine anchor when this generation genuinely FILED a
               // content_id, so the next "make it brighter" refine stacks onto this image. DEDICATED chat
               // only (Studio uses its canvas + studio_artifact_versions). The anchor was CLEARED up-front
@@ -12001,47 +12080,25 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 p_id: args.page_id ?? null,
               });
               if (error) throw error;
-              // §10 / lead-capture (B1): every embedded_form block must be backed by a
-              // real active growth_forms row, or the published page renders an INVISIBLE
-              // signup and publish would falsely report success. Auto-author a
-              // coaching-generic default form (name/email/goal) for any form_slug that
-              // doesn't exist yet — never overwrite one the operator already customized.
-              const _saveTid = personaCtx?.tenant_id ?? null;
+              // §10 / lead-capture (B1): every embedded_form block is backed by a real form. The
+              // growth_page_upsert RPC authors any that are missing (unpublished, going live with the
+              // page), so here we only read them back — to report them and, in a Studio session, to
+              // file them on the project so the owner can open and edit them there.
               const _formSlugs: string[] = Array.from(new Set(
                 (Array.isArray(args.blocks) ? args.blocks : [])
                   .filter((b: any) => b?.type === "embedded_form" && typeof b?.form_slug === "string" && b.form_slug.trim())
                   .map((b: any) => b.form_slug.trim())
               ));
-              const formsCreated: string[] = [];
-              for (const fslug of _formSlugs) {
-                let existing: any = null;
-                if (_saveTid) {
-                  const { data: ex } = await supabaseClient
-                    .from("growth_forms").select("id").eq("tenant_id", _saveTid).eq("slug", fslug).maybeSingle();
-                  existing = ex;
-                }
-                if (existing?.id) continue;
-                const { error: fErr } = await supabaseClient.rpc("growth_form_upsert", {
-                  p_tenant_id: _saveTid,
-                  p_slug: fslug,
-                  p_name: args.title ? `${String(args.title).slice(0, 80)} — signup` : "Signup",
-                  p_schema_json: {
-                    submit_label: "Count me in",
-                    sections: [{
-                      title: "",
-                      fields: [
-                        { key: "full_name", label: "Your name", type: "text", required: true },
-                        { key: "email", label: "Email", type: "email", required: true, maps_to: "contacts.email" },
-                        { key: "goal", label: "What are you hoping to get out of this?", type: "textarea", required: false },
-                      ],
-                    }],
-                  },
-                });
-                if (!fErr) formsCreated.push(fslug);
+              let pageForms: Array<{ id: string; slug: string }> = [];
+              if (_formSlugs.length && (row as any)?.tenant_id) {
+                const { data: fr } = await supabaseClient
+                  .from("growth_forms").select("id, slug").eq("tenant_id", (row as any).tenant_id).in("slug", _formSlugs);
+                pageForms = (fr ?? []) as Array<{ id: string; slug: string }>;
               }
+              const formsCreated = pageForms.map((f) => f.slug);
               // §13/§70 — a 200 with no returned row id means the page draft may not have saved.
               result = artifactProduced("saved_id", (row as any)?.id)
-                ? { success: true, page_id: (row as any)?.id, slug: (row as any)?.slug, status: (row as any)?.status, forms_created: formsCreated }
+                ? { success: true, page_id: (row as any)?.id, slug: (row as any)?.slug, status: (row as any)?.status, forms_created: formsCreated, form_ids: pageForms.map((f) => f.id) }
                 : { success: false, error: ARTIFACT_ABSENT_ERROR.saved_id };
             } else if (tc.function.name === "growth_page_publish") {
               // Going-live action (confirm-gated by the autonomy gate above). The RPC
@@ -12050,6 +12107,42 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               const { data: pub, error } = await supabaseClient.rpc("growth_page_publish", {
                 p_tenant_id: personaCtx?.tenant_id ?? null,
                 p_id: args.page_id,
+              });
+              if (error) throw error;
+              result = { success: true, ...(pub as any) };
+            } else if (tc.function.name === "growth_form_save") {
+              // A form the owner asked for, written by Paige as structured questions and validated by
+              // the DEFINER RPC (§9: p_tenant_id is ignored for a signed-in caller; it pins to the
+              // active workspace and requires its owner or an admin). Saves a DRAFT only.
+              const built = buildFormSchemaFromQuestions(args);
+              if (!built.ok) {
+                result = { success: false, error: built.error };
+              } else {
+                // In a Studio session, update in place only the form that is on the canvas (§13 clamp,
+                // the same rule images follow): an echoed id can never rewrite a different form.
+                const formId = studioSessionId
+                  ? (canvasArtifact?.kind === "form" && args.form_id === canvasArtifact.id ? canvasArtifact.id : null)
+                  : (typeof args.form_id === "string" ? args.form_id : null);
+                const { data: row, error } = await supabaseClient.rpc("growth_form_upsert", {
+                  p_tenant_id: personaCtx?.tenant_id ?? null,
+                  p_slug: String(args.slug ?? ""),
+                  p_name: String(args.name ?? ""),
+                  p_schema_json: built.schema,
+                  p_success_action_json: typeof args.thank_you === "string" && args.thank_you.trim()
+                    ? { type: "thank_you", message: args.thank_you.trim().slice(0, 500) } : null,
+                  p_id: formId,
+                });
+                if (error) throw error;
+                result = artifactProduced("saved_id", (row as any)?.id)
+                  ? { success: true, form_id: (row as any).id, slug: (row as any).slug, title: (row as any).name, status: (row as any).status,
+                      live_changes_pending: (row as any).status === "active" }
+                  : { success: false, error: ARTIFACT_ABSENT_ERROR.saved_id };
+              }
+            } else if (tc.function.name === "growth_form_publish") {
+              // Going-live action (confirm-gated: classified high). Reports the REAL link (§13).
+              const { data: pub, error } = await supabaseClient.rpc("growth_form_publish", {
+                p_tenant_id: personaCtx?.tenant_id ?? null,
+                p_id: args.form_id,
               });
               if (error) throw error;
               result = { success: true, ...(pub as any) };
@@ -12080,6 +12173,23 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 for (let n = 2; n < 200; n++) { const c = `${base}-${n}`; if (!taken.has(c)) return c; }
                 return `${base}-${Date.now()}`;
               };
+              // A LIVE funnel's steps are what visitors walk through, and the funnel RPC refuses a
+              // changed step list. Check that BEFORE writing the page and form, so a refused rebuild
+              // leaves nothing half-written behind it. A content-only rebuild (same page, same form)
+              // goes through: those writes land in the working copies, not the live versions.
+              if (args.funnel_id && _fbTid) {
+                const { data: _exF } = await supabaseClient.from("growth_funnels")
+                  .select("status, entry_page_id").eq("id", args.funnel_id).eq("tenant_id", _fbTid).maybeSingle();
+                if ((_exF as any)?.status === "active") {
+                  const { data: _exSteps } = await supabaseClient.from("growth_funnel_steps")
+                    .select("step_type, page_id, form_id").eq("funnel_id", args.funnel_id).order("order_index");
+                  const _have = (_exSteps || []).map((s: any) => `${s.step_type}:${s.page_id ?? ""}:${s.form_id ?? ""}`).join("|");
+                  const _want = [`page:${args.page_id ?? "new"}:`, ...(args.form?.schema ? [`form::${args.form_id ?? "new"}`] : []), "thankyou::"].join("|");
+                  if (_have !== _want || (_exF as any).entry_page_id !== args.page_id) {
+                    throw new Error("This funnel is live, so its steps can't change while visitors are using it. Unpublish it first, or keep the same page and form and change only their content.");
+                  }
+                }
+              }
               const _page = args.page || {};
               // On a rebuild-in-place, REUSE the existing row's slug — never regenerate it, or the
               // page's live URL (/p/tenant/slug) would churn (spring-launch ⇄ spring-launch-2) and
@@ -12626,11 +12736,21 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               // canvas must render it as a document, so it streams frameKind 'document'.
               const link: { kind: string; id: string; visual: boolean; url: string | null; frameKind?: string } | null =
                 tc.function.name === "growth_page_save" && r.page_id ? { kind: "page", id: r.page_id, visual: true, url: null }
+                : tc.function.name === "growth_form_save" && r.form_id ? { kind: "form", id: r.form_id, visual: true, url: null }
                 : tc.function.name === "growth_funnel_build" && r.funnel_id ? { kind: "funnel", id: r.funnel_id, visual: true, url: null }
                 : tc.function.name === "generate_image" && r.content_id ? { kind: "content", id: r.content_id, visual: true, url: r.url ?? null }
                 : tc.function.name === "document_generate" && r.content_id ? { kind: "content", id: r.content_id, visual: true, url: null, frameKind: "document" }
                 : tc.function.name === "content_save" && r.content_id ? { kind: "content", id: r.content_id, visual: false, url: null }
                 : null;
+              // A page's sign-up forms belong to the project too (owner sees and edits them in the session).
+              if (tc.function.name === "growth_page_save" && Array.isArray(r.form_ids)) {
+                for (const fid of r.form_ids) {
+                  try {
+                    await supabaseClient.rpc("link_session_artifact", { p_session_id: studioSessionId, p_kind: "form", p_artifact_id: fid, p_tenant_id: null });
+                    await supabaseClient.rpc("save_artifact_version", { p_session_id: studioSessionId, p_kind: "form", p_artifact_id: fid, p_tenant_id: null });
+                  } catch (fe) { console.warn("[paige] studio page-form link failed (non-fatal):", (fe as Error)?.message); }
+                }
+              }
               if (link) {
                 try {
                   await supabaseClient.rpc("link_session_artifact", {
@@ -12682,6 +12802,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             await recordCommsRun({ result });
             await recordPipelineRun({ result });
             await recordCrmRun({ result });
+            await recordFormRun({ result });
 
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result) });
           } catch (err) {
@@ -12693,6 +12814,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             await recordCommsRun({ thrown: err, threw: true });
             await recordPipelineRun({ thrown: err, threw: true, writeAttempted: false });
             await recordCrmRun({ thrown: err, threw: true, writeAttempted: crmWriteAttempted });
+            await recordFormRun({ thrown: err, threw: true });
 
             // `outcome_unknown` when the answer never arrived (a transport failure, not a refusal):
             // the write may have happened, and the approval card must say so rather than "didn't
@@ -13560,6 +13682,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         document_generate: "marketing_content",
         growth_page_save: "growth_pages", growth_page_publish: "growth_pages",
         growth_funnel_build: "growth_funnels", growth_funnel_publish: "growth_funnels",
+        growth_form_save: "growth_forms", growth_form_publish: "growth_forms",
         action_file: "paige_actions", action_advance: "paige_actions",
         n8n_activate_workflow: "n8n_workflow", n8n_deactivate_workflow: "n8n_workflow",
         n8n_create_workflow: "n8n_workflow", n8n_update_workflow: "n8n_workflow",

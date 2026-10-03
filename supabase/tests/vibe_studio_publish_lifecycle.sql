@@ -3,7 +3,7 @@
 -- funnel publishes what it needs, and only the workspace's owner or admin does any of it.
 -- Synthetic fixtures; always rolled back.
 BEGIN;
-SELECT plan(58);
+SELECT plan(62);
 
 -- Owner of the studio workspace; a plain member of it who also owns another workspace and holds a
 -- GLOBAL admin role (§59: neither makes them an admin here); and the owner of a second workspace.
@@ -89,12 +89,15 @@ SELECT is((SELECT jsonb_array_length(schema_json->'sections'->0->'fields') FROM 
   'puts them live');
 
 -- ── Publish state cannot be changed around the functions ──
-SELECT throws_ok($$UPDATE public.growth_forms SET status = 'draft' WHERE id = (SELECT id FROM pg_temp.ids WHERE k='form')$$,
-  '42501', NULL, 'not even the owner can flip a form''s status directly');
-SELECT throws_ok($$UPDATE public.growth_forms SET schema_json = '{"sections":[]}'::jsonb WHERE id = (SELECT id FROM pg_temp.ids WHERE k='form')$$,
-  '42501', NULL, 'or rewrite a live form''s questions directly');
-SELECT throws_ok($$INSERT INTO public.growth_forms (tenant_id, slug, name, status, schema_json) VALUES ('5d5d0000-0000-4000-8000-00000000a001','sneaky','Sneaky','active','{"sections":[]}'::jsonb)$$,
-  '42501', NULL, 'or create a form that is already live');
+SELECT throws_like($$UPDATE public.growth_forms SET status = 'draft' WHERE id = (SELECT id FROM pg_temp.ids WHERE k='form')$$,
+  '%GROWTH_PUBLISH_STATE_GUARDED%', 'not even the owner can flip a form''s status directly');
+SELECT throws_like($$UPDATE public.growth_forms SET draft_schema_json = '{"sections":[]}'::jsonb WHERE id = (SELECT id FROM pg_temp.ids WHERE k='form')$$,
+  '%GROWTH_PUBLISH_STATE_GUARDED%', 'or rewrite its working copy around the functions');
+SELECT throws_like($$INSERT INTO public.growth_forms (tenant_id, slug, name, status, schema_json) VALUES ('5d5d0000-0000-4000-8000-00000000a001','sneaky','Sneaky','draft','{"sections":[]}'::jsonb)$$,
+  '%GROWTH_PUBLISH_STATE_GUARDED%', 'or create a form directly');
+SELECT throws_ok($$SELECT public.growth_form_upsert(NULL, 'discovery-call-renamed', 'Discovery call',
+  '{"sections":[{"title":"","fields":[{"key":"full_name","label":"Your name","type":"text","required":true}]}]}'::jsonb, NULL, true, NULL, NULL, (SELECT id FROM pg_temp.ids WHERE k='form'))$$,
+  '22023', NULL, 'a live form''s address cannot change underneath the pages that embed it');
 
 -- ── Pages publish the forms on them; unpublishing a page leaves its forms live ──
 INSERT INTO pg_temp.ids SELECT 'page', (public.growth_page_upsert(NULL, 'spring-workshop', 'Spring workshop',
@@ -104,8 +107,12 @@ INSERT INTO pg_temp.ids SELECT 'signup', id FROM public.growth_forms
 SELECT is((SELECT status FROM public.growth_pages WHERE id = (SELECT id FROM pg_temp.ids WHERE k='page')), 'draft', 'a new page starts unpublished');
 SELECT is((SELECT status FROM public.growth_forms WHERE id = (SELECT id FROM pg_temp.ids WHERE k='signup')), 'draft',
   'and so does the sign-up form made for it');
-SELECT throws_ok($$UPDATE public.growth_pages SET blocks_json = draft_blocks_json WHERE id = (SELECT id FROM pg_temp.ids WHERE k='page')$$,
-  '42501', NULL, 'a page''s live content cannot be written directly');
+SELECT throws_like($$UPDATE public.growth_pages SET blocks_json = draft_blocks_json WHERE id = (SELECT id FROM pg_temp.ids WHERE k='page')$$,
+  '%GROWTH_PUBLISH_STATE_GUARDED%', 'a page''s live content cannot be written directly');
+INSERT INTO pg_temp.ids SELECT 'blank', (public.growth_page_upsert(NULL, 'blank-signup', 'Blank signup',
+  '[{"type":"hero","heading":"Hi"},{"type":"embedded_form"}]'::jsonb)).id;
+SELECT throws_like($$SELECT public.growth_page_publish(NULL, (SELECT id FROM pg_temp.ids WHERE k='blank'))$$,
+  '%GROWTH_FORM_MISSING%', 'a page with a signup section and no form behind it cannot go live');
 SELECT is((public.growth_page_publish(NULL, (SELECT id FROM pg_temp.ids WHERE k='page')))->>'status', 'published', 'the owner publishes the page');
 SELECT is((SELECT status FROM public.growth_forms WHERE id = (SELECT id FROM pg_temp.ids WHERE k='signup')), 'active',
   'which publishes its sign-up form');
@@ -138,8 +145,13 @@ SELECT lives_ok($$SELECT public.growth_funnel_upsert(NULL, 'free-audit-funnel', 
     jsonb_build_object('step_type','page','order_index',0,'page_id',(SELECT id FROM pg_temp.ids WHERE k='offer')),
     jsonb_build_object('step_type','form','order_index',1,'form_id',(SELECT id FROM pg_temp.ids WHERE k='apply'))))$$,
   'resending the same steps (a content-only rebuild) is fine');
-SELECT throws_ok($$DELETE FROM public.growth_funnel_steps WHERE funnel_id = (SELECT id FROM pg_temp.ids WHERE k='funnel')$$,
-  '42501', NULL, 'a live funnel''s steps cannot be deleted directly');
+SELECT throws_like($$DELETE FROM public.growth_funnel_steps WHERE funnel_id = (SELECT id FROM pg_temp.ids WHERE k='funnel')$$,
+  '%GROWTH_PUBLISH_STATE_GUARDED%', 'a live funnel''s steps cannot be deleted directly');
+SELECT throws_like($$DELETE FROM public.growth_pages WHERE id = (SELECT id FROM pg_temp.ids WHERE k='offer')$$,
+  '%GROWTH_PUBLISH_STATE_GUARDED%', 'nor can a live page be deleted out from under it');
+SELECT throws_ok($$SELECT public.growth_funnel_upsert(NULL, 'free-audit-funnel', 'Free audit funnel', NULL, NULL,
+  (SELECT id FROM pg_temp.ids WHERE k='page'))$$,
+  '22023', NULL, 'a live funnel''s entry page cannot be swapped without unpublishing it');
 SELECT throws_ok($$SELECT public.growth_page_unpublish(NULL, (SELECT id FROM pg_temp.ids WHERE k='offer'))$$,
   '22023', NULL, 'a page a live funnel uses cannot be taken down underneath it');
 SELECT is((public.growth_funnel_unpublish(NULL, (SELECT id FROM pg_temp.ids WHERE k='funnel')))->>'status', 'draft', 'the owner unpublishes the funnel');
@@ -148,7 +160,7 @@ SELECT is((SELECT status FROM public.growth_pages WHERE id = (SELECT id FROM pg_
 -- ── Images ──
 SELECT is((public.studio_image_publish(NULL, '5d5d0000-0000-4000-8000-00000000c001'))->>'status', 'published', 'the owner publishes an image to the Catalog');
 SELECT throws_ok($$UPDATE public.marketing_content SET status = 'draft' WHERE id = '5d5d0000-0000-4000-8000-00000000c001'$$,
-  '42501', NULL, 'an image''s published state cannot be changed directly');
+  '42501', NULL, 'signed-in users cannot change an image''s published state directly (the table is not theirs to write)');
 SELECT is((public.studio_image_unpublish(NULL, '5d5d0000-0000-4000-8000-00000000c001'))->>'status', 'draft', 'and unpublishes it');
 SELECT throws_ok($$SELECT public.studio_image_publish(NULL, '5d5d0000-0000-4000-8000-00000000c002')$$,
   '22023', NULL, 'only an image can be published as one');

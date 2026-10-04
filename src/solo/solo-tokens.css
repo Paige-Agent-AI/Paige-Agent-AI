@@ -8,8 +8,6 @@
 --gold:#C9860C;--gold-bright:#E9A83A;--gold-tint:#FBF1DE;--gold-line:#EFDCB4;
 --violet:#5B3FD6;--violet-2:#7A62E8;--violet-tint:#EEEAFD;--violet-line:#DAD1FA;
 --ok:#1B7A52;--ok-tint:#E4F2EB;--warn:#B4700A;--warn-tint:#FBF0DD;--bad:#B93E37;--bad-tint:#FAE9E7;
-/* Chart categories, fixed order, validated for colour-blind and normal-vision separation on this surface (dataviz validator). Grey slots are reserved for "other" and "untagged". Gold is never a chart colour. */
---chart-1:#5B3FD6;--chart-2:#1BAF7A;--chart-3:#EB6834;--chart-4:#2A78D6;--chart-other:#7E7995;--chart-untagged:#CFCADB;
 --r-s:8px;--r-m:12px;--r-l:18px;--r-xl:26px;
 --sh-1:0 1px 2px rgba(23,19,49,.05);--sh-2:0 2px 4px rgba(23,19,49,.04),0 12px 28px -12px rgba(23,19,49,.14);
 --sh-3:0 24px 60px -18px rgba(23,19,49,.28);
@@ -22,7 +20,6 @@
 --gold:#E9A83A;--gold-bright:#F5C266;--gold-tint:#2C2211;--gold-line:#4A3A17;
 --violet:#8A72F5;--violet-2:#A692FF;--violet-tint:#221C4A;--violet-line:#352C68;
 --ok:#4CC48C;--ok-tint:#12301F;--warn:#E3A63C;--warn-tint:#2E2311;--bad:#EE7A72;--bad-tint:#331817;
---chart-1:#8A72F5;--chart-2:#199E70;--chart-3:#D95926;--chart-4:#3987E5;--chart-other:#7D779A;--chart-untagged:#3A3460;
 --sh-1:0 1px 2px rgba(0,0,0,.3);--sh-2:0 2px 4px rgba(0,0,0,.25),0 12px 28px -12px rgba(0,0,0,.5);
 --sh-3:0 24px 60px -18px rgba(0,0,0,.6);
 }

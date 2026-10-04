@@ -358,7 +358,7 @@
 .mk-view .campaigns-state code{font-family:var(--mono);font-size:12px;padding:1px 5px;border-radius:5px;background:var(--surface-sunk);color:var(--ink)}
 
 /* ── Marketing › Overview (owner reference 2026-10-03) ─────────────────────────────────────────
-   Chart colours are the --chart-* tokens in solo-tokens.css. Gold stays on the act only. */
+   Chart colours are the --chart-* tokens in solo-chart-tokens.css. Gold stays on the act only. */
 .mo{gap:16px}
 .mo-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:4px 2px 2px}
 .mo-head h2{font-size:clamp(22px,2.6cqi,28px);font-weight:650;letter-spacing:-.03em;line-height:1.15;color:var(--ink);text-wrap:balance}

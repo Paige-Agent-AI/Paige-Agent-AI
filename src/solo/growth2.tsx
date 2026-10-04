@@ -15,6 +15,7 @@ import { useSoloCampaignBriefs } from "./useSoloCampaignBriefs";
 import { useSoloOwner } from "./data/useSoloOwner";
 import { PERIODS, SUBMISSION_READ_LIMIT, deriveMarketingOverview, isBlockedBrief, salutationFor, submissionsInPeriod } from "./marketing-overview-model";
 import { FormIntakePanel } from "./form-intake";
+import "./solo-chart-tokens.css";
 import "./solo-campaigns.css";
 
 // RETIRED 2026-09-12: the GR projects fixture served only the pre-rebuild Vibe

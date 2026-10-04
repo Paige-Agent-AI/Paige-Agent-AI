@@ -1,7 +1,7 @@
 // Marketing › Overview charts. Loaded lazily by growth2.tsx so recharts never sits on the path to
 // Marketing's first paint; the numbers beside each chart render without it.
 //
-// Colours are read from the Solo --chart-* tokens (solo-tokens.css) at runtime (recharts writes SVG attributes, which do not
+// Colours are read from the Solo --chart-* tokens (solo-chart-tokens.css) at runtime (recharts writes SVG attributes, which do not
 // resolve CSS variables) and re-read when the theme flips. The categorical order is fixed and was
 // validated for both themes with the dataviz palette checker: violet, aqua, orange, blue. Grey is
 // reserved for "Other sources" and "No tracking tag"; gold is never used in a chart (§11).

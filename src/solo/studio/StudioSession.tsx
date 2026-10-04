@@ -251,6 +251,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBa
             artifact={artifact}
             onClose={() => { setPublishOpen(false); publishBtnRef.current?.focus(); }}
             onDone={(m) => { setNotice(m); setRefreshKey((k) => k + 1); }}
+            onRefresh={() => setRefreshKey((k) => k + 1)}
           />
         )}
       </header>

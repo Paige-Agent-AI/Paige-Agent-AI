@@ -341,6 +341,10 @@ class of lie as a fabricated metric (§13).
 
 Legend: **✓** live · **—** not built · **N/A** tier not opened yet · **403** denied at the route gate.
 
+### Vibe Studio V0 — autonomy ceiling, funnels, publish truth (2026-10-04)
+
+Same tiers as the layout C workspace below (Solo owner/admin; operator acting inside a tenant). No tier gains or loses a surface. What changes is what a Studio turn may do on its own: the six Studio build tools are lifted from `confirm` to `auto` only when the Trust Compass effective rung allows acting unread (`resolve_tool_autonomy_detail.ceiling_allows_auto`, Migration A, 20270540000000); on rung 0-1 a Studio save is held for approval like any other write. Funnel generate/build/publish now reach their handler (they returned "Unknown tool"); a build that fails after an earlier write reports `partial`. `document_generate` is no longer offered in Studio. Page/form/funnel publish, from chat or the Publish panel, reports live only with the live status, a publish time and a public address. Main PAIGE's autonomy answers are unchanged (production rollback proof: 112 tenant × tool answers, 0 changed). Unchanged and still V1: the Studio tool surface beyond `document_generate`, and the tenant-agnostic admin gate on the growth tools.
+
 ### Vibe Studio build view, in-project saving, approval cards (2026-10-03)
 
 Same tiers as the layout C workspace below; no new seam. The Studio designer saves drafts in the same turn; held saves surface as approval cards; an unnamed project is renamed through the existing `rename_studio_session` (workspace owner/admin or the project's creator). LIVE on merge; authenticated drive owed.

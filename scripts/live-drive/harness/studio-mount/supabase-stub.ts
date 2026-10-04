@@ -83,8 +83,14 @@ export const supabase = {
       case "list_artifact_versions": return { data: args.p_kind === "form" ? versions : versions.slice(0, 1).map((v) => ({ ...v, is_current: true, title: "First draft" })), error: null };
       case "restore_artifact_version": return { data: { id: "f-1" }, error: null };
       case "is_tenant_admin": return { data: true, error: null };
-      case "growth_form_publish": form = { ...form, status: "active" }; return { data: { id: "f-1", url: "/form/f-1", status: "active" }, error: null };
-      case "growth_page_publish": return { data: { id: "p-1", url: "/p/northwind-studio/referral-workshop" }, error: null };
+      // The real RPC contract (20270537000000): id, status, published_at, url. `?publish=noaddress`
+      // models a workspace with no public slug — the RPC answers url: null, and the panel must refuse.
+      case "growth_form_publish": {
+        form = { ...form, status: "active" };
+        const noAddress = new URLSearchParams(window.location.search).get("publish") === "noaddress";
+        return { data: { id: "f-1", url: noAddress ? null : "/form/f-1", status: "active", published_at: now }, error: null };
+      }
+      case "growth_page_publish": return { data: { id: "p-1", url: "/p/northwind-studio/referral-workshop", status: "published", published_at: now }, error: null };
       case "growth_form_set_intake": form = { ...form, auto_create_deal: args.p_auto_create_deal, pipeline_id: args.p_pipeline_id, stage_id: args.p_stage_id, notify_email: args.p_notify_email }; return { data: form, error: null };
       default: return { data: null, error: { message: `unstubbed rpc ${fn}` } };
     }

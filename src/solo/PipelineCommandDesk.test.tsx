@@ -112,6 +112,7 @@ describe("Pipeline Command Desk MVP", () => {
       ),
     );
 
+  it('reclaims the entire pulse strip while retaining actual work and recorded outcome views',()=>{render();expect(host.querySelector('.pipeline-pulse')).toBeNull();expect(host.textContent).not.toContain('Needs your action');expect(host.textContent).not.toContain('Waiting on contact');expect(host.textContent).not.toContain('Ready for PAIGE');expect(host.textContent).toContain('Active work');expect(host.textContent).toContain('Outcomes');});
   it("opens the exact deal owned by a result deep link and clears it on close", () => {
     const clear = vi.fn();
     render(makeData(), { focusDealId: "d1", onClearFocus: clear });

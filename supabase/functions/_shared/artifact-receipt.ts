@@ -16,9 +16,9 @@
 // imports, no Deno/network) so the contract test drives its BEHAVIOUR, not its source text.
 //
 // What this does NOT do: it does not record a Rail outcome (that is slice 3 / F05 — the ~43
-// audit-log-only actions), and it does not touch the going-live publish handlers (external
-// publishing is slice 6/7 and needs the publish RPCs' URL return contract verified first). It
-// only makes the CREATION receipt truthful.
+// audit-log-only actions). It makes the CREATION receipt truthful, and — since the publish RPCs'
+// return contract was verified (20270537000000: `{id, status, published_at, url, …}`) — the
+// GOING-LIVE receipt too (`publishVerified`, Vibe Studio V0).
 
 /**
  * The shape of "the real artifact" for a creation tool:
@@ -80,3 +80,28 @@ export function usableDrafts(value: unknown): unknown[] {
       ((d as { content: string }).content).trim().length > 0,
   );
 }
+
+/**
+ * The live state each publish RPC reports for a published artifact (20270537000000): a page or an
+ * image is `published`; a form or a funnel is `active`.
+ */
+export type PublishKind = "page" | "form" | "funnel" | "image";
+const LIVE_STATUS: Record<PublishKind, string> = { page: "published", form: "active", funnel: "active", image: "published" };
+
+/**
+ * True only when a publish RPC's return proves the artifact is live AND reachable: the live status,
+ * a publish time, and a non-empty public address. A request that came back without an address (a
+ * workspace with no public slug yields `url: null`) is not a publish anyone can visit, so it is
+ * never reported as one.
+ */
+export function publishVerified(kind: PublishKind, value: unknown): boolean {
+  if (!value || typeof value !== "object") return false;
+  const v = value as { status?: unknown; published_at?: unknown; url?: unknown };
+  return v.status === LIVE_STATUS[kind]
+    && artifactProduced("saved_id", v.published_at)
+    && artifactProduced("file_url", v.url);
+}
+
+/** Failure copy for a publish whose return could not prove a live public address. */
+export const PUBLISH_UNVERIFIED_ERROR =
+  "The publish finished but didn't confirm a public address, so I can't say it's live yet. Check the project's status before sharing a link.";

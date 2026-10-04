@@ -4343,5 +4343,156 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
     JSON.stringify({ advanced: rpcsNamed(plainKeyed, "advance_action").length }));
 }
 
+// ── 32. VIBE STUDIO V0 — THE STUDIO LIFT NEVER RUNS ABOVE THE CEILING; FUNNELS ARE REACHABLE AND TRUTHFUL ──
+//
+// D1: inside a Studio project the design agent's build tools are lifted from `confirm` to `auto`
+// (#292). On Trust Compass rung 1 that lift ran writes the ceiling forbids. The lift now needs the
+// canonical `resolve_tool_autonomy_detail.ceiling_allows_auto`. D2: the funnel tools fell through to
+// "Unknown tool"; they are reachable, and a build that fails after an earlier write is PARTIAL.
+// Each check names the mutation it kills.
+{
+  const THREAD = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+  const SESSION = "5e550000-0000-4000-8000-000000000001";
+  const studioTables = (extra = {}) => ({
+    paige_chat_threads: () => [{ studio_session_id: SESSION, summary: null, last_image_content_id: null, last_image_anchor_at: null }],
+    paige_subagents: () => [{ name: "Design Studio", system_prompt: "You design pages for this business." }],
+    studio_sessions: () => [{ id: SESSION, artifact_refs: [], title: "Spring launch" }],
+    ...extra,
+  });
+  const wire = (r) => r.modelEgress.map((b) => (typeof b === "string" ? b : JSON.stringify(b))).join("\n").replace(/\\"/g, '"');
+  const called = (r, name) => r.rec.rpc.filter((c) => c.name === name).length;
+  const AS_TENANT = { get_actor_access: { data: { tier: "tenant" }, error: null } };
+  const PAGE_ROW = { growth_page_upsert: { data: { id: "page-1", slug: "spring-offer", status: "draft", tenant_id: null }, error: null } };
+  const studioSave = async (ceilingAllowsAuto, { detailError = null } = {}) => {
+    const st = makeConfirmStore();
+    return drive({
+      stream: true, extraBody: { threadId: THREAD },
+      toolCall: { name: "growth_page_save", args: { title: "Spring offer", blocks: [] } },
+      rpcOverrides: {
+        ...AS_TENANT, ...PAGE_ROW,
+        resolve_tool_autonomy: { data: "confirm", error: null },
+        resolve_tool_autonomy_detail: detailError
+          ? { data: null, error: detailError }
+          : { data: { mode: "confirm", ceiling_allows_auto: ceilingAllowsAuto }, error: null },
+      },
+      serviceTablesExtra: { user_roles: () => [{ role: "admin" }] },
+      tablesExtra: { ...studioTables(), paige_pending_confirmations: st.table },
+      onInsert: mirrorConfirms(st),
+    });
+  };
+
+  // ── 32.1 At a ceiling that forbids acting unread (rung 0-1), a Studio save is HELD, not run.
+  // Kills: deleting `&& (await ceilingAllowsAuto(...))` from the Studio lift.
+  const held = await studioSave(false);
+  assert("32.1 rung 1: a Studio page save does not write — the ceiling's confirm stands",
+    called(held, "growth_page_upsert") === 0, JSON.stringify(held.rec.rpc.map((c) => c.name)));
+  assert("32.1b …it is offered for approval instead (a held proposal, not a silent drop)",
+    /"needs_confirm":true/.test(wire(held)), wire(held).slice(0, 400));
+  assert("32.1c …and the lift asked the ceiling fact, not only the mode",
+    called(held, "resolve_tool_autonomy_detail") >= 1, JSON.stringify(held.rec.rpc.map((c) => c.name)));
+
+  // ── 32.2 CONTROL: when the ceiling allows auto, the Studio lift still builds in the same turn.
+  // Kills: removing the lift altogether (the #292 stall returns).
+  const lifted = await studioSave(true);
+  assert("32.2 rung 2+: a Studio page save runs without a card",
+    called(lifted, "growth_page_upsert") === 1 && !/"needs_confirm":true/.test(wire(lifted)),
+    JSON.stringify({ upserts: called(lifted, "growth_page_upsert") }));
+
+  // ── 32.3 An unclear ceiling answer lifts nothing. Kills: treating an errored detail read as allow.
+  const unclear = await studioSave(true, { detailError: { message: "function does not exist" } });
+  assert("32.3 an errored ceiling read fails closed: no write",
+    called(unclear, "growth_page_upsert") === 0, JSON.stringify(unclear.rec.rpc.map((c) => c.name)));
+
+  // ── 32.4 Main PAIGE is untouched: outside a Studio thread the same save at `confirm` is held, and
+  // the ceiling fact is never consulted. Kills: making the lift (or the detail read) global.
+  const st4 = makeConfirmStore();
+  const mainTurn = await drive({
+    stream: true, extraBody: { threadId: THREAD },
+    toolCall: { name: "growth_page_save", args: { title: "Spring offer", blocks: [] } },
+    rpcOverrides: { ...AS_TENANT, ...PAGE_ROW, resolve_tool_autonomy: { data: "confirm", error: null },
+      resolve_tool_autonomy_detail: { data: { mode: "confirm", ceiling_allows_auto: true }, error: null } },
+    serviceTablesExtra: { user_roles: () => [{ role: "admin" }] },
+    tablesExtra: { paige_chat_threads: () => [{ studio_session_id: null, summary: null }], paige_pending_confirmations: st4.table },
+    onInsert: mirrorConfirms(st4),
+  });
+  assert("32.4 a main-PAIGE save at confirm is held and never reads the ceiling fact",
+    called(mainTurn, "growth_page_upsert") === 0 && called(mainTurn, "resolve_tool_autonomy_detail") === 0,
+    JSON.stringify(mainTurn.rec.rpc.map((c) => c.name)));
+
+  // ── 32.5 D2: a funnel build reaches its handler (was "Unknown tool"). Kills: dropping the three
+  // funnel names from the dispatch branch.
+  const funnelArgs = { name: "Spring launch", page: { title: "Spring offer", blocks: [] }, form: { name: "Intake", schema: { fields: [{ id: "email", type: "email", label: "Email" }] } } };
+  const funnelDrive = (formRow) => drive({
+    stream: true, extraBody: { threadId: THREAD },
+    toolCall: { name: "growth_funnel_build", args: funnelArgs },
+    rpcOverrides: {
+      ...AS_TENANT, ...PAGE_ROW,
+      resolve_tool_autonomy: { data: "auto", error: null },
+      growth_form_upsert: formRow,
+      growth_funnel_upsert: { data: { id: "funnel-1", slug: "spring-launch" }, error: null },
+    },
+    serviceTablesExtra: { user_roles: () => [{ role: "admin" }] },
+  });
+  const built = await funnelDrive({ data: { id: "form-1", slug: "intake" }, error: null });
+  assert("32.5 growth_funnel_build runs its handler: page, form and funnel are written",
+    !/Unknown tool: growth_funnel_build/.test(wire(built)) && called(built, "growth_page_upsert") === 1
+      && called(built, "growth_form_upsert") === 1 && called(built, "growth_funnel_upsert") === 1,
+    JSON.stringify(built.rec.rpc.map((c) => c.name)));
+
+  // ── 32.6 A build whose form comes back without an id is PARTIAL, names what was saved, and never
+  // builds the funnel. Kills: the silent form-step drop, or reporting success after a partial write.
+  const half = await funnelDrive({ data: null, error: null });
+  assert("32.6 a missing form id stops the build: no funnel row, outcome partial, the saved page named",
+    called(half, "growth_funnel_upsert") === 0 && /"outcome":"partial"/.test(wire(half))
+      && /"saved_drafts":\{"page_id":"page-1"\}/.test(wire(half)) && !/"success":true,"funnel_id"/.test(wire(half)),
+    wire(half).slice(0, 600));
+
+  // ── 32.7 A TRANSPORT failure after the page landed is UNKNOWN, never "not built". Kills: mapping
+  // every later throw to `partial`, which invites a duplicate funnel on retry.
+  const lost = await drive({
+    stream: true, extraBody: { threadId: THREAD },
+    toolCall: { name: "growth_funnel_build", args: funnelArgs },
+    rpcOverrides: {
+      ...AS_TENANT, ...PAGE_ROW,
+      resolve_tool_autonomy: { data: "auto", error: null },
+      growth_form_upsert: { data: { id: "form-1", slug: "intake" }, error: null },
+      growth_funnel_upsert: { data: null, error: { message: "fetch failed: connection reset" } },
+    },
+    serviceTablesExtra: { user_roles: () => [{ role: "admin" }] },
+  });
+  assert("32.7 a lost funnel write reports outcome_unknown, not 'was not built'",
+    /"outcome_unknown":true/.test(wire(lost)) && !/was not built/.test(wire(lost)),
+    wire(lost).slice(0, 600));
+
+  // ── 32.8 A partial build inside a Studio project links its saved drafts to the project (§19).
+  // Kills: linking only successful results, which leaves the saved page unreachable from the rail.
+  const partialStudio = await drive({
+    stream: true, extraBody: { threadId: THREAD },
+    toolCall: { name: "growth_funnel_build", args: funnelArgs },
+    rpcOverrides: {
+      ...AS_TENANT, ...PAGE_ROW,
+      resolve_tool_autonomy: { data: "auto", error: null },
+      growth_form_upsert: { data: null, error: null },
+    },
+    serviceTablesExtra: { user_roles: () => [{ role: "admin" }] },
+    tablesExtra: studioTables(),
+  });
+  assert("32.8 a partial Studio funnel build links the saved page to the project",
+    partialStudio.rec.rpc.some((c) => c.name === "link_session_artifact" && c.args?.p_kind === "page" && c.args?.p_artifact_id === "page-1"),
+    JSON.stringify(partialStudio.rec.rpc.filter((c) => c.name === "link_session_artifact").map((c) => c.args)));
+
+  // ── 32.9 A funnel built without a form does not claim an intake form. Kills: the fixed note.
+  const noForm = await drive({
+    stream: true, extraBody: { threadId: THREAD },
+    toolCall: { name: "growth_funnel_build", args: { name: "Spring launch", page: { title: "Spring offer", blocks: [] } } },
+    rpcOverrides: { ...AS_TENANT, ...PAGE_ROW, resolve_tool_autonomy: { data: "auto", error: null },
+      growth_funnel_upsert: { data: { id: "funnel-1", slug: "spring-launch" }, error: null } },
+    serviceTablesExtra: { user_roles: () => [{ role: "admin" }] },
+  });
+  assert("32.9 a funnel with no form is saved and its note names no intake form",
+    /"funnel_id":"funnel-1"/.test(wire(noForm)) && !/intake form, and the flow/.test(wire(noForm)),
+    wire(noForm).slice(0, 600));
+}
+
 console.log(`\n${checks - failures} passed, ${failures} failed`);
 process.exit(failures === 0 ? 0 : 1);

@@ -35,7 +35,7 @@ ACCEPTANCE_CRITERIA: after deploy, POST /render with a page payload returns JPEG
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: tested — GrowthPageRenderer (same GrowthBlocks props via GrowthPageView), paige-browser /self-verify + /browse-public-url (existing smokes pass, routes untouched), studio-visual-critique authority (69 existing tests pass), main.tsx telemetry for /invoice (existing test passes); unaffected — Studio LivePreview, GrowthFunnelRenderer, GrowthFormRenderer
 
-INTERNAL_BUILD_IDENTITY: 5a2634533 plus this record (branch screenshots-on-paige-browser from main ff25200b9); deployment=local; environment=development; migrations=PROOF_OWED(20270555000000 applies on merge through deploy-migrations); edge=PROOF_OWED(studio-visual-critique deploys on merge through deploy-edge-functions); evidence=docs/evidence/ui-delivery/screenshots-on-paige-browser.md
+INTERNAL_BUILD_IDENTITY: 5a2634533a3ff0291be610c58accb7ad10c83b6b plus this record (branch screenshots-on-paige-browser from main ff25200b9); deployment=local; environment=development; migrations=PROOF_OWED(20270555000000 applies on merge through deploy-migrations); edge=PROOF_OWED(studio-visual-critique deploys on merge through deploy-edge-functions); evidence=docs/evidence/ui-delivery/screenshots-on-paige-browser.md
 RELEASE_CHANNEL: development: verified locally before merge; deploys through CI on merge (edge, migrations, Fly paige-browser, Vercel frontend)
 RELEASE_CLASSIFICATION: internal-only: no customer release identity; the critique loop stays off
 CUSTOMER_RELEASE_IDENTITY: none: internal-only

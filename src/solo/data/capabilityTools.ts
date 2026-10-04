@@ -128,6 +128,13 @@ export const TOOL_MAP: Readonly<Record<string, { capability: CapabilityKey; risk
   growth_form_publish: { capability: "content", risk: "high" },
   growth_funnel_build: { capability: "content", risk: "ordinary" },
   growth_funnel_publish: { capability: "content", risk: "high" },
+  // The rest of the Studio publish lifecycle (Migration E). Taking work offline changes what the
+  // public sees just as putting it live does, so all five are `high` and the knob caps at confirm.
+  growth_page_unpublish: { capability: "content", risk: "high" },
+  growth_form_unpublish: { capability: "content", risk: "high" },
+  growth_funnel_unpublish: { capability: "content", risk: "high" },
+  studio_image_publish: { capability: "content", risk: "high" },
+  studio_image_unpublish: { capability: "content", risk: "high" },
 
   // ── Automations & connected apps ──────────────────────────────────────────────────────────
   n8n_run_workflow: { capability: "autos", risk: "high" },

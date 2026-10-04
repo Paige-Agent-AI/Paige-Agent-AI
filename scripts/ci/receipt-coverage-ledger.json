@@ -647,13 +647,19 @@
       "tool": "growth_form_publish",
       "risk": "high",
       "receipt": "emits",
-      "evidence": "paige-ai-chat dispatch records the run via recordStudioRun -> classifyStudioRun (_shared/studio-run-outcome.ts) -> recordCapabilityRun (succeeded / refused / failed / unreachable / outcome_unknown), keyed on the tool call, carrying the approval channel and record id; refusals before the write (switched off, not this workspace's owner/admin) file via recordStudioRefusal"
+      "evidence": "growth-publish-command door files the run for both the Studio panel and the chat via recordCapabilityRun (_shared/studio-run-outcome.ts), approval channel operator_card"
     },
     {
       "tool": "growth_form_save",
       "risk": "ordinary",
       "receipt": "emits",
       "evidence": "paige-ai-chat dispatch records the run via recordStudioRun -> classifyStudioRun (_shared/studio-run-outcome.ts) -> recordCapabilityRun (succeeded / refused / failed / unreachable / outcome_unknown), keyed on the tool call, carrying the approval channel and record id; refusals before the write (switched off, not this workspace's owner/admin) file via recordStudioRefusal"
+    },
+    {
+      "tool": "growth_form_unpublish",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "growth-publish-command door records the run via recordCapabilityRun (_shared/studio-run-outcome.ts), approval channel operator_card"
     },
     {
       "tool": "growth_funnel_build",
@@ -665,19 +671,31 @@
       "tool": "growth_funnel_publish",
       "risk": "high",
       "receipt": "emits",
-      "evidence": "paige-ai-chat dispatch records the run via recordStudioRun -> classifyStudioRun (_shared/studio-run-outcome.ts) -> recordCapabilityRun (succeeded / refused / failed / unreachable / outcome_unknown), keyed on the tool call, carrying the approval channel and record id; refusals before the write (switched off, not this workspace's owner/admin) file via recordStudioRefusal"
+      "evidence": "growth-publish-command door files the run for both the Studio panel and the chat via recordCapabilityRun (_shared/studio-run-outcome.ts), approval channel operator_card"
+    },
+    {
+      "tool": "growth_funnel_unpublish",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "growth-publish-command door records the run via recordCapabilityRun (_shared/studio-run-outcome.ts), approval channel operator_card"
     },
     {
       "tool": "growth_page_publish",
       "risk": "high",
       "receipt": "emits",
-      "evidence": "paige-ai-chat dispatch records the run via recordStudioRun -> classifyStudioRun (_shared/studio-run-outcome.ts) -> recordCapabilityRun (succeeded / refused / failed / unreachable / outcome_unknown), keyed on the tool call, carrying the approval channel and record id; refusals before the write (switched off, not this workspace's owner/admin) file via recordStudioRefusal"
+      "evidence": "growth-publish-command door files the run for both the Studio panel and the chat via recordCapabilityRun (_shared/studio-run-outcome.ts), approval channel operator_card"
     },
     {
       "tool": "growth_page_save",
       "risk": "ordinary",
       "receipt": "emits",
       "evidence": "paige-ai-chat dispatch records the run via recordStudioRun -> classifyStudioRun (_shared/studio-run-outcome.ts) -> recordCapabilityRun (succeeded / refused / failed / unreachable / outcome_unknown), keyed on the tool call, carrying the approval channel and record id; refusals before the write (switched off, not this workspace's owner/admin) file via recordStudioRefusal"
+    },
+    {
+      "tool": "growth_page_unpublish",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "growth-publish-command door records the run via recordCapabilityRun (_shared/studio-run-outcome.ts), approval channel operator_card"
     },
     {
       "tool": "improvement_decide",
@@ -878,6 +896,18 @@
       "tool": "social_connection_start",
       "risk": "high",
       "receipt": "seeded_undeclared"
+    },
+    {
+      "tool": "studio_image_publish",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "growth-publish-command door records the run via recordCapabilityRun (_shared/studio-run-outcome.ts), approval channel operator_card"
+    },
+    {
+      "tool": "studio_image_unpublish",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "growth-publish-command door records the run via recordCapabilityRun (_shared/studio-run-outcome.ts), approval channel operator_card"
     },
     {
       "tool": "subagent_approve_proposal",

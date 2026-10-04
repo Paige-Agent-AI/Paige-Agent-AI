@@ -40,6 +40,10 @@ const CONTACT_SCOPED_EDGE_HANDLERS = [
 const CRM_CATALOG = "supabase/functions/_shared/crm-command/catalog.ts";
 const SALES_INVOICE_CONTRACT = "supabase/functions/_shared/sales-invoice-command/contract.ts";
 const SALES_INVOICE_HANDLER = "supabase/functions/sales-invoice-command/index.ts";
+// The Vibe Studio publish door (Migration E). Same precedent as the invoice door: a door-only act
+// is declared by the door's bound declaration map, and only once the door exists and binds it.
+const STUDIO_PUBLISH_MAP = "supabase/functions/_shared/paige-spine/domains/studio_publish.ts";
+const STUDIO_PUBLISH_HANDLER = "supabase/functions/growth-publish-command/index.ts";
 
 /** Every classified action, as `[tool, class, reason]`, read from the policy's own table. */
 export function parsePolicy(src) {
@@ -91,6 +95,21 @@ export function parseSalesInvoiceActions(src) {
   const end = src.indexOf("} as const;", at);
   if (at < 0 || end < 0) return [];
   return [...src.slice(at, end).matchAll(/"invoice\.[a-z_]+":\s*"([a-z0-9_]+)"/g)].map(m => m[1]);
+}
+
+/** The Studio publish door's governed keys, read from its bounded declaration map. */
+export function parseStudioPublishActions(src) {
+  const at = src.indexOf("export const STUDIO_PUBLISH_KIT_BY_ACTION = {");
+  const end = src.indexOf("} as const;", at);
+  if (at < 0 || end < 0) return [];
+  return [...src.slice(at, end).matchAll(/^\s*([a-z0-9_]+):\s*[A-Z0-9_]+_CAPABILITY,/gm)].map(m => m[1]);
+}
+
+/** The door must hand the map's declaration to the canonical Kit gate, as the invoice door does. */
+export function studioPublishDoorBound(handler) {
+  return /import\s*\{[^}]*\bSTUDIO_PUBLISH_KIT_BY_ACTION\b[^}]*\}\s*from\s*["']\.\.\/_shared\/paige-spine\/domains\/studio_publish\.ts["']/.test(handler)
+    && /import\s*\{[^}]*\bdecideDeclaredCapability\b[^}]*\}\s*from\s*["']\.\.\/_shared\/capability-kit\/decision\.ts["']/.test(handler)
+    && /decideDeclaredCapability\(\s*STUDIO_PUBLISH_KIT_BY_ACTION\[/.test(handler);
 }
 
 /** Closed declared adapter, not any function whose name resembles a gate. */
@@ -204,6 +223,20 @@ function selfTest() {
     ['unknown availability',invoiceHandler,invoiceDecision.replace("input.capability.availability === 'unknown'",'false')],
     ['alternate authority',invoiceHandler,invoiceDecision.replace('return decideGovernedExecution(input);','return fakeApproval(input);')],
   ]) bad += ok(`invoice gate refuses ${label}`, !invoiceDeclaredGateBound(handler, decision));
+  bad += ok("studio publish discovery reads its bounded declaration map",
+    parseStudioPublishActions('export const STUDIO_PUBLISH_KIT_BY_ACTION = {\n  growth_page_unpublish: GROWTH_PAGE_UNPUBLISH_CAPABILITY,\n  studio_image_publish: STUDIO_IMAGE_PUBLISH_CAPABILITY,\n} as const;').join() === 'growth_page_unpublish,studio_image_publish');
+  bad += ok("studio publish discovery refuses an absent or incomplete map",
+    parseStudioPublishActions('growth_page_unpublish: GROWTH_PAGE_UNPUBLISH_CAPABILITY,').length === 0
+    && parseStudioPublishActions('export const STUDIO_PUBLISH_KIT_BY_ACTION = {').length === 0);
+  bad += ok("the real studio publish map parses all eight acts",
+    parseStudioPublishActions(fs.readFileSync(STUDIO_PUBLISH_MAP, 'utf8')).length === 8);
+  {
+    const door = 'import { decideDeclaredCapability } from "../_shared/capability-kit/decision.ts";\nimport { STUDIO_PUBLISH_KIT_BY_ACTION } from "../_shared/paige-spine/domains/studio_publish.ts";\nconst d = decideDeclaredCapability(STUDIO_PUBLISH_KIT_BY_ACTION[key], {});';
+    bad += ok("a studio door bound to the map through the Kit gate passes", studioPublishDoorBound(door));
+    bad += ok("a studio door importing a different map is refused", !studioPublishDoorBound(door.replace('domains/studio_publish.ts', 'domains/other.ts')));
+    bad += ok("a studio door skipping the Kit gate is refused", !studioPublishDoorBound(door.replace('decideDeclaredCapability(STUDIO', 'run(STUDIO')));
+    bad += ok("a studio door with a fake gate import is refused", !studioPublishDoorBound(door.replace('capability-kit/decision.ts', 'fake/decision.ts')));
+  }
   bad += ok("imported catalog mutations are included", parseChat('', ['widget_delete_thing']).declared.includes('widget_delete_thing'));
   bad += ok("invoice risk discovery reads its bounded canonical map", parseSalesInvoiceActions('export const SALES_INVOICE_ACTIONS = {\n "invoice.publish": "sales_publish_invoice",\n} as const;').join() === 'sales_publish_invoice');
   bad += ok("invoice risk discovery refuses an absent or incomplete map", parseSalesInvoiceActions('"invoice.publish": "sales_publish_invoice"').length === 0 && parseSalesInvoiceActions('export const SALES_INVOICE_ACTIONS = {').length === 0);
@@ -367,6 +400,15 @@ if (fs.existsSync(SALES_INVOICE_HANDLER)) {
   if (!invoiceDeclaredGateBound(source, fs.readFileSync('supabase/functions/_shared/capability-kit/decision.ts', 'utf8'))) throw new Error('Invoice handler no longer binds its canonical action map and validated declaration to the governed gate');
   const actions = parseSalesInvoiceActions(fs.readFileSync(SALES_INVOICE_CONTRACT, 'utf8'));
   if (!actions.length) throw new Error('Invoice action map could not be parsed');
+  governedEdgeActions.push(...actions);
+  requiredClassifications.push(...actions);
+}
+// The Studio publish door. Until it exists, the keys only it runs are classified but declared by
+// nothing — the ghost rule reports them, which is the truth on a tree without the door.
+if (fs.existsSync(STUDIO_PUBLISH_HANDLER)) {
+  if (!studioPublishDoorBound(fs.readFileSync(STUDIO_PUBLISH_HANDLER, 'utf8'))) throw new Error('Studio publish door no longer binds STUDIO_PUBLISH_KIT_BY_ACTION to the canonical Kit gate (decideDeclaredCapability)');
+  const actions = parseStudioPublishActions(fs.readFileSync(STUDIO_PUBLISH_MAP, 'utf8'));
+  if (!actions.length) throw new Error('Studio publish declaration map could not be parsed');
   governedEdgeActions.push(...actions);
   requiredClassifications.push(...actions);
 }

@@ -137,6 +137,16 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   ["growth_page_publish", "high", "puts a page live at a public URL"],
   ["growth_funnel_publish", "high", "puts a whole sequence live"],
   ["growth_form_publish", "high", "puts a form live at a public URL where strangers can submit to the workspace"],
+  // The rest of the Studio publish lifecycle (Migration E, 2026-10-04). These are door-only keys:
+  // the growth-publish-command door runs them for the Studio panel and the chat alike; no chat tool
+  // carries these names. Taking work offline is `high` for the same reason putting it live is — it
+  // changes what the public sees, and a visitor mid-way through a page or a link someone already
+  // shared stops working. The runtime clamp keeps every one of them ask-first.
+  ["growth_page_unpublish", "high", "takes a public page offline, so anyone with its address stops reaching it"],
+  ["growth_funnel_unpublish", "high", "takes a public sequence offline mid-visit for anyone working through it"],
+  ["growth_form_unpublish", "high", "takes a public form offline, so strangers can no longer submit to the workspace"],
+  ["studio_image_publish", "high", "puts an image in the Catalog where anyone with its link can see it"],
+  ["studio_image_unpublish", "high", "withdraws a published image from the Catalog that people may already be using"],
   // The evaluation loop's DECIDE leg (Runway 4 / #1123), the sign-off half of the `improvement_propose`
   // pair above. It records the owner's approve/reject on a `paige_improvement_proposals` row and
   // applies nothing (there is no auto-apply path — it flips status, decided_by, rationale only). It

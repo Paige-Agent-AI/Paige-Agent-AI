@@ -149,3 +149,46 @@ export const GROWTH_PAGE_PUBLISH_CAPABILITY = defineCapability({
   receipt: PAGE_RECEIPT,
   outcome: { projector: "capability-record" },
 });
+
+// UNPUBLISH (Migration E, 2026-10-04). A door-only act: the growth-publish-command door runs it for
+// the Studio panel and the chat alike, and no chat tool carries this name. So, like the human-only
+// invoice link (sales_invoice.ts), it is declared through the capability kit and NOT as a
+// SpineCapability: the Spine validator requires every mutating entry to name a LIVE chat tool, and
+// claiming one here would be false. The door binds this declaration through
+// STUDIO_PUBLISH_KIT_BY_ACTION (studio_publish.ts) and decideDeclaredCapability.
+//
+// `high`, like publish: it changes what the public sees. The page leaves its public address; its
+// forms stay live (owner ruling 2026-09-30). The RPC refuses a page a live funnel still uses.
+export const GROWTH_PAGE_UNPUBLISH_CAPABILITY = defineCapability({
+  identity: {
+    id: "growth_page.unpublish",
+    version: 1,
+    domain: "growth_page",
+    owner: "vibe-studio",
+    humanSurface: "/solo/:account/growth",
+    description: "Take a landing page offline. The forms on it stay live.",
+  },
+  input: objectInputSchema({
+    description: "Unpublish a live landing page.",
+    properties: { page_id: { type: "string", format: "uuid" } },
+    required: ["page_id"],
+  }),
+  effect: "mutation",
+  governance: {
+    actionRiskKey: "growth_page_unpublish",
+    risk: "high",
+    approval: "confirm",
+    requiredPermission: ownerGrantablePermission("growth_page.unpublish.execute"),
+  },
+  tenantScope: PAGE_SCOPE,
+  availability: PAGE_AVAILABILITY,
+  providerBinding: { kind: "internal", operation: "public.growth_page_unpublish", connectionResolver: null },
+  idempotency: {
+    mode: "required",
+    key: "the page's own state. Unpublishing a page that is not live returns its current status and changes nothing, so a replay converges.",
+    readback: "public.growth_page_unpublish",
+    replay: "return_recorded_result",
+  },
+  receipt: PAGE_RECEIPT,
+  outcome: { projector: "capability-record" },
+});

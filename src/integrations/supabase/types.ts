@@ -22270,6 +22270,21 @@ export type Database = {
         }[]
       }
       verify_cron_token: { Args: { _token: string }; Returns: boolean }
+      list_workspace_research: {
+        Args: { _limit?: number; _offset?: number } | undefined
+        Returns: {
+          id: string
+          question: string
+          domain: string | null
+          caller: string | null
+          stop_reason: string | null
+          configured: boolean | null
+          is_dossier: boolean
+          source_count: number
+          created_at: string
+        }[]
+      }
+      get_workspace_research_run: { Args: { _run_id: string }; Returns: string }
     }
     Enums: {
       access_tier:

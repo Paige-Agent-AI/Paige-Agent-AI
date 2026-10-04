@@ -407,7 +407,9 @@ C1b is now unblocked, because #1701 has merged.
 - **Rendered:** none claimed, because there is no visible change.
 - **Tier matrix:** no change; there is no tier-visible surface. PR: #1710.
 
-### Known gaps (as of fix round 3)
+#- **Codex review on #1710 (two P2s, fixed).** `rounds` now counts the tools-free closing call (a forced close, or Live's answer call) as a model call the turn made, through `closingCallStarted()`, without changing the observed mode (client-memory-authz 36.10 now pins 5 rounds + 1). An action request whose required continuation call fails (non-ok or a throw) records INTERRUPTED, or LIMIT_REACHED on a spend-ceiling throw, instead of standing as FINAL on narration already judged unresolved (36.11b).
+
+## Known gaps (as of fix round 3)
 
 - **A Live answer the provider cut off mid-sentence is still spoken and still gets the Live `done`
   frame.** Its record says `INTERRUPTED` and its wire terminal (`FINAL`, provisional) is not

@@ -50,6 +50,15 @@ describe("mode is observed from what the turn actually did", () => {
     expect(t.mode).toBe("answer");
   });
 
+  it("counts the tools-free closing call in rounds, without changing the observed mode", () => {
+    // A Live turn: one decision round that chose to answer, then the answer call itself.
+    const t = tracker();
+    t.roundStarted(); t.naturalStop();
+    t.closingCallStarted();
+    expect(t.mode).toBe("fast_answer");
+    expect(t.record().rounds).toBe(2);
+  });
+
   it("is answer when tools ran but none is classified", () => {
     const t = tracker();
     t.roundStarted(); t.toolsExecuted([ran("contacts_search")]);

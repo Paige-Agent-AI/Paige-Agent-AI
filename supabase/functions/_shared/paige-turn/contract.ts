@@ -100,7 +100,7 @@ export interface TurnRecord {
   v: typeof TURN_CONTRACT_VERSION;
   state: TurnState;
   mode: TurnMode;
-  /** Model rounds actually run (continuations included). */
+  /** Model calls actually made: decision rounds, continuations and the tools-free closing call. */
   rounds: number;
   /** Tool calls actually executed. */
   tools: number;

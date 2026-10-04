@@ -14978,8 +14978,17 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   currentResponse = continuationResponse;
                   finalChunks = null; finalAssistantText = "";
                   continueContinuation = true;
+                } else {
+                  // paige-turn — the request was already judged unresolved, and the retry failed: the
+                  // prose stands on the wire, but the turn did not finish what it set out to do.
+                  turnTracker.interrupted();
                 }
-              } catch { /* budget-exceeded or a transport throw: the prose we already have stands */ }
+              } catch (e) {
+                // Budget-exceeded or a transport throw: the prose we already have stands, and the turn
+                // records why it stopped — a spend ceiling is a limit, anything else an interruption.
+                if ((e as { code?: unknown })?.code === "budget_exceeded") turnTracker.budgetStop();
+                else turnTracker.interrupted();
+              }
             }
           }
           // Budget exhausted on an unresolved action: the honest blockage sentence, not
@@ -15009,6 +15018,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             }
           }
           if (!finalChunks && (forcedTermination || liveAnswerPending) && !tenantKnowledgeScopeInvalidated) {
+            turnTracker.closingCallStarted();
             finalStreamResponse = await gatewayCompat("anthropic", {
               method: "POST",
               headers: { "Content-Type": "application/json" },

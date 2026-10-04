@@ -5099,9 +5099,9 @@ console.log("\npaige_turn — every stream says it started and ends once, before
   const filing = (n) => ({ name: "action_file", args: { action_kind: "owner.internal_note", title: `Follow up ${n}`, summary: `Step ${n}`, contact_id: OWN } });
   const capped = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "Here is where things stand.",
     toolCall: [1, 2, 3, 4, 5].map(filing), ...OWNER_AUTO });
-  assert("36.10 a turn stopped by the round budget ends LIMIT_REACHED, on the wire and in the record",
+  assert("36.10 a turn stopped by the round budget ends LIMIT_REACHED, on the wire and in the record, counting its tools-free closing call (5 rounds + 1)",
     terminalOf(capped)?.state === "LIMIT_REACHED" && terminalOf(capped)?.event === "completed"
-      && persistedStates(capped)[0]?.state === "LIMIT_REACHED" && persistedStates(capped)[0]?.rounds === 5 && persistedStates(capped)[0]?.tools === 5,
+      && persistedStates(capped)[0]?.state === "LIMIT_REACHED" && persistedStates(capped)[0]?.rounds === 6 && persistedStates(capped)[0]?.tools === 5,
     JSON.stringify({ wire: turnsOf(capped), persisted: persistedStates(capped) }));
 
   // An action request that only ever gets narration: three continuations, then the honest blockage
@@ -5113,6 +5113,17 @@ console.log("\npaige_turn — every stream says it started and ends once, before
     terminalOf(narrated)?.state === "LIMIT_REACHED" && narrated.bodyText.includes(BLOCKAGE)
       && narrated.bodyText.indexOf('"LIMIT_REACHED"') < narrated.bodyText.indexOf(BLOCKAGE),
     narrated.bodyText.slice(0, 500));
+  // The same request, but the continuation call itself fails: the narration was already judged
+  // unresolved and the retry did not happen, so the turn did not finish — INTERRUPTED, never FINAL.
+  const RETRY_NARRATION = "Let me look into that for you.";
+  const retryFailed = await drive({ stream: true, text: "Add Jacqueline to the intake pipeline", replyText: RETRY_NARRATION,
+    extraBody: { threadId: THREAD }, rpcOverrides: { ...AS_OWNER, match_paige_memory: { data: [], error: null } }, ...NO_MEMORY,
+    failStreamCalls: [2] });
+  assert("36.11b an action request whose continuation call fails ends INTERRUPTED, on the wire and in the record, never FINAL",
+    terminalOf(retryFailed)?.state === "INTERRUPTED" && !retryFailed.bodyText.includes('"FINAL"')
+      && retryFailed.bodyText.includes(RETRY_NARRATION)
+      && persistedStates(retryFailed).length === 1 && persistedStates(retryFailed)[0]?.state === "INTERRUPTED",
+    JSON.stringify({ wire: turnsOf(retryFailed), persisted: persistedStates(retryFailed) }));
 
   // FAILURE ENDINGS THAT USED TO READ AS FINAL. Each is a turn whose own words say it did not finish
   // the way it set out to, so neither the wire nor the record may say FINAL.

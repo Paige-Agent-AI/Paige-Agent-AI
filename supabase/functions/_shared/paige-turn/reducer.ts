@@ -109,6 +109,10 @@ export function observeToolResult(name: string, content: string | undefined | nu
 export interface TurnTracker {
   /** A model round is about to be consumed (continuations count). */
   roundStarted(): void;
+  /** The tools-free closing call (a forced close, or Live's answer call) is about to be made. It
+   *  counts toward `rounds` — a model call the turn actually made — but not toward the observed mode,
+   *  which reads how many decision rounds the turn needed. */
+  closingCallStarted(): void;
   /** What one round's executeToolCalls dispatched; calls a gate refused (`ran: false`) are skipped. */
   toolsExecuted(results: ReadonlyArray<ExecutedTool>): void;
   /** PAIGE ended the turn on a question with choices. */
@@ -138,6 +142,7 @@ export interface TurnTracker {
 
 export function createTurnTracker(classify: TurnClassifiers): TurnTracker {
   let rounds = 0;
+  let closingCalls = 0;
   const executed: string[] = [];
   let approvals = 0;
   const workIds: string[] = [];
@@ -185,6 +190,7 @@ export function createTurnTracker(classify: TurnClassifiers): TurnTracker {
 
   return {
     roundStarted() { rounds += 1; },
+    closingCallStarted() { closingCalls += 1; },
     toolsExecuted(results) {
       for (const r of results) {
         if (!r?.name || r.ran === false) continue;
@@ -218,7 +224,7 @@ export function createTurnTracker(classify: TurnClassifiers): TurnTracker {
     record() {
       const s = state();
       const w = waitingOn(s);
-      return { v: TURN_CONTRACT_VERSION, state: s, mode: mode(), rounds, tools: executed.length, ...(w ? { waiting_on: w } : {}) };
+      return { v: TURN_CONTRACT_VERSION, state: s, mode: mode(), rounds: rounds + closingCalls, tools: executed.length, ...(w ? { waiting_on: w } : {}) };
     },
     trace(steps) { return boundTurnTrace(steps); },
   };

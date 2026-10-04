@@ -6,7 +6,7 @@ import "./index.css";
 import { initObservability } from "./lib/observability";
 
 // Initialize Sentry + PostHog as early as possible (no-ops when env keys missing).
-initObservability();
+if (!/^\/invoice\/?$/i.test(window.location.pathname)) initObservability();
 
 
 

@@ -211,6 +211,35 @@ export function useCatalogOffers(options?: CatalogOffersOptions): CatalogOffersS
   });
   const retry = useCallback(() => setRefreshKey((key) => key + 1), []);
 
+  // Notifications invalidate; only the canonical tenant-scoped query supplies offer facts.
+  useEffect(() => {
+    if (!activeTenantId || accountContextLoading) return;
+    const changed = (event: Event) => {
+      if ((event as CustomEvent<{ tenantId?: unknown }>).detail?.tenantId === activeTenantId) retry();
+    };
+    const visible = () => { if (document.visibilityState === "visible") retry(); };
+    const channel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel("paige-catalog-offers") : null;
+    if (channel) channel.onmessage = event => { if (event.data?.tenantId === activeTenantId) retry(); };
+    const realtime = typeof supabase.channel === "function"
+      ? supabase.channel("catalog-offers:" + crypto.randomUUID())
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "tenant_products", filter: "tenant_id=eq." + activeTenantId }, retry)
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "tenant_products", filter: "tenant_id=eq." + activeTenantId }, retry)
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "tenant_prices", filter: "tenant_id=eq." + activeTenantId }, retry)
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "tenant_prices", filter: "tenant_id=eq." + activeTenantId }, retry)
+        .subscribe()
+      : null;
+    window.addEventListener("paige:catalog-offers-changed", changed);
+    window.addEventListener("focus", retry);
+    document.addEventListener("visibilitychange", visible);
+    return () => {
+      window.removeEventListener("paige:catalog-offers-changed", changed);
+      window.removeEventListener("focus", retry);
+      document.removeEventListener("visibilitychange", visible);
+      channel?.close();
+      if (realtime) void supabase.removeChannel(realtime);
+    };
+  }, [activeTenantId, accountContextLoading, retry]);
+
   // WHY THE MUTATIONS LIVE HERE AND NOT IN THE COMPONENT. Every write has to refresh the read that
   // rendered the form, and the read's tenant is resolved here. Putting the write in the component
   // would give it a second opinion about which workspace it is in — which is precisely the class of
@@ -245,7 +274,12 @@ export function useCatalogOffers(options?: CatalogOffersOptions): CatalogOffersS
         stale: error.code === "40001",
       };
     }
-    setRefreshKey((key) => key + 1);
+    window.dispatchEvent(new CustomEvent("paige:catalog-offers-changed", { detail: { tenantId: activeTenantId } }));
+    if (typeof BroadcastChannel !== "undefined") {
+      const channel = new BroadcastChannel("paige-catalog-offers");
+      channel.postMessage({ tenantId: activeTenantId });
+      channel.close();
+    }
     return { ok: true, result: (data ?? null) as OfferWriteResult["result"] };
   }, [activeTenantId]);
 

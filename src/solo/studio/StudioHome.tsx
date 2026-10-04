@@ -1,11 +1,11 @@
 // Studio home: say what you want and Paige opens a project and starts building it. Unpublished work
-// lives here as drafts; published work lives in the Catalog. There is no artifact-type picker: the
+// lives here as drafts; published work lives in Marketing › Lead capture. There is no artifact-type picker: the
 // brief decides what gets built.
 import React from "react";
 import { ArrowUp, FileText, Filter, Image as ImageIcon, LayoutTemplate, Sparkles, Images } from "lucide-react";
 import { Ic, Logo } from "../_shared";
 import { VsStars } from "./VsStars";
-import { createSession, loadBrand, plainError, type StudioSession } from "./studio-data";
+import { createSession, loadBrand, plainError, sessionName, type StudioSession } from "./studio-data";
 import { loadArtifact, type Brand, type LoadedArtifact } from "./artifact-state";
 import { buildGrowthBrandFloor } from "@/components/growth/growth-theme";
 
@@ -96,7 +96,7 @@ export function StudioRail({ view, sessions, onBack, onHome, onMedia, onOpen }: 
   return (
     <nav className="vs-rail" aria-label="Studio">
       <button type="button" className="vs-rail-back" onClick={onBack}>
-        <span style={{ transform: "rotate(180deg)", display: "flex" }}><Ic.chev size={14} style={{}} /></span>Back to Campaigns<kbd>Esc</kbd>
+        <span style={{ transform: "rotate(180deg)", display: "flex" }}><Ic.chev size={14} style={{}} /></span>Back to Marketing<kbd>Esc</kbd>
       </button>
       <div className="vs-rail-brand"><Logo size={20} />Vibe Studio</div>
       <button type="button" className="vs-rail-item" aria-current={view === "home" ? "page" : undefined} onClick={onHome}><Sparkles size={15} aria-hidden="true" />Build with Paige</button>
@@ -106,10 +106,10 @@ export function StudioRail({ view, sessions, onBack, onHome, onMedia, onOpen }: 
         : sessions.length === 0 ? <span className="vs-rail-note" style={{ marginTop: 0 }}>Nothing yet.</span>
         : sessions.slice(0, 12).map((s) => (
           <button key={s.id} type="button" className="vs-rail-item" data-draft="" onClick={() => onOpen(s)}>
-            <SessionIcon s={s} /><span className="vs-trunc">{s.title}</span>
+            <SessionIcon s={s} /><span className="vs-trunc">{sessionName(s)}</span>
           </button>
         ))}
-      <p className="vs-rail-note">Published work is in your Catalog.</p>
+      <p className="vs-rail-note">Published work is in Marketing › Lead capture.</p>
     </nav>
   );
 }
@@ -180,7 +180,7 @@ export function StudioHome({ sessions, sessionsError, tenantSlug, onOpen }: {
               {sessions.slice(0, 8).map((s) => (
                 <button key={s.id} type="button" className="vs-card" onClick={() => onOpen(s.id, null)}>
                   <CardPreview s={s} brand={brand} />
-                  <div className="vs-card-body"><b className="vs-trunc">{s.title}</b><span>{describe(s)}</span></div>
+                  <div className="vs-card-body"><b className="vs-trunc">{sessionName(s)}</b><span>{describe(s)}</span></div>
                 </button>
               ))}
             </div>

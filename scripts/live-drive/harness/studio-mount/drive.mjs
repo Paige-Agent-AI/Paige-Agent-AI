@@ -107,6 +107,20 @@ for (const [w, h] of [[1366, 768], [900, 1000]]) {
   await page.close();
 }
 
+// V0 publish truth: the RPC answers without a public address → the panel refuses to say it's live.
+{
+  const page = await open("theme=light&publish=noaddress", 1366, 768);
+  await openProject(page, "New client intake");
+  await page.getByRole("button", { name: "Publish", exact: true }).click();
+  await page.waitForSelector(".vs-pop");
+  await page.getByRole("button", { name: "Publish now" }).click();
+  await page.waitForTimeout(400);
+  results.push({ name: "publish-noaddress", liveHeading: await page.locator(".vs-pop h2:text(\"It's live\")").count(),
+    error: await page.locator(".vs-pop").textContent() });
+  await shoot(page, "publish-noaddress-1366x768");
+  await page.close();
+}
+
 // Form settings.
 {
   const page = await open("theme=light", 1366, 768);
@@ -172,6 +186,66 @@ for (const [w, h] of [[1366, 768], [900, 1000]]) {
   await page.close();
 }
 
+// The build view: a blank project, Paige starting (neutral sheet), then designing a page.
+for (const [stream, name] of [["start", "build-start"], ["build", "build-page"]]) {
+  const page = await open(`theme=light&stream=${stream}`, 1366, 768);
+  await openProject(page, "my referral workshop");
+  results.push({ name: `${name}-title`, crumb: await page.textContent(".vs-crumbs b") });
+  await page.fill("#vs-chat-input", "Build the landing page");
+  await page.keyboard.press("Enter");
+  await page.waitForSelector(".vs-build");
+  if (stream === "build") await page.waitForSelector(".vs-wire-page");
+  await page.waitForTimeout(900);
+  results.push({ name, shape: await page.getAttribute(".vs-build", "data-shape"), caption: await page.textContent(".vs-build-now") });
+  await shoot(page, `${name}-1366x768`);
+  if (stream === "build") {
+    const narrow = await open(`theme=light&stream=build`, 900, 1000);
+    await openProject(narrow, "my referral workshop");
+    await narrow.getByRole("button", { name: "Chat", exact: true }).click();
+    await narrow.fill("#vs-chat-input", "Build the landing page");
+    await narrow.keyboard.press("Enter");
+    await narrow.waitForSelector(".vs-wire-page");
+    await narrow.getByRole("button", { name: "Hide chat" }).click();
+    await narrow.waitForTimeout(900);
+    await shoot(narrow, `build-page-900x1000`);
+    await narrow.close();
+  }
+  await page.close();
+}
+// Reworking what is already on the stage.
+{
+  const page = await open("theme=light&stream=build", 1366, 768);
+  await openProject(page, "New client intake");
+  await page.fill("#vs-chat-input", "Make it shorter");
+  await page.keyboard.press("Enter");
+  await page.waitForSelector(".vs-working");
+  await page.waitForTimeout(700);
+  results.push({ name: "reworking", pill: await page.textContent(".vs-working") });
+  await shoot(page, "reworking-1366x768");
+  await page.close();
+}
+// Designed, not saved, waiting on approval.
+{
+  const page = await open("theme=light&stream=preview", 1366, 768);
+  await openProject(page, "my referral workshop");
+  await page.fill("#vs-chat-input", "Build the landing page");
+  await page.keyboard.press("Enter");
+  await page.waitForSelector(".vs-unsaved");
+  await page.waitForTimeout(700);
+  results.push({ name: "preview", banner: await page.textContent(".vs-unsaved"), confirm: await page.textContent(".vs-confirm"), rawMarkdown: (await page.textContent(".vs-chat-log")).includes("**") });
+  await shoot(page, "preview-approval-1366x768");
+  await page.close();
+}
+// Reduced motion on the build view: nothing moves, the shape and caption still show.
+{
+  const page = await open("theme=light&stream=build", 1366, 768, { reducedMotion: "reduce" });
+  await openProject(page, "my referral workshop");
+  await page.fill("#vs-chat-input", "Build the landing page");
+  await page.keyboard.press("Enter");
+  await page.waitForSelector(".vs-wire-page");
+  results.push({ name: "build-reduced-motion", moving: await page.evaluate(() => [...document.querySelectorAll(".vs-build *")].filter((e) => { const cs = getComputedStyle(e); return cs.animationName !== "none" && parseFloat(cs.animationDuration) > 0.01; }).length) });
+  await page.close();
+}
 // Keyboard: Tab order through the project top bar; Esc steps back to home, Esc again closes.
 {
   const page = await open("theme=light", 1366, 768);

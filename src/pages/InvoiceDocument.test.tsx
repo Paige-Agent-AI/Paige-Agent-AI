@@ -1,0 +1,11 @@
+import React,{act} from 'react';
+import {createRoot,type Root} from 'react-dom/client';
+import {it,expect,beforeEach,afterEach,vi} from 'vitest';
+import InvoiceDocument from './InvoiceDocument';
+globalThis.IS_REACT_ACT_ENVIRONMENT=true;
+let host:HTMLDivElement,root:Root;const fetchMock=vi.fn();
+beforeEach(()=>{fetchMock.mockReset();vi.stubGlobal('fetch',fetchMock);host=document.createElement('div');document.body.append(host);root=createRoot(host);history.replaceState(null,'','/invoice?token='+ 'a'.repeat(64));});
+afterEach(()=>{act(()=>root.unmount());host.remove();vi.unstubAllGlobals();});
+it('clears bearer history and opens no-store/no-referrer isolated printable artifact',async()=>{let resolve!:(response:Response)=>void;fetchMock.mockImplementation(()=>new Promise(r=>resolve=r));act(()=>root.render(<InvoiceDocument/>));expect(host.textContent).toContain('Opening invoice');expect(location.search).toBe('');expect(fetchMock.mock.calls[0][1]).toMatchObject({cache:'no-store',referrerPolicy:'no-referrer'});await act(async()=>resolve(new Response('<html><body>Frozen obligation</body></html>',{status:200})));const frame=host.querySelector('iframe')!;expect(frame.getAttribute('sandbox')).toBe('allow-same-origin allow-modals');expect(frame.srcdoc).toContain('Frozen obligation');expect([...host.querySelectorAll('button')].every(b=>!b.disabled)).toBe(true);});
+it('malformed token refuses without request or bearer history',()=>{history.replaceState(null,'','/invoice?token=bad');act(()=>root.render(<InvoiceDocument/>));expect(fetchMock).not.toHaveBeenCalled();expect(location.search).toBe('');expect(host.querySelector('[role="alert"]')?.textContent).toContain('unavailable');});
+it('expired or revoked link remains coarse refusal',async()=>{fetchMock.mockResolvedValue(new Response('Unavailable',{status:404}));await act(async()=>root.render(<InvoiceDocument/>));expect(host.querySelector('iframe')).toBeNull();expect(host.querySelector('[role="alert"]')?.textContent).toContain('unavailable');expect(location.search).toBe('');});

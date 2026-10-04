@@ -73,6 +73,7 @@ vi.mock("@/components/paige/live/PaigeLiveConversation", () => ({
 }));
 
 import { PaigeAIChat } from "./PaigeAIChat";
+import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -160,6 +161,32 @@ describe("PaigeAIChat ComposerScopeState integration", () => {
     }
     expect(textarea().disabled).toBe(false);
   };
+
+  // Ask PAIGE from a surface (src/lib/paigePromptHandoff.ts): the question lands in the composer and
+  // waits for the owner. Nothing is sent on their behalf.
+  it("puts a question handed off before the chat mounted into the composer, without sending it", async () => {
+    handOffPaigePrompt("How did my leads do this month?");
+    await render();
+    await waitForWritable();
+    expect(textarea().value).toBe("How did my leads do this month?");
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("appends a later Ask PAIGE question after what the owner already typed", async () => {
+    await render();
+    await waitForWritable();
+    await type("My own note");
+    await act(async () => { handOffPaigePrompt("Which source should I double down on?"); await settle(); });
+    expect(textarea().value).toBe("My own note\n\nWhich source should I double down on?");
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("takes the client portal's prefill event too", async () => {
+    await render();
+    await waitForWritable();
+    await act(async () => { window.dispatchEvent(new CustomEvent("paige:prefill", { detail: { prompt: "What's my next step?" } })); await settle(); });
+    expect(textarea().value).toBe("What's my next step?");
+  });
 
   it.each(["http-500", "fetch-rejection"] as const)("does not offer unsafe or inert Live replay after %s", async (failure) => {
     if (failure === "http-500") vi.mocked(fetch).mockResolvedValueOnce(serverFailure());

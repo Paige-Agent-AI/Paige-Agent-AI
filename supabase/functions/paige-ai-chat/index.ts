@@ -3,6 +3,7 @@ import { executeVerifiedMissionMutation, resolveBusinessMissionThreadContext, re
 import { CAMPAIGN_BRIEF_TOOLS } from '../_shared/paige-spine/domains/campaigns.ts';
 import { CRM_ACTION_LABEL, CRM_COMMAND_TOOLS, CRM_COMMAND_TOOL_NAMES, CRM_TOOL_TO_ACTION, canonicalizeCrmCommand, crmApprovalSubject, crmCommandFallbackIdempotencyKeys } from '../_shared/crm-command/catalog.ts';
 import { resolveCrmApprovedFingerprint, CRM_APPROVAL_CANDIDATE_LIMIT } from '../_shared/crm-command/approval-resolution.ts';
+import { SALES_INVOICE_TOOLS, SALES_INVOICE_TOOL_NAMES, dispatchSalesInvoiceChat, type SalesInvoiceApprovalQuery } from '../_shared/sales-invoice-chat.ts';
 import { executeVerifiedCampaignBriefMutation, resolveCampaignBriefListContext } from '../_shared/campaign-brief-tenant-brain.ts';
 import { CALENDAR_PRESET_TOOLS } from '../_shared/paige-spine/domains/calendar_preset.ts';
 import { executeVerifiedCalendarPresetMutation, resolveCalendarPresetListContext, type CalendarPresetMutationTool } from '../_shared/calendar-preset-tenant-brain.ts';
@@ -17,6 +18,7 @@ import { GROWTH_FORM_TOOLS } from '../_shared/paige-spine/domains/growth_form.ts
 import { readAgreements } from '../_shared/agreements/chat-read.ts';
 import { draftAgreement, sendAgreement } from '../_shared/agreements/chat-write.ts';
 import { N8N_MANAGEMENT_TOOLS, runN8nManagement } from '../_shared/n8n-management.ts';
+import { GHL_MANAGEMENT_TOOLS } from '../_shared/ghl-management.ts';
 const N8N_MANAGEMENT_TOOL_NAMES = new Set(N8N_MANAGEMENT_TOOLS.map(tool => tool.function.name));
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { gatewayCompat } from "../_shared/claude.ts";
@@ -38,7 +40,7 @@ import { isSpendableQuoteCents } from "../_shared/purchase-quote.ts";
 // phone line. `capability-record` owns HOW a run is written; `comms-capability-outcome`
 // owns WHICH of the six outcomes these four acts landed in (§18: one home each).
 import { recordCapabilityRun, stableRunId, type CapabilityOutcome } from "../_shared/capability-record.ts";
-import { classifyGrowthFormRun } from "../_shared/growth-form-outcome.ts";
+import { classifyStudioRun, studioReceiptDetail } from "../_shared/studio-run-outcome.ts";
 import { classifyCommsRun } from "../_shared/comms-capability-outcome.ts";
 // Phase 2 · S1 — Pipeline write acts (starting deal_move_stage) record an honest outcome
 // through the SAME ratified pattern (#947): capability-record owns HOW, this owns WHICH.
@@ -50,7 +52,21 @@ import { classifyCrmRun } from "../_shared/crm-capability-outcome.ts";
 // no real artifact (null url, empty drafts, null saved id) must degrade to an honest failure,
 // not a success-shaped receipt. ONE pure home for that decision (§18); handlers wrap their
 // own success shape in it so the model, the status label and the artifact card all inherit it.
-import { artifactProduced, ARTIFACT_ABSENT_ERROR, usableDrafts } from "../_shared/artifact-receipt.ts";
+import { artifactProduced, ARTIFACT_ABSENT_ERROR, usableDrafts, publishVerified, PUBLISH_UNVERIFIED_ERROR } from "../_shared/artifact-receipt.ts";
+import { narrowToolDefs, outsideStudioScope, resolveRoleToolScope, STUDIO_SCOPE_FAIL_CLOSED, type RoleToolScope } from "../_shared/studio-scope.ts";
+
+/** Tools whose backend requires the CURRENT workspace's owner or admin (or the managing agency) —
+ *  the growth RPCs' `_growth_admin_tenant`, `save_marketing_content` (Migration D), and the Studio
+ *  generation functions through `_shared/studio-caller.ts` (content-draft, generate-image and the
+ *  growth draft functions). Their chat gate asks the same question, `studio_role_ok`, instead of the
+ *  tenant-agnostic global `user_roles` admin (§59, D3), so the chat gate and the backend agree. Every
+ *  other tool keeps its existing gate. */
+const WORKSPACE_BUILD_TOOLS: ReadonlySet<string> = new Set([
+  "growth_page_generate", "growth_page_save", "growth_page_publish",
+  "growth_form_save", "growth_form_publish",
+  "growth_funnel_generate", "growth_funnel_build", "growth_funnel_publish",
+  "draft_marketing_content", "content_save", "generate_image",
+]);
 import { buildFormSchemaFromQuestions } from "../_shared/growth-form-build.ts";
 import { classifyDocumentSubmissionError, validateDocumentBrief } from "../_shared/document-production.ts";
 // Wave 4 · 4a.3 — token-aware compaction trigger (§18 one home; smoke-tested per §32).
@@ -4599,6 +4615,24 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       autonomyModeCache.set(toolKey, mode);
       return mode;
     };
+    // The ONE extra fact a lane-lifter needs (Migration A): does the Trust Compass ceiling permit
+    // acting unread at all? Same canonical resolution as above (resolve_tool_autonomy_detail reads
+    // the same internal function), asked only where a lane may be lifted. Anything but a clean
+    // `true` answers false, so a lift never happens on an unclear reply.
+    const ceilingAllowsAutoCache = new Map<string, boolean>();
+    const ceilingAllowsAuto = async (toolKey: string): Promise<boolean> => {
+      if (ceilingAllowsAutoCache.has(toolKey)) return ceilingAllowsAutoCache.get(toolKey)!;
+      let allowed = false;
+      try {
+        const { data, error } = await supabaseClient.rpc("resolve_tool_autonomy_detail", {
+          _tenant_id: personaCtx?.tenant_id ?? null,
+          _tool_key: toolKey,
+        });
+        allowed = !error && (data as { ceiling_allows_auto?: unknown } | null)?.ceiling_allows_auto === true;
+      } catch { /* keep the safe answer */ }
+      ceilingAllowsAutoCache.set(toolKey, allowed);
+      return allowed;
+    };
 
     // ── Capability manifest — the ONE home for "what can Paige do for THIS workspace?" (§18) ──────
     // Resolves each capability family's honest status from SERVER-RESOLVED truth only: the caller's
@@ -4945,6 +4979,12 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // the agent made THIS turn so the stream tells the client exactly what to open — never a
     // guessed manifest index (the manifest is newest-LAST and doesn't re-order on edits).
     let studioSessionId: string | null = null;
+    // The Design Studio role's capability scope (V1), read from the platform role record when the
+    // thread is a Studio project. Null on a Studio turn means it could not be read: fail closed.
+    let studioScope: RoleToolScope | null = null;
+    // The thread's Studio link as first read (before the summary fold). If the later read fails, the
+    // turn still knows it is a Studio turn and runs with the fail-closed scope, never as main PAIGE.
+    let preStudioSessionId: string | null = null;
     // Task #15 — the SERVER-OWNED in-place-image-refine anchor for the dedicated chat (resolved from
     // the thread row below): { id } of the immediately-eligible Paige image, or null when absent/expired.
     // The model never supplies the id authority; it only echoes this exact id back, re-checked at the tool.
@@ -4953,6 +4993,11 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // thread; after that a refine mints a fresh image (the anchor's expiry clear).
     const IMAGE_REFINE_ANCHOR_WINDOW_MS = 30 * 60 * 1000;
     const studioLinked: Array<{ kind: string; id: string; title: string; url: string | null }> = [];
+    // A page designed in a Studio project but not saved this turn (the save waited on approval, or
+    // the model stopped short). The stage shows it, marked as not saved, instead of staying empty:
+    // it is the tenant's own draft, generated from their brief and brand, and nothing is claimed
+    // about it beyond "designed, not saved". Emitted with the other content frames at the end.
+    let studioPreview: { kind: "page" | "funnel"; title: string; blocks: unknown[]; theme: unknown } | null = null;
     // #29 — REGULAR-CHAT deliverables. Outside a Studio session there is no canvas to link to, but a
     // chat surface (PaigeChat/PaigeAIChat/BrokerPaigeSession) still earns the
     // Cowork-style "Created a file" handoff card. This collects the artifacts the agent PERSISTED
@@ -5115,14 +5160,21 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
         const { data: pre } = await supabaseClient
           .from("paige_chat_threads").select("studio_session_id").eq("id", payloadThreadId).maybeSingle();
         if (pre?.studio_session_id) traceCtx.agent_id = "studio-design-agent";
+        preStudioSessionId = pre?.studio_session_id ? String(pre.studio_session_id) : null;
       }
       await foldThreadSummary(payloadThreadId, {
         emit: (payload) => compactionLeadFrames.push(`data: ${JSON.stringify({ paige_compacting: payload })}\n\n`),
       });
 
       try {
-        const { data: th } = await supabaseClient
+        const { data: th, error: thErr } = await supabaseClient
           .from("paige_chat_threads").select("summary, studio_session_id, last_image_content_id, last_image_anchor_at").eq("id", payloadThreadId).maybeSingle();
+        if (thErr && preStudioSessionId && !studioSessionId) {
+          // A Studio thread whose second read failed: keep it a Studio turn, with no scope read yet
+          // (studioScope stays null, which every enforcement point treats as the fail-closed set).
+          studioSessionId = preStudioSessionId;
+          console.error("[paige] studio thread re-read failed; running the turn with the fail-closed Studio scope");
+        }
         // STUDIO SESSION → swap Paige's persona (aiMessages[0]) for her design-studio specialist's
         // identity (#292). Gated on studio_session_id, which is NULL for EVERY Your-Paige/contact
         // thread — so the main chat's identity is provably untouched by this branch.
@@ -5132,6 +5184,18 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
           // actually establishes the Studio persona, and a reader looking for where the agent id
           // is decided should find it here too (§34).
           traceCtx.agent_id = "studio-design-agent";
+          // V1 — the role's capability scope comes ONLY from the platform row (tenant_id IS NULL), read
+          // with the server client: a tenant can neither author it nor narrow-then-widen it. A read
+          // that fails, or a scope that is missing or malformed, leaves the fail-closed set.
+          try {
+            const { data: scopeRow, error: scopeErr } = await supabase
+              .from("paige_subagents").select("config")
+              .eq("slug", "design-studio").is("tenant_id", null).maybeSingle();
+            studioScope = resolveRoleToolScope(scopeErr ? null : scopeRow?.config);
+          } catch {
+            studioScope = resolveRoleToolScope(null);
+          }
+          if (!studioScope.valid) console.error("[paige] design-studio capability scope unusable, failing closed:", studioScope.reason);
           try {
             let q = supabaseClient
               .from("paige_subagents").select("name, system_prompt")
@@ -5180,9 +5244,16 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
               content: `CANVAS STATE — the artifact currently on the canvas is a ${canvasArtifact.kind} (id ${canvasArtifact.id}). If the user is changing THAT ${canvasArtifact.kind}, pass ${idArg}:"${canvasArtifact.id}" to ${saveTool} so it updates in place and keeps its timeline. If they want a new, separate ${canvasArtifact.kind}, omit ${idArg}.`,
             });
           }
-          if (canvasArtifact && (canvasArtifact.kind === "content" || canvasArtifact.kind === "document")) {
-            const canvasLabel = canvasArtifact.kind === "document" ? "document" : "image";
-            const canvasTool = canvasArtifact.kind === "document" ? "document_generate" : "generate_image";
+          if (canvasArtifact && canvasArtifact.kind === "document") {
+            // document_generate is not offered in Studio (it has no Studio execution path), so the
+            // hint must not steer the design agent to it.
+            aiMessages.splice(2, 0, {
+              role: "system",
+              content: `CANVAS STATE — the artifact currently on the canvas is a document (content id ${canvasArtifact.id}). Documents can't be revised in this Studio session; if the user asks to change it, say so plainly in one line.`,
+            });
+          } else if (canvasArtifact && canvasArtifact.kind === "content") {
+            const canvasLabel = "image";
+            const canvasTool = "generate_image";
             aiMessages.splice(2, 0, {
               role: "system",
               content: `CANVAS STATE — the artifact currently on the canvas is a ${canvasLabel} (content id ${canvasArtifact.id}). If the user is refining, adjusting, or regenerating THAT ${canvasLabel}, pass target_content_id:"${canvasArtifact.id}" to ${canvasTool} so it updates in place and keeps its version history. If they instead want a brand-new/additional ${canvasLabel}, OMIT target_content_id so it's created as a separate asset — never overwrite the on-canvas one when they asked for a new one.`,
@@ -6948,6 +7019,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             }
           },
           ...N8N_MANAGEMENT_TOOLS,
+          ...GHL_MANAGEMENT_TOOLS,
           // ── The business phone line and its carrier registration ──────────────
           // These exist so Paige can DO this, not just describe it. Before them the
           // capability shipped as a surface only a human could click: she could not tell
@@ -7233,6 +7305,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       if (legacyCrmMutationTools.has((toolDefs[i] as any)?.function?.name)) toolDefs.splice(i, 1);
     }
     toolDefs.push(...CRM_COMMAND_TOOLS as any);
+    toolDefs.push(...SALES_INVOICE_TOOLS as any);
 
     // ── AUTONOMY GATE WIRING ─────────────────────────────────────────────────
     // Every tool that writes, creates, or changes state is governed by the
@@ -7626,6 +7699,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       n8n_archive_workflow: "archiving an automation",
       n8n_delete_workflow: "permanently deleting an automation",
       zapier_run_action: "running a Zapier action",
+      ghl_run_action: "running a GoHighLevel action",
       forge_subagent: "spinning up a new specialist agent",
       save_to_knowledge_base: "saving this to your knowledge base",
       plan_set_reminder: "setting a reminder",
@@ -8140,6 +8214,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           return `PERMANENTLY delete the n8n automation ${a?.workflow_id || ""}. This can't be undone.`;
         case "zapier_run_action":
           return `Run the Zapier action "${a?.tool_name || ""}"${a?.arguments ? " with the prepared inputs" : ""} — this runs it live in the connected app.`;
+        case "ghl_run_action":
+          return `Run the GoHighLevel tool "${a?.tool_name || ""}"${a?.arguments ? " with the prepared inputs" : ""} — this touches the live CRM (a write changes real records; a send messages a real person).`;
         case "forge_subagent":
           return `${a?.runtime === "hard" ? "Propose a new (code-backed) specialist" : "Spin up a new specialist"} — "${a?.name || a?.slug || "agent"}" (${a?.domain || "general"}): ${String(a?.description || "").slice(0, 80)}.${a?.runtime === "hard" ? " Goes to an admin for sign-off." : " Joins the team right away."}`;
         case "save_to_knowledge_base":
@@ -8221,6 +8297,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           },
         },
       } as any);
+      // V1 — the design agent is OFFERED only its role's scope. This filters the list the turn
+      // already carries (it never adds a tool); dispatch enforces the same scope again below, so a
+      // tool the model names anyway is still refused. (document_generate, which has no Studio
+      // execution path, is outside the scope and so no longer offered here.)
+      const offScope = narrowToolDefs(toolDefs as unknown[], (studioScope ?? resolveRoleToolScope(null)).allowed);
+      if (offScope.length) console.log(`[paige] design-studio scope: ${toolDefs.length} tools offered, ${offScope.length} withheld`);
     }
 
     // Advertise the confirm flag on every mutating tool so the model knows the
@@ -8487,6 +8569,28 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // the shared queuedApprovals passed in from the loop.
       let documentCallOrdinal = 0;
       const executeToolCalls = async (toolCalls: any[], queuedApprovals: Array<{ id: string; summary: string; category: string; contact_id: string | null }>) => {
+        // A Studio act stopped before it ran — switched off in autonomy settings, or the caller is not
+        // this workspace's owner/admin — still files its receipt, as refused, so the activity feed
+        // shows the attempt and why nothing changed. A held-for-approval proposal files none: the
+        // approval card is its record. Never fails the turn.
+        const recordStudioRefusal = async (tc: any, reason: string): Promise<void> => {
+          try {
+            const receipt = classifyStudioRun({ capability: tc.function.name, result: { success: false } });
+            if (!receipt) return;
+            const { data: refusedTenant, error: rtErr } = await supabaseClient.rpc("current_user_tenant_id");
+            if (rtErr || typeof refusedTenant !== "string") return;
+            await recordCapabilityRun(supabase, {
+              tenantId: refusedTenant,
+              actorId: user.id,
+              capabilityKey: receipt.key,
+              outcome: "capability_refused",
+              runId: await stableRunId([receipt.key, refusedTenant, `${payloadThreadId ?? ""}:${tc.id}`]),
+              detail: { refused: reason },
+            });
+          } catch (e) {
+            console.error("[paige] studio refusal not recorded:", (e as Error)?.message);
+          }
+        };
       const toolResults: any[] = [];
       const executed: any[] = [];
       for (const [toolIndex, tc] of toolCalls.entries()) {
@@ -8512,6 +8616,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         }
         executed.push(tc);
 
+        // ── STUDIO CAPABILITY BOUNDARY (V1) ──────────────────────────────────
+        // A Studio turn may dispatch only its role's scope, whatever the model names — the list it
+        // was offered is already narrowed, and this is the second, independent enforcement. Checked
+        // before every door (the CRM door included), so a refused tool reaches no executor.
+        if (studioSessionId && !(studioScope?.allowed ?? new Set(STUDIO_SCOPE_FAIL_CLOSED)).has(tc.function.name)) {
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(outsideStudioScope(tc.function.name)) });
+          continue;
+        }
+
         // ── CLIENT-SEAT GATE (Tier Rail Phase D, §9/#133) ────────────────────
         // Deny-by-default on a client-portal seat: only the CLIENT_SEAT_ALLOW
         // tools are permitted; every owner-ops tool (crm_*, pipeline_*, member_*,
@@ -8520,6 +8633,27 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // enforced, mirroring paige-mcp's enforceTierAndScope client seal.
         if (callerTier === "client" && !clientSeatToolAllowed(tc.function.name)) {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, forbidden_seat: true, error: "This is a client portal seat; that action is not available here." }) });
+          continue;
+        }
+
+        // Sales uses its canonical action door, which alone claims approval and executes stored
+        // arguments. This branch stays after scope/seat guards and before the legacy Chat gate.
+        if (SALES_INVOICE_TOOL_NAMES.has(tc.function.name)) {
+          let invoiceArgs: Record<string, unknown> = {};
+          try { invoiceArgs = JSON.parse(tc.function.arguments || '{}'); } catch { invoiceArgs = {}; }
+          const userTurns = messages.filter((message: any) => message?.role === 'user');
+          const result = await dispatchSalesInvoiceChat({
+            tenantId: personaCtx?.tenant_id ?? null, userId: user.id, toolName: tc.function.name,
+            args: invoiceArgs, approved: approvedConfirmations,
+            sameToolCalls: toolCalls.filter((call: any) => call?.function?.name === tc.function.name).length,
+            turn: { thread_id: payloadThreadId ?? null, user_turn_ordinal: userTurns.length, user_turn: userTurns[userTurns.length - 1]?.content ?? null },
+          }, { caller: supabase, admin: { from: (name: string) => ({
+            // Dynamic approval table: isolate the SDK generic expansion at the selected-query boundary.
+            select: (columns: string) => createClient(supabaseUrl, supabaseServiceKey).from(name).select(columns) as unknown as SalesInvoiceApprovalQuery,
+          }) } });
+          for (const token of result.tokens ?? []) approvalTokenTool.set(token, tc.function.name);
+          if (result.refusal) approvalRefusals.set(tc.function.name, result.refusal);
+          toolResults.push({ tool_call_id: tc.id, role: 'tool', content: JSON.stringify(result.content) });
           continue;
         }
 
@@ -8917,6 +9051,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           }
 
           let autoMode = await resolveToolAutonomy(tc.function.name);
+          let studioLifted = false; // true only when the Studio lift below changed confirm → auto
           const isPipelineArchive = tc.function.name === "pipeline_configure" && gateArgs?.command?.type === "archive-pipeline";
           const isPipelineFolderArchive = tc.function.name === "pipeline_configure" && gateArgs?.command?.type === "archive-folder";
           if (isPipelineArchive) {
@@ -9021,16 +9156,21 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             gateArgs._folderArchive = { name: archiveFolder.name, pipeline_count: folderBinding.expected_pipeline_count };
           }
           // #292 — inside a STUDIO session the creative BUILD tools run at auto. The Vibe Studio IS the
-          // propose→build surface: the customer already asked, the design agent's core says "build,
-          // don't describe", and StudioChat has no confirm affordance — so confirm-gating these stalls
-          // the agent in an endless "ready to lock these in?" loop that never generates anything (the
-          // reported bug). Drafts/creations only; a tenant 'off' is still respected, and publish
-          // (make-it-LIVE) is deliberately NOT here — going public still asks first.
+          // propose→build surface: the customer already asked and the design agent's core says "build,
+          // don't describe", so confirm-gating these stalls the agent in a "ready to lock these in?"
+          // loop. Drafts/creations only; a tenant 'off' is still respected, and publish (make-it-LIVE)
+          // is deliberately NOT here — going public still asks first.
+          //
+          // NEVER ABOVE THE CEILING (V0, 2026-10-04). The lift only replaces a tenant's own `confirm`.
+          // When the Trust Compass effective rung forbids acting unread (rung 0-1), the confirm IS the
+          // ceiling, and lifting it was a §68 bypass: on rung 1 these writes ran at auto. The lift now
+          // requires the canonical resolver's `ceiling_allows_auto`; an unclear answer allows nothing,
+          // and the Studio shows the held draft with its approval card instead.
           // Only the confirm-gated build tools need listing — the pure-draft generators
           // (growth_page_generate / growth_funnel_generate) are NOT in MUTATING_TOOLS, so they never
           // reach this block and already run at auto; adding them here would be dead code.
           const STUDIO_AUTO_TOOLS = new Set([
-            "generate_image", "content_save", "document_generate",
+            "generate_image", "content_save",
             "growth_page_save", "growth_funnel_build", "growth_form_save",
           ]);
           // …AND IT CAN NEVER LIFT A HIGH-RISK ACTION. This escalation is a fallback path — a way
@@ -9041,8 +9181,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           if (
             studioSessionId && STUDIO_AUTO_TOOLS.has(tc.function.name) && autoMode === "confirm"
             && classifyAction(tc.function.name) === "ordinary"
+            && (await ceilingAllowsAuto(tc.function.name))
           ) {
             autoMode = "auto";
+            studioLifted = true;
           }
           // ── THE CLASSIFICATION OUTRANKS THE SWITCH ──────────────────────────────────────────
           //
@@ -9088,6 +9230,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           }
 
           if (autoMode === "off") {
+            await recordStudioRefusal(tc, "turned_off");
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, disabled: true, error: `${(TOOL_LABELS[tc.function.name] || "this action").replace(/^./, (c) => c.toUpperCase())} is turned off for this workspace in Paige's autonomy settings. Tell the operator it's disabled (don't mention any internal names) and don't retry.` }) });
             continue;
           }
@@ -9294,8 +9437,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // `auto` — the operator's standing decision in their autonomy settings, not an
             // approval given in this conversation. Recorded as what it is, so a later reader can
             // tell "they said yes to this" apart from "they had already said yes to all of these".
-            approvalChannel.set(tc.id, studioSessionId && STUDIO_AUTO_TOOLS.has(tc.function.name)
-              ? "studio_session_auto" : "standing_autonomy_setting");
+            approvalChannel.set(tc.id, studioLifted ? "studio_session_auto" : "standing_autonomy_setting");
           }
           // autoMode === 'auto', or the approval matched this exact call → fall through to execute.
         }
@@ -10183,6 +10325,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           tc.function.name === "growth_page_publish" ||
           tc.function.name === "growth_form_save" ||
           tc.function.name === "growth_form_publish" ||
+          // V0 — the funnel tools were advertised and handled below but missing from this list, so
+          // every call fell through to "Unknown tool" (0 funnels ever built in production). They are
+          // reachable now that a partial build can only report itself as partial.
+          tc.function.name === "growth_funnel_generate" ||
+          tc.function.name === "growth_funnel_build" ||
+          tc.function.name === "growth_funnel_publish" ||
           tc.function.name === "action_file" ||
           tc.function.name === "action_advance" ||
           tc.function.name === "inbox_list" ||
@@ -10204,6 +10352,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           N8N_MANAGEMENT_TOOL_NAMES.has(tc.function.name) ||
           tc.function.name === "zapier_list_actions" ||
           tc.function.name === "zapier_run_action" ||
+          tc.function.name === "ghl_list_actions" ||
+          tc.function.name === "ghl_run_action" ||
           tc.function.name === "crm_log_activity" ||
           tc.function.name === "crm_add_note" ||
           tc.function.name === "crm_list_documents" ||
@@ -10238,12 +10388,28 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // role string here is the same one `is_platform_owner()`/`is_super_admin()` gate on, and
           // `platform_admin` is a DISTINCT string that stays denied. Server-derived from the JWT
           // (user.id) — a caller-supplied role can never reach this array.
-          const allowed = N8N_MANAGEMENT_TOOL_NAMES.has(tc.function.name) || roles.includes("admin") || roles.includes("super_admin");
+          // D3 (V1) — the growth save/build/publish RPCs require the CURRENT workspace's owner or
+          // admin (or the agency managing it): `_growth_admin_tenant`. The global `user_roles` admin
+          // above is tenant-agnostic (§59): it let an admin of another workspace past this gate (the
+          // RPC then refused them) and refused a workspace's own owner who lacks the global role (the
+          // RPC would have allowed them). For exactly those tools the gate now asks the RPC's own
+          // question (`studio_role_ok`), on every turn — the chat gate and the write agree.
+          const workspaceAuthorityTool = WORKSPACE_BUILD_TOOLS.has(tc.function.name);
+          let allowed: boolean;
+          if (workspaceAuthorityTool) {
+            const { data: ownerOrAdmin, error: authorityErr } = await supabaseClient.rpc("studio_role_ok", { _caller: user.id });
+            allowed = !authorityErr && ownerOrAdmin === true;
+          } else {
+            allowed = N8N_MANAGEMENT_TOOL_NAMES.has(tc.function.name) || roles.includes("admin") || roles.includes("super_admin");
+          }
           if (!allowed) {
+            if (workspaceAuthorityTool) await recordStudioRefusal(tc, "workspace_owner_or_admin_required");
             toolResults.push({
               tool_call_id: tc.id,
               role: "tool",
-              content: JSON.stringify({ success: false, error: "CRM operator tools are restricted to admins." }),
+              content: JSON.stringify(workspaceAuthorityTool
+                ? { success: false, error: "workspace_owner_or_admin_required", message: "Building and publishing here needs this workspace's owner or an admin. Nothing was changed." }
+                : { success: false, error: "CRM operator tools are restricted to admins." }),
             });
             continue;
           }
@@ -10410,25 +10576,33 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               console.error("[paige] crm capability run not recorded:", (e as Error)?.message);
             }
           };
-          // Studio forms (save / publish) file the same honest receipt. Attributed to the tenant the
-          // RPC acted on (current_user_tenant_id(), like the CRM recorder), keyed on this tool call so
-          // a retried turn folds to one row. Never fails the turn.
-          const recordFormRun = async (
+          // Studio acts (page, funnel, form, copy and image saves and publishes) file the same honest
+          // receipt. Attributed to the tenant the act landed in (current_user_tenant_id(), like the CRM
+          // recorder), keyed on this tool call so a retried turn folds to one row, carrying how it was
+          // approved and the record it touched. Never fails the turn.
+          // Set by the Studio image branch when paige-media itself files this attempt's receipt: once a
+          // job exists (it files the render's success or failure) or when it refused over budget (it
+          // files that refusal). Every other Studio image outcome — a synchronous refusal, an answer
+          // that never came back — is filed here, so each attempt is on the record exactly once.
+          let mediaFilesReceipt = false;
+          const recordStudioRun = async (
             input: { result?: unknown; thrown?: unknown; threw?: boolean },
           ): Promise<void> => {
             try {
-              const outcome: CapabilityOutcome | null = classifyGrowthFormRun({ capability: tc.function.name, ...input });
-              if (!outcome) return;
-              const formTenant = await resolveActorTenant();
+              if (tc.function.name === "generate_image" && mediaFilesReceipt) return;
+              const receipt = classifyStudioRun({ capability: tc.function.name, ...input });
+              if (!receipt) return;
+              const studioTenant = await resolveActorTenant();
               await recordCapabilityRun(supabase, {
-                tenantId: formTenant,
+                tenantId: studioTenant,
                 actorId: user.id,
-                capabilityKey: tc.function.name,
-                outcome,
-                runId: await stableRunId([tc.function.name, formTenant ?? "", `${payloadThreadId ?? ""}:${tc.id}`]),
+                capabilityKey: receipt.key,
+                outcome: receipt.outcome,
+                runId: await stableRunId([receipt.key, studioTenant ?? "", `${payloadThreadId ?? ""}:${tc.id}`]),
+                detail: studioReceiptDetail(input.threw ? null : input.result, approvalChannel.get(tc.id)),
               });
             } catch (e) {
-              console.error("[paige] form capability run not recorded:", (e as Error)?.message);
+              console.error("[paige] studio capability run not recorded:", (e as Error)?.message);
             }
           };
           // Pre/post-write boundary for the pipeline capability recorder (Codex P2, 2026-09-05):
@@ -10581,6 +10755,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               }
               if (ctx && typeof ctx === "object") return asToolRecord(ctx);
               return {};
+            };
+            /** A Studio backend's workspace refusal (`forbidden: true`), as the sentence to hand the
+             *  model, whichever error shape the backend uses; null when the body is not a refusal. */
+            const workspaceRefusal = (body: Record<string, unknown>): string | null => {
+              if (body.forbidden !== true) return null;
+              const e = body.error as unknown;
+              if (typeof e === "string" && e) return e;
+              const m = (e as { message?: unknown } | null)?.message;
+              return typeof m === "string" && m ? m : null;
             };
 
             // Everything here goes through the SAME seams the Connections surface uses —
@@ -11642,6 +11825,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               const { data: cd, error } = await supabaseClient.functions.invoke("content-draft", {
                 body: { channel: args.channel, brief: args.brief, tone: args.tone ?? null, variations: args.variations ?? 1, tenant_id: personaCtx?.tenant_id ?? null },
               });
+              // A workspace refusal arrives as a non-2xx whose message only the body carries.
+              const _cdRefusal = workspaceRefusal(await readInvokeBody(error, cd));
+              if (_cdRefusal) {
+                result = { success: false, error: _cdRefusal, not_applied: true };
+              } else {
               if (error) throw error;
               if ((cd as any)?.error) throw new Error((cd as any).error);
               // §13/§70 — a 200 can carry an empty drafts array, OR a non-empty array of
@@ -11652,6 +11840,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               result = artifactProduced("draft_list", _usableDrafts)
                 ? { success: true, channel: (cd as any)?.channel, drafts: _usableDrafts }
                 : { success: false, error: ARTIFACT_ABSENT_ERROR.draft_list };
+              }
             } else if (tc.function.name === "generate_image") {
               // #292 — reuse the on-canvas image row (stack its versions) ONLY when the model targets
               // the exact image that's actually on the canvas. Any other id → treat as a new asset
@@ -11707,6 +11896,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   try { mjBody = await (mjErr as any).context.json(); } catch { mjBody = null; }
                 }
                 const mjJob = mjBody?.job;
+                mediaFilesReceipt = Boolean(mjJob?.id) || mjBody?.budget_denied === true;
                 if (!mjJob?.id) {
                   if (mjBody?.error) result = { success: false, error: String(mjBody.error) };
                   else throw (mjErr ?? new Error("The image request didn't go through."));
@@ -11738,8 +11928,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   reuse_content_id: reuseImageId,
                 },
               });
-              if (error) throw error;
-              if ((img as any)?.needs_config) {
+              // A workspace refusal arrives as a non-2xx whose message only the body carries.
+              const _imgRefusal = workspaceRefusal(await readInvokeBody(error, img));
+              if (_imgRefusal) {
+                result = { success: false, error: _imgRefusal, not_applied: true };
+              } else if (error) {
+                throw error;
+              } else if ((img as any)?.needs_config) {
                 result = { success: false, needs_config: true, message: (img as any).error };
               } else if ((img as any)?.error) {
                 throw new Error((img as any).error);
@@ -11839,13 +12034,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 p_body: args.body,
                 p_channel: args.channel ?? null,
                 p_brief: args.brief ?? null,
-                p_tenant_id: personaCtx?.tenant_id ?? null,
+                // The RPC files into the session's own workspace (Migration D). Naming the persona's
+                // tenant could only refuse: for someone who is a client of one workspace and staff of
+                // another, the persona resolves the client side first.
+                p_tenant_id: null,
               });
               if (error) throw error;
-              // §13/§70 — a 200 with no returned id means the row may not have persisted.
+              // §13/§70 — a 200 with no returned id means the row may or may not have persisted.
               result = artifactProduced("saved_id", cid)
                 ? { success: true, content_id: cid }
-                : { success: false, error: ARTIFACT_ABSENT_ERROR.saved_id };
+                : { success: false, error: ARTIFACT_ABSENT_ERROR.saved_id, outcome_unknown: true };
             } else if (tc.function.name === "document_generate") {
               const currentDocumentCallOrdinal = documentCallOrdinal++;
               const documentIntentId = payloadRequestIntentId
@@ -12062,6 +12260,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               const { data: gd, error } = await supabaseClient.functions.invoke("growth-page-draft", {
                 body: { brief: args.brief, kind: "page", tone: args.tone ?? null, tenant_id: personaCtx?.tenant_id ?? null },
               });
+              // A workspace refusal arrives as a non-2xx whose reason only the body carries.
+              const _gpRefusal = workspaceRefusal(await readInvokeBody(error, gd));
+              if (_gpRefusal) {
+                result = { success: false, error: _gpRefusal, not_applied: true };
+              } else {
               if (error) throw error;
               if ((gd as any)?.error) throw new Error((gd as any).error);
               result = {
@@ -12070,6 +12273,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 theme_json: (gd as any)?.theme_json ?? null,
                 seo_json: (gd as any)?.seo_json ?? null,
               };
+              if (studioSessionId && Array.isArray((gd as any)?.blocks) && (gd as any).blocks.length) {
+                studioPreview = {
+                  kind: "page",
+                  title: String((gd as any)?.seo_json?.title ?? "Landing page draft").slice(0, 120),
+                  blocks: (gd as any).blocks,
+                  theme: (gd as any)?.theme_json ?? null,
+                };
+              }
+              }
             } else if (tc.function.name === "growth_page_save") {
               // p_tenant_id is IGNORED for JWT callers by the DEFINER RPC (no IDOR, §9) —
               // it pins to current_user_tenant_id(). Writes the DRAFT only; never goes live.
@@ -12079,6 +12291,18 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               if (args.page_id && personaCtx?.tenant_id) {
                 const { data: _exP } = await supabaseClient.from("growth_pages").select("slug").eq("id", args.page_id).eq("tenant_id", personaCtx.tenant_id).maybeSingle();
                 if ((_exP as any)?.slug) _pageSaveSlug = (_exP as any).slug;
+              } else if (personaCtx?.tenant_id) {
+                // A NEW page never takes a slug another page already has: the upsert is keyed on
+                // (tenant, slug), so a reused slug would overwrite that page's draft and title — and
+                // the Studio saves without asking. Same rule the funnel builder applies (`_uniqueSlug`).
+                const _base = String(args.slug || args.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48) || "page";
+                const { data: _taken } = await supabaseClient.from("growth_pages").select("slug").eq("tenant_id", personaCtx.tenant_id).like("slug", `${_base}%`);
+                const _set = new Set(((_taken ?? []) as Array<{ slug: string }>).map((r) => r.slug));
+                _pageSaveSlug = _base;
+                if (_set.has(_base)) {
+                  _pageSaveSlug = `${_base}-${Date.now()}`;
+                  for (let n = 2; n < 200; n++) { if (!_set.has(`${_base}-${n}`)) { _pageSaveSlug = `${_base}-${n}`; break; } }
+                }
               }
               const { data: row, error } = await supabaseClient.rpc("growth_page_upsert", {
                 p_tenant_id: personaCtx?.tenant_id ?? null,
@@ -12118,7 +12342,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 p_id: args.page_id,
               });
               if (error) throw error;
-              result = { success: true, ...(pub as any) };
+              // V0 — "live" only on a readback that proves it: live status, publish time, public address.
+              result = publishVerified("page", pub)
+                ? { success: true, ...(pub as any) }
+                : { success: false, outcome: "unverified", error: PUBLISH_UNVERIFIED_ERROR, status: (pub as any)?.status ?? null };
             } else if (tc.function.name === "growth_form_save") {
               // A form the owner asked for, written by Paige as structured questions and validated by
               // the DEFINER RPC (§9: p_tenant_id is ignored for a signed-in caller; it pins to the
@@ -12181,19 +12408,31 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 p_id: args.form_id,
               });
               if (error) throw error;
-              result = { success: true, ...(pub as any) };
+              result = publishVerified("form", pub)
+                ? { success: true, ...(pub as any) }
+                : { success: false, outcome: "unverified", error: PUBLISH_UNVERIFIED_ERROR, status: (pub as any)?.status ?? null };
             } else if (tc.function.name === "growth_funnel_generate") {
               // Draft-only: plans + drafts the whole funnel (entry page + intake form) via the
               // edge fn, which reuses the page/form drafters server-side. Writes nothing (§13).
               const { data: gd, error } = await supabaseClient.functions.invoke("growth-funnel-draft", {
                 body: { brief: args.brief, tenant_id: personaCtx?.tenant_id ?? null },
               });
+              // A workspace refusal arrives as a non-2xx whose reason only the body carries.
+              const _gfRefusal = workspaceRefusal(await readInvokeBody(error, gd));
+              if (_gfRefusal) {
+                result = { success: false, error: _gfRefusal, not_applied: true };
+              } else {
               if (error) throw error;
               if ((gd as any)?.error) {
                 const e = (gd as any).error;
                 throw new Error(typeof e === "string" ? e : e?.message || "Funnel draft failed");
               }
               result = { success: true, name: (gd as any)?.name, goal: (gd as any)?.goal ?? null, page: (gd as any)?.page ?? null, form: (gd as any)?.form ?? null };
+              const _fpBlocks = (gd as any)?.page?.blocks ?? (gd as any)?.page?.blocks_json;
+              if (studioSessionId && Array.isArray(_fpBlocks) && _fpBlocks.length) {
+                studioPreview = { kind: "funnel", title: String((gd as any)?.name ?? "Funnel draft").slice(0, 120), blocks: _fpBlocks, theme: (gd as any)?.page?.theme_json ?? null };
+              }
+              }
             } else if (tc.function.name === "growth_funnel_build") {
               // Persist the funnel into REAL draft rows — entry page + intake form + wired
               // funnel — through the SAME DEFINER RPCs the client seam uses (§10/§18). JWT
@@ -12237,85 +12476,121 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               } else {
                 _pageSlug = await _uniqueSlug("growth_pages", _page.title || args.name, "page");
               }
-              const { data: _pageRow, error: _pErr } = await supabaseClient.rpc("growth_page_upsert", {
-                p_tenant_id: _fbTid,
-                p_slug: _pageSlug,
-                p_title: _page.title || args.name || "Landing page",
-                p_blocks_json: Array.isArray(_page.blocks) ? _page.blocks : [],
-                p_theme_json: _page.theme ?? _page.theme_json ?? null,
-                p_seo_json: _page.seo ?? _page.seo_json ?? null,
-                p_id: args.page_id ?? null,
-              });
-              if (_pErr) throw _pErr;
-              const _pageId = (_pageRow as any)?.id;
-              if (!_pageId) throw new Error("The funnel's entry page didn't save.");
-              let _formId: string | null = null;
-              if (args.form && args.form.schema) {
-                let _formSlug: string;
-                if (args.form_id && _fbTid) {
-                  const { data: _exForm } = await supabaseClient.from("growth_forms").select("slug").eq("id", args.form_id).eq("tenant_id", _fbTid).maybeSingle();
-                  _formSlug = (_exForm as any)?.slug || args.form.slug || await _uniqueSlug("growth_forms", args.form.name || args.name, "form");
-                } else {
-                  _formSlug = await _uniqueSlug("growth_forms", args.form.name || args.name, "form");
-                }
-                const { data: _formRow, error: _fErr } = await supabaseClient.rpc("growth_form_upsert", {
+              // V0 TRUTH — the build is three writes (page, form, funnel), not one transaction. If any
+              // step fails after an earlier one landed, the outcome is PARTIAL and names exactly what
+              // was saved as a draft; it is never success. (An atomic build RPC is later work.)
+              const _fbWritten: { page_id?: string; form_id?: string } = {};
+              try {
+                const { data: _pageRow, error: _pErr } = await supabaseClient.rpc("growth_page_upsert", {
                   p_tenant_id: _fbTid,
-                  p_slug: _formSlug,
-                  p_name: args.form.name || "Intake form",
-                  p_schema_json: args.form.schema,
-                  p_success_action_json: null,
-                  p_auto_create_contact: true,
-                  p_pipeline_id: null,
-                  p_stage_id: null,
-                  p_id: args.form_id ?? null,
+                  p_slug: _pageSlug,
+                  p_title: _page.title || args.name || "Landing page",
+                  p_blocks_json: Array.isArray(_page.blocks) ? _page.blocks : [],
+                  p_theme_json: _page.theme ?? _page.theme_json ?? null,
+                  p_seo_json: _page.seo ?? _page.seo_json ?? null,
+                  p_id: args.page_id ?? null,
                 });
-                if (_fErr) throw _fErr;
-                _formId = (_formRow as any)?.id ?? null;
+                if (_pErr) throw _pErr;
+                const _pageId = (_pageRow as any)?.id;
+                if (!_pageId) throw new Error("The funnel's entry page didn't save.");
+                _fbWritten.page_id = _pageId;
+                let _formId: string | null = null;
+                if (args.form && args.form.schema) {
+                  let _formSlug: string;
+                  if (args.form_id && _fbTid) {
+                    const { data: _exForm } = await supabaseClient.from("growth_forms").select("slug").eq("id", args.form_id).eq("tenant_id", _fbTid).maybeSingle();
+                    _formSlug = (_exForm as any)?.slug || args.form.slug || await _uniqueSlug("growth_forms", args.form.name || args.name, "form");
+                  } else {
+                    _formSlug = await _uniqueSlug("growth_forms", args.form.name || args.name, "form");
+                  }
+                  const { data: _formRow, error: _fErr } = await supabaseClient.rpc("growth_form_upsert", {
+                    p_tenant_id: _fbTid,
+                    p_slug: _formSlug,
+                    p_name: args.form.name || "Intake form",
+                    p_schema_json: args.form.schema,
+                    p_success_action_json: null,
+                    p_auto_create_contact: true,
+                    p_pipeline_id: null,
+                    p_stage_id: null,
+                    p_id: args.form_id ?? null,
+                  });
+                  if (_fErr) throw _fErr;
+                  _formId = (_formRow as any)?.id ?? null;
+                  // A funnel asked to carry a form is not built without it: dropping the step and
+                  // reporting success would hand the owner a funnel that captures nobody.
+                  if (!_formId) throw new Error("The funnel's intake form didn't save.");
+                  _fbWritten.form_id = _formId;
+                }
+                const _steps: any[] = [{ step_type: "page", order_index: 0, page_id: _pageId }];
+                if (_formId) _steps.push({ step_type: "form", order_index: _steps.length, form_id: _formId });
+                _steps.push({ step_type: "thankyou", order_index: _steps.length });
+                let _funnelSlug: string;
+                if (args.funnel_id && _fbTid) {
+                  const { data: _exFunnel } = await supabaseClient.from("growth_funnels").select("slug").eq("id", args.funnel_id).eq("tenant_id", _fbTid).maybeSingle();
+                  _funnelSlug = (_exFunnel as any)?.slug || args.slug || await _uniqueSlug("growth_funnels", args.name, "funnel");
+                } else {
+                  _funnelSlug = await _uniqueSlug("growth_funnels", args.name, "funnel");
+                }
+                const { data: _funnelRow, error: _fnErr } = await supabaseClient.rpc("growth_funnel_upsert", {
+                  p_tenant_id: _fbTid,
+                  p_slug: _funnelSlug,
+                  p_name: args.name || "New funnel",
+                  p_goal: args.goal ?? null,
+                  p_steps: _steps,
+                  p_entry_page_id: _pageId,
+                  p_success_page_id: null,
+                  p_id: args.funnel_id ?? null,
+                });
+                if (_fnErr) throw _fnErr;
+                // Some upsert rails return the row, some return void — resolve the id by
+                // (tenant, slug) when it isn't handed back so we never report a save we can't
+                // point at (§13), exactly like the client seam's saveFunnel().
+                let _funnelId = (_funnelRow as any)?.id ?? null;
+                let _funnelSlugOut = (_funnelRow as any)?.slug ?? _funnelSlug;
+                if (!_funnelId && _fbTid) {
+                  const { data: _f } = await supabaseClient.from("growth_funnels").select("id,slug").eq("tenant_id", _fbTid).eq("slug", _funnelSlug).maybeSingle();
+                  _funnelId = (_f as any)?.id ?? null;
+                  _funnelSlugOut = (_f as any)?.slug ?? _funnelSlug;
+                }
+                // §13 — never report a save we can't point at. (Practically unreachable: the RPC
+                // RETURNS growth_funnels; this guards the "void return + re-query missed" corner.)
+                if (!_funnelId) throw new Error("The funnel saved but its id couldn't be resolved — try again.");
+                result = {
+                  success: true,
+                  funnel_id: _funnelId,
+                  funnel_slug: _funnelSlugOut,
+                  page_id: _pageId,
+                  form_id: _formId,
+                  steps: _steps.length,
+                  status: "draft",
+                  note: _formId
+                  ? "Funnel saved as a draft — the entry page, the intake form, and the flow are wired. Publish it to take the whole sequence live."
+                  : "Funnel saved as a draft — the entry page and the flow are wired (no intake form was requested). Publish it to take the whole sequence live.",
+                };
+              } catch (_fbErr) {
+                const _why = _fbErr instanceof Error ? _fbErr.message : String((_fbErr as any)?.message ?? _fbErr);
+                if (!_fbWritten.page_id) throw _fbErr; // nothing landed: the ordinary failure path
+                // A transport failure is not the database answering: the later write may have landed.
+                // Then the honest outcome is UNKNOWN — never "not built", which would invite a
+                // duplicate on retry.
+                const _unknown = thrownOutcomeUnknown(_fbErr);
+                result = _unknown
+                  ? {
+                    success: false,
+                    outcome: "unknown",
+                    outcome_unknown: true,
+                    error: `The funnel build couldn't be confirmed: ${_why}`,
+                    saved_drafts: _fbWritten,
+                    note: OUTCOME_UNKNOWN_NOTE,
+                  }
+                  : {
+                    success: false,
+                    outcome: "partial",
+                    error: `The funnel wasn't finished: ${_why}`,
+                    saved_drafts: _fbWritten,
+                    note: "Some pieces were saved as drafts in this project but the funnel itself was not built. Say exactly which pieces were saved, that nothing went live, and offer to try the build again.",
+                  };
               }
-              const _steps: any[] = [{ step_type: "page", order_index: 0, page_id: _pageId }];
-              if (_formId) _steps.push({ step_type: "form", order_index: _steps.length, form_id: _formId });
-              _steps.push({ step_type: "thankyou", order_index: _steps.length });
-              let _funnelSlug: string;
-              if (args.funnel_id && _fbTid) {
-                const { data: _exFunnel } = await supabaseClient.from("growth_funnels").select("slug").eq("id", args.funnel_id).eq("tenant_id", _fbTid).maybeSingle();
-                _funnelSlug = (_exFunnel as any)?.slug || args.slug || await _uniqueSlug("growth_funnels", args.name, "funnel");
-              } else {
-                _funnelSlug = await _uniqueSlug("growth_funnels", args.name, "funnel");
-              }
-              const { data: _funnelRow, error: _fnErr } = await supabaseClient.rpc("growth_funnel_upsert", {
-                p_tenant_id: _fbTid,
-                p_slug: _funnelSlug,
-                p_name: args.name || "New funnel",
-                p_goal: args.goal ?? null,
-                p_steps: _steps,
-                p_entry_page_id: _pageId,
-                p_success_page_id: null,
-                p_id: args.funnel_id ?? null,
-              });
-              if (_fnErr) throw _fnErr;
-              // Some upsert rails return the row, some return void — resolve the id by
-              // (tenant, slug) when it isn't handed back so we never report a save we can't
-              // point at (§13), exactly like the client seam's saveFunnel().
-              let _funnelId = (_funnelRow as any)?.id ?? null;
-              let _funnelSlugOut = (_funnelRow as any)?.slug ?? _funnelSlug;
-              if (!_funnelId && _fbTid) {
-                const { data: _f } = await supabaseClient.from("growth_funnels").select("id,slug").eq("tenant_id", _fbTid).eq("slug", _funnelSlug).maybeSingle();
-                _funnelId = (_f as any)?.id ?? null;
-                _funnelSlugOut = (_f as any)?.slug ?? _funnelSlug;
-              }
-              // §13 — never report a save we can't point at. (Practically unreachable: the RPC
-              // RETURNS growth_funnels; this guards the "void return + re-query missed" corner.)
-              if (!_funnelId) throw new Error("The funnel saved but its id couldn't be resolved — try again.");
-              result = {
-                success: true,
-                funnel_id: _funnelId,
-                funnel_slug: _funnelSlugOut,
-                page_id: _pageId,
-                form_id: _formId,
-                steps: _steps.length,
-                status: "draft",
-                note: "Funnel saved as a draft — the entry page, the intake form, and the flow are wired. Publish it to take the whole sequence live.",
-              };
             } else if (tc.function.name === "growth_funnel_publish") {
               // Going-live (confirm-gated above). One call: the funnel publish puts every page and
               // form the funnel uses live with it, in one transaction, so a refusal leaves nothing
@@ -12323,7 +12598,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               const _fpTid = personaCtx?.tenant_id ?? null;
               const { data: _pub, error: _pubFErr } = await supabaseClient.rpc("growth_funnel_publish", { p_tenant_id: _fpTid, p_id: args.funnel_id });
               if (_pubFErr) throw _pubFErr;
-              result = { success: true, ...(_pub as any) };
+              result = publishVerified("funnel", _pub)
+                ? { success: true, ...(_pub as any) }
+                : { success: false, outcome: "unverified", error: PUBLISH_UNVERIFIED_ERROR, status: (_pub as any)?.status ?? null };
             } else if (tc.function.name === "action_file") {
               // R2 — read where it runs: in the auto lane these are the model's arguments, and on an
               // approval the card's stored ones.
@@ -12745,6 +13022,83 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               // Spreading the response wholesale, as this once did, is what let a raw
               // JSON-RPC envelope of any size and content through.
               result = projectOutcomeForModel(zapData);
+            } else if (
+              tc.function.name === "ghl_list_actions" || tc.function.name === "ghl_run_action"
+            ) {
+              // Route GHL tools through the CANONICAL mcp-gateway with the caller's JWT
+              // (the gateway resolves the tenant server-side and is the single governed
+              // door: per-tool durable consent, the owner's execute gate, the canonical
+              // Rail receipt). The model NEVER supplies a connection id — the canonical
+              // gohighlevel connection is resolved server-side from the tenant's own
+              // registry rows (§9). ghl_run_action already cleared the autonomy gate
+              // above; the gateway's consent verifier and owner go are the remaining
+              // authorities, and its closed outcome vocabulary is all that returns.
+              const { data: ghlConns } = await supabaseClient.rpc("get_mcp_connections_v2");
+              const ghlConn = Array.isArray(ghlConns)
+                ? (ghlConns as Array<Record<string, unknown>>).find((c) => c?.provider_key === "gohighlevel" && c?.connection_id)
+                : null;
+              if (!ghlConn) {
+                result = {
+                  success: false,
+                  error: "not_connected",
+                  detail: "This workspace has no canonical GoHighLevel connection yet. Connect it in Settings → Integrations (the HighLevel tile: Private Integration token + locationId header); do not imply any GHL data was read.",
+                };
+              } else if (tc.function.name === "ghl_list_actions") {
+                const { data: ghlData, error: ghlErr } = await supabaseClient.functions.invoke("mcp-gateway", {
+                  body: { action: "tools", connection_id: ghlConn.connection_id },
+                });
+                // READ THE BODY, DO NOT READ `error.message` — a gateway refusal arrives as a
+                // non-2xx whose CLOSED body (not_found, lookup_failed…) is the honest reason;
+                // the thrown transport constant would collapse them all into one opaque
+                // sentence (the trap this file documents at the social lanes; readInvokeBody
+                // exists for exactly this seam).
+                const ghlListBody = await readInvokeBody(ghlErr, ghlData);
+                if (ghlErr) {
+                  result = { success: false, error: String(ghlListBody.error ?? "gateway_refused") };
+                } else {
+                  // The gateway's catalogue is already closed-vocabulary (identifier-validated
+                  // names, sanitized labels); project only what the model needs — the name,
+                  // its approval state, and the counts — never display metadata.
+                  const catalogue = ghlData as { tools?: Array<Record<string, unknown>>; tool_count?: number; approved_count?: number; observed_at?: string | null } | null;
+                  const tools = Array.isArray(catalogue?.tools) ? catalogue!.tools! : [];
+                  result = {
+                    success: true,
+                    connection: "gohighlevel",
+                    tool_count: typeof catalogue?.tool_count === "number" ? catalogue.tool_count : tools.length,
+                    approved_count: typeof catalogue?.approved_count === "number" ? catalogue.approved_count : 0,
+                    approved: tools.filter((t) => t?.approved === true).map((t) => String(t?.name ?? "")).filter(Boolean),
+                    // NAME the waiting tools so the operator can act — never a bare count.
+                    unapproved: tools.filter((t) => t?.approved !== true).map((t) => String(t?.name ?? "")).filter(Boolean),
+                    note: "The approved tools are ready to run via ghl_run_action. The unapproved names are waiting on the operator's per-tool approval (Settings → Integrations) — name them to the operator so they can choose which to grant.",
+                  };
+                }
+              } else {
+                // ghl_run_action: propose-first per the autonomy gate above. Without the
+                // operator's confirmation this dispatch PREPARES (the gateway contacts no
+                // provider); with it, it executes — live execution additionally requires
+                // the owner's gateway execute gate and the tool's durable approval, and
+                // the gateway's closed vocabulary (outcome/code/run_id/recorded) reports
+                // honestly which of those refused.
+                const { data: ghlData, error: ghlErr } = await supabaseClient.functions.invoke("mcp-gateway", {
+                  body: {
+                    action: "execute",
+                    connection_id: ghlConn.connection_id,
+                    tool_name: String(args.tool_name ?? ""),
+                    args: args.arguments && typeof args.arguments === "object" ? args.arguments : {},
+                    mode: approvalChannel.has(tc.id) ? "execute" : "prepare",
+                  },
+                });
+                // Same seam: the gateway's refusal bodies are the honest vocabulary —
+                // execute_not_enabled (the owner's gate is off), approval_required (the
+                // tool lacks its durable approval), not_found, bad_tool_name — and each
+                // must reach the model verbatim, never the generic transport sentence.
+                const ghlRunBody = await readInvokeBody(ghlErr, ghlData);
+                if (ghlErr) {
+                  result = { success: false, ...ghlRunBody, error: String(ghlRunBody.error ?? "gateway_refused") };
+                } else {
+                  result = ghlRunBody;
+                }
+              }
             }
 
             // STUDIO SESSION LINKAGE (#292) — when this chat IS a project's design session, attach
@@ -12798,6 +13152,18 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 } catch (e) { console.warn("[paige] studio artifact link failed:", (e as Error)?.message); }
               }
             }
+            // A funnel build that stopped part-way still saved drafts. They belong to this project so
+            // the owner can find them in its rail (§19) — linked and versioned, not opened on the canvas.
+            if (studioSessionId && tc.function.name === "growth_funnel_build" && result && !(result as any).success && (result as any).saved_drafts) {
+              const _sd = (result as any).saved_drafts as { page_id?: string; form_id?: string };
+              for (const [kind, id] of [["page", _sd.page_id], ["form", _sd.form_id]] as const) {
+                if (!id) continue;
+                try {
+                  await supabaseClient.rpc("link_session_artifact", { p_session_id: studioSessionId, p_kind: kind, p_artifact_id: id, p_tenant_id: null });
+                  await supabaseClient.rpc("save_artifact_version", { p_session_id: studioSessionId, p_kind: kind, p_artifact_id: id, p_tenant_id: null });
+                } catch (le) { console.warn("[paige] studio partial-funnel link failed (non-fatal):", (le as Error)?.message); }
+              }
+            }
 
             // REGULAR-CHAT ARTIFACT EMIT (#29) — the non-Studio twin of the Studio linkage above.
             // When this is NOT a project design session there is no canvas link, but the agent still
@@ -12827,7 +13193,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             await recordCommsRun({ result });
             await recordPipelineRun({ result });
             await recordCrmRun({ result });
-            await recordFormRun({ result });
+            await recordStudioRun({ result });
 
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result) });
           } catch (err) {
@@ -12839,7 +13205,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             await recordCommsRun({ thrown: err, threw: true });
             await recordPipelineRun({ thrown: err, threw: true, writeAttempted: false });
             await recordCrmRun({ thrown: err, threw: true, writeAttempted: crmWriteAttempted });
-            await recordFormRun({ thrown: err, threw: true });
+            await recordStudioRun({ thrown: err, threw: true });
 
             // `outcome_unknown` when the answer never arrived (a transport failure, not a refusal):
             // the write may have happened, and the approval card must say so rather than "didn't
@@ -13666,8 +14032,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // handlers' own dispatch: the canonical `crm_log_activity` command writes `client_notes`,
       // `calendar_book_meeting` writes `internal_bookings` via `create_internal_booking`, the
       // content family writes `marketing_content` (the `document_generate` handler says so in its
-      // own comment) except `content_save`, which writes `studio_artifact_versions` via
-      // `save_artifact_version`, and `author_event_kind` writes `paige_event_kinds`.
+      // own comment) — `content_save` included: it writes `marketing_content` through
+      // `save_marketing_content`; the Studio's `save_artifact_version` is only a side link (V0
+      // correction, 2026-10-04) — and `author_event_kind` writes `paige_event_kinds`.
       //
       // The existing harness checks could not catch this: 19.7 and 19.8 assert that a rail event
       // NAMES a record, which a wrong name satisfies perfectly. Presence and truth are different
@@ -13703,7 +14070,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         team_invite_member: "tenant_invite_tokens", team_invite_resend: "tenant_invite_tokens",
         team_invite_revoke: "tenant_invite_tokens",
         calendar_book_meeting: "internal_bookings",
-        draft_marketing_content: "marketing_content", generate_image: "marketing_content", content_save: "studio_artifact_versions",
+        generate_image: "marketing_content", content_save: "marketing_content",
         document_generate: "marketing_content",
         growth_page_save: "growth_pages", growth_page_publish: "growth_pages",
         growth_funnel_build: "growth_funnels", growth_funnel_publish: "growth_funnels",
@@ -13714,6 +14081,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         n8n_run_workflow: "n8n_workflow", n8n_archive_workflow: "n8n_workflow",
         n8n_delete_workflow: "n8n_workflow",
         zapier_run_action: "external_provider",
+        ghl_run_action: "external_provider",
         forge_subagent: "paige_subagents", delegate_to_subagent: "paige_subagents",
         save_to_knowledge_base: "knowledge_base",
         mission_create: "business_missions", mission_revise: "business_missions", mission_transition: "business_missions",
@@ -13804,6 +14172,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         comms_add_email_domain: "tenant_email_domains",
         comms_set_primary_email_domain: "tenant_email_domains",
         billing_create_invoice: "paige_invoices", billing_send_invoice: "paige_invoices",
+        sales_publish_invoice: "paige_invoices", sales_record_manual_payment: "paige_invoices",
+        sales_reverse_manual_payment: "paige_invoices", sales_void_invoice: "paige_invoices",
+        sales_create_invoice_link: "paige_invoices",
         business_create: "businesses", business_update: "businesses",
         business_verify: "business_verification_runs",
         // #1213 / #1214 — the two governed credit-pull capabilities. Both are classified `high`
@@ -14603,6 +14974,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // #292 — tell the Studio canvas the exact artifact this turn produced (server-authoritative;
           // the client opens THIS, never a guessed manifest index). Last visual wins if several built.
           if (studioLinked.length) emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_artifact: studioLinked[studioLinked.length - 1] })}\n\n`));
+          // Designed but not saved this turn: the stage shows the draft as "not saved" (see studioPreview).
+          // Suppressed only by a saved page or funnel — a form or image linked the same turn is not it.
+          if (studioPreview && !studioLinked.some((l) => l.kind === "page" || l.kind === "funnel")) {
+            emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_preview: studioPreview })}\n\n`));
+          }
           // #29 — REGULAR-CHAT handoff cards. Outside a Studio session, emit ONE paige_artifact frame
           // per deliverable the agent persisted this turn so the chat renders a Cowork-style "Created a
           // file" card. Same frame the Studio canvas consumes (backward-compatible: kind/id/title/url +

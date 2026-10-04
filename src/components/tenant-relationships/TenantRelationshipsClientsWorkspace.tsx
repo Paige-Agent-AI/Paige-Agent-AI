@@ -124,7 +124,7 @@ export function TenantRelationshipsClientsWorkspace({
     if (!searchParams.has("person") && !clearSalesOrigin) return;
     const next = new URLSearchParams(searchParams);
     next.delete("person");
-    if (clearSalesOrigin) next.delete("origin");
+    if (clearSalesOrigin) { next.delete("origin"); next.delete("salesReturn"); }
     setSearchParams(next, { replace: true });
   }, [activeTenantId, searchParams, setSearchParams, routeTier]);
 
@@ -180,7 +180,7 @@ export function TenantRelationshipsClientsWorkspace({
     <section className={`trc-workspace${soloPeople ? " trc-workspace--people" : ""}${soloConversations ? " trc-workspace--conversations" : ""}${soloCalendar ? " trc-workspace--calendar" : ""}`} data-relationship-workspace data-variant={variant}>
       {routeTier === "solo" && soloClientRoute && !(previousTenantId.current && accountIsChanging) && searchParams.get("origin") === "sales" && (
         <div className="trc-sales-return" style={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:8,padding:"8px 18px",flexShrink:0,borderBottom:"1px solid var(--pg-line)"}}>
-          <button type="button" className="btn btn-s btn-p" onClick={() => navigate(`/solo/${soloClientRoute[1]}/growth/sales?resume=terms`)}>Return to commercial terms</button>
+          <button type="button" className="btn btn-s btn-p" onClick={() => navigate(`/solo/${soloClientRoute[1]}/${searchParams.get("salesReturn") === "department" ? "sales/agreements" : "growth/sales"}?resume=terms`)}>Return to commercial terms</button>
           <span>Create or choose a client here, then return to select them in Sales.</span>
         </div>
       )}
@@ -669,7 +669,7 @@ function ClientRecord({
           <header><div><span>Owned capabilities</span><h3>Relationship connections</h3></div><ProofPill>Canonical handoffs</ProofPill></header>
           <div className="trc-capability-list">
             <article><div><strong>Conversations · PARTIAL</strong><span>The canonical Conversations owner remains the only inbox. Selected-client context handoff is not yet proven.</span></div></article>
-            <article><div><strong>Campaigns owns pipeline · PARTIAL</strong><span>No stage, campaign membership, product association, or assignment is inferred here.</span></div></article>
+            <article><div><strong>Sales owns pipeline · PARTIAL</strong><span>No stage, campaign membership, product association, or assignment is inferred here.</span></div></article>
             <article><div><strong>Portal access · PARTIAL</strong><span>Configuration and invitations remain in existing Portal owners; this record does not prove their role gates.</span></div></article>
             <article><div><strong>Client files · PARTIAL</strong><span>The existing client-files seam remains separate from the business Vault; upload is not exposed here.</span></div></article>
           </div>

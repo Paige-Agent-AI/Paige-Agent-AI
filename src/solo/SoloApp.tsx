@@ -23,6 +23,7 @@ import { TenantRelationshipsClientsWorkspace } from "@/components/tenant-relatio
 import { isLegacyRelationshipOwner } from "@/components/tenant-relationships/workspaceModel";
 import { ClientsHub } from "./conversations";
 import { GrowthHub } from "./growth2";
+import { SalesWorkspace } from "./SalesWorkspace";
 import { TenantCanonicalCalendarWorkspace } from "@/components/tenant-calendar/TenantCanonicalCalendarWorkspace";
 import { Analytics2 } from "./analytics2";
 import { Marketplace } from "./marketplace";
@@ -31,7 +32,8 @@ import { SOLO_SETTINGS_DESTINATIONS } from "./settings-contract";
 import { canShowVaultNavigation, useVaultAccess } from "./vault/useBusinessVault";
 import { VibeStudio } from "./vibe";
 import { TenantCommandCenterShell } from "@/components/tenant-shell/TenantCommandCenterShell";
-import { resolveTenantAccountContext } from "@/components/tenant-shell/tenantShellRoutes";
+import { resolveTenantAccountContext, tenantShellDestinationsForPath } from "@/components/tenant-shell/tenantShellRoutes";
+import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
 import { AgentPresenceProvider, useAgentPresence } from "@/components/ui/paige";
 import { VoiceDeviceProvider } from "@/lib/voice/VoiceDeviceProvider";
 import { DialPadSurface } from "@/components/admin/voice/DialPadSurface";
@@ -309,9 +311,10 @@ const theme=resolvedTheme==='light'?'light':'dark';
 // and nothing more; the rail is navigation, never a panel trigger.
 const openPaige=()=>expandRail();
 // `paige:open` had three dispatchers in this app and NO listener, so every "Ask PAIGE"
-// on Pipeline dispatched into nothing. This is that listener. It does two separable
-// things and neither depends on the other: it opens the fold, and — when the event
-// names one — it records which client the surface pointed PAIGE at. The scope is UI
+// on Pipeline dispatched into nothing. This is that listener. It does three separable
+// things and none depends on another: it opens the fold, it hands the surface's drafted
+// question to the composer, and — when the event names one — it records which client
+// the surface pointed PAIGE at. The scope is UI
 // context only; the server re-resolves tenant, authorization and client scope on every
 // request that carries it. An event that names no client clears nothing and simply
 // opens the fold, which is what the two existing prompt-only dispatches expect.
@@ -319,6 +322,8 @@ React.useEffect(()=>{const h=(event:Event)=>{
   const detail=(event as CustomEvent)?.detail;
   const scope=readPaigeOpenScope(detail,activeTenantId);
   if(scope){clearPaigePublicPresenceScope();setPaigeClientScope(scope);}
+  // The question a surface drafted goes into PAIGE's composer for the owner to send (prefill only).
+  handOffPaigePrompt(detail?.prompt);
   expandRail();
 };window.addEventListener('paige:open',h);return()=>window.removeEventListener('paige:open',h)},[activeTenantId,expandRail]);
 // An account switch invalidates a client scope outright: the client belonged to the
@@ -340,7 +345,7 @@ React.useEffect(()=>{clearPaigeClientScope();clearPaigePublicPresenceScope()},[a
 const full=route==='paige'||route==='auto'||route==='cal'||route==='home'||route==='analytics'||route==='market';
 const accountContext=resolveTenantAccountContext({accountName:activeTenant?.name,accountType:activeTenant?.account_type,parentTenantId:activeTenant?.parent_tenant_id});
 const accountEpochKey=activeTenantId??'resolving';
-const screens={home:<CommandHub account={urlAccount} accountContext={accountContext} openPaige={openPaige}/>,auto:null,clients:<SoloClientsRoute openPaige={openPaige}/>,cal:<TenantCanonicalCalendarWorkspace tier="solo" openPaige={openPaige}/>,growth:<GrowthHub/>,analytics:<Analytics2 accountContext={accountContext} accountEpoch={activeTenantId} openPaige={openPaige}/>,market:<Marketplace/>,settings:<SoloSettings openPaige={openPaige}/>};
+const screens={home:<CommandHub account={urlAccount} accountContext={accountContext} openPaige={openPaige}/>,auto:null,clients:<SoloClientsRoute openPaige={openPaige}/>,cal:<TenantCanonicalCalendarWorkspace tier="solo" openPaige={openPaige}/>,growth:<GrowthHub salesInShell={tenantShellDestinationsForPath(`/solo/${urlAccount??"account"}`,accountContext.accountType).some((destination)=>destination.id==="sales")}/>,sales:<SalesWorkspace accountContext={accountContext} accountEpoch={activeTenantId} openPaige={openPaige}/>,analytics:<Analytics2 accountContext={accountContext} accountEpoch={activeTenantId} openPaige={openPaige}/>,market:<Marketplace/>,settings:<SoloSettings openPaige={openPaige}/>};
 const settingsActive=urlBranchSlug==='settings'?(urlSplat.split('/')[1]||'setup'):(legacySettingsDestination||'setup');
 const contextualNavigation=route==='settings'&&urlDriven?{
   label:'Settings',

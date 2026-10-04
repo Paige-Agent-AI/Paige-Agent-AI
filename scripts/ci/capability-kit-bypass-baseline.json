@@ -1,5 +1,115 @@
 [
   {
+    "rule": "direct-capability-receipt",
+    "path": "supabase/functions/_shared/capability-record.ts",
+    "symbol": "record_capability_run"
+  },
+  {
+    "rule": "direct-capability-receipt",
+    "path": "supabase/functions/_shared/mcp-outcome.ts",
+    "symbol": "record_capability_run"
+  },
+  {
+    "rule": "direct-capability-receipt",
+    "path": "supabase/functions/_shared/n8n-management.ts",
+    "symbol": "record_capability_run"
+  },
+  {
+    "rule": "direct-governed-binding",
+    "path": "supabase/functions/_shared/paige-orchestration/approve-executor.ts",
+    "symbol": "rpc:paige_approve_act_execution"
+  },
+  {
+    "rule": "direct-governed-binding",
+    "path": "supabase/functions/_shared/paige-orchestration/approve-executor.ts",
+    "symbol": "rpc:paige_record_act_execution"
+  },
+  {
+    "rule": "direct-governed-binding",
+    "path": "supabase/functions/_shared/paige-orchestration/engine.ts",
+    "symbol": "rpc:paige_record_act_execution"
+  },
+  {
+    "rule": "direct-governed-binding",
+    "path": "supabase/functions/_shared/paige-orchestration/engine.ts",
+    "symbol": "rpc:paige_record_act_execution"
+  },
+  {
+    "rule": "direct-governed-binding",
+    "path": "supabase/functions/_shared/paige-orchestration/engine.ts",
+    "symbol": "rpc:resolve_automation_autonomy"
+  },
+  {
+    "rule": "direct-governed-binding",
+    "path": "supabase/functions/_shared/social-provider/governance.ts",
+    "symbol": "rpc:resolve_tool_autonomy"
+  },
+  {
+    "rule": "direct-governed-binding",
+    "path": "supabase/functions/crm-command/index.ts",
+    "symbol": "rpc:current_user_tenant_id"
+  },
+  {
+    "rule": "direct-governed-binding",
+    "path": "supabase/functions/crm-command/index.ts",
+    "symbol": "rpc:current_user_tenant_id"
+  },
+  {
+    "rule": "direct-governed-binding",
+    "path": "supabase/functions/crm-command/index.ts",
+    "symbol": "rpc:execute_crm_command"
+  },
+  {
+    "rule": "direct-governed-binding",
+    "path": "supabase/functions/crm-command/index.ts",
+    "symbol": "rpc:preview_crm_command"
+  },
+  {
+    "rule": "direct-governed-binding",
+    "path": "supabase/functions/crm-command/index.ts",
+    "symbol": "rpc:read_crm_command_result"
+  },
+  {
+    "rule": "direct-governed-binding",
+    "path": "supabase/functions/crm-command/index.ts",
+    "symbol": "rpc:resolve_tool_autonomy"
+  },
+  {
+    "rule": "direct-governed-execution",
+    "path": "supabase/functions/_shared/paige-mcp/governed-adapter.ts",
+    "symbol": "decideGovernedExecution"
+  },
+  {
+    "rule": "direct-governed-execution",
+    "path": "supabase/functions/_shared/paige-orchestration/approve-executor.ts",
+    "symbol": "decideGovernedExecution"
+  },
+  {
+    "rule": "direct-governed-execution",
+    "path": "supabase/functions/_shared/paige-orchestration/engine.ts",
+    "symbol": "decideGovernedExecution"
+  },
+  {
+    "rule": "direct-governed-execution",
+    "path": "supabase/functions/_shared/paige-skill/governed-adapter.ts",
+    "symbol": "decideGovernedExecution"
+  },
+  {
+    "rule": "direct-governed-execution",
+    "path": "supabase/functions/_shared/paige-write-back/governed-adapter.ts",
+    "symbol": "decideGovernedExecution"
+  },
+  {
+    "rule": "direct-governed-execution",
+    "path": "supabase/functions/_shared/social-provider/governance.ts",
+    "symbol": "decideGovernedExecution"
+  },
+  {
+    "rule": "direct-governed-execution",
+    "path": "supabase/functions/crm-command/index.ts",
+    "symbol": "decideGovernedExecution"
+  },
+  {
     "rule": "direct-risk-entry",
     "path": "supabase/functions/_shared/action-risk.ts",
     "symbol": "action_advance"
@@ -237,11 +347,6 @@
   {
     "rule": "direct-risk-entry",
     "path": "supabase/functions/_shared/action-risk.ts",
-    "symbol": "content_save"
-  },
-  {
-    "rule": "direct-risk-entry",
-    "path": "supabase/functions/_shared/action-risk.ts",
     "symbol": "crm_add_note"
   },
   {
@@ -457,37 +562,12 @@
   {
     "rule": "direct-risk-entry",
     "path": "supabase/functions/_shared/action-risk.ts",
-    "symbol": "draft_marketing_content"
-  },
-  {
-    "rule": "direct-risk-entry",
-    "path": "supabase/functions/_shared/action-risk.ts",
     "symbol": "forge_subagent"
   },
   {
     "rule": "direct-risk-entry",
     "path": "supabase/functions/_shared/action-risk.ts",
     "symbol": "generate_image"
-  },
-  {
-    "rule": "direct-risk-entry",
-    "path": "supabase/functions/_shared/action-risk.ts",
-    "symbol": "growth_funnel_build"
-  },
-  {
-    "rule": "direct-risk-entry",
-    "path": "supabase/functions/_shared/action-risk.ts",
-    "symbol": "growth_funnel_publish"
-  },
-  {
-    "rule": "direct-risk-entry",
-    "path": "supabase/functions/_shared/action-risk.ts",
-    "symbol": "growth_page_publish"
-  },
-  {
-    "rule": "direct-risk-entry",
-    "path": "supabase/functions/_shared/action-risk.ts",
-    "symbol": "growth_page_save"
   },
   {
     "rule": "direct-risk-entry",
@@ -780,11 +860,6 @@
     "symbol": "zapier_run_action"
   },
   {
-    "rule": "direct-capability-receipt",
-    "path": "supabase/functions/_shared/capability-record.ts",
-    "symbol": "record_capability_run"
-  },
-  {
     "rule": "direct-tool-definition",
     "path": "supabase/functions/_shared/claude.ts",
     "symbol": "<dynamic>"
@@ -800,14 +875,9 @@
     "symbol": "<dynamic>"
   },
   {
-    "rule": "direct-capability-receipt",
-    "path": "supabase/functions/_shared/mcp-outcome.ts",
-    "symbol": "record_capability_run"
-  },
-  {
-    "rule": "direct-capability-receipt",
-    "path": "supabase/functions/_shared/n8n-management.ts",
-    "symbol": "record_capability_run"
+    "rule": "direct-tool-definition",
+    "path": "supabase/functions/_shared/ghl-management.ts",
+    "symbol": "<dynamic>"
   },
   {
     "rule": "direct-tool-definition",
@@ -823,51 +893,6 @@
     "rule": "direct-tool-definition",
     "path": "supabase/functions/_shared/paige-capability-gateway/gateway.ts",
     "symbol": "contact_event_status"
-  },
-  {
-    "rule": "direct-governed-execution",
-    "path": "supabase/functions/_shared/paige-mcp/governed-adapter.ts",
-    "symbol": "decideGovernedExecution"
-  },
-  {
-    "rule": "direct-governed-binding",
-    "path": "supabase/functions/_shared/paige-orchestration/approve-executor.ts",
-    "symbol": "rpc:paige_approve_act_execution"
-  },
-  {
-    "rule": "direct-governed-binding",
-    "path": "supabase/functions/_shared/paige-orchestration/approve-executor.ts",
-    "symbol": "rpc:paige_record_act_execution"
-  },
-  {
-    "rule": "direct-governed-execution",
-    "path": "supabase/functions/_shared/paige-orchestration/approve-executor.ts",
-    "symbol": "decideGovernedExecution"
-  },
-  {
-    "rule": "direct-governed-binding",
-    "path": "supabase/functions/_shared/paige-orchestration/engine.ts",
-    "symbol": "rpc:paige_record_act_execution"
-  },
-  {
-    "rule": "direct-governed-binding",
-    "path": "supabase/functions/_shared/paige-orchestration/engine.ts",
-    "symbol": "rpc:paige_record_act_execution"
-  },
-  {
-    "rule": "direct-governed-binding",
-    "path": "supabase/functions/_shared/paige-orchestration/engine.ts",
-    "symbol": "rpc:resolve_automation_autonomy"
-  },
-  {
-    "rule": "direct-governed-execution",
-    "path": "supabase/functions/_shared/paige-orchestration/engine.ts",
-    "symbol": "decideGovernedExecution"
-  },
-  {
-    "rule": "direct-governed-execution",
-    "path": "supabase/functions/_shared/paige-skill/governed-adapter.ts",
-    "symbol": "decideGovernedExecution"
   },
   {
     "rule": "direct-tool-definition",
@@ -963,56 +988,6 @@
     "rule": "direct-tool-definition",
     "path": "supabase/functions/_shared/paige-spine/domains/campaigns.ts",
     "symbol": "campaign_brief_revise"
-  },
-  {
-    "rule": "direct-governed-execution",
-    "path": "supabase/functions/_shared/paige-write-back/governed-adapter.ts",
-    "symbol": "decideGovernedExecution"
-  },
-  {
-    "rule": "direct-governed-binding",
-    "path": "supabase/functions/_shared/social-provider/governance.ts",
-    "symbol": "rpc:resolve_tool_autonomy"
-  },
-  {
-    "rule": "direct-governed-execution",
-    "path": "supabase/functions/_shared/social-provider/governance.ts",
-    "symbol": "decideGovernedExecution"
-  },
-  {
-    "rule": "direct-governed-binding",
-    "path": "supabase/functions/crm-command/index.ts",
-    "symbol": "rpc:current_user_tenant_id"
-  },
-  {
-    "rule": "direct-governed-binding",
-    "path": "supabase/functions/crm-command/index.ts",
-    "symbol": "rpc:current_user_tenant_id"
-  },
-  {
-    "rule": "direct-governed-binding",
-    "path": "supabase/functions/crm-command/index.ts",
-    "symbol": "rpc:execute_crm_command"
-  },
-  {
-    "rule": "direct-governed-binding",
-    "path": "supabase/functions/crm-command/index.ts",
-    "symbol": "rpc:preview_crm_command"
-  },
-  {
-    "rule": "direct-governed-binding",
-    "path": "supabase/functions/crm-command/index.ts",
-    "symbol": "rpc:read_crm_command_result"
-  },
-  {
-    "rule": "direct-governed-binding",
-    "path": "supabase/functions/crm-command/index.ts",
-    "symbol": "rpc:resolve_tool_autonomy"
-  },
-  {
-    "rule": "direct-governed-execution",
-    "path": "supabase/functions/crm-command/index.ts",
-    "symbol": "decideGovernedExecution"
   },
   {
     "rule": "direct-tool-definition",
@@ -1118,11 +1093,6 @@
     "rule": "direct-tool-definition",
     "path": "supabase/functions/paige-ai-chat/index.ts",
     "symbol": "comms_set_primary_number"
-  },
-  {
-    "rule": "direct-tool-definition",
-    "path": "supabase/functions/paige-ai-chat/index.ts",
-    "symbol": "content_save"
   },
   {
     "rule": "direct-tool-definition",
@@ -1267,17 +1237,12 @@
   {
     "rule": "direct-tool-definition",
     "path": "supabase/functions/paige-ai-chat/index.ts",
-    "symbol": "growth_funnel_build"
+    "symbol": "ghl_list_actions"
   },
   {
     "rule": "direct-tool-definition",
     "path": "supabase/functions/paige-ai-chat/index.ts",
     "symbol": "growth_funnel_generate"
-  },
-  {
-    "rule": "direct-tool-definition",
-    "path": "supabase/functions/paige-ai-chat/index.ts",
-    "symbol": "growth_funnel_publish"
   },
   {
     "rule": "direct-tool-definition",
@@ -1288,16 +1253,6 @@
     "rule": "direct-tool-definition",
     "path": "supabase/functions/paige-ai-chat/index.ts",
     "symbol": "growth_page_generate"
-  },
-  {
-    "rule": "direct-tool-definition",
-    "path": "supabase/functions/paige-ai-chat/index.ts",
-    "symbol": "growth_page_publish"
-  },
-  {
-    "rule": "direct-tool-definition",
-    "path": "supabase/functions/paige-ai-chat/index.ts",
-    "symbol": "growth_page_save"
   },
   {
     "rule": "direct-tool-definition",

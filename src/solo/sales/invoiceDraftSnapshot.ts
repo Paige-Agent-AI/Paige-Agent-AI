@@ -1,6 +1,6 @@
 /** Invoice-only persisted facts. Processor/method/channel values are intent, never eligibility or dispatch authority. */
 export type InvoiceAddress = { line1: string | null; line2: string | null; city: string | null; region: string | null; postal_code: string | null; country: string | null };
-export type InvoiceItemInput = { price_id: string | null; item: string; unit_minor: number | null; quantity: number };
+export type InvoiceItemInput = { price_id: string | null; item: string; description?: string | null; unit_minor: number | null; quantity: number };
 export type InvoiceItemSnapshot = Omit<InvoiceItemInput, 'unit_minor'> & { unit_minor: number; price_snapshot: Record<string, unknown> | null };
 export type InvoiceSnapshotInput = {
   schema_version: 2; client_id: string; items: InvoiceItemInput[];
@@ -63,7 +63,8 @@ function readV2(value: Record<string, unknown>, expectedTotal: number): InvoiceS
     || typeof value.agreement_snapshot.title !== 'string' || !integer(value.agreement_snapshot.version) || value.agreement_snapshot.version < 1
     || !['draft', 'sent', 'viewed', 'partially_signed', 'completed'].includes(String(value.agreement_snapshot.status))) return null;
   for (const line of value.items) {
-    if (!object(line) || !only(line, ['price_id', 'item', 'unit_minor', 'quantity', 'price_snapshot']) || !nullableId(line.price_id)
+    if (!object(line) || !only(line, ['price_id', 'item', 'description', 'unit_minor', 'quantity', 'price_snapshot']) || !nullableId(line.price_id)
+      || ('description' in line && !text(line.description, 10000))
       || typeof line.item !== 'string' || !line.item.trim() || line.item.length > 200
       || (line.price_id === null ? line.price_snapshot !== null : !object(line.price_snapshot)
         || !only(line.price_snapshot, ['price_id','product_id','product_name','unit_minor','currency','billing_interval','interval_count'])

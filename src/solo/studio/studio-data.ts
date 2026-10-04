@@ -37,6 +37,9 @@ export interface StudioVersion {
 
 /** A sentence written for the owner. plainError passes it through unchanged. */
 export class Said extends Error {}
+/** The publish call returned, but its readback did not prove a live public address. The server
+ *  may already have changed the piece's state, so the caller re-reads it. */
+export class PublishUnverified extends Said {}
 
 /** A refusal the owner can read: our own sentence, or the server's without its machine code.
  *  Anything else (a dropped connection, a raw database message) becomes the fallback. */
@@ -107,6 +110,25 @@ export async function openSession(id: string): Promise<StudioSession> {
   return toSession(row);
 }
 
+/** Names the project. The server keeps it to the active workspace's owner/admin or the project's creator. */
+export async function renameSession(id: string, title: string): Promise<void> {
+  const t = title.trim().replace(/\s+/g, " ").slice(0, 80);
+  if (!t) return;
+  const { error } = await rpc("rename_studio_session", { p_id: id, p_title: t, p_tenant_id: null });
+  if (error) throw error;
+}
+
+/** What to call a project: its name, or, until it has one, what was asked for. */
+export function sessionName(s: { title: string | null; seedBrief: string | null }): string {
+  if (!isUnnamed(s.title)) return String(s.title);
+  return s.seedBrief ? s.seedBrief.replace(/\s+/g, " ").slice(0, 60) : "New project";
+}
+
+/** A project nobody has named yet. */
+export function isUnnamed(title: string | null | undefined): boolean {
+  return !title || !title.trim() || /^untitled( project)?$/i.test(title.trim());
+}
+
 // ── Chat thread ────────────────────────────────────────────────────────────────
 export interface ChatTurn { role: "user" | "assistant"; content: string }
 
@@ -126,6 +148,28 @@ export async function loadTurns(threadId: string): Promise<ChatTurn[]> {
     .order("seq", { ascending: true });
   if (error) throw error;
   return ((data ?? []) as { role: "user" | "assistant"; content: string }[]).map((t) => ({ role: t.role, content: t.content }));
+}
+
+/** Approval cards the latest reply left waiting (its stored paige_confirm list), so a reload keeps
+ *  them. Only the latest turn counts: any later message has already answered or passed them. The
+ *  server still decides — an expired proposal comes back as "didn't run". */
+export async function loadHeldConfirms(threadId: string): Promise<Array<{ tool: string; summary: string; fingerprint: string }>> {
+  try {
+    const { data } = await supabase
+      .from("paige_chat_turns")
+      .select("role, bundle_ref, seq")
+      .eq("thread_id", threadId)
+      .order("seq", { ascending: false })
+      .limit(1);
+    const last = ((data ?? []) as Array<{ role: string; bundle_ref: Record<string, unknown> | null }>)[0];
+    if (!last || last.role !== "assistant") return [];
+    const list = Array.isArray(last.bundle_ref?.paige_confirm) ? (last.bundle_ref!.paige_confirm as Array<Record<string, unknown>>) : [];
+    return list
+      .filter((c) => typeof c.summary === "string" && typeof c.fingerprint === "string")
+      .map((c) => ({ tool: String(c.tool ?? "action"), summary: String(c.summary), fingerprint: String(c.fingerprint) }));
+  } catch {
+    return [];
+  }
 }
 
 // ── Artifacts ──────────────────────────────────────────────────────────────────
@@ -326,7 +370,7 @@ export async function restoreVersion(versionId: string): Promise<void> {
 }
 
 // ── Publish ────────────────────────────────────────────────────────────────────
-export interface PublishResult { url: string | null }
+export interface PublishResult { url: string }
 
 const PUBLISH_FN: Record<ArtifactKind, [string, string]> = {
   form: ["growth_form_publish", "growth_form_unpublish"],
@@ -335,11 +379,22 @@ const PUBLISH_FN: Record<ArtifactKind, [string, string]> = {
   content: ["studio_image_publish", "studio_image_unpublish"],
 };
 
+// The live state each publish RPC reports (20270537000000): pages and images are `published`,
+// forms and funnels `active`. Same rule as the chat's `publishVerified` (_shared/artifact-receipt.ts).
+const LIVE_STATUS: Record<ArtifactKind, string> = { form: "active", page: "published", funnel: "active", content: "published" };
+
+/** Live only on a readback that proves it: the live status, a publish time, and a public address.
+ *  A return without an address (a workspace with no public slug) is never reported as published. */
 export async function publishArtifact(kind: ArtifactKind, id: string): Promise<PublishResult> {
   const { data, error } = await rpc(PUBLISH_FN[kind][0], { p_tenant_id: null, p_id: id });
   if (error) throw error;
   const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | null;
-  return { url: row && typeof row.url === "string" ? row.url : null };
+  const url = row && typeof row.url === "string" ? row.url.trim() : "";
+  const at = row && typeof row.published_at === "string" ? row.published_at.trim() : "";
+  if (!row || row.status !== LIVE_STATUS[kind] || !at || !url) {
+    throw new PublishUnverified("The publish didn't confirm a public address, so it may not be live. Check the project before sharing a link.");
+  }
+  return { url };
 }
 
 export async function unpublishArtifact(kind: ArtifactKind, id: string): Promise<void> {

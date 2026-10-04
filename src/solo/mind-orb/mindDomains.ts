@@ -245,12 +245,12 @@ export function buildMindDomains(inputs: MindInputs): MindDomainModel[] {
     body: "Canonical people and relationships live in Clients. A governed memory seam can hold context on top, but nothing writes to it yet.",
   };
 
-  // Offers & services — the catalog is real but lives in Campaigns, not as a governed fact.
+  // Offers & services — the catalog is real but lives in Offers, not as a governed fact.
   const offers = byKey.get("offers")!;
   offers.verdict = "UNAVAILABLE";
   offers.empty = {
     heading: "Not on file as knowledge yet",
-    body: "PAIGE has no confirmed record of your offers. Your catalog is real, but it lives in Campaigns and isn't a governed fact yet.",
+    body: "PAIGE has no confirmed record of your offers. Your offers are real and live in Offers, but they aren't a governed fact yet.",
   };
 
   return MIND_DOMAINS.map((def) => byKey.get(def.key)!);

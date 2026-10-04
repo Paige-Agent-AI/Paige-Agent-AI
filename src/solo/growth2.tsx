@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
+import { legacySalesRoute } from "./sales/legacySalesRoute";
 import { useSubtabRoute } from "@/lib/routing/useSubtabRoute";
 import { branchPath, subtabPath } from "@/lib/routing/tierBranches";
 import { Ic, PageHead } from "./_shared";
@@ -11,7 +12,13 @@ import { SocialCommand } from "./social-command";
 import { PipelineDelete } from "./PipelineDelete";
 import { PipelineCommandDesk } from "./PipelineCommandDesk";
 import CampaignOverview from "./campaign-desk";
+import { useSoloCampaignBriefs } from "./useSoloCampaignBriefs";
+import { PERIODS, SUBMISSION_READ_LIMIT, deriveMarketingOverview, isBlockedBrief, submissionsInPeriod } from "./marketing-overview-model";
 import { FormIntakePanel } from "./form-intake";
+import { AskPaige, ChartBoundary, DeltaLine, OverviewStat } from "./marketing-ui";
+import { MarketingAds, MarketingContent, MarketingEmail } from "./marketing-planned";
+import { MarketingAudience } from "./marketing-audience";
+import "./solo-chart-tokens.css";
 import "./solo-campaigns.css";
 
 // RETIRED 2026-09-12: the GR projects fixture served only the pre-rebuild Vibe
@@ -28,14 +35,17 @@ const TRUTH = {
   pipeline: ["PROPOSED", "Only explicit form routing configuration and recorded outcomes are shown."],
   social: ["PARTIAL", "The accounts this workspace has recorded that it posts from, and its published Vibe Studio outputs, are read from tenant-scoped records. A customer-facing social provider connection is still not ready, so no follower, reach, publishing queue, schedule, or placement figure is available."],
   performance: ["PROPOSED", "Source coverage is visible; cross-source campaign analytics are not yet canonical."],
+  capture: ["PARTIAL", "Pages, funnels and forms are created and published in Vibe Studio. Submission counts cover this workspace’s latest 200 submissions, not lifetime totals."],
+  marketing: ["PARTIAL", "Briefs, published capture points and submissions are read from this workspace’s own records. Email broadcasts, paid ads and spend are not connected, so no reach or cost figure is shown."],
+  analytics: ["PARTIAL", "Sources come from the tracking tags on the link a visitor submitted from, not their earlier visits. Visits, spend and revenue by campaign are not recorded, so no conversion rate, cost per lead or return is calculated."],
 };
 
 const LEGACY = {
   "brand-kit": { label: "Brand Kit", note: "Brand identity and reusable creative now belong in Vibe Studio." },
-  pages: { label: "Pages", note: "Pages are created, edited, and published in Vibe Studio. Published pages appear in Catalog." },
-  funnels: { label: "Funnels", note: "Funnels and their pages, forms, and video are managed in Vibe Studio. Published funnels appear in Catalog." },
-  forms: { label: "Forms", note: "Forms are managed in Vibe Studio. Campaigns reports submissions and routing outcomes only when recorded." },
-  builders: { label: "Builders", note: "Creative tools and builder connections are managed outside Campaigns. Vibe Studio is the creative owner." },
+  pages: { label: "Pages", note: "Pages are created, edited, and published in Vibe Studio. Published pages appear in Lead capture." },
+  funnels: { label: "Funnels", note: "Funnels and their pages, forms, and video are managed in Vibe Studio. Published funnels appear in Lead capture." },
+  forms: { label: "Forms", note: "Forms are managed in Vibe Studio. Lead capture reports submissions and routing outcomes only when recorded." },
+  builders: { label: "Builders", note: "Creative tools and builder connections are managed outside Marketing. Vibe Studio is the creative owner." },
 };
 
 const openStudio=(event)=>window.dispatchEvent(new CustomEvent('paige-studio',{detail:{returnFocus:event.currentTarget}}));
@@ -58,16 +68,12 @@ const PLAIN_STATE = {
   UNAVAILABLE: "Not available",
 };
 
-function TruthTag({ state }) {
-  const key = state || "UNAVAILABLE";
-  return <span className={`campaigns-truth campaigns-truth--${key.toLowerCase()}`}>{PLAIN_STATE[key] || PLAIN_STATE.UNAVAILABLE}</span>;
-}
 
 function StateFrame({ phase, retry, noun, children }) {
-  if (phase === "resolving") return <div className="campaigns-state" role="status"><span className="campaigns-spinner"/>Resolving this account’s Campaigns workspace…</div>;
+  if (phase === "resolving") return <div className="campaigns-state" role="status"><span className="campaigns-spinner"/>Resolving this account’s Marketing workspace…</div>;
   if (phase === "loading") return <div className="campaigns-skeleton" role="status" aria-label={`Loading ${noun}`}><span/><span/><span/></div>;
-  if (phase === "unavailable") return <div className="campaigns-state"><h2>Campaigns needs a resolved workspace</h2><p>No tenant data is read until your account context is confirmed.</p></div>;
-  if (phase === "error") return <div className="campaigns-state" role="alert"><h2>Campaigns could not load</h2><p>Your records were not changed. Try the tenant-scoped read again.</p><button className="btn btn-s" onClick={retry}><Ic.arrow size={13}/>Retry</button></div>;
+  if (phase === "unavailable") return <div className="campaigns-state"><h2>Marketing needs a resolved workspace</h2><p>Nothing is read until your account is confirmed.</p></div>;
+  if (phase === "error") return <div className="campaigns-state" role="alert"><h2>Marketing could not load</h2><p>Your records were not changed. Try again.</p><button className="btn btn-s" onClick={retry}><Ic.arrow size={13}/>Retry</button></div>;
   return children;
 }
 
@@ -80,7 +86,7 @@ function SurfaceHead({ truthKey, title, description, action }) {
   return <div className="campaigns-surface-head"><div><div className="campaigns-heading-line"><h2>{title}</h2></div><p>{description}</p><small>{note}</small></div>{action}</div>;
 }
 
-function DetailDrawer({ detail, onClose }) {
+export function DetailDrawer({ detail, onClose }) {
   const closeRef = React.useRef(null);
   const drawerRef = React.useRef(null);
   React.useEffect(() => {
@@ -112,48 +118,23 @@ function DetailDrawer({ detail, onClose }) {
   </aside></>;
 }
 
-// Overview is the Campaign Command Desk (docs/prototypes/campaigns-overview.html, owner-approved
+// Campaigns is the Campaign Command Desk (docs/prototypes/campaigns-overview.html, owner-approved
 // 2026-09-05). It COORDINATES a campaign across the source-owning subtabs and fabricates no campaign
 // state. The old "Campaign state rollup unavailable" panel is replaced: a campaign is now an
 // owner-authored brief (campaign_briefs / useSoloCampaignBriefs), and each growth-loop stage is a
 // real source fact or an honest absence. `data` supplies the loop-source reads (pipeline, artifacts);
 // keyed by tenant so a workspace switch clears the desk's filters, drawers and pending edits.
-function Overview({ data, onRoute }) {
-  return <CampaignOverview key={data.tenantId || "none"} data={data} onRoute={onRoute}/>;
+function Campaigns({ data, onRoute, autoOpenBrief, onAutoOpenConsumed }) {
+  return <CampaignOverview key={data.tenantId || "none"} data={data} onRoute={onRoute} autoOpenBrief={autoOpenBrief} onAutoOpenConsumed={onAutoOpenConsumed}/>;
 }
 
-// Catalog holds TWO durable concepts under one tab (owner ruling, Gate 1 2026-09-02):
-//   Offers          — what this business sells. Catalog owns the definition.
-//   Published assets — the Vibe-owned pages, funnels and forms that present it. Unchanged, and
-//                      deliberately NOT deleted or reframed as offers.
-// A legacy address (/growth/pages and its four siblings, or ?type=) still means the Vibe-owned
-// half, so an incoming `initialType` opens Published assets rather than Offers.
-function Catalog({ data, setDetail, initialType, onOpenContact, onOpenDeal }) {
-  const [section, setSection] = React.useState(initialType ? "assets" : "offers");
-  const [type, setType] = React.useState(initialType || "all");
-  // The null transition is reachable without unmounting: clicking the already-selected Catalog
-  // tab navigates to the bare path and history navigation can drop the query too. Without the
-  // else branch the bare /growth/catalog kept showing Published assets, contradicting the
-  // initial state on the line above, which makes Offers the bare-route default.
-  React.useEffect(()=>{
-    if(initialType){ setType(initialType); setSection("assets"); }
-    else { setType("all"); setSection("offers"); }
-  },[initialType]);
-  const shown = type === "all" ? data.artifacts : data.artifacts.filter((artifact)=>artifact.type===type);
-  const offers = section === "offers";
-  const sectionSwitch = <div className="campaigns-segmented" aria-label="What this tab shows">
-    <button aria-pressed={offers} onClick={()=>setSection("offers")}>Offers</button>
-    <button aria-pressed={!offers} onClick={()=>setSection("assets")}>Published assets</button>
-  </div>;
-  if (offers) return <section className="campaigns-surface"><SurfaceHead truthKey="offers" title="Offers" description="What this business sells — products, services, programs, packages and consultations." action={sectionSwitch}/>
+// Offers: what this business sells. The definition belongs to the Sales lane (owner ruling
+// 2026-10-03); it stays reachable here, unchanged, until the top-level Sales destination lands.
+// The Vibe-owned "Published assets" half that used to share this tab moved to Lead capture, where
+// it is measured by how it captures leads. Old `?type=` addresses are redirected there (GrowthHub).
+function Catalog({ setDetail }) {
+  return <section className="campaigns-surface"><SurfaceHead truthKey="offers" title="Offers" description="What this business sells — products, services, programs, packages and consultations."/>
     <CatalogOffers setDetail={setDetail}/>
-  </section>;
-  return <section className="campaigns-surface"><SurfaceHead truthKey="catalog" title="Published assets" description="Read-only published outputs owned by Vibe Studio." action={sectionSwitch}/>
-    <div className="campaigns-segmented" aria-label="Filter published outputs" style={{margin:"12px 19px 0"}}>{["all","page","funnel","form"].map((item)=><button key={item} aria-pressed={type===item} onClick={()=>setType(item)}>{item === "all" ? "All" : `${item[0].toUpperCase()}${item.slice(1)}s`}</button>)}</div>
-    <StateFrame phase={data.phase} retry={data.retry} noun="published outputs">{shown.length===0?<Empty title="No published outputs in this view" detail="Create and publish creative work in Vibe Studio. Campaigns will list only grounded published outputs here."/>:<div className="campaigns-catalog-grid">{shown.map((artifact)=><article className="campaigns-artifact" key={`${artifact.type}-${artifact.id}`}><div><span className="campaigns-type">{artifact.type}</span><h3>{artifact.name}</h3><p>Updated {formatDate(artifact.updatedAt)}</p></div><div className="campaigns-artifact-actions"><button className="btn btn-s" onClick={()=>setDetail(artifact.type==="form"
-  // A form's drawer carries its intake: where submissions go, and what each visitor typed.
-  ?{title:artifact.name,rows:[["Type",artifact.type],["Published state",artifact.status],["Recent captures",`${artifact.recentSubmissions} in the latest 200 workspace submissions`],["Routing contract",artifact.routingConfigured?"Configured":"Not configured"]],body:<FormIntakePanel key={artifact.id} tenantId={data.tenantId} formId={artifact.id} workspace={data.pipelineWorkspace} onOpenContact={onOpenContact} onOpenDeal={onOpenDeal}/>,note:"Creative changes remain in Vibe Studio. Recent capture counts are a bounded window, not lifetime totals."}
-  :{title:artifact.name,rows:[["Type",artifact.type],["Published state",artifact.status],["Recent captures","Not available"],["Routing contract","Not applicable"]],note:"Creative changes remain in Vibe Studio. Recent capture counts are a bounded window, not lifetime totals."})}>Details</button>{artifact.publicHref&&<a className="btn btn-s" href={artifact.publicHref} target="_blank" rel="noreferrer">Open published <Ic.arrow size={12}/></a>}</div></article>)}</div>}</StateFrame>
   </section>;
 }
 
@@ -261,7 +242,7 @@ function PipelineFolderOrganizer({ workspace, run, onClose }) {
   </section></>;
 }
 
-function PipelineSurface({ data, setDetail, focusDealId, onClearFocus }) {
+export function PipelineSurface({ data, setDetail, focusDealId, onClearFocus, createRequested = false }) {
   const workspace=data.pipelineWorkspace;
   const mounted=React.useRef(false);
   React.useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
@@ -307,7 +288,7 @@ function PipelineSurface({ data, setDetail, focusDealId, onClearFocus }) {
   // the selected record's dialog before its own await resolves.
   const runConfig=async(action)=>{const result=await data.pipelineAction(action);if(mounted.current&&action.type==="delete-empty-pipeline"&&result.ok)deleted(action.pipelineId,result.message);return result;};
   if(view!=="board")return <section className="campaigns-surface pipeline-surface"><PipelineConfigWorkspace mode={view==="config-create"?"create":"edit"} pipeline={selected} stages={stages} canManage={workspace.canManage} canDelete={workspace.canDelete} run={runConfig} onBack={back} onCreated={created} onDeleted={()=>{}} newPipeline={newPipeline} setNewPipeline={setNewPipeline}/></section>;
-  return <section className="campaigns-surface pipeline-surface"><StateFrame phase={data.phase} retry={data.retry}><PipelineCommandDesk data={data} selectedId={selectedId} setSelectedId={setSelectedId} folderFilter={folderFilter} setFolderFilter={setFolderFilter} onCreatePipeline={(event)=>openConfig("config-create",event)} onManage={(event)=>openConfig("config-edit",event)} onFolders={()=>setFoldersOpen(true)} focusDealId={focusDealId} onClearFocus={onClearFocus}/></StateFrame>{data.phase==="ready"&&foldersOpen&&<PipelineFolderOrganizer workspace={workspace} run={data.pipelineAction} onClose={()=>setFoldersOpen(false)}/>}</section>;
+  return <section className="campaigns-surface pipeline-surface"><StateFrame phase={data.phase} retry={data.retry}><PipelineCommandDesk data={data} selectedId={selectedId} setSelectedId={setSelectedId} folderFilter={folderFilter} setFolderFilter={setFolderFilter} onCreatePipeline={(event)=>openConfig("config-create",event)} onManage={(event)=>openConfig("config-edit",event)} onFolders={()=>setFoldersOpen(true)} focusDealId={focusDealId} onClearFocus={onClearFocus} createRequested={createRequested}/></StateFrame>{data.phase==="ready"&&foldersOpen&&<PipelineFolderOrganizer workspace={workspace} run={data.pipelineAction} onClose={()=>setFoldersOpen(false)}/>}</section>;
 }
 
 // Social is now its own surface (./social-command.tsx) rather than a fixed panel here.
@@ -322,20 +303,292 @@ function PipelineSurface({ data, setDetail, focusDealId, onClearFocus }) {
 //
 // Kept verbatim in the new surface: the placements precondition (published work appears as a
 // placement only once a supported provider records it) and the Vibe Studio redirect for creative
-// work. `Performance()` below keeps its own "Social performance" UNAVAILABLE card, and the two do
-// not contradict each other — neither claims a provider figure.
+// work. Marketing › Analytics lists social reach as not measured; neither surface claims a
+// provider figure.
 function Social({ data, onOpenCompass, onOpenPipeline }) {
   const askPaige = React.useCallback(() => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt: "Using only the social accounts on record for this workspace, tell me which are recorded and which are not. Do not report followers, reach, engagement, a publishing queue, a schedule, or where anything went live — none of those exist here. If nothing is recorded, say so." } })), []);
   return <SocialCommand campaigns={data} onOpenStudio={openStudio} onAskPaige={askPaige} onOpenCompass={onOpenCompass} onOpenPipeline={onOpenPipeline}/>;
 }
 
-function Performance({ data }) {
-  return <section className="campaigns-surface"><SurfaceHead truthKey="performance" title="Performance coverage" description="A source-by-source view of what can—and cannot—be reported truthfully."/><StateFrame phase={data.phase} retry={data.retry} noun="performance sources"><div className="campaigns-coverage"><article><TruthTag state="UNAVAILABLE"/><h3>Campaign runs</h3><p>A tenant-authorized campaign rollup is not available.</p></article><article><TruthTag state="PARTIAL"/><h3>Published outputs</h3><p>{data.artifacts.length?"Published Vibe Studio outputs are available.":"No published outputs were returned."}</p></article><article><TruthTag state="PROPOSED"/><h3>Attribution and outcomes</h3><p>Captured submissions may carry traceable source and routing references; no ROI or revenue is calculated.</p></article><article><TruthTag state="UNAVAILABLE"/><h3>Social performance</h3><p>No supported provider source is connected to this customer-facing surface.</p></article></div></StateFrame></section>;
+// ── Marketing department views (owner ruling 2026-10-03; docs/product/solo-marketing-ia-proposal.md) ──
+//
+// Every figure below comes from a read this hub already makes: owner briefs (useSoloCampaignBriefs),
+// published and draft Vibe outputs, and the latest 200 form submissions (useSoloCampaigns). Nothing is
+// estimated. Email, ads, visits and spend have no source in this workspace, so they are named as
+// unavailable instead of shown as zero.
+
+const LEAD_WINDOW_DAYS = 30;
+
+// The one definition of "last N days" (marketing-overview-model.ts), shared with Overview so the same
+// tenant never sees two different 30-day lead counts one click apart.
+function leadsInWindow(submissions) {
+  const { within, capped } = submissionsInPeriod(submissions, LEAD_WINDOW_DAYS);
+  return { within, capped };
 }
 
-function CompatibilityLanding({ legacy, returnToAssets }) {
+function countLabel(count, capped) {
+  return capped ? `${count}+` : String(count);
+}
+
+const TYPE_LABEL = { page: "Page", funnel: "Funnel", form: "Form" };
+
+function combinedPhase(...phases) {
+  if (phases.includes("unavailable")) return "unavailable";
+  if (phases.includes("resolving")) return "resolving";
+  if (phases.includes("error")) return "error";
+  if (phases.includes("loading")) return "loading";
+  return "ready";
+}
+
+function StudioLauncher({ label = "Open Vibe Studio", primary = false }) {
+  return <button className={`btn btn-s ${primary ? "btn-p" : ""}`} data-solo-vibe-studio-launcher onClick={openStudio}><Ic.spark size={13}/>{label}</button>;
+}
+
+// One ruled band of four facts, read left to right — not four floating metric cards.
+function MarketingStat({ label, value, foot }) {
+  return <div className="mk-stat"><dt>{label}</dt><dd><strong>{value}</strong>{foot && <span>{foot}</span>}</dd></div>;
+}
+
+
+const LeadsOverTimeChart = React.lazy(() => import("./marketing-overview-charts").then((module) => ({ default: module.LeadsOverTimeChart })));
+const Donut = React.lazy(() => import("./marketing-overview-charts").then((module) => ({ default: module.Donut })));
+const SOURCE_TOKENS = ["--chart-1", "--chart-2", "--chart-3", "--chart-4"];
+const STATUS_TOKENS = { running: "--ok", approved: "--chart-1", review: "--warn", draft: "--ink-3", paused: "--chart-3", blocked: "--bad", completed: "--chart-4" };
+const sourceToken = (slice, index) => slice.kind === "untagged" ? "--chart-untagged" : slice.kind === "other" ? "--chart-other" : SOURCE_TOKENS[index] || "--chart-other";
+const NO_ROWS = []; // one stable empty list, so the model is not re-derived on every render
+const percentOf = (count, total) => total ? `${Math.round((count / total) * 100)}%` : "0%";
+
+function MarketingOverview({ data, onGo, onCreateBrief, salesInShell = false }) {
+  const navigate = useNavigate();
+  const params = useParams();
+  const briefsState = useSoloCampaignBriefs();
+  const briefs = briefsState.briefs || NO_ROWS;
+  const phase = combinedPhase(data.phase, briefsState.phase);
+  const retry = () => { data.retry?.(); briefsState.retry?.(); };
+  const drafts = data.drafts || NO_ROWS;
+  const submissions = data.submissions || NO_ROWS;
+  const [periodDays, setPeriodDays] = React.useState(30);
+  const today = new Date().toDateString(); // re-derive when the day turns, not only when data changes
+  const model = React.useMemo(() => deriveMarketingOverview({ briefs, artifacts: data.artifacts, drafts, submissions, periodDays }), [briefs, data.artifacts, drafts, submissions, periodDays, today]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Offers and Pipeline belong to Sales (owner ruling 2026-10-03). Only an account whose menu shows
+  // Sales (SoloApp passes the shell's own answer) is sent there; every other account keeps
+  // Marketing's own Offers and Pipeline tabs, so no link lands on a department its tier hides.
+  const toSales = (slug) => salesInShell ? navigate(subtabPath("solo", params.account, "sales", slug)) : onGo(slug === "offers" ? "catalog" : "pipeline");
+  const unrouted = data.artifacts.filter((artifact) => artifact.type === "form" && !artifact.routingConfigured);
+  const firstUse = phase === "ready" && !briefs.length && !data.artifacts.length && !drafts.length && !submissions.length;
+  const canCreate = briefsState.canManage;
+  const create = canCreate ? <button className="btn btn-g" onClick={onCreateBrief}><Ic.plus size={14}/>Create campaign brief</button> : null;
+  const leads = countLabel(model.leads.count, model.capped);
+  const opportunities = countLabel(model.opportunities.count, model.capped);
+
+  const attention = [];
+  for (const brief of briefs.filter((item) => item.lifecycleStatus === "ready_for_review")) attention.push({ key: `review-${brief.id}`, tone: "is-review", icon: <Ic.doc size={15}/>, label: "Awaiting review", title: brief.name, detail: "A campaign brief is ready for your decision.", go: () => onGo("campaigns") });
+  for (const brief of briefs.filter(isBlockedBrief)) attention.push({ key: `blocked-${brief.id}`, tone: "is-blocked", icon: <Ic.shield size={15}/>, label: "Blocked", title: brief.name, detail: brief.blocker || "Marked blocked on the brief.", go: () => onGo("campaigns") });
+  for (const form of unrouted) attention.push({ key: `route-${form.id}`, tone: "is-warn", icon: <Ic.send size={15}/>, label: "Not routed", title: form.name, detail: "Submissions are saved, but nothing follows up on them.", go: () => onGo("capture") });
+  for (const draft of drafts) attention.push({ key: `draft-${draft.type}-${draft.id}`, tone: "is-warn", icon: <Ic.spark size={15}/>, label: "Not published", title: draft.name, detail: `${TYPE_LABEL[draft.type]} in Vibe Studio. It collects nothing until it is published.`, go: () => onGo("capture") });
+  const shownAttention = attention.slice(0, 4);
+  const hidden = attention.length - shownAttention.length;
+
+  // One recommended move, in the order an owner would want them handled.
+  const reviewing = briefs.find((brief) => brief.lifecycleStatus === "ready_for_review");
+  const nextStep = reviewing
+    ? { text: `“${reviewing.name}” is waiting for your decision. Approve it, or send it back with notes.`, label: "Review the brief", go: () => onGo("campaigns") }
+    : unrouted.length
+      ? { text: `“${unrouted[0].name}” is collecting leads that nothing follows up on. Choose where its submissions go.`, label: "Route the form", go: () => onGo("capture") }
+      : drafts.length
+        ? { text: `“${drafts[0].name}” is built but not published, so it can’t collect anyone yet.`, label: "Finish in Vibe Studio", studio: true }
+        : canCreate
+          ? { text: "Plan your next campaign: who it’s for, the offer, and where people land. PAIGE can draft the brief with you.", label: "Create campaign brief", go: onCreateBrief }
+          : null;
+
+  const sourceSlices = model.sources.map((slice, index) => ({ ...slice, colorToken: sourceToken(slice, index) }));
+  const statusSlices = model.status.map((slice) => ({ ...slice, colorToken: STATUS_TOKENS[slice.key] }));
+  const contentMax = model.topContent.reduce((max, row) => Math.max(max, row.count), 0);
+  const periodLabel = `last ${periodDays} days`;
+  const floor = (count) => countLabel(count, model.capped);
+  const plural = (count, noun) => `${count} ${noun}${count === 1 ? "" : "s"}`;
+  const publishedParts = [model.published.pages && plural(model.published.pages, "page"), model.published.funnels && plural(model.published.funnels, "funnel"), model.published.forms && plural(model.published.forms, "form")].filter(Boolean);
+  const inProgress = briefs.filter((brief) => !["completed", "archived"].includes(brief.lifecycleStatus)).slice(0, 3);
+  const [sourceActive, setSourceActive] = React.useState(null);
+  const [statusActive, setStatusActive] = React.useState(null);
+  const honest = "Use only what my records show. Do not invent visits, reach, spend or revenue; this workspace does not track them.";
+  const askTime = `Look at my Marketing leads for the ${periodLabel}: ${model.leads.count}${model.capped ? "+" : ""} leads, ${model.opportunities.count} became opportunities. Which days stood out, and what is one thing I should do next? ${honest}`;
+  // A tag is whatever a visitor's link carried, so it reaches PAIGE quoted, short and plain.
+  const tagText = (label) => `"${String(label).replace(/[^\p{L}\p{N} ._-]/gu, "").slice(0, 40)}"`;
+  const askSources = `My leads for the ${periodLabel} by tracking tag: ${model.sources.map((slice) => `${slice.kind === "tag" ? tagText(slice.label) : slice.label} ${slice.count}`).join(", ") || "none yet"}. Which source is worth more effort, and how should I tag the links I share? ${honest}`;
+  const askStatus = `My campaign briefs by status: ${model.status.filter((slice) => slice.count).map((slice) => `${slice.label} ${slice.count}`).join(", ") || "none yet"}. What should I move forward first? ${honest}`;
+
+  return <div className="mk-view mo"><StateFrame phase={phase} retry={retry} noun="marketing">
+    {firstUse ? <section className="campaigns-surface mk-first">
+      <h2>Nothing is being marketed yet</h2>
+      <p>Marketing starts with one campaign brief: who you want to reach, with which offer, and where they land. PAIGE can draft it with you.</p>
+      <ol className="mk-steps">
+        <li><span>Name what you sell in <button className="mk-link" onClick={() => toSales("offers")}>Offers</button>.</span></li>
+        <li><span>Write a campaign brief: the objective, the audience and the channels.</span></li>
+        <li><span>Give it somewhere to land. Build a form or page in Vibe Studio and publish it.</span></li>
+        <li><span>Choose where submissions go, so each lead becomes something you follow up on.</span></li>
+      </ol>
+      <div className="mk-actions">{create}<StudioLauncher/></div>
+    </section> : <>
+      <header className="mo-head">
+        <p>Here’s what needs your attention and how Marketing is performing.</p>
+        <div className="mo-head-actions">
+          <div className="campaigns-segmented" role="group" aria-label="Period">{PERIODS.map((days) => <button key={days} aria-pressed={periodDays === days} onClick={() => setPeriodDays(days)}>Last {days} days</button>)}</div>
+          {create}
+        </div>
+      </header>
+
+      <div className="mo-stats">
+        <OverviewStat icon={<Ic.bolt size={18}/>} tone="is-violet" label="Active campaigns" value={model.campaigns.running}
+          foot={<span className="mo-delta">{model.campaigns.newInPeriod ? `${plural(model.campaigns.newInPeriod, "brief")} created in the ${periodLabel}` : `${plural(model.campaigns.total, "brief")} in total`}{model.campaigns.blocked ? ` · ${model.campaigns.blocked} blocked` : ""}</span>}
+          link="View all" onLink={() => onGo("campaigns")}/>
+        <OverviewStat icon={<Ic.doc size={18}/>} tone="is-aqua" label="Published work" value={model.published.total}
+          foot={<span className="mo-delta">{[...publishedParts, model.published.drafts && `${model.published.drafts} not published yet`].filter(Boolean).join(" · ") || "Nothing published yet"}</span>}
+          link="View work" onLink={() => onGo("capture")}/>
+        <OverviewStat icon={<Ic.users size={18}/>} tone="is-blue" label={`Leads (${periodLabel})`} value={leads}
+          foot={<DeltaLine delta={model.leads.delta} periodDays={periodDays} fallback={`${floor(model.leads.tagged)} with a tracking tag`}/>}
+          link="View leads" onLink={() => onGo("capture")}/>
+        <OverviewStat icon={<Ic.trend size={18}/>} tone="is-orange" label="Became opportunities" value={opportunities}
+          foot={<DeltaLine delta={model.opportunities.delta} periodDays={periodDays} fallback={model.leads.count ? `${percentOf(model.opportunities.count, model.leads.count)} of leads` : "No leads yet"}/>}
+          link="View pipeline" onLink={() => toSales("pipeline")}/>
+      </div>
+
+      <div className="mo-grid mo-grid-a">
+        <section className="campaigns-surface mo-panel">
+          <div className="mo-panel-head"><div><h2>Leads over time</h2><p>Form submissions from every capture point, by the day they arrived.</p></div>
+            <div className="mo-panel-tools"><AskPaige prompt={askTime}/></div>
+            <ul className="mo-legend" aria-hidden="true"><li><i className="is-s1"/>Leads</li><li><i className="is-s2 is-line"/>Became opportunities</li></ul></div>
+          {model.leads.count ? <ChartBoundary className={`mo-chart mo-chart-time${model.daily.length > 7 ? " has-brush" : ""}`}><LeadsOverTimeChart daily={model.daily} onOpenDay={() => onGo("capture")}/></ChartBoundary>
+            : <Empty title={`No leads in the ${periodLabel}`} detail="When someone submits a published form, the day it arrived shows here."/>}
+          <table className="campaigns-sr-only"><caption>Leads and opportunities by day, {periodLabel}</caption><thead><tr><th>Day</th><th>Leads</th><th>Became opportunities</th></tr></thead><tbody>{model.daily.map((point) => <tr key={point.day}><td>{point.label}</td><td>{point.leads}</td><td>{point.opportunities}</td></tr>)}</tbody></table>
+          {model.capped && <p className="mo-note">Showing the latest {SUBMISSION_READ_LIMIT} submissions. Earlier days in this period may be missing.</p>}
+        </section>
+        <section className="campaigns-surface mo-panel">
+          <div className="mo-panel-head"><div><h2>Leads by source</h2><p>The tracking tag on the link each lead submitted from.</p></div><div className="mo-panel-tools"><AskPaige prompt={askSources}/><button className="mo-link" onClick={() => onGo("analytics")}>View all sources<Ic.arrow size={12}/></button></div></div>
+          {model.leads.count ? <div className="mo-split">
+            <ChartBoundary className="mo-donut"><Donut slices={sourceSlices} total={floor(model.leads.count)} caption="Total leads" label="Leads by source" activeKey={sourceActive} onActiveKey={setSourceActive} onSelect={() => onGo("analytics")}/></ChartBoundary>
+            <ul className="mo-keys">{sourceSlices.map((slice) => <li key={slice.key}><button type="button" className={sourceActive === slice.key ? "is-active" : ""} onMouseEnter={() => setSourceActive(slice.key)} onMouseLeave={() => setSourceActive(null)} onFocus={() => setSourceActive(slice.key)} onBlur={() => setSourceActive(null)} onClick={() => onGo("analytics")} aria-label={`${slice.label}: ${floor(slice.count)} leads, ${percentOf(slice.count, model.leads.count)}. Open Analytics`}><i style={{ background: `var(${slice.colorToken})` }} aria-hidden="true"/><span>{slice.label}</span><b>{floor(slice.count)}</b><em>{percentOf(slice.count, model.leads.count)}</em></button></li>)}</ul>
+          </div> : <Empty title="No sources yet" detail="Add ?utm_source= to the links you share and each lead will show where it came from."/>}
+          <p className="mo-note">{model.capped ? `Counted from the latest ${SUBMISSION_READ_LIMIT} submissions. ` : ""}Email and paid ads aren’t connected, so they can’t appear here.</p>
+        </section>
+      </div>
+
+      <div className="mo-grid mo-grid-b">
+        <section className="campaigns-surface mo-panel">
+          <div className="mo-panel-head"><div><h2>Top capture points</h2><p>Leads per form in the {periodLabel}. Pages and funnels collect through their forms.</p></div><button className="mo-link" onClick={() => onGo("capture")}>View all<Ic.arrow size={12}/></button></div>
+          {model.topContent.length ? <ol className="mo-rank">{model.topContent.map((row) => <li key={row.id}><button type="button" onClick={() => onGo("capture")} aria-label={`${row.name}: ${floor(row.count)} leads. Open Lead capture`}><span className="mo-rank-name">{row.name}</span><span className="mo-rank-bar" aria-hidden="true"><i style={{ width: `${contentMax ? Math.max(4, (row.count / contentMax) * 100) : 0}%` }}/></span><b>{floor(row.count)}</b></button></li>)}</ol>
+            : <Empty title="No form has collected a lead yet" detail="Publish a form from Vibe Studio and its leads are ranked here."/>}
+        </section>
+        <section className="campaigns-surface mo-panel">
+          <div className="mo-panel-head"><div><h2>Campaign status</h2><p>Every campaign brief, by where it stands.</p></div><div className="mo-panel-tools"><AskPaige prompt={askStatus}/><button className="mo-link" onClick={() => onGo("campaigns")}>View campaigns<Ic.arrow size={12}/></button></div></div>
+          {model.campaigns.total ? <div className="mo-split">
+            <ChartBoundary className="mo-donut"><Donut slices={statusSlices} total={model.campaigns.total} caption={model.campaigns.total === 1 ? "Brief" : "Briefs"} label="Campaign status" activeKey={statusActive} onActiveKey={setStatusActive} onSelect={() => onGo("campaigns")}/></ChartBoundary>
+            <ul className="mo-keys">{statusSlices.filter((slice) => slice.count > 0 || ["running", "draft", "blocked"].includes(slice.key)).map((slice) => <li key={slice.key} className={slice.count ? "" : "is-zero"}><button type="button" className={statusActive === slice.key ? "is-active" : ""} onMouseEnter={() => setStatusActive(slice.key)} onMouseLeave={() => setStatusActive(null)} onFocus={() => setStatusActive(slice.key)} onBlur={() => setStatusActive(null)} onClick={() => onGo("campaigns")} aria-label={`${slice.label}: ${slice.count}. Open Campaigns`}><i style={{ background: `var(${slice.colorToken})` }} aria-hidden="true"/><span>{slice.label}</span><b>{slice.count}</b></button></li>)}</ul>
+          </div> : <Empty title="No campaign briefs yet" detail="Create a brief to plan your first campaign."/>}
+          {inProgress.length > 0 && <ul className="mo-briefs" aria-label="Campaigns in progress">{inProgress.map((brief) => <li key={brief.id}><button type="button" onClick={() => onGo("campaigns")}><strong>{brief.name}</strong><small>{brief.timing || "No timing written yet"}</small></button></li>)}</ul>}
+        </section>
+        <section className="campaigns-surface mo-panel">
+          <div className="mo-panel-head"><div><h2>Needs your attention</h2><p>From your briefs and capture points.</p></div></div>
+          {shownAttention.length ? <ul className="mo-tasks">{shownAttention.map((item) => <li key={item.key}><button onClick={item.go}><span className={`mo-task-plate ${item.tone}`} aria-hidden="true">{item.icon}</span><span className="mo-task-main"><strong>{item.title}</strong><small>{item.detail}</small></span><span className={`mk-flag ${item.tone}`}>{item.label}</span></button></li>)}</ul>
+            : <Empty title="Nothing needs you right now" detail="Briefs waiting on you, blocked work, unrouted forms and unpublished drafts appear here."/>}
+          {hidden > 0 && <p className="mo-note">{hidden} more in Campaigns and Lead capture.</p>}
+        </section>
+      </div>
+
+      {nextStep && <section className="mo-next" aria-label="Next step">
+        <span className="mo-next-plate" aria-hidden="true"><Ic.spark size={18}/></span>
+        <div><h2>Next step</h2><p>{nextStep.text}</p></div>
+        {nextStep.studio ? <StudioLauncher label={nextStep.label} primary/> : <button className="btn btn-p" onClick={nextStep.go}>{nextStep.label}<Ic.arrow size={13}/></button>}
+      </section>}
+    </>}
+  </StateFrame></div>;
+}
+
+function LeadCapture({ data, setDetail, initialType, onOpenContact, onOpenDeal }) {
+  const [type, setType] = React.useState(initialType || "all");
+  React.useEffect(() => { setType(initialType || "all"); }, [initialType]);
+  const drafts = data.drafts || [];
+  const live = type === "all" ? data.artifacts : data.artifacts.filter((artifact) => artifact.type === type);
+  const waiting = type === "all" ? drafts : drafts.filter((draft) => draft.type === type);
+  const names = Object.fromEntries([...data.artifacts, ...drafts].map((item) => [item.id, item.name]));
+  const recent = (data.submissions || []).slice(0, 8);
+  const openDetails = (artifact) => setDetail(artifact.type === "form"
+    // A form's drawer carries its intake: where submissions go, and what each visitor typed.
+    ? { title: artifact.name, rows: [["Type", artifact.type], ["Published state", artifact.status], ["Recent captures", `${artifact.recentSubmissions} in the latest ${SUBMISSION_READ_LIMIT} workspace submissions`], ["Routing contract", artifact.routingConfigured ? "Configured" : "Not configured"]], body: <FormIntakePanel key={artifact.id} tenantId={data.tenantId} formId={artifact.id} workspace={data.pipelineWorkspace} onOpenContact={onOpenContact} onOpenDeal={onOpenDeal}/>, note: "Creative changes remain in Vibe Studio. Recent capture counts are a bounded window, not lifetime totals." }
+    : { title: artifact.name, rows: [["Type", artifact.type], ["Published state", artifact.status], ["Recent captures", "Not available"], ["Routing contract", "Not applicable"]], note: "Creative changes remain in Vibe Studio. A page or funnel collects leads through the forms on it." });
+  return <>
+    <div className="mk-view"><section className="campaigns-surface"><SurfaceHead truthKey="capture" title="Capture points" description="Created and published in Vibe Studio. How they capture leads is measured here."
+      action={<div className="campaigns-segmented" role="group" aria-label="Filter capture points">{["all", "page", "funnel", "form"].map((item) => <button key={item} aria-pressed={type === item} onClick={() => setType(item)}>{item === "all" ? "All" : `${TYPE_LABEL[item]}s`}</button>)}</div>}/>
+      <StateFrame phase={data.phase} retry={data.retry} noun="capture points">
+        {live.length + waiting.length === 0 ? <div className="campaigns-state"><h2>Nothing is capturing leads in this view</h2><p>Build a form or landing page in Vibe Studio and publish it. It appears here with its submissions and routing.</p><StudioLauncher label="Build in Vibe Studio" primary/></div>
+        : <div className="campaigns-list">
+          {live.map((artifact) => <div className="campaigns-list-row mk-row" key={`${artifact.type}-${artifact.id}`}><span className="mk-flag is-live">Published</span><div className="mk-row-main"><strong>{artifact.name}</strong><small>{TYPE_LABEL[artifact.type]} · updated {formatDate(artifact.updatedAt)}{artifact.type === "form" ? ` · ${artifact.recentSubmissions} recent submission${artifact.recentSubmissions === 1 ? "" : "s"} · ${artifact.routingConfigured ? "routed" : "not routed"}` : ""}</small></div><div className="campaigns-row-end mk-actions"><button className="btn btn-s" onClick={() => openDetails(artifact)}>{artifact.type === "form" ? "Routing and submissions" : "Details"}</button>{artifact.publicHref && <a className="btn btn-s" href={artifact.publicHref} target="_blank" rel="noreferrer">Open published <Ic.arrow size={12}/></a>}</div></div>)}
+          {waiting.map((draft) => <div className="campaigns-list-row mk-row" key={`draft-${draft.type}-${draft.id}`}><span className="mk-flag">Draft</span><div className="mk-row-main"><strong>{draft.name}</strong><small>{TYPE_LABEL[draft.type]} · updated {formatDate(draft.updatedAt)} · collects nothing until it is published</small></div><div className="campaigns-row-end"><StudioLauncher label="Finish in Vibe Studio"/></div></div>)}
+        </div>}
+      </StateFrame>
+    </section>
+    <section className="campaigns-surface"><div className="campaigns-surface-head"><div><h2>Recent submissions</h2><p>The latest submissions across every form, with the tracking tag of the link each visitor arrived on.</p></div></div>
+      <StateFrame phase={data.phase} retry={data.retry} noun="submissions">
+        {recent.length === 0 ? <Empty title="No submissions yet" detail="When someone submits a published form, it appears here."/>
+        : <div className="campaigns-list">{recent.map((submission) => <div className="campaigns-list-row mk-row" key={submission.id}><div className="mk-row-main"><strong>{names[submission.formId] || "A form no longer listed"}</strong><small>{formatDate(submission.createdAt)} · {submission.trackingSource ? `source: ${submission.trackingSource}` : "no tracking tag"}{submission.trackingCampaign ? ` · campaign: ${submission.trackingCampaign}` : ""}</small></div><div className="campaigns-row-end mk-actions">{submission.dealId ? <button className="btn btn-s" onClick={() => onOpenDeal(submission.dealId)}>Open deal</button> : submission.contactId ? <button className="btn btn-s" onClick={() => onOpenContact(submission.contactId)}>Open contact</button> : <span className="campaigns-status">{submission.state ? submission.state.replace(/_/g, " ") : "Not processed"}</span>}</div></div>)}</div>}
+      </StateFrame>
+    </section></div>
+  </>;
+}
+
+function SourceBars({ rows, empty }) {
+  if (!rows.length) return <Empty title="Nothing to show yet" detail={empty}/>;
+  const max = Math.max(...rows.map(([, count]) => count));
+  return <ul className="mk-bars">{rows.map(([label, count, note]) => <li key={label}><span className="mk-bar-label"><strong>{label}</strong>{note && <small>{note}</small>}</span><span className="mk-bar-track" aria-hidden="true"><i style={{ width: `${Math.max(4, Math.round((count / max) * 100))}%` }}/></span><span className="mk-bar-count">{count}</span></li>)}</ul>;
+}
+
+function MarketingAnalytics({ data, onGo }) {
+  const briefsState = useSoloCampaignBriefs();
+  const phase = combinedPhase(data.phase, briefsState.phase);
+  const retry = () => { data.retry?.(); briefsState.retry?.(); };
+  const { within, capped } = leadsInWindow(data.submissions || []);
+  const tagged = within.filter((submission) => submission.trackingSource);
+  const campaignTagged = within.filter((submission) => submission.trackingCampaign).length;
+  const opened = within.filter((submission) => submission.dealId).length;
+  const group = (pick) => Object.entries(within.reduce((counts, submission) => { const key = pick(submission); if (key) counts[key] = (counts[key] || 0) + 1; return counts; }, {})).sort((a, b) => b[1] - a[1]);
+  // Tags merge case-insensitively, as on Overview; the first spelling seen is the one shown.
+  const spelling = {};
+  const bySource = group((submission) => { const tag = submission.trackingSource?.trim(); if (!tag) return "No tracking tag"; return (spelling[tag.toLowerCase()] ??= tag); });
+  const refs = Object.fromEntries((briefsState.briefs || []).filter((brief) => brief.shortRef).map((brief) => [brief.shortRef.toLowerCase(), brief.name]));
+  const byCampaign = group((submission) => submission.trackingCampaign).map(([tag, count]) => [tag, count, refs[tag.toLowerCase()] ? `Brief: ${refs[tag.toLowerCase()]}` : "No brief uses this reference"]);
+  return <>
+    <div className="mk-view"><StateFrame phase={phase} retry={retry} noun="marketing analytics">
+      {(data.submissions || []).length === 0 ? <section className="campaigns-surface"><div className="campaigns-state"><h2>No leads to measure yet</h2><p>When a published form collects a submission, where it came from appears here. Share your form’s link with a tracking tag on it, such as <code>?utm_source=newsletter</code>, so each lead says which channel sent it.</p><button className="btn btn-s" onClick={() => onGo("capture")}>Open Lead capture</button></div></section> : <>
+        <dl className="mk-ledger">
+          <MarketingStat label={`Leads · last ${LEAD_WINDOW_DAYS} days`} value={countLabel(within.length, capped)} foot={capped ? `Counted from the latest ${SUBMISSION_READ_LIMIT} submissions` : "Across every published form"}/>
+          <MarketingStat label="With a source tag" value={`${countLabel(tagged.length, capped)} of ${countLabel(within.length, capped)}`} foot="Everything below rests on this coverage"/>
+          <MarketingStat label="Became opportunities" value={countLabel(opened, capped)} foot="Revenue from them is tracked in Sales"/>
+          <MarketingStat label="Tagged with a campaign" value={`${countLabel(campaignTagged, capped)} of ${countLabel(within.length, capped)}`} foot="Matched to a brief by its reference"/>
+        </dl>
+        <div className="mk-two">
+          <section className="campaigns-surface"><SurfaceHead truthKey="analytics" title="Leads by source" description={`Last ${LEAD_WINDOW_DAYS} days · from the source tag on the link each lead submitted from (utm_source).`}/>
+            <SourceBars rows={bySource} empty="No submissions in this window."/>
+          </section>
+          <section className="campaigns-surface"><div className="campaigns-surface-head"><div><h2>Leads by campaign</h2><p>Counted when the link carries a campaign tag (utm_campaign). Use a brief’s reference as the tag and it matches that brief.</p></div><button className="btn btn-s" onClick={() => onGo("campaigns")}>Open Campaigns</button></div>
+            <SourceBars rows={byCampaign} empty="No submission in this window arrived on a link tagged with a campaign."/>
+          </section>
+        </div>
+        <section className="campaigns-surface"><div className="campaigns-surface-head"><div><h2>Not measured here</h2><p>Each needs a source this workspace doesn’t record yet.</p></div></div>
+          <div className="campaigns-list">
+            {[["Form and page conversion", "Visits to published pages aren’t counted, so there is no conversion rate."],
+              ["Cost per lead and acquisition cost", "No ad spend or budget actual is recorded."],
+              ["Multi-touch attribution", "Only the link a visitor submitted from is known, not their earlier visits."],
+              ["Revenue by campaign", "No order or deal names a campaign. Revenue stays in Sales."]].map(([title, why]) => <div className="campaigns-list-row mk-row" key={title}><div className="mk-row-main"><strong>{title}</strong><small>{why}</small></div><span className="mk-flag">{PLAIN_STATE.UNAVAILABLE}</span></div>)}
+          </div>
+        </section>
+      </>}
+    </StateFrame></div>
+  </>;
+}
+
+function CompatibilityLanding({ legacy, returnToCapture }) {
   const item = LEGACY[legacy];
-  return <section className="campaigns-compat" aria-labelledby="campaigns-compat-title"><span className="campaigns-type">Compatibility address</span><h2 id="campaigns-compat-title">This address moved</h2><p><strong>{item.label}</strong> is no longer a Campaigns subtab. {item.note}</p><div className="campaigns-compat-note"><Ic.shield size={16}/><span>Your workspace and account stay selected. Vibe Studio opens through the existing supported handoff and returns focus here when you leave.</span></div><div className="campaigns-compat-actions"><button className="btn btn-s btn-p" data-solo-vibe-studio-launcher onClick={openStudio}><Ic.spark size={13}/>Vibe Studio</button><button className="btn btn-s" onClick={returnToAssets}>Return to Catalog</button></div></section>;
+  return <section className="campaigns-compat" aria-labelledby="campaigns-compat-title"><span className="campaigns-type">Compatibility address</span><h2 id="campaigns-compat-title">This address moved</h2><p><strong>{item.label}</strong> is no longer a Marketing subtab. {item.note}</p><div className="campaigns-compat-note"><Ic.shield size={16}/><span>Your workspace and account stay selected. Vibe Studio opens through the existing supported handoff and returns focus here when you leave.</span></div><div className="campaigns-compat-actions"><button className="btn btn-s btn-p" data-solo-vibe-studio-launcher onClick={openStudio}><Ic.spark size={13}/>Vibe Studio</button><button className="btn btn-s" onClick={returnToCapture}>Go to Lead capture</button></div></section>;
 }
 
 function CampaignTabs({ tabs, current, setCurrent }) {
@@ -366,7 +619,7 @@ function CampaignTabs({ tabs, current, setCurrent }) {
     pendingCampaignTabFocus=nextKey;
     setCurrent(nextKey);
   };
-  return <div className="campaigns-nav"><div className="campaigns-tabs" role="tablist" aria-label="Campaigns views">{tabs.map((tab,index)=><button id={`campaigns-tab-${tab[0]}`} aria-controls="campaigns-tabpanel" key={tab[0]} role="tab" aria-selected={current===tab[0]} tabIndex={current===tab[0]?0:-1} onClick={()=>setCurrent(tab[0])} onKeyDown={(event)=>onKeyDown(event,index)}>{tab[2]()}<span>{tab[1]}</span></button>)}</div><button className="btn btn-s btn-p campaigns-studio" data-solo-vibe-studio-launcher onClick={openStudio}><Ic.spark size={13}/>Vibe Studio</button></div>;
+  return <div className="campaigns-nav"><div className="campaigns-tabs" role="tablist" aria-label="Marketing views">{tabs.map((tab,index)=><React.Fragment key={tab[0]}>{tab[3]==="sales"&&tabs[index-1]?.[3]!=="sales"&&<span className="campaigns-tab-divider" aria-hidden="true" title="Moving to Sales"/>}<button id={`campaigns-tab-${tab[0]}`} aria-controls="campaigns-tabpanel" role="tab" aria-selected={current===tab[0]} tabIndex={current===tab[0]?0:-1} onClick={()=>setCurrent(tab[0])} onKeyDown={(event)=>onKeyDown(event,index)}>{tab[2]()}<span>{tab[1]}</span></button></React.Fragment>)}</div><button className="btn btn-s btn-p campaigns-studio" title="Vibe Studio" data-solo-vibe-studio-launcher onClick={openStudio}><Ic.spark size={13}/>Vibe Studio</button></div>;
 }
 
 // Retained for the existing hidden Clients compatibility mount. It performs no
@@ -375,12 +628,21 @@ export const Pipeline=()=>{
   const params=useParams();
   const navigate=useNavigate();
   const account=params.account;
-  return <div className="solo-campaigns"><div className="campaigns-scroll"><PageHead eyebrow="Campaigns" title="Pipeline moved" sub="Campaign capture and routing now live under Campaigns."/><section className="campaigns-compat"><span className="campaigns-type">Compatibility address</span><h2>Open Campaigns Pipeline</h2><p>This address is preserved so older links do not silently lose their destination.</p><div className="campaigns-compat-actions"><button className="btn btn-s btn-p" disabled={!account} onClick={()=>account&&navigate(`/solo/${account}/growth/pipeline`)}>Go to Pipeline <Ic.arrow size={13}/></button></div></section></div></div>;
+  return <div className="solo-campaigns"><div className="campaigns-scroll"><PageHead eyebrow="Marketing" title="Pipeline moved" sub="Pipeline now lives under Marketing until it moves to Sales."/><section className="campaigns-compat"><span className="campaigns-type">Compatibility address</span><h2>Open Pipeline</h2><p>This address is preserved so older links do not silently lose their destination.</p><div className="campaigns-compat-actions"><button className="btn btn-s btn-p" disabled={!account} onClick={()=>account&&navigate(`/solo/${account}/growth/pipeline`)}>Go to Pipeline <Ic.arrow size={13}/></button></div></section></div></div>;
 };
 
-export const GrowthHub=()=>{
-  const[tab,setTab]=useSubtabRoute("solo","growth","ov");
-  const tabs=[['ov','Overview',()=><Ic.bolt size={14}/>],['catalog','Catalog',()=><Ic.grid size={14}/>],['sales','Sales',()=><Ic.chart size={14}/>],['pipeline','Pipeline',()=><Ic.trend size={14}/>],['social','Social',()=><Ic.users size={14}/>],['performance','Performance',()=><Ic.pulse size={14}/>]];
+export const GrowthHub=({ salesInShell = false } = {})=>{
+  const params=useParams();
+  const location=useLocation();
+  const target=legacySalesRoute(params.account ?? null,(params["*"]||"").split("/")[1]||"",location.search,location.hash);
+  return target ? <Navigate to={target} replace/> : <MarketingWorkspace salesInShell={salesInShell}/>;
+};
+
+const MarketingWorkspace=({ salesInShell = false })=>{
+  const[tab,setTab]=useSubtabRoute("solo","growth","overview");
+  // Commercial addresses resolve to Sales before Marketing readers mount.
+  // The owner's order (2026-10-04).
+  const tabs=[['overview','Overview',()=><Ic.pulse size={14}/>],['campaigns','Campaigns',()=><Ic.bolt size={14}/>],['audience','Audience',()=><Ic.users size={14}/>],['content','Content',()=><Ic.grid size={14}/>],['social','Social',()=><Ic.send size={14}/>],['email','Email',()=><Ic.mail size={14}/>],['ads','Ads',()=><Ic.trend size={14}/>],['capture','Lead capture',()=><Ic.doc size={14}/>],['analytics','Analytics',()=><Ic.chart size={14}/>]];
   const data=useSoloCampaigns();
   const params=useParams();
   const location=useLocation();
@@ -389,16 +651,13 @@ export const GrowthHub=()=>{
   const legacy=LEGACY[segment]?segment:null;
   const query=new URLSearchParams(location.search);
   const requestedType=["all","page","funnel","form"].includes(query.get("type"))?query.get("type"):null;
-  // The five retired addresses promise "Published pages appear in Catalog", so their one escape
-  // hatch must land on the VIBE-OWNED half. Since Slice 2A made Offers the default section, a bare
-  // setTab("catalog") would have dropped them on an empty offer list — a §58 regression on the exact
-  // recovery path this landing exists to provide. `?type=all` addresses that half explicitly.
-  const returnToAssets=React.useCallback(()=>{
-    navigate(`${subtabPath("solo",params.account,"growth","catalog")}?type=all`);
+  // The five retired addresses promise "Published pages appear in Lead capture", so their one
+  // escape hatch lands there — where the Vibe-owned published work now lives.
+  const returnToCapture=React.useCallback(()=>{
+    navigate(subtabPath("solo",params.account,"growth","lead-capture"));
   },[navigate,params.account]);
-  // Sales' "Open Catalog" lands on the OFFERS half — the bare catalog path, which Slice 2A made the
-  // offers default. Deliberately not `returnToAssets`, which exists for the retired Vibe addresses
-  // and forces `?type=all` onto the published-assets half instead.
+  // Sales' "Open Catalog" lands on Offers, the bare catalog path. Published Vibe work lives in
+  // Lead capture now, so nothing here forces a `?type=`.
   const openCatalogOffers=React.useCallback((resumeTerms=false)=>{
     navigate(`${subtabPath("solo",params.account,"growth","catalog")}?origin=sales${resumeTerms === true ? "&resume=terms" : ""}`);
   },[navigate,params.account]);
@@ -431,11 +690,21 @@ export const GrowthHub=()=>{
   // their work — it routes.
   const onRoute=React.useCallback((target,event)=>{
     const account=params.account; if(!account) return;
-    // The Studio opens through the shell's handoff, which returns focus to the launcher on close.
-    if(target==="studio"){ window.dispatchEvent(new CustomEvent("paige-studio",{detail:{returnFocus:event?.currentTarget}})); return; }
+    // SoloApp opens Vibe Studio only for a real launcher button it can return focus to; an event
+    // without one was silently ignored, so every "Open Studio" in the desk did nothing. The tab
+    // strip's launcher is that button.
+    if(target==="studio"){
+      // Prefer the button that was pressed (it carries the launcher marker, even inside an open
+      // drawer, so focus comes back to it); otherwise the tab strip's own launcher.
+      const pressed=event?.currentTarget;
+      const launcher=pressed instanceof HTMLButtonElement&&pressed.hasAttribute("data-solo-vibe-studio-launcher")?pressed:document.querySelector(".campaigns-nav [data-solo-vibe-studio-launcher]");
+      window.dispatchEvent(new CustomEvent("paige-studio",{detail:{returnFocus:launcher}}));
+      return;
+    }
     if(target==="clients"){ navigate(subtabPath("solo",account,"clients","people")); return; }
-    // catalog · sales · pipeline · social · performance are Campaigns subtabs.
-    navigate(subtabPath("solo",account,"growth",target));
+    // Everything else is a Marketing subtab, addressed by its slug (or a key the registry knows).
+    const slug={overview:"overview",campaigns:"campaigns",capture:"lead-capture",performance:"analytics"}[target]||target;
+    navigate(subtabPath("solo",account,"growth",slug));
   },[navigate,params.account]);
   const previousWorkspace=React.useRef({tenantId:data.tenantId,account:params.account});
   const workspaceChanged=(!!previousWorkspace.current.tenantId && previousWorkspace.current.tenantId!==data.tenantId) || previousWorkspace.current.account!==params.account;
@@ -461,13 +730,42 @@ export const GrowthHub=()=>{
   // rows had the same detached snapshot, and the fix cannot be narrowed to one of them
   // without duplicating the state.
   React.useEffect(()=>{setDetailSnapshot(null);},[tab,segment,data.tenantId,params.account]);
-  React.useEffect(()=>{if(segment!=="active")return;const account=params.account;if(account)navigate(`/solo/${account}/growth/overview${location.search}`,{replace:true});},[segment,params.account,location.search,navigate]);
-  let body=<Overview data={data} onRoute={onRoute}/>;
-  if(legacy) body=<CompatibilityLanding legacy={legacy} returnToAssets={returnToAssets}/>;
-  else if(tab==="catalog") body=<Catalog data={data} setDetail={setDetail} initialType={requestedType} onOpenContact={openContact} onOpenDeal={openDeal}/>;
+  // Previously shipped addresses resolve to their new canonical home with a replace redirect, so a
+  // copied link keeps working and the address bar shows where the work lives now (§58).
+  //   /growth/active        → Campaigns (the desk's earlier address)
+  //   /growth/performance   → Analytics
+  //   /growth/catalog?type= → Lead capture (published Vibe work left the Offers tab)
+  const redirectTo=segment==="active"?"campaigns":segment==="performance"?"analytics":(segment==="catalog"&&requestedType)?"lead-capture":null;
+  React.useEffect(()=>{
+    const account=params.account; if(!redirectTo||!account)return;
+    const next=new URLSearchParams(location.search);
+    if(redirectTo!=="lead-capture") next.delete("type");
+    const search=next.toString();
+    navigate(`${subtabPath("solo",account,"growth",redirectTo)}${search?`?${search}`:""}`,{replace:true});
+  },[redirectTo,params.account,location.search,navigate]);
+  const goTo=React.useCallback((target)=>onRoute(target),[onRoute]);
+  // Overview's "Create campaign brief" opens the builder on the Campaigns desk, the one home for briefs.
+  const createBrief=React.useCallback(()=>{
+    const account=params.account; if(!account)return;
+    navigate(`${subtabPath("solo",account,"growth","campaigns")}?brief=new`);
+  },[navigate,params.account]);
+  const clearBriefRequest=React.useCallback(()=>{
+    const next=new URLSearchParams(location.search); if(!next.has("brief"))return;
+    next.delete("brief");
+    navigate({pathname:location.pathname,search:next.toString()},{replace:true});
+  },[location.pathname,location.search,navigate]);
+  let body=<MarketingOverview data={data} onGo={goTo} onCreateBrief={createBrief} salesInShell={salesInShell}/>;
+  if(legacy) body=<CompatibilityLanding legacy={legacy} returnToCapture={returnToCapture}/>;
+  else if(tab==="campaigns") body=<Campaigns data={data} onRoute={onRoute} autoOpenBrief={query.get("brief")==="new"} onAutoOpenConsumed={clearBriefRequest}/>;
+  else if(tab==="capture") body=<LeadCapture data={data} setDetail={setDetail} initialType={requestedType} onOpenContact={openContact} onOpenDeal={openDeal}/>;
+  else if(tab==="analytics") body=<MarketingAnalytics data={data} onGo={goTo}/>;
+  else if(tab==="catalog") body=<Catalog setDetail={setDetail}/>;
   else if(tab==="sales") body=<Sales data={data} setDetail={setDetail} onOpenCatalog={openCatalogOffers} onOpenClients={openClients} onOpenPipeline={openPipeline}/>;
   else if(tab==="pipeline") body=<PipelineSurface key={data.tenantId} data={data} setDetail={setDetail} focusDealId={query.get("deal")} onClearFocus={()=>{const next=new URLSearchParams(location.search);next.delete("deal");navigate({pathname:location.pathname,search:next.toString()},{replace:true});}}/>;
   else if(tab==="social") body=<Social data={data} onOpenCompass={openCompass} onOpenPipeline={openPipeline}/>;
-  else if(tab==="performance") body=<Performance data={data}/>;
-  return <div className="solo-campaigns" data-campaigns-view={tab}><h1 className="campaigns-sr-only">Campaigns</h1><CampaignTabs tabs={tabs} current={tab} setCurrent={setTab}/><div id="campaigns-tabpanel" role="tabpanel" aria-labelledby={`campaigns-tab-${tab}`} className="campaigns-scroll">{legacy?<PageHead eyebrow="Campaigns" title={LEGACY[legacy].label}/>:null}{tab==="catalog" && query.get("origin")==="sales" && !workspaceChanged && data.tenantId && data.phase!=="resolving" && <div className="so-source-return"><button type="button" className="btn btn-s btn-p" onClick={()=>navigate(`${subtabPath("solo",params.account,"growth","sales")}${query.get("resume")==="terms" ? "?resume=terms" : ""}`)}>{query.get("resume")==="terms" ? "Return to commercial terms" : "Return to Sales"}</button><span>Finish offer setup here in Catalog, then return when ready.</span></div>}{body}</div><DetailDrawer detail={detail} onClose={closeDetail}/></div>;
+  else if(tab==="audience") body=<MarketingAudience tenantId={data.tenantId} onOpenClients={()=>params.account&&navigate(subtabPath("solo",params.account,"clients","people"))}/>;
+  else if(tab==="content") body=<MarketingContent tenantId={data.tenantId} published={{phase:data.phase,pages:data.artifacts.filter((a)=>a.type==="page").length,funnels:data.artifacts.filter((a)=>a.type==="funnel").length,forms:data.artifacts.filter((a)=>a.type==="form").length,unpublished:(data.drafts||NO_ROWS).length}} onOpenCapture={()=>goTo("capture")} onRetryPublished={()=>data.retry?.()} studioLauncher={<StudioLauncher/>}/>;
+  else if(tab==="email") body=<MarketingEmail tenantId={data.tenantId} onOpenConnections={params.account?()=>navigate(`${subtabPath("solo",params.account,"settings","connections")}?segment=communications`):null}/>;
+  else if(tab==="ads") body=<MarketingAds tenantId={data.tenantId} onOpenIntegrations={params.account?()=>navigate(subtabPath("solo",params.account,"settings","integrations")):null}/>;
+  return <div className="solo-campaigns" data-campaigns-view={tab}><h1 className="campaigns-sr-only">Marketing</h1><CampaignTabs tabs={tabs} current={tab} setCurrent={setTab}/><div id="campaigns-tabpanel" role="tabpanel" aria-labelledby={`campaigns-tab-${tab}`} className="campaigns-scroll">{legacy?<PageHead eyebrow="Marketing" title={LEGACY[legacy].label}/>:null}{tab==="catalog" && query.get("origin")==="sales" && !workspaceChanged && data.tenantId && data.phase!=="resolving" && <div className="so-source-return"><button type="button" className="btn btn-s btn-p" onClick={()=>navigate(`${subtabPath("solo",params.account,"growth","sales")}${query.get("resume")==="terms" ? "?resume=terms" : ""}`)}>{query.get("resume")==="terms" ? "Return to commercial terms" : "Return to Sales"}</button><span>Finish offer setup here in Offers, then return when ready.</span></div>}{body}</div><DetailDrawer detail={detail} onClose={closeDetail}/></div>;
 };

@@ -638,3 +638,14 @@ verify_jwt = false
 
 [functions.kb-extract-submit]
 verify_jwt = true
+
+[functions.sales-invoice-command]
+verify_jwt = true
+
+[functions.sales-invoice-delivery]
+# Read-only email eligibility; execution uses sales-invoice-command's canonical gate.
+verify_jwt = true
+
+[functions.sales-invoice-document]
+# Public hash-only grant capability and separate JWT owner read; handler enforces both.
+verify_jwt = false

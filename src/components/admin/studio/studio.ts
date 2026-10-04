@@ -1461,8 +1461,8 @@ export async function reviseBlock(input: ReviseBlockInput): Promise<GrowthBlock>
         block: input.block,
         instruction,
         block_index: input.index,
-        // Ignored for a JWT caller (the function pins the tenant itself); read only when
-        // Paige calls this headlessly with the service role.
+        // For a JWT caller it must be the session's own workspace or the function refuses (it pins
+        // the tenant itself); read as the tenant only when Paige calls headlessly with the service role.
         tenant_id: tenantId,
       }),
       signal: input.signal,

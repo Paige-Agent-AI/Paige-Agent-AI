@@ -112,12 +112,59 @@ function validateZapierTypeScript(chatText) {
 }
 const zapierProof=validateZapierTypeScript(readFileSync(chatSourcePath,'utf8'));
 
+// The GHL twin (GHL-1, 2026-10-03: the owner's live connection's 36-tool catalogue is the
+// discovery event the M4 lane named as the gate). The GHL lane dispatches to the CANONICAL
+// mcp-gateway (not a legacy edge), so the proof pins: the manifest declarations, the
+// role-gate + dispatch mentions, the canonical-connection resolution (provider_key
+// 'gohighlevel', server-side — the model never supplies a connection id), the gateway
+// invocation (the tools action for the list; the execute action with prepare/execute modes
+// gated on the approval channel), and the honest not_connected refusal.
+function validateGhlTypeScript(chatText, adapterText) {
+  const chat=ts.createSourceFile('paige-ai-chat.ts',chatText,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
+  const adapter=ts.createSourceFile('ghl-management.ts',adapterText,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
+  const findings=[]; const requireProof=(ok,label)=>{if(!ok)findings.push(`ghl TypeScript binding: ${label}`)};
+  requireProof(!chat.parseDiagnostics.length&&!adapter.parseDiagnostics.length,'sources must parse');
+  // The tool schemas live in the DOMAIN'S ADAPTER (the chat-tool-registry ruling), derived
+  // from a specs catalog and mounted by spread — the n8n-management shape, pinned the same way.
+  const specs=nodes(adapter,ts.isVariableDeclaration).find(n=>nameOf(n.name)==='specs');
+  requireProof(!!specs?.initializer&&ts.isObjectLiteralExpression(specs.initializer),'adapter derives tools from a literal specs catalog');
+  const specNames=new Set(specs&&ts.isObjectLiteralExpression(specs.initializer)?specs.initializer.properties.map(p=>nameOf(p.name)).filter(Boolean):[]);
+  for(const tool of ['ghl_list_actions','ghl_run_action'])requireProof(specNames.has(tool),`adapter's specs catalog declares ${tool}`);
+  const catalog=nodes(adapter,ts.isVariableDeclaration).find(n=>nameOf(n.name)==='GHL_MANAGEMENT_TOOLS');
+  requireProof(!!catalog?.initializer&&normalized(catalog.initializer).startsWith('Object.entries(specs).map('),'catalog derived from the specs catalog');
+  const mounted=nodes(chat,ts.isSpreadElement).some(n=>normalized(n.expression)==='GHL_MANAGEMENT_TOOLS');
+  requireProof(mounted,'catalog mounted in the handler toolDefs by spread (never re-declared inline)');
+  for(const tool of ['ghl_list_actions','ghl_run_action'])requireProof(nodes(chat,n=>ts.isBinaryExpression(n)&&n.operatorToken.kind===ts.SyntaxKind.EqualsEqualsEqualsToken&&normalized(n.left)==='tc.function.name'&&n.right&&ts.isStringLiteral(n.right)&&n.right.text===tool).length>=2,`${tool} referenced by role gate and dispatch`);
+  const guard=nodes(chat,ts.isIfStatement).find(n=>normalized(n.expression)==='tc.function.name==="ghl_list_actions"||tc.function.name==="ghl_run_action"');
+  requireProof(!!guard,'dispatch guard selects exactly the two ghl tools');
+  const block=guard?.thenStatement;
+  if(block){
+    // THE CANONICAL CONNECTION IS RESOLVED SERVER-SIDE — provider_key 'gohighlevel', never
+    // a model-supplied connection id.
+    requireProof(nodes(block,ts.isBinaryExpression).some(n=>n.operatorToken.kind===ts.SyntaxKind.EqualsEqualsEqualsToken&&normalized(n.left)==='c?.provider_key'&&n.right&&ts.isStringLiteral(n.right)&&n.right.text==='gohighlevel'),'canonical connection resolved by provider_key gohighlevel server-side');
+    requireProof(nodes(block,ts.isPropertyAssignment).some(n=>nameOf(n.name)==='action'&&n.initializer&&ts.isStringLiteral(n.initializer)&&n.initializer.text==='tools'),'catalogue read goes through the gateway tools action');
+    const executeCalls=nodes(block,n=>ts.isPropertyAssignment(n)&&nameOf(n.name)==='action'&&n.initializer&&ts.isStringLiteral(n.initializer)&&n.initializer.text==='execute');
+    requireProof(executeCalls.length===1,'one execute dispatch through the canonical gateway');
+    requireProof(nodes(block,ts.isPropertyAssignment).some(n=>nameOf(n.name)==='mode'&&n.initializer&&ts.isConditionalExpression(n.initializer)&&normalized(n.initializer).includes('approvalChannel.has(tc.id)')&&normalized(n.initializer).includes('"execute"')&&normalized(n.initializer).includes('"prepare"')),'dispatch mode is prepare without the operator approval, execute with it');
+    requireProof(nodes(block,ts.isPropertyAssignment).some(n=>nameOf(n.name)==='error'&&n.initializer&&ts.isStringLiteral(n.initializer)&&n.initializer.text==='not_connected'),'honest not_connected refusal when no canonical connection exists');
+    // THE TRANSPORT SEAM: a gateway refusal is a non-2xx whose BODY is the honest closed
+    // vocabulary (execute_not_enabled, approval_required, not_found); thrown verbatim the
+    // model would see only the generic transport sentence. Both invoke sites must read the
+    // body with the in-file helper built for exactly this trap.
+    requireProof(nodes(block,ts.isCallExpression).filter(n=>normalized(n.expression).includes('readInvokeBody')).length===2,'both gateway invoke sites read the refusal body (readInvokeBody), never throw the transport error');
+  } else requireProof(false,'dispatch block resolved');
+  return {findings,tools:new Map([['ghl_list_actions',{write:false}],['ghl_run_action',{write:true}]])};
+}
+const ghlProof=validateGhlTypeScript(readFileSync(chatSourcePath,'utf8'),readFileSync(join(root,'supabase/functions/_shared/ghl-management.ts'),'utf8'));
+
 // One registry of the exact TS symbol pairs each proof may vouch for. A proof only vouches
 // for capabilities whose chatTool it actually verified, with the declared classification,
 // risk policy, and approval authority matching the verified write kind field-for-field.
 const TS_SYMBOL_PROOFS=[
   {proof:tsProof,executor:'edge.paige-ai-chat',projector:'n8n-management.project'},
   {proof:zapierProof,executor:'edge.paige-ai-chat',projector:'mcp-outcome.projectOutcomeForModel'},
+  {proof:ghlProof,executor:'edge.paige-ai-chat',projector:'mcp-gateway.tools'},
+  {proof:ghlProof,executor:'edge.paige-ai-chat',projector:'mcp-gateway.execute'},
 ];
 function provenTypeScriptSymbol(capability,role,symbol){
   const tool=capability.action?.chatTool;
@@ -165,14 +212,17 @@ if (process.argv.includes("--self-test")) {
   const later = migrations + "\ncreate or replace function public.future_domain_adapter() returns void language sql as $$ select $$;";
   const future = [{ ...PAIGE_SPINE_CAPABILITIES[0], key: "future.safe_evidence", domain: "future", owner: "future-domain", evidence: { ...PAIGE_SPINE_CAPABILITIES[0].evidence, adapter: "public.future_domain_adapter" }, action: undefined, outcome: undefined }];
   if (lint(future, later, null, null).length) { console.error("PAIGE Spine registry lint rejected a coherent additive later-domain migration"); process.exit(1); }
-  if(tsProof.findings.length||zapierProof.findings.length){console.error(tsProof.findings.concat(zapierProof.findings));process.exit(1);}
+  if(tsProof.findings.length||zapierProof.findings.length||ghlProof.findings.length){console.error(tsProof.findings.concat(zapierProof.findings,ghlProof.findings));process.exit(1);}
   const originalChat=readFileSync(chatSourcePath,'utf8'),originalManagement=readFileSync(managementSourcePath,'utf8');
+  // Mutate the intended call, not an unrelated additive domain's matching field.
+  const n8nStart=originalChat.indexOf('await runN8nManagement('),n8nEnd=originalChat.indexOf('});',n8nStart)+3;
+  const mutateN8nCall=(before,after)=>{if(n8nStart<0||n8nEnd<=n8nStart)throw Error('n8n self-test target missing');const call=originalChat.slice(n8nStart,n8nEnd);if(!call.includes(before))throw Error('n8n self-test field missing: '+before);return originalChat.slice(0,n8nStart)+call.replace(before,after)+originalChat.slice(n8nEnd);};
   const n8nNegatives=[
     ['wrong import',originalChat.replace("../_shared/n8n-management.ts","../_shared/untrusted.ts"),originalManagement],
     ['unmounted catalog',originalChat.replace('...N8N_MANAGEMENT_TOOLS','...OTHER_TOOLS'),originalManagement],
-    ['caller change',originalChat.replace('userId: user.id','userId: args.user_id'),originalManagement],
-    ['tenant change',originalChat.replace("tenantId: personaCtx.tenant_id ?? ''","tenantId: args.tenant_id"),originalManagement],
-    ['approval bypass',originalChat.replace('mutationApproved: approvalChannel.has(tc.id)','mutationApproved: true'),originalManagement],
+    ['caller change',mutateN8nCall('userId: user.id','userId: args.user_id'),originalManagement],
+    ['tenant change',mutateN8nCall("tenantId: personaCtx.tenant_id ?? ''","tenantId: args.tenant_id"),originalManagement],
+    ['approval bypass',mutateN8nCall('mutationApproved: approvalChannel.has(tc.id)','mutationApproved: true'),originalManagement],
     ['missing executor',originalChat,originalManagement.replace('function runN8nManagement','function missingExecutor')],
     ['missing projector',originalChat,originalManagement.replace('function project(','function missingProjector(')],
     ['projection bypass',originalChat,originalManagement.replace('return projected;','return data;')],
@@ -187,6 +237,17 @@ if (process.argv.includes("--self-test")) {
     ['zapier raw provider forward',originalChat.replace('result = projectOutcomeForModel(zapData);','result = zapData;')],
   ];
   for(const [name,chat]of zapierNegatives)if(!validateZapierTypeScript(chat).findings.length){console.error(`Zapier AST negative failed: ${name}`);process.exit(1);}
+  const originalAdapter=readFileSync(join(root,'supabase/functions/_shared/ghl-management.ts'),'utf8');
+  const ghlNegatives=[
+    ['ghl adapter tool removed',originalChat,originalAdapter.replace('  ghl_run_action: {','  ghl_other_action: {')],
+    ['ghl adapter unmounted',originalChat.replace('...GHL_MANAGEMENT_TOOLS,','...OTHER_TOOLS,'),originalAdapter],
+    ['ghl provider resolution weakened',originalChat.replace('c?.provider_key === "gohighlevel"','c?.provider_key === args.provider_key'),originalAdapter],
+    ['ghl dispatch guard weakened',originalChat.replace('tc.function.name === "ghl_list_actions" || tc.function.name === "ghl_run_action"','true'),originalAdapter],
+    ['ghl prepare bypass (always execute)',originalChat.replace('mode: approvalChannel.has(tc.id) ? "execute" : "prepare"','mode: "execute"'),originalAdapter],
+    ['ghl honest not_connected removed',originalChat.replace('error: "not_connected",','error: "unavailable",'),originalAdapter],
+    ['ghl refusal body dropped',originalChat.replace('const ghlRunBody = await readInvokeBody(ghlErr, ghlData);','if (ghlErr) throw ghlErr;'),originalAdapter],
+  ];
+  for(const [name,chat,adapter]of ghlNegatives)if(!validateGhlTypeScript(chat,adapter).findings.length){console.error(`GHL AST negative failed: ${name}`);process.exit(1);}
   const native=PAIGE_SPINE_CAPABILITIES.find(c=>c.action?.executor==='edge.paige-ai-chat');
   for(const [label,capability]of [['missing SQL',{...native,outcome:{...native.outcome,projector:'public.missing_sql_projector'}}],['unknown TS',{...native,outcome:{...native.outcome,projector:'other.project'}}],['unregistered TS',{...native,key:'integrations.unknown'}]]){
     if(!lint([capability],migrations,'supabase/functions/_shared/paige-spine/registry.ts',()=> 'high',tsProof).length){console.error(`symbol negative failed: ${label}`);process.exit(1);}

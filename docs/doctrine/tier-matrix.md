@@ -334,12 +334,54 @@ posture**, and **(d) permitted-RPC scoping**, each grounded in a named resolver 
 
 ## Surface ledger — what actually SHIPPED, per tier (§66)
 
+### Solo Sales customer invoice lifecycle — PR #1688
+
+Standalone Solo owners/admins in the active session workspace may propose customer-invoice publication, manual full/partial receipts, reversals and voids through canonical high-risk confirmation. Read-only roles gain no writes; platform operator authority is not widened. Anonymous access requires a valid expiring hashed invoice grant and exposes only the controlled customer document/balance. No Agency or sub-account UI expansion. Production code/migrations deployed; authenticated mutation and provider acceptance proof remain owed. Settings Billing is unchanged. See `docs/delivery/solo-sales-invoice-publication.md`.
+
 **Bound by `CLAUDE.md` §66:** every merge that changes what shipped, what's gated, or which tiers see
 a surface updates this table **in the same commit as the code**. A row records what is **LIVE**, never
 what a commit intends to deliver — ticking a box because the slice "is going to" get there is the same
 class of lie as a fabricated metric (§13).
 
 Legend: **✓** live · **—** not built · **N/A** tier not opened yet · **403** denied at the route gate.
+
+### Vibe Studio V2a — receipts, drafts without approval, Migration D (2026-10-04)
+
+Same Studio tiers (Solo owner/admin; the agency managing a sub-account; operators in company workspaces). Every chat-driven Studio save and publish now appears on the workspace's activity Rail with a named line — for workspace members only: an agency user inside a sub-account and an operator in a company workspace act without a receipt (`record_capability_run` requires active membership; widening it awaits an owner ruling), and the Studio panel's own Publish/Unpublish and library uploads file none until V2b. Copy drafts run without an approval card for every tier; saving and publishing keep their approval. `save_marketing_content`: a plain member holding the global admin role loses write; a workspace owner/admin without it gains write; the platform owner can no longer write into a workspace where they are not owner/admin. `marketing_content` reads: the managing agency gains read of a sub-account's library only while working inside that sub-account; members still read nothing. Draft, edit, route, critique and learn (seven functions): a plain member holding the global admin role loses page/form/funnel drafting, block edit, routing, critique and learn; `super_admin` loses cross-tenant critique with a named tenant and learn-from-artifact without switching into the artifact's workspace; an operator with no active workspace loses drafting without brand context (now "open one of your workspaces first"); a body tenant naming another workspace, previously ignored, is now refused; a workspace owner/admin or managing agency without the global role gains all of them. Client and Anonymous: unchanged, refused.
+
+### Vibe Studio V2a-0 — generation writes only into the caller's own workspace (2026-10-04)
+
+`generate-image` and `content-draft` now resolve the workspace from the session and require that workspace's owner/admin or its managing agency (the `studio_role_ok` rule; operators only in company workspaces). A body tenant naming another workspace is refused. paige-ai-chat's gate for `generate_image` and `draft_marketing_content` now asks `studio_role_ok` too. Before: any holder of the platform-wide `admin` role passed and the body tenant was trusted. Solo owners without the global role gain image generation and copy drafting (chat and paige-media); a global admin who is only a member of the active workspace loses it. Client and Anonymous: unchanged, refused. `save_marketing_content` and the growth draft functions are still V2a.
+
+### Vibe Studio V1 — the Studio capability boundary (2026-10-04)
+
+Same tiers as before (Solo owner/admin; the agency managing a sub-account; operators in company workspaces, per `studio_role_ok`). No tier gains a surface. A Studio turn is now offered and may dispatch only the design-studio role's `capability_scope` (16 tools); CRM, deals, team, calendar, provider execution, comms, sub-agents, funding, Knowledge writes and business-profile mutations are refused in Studio with `outside_studio_scope` and remain available in main PAIGE. D3: the six growth save/build/publish tools (whose RPCs require this workspace's owner/admin via `_growth_admin_tenant`) now ask the chat gate the same question (`studio_role_ok`) on every turn, Studio or main PAIGE: a global admin of another workspace is refused at the chat gate (the RPC already refused them), and a workspace owner without the global role is allowed (the RPC already allowed them). Every other tool keeps its existing gate; the draft edge functions, `generate-image` and `save_marketing_content` still check the global role themselves and are tracked for V2a. Knowledge context for the Studio arrives in V3, not V1.
+
+### Vibe Studio V0 — autonomy ceiling, funnels, publish truth (2026-10-04)
+
+Same tiers as the layout C workspace below (Solo owner/admin; operator acting inside a tenant). No tier gains or loses a surface. What changes is what a Studio turn may do on its own: the six Studio build tools are lifted from `confirm` to `auto` only when the Trust Compass effective rung allows acting unread (`resolve_tool_autonomy_detail.ceiling_allows_auto`, Migration A, 20270540000000); on rung 0-1 a Studio save is held for approval like any other write. Funnel generate/build/publish now reach their handler (they returned "Unknown tool"); a build that fails after an earlier write reports `partial`. `document_generate` is no longer offered in Studio. Page/form/funnel publish, from chat or the Publish panel, reports live only with the live status, a publish time and a public address. Main PAIGE's autonomy answers are unchanged (production rollback proof: 112 tenant × tool answers, 0 changed). Unchanged and still V1: the Studio tool surface beyond `document_generate`, and the tenant-agnostic admin gate on the growth tools.
+
+### Vibe Studio build view, in-project saving, approval cards (2026-10-03)
+
+Same tiers as the layout C workspace below; no new seam. The Studio designer saves drafts in the same turn; held saves surface as approval cards; an unnamed project is renamed through the existing `rename_studio_session` (workspace owner/admin or the project's creator). LIVE on merge; authenticated drive owed.
+
+### Solo Campaigns becomes the Marketing department — S2 "Marketing in place" (branch `claude/gifted-bell-qfezxb`, 2026-10-03)
+
+Owner ruling 2026-10-03, decisions D1–D5 (`docs/product/solo-marketing-ia-proposal.md`). Only the
+Solo tree changes: `SOLO_BRANCHES.growth`, the Solo rail and `src/solo/growth2.tsx`. Agency, Enterprise, Operator
+and the sub-account tree (`SUB_ACCOUNT_BRANCHES`, rendered by `AgencyApp mode="subaccount"`) are untouched.
+The URL slug stays `growth` until slice S5.
+
+| Surface | God / Super Admin | Agency | Standalone (Solo) | Sub-account | Client | Anonymous | Status |
+|---|---|---|---|---|---|---|---|
+| Menu item **Marketing** (was Campaigns), `/solo/{account}/growth` | as Solo, only with a tenant selected | **—** keeps its own "Growth" tree (unchanged) | **✓** | **— gap (D4):** still "Growth" on the Agency tree, until the `/business` → Solo-shell migration | — | — | PARTIAL: on merge; authenticated drive owed (§32.c) |
+| Marketing › **Overview** (redesigned 2026-10-03 to the owner's reference; the personal greeting removed 2026-10-04 because Command Center already greets the owner: KPI cards, leads over time, leads by source, top capture points, campaign status with brief timing, needs attention, next step; 7/30-day switch) | as Solo | — | **✓**; Pipeline and Offers links open **Sales** only where the shell shows Sales (standalone Solo), Marketing's own tabs for every other account | — (gap above) | — | — | PARTIAL: tenant reads only; no email/ads/spend source; authenticated drive owed |
+| Marketing › **Campaigns** (the Campaign Command Desk, moved from Overview unchanged; `?brief=new` opens the builder) | as Solo | — | **✓** | — | — | — | as before (`campaign_briefs`) |
+| Marketing › **Lead capture** (published + draft pages/funnels/forms, form routing drawer, recent submissions with tracking tags; moved from Catalog's Published assets half) | as Solo | — | **✓** owner/admin edit routing; a member reads | — | — | — | PARTIAL: routing write unchanged (`growth_form_set_intake`) |
+| Marketing › **Analytics** (leads by `utm_source` / `utm_campaign` from the link each lead submitted from; replaces the static Performance cards) | as Solo | — | **✓** | — | — | — | PARTIAL: visits, spend, multi-touch and revenue-by-campaign UNAVAILABLE |
+| Marketing › **Audience** · **Content** · **Email** · **Ads** (owner's list 2026-10-04; no header and no Planned marker, owner 2026-10-04: the tab strip already names each tab; in the strip; order Overview · Campaigns · Audience · Content · Social · Email · Ads · Lead capture · Analytics) | as Solo | — | **✓** read-only: Audience is a dashboard (2026-10-04) — six figures, composition, stage bars, growth, source and tag shares, PAIGE observations and draft-first next action (`clients` + `client_contact_methods`, merged contacts excluded, up to 5,000 read and marked + beyond); Content lists the saved library (`marketing_content`, not archived) and published counts; Email shows the sending identity as Settings reads it (`resolve_tenant_domain_identity`) and saved email copy; Ads shows saved ad copy | — (gap above) | — | — | PARTIAL: read-only views LIVE; the saved-library panels read `marketing_content` through migration `20270542000000` (owner-approved `GRANT SELECT`, rule narrowed to `is_tenant_admin` of the row's business), **persisted on prod 2026-10-04**;  (the library is admin-only per its read policy, and members are told so; the newest 60 pieces, marked +); segments, content calendar, broadcasts/sequences, ad accounts and spend UNAVAILABLE and each tab says so; no backend added; authenticated drive owed (§32.c) |
+| Offers · Sales · Pipeline (Sales lane) | as Solo | — | moved to the top-level **Sales** destination (#1676); old Marketing addresses redirect there | — | — | — | redirect only |
+| Solo **Analytics** branch (`/solo/{account}/analytics`) | — | — | **✓ unchanged** (retires in S4, after Sales hosts the sales-funnel evidence) | — | — | — | unchanged |
 
 ### Solo Vibe Studio workspace — layout C (2026-10-03)
 

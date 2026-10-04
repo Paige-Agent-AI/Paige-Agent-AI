@@ -54,7 +54,7 @@ describe("the Spine registers the live zapier chat surface", () => {
 
   it("the edge-executor exception covers the zapier entries field-for-field", () => {
     expect(spineRegistry).toContain(
-      "const EDGE_CHAT_EXECUTOR_CAPABILITIES = [...N8N_MANAGEMENT_CAPABILITIES, ...ZAPIER_MANAGEMENT_CAPABILITIES] as const;",
+      "const EDGE_CHAT_EXECUTOR_CAPABILITIES = [...N8N_MANAGEMENT_CAPABILITIES, ...ZAPIER_MANAGEMENT_CAPABILITIES, ...GHL_MANAGEMENT_CAPABILITIES] as const;",
     );
     expect(spineRegistry).toContain(
       "EDGE_CHAT_EXECUTOR_CAPABILITIES.some(entry => entry.key === capability.key && entry.action.chatTool === action.chatTool && entry.action.classification === action.classification && entry.action.riskPolicyKey === action.riskPolicyKey && entry.action.approvalAuthority === action.approvalAuthority)",

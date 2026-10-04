@@ -1,0 +1,32 @@
+# Solo Sales workspace refinements — pre-edit contract
+
+Ground: origin/main 62a8f590bc56a9fdbb2ea3f9baba8b729e7d53cc; fresh isolated sales/workspace-refinements. Owner authorized direct refinements 1–5 in established Sales/Invoice world; S3 status handoff held. Flow-by-Flow, Paige UI, Flow Prototype and Impeccable routed references read; context collection already completed, not repeated. No new prototype is needed for these approved minor changes.
+
+## Ten capability routing answers
+1. Outcome: reclaim Pipeline working space; use full Payments height; open Invoices by default; record off-platform preferences and editable canonical offer descriptions on invoice drafts.
+2. Owner: sales.department. Marketing/Vibe remain concurrent protected owners. Changes scoped to PipelineCommandDesk, SalesWorkspace, sales-billing/departments CSS, Catalog offer description label, InvoiceDraftEditor and SalesBillingWorkspace plus tests/evidence. No Settings Billing changes.
+3. Harness: inherited tenant-resolution/read/write contracts only. Shared Harness/Gateway layers are not extended; live payment execution is separately grounded, not enabled by these refinements.
+4. Spine: no new Sales department Spine verb; department PAIGE context/execution remains UNAVAILABLE. Existing canonical UI adapters are reused; no fabricated registry key.
+5. Provider: preferences and drafts require no connected provider. processors=[] correctly means no verified merchant connection. Provider execution requirement 6 is separate and unverified; legacy tenant-checkout-session/tenant-stripe-connect cannot be presumed safe authority.
+6. Authority: UI navigation/layout is nonmutating. Existing draft/offer save permissions and existing action-risk/Trust Compass lanes remain inherited; no new MUTATION_VERB or approval channel. Preferences do not authorize charge/send/collection.
+7. Durable work: existing invoice draft save operation/idempotency and canonical offer RPC only; no new job, scheduler, event producer or payment ledger.
+8. Readback: canonical offer description save/reopen; invoice payment_method_intents and edited item text save/reopen/preview. A draft proves recorded preferences only, not received payment or provider receipt.
+9. Binding: sales.department remains PROOF_OWED; no LIVE upgrade from fixture/UI evidence. Existing source/authority chain stays inherited.
+10. Proof: meaningful automated regressions and real rendered geometry at 1536x770,1366x768,1024x768,900x1000,390x844,430x932, both themes and PAIGE open/closed. Forms/editor/review/records keyboard reach, scroll-owner and clipping checks required. Authenticated owner saves/account-switch and governed provider test payment remain UNVERIFIED until actually exercised.
+
+## Exact seams
+- PipelineCommandDesk.tsx 662–688: remove all five pipeline-pulse cards, retain real Active work/Outcomes modes. Remove now-unused recent calculation only.
+- SalesWorkspace.tsx 47,55: remove Overview Payments secondary tab, bare and legacy view=overview map to Invoices. Preserve Recurring/Collections/Scenarios and legacy intent.
+- sales-billing.css: current workspace/editor fixed calc(100dvh - 280px/250px) conflicts with available parent height. Replace scoped Sales payment flex chain; preserve register/editor scroll ownership, content spacing, usable small-screen scrolling, no clipped overflow.
+- useSoloSalesOps.ts declared methods already includes zelle/wire/cash/check/bank_transfer/other and declares through declare_client_payment_handling. Invoice v2 payment_method_intents already persists distinct identifiers via 20270536000001_sales_invoice_snapshot_v2.sql 217–232; expose offline preferences independent of provider, no method schema change.
+- catalog-offers.tsx 481 existing canonical description textarea; useCatalogOffers.ts 262 saves _description to canonical tenant_products. Improve findability/label, no duplicate field.
+- InvoiceCatalogChoice currently omits description. Prefill name plus canonical description only on explicit offer selection into a separate editable optional line description snapshot; multiline description control. Never overwrite edited text on refresh/reprice. Forward function-only migration 20270539000000 adds optional line description max10000 and retains existing60000-byte envelope; absent keys remain absent. Name stays<=200. No truncation/memo substitution. Exact request equality and idempotent replay remain before mutable Catalog reads. v1/v2 read compatibility preserved.
+
+## Verification and exclusions
+Cover manual custom items, explicit different offer selection, background refresh/repricing preserving text, offline preferences save/readback, read permission and cross-tenant gates, schema-v1 compatibility, unknown-save recovery and dirty exits. Existing commercial/catalog/route tests stay meaningful. No provider activation, message send, actual charge, received-payment declaration or INT299 backend changes. Independent finish review required before delivery.
+
+## Approved description contract and collision proof
+Owner approved optional v2 item.description <=10000; invoice name remains<=200. Existing Catalog description is unbounded canonical text; oversized descriptions fail explicitly before adding, preserving the source without truncation. No invoice-wide memo substitution. Forward-only function replacement retains SECURITY DEFINER/search_path and existing ACL. GitHub open16 PRs and changed filenames checked:39000000 absent; latest main62a8f590 has highest38000000. Marketing1678 touches no owned source/migration, address1657 remains unabsorbed. Auto-review initially rejected historical migration-copy command; read-only proof showed only one CREATE OR REPLACE function and grants. Safe alternative excludes redundant ACL and includes only complete function definition with bounded description diff; accepted. No hosted DDL executed.
+
+## Isolated database evidence
+Fresh owned directory work/sales-line-description-proof-db; PostgreSQL16 loopback56227 userpostgres; SHOW data_directory exactmatch verified before writes. Prior clusters untouched. Snapshot and concurrency proof drivers passed actual PostgreSQL create/edit/replay/list with description/method preferences, role and tenant refusal, max10000 intact/max10001 and nontext refusal, v1 compatibility, same-operation race and optimistic-version loser refusal. Fixtures rollback; unique concurrency DB removed. Auth-helper stubs are not hosted JWT/authenticated/provider proof.

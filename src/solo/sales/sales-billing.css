@@ -118,3 +118,43 @@
 .so-editor.so-agreement-editor :focus-visible{outline:2px solid var(--violet);outline-offset:3px}
 @media(prefers-reduced-motion:reduce){.so-editor.so-agreement-editor .btn:hover:not(:disabled),.so-editor.so-agreement-editor .btn:active:not(:disabled){transform:none}}
 @media(forced-colors:active){.so-editor.so-agreement-editor{border-color:CanvasText}.so-editor.so-agreement-editor .btn{border-color:ButtonText;box-shadow:none}.so-editor.so-agreement-editor .btn:disabled{border-color:GrayText;color:GrayText;opacity:1}.so-editor.so-agreement-editor :focus-visible{outline-color:Highlight}}
+
+/* Canonical Sales Payments consumes its assigned canvas; content keeps its spacing. */
+.sb-paper form{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:14px;margin-top:18px}
+.sb-paper form label,.sb-paper>label,.sb-paper>div>label{display:flex;flex-direction:column;gap:6px;min-width:0}
+.sb-paper form input,.sb-paper form select,.sb-paper textarea,.sb-paper>div>label input{width:100%;min-height:44px;box-sizing:border-box;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px}
+.sb-paper textarea{min-height:88px;resize:vertical}
+.sb-paper form p{grid-column:1/-1}
+.sb-paper article{border-top:1px solid var(--line);padding:12px 0;overflow-wrap:anywhere}
+.sb-command-dialog{max-height:calc(100dvh - 32px);overflow:auto}
+.sb-command-dialog,.sb-payment-dialog{width:calc(100% - 24px);max-width:720px;max-height:calc(100dvh - 32px);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:16px;box-shadow:var(--sh-2);padding-bottom:max(20px,env(safe-area-inset-bottom));overflow:auto}
+.sb-command-dialog.paige-solo,.sb-payment-dialog.paige-solo{height:auto;min-height:0;padding:24px;padding-bottom:max(24px,env(safe-area-inset-bottom));align-content:start;gap:16px}
+@media(max-width:650px){.sb-command-dialog.paige-solo,.sb-payment-dialog.paige-solo{padding:18px;padding-bottom:max(18px,env(safe-area-inset-bottom))}}
+.sb-command-dialog .sb-paper{display:flex;flex-wrap:wrap;gap:12px;padding:0}
+.sb-command-dialog .sb-paper>p,.sb-command-dialog .sb-paper>dl{width:100%;margin:0}
+.sb-command-dialog button,.sb-payment-dialog button{min-height:44px;min-width:44px;padding:10px 16px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);color:var(--ink);font:inherit;font-weight:600;cursor:pointer;transition:transform 160ms ease-out,box-shadow 160ms ease-out}
+.sb-command-dialog .btn-p,.sb-payment-dialog .btn-p{background:var(--violet);color:#fff;border-color:var(--violet);box-shadow:0 3px 0 var(--violet-2),var(--sh-1)}
+.paige-solo.sb-command-dialog .btn,.paige-solo.sb-payment-dialog .btn{height:auto;min-height:44px;padding:10px 16px;font-size:14px}
+.paige-solo.sb-command-dialog .btn-p,.paige-solo.sb-payment-dialog .btn-p{background:var(--violet);color:#fff;border-color:var(--violet);box-shadow:0 3px 0 var(--violet-2),var(--sh-1)}
+.paige-solo.sb-command-dialog .btn-p:hover:not(:disabled),.paige-solo.sb-payment-dialog .btn-p:hover:not(:disabled){background:var(--violet-2);color:#fff}
+.sb-payment-dialog label:has(textarea){grid-column:1/-1}
+.sb-command-dialog button:disabled,.sb-payment-dialog button:disabled{opacity:.55;cursor:default;box-shadow:none}
+.sb-command-dialog button:focus-visible,.sb-payment-dialog :focus-visible{outline:2px solid var(--violet);outline-offset:3px}
+.sb-payment-dialog .sb-paper{padding:0}.sb-payment-dialog .sb-paper form{margin-top:0}
+.sb-command-dialog dl{display:grid;grid-template-columns:1fr 1fr;gap:8px}.sb-command-dialog dd{margin:0;font-weight:600;overflow-wrap:anywhere}
+@media(max-width:650px){.sb-paper input,.sb-paper select,.sb-paper textarea{font-size:16px}.sb-paper .btn,.sb-command-dialog .btn{min-height:44px}}
+.sales-department[data-sales-view="payments"]>.sales-department-body{display:flex;flex-direction:column;gap:12px;overflow:auto}
+.sales-department[data-sales-view="payments"] .sales-payments-tabs{flex:none;flex-wrap:wrap;margin:0}
+.sales-department[data-sales-view="payments"] .so.so-billing{display:flex;flex-direction:column;flex:1;min-height:0;width:100%}
+.sales-department[data-sales-view="payments"] .so-billing>.so-view{display:flex;flex-direction:column;flex:1;min-height:0}
+.sales-department[data-sales-view="payments"] .sb-workspace,.sales-department[data-sales-view="payments"] .sb-editor{height:auto;flex:1;min-height:0}
+.sales-department[data-sales-view="payments"] .sb-records{display:flex;flex-direction:column;gap:16px;flex:1;min-height:0}
+.sales-department[data-sales-view="payments"] .sb-records>.sb-panel{flex:1;min-height:0}
+.sales-department[data-sales-view="payments"] .sb-register{max-height:none}
+@media(max-width:650px),(max-height:600px){
+ .sales-department[data-sales-view="payments"] .sb-records{overflow:auto;overscroll-behavior:contain}
+ .sales-department[data-sales-view="payments"] .sb-records>.sb-panel{flex:none;min-height:200px}
+ .sales-department[data-sales-view="payments"] .sb-detail-grid{flex:none;max-height:none}
+ .sales-department[data-sales-view="payments"] .sb-register{max-height:300px}
+ .sales-department[data-sales-view="payments"] .sb-editor{min-height:320px}
+}

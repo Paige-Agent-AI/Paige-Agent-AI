@@ -9,6 +9,9 @@ import { DocumentPreview } from "@/components/admin/studio/DocumentPreview";
 import { loadDocument, type StudioDocument } from "@/components/admin/studio/studio";
 import { plainError, type ArtifactRef, type FormField, type StudioForm, type StudioFunnel, type StudioPage } from "./studio-data";
 import { loadArtifact, type Brand, type Device, type LoadedArtifact } from "./artifact-state";
+import type { BuildStep, DraftPreview } from "./useStudioChat";
+import { shapeFromSteps, type BuildShape } from "./artifact-state";
+import type { GrowthBlock, GrowthPageTheme } from "@/lib/growth";
 
 const TYPE_HINT: Record<string, string> = {
   email: "you@company.com", tel: "Phone number", number: "0", date: "", textarea: "", text: "",
@@ -130,13 +133,112 @@ export function Building() {
   return <div className="vs-building" aria-hidden="true"><i /><i /><i /><i /><i /><i /></div>;
 }
 
-export function StudioStage({ artifact, brand, device, tenantId, building }: {
-  artifact: LoadedArtifact | null; brand: Brand; device: Device; tenantId: string; building: boolean;
-}) {
+// ── The build view ─────────────────────────────────────────────────────────────────────────────
+// While Paige works, the stage shows the sheet the work will land on, assembling. Its shape comes
+// only from the steps the stream has actually sent (a fixed server vocabulary): before the first
+// one it is a neutral sheet; once she is designing a page it becomes a page, and so on. Nothing here
+// plays a script the stream did not report.
+const SHAPE_WORD: Record<BuildShape, string> = {
+  sheet: "Paige is getting started", page: "Paige is building your page", form: "Paige is building your form",
+  funnel: "Paige is building your funnel", image: "Paige is making your image",
+};
+
+function Wire({ shape, brand }: { shape: BuildShape; brand: Brand }) {
+  const accent = { background: brand.floor.primary ?? "var(--vs-violet)" };
+  if (shape === "page") {
+    return (
+      <div className="vs-wire vs-wire-page">
+        <i className="vs-w-nav" /><div className="vs-w-hero" style={accent}><i /><i /><i className="vs-w-cta" /></div>
+        <div className="vs-w-cols"><span><i /><i /><i /></span><span><i /><i /><i /></span><span><i /><i /><i /></span></div>
+        <i className="vs-w-line" /><i className="vs-w-line vs-w-short" /><i className="vs-w-btn" style={accent} />
+      </div>
+    );
+  }
+  if (shape === "form") {
+    return (
+      <div className="vs-wire vs-wire-form">
+        <i className="vs-w-title" /><i className="vs-w-line vs-w-short" />
+        {[0, 1, 2, 3].map((n) => <span key={n} className="vs-w-field"><i /><b /></span>)}
+        <i className="vs-w-btn" style={accent} />
+      </div>
+    );
+  }
+  if (shape === "funnel") {
+    return (
+      <div className="vs-wire vs-wire-funnel">
+        {["Page", "Form", "Thank you"].map((w, n) => (
+          <React.Fragment key={w}>
+            {n > 0 && <i className="vs-w-link" />}
+            <span className="vs-w-mini"><i style={n === 0 ? accent : undefined} /><i /><i /><small>{w}</small></span>
+          </React.Fragment>
+        ))}
+      </div>
+    );
+  }
+  if (shape === "image") return <div className="vs-wire vs-wire-image"><span /></div>;
+  return <div className="vs-wire vs-wire-sheet"><i className="vs-w-title" /><i className="vs-w-line" /><i className="vs-w-line" /><i className="vs-w-line vs-w-short" /></div>;
+}
+
+/** The stage while Paige works and nothing is on it yet. */
+export function BuildView({ steps, status, brand }: { steps: BuildStep[]; status: string | null; brand: Brand }) {
+  const shape = shapeFromSteps(steps);
+  const latest = steps[steps.length - 1];
+  const caption = latest?.label ?? status ?? SHAPE_WORD[shape];
+  const done = steps.slice(0, -1).slice(-3);
   return (
-    <div className="vs-stage-inner">
-      {!artifact ? (
-        building ? <Building /> : <div className="vs-stage-empty"><b>Nothing on the stage yet</b>Tell Paige what to build, and it appears here as she makes it.</div>
+    <div className="vs-build" data-shape={shape}>
+      <div className="vs-build-sheet" aria-hidden="true">
+        <Wire key={shape} shape={shape} brand={brand} />
+        <span className="vs-build-light" />
+      </div>
+      <div className="vs-build-caption" role="status" aria-live="polite">
+        <span className="vs-build-orb" aria-hidden="true" />
+        <span key={caption} className="vs-build-now">{caption}</span>
+      </div>
+      {done.length > 0 && (
+        <ul className="vs-build-done" aria-label="Done so far">
+          {done.map((s) => <li key={s.id}>{s.label}</li>)}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/** A page Paige designed this turn but did not save: shown honestly, as not saved. */
+function PreviewView({ preview, waiting, brand, device, tenantId }: { preview: DraftPreview; waiting: boolean; brand: Brand; device: Device; tenantId: string }) {
+  return (
+    <>
+      <p className="vs-unsaved" role="status">
+        <b>Designed, not saved yet.</b>
+        {waiting ? " Approve the save in the chat to keep it." : " Tell Paige to save it if you want to keep it in this project."}
+      </p>
+      <div className="vs-page-frame" style={device === "phone" ? { width: 390 } : undefined}>
+        <LivePreview blocks={preview.blocks as GrowthBlock[]} theme={(preview.theme as GrowthPageTheme | null) ?? undefined} brandFloor={brand.floor} tenantId={tenantId} device={device === "phone" ? "mobile" : "desktop"} />
+      </div>
+    </>
+  );
+}
+
+export function StudioStage({ artifact, brand, device, tenantId, building, steps = [], status = null, preview = null, waitingApproval = false }: {
+  artifact: LoadedArtifact | null; brand: Brand; device: Device; tenantId: string; building: boolean;
+  steps?: BuildStep[]; status?: string | null; preview?: DraftPreview | null; waitingApproval?: boolean;
+}) {
+  // Working on something already on the stage: it stays visible, with the light passing over it.
+  // Only once she is actually building (a step arrived); a plain question leaves the stage alone.
+  const reworking = building && !!artifact && steps.length > 0;
+  return (
+    <div className="vs-stage-inner" data-reworking={reworking || undefined}>
+      {reworking && (
+        <p className="vs-working" role="status" aria-live="polite">
+          <span className="vs-build-orb" aria-hidden="true" />
+          <span key={steps[steps.length - 1]?.label ?? ""}>Paige is working: {steps[steps.length - 1]?.label}</span>
+        </p>
+      )}
+      {preview && !building ? (
+        <PreviewView preview={preview} waiting={waitingApproval} brand={brand} device={device} tenantId={tenantId} />
+      ) : !artifact ? (
+        building ? <BuildView steps={steps} status={status} brand={brand} />
+        : <div className="vs-stage-empty"><b>Nothing on the stage yet</b>Tell Paige what to build, and it appears here as she makes it.</div>
       ) : artifact.kind === "form" ? (
         <FormSheet form={artifact.form} brand={brand} device={device} />
       ) : artifact.kind === "page" ? (

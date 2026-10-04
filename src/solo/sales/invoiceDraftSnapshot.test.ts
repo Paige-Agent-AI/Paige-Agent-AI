@@ -43,3 +43,5 @@ describe('versioned invoice-only snapshots', () => {
     expect(normalizeInvoiceSnapshot({ ...snapshot, ...patch }, 2999)).toBeNull();
   });
 });
+
+it('preserves optional multiline descriptions and absent legacy keys through snapshot edits',()=>{const described={...snapshot,items:snapshot.items.map((line,index)=>index===0?{...line,description:'Scope\nCustomer wording'}:line)};expect(normalizeInvoiceSnapshot(described,2999)).toEqual(described);expect(snapshotEditInput(described).items[0].description).toBe('Scope\nCustomer wording');expect(Object.prototype.hasOwnProperty.call(snapshotEditInput(snapshot).items[0],'description')).toBe(false);expect(normalizeInvoiceSnapshot({...described,items:[{...described.items[0],description:'x'.repeat(10001)},described.items[1]]},2999)).toBeNull();expect(normalizeInvoiceSnapshot({...described,items:[{...described.items[0],description:42},described.items[1]]},2999)).toBeNull();});

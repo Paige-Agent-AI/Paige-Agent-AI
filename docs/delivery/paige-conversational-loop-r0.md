@@ -1,0 +1,518 @@
+# PAIGE Conversational Loop + Dynamic Capability Awareness — R0 grounding
+
+**What this is.** The R0 grounding return for the owner handoff of 2026‑10‑04 ("PAIGE Progressive
+Conversational Turn Experience" + "dynamic capability awareness"). Grounding and architecture only —
+**no runtime code changes in this PR.** It is a delivery record over the canonical homes (Spine
+registry, Capability Kit, capability‑status resolver, durable‑job contract, chat completion matrix),
+**not** a new registry, Harness, orchestrator or source of truth.
+
+**Read on.** `main` = `39d5c956` (#1692), 2026‑10‑04. Five read‑only specialists (turn lifecycle ·
+client consumers · approvals/durable/sub‑agents · capability manifest · registries) + integrator.
+Every load‑bearing claim below was either cited by a specialist with file:line or re‑checked by the
+integrator; the integrator's own re‑checks are marked **[verified]**. Production numbers come from
+read‑only queries against prod (`xygzykjyynhzqytbqnzu`) on 2026‑10‑04.
+
+**Method (Flow‑by‑Flow).** Mode: Existing Project / Audit. Depth: **Deep** (cross‑flow state, a
+major UI change ahead, persistence, authority). Product paradigm: `app`. UI work (C3) is gated on
+**Impeccable** + a `flow-prototype` the owner sees before production (owner instruction 2026‑10‑04,
+§00).
+
+---
+
+## 0. The five findings that decide the design
+
+1. **The handoff's named "under‑claim" was closed — and has re‑opened in a new shape.** Research,
+   documents, save‑to‑Knowledge, planning and delegation were added to the manifest on 2026‑09‑12
+   (`chat-completion-matrix.md` cross‑cutting #1). But the manifest is still a **hand‑written array
+   of 21 families** (`_shared/paige-capability-status/signals.ts:139-249`), and it has drifted again
+   since: it calls `team.manage` "planned" while `member_grant_role` (`index.ts:5990`) and
+   `team_invite_member` (`:6076`) ship **[verified]**; it says "no governed move‑a‑deal write" while
+   `deal_move_stage` is in `crm-command/catalog.ts:22` **[verified]**; it offers
+   `crm.advance_journey_stage` in chat although no chat tool of that name exists **[verified]**; it
+   calls `comms.send` planned while `calendar_link_send`, `agreement_send`, `billing_send_invoice`
+   ship; it omits Studio/Vibe, Sales invoices, ~30 CRM writes, calendar, agreements, automations.
+   **The owner's thesis is proven by the repository's own history: a hand list drifts every time a
+   tool ships.**
+2. **The right descriptor already exists — nothing reads it.** The Capability Kit
+   (`_shared/capability-kit/types.ts`, `defineCapability()`) carries almost exactly the handoff's §7
+   descriptor (identity/domain/owner/human surface/description · input schema · effect · risk ·
+   approval · required permission · server tenant scope · availability resolver · provider binding ·
+   idempotency/readback · receipt). 17 declarations; its only runtime reader is
+   `sales-invoice-command`. The Spine registry (91 capabilities, 85 with a `chatTool`) is the
+   canonical *existence + governance* list but has **no** model‑facing description, availability or
+   role field. The manifest reads neither (it looks up Spine `maturity` for 11 keys, three of which
+   don't exist in Spine). `governance-seam-convergence-plan.md` §4a records the same gap from the
+   execution side.
+3. **CI already forces registration of new tools.** `lint:chat-tool-registry` (inline tool names
+   may only shrink, baseline 96), `lint:capability-declaration` (every model‑surface tool has a
+   Spine `chatTool` or sits in a shrink‑only baseline of **80**), `lint:action-risk`,
+   `lint:tool-catalogue`, `capability-kit-lint`. So the "adoption contract" the handoff asks for is
+   ~70 % built. **The missing 30 % is that the manifest — what PAIGE believes she can do — is not
+   derived from what CI forces developers to declare.** Close that and new capabilities appear in
+   PAIGE's self‑knowledge with no conversation‑layer change.
+4. **The dead air is mostly self‑inflicted buffering, not missing architecture.** On the main tool
+   path every model round is read to completion before anything is forwarded (`consumeRound`,
+   `index.ts:8514`); a no‑tool answer is stored (`finalChunks = allChunks`, `:14626`) and replayed in
+   one burst after the loop (`:15009-15010`) **[verified]**. Prod, 30 days: the `chat` model call
+   takes **p50 3.65 s / p90 12.8 s** to *finish* (trace measures to end of stream, `claude.ts:683`)
+   — so a plain answer shows **zero characters** for that whole time, on top of unmeasured context
+   assembly (up to 4 sequential embeddings, persona/context RPCs, an optional pre‑flight fold at
+   p50 4.2 s). Each further tool round adds p50 3.4 s / p90 13.9 s. Only the tools‑free closing call
+   streams live. There is no acknowledgement frame of any kind.
+5. **There is no "resume the same objective".** Approval is a new turn in which the model must
+   re‑emit the call (`index.ts:9366-9433`) while the system prompt simultaneously tells it never to
+   re‑emit an approved action (`:5438`) **[verified]**; durable document work completes by inserting
+   a canned "Your document is ready" turn without re‑invoking PAIGE (migration `20270418000000:460`);
+   the only ask‑the‑user tool (`ask_choices`) exists in Studio only. Deep Research (another lane,
+   build in progress past M0) is contracted to adopt the same `paige_durable_work` envelope
+   (`docs/brain/paige-durable-job-contract.md` §3), so **the loop's resume design is the seam Deep
+   Research plugs into** — it must land as one shared mechanism, not two.
+
+---
+
+## 1. Current `paige-ai-chat` turn lifecycle
+
+`supabase/functions/paige-ai-chat/index.ts` (16,267 lines; one file). In order:
+
+1. `serve` (784) → JWT auth (790–812) → trace ctx (868–887) → rate limit 20/min (890–901) → zod body
+   (477–590, parsed 903–915; 50‑message window).
+2. Optional Live runtime (917–981) → client‑scope authorization (1043–1102; refusal returns a fixed
+   3‑frame SSE at 1167–1189) → portal Rail event (1204–1237) → session‑summary JSON mode (1240–1434).
+3. Attachments/documents (1440–1647) → actor tier `getActorTier` (1670) → URL auto‑fetch (1677–1706)
+   → client + operating memory, preference detection (1729–1955).
+4. Persona/workspace `get_paige_persona_context` (1982–2009) → context reads incl. KB/RAG/tenant
+   knowledge with three embeddings (2033–2350) → protected‑content latches (2391–2732) → domain
+   identity, departments (2741–2918).
+5. Prompt constants (2929–4597) → autonomy resolvers (4604–4635) → **capability manifest gathered**
+   (4663–4717; block built 4844–4852 only for a tenant, non‑client seat) → team/readiness/presence/
+   authority/social/mission/n8n/integrations blocks (4727–4834).
+6. `aiMessages` assembly (4910–4936): persona → voice → core → context blocks → **capability block
+   (4928)** → core prompt → narration instruction (4935). Operator briefing spliced at 2 (4956–4961).
+7. User turn persisted `paige_chat_turn_append` (5132–5142) → pre‑flight compaction fold (5165) →
+   Studio swap (5181–5262) → rolling summary (5283–5296) → admin operator context (5339–5558) →
+   message mapping (5571–5645).
+8. Tool list built (5647–7308) → declined confirmations cancelled (7567) → Studio `ask_choices` +
+   narrowing (8271–8306) → `substantiveTurn` model pick (8344) → pre‑egress scope check (8357).
+9. **First model call** (8411–8433). `Response` returned at 15230 with a `ReadableStream` that runs
+   the tool loop (8510–15230). Document turns take a separate no‑tool path (15233–15600).
+10. Close: final scope check (15106) → client‑seat withhold (15135) → `releaseContent` (15160) →
+    assistant turn persisted via `waitUntil` (15175; `persistAssistantTurn` 5307–5334).
+
+## 2. Current SSE frame taxonomy (server → client)
+
+All `data: <json>\n\n`. Producers in `index.ts` unless noted.
+
+| frame | shape | producer | notes |
+|---|---|---|---|
+| content delta | OpenAI `{choices:[{delta:{content}}]}` | replayed provider chunks 15010; closing stream 15033; doc stream 15578; fixed sentences (14832, 15057, …) | provider chunks from tool rounds are parsed, never forwarded |
+| `[DONE]` | sentinel | 1182, 14866, 15049, … | |
+| `paige_step` | `{id, round, seq, kind:"thought"\|"action", label, group, status, detail?, ts}` | 14503 (`emitStep`), 14692 (via `emitContent`) | see §3 |
+| `paige_phase` | `"writing"` | 15008, 15535, 15576 | only value emitted |
+| `paige_compacting` | `{state, pct?}` | collected 5166, flushed 14602/15275 | only pre‑answer frame that exists |
+| `paige_confirm` | `{tool, summary, fingerprint?, command?, idempotency_key?}` | 14972 | approval card |
+| `approval_queued` | `[{id, summary, category, contact_id}]` | 14969 | action‑bus lane |
+| `paige_approval_outcome` | `{actions:[{fingerprint, outcome, note?}], note?}` | 14579 | once per approval turn |
+| `paige_crm_result` | `{action, outcome, readback, receipt_recorded, …}` | 14973 | |
+| `paige_artifact` | `{kind,id,title,url[,artifactType,tenant_id]}` | 14976 / 14988 | |
+| `paige_choices` | `{prompt, options[], multi, allow_other}` | 14659 | Studio turn‑ender |
+| `paige_preview` | `{kind,title,blocks,theme}` | 14980 | Studio |
+| `extraction_proposal`, `sync_status` | — | 15003; doc path | |
+| `client_scope` | `{status:"refused",…}` | 1180 (14597/15272 unreachable) | |
+| `paige_withheld` | `true` | 15147, 15453 | client‑seat withhold |
+| `paige_live_error` / `paige_live_output` | — | 15201 / `_shared/paige-live-runtime-proof.ts:97` | Live only |
+| `paige_thinking` | — | `claude.ts:636,649` | **never requested** (`STUDIO_THINKING_ENABLED=false`, 8333) — private reasoning is not forwarded today |
+
+No in‑stream generic error frame; pre‑stream errors are JSON responses.
+
+## 3. Current `paige_step` producers
+
+- **Thought** (14681–14693): `id "t:<round>"`, label = `summarizeThought(content)` (14360–14376:
+  strips snake_case/§/uuids/markup, caps 200 chars) — i.e. a sanitized summary of the model's own
+  *visible* round text, produced only on rounds that call tools. Held on protected turns.
+- **Action** (14759–14766): label/group/detail from `describeStep` (169–405), which suppresses noise
+  (`web_fetch`, policy rejections, `needs_confirm`, forbidden seats, internal drafts). **Emitted after
+  the whole round's tools finish** (loop 14728–14768), never as a tool starts. Never held.
+- No other producers (searched `supabase/functions` for `paige_step`, `paige_phase`).
+- Labels for sub‑agents come from a hard‑coded 3‑entry `SUBAGENT_FRIENDLY` map (164–168).
+
+## 4. Current client consumers
+
+**Four independent hand‑written SSE parsers for the same endpoint** (plus Broker's own, other endpoint):
+
+| parser | file | frames handled | live? |
+|---|---|---|---|
+| `PaigeAIChat.streamTurn` | `src/components/dashboard/PaigeAIChat.tsx:1030-1544` | all of the table above except Studio frames | Solo workspace + Command Center |
+| `PaigeChat` | `src/components/app/PaigeChat.tsx:449-484` | step, phase, sync_status, withheld, delta | client portal `/app` |
+| `useOperatorChat.run` | `src/operator/data/useOperatorChat.ts:168-226` | `paige_confirm`, delta (drops the rest) | `/operator` |
+| `useStudioChat.send` | `src/solo/studio/useStudioChat.ts:137-211` | step (appended, not upserted), choices, artifact, confirm, approval_outcome, preview, delta | Solo Vibe Studio |
+
+- `PaigeThinkingIndicator` (`src/components/paige/chat/PaigeThinkingIndicator.tsx`) renders only
+  `kind:"thought"` steps, collapsed; returns `null` when not active. In Solo it receives `thoughts={[]}`
+  (`PaigeAIChat.tsx:2440`).
+- `PaigeStepTrace` (`src/components/dashboard/PaigeStepTrace.tsx`): `upsertStep`, `StepTimeline`,
+  `PaigeReasoningStrip` (one‑line strip + bottom sheet). `ReasoningDeck` is **dead** (only importer is
+  the dead `PaigeWorkspace` ← `PlaybookAdmin`, zero importers).
+- **Steps live in component state, not on the message**; cleared at each send; earlier turns' traces
+  are discarded and never persisted.
+- One evolving assistant message per turn in `PaigeAIChat` (single `assistantId`, 1098) — the
+  "one living turn" shape already exists for text; steps/phase are sidecar state.
+
+## 5. Current first‑token latency path
+
+Everything from 790 to 8433 is awaited before the `Response` returns (§1), including up to four
+sequential `embedText` calls (1743, 1937, 2122, 2268), the optional fold LLM call (5099) and deferred
+document extraction (8380). Then: **tool path = per‑round buffering** (finding 4). No early frame
+except `paige_compacting` on long threads. Document path streams live unless protected (every
+document turn is protected, 2397). Prod p50/p90 above.
+
+## 6. Tool‑round / continuation loop
+
+- `MAX_ROUNDS = 5`, `MAX_TOTAL_TOOL_CALLS = 12`, wall clock 360 s (13986, 153); `deep_research`
+  costs 3.
+- Sequential execution in `executeToolCalls` (8571–13981): per call scope revalidation (8614) → Studio
+  scope → client seat → Sales‑invoice door → CRM door → quote check → autonomy gate (8923) → ~106
+  `if/else` branches → "Unknown tool" (13977).
+- Results fed back as `assistant{tool_calls}` + tool messages, next call `tool_choice:"auto"`
+  (14769–14786).
+- Stops: duplicate call signature, over‑cap/over‑time/last round (cap can be exceeded in the final
+  round), scope invalidated, non‑OK follow‑up.
+- Continuation wrapper `MAX_CONTINUATIONS = 3` (14456) for action‑looking requests that ended in
+  prose without a terminal signal (14797–14814).
+
+## 7. Final synthesis
+
+Natural stop → replay of the buffered last round (no separate call). Forced termination / Live → one
+tools‑free streamed "close" call over the bare `convo` (14847–14853), **no synthesis instruction
+added**. Fallback sentences for close failure / exception / scope change.
+
+## 8. Approval interruption / resume
+
+- Confirm lane → fingerprint + `recordConfirmation` into `paige_pending_confirmations` (single‑use,
+  30‑min expiry, `issued_in_request` nonce, `server_issued_at`, browser‑read‑only) → tool result
+  `needs_confirm` → `paige_confirm` frame after the loop.
+- Decision rides the **next POST** as `approvedConfirmations`/`declinedConfirmations`; CRM and
+  pipeline lanes are executed client‑side before the turn and appended to the user text as
+  `[Card result — …]` (`PaigeAIChat.tsx:1629-1787`).
+- General gate: the model must **re‑emit** the call; the gate claims the row and overwrites args with
+  the stored ones (9366–9433). Contradiction with the prompt at 5438 **[verified]** (recorded already
+  as a family in §10, 2026‑09‑26 #1450).
+- Self‑approval guards are strong (body‑only approvals, per‑request nonce, server‑issued rows,
+  single‑use CAS, scope re‑check, Live turns cannot carry approvals).
+- **No objective state is saved and re‑fed.** Decline = `cancelConfirmations` (7495–7566), then a
+  normal turn.
+
+## 9. Sub‑agent delegation
+
+- `list_subagents` (6931) and `delegate_to_subagent` (6948, free‑string slug) → `paige-orchestrator`
+  with service role (`tool_search` / `tool_invoke`), gated on global admin role (13229–13235),
+  `delegate_to_subagent` classified **high** → approval card every time.
+- Roster is **dynamic** (read from `paige_subagents`, enabled, `tenant_id IS NULL OR = X`); prod has
+  **33 rows, all enabled**. Orchestrator `inspect` (233–278) returns health derived from
+  `paige_subagent_invocations`; chat never calls it.
+- Runs are **synchronous**, one tool result, no progress.
+- **Latent defect [verified]:** the `deep-research` sub‑agent cannot run via delegation —
+  `invokeLocal` posts `{input, context}` (`paige-orchestrator/index.ts:457-481`) but
+  `paige-deep-research` reads top‑level `body.question`/`body.user_id` and 400s
+  (`index.ts:1531-1533`). Prod: 0 invocations ever, so unhit. **Belongs to the Deep Research lane;
+  routed there, not fixed here.**
+
+## 10. Durable‑work resume
+
+- `paige_durable_work` envelope (`20270417000000`) + document adapter (`20270418000000`, pg_cron
+  worker every minute) is the **adopted** contract (`docs/brain/paige-durable-job-contract.md`):
+  canonical states incl. `blocked` with a named waiter; approval expiry → `blocked/approval_expired`;
+  *"fresh approval resumes the existing work identity"*.
+- `requestIntentId` (body 556) is consumed only by `document_generate` (12047–12223) → returns
+  `accepted` + `work_id` immediately.
+- Completion inserts a fixed assistant turn; PAIGE is not re‑invoked; nothing narrates progress.
+- Searched `paige_jobs`, `job_steps`, `harness_job`, `paige_objective`, `resume_turn`,
+  `continuation_token` — none exist. Deep Research is synchronous today (60–90 s bound), not durable.
+
+## 11. Thread persistence
+
+- Server is the single writer: user turn before inference, assistant turn after the stream via
+  `paige_chat_turn_append`. `bundle_ref` (**jsonb**, free‑form, accepted by the RPC —
+  `20261020100000_chat_turn_append_tenant_scope.sql:109-174`) stores `approval_queued`,
+  `paige_confirm`, `paige_crm_result`, surfaces; artifacts via durable work.
+- **Steps/trace and interim narration are not persisted**; reload restores text, settled confirms,
+  CRM results, artifacts.
+- Client portal and operator chats keep no thread.
+
+## 12. Workspace‑switch / scope fences
+
+- `PaigeAIChat`: scope identity = tenant/user/focused client/mission; `createComposerRequestFence`
+  aborts on epoch change; every frame checked with `ticketAccepted`; reset clears thread/messages/
+  steps. Solo additionally remounts on `activeTenantId`. Thread cache keys include tenant.
+- Server: tenant is re‑resolved per request from the JWT; per‑call scope revalidation in the loop.
+- **Gaps:** `useStudioChat` aborts only on unmount/session change and carries no tenant fence;
+  `useOperatorChat` and `PaigeChat` have no abort controller.
+
+## 13. Current capability manifest architecture
+
+`_shared/paige-capability-status/`: `signals.ts` (facts → 21 hand‑written `CapabilitySignal`s),
+`resolver.ts` (most‑restrictive‑wins: tier → evidence → maturity → package → connection → proof_owed →
+lane), `render.ts` (prompt block, "authoritative / OVERRIDES"), `gatherer.ts` (a 1‑binding Layer‑C
+resolver, **not** the chat gatherer). The chat gatherer is inline: `gatherCapabilityManifest`
+(`index.ts:4663-4717`). Same truth feeds the prompt block (4928) and the `capability_status` tool
+(12672–12680) → "what can you do?" is one truth, by design. ~3.0 k chars per turn. Computed **every
+request**, no cross‑request cache, no fingerprint.
+
+## 14. Exact gatherer inputs (chat path)
+
+Tier (`get_actor_access` via `getActorTier`, fail‑closed to client) · tenant (`get_paige_persona_context`)
+· owner‑ops role (global `user_roles` admin/super_admin — **not tenant‑scoped**) · lanes for **8
+hard‑coded tool keys** via `resolve_tool_autonomy` (Trust ceiling applied in SQL) + `clampLaneByRisk`
+· Spine `maturity` for 11 keys (3 absent from Spine → "planned") · n8n readiness RPC · env
+`FIRECRAWL_API_KEY`. **Not read:** any other connection (email, calendar, GHL, Zapier, Twilio, social),
+tier features, package entitlement, Studio scope, the Integration Capability Registry.
+
+## 15. What the manifest currently omits or gets wrong
+
+Under‑claims: Studio/Vibe build tools (11+), Sales invoices (6), ~30 CRM‑command writes, calendar
+(12), agreements (4), business missions, automations, Zapier/GHL, n8n management beyond run, comms
+numbers, action bus, team management (contradiction), deal moves (contradiction), sends
+(contradiction). Over‑claims: `crm.advance_journey_stage` in chat; n8n `available ≠ connected`
+(`n8nReadiness.ts:20-37`); CRM rows on Studio turns that cannot use them. Honesty bugs: block shown to
+non‑admin members while the tool is admin‑only, with "not for this account type" as the stated reason
+when the real cause is role. Stale docs: matrix row 146/148.
+
+## 16. Spine registry coverage
+
+`PAIGE_SPINE_CAPABILITIES` (`_shared/paige-spine/registry.ts:50`): 91 capabilities from 22 domain files,
+self‑validating at load; all `maturity: PARTIAL`; 85 declare a `chatTool`. **84 of the 164 chat tools
+are covered.** Fields: key, domain, owner (team), humanSurface (route), evidence, action{classification,
+executor, chatTool, idempotency, riskPolicyKey, approvalAuthority}, outcome, chatBinding, mindBinding,
+maturity. **No** description/schema, availability, tier, role or specialist field. Runtime readers:
+manifest maturity lookup, Mind evidence, migration advisor. One dead binding (`integrations_health`).
+
+## 17. Inline vs registered gap
+
+Chat offers **~164 tools** (96 inline names + 39 spread from domain modules − 9 spliced + 32 CRM catalog
++ 6 Sales). 104 are mutating. Coverage: action‑risk 104/104 · `list_tool_autonomy` 104/104 · receipt
+ledger 104/104 (most `seeded_undeclared`) · Spine 84/164 · Kit 15 · Gateway 2. **80 tools are on the
+surface with no Spine entry** (38 mutating, 42 read — exactly the shrink‑only
+`capability-declaration-baseline.json`). Kit bypass baseline: 297 entries (125 direct tool defs, 150
+direct risk entries, 22 direct bindings/receipts).
+
+## 18. Capability Gateway coverage
+
+`_shared/paige-capability-gateway/gateway.ts` (no edge function exists): `decideGatewayEntry` maps
+availability → disposition; it owns **2 tools** (`capability_status`, `contact_event_status`), both
+emitted with hard‑coded `live`. Per‑caller withholding "deliberately NOT yet wired" (219–224). **No
+tool is filtered by tenant or provider availability before the model sees it**; client seats are
+refused at dispatch only (8634) despite a "hidden AND enforced" comment.
+
+## 19. Agent‑roster discovery
+
+Dynamic and correct at the data layer (`paige_subagents`, tenant overrides by row, health from
+invocations, Studio capability scope in `config`). Not dynamic at the presentation layer
+(`SUBAGENT_FRIENDLY`, 3 labels) and not in the manifest beyond one `agentteam.delegate` row.
+
+### Ownership map — who answers each concern today
+
+| concern | owner today | divergence |
+|---|---|---|
+| A existence | de facto the chat `toolDefs` assembly; Spine is canonical for 84 | ⚠ 80 surface tools unregistered; MCP has its own 117‑tool list |
+| B model‑facing description | inline literals + domain `*_TOOLS` arrays + CRM/Sales catalogs; Kit has `description`; Spine has none | ⚠ |
+| C tenant availability | manifest (21 families), Gateway (2, hard‑coded), Studio scope, client‑seat allowlist, conditional spreads | ⚠ |
+| D provider readiness | n8n RPC, env key, `tenant_mcp_connections`, Integration Registry (docs only) | ⚠ three vocabularies |
+| E actor authority | inline per door; Kit `requiredPermission`; no per‑tool role in Spine | ⚠ |
+| F trust/autonomy | `resolve_tool_autonomy` + Trust ceiling + `clampLaneByRisk`; action kinds; §67 process grants | ⚠ action‑kind vs tool lane for journey advance |
+| G risk | **`action-risk.ts` canonical**, mirrored and CI‑checked | converged |
+| H execution binding | inline dispatch chain + command doors; Spine `executor` is declarative only | ⚠ |
+| I specialist owner | `paige_action_kinds.draft_subagent_slug`; "owner" means team in Spine/Kit | ⚠ |
+| J human surface/label | Spine `humanSurface`, Kit, catalogue labels, `TOOL_LABELS`, manifest labels | ⚠ four label sets |
+| K evidence/Rail | Spine `outcome`, receipt ledger, Kit `receipt`, seam `outcomeChannel` | ⚠ declared vs `seeded_undeclared` |
+
+---
+
+## 20. Proposed dynamic capability source of truth — no new registry
+
+**Principle.** *The manifest becomes a projection, not a list.* What PAIGE believes she can do on a
+turn is computed from (a) the tools actually emitted to the model on that turn, (b) their canonical
+declarations, and (c) named availability resolvers. Nothing in the conversation layer enumerates
+capabilities.
+
+- **Existence + governance:** the **Spine registry** (already canonical; CI already forces new chat
+  tools into it).
+- **Per‑capability declaration:** the **Capability Kit** shape (already has description, permission,
+  availability resolver id, provider binding, receipt). Where a Spine entry has a Kit declaration, the
+  projection reads it; where it doesn't yet, the projection falls back to Spine + `action-risk` +
+  `list_tool_autonomy` label + the emitted tool's own `description` — so **all 164 tools are visible
+  on day one**, before the 80‑tool registration migration finishes.
+- **Availability:** a small, closed **resolver registry** keyed by the ids the Kit already names
+  (`CapabilityAvailabilityResolverId`, `seams.ts`): e.g. `always`, `provider:n8n`, `env:research`,
+  `connection:mcp:<provider>`, `role:owner_ops`, `studio_scope`. A new *kind* of readiness adds one
+  resolver; a new capability of an existing kind adds **nothing** outside its own declaration.
+- **Lane:** unchanged canonical path — `resolve_tool_autonomy` (Trust ceiling in SQL) +
+  `clampLaneByRisk`, resolved for **every emitted mutating tool** (batched), not 8 hand‑picked keys.
+- **Families/grouping:** derived from Spine `domain` (+ an optional owner‑facing family label on the
+  declaration), not hard‑coded render order.
+- **Non‑tool capabilities** (skills‑in‑chat, Secure Browser — honest "not yet"): stay as an explicit,
+  small *overlay* of planned rows, each pointing at a real gate.
+- **Specialists:** the manifest's agent‑team section lists enabled, healthy `paige_subagents` for the
+  tenant (name, domain, role) — read, not hard‑coded; step labels come from the same row
+  (`rail_display_name`/`name`), retiring `SUBAGENT_FRIENDLY`.
+- **Executable truth == advertised truth:** the projection runs **over the post‑narrowing tool
+  surface** (Studio scope, client seat, funding/marketplace), so the manifest can no longer offer what
+  the turn cannot call. Availability‑gated *emission* (withholding a `needs_setup` tool from the model)
+  is a later, separate step under §58 — it changes behaviour; the projection does not.
+
+## 21. Manifest refresh / invalidation contract
+
+Today it is already recomputed every request (good), with three real staleness windows: inside a
+long tool loop, across a suspended objective, and across durable work.
+
+- **Capability fingerprint:** `hash(tenant, workspace scope epoch, actor, tier, role, trust rung,
+  registry build revision, sorted (key, availability, lane))`. Computed with the manifest; stamped
+  into the assistant turn's `bundle_ref.turn_state`, onto suspended objectives (§22) and compared to
+  the durable work envelope's existing `authority_context`/`scope_epoch`.
+- **Inside a turn:** a tool whose declaration marks it `invalidatesCapabilities` (connect a provider,
+  change autonomy, change a member's role) triggers a re‑gather before the next round. Everything
+  else uses the per‑request memo.
+- **On resume** (approval, answer, durable completion): always re‑gather; if the fingerprint changed,
+  PAIGE is told *what* changed ("n8n is now connected") rather than silently given a new list.
+- **Authority is never cached:** every act still re‑resolves tenant/actor/scope/lane at execution
+  (existing per‑call gate). The fingerprint governs what PAIGE *believes*, not what she is *allowed*.
+- **Workspace switch:** client epoch abort already exists for `PaigeAIChat`; the server binds tenant
+  per request. Gaps to close: Studio and operator parsers (§12).
+
+## 22. Proposed conversational turn state machine
+
+The conversational loop owns **dialogue**; the existing tool loop / Harness owns **work**. A small
+pure reducer (`_shared/paige-turn/`) observes the loop and decides what the user sees and what is
+recorded; it never chooses tools.
+
+```
+RECEIVED → ORIENT → (ACKNOWLEDGE) → WORK ⟲ [act → observe → evaluate]
+   evaluate → CONTINUE | ASK_USER | WAIT_APPROVAL | WAIT_WORK | BLOCKED | SUFFICIENT
+   SUFFICIENT / forced → SYNTHESIZE → FINAL
+   ASK_USER | WAIT_APPROVAL | WAIT_WORK → (suspended; turn_state persisted) → RESUMED → WORK
+```
+
+Mapping onto existing code: RECEIVED = 784–915 · ORIENT = context assembly · first model call =
+plan · loop 14450–14836 = WORK/EVALUATE · continuation wrapper = CONTINUE · `needs_confirm` =
+WAIT_APPROVAL · `document_generate accepted` = WAIT_WORK · `ask_choices` = ASK_USER · close call =
+SYNTHESIZE · natural stop = FINAL.
+
+**Response mode is observed, not predicted.** No extra classifier call (it would add latency). Mode
+starts `pending` and is set by what the model actually does: no tool call in round 0 → `fast_answer`;
+research‑domain tools → `research`; mutating tools → `action`; Studio build tools → `build`;
+`delegate_to_subagent` → `multi_agent`; a question → `clarify`; resume handle present → `resume`.
+Domains come from the registry, so a future Operations tool sets its mode with no loop change.
+
+**Resume handle** = `thread_id` + `turn_state` in the assistant turn's `bundle_ref` (objective
+summary, mode, status, pending fingerprints, `work_id`s, capability fingerprint). On the next request
+that answers it (approval, choice, durable completion), the server injects "you are resuming objective
+X; outcome Y; continue" and the **same** loop finishes the objective — fixing the re‑emit
+contradiction by making the server, not the model, carry the approved call forward.
+
+## 23. Proposed safe narration contract
+
+Three channels; every visible event has a real producer:
+
+| channel | producer | surface | persisted |
+|---|---|---|---|
+| **Private reasoning** | provider thinking | **never** (stays unrequested / unforwarded) | no |
+| **Work activity** | real tool start/finish, sub‑agent invoke, durable‑work transitions | `paige_step` → expandable "What PAIGE did" | yes, compact, in `bundle_ref.turn_trace` |
+| **Conversational narration** | the model's own *visible* text before/between tool calls | inline in the one living assistant turn | acknowledgement + material discoveries kept; the rest collapses into the trace |
+| **Final answer** | final round / close call | the turn body | yes (as today) |
+
+Rules: (1) stream round text **live** instead of buffering it — the model's own "Let me check the
+agreement against what was invoiced" *is* the acknowledgement, authored by PAIGE, not manufactured;
+(2) the existing narration instruction (4935) is rewritten to the handoff's §12 standard — one short
+sentence before work on a work turn, nothing on a fast turn, speak again only on a meaningful
+discovery, never name tools; (3) `paige_step` action steps are emitted **as each tool starts and
+finishes** (`running` → `done`/`error`), still filtered by `describeStep`; (4) no client timers invent
+steps (the 10 s "still thinking" cue is honest elapsed time and stays); (5) protected‑content holds
+apply to narration exactly as to answers (`emitContent`).
+
+**Minimum frame additions:** one new frame, `paige_turn {event, state, mode, segment?}` with events
+`started | segment | waiting | resumed | completed`. `started` is written the moment the stream opens
+(before context assembly finishes, if the stream is moved earlier) so the client can show PAIGE is
+present truthfully; `segment` marks interim vs final text. Everything else reuses `paige_step`,
+`paige_confirm`, `paige_choices`, `paige_approval_outcome`, `paige_phase`.
+
+**One shared client parser** (`src/lib/paige-stream/`) replaces the four, so the new contract lands
+once.
+
+## 24. Minimal PR sequence
+
+Each slice is independently shippable, mounts on existing seams, and is pre‑launch merge‑on‑verified
+(§4) except where a gate is named.
+
+| slice | scope | gate |
+|---|---|---|
+| **C0a — manifest as projection** | Build the projection (§20) over the emitted surface + Spine/Kit/action‑risk/catalogue + resolver registry; parity test old vs new; fix the drifts it exposes (team, deals, sends, journey over‑claim, n8n connected, Studio scope, role‑vs‑tier reason); new CI rule: every emitted tool appears in the projection; mutation tests for acceptance A–D, J | none beyond §39 + CI |
+| **C0b — registration burn‑down** | Register the 80 baseline tools in Spine by domain batch (team, plan, documents/knowledge, research, comms, action bus…), shrinking `capability-declaration-baseline.json`; reverse lint (Spine `chatTool` with no surface tool, e.g. `integrations_health`) | batches; coordinate #1615 |
+| **C1 — turn contract** | `_shared/paige-turn/` reducer + `paige_turn` frame + shared client parser (PaigeAIChat + Studio first) + `bundle_ref.turn_state/turn_trace` | none (no visible change) |
+| **C2 — server streaming** | Live round streaming on unprotected turns; per‑tool running/done steps; `started` early; observed mode; narration instruction rewrite; parallelize the 4 embeddings; measure TTFB before/after | must preserve protected holds; latency proof |
+| **C3 — living‑response UI** | One evolving PAIGE turn, acknowledgement, meaningful updates, expandable trace, persisted "What PAIGE did" | **Impeccable + `flow-prototype`, owner sees it before production** |
+| **C4 — interrupt/resume** | Server‑carried approval resume; `ask_user` in main chat (generalize `ask_choices`); durable‑work resume via thread (+ progress from envelope transitions) | **joint seam with the Deep Research lane** |
+| **C5 — multi‑agent** | Dynamic specialist labels/roster in manifest; sub‑agent progress as steps; parallel consults | open decision D2 below |
+| **C6 — intelligence enrichment** | Mind/Knowledge/Memory/Agent Intelligence/Deep Research feed ORIENT; no loop change | after C4 |
+
+## 25. Migrations required
+
+- **C0–C3: none expected.** Registry/Kit/resolvers are TS; turn state and trace ride
+  `paige_chat_turns.bundle_ref` (jsonb, free‑form through `paige_chat_turn_append`).
+- **C4: likely one.** A resume marker per thread (or reading the latest `turn_state`), and changing
+  `complete_paige_document_work` from inserting a canned turn to marking the thread resume‑pending.
+  Server‑side model invocation on completion is **not** proposed: resume runs on the owner's next
+  JWT‑bearing request (or a client‑triggered resume when the thread is open), so authority stays
+  caller‑derived (§9).
+- Possibly an index for "latest suspended turn per thread" — decide at C4 with a measured query.
+
+## 26. Collision / open‑PR review
+
+| PR / lane | touches | relation |
+|---|---|---|
+| #1615 knowledge governed CRUD (draft) | `paige-ai-chat/index.ts` (+134), Spine registry + `domains/knowledge.ts`, `capability-kit-lint` | **helps C0b** (registers knowledge); sequence C0a after or rebase onto it |
+| #1608 knowledge summary scope (draft) | `paige-ai-chat/index.ts` (+97) | merge‑conflict risk only |
+| #1556 operator member threads private (draft) | `PaigeAIChat.tsx`, `usePaigeThreads.ts` | C1/C3 client parser; coordinate |
+| #1321, #1315 | — | **no merge base with main** — stale; not dependencies |
+| Deep Research lane (M0 merged #1689; later phases off‑main) | `paige-deep-research`, durable work | **joint seam at C4**; owns the sub‑agent input defect (§9) |
+| Governance seam convergence (Platform Reach lane) | `governedInputsFor`, chat chokepoint | C0a reads the same declarations — must not fork; share the declaration reader |
+| Vibe Studio V2 lane (#1680–#1692) | `useStudioChat`, Studio scope | C1 parser consolidation; Studio scope is an input to C0a |
+
+## 27. Proof plan
+
+- **Baseline first (§71.3):** record current TTFB per mode from instrumented runs + the prod
+  `paige_llm_trace` distribution above; same measurement after C2.
+- **Capability acceptance A–J as pure tests** with fixture registries: register a fake read capability
+  → appears; disable → disappears; disconnect provider → `needs_setup`, tool not executed; member vs
+  admin → different rows; lane change → next decision uses it; workspace change → fingerprint changes
+  and no row carries over; new sub‑agent row → listed and delegable; retire → gone. **Each mutation‑
+  tested** (reinstate the defect, watch the test fail).
+- **Stream contract tests:** frame order through the loop with a mocked provider (existing
+  `__checks__` harness), incl. protected‑turn holds and the single‑living‑turn invariant.
+- **Self‑description test (handoff §17):** "What can you help me with?" answered from the projection
+  only — snapshot per tier/role/connection fixture.
+- **Rendered proof (C3):** Impeccable audit + prototype frames, both themes, Solo viewports.
+- **Authenticated runtime (§32.c / §70.1):** the handoff §28 scenario ("why aren't these leads
+  converting") on the live Solo workspace. Blocked on the universal proof gate recorded in
+  `chat-completion-matrix.md` (least‑privilege Solo test tenant + `LIVE_DRIVE_*`); until then
+  **UNVERIFIED** and said so.
+
+---
+
+## Open decisions for the owner (material only)
+
+- **D1 — Where interim narration lives after completion.** Recommendation: keep the acknowledgement
+  and any material discovery visible; collapse the rest into "What PAIGE did". Decided finally at the
+  C3 prototype, where the owner can see it.
+- **D2 — Should consulting a tool‑less specialist require approval?** `delegate_to_subagent` is `high`
+  today, so every specialist consult is an approval card — which makes the §21 multi‑agent turn
+  ("I'll look at pipeline, marketing and follow‑up") stop three times. Recommendation: split consult
+  (read‑only, `soft` runtime, no tools) from delegate‑to‑act; consult becomes `ordinary`/read. This is
+  an authority change → owner's call.
+- **D3 — Approval continuation shape.** Recommendation: after Approve, the outcome and PAIGE's
+  conclusion continue in the **same** assistant turn (no "Approved — run it." user bubble). Shown in
+  the C3 prototype.
+
+## Evidence classes in this return
+
+- **Static (code read):** everything with a file:line.
+- **Production read‑only:** 626 turns / 17 threads / 59 confirmations / 33 enabled sub‑agents in 30
+  days; LLM latency percentiles; 0 `deep-research` sub‑agent invocations.
+- **Automated / runtime / authenticated:** none — this is R0; nothing was changed or driven.

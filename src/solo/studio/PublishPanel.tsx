@@ -5,7 +5,7 @@
 import React from "react";
 import { Check, X, Circle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { plainError, publishArtifact, unpublishArtifact, type ArtifactKind } from "./studio-data";
+import { plainError, publishArtifact, PublishUnverified, unpublishArtifact, type ArtifactKind } from "./studio-data";
 import { artifactId, hasPendingChanges, isLive, type LoadedArtifact } from "./artifact-state";
 
 interface CheckRow { ok: boolean | null; label: string; note?: string; blocking: boolean }
@@ -29,7 +29,7 @@ function checksFor(a: LoadedArtifact, route: string | null): CheckRow[] {
         { ok: f.fields.length > 0, label: f.fields.length > 0 ? `Has ${f.fields.length} question${f.fields.length === 1 ? "" : "s"}` : "Has no questions yet", blocking: true },
         { ok: f.fields.some((q) => q.key === "email"), label: f.fields.some((q) => q.key === "email") ? "Asks for an email, so each request becomes a contact" : "Doesn't ask for an email", note: f.fields.some((q) => q.key === "email") ? undefined : "Requests still arrive, but can't be matched to a contact.", blocking: false },
         { ok: f.routesToPipeline ? true : null, label: f.routesToPipeline ? `Requests go to ${route ?? "your pipeline"}` : "Requests aren't sent to a pipeline", note: f.routesToPipeline ? undefined : "Set this in Form settings.", blocking: false },
-        { ok: f.notifyEmail ? true : null, label: f.notifyEmail ? `Each request emails ${f.notifyEmail}` : "No alert email", note: f.notifyEmail ? undefined : "Set one in Form settings, or see requests in the Catalog.", blocking: false },
+        { ok: f.notifyEmail ? true : null, label: f.notifyEmail ? `Each request emails ${f.notifyEmail}` : "No alert email", note: f.notifyEmail ? undefined : "Set one in Form settings, or see requests in Marketing › Lead capture.", blocking: false },
         { ok: f.thankYou ? true : null, label: f.thankYou ? "Thank-you message is written" : "No thank-you message", note: f.thankYou ? undefined : "Visitors see a plain confirmation.", blocking: false },
       ];
     }
@@ -52,10 +52,12 @@ function checksFor(a: LoadedArtifact, route: string | null): CheckRow[] {
 }
 
 
-export function PublishPanel({ artifact, onClose, onDone }: {
+export function PublishPanel({ artifact, onClose, onDone, onRefresh }: {
   artifact: LoadedArtifact;
   onClose: () => void;
   onDone: (message: string) => void;
+  /** Re-read the artifact without announcing success (an unverified publish). */
+  onRefresh?: () => void;
 }) {
   const live = isLive(artifact);
   const pending = hasPendingChanges(artifact);
@@ -85,11 +87,15 @@ export function PublishPanel({ artifact, onClose, onDone }: {
     setBusy(true); setError(null);
     try {
       const res = await publishArtifact(kind, artifactId(artifact));
-      const full = res.url ? (res.url.startsWith("http") ? res.url : `${window.location.origin}${res.url}`) : null;
+      // publishArtifact only returns once the server's readback proves a live public address.
+      const full = res.url.startsWith("http") ? res.url : `${window.location.origin}${res.url}`;
       setUrl(full);
-      onDone(full ? `Live at ${full}` : "Published.");
+      onDone(`Live at ${full}`);
     } catch (e) {
       setError(plainError(e, "It didn't go live. Nothing changed; try again."));
+      // The server may have changed the piece's state without returning an address: re-read it so
+      // the Studio shows what is actually stored, not the state from before the click.
+      if (e instanceof PublishUnverified) onRefresh?.();
     } finally {
       setBusy(false);
     }
@@ -112,7 +118,7 @@ export function PublishPanel({ artifact, onClose, onDone }: {
       {url ? (
         <>
           <h2>It's live</h2>
-          <p>Anyone with the link can open it, and it's in your Catalog.</p>
+          <p>Anyone with the link can open it, and it's in Marketing › Lead capture.</p>
           <a href={url} target="_blank" rel="noreferrer" className="vs-link" style={{ wordBreak: "break-all" }}>{url}</a>
           <div className="vs-pop-foot"><button ref={firstRef} type="button" className="vs-btn" onClick={onClose}>Done</button></div>
         </>
@@ -131,7 +137,7 @@ export function PublishPanel({ artifact, onClose, onDone }: {
       ) : (
         <>
           <h2>{pending ? "Put your changes live?" : "Ready to go live?"}</h2>
-          <p>{pending ? "Visitors keep seeing the current version until you do." : "It gets a public link and moves to your Catalog."}</p>
+          <p>{pending ? "Visitors keep seeing the current version until you do." : "It gets a public link and moves to Marketing › Lead capture."}</p>
           <ul className="vs-checks">
             {checks.map((c) => (
               <li key={c.label}>

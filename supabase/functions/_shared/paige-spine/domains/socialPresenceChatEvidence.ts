@@ -78,7 +78,7 @@ export async function loadSocialPresenceForChat(
   }
 }
 
-const HEADER = "=== SOCIAL ACCOUNTS ON RECORD (Campaigns › Social) ===";
+const HEADER = "=== SOCIAL ACCOUNTS ON RECORD (Marketing › Social) ===";
 const FOOTER = "=== END SOCIAL ACCOUNTS ON RECORD ===";
 
 const UNAVAILABLE = [
@@ -129,7 +129,7 @@ export function renderSocialPresenceForChat(evidence: SocialPresenceEvidence): s
     ...lines,
     // The one wrong inference available from the rows above, closed explicitly.
     "These are DECLARED accounts — what the business says it posts from. No account is connected: nothing here is authorised to publish, schedule, read comments, or report followers, reach or engagement, and no such figure exists anywhere for you to cite. If asked how a post performed, say the platform does not have that.",
-    `The owner changes these in Campaigns › Social${asOf ? `; this workspace record last changed ${asOf}` : ""}. You can record or update them yourself with the record_social_accounts tool, which writes the same field.`,
+    `The owner changes these in Marketing › Social${asOf ? `; this workspace record last changed ${asOf}` : ""}. You can record or update them yourself with the record_social_accounts tool, which writes the same field.`,
     FOOTER,
   ].join("\n");
 }

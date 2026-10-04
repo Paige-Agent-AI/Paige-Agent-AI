@@ -52,6 +52,7 @@ import { PlatformUpdateBanner } from "./components/PlatformUpdateBanner";
 
 // Eagerly load only the public landing + auth pages (likely first-paint)
 import Auth from "./pages/Auth";
+import InvoiceDocument from "./pages/InvoiceDocument";
 const OperatorEntry = lazyWithReload(() => import("@/operator/OperatorEntry"));
 const JoinPlatform = lazyWithReload(() => import("./pages/JoinPlatform"));
 const McpOAuthCallback = lazyWithReload(() => import("./pages/McpOAuthCallback"));
@@ -194,7 +195,7 @@ function SignupRedirect() {
   return <Navigate to="/auth?mode=signup&plan=solo&billing=monthly" replace />;
 }
 
-const App = () => (
+const App = () => /^\/invoice\/?$/i.test(window.location.pathname) ? <InvoiceDocument /> : (
   <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>

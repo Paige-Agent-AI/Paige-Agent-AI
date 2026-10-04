@@ -120,6 +120,7 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   ["n8n_run_workflow", "high", "fires an external automation with real effects"],
   ["n8n_archive_workflow", "high", "acts on the operator's provider account"],
   ["zapier_run_action", "high", "runs an action in a third-party app"],
+  ["ghl_run_action", "high", "runs a tool in the tenant's GoHighLevel CRM — reads contacts/conversations, writes can move real CRM records and send real messages"],
   ["calendar_book_meeting", "high", "books a real event with a real person"],
   ["social_connection_start", "high", "creates an external provider profile and begins authorization for a tenant Social identity"],
   ["social_connection_disconnect", "high", "revokes a tenant Social identity at the external provider"],
@@ -316,7 +317,6 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   // The client seat's ONLY write, and on the portal it is the client editing their own profile.
   // Reversible, in-tenant, and scoped to the client already in focus.
   ["update_client_data", "ordinary", "edits fields on the focused client's record"],
-  ["draft_marketing_content", "ordinary", "produces a draft nobody has sent"],
   ["generate_image", "ordinary", "produces an image nobody has published"],
   ["content_save", "ordinary", "saves to the workspace's own library"],
   ["growth_page_save", "ordinary", "saves a DRAFT; publishing is the separate high-risk act"],
@@ -424,6 +424,11 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   ["workflow_register", "high", "defines a new automation and where firing it points"],
   // send_invoice
   ["billing_send_invoice", "high", "emails a real person a bill and a link to pay it"],
+  ["sales_publish_invoice", "high", "issues the business's reviewed customer invoice as an immutable obligation"],
+  ["sales_record_manual_payment", "high", "records a human-reported customer payment and changes the invoice balance"],
+  ["sales_reverse_manual_payment", "high", "reverses a recorded receipt while preserving the original financial history"],
+  ["sales_void_invoice", "high", "withdraws an issued customer invoice and revokes its customer access"],
+  ["sales_create_invoice_link", "high", "grants expiring access to a customer invoice document"],
   // run_skill
   ["skill_run", "high", "runs a recipe that can email, scrape and write on its own"],
   // verify_business
@@ -578,6 +583,10 @@ const REASON_BY_TOOL: ReadonlyMap<string, string> = new Map(
 const NON_MUTATING_EXEMPT: ReadonlyMap<string, string> = new Map([
   ["growth_page_generate", "drafts a page in memory and returns it; saving is growth_page_save"],
   ["growth_funnel_generate", "drafts a funnel in memory; building it is growth_funnel_build"],
+  // ADDED 2026-10-04 by owner ruling ("Drafts skip approval is a go"). content-draft returns copy and
+  // persists nothing; saving it is content_save, which stays gated. Production had one approval card
+  // for a draft, never answered: the gate asked the owner to approve being shown words.
+  ["draft_marketing_content", "drafts copy in memory and returns it; saving is content_save"],
   ["propose_action", "files a request for the operator's decision and sends nothing; the send it proposes is the gated act"],
   // ADDED 2026-09-02 with the Pipelines merge. It persists a row, so the verb backstop was right
   // to stop it — but the row is the archive's own binding: single-use, expiring, scoped to this

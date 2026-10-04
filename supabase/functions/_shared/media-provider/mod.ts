@@ -110,7 +110,7 @@ export interface ExecuteInput {
   /**
    * The ALREADY-VERIFIED caller's JWT, forwarded verbatim (sync adapters only).
    * Compliance mechanics: generate-image authenticates a USER (auth.getUser +
-   * role gate + tenant membership) — a service-key invoke has no user and cannot
+   * the session workspace's owner/admin check) — a service-key invoke has no user and cannot
    * pass it. This is the authenticated request's own Authorization header,
    * re-sent server-to-server; never logged, never stored. Consequence: legacy
    * sync providers execute ONLY inside the authenticated request; the sweeper

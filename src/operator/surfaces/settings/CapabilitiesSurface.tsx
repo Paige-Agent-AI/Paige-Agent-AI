@@ -37,15 +37,17 @@ const MODE = {
 const MODE_ORDER: readonly ToolMode[] = ["auto", "confirm", "off"];
 
 /**
- * The schema rule, mirrored so the control cannot offer an illegal state (`canAuto`, L9951).
- * These are the catalogue keys whose action reaches a PERSON, so approval is structural. Keeping
- * the list here rather than deriving it is deliberate: the authority is the database constraint,
- * and this is a mirror of it for the UI — if they ever disagree the server refuses and the
- * control does not move, which is the failure direction that stays safe.
+ * Catalogue keys whose action reaches a PERSON, so approval is structural and "act on its own" is
+ * not offered. The authority is the runtime clamp in paige-ai-chat (`clampLaneByRisk`: a `high`
+ * action set to auto runs as confirm), keyed on the class in `supabase/functions/_shared/action-risk.ts`
+ * — there is no database constraint behind this list. It is a partial mirror: a key missing here
+ * offers an auto setting the runtime overrides (a false affordance, §70.1), which is the failure
+ * direction to fix by adding the key.
  */
 const REACHES_A_PERSON = new Set([
   "growth_page_publish",
   "growth_funnel_publish",
+  "growth_form_publish",
   "member_grant_role",
   "member_revoke_role",
   "calendar_book_meeting",

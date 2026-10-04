@@ -1719,7 +1719,7 @@ function ScenarioLab({ offers, deals, stages, onAskPaige }) {
   );
 }
 
-export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages = [], submissions = [], submissionsPhase = "ready", submissionsRetry, onOpenCatalog, onOpenClients, onOpenPipeline, truth }) {
+export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages = [], submissions = [], submissionsPhase = "ready", submissionsRetry, onOpenCatalog, onOpenClients, onOpenPipeline, truth = null, controlledView = null, onViewChange = null, hideNavigation = false }) {
   const sales = useSoloSalesOps();
   const agreements = useSoloCommercialTerms();
   const signings = useSoloAgreementSignings();
@@ -1748,29 +1748,30 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
   // and it never touches the shell's `useSubtabRoute` growth-subtab registry. Overview is the bare
   // default; existing command/revenue/scenarios deep links remain supported.
   const rawView = new URLSearchParams(location.search).get("view");
-  const view = SALES_VIEWS.some(([id]) => id === rawView) || LEGACY_SALES_VIEWS.includes(rawView) ? rawView : "overview";
+  const view = controlledView ?? (SALES_VIEWS.some(([id]) => id === rawView) || LEGACY_SALES_VIEWS.includes(rawView) ? rawView : "overview");
   const setView = React.useCallback((next) => {
+    if (onViewChange) { onViewChange(next); return; }
     const q = new URLSearchParams(location.search);
     if (next === "overview") q.delete("view"); else q.set("view", next);
     q.delete("resume");
     const search = q.toString();
     navigate({ pathname: location.pathname, search: search ? `?${search}` : "" });
-  }, [navigate, location.pathname, location.search]);
+  }, [navigate, location.pathname, location.search, onViewChange]);
+  // A workspace switch clears anything half-typed. Without this, a draft opened against one
+  // workspace stays on screen under the next one. Both tenant ids are watched because each hook
+  // guards its own synchronously, and the agreements drawer holds the more sensitive draft — a
+  // client name bound to a negotiated amount.
+  React.useEffect(() => { setEditor(null); setEditing(null); setSending(null); setCompleted(null); setSuccess(""); setTermSearch(""); setTermStatus("all"); setTermPage(0); }, [sales.tenantId, agreements.tenantId, signings.tenantId]);
+
   React.useEffect(() => {
-    if (new URLSearchParams(location.search).get("resume") === "terms" && agreements.phase === "ready" && offers.phase === "ready") {
+    if (new URLSearchParams(location.search).get("resume") === "terms" && agreements.phase === "ready" && offers.phase === "ready" && agreements.tenantId && agreements.tenantId === offers.tenantId && agreements.tenantId === sales.tenantId) {
       setEditor("agreement");
       // Land on Commercial Terms so the editor opens over its own view, and strip the one-shot param.
       const q = new URLSearchParams(location.search);
       q.delete("resume"); q.set("view", "terms");
       navigate({ pathname: location.pathname, search: `?${q.toString()}` }, { replace: true });
     }
-  }, [location.search, agreements.phase, offers.phase, navigate, location.pathname]);
-
-  // A workspace switch clears anything half-typed. Without this, a draft opened against one
-  // workspace stays on screen under the next one. Both tenant ids are watched because each hook
-  // guards its own synchronously, and the agreements drawer holds the more sensitive draft — a
-  // client name bound to a negotiated amount.
-  React.useEffect(() => { setEditor(null); setEditing(null); setSending(null); setCompleted(null); setSuccess(""); setTermSearch(""); setTermStatus("all"); setTermPage(0); }, [sales.tenantId, agreements.tenantId, signings.tenantId]);
+  }, [location.search, agreements.phase, offers.phase, agreements.tenantId, offers.tenantId, sales.tenantId, navigate, location.pathname]);
 
   // Hooks must run in the same order while the production adapters advance from loading to ready.
   // Keeping this memo above every phase return prevents React from aborting the Sales route on the
@@ -2100,8 +2101,8 @@ export function SalesOps({ setDetail, deals = [], dealsPhase = "ready", stages =
         />
       ) : null}
 
-      <SubNav view={view} setView={setView} />
-      <div id="sales-view-panel" role="tabpanel" aria-labelledby={LEGACY_SALES_VIEWS.includes(view) ? undefined : `sales-view-${view}`} aria-label={LEGACY_SALES_VIEWS.includes(view) ? view === "command" ? "Sales Command" : view === "scenarios" ? "Sales Scenarios" : "Recorded commercial activity" : undefined} className="so-view">
+      {!hideNavigation && <SubNav view={view} setView={setView} />}
+      <div id="sales-view-panel" role={hideNavigation ? undefined : "tabpanel"} aria-labelledby={hideNavigation || LEGACY_SALES_VIEWS.includes(view) ? undefined : `sales-view-${view}`} aria-label={LEGACY_SALES_VIEWS.includes(view) ? view === "command" ? "Sales Command" : view === "scenarios" ? "Sales Scenarios" : "Recorded commercial activity" : undefined} className="so-view">
 
       {["overview", "payments", "invoices", "recurring"].includes(view) && <SalesBillingWorkspace key={view} view={view} integrationsPath={location.pathname.split("/").slice(0, 3).join("/") + "/settings/integrations"} />}
       {view === "command" && (

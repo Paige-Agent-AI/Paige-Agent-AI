@@ -186,17 +186,41 @@ export const SOLO_BRANCHES: Branch[] = [
     ],
   },
   {
-    slug: "growth", key: "growth", label: "Campaigns", group: "main",
-    // Campaigns owns six customer-facing reporting views. Vibe Studio remains the
-    // sole creative owner and opens through its existing side action. Retired
-    // creative slugs resolve to a Campaigns-owned compatibility landing, never a
-    // fabricated Vibe library or asset route.
+    slug: "growth", key: "growth", label: "Marketing", group: "main",
+    // Marketing is the department (owner ruling 2026-10-03, docs/product/solo-marketing-ia-proposal.md).
+    // Campaigns is one function inside it. Vibe Studio stays the only creative owner and opens
+    // through its existing side action; Lead capture measures how published Vibe work is USED.
+    // The slug stays `growth` until the canonical-URL slice (S5) so no copied link breaks.
+    //
+    // Commercial entries stay hidden for intent-preserving compatibility redirects into Sales.
+    // Retired creative slugs still resolve to the compatibility landing, which now points at
+    // Lead capture instead of Catalog.
     subtabs: [
-      { slug: "overview", aliases: ["active"], key: "ov", label: "Overview" },
-      { slug: "catalog", aliases: ["brand-kit", "pages", "funnels", "forms", "builders"], key: "catalog", label: "Catalog" },
-      { slug: "sales", key: "sales", label: "Sales" },
-      { slug: "pipeline", key: "pipeline", label: "Pipeline" },
+      { slug: "overview", key: "overview", label: "Overview" },
+      { slug: "campaigns", aliases: ["active"], key: "campaigns", label: "Campaigns" },
+      // Audience, Content, Email and Ads: the owner's Marketing list (2026-10-04). Each is marked
+      // Planned in the strip until the feature its name promises exists (src/solo/marketing-planned.tsx).
+      { slug: "audience", key: "audience", label: "Audience" },
+      { slug: "content", key: "content", label: "Content" },
       { slug: "social", key: "social", label: "Social" },
+      { slug: "email", key: "email", label: "Email" },
+      { slug: "ads", key: "ads", label: "Ads" },
+      { slug: "lead-capture", aliases: ["brand-kit", "pages", "funnels", "forms", "builders"], key: "capture", label: "Lead capture" },
+      { slug: "analytics", aliases: ["performance"], key: "analytics", label: "Analytics" },
+      { slug: "catalog", key: "catalog", label: "Offers", hidden: true },
+      { slug: "sales", key: "sales", label: "Sales", hidden: true },
+      { slug: "pipeline", key: "pipeline", label: "Pipeline", hidden: true },
+    ],
+  },
+  {
+    slug: "sales", key: "sales", label: "Sales", group: "main",
+    subtabs: [
+      { slug: "overview", key: "overview", label: "Overview" },
+      { slug: "opportunities", key: "opportunities", label: "Opportunities" },
+      { slug: "pipeline", key: "pipeline", label: "Pipeline" },
+      { slug: "offers", key: "offers", label: "Offers" },
+      { slug: "agreements", key: "agreements", label: "Terms & Agreements" },
+      { slug: "payments", key: "payments", label: "Payments" },
       { slug: "performance", key: "performance", label: "Performance" },
     ],
   },
@@ -724,4 +748,3 @@ export function subtabPath(tier: RouteTierKey, account: string, branchSlug: stri
   if (tree.accountSegment === false) return `${tree.root}/${branchSlug}/${subSlug}`;
   return `${tree.root}/${account}/${branchSlug}/${subSlug}`;
 }
-

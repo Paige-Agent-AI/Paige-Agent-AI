@@ -26,10 +26,10 @@ const concurrent=sql=>new Promise(resolve=>{
 });
 const tenant='20000000-0000-0000-0000-000000000001',invoice='60000000-0000-0000-0000-000000000088';
 const draft={schema_version:2,client_id:'30000000-0000-0000-0000-000000000001',
-  items:[{price_id:null,item:'First service',unit_minor:999,quantity:2},{price_id:null,item:'Second service',unit_minor:1001,quantity:1}],
+  items:[{price_id:null,item:'First service',description:'Concurrent customer scope',unit_minor:999,quantity:2},{price_id:null,item:'Second service',unit_minor:1001,quantity:1}],
   kind:'deposit',deposit_basis_points:2500,currency:'usd',cadence:null,recipient_email:'billing@example.test',recipient_phone:null,
   email_source_method_id:null,phone_source_method_id:null,billing_address:null,agreement_id:null,processor_intent:null,
-  payment_method_intents:[],delivery_channel_intents:['email','sms'],due_date:null,memo:null};
+  payment_method_intents:['zelle','wire'],delivery_channel_intents:['email','sms'],due_date:null,memo:null};
 const request=(version,operation,memo=null)=>`BEGIN; SET LOCAL test.actor='10000000-0000-0000-0000-000000000001';
 SET LOCAL test.workspace='${tenant}'; SET LOCAL test.admin='true'; SET LOCAL ROLE authenticated;
 SELECT save_sales_billing_draft('${tenant}','${invoice}',${version},'${operation}','${JSON.stringify({...draft,memo}).replaceAll("'","''")}'::jsonb); COMMIT;`;

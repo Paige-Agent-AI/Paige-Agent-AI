@@ -44,6 +44,21 @@ export type CampaignSubmission = {
   createdAt: string;
   contactId: string | null;
   dealId: string | null;
+  /** `utm_source` from the link the visitor arrived on. Null when the link carried no tag. */
+  trackingSource: string | null;
+  /** `utm_campaign` from that link. Null when untagged. Never inferred from anything else. */
+  trackingCampaign: string | null;
+};
+
+/**
+ * A page, funnel or form that exists in Vibe Studio but is not published. Read from the same rows
+ * as `artifacts` (no extra query); it collects nothing until it is published there.
+ */
+export type CampaignDraft = {
+  id: string;
+  type: "page" | "funnel" | "form";
+  name: string;
+  updatedAt: string;
 };
 
 export type SoloCampaignsState = {
@@ -52,6 +67,7 @@ export type SoloCampaignsState = {
   campaigns: CampaignRecord[];
   artifacts: CampaignArtifact[];
   submissions: CampaignSubmission[];
+  drafts: CampaignDraft[];
   pipelineWorkspace: PipelineWorkspace;
   pipelineAction: (action: PipelineAction) => Promise<{
     ok: boolean;
@@ -284,6 +300,12 @@ export type PipelineAction =
       expectedVersion: number;
     });
 
+/** One tracking tag from a submission's `utm_json`, trimmed; null when absent or not text. */
+function utmValue(utm: Record<string, unknown> | null, key: string): string | null {
+  const value = utm && typeof utm === "object" ? utm[key] : null;
+  return typeof value === "string" && value.trim() ? value.trim().slice(0, 120) : null;
+}
+
 type PageRow = {
   id: string;
   slug: string;
@@ -313,6 +335,7 @@ type SubmissionRow = {
   created_at: string;
   contact_id: string | null;
   deal_id: string | null;
+  utm_json: Record<string, unknown> | null;
 };
 type RoutingEvidenceRow = {
   id: string;
@@ -418,10 +441,12 @@ const empty = {
   campaigns: [],
   artifacts: [],
   submissions: [],
+  drafts: [],
   pipelineWorkspace: emptyPipeline,
 };
 
-export function useSoloCampaigns(): SoloCampaignsState {
+export function useSoloCampaigns({ scope = "campaigns" }: { scope?: "campaigns" | "pipeline" } = {}): SoloCampaignsState {
+  const pipelineOnly = scope === "pipeline";
   const { activeTenantId, activeTenant, accountContextLoading } =
     useTenantContext();
   const deletionContext = useRef({
@@ -616,7 +641,7 @@ export function useSoloCampaigns(): SoloCampaignsState {
     }
 
     setState((previous) =>
-      previous.tenantId === activeTenantId && previous.phase === "ready"
+      !pipelineOnly && previous.tenantId === activeTenantId && previous.phase === "ready"
         ? previous
         : { tenantId: activeTenantId, phase: "loading", ...empty },
     );
@@ -630,30 +655,30 @@ export function useSoloCampaigns(): SoloCampaignsState {
           routingResponse,
           pipelineResponse,
         ] = await Promise.all([
-          supabase
+          pipelineOnly ? Promise.resolve({ data: [], error: null }) : supabase
             .from("growth_pages")
             .select("id,slug,title,status,updated_at")
             .eq("tenant_id", activeTenantId)
             .order("updated_at", { ascending: false }),
-          supabase
+          pipelineOnly ? Promise.resolve({ data: [], error: null }) : supabase
             .from("growth_funnels")
             .select("id,slug,name,status,updated_at")
             .eq("tenant_id", activeTenantId)
             .order("updated_at", { ascending: false }),
-          supabase
+          pipelineOnly ? Promise.resolve({ data: [], error: null }) : supabase
             .from("growth_forms")
             .select("id,slug,name,status,updated_at")
             .eq("tenant_id", activeTenantId)
             .order("updated_at", { ascending: false }),
-          supabase
+          pipelineOnly ? Promise.resolve({ data: [], error: null }) : supabase
             .from("growth_form_submissions")
             .select(
-              "id,form_id,source,processing_state,created_at,contact_id,deal_id",
+              "id,form_id,source,processing_state,created_at,contact_id,deal_id,utm_json",
             )
             .eq("tenant_id", activeTenantId)
             .order("created_at", { ascending: false })
             .limit(200),
-          supabase.rpc(
+          pipelineOnly ? Promise.resolve({ data: [], error: null }) : supabase.rpc(
             "get_pipeline_routing_evidence" as never,
             { _tenant_id: activeTenantId } as never,
           ),
@@ -690,6 +715,8 @@ export function useSoloCampaigns(): SoloCampaignsState {
           createdAt: row.created_at,
           contactId: row.contact_id,
           dealId: row.deal_id,
+          trackingSource: utmValue(row.utm_json, "utm_source"),
+          trackingCampaign: utmValue(row.utm_json, "utm_campaign"),
         }));
         const submissionCounts = submissions.reduce<Record<string, number>>(
           (counts, row) => {
@@ -896,19 +923,30 @@ export function useSoloCampaigns(): SoloCampaignsState {
               ...routingEvidence(row.id),
             })),
         ].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+        // Unpublished work, from the rows already read above. Archived work is neither live nor
+        // waiting, so it is left out of both lists.
+        const drafts: CampaignDraft[] = [
+          ...pages.filter((row) => row.status !== "published" && row.status !== "archived")
+            .map((row) => ({ id: row.id, type: "page" as const, name: row.title, updatedAt: row.updated_at })),
+          ...funnels.filter((row) => row.status !== "active" && row.status !== "archived")
+            .map((row) => ({ id: row.id, type: "funnel" as const, name: row.name, updatedAt: row.updated_at })),
+          ...forms.filter((row) => row.status !== "active" && row.status !== "archived")
+            .map((row) => ({ id: row.id, type: "form" as const, name: row.name, updatedAt: row.updated_at })),
+        ].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
         setState({
           tenantId: activeTenantId,
           phase: "ready",
           campaigns,
           artifacts,
           submissions,
+          drafts,
           pipelineWorkspace,
         });
       } catch (error) {
         console.error("[solo-campaigns] read failed", error);
         if (current)
           setState((previous) =>
-            previous.tenantId === activeTenantId && previous.phase === "ready"
+            !pipelineOnly && previous.tenantId === activeTenantId && previous.phase === "ready"
               ? previous
               : { tenantId: activeTenantId, phase: "error", ...empty },
           );
@@ -917,7 +955,7 @@ export function useSoloCampaigns(): SoloCampaignsState {
     return () => {
       current = false;
     };
-  }, [accountContextLoading, activeTenantId, activeTenant?.slug, refreshKey]);
+  }, [accountContextLoading, activeTenantId, activeTenant?.slug, refreshKey, pipelineOnly]);
 
   // Realtime pipeline board: one tenant-keyed subscription over the records the canonical
   // load already reads. Events and (re)subscriptions resolve through `retry()` — a full

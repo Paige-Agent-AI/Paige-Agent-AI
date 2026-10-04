@@ -1,0 +1,55 @@
+import React from 'react';
+import {supabase} from '@/integrations/supabase/client';
+import {parseSalesInvoiceCommand,UUID,type SalesInvoiceCommand} from '../../../supabase/functions/_shared/sales-invoice-command/contract';
+import {Dialog,DialogContent,DialogHeader,DialogTitle} from '@/components/ui/dialog';
+import {useTheme} from 'next-themes';
+type Result=Record<string,unknown>;
+type ReviewProps={tenantId:string;command:SalesInvoiceCommand;onComplete(result:Result):void;onClose():void};
+/** One immutable operation and command, proposed then approved through the canonical server card. */
+export function InvoiceCommandReview(props:ReviewProps){
+  const [actorId,setActorId]=React.useState<string|null>(null),[resolved,setResolved]=React.useState(false);
+  React.useEffect(()=>{let alive=true,epoch=0;const opened=epoch;
+    void supabase.auth.getSession().then(({data})=>{if(alive&&epoch===opened){setActorId(data.session?.user.id??null);setResolved(true);}}).catch(()=>{if(alive){setActorId(null);setResolved(true);}});
+    const {data}=supabase.auth.onAuthStateChange((_event,session)=>{epoch++;if(alive){setActorId(session?.user.id??null);setResolved(true);}});
+    return()=>{alive=false;data.subscription.unsubscribe();};
+  },[]);
+  if(!resolved)return <p role="status">Checking your account before invoice review…</p>;
+  if(!actorId)return <p role="alert">Sign in to review this invoice action.</p>;
+  return <ActorInvoiceCommandReview key={`${actorId}:${props.tenantId}`} {...props} actorId={actorId}/>;
+}
+function ActorInvoiceCommandReview({tenantId,command,onComplete,onClose,actorId}:ReviewProps&{actorId:string}){
+  const {resolvedTheme}=useTheme();const primary=React.useRef<HTMLButtonElement>(null);
+  const storageKey=`paige:invoice-operation:${actorId}:${tenantId}:${command.invoice_id}`;
+  const captured=React.useRef({actorId,tenantId,command:structuredClone(command),operationId:crypto.randomUUID()});
+  const initialized=React.useRef(false);
+  const restored=React.useRef(false);
+  if(!initialized.current){initialized.current=true;try{const saved=JSON.parse(sessionStorage.getItem(storageKey)||'null');if(saved?.actorId===actorId&&saved?.tenantId===tenantId&&saved?.command?.invoice_id===command.invoice_id&&UUID.test(saved.operationId)){captured.current={actorId,tenantId,command:parseSalesInvoiceCommand(saved.command),operationId:saved.operationId};restored.current=true;}}catch{/* invalid stored recovery is not authority */}}
+  const latestTenant=React.useRef(tenantId);latestTenant.current=tenantId;
+  const unresolved=React.useRef(restored.current);
+  const [busy,setBusy]=React.useState(false),[proposal,setProposal]=React.useState<Result|null>(null),[unknown,setUnknown]=React.useState(restored.current),[notice,setNotice]=React.useState('');
+  const alive=React.useRef(true);React.useEffect(()=>{alive.current=true;return()=>{alive.current=false}},[]);
+  const forget=()=>{try{sessionStorage.removeItem(storageKey)}catch{/* unavailable storage */}};
+  const money=(v:unknown)=>typeof v==='number'&&Number.isSafeInteger(v)?new Intl.NumberFormat(undefined,{style:'currency',currency:'USD'}).format(v/100):'Unavailable';
+  React.useEffect(()=>{if(!busy)primary.current?.focus();},[proposal,busy]);
+  React.useEffect(()=>{if(!busy&&!unknown)return;const prevent=(event:BeforeUnloadEvent)=>{event.preventDefault();event.returnValue='';};window.addEventListener('beforeunload',prevent);return()=>window.removeEventListener('beforeunload',prevent);},[busy,unknown]);
+  const execute=async(approve:boolean)=>{
+    if(busy||captured.current.tenantId!==latestTenant.current)return;setBusy(true);setNotice('');
+    try{
+      const original=captured.current;
+      try{sessionStorage.setItem(storageKey,JSON.stringify(original));}catch{/* in-memory same operation remains */}
+      let {data,error}=await supabase.functions.invoke('sales-invoice-command',{body:{expected_tenant_id:original.tenantId,operation_id:original.operationId,command:original.command,...(approve&&proposal?{approved_fingerprint:proposal.fingerprint}:{})}});
+      if(error&&'context' in error&&error.context instanceof Response){try{data=await error.context.json();error=null;}catch{/* unresolved response */}}
+      if(!alive.current||latestTenant.current!==original.tenantId)return;
+      if(data&&typeof data==='object'&&data.outcome==='approval_required'){setProposal(data);setUnknown(false);unresolved.current=false;}
+      else if(data?.ok===true){forget();onComplete(data);}
+      else{const terminalFailure=data?.outcome==='failed'&&typeof data?.message_id==='string';const uncertain=!terminalFailure&&(unresolved.current||!!error||['outcome_unknown','unknown','dispatching','prepared'].includes(data?.outcome));unresolved.current=uncertain;setUnknown(uncertain);if(!uncertain)forget();setNotice(uncertain?'This operation requires recovery or review. Keep its original identity; do not start another delivery.':data?.message||'The action was refused. Reload the invoice before trying again.');}
+    }catch{if(alive.current&&latestTenant.current===captured.current.tenantId){unresolved.current=true;setUnknown(true);setNotice('The result is unknown. Recover this same operation.');}}
+    finally{if(alive.current)setBusy(false);}
+  };
+  return <Dialog open onOpenChange={open=>{if(!open&&!busy&&!unknown){forget();onClose();}}}><DialogContent className="paige-solo sb-command-dialog" data-theme={resolvedTheme==='dark'?'dark':'light'} onEscapeKeyDown={e=>{if(busy||unknown)e.preventDefault();}} onPointerDownOutside={e=>e.preventDefault()}><DialogHeader><DialogTitle>Review invoice action</DialogTitle></DialogHeader><div className="sb-paper">
+    {restored.current&&<p role="status">Recovering the saved {captured.current.command.action.replace('invoice.','').replace(/_/g,' ')} operation for this invoice. The newly requested action has not started.</p>}
+    {proposal?.preview&&typeof proposal.preview==='object'&&<dl><dt>Invoice</dt><dd>{String((proposal.preview as Result).invoice_number??captured.current.command.invoice_id)}</dd><dt>Current outstanding</dt><dd>{money((proposal.preview as Result).remaining_cents)}</dd>{captured.current.command.action==='invoice.record_manual_payment'&&<><dt>Received amount</dt><dd>{money(captured.current.command.amount_cents)}</dd><dt>Method</dt><dd>{String(captured.current.command.method)}</dd><dt>Date received</dt><dd>{new Date(String(captured.current.command.received_at)).toLocaleDateString(undefined,{timeZone:'UTC'})}</dd></>}</dl>}
+    {proposal?<><p>{typeof proposal.summary==='string'?proposal.summary:'Review the server-verified invoice consequence before approving.'}</p><button ref={primary} className="btn btn-p" disabled={busy} onClick={()=>execute(!unknown)}>{busy?'Checking…':unknown?'Recover approved operation':'Approve action'}</button></>:<><p>Check the saved invoice and its current version before preparing this action.</p><button ref={primary} className="btn btn-p" disabled={busy} onClick={()=>execute(false)}>{busy?'Checking…':unknown?'Recover original operation':'Prepare review'}</button></>}
+    {notice&&<p role="alert">{notice}</p>}<button className="btn" disabled={busy||unknown} onClick={()=>{forget();onClose();}}>Cancel</button>
+  </div></DialogContent></Dialog>;
+}

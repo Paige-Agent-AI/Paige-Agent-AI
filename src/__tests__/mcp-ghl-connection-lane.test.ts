@@ -109,7 +109,7 @@ describe("the registry JSON carries the honest PARTIAL entry", () => {
     const ghl = registryJson.providers.find((p) => p.id === "gohighlevel-mcp");
     expect(ghl).toBeDefined();
     expect(ghl?.status).toBe("PARTIAL");
-    expect(ghl?.dependency).toContain("no chat tool, no spine capability, no connection exists");
+    expect(ghl?.dependency).toContain("GHL-1 landed the governed chat lane");
   });
 });
 
@@ -140,14 +140,18 @@ describe("the catalogue names GHL's real MCP endpoint", () => {
   });
 });
 
-describe("nothing over-claims a GHL surface that does not exist yet", () => {
-  it("no GHL chat tool is declared (the lane lands after real discovery)", () => {
-    expect(chatCore).not.toContain('name: "ghl_');
-    expect(chatCore).not.toContain('name: "gohighlevel');
+describe("the lane LANDED (GHL-1, 2026-10-03) — declared from the real catalogue, not before it", () => {
+  it("the GHL chat tools exist BECAUSE the owner's live connection discovered the real 36", () => {
+    // The M4 pins said: no ghl chat tool and no GHL spine capability UNTIL real discovery.
+    // The owner's live connection (36 real tools) is that discovery; GHL-1 landed the lane.
+    // The schemas live in the domain ADAPTER (the chat-tool-registry ruling); the chat
+    // handler mounts them by spread and routes by name.
+    expect(chatCore).toContain("...GHL_MANAGEMENT_TOOLS,");
+    // The lane routes through the CANONICAL gateway (no legacy edge, no new authority).
+    expect(chatCore).toContain('c?.provider_key === "gohighlevel"');
   });
 
-  it("no GHL Spine capability is declared (register what exists, no more)", () => {
-    expect(spineRegistry).not.toContain("GHL_");
-    expect(spineRegistry).not.toContain("GOHIGHLEVEL_");
+  it("the Spine domain is declared and composed (the register-what-exists discipline honored)", () => {
+    expect(spineRegistry).toContain("...GHL_MANAGEMENT_CAPABILITIES");
   });
 });

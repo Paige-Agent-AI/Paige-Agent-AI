@@ -154,6 +154,9 @@ async function main() {
             if (m) {
               check(errors.length === 0, `${id}: no page errors`, errors[0] ?? "");
               check(m.overflowX <= 0, `${id}: no horizontal overflow in the scroll owner`, `overflow=${m.overflowX}px`);
+              // Populated fixtures must render populated: a failed read here is a harness or code defect.
+              const failed = await page.evaluate(() => [...document.querySelectorAll(".campaigns-scroll h2, .campaigns-scroll h3")].map((h) => h.textContent ?? "").filter((t) => /could not load/.test(t)));
+              check(failed.length === 0, `${id}: every read lands (no error state on populated data)`, failed.join(" | "));
               check(m.pushed.length === 0, `${id}: nothing pushed past the right edge`, m.pushed.join(","));
               check(!m.sideways, `${id}: document does not scroll sideways`);
               check(!m.launcherSpills, `${id}: the Vibe Studio launcher contains its label`);

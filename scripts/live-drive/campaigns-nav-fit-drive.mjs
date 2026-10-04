@@ -295,7 +295,7 @@ async function main() {
           await page.waitForTimeout(200);
           const after = await measureNav(page);
           check(
-            after.selected === "Pipeline",
+            after.selected === TABS[TABS.length - 1],
             `${id}: last tab selects`, String(after.selected),
           );
           check(

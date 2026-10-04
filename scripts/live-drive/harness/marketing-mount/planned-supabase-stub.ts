@@ -30,7 +30,7 @@ function answer(rows: unknown): Promise<Answer> {
 function from(table: string) {
   const rows = table === "clients" ? clients : table === "marketing_content" ? content : [];
   const chain: Record<string, unknown> = {};
-  for (const method of ["select", "eq", "order", "limit"]) chain[method] = () => chain;
+  for (const method of ["select", "eq", "neq", "order", "limit"]) chain[method] = () => chain;
   chain.then = (resolve: (value: Answer) => unknown, reject: (reason: unknown) => unknown) => answer(rows).then(resolve, reject);
   return chain;
 }

@@ -111,7 +111,7 @@ describe("Marketing › Content", () => {
     const flags = [...host.querySelectorAll(".mp-list .mk-flag")].map((el) => el.textContent);
     expect(flags.slice(0, 3)).toEqual(["Image", "Document", "Social post"]);
     expect(host.querySelector(".mp-list li small")?.textContent).toMatch(/^Published · saved/);
-    expect(text()).toContain("2 pages · 0 funnels · 1 forms");
+    expect(text()).toContain("2 pages · 0 funnels · 1 form");
     expect(text()).toContain("Not published yet4");
     act(() => ([...host.querySelectorAll("button")].find((b) => b.textContent === "Published work") as HTMLButtonElement).click());
     expect(onOpenCapture).toHaveBeenCalled();

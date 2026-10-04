@@ -218,7 +218,7 @@ export function MarketingContent({ tenantId, published, onOpenCapture, onRetryPu
     </PlannedHead>
     <dl className="mk-ledger mp-ledger-3">
       <div className="mk-stat"><dt>In your library</dt><dd><strong>{libraryCount}</strong><span>{access === "denied" ? "Visible to owners and admins" : capped ? `The newest ${LIBRARY_READ_LIMIT} are counted` : "Images, documents and copy, not archived"}</span></dd></div>
-      <div className="mk-stat"><dt>Published</dt><dd><strong>{publishedValue(total)}</strong><span>{publishedReady ? `${published.pages} pages · ${published.funnels} funnels · ${published.forms} forms` : publishedFailed ? "Could not load" : "Loading"}</span></dd></div>
+      <div className="mk-stat"><dt>Published</dt><dd><strong>{publishedValue(total)}</strong><span>{publishedReady ? [[published.pages, "page"], [published.funnels, "funnel"], [published.forms, "form"]].map(([n, noun]) => `${n} ${noun}${n === 1 ? "" : "s"}`).join(" · ") : publishedFailed ? "Could not load" : "Loading"}</span></dd></div>
       <div className="mk-stat"><dt>Not published yet</dt><dd><strong>{publishedValue(published.unpublished)}</strong><span>Built in Vibe Studio, collecting nothing</span></dd></div>
     </dl>
     {publishedFailed && <p className="mo-note mp-inline-note">Your published pages, funnels and forms could not load. <button className="mo-link" onClick={onRetryPublished}>Try again</button></p>}

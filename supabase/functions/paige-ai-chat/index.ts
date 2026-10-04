@@ -146,6 +146,11 @@ import { LEGACY_CAPABILITIES } from "../_shared/paige-capability-status/legacy-c
 import type { ReadinessResolverId, ReadinessState } from "../_shared/paige-capability-status/readiness.ts";
 import { renderProjectedCapabilityBlock, type SpecialistSummary } from "../_shared/paige-capability-status/render.ts";
 import { PAIGE_SPINE_CAPABILITIES } from "../_shared/paige-spine/registry.ts";
+// paige-turn — the turn contract (docs/delivery/paige-conversational-loop-c1.md). The stream says when a turn
+// started and how it ended, and the assistant turn records the same, from one pure reducer that only
+// OBSERVES the loop (§18: one home for the shape, shared with the client parser).
+import { turnFrameLine } from "../_shared/paige-turn/contract.ts";
+import { attachTurnRecord, createTurnTracker, NO_TOOLS, observeToolResult, type TurnClassifiers } from "../_shared/paige-turn/reducer.ts";
 import { looksLikeFinanceAgent } from "../_shared/finance-gate.ts";
 // "ADMIN IS A TENANT ROLE" (owner ruling 2026-10-04): one resolver + one tool set for every
 // owner/admin-only chat tool, the early refusal, and the projection.
@@ -508,6 +513,30 @@ const railKindLabel = (k: string): string =>
 // (index.ts:575/3660/3673/3678 pass `msg.content` straight through), and model-context management
 // happens downstream regardless.
 import { createLiveRuntimeProof, liveRuntimeDigest, type LiveRuntimeScope } from "../_shared/paige-live-runtime-proof.ts";
+
+/** The research chat tools, for the turn's observed mode (paige-turn) — computed ONCE at module load,
+ *  so classifying an executed tool is a set lookup, not a registry scan per tool per frame. The three
+ *  research tools by name, and any tool whose canonical declaration puts it in a research domain as a
+ *  READ: its Spine row when the tool is registered (the first row naming the chat tool decides), the
+ *  legacy classification while it is not (C0b). A research-family WRITE (document_generate,
+ *  save_to_knowledge_base) is not research; it is an action. Read from the registries, so a research
+ *  tool registered later classifies itself with no loop change. */
+const RESEARCH_CHAT_TOOLS: ReadonlySet<string> = (() => {
+  const researchDomain = (domain: unknown) => typeof domain === "string" && (domain === "research" || domain.startsWith("research_"));
+  const research = new Set<string>(["web_search", "deep_research", "web_fetch"]);
+  const registered = new Set<string>();
+  for (const cap of PAIGE_SPINE_CAPABILITIES as ReadonlyArray<{ domain?: string; action?: { classification?: string; chatTool?: string } }>) {
+    const tool = cap.action?.chatTool;
+    if (!tool || registered.has(tool)) continue;
+    registered.add(tool);
+    if (researchDomain(cap.domain) && cap.action?.classification === "read") research.add(tool);
+  }
+  for (const [tool, legacy] of Object.entries(LEGACY_CAPABILITIES)) {
+    if (!registered.has(tool) && researchDomain(legacy.domain) && legacy.effect === "read") research.add(tool);
+  }
+  return research;
+})();
+const isResearchCapability = (tool: string): boolean => RESEARCH_CHAT_TOOLS.has(tool);
 
 const MAX_MESSAGE_CONTENT = 200_000;
 
@@ -1212,9 +1241,15 @@ serve(async (req) => {
       }
 
       const enc = new TextEncoder();
+      // The turn frame on the refusal stream too: started first, then REFUSED before the sentence. No
+      // round ran, so its mode stays `pending` — the truthful answer for a turn refused before any work.
+      const refusedTurn = createTurnTracker(NO_TOOLS);
+      refusedTurn.refused();
       const refusalStream = new ReadableStream({
         start(controller) {
+          controller.enqueue(enc.encode(turnFrameLine(refusedTurn.frame("started"))));
           controller.enqueue(enc.encode(`data: ${JSON.stringify(scopeFrame)}\n\n`));
+          controller.enqueue(enc.encode(turnFrameLine(refusedTurn.terminalFrame())));
           controller.enqueue(enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: refusalText } }] })}\n\n`));
           controller.enqueue(enc.encode("data: [DONE]\n\n"));
           controller.close();
@@ -7613,6 +7648,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // the permissive answer was the one that came for free. `_shared/action-risk.ts` classifies
     // every mutation once, CI proves the classification is exhaustive, and this reads it.
     const MUTATING_TOOLS = mutatingTools();
+    // paige-turn — how the turn reducer classifies a tool, from what this handler already holds: the governed
+    // write set, the workspace build set, the two delegation tools, and the research registries.
+    const turnClassifiers: TurnClassifiers = {
+      isMutating: (tool) => MUTATING_TOOLS.has(tool),
+      isBuild: (tool) => WORKSPACE_BUILD_TOOLS.has(tool),
+      isResearch: isResearchCapability,
+      isDelegation: (tool) => tool === "delegate_to_subagent" || tool === "list_subagents",
+    };
 
     // Approval schema.
     // Approval-path hardening.
@@ -8593,6 +8636,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         let toolCalls: any[] = [];
         let allChunks: Uint8Array[] = [];
         let hasToolCall = false;
+        // paige-turn — did the provider say the round FINISHED? The one streaming route the chat uses
+        // (gatewayCompat → _shared/claude.ts's translator) sends a finish_reason only on the provider's
+        // own message_stop, and ends a stream that broke with the same clean [DONE] — so a missing
+        // finish_reason is the only sign a round was cut off. Read by the turn record, nothing else.
+        let finished = false;
         // Carry a leftover-line buffer across reads: the gateway routinely splits
         // a `data: {...}` SSE record across two TCP reads, and parsing per-read
         // would drop those straddling deltas from `content` (the persisted text)
@@ -8620,6 +8668,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               }
             }
             if (parsed.choices?.[0]?.finish_reason === "tool_calls") hasToolCall = true;
+            if (parsed.choices?.[0]?.finish_reason) finished = true;
           } catch { /* skip */ }
         };
         while (true) {
@@ -8635,7 +8684,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         }
         sseBuf += fullDecoder.decode(); // flush any trailing multi-byte char
         if (sseBuf) handleLine(sseBuf); // final line without a trailing newline
-        return { content, toolCalls, allChunks, hasToolCall };
+        return { content, toolCalls, allChunks, hasToolCall, finished };
       };
 
       // executeToolCalls dispatches one round's tool calls. Every tc that clears
@@ -14524,6 +14573,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       let totalToolCalls = 0;
       const seenSignatures = new Set<string>();
       let finalChunks: Uint8Array[] | null = null;
+      // paige-turn — whether the round `finalChunks` replays was FINISHED by the provider (consumeRound's
+      // `finished`). Updated every round, so it describes the last one, which is the one replayed.
+      let lastRoundFinished = true;
       let liveAnswerPending = false;
       let forcedTermination = false;
       let tenantKnowledgeScopeInvalidated = false;
@@ -14569,6 +14621,42 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         heldContent.length = 0;
       };
       const discardContent = () => { heldContent.length = 0; };
+      // paige-turn — THE TURN FRAME. `started` is the stream's first frame and exactly ONE terminal frame
+      // (`completed` or `waiting`) closes it, BEFORE any answer byte: the provider's own `[DONE]` rides
+      // inside the replayed answer, and four of the seven SSE consumers stop reading at it. The frame
+      // is enums only, so it goes DIRECT on the line `emitStep` sits on and never quotes evidence.
+      //
+      // WHERE THE TERMINAL GOES, and why the two kinds of turn differ:
+      //  - an ORDINARY turn streams its answer live, so the terminal goes out just before the first
+      //    answer frame (`emitTurnTerminalBeforeAnswer`). It cannot know about a later scope lapse; an
+      //    ordinary turn's answer is already on screen by then too, so it claims no more than the wire.
+      //    An answer streamed from the closing call (Live, or a text close-out) has its terminal go
+      //    later still: just ahead of the first line carrying answer TEXT, so a closing call that
+      //    never answered ends INTERRUPTED, not FINAL.
+      //  - a PROTECTED turn holds its answer, so the terminal waits for the release point — after the
+      //    final scope check and the client-seat read — and a turn withheld there says WITHHELD, never
+      //    first FINAL. Every exit that ends the turn early emits its own (INTERRUPTED / WITHHELD).
+      // The guard flag makes it exactly once whichever exit gets there first. On an ordinary turn the
+      // wire terminal is therefore PROVISIONAL (contract.ts): an answer that breaks after its first
+      // text already said FINAL, a later paige_live_error supersedes that, and the RECORD follows the
+      // latest truth (persisted INTERRUPTED).
+      const turnTracker = createTurnTracker(turnClassifiers);
+      let turnTerminalSent = false;
+      const emitTurnTerminal = (controller: ReadableStreamDefaultController, outcome?: "interrupted" | "withheld") => {
+        if (outcome === "interrupted") turnTracker.interrupted();
+        if (outcome === "withheld") turnTracker.withheld();
+        if (turnTerminalSent) return;
+        turnTerminalSent = true;
+        try { controller.enqueue(enc.encode(turnFrameLine(turnTracker.terminalFrame()))); } catch { /* client hung up */ }
+      };
+      const emitTurnTerminalBeforeAnswer = (controller: ReadableStreamDefaultController) => {
+        if (!turnCarriesProtectedContent()) emitTurnTerminal(controller);
+      };
+      // The turn record rides bundle_ref at each persist call site, never inside
+      // `assistantTurnMetadata` (its output is pinned by n5; #1701 extended it). The persist gate is
+      // unchanged: an empty turn with no legacy card still persists nothing (attachTurnRecord).
+      const withTurnRecord = <M extends { bundleRef?: unknown }>(text: string, meta: M): M =>
+        attachTurnRecord(turnTracker, text, meta, stepTrace);
       // WHAT BECAME OF EACH APPROVAL THE OPERATOR SENT, in the order they sent them — once per turn,
       // however the turn ends (a reply, a changed workspace, a snag), so the card that asked never
       // has to guess (_shared/approval-outcome.ts).
@@ -14630,6 +14718,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       };
       const finalStream = new ReadableStream({
         async start(controller) {
+         // paige-turn — the first frame of the stream, ahead of the compaction card and everything else.
+         controller.enqueue(enc.encode(turnFrameLine(turnTracker.frame("started"))));
          // §13/§36 — a client was named but could NOT be authorized, so this turn ran with no
          // client scope at all: no memory, no rail, no client file. Publish that fact on the wire
          // WITHOUT the rejected id or any client field (a fixed category string, same as the
@@ -14659,7 +14749,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           let continueContinuation = false;
           while (true) {
           for (let round = 0; round < MAX_ROUNDS; round++) {
-            const { content, toolCalls, allChunks, hasToolCall } = await consumeRound(currentResponse);
+            turnTracker.roundStarted();
+            const { content, toolCalls, allChunks, hasToolCall, finished } = await consumeRound(currentResponse);
+            lastRoundFinished = finished;
             // The active account can change while a streamed provider round is in
             // flight. Re-check before accepting its result or executing any tool it
             // proposed from tenant Knowledge.
@@ -14703,6 +14795,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 // so streaming it direct meant a protected turn published its entire answer
                 // before the final check, then discarded an empty buffer and printed a refusal
                 // underneath an answer already on screen.
+                // The chips ARE the answer here, so the terminal (ASK_USER) precedes them on an
+                // ordinary turn; a protected turn holds both and says so at release.
+                turnTracker.choicesAsked();
+                emitTurnTerminalBeforeAnswer(controller);
                 emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_choices: frame })}\n\n`));
                 finalAssistantText = frame.prompt;
                 forcedTermination = true;
@@ -14717,7 +14813,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // No-progress: the model re-emitted the exact same call(s) as an earlier
             // round. Do NOT execute again (a repeated propose_action would double-queue
             // an approval) — close out from the balanced convo we already have.
-            if (seenSignatures.has(sig)) { forcedTermination = true; break; }
+            if (seenSignatures.has(sig)) { turnTracker.budgetStop(); forcedTermination = true; break; }
             const overCap = totalToolCalls + sumToolCost(realCalls) > MAX_TOTAL_TOOL_CALLS;
             const overTime = Date.now() - startedAt > WALL_CLOCK_MS;
             const lastRound = round === MAX_ROUNDS - 1;
@@ -14753,6 +14849,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               }
             }
             for (const r of toolResults) toolResultContent.set(r.tool_call_id, String(r.content ?? ""));
+            // paige-turn — what this round actually ran, read from each tool's own result (after the approval
+            // rewrite above), before any exit below: a tool that executed counts even if the turn stops.
+            turnTracker.toolsExecuted(executed.map((tc: any) => observeToolResult(String(tc?.function?.name ?? ""), toolResultContent.get(tc?.id))));
             // R3 — whether anything on this turn was actually saved, by each write's own report, so a
             // withheld answer can say so and the client does not send it again. Read after the
             // rewrite above: a spent approval whose card will say "couldn't confirm" does not count.
@@ -14832,7 +14931,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // content can emit" rather than merely usually so.
             markLateRetrievalProtected(executed, toolResults, TOOL_RESULT_IS_RECEIPT);
             convo.push(...toolResults);
-            if (overCap || overTime || lastRound) { forcedTermination = true; break; }
+            if (overCap || overTime || lastRound) { turnTracker.budgetStop(); forcedTermination = true; break; }
             if (!(await revalidateTenantKnowledgeScope())) {
               tenantKnowledgeScopeInvalidated = true;
               forcedTermination = true;
@@ -14843,9 +14942,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ model: (studioSessionId || substantiveTurn) ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash", messages: liveDecisionMessages(convo), tools: toolDefs, tool_choice: "auto", stream: true }),
             }, traceFor("chat-tool-loop"));
-            if (!currentResponse.ok) { forcedTermination = true; break; }
+            if (!currentResponse.ok) { turnTracker.interrupted(); forcedTermination = true; break; }
           }
 
+          // The round answered with no tool call (Live: decided to answer). Observed here, after the
+          // loop, so the `!hasToolCall` block itself stays byte-identical (n5 runs it in isolation).
+          if (!forcedTermination && (finalChunks || liveAnswerPending)) turnTracker.naturalStop();
           // ── C1: THE POST-LOOP CONTINUATION CHECK ─────────────────────────────────────────
           // The for-loop has exited. If it exited via the prose-only branch (`!hasToolCall`)
           // with NO terminal state — nothing executed, no card minted, the prose itself is not
@@ -14889,6 +14991,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               && !studioSessionId) {
             const exhausted = "I wasn't able to complete that request. The task may need a different approach or a capability that isn't available here yet — could you try asking again, or check what's possible from this workspace?";
             finalAssistantText = exhausted;
+            turnTracker.budgetStop();
+            emitTurnTerminalBeforeAnswer(controller);
             emitContent(controller, enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: exhausted } }] })}\n\n`));
           }
           if (continueContinuation) { continueContinuation = false; continue; }
@@ -14921,6 +15025,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             pendingTenantKbTelemetry = null;
             // "Anything I'd already finished is saved" — and the card says which of the approvals that was.
             await emitApprovalOutcome(controller);
+            emitTurnTerminal(controller, "interrupted");
             const changed = "Your active workspace changed, so I stopped here. Anything I'd already finished is saved. Try again in the current workspace.";
             controller.enqueue(enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: changed } }] })}\n\n`));
             controller.enqueue(enc.encode("data: [DONE]\n\n"));
@@ -15065,6 +15170,33 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           if (extractionProposal && extractionProposal.fields?.length > 0) {
             emitContent(controller, enc.encode(`data: ${JSON.stringify({ extraction_proposal: extractionProposal })}\n\n`));
           }
+          // paige-turn — the terminal, as late as it can honestly go.
+          //  - A REPLAYED round (`finalChunks`) is already in hand, so its terminal goes here, before
+          //    the replay — INTERRUPTED when the provider never finished that round (no finish_reason:
+          //    the translator ends a broken stream with a clean [DONE], so that is the only sign).
+          //  - No answer at all (the closing call failed or came back with no body) ends on the
+          //    "couldn't finish" fallback below: INTERRUPTED, not FINAL.
+          //  - A CLOSING STREAM (text or Live) is not in hand yet. Its terminal waits in `capLine` for
+          //    the first line that carries answer text (the translator's first line is a synthetic
+          //    role-only delta, which is not an answer), so a closing call that breaks before any
+          //    text ends INTERRUPTED, never first FINAL. Once answer bytes are out the wire terminal is
+          //    provisional (contract.ts): a stream that breaks after them is INTERRUPTED in the record,
+          //    and on Live a paige_live_error supersedes the frame.
+          const answerFromClosingStream = !finalChunks && !!(finalStreamResponse?.ok && finalStreamResponse.body);
+          // A round the provider FINISHED cleanly with no text, after a turn that did no work, is not an
+          // answer either: FINAL would sit over an empty bubble. Only FINAL is changed — a waiting
+          // state (a card, accepted work, a question), a limit, or a turn whose tools ran keeps its own.
+          // The closing stream applies the same rule when it ends; there it is defensive today (every
+          // way into a text closing call has already recorded a limit or an interruption, and Live
+          // refuses an empty answer outright), so one rule holds on both ends of the reply.
+          const interruptEmptyFinal = () => {
+            if (turnTracker.state === "FINAL" && !finalAssistantText.trim() && turnTracker.record().tools === 0) turnTracker.interrupted();
+          };
+          if (!liveRuntimeScope && !answerFromClosingStream) {
+            if (!finalChunks || !lastRoundFinished) turnTracker.interrupted();
+            interruptEmptyFinal();
+            emitTurnTerminalBeforeAnswer(controller);
+          }
           // #11 — mark the transition into the ANSWER: the loop's reasoning (paige_step "thought"
           // frames) is done and the reply text begins now. The client also derives "writing" from
           // the first delta.content, so this is a lightweight explicit confirmation, not a dependency.
@@ -15078,6 +15210,24 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // contributes its delta to the persisted text (#94 integrity).
             let capBuf = "";
             let finalStreamDone = false;
+            // paige-turn — the terminal waits for the first ANSWER TEXT (a non-empty delta.content).
+            // What arrives before it — the translator's synthetic role-only first line, an empty delta —
+            // is HELD here, not dropped, and goes out right after the terminal in its original order:
+            // forwarding it first would put a `choices` frame ahead of the terminal, and dropping it
+            // would change the bytes an answering stream sends. If no text ever comes, it carried nothing
+            // and the turn has failed anyway. Live holds lines (it forwards line by line); text holds the
+            // raw chunks it forwards, so its bytes are unchanged, only later. `closingFinished`: the
+            // provider's own finish_reason, the only sign this stream was not cut off (see consumeRound).
+            let answerStarted = false;
+            let closingFinished = false;
+            const heldLead: Uint8Array[] = [];
+            const startAnswer = () => {
+              if (answerStarted) return;
+              answerStarted = true;
+              emitTurnTerminalBeforeAnswer(controller);
+              for (const b of heldLead) emitContent(controller, b);
+              heldLead.length = 0;
+            };
             const capLine = (line: string) => {
               if (!line.startsWith("data: ") || (liveRuntimeScope && finalStreamDone)) return;
               if (line.slice(6).trim() === "[DONE]") { finalStreamDone = true; return; }
@@ -15085,7 +15235,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 const parsed = JSON.parse(line.slice(6));
                 if (liveRuntimeScope && parsed.error) throw new Error("live_answer_failed");
                 const c = parsed?.choices?.[0]?.delta?.content;
-                if (liveRuntimeScope) emitContent(controller, new TextEncoder().encode(`${line}\n\n`));
+                if (parsed?.choices?.[0]?.finish_reason) closingFinished = true;
+                const isText = typeof c === "string" && c.length > 0;
+                if (liveRuntimeScope) {
+                  const bytes = new TextEncoder().encode(`${line}\n\n`);
+                  if (!answerStarted && !isText) heldLead.push(bytes);
+                  else { startAnswer(); emitContent(controller, bytes); }
+                } else if (isText) startAnswer();
                 if (c) finalAssistantText += c;
               } catch (error) { if (liveRuntimeScope) throw error; }
             };
@@ -15093,7 +15249,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               while (!liveRuntimeScope || !finalStreamDone) {
                 const { done, value } = await up.read();
                 if (done) break;
-                if (!liveRuntimeScope) emitContent(controller, value);
+                if (!liveRuntimeScope) {
+                  if (answerStarted) emitContent(controller, value); else heldLead.push(value);
+                }
                 capBuf += dec.decode(value, { stream: true });
                 let nl: number;
                 while ((nl = capBuf.indexOf("\n")) !== -1) { capLine(capBuf.slice(0, nl)); capBuf = capBuf.slice(nl + 1); }
@@ -15102,12 +15260,21 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               if (!liveRuntimeScope) {
                 capBuf += dec.decode();
                 if (capBuf) capLine(capBuf);
+                // The stream is over: a text answer the provider never finished is INTERRUPTED, and a
+                // stream that never carried text gets its terminal now (then its held bytes).
+                if (!closingFinished) turnTracker.interrupted();
+                interruptEmptyFinal();
+                startAnswer();
               }
             }
             if (liveRuntimeScope) {
               capBuf += dec.decode();
               if (capBuf) capLine(capBuf);
               if (!finalStreamDone || !finalAssistantText.trim()) throw new Error("live_answer_incomplete");
+              // A Live answer the provider never finished still reached [DONE] (the translator's), so
+              // it is spoken as before — but the record says INTERRUPTED (the wire terminal was
+              // provisional). Whether Live should fail such an answer instead is a Live decision.
+              if (!closingFinished) turnTracker.interrupted();
               void up.cancel().catch(() => {});
               emitContent(controller, new TextEncoder().encode("data: [DONE]\n\n"));
             }
@@ -15175,6 +15342,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             discardContent();
             pendingTenantKbTelemetry = null;
             finalAssistantText = "";
+            emitTurnTerminal(controller, "interrupted");
             const changed = "Your active workspace changed, so I stopped here. Anything I'd already finished is saved. Try again in the current workspace.";
             try {
               controller.enqueue(enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: changed } }] })}\n\n`));
@@ -15206,6 +15374,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             discardContent();
             pendingTenantKbTelemetry = null;
             finalAssistantText = withheld;
+            emitTurnTerminal(controller, "withheld");
             try {
               controller.enqueue(enc.encode(WITHHELD_FRAME));
               controller.enqueue(enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: withheld } }] })}\n\n`));
@@ -15213,13 +15382,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             } catch { /* client already gone */ }
             if (payloadThreadId) {
               try {
-                const p = persistAssistantTurn(withheld, { bundleRef: null });
+                const p = persistAssistantTurn(withheld, withTurnRecord(withheld, { bundleRef: null }));
                 // @ts-ignore — EdgeRuntime is available in Supabase Edge Functions runtime
                 if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(p); else await p;
               } catch (e) { console.error("[paige] persist assistant turn failed:", (e as Error)?.message); }
             }
             return;
           }
+          // Past both gates: a protected turn's terminal goes out here, ahead of the answer it releases
+          // (a no-op on an ordinary turn, which already sent it before its answer).
+          emitTurnTerminal(controller);
           releaseContent(controller);
 
           // The durable record follows that same single decision. It used to sit behind its own
@@ -15237,12 +15409,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // the check holds.
           if (payloadThreadId && finalAssistantText.trim()) {
             try {
-              const p = persistAssistantTurn(finalAssistantText, assistantTurnMetadata());
+              const p = persistAssistantTurn(finalAssistantText, withTurnRecord(finalAssistantText, assistantTurnMetadata()));
               // @ts-ignore — EdgeRuntime is available in Supabase Edge Functions runtime
               if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(p); else await p;
             } catch (e) { console.error("[paige] persist assistant turn failed:", (e as Error)?.message); }
           }
          } catch (e) {
+           // Nothing more will come: the terminal (INTERRUPTED, unless already sent) precedes the
+           // approval outcome, the Live error frame and the snag sentence alike.
+           emitTurnTerminal(controller, "interrupted");
            if (liveRuntimeScope) {
              // A partly spoken answer is not a successful turn. Keep exactly
              // the released, unprotected text in this same thread; never save
@@ -15254,7 +15429,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
              if (!turnCarriesProtectedContent() && payloadThreadId && (finalAssistantText.trim() || interruptedMeta.bundleRef)
                && await revalidateTenantKnowledgeScope()) {
                try {
-                 await persistAssistantTurn(finalAssistantText, interruptedMeta);
+                 await persistAssistantTurn(finalAssistantText, withTurnRecord(finalAssistantText, interruptedMeta));
                } catch { console.error("[paige] partial Live answer persistence failed"); }
              }
              // What became of the approvals, then the error frame the Live client settles on — each
@@ -15280,7 +15455,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
            // question with no assistant reply — symmetry with the in-band fallback.
            if (payloadThreadId) {
              try {
-               const p = persistAssistantTurn(snag, { surfaces: [], bundleRef: null });
+               const p = persistAssistantTurn(snag, withTurnRecord(snag, { surfaces: [], bundleRef: null }));
                // @ts-ignore — EdgeRuntime is available in Supabase Edge Functions runtime
                if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(p); else await p;
              } catch (pe) { console.error("[paige] persist snag fallback failed:", (pe as Error)?.message); }
@@ -15300,6 +15475,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // Leftover-line buffer across pulls: a `data:` record split over two reads
     // must still contribute its delta to the persisted text (#94 integrity).
     let directSseBuf = "";
+    // paige-turn — whether the provider FINISHED the document answer (a finish_reason arrived). The
+    // translator ends a stream that broke with the same clean [DONE], so this is the only sign; a
+    // document answer without it is recorded INTERRUPTED (see the close decision below).
+    let docAnswerFinished = false;
     // Document responses are held until the final active-account revalidation
     // and post-processing checks complete. This prevents prior-account Knowledge
     // from crossing the response boundary if authority changes mid-stream.
@@ -15318,12 +15497,34 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // path has no reasoning loop, so first bytes ≈ writing start). The client also derives it from
     // the first delta, so this is a lightweight confirmation, not a dependency.
     let sentWritingPhase = false;
+    // paige-turn — the turn frame on the document path. It has no tool loop (tools are offered on the first
+    // call but never executed here), so the turn is one round that answers: FINAL unless an exit says
+    // otherwise. WHERE THE TERMINAL GOES, decided by the same hold this path already snapshots:
+    //  - ORDINARY (unprotected; unreachable today, since every document turn holds — kept defensive):
+    //    provider bytes are forwarded raw as they arrive, the provider's own
+    //    `[DONE]` among them, so the server cannot wait for the end. The terminal precedes the FIRST
+    //    forwarded byte (state FINAL — nothing on this path can still change an answer already going
+    //    out), and an empty stream gets it before the server's own closing `[DONE]`.
+    //  - PROTECTED: nothing is forwarded until the close decision, so the terminal goes out at the
+    //    release point, after `scopeHeldAtClose` and the client-seat read, saying what they decided.
+    const docTurn = createTurnTracker(turnClassifiers);
+    docTurn.roundStarted();
+    let docTurnTerminalSent = false;
+    const emitDocTurnTerminal = (controller: ReadableStreamDefaultController, outcome?: "interrupted") => {
+      docTurn.naturalStop(); // the one round answered (or is answering); an exit below may still end it
+      if (outcome === "interrupted") docTurn.interrupted();
+      if (docTurnTerminalSent) return;
+      docTurnTerminalSent = true;
+      controller.enqueue(new TextEncoder().encode(turnFrameLine(docTurn.terminalFrame())));
+    };
 
     const stream = new ReadableStream({
       // #12 — flush any PRE-FLIGHT compaction frames FIRST so the compacting card renders before the
       // reply. Empty (no-op) on every turn that didn't fold. A persisted Studio thread reaching this
       // path (a doc-attached turn) still shows its compaction card.
       start(controller) {
+        // paige-turn — the first frame of the stream.
+        controller.enqueue(new TextEncoder().encode(turnFrameLine(docTurn.frame("started"))));
         // The DOCUMENT path is a SECOND, independent stream (the agentic stream below is gated
         // on `!attachedDocument`), so the refusal frame emitted there does not reach here. This
         // is the higher-stakes half of the surface — the caller believes they are attaching a
@@ -15338,10 +15539,18 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         for (const f of compactionLeadFrames) controller.enqueue(new TextEncoder().encode(f));
       },
       async pull(controller) {
+       // paige-turn — a provider read that rejects, or anything else that throws below, still ends the
+       // stream with its one terminal (INTERRUPTED, unless one already went out) and a [DONE]. Without
+       // this the stream errored after `started` with no terminal and no [DONE] at all. The catch only
+       // CLOSES THE WIRE: it writes no record. A turn record already persisted before the throw stands
+       // as written (the close-out persists before its last steps, so a throw after it leaves whatever
+       // state it recorded), and a throw before the close writes no record at all.
+       try {
         const { done, value } = await reader.read();
         if (done) {
           if (!(await revalidateTenantKnowledgeScope())) {
             pendingTenantKbTelemetry = null;
+            emitDocTurnTerminal(controller, "interrupted");
             const changed = "Your active workspace changed, so I stopped here. Anything I'd already finished is saved. Try again in the current workspace.";
             controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ choices: [{ delta: { content: changed } }] })}\n\n`));
             controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"));
@@ -15353,7 +15562,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             for (const line of directSseBuf.split("\n")) {
               if (!line.startsWith("data: ") || line.slice(6).trim() === "[DONE]") continue;
               if (holdProtectedContent) directFrames.push(`${line}\n\n`);
-              try { const c = JSON.parse(line.slice(6))?.choices?.[0]?.delta?.content; if (c) fullAssistantResponse += c; } catch { /* skip */ }
+              try {
+                const choice = JSON.parse(line.slice(6))?.choices?.[0];
+                if (choice?.delta?.content) fullAssistantResponse += choice.delta.content;
+                if (choice?.finish_reason) docAnswerFinished = true;
+              } catch { /* skip */ }
             }
             directSseBuf = "";
           }
@@ -15378,7 +15591,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // of it is the "closing window" trade this rule exists to remove, not an edge case.
           //
           // On an ordinary turn this is a pass-through and the frames go out exactly as before.
+          // paige-turn — whether the close-out handed the person something to act on: a proposal
+          // card, or the review sentence beside it. Such a turn answered even when its reply text is
+          // empty, so the empty-answer rule below must not call it INTERRUPTED.
+          let docCloseDelivered = false;
           const emitCloseFrame = (frame: string) => {
+            if (frame.includes('"extraction_proposal"') || frame.includes('"awaiting_review":true')) docCloseDelivered = true;
             if (holdProtectedContent) directFrames.push(frame);
             else controller.enqueue(new TextEncoder().encode(frame));
           };
@@ -15436,6 +15654,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               );
               if (!(await revalidateTenantKnowledgeScope())) {
                 pendingTenantKbTelemetry = null;
+                emitDocTurnTerminal(controller, "interrupted");
                 const changed = "Your active workspace changed, so I stopped here. Anything I'd already finished is saved. Try again in the current workspace.";
                 controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ choices: [{ delta: { content: changed } }] })}\n\n`));
                 controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"));
@@ -15504,12 +15723,20 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // Returns `true` immediately, with no RPC, on any turn that retrieved no Knowledge, so
           // this costs nothing on the ordinary path.
           const scopeHeldAtClose = await revalidateTenantKnowledgeScope();
+          // The record follows the close decision before anything durable is written below — and an
+          // answer the provider never finished is INTERRUPTED, on the wire at release and in the record.
+          // So is an EMPTY one that delivered nothing else: a reply that is only a tool call finishes
+          // (`tool_calls`) with no text, and this path executes no tool, so it would otherwise end FINAL
+          // over an empty bubble. A close-out that emitted a proposal card (`docCloseDelivered`) did
+          // answer, through the card, and stays FINAL.
+          if (!scopeHeldAtClose || !docAnswerFinished || (!fullAssistantResponse.trim() && !docCloseDelivered)) docTurn.interrupted();
 
           // R3 — THE RELEASE HALF of the decision made before the close-out. On a finding every held
           // frame is replaced by the one sentence and the thread keeps that sentence, so the thread row,
           // the analytics rows (which read `fullAssistantResponse`, the sentence by then) and the wire
           // agree. The close frames go with the answer, as the cards do on the agentic path.
           if (scopeHeldAtClose && clientSeatWithheld !== null) {
+            docTurn.withheld();
             fullAssistantResponse = clientSeatWithheld;
             pendingTenantKbTelemetry = null;
             directFrames.length = 0;
@@ -15588,7 +15815,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // rule now: one close decision governs the wire, the thread row and the telemetry row
           // together, and a reply the user was told was stopped is saved nowhere.
           if (scopeHeldAtClose && payloadThreadId && fullAssistantResponse.trim()) {
-            const p = persistAssistantTurn(fullAssistantResponse, { bundleRef: null });
+            docTurn.naturalStop();
+            const p = persistAssistantTurn(fullAssistantResponse, attachTurnRecord(docTurn, fullAssistantResponse, { bundleRef: null }));
             // @ts-ignore — EdgeRuntime is available in Supabase Edge Functions runtime
             if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) EdgeRuntime.waitUntil(p); else await p;
           }
@@ -15615,9 +15843,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // One decision, both durable effects and the wire, so the reply, the thread row and
             // the telemetry row can never disagree about whether this turn happened.
             if (!scopeHeldAtClose) {
+              emitDocTurnTerminal(controller, "interrupted");
               const changed = "Your active workspace changed, so I stopped here. Anything I'd already finished is saved. Try again in the current workspace.";
               controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ choices: [{ delta: { content: changed } }] })}\n\n`));
             } else {
+              // Past the close decision and the client-seat read: FINAL or WITHHELD, ahead of the release.
+              emitDocTurnTerminal(controller);
               for (const frame of directFrames) controller.enqueue(new TextEncoder().encode(frame));
               // The durable record is written HERE, after the reply has actually crossed — the
               // same rule the agentic path follows, and now the same single site (§18) rather
@@ -15628,12 +15859,18 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               await commitTenantKnowledgeTelemetry();
             }
           }
+          // An ordinary turn whose provider sent nothing at all has not had its terminal yet.
+          emitDocTurnTerminal(controller);
           controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"));
           controller.close();
           return;
         }
 
+        // Unreachable today — every document turn is protected at entry (turnCarriesProtectedContentAtEntry
+        // includes attachedDocument), so holdProtectedContent is always true here; kept defensive.
         if (!holdProtectedContent) {
+          // Before the first forwarded provider byte (see `emitDocTurnTerminal`).
+          emitDocTurnTerminal(controller);
           if (!sentWritingPhase) {
             sentWritingPhase = true;
             controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ paige_phase: "writing" })}\n\n`));
@@ -15651,10 +15888,22 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             const parsed = JSON.parse(line.slice(6));
             const content = parsed.choices?.[0]?.delta?.content;
             if (content) fullAssistantResponse += content;
+            if (parsed.choices?.[0]?.finish_reason) docAnswerFinished = true;
           } catch { /* skip */ }
         }
         // Keep the pull loop advancing without exposing buffered provider bytes.
         if (holdProtectedContent) controller.enqueue(new Uint8Array());
+       } catch (error) {
+        console.error("[paige] document stream failed:", (error as Error)?.message);
+        // Nothing held is released here: a protected turn's buffered frames are simply dropped.
+        try { emitDocTurnTerminal(controller, "interrupted"); } catch { /* the stream is already closed */ }
+        try {
+          controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"));
+          controller.close();
+        } catch {
+          try { controller.error(error); } catch { /* already closed or errored */ }
+        }
+       }
       },
     });
 

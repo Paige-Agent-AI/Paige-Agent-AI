@@ -3,6 +3,7 @@
 // produced arrive as their own frames; nothing here invents a step or a result the stream did not send.
 import React from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { readPaigeStream } from "@/lib/paige-stream";
 import { ensureThread, loadHeldConfirms, loadTurns, plainError, Said, type ArtifactKind, type ChatTurn } from "./studio-data";
 
 export interface BuildStep { id: string; label: string; detail?: string; status: "done" | "error"; at: number }
@@ -126,88 +127,73 @@ export function useStudioChat(opts: {
         }),
       });
       if (!resp.ok) throw new Said(resp.status === 429 ? "Give it a moment — too many requests." : "Paige couldn't take that just now. Try again.");
-      const reader = resp.body?.getReader();
-      const decoder = new TextDecoder();
       let reply = "";
-      let buffer = "";
-      let done = false;
       let gotChoices = false;
       let sawStep = false;
       let sawConfirm = false;
-      while (reader && !done) {
-        const { done: end, value } = await reader.read();
-        if (end) break;
-        buffer += decoder.decode(value, { stream: true });
-        let nl: number;
-        while ((nl = buffer.indexOf("\n")) !== -1) {
-          let line = buffer.slice(0, nl);
-          buffer = buffer.slice(nl + 1);
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (!line.startsWith("data: ")) continue;
-          const payload = line.slice(6).trim();
-          if (payload === "[DONE]") { done = true; break; }
-          let parsed: Record<string, unknown>;
-          // A line is only parsed once its newline has arrived, so a parse failure is a bad line,
-          // never a split one: skip it and keep reading.
-          try { parsed = JSON.parse(payload); } catch { continue; }
-          if (parsed.paige_step && typeof parsed.paige_step === "object") {
-            const ps = parsed.paige_step as Record<string, unknown>;
-            if (typeof ps.label === "string" && ps.label) {
-              const label = ps.label;
-              sawStep = true;
-              setStatus(label);
-              setSteps((prev) => {
-                const id = typeof ps.id === "string" && ps.id ? ps.id : `s:${prev.length}`;
-                if (prev.some((p) => p.id === id)) return prev;
-                return [...prev, { id, label, detail: typeof ps.detail === "string" ? ps.detail : undefined, status: ps.status === "error" ? "error" : "done", at: Date.now() }];
-              });
-            }
-            continue;
+      // The shared reader (src/lib/paige-stream) owns the framing. As this loop always did, [DONE]
+      // ends the read and a line that is not JSON is skipped; a frame it does not name is dropped.
+      for await (const frame of readPaigeStream(resp.body, { stopAtDone: true, malformed: "skip" })) {
+        if (frame.type === "step") {
+          if (typeof frame.step !== "object") continue;
+          const ps = frame.step as Record<string, unknown>;
+          if (typeof ps.label === "string" && ps.label) {
+            const label = ps.label;
+            sawStep = true;
+            setStatus(label);
+            setSteps((prev) => {
+              const id = typeof ps.id === "string" && ps.id ? ps.id : `s:${prev.length}`;
+              if (prev.some((p) => p.id === id)) return prev;
+              return [...prev, { id, label, detail: typeof ps.detail === "string" ? ps.detail : undefined, status: ps.status === "error" ? "error" : "done", at: Date.now() }];
+            });
           }
-          if (parsed.paige_choices && typeof parsed.paige_choices === "object") {
-            const c = parsed.paige_choices as Record<string, unknown>;
-            const options = Array.isArray(c.options) ? (c.options as Record<string, unknown>[])
-              .filter((o) => typeof o.label === "string")
-              .map((o) => ({ label: String(o.label), value: typeof o.value === "string" ? o.value : String(o.label), description: typeof o.description === "string" ? o.description : undefined })) : [];
-            const prompt = typeof c.prompt === "string" ? c.prompt : "";
-            gotChoices = true;
-            setChoices({ prompt, options, multi: c.multi === true, allowOther: c.allow_other === true });
-            if (!reply.trim() && prompt) { reply = prompt; setTurns([...shown, { role: "assistant", content: reply }]); }
-            continue;
+          continue;
+        }
+        if (frame.type === "choices") {
+          if (typeof frame.choices !== "object") continue;
+          const c = frame.choices as Record<string, unknown>;
+          const options = Array.isArray(c.options) ? (c.options as Record<string, unknown>[])
+            .filter((o) => typeof o.label === "string")
+            .map((o) => ({ label: String(o.label), value: typeof o.value === "string" ? o.value : String(o.label), description: typeof o.description === "string" ? o.description : undefined })) : [];
+          const prompt = typeof c.prompt === "string" ? c.prompt : "";
+          gotChoices = true;
+          setChoices({ prompt, options, multi: c.multi === true, allowOther: c.allow_other === true });
+          if (!reply.trim() && prompt) { reply = prompt; setTurns([...shown, { role: "assistant", content: reply }]); }
+          continue;
+        }
+        if (frame.type === "artifact") { produced = toArtifact(frame.artifact) ?? produced; continue; }
+        if (frame.type === "confirm") {
+          if (typeof frame.confirm !== "object") continue;
+          const c = frame.confirm as Record<string, unknown>;
+          if (typeof c.summary === "string" && typeof c.fingerprint === "string") {
+            const pc = { tool: String(c.tool ?? "action"), summary: c.summary, fingerprint: c.fingerprint };
+            sawConfirm = true;
+            setConfirms((prev) => (prev.some((x) => x.fingerprint === pc.fingerprint) ? prev : [...prev, pc]));
           }
-          if (parsed.paige_artifact) { produced = toArtifact(parsed.paige_artifact) ?? produced; continue; }
-          if (parsed.paige_confirm && typeof parsed.paige_confirm === "object") {
-            const c = parsed.paige_confirm as Record<string, unknown>;
-            if (typeof c.summary === "string" && typeof c.fingerprint === "string") {
-              const pc = { tool: String(c.tool ?? "action"), summary: c.summary, fingerprint: c.fingerprint };
-              sawConfirm = true;
-              setConfirms((prev) => (prev.some((x) => x.fingerprint === pc.fingerprint) ? prev : [...prev, pc]));
-            }
-            continue;
+          continue;
+        }
+        if (frame.type === "approval_outcome") {
+          if (typeof frame.outcome !== "object") continue;
+          const o = frame.outcome as { actions?: Array<{ fingerprint?: string; outcome?: string; note?: string }>; note?: string };
+          const byFp = new Map((o.actions ?? []).map((a) => [String(a.fingerprint), a]));
+          setConfirms((prev) => prev.map((c) => {
+            const a = byFp.get(c.fingerprint);
+            if (!a || (a.outcome !== "ran" && a.outcome !== "not_run" && a.outcome !== "unconfirmed")) return c;
+            return { ...c, state: a.outcome, note: a.note ?? o.note };
+          }));
+          continue;
+        }
+        if (frame.type === "preview") {
+          if (typeof frame.preview !== "object") continue;
+          const pv = frame.preview as Record<string, unknown>;
+          if (Array.isArray(pv.blocks) && pv.blocks.length) {
+            setPreview({ kind: pv.kind === "funnel" ? "funnel" : "page", title: typeof pv.title === "string" ? pv.title : "Draft", blocks: pv.blocks, theme: pv.theme ?? null });
           }
-          if (parsed.paige_approval_outcome && typeof parsed.paige_approval_outcome === "object") {
-            const o = parsed.paige_approval_outcome as { actions?: Array<{ fingerprint?: string; outcome?: string; note?: string }>; note?: string };
-            const byFp = new Map((o.actions ?? []).map((a) => [String(a.fingerprint), a]));
-            setConfirms((prev) => prev.map((c) => {
-              const a = byFp.get(c.fingerprint);
-              if (!a || (a.outcome !== "ran" && a.outcome !== "not_run" && a.outcome !== "unconfirmed")) return c;
-              return { ...c, state: a.outcome, note: a.note ?? o.note };
-            }));
-            continue;
-          }
-          if (parsed.paige_preview && typeof parsed.paige_preview === "object") {
-            const pv = parsed.paige_preview as Record<string, unknown>;
-            if (Array.isArray(pv.blocks) && pv.blocks.length) {
-              setPreview({ kind: pv.kind === "funnel" ? "funnel" : "page", title: typeof pv.title === "string" ? pv.title : "Draft", blocks: pv.blocks, theme: pv.theme ?? null });
-            }
-            continue;
-          }
-          const choicesArr = parsed.choices as { delta?: { content?: unknown } }[] | undefined;
-          const delta = choicesArr?.[0]?.delta?.content;
-          if (typeof delta === "string" && delta) {
-            reply += delta;
-            setTurns([...shown, { role: "assistant", content: reply }]);
-          }
+          continue;
+        }
+        if (frame.type === "content" && frame.text) {
+          reply += frame.text;
+          setTurns([...shown, { role: "assistant", content: reply }]);
         }
       }
       if (!reply.trim() && !gotChoices && !produced && !sawStep && !sawConfirm) setTurns([...shown, { role: "assistant", content: "I didn't catch that. Try saying it another way?" }]);

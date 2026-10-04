@@ -72,5 +72,23 @@
   "served": {
     "files": 40,
     "spa": 2
+  },
+  "solo_viewports": {
+    "solo-1536x770.png": {
+      "scrollWidth": 1536,
+      "innerWidth": 1536
+    },
+    "solo-1366x768.png": {
+      "scrollWidth": 1366,
+      "innerWidth": 1366
+    },
+    "solo-1024x768.png": {
+      "scrollWidth": 1024,
+      "innerWidth": 1024
+    },
+    "solo-900x1000.png": {
+      "scrollWidth": 900,
+      "innerWidth": 900
+    }
   }
 }

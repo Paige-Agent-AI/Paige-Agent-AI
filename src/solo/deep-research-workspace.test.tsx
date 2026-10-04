@@ -135,12 +135,18 @@ describe("the truthful empty state (ruling §3/§14)", () => {
   });
 
   it("the deliberate error states are distinct (not 'something went wrong')", () => {
-    expect(view).toContain("engine_unreachable");
-    expect(view).toContain("search_unconfigured");
-    expect(view).toContain("workspace_changed");
-    expect(view).toContain("not_signed_in");
-    expect(view).toContain("Live web search is not configured");
+    // R2b: the library no longer RUNS research (the start flow and its failure
+    // vocabulary — engine_unreachable/search_unconfigured/workspace_changed/
+    // not_signed_in — went with it; Chat owns execution now). What remains honest
+    // here: the two real read failures (list + detail), each with its own words and
+    // a retry, and the engine's own outcome vocabulary on saved runs — an
+    // unconfigured run still says so through its stop reason, never a guess.
+    expect(view).toContain("Research history could not be loaded.");
+    expect(view).toContain("That research could not be opened.");
+    expect(view).toContain("Retry");
+    expect(view).toContain("Search not configured");
     expect(view).not.toContain("Something went wrong");
+    expect(view).not.toContain("engine_unreachable");
   });
 
   it("foreign/unknown runs render the uniform not-found shape", () => {

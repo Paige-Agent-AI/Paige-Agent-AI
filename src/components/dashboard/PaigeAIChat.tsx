@@ -877,7 +877,15 @@ const PaigeAIChatInner = ({
             if (!ref.run_id) continue;
             try {
               const { data } = await supabase.rpc("get_workspace_research_run", { _run_id: ref.run_id });
-              if (!data) continue;
+              if (!data) {
+                // R2b review P2: settle the reference — a null readback clears the
+                // rehydrating state so the card shows its honest unavailable wording,
+                // never an eternal "Loading…" and never a fabricated evidence card.
+                setMessages((prev) => prev.map((m) => m.research?.some((r) => r.run_id === ref.run_id)
+                  ? { ...m, research: m.research!.map((r) => r.run_id === ref.run_id ? { ...r, rehydrating: false } : r) }
+                  : m));
+                continue;
+              }
               const run = data as unknown as Record<string, unknown>;
               setMessages((prev) => prev.map((m) => m.research?.some((r) => r.run_id === ref.run_id)
                 ? { ...m, research: m.research!.map((r) => r.run_id === ref.run_id
@@ -897,7 +905,9 @@ const PaigeAIChatInner = ({
                               published_at: typeof src.published_at === "string" ? src.published_at : null,
                               excluded: src.excluded === true,
                             })) : [],
-                        unverified_notes: [],
+                        unverified_notes: Array.isArray((run.coverage as Record<string, unknown> | undefined)?.unverified_notes)
+                          ? (run.coverage as { unverified_notes: string[] }).unverified_notes
+                          : [],
                       }
                     : r) }
                 : m));
@@ -1498,7 +1508,10 @@ const PaigeAIChatInner = ({
             }
             if (parsed.paige_crm_result?.action && parsed.paige_crm_result?.receipt_recorded === true) {
               crmResultsThisTurn.push(parsed.paige_crm_result as PaigeCrmResult);
-              setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: [...crmResultsThisTurn], artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
+              // R2b review P2: card survival must not depend on frame order — this rebuild
+              // carries the research cards too (researchTrace flushes after crmResultTrace
+              // today, but the invariant is the crm pattern's, not the ordering's).
+              setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: [...crmResultsThisTurn], research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
               continue;
             }
             // R2b — the inline research card arrives attached to the SAME assistant turn

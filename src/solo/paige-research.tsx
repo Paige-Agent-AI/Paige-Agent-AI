@@ -43,29 +43,6 @@ const formatDate = (iso: string | null) => {
   catch { return "—"; }
 };
 
-const FAIL_WORDS: Record<string, { title: string; body: string }> = {
-  engine_unreachable: {
-    title: "Research could not run",
-    body: "The research engine could not be reached. Check your connection and try again — nothing was charged or saved.",
-  },
-  search_unconfigured: {
-    title: "Live web search is not configured",
-    body: "PAIGE's cited research needs the web-search provider, which is not configured for this platform yet. Ask in Chat for a same-session answer from her own knowledge, clearly flagged as not freshly sourced.",
-  },
-  workspace_changed: {
-    title: "Your workspace changed mid-research",
-    body: "The research was started under a different workspace. Its result stays with that workspace — it has not been shown or saved here.",
-  },
-  engine_error: {
-    title: "The research engine reported an error",
-    body: "The engine stopped honestly and nothing was saved. Check the question and try again; if it repeats, the provider may be unreachable.",
-  },
-  not_signed_in: {
-    title: "Sign in to research",
-    body: "Research runs are saved to your workspace, so you need to be signed in first.",
-  },
-};
-
 function RunCard({ row, onOpen }: { row: ResearchRunRow; onOpen: (id: string) => void }) {
   return (
     <article className="spw-source-card dr-run-card">

@@ -1,5 +1,9 @@
 import { useState } from "react";
 import { Search, FileSearch, ExternalLink, ChevronDown } from "lucide-react";
+// Component-owned styles: the card renders in EVERY chat surface (Solo workspace,
+// tenant shell, platform desk), so its CSS follows the component instead of living
+// in the Solo-only workspace stylesheet (R2b review P2 — per-chunk CSS + React.lazy).
+import "./paige-research-card.css";
 
 /**
  * PaigeResearchCard — the inline Deep Research result card (R2b, INT-303 reshape).
@@ -75,7 +79,17 @@ export function PaigeResearchCard({ result }: { result: PaigeResearchResult }) {
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const cited = new Set(result.findings.flatMap((f) => f.citations));
   const showingSources = result.sources.filter((s) => !s.excluded);
-  const stateWord = result.stop_reason ? (STOP_WORDS[result.stop_reason] ?? "Stopped") : "Completed";
+  // A reloaded REFERENCE carries no engine state until the governed get resolves —
+  // claim nothing while it loads ("Reloading…") or after a null readback ("Unavailable");
+  // "Completed" is reserved for a payload the engine actually produced (R2b review P3).
+  const supportsStateWord = result.stop_reason !== null || result.findings.length > 0;
+  const stateWord = supportsStateWord
+    ? (result.stop_reason ? (STOP_WORDS[result.stop_reason] ?? "Stopped") : "Completed")
+    : (result.rehydrating ? "Reloading…" : "Unavailable");
+  // The settled failed-readback shape: nothing came back for this reference. Distinct
+  // from a live run that genuinely found nothing (that one has the engine's own words).
+  const referenceUnavailable = !result.rehydrating && result.findings.length === 0
+    && result.sources.length === 0 && result.stop_reason === null && !result.saved;
 
   return (
     <div className="dr-card" data-research-card="">
@@ -126,14 +140,19 @@ export function PaigeResearchCard({ result }: { result: PaigeResearchResult }) {
         </ul>
       )}
 
-      {!result.rehydrating && result.findings.length === 0 && result.configured && (
+      {referenceUnavailable ? (
+        <p className="dr-card-note">
+          This run's evidence is no longer available in this workspace — the reference
+          could not be read back through the research library.
+        </p>
+      ) : !result.rehydrating && result.findings.length === 0 && result.configured && (
         <p className="dr-card-note">
           No findings survived validation — the engine reports honestly rather than guessing.
         </p>
       )}
 
       {result.unverified_notes.length > 0 && (
-        <p className="dr-card-note dr-unverified">
+        <p className="dr-card-note dr-card-unverified">
           Could not verify: {result.unverified_notes.slice(0, 6).join(" · ")}
           {result.unverified_notes.length > 6 ? " · …" : ""}
         </p>

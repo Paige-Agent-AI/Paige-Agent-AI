@@ -11,11 +11,11 @@ import type { ApprovalQueueRow } from "@/hooks/usePendingApprovals";
 const invoke = vi.fn(async (_name: string, _options: { body: { approval_id: string } }) => ({ data: { ok: true, executed: false }, error: null }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { functions: { invoke: (name: string, options: { body: { approval_id: string } }) => invoke(name, options) } } }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), warning: vi.fn() } }));
-vi.mock("@/components/paige/ApprovalRow", () => ({ ApprovalRow: ({ a }: { a: ApprovalQueueRow }) => <div>{a.title}</div> }));
+vi.mock("@/components/paige/ApprovalRow", () => ({ ApprovalRow: ({ a }: { a: ApprovalQueueRow }) => <div>{a.summary}</div> }));
 
 import { DraftsAwaitingPanel } from "./DraftsAwaitingPanel";
 
-const row = (id: string, type: string, title: string) => ({ id, type, title, sla_state: "on_track", priority: 2 }) as unknown as ApprovalQueueRow;
+const row = (id: string, type: string, summary: string) => ({ id, type, summary, sla_state: "on_track", priority: 2 }) as unknown as ApprovalQueueRow;
 
 let host: HTMLDivElement;
 let root: Root;

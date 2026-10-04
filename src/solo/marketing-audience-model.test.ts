@@ -62,4 +62,10 @@ describe("deriveAudience", () => {
     expect(model.contacted.count).toBe(1);
     expect(model.stale).toBe(2);
   });
+
+  it("a contact added recently and not yet contacted is new, not neglected", () => {
+    const contacts = [contact({ created_at: daysAgo(5) }), contact({ created_at: daysAgo(200) }), contact({ created_at: daysAgo(5), last_contacted_at: daysAgo(100) })];
+    const model = deriveAudience({ contacts, reachableIds: new Set(), periodDays: 30, now: NOW });
+    expect(model.stale).toBe(2); // the 200-day-old contact never reached, and the one last reached 100 days ago
+  });
 });

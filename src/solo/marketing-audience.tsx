@@ -24,29 +24,35 @@ export const CONTACT_READ_LIMIT = 5000;
 const COLUMNS = "id,lifecycle_stage,source,tags,created_at,last_contacted_at,do_not_contact,dnd_active,disqualified,email,phone";
 
 type AudienceRead = { contacts: AudienceContact[]; reachableIds: Set<string>; capped: boolean };
+const METHOD_READ_LIMIT = CONTACT_READ_LIMIT * 2;
 const NO_READ: AudienceRead = { contacts: [], reachableIds: new Set(), capped: false };
 
 // The generated client types cannot follow this column list through the filters; the rows are typed below.
 type Query = { select: (columns: string) => Query; eq: (column: string, value: unknown) => Query; is: (column: string, value: null) => Query; in: (column: string, values: string[]) => Query; order: (column: string, options: { ascending: boolean }) => Query; range: (from: number, to: number) => Promise<{ data: unknown[] | null; error: unknown }> };
 const db = supabase as unknown as { from: (table: string) => Query };
 
+// Newest first, so a capped read still holds every recent contact the period figures count. `id` breaks
+// ties: one import shares a created_at, and without a unique order a page could repeat or skip rows.
 async function readAudience(tenantId: string): Promise<AudienceRead> {
   const contacts: AudienceContact[] = [];
   for (let from = 0; from < CONTACT_READ_LIMIT; from += PAGE) {
     const { data, error } = await db.from("clients").select(COLUMNS).eq("tenant_id", tenantId).is("merged_into_contact_id", null)
-      .order("created_at", { ascending: true }).range(from, from + PAGE - 1);
+      .order("created_at", { ascending: false }).order("id", { ascending: false }).range(from, from + PAGE - 1);
     if (error) throw error;
     contacts.push(...((data ?? []) as unknown as AudienceContact[]));
     if (!data || data.length < PAGE) break;
   }
   const reachableIds = new Set<string>();
-  for (let from = 0; from < CONTACT_READ_LIMIT * 2; from += PAGE) {
-    const { data, error } = await db.from("client_contact_methods").select("client_id").eq("tenant_id", tenantId).in("kind", ["email", "phone"]).range(from, from + PAGE - 1);
+  let methods = 0;
+  for (let from = 0; from < METHOD_READ_LIMIT; from += PAGE) {
+    const { data, error } = await db.from("client_contact_methods").select("client_id").eq("tenant_id", tenantId).in("kind", ["email", "phone"])
+      .order("id", { ascending: true }).range(from, from + PAGE - 1);
     if (error) throw error;
     for (const row of (data ?? []) as { client_id: string }[]) reachableIds.add(row.client_id);
+    methods += data?.length ?? 0;
     if (!data || data.length < PAGE) break;
   }
-  return { contacts, reachableIds, capped: contacts.length >= CONTACT_READ_LIMIT };
+  return { contacts, reachableIds, capped: contacts.length >= CONTACT_READ_LIMIT || methods >= METHOD_READ_LIMIT };
 }
 
 // Stage words for owners. A stage named for one vertical's outcome reads as a neutral outcome (§2).
@@ -98,7 +104,7 @@ export function audienceInsights(model: AudienceModel): { items: Insight[]; next
   if (topSource) items.push({ key: "source", icon: <Ic.users size={16}/>, title: `Largest source: ${sourceLabel(topSource.key)}`, detail: `${topSource.share}% of your contacts (${topSource.count.toLocaleString()}).` });
   const topTag = model.tags[0];
   if (topTag) items.push({ key: "tag", icon: <Ic.filter size={16}/>, title: `“${topTag.key}” is your largest tagged group`, detail: `${topTag.count.toLocaleString()} contacts, ${topTag.share}% of your audience.` });
-  if (model.stale > 0) items.push({ key: "stale", icon: <Ic.bolt size={16}/>, title: `${model.stale.toLocaleString()} contact${model.stale === 1 ? " hasn’t" : "s haven’t"} heard from you in ${STALE_DAYS} days`, detail: "Or have never been contacted. Contacts who opted out are not counted." });
+  if (model.stale > 0) items.push({ key: "stale", icon: <Ic.bolt size={16}/>, title: `${model.stale.toLocaleString()} contact${model.stale === 1 ? " hasn’t" : "s haven’t"} heard from you in ${STALE_DAYS} days`, detail: `Or were never contacted, and joined over ${STALE_DAYS} days ago. Contacts who opted out or were disqualified are not counted.` });
   const next = model.stale > 0
     ? { text: `Draft a re-engagement message for the ${model.stale.toLocaleString()} contact${model.stale === 1 ? "" : "s"} you haven’t reached in ${STALE_DAYS} days.`, prompt: `I have ${model.stale} contacts I haven't contacted in ${STALE_DAYS} days or more (contacts who opted out are excluded). Draft a short, warm re-engagement message I could send them. Ask me what I want them to do next before you write it. Save it as a draft; do not send anything.` }
     : model.added.count > 0
@@ -124,17 +130,17 @@ export function MarketingAudience({ tenantId, onOpenClients }: { tenantId: strin
 
   return <div className="mk-view mo mp ma">
     <TabActions>
-      <div className="campaigns-segmented" role="group" aria-label="Period">{AUDIENCE_PERIODS.map((days) => <button key={days} aria-pressed={periodDays === days} onClick={() => setPeriodDays(days)}>Last {days} days</button>)}</div>
+      <div className="campaigns-segmented" role="group" aria-label="Period">{AUDIENCE_PERIODS.map((days) => <button type="button" key={days} aria-pressed={periodDays === days} onClick={() => setPeriodDays(days)}>Last {days} days</button>)}</div>
       <button className="btn btn-s" onClick={onOpenClients}>Open Clients</button>
     </TabActions>
     <Frame phase={read.phase} retry={read.retry} noun="contacts">
       {model.total === 0 ? <section className="campaigns-surface"><div className="campaigns-state"><h2>No contacts yet</h2><p>Contacts arrive from your published forms, conversations and Clients. Once you have some, this tab shows who your marketing can reach.</p></div></section> : <>
         <div className="mo-stats ma-stats">
-          <OverviewStat icon={<Ic.users size={18}/>} tone="is-violet" label="Total contacts" value={floor(model.total, c)} foot={<DeltaLine delta={model.totalDelta} periodDays={periodDays} fallback={c ? `Counted from the first ${model.total.toLocaleString()}` : "All the contacts you can see"}/>}/>
+          <OverviewStat icon={<Ic.users size={18}/>} tone="is-violet" label="Total contacts" value={floor(model.total, c)} foot={<DeltaLine delta={model.totalDelta} periodDays={periodDays} against={`${periodDays} days ago`} fallback={c ? `Counted from your newest ${model.total.toLocaleString()}` : "All the contacts you can see"}/>}/>
           <OverviewStat icon={<Ic.plus size={18}/>} tone="is-aqua" label={`New, last ${periodDays} days`} value={floor(model.added.count, c)} foot={<DeltaLine delta={model.added.delta} periodDays={periodDays} fallback="No earlier period to compare"/>}/>
           <OverviewStat icon={<Ic.filter size={18}/>} tone="is-orange" label="Qualified" value={floor(model.qualified.count, c)} foot={<span className="mo-delta">{model.qualified.share}% of contacts</span>}/>
           <OverviewStat icon={<Ic.grid size={18}/>} tone="is-blue" label="Tagged" value={floor(model.tagged.count, c)} foot={<span className="mo-delta">{model.tagged.share}% carry a tag</span>}/>
-          <OverviewStat icon={<Ic.mail size={18}/>} tone="is-violet" label="Reachable" value={floor(model.reachable.count, c)} foot={<span className="mo-delta">{model.reachable.share}% have an email or phone and accept contact</span>}/>
+          <OverviewStat icon={<Ic.mail size={18}/>} tone="is-violet" label="Reachable" value={floor(model.reachable.count, c)} foot={<span className="mo-delta">{model.reachable.share}% have an email or phone and can be contacted</span>}/>
           <OverviewStat icon={<Ic.send size={18}/>} tone="is-aqua" label={`Contacted, last ${periodDays} days`} value={floor(model.contacted.count, c)} foot={<span className="mo-delta">{model.contacted.share}% of contacts</span>}/>
         </div>
 
@@ -143,7 +149,7 @@ export function MarketingAudience({ tenantId, onOpenClients }: { tenantId: strin
             <div className="mo-panel-head"><div><h2>Audience composition</h2><p>Contacts by where they stand with you.</p></div><div className="mo-panel-tools"><AskPaige prompt={askComposition}/></div></div>
             <div className="mo-split">
               <ChartBoundary className="mo-donut"><Donut slices={slices} total={floor(model.total, c)} caption="Contacts" label="Audience composition" activeKey={groupActive} onActiveKey={setGroupActive} onSelect={onOpenClients}/></ChartBoundary>
-              <ul className="mo-keys">{slices.filter((slice) => slice.count > 0).map((slice) => <li key={slice.key}><button type="button" className={groupActive === slice.key ? "is-active" : ""} onMouseEnter={() => setGroupActive(slice.key)} onMouseLeave={() => setGroupActive(null)} onFocus={() => setGroupActive(slice.key)} onBlur={() => setGroupActive(null)} onClick={onOpenClients} aria-label={`${slice.label}: ${slice.count}. Open Clients`}><i style={{ background: `var(${slice.colorToken})` }} aria-hidden="true"/><span>{slice.label}</span><b>{slice.count}</b><em>{model.groups.find((g) => g.key === slice.key)?.share}%</em></button></li>)}</ul>
+              <ul className="mo-keys">{slices.filter((slice) => slice.count > 0).map((slice) => <li key={slice.key}><button type="button" className={groupActive === slice.key ? "is-active" : ""} onMouseEnter={() => setGroupActive(slice.key)} onMouseLeave={() => setGroupActive(null)} onFocus={() => setGroupActive(slice.key)} onBlur={() => setGroupActive(null)} onClick={onOpenClients} aria-label={`${slice.label}: ${slice.count}. Open Clients`}><i style={{ background: `var(${slice.colorToken})` }} aria-hidden="true"/><span>{slice.label}</span><b>{floor(slice.count, c)}</b><em>{model.groups.find((g) => g.key === slice.key)?.share}%</em></button></li>)}</ul>
             </div>
           </section>
           <section className="campaigns-surface mo-panel">
@@ -151,7 +157,7 @@ export function MarketingAudience({ tenantId, onOpenClients }: { tenantId: strin
             <ChartBoundary className="mo-chart ma-chart-stages"><StageBars bars={bars} label="Contacts by lifecycle stage"/></ChartBoundary>
           </section>
           <section className="campaigns-surface mo-panel">
-            <div className="mo-panel-head"><div><h2>Audience growth</h2><p>Total contacts over the last {periodDays} days.</p></div>{last > first && <span className="mo-delta is-up ma-growth-badge"><Ic.arrow size={12}/>+{(last - first).toLocaleString()}</span>}</div>
+            <div className="mo-panel-head"><div><h2>Audience growth</h2><p>{c ? `Your newest ${model.total.toLocaleString()} contacts` : "The contacts you have today"}, by the day each was added.</p></div>{last > first && <span className="mo-delta is-up ma-growth-badge"><Ic.arrow size={12}/>+{(last - first).toLocaleString()}</span>}</div>
             <ChartBoundary className="mo-chart ma-chart-growth"><GrowthArea points={model.growth} label={`Contacts over the last ${periodDays} days`}/></ChartBoundary>
           </section>
         </div>

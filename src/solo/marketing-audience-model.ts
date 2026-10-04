@@ -35,7 +35,9 @@ export type GroupKey = keyof typeof GROUP_LABEL;
 export const STAGE_ORDER = ["new_lead", "lead", "prospect", "nurturing", "qualified", "hot_lead", "negotiating", "won", "customer", "active", "client_active", "client_paused", "client_funded", "client_alumni", "inactive", "churned", "client_churned"];
 
 const DAY = 86_400_000;
-const midnight = (time: number) => { const d = new Date(time); d.setHours(0, 0, 0, 0); return d.getTime(); };
+// Local midnight `offset` calendar days from `time`. Calendar arithmetic, not fixed 24h steps, so a day
+// that is 23 or 25 hours long (a clock change) still starts at midnight.
+const midnight = (time: number, offset = 0) => { const d = new Date(time); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + offset); return d.getTime(); };
 const at = (iso: string | null) => { const t = iso ? Date.parse(iso) : NaN; return Number.isFinite(t) ? t : null; };
 const pct = (part: number, whole: number) => (whole ? Math.round((part / whole) * 100) : 0);
 
@@ -83,9 +85,8 @@ export function deriveAudience({ contacts, reachableIds, periodDays, now = Date.
   capped?: boolean;
 }): AudienceModel {
   const total = contacts.length;
-  const today = midnight(now);
-  const start = today - (periodDays - 1) * DAY; // the period includes today
-  const prevStart = start - periodDays * DAY;
+  const start = midnight(now, -(periodDays - 1)); // the period includes today
+  const prevStart = midnight(now, -(2 * periodDays - 1));
   const staleBefore = now - STALE_DAYS * DAY;
   const created = contacts.map((c) => at(c.created_at));
 
@@ -99,7 +100,15 @@ export function deriveAudience({ contacts, reachableIds, periodDays, now = Date.
   const blocked = (c: AudienceContact) => Boolean(c.do_not_contact || c.dnd_active || c.disqualified);
   const reachable = contacts.filter((c) => !blocked(c) && (Boolean(c.email?.trim() || c.phone?.trim()) || reachableIds.has(c.id))).length;
   const contacted = contacts.filter((c) => { const t = at(c.last_contacted_at); return t !== null && t >= start && t <= now; }).length;
-  const stale = contacts.filter((c) => { if (blocked(c)) return false; const t = at(c.last_contacted_at); return t === null || t < staleBefore; }).length;
+  // Not reached in STALE_DAYS: last contacted before then, or never contacted and old enough that it matters
+  // (a contact added this week has not been neglected yet).
+  const stale = contacts.filter((c, i) => {
+    if (blocked(c)) return false;
+    const t = at(c.last_contacted_at);
+    if (t !== null) return t < staleBefore;
+    const joined = created[i];
+    return joined !== null && joined < staleBefore;
+  }).length;
 
   const groupCounts = new Map<GroupKey, number>();
   for (const c of contacts) {
@@ -119,8 +128,8 @@ export function deriveAudience({ contacts, reachableIds, periodDays, now = Date.
   const growth: GrowthPoint[] = [];
   let running = beforeStart + undated;
   for (let i = 0; i < periodDays; i++) {
-    const day = start + i * DAY;
-    const end = day + DAY;
+    const day = midnight(now, -(periodDays - 1) + i);
+    const end = midnight(now, -(periodDays - 1) + i + 1);
     const added = created.filter((t) => t !== null && t >= day && t < end && t <= now).length;
     running += added;
     growth.push({ day, label: new Date(day).toLocaleDateString(undefined, { month: "short", day: "numeric" }), total: running, added });

@@ -5,20 +5,26 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-type Answer = { data: unknown; error: unknown };
-const db: { tables: Record<string, Answer>; calls: { table: string; filters: [string, unknown][] }[] } = { tables: {}, calls: [] };
+// A table answers with a fixed result, or with `rows` served a page at a time by range(from, to).
+type Answer = { data: unknown; error: unknown } | { rows: unknown[] };
+type Call = { table: string; filters: [string, unknown][]; orders: [string, boolean][]; ranges: [number, number][] };
+const db: { tables: Record<string, Answer>; calls: Call[] } = { tables: {}, calls: [] };
 
 vi.mock("@/integrations/supabase/client", () => {
   const from = (table: string) => {
-    const call = { table, filters: [] as [string, unknown][] };
+    const call: Call = { table, filters: [], orders: [], ranges: [] };
     db.calls.push(call);
     const answer = db.tables[table] ?? { data: [], error: null };
     const chain: Record<string, unknown> = {};
-    for (const method of ["select", "order"]) chain[method] = () => chain;
+    chain.select = () => chain;
+    chain.order = (column: string, options: { ascending: boolean }) => { call.orders.push([column, options.ascending]); return chain; };
     chain.eq = (column: string, value: unknown) => { call.filters.push([column, value]); return chain; };
     chain.is = (column: string, value: unknown) => { call.filters.push([`is ${column}`, value]); return chain; };
     chain.in = (column: string, value: unknown) => { call.filters.push([`in ${column}`, value]); return chain; };
-    chain.range = () => Promise.resolve(answer);
+    chain.range = (from: number, to: number) => {
+      call.ranges.push([from, to]);
+      return Promise.resolve("rows" in answer ? { data: answer.rows.slice(from, to + 1), error: null } : answer);
+    };
     return chain;
   };
   return { supabase: { from } };
@@ -90,6 +96,22 @@ describe("Marketing › Audience", () => {
     act(() => ([...host.querySelectorAll(".ma-next button")][0] as HTMLButtonElement).click());
     window.removeEventListener("paige:open", listen);
     expect(asks[0]).toMatch(/do not send anything/);
+  });
+
+  it("pages newest first in a stable order, and a read past the limit is a marked floor", async () => {
+    // 5,200 contacts: five pages are read, the oldest 200 are not, and every count says so.
+    db.tables.clients = { rows: Array.from({ length: 5200 }, (_, i) => row(`c${i}`, { created_at: ago(i < 3 ? 2 : 200) })) };
+    await render(<MarketingAudience tenantId="t-1" onOpenClients={() => {}}/>);
+    const reads = db.calls.filter((c) => c.table === "clients");
+    expect(reads.map((c) => c.ranges[0])).toEqual([[0, 999], [1000, 1999], [2000, 2999], [3000, 3999], [4000, 4999]]);
+    // created_at alone is not unique (one import shares it): id makes the page order total.
+    expect(reads[0].orders).toEqual([["created_at", false], ["id", false]]);
+    expect(db.calls.find((c) => c.table === "client_contact_methods")?.orders).toEqual([["id", true]]);
+    expect(stat("Total contacts")).toBe("5,000+");
+    expect(stat("New, last 30 days")).toBe("3+");
+    expect(text()).toContain("Counted from your newest 5,000");
+    expect(text()).toContain("Your newest 5,000 contacts, by the day each was added");
+    expect(text()).not.toMatch(/vs previous|vs \d+ days ago/); // no comparison from a partial read
   });
 
   it("starts from an honest empty state, and a failed read can be retried", async () => {

@@ -24,9 +24,10 @@ export class ChartBoundary extends React.Component<{ className?: string; childre
 type Delta = { change: number; percent: number | null } | null;
 
 // A comparison only when the read covers the whole previous period.
-export function DeltaLine({ delta, periodDays, fallback }: { delta: Delta; periodDays: number; fallback: React.ReactNode }) {
+// `against` names what the figure is compared with when it is not the previous period (a running total).
+export function DeltaLine({ delta, periodDays, fallback, against }: { delta: Delta; periodDays: number; fallback: React.ReactNode; against?: string }) {
   if (!delta) return <span className="mo-delta">{fallback}</span>;
-  const span = `previous ${periodDays} days`;
+  const span = against ?? `previous ${periodDays} days`;
   if (delta.change === 0) return <span className="mo-delta">Same as the {span}</span>;
   const up = delta.change > 0;
   const amount = delta.percent === null ? `${up ? "+" : ""}${delta.change}` : `${up ? "+" : ""}${delta.percent}%`;

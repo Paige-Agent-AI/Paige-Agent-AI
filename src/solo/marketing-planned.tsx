@@ -5,10 +5,10 @@
 //
 // Reads (all tenant-scoped, read-only, existing tables and RPCs; nothing new on the server):
 //   clients               lifecycle_stage, source, tags   (Audience; RLS may narrow it to assigned contacts)
-//   marketing_content     the saved library, not archived (Content, Email, Ads). RLS: admins of the
-//                         active workspace and the platform owner only, so a member who cannot read it
-//                         is told so rather than shown an empty library (the briefs read's can_manage
-//                         is the same is_tenant_admin test).
+//   marketing_content     the saved library, not archived (Content, Email, Ads). RLS: is_tenant_admin
+//                         of the row's business, or the platform owner (20270542000000), which is the
+//                         same test the briefs read reports as can_manage, so a member who cannot read
+//                         it is told so rather than shown an empty library.
 //   resolve_tenant_domain_identity()  the sending identity Settings shows (Email); the row must name
 //                         the workspace on screen, or it is treated as unreadable.
 // No segment, broadcast, ad-account or spend source exists; those stay "Not available".

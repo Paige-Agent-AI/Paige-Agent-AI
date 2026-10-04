@@ -3298,7 +3298,7 @@ Grouped:
 
 ### Solo Marketing Planned tabs — GAPS, each named on its tab (2026-10-04)
 
-Audience, Content, Email and Ads ship as read-only views (no header and no Planned marker since 2026-10-04: the tab strip names each tab). **Their saved-library panels fail in production: the `authenticated` role has no SELECT on `marketing_content`, so every direct read is refused Owner approved a `GRANT SELECT` 2026-10-04: migration `20270542000000` (RLS still limits rows to admins of the active workspace; writes stay RPC-only). Proven in a rolled-back production transaction; the persisted apply is confirmed after merge.** What turns each into a
+Audience, Content, Email and Ads ship as read-only views (no header and no Planned marker since 2026-10-04: the tab strip names each tab). **Their saved-library panels fail in production: the `authenticated` role has no SELECT on `marketing_content`, so every direct read is refused Owner approved a `GRANT SELECT` 2026-10-04: migration `20270542000000`, which first narrows the read rule from the global `admin` role (§59 trap: an admin elsewhere who is a plain member here could read) to `is_tenant_admin(tenant_id) OR is_platform_owner()`; writes stay RPC-only. Proven in a rolled-back production transaction; the persisted apply is confirmed after merge.** What turns each into a
 built feature is a backend decision for the owner (`docs/product/solo-marketing-ia-proposal.md` §4):
 Audience needs a Clients-owned segment table + RPC; Content needs dated briefs for a calendar; Email
 needs a broadcast record + an approval-gated send (sending spends money); Ads needs a tenant

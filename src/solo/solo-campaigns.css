@@ -510,7 +510,6 @@
 .mp-empty .mo-note{margin-top:0}
 .mp-inline-note{margin:-4px 2px 0}
 .mp-inline-note .mo-link{font-size:inherit}
-.mp-notyet .mk-flag{min-width:0;padding:0 8px}
 @container (max-width:900px){.mp-ledger-3{grid-template-columns:minmax(0,1fr)}.mp-ledger-3 .mk-stat{border-left:0;border-top:1px solid var(--line-soft)}.mp-ledger-3 .mk-stat:first-child{border-top:0}}
 @container (max-width:1000px){.mp-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.mp-grid>.mo-panel:last-child:nth-child(odd){grid-column:1/-1}}
 @container (max-width:720px){.mp-grid,.mp-grid.mp-grid-2{grid-template-columns:minmax(0,1fr)}.mp-actions{justify-content:flex-start}}

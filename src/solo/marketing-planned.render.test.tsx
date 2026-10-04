@@ -188,7 +188,8 @@ describe("Marketing › Ads", () => {
     await render(<MarketingAds tenantId="t-1" onOpenIntegrations={onOpenIntegrations}/>);
     expect(db.calls.find((c) => c.table === "marketing_content")?.filters).toContainEqual(["channel", "ad_copy"]);
     expect(text()).toContain("Spring ad");
-    expect(text()).toContain("Nothing here is estimated");
+    expect(text()).toContain("Nothing here has run");
+    expect(host.querySelector(".mp-notyet .mk-flag")).toBeNull();
     expect(text()).not.toMatch(/\$\s?\d|cost per lead\s*\d|\bROAS\b/i);
     const button = (label: string) => [...host.querySelectorAll(".mp-actions button")].find((b) => b.textContent === label) as HTMLButtonElement;
     act(() => button("Open Integrations").click());

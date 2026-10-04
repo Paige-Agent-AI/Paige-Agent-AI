@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useLayoutEffect } from "react";
+import { mergeIntoDraft, subscribePaigePromptHandoff } from "@/lib/paigePromptHandoff";
 import { PaigeReasoningStrip, StepTimeline, upsertStep, type PaigeStep } from "@/components/dashboard/PaigeStepTrace";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -498,6 +499,11 @@ const PaigeAIChatInner = ({
   const draft = useComposerDraft(composerScope);
   const input = draft.value;
   const setInput = draft.setValue;
+  // Ask PAIGE from any surface puts its question in this composer (never sends it); see
+  // src/lib/paigePromptHandoff.ts. A draft already typed here is kept, the question appended.
+  // The composer accepts writes only once its scope is writable; until then a question waits.
+  const composerWritable = Boolean(draft.writableHandle);
+  useEffect(() => composerWritable ? subscribePaigePromptHandoff((prompt) => setInput((current) => mergeIntoDraft(current, prompt))) : undefined, [composerWritable, setInput]);
   // A deployment reload must never discard an unsent prompt, attachment, or
   // response currently arriving from Paige.
   useBeforeUnloadGuard(input.trim().length > 0 || attachedDoc !== null || isProcessingFile || isLoading);

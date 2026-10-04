@@ -31,8 +31,25 @@ const populated = {
     submission("s6", "f1", 9, "newsletter", null, null, "c6"),
     submission("s7", "f2", 12, "instagram", "CB-PODCAST", null, "c7"),
     submission("s8", "f1", 45, "linkedin", null, null, "c8"),
+    ...generated(),
   ],
 };
+
+// Two months of steady, deterministic traffic so the Overview charts have a real shape to draw:
+// the current 30 days and the 30 before them (the comparison period).
+function generated() {
+  const sources = ["newsletter", "instagram", "linkedin", null, "podcast", "newsletter", null, "partner-site"];
+  const rows = [];
+  for (let day = 0; day < 60; day += 1) {
+    const count = (day * 7 + 3) % 5 + (day < 30 ? 1 : 0);
+    for (let i = 0; i < count; i += 1) {
+      const n = day * 10 + i;
+      const source = sources[(day + i * 3) % sources.length];
+      rows.push(submission(`g${n}`, i % 3 === 0 ? "f2" : "f1", day + 0.2 + i * 0.05, source, source === "newsletter" ? "CB-SPRING" : null, (day + i) % 4 === 0 ? `gd${n}` : null, `gc${n}`));
+    }
+  }
+  return rows;
+}
 
 export function useSoloCampaigns() {
   const base = {

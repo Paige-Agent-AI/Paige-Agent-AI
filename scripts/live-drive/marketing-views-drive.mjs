@@ -74,6 +74,10 @@ async function open(page, { tab, theme = "light", mode = "populated" }) {
 async function setContentWidth(page, width) {
   await page.addStyleTag({ content: `main.paige-solo{width:${width}px!important;max-width:${width}px!important}` });
   await page.waitForTimeout(150);
+  // A width change crosses container queries, and .btn animates every property for 150ms. Measure
+  // once those transitions have settled, not mid-collapse (the Overview lazily loads its charts in
+  // the same window, so a fixed delay is not enough there).
+  await page.waitForFunction(() => document.getAnimations().filter((a) => a instanceof CSSTransition && a.playState === "running").length === 0, null, { timeout: 5000 }).catch(() => {});
 }
 async function measure(page) {
   return page.evaluate(() => {
@@ -101,7 +105,7 @@ async function measure(page) {
         const lum = ({ r, g, b }) => [r, g, b].map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }).reduce((t, v, i) => t + v * [0.2126, 0.7152, 0.0722][i], 0);
         const bgOf = (el) => { for (let n = el; n; n = n.parentElement) { const c = rgb(getComputedStyle(n).backgroundColor); if (c.a > 0.9) return c; } return { r: 255, g: 255, b: 255 }; };
         let worst = { ratio: 99, what: "" };
-        for (const el of document.querySelectorAll(".mk-flag, .mk-row-main small, .mk-stat dt, .mk-stat span, .mk-view .mk-link, .mk-view .btn-g")) {
+        for (const el of document.querySelectorAll(".mk-flag, .mk-row-main small, .mk-stat dt, .mk-stat span, .mk-view .mk-link, .mk-view .btn-g, .mo-stat h3, .mo-delta, .mo .mo-link, .mo-keys span, .mo-keys em, .mo-note, .mo-panel-head p, .mo-head p, .mo-task-main small, .mo-rank-name, .mo-next p, .mo-donut-center span, .mo-ask, .mo-readout")) {
           const fg = rgb(getComputedStyle(el).color), bg = bgOf(el);
           const [hi, lo] = [lum(fg), lum(bg)].sort((x, y) => y - x);
           const ratio = (hi + 0.05) / (lo + 0.05);
@@ -111,7 +115,7 @@ async function measure(page) {
       })(),
       // The Vibe Studio launcher must contain its own label (a collapsed launcher shows only the icon).
       launcherSpills: (() => { const b = document.querySelector(".campaigns-studio"); return b ? b.scrollWidth > b.clientWidth + 1 : false; })(),
-      heading: document.querySelector(".campaigns-scroll h2, .campaigns-scroll .mk-command p")?.textContent?.trim().slice(0, 60) ?? "",
+      heading: document.querySelector(".campaigns-scroll h2, .campaigns-scroll .mk-command p, .campaigns-scroll .mo-head h2")?.textContent?.trim().slice(0, 60) ?? "",
     };
   });
 }
@@ -134,13 +138,16 @@ async function main() {
       for (const frame of FRAMES) {
         for (const posture of POSTURES) {
           const width = contentWidth(frame.width, posture);
-          const ctx = await browser.newContext({ viewport: { width: frame.width, height: frame.height } });
+          // Reduced motion so the Overview charts paint their final state, not a frame of their entrance.
+          const ctx = await browser.newContext({ viewport: { width: frame.width, height: frame.height }, reducedMotion: "reduce" });
           for (const tab of TABS) {
             const page = await ctx.newPage();
             const errors = [];
             page.on("pageerror", (e) => errors.push(String(e.message)));
             await open(page, { tab, theme });
             await setContentWidth(page, width);
+            // The Overview's charts load lazily: wait until both donuts and the time chart have drawn.
+            if (tab === "overview") await page.waitForFunction(() => document.querySelectorAll(".mo-donut .recharts-pie-sector").length > 0 && document.querySelector(".mo-chart-time .recharts-bar-rectangle"), null, { timeout: 15000 }).catch(() => {});
             const id = `${theme}/${frame.name}/paige-${posture}@${width}px/${tab}`;
             const m = await measure(page);
             check(Boolean(m) && !m.crashed, `${id}: renders`);
@@ -150,8 +157,12 @@ async function main() {
               check(m.pushed.length === 0, `${id}: nothing pushed past the right edge`, m.pushed.join(","));
               check(!m.sideways, `${id}: document does not scroll sideways`);
               check(!m.launcherSpills, `${id}: the Vibe Studio launcher contains its label`);
+              if (tab === "overview") {
+                const drawn = await page.evaluate(() => ({ donuts: [...document.querySelectorAll(".mo-donut")].filter((d) => d.querySelector(".recharts-pie-sector")).length, bars: document.querySelectorAll(".mo-chart-time .recharts-bar-rectangle").length, line: Boolean(document.querySelector(".mo-chart-time .recharts-line-curve")) }));
+                check(drawn.donuts === 2 && drawn.bars > 0 && drawn.line, `${id}: both donuts, the bars and the opportunities line are drawn`, JSON.stringify(drawn));
+              }
               check(m.contrast.ratio >= 4.5, `${id}: new small text meets AA (4.5:1)`, `worst ${m.contrast.ratio} ${m.contrast.what}`);
-              geometry.push({ id, width, overflowX: m.overflowX, innerScrollers: m.innerScrollers });
+              geometry.push({ id, width, overflowX: m.overflowX, innerScrollers: m.innerScrollers, worstContrast: m.contrast });
             }
             if (posture !== "wide" && frame.name !== "1024x768") {
               await page.screenshot({ path: path.join(OUT, `${tab}-${theme}-${frame.name}-${posture}.png`) });

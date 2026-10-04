@@ -356,3 +356,129 @@
 @media(forced-colors:active){.mk-ledger,.mk-command,.mk-flag{border:1px solid CanvasText}.mk-bar-track i{background:Highlight}}
 
 .mk-view .campaigns-state code{font-family:var(--mono);font-size:12px;padding:1px 5px;border-radius:5px;background:var(--surface-sunk);color:var(--ink)}
+
+/* ── Marketing › Overview (owner reference 2026-10-03) ─────────────────────────────────────────
+   Chart colours are the --chart-* tokens in solo-chart-tokens.css. Gold stays on the act only. */
+.mo{gap:16px}
+.mo-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:4px 2px 2px}
+.mo-head h2{font-size:clamp(22px,2.6cqi,28px);font-weight:650;letter-spacing:-.03em;line-height:1.15;color:var(--ink);text-wrap:balance}
+.mo-head p{margin-top:5px;font-size:13.5px;color:var(--ink-2)}
+.mo-head-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.mo-head-actions .campaigns-segmented button{padding:6px 11px;font-size:12px}
+.mo-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.mo-stat{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:start;padding:18px;border:1px solid var(--line);border-radius:14px;background:var(--surface);box-shadow:var(--sh-1);min-width:0}
+.mo-plate{display:grid;place-items:center;width:44px;height:44px;border-radius:12px}
+.mo-plate.is-violet{background:var(--violet-tint);color:var(--chart-1)}
+.mo-plate.is-aqua{background:color-mix(in srgb,var(--chart-2) 16%,var(--surface));color:color-mix(in srgb,var(--chart-2) 78%,var(--ink))}
+.mo-plate.is-blue{background:color-mix(in srgb,var(--chart-4) 15%,var(--surface));color:color-mix(in srgb,var(--chart-4) 84%,var(--ink))}
+.mo-plate.is-orange{background:color-mix(in srgb,var(--chart-3) 15%,var(--surface));color:color-mix(in srgb,var(--chart-3) 78%,var(--ink))}
+.mo-stat-body{min-width:0;display:grid;gap:2px}
+.mo-stat h3{font-size:12.5px;font-weight:550;color:var(--ink-2);letter-spacing:0}
+.mo-stat-value{font-size:30px;font-weight:650;letter-spacing:-.035em;line-height:1.1;color:var(--ink);font-variant-numeric:tabular-nums}
+.mo-stat-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:6px}
+.mo-delta{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.mo-delta svg{flex:none}
+.mo-delta.is-up{color:color-mix(in srgb,var(--ok) 74%,var(--ink))}
+.mo-delta.is-up svg{transform:rotate(-90deg)}
+.mo-delta.is-down{color:color-mix(in srgb,var(--bad) 74%,var(--ink))}
+.mo-delta.is-down svg{transform:rotate(90deg)}
+.mo-link{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:550;color:color-mix(in srgb,var(--violet) 82%,var(--ink));text-decoration:underline;text-decoration-color:color-mix(in srgb,var(--violet) 35%,transparent);text-underline-offset:3px;white-space:nowrap;border-radius:4px}
+.mo-link:hover{text-decoration-color:currentColor}
+.mo-link:focus-visible,.mo-tasks button:focus-visible,.mo-keys button:focus-visible,.mo-rank button:focus-visible,.mo-briefs button:focus-visible,.mo-ask:focus-visible,.mo-chart-time:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+.mo-grid{display:grid;gap:14px;min-width:0}
+.mo-grid-a{grid-template-columns:minmax(0,1.7fr) minmax(0,1fr)}
+.mo-grid-b{grid-template-columns:repeat(3,minmax(0,1fr))}
+.mo-panel{display:flex;flex-direction:column;padding:18px 19px;gap:12px;min-width:0}
+.mo-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.mo-panel-head h2{font-size:15.5px;font-weight:620;letter-spacing:-.02em;color:var(--ink)}
+.mo-panel-head p{margin-top:3px;font-size:12.3px;line-height:1.5;color:var(--ink-2)}
+.mo-panel .campaigns-state{min-height:170px;padding:18px 12px}
+.mo-panel .campaigns-state h2{font-size:14px}
+.mo-note{font-size:11.8px;line-height:1.5;color:var(--ink-2);margin-top:auto}
+.mo-legend{display:flex;gap:14px;list-style:none;margin:2px 0 0;padding:0;font-size:11.8px;color:var(--ink-2);white-space:nowrap}
+.mo-legend li{display:inline-flex;align-items:center;gap:6px}
+.mo-legend i{width:9px;height:9px;border-radius:3px}
+.mo-legend i.is-s1{background:var(--chart-1)}
+.mo-legend i.is-s2{background:var(--chart-2)}
+.mo-legend i.is-line{height:3px;width:14px;border-radius:2px}
+.mo-chart-time{height:240px;min-width:0;border-radius:8px}
+.mo-chart-time.has-brush{height:272px}
+.mo-chart-wrap{display:grid;gap:6px;min-width:0}
+.mo-readout{min-height:1.5em;font-size:11.8px;line-height:1.5;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.mo-chart-time .recharts-brush-traveller{cursor:ew-resize}
+.mo-chart-time .recharts-brush-slide{cursor:grab}
+.mo-skel{border-radius:10px;background:linear-gradient(90deg,var(--surface-sunk),var(--surface-2),var(--surface-sunk));background-size:200% 100%;animation:mo-shimmer 1.4s ease-in-out infinite}
+@keyframes mo-shimmer{to{background-position:-200% 0}}
+.mo-tip{display:grid;gap:4px;min-width:150px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--surface);box-shadow:var(--sh-2);font-size:12px;color:var(--ink)}
+.mo-tip strong{font-size:11.5px;color:var(--ink-2);font-weight:600}
+.mo-tip span{display:flex;align-items:center;gap:7px;color:var(--ink-2)}
+.mo-tip span b{margin-left:auto;color:var(--ink);font-variant-numeric:tabular-nums}
+.mo-tip i{width:8px;height:8px;border-radius:2px;flex:none}
+.mo-split{display:grid;grid-template-columns:minmax(120px,168px) minmax(0,1fr);align-items:center;gap:20px}
+.mo-donut{position:relative;width:100%;aspect-ratio:1;max-width:168px}
+.mo-donut-center{position:absolute;inset:0;display:grid;place-content:center;text-align:center;pointer-events:none}
+.mo-donut-center strong{font-size:26px;font-weight:650;letter-spacing:-.03em;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1}
+.mo-donut-center span{margin-top:4px;font-size:11px;color:var(--ink-2)}
+.mo-keys{list-style:none;margin:0;padding:0;display:grid;gap:9px;min-width:0}
+.mo-keys button{width:100%;display:grid;grid-template-columns:10px minmax(0,1fr) auto auto;align-items:center;gap:9px;padding:3px 6px;margin:-3px -6px;border-radius:7px;font-size:12.8px;color:var(--ink);text-align:left;cursor:pointer;transition:background-color .16s cubic-bezier(.22,1,.36,1)}
+.mo-keys button:hover,.mo-keys button.is-active{background:var(--surface-2)}
+.mo-keys li.is-zero button{color:var(--ink-2)}
+.mo-keys li.is-zero i{opacity:.45}
+.mo-keys i{width:10px;height:10px;border-radius:50%}
+.mo-keys span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mo-keys b{font-weight:600;font-variant-numeric:tabular-nums;text-align:right;min-width:2ch}
+.mo-keys em{font-style:normal;font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums;text-align:right;min-width:4ch}
+.mo-rank{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.mo-rank button{width:100%;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(60px,1fr) 4ch;align-items:center;gap:12px;padding:5px 8px;margin:-5px -8px;border-radius:8px;font-size:12.8px;color:var(--ink);text-align:left;cursor:pointer;transition:background-color .16s cubic-bezier(.22,1,.36,1)}
+.mo-rank button:hover{background:var(--surface-2)}
+.mo-rank-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mo-rank-bar{height:8px;border-radius:999px;background:var(--surface-sunk);overflow:hidden}
+.mo-rank-bar i{display:block;height:100%;border-radius:999px;background:var(--chart-1)}
+.mo-rank b{font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+.mo-tasks{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.mo-tasks button{width:100%;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:11px;padding:8px;border-radius:10px;text-align:left;color:var(--ink);transition:background-color .16s cubic-bezier(.22,1,.36,1)}
+.mo-tasks button:hover{background:var(--surface-2)}
+.mo-task-plate{display:grid;place-items:center;width:32px;height:32px;border-radius:9px;background:var(--surface-sunk);color:var(--ink-2)}
+.mo-task-plate.is-review{background:var(--violet-tint);color:color-mix(in srgb,var(--violet) 80%,var(--ink))}
+.mo-task-plate.is-blocked{background:var(--bad-tint);color:color-mix(in srgb,var(--bad) 80%,var(--ink))}
+.mo-task-plate.is-warn{background:var(--warn-tint);color:color-mix(in srgb,var(--warn) 70%,var(--ink))}
+.mo-task-main{min-width:0;display:grid;gap:2px}
+.mo-task-main strong{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mo-task-main small{font-size:11.8px;line-height:1.4;color:var(--ink-2)}
+.mo-tasks .mk-flag{min-width:0}
+.mo-next{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:14px;padding:14px 18px;border:1px solid var(--violet-line);border-radius:14px;background:linear-gradient(110deg,var(--violet-tint),var(--surface) 70%)}
+.mo-next-plate{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:var(--surface);color:var(--chart-1);box-shadow:var(--sh-1)}
+.mo-next h2{font-size:13.5px;font-weight:650;color:var(--ink)}
+.mo-next p{margin-top:2px;font-size:12.8px;line-height:1.5;color:var(--ink-2)}
+@container (max-width:1100px){.mo-grid-b{grid-template-columns:repeat(2,minmax(0,1fr))}.mo-grid-b>.mo-panel:last-child{grid-column:1/-1}}
+@container (max-width:980px){.mo-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container (max-width:900px){.mo-grid-a{grid-template-columns:minmax(0,1fr)}}
+@container (max-width:720px){.mo-grid-b{grid-template-columns:minmax(0,1fr)}.mo-head{align-items:flex-start}}
+@container (max-width:460px){.mo-stats{grid-template-columns:minmax(0,1fr)}.mo-split{grid-template-columns:minmax(0,1fr);justify-items:center}.mo-keys{width:100%}.mo-next{grid-template-columns:minmax(0,1fr)}.mo-next-plate{display:none}.mo-panel-head{flex-wrap:wrap}}
+@media(prefers-reduced-motion:reduce){.mo-skel{animation:none}.mo-tasks button{transition:none}}
+@media(forced-colors:active){.mo-stat,.mo-next,.mo-tip{border:1px solid CanvasText}.mo-rank-bar i{background:Highlight}.mo-keys i,.mo-legend i{forced-color-adjust:none}}
+/* The Solo base rules for headings, buttons and .campaigns-surface out-rank single classes. */
+.paige-solo .mo .campaigns-surface{margin:0;max-width:none;width:auto}
+.paige-solo .mo .mo-link{font-size:12px;font-weight:550;line-height:1.3}
+.paige-solo .mo .mo-stat h3{font-size:12.5px;font-weight:550;color:var(--ink-2);line-height:1.3}
+.paige-solo .mo .mo-panel-head h2{font-size:15.5px;font-weight:620}
+.mo-briefs{list-style:none;margin:0;padding:12px 0 0;border-top:1px solid var(--line-soft);display:grid;gap:8px}
+.mo-briefs button{width:100%;display:flex;align-items:baseline;justify-content:space-between;gap:12px;min-width:0;padding:3px 6px;margin:-3px -6px;border-radius:7px;font-size:12.6px;text-align:left;cursor:pointer;transition:background-color .16s cubic-bezier(.22,1,.36,1)}
+.mo-briefs button:hover{background:var(--surface-2)}
+.mo-briefs strong{font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.mo-briefs small{flex:none;max-width:55%;font-size:11.8px;color:var(--ink-2);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mo-chart-failed{display:grid;place-items:center;padding:16px;text-align:center;font-size:12.5px;line-height:1.5;color:var(--ink-2);border:1px dashed var(--line);border-radius:10px;aspect-ratio:auto}
+.mo-panel-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.mo-panel-head:has(.mo-legend){flex-wrap:wrap}
+.mo-ask{display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 10px;border:1px solid var(--violet-line);border-radius:999px;background:var(--violet-tint);font-size:11.8px;font-weight:550;color:color-mix(in srgb,var(--violet) 82%,var(--ink));white-space:nowrap;cursor:pointer;transition:background-color .16s cubic-bezier(.22,1,.36,1),border-color .16s cubic-bezier(.22,1,.36,1)}
+.mo-ask:hover{border-color:var(--violet);background:color-mix(in srgb,var(--violet-tint) 70%,var(--surface))}
+.paige-solo .mo .mo-ask{font-size:11.8px;line-height:1}
+/* One authored entrance: the dashboard rises into place in reading order each time Overview is
+   opened. It starts visible (no fade from zero); reduced motion turns it off. */
+@keyframes mo-rise{from{opacity:.35;transform:translateY(10px)}to{opacity:1;transform:none}}
+.mo-stats>*,.mo-grid>*,.mo-next{animation:mo-rise .56s cubic-bezier(.16,1,.3,1) both}
+.mo-stats>:nth-child(2){animation-delay:.04s}.mo-stats>:nth-child(3){animation-delay:.08s}.mo-stats>:nth-child(4){animation-delay:.12s}
+.mo-grid-a>*{animation-delay:.14s}.mo-grid-a>:nth-child(2){animation-delay:.18s}
+.mo-grid-b>*{animation-delay:.22s}.mo-grid-b>:nth-child(2){animation-delay:.26s}.mo-grid-b>:nth-child(3){animation-delay:.3s}
+.mo-next{animation-delay:.34s}
+@media(prefers-reduced-motion:reduce){.mo-stats>*,.mo-grid>*,.mo-next{animation:none}.mo-keys button,.mo-rank button,.mo-briefs button,.mo-ask{transition:none}}

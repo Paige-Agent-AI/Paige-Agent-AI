@@ -798,6 +798,7 @@ Reference or any domain ledger; it governs how their facts become release and cu
   - Edge: `paige-ai-chat` is at v308 ACTIVE (it also carries #1662) and `edge-live` is at `cab19aed`. Migrations NOT_APPLICABLE.
   - Authenticated runtime is PARTIAL: an owner screenshot proves the Marketing menu, tab strip and Pipeline reachability. The rest is owed (see the evidence record's post-merge closeout).
 - *S3 trigger (owner ruling 2026-10-03):* Offers, Sales and Pipeline stay behind the divider until Sales' top-level destination is LIVE in production. Only then does Marketing remove them and redirect.
+- *Overview redesign (owner reference, 2026-10-03, branch `claude/gifted-bell-qfezxb`):* Overview rebuilt as a dashboard: greeting, 7/30-day switch, four KPI cards (a previous-period comparison only where the 200-row read covers it), leads-over-time bars with an opportunities line, leads-by-source and campaign-status donuts, top capture points, needs your attention, one next step. Charts are recharts, lazy-loaded behind an error boundary; colours are `--chart-*` tokens (`src/solo/solo-chart-tokens.css`). Overview and Analytics share one "last N days" definition (`marketing-overview-model.ts`). Pipeline and Offers links follow the account's own menu. Evidence: `docs/evidence/ui-delivery/solo-marketing-overview-redesign.md`; authenticated drive owed.
 - *Boundary:*
   - Email, ads, spend, visits, multi-touch and revenue-by-campaign are UNAVAILABLE.
   - Authenticated production behaviour is PROOF OWED (§32.c).

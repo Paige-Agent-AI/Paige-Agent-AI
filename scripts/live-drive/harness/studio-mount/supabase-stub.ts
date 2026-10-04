@@ -26,7 +26,12 @@ const sessions: Record<string, unknown>[] = [
   { id: "s-blank", title: "Untitled project", seed_brief: "Design me a landing page for my referral workshop", artifact_refs: [], updated_at: ago(30) },
   { id: "s-funnel", title: "Free strategy call", seed_brief: "A funnel for a free consultation", artifact_refs: [], updated_at: ago(60 * 26) },
 ];
-let form: Record<string, unknown> = { id: "f-1", name: "New client intake", slug: "new-client-intake", status: "draft", schema_json: FORM_SCHEMA, draft_schema_json: FORM_SCHEMA,
+// `?publish=` picks the publish door's answer (see `door` below): ready (default) · slow · blocked ·
+// off · forbidden · no-workspace · refused (stale once, then fine) · notdone (503, nothing ran) · unverified ·
+// noaddress · optional (unmet non-blocking checks) · live · live-blocked · unpublish-off (live; only unpublish off).
+const publishMode = new URLSearchParams(window.location.search).get("publish") ?? "ready";
+const startsLive = publishMode === "live" || publishMode === "live-blocked" || publishMode === "unpublish-off";
+let form: Record<string, unknown> = { id: "f-1", name: "New client intake", slug: "new-client-intake", status: startsLive ? "active" : "draft", schema_json: FORM_SCHEMA, draft_schema_json: FORM_SCHEMA,
   success_action_json: { message: "Thanks — we'll be in touch within one business day." }, draft_success_action_json: { message: "Thanks — we'll be in touch within one business day." },
   auto_create_deal: true, pipeline_id: "pl-1", stage_id: "st-1", notify_email: "hello@northwind.example" };
 const page = { id: "p-1", title: "Referral workshop", slug: "referral-workshop", status: "draft", blocks_json: PAGE_BLOCKS, draft_blocks_json: PAGE_BLOCKS, theme_json: null, draft_theme_json: null };
@@ -69,6 +74,64 @@ const versions = [
   { id: "v2", version_no: 2, is_current: false, title: "Added the goal question", thumbnail_url: null, created_at: ago(25) },
   { id: "v3", version_no: 3, is_current: true, title: "Routed to Sales → New lead", thumbnail_url: null, created_at: ago(8) },
 ];
+// The growth-publish-command door, in its contract: prepare (no fingerprint) → 202-style
+// approval_required with the server's checks (fingerprint only when nothing blocks); redeem (with
+// the fingerprint) → ok with the readback, unverified, or a refusal. Non-2xx bodies ride on the
+// error's context Response, as supabase-js delivers them.
+let prepares = 0;
+let redeems = 0;
+const httpError = (status: number, body: unknown) => ({ data: null, error: { name: "FunctionsHttpError", message: `Edge Function returned a non-2xx status code`, context: new Response(JSON.stringify(body), { status }) } });
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+async function door(b: Record<string, unknown>) {
+  await wait(220); // a real round trip, so the "checking" state is on screen for a moment
+  const kind = String(b.kind);
+  const isPage = kind === "page";
+  // Codes, statuses and check rows as growth-publish-command/door.ts and contract.ts send them.
+  if (publishMode === "off") return httpError(403, { ok: false, refused: true, disabled: true, code: "autonomy_off", error: "Publishing is switched off for this workspace in your autonomy settings. Nothing changed." });
+  if (publishMode === "unpublish-off" && b.action === "unpublish") return httpError(403, { ok: false, refused: true, disabled: true, code: "autonomy_off", error: "Unpublishing is switched off for this workspace in your autonomy settings. Nothing changed." });
+  if (publishMode === "forbidden") return httpError(403, { ok: false, refused: true, forbidden: true, code: "NOT_ADMIN", error: "Only this workspace's owner or an admin can use the Studio." });
+  if (publishMode === "no-workspace") return httpError(403, { ok: false, refused: true, forbidden: true, code: "NO_WORKSPACE", error: "Open one of your workspaces first, then try again." });
+  if (!b.approved_fingerprint) {
+    if (publishMode === "slow") await new Promise(() => {});
+    prepares += 1;
+    if (b.action === "unpublish") {
+      const blockedOut = publishMode === "live-blocked";
+      return { data: { ok: false, approval_required: true, ...(blockedOut ? {} : { fingerprint: `fp-out-${prepares}` }), preview: { kind, id: b.id, title: "New client intake", action: "unpublish",
+        checks: [
+          { key: "is_live", label: "This form is live now", ok: true, blocking: true },
+          blockedOut
+            ? { key: "not_in_use", label: "A live funnel collects through this form", ok: false, blocking: true, detail: "Take “Free strategy call” offline first, then unpublish this." }
+            : { key: "not_in_use", label: "Nothing live depends on this form", ok: true, blocking: true },
+        ] } }, error: null };
+    }
+    const blocked = publishMode === "blocked";
+    const optional = publishMode === "optional";
+    const checks = isPage
+      ? [{ key: "has_sections", label: "Has 2 sections", ok: true, blocking: true }, { key: "no_placeholders", label: "No unfinished text", ok: true, blocking: true }]
+      : [
+        { key: "has_questions", label: blocked ? "Has no questions yet" : "Has 6 questions", ok: !blocked, blocking: true },
+        { key: "asks_email", label: "Asks for an email, so each request becomes a contact", ok: true, blocking: false },
+        { key: "routes_to_pipeline", label: "Requests go to your pipeline", ok: true, blocking: false },
+        optional
+          ? { key: "alert_email", label: "No alert email", ok: false, blocking: false, detail: "Set one in Form settings." }
+          : { key: "alert_email", label: "Each request emails hello@northwind.example", ok: true, blocking: false },
+        optional
+          ? { key: "thank_you", label: "No thank-you message", ok: false, blocking: false, detail: "Visitors see a plain confirmation." }
+          : { key: "thank_you", label: "Thank-you message is written", ok: true, blocking: false },
+      ];
+    return { data: { approval_required: true, ...(blocked ? {} : { fingerprint: `fp-${prepares}` }), preview: { kind, id: b.id, title: isPage ? "Referral workshop" : "New client intake", action: "publish",
+      address: isPage ? "/p/northwind-studio/referral-workshop" : "/form/f-1", checks } }, error: null };
+  }
+  redeems += 1;
+  if (publishMode === "refused" && redeems === 1) return httpError(409, { ok: false, refused: true, outcome: "refused", code: "APPROVAL_NOT_AVAILABLE", error: "That approval expired before it was used." });
+  if (publishMode === "notdone") return httpError(503, { ok: false, code: "READINESS_UNAVAILABLE", error: "I couldn't check whether it's ready just now. Nothing changed. Try again." });
+  if (publishMode === "unverified") return { data: { ok: false, outcome: "unverified", error: "The publish ran, but Paige couldn't confirm a public address, so it may not be live. Check the project before sharing a link." }, error: null };
+  if (b.action === "unpublish") { form = { ...form, status: "draft" }; return { data: { ok: true, action: "unpublish", kind, id: b.id, status: "draft" }, error: null }; }
+  if (!isPage) form = { ...form, status: "active" };
+  return { data: { ok: true, action: "publish", kind, id: b.id, status: isPage ? "published" : "active", published_at: now,
+    url: publishMode === "noaddress" ? null : isPage ? "/p/northwind-studio/referral-workshop" : "/form/f-1" }, error: null };
+}
+
 export const supabase = {
   from,
   rpc: async (fn: string, args: Record<string, unknown>) => {
@@ -83,14 +146,8 @@ export const supabase = {
       case "list_artifact_versions": return { data: args.p_kind === "form" ? versions : versions.slice(0, 1).map((v) => ({ ...v, is_current: true, title: "First draft" })), error: null };
       case "restore_artifact_version": return { data: { id: "f-1" }, error: null };
       case "is_tenant_admin": return { data: true, error: null };
-      // The real RPC contract (20270537000000): id, status, published_at, url. `?publish=noaddress`
-      // models a workspace with no public slug — the RPC answers url: null, and the panel must refuse.
-      case "growth_form_publish": {
-        form = { ...form, status: "active" };
-        const noAddress = new URLSearchParams(window.location.search).get("publish") === "noaddress";
-        return { data: { id: "f-1", url: noAddress ? null : "/form/f-1", status: "active", published_at: now }, error: null };
-      }
-      case "growth_page_publish": return { data: { id: "p-1", url: "/p/northwind-studio/referral-workshop", status: "published", published_at: now }, error: null };
+      // No publish/unpublish RPC is stubbed: since V2b the Studio publishes only through the
+      // growth-publish-command door, so a direct call lands in `default` and the drive asserts none.
       case "growth_form_set_intake": form = { ...form, auto_create_deal: args.p_auto_create_deal, pipeline_id: args.p_pipeline_id, stage_id: args.p_stage_id, notify_email: args.p_notify_email }; return { data: form, error: null };
       default: return { data: null, error: { message: `unstubbed rpc ${fn}` } };
     }
@@ -100,7 +157,13 @@ export const supabase = {
     getUser: async () => ({ data: { user: null }, error: null }),
     onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
   },
-  functions: { invoke: async () => ({ data: null, error: { message: "unstubbed" } }) },
+  functions: {
+    invoke: async (fn: string, opts?: { body?: Record<string, unknown> }) => {
+      window.__studioCalls.push({ fn: `invoke:${fn}`, args: opts?.body ?? null });
+      if (fn !== "growth-publish-command") return { data: null, error: { message: "unstubbed" } };
+      return door(opts?.body ?? {});
+    },
+  },
   channel: () => ({ on() { return this; }, subscribe() { return this; } }),
   removeChannel: () => {},
 };

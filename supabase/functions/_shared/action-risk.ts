@@ -137,6 +137,16 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   ["growth_page_publish", "high", "puts a page live at a public URL"],
   ["growth_funnel_publish", "high", "puts a whole sequence live"],
   ["growth_form_publish", "high", "puts a form live at a public URL where strangers can submit to the workspace"],
+  // The rest of the Studio publish lifecycle (Migration E, 2026-10-04). These are door-only keys:
+  // the growth-publish-command door runs them for the Studio panel and the chat alike; no chat tool
+  // carries these names. Taking work offline is `high` for the same reason putting it live is — it
+  // changes what the public sees, and a visitor mid-way through a page or a link someone already
+  // shared stops working. The runtime clamp keeps every one of them ask-first.
+  ["growth_page_unpublish", "high", "takes a public page offline, so anyone with its address stops reaching it"],
+  ["growth_funnel_unpublish", "high", "takes a public sequence offline mid-visit for anyone working through it"],
+  ["growth_form_unpublish", "high", "takes a public form offline, so strangers can no longer submit to the workspace"],
+  ["studio_image_publish", "high", "puts an image in the Catalog where anyone with its link can see it"],
+  ["studio_image_unpublish", "high", "withdraws a published image from the Catalog that people may already be using"],
   // The evaluation loop's DECIDE leg (Runway 4 / #1123), the sign-off half of the `improvement_propose`
   // pair above. It records the owner's approve/reject on a `paige_improvement_proposals` row and
   // applies nothing (there is no auto-apply path — it flips status, decided_by, rationale only). It
@@ -425,6 +435,9 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   // send_invoice
   ["billing_send_invoice", "high", "emails a real person a bill and a link to pay it"],
   ["sales_publish_invoice", "high", "issues the business's reviewed customer invoice as an immutable obligation"],
+  ["sales_save_collection_terms", "high", "changes agreement-backed customer repayment terms without executing a charge"],
+  ["sales_stage_collection_import", "high", "stages tenant commercial records for explicit review without publishing or verifying payment"],
+  ["sales_commit_collection_import", "high", "imports reviewed historical obligations and human-reported receipts into canonical customer records"],
   ["sales_record_manual_payment", "high", "records a human-reported customer payment and changes the invoice balance"],
   ["sales_reverse_manual_payment", "high", "reverses a recorded receipt while preserving the original financial history"],
   ["sales_void_invoice", "high", "withdraws an issued customer invoice and revokes its customer access"],

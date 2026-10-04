@@ -1,5 +1,5 @@
 // Marketing email dispatcher (E1, owner rulings 2026-10-04). pg_cron wakes it every minute with an
-// x-cron-token (migration 20270547000000); a service-role bearer is also accepted.
+// x-cron-token (migration 20270549000000); a service-role bearer is also accepted.
 //
 // Each tick:
 //   1. Claims a batch of one due campaign (email_campaign_dispatch_claim). The database has already

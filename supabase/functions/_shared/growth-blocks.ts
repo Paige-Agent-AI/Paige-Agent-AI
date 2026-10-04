@@ -343,14 +343,25 @@ const PLACEHOLDER_ACTION_WORD = /\b(add|paste|insert|enter|fill|tbd|placeholder|
  */
 export function placeholderTokens(value: unknown): Set<string> {
   const out = new Set<string>();
-  let text: string;
-  try { text = JSON.stringify(value ?? ""); } catch { return out; }
-  for (const m of text.matchAll(/\[[^\][]*\]/g)) {
-    const token = m[0];
-    if (PLACEHOLDER_UNDERSCORE.test(token) || PLACEHOLDER_ACTION_WORD.test(token)) {
-      out.add(token.toLowerCase().replace(/\s+/g, " "));
+  // Each STRING VALUE on its own (Migration F, 2026-10-04), never the serialized JSON: serialized, a
+  // string array's own brackets read as a token — ["Your weekly call","Add-on support"] was
+  // "a new placeholder" and the edit was refused. Object keys are structure, not copy.
+  const seen = new Set<unknown>();
+  const walk = (v: unknown): void => {
+    if (typeof v === "string") {
+      for (const m of v.matchAll(/\[[^\][]*\]/g)) {
+        const token = m[0];
+        if (PLACEHOLDER_UNDERSCORE.test(token) || PLACEHOLDER_ACTION_WORD.test(token)) {
+          out.add(token.toLowerCase().replace(/\s+/g, " "));
+        }
+      }
+      return;
     }
-  }
+    if (v === null || typeof v !== "object" || seen.has(v)) return;
+    seen.add(v);
+    for (const child of Array.isArray(v) ? v : Object.values(v)) walk(child);
+  };
+  walk(value);
   return out;
 }
 

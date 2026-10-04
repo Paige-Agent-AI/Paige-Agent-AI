@@ -73,7 +73,7 @@ rollback proofs structurally could not catch (they run as owner, not service_rol
 Five seeded signals; **`migrations.drift` ships `is_readable = false` on purpose** — an edge function
 cannot read git, so a rule bound to it must report "never evaluated", never a pass.
 
-**Marketing email dispatcher** (E1, migration `20270547000000` + edge function `email-campaign-worker`,
+**Marketing email dispatcher** (E1, migration `20270549000000` + edge function `email-campaign-worker`,
 2026-10-04). A `pg_cron` job **`email-campaign-worker`** on `* * * * *` pokes the function via `net.http_post`
 with `public.cron_token_header()` (same poke shape as `comms-scheduled-drain`); `verify_jwt = false` in
 `config.toml`, failing closed in-function to a service-role bearer or `x-cron-token`. Sends go through

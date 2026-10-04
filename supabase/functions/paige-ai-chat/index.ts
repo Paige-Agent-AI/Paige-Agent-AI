@@ -4,6 +4,8 @@ import { CAMPAIGN_BRIEF_TOOLS } from '../_shared/paige-spine/domains/campaigns.t
 import { CRM_ACTION_LABEL, CRM_COMMAND_TOOLS, CRM_COMMAND_TOOL_NAMES, CRM_TOOL_TO_ACTION, canonicalizeCrmCommand, crmApprovalSubject, crmCommandFallbackIdempotencyKeys } from '../_shared/crm-command/catalog.ts';
 import { resolveCrmApprovedFingerprint, CRM_APPROVAL_CANDIDATE_LIMIT } from '../_shared/crm-command/approval-resolution.ts';
 import { SALES_INVOICE_TOOLS, SALES_INVOICE_TOOL_NAMES, dispatchSalesInvoiceChat, type SalesInvoiceApprovalQuery } from '../_shared/sales-invoice-chat.ts';
+import { SALES_COLLECTIONS_TOOLS, SALES_COLLECTIONS_TOOL_NAMES, dispatchSalesCollectionsChat } from '../_shared/sales-collections-chat.ts';
+import { GROWTH_PUBLISH_DOOR_TOOL_NAMES, dispatchGrowthPublishChat, type GrowthPublishApprovalQuery } from '../_shared/growth-publish-chat.ts';
 import { executeVerifiedCampaignBriefMutation, resolveCampaignBriefListContext } from '../_shared/campaign-brief-tenant-brain.ts';
 import { CALENDAR_PRESET_TOOLS } from '../_shared/paige-spine/domains/calendar_preset.ts';
 import { executeVerifiedCalendarPresetMutation, resolveCalendarPresetListContext, type CalendarPresetMutationTool } from '../_shared/calendar-preset-tenant-brain.ts';
@@ -40,7 +42,7 @@ import { isSpendableQuoteCents } from "../_shared/purchase-quote.ts";
 // phone line. `capability-record` owns HOW a run is written; `comms-capability-outcome`
 // owns WHICH of the six outcomes these four acts landed in (§18: one home each).
 import { recordCapabilityRun, stableRunId, type CapabilityOutcome } from "../_shared/capability-record.ts";
-import { classifyStudioRun, studioReceiptDetail } from "../_shared/studio-run-outcome.ts";
+import { classifyStudioRun, DOOR_FILED_STUDIO_TOOLS, studioReceiptDetail } from "../_shared/studio-run-outcome.ts";
 import { classifyCommsRun } from "../_shared/comms-capability-outcome.ts";
 // Phase 2 · S1 — Pipeline write acts (starting deal_move_stage) record an honest outcome
 // through the SAME ratified pattern (#947): capability-record owns HOW, this owns WHICH.
@@ -52,7 +54,7 @@ import { classifyCrmRun } from "../_shared/crm-capability-outcome.ts";
 // no real artifact (null url, empty drafts, null saved id) must degrade to an honest failure,
 // not a success-shaped receipt. ONE pure home for that decision (§18); handlers wrap their
 // own success shape in it so the model, the status label and the artifact card all inherit it.
-import { artifactProduced, ARTIFACT_ABSENT_ERROR, usableDrafts, publishVerified, PUBLISH_UNVERIFIED_ERROR } from "../_shared/artifact-receipt.ts";
+import { artifactProduced, ARTIFACT_ABSENT_ERROR, usableDrafts } from "../_shared/artifact-receipt.ts";
 import { narrowToolDefs, outsideStudioScope, resolveRoleToolScope, STUDIO_SCOPE_FAIL_CLOSED, type RoleToolScope } from "../_shared/studio-scope.ts";
 
 /** Tools whose backend requires the CURRENT workspace's owner or admin (or the managing agency) —
@@ -7306,6 +7308,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     }
     toolDefs.push(...CRM_COMMAND_TOOLS as any);
     toolDefs.push(...SALES_INVOICE_TOOLS as any);
+    toolDefs.push(...SALES_COLLECTIONS_TOOLS);
 
     // ── AUTONOMY GATE WIRING ─────────────────────────────────────────────────
     // Every tool that writes, creates, or changes state is governed by the
@@ -8575,6 +8578,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // approval card is its record. Never fails the turn.
         const recordStudioRefusal = async (tc: any, reason: string): Promise<void> => {
           try {
+            // The publish door files these receipts itself, once (V2b).
+            if (DOOR_FILED_STUDIO_TOOLS.has(tc.function.name)) return;
             const receipt = classifyStudioRun({ capability: tc.function.name, result: { success: false } });
             if (!receipt) return;
             const { data: refusedTenant, error: rtErr } = await supabaseClient.rpc("current_user_tenant_id");
@@ -8638,11 +8643,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
 
         // Sales uses its canonical action door, which alone claims approval and executes stored
         // arguments. This branch stays after scope/seat guards and before the legacy Chat gate.
-        if (SALES_INVOICE_TOOL_NAMES.has(tc.function.name)) {
+        if (SALES_INVOICE_TOOL_NAMES.has(tc.function.name) || SALES_COLLECTIONS_TOOL_NAMES.has(tc.function.name)) {
           let invoiceArgs: Record<string, unknown> = {};
           try { invoiceArgs = JSON.parse(tc.function.arguments || '{}'); } catch { invoiceArgs = {}; }
           const userTurns = messages.filter((message: any) => message?.role === 'user');
-          const result = await dispatchSalesInvoiceChat({
+          const dispatchSales = SALES_COLLECTIONS_TOOL_NAMES.has(tc.function.name) ? dispatchSalesCollectionsChat : dispatchSalesInvoiceChat;
+          const result = await dispatchSales({
             tenantId: personaCtx?.tenant_id ?? null, userId: user.id, toolName: tc.function.name,
             args: invoiceArgs, approved: approvedConfirmations,
             sameToolCalls: toolCalls.filter((call: any) => call?.function?.name === tc.function.name).length,
@@ -8654,6 +8660,47 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           for (const token of result.tokens ?? []) approvalTokenTool.set(token, tc.function.name);
           if (result.refusal) approvalRefusals.set(tc.function.name, result.refusal);
           toolResults.push({ tool_call_id: tc.id, role: 'tool', content: JSON.stringify(result.content) });
+          continue;
+        }
+
+        // ── THE ONE PUBLISH DOOR (Vibe Studio V2b) ───────────────────────────
+        // Page, form and funnel publishing from chat redeem through growth-publish-command — the same
+        // door the Studio Publish panel uses — so there is one authority decision, one approval, one
+        // executor, one readback and one receipt however a piece goes live. This branch only SELECTS:
+        // a first call becomes the door's server-issued Needs-your-OK card, and an approved card is
+        // handed back to the door, which alone claims it and runs the STORED call. It sits after the
+        // scope and seat guards and before the legacy Chat gate, which must not also gate these tools
+        // (that would be a second approval), and the chat files no receipt for them (the door does).
+        if (GROWTH_PUBLISH_DOOR_TOOL_NAMES.has(tc.function.name)) {
+          // A turn whose declines could not be recorded, or whose workspace moved, may not propose or
+          // run an act — the general gate's rule, applied to this door too.
+          if (!cancellationsRecorded || !(await revalidateProposalScope())) {
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
+              success: false, not_applied: true, error: "confirmation_context_unavailable",
+              message: "The workspace or declined approval could not be verified. Nothing was published. Reopen the workspace and retry; do not try another tool to bypass this refusal.",
+            }) });
+            continue;
+          }
+          let publishArgs: Record<string, unknown> = {};
+          try { publishArgs = JSON.parse(tc.function.arguments || '{}'); } catch { publishArgs = {}; }
+          const publishAdmin = createClient(supabaseUrl, supabaseServiceKey);
+          const result = await dispatchGrowthPublishChat({
+            tenantId: personaCtx?.tenant_id ?? null, userId: user.id, toolName: tc.function.name,
+            args: publishArgs, approved: approvedConfirmations,
+            sameToolCalls: toolCalls.filter((call: any) => call?.function?.name === tc.function.name).length,
+          }, {
+            admin: { from: (name: string) => ({
+              // Dynamic approval table: isolate the SDK generic expansion at the selected-query boundary.
+              select: (columns: string) => publishAdmin.from(name).select(columns) as unknown as GrowthPublishApprovalQuery,
+            }) },
+            // The operator's own JWT, so the door resolves THEIR workspace and authority.
+            invoke: (body: Record<string, unknown>) => supabaseClient.functions.invoke("growth-publish-command", { headers: { Authorization: authHeader }, body }),
+          });
+          for (const token of result.tokens ?? []) approvalTokenTool.set(token, tc.function.name);
+          if (result.refusal) approvalRefusals.set(tc.function.name, result.refusal);
+          // The door claims the stored proposal atomically; what it returns is this approval's outcome.
+          if (result.spent) approvalSpend.set(result.spent, tc.id);
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result.content) });
           continue;
         }
 
@@ -10322,15 +10369,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           tc.function.name === "growth_list" ||
           tc.function.name === "growth_page_generate" ||
           tc.function.name === "growth_page_save" ||
-          tc.function.name === "growth_page_publish" ||
           tc.function.name === "growth_form_save" ||
-          tc.function.name === "growth_form_publish" ||
           // V0 — the funnel tools were advertised and handled below but missing from this list, so
           // every call fell through to "Unknown tool" (0 funnels ever built in production). They are
           // reachable now that a partial build can only report itself as partial.
+          // (The three *_publish tools are not in this list: they redeem through the one publish
+          // door above, growth-publish-command, and never reach this dispatch.)
           tc.function.name === "growth_funnel_generate" ||
           tc.function.name === "growth_funnel_build" ||
-          tc.function.name === "growth_funnel_publish" ||
           tc.function.name === "action_file" ||
           tc.function.name === "action_advance" ||
           tc.function.name === "inbox_list" ||
@@ -10590,6 +10636,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           ): Promise<void> => {
             try {
               if (tc.function.name === "generate_image" && mediaFilesReceipt) return;
+              // The publish door files these receipts itself, once (V2b).
+              if (DOOR_FILED_STUDIO_TOOLS.has(tc.function.name)) return;
               const receipt = classifyStudioRun({ capability: tc.function.name, ...input });
               if (!receipt) return;
               const studioTenant = await resolveActorTenant();
@@ -11913,7 +11961,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                     model_reason: choice?.reason ?? null,
                     estimated_cost_usd: mjJob.estimated_cost_usd ?? null,
                     note: mjBody?.awaiting_approval
-                      ? "This one needs the owner's approval before it runs; it is waiting in the Studio. Say so plainly, with the estimate."
+                      ? "This one needs your approval before it runs; approve it on the card in this Studio project. Say so plainly, with the estimate."
                       : "The image is being made now and will appear in the Studio when it's ready. Do not describe it as finished.",
                   };
                 }
@@ -12333,19 +12381,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               result = artifactProduced("saved_id", (row as any)?.id)
                 ? { success: true, page_id: (row as any)?.id, slug: (row as any)?.slug, status: (row as any)?.status, forms_on_page: pageForms.map((f) => f.slug), form_ids: pageForms.map((f) => f.id) }
                 : { success: false, error: ARTIFACT_ABSENT_ERROR.saved_id };
-            } else if (tc.function.name === "growth_page_publish") {
-              // Going-live action (confirm-gated by the autonomy gate above). The RPC
-              // validates the draft (rejects unfilled [PLACEHOLDER]s, §15) and returns the
-              // REAL public url — surface it verbatim; never claim it's live without it (§13).
-              const { data: pub, error } = await supabaseClient.rpc("growth_page_publish", {
-                p_tenant_id: personaCtx?.tenant_id ?? null,
-                p_id: args.page_id,
-              });
-              if (error) throw error;
-              // V0 — "live" only on a readback that proves it: live status, publish time, public address.
-              result = publishVerified("page", pub)
-                ? { success: true, ...(pub as any) }
-                : { success: false, outcome: "unverified", error: PUBLISH_UNVERIFIED_ERROR, status: (pub as any)?.status ?? null };
             } else if (tc.function.name === "growth_form_save") {
               // A form the owner asked for, written by Paige as structured questions and validated by
               // the DEFINER RPC (§9: p_tenant_id is ignored for a signed-in caller; it pins to the
@@ -12401,16 +12436,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                       ...(_droppedFormId ? { note: "The form id given isn't one of this project's forms, so this was saved as a NEW form. Say so plainly; the other form was not changed." } : {}) }
                   : { success: false, error: ARTIFACT_ABSENT_ERROR.saved_id };
               }
-            } else if (tc.function.name === "growth_form_publish") {
-              // Going-live action (confirm-gated: classified high). Reports the REAL link (§13).
-              const { data: pub, error } = await supabaseClient.rpc("growth_form_publish", {
-                p_tenant_id: personaCtx?.tenant_id ?? null,
-                p_id: args.form_id,
-              });
-              if (error) throw error;
-              result = publishVerified("form", pub)
-                ? { success: true, ...(pub as any) }
-                : { success: false, outcome: "unverified", error: PUBLISH_UNVERIFIED_ERROR, status: (pub as any)?.status ?? null };
             } else if (tc.function.name === "growth_funnel_generate") {
               // Draft-only: plans + drafts the whole funnel (entry page + intake form) via the
               // edge fn, which reuses the page/form drafters server-side. Writes nothing (§13).
@@ -12591,16 +12616,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                     note: "Some pieces were saved as drafts in this project but the funnel itself was not built. Say exactly which pieces were saved, that nothing went live, and offer to try the build again.",
                   };
               }
-            } else if (tc.function.name === "growth_funnel_publish") {
-              // Going-live (confirm-gated above). One call: the funnel publish puts every page and
-              // form the funnel uses live with it, in one transaction, so a refusal leaves nothing
-              // half-live. It returns the REAL public url; surface it verbatim, never claim live without it.
-              const _fpTid = personaCtx?.tenant_id ?? null;
-              const { data: _pub, error: _pubFErr } = await supabaseClient.rpc("growth_funnel_publish", { p_tenant_id: _fpTid, p_id: args.funnel_id });
-              if (_pubFErr) throw _pubFErr;
-              result = publishVerified("funnel", _pub)
-                ? { success: true, ...(_pub as any) }
-                : { success: false, outcome: "unverified", error: PUBLISH_UNVERIFIED_ERROR, status: (_pub as any)?.status ?? null };
             } else if (tc.function.name === "action_file") {
               // R2 — read where it runs: in the auto lane these are the model's arguments, and on an
               // approval the card's stored ones.
@@ -14075,6 +14090,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         growth_page_save: "growth_pages", growth_page_publish: "growth_pages",
         growth_funnel_build: "growth_funnels", growth_funnel_publish: "growth_funnels",
         growth_form_save: "growth_forms", growth_form_publish: "growth_forms",
+        // V2b — acts only the publish door (growth-publish-command) performs; named here because this
+        // map is keyed off the classifier, not off Chat's tool list.
+        growth_page_unpublish: "growth_pages", growth_form_unpublish: "growth_forms",
+        growth_funnel_unpublish: "growth_funnels",
+        studio_image_publish: "marketing_content", studio_image_unpublish: "marketing_content",
         action_file: "paige_actions", action_advance: "paige_actions",
         n8n_activate_workflow: "n8n_workflow", n8n_deactivate_workflow: "n8n_workflow",
         n8n_create_workflow: "n8n_workflow", n8n_update_workflow: "n8n_workflow",
@@ -14175,6 +14195,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         sales_publish_invoice: "paige_invoices", sales_record_manual_payment: "paige_invoices",
         sales_reverse_manual_payment: "paige_invoices", sales_void_invoice: "paige_invoices",
         sales_create_invoice_link: "paige_invoices",
+        sales_save_collection_terms: "tenant_client_agreements",
+        sales_stage_collection_import: "paige_sales_import_batches",
+        sales_commit_collection_import: "paige_sales_import_batches",
         business_create: "businesses", business_update: "businesses",
         business_verify: "business_verification_runs",
         // #1213 / #1214 — the two governed credit-pull capabilities. Both are classified `high`
@@ -14206,7 +14229,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
        * records, and the ids stay in the payload where a list belongs.
        */
       const TARGET_ID_KEYS = [
-        "contact_id", "client_id", "deleted", "deal_id", "task_id", "pipeline_id", "stage_id",
+        "agreement_id", "batch_id", "contact_id", "client_id", "deleted", "deal_id", "task_id", "pipeline_id", "stage_id",
         "page_id", "funnel_id", "content_id", "booking_id", "log_id", "automation_id", "mission_id", "plan_id",
         "item_id", "workflow_id", "subagent_id", "action_id", "connection_id", "account_id", "tenant_id", "id",
       ] as const;

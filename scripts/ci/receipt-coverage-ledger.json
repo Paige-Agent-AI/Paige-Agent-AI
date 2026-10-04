@@ -647,13 +647,19 @@
       "tool": "growth_form_publish",
       "risk": "high",
       "receipt": "emits",
-      "evidence": "paige-ai-chat dispatch records the run via recordStudioRun -> classifyStudioRun (_shared/studio-run-outcome.ts) -> recordCapabilityRun (succeeded / refused / failed / unreachable / outcome_unknown), keyed on the tool call, carrying the approval channel and record id; refusals before the write (switched off, not this workspace's owner/admin) file via recordStudioRefusal"
+      "evidence": "growth-publish-command door files the run for both the Studio panel and the chat via recordCapabilityRun (_shared/studio-run-outcome.ts), approval channel operator_card"
     },
     {
       "tool": "growth_form_save",
       "risk": "ordinary",
       "receipt": "emits",
       "evidence": "paige-ai-chat dispatch records the run via recordStudioRun -> classifyStudioRun (_shared/studio-run-outcome.ts) -> recordCapabilityRun (succeeded / refused / failed / unreachable / outcome_unknown), keyed on the tool call, carrying the approval channel and record id; refusals before the write (switched off, not this workspace's owner/admin) file via recordStudioRefusal"
+    },
+    {
+      "tool": "growth_form_unpublish",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "growth-publish-command door records the run via recordCapabilityRun (_shared/studio-run-outcome.ts), approval channel operator_card"
     },
     {
       "tool": "growth_funnel_build",
@@ -665,19 +671,31 @@
       "tool": "growth_funnel_publish",
       "risk": "high",
       "receipt": "emits",
-      "evidence": "paige-ai-chat dispatch records the run via recordStudioRun -> classifyStudioRun (_shared/studio-run-outcome.ts) -> recordCapabilityRun (succeeded / refused / failed / unreachable / outcome_unknown), keyed on the tool call, carrying the approval channel and record id; refusals before the write (switched off, not this workspace's owner/admin) file via recordStudioRefusal"
+      "evidence": "growth-publish-command door files the run for both the Studio panel and the chat via recordCapabilityRun (_shared/studio-run-outcome.ts), approval channel operator_card"
+    },
+    {
+      "tool": "growth_funnel_unpublish",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "growth-publish-command door records the run via recordCapabilityRun (_shared/studio-run-outcome.ts), approval channel operator_card"
     },
     {
       "tool": "growth_page_publish",
       "risk": "high",
       "receipt": "emits",
-      "evidence": "paige-ai-chat dispatch records the run via recordStudioRun -> classifyStudioRun (_shared/studio-run-outcome.ts) -> recordCapabilityRun (succeeded / refused / failed / unreachable / outcome_unknown), keyed on the tool call, carrying the approval channel and record id; refusals before the write (switched off, not this workspace's owner/admin) file via recordStudioRefusal"
+      "evidence": "growth-publish-command door files the run for both the Studio panel and the chat via recordCapabilityRun (_shared/studio-run-outcome.ts), approval channel operator_card"
     },
     {
       "tool": "growth_page_save",
       "risk": "ordinary",
       "receipt": "emits",
       "evidence": "paige-ai-chat dispatch records the run via recordStudioRun -> classifyStudioRun (_shared/studio-run-outcome.ts) -> recordCapabilityRun (succeeded / refused / failed / unreachable / outcome_unknown), keyed on the tool call, carrying the approval channel and record id; refusals before the write (switched off, not this workspace's owner/admin) file via recordStudioRefusal"
+    },
+    {
+      "tool": "growth_page_unpublish",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "growth-publish-command door records the run via recordCapabilityRun (_shared/studio-run-outcome.ts), approval channel operator_card"
     },
     {
       "tool": "improvement_decide",
@@ -880,6 +898,18 @@
       "receipt": "seeded_undeclared"
     },
     {
+      "tool": "studio_image_publish",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "growth-publish-command door records the run via recordCapabilityRun (_shared/studio-run-outcome.ts), approval channel operator_card"
+    },
+    {
+      "tool": "studio_image_unpublish",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "growth-publish-command door records the run via recordCapabilityRun (_shared/studio-run-outcome.ts), approval channel operator_card"
+    },
+    {
       "tool": "subagent_approve_proposal",
       "risk": "high",
       "receipt": "seeded_undeclared"
@@ -1004,6 +1034,24 @@
       "risk": "high",
       "receipt": "emits",
       "evidence": "execute_sales_invoice_command atomically calls canonical public.record_capability_run with operation identity and actor/tenant in supabase/migrations/20270543000000_sales_invoice_lifecycle.sql; isolated SQL proof verifies Rail and rollback on receipt failure."
+    },
+    {
+      "tool": "sales_save_collection_terms",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "execute_sales_collection_command atomically calls public.record_capability_run with actor, tenant and operation identity in supabase/migrations/20270547000000_sales_collections.sql; isolated SQL proof verifies receipt failure rolls back business changes."
+    },
+    {
+      "tool": "sales_stage_collection_import",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "execute_sales_collection_command atomically calls public.record_capability_run with actor, tenant and operation identity in supabase/migrations/20270547000000_sales_collections.sql; isolated SQL proof verifies receipt failure rolls back business changes."
+    },
+    {
+      "tool": "sales_commit_collection_import",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "execute_sales_collection_command atomically calls public.record_capability_run with actor, tenant and operation identity in supabase/migrations/20270547000000_sales_collections.sql; isolated SQL proof verifies receipt failure rolls back business changes."
     }
   ]
 }

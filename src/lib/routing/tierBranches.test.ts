@@ -204,7 +204,7 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
   it("verified Solo counts + first-is-default per the live-screen audit", () => {
     const count = (slug: string) => branchBySlug("solo", slug)?.subtabs?.length ?? 0;
     expect(count("command-center")).toBe(4);
-    expect(count("paige")).toBe(4);
+    expect(count("paige")).toBe(5); // +Deep Research (INT-303)
     expect(count("automations")).toBe(3);
     expect(count("clients")).toBe(6);
     expect(count("calendar")).toBe(6);
@@ -214,7 +214,7 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
     expect(count("marketplace")).toBe(4);
     expect(count("settings")).toBe(7);
     const total = SOLO_BRANCHES.reduce((n, b) => n + (b.subtabs?.length ?? 0), 0);
-    expect(total).toBe(59);
+    expect(total).toBe(60); // main's 59 + Deep Research (INT-303)
     // first sub-tab is the screen's default (bare branch renders it) — now Business Game Plan.
     expect(defaultSubtabSlug("solo", "command-center")).toBe("business-game-plan");
     expect(defaultSubtabSlug("solo", "paige")).toBe("chat");

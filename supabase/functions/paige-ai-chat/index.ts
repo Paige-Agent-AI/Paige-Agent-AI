@@ -5477,6 +5477,8 @@ CHECK YOUR OWN HANDS BEFORE DESCRIBING THEM — when the operator asks what you 
 
 STABLE vs MUTABLE references — a stable identity like a client_ref or PPL reference stays valid across turns; you do not need to re-read it just because it was mentioned earlier. But mutable state (version, membership, status) changes and must be re-read from a current source before you build a consequential proposal on it. Re-read what can have changed; reuse what cannot.
 
+RESEARCH STATUS BOUNDS YOUR LANGUAGE — when a deep_research result is in this conversation, its research_status decides what your answer may claim. Nothing is "what sources say" or "what the research found" unless a numbered citation FROM THAT RESULT stands behind the exact claim. If research_status is anything but "verified" (insufficient, no_credible_sources, partial, unconfigured): say so plainly, keep any general knowledge visibly labeled as NOT freshly sourced, never dressed as research, and for high-stakes subjects (legal, tax, financial, regulatory, medical) do not rest a material recommendation on uncited facts — offer the refined follow-up research pass instead. The rule from your tool outcomes holds here too: a polished answer is not evidence.
+
 THE INNOVATIVE ASSISTANT — probe for specifics, weigh the client's experience, propose the better idea. You serve the human team; you don't silently guess what only a human knows, and you never hand over half-finished work full of [PLACEHOLDER]s as if it were done.
 - PROBE for what you can't know; use what you can. Before you produce or (especially) SEND something, resolve the concrete specifics: the website/domain, which email it comes from (the sending identity), the real names of the people involved (the client, the coach, the staff), the actual links, dates, and the offer. Pull these from the contact/brand/Playbook data you can see; ASK the human for the rest in one tight grouped set of questions. If a draft still has unresolved placeholders, it is NOT done — either fill them from real data or ask. Do not present bracketed filler as finished work.
 - WEIGH THE CLIENT IMPACT. Think about how the thing actually lands on the recipient — clarity, tone, how much effort it asks of them, whether it feels personal or generic. Most humans can't see that in advance; you can, so flag a better call when you spot one.
@@ -9986,15 +9988,43 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // name + title + "contact not public" — NEVER a guessed email (§13).
             const ep = dr?.entity_profile ?? null;
             const dossier = ep ? formatDossier(ep) : null;
+            // R2c — the research-status contract (owner acceptance finding 2026-10-04: a
+            // findings:[] run must never be bridged into "here's what reliable sources say").
+            // Derived from the engine's own output — NO new engine schema. The class bounds
+            // the final answer's language: nothing is "research-backed" unless a citation
+            // from THIS result stands behind it.
+            const citedSources = sources.filter((sc: any) => !sc?.excluded);
+            const researchStatus =
+              coverage.configured === false ? "unconfigured"
+              : dossier ? "verified"
+              : findings.length === 0 ? (citedSources.length > 0 ? "no_credible_sources" : "insufficient")
+              : coverage.stop_reason === "max_hops" || coverage.stop_reason === "budget" || coverage.stop_reason === "wall_clock" ? "partial"
+              : "verified";
+            const citationCoverage =
+              findings.length === 0 && !dossier ? "insufficient"
+              : findings.every((f: any) => Array.isArray(f?.citations) && f.citations.length > 0) || dossier ? "sufficient"
+              : "partial";
             let note: string;
             if (coverage.configured === false) {
               note = "Deep research unavailable: live web search is not configured. Do NOT fabricate facts — tell the client web lookup is offline and answer from your knowledge, clearly flagged as not freshly sourced.";
             } else if (dossier) {
               note = "This is a cited entity dossier. Present it as structured intel with EVERY fact carrying its [n] citation. When a person's contact is 'not public', say so plainly and point to the main channels — do NOT fill the gap with a guessed email or phone. Surface the 'What we could not verify' notes honestly.";
             } else if (findings.length === 0) {
-              note = `No verifiable sources found${coverage.note ? ` (${coverage.note})` : ""}. Report that honestly — do NOT invent results, names, or figures.`;
+              // R2c: the insufficient run — the language contract, not a soft suggestion.
+              note = `RESEARCH ${coverage.stop_reason === "error" ? "RUN ERRORED — THE ENGINE RETURNED NOTHING VERIFIABLE" : researchStatus === "no_credible_sources" ? "FOUND SOURCES, BUT VALIDATION REFUSED EVERY CLAIM" : "DID NOT PRODUCE VERIFIABLE FINDINGS"} — language contract for your reply:
+- You may NOT present anything as what "sources" or "the research" found: NO citation in this result supports any claim. "Here's what I know from reliable sources" and similar sourced-sounding framing are FORBIDDEN.
+- Keep your evidence classes visibly separate: VERIFIED RESEARCH FINDING (none this run) | GENERAL BACKGROUND (your own knowledge — label it plainly as NOT freshly sourced, never as research) | INFERENCE / RECOMMENDATION (yours — label it and name the facts it rests on).
+- HIGH-STAKES subjects (legal, tax, financial, regulatory, medical): do NOT make a material recommendation that rests on uncited facts. Instead: offer a refined follow-up research pass (name exactly what it would target), or use another capability, or state plainly that the evidence is insufficient for a recommendation.
+- A weak run is a finding, not a void: say what was tried${coverage.note ? ` (${coverage.note})` : ""} and what a better-targeted pass would look for. Never polish uncertainty into confidence.`;
+            } else if (researchStatus === "partial") {
+              note = `PARTIAL RESEARCH — the run stopped early (${coverage.stop_reason ?? "bounds"}). Language contract: present the cited findings WITH their [n] markers; anything beyond them is GENERAL BACKGROUND (labeled as not freshly sourced, never attributed to research) or your own INFERENCE/RECOMMENDATION (labeled, premises named). For high-stakes questions, say the coverage is partial and offer a focused follow-up pass.`;
+            } else if (citationCoverage === "sufficient") {
+              note = "Every factual claim below is tied to a numbered source. Weave these into a conversational answer and keep the [n] citation markers so the client can verify. Anything you add beyond these findings is GENERAL BACKGROUND (label it as not freshly sourced) or your own RECOMMENDATION (label it and name the premises) — never present prior knowledge as research evidence. Add a short 'verify before acting' note on any rates, requirements, or contact details.";
             } else {
-              note = "Every factual claim below is tied to a numbered source. Weave these into a conversational answer and keep the [n] citation markers so the client can verify. Add a short 'verify before acting' note on any rates, requirements, or contact details.";
+              // Defense-in-depth: findings exist but some carry no citation (not reachable
+              // from today's engine — validateAndBind drops uncited findings — but a future
+              // engine change must land HERE, in the partial contract, never the verified note.
+              note = `PARTIAL RESEARCH — some findings carry no citation (${coverage.stop_reason ?? "coverage"}). Language contract: present ONLY the cited findings with their [n] markers as research; uncited material is GENERAL BACKGROUND (labeled, never attributed to research) or your own INFERENCE (labeled). Offer a focused follow-up pass for the gaps.`;
             }
             toolResults.push({
               tool_call_id: tc.id,
@@ -10003,6 +10033,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 configured: coverage.configured !== false,
                 run_id: dr?.run_id ?? null,
                 saved: drSaved,
+                // R2c: the derived status pair the reply's language must obey.
+                research_status: researchStatus,
+                citation_coverage: citationCoverage,
                 question: typeof args.question === "string" ? args.question : "",
                 stop_reason: coverage.stop_reason ?? null,
                 ...(dossier ? { dossier } : {}),

@@ -8,6 +8,7 @@ import { databaseAnswered } from "../_shared/approval-outcome.ts";
 import { mintSignerToken, sha256Hex } from "../_shared/agreements/token.ts";
 import { FINGERPRINT, UUID, SALES_INVOICE_ACTIONS, parseSalesInvoiceCommand } from "../_shared/sales-invoice-command/contract.ts";
 import { executeSalesInvoiceDelivery } from "../_shared/sales-invoice-delivery/adapter.ts";
+import { readInvoiceDeliveryReadiness, type InvoiceReadinessAdmin } from "../_shared/sales-invoice-delivery/readiness-reader.ts";
 
 const headers = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Content-Type": "application/json", "Cache-Control": "no-store" };
 const response = (status: number, body: Record<string, unknown>) => new Response(JSON.stringify(body), { status, headers });
@@ -48,7 +49,7 @@ Deno.serve(async req => {
   // Replay comes before current balance/version eligibility and before approval redemption.
   // The business RPC fences actor/tenant and exact canonical request even for historical operations.
   if (!(await stillCurrent())) return response(409, { ok: false, code: "WORKSPACE_CHANGED" });
-  const emailAction = command.action === "invoice.email_send";
+  const emailAction = command.action === "invoice.email_send" || command.action === "invoice.sms_send";
   const { data: replay, error: replayError } = await admin.rpc(emailAction ? "read_sales_invoice_delivery_result" : "read_sales_invoice_command_result", rpcArgs);
   if (replayError) return response(409, { ok: false, outcome: "refused", code: "SALES_INVOICE_REPLAY_UNAVAILABLE" });
   const preparedRecovery = emailAction && object(replay)?.outcome === "prepared";
@@ -58,6 +59,12 @@ Deno.serve(async req => {
   const { data: previewData, error: previewError } = await admin.rpc(emailAction ? "preview_sales_invoice_delivery_command" : "preview_sales_invoice_command", { _actor_user_id: user.id, _expected_tenant_id: tenantId, _command: command });
   const preview = object(previewData);
   if (previewError || !preview || preview.eligible !== true) return response(422, { ok: false, outcome: "refused", code: "SALES_INVOICE_INELIGIBLE", ...(preview ? { preview } : {}) });
+  if (emailAction) {
+    const { data: invoice, error } = await admin.rpc("_sales_invoice_read", { _tenant:tenantId, _invoice:command.invoice_id });
+    if (error) return response(503, { ok:false,outcome:"refused",code:"INVOICE_READ_UNAVAILABLE" });
+    const readiness = await readInvoiceDeliveryReadiness(admin as unknown as InvoiceReadinessAdmin, { tenantId,invoice,channel:command.action === "invoice.sms_send" ? "sms" : "email",connectorId:typeof command.connector_id === "string" ? command.connector_id : null }, key => Deno.env.get(key));
+    if (!readiness.eligible) return response(422, { ok:false,outcome:"needs_setup",code:"INVOICE_DELIVERY_NOT_READY",readiness });
+  }
   if (preparedRecovery || body.approved_fingerprint === undefined) {
     // Reuse a live server-issued proposal cycle. If an approval was consumed but
     // the process stopped before its business record, mint a fresh card for the
@@ -143,16 +150,17 @@ Deno.serve(async req => {
     decision_receipt_recorded: true,
     ...(token ? { generated_link: { token_hash: await sha256Hex(token), grant_id: crypto.randomUUID() } } : {}),
   };
-  if (decided.action === "invoice.email_send") {
+  if (decided.action === "invoice.email_send" || decided.action === "invoice.sms_send") {
     const readOutcome = async () => {
       const { data, error } = await admin.rpc("read_sales_invoice_delivery_result", { _actor_user_id: user.id, _expected_tenant_id: tenantId, _operation_id: args.operation_id, _command: decided });
       if (error) throw new Error("delivery_readback_unavailable");
       return data;
     };
-    const result = await executeSalesInvoiceDelivery({ actorUserId: user.id, tenantId, operationId: args.operation_id, command: { invoice_id: decided.invoice_id, expected_version: decided.expected_version, connector_id: String(decided.connector_id) }, governance }, {
+    const result = await executeSalesInvoiceDelivery({ actorUserId: user.id, tenantId, operationId: args.operation_id, command: { action:decided.action,invoice_id: decided.invoice_id, expected_version: decided.expected_version, connector_id: typeof decided.connector_id === "string" ? decided.connector_id : null }, governance }, {
       stillCurrent, hash: sha256Hex, readOutcome,
+      readiness: invoice => readInvoiceDeliveryReadiness(admin as unknown as InvoiceReadinessAdmin, { tenantId,invoice,channel:decided.action === "invoice.sms_send" ? "sms" : "email",connectorId:typeof decided.connector_id === "string" ? decided.connector_id : null }, key => Deno.env.get(key)),
       readInvoice: async () => { const { data, error } = await admin.rpc("_sales_invoice_read", { _tenant: tenantId, _invoice: decided.invoice_id }); if (error) throw new Error("invoice_read_unavailable"); return data; },
-      prepare: async prepared => { const { data, error } = await admin.rpc("prepare_sales_invoice_delivery", prepared); if (error) throw new Error("delivery_prepare_unavailable"); return data; },
+      prepare: async prepared => { const { data, error } = await admin.rpc(decided.action === "invoice.sms_send" ? "prepare_sales_invoice_channel_delivery" : "prepare_sales_invoice_delivery", prepared); if (error) throw new Error("delivery_prepare_unavailable"); return data; },
       send: async prepared => {
         const abort = new AbortController(); const timer = setTimeout(() => abort.abort(), 15000);
         try { const sent = await fetch(`${url}/functions/v1/send-message`, { method: "POST", headers: { Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!}`, "Content-Type": "application/json" }, body: JSON.stringify(prepared), signal: abort.signal }); if (!sent.ok) throw new Error("delivery_dispatch_unconfirmed"); return await sent.json(); } finally { clearTimeout(timer); }

@@ -1,5 +1,6 @@
 import {SALES_INVOICE_READ_CAPABILITY,SALES_INVOICE_PUBLISH_CAPABILITY,SALES_INVOICE_RECORD_PAYMENT_CAPABILITY,SALES_INVOICE_REVERSE_PAYMENT_CAPABILITY,SALES_INVOICE_VOID_CAPABILITY,SALES_INVOICE_EMAIL_CAPABILITY} from './paige-spine/domains/sales_invoice.ts';
 import { parseSalesInvoiceCommand, SALES_INVOICE_ACTIONS, UUID } from './sales-invoice-command/contract.ts';
+import { parseCollectionCommand, COLLECTION_ACTIONS } from './sales-collections/contract.ts';
 import { CRM_APPROVAL_CANDIDATE_LIMIT, resolveCrmApprovedFingerprint } from './crm-command/approval-resolution.ts';
 
 const ACTIONS = {
@@ -19,14 +20,16 @@ function chatInput(capability: {input: {properties: Readonly<Record<string, unkn
   }));
   return {type:'object',properties,required:capability.input.required.filter(key=>key!=='action'),additionalProperties:false};
 }
+function invoiceSendInput(){const input=chatInput(SALES_INVOICE_EMAIL_CAPABILITY);return {...input,properties:{...input.properties,channel:{type:'string',enum:['email','sms'],description:'Defaults to email. SMS requires business A2P and this recipient consent; the server resolves its connection.'}}};}
+function receiptInput(capability:Parameters<typeof chatInput>[0]):ReturnType<typeof chatInput>{const input=chatInput(capability);return {...input,properties:{...input.properties,record_kind:{type:'string',enum:['managed','imported'],description:'Use imported only for a recorded historical obligation read from Collections.'},...('currency' in input.properties?{currency:{type:'string',pattern:'^[a-z]{3}$',description:'Exact currency from the canonical obligation; managed invoices support USD.'}}:{})}};}
 // No invoice link tool: its human-only endpoint returns a bearer token.
 export const SALES_INVOICE_TOOLS = [
  {type:'function',function:{name:'read_sales_invoice',description:'Read this workspace invoice and manual receipt history. Manual settlement is a record, not a processor charge.',parameters:SALES_INVOICE_READ_CAPABILITY.input}},
  {type:'function',function:{name:'sales_publish_invoice',description:'Issue an existing saved invoice with approval. This creates an obligation snapshot; it does not charge, send, or create a payment link. Read the invoice first for its current version.',parameters:chatInput(SALES_INVOICE_PUBLISH_CAPABILITY)}},
- {type:'function',function:{name:'sales_record_manual_payment',description:'With approval, record money the owner says was received off platform. Never claim a processor verified or charged it.',parameters:chatInput(SALES_INVOICE_RECORD_PAYMENT_CAPABILITY)}},
- {type:'function',function:{name:'sales_reverse_manual_payment',description:'With approval, append a reversal of an existing manual receipt. This does not refund or transfer money.',parameters:chatInput(SALES_INVOICE_REVERSE_PAYMENT_CAPABILITY)}},
+ {type:'function',function:{name:'sales_record_manual_payment',description:'With approval, record money the owner says was received off platform against a managed or imported obligation. Read its currency, kind, balance and version first. Never claim a processor verified or charged it.',parameters:receiptInput(SALES_INVOICE_RECORD_PAYMENT_CAPABILITY)}},
+ {type:'function',function:{name:'sales_reverse_manual_payment',description:'With approval, append a reversal of an existing manual receipt on a managed or imported obligation. This does not refund or transfer money.',parameters:receiptInput(SALES_INVOICE_REVERSE_PAYMENT_CAPABILITY)}},
  {type:'function',function:{name:'sales_void_invoice',description:'With approval, void the existing invoice. This does not refund or transfer money.',parameters:chatInput(SALES_INVOICE_VOID_CAPABILITY)}},
- {type:'function',function:{name:'billing_send_invoice',description:'With approval, ask the selected verified business email connection to send an issued invoice. Use an eligible connector from server connection truth; never invent one. Provider acceptance is not delivery or payment. Unknown outcomes require reconciliation, never a fresh-operation retry.',parameters:chatInput(SALES_INVOICE_EMAIL_CAPABILITY)}},
+ {type:'function',function:{name:'billing_send_invoice',description:'With approval, attempt issued invoice delivery by email or SMS. Email requires an eligible connector from server truth; SMS resolves tenant connection and checks A2P and recipient consent. Never invent sender eligibility. iMessage is unavailable. Provider acceptance is not delivery or payment. Unknown outcomes require reconciliation, never a fresh-operation retry.',parameters:invoiceSendInput()}},
 ] as const;
 export const SALES_INVOICE_TOOL_NAMES = new Set(SALES_INVOICE_TOOLS.map(t => t.function.name));
 
@@ -73,7 +76,7 @@ export function salesInvoiceSafeResult(value: unknown): Record<string, unknown> 
   if (source.operation && typeof source.operation === 'object' && !Array.isArray(source.operation)) {
     const operation = source.operation as Record<string, unknown>;
     if (typeof operation.id === 'string' && UUID.test(operation.id)) out.operation_id = operation.id;
-    const outcomes: Record<string, string> = { 'invoice.publish': 'published', 'invoice.record_manual_payment': 'manual_payment_recorded', 'invoice.reverse_manual_payment': 'manual_payment_reversed', 'invoice.void': 'voided' };
+    const outcomes: Record<string, string> = { 'invoice.publish': 'published', 'invoice.record_manual_payment': 'manual_payment_recorded', 'invoice.reverse_manual_payment': 'manual_payment_reversed', 'collection.record_receipt':'manual_payment_recorded','collection.reverse_receipt':'manual_payment_reversed', 'invoice.void': 'voided' };
     if (source.ok === true && typeof operation.action === 'string' && outcomes[operation.action]) out.outcome = outcomes[operation.action];
   }
   if (Array.isArray(source.payments)) {
@@ -99,9 +102,11 @@ export async function dispatchSalesInvoiceChat(ctx: Context, deps: Dependencies)
       return { content: reply.error ? { success: false, error: 'Invoice unavailable in this workspace.' } : { success: true, invoice: salesInvoiceSafeResult(reply.data) } };
     } catch { return { content: { success: false, error: 'Invoice read unavailable.' } }; }
   }
-  const action = ACTIONS[ctx.toolName as keyof typeof ACTIONS];
+  if(ctx.toolName==='billing_send_invoice'&&ctx.args.channel!==undefined&&(typeof ctx.args.channel!=='string'||!['email','sms'].includes(ctx.args.channel)))return {content:{success:false,error:'Invoice delivery channel unavailable.'}};
+  if(ctx.args.record_kind!==undefined&&(!['sales_record_manual_payment','sales_reverse_manual_payment'].includes(ctx.toolName)||typeof ctx.args.record_kind!=='string'||!['managed','imported'].includes(ctx.args.record_kind)))return {content:{success:false,error:'Invoice record kind unavailable.'}};
+  const action = ctx.args.record_kind==='imported' ? ctx.toolName==='sales_record_manual_payment'?'collection.record_receipt':'collection.reverse_receipt' : ctx.toolName==='billing_send_invoice'&&ctx.args.channel==='sms' ? 'invoice.sms_send' : ACTIONS[ctx.toolName as keyof typeof ACTIONS];
   if (!action) return { content: { success: false, error: 'Invoice action unavailable.' } };
-  let command: ReturnType<typeof parseSalesInvoiceCommand>;
+  let command: ReturnType<typeof parseSalesInvoiceCommand>|ReturnType<typeof parseCollectionCommand>;
   let body: Record<string, unknown>;
   const tokens: string[] = [];
   let approvedArgs: Record<string, unknown> | undefined;
@@ -129,15 +134,19 @@ export async function dispatchSalesInvoiceChat(ctx: Context, deps: Dependencies)
     } catch { return refusal('lookup_failed'); }
   }
   try {
-    command = parseSalesInvoiceCommand(approvedArgs ? approvedArgs.command : { ...ctx.args, action });
-    if (SALES_INVOICE_ACTIONS[command.action] !== ctx.toolName) return { ...refusal('unclaimable'), tokens };
+    const sendArgs={...ctx.args};delete sendArgs.channel;delete sendArgs.record_kind;
+    const rawCommand=approvedArgs ? approvedArgs.command : {...sendArgs,action};
+    const storedAction=rawCommand&&typeof rawCommand==='object'&&!Array.isArray(rawCommand)?(rawCommand as Record<string,unknown>).action:null;
+    command=typeof storedAction==='string'&&storedAction.startsWith('collection.')?parseCollectionCommand(rawCommand):parseSalesInvoiceCommand(rawCommand);
+    const policy=command.action.startsWith('collection.')?COLLECTION_ACTIONS[command.action as keyof typeof COLLECTION_ACTIONS]:SALES_INVOICE_ACTIONS[command.action as keyof typeof SALES_INVOICE_ACTIONS];
+    if (policy !== ctx.toolName) return { ...refusal('unclaimable'), tokens };
     if (approvedArgs) {
       if (approvedArgs.expected_tenant_id !== ctx.tenantId || typeof approvedArgs.operation_id !== 'string' || !UUID.test(approvedArgs.operation_id)) return { ...refusal('unclaimable'), tokens };
       body = { expected_tenant_id: ctx.tenantId, operation_id: approvedArgs.operation_id, command, approved_fingerprint: fingerprint };
     } else body = { expected_tenant_id: ctx.tenantId, operation_id: await salesInvoiceOperationId(ctx.tenantId, ctx.userId, command, ctx.turn), command };
   } catch { return approvedArgs ? { ...refusal('unclaimable'), tokens } : { content: { success: false, error: 'Invalid invoice command. Read its current version and use the required fields.' }, tokens }; }
   try {
-    const reply = await deps.caller.functions.invoke('sales-invoice-command', { body });
+    const reply = await deps.caller.functions.invoke(command.action.startsWith('collection.')?'sales-collection-command':'sales-invoice-command', { body });
     let data = reply.data;
     if (reply.error) {
       const error = reply.error as { context?: { json?: () => Promise<unknown> } };
@@ -148,10 +157,10 @@ export async function dispatchSalesInvoiceChat(ctx: Context, deps: Dependencies)
     const result = data as Record<string, unknown>;
     if (result.outcome === 'approval_required' && typeof result.fingerprint === 'string' && /^[0-9a-f]{16}$/.test(result.fingerprint)) return { tokens, content: { success: false, needs_confirm: true, requires_operator_approval: true, confirm_fingerprint: result.fingerprint, confirm_summary: typeof result.summary === 'string' ? result.summary : 'Approve this invoice action', note: 'Show the Needs your OK card. Nothing changed yet. Do not call this tool again until the person approves.' } };
     const safe = salesInvoiceSafeResult(result);
-    if (action === 'invoice.email_send') {
+    if (action === 'invoice.email_send' || action === 'invoice.sms_send') {
       for (const key of Object.keys(safe)) if (!['ok', 'outcome', 'provider_receipt_available', 'delivery_confirmed', 'replayed'].includes(key)) delete safe[key];
     }
-    const completed = result.ok === true && (action !== 'invoice.email_send' || result.outcome === 'provider_accepted');
+    const completed = result.ok === true && (!['invoice.email_send','invoice.sms_send'].includes(action) || result.outcome === 'provider_accepted');
     return { tokens, content: { ...safe, success: completed, ...(completed ? result.replayed === true ? { note: 'This is the saved result of an earlier operation. Read the invoice again before reporting its current balance or status.' } : {} : { note: 'This call did not establish a completed action. Report the returned outcome; do not retry automatically.' }) } };
-  } catch { return { tokens, content: { success: false, outcome: 'outcome_unknown', ...(action === 'invoice.email_send' ? {} : { operation_id: body.operation_id }), note: 'The invoice request has no verified response. Check the invoice before another action; do not claim success or retry automatically.' } }; }
+  } catch { return { tokens, content: { success: false, outcome: 'outcome_unknown', ...(['invoice.email_send','invoice.sms_send'].includes(action) ? {} : { operation_id: body.operation_id }), note: 'The invoice request has no verified response. Check the invoice before another action; do not claim success or retry automatically.' } }; }
 }

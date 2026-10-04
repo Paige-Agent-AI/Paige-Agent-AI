@@ -425,6 +425,9 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   // send_invoice
   ["billing_send_invoice", "high", "emails a real person a bill and a link to pay it"],
   ["sales_publish_invoice", "high", "issues the business's reviewed customer invoice as an immutable obligation"],
+  ["sales_save_collection_terms", "high", "changes agreement-backed customer repayment terms without executing a charge"],
+  ["sales_stage_collection_import", "high", "stages tenant commercial records for explicit review without publishing or verifying payment"],
+  ["sales_commit_collection_import", "high", "imports reviewed historical obligations and human-reported receipts into canonical customer records"],
   ["sales_record_manual_payment", "high", "records a human-reported customer payment and changes the invoice balance"],
   ["sales_reverse_manual_payment", "high", "reverses a recorded receipt while preserving the original financial history"],
   ["sales_void_invoice", "high", "withdraws an issued customer invoice and revokes its customer access"],

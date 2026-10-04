@@ -1,0 +1,16 @@
+import {readFileSync} from 'node:fs';
+import {transpileModule,ModuleKind,ScriptTarget} from 'typescript';
+import {describe,it,expect} from 'vitest';
+import {invoiceDeliveryReadiness} from './readiness.ts';
+const id='11111111-1111-4111-8111-111111111111';
+const source=readFileSync('supabase/functions/_shared/sales-invoice-delivery/readiness-reader.ts','utf8').replace(/^import.*;\r?\n/gm,'').replace(/export /g,'');
+const js=transpileModule(source,{compilerOptions:{module:ModuleKind.None,target:ScriptTarget.ES2022}}).outputText;
+type Reader=(admin:unknown,input:unknown,env:(key:string)=>string|undefined)=>Promise<{eligible:boolean;reason:string}>;
+function setup(consent=true,failed=false){const reads:string[]=[],preSendInputs:unknown[]=[];const reader=new Function('runPreSend','invoiceDeliveryReadiness',js+';return readInvoiceDeliveryReadiness;')(async(inputAdmin:unknown,input:unknown)=>{preSendInputs.push(input);return{proceed:consent,outcome:consent?'proceed':'blocked_no_consent'}},invoiceDeliveryReadiness) as Reader;
+ const admin={from:(table:string)=>({select:(columns:string)=>{reads.push(table+':'+columns);const data=table==='channel_connectors'?{tenant_id:id,active:true,status:'active',provider:'resend',from_address:'tenant@example.test'}:table==='tenant_twilio_subaccounts'?{subaccount_sid:'present',api_key_sid:'present',auth_token_vault_ref:'reference-only'}:table==='tenant_phone_numbers'?[{phone_number:'+12025550123',capabilities:{sms:true}}]:{status:'approved'};const result={data,error:failed?{code:'failure'}:null};const q={eq:()=>q,maybeSingle:async()=>result,then:(resolve:(v:unknown)=>unknown,reject:(e:unknown)=>unknown)=>Promise.resolve(result).then(resolve,reject)};return q;}})};
+ const invoice={tenant_id:id,document:{snapshot:{client_id:id,recipient_email:'customer@example.test',recipient_phone:'+12025550124'}}};return {reads,preSendInputs,run:(channel='sms',value=invoice)=>reader(admin,{tenantId:id,invoice:value,channel,connectorId:id},()=> 'configured')};}
+describe('actual readiness reader, provider-free metadata',()=>{
+ it('checks frozen recipient and canonical client consent, reads only reference presence, returns redacted facts',async()=>{const s=setup(false);const r=await s.run();expect(r.eligible).toBe(false);expect(r.reason).toBe('BLOCKED_NO_CONSENT');expect(s.preSendInputs).toEqual([{tenantId:id,channel:'sms',to:'+12025550124',contactId:id}]);expect(s.reads).not.toContain('read_channel_secret');expect(JSON.stringify(r)).not.toContain('customer@example.test')});
+ it('refuses foreign invoices before setup reads and metadata errors fail closed',async()=>{const s=setup();expect((await s.run('sms',{tenant_id:'foreign',document:{snapshot:{client_id:id,recipient_email:'',recipient_phone:''}}})).eligible).toBe(false);expect(s.reads).toHaveLength(0);expect((await setup(true,true).run()).eligible).toBe(false)});
+ it('allows configured tenant email only after this recipient preference checks',async()=>{const s=setup();expect((await s.run('email')).eligible).toBe(true);expect(s.preSendInputs).toEqual([{tenantId:id,channel:'email',to:'customer@example.test',contactId:id}]);expect(s.reads[0]).toContain('credentials_vault_ref');expect(s.reads[0]).not.toContain('secret')});
+});

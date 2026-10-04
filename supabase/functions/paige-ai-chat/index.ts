@@ -4,6 +4,7 @@ import { CAMPAIGN_BRIEF_TOOLS } from '../_shared/paige-spine/domains/campaigns.t
 import { CRM_ACTION_LABEL, CRM_COMMAND_TOOLS, CRM_COMMAND_TOOL_NAMES, CRM_TOOL_TO_ACTION, canonicalizeCrmCommand, crmApprovalSubject, crmCommandFallbackIdempotencyKeys } from '../_shared/crm-command/catalog.ts';
 import { resolveCrmApprovedFingerprint, CRM_APPROVAL_CANDIDATE_LIMIT } from '../_shared/crm-command/approval-resolution.ts';
 import { SALES_INVOICE_TOOLS, SALES_INVOICE_TOOL_NAMES, dispatchSalesInvoiceChat, type SalesInvoiceApprovalQuery } from '../_shared/sales-invoice-chat.ts';
+import { SALES_COLLECTIONS_TOOLS, SALES_COLLECTIONS_TOOL_NAMES, dispatchSalesCollectionsChat } from '../_shared/sales-collections-chat.ts';
 import { executeVerifiedCampaignBriefMutation, resolveCampaignBriefListContext } from '../_shared/campaign-brief-tenant-brain.ts';
 import { CALENDAR_PRESET_TOOLS } from '../_shared/paige-spine/domains/calendar_preset.ts';
 import { executeVerifiedCalendarPresetMutation, resolveCalendarPresetListContext, type CalendarPresetMutationTool } from '../_shared/calendar-preset-tenant-brain.ts';
@@ -7279,6 +7280,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     }
     toolDefs.push(...CRM_COMMAND_TOOLS as any);
     toolDefs.push(...SALES_INVOICE_TOOLS as any);
+    toolDefs.push(...SALES_COLLECTIONS_TOOLS);
 
     // ── AUTONOMY GATE WIRING ─────────────────────────────────────────────────
     // Every tool that writes, creates, or changes state is governed by the
@@ -8688,11 +8690,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
 
         // Sales uses its canonical action door, which alone claims approval and executes stored
         // arguments. This branch stays after scope/seat guards and before the legacy Chat gate.
-        if (SALES_INVOICE_TOOL_NAMES.has(tc.function.name)) {
+        if (SALES_INVOICE_TOOL_NAMES.has(tc.function.name) || SALES_COLLECTIONS_TOOL_NAMES.has(tc.function.name)) {
           let invoiceArgs: Record<string, unknown> = {};
           try { invoiceArgs = JSON.parse(tc.function.arguments || '{}'); } catch { invoiceArgs = {}; }
           const userTurns = messages.filter((message: any) => message?.role === 'user');
-          const result = await dispatchSalesInvoiceChat({
+          const dispatchSales = SALES_COLLECTIONS_TOOL_NAMES.has(tc.function.name) ? dispatchSalesCollectionsChat : dispatchSalesInvoiceChat;
+          const result = await dispatchSales({
             tenantId: personaCtx?.tenant_id ?? null, userId: user.id, toolName: tc.function.name,
             args: invoiceArgs, approved: approvedConfirmations,
             sameToolCalls: toolCalls.filter((call: any) => call?.function?.name === tc.function.name).length,
@@ -14151,6 +14154,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         sales_publish_invoice: "paige_invoices", sales_record_manual_payment: "paige_invoices",
         sales_reverse_manual_payment: "paige_invoices", sales_void_invoice: "paige_invoices",
         sales_create_invoice_link: "paige_invoices",
+        sales_save_collection_terms: "tenant_client_agreements",
+        sales_stage_collection_import: "paige_sales_import_batches",
+        sales_commit_collection_import: "paige_sales_import_batches",
         business_create: "businesses", business_update: "businesses",
         business_verify: "business_verification_runs",
         // #1213 / #1214 — the two governed credit-pull capabilities. Both are classified `high`
@@ -14182,7 +14188,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
        * records, and the ids stay in the payload where a list belongs.
        */
       const TARGET_ID_KEYS = [
-        "contact_id", "client_id", "deleted", "deal_id", "task_id", "pipeline_id", "stage_id",
+        "agreement_id", "batch_id", "contact_id", "client_id", "deleted", "deal_id", "task_id", "pipeline_id", "stage_id",
         "page_id", "funnel_id", "content_id", "booking_id", "log_id", "automation_id", "mission_id", "plan_id",
         "item_id", "workflow_id", "subagent_id", "action_id", "connection_id", "account_id", "tenant_id", "id",
       ] as const;

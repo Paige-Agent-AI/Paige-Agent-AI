@@ -16,6 +16,23 @@ function harness(rows: unknown[] = []) {
   return { predicates, calls, deps: { admin: { from: () => query }, caller: { functions: { invoke: async (_name: string, options: unknown): Promise<{data: Record<string, unknown>; error: null}> => { calls.push(options); return { data: { ok: true, outcome: 'published', access_token: 'secret' }, error: null }; } }, rpc: async () => ({ data: { id: invoice, status: 'issued' }, error: null }) } } };
 }
 describe('Sales invoice canonical Chat door', () => {
+  it('records imported partial receipts through the canonical Collections door and same payment policy',async()=>{
+    const h=harness();let endpoint='';h.deps.caller.functions.invoke=async(name,options)=>{endpoint=name;h.calls.push(options);return {data:{ok:true,operation:{id:operation,action:'collection.record_receipt'},row:{status:'recorded',remaining_cents:5000,currency:'jpy',version:2}},error:null}};
+    const result=await dispatchSalesInvoiceChat({...context,toolName:'sales_record_manual_payment',approved:new Set(),args:{record_kind:'imported',invoice_id:invoice,expected_version:1,amount_cents:1000,currency:'jpy',method:'wire',received_at:'2026-10-03T12:00:00.000Z'}},h.deps as never);
+    expect(endpoint).toBe('sales-collection-command');expect(h.calls[0]).toMatchObject({body:{command:{action:'collection.record_receipt',currency:'jpy',amount_cents:1000}}});expect(result.content).toMatchObject({success:true,outcome:'manual_payment_recorded',invoice:{status:'recorded',currency:'jpy',remaining_cents:5000}});
+  });
+  it('routes SMS through the same governed tool with server-selected connection and closed outcome',async()=>{
+    const h=harness();h.deps.caller.functions.invoke=async(_name,options)=>{h.calls.push(options);return {data:{ok:true,outcome:'provider_accepted',provider_receipt_available:true,delivery_confirmed:false,operation_id:operation,recipient:'private',access_token:'private'},error:null}};
+    const result=await dispatchSalesInvoiceChat({...context,toolName:'billing_send_invoice',approved:new Set(),args:{invoice_id:invoice,expected_version:2,channel:'sms'}},h.deps as never);
+    expect(h.calls[0]).toMatchObject({body:{command:{action:'invoice.sms_send',connector_id:null,invoice_id:invoice,expected_version:2}}});
+    expect(result.content).toMatchObject({success:true,outcome:'provider_accepted',delivery_confirmed:false});expect(JSON.stringify(result)).not.toContain('private');expect(result.content).not.toHaveProperty('operation_id');
+  });
+  it('rejects iMessage and arbitrary SMS destination arguments without dispatch',async()=>{
+    for(const extra of [{channel:'imessage'},{channel:'sms',to:'+15555555555'}]){const h=harness();expect((await dispatchSalesInvoiceChat({...context,toolName:'billing_send_invoice',approved:new Set(),args:{invoice_id:invoice,expected_version:2,...extra}},h.deps as never)).content.success).toBe(false);expect(h.calls).toHaveLength(0)}
+  });
+  it('rejects non-string delivery and record-kind discriminators',async()=>{
+    for(const [toolName,extra] of [['billing_send_invoice',{channel:['sms']}],['sales_record_manual_payment',{record_kind:['imported']}]] as const){const h=harness();const result=await dispatchSalesInvoiceChat({...context,toolName,approved:new Set(),args:{invoice_id:invoice,expected_version:2,...extra}},h.deps as never);expect(result.content.success).toBe(false);expect(h.calls).toHaveLength(0)}
+  });
   it('omits bearer-link tools', () => expect(SALES_INVOICE_TOOLS.map(t => t.function.name)).not.toContain('sales_create_invoice_link'));
   it('uses stable turn and canonical command retry identity', async () => {
     const a = await salesInvoiceOperationId(tenant, 'actor', command, context.turn);

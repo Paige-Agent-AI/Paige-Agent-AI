@@ -13,7 +13,7 @@ const command = { action: "invoice.record_manual_payment", invoice_id: "30000000
 const source = readFileSync("supabase/functions/sales-invoice-command/index.ts", "utf8").replace(/^import .*;\r?\n/gm, "");
 const compiled = transpileModule(source, { compilerOptions: { module: ModuleKind.None, target: ScriptTarget.ES2022 } }).outputText;
 
-type Setup = { role?: string; currentTenant?: string; replay?: unknown; auditFails?: boolean; claimed?: unknown; pendingCycle?: unknown; executeError?: unknown; authenticated?: boolean; deliveryResult?: unknown; publicOrigin?: string; };
+type Setup = { role?: string; currentTenant?: string; replay?: unknown; auditFails?: boolean; claimed?: unknown; pendingCycle?: unknown; executeError?: unknown; authenticated?: boolean; deliveryResult?: unknown; publicOrigin?: string; readiness?:boolean; };
 function setup(options: Setup = {}) {
   const calls: { name: string; args: unknown }[] = [];
   const claims: Record<string, unknown>[][] = [];
@@ -57,6 +57,7 @@ function setup(options: Setup = {}) {
     executeSalesInvoiceDelivery: async (args: unknown) => { calls.push({ name: "delivery", args }); return options.deliveryResult ?? { ok: true, outcome: "provider_accepted", provider_receipt_available: true, delivery_confirmed: false }; },
     FINGERPRINT, UUID, SALES_INVOICE_ACTIONS, parseSalesInvoiceCommand,
     PAIGE_APP_ORIGIN: options.publicOrigin ?? PAIGE_APP_ORIGIN, invoicePublicOriginReady,
+    readInvoiceDeliveryReadiness:async()=>({eligible:options.readiness!==false,state:options.readiness===false?'needs_setup':'ready',reason:options.readiness===false?'SMS_A2P_NOT_APPROVED':'READY_FOR_GOVERNED_REVIEW',provider_execution_verified:false}),
   };
   // Execute the production handler itself, substituting only network/runtime boundaries.
   new Function(...Object.keys(scope), compiled)(...Object.values(scope));
@@ -69,6 +70,12 @@ function setup(options: Setup = {}) {
 }
 
 describe("actual invoice HTTP adapter authority and recovery", () => {
+  it('does not raise or redeem approval for an unready invoice channel',async()=>{
+    const test=setup({readiness:false});
+    const result=await test.request({command:{action:'invoice.sms_send',invoice_id:command.invoice_id,expected_version:2,connector_id:null}});
+    expect(result.body).toMatchObject({code:'INVOICE_DELIVERY_NOT_READY',outcome:'needs_setup'});
+    expect(test.claims).toEqual([]);expect(test.calls.some(call=>call.name==='delivery'||call.name==='insert:paige_pending_confirmations')).toBe(false);
+  });
   it("refuses an unsigned caller before any business RPC", async () => {
     const test = setup({ authenticated: false });
     expect((await test.request()).status).toBe(401); expect(test.calls).toEqual([]);

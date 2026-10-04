@@ -642,6 +642,10 @@ verify_jwt = true
 [functions.sales-invoice-command]
 verify_jwt = true
 
+[functions.sales-collection-command]
+# Scoped owner/admin commands reuse the canonical approval and Rail contracts.
+verify_jwt = true
+
 [functions.sales-invoice-delivery]
 # Read-only email eligibility; execution uses sales-invoice-command's canonical gate.
 verify_jwt = true

@@ -4,6 +4,7 @@ import {spawnSync,spawn} from 'node:child_process';
 import {randomUUID} from 'node:crypto';
 import {strict as assert} from 'node:assert';
 import {fileURLToPath} from 'node:url';
+import {renderSalesInvoiceDocument} from '../../supabase/functions/_shared/sales-invoice-document.ts';
 const [binary,port,user,expectedDirectory]=process.argv.slice(2);
 if(!binary||!/^\d+$/.test(port??'')||!user||!expectedDirectory)throw Error('Explicit local cluster arguments required');
 const cwd=fileURLToPath(new URL('.',import.meta.url));
@@ -77,6 +78,13 @@ if(concurrency){assert(/^sales_payment_ledger_[a-f0-9]{32}$/.test(ownedDatabase)
 try{
  run(base.replace('ROLLBACK;',()=>snapshot+'\n'+setup+'\n'+assertions+(concurrency?'\nCOMMIT;':'\nROLLBACK;')));
  if(concurrency){
+  // Real canonical SQL output passes directly to the production renderer, without fixture adapters.
+  const projection=JSON.parse(run("BEGIN;SET LOCAL ROLE service_role;SELECT read_public_sales_invoice_payment_ledger(repeat('b',64),100);COMMIT;").split(/\r?\n/).find(line=>line.trim().startsWith('{')));
+  assert.equal(projection.payment_ledger.rows[0].kind,'receipt');
+  const rendered=renderSalesInvoiceDocument(projection);
+  assert.equal(typeof rendered,'string','real SQL ledger must produce a document');
+  assert(rendered.includes('Dated payment activity')&&rendered.includes('Payment recorded')&&rendered.includes('Payment correction / reversal'),'real receipts and corrections must be itemized');
+  assert(rendered.includes('2026-10-01')&&rendered.includes('outstanding $4.00 USD'),'real receipt date and canonical remaining balance must render');
   const execute=sql=>new Promise(resolve=>{const p=spawn(binary,args(),{cwd,stdio:['pipe','pipe','pipe']});let stdout='',stderr='';p.stdout.on('data',data=>stdout+=data);p.stderr.on('data',data=>stderr+=data);p.on('close',code=>resolve({code,stdout,stderr}));p.on('error',error=>resolve({code:1,stdout,stderr:String(error)}));p.stdin.end(sql);});
   const command=(op,version,amount)=>`BEGIN;SET LOCAL ROLE service_role;SELECT proof_command(${op},'{"action":"invoice.record_manual_payment","expected_version":${version},"amount_cents":${amount},"currency":"usd","method":"cash","received_at":"2026-10-01T12:00:00Z"}','sales_record_manual_payment');COMMIT;`;
   const ledgerCursor=JSON.parse(run("BEGIN;SET LOCAL test.actor='10000000-0000-0000-0000-000000000001';SET LOCAL test.workspace='20000000-0000-0000-0000-000000000001';SET LOCAL ROLE authenticated;SELECT read_sales_invoice_payment_ledger('20000000-0000-0000-0000-000000000001','60000000-0000-0000-0000-000000000091',1)->'next_cursor';COMMIT;").split(/\r?\n/).find(line=>line.trim().startsWith('{')));

@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: presentation and read projection refinement; no new cu
 FLOW_PROTOTYPE: NOT_REQUIRED: existing approved invoice/payment flow retained; itemized read-only document activity added.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Solo owners and customers understand the invoice number, recorded receipts/corrections and remaining balance.
 VISUAL_DIRECTION: PASS: existing Mineral/Obsidian operating surfaces and invoice templates; readable dated ledger with aligned monetary amounts.
-AUTOMATED_EVIDENCE: PASS: 160 tests across 11 invoice/component/command suites; isolated PostgreSQL proof with 20 ledger assertions plus negative controls, replay and actual concurrent stale-page rejection.
+AUTOMATED_EVIDENCE: PASS: 447 tests across 36 Sales suites plus 15 document-focused tests; isolated PostgreSQL proof with 20 ledger assertions plus negative controls, replay and actual concurrent stale-page rejection.
 STATIC_EVIDENCE: PASS: production build, changed-file ESLint, Impeccable detector, Deno document check, explicit definer ACL baseline and migration replay.
 RENDERED_EVIDENCE: PASS: 24 actual Solo lifecycle cases and eight actual document-renderer captures; assets/solo-sales-payment-breakdown/lifecycle-geometry.json and renderer-geometry.json.
 BEHAVIORAL_EVIDENCE: PASS: real React components in fixture-backed Chromium; record payment, review, canonical prepare, cancel and dirty exit across 24 viewport/theme/dock cases.
@@ -50,3 +50,7 @@ SOLO_1024X768_PAIGE_CLOSED: PASS: lifecycle-geometry.json records both themes, n
 SOLO_1024X768_PAIGE_OPEN: PASS: lifecycle-geometry.json records both themes, no outer overflow, dialog controls reachable and focus restored; fixture-only authentication.
 SOLO_900X1000_PAIGE_CLOSED: PASS: lifecycle-geometry.json records both themes, no outer overflow, dialog controls reachable and focus restored; fixture-only authentication.
 SOLO_900X1000_PAIGE_OPEN: PASS: lifecycle-geometry.json records both themes, no outer overflow, dialog controls reachable and focus restored; fixture-only authentication.
+
+## Independent review repair
+
+Non-writer collections_independent_review completed initial exact-head review acf6c2efeca5c62ffc265d244cfb60a258f5cb7d: P1 canonical SQL receipt vocabulary mismatched renderer payment fixture; P2 a draft lifecycle number inherited issued display. Both repaired, plus redundant legacy document title removed. The SQL proof now feeds actual database ledger JSON into the production renderer and asserts successful dated receipt/correction output and conserved balance. One exact-head combined repair recheck is required before merge.

@@ -149,7 +149,7 @@
   },
   {
     "tool": "draft_marketing_content",
-    "kind": "mutating"
+    "kind": "read"
   },
   {
     "tool": "forge_subagent",

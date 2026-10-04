@@ -4638,6 +4638,77 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
   assert("33.6 a Studio thread whose re-read fails is still fail-closed Studio: off-scope tool refused, only the fail-closed set offered",
     scopeRefused(flaky, "crm_create_contact") && offered(flaky).every((t) => ["ask_choices", "capability_status"].includes(t)),
     JSON.stringify({ offered: offered(flaky), refused: scopeRefused(flaky, "crm_create_contact") }));
+
+  // ── 34. V2a: every Studio act files one honest receipt, through the shared ledger ──────────────
+  const receipts = (r, key) => r.rec.rpc.filter((c) => c.name === "record_capability_run" && c.args?._capability_key === key);
+  const onlyReceipt = (r, key) => { const rs = receipts(r, key); return rs.length === 1 ? rs[0] : null; };
+  const allReceipts = (r) => r.rec.rpc.filter((c) => c.name === "record_capability_run").map((c) => `${c.args?._capability_key}:${c.args?._outcome}`);
+
+  // 34.1 A saved page files one success, on the server client, saying how it was approved and which
+  // page it touched. Kills: leaving pages without a receipt; recording through the caller's client.
+  const pageSaved = await mainDrive({ name: "growth_page_save", args: { title: "Spring offer", blocks: [] } });
+  const pr = onlyReceipt(pageSaved, "growth_page_save");
+  assert("34.1 a saved page files one success receipt with its approval channel and page id",
+    pr && pr.client === "service" && pr.args._outcome === "capability_succeeded"
+      && pr.args._detail?.approval === "standing_autonomy_setting" && pr.args._detail?.page_id === "page-1",
+    JSON.stringify(allReceipts(pageSaved)) + " " + JSON.stringify(pr?.args?._detail ?? null));
+
+  // 34.2 A save whose answer never came back may have landed: it is recorded as unknown, never as
+  // refused or failed. (An unproven publish takes the same path; its classification is pinned in
+  // studio-run-outcome.test.ts, since a publish waits for approval here.) Kills: the forms-era rule
+  // that filed every non-success as a refusal.
+  const lostSave = await mainDrive({ name: "content_save", args: { title: "x", body: "y" } },
+    { save_marketing_content: { data: null, error: { code: "", message: "TypeError: fetch failed", details: "", hint: "" } } });
+  assert("34.2 a save whose answer was lost files capability_outcome_unknown",
+    onlyReceipt(lostSave, "content_save")?.args._outcome === "capability_outcome_unknown", JSON.stringify(allReceipts(lostSave)));
+
+  // 34.3 A caller who is not this workspace's owner/admin is refused before the write, and the
+  // refusal is on the record. Kills: a pre-executor refusal that leaves no trace.
+  const notOwner = await mainDrive({ name: "growth_page_save", args: { title: "x", blocks: [] } },
+    { studio_role_ok: { data: false, error: null } }, []);
+  const nr = onlyReceipt(notOwner, "growth_page_save");
+  assert("34.3 a not-owner refusal files a refused receipt and writes nothing",
+    called(notOwner, "growth_page_upsert") === 0 && nr?.args._outcome === "capability_refused"
+      && nr?.args._detail?.refused === "workspace_owner_or_admin_required",
+    JSON.stringify(allReceipts(notOwner)));
+
+  // 34.4 A Studio act switched off is refused on the record too.
+  const switchedOff = await mainDrive({ name: "content_save", args: { title: "x", body: "y" } },
+    { resolve_tool_autonomy: { data: "off", error: null } });
+  assert("34.4 a switched-off Studio act files a refused receipt and writes nothing",
+    called(switchedOff, "save_marketing_content") === 0 && onlyReceipt(switchedOff, "content_save")?.args._detail?.refused === "turned_off",
+    JSON.stringify(allReceipts(switchedOff)));
+
+  // 34.5 Images: one key, one receipt. Outside a project the chat files it; inside a project paige-
+  // media owns every receipt for its job, so the chat files none. Kills: double-counting an image.
+  const plainImage = await mainDrive({ name: "generate_image", args: { prompt: "a calm hero image" } }, {}, [], {
+    "generate-image": { data: { url: "https://cdn.example.test/i.png", content_id: "c-1", provider: "gemini" }, error: null },
+  });
+  assert("34.5 an image outside a project files one vibe_media_image success and nothing under generate_image",
+    onlyReceipt(plainImage, "vibe_media_image")?.args._outcome === "capability_succeeded"
+      && onlyReceipt(plainImage, "vibe_media_image")?.args._detail?.content_id === "c-1"
+      && receipts(plainImage, "generate_image").length === 0,
+    JSON.stringify(allReceipts(plainImage)));
+  const studioImage = await studioTurn({ name: "generate_image", args: { prompt: "a calm hero image" } }, SCOPE_ROW);
+  assert("34.5b an image inside a project files no chat receipt (paige-media files its own)",
+    receipts(studioImage, "vibe_media_image").length === 0 && receipts(studioImage, "generate_image").length === 0,
+    JSON.stringify(allReceipts(studioImage)));
+
+  // 34.6 Drafting copy saves nothing, so it runs without an approval card even when the workspace
+  // asks Paige to confirm every write (owner ruling 2026-10-04), and files no receipt.
+  const draftUnderConfirm = await mainDrive({ name: "draft_marketing_content", args: { channel: "social_post", brief: "spring launch for our clients" } },
+    { resolve_tool_autonomy: { data: "confirm", error: null } }, [], {
+      "content-draft": { data: { channel: "social_post", drafts: [{ content: "Spring is here." }] }, error: null },
+    });
+  assert("34.6 a copy draft runs without an approval card under confirm, and files no receipt",
+    draftUnderConfirm.rec.functions.some((f) => f.name === "content-draft") && !/"needs_confirm":true/.test(wire(draftUnderConfirm))
+      && allReceipts(draftUnderConfirm).length === 0,
+    wire(draftUnderConfirm).slice(0, 300));
+  const saveUnderConfirm = await mainDrive({ name: "content_save", args: { title: "x", body: "y" } },
+    { resolve_tool_autonomy: { data: "confirm", error: null } });
+  assert("34.6b saving copy still asks first under confirm",
+    called(saveUnderConfirm, "save_marketing_content") === 0 && /"needs_confirm":true/.test(wire(saveUnderConfirm)),
+    wire(saveUnderConfirm).slice(0, 300));
 }
 
 console.log(`\n${checks - failures} passed, ${failures} failed`);

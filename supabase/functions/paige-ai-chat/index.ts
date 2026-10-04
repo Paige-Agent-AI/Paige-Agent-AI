@@ -40,7 +40,7 @@ import { isSpendableQuoteCents } from "../_shared/purchase-quote.ts";
 // phone line. `capability-record` owns HOW a run is written; `comms-capability-outcome`
 // owns WHICH of the six outcomes these four acts landed in (§18: one home each).
 import { recordCapabilityRun, stableRunId, type CapabilityOutcome } from "../_shared/capability-record.ts";
-import { classifyGrowthFormRun } from "../_shared/growth-form-outcome.ts";
+import { classifyStudioRun, studioReceiptDetail } from "../_shared/studio-run-outcome.ts";
 import { classifyCommsRun } from "../_shared/comms-capability-outcome.ts";
 // Phase 2 · S1 — Pipeline write acts (starting deal_move_stage) record an honest outcome
 // through the SAME ratified pattern (#947): capability-record owns HOW, this owns WHICH.
@@ -8570,6 +8570,28 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // the shared queuedApprovals passed in from the loop.
       let documentCallOrdinal = 0;
       const executeToolCalls = async (toolCalls: any[], queuedApprovals: Array<{ id: string; summary: string; category: string; contact_id: string | null }>) => {
+        // A Studio act stopped before it ran — switched off in autonomy settings, or the caller is not
+        // this workspace's owner/admin — still files its receipt, as refused, so the activity feed
+        // shows the attempt and why nothing changed. A held-for-approval proposal files none: the
+        // approval card is its record. Never fails the turn.
+        const recordStudioRefusal = async (tc: any, reason: string): Promise<void> => {
+          try {
+            const receipt = classifyStudioRun({ capability: tc.function.name, result: { success: false } });
+            if (!receipt) return;
+            const { data: refusedTenant, error: rtErr } = await supabaseClient.rpc("current_user_tenant_id");
+            if (rtErr || typeof refusedTenant !== "string") return;
+            await recordCapabilityRun(supabase, {
+              tenantId: refusedTenant,
+              actorId: user.id,
+              capabilityKey: receipt.key,
+              outcome: "capability_refused",
+              runId: await stableRunId([receipt.key, refusedTenant, `${payloadThreadId ?? ""}:${tc.id}`]),
+              detail: { refused: reason },
+            });
+          } catch (e) {
+            console.error("[paige] studio refusal not recorded:", (e as Error)?.message);
+          }
+        };
       const toolResults: any[] = [];
       const executed: any[] = [];
       for (const [toolIndex, tc] of toolCalls.entries()) {
@@ -9209,6 +9231,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           }
 
           if (autoMode === "off") {
+            await recordStudioRefusal(tc, "turned_off");
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, disabled: true, error: `${(TOOL_LABELS[tc.function.name] || "this action").replace(/^./, (c) => c.toUpperCase())} is turned off for this workspace in Paige's autonomy settings. Tell the operator it's disabled (don't mention any internal names) and don't retry.` }) });
             continue;
           }
@@ -10381,6 +10404,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             allowed = N8N_MANAGEMENT_TOOL_NAMES.has(tc.function.name) || roles.includes("admin") || roles.includes("super_admin");
           }
           if (!allowed) {
+            if (workspaceAuthorityTool) await recordStudioRefusal(tc, "workspace_owner_or_admin_required");
             toolResults.push({
               tool_call_id: tc.id,
               role: "tool",
@@ -10553,25 +10577,31 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               console.error("[paige] crm capability run not recorded:", (e as Error)?.message);
             }
           };
-          // Studio forms (save / publish) file the same honest receipt. Attributed to the tenant the
-          // RPC acted on (current_user_tenant_id(), like the CRM recorder), keyed on this tool call so
-          // a retried turn folds to one row. Never fails the turn.
-          const recordFormRun = async (
+          // Studio acts (page, funnel, form, copy and image saves and publishes) file the same honest
+          // receipt. Attributed to the tenant the act landed in (current_user_tenant_id(), like the CRM
+          // recorder), keyed on this tool call so a retried turn folds to one row, carrying how it was
+          // approved and the record it touched. Never fails the turn.
+          const recordStudioRun = async (
             input: { result?: unknown; thrown?: unknown; threw?: boolean },
           ): Promise<void> => {
             try {
-              const outcome: CapabilityOutcome | null = classifyGrowthFormRun({ capability: tc.function.name, ...input });
-              if (!outcome) return;
-              const formTenant = await resolveActorTenant();
+              // In a Studio project an image is a paige-media job, and paige-media files every one of
+              // its receipts (rendered, refused over budget, failed). Filing here too would count the
+              // image twice.
+              if (tc.function.name === "generate_image" && studioSessionId) return;
+              const receipt = classifyStudioRun({ capability: tc.function.name, ...input });
+              if (!receipt) return;
+              const studioTenant = await resolveActorTenant();
               await recordCapabilityRun(supabase, {
-                tenantId: formTenant,
+                tenantId: studioTenant,
                 actorId: user.id,
-                capabilityKey: tc.function.name,
-                outcome,
-                runId: await stableRunId([tc.function.name, formTenant ?? "", `${payloadThreadId ?? ""}:${tc.id}`]),
+                capabilityKey: receipt.key,
+                outcome: receipt.outcome,
+                runId: await stableRunId([receipt.key, studioTenant ?? "", `${payloadThreadId ?? ""}:${tc.id}`]),
+                detail: studioReceiptDetail(input.threw ? null : input.result, approvalChannel.get(tc.id)),
               });
             } catch (e) {
-              console.error("[paige] form capability run not recorded:", (e as Error)?.message);
+              console.error("[paige] studio capability run not recorded:", (e as Error)?.message);
             }
           };
           // Pre/post-write boundary for the pipeline capability recorder (Codex P2, 2026-09-05):
@@ -13137,7 +13167,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             await recordCommsRun({ result });
             await recordPipelineRun({ result });
             await recordCrmRun({ result });
-            await recordFormRun({ result });
+            await recordStudioRun({ result });
 
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result) });
           } catch (err) {
@@ -13149,7 +13179,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             await recordCommsRun({ thrown: err, threw: true });
             await recordPipelineRun({ thrown: err, threw: true, writeAttempted: false });
             await recordCrmRun({ thrown: err, threw: true, writeAttempted: crmWriteAttempted });
-            await recordFormRun({ thrown: err, threw: true });
+            await recordStudioRun({ thrown: err, threw: true });
 
             // `outcome_unknown` when the answer never arrived (a transport failure, not a refusal):
             // the write may have happened, and the approval card must say so rather than "didn't
@@ -14014,7 +14044,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         team_invite_member: "tenant_invite_tokens", team_invite_resend: "tenant_invite_tokens",
         team_invite_revoke: "tenant_invite_tokens",
         calendar_book_meeting: "internal_bookings",
-        draft_marketing_content: "marketing_content", generate_image: "marketing_content", content_save: "marketing_content",
+        generate_image: "marketing_content", content_save: "marketing_content",
         document_generate: "marketing_content",
         growth_page_save: "growth_pages", growth_page_publish: "growth_pages",
         growth_funnel_build: "growth_funnels", growth_funnel_publish: "growth_funnels",

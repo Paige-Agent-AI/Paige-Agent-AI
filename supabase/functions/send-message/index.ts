@@ -1,3 +1,4 @@
+import { PAIGE_APP_ORIGIN } from "../_shared/canonical-app-url.ts";
 // Unified send dispatcher — routes email via Resend, SMS via Twilio.
 // SMS is a tenant-configurable channel: it sends only when the tenant's Twilio
 // A2P registration is approved (config.twilio_a2p_status). Email is the default.
@@ -34,6 +35,8 @@ import { resolveGmailAccessToken, gmailSend } from "../_shared/gmail.ts";
 import { resolveSmtpCreds, smtpSend } from "../_shared/smtp.ts";
 import { runPreSend } from "../_shared/pre-send-pipeline.ts";
 import { CLIENT_CONTACT_METHODS_EMBED, clientAddresses } from "../_shared/contact-methods.ts";
+import { parseDeliveryBinding, renderTransientInvoiceLink, type DeliveryBinding } from "../_shared/sales-invoice-delivery/binding.ts";
+import { mintSignerToken, sha256Hex } from "../_shared/agreements/token.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -41,6 +44,7 @@ const corsHeaders = {
 };
 
 interface SendBody {
+  invoice_delivery_operation_id?: string;
   channel: "email" | "sms";
   to: string;
   subject?: string;
@@ -508,7 +512,7 @@ Deno.serve(async (req) => {
         status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (isInternal && data.status !== "queued") {
+    if (isInternal && !body.invoice_delivery_operation_id && data.status !== "queued") {
       return new Response(JSON.stringify({ error: "scheduled_message_not_releasable" }), {
         status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -553,6 +557,21 @@ Deno.serve(async (req) => {
   }
   const effectiveContactId = draftRow?.contact_id ?? body.contact_id ?? null;
   const effectiveConnectorId = body.connector_id ?? draftRow?.connector_id ?? null;
+  let invoiceBinding: DeliveryBinding | null = null;
+  let invoiceDispatchClaimed = false;
+  let invoiceProviderAttempted = false;
+  const finalizeInvoice = async (result: "provider_accepted" | "unknown" | "failed", providerId: string | null = null) => {
+    if (!invoiceBinding) return null;
+    const { data, error } = await admin.rpc("finalize_sales_invoice_delivery", { _message_id: invoiceBinding.message_id, _operation_id: invoiceBinding.operation_id, _outcome: result, _provider_message_id: providerId, _reason: null });
+    return !error && data && typeof data === "object" ? data : null;
+  };
+  // Invoice messages cannot be sent as ordinary editable drafts or released by a scheduler.
+  if (body.invoice_delivery_operation_id || draftRow?.meta?.sales_invoice_binding) {
+    if (!isInternal || !body.message_id || !body.invoice_delivery_operation_id || body.scheduled_for || body.channel !== "email") return new Response(JSON.stringify({ error: "invoice_delivery_binding_required" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const { data, error } = await admin.rpc("read_sales_invoice_delivery_binding", { _message_id: body.message_id });
+    invoiceBinding = !error ? parseDeliveryBinding(data, tenantId ?? "", body.message_id) : null;
+    if (!invoiceBinding || invoiceBinding.operation_id !== body.invoice_delivery_operation_id || effectiveContactId !== invoiceBinding.client_id || effectiveConnectorId !== invoiceBinding.connector_id || body.to !== invoiceBinding.recipient || body.subject !== invoiceBinding.subject || body.body !== invoiceBinding.body_html) return new Response(JSON.stringify({ error: "invoice_delivery_binding_invalid" }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
   const scheduledBinding = draftRow?.meta?.scheduled_binding as Record<string, unknown> | undefined;
   if (isInternal && draftRow?.status === "queued") {
     if (!scheduledBinding || (typeof scheduledBinding.contact_id !== "string" && typeof scheduledBinding.connector_id !== "string")) {
@@ -697,7 +716,7 @@ Deno.serve(async (req) => {
     const recipient = normalizeRecipient(body.channel, body.to);
     const recipientBelongsToContact = recipient !== "" &&
       contactAddresses.some((address) => normalizeRecipient(body.channel, address) === recipient);
-    if (!recipientBelongsToContact) {
+    if (!recipientBelongsToContact && !invoiceBinding) {
       if (isInternal && body.message_id && tenantId) {
         // A scheduled row keeps the exact recipient approved when it was queued. If the
         // canonical People address changes before release, never retarget silently and never
@@ -860,6 +879,10 @@ Deno.serve(async (req) => {
     });
 
     if (!preSend.proceed) {
+      if (invoiceBinding) {
+        const receipt = await finalizeInvoice("failed");
+        return new Response(JSON.stringify({ status: "failed", outcome: receipt ? "failed" : "outcome_unknown", error: "invoice_delivery_held", reason: "Invoice delivery cannot be queued. Review message preferences and try an explicitly approved operation later.", message_id: invoiceBinding.message_id, scheduled_for: null }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
       const gatedPipe: "resend" | "twilio" = body.channel === "sms" ? "twilio" : "resend";
 
       // 'error' = a LEGAL gate (suppression/consent) DB read failed → §13 fail closed.
@@ -1056,6 +1079,18 @@ Deno.serve(async (req) => {
         credentialsVaultRef: connectorRow?.credentials_vault_ref ?? null,
         admin,                     // service-role client the Gmail seam uses to read the Vault ref
       };
+      if (invoiceBinding) {
+        // A separate delivery grant is minted at the one atomic provider-admission point.
+        // body.body stays token-free for every existing persistence/audit/preview path.
+        const token = mintSignerToken();
+        const transientHtml = renderTransientInvoiceLink(invoiceBinding, PAIGE_APP_ORIGIN, token);
+        const { data: claimed, error: claimError } = await admin.rpc("claim_sales_invoice_delivery", { _message_id: invoiceBinding.message_id, _operation_id: invoiceBinding.operation_id, _grant_id: crypto.randomUUID(), _token_hash: await sha256Hex(token), _expires_at: new Date(Date.now() + 7 * 86400000).toISOString() });
+        // A losing/concurrent/uncertain claim must not finalize another attempt's operation.
+        if (claimError || !claimed || claimed.state !== "dispatching") return new Response(JSON.stringify({ ok: false, outcome: "outcome_unknown", error: "invoice_dispatch_claim_unconfirmed", message_id: invoiceBinding.message_id }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        invoiceDispatchClaimed = true;
+        outMsg.body_html = transientHtml;
+        invoiceProviderAttempted = true;
+      }
       const delivery = await adapter.send(outMsg, ctx);
       // #141b/#141c HONEST NOTE (§13): the paige_messages_audit.pipe_used CHECK is
       // ('resend','twilio','ghl_fallback') — 'gmail'/'smtp' are not yet legal values, so widening
@@ -1065,7 +1100,7 @@ Deno.serve(async (req) => {
       pipe_used = "resend";
       if (!delivery.ok) {
         throw new Error(
-          delivery.error || (isGmail ? "gmail_send_failed" : isSmtp ? "smtp_send_failed" : "resend_send_failed"),
+          invoiceBinding ? "invoice_provider_result_unconfirmed" : delivery.error || (isGmail ? "gmail_send_failed" : isSmtp ? "smtp_send_failed" : "resend_send_failed"),
         );
       }
       vendor_message_id = delivery.provider_message_id ?? null;
@@ -1134,7 +1169,7 @@ Deno.serve(async (req) => {
       status = "sent";
     }
   } catch (e) {
-    errorText = (e as Error).message.slice(0, 500);
+    errorText = invoiceBinding ? "invoice_delivery_requires_review" : (e as Error).message.slice(0, 500);
     status = "failed";
   }
 
@@ -1403,6 +1438,13 @@ Deno.serve(async (req) => {
   // reason: prefer the SMS reason code the branch set, else the raw error text on failure.
   outcome = status; // 'sent' | 'failed'
   if (status === "failed" && !reason) reason = errorText;
+  if (invoiceBinding) {
+    const invoiceOutcome = invoiceProviderAttempted || invoiceDispatchClaimed
+      ? status === "sent" && vendor_message_id ? "provider_accepted" : "unknown"
+      : "failed";
+    const receipt = await finalizeInvoice(invoiceOutcome, vendor_message_id);
+    return new Response(JSON.stringify({ ok: !!receipt && invoiceOutcome === "provider_accepted", outcome: receipt ? invoiceOutcome : "outcome_unknown", message_id: invoiceBinding.message_id, delivery_confirmed: false, error: invoiceOutcome === "provider_accepted" && receipt ? null : "invoice_delivery_requires_review" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
 
   return new Response(
     JSON.stringify({

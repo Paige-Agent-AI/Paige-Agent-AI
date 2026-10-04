@@ -1,0 +1,4 @@
+import {describe,it,expect} from 'vitest';
+import {parseSalesInvoiceCommand,SALES_INVOICE_ACTIONS} from '../../../supabase/functions/_shared/sales-invoice-command/contract';
+const id='11111111-1111-4111-8111-111111111111';
+describe('email invoice canonical command',()=>{it('requires only immutable target/version and eligible connector reference',()=>{expect(SALES_INVOICE_ACTIONS['invoice.email_send']).toBe('billing_send_invoice');expect(parseSalesInvoiceCommand({action:'invoice.email_send',invoice_id:id,expected_version:2,connector_id:id})).toMatchObject({connector_id:id});for(const patch of [{connector_id:null},{to:'someone@example.test'},{body:'arbitrary'},{token:'secret'},{scheduled_for:'later'},{governance:{approved:true}}])expect(()=>parseSalesInvoiceCommand({action:'invoice.email_send',invoice_id:id,expected_version:2,connector_id:id,...patch})).toThrow()})});

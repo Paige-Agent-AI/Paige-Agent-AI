@@ -3,6 +3,7 @@ import { useTenantContext } from '@/hooks/useTenantContext';
 import { supabase } from '@/integrations/supabase/client';
 import { listInvoiceDrafts, saveInvoiceDraft, type InvoiceDraft, type InvoiceDraftSaveRequest } from './sales/invoiceDraftApi';
 import type { BillingRpc } from './sales/billingDrafts';
+import {listInvoiceRecords} from './sales/invoiceLifecycleApi';
 
 // New migration RPCs are not yet in generated database types. This explicit narrow adapter
 // forwards the caller's ordinary session, never a service key or browser-resolved authority.
@@ -10,7 +11,7 @@ const rpc: BillingRpc = (name, args) => (supabase.rpc as unknown as BillingRpc)(
 type Identity = { tenant: string | null; resolving: boolean };
 type View = { identity: Identity; phase: 'loading' | 'ready' | 'error' | 'unavailable'; rows: InvoiceDraft[]; hasMore: boolean; nextCursor: string | null; message: string };
 
-export function useSalesInvoiceDrafts() {
+export function useSalesInvoiceDrafts(includeIssued = false) {
   const { activeTenantId, accountContextLoading } = useTenantContext();
   const identity = useRef<Identity>({ tenant: activeTenantId ?? null, resolving: accountContextLoading });
   if (identity.current.tenant !== (activeTenantId ?? null) || identity.current.resolving !== accountContextLoading) {
@@ -29,21 +30,21 @@ export function useSalesInvoiceDrafts() {
     pageRequest.current = null; setLoadingMore(false); setPageMessage('');
     setView({ identity: opened, phase: 'loading', rows: [], hasMore: false, nextCursor: null, message: '' });
     if (!opened.tenant || opened.resolving) return;
-    void listInvoiceDrafts(rpc, opened.tenant).then(result => {
+    void (includeIssued ? listInvoiceRecords : listInvoiceDrafts)(rpc, opened.tenant).then(result => {
       if (cancelled || !alive.current || identity.current !== opened) return;
       setView(result.ok === true
         ? { identity: opened, phase: 'ready', ...result.value, message: '' }
-        : { identity: opened, phase: result.outcome === 'unavailable' ? 'unavailable' : 'error', rows: [], hasMore: false, nextCursor: null, message: 'Billing drafts could not be read. Retry after checking workspace and access.' });
+        : { identity: opened, phase: result.outcome === 'unavailable' ? 'unavailable' : 'error', rows: [], hasMore: false, nextCursor: null, message: includeIssued ? 'Invoices could not be read. Retry after checking workspace and access.' : 'Billing drafts could not be read. Retry after checking workspace and access.' });
     });
     return () => { cancelled = true; };
-  }, [activeTenantId, accountContextLoading, refresh]);
+  }, [activeTenantId, accountContextLoading, refresh, includeIssued]);
   const retry = useCallback(() => setRefresh(n => n + 1), []);
   const loadMore = useCallback(async () => {
     const opened = identity.current;
     if (!alive.current || opened.resolving || !opened.tenant || view.identity !== opened || view.phase !== 'ready' || !view.hasMore || !view.nextCursor || pageRequest.current) return;
     const token = {};
     pageRequest.current = token; setLoadingMore(true); setPageMessage('');
-    const result = await listInvoiceDrafts(rpc, opened.tenant, view.nextCursor);
+    const result = await (includeIssued ? listInvoiceRecords : listInvoiceDrafts)(rpc, opened.tenant, view.nextCursor);
     if (!alive.current || identity.current !== opened || pageRequest.current !== token) return;
     pageRequest.current = null; setLoadingMore(false);
     if (result.ok === false) { setPageMessage('Further records could not be read. Retry loading more.'); return; }
@@ -51,7 +52,7 @@ export function useSalesInvoiceDrafts() {
       ...previous, rows: [...previous.rows, ...result.value.rows.filter(row => !previous.rows.some(existing => existing.id === row.id))],
       hasMore: result.value.hasMore, nextCursor: result.value.nextCursor,
     });
-  }, [view]);
+  }, [view, includeIssued]);
   const save = useCallback(async (request: InvoiceDraftSaveRequest) => {
     const opened = identity.current;
     if (!alive.current || opened.resolving || request.openedTenantId !== opened.tenant) {

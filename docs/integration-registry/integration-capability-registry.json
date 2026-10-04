@@ -1262,14 +1262,15 @@
       "business_reason": "Email delivery for platform and tenant sending identities.",
       "paige_use_cases": [
         "send platform/tenant email from a verified sending identity",
-        "verify a sending domain"
+        "verify a sending domain",
+        "prepare and send an issued invoice through high-risk canonical billing_send_invoice approval; authenticated/provider proof remains PROOF_OWED"
       ],
-      "connection_prerequisite": "Verified sending domain/identity per the comms substrate.",
+      "connection_prerequisite": "Verified sending domain/identity per the comms substrate. Invoice sending additionally requires an active same-tenant email connector with an explicit from_address, issued immutable invoice and positive current remaining obligation; no platform sender fallback.",
       "required_scopes": [
         "Resend API (send / domains)"
       ],
       "safe_readable_context": "Delivery status, domain verification state; never message secrets.",
-      "allowed_writes_external_effects": "Send email — through the one approval path; requires a resolved sending identity (§15).",
+      "allowed_writes_external_effects": "Send email — through the one approval path; requires a resolved sending identity (§15). Invoice email is high risk and uses existing canonical pending-confirmation/CAS authority; prepared recovery needs a fresh server-authored approval cycle for the same operation. Unknown dispatch blocks retry.",
       "authority_lane": [
         "read",
         "draft",
@@ -1277,11 +1278,11 @@
       ],
       "m1_dependency": "none as a discretionary purchase (email delivery is an operating comms cost, recorded below). Send/engagement VOLUME is capped by M1-b engagement caps (#1027); it is not an M1-a real-money reserve/confirm act.",
       "canonical_provider_receipt": "Resend message id.",
-      "rail_mind_memory": "Rail: send outcome. Mind: no bodies. Memory: none of raw content.",
+      "rail_mind_memory": "Rail: send outcome. Mind: no bodies. Memory: none of raw content. Invoice templates and bindings are token-free; delivery bearer links exist only transiently in provider input. Provider acceptance is not delivery or payment confirmation.",
       "status": "PARTIAL",
       "owner": "Comms workstream",
       "dependency": "Per-tenant sending-identity wiring.",
-      "next_slice": "Confirm sending-identity resolution + send receipt on the Rail.",
+      "next_slice": "Confirm sending-identity resolution + send receipt on the Rail. Issued-invoice email source/isolated SQL and handler tests are implemented; authenticated sender/provider end-to-end remains PROOF_OWED (owner deferred actual email testing).",
       "tier_eligibility": {
         "platform": "eligible",
         "solo": "eligible",
@@ -1303,14 +1304,14 @@
         "rate_limits_quotas": "Per-account send rate + monthly volume caps by plan; backoff on 429. Verify at source.",
         "usage_review_cadence": "Monthly (send volume).",
         "renewal_deprecation_review": "No fixed contract; track Resend API deprecations + domain re-verification.",
-        "data_privacy_retention": "Delivery status only; message bodies never enter Mind/Memory; no message secrets recorded.",
+        "data_privacy_retention": "Delivery status only; message bodies never enter Mind/Memory; no message secrets recorded. Invoice access token is hash-only at rest and transient in provider HTML; provider errors are sanitized so echoed links never enter durable audit/log/readback.",
         "money_movement": {
           "can_move_real_money": false,
           "m1_dependency_track": "none",
           "detail": "Email delivery is a metered operating comms cost, not a discretionary purchase/payment. Volume governed by M1-b engagement caps; cost visibility via this expense layer."
         },
         "receipt_reconciliation": "Resend message id; reconcile send volume against the Resend dashboard.",
-        "rail_outcome": "send outcome.",
+        "rail_outcome": "send outcome; invoice provider acceptance is recorded separately from delivery and human-recorded settlement.",
         "pause_revoke_path": "Disable the send path / rotate the sending identity; M1-b caps throttle volume.",
         "next_owner": "Comms workstream",
         "next_slice": "Per-tenant sending-identity wiring + send receipt on the Rail."
@@ -2982,6 +2983,8 @@
   "uncatalogued_wired_providers": {
     "note": "These providers are WIRED/CONFIGURED per master §4 but do NOT yet have a full catalogued entry above (including an expense_and_operations block). Their presence here is honest coverage (nothing hidden); the delivery rule requires the next PR that touches any of them to promote it to a full entry with its expense_and_operations block. Absence of a full entry is NOT a claim of absence of capability (§13).",
     "providers": [
+      "Gmail email (existing tenant channel_connectors/send-message + _shared/gmail.ts contract reused by issued-invoice email; authenticated/provider PROOF_OWED, full expense/capability entry owed to Comms/Integrations; no platform sender fallback or new OAuth connection claimed)",
+      "SMTP email (existing tenant channel_connectors/send-message + _shared/smtp.ts contract reused by issued-invoice email; authenticated/provider PROOF_OWED, provider-specific expense/capability entry owed to Comms/Integrations; SMTP acceptance without a provider message receipt remains unknown, no delivered/paid claim)",
       "ElevenLabs (TTS/ConvAI voice)",
       "Zoom",
       "Cal.com",

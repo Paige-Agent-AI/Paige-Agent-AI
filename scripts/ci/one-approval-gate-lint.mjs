@@ -49,6 +49,9 @@ const SURFACES = [
   "src/solo/data/useSoloChat.ts",
   "supabase/functions/paige-mcp/index.ts",
   "supabase/functions/_shared/paige-mcp/governed-adapter.ts",
+  "supabase/functions/sales-invoice-command/index.ts",
+  "supabase/functions/_shared/sales-invoice-chat.ts",
+  "supabase/functions/_shared/sales-invoice-delivery/adapter.ts",
 ];
 const ESCAPE = "approval-channel-exempt:";
 

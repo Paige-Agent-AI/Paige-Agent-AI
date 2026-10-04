@@ -44,3 +44,9 @@ SOLO_900X1000_PAIGE_OPEN: PASS: both themes in actual-component fixture geometry
 ## Evidence boundary
 
 The local prototype and component harness contain explicitly labelled synthetic records. They prove layout and controlled interaction, not tenant authentication, provider state or production acceptance. See the delivery contract for research and canonical source map.
+
+## Drawer layering repair — 2026-10-04
+
+Owner screenshot shows the working drawer covered by a dark backdrop. A late-attached backdrop regression reproduces the layering failure. Intended outcome: readable and interactive invoice detail, receipt forms and approval popouts with reachable close/scroll controls. The opt-in Collections backdrop now uses layer49 and42% dimming; the drawer is explicitly layer50. Shared dialogs retain their defaults, and later nested canonical payment/approval dialogs remain above the drawer. Long invoice references wrap; safe-area padding and contained scrolling preserve mobile reachability. No financial, permission or provider contract changed.
+
+Flow-by-Flow Quick repair and Impeccable Operate/craft-floor applied. Actual component fixture: four laptop/mobile light/dark cases PASS, including forced late-backdrop ordering, opaque surface, nested receipt/approval, Cancel focus return, drawer and form scrolling, no page overflow. Nine focused component tests PASS. Evidence: assets/solo-sales-collections/drawer-layering.json and layering-prefixed captures. Authenticated live reproduction remains UNVERIFIED because trusted browser initialization fails; no provider action attempted. Exact repair head and release identity are recorded in its PR closeout.

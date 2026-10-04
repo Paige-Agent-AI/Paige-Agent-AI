@@ -2112,10 +2112,12 @@ group("safety-first streaming: the sources the first enumeration missed");
       // submitting durable work.
       resolve_tool_autonomy: { data: "auto", error: null },
       submit_paige_document_work: { data: [{ work_id: "88888888-8888-4888-8888-888888888888", work_status: "claimed", resumed_existing: false }], error: null },
+      // The creative tools need this workspace's owner or an admin — a TENANT role (C0a, owner
+      // ruling "ADMIN IS A TENANT ROLE"): a seat in the active workspace (`studio_role_ok`) that is
+      // the workspace the chat acts in. Without it the call is refused and nothing is produced.
+      studio_role_ok: { data: true, error: null },
+      current_user_tenant_id: { data: CHILD, error: null },
     },
-    // The creative tools sit behind an admin/coach role gate; without a role the call is
-    // refused and dropped from the trace, so nothing is produced to hold or leak.
-    tableExtras: { user_roles: () => [{ role: "admin" }] },
   };
   const artifactClean = await drive({
     personaTenant: CHILD, personaSequence: [CHILD], memberships: [CHILD], ...artifactOpts,
@@ -2665,9 +2667,12 @@ group("safety-first streaming: the sources the first enumeration missed");
     rpcExtras: {
       get_actor_access: { data: { tier: "tenant" }, error: null },
       resolve_tool_autonomy: { data: "auto", error: null },
+      // propose_action needs this workspace's owner or an admin (C0a: a tenant seat, not the
+      // global `admin` row).
+      studio_role_ok: { data: true, error: null },
+      current_user_tenant_id: { data: CHILD, error: null },
     },
     tableExtras: {
-      user_roles: () => [{ role: "admin" }],
       // The insert's `.select("id").single()` reads back through the scenario table, so without
       // this the queue insert returns no id and the tool bails before pushing the approval.
       paige_pending_approvals: () => [{ id: "22222222-2222-4222-8222-222222222222" }],
@@ -3001,6 +3006,8 @@ group("safety-first streaming: the sources the first enumeration missed");
       // unstubbed it returns null and every client-scoped turn is refused before the persona
       // resolution even runs.
       current_user_tenant_id: { data: CHILD, error: null },
+      // The CRM who-line is an owner/admin context (C0a: a tenant seat in this workspace).
+      studio_role_ok: { data: true, error: null },
       is_platform_owner: { data: false, error: null },
       tenant_sender_identity: { data: [{ from_name: "PRIVATE-SENDER-MARKER Coaching", from_address: "private-sender-marker@ada.test" }], error: null },
       // The rail arrives through an RPC, not a table read. #804 moved this seam from
@@ -3010,7 +3017,6 @@ group("safety-first streaming: the sources the first enumeration missed");
       get_client_rail_for_chat: { data: [{ event_kind: "note.added", title: "PRIVATE-RAIL-MARKER call notes", occurred_at: new Date().toISOString() }], error: null },
     },
     tableExtras: {
-      user_roles: () => [{ role: "admin" }],
       clients: () => [{ id: RAIL_CLIENT, tenant_id: CHILD, linked_user_id: USER, first_name: "PRIVATE-CLIENTNAME-MARKER", last_name: "Lovelace" }],
       // The operator's own name; without it `whoLine` is empty and that site never fires.
       profiles: () => [{ active_tenant_id: CHILD, first_name: "PRIVATE-OPERATORNAME-MARKER", last_name: "Rivera", full_name: "PRIVATE-OPERATORNAME-MARKER Rivera" }],

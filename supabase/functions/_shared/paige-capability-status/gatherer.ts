@@ -125,7 +125,7 @@ export async function resolveNativeCapabilityStatus(
     // "ADMIN IS A TENANT ROLE"), in its actor-EXPLICIT form because this path has no JWT. One module
     // composes it for both (§18); never the tenant-agnostic global `admin` row.
     const resolved = await resolveWorkspaceAuthorityAs(db, opts.actorUserId, opts.tenantId);
-    if (!resolved.ok) return { ok: false, error: resolved.error };
+    if ("error" in resolved) return { ok: false, error: resolved.error };
     const ownerOpsEligible = resolved.authority.workspaceAdmin || resolved.authority.platformOperator;
 
     // Effective lane = ceiling clamp (resolve_tool_autonomy) THEN action-class clamp (clampLaneByRisk),

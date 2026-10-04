@@ -334,6 +334,10 @@ posture**, and **(d) permitted-RPC scoping**, each grounded in a named resolver 
 
 ## Surface ledger — what actually SHIPPED, per tier (§66)
 
+### Solo Sales customer invoice lifecycle — PR #1688
+
+Standalone Solo owners/admins in the active session workspace may propose customer-invoice publication, manual full/partial receipts, reversals and voids through canonical high-risk confirmation. Read-only roles gain no writes; platform operator authority is not widened. Anonymous access requires a valid expiring hashed invoice grant and exposes only the controlled customer document/balance. No Agency or sub-account UI expansion. Production code/migrations deployed; authenticated mutation and provider acceptance proof remain owed. Settings Billing is unchanged. See `docs/delivery/solo-sales-invoice-publication.md`.
+
 **Bound by `CLAUDE.md` §66:** every merge that changes what shipped, what's gated, or which tiers see
 a surface updates this table **in the same commit as the code**. A row records what is **LIVE**, never
 what a commit intends to deliver — ticking a box because the slice "is going to" get there is the same

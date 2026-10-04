@@ -138,8 +138,18 @@ BEGIN
  RETURN jsonb_build_object('ok',_outcome='provider_accepted','outcome',_outcome,'operation_id',_operation_id,'message_id',m.id,'delivery_confirmed',false);
 END $$;
 
-REVOKE ALL ON FUNCTION public.preview_sales_invoice_delivery_command(uuid,uuid,jsonb),public.read_sales_invoice_delivery_result(uuid,uuid,uuid,jsonb),public.prepare_sales_invoice_delivery(uuid,uuid,uuid,bigint,uuid,uuid,text,text,text,jsonb),public.read_sales_invoice_delivery_binding(uuid),public.claim_sales_invoice_delivery(uuid,uuid,uuid,text,timestamptz),public.finalize_sales_invoice_delivery(uuid,uuid,text,text,text) FROM PUBLIC,anon,authenticated;
-GRANT EXECUTE ON FUNCTION public.preview_sales_invoice_delivery_command(uuid,uuid,jsonb),public.read_sales_invoice_delivery_result(uuid,uuid,uuid,jsonb),public.prepare_sales_invoice_delivery(uuid,uuid,uuid,bigint,uuid,uuid,text,text,text,jsonb),public.read_sales_invoice_delivery_binding(uuid),public.claim_sales_invoice_delivery(uuid,uuid,uuid,text,timestamptz),public.finalize_sales_invoice_delivery(uuid,uuid,text,text,text) TO service_role;
+REVOKE ALL ON FUNCTION public.preview_sales_invoice_delivery_command(uuid,uuid,jsonb) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.preview_sales_invoice_delivery_command(uuid,uuid,jsonb) TO service_role;
+REVOKE ALL ON FUNCTION public.read_sales_invoice_delivery_result(uuid,uuid,uuid,jsonb) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.read_sales_invoice_delivery_result(uuid,uuid,uuid,jsonb) TO service_role;
+REVOKE ALL ON FUNCTION public.prepare_sales_invoice_delivery(uuid,uuid,uuid,bigint,uuid,uuid,text,text,text,jsonb) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.prepare_sales_invoice_delivery(uuid,uuid,uuid,bigint,uuid,uuid,text,text,text,jsonb) TO service_role;
+REVOKE ALL ON FUNCTION public.read_sales_invoice_delivery_binding(uuid) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.read_sales_invoice_delivery_binding(uuid) TO service_role;
+REVOKE ALL ON FUNCTION public.claim_sales_invoice_delivery(uuid,uuid,uuid,text,timestamptz) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.claim_sales_invoice_delivery(uuid,uuid,uuid,text,timestamptz) TO service_role;
+REVOKE ALL ON FUNCTION public.finalize_sales_invoice_delivery(uuid,uuid,text,text,text) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.finalize_sales_invoice_delivery(uuid,uuid,text,text,text) TO service_role;
 
 -- Human UI discovery only; connector credentials and configuration remain private.
 CREATE OR REPLACE FUNCTION public.list_sales_invoice_senders(_expected_tenant_id uuid) RETURNS jsonb

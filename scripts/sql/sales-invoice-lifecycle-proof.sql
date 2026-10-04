@@ -85,3 +85,12 @@ SELECT proof_denied($q$SELECT proof_delivery(112)$q$,'55000','unknown delivery b
 SELECT proof_assert(read_public_sales_invoice(repeat('b',64))->>'remaining_cents'='400','public token reads aggregate balance');
 RESET ROLE;
 SELECT proof_assert((SELECT body_html='<p>{{PAIGE_INVOICE_LINK}}</p>' AND position('?token=' in meta::text)=0 FROM messages WHERE id=(SELECT (result->>'message_id')::uuid FROM delivery_result)),'no durable bearer token');
+
+SET ROLE authenticated;
+SELECT proof_assert((SELECT count(*)=5 AND bool_and(mode='confirm' AND is_default AND category='Payments') FROM list_tool_autonomy('20000000-0000-0000-0000-000000000001') WHERE tool_key IN ('sales_publish_invoice','sales_record_manual_payment','sales_reverse_manual_payment','sales_void_invoice','sales_create_invoice_link')),'Sales autonomy visible with confirm defaults');
+SELECT proof_assert((SELECT count(*)=3 FROM list_tool_autonomy('20000000-0000-0000-0000-000000000001') WHERE tool_key IN ('ghl_run_action','agreement_send','crm_create_contact')),'prior catalogue rows preserved');
+RESET ROLE;
+INSERT INTO tenant_tool_autonomy VALUES('20000000-0000-0000-0000-000000000001','sales_record_manual_payment','off',now());
+SET ROLE authenticated;
+SELECT proof_assert((SELECT mode='off' AND NOT is_default FROM list_tool_autonomy('20000000-0000-0000-0000-000000000001') WHERE tool_key='sales_record_manual_payment'),'Sales autonomy stored off remains visible');
+RESET ROLE;

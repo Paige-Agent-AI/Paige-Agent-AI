@@ -16,6 +16,7 @@ assert.equal(normalize(run('SHOW data_directory;')),normalize(expectedDirectory)
 const extract=(source,name)=>{const start=source.indexOf('CREATE OR REPLACE FUNCTION public.'+name+'(');assert(start>=0,name);const end=source.indexOf('END $$;',start);assert(end>start,name);return source.slice(start,end+7);};
 const rail12=read('../../supabase/migrations/20261212000000_paige_can_show_her_work.sql');
 const rail20=read('../../supabase/migrations/20261220000000_an_act_that_landed_but_was_not_recorded.sql');
+const catalogue=read('../../supabase/migrations/20270543000003_sales_invoice_autonomy_catalogue.sql');
 const setup=`
 RESET ROLE;
 CREATE SCHEMA extensions;
@@ -37,6 +38,9 @@ REVOKE ALL ON FUNCTION record_capability_run(uuid,uuid,text,text,uuid,text) FROM
 GRANT EXECUTE ON FUNCTION record_capability_run(uuid,uuid,text,text,uuid,text) TO service_role;
 \\ir ../../supabase/migrations/20270543000000_sales_invoice_lifecycle.sql
 \\ir ../../supabase/migrations/20270543000000_sales_invoice_lifecycle.sql
+CREATE TABLE tenant_tool_autonomy(tenant_id uuid,tool_key text,mode text,updated_at timestamptz);
+CREATE FUNCTION public.is_platform_owner() RETURNS boolean LANGUAGE sql AS 'SELECT false';
+${catalogue}
 CREATE TABLE channel_connectors(id uuid PRIMARY KEY,tenant_id uuid,active boolean,status text,channel_type text,provider text,from_address text);
 CREATE TABLE messages(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),tenant_id uuid,contact_id uuid,connector_id uuid,thread_key text,channel_type text,direction text,status text,recipients jsonb,subject text,body_html text,meta jsonb,error text,provider_message_id text);
 \\ir ../../supabase/migrations/20270543000002_sales_invoice_delivery.sql

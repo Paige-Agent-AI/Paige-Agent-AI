@@ -14,7 +14,7 @@ const compiled = transpileModule(source, { compilerOptions: { module: ModuleKind
 
 type Setup = { role?: string; currentTenant?: string; replay?: unknown; auditFails?: boolean; claimed?: unknown; pendingCycle?: unknown; executeError?: unknown; authenticated?: boolean; deliveryResult?: unknown; publicOrigin?: string; };
 function setup(options: Setup = {}) {
-  const calls: { name: string; args: any }[] = [];
+  const calls: { name: string; args: unknown }[] = [];
   const claims: Record<string, unknown>[][] = [];
   let handler: (request: Request) => Promise<Response>;
   const caller = { auth: { getUser: async () => ({ data: { user: options.authenticated === false ? null : { id: "owner" } }, error: null }) }, rpc: async (name: string) => ({ data: name === "current_user_tenant_id" ? options.currentTenant ?? tenant : "auto", error: null }) };
@@ -28,7 +28,7 @@ function setup(options: Setup = {}) {
     from: (table: string) => {
       const filters: Record<string, unknown>[] = [];
       let mutation = "";
-      const builder: any = {};
+      const builder: Record<string, unknown> = {};
       for (const method of ["eq", "is", "not", "neq", "gt", "lte", "contains", "order", "limit"]) builder[method] = (...args: unknown[]) => { filters.push({ method, args }); return builder; };
       builder.select = () => builder;
       builder.update = () => { mutation = "update"; return builder; };
@@ -43,7 +43,7 @@ function setup(options: Setup = {}) {
         if (table === "paige_pending_confirmations" && !mutation) { calls.push({ name: "pending-cycle", args: filters }); return { data: options.pendingCycle ? { args: options.pendingCycle } : null, error: null }; }
         return { data: { summary: "Review payment", expires_at: "2026-10-03T13:00:00Z" }, error: null };
       };
-      builder.then = (resolve: any, reject: any) => Promise.resolve({ error: table === "paige_audit_log" && options.auditFails ? { code: "failure" } : null }).then(resolve, reject);
+      builder.then = (resolve: (value: {error: {code:string}|null}) => unknown, reject: (reason: unknown) => unknown) => Promise.resolve({ error: table === "paige_audit_log" && options.auditFails ? { code: "failure" } : null }).then(resolve, reject);
       return builder;
     },
   };
@@ -51,7 +51,7 @@ function setup(options: Setup = {}) {
     Deno: { env: { get: (key: string) => key }, serve: (fn: typeof handler) => { handler = fn; } },
     createClient: (_url: string, key: string) => key === "SUPABASE_ANON_KEY" ? caller : admin,
     confirmFingerprint: async () => "1234567890abcdef", decideGovernedExecution,
-    databaseAnswered: (error: any) => error?.code === "23514",
+    databaseAnswered: (error: unknown) => Boolean(error && typeof error === "object" && "code" in error && error.code === "23514"),
     mintSignerToken: () => "one-time-secret", sha256Hex: async () => "a".repeat(64),
     executeSalesInvoiceDelivery: async (args: unknown) => { calls.push({ name: "delivery", args }); return options.deliveryResult ?? { ok: true, outcome: "provider_accepted", provider_receipt_available: true, delivery_confirmed: false }; },
     FINGERPRINT, UUID, SALES_INVOICE_ACTIONS, parseSalesInvoiceCommand,
@@ -63,7 +63,8 @@ function setup(options: Setup = {}) {
     const response = await handler!(new Request("https://example.test/sales-invoice-command", { method: "POST", headers: { Authorization: "Bearer signed-session" }, body: JSON.stringify({ expected_tenant_id: tenant, operation_id: operation, command, ...extra }) }));
     return { status: response.status, body: await response.json() };
   };
-  return { request, calls, claims };
+  const details=(name:string)=>{const value=calls.find(call=>call.name===name)?.args;if(!value||typeof value!=='object'||Array.isArray(value))throw Error('Missing call '+name);return value as Record<string,unknown>;};
+  return { request, calls, claims, details };
 }
 
 describe("actual invoice HTTP adapter authority and recovery", () => {
@@ -96,7 +97,7 @@ describe("actual invoice HTTP adapter authority and recovery", () => {
   it("creates a fresh approval cycle without changing an unrecorded receipt operation", async () => {
     const test = setup();
     expect((await test.request()).body.outcome).toBe("approval_required");
-    const stored = test.calls.find(call => call.name === "insert:paige_pending_confirmations")?.args.args;
+    const stored = test.details("insert:paige_pending_confirmations").args as Record<string,unknown>;
     expect(stored).toMatchObject({ command, operation_id: operation, expected_tenant_id: tenant });
     expect(stored.approval_cycle_nonce).toMatch(UUID);
     expect(test.claims).toEqual([]);
@@ -105,7 +106,7 @@ describe("actual invoice HTTP adapter authority and recovery", () => {
     const cycle = { command, operation_id: operation, expected_tenant_id: tenant, approval_subject: `invoice.record_manual_payment:${command.invoice_id}`, approval_cycle_nonce: command.invoice_id };
     const test = setup({ pendingCycle: cycle });
     expect((await test.request()).body.outcome).toBe("approval_required");
-    expect(test.calls.find(call => call.name === "insert:paige_pending_confirmations")?.args.args.approval_cycle_nonce).toBe(command.invoice_id);
+    expect(test.details("insert:paige_pending_confirmations")).toMatchObject({args:{approval_cycle_nonce:command.invoice_id}});
   });
   it("does not reuse a proposal cycle with a different receipt amount", async () => {
     const test = setup({ pendingCycle: { command: { ...command, amount_cents: 500 }, operation_id: operation, expected_tenant_id: tenant, approval_subject: `invoice.record_manual_payment:${command.invoice_id}`, approval_cycle_nonce: command.invoice_id } });
@@ -139,7 +140,7 @@ describe("actual invoice HTTP adapter authority and recovery", () => {
     const test = setup({ claimed: { command: link, operation_id: operation, expected_tenant_id: tenant } });
     expect((await test.request({ command: link, approved_fingerprint: "1234567890abcdef" })).body.access_token).toBe("one-time-secret");
     expect(JSON.stringify(test.calls)).not.toContain("one-time-secret");
-    expect(test.calls.find(call => call.name === "execute_sales_invoice_command")?.args._governance.generated_link.token_hash).toBe("a".repeat(64));
+    expect(test.details("execute_sales_invoice_command")).toMatchObject({_governance:{generated_link:{token_hash:"a".repeat(64)}}});
   });
   it("does not remint a bearer secret when recovering a committed link operation", async () => {
     const link = { action: "invoice.link_create", invoice_id: command.invoice_id, expected_version: 2, expires_in_days: 7, grant_scope: "share" };
@@ -188,7 +189,7 @@ describe("actual invoice HTTP adapter authority and recovery", () => {
     const email = { action: "invoice.email_send", invoice_id: command.invoice_id, expected_version: 2, connector_id: operation };
     const test = setup({ replay: { ok: false, outcome: "prepared" } });
     expect((await test.request({ command: email })).body.outcome).toBe("approval_required");
-    const args = test.calls.find(call => call.name === "insert:paige_pending_confirmations")?.args.args;
+    const args = test.details("insert:paige_pending_confirmations").args as Record<string,unknown>;
     expect(args).toMatchObject({ command: email, operation_id: operation, expected_tenant_id: tenant });
     expect(args.approval_cycle_nonce).toMatch(UUID);
     expect(test.calls.some(call => call.name === "delivery")).toBe(false);
@@ -198,7 +199,7 @@ describe("actual invoice HTTP adapter authority and recovery", () => {
     const cycle = { command: email, operation_id: operation, expected_tenant_id: tenant, approval_subject: `invoice.email_send:${command.invoice_id}`, approval_cycle_nonce: command.invoice_id };
     const test = setup({ replay: { ok: false, outcome: "prepared" }, pendingCycle: cycle, claimed: cycle });
     expect((await test.request({ command: email, approved_fingerprint: "1234567890abcdef" })).body.outcome).toBe("provider_accepted");
-    expect(test.calls.find(call => call.name === "delivery")?.args.operationId).toBe(operation);
+    expect(test.details("delivery").operationId).toBe(operation);
   });
   it.each(["unknown", "dispatching"])("never re-dispatches %s delivery on recovery", async outcome => {
     const email = { action: "invoice.email_send", invoice_id: command.invoice_id, expected_version: 2, connector_id: operation };

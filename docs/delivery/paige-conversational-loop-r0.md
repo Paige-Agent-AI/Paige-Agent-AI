@@ -19,6 +19,9 @@ major UI change ahead, persistence, authority). Product paradigm: `app`. UI work
 
 ---
 
+> **Status (2026-10-04).** R0 accepted by the owner; sequence C0a→C6 approved with rulings (decision log).
+> **C0a** delivered in PR #1697 — projection-based capability awareness, tenant-role authority, discovery CI.
+
 ## 0. The five findings that decide the design
 
 1. **The handoff's named "under‑claim" was closed — and has re‑opened in a new shape.** Research,

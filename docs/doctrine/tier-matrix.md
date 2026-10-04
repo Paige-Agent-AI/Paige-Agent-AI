@@ -599,6 +599,15 @@ Paige chat tools (not nav surfaces), gated server-side to **admin / coach / supe
 | `crm_create_contact` honest outcome + idempotency | ✓ | ✓ | ✓ | ✓ | — | 403 | edge logic LIVE; `create_contact_v2` signal deploy-pending #1147; **its APPROVAL path was dark until 2026-09-25 — see the CRM approval note below** |
 | `contact.created` native event + `contact_event_status` read | ✓ | ✓ | ✓ | ✓ | — | 403 | **code MERGED, prod activation PENDING #1147** (migration `20270119000000` sorts after the broken Social `20270117000000`); edge deploys inert until tables land |
 
+**C0a correction, 2026-10-04 (PR #1697) — the gate above is now the TENANT role.** Owner ruling: "ADMIN IS A TENANT ROLE." The owner-ops chat tools (the branch set in `_shared/workspace-authority.ts`, plus delegation, specialist forging and outbound proposals) no longer read the global `user_roles` `admin` row. A caller is admitted when they hold an owner/admin seat in the workspace PAIGE is acting in, or their agency manages it (`studio_role_ok`, with `current_user_tenant_id()` equal to the chat's tenant), or they are the Platform Operator (`super_admin`, admitted explicitly because acting-as grants no seat). `coach` is no longer named anywhere in the gate (it was a retired title). Measured on production before the switch: no account changed access (every global admin held a seat; the one global admin without a seat is the super_admin). The Layer-C process engine asks the same question through `is_tenant_admin_as` / `agency_can_manage_child`. The refusal now arrives BEFORE an approval card rather than after it.
+
+| Capability | God (act-as) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|
+| Owner-ops chat tools (CRM, comms, team, pipeline, Studio build, delegation) | ✓ (super_admin; build tools only in a company workspace) | ✓ owner/admin, and the agency managing a child | ✓ owner/admin · members refused, before any card | ✓ owner/admin · members refused | — (client seat sealed) | 403 | edge on merge; authenticated drive OWED |
+| `capability_status` + the per-turn capability block | ✓ | ✓ | ✓ **any workspace member** (was admin-only) | ✓ any member | — (block never shown to a client seat) | 403 | edge on merge; batch-lane RPC `20270548000000` via the migration pipeline; authenticated drive OWED |
+
+The block is now a projection over the tools actually emitted that turn (Spine + legacy classification + action-risk + effective lane + workspace role + readiness), so a member sees the owner-ops tools marked "needs this workspace's owner or an admin" rather than "not for this account type".
+
 Honest note (§13), CRM approval door, added 2026-09-25 because the ledger above asserted something
 production falsified. "One approval executes exactly once" was recorded ✓ on every tier while, for
 the CRM door specifically, a class of approvals executed **zero** times. Fourteen days of

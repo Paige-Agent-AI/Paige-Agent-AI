@@ -82,7 +82,10 @@ with `public.cron_token_header()` (same poke shape as `comms-scheduled-drain`); 
 managed send (an estimate, metered as `platform_metered_events` `L3_tenant_passthrough` / `marketing_email_sent`).
 Durable-work capability `marketing.email_campaign` / kind `email_campaign_dispatch`; Rail capability key
 `marketing_email_campaign`. Session flag `paige.email_campaign_approve` is set only by `email_campaign_approve`
-and checked by the `trg_email_campaign_approval_guard` trigger on `paige_pending_approvals`. No new secret.
+and checked by the `trg_email_campaign_approval_guard` trigger on `paige_pending_approvals`; a second trigger,
+`_email_campaign_approval_withdrawn`, returns a campaign to draft when its approval is rejected anywhere. Before each
+send the worker calls `email_campaign_dispatch_begin` (service role only); a recipient held by quiet hours is
+recorded `deferred` (back to planned with `not_before`, 1 minute to 24 hours). No new secret.
 
 **Platform alerting evaluator** (A2, migration `20260923000000` + edge function `alerting-evaluate`,
 2026-08-20 — ✅ §32.b rollback-proved on prod pre-merge). Adds `paige_alert_rule.condition_met_since`

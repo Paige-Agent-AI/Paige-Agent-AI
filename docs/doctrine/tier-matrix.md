@@ -375,7 +375,7 @@ caller's ACTIVE workspace (`current_user_tenant_id()`), each gated on `is_tenant
 |---|---|---|---|---|---|---|---|
 | Draft, approve-request, approve, cancel, resume an email campaign; newsletter consent; audience preview | ✗ as operator (no workspace; reads all rows through `is_platform_owner()`) | DB allows its owner/admin in its own workspace; no screen (§61 default: the agency does not run its own email book here) | **✓** owner/admin; a member is refused (`not_permitted`) | **✓** owner/admin of the sub-account, same RPCs (no screen yet; E2 builds Solo first) | ✗ | ✗ | PARTIAL: backend LIVE on merge; screens arrive in E2 |
 | Approve a `campaign_send` approval | ✗ | only a person who owns/administers that business, through `email_campaign_approve` (DB guard refuses every other writer) | ✓ | ✓ | ✗ | ✗ | LIVE on merge |
-| Dispatch (claim, record, settle, envelopes) | service role only (`email-campaign-worker`) | — | — | — | — | — | LIVE on merge |
+| Dispatch (claim, begin, record, settle, envelopes) | service role only (`email-campaign-worker`) | — | — | — | — | — | LIVE on merge |
 
 ### Solo Campaigns becomes the Marketing department — S2 "Marketing in place" (branch `claude/gifted-bell-qfezxb`, 2026-10-03)
 

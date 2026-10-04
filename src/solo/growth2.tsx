@@ -382,6 +382,12 @@ function DeltaLine({ delta, periodDays, fallback }) {
   return <span className={`mo-delta ${up ? "is-up" : "is-down"}`}><Ic.arrow size={12}/>{amount} vs {span}</span>;
 }
 
+// Ask PAIGE about one chart. The question carries only figures already on this page, and tells her
+// not to invent the measures this workspace cannot see.
+function AskPaige({ prompt }) {
+  return <button type="button" className="mo-ask" onClick={() => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt } }))}><Ic.spark size={12}/>Ask PAIGE</button>;
+}
+
 function OverviewStat({ icon, tone, label, value, foot, link, onLink }) {
   return <section className="mo-stat" aria-label={label}>
     <span className={`mo-plate ${tone}`} aria-hidden="true">{icon}</span>
@@ -447,6 +453,12 @@ function MarketingOverview({ data, onGo, onCreateBrief, salesInShell = false }) 
   const plural = (count, noun) => `${count} ${noun}${count === 1 ? "" : "s"}`;
   const publishedParts = [model.published.pages && plural(model.published.pages, "page"), model.published.funnels && plural(model.published.funnels, "funnel"), model.published.forms && plural(model.published.forms, "form")].filter(Boolean);
   const inProgress = briefs.filter((brief) => !["completed", "archived"].includes(brief.lifecycleStatus)).slice(0, 3);
+  const [sourceActive, setSourceActive] = React.useState(null);
+  const [statusActive, setStatusActive] = React.useState(null);
+  const honest = "Use only what my records show. Do not invent visits, reach, spend or revenue; this workspace does not track them.";
+  const askTime = `Look at my Marketing leads for the ${periodLabel}: ${model.leads.count}${model.capped ? "+" : ""} leads, ${model.opportunities.count} became opportunities. Which days stood out, and what is one thing I should do next? ${honest}`;
+  const askSources = `My leads for the ${periodLabel} by tracking tag: ${model.sources.map((slice) => `${slice.label} ${slice.count}`).join(", ") || "none yet"}. Which source is worth more effort, and how should I tag the links I share? ${honest}`;
+  const askStatus = `My campaign briefs by status: ${model.status.filter((slice) => slice.count).map((slice) => `${slice.label} ${slice.count}`).join(", ") || "none yet"}. What should I move forward first? ${honest}`;
 
   return <div className="mk-view mo"><StateFrame phase={phase} retry={retry} noun="marketing">
     {firstUse ? <section className="campaigns-surface mk-first">
@@ -486,17 +498,18 @@ function MarketingOverview({ data, onGo, onCreateBrief, salesInShell = false }) 
       <div className="mo-grid mo-grid-a">
         <section className="campaigns-surface mo-panel">
           <div className="mo-panel-head"><div><h2>Leads over time</h2><p>Form submissions from every capture point, by the day they arrived.</p></div>
+            <div className="mo-panel-tools"><AskPaige prompt={askTime}/></div>
             <ul className="mo-legend" aria-hidden="true"><li><i className="is-s1"/>Leads</li><li><i className="is-s2 is-line"/>Became opportunities</li></ul></div>
-          {model.leads.count ? <ChartBoundary className="mo-chart mo-chart-time"><LeadsOverTimeChart daily={model.daily}/></ChartBoundary>
+          {model.leads.count ? <ChartBoundary className="mo-chart mo-chart-time"><LeadsOverTimeChart daily={model.daily} onOpenDay={() => onGo("capture")}/></ChartBoundary>
             : <Empty title={`No leads in the ${periodLabel}`} detail="When someone submits a published form, the day it arrived shows here."/>}
           <table className="campaigns-sr-only"><caption>Leads and opportunities by day, {periodLabel}</caption><thead><tr><th>Day</th><th>Leads</th><th>Became opportunities</th></tr></thead><tbody>{model.daily.map((point) => <tr key={point.day}><td>{point.label}</td><td>{point.leads}</td><td>{point.opportunities}</td></tr>)}</tbody></table>
           {model.capped && <p className="mo-note">Showing the latest {SUBMISSION_READ_LIMIT} submissions. Earlier days in this period may be missing.</p>}
         </section>
         <section className="campaigns-surface mo-panel">
-          <div className="mo-panel-head"><div><h2>Leads by source</h2><p>The tracking tag on the link each lead submitted from.</p></div><button className="mo-link" onClick={() => onGo("analytics")}>View all sources<Ic.arrow size={12}/></button></div>
+          <div className="mo-panel-head"><div><h2>Leads by source</h2><p>The tracking tag on the link each lead submitted from.</p></div><div className="mo-panel-tools"><AskPaige prompt={askSources}/><button className="mo-link" onClick={() => onGo("analytics")}>View all sources<Ic.arrow size={12}/></button></div></div>
           {model.leads.count ? <div className="mo-split">
-            <ChartBoundary className="mo-donut"><Donut slices={sourceSlices} total={floor(model.leads.count)} caption="Total leads" label="Leads by source"/></ChartBoundary>
-            <ul className="mo-keys">{sourceSlices.map((slice) => <li key={slice.key}><i style={{ background: `var(${slice.colorToken})` }} aria-hidden="true"/><span>{slice.label}</span><b>{floor(slice.count)}</b><em>{percentOf(slice.count, model.leads.count)}</em></li>)}</ul>
+            <ChartBoundary className="mo-donut"><Donut slices={sourceSlices} total={floor(model.leads.count)} caption="Total leads" label="Leads by source" activeKey={sourceActive} onActiveKey={setSourceActive} onSelect={() => onGo("analytics")}/></ChartBoundary>
+            <ul className="mo-keys">{sourceSlices.map((slice) => <li key={slice.key}><button type="button" className={sourceActive === slice.key ? "is-active" : ""} onMouseEnter={() => setSourceActive(slice.key)} onMouseLeave={() => setSourceActive(null)} onFocus={() => setSourceActive(slice.key)} onBlur={() => setSourceActive(null)} onClick={() => onGo("analytics")}><i style={{ background: `var(${slice.colorToken})` }} aria-hidden="true"/><span>{slice.label}</span><b>{floor(slice.count)}</b><em>{percentOf(slice.count, model.leads.count)}</em></button></li>)}</ul>
           </div> : <Empty title="No sources yet" detail="Add ?utm_source= to the links you share and each lead will show where it came from."/>}
           <p className="mo-note">{model.capped ? `Counted from the latest ${SUBMISSION_READ_LIMIT} submissions. ` : ""}Email and paid ads aren’t connected, so they can’t appear here.</p>
         </section>
@@ -505,16 +518,16 @@ function MarketingOverview({ data, onGo, onCreateBrief, salesInShell = false }) 
       <div className="mo-grid mo-grid-b">
         <section className="campaigns-surface mo-panel">
           <div className="mo-panel-head"><div><h2>Top capture points</h2><p>Leads per form in the {periodLabel}. Pages and funnels collect through their forms.</p></div><button className="mo-link" onClick={() => onGo("capture")}>View all<Ic.arrow size={12}/></button></div>
-          {model.topContent.length ? <ol className="mo-rank">{model.topContent.map((row) => <li key={row.id}><span className="mo-rank-name">{row.name}</span><span className="mo-rank-bar" aria-hidden="true"><i style={{ width: `${contentMax ? Math.max(4, (row.count / contentMax) * 100) : 0}%` }}/></span><b>{floor(row.count)}</b></li>)}</ol>
+          {model.topContent.length ? <ol className="mo-rank">{model.topContent.map((row) => <li key={row.id}><button type="button" onClick={() => onGo("capture")} aria-label={`${row.name}: ${floor(row.count)} leads. Open Lead capture`}><span className="mo-rank-name">{row.name}</span><span className="mo-rank-bar" aria-hidden="true"><i style={{ width: `${contentMax ? Math.max(4, (row.count / contentMax) * 100) : 0}%` }}/></span><b>{floor(row.count)}</b></button></li>)}</ol>
             : <Empty title="No form has collected a lead yet" detail="Publish a form from Vibe Studio and its leads are ranked here."/>}
         </section>
         <section className="campaigns-surface mo-panel">
-          <div className="mo-panel-head"><div><h2>Campaign status</h2><p>Every campaign brief, by where it stands.</p></div><button className="mo-link" onClick={() => onGo("campaigns")}>View campaigns<Ic.arrow size={12}/></button></div>
+          <div className="mo-panel-head"><div><h2>Campaign status</h2><p>Every campaign brief, by where it stands.</p></div><div className="mo-panel-tools"><AskPaige prompt={askStatus}/><button className="mo-link" onClick={() => onGo("campaigns")}>View campaigns<Ic.arrow size={12}/></button></div></div>
           {model.campaigns.total ? <div className="mo-split">
-            <ChartBoundary className="mo-donut"><Donut slices={statusSlices} total={model.campaigns.total} caption={model.campaigns.total === 1 ? "Brief" : "Briefs"} label="Campaign status"/></ChartBoundary>
-            <ul className="mo-keys">{statusSlices.filter((slice) => slice.count > 0 || ["running", "draft", "blocked"].includes(slice.key)).map((slice) => <li key={slice.key} className={slice.count ? "" : "is-zero"}><i style={{ background: `var(${slice.colorToken})` }} aria-hidden="true"/><span>{slice.label}</span><b>{slice.count}</b></li>)}</ul>
+            <ChartBoundary className="mo-donut"><Donut slices={statusSlices} total={model.campaigns.total} caption={model.campaigns.total === 1 ? "Brief" : "Briefs"} label="Campaign status" activeKey={statusActive} onActiveKey={setStatusActive} onSelect={() => onGo("campaigns")}/></ChartBoundary>
+            <ul className="mo-keys">{statusSlices.filter((slice) => slice.count > 0 || ["running", "draft", "blocked"].includes(slice.key)).map((slice) => <li key={slice.key} className={slice.count ? "" : "is-zero"}><button type="button" className={statusActive === slice.key ? "is-active" : ""} onMouseEnter={() => setStatusActive(slice.key)} onMouseLeave={() => setStatusActive(null)} onFocus={() => setStatusActive(slice.key)} onBlur={() => setStatusActive(null)} onClick={() => onGo("campaigns")}><i style={{ background: `var(${slice.colorToken})` }} aria-hidden="true"/><span>{slice.label}</span><b>{slice.count}</b></button></li>)}</ul>
           </div> : <Empty title="No campaign briefs yet" detail="Create a brief to plan your first campaign."/>}
-          {inProgress.length > 0 && <ul className="mo-briefs" aria-label="Campaigns in progress">{inProgress.map((brief) => <li key={brief.id}><strong>{brief.name}</strong><small>{brief.timing || "No timing written yet"}</small></li>)}</ul>}
+          {inProgress.length > 0 && <ul className="mo-briefs" aria-label="Campaigns in progress">{inProgress.map((brief) => <li key={brief.id}><button type="button" onClick={() => onGo("campaigns")}><strong>{brief.name}</strong><small>{brief.timing || "No timing written yet"}</small></button></li>)}</ul>}
         </section>
         <section className="campaigns-surface mo-panel">
           <div className="mo-panel-head"><div><h2>Needs your attention</h2><p>From your briefs and capture points.</p></div></div>

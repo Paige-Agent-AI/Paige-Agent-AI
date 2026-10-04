@@ -6,7 +6,7 @@
 // validated for both themes with the dataviz palette checker: violet, aqua, orange, blue. Grey is
 // reserved for "Other sources" and "No tracking tag"; gold is never used in a chart (§11).
 import React from "react";
-import { Bar, CartesianGrid, Cell, ComposedChart, Line, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, Brush, CartesianGrid, Cell, ComposedChart, Line, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { DailyPoint } from "./marketing-overview-model";
 
 const TOKENS = ["--chart-1", "--chart-2", "--chart-3", "--chart-4", "--chart-other", "--chart-untagged", "--ok", "--warn", "--bad", "--surface", "--line-soft", "--ink", "--ink-2", "--ink-3"] as const;
@@ -63,49 +63,95 @@ function TipBox({ title, rows }: { title?: string; rows: { label: string; value:
   </div>;
 }
 
-export function LeadsOverTimeChart({ daily }: { daily: DailyPoint[] }) {
+const dayReadout = (point: DailyPoint) => `${point.label}: ${point.leads} lead${point.leads === 1 ? "" : "s"}, ${point.opportunities} became ${point.opportunities === 1 ? "an opportunity" : "opportunities"}`;
+
+/**
+ * Leads per day with the opportunities line. Interactive four ways, all optional to the reader:
+ * hover for a day's values; drag the range handle under the chart to zoom into any stretch of days;
+ * Tab in and step day by day with the arrow keys (Home/End jump, Enter opens the day's leads);
+ * click a bar to open where the leads are listed.
+ */
+export function LeadsOverTimeChart({ daily, onOpenDay }: { daily: DailyPoint[]; onOpenDay?: (point: DailyPoint) => void }) {
   const ref = React.useRef<HTMLDivElement>(null);
   const colors = useChartColors(ref);
   const reduced = useReducedMotion();
-  const dense = daily.length > 14;
-  return <div ref={ref} className="mo-chart mo-chart-time" aria-hidden="true">
-    <ResponsiveContainer width="100%" height="100%">
-      <ComposedChart accessibilityLayer={false} data={daily} margin={{ top: 8, right: 8, bottom: 0, left: -18 }} barCategoryGap={dense ? "22%" : "34%"}>
-        <CartesianGrid vertical={false} stroke={colors["--line-soft"]} />
-        <XAxis dataKey="label" tickLine={false} axisLine={false} interval={dense ? 2 : 0} minTickGap={8} tick={{ fill: colors["--ink-3"], fontSize: 11 }} />
-        <YAxis allowDecimals={false} tickLine={false} axisLine={false} width={44} tick={{ fill: colors["--ink-3"], fontSize: 11 }} />
-        <Tooltip
-          cursor={{ fill: colors["--line-soft"], opacity: 0.6 }}
-          content={({ active, payload, label }) => active && payload?.length
-            ? <TipBox title={String(label)} rows={(payload as unknown as TipRow[]).map((row) => ({ label: row.dataKey === "leads" ? "Leads" : "Became opportunities", value: row.value, color: row.dataKey === "leads" ? colors["--chart-1"] : colors["--chart-2"] }))} />
-            : null}
-        />
-        <Bar dataKey="leads" fill={colors["--chart-1"]} radius={[4, 4, 0, 0]} maxBarSize={18} isAnimationActive={!reduced} />
-        <Line dataKey="opportunities" type="monotone" stroke={colors["--chart-2"]} strokeWidth={2} dot={{ r: 3, fill: colors["--chart-2"], stroke: colors["--surface"], strokeWidth: 2 }} activeDot={{ r: 5, stroke: colors["--surface"], strokeWidth: 2 }} isAnimationActive={!reduced} />
-      </ComposedChart>
-    </ResponsiveContainer>
+  const [range, setRange] = React.useState({ start: 0, end: daily.length - 1 });
+  const [focused, setFocused] = React.useState<number | null>(null);
+  // A new period means new days: reset the zoom and the keyboard position.
+  React.useEffect(() => { setRange({ start: 0, end: daily.length - 1 }); setFocused(null); }, [daily.length]);
+  const visible = range.end - range.start + 1;
+  const dense = visible > 14;
+  const brushable = daily.length > 7;
+  const onKeyDown = (event: React.KeyboardEvent) => {
+    const at = focused ?? range.end;
+    const next = event.key === "ArrowLeft" ? Math.max(range.start, at - 1)
+      : event.key === "ArrowRight" ? Math.min(range.end, at + 1)
+        : event.key === "Home" ? range.start
+          : event.key === "End" ? range.end
+            : null;
+    if (next !== null) { event.preventDefault(); setFocused(next); return; }
+    if ((event.key === "Enter" || event.key === " ") && focused !== null) { event.preventDefault(); onOpenDay?.(daily[focused]); }
+    if (event.key === "Escape") setFocused(null);
+  };
+  const focusedPoint = focused !== null ? daily[focused] : null;
+  return <div className="mo-chart-wrap">
+    <div ref={ref} className={`mo-chart mo-chart-time${brushable ? " has-brush" : ""}`} tabIndex={0} role="group"
+      aria-label="Leads over time. Use the left and right arrow keys to move between days, Enter to open that day's leads."
+      aria-describedby="mo-time-readout" onKeyDown={onKeyDown} onBlur={() => setFocused(null)}>
+      <ResponsiveContainer width="100%" height="100%">
+        <ComposedChart accessibilityLayer={false} data={daily} margin={{ top: 8, right: 8, bottom: 0, left: -18 }} barCategoryGap={dense ? "22%" : "34%"}>
+          <CartesianGrid vertical={false} stroke={colors["--line-soft"]} />
+          <XAxis dataKey="label" tickLine={false} axisLine={false} interval={dense ? 2 : 0} minTickGap={8} tick={{ fill: colors["--ink-3"], fontSize: 11 }} />
+          <YAxis allowDecimals={false} tickLine={false} axisLine={false} width={44} tick={{ fill: colors["--ink-3"], fontSize: 11 }} />
+          <Tooltip
+            cursor={{ fill: colors["--line-soft"], opacity: 0.6 }}
+            content={({ active, payload, label }) => active && payload?.length
+              ? <TipBox title={String(label)} rows={(payload as unknown as TipRow[]).map((row) => ({ label: row.dataKey === "leads" ? "Leads" : "Became opportunities", value: row.value, color: row.dataKey === "leads" ? colors["--chart-1"] : colors["--chart-2"] }))} />
+              : null}
+          />
+          <Bar dataKey="leads" fill={colors["--chart-1"]} radius={[4, 4, 0, 0]} maxBarSize={18} isAnimationActive={!reduced} cursor={onOpenDay ? "pointer" : undefined} onClick={(_data, index) => onOpenDay?.(daily[index])}>
+            {daily.map((point, index) => <Cell key={point.day} fill={colors["--chart-1"]} fillOpacity={focused === null || focused === index ? 1 : 0.38} />)}
+          </Bar>
+          <Line dataKey="opportunities" type="monotone" stroke={colors["--chart-2"]} strokeWidth={2} dot={{ r: 3, fill: colors["--chart-2"], stroke: colors["--surface"], strokeWidth: 2 }} activeDot={{ r: 5, stroke: colors["--surface"], strokeWidth: 2 }} isAnimationActive={!reduced} />
+          {brushable && <Brush dataKey="label" height={22} travellerWidth={10} startIndex={range.start} endIndex={range.end}
+            stroke={colors["--chart-1"]} fill={colors["--surface"]} tickFormatter={() => ""}
+            onChange={(next) => { if (typeof next?.startIndex === "number" && typeof next?.endIndex === "number") { setRange({ start: next.startIndex, end: next.endIndex }); setFocused(null); } }} />}
+        </ComposedChart>
+      </ResponsiveContainer>
+    </div>
+    <p id="mo-time-readout" className="mo-readout" aria-live="polite">
+      {focusedPoint ? dayReadout(focusedPoint) : brushable ? (visible < daily.length ? `Showing ${daily[range.start].label} to ${daily[range.end].label}. Drag the handles below the chart to change the range.` : "Drag the handles below the chart to zoom into any stretch of days.") : ""}
+    </p>
   </div>;
 }
 
 export type DonutSlice = { key: string; label: string; count: number; colorToken: Token };
 
-export function Donut({ slices, total, caption, label }: { slices: DonutSlice[]; total: number | string; caption: string; label: string }) {
+/**
+ * A part-to-whole ring. The highlighted slice is controlled by the page, so hovering or focusing a
+ * legend row and hovering the ring light the same slice; clicking a slice opens what it stands for.
+ */
+export function Donut({ slices, total, caption, label, activeKey, onActiveKey, onSelect }: { slices: DonutSlice[]; total: number | string; caption: string; label: string; activeKey?: string | null; onActiveKey?: (key: string | null) => void; onSelect?: (slice: DonutSlice) => void }) {
   const ref = React.useRef<HTMLDivElement>(null);
   const colors = useChartColors(ref);
   const reduced = useReducedMotion();
   const shown = slices.filter((slice) => slice.count > 0);
+  const active = shown.find((slice) => slice.key === activeKey) ?? null;
   return <div ref={ref} className="mo-donut" role="img" aria-label={`${label}: ${shown.map((slice) => `${slice.label} ${slice.count}`).join(", ") || "none"}`}>
     <ResponsiveContainer width="100%" height="100%">
       <PieChart accessibilityLayer={false}>
-        <Pie data={shown.length ? shown : [{ key: "none", label: "None", count: 1, colorToken: "--line-soft" }]} dataKey="count" nameKey="label" innerRadius="70%" outerRadius="100%" paddingAngle={shown.length > 1 ? 1.5 : 0} stroke={colors["--surface"]} strokeWidth={2} startAngle={90} endAngle={-270} isAnimationActive={!reduced}>
-          {(shown.length ? shown : [{ key: "none", colorToken: "--line-soft" as Token }]).map((slice) => <Cell key={slice.key} fill={colors[slice.colorToken]} />)}
+        <Pie data={shown.length ? shown : [{ key: "none", label: "None", count: 1, colorToken: "--line-soft" }]} dataKey="count" nameKey="label" innerRadius="70%" outerRadius="100%" paddingAngle={shown.length > 1 ? 1.5 : 0} stroke={colors["--surface"]} strokeWidth={2} startAngle={90} endAngle={-270} isAnimationActive={!reduced}
+          cursor={onSelect && shown.length ? "pointer" : undefined}
+          onMouseEnter={(_data, index) => shown[index] && onActiveKey?.(shown[index].key)}
+          onMouseLeave={() => onActiveKey?.(null)}
+          onClick={(_data, index) => shown[index] && onSelect?.(shown[index])}>
+          {(shown.length ? shown : [{ key: "none", colorToken: "--line-soft" as Token }]).map((slice) => <Cell key={slice.key} fill={colors[slice.colorToken]} fillOpacity={!active || active.key === slice.key ? 1 : 0.32} />)}
         </Pie>
-        {shown.length > 0 && <Tooltip content={({ active, payload }) => active && payload?.length
+        {shown.length > 0 && <Tooltip content={({ active: on, payload }) => on && payload?.length
           ? <TipBox rows={(payload as unknown as TipRow[]).map((row) => ({ label: String(row.name), value: row.value, color: row.payload?.colorToken ? colors[row.payload.colorToken] : undefined }))} />
           : null} />}
       </PieChart>
     </ResponsiveContainer>
-    <div className="mo-donut-center" aria-hidden="true"><strong>{total}</strong><span>{caption}</span></div>
+    <div className="mo-donut-center" aria-hidden="true">{active ? <><strong>{active.count}</strong><span>{active.label}</span></> : <><strong>{total}</strong><span>{caption}</span></>}</div>
   </div>;
 }
-

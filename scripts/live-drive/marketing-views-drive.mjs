@@ -105,7 +105,7 @@ async function measure(page) {
         const lum = ({ r, g, b }) => [r, g, b].map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }).reduce((t, v, i) => t + v * [0.2126, 0.7152, 0.0722][i], 0);
         const bgOf = (el) => { for (let n = el; n; n = n.parentElement) { const c = rgb(getComputedStyle(n).backgroundColor); if (c.a > 0.9) return c; } return { r: 255, g: 255, b: 255 }; };
         let worst = { ratio: 99, what: "" };
-        for (const el of document.querySelectorAll(".mk-flag, .mk-row-main small, .mk-stat dt, .mk-stat span, .mk-view .mk-link, .mk-view .btn-g, .mo-stat h3, .mo-delta, .mo .mo-link, .mo-keys span, .mo-keys em, .mo-note, .mo-panel-head p, .mo-head p, .mo-task-main small, .mo-rank-name, .mo-next p, .mo-donut-center span")) {
+        for (const el of document.querySelectorAll(".mk-flag, .mk-row-main small, .mk-stat dt, .mk-stat span, .mk-view .mk-link, .mk-view .btn-g, .mo-stat h3, .mo-delta, .mo .mo-link, .mo-keys span, .mo-keys em, .mo-note, .mo-panel-head p, .mo-head p, .mo-task-main small, .mo-rank-name, .mo-next p, .mo-donut-center span, .mo-ask, .mo-readout")) {
           const fg = rgb(getComputedStyle(el).color), bg = bgOf(el);
           const [hi, lo] = [lum(fg), lum(bg)].sort((x, y) => y - x);
           const ratio = (hi + 0.05) / (lo + 0.05);

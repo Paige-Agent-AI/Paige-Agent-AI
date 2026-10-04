@@ -19,7 +19,7 @@
 //      request-id uniqueness.
 //   4. paige-media derives the tenant SERVER-SIDE (resolveTenantForUser) and
 //      never reads a body tenant_id; auth + role gate precede every action.
-//   5. The legacy generate-image executor keeps its own authorized behavior
+//   5. The legacy generate-image executor keeps its own authorized behavior (session workspace, owner or admin)
 //      (role gate + tenant membership check) and the Vibe client invokes ONLY
 //      paige-media — no silent bypass lane around the media budget model.
 import { readFileSync } from "node:fs";
@@ -132,11 +132,13 @@ describe("correction #4 — paige-media auth precedence (no unauthenticated subm
 });
 
 describe("correction #4 — generate-image audit (existing authorized behavior, no silent bypass)", () => {
-  it("generate-image keeps its own user-JWT auth + role gate + tenant membership check", () => {
+  it("generate-image keeps its own user-JWT auth and takes the workspace from the session, owner or admin only", () => {
     expect(generateImageSrc).toContain("auth.getUser()");
-    expect(generateImageSrc).toContain('r === "admin" || r === "super_admin")');
+    expect(generateImageSrc).toContain("resolveStudioCaller(authed, user.id, body?.tenant_id)");
+    expect(generateImageSrc).toContain("const tenantId: string = caller.tenantId;");
+    // A platform-wide role says nothing about which workspace a person may write into.
+    expect(generateImageSrc).not.toContain('from("user_roles")');
     expect(generateImageSrc).not.toContain('r === "coach"');
-    expect(generateImageSrc).toContain("is_tenant_member");
   });
 
   it("the Vibe client invokes ONLY the governed seam — there is no direct generate-image lane in the Studio", () => {

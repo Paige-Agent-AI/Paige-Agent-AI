@@ -341,6 +341,10 @@ class of lie as a fabricated metric (§13).
 
 Legend: **✓** live · **—** not built · **N/A** tier not opened yet · **403** denied at the route gate.
 
+### Vibe Studio V2a-0 — generation writes only into the caller's own workspace (2026-10-04)
+
+`generate-image` and `content-draft` now resolve the workspace from the session and require `studio_role_ok` (Solo owner/admin; the agency managing a sub-account; operators in company workspaces). A body tenant naming another workspace is refused. Before: any holder of the platform-wide `admin` role (most workspace owners) passed, and the body tenant was trusted. Solo owners without the global role gain image generation through paige-media's legacy providers (paige-media already admitted them). Client and Anonymous: unchanged, refused. `save_marketing_content` and the growth draft functions are still V2a.
+
 ### Vibe Studio V1 — the Studio capability boundary (2026-10-04)
 
 Same tiers as before (Solo owner/admin; the agency managing a sub-account; operators in company workspaces, per `studio_role_ok`). No tier gains a surface. A Studio turn is now offered and may dispatch only the design-studio role's `capability_scope` (16 tools); CRM, deals, team, calendar, provider execution, comms, sub-agents, funding, Knowledge writes and business-profile mutations are refused in Studio with `outside_studio_scope` and remain available in main PAIGE. D3: the six growth save/build/publish tools (whose RPCs require this workspace's owner/admin via `_growth_admin_tenant`) now ask the chat gate the same question (`studio_role_ok`) on every turn, Studio or main PAIGE: a global admin of another workspace is refused at the chat gate (the RPC already refused them), and a workspace owner without the global role is allowed (the RPC already allowed them). Every other tool keeps its existing gate; the draft edge functions, `generate-image` and `save_marketing_content` still check the global role themselves and are tracked for V2a. Knowledge context for the Studio arrives in V3, not V1.

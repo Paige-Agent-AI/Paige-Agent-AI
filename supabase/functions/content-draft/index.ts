@@ -7,6 +7,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { chatCompletionCompat } from "../_shared/claude.ts";
 import { claudeVoicePolish, pickRoute, routedChatCompletion } from "../_shared/model-router.ts";
+import { resolveStudioCaller } from "../_shared/studio-caller.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -44,19 +45,21 @@ serve(async (req: Request) => {
     const authed = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: authHeader } } });
     const { data: { user }, error: uErr } = await authed.auth.getUser();
     if (uErr || !user) throw new Error("Unauthorized");
-    const { data: roleRows } = await authed.from("user_roles").select("role").eq("user_id", user.id);
-    const roles = (roleRows || []).map((r: any) => r.role);
-    if (!roles.some((r: string) => r === "admin" || r === "super_admin")) {
-      return new Response(JSON.stringify({ error: "Admin access required." }), {
-        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
 
     const body = await req.json();
     const channel: Channel = (["social_post","ad_copy","email_campaign","caption","blog_outline","sms_broadcast"].includes(body?.channel) ? body.channel : "social_post");
     const brief = String(body?.brief ?? body?.topic ?? "").trim();
     const tone = String(body?.tone ?? "").trim();
     const count = Math.max(1, Math.min(3, Number(body?.variations) || 1));
-    const tenantId = body?.tenant_id ?? null;
+    // §9: the workspace comes from the caller's session and they must own or administer it — never a
+    // body tenant id (that let anyone holding the platform-wide admin role read another workspace's
+    // name and voice).
+    const caller = await resolveStudioCaller(authed, user.id, body?.tenant_id);
+    if (!caller.ok) {
+      return new Response(JSON.stringify({ error: caller.error, forbidden: true }), {
+        status: caller.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    const tenantId: string = caller.tenantId;
     if (brief.length < 5) {
       return new Response(JSON.stringify({ error: "Give a brief: what's the content about, and any key points." }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });

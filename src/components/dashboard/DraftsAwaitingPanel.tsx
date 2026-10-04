@@ -43,6 +43,8 @@ export function DraftsAwaitingPanel({
   const ranked = [...items].sort(rank);
   const visible = ranked.slice(0, cap);
   const overflow = ranked.length - visible.length;
+  // An email campaign goes to many people at once; it is approved one at a time, never in a batch.
+  const batchable = visible.filter((row) => row.type !== "campaign_send");
 
   // Batch approve — sequential client loop (execute-approval is single-id; no batch
   // RPC). Each call is per-row idempotent (server claim lock, §163). Report the REAL
@@ -50,8 +52,7 @@ export function DraftsAwaitingPanel({
   const approveAll = async () => {
     setBatchBusy(true);
     let acted = 0, ackd = 0, failed = 0;
-    // An email campaign goes to many people at once; it is approved one at a time, never in a batch.
-    for (const a of visible.filter((row) => row.type !== "campaign_send")) {
+    for (const a of batchable) {
       try {
         const { data, error } = await supabase.functions.invoke("execute-approval", { body: { approval_id: a.id } });
         if (error || (data && data.ok === false)) { failed++; continue; }
@@ -75,10 +76,10 @@ export function DraftsAwaitingPanel({
       actions={
         items.length === 0 ? (
           <StatePill state="success">All clear</StatePill>
-        ) : visible.length > 1 ? (
+        ) : batchable.length > 1 ? (
           <Button size="sm" variant="secondary" onClick={approveAll} disabled={batchBusy}>
             {batchBusy ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : null}
-            Approve all ({visible.length})
+            Approve all ({batchable.length})
           </Button>
         ) : null
       }

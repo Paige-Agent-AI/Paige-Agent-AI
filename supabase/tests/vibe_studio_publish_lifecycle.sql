@@ -1,9 +1,14 @@
 -- Vibe Studio publish lifecycle (20270537000000). One publish rule for everything Vibe Studio
 -- makes: new work starts unpublished, Publish and Unpublish are the only ways across, a page or
 -- funnel publishes what it needs, and only the workspace's owner or admin does any of it.
+--
+-- Migration G (20270554000000): the eight publish/unpublish functions run only for the server —
+-- the publish door, growth-publish-command, on its service-role client, naming the workspace it
+-- resolved and the signed-in person it verified. Every publish and unpublish below runs that way
+-- (pg_temp.door); who may publish is the person check inside the functions (_studio_publish_actor).
 -- Synthetic fixtures; always rolled back.
 BEGIN;
-SELECT plan(65);
+SELECT plan(72);
 
 -- Owner of the studio workspace; a plain member of it who also owns another workspace and holds a
 -- GLOBAL admin role (§59: neither makes them an admin here); and the owner of a second workspace.
@@ -45,11 +50,44 @@ END $$;
 CREATE TABLE pg_temp.ids (k text PRIMARY KEY, id uuid);
 GRANT ALL ON pg_temp.ids TO authenticated, anon, service_role;
 
+-- Run one of the eight the way the publish door does (Migration G): the service role, the workspace
+-- named explicitly, and the person who asked. The caller's role and JWT claims are restored after a
+-- normal return; a throw rolls the enclosing pgTAP subtransaction back, which restores them too.
+CREATE FUNCTION pg_temp.door(_fn text, _id uuid, _actor uuid,
+                             _tenant uuid DEFAULT '5d5d0000-0000-4000-8000-00000000a001') RETURNS jsonb
+LANGUAGE plpgsql AS $$
+DECLARE
+  _role   text := current_user;
+  _claims text := current_setting('request.jwt.claims', true);
+  _r      jsonb;
+BEGIN
+  PERFORM set_config('request.jwt.claims', '{"role":"service_role"}', true);
+  EXECUTE 'SET LOCAL ROLE service_role';
+  EXECUTE format('SELECT public.%I(p_tenant_id => $1, p_id => $2, p_actor_id => $3)', _fn)
+    INTO _r USING _tenant, _id, _actor;
+  EXECUTE format('SET LOCAL ROLE %I', _role);
+  PERFORM set_config('request.jwt.claims', coalesce(_claims, ''), true);
+  RETURN _r;
+END $$;
+CREATE TABLE pg_temp.eight (fn text PRIMARY KEY);
+INSERT INTO pg_temp.eight VALUES ('growth_page_publish'), ('growth_page_unpublish'), ('growth_form_publish'),
+  ('growth_form_unpublish'), ('growth_funnel_publish'), ('growth_funnel_unpublish'), ('studio_image_publish'),
+  ('studio_image_unpublish');
+
 -- ── Who may call what ──
 SELECT ok(NOT has_function_privilege('anon', 'public.list_artifact_versions(uuid,text,uuid,uuid)', 'EXECUTE'),
   'a signed-out visitor cannot read version history');
-SELECT ok(NOT has_function_privilege('anon', 'public.growth_form_publish(uuid,uuid)', 'EXECUTE'),
-  'a signed-out visitor cannot publish');
+SELECT ok(NOT EXISTS (SELECT 1 FROM pg_temp.eight
+                       WHERE has_function_privilege('anon', format('public.%s(uuid,uuid,uuid)', fn), 'EXECUTE')),
+  'a signed-out visitor cannot run any of the eight publish/unpublish functions');
+SELECT ok(NOT EXISTS (SELECT 1 FROM pg_temp.eight
+                       WHERE has_function_privilege('authenticated', format('public.%s(uuid,uuid,uuid)', fn), 'EXECUTE')),
+  'a signed-in user cannot run any of them directly either (Migration G: only the publish door)');
+SELECT ok(NOT EXISTS (SELECT 1 FROM pg_temp.eight
+                       WHERE NOT has_function_privilege('service_role', format('public.%s(uuid,uuid,uuid)', fn), 'EXECUTE')),
+  'the server (service role) can run all eight');
+SELECT ok(NOT EXISTS (SELECT 1 FROM pg_temp.eight WHERE to_regprocedure(format('public.%s(uuid,uuid)', fn)) IS NOT NULL),
+  'the two-argument signatures are gone');
 SELECT ok(NOT has_function_privilege('authenticated', 'public._growth_form_go_live(uuid,uuid)', 'EXECUTE'),
   'the internal go-live step is not callable directly');
 SELECT ok(NOT has_function_privilege('service_role', 'public._growth_page_go_live(uuid,uuid)', 'EXECUTE'),
@@ -63,6 +101,8 @@ SELECT ok(NOT public.studio_role_ok('5d5d0000-0000-4000-8000-000000000002'),
 SELECT pg_temp.as_caller('5d5d0000-0000-4000-8000-000000000001');
 SELECT ok(public.studio_role_ok('5d5d0000-0000-4000-8000-000000000001'), 'the workspace owner does');
 SELECT ok(NOT public.studio_role_ok('5d5d0000-0000-4000-8000-000000000002'), 'and cannot vouch for anyone else');
+SELECT throws_ok($$SELECT public.growth_page_publish(NULL, '5d5d0000-0000-4000-8000-00000000ffff', NULL)$$,
+  '42501', NULL, 'the owner''s own direct call (a browser console) is refused: publishing is the door only');
 
 -- ── Forms: new work starts unpublished; edits to a live form wait for Publish ──
 INSERT INTO pg_temp.ids SELECT 'form', (public.growth_form_upsert(NULL, 'discovery-call', 'Discovery call',
@@ -73,7 +113,7 @@ SELECT is((SELECT draft_schema_json = schema_json FROM public.growth_forms WHERE
   'an unpublished form''s working copy and live copy are the same');
 SELECT is((SELECT count(*)::int FROM public.growth_public_form(p_form_id => (SELECT id FROM pg_temp.ids WHERE k='form'))), 0,
   'visitors cannot load an unpublished form');
-SELECT is((public.growth_form_publish(NULL, (SELECT id FROM pg_temp.ids WHERE k='form')))->>'status', 'active',
+SELECT is((pg_temp.door('growth_form_publish', (SELECT id FROM pg_temp.ids WHERE k='form'), '5d5d0000-0000-4000-8000-000000000001'))->>'status', 'active',
   'the owner publishes it');
 SELECT isnt((SELECT published_at FROM public.growth_forms WHERE id = (SELECT id FROM pg_temp.ids WHERE k='form')), NULL,
   'and the publish time is recorded');
@@ -84,7 +124,7 @@ SELECT is((SELECT jsonb_array_length(schema_json->'sections'->0->'fields') FROM 
   'visitors still see the published questions');
 SELECT is((SELECT jsonb_array_length(draft_schema_json->'sections'->0->'fields') FROM public.growth_forms WHERE id = (SELECT id FROM pg_temp.ids WHERE k='form')), 2,
   'the edit waits in the working copy');
-SELECT lives_ok($$SELECT public.growth_form_publish(NULL, (SELECT id FROM pg_temp.ids WHERE k='form'))$$, 'publishing the changes');
+SELECT lives_ok($$SELECT pg_temp.door('growth_form_publish', (SELECT id FROM pg_temp.ids WHERE k='form'), '5d5d0000-0000-4000-8000-000000000001')$$, 'publishing the changes');
 SELECT is((SELECT jsonb_array_length(schema_json->'sections'->0->'fields') FROM public.growth_forms WHERE id = (SELECT id FROM pg_temp.ids WHERE k='form')), 2,
   'puts them live');
 
@@ -111,17 +151,17 @@ SELECT throws_like($$UPDATE public.growth_pages SET blocks_json = draft_blocks_j
   '%GROWTH_PUBLISH_STATE_GUARDED%', 'a page''s live content cannot be written directly');
 INSERT INTO pg_temp.ids SELECT 'blank', (public.growth_page_upsert(NULL, 'blank-signup', 'Blank signup',
   '[{"type":"hero","heading":"Hi"},{"type":"embedded_form"}]'::jsonb)).id;
-SELECT throws_like($$SELECT public.growth_page_publish(NULL, (SELECT id FROM pg_temp.ids WHERE k='blank'))$$,
+SELECT throws_like($$SELECT pg_temp.door('growth_page_publish', (SELECT id FROM pg_temp.ids WHERE k='blank'), '5d5d0000-0000-4000-8000-000000000001')$$,
   '%GROWTH_FORM_MISSING%', 'a page with a signup section and no form behind it cannot go live');
-SELECT is((public.growth_page_publish(NULL, (SELECT id FROM pg_temp.ids WHERE k='page')))->>'status', 'published', 'the owner publishes the page');
+SELECT is((pg_temp.door('growth_page_publish', (SELECT id FROM pg_temp.ids WHERE k='page'), '5d5d0000-0000-4000-8000-000000000001'))->>'status', 'published', 'the owner publishes the page');
 SELECT is((SELECT status FROM public.growth_forms WHERE id = (SELECT id FROM pg_temp.ids WHERE k='signup')), 'active',
   'which publishes its sign-up form');
-SELECT throws_ok($$SELECT public.growth_form_unpublish(NULL, (SELECT id FROM pg_temp.ids WHERE k='signup'))$$,
+SELECT throws_ok($$SELECT pg_temp.door('growth_form_unpublish', (SELECT id FROM pg_temp.ids WHERE k='signup'), '5d5d0000-0000-4000-8000-000000000001')$$,
   '22023', NULL, 'a form a live page collects through cannot be taken down underneath it');
-SELECT is((public.growth_page_unpublish(NULL, (SELECT id FROM pg_temp.ids WHERE k='page')))->>'status', 'draft', 'the owner unpublishes the page');
+SELECT is((pg_temp.door('growth_page_unpublish', (SELECT id FROM pg_temp.ids WHERE k='page'), '5d5d0000-0000-4000-8000-000000000001'))->>'status', 'draft', 'the owner unpublishes the page');
 SELECT is((SELECT status FROM public.growth_forms WHERE id = (SELECT id FROM pg_temp.ids WHERE k='signup')), 'active',
   'its sign-up form stays live');
-SELECT is((public.growth_form_unpublish(NULL, (SELECT id FROM pg_temp.ids WHERE k='signup')))->>'status', 'draft',
+SELECT is((pg_temp.door('growth_form_unpublish', (SELECT id FROM pg_temp.ids WHERE k='signup'), '5d5d0000-0000-4000-8000-000000000001'))->>'status', 'draft',
   'and can then be unpublished on its own');
 
 -- ── Funnels publish every step together; a live funnel's steps change only after unpublishing ──
@@ -134,7 +174,7 @@ INSERT INTO pg_temp.ids SELECT 'funnel', (public.growth_funnel_upsert(NULL, 'fre
     jsonb_build_object('step_type','page','order_index',0,'page_id',(SELECT id FROM pg_temp.ids WHERE k='offer')),
     jsonb_build_object('step_type','form','order_index',1,'form_id',(SELECT id FROM pg_temp.ids WHERE k='apply'))))).id;
 SELECT is((SELECT status FROM public.growth_funnels WHERE id = (SELECT id FROM pg_temp.ids WHERE k='funnel')), 'draft', 'a new funnel starts unpublished');
-SELECT is((public.growth_funnel_publish(NULL, (SELECT id FROM pg_temp.ids WHERE k='funnel')))->>'status', 'active', 'the owner publishes the funnel');
+SELECT is((pg_temp.door('growth_funnel_publish', (SELECT id FROM pg_temp.ids WHERE k='funnel'), '5d5d0000-0000-4000-8000-000000000001'))->>'status', 'active', 'the owner publishes the funnel');
 SELECT is((SELECT status FROM public.growth_pages WHERE id = (SELECT id FROM pg_temp.ids WHERE k='offer')), 'published', 'its page goes live with it');
 SELECT is((SELECT status FROM public.growth_forms WHERE id = (SELECT id FROM pg_temp.ids WHERE k='apply')), 'active', 'and its form');
 SELECT throws_ok($$SELECT public.growth_funnel_upsert(NULL, 'free-audit-funnel', 'Free audit funnel', NULL,
@@ -152,26 +192,26 @@ SELECT throws_like($$DELETE FROM public.growth_pages WHERE id = (SELECT id FROM 
 SELECT throws_ok($$SELECT public.growth_funnel_upsert(NULL, 'free-audit-funnel', 'Free audit funnel', NULL, NULL,
   (SELECT id FROM pg_temp.ids WHERE k='page'))$$,
   '22023', NULL, 'a live funnel''s entry page cannot be swapped without unpublishing it');
-SELECT throws_ok($$SELECT public.growth_page_unpublish(NULL, (SELECT id FROM pg_temp.ids WHERE k='offer'))$$,
+SELECT throws_ok($$SELECT pg_temp.door('growth_page_unpublish', (SELECT id FROM pg_temp.ids WHERE k='offer'), '5d5d0000-0000-4000-8000-000000000001')$$,
   '22023', NULL, 'a page a live funnel uses cannot be taken down underneath it');
-SELECT is((public.growth_funnel_unpublish(NULL, (SELECT id FROM pg_temp.ids WHERE k='funnel')))->>'status', 'draft', 'the owner unpublishes the funnel');
+SELECT is((pg_temp.door('growth_funnel_unpublish', (SELECT id FROM pg_temp.ids WHERE k='funnel'), '5d5d0000-0000-4000-8000-000000000001'))->>'status', 'draft', 'the owner unpublishes the funnel');
 SELECT is((SELECT status FROM public.growth_pages WHERE id = (SELECT id FROM pg_temp.ids WHERE k='offer')), 'published', 'its page stays live');
 
 -- ── Images ──
-SELECT is((public.studio_image_publish(NULL, '5d5d0000-0000-4000-8000-00000000c001'))->>'status', 'published', 'the owner publishes an image to the Catalog');
+SELECT is((pg_temp.door('studio_image_publish', '5d5d0000-0000-4000-8000-00000000c001', '5d5d0000-0000-4000-8000-000000000001'))->>'status', 'published', 'the owner publishes an image to the Catalog');
 SELECT throws_ok($$UPDATE public.marketing_content SET status = 'draft' WHERE id = '5d5d0000-0000-4000-8000-00000000c001'$$,
   '42501', NULL, 'signed-in users cannot change an image''s published state directly (the table is not theirs to write)');
 SELECT throws_like($$SELECT public.save_marketing_content(p_kind => 'image', p_title => 'Swapped banner',
   p_image_url => 'https://img.tests.invalid/b.png', p_id => '5d5d0000-0000-4000-8000-00000000c001')$$,
   '%GROWTH_PUBLISH_STATE_GUARDED%', 'not even the owner-run save can swap the file of a published image');
-SELECT is((public.studio_image_unpublish(NULL, '5d5d0000-0000-4000-8000-00000000c001'))->>'status', 'draft', 'and unpublishes it');
+SELECT is((pg_temp.door('studio_image_unpublish', '5d5d0000-0000-4000-8000-00000000c001', '5d5d0000-0000-4000-8000-000000000001'))->>'status', 'draft', 'and unpublishes it');
 SELECT lives_ok($$SELECT public.save_marketing_content(p_kind => 'image', p_title => 'Swapped banner',
   p_image_url => 'https://img.tests.invalid/b.png', p_id => '5d5d0000-0000-4000-8000-00000000c001')$$,
   'once unpublished, the image takes a new version again');
 SELECT throws_like($$SELECT public.growth_page_upsert(NULL, 'renamed-offer', 'Offer', '[]'::jsonb, NULL, NULL,
   (SELECT id FROM pg_temp.ids WHERE k='offer'))$$,
   '%GROWTH_PAGE_LIVE_SLUG%', 'a live page''s address cannot change without unpublishing it');
-SELECT throws_ok($$SELECT public.studio_image_publish(NULL, '5d5d0000-0000-4000-8000-00000000c002')$$,
+SELECT throws_ok($$SELECT pg_temp.door('studio_image_publish', '5d5d0000-0000-4000-8000-00000000c002', '5d5d0000-0000-4000-8000-000000000001')$$,
   '22023', NULL, 'only an image can be published as one');
 
 -- ── The timeline: snapshots and going back ──
@@ -193,18 +233,18 @@ SELECT is((SELECT count(*)::int FROM public.list_artifact_versions((SELECT id FR
 SELECT pg_temp.as_caller('5d5d0000-0000-4000-8000-000000000002');
 SELECT throws_ok($$SELECT public.growth_form_upsert(NULL, 'member-form', 'Member form', '{"sections":[]}'::jsonb)$$,
   '42501', NULL, 'a plain member cannot create a form, global admin role or not');
-SELECT throws_ok($$SELECT public.growth_page_publish(NULL, (SELECT id FROM pg_temp.ids WHERE k='page'))$$,
-  '42501', NULL, 'or publish a page');
-SELECT throws_ok($$SELECT public.growth_form_unpublish(NULL, (SELECT id FROM pg_temp.ids WHERE k='form'))$$,
+SELECT throws_ok($$SELECT pg_temp.door('growth_page_publish', (SELECT id FROM pg_temp.ids WHERE k='page'), '5d5d0000-0000-4000-8000-000000000002')$$,
+  '42501', NULL, 'or publish a page (the door names them; the person check refuses them)');
+SELECT throws_ok($$SELECT pg_temp.door('growth_form_unpublish', (SELECT id FROM pg_temp.ids WHERE k='form'), '5d5d0000-0000-4000-8000-000000000002')$$,
   '42501', NULL, 'or unpublish a form');
 SELECT is((SELECT count(*)::int FROM public.list_artifact_versions((SELECT id FROM pg_temp.ids WHERE k='session'), 'form', (SELECT id FROM pg_temp.ids WHERE k='form'))), 0,
   'or read the owner''s studio history');
 
 SELECT pg_temp.as_caller('5d5d0000-0000-4000-8000-000000000003');
-SELECT throws_ok($$SELECT public.growth_form_unpublish(NULL, (SELECT id FROM pg_temp.ids WHERE k='form'))$$,
-  'P0002', NULL, 'another workspace''s owner cannot reach this form');
-SELECT throws_ok($$SELECT public.growth_form_unpublish('5d5d0000-0000-4000-8000-00000000a001', (SELECT id FROM pg_temp.ids WHERE k='form'))$$,
-  'P0002', NULL, 'not even by naming this workspace');
+SELECT throws_ok($$SELECT pg_temp.door('growth_form_unpublish', (SELECT id FROM pg_temp.ids WHERE k='form'), '5d5d0000-0000-4000-8000-000000000003', '5d5d0000-0000-4000-8000-00000000a002')$$,
+  'P0002', NULL, 'another workspace''s owner cannot reach this form from their own workspace');
+SELECT throws_ok($$SELECT pg_temp.door('growth_form_unpublish', (SELECT id FROM pg_temp.ids WHERE k='form'), '5d5d0000-0000-4000-8000-000000000003', '5d5d0000-0000-4000-8000-00000000a001')$$,
+  '42501', NULL, 'not even by naming this workspace: they are not its owner or admin');
 
 -- ── A signed-out visitor; and the server path ──
 RESET ROLE;
@@ -218,8 +258,17 @@ SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);
 SET LOCAL ROLE service_role;
 SELECT is((SELECT count(*)::int FROM public.list_artifact_versions((SELECT id FROM pg_temp.ids WHERE k='session'), 'form', (SELECT id FROM pg_temp.ids WHERE k='form'), '5d5d0000-0000-4000-8000-00000000a001')), 2,
   'a server session reads it for the workspace it names');
-SELECT is((public.growth_form_unpublish('5d5d0000-0000-4000-8000-00000000a001', (SELECT id FROM pg_temp.ids WHERE k='form')))->>'status', 'draft',
-  'and the server path still unpublishes for the workspace it names');
+SELECT throws_ok($$SELECT public.growth_form_unpublish(p_tenant_id => '5d5d0000-0000-4000-8000-00000000a001', p_id => (SELECT id FROM pg_temp.ids WHERE k='form'))$$,
+  '22023', NULL, 'a server call that does not name the person is refused');
+SELECT throws_ok($$SELECT public.growth_form_unpublish(p_tenant_id => NULL, p_id => (SELECT id FROM pg_temp.ids WHERE k='form'), p_actor_id => '5d5d0000-0000-4000-8000-000000000001')$$,
+  '22023', NULL, 'a server call that does not name the workspace is refused');
+SELECT is((public.growth_form_unpublish(p_tenant_id => '5d5d0000-0000-4000-8000-00000000a001', p_id => (SELECT id FROM pg_temp.ids WHERE k='form'), p_actor_id => '5d5d0000-0000-4000-8000-000000000001'))->>'status', 'draft',
+  'and the server path still unpublishes for the workspace and person it names');
+-- The audit trail is not readable by the API roles; read it as the test owner.
+RESET ROLE;
+SELECT ok((SELECT count(*) > 0 AND bool_and(user_id = '5d5d0000-0000-4000-8000-000000000001'::uuid) FROM public.audit_logs
+            WHERE action IN ('growth_form_publish', 'growth_form_unpublish') AND entity_id = (SELECT id FROM pg_temp.ids WHERE k='form')),
+  'every publish and unpublish of the form records the person who asked, never NULL');
 
 RESET ROLE;
 SELECT * FROM finish();

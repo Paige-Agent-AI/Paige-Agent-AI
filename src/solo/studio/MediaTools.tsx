@@ -280,7 +280,7 @@ export const MediaTools = () => {
                   </div>
                   {!mine && (
                     <div style={{ fontSize: 12.3, color: TXT, lineHeight: 1.55, marginBottom: 6 }}>
-                      Only {requesterName ?? "the person who asked"} can approve the cost. You can decline it.
+                      {requestedByYou === false ? "Only they" : "Only the person who asked"} can approve the cost. You can decline it.
                     </div>
                   )}
                   {license && <div style={{ fontSize: 11.8, color: DIM, lineHeight: 1.55, marginBottom: 12 }}>{license}</div>}

@@ -45,10 +45,10 @@ export function MediaApprovalCard({ job, media }: { job: MediaJob; media: MediaA
     >
       <b>{heading}</b>
       <span style={{ color: "var(--vs-dim)" }}>{prompt}</span>
-      <span className="mono" style={{ color: "var(--vs-text)" }}>Estimated ${Number(job.estimated_cost_usd ?? 0).toFixed(2)}</span>
+      <span className="vs-approval-cost">About <strong>${Number(job.estimated_cost_usd ?? 0).toFixed(2)}</strong> to make</span>
       {requestedByYou !== true && (
         <span style={{ color: "var(--vs-dim)", lineHeight: 1.5 }}>
-          Only {requesterName ?? (requestedByYou === false ? "they" : "the person who asked")} can approve the cost. You can decline it.
+          {requestedByYou === false ? "Only they" : "Only the person who asked"} can approve the cost. You can decline it.
         </span>
       )}
       <div style={{ display: "flex", gap: 8 }}>

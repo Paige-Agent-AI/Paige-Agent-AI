@@ -172,7 +172,8 @@ describe("Vibe Studio — the 18 owner-required states, rendered", () => {
       approvalFor: () => ({ requestedByYou: false, requesterName: "Dana Reyes" }),
     }));
     expect(text()).toContain("Waiting for Dana Reyes");
-    expect(text()).toContain("Only Dana Reyes can approve the cost. You can decline it.");
+    expect(text()).toContain("Waiting for Dana Reyes");
+    expect(text()).toContain("Only they can approve the cost. You can decline it.");
     expect(text()).not.toContain("Needs your approval");
     expect([...host.querySelectorAll("button")].some((b) => b.textContent === "Approve & run")).toBe(false);
     const decline = [...host.querySelectorAll("button")].find((b) => b.textContent === "Decline");

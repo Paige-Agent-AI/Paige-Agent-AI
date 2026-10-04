@@ -170,6 +170,8 @@
 .vs-studio .vs-send { justify-self: end; width: 30px; height: 30px; border-radius: 8px; border: 0; display: grid; place-items: center; background: var(--vs-violet); color: #fff; cursor: pointer; }
 .vs-studio .vs-send:disabled { background: rgba(255, 255, 255, .12); color: var(--vs-faint); cursor: not-allowed; }
 .vs-studio .vs-approval { border: 1px solid var(--vs-line); background: var(--vs-panel); border-radius: 12px; padding: 12px; display: grid; gap: 8px; font-size: 12.6px; }
+.vs-studio .vs-approval-cost { color: var(--vs-dim); font-variant-numeric: tabular-nums; }
+.vs-studio .vs-approval-cost strong { color: var(--vs-text); font-weight: 600; }
 
 .vs-studio .vs-stage { position: relative; overflow: auto; min-width: 0;
   background-color: #0C0A1C;

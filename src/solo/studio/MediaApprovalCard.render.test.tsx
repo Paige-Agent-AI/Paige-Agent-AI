@@ -94,7 +94,7 @@ describe("MediaApprovalCard — who sees what", () => {
     const media = actions({ requestedByYou: true, requesterName: null });
     act(() => root.render(<MediaApprovalCard job={pendingJob() as never} media={media} />));
     expect(host.textContent).toContain("An image needs your approval");
-    expect(host.textContent).toContain("Estimated $0.04");
+    expect(host.textContent).toContain("About $0.04 to make");
     expect(buttons()).toEqual(["Approve and make it", "Decline"]);
     expect(host.querySelector(".vs-btn-gold")?.textContent).toBe("Approve and make it");
     await click("Approve and make it");
@@ -105,7 +105,8 @@ describe("MediaApprovalCard — who sees what", () => {
     const media = actions({ requestedByYou: false, requesterName: "Dana Reyes" });
     act(() => root.render(<MediaApprovalCard job={pendingJob() as never} media={media} />));
     expect(host.textContent).toContain("Waiting for Dana Reyes to approve");
-    expect(host.textContent).toContain("Only Dana Reyes can approve the cost. You can decline it.");
+    expect(host.textContent).toContain("Waiting for Dana Reyes to approve");
+    expect(host.textContent).toContain("Only they can approve the cost. You can decline it.");
     expect(buttons()).toEqual(["Decline"]);
     expect(host.querySelector(".vs-btn-gold")).toBeNull();
     await click("Decline");

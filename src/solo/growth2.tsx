@@ -16,7 +16,8 @@ import { useSoloCampaignBriefs } from "./useSoloCampaignBriefs";
 import { PERIODS, SUBMISSION_READ_LIMIT, deriveMarketingOverview, isBlockedBrief, submissionsInPeriod } from "./marketing-overview-model";
 import { FormIntakePanel } from "./form-intake";
 import { AskPaige, ChartBoundary, DeltaLine, OverviewStat } from "./marketing-ui";
-import { MarketingAds, MarketingContent, MarketingEmail } from "./marketing-planned";
+import { MarketingAds, MarketingContent } from "./marketing-planned";
+import { MarketingEmail } from "./marketing-email";
 import { MarketingAudience } from "./marketing-audience";
 import "./solo-chart-tokens.css";
 import "./solo-campaigns.css";
@@ -765,7 +766,7 @@ const MarketingWorkspace=({ salesInShell = false })=>{
   else if(tab==="social") body=<Social data={data} onOpenCompass={openCompass} onOpenPipeline={openPipeline}/>;
   else if(tab==="audience") body=<MarketingAudience tenantId={data.tenantId} onOpenClients={()=>params.account&&navigate(subtabPath("solo",params.account,"clients","people"))}/>;
   else if(tab==="content") body=<MarketingContent tenantId={data.tenantId} published={{phase:data.phase,pages:data.artifacts.filter((a)=>a.type==="page").length,funnels:data.artifacts.filter((a)=>a.type==="funnel").length,forms:data.artifacts.filter((a)=>a.type==="form").length,unpublished:(data.drafts||NO_ROWS).length}} onOpenCapture={()=>goTo("capture")} onRetryPublished={()=>data.retry?.()} studioLauncher={<StudioLauncher/>}/>;
-  else if(tab==="email") body=<MarketingEmail tenantId={data.tenantId} onOpenConnections={params.account?()=>navigate(`${subtabPath("solo",params.account,"settings","connections")}?segment=communications`):null}/>;
+  else if(tab==="email") body=<MarketingEmail tenantId={data.tenantId} onOpenAudience={()=>setTab("audience")} onOpenConnections={params.account?()=>navigate(`${subtabPath("solo",params.account,"settings","connections")}?segment=communications`):null} onOpenSettings={params.account?()=>navigate(`${subtabPath("solo",params.account,"settings","connections")}?segment=registration`):null}/>;
   else if(tab==="ads") body=<MarketingAds tenantId={data.tenantId} onOpenIntegrations={params.account?()=>navigate(subtabPath("solo",params.account,"settings","integrations")):null}/>;
   return <div className="solo-campaigns" data-campaigns-view={tab}><h1 className="campaigns-sr-only">Marketing</h1><CampaignTabs tabs={tabs} current={tab} setCurrent={setTab}/><div id="campaigns-tabpanel" role="tabpanel" aria-labelledby={`campaigns-tab-${tab}`} className="campaigns-scroll">{legacy?<PageHead eyebrow="Marketing" title={LEGACY[legacy].label}/>:null}{tab==="catalog" && query.get("origin")==="sales" && !workspaceChanged && data.tenantId && data.phase!=="resolving" && <div className="so-source-return"><button type="button" className="btn btn-s btn-p" onClick={()=>navigate(`${subtabPath("solo",params.account,"growth","sales")}${query.get("resume")==="terms" ? "?resume=terms" : ""}`)}>{query.get("resume")==="terms" ? "Return to commercial terms" : "Return to Sales"}</button><span>Finish offer setup here in Offers, then return when ready.</span></div>}{body}</div><DetailDrawer detail={detail} onClose={closeDetail}/></div>;
 };

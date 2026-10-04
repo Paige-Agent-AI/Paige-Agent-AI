@@ -6,6 +6,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses } from "../_shared/contact-methods.ts";
+import { adminClient, isAuthorizedInternalCaller } from "../_shared/systems-check-http.ts";
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -46,6 +47,11 @@ function ok(data: unknown, status = 200) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  // INT-310 C0 — internal-only specialist. It reads canonical client data with the SERVICE ROLE, so
+  // the gateway's verify_jwt (which the public anon key and any user JWT pass) is not authority.
+  // Only the canonical internal caller (exact service-role bearer or a verified cron token — the
+  // orchestrator, and email-composer's compliance review) may reach the lookup below.
+  if (!(await isAuthorizedInternalCaller(req, adminClient()))) return ok({ ok: false, error: "unauthorized" }, 401);
 
   let body: { input?: ReviewInput; context?: { contact_id?: string } } = {};
   try { body = await req.json(); } catch { return ok({ ok: false, error: "Invalid JSON" }, 400); }

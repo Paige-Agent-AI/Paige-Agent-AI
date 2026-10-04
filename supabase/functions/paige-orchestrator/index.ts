@@ -638,6 +638,10 @@ Deno.serve(async (req) => {
     if (payload.action !== "tool_invoke") {
       return fail(`Unknown action: ${String(payload.action)}`, 400);
     }
+    // INT-310 C0: invoking a specialist runs it with the SERVICE ROLE, so it needs a real actor —
+    // the canonical trusted service, or a VERIFIED human (callerId from getUser). The public anon key
+    // passes the gateway but resolves no user, so it never satisfies "authenticated" here.
+    if (!isService && !callerId) return fail("Authentication required", 401);
     if (!payload.slug) return fail("Missing slug for tool_invoke", 400);
 
     let invQ = supabase

@@ -4446,6 +4446,52 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
     called(half, "growth_funnel_upsert") === 0 && /"outcome":"partial"/.test(wire(half))
       && /"saved_drafts":\{"page_id":"page-1"\}/.test(wire(half)) && !/"success":true,"funnel_id"/.test(wire(half)),
     wire(half).slice(0, 600));
+
+  // ── 32.7 A TRANSPORT failure after the page landed is UNKNOWN, never "not built". Kills: mapping
+  // every later throw to `partial`, which invites a duplicate funnel on retry.
+  const lost = await drive({
+    stream: true, extraBody: { threadId: THREAD },
+    toolCall: { name: "growth_funnel_build", args: funnelArgs },
+    rpcOverrides: {
+      ...AS_TENANT, ...PAGE_ROW,
+      resolve_tool_autonomy: { data: "auto", error: null },
+      growth_form_upsert: { data: { id: "form-1", slug: "intake" }, error: null },
+      growth_funnel_upsert: { data: null, error: { message: "fetch failed: connection reset" } },
+    },
+    serviceTablesExtra: { user_roles: () => [{ role: "admin" }] },
+  });
+  assert("32.7 a lost funnel write reports outcome_unknown, not 'was not built'",
+    /"outcome_unknown":true/.test(wire(lost)) && !/was not built/.test(wire(lost)),
+    wire(lost).slice(0, 600));
+
+  // ── 32.8 A partial build inside a Studio project links its saved drafts to the project (§19).
+  // Kills: linking only successful results, which leaves the saved page unreachable from the rail.
+  const partialStudio = await drive({
+    stream: true, extraBody: { threadId: THREAD },
+    toolCall: { name: "growth_funnel_build", args: funnelArgs },
+    rpcOverrides: {
+      ...AS_TENANT, ...PAGE_ROW,
+      resolve_tool_autonomy: { data: "auto", error: null },
+      growth_form_upsert: { data: null, error: null },
+    },
+    serviceTablesExtra: { user_roles: () => [{ role: "admin" }] },
+    tablesExtra: studioTables(),
+  });
+  assert("32.8 a partial Studio funnel build links the saved page to the project",
+    partialStudio.rec.rpc.some((c) => c.name === "link_session_artifact" && c.args?.p_kind === "page" && c.args?.p_artifact_id === "page-1"),
+    JSON.stringify(partialStudio.rec.rpc.filter((c) => c.name === "link_session_artifact").map((c) => c.args)));
+
+  // ── 32.9 A funnel built without a form does not claim an intake form. Kills: the fixed note.
+  const noForm = await drive({
+    stream: true, extraBody: { threadId: THREAD },
+    toolCall: { name: "growth_funnel_build", args: { name: "Spring launch", page: { title: "Spring offer", blocks: [] } } },
+    rpcOverrides: { ...AS_TENANT, ...PAGE_ROW, resolve_tool_autonomy: { data: "auto", error: null },
+      growth_funnel_upsert: { data: { id: "funnel-1", slug: "spring-launch" }, error: null } },
+    serviceTablesExtra: { user_roles: () => [{ role: "admin" }] },
+  });
+  assert("32.9 a funnel with no form is saved and its note names no intake form",
+    /"funnel_id":"funnel-1"/.test(wire(noForm)) && !/intake form, and the flow/.test(wire(noForm)),
+    wire(noForm).slice(0, 600));
 }
 
 console.log(`\n${checks - failures} passed, ${failures} failed`);

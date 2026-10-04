@@ -5,7 +5,7 @@
 import React from "react";
 import { Check, X, Circle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { plainError, publishArtifact, unpublishArtifact, type ArtifactKind } from "./studio-data";
+import { plainError, publishArtifact, PublishUnverified, unpublishArtifact, type ArtifactKind } from "./studio-data";
 import { artifactId, hasPendingChanges, isLive, type LoadedArtifact } from "./artifact-state";
 
 interface CheckRow { ok: boolean | null; label: string; note?: string; blocking: boolean }
@@ -52,10 +52,12 @@ function checksFor(a: LoadedArtifact, route: string | null): CheckRow[] {
 }
 
 
-export function PublishPanel({ artifact, onClose, onDone }: {
+export function PublishPanel({ artifact, onClose, onDone, onRefresh }: {
   artifact: LoadedArtifact;
   onClose: () => void;
   onDone: (message: string) => void;
+  /** Re-read the artifact without announcing success (an unverified publish). */
+  onRefresh?: () => void;
 }) {
   const live = isLive(artifact);
   const pending = hasPendingChanges(artifact);
@@ -91,6 +93,9 @@ export function PublishPanel({ artifact, onClose, onDone }: {
       onDone(`Live at ${full}`);
     } catch (e) {
       setError(plainError(e, "It didn't go live. Nothing changed; try again."));
+      // The server may have changed the piece's state without returning an address: re-read it so
+      // the Studio shows what is actually stored, not the state from before the click.
+      if (e instanceof PublishUnverified) onRefresh?.();
     } finally {
       setBusy(false);
     }

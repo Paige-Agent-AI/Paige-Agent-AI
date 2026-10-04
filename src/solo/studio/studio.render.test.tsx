@@ -210,6 +210,25 @@ describe("Vibe Studio project workspace", () => {
     expect(text()).not.toContain("It's live");
   });
 
+  it("a publish that returns no public address claims nothing and re-reads the piece", async () => {
+    const { PublishUnverified } = await import("./studio-data");
+    h.manifest = [{ kind: "form", id: "f-1", title: "New client intake" }];
+    h.form = FORM;
+    h.sessions = [{ id: "s-1", title: "Client intake", seedBrief: null, artifacts: h.manifest, updatedAt: "2026-10-03T12:00:00Z" }];
+    h.publishError = new PublishUnverified("The publish didn't confirm a public address, so it may not be live. Check the project before sharing a link.");
+    await mount();
+    await act(async () => { [...host.querySelectorAll(".vs-card")][0]!.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+    await flush();
+    const readsBefore = h.versionReads;
+    await act(async () => { button("Publish")!.click(); });
+    await act(async () => { button("Publish now")!.click(); });
+    await flush();
+    expect(text()).toContain("didn't confirm a public address");
+    expect(text()).not.toContain("It's live");
+    // The server may have changed state: the piece and its timeline are read again.
+    expect(h.versionReads).toBeGreaterThan(readsBefore);
+  });
+
   it("the timeline restores an earlier version into the working copy", async () => {
     h.manifest = [{ kind: "form", id: "f-1", title: "New client intake" }];
     h.form = FORM;

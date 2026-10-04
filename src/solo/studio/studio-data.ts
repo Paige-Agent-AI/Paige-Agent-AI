@@ -37,6 +37,9 @@ export interface StudioVersion {
 
 /** A sentence written for the owner. plainError passes it through unchanged. */
 export class Said extends Error {}
+/** The publish call returned, but its readback did not prove a live public address. The server
+ *  may already have changed the piece's state, so the caller re-reads it. */
+export class PublishUnverified extends Said {}
 
 /** A refusal the owner can read: our own sentence, or the server's without its machine code.
  *  Anything else (a dropped connection, a raw database message) becomes the fallback. */
@@ -389,7 +392,7 @@ export async function publishArtifact(kind: ArtifactKind, id: string): Promise<P
   const url = row && typeof row.url === "string" ? row.url.trim() : "";
   const at = row && typeof row.published_at === "string" ? row.published_at.trim() : "";
   if (!row || row.status !== LIVE_STATUS[kind] || !at || !url) {
-    throw new Said("The publish didn't confirm a public address, so it may not be live. Check the project before sharing a link.");
+    throw new PublishUnverified("The publish didn't confirm a public address, so it may not be live. Check the project before sharing a link.");
   }
   return { url };
 }

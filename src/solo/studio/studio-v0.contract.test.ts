@@ -130,3 +130,16 @@ describe("content_save — its audit row names the table it writes", () => {
     expect(chat).not.toContain('content_save: "studio_artifact_versions"');
   });
 });
+
+describe("Review fixes — the Studio canvas hint and the audit label", () => {
+  it("never steers the design agent to document_generate from the canvas hint", () => {
+    const hint = between('if (canvasArtifact && canvasArtifact.kind === "document") {', '} else if (canvasArtifact && canvasArtifact.kind === "content") {');
+    expect(hint).not.toContain('"document_generate"');
+    expect(hint).toContain("Documents can't be revised in this Studio session");
+  });
+  it("labels a run studio_session_auto only when the Studio lift actually changed the lane", () => {
+    expect(chat).toContain('approvalChannel.set(tc.id, studioLifted ? "studio_session_auto" : "standing_autonomy_setting");');
+    const lift = between("const STUDIO_AUTO_TOOLS = new Set([", "studioLifted = true;");
+    expect(lift).toContain('autoMode = "auto";');
+  });
+});

@@ -5204,9 +5204,16 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
               content: `CANVAS STATE — the artifact currently on the canvas is a ${canvasArtifact.kind} (id ${canvasArtifact.id}). If the user is changing THAT ${canvasArtifact.kind}, pass ${idArg}:"${canvasArtifact.id}" to ${saveTool} so it updates in place and keeps its timeline. If they want a new, separate ${canvasArtifact.kind}, omit ${idArg}.`,
             });
           }
-          if (canvasArtifact && (canvasArtifact.kind === "content" || canvasArtifact.kind === "document")) {
-            const canvasLabel = canvasArtifact.kind === "document" ? "document" : "image";
-            const canvasTool = canvasArtifact.kind === "document" ? "document_generate" : "generate_image";
+          if (canvasArtifact && canvasArtifact.kind === "document") {
+            // document_generate is not offered in Studio (it has no Studio execution path), so the
+            // hint must not steer the design agent to it.
+            aiMessages.splice(2, 0, {
+              role: "system",
+              content: `CANVAS STATE — the artifact currently on the canvas is a document (content id ${canvasArtifact.id}). Documents can't be revised in this Studio session; if the user asks to change it, say so plainly in one line.`,
+            });
+          } else if (canvasArtifact && canvasArtifact.kind === "content") {
+            const canvasLabel = "image";
+            const canvasTool = "generate_image";
             aiMessages.splice(2, 0, {
               role: "system",
               content: `CANVAS STATE — the artifact currently on the canvas is a ${canvasLabel} (content id ${canvasArtifact.id}). If the user is refining, adjusting, or regenerating THAT ${canvasLabel}, pass target_content_id:"${canvasArtifact.id}" to ${canvasTool} so it updates in place and keeps its version history. If they instead want a brand-new/additional ${canvasLabel}, OMIT target_content_id so it's created as a separate asset — never overwrite the on-canvas one when they asked for a new one.`,
@@ -8949,6 +8956,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           }
 
           let autoMode = await resolveToolAutonomy(tc.function.name);
+          let studioLifted = false; // true only when the Studio lift below changed confirm → auto
           const isPipelineArchive = tc.function.name === "pipeline_configure" && gateArgs?.command?.type === "archive-pipeline";
           const isPipelineFolderArchive = tc.function.name === "pipeline_configure" && gateArgs?.command?.type === "archive-folder";
           if (isPipelineArchive) {
@@ -9081,6 +9089,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             && (await ceilingAllowsAuto(tc.function.name))
           ) {
             autoMode = "auto";
+            studioLifted = true;
           }
           // ── THE CLASSIFICATION OUTRANKS THE SWITCH ──────────────────────────────────────────
           //
@@ -9332,8 +9341,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // `auto` — the operator's standing decision in their autonomy settings, not an
             // approval given in this conversation. Recorded as what it is, so a later reader can
             // tell "they said yes to this" apart from "they had already said yes to all of these".
-            approvalChannel.set(tc.id, studioSessionId && STUDIO_AUTO_TOOLS.has(tc.function.name)
-              ? "studio_session_auto" : "standing_autonomy_setting");
+            approvalChannel.set(tc.id, studioLifted ? "studio_session_auto" : "standing_autonomy_setting");
           }
           // autoMode === 'auto', or the approval matched this exact call → fall through to execute.
         }
@@ -12399,18 +12407,33 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   form_id: _formId,
                   steps: _steps.length,
                   status: "draft",
-                  note: "Funnel saved as a draft — the entry page, the intake form, and the flow are wired. Publish it to take the whole sequence live.",
+                  note: _formId
+                  ? "Funnel saved as a draft — the entry page, the intake form, and the flow are wired. Publish it to take the whole sequence live."
+                  : "Funnel saved as a draft — the entry page and the flow are wired (no intake form was requested). Publish it to take the whole sequence live.",
                 };
               } catch (_fbErr) {
                 const _why = _fbErr instanceof Error ? _fbErr.message : String((_fbErr as any)?.message ?? _fbErr);
                 if (!_fbWritten.page_id) throw _fbErr; // nothing landed: the ordinary failure path
-                result = {
-                  success: false,
-                  outcome: "partial",
-                  error: `The funnel wasn't finished: ${_why}`,
-                  saved_drafts: _fbWritten,
-                  note: "Some pieces were saved as drafts but the funnel itself was not built. Say exactly which pieces were saved, that nothing went live, and offer to try the build again.",
-                };
+                // A transport failure is not the database answering: the later write may have landed.
+                // Then the honest outcome is UNKNOWN — never "not built", which would invite a
+                // duplicate on retry.
+                const _unknown = thrownOutcomeUnknown(_fbErr);
+                result = _unknown
+                  ? {
+                    success: false,
+                    outcome: "unknown",
+                    outcome_unknown: true,
+                    error: `The funnel build couldn't be confirmed: ${_why}`,
+                    saved_drafts: _fbWritten,
+                    note: OUTCOME_UNKNOWN_NOTE,
+                  }
+                  : {
+                    success: false,
+                    outcome: "partial",
+                    error: `The funnel wasn't finished: ${_why}`,
+                    saved_drafts: _fbWritten,
+                    note: "Some pieces were saved as drafts in this project but the funnel itself was not built. Say exactly which pieces were saved, that nothing went live, and offer to try the build again.",
+                  };
               }
             } else if (tc.function.name === "growth_funnel_publish") {
               // Going-live (confirm-gated above). One call: the funnel publish puts every page and
@@ -12971,6 +12994,18 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                     });
                   } catch (ve) { console.warn("[paige] studio artifact version save failed (non-fatal):", (ve as Error)?.message); }
                 } catch (e) { console.warn("[paige] studio artifact link failed:", (e as Error)?.message); }
+              }
+            }
+            // A funnel build that stopped part-way still saved drafts. They belong to this project so
+            // the owner can find them in its rail (§19) — linked and versioned, not opened on the canvas.
+            if (studioSessionId && tc.function.name === "growth_funnel_build" && result && !(result as any).success && (result as any).saved_drafts) {
+              const _sd = (result as any).saved_drafts as { page_id?: string; form_id?: string };
+              for (const [kind, id] of [["page", _sd.page_id], ["form", _sd.form_id]] as const) {
+                if (!id) continue;
+                try {
+                  await supabaseClient.rpc("link_session_artifact", { p_session_id: studioSessionId, p_kind: kind, p_artifact_id: id, p_tenant_id: null });
+                  await supabaseClient.rpc("save_artifact_version", { p_session_id: studioSessionId, p_kind: kind, p_artifact_id: id, p_tenant_id: null });
+                } catch (le) { console.warn("[paige] studio partial-funnel link failed (non-fatal):", (le as Error)?.message); }
               }
             }
 

@@ -1088,7 +1088,8 @@
         "search + purchase phone numbers",
         "operator voice both directions (live)",
         "send/receive SMS once A2P approves",
-        "per-tenant subaccount routing"
+        "per-tenant subaccount routing",
+        "governed issued-invoice SMS delivery with exact recipient consent/A2P readiness; provider acceptance and authenticated proof remain PROOF_OWED"
       ],
       "connection_prerequisite": "Master account + per-tenant subaccount (provisioned at Twilio console); A2P registration for tenant SMS.",
       "required_scopes": [
@@ -1265,7 +1266,7 @@
         "verify a sending domain",
         "prepare and send an issued invoice through high-risk canonical billing_send_invoice approval; authenticated/provider proof remains PROOF_OWED"
       ],
-      "connection_prerequisite": "Verified sending domain/identity per the comms substrate. Invoice sending additionally requires an active same-tenant email connector with an explicit from_address, issued immutable invoice and positive current remaining obligation; no platform sender fallback.",
+      "connection_prerequisite": "Verified sending domain/identity per the comms substrate. Invoice readiness is checked per issued invoice and recipient; metadata readiness alone does not verify provider execution. Invoice sending additionally requires an active same-tenant email connector with an explicit from_address, issued immutable invoice and positive current remaining obligation; no platform sender fallback.",
       "required_scopes": [
         "Resend API (send / domains)"
       ],

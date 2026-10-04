@@ -137,6 +137,19 @@ function parseCatalogue(sql) {
   return [...sql.slice(from, to).matchAll(/\('([a-z0-9_]+)',/g)].map((m) => m[1]);
 }
 
+/** An additive wrapper preserves the exact predecessor before returning new rows.
+ * This is deliberately narrow: a filtered/conditional forwarding call cannot clear erasure.
+ */
+export function preservesCataloguePredecessor(sql) {
+  const code=sql.replace(/--[^\n]*/g,'').replace(/\/\*[\s\S]*?\*\//g,'');
+  const rename=code.match(/ALTER\s+FUNCTION\s+public\.list_tool_autonomy\(uuid\)\s+RENAME\s+TO\s+([a-z0-9_]+)\s*;/i);
+  if(!rename || declarationCount(code)!==1)return false;
+  const name=rename[1];
+  const body=code.slice(code.search(DECLARES));
+  return new RegExp('BEGIN\\s+RETURN\\s+QUERY\\s+SELECT\\s+\\*\\s+FROM\\s+public\\.'+name+'\\(_tenant_id\\)\\s*;','i').test(body)
+    && new RegExp('REVOKE\\s+ALL\\s+ON\\s+FUNCTION\\s+public\\.'+name+'\\(uuid\\)\\s+FROM\\s+PUBLIC,anon,authenticated\\s*;','i').test(code);
+}
+
 /** More than one declaration in one file is legal SQL and a trap for any single-body reader. */
 export const declarationCount = (sql) => [...sql.matchAll(new RegExp(DECLARES.source, "gi"))].length;
 
@@ -251,7 +264,8 @@ function catalogueDeclarations() {
       console.error("  deleting it — a guard that cannot find its subject must fail loudly.");
       process.exit(1);
     }
-    decls.push({ file: f, sql, keys: new Set(keys) });
+    const inherited=preservesCataloguePredecessor(sql)?[...(decls.at(-1)?.keys??[])]:[];
+    decls.push({ file: f, sql, keys: new Set([...inherited,...keys]) });
   }
   if (!decls.length) {
     console.error("✗ tool-catalogue-lint: no migration declares list_tool_autonomy.");
@@ -292,6 +306,12 @@ function selfTest() {
   });
 
   // ── the parser ─────────────────────────────────────────────────────────────────────────────────
+  const wrapper="ALTER FUNCTION public.list_tool_autonomy(uuid) RENAME TO _prior_catalogue; REVOKE ALL ON FUNCTION public._prior_catalogue(uuid) FROM PUBLIC,anon,authenticated; CREATE OR REPLACE FUNCTION public.list_tool_autonomy(_tenant_id uuid) AS $$ BEGIN RETURN QUERY SELECT * FROM public._prior_catalogue(_tenant_id); WITH catalog(tool_key,label) AS (VALUES ('new_action','New')) SELECT * FROM catalog; END $$;";
+  check("additive wrapper forwards full private predecessor",preservesCataloguePredecessor(wrapper));
+  check("NEGATIVE: filtered predecessor cannot preserve rows",!preservesCataloguePredecessor(wrapper.replace('(_tenant_id);','(_tenant_id) WHERE false;')));
+  check("NEGATIVE: conditional predecessor cannot preserve rows",!preservesCataloguePredecessor(wrapper.replace('BEGIN RETURN','BEGIN IF false THEN RETURN')));
+  check("NEGATIVE: a comment cannot establish forwarding",!preservesCataloguePredecessor(wrapper.replace('RETURN QUERY SELECT * FROM public._prior_catalogue(_tenant_id);','-- RETURN QUERY SELECT * FROM public._prior_catalogue(_tenant_id);\n')));
+
   check("parses the VALUES rows of a declaration",
     JSON.stringify(parseCatalogue(decl("a.sql", ["crm_create_contact", "crm_add_note"]).sql))
       === JSON.stringify(["crm_create_contact", "crm_add_note"]));

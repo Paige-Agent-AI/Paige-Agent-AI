@@ -5,6 +5,7 @@ export const SALES_INVOICE_ACTIONS = {
   "invoice.void": "sales_void_invoice",
   "invoice.link_create": "sales_create_invoice_link",
   "invoice.email_send": "billing_send_invoice",
+  "invoice.sms_send": "billing_send_invoice",
 } as const;
 
 export type SalesInvoiceAction = keyof typeof SALES_INVOICE_ACTIONS;
@@ -31,10 +32,15 @@ export function parseSalesInvoiceCommand(value: unknown): SalesInvoiceCommand {
     if (typeof item !== "string" || item.length > max || (required && !item.trim())) return invalid();
     return item;
   };
-  if (action === "invoice.email_send") {
+  if (action === "invoice.email_send" || action === "invoice.sms_send") {
     allowed.add("connector_id");
-    if (typeof v.connector_id !== "string" || !UUID.test(v.connector_id)) return invalid();
-    out.connector_id = v.connector_id.toLowerCase();
+    if (action === "invoice.sms_send" && v.connector_id !== undefined && v.connector_id !== null) return invalid();
+    if (action === "invoice.sms_send" && (v.connector_id === undefined || v.connector_id === null)) {
+      out.connector_id = null;
+    } else {
+      if (typeof v.connector_id !== "string" || !UUID.test(v.connector_id)) return invalid();
+      out.connector_id = v.connector_id.toLowerCase();
+    }
   } else if (action === "invoice.record_manual_payment") {
     for (const key of ["amount_cents", "currency", "method", "received_at"]) allowed.add(key);
     if (!Number.isSafeInteger(v.amount_cents) || (v.amount_cents as number) <= 0 || (v.amount_cents as number) > 2147483647 || v.currency !== "usd") return invalid();

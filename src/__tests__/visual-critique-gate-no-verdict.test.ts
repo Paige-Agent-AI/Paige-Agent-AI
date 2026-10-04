@@ -38,6 +38,13 @@ describe("visual-critique-gate and NO_VERDICT", () => {
       expect(out.critique?.ok ? out.critique.verdict : undefined).toBeUndefined();
     });
 
+  it("a disabled answer (the edge flag is off) is no review: original kept, nothing regenerated", async () => {
+    const { out, regenerate, original } = await loop({ ok: false, status: "disabled", message: "Image critique is switched off" });
+    expect(regenerate).not.toHaveBeenCalled();
+    expect(out.image).toBe(original);
+    expect(out.critique?.ok).toBe(false);
+  });
+
   it("an ITERATE verdict still regenerates (the loop itself is unchanged)", async () => {
     const { regenerate } = await loop({ ok: true, verdict: "ITERATE", refined_prompt: "bolder headline", spent_usd: 0.01 });
     expect(regenerate).toHaveBeenCalledWith("bolder headline");

@@ -16,13 +16,15 @@ import GrowthPageRenderer from "./GrowthPageRenderer";
 const state = vi.hoisted(() => ({
   rpc: vi.fn(),
   rows: {} as Record<string, unknown>,
+  errors: {} as Record<string, { message: string } | "throw">,
 }));
 
 function query(table: string) {
-  const result = { data: state.rows[table] ?? null, error: null };
+  const err = state.errors[table];
+  const result = { data: err ? null : state.rows[table] ?? null, error: err && err !== "throw" ? err : null };
   const b: Record<string, unknown> = {};
   for (const m of ["select", "eq"]) b[m] = () => b;
-  b.maybeSingle = () => Promise.resolve(result);
+  b.maybeSingle = () => (err === "throw" ? Promise.reject(new Error("fetch failed")) : Promise.resolve(result));
   return b;
 }
 
@@ -45,6 +47,7 @@ beforeEach(() => {
   if (!Element.prototype.scrollTo) Element.prototype.scrollTo = () => {};
   state.rpc.mockReset();
   state.rows = { tenants: { id: "t1" }, growth_pages: PAGE };
+  state.errors = {};
   container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
@@ -98,6 +101,23 @@ describe("published page readiness for URL-mode screenshots", () => {
     await mount();
     expect(container.querySelector("[data-growth-page-ready]")?.getAttribute("data-growth-page-ready")).toBe("missing");
     expect(state.rpc).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["the tenant lookup returns an error", "tenants", { message: "JWT expired" }],
+    ["the page lookup returns an error", "growth_pages", { message: "upstream timeout" }],
+    ["the tenant lookup throws", "tenants", "throw"],
+    ["the page lookup throws", "growth_pages", "throw"],
+  ] as const)("%s → state=error and a try-again message, never 'missing' or 'Page not found'", async (_label, table, err) => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    state.errors = { [table]: err };
+    await mount();
+    expect(container.querySelector("[data-growth-page-ready]")?.getAttribute("data-growth-page-ready")).toBe("error");
+    expect(container.textContent).toContain("This page didn't load");
+    expect(container.textContent).not.toContain("Page not found");
+    expect(state.rpc).not.toHaveBeenCalled();
+    expect(log).toHaveBeenCalled();
+    log.mockRestore();
   });
 });
 

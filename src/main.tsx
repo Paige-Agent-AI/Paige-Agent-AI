@@ -7,7 +7,8 @@ import { initObservability } from "./lib/observability";
 
 // Initialize Sentry + PostHog as early as possible (no-ops when env keys missing).
 // /render-frame is a machine surface (paige-browser screenshots of draft pages): no visitor to observe,
-// and a draft's content must not leave the frame through analytics.
+// and a draft's content must not leave the frame through analytics. Plausible, the one third-party
+// script index.html loads, is skipped on the same route by its loader there.
 if (!/^\/(?:invoice|render-frame)\/?$/i.test(window.location.pathname)) initObservability();
 
 

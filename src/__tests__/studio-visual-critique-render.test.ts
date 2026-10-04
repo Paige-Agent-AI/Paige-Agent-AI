@@ -125,7 +125,7 @@ function run(body: Record<string, unknown>, o: Opts = {}) {
 const PAGE = { blocks: [{ type: "hero", title: "Get your weekends back" }], theme: { primary: "#1f2a5a" }, tenant_name: "Northwind", junk: "dropped" };
 const browserCalls = (seen: { fetches: Array<{ url: string }> }) => seen.fetches.filter((f) => f.url.startsWith(BROWSER));
 
-describe("the render path is gated by STUDIO_VISUAL_CRITIQUE_ENABLED", () => {
+describe("both paths are gated by STUDIO_VISUAL_CRITIQUE_ENABLED", () => {
   it("flag off → status disabled, no paige-browser call, no row, no model", async () => {
     const { seen, res } = run({ render: { page: PAGE } }, { env: BROWSER_FLAG_OFF });
     const r = await res;
@@ -136,8 +136,21 @@ describe("the render path is gated by STUDIO_VISUAL_CRITIQUE_ENABLED", () => {
     expect(seen.model).toEqual([]);
   });
 
-  it("flag off → the image_url path still critiques (it is not gated)", async () => {
-    const { res } = run({ image_url: "https://img.test/a.png" }, { env: BROWSER_FLAG_OFF });
+  it.each([["unset", BASE_ENV], ["off with the browser configured", BROWSER_FLAG_OFF], ["not exactly true", { ...BASE_ENV, STUDIO_VISUAL_CRITIQUE_ENABLED: "yes" }]])(
+    "flag %s → the image_url path is disabled too: no image fetch, no throttle read, no model, no row", async (_label, env) => {
+      const { seen, res } = run({ image_url: "https://img.test/a.png" }, { env });
+      const r = await res;
+      expect(r.status).toBe(200);
+      expect(r.json).toMatchObject({ ok: false, status: "disabled" });
+      expect(seen.fetches).toEqual([]);
+      expect(seen.reads).toEqual([]);
+      expect(seen.model).toEqual([]);
+      expect(seen.inserts).toEqual([]);
+      expect(seen.dnsChecks).toBe(0);
+    });
+
+  it("flag on → the image_url path critiques", async () => {
+    const { res } = run({ image_url: "https://img.test/a.png" }, { env: FLAG_ON });
     expect((await res).json).toMatchObject({ ok: true, verdict: "ITERATE" });
   });
 });
@@ -279,6 +292,14 @@ describe("§33 caps use server-derived loop state, not the caller's word", () =>
     const r = await res;
     expect(r.json).toMatchObject({ capped: true });
     expect(r.json.loop).toMatchObject({ spent_derived: 2.1, key: "session_id", iteration_derived: 1 });
+  });
+
+  it.each(["abc", "", "-1", "NaN"])("a malformed cap env (%j) falls back to the defaults instead of switching the caps off", async (bad) => {
+    const env = { ...WITH_BROWSER, STUDIO_CRITIQUE_MAX_ITERATIONS: bad, STUDIO_CRITIQUE_COST_CAP_USD: bad };
+    const iter = await run({ image_url: "https://img.test/a.png", deliverable_id: DELIVERABLE }, { env, loopRows: ran(3) }).res;
+    expect(iter.json).toMatchObject({ verdict: "SHIP", capped: true, iteration: 3 });
+    const cost = await run({ image_url: "https://img.test/a.png", deliverable_id: DELIVERABLE }, { env, loopRows: [{ verdict: "ITERATE", cost_estimate_usd: 2 }] }).res;
+    expect(cost.json).toMatchObject({ verdict: "SHIP", capped: true });
   });
 
   it("NO_VERDICT and capped rows are not counted as iterations", async () => {

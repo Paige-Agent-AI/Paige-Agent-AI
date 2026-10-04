@@ -67,9 +67,24 @@
     </script>
 
 
-    <!-- Privacy-friendly analytics by Plausible -->
-    <script defer data-domain="paigeagent.ai" src="https://plausible.io/js/script.js"></script>
-    <script async src="https://plausible.io/js/pa-6X7R-SykdBdjPO8QpOaQD.js"></script>
+    <!-- Privacy-friendly analytics by Plausible. Loaded from script, not static tags, so it can be
+         skipped on /render-frame: that machine surface (paige-browser screenshots of unpublished
+         drafts) exposes the draft as window.__PAIGE_RENDER_PAYLOAD__, and no third-party script may
+         run beside it. src/main.tsx skips Sentry/PostHog on the same route. -->
+    <script>
+      (function () {
+        if (/^\/render-frame(?:\/|$)/i.test(window.location.pathname)) return;
+        var tracker = document.createElement("script");
+        tracker.defer = true;
+        tracker.setAttribute("data-domain", "paigeagent.ai");
+        tracker.src = "https://plausible.io/js/script.js";
+        document.head.appendChild(tracker);
+        var pa = document.createElement("script");
+        pa.async = true;
+        pa.src = "https://plausible.io/js/pa-6X7R-SykdBdjPO8QpOaQD.js";
+        document.head.appendChild(pa);
+      })();
+    </script>
     <script>
       window.plausible = window.plausible || function () {
         (window.plausible.q = window.plausible.q || []).push(arguments);

@@ -13,7 +13,10 @@
 //   3. mobile preset — 390px wide, touch + mobile UA visible to the page.
 //   4. the slice cap truncates honestly (truncated:true, never a pretend-complete capture).
 //   5. url mode — allowlisted origin renders; the [data-app-ready] default ready selector works.
-//   6. honest failures — not_ready, http_404, off-origin redirect: ok:false, a reason, NO image.
+//   6. honest failures — not_ready (incl. a slow page where only a third-party script threw),
+//      render_crashed (the app's own throw), render_failed (the page's data lookup errored), http_404,
+//      off-origin redirect: ok:false, a reason, NO image. The url-mode scroll walk is bounded, and a
+//      run with no settle budget left skips the network-idle wait.
 //   7. refusals — origin outside the allowlist, a private host even when allowlisted, payload over the
 //      cap, unknown viewport, both/neither targets.
 //
@@ -71,6 +74,9 @@ const NEVER_READY_HTML = `<!doctype html><body><div style="height:1200px">still 
 async function instrument(ctx) {
   await ctx.route(`${THIRD_PARTY}/**`, (route) => {
     // The off-origin redirect target even carries a ready marker: only the origin re-check can stop it.
+    if (new URL(route.request().url()).pathname === "/throws.js") {
+      return route.fulfill({ status: 200, contentType: "application/javascript", body: `setTimeout(() => { throw new Error("analytics vendor exploded"); }, 10);` });
+    }
     if (new URL(route.request().url()).pathname === "/elsewhere") {
       return route.fulfill({ status: 200, contentType: "text/html", body: `<!doctype html><body><div style="height:900px">elsewhere</div><div data-app-ready hidden></div><div data-growth-page-ready="true" hidden></div></body>` });
     }
@@ -85,6 +91,14 @@ async function instrument(ctx) {
     if (pathname === "/p/demo/mounted-only") return route.fulfill({ status: 200, contentType: "text/html", body: `<!doctype html><body><div data-app-ready hidden></div><div style="height:1200px">skeleton</div></body>` });
     if (pathname === "/p/demo/gone") return route.fulfill({ status: 200, contentType: "text/html", body: `<!doctype html><body><h1>Page not found</h1><div data-app-ready hidden></div><div data-growth-page-ready="missing" hidden></div></body>` });
     if (pathname === "/p/demo/throws") return route.fulfill({ status: 200, contentType: "text/html", body: `<!doctype html><body><div style="height:900px">half</div><script>setTimeout(() => { throw new Error("StatsBlock: items is undefined"); }, 20)</script></body>` });
+    // The page's data lookup FAILED (GrowthPageRenderer's state="error") — not a missing page.
+    if (pathname === "/p/demo/load-error") return route.fulfill({ status: 200, contentType: "text/html", body: `<!doctype html><body><h1>This page didn't load</h1><div data-app-ready hidden></div><div data-growth-page-ready="error" hidden></div></body>` });
+    // Slow (never ready) AND a third-party script throws on it: the app did not crash — not_ready.
+    if (pathname === "/p/demo/slow-vendor-throws") return route.fulfill({ status: 200, contentType: "text/html", body: `<!doctype html><body><div style="height:1200px">still loading…</div><script src="${THIRD_PARTY}/throws.js"></script></body>` });
+    // 200,000px tall: walking all of it at 60ms a viewport takes ~13s, far past what is captured.
+    if (pathname === "/p/demo/very-tall") return route.fulfill({ status: 200, contentType: "text/html", body: `<!doctype html><body style="margin:0"><div style="height:200000px;background:linear-gradient(#246,#642)"></div><div data-growth-page-ready="true" hidden></div></body>` });
+    // Ready at once, but a request started after load never answers, so the network is never idle.
+    if (pathname === "/p/demo/busy") return route.fulfill({ status: 200, contentType: "text/html", body: `<!doctype html><body style="margin:0"><div style="height:900px;background:#462">busy</div><div data-growth-page-ready="true" hidden></div><script>addEventListener("load", () => { fetch("/p/demo/hang").catch(() => {}); });</script></body>` });
     // Never answers: only the deadline can end this run.
     if (pathname === "/p/demo/hang") return new Promise(() => {});
     // A client-side redirect lands AFTER page.goto resolves (a fulfilled 30x cannot be driven in this
@@ -174,6 +188,8 @@ try {
     ["app mounted but page data never settled", "/p/demo/mounted-only", "not_ready"],
     ["published page missing", "/p/demo/gone", "page_not_found"],
     ["page threw and never became ready", "/p/demo/throws", "render_crashed"],
+    ["slow page where only a third-party script threw", "/p/demo/slow-vendor-throws", "not_ready"],
+    ["published page's data lookup failed", "/p/demo/load-error", "render_failed"],
     ["404", "/p/demo/missing", "http_404"],
     ["off-origin redirect", "/p/demo/away", "blocked_redirect"],
   ]) {
@@ -210,6 +226,17 @@ try {
     },
   });
   check(`deadline timer closes a busy context mid-run → run_cap_exceeded (${Date.now() - t2}ms)`, rt.ok === false && rt.reason === "run_cap_exceeded" && closedWhileBusy === true, JSON.stringify({ rt, closedWhileBusy }));
+
+  // ── 6c-ii: the url-mode scroll walk is bounded by maxSlices × sliceHeight ─────────────────────
+  const t3 = Date.now();
+  const re = await renderCapture(browser, await validateRenderRequest({ url: `${ORIGIN}/p/demo/very-tall`, maxSlices: 2 }, cfg), cfg, { instrumentContext: instrument, deadline: Date.now() + 9000 });
+  check(`200,000px page: the walk stops at the capture bound, 2 slices, truncated (${Date.now() - t3}ms)`, re.ok === true && re.slices.length === 2 && re.truncated === true, JSON.stringify({ ...re, slices: re.slices?.length }));
+
+  // ── 6c-iii: no time left for the network-idle settle → it is skipped, not waited on forever ──
+  // (Playwright reads timeout 0 as "no timeout"; with exactly the capture reserve left, the old code
+  // waited on a never-idle network until the deadline closed the context.)
+  const rb = await renderCapture(browser, await validateRenderRequest({ url: `${ORIGIN}/p/demo/busy` }, cfg), cfg, { instrumentContext: instrument, deadline: Date.now() + 4000 });
+  check("never-idle page with no settle budget still captures", rb.ok === true && rb.slices.length === 1, JSON.stringify({ ...rb, slices: rb.slices?.length }));
 
   // ── 6d: the caller may ask for fewer slices; a bigger ask is clamped ─────────────────────────
   const r2 = await renderCapture(browser, await validateRenderRequest({ page: { blocks: blocks(5) }, maxSlices: 2 }, cfg), cfg, { instrumentContext: instrument });

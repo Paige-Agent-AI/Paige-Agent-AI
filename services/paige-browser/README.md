@@ -55,7 +55,8 @@ Body — exactly one target:
   exact-origin match) that also passes the SSRF guard. Readiness default: `[data-growth-page-ready]`,
   which `GrowthPageRenderer` sets only once the page row AND its brand (or the brand's failure) have
   settled — `="missing"` when there is no such published page, which `/render` answers as
-  `page_not_found`. (The app-wide `[data-app-ready]` fires at mount, before the data, so it is not the
+  `page_not_found`; `="error"` when the lookup itself failed, answered as `render_failed` (whether the
+  page exists is unknown). (The app-wide `[data-app-ready]` fires at mount, before the data, so it is not the
   default.) The brand lookup `peek_tenant_portal_brand` is sent as a GET (`rpc(..., { get: true })`;
   the function is STABLE), so this host's read-only egress fence — which aborts every POST — lets it
   through. It never renders an arbitrary URL — that is `/browse-public-url`'s job.
@@ -85,8 +86,9 @@ Response: `{ ok:true, width, full_height, slices:[{ y, height, jpeg_base64 }], t
 `PAIGE_RENDER_MAX_SLICES`, `PAIGE_RENDER_JPEG_QUALITY`). A 2× full-page PNG is 6–7 MB, over the edge
 function's 4 MB image budget; slices are sized for the consumer. `truncated:true` says the page ran
 past the cap. Failures are `{ ok:false, reason, error }` and never carry an image: `not_ready`,
-`render_crashed` (the frame's error boundary fired, or the page threw — `pageerror` — and never became
-ready), `page_not_found`, `http_<status>`, `blocked_redirect` (checked after navigation, after ready,
+`render_crashed` (the frame's error boundary fired, or the app's OWN script threw — a `pageerror` whose
+stack is on the Paige origin — and the page never became ready; a third-party script's throw on a page
+that never got ready is `not_ready` with `page_errors` attached), `page_not_found`, `render_failed`, `http_<status>`, `blocked_redirect` (checked after navigation, after ready,
 and after capture), `navigation_failed`, `empty_page`, `slice_too_large`, `run_cap_exceeded`.
 Refusals are 4xx with a reason: `bad_request`, `invalid_viewport`, `invalid_max_slices`, `invalid_url`,
 `origin_not_allowed` (403), `blocked:<ssrf reason>`, `invalid_page`, `payload_too_large` (413).

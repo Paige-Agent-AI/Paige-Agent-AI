@@ -2,9 +2,11 @@
 --
 -- WHY THIS EXISTS (CLAUDE.md §13/§33): studio-visual-critique wrote a log row only when a verdict
 -- came back. An attempt that produced NO verdict — the page renderer unconfigured, a render that
--- failed, an image that could not be fetched, the vision model unconfigured — left no trace, so the
--- audit showed successes and hid every failed attempt. The function now records those attempts as
--- verdict 'NO_VERDICT' with the cause in findings.status. The original CHECK allowed only
+-- failed, an image that could not be fetched, the vision model unconfigured, or a model call that
+-- threw or replied unreadably (that last case can follow a model call that cost money, and its row
+-- carries the estimate) — left no trace, so the audit showed successes and hid every failed attempt.
+-- The function now records those attempts as verdict 'NO_VERDICT' with one of six reason codes in
+-- findings.reason (findings.detail carries the cause text). The original CHECK allowed only
 -- SHIP/ITERATE/BLOCK, so this widens it by exactly one value.
 --
 -- ADDITIVE ONLY: every existing row still satisfies the new constraint; no row is rewritten; the
@@ -22,7 +24,7 @@ ALTER TABLE public.studio_visual_critique_log
   CHECK (verdict IN ('SHIP', 'ITERATE', 'BLOCK', 'NO_VERDICT'));
 
 COMMENT ON COLUMN public.studio_visual_critique_log.verdict IS
-  'SHIP | ITERATE | BLOCK — a critique that ran; NO_VERDICT — an attempt that produced no screenshot or no model call (cause in findings.status). Never a fabricated verdict.';
+  'SHIP | ITERATE | BLOCK — a critique that ran; NO_VERDICT — an attempt that produced no verdict: no screenshot or image, no configured model, or a model call that failed or replied unreadably (that call may have cost money — see cost_estimate_usd). Reason code in findings.reason. Never a fabricated verdict.';
 COMMENT ON COLUMN public.studio_visual_critique_log.image_source IS
   '''image_url'' (an existing raster) or ''render'' (paige-browser /render — the one browser host).';
 COMMENT ON COLUMN public.studio_visual_critique_log.cost_estimate_usd IS

@@ -250,7 +250,7 @@ BEGIN
   PERFORM pg_temp.chk(a->>'cons' IS DISTINCT FROM b->>'cons', 'the constraint set did change (only the verdict check, per cons_other)');
   PERFORM pg_temp.chk((SELECT array_agg(k2 ORDER BY k2) FROM jsonb_object_keys(a->'comments') k2) = ARRAY['cost_estimate_usd', 'image_source', 'verdict'],
     'the only other change: comments on verdict, image_source and cost_estimate_usd');
-  PERFORM pg_temp.chk(a->'comments'->>'verdict' LIKE '%NO_VERDICT%Never a fabricated verdict.', 'the verdict comment names NO_VERDICT');
+  PERFORM pg_temp.chk(a->'comments'->>'verdict' LIKE '%NO_VERDICT%findings.reason%Never a fabricated verdict.', 'the verdict comment names NO_VERDICT and where its reason code lives (findings.reason)');
   PERFORM pg_temp.chk(a->'comments'->>'image_source' LIKE '%paige-browser /render%', 'the image_source comment names paige-browser /render');
   PERFORM pg_temp.chk(a->'comments'->>'cost_estimate_usd' LIKE '%ESTIMATE%never a billed figure.', 'the cost comment labels it an estimate');
   PERFORM pg_temp.chk(NOT has_table_privilege('anon', 'public.studio_visual_critique_log', 'SELECT')
@@ -267,7 +267,7 @@ SET ROLE service_role;
 SELECT set_config('request.jwt.claims', '{"role":"service_role"}', false) IS NOT NULL AS _ \gset
 INSERT INTO public.studio_visual_critique_log (id, tenant_id, artifact_kind, image_source, verdict, findings, low_confidence)
 VALUES ('00000000-0000-4000-8000-0000000c0007', '00000000-0000-4000-8000-00000000d0a1', 'page', 'render', 'NO_VERDICT',
-        '{"status":"renderer_unconfigured"}', false);
+        '{"reason":"screenshot_service_unavailable","detail":"PAIGE_BROWSER_URL / PAIGE_BROWSER_SECRET are not set"}', false);
 RESET ROLE;
 SELECT set_config('request.jwt.claims', '', false) IS NOT NULL AS _ \gset
 
@@ -301,9 +301,9 @@ BEGIN
     = 'err:42501', 'a workspace still cannot insert, NO_VERDICT included (42501)');
   PERFORM pg_temp.chk(pg_temp.as_role('anon', '{"role":"anon"}',
       'SELECT count(*)::text FROM public.studio_visual_critique_log') = 'err:42501', 'anon still reads nothing (42501)');
-  PERFORM pg_temp.chk((SELECT verdict || ':' || (findings->>'status') FROM public.studio_visual_critique_log
-                        WHERE id = '00000000-0000-4000-8000-0000000c0007') = 'NO_VERDICT:renderer_unconfigured',
-    'the service seam wrote a NO_VERDICT row with its cause in findings.status');
+  PERFORM pg_temp.chk((SELECT verdict || ':' || (findings->>'reason') FROM public.studio_visual_critique_log
+                        WHERE id = '00000000-0000-4000-8000-0000000c0007') = 'NO_VERDICT:screenshot_service_unavailable',
+    'the service seam wrote a NO_VERDICT row with its reason code in findings.reason');
 END $$;
 
 -- ═════════════════════════════════════════════════════════════════════════════════════════════════

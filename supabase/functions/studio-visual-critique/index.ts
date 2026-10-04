@@ -17,9 +17,10 @@
 //                 Funnels and forms are REFUSED for render: /render-frame draws one block page, and only
 //                 the published landing page signals that its data has loaded. Critique them through
 //                 image_url, or per landing page.
-//                 The render path runs only when STUDIO_VISUAL_CRITIQUE_ENABLED is "true" — the same flag
-//                 that gates the product loop — so deploying this function does not open paige-browser
-//                 to every workspace owner. Off → `status:"disabled"`, no paige-browser call, no row.
+//                 BOTH paths run only when STUDIO_VISUAL_CRITIQUE_ENABLED is "true" — the same flag that
+//                 gates the product loop — so deploying this function opens neither paige-browser nor a
+//                 frontier vision call to every workspace owner. Off → `status:"disabled"`, no
+//                 paige-browser call, no image fetch, no model call, no row.
 //
 // ── CONTRACT ────────────────────────────────────────────────────────────────
 // POST (JWT or service-role bearer required)
@@ -41,7 +42,7 @@
 //   200 { ok:false, verdict:"NO_VERDICT", reason, message, needs_config, logged, log_error? }
 //        reason ∈ screenshot_service_unavailable | render_failed | screenshot_unavailable |
 //                 image_unavailable | critique_unavailable | critique_failed   (also in findings.reason)
-//   200 { ok:false, status:"disabled", message }   — render path while the flag is off (NO row: never attempted)
+//   200 { ok:false, status:"disabled", message }   — either path while the flag is off (NO row: never attempted)
 //   429 { ok:false, status:"throttled", retry_after_seconds, message } — per-tenant throttle (NO row)
 //   503 { ok:false, status:"throttle_unavailable"|"loop_state_unavailable", message } — fail closed (NO row)
 //   403 { error, forbidden:true } · 500 { error } · 4xx { error }
@@ -82,17 +83,23 @@ const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 // paige-browser — the one browser host. The same two secrets skill-runner already reads.
 const BROWSER_URL = (Deno.env.get("PAIGE_BROWSER_URL") ?? "").replace(/\/+$/, "");
 const BROWSER_SECRET = Deno.env.get("PAIGE_BROWSER_SECRET") ?? "";
-// The render path is live only with the product loop's own flag (read per request, so flipping it
-// needs no deploy).
-const renderEnabled = () => (Deno.env.get("STUDIO_VISUAL_CRITIQUE_ENABLED") ?? "").toLowerCase() === "true";
+// Both critique paths (image_url and render) are live only with the product loop's own flag (read per
+// request, so flipping it needs no deploy).
+const critiqueEnabled = () => (Deno.env.get("STUDIO_VISUAL_CRITIQUE_ENABLED") ?? "").toLowerCase() === "true";
 
 const envInt = (k: string, d: number, lo: number, hi: number) => {
   const n = Math.floor(Number(Deno.env.get(k) ?? ""));
   return Number.isFinite(n) && n > 0 ? Math.min(hi, Math.max(lo, n)) : d;
 };
+// Same contract for a decimal: unset, blank, non-numeric or ≤0 falls back to the default, and the value
+// is clamped — a malformed env var can never become NaN and silently switch a cap off (NaN >= x is false).
+const envNumber = (k: string, d: number, lo: number, hi: number) => {
+  const n = Number(Deno.env.get(k) ?? "");
+  return Number.isFinite(n) && n > 0 ? Math.min(hi, Math.max(lo, n)) : d;
+};
 // §33 loop ceilings (env-overridable so they can be retuned without a deploy).
-const MAX_ITERATIONS = Number(Deno.env.get("STUDIO_CRITIQUE_MAX_ITERATIONS") ?? "3");
-const COST_CAP_USD = Number(Deno.env.get("STUDIO_CRITIQUE_COST_CAP_USD") ?? "2");
+const MAX_ITERATIONS = envInt("STUDIO_CRITIQUE_MAX_ITERATIONS", 3, 1, 10);
+const COST_CAP_USD = envNumber("STUDIO_CRITIQUE_COST_CAP_USD", 2, 0.01, 50);
 const THROTTLE_WINDOW_MIN = envInt("STUDIO_CRITIQUE_THROTTLE_WINDOW_MIN", 10, 1, 1440);
 const THROTTLE_MAX = envInt("STUDIO_CRITIQUE_THROTTLE_MAX", 12, 1, 500);
 const LOOP_WINDOW_MIN = envInt("STUDIO_CRITIQUE_LOOP_WINDOW_MIN", 60, 1, 1440);
@@ -377,15 +384,23 @@ serve(async (req: Request) => {
     const deliverableId = UUID_RE.test(str(body.deliverable_id)) ? str(body.deliverable_id) : null;
     const imageSource = imageUrl ? "image_url" : "render";
 
-    // ── The render path is live only with the product flag. Never attempted → no row, no call. ──
-    if (render && !renderEnabled()) {
+    // ── Both paths are live only with the product flag. Never attempted → no row, no call. ──
+    if (!critiqueEnabled()) {
       return json(200, {
         ok: false, status: "disabled",
-        message: "Page critique is switched off (STUDIO_VISUAL_CRITIQUE_ENABLED). Nothing was rendered or recorded.",
+        message: render
+          ? "Page critique is switched off (STUDIO_VISUAL_CRITIQUE_ENABLED). Nothing was rendered or recorded."
+          : "Image critique is switched off (STUDIO_VISUAL_CRITIQUE_ENABLED). Nothing was fetched or recorded.",
       });
     }
 
     // ── Per-tenant throttle, before ANY work or row. Fails closed. ───────────────────────────
+    // NOT ATOMIC UNDER CONCURRENCY (§13). This is a count-then-insert: the row that "spends" a slot is
+    // only written after the model call, so N parallel requests can all read the same count (e.g. 0)
+    // and all run — bypassing THROTTLE_MAX here and the §33 iteration/cost caps below, which read the
+    // same rows the same way. An atomic reservation (an advisory-locked count+insert of a pending row,
+    // per tenant and per loop key) is a REQUIRED prerequisite before STUDIO_VISUAL_CRITIQUE_ENABLED is
+    // ever turned on. The flag is OFF by owner ruling, so today this path is unreachable.
     const since = new Date(Date.now() - THROTTLE_WINDOW_MIN * 60_000).toISOString();
     const { count: recent, error: tErr } = await admin.from(LOG_TABLE)
       .select("id", { count: "exact", head: true })

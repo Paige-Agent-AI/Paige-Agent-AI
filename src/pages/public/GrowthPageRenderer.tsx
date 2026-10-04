@@ -39,18 +39,36 @@ export default function GrowthPageRenderer() {
   const [brand, setBrand] = useState<PortalBrand | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  // A lookup that FAILED (network, PostgREST error) is not a page that does not exist — the visitor is
+  // told to try again, and paige-browser reads state="error" (render_failed), never page_not_found.
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     if (!tenantSlug || !pageSlug) return;
     (async () => {
-      const { data: tenant } = await supabase.from("tenants").select("id").eq("slug", tenantSlug).maybeSingle();
+      const failed = (what: string, e: unknown) => {
+        console.error(`[growth-page] ${what} lookup failed:`, e);
+        setLoadError(true);
+        setLoading(false);
+      };
+      let tenant: { id: string } | null;
+      try {
+        const { data, error } = await supabase.from("tenants").select("id").eq("slug", tenantSlug).maybeSingle();
+        if (error) { failed("tenant", error); return; }
+        tenant = data;
+      } catch (e) { failed("tenant", e); return; }
       if (!tenant) { setNotFound(true); setLoading(false); return; }
-      const { data } = await supabase.from("growth_pages")
-        .select("id,title,status,blocks_json,theme_json,seo_json,og_image_url,tenant_id")
-        .eq("tenant_id", tenant.id)
-        .eq("slug", pageSlug)
-        .eq("status", "published")
-        .maybeSingle();
+      let data: unknown;
+      try {
+        const res = await supabase.from("growth_pages")
+          .select("id,title,status,blocks_json,theme_json,seo_json,og_image_url,tenant_id")
+          .eq("tenant_id", tenant.id)
+          .eq("slug", pageSlug)
+          .eq("status", "published")
+          .maybeSingle();
+        if (res.error) { failed("page", res.error); return; }
+        data = res.data;
+      } catch (e) { failed("page", e); return; }
       if (!data) { setNotFound(true); setLoading(false); return; }
       setPage(data as unknown as PageRow);
       // Resolve the tenant brand FLOOR (anon-safe, SECURITY DEFINER, keyed by the
@@ -76,6 +94,7 @@ export default function GrowthPageRenderer() {
   }, [page?.title]);
 
   if (loading) return <PageSkeleton />;
+  if (loadError) return <><LoadFailed /><PageReadyMarker state="error" /></>;
   if (notFound || !page) return <><NotFound /><PageReadyMarker state="missing" /></>;
 
   // The tenant brand becomes the FLOOR; the page's own theme_json overrides it. Both are fed to
@@ -90,8 +109,9 @@ export default function GrowthPageRenderer() {
 
 // Present only once the page row AND its brand (or the brand's failure) have settled — what
 // paige-browser's /render waits on for a published page. The app-wide [data-app-ready] fires at
-// mount, before this data arrives, so it cannot stand in. "missing" = no such published page.
-function PageReadyMarker({ state }: { state: "true" | "missing" }) {
+// mount, before this data arrives, so it cannot stand in. "missing" = no such published page;
+// "error" = the lookup itself failed, so whether the page exists is unknown.
+function PageReadyMarker({ state }: { state: "true" | "missing" | "error" }) {
   return <div data-growth-page-ready={state} hidden aria-hidden="true" />;
 }
 
@@ -120,14 +140,23 @@ function PageSkeleton() {
 }
 
 function NotFound() {
+  return <CenteredMessage title="Page not found" body="This page may have moved or is no longer published." />;
+}
+
+// Same treatment as NotFound, different truth: the page may well exist, the load did not finish.
+function LoadFailed() {
+  return <CenteredMessage title="This page didn't load" body="Something went wrong on our side. Refresh to try again." />;
+}
+
+function CenteredMessage({ title, body }: { title: string; body: string }) {
   const vars = resolveGrowthTheme(null, null);
   return (
     <div
       className="flex min-h-dvh flex-col items-center justify-center px-6 text-center"
       style={{ ...(vars as Record<string, string>), background: "var(--gp-bg)", color: "var(--gp-text)", fontFamily: "var(--gp-font)" } as React.CSSProperties}
     >
-      <h1 className="font-display text-3xl font-semibold">Page not found</h1>
-      <p className="mt-2 text-sm" style={{ color: "var(--gp-muted)" }}>This page may have moved or is no longer published.</p>
+      <h1 className="font-display text-3xl font-semibold">{title}</h1>
+      <p className="mt-2 text-sm" style={{ color: "var(--gp-muted)" }}>{body}</p>
     </div>
   );
 }

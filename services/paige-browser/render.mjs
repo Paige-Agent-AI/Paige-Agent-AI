@@ -41,8 +41,10 @@ const DEFAULT_APP_ORIGIN = "https://paigeagent.ai";
 export const RENDER_FRAME_PATH = "/render-frame";
 export const DEFAULT_PAGE_READY_SELECTOR = '[data-render-ready="true"]';
 // GrowthPageRenderer sets this once the published row AND its brand (or the brand's failure) have
-// settled — "missing" when the page does not exist. The app-wide [data-app-ready] marker only says the
-// app mounted, which is before the page's data arrives, so it is not the URL-mode default.
+// settled — "missing" when the page does not exist, "error" when the lookup itself failed (so whether
+// it exists is unknown: render_failed, never page_not_found). The app-wide [data-app-ready] marker
+// only says the app mounted, which is before the page's data arrives, so it is not the URL-mode
+// default.
 export const DEFAULT_URL_READY_SELECTOR = "[data-growth-page-ready]";
 // Set by the render frame's error boundary when a block throws.
 export const RENDER_ERROR_SELECTOR = "[data-render-error]";
@@ -203,6 +205,9 @@ export async function renderCapture(browser, req, cfg, opts = {}) {
   let timedOut = false;
   let deadlineTimer = null;
   const pageErrors = [];
+  // The subset thrown by the Paige app's OWN scripts (a stack frame on the expected origin). A
+  // third-party script that throws on a page that is merely slow is not the page crashing.
+  const appPageErrors = [];
   try {
     ctx = await browser.newContext(contextOptions(req.viewportName));
     const ctxRef = ctx;
@@ -225,7 +230,11 @@ export async function renderCapture(browser, req, cfg, opts = {}) {
     }
     const page = await ctx.newPage();
     page.setDefaultTimeout(stepTimeout);
-    page.on("pageerror", (e) => { pageErrors.push(String(e?.message || e).slice(0, 500)); });
+    page.on("pageerror", (e) => {
+      const message = String(e?.message || e).slice(0, 500);
+      pageErrors.push(message);
+      if (String(e?.stack || "").includes(`${req.expectOrigin}/`)) appPageErrors.push(message);
+    });
 
     let response;
     // A wait shortened to fit the deadline that then times out is the deadline's doing, not the page's.
@@ -256,6 +265,7 @@ export async function renderCapture(browser, req, cfg, opts = {}) {
       console.error(`[paige-browser] render crashed for ${req.target}: ${message}`);
       return done({ ok: false, reason: "render_crashed", error: `the page threw while rendering: ${message}`, page_errors: pageErrors.slice(0, 5), final_url: page.url(), http_status });
     };
+    const boundaryMessage = () => page.evaluate((sel) => document.querySelector(sel)?.getAttribute("data-render-error") ?? null, RENDER_ERROR_SELECTOR).catch(() => null);
     const early = offOrigin();
     if (early) return early;
 
@@ -268,31 +278,44 @@ export async function renderCapture(browser, req, cfg, opts = {}) {
       if (timedOut) return done({ ok: false, reason: "run_cap_exceeded", error: "the render ran past its deadline waiting for ready" });
       const moved = offOrigin();
       if (moved) return moved;
-      // A page that threw and so never signalled ready is a crash, not a slow page (§32).
-      if (pageErrors.length) return crashed(pageErrors[0]);
+      // A page that threw and so never signalled ready is a crash, not a slow page (§32) — but only when
+      // the app says so (its error boundary's marker) or the throw came from the app's own scripts. Any
+      // other error (a third-party script) on a page that never got ready is reported as not_ready, with
+      // the errors attached so the cause is still visible.
+      const lateBoundary = await boundaryMessage();
+      if (lateBoundary != null) return crashed(lateBoundary || appPageErrors[0] || pageErrors[0] || "unknown error");
+      if (appPageErrors.length) return crashed(appPageErrors[0]);
       if (readyTimeout < cfg.readyTimeoutMs) return done({ ok: false, reason: "run_cap_exceeded", error: "the render ran out of its deadline waiting for ready", final_url: page.url(), http_status });
-      console.error(`[paige-browser] render never became ready (${req.readySelector}) for`, req.target);
-      return done({ ok: false, reason: "not_ready", error: `the page never signalled ready (${req.readySelector})`, final_url: page.url(), http_status });
+      console.error(`[paige-browser] render never became ready (${req.readySelector}) for`, req.target, pageErrors.length ? `(page errors: ${pageErrors.slice(0, 3).join(" | ")})` : "");
+      return done({ ok: false, reason: "not_ready", error: `the page never signalled ready (${req.readySelector})`, ...(pageErrors.length ? { page_errors: pageErrors.slice(0, 5) } : {}), final_url: page.url(), http_status });
     }
-    const boundaryError = await page.evaluate((sel) => document.querySelector(sel)?.getAttribute("data-render-error") ?? null, RENDER_ERROR_SELECTOR).catch(() => null);
+    const boundaryError = await boundaryMessage();
     if (boundaryError != null) return crashed(boundaryError || pageErrors[0] || "unknown error");
     const growthState = await page.evaluate(() => document.querySelector("[data-growth-page-ready]")?.getAttribute("data-growth-page-ready") ?? null).catch(() => null);
     if (req.mode === "url" && growthState === "missing") {
       return done({ ok: false, reason: "page_not_found", error: "the published page does not exist (or is not published)", final_url: page.url(), http_status });
     }
+    if (req.mode === "url" && growthState === "error") {
+      console.error(`[paige-browser] the published page's data failed to load for ${req.target}`);
+      return done({ ok: false, reason: "render_failed", error: "the published page's data failed to load, so whether it exists is unknown", final_url: page.url(), http_status });
+    }
 
     if (req.mode === "url") {
       // A published page lazy-loads below-the-fold media; walk the page once so it is requested, then
       // return to the top. The render frame upgrades its own lazy images and embeds before it signals
-      // ready, so it needs no walk.
-      await page.evaluate(async () => {
+      // ready, so it needs no walk. Bounded to what will be captured (maxSlices × sliceHeight): a very
+      // tall page (200,000px walks for ~13s) cannot keep the walk going past what is captured.
+      await page.evaluate(async (limit) => {
         const step = Math.max(200, window.innerHeight);
-        const max = Math.max(document.documentElement.scrollHeight, document.body ? document.body.scrollHeight : 0);
+        const max = Math.min(limit, Math.max(document.documentElement.scrollHeight, document.body ? document.body.scrollHeight : 0));
         for (let y = 0; y < max; y += step) { window.scrollTo(0, y); await new Promise((r) => setTimeout(r, 60)); }
         window.scrollTo(0, 0);
-      }).catch(() => {});
+      }, maxSlices * cfg.sliceHeight).catch(() => {});
     }
-    await page.waitForLoadState("networkidle", { timeout: Math.max(0, Math.min(3000, remaining() - CAPTURE_RESERVE_MS)) }).catch(() => {});
+    // In Playwright a timeout of 0 means NO timeout — so when the deadline leaves no room, skip the
+    // settle wait entirely rather than wait forever.
+    const idleBudget = Math.min(3000, remaining() - CAPTURE_RESERVE_MS);
+    if (idleBudget > 0) await page.waitForLoadState("networkidle", { timeout: Math.max(1, idleBudget) }).catch(() => {});
     const late = offOrigin();
     if (late) return late;
     const final_url = page.url();

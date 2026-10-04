@@ -13,16 +13,16 @@ MATERIAL_FLOW_CHANGE: YES: the Email tab changes from a read-only summary of sav
 FLOW_PROTOTYPE: PASS: the owner's reference image of 2026-10-04 is the approved direction; rendered frames of the dashboard, editor, segment drawer and first use are shown with this PR for his live review
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Solo owner or admin; primary action is starting a campaign, then Review and send and Approve and send
 VISUAL_DIRECTION: PASS: the Marketing Overview/Audience card and panel system (mo-*), extended as me-*; violet for selection and focus, gold only for approval; light and dark
-AUTOMATED_EVIDENCE: PASS: marketing-email-model.test.ts, email-markup.test.ts (includes a parity test that the editor's preview renders byte-for-byte what email-campaign-worker sends), marketing-email.render.test.tsx (views driven through their RPCs: dashboard read and period, create and open, re-engagement starting audience, refused create, autosave then Review and send calling save then request approval, Approve and send, refusal words). Reinstated defects (no save before review; a changed refusal sentence; a drifted footer) each failed. Full vitest 559 files / 8100 tests
+AUTOMATED_EVIDENCE: PASS: marketing-email-model.test.ts, email-markup.test.ts (includes a parity test that the editor's preview renders byte-for-byte what email-campaign-worker sends), marketing-email.render.test.tsx (views driven through their RPCs: dashboard read and period, create and open, re-engagement starting audience, refused create, autosave then Review and send calling save then request approval, Approve and send, refusal words). editor leave-while-unsaved (Back saves first; unmount saves; the browser asks before closing), segment in use refused, drawer Tab trap, sender arrow keys; the worker renderer closes open tags and drops hidden elements (style, textarea, title, script, link). Reinstated defects (no save before review; a changed refusal sentence; a drifted footer; no save on leave; no Tab trap; the old comment-only renderer) each failed. Full vitest: count recorded in the PR
 STATIC_EVIDENCE: PASS: tsc 10 errors, identical to main; lint:definer-fns and lint:migration-versions pass; lint_migrations passes on 20270550000000; production build passes
 RENDERED_EVIDENCE: PASS: scripts/live-drive/marketing-views-drive.mjs 1780/1780 - every Marketing tab at 1536x770, 1366x768, 1024x768 and 900x1000, PAIGE docked, expanded and closed, light and dark, plus first-use, loading, error and read-only states; Email asserts five figures, six ways to start, the campaigns table and the drawn rate chart; worst Email small-text contrast 6.03:1 (the drive caught two type chips under AA, fixed); overflow 0 everywhere
 BEHAVIORAL_EVIDENCE: PASS: harness clicks (segment drawer opens from a segment row; editor opens from ?campaign=); jsdom drives of create, autosave, review, approve and refusals
 AUTHENTICATED_RUNTIME: UNVERIFIED: no tenant login in this session; the owner's live look at /solo/{account}/growth/email is owed, and a real send is owed until he sends one
-KEYBOARD_FOCUS: PASS: every control is a native button, input, textarea or link with the violet focus ring; chips use aria-pressed, senders role=radio with aria-checked; the segment drawer is role=dialog aria-modal, focuses its first field, closes on Escape and returns focus to the opener
+KEYBOARD_FOCUS: PASS: every control is a native button, input, textarea or link with the violet focus ring; chips use aria-pressed; senders are a radio group with one tab stop and arrow keys that choose; the segment drawer is role=dialog aria-modal, focuses its first field, keeps Tab inside, closes on Escape and returns focus to the opener
 ZOOM_REFLOW: PASS: figures 5 to 3 to 2 to 1 columns by container width; panels 2 to 1; editor form and preview side by side then stacked with the preview un-stuck; table scrolls inside its own region
 REDUCED_MOTION: PASS: tile lift, chip and drawer transitions and the progress bar are off under prefers-reduced-motion; charts honour it
-STATE_COVERAGE: PASS: loading skeleton, read error with Try again, first use (no sends: rates "—" and why; postal address missing banner), populated, member refused (database refusal shown in words), campaign states draft / awaiting approval / scheduled / sending / sent / partly sent / not sent / paused / cancelled, declined-version note, not found
-TRUTHFUL_STATE_LABELS: PASS: rates only over email that reports opens and the rest named; no rate on a day with nothing sent; comparisons only when an earlier period had something; conversions exactly the owner's 7-days-after-a-click rule; cost labelled an estimate; Automations says series are built next
+STATE_COVERAGE: PASS: loading skeleton, read error with Try again, first use (no sends: rates "—" and why; postal address missing banner), populated, member refused (database refusal shown in words), campaign states draft / new draft after a send / awaiting approval / scheduled / approved waiting to send / sending / sent / partly sent (failed and not confirmed counted apart) / not sent / paused / cancelled, declined-version note, not found, unsaved changes on leave
+TRUTHFUL_STATE_LABELS: PASS: rates only over email that reports opens and the rest named; no rate on a day with nothing sent; comparisons only when an earlier period had something; conversions exactly the owner's 7-days-after-a-click rule, a contact counted once, cancelled bookings excluded; cost labelled an estimate and under a cent reads "less than $0.01"; PAIGE prompts say she cannot save or send campaigns yet; Automations says series are built next
 SOLO_UI: YES: Solo Marketing › Email, /solo/{account}/growth/email
 
 SOLO_1536X770_PAIGE_CLOSED: PASS: content column 1320px, light and dark, overflow 0, all assertions
@@ -39,7 +39,7 @@ MUST_NOT_HAPPEN: a send without the one approval; approving a version other than
 MUST_PRESERVE: Audience as approved; Content listing saved email copy; Drafts batch approve leaving campaign sends alone; every other Marketing tab's render and figures
 ACCEPTANCE_CRITERIA: on the live app the owner opens Email, creates a campaign, writes it, sees the preview with his postal address, sends it for approval, approves it, and sees it sending and then its results
 MOTION_PURPOSE: tile lift on hover says the tile is a door; the drawer slides from the edge it lives at; the progress bar moves with sends; all off under reduced motion
-PROTECTED_SEAMS: tested - every Marketing tab in the drive, Drafts batch approve test, worker renderer parity; unaffected and named - Audience (frozen file unchanged except an import of its exported labels), Overview charts (new export only)
+PROTECTED_SEAMS: tested - every Marketing tab in the drive, Drafts batch approve test, worker renderer parity, E1 functions corrected here (sender cost and route for a Resend connection, the not-contacted rule, segment in use) proven on production in a rolled-back transaction; unaffected and named - Audience (frozen file unchanged except an import of its exported labels), Overview charts (new export only)
 
 INTERNAL_BUILD_IDENTITY: dd582794ace6da8eea322520efd124bc44a26ee5; deployment=none-pre-merge; environment=development; migrations=PROOF_OWED(20270550000000 applies through deploy-migrations.yml on merge after its rolled-back production proof passed); edge=NOT_APPLICABLE; evidence=scripts/live-drive/marketing-views-drive.mjs
 RELEASE_CHANNEL: development: verified locally; production on merge per the owner ("Merge it when green, then start the email dashboard")
@@ -57,12 +57,13 @@ UNVERIFIED: the signed-in Email tab on production and a real provider send (no t
 - Neighboring regressions: other Marketing tabs, Drafts batch approve, Audience.
 - Active-owner/file collisions: none found on main at the time of writing.
 - Explicit exclusions: PAIGE's chat tools for email (E2b); sequences (E3); the sub-account tree's Email screen.
+- Moved, not removed (§58): the old Email tab's sender line (which address sends) now lives in the editor's From panel, which lists every connection and PAIGE's sender with its health, and the dashboard's Sending settings button opens Connections. The old tab's list of saved email copy is still on Content.
 
 ## Evidence index
 
 - Frames (harness): dashboard light/dark, draft editor, awaiting approval, segment drawer, first use — attached to the PR conversation.
 - `node scripts/live-drive/marketing-views-drive.mjs` → 1780/1780.
-- Production proof (rolled back): see the PR.
+- Production proof (rolled back): see the PR. The segment guard was proven as a copy without its delete line, because this session's database tool waits for a confirmation on any statement containing a delete; the delete line itself is unchanged from E1.
 
 ## Review and limitations
 

@@ -1,7 +1,7 @@
 // Marketing › Email figures: a rate needs emails that report opens, a comparison needs an earlier period,
 // and a status reads in the owner's words.
 import { describe, expect, it } from "vitest";
-import { activityDetail, ago, campaignState, deriveStats, pointsDelta, rate, ratePoints, type CampaignRow, type DashboardStats } from "./marketing-email-model";
+import { activityDetail, ago, campaignState, costWords, deriveStats, pointsDelta, rate, ratePoints, unsent, type CampaignRow, type DashboardStats } from "./marketing-email-model";
 
 const stats = (over: Partial<DashboardStats> = {}): DashboardStats => ({
   sent: 0, sent_prev: 0, tracked: 0, tracked_prev: 0, opened: 0, opened_prev: 0, clicked: 0, clicked_prev: 0, bounced: 0,
@@ -65,11 +65,13 @@ const campaign = (over: Partial<CampaignRow>): CampaignRow => ({
 describe("campaign status words", () => {
   it("names each state and what it means", () => {
     expect(campaignState(campaign({ status: "pending_approval", recipients: 1 })).detail).toBe("Ready to send to 1 person once approved.");
-    expect(campaignState(campaign({ status: "partially_completed", sent: 9, failed: 1, not_confirmed: 2 }))).toMatchObject({ label: "Partly sent", tone: "is-warn" });
+    expect(campaignState(campaign({ status: "partially_completed", sent: 9, failed: 1, not_confirmed: 2 }))).toMatchObject({ label: "Partly sent", tone: "is-warn", detail: "Sent to 9 people; 1 failed; 2 not confirmed." });
     expect(campaignState(campaign({ status: "blocked", blocked_reason: "postal_address_missing" })).detail).toContain("postal address");
     expect(campaignState(campaign({ status: "scheduled", scheduled_for: new Date(Date.now() + 86_400_000).toISOString() })).label).toBe("Scheduled");
-    expect(campaignState(campaign({ status: "scheduled", scheduled_for: null })).label).toBe("Sending");
+    expect(campaignState(campaign({ status: "scheduled", scheduled_for: null }))).toMatchObject({ label: "Approved", detail: "Approved, waiting to send." });
+    expect(campaignState(campaign({ status: "scheduled", scheduled_for: new Date(Date.now() - 60_000).toISOString() })).label).toBe("Approved");
     expect(campaignState(campaign({ status: "cancelled", sent: 0 })).detail).toBe("Cancelled before sending.");
+    expect(campaignState(campaign({ status: "draft", sent: 2 })).detail).toBe("A new version, not sent yet. Earlier versions reached 2 people.");
   });
 });
 
@@ -84,5 +86,17 @@ describe("activity", () => {
     expect(ago("2026-10-04T11:59:30Z", now)).toBe("Just now");
     expect(ago("2026-10-04T10:00:00Z", now)).toBe("2 hours ago");
     expect(ago("2026-10-03T12:00:00Z", now)).toBe("1 day ago");
+  });
+});
+
+describe("what did not send, and what it costs", () => {
+  it("a reported failure and an answer that never came are counted apart", () => {
+    expect(unsent({ failed: 0, not_confirmed: 0 })).toBe("");
+    expect(unsent({ failed: 2, not_confirmed: 0 })).toBe("; 2 failed");
+    expect(unsent({ failed: 0, not_confirmed: 3 })).toBe("; 3 not confirmed");
+  });
+  it("under a cent never reads as free", () => {
+    expect(costWords(0.0048)).toBe("less than $0.01");
+    expect(costWords(0.2)).toBe("$0.20");
   });
 });

@@ -12,7 +12,7 @@
 import React from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Ic as SharedIcons } from "./_shared";
-import { KIND_LABEL, blockReason, type SegmentRow } from "./marketing-email-model";
+import { KIND_LABEL, blockReason, costWords, unsent, type SegmentRow } from "./marketing-email-model";
 import { SOURCE_LABEL, STAGE_LABEL } from "./marketing-audience";
 import { markupToHtml, previewDocument, renderCampaignEmail, sourceOf } from "./email-markup";
 import { Frame, type Phase } from "./marketing-planned";
@@ -62,6 +62,12 @@ export function errorWords(error: { message?: string; details?: string } | null)
     business_inactive: "This business is not active, so nothing can send.",
     segment_not_found: "That segment no longer exists.",
     campaign_not_found: "That campaign no longer exists.",
+    segment_in_use: "A campaign uses this segment. Choose another audience for that campaign first, or keep the segment.",
+    sender_changed: "The sender changed since this was approved. Make changes to approve it with the new sender.",
+    approval_stale: "Something changed since this was sent for approval. Reload, check it, and approve again.",
+    not_blocked: "This campaign is not paused any more. Reload to see where it stands.",
+    version_not_found: "That version no longer exists. Reload to see the current one.",
+    not_the_current_version: "A newer version of this campaign exists. Reload to see it.",
   };
   return words[code] ?? "That did not work. Nothing was changed; try again.";
 }
@@ -204,6 +210,29 @@ export function EmailCampaignEditor({ campaignId, onBack, onOpenSettings, onOpen
   }, [draft, editable, save, persist]);
   const change = (patch: Partial<Draft>) => { revision.current += 1; setDraft((d) => (d ? { ...d, ...patch } : d)); setSave("dirty"); setNotice(null); };
 
+  // Leaving must never drop the last edits: Back saves first, unmounting saves what is pending, and the
+  // browser asks before a reload or a closed tab while anything is unsaved.
+  const unsaved = Boolean(editable && draft && save !== "saved");
+  const pending = React.useRef<{ draft: Draft | null; unsaved: boolean; persist: typeof persist }>({ draft: null, unsaved: false, persist });
+  pending.current = { draft, unsaved, persist };
+  React.useEffect(() => () => {
+    const { draft: last, unsaved: open, persist: flush } = pending.current;
+    if (open && last) void flush(last);
+  }, []);
+  React.useEffect(() => {
+    if (!unsaved) return;
+    const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [unsaved]);
+  const leave = async () => {
+    if (unsaved && draft) {
+      pending.current.unsaved = false; // this save is the one; unmounting need not repeat it
+      if (!(await persist(draft)) && !window.confirm("Your latest changes did not save. Leave anyway and lose them?")) { pending.current.unsaved = true; return; }
+    }
+    onBack();
+  };
+
   const act = async (key: string, fn: string, args: Record<string, unknown>, done?: string) => {
     setBusy(key); setNotice(null);
     const { error } = await rpc(fn, args);
@@ -233,11 +262,16 @@ export function EmailCampaignEditor({ campaignId, onBack, onOpenSettings, onOpen
   const sentEmail = renderCampaignEmail({ bodyHtml, preheader: draft.preheader, businessName: data.business_name, postalAddress: data.postal_address ?? "" });
   const from = editable ? (draft.sender.mode === "connector" ? data.senders.find((s) => s.connector_id === draft.sender.connector_id) : data.managed_sender) : (v.sender_snapshot ?? data.resolves);
   const fromLine = from?.from_address ? `${from.from_name ? `${from.from_name} <${from.from_address}>` : from.from_address}` : "No sender set up";
-  const state = { draft: "Draft", pending_approval: "Awaiting approval", scheduled: "Scheduled", sending: "Sending", completed: "Sent", partially_completed: "Partly sent", failed: "Not sent", blocked: "Paused", cancelled: "Cancelled" }[c.status] ?? c.status;
+  // One tab stop for the sender group (the chosen sender, or the first one when none is chosen yet).
+  const anyChosen = draft.sender.mode === "managed" ? data.managed_sender.ok : data.senders.some((x) => x.connector_id === draft.sender.connector_id && x.healthy);
+  const tabStop = (chosen: boolean) => (chosen || !anyChosen ? 0 : -1);
+  const later = Boolean(v.scheduled_for && Date.parse(v.scheduled_for) > Date.now());
+  const state = { draft: "Draft", pending_approval: "Awaiting approval", scheduled: later ? "Scheduled" : "Approved", sending: "Sending", completed: "Sent", partially_completed: "Partly sent", failed: "Not sent", blocked: "Paused", cancelled: "Cancelled" }[c.status] ?? c.status;
+  const at = (iso: string) => new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 
   return <div className="mk-view mo me me-editor">
     <div className="me-editor-head">
-      <button type="button" className="mo-link me-back" onClick={onBack}><Ic.arrow size={12}/>Email</button>
+      <button type="button" className="mo-link me-back" onClick={() => void leave()}><Ic.arrow size={12}/>Email</button>
       <div className="me-title">
         {editable ? <label className="me-name-input"><span className="campaigns-sr-only">Campaign name</span><input value={draft.name} maxLength={200} onChange={(e) => change({ name: e.target.value })}/></label> : <h2>{c.name}</h2>}
         <span className="me-kind">{KIND_LABEL[draft.kind] ?? "Campaign"}</span>
@@ -258,11 +292,11 @@ export function EmailCampaignEditor({ campaignId, onBack, onOpenSettings, onOpen
       <dl className="me-facts">
         <div><dt>To</dt><dd>{(v.expected_recipients ?? 0).toLocaleString()} {v.expected_recipients === 1 ? "person" : "people"}</dd></div>
         <div><dt>From</dt><dd>{fromLine}</dd></div>
-        <div><dt>When</dt><dd>{v.scheduled_for ? new Date(v.scheduled_for).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : "As soon as you approve"}</dd></div>
-        <div><dt>Cost</dt><dd>{v.cost_bound_usd ? `About $${Number(v.cost_bound_usd).toFixed(2)} on PAIGE’s sender (an estimate)` : "Sent through your own connection"}</dd></div>
+        <div><dt>When</dt><dd>{later && v.scheduled_for ? at(v.scheduled_for) : "As soon as you approve"}</dd></div>
+        <div><dt>Cost</dt><dd>{v.cost_bound_usd ? `About ${costWords(Number(v.cost_bound_usd))} on PAIGE’s sender (an estimate)` : "Sent through your own connection"}</dd></div>
       </dl>
       <div className="me-review-acts">
-        <button type="button" className="btn btn-s btn-g" disabled={busy !== null} onClick={() => void act("approve", "email_campaign_approve", { p_version_id: v.id }, "Approved. Sending starts within a minute.")}>{busy === "approve" ? "Approving…" : "Approve and send"}</button>
+        <button type="button" className="btn btn-s btn-g" disabled={busy !== null} onClick={() => void act("approve", "email_campaign_approve", { p_version_id: v.id }, later && v.scheduled_for ? `Approved. It sends ${at(v.scheduled_for)}.` : "Approved. Sending starts within a minute.")}>{busy === "approve" ? "Approving…" : "Approve and send"}</button>
         <button type="button" className="btn btn-s" disabled={busy !== null} onClick={() => void act("edit", "email_campaign_new_version", { p_campaign_id: c.id })}>Make changes</button>
         <button type="button" className="btn btn-s btn-q" disabled={busy !== null} onClick={() => setDeclineOpen((o) => !o)} aria-expanded={declineOpen}>Decline</button>
       </div>
@@ -273,7 +307,7 @@ export function EmailCampaignEditor({ campaignId, onBack, onOpenSettings, onOpen
     </section>}
 
     {(c.status === "scheduled" || c.status === "sending") && <section className="campaigns-surface mo-panel me-review">
-      <div className="mo-panel-head"><div><h2>{c.status === "sending" ? "Sending" : "Approved"}</h2><p>{p.sent.toLocaleString()} of {p.total.toLocaleString()} sent{p.failed + p.not_confirmed ? `; ${(p.failed + p.not_confirmed).toLocaleString()} not confirmed` : ""}.</p></div></div>
+      <div className="mo-panel-head"><div><h2>{c.status === "sending" ? "Sending" : "Approved"}</h2><p>{c.status === "scheduled" && later && v.scheduled_for ? `Sends ${at(v.scheduled_for)}.` : c.status === "scheduled" && !p.sent ? "Approved, waiting to send." : `${p.sent.toLocaleString()} of ${p.total.toLocaleString()} sent${unsent(p)}.`}</p></div></div>
       <div className="me-progress" role="progressbar" aria-valuemin={0} aria-valuemax={p.total} aria-valuenow={p.sent} aria-label="Sent so far"><i style={{ transform: `scaleX(${p.total ? p.sent / p.total : 0})` }}/></div>
       <div className="me-review-acts"><button type="button" className="btn btn-s" onClick={reload}>Refresh</button><button type="button" className="btn btn-s" disabled={busy !== null} onClick={() => { if (window.confirm("Stop sending? Emails already sent stay sent.")) void act("cancel", "email_campaign_cancel", { p_campaign_id: c.id }, "Stopped. Nobody else will receive it."); }}>Stop sending</button></div>
     </section>}
@@ -295,7 +329,8 @@ export function EmailCampaignEditor({ campaignId, onBack, onOpenSettings, onOpen
         <div><dt>Sent</dt><dd>{p.sent.toLocaleString()}</dd></div>
         <div><dt>Opened</dt><dd>{p.tracked ? `${p.opened.toLocaleString()} · ${Math.round((p.opened / p.tracked) * 1000) / 10}%` : "—"}</dd></div>
         <div><dt>Clicked</dt><dd>{p.tracked ? `${p.clicked.toLocaleString()} · ${Math.round((p.clicked / p.tracked) * 1000) / 10}%` : "—"}</dd></div>
-        <div><dt>Not confirmed</dt><dd>{(p.failed + p.not_confirmed).toLocaleString()}</dd></div>
+        <div><dt>Failed</dt><dd>{p.failed.toLocaleString()}</dd></div>
+        <div><dt>Not confirmed</dt><dd>{p.not_confirmed.toLocaleString()}</dd></div>
         <div><dt>Skipped</dt><dd>{p.skipped.toLocaleString()}</dd></div>
       </dl>
       <p className="mo-note">“Edit and send again” never goes to someone this campaign already reached.</p>
@@ -318,17 +353,17 @@ export function EmailCampaignEditor({ campaignId, onBack, onOpenSettings, onOpen
 
         <section className="campaigns-surface mo-panel" aria-labelledby="me-from">
           <div className="mo-panel-head"><div><h2 id="me-from">From</h2><p>Your own email connection sends first. PAIGE’s sender is used only if you choose it.</p></div>{onOpenConnections && editable && <button type="button" className="mo-link" onClick={onOpenConnections}>Connections<Ic.arrow size={12}/></button>}</div>
-          {editable ? <div className="me-senders" role="radiogroup" aria-label="Sender">
-            {data.senders.map((s) => <button type="button" role="radio" key={s.connector_id} aria-checked={draft.sender.mode === "connector" && draft.sender.connector_id === s.connector_id} disabled={!s.healthy} onClick={() => change({ sender: { mode: "connector", connector_id: s.connector_id } })}>
+          {editable ? <div className="me-senders" role="radiogroup" aria-label="Sender" onKeyDown={roveRadios}>
+            {data.senders.map((s) => <button type="button" role="radio" key={s.connector_id} aria-checked={draft.sender.mode === "connector" && draft.sender.connector_id === s.connector_id} tabIndex={tabStop(draft.sender.mode === "connector" && draft.sender.connector_id === s.connector_id)} disabled={!s.healthy} onClick={() => change({ sender: { mode: "connector", connector_id: s.connector_id } })}>
               <strong>{s.from_name ? `${s.from_name} <${s.from_address}>` : s.from_address ?? "No address"}</strong><small>{s.healthy ? `Your ${words(s.provider ?? "email")} connection` : "Needs attention in Connections"}</small></button>)}
-            <button type="button" role="radio" aria-checked={draft.sender.mode === "managed"} disabled={!data.managed_sender.ok} onClick={() => change({ sender: { mode: "managed" } })}>
+            <button type="button" role="radio" aria-checked={draft.sender.mode === "managed"} tabIndex={tabStop(draft.sender.mode === "managed")} disabled={!data.managed_sender.ok} onClick={() => change({ sender: { mode: "managed" } })}>
               <strong>{data.managed_sender.ok ? (data.managed_sender.from_name ? `${data.managed_sender.from_name} <${data.managed_sender.from_address}>` : data.managed_sender.from_address) : "PAIGE’s sender"}</strong>
               <small>{data.managed_sender.ok ? "PAIGE’s sender · up to 500 a day · opens and clicks reported" : "Not set up for this business yet"}</small></button>
           </div> : <p className="me-reach"><span>{fromLine}</span></p>}
         </section>
 
         <section className="campaigns-surface mo-panel" aria-labelledby="me-write">
-          <div className="mo-panel-head"><div><h2 id="me-write">Email</h2></div>{editable && <button type="button" className="mo-ask" onClick={() => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt: `Write the email for my campaign "${draft.name}" (${KIND_LABEL[draft.kind] ?? "Campaign"}${draft.subject ? `, subject "${draft.subject}"` : ""}). Ask me who it is for and what I want them to do before you write it. Give me a subject line, a preview line and the body. Do not send anything.` } }))}><Ic.spark size={12}/>Write with PAIGE</button>}</div>
+          <div className="mo-panel-head"><div><h2 id="me-write">Email</h2></div>{editable && <button type="button" className="mo-ask" onClick={() => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt: `Write the email for my campaign "${draft.name}" (${KIND_LABEL[draft.kind] ?? "Campaign"}${draft.subject ? `, subject "${draft.subject}"` : ""}). Ask me who it is for and what I want them to do before you write it. Give me a subject line, a preview line and the body here so I can paste them into the campaign. You cannot save or send campaigns yet, so do not say you did.` } }))}><Ic.spark size={12}/>Write with PAIGE</button>}</div>
           <label className="me-input"><span>Subject</span><input value={draft.subject} maxLength={300} disabled={!editable} onChange={(e) => change({ subject: e.target.value })} placeholder="What the inbox shows first"/></label>
           <label className="me-input"><span>Preview text</span><input value={draft.preheader} maxLength={300} disabled={!editable} onChange={(e) => change({ preheader: e.target.value })} placeholder="The line shown after the subject"/></label>
           <label className="me-input"><span>{draft.source !== null ? "Message" : "Message (HTML)"}</span>
@@ -386,6 +421,31 @@ export function EmailCampaignList({ tenantId, onBack, onOpen }: { tenantId: stri
   </div>;
 }
 
+/** Arrow keys move through a radio group and choose, as a native radio group does. */
+function roveRadios(e: React.KeyboardEvent<HTMLElement>) {
+  const step = e.key === "ArrowDown" || e.key === "ArrowRight" ? 1 : e.key === "ArrowUp" || e.key === "ArrowLeft" ? -1 : 0;
+  if (!step) return;
+  const radios = Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="radio"]:not(:disabled)'));
+  if (!radios.length) return;
+  e.preventDefault();
+  const at = radios.indexOf(document.activeElement as HTMLButtonElement);
+  const next = radios[(at + step + radios.length) % radios.length];
+  next.focus();
+  next.click();
+}
+
+/** Escape closes; Tab and Shift+Tab stay inside the drawer, since the page behind it is inert to the reader. */
+function trapKeys(e: React.KeyboardEvent, root: HTMLElement | null, close: () => void) {
+  if (e.key === "Escape") { close(); return; }
+  if (e.key !== "Tab" || !root) return;
+  const stops = Array.from(root.querySelectorAll<HTMLElement>("button, input, textarea, select, a[href], [tabindex]:not([tabindex='-1'])"))
+    .filter((el) => !(el as HTMLButtonElement).disabled);
+  if (!stops.length) return;
+  const first = stops[0], last = stops[stops.length - 1];
+  if (e.shiftKey && (document.activeElement === first || !root.contains(document.activeElement))) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+}
+
 /** Create, change or delete a saved segment; or start a campaign to it. */
 export function SegmentDialog({ segmentId, segment, onClose, onEmail }: { segmentId: string | null; segment: SegmentRow | null; onClose: (changed: boolean) => void; onEmail: (id: string, name: string) => void }) {
   const [name, setName] = React.useState(segment?.name ?? "");
@@ -416,7 +476,7 @@ export function SegmentDialog({ segmentId, segment, onClose, onEmail }: { segmen
     setBusy(false);
     if (e) setError(errorWords(e)); else onClose(true);
   };
-  return <div className="me-scrim" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(false); }} onKeyDown={(e) => { if (e.key === "Escape") onClose(false); }}>
+  return <div className="me-scrim" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(false); }} onKeyDown={(e) => trapKeys(e, panel.current, () => onClose(false))}>
     <section ref={panel} className="me-drawer" role="dialog" aria-modal="true" aria-labelledby="me-seg-title">
       <div className="me-drawer-head"><h2 id="me-seg-title">{segmentId ? "Segment" : "New segment"}</h2><button type="button" className="me-x" aria-label="Close" onClick={() => onClose(false)}><Ic.x size={16}/></button></div>
       <label className="me-input"><span>Name</span><input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder="e.g. Leads from my website"/></label>

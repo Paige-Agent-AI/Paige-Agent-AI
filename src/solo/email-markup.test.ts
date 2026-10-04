@@ -56,6 +56,9 @@ describe("the preview is the email as sent", () => {
       { bodyHtml: markupToHtml(SOURCE), preheader: "Three things", businessName: "Northfield <Advisory>", postalAddress: "1 Main St, Atlanta" },
       { bodyHtml: "<p>open <!-- never closed", preheader: "", businessName: null, postalAddress: "PO Box 9" },
       { bodyHtml: "<p>HTML from PAIGE</p>", preheader: null, businessName: "  ", postalAddress: "  2 Elm  " },
+      { bodyHtml: "<div><p>unclosed <b>bold <a href=\"https://x.example\">link", postalAddress: "1 Main St" },
+      { bodyHtml: "<style>.f{display:none}</style><p>a</p><textarea>everything after", postalAddress: "1 Main St" },
+      { bodyHtml: "<p>a < b</p><a href=\"x>broken", postalAddress: "1 Main St" },
     ];
     for (const input of cases) expect(renderCampaignEmail(input)).toBe(sent(input));
   });

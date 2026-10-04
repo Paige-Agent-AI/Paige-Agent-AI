@@ -109,6 +109,8 @@ export function MarketingEmail({ tenantId, onOpenAudience, onOpenConnections, on
   if (view.kind === "all") return <EmailCampaignList tenantId={tenantId} onBack={() => go({ kind: "dashboard" })} onOpen={(id) => go({ kind: "campaign", id })}/>;
 
   const d = read.data;
+  // While another period loads, the figures on screen are still the old period's: label them as such.
+  const shownDays = d?.period_days ?? days;
   const stats = d ? deriveStats(d.stats) : null;
   const points = d ? ratePoints(d.series) : [];
   const busy = creating !== null;
@@ -117,8 +119,8 @@ export function MarketingEmail({ tenantId, onOpenAudience, onOpenConnections, on
     { key: "newsletter", icon: <Ic.doc size={20}/>, title: "Create a newsletter", detail: "To people who opted in", act: () => void create("newsletter", "newsletter", "Newsletter") },
     { key: "welcome", icon: <Ic.users size={20}/>, title: "Welcome new contacts", detail: "To your new leads", act: () => void create("welcome", "welcome", "Welcome", { stages: ["new_lead", "lead"] }) },
     { key: "reengagement", icon: <Ic.clock size={20}/>, title: "Re-engagement campaign", detail: "Not contacted in 90 days", act: () => void create("reengagement", "reengagement", "We miss you", { inactive_days: 90 }) },
-    { key: "nurture", icon: <Ic.trend size={20}/>, title: "Plan a nurture series", detail: "PAIGE drafts the emails", act: () => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt: "Help me plan a short nurture series of marketing emails for my leads. Ask me who it is for and what I want them to do, then draft the first email as a campaign draft. Automatic sending of a series is not available yet, so do not schedule anything." } })) },
-    { key: "paige", icon: <Ic.spark size={20}/>, title: "Use PAIGE", detail: "Describe what you need", act: () => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt: "Draft a marketing email for my business. Ask me who it is for and what it should say before you write it. Save it as a campaign draft; do not send anything." } })) },
+    { key: "nurture", icon: <Ic.trend size={20}/>, title: "Plan a nurture series", detail: "PAIGE plans it with you", act: () => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt: "Help me plan a short nurture series of marketing emails for my leads. Ask me who it is for and what I want them to do, then write the first email here so I can paste it into a campaign. You cannot save campaigns or schedule a series yet, so do not say you did." } })) },
+    { key: "paige", icon: <Ic.spark size={20}/>, title: "Use PAIGE", detail: "Describe what you need", act: () => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt: "Draft a marketing email for my business. Ask me who it is for and what it should say before you write it. Write the subject line, preview line and body here so I can paste them into a campaign. You cannot save or send campaigns yet, so do not say you did." } })) },
   ];
 
   const audienceRows = d ? [
@@ -132,18 +134,19 @@ export function MarketingEmail({ tenantId, onOpenAudience, onOpenConnections, on
   return <div className="mk-view mo mp me">
     <TabActions>
       <div className="campaigns-segmented" role="group" aria-label="Period">{EMAIL_PERIODS.map((n) => <button type="button" key={n} aria-pressed={days === n} onClick={() => setDays(n)}>Last {n} days</button>)}</div>
-      <AskPaigeButton label="Ask PAIGE to draft an email" prompt="Draft a marketing email for my business. Ask me who it is for and what it should say before you write it. Save it as a campaign draft; do not send anything."/>
+      <AskPaigeButton label="Ask PAIGE to draft an email" prompt="Draft a marketing email for my business. Ask me who it is for and what it should say before you write it. Write the subject line, preview line and body here so I can paste them into a campaign. You cannot save or send campaigns yet, so do not say you did."/>
+      {onOpenConnections && <button type="button" className="btn btn-s" onClick={onOpenConnections}><Ic.gear size={14}/>Sending settings</button>}
       <button type="button" className="btn btn-s btn-p" disabled={busy} onClick={() => void create("campaign", "standard", "Untitled campaign")}><Ic.plus size={14}/>New campaign</button>
     </TabActions>
     {createError && <p className="mo-note mp-inline-note" role="alert">{createError}</p>}
     <Frame phase={d ? "ready" : read.phase} retry={read.retry} noun="email dashboard">
       {d && stats && <>
         <div className="mo-stats me-stats" aria-busy={read.phase === "loading"}>
-          <OverviewStat icon={<Ic.send size={18}/>} tone="is-violet" label="Emails sent" value={stats.sent.value.toLocaleString()} foot={<CountDelta delta={stats.sent.delta} days={days} fallback={stats.sent.value ? "No earlier sends to compare" : "Nothing sent in this period"}/>}/>
-          <OverviewStat icon={<Ic.mail size={18}/>} tone="is-aqua" label="Open rate" value={pct(stats.openRate.value)} foot={<PointsDelta points={stats.openRate.points} days={days} fallback={stats.openRate.value === null ? (stats.untracked ? "Your own mail server does not report opens" : "Shown once an email is sent") : "No earlier period to compare"}/>}/>
-          <OverviewStat icon={<Ic.arrow size={18}/>} tone="is-blue" label="Click rate" value={pct(stats.clickRate.value)} foot={<PointsDelta points={stats.clickRate.points} days={days} fallback={stats.clickRate.value === null ? (stats.untracked ? "Your own mail server does not report clicks" : "Shown once an email is sent") : "No earlier period to compare"}/>}/>
-          <OverviewStat icon={<Ic.plus size={18}/>} tone="is-violet" label="New subscribers" value={stats.subscribers.value.toLocaleString()} foot={<CountDelta delta={stats.subscribers.delta} days={days} fallback="Newsletter opt-ins"/>}/>
-          <OverviewStat icon={<Ic.chart size={18}/>} tone="is-orange" label="Conversions" value={stats.conversions.value.toLocaleString()} foot={<CountDelta delta={stats.conversions.delta} days={days} fallback="A campaign's goal, within 7 days of a click"/>}/>
+          <OverviewStat icon={<Ic.send size={18}/>} tone="is-violet" label="Emails sent" value={stats.sent.value.toLocaleString()} foot={<CountDelta delta={stats.sent.delta} days={shownDays} fallback={stats.sent.value ? "No earlier sends to compare" : "Nothing sent in this period"}/>}/>
+          <OverviewStat icon={<Ic.mail size={18}/>} tone="is-aqua" label="Open rate" value={pct(stats.openRate.value)} foot={<PointsDelta points={stats.openRate.points} days={shownDays} fallback={stats.openRate.value === null ? (stats.untracked ? "Your own mail server does not report opens" : "Shown once an email is sent") : "No earlier period to compare"}/>}/>
+          <OverviewStat icon={<Ic.arrow size={18}/>} tone="is-blue" label="Click rate" value={pct(stats.clickRate.value)} foot={<PointsDelta points={stats.clickRate.points} days={shownDays} fallback={stats.clickRate.value === null ? (stats.untracked ? "Your own mail server does not report clicks" : "Shown once an email is sent") : "No earlier period to compare"}/>}/>
+          <OverviewStat icon={<Ic.plus size={18}/>} tone="is-violet" label="New subscribers" value={stats.subscribers.value.toLocaleString()} foot={<CountDelta delta={stats.subscribers.delta} days={shownDays} fallback="Newsletter opt-ins"/>}/>
+          <OverviewStat icon={<Ic.chart size={18}/>} tone="is-orange" label="Conversions" value={stats.conversions.value.toLocaleString()} foot={<CountDelta delta={stats.conversions.delta} days={shownDays} fallback="A campaign's goal, within 7 days of a click"/>}/>
         </div>
         {stats.untracked > 0 && stats.untracked < stats.sent.value && <p className="mo-note mp-inline-note">Rates count the {(stats.sent.value - stats.untracked).toLocaleString()} emails sent through PAIGE’s sender. The {stats.untracked.toLocaleString()} sent through your own mail server do not report opens or clicks.</p>}
         {!d.sending.postal_address_set && <div className="mo-next me-warn" role="status"><span className="mo-next-plate" aria-hidden="true"><Ic.shield size={16}/></span><div><h2>Add your postal address before you send</h2><p>Every marketing email shows the sender’s postal address. Campaigns stay in draft until your business has one.</p></div>{onOpenSettings && <button type="button" className="btn btn-s" onClick={onOpenSettings}>Open Settings</button>}</div>}
@@ -182,7 +185,7 @@ export function MarketingEmail({ tenantId, onOpenAudience, onOpenConnections, on
           <section className="campaigns-surface mo-panel" aria-labelledby="me-perf">
             <div className="mo-panel-head"><div><h2 id="me-perf">Email performance</h2><p>Open and click rate by day.</p></div><div className="mo-panel-tools"><ul className="mo-legend" aria-hidden="true"><li><i className="is-s1"/>Open rate</li><li><i className="is-s2"/>Click rate</li></ul></div></div>
             {points.some((p) => p.openRate !== null)
-              ? <ChartBoundary className="mo-chart me-chart-rates"><EmailRatesChart points={points} label={`Open and click rate over the last ${days} days`}/></ChartBoundary>
+              ? <ChartBoundary className="mo-chart me-chart-rates"><EmailRatesChart points={points} label={`Open and click rate over the last ${shownDays} days`}/></ChartBoundary>
               : <div className="campaigns-state me-chart-empty"><h2>{stats.sent.value ? "Opens are not reported for these emails" : "Nothing sent in this period"}</h2><p>{stats.sent.value ? "Emails sent through your own mail server do not report opens or clicks." : "Rates appear here after your first campaign goes out."}</p></div>}
           </section>
           <section className="campaigns-surface mo-panel" aria-labelledby="me-auto">

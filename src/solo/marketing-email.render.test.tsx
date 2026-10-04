@@ -97,6 +97,34 @@ describe("Marketing › Email dashboard", () => {
     expect(calls.find((c) => c.fn === "email_campaign_update_draft")?.args).toMatchObject({ p_version_id: "v-new", p_audience: { inactive_days: 90 } });
   });
 
+  it("a segment a campaign still uses is not deleted, and says why", async () => {
+    answers.read_email_marketing_dashboard = { data: { ...dashboard, segment_count: 1, segments: [{ id: "s-1", name: "Leads", rule: { stages: ["new_lead"] }, eligible: 4, matched: 4 }] }, error: null };
+    answers.email_segment_delete = { data: null, error: { message: "segment_in_use" } };
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+    await mount();
+    await act(async () => { host.querySelector<HTMLButtonElement>('button[aria-label^="Leads"]')!.click(); });
+    await flush();
+    await act(async () => { button("Delete")!.click(); });
+    await flush();
+    expect(calls.find((c) => c.fn === "email_segment_delete")?.args).toEqual({ p_id: "s-1" });
+    expect(text()).toContain("A campaign uses this segment.");
+    expect(host.querySelector('[role="dialog"]')).not.toBeNull();
+    confirm.mockRestore();
+  });
+
+  it("the segment drawer keeps Tab inside it", async () => {
+    await mount();
+    await act(async () => { button(/New segment/)!.click(); });
+    await flush();
+    const dialog = host.querySelector<HTMLElement>('[role="dialog"]')!;
+    const stops = Array.from(dialog.querySelectorAll<HTMLElement>("button, input")).filter((el) => !(el as HTMLButtonElement).disabled);
+    stops.at(-1)!.focus();
+    await act(async () => { dialog.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true })); });
+    expect(document.activeElement).toBe(stops[0]);
+    await act(async () => { dialog.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true, cancelable: true })); });
+    expect(document.activeElement).toBe(stops.at(-1));
+  });
+
   it("a refused create says why in plain words and opens nothing", async () => {
     answers.email_campaign_create = { data: null, error: { message: "not_permitted" } };
     await mount();
@@ -137,12 +165,55 @@ describe("Marketing › Email campaign editor", () => {
     await mount();
     expect(text()).toContain("Ready to send");
     expect(text()).toContain("12 people");
-    expect(text()).toContain("About $0.00 on PAIGE’s sender (an estimate)");
+    expect(text()).toContain("About less than $0.01 on PAIGE’s sender (an estimate)");
     expect(host.querySelector("textarea")?.disabled).toBe(true);
     await act(async () => { button("Approve and send")!.click(); });
     await flush();
     expect(calls.find((c) => c.fn === "email_campaign_approve")?.args).toEqual({ p_version_id: "v-new" });
     expect(button("Approve and send")!.className).toContain("btn-g");
+  });
+
+  it("Back saves an unsaved edit before leaving, and the browser asks before closing while it is unsaved", async () => {
+    window.history.replaceState(null, "", "/solo/1/growth/email?campaign=c-new");
+    answers.read_email_campaign = { data: campaignRead(), error: null };
+    await mount();
+    const subject = host.querySelector<HTMLInputElement>('input[placeholder="What the inbox shows first"]')!;
+    await type(subject, "Typed then left at once");
+    const ask = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(ask);
+    expect(ask.defaultPrevented).toBe(true);
+    calls.length = 0;
+    await act(async () => { button(/^Email$/)!.click(); });
+    await flush();
+    expect(calls[0]).toMatchObject({ fn: "email_campaign_update_draft", args: { p_subject: "Typed then left at once" } });
+    expect(window.location.search).toBe("");
+    expect(calls.filter((c) => c.fn === "email_campaign_update_draft")).toHaveLength(1);
+  });
+
+  it("an edit still pending when the editor closes is saved, not dropped", async () => {
+    window.history.replaceState(null, "", "/solo/1/growth/email?campaign=c-new");
+    answers.read_email_campaign = { data: campaignRead(), error: null };
+    await mount();
+    await type(host.querySelector<HTMLInputElement>('input[placeholder="What the inbox shows first"]')!, "Closed mid-edit");
+    calls.length = 0;
+    act(() => root.unmount());
+    root = createRoot(host);
+    await flush();
+    expect(calls.find((c) => c.fn === "email_campaign_update_draft")?.args).toMatchObject({ p_subject: "Closed mid-edit" });
+  });
+
+  it("the sender group is one tab stop and arrow keys choose the next sender", async () => {
+    window.history.replaceState(null, "", "/solo/1/growth/email?campaign=c-new");
+    const read = campaignRead();
+    read.senders = [{ mode: "connector", connector_id: "g-1", provider: "gmail", from_address: "me@biz.example", from_name: null, healthy: true }] as never;
+    answers.read_email_campaign = { data: read, error: null };
+    await mount();
+    const radios = Array.from(host.querySelectorAll<HTMLButtonElement>('[role="radio"]'));
+    expect(radios.map((r) => r.tabIndex)).toEqual([-1, 0]); // managed is chosen
+    radios[1].focus();
+    await act(async () => { host.querySelector('[role="radiogroup"]')!.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true, cancelable: true })); });
+    expect(document.activeElement).toBe(radios[0]);
+    expect(radios[0].getAttribute("aria-checked")).toBe("true");
   });
 
   it("a refusal from the database reads in the owner's words", async () => {

@@ -68,7 +68,8 @@ export function deriveStats(s: DashboardStats): EmailStats {
 
 export type RatePoint = { day: string; label: string; sent: number; openRate: number | null; clickRate: number | null };
 
-/** One point per calendar day. A day with no tracked sends has no rate: the chart leaves a gap, never a 0%. */
+/** One point per calendar day. A day with no tracked sends has no rate, never a 0%: the chart draws no dot
+ *  there and its line runs straight between the days that were measured. */
 export function ratePoints(series: SeriesDay[], locale?: string): RatePoint[] {
   const format = new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", timeZone: "UTC" });
   return series.map((d) => ({
@@ -96,18 +97,29 @@ const BLOCK_REASON: Record<string, string> = {
 };
 export const blockReason = (reason: string | null) => (reason ? BLOCK_REASON[reason] ?? "Sending is paused." : "Sending is paused.");
 
+/** "; 2 failed; 3 not confirmed": a failure the provider reported is not the same as an answer that never
+ *  came (outcome_unknown, never resent), so the two are counted apart. */
+export function unsent(c: { failed: number; not_confirmed: number }): string {
+  return (c.failed ? `; ${c.failed.toLocaleString()} failed` : "") + (c.not_confirmed ? `; ${c.not_confirmed.toLocaleString()} not confirmed` : "");
+}
+
+/** Under a cent reads as such; "$0.00" would say it is free. */
+export const costWords = (usd: number) => (usd < 0.01 ? "less than $0.01" : `$${usd.toFixed(2)}`);
+
 /** What a campaign's status means to the owner, in one label and one line. */
 export function campaignState(c: CampaignRow): CampaignState {
   const people = (n: number) => `${n.toLocaleString()} ${n === 1 ? "person" : "people"}`;
   switch (c.status) {
-    case "draft": return { label: "Draft", tone: "", detail: "Not sent. Only you can send it, after you approve it." };
+    case "draft": return { label: "Draft", tone: "", detail: c.sent
+      ? `A new version, not sent yet. Earlier versions reached ${people(c.sent)}.`
+      : "Not sent. Only you can send it, after you approve it." };
     case "pending_approval": return { label: "Awaiting approval", tone: "is-review", detail: `Ready to send to ${people(c.recipients ?? 0)} once approved.` };
     case "scheduled": return c.scheduled_for && Date.parse(c.scheduled_for) > Date.now()
       ? { label: "Scheduled", tone: "is-review", detail: `Approved. Sends ${new Date(c.scheduled_for).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}.` }
-      : { label: "Sending", tone: "is-review", detail: "Approved and starting." };
+      : { label: "Approved", tone: "is-review", detail: "Approved, waiting to send." };
     case "sending": return { label: "Sending", tone: "is-review", detail: `${c.sent.toLocaleString()} of ${(c.recipients ?? 0).toLocaleString()} sent so far.` };
     case "completed": return { label: "Sent", tone: "is-live", detail: `Sent to ${people(c.sent)}.` };
-    case "partially_completed": return { label: "Partly sent", tone: "is-warn", detail: `Sent to ${people(c.sent)}; ${(c.failed + c.not_confirmed).toLocaleString()} not confirmed.` };
+    case "partially_completed": return { label: "Partly sent", tone: "is-warn", detail: `Sent to ${people(c.sent)}${unsent(c)}.` };
     case "failed": return { label: "Not sent", tone: "is-blocked", detail: "No email went out." };
     case "blocked": return { label: "Paused", tone: "is-blocked", detail: blockReason(c.blocked_reason) };
     case "cancelled": return { label: "Cancelled", tone: "", detail: c.sent ? `Stopped after ${people(c.sent)}.` : "Cancelled before sending." };

@@ -496,14 +496,31 @@ Values intentionally omitted.
   LONGER reference Lovable (purged in #442 — they always ran on direct-Anthropic via `gatewayCompat`). Do
   NOT assume the chat touches Lovable (§10 corrections log 2026-08-10). Removing these is a launch-critical
   email-provider migration (owner-set replacement secret + §32 live-email verify) — see task #112.
-- **Visual critique (§33):** `VISUAL_RENDERER_URL`, `VISUAL_RENDERER_SECRET`,
-  `STUDIO_VISUAL_CRITIQUE_ENABLED`, `STUDIO_CRITIQUE_MAX_ITERATIONS`, `STUDIO_CRITIQUE_COST_CAP_USD`.
+- **Visual critique (§33):** `STUDIO_VISUAL_CRITIQUE_ENABLED` (unset = the loop is OFF in the product
+  flow AND studio-visual-critique answers `status:"disabled"` on BOTH paths — render and `image_url` —
+  without calling paige-browser or the model, and writes no row; its per-tenant throttle is not atomic under
+  concurrency, so an advisory-locked reservation is a required prerequisite before this is ever turned on), `STUDIO_CRITIQUE_MAX_ITERATIONS`, `STUDIO_CRITIQUE_COST_CAP_USD` (both enforced on
+  server-derived loop state from the log rows), `STUDIO_CRITIQUE_MAX_SLICES` (default 4 — slices asked
+  for and sent per critique), `STUDIO_CRITIQUE_THROTTLE_WINDOW_MIN` (10) + `STUDIO_CRITIQUE_THROTTLE_MAX`
+  (12 — per-tenant attempts per window, counted on the log), `STUDIO_CRITIQUE_LOOP_WINDOW_MIN` (60 — how
+  far back a deliverable/session's loop rows count). Landing pages (not funnels or forms) render through
+  paige-browser `/render` using the SAME edge secrets `PAIGE_BROWSER_URL` + `PAIGE_BROWSER_SECRET` below
+  (branch `screenshots-on-paige-browser`, 2026-10-04 — live only once merged and deployed).
+  **RETIRED:** `VISUAL_RENDERER_URL` / `VISUAL_RENDERER_SECRET` (edge) and `FLY_RENDERER_SHARED_SECRET`
+  (Fly) — they pointed at `paige-visual-renderer`, a Fly app that was never deployed (NXDOMAIN); no code
+  reads them after this change. If either edge secret exists on prod it is dead and may be unset.
 - **Paige browser — self-hosted headless browser (Task #126, §32.c self-verify + §17 public-web browse):**
   edge secret NAMES `PAIGE_BROWSER_URL` + `PAIGE_BROWSER_SECRET` (skill-runner → the Fly host's
-  `/self-verify` and `/browse-public-url`; unset → honest `needs_config`, §13). Fly-side (on the
+  `/self-verify` and `/browse-public-url`; studio-visual-critique → `/render`; unset → honest
+  `needs_config` / `renderer_not_configured`, §13). Fly-side (on the
   `paige-browser` app, NOT edge): `PAIGE_BROWSER_SHARED_SECRET` (must equal the edge `PAIGE_BROWSER_SECRET`),
   `PAIGE_BROWSER_WILDCARD_ENABLED` (`true` = wildcard public browsing ON, owner-flipped 2026-08-13),
-  `PAIGE_BROWSER_MAX_CONTENT_BYTES` (default 500000). Audit rail: `paige_browser_usage` (written by the
+  `PAIGE_BROWSER_MAX_CONTENT_BYTES` (default 500000). `/render` knobs, ALL optional with safe defaults
+  (no new Fly secret needed): `PAIGE_RENDER_ALLOWED_ORIGINS` (default
+  `https://paigeagent.ai,https://app.paigeagent.ai`), `PAIGE_APP_ORIGIN` (default `https://paigeagent.ai`,
+  where `/render-frame` is opened), `PAIGE_RENDER_MAX_PAYLOAD_BYTES` (1000000), `PAIGE_RENDER_SLICE_HEIGHT`
+  (1600), `PAIGE_RENDER_MAX_SLICES` (8), `PAIGE_RENDER_JPEG_QUALITY` (80), `PAIGE_RENDER_READY_TIMEOUT_MS`
+  (12000, and always shortened to fit the run deadline), `PAIGE_RENDER_MAX_SLICE_BYTES` (3500000). Audit rail: `paige_browser_usage` (written by the
   CALLER edge fn via service_role; the Fly host is DB-free, §9/§34).
 - **Email:** `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, plus from-address names
   `PLATFORM_DEFAULT_EMAIL_FROM`, `BILLING_EMAIL_FROM`, `WELCOME_EMAIL_FROM`, `CALENDAR_EMAIL_FROM`,

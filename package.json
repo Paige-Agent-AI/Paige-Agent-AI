@@ -131,6 +131,7 @@
     "smoke:secure-browser-control-plane": "node scripts/secure-browser-control-plane-smoke.mjs",
     "smoke:secure-browser-authority": "deno run -A scripts/secure-browser-authority-smoke.ts",
     "smoke:secure-browser-egress": "node services/paige-browser/smoke-readonly-egress.mjs",
+    "smoke:paige-browser-render": "node services/paige-browser/smoke-render.mjs",
     "lint:release-governance": "node scripts/ci/release-governance-lint.mjs",
     "lint:release-governance:test": "node scripts/ci/release-governance-lint.mjs --self-test",
     "test:customer-update-manifest": "node --test scripts/release-governance/customer-update-manifest.test.mjs",

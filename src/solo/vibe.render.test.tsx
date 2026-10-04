@@ -106,6 +106,16 @@ const baseMedia = (over: Partial<Record<string, unknown>> = {}) => ({
     harness.decided.push([id, approve]);
     return true;
   },
+  approve: async (id: string) => {
+    harness.decided.push([id, true]);
+    return true;
+  },
+  decline: async (id: string) => {
+    harness.decided.push([id, false]);
+    return true;
+  },
+  // Owner ruling 2026-10-04: the requester approves. Default fixture: the viewer asked for it.
+  approvalFor: () => ({ requestedByYou: true, requesterName: null }),
   cancel: async (id: string) => {
     harness.cancelled.push(id);
     return true;
@@ -142,7 +152,7 @@ describe("Vibe Studio — the 18 owner-required states, rendered", () => {
     expect((textarea as HTMLTextAreaElement).value).toContain("masterclass");
   });
 
-  it("states 5+6 — awaiting approval renders the boundary with the estimate and the exact commercial-use language", () => {
+  it("states 5+6 — awaiting approval renders the boundary with the estimate and the exact commercial-use language", async () => {
     renderAt(baseMedia({
       jobs: [{ id: "pj", mode: "image", provider: "fal", model: "fal-ai/nano-banana", params: { prompt: "hero visual" }, state: "blocked", approval_state: "pending", estimated_cost_usd: 0.039, actual_cost_usd: null, error: null, content_id: null, video_seconds: null, created_at: new Date().toISOString(), completed_at: null }],
     }));
@@ -150,10 +160,25 @@ describe("Vibe Studio — the 18 owner-required states, rendered", () => {
     expect(text()).toContain("≈$0.039");
     expect(text()).toContain("Commercial-use status depends on the applicable provider and model terms");
     const approve = [...host.querySelectorAll("button")].find((b) => b.textContent === "Approve & run");
+    await act(async () => { approve?.click(); });
     const decline = [...host.querySelectorAll("button")].find((b) => b.textContent === "Decline");
-    act(() => { approve?.click(); });
-    act(() => { decline?.click(); });
+    await act(async () => { decline?.click(); });
     expect(harness.decided).toEqual([["pj", true], ["pj", false]]);
+  });
+
+  it("states 5+6 for another admin — names who asked, offers Decline only, and never Approve", async () => {
+    renderAt(baseMedia({
+      jobs: [{ id: "pj", mode: "image", provider: "fal", model: "fal-ai/nano-banana", params: { prompt: "hero visual" }, state: "blocked", approval_state: "pending", estimated_cost_usd: 0.039, actual_cost_usd: null, error: null, content_id: null, video_seconds: null, created_at: new Date().toISOString(), completed_at: null }],
+      approvalFor: () => ({ requestedByYou: false, requesterName: "Dana Reyes" }),
+    }));
+    expect(text()).toContain("Waiting for Dana Reyes");
+    expect(text()).toContain("Waiting for Dana Reyes");
+    expect(text()).toContain("Only they can approve the cost. You can decline it.");
+    expect(text()).not.toContain("Needs your approval");
+    expect([...host.querySelectorAll("button")].some((b) => b.textContent === "Approve & run")).toBe(false);
+    const decline = [...host.querySelectorAll("button")].find((b) => b.textContent === "Decline");
+    await act(async () => { decline?.click(); });
+    expect(harness.decided).toEqual([["pj", false]]);
   });
 
   it("states 10+11+18 — a finished job renders its asset, the review row, and the truthful DISABLED Social handoff", () => {

@@ -10,8 +10,9 @@ const outcome = (capability: string, input: Record<string, unknown>) => classify
 describe("Studio receipts", () => {
   it("covers every Studio save and publish, and files images under one key", () => {
     expect([...STUDIO_RECEIPT_KEYS.keys()].sort()).toEqual([
-      "content_save", "generate_image", "growth_form_publish", "growth_form_save", "growth_funnel_build",
-      "growth_funnel_publish", "growth_page_publish", "growth_page_save",
+      "content_save", "generate_image", "growth_form_publish", "growth_form_save", "growth_form_unpublish",
+      "growth_funnel_build", "growth_funnel_publish", "growth_funnel_unpublish", "growth_page_publish", "growth_page_save",
+      "growth_page_unpublish", "studio_image_publish", "studio_image_unpublish",
     ]);
     expect(classifyStudioRun({ capability: "generate_image", result: { success: true, url: "u" } })).toEqual({ key: "vibe_media_image", outcome: "capability_succeeded" });
   });
@@ -33,6 +34,11 @@ describe("Studio receipts", () => {
   it("records an image with no provider configured as unreachable, and files nothing for a render in progress", () => {
     expect(outcome("generate_image", { result: { success: false, needs_config: true } })).toBe("capability_unreachable");
     expect(classifyStudioRun({ capability: "generate_image", result: { success: true, pending: true, job_id: "j" } })).toBeNull();
+  });
+
+  it("reads supabase-js's own words for a call that never got an answer as unknown", () => {
+    expect(outcome("growth_page_publish", { threw: true, thrown: { message: "error sending request for url (https://x.supabase.co/rest/v1/rpc/growth_page_publish)" } })).toBe("capability_outcome_unknown");
+    expect(outcome("growth_page_publish", { threw: true, thrown: { name: "FunctionsFetchError", message: "Failed to send a request to the Edge Function" } })).toBe("capability_outcome_unknown");
   });
 
   it("tells a server refusal from a failure from a lost answer", () => {

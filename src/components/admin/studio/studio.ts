@@ -15,10 +15,11 @@
 //   1. loadBrandFloor() reproduces GrowthPageRenderer's brand-floor construction EXACTLY —
 //      including the non-obvious line where `background` derives from primary_color. Get that
 //      wrong and the canvas lies about what will publish, with no test to catch it.
-//   2. publishPage() goes through growth_page_publish. A direct `update … set status='published'`
-//      would skip every guard AND never copy draft → live, producing a live, public, BLANK page.
-//   3. The publish path ALWAYS saves and THEN publishes. The save is what auto-authors the form
-//      behind the signup section, which is what makes publish's lead-capture guard pass.
+//   2. Nothing here publishes. Going live is one governed act, run only by the publish door
+//      (growth-publish-command), which the Studio panel and Paige's chat both call. A direct
+//      `update … set status='published'` would skip every guard AND never copy draft → live.
+//   3. A page is SAVED before it is published. The save is what auto-authors the form behind
+//      the signup section, which is what makes publish's lead-capture guard pass.
 import { supabase } from "@/integrations/supabase/client";
 import { knowledgeIngestOutcome } from "@/lib/knowledge/ingest-outcome";
 import type { GrowthAsset, GrowthAssetKind, GrowthBlock, GrowthField, GrowthFormSchema, GrowthPageTheme, GrowthSuccessAction } from "@/lib/growth";
@@ -1141,8 +1142,8 @@ export interface SavedPage {
  *
  * SIDE EFFECT WE DEPEND ON: the RPC idempotently auto-authors an ACTIVE backing form for every
  * embedded_form block. That is what makes the canvas's signup section a real signup section,
- * and it is the reason publish's lead-capture guard passes. Which is why publish ALWAYS saves
- * first — see publishAndSave() below.
+ * and it is the reason publish's lead-capture guard passes. Which is why a page is always
+ * saved before the publish door is asked to put it live.
  */
 export async function savePageDraft(input: SavePageInput): Promise<SavedPage> {
   const tenantId = requireTenant(input.tenantId);
@@ -1173,82 +1174,6 @@ export async function savePageDraft(input: SavePageInput): Promise<SavedPage> {
 
   if (!row?.id) throw studioError("SAVE_FAILED", row);
   return { id: row.id, slug: row.slug, title: row.title, status: row.status };
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════════════
-// Publish — rpc growth_page_publish. THE ACT.
-// ═══════════════════════════════════════════════════════════════════════════════════════
-
-export interface PublishPageInput {
-  tenantId: string;
-  pageId: string;
-}
-
-export interface PublishPageResult {
-  id: string;
-  slug: string;
-  tenantSlug: string;
-  status: string;
-  publishedAt: string | null;
-  /** The REAL URL the server resolved. Never concatenated on the client (§13). */
-  url: string;
-}
-
-interface PublishRpcRow {
-  id: string;
-  slug: string;
-  tenant_slug: string;
-  status: string;
-  published_at: string | null;
-  url: string;
-}
-
-/**
- * Copy draft → live and go public.
- *
- * This MUST be the RPC. The RPC is what copies draft_blocks_json into blocks_json, and it is
- * what enforces every guard: nothing saved yet, unresolved [ADD_…] blanks, a signup section
- * with no live form, a workspace with no public address. A direct
- * `update growth_pages set status='published'` would satisfy the type checker, skip all four
- * guards, copy nothing — and put a LIVE, PUBLICLY VISIBLE, BLANK page on the internet while
- * reporting success. Do not write that line.
- *
- * Callers must have saved first. publishAndSave() below does it in the right order for you.
- */
-export async function publishPage(input: PublishPageInput): Promise<PublishPageResult> {
-  const tenantId = requireTenant(input.tenantId);
-  if (!input.pageId) throw studioError("NO_DRAFT");
-
-  const row = await rpc<PublishRpcRow | null>(
-    "growth_page_publish",
-    { p_tenant_id: tenantId, p_id: input.pageId },
-    "PUBLISH_FAILED",
-  );
-
-  if (!row?.url) throw studioError("PUBLISH_FAILED", row);
-  return {
-    id: row.id,
-    slug: row.slug,
-    tenantSlug: row.tenant_slug,
-    status: row.status,
-    publishedAt: row.published_at ?? null,
-    url: row.url,
-  };
-}
-
-/**
- * The whole act, in the one order that works: SAVE, then PUBLISH.
- *
- * The save writes the draft columns and auto-authors the form behind the signup section; the
- * publish then finds that form and its lead-capture guard passes. Publish-without-save fails on
- * a page that looks perfectly fine on the canvas. This is the entry point Paige calls — she gets
- * the same ordering guarantee the gold button does, for free.
- */
-export async function publishAndSave(
-  input: SavePageInput & { pageId?: string | null },
-): Promise<PublishPageResult> {
-  const saved = await savePageDraft(input);
-  return publishPage({ tenantId: input.tenantId, pageId: saved.id });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════════════
@@ -1912,7 +1837,7 @@ export async function saveFunnel(input: SaveFunnelInput): Promise<SavedFunnel> {
   );
 
   // Some upsert rails return the row, some return void — resolve the id by (tenant, slug)
-  // when it isn't handed back, so publishFunnel always has a real target (§13: never
+  // when it isn't handed back, so a publish always has a real target (§13: never
   // report a save we can't point at).
   let id = row && typeof row === "object" && typeof row.id === "string" ? row.id : null;
   if (!id) {
@@ -1929,26 +1854,12 @@ export async function saveFunnel(input: SaveFunnelInput): Promise<SavedFunnel> {
   return { id, slug };
 }
 
-/** Go live — growth_funnel_publish is the ONLY path to status='active'; it enforces the
- *  lead-capture guards (pages published, forms active) so a live funnel never renders a
- *  blank or dead step. Never flip the status column directly. */
-export async function publishFunnel(input: { tenantId: string; id: string }): Promise<{ url: string | null }> {
-  requireTenant(input.tenantId);
-  if (!input.id) throw studioError("NO_DRAFT");
-  const row = await rpc<{ url?: string } | null>(
-    "growth_funnel_publish",
-    { p_tenant_id: null, p_id: input.id },
-    "PUBLISH_FAILED",
-  );
-  return { url: row?.url ?? null };
-}
-
 // ═══════════════════════════════════════════════════════════════════════════════════════
 // AI funnel — the conversational funnel seam (§18/§19). A funnel is born from the SAME
 // composer as everything else: classifyStudioIntent → "funnel" → draftFunnel() plans and
 // drafts the whole thing (via growth-funnel-draft, which reuses the page + form drafters) →
-// buildFunnelFromDraft() persists the real page/form/funnel rows → publishFunnelCascade()
-// ships the whole sequence in one act. There is NO separate Funnel tab; this is the AI path
+// buildFunnelFromDraft() persists the real page/form/funnel rows; going live is the publish
+// door's act (growth-publish-command). There is NO separate Funnel tab; this is the AI path
 // FunnelMode never had, wired straight into the one Studio surface.
 // ═══════════════════════════════════════════════════════════════════════════════════════
 
@@ -2053,24 +1964,38 @@ export interface BuiltFunnel {
   /** The intake form's slug — carried so a rebuild updates the SAME form row in place. */
   formSlug: string | null;
   /** Unresolved [ADD_…] blanks the generator left in the entry page (§15). While non-empty
-   *  the funnel CANNOT publish — growth_page_publish hard-refuses these — so the caller must
+   *  the funnel CANNOT publish — the publish guard hard-refuses these — so the caller must
    *  gate the act and tell the operator what to add, never arm a gold button that will fail. */
   pageBlanks: string[];
   steps: BuiltFunnelStep[];
 }
 
+/** The publish guard's two placeholder shapes (_growth_page_go_live). They are tested against each
+ *  piece of text on its own, never against the serialized page: run over the whole JSON, the
+ *  page's own brackets plus an ordinary word like "your" read as a blank. */
+const PLACEHOLDER_TOKEN = /\[[A-Za-z0-9]*_[A-Za-z0-9_]*\]/g;
+const PLACEHOLDER_PROMPT = /\[[^\]]*\b(add|paste|insert|enter|fill|tbd|placeholder|replace|example|your)\b[^\]]*\]/gi;
+
+function stringLeaves(value: unknown, out: string[] = []): string[] {
+  if (typeof value === "string") out.push(value);
+  else if (Array.isArray(value)) for (const v of value) stringLeaves(v, out);
+  else if (value && typeof value === "object") for (const v of Object.values(value)) stringLeaves(v, out);
+  return out;
+}
+
 /** The [ADD_…] / prompt-style blanks the page generator leaves when the brief lacked a real
- *  fact (§15). Same two regexes the publish preflight uses (PLACEHOLDER_TOKEN/_PROMPT below),
- *  so what we flag here is exactly what growth_page_publish will refuse — no drift. */
+ *  fact (§15) — exactly what the publish guard will refuse, so the funnel never arms a publish
+ *  that will fail. */
 function collectPlaceholders(value: unknown): string[] {
-  if (value === null || value === undefined) return [];
-  const text = JSON.stringify(value) ?? "";
   const found = new Set<string>();
-  for (const re of [new RegExp(PLACEHOLDER_TOKEN.source, "g"), new RegExp(PLACEHOLDER_PROMPT.source, "gi")]) {
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(text)) !== null) {
-      found.add(m[0]);
-      if (found.size >= 8) break;
+  for (const text of stringLeaves(value)) {
+    for (const re of [PLACEHOLDER_TOKEN, PLACEHOLDER_PROMPT]) {
+      re.lastIndex = 0;
+      let m: RegExpExecArray | null;
+      while ((m = re.exec(text)) !== null) {
+        found.add(m[0]);
+        if (found.size >= 8) return [...found];
+      }
     }
   }
   return [...found];
@@ -2078,7 +2003,7 @@ function collectPlaceholders(value: unknown): string[] {
 
 /** Persist a drafted funnel into REAL rows — the entry page (draft), the intake form (active),
  *  and the funnel itself with its wired steps. Returns the built funnel with honest per-step
- *  status so the canvas never claims a step is live before publishFunnelCascade() ships it.
+ *  status so the canvas never claims a step is live before the publish door ships it.
  *
  *  Pass `existing` to REBUILD in place (the refine-by-re-briefing path): the same page/form/
  *  funnel rows are updated instead of INSERTing a fresh set — otherwise every refinement would
@@ -2164,131 +2089,6 @@ export async function buildFunnelFromDraft(input: {
     pageBlanks: uniqueBlanks,
     steps: builtSteps,
   };
-}
-
-export interface PublishFunnelCascadeResult {
-  url: string | null;
-  /** True when the entry page was published as part of this cascade (§13 — report what ran). */
-  pagePublished: boolean;
-}
-
-/** A funnel-publish failure that happened AFTER the entry page already went live — so the
- *  caller can still reflect the page as published instead of lying that nothing happened (§13). */
-export interface FunnelPublishError {
-  cause: unknown;
-  /** The entry page IS live even though the funnel didn't flip — reflect it. */
-  pagePublished: boolean;
-}
-
-export function isFunnelPublishError(e: unknown): e is FunnelPublishError {
-  return !!e && typeof e === "object" && "cause" in e && "pagePublished" in e;
-}
-
-/** Ship the whole funnel in one act (§19): publish the entry page (the one step still a draft),
- *  then publish the funnel — whose server guard re-checks that pages are live and forms active
- *  before it flips to active and returns the real /f/<tenant>/<slug> URL. If the funnel step
- *  throws AFTER the page published, we rethrow a FunnelPublishError carrying pagePublished so
- *  the UI never claims the page is still a draft when it is actually live (§13). */
-export async function publishFunnelCascade(input: {
-  tenantId: string;
-  funnel: Pick<BuiltFunnel, "funnelId" | "pageId" | "pageStatus">;
-}): Promise<PublishFunnelCascadeResult> {
-  const tenantId = requireTenant(input.tenantId);
-  let pagePublished = false;
-  if (input.funnel.pageStatus !== "published") {
-    await publishPage({ tenantId, pageId: input.funnel.pageId });
-    pagePublished = true;
-  }
-  try {
-    const { url } = await publishFunnel({ tenantId, id: input.funnel.funnelId });
-    return { url, pagePublished };
-  } catch (cause) {
-    throw { cause, pagePublished } as FunnelPublishError;
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════════════
-// Publish preflight — the server's own guards, run on the client first
-// ═══════════════════════════════════════════════════════════════════════════════════════
-
-export interface PublishCheck {
-  id: "has_blocks" | "no_placeholders" | "tenant_slug" | "valid_slug";
-  ok: boolean;
-  label: string;
-  /** What to fix, in operator voice. */
-  detail?: string;
-  /** Sections still carrying a blank — lets the dialog deep-link the fix. */
-  blockIndexes?: number[];
-}
-
-/** The publish RPC's OWN regexes, ported 1:1 (20260713090000_growth_authoring_seam.sql). SQL's
- *  `\y` word boundary is JS's `\b`. If the server's guard changes, these change in lockstep — a
- *  preflight that disagrees with the server is worse than no preflight, because it re-arms the
- *  gold button on a page the server will refuse. */
-export const PLACEHOLDER_TOKEN = /\[[A-Za-z0-9]*_[A-Za-z0-9_]*\]/;
-export const PLACEHOLDER_PROMPT =
-  /\[[^\]]*\b(add|paste|insert|enter|fill|tbd|placeholder|replace|example|your)\b[^\]]*\]/i;
-
-const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-
-function hasPlaceholder(value: unknown): boolean {
-  if (value === null || value === undefined) return false;
-  const text = JSON.stringify(value) ?? "";
-  return PLACEHOLDER_TOKEN.test(text) || PLACEHOLDER_PROMPT.test(text);
-}
-
-/**
- * Run the server's guards BEFORE the gold button is armed.
- *
- * The generator is *instructed* to leave bracketed blanks ([ADD_WEBINAR_DATE]) wherever the
- * brief didn't give it a real fact — that's §15 working correctly, not a bug. But the publish
- * RPC hard-refuses those. So without this, the very first gold click most operators ever make
- * would fail on a raw server error. A grey button that explains beats a gold one that blows up.
- */
-export function preflightPublish(input: {
-  blocks: GrowthBlock[];
-  seo: StudioSeoDraft | null;
-  slug: string;
-  tenantSlug: string | null;
-}): PublishCheck[] {
-  const blocks = Array.isArray(input.blocks) ? input.blocks : [];
-  const slug = (input.slug ?? "").trim();
-
-  const flagged: number[] = [];
-  blocks.forEach((block, index) => {
-    if (hasPlaceholder(block)) flagged.push(index);
-  });
-  const seoFlagged = hasPlaceholder(input.seo);
-
-  return [
-    {
-      id: "has_blocks",
-      ok: blocks.length > 0,
-      label: "The page has sections",
-      detail: "Describe the page and let Paige draft it first.",
-    },
-    {
-      id: "no_placeholders",
-      ok: flagged.length === 0 && !seoFlagged,
-      label: "Every blank is filled in",
-      detail: seoFlagged
-        ? "The page name or description still has a blank in square brackets. Fill it in, then publish."
-        : "Some sections still have blanks in square brackets — a date, a link, a real result. Fill them in, then publish.",
-      blockIndexes: flagged.length > 0 ? flagged : undefined,
-    },
-    {
-      id: "tenant_slug",
-      ok: !!input.tenantSlug,
-      label: "This workspace has a public web address",
-      detail: "Set your workspace's web address in brand settings, then come back and publish.",
-    },
-    {
-      id: "valid_slug",
-      ok: SLUG_RE.test(slug),
-      label: "The page has a web address",
-      detail: "Give it a web address — letters, numbers and dashes.",
-    },
-  ];
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════════════

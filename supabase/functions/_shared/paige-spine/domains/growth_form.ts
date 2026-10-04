@@ -153,3 +153,46 @@ export const GROWTH_FORM_PUBLISH_CAPABILITY = defineCapability({
   receipt: FORM_RECEIPT,
   outcome: { projector: "capability-record" },
 });
+
+// UNPUBLISH (Migration E, 2026-10-04). A door-only act: the growth-publish-command door runs it for
+// the Studio panel and the chat alike, and no chat tool carries this name. So, like the human-only
+// invoice link (sales_invoice.ts), it is declared through the capability kit and NOT as a
+// SpineCapability: the Spine validator requires every mutating entry to name a LIVE chat tool, and
+// claiming one here would be false. The door binds this declaration through
+// STUDIO_PUBLISH_KIT_BY_ACTION (studio_publish.ts) and decideDeclaredCapability.
+//
+// `high`, like publish: strangers can no longer submit. The RPC refuses a form a live page or
+// funnel still collects through.
+export const GROWTH_FORM_UNPUBLISH_CAPABILITY = defineCapability({
+  identity: {
+    id: "growth_form.unpublish",
+    version: 1,
+    domain: "growth_form",
+    owner: "vibe-studio",
+    humanSurface: "/solo/:account/growth",
+    description: "Take a form offline so it stops taking submissions.",
+  },
+  input: objectInputSchema({
+    description: "Unpublish a live form.",
+    properties: { form_id: { type: "string", format: "uuid" } },
+    required: ["form_id"],
+  }),
+  effect: "mutation",
+  governance: {
+    actionRiskKey: "growth_form_unpublish",
+    risk: "high",
+    approval: "confirm",
+    requiredPermission: ownerGrantablePermission("growth_form.unpublish.execute"),
+  },
+  tenantScope: FORM_SCOPE,
+  availability: FORM_AVAILABILITY,
+  providerBinding: { kind: "internal", operation: "public.growth_form_unpublish", connectionResolver: null },
+  idempotency: {
+    mode: "required",
+    key: "the form's own state. Unpublishing a form that is not live returns its current status and changes nothing, so a replay converges.",
+    readback: "public.growth_form_unpublish",
+    replay: "return_recorded_result",
+  },
+  receipt: FORM_RECEIPT,
+  outcome: { projector: "capability-record" },
+});

@@ -93,6 +93,21 @@ export function parseSalesInvoiceActions(src) {
   return [...src.slice(at, end).matchAll(/"invoice\.[a-z_]+":\s*"([a-z0-9_]+)"/g)].map(m => m[1]);
 }
 
+/** Closed declared adapter, not any function whose name resembles a gate. */
+export function invoiceDeclaredGateBound(handler, decision) {
+  return handler.includes('SALES_INVOICE_ACTIONS[command.action]')
+    && /import\s*\{\s*decideDeclaredCapability\s*\}\s*from\s*["']\.\.\/_shared\/capability-kit\/decision\.ts["']/.test(handler)
+    && /import\s*\{\s*SALES_INVOICE_KIT_BY_ACTION\s*\}\s*from\s*["']\.\.\/_shared\/paige-spine\/domains\/sales_invoice\.ts["']/.test(handler)
+    && handler.includes('decideDeclaredCapability(SALES_INVOICE_KIT_BY_ACTION[capability], {')
+    && /import\s*\{\s*decideGovernedExecution\s*\}\s*from\s*["']\.\.\/paige-spine\/governedExecution\.ts["']/.test(decision)
+    && decision.includes("if (!isDefinedCapability(declaration)) throw new TypeError('CAPABILITY_DECLARATION_REQUIRED')")
+    && decision.includes('key !== input.capability.id')
+    && decision.includes('classifyAction(key) !== declaration.governance.risk')
+    && decision.includes("declaration.governance.approval !== 'confirm'")
+    && decision.includes("input.capability.availability === 'unknown'")
+    && decision.includes('input.capability.outcomeChannel !== declaration.receipt.recorder')
+    && decision.includes('return decideGovernedExecution(input);');
+}
 export function parseExemptions(src) {
   const at = src.indexOf("const NON_MUTATING_EXEMPT: ReadonlyMap<string, string> = new Map([");
   if (at < 0) return null;
@@ -178,6 +193,17 @@ function selfTest() {
     verbSourceMatches: true,
   };
   let bad = 0;
+  const invoiceHandler = fs.readFileSync(SALES_INVOICE_HANDLER, 'utf8');
+  const invoiceDecision = fs.readFileSync('supabase/functions/_shared/capability-kit/decision.ts', 'utf8');
+  bad += ok('invoice declared gate follows the exact canonical adapter', invoiceDeclaredGateBound(invoiceHandler, invoiceDecision));
+  for (const [label, handler, decision] of [
+    ['fake adapter import',invoiceHandler.replace('capability-kit/decision.ts','fake/decision.ts'),invoiceDecision],
+    ['wrong declaration selection',invoiceHandler.replace('SALES_INVOICE_KIT_BY_ACTION[capability]','SALES_INVOICE_KIT_BY_ACTION.other'),invoiceDecision],
+    ['forged declaration',invoiceHandler,invoiceDecision.replace('!isDefinedCapability(declaration)','false')],
+    ['wrong risk',invoiceHandler,invoiceDecision.replace('classifyAction(key) !== declaration.governance.risk','false')],
+    ['unknown availability',invoiceHandler,invoiceDecision.replace("input.capability.availability === 'unknown'",'false')],
+    ['alternate authority',invoiceHandler,invoiceDecision.replace('return decideGovernedExecution(input);','return fakeApproval(input);')],
+  ]) bad += ok(`invoice gate refuses ${label}`, !invoiceDeclaredGateBound(handler, decision));
   bad += ok("imported catalog mutations are included", parseChat('', ['widget_delete_thing']).declared.includes('widget_delete_thing'));
   bad += ok("invoice risk discovery reads its bounded canonical map", parseSalesInvoiceActions('export const SALES_INVOICE_ACTIONS = {\n "invoice.publish": "sales_publish_invoice",\n} as const;').join() === 'sales_publish_invoice');
   bad += ok("invoice risk discovery refuses an absent or incomplete map", parseSalesInvoiceActions('"invoice.publish": "sales_publish_invoice"').length === 0 && parseSalesInvoiceActions('export const SALES_INVOICE_ACTIONS = {').length === 0);
@@ -338,7 +364,7 @@ const governedEdgeActions = [
 const requiredClassifications = [];
 if (fs.existsSync(SALES_INVOICE_HANDLER)) {
   const source = fs.readFileSync(SALES_INVOICE_HANDLER, 'utf8');
-  if (!source.includes('SALES_INVOICE_ACTIONS[command.action]') || !source.includes('decideGovernedExecution(')) throw new Error('Invoice handler no longer binds its canonical action map to the governed gate');
+  if (!invoiceDeclaredGateBound(source, fs.readFileSync('supabase/functions/_shared/capability-kit/decision.ts', 'utf8'))) throw new Error('Invoice handler no longer binds its canonical action map and validated declaration to the governed gate');
   const actions = parseSalesInvoiceActions(fs.readFileSync(SALES_INVOICE_CONTRACT, 'utf8'));
   if (!actions.length) throw new Error('Invoice action map could not be parsed');
   governedEdgeActions.push(...actions);

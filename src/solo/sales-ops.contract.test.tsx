@@ -83,7 +83,7 @@ vi.mock("./data/useSoloTrust", () => ({
   useSoloTrust: () => ({ loading: false, configured: true, departments: [], bySlug: {}, error: null }),
 }));
 vi.mock("./useSoloCampaigns", () => ({ useSoloCampaigns: () => harness.state }));
-// The Planned Marketing tabs read Supabase directly; this suite only needs them mounted, not reading.
+// Audience, Content, Email and Ads read Supabase directly; this suite only needs them mounted, not reading.
 vi.mock("./marketing-planned", () => {
   const view = (name: string) => () => <div data-planned-view={name}/>;
   return { MarketingAudience: view("audience"), MarketingContent: view("content"), MarketingEmail: view("email"), MarketingAds: view("ads") };
@@ -332,7 +332,7 @@ describe("§58 — behaviour that shipped on Sales and must survive the command-
     const tabs = [...host.querySelectorAll('[role="tablist"][aria-label="Marketing views"] [role="tab"]')]
       .map((t) => t.textContent?.trim())
       .filter(Boolean);
-    expect(tabs).toEqual(["Overview", "Campaigns", "Audience, Planned", "Content, Planned", "Social", "Email, Planned", "Ads, Planned", "Lead capture", "Analytics"]);
+    expect(tabs).toEqual(["Overview", "Campaigns", "Audience", "Content", "Social", "Email", "Ads", "Lead capture", "Analytics"]);
   });
 
   it("keeps SalesOps' own four load phases distinct from the Campaigns snapshot's", () => {

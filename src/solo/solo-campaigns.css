@@ -482,21 +482,10 @@
 .mo-next{animation-delay:.34s}
 @media(prefers-reduced-motion:reduce){.mo-stats>*,.mo-grid>*,.mo-next{animation:none}.mo-keys button,.mo-rank button,.mo-briefs button,.mo-ask{transition:none}}
 
-/* ── Planned Marketing tabs: Audience · Content · Email · Ads (marketing-planned.tsx) ──
-   "Planned" is said quietly, in a dashed outline: it is a state, not an act, so it never takes
-   gold, and it must not read as the violet "Awaiting review" that asks for a decision. */
-.campaigns-tab-planned{flex:none;padding:1px 6px;border:1px dashed var(--line);border-radius:999px;font-size:10.5px;font-weight:500;line-height:1.4;color:var(--ink-2)}
-/* Nine tabs scroll the strip whenever PAIGE is docked. Where room is short, "Planned" becomes a small
-   dashed ring (its words stay in the accessible name), and the strip's edge fades so the tabs past it
-   read as more to scroll to, never as missing. The end padding keeps the last tab clear of the fade. */
+/* ── Audience · Content · Email · Ads (marketing-planned.tsx) ──
+   No header: the tab strip already names the tab. The strip fades at its edge so tabs past it read as
+   more to scroll to; the end padding keeps the last tab clear of the fade. */
 .campaigns-tabs{-webkit-mask-image:linear-gradient(to right,var(--ink) calc(100% - 28px),transparent);mask-image:linear-gradient(to right,var(--ink) calc(100% - 28px),transparent);padding-right:28px}
-@container (max-width:900px){.campaigns-tab-planned{width:9px;height:9px;padding:0;font-size:0;line-height:0;border-color:var(--ink-3)}}
-.mk-flag.is-planned{min-width:0;background:transparent;border:1px dashed var(--line);color:var(--ink-2)}
-.mp-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:4px 2px 2px}
-.mp-head h2{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:clamp(20px,2.4cqi,26px);font-weight:650;letter-spacing:-.03em;line-height:1.15;color:var(--ink)}
-.mp-head h2 .mk-flag{letter-spacing:0}
-.mp-head p{margin-top:6px;max-width:68ch;font-size:13.5px;line-height:1.5;color:var(--ink-2)}
-.mp-head-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .mp-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 .mp-grid.mp-grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .mp-list{list-style:none;margin:0;padding:0;display:grid}
@@ -514,15 +503,14 @@
 .mp-facts dd{margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--ink);overflow-wrap:anywhere}
 .mp-facts dd .mk-flag{min-width:0}
 .mp-facts dd small{font-size:12px;color:var(--ink-2)}
+.mp-actions{display:flex;justify-content:flex-end;align-items:center;gap:10px;flex-wrap:wrap}
 .mp-skeleton{padding:0}
 .mp-ledger-3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .mp-empty{display:grid;justify-items:start;gap:10px}
 .mp-empty .mo-note{margin-top:0}
 .mp-inline-note{margin:-4px 2px 0}
 .mp-inline-note .mo-link{font-size:inherit}
-.mp-notyet .mk-flag{min-width:0;padding:0 8px}
 @container (max-width:900px){.mp-ledger-3{grid-template-columns:minmax(0,1fr)}.mp-ledger-3 .mk-stat{border-left:0;border-top:1px solid var(--line-soft)}.mp-ledger-3 .mk-stat:first-child{border-top:0}}
 @container (max-width:1000px){.mp-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.mp-grid>.mo-panel:last-child:nth-child(odd){grid-column:1/-1}}
-@container (max-width:720px){.mp-grid,.mp-grid.mp-grid-2{grid-template-columns:minmax(0,1fr)}.mp-head{align-items:flex-start}}
+@container (max-width:720px){.mp-grid,.mp-grid.mp-grid-2{grid-template-columns:minmax(0,1fr)}.mp-actions{justify-content:flex-start}}
 @container (max-width:460px){.mp-list li{flex-direction:column;gap:6px}.mp-list .mk-flag{min-width:0}}
-@media(forced-colors:active){.campaigns-tab-planned,.mk-flag.is-planned{border:1px dashed CanvasText}}

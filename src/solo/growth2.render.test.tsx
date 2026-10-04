@@ -557,7 +557,7 @@ describe("Solo Campaigns rendered flows", () => {
   it("renders the exact tab order and moves route plus focus with arrow keys", () => {
     renderAt("/solo/42/growth/overview");
     const tabs = [...host.querySelectorAll('[role="tab"]')] as HTMLButtonElement[];
-    expect(tabs.map((tab) => tab.textContent)).toEqual(["Overview", "Campaigns", "Audience, Planned", "Content, Planned", "Social", "Email, Planned", "Ads, Planned", "Lead capture", "Analytics"]);
+    expect(tabs.map((tab) => tab.textContent)).toEqual(["Overview", "Campaigns", "Audience", "Content", "Social", "Email", "Ads", "Lead capture", "Analytics"]);
     expect(host.querySelector('[role="tablist"]')?.getAttribute("aria-label")).toBe("Marketing views");
     // One divider, placed before the Sales lane's three tabs.
     const dividers = [...host.querySelectorAll(".campaigns-tab-divider")];

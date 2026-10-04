@@ -660,7 +660,7 @@ function CampaignTabs({ tabs, current, setCurrent }) {
     pendingCampaignTabFocus=nextKey;
     setCurrent(nextKey);
   };
-  return <div className="campaigns-nav"><div className="campaigns-tabs" role="tablist" aria-label="Marketing views">{tabs.map((tab,index)=><React.Fragment key={tab[0]}>{tab[3]==="sales"&&tabs[index-1]?.[3]!=="sales"&&<span className="campaigns-tab-divider" aria-hidden="true" title="Moving to Sales"/>}<button id={`campaigns-tab-${tab[0]}`} aria-controls="campaigns-tabpanel" role="tab" aria-selected={current===tab[0]} tabIndex={current===tab[0]?0:-1} onClick={()=>setCurrent(tab[0])} onKeyDown={(event)=>onKeyDown(event,index)}>{tab[2]()}<span>{tab[1]}</span>{tab[3]==="planned"&&<span className="campaigns-tab-planned" title="Planned"><span className="campaigns-sr-only">, </span>Planned</span>}</button></React.Fragment>)}</div><button className="btn btn-s btn-p campaigns-studio" title="Vibe Studio" data-solo-vibe-studio-launcher onClick={openStudio}><Ic.spark size={13}/>Vibe Studio</button></div>;
+  return <div className="campaigns-nav"><div className="campaigns-tabs" role="tablist" aria-label="Marketing views">{tabs.map((tab,index)=><React.Fragment key={tab[0]}>{tab[3]==="sales"&&tabs[index-1]?.[3]!=="sales"&&<span className="campaigns-tab-divider" aria-hidden="true" title="Moving to Sales"/>}<button id={`campaigns-tab-${tab[0]}`} aria-controls="campaigns-tabpanel" role="tab" aria-selected={current===tab[0]} tabIndex={current===tab[0]?0:-1} onClick={()=>setCurrent(tab[0])} onKeyDown={(event)=>onKeyDown(event,index)}>{tab[2]()}<span>{tab[1]}</span></button></React.Fragment>)}</div><button className="btn btn-s btn-p campaigns-studio" title="Vibe Studio" data-solo-vibe-studio-launcher onClick={openStudio}><Ic.spark size={13}/>Vibe Studio</button></div>;
 }
 
 // Retained for the existing hidden Clients compatibility mount. It performs no
@@ -682,8 +682,8 @@ export const GrowthHub=({ salesInShell = false } = {})=>{
 const MarketingWorkspace=({ salesInShell = false })=>{
   const[tab,setTab]=useSubtabRoute("solo","growth","overview");
   // Commercial addresses resolve to Sales before Marketing readers mount.
-  // The owner's order (2026-10-04). A fourth element of "planned" marks a tab whose feature is not built yet.
-  const tabs=[['overview','Overview',()=><Ic.pulse size={14}/>],['campaigns','Campaigns',()=><Ic.bolt size={14}/>],['audience','Audience',()=><Ic.users size={14}/>,'planned'],['content','Content',()=><Ic.grid size={14}/>,'planned'],['social','Social',()=><Ic.send size={14}/>],['email','Email',()=><Ic.mail size={14}/>,'planned'],['ads','Ads',()=><Ic.trend size={14}/>,'planned'],['capture','Lead capture',()=><Ic.doc size={14}/>],['analytics','Analytics',()=><Ic.chart size={14}/>]];
+  // The owner's order (2026-10-04).
+  const tabs=[['overview','Overview',()=><Ic.pulse size={14}/>],['campaigns','Campaigns',()=><Ic.bolt size={14}/>],['audience','Audience',()=><Ic.users size={14}/>],['content','Content',()=><Ic.grid size={14}/>],['social','Social',()=><Ic.send size={14}/>],['email','Email',()=><Ic.mail size={14}/>],['ads','Ads',()=><Ic.trend size={14}/>],['capture','Lead capture',()=><Ic.doc size={14}/>],['analytics','Analytics',()=><Ic.chart size={14}/>]];
   const data=useSoloCampaigns();
   const params=useParams();
   const location=useLocation();

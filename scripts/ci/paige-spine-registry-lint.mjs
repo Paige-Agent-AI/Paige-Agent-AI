@@ -214,12 +214,15 @@ if (process.argv.includes("--self-test")) {
   if (lint(future, later, null, null).length) { console.error("PAIGE Spine registry lint rejected a coherent additive later-domain migration"); process.exit(1); }
   if(tsProof.findings.length||zapierProof.findings.length||ghlProof.findings.length){console.error(tsProof.findings.concat(zapierProof.findings,ghlProof.findings));process.exit(1);}
   const originalChat=readFileSync(chatSourcePath,'utf8'),originalManagement=readFileSync(managementSourcePath,'utf8');
+  // Mutate the intended call, not an unrelated additive domain's matching field.
+  const n8nStart=originalChat.indexOf('await runN8nManagement('),n8nEnd=originalChat.indexOf('});',n8nStart)+3;
+  const mutateN8nCall=(before,after)=>{if(n8nStart<0||n8nEnd<=n8nStart)throw Error('n8n self-test target missing');const call=originalChat.slice(n8nStart,n8nEnd);if(!call.includes(before))throw Error('n8n self-test field missing: '+before);return originalChat.slice(0,n8nStart)+call.replace(before,after)+originalChat.slice(n8nEnd);};
   const n8nNegatives=[
     ['wrong import',originalChat.replace("../_shared/n8n-management.ts","../_shared/untrusted.ts"),originalManagement],
     ['unmounted catalog',originalChat.replace('...N8N_MANAGEMENT_TOOLS','...OTHER_TOOLS'),originalManagement],
-    ['caller change',originalChat.replace('userId: user.id','userId: args.user_id'),originalManagement],
-    ['tenant change',originalChat.replace("tenantId: personaCtx.tenant_id ?? ''","tenantId: args.tenant_id"),originalManagement],
-    ['approval bypass',originalChat.replace('mutationApproved: approvalChannel.has(tc.id)','mutationApproved: true'),originalManagement],
+    ['caller change',mutateN8nCall('userId: user.id','userId: args.user_id'),originalManagement],
+    ['tenant change',mutateN8nCall("tenantId: personaCtx.tenant_id ?? ''","tenantId: args.tenant_id"),originalManagement],
+    ['approval bypass',mutateN8nCall('mutationApproved: approvalChannel.has(tc.id)','mutationApproved: true'),originalManagement],
     ['missing executor',originalChat,originalManagement.replace('function runN8nManagement','function missingExecutor')],
     ['missing projector',originalChat,originalManagement.replace('function project(','function missingProjector(')],
     ['projection bypass',originalChat,originalManagement.replace('return projected;','return data;')],

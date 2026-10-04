@@ -89,6 +89,45 @@ async function resolveTenantScope(req: Request, payload: OrchestratorRequest): P
   return { tenantId, fundingEnabled, callerId, isService: false };
 }
 
+/**
+ * INT-308 — the trusted-actor boundary. ONE downstream context is built AFTER authentication,
+ * from verified state only; the raw caller context is never spread forward again:
+ *   • JWT/anon caller: user_id IS the verified callerId — always. A caller-supplied
+ *     context.user_id is IGNORED (and surfaced as a tamper signal), never forwarded, never
+ *     used for attribution. Identity is not request input.
+ *   • SERVICE-ROLE caller: it may name an acting user (a canonical PAIGE service resolved the
+ *     real user upstream), but when BOTH the resolved tenant and the actor are present the
+ *     association is PROVEN server-side (active tenant_members row for actor+tenant) —
+ *     tenant A paired with tenant B's user FAILS CLOSED instead of being forwarded.
+ * contact_id / conversation_id pass through unchanged (audit: no downstream consumer reads
+ * them as authority today; see the INT-308 record).
+ */
+async function buildTrustedContext(
+  payload: OrchestratorRequest,
+  scope: TenantScope,
+): Promise<{ ctx: NonNullable<OrchestratorRequest["context"]> } | { error: string; status: number }> {
+  const supplied = payload.context?.user_id ?? null;
+  if (scope.isService) {
+    const acting = supplied && UUID_RE.test(supplied) ? supplied : null;
+    if (supplied && !acting) return { error: "Invalid acting user_id", status: 400 };
+    if (acting && scope.tenantId) {
+      const { data: member, error: memberErr } = await supabase
+        .from("tenant_members").select("tenant_id").limit(1)
+        .eq("user_id", acting).eq("tenant_id", scope.tenantId).eq("status", "active");
+      if (memberErr) throw memberErr;
+      const associated = Array.isArray(member) ? member.length > 0 : !!member;
+      if (!associated) {
+        return { error: "Acting user is not a member of the resolved workspace", status: 403 };
+      }
+    }
+    return { ctx: { ...payload.context, user_id: acting ?? undefined } };
+  }
+  if (supplied && supplied !== scope.callerId) {
+    console.warn("[paige-orchestrator] INT-308: caller-supplied context.user_id ignored — identity is not request input");
+  }
+  return { ctx: { ...payload.context, user_id: scope.callerId ?? undefined } };
+}
+
 type Action = "tool_search" | "tool_invoke" | "list_subagents" | "inspect" | "set_agent_job_kind";
 
 interface OrchestratorRequest {
@@ -560,7 +599,12 @@ Deno.serve(async (req) => {
   const scope = await resolveTenantScope(req, payload);
   if ("error" in scope) return fail(scope.error, scope.status);
   const { tenantId, fundingEnabled, callerId, isService } = scope;
-  const ctx = { ...payload.context, user_id: payload.context?.user_id ?? callerId ?? undefined };
+  // INT-308: the ONE trusted downstream context — built from verified state, never from the
+  // raw caller context (see buildTrustedContext). Everything downstream (invocation
+  // attribution + the local/soft/langgraph context envelope) reads THIS, and only this.
+  const trusted = await buildTrustedContext(payload, scope);
+  if ("error" in trusted) return fail(trusted.error, trusted.status);
+  const ctx = trusted.ctx;
 
   try {
     if (payload.action === "list_subagents" || payload.action === "tool_search") {

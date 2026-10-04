@@ -683,6 +683,9 @@ BEGIN
     ) x
    WHERE r.id = x.id AND x.why IS NOT NULL;
 
+  -- One business at a time from here to the lease, so two workers claiming different campaigns of the
+  -- same business cannot both see the same room and overshoot the daily ceiling.
+  PERFORM pg_advisory_xact_lock(hashtextextended('email_campaign_room:' || c.tenant_id::text, 0));
   room := GREATEST(public.email_campaign_daily_cap() - public._email_used_today(c.tenant_id), 0);
   IF room = 0 THEN
     UPDATE public.email_campaigns SET status = 'sending', updated_at = now() WHERE id = c.id;

@@ -195,7 +195,14 @@ function SignupRedirect() {
   return <Navigate to="/auth?mode=signup&plan=solo&billing=monthly" replace />;
 }
 
-const App = () => /^\/invoice\/?$/i.test(window.location.pathname) ? <InvoiceDocument /> : (
+// /render-frame — the DB-free page paige-browser screenshots for the §33 critique loop. Like /invoice it
+// short-circuits BEFORE every provider: no auth, tenant context, router, analytics or Supabase reads.
+const RenderFrame = lazyWithReload(() => import("./pages/public/RenderFrame"));
+const isRenderFramePath = (pathname: string) => /^\/render-frame\/?$/i.test(pathname);
+
+const App = () => /^\/invoice\/?$/i.test(window.location.pathname) ? <InvoiceDocument /> : isRenderFramePath(window.location.pathname) ? (
+  <React.Suspense fallback={null}><RenderFrame /></React.Suspense>
+) : (
   <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>

@@ -51,9 +51,7 @@
 import { useCallback, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { SpineTurn } from "@/operator/shell/spine/spineContract";
-
-/** The engine speaks OpenAI-shaped SSE: `data: {choices:[{delta:{content}}]}`, then `[DONE]`. */
-const SSE_PREFIX = "data: ";
+import { readPaigeStream } from "@/lib/paige-stream";
 
 /** The server's own shape for a fingerprint: `z.array(z.string().regex(...)).max(16)`. A single
  *  malformed entry fails the WHOLE request body, taking the operator's message down with the
@@ -169,68 +167,47 @@ export function useOperatorChat(enabled: boolean = true): OperatorChat {
           return;
         }
 
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
         let answer = "";
-        let buffered = "";
         const confirmThisTurn: PendingConfirm[] = [];
 
-        for (;;) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          // A chunk can split mid-line, so the tail is carried rather than parsed and lost —
-          // dropping it silently truncates her answer in a way that still LOOKS complete.
-          buffered += decoder.decode(value, { stream: true });
-          const lines = buffered.split("\n");
-          buffered = lines.pop() ?? "";
+        // The shared reader (src/lib/paige-stream) owns the framing — a chunk that splits mid-line
+        // carries its tail, so a cut never silently truncates her answer. As this loop always did,
+        // `[DONE]` does not end the read and a line that is not JSON is skipped: one unparseable
+        // frame is not a failed answer.
+        for await (const frame of readPaigeStream(res.body, { stopAtDone: false, malformed: "skip" })) {
+          // ROUTE ON THE FRAME KIND. Reading `choices[0].delta.content` directly is what dropped
+          // every structured frame the engine sends: they parse cleanly, have no `choices`, and
+          // evaluated to `undefined` with no branch to catch them.
+          const pending = frame.type === "confirm"
+            ? (frame.confirm as { tool?: unknown; summary?: unknown; fingerprint?: unknown })
+            : undefined;
+          if (pending && typeof pending.summary === "string") {
+            // One frame per gated call. A frame with no fingerprint is un-approvable by echo
+            // and is still LISTED, so the operator sees what she is asking for — but it
+            // cannot open the gate, and the plate refuses to draw Approve over an empty set.
+            const next: PendingConfirm = {
+              tool: String(pending.tool ?? "action"),
+              summary: pending.summary,
+              ...(typeof pending.fingerprint === "string"
+                ? { fingerprint: pending.fingerprint }
+                : {}),
+            };
+            // ONE ROW PER ACTION. The agent can gate the same tool across several rounds
+            // inside a single turn, and each gated result emits its own frame — so without
+            // this the plate lists one action twice and asks for it twice. The fingerprint
+            // identifies the exact call; a frame without one falls back to its sentence.
+            const already = confirmThisTurn.some((c) =>
+              next.fingerprint ? c.fingerprint === next.fingerprint : c.summary === next.summary,
+            );
+            if (!already) confirmThisTurn.push(next);
+            continue;
+          }
 
-          for (const line of lines) {
-            if (!line.startsWith(SSE_PREFIX)) continue;
-            const payload = line.slice(SSE_PREFIX.length).trim();
-            if (payload === "[DONE]") continue;
-            try {
-              // PARSE ONCE, THEN ROUTE ON THE FRAME KIND. Reading `choices[0].delta.content`
-              // directly is what dropped every structured frame the engine sends: they parse
-              // cleanly, have no `choices`, and evaluated to `undefined` with no branch to catch
-              // them. The `catch` below was never the drop.
-              const frame = JSON.parse(payload) as {
-                choices?: Array<{ delta?: { content?: unknown } }>;
-                paige_confirm?: { tool?: unknown; summary?: unknown; fingerprint?: unknown };
-              };
-
-              const pending = frame.paige_confirm;
-              if (pending && typeof pending.summary === "string") {
-                // One frame per gated call. A frame with no fingerprint is un-approvable by echo
-                // and is still LISTED, so the operator sees what she is asking for — but it
-                // cannot open the gate, and the plate refuses to draw Approve over an empty set.
-                const next: PendingConfirm = {
-                  tool: String(pending.tool ?? "action"),
-                  summary: pending.summary,
-                  ...(typeof pending.fingerprint === "string"
-                    ? { fingerprint: pending.fingerprint }
-                    : {}),
-                };
-                // ONE ROW PER ACTION. The agent can gate the same tool across several rounds
-                // inside a single turn, and each gated result emits its own frame — so without
-                // this the plate lists one action twice and asks for it twice. The fingerprint
-                // identifies the exact call; a frame without one falls back to its sentence.
-                const already = confirmThisTurn.some((c) =>
-                  next.fingerprint ? c.fingerprint === next.fingerprint : c.summary === next.summary,
-                );
-                if (!already) confirmThisTurn.push(next);
-                continue;
-              }
-
-              const piece = frame.choices?.[0]?.delta?.content;
-              if (typeof piece === "string" && piece) {
-                answer += piece;
-                setTranscript((prev) =>
-                  prev.map((t) => (t.id === hersId ? { ...t, body: answer } : t)),
-                );
-              }
-            } catch {
-              // One unparseable frame is not a failed answer; the stream carries on.
-            }
+          if (frame.type === "content" && frame.text) {
+            answer += frame.text;
+            setTranscript((prev) =>
+              prev.map((t) => (t.id === hersId ? { ...t, body: answer } : t)),
+            );
           }
         }
 

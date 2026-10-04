@@ -3,7 +3,7 @@
 // EXTRACTED to its OWN module (§18 one home) so BOTH server.js AND the smoke test import the SAME
 // real code — a security guard must be tested as-shipped, never as a hand-copied mirror that can drift
 // (§32: a green build is not a working guard). It is also the consolidation seam for #138 (the guard
-// is currently duplicated verbatim in services/visual-renderer; that service can import this next).
+// was once duplicated in services/visual-renderer — that service is deleted; render.mjs imports this).
 //
 // Every function returns a REASON CODE (null = allowed) so the response + the paige_browser_usage
 // audit rail carry the SPECIFIC block cause (§13 honest reporting), never a generic "blocked".

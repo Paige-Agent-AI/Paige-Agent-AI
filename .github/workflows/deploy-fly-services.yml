@@ -1,12 +1,17 @@
 # deploy-fly-services — keep the prod Fly services in lockstep with `main` (§24/§64).
 #
-# WHY THIS EXISTS (§64 cloud-first): the two self-hosted Fly services — paige-browser
-# (Paige's headless-browser "eyes") and paige-visual-renderer (the §33 screenshot host) —
-# used to deploy ONLY via a manual `flyctl deploy` from a local CLI. That makes a prod
+# WHY THIS EXISTS (§64 cloud-first): the self-hosted Fly service paige-browser (Paige's
+# headless-browser "eyes" — self-verify, public browsing, and since 2026-10-04 the §33 page
+# screenshots at /render) used to deploy ONLY via a manual `flyctl deploy` from a local CLI. That makes a prod
 # capability depend on the owner's laptop being on — exactly what §64 forbids. This mirrors
 # deploy-edge-functions.yml (§18 — extend the established CI-deploy pattern, do NOT invent a
 # second mechanism): on every push to main that touches a service's directory, it deploys
 # EXACTLY the service(s) whose bundle changed, and nothing else.
+#
+# 2026-10-04 (owner direction): the second service, paige-visual-renderer, was deleted. It was
+# never deployed (its Fly app never existed — DNS NXDOMAIN — and this workflow only ever deployed
+# paige-browser); its one job, screenshots, is now paige-browser's /render (§18 one browser host).
+# The matrix shape below is kept so a future service is one detect line + one case arm.
 #
 # SETUP (one-time, owner): add a repo secret FLY_API_TOKEN
 #   1. Run `flyctl auth token` locally once (the last local-CLI action for this class of work).
@@ -22,7 +27,6 @@ on:
     branches: [main]
     paths:
       - "services/paige-browser/**"
-      - "services/visual-renderer/**"
   # Manual on-demand deploy — for the FIRST deploy of a service whose code merged BEFORE this workflow
   # existed, or any redeploy without a code change. Pick a specific service or "all".
   workflow_dispatch:
@@ -35,7 +39,6 @@ on:
         options:
           - all
           - paige-browser
-          - paige-visual-renderer
 
 # Least-privilege GITHUB_TOKEN (CodeQL actions/missing-workflow-permissions). This workflow
 # only READS the repo (checkout) and deploys to Fly via FLY_API_TOKEN — it never writes to the
@@ -45,8 +48,7 @@ permissions:
 
 jobs:
   # Which service(s) actually changed in this push? Emits a JSON array so the deploy job
-  # fans out over ONLY the changed services — a change to paige-browser never redeploys
-  # visual-renderer, and vice-versa (peer-gate R2: matrix separation).
+  # fans out over ONLY the changed services (peer-gate R2: matrix separation).
   detect:
     runs-on: ubuntu-latest
     outputs:
@@ -64,8 +66,7 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             sel="${{ github.event.inputs.service }}"
             svcs=""
-            { [ "$sel" = "all" ] || [ "$sel" = "paige-browser" ]; }         && svcs="$svcs paige-browser"
-            { [ "$sel" = "all" ] || [ "$sel" = "paige-visual-renderer" ]; } && svcs="$svcs paige-visual-renderer"
+            { [ "$sel" = "all" ] || [ "$sel" = "paige-browser" ]; } && svcs="$svcs paige-browser"
             json="$(printf '%s\n' $svcs | grep . | jq -R . | jq -cs .)"; [ -z "$json" ] && json='[]'
             count="$(printf '%s\n' $svcs | grep -c . || true)"
             echo "services=$json" >> "$GITHUB_OUTPUT"
@@ -82,8 +83,7 @@ jobs:
           changed="$(git diff --name-only "$before" "$after")"
           echo "changed files:"; echo "$changed"
           svcs=""
-          echo "$changed" | grep -q '^services/paige-browser/'   && svcs="$svcs paige-browser"
-          echo "$changed" | grep -q '^services/visual-renderer/' && svcs="$svcs paige-visual-renderer"
+          echo "$changed" | grep -q '^services/paige-browser/' && svcs="$svcs paige-browser"
           json="$(printf '%s\n' $svcs | grep . | jq -R . | jq -cs .)"
           [ -z "$json" ] && json='[]'
           count="$(printf '%s\n' $svcs | grep -c . || true)"
@@ -122,8 +122,7 @@ jobs:
         id: dir
         run: |
           case "${{ matrix.service }}" in
-            paige-browser)         echo "dir=services/paige-browser"   >> "$GITHUB_OUTPUT" ;;
-            paige-visual-renderer) echo "dir=services/visual-renderer" >> "$GITHUB_OUTPUT" ;;
+            paige-browser) echo "dir=services/paige-browser" >> "$GITHUB_OUTPUT" ;;
             *) echo "::error::unknown service '${{ matrix.service }}'"; exit 1 ;;
           esac
 

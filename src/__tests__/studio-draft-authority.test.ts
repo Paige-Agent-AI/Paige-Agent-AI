@@ -19,7 +19,9 @@ import { CHEESY_TELLS_AVOID } from "../../supabase/functions/_shared/cheesy-tell
 const MINE = "11111111-1111-4111-8111-111111111111";
 const THEIRS = "22222222-2222-4222-8222-222222222222";
 const ARTIFACT = "33333333-3333-4333-8333-333333333333";
-const ENV: Record<string, string> = { SUPABASE_URL: "https://db.test", SUPABASE_ANON_KEY: "anon", SUPABASE_SERVICE_ROLE_KEY: "service" };
+// STUDIO_VISUAL_CRITIQUE_ENABLED: studio-visual-critique answers "disabled" (no row) on BOTH paths without
+// it, and its tests below need the critique to run and log. No other function here reads the flag.
+const ENV: Record<string, string> = { SUPABASE_URL: "https://db.test", SUPABASE_ANON_KEY: "anon", SUPABASE_SERVICE_ROLE_KEY: "service", STUDIO_VISUAL_CRITIQUE_ENABLED: "true" };
 const bearer = (role: string) => `h.${Buffer.from(JSON.stringify({ role, sub: "u1" })).toString("base64url")}.s`;
 
 interface World { active?: unknown; activeFails?: boolean; admin?: boolean; manages?: boolean; artifactTenant?: string }
@@ -35,7 +37,8 @@ function world(w: World) {
   type Chain = Record<string, (...args: never[]) => unknown>;
   const chain = (rows: unknown, single: unknown, onInsert?: (row: Record<string, unknown>) => void): Chain => {
     const q: Chain = {
-      select: () => q, eq: () => q, in: () => q, limit: () => q,
+      // gte: studio-visual-critique's per-tenant throttle count (an empty log here → under the limit).
+      select: () => q, eq: () => q, in: () => q, limit: () => q, gte: () => q,
       insert: (row: Record<string, unknown>) => { onInsert?.(row); return q; },
       maybeSingle: async () => ({ data: single, error: null }),
       then: (ok: (v: unknown) => unknown, bad: (e: unknown) => unknown) => Promise.resolve({ data: rows, error: null }).then(ok, bad),

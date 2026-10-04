@@ -8,11 +8,11 @@
 //   deployed, auth-gated surface itself instead of owing the owner's eyes — and so we stop
 //   writing a fourth copy of the chromium-launch/resolve dance (§18: one home per capability).
 //
-// WHY IT LIVES HERE (not in services/visual-renderer/)
-//   services/visual-renderer/ is a DEPLOYED Fly artifact with its own package.json + pinned
+// WHY IT LIVES HERE (not in services/paige-browser/)
+//   services/paige-browser/ is a DEPLOYED Fly artifact with its own package.json + pinned
 //   playwright + lockfile; it is a long-lived warm-browser SERVICE, not one-shot dev/CI tooling.
 //   This helper is dev/CI verification tooling → it belongs beside the other scripts/*-smoke.*.
-//   The chromium-RESOLUTION logic below intentionally MIRRORS services/visual-renderer/smoke.mjs's
+//   The chromium-RESOLUTION logic below intentionally MIRRORS services/paige-browser/smoke.mjs's
 //   `findSandboxChromium` — reference the proven pattern (§30), do not fork a third divergent copy.
 //   (Follow-up, later PR: smoke.mjs migrates to import resolveExecutablePath() from here — §37 #2.)
 //
@@ -94,7 +94,7 @@ export async function resolvePlaywright() {
  * Resolve the Chromium executable path across environments.
  *  1. PW_EXECUTABLE_PATH env override (explicit wins).
  *  2. Scan the pre-provisioned browsers dir (PLAYWRIGHT_BROWSERS_PATH || /opt/pw-browsers) for
- *     a chromium* build — mirrors services/visual-renderer/smoke.mjs::findSandboxChromium.
+ *     a chromium* build — mirrors services/paige-browser/smoke.mjs::findSandboxChromium.
  *  3. undefined → let Playwright resolve its own bundled browser (normal dev machine).
  * @returns {string | undefined}
  */

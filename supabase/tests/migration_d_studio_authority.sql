@@ -674,7 +674,7 @@ PERFORM pg_temp.chk((SELECT count(*) FROM pg_policies WHERE schemaname = 'public
    AND EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'marketing_content' AND policyname = 'marketing_content_service'
                AND qual = '(auth.role() = ''service_role''::text)'), 'policies: still exactly two; the service policy is untouched');
 PERFORM pg_temp.chk((SELECT qual = with_check AND qual NOT LIKE '%has_any_role%' AND qual NOT LIKE '%has_role%'
-     AND qual LIKE '%is_tenant_admin(tenant_id)%' AND qual LIKE '%agency_can_manage_child(tenant_id)%' AND qual LIKE '%is_platform_owner()%'
+     AND qual LIKE '%is_tenant_admin(tenant_id)%' AND qual LIKE '%agency_can_manage_child(current_user_tenant_id())%' AND qual LIKE '%is_platform_owner()%'
    FROM pg_policies WHERE tablename = 'marketing_content' AND policyname = 'marketing_content_tenant_manage'), 'tenant_manage: tenant-scoped, no global role');
 END $$;
 

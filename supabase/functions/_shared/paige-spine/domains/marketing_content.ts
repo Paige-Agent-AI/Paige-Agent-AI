@@ -17,9 +17,9 @@ import { defineCapability, objectInputSchema, ownerGrantablePermission } from ".
 // the Content tab (/solo/:account/growth/content).
 //
 // THE AUTHORITY MODEL (mirrors the action-risk table). save = `ordinary`: in-tenant and reversible
-// (a row can be archived). Who may do it is decided server-side: an admin, coach or super_admin who is
-// a member of that workspace (the platform owner excepted); a caller-named tenant is honoured only
-// inside that membership check.
+// (a row can be archived). Who may do it is decided server-side (save_marketing_content, Migration D):
+// the owner or an admin of the session's own workspace, or the agency that manages it; never a member,
+// never a global role, and a caller-named tenant other than the session's is refused, never swapped.
 //
 // IDEMPOTENCY, honestly (§13). The chat tool passes no content id, so every save INSERTS a new row: a
 // blind retry saves a second copy. The Chat confirmation fingerprint and the auto lane's one call per

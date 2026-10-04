@@ -641,7 +641,7 @@
       "tool": "generate_image",
       "risk": "ordinary",
       "receipt": "emits",
-      "evidence": "outside a Studio project paige-ai-chat records it via recordStudioRun under capability key vibe_media_image (_shared/studio-run-outcome.ts); inside a project paige-media files every receipt for the job under vibe_media_image (budget refusal, render success, failure in _shared/media-provider/complete.ts), so the chat files none there"
+      "evidence": "outside a Studio project paige-ai-chat records it via recordStudioRun under capability key vibe_media_image (_shared/studio-run-outcome.ts); inside a project paige-media files the receipt once a job exists (render success or failure in _shared/media-provider/complete.ts) and for a budget refusal, and the chat files every other outcome there (synchronous refusal, lost answer) via recordStudioRun"
     },
     {
       "tool": "growth_form_publish",

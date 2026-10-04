@@ -4518,8 +4518,8 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
   // The refusal travels as a JSON string inside the next model request, so its quotes arrive escaped.
   const scopeRefused = (r, name) => new RegExp(`"error":"outside_studio_scope","message":"\\\\*"${name}\\\\*" isn't something the design studio can do`).test(wire(r));
   const AUTO_LANE = { resolve_tool_autonomy: { data: "auto", error: null } };
-  const studioTurn = (toolCall, scope = SCOPE_ROW, extraRpc = {}) => drive({
-    stream: true, extraBody: { threadId: THREAD }, toolCall,
+  const studioTurn = (toolCall, scope = SCOPE_ROW, extraRpc = {}, functionsExtra = {}) => drive({
+    stream: true, extraBody: { threadId: THREAD }, toolCall, functionsExtra,
     rpcOverrides: { ...AS_TENANT, ...WS, ...AUTO_LANE, ...extraRpc },
     serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...scope },
     tablesExtra: studioTables(),
@@ -4706,10 +4706,21 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
       && onlyReceipt(plainImage, "vibe_media_image")?.args._detail?.content_id === "c-1"
       && receipts(plainImage, "generate_image").length === 0,
     JSON.stringify(allReceipts(plainImage)));
-  const studioImage = await studioTurn({ name: "generate_image", args: { prompt: "a calm hero image" } }, SCOPE_ROW);
-  assert("34.5b an image inside a project files no chat receipt (paige-media files its own)",
-    receipts(studioImage, "vibe_media_image").length === 0 && receipts(studioImage, "generate_image").length === 0,
-    JSON.stringify(allReceipts(studioImage)));
+  // Inside a project paige-media files the receipt once a job exists, and for a budget refusal; any
+  // other outcome (a synchronous refusal, an answer that never came) is filed by the chat — exactly
+  // one receipt per attempt. Kills: skipping every Studio image (refusals vanish) or none (doubles).
+  const IMG = { name: "generate_image", args: { prompt: "a calm hero image" } };
+  const jobImage = await studioTurn(IMG, SCOPE_ROW, {}, { "paige-media": { data: { job: { id: "job-1", state: "queued", model: "m" } }, error: null } });
+  assert("34.5b an image inside a project that became a paige-media job files no chat receipt (paige-media files it)",
+    receipts(jobImage, "vibe_media_image").length === 0 && receipts(jobImage, "generate_image").length === 0,
+    JSON.stringify(allReceipts(jobImage)));
+  const nonJson = (body) => ({ data: null, error: { message: "Edge Function returned a non-2xx status code", context: { json: async () => body } } });
+  const overBudget = await studioTurn(IMG, SCOPE_ROW, {}, { "paige-media": nonJson({ error: "This month's image budget is used up.", budget_denied: true, gate: "ceiling" }) });
+  assert("34.5c a budget refusal inside a project files no chat receipt (paige-media filed it)",
+    receipts(overBudget, "vibe_media_image").length === 0, JSON.stringify(allReceipts(overBudget)));
+  const mediaRefused = await studioTurn(IMG, SCOPE_ROW, {}, { "paige-media": nonJson({ error: "No image provider is set up for this workspace." }) });
+  assert("34.5d a synchronous paige-media refusal inside a project is filed once, by the chat, as refused",
+    onlyReceipt(mediaRefused, "vibe_media_image")?.args._outcome === "capability_refused", JSON.stringify(allReceipts(mediaRefused)));
 
   // 34.6 Drafting copy saves nothing, so it runs without an approval card even when the workspace
   // asks Paige to confirm every write (owner ruling 2026-10-04), and files no receipt.

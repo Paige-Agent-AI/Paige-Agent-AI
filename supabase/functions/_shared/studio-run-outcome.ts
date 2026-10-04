@@ -5,9 +5,10 @@
 // funnel build that stopped after an earlier write is a failure that left drafts behind. Pure: no I/O.
 //
 // One receipt per act, under one key. An image is filed under `vibe_media_image` whichever door made
-// it: in a Studio project paige-media renders it and files every receipt for that job itself
-// (rendered, refused over budget, failed), so the chat files none for it; outside a project the chat
-// files it here. Two receipts for one image would be a lie of a different kind.
+// it. In a Studio project paige-media files the receipt once a job exists (the render's success or
+// failure) and for a budget refusal, so the chat files none for those; every other outcome there (a
+// synchronous refusal, an answer that never came back) and every image outside a project is filed by
+// the chat. Two receipts for one image would be a lie of a different kind; none would be too.
 import type { CapabilityOutcome } from "./capability-record.ts";
 
 /** Chat tool → the capability key its receipt is filed under. */

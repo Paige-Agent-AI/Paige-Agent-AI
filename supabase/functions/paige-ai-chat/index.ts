@@ -10580,14 +10580,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // receipt. Attributed to the tenant the act landed in (current_user_tenant_id(), like the CRM
           // recorder), keyed on this tool call so a retried turn folds to one row, carrying how it was
           // approved and the record it touched. Never fails the turn.
+          // Set by the Studio image branch when paige-media itself files this attempt's receipt: once a
+          // job exists (it files the render's success or failure) or when it refused over budget (it
+          // files that refusal). Every other Studio image outcome — a synchronous refusal, an answer
+          // that never came back — is filed here, so each attempt is on the record exactly once.
+          let mediaFilesReceipt = false;
           const recordStudioRun = async (
             input: { result?: unknown; thrown?: unknown; threw?: boolean },
           ): Promise<void> => {
             try {
-              // In a Studio project an image is a paige-media job, and paige-media files every one of
-              // its receipts (rendered, refused over budget, failed). Filing here too would count the
-              // image twice.
-              if (tc.function.name === "generate_image" && studioSessionId) return;
+              if (tc.function.name === "generate_image" && mediaFilesReceipt) return;
               const receipt = classifyStudioRun({ capability: tc.function.name, ...input });
               if (!receipt) return;
               const studioTenant = await resolveActorTenant();
@@ -11894,6 +11896,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   try { mjBody = await (mjErr as any).context.json(); } catch { mjBody = null; }
                 }
                 const mjJob = mjBody?.job;
+                mediaFilesReceipt = Boolean(mjJob?.id) || mjBody?.budget_denied === true;
                 if (!mjJob?.id) {
                   if (mjBody?.error) result = { success: false, error: String(mjBody.error) };
                   else throw (mjErr ?? new Error("The image request didn't go through."));
@@ -12031,13 +12034,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 p_body: args.body,
                 p_channel: args.channel ?? null,
                 p_brief: args.brief ?? null,
-                p_tenant_id: personaCtx?.tenant_id ?? null,
+                // The RPC files into the session's own workspace (Migration D). Naming the persona's
+                // tenant could only refuse: for someone who is a client of one workspace and staff of
+                // another, the persona resolves the client side first.
+                p_tenant_id: null,
               });
               if (error) throw error;
-              // §13/§70 — a 200 with no returned id means the row may not have persisted.
+              // §13/§70 — a 200 with no returned id means the row may or may not have persisted.
               result = artifactProduced("saved_id", cid)
                 ? { success: true, content_id: cid }
-                : { success: false, error: ARTIFACT_ABSENT_ERROR.saved_id };
+                : { success: false, error: ARTIFACT_ABSENT_ERROR.saved_id, outcome_unknown: true };
             } else if (tc.function.name === "document_generate") {
               const currentDocumentCallOrdinal = documentCallOrdinal++;
               const documentIntentId = payloadRequestIntentId

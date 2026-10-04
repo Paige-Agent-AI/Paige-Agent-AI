@@ -190,10 +190,10 @@ GRANT EXECUTE ON FUNCTION public.save_marketing_content(text, text, text, text, 
 -- ─────────────────────────────────────────────────────────────────────────────
 ALTER POLICY marketing_content_tenant_manage ON public.marketing_content
   USING (public.is_tenant_admin(tenant_id)
-         OR (tenant_id = public.current_user_tenant_id() AND public.agency_can_manage_child(tenant_id))
+         OR (tenant_id = (SELECT public.current_user_tenant_id()) AND (SELECT public.agency_can_manage_child(public.current_user_tenant_id())))
          OR public.is_platform_owner())
   WITH CHECK (public.is_tenant_admin(tenant_id)
-         OR (tenant_id = public.current_user_tenant_id() AND public.agency_can_manage_child(tenant_id))
+         OR (tenant_id = (SELECT public.current_user_tenant_id()) AND (SELECT public.agency_can_manage_child(public.current_user_tenant_id())))
          OR public.is_platform_owner());
 
 -- ─────────────────────────────────────────────────────────────────────────────

@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: YES: copy drafts no longer raise an approval card (owner r
 FLOW_PROTOTYPE: PASS: no new surface; receipts reuse the shipped Rail and the drafts change removes a card
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Solo owner/admin building in the Studio and reading what Paige did on the Rail; primary actions unchanged
 VISUAL_DIRECTION: PASS: unchanged (layout C)
-AUTOMATED_EVIDENCE: PASS: src/__tests__/studio-run-outcome.test.ts (8) and scripts/client-memory-authz/check.mjs 514/514 including 33.5c, 33.5g and 34.1-34.6 against the real chat handler; full vitest 7,787/7,787; Migration D contract suite 1,683 checks on Postgres 16; src/__tests__/studio-draft-authority.test.ts drives the seven draft, edit, route, critique and learn handlers; removing the new receipt keys, the Studio image skip, the refusal receipts, the drafts exemption, or the gate additions each turns its checks red
+AUTOMATED_EVIDENCE: PASS: src/__tests__/studio-run-outcome.test.ts (8) and scripts/client-memory-authz/check.mjs 516/516 including 33.5c, 33.5g and 34.1-34.6 against the real chat handler; full vitest 7,787/7,787; Migration D contract suite 1,683 checks on Postgres 16; src/__tests__/studio-draft-authority.test.ts drives the seven draft, edit, route, critique and learn handlers; removing the new receipt keys, the Studio image skip, the refusal receipts, the drafts exemption, or the gate additions each turns its checks red
 STATIC_EVIDENCE: PASS: deno check --no-lock on paige-ai-chat matches main line for line, 12 errors before and after; lint:action-risk, lint:receipt-coverage, capability-declaration and capability-kit lints pass
 RENDERED_EVIDENCE: PASS: no UI change; the current frames are docs/evidence/ui-delivery/assets/vibe-studio-v0-publish-truth/ (harness render · not live)
 BEHAVIORAL_EVIDENCE: PASS: harness section 34 drives a saved page, a lost answer, a not-owner refusal, a switched-off act, images in and out of a project, and a copy draft under confirm through the real handler
@@ -29,7 +29,7 @@ SOLO_900X1000_PAIGE_OPEN: PASS: docs/evidence/ui-delivery/assets/vibe-studio-v0-
 UNVERIFIED: authenticated runtime (above)
 
 OWNER_INTENT: "Drafts skip approval is a go." and "Migration D authorized" (2026-10-04); the governance direction: one PAIGE architecture, no parallel receipts
-MUST_NOT_HAPPEN: a Studio act that changes something without a receipt; an image counted twice; a draft blocked behind an approval card; saving or publishing running without approval where the workspace asks first
+MUST_NOT_HAPPEN: a chat-driven Studio act by a workspace member that changes something without a receipt; an image counted twice; a draft blocked behind an approval card; saving or publishing running without approval where the workspace asks first
 MUST_PRESERVE: every approval on saves and publishes; paige-media's own image receipts; the existing Rail
 ACCEPTANCE_CRITERIA: after deploy, a Studio page save and a content save each appear once on the owner's Rail, and a copy draft returns without an approval card
 MOTION_PURPOSE: none
@@ -46,8 +46,8 @@ RELEASE_RECOVERY: position=forward-fix, a revert restores the previous receipts 
 ## Scope and collisions
 
 - Classification: Studio governance — receipts, drafts approval, workspace authority, Migration D, Spine declarations.
-- Explicit exclusions: V2b one publish path; the operator settings list beyond the Studio tools.
+- Explicit exclusions: V2b one publish path (panel Publish/Unpublish and library uploads file no receipt yet); receipts for non-member actors (agency inside a sub-account, operator in a company workspace) await an owner ruling on record_capability_run; the operator settings list beyond the Studio tools.
 
 ## Review and limitations
 
-Independent review: pending; recorded on the PR when it returns.
+Independent review, by a reviewer who did not write it: FIX FIRST on documentation only (receipts are member-only and chat-driven; both now stated), no code or security defect. Its follow-ups were fixed in this PR: Studio image refusals paige-media does not record are filed by the chat, the seven functions' lost capabilities named in the tier matrix, the marketing_content domain comment corrected, content_save no longer passes the persona tenant, a missing saved id records as unknown, and the RLS agency arm evaluates its helpers once per query.

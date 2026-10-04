@@ -233,7 +233,13 @@ export async function renderCapture(browser, req, cfg, opts = {}) {
     page.on("pageerror", (e) => {
       const message = String(e?.message || e).slice(0, 500);
       pageErrors.push(message);
-      if (String(e?.stack || "").includes(`${req.expectOrigin}/`)) appPageErrors.push(message);
+      // The app's own error, unless its stack points only at another origin. Chromium reports some app
+      // failures with NO stack (a non-Error or string rejection, a lazy chunk that failed to load), so an
+      // empty stack counts as the app's — except a bare network "Failed to fetch", which is the read-only
+      // fence aborting a write (analytics), not the app dying.
+      const stack = String(e?.stack || "");
+      const bareFetchFailure = /^(TypeError: )?Failed to fetch$/.test(message.trim());
+      if (stack.includes(`${req.expectOrigin}/`) || (!stack.trim() && !bareFetchFailure)) appPageErrors.push(message);
     });
 
     let response;

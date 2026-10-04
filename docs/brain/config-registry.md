@@ -497,8 +497,9 @@ Values intentionally omitted.
   NOT assume the chat touches Lovable (§10 corrections log 2026-08-10). Removing these is a launch-critical
   email-provider migration (owner-set replacement secret + §32 live-email verify) — see task #112.
 - **Visual critique (§33):** `STUDIO_VISUAL_CRITIQUE_ENABLED` (unset = the loop is OFF in the product
-  flow AND studio-visual-critique's render path answers `status:"disabled"` without calling
-  paige-browser), `STUDIO_CRITIQUE_MAX_ITERATIONS`, `STUDIO_CRITIQUE_COST_CAP_USD` (both enforced on
+  flow AND studio-visual-critique answers `status:"disabled"` on BOTH paths — render and `image_url` —
+  without calling paige-browser or the model, and writes no row; its per-tenant throttle is not atomic under
+  concurrency, so an advisory-locked reservation is a required prerequisite before this is ever turned on), `STUDIO_CRITIQUE_MAX_ITERATIONS`, `STUDIO_CRITIQUE_COST_CAP_USD` (both enforced on
   server-derived loop state from the log rows), `STUDIO_CRITIQUE_MAX_SLICES` (default 4 — slices asked
   for and sent per critique), `STUDIO_CRITIQUE_THROTTLE_WINDOW_MIN` (10) + `STUDIO_CRITIQUE_THROTTLE_MAX`
   (12 — per-tenant attempts per window, counted on the log), `STUDIO_CRITIQUE_LOOP_WINDOW_MIN` (60 — how

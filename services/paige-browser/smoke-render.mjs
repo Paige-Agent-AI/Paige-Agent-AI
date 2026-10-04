@@ -91,6 +91,8 @@ async function instrument(ctx) {
     if (pathname === "/p/demo/mounted-only") return route.fulfill({ status: 200, contentType: "text/html", body: `<!doctype html><body><div data-app-ready hidden></div><div style="height:1200px">skeleton</div></body>` });
     if (pathname === "/p/demo/gone") return route.fulfill({ status: 200, contentType: "text/html", body: `<!doctype html><body><h1>Page not found</h1><div data-app-ready hidden></div><div data-growth-page-ready="missing" hidden></div></body>` });
     if (pathname === "/p/demo/throws") return route.fulfill({ status: 200, contentType: "text/html", body: `<!doctype html><body><div style="height:900px">half</div><script>setTimeout(() => { throw new Error("StatsBlock: items is undefined"); }, 20)</script></body>` });
+    // The app dies with NO stack (a string rejection, as a failed lazy chunk or a non-Error reject does).
+    if (pathname === "/p/demo/rejects") return route.fulfill({ status: 200, contentType: "text/html", body: `<!doctype html><body><div style="height:900px">half</div><script>setTimeout(() => { Promise.reject("route chunk failed to load"); }, 20)</script></body>` });
     // The page's data lookup FAILED (GrowthPageRenderer's state="error") — not a missing page.
     if (pathname === "/p/demo/load-error") return route.fulfill({ status: 200, contentType: "text/html", body: `<!doctype html><body><h1>This page didn't load</h1><div data-app-ready hidden></div><div data-growth-page-ready="error" hidden></div></body>` });
     // Slow (never ready) AND a third-party script throws on it: the app did not crash — not_ready.
@@ -189,6 +191,7 @@ try {
     ["published page missing", "/p/demo/gone", "page_not_found"],
     ["page threw and never became ready", "/p/demo/throws", "render_crashed"],
     ["slow page where only a third-party script threw", "/p/demo/slow-vendor-throws", "not_ready"],
+    ["app died with an empty-stack rejection", "/p/demo/rejects", "render_crashed"],
     ["published page's data lookup failed", "/p/demo/load-error", "render_failed"],
     ["404", "/p/demo/missing", "http_404"],
     ["off-origin redirect", "/p/demo/away", "blocked_redirect"],

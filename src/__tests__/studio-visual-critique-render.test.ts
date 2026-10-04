@@ -222,6 +222,12 @@ describe("NO_VERDICT carries exactly one truthful reason code, stored and return
     expect((seen.inserts[0].findings as { reason: string }).reason).toBe(reason);
   });
 
+  it("a not_ready render keeps the page's own error in the logged detail", async () => {
+    const { seen, res } = run({ render: { page: PAGE } }, { browser: () => ({ json: { ok: false, reason: "not_ready", error: "the page never signalled ready", page_errors: ["route chunk failed to load"] } }) });
+    expect((await res).json).toMatchObject({ verdict: "NO_VERDICT", reason: "render_failed" });
+    expect((seen.inserts[0].findings as { detail: string }).detail).toBe("not_ready: the page never signalled ready; page error: route chunk failed to load");
+  });
+
   it("a critic failure is never dressed up as a SHIP", async () => {
     for (const model of [{ throws: true }, { content: "not json" }]) {
       const { seen, res } = run({ render: { page: PAGE } }, { model });

@@ -206,7 +206,9 @@ async function renderSlices(request: Record<string, unknown>, viewport: string):
   }
   if (!resp.ok || body.ok !== true) {
     const r = str(body.reason) || `http_${resp.status}`;
-    const d = str(body.error);
+    // paige-browser attaches the page's own errors to a not_ready result — keep the real cause in the row.
+    const firstPageError = Array.isArray(body.page_errors) ? str(body.page_errors[0]).slice(0, 300) : "";
+    const d = [str(body.error), firstPageError && `page error: ${firstPageError}`].filter(Boolean).join("; ");
     console.error(`[studio-visual-critique] render refused/failed: ${r}${d ? ` — ${d}` : ""}`);
     return { ok: false, reason: "render_failed", detail: d ? `${r}: ${d}` : r };
   }

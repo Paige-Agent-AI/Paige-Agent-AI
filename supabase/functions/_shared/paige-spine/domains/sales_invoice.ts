@@ -101,7 +101,7 @@ export const SALES_INVOICE_READ_CAPABILITY = defineCapability({
 });
 export const SALES_INVOICE_EMAIL_CAPABILITY = defineCapability({
  identity:{id:'sales_invoice.email_send',version:1,domain:'sales_invoice',owner:'sales',humanSurface:'/solo/:account/sales/payments',description:'Governed attempt through the selected tenant email sender. Acceptance is not delivery or payment.'},
- input:objectInputSchema({properties:{...INVOICE_INPUT,action:{type:'string',enum:['invoice.email_send']},connector_id:{type:'string',format:'uuid'}},required:['action','invoice_id','expected_version','connector_id']}),effect:'external_effect',
+ input:objectInputSchema({properties:{...INVOICE_INPUT,action:{type:'string',enum:['invoice.email_send','invoice.sms_send']},connector_id:{anyOf:[{type:'string',format:'uuid'},{type:'null'}]}},required:['action','invoice_id','expected_version']}),effect:'external_effect',
  governance:{actionRiskKey:'billing_send_invoice',risk:'high',approval:'confirm',requiredPermission:ownerGrantablePermission('sales_invoice.email_send.execute')},
  tenantScope:INVOICE_SCOPE,availability:INVOICE_AVAILABILITY,providerBinding:{kind:'internal',operation:'public.prepare_sales_invoice_delivery',connectionResolver:null},
  idempotency:{mode:'required',key:'Server actor + tenant + stored operation UUID + exact issued version and connector. Unknown delivery is reconciled, never automatically resent.',readback:'public.read_sales_invoice_delivery_result',replay:'reconcile_then_return'},

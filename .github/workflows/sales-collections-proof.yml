@@ -1,0 +1,50 @@
+name: Sales Collections SQL proof
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/**'
+      - 'supabase/functions/_shared/sales-collections/**'
+      - 'supabase/functions/sales-collection-command/**'
+      - 'scripts/sql/sales-collections-proof.*'
+      - '.github/workflows/sales-collections-proof.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - 'supabase/functions/_shared/sales-collections/**'
+      - 'scripts/sql/sales-collections-proof.*'
+      - '.github/workflows/sales-collections-proof.yml'
+permissions:
+  contents: read
+jobs:
+  collections-sql:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-password
+        ports: ['56347:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Actual Collections migration, tenant gates, atomic import, receipt and reversal races
+        env:
+          PGPASSWORD: isolated-test-password
+        run: node scripts/sql/sales-collections-proof.mjs "$(command -v psql)" 56347 /var/lib/postgresql/data postgres
+      - name: Preserve Collections SQL proof receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sales-collections-sql-proof
+          path: supabase/functions/_shared/sales-collections/sql-proof-result.txt
+          if-no-files-found: warn

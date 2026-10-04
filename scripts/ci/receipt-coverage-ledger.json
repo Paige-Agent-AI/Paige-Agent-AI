@@ -1034,6 +1034,24 @@
       "risk": "high",
       "receipt": "emits",
       "evidence": "execute_sales_invoice_command atomically calls canonical public.record_capability_run with operation identity and actor/tenant in supabase/migrations/20270543000000_sales_invoice_lifecycle.sql; isolated SQL proof verifies Rail and rollback on receipt failure."
+    },
+    {
+      "tool": "sales_save_collection_terms",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "execute_sales_collection_command atomically calls public.record_capability_run with actor, tenant and operation identity in supabase/migrations/20270547000000_sales_collections.sql; isolated SQL proof verifies receipt failure rolls back business changes."
+    },
+    {
+      "tool": "sales_stage_collection_import",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "execute_sales_collection_command atomically calls public.record_capability_run with actor, tenant and operation identity in supabase/migrations/20270547000000_sales_collections.sql; isolated SQL proof verifies receipt failure rolls back business changes."
+    },
+    {
+      "tool": "sales_commit_collection_import",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "execute_sales_collection_command atomically calls public.record_capability_run with actor, tenant and operation identity in supabase/migrations/20270547000000_sales_collections.sql; isolated SQL proof verifies receipt failure rolls back business changes."
     }
   ]
 }

@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
-import fs from "node:fs";
-import path from "node:path";
+import { catalogueDeclarations } from "../../../scripts/ci/tool-catalogue-lint.mjs";
 import {
   TOOL_MAP,
   UNMAPPED_CATALOGUE_TOOLS,
@@ -19,20 +18,7 @@ import { classifyAction } from "../../../supabase/functions/_shared/action-risk"
 // tool, which is the exact "governed invisibly" failure the catalogue's own header warns about; a
 // derived list makes that a hard test failure the moment the migration lands.
 function catalogueKeysFromMigration(): string[] {
-  const dir = path.join(process.cwd(), "supabase/migrations");
-  const files = fs.readdirSync(dir).filter((f) => f.endsWith(".sql")).sort();
-  // list_tool_autonomy is CREATE OR REPLACE'd across several migrations; the highest-versioned file
-  // that defines it holds the live catalogue.
-  const defining = files.filter((f) =>
-    /CREATE OR REPLACE FUNCTION public\.list_tool_autonomy/.test(fs.readFileSync(path.join(dir, f), "utf8")),
-  );
-  if (!defining.length) throw new Error("no migration defines list_tool_autonomy");
-  const sql = fs.readFileSync(path.join(dir, defining[defining.length - 1]), "utf8");
-  // Each catalogue row is `('<tool_key>', '<label>', '<category>'),`. Tool keys are lower_snake with
-  // no spaces, so the first single-quoted lower-snake token after an opening paren is the key; labels
-  // and categories (which start uppercase or contain spaces) never match this shape.
-  const keys = [...sql.matchAll(/\(\s*'([a-z0-9_]+)'\s*,/g)].map((m) => m[1]);
-  return [...new Set(keys)];
+  return [...catalogueDeclarations().at(-1)!.keys];
 }
 const CATALOGUE_KEYS: readonly string[] = catalogueKeysFromMigration();
 

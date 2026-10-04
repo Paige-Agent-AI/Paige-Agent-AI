@@ -370,6 +370,21 @@ if (fs.existsSync(SALES_INVOICE_HANDLER)) {
   governedEdgeActions.push(...actions);
   requiredClassifications.push(...actions);
 }
+const collectionHandlerPath = 'supabase/functions/sales-collection-command/index.ts';
+if (fs.existsSync(collectionHandlerPath)) {
+  // Reuse the closed adapter proof, with only the domain's imported symbols changed.
+  const source = fs.readFileSync(collectionHandlerPath,'utf8')
+    .replaceAll('COLLECTION_ACTIONS','SALES_INVOICE_ACTIONS')
+    .replaceAll('SALES_COLLECTION_KIT_BY_ACTION','SALES_INVOICE_KIT_BY_ACTION')
+    .replaceAll('domains/sales_collections.ts','domains/sales_invoice.ts');
+  if (!invoiceDeclaredGateBound(source,fs.readFileSync('supabase/functions/_shared/capability-kit/decision.ts','utf8'))) throw new Error('Collections handler lost canonical declared governance');
+  const contract=fs.readFileSync('supabase/functions/_shared/sales-collections/contract.ts','utf8');
+  const map=contract.slice(contract.indexOf('export const COLLECTION_ACTIONS ='),contract.indexOf('} as const;'));
+  const actions=[...map.matchAll(/'collection\.[a-z_]+':\s*'([a-z0-9_]+)'/g)].map(match=>match[1]);
+  if(actions.length!==5)throw new Error('Collections closed action map could not be parsed');
+  governedEdgeActions.push(...actions);
+  requiredClassifications.push(...actions);
+}
 if (!mcpCanonicals.length) {
   console.error(`✗ action-risk-lint: read no canonical keys out of ${MCP_POLICY}. That file is the MCP door's second declaring surface, so an empty read would silently condemn every MCP-only classification as a ghost. Fix this guard rather than letting it pass.`);
   process.exit(1);

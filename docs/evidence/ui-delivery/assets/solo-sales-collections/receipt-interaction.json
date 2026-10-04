@@ -1,0 +1,13 @@
+{
+  "boundary": "Actual imported Collections receipt form/review/readback with deterministic local RPC mutation. No authenticated tenant, real payment or provider execution.",
+  "initial_remaining_minor": 75000,
+  "recorded_minor": 10000,
+  "remaining_minor": 65000,
+  "currency": "usd",
+  "receipt_reference": "Synthetic partial receipt",
+  "keyboardFocusInside": true,
+  "reducedMotion": {
+    "matches": true,
+    "animation": "none"
+  }
+}

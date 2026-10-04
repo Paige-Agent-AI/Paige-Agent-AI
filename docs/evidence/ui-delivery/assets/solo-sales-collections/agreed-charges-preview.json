@@ -1,0 +1,21 @@
+{
+  "boundary": "Actual builder and canonical previewAgreedCharges model with synthetic agreement/RPC fixture; no debt, accrual, charge, provider or authenticated execution.",
+  "results": [
+    {
+      "width": 1366,
+      "theme": "light",
+      "documentWidth": 1366,
+      "interest": "$10.00",
+      "lateFee": "$7.00",
+      "total": "$17.00"
+    },
+    {
+      "width": 390,
+      "theme": "dark",
+      "documentWidth": 390,
+      "interest": "$10.00",
+      "lateFee": "$7.00",
+      "total": "$17.00"
+    }
+  ]
+}

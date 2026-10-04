@@ -4362,6 +4362,19 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
   const wire = (r) => r.modelEgress.map((b) => (typeof b === "string" ? b : JSON.stringify(b))).join("\n").replace(/\\"/g, '"');
   const called = (r, name) => r.rec.rpc.filter((c) => c.name === name).length;
   const AS_TENANT = { get_actor_access: { data: { tier: "tenant" }, error: null } };
+  // V1: the build tools ask the workspace-scoped authority, and a Studio turn reads its role scope
+  // from the platform design-studio row (server client). Both answered as production would.
+  const WS = { studio_role_ok: { data: true, error: null } };
+  const STUDIO_TOOLS = ["ask_choices", "capability_status", "generate_image", "draft_marketing_content", "content_save", "growth_list",
+    "growth_page_generate", "growth_page_save", "growth_page_publish", "growth_funnel_generate", "growth_funnel_build", "growth_funnel_publish",
+    "growth_form_save", "growth_form_publish", "web_search", "web_fetch"];
+  // Answers only the PLATFORM row read (slug design-studio, tenant_id IS NULL) — so dropping either
+  // filter from the scope read fails the Studio checks instead of passing on a fixture that ignores them.
+  const platformRowOnly = (row) => (filters) => (
+    filters.some((f) => f[0] === "eq" && f[1] === "slug" && f[2] === "design-studio")
+    && filters.some((f) => f[0] === "is" && f[1] === "tenant_id" && f[2] === null)
+  ) ? [row] : [];
+  const SCOPE_ROW = { paige_subagents: platformRowOnly({ config: { capability_scope: { version: 1, mode: "allowlist", tools: STUDIO_TOOLS } } }) };
   const PAGE_ROW = { growth_page_upsert: { data: { id: "page-1", slug: "spring-offer", status: "draft", tenant_id: null }, error: null } };
   const studioSave = async (ceilingAllowsAuto, { detailError = null } = {}) => {
     const st = makeConfirmStore();
@@ -4369,13 +4382,13 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
       stream: true, extraBody: { threadId: THREAD },
       toolCall: { name: "growth_page_save", args: { title: "Spring offer", blocks: [] } },
       rpcOverrides: {
-        ...AS_TENANT, ...PAGE_ROW,
+        ...AS_TENANT, ...WS, ...PAGE_ROW,
         resolve_tool_autonomy: { data: "confirm", error: null },
         resolve_tool_autonomy_detail: detailError
           ? { data: null, error: detailError }
           : { data: { mode: "confirm", ceiling_allows_auto: ceilingAllowsAuto }, error: null },
       },
-      serviceTablesExtra: { user_roles: () => [{ role: "admin" }] },
+      serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...SCOPE_ROW },
       tablesExtra: { ...studioTables(), paige_pending_confirmations: st.table },
       onInsert: mirrorConfirms(st),
     });
@@ -4409,9 +4422,9 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
   const mainTurn = await drive({
     stream: true, extraBody: { threadId: THREAD },
     toolCall: { name: "growth_page_save", args: { title: "Spring offer", blocks: [] } },
-    rpcOverrides: { ...AS_TENANT, ...PAGE_ROW, resolve_tool_autonomy: { data: "confirm", error: null },
+    rpcOverrides: { ...AS_TENANT, ...WS, ...PAGE_ROW, resolve_tool_autonomy: { data: "confirm", error: null },
       resolve_tool_autonomy_detail: { data: { mode: "confirm", ceiling_allows_auto: true }, error: null } },
-    serviceTablesExtra: { user_roles: () => [{ role: "admin" }] },
+    serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...SCOPE_ROW },
     tablesExtra: { paige_chat_threads: () => [{ studio_session_id: null, summary: null }], paige_pending_confirmations: st4.table },
     onInsert: mirrorConfirms(st4),
   });
@@ -4426,12 +4439,12 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
     stream: true, extraBody: { threadId: THREAD },
     toolCall: { name: "growth_funnel_build", args: funnelArgs },
     rpcOverrides: {
-      ...AS_TENANT, ...PAGE_ROW,
+      ...AS_TENANT, ...WS, ...PAGE_ROW,
       resolve_tool_autonomy: { data: "auto", error: null },
       growth_form_upsert: formRow,
       growth_funnel_upsert: { data: { id: "funnel-1", slug: "spring-launch" }, error: null },
     },
-    serviceTablesExtra: { user_roles: () => [{ role: "admin" }] },
+    serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...SCOPE_ROW },
   });
   const built = await funnelDrive({ data: { id: "form-1", slug: "intake" }, error: null });
   assert("32.5 growth_funnel_build runs its handler: page, form and funnel are written",
@@ -4453,12 +4466,12 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
     stream: true, extraBody: { threadId: THREAD },
     toolCall: { name: "growth_funnel_build", args: funnelArgs },
     rpcOverrides: {
-      ...AS_TENANT, ...PAGE_ROW,
+      ...AS_TENANT, ...WS, ...PAGE_ROW,
       resolve_tool_autonomy: { data: "auto", error: null },
       growth_form_upsert: { data: { id: "form-1", slug: "intake" }, error: null },
       growth_funnel_upsert: { data: null, error: { message: "fetch failed: connection reset" } },
     },
-    serviceTablesExtra: { user_roles: () => [{ role: "admin" }] },
+    serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...SCOPE_ROW },
   });
   assert("32.7 a lost funnel write reports outcome_unknown, not 'was not built'",
     /"outcome_unknown":true/.test(wire(lost)) && !/was not built/.test(wire(lost)),
@@ -4470,11 +4483,11 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
     stream: true, extraBody: { threadId: THREAD },
     toolCall: { name: "growth_funnel_build", args: funnelArgs },
     rpcOverrides: {
-      ...AS_TENANT, ...PAGE_ROW,
+      ...AS_TENANT, ...WS, ...PAGE_ROW,
       resolve_tool_autonomy: { data: "auto", error: null },
       growth_form_upsert: { data: null, error: null },
     },
-    serviceTablesExtra: { user_roles: () => [{ role: "admin" }] },
+    serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...SCOPE_ROW },
     tablesExtra: studioTables(),
   });
   assert("32.8 a partial Studio funnel build links the saved page to the project",
@@ -4485,13 +4498,119 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
   const noForm = await drive({
     stream: true, extraBody: { threadId: THREAD },
     toolCall: { name: "growth_funnel_build", args: { name: "Spring launch", page: { title: "Spring offer", blocks: [] } } },
-    rpcOverrides: { ...AS_TENANT, ...PAGE_ROW, resolve_tool_autonomy: { data: "auto", error: null },
+    rpcOverrides: { ...AS_TENANT, ...WS, ...PAGE_ROW, resolve_tool_autonomy: { data: "auto", error: null },
       growth_funnel_upsert: { data: { id: "funnel-1", slug: "spring-launch" }, error: null } },
-    serviceTablesExtra: { user_roles: () => [{ role: "admin" }] },
+    serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...SCOPE_ROW },
   });
   assert("32.9 a funnel with no form is saved and its note names no intake form",
     /"funnel_id":"funnel-1"/.test(wire(noForm)) && !/intake form, and the flow/.test(wire(noForm)),
     wire(noForm).slice(0, 600));
+
+  // ── 33. VIBE STUDIO V1 — THE STUDIO CAPABILITY BOUNDARY IS RUNTIME, NOT PROMPT ─────────────────
+  //
+  // A Studio turn is OFFERED only the design-studio role's scope (read from the platform row), and
+  // dispatch REFUSES anything outside it — two independent enforcements, each mutation-tested. Main
+  // PAIGE keeps every tool. D3: the build tools ask the workspace-scoped `studio_role_ok`.
+  const FORBIDDEN = ["crm_create_contact", "crm_update_deal", "ghl_run_action", "member_grant_role", "calendar_book_meeting"];
+  const offered = (r) => r.modelEgress.flatMap((body) => {
+    try { const parsed = JSON.parse(body); return Array.isArray(parsed.tools) ? parsed.tools : []; } catch { return []; }
+  }).map((t) => t.name ?? t.function?.name);
+  // The refusal travels as a JSON string inside the next model request, so its quotes arrive escaped.
+  const scopeRefused = (r, name) => new RegExp(`"error":"outside_studio_scope","message":"\\\\*"${name}\\\\*" isn't something the design studio can do`).test(wire(r));
+  const AUTO_LANE = { resolve_tool_autonomy: { data: "auto", error: null } };
+  const studioTurn = (toolCall, scope = SCOPE_ROW, extraRpc = {}) => drive({
+    stream: true, extraBody: { threadId: THREAD }, toolCall,
+    rpcOverrides: { ...AS_TENANT, ...WS, ...AUTO_LANE, ...extraRpc },
+    serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...scope },
+    tablesExtra: studioTables(),
+  });
+  const mainDrive = (toolCall, extraRpc = {}, roles = [{ role: "admin" }]) => drive({
+    stream: true, extraBody: { threadId: THREAD }, toolCall,
+    rpcOverrides: { ...AS_TENANT, ...WS, ...AUTO_LANE, ...PAGE_ROW, ...extraRpc },
+    serviceTablesExtra: { user_roles: () => roles, ...SCOPE_ROW },
+    tablesExtra: { paige_chat_threads: () => [{ studio_session_id: null, summary: null }] },
+  });
+
+  // 33.1 INVISIBLE. Kills: removing the narrowToolDefs filter.
+  const look = await studioTurn(undefined);
+  const studioOffered = offered(look);
+  assert("33.1 a Studio turn is not offered any of the five forbidden tools",
+    studioOffered.length > 0 && FORBIDDEN.every((t) => !studioOffered.includes(t)), JSON.stringify(studioOffered));
+  assert("33.1b …it is offered exactly its scope's design tools (nothing outside the allowlist)",
+    studioOffered.includes("growth_page_save") && studioOffered.every((t) => STUDIO_TOOLS.includes(t)),
+    JSON.stringify(studioOffered.filter((t) => !STUDIO_TOOLS.includes(t))));
+  assert("33.1c Knowledge writes and document_generate are not offered in Studio",
+    !studioOffered.includes("save_to_knowledge_base") && !studioOffered.includes("document_generate"), JSON.stringify(studioOffered));
+
+  // 33.2 REFUSED AT DISPATCH even when the model names them. Kills: removing the dispatch guard.
+  for (const name of FORBIDDEN) {
+    const tried = await studioTurn({ name, args: {} });
+    assert(`33.2 a Studio turn that calls ${name} anyway is refused outside_studio_scope`,
+      scopeRefused(tried, name), wire(tried).slice(0, 300));
+  }
+  const kbTried = await studioTurn({ name: "save_to_knowledge_base", args: { title: "x", content: "y" } });
+  assert("33.2b save_to_knowledge_base is refused in Studio (Knowledge writes wait for V5)",
+    scopeRefused(kbTried, "save_to_knowledge_base"), wire(kbTried).slice(0, 300));
+
+  // 33.3 MAIN PAIGE UNCHANGED: the same five are offered and are not scope-refused.
+  const mainLook = await mainDrive(undefined);
+  const mainOffered = offered(mainLook);
+  assert("33.3 main PAIGE is still offered all five", FORBIDDEN.every((t) => mainOffered.includes(t)), JSON.stringify(FORBIDDEN.filter((t) => !mainOffered.includes(t))));
+  for (const name of FORBIDDEN) {
+    const tried = await mainDrive({ name, args: {} });
+    const w = wire(tried);
+    // Reached its own path: the CRM door was invoked, or its handler ran an RPC beyond the turn's
+    // baseline reads, or the risk gate held it as a proposal — and no scope or unknown-tool refusal.
+    const baseline = new Set(["check_rate_limit", "current_user_tenant_id", "is_platform_operator", "is_platform_owner", "get_paige_persona_context", "match_paige_memory", "get_actor_access", "resolve_tool_autonomy", "match_tenant_knowledge", "match_rag_documents", "paige_operating_memory"]);
+    const reached = tried.rec.functions.length > 0 || /"needs_confirm":true/.test(w) || tried.rec.rpc.some((c) => !baseline.has(c.name));
+    assert(`33.3b main PAIGE calling ${name} reaches its own path (no scope or unknown-tool refusal)`,
+      reached && !w.includes("outside_studio_scope") && !/Unknown tool/.test(w),
+      JSON.stringify({ functions: tried.rec.functions.map((f) => f.name), rpcs: tried.rec.rpc.map((c) => c.name).filter((n) => !baseline.has(n)) }));
+  }
+
+  // 33.4 FAIL CLOSED: no usable scope on the platform row. Kills: defaulting to the full tool list.
+  const noScope = { paige_subagents: platformRowOnly({ config: {} }) };
+  const blind = await studioTurn(undefined, noScope);
+  assert("33.4 a missing scope offers only the fail-closed set (no writes)",
+    offered(blind).length > 0 && offered(blind).every((t) => ["ask_choices", "capability_status"].includes(t)), JSON.stringify(offered(blind)));
+  const blindSave = await studioTurn({ name: "growth_page_save", args: { title: "x", blocks: [] } }, noScope, PAGE_ROW);
+  assert("33.4b …and refuses a build tool at dispatch",
+    scopeRefused(blindSave, "growth_page_save") && called(blindSave, "growth_page_upsert") === 0, wire(blindSave).slice(0, 300));
+  const widened = { paige_subagents: platformRowOnly({ config: { capability_scope: { mode: "everything", tools: ["*"] } } }) };
+  const wide = await studioTurn({ name: "crm_create_contact", args: {} }, widened);
+  assert("33.4c a malformed scope cannot widen: still refused", scopeRefused(wide, "crm_create_contact"), wire(wide).slice(0, 300));
+
+  // 33.5 D3: workspace-scoped authority. Kills: keeping the tenant-agnostic global-admin check.
+  const otherWorkspaceAdmin = await mainDrive({ name: "growth_page_save", args: { title: "x", blocks: [] } },
+    { studio_role_ok: { data: false, error: null } }, [{ role: "admin" }]);
+  assert("33.5 a global admin who is not this workspace's owner/admin cannot build here",
+    called(otherWorkspaceAdmin, "growth_page_upsert") === 0 && wire(otherWorkspaceAdmin).includes("workspace_owner_or_admin_required"),
+    wire(otherWorkspaceAdmin).slice(0, 300));
+  const ownerNoGlobalRole = await mainDrive({ name: "growth_page_save", args: { title: "x", blocks: [] } },
+    { studio_role_ok: { data: true, error: null } }, []);
+  assert("33.5b this workspace's owner builds without any global role",
+    called(ownerNoGlobalRole, "growth_page_upsert") === 1, JSON.stringify(ownerNoGlobalRole.rec.rpc.map((c) => c.name)));
+  // 33.5c The tenant-scoped gate covers ONLY the tools whose backend asks the same question. A tool
+  // whose backend still checks the global role keeps its existing gate. Kills: widening
+  // WORKSPACE_BUILD_TOOLS past the growth RPCs (which would admit callers the backend then refuses).
+  const contentNoGlobal = await mainDrive({ name: "content_save", args: { title: "x", body: "y" } },
+    { studio_role_ok: { data: true, error: null } }, []);
+  assert("33.5c content_save keeps its existing gate (its backend still checks the global role)",
+    called(contentNoGlobal, "save_marketing_content") === 0 && called(contentNoGlobal, "studio_role_ok") === 0,
+    JSON.stringify(contentNoGlobal.rec.rpc.map((c) => c.name)));
+
+  // 33.6 A Studio thread whose second read fails still runs as a Studio turn, fail-closed — never as
+  // main PAIGE with every tool. Kills: dropping the preStudioSessionId fallback.
+  const flaky = await drive({
+    stream: true, extraBody: { threadId: THREAD }, toolCall: { name: "crm_create_contact", args: {} },
+    rpcOverrides: { ...AS_TENANT, ...WS, ...AUTO_LANE },
+    serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...SCOPE_ROW },
+    tablesExtra: studioTables(),
+    tableErrorsExtra: { paige_chat_threads: ({ filters }) => (filters.some((f) => f[0] === "select" && String(f[1]).includes("summary")) ? { message: "connection reset", code: "08006" } : null) },
+  });
+  assert("33.6 a Studio thread whose re-read fails is still fail-closed Studio: off-scope tool refused, only the fail-closed set offered",
+    scopeRefused(flaky, "crm_create_contact") && offered(flaky).every((t) => ["ask_choices", "capability_status"].includes(t)),
+    JSON.stringify({ offered: offered(flaky), refused: scopeRefused(flaky, "crm_create_contact") }));
 }
 
 console.log(`\n${checks - failures} passed, ${failures} failed`);

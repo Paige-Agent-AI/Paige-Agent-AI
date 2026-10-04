@@ -87,10 +87,11 @@ describe("D4 — document_generate is off the Studio surface", () => {
     const list = between("const STUDIO_AUTO_TOOLS = new Set([", "]);");
     expect(list).not.toContain("document_generate");
   });
-  it("is removed from the tools a Studio turn is shown", () => {
-    const studioDefs = between("if (studioSessionId) {\n      // document_generate has no Studio execution path", 'name: "ask_choices"');
-    expect(studioDefs).toContain('toolDefs.findIndex((d: any) => d?.function?.name === "document_generate")');
-    expect(studioDefs).toContain("toolDefs.splice(docIdx, 1)");
+  it("is outside the Studio scope, so a Studio turn is not shown it (V1 replaced the V0 splice)", () => {
+    const migration = readFileSync("supabase/migrations/20270541000000_design_studio_capability_scope.sql", "utf8");
+    const tools = migration.slice(migration.indexOf("jsonb_build_array("), migration.indexOf("))),"));
+    expect(tools).not.toContain("'document_generate'");
+    expect(chat).not.toContain('toolDefs.findIndex((d: any) => d?.function?.name === "document_generate")');
   });
 });
 

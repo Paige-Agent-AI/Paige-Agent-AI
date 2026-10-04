@@ -52,6 +52,20 @@ import { classifyCrmRun } from "../_shared/crm-capability-outcome.ts";
 // not a success-shaped receipt. ONE pure home for that decision (§18); handlers wrap their
 // own success shape in it so the model, the status label and the artifact card all inherit it.
 import { artifactProduced, ARTIFACT_ABSENT_ERROR, usableDrafts, publishVerified, PUBLISH_UNVERIFIED_ERROR } from "../_shared/artifact-receipt.ts";
+import { narrowToolDefs, outsideStudioScope, resolveRoleToolScope, STUDIO_SCOPE_FAIL_CLOSED, type RoleToolScope } from "../_shared/studio-scope.ts";
+
+/** Tools whose backend write requires the CURRENT workspace's owner or admin — the growth RPCs'
+ *  `_growth_admin_tenant` (or the managing agency). Their chat gate asks the same question,
+ *  `studio_role_ok`, instead of the tenant-agnostic global `user_roles` admin (§59, D3), so the chat
+ *  gate and the write agree. Every other tool keeps its existing gate: the draft edge functions
+ *  (growth-*-draft, content-draft, generate-image) and `save_marketing_content` still check the
+ *  global role themselves, so moving their chat gate alone would admit callers the backend refuses.
+ *  Those backends moving to tenant-scoped authority is tracked for V2a. */
+const WORKSPACE_BUILD_TOOLS: ReadonlySet<string> = new Set([
+  "growth_page_save", "growth_page_publish",
+  "growth_form_save", "growth_form_publish",
+  "growth_funnel_build", "growth_funnel_publish",
+]);
 import { buildFormSchemaFromQuestions } from "../_shared/growth-form-build.ts";
 import { classifyDocumentSubmissionError, validateDocumentBrief } from "../_shared/document-production.ts";
 // Wave 4 · 4a.3 — token-aware compaction trigger (§18 one home; smoke-tested per §32).
@@ -4964,6 +4978,12 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     // the agent made THIS turn so the stream tells the client exactly what to open — never a
     // guessed manifest index (the manifest is newest-LAST and doesn't re-order on edits).
     let studioSessionId: string | null = null;
+    // The Design Studio role's capability scope (V1), read from the platform role record when the
+    // thread is a Studio project. Null on a Studio turn means it could not be read: fail closed.
+    let studioScope: RoleToolScope | null = null;
+    // The thread's Studio link as first read (before the summary fold). If the later read fails, the
+    // turn still knows it is a Studio turn and runs with the fail-closed scope, never as main PAIGE.
+    let preStudioSessionId: string | null = null;
     // Task #15 — the SERVER-OWNED in-place-image-refine anchor for the dedicated chat (resolved from
     // the thread row below): { id } of the immediately-eligible Paige image, or null when absent/expired.
     // The model never supplies the id authority; it only echoes this exact id back, re-checked at the tool.
@@ -5139,14 +5159,21 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
         const { data: pre } = await supabaseClient
           .from("paige_chat_threads").select("studio_session_id").eq("id", payloadThreadId).maybeSingle();
         if (pre?.studio_session_id) traceCtx.agent_id = "studio-design-agent";
+        preStudioSessionId = pre?.studio_session_id ? String(pre.studio_session_id) : null;
       }
       await foldThreadSummary(payloadThreadId, {
         emit: (payload) => compactionLeadFrames.push(`data: ${JSON.stringify({ paige_compacting: payload })}\n\n`),
       });
 
       try {
-        const { data: th } = await supabaseClient
+        const { data: th, error: thErr } = await supabaseClient
           .from("paige_chat_threads").select("summary, studio_session_id, last_image_content_id, last_image_anchor_at").eq("id", payloadThreadId).maybeSingle();
+        if (thErr && preStudioSessionId && !studioSessionId) {
+          // A Studio thread whose second read failed: keep it a Studio turn, with no scope read yet
+          // (studioScope stays null, which every enforcement point treats as the fail-closed set).
+          studioSessionId = preStudioSessionId;
+          console.error("[paige] studio thread re-read failed; running the turn with the fail-closed Studio scope");
+        }
         // STUDIO SESSION → swap Paige's persona (aiMessages[0]) for her design-studio specialist's
         // identity (#292). Gated on studio_session_id, which is NULL for EVERY Your-Paige/contact
         // thread — so the main chat's identity is provably untouched by this branch.
@@ -5156,6 +5183,18 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
           // actually establishes the Studio persona, and a reader looking for where the agent id
           // is decided should find it here too (§34).
           traceCtx.agent_id = "studio-design-agent";
+          // V1 — the role's capability scope comes ONLY from the platform row (tenant_id IS NULL), read
+          // with the server client: a tenant can neither author it nor narrow-then-widen it. A read
+          // that fails, or a scope that is missing or malformed, leaves the fail-closed set.
+          try {
+            const { data: scopeRow, error: scopeErr } = await supabase
+              .from("paige_subagents").select("config")
+              .eq("slug", "design-studio").is("tenant_id", null).maybeSingle();
+            studioScope = resolveRoleToolScope(scopeErr ? null : scopeRow?.config);
+          } catch {
+            studioScope = resolveRoleToolScope(null);
+          }
+          if (!studioScope.valid) console.error("[paige] design-studio capability scope unusable, failing closed:", studioScope.reason);
           try {
             let q = supabaseClient
               .from("paige_subagents").select("name, system_prompt")
@@ -8228,10 +8267,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // #292 — inside a Studio session, give the design agent the clickable-decision tool (studio-gated
     // so main Paige never gains it). Handled as a turn-ender in the stream loop, not a backend call.
     if (studioSessionId) {
-      // document_generate has no Studio execution path (its handler refuses every Studio turn with
-      // DURABLE_DOCUMENT_STUDIO_ASYNC_UNAVAILABLE), so the design agent is not shown it at all.
-      const docIdx = toolDefs.findIndex((d: any) => d?.function?.name === "document_generate");
-      if (docIdx !== -1) toolDefs.splice(docIdx, 1);
       toolDefs.push({
         type: "function",
         function: {
@@ -8260,6 +8295,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           },
         },
       } as any);
+      // V1 — the design agent is OFFERED only its role's scope. This filters the list the turn
+      // already carries (it never adds a tool); dispatch enforces the same scope again below, so a
+      // tool the model names anyway is still refused. (document_generate, which has no Studio
+      // execution path, is outside the scope and so no longer offered here.)
+      const offScope = narrowToolDefs(toolDefs as unknown[], (studioScope ?? resolveRoleToolScope(null)).allowed);
+      if (offScope.length) console.log(`[paige] design-studio scope: ${toolDefs.length} tools offered, ${offScope.length} withheld`);
     }
 
     // Advertise the confirm flag on every mutating tool so the model knows the
@@ -8550,6 +8591,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           return { toolResults, executed, scopeInvalidated: true };
         }
         executed.push(tc);
+
+        // ── STUDIO CAPABILITY BOUNDARY (V1) ──────────────────────────────────
+        // A Studio turn may dispatch only its role's scope, whatever the model names — the list it
+        // was offered is already narrowed, and this is the second, independent enforcement. Checked
+        // before every door (the CRM door included), so a refused tool reaches no executor.
+        if (studioSessionId && !(studioScope?.allowed ?? new Set(STUDIO_SCOPE_FAIL_CLOSED)).has(tc.function.name)) {
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(outsideStudioScope(tc.function.name)) });
+          continue;
+        }
 
         // ── CLIENT-SEAT GATE (Tier Rail Phase D, §9/#133) ────────────────────
         // Deny-by-default on a client-portal seat: only the CLIENT_SEAT_ALLOW
@@ -10292,12 +10342,27 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // role string here is the same one `is_platform_owner()`/`is_super_admin()` gate on, and
           // `platform_admin` is a DISTINCT string that stays denied. Server-derived from the JWT
           // (user.id) — a caller-supplied role can never reach this array.
-          const allowed = N8N_MANAGEMENT_TOOL_NAMES.has(tc.function.name) || roles.includes("admin") || roles.includes("super_admin");
+          // D3 (V1) — the growth save/build/publish RPCs require the CURRENT workspace's owner or
+          // admin (or the agency managing it): `_growth_admin_tenant`. The global `user_roles` admin
+          // above is tenant-agnostic (§59): it let an admin of another workspace past this gate (the
+          // RPC then refused them) and refused a workspace's own owner who lacks the global role (the
+          // RPC would have allowed them). For exactly those tools the gate now asks the RPC's own
+          // question (`studio_role_ok`), on every turn — the chat gate and the write agree.
+          const workspaceAuthorityTool = WORKSPACE_BUILD_TOOLS.has(tc.function.name);
+          let allowed: boolean;
+          if (workspaceAuthorityTool) {
+            const { data: ownerOrAdmin, error: authorityErr } = await supabaseClient.rpc("studio_role_ok", { _caller: user.id });
+            allowed = !authorityErr && ownerOrAdmin === true;
+          } else {
+            allowed = N8N_MANAGEMENT_TOOL_NAMES.has(tc.function.name) || roles.includes("admin") || roles.includes("super_admin");
+          }
           if (!allowed) {
             toolResults.push({
               tool_call_id: tc.id,
               role: "tool",
-              content: JSON.stringify({ success: false, error: "CRM operator tools are restricted to admins." }),
+              content: JSON.stringify(workspaceAuthorityTool
+                ? { success: false, error: "workspace_owner_or_admin_required", message: "Building and publishing here needs this workspace's owner or an admin. Nothing was changed." }
+                : { success: false, error: "CRM operator tools are restricted to admins." }),
             });
             continue;
           }

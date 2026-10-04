@@ -158,3 +158,19 @@
  .sales-department[data-sales-view="payments"] .sb-register{max-height:300px}
  .sales-department[data-sales-view="payments"] .sb-editor{min-height:320px}
 }
+/* Approved invoice workspace: one body scroll, full-screen on compact devices. */
+.paige-solo.sb-invoice-workspace{width:calc(100vw - 48px);max-width:1440px;height:calc(100dvh - 48px);max-height:none;padding:0;display:flex;flex-direction:column;gap:0;background:var(--surface);color:var(--ink);overflow:hidden}
+.sb-invoice-workspace>div:first-child{padding:20px 52px 20px 24px;border-bottom:1px solid var(--line);flex:none;text-align:left}
+.sb-invoice-workspace-body{min-height:0;flex:1;overflow:auto;padding:24px;overscroll-behavior:contain}
+.sb-invoice-workspace-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(340px,.85fr);gap:28px;align-items:start}
+.sb-invoice-preview iframe{width:100%;height:1100px;border:1px solid var(--line);background:white}
+.sb-invoice-workspace .sb-preview-toggle{display:none!important}
+.sb-invoice-workspace .btn{min-height:44px;font-size:14px;padding:10px 14px;margin:4px 6px 4px 0}
+.sb-invoice-actions{font-size:14px;line-height:1.55;padding:0}
+.sb-invoice-action-tabs{display:flex;gap:8px;margin:16px 0 10px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.sb-invoice-action-tabs .btn[aria-pressed=true]{background:var(--violet-tint);border-color:var(--violet);color:var(--violet)}
+.sb-invoice-actions h4{font-size:16px;margin:24px 0 12px}
+.sb-correction-editor{margin-top:14px;padding:16px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px}
+@media(max-width:1050px){.sb-invoice-workspace-grid{grid-template-columns:minmax(0,1fr)}.sb-invoice-workspace-grid>section:last-child{grid-row:1}.sb-invoice-preview{display:none}.sb-invoice-preview.is-visible{display:block}.sb-invoice-workspace .sb-preview-toggle{display:inline-flex!important}}
+@media(max-width:650px){.paige-solo.sb-invoice-workspace{width:100vw;height:100dvh;border-radius:0}.sb-invoice-workspace-body{padding:16px}.sb-invoice-workspace>div:first-child{padding:18px 48px 18px 16px}}
+@media(prefers-reduced-motion:reduce){.sb-invoice-workspace,.sb-invoice-workspace-overlay{animation:none!important;transition:none!important}}

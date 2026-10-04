@@ -25,10 +25,11 @@ export async function executeSalesInvoiceDelivery(input:DeliveryExecutorInput,d:
   if(!((await d.readiness(invoice)).eligible))return refused('INVOICE_DELIVERY_NOT_READY');
   const number=typeof invoice.invoice_number==='string'?invoice.invoice_number:'';
   if(!number||number.length>100||/[\r\n]/.test(number))return refused('INVOICE_DELIVERY_ARTIFACT_UNAVAILABLE');
-  const subject=`Invoice ${number}`;
+  const label=/^DRAFT-/i.test(number)?'previously issued invoice':number;
+  const subject=/^DRAFT-/i.test(number)?'Your invoice':`Invoice ${number}`;
   const cash=(value:unknown)=>`USD ${(Number(value)/100).toFixed(2)}`;
-  const emailBody=`<p>Your invoice <strong>${escape(number)}</strong> is ready.</p><p>Original issued amount: ${cash(invoice.amount_total_cents)}. Remaining obligation at this review: ${cash(invoice.remaining_cents)}.</p><p>Any recorded receipts are business-entered records, not processor-verified payments.</p><p><a href="${INVOICE_LINK_MARKER}">View invoice</a></p><p>Payment instructions are on the invoice. This email does not confirm payment.</p>`;
-  const bodyHtml=sms?'Invoice '+number+': original '+cash(invoice.amount_total_cents)+'; remaining '+cash(invoice.remaining_cents)+'. View: '+INVOICE_LINK_MARKER+'. Recorded receipts are not processor verified.':emailBody;
+  const emailBody=`<p>Your invoice <strong>${escape(label)}</strong> is ready. A PDF copy is attached.</p><p>Original issued amount: ${cash(invoice.amount_total_cents)}. Remaining obligation at this review: ${cash(invoice.remaining_cents)}.</p><p>Any recorded receipts are business-entered records, not processor-verified payments.</p><p><a href="${INVOICE_LINK_MARKER}">View invoice</a></p><p>Payment instructions are on the invoice. This email does not confirm payment.</p>`;
+  const bodyHtml=sms?'Invoice '+label+': original '+cash(invoice.amount_total_cents)+'; remaining '+cash(invoice.remaining_cents)+'. View: '+INVOICE_LINK_MARKER+'. Recorded receipts are not processor verified.':emailBody;
   const contentDigest=await d.hash([subject,bodyHtml,invoice.document_input_digest,String(invoice.issued_snapshot_version)].join('\n'));
   if(!await d.stillCurrent())return refused('WORKSPACE_CHANGED');
   const prepared=object(await d.prepare({_actor_user_id:input.actorUserId,_expected_tenant_id:input.tenantId,_invoice_id:input.command.invoice_id,_expected_version:input.command.expected_version,_operation_id:input.operationId,_connector_id:input.command.connector_id,_subject:subject,_body_html:bodyHtml,_content_digest:contentDigest,_governance:input.governance,...(sms?{_channel:'sms'}:{})}));

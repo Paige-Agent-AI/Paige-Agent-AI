@@ -65,7 +65,10 @@ describe("capability_status tool wiring (source assertions)", () => {
     expect(src).toContain("isWorkspaceAdmin: (tool) => authorityAdmits(tool, authority, WORKSPACE_BUILD_TOOLS, DOOR_SEAT_TOOLS),");
     // the governed doors' tools are described by the doors' own seat rule
     expect(src).toContain("...CRM_COMMAND_TOOL_NAMES, ...SALES_INVOICE_TOOL_NAMES, ...SALES_COLLECTIONS_TOOL_NAMES,");
-    expect(src).toContain("|| DOOR_SEAT_TOOLS.has(n)));");
+    expect(src).toContain("|| DOOR_SEAT_TOOLS.has(n)")
+    // the one publish door (V2b) admits the Studio build rule; the projection must say so to a member
+    expect(src).toContain("const PUBLISH_DOOR_ADMIN_TOOLS: ReadonlySet<string> = GROWTH_PUBLISH_DOOR_TOOL_NAMES;");
+    expect(src).toContain("|| PUBLISH_DOOR_ADMIN_TOOLS.has(n)));");;
     // the roster is only offered when a delegation tool is in her hands for this person
     expect(src).toContain("return { rows, specialists: canDelegate ? specialists : [] };");
     // the batch lane answer describes the turn; it never seeds the dispatch caches (§68)

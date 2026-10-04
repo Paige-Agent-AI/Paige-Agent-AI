@@ -21,12 +21,30 @@ export const STUDIO_RECEIPT_KEYS: ReadonlyMap<string, string> = new Map([
   ["growth_funnel_publish", "growth_funnel_publish"],
   ["content_save", "content_save"],
   ["generate_image", "vibe_media_image"],
+  // V2b — the acts only the publish door performs (growth-publish-command). It files their receipt
+  // under the act's own key, exactly once; no chat tool reaches them.
+  ["growth_page_unpublish", "growth_page_unpublish"],
+  ["growth_form_unpublish", "growth_form_unpublish"],
+  ["growth_funnel_unpublish", "growth_funnel_unpublish"],
+  ["studio_image_publish", "studio_image_publish"],
+  ["studio_image_unpublish", "studio_image_unpublish"],
+]);
+
+/**
+ * The chat publish tools whose receipt the publish door files (V2b, growth-publish-command). The chat
+ * hands these to the door and must file nothing for them itself: two receipts for one publish would
+ * be a lie of a different kind.
+ */
+export const DOOR_FILED_STUDIO_TOOLS: ReadonlySet<string> = new Set([
+  "growth_page_publish", "growth_form_publish", "growth_funnel_publish",
 ]);
 
 // Postgres codes the Studio RPCs raise when they refuse: forbidden, invalid/locked, not found, and a
 // duplicate.
 const REFUSAL_CODES = new Set(["42501", "22023", "P0002", "23505"]);
-const TRANSPORT = /\b(fetch|network|timed? ?out|timeout|ECONN|socket|aborted)\b/i;
+// "error sending request" / "failed to send a request" are supabase-js's own words for a call that
+// never got an answer (FunctionsFetchError and the fetch layer under it).
+const TRANSPORT = /\b(fetch|network|timed? ?out|timeout|ECONN|socket|aborted|error sending request|failed to send a request)\b/i;
 
 export interface StudioReceipt { key: string; outcome: CapabilityOutcome }
 

@@ -20,5 +20,6 @@ export default defineConfig({
     ],
   },
   define: { "import.meta.env.VITE_SUPABASE_URL": JSON.stringify("https://harness.invalid") },
-  server: { host: "127.0.0.1", port: 5216, strictPort: true },
+  // STUDIO_HARNESS_PORT lets two worktrees drive the harness at once without one hitting the other.
+  server: { host: "127.0.0.1", port: Number(process.env.STUDIO_HARNESS_PORT) || 5216, strictPort: true },
 });

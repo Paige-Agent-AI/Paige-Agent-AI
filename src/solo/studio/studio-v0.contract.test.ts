@@ -2,7 +2,8 @@
  * Vibe Studio V0 — the live-defect fixes, pinned.
  *
  * EVIDENCE CLASSES:
- *  - publishVerified and publishArtifact are driven BEHAVIOURALLY (real functions, mocked RPC).
+ *  - publishVerified is driven BEHAVIOURALLY (the real function). The panel's publish path moved
+ *    behind the publish door in V2b (studio-publish-door.contract.test.ts).
  *  - The paige-ai-chat rules (ceiling-respecting Studio lift, funnel reachability, partial funnel
  *    outcomes, document_generate off the Studio surface, publish readback, content_save audit
  *    target) are a STATIC contract over the edge source — the repo's idiom for that 15k-line file.
@@ -10,11 +11,8 @@
  *    authenticated drive.
  */
 import { readFileSync } from "node:fs";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { publishVerified, PUBLISH_UNVERIFIED_ERROR } from "../../../supabase/functions/_shared/artifact-receipt";
-
-const rpcMock = vi.fn();
-vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: (...a: unknown[]) => rpcMock(...a) } }));
 
 const chat = readFileSync("supabase/functions/paige-ai-chat/index.ts", "utf8");
 const between = (from: string, to: string) => {
@@ -46,24 +44,8 @@ describe("publishVerified — live only on a readback that proves it", () => {
   });
 });
 
-describe("Publish panel path (publishArtifact) — never 'Published' without an address", () => {
-  beforeEach(() => rpcMock.mockReset());
-  it("returns the address when the server proves the artifact is live", async () => {
-    rpcMock.mockResolvedValue({ data: { id: "1", status: "published", published_at: "2026-10-04T10:00:00Z", url: "/p/acme/offer" }, error: null });
-    const { publishArtifact } = await import("./studio-data");
-    await expect(publishArtifact("page", "1")).resolves.toEqual({ url: "/p/acme/offer" });
-  });
-  it("throws a plain refusal when the readback has no address", async () => {
-    rpcMock.mockResolvedValue({ data: { id: "1", status: "published", published_at: "2026-10-04T10:00:00Z", url: null }, error: null });
-    const { publishArtifact } = await import("./studio-data");
-    await expect(publishArtifact("page", "1")).rejects.toThrow(/didn't confirm a public address/);
-  });
-  it("throws when the status is not the kind's live state", async () => {
-    rpcMock.mockResolvedValue({ data: { id: "1", status: "draft", published_at: "2026-10-04T10:00:00Z", url: "/form/1" }, error: null });
-    const { publishArtifact } = await import("./studio-data");
-    await expect(publishArtifact("form", "1")).rejects.toThrow(/didn't confirm a public address/);
-  });
-});
+// The Publish panel's own path (V0's publishArtifact readback) moved behind the one publish door in
+// V2b; its "never live without an address" rule is pinned in studio-publish-door.contract.test.ts.
 
 describe("D1 — the Studio auto-run list never runs above the Trust Compass ceiling", () => {
   it("keeps main PAIGE on the canonical resolver and asks the ceiling fact only for a lift, failing closed", () => {
@@ -96,18 +78,20 @@ describe("D4 — document_generate is off the Studio surface", () => {
 });
 
 describe("D2 — funnel tools are reachable, and a partial build is never success", () => {
-  it("routes the three funnel tools into the dispatch branch that handles them", () => {
+  it("routes the funnel draft and build tools into the dispatch branch that handles them", () => {
     // C0a: the owner-ops branch routes through ONE shared set (the gate and the capability projection
     // both read it), so the funnel tools must be members of that set and the branch must consult it.
     const auth = readFileSync("supabase/functions/_shared/workspace-authority.ts", "utf8");
     const set = auth.slice(auth.indexOf("OWNER_OPS_BRANCH_TOOLS"), auth.indexOf("]);", auth.indexOf("OWNER_OPS_BRANCH_TOOLS")));
-    for (const t of ["growth_funnel_generate", "growth_funnel_build", "growth_funnel_publish"]) {
+    for (const t of ["growth_funnel_generate", "growth_funnel_build"]) {
       expect(set).toContain(`"${t}"`);
     }
+    // V2b: funnel publish is reachable through the one publish door instead (see below).
+    expect(set).not.toContain('"growth_funnel_publish"');
     expect(chat).toContain("OWNER_OPS_BRANCH_TOOLS.has(tc.function.name) ||");
   });
   it("reports a build that failed after a write as partial, naming what was saved", () => {
-    const build = between('} else if (tc.function.name === "growth_funnel_build") {', '} else if (tc.function.name === "growth_funnel_publish") {');
+    const build = between('} else if (tc.function.name === "growth_funnel_build") {', '} else if (tc.function.name === "action_file") {');
     expect(build).toContain("_fbWritten.page_id = _pageId;");
     expect(build).toContain("_fbWritten.form_id = _formId;");
     expect(build).toContain('if (!_formId) throw new Error("The funnel\'s intake form didn\'t save.");');
@@ -116,16 +100,20 @@ describe("D2 — funnel tools are reachable, and a partial build is never succes
   });
 });
 
+// V2b — ONE PUBLISH DOOR. Chat no longer runs its own publish RPC and readback; it hands the act to
+// growth-publish-command (the Studio panel's door too), whose handler requires the readback. The
+// door's behaviour is driven in src/__tests__/growth-publish-door.test.ts; this pins the wiring.
 describe("Publish truth in chat — no success without the published readback", () => {
-  it.each([
-    ["growth_page_publish", '"page", pub'],
-    ["growth_form_publish", '"form", pub'],
-    ["growth_funnel_publish", '"funnel", _pub'],
-  ])("%s requires publishVerified", (tool, call) => {
-    const start = `} else if (tc.function.name === "${tool}") {`;
-    const handler = chat.slice(chat.indexOf(start), chat.indexOf("} else if (tc.function.name ===", chat.indexOf(start) + start.length));
-    expect(handler).toContain(`publishVerified(${call})`);
-    expect(handler).toContain('outcome: "unverified", error: PUBLISH_UNVERIFIED_ERROR');
+  const door = readFileSync("supabase/functions/_shared/growth-publish-command/door.ts", "utf8");
+  it.each(["growth_page_publish", "growth_form_publish", "growth_funnel_publish"])("%s has no inline executor left in chat", (tool) => {
+    expect(chat).not.toContain(`} else if (tc.function.name === "${tool}") {`);
+    expect(chat).not.toContain(`supabaseClient.rpc("${tool}"`);
+  });
+  it("chat routes publishing through the door, and the door requires the readback", () => {
+    expect(between("if (GROWTH_PUBLISH_DOOR_TOOL_NAMES.has(tc.function.name)) {", "// ── CANONICAL GOVERNED CRM/Pipeline DOOR"))
+      .toContain('supabaseClient.functions.invoke("growth-publish-command"');
+    expect(door).toContain("publishVerified(cmd.kind, data)");
+    expect(door).toContain('outcome: "unverified"');
   });
 });
 

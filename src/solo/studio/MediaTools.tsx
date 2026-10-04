@@ -4,16 +4,19 @@
 // still runs through paige-media; nothing here fabricates progress, spend or readiness.
 import React from "react";
 import { Ic, Logo } from "../_shared";
-import { useMediaJobs, type MediaJob, type MediaModelInfo } from "../useMediaJobs";
+import { useMediaJobs, type MediaApprovalState, type MediaJob, type MediaModelInfo } from "../useMediaJobs";
 import { VsStars } from "./VsStars";
 
 const LINE = "rgba(255,255,255,.12)";
 const TXT = "#EDEAF7";
 const DIM = "#A49FC0";
 
-// The 18 owner-required job states, rendered from the seam's own vocabulary.
-function jobStateChip(job: MediaJob): { label: string; tone: "gold" | "green" | "red" | "neutral" | "amber" } {
-  if (job.state === "blocked" && job.approval_state === "pending") return { label: "Needs your approval", tone: "gold" };
+// The 18 owner-required job states, rendered from the seam's own vocabulary. A pending approval
+// reads as YOURS only for the person who asked (owner ruling 2026-10-04: requester approves).
+function jobStateChip(job: MediaJob, approval?: MediaApprovalState): { label: string; tone: "gold" | "green" | "red" | "neutral" | "amber" } {
+  if (job.state === "blocked" && job.approval_state === "pending") {
+    return approval?.requestedByYou === true ? { label: "Needs your approval", tone: "gold" } : { label: "Awaiting approval", tone: "neutral" };
+  }
   switch (job.state) {
     case "created": return { label: "Queued", tone: "neutral" };
     case "submitted": return { label: "At provider", tone: "amber" };
@@ -103,6 +106,16 @@ export const MediaTools = () => {
 
   const anyProviderConfigured = (media.capabilities?.providers ?? []).some((p) => p.configured);
   const pendingJobs = media.jobs.filter((j) => j.state === "blocked" && j.approval_state === "pending");
+  const [deciding, setDeciding] = React.useState<{ id: string; kind: "approve" | "decline" } | null>(null);
+  const decideJob = async (id: string, kind: "approve" | "decline") => {
+    if (deciding) return;
+    setDeciding({ id, kind });
+    try {
+      await (kind === "approve" ? media.approve(id) : media.decline(id));
+    } finally {
+      setDeciding(null);
+    }
+  };
   const budget = media.capabilities?.budget;
 
   const generate = async () => {
@@ -249,31 +262,49 @@ export const MediaTools = () => {
             and the commercial-use disclosure the owner's contract requires. */}
         {pendingJobs.length > 0 && (
           <section style={{ padding: "20px 28px 0" }} aria-label="Awaiting approval">
-            {pendingJobs.map((job) => (
-              <div key={job.id} style={{ background: "rgba(245,194,102,.06)", border: "1px solid rgba(245,194,102,.25)", borderRadius: 16, padding: "15px 17px" }}>
-                <div className="row" style={{ gap: 10, marginBottom: 8, flexWrap: "wrap" }}>
-                  <Chip tone="gold">Needs your approval</Chip>
-                  <span style={{ fontSize: 13, fontWeight: 600 }}>{String(job.params?.prompt ?? "").slice(0, 70)}{String(job.params?.prompt ?? "").length > 70 ? "…" : ""}</span>
-                  <span className="mono" style={{ marginLeft: "auto", fontSize: 12, color: "#F5C266" }}>≈{usd(job.estimated_cost_usd)}</span>
+            {pendingJobs.map((job) => {
+              const { requestedByYou, requesterName } = media.approvalFor(job);
+              const mine = requestedByYou === true;
+              const busy = deciding?.id === job.id ? deciding.kind : null;
+              return (
+                <div
+                  key={job.id}
+                  data-approver={mine ? "you" : requestedByYou === false ? "someone-else" : "unknown"}
+                  aria-busy={busy !== null}
+                  style={{ background: mine ? "rgba(245,194,102,.06)" : "rgba(255,255,255,.035)", border: `1px solid ${mine ? "rgba(245,194,102,.25)" : LINE}`, borderRadius: 16, padding: "15px 17px" }}
+                >
+                  <div className="row" style={{ gap: 10, marginBottom: 8, flexWrap: "wrap" }}>
+                    <Chip tone={mine ? "gold" : "neutral"}>{mine ? "Needs your approval" : requestedByYou === false ? `Waiting for ${requesterName ?? "the person who asked"}` : "Awaiting approval"}</Chip>
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>{String(job.params?.prompt ?? "").slice(0, 70)}{String(job.params?.prompt ?? "").length > 70 ? "…" : ""}</span>
+                    <span className="mono" style={{ marginLeft: "auto", fontSize: 12, color: mine ? "#F5C266" : TXT }}>≈{usd(job.estimated_cost_usd)}</span>
+                  </div>
+                  {!mine && (
+                    <div style={{ fontSize: 12.3, color: TXT, lineHeight: 1.55, marginBottom: 6 }}>
+                      {requestedByYou === false ? "Only they" : "Only the person who asked"} can approve the cost. You can decline it.
+                    </div>
+                  )}
+                  {license && <div style={{ fontSize: 11.8, color: DIM, lineHeight: 1.55, marginBottom: 12 }}>{license}</div>}
+                  <div className="row" style={{ gap: 10, marginTop: license ? 0 : 6 }}>
+                    {mine && (
+                      <button
+                        onClick={() => void decideJob(job.id, "approve")}
+                        disabled={busy !== null}
+                        className="btn btn-s"
+                        style={{ background: "var(--gold-bright)", borderColor: "var(--gold-bright)", color: "#2A1C00", fontWeight: 600 }}
+                      >
+                        {busy === "approve" ? "Approving…" : "Approve & run"}
+                      </button>
+                    )}
+                    <button onClick={() => void decideJob(job.id, "decline")} disabled={busy !== null} className="btn btn-s" style={{ background: "transparent", borderColor: LINE, color: TXT }}>
+                      {busy === "decline" ? "Declining…" : "Decline"}
+                    </button>
+                    <span style={{ fontSize: 11.3, color: DIM, marginLeft: 6 }}>
+                      {job.mode === "video" ? `Video · ${job.video_seconds ?? "?"}s · ${job.model}` : job.model}
+                    </span>
+                  </div>
                 </div>
-                <div style={{ fontSize: 11.8, color: DIM, lineHeight: 1.55, marginBottom: 12 }}>{license}</div>
-                <div className="row" style={{ gap: 10 }}>
-                  <button
-                    onClick={() => void media.decide(job.id, true)}
-                    className="btn btn-s"
-                    style={{ background: "var(--gold-bright)", borderColor: "var(--gold-bright)", color: "#2A1C00", fontWeight: 600 }}
-                  >
-                    Approve & run
-                  </button>
-                  <button onClick={() => void media.decide(job.id, false)} className="btn btn-s" style={{ background: "transparent", borderColor: LINE, color: TXT }}>
-                    Decline
-                  </button>
-                  <span style={{ fontSize: 11.3, color: DIM, marginLeft: 6 }}>
-                    {job.mode === "video" ? `Video · ${job.video_seconds ?? "?"}s · ${job.model}` : job.model}
-                  </span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </section>
         )}
 
@@ -294,7 +325,7 @@ export const MediaTools = () => {
           ) : (
             <div style={{ display: "grid", gap: 10 }}>
               {media.jobs.map((job) => {
-                const chip = jobStateChip(job);
+                const chip = jobStateChip(job, media.approvalFor(job));
                 const asset = job.content_id ? media.assets[job.content_id] : undefined;
                 const cancellable = !["succeeded", "failed", "cancelled"].includes(job.state) && job.approval_state !== "rejected";
                 return (

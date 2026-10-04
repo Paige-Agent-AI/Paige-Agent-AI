@@ -4785,5 +4785,87 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
     wire(saveUnderConfirm).slice(0, 300));
 }
 
+// ── 35. VIBE STUDIO V2b — ONE PUBLISH DOOR ───────────────────────────────────────────────────
+//
+// Chat publishing no longer runs its own RPC, readback, gate or receipt. The three publish tools hand
+// the act to growth-publish-command — the Studio Publish panel's door — whose 202 becomes the chat's
+// Needs-your-OK card; an approved card goes back to the door with the stored fingerprint, and the door
+// alone claims it, runs it, proves it and files the one receipt. Each check names the mutation it kills.
+console.log("\nV2b — chat publishing goes through the one publish door");
+{
+  const THREAD = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+  const PAGE_ID = "3a3a3a3a-3a3a-4a3a-8a3a-3a3a3a3a3a3a";
+  const FP = "0f0f0f0f0f0f0f0f";
+  const PERSONA = { get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT }], error: null } };
+  const frames = (r) => r.bodyText.split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
+    .map((l) => { try { return JSON.parse(l.slice(6)); } catch { return null; } }).filter(Boolean);
+  const cards = (r) => frames(r).filter((f) => f.paige_confirm).flatMap((f) => [].concat(f.paige_confirm));
+  const outcomes = (r) => frames(r).filter((f) => f.paige_approval_outcome).map((f) => f.paige_approval_outcome);
+  const doorCalls = (r) => r.rec.functions.filter((f) => f.name === "growth-publish-command");
+  const publishRpcs = (r) => r.rec.rpc.filter((c) => /^growth_(page|form|funnel)_publish$/.test(c.name));
+  const chatReceipts = (r) => r.rec.rpc.filter((c) => c.name === "record_capability_run");
+  const publishDrive = ({ approved, rows = [], answer, lane = "confirm" } = {}) => {
+    const store = makeConfirmStore(rows);
+    return drive({
+      stream: true, extraBody: { threadId: THREAD, ...(approved ? { approvedConfirmations: approved } : {}) },
+      toolCall: { name: "growth_page_publish", args: { page_id: PAGE_ID } },
+      rpcOverrides: { get_actor_access: { data: { tier: "tenant" }, error: null }, resolve_tool_autonomy: { data: lane, error: null },
+        studio_role_ok: { data: true, error: null }, ...PERSONA },
+      serviceTablesExtra: { user_roles: () => [{ role: "admin" }] },
+      tablesExtra: { paige_pending_confirmations: store.table, paige_chat_threads: () => [{ studio_session_id: null, summary: null }] },
+      onInsert: mirrorConfirms(store),
+      functionsExtra: answer ? { "growth-publish-command": answer } : {},
+    }).then((r) => ({ ...r, store }));
+  };
+
+  // 35.1 A first call asks the door — never the RPC — and its 202 becomes ONE card carrying the door's
+  // fingerprint. Kills: leaving the inline growth_page_publish RPC in chat; minting a second (chat-gate)
+  // proposal beside the door's.
+  const asked = await publishDrive({ answer: { data: { ok: false, approval_required: true, fingerprint: FP,
+    summary: 'Publish the page "Spring offer" at /p/acme/spring-offer.', preview: { kind: "page" } }, error: null } });
+  const askedCards = cards(asked);
+  assert("35.1 chat publish invokes growth-publish-command with the operator's JWT, marked as a chat attempt (so a refusal is filed), and calls no publish RPC",
+    doorCalls(asked).length === 1 && publishRpcs(asked).length === 0
+      && JSON.stringify(doorCalls(asked)[0].body) === JSON.stringify({ action: "publish", kind: "page", id: PAGE_ID, expected_tenant_id: CALLER_TENANT, chat_attempt: true })
+      && doorCalls(asked)[0].headers?.Authorization === "Bearer test-jwt",
+    JSON.stringify({ door: doorCalls(asked), rpcs: publishRpcs(asked).map((c) => c.name) }));
+  assert("35.1b …the door's 202 is the one Needs-your-OK card, with the door's fingerprint, and chat stored no proposal of its own",
+    askedCards.length === 1 && askedCards[0].fingerprint === FP && /Spring offer/.test(askedCards[0].summary ?? "") && asked.store.rows.length === 0,
+    JSON.stringify({ cards: askedCards, stored: asked.store.rows.length }));
+  assert("35.1c …and chat files no receipt for the proposal (the door files receipts, once, for acts)",
+    chatReceipts(asked).length === 0, JSON.stringify(chatReceipts(asked).map((c) => c.args?._capability_key)));
+
+  // 35.2 Approving the card hands the door the STORED proposal: its fingerprint and its artifact id,
+  // whatever the model re-emits. The chat runs nothing itself and files no receipt. Kills: executing the
+  // model's re-emitted id; a chat-side claim; a second receipt beside the door's.
+  const stored = { user_id: USER, tenant_id: CALLER_TENANT, thread_id: null, scoped_client_id: null, tool_name: "growth_page_publish", fingerprint: FP,
+    issued_in_request: "an-earlier-request", args: { action: "publish", kind: "page", id: PAGE_ID, expected_tenant_id: CALLER_TENANT, approval_subject: `publish:page:${PAGE_ID}`, approval_cycle_nonce: "11111111-2222-4333-8444-555555555555" } };
+  const approvedRun = await publishDrive({ approved: [FP], rows: [stored],
+    answer: { data: { ok: true, action: "publish", kind: "page", id: PAGE_ID, status: "published", published_at: "2026-10-04T10:00:00Z", url: "/p/acme/spring-offer", receipt_recorded: true }, error: null } });
+  assert("35.2 an approved card sends the door the stored id and the fingerprint; chat calls no publish RPC and leaves the claim to the door",
+    doorCalls(approvedRun).length === 1 && doorCalls(approvedRun)[0].body.approved_fingerprint === FP && doorCalls(approvedRun)[0].body.id === PAGE_ID
+      && publishRpcs(approvedRun).length === 0 && approvedRun.store.rows[0].consumed === false,
+    JSON.stringify({ door: doorCalls(approvedRun).map((c) => c.body), consumed: approvedRun.store.rows[0].consumed }));
+  assert("35.2b …one receipt total: the chat files none for the publish (the door filed it)",
+    chatReceipts(approvedRun).length === 0, JSON.stringify(chatReceipts(approvedRun).map((c) => `${c.args?._capability_key}:${c.args?._outcome}`)));
+  assert("35.2c …the card that asked reports the approval as ran, from the door's answer",
+    JSON.stringify(outcomes(approvedRun)[0]) === JSON.stringify({ actions: [{ fingerprint: FP, outcome: "ran" }] }), JSON.stringify(outcomes(approvedRun)));
+  assert("35.2d …and Paige is told the real address the door returned",
+    /\/p\/acme\/spring-offer/.test(approvedRun.modelEgress.join("\n")), "");
+
+  // 35.3 Even on an `auto` lane, chat's legacy gate does not run for a publish: the door decides (and
+  // clamps high-risk to a card). Kills: chat executing a publish on its own auto lane.
+  const autoLane = await publishDrive({ lane: "auto", answer: { data: { ok: false, approval_required: true, fingerprint: FP, summary: "Publish it" }, error: null } });
+  assert("35.3 on an auto lane chat still only asks the door; no publish RPC runs from chat",
+    doorCalls(autoLane).length === 1 && publishRpcs(autoLane).length === 0 && cards(autoLane).length === 1,
+    JSON.stringify({ door: doorCalls(autoLane).length, rpcs: publishRpcs(autoLane).length }));
+
+  // 35.4 An answer that never came back is not "nothing changed": the card says couldn't confirm.
+  const lost = await publishDrive({ approved: [FP], rows: [stored], answer: { data: null, error: Object.assign(new Error("Failed to send a request to the Edge Function"), { name: "FunctionsFetchError", context: new TypeError("fetch failed") }) } });
+  assert("35.4 a lost door answer is reported as couldn't confirm, never ran or didn't run",
+    outcomes(lost)[0]?.actions?.[0]?.outcome === "unconfirmed" && /"outcome_unknown":true/.test(lost.modelEgress.join("\n").replace(/\\"/g, '"')),
+    JSON.stringify(outcomes(lost)));
+}
+
 console.log(`\n${checks - failures} passed, ${failures} failed`);
 process.exit(failures === 0 ? 0 : 1);

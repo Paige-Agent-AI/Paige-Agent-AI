@@ -526,6 +526,7 @@
 .ma-shares{gap:10px}
 .ma .mo-keys span{white-space:normal;overflow:visible;line-height:1.25}
 .ma-share-row{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(60px,1fr) 4ch 5ch;align-items:center;gap:12px;font-size:12.8px;color:var(--ink)}
+.ma-share-row .mo-rank-name{white-space:normal;overflow:visible;line-height:1.25}
 .ma-share-row em{font-style:normal;font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums;text-align:right}
 .ma-share-row b{font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
 .ma-insight-list{list-style:none;margin:0;padding:0;display:grid;gap:12px}

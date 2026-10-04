@@ -67,10 +67,15 @@ const makeSupabase = (rows: unknown[] = [], err: unknown = null) => {
 };
 
 type Ctx = { user_id?: string; contact_id?: string; conversation_id?: string };
-const build = async (fnText: string, payloadCtx: Ctx, scope: { tenantId: string | null; callerId: string | null; isService: boolean }, memberRows: unknown[] = []) => {
-  const fn = new Function("supabase", "UUID_RE", "console", js(`return (${fnText});`)) as
-    (p: { context?: Ctx }, s: typeof scope) => Promise<{ ctx: Ctx } | { error: string; status: number }>;
-  return fn(makeSupabase(memberRows) as never, UUID_RE, { warn() {} })({ context: payloadCtx }, scope);
+type Scope = { tenantId: string | null; callerId: string | null; isService: boolean };
+type BuildResult = { ctx: Ctx } | { error: string; status: number };
+
+const build = async (fnText: string, payloadCtx: Ctx, scope: Scope, memberRows: unknown[] = []): Promise<BuildResult> => {
+  // two-stage eval: the outer call binds the stubs (the function body's free variables
+  // close over these parameters), the returned function is the real builder.
+  const outer = new Function("supabase", "UUID_RE", "console", js(`return (${fnText});`)) as unknown as
+    (sb: unknown, re: unknown, log: unknown) => (p: { context?: Ctx }, s: Scope) => Promise<BuildResult>;
+  return outer(makeSupabase(memberRows), UUID_RE, { warn() {} })({ context: payloadCtx }, scope);
 };
 
 const realFn = extractFn(source, "buildTrustedContext");

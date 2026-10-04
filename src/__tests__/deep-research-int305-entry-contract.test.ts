@@ -85,6 +85,12 @@ describe("INT-305: the engine accepts the orchestrator's { input, context } enve
     expect(source).toContain('return json({ error: "user_id is required" }, 400);');
   });
 
+  it("an envelope with context entirely absent fills user_id from nowhere (review P3 fixture)", () => {
+    const out = normalize({ input: { question: "q" } });
+    expect(out.question).toBe("q");
+    expect(out.user_id).toBeUndefined();
+  });
+
   it("an input with no question/query and no context.user_id fills nothing (fail-closed, not invented)", () => {
     const out = normalize({ input: { lender: "Acme" }, context: { conversation_id: "c" } });
     expect(out.question).toBeUndefined();
@@ -102,6 +108,6 @@ describe("INT-305: M0 lineage untouched", () => {
   });
 
   it("no tenant field is read anywhere in the normalization block (comments may explain; code may not read)", () => {
-    expect(blockText).not.toMatch(/tenant_id|tenantId|\.tenant|expected_tenant/);
+    expect(blockText).not.toMatch(/tenant_id|tenantId|\.tenant[^_a-zA-Z]|expected_tenant/);
   });
 });

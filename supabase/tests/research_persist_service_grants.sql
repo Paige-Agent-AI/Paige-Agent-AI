@@ -128,11 +128,11 @@ SELECT ok(NOT has_function_privilege('anon','public.list_workspace_research(inte
   'G: anon still cannot execute the governed list');
 
 -- ── H: the M0 policy set is unchanged (the same eight, no new, no dropped) ───────────────
-SELECT is((SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename IN ('research_runs','research_sources')), 8,
+SELECT is((SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename IN ('research_runs','research_sources')), 8::bigint,
   'H: RLS policy count unchanged (the M0 eight)');
-SELECT is((SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename='research_runs'), 4,
+SELECT is((SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename='research_runs'), 4::bigint,
   'H: research_runs keeps its four policies');
-SELECT is((SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename='research_sources'), 4,
+SELECT is((SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename='research_sources'), 4::bigint,
   'H: research_sources keeps its four policies');
 
 SELECT * FROM finish();

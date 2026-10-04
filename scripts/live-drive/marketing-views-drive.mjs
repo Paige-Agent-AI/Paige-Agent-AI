@@ -105,7 +105,7 @@ async function measure(page) {
         const lum = ({ r, g, b }) => [r, g, b].map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }).reduce((t, v, i) => t + v * [0.2126, 0.7152, 0.0722][i], 0);
         const bgOf = (el) => { for (let n = el; n; n = n.parentElement) { const c = rgb(getComputedStyle(n).backgroundColor); if (c.a > 0.9) return c; } return { r: 255, g: 255, b: 255 }; };
         let worst = { ratio: 99, what: "" };
-        for (const el of document.querySelectorAll(".mk-flag, .mk-row-main small, .mk-stat dt, .mk-stat span, .mk-view .mk-link, .mk-view .btn-g, .mo-stat h3, .mo-delta, .mo .mo-link, .mo-keys span, .mo-keys em, .mo-note, .mo-panel-head p, .mo-head p, .mp-list-main small, .mp-facts dt, .mp-facts dd small, .mo-task-main small, .mo-rank-name, .mo-next p, .mo-donut-center span, .mo-ask, .mo-readout")) {
+        for (const el of document.querySelectorAll(".mk-flag, .mk-row-main small, .mk-stat dt, .mk-stat span, .mk-view .mk-link, .mk-view .btn-g, .mo-stat h3, .mo-delta, .mo .mo-link, .mo-keys span, .mo-keys em, .mo-note, .mo-panel-head p, .mo-head p, .mp-list-main small, .mp-facts dt, .mp-facts dd small, .mo-task-main small, .mo-rank-name, .mo-next p, .mo-donut-center span, .mo-ask, .mo-readout, .ma-share-row em, .ma-share-row b, .ma-growth-badge, .ma-next p, .ma-group small")) {
           const fg = rgb(getComputedStyle(el).color), bg = bgOf(el);
           const [hi, lo] = [lum(fg), lum(bg)].sort((x, y) => y - x);
           const ratio = (hi + 0.05) / (lo + 0.05);
@@ -148,6 +148,8 @@ async function main() {
             await setContentWidth(page, width);
             // The Overview's charts load lazily: wait until both donuts and the time chart have drawn.
             if (tab === "overview") await page.waitForFunction(() => document.querySelectorAll(".mo-donut .recharts-pie-sector").length > 0 && document.querySelector(".mo-chart-time .recharts-bar-rectangle"), null, { timeout: 15000 }).catch(() => {});
+            // Audience: the composition donut, the stage bars and the growth area also load lazily.
+            if (tab === "audience") await page.waitForFunction(() => document.querySelector(".ma .mo-donut .recharts-pie-sector") && document.querySelector(".ma-chart-stages .recharts-bar-rectangle") && document.querySelector(".ma-chart-growth .recharts-area-area"), null, { timeout: 15000 }).catch(() => {});
             const id = `${theme}/${frame.name}/paige-${posture}@${width}px/${tab}`;
             const m = await measure(page);
             check(Boolean(m) && !m.crashed, `${id}: renders`);
@@ -168,6 +170,10 @@ async function main() {
               if (tab === "overview") {
                 const drawn = await page.evaluate(() => ({ donuts: [...document.querySelectorAll(".mo-donut")].filter((d) => d.querySelector(".recharts-pie-sector")).length, bars: document.querySelectorAll(".mo-chart-time .recharts-bar-rectangle").length, line: Boolean(document.querySelector(".mo-chart-time .recharts-line-curve")) }));
                 check(drawn.donuts === 2 && drawn.bars > 0 && drawn.line, `${id}: both donuts, the bars and the opportunities line are drawn`, JSON.stringify(drawn));
+              }
+              if (tab === "audience") {
+                const drawn = await page.evaluate(() => ({ donut: Boolean(document.querySelector(".ma .mo-donut .recharts-pie-sector")), stages: document.querySelectorAll(".ma-chart-stages .recharts-bar-rectangle").length, growth: Boolean(document.querySelector(".ma-chart-growth .recharts-area-area")), stats: document.querySelectorAll(".ma-stats > *").length }));
+                check(drawn.donut && drawn.stages > 0 && drawn.growth && drawn.stats === 6, `${id}: six figures, the composition donut, the stage bars and the growth area are drawn`, JSON.stringify(drawn));
               }
               check(m.contrast.ratio >= 4.5, `${id}: new small text meets AA (4.5:1)`, `worst ${m.contrast.ratio} ${m.contrast.what}`);
               geometry.push({ id, width, overflowX: m.overflowX, innerScrollers: m.innerScrollers, worstContrast: m.contrast });

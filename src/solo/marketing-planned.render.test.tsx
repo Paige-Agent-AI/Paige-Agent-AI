@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-// Marketing › Audience, Content, Email and Ads: what each tab shows from real records, and what
+// Marketing › Content, Email and Ads: what each tab shows from real records, and what
 // it refuses to show. Network reads are stubbed at the Supabase client; everything else is the real view.
 import React from "react";
 import { act } from "react";
@@ -28,7 +28,7 @@ vi.mock("@/integrations/supabase/client", () => {
 const access = { phase: "ready", canManage: true };
 vi.mock("./useSoloCampaignBriefs", () => ({ useSoloCampaignBriefs: () => access }));
 
-import { MarketingAds, MarketingAudience, MarketingContent, MarketingEmail } from "./marketing-planned";
+import { MarketingAds, MarketingContent, MarketingEmail } from "./marketing-planned";
 
 let host: HTMLDivElement;
 let root: Root;
@@ -45,56 +45,6 @@ beforeEach(() => {
   root = createRoot(host);
 });
 afterEach(() => { act(() => root.unmount()); host.remove(); vi.restoreAllMocks(); });
-
-describe("Marketing › Audience", () => {
-  it("counts the workspace's own contacts by stage, source and tag, read for this tenant only", async () => {
-    db.tables.clients = { data: [
-      { lifecycle_stage: "new_lead", source: "paige_form", tags: ["spring", "webinar"] },
-      { lifecycle_stage: "new_lead", source: "manual", tags: ["spring"] },
-      { lifecycle_stage: "client_funded", source: "conversations", tags: null },
-    ], error: null };
-    const onOpenClients = vi.fn();
-    await render(<MarketingAudience tenantId="t-1" onOpenClients={onOpenClients}/>);
-    expect(db.calls.find((call) => call.table === "clients")?.filters).toContainEqual(["tenant_id", "t-1"]);
-    const stat = (label: string) => [...host.querySelectorAll(".mk-stat")].find((el) => el.querySelector("dt")?.textContent === label)?.querySelector("strong")?.textContent;
-    expect(stat("Contacts")).toBe("3");
-    expect(stat("From your forms")).toBe("1");
-    expect(stat("Tags in use")).toBe("2");
-    expect(stat("Stages in use")).toBe("2");
-    expect(text()).toContain("New lead2");
-    expect(text()).toContain("From a conversation1");
-    expect(text()).toContain("spring2");
-    // A stage named for one vertical's outcome reads as a neutral outcome (§2).
-    expect(text()).toContain("Outcome reached");
-    expect(text()).not.toMatch(/fund|credit|loan/i);
-    // No header: the tab strip already names the tab, so the view does not repeat it (owner, 2026-10-04).
-    expect(host.querySelector("h2")?.textContent).toBe("By stage");
-    expect(host.textContent).not.toMatch(/Planned/);
-    expect(text()).toContain("Saved audiences and segments");
-    act(() => (host.querySelector(".mp-actions button") as HTMLButtonElement).click());
-    expect(onOpenClients).toHaveBeenCalledTimes(1);
-  });
-
-  it("says a capped read is a floor, not a total", async () => {
-    db.tables.clients = { data: Array.from({ length: 1000 }, () => ({ lifecycle_stage: "new_lead", source: "manual", tags: [] })), error: null };
-    await render(<MarketingAudience tenantId="t-1" onOpenClients={() => {}}/>);
-    expect(text()).toContain("1000+");
-    expect(text()).toContain("Counted from the first 1000");
-  });
-
-  it("starts from an honest empty state, and a failed read can be retried", async () => {
-    await render(<MarketingAudience tenantId="t-1" onOpenClients={() => {}}/>);
-    expect(text()).toContain("No contacts yet");
-    vi.spyOn(console, "error").mockImplementation(() => {});
-    db.tables.clients = { data: null, error: { message: "boom" } };
-    await render(<MarketingAudience tenantId="t-2" onOpenClients={() => {}}/>);
-    expect(text()).toContain("Your contacts could not load");
-    db.tables.clients = { data: [{ lifecycle_stage: "won", source: "manual", tags: [] }], error: null };
-    act(() => ([...host.querySelectorAll("button")].find((b) => b.textContent === "Try again") as HTMLButtonElement).click());
-    await flush();
-    expect(text()).toContain("Won1");
-  });
-});
 
 describe("Marketing › Content", () => {
   const published = { phase: "ready", pages: 2, funnels: 0, forms: 1, unpublished: 4 };

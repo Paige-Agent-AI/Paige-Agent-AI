@@ -8,7 +8,15 @@ const day = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString();
 const STAGES = ["new_lead", "new_lead", "new_lead", "new_lead", "qualified", "qualified", "nurturing", "hot_lead", "won", "client_active", "client_active", "client_active", "client_alumni"];
 const SOURCES = ["paige_form", "paige_form", "paige_form", "paige_form", "paige_form", "manual", "manual", "paige", "paige", "conversations", "import", "paige_form", "manual"];
 const TAGS = [["spring-webinar", "newsletter"], ["spring-webinar"], ["referral"], ["newsletter"], ["spring-webinar", "vip"], [], ["referral", "newsletter"], ["podcast"], ["vip"], ["newsletter"], [], ["spring-webinar"], ["podcast"]];
-const clients = STAGES.map((lifecycle_stage, i) => ({ lifecycle_stage, source: SOURCES[i], tags: TAGS[i] }));
+// Spread over the last 120 days so growth, "new" and the period switch all have something to show.
+const AGES = [1, 2, 4, 6, 9, 12, 15, 19, 24, 33, 47, 70, 115];
+const CONTACTED = [1, null, 5, null, 40, 2, null, 120, 8, null, 200, 3, null];
+const clients = STAGES.map((lifecycle_stage, i) => ({
+  id: `contact-${i + 1}`, lifecycle_stage, source: SOURCES[i], tags: TAGS[i], created_at: day(AGES[i]),
+  last_contacted_at: CONTACTED[i] === null ? null : day(CONTACTED[i] as number), do_not_contact: i === 7, dnd_active: false, disqualified: false,
+  email: i % 3 === 0 ? `person${i + 1}@northfield.example` : null, phone: i % 4 === 1 ? "555-0100" : null,
+}));
+const methods = clients.filter((_, i) => i % 5 === 2).map((c) => ({ client_id: c.id }));
 const content = [
   { id: "mc-1", kind: "image", channel: null, status: "published", title: "Spring workshop hero", updated_at: day(1) },
   { id: "mc-2", kind: "text", channel: "email_campaign", status: "draft", title: "Workshop reminder: two days out", updated_at: day(2) },
@@ -28,12 +36,15 @@ function answer(rows: unknown): Promise<Answer> {
 }
 
 function from(table: string) {
-  let rows: Record<string, unknown>[] = table === "clients" ? clients : table === "marketing_content" ? content : [];
+  let rows: Record<string, unknown>[] = table === "clients" ? clients : table === "marketing_content" ? content : table === "client_contact_methods" ? methods : [];
   const chain: Record<string, unknown> = {};
   for (const method of ["select", "order", "limit"]) chain[method] = () => chain;
   // Filters behave like the server's, so each tab shows only what its own query would return.
   chain.eq = (column: string, value: unknown) => { if (column !== "tenant_id") rows = rows.filter((row) => row[column] === value); return chain; };
   chain.neq = (column: string, value: unknown) => { rows = rows.filter((row) => row[column] !== value); return chain; };
+  chain.is = () => chain;
+  chain.in = () => chain;
+  chain.range = () => answer(rows);
   chain.then = (resolve: (value: Answer) => unknown, reject: (reason: unknown) => unknown) => answer(rows).then(resolve, reject);
   return chain;
 }

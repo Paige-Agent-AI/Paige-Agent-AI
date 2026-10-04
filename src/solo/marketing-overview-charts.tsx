@@ -6,7 +6,7 @@
 // validated for both themes with the dataviz palette checker: violet, aqua, orange, blue. Grey is
 // reserved for "Other sources" and "No tracking tag"; gold is never used in a chart (§11).
 import React from "react";
-import { Bar, Brush, CartesianGrid, Cell, ComposedChart, Line, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, Bar, BarChart, Brush, CartesianGrid, Cell, ComposedChart, LabelList, Line, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { DailyPoint } from "./marketing-overview-model";
 
 const TOKENS = ["--chart-1", "--chart-2", "--chart-3", "--chart-4", "--chart-other", "--chart-untagged", "--ok", "--warn", "--bad", "--surface", "--line-soft", "--ink", "--ink-2", "--ink-3"] as const;
@@ -164,5 +164,76 @@ export function Donut({ slices, total, caption, label, activeKey, onActiveKey, o
       </PieChart>
     </ResponsiveContainer>
     <div className="mo-donut-center" aria-hidden="true">{active ? <><strong>{active.count}</strong><span>{active.label}</span></> : <><strong>{total}</strong><span>{caption}</span></>}</div>
+  </div>;
+}
+
+// ── Marketing › Audience ──────────────────────────────────────────────────────────────────────────
+
+export type StageBar = { key: string; label: string; count: number; colorToken: Token };
+
+/** Contacts per lifecycle stage, first contact to last, each bar labelled with its count. */
+// A stage name is one or two words; each word gets its own line so neighbouring names never run together.
+function WrapTick({ x = 0, y = 0, payload, fill }: { x?: number; y?: number; payload?: { value: string }; fill: string }) {
+  const words = String(payload?.value ?? "").split(" ");
+  return <text x={x} y={y + 4} textAnchor="middle" fill={fill} fontSize={11}>
+    {words.map((word, index) => <tspan key={index} x={x} dy={index === 0 ? "0.71em" : "1.15em"}>{word}</tspan>)}
+  </text>;
+}
+
+export function StageBars({ bars, label }: { bars: StageBar[]; label: string }) {
+  const ref = React.useRef<HTMLDivElement>(null);
+  const colors = useChartColors(ref);
+  const reduced = useReducedMotion();
+  return <div ref={ref} className="mo-chart ma-chart-stages" role="img" aria-label={`${label}: ${bars.map((bar) => `${bar.label} ${bar.count}`).join(", ")}`}>
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart accessibilityLayer={false} data={bars} margin={{ top: 22, right: 4, bottom: 0, left: -18 }} barCategoryGap="24%">
+        <CartesianGrid vertical={false} stroke={colors["--line-soft"]} />
+        <XAxis dataKey="label" tickLine={false} axisLine={false} interval={0} height={34} tick={<WrapTick fill={colors["--ink-3"]} />} />
+        <YAxis allowDecimals={false} tickLine={false} axisLine={false} width={40} tick={{ fill: colors["--ink-3"], fontSize: 11 }} />
+        <Tooltip cursor={{ fill: colors["--line-soft"], opacity: 0.6 }}
+          content={({ active, payload }) => active && payload?.length
+            ? <TipBox rows={(payload as unknown as { payload: StageBar }[]).map((row) => ({ label: row.payload.label, value: row.payload.count, color: colors[row.payload.colorToken] }))} />
+            : null} />
+        <Bar dataKey="count" radius={[5, 5, 0, 0]} maxBarSize={56} isAnimationActive={!reduced}>
+          {bars.map((bar) => <Cell key={bar.key} fill={colors[bar.colorToken]} />)}
+          <LabelList dataKey="count" position="top" fill={colors["--ink"]} fontSize={11.5} fontWeight={600} />
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  </div>;
+}
+
+export type GrowthPointView = { day: number; label: string; total: number; added: number };
+
+/** The running number of contacts across the period; hover for a day's total and how many arrived. */
+export function GrowthArea({ points, label }: { points: GrowthPointView[]; label: string }) {
+  const ref = React.useRef<HTMLDivElement>(null);
+  const colors = useChartColors(ref);
+  const reduced = useReducedMotion();
+  const gradient = React.useId().replace(/:/g, "");
+  const last = points[points.length - 1];
+  return <div ref={ref} className="mo-chart ma-chart-growth" role="img" aria-label={`${label}: ${points[0]?.total ?? 0} at the start, ${last?.total ?? 0} now`}>
+    <ResponsiveContainer width="100%" height="100%">
+      <AreaChart accessibilityLayer={false} data={points} margin={{ top: 10, right: 10, bottom: 0, left: -18 }}>
+        <defs>
+          <linearGradient id={gradient} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={colors["--chart-1"]} stopOpacity={0.32} />
+            <stop offset="100%" stopColor={colors["--chart-1"]} stopOpacity={0.02} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid vertical={false} stroke={colors["--line-soft"]} />
+        <XAxis dataKey="label" tickLine={false} axisLine={false} minTickGap={22} tick={{ fill: colors["--ink-3"], fontSize: 11 }} />
+        <YAxis allowDecimals={false} tickLine={false} axisLine={false} width={40} domain={[0, "auto"]} tick={{ fill: colors["--ink-3"], fontSize: 11 }} />
+        <Tooltip cursor={{ stroke: colors["--line-soft"] }}
+          content={({ active, payload, label: day }) => active && payload?.length
+            ? <TipBox title={String(day)} rows={[
+              { label: "Contacts", value: (payload[0] as unknown as { payload: GrowthPointView }).payload.total, color: colors["--chart-1"] },
+              { label: "Added that day", value: (payload[0] as unknown as { payload: GrowthPointView }).payload.added },
+            ]} />
+            : null} />
+        <Area type="monotone" dataKey="total" stroke={colors["--chart-1"]} strokeWidth={2} fill={`url(#${gradient})`} isAnimationActive={!reduced}
+          dot={false} activeDot={{ r: 4, stroke: colors["--surface"], strokeWidth: 2 }} />
+      </AreaChart>
+    </ResponsiveContainer>
   </div>;
 }

@@ -514,3 +514,28 @@
 @container (max-width:1000px){.mp-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.mp-grid>.mo-panel:last-child:nth-child(odd){grid-column:1/-1}}
 @container (max-width:720px){.mp-grid,.mp-grid.mp-grid-2{grid-template-columns:minmax(0,1fr)}.mp-actions{justify-content:flex-start}}
 @container (max-width:460px){.mp-list li{flex-direction:column;gap:6px}.mp-list .mk-flag{min-width:0}}
+
+/* ── Marketing › Audience (marketing-audience.tsx): the Overview's cards and panels, six figures wide ── */
+.ma-stats{grid-template-columns:repeat(6,minmax(0,1fr))}
+.ma-stats .mo-stat{padding:16px;gap:12px}
+.ma-stats .mo-plate{width:40px;height:40px}
+.ma-stats .mo-stat-value{font-size:26px}
+.ma-grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ma-chart-stages,.ma-chart-growth{height:228px;min-width:0;border-radius:8px}
+.ma-growth-badge{flex:none;font-weight:600}
+.ma-shares{gap:10px}
+.ma .mo-keys span{white-space:normal;overflow:visible;line-height:1.25}
+.ma-share-row{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(60px,1fr) 4ch 5ch;align-items:center;gap:12px;font-size:12.8px;color:var(--ink)}
+.ma-share-row em{font-style:normal;font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums;text-align:right}
+.ma-share-row b{font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+.ma-insight-list{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.ma-insight-list li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:start}
+.ma-insight-plate{display:grid;place-items:center;width:32px;height:32px;border-radius:9px;background:var(--violet-tint);color:var(--chart-1)}
+.ma-next{grid-template-columns:auto minmax(0,1fr) auto;padding:12px 14px;margin-top:auto;animation:none}
+.ma-next h2{font-size:12.8px}
+.ma-next p{font-size:12.3px}
+.ma-group{align-items:center;justify-content:space-between}
+@container (max-width:1180px){.ma-stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@container (max-width:1100px){.ma-grid-3{grid-template-columns:repeat(2,minmax(0,1fr))}.ma-grid-3>.mo-panel:last-child{grid-column:1/-1}}
+@container (max-width:720px){.ma-grid-3{grid-template-columns:minmax(0,1fr)}.ma-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.ma-next{grid-template-columns:minmax(0,1fr)}.ma-next .mo-next-plate{display:none}}
+@container (max-width:460px){.ma-stats{grid-template-columns:minmax(0,1fr)}.ma-share-row{grid-template-columns:minmax(0,1fr) 4ch 5ch}.ma-share-row .mo-rank-bar{display:none}}

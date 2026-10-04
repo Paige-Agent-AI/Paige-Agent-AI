@@ -26,7 +26,8 @@ Deno.serve(async req=>{
   }
   const html=renderSalesInvoiceDocument(projection);if(!html)return refuse();
   if(url.searchParams.get('format')==='pdf'){
-    try {const bytes=await renderDocumentPdf(html);return new Response(bytes,{headers:{...headers,'Content-Type':'application/pdf','Content-Disposition':'attachment; filename="invoice.pdf"'}});}
+    // renderDocumentPdf creates this full-view Uint8Array from response.arrayBuffer().
+    try {const bytes=await renderDocumentPdf(html);return new Response(bytes.buffer as ArrayBuffer,{headers:{...headers,'Content-Type':'application/pdf','Content-Disposition':'attachment; filename="invoice.pdf"'}});}
     catch{return new Response('PDF could not be prepared. Retry the current invoice.',{status:503,headers});}
   }
   return new Response(html,{headers:{...headers,'Content-Type':'text/html; charset=utf-8'}});

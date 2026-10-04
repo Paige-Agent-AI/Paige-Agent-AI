@@ -8,7 +8,7 @@ FLOW_PROTOTYPE: PASS: owner approved invoice-popout-prototype.html on 2026-10-04
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Solo business owners inspect the invoice, record/correct received payments and prepare delivery; customers download a real PDF.
 VISUAL_DIRECTION: PASS: Mineral/Obsidian tokens; invoice preview beside an operational action pane, one body scroll, full-screen compact workspace.
 AUTOMATED_EVIDENCE: PASS: 220 tests across 21 invoice/billing/delivery suites; real Chromium PDF smoke produces four valid template PDFs and blocks network requests.
-STATIC_EVIDENCE: PARTIAL: production Vite build passes. App tsc retains ten pre-existing errors in unrelated files; no changed-file errors. JavaScript syntax and contract inspection pass.
+STATIC_EVIDENCE: UNVERIFIED: production Vite build passes. App tsc retains ten pre-existing errors in unrelated files; no changed-file errors. JavaScript syntax and contract inspection pass.
 RENDERED_EVIDENCE: PASS: 24 actual component cases, both themes and PAIGE states, six viewport sizes; assets/solo-sales-invoice-pdf-workspace/workspace-proof.json, desktop.png, mobile.png and invoice.pdf.
 BEHAVIORAL_EVIDENCE: PASS: partial payment draft/review/cancel and guarded dirty exits; correction review/cancel preserves input; delivery approval explains attachment; PDF failure refuses download; public token download scrubs URL. All component auth/RPC responses are local fixtures.
 AUTHENTICATED_RUNTIME: UNVERIFIED: trusted CUA process failed; signed-in owner/second-tenant, production bearer document and provider attachment acceptance not driven. No external email or payment mutation performed.
@@ -25,12 +25,12 @@ MUST_PRESERVE: Frozen issued obligations/branding; historical numbers/documents 
 ACCEPTANCE_CRITERIA: Invoice action pop-out fits laptop/tablet/mobile; edits survive cancel/dirty close; clean customer PDF contains current dated payment facts; approved email sends the same PDF projection through existing provider seams or fails closed.
 MOTION_PURPOSE: Existing dialog entrance/exit only; reduced-motion removes it.
 PROTECTED_SEAMS: Tested invoice ledger/version, public grant, command approval/unknown recovery, token redaction, shared browser auth/rate/concurrency/network fence and ordinary email transport. Settings platform Billing, agreements/seals, Clients identity, Marketing writes, entitlement, chat transcript and scheduling remain unchanged.
-INTERNAL_BUILD_IDENTITY: git commit containing this record; deployment=UNVERIFIED before merge; environment=development; migrations=NOT_APPLICABLE; edge=UNVERIFIED sales-invoice-document/send-message pending canonical deploy; evidence=this record and assets.
+INTERNAL_BUILD_IDENTITY: 738ad016163fc98bd3c0edb185b7844f43ffaf28 (initial implementation; exact final reviewed head in PR1715); deployment=UNVERIFIED before merge; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(sales-invoice-document and send-message pending canonical deploy); evidence=this record and assets.
 RELEASE_CHANNEL: development: production promotion authorized by owner; actual deployment identities must be recorded after merge.
 RELEASE_CLASSIFICATION: internal-only: invoice workflow repair, no named customer release.
 CUSTOMER_RELEASE_IDENTITY: none: authenticated end-to-end acceptance remains PROOF OWED.
 RELEASE_NOTE_REQUIRED: no: no customer announcement authorized.
-RELEASE_TRUTH_BOUNDARY: PARTIAL implementation with local automated/rendered proof; production/provider/authenticated claims remain PROOF OWED.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: implementation with local automated/rendered proof; production/provider/authenticated claims remain PROOF OWED. LIVE is not claimed.
 RELEASE_RECOVERY: position=forward-fix scoped renderer/UI/transport; reference=existing immutable invoice facts and governed operation recovery retained; PDF failure refuses provider dispatch, never substitutes HTML.
 
 SOLO_1536X770_PAIGE_CLOSED: PASS: workspace-proof.json both themes; body is scroll owner, no horizontal overflow.
@@ -53,3 +53,11 @@ PDF generation uses the existing paige-browser host, not a new service: JavaScri
 Customer documents hide legacy DRAFT references without renumbering/mutating historical issued facts. Correct payment appends the existing governed reversal; replacement is a separate recorded receipt, never an in-place rewrite.
 
 Independent exact-head non-writer and Impeccable finish review must complete before merge; its verdict is recorded in the PR. Scope is INT-299 deferred; no wider Sales Harness architecture is included.
+
+## Combined review repair
+
+Non-writer invoice_pdf_review completed initial review of 738ad016163fc98bd3c0edb185b7844f43ffaf28: P1 PDF module omitted from the browser Docker COPY; P2 switching invoice editors skipped the dirty-exit guard. Both repaired together. The packaged-file startup/HTTP PDF proof now runs in CI, and the actual-component extra drive checks correction-to-payment/void switching prompts before continuing. Independent reviewer reran all 220 focused tests. The refreshed desktop capture removes the obsolete preview toggle.
+
+Initial CI also identified a Deno Response body typing error: the PDF's full arrayBuffer is now passed explicitly. UI evidence metadata grammar was corrected without changing its honest proof boundary. Final exact-head repair review and CI are required before merge.
+
+Impeccable documenter completed its ordinary-extension check: incumbent Solo tokens, Dialog, typography, responsive grid, 44px actions, single scroll owner, guarded close/focus and reduced motion preserved. Root DESIGN.md/sidecar are absent and no new design system was invented. Existing Schibsted/gold documentation versus Geist/violet Solo implementation drift and unrelated approval shadow/eyebrow drift remain outside scope.

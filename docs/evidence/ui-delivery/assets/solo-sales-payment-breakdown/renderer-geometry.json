@@ -1,0 +1,69 @@
+{
+  "boundary": "Actual renderer Chromium output using synthetic records. Native print, hosted authenticated/public tokens and production customer data UNVERIFIED.",
+  "results": [
+    {
+      "template": "legacy",
+      "width": 390,
+      "scrollWidth": 390,
+      "balancePresent": true,
+      "activityBottom": 843.8125,
+      "viewport": 844
+    },
+    {
+      "template": "legacy",
+      "width": 1366,
+      "scrollWidth": 1366,
+      "balancePresent": true,
+      "activityBottom": 795.8125,
+      "viewport": 844
+    },
+    {
+      "template": "classic",
+      "width": 390,
+      "scrollWidth": 390,
+      "balancePresent": true,
+      "activityBottom": 844.390625,
+      "viewport": 844
+    },
+    {
+      "template": "classic",
+      "width": 1366,
+      "scrollWidth": 1366,
+      "balancePresent": true,
+      "activityBottom": 664.390625,
+      "viewport": 844
+    },
+    {
+      "template": "modern",
+      "width": 390,
+      "scrollWidth": 390,
+      "balancePresent": true,
+      "activityBottom": 844.390625,
+      "viewport": 844
+    },
+    {
+      "template": "modern",
+      "width": 1366,
+      "scrollWidth": 1366,
+      "balancePresent": true,
+      "activityBottom": 671.28125,
+      "viewport": 844
+    },
+    {
+      "template": "service",
+      "width": 390,
+      "scrollWidth": 390,
+      "balancePresent": true,
+      "activityBottom": 839.1875,
+      "viewport": 844
+    },
+    {
+      "template": "service",
+      "width": 1366,
+      "scrollWidth": 1366,
+      "balancePresent": true,
+      "activityBottom": 708.796875,
+      "viewport": 844
+    }
+  ]
+}

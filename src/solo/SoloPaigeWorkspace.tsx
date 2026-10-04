@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from "react";
-import { BookOpen, Bot, Brain, MessageSquarePlus, MessagesSquare, RotateCw, Search, Sparkles, Wrench, X } from "lucide-react";
+import { BookOpen, Bot, Brain, MessageSquarePlus, MessagesSquare, RotateCw, Search, Sparkles, Telescope, Wrench, X } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { PaigeAIChat, type ChatRailApi } from "@/components/dashboard/PaigeAIChat";
 import { PaigeComposerAutonomyChip } from "@/components/dashboard/paige/PaigeComposerAutonomyChip";
 import { useTenantContext } from "@/hooks/useTenantContext";
+import { ResearchView } from "@/solo/paige-research";
 import { useTierFeatures } from "@/hooks/useTierFeatures";
 import { useSubtabRoute } from "@/lib/routing/useSubtabRoute";
 import { useSoloKnowledge } from "./data/useSoloKnowledge";
@@ -13,11 +14,12 @@ import { clearPaigePublicPresenceScope, getPaigePublicPresenceScope, subscribePa
 import "./solo-paige-workspace.css";
 
 // Approved design lineage: 51D7A6F680DB83AEF6BFE1147E9FC1651E39206EFAED17963F2FC16EC294F117
-type SoloPaigeTab = "chat" | "knowledge" | "helpers" | "capabilities";
+type SoloPaigeTab = "chat" | "knowledge" | "research" | "helpers" | "capabilities";
 
 const TABS: Array<{ id: SoloPaigeTab; label: string; icon: typeof Sparkles }> = [
   { id: "chat", label: "Chat", icon: Sparkles },
   { id: "knowledge", label: "Knowledge", icon: BookOpen },
+  { id: "research", label: "Deep Research", icon: Telescope },
   { id: "helpers", label: "Helpers", icon: Bot },
   { id: "capabilities", label: "Capabilities", icon: Wrench },
 ];
@@ -382,6 +384,7 @@ export function SoloPaigeWorkspace({
         />
       </section>
       <section id="spw-panel-knowledge" role="tabpanel" aria-labelledby="spw-tab-knowledge" hidden={tab !== "knowledge"} className="spw-panel">{tab === "knowledge" && <KnowledgeView />}</section>
+      <section id="spw-panel-research" role="tabpanel" aria-labelledby="spw-tab-research" hidden={tab !== "research"} className="spw-panel">{tab === "research" && <ResearchView activeTenantId={activeTenantId} />}</section>
       <section id="spw-panel-helpers" role="tabpanel" aria-labelledby="spw-tab-helpers" hidden={tab !== "helpers"} className="spw-panel">{tab === "helpers" && <HelpersView />}</section>
       <section id="spw-panel-capabilities" role="tabpanel" aria-labelledby="spw-tab-capabilities" hidden={tab !== "capabilities"} className="spw-panel">{tab === "capabilities" && <CapabilitiesView />}</section>
       <span className="spw-sr" aria-live="polite">{TABS.find((item) => item.id === tab)?.label} view open</span>

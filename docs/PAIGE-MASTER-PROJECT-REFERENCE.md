@@ -767,8 +767,8 @@ Reference or any domain ledger; it governs how their facts become release and cu
 - *What changed:*
   - Migration B (data only): `paige_subagents.config.capability_scope` on the platform `design-studio` row — a 16-tool allowlist (page/funnel/form build and publish, image, content draft and save, growth reads, capability status, web search/fetch, ask_choices).
   - paige-ai-chat reads it from the platform row only (server client), filters the tool list before the model sees it, and refuses anything else at dispatch with `outside_studio_scope`. A missing or malformed scope fails closed (ask_choices, capability_status).
-  - D3: the Studio build tools' chat gate asks `studio_role_ok` (this workspace's owner/admin, or the managing agency), not the tenant-agnostic global role.
-  - Main PAIGE keeps every tool. Knowledge writes and Business Mission/profile mutations are not Studio capabilities.
+  - D3: the six growth save/build/publish tools' chat gate asks `studio_role_ok` (this workspace's owner/admin, or the managing agency) — the same question their RPCs ask — instead of the tenant-agnostic global role. Other tools keep their gates; the draft edge functions, `generate-image` and `save_marketing_content` still check the global role (V2a).
+  - Main PAIGE keeps every tool. Knowledge writes and Business Mission/profile mutations are not Studio capabilities; Knowledge context reaches the Studio in V3.
 - *Proof:* harness section 33 against the real handler — the five forbidden tools invisible and refused, main PAIGE unchanged, fail-closed, malformed scope cannot widen, D3; each of the three guards removed in turn fails its own checks. Production rollback proof: the scope lands on exactly one row; a tenant owner's update touches 0 rows; a competing design-studio identity is refused by the unique slug.
 - *Boundary:* authenticated production drive `PROOF OWED`; Migration B persisted apply confirmed after the pipeline.
 

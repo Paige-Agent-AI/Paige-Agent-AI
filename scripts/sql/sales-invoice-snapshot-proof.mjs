@@ -26,6 +26,7 @@ const javascript = ts.transpileModule(source,{compilerOptions:{target:ts.ScriptT
 const api = await import(`data:text/javascript;base64,${Buffer.from(javascript).toString('base64')}`);
 const decoded = api.normalizeInvoiceSnapshot(payload.row.billing_draft,payload.row.amount_total_cents);
 assert(decoded, 'actual SQL multi-item contact/address snapshot must decode');
+assert.equal(decoded.items[0].description,'Saved multiline\ndescription'); assert.deepEqual(decoded.payment_method_intents,['zelle','cash','wire']); assert.equal(decoded.processor_intent,null);
 assert.equal(decoded.items.length,2); assert.deepEqual(decoded.delivery_channel_intents,['email','sms']);
 assert.equal(decoded.billing_address.line2,'Suite 2'); assert.equal(decoded.billing_address.country,null);
 assert.equal(decoded.agreement_snapshot.title,'Matching agreement');

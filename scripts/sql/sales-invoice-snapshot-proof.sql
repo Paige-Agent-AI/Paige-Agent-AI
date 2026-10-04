@@ -16,10 +16,12 @@ INSERT INTO paige_agreements VALUES
  ('90000000-0000-0000-0000-000000000005','20000000-0000-0000-0000-000000000001','30000000-0000-0000-0000-000000000001','Expired agreement',1,'sent',now()-interval '1 day');
 \ir ../../supabase/migrations/20270536000001_sales_invoice_snapshot_v2.sql
 \ir ../../supabase/migrations/20270536000001_sales_invoice_snapshot_v2.sql
+\ir ../../supabase/migrations/20270539000000_sales_invoice_line_description.sql
+\ir ../../supabase/migrations/20270539000000_sales_invoice_line_description.sql
 UPDATE tenant_prices SET active=true,unit_amount=999 WHERE id='50000000-0000-0000-0000-000000000001';
 SET LOCAL ROLE authenticated;
 CREATE TEMP TABLE snapshot_input(draft jsonb);
-INSERT INTO snapshot_input VALUES ('{"schema_version":2,"client_id":"30000000-0000-0000-0000-000000000001","items":[{"price_id":"50000000-0000-0000-0000-000000000001","item":"Catalog service","unit_minor":null,"quantity":2},{"price_id":null,"item":"Custom review","unit_minor":1001,"quantity":1}],"kind":"deposit","deposit_basis_points":2500,"currency":"usd","cadence":null,"recipient_email":"client@example.test","recipient_phone":"+15555550123","email_source_method_id":"80000000-0000-0000-0000-000000000001","phone_source_method_id":null,"billing_address":{"line1":"123 Example St","line2":"Suite 2","city":"Sample","region":"CA","postal_code":"90210","country":null},"agreement_id":"90000000-0000-0000-0000-000000000001","processor_intent":null,"payment_method_intents":[],"delivery_channel_intents":["email","sms"],"due_date":"2026-12-01","memo":"Invoice-only snapshot"}');
+INSERT INTO snapshot_input VALUES ('{"schema_version":2,"client_id":"30000000-0000-0000-0000-000000000001","items":[{"price_id":"50000000-0000-0000-0000-000000000001","item":"Catalog service","description":"Saved multiline\ndescription","unit_minor":null,"quantity":2},{"price_id":null,"item":"Custom review","unit_minor":1001,"quantity":1}],"kind":"deposit","deposit_basis_points":2500,"currency":"usd","cadence":null,"recipient_email":"client@example.test","recipient_phone":"+15555550123","email_source_method_id":"80000000-0000-0000-0000-000000000001","phone_source_method_id":null,"billing_address":{"line1":"123 Example St","line2":"Suite 2","city":"Sample","region":"CA","postal_code":"90210","country":null},"agreement_id":"90000000-0000-0000-0000-000000000001","processor_intent":null,"payment_method_intents":["zelle","cash","wire"],"delivery_channel_intents":["email","sms"],"due_date":"2026-12-01","memo":"Invoice-only snapshot"}');
 CREATE TEMP TABLE snapshot_results(label text,result jsonb);
 INSERT INTO snapshot_results SELECT 'created',save_sales_billing_draft(
  '20000000-0000-0000-0000-000000000001','60000000-0000-0000-0000-000000000077',0,
@@ -95,6 +97,19 @@ SELECT set_config('test.workspace','20000000-0000-0000-0000-000000000001',true);
 RESET ROLE;
 SELECT proof_assert((SELECT count(*) FROM paige_invoices WHERE billing_draft_version IS NOT NULL AND
  (hosted_invoice_url IS NOT NULL OR sent_at IS NOT NULL OR paid_at IS NOT NULL OR status<>'draft'))=0,'no provider dispatch or legacy promotion');
+SET LOCAL ROLE authenticated;
+DO $$ DECLARE base jsonb; candidate jsonb; BEGIN
+ SELECT draft INTO base FROM snapshot_input;
+ base := base || '{"email_source_method_id":null,"phone_source_method_id":null,"agreement_id":null}'::jsonb;
+ base := jsonb_set(base,'{items}',jsonb_build_array(jsonb_build_object('price_id',NULL,'item','Custom scope','unit_minor',1000,'quantity',1)));
+ candidate := jsonb_set(base,'{items,0,description}',to_jsonb(repeat('x',10000)));
+ PERFORM proof_assert((save_sales_billing_draft('20000000-0000-0000-0000-000000000001','60000000-0000-0000-0000-000000000091',0,'70000000-0000-0000-0000-000000000091',candidate)#>>'{row,billing_draft,items,0,description}')=repeat('x',10000),'10000 description accepted intact');
+ candidate := jsonb_set(base,'{items,0,description}',to_jsonb(repeat('x',10001)));
+ PERFORM proof_denied(format('SELECT save_sales_billing_draft(%L,%L,0,%L,%L::jsonb)','20000000-0000-0000-0000-000000000001','60000000-0000-0000-0000-000000000092','70000000-0000-0000-0000-000000000092',candidate::text),'22023','10001 description refused');
+ candidate := jsonb_set(base,'{items,0,description}','42'::jsonb);
+ PERFORM proof_denied(format('SELECT save_sales_billing_draft(%L,%L,0,%L,%L::jsonb)','20000000-0000-0000-0000-000000000001','60000000-0000-0000-0000-000000000092','70000000-0000-0000-0000-000000000092',candidate::text),'22023','nontext description refused');
+ END $$;
+RESET ROLE;
 \pset tuples_only on
 \pset format unaligned
 SELECT jsonb_build_object('snapshot_roundtrip',(SELECT result FROM snapshot_results WHERE label='created'));

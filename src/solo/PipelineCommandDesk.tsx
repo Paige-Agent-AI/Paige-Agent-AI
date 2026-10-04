@@ -463,9 +463,7 @@ export function PipelineCommandDesk({
       setMove({ deal, targetStageId: deal.stageId });
     }
   };
-  const recent = activeDeals.filter(
-    (deal) => Date.now() - new Date(deal.updatedAt).getTime() <= 7 * 86400000,
-  ).length;
+  const recent = activeDeals.filter((deal) => Date.now() - new Date(deal.updatedAt).getTime() <= 7 * 86400000).length;
   const filteredOutcomes = decidedDeals.filter((deal) => {
     const latest = deal.outcomes.find(
       (item) => item.outcomeType !== "reopened",
@@ -659,33 +657,6 @@ export function PipelineCommandDesk({
         </div>
       ) : (
         <>
-          <section className="pipeline-pulse" aria-label="Pipeline pulse">
-            <div>
-              <span>Needs your action</span>
-              <strong>Unavailable</strong>
-              <small>No complete source yet</small>
-            </div>
-            <div>
-              <span>Waiting on contact</span>
-              <strong>Unavailable</strong>
-              <small>No complete source yet</small>
-            </div>
-            <div>
-              <span>Ready for PAIGE</span>
-              <strong>Unavailable</strong>
-              <small>No queue source yet</small>
-            </div>
-            <div>
-              <span>Recently updated</span>
-              <strong>{recent}</strong>
-              <small>Last 7 days</small>
-            </div>
-            <div>
-              <span>Recorded outcomes</span>
-              <strong>{decidedDeals.length}</strong>
-              <small>Durable decisions</small>
-            </div>
-          </section>
           <nav className="pipeline-desk-views" aria-label="Pipeline views">
             <button
               aria-pressed={mode === "board"}

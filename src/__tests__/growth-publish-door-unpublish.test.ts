@@ -6,7 +6,7 @@
 // are used — nothing here is mocked but the two Supabase clients.
 import { describe, expect, it } from "vitest";
 import { classifyAction } from "../../supabase/functions/_shared/action-risk.ts";
-import { FORM, FUNNEL, IMAGE, MINE, PAGE, livePage, world } from "./growth-publish-door.world.ts";
+import { FORM, FUNNEL, IMAGE, MINE, PAGE, livePage, serverCall, world } from "./growth-publish-door.world.ts";
 
 it("the five door-only acts are classified high by the canonical policy", () => {
   for (const k of ["growth_page_unpublish", "growth_form_unpublish", "growth_funnel_unpublish", "studio_image_publish", "studio_image_unpublish"]) {
@@ -29,7 +29,7 @@ describe("growth-publish-command — unpublish and image through the one door", 
     expect(String(first.body.summary)).toMatch(/offline/);
     expect(second).toMatchObject({ status: 200, body: { ok: true, action: "unpublish", kind: "page", id: PAGE, status: "draft" } });
     expect(second!.body.url).toBeUndefined();
-    expect(w.executorCalls()).toEqual([{ fn: "growth_page_unpublish", args: { p_tenant_id: null, p_id: PAGE }, client: "caller" }]);
+    expect(w.executorCalls()).toEqual([serverCall("growth_page_unpublish", PAGE)]);
     expect(w.seen.receipts).toEqual([expect.objectContaining({ _capability_key: "growth_page_unpublish", _outcome: "capability_succeeded", _detail: expect.objectContaining({ approval: "operator_card" }) })]);
   });
 

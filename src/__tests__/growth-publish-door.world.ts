@@ -30,7 +30,7 @@ export interface WorldOptions {
   manages?: boolean;
   lane?: string;
   laneError?: boolean;
-  /** Answer for the publish/unpublish RPC, or a function of its args. */
+  /** Answer for the publish/unpublish RPC on the service-role client, or a function of its args. */
   rpc?: (name: string, args: Row) => { data: unknown; error: unknown } | Promise<{ data: unknown; error: unknown }>;
   tables?: Partial<Record<string, Row[]>>;
   /** Make the active workspace change after N current_user_tenant_id reads. */
@@ -134,7 +134,9 @@ export function world(o: WorldOptions = {}) {
       if (fn === "is_tenant_admin") return { data: o.admin !== false, error: null };
       if (fn === "agency_can_manage_child") return { data: o.manages === true, error: null };
       if (fn === "resolve_tool_autonomy") return o.laneError ? { data: null, error: { message: "down" } } : { data: o.lane ?? "confirm", error: null };
-      if (o.rpc) return await o.rpc(fn, args ?? {});
+      // Migration G: the eight publish/unpublish RPCs are service_role-only. A call on the caller's
+      // own JWT is refused by privilege, exactly as PostgREST would answer it.
+      if (PUBLISH_RPC.test(fn)) return { data: null, error: { code: "42501", message: `permission denied for function ${fn}` } };
       return { data: null, error: { code: "PGRST202", message: `no rpc ${fn}` } };
     },
   };
@@ -147,6 +149,10 @@ export function world(o: WorldOptions = {}) {
         seen.receipts.push(args ?? {});
         return { data: true, error: null };
       }
+      if (PUBLISH_RPC.test(fn)) {
+        if (o.rpc) return await o.rpc(fn, args ?? {});
+        return { data: null, error: { code: "PGRST202", message: `no rpc ${fn}` } };
+      }
       return { data: null, error: { message: `unexpected admin rpc ${fn}` } };
     },
   };
@@ -157,9 +163,17 @@ export function world(o: WorldOptions = {}) {
     }), { caller, admin, decide: o.decideOverride ? (k, i) => o.decideOverride!(k, i, realDecide) : realDecide });
     return { status: res.status, body: await res.json().catch(() => null) as Row };
   };
-  const executorCalls = () => seen.rpc.filter((c) => c.client === "caller" && /_(un)?publish$/.test(c.fn));
+  /** Every call to one of the eight publish/unpublish RPCs, on EITHER client. */
+  const executorCalls = () => seen.rpc.filter((c) => PUBLISH_RPC.test(c.fn));
   return { tables, seen, call, executorCalls };
 }
+
+/** The eight publish/unpublish RPCs (Migration G: service_role-only). */
+export const PUBLISH_RPC = /^(growth_(page|form|funnel)|studio_image)_(un)?publish$/;
+
+/** The exact executor call Migration G requires: service role, the verified workspace and person. */
+export const serverCall = (fn: string, id: string, tenant = MINE, actor = USER) =>
+  ({ fn, args: { p_tenant_id: tenant, p_id: id, p_actor_id: actor }, client: "admin" as const });
 
 /** A publish RPC that answers like the real one for a page. */
 export const pagePublished = (_fn: string, args: Row) => ({

@@ -146,6 +146,18 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run lint:definer-fns
 
+      # Two migrations sharing a version means production applies only one of them: the
+      # deploy-migrations push refuses or skips the other, and its objects never exist. Two PRs can
+      # each pass alone and collide only once both are on main (2026-10-04: #1679 and #1680 both
+      # merged 20270539000000), so this runs on every push to main as well as every PR.
+      - name: Migration version collision guard (two files may never share a version)
+        if: ${{ !cancelled() }}
+        run: npm run lint:migration-versions
+
+      - name: Migration version collision guard self-test
+        if: ${{ !cancelled() }}
+        run: npm run lint:migration-versions:test
+
       - name: Raw-Rail browser-grant guard (§9/§58 #746 — the browser reads the Rail via resolvers, never the table)
         if: ${{ !cancelled() }}
         run: npm run lint:rail-grants

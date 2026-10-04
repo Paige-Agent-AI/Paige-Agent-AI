@@ -1,5 +1,9 @@
 -- Migration A (Vibe Studio V0, owner-authorized 2026-10-03): one autonomy resolution, two readers.
 --
+-- VERSION NOTE (2026-10-04): first merged as 20270539000000, which collided with
+-- 20270539000000_sales_invoice_line_description (merged minutes earlier). Production recorded that
+-- version for the Sales file, so this one never ran; it is renumbered here, unchanged in content.
+--
 -- WHY. paige-ai-chat lifts six Studio build tools from `confirm` to `auto` so a design turn can
 -- build in the same breath (#292). `resolve_tool_autonomy` returns only the final mode, so the lift
 -- could not tell "this tenant is asked by default" from "the Trust Compass forbids acting unread".

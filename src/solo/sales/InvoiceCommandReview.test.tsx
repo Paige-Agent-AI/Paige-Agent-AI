@@ -36,3 +36,12 @@ it('freezes the chosen publication template into preparation and approval identi
  const select=document.querySelector<HTMLSelectElement>('select')!;await act(async()=>{Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value')!.set!.call(select,'service');select.dispatchEvent(new Event('change',{bubbles:true}));});
  await click('Prepare review');expect(select.disabled).toBe(true);expect(h.invoke.mock.calls[0][1].body.command.template).toBe('service');await click('Approve action');expect(h.invoke.mock.calls[1][1].body.command).toEqual(h.invoke.mock.calls[0][1].body.command);
 });
+
+it('shows the server invoice number and never falls back to its internal identifier',async()=>{
+ h.invoke.mockResolvedValue({data:{outcome:'approval_required',fingerprint:'0123456789abcdef',preview:{invoice_number:'INV-0042',remaining_cents:297300},summary:'Publish the reviewed invoice.'},error:null});
+ await render();await click('Prepare review');expect(document.body.textContent).toContain('Invoice number');expect(document.body.textContent).toContain('INV-0042');expect(document.body.textContent).not.toContain(command.invoice_id);
+});
+it('reports an unavailable number rather than exposing a UUID',async()=>{
+ h.invoke.mockResolvedValue({data:{outcome:'approval_required',fingerprint:'0123456789abcdef',preview:{remaining_cents:297300}},error:null});
+ await render();await click('Prepare review');expect(document.body.textContent).toContain('Invoice number unavailable');expect(document.body.textContent).not.toContain(command.invoice_id);
+});

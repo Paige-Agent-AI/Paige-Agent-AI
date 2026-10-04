@@ -25,7 +25,7 @@ describe("growth-publish-command — unpublish and image through the one door", 
       rpc: (_fn, a) => ({ data: { id: a.p_id, status: "draft" }, error: null }) });
     const body = { action: "unpublish", kind: "page", id: PAGE };
     const { first, second } = await approve(w, body);
-    expect(first.body).toMatchObject({ approval_required: true, capability: "growth_page_unpublish", preview: { action: "unpublish", checks: [{ key: "is_live", ok: true }] } });
+    expect(first.body).toMatchObject({ approval_required: true, capability: "growth_page_unpublish", preview: { action: "unpublish", checks: [{ key: "is_live", ok: true }, { key: "not_in_use", ok: true }] } });
     expect(String(first.body.summary)).toMatch(/offline/);
     expect(second).toMatchObject({ status: 200, body: { ok: true, action: "unpublish", kind: "page", id: PAGE, status: "draft" } });
     expect(second!.body.url).toBeUndefined();
@@ -43,7 +43,8 @@ describe("growth-publish-command — unpublish and image through the one door", 
   it("nothing to take down: a draft has no unpublish to approve", async () => {
     const w = world();
     const r = await w.call({ action: "unpublish", kind: "page", id: PAGE });
-    expect(r).toMatchObject({ status: 200, body: { outcome: "not_ready", approval_required: false } });
+    expect(r).toMatchObject({ status: 202, body: { outcome: "not_ready", approval_required: true } });
+    expect(r.body.fingerprint).toBeUndefined();
     expect(w.tables.paige_pending_confirmations).toHaveLength(0);
   });
 
@@ -74,6 +75,62 @@ describe("growth-publish-command — unpublish and image through the one door", 
       rpc: (_fn, a) => ({ data: { id: a.p_id, status: "draft" }, error: null }) });
     expect((await approve(un, { action: "unpublish", kind: "image", id: IMAGE })).second!.body).toMatchObject({ ok: true, status: "draft" });
     expect(un.seen.receipts[0]).toMatchObject({ _capability_key: "studio_image_unpublish" });
+  });
+
+  // The Studio panel's contract (Builder D, 2026-10-04): an unpublish gets a real prepare, and what the
+  // unpublish RPC would refuse — a live funnel using the page, a live page or funnel collecting through
+  // the form — comes back as a failed check with a plain detail and NO fingerprint.
+  const checksOf = (r: { body: Record<string, unknown> }) => (r.body.preview as { checks: Array<{ key: string; ok: boolean; label: string; detail?: string }> }).checks;
+  const ACTIVE_FUNNEL = (over: Record<string, unknown> = {}) => ({ id: FUNNEL, tenant_id: MINE, name: "Free strategy call", slug: "call", status: "active", entry_page_id: null, success_page_id: null, ...over });
+  it.each([
+    ["a live funnel's entry page", { growth_funnels: [ACTIVE_FUNNEL({ entry_page_id: PAGE })], growth_funnel_steps: [] }],
+    ["a page in a live funnel's steps", { growth_funnels: [ACTIVE_FUNNEL()], growth_funnel_steps: [{ funnel_id: FUNNEL, tenant_id: MINE, step_type: "page", page_id: PAGE, form_id: null }] }],
+  ])("unpublishing %s is blocked before anyone approves it", async (_l, tables) => {
+    const w = world({ tables: { growth_pages: [livePage({ status: "published" })], ...tables } });
+    const r = await w.call({ action: "unpublish", kind: "page", id: PAGE });
+    expect(r).toMatchObject({ status: 202, body: { approval_required: true, outcome: "not_ready" } });
+    expect(r.body.fingerprint).toBeUndefined();
+    expect(checksOf(r).find((c) => c.key === "not_in_use")).toEqual({ key: "not_in_use", ok: false, blocking: true,
+      label: "A live funnel uses this page", detail: "Take \u201cFree strategy call\u201d offline first, then unpublish this." });
+    expect(w.tables.paige_pending_confirmations).toHaveLength(0);
+  });
+
+  it("a draft funnel using the page does not block its unpublish", async () => {
+    const w = world({ tables: { growth_pages: [livePage({ status: "published" })], growth_funnels: [ACTIVE_FUNNEL({ status: "draft", entry_page_id: PAGE })] } });
+    const r = await w.call({ action: "unpublish", kind: "page", id: PAGE });
+    expect(r.body.fingerprint).toMatch(/^[0-9a-f]{16}$/);
+    expect(checksOf(r).find((c) => c.key === "not_in_use")).toMatchObject({ ok: true });
+  });
+
+  it.each([
+    ["a live page that collects through it", { growth_pages: [livePage({ title: "Referral workshop", status: "published", blocks_json: [{ type: "embedded_form", form_slug: "intake" }] })], growth_funnel_steps: [] }, "A live page collects through this form", "Referral workshop"],
+    ["a live funnel step", { growth_funnels: [ACTIVE_FUNNEL()], growth_funnel_steps: [{ funnel_id: FUNNEL, tenant_id: MINE, step_type: "form", page_id: null, form_id: FORM }] }, "A live funnel collects through this form", "Free strategy call"],
+  ])("unpublishing a form used by %s is blocked with a plain reason", async (_l, tables, label, name) => {
+    const w = world({ tables: { growth_forms: [{ id: FORM, tenant_id: MINE, name: "Intake", slug: "intake", status: "active" }], ...tables } });
+    const r = await w.call({ action: "unpublish", kind: "form", id: FORM });
+    expect(r.body.fingerprint).toBeUndefined();
+    expect(checksOf(r).find((c) => c.key === "not_in_use")).toMatchObject({ ok: false, label, detail: `Take \u201c${name}\u201d offline first, then unpublish this.` });
+  });
+
+  it("prepare never acts, even on an auto lane, for publish or unpublish", async () => {
+    const w = world({ lane: "auto", tables: { growth_pages: [livePage({ status: "published" })] }, rpc: (_fn, a) => ({ data: { id: a.p_id, status: "draft" }, error: null }) });
+    expect((await w.call({ action: "unpublish", kind: "page", id: PAGE })).body).toMatchObject({ approval_required: true });
+    expect((await w.call({ action: "publish", kind: "image", id: IMAGE })).body).toMatchObject({ approval_required: true });
+    expect(w.executorCalls()).toHaveLength(0);
+  });
+
+  it("every check label and detail is a plain sentence — no codes, keys or table names", async () => {
+    const bodies = [
+      await world({ tables: { growth_pages: [livePage({ draft_blocks_json: [{ type: "embedded_form", form_slug: "ghost" }, { type: "hero", title: "[ADD_DATE]" }] })], tenants: [{ id: MINE, slug: "" }] } }).call({ action: "publish", kind: "page", id: PAGE }),
+      await world({ tables: { growth_forms: [{ id: FORM, tenant_id: MINE, name: "Intake", slug: "intake", status: "draft", draft_schema_json: { sections: [] } }] } }).call({ action: "publish", kind: "form", id: FORM }),
+      await world({ tables: { growth_funnel_steps: [{ funnel_id: FUNNEL, tenant_id: MINE, step_type: "form", page_id: null, form_id: null }] } }).call({ action: "publish", kind: "funnel", id: FUNNEL }),
+      await world({ tables: { marketing_content: [{ id: IMAGE, tenant_id: MINE, title: "x", kind: "document", image_url: null, status: "draft" }] } }).call({ action: "publish", kind: "image", id: IMAGE }),
+      await world({ tables: { growth_pages: [livePage({ status: "published" })], growth_funnels: [ACTIVE_FUNNEL({ entry_page_id: PAGE })] } }).call({ action: "unpublish", kind: "page", id: PAGE }),
+    ];
+    for (const r of bodies) for (const c of checksOf(r)) {
+      // A bracketed example such as [ADD_DATE] is the owner's own page text, quoted so they can find it.
+      for (const text of [c.label, c.detail ?? ""].map((t) => t.replace(/\[[A-Z_]+\]/g, ""))) expect(text).not.toMatch(/GROWTH_|[a-z]+_[a-z]+|\b[A-Z]{2,}_|SQLSTATE|\buuid\b/);
+    }
   });
 
   it("copy and an image with no file have nothing to approve", async () => {

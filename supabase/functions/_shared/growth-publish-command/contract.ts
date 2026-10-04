@@ -101,6 +101,9 @@ export interface ReadinessFacts {
   funnel?: Record<string, unknown> | null;
   funnelSteps?: ReadonlyArray<Record<string, unknown>>;
   image?: Record<string, unknown> | null;
+  /** For an unpublish: the live pieces that would break if this came down (a live funnel using a
+   *  page; a live page or funnel collecting through a form). Read only for a live page or form. */
+  liveDependents?: ReadonlyArray<{ kind: "page" | "funnel"; name: string }>;
 }
 
 // The same two placeholder shapes the publish RPC refuses (_growth_page_go_live). Kept identical so
@@ -202,6 +205,15 @@ export function buildPublishPreview(action: PublishAction, kind: PublishKind, id
   if (action === "unpublish") {
     const live = isLiveRow(kind, row);
     add("is_live", live, live ? `This ${KIND_NOUN[kind]} is live now` : `This ${KIND_NOUN[kind]} isn't live, so there's nothing to take down`, true);
+    // The same refusals the unpublish RPC raises (GROWTH_PAGE_IN_USE / GROWTH_FORM_IN_USE), asked
+    // first so nobody approves taking down something the server will keep up.
+    if (live && (kind === "page" || kind === "form")) {
+      const first = (facts.liveDependents ?? [])[0];
+      const noun = kind === "page" ? "page" : "form";
+      add("not_in_use", !first,
+        first ? `A live ${first.kind} ${kind === "page" ? "uses" : "collects through"} this ${noun}` : `Nothing live depends on this ${noun}`, true,
+        first ? `Take “${first.name}” offline first, then unpublish this.` : undefined);
+    }
     return { kind, id, title, action, address, checks };
   }
 

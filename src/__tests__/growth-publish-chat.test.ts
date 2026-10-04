@@ -93,7 +93,7 @@ describe("chat publish → the one door", () => {
     const unverified = await dispatchGrowthPublishChat(ctx(), deps({ answer: { data: { ok: false, outcome: "unverified", status: "published" }, error: null } }).d);
     expect(unverified.content).toMatchObject({ success: false, outcome: "unverified" });
     expect(classifySpentApproval(JSON.stringify(unverified.content)).outcome).toBe("unconfirmed");
-    const notReady = await dispatchGrowthPublishChat(ctx(), deps({ answer: { data: { ok: false, outcome: "not_ready", error: "It isn't ready yet.",
+    const notReady = await dispatchGrowthPublishChat(ctx(), deps({ answer: { data: { ok: false, outcome: "not_ready", approval_required: true, error: "It isn't ready yet.",
       preview: { checks: [{ key: "has_sections", label: "The page is empty", ok: false, blocking: true }, { key: "x", label: "warn", ok: false, blocking: false }] } }, error: null } }).d);
     expect(notReady.content).toMatchObject({ success: false, not_applied: true, missing: ["The page is empty"] });
     const off = await dispatchGrowthPublishChat(ctx(), deps({ answer: httpError({ ok: false, disabled: true, error: "Publishing is switched off." }) }).d);

@@ -99,7 +99,40 @@ async function loadFacts(admin: Client, tenantId: string, cmd: PublishCommand): 
   } else {
     facts.image = await one("marketing_content", "id,tenant_id,title,kind,image_url,status");
   }
+  if (cmd.action === "unpublish") facts.liveDependents = await loadLiveDependents(admin, tenantId, cmd, facts);
   return facts;
+}
+
+const named = (value: unknown, fallback: string) => typeof value === "string" && value.trim() ? value.trim().slice(0, 120) : fallback;
+
+/** What is live and would break if this page or form came down — the unpublish RPC's own refusals. */
+async function loadLiveDependents(admin: Client, tenantId: string, cmd: PublishCommand, facts: ReadinessFacts): Promise<Array<{ kind: "page" | "funnel"; name: string }>> {
+  const row = cmd.kind === "page" ? facts.page : cmd.kind === "form" ? facts.form : null;
+  if (!row || row.status !== (cmd.kind === "page" ? "published" : "active")) return [];
+  const read = async (q: PromiseLike<{ data: unknown; error: unknown }>) => {
+    const { data, error } = await q;
+    if (error) throw new Error("readiness_read_failed");
+    return (data ?? []) as Array<Record<string, unknown>>;
+  };
+  const out: Array<{ kind: "page" | "funnel"; name: string }> = [];
+  const stepFunnels = new Set((await read(admin.from("growth_funnel_steps").select("funnel_id")
+    .eq("tenant_id", tenantId).eq(cmd.kind === "page" ? "page_id" : "form_id", cmd.id))).map((s) => String(s.funnel_id)));
+  const funnels = await read(admin.from("growth_funnels").select("id,name,entry_page_id,success_page_id").eq("tenant_id", tenantId).eq("status", "active"));
+  for (const f of funnels) {
+    const uses = stepFunnels.has(String(f.id)) || (cmd.kind === "page" && (f.entry_page_id === cmd.id || f.success_page_id === cmd.id));
+    if (uses) out.push({ kind: "funnel", name: named(f.name, "a funnel") });
+  }
+  if (cmd.kind === "form" && typeof row.slug === "string" && row.slug) {
+    const pages = await read(admin.from("growth_pages").select("title,blocks_json").eq("tenant_id", tenantId).eq("status", "published"));
+    for (const p of pages) {
+      const blocks = Array.isArray(p.blocks_json) ? p.blocks_json : [];
+      if (blocks.some((b) => b && typeof b === "object" && (b as Record<string, unknown>).type === "embedded_form"
+        && typeof (b as Record<string, unknown>).form_slug === "string" && String((b as Record<string, unknown>).form_slug).trim() === row.slug)) {
+        out.unshift({ kind: "page", name: named(p.title, "a page") });
+      }
+    }
+  }
+  return out;
 }
 
 /** The door. Never throws: every path answers with a status and a plain sentence. */
@@ -214,8 +247,10 @@ export async function handleGrowthPublishCommand(req: Request, deps: PublishDoor
     if (!preview) {
       return respond(404, { ok: false, refused: true, code: "ARTIFACT_NOT_FOUND", error: `That ${cmd.kind} isn't in this workspace. ${NOTHING_CHANGED}` });
     }
+    // Nothing to approve: the same 202 approval shape the Studio panel and chat read, with the preview
+    // and NO fingerprint. A blocked act never mints a proposal.
     if (!previewReady(preview)) {
-      return respond(200, { ok: false, outcome: "not_ready", approval_required: false, capability: key, preview,
+      return respond(202, { ok: false, outcome: "not_ready", approval_required: true, capability: key, preview,
         error: `It isn't ready yet: ${preview.checks.filter((c) => c.blocking && !c.ok).map((c) => c.label).join("; ")}. ${NOTHING_CHANGED}` });
     }
 

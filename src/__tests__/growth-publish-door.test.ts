@@ -140,7 +140,7 @@ describe("growth-publish-command — the proposal", () => {
   ])("a failed blocking check (%s) returns the preview with no fingerprint and nothing to approve", async (_label, tables, key) => {
     const w = world({ tables });
     const r = await w.call(publishPage);
-    expect(r).toMatchObject({ status: 200, body: { ok: false, outcome: "not_ready", approval_required: false } });
+    expect(r).toMatchObject({ status: 202, body: { ok: false, outcome: "not_ready", approval_required: true } });
     expect(r.body.fingerprint).toBeUndefined();
     const check = (r.body.preview as { checks: Array<{ key: string; ok: boolean; blocking: boolean }> }).checks.find((c) => c.key === key);
     expect(check).toMatchObject({ ok: false, blocking: true });

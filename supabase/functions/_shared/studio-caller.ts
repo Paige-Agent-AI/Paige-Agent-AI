@@ -10,8 +10,9 @@
 // A platform-wide role grants nothing here: user_roles has no tenant, so "admin" there says nothing
 // about which workspace the person may write into.
 
+export type StudioCallerRefusal = "lookup_failed" | "no_workspace" | "other_workspace" | "not_admin";
 export interface StudioCallerOk { ok: true; tenantId: string }
-export interface StudioCallerRefused { ok: false; status: 403 | 500; error: string }
+export interface StudioCallerRefused { ok: false; status: 403 | 500; error: string; reason: StudioCallerRefusal }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const UNCONFIRMED = "Couldn't confirm your workspace just now. Nothing was created. Try again.";
@@ -24,22 +25,59 @@ export async function resolveStudioCaller(
   requestedTenant: unknown,
 ): Promise<StudioCallerOk | StudioCallerRefused> {
   const { data: active, error: tErr } = await authed.rpc("current_user_tenant_id");
-  if (tErr) return { ok: false, status: 500, error: UNCONFIRMED };
+  if (tErr) return { ok: false, status: 500, error: UNCONFIRMED, reason: "lookup_failed" };
   const tenantId = typeof active === "string" && UUID_RE.test(active) ? active.toLowerCase() : null;
-  if (!tenantId) return { ok: false, status: 403, error: "Open one of your workspaces first, then try again." };
+  if (!tenantId) {
+    return { ok: false, status: 403, error: "Open one of your workspaces first, then try again.", reason: "no_workspace" };
+  }
 
   if (requestedTenant != null && requestedTenant !== "" && String(requestedTenant).toLowerCase() !== tenantId) {
-    return { ok: false, status: 403, error: "That isn't the workspace you're signed in to. Nothing was created." };
+    return {
+      ok: false, status: 403, reason: "other_workspace",
+      error: "That isn't the workspace you're signed in to. Nothing was created.",
+    };
   }
 
   const { data: isAdmin, error: aErr } = await authed.rpc("is_tenant_admin", { _tenant: tenantId });
-  if (aErr) return { ok: false, status: 500, error: UNCONFIRMED };
+  if (aErr) return { ok: false, status: 500, error: UNCONFIRMED, reason: "lookup_failed" };
   if (isAdmin !== true) {
     const { data: manages, error: mErr } = await authed.rpc("agency_can_manage_child", { _child: tenantId });
-    if (mErr) return { ok: false, status: 500, error: UNCONFIRMED };
+    if (mErr) return { ok: false, status: 500, error: UNCONFIRMED, reason: "lookup_failed" };
     if (manages !== true) {
-      return { ok: false, status: 403, error: "Only this workspace's owner or an admin can use the Studio." };
+      return {
+        ok: false, status: 403, reason: "not_admin",
+        error: "Only this workspace's owner or an admin can use the Studio.",
+      };
     }
   }
   return { ok: true, tenantId };
+}
+
+// The same rule for a request about a row that already belongs to a workspace (an artifact being
+// learned from): the row's workspace must be the one the caller is signed in to, and the caller its
+// owner, admin or managing agency. A row from any other workspace is refused and the caller told to
+// switch — never served from whichever workspace they happen to be in. The row's tenant goes in as
+// the requested workspace, so this is resolveStudioCaller's own check rather than a second copy of
+// it; a row without a valid tenant is refused instead of reading as "no workspace was named".
+export async function resolveStudioCallerForArtifact(
+  authed: RpcClient,
+  artifactTenant: unknown,
+): Promise<StudioCallerOk | StudioCallerRefused> {
+  if (typeof artifactTenant !== "string" || !UUID_RE.test(artifactTenant)) {
+    return {
+      ok: false, status: 403, reason: "other_workspace",
+      error: "That item has no workspace I can check you against. Nothing was learned.",
+    };
+  }
+  const caller = await resolveStudioCaller(authed, artifactTenant);
+  if (caller.ok) return caller;
+  // An explicit annotation: the app tsconfig runs without strictNullChecks, where `ok` does not narrow.
+  const refused = caller as StudioCallerRefused;
+  if (refused.reason === "other_workspace") {
+    return { ...refused, error: "Switch into that workspace to teach its Paige from this artifact." };
+  }
+  if (refused.reason === "lookup_failed") {
+    return { ...refused, error: "Couldn't confirm your workspace just now. Nothing was learned. Try again." };
+  }
+  return refused;
 }

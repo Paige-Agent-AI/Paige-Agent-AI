@@ -18,8 +18,9 @@
 //       instruction:  string,        // REQUIRED. What to change, in plain language.
 //       block_index?: number,        // OPTIONAL. 0-based position on the page; context only —
 //                                    //   the caller already owns it, so it is NOT echoed back.
-//       tenant_id?:   string         // SERVICE-ROLE CALLERS ONLY. IGNORED for JWT callers,
-//                                    //   whose tenant is resolved server-side (see SECURITY).
+//       tenant_id?:   string         // SERVICE-ROLE CALLERS: names the tenant. JWT CALLERS:
+//                                    //   never chooses one — the session's own workspace is
+//                                    //   used; a tenant_id naming another one is refused (403).
 //     }
 //
 //   200  { block: GrowthBlock }                  // the revision, same `type`, save-safe
@@ -34,7 +35,10 @@
 //     400 INVALID_BLOCK_INDEX block_index was present but not a non-negative integer
 //     400 INVALID_TENANT_ID   service-role caller passed a malformed tenant_id
 //     401 UNAUTHENTICATED     no / invalid bearer token
-//     403 FORBIDDEN           JWT caller lacks admin or super_admin
+//     403 FORBIDDEN           JWT caller has no workspace open, named another workspace, or is
+//                             not its owner/admin or managing agency (body also carries
+//                             `forbidden: true`)
+//     500 INTERNAL            also: the workspace/permission lookup itself failed (retryable)
 //     422 BLOCK_TYPE_CHANGED  the model tried to change the section's kind — an edit revises a
 //                             section, it does not turn a hero into a pricing table
 //     422 REVISION_INVALID    the revision fails GrowthBlock validation (it would be rejected
@@ -47,14 +51,13 @@
 //     500 INTERNAL            anything else — with the real message, never a generic shrug
 //
 // ── SECURITY (§13 — tenant isolation, least privilege) ──────────────────────
-// This function does NOT trust `tenant_id` from a JWT caller. It resolves the tenant
-// SERVER-SIDE via current_user_tenant_id() executed in the CALLER's own JWT context — the same
-// pin the growth_page_upsert / growth_page_edit_blocks RPCs use ("JWT callers: client tenant ids
-// IGNORED"; migration 20260714091000). Only a service-role bearer — Paige's agent calling this
-// headlessly (§10) — may name a tenant explicitly. The service-role key is used ONLY to read
-// brand for the tenant we resolved ourselves, never for a tenant the caller named.
-// (Deliberately NOT copying growth-page-draft's `const tenantId = body?.tenant_id` cross-tenant
-// IDOR: it reads brand with the service-role key for any tenant a caller names. Flagged for fix.)
+// This function does NOT trust `tenant_id` from a JWT caller. _shared/studio-caller.ts
+// resolveStudioCaller takes the workspace from current_user_tenant_id() in the CALLER's own JWT
+// context, refuses a body tenant naming a different one, and requires the caller to be that exact
+// workspace's owner/admin or its managing agency — the same rule as growth-page-draft. A
+// platform-wide user_roles admin grants nothing: that table has no tenant. Only a service-role
+// bearer — Paige's agent calling this headlessly (§10) — may name a tenant explicitly. The
+// service-role key is used ONLY to read brand for the tenant resolved here.
 //
 // Doctrine: §2 (never introduce credit/funding/lending framing — a tenant's own funding content
 // is theirs, but we never ADD it) · §3 (direct, confident, mogul-founder voice) · §10 (callable
@@ -63,6 +66,7 @@
 // §15 (resolve placeholders, never invent facts).
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { resolveStudioCaller } from "../_shared/studio-caller.ts";
 import { chatCompletionCompat } from "../_shared/claude.ts";
 import { routedChatCompletion } from "../_shared/model-router.ts";
 import {
@@ -92,8 +96,8 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const SSN_RE = /\bssn\b|social[\s-]?security[\s-]?(number|#)/i;
 
 /** Structured failure. Never a 200-with-{error}; never a swallowed generic. */
-function fail(status: number, code: string, message: string): Response {
-  return new Response(JSON.stringify({ error: { code, message } }), { status, headers: jsonHeaders });
+function fail(status: number, code: string, message: string, extra?: Record<string, unknown>): Response {
+  return new Response(JSON.stringify({ error: { code, message }, ...extra }), { status, headers: jsonHeaders });
 }
 function ok(payload: unknown): Response {
   return new Response(JSON.stringify(payload), { status: 200, headers: jsonHeaders });
@@ -170,9 +174,9 @@ serve(async (req: Request) => {
     }
 
     // ── 3. Resolve the tenant SERVER-SIDE (the IDOR-safe path) ───────────────
-    // JWT caller: role-gate, then pin the tenant to current_user_tenant_id() run in THEIR JWT
-    // context. `body.tenant_id` is never read on this path. Service-role caller: Paige's agent
-    // running headlessly (§10) may name the tenant.
+    // JWT caller: the session's own workspace, its owner/admin or managing agency only
+    // (resolveStudioCaller, §9). `body.tenant_id` can only be refused here, never chosen.
+    // Service-role caller: Paige's agent running headlessly (§10) may name the tenant.
     let tenantId: string | null = null;
 
     if (isServiceRole) {
@@ -192,25 +196,13 @@ serve(async (req: Request) => {
         return fail(401, "UNAUTHENTICATED", uErr?.message || "Could not verify this session.");
       }
 
-      const { data: roleRows, error: rErr } = await authed.from("user_roles").select("role").eq("user_id", user.id);
-      if (rErr) {
-        console.error("growth-block-edit: role lookup failed:", rErr);
-        return fail(500, "INTERNAL", `Could not read your roles: ${rErr.message}`);
+      const caller = await resolveStudioCaller(authed, body?.tenant_id);
+      if (!caller.ok) {
+        return caller.status === 403
+          ? fail(403, "FORBIDDEN", caller.error, { forbidden: true })
+          : fail(500, "INTERNAL", caller.error);
       }
-      const roles = (roleRows || []).map((r: any) => r.role);
-      if (!roles.some((r: string) => r === "admin" || r === "super_admin")) {
-        return fail(403, "FORBIDDEN", "Admin access required.");
-      }
-
-      // The tenant pin. SECURITY DEFINER, evaluated as the caller — it cannot return a tenant
-      // they don't belong to. May legitimately be null (e.g. an operator with no active tenant);
-      // that only means "no brand context", never "use whatever tenant they asked for".
-      const { data: resolved, error: tErr } = await authed.rpc("current_user_tenant_id");
-      if (tErr) {
-        console.error("growth-block-edit: tenant resolve failed:", tErr);
-        return fail(500, "INTERNAL", `Could not resolve your workspace: ${tErr.message}`);
-      }
-      tenantId = str(resolved) || null;
+      tenantId = caller.tenantId;
     }
 
     // ── 4. Brand context (truthful, §13) — read with the tenant WE resolved ───

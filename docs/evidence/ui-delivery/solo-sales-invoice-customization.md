@@ -74,3 +74,9 @@ SOLO_900X1000_PAIGE_OPEN: PASS: both themes captured in invoice-geometry.json an
 ## Review and limitations
 
 Independent non-writer review completed at 3f48ed03312be723a5951221ff91617fa9d04efc. Findings: same-prefix rewind, misleading skip copy and stale evidence; all are addressed in the combined repair. One exact-head repair recheck is required before merge. Hosted authenticated proof remains UNVERIFIED.
+
+## CI repair review
+
+The complete CI run exposed stale Marketing/Pipeline harness routes and five-action/six-tool assertions, plus missing declarations for the new settings action in the existing receipt ledger and Chat entity-target map. The render harness now mounts the real Opportunities workspace; behavior assertions remain. The canonical settings action declares its actual tenants.brand target and existing transactional Rail receipt. No new approval, memory, receipt or task system is introduced.
+
+Owner authority for an additional repair review: explicit standing instruction in this thread, “Yes—review again and continue delivery,” following the repository review-limit explanation; continued delivery is authorized. One further independent review must complete for the changed head before merge. Local focused verification is recorded in the PR. Hosted authenticated flows remain UNVERIFIED.

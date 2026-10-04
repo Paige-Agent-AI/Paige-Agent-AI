@@ -38,3 +38,13 @@
 }
 
 .ide-quantity,.ide-unit-price{display:flex;flex-direction:column;gap:5px;min-width:0}.ide-quantity>span,.ide-unit-price>span,.ide-unit-price>small{font-size:11px;color:var(--ink-2)}
+@media(max-width:650px){
+ .sales-department[data-sales-view="payments"] .sb-editor input:not([type=checkbox]),.sales-department[data-sales-view="payments"] .sb-editor select,.sales-department[data-sales-view="payments"] .sb-editor textarea,.sales-department[data-sales-view="payments"] .sb-workspace input{font-size:16px;min-height:44px}
+ .sales-department[data-sales-view="payments"] .btn,.sales-department[data-sales-view="payments"] .sales-payments-tabs button{min-height:44px}
+ .sales-department[data-sales-view="payments"] .ide-item>.btn{width:44px}
+ .sales-department[data-sales-view="payments"] .ide-item{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 44px}
+ .sales-department[data-sales-view="payments"] .ide-choices label{min-height:44px;display:flex;align-items:center;gap:8px}
+ .sales-department[data-sales-view="payments"] .ide-footer{padding-bottom:max(8px,env(safe-area-inset-bottom))}
+}
+@media(max-width:650px){.sales-department[data-sales-view="payments"]>.sales-tabs button{min-height:44px}}
+@media(pointer:coarse){.sales-department[data-sales-view="payments"] .btn,.sales-department[data-sales-view="payments"] .sales-payments-tabs button,.sales-department[data-sales-view="payments"]>.sales-tabs button{min-height:44px}.sales-department[data-sales-view="payments"] .ide-choices label{min-height:44px}}

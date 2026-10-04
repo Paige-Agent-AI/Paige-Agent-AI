@@ -217,7 +217,7 @@ export const SOLO_BRANCHES: Branch[] = [
     subtabs: [
       { slug: "overview", key: "overview", label: "Overview" },
       { slug: "opportunities", key: "opportunities", label: "Opportunities" },
-      { slug: "pipeline", key: "pipeline", label: "Pipeline" },
+      { slug: "pipeline", key: "pipeline", label: "Pipeline", hidden: true },
       { slug: "offers", key: "offers", label: "Offers" },
       { slug: "agreements", key: "agreements", label: "Terms & Agreements" },
       { slug: "payments", key: "payments", label: "Payments" },

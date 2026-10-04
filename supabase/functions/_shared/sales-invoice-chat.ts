@@ -1,10 +1,10 @@
-import {SALES_INVOICE_READ_CAPABILITY,SALES_INVOICE_PUBLISH_CAPABILITY,SALES_INVOICE_RECORD_PAYMENT_CAPABILITY,SALES_INVOICE_REVERSE_PAYMENT_CAPABILITY,SALES_INVOICE_VOID_CAPABILITY,SALES_INVOICE_EMAIL_CAPABILITY} from './paige-spine/domains/sales_invoice.ts';
+import {SALES_INVOICE_READ_CAPABILITY,SALES_INVOICE_PUBLISH_CAPABILITY,SALES_INVOICE_RECORD_PAYMENT_CAPABILITY,SALES_INVOICE_REVERSE_PAYMENT_CAPABILITY,SALES_INVOICE_VOID_CAPABILITY,SALES_INVOICE_EMAIL_CAPABILITY,SALES_INVOICE_SETTINGS_CAPABILITY,SALES_INVOICE_PREFERENCES_READ_CAPABILITY} from './paige-spine/domains/sales_invoice.ts';
 import { parseSalesInvoiceCommand, SALES_INVOICE_ACTIONS, UUID } from './sales-invoice-command/contract.ts';
 import { parseCollectionCommand, COLLECTION_ACTIONS } from './sales-collections/contract.ts';
 import { CRM_APPROVAL_CANDIDATE_LIMIT, resolveCrmApprovedFingerprint } from './crm-command/approval-resolution.ts';
 
 const ACTIONS = {
-  sales_publish_invoice: 'invoice.publish', sales_record_manual_payment: 'invoice.record_manual_payment',
+  sales_update_invoice_settings:'invoice.settings_update', sales_publish_invoice: 'invoice.publish', sales_record_manual_payment: 'invoice.record_manual_payment',
   sales_reverse_manual_payment: 'invoice.reverse_manual_payment', sales_void_invoice: 'invoice.void',
   billing_send_invoice: 'invoice.email_send',
 } as const;
@@ -24,6 +24,8 @@ function invoiceSendInput(){const input=chatInput(SALES_INVOICE_EMAIL_CAPABILITY
 function receiptInput(capability:Parameters<typeof chatInput>[0]):ReturnType<typeof chatInput>{const input=chatInput(capability);return {...input,properties:{...input.properties,record_kind:{type:'string',enum:['managed','imported'],description:'Use imported only for a recorded historical obligation read from Collections.'},...('currency' in input.properties?{currency:{type:'string',pattern:'^[a-z]{3}$',description:'Exact currency from the canonical obligation; managed invoices support USD.'}}:{})}};}
 // No invoice link tool: its human-only endpoint returns a bearer token.
 export const SALES_INVOICE_TOOLS = [
+ {type:'function',function:{name:'read_sales_invoice_preferences',description:'Read current tenant invoice preferences and version. This does not change issued invoices.',parameters:SALES_INVOICE_PREFERENCES_READ_CAPABILITY.input}},
+ {type:'function',function:{name:'sales_update_invoice_settings',description:'With canonical approval, update future invoice numbering and document preferences at the current settings version. Issued invoices remain unchanged.',parameters:chatInput(SALES_INVOICE_SETTINGS_CAPABILITY)}},
  {type:'function',function:{name:'read_sales_invoice',description:'Read this workspace invoice and manual receipt history. Manual settlement is a record, not a processor charge.',parameters:SALES_INVOICE_READ_CAPABILITY.input}},
  {type:'function',function:{name:'sales_publish_invoice',description:'Issue an existing saved invoice with approval. This creates an obligation snapshot; it does not charge, send, or create a payment link. Read the invoice first for its current version.',parameters:chatInput(SALES_INVOICE_PUBLISH_CAPABILITY)}},
  {type:'function',function:{name:'sales_record_manual_payment',description:'With approval, record money the owner says was received off platform against a managed or imported obligation. Read its currency, kind, balance and version first. Never claim a processor verified or charged it.',parameters:receiptInput(SALES_INVOICE_RECORD_PAYMENT_CAPABILITY)}},
@@ -95,6 +97,14 @@ export function salesInvoiceSafeResult(value: unknown): Record<string, unknown> 
 export async function dispatchSalesInvoiceChat(ctx: Context, deps: Dependencies): Promise<Result> {
   if (!ctx.tenantId || !UUID.test(ctx.tenantId)) return { content: { success: false, error: 'Invoice workspace unavailable.' } };
   if (!ctx.args || typeof ctx.args !== 'object' || Array.isArray(ctx.args) || Object.prototype.hasOwnProperty.call(ctx.args, 'action')) return { content: { success: false, error: 'Invalid invoice request.' } };
+  if(ctx.toolName==='read_sales_invoice_preferences'){
+    if(Object.keys(ctx.args).length)return {content:{success:false,error:'Invalid invoice preferences request.'}};
+    try{const reply=await deps.caller.rpc('read_sales_invoice_preferences',{_expected_tenant_id:ctx.tenantId});const p=reply.data as Record<string,unknown>|null;
+      if(reply.error||!p||p.tenant_id!==ctx.tenantId||!Number.isSafeInteger(p.version)||typeof p.can_manage!=='boolean'||!p.settings||typeof p.settings!=='object'||Array.isArray(p.settings))throw Error();
+      const settings=p.settings as Record<string,unknown>;const safe=Object.fromEntries(['prefix','next_number','padding','template','accent','footer','payment_instructions'].filter(k=>typeof settings[k]==='string'||typeof settings[k]==='number').map(k=>[k,settings[k]]));
+      return {content:{success:true,version:p.version,can_manage:p.can_manage,settings:{...safe,logo_available:typeof settings.logo_data_uri==='string'},note:'Preferences affect future issuance. Existing issued documents remain frozen.'}};
+    }catch{return {content:{success:false,error:'Invoice preferences unavailable in this workspace.'}};}
+  }
   if (ctx.toolName === 'read_sales_invoice') {
     if (Object.keys(ctx.args).some(k => k !== 'invoice_id') || typeof ctx.args.invoice_id !== 'string' || !UUID.test(ctx.args.invoice_id)) return { content: { success: false, error: 'Invalid invoice request.' } };
     try {
@@ -122,7 +132,7 @@ export async function dispatchSalesInvoiceChat(ctx: Context, deps: Dependencies)
       if (reply.error) return refusal('lookup_failed');
       const rows = reply.data ?? [];
       for (const row of rows) for (const token of ctx.approved) if (token.split(':')[0] === row.fingerprint) tokens.push(token);
-      const subject = typeof ctx.args.invoice_id === 'string' ? `${action}:${ctx.args.invoice_id.toLowerCase()}` : '';
+      const subject = action==='invoice.settings_update'?`${action}:${ctx.tenantId}`:typeof ctx.args.invoice_id === 'string' ? `${action}:${ctx.args.invoice_id.toLowerCase()}` : '';
       const selected = resolveCrmApprovedFingerprint(rows, subject, ctx.sameToolCalls);
       if (selected.kind === 'ambiguous') return { ...refusal('ambiguous'), tokens };
       if (selected.kind === 'claim') {
@@ -157,6 +167,7 @@ export async function dispatchSalesInvoiceChat(ctx: Context, deps: Dependencies)
     const result = data as Record<string, unknown>;
     if (result.outcome === 'approval_required' && typeof result.fingerprint === 'string' && /^[0-9a-f]{16}$/.test(result.fingerprint)) return { tokens, content: { success: false, needs_confirm: true, requires_operator_approval: true, confirm_fingerprint: result.fingerprint, confirm_summary: typeof result.summary === 'string' ? result.summary : 'Approve this invoice action', note: 'Show the Needs your OK card. Nothing changed yet. Do not call this tool again until the person approves.' } };
     const safe = salesInvoiceSafeResult(result);
+    if(command.action==='invoice.settings_update'){for(const k of Object.keys(safe))delete safe[k];const p=result.preferences as Record<string,unknown>|null;if(p&&p.tenant_id===ctx.tenantId&&Number.isSafeInteger(p.version)){safe.version=p.version;safe.outcome='settings_saved';}else if(result.ok===true)return {tokens,content:{success:false,outcome:'outcome_unknown',note:'Preferences readback was not verified. Recover the existing operation.'}};}
     if (action === 'invoice.email_send' || action === 'invoice.sms_send') {
       for (const key of Object.keys(safe)) if (!['ok', 'outcome', 'provider_receipt_available', 'delivery_confirmed', 'replayed'].includes(key)) delete safe[key];
     }

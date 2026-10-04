@@ -99,7 +99,7 @@ function rerenderAt(path: string) {
 let salesInShellForTest = false;
 function CanonicalSalesOwner() {
   const params=useParams();
-  return <>{(params["*"] === "growth" || params["*"].startsWith("growth/")) ? <GrowthHub salesInShell={salesInShellForTest}/> : params["*"].startsWith("sales/pipeline") ? <SalesWorkspace/> : null}<LocationProbe/></>;
+  return <>{(params["*"] === "growth" || params["*"].startsWith("growth/")) ? <GrowthHub salesInShell={salesInShellForTest}/> : (params["*"].startsWith("sales/pipeline") || params["*"].startsWith("sales/opportunities")) ? <SalesWorkspace/> : null}<LocationProbe/></>;
 }
 
 function LocationProbe() {
@@ -502,7 +502,8 @@ describe("Solo Campaigns rendered flows", () => {
       const retry = harness.state.retry as ReturnType<typeof vi.fn>;
       retry.mockClear();
       act(() => ([...host.querySelectorAll('[role="dialog"] button')].find((button) => button.textContent === "Open deal") as HTMLButtonElement).click());
-      expect(host.querySelector("[data-location]")?.textContent).toBe("/solo/42/sales/pipeline?deal=deal-1");
+      expect(host.querySelector("[data-location]")?.textContent).toBe("/solo/42/sales/opportunities?deal=deal-1&view=board&pipeline=pipeline-1");
+      expect(host.querySelector('[role="dialog"]')?.textContent).toContain("Onboarding work");
       // deal-1 is already in the workspace read, so nothing is re-read.
       expect(retry).not.toHaveBeenCalled();
     } finally {
@@ -521,7 +522,8 @@ describe("Solo Campaigns rendered flows", () => {
       const openDeals = [...host.querySelectorAll('[role="dialog"] button')].filter((button) => button.textContent === "Open deal") as HTMLButtonElement[];
       act(() => openDeals[1].click());
       expect(retry).toHaveBeenCalledTimes(1);
-      expect(host.querySelector("[data-location]")?.textContent).toBe("/solo/42/sales/pipeline?deal=deal-arrived-later");
+      expect(host.querySelector("[data-location]")?.textContent).toBe("/solo/42/sales/opportunities?deal=deal-arrived-later&view=board&pipeline=pipeline-1");
+      expect(host.querySelector(".pipeline-surface")?.textContent).toContain("Deal record unavailable in this workspace. Nothing was changed.");
     } finally {
       harness.state.artifacts = artifacts;
     }
@@ -732,14 +734,14 @@ describe("Solo Marketing department views", () => {
     // Without Sales in the menu the link goes through Marketing's address, which the Sales cutover
     // (#1676) redirects to Sales' Pipeline for every Solo account.
     act(() => button("View pipeline")!.click());
-    expect(location()).toBe("/solo/42/sales/pipeline");
+    expect(location()).toBe("/solo/42/sales/opportunities?view=board");
   });
 
   it("an account whose menu shows Sales is sent to Sales' Pipeline and Offers", () => {
     useWorkspace();
     renderAt("/solo/42/growth/overview", { salesInShell: true });
     act(() => button("View pipeline")!.click());
-    expect(location()).toBe("/solo/42/sales/pipeline");
+    expect(location()).toBe("/solo/42/sales/opportunities?view=board");
   });
 
   it("a brand-new workspace sees one guided start, not a wall of zeros", () => {
@@ -766,7 +768,7 @@ describe("Solo Marketing department views", () => {
     const finish = button("Finish in Vibe Studio")!;
     expect(finish.hasAttribute("data-solo-vibe-studio-launcher")).toBe(true);
     act(() => button("Open deal")!.click());
-    expect(location()).toBe("/solo/42/sales/pipeline?deal=deal-1");
+    expect(location()).toBe("/solo/42/sales/opportunities?deal=deal-1&view=board");
   });
 
   it("Lead capture's type filter hides what does not match", () => {

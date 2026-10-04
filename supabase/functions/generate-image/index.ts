@@ -1,5 +1,5 @@
 // generate-image — Paige generates marketing images for a tenant, stores them in the public
-// paige-generated bucket, returns URLs. Admin only. Tenant-generic (§2).
+// paige-generated bucket, returns URLs. The signed-in workspace's owner or admin only. Tenant-generic (§2).
 //
 // PROVIDERS (owner directive 2026-07-15 / 2026-07-18): the studio design agent picks the best
 // image model per brief across FOUR providers, all filing to the SAME storage + Content Studio
@@ -18,6 +18,7 @@
 // session artifact link + canvas).
 // Featherless is NOT used here — it is a text-LLM host with no verified image models (§13).
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { resolveStudioCaller } from "../_shared/studio-caller.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { envKey } from "../_shared/env-key.ts";
 import { replicateRun } from "../_shared/replicate.ts";
@@ -97,19 +98,20 @@ serve(async (req: Request) => {
     const authed = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: authHeader } } });
     const { data: { user }, error: uErr } = await authed.auth.getUser();
     if (uErr || !user) throw new Error("Unauthorized");
-    const { data: roleRows } = await authed.from("user_roles").select("role").eq("user_id", user.id);
-    const roles = (roleRows || []).map((r: any) => r.role);
-    if (!roles.some((r: string) => r === "admin" || r === "super_admin")) {
-      return new Response(JSON.stringify({ error: "Admin access required." }), {
-        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-
     const body = await req.json();
+    // §9: the workspace comes from the caller's session and they must own or administer it. A body
+    // tenant id that names another workspace is refused (it used to be trusted for anyone holding the
+    // platform-wide admin role, whatever workspace they were in).
+    const caller = await resolveStudioCaller(authed, body?.tenant_id);
+    if (!caller.ok) {
+      return new Response(JSON.stringify({ error: caller.error, forbidden: caller.status === 403 }), {
+        status: caller.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
     const prompt = String(body?.prompt ?? "").trim();
     const sizeKey = typeof body?.size === "string" ? body.size : "square";
     const size = SIZE_MAP[sizeKey] ?? "1024x1024";
     const aspect = ASPECT_MAP[sizeKey] ?? "1:1";
-    const tenantId = body?.tenant_id ?? null;
+    const tenantId: string = caller.tenantId;
     // #292 — when set (by paige-ai-chat, already clamped to the exact on-canvas image row), reuse that
     // marketing_content row instead of inserting a fresh one, so the Studio artifact's version history
     // stacks (v2, v3…) rather than minting a new sibling every regeneration. Null → insert as before.
@@ -163,20 +165,6 @@ serve(async (req: Request) => {
         needs_config: true,
         configured,
       }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-
-    // Tenant isolation (§9): the image is stored + filed under tenantId, so the caller
-    // must actually belong to that tenant (platform admins excepted). Without this a coach
-    // in one tenant could plant objects in another's storage prefix + Content Studio library.
-    if (tenantId) {
-      const isPlatformAdmin = roles.some((r: string) => r === "admin" || r === "super_admin");
-      if (!isPlatformAdmin) {
-        const { data: isMember } = await authed.rpc("is_tenant_member", { _tenant: tenantId });
-        if (!isMember) {
-          return new Response(JSON.stringify({ error: "You don't have access to that workspace." }), {
-            status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        }
-      }
     }
 
     // Generate the raw image BYTES for a single provider. gemini/openai return base64 (decoded);
@@ -297,7 +285,7 @@ serve(async (req: Request) => {
     // ---- SHARED TAIL (identical for every provider): upload bytes → library → audit → return ----
     const stamp = Date.now();
     const rand = crypto.randomUUID().slice(0, 8);
-    const path = `${tenantId ?? "shared"}/${stamp}-${rand}.png`;
+    const path = `${tenantId}/${stamp}-${rand}.png`;
 
     const admin = createClient(supabaseUrl, supabaseServiceKey);
     const { error: upErr } = await admin.storage.from("paige-generated").upload(path, bytes, {
@@ -311,7 +299,7 @@ serve(async (req: Request) => {
     // so it's browsable/reusable without a second step. Best-effort — never fail the
     // generation because the library insert hiccuped.
     let contentId: string | null = null;
-    if (tenantId && publicUrl) {
+    if (publicUrl) {
       const title = prompt.slice(0, 60) + (prompt.length > 60 ? "…" : "");
       const saveArgs = {
         p_kind: "image", p_title: title, p_image_url: publicUrl, p_image_path: path,
@@ -338,7 +326,7 @@ serve(async (req: Request) => {
     // worked, and recall (recallSimilar, wired in paige-deep-research) stops reading an empty table.
     // Hooked HERE (the shared seam) rather than at any one caller, so paige-ai-chat AND the Vibe Studio
     // frontend both capture — the seam the user actually creates in. tenantId is membership-VALIDATED
-    // above (is_tenant_member, §9) and the memory is filed under the SAME tenant as the image storage.
+    // above (resolveStudioCaller: the session's own workspace, owner or admin, §9) and the memory is filed under the SAME tenant as the image storage.
     // Capture EVERY genuinely-produced image (fresh + refine/regen): a refine reuses the content lineage
     // but the refined image is what the user KEPT, so we must never drop it — dropping the kept version
     // (and, in the §33 critique loop, keeping only the pre-critique original) would anchor recall on a
@@ -346,9 +334,9 @@ serve(async (req: Request) => {
     // reaction-weight are the tracked Wave-2 follow-ups), not a reason to skip a real artifact here (§13).
     // DETACHED + best-effort: a capture failure never fails or slows the image the user asked for
     // (§13/§32); rememberArtifact never throws, skips honestly when tenant/url/intent is absent.
-    if (tenantId && publicUrl) {
+    if (publicUrl) {
       try {
-        const actorRole = roles.some((r: string) => r === "admin" || r === "super_admin") ? "operator" : "tenant";
+        const actorRole = "tenant"; // the caller acted inside their own workspace (resolveStudioCaller)
         const memP = rememberArtifact({
           tenantId,
           modality: "image",

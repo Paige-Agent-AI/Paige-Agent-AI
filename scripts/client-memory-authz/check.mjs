@@ -4524,8 +4524,8 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
     serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...scope },
     tablesExtra: studioTables(),
   });
-  const mainDrive = (toolCall, extraRpc = {}, roles = [{ role: "admin" }]) => drive({
-    stream: true, extraBody: { threadId: THREAD }, toolCall,
+  const mainDrive = (toolCall, extraRpc = {}, roles = [{ role: "admin" }], functionsExtra = {}) => drive({
+    stream: true, extraBody: { threadId: THREAD }, toolCall, functionsExtra,
     rpcOverrides: { ...AS_TENANT, ...WS, ...AUTO_LANE, ...PAGE_ROW, ...extraRpc },
     serviceTablesExtra: { user_roles: () => roles, ...SCOPE_ROW },
     tablesExtra: { paige_chat_threads: () => [{ studio_session_id: null, summary: null }] },
@@ -4598,6 +4598,33 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
   assert("33.5c content_save keeps its existing gate (its backend still checks the global role)",
     called(contentNoGlobal, "save_marketing_content") === 0 && called(contentNoGlobal, "studio_role_ok") === 0,
     JSON.stringify(contentNoGlobal.rec.rpc.map((c) => c.name)));
+
+  // 33.5d Image generation and copy drafting ask the same workspace question as their backends
+  // (_shared/studio-caller.ts). Kills: leaving them on the global-role chat gate, where a workspace
+  // owner without the global role is refused in chat and a global admin outside the workspace passes
+  // the chat gate only to be refused by the backend.
+  const invoked = (r, name) => r.rec.functions.filter((f) => f.name === name).length;
+  for (const [tool, fn, args] of [
+    ["generate_image", "generate-image", { prompt: "a calm hero image" }],
+    ["draft_marketing_content", "content-draft", { channel: "social_post", brief: "spring launch for our clients" }],
+  ]) {
+    const owner = await mainDrive({ name: tool, args }, { studio_role_ok: { data: true, error: null } }, []);
+    assert(`33.5d ${tool}: this workspace's owner reaches ${fn} without any global role`,
+      invoked(owner, fn) === 1 && called(owner, "studio_role_ok") === 1,
+      JSON.stringify({ fns: owner.rec.functions.map((f) => f.name), rpcs: owner.rec.rpc.map((c) => c.name) }));
+    const outsider = await mainDrive({ name: tool, args }, { studio_role_ok: { data: false, error: null } }, [{ role: "admin" }]);
+    assert(`33.5e ${tool}: a global admin who is not this workspace's owner/admin is refused before ${fn}`,
+      invoked(outsider, fn) === 0 && wire(outsider).includes("workspace_owner_or_admin_required"),
+      wire(outsider).slice(0, 300));
+    // 33.5f The backend's own refusal (a non-2xx whose message only the body carries) reaches the
+    // model as itself, never "Unknown error". Kills: `if (error) throw error` before reading the body.
+    const REFUSAL = "That isn't the workspace you're signed in to. Nothing was created.";
+    const refused = await mainDrive({ name: tool, args }, { studio_role_ok: { data: true, error: null } }, [], {
+      [fn]: { data: null, error: { message: "Edge Function returned a non-2xx status code", context: { json: async () => ({ error: REFUSAL, forbidden: true }) } } },
+    });
+    assert(`33.5f ${tool}: the backend's workspace refusal reaches the model verbatim`,
+      wire(refused).includes(REFUSAL) && !wire(refused).includes("non-2xx"), wire(refused).slice(0, 400));
+  }
 
   // 33.6 A Studio thread whose second read fails still runs as a Studio turn, fail-closed — never as
   // main PAIGE with every tool. Kills: dropping the preStudioSessionId fallback.

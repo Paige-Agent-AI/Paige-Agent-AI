@@ -7,12 +7,22 @@
 import React from "react";
 import { Check, X, Circle } from "lucide-react";
 import {
-  confirmPublication, plainError, preparePublication, PublishOff, PublishRefused, PublishUnverified,
-  type Prepared, type PublishAction, type PublishCheck,
+  confirmPublication, plainError, preparePublication, PublishForbidden, PublishNotDone, PublishOff, PublishRefused,
+  PublishUnverified, type Prepared, type PublishAction, type PublishCheck, type PublishForbiddenReason,
 } from "./studio-data";
 import { artifactId, hasPendingChanges, isLive, type LoadedArtifact } from "./artifact-state";
 
-type Prep = Prepared | { state: "preparing" } | { state: "error"; message: string };
+// "error": nothing armed. The message says why; the button re-prepares ("Try again" when the door
+// said nothing ran, "Check again" otherwise). A used fingerprint is never left armed.
+type Prep = Prepared | { state: "preparing" } | { state: "error"; message: string; retry?: boolean };
+
+/** Who or where the door refused, in the owner's words: a heading for the fact, a line for the way out. */
+const FORBIDDEN_COPY: Record<PublishForbiddenReason, [string, string]> = {
+  not_admin: ["Only an owner or admin can publish", "Ask this workspace's owner to publish it, or to give you admin access."],
+  no_workspace: ["Open this workspace first", "Paige publishes only in the workspace you're working in. Open the one this piece belongs to, then try again."],
+  other_workspace: ["This piece belongs to another workspace", "Switch into that workspace to publish it from here."],
+};
+const UNPUBLISH_OFF = "Unpublishing is switched off in your Trust Compass, so it stays live from here. To take it offline, turn it on in Command Center › Trust Compass.";
 
 const CHECK_FAILED = "Paige couldn't check this just now. Try again in a moment.";
 
@@ -27,7 +37,11 @@ function CheckList({ checks, label }: { checks: PublishCheck[]; label: string })
     <ul className="vs-checks" aria-label={label}>
       {checks.map((c) => (
         <li key={c.key}>
-          {c.ok ? <Check size={15} color="var(--vs-good)" aria-label="Done" /> : <X size={15} color="var(--vs-bad)" aria-label="Blocks this" />}
+          {/* A failed check that doesn't block (an alert email, a thank-you message) is advice: the
+              neutral optional mark, never a cross. */}
+          {c.ok ? <Check size={15} color="var(--vs-good)" aria-label="Done" />
+            : c.blocking ? <X size={15} color="var(--vs-bad)" aria-label="Blocks this" />
+            : <Circle size={13} color="var(--vs-faint)" aria-label="Optional" />}
           <span>{c.label}{c.detail && <small>{c.detail}</small>}</span>
         </li>
       ))}
@@ -80,7 +94,6 @@ export function PublishPanel({ artifact, onClose, onDone, onRefresh }: {
   const alive = React.useRef(true);
   const finished = React.useRef(false);
   const seq = React.useRef<Record<PublishAction, number>>({ publish: 0, unpublish: 0 });
-  const retried = React.useRef<Record<PublishAction, boolean>>({ publish: false, unpublish: false });
   const refreshRef = React.useRef(onRefresh);
   refreshRef.current = onRefresh;
   const busyRef = React.useRef(busy);
@@ -159,10 +172,10 @@ export function PublishPanel({ artifact, onClose, onDone, onRefresh }: {
       }
     } catch (e) {
       if (!alive.current) return;
-      if (e instanceof PublishRefused && !retried.current[action]) {
-        // Usually the fingerprint went stale (the piece changed, or the approval expired). Check
-        // once more; the owner's next click is a fresh approval, never an automatic retry.
-        retried.current[action] = true;
+      if (e instanceof PublishRefused) {
+        // Usually the fingerprint went stale (the piece changed, or the approval expired). The used
+        // fingerprint is never left armed: one fresh prepare for this click, and the owner's next
+        // click is a fresh approval — never an automatic retry.
         const again = await prepare(action);
         if (!alive.current) return;
         if (again.state === "ready") {
@@ -172,8 +185,15 @@ export function PublishPanel({ artifact, onClose, onDone, onRefresh }: {
         }
       } else if (e instanceof PublishOff) {
         setPreps((s) => ({ ...s, [action]: { state: "disabled", message: e.message } }));
+      } else if (e instanceof PublishForbidden) {
+        setPreps((s) => ({ ...s, [action]: { state: "forbidden", reason: e.reason, message: e.message } }));
+      } else if (e instanceof PublishNotDone) {
+        // The door says nothing ran. Disarm the fingerprint; "Try again" prepares afresh.
+        setPreps((s) => ({ ...s, [action]: { state: "error", message: e.message, retry: true } }));
       } else {
-        setError(plainError(e, action === "publish" ? "It didn't go live. Nothing changed; try again." : "It couldn't be taken down. It's still live."));
+        // It may have run (unverified, or the answer was lost). The fingerprint is spent either way.
+        const message = plainError(e, action === "publish" ? "It didn't go live. Nothing changed; try again." : "It couldn't be taken down. It's still live.");
+        setPreps((s) => ({ ...s, [action]: { state: "error", message } }));
         // The server may have changed the piece without proving it: re-read so the Studio shows
         // what is stored, not the state from before the click.
         if (e instanceof PublishUnverified) {
@@ -190,10 +210,14 @@ export function PublishPanel({ artifact, onClose, onDone, onRefresh }: {
     setError(null); setNote(null); setConfirming(true);
     if (!out || out.state === "error" || out.state === "refused") void prepare("unpublish");
   };
+  const againLabel = (p: Prep | undefined) => (p?.state === "error" && p.retry ? "Try again" : "Check again");
+  const unpublishOff = out?.state === "disabled" ? <p>{UNPUBLISH_OFF}</p> : null;
 
   // ── States that replace the panel's body ─────────────────────────────────────
-  const offBy = [pub, out].find((p) => p?.state === "disabled") as { message: string } | undefined;
-  const forbiddenBy = [pub, out].find((p) => p?.state === "forbidden") as { message: string } | undefined;
+  // Only publishing itself being off replaces the panel. Unpublishing off (a live piece prepares its
+  // unpublish on open) keeps the live view and says so where the Unpublish control is.
+  const offBy = pub?.state === "disabled";
+  const forbiddenBy = [pub, out].find((p) => p?.state === "forbidden") as { reason: PublishForbiddenReason } | undefined;
 
   if (url) {
     return (
@@ -207,12 +231,12 @@ export function PublishPanel({ artifact, onClose, onDone, onRefresh }: {
   }
   if (offBy || forbiddenBy) {
     return (
-      <div ref={panelRef} className="vs-pop" role="dialog" aria-label={offBy ? "Publishing is switched off" : "Only an owner or admin can publish"}>
-        <h2>{offBy ? "Publishing is switched off" : "Only an owner or admin can publish"}</h2>
+      <div ref={panelRef} className="vs-pop" role="dialog" aria-label={offBy ? "Publishing is switched off" : FORBIDDEN_COPY[forbiddenBy!.reason][0]}>
+        <h2>{offBy ? "Publishing is switched off" : FORBIDDEN_COPY[forbiddenBy!.reason][0]}</h2>
         {/* The heading carries the fact; the body says what to do, so nothing is said twice. */}
         <p>{offBy
           ? "Your Trust Compass doesn't let Paige publish in this workspace, so nothing goes live from here. To publish, turn it back on in Command Center › Trust Compass."
-          : "Ask this workspace's owner to publish it, or to give you admin access."}</p>
+          : FORBIDDEN_COPY[forbiddenBy!.reason][1]}</p>
         <div className="vs-pop-foot"><button ref={firstRef} type="button" className="vs-btn" onClick={onClose}>Close</button></div>
       </div>
     );
@@ -225,13 +249,18 @@ export function PublishPanel({ artifact, onClose, onDone, onRefresh }: {
       {/* The "This is live" text above already says it returns to a draft; don't say it twice. */}
       <p>{view === "live" ? "Visitors lose the link right away." : "Visitors lose the link right away, and it goes back to a draft here in the Studio."}</p>
       {out?.state === "preparing" && <Checking text="Paige is checking whether it can come down…" />}
-      {out?.state === "blocked" && <CheckList checks={out.preview.checks.filter((c) => !c.ok)} label="Why it can't come down yet" />}
+      {out?.state === "blocked" && <CheckList checks={out.preview.checks.filter((c) => !c.ok && c.blocking)} label="Why it can't come down yet" />}
       {(out?.state === "refused" || out?.state === "error") && <p className="vs-alert" role="alert">{out.message}</p>}
+      {unpublishOff}
       <div className="vs-pop-foot">
         <button ref={keepRef} type="button" className="vs-btn vs-btn-quiet" disabled={busy === "unpublish"} onClick={() => setConfirming(false)}>Keep it live</button>
-        <button type="button" className="vs-btn vs-btn-danger" disabled={out?.state !== "ready" || !!busy} onClick={() => void redeem("unpublish")}>
-          {busy === "unpublish" ? "Taking it offline…" : "Take it offline"}
-        </button>
+        {out?.state === "error" ? (
+          <button type="button" className="vs-btn" onClick={() => void prepare("unpublish")}>{againLabel(out)}</button>
+        ) : (
+          <button type="button" className="vs-btn vs-btn-danger" disabled={out?.state !== "ready" || !!busy} onClick={() => void redeem("unpublish")}>
+            {busy === "unpublish" ? "Taking it offline…" : "Take it offline"}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -248,7 +277,8 @@ export function PublishPanel({ artifact, onClose, onDone, onRefresh }: {
         <h2>This is live</h2>
         <p>Visitors see the published version. Unpublishing moves it back to a draft here; anything that depends on it stays as it is.</p>
         {kind === "funnel" && <p>Changed one of its pages or forms? Publish again to put every step's latest saved version live.</p>}
-        {!confirming && out?.state === "blocked" && <CheckList checks={out.preview.checks.filter((c) => !c.ok)} label="Why it can't come down yet" />}
+        {!confirming && out?.state === "blocked" && <CheckList checks={out.preview.checks.filter((c) => !c.ok && c.blocking)} label="Why it can't come down yet" />}
+        {!confirming && unpublishOff}
         {!confirming && (out?.state === "refused" || out?.state === "error") && (
           <p className="vs-alert" role="alert">{out.message}</p>
         )}
@@ -257,7 +287,7 @@ export function PublishPanel({ artifact, onClose, onDone, onRefresh }: {
           <div className="vs-pop-foot">
             <button ref={firstRef} type="button" className="vs-btn vs-btn-quiet" onClick={onClose}>Close</button>
             {out?.state === "error"
-              ? <button type="button" className="vs-btn" onClick={() => void prepare("unpublish")}>Check again</button>
+              ? <button type="button" className="vs-btn" onClick={() => void prepare("unpublish")}>{againLabel(out)}</button>
               : <button type="button" className="vs-btn vs-btn-danger" disabled={out?.state !== "ready" || !!busy} aria-busy={out?.state === "preparing"} onClick={startUnpublish}>Unpublish</button>}
             {kind === "funnel" && <button type="button" className="vs-btn vs-btn-gold" disabled={!!busy} onClick={() => { setError(null); setNote(null); setRepublish(true); }}>Publish again</button>}
           </div>
@@ -300,7 +330,7 @@ export function PublishPanel({ artifact, onClose, onDone, onRefresh }: {
           {live && <button type="button" className="vs-btn vs-btn-danger" disabled={!!busy} onClick={startUnpublish}>Unpublish</button>}
           <button ref={firstRef} type="button" className="vs-btn vs-btn-quiet" disabled={!!busy} onClick={republish ? () => setRepublish(false) : onClose}>{republish ? "Back" : "Not yet"}</button>
           {pub?.state === "error" ? (
-            <button type="button" className="vs-btn" onClick={() => void prepare("publish")}>Check again</button>
+            <button type="button" className="vs-btn" onClick={() => void prepare("publish")}>{againLabel(pub)}</button>
           ) : (
             <button ref={primaryRef} type="button" className="vs-btn vs-btn-gold" disabled={notPublishable || !ready || !!busy} onClick={() => void redeem("publish")}>
               {busy === "publish" ? "Publishing…" : !notPublishable && (!pub || pub.state === "preparing") ? "Checking…" : publishLabel}

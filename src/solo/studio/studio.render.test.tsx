@@ -35,6 +35,7 @@ const h = vi.hoisted(() => ({
   fetchBodies: [] as Rec[],
   versionReads: 0,
   content: null as Rec | null,
+  funnel: null as Rec | null,
   openTitle: "Client intake",
   renamed: [] as Array<[string, string]>,
   held: [] as Array<{ tool: string; summary: string; fingerprint: string }>,
@@ -79,6 +80,7 @@ vi.mock("./studio-data", async (orig) => {
     loadForm: async () => { if (!h.form) throw new Error("missing"); return h.form; },
     listVersions: async () => { h.versionReads += 1; return h.versions; },
     loadImage: async () => { if (!h.content) throw new Error("missing"); return h.content; },
+    loadFunnel: async () => { if (!h.funnel) throw new Error("missing"); return h.funnel; },
     restoreVersion: async (id: string) => { h.restored.push(id); },
   };
 });
@@ -135,7 +137,7 @@ function type(el: HTMLTextAreaElement, value: string) {
 }
 
 beforeEach(() => {
-  Object.assign(h, { sessions: [], created: [], manifest: [], form: null, versions: [], restored: [], doorCalls: [], door: happyDoor, sse: [], status: 200, fetchBodies: [], versionReads: 0, content: null, openTitle: "Client intake", renamed: [], held: [], openBrief: "An intake form for new clients" });
+  Object.assign(h, { sessions: [], created: [], manifest: [], form: null, versions: [], restored: [], doorCalls: [], door: happyDoor, sse: [], status: 200, fetchBodies: [], versionReads: 0, content: null, funnel: null, openTitle: "Client intake", renamed: [], held: [], openBrief: "An intake form for new clients" });
   backs = 0;
   host = document.createElement("div");
   document.body.appendChild(host);
@@ -290,16 +292,107 @@ describe("Vibe Studio project workspace", () => {
     expect(text()).toContain("It's live");
   });
 
-  it("a refusal that holds after the re-check shows the server's own sentence and claims nothing", async () => {
-    h.door = (body) => (body.approved_fingerprint ? http(422, { ok: false, refused: true, error: "GROWTH_PLACEHOLDER: the form still has unfinished text" }) : ready());
+  it("a refusal that holds never leaves a used fingerprint armed: every click redeems a fresh one", async () => {
+    let prepares = 0;
+    h.door = (body) => {
+      if (!body.approved_fingerprint) { prepares += 1; return ready(`fp-${prepares}`); }
+      return http(409, { ok: false, refused: true, code: "APPROVAL_NOT_AVAILABLE", error: "GROWTH_PLACEHOLDER: the form still has unfinished text" });
+    };
     await openPiece();
     await openPanel();
     await press("Publish now");
     await press("Publish now");
+    await press("Publish now");
     expect(text()).toContain("The form still has unfinished text");
     expect(text()).not.toContain("It's live");
-    // prepare, redeem, re-prepare, redeem — and no further re-prepare.
-    expect(h.doorCalls).toHaveLength(4);
+    // Each click redeems the fingerprint the refusal's re-prepare just issued — never a spent one —
+    // and nothing is redeemed without a click.
+    const redeemed = h.doorCalls.filter((c) => c.approved_fingerprint).map((c) => c.approved_fingerprint);
+    expect(redeemed).toEqual(["fp-1", "fp-2", "fp-3"]);
+    expect(h.doorCalls.map((c) => (c.approved_fingerprint ? "redeem" : "prepare"))).toEqual(["prepare", "redeem", "prepare", "redeem", "prepare", "redeem", "prepare"]);
+  });
+
+  it("an optional check that isn't met shows as optional, not as a cross that blocks", async () => {
+    h.door = () => ready("fp-1", [
+      { key: "has_questions", label: "Has 3 questions", ok: true, blocking: true },
+      { key: "alert_email", label: "No alert email", ok: false, blocking: false, detail: "Set one in Form settings." },
+      { key: "thank_you", label: "No thank-you message", ok: false, blocking: false, detail: "Visitors see a plain confirmation." },
+    ]);
+    await openPiece();
+    await openPanel();
+    const marks = [...host.querySelectorAll(".vs-checks li svg")].map((s) => s.getAttribute("aria-label"));
+    expect(marks).toEqual(["Done", "Optional", "Optional"]);
+    expect(text()).toContain("No alert email");
+    expect(text()).not.toContain("Fix what's marked");
+    expect(button("Publish now")!.disabled).toBe(false);
+  });
+
+  it("only unpublishing switched off keeps the live view, names unpublishing, and still offers Publish again", async () => {
+    h.manifest = [{ kind: "funnel", id: "u-1", title: "Free strategy call" }];
+    h.funnel = { id: "u-1", name: "Free strategy call", slug: "free-call", live: true, steps: [] };
+    h.door = (body) => (body.action === "unpublish"
+      ? http(403, { ok: false, refused: true, disabled: true, code: "autonomy_off", error: "Unpublishing is switched off for this workspace in your autonomy settings. Nothing changed." })
+      : ready());
+    h.sessions = [{ id: "s-1", title: "Free strategy call", seedBrief: null, artifacts: h.manifest, updatedAt: "2026-10-03T12:00:00Z" }];
+    await mount();
+    await act(async () => { [...host.querySelectorAll(".vs-card")][0]!.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+    await flush();
+    await act(async () => { button("Live · Manage")!.click(); });
+    await flush();
+    expect(text()).toContain("This is live");
+    expect(text()).toContain("Unpublishing is switched off in your Trust Compass");
+    expect(text()).not.toContain("Publishing is switched off");
+    expect(button("Unpublish")!.disabled).toBe(true);
+    expect(button("Publish again")!.disabled).toBe(false);
+  });
+
+  it.each([
+    ["NO_WORKSPACE", "Open one of your workspaces first, then try again.", "Open this workspace first"],
+    ["OTHER_WORKSPACE", "That isn't the workspace you're signed in to. Nothing changed.", "This piece belongs to another workspace"],
+    ["NOT_ADMIN", "Only this workspace's owner or an admin can use the Studio.", "Only an owner or admin can publish"],
+  ])("a %s refusal says what is actually wrong", async (code, error, heading) => {
+    h.door = () => http(403, { ok: false, refused: true, forbidden: true, code, error });
+    await openPiece();
+    await openPanel();
+    expect(host.querySelector(".vs-pop h2")?.textContent).toBe(heading);
+    expect(button("Publish now")).toBeUndefined();
+  });
+
+  it.each([
+    ["READINESS_UNAVAILABLE", 503, { ok: false, code: "READINESS_UNAVAILABLE", error: "I couldn't check whether it's ready just now. Nothing changed. Try again." }],
+    ["APPROVAL_STORE_UNAVAILABLE", 503, { ok: false, code: "APPROVAL_STORE_UNAVAILABLE", error: "I couldn't check that approval just now. Nothing changed." }],
+    ["DECISION_RECEIPT_FAILED", 503, { ok: false, code: "DECISION_RECEIPT_FAILED", error: "I couldn't record this decision, so I didn't go ahead. Nothing changed." }],
+    ["failed", 500, { ok: false, outcome: "failed", error: "It didn't go live. Nothing changed." }],
+  ])("a redeem the door says never ran (%s) says nothing changed, never 'may not be live', and Try again prepares afresh", async (_label, status, body) => {
+    let prepares = 0;
+    h.door = (b) => {
+      if (!b.approved_fingerprint) { prepares += 1; return ready(`fp-${prepares}`); }
+      return http(status as number, body);
+    };
+    await openPiece();
+    const readsBefore = h.versionReads;
+    await openPanel();
+    await press("Publish now");
+    expect(text()).toContain("Nothing changed");
+    expect(text()).not.toContain("may not be live");
+    expect(text()).not.toContain("It's live");
+    expect(h.versionReads).toBe(readsBefore + 0); // nothing ran, so nothing to re-read
+    // The used fingerprint is disarmed: the act button is gone until the owner asks to try again.
+    expect(button("Publish now")).toBeUndefined();
+    await press("Try again");
+    expect(h.doorCalls.at(-1)).toEqual({ action: "publish", kind: "form", id: "f-1" });
+    expect(button("Publish now")!.disabled).toBe(false);
+  });
+
+  it("a lost answer (outcome_unknown) is the one redeem failure that may say 'may not be live'", async () => {
+    h.door = (b) => (b.approved_fingerprint ? http(503, { ok: false, outcome: "outcome_unknown", error: "The answer never came back, so I can't say whether it changed. Check the project before trying again." }) : ready());
+    await openPiece();
+    await openPanel();
+    await press("Publish now");
+    expect(text()).toContain("can't say whether it changed");
+    expect(text()).not.toContain("It's live");
+    expect(button("Publish now")).toBeUndefined();
+    expect(button("Check again")).toBeDefined();
   });
 
   it("an unverified publish claims nothing and re-reads the piece", async () => {

@@ -27,9 +27,10 @@ const sessions: Record<string, unknown>[] = [
   { id: "s-funnel", title: "Free strategy call", seed_brief: "A funnel for a free consultation", artifact_refs: [], updated_at: ago(60 * 26) },
 ];
 // `?publish=` picks the publish door's answer (see `door` below): ready (default) · slow · blocked ·
-// off · forbidden · refused (stale once, then fine) · unverified · noaddress · live · live-blocked.
+// off · forbidden · no-workspace · refused (stale once, then fine) · notdone (503, nothing ran) · unverified ·
+// noaddress · optional (unmet non-blocking checks) · live · live-blocked · unpublish-off (live; only unpublish off).
 const publishMode = new URLSearchParams(window.location.search).get("publish") ?? "ready";
-const startsLive = publishMode === "live" || publishMode === "live-blocked";
+const startsLive = publishMode === "live" || publishMode === "live-blocked" || publishMode === "unpublish-off";
 let form: Record<string, unknown> = { id: "f-1", name: "New client intake", slug: "new-client-intake", status: startsLive ? "active" : "draft", schema_json: FORM_SCHEMA, draft_schema_json: FORM_SCHEMA,
   success_action_json: { message: "Thanks — we'll be in touch within one business day." }, draft_success_action_json: { message: "Thanks — we'll be in touch within one business day." },
   auto_create_deal: true, pipeline_id: "pl-1", stage_id: "st-1", notify_email: "hello@northwind.example" };
@@ -85,33 +86,45 @@ async function door(b: Record<string, unknown>) {
   await wait(220); // a real round trip, so the "checking" state is on screen for a moment
   const kind = String(b.kind);
   const isPage = kind === "page";
-  if (publishMode === "off") return httpError(403, { error: "Publishing is switched off in Paige's Trust Compass for this workspace. Turn it on in Command Center › Trust Compass to publish from here.", disabled: true });
-  if (publishMode === "forbidden") return httpError(403, { error: "Only this workspace's owner or an admin can publish.", forbidden: true });
+  // Codes, statuses and check rows as growth-publish-command/door.ts and contract.ts send them.
+  if (publishMode === "off") return httpError(403, { ok: false, refused: true, disabled: true, code: "autonomy_off", error: "Publishing is switched off for this workspace in your autonomy settings. Nothing changed." });
+  if (publishMode === "unpublish-off" && b.action === "unpublish") return httpError(403, { ok: false, refused: true, disabled: true, code: "autonomy_off", error: "Unpublishing is switched off for this workspace in your autonomy settings. Nothing changed." });
+  if (publishMode === "forbidden") return httpError(403, { ok: false, refused: true, forbidden: true, code: "NOT_ADMIN", error: "Only this workspace's owner or an admin can use the Studio." });
+  if (publishMode === "no-workspace") return httpError(403, { ok: false, refused: true, forbidden: true, code: "NO_WORKSPACE", error: "Open one of your workspaces first, then try again." });
   if (!b.approved_fingerprint) {
     if (publishMode === "slow") await new Promise(() => {});
     prepares += 1;
     if (b.action === "unpublish") {
       const blockedOut = publishMode === "live-blocked";
-      return { data: { approval_required: true, ...(blockedOut ? {} : { fingerprint: `fp-out-${prepares}` }), preview: { kind, id: b.id, title: "New client intake", action: "unpublish",
-        checks: blockedOut ? [{ key: "funnels", label: "A live funnel uses this form", ok: false, detail: "Take “Free strategy call” offline first, then unpublish this." }] : [] } }, error: null };
+      return { data: { ok: false, approval_required: true, ...(blockedOut ? {} : { fingerprint: `fp-out-${prepares}` }), preview: { kind, id: b.id, title: "New client intake", action: "unpublish",
+        checks: [
+          { key: "is_live", label: "This form is live now", ok: true, blocking: true },
+          blockedOut
+            ? { key: "not_in_use", label: "A live funnel collects through this form", ok: false, blocking: true, detail: "Take “Free strategy call” offline first, then unpublish this." }
+            : { key: "not_in_use", label: "Nothing live depends on this form", ok: true, blocking: true },
+        ] } }, error: null };
     }
     const blocked = publishMode === "blocked";
+    const optional = publishMode === "optional";
     const checks = isPage
-      ? [{ key: "sections", label: "Has 2 sections", ok: true }, { key: "placeholders", label: "No unfinished text", ok: true }]
+      ? [{ key: "has_sections", label: "Has 2 sections", ok: true, blocking: true }, { key: "no_placeholders", label: "No unfinished text", ok: true, blocking: true }]
       : [
-        { key: "questions", label: "Has 6 questions", ok: true },
-        { key: "email", label: "Asks for an email, so each request becomes a contact", ok: true },
-        { key: "route", label: "Requests go to Sales → New lead", ok: true },
-        { key: "alert", label: "Each request emails hello@northwind.example", ok: true },
-        blocked
-          ? { key: "placeholders", label: "Has unfinished text", ok: false, detail: "The thank-you message still says “[your name]”." }
-          : { key: "placeholders", label: "No unfinished text", ok: true },
+        { key: "has_questions", label: blocked ? "Has no questions yet" : "Has 6 questions", ok: !blocked, blocking: true },
+        { key: "asks_email", label: "Asks for an email, so each request becomes a contact", ok: true, blocking: false },
+        { key: "routes_to_pipeline", label: "Requests go to your pipeline", ok: true, blocking: false },
+        optional
+          ? { key: "alert_email", label: "No alert email", ok: false, blocking: false, detail: "Set one in Form settings." }
+          : { key: "alert_email", label: "Each request emails hello@northwind.example", ok: true, blocking: false },
+        optional
+          ? { key: "thank_you", label: "No thank-you message", ok: false, blocking: false, detail: "Visitors see a plain confirmation." }
+          : { key: "thank_you", label: "Thank-you message is written", ok: true, blocking: false },
       ];
     return { data: { approval_required: true, ...(blocked ? {} : { fingerprint: `fp-${prepares}` }), preview: { kind, id: b.id, title: isPage ? "Referral workshop" : "New client intake", action: "publish",
       address: isPage ? "/p/northwind-studio/referral-workshop" : "/form/f-1", checks } }, error: null };
   }
   redeems += 1;
-  if (publishMode === "refused" && redeems === 1) return httpError(409, { ok: false, refused: true, error: "That approval expired before it was used." });
+  if (publishMode === "refused" && redeems === 1) return httpError(409, { ok: false, refused: true, outcome: "refused", code: "APPROVAL_NOT_AVAILABLE", error: "That approval expired before it was used." });
+  if (publishMode === "notdone") return httpError(503, { ok: false, code: "READINESS_UNAVAILABLE", error: "I couldn't check whether it's ready just now. Nothing changed. Try again." });
   if (publishMode === "unverified") return { data: { ok: false, outcome: "unverified", error: "The publish ran, but Paige couldn't confirm a public address, so it may not be live. Check the project before sharing a link." }, error: null };
   if (b.action === "unpublish") { form = { ...form, status: "draft" }; return { data: { ok: true, action: "unpublish", kind, id: b.id, status: "draft" }, error: null }; }
   if (!isPage) form = { ...form, status: "active" };

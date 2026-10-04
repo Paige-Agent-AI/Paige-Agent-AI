@@ -384,27 +384,39 @@ export type DoorKind = "page" | "form" | "funnel" | "image";
 /** The Studio calls a made image "content"; the door calls it "image". */
 export const doorKind = (kind: ArtifactKind): DoorKind => (kind === "content" ? "image" : kind);
 
-export interface PublishCheck { key: string; label: string; ok: boolean; detail?: string }
+/** One server readiness check. `blocking: false` is advice (an alert email, a thank-you message):
+ *  it never stops the act, and the panel shows it as optional, not as a cross. */
+export interface PublishCheck { key: string; label: string; ok: boolean; blocking: boolean; detail?: string }
 export interface PublishPreview { title: string | null; address: string | null; checks: PublishCheck[] }
+
+/** Why the door refused who or where (studio-caller's reasons). */
+export type PublishForbiddenReason = "not_admin" | "no_workspace" | "other_workspace";
 
 export type Prepared =
   /** Nothing blocks: the owner's click redeems this fingerprint. */
   | { state: "ready"; fingerprint: string; preview: PublishPreview }
-  /** A check failed, so the server issued no fingerprint. */
+  /** A blocking check failed, so the server issued no fingerprint. */
   | { state: "blocked"; preview: PublishPreview }
-  /** Publishing is switched off in Paige's autonomy settings. */
+  /** This act (publish, or unpublish) is switched off in Paige's autonomy settings. */
   | { state: "disabled"; message: string }
-  /** The signed-in person isn't this workspace's owner or an admin. */
-  | { state: "forbidden"; message: string }
+  /** Not this workspace's owner or admin, no workspace open, or another workspace's piece. */
+  | { state: "forbidden"; reason: PublishForbiddenReason; message: string }
   /** The server refused outright (not publishable, not found…), in its own words. */
   | { state: "refused"; message: string };
 
 export interface PublicationResult { action: PublishAction; status: string | null; publishedAt: string | null; url: string | null }
 
-/** The door refused the redeem, often because the fingerprint went stale. The panel re-prepares once. */
+/** The door refused the redeem, often because the fingerprint went stale. The panel re-prepares. */
 export class PublishRefused extends Said {}
-/** Publishing is switched off in Paige's autonomy settings. */
+/** This act is switched off in Paige's autonomy settings. */
 export class PublishOff extends Said {}
+/** Who or where was refused on the redeem. */
+export class PublishForbidden extends Said {
+  constructor(public reason: PublishForbiddenReason, message: string) { super(message); }
+}
+/** The door says nothing ran (a readiness or approval-store outage, a decision it couldn't record,
+ *  a database failure it caught): nothing changed, and trying again is safe. Never "may not be live". */
+export class PublishNotDone extends Said {}
 
 const OFF_FALLBACK = "Publishing is switched off in Paige's Trust Compass, so nothing goes live from here. Turn it on in Command Center › Trust Compass.";
 const FORBIDDEN_FALLBACK = "Only this workspace's owner or an admin can publish.";
@@ -412,6 +424,23 @@ const CHECK_FAILED = "Paige couldn't check this just now. Try again in a moment.
 const unverifiedFallback = (action: PublishAction) => action === "publish"
   ? "The publish didn't confirm a public address, so it may not be live. Check the project before sharing a link."
   : "Taking it offline didn't confirm, so it may still be live. Check the project before you rely on it.";
+const notDoneFallback = (action: PublishAction) => action === "publish"
+  ? "It didn't go live. Nothing changed. Try again."
+  : "It couldn't be taken down. Nothing changed; it's still live. Try again.";
+
+// The door's codes for an answer where nothing ran (growth-publish-command/door.ts): it stopped
+// before the claim, or the publish RPC raised an error it caught (`outcome: "failed"`). Only a lost
+// answer (`outcome_unknown`), an unreadable reply, `outcome: "unverified"` and the door's own
+// catch-all (`UNEXPECTED`, which can follow the RPC) may say "may not be live".
+const NOTHING_RAN = new Set([
+  "READINESS_UNAVAILABLE", "APPROVAL_STORE_UNAVAILABLE", "DECISION_RECEIPT_FAILED", "DECISION_INCONSISTENT",
+  "CAPABILITY_NOT_GOVERNED", "LOOKUP_FAILED", "UNAUTHENTICATED", "GROWTH_PUBLISH_COMMAND_INVALID", "METHOD_NOT_ALLOWED",
+]);
+const FORBIDDEN_REASONS = new Set<PublishForbiddenReason>(["not_admin", "no_workspace", "other_workspace"]);
+function forbiddenReason(code: unknown): PublishForbiddenReason {
+  const r = typeof code === "string" ? (code.toLowerCase() as PublishForbiddenReason) : "not_admin";
+  return FORBIDDEN_REASONS.has(r) ? r : "not_admin";
+}
 
 /** A server sentence as the owner reads it: trimmed, any machine-code prefix dropped. */
 function serverSentence(raw: unknown, fallback: string): string {
@@ -445,7 +474,8 @@ function readPreview(raw: unknown): PublishPreview {
     const o = c as Record<string, unknown>;
     const label = str(o.label);
     if (!label) continue;
-    checks.push({ key: str(o.key) ?? label, label, ok: o.ok === true, detail: str(o.detail) ?? undefined });
+    // Absent means blocking: a row the door didn't mark as advice is never shown as optional.
+    checks.push({ key: str(o.key) ?? label, label, ok: o.ok === true, blocking: o.blocking !== false, detail: str(o.detail) ?? undefined });
   }
   return { title: str(p.title), address: str(p.address), checks };
 }
@@ -457,7 +487,7 @@ export async function preparePublication(kind: ArtifactKind, id: string, action:
   const { data, transport } = await callDoor({ action, kind: doorKind(kind), id });
   if (transport || !data) throw new Said(CHECK_FAILED);
   if (data.disabled === true) return { state: "disabled", message: serverSentence(data.error, OFF_FALLBACK) };
-  if (data.forbidden === true) return { state: "forbidden", message: serverSentence(data.error, FORBIDDEN_FALLBACK) };
+  if (data.forbidden === true) return { state: "forbidden", reason: forbiddenReason(data.code), message: serverSentence(data.error, FORBIDDEN_FALLBACK) };
   if (data.approval_required === true) {
     const preview = readPreview(data.preview);
     const fingerprint = str(data.fingerprint);
@@ -466,6 +496,7 @@ export async function preparePublication(kind: ArtifactKind, id: string, action:
   if (data.ok === true || data.outcome === "unverified") {
     throw new PublishUnverified("Paige answered without waiting for your click, so this panel can't confirm what happened. Check the project before sharing a link.");
   }
+  if (typeof data.code === "string" && NOTHING_RAN.has(data.code)) throw new Said(serverSentence(data.error, CHECK_FAILED));
   if (data.refused === true || typeof data.error === "string") {
     return { state: "refused", message: serverSentence(data.error, "Paige can't do that for this piece.") };
   }
@@ -483,10 +514,15 @@ export async function confirmPublication(kind: ArtifactKind, id: string, action:
     if (action === "publish" && !url) throw new PublishUnverified(unverifiedFallback(action));
     return { action, status: str(data.status), publishedAt: str(data.published_at), url };
   }
-  if (data.outcome === "unverified") throw new PublishUnverified(serverSentence(data.error, unverifiedFallback(action)));
+  // It may have run: the readback didn't prove it, or the answer was lost.
+  if (data.outcome === "unverified" || data.outcome === "outcome_unknown") throw new PublishUnverified(serverSentence(data.error, unverifiedFallback(action)));
   if (data.disabled === true) throw new PublishOff(serverSentence(data.error, OFF_FALLBACK));
-  if (data.forbidden === true) throw new Said(serverSentence(data.error, FORBIDDEN_FALLBACK));
-  // A fresh proposal in reply means the fingerprint no longer matched what is saved.
+  if (data.forbidden === true) throw new PublishForbidden(forbiddenReason(data.code), serverSentence(data.error, FORBIDDEN_FALLBACK));
+  // Nothing ran: say so, plainly, and let the owner try again.
+  if (data.outcome === "failed" || (typeof data.code === "string" && NOTHING_RAN.has(data.code))) {
+    throw new PublishNotDone(serverSentence(data.error, notDoneFallback(action)));
+  }
+  // A refusal, or a fresh proposal in reply: the fingerprint no longer matched what is saved.
   if (data.refused === true || data.approval_required === true) {
     throw new PublishRefused(serverSentence(data.error, "Something changed since this opened."));
   }

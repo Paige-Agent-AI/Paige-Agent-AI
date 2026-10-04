@@ -45,7 +45,7 @@ describe("preparePublication — opening the panel asks, never acts", () => {
     const { preparePublication } = await import("./studio-data");
     await expect(preparePublication("content", "c-1", "publish")).resolves.toEqual({
       state: "ready", fingerprint: "fp-1",
-      preview: { title: "Hero", address: "https://cdn.example/h.png", checks: [{ key: "file", label: "The image file is ready", ok: true, detail: undefined }] },
+      preview: { title: "Hero", address: "https://cdn.example/h.png", checks: [{ key: "file", label: "The image file is ready", ok: true, blocking: true, detail: undefined }] },
     });
     expect(invoke).toHaveBeenCalledWith("growth-publish-command", { body: { action: "publish", kind: "image", id: "c-1" } });
   });
@@ -60,7 +60,7 @@ describe("preparePublication — opening the panel asks, never acts", () => {
     invoke.mockResolvedValueOnce(http(403, { error: "Publishing is off.", disabled: true }));
     await expect(preparePublication("form", "f-1", "publish")).resolves.toEqual({ state: "disabled", message: "Publishing is off." });
     invoke.mockResolvedValueOnce(http(403, { error: "Owners and admins only.", forbidden: true }));
-    await expect(preparePublication("form", "f-1", "publish")).resolves.toEqual({ state: "forbidden", message: "Owners and admins only." });
+    await expect(preparePublication("form", "f-1", "publish")).resolves.toEqual({ state: "forbidden", reason: "not_admin", message: "Owners and admins only." });
     invoke.mockResolvedValueOnce(http(404, { ok: false, refused: true, error: "GROWTH_NOT_FOUND: that form isn't in this workspace" }));
     await expect(preparePublication("form", "f-1", "publish")).resolves.toEqual({ state: "refused", message: "That form isn't in this workspace" });
   });
@@ -103,5 +103,55 @@ describe("confirmPublication — the click redeems; live only on the door's read
     invoke.mockResolvedValue(ok({ ok: true, action: "unpublish", kind: "funnel", id: "u-1", status: "draft" }));
     const { confirmPublication } = await import("./studio-data");
     await expect(confirmPublication("funnel", "u-1", "unpublish", "fp")).resolves.toMatchObject({ action: "unpublish", status: "draft", url: null });
+  });
+});
+
+describe("review fixes — the door's own codes read truthfully (growth-publish-command/door.ts)", () => {
+  beforeEach(() => invoke.mockReset());
+  it("carries each check's blocking flag; a check the door didn't mark stays blocking", async () => {
+    invoke.mockResolvedValue(ok({ approval_required: true, fingerprint: "0123456789abcdef", preview: { checks: [
+      { key: "has_questions", label: "Has 3 questions", ok: true, blocking: true },
+      { key: "alert_email", label: "No alert email", ok: false, blocking: false },
+      { key: "legacy", label: "Unmarked", ok: false },
+    ] } }));
+    const { preparePublication } = await import("./studio-data");
+    const r = await preparePublication("form", "f-1", "publish");
+    expect(r.state === "ready" && r.preview.checks.map((c) => [c.key, c.blocking])).toEqual([["has_questions", true], ["alert_email", false], ["legacy", true]]);
+  });
+  it("names the forbidden reason on prepare and redeem", async () => {
+    const { preparePublication, confirmPublication, PublishForbidden } = await import("./studio-data");
+    for (const [code, reason] of [["NO_WORKSPACE", "no_workspace"], ["OTHER_WORKSPACE", "other_workspace"], ["NOT_ADMIN", "not_admin"], [undefined, "not_admin"]] as const) {
+      invoke.mockResolvedValueOnce(http(403, { ok: false, refused: true, forbidden: true, code, error: "x" }));
+      await expect(preparePublication("form", "f-1", "publish")).resolves.toMatchObject({ state: "forbidden", reason });
+      invoke.mockResolvedValueOnce(http(403, { ok: false, refused: true, forbidden: true, code, error: "x" }));
+      const e = await confirmPublication("form", "f-1", "publish", "fp").catch((x) => x);
+      expect(e).toBeInstanceOf(PublishForbidden);
+      expect(e.reason).toBe(reason);
+    }
+  });
+  it("a redeem the door says never ran is PublishNotDone, not PublishUnverified", async () => {
+    const { confirmPublication, PublishNotDone } = await import("./studio-data");
+    for (const reply of [
+      http(503, { ok: false, code: "READINESS_UNAVAILABLE", error: "I couldn't check whether it's ready just now. Nothing changed. Try again." }),
+      http(503, { ok: false, code: "APPROVAL_STORE_UNAVAILABLE", error: "I couldn't check that approval just now. Nothing changed." }),
+      http(503, { ok: false, code: "DECISION_RECEIPT_FAILED", error: "I couldn't record this decision, so I didn't go ahead. Nothing changed." }),
+      http(503, { ok: false, refused: true, code: "CAPABILITY_NOT_GOVERNED", error: "This can't be done from here yet. Nothing changed." }),
+      http(500, { ok: false, outcome: "failed", error: "It didn't go live. Nothing changed." }),
+    ]) {
+      invoke.mockResolvedValueOnce(reply);
+      await expect(confirmPublication("page", "p-1", "publish", "fp")).rejects.toBeInstanceOf(PublishNotDone);
+    }
+  });
+  it("only a lost answer, an unreadable reply, unverified, or the door's catch-all may say 'may not be live'", async () => {
+    const { confirmPublication, PublishUnverified } = await import("./studio-data");
+    for (const reply of [
+      http(503, { ok: false, outcome: "outcome_unknown", error: "The answer never came back." }),
+      ok({ ok: false, outcome: "unverified", error: "It ran, unconfirmed." }),
+      http(500, { ok: false, code: "UNEXPECTED", error: "Something went wrong on our side. Check the project before trying again." }),
+      { data: null, error: { name: "FunctionsFetchError", message: "Failed to send a request" } },
+    ]) {
+      invoke.mockResolvedValueOnce(reply);
+      await expect(confirmPublication("page", "p-1", "publish", "fp")).rejects.toBeInstanceOf(PublishUnverified);
+    }
   });
 });

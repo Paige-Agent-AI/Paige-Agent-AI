@@ -104,6 +104,9 @@ if (mode === "after") {
     ["refused", "state-stale-recheck", "Publish now"],
     ["unverified", "state-unverified", "Publish now"],
     ["noaddress", "state-noaddress", "Publish now"],
+    ["optional", "state-optional", null],
+    ["no-workspace", "state-no-workspace", null],
+    ["notdone", "state-notdone", "Publish now"],
   ]) {
     const page = await open(`theme=light&publish=${m}`, 1366, 768);
     await openPanel(page);
@@ -126,6 +129,15 @@ if (mode === "after") {
     await page.waitForTimeout(400);
     results.push({ name: "live-blocked", text: await panelText(page), unpublishDisabled: await page.getByRole("button", { name: "Unpublish" }).isDisabled(), doorCalls: await doorCalls(page) });
     await shoot(page, "state-live-blocked-1366x768");
+    await page.close();
+  }
+  // Live, with only unpublishing switched off: the live view stays and says so at the Unpublish control.
+  {
+    const page = await open("theme=light&publish=unpublish-off", 1366, 768);
+    await openPanel(page, "Live · Manage");
+    await page.waitForTimeout(400);
+    results.push({ name: "unpublish-off", text: await panelText(page), unpublishDisabled: await page.getByRole("button", { name: "Unpublish" }).isDisabled(), heading: await page.textContent(".vs-pop h2"), doorCalls: await doorCalls(page) });
+    await shoot(page, "state-unpublish-off-1366x768");
     await page.close();
   }
   // Live → Unpublish → "Take it offline?" inline → redeemed.

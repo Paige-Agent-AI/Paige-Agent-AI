@@ -279,6 +279,14 @@ All five recommendations were approved as written:
 
 Slice S2 ("Marketing in place") is the first implementation.
 
+**D1 overruled by the owner (2026-10-04):** "this is the actual subtab list that I want for marketing".
+Marketing now carries nine tabs: Overview · Campaigns · Audience · Content · Social · Email · Ads ·
+Lead capture · Analytics. Audience, Content, Email and Ads are marked **Planned** and show only real
+existing data (see `docs/evidence/ui-delivery/solo-marketing-planned-tabs.md`). The "What would make it
+real" column in §4 still stands for each: those are the backend decisions that turn Planned into built.
+The fit cost measured in §4 applies: nine tabs scroll the strip at PAIGE-docked widths, and the selected
+tab is always brought into view.
+
 ## Next phase: Marketing execution architecture (INT-298), after S2–S5
 
 The owner set the backend direction on 2026-10-03 and preserved it as **INT-298**. It is recorded

@@ -361,8 +361,7 @@
    Chart colours are the --chart-* tokens in solo-chart-tokens.css. Gold stays on the act only. */
 .mo{gap:16px}
 .mo-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:4px 2px 2px}
-.mo-head h2{font-size:clamp(22px,2.6cqi,28px);font-weight:650;letter-spacing:-.03em;line-height:1.15;color:var(--ink);text-wrap:balance}
-.mo-head p{margin-top:5px;font-size:13.5px;color:var(--ink-2)}
+.mo-head p{font-size:13.5px;color:var(--ink-2)}
 .mo-head-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .mo-head-actions .campaigns-segmented button{padding:6px 11px;font-size:12px}
 .mo-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
@@ -482,3 +481,37 @@
 .mo-grid-b>*{animation-delay:.22s}.mo-grid-b>:nth-child(2){animation-delay:.26s}.mo-grid-b>:nth-child(3){animation-delay:.3s}
 .mo-next{animation-delay:.34s}
 @media(prefers-reduced-motion:reduce){.mo-stats>*,.mo-grid>*,.mo-next{animation:none}.mo-keys button,.mo-rank button,.mo-briefs button,.mo-ask{transition:none}}
+
+/* ── Planned Marketing tabs: Audience · Content · Email · Ads (marketing-planned.tsx) ──
+   "Planned" is said quietly, in a dashed outline: it is a state, not an act, so it never takes
+   gold, and it must not read as the violet "Awaiting review" that asks for a decision. */
+.campaigns-tab-planned{flex:none;padding:1px 6px;border:1px dashed var(--line);border-radius:999px;font-size:10.5px;font-weight:500;line-height:1.4;color:var(--ink-2)}
+.mk-flag.is-planned{min-width:0;background:transparent;border:1px dashed var(--line);color:var(--ink-2)}
+.mp-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:4px 2px 2px}
+.mp-head h2{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:clamp(20px,2.4cqi,26px);font-weight:650;letter-spacing:-.03em;line-height:1.15;color:var(--ink)}
+.mp-head h2 .mk-flag{letter-spacing:0}
+.mp-head p{margin-top:6px;max-width:68ch;font-size:13.5px;line-height:1.5;color:var(--ink-2)}
+.mp-head-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.mp-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.mp-grid.mp-grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.mp-list{list-style:none;margin:0;padding:0;display:grid}
+.mp-list li{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-top:1px solid var(--line-soft)}
+.mp-list li:first-child{border-top:0;padding-top:2px}
+.mp-list .mk-flag{min-width:96px}
+.mp-list-main{min-width:0;display:grid;gap:2px}
+.mp-list-main strong{font-size:13px;font-weight:600;color:var(--ink);overflow-wrap:anywhere}
+.mp-list-main small{font-size:12px;line-height:1.45;color:var(--ink-2)}
+.mp-rank-row{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(60px,1fr) 4ch;align-items:center;gap:12px;font-size:12.8px;color:var(--ink)}
+.mp-facts{margin:0;display:grid}
+.mp-facts>div{display:grid;grid-template-columns:9ch minmax(0,1fr);gap:12px;align-items:baseline;padding:9px 0;border-top:1px solid var(--line-soft)}
+.mp-facts>div:first-child{border-top:0;padding-top:0}
+.mp-facts dt{font-size:12.5px;color:var(--ink-2)}
+.mp-facts dd{margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--ink);overflow-wrap:anywhere}
+.mp-facts dd .mk-flag{min-width:0}
+.mp-facts dd small{font-size:12px;color:var(--ink-2)}
+.mp-skeleton{padding:0}
+.mp-notyet .mk-flag{min-width:0;padding:0 8px}
+@container (max-width:1000px){.mp-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.mp-grid>.mo-panel:last-child:nth-child(odd){grid-column:1/-1}}
+@container (max-width:720px){.mp-grid,.mp-grid.mp-grid-2{grid-template-columns:minmax(0,1fr)}.mp-head{align-items:flex-start}}
+@container (max-width:460px){.mp-list li{flex-direction:column;gap:6px}.mp-list .mk-flag{min-width:0}}
+@media(forced-colors:active){.campaigns-tab-planned,.mk-flag.is-planned{border:1px dashed CanvasText}}

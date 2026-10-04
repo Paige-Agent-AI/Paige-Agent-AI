@@ -33,20 +33,23 @@ const paigeChatSurface = readFileSync(resolve(process.cwd(), "src/components/das
 const paigeMcp = readFileSync(resolve(process.cwd(), "supabase/functions/paige-mcp/index.ts"), "utf8");
 
 describe("Solo Campaigns approved contract", () => {
-  it("renders the approved five Marketing tabs after commercial cutover", () => {
-    // Owner ruling 2026-10-03 (docs/product/solo-marketing-ia-proposal.md): five Marketing tabs, then
-    // Offers · Sales · Pipeline, which stay reachable here only until the top-level Sales destination lands.
+  it("renders the owner's nine Marketing tabs, four of them marked Planned", () => {
+    // Owner ruling 2026-10-04: "these are the ones that I want dedicated to marketing". Audience,
+    // Content, Email and Ads are marked Planned until the feature each name promises exists.
     const tabBlock = /const tabs=\[([\s\S]*?)\];/.exec(source)?.[1] ?? "";
     expect([...tabBlock.matchAll(/\['([^']+)','([^']+)'/g)].map((match) => match.slice(1, 3))).toEqual([
       ["overview", "Overview"],
       ["campaigns", "Campaigns"],
-      ["capture", "Lead capture"],
+      ["audience", "Audience"],
+      ["content", "Content"],
       ["social", "Social"],
+      ["email", "Email"],
+      ["ads", "Ads"],
+      ["capture", "Lead capture"],
       ["analytics", "Analytics"],
     ]);
+    expect([...tabBlock.matchAll(/\['([^']+)','[^']+',\(\)=>[^,\]]+,'planned'\]/g)].map((match) => match[1])).toEqual(["audience", "content", "email", "ads"]);
     expect([...tabBlock.matchAll(/\['([^']+)','[^']+',\(\)=>[^,\]]+,'sales'\]/g)].map((match) => match[1])).toEqual([]);
-    // No tab for channels that have no source in this workspace.
-    expect(tabBlock).not.toMatch(/'Audience'|'Content'|'Email'|'Ads'/);
     expect(tabBlock).not.toMatch(/Active|Brand Kit|Pages|Funnels|Forms|Builders/);
   });
 

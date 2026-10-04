@@ -29,7 +29,7 @@ const FRAMES = [
   { name: "900x1000", width: 900, height: 1000 },
 ];
 const POSTURES = ["docked", "wide", "closed"];
-const TABS = ["overview", "campaigns", "lead-capture", "analytics"];
+const TABS = ["overview", "campaigns", "audience", "content", "email", "ads", "lead-capture", "analytics"];
 
 // Same model as campaigns-nav-fit-drive.mjs (TenantCommandCenterShell.tsx:483, verified there).
 function contentWidth(viewport, posture) {
@@ -105,7 +105,7 @@ async function measure(page) {
         const lum = ({ r, g, b }) => [r, g, b].map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }).reduce((t, v, i) => t + v * [0.2126, 0.7152, 0.0722][i], 0);
         const bgOf = (el) => { for (let n = el; n; n = n.parentElement) { const c = rgb(getComputedStyle(n).backgroundColor); if (c.a > 0.9) return c; } return { r: 255, g: 255, b: 255 }; };
         let worst = { ratio: 99, what: "" };
-        for (const el of document.querySelectorAll(".mk-flag, .mk-row-main small, .mk-stat dt, .mk-stat span, .mk-view .mk-link, .mk-view .btn-g, .mo-stat h3, .mo-delta, .mo .mo-link, .mo-keys span, .mo-keys em, .mo-note, .mo-panel-head p, .mo-head p, .mo-task-main small, .mo-rank-name, .mo-next p, .mo-donut-center span, .mo-ask, .mo-readout")) {
+        for (const el of document.querySelectorAll(".mk-flag, .mk-row-main small, .mk-stat dt, .mk-stat span, .mk-view .mk-link, .mk-view .btn-g, .mo-stat h3, .mo-delta, .mo .mo-link, .mo-keys span, .mo-keys em, .mo-note, .mo-panel-head p, .mo-head p, .mp-head p, .mp-list-main small, .mp-facts dt, .mp-facts dd small, .campaigns-tab-planned, .mo-task-main small, .mo-rank-name, .mo-next p, .mo-donut-center span, .mo-ask, .mo-readout")) {
           const fg = rgb(getComputedStyle(el).color), bg = bgOf(el);
           const [hi, lo] = [lum(fg), lum(bg)].sort((x, y) => y - x);
           const ratio = (hi + 0.05) / (lo + 0.05);
@@ -115,7 +115,7 @@ async function measure(page) {
       })(),
       // The Vibe Studio launcher must contain its own label (a collapsed launcher shows only the icon).
       launcherSpills: (() => { const b = document.querySelector(".campaigns-studio"); return b ? b.scrollWidth > b.clientWidth + 1 : false; })(),
-      heading: document.querySelector(".campaigns-scroll h2, .campaigns-scroll .mk-command p, .campaigns-scroll .mo-head h2")?.textContent?.trim().slice(0, 60) ?? "",
+      heading: document.querySelector(".campaigns-scroll h2, .campaigns-scroll .mk-command p, .campaigns-scroll .mo-head p, .campaigns-scroll .mp-head h2")?.textContent?.trim().slice(0, 60) ?? "",
     };
   });
 }
@@ -177,7 +177,7 @@ async function main() {
     // States, at the ordinary 1366 docked session, both themes.
     for (const theme of ["light", "dark"]) {
       for (const mode of ["first", "loading", "error", "readonly"]) {
-        for (const tab of ["overview", "lead-capture", "analytics"]) {
+        for (const tab of ["overview", "lead-capture", "analytics", "audience", "content", "email", "ads"]) {
           const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
           const page = await ctx.newPage();
           const errors = [];

@@ -195,8 +195,14 @@ export const SOLO_BRANCHES: Branch[] = [
     subtabs: [
       { slug: "overview", key: "overview", label: "Overview" },
       { slug: "campaigns", aliases: ["active"], key: "campaigns", label: "Campaigns" },
-      { slug: "lead-capture", aliases: ["brand-kit", "pages", "funnels", "forms", "builders"], key: "capture", label: "Lead capture" },
+      // Audience, Content, Email and Ads: the owner's Marketing list (2026-10-04). Each is marked
+      // Planned in the strip until the feature its name promises exists (src/solo/marketing-planned.tsx).
+      { slug: "audience", key: "audience", label: "Audience" },
+      { slug: "content", key: "content", label: "Content" },
       { slug: "social", key: "social", label: "Social" },
+      { slug: "email", key: "email", label: "Email" },
+      { slug: "ads", key: "ads", label: "Ads" },
+      { slug: "lead-capture", aliases: ["brand-kit", "pages", "funnels", "forms", "builders"], key: "capture", label: "Lead capture" },
       { slug: "analytics", aliases: ["performance"], key: "analytics", label: "Analytics" },
       { slug: "catalog", key: "catalog", label: "Offers", hidden: true },
       { slug: "sales", key: "sales", label: "Sales", hidden: true },

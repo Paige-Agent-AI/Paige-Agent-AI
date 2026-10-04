@@ -13,9 +13,9 @@ import { PipelineDelete } from "./PipelineDelete";
 import { PipelineCommandDesk } from "./PipelineCommandDesk";
 import CampaignOverview from "./campaign-desk";
 import { useSoloCampaignBriefs } from "./useSoloCampaignBriefs";
-import { useSoloOwner } from "./data/useSoloOwner";
-import { PERIODS, SUBMISSION_READ_LIMIT, deriveMarketingOverview, isBlockedBrief, salutationFor, submissionsInPeriod } from "./marketing-overview-model";
+import { PERIODS, SUBMISSION_READ_LIMIT, deriveMarketingOverview, isBlockedBrief, submissionsInPeriod } from "./marketing-overview-model";
 import { FormIntakePanel } from "./form-intake";
+import { MarketingAds, MarketingAudience, MarketingContent, MarketingEmail } from "./marketing-planned";
 import "./solo-chart-tokens.css";
 import "./solo-campaigns.css";
 
@@ -403,7 +403,6 @@ function MarketingOverview({ data, onGo, onCreateBrief, salesInShell = false }) 
   const navigate = useNavigate();
   const params = useParams();
   const briefsState = useSoloCampaignBriefs();
-  const { owner } = useSoloOwner();
   const briefs = briefsState.briefs || NO_ROWS;
   const phase = combinedPhase(data.phase, briefsState.phase);
   const retry = () => { data.retry?.(); briefsState.retry?.(); };
@@ -420,8 +419,6 @@ function MarketingOverview({ data, onGo, onCreateBrief, salesInShell = false }) 
   const firstUse = phase === "ready" && !briefs.length && !data.artifacts.length && !drafts.length && !submissions.length;
   const canCreate = briefsState.canManage;
   const create = canCreate ? <button className="btn btn-g" onClick={onCreateBrief}><Ic.plus size={14}/>Create campaign brief</button> : null;
-  const firstName = owner?.name ? owner.name.trim().split(/\s+/)[0] : "";
-  const greeting = `${salutationFor(Date.now())}${firstName ? `, ${firstName}` : ""}`;
   const leads = countLabel(model.leads.count, model.capped);
   const opportunities = countLabel(model.opportunities.count, model.capped);
 
@@ -475,7 +472,7 @@ function MarketingOverview({ data, onGo, onCreateBrief, salesInShell = false }) 
       <div className="mk-actions">{create}<StudioLauncher/></div>
     </section> : <>
       <header className="mo-head">
-        <div><h2>{greeting}</h2><p>Here’s what needs your attention and how Marketing is performing.</p></div>
+        <p>Here’s what needs your attention and how Marketing is performing.</p>
         <div className="mo-head-actions">
           <div className="campaigns-segmented" role="group" aria-label="Period">{PERIODS.map((days) => <button key={days} aria-pressed={periodDays === days} onClick={() => setPeriodDays(days)}>Last {days} days</button>)}</div>
           {create}
@@ -663,7 +660,7 @@ function CampaignTabs({ tabs, current, setCurrent }) {
     pendingCampaignTabFocus=nextKey;
     setCurrent(nextKey);
   };
-  return <div className="campaigns-nav"><div className="campaigns-tabs" role="tablist" aria-label="Marketing views">{tabs.map((tab,index)=><React.Fragment key={tab[0]}>{tab[3]==="sales"&&tabs[index-1]?.[3]!=="sales"&&<span className="campaigns-tab-divider" aria-hidden="true" title="Moving to Sales"/>}<button id={`campaigns-tab-${tab[0]}`} aria-controls="campaigns-tabpanel" role="tab" aria-selected={current===tab[0]} tabIndex={current===tab[0]?0:-1} onClick={()=>setCurrent(tab[0])} onKeyDown={(event)=>onKeyDown(event,index)}>{tab[2]()}<span>{tab[1]}</span></button></React.Fragment>)}</div><button className="btn btn-s btn-p campaigns-studio" title="Vibe Studio" data-solo-vibe-studio-launcher onClick={openStudio}><Ic.spark size={13}/>Vibe Studio</button></div>;
+  return <div className="campaigns-nav"><div className="campaigns-tabs" role="tablist" aria-label="Marketing views">{tabs.map((tab,index)=><React.Fragment key={tab[0]}>{tab[3]==="sales"&&tabs[index-1]?.[3]!=="sales"&&<span className="campaigns-tab-divider" aria-hidden="true" title="Moving to Sales"/>}<button id={`campaigns-tab-${tab[0]}`} aria-controls="campaigns-tabpanel" role="tab" aria-selected={current===tab[0]} tabIndex={current===tab[0]?0:-1} onClick={()=>setCurrent(tab[0])} onKeyDown={(event)=>onKeyDown(event,index)}>{tab[2]()}<span>{tab[1]}</span>{tab[3]==="planned"&&<span className="campaigns-tab-planned"><span className="campaigns-sr-only">, </span>Planned</span>}</button></React.Fragment>)}</div><button className="btn btn-s btn-p campaigns-studio" title="Vibe Studio" data-solo-vibe-studio-launcher onClick={openStudio}><Ic.spark size={13}/>Vibe Studio</button></div>;
 }
 
 // Retained for the existing hidden Clients compatibility mount. It performs no
@@ -685,7 +682,8 @@ export const GrowthHub=({ salesInShell = false } = {})=>{
 const MarketingWorkspace=({ salesInShell = false })=>{
   const[tab,setTab]=useSubtabRoute("solo","growth","overview");
   // Commercial addresses resolve to Sales before Marketing readers mount.
-  const tabs=[['overview','Overview',()=><Ic.pulse size={14}/>],['campaigns','Campaigns',()=><Ic.bolt size={14}/>],['capture','Lead capture',()=><Ic.doc size={14}/>],['social','Social',()=><Ic.users size={14}/>],['analytics','Analytics',()=><Ic.chart size={14}/>]];
+  // The owner's order (2026-10-04). A fourth element of "planned" marks a tab whose feature is not built yet.
+  const tabs=[['overview','Overview',()=><Ic.pulse size={14}/>],['campaigns','Campaigns',()=><Ic.bolt size={14}/>],['audience','Audience',()=><Ic.users size={14}/>,'planned'],['content','Content',()=><Ic.grid size={14}/>,'planned'],['social','Social',()=><Ic.send size={14}/>],['email','Email',()=><Ic.mail size={14}/>,'planned'],['ads','Ads',()=><Ic.trend size={14}/>,'planned'],['capture','Lead capture',()=><Ic.doc size={14}/>],['analytics','Analytics',()=><Ic.chart size={14}/>]];
   const data=useSoloCampaigns();
   const params=useParams();
   const location=useLocation();
@@ -806,5 +804,9 @@ const MarketingWorkspace=({ salesInShell = false })=>{
   else if(tab==="sales") body=<Sales data={data} setDetail={setDetail} onOpenCatalog={openCatalogOffers} onOpenClients={openClients} onOpenPipeline={openPipeline}/>;
   else if(tab==="pipeline") body=<PipelineSurface key={data.tenantId} data={data} setDetail={setDetail} focusDealId={query.get("deal")} onClearFocus={()=>{const next=new URLSearchParams(location.search);next.delete("deal");navigate({pathname:location.pathname,search:next.toString()},{replace:true});}}/>;
   else if(tab==="social") body=<Social data={data} onOpenCompass={openCompass} onOpenPipeline={openPipeline}/>;
+  else if(tab==="audience") body=<MarketingAudience tenantId={data.tenantId} onOpenClients={()=>openClients()}/>;
+  else if(tab==="content") body=<MarketingContent tenantId={data.tenantId} published={{pages:data.artifacts.filter((a)=>a.type==="page").length,funnels:data.artifacts.filter((a)=>a.type==="funnel").length,forms:data.artifacts.filter((a)=>a.type==="form").length}} unpublished={(data.drafts||NO_ROWS).length} onOpenCapture={()=>goTo("capture")} studioLauncher={<StudioLauncher/>}/>;
+  else if(tab==="email") body=<MarketingEmail tenantId={data.tenantId} onOpenConnections={()=>params.account&&navigate(`${subtabPath("solo",params.account,"settings","connections")}?segment=communications`)}/>;
+  else if(tab==="ads") body=<MarketingAds tenantId={data.tenantId}/>;
   return <div className="solo-campaigns" data-campaigns-view={tab}><h1 className="campaigns-sr-only">Marketing</h1><CampaignTabs tabs={tabs} current={tab} setCurrent={setTab}/><div id="campaigns-tabpanel" role="tabpanel" aria-labelledby={`campaigns-tab-${tab}`} className="campaigns-scroll">{legacy?<PageHead eyebrow="Marketing" title={LEGACY[legacy].label}/>:null}{tab==="catalog" && query.get("origin")==="sales" && !workspaceChanged && data.tenantId && data.phase!=="resolving" && <div className="so-source-return"><button type="button" className="btn btn-s btn-p" onClick={()=>navigate(`${subtabPath("solo",params.account,"growth","sales")}${query.get("resume")==="terms" ? "?resume=terms" : ""}`)}>{query.get("resume")==="terms" ? "Return to commercial terms" : "Return to Sales"}</button><span>Finish offer setup here in Offers, then return when ready.</span></div>}{body}</div><DetailDrawer detail={detail} onClose={closeDetail}/></div>;
 };

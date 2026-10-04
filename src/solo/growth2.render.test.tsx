@@ -45,7 +45,6 @@ type PipelineWorkspaceFixture = {
 };
 
 vi.mock("./useSoloCampaigns", () => ({ useSoloCampaigns: () => { harness.readCalls++; return harness.state; } }));
-vi.mock("./data/useSoloOwner", () => ({ useSoloOwner: () => ({ owner: { name: "Jordan Reyes" }, loading: false, error: null, refresh: vi.fn() }) }));
 
 // Overview is now the Campaign Command Desk, which reads owner briefs through its own tenant-scoped
 // adapter (`useSoloCampaignBriefs`). This file proves the shell (tab order, error/unavailable
@@ -558,7 +557,7 @@ describe("Solo Campaigns rendered flows", () => {
   it("renders the exact tab order and moves route plus focus with arrow keys", () => {
     renderAt("/solo/42/growth/overview");
     const tabs = [...host.querySelectorAll('[role="tab"]')] as HTMLButtonElement[];
-    expect(tabs.map((tab) => tab.textContent)).toEqual(["Overview", "Campaigns", "Lead capture", "Social", "Analytics"]);
+    expect(tabs.map((tab) => tab.textContent)).toEqual(["Overview", "Campaigns", "Audience, Planned", "Content, Planned", "Social", "Email, Planned", "Ads, Planned", "Lead capture", "Analytics"]);
     expect(host.querySelector('[role="tablist"]')?.getAttribute("aria-label")).toBe("Marketing views");
     // One divider, placed before the Sales lane's three tabs.
     const dividers = [...host.querySelectorAll(".campaigns-tab-divider")];
@@ -667,7 +666,9 @@ describe("Solo Marketing department views", () => {
       brief("b4", "Referral push", { lifecycleStatus: "active", blocker: "Waiting on the offer" }),
     ];
     renderAt("/solo/42/growth");
-    expect(host.querySelector(".mo-head h2")?.textContent).toMatch(/^Good (morning|afternoon|evening), Jordan$/);
+    // No personal greeting here: Command Center already greets the owner (owner ruling 2026-10-04).
+    expect(host.querySelector(".mo-head h2")).toBeNull();
+    expect(host.querySelector(".mo-head")?.textContent).not.toMatch(/Good (morning|afternoon|evening)/);
     expect(stat("Active campaigns")).toContain("Active campaigns1");
     expect(stat("Active campaigns")).toContain("4 briefs in total · 2 blocked");
     // Brief timing, as written on each brief, is still shown read-only on Overview (§58).

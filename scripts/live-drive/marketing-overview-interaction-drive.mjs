@@ -87,6 +87,7 @@ async function main() {
       check(Boolean(rowLabel) && centre?.includes(rowLabel), `${theme}: hovering a legend row puts that source in the ring's centre`, `row=${rowLabel} centre=${centre}`);
 
       // Drag: pull the range handle's left traveller to the right.
+      const barsBefore = await page.locator(".mo-chart-time .recharts-bar-rectangle").count();
       const traveller = page.locator(".mo-chart-time .recharts-brush-traveller").first();
       const box = await traveller.boundingBox();
       if (box) {
@@ -98,7 +99,7 @@ async function main() {
       }
       const readout = await page.locator("#mo-time-readout").textContent();
       const barsAfter = await page.locator(".mo-chart-time .recharts-bar-rectangle").count();
-      check(Boolean(box) && /^Showing /.test(readout ?? "") && barsAfter < 30, `${theme}: dragging the range handle zooms the chart`, `readout=${readout} bars=${barsAfter}`);
+      check(Boolean(box) && /^Showing /.test(readout ?? "") && barsAfter < barsBefore, `${theme}: dragging the range handle zooms the chart`, `readout=${readout} bars ${barsBefore}→${barsAfter}`);
 
       // Keys: Tab into the chart, step with the arrows, Enter opens the day's leads.
       await page.locator(".mo-chart-time").focus();
@@ -106,6 +107,9 @@ async function main() {
       await page.keyboard.press("ArrowLeft");
       const stepped = await page.locator("#mo-time-readout").textContent();
       check(/: \d+ leads?, \d+ became/.test(stepped ?? ""), `${theme}: the arrow keys step day by day with a readout`, stepped ?? "none");
+      // While zoomed, exactly one visible bar is lit: the day the readout names.
+      const litBars = await page.evaluate(() => [...document.querySelectorAll(".mo-chart-time .recharts-bar-rectangle path")].filter((path) => (path.getAttribute("fill-opacity") ?? "1") === "1").length);
+      check(litBars === 1, `${theme}: while zoomed, the keyboard lights exactly the day it names`, `lit=${litBars}`);
       await page.keyboard.press("Enter");
       await page.waitForTimeout(200);
       check(await page.locator('[data-campaigns-view="capture"]').count() === 1, `${theme}: Enter on a day opens Lead capture`);
@@ -116,11 +120,20 @@ async function main() {
       await page.waitForTimeout(1600);
       await page.locator(".mo-ask").first().click();
       const asks = await page.evaluate(() => window.__asks);
+      // The harness has no Solo shell or chat, so this proves the question is built and sent; that the
+      // shell puts it in PAIGE's composer is proven in PaigeAIChat.composerScope.test.tsx.
       check(asks.length === 1 && /leads/.test(asks[0]) && /Do not invent/.test(asks[0]), `${theme}: Ask PAIGE sends a question built from the page's own figures`, asks[0] ?? "none");
       const onStatus = await ringPoint(page.locator(".mo-donut").nth(1));
       await page.mouse.click(onStatus.x, onStatus.y);
       await page.waitForTimeout(200);
       check(await page.locator('[data-campaigns-view="campaigns"]').count() === 1, `${theme}: clicking a campaign-status slice opens Campaigns`);
+      // Mouse: clicking a bar opens Lead capture.
+      await page.goto(`${BASE}?tab=overview&theme=${theme}`, { waitUntil: "domcontentloaded" });
+      await page.waitForFunction(() => document.querySelector(".mo-chart-time .recharts-bar-rectangle"), null, { timeout: 15000 });
+      await page.waitForTimeout(1600);
+      await page.locator(".mo-chart-time .recharts-bar-rectangle path").nth(25).click({ force: true });
+      await page.waitForTimeout(200);
+      check(await page.locator('[data-campaigns-view="capture"]').count() === 1, `${theme}: clicking a bar opens Lead capture`);
       check(errors.length === 0, `${theme}: no page errors`, errors[0] ?? "");
       await ctx.close();
     }

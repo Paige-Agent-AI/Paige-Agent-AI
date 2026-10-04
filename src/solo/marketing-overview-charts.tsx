@@ -75,22 +75,32 @@ export function LeadsOverTimeChart({ daily, onOpenDay }: { daily: DailyPoint[]; 
   const ref = React.useRef<HTMLDivElement>(null);
   const colors = useChartColors(ref);
   const reduced = useReducedMotion();
-  const [range, setRange] = React.useState({ start: 0, end: daily.length - 1 });
+  const [chosen, setRange] = React.useState({ start: 0, end: daily.length - 1 });
   const [focused, setFocused] = React.useState<number | null>(null);
-  // A new period means new days: reset the zoom and the keyboard position.
-  React.useEffect(() => { setRange({ start: 0, end: daily.length - 1 }); setFocused(null); }, [daily.length]);
+  // A new period, or a new day rolling in, means new days: reset the zoom and the keyboard position.
+  const firstDay = daily[0]?.day;
+  React.useEffect(() => { setRange({ start: 0, end: daily.length - 1 }); setFocused(null); }, [daily.length, firstDay]);
+  // Clamped on every render, so a stale range can never index past the data before that reset runs.
+  const last = Math.max(0, daily.length - 1);
+  const range = { start: Math.min(chosen.start, last), end: Math.min(Math.max(chosen.end, chosen.start), last) };
   const visible = range.end - range.start + 1;
   const dense = visible > 14;
   const brushable = daily.length > 7;
   const onKeyDown = (event: React.KeyboardEvent) => {
+    // The first arrow press lands on the latest visible day rather than skipping it.
     const at = focused ?? range.end;
-    const next = event.key === "ArrowLeft" ? Math.max(range.start, at - 1)
+    const next = focused === null && (event.key === "ArrowLeft" || event.key === "ArrowRight") ? range.end
+      : event.key === "ArrowLeft" ? Math.max(range.start, at - 1)
       : event.key === "ArrowRight" ? Math.min(range.end, at + 1)
         : event.key === "Home" ? range.start
           : event.key === "End" ? range.end
             : null;
     if (next !== null) { event.preventDefault(); setFocused(next); return; }
-    if ((event.key === "Enter" || event.key === " ") && focused !== null) { event.preventDefault(); onOpenDay?.(daily[focused]); }
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      if (focused === null) setFocused(range.end); // first Enter selects the latest day; the next opens it
+      else onOpenDay?.(daily[focused]);
+    }
     if (event.key === "Escape") setFocused(null);
   };
   const focusedPoint = focused !== null ? daily[focused] : null;
@@ -109,8 +119,9 @@ export function LeadsOverTimeChart({ daily, onOpenDay }: { daily: DailyPoint[]; 
               ? <TipBox title={String(label)} rows={(payload as unknown as TipRow[]).map((row) => ({ label: row.dataKey === "leads" ? "Leads" : "Became opportunities", value: row.value, color: row.dataKey === "leads" ? colors["--chart-1"] : colors["--chart-2"] }))} />
               : null}
           />
-          <Bar dataKey="leads" fill={colors["--chart-1"]} radius={[4, 4, 0, 0]} maxBarSize={18} isAnimationActive={!reduced} cursor={onOpenDay ? "pointer" : undefined} onClick={(_data, index) => onOpenDay?.(daily[index])}>
-            {daily.map((point, index) => <Cell key={point.day} fill={colors["--chart-1"]} fillOpacity={focused === null || focused === index ? 1 : 0.38} />)}
+          <Bar dataKey="leads" fill={colors["--chart-1"]} radius={[4, 4, 0, 0]} maxBarSize={18} isAnimationActive={!reduced} cursor={onOpenDay ? "pointer" : undefined} onClick={(_data, index) => onOpenDay?.(daily[range.start + index])}>
+            {/* recharts indexes cells and clicks from the start of the zoomed range, not the whole period */}
+            {daily.slice(range.start, range.end + 1).map((point, index) => <Cell key={point.day} fill={colors["--chart-1"]} fillOpacity={focused === null || focused === range.start + index ? 1 : 0.38} />)}
           </Bar>
           <Line dataKey="opportunities" type="monotone" stroke={colors["--chart-2"]} strokeWidth={2} dot={{ r: 3, fill: colors["--chart-2"], stroke: colors["--surface"], strokeWidth: 2 }} activeDot={{ r: 5, stroke: colors["--surface"], strokeWidth: 2 }} isAnimationActive={!reduced} />
           {brushable && <Brush dataKey="label" height={22} travellerWidth={10} startIndex={range.start} endIndex={range.end}

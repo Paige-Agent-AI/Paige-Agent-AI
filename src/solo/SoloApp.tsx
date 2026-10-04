@@ -33,6 +33,7 @@ import { canShowVaultNavigation, useVaultAccess } from "./vault/useBusinessVault
 import { VibeStudio } from "./vibe";
 import { TenantCommandCenterShell } from "@/components/tenant-shell/TenantCommandCenterShell";
 import { resolveTenantAccountContext, tenantShellDestinationsForPath } from "@/components/tenant-shell/tenantShellRoutes";
+import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
 import { AgentPresenceProvider, useAgentPresence } from "@/components/ui/paige";
 import { VoiceDeviceProvider } from "@/lib/voice/VoiceDeviceProvider";
 import { DialPadSurface } from "@/components/admin/voice/DialPadSurface";
@@ -310,9 +311,10 @@ const theme=resolvedTheme==='light'?'light':'dark';
 // and nothing more; the rail is navigation, never a panel trigger.
 const openPaige=()=>expandRail();
 // `paige:open` had three dispatchers in this app and NO listener, so every "Ask PAIGE"
-// on Pipeline dispatched into nothing. This is that listener. It does two separable
-// things and neither depends on the other: it opens the fold, and — when the event
-// names one — it records which client the surface pointed PAIGE at. The scope is UI
+// on Pipeline dispatched into nothing. This is that listener. It does three separable
+// things and none depends on another: it opens the fold, it hands the surface's drafted
+// question to the composer, and — when the event names one — it records which client
+// the surface pointed PAIGE at. The scope is UI
 // context only; the server re-resolves tenant, authorization and client scope on every
 // request that carries it. An event that names no client clears nothing and simply
 // opens the fold, which is what the two existing prompt-only dispatches expect.
@@ -320,6 +322,8 @@ React.useEffect(()=>{const h=(event:Event)=>{
   const detail=(event as CustomEvent)?.detail;
   const scope=readPaigeOpenScope(detail,activeTenantId);
   if(scope){clearPaigePublicPresenceScope();setPaigeClientScope(scope);}
+  // The question a surface drafted goes into PAIGE's composer for the owner to send (prefill only).
+  handOffPaigePrompt(detail?.prompt);
   expandRail();
 };window.addEventListener('paige:open',h);return()=>window.removeEventListener('paige:open',h)},[activeTenantId,expandRail]);
 // An account switch invalidates a client scope outright: the client belonged to the

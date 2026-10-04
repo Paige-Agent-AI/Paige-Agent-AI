@@ -1,0 +1,76 @@
+{
+  "desktop": {
+    "ok": true,
+    "width": 1440,
+    "full_height": 3628,
+    "truncated": false,
+    "duration_ms": 1840,
+    "final_url": "https://93.184.216.34/render-frame",
+    "dom": {
+      "ready": "true",
+      "robots": "noindex, nofollow",
+      "h1": "Get your weekends back",
+      "title": "Northwind Advisory",
+      "fontsLoaded": []
+    },
+    "files": [
+      {
+        "file": "desktop-slice-0.jpg",
+        "y": 0,
+        "height": 1600,
+        "bytes": 100169
+      },
+      {
+        "file": "desktop-slice-1.jpg",
+        "y": 1600,
+        "height": 1600,
+        "bytes": 77606
+      },
+      {
+        "file": "desktop-slice-2.jpg",
+        "y": 3200,
+        "height": 428,
+        "bytes": 19412
+      }
+    ]
+  },
+  "mobile": {
+    "ok": true,
+    "width": 390,
+    "full_height": 4054,
+    "truncated": false,
+    "duration_ms": 1550,
+    "final_url": "https://93.184.216.34/render-frame",
+    "dom": {
+      "ready": "true",
+      "robots": "noindex, nofollow",
+      "h1": "Get your weekends back",
+      "title": "Northwind Advisory",
+      "fontsLoaded": []
+    },
+    "files": [
+      {
+        "file": "mobile-slice-0.jpg",
+        "y": 0,
+        "height": 1600,
+        "bytes": 66969
+      },
+      {
+        "file": "mobile-slice-1.jpg",
+        "y": 1600,
+        "height": 1600,
+        "bytes": 48962
+      },
+      {
+        "file": "mobile-slice-2.jpg",
+        "y": 3200,
+        "height": 854,
+        "bytes": 20837
+      }
+    ]
+  },
+  "served": {
+    "files": 40,
+    "spa": 2
+  }
+}

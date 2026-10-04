@@ -28,7 +28,7 @@ inside its own `assert` callback, where it stays out of any log.
   capability. Drive the DEPLOYED surface, assert the intended behavior actually renders, capture
   the pixels — that is a first-class verification step, not owner burden.
 - **Not** for HTTP/JSON edge-function smokes (those stay `fetch`-based, no browser) and **not** for
-  the deployed visual-renderer Fly service (that's a separate long-lived warm-browser artifact).
+  the deployed paige-browser Fly service (that's a separate long-lived warm-browser artifact).
 
 ## Environment variables
 
@@ -75,6 +75,6 @@ In this CI sandbox, live prod (`paigeagent.ai`) was **not** reachable headless i
   unreachable from this env" before reporting.** Never report a broken surface on an env-reachability
   failure, and never claim a pass that did not happen.
 
-The chromium-resolution logic here mirrors `services/visual-renderer/smoke.mjs::findSandboxChromium`
+The chromium-resolution logic here mirrors `services/paige-browser/smoke.mjs::findSandboxChromium`
 on purpose (§30 — reference the proven pattern). A later PR migrates that smoke to import
 `resolveExecutablePath()` from here so there is truly one home (§37 follow-up).

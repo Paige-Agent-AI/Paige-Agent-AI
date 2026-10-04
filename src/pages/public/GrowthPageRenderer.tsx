@@ -4,14 +4,15 @@
 //
 // The RENDERING core is the shared <GrowthBlocks>: the exact same component (and the exact
 // same resolveGrowthTheme token map) that draws the Studio live preview. Preview ==
-// published — there is no second renderer to drift. This file owns only data loading, the
-// brand floor, and the page chrome (title, skeleton, footer).
+// published — there is no second renderer to drift. The brand floor + footer live in the
+// shared <GrowthPageView>, which the DB-free /render-frame (paige-browser screenshots) also
+// mounts. This file owns only data loading and the loading / not-found chrome.
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { GrowthBlock, GrowthPageTheme } from "@/lib/growth";
-import { GrowthBlocks } from "@/components/growth/GrowthBlocks";
-import { resolveGrowthTheme, GROWTH_BRAND_FLOOR, buildGrowthBrandFloor } from "@/components/growth/growth-theme";
+import { GrowthPageView } from "@/components/growth/GrowthPageView";
+import { resolveGrowthTheme } from "@/components/growth/growth-theme";
 
 interface PageRow {
   id: string;
@@ -70,17 +71,8 @@ export default function GrowthPageRenderer() {
   if (notFound || !page) return <NotFound />;
 
   // The tenant brand becomes the FLOOR; the page's own theme_json overrides it. Both are fed to
-  // the ONE resolver inside <GrowthBlocks>. The floor is built by the ONE shared builder, which
-  // the Studio canvas also calls — that shared call is what makes preview == published true.
-  const brandFloor: GrowthPageTheme = buildGrowthBrandFloor(brand);
-
-  return (
-    <GrowthBlocks blocks={page.blocks_json ?? []} theme={page.theme_json} brandFloor={brandFloor} tenantId={page.tenant_id}>
-      <footer className="py-10 text-center text-xs" style={{ color: "var(--gp-muted)" }}>
-        © {new Date().getFullYear()}
-      </footer>
-    </GrowthBlocks>
-  );
+  // the ONE resolver inside <GrowthBlocks> by the shared <GrowthPageView>.
+  return <GrowthPageView blocks={page.blocks_json} theme={page.theme_json} brand={brand} tenantId={page.tenant_id} />;
 }
 
 // Themed skeleton — a masthead + card grid shimmer on the on-brand floor. Never a bare

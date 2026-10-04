@@ -5,10 +5,9 @@
 // a screenshot. Deployed to Fly.io (shared-cpu-1x); one warm browser so a verify loop isn't paying
 // cold-start each call (the reason we don't use Vercel serverless Chromium).
 //
-// §18 — this is a NEW home ON PURPOSE, distinct from BOTH existing browser seams:
-//   • services/visual-renderer = a STATELESS screenshot-ONE-thing service (url/html -> PNG). This
-//     service is the OPPOSITE shape: it DRIVES and OBSERVES, returning a structured JSON observation
-//     (title, final_url, http_status, text excerpt, per-step results) — not a bare image.
+// §18 — this is a NEW home ON PURPOSE, distinct from the other browser seam:
+//   • (history) services/visual-renderer was a separate screenshot-one-thing Fly app; it was never
+//     deployed and is deleted — screenshots are now this host's /render capability (2026-10-04).
 //   • supabase/functions/browser-use = a Browserbase (3rd-party, edge-can't-drive-Playwright)
 //     stateful stub. paige-browser is SELF-HOSTED real Playwright (§34 moat — tenant session tokens
 //     will eventually flow through this host in a later slice, so it must NOT be a 3rd party).
@@ -28,6 +27,12 @@
 //   GET  /healthz                                                         -> 200 "ok"
 //   POST /self-verify  (requires X-Browser-Secret == PAIGE_BROWSER_SHARED_SECRET, timing-safe)
 //        body: { url, viewport?, waitForSelector?, waitMs?, steps? }      -> 200 JSON observation
+//   POST /render       (same secret, rate limit and concurrency cap)
+//        body: { url } | { page }, viewport?: "desktop"|"tablet"|"mobile", waitForSelector?
+//        -> 200 { ok, width, full_height, slices:[{ y, height, jpeg_base64 }], truncated }
+//        url = an allowlisted Paige app origin only; page = a draft rendered DB-free at /render-frame.
+//        Screenshots are a capability of THIS host — the separate visual-renderer Fly app was never
+//        deployed and is deleted (owner direction 2026-10-04, §18 one browser host).
 //
 // §13 SSRF — every request the browser makes (the top-level url AND any sub-resource) is filtered
 // against private/link-local/cloud-metadata ranges via a page.route interceptor; the final_url is
@@ -38,6 +43,9 @@ import crypto from "node:crypto";
 // SSRF egress guard + two-layer content denylist — extracted to a shared module (§18 one home) so the
 // smoke test exercises the SAME real code the server runs (§32), not a mirror that can drift.
 import { urlBlockReason, assertPublicUrl, installReadOnlyBrowserEgress, loadDenylist } from "./ssrf-guard.mjs";
+// /render — screenshot capture of Paige's own pages for the §33 critique loop. The capture logic lives
+// in ./render.mjs (§18 one home) so smoke-render.mjs exercises the code the server runs (§32).
+import { renderConfig, validateRenderRequest, renderCapture } from "./render.mjs";
 
 const PORT = process.env.PORT || 8080;
 const SECRET = process.env.PAIGE_BROWSER_SHARED_SECRET || "";
@@ -476,6 +484,39 @@ app.post("/browse-public-url", rateLimit, async (req, res) => { // codeql[js/mis
   } catch (e) {
     console.error("[paige-browser] /browse-public-url unexpected error for", String(url) + ":", e?.message || e);
     return res.status(200).json({ ok: false, url, blocked_reason: null, error: String(e?.message || e), duration_ms: Date.now() - start });
+  } finally {
+    inFlight--;
+  }
+});
+
+// ── /render — full-page JPEG slices of Paige's OWN pages for the §33 visual-critique loop ─────────
+// Same three gates as the routes above (per-IP rateLimit, timing-safe auth, MAX_CONCURRENT). It never
+// renders an arbitrary URL: `url` must sit on an allowlisted Paige app origin (exact match) AND pass the
+// SSRF guard; `page` renders a draft at ${PAIGE_APP_ORIGIN}/render-frame with the payload injected. The
+// browser context carries the same read-only egress fence. A run failure is 200 ok:false with a reason
+// (the caller always gets the structured shape); a refused request is 4xx with a reason. Never a fake image.
+// CodeQL js/missing-rate-limiting is a FALSE POSITIVE here for the same reason as /browse-public-url.
+const RENDER_CFG = renderConfig();
+app.post("/render", rateLimit, async (req, res) => { // codeql[js/missing-rate-limiting]
+  if (!auth(req, res)) return;
+  const v = await validateRenderRequest(req.body, RENDER_CFG);
+  if (!v.ok) return res.status(v.status).json({ ok: false, reason: v.reason, error: v.error });
+
+  if (inFlight >= MAX_CONCURRENT) return res.status(429).json({ ok: false, reason: "busy", error: "busy, retry" });
+  inFlight++;
+  const start = Date.now();
+  try {
+    const browser = await getBrowser();
+    const result = await withHardCap(
+      renderCapture(browser, v, RENDER_CFG, { navTimeout: NAV_TIMEOUT_MS, stepTimeout: STEP_TIMEOUT_MS }),
+      RUN_CAP_MS, v.target, start,
+    );
+    // withHardCap's backstop result has no reason code; give it one so callers can log it honestly.
+    if (!result.ok && !result.reason) result.reason = "run_cap_exceeded";
+    return res.status(200).json(result);
+  } catch (e) {
+    console.error("[paige-browser] /render unexpected error for", v.target + ":", e?.message || e);
+    return res.status(200).json({ ok: false, reason: "browser_unavailable", error: String(e?.message || e), duration_ms: Date.now() - start });
   } finally {
     inFlight--;
   }

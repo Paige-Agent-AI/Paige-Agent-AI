@@ -345,6 +345,10 @@ class of lie as a fabricated metric (§13).
 
 Legend: **✓** live · **—** not built · **N/A** tier not opened yet · **403** denied at the route gate.
 
+### Page screenshots move onto paige-browser `/render`; `/render-frame` (branch `screenshots-on-paige-browser`, 2026-10-04)
+
+**No tier gains or loses a visible capability.** The §33 visual-critique loop stays OFF in the product flow (`STUDIO_VISUAL_CRITIQUE_ENABLED` unset), so no Solo, Sub-account, Agency, Enterprise or God surface changes. What changes underneath: `studio-visual-critique` renders pages through paige-browser instead of a host that never existed, and logs no-verdict attempts. Its authority is unchanged — a JWT caller only for the session's own workspace as owner/admin or managing agency (`resolveStudioCaller`); a service-role caller names the tenant, which the log row and the model trace carry; Client and Anonymous: refused (no Studio seam). New public route `/render-frame`: **Anonymous-reachable by design but inert** — it reads no data, renders only a payload injected by paige-browser, is noindex, carries no telemetry, and shows "Nothing to render" to a person who opens it (it holds no tenant data to leak). Written before merge; LIVE only once merged, the edge function and paige-browser are redeployed, and the frontend ships `/render-frame`.
+
 ### Vibe Studio V2b.1 — Migration G: publishing runs only through the door (2026-10-04)
 
 No tier gains or loses a capability: publishing and unpublishing still need the workspace's owner, an admin or its managing agency (operators in company workspaces, per the same rule), through `growth-publish-command` and its approval card. What is removed, for every tier, is direct access: the eight publish/unpublish RPCs are no longer executable by a signed-in or anonymous caller, so publishing is the door only. Client and Anonymous: unchanged, refused. Written before merge; LIVE once the migration and the edge function are both deployed; authenticated drive owed.

@@ -9,13 +9,20 @@ observation** — final URL, HTTP status, page title, a tag-stripped text excerp
 and a screenshot. This is the browser **host**; the tenant-scope resolution + ledger write + Paige's
 interpreter dispatch live in the calling edge function (later slices).
 
-## Why a NEW service (not the two browser seams we already have) — §18
+## One browser host — §18
 
-This is a deliberately distinct home from **both** existing browser seams:
+paige-browser is Paige's ONE self-hosted browser. Since 2026-10-04 it also takes the screenshots the
+§33 visual-critique loop needs (`POST /render`, below). Owner direction that day: *"Go ahead and set
+up the screenshot service. If there's anything that we can create inside of our own code to
+alleviate the need for the Fly app, that would be even better."*
 
-- **`services/visual-renderer`** is a *stateless screenshot-one-thing* service (`url`/`html` → PNG).
-  paige-browser is the **opposite shape**: it **drives and observes**, returning a structured JSON
-  observation, not a bare image.
+- **Why screenshots live here and not in their own Fly app.** A separate screenshot service
+  (`services/visual-renderer`, Fly app `paige-visual-renderer`) was written for this and **never
+  deployed** — its hostname never resolved (NXDOMAIN) and the Fly deploy workflow only ever shipped
+  paige-browser. It duplicated this host's warm Chromium, its secret gate and (in a weaker copy) its
+  SSRF guard. A second browser host would mean a second image, a second secret, a second guard to keep
+  in step and a second bill, for one more endpoint. It is **deleted**; screenshots are a capability of
+  this host, behind the same rate limit, secret, concurrency cap and read-only egress fence.
 - **`supabase/functions/browser-use`** is a *Browserbase* (3rd-party) stateful stub — an edge
   function can't drive Playwright itself. paige-browser is **self-hosted real Playwright** (§34
   moat: tenant session tokens will eventually flow through this host in a later slice, so it must
@@ -35,6 +42,44 @@ run.
   gated behind the §16 autonomy clamp in a later slice.
 
 ## Endpoints
+
+### `POST /render` — full-page screenshots of Paige's OWN pages (§33 visual critique)
+
+Same gates as every route here: per-IP `rateLimit`, timing-safe `X-Browser-Secret`, `MAX_CONCURRENT`.
+The capture logic is `render.mjs` (one home, so the smoke runs the real code).
+
+Body — exactly one target:
+
+- `{ url }` — a page on an **allowlisted Paige app origin** (`PAIGE_RENDER_ALLOWED_ORIGINS`, default
+  `https://paigeagent.ai,https://app.paigeagent.ai`, exact-origin match) that also passes the SSRF
+  guard. Typically a published `/p/<tenant>/<page>`. Readiness default: the app's `[data-app-ready]`
+  post-hydration marker. It never renders an arbitrary URL — that is `/browse-public-url`'s job.
+- `{ page: { blocks, theme?, brand?, tenant_name? } }` — a **draft** that exists only as data. The
+  browser opens `${PAIGE_APP_ORIGIN}/render-frame` (default `https://paigeagent.ai`) and the payload is
+  injected before any script runs (`addInitScript`, set ONLY on the frame document itself — never in a
+  child iframe such as a media embed). The frame is DB-free and renders the payload through the same
+  `<GrowthPageView>` the public page uses, then sets `data-render-ready="true"`. Payload cap:
+  `PAIGE_RENDER_MAX_PAYLOAD_BYTES` (default 1,000,000).
+
+Options: `viewport` = `desktop` (1440×900, default) · `tablet` (834×1112) · `mobile` (390×844, touch,
+mobile UA); `waitForSelector` overrides the ready marker. Contexts run with `reducedMotion: "reduce"`
+so entrance animations are settled, not mid-flight.
+
+Response: `{ ok:true, width, full_height, slices:[{ y, height, jpeg_base64 }], truncated }` — JPEG
+(quality 80) at DPR 1, each slice at most 1600 CSS px tall, at most 8 slices (`PAIGE_RENDER_SLICE_HEIGHT`,
+`PAIGE_RENDER_MAX_SLICES`, `PAIGE_RENDER_JPEG_QUALITY`). A 2× full-page PNG is 6–7 MB, over the edge
+function's 4 MB image budget; slices are sized for the consumer. `truncated:true` says the page ran
+past the cap. Failures are `{ ok:false, reason, error }` and never carry an image: `not_ready`,
+`http_<status>`, `blocked_redirect` (checked after navigation, after ready, and after capture),
+`navigation_failed`, `empty_page`, `slice_too_large`, `run_cap_exceeded`. Refusals are 4xx with a
+reason: `bad_request`, `invalid_viewport`, `invalid_url`, `origin_not_allowed` (403),
+`blocked:<ssrf reason>`, `invalid_page`, `payload_too_large` (413).
+
+**No new Fly secret is required** — every knob above has a safe default. Caller:
+`supabase/functions/studio-visual-critique` (edge secrets `PAIGE_BROWSER_URL` / `PAIGE_BROWSER_SECRET`,
+already set for skill-runner).
+
+### `POST /self-verify`
 
 `/self-verify` requires the `X-Browser-Secret` header to equal `PAIGE_BROWSER_SHARED_SECRET`
 (timing-safe compare). No secret set → the service returns **500** (fails closed, never runs
@@ -145,7 +190,13 @@ silent blank.
 cd services/paige-browser
 npm install
 node smoke.mjs          # launches Chromium, drives inline HTML, asserts an honest observation
+node smoke-render.mjs   # /render: real render.mjs + real Chromium + the real server.js refusals
 ```
+
+`smoke-render.mjs` stands a public IP literal in for `paigeagent.ai` and fulfills its responses in a
+test receiver, so it needs no outbound network; the production egress fence still decides first on
+every request. It proves slice geometry, payload isolation from child frames, the mobile preset, honest
+truncation, the `not_ready` / `http_404` / off-origin-redirect failures, and every refusal.
 
 In the sandbox the pre-installed Chromium is at `/opt/pw-browsers/`; `smoke.mjs` auto-detects it and
 falls back to Playwright's own resolution elsewhere. Chromium outbound network is blocked in the
@@ -178,15 +229,17 @@ fly deploy --app paige-browser
 
 ## Dormant until deployed + secrets set (honest, §13)
 
-Like `services/visual-renderer`, this service does nothing until it's deployed to Fly and its secret
+This service does nothing until it's deployed to Fly and its secret
 is set. With `PAIGE_BROWSER_SHARED_SECRET` unset it returns 500 on `/self-verify` (fails closed,
 never runs unauthenticated). The Slice 1b caller degrades honestly when `PAIGE_BROWSER_URL` /
 `PAIGE_BROWSER_SECRET` are unset — it never fabricates an observation. The Dockerfile pins the
 Playwright base image (`mcr.microsoft.com/playwright:v1.62.1-jammy`, the **same** version as
-`services/visual-renderer` and the root live-drive devDep — §18) so browser and library versions
+the root live-drive devDep — §18) so browser and library versions
 always match. The `playwright` npm pin is EXACT (`1.62.1`, not a caret) so npm can never drift
 ahead of the image (Task #126 §32.c finding #2).
 
 ## Redeploy
 
-Just `fly deploy --app paige-browser` after any change here.
+Merge to `main`: `.github/workflows/deploy-fly-services.yml` redeploys this service on any
+`services/paige-browser/**` change (§64). `fly deploy --app paige-browser` from a laptop is a last
+resort only when CI is unavailable.

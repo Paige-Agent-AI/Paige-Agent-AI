@@ -198,6 +198,18 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run smoke:secure-browser-egress
 
+      # paige-browser /render (§33 screenshots): the REAL render.mjs against real Chromium, plus the
+      # real server.js refusal paths over HTTP. express is a service-only dependency, so it is
+      # installed into the service folder here (no lockfile written) — without it the HTTP leg would
+      # print SKIP, never pass silently.
+      - name: paige-browser /render capture proof (slices, payload isolation, honest failures, refusals)
+        if: ${{ !cancelled() }}
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: |
+          npm install --prefix services/paige-browser --omit=dev --no-audit --no-fund --no-package-lock
+          npm run smoke:paige-browser-render
+
       - name: Tier-feature guard (§60 — render gates must not hardcode a tier; use useTierFeatures)
         if: ${{ !cancelled() }}
         run: npm run lint:tier-features

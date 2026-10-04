@@ -141,6 +141,12 @@ generation → real artifact.
 
 ## Family 7 — Universal governed action surface (the substrate everything mounts on)
 
+> **2026‑10‑04 correction (§13):** the row below is the pre‑Slice‑1 snapshot. Slice 1 closed the five named
+> families, but the hand‑written manifest has drifted again (team management, deal moves and sends read
+> "planned" while governed chat tools ship; journey advance is offered with no chat tool; Studio, Sales,
+> calendar and agreements are absent). Current state and the projection‑based repair:
+> `docs/delivery/paige-conversational-loop-r0.md` §0, §15, §20.
+
 | capability | current implementation | truth | canonical seam | missing work / proof |
 |---|---|---|---|---|
 | Truthful "what can you do here?" | per‑turn manifest block + `capability_status` via one gatherer (#1166); models CRM/Connections/Pipeline/Comms/Social/Team/Campaigns/n8n | **PARTIAL** | `paige-capability-status` resolver/signals/render | **under‑claims** — omits research, document‑creation, save‑to‑knowledge, planning, **delegation/agent‑team** (all genuinely governed in chat); maturities all PARTIAL; CRM hardcoded‑LIVE (documented) |

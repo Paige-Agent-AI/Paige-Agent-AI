@@ -25,7 +25,7 @@ MUST_PRESERVE: Existing canonical invoice/pending-confirmation/Rail contracts, t
 ACCEPTANCE_CRITERIA: Owner/admin reads current preferences, saves exact settings version under one approval, issues uniquely numbered frozen artifacts, chooses a supported invoice template before issue, and navigates six tabs with List/Board sharing canonical deals; another tenant cannot read/write these records.
 MOTION_PURPOSE: NONE: no new animation; template and view changes are immediate.
 PROTECTED_SEAMS: Automated tenant/actor/admin, settings CAS, exact canonical command/operation/approval and private result boundaries; provider execution and production state remain outside this proof.
-INTERNAL_BUILD_IDENTITY: 3f48ed03312be723a5951221ff91617fa9d04efc; deployment=NOT_DEPLOYED; environment=local; migrations=PROOF_OWED(hosted application of 20270549000000_sales_invoice_preferences); edge=PROOF_OWED(hosted sales-invoice-command and paige-ai-chat deployment); evidence=docs/evidence/ui-delivery/solo-sales-invoice-customization.md
+INTERNAL_BUILD_IDENTITY: 3f48ed03312be723a5951221ff91617fa9d04efc; deployment=NOT_DEPLOYED; environment=local; migrations=PROOF_OWED(hosted application of 20270550000000_sales_invoice_preferences); edge=PROOF_OWED(hosted sales-invoice-command and paige-ai-chat deployment); evidence=docs/evidence/ui-delivery/solo-sales-invoice-customization.md
 RELEASE_CHANNEL: development: root coordinates integration/review/release; source checks and local SQL do not establish deployment.
 RELEASE_CLASSIFICATION: internal-only: development candidate until exact final source, independent review and deployment evidence are complete.
 CUSTOMER_RELEASE_IDENTITY: none: no customer version or announcement is assigned by this record.
@@ -68,7 +68,7 @@ SOLO_900X1000_PAIGE_OPEN: PASS: both themes captured in invoice-geometry.json an
 - Commands: node node_modules/vitest/vitest.mjs run src/solo/sales/invoiceCommandContract.test.ts src/solo/sales/invoiceCommandEndpoint.test.ts src/solo/sales/invoiceGovernance.test.ts src/__tests__/sales-invoice-chat.test.ts — 118 PASS.
 - Deno: check --no-lock --node-modules-dir=none supabase/functions/sales-invoice-command/index.ts supabase/functions/_shared/sales-invoice-chat.ts — PASS with existing pinned local runtime.
 - SQL: SQL owner isolated preference/lifecycle proof reports 44 tests plus issuance concurrency/CAS PASS; root must attach exact executed command/result artifact.
-- Source: src/solo/SalesWorkspace.tsx six-tab declaration; InvoiceAppearanceWorkspace/InvoiceCommandReview; strict settings parser and canonical command endpoint; 20270549000000_sales_invoice_preferences.sql.
+- Source: src/solo/SalesWorkspace.tsx six-tab declaration; InvoiceAppearanceWorkspace/InvoiceCommandReview; strict settings parser and canonical command endpoint; 20270550000000_sales_invoice_preferences.sql.
 - Runtime tenant data: none read or mutated by this documentation task; automated fixtures remain synthetic.
 
 ## Review and limitations

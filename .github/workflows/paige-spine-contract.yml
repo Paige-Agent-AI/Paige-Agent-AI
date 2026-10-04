@@ -18,6 +18,7 @@ on:
     paths:
       - "supabase/functions/_shared/paige-spine/**"
       - "supabase/migrations/**"
+      - "supabase/tests/research_tenant_lineage.sql"
       - "supabase/tests/mcp_gateway_endpoint_revokes_approvals.sql"
       - "supabase/tests/mcp_gateway_durable_endpoint_bound_consent.sql"
       - "supabase/tests/mcp_gateway_url_auth_configured.sql"
@@ -169,6 +170,12 @@ jobs:
       - run: supabase test db supabase/tests/paige_live_pilot_feature_guard.sql
       - run: supabase test db supabase/tests/paige_live_runtime_claim.sql
       - run: supabase test db supabase/tests/paige_live_session_transition.sql
+      # M0 (Deep Research, 2026-10-03): research tenant lineage — the matrix's database halves
+      # (cross-tenant refusal by role, active-workspace scope switching, fail-closed persistence,
+      # no-tenant-parameter RPCs, policy shapes). The engine-side lineage logic is pinned by
+      # src/__tests__/deep-research-m0-contract.test.ts.
+      - run: supabase test db supabase/tests/research_tenant_lineage.sql
+        if: ${{ !cancelled() }}
       # Governed CRM/Pipeline: tenant, authority, idempotency, destructive preview, readback, and Rail proof.
       - run: supabase test db supabase/tests/governed_crm_commands.sql
         # Its fixtures write addresses as contact methods (20270519010000's lane); like the proofs

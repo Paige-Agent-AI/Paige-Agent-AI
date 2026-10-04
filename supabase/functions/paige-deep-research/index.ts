@@ -18,8 +18,21 @@
 //               "extract" (PLAN/GAP-CHECK, cheap) · "score" (tie-breaks, cheap) ·
 //               "doc_draft" (the ONE final synthesis → Claude reasoning tier = claude-sonnet-5).
 //
-// Persistence is via the SERVICE-ROLE client into research_runs + research_sources
-// (RLS declared for direct client reads; the service role is the write boundary).
+// Persistence is via the SERVICE-ROLE client into research_runs + research_sources —
+// the service role is the write boundary. (CORRECTION 2026-10-03, M0: this header used to
+// claim persistence is "RLS declared for direct client reads"; production grants prove
+// direct client reads were never usable — table grants are owner-only and the canonical
+// read path is the governed RPC pair added by migration 20270539000000. History preserved;
+// claim corrected.)
+//
+// TENANT LINEAGE (M0, owner ruling 2026-10-03): every PERSISTED run carries the exact
+// resolved workspace, and sources inherit it verbatim. Lineage is strict for persistence:
+// user JWT → current_user_tenant_id; service-role caller → profiles.active_tenant_id of the
+// validated acting user — and NO first-membership fallback (too ambiguous: the platform must
+// not persist a run under guessed ownership). Ambiguous lineage SKIPS persistence with an
+// honest log while the research itself still runs and returns. An optional
+// body.expected_tenant_id is a CROSS-CHECK only (a mismatch skips persistence); it is never
+// the persisted value and never authority.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
@@ -88,6 +101,10 @@ interface DeepResearchRequest {
   max_hops?: number;
   freshness_days?: number;
   persist?: boolean;
+  /** Optional CROSS-CHECK (never authority): when provided and ≠ the server-resolved
+   *  lineage tenant, persistence is SKIPPED — an upstream context disagreement is treated
+   *  as ambiguous, not resolved in the caller's favor. */
+  expected_tenant_id?: string;
   strict?: boolean;
   caller?: string;   // opaque provenance tag (e.g. "chat" | "manual" | an opted-in caller)
   // A7 — caller-supplied flavor facets. An opt-in vertical surface may inject its
@@ -1438,13 +1455,24 @@ async function persistRun(
   runId: string,
   req: DeepResearchRequest,
   result: DeepResearchResult,
+  tenantId: string | null,
 ): Promise<void> {
+  // M0 FAIL-CLOSED FOR PERSISTENCE: without unambiguous tenant lineage the run is NOT
+  // stored — the research result still returns to the caller, but the platform never
+  // persists a run under guessed ownership (owner ruling 2026-10-03).
+  if (!tenantId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) {
+    console.warn(
+      "[paige-deep-research] persistence skipped: tenant lineage unresolved/ambiguous (M0 fail-closed; the run's result is still returned)",
+    );
+    return;
+  }
   try {
     const admin = createClient(serviceUrl, serviceKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
     const { error: runErr } = await admin.from("research_runs").insert({
       id: runId,
+      tenant_id: tenantId,
       user_id: req.user_id,
       client_user_id: req.client_user_id ?? null,
       question: req.question,
@@ -1460,8 +1488,10 @@ async function persistRun(
     if (runErr) { console.error("[paige-deep-research] persist run failed:", runErr.message); return; }
 
     if (result.sources.length) {
+      // Sources inherit the parent run's lineage VERBATIM — never independently resolved.
       const rows = result.sources.map((s) => ({
         run_id: runId,
+        tenant_id: tenantId,
         user_id: req.user_id,
         source_index: s.index,
         url: s.url,
@@ -1550,17 +1580,28 @@ serve(async (req) => {
   // gets no memory anchors and writes a platform-null trace — §13 honest-degrade).
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   let resolvedTenantId: string | null = null;
+  // M0: the STRICT lineage used ONLY for persistence (see the auth block below). Null ⇒
+  // ambiguous ⇒ persistence is skipped, never guessed.
+  let lineageTenantId: string | null = null;
   try {
     const authHeader = req.headers.get("Authorization") ?? "";
     const bearer = authHeader.replace(/^Bearer\s+/i, "").trim();
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
     if (bearer && bearer === SERVICE_KEY) {
-      // Trusted service-role caller → derive tenant from the (trusted) body.user_id.
+      // Trusted service-role caller → derive tenant from the (trusted) body.user_id).
+      // TWO resolutions with different strictness (M0):
+      //   resolvedTenantId — for strategize/tracing: active_tenant_id, else first active
+      //     membership (honest-degrade context only; nothing persisted under it).
+      //   lineageTenantId — for PERSISTENCE: active_tenant_id ONLY. A user whose active
+      //     workspace is unset has AMBIGUOUS ownership and the run is NOT persisted
+      //     (fail-closed per the owner ruling — never a guessed membership).
       const userId = typeof body.user_id === "string" ? body.user_id : "";
       if (userId) {
         const { data: prof } = await admin
           .from("profiles").select("active_tenant_id").eq("user_id", userId).maybeSingle();
-        let tid = (prof?.active_tenant_id as string | null) ?? null;
+        const activeTid = (prof?.active_tenant_id as string | null) ?? null;
+        lineageTenantId = activeTid && UUID_RE.test(activeTid) ? activeTid : null;
+        let tid: string | null = activeTid;
         if (!tid) {
           const { data: memberRows } = await admin
             .from("tenant_members").select("tenant_id")
@@ -1579,11 +1620,27 @@ serve(async (req) => {
       if (user) {
         const { data: activeTenant } = await anon.rpc("current_user_tenant_id");
         resolvedTenantId = typeof activeTenant === "string" && UUID_RE.test(activeTenant) ? activeTenant : null;
+        // The JWT path is exact by construction (RLS-pinned resolver) — lineage = resolved.
+        lineageTenantId = resolvedTenantId;
       }
     }
   } catch (e) {
     console.warn("[paige-deep-research] tenant resolution failed (non-fatal):", (e as Error)?.message);
     resolvedTenantId = null;
+    lineageTenantId = null;
+  }
+
+  // M0 CROSS-CHECK: an upstream expected_tenant_id is honored only when it AGREES with the
+  // server-resolved lineage. A disagreement is ambiguity — persistence is skipped, the
+  // caller's value is never persisted and never granted authority.
+  const expectedTenant = typeof body.expected_tenant_id === "string" && UUID_RE.test(body.expected_tenant_id)
+    ? (body.expected_tenant_id as string).toLowerCase()
+    : null;
+  if (expectedTenant && lineageTenantId && expectedTenant !== lineageTenantId) {
+    console.warn(
+      "[paige-deep-research] persistence skipped: upstream expected_tenant_id disagrees with the server-resolved lineage (treated as ambiguous, §9/M0)",
+    );
+    lineageTenantId = null;
   }
 
   try {
@@ -1720,7 +1777,7 @@ serve(async (req) => {
         ? "Search ran but returned no results. No verifiable sources, so no findings — nothing was fabricated."
         : "Sources were found but none met the reliability bar. No findings produced rather than surface unverifiable claims.",
     );
-    if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result);
+    if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId);
     return json(result);
   }
 
@@ -1731,7 +1788,7 @@ serve(async (req) => {
   const synth = await synthesize(question, domainHint, citable, entityTarget);
   if (!synth) {
     const result = buildResult([], "error", "Synthesis failed; no findings returned rather than risk fabrication.");
-    if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result);
+    if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId);
     return json(result);
   }
 
@@ -1760,7 +1817,7 @@ serve(async (req) => {
     // only `coverage` (B1). entity_profile.unverified_notes stays canonical.
     result.coverage.unverified_notes = entityProfile.unverified_notes;
   }
-  if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result);
+  if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId);
   return json(result);
   } catch (e) {
     // §13 — any unexpected failure returns a STRUCTURED honest error, never a

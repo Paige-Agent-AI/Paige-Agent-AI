@@ -208,8 +208,8 @@ BEGIN
       ELSIF row->>'invoice_id' IS NULL AND (SELECT count(*) FROM jsonb_array_elements(_rows) sibling WHERE sibling->>'entity'='invoice' AND sibling->>'client_id'=row->>'client_id' AND sibling->>'invoice_number'=row->>'invoice_number')>1 THEN conflict:='possible_duplicate_invoice_rows';
       ELSIF row->>'invoice_id' IS NOT NULL THEN
         SELECT * INTO invoice FROM public.paige_invoices WHERE id=(row->>'invoice_id')::uuid AND tenant_id=_tenant;
-        IF NOT FOUND OR invoice.contact_id<>(row->>'client_id')::uuid OR invoice.amount_total_cents<>(row->>'amount_cents')::integer
-          OR lower(invoice.currency)<>row->>'currency' OR invoice.due_date IS DISTINCT FROM (row->>'due_date')::date THEN conflict:='invoice_mapping_mismatch';
+        IF NOT FOUND OR invoice.contact_id IS DISTINCT FROM (row->>'client_id')::uuid OR invoice.amount_total_cents IS DISTINCT FROM (row->>'amount_cents')::integer
+          OR lower(invoice.currency) IS DISTINCT FROM row->>'currency' OR invoice.due_date IS DISTINCT FROM (row->>'due_date')::date THEN conflict:='invoice_mapping_mismatch';
         ELSE target:=invoice.id;END IF;
       ELSE
         -- Do not guess whether a new source identity is an already-recorded obligation.

@@ -8,7 +8,7 @@ FLOW_PROTOTYPE: PASS: owner pinned Collections reference and 2026-10-04 full imp
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Solo owner reviews customer obligations and records receipts, or prepares an agreement-backed collection plan with canonical approval.
 VISUAL_DIRECTION: PASS: Mineral/Obsidian tokens, distinct plan controls, compact toolbar, operational register, wide slide-out detail and focused approval popout; no duplicated domain banner or fabricated charts.
 AUTOMATED_EVIDENCE: PASS: affected36 suites477 tests (including shared Studio regressions); canonical Collections SQL proof with real local Rail, tenant/role refusals, replay, atomic conflicts, currencies, receipt/reversal race, bounded locks, snapshot cursor coverage and twice-applied migrations.
-STATIC_EVIDENCE: PASS: production bundle; Deno checks for canonical command endpoints; capability anti-bypass, action-risk, catalogue preservation, receipt coverage, definer ACL and migration-collision guards. Final type ratchet recheck in progress; shared Chat baseline errors remain distinct.
+STATIC_EVIDENCE: PASS: production bundle; Deno checks for canonical command endpoints; capability anti-bypass, action-risk, catalogue preservation, receipt coverage, definer ACL and migration-collision guards. Type ratchet PASS (baseline10/current10); shared Chat baseline errors remain distinct.
 RENDERED_EVIDENCE: PASS: full20 viewport/theme/dock cases; independent rendered review repaired drawer clipping, theme tokens and imported form controls. docs/evidence/ui-delivery/assets/solo-sales-collections/geometry.json.
 BEHAVIORAL_EVIDENCE: PASS: actual components with synthetic adapters exercise register, invoice drawer, payment form, approval, Cancel focus return, plan builder and import mapping. SQL exercises durable canonical consequences. Hosted behavior is separate.
 AUTHENTICATED_RUNTIME: UNVERIFIED: browser automation fails initialization (trusted Node process exit). No hosted owner-session, second-tenant, provider send or settlement proof obtained.
@@ -25,13 +25,13 @@ MUST_PRESERVE: Canonical agreements, invoices, receipt reversals, pending-confir
 ACCEPTANCE_CRITERIA: Owner can inspect scoped obligations, save exact agreement terms, review/conflict-check import, export complete captured membership, record/correct partial receipts and check governed delivery readiness in both themes and compact layouts.
 MOTION_PURPOSE: Drawer enters horizontally to establish detail continuity; reduce-motion removes nonessential travel.
 PROTECTED_SEAMS: Tested tenant/actor/role, optimistic version, canonical approval, exact replay and receipt atomicity. Broad INT-299 Harness, Settings Billing, Marketing/Vibe and Platform Analytics unchanged.
-INTERNAL_BUILD_IDENTITY: 25ac47f6031bad8cfc35b1e59d96b73c9117cce9; deployment=PROOF_OWED(collections-preview); environment=local; migrations=NOT_APPLIED(20270547000000,20270547000001,20270547000002); edge=NOT_DEPLOYED; evidence=docs/evidence/ui-delivery/solo-sales-collections.md
+INTERNAL_BUILD_IDENTITY: 25ac47f6031bad8cfc35b1e59d96b73c9117cce9; deployment=PROOF_OWED(collections-preview); environment=local; migrations=PROOF_OWED(hosted application of 20270547000000_sales_collections,20270547000001_sales_invoice_channel_delivery,20270547000002_sales_collection_autonomy_catalogue); edge=PROOF_OWED(hosted Collections command and invoice delivery deployment); evidence=docs/evidence/ui-delivery/solo-sales-collections.md
 RELEASE_CHANNEL: development: owner authorized implementation and normal delivery; release evidence is not yet available.
 RELEASE_CLASSIFICATION: internal-only: supporting Sales capability with authenticated/provider acceptance still proof owed.
 CUSTOMER_RELEASE_IDENTITY: none: No customer version assigned.
 RELEASE_NOTE_REQUIRED: no: No external communication requested.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: local canonical persistence and fixture interaction proved; hosted release and authenticated capability proof owed.
-RELEASE_RECOVERY: position=revert UI/Edge candidate and forward-restore canonical functions if needed; preserve append-only imported records/receipts; reference=docs/delivery/solo-sales-collections.md
+RELEASE_RECOVERY: position=revert UI/Edge candidate and forward-restore canonical functions while preserving append-only imported records and receipts; reference=docs/delivery/solo-sales-collections.md
 SOLO_1536X770_PAIGE_CLOSED: PASS: both themes in actual-component fixture geometry.json; no authenticated viewport claim.
 SOLO_1536X770_PAIGE_OPEN: PASS: both themes in actual-component fixture geometry.json; no authenticated viewport claim.
 SOLO_1366X768_PAIGE_CLOSED: PASS: both themes in actual-component fixture geometry.json; no authenticated viewport claim.

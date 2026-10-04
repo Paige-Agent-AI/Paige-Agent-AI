@@ -88,6 +88,20 @@ UPDATE proof_commands SET result=proof_collection(22,command) WHERE name='overpa
 SELECT proof_assert((SELECT result#>>'{batch,review,eligible_commit}' FROM proof_commands WHERE name='overpay')='false','overpayment conflicts');
 SELECT proof_denied($q$SELECT proof_collection(23,(SELECT jsonb_build_object('action','collection.commit_import','batch_id',result#>>'{batch,id}','expected_digest',result#>>'{batch,content_digest}') FROM proof_commands WHERE name='overpay'))$q$,'22023','atomic conflicted batch refused');
 SELECT proof_assert((SELECT count(*) FROM paige_invoices)=1,'failed batch leaves no partial invoice');
+SAVEPOINT null_contact_mapping;
+RESET ROLE;
+-- Model nullable historical schema drift explicitly; tracked fresh schema currently forbids null.
+ALTER TABLE paige_invoices ALTER COLUMN contact_id DROP NOT NULL;
+INSERT INTO paige_invoices(id,tenant_id,contact_id,invoice_number,status,amount_total_cents,currency,line_items,created_by)
+ VALUES('80000000-0000-0000-0000-000000000099','20000000-0000-0000-0000-000000000001',NULL,'UNMAPPED-LEGACY','draft',1000,'usd','[]','10000000-0000-0000-0000-000000000001');
+SET LOCAL ROLE service_role;
+INSERT INTO proof_commands SELECT 'null-contact-map',jsonb_set(command,'{source_account}','"null-contact-fixture"')||jsonb_build_object('rows',jsonb_build_array(jsonb_set(jsonb_set(jsonb_set(command#>'{rows,0}','{invoice_id}','"80000000-0000-0000-0000-000000000099"'),'{due_date}','null'),'{entity_id}','"NULL-CLIENT"'))),NULL FROM proof_commands WHERE name='import';
+UPDATE proof_commands SET result=proof_collection(90,command) WHERE name='null-contact-map';
+SELECT proof_assert((SELECT result#>>'{batch,review,eligible_commit}' FROM proof_commands WHERE name='null-contact-map')='false','null canonical client must conflict with explicit client mapping');
+SELECT proof_denied($q$SELECT proof_collection(91,(SELECT jsonb_build_object('action','collection.commit_import','batch_id',result#>>'{batch,id}','expected_digest',result#>>'{batch,content_digest}') FROM proof_commands WHERE name='null-contact-map'))$q$,'22023','null-client mapped commit refused');
+RESET ROLE;
+SELECT proof_assert(NOT EXISTS(SELECT 1 FROM paige_sales_import_bindings WHERE source_account='null-contact-fixture') AND NOT EXISTS(SELECT 1 FROM paige_invoice_payments WHERE invoice_id='80000000-0000-0000-0000-000000000099'),'null-client mapping creates no binding or receipt');
+ROLLBACK TO null_contact_mapping;
 INSERT INTO proof_commands SELECT 'jpy',jsonb_set(command,'{source_account}','"jpy-ledger"')||jsonb_build_object('rows',jsonb_build_array(jsonb_set(jsonb_set(command#>'{rows,0}','{currency}','"jpy"'),'{invoice_number}','"JPY-1"'),jsonb_set(command#>'{rows,1}','{currency}','"jpy"'))),NULL FROM proof_commands WHERE name='import';
 UPDATE proof_commands SET result=proof_collection(30,command) WHERE name='jpy';
 SELECT proof_assert((SELECT result#>>'{batch,review,eligible_commit}' FROM proof_commands WHERE name='jpy')='true','JPY preserved stage');

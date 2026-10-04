@@ -158,9 +158,8 @@ export function Donut({ slices, total, caption, label, activeKey, onActiveKey, o
           onClick={(_data, index) => shown[index] && onSelect?.(shown[index])}>
           {(shown.length ? shown : [{ key: "none", colorToken: "--line-soft" as Token }]).map((slice) => <Cell key={slice.key} fill={colors[slice.colorToken]} fillOpacity={!active || active.key === slice.key ? 1 : 0.32} />)}
         </Pie>
-        {shown.length > 0 && <Tooltip content={({ active: on, payload }) => on && payload?.length
-          ? <TipBox rows={(payload as unknown as TipRow[]).map((row) => ({ label: String(row.name), value: row.value, color: row.payload?.colorToken ? colors[row.payload.colorToken] : undefined }))} />
-          : null} />}
+        {/* No hover box: the centre already names the slice under the pointer, and a box drawn over the
+            ring covers that very number (seen live on Audience, 2026-10-04). */}
       </PieChart>
     </ResponsiveContainer>
     <div className="mo-donut-center" aria-hidden="true">{active ? <><strong>{active.count}</strong><span>{active.label}</span></> : <><strong>{total}</strong><span>{caption}</span></>}</div>

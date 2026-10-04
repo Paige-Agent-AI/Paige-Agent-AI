@@ -10,13 +10,13 @@ const SOURCES = ["paige_form", "paige_form", "paige_form", "paige_form", "paige_
 const TAGS = [["spring-webinar", "newsletter"], ["spring-webinar"], ["referral"], ["newsletter"], ["spring-webinar", "vip"], [], ["referral", "newsletter"], ["podcast"], ["vip"], ["newsletter"], [], ["spring-webinar"], ["podcast"]];
 const clients = STAGES.map((lifecycle_stage, i) => ({ lifecycle_stage, source: SOURCES[i], tags: TAGS[i] }));
 const content = [
-  { id: "mc-1", kind: "image", channel: null, title: "Spring workshop hero", updated_at: day(1) },
-  { id: "mc-2", kind: "text", channel: "email_campaign", title: "Workshop reminder: two days out", updated_at: day(2) },
-  { id: "mc-3", kind: "document", channel: null, title: "Client onboarding guide", updated_at: day(3) },
-  { id: "mc-4", kind: "text", channel: "social_post", title: "Three questions to ask before hiring help", updated_at: day(4) },
-  { id: "mc-5", kind: "text", channel: "ad_copy", title: "Free planning session, limited seats", updated_at: day(5) },
-  { id: "mc-6", kind: "text", channel: "email_campaign", title: "Welcome to the list", updated_at: day(8) },
-  { id: "mc-7", kind: "image", channel: null, title: "Testimonial card", updated_at: day(11) },
+  { id: "mc-1", kind: "image", channel: null, status: "published", title: "Spring workshop hero", updated_at: day(1) },
+  { id: "mc-2", kind: "text", channel: "email_campaign", status: "draft", title: "Workshop reminder: two days out", updated_at: day(2) },
+  { id: "mc-3", kind: "document", channel: null, status: "draft", title: "Client onboarding guide", updated_at: day(3) },
+  { id: "mc-4", kind: "text", channel: "social_post", status: "draft", title: "Three questions to ask before hiring help", updated_at: day(4) },
+  { id: "mc-5", kind: "text", channel: "ad_copy", status: "draft", title: "Free planning session, limited seats", updated_at: day(5) },
+  { id: "mc-6", kind: "text", channel: "email_campaign", status: "draft", title: "Welcome to the list", updated_at: day(8) },
+  { id: "mc-7", kind: "image", channel: null, status: "draft", title: "Testimonial card", updated_at: day(11) },
 ];
 const identity = [{ default_email_sender: "hello@northfield.example", default_email_domain: "northfield.example", default_email_status: "verified" }];
 
@@ -28,9 +28,12 @@ function answer(rows: unknown): Promise<Answer> {
 }
 
 function from(table: string) {
-  const rows = table === "clients" ? clients : table === "marketing_content" ? content : [];
+  let rows: Record<string, unknown>[] = table === "clients" ? clients : table === "marketing_content" ? content : [];
   const chain: Record<string, unknown> = {};
-  for (const method of ["select", "eq", "neq", "order", "limit"]) chain[method] = () => chain;
+  for (const method of ["select", "order", "limit"]) chain[method] = () => chain;
+  // Filters behave like the server's, so each tab shows only what its own query would return.
+  chain.eq = (column: string, value: unknown) => { if (column !== "tenant_id") rows = rows.filter((row) => row[column] === value); return chain; };
+  chain.neq = (column: string, value: unknown) => { rows = rows.filter((row) => row[column] !== value); return chain; };
   chain.then = (resolve: (value: Answer) => unknown, reject: (reason: unknown) => unknown) => answer(rows).then(resolve, reject);
   return chain;
 }

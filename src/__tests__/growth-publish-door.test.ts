@@ -334,6 +334,9 @@ describe("growth-publish-command — an act the Kit gate cannot decide fails clo
     expect(r).toMatchObject({ status: 503, body: { refused: true, code: "CAPABILITY_NOT_GOVERNED" } });
     expect(w.tables.paige_pending_confirmations).toHaveLength(0);
     expect(w.executorCalls()).toHaveLength(0);
+    // A panel prepare files nothing; an attempt (chat) files one refusal.
+    expect(w.seen.receipts).toHaveLength(0);
+    await w.call({ action: "unpublish", kind: "page", id: PAGE, chat_attempt: true });
     expect(w.seen.receipts).toEqual([expect.objectContaining({ _capability_key: "growth_page_unpublish", _outcome: "capability_refused" })]);
     expect((await w.call({ action: "publish", kind: "image", id: IMAGE })).status).toBe(202);
   });

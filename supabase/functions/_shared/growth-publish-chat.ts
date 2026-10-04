@@ -99,7 +99,9 @@ export async function dispatchGrowthPublishChat(ctx: Context, deps: GrowthPublis
     // The one producer of this refusal (confirm-fingerprint.ts), so every door says the same thing.
     return { tokens, content: unaddressableArgsRefusal({ field: spec.idArg, required: true, problem: raw == null || raw === '' ? 'missing' : 'malformed' }, 'proposal') };
   }
-  const body: Record<string, unknown> = { action: 'publish', kind: spec.kind, id, expected_tenant_id: ctx.tenantId,
+  // chat_attempt: this is a person asking Paige to publish, so the door files a refusal on the Rail
+  // (the panel's prepare-on-open does not). It changes nothing about what may run.
+  const body: Record<string, unknown> = { action: 'publish', kind: spec.kind, id, expected_tenant_id: ctx.tenantId, chat_attempt: true,
     ...(approvedFingerprint ? { approved_fingerprint: approvedFingerprint } : {}) };
   const spent = approvedFingerprint;
 

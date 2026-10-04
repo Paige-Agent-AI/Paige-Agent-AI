@@ -43,7 +43,7 @@ describe("chat publish → the one door", () => {
   it("a first call asks the door and turns its 202 into the Needs-your-OK card", async () => {
     const t = deps({ answer: { data: { ok: false, approval_required: true, fingerprint: FP, summary: 'Publish the page "Spring offer" at /p/acme/spring-offer.', preview: { kind: "page" } }, error: null } });
     const r = await dispatchGrowthPublishChat(ctx(), t.d);
-    expect(t.invoked).toEqual([{ action: "publish", kind: "page", id: PAGE, expected_tenant_id: TENANT }]);
+    expect(t.invoked).toEqual([{ action: "publish", kind: "page", id: PAGE, expected_tenant_id: TENANT, chat_attempt: true }]);
     expect(r.content).toMatchObject({ success: false, needs_confirm: true, confirm_fingerprint: FP, confirm_summary: expect.stringContaining("Spring offer") });
     expect(r.spent).toBeUndefined();
   });
@@ -52,7 +52,7 @@ describe("chat publish → the one door", () => {
     const t = deps({ rows: [{ fingerprint: FP, args: { action: "publish", kind: "page", id: PAGE, expected_tenant_id: TENANT, approval_subject: `publish:page:${PAGE}` } }],
       answer: { data: { ok: true, id: PAGE, status: "published", published_at: "2026-10-04T10:00:00Z", url: "/p/acme/spring-offer" }, error: null } });
     const r = await dispatchGrowthPublishChat(ctx({ args: { page_id: OTHER, confirm: true }, approved: new Set([FP]) }), t.d);
-    expect(t.invoked).toEqual([{ action: "publish", kind: "page", id: PAGE, expected_tenant_id: TENANT, approved_fingerprint: FP }]);
+    expect(t.invoked).toEqual([{ action: "publish", kind: "page", id: PAGE, expected_tenant_id: TENANT, chat_attempt: true, approved_fingerprint: FP }]);
     expect(r).toMatchObject({ spent: FP, tokens: [FP], content: { success: true, url: "/p/acme/spring-offer", page_id: PAGE } });
     expect(classifySpentApproval(JSON.stringify(r.content)).outcome).toBe("ran");
     // The lookup is scoped to this person, workspace, act, and the door's thread-less live proposals.

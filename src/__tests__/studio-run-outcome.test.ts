@@ -36,6 +36,11 @@ describe("Studio receipts", () => {
     expect(classifyStudioRun({ capability: "generate_image", result: { success: true, pending: true, job_id: "j" } })).toBeNull();
   });
 
+  it("reads supabase-js's own words for a call that never got an answer as unknown", () => {
+    expect(outcome("growth_page_publish", { threw: true, thrown: { message: "error sending request for url (https://x.supabase.co/rest/v1/rpc/growth_page_publish)" } })).toBe("capability_outcome_unknown");
+    expect(outcome("growth_page_publish", { threw: true, thrown: { name: "FunctionsFetchError", message: "Failed to send a request to the Edge Function" } })).toBe("capability_outcome_unknown");
+  });
+
   it("tells a server refusal from a failure from a lost answer", () => {
     expect(outcome("growth_form_publish", { threw: true, thrown: { code: "42501", message: "GROWTH_FORBIDDEN" } })).toBe("capability_refused");
     expect(outcome("growth_form_save", { threw: true, thrown: { code: "22023", message: "GROWTH_FORM_LIVE_SLUG" } })).toBe("capability_refused");

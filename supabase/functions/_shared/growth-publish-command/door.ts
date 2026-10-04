@@ -160,9 +160,35 @@ export async function handleGrowthPublishCommand(req: Request, deps: PublishDoor
 
     // WHO and WHERE: the workspace the session is in, as its owner, admin or managing agency. A body
     // tenant naming any other workspace is refused, never swapped.
+    // WHETHER A REFUSAL IS AN ATTEMPT. A fingerprinted redeem is a person's click, and a chat call is a
+    // person asking Paige to publish: both refused before a proposal leave one Rail line. A panel
+    // prepare (no fingerprint, no chat flag) is someone opening the panel, and files nothing.
+    const isAttempt = !!cmd.approved_fingerprint || cmd.chat_attempt === true;
+    // Stable per attempt, so a retried redeem or a repeated chat ask folds to one row: the fingerprint
+    // for a redeem, else this person + act + artifact + day.
+    const attemptAnchor = cmd.approved_fingerprint
+      ? `refused:${cmd.approved_fingerprint}`
+      : `attempt:${userId}:${cmd.action}:${cmd.kind}:${cmd.id}:${new Date().toISOString().slice(0, 10)}`;
     const who = await resolveStudioCaller(caller, cmd.expected_tenant_id ?? null);
     if (!who.ok) {
       const refused = who as StudioCallerRefused;
+      // A member who is not the workspace's owner or admin was refused IN that workspace — the one
+      // refusal here with a workspace to file it in (the chat's own gate filed it before V2b).
+      if (isAttempt && refused.reason === "not_admin") {
+        try {
+          const { data: sessionTenant, error } = await caller.rpc("current_user_tenant_id");
+          const receipt = classifyStudioRun({ capability: key, result: { success: false } });
+          if (!error && typeof sessionTenant === "string" && UUID.test(sessionTenant) && receipt) {
+            await recordCapabilityRun(admin, {
+              tenantId: sessionTenant.toLowerCase(), actorId: userId, capabilityKey: receipt.key, outcome: receipt.outcome,
+              runId: await stableRunId([receipt.key, sessionTenant.toLowerCase(), attemptAnchor]),
+              detail: { ...studioReceiptDetail({ [RECEIPT_ID_KEY[cmd.kind]]: cmd.id }, null), door: "growth-publish-command", action: cmd.action, kind: cmd.kind, refused: "workspace_owner_or_admin_required" },
+            });
+          }
+        } catch (e) {
+          console.error("[growth-publish-command] refusal not recorded", JSON.stringify({ key, reason: e instanceof Error ? e.message : String(e) }));
+        }
+      }
       return respond(refused.status, { ok: false, refused: true, forbidden: refused.status === 403, code: refused.reason.toUpperCase(), error: refused.error.replace("Nothing was created.", NOTHING_CHANGED) });
     }
     const tenantId = who.tenantId;
@@ -187,6 +213,9 @@ export async function handleGrowthPublishCommand(req: Request, deps: PublishDoor
         detail: { ...studioReceiptDetail({ ...idDetail, ...extra }, approval), door: "growth-publish-command", action: cmd.action, kind: cmd.kind, ...(input.threw ? {} : object(input.result)?.refused_reason ? { refused: object(input.result)!.refused_reason } : {}) },
       });
     };
+    /** A refusal before any proposal: on the Rail for an attempt, silent for a panel prepare. */
+    const fileAttemptRefusal = async (reason: string): Promise<boolean> =>
+      isAttempt ? await fileReceipt({ result: { success: false, refused_reason: reason } }, attemptAnchor, null) : false;
 
     const { data: resolvedLane, error: laneError } = await caller.rpc("resolve_tool_autonomy", { _tenant_id: tenantId, _tool_key: key });
     const lane = !laneError && typeof resolvedLane === "string" && ["auto", "confirm", "off"].includes(resolvedLane) ? resolvedLane : "unresolved";
@@ -213,12 +242,14 @@ export async function handleGrowthPublishCommand(req: Request, deps: PublishDoor
     // refuses that act, loudly, and never runs it ungoverned.
     const notGoverned = async (e: unknown): Promise<Response> => {
       console.error("[growth-publish-command] the Kit gate refused to decide", JSON.stringify({ key, reason: e instanceof Error ? e.message : String(e) }));
-      const recorded = await fileReceipt({ result: { success: false, refused_reason: "capability_not_governed" } }, `refused:${requestNonce}`, null);
+      const recorded = await fileAttemptRefusal("capability_not_governed");
       return respond(503, { ok: false, refused: true, code: "CAPABILITY_NOT_GOVERNED", error: `This can't be done from here yet. ${NOTHING_CHANGED}`, receipt_recorded: recorded });
     };
     const refusedByDecision = async (decision: Extract<Decision, { kind: "refuse" }>): Promise<Response> => {
-      const audited = await audit(decision);
-      const recorded = await fileReceipt({ result: { success: false, refused_reason: decision.code } }, `refused:${requestNonce}`, null);
+      // A panel prepare against a switched-off lane is someone opening the panel, not an attempt: it
+      // writes neither an audit row nor a receipt (three opens were three "Not allowed" Rail lines).
+      const audited = isAttempt ? await audit(decision) : false;
+      const recorded = await fileAttemptRefusal(decision.code);
       if (decision.code === "autonomy_off") {
         return respond(403, { ok: false, refused: true, disabled: true, code: decision.code, capability: key,
           error: `${cmd.action === "publish" ? "Publishing" : "Unpublishing"} is switched off for this workspace in your autonomy settings. ${NOTHING_CHANGED}`,
@@ -245,12 +276,14 @@ export async function handleGrowthPublishCommand(req: Request, deps: PublishDoor
     }
     const preview = buildPublishPreview(cmd.action, cmd.kind, cmd.id, facts);
     if (!preview) {
-      return respond(404, { ok: false, refused: true, code: "ARTIFACT_NOT_FOUND", error: `That ${cmd.kind} isn't in this workspace. ${NOTHING_CHANGED}` });
+      const recorded = await fileAttemptRefusal("not_found");
+      return respond(404, { ok: false, refused: true, code: "ARTIFACT_NOT_FOUND", error: `That ${cmd.kind} isn't in this workspace. ${NOTHING_CHANGED}`, receipt_recorded: recorded });
     }
     // Nothing to approve: the same 202 approval shape the Studio panel and chat read, with the preview
     // and NO fingerprint. A blocked act never mints a proposal.
     if (!previewReady(preview)) {
-      return respond(202, { ok: false, outcome: "not_ready", approval_required: true, capability: key, preview,
+      const recorded = await fileAttemptRefusal("not_ready");
+      return respond(202, { ok: false, outcome: "not_ready", approval_required: true, capability: key, preview, receipt_recorded: recorded,
         error: `It isn't ready yet: ${preview.checks.filter((c) => c.blocking && !c.ok).map((c) => c.label).join("; ")}. ${NOTHING_CHANGED}` });
     }
 
@@ -260,7 +293,10 @@ export async function handleGrowthPublishCommand(req: Request, deps: PublishDoor
     // approval left unspent.
     let claimedArgs: Record<string, unknown> | null | undefined;
     if (cmd.approved_fingerprint && (lane === "confirm" || lane === "auto")) {
-      if (!(await stillCurrent())) return respond(409, { ok: false, refused: true, code: "WORKSPACE_CHANGED", error: `Your workspace changed. ${NOTHING_CHANGED}` });
+      if (!(await stillCurrent())) {
+        const recorded = await fileAttemptRefusal("workspace_changed");
+        return respond(409, { ok: false, refused: true, code: "WORKSPACE_CHANGED", error: `Your workspace changed. ${NOTHING_CHANGED}`, receipt_recorded: recorded });
+      }
       const now = new Date().toISOString();
       const { data: claimed, error: claimError } = await admin.from("paige_pending_confirmations")
         .update({ consumed_at: now }).eq("user_id", userId).eq("tenant_id", tenantId).eq("tool_name", key)
@@ -271,6 +307,16 @@ export async function handleGrowthPublishCommand(req: Request, deps: PublishDoor
         .contains("args", { id: cmd.id }).select("args").maybeSingle();
       if (claimError) return respond(503, { ok: false, code: "APPROVAL_STORE_UNAVAILABLE", error: `I couldn't check that approval just now. ${NOTHING_CHANGED}` });
       claimedArgs = object(claimed?.args);
+      // One approval settles the act: a sibling proposal for the same act on the same artifact (two
+      // panels opened at once, or a chat card beside a panel) is retired with it, so it cannot redeem
+      // the same act a second time. Best effort: a failure leaves siblings to expire, and is logged.
+      if (claimedArgs) {
+        const { error: retireError } = await admin.from("paige_pending_confirmations")
+          .update({ consumed_at: now }).eq("user_id", userId).eq("tenant_id", tenantId).eq("tool_name", key)
+          .is("thread_id", null).is("scoped_client_id", null).is("consumed_at", null)
+          .contains("args", { id: cmd.id });
+        if (retireError) console.error("[growth-publish-command] sibling proposals not retired", JSON.stringify({ key, reason: retireError.message ?? "unknown" }));
+      }
     }
 
     let decision: Decision;
@@ -287,7 +333,10 @@ export async function handleGrowthPublishCommand(req: Request, deps: PublishDoor
         return respond(409, { ok: false, refused: true, outcome: "refused", code: "APPROVAL_NOT_AVAILABLE", capability: key,
           error: `That approval was already used or has expired, so nothing ran. Review it again to ${cmd.action}.` });
       }
-      if (!(await stillCurrent())) return respond(409, { ok: false, refused: true, code: "WORKSPACE_CHANGED", error: `Your workspace changed. ${NOTHING_CHANGED}` });
+      if (!(await stillCurrent())) {
+        const recorded = await fileAttemptRefusal("workspace_changed");
+        return respond(409, { ok: false, refused: true, code: "WORKSPACE_CHANGED", error: `Your workspace changed. ${NOTHING_CHANGED}`, receipt_recorded: recorded });
+      }
       const now = new Date().toISOString();
       // Reuse a live proposal for this exact act and artifact, so asking twice shows one card. A
       // consumed fingerprint can never become authority again: each cycle carries a fresh nonce.

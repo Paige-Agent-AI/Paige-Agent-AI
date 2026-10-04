@@ -48,9 +48,16 @@ export interface PublishCommand {
   id: string;
   approved_fingerprint?: string;
   expected_tenant_id?: string;
+  /**
+   * Set by Paige's chat bridge (growth-publish-chat.ts): this call is a person's ATTEMPT, so a refusal
+   * before any proposal is filed on the Rail. The Studio panel prepares on every open and never sets
+   * it, so opening the panel files nothing. It widens nothing: it decides only whether a refusal is
+   * recorded, never whether anything runs.
+   */
+  chat_attempt?: boolean;
 }
 
-const BODY_KEYS = new Set(["action", "kind", "id", "approved_fingerprint", "expected_tenant_id"]);
+const BODY_KEYS = new Set(["action", "kind", "id", "approved_fingerprint", "expected_tenant_id", "chat_attempt"]);
 
 /** Parse the request body, closed: an unknown key, a bad action/kind, or a malformed id refuses. */
 export function parsePublishCommand(value: unknown): PublishCommand {
@@ -66,12 +73,14 @@ export function parsePublishCommand(value: unknown): PublishCommand {
   if (body.expected_tenant_id !== undefined && (typeof body.expected_tenant_id !== "string" || !UUID.test(body.expected_tenant_id))) {
     throw new TypeError("INVALID_SCOPE");
   }
+  if (body.chat_attempt !== undefined && typeof body.chat_attempt !== "boolean") throw new TypeError("INVALID_ORIGIN");
   return {
     action: body.action as PublishAction,
     kind: body.kind as PublishKind,
     id: body.id.toLowerCase(),
     ...(body.approved_fingerprint !== undefined ? { approved_fingerprint: body.approved_fingerprint as string } : {}),
     ...(body.expected_tenant_id !== undefined ? { expected_tenant_id: (body.expected_tenant_id as string).toLowerCase() } : {}),
+    ...(body.chat_attempt === true ? { chat_attempt: true } : {}),
   };
 }
 

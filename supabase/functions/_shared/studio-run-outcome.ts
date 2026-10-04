@@ -42,7 +42,9 @@ export const DOOR_FILED_STUDIO_TOOLS: ReadonlySet<string> = new Set([
 // Postgres codes the Studio RPCs raise when they refuse: forbidden, invalid/locked, not found, and a
 // duplicate.
 const REFUSAL_CODES = new Set(["42501", "22023", "P0002", "23505"]);
-const TRANSPORT = /\b(fetch|network|timed? ?out|timeout|ECONN|socket|aborted)\b/i;
+// "error sending request" / "failed to send a request" are supabase-js's own words for a call that
+// never got an answer (FunctionsFetchError and the fetch layer under it).
+const TRANSPORT = /\b(fetch|network|timed? ?out|timeout|ECONN|socket|aborted|error sending request|failed to send a request)\b/i;
 
 export interface StudioReceipt { key: string; outcome: CapabilityOutcome }
 

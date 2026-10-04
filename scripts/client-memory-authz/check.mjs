@@ -4778,9 +4778,9 @@ console.log("\nV2b — chat publishing goes through the one publish door");
   const asked = await publishDrive({ answer: { data: { ok: false, approval_required: true, fingerprint: FP,
     summary: 'Publish the page "Spring offer" at /p/acme/spring-offer.', preview: { kind: "page" } }, error: null } });
   const askedCards = cards(asked);
-  assert("35.1 chat publish invokes growth-publish-command with the operator's JWT and calls no publish RPC",
+  assert("35.1 chat publish invokes growth-publish-command with the operator's JWT, marked as a chat attempt (so a refusal is filed), and calls no publish RPC",
     doorCalls(asked).length === 1 && publishRpcs(asked).length === 0
-      && JSON.stringify(doorCalls(asked)[0].body) === JSON.stringify({ action: "publish", kind: "page", id: PAGE_ID, expected_tenant_id: CALLER_TENANT })
+      && JSON.stringify(doorCalls(asked)[0].body) === JSON.stringify({ action: "publish", kind: "page", id: PAGE_ID, expected_tenant_id: CALLER_TENANT, chat_attempt: true })
       && doorCalls(asked)[0].headers?.Authorization === "Bearer test-jwt",
     JSON.stringify({ door: doorCalls(asked), rpcs: publishRpcs(asked).map((c) => c.name) }));
   assert("35.1b …the door's 202 is the one Needs-your-OK card, with the door's fingerprint, and chat stored no proposal of its own",

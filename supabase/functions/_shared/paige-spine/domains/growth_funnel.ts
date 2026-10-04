@@ -156,3 +156,46 @@ export const GROWTH_FUNNEL_PUBLISH_CAPABILITY = defineCapability({
   receipt: FUNNEL_RECEIPT,
   outcome: { projector: "capability-record" },
 });
+
+// UNPUBLISH (Migration E, 2026-10-04). A door-only act: the growth-publish-command door runs it for
+// the Studio panel and the chat alike, and no chat tool carries this name. So, like the human-only
+// invoice link (sales_invoice.ts), it is declared through the capability kit and NOT as a
+// SpineCapability: the Spine validator requires every mutating entry to name a LIVE chat tool, and
+// claiming one here would be false. The door binds this declaration through
+// STUDIO_PUBLISH_KIT_BY_ACTION (studio_publish.ts) and decideDeclaredCapability.
+//
+// `high`, like publish: anyone part-way through the sequence loses it. The funnel's pages and forms
+// stay live (owner ruling 2026-09-30: unpublish them separately).
+export const GROWTH_FUNNEL_UNPUBLISH_CAPABILITY = defineCapability({
+  identity: {
+    id: "growth_funnel.unpublish",
+    version: 1,
+    domain: "growth_funnel",
+    owner: "vibe-studio",
+    humanSurface: "/solo/:account/growth",
+    description: "Take a funnel offline. Its pages and forms stay live.",
+  },
+  input: objectInputSchema({
+    description: "Unpublish a live funnel.",
+    properties: { funnel_id: { type: "string", format: "uuid" } },
+    required: ["funnel_id"],
+  }),
+  effect: "mutation",
+  governance: {
+    actionRiskKey: "growth_funnel_unpublish",
+    risk: "high",
+    approval: "confirm",
+    requiredPermission: ownerGrantablePermission("growth_funnel.unpublish.execute"),
+  },
+  tenantScope: FUNNEL_SCOPE,
+  availability: FUNNEL_AVAILABILITY,
+  providerBinding: { kind: "internal", operation: "public.growth_funnel_unpublish", connectionResolver: null },
+  idempotency: {
+    mode: "required",
+    key: "the funnel's own state. Unpublishing a funnel that is not live returns its current status and changes nothing, so a replay converges.",
+    readback: "public.growth_funnel_unpublish",
+    replay: "return_recorded_result",
+  },
+  receipt: FUNNEL_RECEIPT,
+  outcome: { projector: "capability-record" },
+});

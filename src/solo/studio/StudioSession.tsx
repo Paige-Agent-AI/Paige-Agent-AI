@@ -7,6 +7,7 @@ import { ArrowLeft, Monitor, Smartphone, MessageSquare, SlidersHorizontal, Arrow
 import { Logo } from "../_shared";
 import { buildGrowthBrandFloor } from "@/components/growth/growth-theme";
 import { useMediaJobs } from "../useMediaJobs";
+import { MediaApprovalCard } from "./MediaApprovalCard";
 import { formFromRow, isUnnamed, sessionName, loadBrand, openSession, pageFromRow, plainError, renameSession, type ArtifactRef, type StudioSession as Session, type StudioVersion } from "./studio-data";
 import { MarkdownMessage } from "@/components/chat/MarkdownMessage";
 import { useStudioChat, type Choices } from "./useStudioChat";
@@ -248,6 +249,8 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBa
         </div>
         {publishOpen && artifact && (
           <PublishPanel
+            // A different piece is a different door preparation: never carry a fingerprint across.
+            key={`${artifact.kind}:${artifactId(artifact)}`}
             artifact={artifact}
             onClose={() => { setPublishOpen(false); publishBtnRef.current?.focus(); }}
             onDone={(m) => { setNotice(m); setRefreshKey((k) => k + 1); }}
@@ -299,17 +302,7 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBa
                 ) : c.note ? <small role="status">{c.note}</small> : null}
               </div>
             ))}
-            {pendingApprovals.map((job) => (
-              <div key={job.id} className="vs-approval" role="group" aria-label="Image waiting for approval">
-                <b>An image needs your approval</b>
-                <span style={{ color: "var(--vs-dim)" }}>{String((job.params as Record<string, unknown>)?.prompt ?? "").slice(0, 90)}</span>
-                <span className="mono" style={{ color: "var(--vs-text)" }}>Estimated ${Number(job.estimated_cost_usd ?? 0).toFixed(2)}</span>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button type="button" className="vs-btn vs-btn-gold" onClick={() => void media.decide(job.id, true)}>Approve and make it</button>
-                  <button type="button" className="vs-btn vs-btn-quiet" onClick={() => void media.decide(job.id, false)}>Decline</button>
-                </div>
-              </div>
-            ))}
+            {pendingApprovals.map((job) => <MediaApprovalCard key={job.id} job={job} media={media} />)}
             {chat.sendError && <p className="vs-alert" role="alert">{chat.sendError}</p>}
             {media.actionError && pendingApprovals.length > 0 && <p className="vs-alert" role="alert">{media.actionError}</p>}
           </div>

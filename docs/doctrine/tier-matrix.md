@@ -345,6 +345,10 @@ class of lie as a fabricated metric (§13).
 
 Legend: **✓** live · **—** not built · **N/A** tier not opened yet · **403** denied at the route gate.
 
+### Vibe Studio V2b — one publish door, media approval, Migrations E and F (2026-10-04)
+
+Same Studio tiers (Solo owner/admin; the agency managing a sub-account; operators in company workspaces, per `studio_role_ok`). Publishing and unpublishing from the Studio panel now run through `growth-publish-command` with an approval card for every tier, exactly as chat publishing does; a plain workspace member, Client and Anonymous are refused as before. New Trust Compass rows for every Studio tier: unpublish a landing page, a funnel or a form; publish and unpublish an image (default ask first, high risk). Media spend: the person who asked approves; any other owner/admin of the workspace sees the card and can decline but no longer approve it. Pages with ordinary copy containing words like "your" or "add" can now be published on every tier (Migration F). No tier gains or loses a surface otherwise.
+
 ### Vibe Studio V2a — receipts, drafts without approval, Migration D (2026-10-04)
 
 Same Studio tiers (Solo owner/admin; the agency managing a sub-account; operators in company workspaces). Every chat-driven Studio save and publish now appears on the workspace's activity Rail with a named line — for workspace members only: an agency user inside a sub-account and an operator in a company workspace act without a receipt (`record_capability_run` requires active membership; widening it awaits an owner ruling), and the Studio panel's own Publish/Unpublish and library uploads file none until V2b. Copy drafts run without an approval card for every tier; saving and publishing keep their approval. `save_marketing_content`: a plain member holding the global admin role loses write; a workspace owner/admin without it gains write; the platform owner can no longer write into a workspace where they are not owner/admin. `marketing_content` reads: the managing agency gains read of a sub-account's library only while working inside that sub-account; members still read nothing. Draft, edit, route, critique and learn (seven functions): a plain member holding the global admin role loses page/form/funnel drafting, block edit, routing, critique and learn; `super_admin` loses cross-tenant critique with a named tenant and learn-from-artifact without switching into the artifact's workspace; an operator with no active workspace loses drafting without brand context (now "open one of your workspaces first"); a body tenant naming another workspace, previously ignored, is now refused; a workspace owner/admin or managing agency without the global role gains all of them. Client and Anonymous: unchanged, refused.
@@ -364,6 +368,18 @@ Same tiers as the layout C workspace below (Solo owner/admin; operator acting in
 ### Vibe Studio build view, in-project saving, approval cards (2026-10-03)
 
 Same tiers as the layout C workspace below; no new seam. The Studio designer saves drafts in the same turn; held saves surface as approval cards; an unnamed project is renamed through the existing `rename_studio_session` (workspace owner/admin or the project's creator). LIVE on merge; authenticated drive owed.
+
+### Marketing email E1 — the sending foundation (branch `claude/gifted-bell-qfezxb`, 2026-10-04)
+
+Backend only: no surface changes in this slice (the Email tab is unchanged until E2). Recorded here
+because it changes what each tier can DO (§66). The callable seam is `email_campaign_*` RPCs on the
+caller's ACTIVE workspace (`current_user_tenant_id()`), each gated on `is_tenant_admin` of that workspace.
+
+| Capability | God / Super Admin | Agency | Standalone (Solo) | Sub-account | Client | Anonymous | Status |
+|---|---|---|---|---|---|---|---|
+| Draft, approve-request, approve, cancel, resume an email campaign; newsletter consent; audience preview | ✗ as operator (no workspace; reads all rows through `is_platform_owner()`) | DB allows its owner/admin in its own workspace; no screen (§61 default: the agency does not run its own email book here) | **✓** owner/admin; a member is refused (`not_permitted`) | **✓** owner/admin of the sub-account, same RPCs (no screen yet; E2 builds Solo first) | ✗ | ✗ | PARTIAL: backend LIVE on merge; screens arrive in E2 |
+| Approve a `campaign_send` approval | ✗ | only a person who owns/administers that business, through `email_campaign_approve` (DB guard refuses every other writer) | ✓ | ✓ | ✗ | ✗ | LIVE on merge |
+| Dispatch (claim, begin, record, settle, envelopes) | service role only (`email-campaign-worker`) | — | — | — | — | — | LIVE on merge |
 
 ### Solo Campaigns becomes the Marketing department — S2 "Marketing in place" (branch `claude/gifted-bell-qfezxb`, 2026-10-03)
 

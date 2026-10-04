@@ -47,10 +47,21 @@ import {
 import {
   estimateCredits,
   holdMediaCredits,
+  releaseMediaCredits,
 } from "../_shared/media-provider/credits.ts";
 import { failMediaJob } from "../_shared/media-provider/complete.ts";
 import { linkStudioArtifact } from "../_shared/media-provider/studio-link.ts";
 import { NeedsConfigError } from "../_shared/provider-types.ts";
+import { stableRunId } from "../_shared/capability-record.ts";
+import {
+  claimMediaProposal,
+  issueMediaProposal,
+  mediaApprovalView,
+  REQUESTER_ONLY_MESSAGE,
+  retireMediaProposals,
+  type MediaApprovalJob,
+  type MediaApprovalView,
+} from "../_shared/media-provider/approval.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -129,6 +140,79 @@ serve(async (req: Request) => {
 
     const config = await loadMediaConfig(admin);
     const ceilingUsd = await resolveMediaCeiling(admin, tenantId, config.dailyCeilingUsd);
+
+    // ── APPROVAL (v2b): the canonical proposal store, not a second channel ──
+    // A job that needs approval carries a server-issued proposal in paige_pending_confirmations,
+    // addressed to the person who asked (owner ruling 2026-10-04: "Requester approves, any admin
+    // can decline"). This nonce stamps any proposal THIS request issues, so this request can never
+    // redeem one it minted (docs/doctrine/one-approval-gate.md).
+    const requestNonce = crypto.randomUUID();
+
+    // What this caller may see about each pending approval: the requester gets the fingerprint
+    // (issued here if it is missing — a job from before v2b, or one whose earlier claim did not
+    // land), everyone else sees who asked. Never the fingerprint to anyone but the requester.
+    const approvalsFor = async (rows: Array<Record<string, unknown>>): Promise<Record<string, MediaApprovalView>> => {
+      const pending = rows.filter((j) => j.approval_state === "pending" && j.state === "blocked");
+      if (!pending.length) return {};
+      const others = [...new Set(pending.map((j) => j.actor_id as string | null).filter((id): id is string => !!id && id !== user.id))];
+      const names: Record<string, string> = {};
+      if (others.length) {
+        const { data: people } = await admin.from("profiles").select("user_id, full_name").in("user_id", others);
+        for (const p of (people ?? []) as Array<{ user_id: string; full_name: string | null }>) {
+          if (p.full_name && p.full_name.trim()) names[p.user_id] = p.full_name.trim();
+        }
+      }
+      const out: Record<string, MediaApprovalView> = {};
+      for (const j of pending) {
+        const job = j as unknown as MediaApprovalJob;
+        let proposal = null;
+        if (job.actor_id === user.id) {
+          const issued = await issueMediaProposal(admin, job, requestNonce);
+          if (issued.ok) proposal = issued.proposal;
+          else console.error("[paige-media] approval not issued", JSON.stringify({ job: job.id, reason: issued.reason }));
+        }
+        out[job.id] = mediaApprovalView(job, user.id, job.actor_id ? names[job.actor_id] ?? null : null, proposal);
+      }
+      return out;
+    };
+
+    // Decline a job that is awaiting approval — any owner or admin may (owner ruling). The job's
+    // guarded transition decides the race with an approval; the proposal is then retired so it can
+    // never be redeemed, and the decision is filed on the Rail once per job.
+    const declinePending = async (job: Record<string, unknown>): Promise<Record<string, unknown> | null | "failed"> => {
+      const { data: updated, error: declineErr } = await admin
+        .from("paige_media_jobs")
+        .update({ approval_state: "rejected", state: "cancelled", completed_at: new Date().toISOString(), lease_until: null })
+        .eq("id", String(job.id))
+        .eq("approval_state", "pending")
+        .eq("state", "blocked")
+        .select()
+        .maybeSingle();
+      if (declineErr) return "failed";
+      if (!updated) return null;
+      const approvalJob = job as unknown as MediaApprovalJob;
+      // A failed retire cannot reopen the spend: approve requires a pending job, and this one is
+      // cancelled. It is logged so the dangling row is visible, never silent.
+      if (!(await retireMediaProposals(admin, approvalJob))) {
+        console.error("[paige-media] declined job's approval was not retired", JSON.stringify({ job: approvalJob.id }));
+      }
+      await recordCapabilityRun(admin, {
+        tenantId,
+        actorId: user.id,
+        capabilityKey: approvalJob.mode === "video" ? "vibe_media_video" : "vibe_media_image",
+        outcome: "capability_refused",
+        runId: await stableRunId(["vibe-media-declined", tenantId, approvalJob.id]),
+        detail: {
+          declined_by_owner: true,
+          declined_by_requester: approvalJob.actor_id === user.id,
+          job_id: approvalJob.id,
+          mode: approvalJob.mode,
+          model: approvalJob.model,
+          estimated_cost_usd: approvalJob.estimated_cost_usd,
+        },
+      });
+      return updated;
+    };
 
     // ── capabilities: the truthful surface state (all 18 states' server side) ─
     if (action === "capabilities") {
@@ -426,7 +510,10 @@ serve(async (req: Request) => {
         .select("*")
         .eq("idempotency_key", idempotencyKey)
         .maybeSingle();
-      if (existing) return json({ job: existing, idempotent_replay: true });
+      if (existing) {
+        const replayApproval = (await approvalsFor([existing]))[String(existing.id)];
+        return json({ job: existing, idempotent_replay: true, ...(replayApproval ? { awaiting_approval: true, approval: replayApproval } : {}) });
+      }
 
       const { data: job, error: insertErr } = await admin
         .from("paige_media_jobs")
@@ -456,34 +543,48 @@ serve(async (req: Request) => {
             .select("*")
             .eq("idempotency_key", idempotencyKey)
             .maybeSingle();
-          if (winner) return json({ job: winner, idempotent_replay: true });
+          if (winner) {
+            const replayApproval = (await approvalsFor([winner]))[String(winner.id)];
+            return json({ job: winner, idempotent_replay: true, ...(replayApproval ? { awaiting_approval: true, approval: replayApproval } : {}) });
+          }
         }
         return json({ error: "Couldn't create the media job." }, 500);
       }
 
       if (policy.approvalRequired) {
-        return json({ job, awaiting_approval: true, reason: policy.reason, estimate, model_choice: picked });
+        // The spend waits on a canonical proposal addressed to the requester. If the store cannot
+        // issue it right now the job still waits (it is blocked either way) and the next read
+        // issues it — the Approve control asks for it again rather than approving without one.
+        const approval = (await approvalsFor([job]))[String(job.id)] ?? null;
+        return json({ job, awaiting_approval: true, reason: policy.reason, estimate, model_choice: picked, approval, ...(approval?.fingerprint ? {} : { approval_unavailable: true }) });
       }
       return await dispatchJob(admin, job, { authHeader, webhookUrl: `${supabaseUrl}/functions/v1/paige-media-webhook` }, config);
     }
 
-    // ── approve / reject: the approval boundary is SERVER-HELD state ─────────
+    // ── approve / reject: decided through the canonical proposal (v2b) ───────
     if (action === "approve" || action === "reject") {
       const jobId = String(body?.job_id ?? "");
       if (!jobId) return json({ error: "job_id is required." }, 400);
       const { data: job } = await admin.from("paige_media_jobs").select("*").eq("id", jobId).maybeSingle();
       if (!job || job.tenant_id !== tenantId) return json({ error: "Job not found." }, 404);
-      if (job.approval_state !== "pending") return json({ error: "This job isn't awaiting approval." }, 409);
+      if (job.approval_state !== "pending" || job.state !== "blocked") return json({ error: "This job isn't awaiting approval." }, 409);
 
       if (action === "reject") {
-        const { data: updated } = await admin
-          .from("paige_media_jobs")
-          .update({ approval_state: "rejected", state: "cancelled", completed_at: new Date().toISOString() })
-          .eq("id", jobId)
-          .eq("approval_state", "pending")
-          .select()
-          .single();
-        return json({ job: updated });
+        const declined = await declinePending(job);
+        if (declined === "failed") return json({ error: "Couldn't decline the job — try again." }, 500);
+        if (!declined) return json({ error: "This job was already decided." }, 409);
+        return json({ job: declined, declined: true });
+      }
+
+      // Only the person who asked can approve the spend (owner ruling 2026-10-04). Anyone else
+      // with access can still decline it.
+      if (job.actor_id !== user.id) {
+        return json({ error: REQUESTER_ONLY_MESSAGE(String(job.mode)), requester_only: true }, 403);
+      }
+      // The proof is the server-issued fingerprint echoed back in the request body — never a flag.
+      const approvedFingerprint = typeof body?.approved_fingerprint === "string" ? body.approved_fingerprint : "";
+      if (!/^[0-9a-f]{16}$/.test(approvedFingerprint)) {
+        return json({ error: "This approval didn't come from the approval card. Open it again and approve from there.", approval_required: true }, 400);
       }
 
       // Approve: re-check the daily video cap at approval time (M6) and the
@@ -503,6 +604,20 @@ serve(async (req: Request) => {
         estimatedCostUsd: job.estimated_cost_usd ?? 0,
       });
       if (budget.verdict === "deny") return json({ error: budget.explanation, budget_denied: true, gate: budget.gate }, 429);
+
+      // Redeem the proposal ONCE — after the rechecks, so a limit or budget refusal does not spend
+      // the person's approval. Bound to the caller, the tenant, this job and its estimate.
+      const claim = await claimMediaProposal(admin, {
+        job: job as unknown as MediaApprovalJob,
+        callerId: user.id,
+        tenantId,
+        fingerprint: approvedFingerprint,
+        requestNonce,
+      });
+      if (claim === "unavailable") return json({ error: "Couldn't record your approval — try again." }, 503);
+      if (claim === "not_claimable") {
+        return json({ error: "That approval is no longer valid. Reload the Studio and approve it again.", approval_stale: true }, 409);
+      }
 
       const { data: updated, error: upErr } = await admin
         .from("paige_media_jobs")
@@ -524,6 +639,13 @@ serve(async (req: Request) => {
       if (["succeeded", "failed", "cancelled"].includes(job.state)) {
         return json({ job, already_terminal: true });
       }
+      // Cancelling a job that is still awaiting approval IS a decline (any owner or admin): it
+      // retires the proposal and is filed once. If an approval won the race, cancel as usual below.
+      if (job.approval_state === "pending" && job.state === "blocked") {
+        const declined = await declinePending(job);
+        if (declined === "failed") return json({ error: "Couldn't cancel the job." }, 500);
+        if (declined) return json({ job: declined, declined: true });
+      }
       // Terminal-bound guarded transition wins exactly once.
       const { data: updated, error: upErr } = await admin
         .from("paige_media_jobs")
@@ -535,7 +657,6 @@ serve(async (req: Request) => {
       if (upErr || !updated) return json({ error: "Couldn't cancel the job." }, 500);
 
       // The reservation returns to the workspace's pool on cancel (idempotent).
-      const { releaseMediaCredits } = await import("../_shared/media-provider/credits.ts");
       await releaseMediaCredits(
         (n: string, a: Record<string, unknown>) => admin.rpc(n, a),
         tenantId,
@@ -560,7 +681,8 @@ serve(async (req: Request) => {
       const jobId = String(body?.job_id ?? "");
       const { data: job } = await admin.from("paige_media_jobs").select("*").eq("id", jobId).maybeSingle();
       if (!job || job.tenant_id !== tenantId) return json({ error: "Job not found." }, 404);
-      return json({ job });
+      const approval = (await approvalsFor([job]))[String(job.id)];
+      return json({ job, ...(approval ? { approval } : {}) });
     }
     if (action === "list") {
       const limit = Math.max(1, Math.min(50, Number(body?.limit) || 20));
@@ -571,7 +693,8 @@ serve(async (req: Request) => {
         .order("created_at", { ascending: false })
         .limit(limit);
       if (error) return json({ error: "Couldn't list media jobs." }, 500);
-      return json({ jobs });
+      const approvals = await approvalsFor(jobs ?? []);
+      return json({ jobs: (jobs ?? []).map((j: Record<string, unknown>) => approvals[String(j.id)] ? { ...j, approval: approvals[String(j.id)] } : j) });
     }
 
     return json({ error: "unknown_action" }, 400);

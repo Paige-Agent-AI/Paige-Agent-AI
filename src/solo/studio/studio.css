@@ -170,6 +170,8 @@
 .vs-studio .vs-send { justify-self: end; width: 30px; height: 30px; border-radius: 8px; border: 0; display: grid; place-items: center; background: var(--vs-violet); color: #fff; cursor: pointer; }
 .vs-studio .vs-send:disabled { background: rgba(255, 255, 255, .12); color: var(--vs-faint); cursor: not-allowed; }
 .vs-studio .vs-approval { border: 1px solid var(--vs-line); background: var(--vs-panel); border-radius: 12px; padding: 12px; display: grid; gap: 8px; font-size: 12.6px; }
+.vs-studio .vs-approval-cost { color: var(--vs-dim); font-variant-numeric: tabular-nums; }
+.vs-studio .vs-approval-cost strong { color: var(--vs-text); font-weight: 600; }
 
 .vs-studio .vs-stage { position: relative; overflow: auto; min-width: 0;
   background-color: #0C0A1C;
@@ -227,6 +229,8 @@
 .vs-studio .vs-version-actions { display: flex; align-items: center; gap: 10px; font-size: 12.4px; color: var(--vs-dim); }
 
 .vs-studio .vs-pop { position: absolute; top: 50px; right: 12px; width: 360px; z-index: 5; border: 1px solid var(--vs-line); border-radius: 14px; background: var(--vs-pop); box-shadow: 0 24px 60px -24px rgba(0, 0, 0, .8); padding: 16px; display: grid; gap: 12px; }
+/* Short viewports and 200% zoom: the panel scrolls inside itself instead of running off the bottom. */
+.vs-studio .vs-pop { max-height: calc(100dvh - 62px); overflow-y: auto; overscroll-behavior: contain; }
 .vs-studio .vs-pop h2 { margin: 0; font-size: 14.5px; }
 .vs-studio .vs-pop p { margin: 0; font-size: 12.4px; color: var(--vs-dim); line-height: 1.5; }
 /* A refusal inside the panel keeps its alert colour (the paragraph rule above outranks .vs-alert). */
@@ -235,6 +239,22 @@
 .vs-studio .vs-checks li { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 8px; font-size: 12.8px; }
 .vs-studio .vs-checks small { display: block; color: var(--vs-faint); font-size: 11.6px; }
 .vs-studio .vs-pop-foot { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+/* The server's checks while they run: rows in the checklist's own shape, no spinner. */
+.vs-studio .vs-pop p.vs-pop-status { color: var(--vs-faint); }
+.vs-studio .vs-checks-skel li { align-items: center; }
+.vs-studio .vs-checks-skel i { display: block; width: 14px; height: 14px; border-radius: 50%; background: rgba(255, 255, 255, .08); }
+.vs-studio .vs-checks-skel b { display: block; height: 10px; width: 86%; border-radius: 5px; background: rgba(255, 255, 255, .08); }
+.vs-studio .vs-checks-skel li:nth-child(2) b { width: 70%; }
+.vs-studio .vs-checks-skel li:nth-child(3) b { width: 54%; }
+@media (prefers-reduced-motion: no-preference) {
+  .vs-studio .vs-checks-skel i, .vs-studio .vs-checks-skel b { animation: vs-skel 1.1s ease-in-out infinite alternate; }
+  @keyframes vs-skel { from { opacity: .5; } to { opacity: 1; } }
+}
+.vs-studio .vs-pop p.vs-pop-address b { color: var(--vs-text); font-weight: 500; word-break: break-all; }
+/* A re-check after a stale approval: news, not an error. */
+.vs-studio .vs-pop p.vs-pop-note { color: var(--vs-text); }
+.vs-studio .vs-pop-confirm { display: grid; gap: 10px; padding-top: 12px; border-top: 1px solid var(--vs-line-soft); }
+.vs-studio .vs-pop h3 { margin: 0; font-size: 13.5px; }
 .vs-studio .vs-chat-toggle { display: none; }
 
 /* Narrower screens: the chat becomes a panel over the stage, opened from the top bar. */

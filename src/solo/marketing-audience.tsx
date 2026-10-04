@@ -1,3 +1,5 @@
+// APPROVED-FROZEN (§28): owner approved this Audience dashboard on 2026-10-04 ("Yes, it's working perfectly",
+// after #1693). Do not move, restyle or rework it unless the owner asks for that exact change.
 // Marketing › Audience (owner reference 2026-10-04): who marketing can reach, read from this
 // workspace's own contacts. Every figure comes from marketing-audience-model.ts; nothing is estimated.
 //

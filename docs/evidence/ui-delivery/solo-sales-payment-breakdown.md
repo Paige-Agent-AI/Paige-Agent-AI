@@ -25,9 +25,9 @@ MUST_PRESERVE: Frozen issued snapshots/digests, canonical tenant/role authorizat
 ACCEPTANCE_CRITERIA: Each current invoice displays its canonical number, issued status and exact recorded balance; downloaded/customer invoice includes dated receipt/correction activity and arithmetic; partial history is explicitly labelled; cross-tenant/token reads refuse.
 MOTION_PURPOSE: NONE: no new animation.
 PROTECTED_SEAMS: Affected: scoped invoice readers/public-token checks, canonical financial readback, privacy, document rendering, responsive geometry/accessibility. Preserved unchanged: authentication/account choice, entitlement/platform billing/provisioning, approval/autonomy/Spine mutations/Rail writers, chat transcript/Live Conversation, Secure Browser/Vault, provider sends and durable scheduling/recovery.
-INTERNAL_BUILD_IDENTITY: uncommitted; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLIED; edge=NOT_APPLIED; evidence=this record.
+INTERNAL_BUILD_IDENTITY: acf6c2efeca5c62ffc265d244cfb60a258f5cb7d; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20270555000000 deploy after merge); edge=PROOF_OWED(sales-invoice-document deployment after merge); evidence=this record.
 RELEASE_CHANNEL: development: implementation and isolated proof only.
-RELEASE_CLASSIFICATION: refinement: existing invoice/payment evidence presentation.
+RELEASE_CLASSIFICATION: maintenance: existing invoice/payment evidence presentation correction.
 CUSTOMER_RELEASE_IDENTITY: none: authenticated customer outcome not proven.
 RELEASE_NOTE_REQUIRED: no: no customer release claim.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: local read/presentation implementation; authenticated usability PROOF OWED; provider evidence unchanged.

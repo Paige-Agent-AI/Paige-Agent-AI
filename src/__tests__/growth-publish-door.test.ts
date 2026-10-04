@@ -9,7 +9,7 @@
 import { describe, expect, it } from "vitest";
 import { classifyAction } from "../../supabase/functions/_shared/action-risk.ts";
 import { confirmFingerprint } from "../../supabase/functions/_shared/confirm-fingerprint.ts";
-import { FORM, FUNNEL, IMAGE, MINE, OTHER_USER, PAGE, THEIRS, USER, livePage, pagePublished, world } from "./growth-publish-door.world.ts";
+import { FORM, FUNNEL, IMAGE, MINE, OTHER_USER, PAGE, THEIRS, USER, livePage, pagePublished, serverCall, world } from "./growth-publish-door.world.ts";
 
 const publishPage = { action: "publish", kind: "page", id: PAGE };
 
@@ -209,13 +209,13 @@ describe("growth-publish-command — the proposal", () => {
 });
 
 describe("growth-publish-command — the claim and the act", () => {
-  it("claims the stored proposal once, runs the STORED call on the caller's own client, proves it, and files one receipt", async () => {
+  it("claims the stored proposal once, runs the STORED call on the service-role client with the verified workspace and person, proves it, and files one receipt", async () => {
     const w = world({ rpc: pagePublished });
     const { first, second } = await approve(w);
     expect(second.status).toBe(200);
     expect(second.body).toMatchObject({ ok: true, action: "publish", kind: "page", id: PAGE, status: "published", url: "/p/acme/spring-offer",
       governance: { approval_channel: "operator_card", approved_fingerprint: first.body.fingerprint } });
-    expect(w.executorCalls()).toEqual([{ fn: "growth_page_publish", args: { p_tenant_id: null, p_id: PAGE }, client: "caller" }]);
+    expect(w.executorCalls()).toEqual([serverCall("growth_page_publish", PAGE)]);
     expect(w.tables.paige_pending_confirmations[0].consumed_at).toBeTruthy();
     expect(w.seen.receipts).toHaveLength(1);
     expect(w.seen.receipts[0]).toMatchObject({ _capability_key: "growth_page_publish", _outcome: "capability_succeeded", _tenant_id: MINE, _actor_id: USER,
@@ -347,5 +347,85 @@ describe("growth-publish-command — an act the Kit gate cannot decide fails clo
     await w.call(publishPage);
     await w.call({ action: "publish", kind: "image", id: IMAGE });
     expect(asked).toEqual(["growth_page_publish", "studio_image_publish"]);
+  });
+});
+
+// Migration G (V2b.1, owner ruling 2026-10-04): the eight publish/unpublish RPCs are service_role-only,
+// so this door is the only way they run. It runs them on its service-role client, after the claim,
+// naming the workspace it resolved from the caller's session and the caller's verified user id — and
+// never on the caller's own client.
+describe("growth-publish-command — the door is the only way the publish RPCs run (Migration G)", () => {
+  const LIVE = { page: "published", form: "active", funnel: "active", image: "published" } as const;
+  const answer = (fn: string, a: Record<string, unknown>) => fn.endsWith("_unpublish")
+    ? { data: { id: a.p_id, status: "draft" }, error: null }
+    : { data: { id: a.p_id, status: LIVE[(fn.includes("_page_") ? "page" : fn.includes("_form_") ? "form" : fn.includes("_funnel_") ? "funnel" : "image")],
+        published_at: "2026-10-04T10:00:00Z", url: "/live" }, error: null };
+  const liveTables = {
+    growth_pages: [livePage({ status: "published", blocks_json: [{ type: "hero" }] })],
+    growth_forms: [{ id: FORM, tenant_id: MINE, name: "Intake", slug: "intake", status: "active" }],
+    growth_funnels: [{ id: FUNNEL, tenant_id: MINE, name: "Launch", slug: "launch", status: "active" }],
+    growth_funnel_steps: [],
+    marketing_content: [{ id: IMAGE, tenant_id: MINE, title: "Hero shot", kind: "image", image_url: "https://cdn.test/a.png", status: "published" }],
+  };
+  const ACTS: Array<[string, string, string]> = [
+    ["publish", "page", PAGE], ["publish", "form", FORM], ["publish", "funnel", FUNNEL], ["publish", "image", IMAGE],
+    ["unpublish", "page", PAGE], ["unpublish", "form", FORM], ["unpublish", "funnel", FUNNEL], ["unpublish", "image", IMAGE],
+  ];
+
+  it.each(ACTS)("%s %s: the approved act runs on the service-role client with the verified workspace and person, once", async (action, kind, id) => {
+    const w = world({ rpc: answer, ...(action === "unpublish" ? { tables: liveTables } : {}) });
+    const body = { action, kind, id };
+    const first = await w.call(body);
+    expect(first.status).toBe(202);
+    expect(w.executorCalls()).toHaveLength(0);
+    const second = await w.call({ ...body, approved_fingerprint: first.body.fingerprint });
+    expect(second).toMatchObject({ status: 200, body: { ok: true, action, kind, id } });
+    expect(w.executorCalls()).toEqual([serverCall(`${kind === "image" ? "studio_image" : `growth_${kind}`}_${action}`, id)]);
+    expect(w.seen.rpc.filter((c) => c.client === "caller" && /_(un)?publish$/.test(c.fn))).toHaveLength(0);
+    expect(w.seen.receipts).toEqual([expect.objectContaining({ _outcome: "capability_succeeded", _tenant_id: MINE, _actor_id: USER })]);
+  });
+
+  it("an auto lane runs on the same server path, still naming the verified workspace and person", async () => {
+    const w = world({ lane: "auto", rpc: pagePublished });
+    const { second } = await approve(w);
+    expect(second).toMatchObject({ status: 200, body: { ok: true } });
+    expect(w.executorCalls()).toEqual([serverCall("growth_page_publish", PAGE)]);
+  });
+
+  it("the workspace sent to the RPC is the session's, never one from the request", async () => {
+    const w = world({ rpc: pagePublished });
+    const refused = await w.call({ ...publishPage, expected_tenant_id: THEIRS });
+    expect(refused).toMatchObject({ status: 403, body: { code: "OTHER_WORKSPACE" } });
+    const { second } = await approve(w, { ...publishPage, expected_tenant_id: MINE });
+    expect(second.status).toBe(200);
+    expect(w.executorCalls()).toEqual([serverCall("growth_page_publish", PAGE, MINE, USER)]);
+  });
+
+  it("an agency manager acting in the sub-account is the person named, in the sub-account", async () => {
+    const w = world({ admin: false, manages: true, rpc: pagePublished });
+    const { second } = await approve(w);
+    expect(second.status).toBe(200);
+    expect(w.executorCalls()).toEqual([serverCall("growth_page_publish", PAGE)]);
+  });
+
+  it("nothing reaches the RPC before a successful claim: no approval, a stale one, a switched-off lane, a switched workspace, a non-admin", async () => {
+    const stale = world({ rpc: pagePublished });
+    await stale.call({ ...publishPage, approved_fingerprint: "0123456789abcdef" });
+    const off = world({ lane: "off", rpc: pagePublished });
+    await off.call({ ...publishPage, approved_fingerprint: "0123456789abcdef" });
+    const member = world({ admin: false, manages: false, rpc: pagePublished });
+    await member.call({ ...publishPage, chat_attempt: true });
+    const minted = world();
+    const { body } = await minted.call(publishPage);
+    const switched = world({ rpc: pagePublished, switchAfter: 2, tables: { paige_pending_confirmations: minted.tables.paige_pending_confirmations } });
+    await switched.call({ ...publishPage, approved_fingerprint: body.fingerprint });
+    for (const w of [stale, off, member, minted, switched]) expect(w.executorCalls()).toHaveLength(0);
+  });
+
+  it("the server's refusal of the person (not an admin there any more) is a plain refusal with a refused receipt", async () => {
+    const w = world({ rpc: () => ({ data: null, error: { code: "42501", message: "GROWTH_FORBIDDEN: the workspace owner or an admin is required" } }) });
+    const { second } = await approve(w);
+    expect(second).toMatchObject({ status: 403, body: { refused: true, error: "Only this workspace's owner or an admin can do that." } });
+    expect(w.seen.receipts).toEqual([expect.objectContaining({ _outcome: "capability_refused" })]);
   });
 });

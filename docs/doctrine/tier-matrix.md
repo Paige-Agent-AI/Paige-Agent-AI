@@ -345,6 +345,10 @@ class of lie as a fabricated metric (§13).
 
 Legend: **✓** live · **—** not built · **N/A** tier not opened yet · **403** denied at the route gate.
 
+### Vibe Studio V2b.1 — Migration G: publishing runs only through the door (2026-10-04)
+
+No tier gains or loses a capability: publishing and unpublishing still need the workspace's owner, an admin or its managing agency (operators in company workspaces, per the same rule), through `growth-publish-command` and its approval card. What is removed, for every tier, is direct access: the eight publish/unpublish RPCs are no longer executable by a signed-in or anonymous caller, so publishing is the door only. Client and Anonymous: unchanged, refused. Written before merge; LIVE once the migration and the edge function are both deployed; authenticated drive owed.
+
 ### Vibe Studio V2b — one publish door, media approval, Migrations E and F (2026-10-04)
 
 Same Studio tiers (Solo owner/admin; the agency managing a sub-account; operators in company workspaces, per `studio_role_ok`). Publishing and unpublishing from the Studio panel now run through `growth-publish-command` with an approval card for every tier, exactly as chat publishing does; a plain workspace member, Client and Anonymous are refused as before. New Trust Compass rows for every Studio tier: unpublish a landing page, a funnel or a form; publish and unpublish an image (default ask first, high risk). Media spend: the person who asked approves; any other owner/admin of the workspace sees the card and can decline but no longer approve it. Pages with ordinary copy containing words like "your" or "add" can now be published on every tier (Migration F). No tier gains or loses a surface otherwise.

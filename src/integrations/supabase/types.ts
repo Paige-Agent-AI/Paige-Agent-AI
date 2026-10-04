@@ -20710,7 +20710,7 @@ export type Database = {
         }
       }
       growth_funnel_publish: {
-        Args: { p_id: string; p_tenant_id: string }
+        Args: { p_actor_id?: string; p_id: string; p_tenant_id: string }
         Returns: Json
       }
       growth_funnel_session_upsert: {
@@ -20780,7 +20780,7 @@ export type Database = {
         Returns: Json
       }
       growth_page_publish: {
-        Args: { p_id: string; p_tenant_id: string }
+        Args: { p_actor_id?: string; p_id: string; p_tenant_id: string }
         Returns: Json
       }
       growth_page_upsert: {

@@ -90,6 +90,8 @@ CREATE TABLE IF NOT EXISTS public.email_campaign_versions (
 );
 CREATE INDEX IF NOT EXISTS email_campaign_versions_campaign ON public.email_campaign_versions (campaign_id, version_no DESC);
 
+-- Safe to replay (a preview database may already hold these objects).
+ALTER TABLE public.email_campaigns DROP CONSTRAINT IF EXISTS email_campaigns_current_version_fk;
 ALTER TABLE public.email_campaigns
   ADD CONSTRAINT email_campaigns_current_version_fk FOREIGN KEY (current_version_id)
   REFERENCES public.email_campaign_versions(id) ON DELETE SET NULL DEFERRABLE INITIALLY DEFERRED;
@@ -149,12 +151,16 @@ GRANT SELECT ON public.email_segments, public.email_campaigns, public.email_camp
 GRANT ALL ON public.email_segments, public.email_campaigns, public.email_campaign_versions,
   public.email_campaign_recipients, public.email_campaign_dispatches TO service_role;
 
+DROP POLICY IF EXISTS email_segments_admin_read ON public.email_segments;
 CREATE POLICY email_segments_admin_read ON public.email_segments FOR SELECT TO authenticated
   USING (public.is_tenant_admin(tenant_id) OR public.is_platform_owner());
+DROP POLICY IF EXISTS email_campaigns_admin_read ON public.email_campaigns;
 CREATE POLICY email_campaigns_admin_read ON public.email_campaigns FOR SELECT TO authenticated
   USING (public.is_tenant_admin(tenant_id) OR public.is_platform_owner());
+DROP POLICY IF EXISTS email_campaign_versions_admin_read ON public.email_campaign_versions;
 CREATE POLICY email_campaign_versions_admin_read ON public.email_campaign_versions FOR SELECT TO authenticated
   USING (public.is_tenant_admin(tenant_id) OR public.is_platform_owner());
+DROP POLICY IF EXISTS email_campaign_recipients_admin_read ON public.email_campaign_recipients;
 CREATE POLICY email_campaign_recipients_admin_read ON public.email_campaign_recipients FOR SELECT TO authenticated
   USING (public.is_tenant_admin(tenant_id) OR public.is_platform_owner());
 
@@ -174,6 +180,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END $$;
+DROP TRIGGER IF EXISTS email_campaign_version_frozen ON public.email_campaign_versions;
 CREATE TRIGGER email_campaign_version_frozen BEFORE UPDATE ON public.email_campaign_versions
   FOR EACH ROW EXECUTE FUNCTION public._email_campaign_version_frozen();
 

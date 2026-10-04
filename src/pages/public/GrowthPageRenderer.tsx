@@ -56,9 +56,17 @@ export default function GrowthPageRenderer() {
       // Resolve the tenant brand FLOOR (anon-safe, SECURITY DEFINER, keyed by the
       // slug in the route) so a published page wears its coach's brand (§6). A transient
       // brand miss is not a page miss — the resolver falls through to the on-brand floor.
-      const { data: brandData } = await supabase.rpc("peek_tenant_portal_brand", { _slug: tenantSlug });
-      const row = Array.isArray(brandData) ? (brandData[0] as PortalBrand | undefined) : (brandData as PortalBrand | null);
-      if (row) setBrand(row);
+      //
+      // `get: true` sends this as a GET. The function is STABLE (checked on production 2026-10-04,
+      // provolatile 's'), so PostgREST serves it read-only — and paige-browser's read-only egress
+      // fence, which aborts every POST, can now load the brand when it screenshots a published page.
+      try {
+        const { data: brandData } = await supabase.rpc("peek_tenant_portal_brand", { _slug: tenantSlug }, { get: true });
+        const row = Array.isArray(brandData) ? (brandData[0] as PortalBrand | undefined) : (brandData as PortalBrand | null);
+        if (row) setBrand(row);
+      } catch (e) {
+        console.error("[growth-page] brand lookup failed; rendering on the brand floor:", e);
+      }
       setLoading(false);
     })();
   }, [tenantSlug, pageSlug]);
@@ -68,11 +76,23 @@ export default function GrowthPageRenderer() {
   }, [page?.title]);
 
   if (loading) return <PageSkeleton />;
-  if (notFound || !page) return <NotFound />;
+  if (notFound || !page) return <><NotFound /><PageReadyMarker state="missing" /></>;
 
   // The tenant brand becomes the FLOOR; the page's own theme_json overrides it. Both are fed to
   // the ONE resolver inside <GrowthBlocks> by the shared <GrowthPageView>.
-  return <GrowthPageView blocks={page.blocks_json} theme={page.theme_json} brand={brand} tenantId={page.tenant_id} />;
+  return (
+    <>
+      <GrowthPageView blocks={page.blocks_json} theme={page.theme_json} brand={brand} tenantId={page.tenant_id} />
+      <PageReadyMarker state="true" />
+    </>
+  );
+}
+
+// Present only once the page row AND its brand (or the brand's failure) have settled — what
+// paige-browser's /render waits on for a published page. The app-wide [data-app-ready] fires at
+// mount, before this data arrives, so it cannot stand in. "missing" = no such published page.
+function PageReadyMarker({ state }: { state: "true" | "missing" }) {
+  return <div data-growth-page-ready={state} hidden aria-hidden="true" />;
 }
 
 // Themed skeleton — a masthead + card grid shimmer on the on-brand floor. Never a bare

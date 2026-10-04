@@ -35,7 +35,8 @@ function world(w: World) {
   type Chain = Record<string, (...args: never[]) => unknown>;
   const chain = (rows: unknown, single: unknown, onInsert?: (row: Record<string, unknown>) => void): Chain => {
     const q: Chain = {
-      select: () => q, eq: () => q, in: () => q, limit: () => q,
+      // gte: studio-visual-critique's per-tenant throttle count (an empty log here → under the limit).
+      select: () => q, eq: () => q, in: () => q, limit: () => q, gte: () => q,
       insert: (row: Record<string, unknown>) => { onInsert?.(row); return q; },
       maybeSingle: async () => ({ data: single, error: null }),
       then: (ok: (v: unknown) => unknown, bad: (e: unknown) => unknown) => Promise.resolve({ data: rows, error: null }).then(ok, bad),

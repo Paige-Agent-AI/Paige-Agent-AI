@@ -28,7 +28,7 @@
 //   POST /self-verify  (requires X-Browser-Secret == PAIGE_BROWSER_SHARED_SECRET, timing-safe)
 //        body: { url, viewport?, waitForSelector?, waitMs?, steps? }      -> 200 JSON observation
 //   POST /render       (same secret, rate limit and concurrency cap)
-//        body: { url } | { page }, viewport?: "desktop"|"tablet"|"mobile", waitForSelector?
+//        body: { url } | { page }, viewport?: "desktop"|"tablet"|"mobile", waitForSelector?, maxSlices?
 //        -> 200 { ok, width, full_height, slices:[{ y, height, jpeg_base64 }], truncated }
 //        url = an allowlisted Paige app origin only; page = a draft rendered DB-free at /render-frame.
 //        Screenshots are a capability of THIS host — the separate visual-renderer Fly app was never
@@ -507,8 +507,12 @@ app.post("/render", rateLimit, async (req, res) => { // codeql[js/missing-rate-l
   const start = Date.now();
   try {
     const browser = await getBrowser();
+    // renderCapture owns the deadline: it sizes its waits to finish inside it and CLOSES its browser
+    // context when it passes, so the run stops using the browser before this slot is released. The
+    // deadline sits 1.5s inside RUN_CAP_MS; withHardCap stays only as the last-resort backstop.
+    const deadline = start + Math.max(5000, RUN_CAP_MS - 1500);
     const result = await withHardCap(
-      renderCapture(browser, v, RENDER_CFG, { navTimeout: NAV_TIMEOUT_MS, stepTimeout: STEP_TIMEOUT_MS }),
+      renderCapture(browser, v, RENDER_CFG, { navTimeout: NAV_TIMEOUT_MS, stepTimeout: STEP_TIMEOUT_MS, deadline }),
       RUN_CAP_MS, v.target, start,
     );
     // withHardCap's backstop result has no reason code; give it one so callers can log it honestly.

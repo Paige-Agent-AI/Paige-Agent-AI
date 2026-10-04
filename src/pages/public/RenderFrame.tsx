@@ -14,10 +14,14 @@
 // It sets data-render-ready="true" on its root once web fonts and images have settled (or a bounded
 // wait has passed) — the marker /render waits on. With no payload it shows a neutral state and never
 // marks itself ready, so a failed injection is a not_ready refusal, never a screenshot of "nothing".
-import { useEffect, useMemo, useRef, useState } from "react";
+//
+// A block that throws is caught by RenderErrorBoundary: the frame shows a neutral message, sets
+// data-render-error="<message>" and console.errors the cause, and never marks itself ready — so
+// /render answers render_crashed at once instead of not_ready after its timeout.
+import { Component, useEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { resolveGrowthTheme } from "@/components/growth/growth-theme";
 import { GrowthPageView } from "@/components/growth/GrowthPageView";
-import { readRenderPayload, settleRenderFrame } from "@/lib/render-frame";
+import { readRenderPayload, settleRenderFrame, type RenderPayload } from "@/lib/render-frame";
 
 function useNoIndex() {
   useEffect(() => {
@@ -32,27 +36,67 @@ function useNoIndex() {
 export default function RenderFrame() {
   useNoIndex();
   const payload = useMemo(() => readRenderPayload(), []);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     if (payload?.tenantName) document.title = payload.tenantName;
   }, [payload?.tenantName]);
 
+  if (!payload) return <NothingToRender />;
+
+  // One malformed block (e.g. a stats block with no items) throws during render. Without a boundary
+  // React unmounts the whole tree, no marker ever appears and the caller waits out a misleading
+  // not_ready. The boundary turns it into a loud, immediate data-render-error (§32).
+  return (
+    <RenderErrorBoundary>
+      <FramePage payload={payload} />
+    </RenderErrorBoundary>
+  );
+}
+
+function FramePage({ payload }: { payload: RenderPayload }) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [ready, setReady] = useState(false);
+
   useEffect(() => {
-    if (!payload || !rootRef.current) return;
+    if (!rootRef.current) return;
     let cancelled = false;
     void settleRenderFrame(rootRef.current).then(() => { if (!cancelled) setReady(true); });
     return () => { cancelled = true; };
   }, [payload]);
-
-  if (!payload) return <NothingToRender />;
 
   return (
     <div ref={rootRef} data-render-frame="" data-render-ready={ready ? "true" : "false"}>
       <GrowthPageView blocks={payload.blocks} theme={payload.theme} brand={payload.brand} />
     </div>
   );
+}
+
+class RenderErrorBoundary extends Component<{ children: ReactNode }, { error: string | null }> {
+  state = { error: null as string | null };
+
+  static getDerivedStateFromError(error: unknown) {
+    return { error: String((error as Error)?.message ?? error).slice(0, 500) || "unknown error" };
+  }
+
+  componentDidCatch(error: unknown, info: ErrorInfo) {
+    console.error("[render-frame] a block threw while rendering:", error, info?.componentStack);
+  }
+
+  render() {
+    if (this.state.error == null) return this.props.children;
+    const vars = resolveGrowthTheme(null, null);
+    return (
+      <div
+        data-render-frame=""
+        data-render-error={this.state.error}
+        className="flex min-h-dvh flex-col items-center justify-center px-6 text-center"
+        style={{ ...(vars as Record<string, string>), background: "var(--gp-bg)", color: "var(--gp-text)", fontFamily: "var(--gp-font)" } as React.CSSProperties}
+      >
+        <h1 className="font-display text-2xl font-semibold">This draft could not be drawn</h1>
+        <p className="mt-2 text-sm" style={{ color: "var(--gp-muted)" }}>One of its blocks is incomplete.</p>
+      </div>
+    );
+  }
 }
 
 // Neutral, on-brand-floor state for a frame opened without a payload (a person who followed the URL,

@@ -51,16 +51,23 @@ const nextFrame = () => new Promise<void>((resolve) => {
   else setTimeout(resolve, 16);
 });
 
-/** Resolve once fonts and every image under `root` have loaded or failed, capped at `capMs`. */
+// An iframe fires load (also for most failures); there is no reliable error event, so the cap bounds it.
+function embedSettled(frame: HTMLIFrameElement): Promise<void> {
+  return new Promise((resolve) => { frame.addEventListener("load", () => resolve(), { once: true }); });
+}
+
+/** Resolve once fonts, every image and every embed under `root` have loaded or failed, capped at `capMs`. */
 export async function settleRenderFrame(root: HTMLElement, capMs = RENDER_SETTLE_CAP_MS): Promise<void> {
-  // Render-only: a full-page capture never scrolls, so a lazy image below the fold would never be
-  // requested. Upgrading it to eager changes nothing a visitor sees once it has loaded.
+  // Render-only: a full-page capture never scrolls, so anything marked loading="lazy" below the fold
+  // would never be requested. Today that is the media block's <iframe> (GrowthBlocks MediaBlock); an
+  // <img> may carry it too. Upgrading to eager changes nothing a visitor sees once it has loaded.
   const images = Array.from(root.querySelectorAll("img"));
-  for (const img of images) if (img.getAttribute("loading") === "lazy") img.setAttribute("loading", "eager");
+  const embeds = Array.from(root.querySelectorAll("iframe"));
+  for (const el of [...images, ...embeds]) if (el.getAttribute("loading") === "lazy") el.setAttribute("loading", "eager");
   const fonts = typeof document !== "undefined" && document.fonts ? document.fonts.ready.then(() => undefined) : Promise.resolve();
   let timer: ReturnType<typeof setTimeout> | undefined;
   const cap = new Promise<void>((resolve) => { timer = setTimeout(resolve, capMs); });
-  await Promise.race([Promise.all([fonts, ...images.map(imageSettled)]).then(() => undefined), cap]);
+  await Promise.race([Promise.all([fonts, ...images.map(imageSettled), ...embeds.map(embedSettled)]).then(() => undefined), cap]);
   if (timer) clearTimeout(timer);
   // Two frames so layout and paint of the settled content have happened before the marker flips.
   await nextFrame();

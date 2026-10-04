@@ -144,7 +144,38 @@ describe("/render-frame with nothing to render", () => {
   });
 });
 
+describe("/render-frame when a block throws", () => {
+  it("a stats block with no items → data-render-error with the cause, logged, never ready", async () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    window.__PAIGE_RENDER_PAYLOAD__ = { blocks: [{ type: "hero", title: "fine" }, { type: "stats", title: "Proof" }] };
+    await mount();
+    const el = container.querySelector("[data-render-error]");
+    expect(el).not.toBeNull();
+    expect(el?.getAttribute("data-render-error")).toMatch(/map|undefined/);
+    expect(container.textContent).toContain("This draft could not be drawn");
+    expect(err.mock.calls.some((c) => String(c[0]).includes("[render-frame] a block threw"))).toBe(true);
+    await act(async () => { await new Promise((r) => setTimeout(r, 50)); });
+    expect(container.querySelector('[data-render-ready="true"]')).toBeNull();
+    expect(db.calls).toEqual([]);
+    err.mockRestore();
+  });
+});
+
 describe("readRenderPayload / settleRenderFrame", () => {
+  it("upgrades the media block's lazy iframe to eager and waits for it", async () => {
+    const host = document.createElement("div");
+    host.innerHTML = '<iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/x"></iframe>';
+    let settled = false;
+    const done = settleRenderFrame(host, 2000).then(() => { settled = true; });
+    const frame = host.querySelector("iframe")!;
+    expect(frame.getAttribute("loading")).toBe("eager");
+    await new Promise((r) => setTimeout(r, 30));
+    expect(settled).toBe(false); // still waiting on the embed
+    frame.dispatchEvent(new Event("load"));
+    await done;
+    expect(settled).toBe(true);
+  });
+
   it("keeps only object blocks with a type and drops malformed theme/brand", () => {
     const p = readRenderPayload({ blocks: [{ type: "cta", title: "t", cta_label: "a", cta_href: "#" }, null, 3, { title: "no type" }], theme: "dark", brand: [1] });
     expect(p?.blocks).toHaveLength(1);

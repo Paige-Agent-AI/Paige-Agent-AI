@@ -50,34 +50,51 @@ The capture logic is `render.mjs` (one home, so the smoke runs the real code).
 
 Body — exactly one target:
 
-- `{ url }` — a page on an **allowlisted Paige app origin** (`PAIGE_RENDER_ALLOWED_ORIGINS`, default
-  `https://paigeagent.ai,https://app.paigeagent.ai`, exact-origin match) that also passes the SSRF
-  guard. Typically a published `/p/<tenant>/<page>`. Readiness default: the app's `[data-app-ready]`
-  post-hydration marker. It never renders an arbitrary URL — that is `/browse-public-url`'s job.
-- `{ page: { blocks, theme?, brand?, tenant_name? } }` — a **draft** that exists only as data. The
-  browser opens `${PAIGE_APP_ORIGIN}/render-frame` (default `https://paigeagent.ai`) and the payload is
-  injected before any script runs (`addInitScript`, set ONLY on the frame document itself — never in a
-  child iframe such as a media embed). The frame is DB-free and renders the payload through the same
-  `<GrowthPageView>` the public page uses, then sets `data-render-ready="true"`. Payload cap:
-  `PAIGE_RENDER_MAX_PAYLOAD_BYTES` (default 1,000,000).
+- `{ url }` — a **published landing page** (`/p/<tenant>/<page>`) on an **allowlisted Paige app
+  origin** (`PAIGE_RENDER_ALLOWED_ORIGINS`, default `https://paigeagent.ai,https://app.paigeagent.ai`,
+  exact-origin match) that also passes the SSRF guard. Readiness default: `[data-growth-page-ready]`,
+  which `GrowthPageRenderer` sets only once the page row AND its brand (or the brand's failure) have
+  settled — `="missing"` when there is no such published page, which `/render` answers as
+  `page_not_found`. (The app-wide `[data-app-ready]` fires at mount, before the data, so it is not the
+  default.) The brand lookup `peek_tenant_portal_brand` is sent as a GET (`rpc(..., { get: true })`;
+  the function is STABLE), so this host's read-only egress fence — which aborts every POST — lets it
+  through. It never renders an arbitrary URL — that is `/browse-public-url`'s job.
+- `{ page: { blocks, theme?, brand?, tenant_name? } }` — a **draft landing page** that exists only as
+  data. The browser opens `${PAIGE_APP_ORIGIN}/render-frame` (default `https://paigeagent.ai`) and the
+  payload is injected before any script runs (`addInitScript`, set ONLY on the frame document itself —
+  never in a child iframe such as a media embed). The frame is DB-free and renders the payload through
+  the same `<GrowthPageView>` the public page uses, upgrades lazy images and the media embed to eager,
+  then sets `data-render-ready="true"`. A block that throws is caught by the frame's error boundary,
+  which sets `data-render-error="<message>"` — answered at once as `render_crashed`. Payload cap:
+  `PAIGE_RENDER_MAX_PAYLOAD_BYTES` (default 1,000,000), measured as UTF-8 bytes of the exact
+  `{ blocks, theme|null, brand|null, tenant_name|null }` object that crosses into the browser — the edge
+  function measures the identical object the identical way. Funnels and forms are not rendered: the
+  frame draws one block page.
 
 Options: `viewport` = `desktop` (1440×900, default) · `tablet` (834×1112) · `mobile` (390×844, touch,
-mobile UA); `waitForSelector` overrides the ready marker. Contexts run with `reducedMotion: "reduce"`
-so entrance animations are settled, not mid-flight.
+mobile UA); `maxSlices` (fewer than the host cap; a larger ask is clamped); `waitForSelector` overrides
+the ready marker. Contexts run with `reducedMotion: "reduce"` so entrance animations are settled.
+
+**Deadline.** Each run gets a deadline 1.5s inside `PAIGE_BROWSER_RUN_CAP_MS` (default 45s). Navigation
+and the ready wait are shortened to fit inside it with time left to capture, and when the deadline
+passes the run's browser context is CLOSED — so a timed-out run stops using the browser before its
+concurrency slot is released. A wait cut short by the deadline answers `run_cap_exceeded`.
 
 Response: `{ ok:true, width, full_height, slices:[{ y, height, jpeg_base64 }], truncated }` — JPEG
 (quality 80) at DPR 1, each slice at most 1600 CSS px tall, at most 8 slices (`PAIGE_RENDER_SLICE_HEIGHT`,
 `PAIGE_RENDER_MAX_SLICES`, `PAIGE_RENDER_JPEG_QUALITY`). A 2× full-page PNG is 6–7 MB, over the edge
 function's 4 MB image budget; slices are sized for the consumer. `truncated:true` says the page ran
 past the cap. Failures are `{ ok:false, reason, error }` and never carry an image: `not_ready`,
-`http_<status>`, `blocked_redirect` (checked after navigation, after ready, and after capture),
-`navigation_failed`, `empty_page`, `slice_too_large`, `run_cap_exceeded`. Refusals are 4xx with a
-reason: `bad_request`, `invalid_viewport`, `invalid_url`, `origin_not_allowed` (403),
-`blocked:<ssrf reason>`, `invalid_page`, `payload_too_large` (413).
+`render_crashed` (the frame's error boundary fired, or the page threw — `pageerror` — and never became
+ready), `page_not_found`, `http_<status>`, `blocked_redirect` (checked after navigation, after ready,
+and after capture), `navigation_failed`, `empty_page`, `slice_too_large`, `run_cap_exceeded`.
+Refusals are 4xx with a reason: `bad_request`, `invalid_viewport`, `invalid_max_slices`, `invalid_url`,
+`origin_not_allowed` (403), `blocked:<ssrf reason>`, `invalid_page`, `payload_too_large` (413).
 
 **No new Fly secret is required** — every knob above has a safe default. Caller:
 `supabase/functions/studio-visual-critique` (edge secrets `PAIGE_BROWSER_URL` / `PAIGE_BROWSER_SECRET`,
-already set for skill-runner).
+already set for skill-runner) — and it calls `/render` only while `STUDIO_VISUAL_CRITIQUE_ENABLED` is
+`"true"`, under its own per-tenant throttle, so this host's three slots are not open to every workspace.
 
 ### `POST /self-verify`
 

@@ -19,7 +19,7 @@
 //
 // Run:  node smoke-render.mjs   (or: npm run smoke:render)
 import { chromium } from "playwright";
-import { renderConfig, validateRenderRequest, renderCapture } from "./render.mjs";
+import { renderConfig, validateRenderRequest, renderCapture, pickPagePayload, pagePayloadBytes } from "./render.mjs";
 
 const ORIGIN = "https://93.184.216.34";      // stands in for https://paigeagent.ai
 const THIRD_PARTY = "https://93.184.216.35";  // stands in for a media embed host
@@ -40,6 +40,11 @@ const FRAME_HTML = `<!doctype html><html><head><meta name="robots" content="noin
   const root = document.getElementById("root");
   if (!p) { root.textContent = "nothing to render"; }
   else {
+    if (p.blocks.some((b) => b.type === "boom")) {
+      // What RenderFrame's error boundary does when a block throws.
+      root.setAttribute("data-render-error", "Cannot read properties of undefined (reading 'map')");
+      console.error("block threw");
+    }
     for (const b of p.blocks) {
       const s = document.createElement("section");
       s.style.height = "1000px";
@@ -59,7 +64,7 @@ const EMBED_HTML = `<!doctype html><body><script>
 
 const PUBLISHED_HTML = `<!doctype html><head><meta name="viewport" content="width=device-width, initial-scale=1"></head><body style="margin:0">
 <div style="height:2500px;background:linear-gradient(#123,#c93)">published</div>
-<div data-app-ready hidden></div></body>`;
+<div data-app-ready hidden></div><div data-growth-page-ready="true" hidden></div></body>`;
 
 const NEVER_READY_HTML = `<!doctype html><body><div style="height:1200px">still loading…</div></body>`;
 
@@ -67,7 +72,7 @@ async function instrument(ctx) {
   await ctx.route(`${THIRD_PARTY}/**`, (route) => {
     // The off-origin redirect target even carries a ready marker: only the origin re-check can stop it.
     if (new URL(route.request().url()).pathname === "/elsewhere") {
-      return route.fulfill({ status: 200, contentType: "text/html", body: `<!doctype html><body><div style="height:900px">elsewhere</div><div data-app-ready hidden></div></body>` });
+      return route.fulfill({ status: 200, contentType: "text/html", body: `<!doctype html><body><div style="height:900px">elsewhere</div><div data-app-ready hidden></div><div data-growth-page-ready="true" hidden></div></body>` });
     }
     return route.fulfill({ status: 200, contentType: "text/html", body: EMBED_HTML });
   });
@@ -76,6 +81,12 @@ async function instrument(ctx) {
     if (pathname === "/render-frame") return route.fulfill({ status: 200, contentType: "text/html", body: FRAME_HTML });
     if (pathname === "/p/demo/home") return route.fulfill({ status: 200, contentType: "text/html", body: PUBLISHED_HTML });
     if (pathname === "/p/demo/slow") return route.fulfill({ status: 200, contentType: "text/html", body: NEVER_READY_HTML });
+    // The app mounted (data-app-ready) but the page's data never settled — must NOT count as ready.
+    if (pathname === "/p/demo/mounted-only") return route.fulfill({ status: 200, contentType: "text/html", body: `<!doctype html><body><div data-app-ready hidden></div><div style="height:1200px">skeleton</div></body>` });
+    if (pathname === "/p/demo/gone") return route.fulfill({ status: 200, contentType: "text/html", body: `<!doctype html><body><h1>Page not found</h1><div data-app-ready hidden></div><div data-growth-page-ready="missing" hidden></div></body>` });
+    if (pathname === "/p/demo/throws") return route.fulfill({ status: 200, contentType: "text/html", body: `<!doctype html><body><div style="height:900px">half</div><script>setTimeout(() => { throw new Error("StatsBlock: items is undefined"); }, 20)</script></body>` });
+    // Never answers: only the deadline can end this run.
+    if (pathname === "/p/demo/hang") return new Promise(() => {});
     // A client-side redirect lands AFTER page.goto resolves (a fulfilled 30x cannot be driven in this
     // sandbox — Chromium resets it), so it is the stricter case for the origin re-check anyway.
     if (pathname === "/p/demo/away") return route.fulfill({ status: 200, contentType: "text/html", body: `<!doctype html><script>setTimeout(() => location.replace("${THIRD_PARTY}/elsewhere"), 50)</script>` });
@@ -103,7 +114,7 @@ const jpegSize = (b64) => {
 const cfg = renderConfig({
   PAIGE_RENDER_ALLOWED_ORIGINS: `${ORIGIN},https://127.0.0.1`,
   PAIGE_APP_ORIGIN: ORIGIN,
-  PAIGE_RENDER_READY_TIMEOUT_MS: "2500",
+  PAIGE_RENDER_READY_TIMEOUT_MS: "4000",
 });
 const blocks = (n) => Array.from({ length: n }, (_, i) => ({ type: "hero", title: `Section ${i + 1}`, color: i % 2 ? "#223" : "#552" }));
 
@@ -154,14 +165,64 @@ try {
 
   // ── 5: url mode ───────────────────────────────────────────────────────────────────────────────
   const r5 = await renderCapture(browser, await validateRenderRequest({ url: `${ORIGIN}/p/demo/home`, viewport: "tablet" }, cfg), cfg, { instrumentContext: instrument });
-  check("url mode ok via [data-app-ready], tablet 834, two slices", r5.ok && r5.width === 834 && r5.full_height === 2500 && r5.slices.length === 2,
+  check("url mode ok via [data-growth-page-ready], tablet 834, two slices", r5.ok && r5.width === 834 && r5.full_height === 2500 && r5.slices.length === 2,
     JSON.stringify({ ...r5, slices: r5.slices?.length }));
 
   // ── 6: honest failures carry a reason and no image ────────────────────────────────────────────
-  for (const [label, path, reason] of [["never ready", "/p/demo/slow", "not_ready"], ["404", "/p/demo/missing", "http_404"], ["off-origin redirect", "/p/demo/away", "blocked_redirect"]]) {
+  for (const [label, path, reason] of [
+    ["never ready", "/p/demo/slow", "not_ready"],
+    ["app mounted but page data never settled", "/p/demo/mounted-only", "not_ready"],
+    ["published page missing", "/p/demo/gone", "page_not_found"],
+    ["page threw and never became ready", "/p/demo/throws", "render_crashed"],
+    ["404", "/p/demo/missing", "http_404"],
+    ["off-origin redirect", "/p/demo/away", "blocked_redirect"],
+  ]) {
     const r = await renderCapture(browser, await validateRenderRequest({ url: `${ORIGIN}${path}` }, cfg), cfg, { instrumentContext: instrument });
     check(`${label}: ok:false, reason ${reason}, no slices`, r.ok === false && r.reason === reason && !("slices" in r), JSON.stringify({ ...r, slices: r.slices?.length }));
   }
+
+  // ── 6b: a block that throws in the frame → render_crashed with the boundary's message, at once ──
+  const t0 = Date.now();
+  const rc = await renderCapture(browser, await validateRenderRequest({ page: { blocks: [{ type: "boom" }, ...blocks(1)] } }, cfg), cfg, { instrumentContext: instrument });
+  check("frame error boundary → render_crashed with the cause, no slices, no ready wait",
+    rc.ok === false && rc.reason === "render_crashed" && /reading 'map'/.test(rc.error) && !("slices" in rc) && Date.now() - t0 < cfg.readyTimeoutMs,
+    JSON.stringify({ ...rc, slices: rc.slices?.length }));
+
+  // ── 6c: the deadline ends a hung run AND closes its browser context ────────────────────────────
+  const before = browser.contexts().length;
+  const t1 = Date.now();
+  const rh = await renderCapture(browser, await validateRenderRequest({ url: `${ORIGIN}/p/demo/hang` }, cfg), cfg, { instrumentContext: instrument, deadline: Date.now() + 1500 });
+  const took = Date.now() - t1;
+  check(`hung page → run_cap_exceeded inside the deadline (${took}ms)`, rh.ok === false && rh.reason === "run_cap_exceeded" && took < 4000, JSON.stringify(rh));
+  check("no browser context left open after the deadline", browser.contexts().length === before, `contexts ${before} → ${browser.contexts().length}`);
+  // The deadline TIMER itself: a run still busy when the deadline passes has its context closed under
+  // it (here the context setup outlives a 600ms deadline), and reports run_cap_exceeded.
+  // The context must already be CLOSED while the run is still busy (checked from inside the run, before
+  // renderCapture's own cleanup could close it).
+  let closedWhileBusy = null;
+  const t2 = Date.now();
+  const rt = await renderCapture(browser, await validateRenderRequest({ page: { blocks: blocks(1) } }, cfg), cfg, {
+    deadline: Date.now() + 600,
+    instrumentContext: async (ctx) => {
+      await new Promise((r) => setTimeout(r, 1500));
+      try { const p = await ctx.newPage(); await p.close(); closedWhileBusy = false; } catch { closedWhileBusy = true; }
+      await instrument(ctx);
+    },
+  });
+  check(`deadline timer closes a busy context mid-run → run_cap_exceeded (${Date.now() - t2}ms)`, rt.ok === false && rt.reason === "run_cap_exceeded" && closedWhileBusy === true, JSON.stringify({ rt, closedWhileBusy }));
+
+  // ── 6d: the caller may ask for fewer slices; a bigger ask is clamped ─────────────────────────
+  const r2 = await renderCapture(browser, await validateRenderRequest({ page: { blocks: blocks(5) }, maxSlices: 2 }, cfg), cfg, { instrumentContext: instrument });
+  check("maxSlices:2 → 2 slices, truncated:true", r2.ok && r2.slices.length === 2 && r2.truncated === true, JSON.stringify({ ...r2, slices: r2.slices?.length }));
+  const big = await validateRenderRequest({ page: { blocks: [] }, maxSlices: 99 }, cfg);
+  check("maxSlices above the host cap is clamped to it", big.ok && big.maxSlices === cfg.maxSlices, JSON.stringify(big));
+
+  // ── 6e: the payload cap is measured on the exact payload that crosses into the browser ────────
+  const filler = (n) => ({ blocks: [{ type: "rich_text", html: "x".repeat(n) }] });
+  const base = pagePayloadBytes(pickPagePayload(filler(0)));
+  const exact = filler(cfg.maxPayloadBytes - base);
+  check("a payload of exactly the cap is accepted", (await validateRenderRequest({ page: exact }, cfg)).ok === true && pagePayloadBytes(pickPagePayload(exact)) === cfg.maxPayloadBytes);
+  check("one byte over the cap is refused", (await validateRenderRequest({ page: filler(cfg.maxPayloadBytes - base + 1) }, cfg)).reason === "payload_too_large");
 
   // ── 7: refusals before the browser is touched ─────────────────────────────────────────────────
   const refusals = [
@@ -172,6 +233,7 @@ try {
     ["neither target", {}, 400, "bad_request"],
     ["unknown viewport", { page: { blocks: [] }, viewport: "watch" }, 400, "invalid_viewport"],
     ["blocks not an array", { page: { blocks: "x" } }, 400, "invalid_page"],
+    ["maxSlices zero", { page: { blocks: [] }, maxSlices: 0 }, 400, "invalid_max_slices"],
     ["payload over the cap", { page: { blocks: [{ type: "rich_text", html: "x".repeat(cfg.maxPayloadBytes) }] } }, 413, "payload_too_large"],
   ];
   for (const [label, body, status, reason] of refusals) {

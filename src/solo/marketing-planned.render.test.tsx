@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-// Marketing › Audience, Content, Email and Ads: what each Planned tab shows from real records, and what
+// Marketing › Audience, Content, Email and Ads: what each tab shows from real records, and what
 // it refuses to show. Network reads are stubbed at the Supabase client; everything else is the real view.
 import React from "react";
 import { act } from "react";
@@ -67,9 +67,11 @@ describe("Marketing › Audience", () => {
     // A stage named for one vertical's outcome reads as a neutral outcome (§2).
     expect(text()).toContain("Outcome reached");
     expect(text()).not.toMatch(/fund|credit|loan/i);
-    expect(host.querySelector(".mp-head .mk-flag.is-planned")?.textContent).toBe("Planned");
+    // No header: the tab strip already names the tab, so the view does not repeat it (owner, 2026-10-04).
+    expect(host.querySelector("h2")?.textContent).toBe("By stage");
+    expect(host.textContent).not.toMatch(/Planned/);
     expect(text()).toContain("Saved audiences and segments");
-    act(() => (host.querySelector(".mp-head-actions button") as HTMLButtonElement).click());
+    act(() => (host.querySelector(".mp-actions button") as HTMLButtonElement).click());
     expect(onOpenClients).toHaveBeenCalledTimes(1);
   });
 
@@ -158,7 +160,7 @@ describe("Marketing › Email", () => {
     expect(text()).toContain("Welcome note");
     expect(db.calls.find((c) => c.table === "marketing_content")?.filters).toContainEqual(["channel", "email_campaign"]);
     expect(text()).not.toMatch(/open rate|\d+%/i);
-    act(() => ([...host.querySelectorAll(".mp-head-actions button")].find((b) => b.textContent === "Sending settings") as HTMLButtonElement).click());
+    act(() => ([...host.querySelectorAll(".mp-actions button")].find((b) => b.textContent === "Sending settings") as HTMLButtonElement).click());
     expect(onOpenConnections).toHaveBeenCalled();
   });
 
@@ -186,9 +188,9 @@ describe("Marketing › Ads", () => {
     await render(<MarketingAds tenantId="t-1" onOpenIntegrations={onOpenIntegrations}/>);
     expect(db.calls.find((c) => c.table === "marketing_content")?.filters).toContainEqual(["channel", "ad_copy"]);
     expect(text()).toContain("Spring ad");
-    expect(text()).toContain("none are estimated");
+    expect(text()).toContain("Nothing here is estimated");
     expect(text()).not.toMatch(/\$\s?\d|cost per lead\s*\d|\bROAS\b/i);
-    const button = (label: string) => [...host.querySelectorAll(".mp-head-actions button")].find((b) => b.textContent === label) as HTMLButtonElement;
+    const button = (label: string) => [...host.querySelectorAll(".mp-actions button")].find((b) => b.textContent === label) as HTMLButtonElement;
     act(() => button("Open Integrations").click());
     expect(onOpenIntegrations).toHaveBeenCalled();
     act(() => button("Ask PAIGE to draft ad copy").click());
@@ -208,6 +210,6 @@ describe("Marketing › Ads", () => {
     await flush();
     expect(text()).toContain("Second workspace ad");
     expect(text()).not.toContain("First workspace ad");
-    expect(host.querySelector(".mp-head-actions")?.textContent).not.toContain("Open Integrations");
+    expect(host.querySelector(".mp-actions")?.textContent).not.toContain("Open Integrations");
   });
 });

@@ -41,13 +41,13 @@ ACCEPTANCE_CRITERIA: on the live app a Solo owner opens Marketing and sees the n
 MOTION_PURPOSE: NONE: no motion added
 PROTECTED_SEAMS: tested - tab registry round-trips and counts, Marketing tab order (contract + render + sales-ops), Overview figures, Sales redirects (legacySalesRoute untouched). Unaffected and named - Clients, Settings › Connections, Vibe Studio, Command Center
 
-INTERNAL_BUILD_IDENTITY: 2decf57bd7a4c8bca7153a75b174f5e2149b1fdf; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=scripts/live-drive/marketing-views-drive.mjs
+INTERNAL_BUILD_IDENTITY: 318fe03b6ccda27a8ea3a2d63cc20b14359a88ef; deployment=none-pre-merge; environment=development; migrations=PROOF_OWED(20270542000000 applied by deploy-migrations on merge, confirmed from schema_migrations afterwards); edge=NOT_APPLICABLE; evidence=scripts/live-drive/marketing-views-drive.mjs
 RELEASE_CHANNEL: development: verified locally; production on merge per the owner ("Merge once CIS is green")
 RELEASE_CLASSIFICATION: internal-only: four read-only Solo views over existing records and a copy removal
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement or version
 RELEASE_NOTE_REQUIRED: no: pre-launch, no customers
 RELEASE_TRUTH_BOUNDARY: PARTIAL: Audience, Content, Email and Ads read only existing data and are PROPOSED as features; authenticated production behaviour is PROOF OWED
-RELEASE_RECOVERY: position=revert the merge commit - frontend only, no migration or edge change; reference=git revert of this PR's merge
+RELEASE_RECOVERY: position=revert the merge commit for the frontend; the grant is reversed with REVOKE SELECT ON public.marketing_content FROM authenticated in a forward migration; reference=20270542000000_marketing_content_authenticated_read.sql
 UNVERIFIED: authenticated production runtime (§32.c): the four tabs against a real Solo account, including a team member without marketing_content access.
 
 ## What would turn each Planned tab into a built one
@@ -58,3 +58,11 @@ These are the backend decisions from `docs/product/solo-marketing-ia-proposal.md
 - **Content:** a start date on campaign briefs, for a real calendar.
 - **Email:** a broadcast record and an approval-gated send seam (sending spends money: owner decision).
 - **Ads:** a tenant ad-account connection and spend ingestion (provider choice).
+
+## Follow-up (owner, 2026-10-04): no redundant words; the library permission gap
+
+The owner reviewed the live tabs: "I definitely don't like the redundant words ... I don't like the fact that it
+says 'planned' right next to it." Each tab's header (its name, the Planned pill and the intro sentence) is removed,
+the Planned marker leaves the tab strip, and the per-row "Not available" pill goes (the section heading says it).
+The owner's screenshots also showed every saved-library panel failing: production grants `authenticated` no SELECT
+on `marketing_content`, so the read is refused. The owner approved the fix: migration `20270542000000_marketing_content_authenticated_read.sql` grants SELECT to `authenticated` only. A rolled-back production transaction showed an admin of a workspace holding 1 of 17 rows sees exactly 1 and 0 foreign rows, a user with no role sees 0, and anon is still refused. The persisted apply is confirmed from `schema_migrations` after merge.

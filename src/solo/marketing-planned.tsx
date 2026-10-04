@@ -1,6 +1,6 @@
 // Marketing › Audience, Content, Email and Ads (owner ruling 2026-10-04: "these are the ones that I
-// want dedicated to marketing"). Each is marked Planned in the tab strip because the feature the
-// name promises is not built yet. Each tab still earns its place: it shows what this workspace
+// want dedicated to marketing"). The feature each name promises is not built yet. Each tab still
+// earns its place: it shows what this workspace
 // really has today for that job, links to where it lives, and names what is missing in plain words.
 //
 // Reads (all tenant-scoped, read-only, existing tables and RPCs; nothing new on the server):
@@ -121,19 +121,17 @@ function Frame({ phase, retry, noun, children }: { phase: Phase; retry: () => vo
   return <>{children}</>;
 }
 
-/** The head every Planned tab shares: what the tab will be, and that it is not built yet. */
-function PlannedHead({ title, promise, children }: { title: string; promise: string; children?: React.ReactNode }) {
-  return <header className="mp-head">
-    <div><h2>{title} <span className="mk-flag is-planned">Planned</span></h2><p>{promise}</p></div>
-    {children && <div className="mp-head-actions">{children}</div>}
-  </header>;
+/** The tab's own acts, right-aligned above its panels. The tab strip already names the tab, so
+ *  nothing here repeats its name or what it is for (owner, 2026-10-04: no redundant words). */
+function TabActions({ children }: { children: React.ReactNode }) {
+  return <div className="mp-actions">{children}</div>;
 }
 
 /** The honest list: each missing piece, and why. */
 function NotYet({ items }: { items: { title: string; detail: string }[] }) {
   return <section className="campaigns-surface mo-panel mp-notyet" aria-label="Not available yet">
     <div className="mo-panel-head"><div><h2>Not available yet</h2><p>What this tab will do once it is built. Nothing here is estimated.</p></div></div>
-    <ul className="mp-list">{items.map((item) => <li key={item.title}><span className="mk-flag">Not available</span><span className="mp-list-main"><strong>{item.title}</strong><small>{item.detail}</small></span></li>)}</ul>
+    <ul className="mp-list">{items.map((item) => <li key={item.title}><span className="mp-list-main"><strong>{item.title}</strong><small>{item.detail}</small></span></li>)}</ul>
   </section>;
 }
 
@@ -172,9 +170,9 @@ export function MarketingAudience({ tenantId, onOpenClients }: { tenantId: strin
   const fromForms = rows.filter((row) => row.source === "paige_form").length;
   const recordedStages = stages.filter((row) => row.key !== "__none");
   return <div className="mk-view mo mp">
-    <PlannedHead title="Audience" promise="Who your marketing can reach: the contacts you can see, by stage, where they came from, and tag. Saved audiences you can target are planned.">
+    <TabActions>
       <button className="btn btn-s" onClick={onOpenClients}>Open Clients</button>
-    </PlannedHead>
+    </TabActions>
     <Frame phase={read.phase} retry={read.retry} noun="contacts">
       {rows.length === 0 ? <section className="campaigns-surface"><div className="campaigns-state"><h2>No contacts yet</h2><p>Contacts arrive from your published forms and from Clients. Once you have some, this tab shows them by stage, source and tag.</p><button className="btn btn-s" onClick={onOpenClients}>Open Clients</button></div></section> : <>
         <dl className="mk-ledger">
@@ -213,9 +211,9 @@ export function MarketingContent({ tenantId, published, onOpenCapture, onRetryPu
   const libraryCount = access === "denied" || libraryPhase === "error" ? "—" : libraryPhase === "ready" ? floor(pieces.length, capped) : "…";
   const ask = <AskPaige label="Ask PAIGE for content" prompt="Help me make a piece of marketing content for my business. Ask me what it is for and who it is for before you draft it. Save it as a draft; do not post or send anything."/>;
   return <div className="mk-view mo mp">
-    <PlannedHead title="Content" promise="What your marketing is made of: the images, documents and copy saved to your library, and the pages, funnels and forms you published. A content calendar is planned.">
+    <TabActions>
       {ask}{studioLauncher}
-    </PlannedHead>
+    </TabActions>
     <dl className="mk-ledger mp-ledger-3">
       <div className="mk-stat"><dt>In your library</dt><dd><strong>{libraryCount}</strong><span>{access === "denied" ? "Visible to owners and admins" : capped ? `The newest ${LIBRARY_READ_LIMIT} are counted` : "Images, documents and copy, not archived"}</span></dd></div>
       <div className="mk-stat"><dt>Published</dt><dd><strong>{publishedValue(total)}</strong><span>{publishedReady ? [[published.pages, "page"], [published.funnels, "funnel"], [published.forms, "form"]].map(([n, noun]) => `${n} ${noun}${n === 1 ? "" : "s"}`).join(" · ") : publishedFailed ? "Could not load" : "Loading"}</span></dd></div>
@@ -248,10 +246,10 @@ export function MarketingEmail({ tenantId, onOpenConnections }: { tenantId: stri
   const libraryPhase = libraryPhaseFor(access, content.phase);
   const ask = <AskPaige label="Ask PAIGE to draft an email" prompt="Draft a marketing email for my business. Ask me who it is for and what it should say before you write it. Save it as a draft; do not send anything."/>;
   return <div className="mk-view mo mp">
-    <PlannedHead title="Email" promise="Email to the people on your list: broadcasts, sequences and how they performed. Today Marketing shows the address your business email comes from and the email copy you saved.">
+    <TabActions>
       {ask}
       {onOpenConnections && <button className="btn btn-s" onClick={onOpenConnections}>Sending settings</button>}
-    </PlannedHead>
+    </TabActions>
     <div className="mo-grid mp-grid mp-grid-2">
       <section className="campaigns-surface mo-panel"><div className="mo-panel-head"><div><h2>Who your email comes from</h2><p>The sending identity set in Settings › Connections.</p></div></div>
         <Frame phase={identity.phase} retry={identity.retry} noun="sending identity">
@@ -280,10 +278,10 @@ export function MarketingAds({ tenantId, onOpenIntegrations }: { tenantId: strin
   const libraryPhase = libraryPhaseFor(access, content.phase);
   const ask = <AskPaige label="Ask PAIGE to draft ad copy" prompt="Draft ad copy for my business. Ask me what I am promoting, who it is for and where it will run before you write it. Save it as a draft; do not run or publish anything."/>;
   return <div className="mk-view mo mp">
-    <PlannedHead title="Ads" promise="Paid ads that bring people to your pages and forms: accounts, spend and what each campaign cost per lead. Today Marketing shows the ad copy you saved; no spend, clicks or leads from ads are shown, and none are estimated.">
+    <TabActions>
       {ask}
       {onOpenIntegrations && <button className="btn btn-s" onClick={onOpenIntegrations}>Open Integrations</button>}
-    </PlannedHead>
+    </TabActions>
     <section className="campaigns-surface mo-panel"><div className="mo-panel-head"><div><h2>Saved ad copy</h2><p>Ad drafts in your library. Nothing here has run.</p></div></div>
       <Frame phase={libraryPhase} retry={content.retry} noun="saved ad copy">{access === "denied" ? <p className="mo-note">{LIBRARY_DENIED}</p> : <LibraryList rows={content.rows.slice(0, 10)} empty={<><p className="mo-note">No ad copy saved yet.</p>{ask}</>}/>}</Frame>
     </section>

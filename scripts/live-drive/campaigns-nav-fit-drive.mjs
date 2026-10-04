@@ -29,8 +29,7 @@ const URL = `http://127.0.0.1:${PORT}/`;
 const OUT = path.resolve(import.meta.dirname, "artifacts/campaigns-nav-fit");
 const REPO = path.resolve(import.meta.dirname, "../..");
 
-// The accessible text of each tab: a Planned tab reads "Audience, Planned".
-const TABS = ["Overview", "Campaigns", "Audience, Planned", "Content, Planned", "Social", "Email, Planned", "Ads, Planned", "Lead capture", "Analytics"];
+const TABS = ["Overview", "Campaigns", "Audience", "Content", "Social", "Email", "Ads", "Lead capture", "Analytics"];
 
 // The four widths every Solo surface is proved at.
 const FRAMES = [

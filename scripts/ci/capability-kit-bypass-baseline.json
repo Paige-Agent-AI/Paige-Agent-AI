@@ -347,11 +347,6 @@
   {
     "rule": "direct-risk-entry",
     "path": "supabase/functions/_shared/action-risk.ts",
-    "symbol": "content_save"
-  },
-  {
-    "rule": "direct-risk-entry",
-    "path": "supabase/functions/_shared/action-risk.ts",
     "symbol": "crm_add_note"
   },
   {
@@ -578,26 +573,6 @@
     "rule": "direct-risk-entry",
     "path": "supabase/functions/_shared/action-risk.ts",
     "symbol": "generate_image"
-  },
-  {
-    "rule": "direct-risk-entry",
-    "path": "supabase/functions/_shared/action-risk.ts",
-    "symbol": "growth_funnel_build"
-  },
-  {
-    "rule": "direct-risk-entry",
-    "path": "supabase/functions/_shared/action-risk.ts",
-    "symbol": "growth_funnel_publish"
-  },
-  {
-    "rule": "direct-risk-entry",
-    "path": "supabase/functions/_shared/action-risk.ts",
-    "symbol": "growth_page_publish"
-  },
-  {
-    "rule": "direct-risk-entry",
-    "path": "supabase/functions/_shared/action-risk.ts",
-    "symbol": "growth_page_save"
   },
   {
     "rule": "direct-risk-entry",
@@ -1127,11 +1102,6 @@
   {
     "rule": "direct-tool-definition",
     "path": "supabase/functions/paige-ai-chat/index.ts",
-    "symbol": "content_save"
-  },
-  {
-    "rule": "direct-tool-definition",
-    "path": "supabase/functions/paige-ai-chat/index.ts",
     "symbol": "crm_add_note"
   },
   {
@@ -1277,17 +1247,7 @@
   {
     "rule": "direct-tool-definition",
     "path": "supabase/functions/paige-ai-chat/index.ts",
-    "symbol": "growth_funnel_build"
-  },
-  {
-    "rule": "direct-tool-definition",
-    "path": "supabase/functions/paige-ai-chat/index.ts",
     "symbol": "growth_funnel_generate"
-  },
-  {
-    "rule": "direct-tool-definition",
-    "path": "supabase/functions/paige-ai-chat/index.ts",
-    "symbol": "growth_funnel_publish"
   },
   {
     "rule": "direct-tool-definition",
@@ -1298,16 +1258,6 @@
     "rule": "direct-tool-definition",
     "path": "supabase/functions/paige-ai-chat/index.ts",
     "symbol": "growth_page_generate"
-  },
-  {
-    "rule": "direct-tool-definition",
-    "path": "supabase/functions/paige-ai-chat/index.ts",
-    "symbol": "growth_page_publish"
-  },
-  {
-    "rule": "direct-tool-definition",
-    "path": "supabase/functions/paige-ai-chat/index.ts",
-    "symbol": "growth_page_save"
   },
   {
     "rule": "direct-tool-definition",

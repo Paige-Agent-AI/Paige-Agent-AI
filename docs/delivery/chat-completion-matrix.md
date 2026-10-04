@@ -146,6 +146,14 @@ generation → real artifact.
 > "planned" while governed chat tools ship; journey advance is offered with no chat tool; Studio, Sales,
 > calendar and agreements are absent). Current state and the projection‑based repair:
 > `docs/delivery/paige-conversational-loop-r0.md` §0, §15, §20.
+>
+> **C0a (PR #1697, 2026-10-04): the row below is superseded.** The manifest is no longer a hand list: it is a
+> projection over the tools actually emitted each turn (Spine + legacy classification + action-risk + effective
+> lane in one batch RPC + workspace role + readiness), so every one of the ~164 emitted tools is covered and a new
+> Spine-registered tool appears with no chat edit; `capability-declaration-lint` rules 4–6 fail CI on an
+> undiscoverable capability. The owner-ops role gate is the tenant role (`studio_role_ok` / Platform Operator),
+> not the global `admin` row. Gateway availability-gated *emission* is still not wired (unchanged, §58).
+> Authenticated drive OWED.
 
 | capability | current implementation | truth | canonical seam | missing work / proof |
 |---|---|---|---|---|

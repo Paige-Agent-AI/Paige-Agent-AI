@@ -18,7 +18,7 @@ import type { SpineCapability } from "../contracts.ts";
  * presets took (E5).
  */
 export const ZAPIER_LIST_ACTIONS = {
- key: "integrations.zapier_list_actions", domain: "integrations", owner: "solo-integrations",
+ key: "integrations.zapier_list_actions", domain: "integrations", owner: "solo-integrations", readiness: "mcp_connection",
  humanSurface: "/solo/:account/settings/integrations",
  action: { classification: "read", executor: "edge.paige-ai-chat", chatTool: "zapier_list_actions", riskPolicyKey: "read_only", approvalAuthority: "none",
  idempotency: "Read-only MCP tools/list provider call recorded in Rail; no app action is ever run by discovery." },
@@ -26,7 +26,7 @@ export const ZAPIER_LIST_ACTIONS = {
  chatBinding: "LIVE", mindBinding: "UNAVAILABLE", sharedPrimitiveChange: "SCR-ZAPIER-MANAGEMENT", maturity: "PARTIAL",
 } as const satisfies SpineCapability;
 export const ZAPIER_RUN_ACTION = {
- key: "integrations.zapier_run_action", domain: "integrations", owner: "solo-integrations",
+ key: "integrations.zapier_run_action", domain: "integrations", owner: "solo-integrations", readiness: "mcp_connection",
  humanSurface: "/solo/:account/settings/integrations",
  action: { classification: "external_effect", executor: "edge.paige-ai-chat", chatTool: "zapier_run_action", riskPolicyKey: "high", approvalAuthority: "chat-canonical",
  idempotency: "Caller-scoped one-time confirmation for writes; provider actions are never automatically retried after uncertain results." },

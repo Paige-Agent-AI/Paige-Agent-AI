@@ -246,6 +246,21 @@ async function drive({
    *  parse and validation to the writes after them. Default null: "ok", which fails the parse. */
   extractionReply = null,
 }) {
+  // C0a — a scenario that seats the caller as an ADMIN acts inside a workspace. Production cannot have
+  // an admin seat with no resolved workspace (get_paige_persona_context falls back to
+  // current_user_tenant_id(), so a null persona means no active workspace at all); before C0a the
+  // global admin row needed none, which is why the default persona below could stay null. With the
+  // canonical tenant role, the persona of a seated admin resolves to the caller's workspace — exactly
+  // what production returns. A scenario that scripts the persona still overrides this.
+  const seatedAdmin = (() => {
+    const t = tablesExtra.user_roles;
+    const rows = (typeof t === "function" ? t([]) : t) ?? [];
+    if (Array.isArray(rows) && rows.some((r) => r?.role === "admin")) return true;
+    // …or seated directly through the canonical seat check (an owner with no global role at all).
+    const seat = rpcOverrides.studio_role_ok;
+    const answer = typeof seat === "function" ? seat({}) : seat;
+    return answer?.data === true;
+  })();
   const logged = [];
   embedCount = 0;
   modelEgress = [];
@@ -280,7 +295,7 @@ async function drive({
       current_user_tenant_id: { data: CALLER_TENANT, error: null },
       is_platform_operator: { data: false, error: null },
       is_platform_owner: ownerRpc,
-      get_paige_persona_context: { data: [{ tenant_id: null, tenant_name: null, playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null },
+      get_paige_persona_context: { data: [{ tenant_id: seatedAdmin ? CALLER_TENANT : null, tenant_name: null, playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null },
       match_paige_memory: { data: [{ source: "memory", memory_type: "user_preference", content: MEMORY_TEXT, similarity: 0.95 }], error: null },
       ...rpcOverrides,
     },
@@ -2104,7 +2119,10 @@ const mirrorConfirms = (st) => (t, row) => {
       rpcOverrides: { ...CONFIRM.rpcOverrides, ...rpc },
       tablesExtra: { paige_pending_confirmations: store.table, user_roles: [{ role: "admin" }] }, onInsert: mirrorConfirms(store),
     });
-    const advRow = (fingerprint, args) => ({ user_id: USER, tool_name: "action_advance", fingerprint, args, issued_in_request: "an-earlier-request" });
+    // A minted row carries the workspace it was minted in (the server stamps tenant_id at mint), and
+    // the claim re-checks it — so the hand-authored row carries the caller's workspace too (C0a: a
+    // seated admin's persona resolves that workspace, as production's does).
+    const advRow = (fingerprint, args) => ({ user_id: USER, tenant_id: CALLER_TENANT, tool_name: "action_advance", fingerprint, args, issued_in_request: "an-earlier-request" });
     const shortArgs = { action_id: "424b85ac", to_status: "dismissed" };
     const o9Store = makeConfirmStore([advRow("6".repeat(16), shortArgs)]);
     const o9 = await advDrive(o9Store, ["6".repeat(16)], shortArgs);
@@ -3096,7 +3114,9 @@ console.log('\n24. proposal authority requires proven current scope and durable 
 // documented `tenant_not_resolved`, never an opaque "Unknown error" from the readiness RAISE.
 console.log("\ncomms/CRM tool gate — Super Admin admitted, platform_admin denied, no widening");
 {
-  const GATE_REFUSAL = "restricted to admins";
+  // C0a: the gate now asks the canonical tenant role (workspace owner/admin seat) and names who CAN
+  // act; the global `admin` row is no longer consulted. Super Admin is still admitted explicitly.
+  const GATE_REFUSAL = "needs this workspace's owner or an admin";
   const COMMS_THREAD = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
   const commsRpcs = {
     // Clear the EARLIER client-seat gate (:7532) so the ROLE gate (:8888) — the thing Slice B
@@ -3161,6 +3181,40 @@ console.log("\ncomms/CRM tool gate — Super Admin admitted, platform_admin deni
   });
   assert("25.9 a caller-supplied role/isAdmin in the body cannot admit a denied caller (server-derived)",
     !readinessRan(spoof) && refused(spoof), JSON.stringify({ readiness: readinessRan(spoof), refused: refused(spoof) }));
+
+  // 25.12–25.14 — C0a, "ADMIN IS A TENANT ROLE" (owner ruling 2026-10-04). The gate asks the canonical
+  // tenant question (studio_role_ok: an owner/admin seat in the ACTIVE workspace, or the agency managing
+  // it) AND that the active workspace is the one PAIGE is acting in — never the global `admin` row.
+  const otherWorkspace = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+  const adminElsewhere = await driveGate("admin", "comms_connection_summary", {
+    rpcOverrides: { ...commsRpcs, studio_role_ok: { data: false, error: null } },
+  });
+  assert("25.12 an admin of ANOTHER workspace (global admin row, no seat here) is DENIED — the §59 trap closed",
+    !readinessRan(adminElsewhere) && refused(adminElsewhere),
+    JSON.stringify({ readiness: readinessRan(adminElsewhere), refused: refused(adminElsewhere) }));
+  const seatedOwner = await driveGate(null, "comms_connection_summary", {
+    rpcOverrides: { ...commsRpcs, studio_role_ok: { data: true, error: null } },
+  });
+  assert("25.13 this workspace's owner with NO global role is ADMITTED",
+    readinessRan(seatedOwner) && !refused(seatedOwner),
+    JSON.stringify({ readiness: readinessRan(seatedOwner), refused: refused(seatedOwner) }));
+  const seatElsewhere = await driveGate(null, "comms_connection_summary", {
+    rpcOverrides: { ...commsRpcs, studio_role_ok: { data: true, error: null }, current_user_tenant_id: { data: otherWorkspace, error: null } },
+  });
+  assert("25.14 a seat in a DIFFERENT workspace than the one PAIGE is acting in does not admit",
+    !readinessRan(seatElsewhere) && refused(seatElsewhere),
+    JSON.stringify({ readiness: readinessRan(seatElsewhere), refused: refused(seatElsewhere) }));
+  // 25.15 — the verdict is about the ACTING workspace, asked once and explicitly (Codex P1, PR #1697).
+  // Before: `studio_role_ok` answered for whichever workspace was active when it ran, read in parallel
+  // with the active workspace, so a switch between the two reads could pair workspace A's admin verdict
+  // with workspace B's identity. Modelled directly: the active-workspace answer says admin, the
+  // explicit question about the workspace PAIGE acts in says no. The old code admitted this caller.
+  const raced = await driveGate(null, "comms_connection_summary", {
+    rpcOverrides: { ...commsRpcs, studio_role_ok: { data: true, error: null }, is_tenant_admin_as: { data: false, error: null } },
+  });
+  assert("25.15 an admin verdict for some OTHER active workspace never admits — the acting workspace is asked explicitly",
+    !readinessRan(raced) && refused(raced),
+    JSON.stringify({ readiness: readinessRan(raced), refused: refused(raced), asked: raced.rec.rpc.filter((c) => c.name === "is_tenant_admin_as").map((c) => c.args) }));
 
   // 25.10 / 25.11 — the honesty fix (Codex P2, 2026-09-05). A tenant-less super_admin (at rest,
   // before entering a workspace) is ADMITTED by the role gate but has no tenant. Before the guard,
@@ -4601,7 +4655,10 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
   ]) {
     const ownerOnly = await mainDrive({ name: tool, args }, { studio_role_ok: { data: true, error: null } }, []);
     assert(`33.5c ${tool}: this workspace's owner reaches its backend without any global role`,
-      reach(ownerOnly) && called(ownerOnly, "studio_role_ok") === 1,
+      // Exactly two asks of the actor-explicit seat question: once at prompt time (cached — operator
+      // mode and the capability projection share it) and once, fresh, for this tool call (shared by
+      // every check the call passes). C0a. Never the active-workspace `studio_role_ok` for this gate.
+      reach(ownerOnly) && called(ownerOnly, "is_tenant_admin_as") === 2,
       JSON.stringify({ fns: ownerOnly.rec.functions.map((f) => f.name), rpcs: ownerOnly.rec.rpc.map((c) => c.name) }));
   }
 
@@ -4616,7 +4673,8 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
   ]) {
     const owner = await mainDrive({ name: tool, args }, { studio_role_ok: { data: true, error: null } }, []);
     assert(`33.5d ${tool}: this workspace's owner reaches ${fn} without any global role`,
-      invoked(owner, fn) === 1 && called(owner, "studio_role_ok") === 1,
+      // Exactly two asks of the actor-explicit seat question: prompt time (cached) and fresh for the call.
+      invoked(owner, fn) === 1 && called(owner, "is_tenant_admin_as") === 2,
       JSON.stringify({ fns: owner.rec.functions.map((f) => f.name), rpcs: owner.rec.rpc.map((c) => c.name) }));
     const outsider = await mainDrive({ name: tool, args }, { studio_role_ok: { data: false, error: null } }, [{ role: "admin" }]);
     assert(`33.5e ${tool}: a global admin who is not this workspace's owner/admin is refused before ${fn}`,

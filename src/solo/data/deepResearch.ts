@@ -130,6 +130,7 @@ export function useDeepResearch(activeTenantId: string | null) {
     setPhase({ kind: "running", question, startedAt: Date.now() });
 
     const userId = (await supabase.auth.getUser()).data.user?.id ?? null;
+    if (scopeRef.current !== scope) { setPhase({ kind: "failed", reason: "workspace_changed" }); return; }
     if (!userId) {
       setPhase({ kind: "failed", reason: "not_signed_in" });
       return;
@@ -173,6 +174,10 @@ export function useDeepResearch(activeTenantId: string | null) {
       setPhase({ kind: "failed", reason: "search_unconfigured" });
       return;
     }
+    if (coverage.stop_reason === "error") {
+      setPhase({ kind: "failed", reason: "engine_error" });
+      return;
+    }
 
     const runId = typeof outcome.run_id === "string" ? outcome.run_id : null;
     // PERSISTENCE READBACK: prove the row exists in THIS workspace through the
@@ -186,6 +191,37 @@ export function useDeepResearch(activeTenantId: string | null) {
       if (persisted) {
         setDetail(data as unknown as ResearchRunDetail);
         void refresh();
+      } else {
+        // The RESULT is real but UNSAVED — it still renders (from the engine's
+        // own outcome, the same closed contract the saved readback returns), with
+        // the honest not-saved banner above it. Ruling §6: show the result while
+        // truthfully stating that saving failed.
+        setDetail({
+          id: runId,
+          question: typeof outcome.question === "string" ? outcome.question : question,
+          domain: null,
+          caller: "workspace",
+          stop_reason: typeof coverage.stop_reason === "string" ? coverage.stop_reason : null,
+          configured: coverage.configured === true,
+          findings: Array.isArray(outcome.findings) ? outcome.findings as ResearchRunDetail["findings"] : null,
+          coverage: coverage as ResearchRunDetail["coverage"],
+          entity_profile: outcome.entity_profile ?? null,
+          created_at: new Date().toISOString(),
+          sources: Array.isArray(outcome.sources)
+            ? (outcome.sources as Array<Record<string, unknown>>).map((src) => ({
+                index: Number(src.index ?? 0),
+                url: String(src.url ?? ""),
+                title: typeof src.title === "string" ? src.title : null,
+                snippet: typeof src.snippet === "string" ? src.snippet : null,
+                reliability_score: typeof src.reliability_score === "number" ? src.reliability_score : null,
+                tier: typeof src.tier === "string" ? src.tier : null,
+                reliability: typeof src.reliability === "string" ? src.reliability : null,
+                published_at: typeof src.published_at === "string" ? src.published_at : null,
+                fetched_at: typeof src.fetched_at === "string" ? src.fetched_at : null,
+                excluded: src.excluded === true,
+              }))
+            : [],
+        });
       }
     }
     setPhase({ kind: "done", runId, persisted });

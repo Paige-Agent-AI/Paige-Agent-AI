@@ -56,7 +56,7 @@ describe("one canonical substrate — no second research stack", () => {
 describe("the scope fence (ruling §15)", () => {
   it("every request captures the active workspace and discards on change", () => {
     expect(hook).toContain("const scope = scopeRef.current;");
-    expect(hook.match(/scopeRef\.current !== scope/g)?.length).toBeGreaterThanOrEqual(4);
+    expect(hook.match(/scopeRef\.current !== scope/g)?.length).toBeGreaterThanOrEqual(5);
     expect(hook).toContain("reason: \"workspace_changed\"");
   });
 
@@ -94,10 +94,21 @@ describe("persistence readback (ruling §6)", () => {
     expect(hook).toContain("persisted = !!data;");
   });
 
-  it("the unsaved state is distinct and honest — result shown, saving named as failed", () => {
+  it("the unsaved state is distinct and honest — the result still renders, saving named as failed", () => {
     expect(view).toContain("Research completed and saved.");
     expect(view).toContain("saving could not be confirmed");
     expect(view).toContain("It has not been added to this workspace's history");
+  });
+
+  it("an unsaved result still RENDERS from the engine's own outcome (ruling §6: show the result, state the save failed)", () => {
+    expect(hook).toContain("// The RESULT is real but UNSAVED — it still renders");
+    expect(hook).toContain("setDetail({");
+  });
+
+  it("the engine's structured error is a FAILED state, never 'completed'", () => {
+    expect(hook).toContain('if (coverage.stop_reason === "error")');
+    expect(hook).toContain('reason: "engine_error"');
+    expect(view).toContain("The research engine reported an error");
   });
 
   it("no blind rerun on uncertain persistence", () => {

@@ -4,7 +4,7 @@ UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: the PAIGE workspace tab flow traced (Chat → Knowledge → Deep Research → Helpers → Capabilities) against src/solo/SoloPaigeWorkspace.tsx and src/lib/routing/tierBranches.ts at this PR's head; the new flow is one tab (Deep Research) with two states — the home (list + open) and Start Research (question + depth → run → result) — each state's goal, transition, and exit enumerated in the contract suite; no existing flow changed (Chat/Knowledge/Helpers/Capabilities identical in behavior; the route registry gains one subtab row).
 PAIGE_UI_DESIGN: PASS: the committed spw design vocabulary (Obsidian/Mineral tokens, the card/truth-pill/eyebrow system, 980px/640px breakpoints, reduced-motion) reused; dr-* adds only research-unique marks (grade marks, citation chips, coverage line) in the same tokens.
 MATERIAL_FLOW_CHANGE: YES: a new tab and a new action (Start Research) — the first owner-facing write path into research_runs through the canonical engine.
-FLOW_PROTOTYPE: NOT_REQUIRED: bounded, single-purpose operational flow inside the committed workspace pattern; no new interaction paradigm (form → wait → result card).
+FLOW_PROTOTYPE: WAIVED: owner-decision=INT-303 (owner ruling 2026-10-04); reason=the ruling itself specified the coupled flow — open Deep Research, start research, saved run, open, inspect evidence — inside the committed PAIGE workspace pattern; no new interaction paradigm.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: the owner (or an admin/member of the workspace) investigates a question with cited sources; the primary action (Start research) is the first and only CTA on an empty home.
 VISUAL_DIRECTION: PASS: intelligence-workspace register — scannable run history cards, tabular elapsed time, grade-marked sources; one authored moment (the running pulse) that respects reduced motion.
 AUTOMATED_EVIDENCE: PASS: 25/25 src/solo/deep-research-workspace.test.tsx at this PR's head + 41/41 tierBranches (counts updated for the +1 subtab) + 23/23 SoloPaigeWorkspace.contract + 6/6 paigeClientScope.
@@ -33,9 +33,9 @@ MUST_PRESERVE: the canonical engine call path; the M0 governed read RPCs as the 
 ACCEPTANCE_CRITERIA: Deep Research appears between Knowledge and Helpers in PAIGE; the home lists this workspace's runs with question/date/domain/type/sources/state; Start Research (question + depth) runs the canonical engine and the result appears saved; the run opens with findings, citations, confidence, coverage, and grade-marked sources; dossiers reuse EntityDossier; switching workspace mid-run discards the result from the new view.
 MOTION_PURPOSE: STATE: one pulse (research running) — conveys the engine is working; disabled under reduced motion.
 PROTECTED_SEAMS: research_runs/research_sources (M0 lineage contract); the governed RPC pair; the tier-branch registry (route + nav drift-proof); the spw tab strip's roving tabindex.
-INTERNAL_BUILD_IDENTITY: 83ab34c5c686be2f42936450a3acf9ffcdd2d84a; deployment=none-pre-merge; environment=local development candidate; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record and the AUTOMATED_EVIDENCE suites at the exact candidate head.
+INTERNAL_BUILD_IDENTITY: bbdde817c66299f65d7dc89aa2508b5a120d521f; deployment=none-pre-merge; environment=local development candidate; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record and the AUTOMATED_EVIDENCE suites at the exact candidate head.
 RELEASE_CHANNEL: development: pre-merge candidate.
-RELEASE_CLASSIFICATION: feature: the first owner-facing Deep Research product surface (R1+R2 coupled).
+RELEASE_CLASSIFICATION: internal-only: the first owner-facing Deep Research surface (R1+R2 coupled) — pre-owner-drive.
 CUSTOMER_RELEASE_IDENTITY: none: authenticated outcome not established until the owner's drive.
 RELEASE_NOTE_REQUIRED: no: internal workspace activation.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: the workspace flow is behaviorally proven and CI-pinned; authenticated runtime proof OWED (the §16 drive). No LIVE capability claim beyond the engine's existing honest states.

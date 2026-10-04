@@ -22,7 +22,7 @@
 // the service role is the write boundary. (CORRECTION 2026-10-03, M0: this header used to
 // claim persistence is "RLS declared for direct client reads"; production grants prove
 // direct client reads were never usable — table grants are owner-only and the canonical
-// read path is the governed RPC pair added by migration 20270539000000. History preserved;
+// read path is the governed RPC pair added by migration 20270540000000. History preserved;
 // claim corrected.)
 //
 // TENANT LINEAGE (M0, owner ruling 2026-10-03): every PERSISTED run carries the exact

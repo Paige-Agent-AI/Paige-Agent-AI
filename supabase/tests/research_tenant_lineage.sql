@@ -66,9 +66,9 @@ SELECT is(
   'A: workspace-A owner lists exactly the tenant-A run'
 );
 SELECT is(
-  (SELECT (json->>'source_count') IS NOT NULL FROM public.get_workspace_research_run('d7100000-0000-4000-8000-0000000000r001') AS json_row(json)),
-  true,
-  'A: get returns the run (json shape present)'
+  (SELECT json->>'id' FROM public.get_workspace_research_run('d7100000-0000-4000-8000-0000000000r001') AS json_row(json)),
+  'd7100000-0000-4000-8000-0000000000r001',
+  'A: get returns the run with its sources (json shape present)'
 );
 
 -- Every role inside A sees A's research (canonical semantics inherited, not redesigned).
@@ -108,9 +108,10 @@ SELECT is(
   true,
   'B: tenant-B member gets uniform NULL for tenant A''s run (unknown ≡ foreign)'
 );
--- A tenant-B admin-equivalent: make B's member an admin, then retry (same shape, stronger role).
-INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner,joined_at) VALUES
- ('d7200000-0000-4000-8000-00000000002222','d7200000-0000-4000-8000-000000000002','admin','active',false,now());
+-- A tenant-B admin-equivalent: promote B's member to admin, then retry (same shape, stronger
+-- role). UPDATE, not INSERT — (tenant_id, user_id) is UNIQUE, a second row would abort the file.
+UPDATE public.tenant_members SET role='admin'
+ WHERE tenant_id='d7200000-0000-4000-8000-00000000002222' AND user_id='d7200000-0000-4000-8000-000000000002';
 SELECT is(
   (SELECT public.get_workspace_research_run('d7100000-0000-4000-8000-0000000000r001') IS NULL),
   true,
@@ -162,7 +163,7 @@ SELECT throws_ok(
 );
 SELECT lives_ok(
   'INSERT INTO public.research_sources(tenant_id,run_id,user_id,source_index,url,title,snippet,reliability_score,tier,reliability,published_at,fetched_at,excluded) VALUES (''d7100000-0000-4000-8000-00000000001111'',''d7100000-0000-4000-8000-0000000000r001'',''d7100000-0000-4000-8000-000000000001'',1,''https://a.example.com/s2'',''S2'',''s'',0.5,''T3'',''low'',now(),now(),false)',
-  'E: a source insert WITH the parent run''s inherited lineage succeeds (the control for the refusal below)'
+  'G-control: a source insert WITH the parent run''s inherited lineage succeeds (the control for the refusal below)'
 );
 SELECT throws_ok(
   'INSERT INTO public.research_sources(run_id,user_id,source_index,url,title,snippet,reliability_score,tier,reliability,published_at,fetched_at,excluded) VALUES (''d7100000-0000-4000-8000-0000000000r001'',''d7100000-0000-4000-8000-000000000001'',2,''https://a.example.com/s3'',''S3'',''s'',0.5,''T3'',''low'',now(),now(),false)',
@@ -181,9 +182,10 @@ SELECT is(
 );
 SELECT is(
   (SELECT count(*) FROM information_schema.table_constraints
-    WHERE constraint_type='FOREIGN KEY' AND table_name IN ('research_runs','research_sources')),
+    WHERE constraint_type='FOREIGN KEY'
+      AND constraint_name IN ('research_runs_tenant_id_fkey','research_sources_tenant_id_fkey')),
   2::bigint,
-  'M0: both tables carry canonical tenant FK lineage'
+  'M0: both tables carry canonical tenant FK lineage (the two lineage FKs by name; work_id/run_id FKs pre-exist)'
 );
 
 -- ══ Legacy policies are GONE; tenant-bound shapes are live ════════════════════════════════

@@ -548,8 +548,9 @@ Creative Quality Reviewer. Canonical flow:
 `Owner request → server-derived tenant/workspace/actor context → Paige assembles approved specialist job team → scoped skills/tools → drafts and versions → quality review → owner approval → separately authorized publish/provider execution → verified receipt/Rail outcome`
 
 Existing Vibe Studio creative-authoring/session/version capability is a `PARTIAL`
-substrate. Binding Ledger `campaigns.vibe-studio`, the Paige/Harness Studio
-binding, and all seven roles remain `UNAVAILABLE` for activation. NEXUS owns the
+substrate. Binding Ledger `campaigns.vibe-studio` records the live conversational
+binding as a `PARTIAL` chain (corrected 2026-10-04; §10); an end-to-end Studio Harness run
+and all seven roles remain `UNAVAILABLE` for activation. NEXUS owns the
 growth/creative business domain, MENTOR owns Studio platform/config/readiness,
 and Paige orchestrates the bounded temporary team. First future MVP order is
 (1) Creative Brief and Strategy Specialist plus Creative Quality Reviewer;
@@ -761,6 +762,15 @@ Reference or any domain ledger; it governs how their facts become release and cu
 > **Established login workspace choice + stale-checkout recovery — shipped (2026-09-13).** PR #1219 (`4bc9cf771e992614701d6f4e1b94f1d5c3d513d6`) restores the existing server-derived account/workspace card after every fresh login for any identity with an active direct membership, including one-workspace legacy and promotional Solo identities. Multiple memberships remain separately selectable; Platform remains an explicit authorized peer context. Stale Solo intent and `/welcome?checkout=success|recovery` can no longer override established access, and one-workspace users are not silently auto-entered. The current production descendant `c287a4f86ad42f35903a7dc297012514e1480c8a` contains the repair unchanged; Vercel is `READY`, `solo-beta-enrollment-status` is deployed, and current `edge-live` `d33f67180f2a55691e55dec39fd807610d71fc63` is a descendant of the hotfix with no scoped Edge drift. Authenticated legacy/promotional sign-in, card selection, persisted switching, refresh, and repeat-login proof remain `PROOF OWED`; no Stripe, billing, entitlement, tenant, membership, migration, or unsupported-enrollment behavior changed. Authority: [login workspace-choice recovery evidence](evidence/ui-delivery/login-workspace-choice-recovery.md).
 
 ### 4.0 Shipped Delivery Log
+
+**2026-10-04 Vibe Studio V1: the Studio capability boundary is runtime, not prompt; build tools use workspace-scoped authority. Release channel: `production` on merge (`paige-ai-chat`, Migration B `20270541000000`); classification: `internal-only` safety boundary, `PARTIAL`.**
+- *What changed:*
+  - Migration B (data only): `paige_subagents.config.capability_scope` on the platform `design-studio` row — a 16-tool allowlist (page/funnel/form build and publish, image, content draft and save, growth reads, capability status, web search/fetch, ask_choices).
+  - paige-ai-chat reads it from the platform row only (server client), filters the tool list before the model sees it, and refuses anything else at dispatch with `outside_studio_scope`. A missing or malformed scope fails closed (ask_choices, capability_status).
+  - D3: the Studio build tools' chat gate asks `studio_role_ok` (this workspace's owner/admin, or the managing agency), not the tenant-agnostic global role.
+  - Main PAIGE keeps every tool. Knowledge writes and Business Mission/profile mutations are not Studio capabilities.
+- *Proof:* harness section 33 against the real handler — the five forbidden tools invisible and refused, main PAIGE unchanged, fail-closed, malformed scope cannot widen, D3; each of the three guards removed in turn fails its own checks. Production rollback proof: the scope lands on exactly one row; a tenant owner's update touches 0 rows; a competing design-studio identity is refused by the unique slug.
+- *Boundary:* authenticated production drive `PROOF OWED`; Migration B persisted apply confirmed after the pipeline.
 
 **2026-10-04 Vibe Studio V0: the Studio never auto-runs above the Trust Compass ceiling; funnels reachable and truthful; publish needs a live address. Release channel: `production` on merge (frontend, `paige-ai-chat`, Migration A `20270540000000`); classification: `internal-only` safety fix, `PARTIAL`.**
 - *What changed:*
@@ -4820,6 +4830,8 @@ DOCTRINE_190/191/192, 194, 197, 198 + Addendum, 200, 201, 202, 203, 205, 208, 21
 ---
 
 ## 10. §13 corrections log
+
+- **2026-10-04 · THE VIBE STUDIO WAS RECORDED AS HAVING NO AUTHORITY, CONTEXT OR GOVERNED WRITE, AND ITS ONLY TOOL BOUNDARY WAS A PROMPT.** Binding Ledger `campaigns.vibe-studio` stated `safe_context`, `authority`, `governed_write`, `verified_outcome` and Rail as `none`, and §3 said the Studio's Paige/Harness binding was `UNAVAILABLE`. Grounding (four read-only investigators plus an adversarial verifier) found the opposite in one direction and worse in another: every Studio turn runs through paige-ai-chat with tenant scope, autonomy lanes and risk classes (so `none` under-stated it), but the design agent was offered the full main-PAIGE tool list — CRM, deals, team, calendar, GHL/Zapier/n8n execution, comms — and only `STUDIO_OPERATING_CORE`'s prose kept it on design (so "governed" would have over-stated it). V1 makes the boundary runtime (capability_scope on the platform design-studio row, filtered before the model and refused at dispatch) and the ledger now states each link as `partial` with its reason. The bounded creative-role team stays `UNAVAILABLE`.
 
 - **2026-10-03 · THE PLATFORM OPERATOR ANALYTICS ADDRESS IN THE MARKETING IA HANDOFF DOES NOT EXIST.** The owner handoff for the Solo Marketing reorganization names `/admin/platform/analytics` as the operator surface to protect. On `main` (`3fa9834`) there is no `/admin` route at all: `src/App.tsx` declares none, `src/pages/Admin.tsx` is gone, and `src/pages/admin/platform/PlatformAnalyticsAdmin.tsx` is imported by nothing. The only reference is the stale `docs/architecture/CANONICAL-SYSTEM-ARCHITECTURE-2026-08-08.md:133`, which still cites `Admin.tsx`. Searched `admin/platform/analytics`, `platform/analytics`, `PlatformAnalyticsAdmin`, `path="/admin` across `src/` and `docs/`. The live operator analytics is `/operator/analytics/{view}` (`App.tsx:234` → `OperatorEntry`; `OPERATOR_BRANCHES` analytics, ten views, `tierBranches.ts:513-526`). The owner's intent stands; only the address was wrong. The Solo Analytics retirement must leave `/operator/analytics/*` untouched, and its guard tests target that path. Recorded in `docs/product/solo-marketing-ia-proposal.md` §7.
 

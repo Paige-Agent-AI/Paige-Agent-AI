@@ -1,0 +1,53 @@
+# UI delivery evidence: vibe-studio-v1-capability-boundary
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: grounded before editing — the Studio turn was offered the full main-PAIGE tool list plus ask_choices and nothing at dispatch refused a non-design tool (four investigators plus an adversarial verifier); paige_subagents has no tool-scope column, slug is unique table-wide, and tenant writes never match the NULL-tenant row. Flow: owner asks the Studio for something → the design agent is offered only its role's scope → a design tool runs through the normal gates; anything else is refused with outside_studio_scope and the owner is pointed to main PAIGE
+PAIGE_UI_DESIGN: PASS: no interface change; the visible effect is Paige's reply in the Studio chat (she says the request belongs in main PAIGE) — copy reviewed for §3 voice and §13 honesty ("Nothing was changed")
+MATERIAL_FLOW_CHANGE: YES: in a Studio project, CRM/deal/team/calendar/provider/comms/sub-agent/funding/Knowledge-write/business-profile requests are refused instead of proposed or run; build tools now need this workspace's owner/admin rather than a global admin role
+FLOW_PROTOTYPE: PASS: no new surface; the owner approved the model and the allowlist in writing (2026-10-03)
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Solo owner/admin building in a Studio project; primary action unchanged
+VISUAL_DIRECTION: PASS: unchanged (layout C)
+AUTOMATED_EVIDENCE: PASS: scripts/client-memory-authz/check.mjs section 33 against the real paige-ai-chat handler — the five forbidden tools (crm_create_contact, crm_update_deal, ghl_run_action, member_grant_role, calendar_book_meeting) are not offered and are refused outside_studio_scope when called anyway; save_to_knowledge_base and document_generate are neither offered nor dispatchable; main PAIGE is offered all five and none is scope-refused; a missing scope offers only ask_choices and capability_status and refuses a build tool; a malformed scope cannot widen; a global admin of another workspace cannot build; a workspace owner without the global role can. Removing the tool filter fails only the visibility checks; removing the dispatch guard fails only the refusal checks; reverting D3 fails only the authority checks. src/solo/studio/studio-scope.test.ts drives the resolver (valid allowlist, six fail-closed shapes, narrow-only, the stored allowlist exactly the owner's sixteen)
+STATIC_EVIDENCE: PASS: tsc ratchet no new errors; Deno check paige-ai-chat 12 errors, equal to the baseline; binding-ledger-lint passes; every ci.yml command run locally; full suite 510 files / 7,524 tests
+RENDERED_EVIDENCE: PASS: no UI change; current frames are docs/evidence/ui-delivery/assets/vibe-studio-v0-publish-truth/ (harness render · not live)
+BEHAVIORAL_EVIDENCE: PASS: production rollback proof — Migration B lands on exactly one row (16 tools, no other row carries a scope); as a real tenant owner (a synthetic test tenant) an update of the platform row touches 0 rows and the scope stays; a competing design-studio row is refused by paige_subagents_slug_key (23505) while the same owner can insert their own agent under another slug
+AUTHENTICATED_RUNTIME: UNVERIFIED: no signed-in browser here; owed after merge — in a Studio project the design agent is not offered and refuses CRM/team/calendar/provider tools, and main PAIGE still offers them
+KEYBOARD_FOCUS: PASS: no interface change
+ZOOM_REFLOW: PASS: no interface change
+REDUCED_MOTION: PASS: no interface change
+STATE_COVERAGE: PASS: scope valid / scope missing (fail closed) / scope malformed (fail closed) / in-scope tool (normal gates) / off-scope tool (refused) / workspace owner or admin / other-workspace admin
+TRUTHFUL_STATE_LABELS: PASS: the refusal names the tool and says nothing was changed; the binding ledger now states each Studio chain link as partial with its reason instead of none
+SOLO_UI: YES: Solo Marketing → Vibe Studio → a project
+SOLO_1536X770_PAIGE_CLOSED: PASS: docs/evidence/ui-delivery/assets/vibe-studio-v0-publish-truth/solo-1536x770-paige-closed.png — structural harness (real Studio components and Solo CSS, stubbed reads; labelled "harness render · not live"): unchanged by V1 (no UI file changed); document overflowX 0, Publish and the timeline on screen. The Studio is a full-screen overlay, so PAIGE open and closed render the same frame.
+SOLO_1536X770_PAIGE_OPEN: PASS: docs/evidence/ui-delivery/assets/vibe-studio-v0-publish-truth/solo-1536x770-paige-open.png — structural harness (real Studio components and Solo CSS, stubbed reads; labelled "harness render · not live"): unchanged by V1 (no UI file changed); document overflowX 0, Publish and the timeline on screen. The Studio is a full-screen overlay, so PAIGE open and closed render the same frame.
+SOLO_1366X768_PAIGE_CLOSED: PASS: docs/evidence/ui-delivery/assets/vibe-studio-v0-publish-truth/solo-1366x768-paige-closed.png — structural harness (real Studio components and Solo CSS, stubbed reads; labelled "harness render · not live"): unchanged by V1 (no UI file changed); document overflowX 0, Publish and the timeline on screen. The Studio is a full-screen overlay, so PAIGE open and closed render the same frame.
+SOLO_1366X768_PAIGE_OPEN: PASS: docs/evidence/ui-delivery/assets/vibe-studio-v0-publish-truth/solo-1366x768-paige-open.png — structural harness (real Studio components and Solo CSS, stubbed reads; labelled "harness render · not live"): unchanged by V1 (no UI file changed); document overflowX 0, Publish and the timeline on screen. The Studio is a full-screen overlay, so PAIGE open and closed render the same frame.
+SOLO_1024X768_PAIGE_CLOSED: PASS: docs/evidence/ui-delivery/assets/vibe-studio-v0-publish-truth/solo-1024x768-paige-closed.png — structural harness (real Studio components and Solo CSS, stubbed reads; labelled "harness render · not live"): unchanged by V1 (no UI file changed); document overflowX 0, Publish and the timeline on screen. The Studio is a full-screen overlay, so PAIGE open and closed render the same frame.
+SOLO_1024X768_PAIGE_OPEN: PASS: docs/evidence/ui-delivery/assets/vibe-studio-v0-publish-truth/solo-1024x768-paige-open.png — structural harness (real Studio components and Solo CSS, stubbed reads; labelled "harness render · not live"): unchanged by V1 (no UI file changed); document overflowX 0, Publish and the timeline on screen. The Studio is a full-screen overlay, so PAIGE open and closed render the same frame.
+SOLO_900X1000_PAIGE_CLOSED: PASS: docs/evidence/ui-delivery/assets/vibe-studio-v0-publish-truth/solo-900x1000-paige-closed.png — structural harness (real Studio components and Solo CSS, stubbed reads; labelled "harness render · not live"): unchanged by V1 (no UI file changed); document overflowX 0, Publish and the timeline on screen. The Studio is a full-screen overlay, so PAIGE open and closed render the same frame.
+SOLO_900X1000_PAIGE_OPEN: PASS: docs/evidence/ui-delivery/assets/vibe-studio-v0-publish-truth/solo-900x1000-paige-open.png — structural harness (real Studio components and Solo CSS, stubbed reads; labelled "harness render · not live"): unchanged by V1 (no UI file changed); document overflowX 0, Publish and the timeline on screen. The Studio is a full-screen overlay, so PAIGE open and closed render the same frame.
+UNVERIFIED: authenticated runtime (above)
+
+OWNER_INTENT: "A Studio request cannot invoke a non-design Sales/CRM/client mutation even if the model tries. Main PAIGE retains its full authorized capability set. The boundary is runtime-enforced, not prompt-only."
+MUST_NOT_HAPPEN: a tenant widening the Design Studio scope; the scope granting authority beyond Spine/Trust/tenant permission; main PAIGE losing a tool; Knowledge writes from Studio before V5
+MUST_PRESERVE: the V0 rules (ceiling-respecting lift, truthful funnel and publish outcomes); the Studio UI; main PAIGE's tool list
+ACCEPTANCE_CRITERIA: forbidden tools invisible to the model and refused at dispatch in Studio; removing either guard fails its negative test; main PAIGE reaches the same tools
+MOTION_PURPOSE: none
+PROTECTED_SEAMS: crm-command door (refused before it is reached in Studio, unchanged elsewhere); studio_role_ok (existing RPC, the same rule the growth RPCs enforce); paige_subagents read through the server client from the NULL-tenant row only
+
+INTERNAL_BUILD_IDENTITY: 4f17dda5a98e57f91878361648dad4d374aa9117 plus this PR; deployment=local; environment=development; migrations=PROOF_OWED(20270541000000 is applied by deploy-migrations on merge and confirmed from schema_migrations and the platform row afterwards); edge=PROOF_OWED(paige-ai-chat deploys through deploy-edge-functions on merge); evidence=docs/evidence/ui-delivery/vibe-studio-v1-capability-boundary.md
+RELEASE_CHANNEL: development: verified locally, against the real handler with a fake database, and by a production rollback proof before merge; ships through the migration and edge pipelines on merge (pre-launch merge-on-verified, §4)
+RELEASE_CLASSIFICATION: internal-only: no customer release identity
+CUSTOMER_RELEASE_IDENTITY: none: internal-only
+RELEASE_NOTE_REQUIRED: no: internal-only safety boundary
+RELEASE_TRUTH_BOUNDARY: PARTIAL: ships on merge; the authenticated Studio drive is owed
+RELEASE_RECOVERY: position=forward-fix or revert, the migration is data-only and removing capability_scope makes the Studio fail closed rather than open; reference=deploy-migrations and deploy-edge-functions pipelines
+
+## Scope and collisions
+
+- Classification: Vibe Studio V1 safety gate under the owner's 2026-10-03 rulings (Migration B authorized).
+- Explicit exclusions: Spine/receipt convergence (V2a), one publish door (V2b), Knowledge restored into the design agent (V3).
+
+## Review and limitations
+
+Independent review: recorded in the PR once returned.

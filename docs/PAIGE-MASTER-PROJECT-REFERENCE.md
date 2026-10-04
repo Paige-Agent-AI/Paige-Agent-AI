@@ -762,7 +762,7 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
-**2026-10-04 Vibe Studio V0: the Studio never auto-runs above the Trust Compass ceiling; funnels reachable and truthful; publish needs a live address. Release channel: `production` on merge (frontend, `paige-ai-chat`, Migration A `20270539000000`); classification: `internal-only` safety fix, `PARTIAL`.**
+**2026-10-04 Vibe Studio V0: the Studio never auto-runs above the Trust Compass ceiling; funnels reachable and truthful; publish needs a live address. Release channel: `production` on merge (frontend, `paige-ai-chat`, Migration A `20270540000000`); classification: `internal-only` safety fix, `PARTIAL`.**
 - *What changed:*
   - Migration A: `resolve_tool_autonomy`'s body moved unchanged into one internal resolver; `resolve_tool_autonomy_detail` adds `ceiling_allows_auto`. No grant on `trust_effective_rung` changed.
   - The Studio lift (confirm → auto for six build tools) requires the ceiling to allow acting unread. Production is on effective rung 1, so Studio saves are now held for approval.

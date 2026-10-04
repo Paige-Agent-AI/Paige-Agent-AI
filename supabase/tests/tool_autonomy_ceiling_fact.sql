@@ -1,6 +1,6 @@
 -- ============================================================================
 -- Migration A (Vibe Studio V0) — repeatable proof for
---   20270539000000_tool_autonomy_ceiling_fact.sql
+--   20270540000000_tool_autonomy_ceiling_fact.sql
 --
 -- What it proves, against the REAL migration applied with \ir (twice: clean + replay):
 --   1. EQUIVALENCE — resolve_tool_autonomy returns exactly what the previous canonical body
@@ -77,8 +77,8 @@ begin
 end $$;
 
 -- ── The REAL migration, twice (clean application + replay) ───────────────────────────────────────
-\ir ../migrations/20270539000000_tool_autonomy_ceiling_fact.sql
-\ir ../migrations/20270539000000_tool_autonomy_ceiling_fact.sql
+\ir ../migrations/20270540000000_tool_autonomy_ceiling_fact.sql
+\ir ../migrations/20270540000000_tool_autonomy_ceiling_fact.sql
 
 -- ── Synthetic tenants: T_AUTO set auto, T_CONF set confirm, T_OFF set off, T_NONE no row ──────────
 INSERT INTO public.tenant_tool_autonomy (tenant_id, tool_key, mode) VALUES

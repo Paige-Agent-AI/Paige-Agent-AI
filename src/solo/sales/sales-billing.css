@@ -118,3 +118,20 @@
 .so-editor.so-agreement-editor :focus-visible{outline:2px solid var(--violet);outline-offset:3px}
 @media(prefers-reduced-motion:reduce){.so-editor.so-agreement-editor .btn:hover:not(:disabled),.so-editor.so-agreement-editor .btn:active:not(:disabled){transform:none}}
 @media(forced-colors:active){.so-editor.so-agreement-editor{border-color:CanvasText}.so-editor.so-agreement-editor .btn{border-color:ButtonText;box-shadow:none}.so-editor.so-agreement-editor .btn:disabled{border-color:GrayText;color:GrayText;opacity:1}.so-editor.so-agreement-editor :focus-visible{outline-color:Highlight}}
+
+/* Canonical Sales Payments consumes its assigned canvas; content keeps its spacing. */
+.sales-department[data-sales-view="payments"]>.sales-department-body{display:flex;flex-direction:column;gap:12px;overflow:auto}
+.sales-department[data-sales-view="payments"] .sales-payments-tabs{flex:none;flex-wrap:wrap;margin:0}
+.sales-department[data-sales-view="payments"] .so.so-billing{display:flex;flex-direction:column;flex:1;min-height:0;width:100%}
+.sales-department[data-sales-view="payments"] .so-billing>.so-view{display:flex;flex-direction:column;flex:1;min-height:0}
+.sales-department[data-sales-view="payments"] .sb-workspace,.sales-department[data-sales-view="payments"] .sb-editor{height:auto;flex:1;min-height:0}
+.sales-department[data-sales-view="payments"] .sb-records{display:flex;flex-direction:column;gap:16px;flex:1;min-height:0}
+.sales-department[data-sales-view="payments"] .sb-records>.sb-panel{flex:1;min-height:0}
+.sales-department[data-sales-view="payments"] .sb-register{max-height:none}
+@media(max-width:650px),(max-height:600px){
+ .sales-department[data-sales-view="payments"] .sb-records{overflow:auto;overscroll-behavior:contain}
+ .sales-department[data-sales-view="payments"] .sb-records>.sb-panel{flex:none;min-height:200px}
+ .sales-department[data-sales-view="payments"] .sb-detail-grid{flex:none;max-height:none}
+ .sales-department[data-sales-view="payments"] .sb-register{max-height:300px}
+ .sales-department[data-sales-view="payments"] .sb-editor{min-height:320px}
+}

@@ -477,7 +477,7 @@ function OfferEditor({ draft, onChange, onSave, onClose, busy, notice }) {
           <Pick label="Invite to" value={draft.customerAction} onPick={(v) => onChange({ ...draft, customerAction: v })}
                 options={Object.entries(ACTIONS)} />
           <label className="co-field">
-            <span>Detail</span>
+            <span>Offer description</span>
             <textarea rows={4} value={draft.description} onChange={set("description")}
                       placeholder="Anything a customer should know. Optional." />
           </label>

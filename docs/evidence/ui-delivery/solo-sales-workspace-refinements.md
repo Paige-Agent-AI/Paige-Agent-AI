@@ -2,7 +2,7 @@
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: docs/delivery/solo-sales-workspace-refinements.md records ten pre-edit routing answers, canonical source ownership, protected seams and verification.
-PAIGE_UI_DESIGN: PASS: Paige UI routed geometry/accessibility/protected-behavior/release modules applied; Impeccable craft-floor applied to established Mineral/Obsidian world, responsive line layout and existing violet actions. No context rerun.
+PAIGE_UI_DESIGN: PASS: Paige UI routed geometry/accessibility/protected-behavior/release modules applied; Impeccable craft-floor applied to established Mineral/Obsidian world, responsive line layout and existing violet actions. No context rerun. Impeccable adapt.md applied for mobile full-width line controls,16px inputs,44px touch controls and safe-area footer.
 MATERIAL_FLOW_CHANGE: NO: Owner explicitly authorized direct refinements of established Pipeline/Payments/invoice flow; provider execution remains separate.
 FLOW_PROTOTYPE: PASS: Existing owner-approved Sales seven-tab and invoice direction retained; owner requested direct minor changes without another prototype.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Solo owner prepares editable invoice drafts with canonical offer description and direct-payment preferences, using the available canvas.
@@ -13,7 +13,7 @@ RENDERED_EVIDENCE: PASS: scripts/live-drive/artifacts/sales-workspace-refinement
 BEHAVIORAL_EVIDENCE: PASS: Actual production components in fixture harness save/reopen multiline description and Zelle preference; legacy view=overview selects Invoices; independent Catalog refresh/reprice preserves user description; oversized descriptions refuse without truncation; SQL persistence/replay and unknown-save/dirty/permission regressions pass. No charge/send/collection.
 AUTHENTICATED_RUNTIME: UNVERIFIED: Local network/auth adapters and local SQL auth helpers are synthetic; hosted JWT, authenticated owner save/account-switch and provider execution unexercised.
 KEYBOARD_FOCUS: PASS: Actual invoice review scroll region focuses and End reaches its bottom in all24 contexts; Back/Save/Review/remove controls measured reachable. Existing dirty/unknown-save protection regressions retained.
-ZOOM_REFLOW: UNVERIFIED: Six fixed CSS viewports including390x844 and430x932 exercised; native browser zoom not separately exercised.
+ZOOM_REFLOW: UNVERIFIED: Six fixed CSS viewports including390x844 and430x932 exercised; native browser zoom not separately exercised; real iOS/Android hardware and soft-keyboard behavior UNVERIFIED.
 REDUCED_MOTION: UNVERIFIED: No new motion introduced; existing reduced-motion CSS retained, preference emulation not exercised.
 STATE_COVERAGE: PASS: Canonical permission/tenant/loading/error/v1-normalization/unknown-save/dirty-exit contracts retained; optional description missing/null/text/max/invalid type tested; fixture drafts stay drafts.
 TRUTHFUL_STATE_LABELS: PASS: Off-platform preferences explicitly do not record received payment or connect a processor; eligible processors remains empty because a verified merchant connection source is absent. Collection/status/provider labels remain unavailable. sales.department remains PROOF_OWED.
@@ -27,7 +27,7 @@ SOLO_1024X768_PAIGE_OPEN: PASS: scripts/live-drive/artifacts/sales-workspace-ref
 SOLO_900X1000_PAIGE_CLOSED: PASS: scripts/live-drive/artifacts/sales-workspace-refinements/900-1000-closed-light-register.png plus dark/editor/review/pipeline frames; geometry.json.
 SOLO_900X1000_PAIGE_OPEN: PASS: scripts/live-drive/artifacts/sales-workspace-refinements/900-1000-open-light-register.png plus dark/editor/review/pipeline frames; compact PAIGE overlay recorded then folded for editing.
 UNVERIFIED: Hosted authentication/provider outcomes and native zoom/reduced-motion emulation remain unexercised. Fixture screenshots are not real payment or owner-account proof.
-INTERNAL_BUILD_IDENTITY: f1c2136f11d0481cfeeca65b9f927efea607d787; deployment=PROOF_OWED(sales-refinements-preview); environment=preview; migrations=PROOF_OWED(20270539000000-production-not-applied); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/solo-sales-workspace-refinements.md and scripts/live-drive/artifacts/sales-workspace-refinements/geometry.json; immutable source head precedes attestation-only commit.
+INTERNAL_BUILD_IDENTITY: db18ad2914433abd488b4816388a279f88397c4f; deployment=PROOF_OWED(sales-refinements-preview); environment=preview; migrations=PROOF_OWED(20270539000000-production-not-applied); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/solo-sales-workspace-refinements.md and scripts/live-drive/artifacts/sales-workspace-refinements/geometry.json; immutable source head precedes attestation-only commit.
 RELEASE_CHANNEL: preview: Candidate based main62a8f590, requires independent exact-head review and CI before release.
 RELEASE_CLASSIFICATION: internal-only: Supporting Sales refinements; authenticated owner/provider acceptance remains proof owed.
 CUSTOMER_RELEASE_IDENTITY: none: No customer release identity assigned.

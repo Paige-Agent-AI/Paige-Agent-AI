@@ -67,6 +67,11 @@ function validUrl(raw) {
   const env = process.env.PAIGE_BROWSER_SHARED_SECRET ? process.env : serverEnv();
   const secret = env.PAIGE_BROWSER_SHARED_SECRET || "";
   const port = Number(env.PORT || process.env.PORT || 8080);
+  // The host's own slice bounds (render.mjs loadRenderConfig defaults and clamps), so "bounded" is checked
+  // against what this machine is configured to allow, not assumed.
+  const bound = (v, d, lo, hi) => { const n = Number.parseInt(v ?? "", 10); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : d; };
+  const maxSlices = bound(env.PAIGE_RENDER_MAX_SLICES, 8, 1, 20);
+  const maxSliceHeight = bound(env.PAIGE_RENDER_SLICE_HEIGHT, 1600, 400, 4000);
   if (!secret) {
     console.log(JSON.stringify({ check: "secret", ok: false, reason: "secret_not_found_on_machine" }));
     console.log("ACCEPTANCE_RESULT=FAIL");
@@ -106,7 +111,8 @@ function validUrl(raw) {
         const buf = Buffer.from(b64, "base64");
         return { y: s.y, height: s.height, bytes: buf.length, jpeg_magic: b64.startsWith("/9j/"), sha256: crypto.createHash("sha256").update(buf).digest("hex") };
       });
-      const ok = !!(json && json.ok === true) && slices.length > 0 && sliceMeta.every((m) => m.jpeg_magic && m.bytes > 0);
+      const bounded = slices.length <= maxSlices && sliceMeta.every((m) => Number.isFinite(m.height) && m.height > 0 && m.height <= maxSliceHeight);
+      const ok = !!(json && json.ok === true) && slices.length > 0 && bounded && sliceMeta.every((m) => m.jpeg_magic && m.bytes > 0);
       if (!ok) allOk = false;
       console.log(JSON.stringify({
         check: "render", mode, viewport, http_status: status, ok,
@@ -116,6 +122,7 @@ function validUrl(raw) {
         full_height: json && json.full_height || null,
         truncated: json ? json.truncated ?? null : null,
         slice_count: slices.length,
+        bounded, max_slices: maxSlices, max_slice_height: maxSliceHeight,
         slices: sliceMeta,
         duration_ms: json && json.duration_ms != null ? json.duration_ms : Date.now() - started,
         final_url: json && json.final_url || null,

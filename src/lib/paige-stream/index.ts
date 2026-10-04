@@ -5,18 +5,22 @@
 // the options keep each one as it was:
 //  - whether `[DONE]` ends the read (Studio and the portal send: yes; the operator spine and the
 //    portal's opening greeting: no — they read to the end of the body);
-//  - what a line that is not JSON does: "skip" drops it and reads on; "stop" ends the read there.
+//  - what a line that is not JSON does: "skip" drops it and reads on; "stop" ends the read there;
+//    "drain" yields it, then reads the body to its end yielding nothing more (the dashboard chat,
+//    PaigeAIChat, whose old loop stalled on such a line until the body closed — it also ends at
+//    `[DONE]` and reads through readPaigeStreamWithRaw to keep its own branch order over the
+//    whole object).
 // Everything else — buffering, CR stripping, comment and blank skipping, the final-line flush — is
 // the same for everyone.
 import { createSseFramer } from "./framing";
-import { decodePaigeFrame, type PaigeFrame } from "./decode";
+import { decodePaigeFrameWithRaw, type PaigeFrame } from "./decode";
 
 export { createSseFramer, type SseFramer } from "./framing";
-export { decodePaigeFrame, type PaigeFrame } from "./decode";
+export { decodePaigeFrame, decodePaigeFrameWithRaw, type PaigeFrame } from "./decode";
 
 export interface PaigeStreamOptions {
   stopAtDone: boolean;
-  malformed: "skip" | "stop";
+  malformed: "skip" | "stop" | "drain";
 }
 
 /**
@@ -24,10 +28,30 @@ export interface PaigeStreamOptions {
  * connection lost mid-stream throws to the caller after the frames that already arrived — the
  * caller's own catch decides what a broken turn means, as it did before.
  */
-export async function* readPaigeStream(
+export function readPaigeStream(
   body: ReadableStream<Uint8Array> | null | undefined,
   opts: PaigeStreamOptions,
 ): AsyncGenerator<PaigeFrame, void, undefined> {
+  return readDecoded(body, opts, (decoded) => decoded.frame);
+}
+
+/**
+ * The same read, yielding each frame with the parsed JSON it was named from (decode.ts
+ * decodePaigeFrameWithRaw). Identical framing, `[DONE]` and malformed handling — only the item
+ * shape differs.
+ */
+export function readPaigeStreamWithRaw(
+  body: ReadableStream<Uint8Array> | null | undefined,
+  opts: PaigeStreamOptions,
+): AsyncGenerator<{ frame: PaigeFrame; raw: unknown }, void, undefined> {
+  return readDecoded(body, opts, (decoded) => decoded);
+}
+
+async function* readDecoded<T>(
+  body: ReadableStream<Uint8Array> | null | undefined,
+  opts: PaigeStreamOptions,
+  shape: (decoded: { frame: PaigeFrame; raw: unknown }) => T,
+): AsyncGenerator<T, void, undefined> {
   const reader = body?.getReader();
   if (!reader) return;
   const framer = createSseFramer();
@@ -35,13 +59,18 @@ export async function* readPaigeStream(
     const { done, value } = await reader.read();
     const payloads = done ? framer.end() : framer.push(value);
     for (const payload of payloads) {
-      const frame = decodePaigeFrame(payload);
+      const decoded = decodePaigeFrameWithRaw(payload);
+      const { frame } = decoded;
       if (frame.type === "malformed") {
         if (opts.malformed === "skip") continue;
-        yield frame;
+        yield shape(decoded);
+        if (opts.malformed === "drain") {
+          // Nothing after the line is acted on; the read still waits for the body to close.
+          for (;;) { if ((await reader.read()).done) return; }
+        }
         return;
       }
-      yield frame;
+      yield shape(decoded);
       if (frame.type === "done" && opts.stopAtDone) return;
     }
     if (done) return;

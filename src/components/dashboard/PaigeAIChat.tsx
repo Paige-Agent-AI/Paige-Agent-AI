@@ -49,6 +49,7 @@ import { PaigeArtifactCard, type PaigeArtifact } from "@/components/paige/chat/P
 import { ExtractionProposalCard, type ExtractionProposal } from "@/components/chat/ExtractionProposalCard";
 import { PaigeCompactingCard, type CompactingSignal } from "@/components/paige/chat/PaigeCompactingCard";
 import { PaigeLiveConversation, type LiveVoiceSink } from "@/components/paige/live/PaigeLiveConversation";
+import { readPaigeStreamWithRaw } from "@/lib/paige-stream";
 import { parseLiveConversationCard, type LiveConversationCard } from "@/lib/paigeLiveConversation/contract";
 import { createAnchoredTranscriptScroll, messageScrollAnchorKey } from "@/components/chat/anchoredTranscriptScroll";
 import {
@@ -1350,8 +1351,6 @@ const PaigeAIChatInner = ({
       // This is the canonical PAIGE runtime request, under the same caller JWT,
       // thread, tenant context and governed approval path as text chat.
 
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
       let assistantMessage = "";
       let queuedThisTurn: QueuedApproval[] = [];
       const crmResultsThisTurn: PaigeCrmResult[] = [];
@@ -1366,185 +1365,183 @@ const PaigeAIChatInner = ({
       // The document proposal, if this turn produced one. At most one per turn — a turn carries at
       // most one attached document — so a variable rather than a list.
       let proposalThisTurn: ExtractionProposal | null = null;
-      let textBuffer = "";
       let streamDone = false;
-      let liveStreamFailed = false;
 
       setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: "", approvalOutcome: outcomeThisTurn }]);
 
-      while (reader && !streamDone && !liveStreamFailed) {
-        const { done, value } = await reader.read();
+      // The bytes are framed by the shared reader (src/lib/paige-stream): one buffer across chunks,
+      // CR stripping, comments and blank lines skipped. This surface keeps its OWN dispatch below,
+      // in its own branch order, over the whole parsed object — so `raw`, not the one key the
+      // decoder names. The decoder's naming decides only two things here: `[DONE]` ends the turn,
+      // and a line that is not JSON HALTS the turn (`malformed: "drain"`). Before the move that line
+      // was pushed back and failed again on every chunk, so nothing after it was ever acted on and
+      // the turn fell to the incomplete-turn branch below only when the server closed the body;
+      // "drain" keeps exactly that — nothing more is yielded, and the read waits for the body to
+      // end. A frame whose handling throws halts the same way (`halted`), as it did before.
+      //
+      // The `paige_turn` frame has no branch below and is dropped — no state, nothing rendered.
+      let halted = false;
+      for await (const { frame, raw } of readPaigeStreamWithRaw(response.body, { stopAtDone: true, malformed: "drain" })) {
         if (!ticketAccepted(requestTicket)) return;
-        if (done) break;
-
-        textBuffer += decoder.decode(value, { stream: true });
-
-        let newlineIndex: number;
-        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
-          let line = textBuffer.slice(0, newlineIndex);
-          textBuffer = textBuffer.slice(newlineIndex + 1);
-
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (line.startsWith(":") || line.trim() === "") continue;
-          if (!line.startsWith("data: ")) continue;
-
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") {
-            streamDone = true;
-            voiceSink?.done();
+        if (halted) continue;
+        if (frame.type === "done") {
+          streamDone = true;
+          voiceSink?.done();
+          break;
+        }
+        if (frame.type === "malformed") { halted = true; continue; }
+        try {
+          // The parsed JSON exactly as JSON.parse returned it, read with the optional chaining the
+          // branches below always used. A frame that throws here (JSON `null`, for one) halts the
+          // read exactly as a line that is not JSON does.
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const parsed = raw as any;
+          if (voiceSink && parsed.paige_live_error) {
+            voiceSink.failed();
             break;
           }
-
-          try {
-            const parsed = JSON.parse(jsonStr);
-            if (!ticketAccepted(requestTicket)) return;
-            if (voiceSink && parsed.paige_live_error) {
-              liveStreamFailed = true;
-              voiceSink.failed();
-              break;
-            }
-            if (typeof parsed.paige_live_output === "string") {
-              voiceSink?.proof(parsed.paige_live_output);
-              continue;
-            }
-            // Structured event: a "watch her work" step (#95). Upsert by id, sorted by seq.
-            if (parsed.paige_step) {
-              setSteps((prev) => upsertStep(prev, parsed.paige_step as PaigeStep));
-              continue;
-            }
-            const liveCard = parseLiveConversationCard(parsed.paige_live_card);
-            if (liveCard) {
-              setStreamedLiveCard(liveCard);
-              continue;
-            }
-            // #11 — the server confirmed the transition into the reply. A lightweight signal; the
-            // client also derives "writing" from the first content delta below, so this is belt-and-braces.
-            if (parsed.paige_phase === "writing") { setWritingPhase(true); continue; }
-            // The server refused the focused client — that client does not belong to this
-            // workspace. This frame shipped for several releases with NO consumer anywhere in the
-            // app (zero hits repo-wide), which the handler's own comment described as "an
-            // advisory signal is not a control": the refusal reached the transcript as prose while
-            // the surface went on asserting a focus the server had denied.
+          if (typeof parsed.paige_live_output === "string") {
+            voiceSink?.proof(parsed.paige_live_output);
+            continue;
+          }
+          // Structured event: a "watch her work" step (#95). Upsert by id, sorted by seq.
+          if (parsed.paige_step) {
+            setSteps((prev) => upsertStep(prev, parsed.paige_step as PaigeStep));
+            continue;
+          }
+          const liveCard = parseLiveConversationCard(parsed.paige_live_card);
+          if (liveCard) {
+            setStreamedLiveCard(liveCard);
+            continue;
+          }
+          // #11 — the server confirmed the transition into the reply. A lightweight signal; the
+          // client also derives "writing" from the first content delta below, so this is belt-and-braces.
+          if (parsed.paige_phase === "writing") { setWritingPhase(true); continue; }
+          // The server refused the focused client — that client does not belong to this
+          // workspace. This frame shipped for several releases with NO consumer anywhere in the
+          // app (zero hits repo-wide), which the handler's own comment described as "an
+          // advisory signal is not a control": the refusal reached the transcript as prose while
+          // the surface went on asserting a focus the server had denied.
+          //
+          // Two things happen, in this order. The refusal SENTENCE the server streams is parked
+          // so it survives the transcript reset that releasing focus is about to cause; then the
+          // surface that owns focus is told to let it go. `reason` is one of the handler's fixed
+          // refusal categories — never an identifier for the client that was refused, which is
+          // the whole point of the backend not echoing it.
+          // A document Paige read produced fields she is PROPOSING. NOTHING HAS BEEN WRITTEN.
+          //
+          // This frame existed for several releases with no consumer anywhere in the app, while
+          // the credit-report path wrote eight tables — three FICO columns on `profiles`,
+          // negative items, accounts, inquiries, factor scores, funding readiness — the moment a
+          // PDF was dropped in, and this surface did not even parse the `sync_status` that
+          // reported it. So the write was invisible AND unasked. Now the write waits for the
+          // card below.
+          if (parsed.extraction_proposal?.id && Array.isArray(parsed.extraction_proposal.fields)) {
+            proposalThisTurn = parsed.extraction_proposal as ExtractionProposal;
+            // Committed HERE, not left for a later delta to carry. This frame is emitted at the
+            // CLOSE of the turn, after the last reply token, so no subsequent `setMessages` runs
+            // — a proposal parked in a local and never committed would simply never appear, and
+            // the person would be left with a document Paige said she read and nothing to do
+            // about it. Same shape as the approval and confirm frames above, for the same reason.
+            setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn }]);
+            continue;
+          }
+          if (parsed.client_scope?.status === "refused") {
+            // ONLY a PERMISSION verdict releases focus. Four of the server's six refusal
+            // categories mean UNKNOWN — an RPC blip, a failed authorization read, a thrown
+            // exception — and the handler's own comment says so: "a read failure is UNKNOWN
+            // authority, never permission." Treating those as "this client is not yours"
+            // permanently dropped the operator's focused client on a transient failure and told
+            // them something untrue about who the client belongs to. Both kinds still refuse the
+            // turn; only one is a fact about ownership.
+            const permissionRefusal = parsed.client_scope.kind === "permission";
+            const noticeText = permissionRefusal
+              ? "I couldn't confirm that client belongs to your workspace, so I've let go of that focus. Nothing was saved. Reopen them from your client list if you think that's wrong."
+              : "I couldn't check that client just now, so I stopped rather than guess. Nothing was saved — try that again.";
+            // THE NOTICE GOES IN THIS TURN'S TRANSCRIPT FIRST, unconditionally. That is where an
+            // explanation of a refused turn belongs, and it is what a person sees when nothing
+            // else happens.
+            assistantMessage = assistantMessage ? `${assistantMessage}\n\n${noticeText}` : noticeText;
+            setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn }]);
+            // It is ALSO parked — but only when focus is genuinely about to be released, because
+            // that release resets the transcript and would otherwise delete the line just added.
             //
-            // Two things happen, in this order. The refusal SENTENCE the server streams is parked
-            // so it survives the transcript reset that releasing focus is about to cause; then the
-            // surface that owns focus is told to let it go. `reason` is one of the handler's fixed
-            // refusal categories — never an identifier for the client that was refused, which is
-            // the whole point of the backend not echoing it.
-            // A document Paige read produced fields she is PROPOSING. NOTHING HAS BEEN WRITTEN.
-            //
-            // This frame existed for several releases with no consumer anywhere in the app, while
-            // the credit-report path wrote eight tables — three FICO columns on `profiles`,
-            // negative items, accounts, inquiries, factor scores, funding readiness — the moment a
-            // PDF was dropped in, and this surface did not even parse the `sync_status` that
-            // reported it. So the write was invisible AND unasked. Now the write waits for the
-            // card below.
-            if (parsed.extraction_proposal?.id && Array.isArray(parsed.extraction_proposal.fields)) {
-              proposalThisTurn = parsed.extraction_proposal as ExtractionProposal;
-              // Committed HERE, not left for a later delta to carry. This frame is emitted at the
-              // CLOSE of the turn, after the last reply token, so no subsequent `setMessages` runs
-              // — a proposal parked in a local and never committed would simply never appear, and
-              // the person would be left with a document Paige said she read and nothing to do
-              // about it. Same shape as the approval and confirm frames above, for the same reason.
-              setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn }]);
-              continue;
+            // §13 — PARKING IT UNCONDITIONALLY WAS WRONG, and a test written for the stranding
+            // case caught it. A notice parked when nothing releases focus survives in the ref and
+            // is adopted by the NEXT epoch change of any kind — so a later, unrelated switch
+            // opened with an explanation of a refusal that had nothing to do with it. Epoch
+            // stamping alone does not fix that: both transitions leave the same epoch. Not
+            // parking it is what fixes it, and it is also the simpler truth — the notice only
+            // needs to survive a reset when a reset is coming.
+            if (permissionRefusal && onFocusRelease) {
+              pendingScopeNoticeRef.current = { epoch: scopeEpoch, text: noticeText };
+              onFocusRelease("refused");
             }
-            if (parsed.client_scope?.status === "refused") {
-              // ONLY a PERMISSION verdict releases focus. Four of the server's six refusal
-              // categories mean UNKNOWN — an RPC blip, a failed authorization read, a thrown
-              // exception — and the handler's own comment says so: "a read failure is UNKNOWN
-              // authority, never permission." Treating those as "this client is not yours"
-              // permanently dropped the operator's focused client on a transient failure and told
-              // them something untrue about who the client belongs to. Both kinds still refuse the
-              // turn; only one is a fact about ownership.
-              const permissionRefusal = parsed.client_scope.kind === "permission";
-              const noticeText = permissionRefusal
-                ? "I couldn't confirm that client belongs to your workspace, so I've let go of that focus. Nothing was saved. Reopen them from your client list if you think that's wrong."
-                : "I couldn't check that client just now, so I stopped rather than guess. Nothing was saved — try that again.";
-              // THE NOTICE GOES IN THIS TURN'S TRANSCRIPT FIRST, unconditionally. That is where an
-              // explanation of a refused turn belongs, and it is what a person sees when nothing
-              // else happens.
-              assistantMessage = assistantMessage ? `${assistantMessage}\n\n${noticeText}` : noticeText;
-              setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn }]);
-              // It is ALSO parked — but only when focus is genuinely about to be released, because
-              // that release resets the transcript and would otherwise delete the line just added.
-              //
-              // §13 — PARKING IT UNCONDITIONALLY WAS WRONG, and a test written for the stranding
-              // case caught it. A notice parked when nothing releases focus survives in the ref and
-              // is adopted by the NEXT epoch change of any kind — so a later, unrelated switch
-              // opened with an explanation of a refusal that had nothing to do with it. Epoch
-              // stamping alone does not fix that: both transitions leave the same epoch. Not
-              // parking it is what fixes it, and it is also the simpler truth — the notice only
-              // needs to survive a reset when a reset is coming.
-              if (permissionRefusal && onFocusRelease) {
-                pendingScopeNoticeRef.current = { epoch: scopeEpoch, text: noticeText };
-                onFocusRelease("refused");
-              }
-              continue;
-            }
-            // #12 — conversation-compacting lifecycle (approaching/start/progress/done/skipped).
-            if (parsed.paige_compacting) { setCompacting(parsed.paige_compacting as CompactingSignal); continue; }
-            // Structured event: Paige queued an action to the approvals desk.
-            if (Array.isArray(parsed.approval_queued)) {
-              queuedThisTurn = parsed.approval_queued as QueuedApproval[];
-              // #29 §39 — carry artifacts here too so the invariant "the card survives every rebuild"
-              // never depends on the backend's frame ORDER (today approval_queued precedes paige_artifact,
-              // but a reorder or a second approval_queued after an artifact must not wipe the card).
-              setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn, confirm: confirmThisTurn.length ? confirmThisTurn : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
-              continue;
-            }
-            // What became of each approval this turn carried. Only the card that asked reads it;
-            // on any other mount the frame is consumed and changes nothing.
-            if (parsed.paige_approval_outcome) {
-              if (outcomeThisTurn) {
-                outcomeThisTurn = applyServerOutcome(outcomeThisTurn, parsed.paige_approval_outcome);
-                setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
-              }
-              continue;
-            }
-            // Structured event: Paige is asking to confirm a mutating action → render an approve/deny card.
-            if (parsed.paige_confirm?.summary) {
-              confirmThisTurn.push({ tool: String(parsed.paige_confirm.tool || "action"), summary: String(parsed.paige_confirm.summary), ...(parsed.paige_confirm.fingerprint ? { fingerprint: String(parsed.paige_confirm.fingerprint) } : {}), ...(parsed.paige_confirm.command && typeof parsed.paige_confirm.command === "object" ? { command: parsed.paige_confirm.command as Record<string, unknown> } : {}), ...(parsed.paige_confirm.idempotency_key ? { idempotency_key: String(parsed.paige_confirm.idempotency_key) } : {}) });
-              setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: [...confirmThisTurn], crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
-              continue;
-            }
-            if (parsed.paige_crm_result?.action && parsed.paige_crm_result?.receipt_recorded === true) {
-              crmResultsThisTurn.push(parsed.paige_crm_result as PaigeCrmResult);
-              // R2b review P2: card survival must not depend on frame order — this rebuild
-              // carries the research cards too (researchTrace flushes after crmResultTrace
-              // today, but the invariant is the crm pattern's, not the ordering's).
-              setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: [...crmResultsThisTurn], research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
-              continue;
-            }
-            // R2b — the inline research card arrives attached to the SAME assistant turn
-            // (one Paige turn, ruling §7) and renders immediately, like the crm cards.
-            if (Array.isArray(parsed.paige_research?.findings)) {
-              researchThisTurn.push(parsed.paige_research as PaigeResearchResult);
-              setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, research: [...researchThisTurn], artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
-              continue;
-            }
-            // #29 — Paige handed the user a deliverable (document/image) → attach an inline handoff card.
-            // Arrives BEFORE the reply text, so build the assistant bubble now; the content rebuild below
-            // preserves artifactsThisTurn so the card survives the streaming text.
-            if (parsed.paige_artifact?.id && (parsed.paige_artifact.artifactType === "document" || parsed.paige_artifact.artifactType === "image")) {
-              const a = parsed.paige_artifact as PaigeArtifact;
-              // Capture the frame's tenant_id — the EXACT tenant the row was saved under — so the card's
-              // RLS-safe hydrate scopes to it, not the viewer's activeTenantId (they diverge when an
-              // operator manages another tenant → wrong-tenant query → 0 rows → "Preview unavailable").
-              artifactsThisTurn.push({ id: String(a.id), title: String(a.title ?? ""), url: a.url ?? undefined, artifactType: a.artifactType, tenantId: (parsed.paige_artifact.tenant_id as string | undefined) ?? undefined });
-              setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: [...artifactsThisTurn] }]);
-              continue;
-            }
-            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (content) {
-              if (!assistantMessage) setWritingPhase(true); // #11 — first token → "Writing…"
-              assistantMessage += content;
+            continue;
+          }
+          // #12 — conversation-compacting lifecycle (approaching/start/progress/done/skipped).
+          if (parsed.paige_compacting) { setCompacting(parsed.paige_compacting as CompactingSignal); continue; }
+          // Structured event: Paige queued an action to the approvals desk.
+          if (Array.isArray(parsed.approval_queued)) {
+            queuedThisTurn = parsed.approval_queued as QueuedApproval[];
+            // #29 §39 — carry artifacts here too so the invariant "the card survives every rebuild"
+            // never depends on the backend's frame ORDER (today approval_queued precedes paige_artifact,
+            // but a reorder or a second approval_queued after an artifact must not wipe the card).
+            setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn, confirm: confirmThisTurn.length ? confirmThisTurn : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
+            continue;
+          }
+          // What became of each approval this turn carried. Only the card that asked reads it;
+          // on any other mount the frame is consumed and changes nothing.
+          if (parsed.paige_approval_outcome) {
+            if (outcomeThisTurn) {
+              outcomeThisTurn = applyServerOutcome(outcomeThisTurn, parsed.paige_approval_outcome);
               setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
             }
-          } catch {
-            textBuffer = line + "\n" + textBuffer;
-            break;
+            continue;
           }
+          // Structured event: Paige is asking to confirm a mutating action → render an approve/deny card.
+          if (parsed.paige_confirm?.summary) {
+            confirmThisTurn.push({ tool: String(parsed.paige_confirm.tool || "action"), summary: String(parsed.paige_confirm.summary), ...(parsed.paige_confirm.fingerprint ? { fingerprint: String(parsed.paige_confirm.fingerprint) } : {}), ...(parsed.paige_confirm.command && typeof parsed.paige_confirm.command === "object" ? { command: parsed.paige_confirm.command as Record<string, unknown> } : {}), ...(parsed.paige_confirm.idempotency_key ? { idempotency_key: String(parsed.paige_confirm.idempotency_key) } : {}) });
+            setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: [...confirmThisTurn], crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
+            continue;
+          }
+          if (parsed.paige_crm_result?.action && parsed.paige_crm_result?.receipt_recorded === true) {
+            crmResultsThisTurn.push(parsed.paige_crm_result as PaigeCrmResult);
+            // R2b review P2: card survival must not depend on frame order — this rebuild
+            // carries the research cards too (researchTrace flushes after crmResultTrace
+            // today, but the invariant is the crm pattern's, not the ordering's).
+            setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: [...crmResultsThisTurn], research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
+            continue;
+          }
+          // R2b — the inline research card arrives attached to the SAME assistant turn
+          // (one Paige turn, ruling §7) and renders immediately, like the crm cards.
+          if (Array.isArray(parsed.paige_research?.findings)) {
+            researchThisTurn.push(parsed.paige_research as PaigeResearchResult);
+            setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, research: [...researchThisTurn], artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
+            continue;
+          }
+          // #29 — Paige handed the user a deliverable (document/image) → attach an inline handoff card.
+          // Arrives BEFORE the reply text, so build the assistant bubble now; the content rebuild below
+          // preserves artifactsThisTurn so the card survives the streaming text.
+          if (parsed.paige_artifact?.id && (parsed.paige_artifact.artifactType === "document" || parsed.paige_artifact.artifactType === "image")) {
+            const a = parsed.paige_artifact as PaigeArtifact;
+            // Capture the frame's tenant_id — the EXACT tenant the row was saved under — so the card's
+            // RLS-safe hydrate scopes to it, not the viewer's activeTenantId (they diverge when an
+            // operator manages another tenant → wrong-tenant query → 0 rows → "Preview unavailable").
+            artifactsThisTurn.push({ id: String(a.id), title: String(a.title ?? ""), url: a.url ?? undefined, artifactType: a.artifactType, tenantId: (parsed.paige_artifact.tenant_id as string | undefined) ?? undefined });
+            setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: [...artifactsThisTurn] }]);
+            continue;
+          }
+          // Only a string is an answer's words (the shared decoder's rule): a non-string `content`
+          // is dropped rather than coerced into the transcript.
+          const content: unknown = parsed.choices?.[0]?.delta?.content;
+          if (typeof content === "string" && content) {
+            if (!assistantMessage) setWritingPhase(true); // #11 — first token → "Writing…"
+            assistantMessage += content;
+            setMessages([...newMessages, { id: assistantId, ts: assistantTs, role: "assistant", content: assistantMessage, approvalOutcome: outcomeThisTurn, queued: queuedThisTurn.length ? queuedThisTurn : undefined, confirm: confirmThisTurn.length ? [...confirmThisTurn] : undefined, crmResults: crmResultsThisTurn.length ? [...crmResultsThisTurn] : undefined, research: researchThisTurn.length ? [...researchThisTurn] : undefined, artifacts: artifactsThisTurn.length ? [...artifactsThisTurn] : undefined, extractionProposal: proposalThisTurn ?? undefined }]);
+          }
+        } catch {
+          halted = true;
         }
       }
 

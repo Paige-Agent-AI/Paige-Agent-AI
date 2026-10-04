@@ -4,7 +4,7 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { createSseFramer, decodePaigeFrame, readPaigeStream, type PaigeFrame, type PaigeStreamOptions } from "./index";
+import { createSseFramer, decodePaigeFrame, decodePaigeFrameWithRaw, readPaigeStream, readPaigeStreamWithRaw, type PaigeFrame, type PaigeStreamOptions } from "./index";
 import { turnFrame, turnFrameLine } from "../../../supabase/functions/_shared/paige-turn/contract";
 
 const enc = new TextEncoder();
@@ -172,6 +172,21 @@ describe("readPaigeStream — the read loop", () => {
     expect(frames).toEqual([{ type: "content", text: "A" }, { type: "malformed" }]);
   });
 
+  it("malformed: \"drain\" yields the bad line, then reads the body to its end yielding nothing more", async () => {
+    let n = 0;
+    const pieces = [content("A"), "data: {not json\n\n", content("B"), line("[DONE]"), content("C")];
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        if (n < pieces.length) controller.enqueue(enc.encode(pieces[n++]));
+        else controller.close();
+      },
+    });
+    const frames = await readAll(body, { stopAtDone: true, malformed: "drain" });
+    expect(frames).toEqual([{ type: "content", text: "A" }, { type: "malformed" }]);
+    // Every piece was read — the read waited for the body to close, as the stalled loop did.
+    expect(n).toBe(pieces.length);
+  });
+
   it("a final line without its newline is still delivered when the body ends", async () => {
     const frames = await readAll(bodyOf([content("A"), 'data: {"choices":[{"delta":{"content":"B"}}]}']), SKIP_AT_DONE);
     expect(frames).toEqual([{ type: "content", text: "A" }, { type: "content", text: "B" }]);
@@ -203,5 +218,34 @@ describe("readPaigeStream — the read loop", () => {
     const whole = await readAll(bodyOf([BODY]), SKIP_AT_DONE);
     expect(whole.map((f) => f.type)).toEqual(["turn", "step", "confirm", "content", "turn", "done"]);
     expect(await readAll(bodyOf(chunked(BODY, size)), SKIP_AT_DONE)).toEqual(whole);
+  });
+});
+
+describe("the raw variants — the same frames, plus the JSON they were named from", () => {
+  it("decodePaigeFrameWithRaw names the frame exactly as decodePaigeFrame does and keeps the whole object", () => {
+    for (const payload of [
+      "[DONE]", "{not json", "null", "5",
+      JSON.stringify({ paige_step: { id: "a" }, paige_live_output: "x" }),
+      JSON.stringify({ paige_phase: "thinking", choices: [{ delta: { content: "Hi" } }] }),
+      JSON.stringify({ sync_status: { ok: true }, extraction_proposal: { id: "p" } }),
+    ]) {
+      const { frame, raw } = decodePaigeFrameWithRaw(payload);
+      expect(frame).toEqual(decodePaigeFrame(payload));
+      if (payload === "[DONE]" || payload === "{not json") expect(raw).toBeUndefined();
+      else expect(raw).toEqual(JSON.parse(payload));
+    }
+  });
+
+  it("readPaigeStreamWithRaw yields the frames readPaigeStream yields, under every option", async () => {
+    const pieces = [content("A"), line({ paige_step: { id: "s" }, paige_live_output: "x" }), "data: {not json\n\n", content("B"), "data: [DONE]\n\n", content("C")];
+    for (const opts of [SKIP_AT_DONE, SKIP_THROUGH, { stopAtDone: true, malformed: "stop" } as PaigeStreamOptions]) {
+      const plain = await readAll(bodyOf(pieces), opts);
+      const withRaw: Array<{ frame: PaigeFrame; raw: unknown }> = [];
+      for await (const item of readPaigeStreamWithRaw(bodyOf(pieces), opts)) withRaw.push(item);
+      expect(withRaw.map((item) => item.frame)).toEqual(plain);
+    }
+    const first: Array<{ frame: PaigeFrame; raw: unknown }> = [];
+    for await (const item of readPaigeStreamWithRaw(bodyOf(pieces), SKIP_AT_DONE)) first.push(item);
+    expect(first[1]).toEqual({ frame: { type: "step", step: { id: "s" } }, raw: { paige_step: { id: "s" }, paige_live_output: "x" } });
   });
 });

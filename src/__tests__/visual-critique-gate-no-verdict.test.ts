@@ -12,12 +12,12 @@ async function loop(answer: Record<string, unknown>) {
   // A computed specifier keeps the app's tsc (which has no Deno types) out of the Deno module graph;
   // vitest still loads the real file.
   const gatePath = "../../supabase/functions/_shared/visual-critique-gate.ts";
-  type Img = { url?: string };
+  type GeneratedImage = { url?: string };
   const { critiqueImageAndIterate } = (await import(/* @vite-ignore */ gatePath)) as {
     critiqueImageAndIterate: (opts: {
       client: { functions: { invoke: (name: string, args: { body: unknown }) => Promise<{ data: unknown; error: unknown }> } };
-      image: Img; brief: string; regenerate: (p: string) => Promise<Img | null>;
-    }) => Promise<{ image: Img; critique: { ok: boolean; verdict?: string } | null }>;
+      image: GeneratedImage; brief: string; regenerate: (p: string) => Promise<GeneratedImage | null>;
+    }) => Promise<{ image: GeneratedImage; critique: { ok: boolean; verdict?: string } | null }>;
   };
   const invoke = vi.fn(async () => ({ data: answer, error: null }));
   const regenerate = vi.fn(async () => ({ url: "https://img.test/regenerated.png" }));

@@ -14179,8 +14179,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         sales_reverse_manual_payment: "paige_invoices", sales_void_invoice: "paige_invoices",
         sales_create_invoice_link: "paige_invoices",
         sales_save_collection_terms: "tenant_client_agreements",
-        sales_stage_collection_import: "paige_sales_collection_import_batches",
-        sales_commit_collection_import: "paige_sales_collection_import_batches",
+        sales_stage_collection_import: "paige_sales_import_batches",
+        sales_commit_collection_import: "paige_sales_import_batches",
         business_create: "businesses", business_update: "businesses",
         business_verify: "business_verification_runs",
         // #1213 / #1214 — the two governed credit-pull capabilities. Both are classified `high`

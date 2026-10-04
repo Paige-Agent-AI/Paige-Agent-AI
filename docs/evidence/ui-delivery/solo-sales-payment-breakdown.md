@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: presentation and read projection refinement; no new cu
 FLOW_PROTOTYPE: NOT_REQUIRED: existing approved invoice/payment flow retained; itemized read-only document activity added.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Solo owners and customers understand the invoice number, recorded receipts/corrections and remaining balance.
 VISUAL_DIRECTION: PASS: existing Mineral/Obsidian operating surfaces and invoice templates; readable dated ledger with aligned monetary amounts.
-AUTOMATED_EVIDENCE: PASS: 447 tests across 36 Sales suites plus 15 document-focused tests; isolated PostgreSQL proof with 20 ledger assertions plus negative controls, replay and actual concurrent stale-page rejection.
+AUTOMATED_EVIDENCE: PASS: 448 tests across 36 Sales suites plus 15 document-focused tests; isolated PostgreSQL proof with 20 ledger assertions plus negative controls, replay and actual concurrent stale-page rejection.
 STATIC_EVIDENCE: PASS: production build, changed-file ESLint, Impeccable detector, Deno document check, explicit definer ACL baseline and migration replay.
 RENDERED_EVIDENCE: PASS: 24 actual Solo lifecycle cases and eight actual document-renderer captures; assets/solo-sales-payment-breakdown/lifecycle-geometry.json and renderer-geometry.json.
 BEHAVIORAL_EVIDENCE: PASS: real React components in fixture-backed Chromium; record payment, review, canonical prepare, cancel and dirty exit across 24 viewport/theme/dock cases.
@@ -25,8 +25,8 @@ MUST_PRESERVE: Frozen issued snapshots/digests, canonical tenant/role authorizat
 ACCEPTANCE_CRITERIA: Each current invoice displays its canonical number, issued status and exact recorded balance; downloaded/customer invoice includes dated receipt/correction activity and arithmetic; partial history is explicitly labelled; cross-tenant/token reads refuse.
 MOTION_PURPOSE: NONE: no new animation.
 PROTECTED_SEAMS: Affected: scoped invoice readers/public-token checks, canonical financial readback, privacy, document rendering, responsive geometry/accessibility. Preserved unchanged: authentication/account choice, entitlement/platform billing/provisioning, approval/autonomy/Spine mutations/Rail writers, chat transcript/Live Conversation, Secure Browser/Vault, provider sends and durable scheduling/recovery.
-INTERNAL_BUILD_IDENTITY: acf6c2efeca5c62ffc265d244cfb60a258f5cb7d; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20270555000000 deploy after merge); edge=PROOF_OWED(sales-invoice-document deployment after merge); evidence=this record.
-RELEASE_CHANNEL: development: implementation and isolated proof only.
+INTERNAL_BUILD_IDENTITY: 2ea64909353287087b96fa09be77dc70d34e16b6; deployment=dpl_7yDhbhe4nrhzmJQhRHR3Jv4Wskjb; environment=production; migrations=APPLIED(20270555000000); edge=APPLIED(sales-invoice-document@7); evidence=this record.
+RELEASE_CHANNEL: production: exact merged build, database migration and document edge verified; authenticated customer acceptance remains UNVERIFIED.
 RELEASE_CLASSIFICATION: patch: existing invoice/payment evidence presentation correction.
 CUSTOMER_RELEASE_IDENTITY: none: authenticated customer outcome not proven.
 RELEASE_NOTE_REQUIRED: no: no customer release claim.
@@ -53,4 +53,14 @@ SOLO_900X1000_PAIGE_OPEN: PASS: lifecycle-geometry.json records both themes, no 
 
 ## Independent review repair
 
-Non-writer collections_independent_review completed initial exact-head review acf6c2efeca5c62ffc265d244cfb60a258f5cb7d: P1 canonical SQL receipt vocabulary mismatched renderer payment fixture; P2 a draft lifecycle number inherited issued display. Both repaired, plus redundant legacy document title removed. The SQL proof now feeds actual database ledger JSON into the production renderer and asserts successful dated receipt/correction output and conserved balance. One exact-head combined repair recheck is required before merge.
+Non-writer collections_independent_review completed initial exact-head review acf6c2efeca5c62ffc265d244cfb60a258f5cb7d: P1 canonical SQL receipt vocabulary mismatched renderer payment fixture; P2 a draft lifecycle number inherited issued display. Both repaired, plus redundant legacy document title removed. The SQL proof now feeds actual database ledger JSON into the production renderer and asserts successful dated receipt/correction output and conserved balance. The combined repair recheck completed PASS at 3fdfe954aaab322b49e328755b29249ce614373e; independent reviewer ran 32 focused tests and real SQL-to-renderer/concurrency proof and inspected the repaired captures.
+
+## Verified production delivery
+
+PR1707 merged to main 2ea64909353287087b96fa09be77dc70d34e16b6 after all seven required workflows passed on reviewed head3fdfe954aaab322b49e328755b29249ce614373e. Non-writer review and repair recheck completed before merge.
+
+- Vercel dpl_7yDhbhe4nrhzmJQhRHR3Jv4Wskjb READY, exact2ea64909 source; aliases paigeagent.ai and app.paigeagent.ai verified. Public version.json buildId2ea64909353287087b96fa09be77dc70d34e16b6-muua0ypi; customerUpdate null.
+- deploy-migrations37232433365 SUCCESS; hosted catalog confirms20270555000000 and both scoped document-ledger RPC signatures. db-live exact2ea64909.
+- deploy-edge-functions37232433463 SUCCESS; sales-invoice-document@7 ACTIVE. edge-live exact2ea64909.
+- No external invoice email/SMS/payment was executed for this correction. Hosted signed-in owner/second-tenant and public bearer-document acceptance remain UNVERIFIED: CUA getState failed with trusted Node process unexpectedly exited/kernel reset. Local SQL and component fixtures are separate evidence classes.
+- Recovery: forward-fix document/read projection if needed; frozen invoices, payment receipts/corrections and original references were never rewritten. No legacy numbering backfill, test-record deletion or provider activation occurred.

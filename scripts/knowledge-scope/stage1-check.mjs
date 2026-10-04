@@ -35,6 +35,8 @@ const VECTOR = Array.from({ length: 1024 }, (_, i) => (i % 7) / 10);
 
 let failures = 0;
 let checks = 0;
+/** Every stream this harness drives, audited for the turn frame in the last group (paige-turn). */
+const drivenStreams = [];
 function assert(label, cond, detail) {
   checks += 1;
   if (cond) {
@@ -197,6 +199,22 @@ function anthropicStream(kind = "text") {
         { type: "message_delta", delta: { stop_reason: "tool_use" }, usage: { output_tokens: 1 } },
         { type: "message_stop" },
       ]
+    // A round the provider FINISHES cleanly (end_turn, so the translator sends finish_reason "stop")
+    // with no text and no tool call (paige-turn, 29.8): a clean stop that answered nothing.
+    : kind === "ws-text"
+    ? [
+        { type: "message_start", message: { usage: { input_tokens: 1 } } },
+        { type: "content_block_start", index: 0, content_block: { type: "text", text: "" } },
+        { type: "content_block_delta", index: 0, delta: { type: "text_delta", text: "   " } },
+        { type: "message_delta", delta: { stop_reason: "end_turn" }, usage: { output_tokens: 1 } },
+        { type: "message_stop" },
+      ]
+    : kind === "empty-end"
+    ? [
+        { type: "message_start", message: { usage: { input_tokens: 1 } } },
+        { type: "message_delta", delta: { stop_reason: "end_turn" }, usage: { output_tokens: 1 } },
+        { type: "message_stop" },
+      ]
     : kind === "two-tools"
     ? [
         { type: "message_start", message: { usage: { input_tokens: 1 } } },
@@ -223,6 +241,24 @@ function anthropicStream(kind = "text") {
     status: 200,
     headers: { "Content-Type": "text/event-stream" },
   });
+}
+/** The words a `break-mid-text` stream gets out before it breaks (paige-turn probes, group 29). */
+const BROKEN_ANSWER = "Here is the first half of the answer, and then";
+function breakingStream(kind) {
+  const events = [{ type: "message_start", message: { usage: { input_tokens: 1 } } }];
+  if (kind === "break-mid-text") {
+    events.push({ type: "content_block_start", index: 0, content_block: { type: "text", text: "" } });
+    events.push({ type: "content_block_delta", index: 0, delta: { type: "text_delta", text: BROKEN_ANSWER } });
+  }
+  const bytes = new TextEncoder().encode(events.map((event) => `data: ${JSON.stringify(event)}\n\n`).join(""));
+  let sent = false;
+  // Pull-driven, so the events are READ before the error (erroring in `start` would discard them).
+  const body = new ReadableStream({
+    pull(c) {
+      if (!sent) { sent = true; c.enqueue(bytes); } else c.error(new Error("fixture: upstream connection reset"));
+    },
+  });
+  return new Response(body, { status: 200, headers: { "Content-Type": "text/event-stream" } });
 }
 globalThis.fetch = async (url, init) => {
   const href = String(url);
@@ -253,6 +289,10 @@ globalThis.fetch = async (url, init) => {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
+    }
+    if (next === "general-extraction") {
+      const extracted = JSON.stringify({ document_type: "Formation Certificate", fields: { "foundation.legal_name": "Acme Holdings LLC" } });
+      return new Response(JSON.stringify({ content: [{ type: "text", text: extracted }], model: "test", usage: { input_tokens: 1, output_tokens: 1 } }), { status: 200, headers: { "Content-Type": "application/json" } });
     }
     if (next === "json-extraction") {
       const extracted = JSON.stringify({
@@ -300,6 +340,12 @@ globalThis.fetch = async (url, init) => {
     if (next === "fail") {
       return new Response(JSON.stringify({ error: "upstream" }), { status: 500, headers: { "Content-Type": "application/json" } });
     }
+    // A provider stream that BREAKS after answering 200 (paige-turn). It sends its first events, then
+    // the connection resets: the next read rejects. `_shared/claude.ts`'s translator catches that and
+    // still ends with a clean [DONE] — so the ONLY sign the answer was cut off is the missing
+    // finish_reason (the translator sends one only on the provider's own message_stop). `before-text`
+    // breaks after message_start; `mid-text` after part of an answer.
+    if (next === "break-before-text" || next === "break-mid-text") return breakingStream(next);
     return anthropicStream(next);
   }
   if (href.endsWith("/functions/v1/fetch-url-content")) {
@@ -333,7 +379,7 @@ const handler = capturedHandler();
  * ordered so its FIRST row is NOT the active tenant. That is the whole trap: a correct
  * handler must ignore this ordering entirely.
  */
-async function drive({ personaTenant, personaSequence = null, memberships, kbRejects = false, ragHits = false, bodyExtras = {}, noAuth = false, unauthenticated = false, chunkTitle = "PRIVATE-CHUNKTITLE-MARKER", chunkContent = "x", provider = ["text"], rpcExtras = {}, tableExtras = {}, functionExtras = {}, fundingEnabled = false, throwOnSync = false, activeTenantId = "__USE_PERSONA__", userMessage = "what does my onboarding process look like?" }) {
+async function drive({ personaTenant, personaSequence = null, memberships, kbRejects = false, ragHits = false, bodyExtras = {}, noAuth = false, unauthenticated = false, chunkTitle = "PRIVATE-CHUNKTITLE-MARKER", chunkContent = "x", provider = ["text"], rpcExtras = {}, tableExtras = {}, functionExtras = {}, fundingEnabled = false, throwOnSync = false, activeTenantId = "__USE_PERSONA__", userMessage = "what does my onboarding process look like?", insertThrows = [] }) {
   // `profiles.active_tenant_id` is an INDEPENDENT axis from the persona-resolved tenant. It
   // defaults to `personaTenant` so every existing scenario is byte-identical (persona and active
   // agree). A check overrides it to model the case current_user_tenant_id() hides: a null or
@@ -356,6 +402,7 @@ async function drive({ personaTenant, personaSequence = null, memberships, kbRej
   const personaStates = personaSequence ?? [personaTenant];
 
   const rec = fake.setScenario({
+    insertThrows,
     authUser: unauthenticated ? null : { id: USER, email: "owner@example.test" },
     rpcs: {
       check_rate_limit: { data: true, error: null },
@@ -427,6 +474,7 @@ async function drive({ personaTenant, personaSequence = null, memberships, kbRej
     );
     status = res?.status ?? null;
     if (res?.body) responseText = await res.text();
+    drivenStreams.push({ label: userMessage.slice(0, 40), status, responseText });
   } catch {
     // A downstream failure (no model key configured) is expected and irrelevant — the
     // retrieval call under test happens well before any model call.
@@ -1747,6 +1795,7 @@ group("a document turn withholds its reply at every scope boundary, including a 
 // So it is read out of this file's own source at startup. Add a fixture with a new `*-MARKER`
 // token and it is covered the moment it exists; there is nothing to remember.
 const { APPROVAL_OUTCOME_SENTENCES } = await import("../../supabase/functions/_shared/approval-outcome.ts");
+const { TURN_CONTRACT_VERSION, TURN_EVENTS, TURN_STATES, TURN_MODES } = await import("../../supabase/functions/_shared/paige-turn/contract.ts");
 const HARNESS_SOURCE = (await import("node:fs")).readFileSync(new URL(import.meta.url), "utf8");
 const DISCOVERED_MARKERS = [...new Set(HARNESS_SOURCE.match(/\b[A-Z][A-Z0-9-]*MARKER[A-Z0-9-]*\b/g) ?? [])]
   .filter((m) => !/^(PROTECTED_MARKERS|DISCOVERED_MARKERS)$/.test(m));
@@ -1797,6 +1846,18 @@ const nonNeutralFrames = (text) => text.split("\n").filter((l) => {
       || Object.keys(a).some((x) => x !== "fingerprint" && x !== "outcome" && x !== "note")
       || typeof a.fingerprint !== "string" || !/^[0-9a-f]{16}(?::[0-9a-f-]{36})?$/.test(a.fingerprint)
       || !["ran", "not_run", "unconfirmed"].includes(a.outcome) || !closed(a.note));
+  }
+  // The turn frame: neutral ONLY in its closed shape — exactly v/event/state/mode, each from the
+  // contract's own enums. It is sent direct and the client-seat reader does not scan it, so a field
+  // or a value outside that shape is the one way prose could ride along on it. Written out here
+  // rather than calling the contract's `isTurnFrame`, so loosening the contract cannot loosen this.
+  // Four keys, and each of the four named values checked: a fifth key fails the count, and a renamed
+  // one leaves its named value undefined, which no enum admits (so no separate name check is needed).
+  if (k === "paige_turn") {
+    if (!v || typeof v !== "object" || Array.isArray(v)) return true;
+    if (Object.keys(v).length !== 4) return true;
+    return v.v !== TURN_CONTRACT_VERSION || !TURN_EVENTS.includes(v.event) || !TURN_STATES.includes(v.state)
+      || !TURN_MODES.includes(v.mode);
   }
   // The refusal sentence itself, and nothing else wearing `choices`.
   if (k === "choices") return !/workspace changed/.test(raw);
@@ -3654,6 +3715,29 @@ group("the neutral-frame classifier itself");
       && !isNeutral(outcome({ actions: [], title: "x" }))
       && !isNeutral(outcome({ actions: [{ fingerprint: "Add Maya Ortiz", outcome: "ran" }] }))
       && !isNeutral(outcome({ actions: [{ fingerprint: "a".repeat(16), outcome: "maybe" }] })), "");
+
+  // The turn frame (docs/delivery/paige-conversational-loop-c1.md): sent DIRECT on every turn, so a
+  // protected turn can say it started and how it ended. Neutral ONLY in its exact closed shape —
+  // four keys, every value from the contract's enums — because the client-seat reader does not scan
+  // it, so anything else riding on it would reach the wire unread.
+  const turn = (o) => f({ paige_turn: o });
+  assert("22.25 a turn frame in its closed shape is neutral (started, waiting, completed)",
+    isNeutral(turn({ v: 1, event: "started", state: "WORKING", mode: "pending" }))
+      && isNeutral(turn({ v: 1, event: "waiting", state: "WAIT_APPROVAL", mode: "action" }))
+      && isNeutral(turn({ v: 1, event: "completed", state: "WITHHELD", mode: "fast_answer" })), "");
+  assert("22.26 a turn frame growing a field is protected even with no marker",
+    !isNeutral(turn({ v: 1, event: "completed", state: "FINAL", mode: "answer", summary: "Here is what I found." })), "");
+  assert("22.27 a turn frame carrying a value outside the contract's enums is protected",
+    !isNeutral(turn({ v: 1, event: "completed", state: "Here is what I found.", mode: "answer" }))
+      && !isNeutral(turn({ v: 1, event: "finished", state: "FINAL", mode: "answer" }))
+      && !isNeutral(turn({ v: 1, event: "completed", state: "FINAL", mode: "a free-text mode" })), "");
+  assert("22.28 a turn frame of an unknown version, or missing a field, is protected",
+    !isNeutral(turn({ v: 2, event: "completed", state: "FINAL", mode: "answer" }))
+      && !isNeutral(turn({ v: 1, event: "completed", state: "FINAL" })), "");
+  assert("22.28b a turn frame with a key renamed (still four keys) is protected",
+    !isNeutral(turn({ v: 1, event: "completed", state: "FINAL", summary: "answer" })), "");
+  assert("22.29 a turn frame that is not an object is protected",
+    !isNeutral(turn("completed")) && !isNeutral(turn(["started"])) && !isNeutral(turn(null)), "");
 }
 
 group("a turn that stops on a changed workspace still says what became of each approval");
@@ -3679,6 +3763,17 @@ group("a turn that stops on a changed workspace still says what became of each a
   assert("27.3 …as a frame that carries no evidence",
     outcomes.length === 1 && nonNeutralFrames(`data: ${JSON.stringify({ paige_approval_outcome: outcomes[0] })}\n\n`).length === 0,
     JSON.stringify(outcomes));
+  // The turn frame on the same protected turn: it says it started, and its one terminal frame says
+  // INTERRUPTED — never FINAL — and comes before the sentence. Without this the classifier cases in
+  // group 22 would hold for a frame the server never sends.
+  const turns = r.responseText.split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
+    .map((l) => { try { return JSON.parse(l.slice(6)); } catch { return null; } })
+    .filter((frame) => frame?.paige_turn).map((frame) => frame.paige_turn);
+  const terminals = turns.filter((t) => t.event === "completed" || t.event === "waiting");
+  assert("27.4 …and the turn frame says it started, then INTERRUPTED once, before the sentence",
+    turns[0]?.event === "started" && terminals.length === 1 && terminals[0].state === "INTERRUPTED"
+      && r.responseText.indexOf('"INTERRUPTED"') < r.responseText.indexOf("active workspace changed"),
+    JSON.stringify(turns));
 }
 
 // Fresh-main #591 gap: the resolver may keep its oldest-membership fallback
@@ -3713,6 +3808,204 @@ for (const [label, next] of [
   assert("28 late clear: one authorized initial provider call", r.providerCalls.length === 1);
   assert("28 late clear: buffered answer refused", r.responseText.includes("active workspace changed"));
   assert("28 late clear: no telemetry", !r.telemetry);
+}
+
+group("the turn frame on every stream this harness drove (paige-turn)");
+{
+  // An ORDINARY Studio question (no Knowledge hit, so nothing is held): the chips stream live, so the
+  // terminal — ASK_USER, waiting on the person — has to precede them rather than wait for release.
+  const plainChoice = await drive({
+    personaTenant: CHILD, personaSequence: [CHILD], memberships: [CHILD], provider: ["ask-choices"],
+    rpcExtras: { match_tenant_knowledge: { data: [], error: null } },
+    bodyExtras: { threadId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd", requestIntentId: "77777777-7777-4777-8777-777777777777" },
+    tableExtras: { paige_chat_threads: () => [{ summary: null, studio_session_id: "studio-sess-1" }] },
+  });
+  const plainTurns = plainChoice.responseText.split("\n").filter((l) => l.startsWith("data: ") && l.includes("paige_turn"));
+  assert("29.0 an ordinary Studio question ends waiting ASK_USER, ahead of its chips",
+    plainTurns.length === 2 && plainTurns[1].includes('"waiting"') && plainTurns[1].includes('"ASK_USER"')
+      && plainChoice.responseText.indexOf('"ASK_USER"') < plainChoice.responseText.indexOf("paige_choices"),
+    plainChoice.responseText.slice(0, 400));
+  // A DOCUMENT STREAM THAT THROWS still closes. The Knowledge-telemetry write at the very end of the
+  // document close-out is made to throw (not resolve an error), after the reply was released: the
+  // stream must still end with its one terminal and a [DONE], and say why in the log — not error out
+  // and leave the client with no [DONE] at all.
+  const throwingDoc = await drive({
+    personaTenant: CHILD, personaSequence: [CHILD], memberships: [CHILD], chunkContent: "PRIVATE-KB-SOURCE-MARKER",
+    bodyExtras: { document: { fileName: "operating-notes.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", kind: "docx", textContent: "internal operating notes" } },
+    provider: ["private-text", "private-text"], insertThrows: ["kb_query_telemetry"],
+  });
+  const throwingTurns = throwingDoc.responseText.split("\n").filter((l) => l.startsWith("data: ") && l.includes('"paige_turn"'));
+  assert("29.1 a document stream that throws in its close-out still ends with its one terminal and a [DONE]",
+    !!throwingDoc.telemetry && throwingDoc.responseText.includes("CHILD-PRIVATE-MARKER")
+      && throwingTurns.length === 2 && throwingDoc.responseText.trimEnd().endsWith("data: [DONE]")
+      && throwingDoc.logged.some((l) => l.msg.includes("[paige] document stream failed")),
+    JSON.stringify({ telemetryAttempted: !!throwingDoc.telemetry, turns: throwingTurns, tail: throwingDoc.responseText.slice(-200) }));
+
+  // A PROVIDER STREAM THAT BREAKS. `_shared/claude.ts`'s translator ends a broken stream with the same
+  // clean [DONE] as a finished one; the only difference is the finish_reason it never sent. Each turn
+  // below would read FINAL without that check — on the wire, and (where there is text) in the record.
+  const BREAK_THREAD = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+  const turnsIn = (text) => text.split("\n").filter((l) => l.startsWith("data: ") && l.includes('"paige_turn"'))
+    .map((l) => JSON.parse(l.slice(6)).paige_turn);
+  const terminalIn = (text) => turnsIn(text).filter((t) => t.event !== "started");
+  const assistantRecords = (r) => r.rec.rpc.filter((c) => c.name === "paige_chat_turn_append" && c.args?.p_role === "assistant")
+    .map((c) => ({ content: c.args.p_content, state: c.args.p_bundle_ref?.turn_state ?? null }));
+  const ordinaryBreak = (provider) => drive({
+    personaTenant: CHILD, personaSequence: [CHILD], memberships: [CHILD], provider,
+    rpcExtras: { match_tenant_knowledge: { data: [], error: null } },
+    bodyExtras: { threadId: BREAK_THREAD },
+    tableExtras: { paige_chat_threads: () => [{ summary: null, studio_session_id: null }] },
+  });
+  // Before any text: the only round answered with nothing and no finish_reason. Nothing to persist
+  // (the persist gate), so the wire is the whole record — and it must not say FINAL.
+  const brokeEarly = await ordinaryBreak(["break-before-text"]);
+  assert("29.2 an answer whose stream broke before any text ends INTERRUPTED on the wire, never FINAL, and persists nothing",
+    brokeEarly.status === 200 && brokeEarly.providerCalls.length === 1
+      && terminalIn(brokeEarly.responseText).length === 1 && terminalIn(brokeEarly.responseText)[0].state === "INTERRUPTED"
+      && !brokeEarly.responseText.includes('"FINAL"') && assistantRecords(brokeEarly).length === 0,
+    JSON.stringify({ status: brokeEarly.status, calls: brokeEarly.providerCalls.length, turns: turnsIn(brokeEarly.responseText), records: assistantRecords(brokeEarly) }));
+  // Mid-answer (non-Live): the half-answer is replayed and saved as before — but both the wire terminal
+  // and the record say INTERRUPTED, because the round is replayed whole after the terminal is decided.
+  const brokeMid = await ordinaryBreak(["break-mid-text"]);
+  const midRecords = assistantRecords(brokeMid);
+  assert("29.3 an answer whose stream broke mid-answer ends INTERRUPTED on the wire and in the record, with the half-answer it got",
+    brokeMid.responseText.includes(BROKEN_ANSWER) && terminalIn(brokeMid.responseText).length === 1
+      && terminalIn(brokeMid.responseText)[0].state === "INTERRUPTED" && !brokeMid.responseText.includes('"FINAL"')
+      && brokeMid.responseText.indexOf('"INTERRUPTED"') < brokeMid.responseText.indexOf(BROKEN_ANSWER)
+      && midRecords.length === 1 && midRecords[0].content === BROKEN_ANSWER && midRecords[0].state?.state === "INTERRUPTED",
+    JSON.stringify({ turns: turnsIn(brokeMid.responseText), records: midRecords }));
+  // The DOCUMENT path reads its own stream. A DOCX turn makes two provider calls: the deferred
+  // extraction first (not streamed), then the streamed reply — the one that breaks here. Every document turn is held, so its terminal goes out at release — after
+  // the stream ended — and can say INTERRUPTED on the wire as well as in the record.
+  const docBreak = await drive({
+    personaTenant: CHILD, personaSequence: [CHILD], memberships: [CHILD],
+    bodyExtras: { threadId: BREAK_THREAD, document: { fileName: "operating-notes.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", kind: "docx", textContent: "internal operating notes" } },
+    tableExtras: { paige_chat_threads: () => [{ summary: null, studio_session_id: null }] },
+    provider: ["private-text", "break-mid-text"],
+  });
+  const docRecords = assistantRecords(docBreak);
+  assert("29.4 a document answer whose stream broke mid-answer ends INTERRUPTED on the wire and in the record, never FINAL",
+    docBreak.responseText.includes(BROKEN_ANSWER) && terminalIn(docBreak.responseText).length === 1
+      && terminalIn(docBreak.responseText)[0].state === "INTERRUPTED" && !docBreak.responseText.includes('"FINAL"')
+      && docRecords.length === 1 && docRecords[0].state?.state === "INTERRUPTED"
+      && JSON.stringify(docBreak.providerCalls.map((c) => c.stream === true)) === "[false,true]",
+    JSON.stringify({ calls: docBreak.providerCalls.map((c) => c.stream === true), turns: turnsIn(docBreak.responseText), records: docRecords }));
+
+  // AN EMPTY ANSWER IS NOT A FINAL ONE. The provider FINISHED each reply below, so the finish_reason
+  // check passes; what is missing is the answer. FINAL over an empty bubble tells the client the turn
+  // answered when it said nothing, and with no text the persist gate writes no row, so the wire is
+  // the only record there is.
+  const endsOnDone = (text) => text.trimEnd().endsWith("data: [DONE]");
+  const terminalBeforeDone = (text) => {
+    const t = text.split("\n").findIndex((l) => l.includes('"paige_turn"') && !l.includes('"started"'));
+    return t !== -1 && t < text.split("\n").lastIndexOf("data: [DONE]");
+  };
+  // The document path executes no tool, so a reply that is ONLY a tool call finishes (`tool_calls`)
+  // with no text at all.
+  const docToolOnly = await drive({
+    personaTenant: CHILD, personaSequence: [CHILD], memberships: [CHILD],
+    bodyExtras: { threadId: BREAK_THREAD, document: { fileName: "operating-notes.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", kind: "docx", textContent: "internal operating notes" } },
+    tableExtras: { paige_chat_threads: () => [{ summary: null, studio_session_id: null }] },
+    provider: ["private-text", "action-file"],
+  });
+  assert("29.7 a document reply that is only a tool call (finished, no text) ends INTERRUPTED, never FINAL, with [DONE] last",
+    docToolOnly.status === 200 && JSON.stringify(docToolOnly.providerCalls.map((c) => c.stream === true)) === "[false,true]"
+      && terminalIn(docToolOnly.responseText).length === 1 && terminalIn(docToolOnly.responseText)[0].state === "INTERRUPTED"
+      && !docToolOnly.responseText.includes('"FINAL"') && endsOnDone(docToolOnly.responseText)
+      && terminalBeforeDone(docToolOnly.responseText) && assistantRecords(docToolOnly).length === 0,
+    JSON.stringify({ calls: docToolOnly.providerCalls.map((c) => c.stream === true), turns: turnsIn(docToolOnly.responseText), records: assistantRecords(docToolOnly), tail: docToolOnly.responseText.slice(-200) }));
+  // The agentic path: one round, finished cleanly, no text, no tool — the turn did nothing.
+  const emptyClean = await ordinaryBreak(["empty-end"]);
+  assert("29.8 an answer the provider finished cleanly with no text, after a turn that did no work, ends INTERRUPTED, never FINAL",
+    emptyClean.status === 200 && emptyClean.providerCalls.length === 1
+      && terminalIn(emptyClean.responseText).length === 1 && terminalIn(emptyClean.responseText)[0].state === "INTERRUPTED"
+      && !emptyClean.responseText.includes('"FINAL"') && endsOnDone(emptyClean.responseText)
+      && terminalBeforeDone(emptyClean.responseText) && assistantRecords(emptyClean).length === 0,
+    JSON.stringify({ calls: emptyClean.providerCalls.length, turns: turnsIn(emptyClean.responseText), records: assistantRecords(emptyClean) }));
+  // CONTROLS — the rule changes only an EMPTY FINAL with no work. The same turn answering text stays
+  // FINAL; a turn whose tools RAN and then closed on an empty round keeps FINAL (the work is the answer).
+  const textClean = await ordinaryBreak(["text"]);
+  const workedEmpty = await ordinaryBreak(["two-tools", "empty-end"]);
+  assert("29.9 CONTROL — a clean text answer stays FINAL, and a turn whose tools ran keeps FINAL over an empty closing round",
+    terminalIn(textClean.responseText).length === 1 && terminalIn(textClean.responseText)[0].state === "FINAL"
+      && endsOnDone(textClean.responseText)
+      && workedEmpty.providerCalls.length === 2 && terminalIn(workedEmpty.responseText).length === 1
+      && terminalIn(workedEmpty.responseText)[0].state === "FINAL" && endsOnDone(workedEmpty.responseText),
+    JSON.stringify({ text: turnsIn(textClean.responseText), worked: turnsIn(workedEmpty.responseText), calls: workedEmpty.providerCalls.length }));
+
+  // A WHITESPACE-ONLY answer is an empty one, on both paths: the rule reads the trimmed text.
+  const wsAgentic = await ordinaryBreak(["ws-text"]);
+  const genDoc = { fileName: "formation.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", kind: "docx", textContent: "Certificate of Formation. Legal name: Acme Holdings LLC." };
+  const wsDoc = await drive({
+    personaTenant: CHILD, personaSequence: [CHILD], memberships: [CHILD],
+    bodyExtras: { threadId: BREAK_THREAD, document: genDoc },
+    tableExtras: { paige_chat_threads: () => [{ summary: null, studio_session_id: null }] },
+    provider: ["private-text", "ws-text"],
+  });
+  assert("29.10 a whitespace-only answer is empty — INTERRUPTED, never FINAL — on the agentic and the document path",
+    [wsAgentic, wsDoc].every((r) => r.status === 200 && terminalIn(r.responseText).length === 1
+      && terminalIn(r.responseText)[0].state === "INTERRUPTED" && !r.responseText.includes('"FINAL"')
+      && endsOnDone(r.responseText) && assistantRecords(r).length === 0),
+    JSON.stringify({ agentic: turnsIn(wsAgentic.responseText), doc: turnsIn(wsDoc.responseText) }));
+  // CONTROL — a document turn whose close-out handed the person a proposal card ANSWERED, through the
+  // card, even when its reply text is empty: FINAL, the card on the wire, never INTERRUPTED beside it.
+  const cardOnly = await drive({
+    personaTenant: CHILD, personaSequence: [CHILD], memberships: [CHILD],
+    bodyExtras: { threadId: BREAK_THREAD, document: genDoc },
+    tableExtras: { paige_chat_threads: () => [{ summary: null, studio_session_id: null }] },
+    provider: ["general-extraction", "action-file"],
+  });
+  const cardText = await drive({
+    personaTenant: CHILD, personaSequence: [CHILD], memberships: [CHILD],
+    bodyExtras: { threadId: BREAK_THREAD, document: genDoc },
+    tableExtras: { paige_chat_threads: () => [{ summary: null, studio_session_id: null }] },
+    provider: ["general-extraction", "private-text"],
+  });
+  assert("29.11 CONTROL — a document turn that delivered a proposal card stays FINAL with or without reply text",
+    [cardOnly, cardText].every((r) => r.status === 200 && r.responseText.includes('"extraction_proposal"')
+      && terminalIn(r.responseText).length === 1 && terminalIn(r.responseText)[0].state === "FINAL"
+      && endsOnDone(r.responseText) && terminalBeforeDone(r.responseText)),
+    JSON.stringify({ cardOnly: turnsIn(cardOnly.responseText), cardText: turnsIn(cardText.responseText), tail: cardOnly.responseText.slice(-200) }));
+  // A LIMIT keeps its state over an empty closing round: a Studio turn that repeats a refused call is
+  // stopped by the no-progress rule (LIMIT_REACHED), and the empty-answer rule reads only FINAL.
+  const studioRepeat = await drive({
+    personaTenant: CHILD, personaSequence: [CHILD], memberships: [CHILD],
+    provider: ["action-file", "action-file", "empty-end"],
+    rpcExtras: { match_tenant_knowledge: { data: [], error: null } },
+    bodyExtras: { threadId: BREAK_THREAD },
+    tableExtras: { paige_chat_threads: () => [{ summary: null, studio_session_id: "studio-sess-1" }] },
+  });
+  assert("29.12 a turn stopped at a limit keeps LIMIT_REACHED over an empty closing round, never INTERRUPTED",
+    studioRepeat.status === 200 && terminalIn(studioRepeat.responseText).length === 1
+      && terminalIn(studioRepeat.responseText)[0].state === "LIMIT_REACHED" && endsOnDone(studioRepeat.responseText),
+    JSON.stringify({ calls: studioRepeat.providerCalls.length, turns: turnsIn(studioRepeat.responseText) }));
+
+  // Every protected turn above — the final-gate refusals, the withheld turns, the Studio chips — is a
+  // stream whose turn frame has to tell the truth about how it ended. Audited here, over all of them,
+  // so the rule is held on the turns that exercise the gates rather than on a few written for it.
+  // The structural rules come from the one shared auditor (scripts/lib/audit-turn-frames.mjs); this
+  // harness adds its own: a turn stopped on a changed workspace ends INTERRUPTED.
+  const { auditTurnStream } = await import("../lib/audit-turn-frames.mjs");
+  const { isTurnFrame } = await import("../../supabase/functions/_shared/paige-turn/contract.ts");
+  const violations = [];
+  let audited = 0, interrupted = 0, withheld = 0;
+  for (const { label, status, responseText } of drivenStreams) {
+    if (status !== 200) continue;
+    const audit = auditTurnStream(responseText, { isTurnFrame });
+    if (!audit) continue;
+    audited += 1;
+    for (const why of audit.violations) violations.push(`${label}: ${why}`);
+    if (!audit.terminal) continue;
+    if (responseText.includes("active workspace changed")) {
+      interrupted += 1;
+      if (audit.terminal.t.state !== "INTERRUPTED") violations.push(`${label}: a turn stopped on a changed workspace ended ${audit.terminal.t.state}`);
+    }
+    if (audit.has("paige_withheld")) withheld += 1;
+  }
+  assert("29.5 every stream starts with `started` and has one terminal frame, ahead of its answer and [DONE]",
+    audited >= 50 && violations.length === 0, JSON.stringify({ audited, violations: violations.slice(0, 6) }));
+  assert("29.6 every turn stopped on a changed workspace — at the tool boundary or the final gate — ends INTERRUPTED, never FINAL",
+    interrupted >= 10 && violations.length === 0, JSON.stringify({ interrupted, withheld }));
 }
 
 console.log(`\n${checks - failures} passed, ${failures} failed`);

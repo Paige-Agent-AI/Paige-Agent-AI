@@ -58,6 +58,62 @@ let embedCount = 0;
 let modelStub = false;
 /** What `runDocumentReadCheck` should answer. Set per scenario to reach the credit-report branch. */
 let readCheckReply = { can_read_document: false, document_kind: "other", first_five_account_names: [] };
+
+/**
+ * THE TURN FRAME, AUDITED ON EVERY STREAM THIS HARNESS DRIVES (docs/delivery/paige-conversational-loop-c1.md).
+ * Every drive below that reaches a stream is checked here, so the frame's rules are held across the
+ * whole suite — refusals, documents, confirm cards, client seats, Live — not only on the few scenarios
+ * written for it. Findings are collected and asserted once, in the paige_turn group at the end.
+ */
+const { isTurnFrame, readTurnRecord } = await import("../../supabase/functions/_shared/paige-turn/contract.ts");
+const { auditTurnStream } = await import("../lib/audit-turn-frames.mjs");
+const turnAudit = { streams: 0, violations: [], withheld: 0, confirms: 0, refused: 0, persisted: 0, traced: 0, thoughtsBesideTrace: 0 };
+function auditTurnFrames(label, responses, rec, narration) {
+  const wireThoughts = new Set();
+  for (const response of responses) {
+    if (response.status !== 200) continue;
+    // The structural rules (started first and once, one terminal ahead of the answer and [DONE],
+    // withheld ends WITHHELD) are the shared auditor's; this harness adds refusals and confirm cards.
+    // A stream that errored part-way (a Live turn ending without its signed `done`) is audited on what
+    // reached the wire before the error.
+    const audit = auditTurnStream(response.bodyText || response.partialText, { isTurnFrame });
+    if (!audit) continue;
+    turnAudit.streams += 1;
+    for (const why of audit.violations) turnAudit.violations.push(`${label}: ${why}`);
+    for (const it of audit.items) if (it.f?.paige_step?.kind === "thought") wireThoughts.add(it.f.paige_step.label);
+    if (!audit.terminal) continue;
+    const bad = (why) => turnAudit.violations.push(`${label}: ${why}`);
+    const { t } = audit.terminal;
+    if (audit.has("paige_withheld")) turnAudit.withheld += 1;
+    if (audit.has("client_scope")) {
+      turnAudit.refused += 1;
+      if (t.state !== "REFUSED") bad(`a client-scope refusal's terminal is ${t.state}`);
+    }
+    if (audit.has("paige_confirm") && !audit.has("paige_withheld") && t.state !== "INTERRUPTED") {
+      turnAudit.confirms += 1;
+      if (t.state !== "WAIT_APPROVAL" || t.event !== "waiting") bad(`a turn that issued a confirm card ended ${t.event}/${t.state}`);
+    }
+  }
+  for (const call of rec.rpc.filter((c) => c.name === "paige_chat_turn_append" && c.args?.p_role === "assistant")) {
+    const b = call.args.p_bundle_ref;
+    const bad = (why) => turnAudit.violations.push(`${label} (persisted): ${why}`);
+    if (!String(call.args.p_content ?? "").trim() && !b) continue; // the persist gate: nothing to record
+    const state = b?.turn_state;
+    if (!state) { bad(`an assistant turn persisted with no turn_state: ${JSON.stringify(b)?.slice(0, 120)}`); continue; }
+    turnAudit.persisted += 1;
+    const extra = Object.keys(state).filter((k) => !["v", "state", "mode", "rounds", "tools", "waiting_on"].includes(k));
+    if (extra.length || JSON.stringify(readTurnRecord(state)) !== JSON.stringify(state)) bad(`turn_state outside the contract: ${JSON.stringify(state)}`);
+    if (b.turn_trace !== undefined) {
+      turnAudit.traced += 1;
+      const trace = b.turn_trace;
+      if (!Array.isArray(trace) || trace.some((e) => !e || Object.keys(e).sort().join() !== "group,label,status")) bad(`turn_trace outside the contract: ${JSON.stringify(trace)}`);
+      const text = JSON.stringify(trace);
+      if (narration && text.includes(narration)) bad("turn_trace carries the model's narration");
+      for (const thought of wireThoughts) if (text.includes(thought)) bad(`turn_trace carries a thought: ${thought}`);
+      if (wireThoughts.size) turnAudit.thoughtsBesideTrace += 1;
+    }
+  }
+}
 /** When set, the FIRST streamed round emits a tool call instead of an answer. */
 let toolCallOnce = false;
 /** The text PAIGE's streamed answer carries. "ok" unless a scenario scripts what she says — which is
@@ -114,6 +170,18 @@ const sseModelReply = (text) =>
     { status: 200, headers: { "Content-Type": "text/event-stream" } },
   );
 
+/** A streamed answer that gets `text` out (none when empty) and then the connection resets. Pull-
+ *  driven, so its events are read before the error (an error raised in `start` discards them). */
+const sseBreakingReply = (text) => {
+  const events = [`data: ${JSON.stringify({ type: "message_start", message: { usage: { input_tokens: 1, output_tokens: 1 } } })}\n\n`];
+  if (text) events.push(`data: ${JSON.stringify({ type: "content_block_delta", delta: { type: "text_delta", text } })}\n\n`);
+  const bytes = new TextEncoder().encode(events.join(""));
+  let sent = false;
+  return new Response(new ReadableStream({
+    pull(c) { if (!sent) { sent = true; c.enqueue(bytes); } else c.error(new Error("fixture: upstream connection reset")); },
+  }), { status: 200, headers: { "Content-Type": "text/event-stream" } });
+};
+
 globalThis.fetch = async (url, init) => {
   const href = String(url);
   if (href.includes("voyageai.com")) {
@@ -135,6 +203,23 @@ globalThis.fetch = async (url, init) => {
       try { return JSON.parse(String(init?.body ?? "{}")).stream === true; } catch { return false; }
     })();
     if (wantsStream) {
+      // A PROVIDER CALL THAT FAILS. `failStreamCalls` names which of this turn's streamed model calls
+      // (1-based, in order) answer 529 instead — a mid-loop round, or the closing call that would
+      // carry the answer. How a scenario reaches the turn's failure endings at all.
+      const failing = modelTurnState.getStore();
+      if (failing) {
+        failing.streamCalls = (failing.streamCalls ?? 0) + 1;
+        if (failing.failStreamCalls?.includes(failing.streamCalls)) {
+          return new Response(JSON.stringify({ type: "error", error: { type: "overloaded_error", message: "fixture overloaded" } }),
+            { status: 529, headers: { "Content-Type": "application/json" } });
+        }
+        // A provider call that answers 200 and then BREAKS (paige-turn). `breakStreamCalls` maps a call
+        // number to the text it gets out first ("" = before any text). The translator catches the
+        // reset and still ends the stream with a clean [DONE]; only the finish_reason is missing.
+        if (failing.breakStreamCalls && Object.hasOwn(failing.breakStreamCalls, failing.streamCalls)) {
+          return sseBreakingReply(failing.breakStreamCalls[failing.streamCalls]);
+        }
+      }
       // A MODEL THAT TRIES TO APPROVE ITSELF. It sees `needs_confirm` in the tool result it was
       // just handed — which is exactly what an LLM has in its own context — and re-emits the same
       // call with `confirm: true`, as though the operator had answered. No human, no request-body
@@ -245,6 +330,10 @@ async function drive({
   /** What the credit report's structured extraction returns, so the pipeline can get past its
    *  parse and validation to the writes after them. Default null: "ok", which fails the parse. */
   extractionReply = null,
+  /** Which of this turn's streamed model calls fail with a 529 (1-based, in call order). Default none. */
+  failStreamCalls = [],
+  /** Which streamed model calls answer 200 and then break, as { callNumber: textBeforeTheBreak }. */
+  breakStreamCalls = {},
 }) {
   // C0a — a scenario that seats the caller as an ADMIN acts inside a workspace. Production cannot have
   // an admin seat with no resolved workspace (get_paige_persona_context falls back to
@@ -336,8 +425,8 @@ async function drive({
     },
   });
 
-  const responses = await Promise.all(Array.from({ length: concurrentRequests }, () => modelTurnState.run({ toolCallOnce: toolCalls.length > 0, queue: toolCalls.slice(1), round: 0 }, async () => {
-    let status = null, bodyText = "";
+  const responses = await Promise.all(Array.from({ length: concurrentRequests }, () => modelTurnState.run({ toolCallOnce: toolCalls.length > 0, queue: toolCalls.slice(1), round: 0, streamCalls: 0, failStreamCalls, breakStreamCalls }, async () => {
+    let status = null, bodyText = "", partialText = "";
     try {
       const res = await handler(new Request("http://local/paige-ai-chat", {
       method: "POST",
@@ -351,9 +440,20 @@ async function drive({
       }),
     }));
       status = res.status;
-      try { bodyText = await res.text(); } catch { /* streamed */ }
+      // Read as the client does, chunk by chunk, so a stream that errors part-way (a Live turn that
+      // ended without its signed `done` errors by design) still shows what reached the wire before
+      // the error, in `partialText`. `bodyText` keeps its meaning: the whole body, or "" if it errored.
+      try {
+        const reader = res.body?.getReader();
+        if (reader) {
+          const dec = new TextDecoder();
+          for (;;) { const { done, value } = await reader.read(); if (done) break; partialText += dec.decode(value, { stream: true }); }
+          partialText += dec.decode();
+          bodyText = partialText;
+        } else bodyText = await res.text();
+      } catch { /* streamed */ }
     } catch (e) { status = "throw:" + (e?.message ?? e); }
-    return { status, bodyText };
+    return { status, bodyText, partialText };
   })));
   const status = responses[0]?.status ?? null;
   const bodyText = responses.map((response) => response.bodyText).join("\n");
@@ -365,9 +465,11 @@ async function drive({
   extractionReplyText = null;
 
   console.error = origError; console.warn = origWarn;
+  auditTurnFrames(text.slice(0, 40), responses, rec, toolRoundNarration);
   const memoryReads = rec.from.filter((f) => f.table === "client_memory" && f.op === "select");
   const memoryRpc = rec.rpc.filter((r) => r.name === "match_paige_memory");
-  return { rec, status, bodyText, responses, logged, embeds: embedCount, memoryReads, memoryRpc, modelEgress: [...modelEgress], outboundCalls: [...outboundCalls], selfApproveReplays };
+  const partialText = responses.map((response) => response.partialText).join("\n");
+  return { rec, status, bodyText, partialText, responses, logged, embeds: embedCount, memoryReads, memoryRpc, modelEgress: [...modelEgress], outboundCalls: [...outboundCalls], selfApproveReplays };
 }
 
 console.log("\nauthorized paths still work (no regression)");
@@ -3255,7 +3357,9 @@ console.log("\nsigned Live runtime admission (real handler and real signed chall
   const transcript = "Check my communication connection status.";
   const scope = { sessionId, tenantId: CALLER_TENANT, actorId: USER, threadId, epoch: "test-epoch", turnId: "test-turn" };
   const historyMarker = "Earlier authenticated conversation about this workspace.";
-  const liveDrive = async ({ authority = { data: true, error: null }, scopeOverride = {}, bodyOverride = {} } = {}) => {
+  // `ordinary` drives a Live turn that carries no protected evidence — no tool call, no memory — so its
+  // answer streams live rather than being held for the final check (paige-turn, 26.5–26.6).
+  const liveDrive = async ({ authority = { data: true, error: null }, scopeOverride = {}, bodyOverride = {}, failStreamCalls = [], breakStreamCalls = {}, ordinary = false } = {}) => {
     const issued = await proof.issue({ ...scope, ...scopeOverride }, transcript);
     const session = { id: sessionId, tenant_id: issued.scope.tenantId, actor_user_id: issued.scope.actorId,
       thread_id: threadId, context_epoch: issued.scope.epoch, availability: "LIVE", state: "thinking",
@@ -3265,10 +3369,12 @@ console.log("\nsigned Live runtime admission (real handler and real signed chall
     const matches = (row, filters) => filters.every(([op, key, value]) =>
       op === "eq" ? row[key] === value : op === "in" ? value.includes(row[key]) : true);
     const result = await drive({
-      text: transcript, stream: true,
+      text: transcript, stream: true, failStreamCalls, breakStreamCalls,
       extraBody: { threadId, liveRuntimeChallenge: issued.token, ...bodyOverride },
-      toolCall: { name: "comms_connection_summary", args: {} },
+      toolCall: ordinary ? undefined : { name: "comms_connection_summary", args: {} },
+      replyText: ordinary ? "Your connection is set up." : undefined,
       rpcOverrides: {
+        ...(ordinary ? { match_paige_memory: { data: [], error: null } } : {}),
         paige_live_pilot_authorized_internal: authority,
         get_actor_access: { data: { tier: "tenant" }, error: null },
         get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: "T", playbook_config: null,
@@ -3277,6 +3383,7 @@ console.log("\nsigned Live runtime admission (real handler and real signed chall
         list_tool_autonomy: { data: [], error: null },
       },
       tablesExtra: {
+        ...(ordinary ? { client_memory: () => [] } : {}),
         user_roles: () => [{ role: "admin" }],
         paige_chat_threads: (filters) => {
           const row = { id: threadId, tenant_id: CALLER_TENANT, caller_user_id: USER, contact_id: null };
@@ -3285,6 +3392,7 @@ console.log("\nsigned Live runtime admission (real handler and real signed chall
         paige_chat_turns: () => [{ role: "user", content: historyMarker, seq: 1 }],
       },
       serviceTablesExtra: {
+        ...(ordinary ? { client_memory: () => [] } : {}),
         paige_live_tenant_availability: (filters) => {
           const row = { tenant_id: CALLER_TENANT, enabled: true };
           return matches(row, filters) ? [row] : [];
@@ -3319,6 +3427,50 @@ console.log("\nsigned Live runtime admission (real handler and real signed chall
   assert("26.4 admitted response carries valid signed output through completion for the issued scope",
     output.some((frame) => frame?.kind === "done") && output.every((frame) => frame && sameLiveRuntimeScope(frame.scope, authorized.issued.scope)),
     JSON.stringify({ status: authorized.status, outputKinds: output.map((frame) => frame?.kind), logged: authorized.logged }));
+
+  // paige-turn — WHERE A LIVE TURN'S TERMINAL GOES. A Live answer streams from the tools-free closing
+  // call, so on an ORDINARY turn (nothing held) its terminal waits for the first answer line actually
+  // forwarded. The closing call is the turn's LAST streamed model call (read from a drive that
+  // answered, never hard-coded), and it carries no tools — which is what makes it the closing call.
+  // The Live output stream errors by design when a turn ends without its signed `done`, so a failed
+  // turn is read from what reached the wire before that error (`partialText`) — what the client had.
+  const turnFrames = (text) => text.split("\n").filter((l) => l.startsWith("data: ") && l.includes('"paige_turn"'))
+    .map((l) => JSON.parse(l.slice(6)).paige_turn);
+  const terminalStates = (text) => turnFrames(text).filter((t) => t.event !== "started").map((t) => t.state).join();
+  const streamedCalls = (r) => r.modelEgress.map((b) => { try { return JSON.parse(b); } catch { return {}; } }).filter((b) => b.stream === true);
+  const answered = await liveDrive({ ordinary: true });
+  const closingCall = streamedCalls(answered).length;
+  const firstAnswer = answered.bodyText.indexOf('"choices"');
+  assert("26.5 an ordinary Live answer says FINAL once, just ahead of its first answer line (the control for 26.6)",
+    answered.status === 200 && !answered.logged.some((l) => l.msg.includes("protected evidence reached the model"))
+      && closingCall >= 2 && !("tools" in (streamedCalls(answered)[closingCall - 1] ?? {}))
+      && terminalStates(answered.bodyText) === "FINAL" && firstAnswer !== -1
+      && answered.bodyText.indexOf('"FINAL"') < firstAnswer && answered.bodyText.includes("Your connection is set up."),
+    JSON.stringify({ status: answered.status, closingCall, turns: turnFrames(answered.bodyText), body: answered.bodyText.slice(0, 500) }));
+  const unanswered = await liveDrive({ ordinary: true, failStreamCalls: [closingCall] });
+  const wire = unanswered.partialText;
+  assert("26.6 an ordinary Live turn whose closing call fails ends INTERRUPTED on the wire — never first FINAL — before the Live error frame",
+    unanswered.status === 200 && wire.includes("paige_live_error") && terminalStates(wire) === "INTERRUPTED"
+      && !wire.includes('"FINAL"') && wire.indexOf('"INTERRUPTED"') < wire.indexOf("paige_live_error"),
+    JSON.stringify({ status: unanswered.status, turns: turnFrames(wire), body: wire.slice(0, 600) }));
+  // …and the same failure on a PROTECTED Live turn (its tool result is evidence, so it holds) ends the
+  // same way: there the terminal waits for release, which a failed answer never reaches.
+  const heldUnanswered = await liveDrive({ failStreamCalls: [streamedCalls(authorized).length] });
+  assert("26.7 a protected Live turn whose closing call fails also ends INTERRUPTED, before the Live error frame",
+    terminalStates(heldUnanswered.partialText) === "INTERRUPTED" && !heldUnanswered.partialText.includes('"FINAL"')
+      && heldUnanswered.partialText.indexOf('"INTERRUPTED"') < heldUnanswered.partialText.indexOf("paige_live_error"),
+    JSON.stringify({ turns: turnFrames(heldUnanswered.partialText) }));
+  // The closing call answers 200 and then BREAKS before any text. `_shared/claude.ts`'s translator always
+  // sends a synthetic role-only line first and ends a broken stream with a clean [DONE], so a terminal
+  // sent on the first FORWARDED line would put FINAL on the wire with no answer behind it. It waits for
+  // the first answer TEXT instead, so this turn ends INTERRUPTED, never first FINAL.
+  const brokeEarly = await liveDrive({ ordinary: true, breakStreamCalls: { [closingCall]: "" } });
+  const brokeWire = brokeEarly.partialText;
+  assert("26.8 an ordinary Live turn whose closing call answers 200 then breaks before any text ends INTERRUPTED — no FINAL — before the Live error frame",
+    brokeEarly.status === 200 && brokeWire.includes("paige_live_error") && terminalStates(brokeWire) === "INTERRUPTED"
+      && !brokeWire.includes('"FINAL"') && brokeWire.indexOf('"INTERRUPTED"') < brokeWire.indexOf("paige_live_error")
+      && streamedCalls(brokeEarly).length === closingCall,
+    JSON.stringify({ status: brokeEarly.status, turns: turnFrames(brokeWire), body: brokeWire.slice(0, 600) }));
 
   for (const [name, options, reachesAuthority] of [
     ["false authorization", { authority: { data: false, error: null } }, true],
@@ -4877,6 +5029,227 @@ console.log("\nV2b — chat publishing goes through the one publish door");
   assert("35.4 a lost door answer is reported as couldn't confirm, never ran or didn't run",
     outcomes(lost)[0]?.actions?.[0]?.outcome === "unconfirmed" && /"outcome_unknown":true/.test(lost.modelEgress.join("\n").replace(/\\"/g, '"')),
     JSON.stringify(outcomes(lost)));
+}
+
+console.log("\npaige_turn — every stream says it started and ends once, before the answer");
+{
+  const THREAD = "c1c1c1c1-c1c1-4c1c-8c1c-c1c1c1c1c1c1";
+  const PERSONA = { get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: "Northside Fitness", playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null } };
+  const AS_CLIENT = { ...PERSONA, get_actor_access: { data: { tier: "client" }, error: null } };
+  const AS_OWNER = { ...PERSONA, get_actor_access: { data: { tier: "tenant" }, error: null } };
+  const NO_MEMORY = { tablesExtra: { client_memory: () => [] }, serviceTablesExtra: { client_memory: () => [] } };
+  const turnsOf = (r) => r.bodyText.split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
+    .map((l) => { try { return JSON.parse(l.slice(6)); } catch { return null; } }).filter((f) => f?.paige_turn).map((f) => f.paige_turn);
+  const terminalOf = (r) => turnsOf(r).find((t) => t.event === "completed" || t.event === "waiting");
+  const persistedStates = (r) => r.rec.rpc.filter((c) => c.name === "paige_chat_turn_append" && c.args?.p_role === "assistant")
+    .map((c) => c.args.p_bundle_ref?.turn_state ?? null);
+
+  // Scenarios written for the frame. Everything else the suite drove is in the audit already.
+  const plain = await drive({ stream: true, rpcOverrides: { ...AS_OWNER, match_paige_memory: { data: [], error: null } }, replyText: "Your next session is Tuesday.", ...NO_MEMORY, extraBody: { threadId: THREAD } });
+  assert("36.1 an ordinary owner answer: started, then completed FINAL as a first-round answer, persisted as the same",
+    JSON.stringify(turnsOf(plain)) === JSON.stringify([{ v: 1, event: "started", state: "WORKING", mode: "pending" }, { v: 1, event: "completed", state: "FINAL", mode: "fast_answer" }])
+      && JSON.stringify(persistedStates(plain)) === JSON.stringify([{ v: 1, state: "FINAL", mode: "fast_answer", rounds: 1, tools: 0 }]),
+    JSON.stringify({ wire: turnsOf(plain), persisted: persistedStates(plain) }));
+
+  const LEAKY = "Done, I ran update_client_data for you.";
+  const leak = await drive({ stream: true, rpcOverrides: { ...AS_CLIENT, match_paige_memory: { data: [], error: null } }, replyText: LEAKY, ...NO_MEMORY, extraBody: { threadId: THREAD } });
+  assert("36.2 a protected turn withheld at the final gate never first claims FINAL: its one terminal is WITHHELD, and so is the record",
+    turnsOf(leak).length === 2 && terminalOf(leak)?.state === "WITHHELD" && !turnsOf(leak).some((t) => t.state === "FINAL")
+      && persistedStates(leak).length === 1 && persistedStates(leak)[0]?.state === "WITHHELD",
+    JSON.stringify({ wire: turnsOf(leak), persisted: persistedStates(leak) }));
+  assert("36.3 …and on the held turn the terminal follows the gate: it reaches the wire after the turn's own held frames were decided, beside the withheld frame",
+    leak.bodyText.indexOf('"WITHHELD"') !== -1 && leak.bodyText.indexOf('"WITHHELD"') < leak.bodyText.indexOf("paige_withheld"),
+    leak.bodyText.slice(0, 400));
+
+  const refused = await drive({ clientId: FOREIGN, stream: true });
+  assert("36.4 a client-scope refusal says it started, then completed REFUSED, before its sentence",
+    turnsOf(refused)[0]?.event === "started" && terminalOf(refused)?.state === "REFUSED"
+      && refused.bodyText.indexOf('"REFUSED"') < refused.bodyText.indexOf("couldn't confirm that this client"),
+    refused.bodyText.slice(0, 400));
+
+  const doc = { fileName: "intake.pdf", base64: "JVBERi0xLjQK", mimeType: "application/pdf" };
+  const docTurn = await drive({ stream: true, rpcOverrides: { ...AS_OWNER, match_paige_memory: { data: [], error: null } }, ...NO_MEMORY, document: doc, text: "here is my intake form", replyText: "Got it, I've read your intake form.", extraBody: { threadId: THREAD } });
+  assert("36.5 a document turn says it started, then completed FINAL, and records the same",
+    turnsOf(docTurn)[0]?.event === "started" && terminalOf(docTurn)?.state === "FINAL"
+      && persistedStates(docTurn).length === 1 && persistedStates(docTurn)[0]?.state === "FINAL",
+    JSON.stringify({ wire: turnsOf(docTurn), persisted: persistedStates(docTurn) }));
+
+  // A turn that shows a thought AND does work: the thought reaches the wire, the work step is
+  // persisted in turn_trace, and the thought never is (model reasoning is never durable state).
+  // The group-31 filing shape (an owner on an `auto` lane filing an owner-only action), which renders
+  // exactly one action step, with narration added so the same turn also shows a thought.
+  const NARRATION = "Let me file that next step for Dana now.";
+  const worked = await drive({ stream: true, extraBody: { threadId: THREAD }, toolRoundNarration: NARRATION, replyText: "Filed.",
+    toolCall: { name: "action_file", args: { action_kind: "owner.internal_note", title: "Book your next session", summary: "Next step for Dana", contact_id: OWN } },
+    rpcOverrides: { ...PERSONA, get_actor_access: { data: { tier: "tenant" }, error: null }, resolve_tool_autonomy: { data: "auto", error: null } },
+    tablesExtra: { user_roles: [{ role: "admin" }], paige_action_kinds: () => [{ executor: "record_only" }] },
+    serviceTablesExtra: { paige_action_kinds: () => [{ executor: "record_only" }] } });
+  const workedBundle = worked.rec.rpc.find((c) => c.name === "paige_chat_turn_append" && c.args?.p_role === "assistant")?.args?.p_bundle_ref;
+  assert("36.9 a turn with a thought and a work step persists the step in turn_trace and never the thought",
+    worked.bodyText.includes(NARRATION) && Array.isArray(workedBundle?.turn_trace) && workedBundle.turn_trace.length >= 1
+      && !JSON.stringify(workedBundle).includes(NARRATION) && workedBundle.turn_state?.rounds === 2 && workedBundle.turn_state?.tools === 1,
+    JSON.stringify({ thought: worked.bodyText.includes(NARRATION), bundle: workedBundle }));
+
+  // BUDGETS. Five rounds of distinct work hit the round cap: the turn reached its LIMIT, and says so.
+  const OWNER_AUTO = {
+    rpcOverrides: { ...PERSONA, get_actor_access: { data: { tier: "tenant" }, error: null }, resolve_tool_autonomy: { data: "auto", error: null } },
+    tablesExtra: { user_roles: [{ role: "admin" }], paige_action_kinds: () => [{ executor: "record_only" }] },
+    serviceTablesExtra: { paige_action_kinds: () => [{ executor: "record_only" }] },
+  };
+  const filing = (n) => ({ name: "action_file", args: { action_kind: "owner.internal_note", title: `Follow up ${n}`, summary: `Step ${n}`, contact_id: OWN } });
+  const capped = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "Here is where things stand.",
+    toolCall: [1, 2, 3, 4, 5].map(filing), ...OWNER_AUTO });
+  assert("36.10 a turn stopped by the round budget ends LIMIT_REACHED, on the wire and in the record, counting its tools-free closing call (5 rounds + 1)",
+    terminalOf(capped)?.state === "LIMIT_REACHED" && terminalOf(capped)?.event === "completed"
+      && persistedStates(capped)[0]?.state === "LIMIT_REACHED" && persistedStates(capped)[0]?.rounds === 6 && persistedStates(capped)[0]?.tools === 5,
+    JSON.stringify({ wire: turnsOf(capped), persisted: persistedStates(capped) }));
+
+  // An action request that only ever gets narration: three continuations, then the honest blockage
+  // sentence. On an ordinary turn that sentence streams live, so the terminal (LIMIT_REACHED) must precede it.
+  const BLOCKAGE = "I wasn't able to complete that request.";
+  const narrated = await drive({ stream: true, text: "Add Jacqueline to the intake pipeline", replyText: "Let me look into that for you.",
+    rpcOverrides: { ...AS_OWNER, match_paige_memory: { data: [], error: null } }, ...NO_MEMORY });
+  assert("36.11 an action request that only ever got narration ends LIMIT_REACHED, and says so before the blockage sentence",
+    terminalOf(narrated)?.state === "LIMIT_REACHED" && narrated.bodyText.includes(BLOCKAGE)
+      && narrated.bodyText.indexOf('"LIMIT_REACHED"') < narrated.bodyText.indexOf(BLOCKAGE),
+    narrated.bodyText.slice(0, 500));
+  // The same request, but the continuation call itself fails: the narration was already judged
+  // unresolved and the retry did not happen, so the turn did not finish — INTERRUPTED, never FINAL.
+  const RETRY_NARRATION = "Let me look into that for you.";
+  const retryFailed = await drive({ stream: true, text: "Add Jacqueline to the intake pipeline", replyText: RETRY_NARRATION,
+    extraBody: { threadId: THREAD }, rpcOverrides: { ...AS_OWNER, match_paige_memory: { data: [], error: null } }, ...NO_MEMORY,
+    failStreamCalls: [2] });
+  assert("36.11b an action request whose continuation call fails ends INTERRUPTED, on the wire and in the record, never FINAL",
+    terminalOf(retryFailed)?.state === "INTERRUPTED" && !retryFailed.bodyText.includes('"FINAL"')
+      && retryFailed.bodyText.includes(RETRY_NARRATION)
+      && persistedStates(retryFailed).length === 1 && persistedStates(retryFailed)[0]?.state === "INTERRUPTED",
+    JSON.stringify({ wire: turnsOf(retryFailed), persisted: persistedStates(retryFailed) }));
+
+  // FAILURE ENDINGS THAT USED TO READ AS FINAL. Each is a turn whose own words say it did not finish
+  // the way it set out to, so neither the wire nor the record may say FINAL.
+  const streamCalls = (r) => r.modelEgress.filter((b) => { try { return JSON.parse(b).stream === true; } catch { return false; } }).length;
+  const FALLBACK = "I gathered what I could but couldn't finish that";
+  // The closing call fails after a round budget: the turn ends on the "couldn't finish" fallback. The
+  // closing call is the capped turn's last streamed call (read from 36.10's drive, never hard-coded).
+  const unfinished = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "Here is where things stand.",
+    toolCall: [1, 2, 3, 4, 5].map(filing), ...OWNER_AUTO, failStreamCalls: [streamCalls(capped)] });
+  assert("36.12 a closing call that fails ends on the fallback sentence: INTERRUPTED on the wire, ahead of that sentence, and in the record",
+    streamCalls(capped) === 6 && unfinished.bodyText.includes(FALLBACK)
+      && terminalOf(unfinished)?.state === "INTERRUPTED" && !unfinished.bodyText.includes('"FINAL"')
+      && unfinished.bodyText.indexOf('"INTERRUPTED"') < unfinished.bodyText.indexOf(FALLBACK)
+      && persistedStates(unfinished).length === 1 && persistedStates(unfinished)[0]?.state === "INTERRUPTED",
+    JSON.stringify({ calls: streamCalls(capped), wire: turnsOf(unfinished), persisted: persistedStates(unfinished) }));
+
+  // A ROUND that fails mid-loop: the work of round one stands, the turn closes out, and it says it was
+  // interrupted rather than finished.
+  const brokenRound = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "Here is where things stand.",
+    toolCall: filing(1), ...OWNER_AUTO, failStreamCalls: [2] });
+  assert("36.13 a model round that fails mid-loop ends INTERRUPTED, on the wire and in the record, with the work already done counted",
+    streamCalls(brokenRound) === 3 && brokenRound.bodyText.includes("Here is where things stand.") && terminalOf(brokenRound)?.state === "INTERRUPTED" && !brokenRound.bodyText.includes('"FINAL"')
+      && persistedStates(brokenRound)[0]?.state === "INTERRUPTED" && persistedStates(brokenRound)[0]?.tools === 1,
+    JSON.stringify({ wire: turnsOf(brokenRound), persisted: persistedStates(brokenRound), calls: streamCalls(brokenRound) }));
+
+  // THE NO-PROGRESS STOP: the model repeats a call it already made. It is not executed twice, and the
+  // turn reached a limit rather than finishing.
+  const repeated = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "Here is where things stand.",
+    toolCall: [filing(1), filing(1)], ...OWNER_AUTO });
+  assert("36.14 a turn stopped because the model repeated the same call ends LIMIT_REACHED, and the repeat never ran",
+    terminalOf(repeated)?.state === "LIMIT_REACHED" && persistedStates(repeated)[0]?.state === "LIMIT_REACHED"
+      && persistedStates(repeated)[0]?.tools === 1,
+    JSON.stringify({ wire: turnsOf(repeated), persisted: persistedStates(repeated) }));
+
+  // A CALL A GATE REFUSED IS NOT WORK. A client seat whose model reaches for an owner's tool gets
+  // `forbidden_seat`; the record counts no tool and does not call the turn an action.
+  const refusedTool = await drive({ stream: true, rpcOverrides: { ...AS_CLIENT, match_paige_memory: { data: [], error: null } }, ...NO_MEMORY,
+    replyText: "I can't change that from here.", toolCall: { name: "comms_buy_number", args: { phone_number: "+15550100" } }, extraBody: { threadId: THREAD } });
+  const refusedRecord = persistedStates(refusedTool)[0];
+  // The control: the call was made and refused (the model saw forbidden_seat), not skipped.
+  assert("36.15 a tool the client-seat gate refused counts toward neither the record's tools nor its mode",
+    refusedTool.modelEgress.some((body) => body.includes("forbidden_seat"))
+      && refusedRecord?.tools === 0 && refusedRecord?.mode === "answer" && refusedRecord?.rounds === 2,
+    JSON.stringify({ wire: turnsOf(refusedTool), persisted: persistedStates(refusedTool) }));
+
+  // MODE, OBSERVED END TO END. The record's mode comes from the edge function's classifiers over the
+  // tools that actually ran; these two pin the classifiers the suite otherwise never distinguishes.
+  // A filed action (36.9's turn) is an ACTION turn; a web search is a RESEARCH turn.
+  const workedTerminal = terminalOf(worked);
+  const workedRecord = persistedStates(worked)[0];
+  assert("36.16 a turn that ran a governed write is an `action` turn, on the wire and in the record",
+    workedRecord?.mode === "action" && workedRecord?.tools === 1 && workedTerminal?.mode === "action",
+    JSON.stringify({ wire: turnsOf(worked), persisted: persistedStates(worked) }));
+  const searched = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "Here is what I found.",
+    toolCall: { name: "web_search", args: { query: "client onboarding checklist" } },
+    rpcOverrides: { ...AS_OWNER, match_paige_memory: { data: [], error: null } }, ...NO_MEMORY });
+  const searchedRecord = persistedStates(searched)[0];
+  assert("36.17 a turn that ran a web search is a `research` turn, on the wire and in the record",
+    searched.outboundCalls.some((c) => c.url.includes("paige-web-search"))
+      && searchedRecord?.mode === "research" && searchedRecord?.tools === 1 && terminalOf(searched)?.mode === "research",
+    JSON.stringify({ wire: turnsOf(searched), persisted: persistedStates(searched), outbound: searched.outboundCalls.map((c) => c.url) }));
+
+  // A CLOSING CALL THAT ANSWERS 200 AND THEN BREAKS (text turns). The translator ends it with a clean
+  // [DONE]; only the missing finish_reason says it was cut off. Driven on an ORDINARY turn (no memory,
+  // and `action_file` is a receipt, so nothing is held): there the terminal is not held for release, so
+  // these show where it goes on the wire. The control first: the same capped turn, unbroken.
+  const ORDINARY_AUTO = {
+    rpcOverrides: { ...OWNER_AUTO.rpcOverrides, match_paige_memory: { data: [], error: null } },
+    tablesExtra: { ...OWNER_AUTO.tablesExtra, client_memory: () => [] },
+    serviceTablesExtra: { ...OWNER_AUTO.serviceTablesExtra, client_memory: () => [] },
+  };
+  const ordinaryOf = (r) => !r.logged.some((l) => l.msg.includes("protected evidence reached the model"));
+  // The stream's last line is the [DONE] every consumer stops at, and the terminal precedes it. Held
+  // closing-call bytes carry the translator's own [DONE], so a terminal or a release that never
+  // happens shows here, not as a missing frame the audit might excuse.
+  const endsOnDone = (r) => r.bodyText.trimEnd().endsWith("data: [DONE]");
+  const terminalBeforeDone = (r, state) => {
+    const at = r.bodyText.indexOf(`"state":"${state}"`);
+    return at !== -1 && at < r.bodyText.lastIndexOf("data: [DONE]");
+  };
+  const cappedOrdinary = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "Here is where things stand.",
+    toolCall: [1, 2, 3, 4, 5].map(filing), ...ORDINARY_AUTO });
+  const closingOf = streamCalls(cappedOrdinary);
+  assert("36.18 CONTROL — an ordinary capped turn whose closing call finishes ends LIMIT_REACHED, ahead of its answer",
+    ordinaryOf(cappedOrdinary) && closingOf === 6 && terminalOf(cappedOrdinary)?.state === "LIMIT_REACHED"
+      && persistedStates(cappedOrdinary).length === 1 && persistedStates(cappedOrdinary)[0]?.state === "LIMIT_REACHED"
+      && endsOnDone(cappedOrdinary) && terminalBeforeDone(cappedOrdinary, "LIMIT_REACHED")
+      && cappedOrdinary.bodyText.indexOf('"LIMIT_REACHED"') < cappedOrdinary.bodyText.indexOf("Here is where things stand."),
+    JSON.stringify({ ordinary: ordinaryOf(cappedOrdinary), calls: closingOf, wire: turnsOf(cappedOrdinary), persisted: persistedStates(cappedOrdinary) }));
+  // Before any text: the terminal waits for the first answer text, which never comes, so the wire
+  // says INTERRUPTED — never the provisional LIMIT_REACHED ahead of the translator's role-only line.
+  // The stream still ends on [DONE] (the held lead goes out after the terminal), and NOTHING persists:
+  // no text and no legacy card, so the persist gate writes no row and the wire is the only record.
+  const closeBrokeEarly = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "Here is where things stand.",
+    toolCall: [1, 2, 3, 4, 5].map(filing), ...ORDINARY_AUTO, breakStreamCalls: { [closingOf]: "" } });
+  assert("36.19 an ordinary text turn whose closing call breaks before any text ends INTERRUPTED on the wire, never with a provisional terminal",
+    ordinaryOf(closeBrokeEarly) && streamCalls(closeBrokeEarly) === closingOf && terminalOf(closeBrokeEarly)?.state === "INTERRUPTED"
+      && !turnsOf(closeBrokeEarly).some((t) => t.state === "LIMIT_REACHED" || t.state === "FINAL")
+      && turnsOf(closeBrokeEarly).filter((t) => t.event !== "started").length === 1
+      && endsOnDone(closeBrokeEarly) && terminalBeforeDone(closeBrokeEarly, "INTERRUPTED")
+      && persistedStates(closeBrokeEarly).length === 0,
+    JSON.stringify({ wire: turnsOf(closeBrokeEarly), persisted: persistedStates(closeBrokeEarly), tail: closeBrokeEarly.bodyText.slice(-160) }));
+  // Mid-answer: the half-answer streams and is saved as before. The wire terminal went out ahead of the
+  // first text, so it is the provisional LIMIT_REACHED (contract.ts) — the RECORD says INTERRUPTED.
+  const HALF = "Here is where things";
+  const closeBrokeMid = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "Here is where things stand.",
+    toolCall: [1, 2, 3, 4, 5].map(filing), ...ORDINARY_AUTO, breakStreamCalls: { [closingOf]: HALF } });
+  const midRecord = persistedStates(closeBrokeMid)[0];
+  assert("36.20 an ordinary text turn whose closing call breaks mid-answer is recorded INTERRUPTED, with the half-answer; its provisional terminal precedes that text",
+    ordinaryOf(closeBrokeMid) && closeBrokeMid.bodyText.includes(HALF) && midRecord?.state === "INTERRUPTED"
+      && persistedStates(closeBrokeMid).length === 1 && endsOnDone(closeBrokeMid)
+      && closeBrokeMid.bodyText.indexOf(HALF) < closeBrokeMid.bodyText.lastIndexOf("data: [DONE]")
+      && terminalOf(closeBrokeMid)?.state === "LIMIT_REACHED"
+      && closeBrokeMid.bodyText.indexOf('"LIMIT_REACHED"') < closeBrokeMid.bodyText.indexOf(HALF),
+    JSON.stringify({ wire: turnsOf(closeBrokeMid), persisted: persistedStates(closeBrokeMid) }));
+
+  // The audit, over every stream the suite drove — including the scenarios above.
+  assert("36.6 every stream's first frame is `started`, it has exactly one terminal, and the terminal precedes the first content byte and [DONE]",
+    turnAudit.streams >= 100 && turnAudit.violations.length === 0,
+    JSON.stringify({ streams: turnAudit.streams, violations: turnAudit.violations.slice(0, 8) }));
+  assert("36.7 the audit is not vacuous: it saw withheld turns, refusals and turns that issued confirm cards",
+    turnAudit.withheld >= 3 && turnAudit.refused >= 2 && turnAudit.confirms >= 3,
+    JSON.stringify({ withheld: turnAudit.withheld, refused: turnAudit.refused, confirms: turnAudit.confirms }));
+  assert("36.8 every persisted assistant turn carries a turn_state in the contract's shape, and every turn_trace holds work steps, never a thought",
+    turnAudit.persisted >= 10 && turnAudit.traced >= 1 && turnAudit.thoughtsBesideTrace >= 1 && turnAudit.violations.length === 0,
+    JSON.stringify({ persisted: turnAudit.persisted, traced: turnAudit.traced, thoughtsBesideTrace: turnAudit.thoughtsBesideTrace }));
 }
 
 console.log(`\n${checks - failures} passed, ${failures} failed`);

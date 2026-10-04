@@ -187,8 +187,9 @@ describe("the write trail skips only what declares it never ran", () => {
   });
 
   it("no other edge code produces the marker", () => {
-    // One producer; everything else that names it only reads it: the audit skip, and the approval
-    // card's outcome (approval-outcome.ts, which reports such a call as not run).
+    // One producer; everything else that names it only reads it: the audit skip, the approval
+    // card's outcome (approval-outcome.ts, which reports such a call as not run), and the turn
+    // record (paige-turn/reducer.ts, which does not count such a call as a tool that ran).
     const producers = execSync("grep -rlE 'refused_before_run: ?true' supabase/functions --include=*.ts", { encoding: "utf8" })
       .trim().split("\n").sort();
     expect(producers).toEqual(["supabase/functions/_shared/confirm-fingerprint.ts"]);
@@ -197,6 +198,7 @@ describe("the write trail skips only what declares it never ran", () => {
     expect(mentions).toEqual([
       "supabase/functions/_shared/approval-outcome.ts",
       "supabase/functions/_shared/confirm-fingerprint.ts",
+      "supabase/functions/_shared/paige-turn/reducer.ts",
       "supabase/functions/paige-ai-chat/index.ts",
     ]);
   });

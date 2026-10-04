@@ -3,7 +3,7 @@ import { executeVerifiedMissionMutation, resolveBusinessMissionThreadContext, re
 import { CAMPAIGN_BRIEF_TOOLS } from '../_shared/paige-spine/domains/campaigns.ts';
 import { CRM_ACTION_LABEL, CRM_COMMAND_TOOLS, CRM_COMMAND_TOOL_NAMES, CRM_TOOL_TO_ACTION, canonicalizeCrmCommand, crmApprovalSubject, crmCommandFallbackIdempotencyKeys } from '../_shared/crm-command/catalog.ts';
 import { resolveCrmApprovedFingerprint, CRM_APPROVAL_CANDIDATE_LIMIT } from '../_shared/crm-command/approval-resolution.ts';
-import { SALES_INVOICE_TOOLS, SALES_INVOICE_TOOL_NAMES, dispatchSalesInvoiceChat } from '../_shared/sales-invoice-chat.ts';
+import { SALES_INVOICE_TOOLS, SALES_INVOICE_TOOL_NAMES, dispatchSalesInvoiceChat, type SalesInvoiceApprovalQuery } from '../_shared/sales-invoice-chat.ts';
 import { executeVerifiedCampaignBriefMutation, resolveCampaignBriefListContext } from '../_shared/campaign-brief-tenant-brain.ts';
 import { CALENDAR_PRESET_TOOLS } from '../_shared/paige-spine/domains/calendar_preset.ts';
 import { executeVerifiedCalendarPresetMutation, resolveCalendarPresetListContext, type CalendarPresetMutationTool } from '../_shared/calendar-preset-tenant-brain.ts';
@@ -8626,7 +8626,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             args: invoiceArgs, approved: approvedConfirmations,
             sameToolCalls: toolCalls.filter((call: any) => call?.function?.name === tc.function.name).length,
             turn: { thread_id: payloadThreadId ?? null, user_turn_ordinal: userTurns.length, user_turn: userTurns[userTurns.length - 1]?.content ?? null },
-          }, { caller: supabase, admin: createClient(supabaseUrl, supabaseServiceKey) });
+          }, { caller: supabase, admin: { from: (name: string) => ({
+            // Dynamic approval table: isolate the SDK generic expansion at the selected-query boundary.
+            select: (columns: string) => createClient(supabaseUrl, supabaseServiceKey).from(name).select(columns) as unknown as SalesInvoiceApprovalQuery,
+          }) } });
           for (const token of result.tokens ?? []) approvalTokenTool.set(token, tc.function.name);
           if (result.refusal) approvalRefusals.set(tc.function.name, result.refusal);
           toolResults.push({ tool_call_id: tc.id, role: 'tool', content: JSON.stringify(result.content) });

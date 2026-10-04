@@ -35,14 +35,14 @@ export async function salesInvoiceOperationId(tenant: string, actor: string, com
   return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
 }
 
-type Query = {
-  select(value: string): Query; eq(key: string, value: unknown): Query; in(key: string, values: string[]): Query;
-  is(key: string, value: null): Query; not(key: string, operator: string, value: null): Query;
-  gt(key: string, value: string): Query; limit(value: number): PromiseLike<{ data: { fingerprint?: unknown; args?: unknown }[] | null; error: unknown }>;
+export type SalesInvoiceApprovalQuery = {
+  eq(key: string, value: unknown): SalesInvoiceApprovalQuery; in(key: string, values: string[]): SalesInvoiceApprovalQuery;
+  is(key: string, value: null): SalesInvoiceApprovalQuery; not(key: string, operator: string, value: null): SalesInvoiceApprovalQuery;
+  gt(key: string, value: string): SalesInvoiceApprovalQuery; limit(value: number): PromiseLike<{ data: { fingerprint?: unknown; args?: unknown }[] | null; error: unknown }>;
 };
 type Reply = { data: unknown; error: unknown };
 type Dependencies = {
-  admin: { from(name: string): Query };
+  admin: { from(name: string): { select(value: string): SalesInvoiceApprovalQuery } };
   caller: { rpc(name: string, args: Record<string, unknown>): PromiseLike<Reply>; functions: { invoke(name: string, options: { body: Record<string, unknown> }): Promise<Reply> } };
 };
 type Context = { tenantId: string | null; userId: string; toolName: string; args: Record<string, unknown>; approved: Set<string>; sameToolCalls: number; turn: Turn };

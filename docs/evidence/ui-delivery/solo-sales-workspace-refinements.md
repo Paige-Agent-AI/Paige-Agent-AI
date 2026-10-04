@@ -16,7 +16,7 @@ KEYBOARD_FOCUS: PASS: Actual invoice review scroll region focuses and End reache
 ZOOM_REFLOW: UNVERIFIED: Six fixed CSS viewports including390x844 and430x932 exercised; native browser zoom not separately exercised.
 REDUCED_MOTION: UNVERIFIED: No new motion introduced; existing reduced-motion CSS retained, preference emulation not exercised.
 STATE_COVERAGE: PASS: Canonical permission/tenant/loading/error/v1-normalization/unknown-save/dirty-exit contracts retained; optional description missing/null/text/max/invalid type tested; fixture drafts stay drafts.
-TRUTHFUL_STATE_LABELS: PASS: Off-platform preferences explicitly do not record received payment or connect a processor; eligible processors remains empty pending real provider contract. Collection/status/provider labels remain unavailable. sales.department remains PROOF_OWED.
+TRUTHFUL_STATE_LABELS: PASS: Off-platform preferences explicitly do not record received payment or connect a processor; eligible processors remains empty because a verified merchant connection source is absent. Collection/status/provider labels remain unavailable. sales.department remains PROOF_OWED.
 SOLO_UI: YES: Standalone Solo Sales scope; Settings Billing, Marketing/Vibe and held S3 stage-status handoff untouched.
 SOLO_1536X770_PAIGE_CLOSED: PASS: scripts/live-drive/artifacts/sales-workspace-refinements/1536-770-closed-light-register.png plus dark/editor/review/pipeline frames; geometry.json.
 SOLO_1536X770_PAIGE_OPEN: PASS: scripts/live-drive/artifacts/sales-workspace-refinements/1536-770-open-light-register.png plus dark/editor/review/pipeline frames; geometry.json.

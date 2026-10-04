@@ -54,17 +54,18 @@ import { classifyCrmRun } from "../_shared/crm-capability-outcome.ts";
 import { artifactProduced, ARTIFACT_ABSENT_ERROR, usableDrafts, publishVerified, PUBLISH_UNVERIFIED_ERROR } from "../_shared/artifact-receipt.ts";
 import { narrowToolDefs, outsideStudioScope, resolveRoleToolScope, STUDIO_SCOPE_FAIL_CLOSED, type RoleToolScope } from "../_shared/studio-scope.ts";
 
-/** Tools whose backend write requires the CURRENT workspace's owner or admin — the growth RPCs'
- *  `_growth_admin_tenant` (or the managing agency). Their chat gate asks the same question,
- *  `studio_role_ok`, instead of the tenant-agnostic global `user_roles` admin (§59, D3), so the chat
- *  gate and the write agree. Every other tool keeps its existing gate: the draft edge functions
- *  (growth-*-draft, content-draft, generate-image) and `save_marketing_content` still check the
- *  global role themselves, so moving their chat gate alone would admit callers the backend refuses.
- *  Those backends moving to tenant-scoped authority is tracked for V2a. */
+/** Tools whose backend requires the CURRENT workspace's owner or admin (or the managing agency) —
+ *  the growth RPCs' `_growth_admin_tenant`, and `content-draft` / `generate-image` through
+ *  `_shared/studio-caller.ts`. Their chat gate asks the same question, `studio_role_ok`, instead of
+ *  the tenant-agnostic global `user_roles` admin (§59, D3), so the chat gate and the backend agree.
+ *  Every other tool keeps its existing gate: the growth-*-draft functions and `save_marketing_content`
+ *  still check the global role themselves, so moving their chat gate alone would admit callers the
+ *  backend refuses. Those move to tenant-scoped authority in V2a. */
 const WORKSPACE_BUILD_TOOLS: ReadonlySet<string> = new Set([
   "growth_page_save", "growth_page_publish",
   "growth_form_save", "growth_form_publish",
   "growth_funnel_build", "growth_funnel_publish",
+  "draft_marketing_content", "generate_image",
 ]);
 import { buildFormSchemaFromQuestions } from "../_shared/growth-form-build.ts";
 import { classifyDocumentSubmissionError, validateDocumentBrief } from "../_shared/document-production.ts";
@@ -11761,6 +11762,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               const { data: cd, error } = await supabaseClient.functions.invoke("content-draft", {
                 body: { channel: args.channel, brief: args.brief, tone: args.tone ?? null, variations: args.variations ?? 1, tenant_id: personaCtx?.tenant_id ?? null },
               });
+              // A workspace refusal arrives as a non-2xx whose message only the body carries.
+              const _cdBody = await readInvokeBody(error, cd);
+              if (_cdBody.forbidden === true && typeof _cdBody.error === "string") {
+                result = { success: false, error: _cdBody.error, not_applied: true };
+              } else {
               if (error) throw error;
               if ((cd as any)?.error) throw new Error((cd as any).error);
               // §13/§70 — a 200 can carry an empty drafts array, OR a non-empty array of
@@ -11771,6 +11777,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               result = artifactProduced("draft_list", _usableDrafts)
                 ? { success: true, channel: (cd as any)?.channel, drafts: _usableDrafts }
                 : { success: false, error: ARTIFACT_ABSENT_ERROR.draft_list };
+              }
             } else if (tc.function.name === "generate_image") {
               // #292 — reuse the on-canvas image row (stack its versions) ONLY when the model targets
               // the exact image that's actually on the canvas. Any other id → treat as a new asset
@@ -11857,8 +11864,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   reuse_content_id: reuseImageId,
                 },
               });
-              if (error) throw error;
-              if ((img as any)?.needs_config) {
+              // A workspace refusal arrives as a non-2xx whose message only the body carries.
+              const _imgBody = await readInvokeBody(error, img);
+              if (_imgBody.forbidden === true && typeof _imgBody.error === "string") {
+                result = { success: false, error: _imgBody.error, not_applied: true };
+              } else if (error) {
+                throw error;
+              } else if ((img as any)?.needs_config) {
                 result = { success: false, needs_config: true, message: (img as any).error };
               } else if ((img as any)?.error) {
                 throw new Error((img as any).error);

@@ -343,7 +343,7 @@ Legend: **✓** live · **—** not built · **N/A** tier not opened yet · **40
 
 ### Vibe Studio V2a-0 — generation writes only into the caller's own workspace (2026-10-04)
 
-`generate-image` and `content-draft` now resolve the workspace from the session and require `studio_role_ok` (Solo owner/admin; the agency managing a sub-account; operators in company workspaces). A body tenant naming another workspace is refused. Before: any holder of the platform-wide `admin` role (most workspace owners) passed, and the body tenant was trusted. Solo owners without the global role gain image generation through paige-media's legacy providers (paige-media already admitted them). Client and Anonymous: unchanged, refused. `save_marketing_content` and the growth draft functions are still V2a.
+`generate-image` and `content-draft` now resolve the workspace from the session and require that workspace's owner/admin or its managing agency (the `studio_role_ok` rule; operators only in company workspaces). A body tenant naming another workspace is refused. paige-ai-chat's gate for `generate_image` and `draft_marketing_content` now asks `studio_role_ok` too. Before: any holder of the platform-wide `admin` role passed and the body tenant was trusted. Solo owners without the global role gain image generation and copy drafting (chat and paige-media); a global admin who is only a member of the active workspace loses it. Client and Anonymous: unchanged, refused. `save_marketing_content` and the growth draft functions are still V2a.
 
 ### Vibe Studio V1 — the Studio capability boundary (2026-10-04)
 

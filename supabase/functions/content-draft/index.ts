@@ -54,9 +54,9 @@ serve(async (req: Request) => {
     // §9: the workspace comes from the caller's session and they must own or administer it — never a
     // body tenant id (that let anyone holding the platform-wide admin role read another workspace's
     // name and voice).
-    const caller = await resolveStudioCaller(authed, user.id, body?.tenant_id);
+    const caller = await resolveStudioCaller(authed, body?.tenant_id);
     if (!caller.ok) {
-      return new Response(JSON.stringify({ error: caller.error, forbidden: true }), {
+      return new Response(JSON.stringify({ error: caller.error, forbidden: caller.status === 403 }), {
         status: caller.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     const tenantId: string = caller.tenantId;
@@ -66,14 +66,11 @@ serve(async (req: Request) => {
     }
 
     // Pull the tenant's brand/voice so the draft sounds like them.
-    let brandName = ""; let brandVoice = "";
-    if (tenantId) {
-      const admin = createClient(supabaseUrl, supabaseServiceKey);
-      const { data: t } = await admin.from("tenants").select("name, brand").eq("id", tenantId).maybeSingle();
-      brandName = (t as any)?.name ?? "";
-      const brand = (t as any)?.brand ?? {};
-      brandVoice = brand?.voice ?? brand?.tone ?? "";
-    }
+    const admin = createClient(supabaseUrl, supabaseServiceKey);
+    const { data: t } = await admin.from("tenants").select("name, brand").eq("id", tenantId).maybeSingle();
+    const brandName: string = (t as any)?.name ?? "";
+    const brand = (t as any)?.brand ?? {};
+    const brandVoice: string = brand?.voice ?? brand?.tone ?? "";
 
     const SYSTEM = `You are Paige, the marketing content writer for a client-based service business${brandName ? ` called "${brandName}"` : ""}. Write high-converting, on-brand marketing content.
 ${brandVoice ? `Brand voice: ${brandVoice}.` : "Voice: direct, confident, human — never corporate filler."}

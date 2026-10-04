@@ -3,12 +3,12 @@
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: grounded on production before editing — 11 people hold the platform-wide admin role and 10 are ordinary workspace owners; generate-image and content-draft are deployed exactly as on main (no edge-live drift). Flow: Studio or chat asks for an image or copy → the backend resolves the session workspace and checks owner/admin → the image or draft is filed under that workspace only
 PAIGE_UI_DESIGN: PASS: no interface change; the only visible difference is the refusal message a caller sees in the refused cases
-MATERIAL_FLOW_CHANGE: YES: a request naming another workspace is refused instead of written there; a workspace owner without the platform-wide role can now generate images through paige-media's legacy providers
+MATERIAL_FLOW_CHANGE: YES: a request naming another workspace is refused instead of written there; a workspace owner without the platform-wide role can now generate images and draft copy in chat and through paige-media; a global admin who is only a member of the active workspace is refused; a chat whose persona workspace differs from the session workspace is refused
 FLOW_PROTOTYPE: PASS: no new surface; a backend tenant-isolation fix under the owner's D3 ruling (2026-10-03)
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Solo owner/admin generating an image or drafting copy; primary action unchanged
 VISUAL_DIRECTION: PASS: unchanged (layout C)
-AUTOMATED_EVIDENCE: PASS: src/__tests__/studio-caller-authority.test.ts (10 tests) and the updated media-seam-security-contract pin; 67 tests across every file that references these functions pass; reinstating the old generate-image, removing the foreign-workspace refusal, or loosening the permission check each fails the suite
-STATIC_EVIDENCE: PASS: deno check reports 0 errors on both functions, baseline 0
+AUTOMATED_EVIDENCE: PASS: src/__tests__/studio-caller-authority.test.ts (12 tests), the updated media-seam-security-contract pin, and scripts/client-memory-authz/check.mjs 502/502 including 33.5d-f against the real chat handler; reinstating the old generate-image, removing the foreign-workspace refusal, loosening the permission check, removing the two tools from the chat gate, or throwing before reading the refusal body each turns its checks red
+STATIC_EVIDENCE: PASS: deno check --no-lock errors identical to main on generate-image, content-draft and paige-ai-chat, 3, 1 and 12, compared line by line in a worktree; an earlier note here claiming 0 was wrong because the check had crashed on the lockfile
 RENDERED_EVIDENCE: PASS: no UI change; the current frames are docs/evidence/ui-delivery/assets/vibe-studio-v0-publish-truth/ (harness render · not live)
 BEHAVIORAL_EVIDENCE: PASS: resolver unit tests drive every branch — session workspace returned for owner/admin, matching body tenant accepted, foreign body tenant refused, member refused, every lookup error fails closed, only literal true grants
 AUTHENTICATED_RUNTIME: UNVERIFIED: no signed-in browser here; owed — a signed-in owner generates an image in the Studio and sees it in their own library, and a request naming another workspace is refused
@@ -17,7 +17,6 @@ ZOOM_REFLOW: PASS: no interface change
 REDUCED_MOTION: PASS: no interface change
 STATE_COVERAGE: PASS: owner/admin of the session workspace (allowed) / member (refused) / no workspace (refused) / foreign workspace named (refused) / lookup error (refused)
 TRUTHFUL_STATE_LABELS: PASS: a refused request says nothing was created; it is never filed elsewhere
-SOLO_UI: YES: Solo Marketing → Vibe Studio → a project
 SOLO_UI: YES: Solo Marketing → Vibe Studio → a project
 SOLO_1536X770_PAIGE_CLOSED: PASS: docs/evidence/ui-delivery/assets/vibe-studio-v0-publish-truth/solo-1536x770-paige-closed.png — structural harness (real Studio components and Solo CSS, stubbed reads; labelled "harness render · not live"): unchanged by this fix (no UI file changed; the Studio's image and copy tools call these backends through paige-media and chat); document overflowX 0, Publish and the timeline on screen. The Studio is a full-screen overlay, so PAIGE open and closed render the same frame.
 SOLO_1536X770_PAIGE_OPEN: PASS: docs/evidence/ui-delivery/assets/vibe-studio-v0-publish-truth/solo-1536x770-paige-open.png — structural harness (real Studio components and Solo CSS, stubbed reads; labelled "harness render · not live"): unchanged by this fix (no UI file changed; the Studio's image and copy tools call these backends through paige-media and chat); document overflowX 0, Publish and the timeline on screen. The Studio is a full-screen overlay, so PAIGE open and closed render the same frame.
@@ -51,4 +50,4 @@ RELEASE_RECOVERY: position=forward-fix, a revert restores the previous functions
 
 ## Review and limitations
 
-Independent review: pending at the time of writing; recorded on the PR.
+Independent review, by a reviewer who did not write it: SHIP. Three should-fix items, all fixed in this PR. The chat gate for the two tools now asks the same question as the backend, the backend refusal reaches the model instead of a non-2xx message, and stale comments and docs were corrected. Nits also fixed: the role check now runs against the exact workspace returned, a lookup error is a retryable 500, always-true branches were removed, stale adapter comments updated, and a duplicate record line dropped.

@@ -9,52 +9,65 @@ import { resolveStudioCaller } from "../../supabase/functions/_shared/studio-cal
 
 const MINE = "11111111-1111-4111-8111-111111111111";
 const THEIRS = "22222222-2222-4222-8222-222222222222";
-const USER = "33333333-3333-4333-8333-333333333333";
 
-function client(opts: { active?: unknown; activeErr?: unknown; roleOk?: unknown; roleErr?: unknown }) {
+type R = { data?: unknown; error?: unknown };
+function client(opts: { active?: R; admin?: R; manages?: R }) {
   const calls: Array<{ fn: string; args?: Record<string, unknown> }> = [];
+  const answer = (r: R | undefined) => ({ data: r?.data ?? null, error: r?.error ?? null });
   return {
     calls,
     rpc: async (fn: string, args?: Record<string, unknown>) => {
       calls.push({ fn, args });
-      if (fn === "current_user_tenant_id") return { data: opts.active ?? null, error: opts.activeErr ?? null };
-      if (fn === "studio_role_ok") return { data: opts.roleOk ?? null, error: opts.roleErr ?? null };
+      if (fn === "current_user_tenant_id") return answer(opts.active);
+      if (fn === "is_tenant_admin") return answer(opts.admin);
+      if (fn === "agency_can_manage_child") return answer(opts.manages);
       return { data: null, error: { message: "unexpected rpc" } };
     },
   };
 }
 
 describe("resolveStudioCaller", () => {
-  it("returns the session's workspace for its owner or admin", async () => {
-    const c = client({ active: MINE, roleOk: true });
-    expect(await resolveStudioCaller(c, USER, undefined)).toEqual({ ok: true, tenantId: MINE });
-    expect(c.calls.find((x) => x.fn === "studio_role_ok")?.args).toEqual({ _caller: USER });
+  it("returns the session's workspace for its owner or admin, checked against that exact workspace", async () => {
+    const c = client({ active: { data: MINE }, admin: { data: true } });
+    expect(await resolveStudioCaller(c, undefined)).toEqual({ ok: true, tenantId: MINE });
+    expect(c.calls.find((x) => x.fn === "is_tenant_admin")?.args).toEqual({ _tenant: MINE });
+  });
+
+  it("admits the agency that manages the workspace", async () => {
+    const c = client({ active: { data: MINE }, admin: { data: false }, manages: { data: true } });
+    expect(await resolveStudioCaller(c, MINE)).toEqual({ ok: true, tenantId: MINE });
+    expect(c.calls.find((x) => x.fn === "agency_can_manage_child")?.args).toEqual({ _child: MINE });
   });
 
   it("accepts a body tenant only when it is the session's own workspace", async () => {
-    expect(await resolveStudioCaller(client({ active: MINE, roleOk: true }), USER, MINE.toUpperCase())).toEqual({ ok: true, tenantId: MINE });
+    expect(await resolveStudioCaller(client({ active: { data: MINE }, admin: { data: true } }), MINE.toUpperCase())).toEqual({ ok: true, tenantId: MINE });
   });
 
-  it("refuses a body tenant that names another workspace — never swaps it", async () => {
-    const r = await resolveStudioCaller(client({ active: MINE, roleOk: true }), USER, THEIRS);
-    expect(r.ok).toBe(false);
-    expect(r).toMatchObject({ status: 403 });
+  it("refuses a body tenant that names another workspace — never swaps it, never asks about permissions", async () => {
+    const c = client({ active: { data: MINE }, admin: { data: true } });
+    expect(await resolveStudioCaller(c, THEIRS)).toMatchObject({ ok: false, status: 403 });
+    expect(c.calls.map((x) => x.fn)).toEqual(["current_user_tenant_id"]);
   });
 
-  it("refuses a member who is not the owner or an admin", async () => {
-    expect((await resolveStudioCaller(client({ active: MINE, roleOk: false }), USER, MINE)).ok).toBe(false);
+  it("refuses a member who is neither the owner, an admin, nor the managing agency", async () => {
+    expect(await resolveStudioCaller(client({ active: { data: MINE }, admin: { data: false }, manages: { data: false } }), MINE))
+      .toMatchObject({ ok: false, status: 403 });
   });
 
-  it("fails closed when the role check or the workspace lookup errors", async () => {
-    expect((await resolveStudioCaller(client({ active: MINE, roleErr: { message: "x" } }), USER, null)).ok).toBe(false);
-    expect((await resolveStudioCaller(client({ activeErr: { message: "x" }, roleOk: true }), USER, null)).ok).toBe(false);
-    expect((await resolveStudioCaller(client({ active: null, roleOk: true }), USER, null)).ok).toBe(false);
-    expect((await resolveStudioCaller(client({ active: "not-a-uuid", roleOk: true }), USER, null)).ok).toBe(false);
+  it("refuses when there is no usable workspace", async () => {
+    expect(await resolveStudioCaller(client({ active: { data: null }, admin: { data: true } }), null)).toMatchObject({ ok: false, status: 403 });
+    expect(await resolveStudioCaller(client({ active: { data: "not-a-uuid" }, admin: { data: true } }), null)).toMatchObject({ ok: false, status: 403 });
+  });
+
+  it("fails closed on every lookup error, as a retryable 500 rather than a permission verdict", async () => {
+    const boom = { error: { message: "x" } };
+    expect(await resolveStudioCaller(client({ active: boom, admin: { data: true } }), null)).toMatchObject({ ok: false, status: 500 });
+    expect(await resolveStudioCaller(client({ active: { data: MINE }, admin: boom }), null)).toMatchObject({ ok: false, status: 500 });
+    expect(await resolveStudioCaller(client({ active: { data: MINE }, admin: { data: false }, manages: boom }), null)).toMatchObject({ ok: false, status: 500 });
   });
 
   it("treats only a literal true as permission", async () => {
-    expect((await resolveStudioCaller(client({ active: MINE, roleOk: "true" }), USER, null)).ok).toBe(false);
-    expect((await resolveStudioCaller(client({ active: MINE, roleOk: 1 }), USER, null)).ok).toBe(false);
+    expect((await resolveStudioCaller(client({ active: { data: MINE }, admin: { data: "true" }, manages: { data: 1 } }), null)).ok).toBe(false);
   });
 });
 
@@ -63,7 +76,7 @@ const read = (path: string) => readFileSync(resolve(__dirname, "../..", path), "
 describe.each(["generate-image", "content-draft"])("%s takes its workspace from the session", (fn) => {
   const src = read(`supabase/functions/${fn}/index.ts`);
   it("runs the shared caller check and uses its tenant", () => {
-    expect(src).toContain("resolveStudioCaller(authed, user.id, body?.tenant_id)");
+    expect(src).toContain("resolveStudioCaller(authed, body?.tenant_id)");
     expect(src).toContain("const tenantId: string = caller.tenantId;");
   });
   it("never reads the tenant from the body or grants on a platform-wide role", () => {

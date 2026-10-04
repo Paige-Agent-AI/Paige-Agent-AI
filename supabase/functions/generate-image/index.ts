@@ -101,10 +101,10 @@ serve(async (req: Request) => {
     const body = await req.json();
     // §9: the workspace comes from the caller's session and they must own or administer it. A body
     // tenant id that names another workspace is refused (it used to be trusted for anyone holding the
-    // platform-wide admin role, which every workspace owner carries).
-    const caller = await resolveStudioCaller(authed, user.id, body?.tenant_id);
+    // platform-wide admin role, whatever workspace they were in).
+    const caller = await resolveStudioCaller(authed, body?.tenant_id);
     if (!caller.ok) {
-      return new Response(JSON.stringify({ error: caller.error, forbidden: true }), {
+      return new Response(JSON.stringify({ error: caller.error, forbidden: caller.status === 403 }), {
         status: caller.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     const prompt = String(body?.prompt ?? "").trim();
@@ -299,7 +299,7 @@ serve(async (req: Request) => {
     // so it's browsable/reusable without a second step. Best-effort — never fail the
     // generation because the library insert hiccuped.
     let contentId: string | null = null;
-    if (tenantId && publicUrl) {
+    if (publicUrl) {
       const title = prompt.slice(0, 60) + (prompt.length > 60 ? "…" : "");
       const saveArgs = {
         p_kind: "image", p_title: title, p_image_url: publicUrl, p_image_path: path,
@@ -334,7 +334,7 @@ serve(async (req: Request) => {
     // reaction-weight are the tracked Wave-2 follow-ups), not a reason to skip a real artifact here (§13).
     // DETACHED + best-effort: a capture failure never fails or slows the image the user asked for
     // (§13/§32); rememberArtifact never throws, skips honestly when tenant/url/intent is absent.
-    if (tenantId && publicUrl) {
+    if (publicUrl) {
       try {
         const actorRole = "tenant"; // the caller acted inside their own workspace (resolveStudioCaller)
         const memP = rememberArtifact({

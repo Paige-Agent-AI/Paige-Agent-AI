@@ -1,3 +1,4 @@
+import {SALES_INVOICE_READ_CAPABILITY,SALES_INVOICE_PUBLISH_CAPABILITY,SALES_INVOICE_RECORD_PAYMENT_CAPABILITY,SALES_INVOICE_REVERSE_PAYMENT_CAPABILITY,SALES_INVOICE_VOID_CAPABILITY,SALES_INVOICE_EMAIL_CAPABILITY} from './paige-spine/domains/sales_invoice.ts';
 import { parseSalesInvoiceCommand, SALES_INVOICE_ACTIONS, UUID } from './sales-invoice-command/contract.ts';
 import { CRM_APPROVAL_CANDIDATE_LIMIT, resolveCrmApprovedFingerprint } from './crm-command/approval-resolution.ts';
 
@@ -6,18 +7,26 @@ const ACTIONS = {
   sales_reverse_manual_payment: 'invoice.reverse_manual_payment', sales_void_invoice: 'invoice.void',
   billing_send_invoice: 'invoice.email_send',
 } as const;
-const base = { invoice_id: { type: 'string', format: 'uuid' }, expected_version: { type: 'integer', minimum: 1 } };
-function tool(name: string, description: string, properties: Record<string, unknown>, required: string[]) {
-  return { type: 'function', function: { name, description, parameters: { type: 'object', properties, required, additionalProperties: false } } };
+// Tool schemas are projections of the same cold-start-validated domain declarations. The action
+// discriminator stays server-authored by ACTIONS; actor, tenant, approval and link material cannot
+// be model arguments. This projection adds no executor and does not change confirmation policy.
+function chatInput(capability: {input: {properties: Readonly<Record<string, unknown>>;required:readonly string[]}}) {
+  const properties=Object.fromEntries(Object.entries(capability.input.properties).filter(([key])=>key!=='action').map(([key,value])=>{
+    // Preserve existing Chat's nullable-string JSON shape; Kit accepts the equivalent anyOf form.
+    if(key==='reference'||key==='notes')return [key,{type:['string','null'],maxLength:key==='reference'?200:2000}];
+    if(key==='received_at')return [key,{type:'string',description:'Actual received UTC date-time ending in Z'}];
+    return [key,value];
+  }));
+  return {type:'object',properties,required:capability.input.required.filter(key=>key!=='action'),additionalProperties:false};
 }
 // No invoice link tool: its human-only endpoint returns a bearer token.
 export const SALES_INVOICE_TOOLS = [
-  tool('read_sales_invoice', 'Read this workspace invoice and manual receipt history. Manual settlement is a record, not a processor charge.', { invoice_id: base.invoice_id }, ['invoice_id']),
-  tool('sales_publish_invoice', 'Issue an existing saved invoice with approval. This creates an obligation snapshot; it does not charge, send, or create a payment link. Read the invoice first for its current version.', base, ['invoice_id', 'expected_version']),
-  tool('sales_record_manual_payment', 'With approval, record money the owner says was received off platform. Never claim a processor verified or charged it.', { ...base, amount_cents: { type: 'integer', minimum: 1, maximum: 2147483647 }, currency: { type: 'string', enum: ['usd'] }, method: { type: 'string', enum: ['zelle', 'cash', 'wire', 'check', 'bank_transfer', 'other'] }, received_at: { type: 'string', description: 'Actual received UTC date-time ending in Z' }, reference: { type: ['string', 'null'], maxLength: 200 }, notes: { type: ['string', 'null'], maxLength: 2000 } }, ['invoice_id', 'expected_version', 'amount_cents', 'currency', 'method', 'received_at']),
-  tool('sales_reverse_manual_payment', 'With approval, append a reversal of an existing manual receipt. This does not refund or transfer money.', { ...base, payment_id: { type: 'string', format: 'uuid' }, reason: { type: 'string', minLength: 1, maxLength: 500 } }, ['invoice_id', 'expected_version', 'payment_id', 'reason']),
-  tool('sales_void_invoice', 'With approval, void the existing invoice. This does not refund or transfer money.', { ...base, reason: { type: 'string', minLength: 1, maxLength: 500 } }, ['invoice_id', 'expected_version', 'reason']),
-  tool('billing_send_invoice', 'With approval, ask the selected verified business email connection to send an issued invoice. Use an eligible connector from server connection truth; never invent one. Provider acceptance is not delivery or payment. Unknown outcomes require reconciliation, never a fresh-operation retry.', { ...base, connector_id: { type: 'string', format: 'uuid' } }, ['invoice_id', 'expected_version', 'connector_id']),
+ {type:'function',function:{name:'read_sales_invoice',description:'Read this workspace invoice and manual receipt history. Manual settlement is a record, not a processor charge.',parameters:SALES_INVOICE_READ_CAPABILITY.input}},
+ {type:'function',function:{name:'sales_publish_invoice',description:'Issue an existing saved invoice with approval. This creates an obligation snapshot; it does not charge, send, or create a payment link. Read the invoice first for its current version.',parameters:chatInput(SALES_INVOICE_PUBLISH_CAPABILITY)}},
+ {type:'function',function:{name:'sales_record_manual_payment',description:'With approval, record money the owner says was received off platform. Never claim a processor verified or charged it.',parameters:chatInput(SALES_INVOICE_RECORD_PAYMENT_CAPABILITY)}},
+ {type:'function',function:{name:'sales_reverse_manual_payment',description:'With approval, append a reversal of an existing manual receipt. This does not refund or transfer money.',parameters:chatInput(SALES_INVOICE_REVERSE_PAYMENT_CAPABILITY)}},
+ {type:'function',function:{name:'sales_void_invoice',description:'With approval, void the existing invoice. This does not refund or transfer money.',parameters:chatInput(SALES_INVOICE_VOID_CAPABILITY)}},
+ {type:'function',function:{name:'billing_send_invoice',description:'With approval, ask the selected verified business email connection to send an issued invoice. Use an eligible connector from server connection truth; never invent one. Provider acceptance is not delivery or payment. Unknown outcomes require reconciliation, never a fresh-operation retry.',parameters:chatInput(SALES_INVOICE_EMAIL_CAPABILITY)}},
 ] as const;
 export const SALES_INVOICE_TOOL_NAMES = new Set(SALES_INVOICE_TOOLS.map(t => t.function.name));
 

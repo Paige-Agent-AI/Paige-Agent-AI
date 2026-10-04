@@ -51,6 +51,7 @@ const KIT_FILES = [
 function collectDeclaredCapabilityNames(files, resolver) {
   const riskKeys = new Set();
   const toolNames = new Set();
+  const readTools = new Map();
   for (const file of files) {
     const sourceFile = resolver.sourceFile(file);
     if (!sourceFile) continue;
@@ -62,6 +63,28 @@ function collectDeclaredCapabilityNames(files, resolver) {
         // (see HEURISTIC LIMITS at the top) and will read as undeclared — which fails CLOSED.
         const argument = unwrapExpression(node.arguments[0]);
         if (argument && ts.isObjectLiteralExpression(argument)) {
+          // A read never clears a mutation risk entry. Admit only an explicit read tuple whose
+          // literal public.read_* executor equals its tool name, and remember the declaration
+          // symbol so the tool must use THAT input schema rather than a hand-written payload.
+          // Aliased/dynamic declarations remain outside this narrow static boundary, fail closed.
+          const sections = objectProperties(argument, sourceFile);
+          const governance = sections.get("governance")?.initializer;
+          const binding = sections.get("providerBinding")?.initializer;
+          const input = sections.get("input")?.initializer;
+          const owner = node.parent;
+          if (literalProperty(sections, "effect") === "read" &&
+              governance && ts.isObjectLiteralExpression(governance) &&
+              binding && ts.isObjectLiteralExpression(binding) &&
+              input && ts.isCallExpression(input) && calledMember(input, sourceFile) === "objectInputSchema" &&
+              ts.isVariableDeclaration(owner) && ts.isIdentifier(owner.name)) {
+            const gov = objectProperties(governance, sourceFile);
+            const operation = literalProperty(objectProperties(binding, sourceFile), "operation");
+            if (gov.get("actionRiskKey")?.initializer?.kind === ts.SyntaxKind.NullKeyword &&
+                literalProperty(gov, "risk") === "read_only" && literalProperty(gov, "approval") === "none" &&
+                operation && /^public\.read_[a-z0-9_]+$/.test(operation)) {
+              readTools.set(operation.slice(7), owner.name.text);
+            }
+          }
           for (const property of argument.properties) {
             if (!ts.isPropertyAssignment(property)) continue;
             const section = propertyName(property.name, sourceFile);
@@ -96,7 +119,7 @@ function collectDeclaredCapabilityNames(files, resolver) {
     };
     visit(sourceFile);
   }
-  return { riskKeys, toolNames };
+  return { riskKeys, toolNames, readTools };
 }
 
 /**
@@ -651,6 +674,7 @@ export function scanSource(source, file = "fixture.ts", options = {}) {
   const strictOnly = options.strictOnly === true;
   const declaredRiskKeys = options.declaredRiskKeys ?? new Set();
   const declaredToolNames = options.declaredToolNames ?? new Set();
+  const declaredReadTools = options.declaredReadTools ?? new Map();
   // Absent (a bare scanSource call, e.g. the self-test) means the policy-membership and
   // class-agreement predicates cannot run. They are SKIPPED rather than guessed — fewer checks
   // without the policy, never a false accusation with it.
@@ -748,12 +772,16 @@ export function scanSource(source, file = "fixture.ts", options = {}) {
         // the risk rule left the deadlock half-standing. A tool whose name carries a governed
         // declaration is declared, not hand-rolled; one without a declaration still fails.
         //
-        // HONEST LIMIT: only a MUTATION clears this, because only `governance.actionRiskKey` is
-        // admitted (see the collector). A brand-new READ tool schema therefore still lands on this
-        // ledger and needs a baseline entry. That is deliberate — INT-003 was a deadlock on new
-        // MUTATING tools, and widening the escape to reads reopened a destructive-write hole.
+        // Mutations clear only through governance.actionRiskKey; genuine reads must use the
+        // exact schema of a read/read_only/none/null declaration and matching public.read_* executor.
+        // A classified mutation cannot use that read path; dynamic and unrelated schemas still fail.
+        // The negative self-tests pin each element of that narrow read construction boundary.
         const toolName = literalProperty(props, "name") ?? "<dynamic>";
-        if (!declaredToolNames.has(toolName)) {
+        const readDeclaration = declaredReadTools.get(toolName);
+        const parameters = props.get("parameters")?.initializer;
+        const boundReadSchema = !riskPolicy?.has(toolName) && readDeclaration && parameters && ts.isPropertyAccessExpression(parameters) &&
+          ts.isIdentifier(parameters.expression) && parameters.expression.text === readDeclaration && parameters.name.text === "input";
+        if (!declaredToolNames.has(toolName) && !boundReadSchema) {
           findings.push(violation("direct-tool-definition", normalized, toolName));
         }
       }
@@ -867,14 +895,14 @@ function scanRepository() {
   const files = SCAN_ROOTS.flatMap((root) => walk(path.join(ROOT, root)))
     .filter((file) => !relative(file).startsWith(MCP_GATEWAY_EXEMPT));
   const resolver = createAstResolver(files);
-  const { riskKeys: declaredRiskKeys, toolNames: declaredToolNames } = collectDeclaredCapabilityNames(files, resolver);
+  const { riskKeys: declaredRiskKeys, toolNames: declaredToolNames, readTools: declaredReadTools } = collectDeclaredCapabilityNames(files, resolver);
   const riskPolicy = collectRiskPolicy(files, resolver);
   for (const file of files) {
     const rel = relative(file);
     const sourceFile = resolver.sourceFile(file);
     if (!sourceFile) throw new Error(`TypeScript did not load ${rel}.`);
     if (!rel.startsWith(KIT_DIR)) {
-      const shared = { sourceFile, resolver, declaredRiskKeys, declaredToolNames, riskPolicy };
+      const shared = { sourceFile, resolver, declaredRiskKeys, declaredToolNames, declaredReadTools, riskPolicy };
       strictFindings.push(...scanSource(sourceFile.text, rel, { ...shared, strictOnly: true }));
       debtFindings.push(...scanSource(sourceFile.text, rel, shared));
     }
@@ -1039,6 +1067,27 @@ function runSelfTest() {
     failed += 1;
     console.error("  FAIL direct-tool-definition still fired for a tool the collector read as declared");
   } else console.log("  ok   direct-tool-definition clears through the same collected declaration");
+  const readSource = `const READ_CAP = defineCapability({effect:"read",governance:{actionRiskKey:null,risk:"read_only",approval:"none"},providerBinding:{kind:"internal",operation:"public.read_probe",connectionResolver:null},input:objectInputSchema({properties:{id:{type:"string",format:"uuid"}},required:["id"]})});`;
+  const readTool = `const tool={name:"read_probe",description:"Read only",parameters:READ_CAP.input};`;
+  const readCases = [
+    ["read tuple + exact schema",readSource,readTool,false],
+    ["read with unrelated payload",readSource,readTool.replace('READ_CAP.input','{type:"object"}'),true],
+    ["read name mismatches executor",readSource,readTool.replace('read_probe','read_other'),true],
+    ["mutation cannot masquerade as read",readSource.replace('effect:"read"','effect:"mutation"'),readTool,true],
+    ["high cannot masquerade as read",readSource.replace('risk:"read_only"','risk:"high"'),readTool,true],
+    ["confirmed cannot masquerade as read",readSource.replace('approval:"none"','approval:"confirm"'),readTool,true],
+    ["nonnull action cannot masquerade as read",readSource.replace('actionRiskKey:null','actionRiskKey:"widget_purge"'),readTool,true],
+    ["destructive nonread name never clears",readSource.replace('public.read_probe','public.widget_purge'),readTool.replace('read_probe','widget_purge'),true],
+  ];
+  for(const [name,source,tool,expected] of readCases){
+    const ast=ts.createSourceFile(declarationFile,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
+    const reads=collectDeclaredCapabilityNames([declarationFile],{sourceFile:()=>ast});
+    const found=scanSource(tool,"src/read-probe.ts",{declaredReadTools:reads.readTools}).some(item=>item.rule==="direct-tool-definition");
+    if(found!==expected){failed++;console.error(`  FAIL ${name}`);}else console.log(`  ok   ${name}`);
+  }
+  const readAst=ts.createSourceFile(declarationFile,readSource,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
+  const readNames=collectDeclaredCapabilityNames([declarationFile],{sourceFile:()=>readAst});
+  if(readNames.riskKeys.size || scanSource(readTool,"src/read-probe.ts",{declaredReadTools:readNames.readTools,riskPolicy:new Map([["read_probe","high"]])}).every(item=>item.rule!=="direct-tool-definition")){failed++;console.error("  FAIL read declaration cleared a classified mutation");}else console.log("  ok   read declaration never clears risk debt or classified mutation");
   // A cast must not hide an incomplete declaration from the strict rule. Before the shared
   // unwrap, `as any` escaped this check entirely — and once a collector read through casts, that
   // escape also minted governance clearance for the tool name.
@@ -1069,7 +1118,7 @@ function runSelfTest() {
     console.error("  FAIL shrink-only baseline admitted a duplicate occurrence");
   } else console.log("  ok   shrink-only baseline preserves occurrence counts");
   if (failed) process.exit(1);
-  console.log(`\n✓ capability-kit lint self-test passed — ${cases.length + aliasCases.length + 9} cases.`);
+  console.log(`\n✓ capability-kit lint self-test passed — ${cases.length + aliasCases.length + readCases.length + 10} cases.`);
 }
 
 if (process.argv.includes("--self-test")) {

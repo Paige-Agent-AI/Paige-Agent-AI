@@ -2,7 +2,8 @@ import { PAIGE_APP_ORIGIN } from "../_shared/canonical-app-url.ts";
 import { invoicePublicOriginReady } from "../_shared/sales-invoice-delivery/binding.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { confirmFingerprint } from "../_shared/confirm-fingerprint.ts";
-import { decideGovernedExecution } from "../_shared/paige-spine/governedExecution.ts";
+import { decideDeclaredCapability } from "../_shared/capability-kit/decision.ts";
+import { SALES_INVOICE_KIT_BY_ACTION } from "../_shared/paige-spine/domains/sales_invoice.ts";
 import { databaseAnswered } from "../_shared/approval-outcome.ts";
 import { mintSignerToken, sha256Hex } from "../_shared/agreements/token.ts";
 import { FINGERPRINT, UUID, SALES_INVOICE_ACTIONS, parseSalesInvoiceCommand } from "../_shared/sales-invoice-command/contract.ts";
@@ -94,7 +95,7 @@ Deno.serve(async req => {
       .neq("issued_in_request", requestNonce).gt("expires_at", new Date().toISOString()).select("args").maybeSingle();
     if (!error) claimedArgs = object(claimed?.args);
   }
-  const decision = decideGovernedExecution({
+  const decision = decideDeclaredCapability(SALES_INVOICE_KIT_BY_ACTION[capability], {
     caller: { authenticated: true, userId: user.id, principal: "person", tenantId, tenantSource: "server", door: "other", access: { allowed: true, reason: "Active tenant owner or admin." } },
     capability: { id: capability, effect: "mutate", outcomeChannel: "record_capability_run", availability: "needs_approval" },
     approval: { autonomyLane: lane, ...(claimedArgs !== undefined ? { claimedArgs, claimedFor: capability } : {}) }, requestArgs,

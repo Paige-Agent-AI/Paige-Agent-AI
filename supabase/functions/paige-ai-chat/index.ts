@@ -14116,6 +14116,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         comms_add_email_domain: "tenant_email_domains",
         comms_set_primary_email_domain: "tenant_email_domains",
         billing_create_invoice: "paige_invoices", billing_send_invoice: "paige_invoices",
+        sales_publish_invoice: "paige_invoices", sales_record_manual_payment: "paige_invoices",
+        sales_reverse_manual_payment: "paige_invoices", sales_void_invoice: "paige_invoices",
+        sales_create_invoice_link: "paige_invoices",
         business_create: "businesses", business_update: "businesses",
         business_verify: "business_verification_runs",
         // #1213 / #1214 — the two governed credit-pull capabilities. Both are classified `high`

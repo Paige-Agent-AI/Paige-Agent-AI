@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 import { transpileModule, ModuleKind, ScriptTarget } from "typescript";
 import { describe, expect, it } from "vitest";
-import { decideGovernedExecution } from "../../../supabase/functions/_shared/paige-spine/governedExecution";
+import { decideDeclaredCapability } from "../../../supabase/functions/_shared/capability-kit/decision";
+import { SALES_INVOICE_KIT_BY_ACTION } from "../../../supabase/functions/_shared/paige-spine/domains/sales_invoice";
 import { FINGERPRINT, UUID, SALES_INVOICE_ACTIONS, parseSalesInvoiceCommand } from "../../../supabase/functions/_shared/sales-invoice-command/contract";
 import { PAIGE_APP_ORIGIN } from "../../../supabase/functions/_shared/canonical-app-url";
 import { invoicePublicOriginReady } from "../../../supabase/functions/_shared/sales-invoice-delivery/binding";
@@ -50,7 +51,7 @@ function setup(options: Setup = {}) {
   const scope = {
     Deno: { env: { get: (key: string) => key }, serve: (fn: typeof handler) => { handler = fn; } },
     createClient: (_url: string, key: string) => key === "SUPABASE_ANON_KEY" ? caller : admin,
-    confirmFingerprint: async () => "1234567890abcdef", decideGovernedExecution,
+    confirmFingerprint: async () => "1234567890abcdef", decideDeclaredCapability, SALES_INVOICE_KIT_BY_ACTION,
     databaseAnswered: (error: unknown) => Boolean(error && typeof error === "object" && "code" in error && error.code === "23514"),
     mintSignerToken: () => "one-time-secret", sha256Hex: async () => "a".repeat(64),
     executeSalesInvoiceDelivery: async (args: unknown) => { calls.push({ name: "delivery", args }); return options.deliveryResult ?? { ok: true, outcome: "provider_accepted", provider_receipt_available: true, delivery_confirmed: false }; },

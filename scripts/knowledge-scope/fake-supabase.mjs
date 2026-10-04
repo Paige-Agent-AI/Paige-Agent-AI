@@ -37,7 +37,15 @@ class QueryBuilder {
   // Every filter/shape method records itself and chains. Recording the SHAPE (not just
   // the table) is what lets a check prove an unordered LIMIT 1 pick is gone.
   select(...a) { this._filters.push(["select", a[0]]); return this; }
-  insert(row) { this._op = "insert"; this._recorder.inserts.push({ table: this._table, row }); return this; }
+  insert(row) {
+    this._op = "insert";
+    this._recorder.inserts.push({ table: this._table, row });
+    // A scenario may make a table's insert THROW (not resolve an error) — an unexpected failure the
+    // handler did not anticipate, to drive the paths that must survive one. Recorded first, so a check
+    // can still see the write was attempted.
+    if (this._scenario?.insertThrows?.includes(this._table)) throw new Error(`fixture: ${this._table} insert threw`);
+    return this;
+  }
   // Real postgrest-js has this, and traceLLMCall calls `.insert(record).abortSignal(sig)`. Without it
   // the expression THROWS before the `{ error }` destructure, lands in that function's swallowing
   // catch, and every assertion here passes without the write path ever executing. Mirrors

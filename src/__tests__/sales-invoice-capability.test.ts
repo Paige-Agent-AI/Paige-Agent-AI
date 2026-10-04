@@ -21,3 +21,9 @@ it('settings read has no write authority and settings mutation has no invented i
  expect(SALES_INVOICE_SETTINGS_CAPABILITY.governance).toMatchObject({actionRiskKey:'sales_update_invoice_settings',risk:'high',approval:'confirm'});
  expect(SALES_INVOICE_CAPABILITIES.find(c=>c.key==='sales_invoice.settings_update')?.action).toMatchObject({chatTool:'sales_update_invoice_settings',approvalAuthority:'chat-canonical',executor:'public.execute_sales_invoice_command'});
 });
+
+it('internal preference read and update use the existing no-provider readiness resolver',()=>{
+ for(const key of ['sales_invoice.preferences_read','sales_invoice.settings_update']){
+  expect(SALES_INVOICE_CAPABILITIES.find(c=>c.key===key)?.readiness).toBe('none');
+ }
+});

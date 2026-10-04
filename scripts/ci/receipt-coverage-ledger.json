@@ -1009,7 +1009,7 @@
       "tool": "sales_update_invoice_settings",
       "risk": "high",
       "receipt": "emits",
-      "evidence": "execute_sales_invoice_command settings branch in supabase/migrations/20270550000000_sales_invoice_preferences.sql atomically updates tenants.brand.invoice_preferences, calls canonical public.record_capability_run and persists existing invoice operation result. Isolated SQL proves receipt failure rollback and exact replay."
+      "evidence": "execute_sales_invoice_command settings branch in supabase/migrations/20270553000000_sales_invoice_preferences.sql atomically updates tenants.brand.invoice_preferences, calls canonical public.record_capability_run and persists existing invoice operation result. Isolated SQL proves receipt failure rollback and exact replay."
     },
     {
       "tool": "sales_publish_invoice",

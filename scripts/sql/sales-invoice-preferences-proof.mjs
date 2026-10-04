@@ -60,8 +60,8 @@ ${brandSource.slice(brandStart,brandEnd)}
 GRANT SELECT,UPDATE(brand) ON tenants TO authenticated;
 \\ir ../../supabase/migrations/20270547000002_sales_collection_autonomy_catalogue.sql
 \\ir ../../supabase/migrations/20270548000000_studio_publish_autonomy_catalogue.sql
-\\ir ../../supabase/migrations/20270550000000_sales_invoice_preferences.sql
-\\ir ../../supabase/migrations/20270550000000_sales_invoice_preferences.sql
+\\ir ../../supabase/migrations/20270553000000_sales_invoice_preferences.sql
+\\ir ../../supabase/migrations/20270553000000_sales_invoice_preferences.sql
 `;
 const assertions=read('sales-invoice-lifecycle-proof.sql')+'\n'+preferencesSetup+'\n'+read('sales-invoice-preferences-proof.sql');
 const concurrency=process.argv[6]==='--concurrency';

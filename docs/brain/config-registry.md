@@ -73,6 +73,17 @@ rollback proofs structurally could not catch (they run as owner, not service_rol
 Five seeded signals; **`migrations.drift` ships `is_readable = false` on purpose** — an edge function
 cannot read git, so a rule bound to it must report "never evaluated", never a pass.
 
+**Marketing email dispatcher** (E1, migration `20270547000000` + edge function `email-campaign-worker`,
+2026-10-04). A `pg_cron` job **`email-campaign-worker`** on `* * * * *` pokes the function via `net.http_post`
+with `public.cron_token_header()` (same poke shape as `comms-scheduled-drain`); `verify_jwt = false` in
+`config.toml`, failing closed in-function to a service-role bearer or `x-cron-token`. Sends go through
+`send-message` with the service-role bearer and `marketing: true`. Constants live in SQL: daily cap
+`email_campaign_daily_cap()` = 500 per business, cost estimate `email_campaign_unit_cost_usd()` = $0.0004 per
+managed send (an estimate, metered as `platform_metered_events` `L3_tenant_passthrough` / `marketing_email_sent`).
+Durable-work capability `marketing.email_campaign` / kind `email_campaign_dispatch`; Rail capability key
+`marketing_email_campaign`. Session flag `paige.email_campaign_approve` is set only by `email_campaign_approve`
+and checked by the `trg_email_campaign_approval_guard` trigger on `paige_pending_approvals`. No new secret.
+
 **Platform alerting evaluator** (A2, migration `20260923000000` + edge function `alerting-evaluate`,
 2026-08-20 — ✅ §32.b rollback-proved on prod pre-merge). Adds `paige_alert_rule.condition_met_since`
 (episode bookkeeping — what makes `for_minutes` meaningful and firing edge-triggered, at most once per

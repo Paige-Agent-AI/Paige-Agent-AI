@@ -365,6 +365,18 @@ Same tiers as the layout C workspace below (Solo owner/admin; operator acting in
 
 Same tiers as the layout C workspace below; no new seam. The Studio designer saves drafts in the same turn; held saves surface as approval cards; an unnamed project is renamed through the existing `rename_studio_session` (workspace owner/admin or the project's creator). LIVE on merge; authenticated drive owed.
 
+### Marketing email E1 — the sending foundation (branch `claude/gifted-bell-qfezxb`, 2026-10-04)
+
+Backend only: no surface changes in this slice (the Email tab is unchanged until E2). Recorded here
+because it changes what each tier can DO (§66). The callable seam is `email_campaign_*` RPCs on the
+caller's ACTIVE workspace (`current_user_tenant_id()`), each gated on `is_tenant_admin` of that workspace.
+
+| Capability | God / Super Admin | Agency | Standalone (Solo) | Sub-account | Client | Anonymous | Status |
+|---|---|---|---|---|---|---|---|
+| Draft, approve-request, approve, cancel, resume an email campaign; newsletter consent; audience preview | ✗ as operator (no workspace; reads all rows through `is_platform_owner()`) | DB allows its owner/admin in its own workspace; no screen (§61 default: the agency does not run its own email book here) | **✓** owner/admin; a member is refused (`not_permitted`) | **✓** owner/admin of the sub-account, same RPCs (no screen yet; E2 builds Solo first) | ✗ | ✗ | PARTIAL: backend LIVE on merge; screens arrive in E2 |
+| Approve a `campaign_send` approval | ✗ | only a person who owns/administers that business, through `email_campaign_approve` (DB guard refuses every other writer) | ✓ | ✓ | ✗ | ✗ | LIVE on merge |
+| Dispatch (claim, record, settle, envelopes) | service role only (`email-campaign-worker`) | — | — | — | — | — | LIVE on merge |
+
 ### Solo Campaigns becomes the Marketing department — S2 "Marketing in place" (branch `claude/gifted-bell-qfezxb`, 2026-10-03)
 
 Owner ruling 2026-10-03, decisions D1–D5 (`docs/product/solo-marketing-ia-proposal.md`). Only the

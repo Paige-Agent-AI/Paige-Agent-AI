@@ -9962,15 +9962,20 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               note = "This is a cited entity dossier. Present it as structured intel with EVERY fact carrying its [n] citation. When a person's contact is 'not public', say so plainly and point to the main channels — do NOT fill the gap with a guessed email or phone. Surface the 'What we could not verify' notes honestly.";
             } else if (findings.length === 0) {
               // R2c: the insufficient run — the language contract, not a soft suggestion.
-              note = `RESEARCH ${researchStatus === "no_credible_sources" ? "FOUND SOURCES, BUT VALIDATION REFUSED EVERY CLAIM" : "DID NOT PRODUCE VERIFIABLE FINDINGS"} — language contract for your reply:
+              note = `RESEARCH ${coverage.stop_reason === "error" ? "RUN ERRORED — THE ENGINE RETURNED NOTHING VERIFIABLE" : researchStatus === "no_credible_sources" ? "FOUND SOURCES, BUT VALIDATION REFUSED EVERY CLAIM" : "DID NOT PRODUCE VERIFIABLE FINDINGS"} — language contract for your reply:
 - You may NOT present anything as what "sources" or "the research" found: NO citation in this result supports any claim. "Here's what I know from reliable sources" and similar sourced-sounding framing are FORBIDDEN.
 - Keep your evidence classes visibly separate: VERIFIED RESEARCH FINDING (none this run) | GENERAL BACKGROUND (your own knowledge — label it plainly as NOT freshly sourced, never as research) | INFERENCE / RECOMMENDATION (yours — label it and name the facts it rests on).
 - HIGH-STAKES subjects (legal, tax, financial, regulatory, medical): do NOT make a material recommendation that rests on uncited facts. Instead: offer a refined follow-up research pass (name exactly what it would target), or use another capability, or state plainly that the evidence is insufficient for a recommendation.
 - A weak run is a finding, not a void: say what was tried${coverage.note ? ` (${coverage.note})` : ""} and what a better-targeted pass would look for. Never polish uncertainty into confidence.`;
             } else if (researchStatus === "partial") {
               note = `PARTIAL RESEARCH — the run stopped early (${coverage.stop_reason ?? "bounds"}). Language contract: present the cited findings WITH their [n] markers; anything beyond them is GENERAL BACKGROUND (labeled as not freshly sourced, never attributed to research) or your own INFERENCE/RECOMMENDATION (labeled, premises named). For high-stakes questions, say the coverage is partial and offer a focused follow-up pass.`;
-            } else {
+            } else if (citationCoverage === "sufficient") {
               note = "Every factual claim below is tied to a numbered source. Weave these into a conversational answer and keep the [n] citation markers so the client can verify. Anything you add beyond these findings is GENERAL BACKGROUND (label it as not freshly sourced) or your own RECOMMENDATION (label it and name the premises) — never present prior knowledge as research evidence. Add a short 'verify before acting' note on any rates, requirements, or contact details.";
+            } else {
+              // Defense-in-depth: findings exist but some carry no citation (not reachable
+              // from today's engine — validateAndBind drops uncited findings — but a future
+              // engine change must land HERE, in the partial contract, never the verified note.
+              note = `PARTIAL RESEARCH — some findings carry no citation (${coverage.stop_reason ?? "coverage"}). Language contract: present ONLY the cited findings with their [n] markers as research; uncited material is GENERAL BACKGROUND (labeled, never attributed to research) or your own INFERENCE (labeled). Offer a focused follow-up pass for the gaps.`;
             }
             toolResults.push({
               tool_call_id: tc.id,

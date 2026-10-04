@@ -64,7 +64,7 @@ const classify = (fixture: {
 };
 
 /** The owner's EXACT case: sources found, validation refused every claim. */
-const OWNER_RUN = { configured: true, stop_reason: "no_results", note: "Sources were found but none met the reliability bar.", findings: [], sources: Array.from({ length: 31 }, (_, i) => ({ index: i + 1 })) };
+const OWNER_RUN = { configured: true, stop_reason: "no_results", note: "The model produced no claim that survived source verification. Reporting nothing rather than an unverified fact.", findings: [], sources: Array.from({ length: 31 }, (_, i) => ({ index: i + 1 })) };
 
 describe("R2c — the status derivation (from the engine's own output, no new schema)", () => {
   it("THE OWNER'S CASE: sources found + findings [] → no_credible_sources / insufficient", () => {
@@ -104,6 +104,20 @@ describe("R2c — the status derivation (from the engine's own output, no new sc
   it("excluded sources do not count toward the sources-found branch", () => {
     const r = classify({ stop_reason: "no_results", findings: [], sources: [{ index: 1, excluded: true }, { index: 2, excluded: true }] });
     expect(r.researchStatus).toBe("insufficient"); // not no_credible_sources
+  });
+
+  it("an engine ERROR stop with sources still present → no_credible_sources, with its own honest headline", () => {
+    const r = classify({ configured: true, stop_reason: "error", note: "Synthesis failed; no findings returned rather than risk fabrication.", findings: [], sources: [{ index: 1 }] });
+    expect(r.researchStatus).toBe("no_credible_sources");
+    expect(r.note).toContain("RUN ERRORED");
+    expect(r.note).not.toContain("VALIDATION REFUSED");
+  });
+
+  it("defense-in-depth: findings with an uncited one land in the PARTIAL arm, never the verified note", () => {
+    const r = classify({ stop_reason: "answered", findings: [{ text: "t", citations: [1] }, { text: "u", citations: [] }], sources: [{ index: 1 }] });
+    expect(r.citationCoverage).toBe("partial");
+    expect(r.note).toContain("PARTIAL RESEARCH");
+    expect(r.note).not.toContain("Every factual claim below is tied to a numbered source");
   });
 
   it("a gate-survived dossier IS the cited deliverable (never 'insufficient')", () => {
@@ -159,32 +173,60 @@ describe("R2c — the language contract rides the tool result", () => {
     expect(engineCall).not.toContain("citation_coverage");
   });
 
-  it("the system-prompt rule bounds language turn-wide (beside the D-lane grounding rules)", () => {
+  it("the system-prompt rule bounds language turn-wide (operator block; seat-agnostic load-bearing is the tool result)", () => {
     expect(core).toContain("RESEARCH STATUS BOUNDS YOUR LANGUAGE");
     expect(core).toContain('research_status is anything but "verified"');
     expect(core).toContain("never dressed as research");
+    // SCOPE (recorded per review): the rule lives in the isOperator block beside the
+    // D-lane grounding rules — the TOOL-RESULT contract (seat-unconditional, above) is
+    // the load-bearing channel for every seat; hoisting the system rule to a global
+ // prompt block is the recorded follow-up if non-admin research answers drift.
   });
 });
 
-describe("R2c §10 — the mutation proof (removing the guard must fail)", () => {
-  it("mutation 1: the old soft note (no contract) → the gate assertions break", () => {
-    const mutated = block.replace(
-      /note = `RESEARCH [\s\S]*?Never polish uncertainty into confidence\.;?/,
-      'note = "No verifiable sources found. Report that honestly — do NOT invent results.";',
-    );
-    expect(mutated).not.toContain("FORBIDDEN"); // the guard is gone…
-    // …and therefore the owner-case assertions can no longer hold on the mutated block:
-    const r = classify(OWNER_RUN); // the REAL block still passes them
-    expect(r.note).toContain("FORBIDDEN");
-    expect(r.note).toContain("HIGH-STAKES");
+describe("R2c §10 — the mutation proofs are DYNAMIC (the mutated block itself must break the gate)", () => {
+  /** classify() against an arbitrary block text (same harness, source injected). */
+  const classifyText = (text: string, fixture: Parameters<typeof classify>[0]) => {
+    const findings = fixture.findings ?? [];
+    const sources = fixture.sources ?? [];
+    const dossier = fixture.dossier ?? null;
+    const coverage = { configured: fixture.configured ?? true, stop_reason: fixture.stop_reason ?? null, note: fixture.note ?? "" };
+    const fn = new Function("findings", "sources", "dossier", "coverage",
+      js(`return (function () {
+${text}
+return { researchStatus, citationCoverage, note };
+})();`),
+    ) as never as () => { researchStatus: string; citationCoverage: string; note: string };
+    return fn.call(undefined, ...([findings, sources, dossier, coverage] as never[]));
+  };
+
+  it("mutation 1: the old soft note — the owner's case loses the contract ON THE MUTATED BLOCK", () => {
+    // deterministic arm surgery (a regex over the template's nested ternaries cuts
+    // mid-expression): swap the ENTIRE findings-empty note arm for the old weak note.
+    const armStart = block.indexOf("} else if (findings.length === 0) {");
+    const armEnd = block.indexOf("} else if (researchStatus === \"partial\") {", armStart);
+    expect(armStart).toBeGreaterThan(-1);
+    expect(armEnd).toBeGreaterThan(armStart);
+    const mutated = block.slice(0, armStart) +
+      '} else if (findings.length === 0) { note = "No verifiable sources found. Report that honestly — do NOT invent results."; ' +
+      block.slice(armEnd);
+    const r = classifyText(mutated, OWNER_RUN);
+    expect(r.note).not.toContain("FORBIDDEN");      // the bridge ban is gone…
+    expect(r.note).not.toContain("HIGH-STAKES");    // …and so is the high-stakes rule…
+    expect(r.note).not.toContain("GENERAL BACKGROUND"); // …and the class separation
+    // while the REAL block holds all three (the load-bearing inverse):
+    const real = classify(OWNER_RUN);
+    expect(real.note).toContain("FORBIDDEN");
+    expect(real.note).toContain("HIGH-STAKES");
   });
 
-  it("mutation 2: forcing every run 'verified' → the owner's case is misclassified", () => {
+  it("mutation 2: forcing every run 'verified' — the owner's case is misclassified ON THE MUTATED BLOCK", () => {
     const mutated = block.replace(
       'findings.length === 0 ? (citedSources.length > 0 ? "no_credible_sources" : "insufficient")',
       'findings.length === 0 ? "verified"',
     );
-    expect(mutated).toContain('findings.length === 0 ? "verified"'); // mutation applied
+    const r = classifyText(mutated, OWNER_RUN);
+    expect(r.researchStatus).toBe("verified");            // the vulnerability: sourced-sounding language unlocked
     expect(classify(OWNER_RUN).researchStatus).toBe("no_credible_sources"); // the real derivation refuses it
   });
 });

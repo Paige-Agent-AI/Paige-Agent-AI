@@ -1528,6 +1528,32 @@ serve(async (req) => {
     return json({ error: "Invalid JSON" }, 400);
   }
 
+  // ── INT-305: delegated-specialist envelope normalization ────────────────────
+  // The orchestrator's invokeLocal contract posts { input, context } to every local
+  // sub-agent's edge function. When THIS engine is the invoked function, the canonical
+  // top-level contract (question/user_id) is absent and the run would die at the two
+  // guards below. Normalize the envelope at the door instead: input.question |
+  // input.query → question, context.user_id → user_id, caller:"subagent" (unless the
+  // envelope names one). Envelope fields only ever FILL a missing canonical field —
+  // an explicit top-level value always wins, so chat/eval/manual callers are
+  // byte-identical to before. Lineage is untouched: the tenant is still resolved
+  // SERVER-SIDE from user_id (§9 below); no caller-supplied tenant is ever trusted.
+  {
+    const raw = body as unknown as Record<string, unknown>;
+    const missingCanonical = typeof raw.question !== "string" || typeof raw.user_id !== "string";
+    const env = typeof raw.input === "object" && raw.input !== null ? raw.input as Record<string, unknown> : null;
+    if (missingCanonical && env) {
+      const ctx = typeof raw.context === "object" && raw.context !== null ? raw.context as Record<string, unknown> : null;
+      if (typeof raw.question !== "string") {
+        const q = typeof env.question === "string" ? env.question : typeof env.query === "string" ? env.query : undefined;
+        if (q !== undefined) raw.question = q;
+      }
+      if (typeof raw.user_id !== "string" && ctx && typeof ctx.user_id === "string") raw.user_id = ctx.user_id;
+      if (typeof raw.caller !== "string") raw.caller = "subagent";
+      body = raw as unknown as DeepResearchRequest;
+    }
+  }
+
   const question = typeof body.question === "string" ? body.question.trim() : "";
   if (!question || question.length < 3) return json({ error: "question is required (min 3 chars)" }, 400);
   if (!body.user_id || typeof body.user_id !== "string") return json({ error: "user_id is required" }, 400);

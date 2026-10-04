@@ -15,7 +15,7 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: No signed-in production invoice issuance, cus
 KEYBOARD_FOCUS: PASS: Focus remains inside Radix dialogs and moves to Approve after preparation; cancellation returns to the editable receipt form. Native hardware interaction remains unverified.
 ZOOM_REFLOW: UNVERIFIED: Six viewport widths were rendered, including390 and430; separate browser zoom was not exercised and is not inferred from viewport tests.
 REDUCED_MOTION: NOT_APPLICABLE: No new animation or motion introduced; existing shell motion unchanged.
-STATE_COVERAGE: PASS: Loading, empty, issued, partial/full manual settlement, reversal, role/workspace refusal, stale version, unknown recovery, consumed approval and unavailable sender covered by isolated tests.
+STATE_COVERAGE: PASS: Actual command, SQL and component tests cover lifecycle conservation, roles, workspace changes, interrupted-response recovery and sender refusal; see the delivery packet.
 TRUTHFUL_STATE_LABELS: PASS: Issued is separate from sent, accepted, delivered and paid; manually recorded receipts never prove processor connectivity or settlement.
 SOLO_UI: YES: Shared Sales Payments and invoice editor/lifecycle flows for every tenant; no account-specific path.
 UNVERIFIED: Authenticated production business writes, actual provider/email acceptance, connected processor collection, native hardware and browser zoom remain unverified. Public screenshot is reduced fixture HTML and proves route/toolbar geometry, not the full canonical rendered invoice.
@@ -26,9 +26,9 @@ MUST_PRESERVE: Existing draft snapshots/recovery, canonical offers/Clients, read
 ACCEPTANCE_CRITERIA: A real authorized owner can publish the saved invoice version, access the controlled document, record a partial receipt and see its balance/history; provider email acceptance requires separate authorized testing.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: Canonical Trust approval, Spine/Chat binding, Rail, tenant scope, messages/provider sender and invoice immutability tested locally; Marketing/Vibe and Settings Billing ownership preserved.
-INTERNAL_BUILD_IDENTITY: pending candidate; deployment=not deployed; environment=local verification; migrations=NOT_APPLICABLE pending43000000/01/02; edge=NOT_APPLICABLE pending deploy; evidence=docs/delivery/solo-sales-invoice-publication.md
-RELEASE_CHANNEL: standard: owner explicitly authorized shared Solo implementation and public release in this conversation; deployment pending exact-head review and CI.
-RELEASE_CLASSIFICATION: feature: existing invoice draft lifecycle gains canonical publication and manually recorded partial receipts.
+INTERNAL_BUILD_IDENTITY: de6c2bedb3eac8897e8dd68e0c1cb12b503d4dfc; deployment=local-fixture-run; environment=local; migrations=PROOF_OWED(hosted application and readback); edge=PROOF_OWED(hosted deployment readback); evidence=docs/delivery/solo-sales-invoice-publication.md
+RELEASE_CHANNEL: development: local candidate evidence recorded before authorized production release; exact deployment readback is a later closeout.
+RELEASE_CLASSIFICATION: patch: complete the existing approved customer invoice workflow and repair missing receipt recording without changing Sales IA.
 CUSTOMER_RELEASE_IDENTITY: none: no customer version/name assigned by owner.
 RELEASE_NOTE_REQUIRED: yes: owner-facing change includes invoice issuance and receipt recording; factual delivery note accompanies release.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: source and isolated proof complete; authenticated execution/provider acceptance PROOF OWED. No collected-revenue claim.

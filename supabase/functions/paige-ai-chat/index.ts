@@ -3,6 +3,7 @@ import { executeVerifiedMissionMutation, resolveBusinessMissionThreadContext, re
 import { CAMPAIGN_BRIEF_TOOLS } from '../_shared/paige-spine/domains/campaigns.ts';
 import { CRM_ACTION_LABEL, CRM_COMMAND_TOOLS, CRM_COMMAND_TOOL_NAMES, CRM_TOOL_TO_ACTION, canonicalizeCrmCommand, crmApprovalSubject, crmCommandFallbackIdempotencyKeys } from '../_shared/crm-command/catalog.ts';
 import { resolveCrmApprovedFingerprint, CRM_APPROVAL_CANDIDATE_LIMIT } from '../_shared/crm-command/approval-resolution.ts';
+import { SALES_INVOICE_TOOLS, SALES_INVOICE_TOOL_NAMES, dispatchSalesInvoiceChat, type SalesInvoiceApprovalQuery } from '../_shared/sales-invoice-chat.ts';
 import { executeVerifiedCampaignBriefMutation, resolveCampaignBriefListContext } from '../_shared/campaign-brief-tenant-brain.ts';
 import { CALENDAR_PRESET_TOOLS } from '../_shared/paige-spine/domains/calendar_preset.ts';
 import { executeVerifiedCalendarPresetMutation, resolveCalendarPresetListContext, type CalendarPresetMutationTool } from '../_shared/calendar-preset-tenant-brain.ts';
@@ -7305,6 +7306,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       if (legacyCrmMutationTools.has((toolDefs[i] as any)?.function?.name)) toolDefs.splice(i, 1);
     }
     toolDefs.push(...CRM_COMMAND_TOOLS as any);
+    toolDefs.push(...SALES_INVOICE_TOOLS as any);
 
     // ── AUTONOMY GATE WIRING ─────────────────────────────────────────────────
     // Every tool that writes, creates, or changes state is governed by the
@@ -8610,6 +8612,27 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // enforced, mirroring paige-mcp's enforceTierAndScope client seal.
         if (callerTier === "client" && !clientSeatToolAllowed(tc.function.name)) {
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, forbidden_seat: true, error: "This is a client portal seat; that action is not available here." }) });
+          continue;
+        }
+
+        // Sales uses its canonical action door, which alone claims approval and executes stored
+        // arguments. This branch stays after scope/seat guards and before the legacy Chat gate.
+        if (SALES_INVOICE_TOOL_NAMES.has(tc.function.name)) {
+          let invoiceArgs: Record<string, unknown> = {};
+          try { invoiceArgs = JSON.parse(tc.function.arguments || '{}'); } catch { invoiceArgs = {}; }
+          const userTurns = messages.filter((message: any) => message?.role === 'user');
+          const result = await dispatchSalesInvoiceChat({
+            tenantId: personaCtx?.tenant_id ?? null, userId: user.id, toolName: tc.function.name,
+            args: invoiceArgs, approved: approvedConfirmations,
+            sameToolCalls: toolCalls.filter((call: any) => call?.function?.name === tc.function.name).length,
+            turn: { thread_id: payloadThreadId ?? null, user_turn_ordinal: userTurns.length, user_turn: userTurns[userTurns.length - 1]?.content ?? null },
+          }, { caller: supabase, admin: { from: (name: string) => ({
+            // Dynamic approval table: isolate the SDK generic expansion at the selected-query boundary.
+            select: (columns: string) => createClient(supabaseUrl, supabaseServiceKey).from(name).select(columns) as unknown as SalesInvoiceApprovalQuery,
+          }) } });
+          for (const token of result.tokens ?? []) approvalTokenTool.set(token, tc.function.name);
+          if (result.refusal) approvalRefusals.set(tc.function.name, result.refusal);
+          toolResults.push({ tool_call_id: tc.id, role: 'tool', content: JSON.stringify(result.content) });
           continue;
         }
 
@@ -14093,6 +14116,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         comms_add_email_domain: "tenant_email_domains",
         comms_set_primary_email_domain: "tenant_email_domains",
         billing_create_invoice: "paige_invoices", billing_send_invoice: "paige_invoices",
+        sales_publish_invoice: "paige_invoices", sales_record_manual_payment: "paige_invoices",
+        sales_reverse_manual_payment: "paige_invoices", sales_void_invoice: "paige_invoices",
+        sales_create_invoice_link: "paige_invoices",
         business_create: "businesses", business_update: "businesses",
         business_verify: "business_verification_runs",
         // #1213 / #1214 — the two governed credit-pull capabilities. Both are classified `high`

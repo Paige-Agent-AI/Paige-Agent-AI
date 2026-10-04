@@ -38,6 +38,8 @@ const CONTACT_SCOPED_EDGE_HANDLERS = [
   "supabase/functions/smartcredit-pull-snapshot/index.ts",
 ];
 const CRM_CATALOG = "supabase/functions/_shared/crm-command/catalog.ts";
+const SALES_INVOICE_CONTRACT = "supabase/functions/_shared/sales-invoice-command/contract.ts";
+const SALES_INVOICE_HANDLER = "supabase/functions/sales-invoice-command/index.ts";
 
 /** Every classified action, as `[tool, class, reason]`, read from the policy's own table. */
 export function parsePolicy(src) {
@@ -83,6 +85,29 @@ export function parseCapabilityConstants(src) {
   return [...src.matchAll(/const (?:[A-Z0-9_]*CAPABILITY) = "([a-z0-9_]+)"/g)].map((m) => m[1]);
 }
 
+/** Actual governed invoice command keys, including the human-only document-link action. */
+export function parseSalesInvoiceActions(src) {
+  const at = src.indexOf("export const SALES_INVOICE_ACTIONS = {");
+  const end = src.indexOf("} as const;", at);
+  if (at < 0 || end < 0) return [];
+  return [...src.slice(at, end).matchAll(/"invoice\.[a-z_]+":\s*"([a-z0-9_]+)"/g)].map(m => m[1]);
+}
+
+/** Closed declared adapter, not any function whose name resembles a gate. */
+export function invoiceDeclaredGateBound(handler, decision) {
+  return handler.includes('SALES_INVOICE_ACTIONS[command.action]')
+    && /import\s*\{\s*decideDeclaredCapability\s*\}\s*from\s*["']\.\.\/_shared\/capability-kit\/decision\.ts["']/.test(handler)
+    && /import\s*\{\s*SALES_INVOICE_KIT_BY_ACTION\s*\}\s*from\s*["']\.\.\/_shared\/paige-spine\/domains\/sales_invoice\.ts["']/.test(handler)
+    && handler.includes('decideDeclaredCapability(SALES_INVOICE_KIT_BY_ACTION[capability], {')
+    && /import\s*\{\s*decideGovernedExecution\s*\}\s*from\s*["']\.\.\/paige-spine\/governedExecution\.ts["']/.test(decision)
+    && decision.includes("if (!isDefinedCapability(declaration)) throw new TypeError('CAPABILITY_DECLARATION_REQUIRED')")
+    && decision.includes('key !== input.capability.id')
+    && decision.includes('classifyAction(key) !== declaration.governance.risk')
+    && decision.includes("declaration.governance.approval !== 'confirm'")
+    && decision.includes("input.capability.availability === 'unknown'")
+    && decision.includes('input.capability.outcomeChannel !== declaration.receipt.recorder')
+    && decision.includes('return decideGovernedExecution(input);');
+}
 export function parseExemptions(src) {
   const at = src.indexOf("const NON_MUTATING_EXEMPT: ReadonlyMap<string, string> = new Map([");
   if (at < 0) return null;
@@ -98,10 +123,14 @@ const MUTATION_VERB = /(^|_)(create|update|delete|remove|save|send|publish|insta
 /** The rule: destroys, changes permissions, or goes public ⇒ never `ordinary`. */
 const IRREVERSIBLE_OR_OUTWARD = /(^|_)(delete|remove|revoke|publish|uninstall|install)(_|$)|(^|_)grant(_|$)/;
 
-export function findings({ policy, exemptions, chat, verbSourceMatches, mcpCanonicals = [], governedEdgeActions = [] }) {
+export function findings({ policy, exemptions, chat, verbSourceMatches, mcpCanonicals = [], governedEdgeActions = [], requiredClassifications = [] }) {
   const out = [];
   const classified = new Map(policy.map((p) => [p.tool, p.risk]));
   const exempt = new Set(exemptions.map((e) => e.tool));
+  // Explicit mutating contracts are stronger evidence than a verb-shaped tool name.
+  for (const tool of new Set(requiredClassifications)) {
+    if (!classified.has(tool)) out.push(`${tool} is a canonical governed mutation but has no classification in ${POLICY}.`);
+  }
 
   // A regex that matches nothing reports a clean bill of health, which is indistinguishable from
   // a clean bill of health. Prove the subject was found before grading it.
@@ -164,7 +193,23 @@ function selfTest() {
     verbSourceMatches: true,
   };
   let bad = 0;
+  const invoiceHandler = fs.readFileSync(SALES_INVOICE_HANDLER, 'utf8');
+  const invoiceDecision = fs.readFileSync('supabase/functions/_shared/capability-kit/decision.ts', 'utf8');
+  bad += ok('invoice declared gate follows the exact canonical adapter', invoiceDeclaredGateBound(invoiceHandler, invoiceDecision));
+  for (const [label, handler, decision] of [
+    ['fake adapter import',invoiceHandler.replace('capability-kit/decision.ts','fake/decision.ts'),invoiceDecision],
+    ['wrong declaration selection',invoiceHandler.replace('SALES_INVOICE_KIT_BY_ACTION[capability]','SALES_INVOICE_KIT_BY_ACTION.other'),invoiceDecision],
+    ['forged declaration',invoiceHandler,invoiceDecision.replace('!isDefinedCapability(declaration)','false')],
+    ['wrong risk',invoiceHandler,invoiceDecision.replace('classifyAction(key) !== declaration.governance.risk','false')],
+    ['unknown availability',invoiceHandler,invoiceDecision.replace("input.capability.availability === 'unknown'",'false')],
+    ['alternate authority',invoiceHandler,invoiceDecision.replace('return decideGovernedExecution(input);','return fakeApproval(input);')],
+  ]) bad += ok(`invoice gate refuses ${label}`, !invoiceDeclaredGateBound(handler, decision));
   bad += ok("imported catalog mutations are included", parseChat('', ['widget_delete_thing']).declared.includes('widget_delete_thing'));
+  bad += ok("invoice risk discovery reads its bounded canonical map", parseSalesInvoiceActions('export const SALES_INVOICE_ACTIONS = {\n "invoice.publish": "sales_publish_invoice",\n} as const;').join() === 'sales_publish_invoice');
+  bad += ok("invoice risk discovery refuses an absent or incomplete map", parseSalesInvoiceActions('"invoice.publish": "sales_publish_invoice"').length === 0 && parseSalesInvoiceActions('export const SALES_INVOICE_ACTIONS = {').length === 0);
+  for (const tool of ['sales_record_manual_payment', 'sales_reverse_manual_payment', 'sales_void_invoice']) {
+    bad += ok(`an unclassified explicit ${tool} fails regardless of its name`, findings({ ...base, requiredClassifications: [tool], governedEdgeActions: [tool] }).some(f => f.includes(`${tool} is a canonical governed mutation`)));
+  }
   bad += ok("an unclassified imported write fails", findings({...base, chat:{...base.chat, declared:[...base.chat.declared,...parseChat('', ['widget_delete_thing']).declared]}}).some(f=>f.includes('widget_delete_thing')));
 
   bad += ok("a fully classified handler is clean", findings(base).length === 0);
@@ -316,6 +361,15 @@ const governedEdgeActions = [
   ...parseGovernedEdgeActions(fs.readFileSync(SOCIAL_HANDLER, "utf8")),
   ...CONTACT_SCOPED_EDGE_HANDLERS.flatMap((path) => parseCapabilityConstants(fs.readFileSync(path, "utf8"))),
 ];
+const requiredClassifications = [];
+if (fs.existsSync(SALES_INVOICE_HANDLER)) {
+  const source = fs.readFileSync(SALES_INVOICE_HANDLER, 'utf8');
+  if (!invoiceDeclaredGateBound(source, fs.readFileSync('supabase/functions/_shared/capability-kit/decision.ts', 'utf8'))) throw new Error('Invoice handler no longer binds its canonical action map and validated declaration to the governed gate');
+  const actions = parseSalesInvoiceActions(fs.readFileSync(SALES_INVOICE_CONTRACT, 'utf8'));
+  if (!actions.length) throw new Error('Invoice action map could not be parsed');
+  governedEdgeActions.push(...actions);
+  requiredClassifications.push(...actions);
+}
 if (!mcpCanonicals.length) {
   console.error(`✗ action-risk-lint: read no canonical keys out of ${MCP_POLICY}. That file is the MCP door's second declaring surface, so an empty read would silently condemn every MCP-only classification as a ghost. Fix this guard rather than letting it pass.`);
   process.exit(1);
@@ -327,6 +381,7 @@ const problems = findings({
   verbSourceMatches,
   mcpCanonicals,
   governedEdgeActions,
+  requiredClassifications,
 });
 
 if (problems.length) {

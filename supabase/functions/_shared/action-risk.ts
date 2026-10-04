@@ -425,6 +425,11 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   ["workflow_register", "high", "defines a new automation and where firing it points"],
   // send_invoice
   ["billing_send_invoice", "high", "emails a real person a bill and a link to pay it"],
+  ["sales_publish_invoice", "high", "issues the business's reviewed customer invoice as an immutable obligation"],
+  ["sales_record_manual_payment", "high", "records a human-reported customer payment and changes the invoice balance"],
+  ["sales_reverse_manual_payment", "high", "reverses a recorded receipt while preserving the original financial history"],
+  ["sales_void_invoice", "high", "withdraws an issued customer invoice and revokes its customer access"],
+  ["sales_create_invoice_link", "high", "grants expiring access to a customer invoice document"],
   // run_skill
   ["skill_run", "high", "runs a recipe that can email, scrape and write on its own"],
   // verify_business

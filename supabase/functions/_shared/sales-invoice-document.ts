@@ -1,0 +1,18 @@
+/** Frozen obligation plus separately labelled current balance. No external resources or executable content. */
+type ObjectValue = Record<string, unknown>;
+const object = (v: unknown): v is ObjectValue => !!v && typeof v === 'object' && !Array.isArray(v);
+const escape = (v: unknown) => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+const money = (v: unknown) => Number.isSafeInteger(v) && Number(v)>=0 ? `$${(Number(v)/100).toFixed(2)} USD` : 'Unavailable';
+export function renderSalesInvoiceDocument(value: unknown): string | null {
+  if (!object(value) || !object(value.document)) return null;
+  const document=value.document;
+  if (document.renderer_version!=='paige-invoice-html-v1' || !object(document.snapshot) || !Array.isArray(document.snapshot.items)
+    || typeof value.document_input_digest!=='string' || !/^[0-9a-f]{64}$/.test(value.document_input_digest)) return null;
+  const snapshot=document.snapshot;
+  const rows=(snapshot.items as unknown[]).map(item=>{
+    if(!object(item)) return '';
+    return `<tr><td><strong>${escape(item.item)}</strong><div class="multiline">${escape(item.description)}</div></td><td>${escape(item.quantity)}</td><td>${money(item.unit_minor)}</td><td>${money(Number(item.unit_minor)*Number(item.quantity))}</td></tr>`;
+  }).join('');
+  const address=object(snapshot.billing_address)?Object.values(snapshot.billing_address).filter(v=>v!==null&&v!=='').map(escape).join('<br>'):'';
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>Invoice ${escape(document.invoice_number)}</title><style>body{font:16px/1.5 system-ui;color:#172033;background:#fff;margin:0}main{max-width:850px;margin:auto;padding:32px}h1{margin:0;font-size:30px}header{border-bottom:2px solid #6247aa;padding-bottom:20px}table{width:100%;border-collapse:collapse;margin:24px 0}td,th{text-align:left;vertical-align:top;padding:12px 8px;border-bottom:1px solid #ddd}.multiline{white-space:pre-wrap;overflow-wrap:anywhere}.balance{background:#f3effa;padding:20px;border-radius:12px}footer{font-size:12px;overflow-wrap:anywhere;margin-top:28px}@media(max-width:600px){main{padding:18px}td,th{padding:8px 4px;font-size:14px}}@media print{main{padding:0}.balance{border:1px solid #ddd}}</style></head><body><main><header><h1>Invoice ${escape(document.invoice_number)}</h1><p>${escape(document.issuer_name)} → ${escape(document.client_name)}</p><p>${address}</p></header><table><thead><tr><th>Item / description</th><th>Qty</th><th>Unit price</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table><p><strong>Original invoice total: ${money(document.total_cents)}</strong></p><p>Original requested amount: ${money(snapshot.due_now_minor)}<br>Original remaining schedule: ${money(snapshot.remainder_minor)}<br>Original due date: ${escape(snapshot.due_date)}</p>${snapshot.kind==='recurring'?'<p>This invoice records an obligation. Automatic recurring collection is not activated.</p>':''}<section class="balance"><strong>Current outstanding: ${money(value.remaining_cents)}</strong><p>Payments manually recorded by the business: ${money(value.manual_recorded_cents)}. These are human records, not provider verification.</p></section><p>Requested payment methods: ${Array.isArray(snapshot.payment_method_intents)?snapshot.payment_method_intents.map(escape).join(', '):''}</p><div class="multiline">${escape(snapshot.memo)}</div><footer>Renderer: ${escape(document.renderer_version)}<br>Document-input digest (frozen document facts): ${escape(value.document_input_digest)}</footer></main></body></html>`;
+}

@@ -791,6 +791,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run test
 
+      - name: Invoice delivery authority and transient-link tests
+        if: ${{ !cancelled() }}
+        run: node node_modules/vitest/vitest.mjs run --config vitest.sales-invoice-delivery.config.ts
+
       # Provider-free relay proof: fake ears/runtime/mouth + UsageSink, plus
       # atomic one-use ticket and pre-upgrade auth boundary. No vendor call.
       - name: Smoke — Live Conversation relay contract and ticket (deterministic, provider-neutral)

@@ -19,7 +19,7 @@ import { defineCapability, objectInputSchema, ownerGrantablePermission } from ".
  * home; these tools are Chat's adapter onto it.
  */
 export const GHL_LIST_ACTIONS = {
- key: "integrations.ghl_list_actions", domain: "integrations", owner: "solo-integrations",
+ key: "integrations.ghl_list_actions", domain: "integrations", owner: "solo-integrations", readiness: "mcp_connection",
  humanSurface: "/solo/:account/settings/integrations",
  action: { classification: "read", executor: "edge.paige-ai-chat", chatTool: "ghl_list_actions", riskPolicyKey: "read_only", approvalAuthority: "none",
  idempotency: "Read-only catalogue read through the canonical gateway's tools action; recorded honestly, never a provider tool call." },
@@ -27,7 +27,7 @@ export const GHL_LIST_ACTIONS = {
  chatBinding: "LIVE", mindBinding: "UNAVAILABLE", sharedPrimitiveChange: "SCR-GHL-MANAGEMENT", maturity: "PARTIAL",
 } as const satisfies SpineCapability;
 export const GHL_RUN_ACTION = {
- key: "integrations.ghl_run_action", domain: "integrations", owner: "solo-integrations",
+ key: "integrations.ghl_run_action", domain: "integrations", owner: "solo-integrations", readiness: "mcp_connection",
  humanSurface: "/solo/:account/settings/integrations",
  action: { classification: "external_effect", executor: "edge.paige-ai-chat", chatTool: "ghl_run_action", riskPolicyKey: "high", approvalAuthority: "chat-canonical",
  idempotency: "Caller-scoped one-time confirmation for writes; provider actions are never automatically retried after uncertain results. The gateway's consent verifier additionally requires the per-tool durable approval." },

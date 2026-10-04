@@ -1,3 +1,5 @@
+import type { ReadinessResolverId } from "../paige-capability-status/readiness.ts";
+
 export const SPINE_ACTION_CLASSIFICATIONS = ["read", "mutate", "external_effect"] as const;
 export type SpineActionClassification = (typeof SPINE_ACTION_CLASSIFICATIONS)[number];
 export type SpineApprovalAuthority = "chat-canonical" | "none";
@@ -9,6 +11,13 @@ export type SpineCapability = {
   readonly domain: string;
   readonly owner: string;
   readonly humanSurface: string;
+  /**
+   * What this capability depends on being there before PAIGE can use it (C0a). Read by the per-turn
+   * capability projection; a capability that declares a provider resolver reads "needs setup" when
+   * that provider is not ready. Required for every NEW capability with a chat tool (CI:
+   * capability-discovery-lint); existing ones without it are a shrink-only baseline.
+   */
+  readonly readiness?: ReadinessResolverId;
   readonly evidence?: {
     readonly signalKinds: readonly string[];
     readonly adapter: string;

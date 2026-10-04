@@ -78,7 +78,9 @@ describe("contact_event_status chat tool — honest reporting surface (paige-ai-
     const gw = readFileSync("supabase/functions/_shared/paige-capability-gateway/gateway.ts", "utf8");
     expect(gw).toContain('name: "contact_event_status"');
     expect(gw).toContain("contact_id"); // still accepts the optional contact id
-    expect(chat).toContain('tc.function.name === "contact_event_status" ||');
+    // C0a: the owner-ops branch routes through ONE shared set (the gate and the projection read it).
+    expect(chat).toContain("OWNER_OPS_BRANCH_TOOLS.has(tc.function.name) ||");
+    expect(readFileSync("supabase/functions/_shared/workspace-authority.ts", "utf8")).toMatch(/OWNER_OPS_BRANCH_TOOLS[^;]*"contact_event_status"/s);
     expect(chat).toContain('case "contact_event_status": return { label: "Checking whether your new-contact alerts fired"');
   });
 

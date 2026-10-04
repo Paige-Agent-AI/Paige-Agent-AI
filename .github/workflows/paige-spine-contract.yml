@@ -177,6 +177,10 @@ jobs:
       # src/__tests__/deep-research-m0-contract.test.ts.
       - run: supabase test db supabase/tests/research_tenant_lineage.sql
         if: ${{ !cancelled() }}
+      # INT-309: the persistence grants — the permission-denied root cause reproduced and
+      # repaired (INSERT-only minimality, browser roles refused, M0 policy set unchanged).
+      - run: supabase test db supabase/tests/research_persist_service_grants.sql
+        if: ${{ !cancelled() }}
       # Governed CRM/Pipeline: tenant, authority, idempotency, destructive preview, readback, and Rail proof.
       - run: supabase test db supabase/tests/governed_crm_commands.sql
         # Its fixtures write addresses as contact methods (20270519010000's lane); like the proofs

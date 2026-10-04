@@ -13,7 +13,7 @@
 -- NOTE the role discipline: inserts run as service_role (the engine's writer); every readback
 -- runs as postgres, because service_role deliberately holds NO SELECT on these tables.
 BEGIN;
-SELECT plan(24);
+SELECT plan(30);
 
 -- ── Fixtures: one synthetic tenant + owner (the engine's lineage resolution shape) ──────
 INSERT INTO auth.users(id,aud,role,email) VALUES
@@ -29,6 +29,10 @@ INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner,joined_
 SAVEPOINT before_grant;
 REVOKE INSERT ON public.research_runs FROM service_role;
 REVOKE INSERT ON public.research_sources FROM service_role;
+-- The probe must run AS service_role: a REVOKE from service_role does not touch the
+-- session role's own privileges, so probing as postgres would insert fine and prove
+-- nothing (review P1 — this is the live failure mode, reproduced at the writer role).
+SET ROLE service_role;
 SELECT throws_ok(
   $$INSERT INTO public.research_runs (id, tenant_id, user_id, question)
       VALUES ('d7400000-2222-4333-8444-555555555555', 'd7400000-0000-4000-8000-000000000111',
@@ -36,6 +40,7 @@ SELECT throws_ok(
   '42501',
   'A/mutation: service_role INSERT research_runs denied without the grant (the live 20:18/20:20 failure reproduced)'
 );
+RESET ROLE;
 ROLLBACK TO before_grant;
 
 -- ── B: the engine's run insert shape is allowed ─────────────────────────────────────────
@@ -101,6 +106,16 @@ SELECT has_table_privilege_is('service_role', 'public.research_runs', 'DELETE', 
   'minimality: service_role does NOT hold DELETE on research_runs');
 SELECT has_table_privilege_is('service_role', 'public.research_sources', 'INSERT', true,
   'minimality: service_role holds exactly INSERT on research_sources');
+SELECT has_table_privilege_is('service_role', 'public.research_sources', 'SELECT', false,
+  'minimality: service_role does NOT hold SELECT on research_sources');
+SELECT has_table_privilege_is('service_role', 'public.research_sources', 'UPDATE', false,
+  'minimality: service_role does NOT hold UPDATE on research_sources');
+SELECT has_table_privilege_is('service_role', 'public.research_sources', 'DELETE', false,
+  'minimality: service_role does NOT hold DELETE on research_sources');
+SELECT has_table_privilege_is('authenticated', 'public.research_runs', 'SELECT', false,
+  'D: authenticated holds NO base-table read on research_runs (reads are the governed RPCs')');
+SELECT has_table_privilege_is('authenticated', 'public.research_sources', 'SELECT', false,
+  'E: authenticated holds NO base-table read on research_sources');
 
 -- ── G: the governed read RPCs remain exactly as M0 left them ────────────────────────────
 SELECT ok(has_function_privilege('authenticated','public.list_workspace_research(integer,integer)','EXECUTE'),
@@ -109,6 +124,8 @@ SELECT ok(has_function_privilege('authenticated','public.get_workspace_research_
   'G: authenticated still executes get_workspace_research_run');
 SELECT ok(NOT has_function_privilege('anon','public.get_workspace_research_run(uuid)','EXECUTE'),
   'G: anon still cannot execute the governed get');
+SELECT ok(NOT has_function_privilege('anon','public.list_workspace_research(integer,integer)','EXECUTE'),
+  'G: anon still cannot execute the governed list');
 
 -- ── H: the M0 policy set is unchanged (the same eight, no new, no dropped) ───────────────
 SELECT is((SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename IN ('research_runs','research_sources')), 8,
@@ -118,4 +135,5 @@ SELECT is((SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablen
 SELECT is((SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename='research_sources'), 4,
   'H: research_sources keeps its four policies');
 
+SELECT * FROM finish();
 ROLLBACK;

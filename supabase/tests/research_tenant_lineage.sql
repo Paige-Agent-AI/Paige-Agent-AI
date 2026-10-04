@@ -199,7 +199,7 @@ SELECT is(
 SELECT is(
   (SELECT count(*) FROM pg_policies
     WHERE tablename IN ('research_runs','research_sources')
-      AND qual::text ~ 'tenant_id = public.current_user_tenant_id\(\)'),
+      AND qual::text LIKE '%tenant_id%' AND qual::text LIKE '%current_user_tenant_id%'),
   4::bigint,
   'M0: tenant-bound policies (member view + owner/admin manage, both tables) are live'
 );

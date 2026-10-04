@@ -37,8 +37,8 @@ SELECT throws_ok(
   $$INSERT INTO public.research_runs (id, tenant_id, user_id, question)
       VALUES ('d7400000-2222-4333-8444-555555555555', 'd7400000-0000-4000-8000-000000000111',
               'd7400000-0000-4000-8000-000000000001', 'mutation probe')$$,
-  '42501',
-  'A/mutation: service_role INSERT research_runs denied without the grant (the live 20:18/20:20 failure reproduced)'
+  'permission denied for table research_runs',
+  'A/mutation: service_role INSERT research_runs denied without the grant (the live 20:18/20:20 failure reproduced — SQLSTATE 42501)'
 );
 RESET ROLE;
 ROLLBACK TO before_grant;
@@ -59,17 +59,17 @@ VALUES ('d7400000-3333-4333-8444-555555555555', 'd7400000-0000-4000-8000-0000000
 -- ── I/J at the constraint layer, as the writer role: the canonical constraints still bite ──
 SELECT throws_ok(
   $$INSERT INTO public.research_runs (id, user_id, question) VALUES ('d7400000-4444-4333-8444-555555555555', 'd7400000-0000-4000-8000-000000000001', 'no tenant')$$,
-  '23502',
-  'I: tenant_id remains NOT NULL — no lineage-less run can ever persist');
+  'null value in column "tenant_id" of relation "research_runs" violates not-null constraint',
+  'I: tenant_id remains NOT NULL — no lineage-less run can ever persist (SQLSTATE 23502)');
 SELECT throws_ok(
   $$INSERT INTO public.research_sources (run_id, tenant_id, user_id, source_index, url, reliability_score)
       VALUES ('d7400000-5555-4333-8444-555555555555', 'd7400000-0000-4000-8000-000000000111', 'd7400000-0000-4000-8000-000000000001', 1, 'https://tests.invalid/x', 0.5)$$,
-  '23503',
-  'J: a source cannot attach to a phantom run (run_id FK) — sources exist only under their parent run');
+  'insert or update on table "research_sources" violates foreign key constraint "research_sources_run_id_fkey"',
+  'J: a source cannot attach to a phantom run (run_id FK) — sources exist only under their parent run (SQLSTATE 23503)');
 SELECT throws_ok(
   $$INSERT INTO public.research_runs (id, tenant_id, user_id, question) VALUES ('d7400000-6666-4333-8444-555555555555', 'd7500000-0000-4000-8000-000000000111', 'd7400000-0000-4000-8000-000000000001', 'foreign tenant')$$,
-  '23503',
-  'J: tenant_id FK still pins every run to a real tenant (the forged-tenant insert refused)');
+  'insert or update on table "research_runs" violates foreign key constraint "research_runs_tenant_id_fkey"',
+  'J: tenant_id FK still pins every run to a real tenant (the forged-tenant insert refused) (SQLSTATE 23503)');
 RESET ROLE;
 
 -- readbacks as postgres (service_role holds no SELECT by design):

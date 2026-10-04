@@ -82,39 +82,39 @@ SELECT is((SELECT tenant_id FROM public.research_sources WHERE run_id = 'd740000
   'C: the persisted source carries the SAME tenant as its parent run (engine supplies one lineage for both)');
 
 -- ── D/E/F: the browser roles keep ZERO base-table write/read privilege ──────────────────
-SELECT has_table_privilege_is('authenticated', 'public.research_runs', 'INSERT', false,
+SELECT is(has_table_privilege('authenticated', 'public.research_runs', 'INSERT'), false,
   'D: authenticated INSERT research_runs still refused');
-SELECT has_table_privilege_is('authenticated', 'public.research_sources', 'INSERT', false,
+SELECT is(has_table_privilege('authenticated', 'public.research_sources', 'INSERT'), false,
   'E: authenticated INSERT research_sources still refused');
-SELECT has_table_privilege_is('anon', 'public.research_runs', 'SELECT', false,
+SELECT is(has_table_privilege('anon', 'public.research_runs', 'SELECT'), false,
   'F: anon READ research_runs still refused');
-SELECT has_table_privilege_is('anon', 'public.research_runs', 'INSERT', false,
+SELECT is(has_table_privilege('anon', 'public.research_runs', 'INSERT'), false,
   'F: anon WRITE research_runs still refused');
-SELECT has_table_privilege_is('anon', 'public.research_sources', 'SELECT', false,
+SELECT is(has_table_privilege('anon', 'public.research_sources', 'SELECT'), false,
   'F: anon READ research_sources still refused');
-SELECT has_table_privilege_is('anon', 'public.research_sources', 'INSERT', false,
+SELECT is(has_table_privilege('anon', 'public.research_sources', 'INSERT'), false,
   'F: anon WRITE research_sources still refused');
 
 -- ── Minimality: service_role gains INSERT ONLY — no SELECT/UPDATE/DELETE convenience ────
-SELECT has_table_privilege_is('service_role', 'public.research_runs', 'INSERT', true,
+SELECT is(has_table_privilege('service_role', 'public.research_runs', 'INSERT'), true,
   'minimality: service_role holds exactly INSERT on research_runs');
-SELECT has_table_privilege_is('service_role', 'public.research_runs', 'SELECT', false,
+SELECT is(has_table_privilege('service_role', 'public.research_runs', 'SELECT'), false,
   'minimality: service_role does NOT hold SELECT on research_runs (reads go through the governed RPCs)');
-SELECT has_table_privilege_is('service_role', 'public.research_runs', 'UPDATE', false,
+SELECT is(has_table_privilege('service_role', 'public.research_runs', 'UPDATE'), false,
   'minimality: service_role does NOT hold UPDATE on research_runs');
-SELECT has_table_privilege_is('service_role', 'public.research_runs', 'DELETE', false,
+SELECT is(has_table_privilege('service_role', 'public.research_runs', 'DELETE'), false,
   'minimality: service_role does NOT hold DELETE on research_runs');
-SELECT has_table_privilege_is('service_role', 'public.research_sources', 'INSERT', true,
+SELECT is(has_table_privilege('service_role', 'public.research_sources', 'INSERT'), true,
   'minimality: service_role holds exactly INSERT on research_sources');
-SELECT has_table_privilege_is('service_role', 'public.research_sources', 'SELECT', false,
+SELECT is(has_table_privilege('service_role', 'public.research_sources', 'SELECT'), false,
   'minimality: service_role does NOT hold SELECT on research_sources');
-SELECT has_table_privilege_is('service_role', 'public.research_sources', 'UPDATE', false,
+SELECT is(has_table_privilege('service_role', 'public.research_sources', 'UPDATE'), false,
   'minimality: service_role does NOT hold UPDATE on research_sources');
-SELECT has_table_privilege_is('service_role', 'public.research_sources', 'DELETE', false,
+SELECT is(has_table_privilege('service_role', 'public.research_sources', 'DELETE'), false,
   'minimality: service_role does NOT hold DELETE on research_sources');
-SELECT has_table_privilege_is('authenticated', 'public.research_runs', 'SELECT', false,
+SELECT is(has_table_privilege('authenticated', 'public.research_runs', 'SELECT'), false,
   'D: authenticated holds NO base-table read on research_runs (reads are the governed RPCs')');
-SELECT has_table_privilege_is('authenticated', 'public.research_sources', 'SELECT', false,
+SELECT is(has_table_privilege('authenticated', 'public.research_sources', 'SELECT'), false,
   'E: authenticated holds NO base-table read on research_sources');
 
 -- ── G: the governed read RPCs remain exactly as M0 left them ────────────────────────────

@@ -10754,6 +10754,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               if (ctx && typeof ctx === "object") return asToolRecord(ctx);
               return {};
             };
+            /** A Studio backend's workspace refusal (`forbidden: true`), as the sentence to hand the
+             *  model, whichever error shape the backend uses; null when the body is not a refusal. */
+            const workspaceRefusal = (body: Record<string, unknown>): string | null => {
+              if (body.forbidden !== true) return null;
+              const e = body.error as unknown;
+              if (typeof e === "string" && e) return e;
+              const m = (e as { message?: unknown } | null)?.message;
+              return typeof m === "string" && m ? m : null;
+            };
 
             // Everything here goes through the SAME seams the Connections surface uses —
             // `comms-search-numbers`, `comms-purchase-number`, `comms-a2p-draft`, and the
@@ -11815,9 +11824,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 body: { channel: args.channel, brief: args.brief, tone: args.tone ?? null, variations: args.variations ?? 1, tenant_id: personaCtx?.tenant_id ?? null },
               });
               // A workspace refusal arrives as a non-2xx whose message only the body carries.
-              const _cdBody = await readInvokeBody(error, cd);
-              if (_cdBody.forbidden === true && typeof _cdBody.error === "string") {
-                result = { success: false, error: _cdBody.error, not_applied: true };
+              const _cdRefusal = workspaceRefusal(await readInvokeBody(error, cd));
+              if (_cdRefusal) {
+                result = { success: false, error: _cdRefusal, not_applied: true };
               } else {
               if (error) throw error;
               if ((cd as any)?.error) throw new Error((cd as any).error);
@@ -11917,9 +11926,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 },
               });
               // A workspace refusal arrives as a non-2xx whose message only the body carries.
-              const _imgBody = await readInvokeBody(error, img);
-              if (_imgBody.forbidden === true && typeof _imgBody.error === "string") {
-                result = { success: false, error: _imgBody.error, not_applied: true };
+              const _imgRefusal = workspaceRefusal(await readInvokeBody(error, img));
+              if (_imgRefusal) {
+                result = { success: false, error: _imgRefusal, not_applied: true };
               } else if (error) {
                 throw error;
               } else if ((img as any)?.needs_config) {
@@ -12245,6 +12254,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               const { data: gd, error } = await supabaseClient.functions.invoke("growth-page-draft", {
                 body: { brief: args.brief, kind: "page", tone: args.tone ?? null, tenant_id: personaCtx?.tenant_id ?? null },
               });
+              // A workspace refusal arrives as a non-2xx whose reason only the body carries.
+              const _gpRefusal = workspaceRefusal(await readInvokeBody(error, gd));
+              if (_gpRefusal) {
+                result = { success: false, error: _gpRefusal, not_applied: true };
+              } else {
               if (error) throw error;
               if ((gd as any)?.error) throw new Error((gd as any).error);
               result = {
@@ -12260,6 +12274,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   blocks: (gd as any).blocks,
                   theme: (gd as any)?.theme_json ?? null,
                 };
+              }
               }
             } else if (tc.function.name === "growth_page_save") {
               // p_tenant_id is IGNORED for JWT callers by the DEFINER RPC (no IDOR, §9) —
@@ -12396,6 +12411,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               const { data: gd, error } = await supabaseClient.functions.invoke("growth-funnel-draft", {
                 body: { brief: args.brief, tenant_id: personaCtx?.tenant_id ?? null },
               });
+              // A workspace refusal arrives as a non-2xx whose reason only the body carries.
+              const _gfRefusal = workspaceRefusal(await readInvokeBody(error, gd));
+              if (_gfRefusal) {
+                result = { success: false, error: _gfRefusal, not_applied: true };
+              } else {
               if (error) throw error;
               if ((gd as any)?.error) {
                 const e = (gd as any).error;
@@ -12405,6 +12425,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               const _fpBlocks = (gd as any)?.page?.blocks ?? (gd as any)?.page?.blocks_json;
               if (studioSessionId && Array.isArray(_fpBlocks) && _fpBlocks.length) {
                 studioPreview = { kind: "funnel", title: String((gd as any)?.name ?? "Funnel draft").slice(0, 120), blocks: _fpBlocks, theme: (gd as any)?.page?.theme_json ?? null };
+              }
               }
             } else if (tc.function.name === "growth_funnel_build") {
               // Persist the funnel into REAL draft rows — entry page + intake form + wired

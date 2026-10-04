@@ -4632,6 +4632,17 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
       wire(refused).includes(REFUSAL) && !wire(refused).includes("non-2xx"), wire(refused).slice(0, 400));
   }
 
+  // 33.5g The growth draft functions refuse with their own body shape ({ error: { code, message },
+  // forbidden: true }); that reason reaches the model verbatim too. Kills: throwing before the body.
+  for (const [tool, fn] of [["growth_page_generate", "growth-page-draft"], ["growth_funnel_generate", "growth-funnel-draft"]]) {
+    const REASON = "Only this workspace's owner or an admin can use the Studio.";
+    const refusedDraft = await mainDrive({ name: tool, args: { brief: "a page for our spring offer" } }, { studio_role_ok: { data: true, error: null } }, [], {
+      [fn]: { data: null, error: { message: "Edge Function returned a non-2xx status code", context: { json: async () => ({ error: { code: "FORBIDDEN", message: REASON }, forbidden: true }) } } },
+    });
+    assert(`33.5g ${tool}: the draft backend's workspace refusal reaches the model verbatim`,
+      wire(refusedDraft).includes(REASON) && !wire(refusedDraft).includes("non-2xx"), wire(refusedDraft).slice(0, 400));
+  }
+
   // 33.6 A Studio thread whose second read fails still runs as a Studio turn, fail-closed — never as
   // main PAIGE with every tool. Kills: dropping the preStudioSessionId fallback.
   const flaky = await drive({

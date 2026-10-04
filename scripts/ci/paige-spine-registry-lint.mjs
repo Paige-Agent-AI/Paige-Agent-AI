@@ -13,6 +13,17 @@ const actionRiskPath = join(root, "supabase/functions/_shared/action-risk.ts");
 // Owner-approved SQL-plus-TypeScript extension. Public SQL symbols keep the original
 // migration check. Only this exact mounted n8n adapter can prove the two TS symbols.
 const chatSourcePath = join(root, "supabase/functions/paige-ai-chat/index.ts");
+// C0a ("ADMIN IS A TENANT ROLE"): the owner/admin role gate routes through ONE shared set in
+// _shared/workspace-authority.ts instead of an inline `tc.function.name === "<tool>"` list. A tool
+// still reaches the model only through that gate when (a) it is a member of OWNER_OPS_BRANCH_TOOLS and
+// (b) the Chat handler actually routes the owner-ops branch through that set.
+const workspaceAuthorityText = readFileSync(join(root, "supabase/functions/_shared/workspace-authority.ts"), "utf8");
+const ownerOpsSetBody = (() => {
+  const at = workspaceAuthorityText.indexOf("OWNER_OPS_BRANCH_TOOLS");
+  return at < 0 ? "" : workspaceAuthorityText.slice(at, workspaceAuthorityText.indexOf("]);", at));
+})();
+const sharedRoleGateCovers = (chatText, tool) =>
+  ownerOpsSetBody.includes(`"${tool}"`) && chatText.includes("OWNER_OPS_BRANCH_TOOLS.has(tc.function.name)");
 const managementSourcePath = join(root, "supabase/functions/_shared/n8n-management.ts");
 const printer = ts.createPrinter({ removeComments: true });
 function nodes(rootNode, predicate) {
@@ -96,7 +107,7 @@ function validateZapierTypeScript(chatText) {
   for(const tool of ['zapier_list_actions','zapier_run_action'])requireProof(manifestNames.some(n=>n.initializer.text===tool),`manifest declares ${tool} with governed description`);
   // Both names must reach the model ONLY through the admin role gate and the dispatch guard:
   // each appears in >=2 exact `tc.function.name === "<tool>"` comparisons.
-  for(const tool of ['zapier_list_actions','zapier_run_action'])requireProof(nodes(chat,n=>ts.isBinaryExpression(n)&&n.operatorToken.kind===ts.SyntaxKind.EqualsEqualsEqualsToken&&normalized(n.left)==='tc.function.name'&&n.right&&ts.isStringLiteral(n.right)&&n.right.text===tool).length>=2,`${tool} referenced by role gate and dispatch`);
+  for(const tool of ['zapier_list_actions','zapier_run_action']){const eq=nodes(chat,n=>ts.isBinaryExpression(n)&&n.operatorToken.kind===ts.SyntaxKind.EqualsEqualsEqualsToken&&normalized(n.left)==='tc.function.name'&&n.right&&ts.isStringLiteral(n.right)&&n.right.text===tool).length;requireProof(eq>=2||(eq>=1&&sharedRoleGateCovers(chat.text,tool)),`${tool} referenced by role gate and dispatch`);}
   const guard=nodes(chat,ts.isIfStatement).find(n=>normalized(n.expression)==='tc.function.name==="zapier_list_actions"||tc.function.name==="zapier_run_action"');
   requireProof(!!guard,'dispatch guard selects exactly the two zapier tools');
   const block=guard?.thenStatement;
@@ -134,7 +145,7 @@ function validateGhlTypeScript(chatText, adapterText) {
   requireProof(!!catalog?.initializer&&normalized(catalog.initializer).startsWith('Object.entries(specs).map('),'catalog derived from the specs catalog');
   const mounted=nodes(chat,ts.isSpreadElement).some(n=>normalized(n.expression)==='GHL_MANAGEMENT_TOOLS');
   requireProof(mounted,'catalog mounted in the handler toolDefs by spread (never re-declared inline)');
-  for(const tool of ['ghl_list_actions','ghl_run_action'])requireProof(nodes(chat,n=>ts.isBinaryExpression(n)&&n.operatorToken.kind===ts.SyntaxKind.EqualsEqualsEqualsToken&&normalized(n.left)==='tc.function.name'&&n.right&&ts.isStringLiteral(n.right)&&n.right.text===tool).length>=2,`${tool} referenced by role gate and dispatch`);
+  for(const tool of ['ghl_list_actions','ghl_run_action']){const eq=nodes(chat,n=>ts.isBinaryExpression(n)&&n.operatorToken.kind===ts.SyntaxKind.EqualsEqualsEqualsToken&&normalized(n.left)==='tc.function.name'&&n.right&&ts.isStringLiteral(n.right)&&n.right.text===tool).length;requireProof(eq>=2||(eq>=1&&sharedRoleGateCovers(chat.text,tool)),`${tool} referenced by role gate and dispatch`);}
   const guard=nodes(chat,ts.isIfStatement).find(n=>normalized(n.expression)==='tc.function.name==="ghl_list_actions"||tc.function.name==="ghl_run_action"');
   requireProof(!!guard,'dispatch guard selects exactly the two ghl tools');
   const block=guard?.thenStatement;

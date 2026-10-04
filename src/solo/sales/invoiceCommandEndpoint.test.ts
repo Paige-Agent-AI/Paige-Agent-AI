@@ -216,3 +216,11 @@ describe("actual invoice HTTP adapter authority and recovery", () => {
     expect(test.calls.map(call => call.name)).toEqual(["read_sales_invoice_delivery_result"]);
   });
 });
+
+const prefsCommand={action:'invoice.settings_update',expected_version:0,settings:{prefix:'',next_number:1,padding:4,template:'classic',accent:'#475569',logo_data_uri:null,footer:'',payment_instructions:''}};
+describe('actual governed preferences handler',()=>{
+ it('proposes canonical settings approval without invoice ID or delivery',async()=>{const test=setup();const response=await test.request({command:prefsCommand});expect(response.status).toBe(202);expect(test.details('insert:paige_pending_confirmations').args).toMatchObject({command:prefsCommand,approval_subject:'invoice.settings_update:'+tenant});expect(test.calls.some(c=>c.name==='delivery'||c.name==='execute_sales_invoice_command')).toBe(false)});
+ it('executes only stored tenant-scoped approved settings through existing RPC',async()=>{const stored={command:prefsCommand,operation_id:operation,expected_tenant_id:tenant};const test=setup({claimed:stored});const response=await test.request({command:prefsCommand,approved_fingerprint:'abcdef0123456789'});expect(response.status).toBe(200);expect(test.details('execute_sales_invoice_command')).toMatchObject({_command:prefsCommand,_operation_id:operation});expect(test.details('insert:paige_audit_log')).toMatchObject({target_type:'invoice_preferences',target_id:tenant});});
+ it('refuses viewer settings before preview or write',async()=>{const test=setup({role:'viewer'});expect((await test.request({command:prefsCommand})).status).toBe(403);expect(test.calls).toEqual([])});
+ it('retains ordinary twenty KB command bound',async()=>{const test=setup();expect((await test.request({command:{...command,notes:'x'.repeat(22000)}})).status).toBe(400)});
+});

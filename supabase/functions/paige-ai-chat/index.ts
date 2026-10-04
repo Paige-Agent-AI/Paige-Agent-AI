@@ -69,6 +69,17 @@ const WORKSPACE_BUILD_TOOLS: ReadonlySet<string> = new Set([
   "growth_funnel_generate", "growth_funnel_build", "growth_funnel_publish",
   "draft_marketing_content", "content_save", "generate_image",
 ]);
+
+// The governed CRM and Sales doors admit only an active owner/admin SEAT in the acting workspace
+// (crm-command, sales-invoice-command, sales-collection-command). The capability projection reads the
+// same rule through authorityAdmits so it never describes a door tool the door would refuse (C0a).
+const DOOR_SEAT_TOOLS: ReadonlySet<string> = new Set<string>([
+  ...CRM_COMMAND_TOOL_NAMES, ...SALES_INVOICE_TOOL_NAMES, ...SALES_COLLECTIONS_TOOL_NAMES,
+]);
+// The one publish door (growth-publish-command, V2b) admits the workspace's owner, an admin or its
+// managing agency — the Studio build rule (its tools are in WORKSPACE_BUILD_TOOLS). It is outside the
+// owner-ops branch, so the projection names it here or it would describe publishing to a member.
+const PUBLISH_DOOR_ADMIN_TOOLS: ReadonlySet<string> = GROWTH_PUBLISH_DOOR_TOOL_NAMES;
 import { buildFormSchemaFromQuestions } from "../_shared/growth-form-build.ts";
 import { classifyDocumentSubmissionError, validateDocumentBrief } from "../_shared/document-production.ts";
 // Wave 4 · 4a.3 — token-aware compaction trigger (§18 one home; smoke-tested per §32).
@@ -126,13 +137,27 @@ import { getActorTier, clientSeatToolAllowed, type Tier } from "../_shared/actor
 import { decodeChunks, internalTextForClient, leakKindCounts, readableFromFrames, syncStatusForClient, resultSavedSomething, WITHHELD_FRAME, withheldReplyForClient } from "../_shared/client-seat-reply.ts";
 // R2 — what PAIGE drafts for a customer is read for internal text before it is filed, carded or sent.
 import { customerBoundTexts, type DraftContext, draftRefusal, internalTextInDraft, OUTBOUND_DRAFT_TOOLS } from "../_shared/outbound-draft-check.ts";
-// Main Paige Operational Chat · P3 — truthful capability status (§13/§36/§70). The pure decision
-// core (resolver) + the MVP signal builder compose the honest "what can Paige do here?" answer;
-// the dispatch feeds them server-resolved facts (tier, clamped lane, Spine maturity). §18: one home.
-import { resolveCapabilityStatus } from "../_shared/paige-capability-status/resolver.ts";
-import { buildCapabilitySignals } from "../_shared/paige-capability-status/signals.ts";
-import { renderCapabilityStatusBlock } from "../_shared/paige-capability-status/render.ts";
-import { getSpineCapability } from "../_shared/paige-spine/registry.ts";
+// C0a — truthful capability status as a PROJECTION (docs/delivery/paige-conversational-loop-r0.md §20).
+// What PAIGE believes she can do is derived per turn from the tools actually emitted to her, their
+// canonical declarations (Spine; the legacy classification while C0b converges), the effective lane,
+// workspace role and readiness — never a hand-written list. §18: one home for the answer.
+import { PLANNED_CAPABILITIES, projectCapabilities, type Lane } from "../_shared/paige-capability-status/projection.ts";
+import { LEGACY_CAPABILITIES } from "../_shared/paige-capability-status/legacy-capabilities.ts";
+import type { ReadinessResolverId, ReadinessState } from "../_shared/paige-capability-status/readiness.ts";
+import { renderProjectedCapabilityBlock, type SpecialistSummary } from "../_shared/paige-capability-status/render.ts";
+import { PAIGE_SPINE_CAPABILITIES } from "../_shared/paige-spine/registry.ts";
+import { looksLikeFinanceAgent } from "../_shared/finance-gate.ts";
+// "ADMIN IS A TENANT ROLE" (owner ruling 2026-10-04): one resolver + one tool set for every
+// owner/admin-only chat tool, the early refusal, and the projection.
+import {
+  authorityAdmits,
+  OWNER_OPS_BRANCH_TOOLS,
+  requiresWorkspaceAdmin,
+  resolveWorkspaceAuthority,
+  ROLE_FREE_BRANCH_TOOLS,
+  workspaceAdminRefusal,
+  type WorkspaceAuthority,
+} from "../_shared/workspace-authority.ts";
 // The Capability Gateway owns the tool definitions Chat may reach (§18 one home; owner ruling
 // 2026-09-01). `capability_status` and `contact_event_status` are emitted from here rather than
 // declared inline, so the chat-tool-registry ratchet descends instead of growing. Dispatch for each
@@ -394,6 +419,16 @@ function describeStep(
     // Scheduling (owner)
     case "calendar_book_meeting": return { label: "Booking the meeting", group: "owner" };
     // Team / orchestration (shared)
+    case "web_search": {
+      const q = typeof args.query === "string" ? args.query.slice(0, 80) : undefined;
+      return { label: failed ? "Couldn't search the web" : "Searching the web", group: "shared", ...(q ? { detail: q } : {}) };
+    }
+    case "deep_research": {
+      // §5 of the R2b ruling: ONE truthful activity state (subject + the tool is running) —
+      // never invented per-step progress (the engine streams no PLAN/SEARCH/READ events).
+      const q = typeof args.question === "string" ? args.question.slice(0, 80) : undefined;
+      return { label: failed ? "Deep research stopped" : "Researching the live web", group: "shared", ...(q ? { detail: q } : {}) };
+    }
     case "delegate_to_subagent": {
       const slug = args?.slug ?? args?.subagent ?? "";
       const who = SUBAGENT_FRIENDLY[slug] ?? "a specialist";
@@ -4598,11 +4633,10 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       tenantKbContext,
     });
 
-    // Per-request cache of resolved autonomy modes (tool_key → 'auto'|'confirm'|'off').
-    // Defined HERE (before prompt assembly) rather than at the tool-dispatch site so the per-turn
-    // capability manifest below can resolve its lanes at prompt time, and the dispatch reuses the
-    // same cached resolver — one home, one cache (§18). Depends only on supabaseClient + personaCtx,
-    // both resolved above; nothing between here and the old site referenced it.
+    // Per-request cache of resolved autonomy modes (tool_key → 'auto'|'confirm'|'off'), filled by the
+    // dispatch gate on first use of each tool. The capability projection does NOT seed it: its lanes
+    // come from one batch read at prompt time (resolveEffectiveLanes, below) and stay in the projection,
+    // so a Trust-Compass brake that lands mid-request still binds every tool not yet dispatched (§68).
     const autonomyModeCache = new Map<string, string>();
     const resolveToolAutonomy = async (toolKey: string): Promise<string> => {
       if (autonomyModeCache.has(toolKey)) return autonomyModeCache.get(toolKey)!;
@@ -4636,86 +4670,54 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       return allowed;
     };
 
-    // ── Capability manifest — the ONE home for "what can Paige do for THIS workspace?" (§18) ──────
-    // Resolves each capability family's honest status from SERVER-RESOLVED truth only: the caller's
-    // tier (callerTier, resolved early off the declared rail — never the body), the ceiling-clamped
-    // autonomy lanes (resolve_tool_autonomy), the REAL Spine maturities (getSpineCapability — a key
-    // with no registered governed seam returns null ⇒ "planned", the anti-over-claim), and the
-    // tenant's real n8n connection state. The SAME gatherer feeds BOTH the prompt-time capability
-    // block the model answers "what can you do" from AND the capability_status read tool, so the two
-    // can never diverge. No maturity is decided here; it is read from the registry (§13/§947).
-    // The owner-ops role the manifest's tools actually require (`admin | coach | super_admin`, the
-    // exact gate the CRM/owner tool block enforces). Resolved once from `user_roles` on the verified
-    // user id (service client, keyed on user.id — a caller-supplied role can never reach it) and
-    // cached for the request, so the prompt block and the capability_status tool agree on WHO
-    // (§13/§51). Fails closed to false so an unresolved role never over-claims.
-    let ownerOpsEligibleCache: boolean | undefined;
-    const resolveOwnerOpsEligible = async (): Promise<boolean> => {
-      if (ownerOpsEligibleCache !== undefined) return ownerOpsEligibleCache;
-      try {
-        const { data } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
-        const roles = (data || []).map((r: any) => r.role);
-        ownerOpsEligibleCache = roles.includes("admin") || roles.includes("super_admin");
-      } catch {
-        ownerOpsEligibleCache = false;
-      }
-      return ownerOpsEligibleCache;
+    // ── Workspace authority + effective lanes — inputs to the per-turn capability projection (C0a) ──
+    // Authority is the canonical TENANT question (owner/admin of the workspace PAIGE is acting in, or
+    // the agency managing it), with the Platform Operator admitted explicitly (§53) — never the
+    // tenant-agnostic global `admin` row (§59). Cached for the request so the prompt block and the
+    // capability_status tool agree; the dispatch gates re-resolve per call (the tenant can change
+    // between batched calls, so a gate must never reuse a stale answer).
+    let workspaceAuthorityCache: Promise<WorkspaceAuthority> | undefined;
+    const getWorkspaceAuthority = (): Promise<WorkspaceAuthority> =>
+      (workspaceAuthorityCache ??= resolveWorkspaceAuthority(supabaseClient, supabase, user.id, personaCtx?.tenant_id ?? null));
+    const workspaceAuthorityNow = (): Promise<WorkspaceAuthority> =>
+      resolveWorkspaceAuthority(supabaseClient, supabase, user.id, personaCtx?.tenant_id ?? null);
+    // One FRESH answer per tool call, shared by every check that call passes (the early refusal, the
+    // owner-ops gate, the inner checks) — fresh across calls, never re-asked within one.
+    const callAuthority = new Map<string, Promise<WorkspaceAuthority>>();
+    const authorityForCall = (callId: string): Promise<WorkspaceAuthority> => {
+      let answer = callAuthority.get(callId);
+      if (!answer) { answer = workspaceAuthorityNow(); callAuthority.set(callId, answer); }
+      return answer;
     };
 
-    const gatherCapabilityManifest = async (workflowsConnected: boolean) => {
-      const mat = (key: string) => getSpineCapability(key)?.maturity ?? null;
-      // The EFFECTIVE lane the runtime would act on = the trust-compass clamp (resolve_tool_autonomy,
-      // §67/§68) THEN the action-class clamp (clampLaneByRisk — the SAME helper the chat dispatch uses
-      // at its gate, §18). Without the second clamp the manifest would show a HIGH tool on an `auto`
-      // grant as "no approval" while the dispatch always forces the card (the §39 over-claim). Resolving
-      // both here makes the manifest's answer identical to what actually happens (§13/§70).
-      const resolveEffectiveLane = async (toolKey: string): Promise<"auto" | "confirm" | "off"> =>
-        clampLaneByRisk((await resolveToolAutonomy(toolKey)) as "auto" | "confirm" | "off", toolKey);
-      const [
-        contactCreateLane, journeyAdvanceLane, campaignCreateLane, workflowsLane,
-        documentCreateLane, knowledgeSaveLane, planningCreateLane, delegateLane,
-        ownerOpsEligible,
-      ] = await Promise.all([
-        resolveEffectiveLane("crm_create_contact"),
-        resolveEffectiveLane("crm_advance_journey_stage"),
-        resolveEffectiveLane("campaign_brief_create"),
-        resolveEffectiveLane("n8n_run_workflow"),
-        resolveEffectiveLane("document_generate"),
-        resolveEffectiveLane("save_to_knowledge_base"),
-        resolveEffectiveLane("plan_create"),
-        resolveEffectiveLane("delegate_to_subagent"),
-        resolveOwnerOpsEligible(),
-      ]);
-      // Research (web_search/deep_research) degrades honestly to configured:false without a provider
-      // key; the manifest gates it on the REAL presence of that key (never the value — §34/§13),
-      // exactly as n8n gates on its connection.
-      const researchProviderConfigured = !!Deno.env.get("FIRECRAWL_API_KEY");
-      const signals = buildCapabilitySignals({
-        callerTier,
-        ownerOpsEligible,
-        contactCreateLane,
-        journeyAdvanceLane,
-        campaignCreateLane,
-        workflowsLane,
-        documentCreateLane,
-        knowledgeSaveLane,
-        planningCreateLane,
-        delegateLane,
-        integrationsListMaturity: mat("integrations.list"),
-        pipelineEvidenceMaturity: mat("pipeline.deal_stage_evidence"),
-        commsReadMaturity: mat("comms.messages_read"),
-        commsSendMaturity: mat("comms.send"),
-        socialPresenceMaturity: mat("social.presence"),
-        socialPublishMaturity: mat("social.publish"),
-        teamAuthorityMaturity: mat("team.authority"),
-        teamManageMaturity: mat("team.manage"),
-        campaignListMaturity: mat("campaign.list"),
-        campaignCreateMaturity: mat("campaign.create"),
-        workflowsMaturity: mat("integrations.n8n_run_workflow"),
-        workflowsConnected,
-        researchProviderConfigured,
-      });
-      return resolveCapabilityStatus(signals);
+    // The EFFECTIVE lane for many tools in one round trip: the Trust-Compass clamp
+    // (resolve_tool_autonomy_many → the one canonical resolution, with the rung read once per call)
+    // THEN the action-class clamp (clampLaneByRisk, the same helper the dispatch gate uses). The answer
+    // describes the turn for PAIGE; it is never an authority — every dispatch re-resolves its own lane
+    // at call time, so nothing here is written into the dispatch caches (§68). A tool with no answer is
+    // simply absent — the projection treats it as "confirm", which never over-claims acting unread.
+    const resolveEffectiveLanes = async (toolKeys: readonly string[]): Promise<Map<string, Lane>> => {
+      const lanes = new Map<string, Lane>();
+      if (!toolKeys.length || !personaCtx?.tenant_id) return lanes;
+      try {
+        const { data, error } = await supabaseClient.rpc("resolve_tool_autonomy_many", {
+          _tenant_id: personaCtx.tenant_id,
+          _tool_keys: [...toolKeys],
+        });
+        if (error || !Array.isArray(data)) {
+          console.warn("[paige-ai-chat] batch lane resolution unavailable:", error?.message ?? "no rows");
+          return lanes;
+        }
+        for (const row of data as Array<{ tool_key?: unknown; mode?: unknown; ceiling_allows_auto?: unknown }>) {
+          const key = typeof row?.tool_key === "string" ? row.tool_key : null;
+          const mode = row?.mode;
+          if (!key || (mode !== "auto" && mode !== "confirm" && mode !== "off")) continue;
+          lanes.set(key, clampLaneByRisk(mode, key) as Lane);
+        }
+      } catch (e) {
+        console.warn("[paige-ai-chat] batch lane resolution failed:", (e as Error)?.message);
+      }
+      return lanes;
     };
 
     // Funding tenants (opt-in skill) keep the full funding brain; everyone else
@@ -4835,23 +4837,13 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     const integrationsMind = personaCtx.tenant_id ? await loadIntegrationsMindEvidence(supabaseClient) : null;
     const integrationsMindBlock = integrationsMind && integrationsMind.status === "recorded" ? renderIntegrationsMindEvidence(integrationsMind) : "";
 
-    // Capability status block (P0 Defect-1 — truthful self-knowledge, §13/§36/§70). The per-turn,
-    // authoritative answer to "what can you do here?", resolved server-side from the SAME gatherer
-    // the capability_status tool uses (§18), so the prompt and the tool never disagree. Injected for
-    // any tenant non-client session; the MANIFEST ITSELF is role-accurate (the gatherer ANDs in the
-    // owner-ops role the tools require, so a non-admin member sees every owner-ops capability as
-    // not-available-to-them rather than a claim the tool gate would refuse — §13/§51). Workflows
-    // connection comes from the n8n evidence already loaded above. Fail-closed NO-OP on any error —
-    // better to say nothing than to inject a half-resolved capability claim (§13).
-    let capabilityStatusBlock = "";
-    if (personaCtx.tenant_id && callerTier !== "client") {
-      try {
-        const capabilities = await gatherCapabilityManifest(n8nEvidence?.status === "available");
-        capabilityStatusBlock = renderCapabilityStatusBlock(capabilities);
-      } catch (e) {
-        console.warn("[paige-ai-chat] capability manifest unavailable:", (e as Error)?.message);
-      }
-    }
+    // C0a — the capability block holds its place in the prompt here (after the context blocks, before
+    // the operating core) but is FILLED later, once the tool surface for this turn is final (Studio
+    // scope, funding, marketplace): what PAIGE is told she can do is projected from exactly the tools
+    // she is handed. Injected for any tenant non-client session; if the projection yields nothing (or
+    // fails) the placeholder is removed before the model is called — never a half-resolved claim (§13).
+    const capabilityStatusMessage: { role: "system"; content: string } = { role: "system", content: "" };
+    const capabilityManifestEligible = !!personaCtx.tenant_id && callerTier !== "client";
 
     // PAIGE VOICE — the platform-DEFAULT "how you talk" block (persona-layer-1 voice fix).
     // It sits RIGHT AFTER the tenant persona and BEFORE the operating core so the model
@@ -4927,7 +4919,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       // Capability status sits LAST among the context blocks, right before the operating core, so
       // "what can you do here?" is answered from the live, workspace-resolved manifest that OVERRIDES
       // any general impression from the tool list or persona (P0 Defect-1, §13/§36/§70).
-      ...(capabilityStatusBlock ? [{ role: "system", content: capabilityStatusBlock }] : []),
+      ...(capabilityManifestEligible ? [capabilityStatusMessage] : []),
       { role: "system", content: systemPrompt },
       ...(liveRuntimeScope ? [{ role: "system", content: PAIGE_LIVE_SPOKEN_STYLE }] : []),
       // "Watch Paige work" narration (#152): when she's about to USE tools, she first
@@ -5341,15 +5333,16 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     let isOperator = false;
     let operatorRoleLabel = "";
     try {
-      const { data: roleRows } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id);
-      const roles = (roleRows || []).map((r: any) => r.role);
-      isOperator = roles.includes("admin");
+      // The SAME authority the owner-ops tools are gated on (workspace owner/admin, or the Platform
+      // Operator) — so the prompt never tells someone they operate this workspace while its tools
+      // refuse them, and never withholds operator mode from a seated owner (owner ruling 2026-10-04).
+      const authority = await getWorkspaceAuthority();
+      isOperator = authority.workspaceAdmin || authority.platformOperator;
       // A short, human role phrase for the identity line (#139): she should know
-      // WHO she's talking to and in WHAT capacity, not just their name.
-      operatorRoleLabel = roles.includes("admin") ? "an admin/owner" : "";
+      // WHO she's talking to and in WHAT capacity, not just their name. The Platform Operator acting
+      // in a customer workspace holds no seat there, so is never described as its owner.
+      operatorRoleLabel = authority.workspaceAdmin ? "an owner or admin on"
+        : authority.platformOperator ? "the platform operator, working with" : "";
     } catch (e) {
       console.warn("[paige-ai-chat] role lookup failed:", e);
     }
@@ -5380,7 +5373,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
           || (op?.full_name ?? "").trim();
       } catch (_e) { /* name is a nicety, never block */ }
       const whoLine = operatorName
-        ? `You are speaking with ${operatorName}${operatorFirst ? ` — address them as ${operatorFirst}` : ""}, ${operatorRoleLabel ? `${operatorRoleLabel} on` : "a member of"} ${personaCtx?.tenant_name ?? "this"} team. This is a named teammate, not an anonymous user: greet and refer to them by their first name naturally, and remember it for this conversation.\n\n`
+        ? `You are speaking with ${operatorName}${operatorFirst ? ` — address them as ${operatorFirst}` : ""}, ${operatorRoleLabel || "a member of"} ${personaCtx?.tenant_name ?? "this"} team. This is a named teammate, not an anonymous user: greet and refer to them by their first name naturally, and remember it for this conversation.\n\n`
         : "";
       // `whoLine` names the real person and their workspace, both read from storage.
       if (whoLine) markProtectedLate("crm_operator_who_line");
@@ -5815,7 +5808,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "deep_research",
-              description: "Run a genuine multi-hop, cited research investigation when the client needs a thorough, source-backed answer (comparisons, landscapes, 'find real X with sources', due diligence). Plans sub-questions, searches the live web across several hops, reads top sources, ranks them by reliability, and returns findings where every claim carries a citation. Slower and heavier than web_search. Use web_search for a single quick lookup; use deep_research when the answer must be trustworthy and sourced. Never fabricates: if search is unconfigured or empty it says so.",
+              description: "Run a genuine multi-hop, cited research investigation and CHOOSE IT PROACTIVELY when the question genuinely warrants triangulating multiple sources — competitive analysis, due diligence, acquisition or vendor evaluation, market or regulatory research, company/person dossiers, complex comparisons, or any answer where source triangulation materially changes it. Plans sub-questions, searches the live web across several hops, reads top sources, ranks them by reliability, and returns findings where every claim carries a citation. When the operator explicitly asks for depth — 'research this deeply', 'do a deep dive', 'use Deep Research', 'investigate this before you answer' — this tool is the request. Do NOT reach for it on a simple fresh-fact lookup: that is web_search (the lightest sufficient capability). Never fabricates: if search is unconfigured or empty it says so.",
               parameters: {
                 type: "object",
                 properties: {
@@ -8324,9 +8317,88 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       }
     }
 
-    // `autonomyModeCache` + `resolveToolAutonomy` are defined earlier (just before the system-prompt
-    // assembly) so the per-turn capability manifest can resolve its lanes at prompt time AND the
-    // tool dispatch below reuses the same cached resolver (§18 one home). Moved, not duplicated.
+    // ── C0a: project what PAIGE can do from EXACTLY the tools she holds this turn ───────────────────
+    // The tool list is final here (Studio scope, funding, marketplace applied above), so "what she is
+    // told she can do" and "what she can call" are the same set by construction. Readiness, lanes,
+    // authority and the specialist roster are resolved server-side; nothing is taken from the model.
+    // Cached for the request: the capability_status tool returns this same projection.
+    const n8nReadinessState = (): ReadinessState => {
+      if (n8nEvidence?.status !== "available") return "unknown"; // unread ≠ disconnected: never claim setup
+      const mcp = n8nEvidence.readiness.mcp.state;
+      if (mcp === "connected_approved_tools" || mcp === "connected_no_approved_tools") return "ready";
+      if (mcp === "consent_in_progress" || mcp === "provider_unavailable") return "unknown";
+      return "not_ready"; // not configured, needs OAuth, disabled, cancelled, refused, failed, expired
+    };
+    const loadSpecialists = async (): Promise<SpecialistSummary[]> => {
+      const tenantId = personaCtx?.tenant_id ?? null;
+      // A uuid before it touches a PostgREST filter (§9) — the same guard the orchestrator applies.
+      if (!tenantId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) return [];
+      try {
+        // Same scope and §2 finance filter the orchestrator applies to list/invoke (platform defaults +
+        // this workspace's own agents; funding agents only for a workspace that opted in).
+        // Only a specialist with a tenant-safe `rail_display_name` is ever named to a tenant: a NULL
+        // marks an internal build-crew seat (migration 20261201000800), and `name` is an internal
+        // register — so it is never the fallback.
+        const { data, error } = await supabase.from("paige_subagents")
+          .select("rail_display_name, domain, name, description, system_prompt")
+          .eq("enabled", true)
+          .not("rail_display_name", "is", null)
+          .or(`tenant_id.is.null,tenant_id.eq.${tenantId}`);
+        if (error || !Array.isArray(data)) return [];
+        return data
+          .filter((r: any) => typeof r.rail_display_name === "string" && r.rail_display_name.trim())
+          .filter((r: any) => personaCtx?.funding_enabled === true || !looksLikeFinanceAgent(r))
+          .map((r: any) => ({ name: String(r.rail_display_name).trim(), domain: r.domain ?? null }));
+      } catch { return []; }
+    };
+    type CapabilityProjection = { rows: ReturnType<typeof projectCapabilities>; specialists: SpecialistSummary[] };
+    let capabilityProjectionCache: Promise<CapabilityProjection> | undefined;
+    const gatherCapabilityProjection = (): Promise<CapabilityProjection> => (capabilityProjectionCache ??= (async () => {
+      const emitted = (toolDefs as any[])
+        .map((d) => d?.function)
+        .filter((f) => f && typeof f.name === "string")
+        .map((f) => ({ name: f.name as string, description: String(f.description ?? "") }));
+      const writes = emitted.map((t) => t.name).filter((n) => MUTATING_TOOLS.has(n));
+      const [lanes, authority, specialists] = await Promise.all([
+        resolveEffectiveLanes(writes), getWorkspaceAuthority(), loadSpecialists(),
+      ]);
+      const readiness = new Map<ReadinessResolverId, ReadinessState>([
+        ["n8n_connection", n8nReadinessState()],
+        ["research_provider", Deno.env.get("FIRECRAWL_API_KEY") ? "ready" : "not_ready"],
+        ["mcp_connection", "unknown"], // per-provider probes land with the Integrations/MCP batch (C0b)
+      ]);
+      const adminTools = new Set(emitted.map((t) => t.name)
+        .filter((n) => requiresWorkspaceAdmin(n, N8N_MANAGEMENT_TOOL_NAMES) || DOOR_SEAT_TOOLS.has(n)
+          || PUBLISH_DOOR_ADMIN_TOOLS.has(n)));
+      const rows = projectCapabilities({
+        tools: emitted,
+        spine: PAIGE_SPINE_CAPABILITIES,
+        legacy: LEGACY_CAPABILITIES,
+        isMutating: (n) => MUTATING_TOOLS.has(n),
+        lanes,
+        workspaceAdminTools: adminTools,
+        isWorkspaceAdmin: (tool) => authorityAdmits(tool, authority, WORKSPACE_BUILD_TOOLS, DOOR_SEAT_TOOLS),
+        readiness,
+        planned: PLANNED_CAPABILITIES,
+      });
+      // The roster is only true when she can actually consult it this turn: a delegation tool is in
+      // her hands AND this person may use it (Studio turns and member seats have neither).
+      const canDelegate = rows.some((r) => (r.tool === "delegate_to_subagent" || r.tool === "list_subagents")
+        && (r.availability === "live" || r.availability === "needs_approval"));
+      return { rows, specialists: canDelegate ? specialists : [] };
+    })());
+    if (capabilityManifestEligible) {
+      try {
+        const projection = await gatherCapabilityProjection();
+        capabilityStatusMessage.content = renderProjectedCapabilityBlock(projection.rows, projection.specialists);
+      } catch (e) {
+        console.warn("[paige-ai-chat] capability projection unavailable:", (e as Error)?.message);
+      }
+    }
+    if (!capabilityStatusMessage.content) {
+      const at = aiMessages.indexOf(capabilityStatusMessage);
+      if (at >= 0) aiMessages.splice(at, 1);
+    }
 
     // Call AI
     // U2 — extended thinking is GATED OFF by default and is ONLY ever considered on the Studio path
@@ -8984,6 +9056,20 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
             success: false,
             error: "This action has no risk classification, so it cannot be run. Tell the operator plainly that you cannot do this one and that it needs looking at — do not try a different way round it.",
+          }) });
+          continue;
+        }
+
+        // ── WORKSPACE ROLE, BEFORE ANY APPROVAL CARD (C0a) ──────────────────────────────────────────
+        // An owner/admin-only tool is refused HERE for anyone without that authority, so a person is
+        // never shown an approval card for an action the role gate further down would then refuse
+        // after they approved it. Same resolver as that gate (asked fresh per call); the later gate
+        // stays as defense in depth.
+        if (requiresWorkspaceAdmin(tc.function.name, N8N_MANAGEMENT_TOOL_NAMES)
+            && !authorityAdmits(tc.function.name, await authorityForCall(tc.id), WORKSPACE_BUILD_TOOLS)) {
+          if (WORKSPACE_BUILD_TOOLS.has(tc.function.name)) await recordStudioRefusal(tc, "workspace_owner_or_admin_required");
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
+            success: false, error: "workspace_owner_or_admin_required", message: workspaceAdminRefusal(MUTATING_TOOLS.has(tc.function.name)),
           }) });
           continue;
         }
@@ -9833,6 +9919,17 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             const coverage = dr?.coverage ?? {};
             const findings = Array.isArray(dr?.findings) ? dr.findings : [];
             const sources = Array.isArray(dr?.sources) ? dr.sources : [];
+            // R2b §10 — the governed readback: never claim a saved run without proving the
+            // row through the M0 RPC (the caller's own client; scope server-derived). A
+            // failed/absent row renders the honest not-saved state downstream.
+            const drRunId = typeof dr?.run_id === "string" ? dr.run_id : null;
+            let drSaved = false;
+            if (drRunId) {
+              try {
+                const { data: drReadback } = await supabaseClient.rpc("get_workspace_research_run", { _run_id: drRunId });
+                drSaved = !!drReadback;
+              } catch { drSaved = false; }
+            }
             // D1 — dossier mode. When the engine detected an entity target it
             // returns a gate-survived `entity_profile` (per-field cited). Format it
             // as a structured intel block: summary, Structure/People/Offerings/
@@ -9856,6 +9953,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               content: JSON.stringify({
                 configured: coverage.configured !== false,
                 run_id: dr?.run_id ?? null,
+                saved: drSaved,
+                question: typeof args.question === "string" ? args.question : "",
                 stop_reason: coverage.stop_reason ?? null,
                 ...(dossier ? { dossier } : {}),
                 ...(ep ? { unverified_notes: Array.isArray(ep.unverified_notes) ? ep.unverified_notes : [] } : {}),
@@ -10341,113 +10440,36 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           }
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(payload) });
         } else if (
-          tc.function.name === "crm_update_pipeline_stage" ||
-          tc.function.name === "crm_assign_coach" ||
-          tc.function.name === "crm_create_task" ||
-          tc.function.name === "crm_create_contact" ||
-          tc.function.name === "crm_update_contact" ||
-          tc.function.name === "propose_business_brief_update" ||
-          tc.function.name === "update_business_profile" ||
-          tc.function.name === "pipeline_catalogue" ||
-          tc.function.name === "pipeline_archive_preview" ||
-          tc.function.name === "pipeline_folder_archive_preview" ||
-          tc.function.name === "pipeline_configure" ||
-          tc.function.name === "deal_create" ||
-          tc.function.name === "deal_move_stage" ||
-          tc.function.name === "member_grant_role" ||
-          tc.function.name === "team_set_work_profile" ||
-          tc.function.name === "team_set_permission" ||
-          tc.function.name === "team_invite_member" ||
-          tc.function.name === "team_invite_resend" ||
-          tc.function.name === "team_invite_revoke" ||
-          tc.function.name === "member_revoke_role" ||
-          tc.function.name === "calendar_book_meeting" ||
-          tc.function.name === "generate_image" ||
-          tc.function.name === "draft_marketing_content" ||
-          tc.function.name === "content_save" ||
-          tc.function.name === "document_generate" ||
-          tc.function.name === "growth_list" ||
-          tc.function.name === "growth_page_generate" ||
-          tc.function.name === "growth_page_save" ||
-          tc.function.name === "growth_form_save" ||
+          OWNER_OPS_BRANCH_TOOLS.has(tc.function.name) ||
           // V0 — the funnel tools were advertised and handled below but missing from this list, so
           // every call fell through to "Unknown tool" (0 funnels ever built in production). They are
           // reachable now that a partial build can only report itself as partial.
-          // (The three *_publish tools are not in this list: they redeem through the one publish
+          // (The three *_publish tools are not in the set: they redeem through the one publish
           // door above, growth-publish-command, and never reach this dispatch.)
-          tc.function.name === "growth_funnel_generate" ||
-          tc.function.name === "growth_funnel_build" ||
-          tc.function.name === "action_file" ||
-          tc.function.name === "action_advance" ||
-          tc.function.name === "inbox_list" ||
-          tc.function.name === "integrations_list" ||
-          tc.function.name === "capability_status" ||
-          tc.function.name === "contact_event_status" ||
-          tc.function.name === "social_post" ||
-          tc.function.name === "social_analytics" ||
-          tc.function.name === "social_accounts" ||
-          tc.function.name === "improvement_propose" ||
-          tc.function.name === "improvement_list" ||
-          tc.function.name === "improvement_decide" ||
-          tc.function.name === "action_list" ||
-          tc.function.name === "action_get" ||
-          tc.function.name === "crm_list_team" ||
-          tc.function.name === "presence_who_online" ||
-          tc.function.name === "presence_is_online" ||
-          tc.function.name === "crm_assign_contact" ||
-          N8N_MANAGEMENT_TOOL_NAMES.has(tc.function.name) ||
-          tc.function.name === "zapier_list_actions" ||
-          tc.function.name === "zapier_run_action" ||
-          tc.function.name === "ghl_list_actions" ||
-          tc.function.name === "ghl_run_action" ||
-          tc.function.name === "crm_log_activity" ||
-          tc.function.name === "crm_add_note" ||
-          tc.function.name === "crm_list_documents" ||
-          tc.function.name === "crm_file_document" ||
-          tc.function.name === "crm_search_contacts" ||
-          tc.function.name === "crm_get_contact_summary" ||
-          tc.function.name === "crm_list_deals" ||
-          tc.function.name === "crm_list_tasks" ||
-          tc.function.name === "crm_pipeline_summary" ||
-          tc.function.name === "comms_connection_summary" ||
-          tc.function.name === "comms_list_numbers" ||
-          tc.function.name === "comms_search_numbers" ||
-          tc.function.name === "comms_buy_number" ||
-          tc.function.name === "comms_name_number" ||
-          tc.function.name === "comms_set_primary_number" ||
-          tc.function.name === "comms_registration_status" ||
-          tc.function.name === "comms_draft_registration"
+          N8N_MANAGEMENT_TOOL_NAMES.has(tc.function.name)
         ) {
-          // Role gate: admin only
-          const { data: roleRows } = await supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", user.id);
-          const roles = (roleRows || []).map((r: any) => r.role);
-          // n8n has its own exact owner/session/tenant lease check; global CRM roles are unrelated.
+          // Role gate: this workspace's owner or an admin (or the agency managing it), or the
+          // Platform Operator — "ADMIN IS A TENANT ROLE" (owner ruling 2026-10-04).
+          // n8n has its own exact owner/session/tenant lease check; workspace roles are unrelated.
           //
-          // `super_admin` is admitted so a verified God-tier operator can manage a tenant's CRM/
-          // Communications while acting inside that tenant (operator_enter_tenant → the tools then
-          // resolve that tenant via current_user_tenant_id()); at rest, tenant-less, the read tools
-          // still answer `tenant_not_resolved`, which is correct. This is the frozen super_admin-only
-          // grant (§53) — NOT `is_platform_operator()`, which would also admit `platform_admin`; the
-          // role string here is the same one `is_platform_owner()`/`is_super_admin()` gate on, and
-          // `platform_admin` is a DISTINCT string that stays denied. Server-derived from the JWT
-          // (user.id) — a caller-supplied role can never reach this array.
-          // D3 (V1) — the growth save/build/publish RPCs require the CURRENT workspace's owner or
-          // admin (or the agency managing it): `_growth_admin_tenant`. The global `user_roles` admin
-          // above is tenant-agnostic (§59): it let an admin of another workspace past this gate (the
-          // RPC then refused them) and refused a workspace's own owner who lacks the global role (the
-          // RPC would have allowed them). For exactly those tools the gate now asks the RPC's own
-          // question (`studio_role_ok`), on every turn — the chat gate and the write agree.
+          // The question is the canonical TENANT one — `studio_role_ok` (owner/admin of the ACTIVE
+          // workspace, or the agency managing it) AND that workspace is the one PAIGE is acting in —
+          // asked fresh on every call (a batch can change workspace between calls). The global
+          // `user_roles` row `admin` is no longer consulted: it is tenant-agnostic (§59) and let an
+          // admin of workspace A act inside workspace B where they are only a member.
+          //
+          // The Platform Operator (§53, global `super_admin`) is admitted explicitly, because acting-as
+          // a customer workspace (operator_enter_tenant) deliberately grants no seat there. NOT
+          // `is_platform_operator()`, which would also admit `platform_admin` — that distinct string
+          // stays denied outside company workspaces exactly as before. Server-derived from the JWT.
+          //
+          // The Studio build tools keep their stricter rule (the workspace's own owner/admin or managing
+          // agency; the operator does not build in a customer workspace from chat) — unchanged.
+          // `capability_status` needs no role: a person may always ask what PAIGE can do for them.
           const workspaceAuthorityTool = WORKSPACE_BUILD_TOOLS.has(tc.function.name);
-          let allowed: boolean;
-          if (workspaceAuthorityTool) {
-            const { data: ownerOrAdmin, error: authorityErr } = await supabaseClient.rpc("studio_role_ok", { _caller: user.id });
-            allowed = !authorityErr && ownerOrAdmin === true;
-          } else {
-            allowed = N8N_MANAGEMENT_TOOL_NAMES.has(tc.function.name) || roles.includes("admin") || roles.includes("super_admin");
-          }
+          const allowed = N8N_MANAGEMENT_TOOL_NAMES.has(tc.function.name)
+            || ROLE_FREE_BRANCH_TOOLS.has(tc.function.name)
+            || authorityAdmits(tc.function.name, await authorityForCall(tc.id), WORKSPACE_BUILD_TOOLS);
           if (!allowed) {
             if (workspaceAuthorityTool) await recordStudioRefusal(tc, "workspace_owner_or_admin_required");
             toolResults.push({
@@ -10455,7 +10477,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               role: "tool",
               content: JSON.stringify(workspaceAuthorityTool
                 ? { success: false, error: "workspace_owner_or_admin_required", message: "Building and publishing here needs this workspace's owner or an admin. Nothing was changed." }
-                : { success: false, error: "CRM operator tools are restricted to admins." }),
+                : { success: false, error: "workspace_owner_or_admin_required", message: workspaceAdminRefusal(MUTATING_TOOLS.has(tc.function.name)) }),
             });
             continue;
           }
@@ -12685,14 +12707,17 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               if (error) throw error;
               result = { success: true, count: (data as any[])?.length ?? 0, integrations: data ?? [] };
             } else if (tc.function.name === "capability_status") {
-              // Truthful capability awareness (§13/§36/§70): what can Paige do for THIS workspace
-              // right now? Resolved through the SAME gatherer that built the prompt-time capability
-              // block (gatherCapabilityManifest, §18 one home) so the tool and the block can never
-              // disagree. Every fact is resolved server-side (tier, ceiling-clamped lanes, real Spine
-              // maturities, real n8n connection); none is taken from the model. n8nEvidence was loaded
-              // at prompt assembly above, in the same request scope.
-              const capabilities = await gatherCapabilityManifest(n8nEvidence?.status === "available");
-              result = { success: true, count: capabilities.length, capabilities };
+              // Truthful capability awareness (§13/§36/§70): what can PAIGE do for THIS workspace and
+              // THIS person right now? The SAME cached projection that wrote the prompt-time block
+              // (gatherCapabilityProjection, §18 one home), so the tool and the block can never
+              // disagree. Every input is server-resolved; none is taken from the model.
+              const projection = await gatherCapabilityProjection();
+              result = {
+                success: true,
+                count: projection.rows.length,
+                capabilities: projection.rows,
+                specialists: projection.specialists,
+              };
             } else if (tc.function.name === "contact_event_status") {
               // The READ half of contact.created (§13/§947): report whether a new contact's event
               // fired and reached its subscribers — NEVER imply an external send that did not happen.
@@ -12729,15 +12754,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             } else if (tc.function.name === "improvement_propose" || tc.function.name === "improvement_list" || tc.function.name === "improvement_decide") {
               // Runway 4 — the evaluation loop's chat surface. Role-gated like delegation;
               // deciding is admin-only (the doctrine's owner gate).
-              const { data: roleRows } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
-              const roles = (roleRows || []).map((r: any) => r.role);
-              const isAdmin = roles.includes("admin");
+              const isAdmin = authorityAdmits(tc.function.name, await authorityForCall(tc.id), WORKSPACE_BUILD_TOOLS);
               if (!isAdmin) {
-                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Improvement proposals are restricted to admins.", note: "Nothing was filed. Tell the operator plainly you could not file this and nothing was recorded — do NOT say it was filed or logged." }) });
-                continue;
-              }
-              if (tc.function.name === "improvement_decide" && !isAdmin) {
-                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Deciding improvement proposals is admin-only.", note: "Nothing changed. Say plainly you could not do this; do NOT imply a decision was recorded." }) });
+                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Improvement proposals need this workspace's owner or an admin.", note: "Nothing was filed. Tell the operator plainly you could not file this and nothing was recorded — do NOT say it was filed or logged." }) });
                 continue;
               }
               const impTenantId = personaCtx?.tenant_id ?? null;
@@ -13241,11 +13260,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         } else if (tc.function.name === "list_subagents" || tc.function.name === "delegate_to_subagent") {
           // Section 18: Orchestrator delegation. Role gate to admin only.
           try {
-            const { data: roleRows } = await supabase
-              .from("user_roles").select("role").eq("user_id", user.id);
-            const roles = (roleRows || []).map((r: any) => r.role);
-            if (!roles.includes("admin")) {
-              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Sub-agent delegation is restricted to admins." }) });
+            if (!authorityAdmits(tc.function.name, await authorityForCall(tc.id), WORKSPACE_BUILD_TOOLS)) {
+              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Working with the specialist team needs this workspace's owner or an admin." }) });
               continue;
             }
             const args = JSON.parse(tc.function.arguments || "{}");
@@ -13275,11 +13291,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // the agent-origin invariant (never admin, never self-approve) holds, and
           // stamps tenant + funding scope from personaCtx (§2/§9).
           try {
-            const { data: roleRows } = await supabase
-              .from("user_roles").select("role").eq("user_id", user.id);
-            const roles = (roleRows || []).map((r: any) => r.role);
-            if (!roles.includes("admin")) {
-              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Creating new team specialists is restricted to admins." }) });
+            if (!authorityAdmits(tc.function.name, await authorityForCall(tc.id), WORKSPACE_BUILD_TOOLS)) {
+              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Creating new team specialists needs this workspace's owner or an admin." }) });
               continue;
             }
             const args = JSON.parse(tc.function.arguments || "{}");
@@ -13348,11 +13361,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // desk, which runs execute-approval → send-message. Outbound comms are
           // gated to admin, matching send-message and the CRM operator tools.
           try {
-            const { data: roleRows } = await supabase
-              .from("user_roles").select("role").eq("user_id", user.id);
-            const roles = (roleRows || []).map((r: any) => r.role);
-            if (!roles.includes("admin")) {
-              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Proposing outbound client messages is restricted to admins." }) });
+            if (!authorityAdmits(tc.function.name, await authorityForCall(tc.id), WORKSPACE_BUILD_TOOLS)) {
+              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Proposing outbound client messages needs this workspace's owner or an admin." }) });
               continue;
             }
             const args = JSON.parse(tc.function.arguments || "{}");
@@ -14192,6 +14202,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         comms_add_email_domain: "tenant_email_domains",
         comms_set_primary_email_domain: "tenant_email_domains",
         billing_create_invoice: "paige_invoices", billing_send_invoice: "paige_invoices",
+        sales_update_invoice_settings: "tenants", // canonical tenant brand.invoice_preferences; no client memory target
         sales_publish_invoice: "paige_invoices", sales_record_manual_payment: "paige_invoices",
         sales_reverse_manual_payment: "paige_invoices", sales_void_invoice: "paige_invoices",
         sales_create_invoice_link: "paige_invoices",
@@ -14404,11 +14415,18 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // to echo it back for the approval to bind to this exact call rather than to a boolean.
       const confirmTrace: Array<{ tool: string; summary: string; fingerprint?: string; command?: Record<string, unknown>; idempotency_key?: string }> = [];
       const crmResultTrace: Array<Record<string, unknown>> = [];
+      // R2b — the inline research card's payload. Captured from the deep_research tool
+      // result in the stream scan below; streamed to the client as a paige_research frame
+      // (attached to the SAME assistant turn — one Paige turn, ruling §7) and persisted in
+      // bundle_ref as a RUN REFERENCE only (§12: reference + canonical reload — the client
+      // rehydrates evidence through the governed get RPC, so chat and the Research library
+      // share one citation identity).
+      const researchTrace: Array<Record<string, unknown>> = [];
       // One authorization-neutral projection for success AND interrupted Live
       // history. Never persist the live CRM readback, locator or contact payload.
       const assistantTurnMetadata = () => ({
         surfaces: stepTrace.filter((s) => s.kind !== "thought").map((s) => s.group).filter((v, i, a) => v && a.indexOf(v) === i),
-        bundleRef: (queuedApprovals.length || confirmTrace.length || crmResultTrace.length)
+        bundleRef: (queuedApprovals.length || confirmTrace.length || crmResultTrace.length || researchTrace.length)
           ? {
               approval_queued: queuedApprovals,
               paige_confirm: confirmTrace,
@@ -14418,6 +14436,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 receipt_recorded: result.receipt_recorded,
                 ...(typeof result.external_effect === "boolean" ? { external_effect: result.external_effect } : {}),
               })),
+              // R2b §12: the run REFERENCE only — the evidence rehydrates from
+              // research_runs through the governed get RPC on reload (one citation
+              // identity with the Research library; no duplicated payload store).
+              ...(researchTrace.length ? { paige_research: researchTrace.map((r) => ({
+                run_id: r.run_id, question: r.question, saved: r.saved === true,
+              })) } : {}),
             }
           : null,
       });
@@ -14759,6 +14783,19 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   if (parsed?.needs_confirm && parsed?.confirm_summary) {
                     confirmTrace.push({ tool: parsed.tool || tc.function?.name || "action", summary: String(parsed.confirm_summary), ...(parsed.confirm_fingerprint ? { fingerprint: String(parsed.confirm_fingerprint) } : {}), ...(parsed.confirm_command && typeof parsed.confirm_command === "object" ? { command: parsed.confirm_command as Record<string, unknown> } : {}), ...(parsed.confirm_idempotency_key ? { idempotency_key: String(parsed.confirm_idempotency_key) } : {}) });
                   }
+                  if (tc.function?.name === "deep_research" && parsed && typeof parsed === "object" && Array.isArray(parsed.findings)) {
+                    researchTrace.push({
+                      run_id: typeof parsed.run_id === "string" ? parsed.run_id : null,
+                      question: typeof parsed.question === "string" ? parsed.question : "",
+                      saved: parsed.saved === true,
+                      configured: parsed.configured !== false,
+                      stop_reason: typeof parsed.stop_reason === "string" ? parsed.stop_reason : null,
+                      is_dossier: typeof parsed.dossier === "string" && parsed.dossier.length > 0,
+                      findings: parsed.findings,
+                      sources: Array.isArray(parsed.sources) ? parsed.sources : [],
+                      unverified_notes: Array.isArray(parsed.unverified_notes) ? parsed.unverified_notes : [],
+                    });
+                  }
                   if (CRM_COMMAND_TOOL_NAMES.has(tc.function?.name) && parsed?.success === true) {
                     crmResultTrace.push({
                       action: String(parsed.action || CRM_TOOL_TO_ACTION[tc.function.name as keyof typeof CRM_TOOL_TO_ACTION]),
@@ -14994,6 +15031,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           await emitApprovalOutcome(controller);
           for (const c of confirmTrace) emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_confirm: c })}\n\n`));
           for (const result of crmResultTrace) emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_crm_result: result })}\n\n`));
+          // R2b — the inline research card's live payload (attached to the same assistant
+          // turn, ruling §7; reloaded turns rehydrate from the run reference instead).
+          for (const r of researchTrace) emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_research: r })}\n\n`));
           // #292 — tell the Studio canvas the exact artifact this turn produced (server-authoritative;
           // the client opens THIS, never a guessed manifest index). Last visual wins if several built.
           if (studioLinked.length) emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_artifact: studioLinked[studioLinked.length - 1] })}\n\n`));

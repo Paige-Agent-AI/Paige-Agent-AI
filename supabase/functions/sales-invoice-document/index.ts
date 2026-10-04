@@ -2,7 +2,7 @@ import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 import {overRateLimit,trustedClientIp} from '../_shared/rateLimit.ts';
 import {sha256Hex} from '../_shared/agreements/token.ts';
 import {renderSalesInvoiceDocument} from '../_shared/sales-invoice-document.ts';
-const headers={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, x-client-info, apikey, content-type','Cache-Control':'no-store','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",'X-Content-Type-Options':'nosniff'};
+const headers={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, x-client-info, apikey, content-type','Cache-Control':'no-store','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'none'; img-src data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",'X-Content-Type-Options':'nosniff'};
 const refuse=()=>new Response('This invoice link is unavailable. Ask the business for a new link.',{status:404,headers});
 Deno.serve(async req=>{
   if(req.method==='OPTIONS')return new Response(null,{headers});

@@ -13,8 +13,8 @@
  *    view (the server already persisted under the old workspace);
  *  - DEPTH maps onto EXISTING engine bounds only (max_hops 1/undefined/3);
  *  - the empty state is truthful (no seeded runs);
- *  - the IA: Deep Research sits in the PAIGE workspace (Chat · Knowledge ·
- *    Deep Research · Helpers · Capabilities) and the canonical route registry.
+ *  - the IA: Research sits in the PAIGE workspace (Chat · Knowledge ·
+ *    Research · Helpers · Capabilities) and the canonical route registry.
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -71,16 +71,13 @@ describe("the scope fence (ruling §15)", () => {
 });
 
 describe("truthful runtime (ruling §5)", () => {
-  it("no fabricated step states — elapsed time is the only live signal", () => {
-    expect(view).toContain("PAIGE is researching this.");
-    expect(view).toContain("elapsed");
-    expect(view).not.toContain("Searching sources");
-    expect(view).not.toContain("Reading sources");
-    expect(view).not.toContain("Checking contradictions");
-  });
-
-  it("the running pulse respects reduced motion", () => {
-    expect(css).toContain("@media(prefers-reduced-motion:reduce){.dr-running-icon{animation:none}}");
+  it("no fabricated step states — the chat shows ONE fixed-vocabulary activity label, never per-step progress", () => {
+    const chat = readFileSync(join(root, "supabase/functions/paige-ai-chat/index.ts"), "utf8");
+    expect(chat).toContain('"Researching the live web"');
+    expect(chat).toContain("// §5 of the R2b ruling: ONE truthful activity state (subject + the tool is running)");
+    expect(chat).not.toContain("Reading source");
+    expect(chat).not.toContain("Comparing sources");
+    expect(chat).not.toContain("Checking contradictions");
   });
 
   it("no Cancel affordance is fabricated (the engine has no cancellation path)", () => {
@@ -94,21 +91,17 @@ describe("persistence readback (ruling §6)", () => {
     expect(hook).toContain("persisted = !!data;");
   });
 
-  it("the unsaved state is distinct and honest — the result still renders, saving named as failed", () => {
-    expect(view).toContain("Research completed and saved.");
-    expect(view).toContain("saving could not be confirmed");
-    expect(view).toContain("It has not been added to this workspace's history");
+  it("saved is claimed ONLY from the server's governed readback (§10)", () => {
+    const chat = readFileSync(join(root, "supabase/functions/paige-ai-chat/index.ts"), "utf8");
+    expect(chat).toContain("// R2b §10 — the governed readback: never claim a saved run without proving");
+    expect(chat).toContain('supabaseClient.rpc("get_workspace_research_run"');
+    expect(chat).toContain("drSaved = !!drReadback");
   });
 
-  it("an unsaved result still RENDERS from the engine's own outcome (ruling §6: show the result, state the save failed)", () => {
-    expect(hook).toContain("// The RESULT is real but UNSAVED — it still renders");
-    expect(hook).toContain("setDetail({");
-  });
-
-  it("the engine's structured error is a FAILED state, never 'completed'", () => {
-    expect(hook).toContain('if (coverage.stop_reason === "error")');
-    expect(hook).toContain('reason: "engine_error"');
-    expect(view).toContain("The research engine reported an error");
+  it("the card's saved/not-saved verdict is the readback's, never assumed", () => {
+    const card = readFileSync(join(root, "src/components/paige/chat/PaigeResearchCard.tsx"), "utf8");
+    expect(card).toContain("Saved to this workspace's research library");
+    expect(card).toContain("Not saved — the run could not be confirmed in this workspace");
   });
 
   it("no blind rerun on uncertain persistence", () => {
@@ -126,27 +119,34 @@ describe("depth maps onto existing engine bounds only (ruling §3)", () => {
     expect(hook).toContain("thorough: 3,");
   });
 
-  it("no engine internals leak into the form (searches/reads/model/cost)", () => {
+  it("the library exposes NO research form — Chat is the only entry (the reshape)", () => {
+    expect(view).not.toContain("Start research");
+    expect(view).not.toContain("dr-start");
     expect(view).not.toContain("max searches");
     expect(view).not.toContain("max reads");
-    expect(view).toContain("bounded by the engine's");
   });
 });
 
 describe("the truthful empty state (ruling §3/§14)", () => {
-  it("no seeded runs — the honest invitation", () => {
+  it("no seeded runs — the honest invitation points to Chat", () => {
     expect(view).toContain("No saved research yet");
-    expect(view).toContain("Ask PAIGE to investigate a market, company, person, competitor, vendor,");
-    expect(view).toContain("regulation, location, or strategic question.");
+    expect(view).toContain("Ask PAIGE in Chat");
+    expect(view).toContain("research this deeply");
   });
 
   it("the deliberate error states are distinct (not 'something went wrong')", () => {
-    expect(view).toContain("engine_unreachable");
-    expect(view).toContain("search_unconfigured");
-    expect(view).toContain("workspace_changed");
-    expect(view).toContain("not_signed_in");
-    expect(view).toContain("Live web search is not configured");
+    // R2b: the library no longer RUNS research (the start flow and its failure
+    // vocabulary — engine_unreachable/search_unconfigured/workspace_changed/
+    // not_signed_in — went with it; Chat owns execution now). What remains honest
+    // here: the two real read failures (list + detail), each with its own words and
+    // a retry, and the engine's own outcome vocabulary on saved runs — an
+    // unconfigured run still says so through its stop reason, never a guess.
+    expect(view).toContain("Research history could not be loaded.");
+    expect(view).toContain("That research could not be opened.");
+    expect(view).toContain("Retry");
+    expect(view).toContain("Search not configured");
     expect(view).not.toContain("Something went wrong");
+    expect(view).not.toContain("engine_unreachable");
   });
 
   it("foreign/unknown runs render the uniform not-found shape", () => {
@@ -177,15 +177,15 @@ describe("the dossier/result view (ruling §8)", () => {
 });
 
 describe("the IA (ruling §2)", () => {
-  it("Deep Research sits in the PAIGE workspace between Knowledge and Helpers", () => {
-    expect(workspace).toContain('{ id: "research", label: "Deep Research", icon: Telescope }');
+  it("Research (the library tab, R2b) sits in the PAIGE workspace between Knowledge and Helpers", () => {
+    expect(workspace).toContain('{ id: "research", label: "Research", icon: Telescope }');
     const tabLine = workspace.slice(workspace.indexOf("const TABS"), workspace.indexOf("];", workspace.indexOf("const TABS")));
     expect(tabLine.indexOf('"knowledge"')).toBeLessThan(tabLine.indexOf('"research"'));
     expect(tabLine.indexOf('"research"')).toBeLessThan(tabLine.indexOf('"helpers"'));
   });
 
   it("the canonical route registry carries the research subtab", () => {
-    expect(routes).toContain('{ slug: "research", key: "research", label: "Deep Research" }');
+    expect(routes).toContain('{ slug: "research", key: "research", label: "Research" }');
   });
 
   it("the panel mounts with server-derived tenant scope", () => {

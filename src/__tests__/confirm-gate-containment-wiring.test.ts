@@ -125,7 +125,8 @@ describe("FIX C — a bug-report/improvement that cannot be filed says so; it ne
   });
 
   it("the role refusal instructs an honest 'nothing was filed' report (never a false 'filed')", () => {
-    expect(imp).toContain("Improvement proposals are restricted to admins.");
+    // C0a: the refusal names who CAN do it (workspace owner/admin), not the retired global "admins".
+    expect(imp).toContain("Improvement proposals need this workspace's owner or an admin.");
     expect(imp).toContain("Nothing was filed");
   });
 

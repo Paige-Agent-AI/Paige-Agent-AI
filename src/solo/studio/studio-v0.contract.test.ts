@@ -79,12 +79,16 @@ describe("D4 — document_generate is off the Studio surface", () => {
 
 describe("D2 — funnel tools are reachable, and a partial build is never success", () => {
   it("routes the funnel draft and build tools into the dispatch branch that handles them", () => {
-    const gate = between('tc.function.name === "growth_form_save" ||', "// Role gate: admin only");
+    // C0a: the owner-ops branch routes through ONE shared set (the gate and the capability projection
+    // both read it), so the funnel tools must be members of that set and the branch must consult it.
+    const auth = readFileSync("supabase/functions/_shared/workspace-authority.ts", "utf8");
+    const set = auth.slice(auth.indexOf("OWNER_OPS_BRANCH_TOOLS"), auth.indexOf("]);", auth.indexOf("OWNER_OPS_BRANCH_TOOLS")));
     for (const t of ["growth_funnel_generate", "growth_funnel_build"]) {
-      expect(gate).toContain(`tc.function.name === "${t}" ||`);
+      expect(set).toContain(`"${t}"`);
     }
     // V2b: funnel publish is reachable through the one publish door instead (see below).
-    expect(gate).not.toContain('tc.function.name === "growth_funnel_publish" ||');
+    expect(set).not.toContain('"growth_funnel_publish"');
+    expect(chat).toContain("OWNER_OPS_BRANCH_TOOLS.has(tc.function.name) ||");
   });
   it("reports a build that failed after a write as partial, naming what was saved", () => {
     const build = between('} else if (tc.function.name === "growth_funnel_build") {', '} else if (tc.function.name === "action_file") {');

@@ -208,13 +208,13 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
     expect(count("automations")).toBe(3);
     expect(count("clients")).toBe(6);
     expect(count("calendar")).toBe(6);
-    expect(count("growth")).toBe(8);
+    expect(count("growth")).toBe(12);
     expect(count("sales")).toBe(7);
     expect(count("analytics")).toBe(6);
     expect(count("marketplace")).toBe(4);
     expect(count("settings")).toBe(7);
     const total = SOLO_BRANCHES.reduce((n, b) => n + (b.subtabs?.length ?? 0), 0);
-    expect(total).toBe(55);
+    expect(total).toBe(59);
     // first sub-tab is the screen's default (bare branch renders it) — now Business Game Plan.
     expect(defaultSubtabSlug("solo", "command-center")).toBe("business-game-plan");
     expect(defaultSubtabSlug("solo", "paige")).toBe("chat");
@@ -244,6 +244,10 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
     expect(subtabByKey("solo", "calendar", "booking")?.slug).toBe("booking-pages");
     roundTrip("growth", "overview", "overview");
     roundTrip("growth", "campaigns", "campaigns");
+    roundTrip("growth", "audience", "audience");
+    roundTrip("growth", "content", "content");
+    roundTrip("growth", "email", "email");
+    roundTrip("growth", "ads", "ads");
     roundTrip("growth", "lead-capture", "capture");
     roundTrip("growth", "social", "social");
     roundTrip("growth", "analytics", "analytics");
@@ -256,8 +260,12 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
     expect(branchBySlug("solo", "growth")?.subtabs?.filter(({ hidden }) => !hidden).map(({ slug, label }) => [slug, label])).toEqual([
       ["overview", "Overview"],
       ["campaigns", "Campaigns"],
-      ["lead-capture", "Lead capture"],
+      ["audience", "Audience"],
+      ["content", "Content"],
       ["social", "Social"],
+      ["email", "Email"],
+      ["ads", "Ads"],
+      ["lead-capture", "Lead capture"],
       ["analytics", "Analytics"],
     ]);
     // Previously shipped addresses keep resolving (§58).

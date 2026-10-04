@@ -212,10 +212,3 @@ export function deriveMarketingOverview(input: {
     status,
   };
 }
-
-export function salutationFor(time: number): string {
-  const hour = new Date(time).getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
-}

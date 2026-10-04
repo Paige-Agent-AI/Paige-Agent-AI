@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// The Marketing tab strip (formerly Campaigns): eight locked tabs, none of them lost.
+// The Marketing tab strip (formerly Campaigns): the owner's nine tabs (2026-10-04), none of them lost.
 //
 // WHY THIS EXISTS. A masthead removal moved the truth-key legend into `.campaigns-nav`, where it
 // was hidden by a VIEWPORT media query while the space it ate belonged to a container ~500px
@@ -29,7 +29,8 @@ const URL = `http://127.0.0.1:${PORT}/`;
 const OUT = path.resolve(import.meta.dirname, "artifacts/campaigns-nav-fit");
 const REPO = path.resolve(import.meta.dirname, "../..");
 
-const TABS = ["Overview", "Campaigns", "Lead capture", "Social", "Analytics", "Offers", "Sales", "Pipeline"];
+// The accessible text of each tab: a Planned tab reads "Audience, Planned".
+const TABS = ["Overview", "Campaigns", "Audience, Planned", "Content, Planned", "Social", "Email, Planned", "Ads, Planned", "Lead capture", "Analytics"];
 
 // The four widths every Solo surface is proved at.
 const FRAMES = [
@@ -242,7 +243,7 @@ async function main() {
 
           check(pageErrors.length === 0, `${id}: no page errors`, pageErrors[0] ?? "");
 
-          // The locked six-tab structure, in order. Nothing about this fix may change it.
+          // The locked tab structure, in order. Nothing about this fix may change it.
           check(
             nav.tabs.join("|") === TABS.join("|"),
             `${id}: Marketing tab lock intact`, nav.tabs.join("|"),
@@ -294,7 +295,7 @@ async function main() {
           await page.waitForTimeout(200);
           const after = await measureNav(page);
           check(
-            after.selected === "Pipeline",
+            after.selected === TABS[TABS.length - 1],
             `${id}: last tab selects`, String(after.selected),
           );
           check(

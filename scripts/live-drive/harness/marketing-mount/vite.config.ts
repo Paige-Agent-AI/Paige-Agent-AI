@@ -9,12 +9,19 @@ const here = import.meta.dirname;
 export default defineConfig({
   root: here,
   css: { postcss: repo },
-  plugins: [react()],
+  plugins: [react(), {
+    // Marketing's Planned tabs read Supabase directly; point only that module at fixed rows.
+    name: "planned-tabs-supabase",
+    enforce: "pre",
+    resolveId(source, importer) {
+      if (importer?.endsWith("marketing-planned.tsx") && source.endsWith("integrations/supabase/client")) return path.join(here, "planned-supabase-stub.ts");
+      return null;
+    },
+  }],
   resolve: {
     alias: [
       { find: "./useSoloCampaigns", replacement: path.join(here, "stubs.ts") },
       { find: "./useSoloCampaignBriefs", replacement: path.join(here, "briefs-stub.ts") },
-      { find: "./data/useSoloOwner", replacement: path.join(here, "owner-stub.ts") },
       { find: "./useCatalogOffers", replacement: path.join(here, "../catalog-mount/useCatalogOffers-stub.ts") },
       { find: "@", replacement: path.join(repo, "src") },
     ],

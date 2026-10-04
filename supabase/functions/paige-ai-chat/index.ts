@@ -11961,7 +11961,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                     model_reason: choice?.reason ?? null,
                     estimated_cost_usd: mjJob.estimated_cost_usd ?? null,
                     note: mjBody?.awaiting_approval
-                      ? "This one needs the owner's approval before it runs; it is waiting in the Studio. Say so plainly, with the estimate."
+                      ? "This one needs your approval before it runs; approve it on the card in this Studio project. Say so plainly, with the estimate."
                       : "The image is being made now and will appear in the Studio when it's ready. Do not describe it as finished.",
                   };
                 }

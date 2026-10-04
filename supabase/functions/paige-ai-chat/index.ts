@@ -14178,6 +14178,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         sales_publish_invoice: "paige_invoices", sales_record_manual_payment: "paige_invoices",
         sales_reverse_manual_payment: "paige_invoices", sales_void_invoice: "paige_invoices",
         sales_create_invoice_link: "paige_invoices",
+        sales_save_collection_terms: "tenant_client_agreements",
+        sales_stage_collection_import: "paige_sales_collection_import_batches",
+        sales_commit_collection_import: "paige_sales_collection_import_batches",
         business_create: "businesses", business_update: "businesses",
         business_verify: "business_verification_runs",
         // #1213 / #1214 — the two governed credit-pull capabilities. Both are classified `high`
@@ -14209,7 +14212,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
        * records, and the ids stay in the payload where a list belongs.
        */
       const TARGET_ID_KEYS = [
-        "contact_id", "client_id", "deleted", "deal_id", "task_id", "pipeline_id", "stage_id",
+        "agreement_id", "batch_id", "contact_id", "client_id", "deleted", "deal_id", "task_id", "pipeline_id", "stage_id",
         "page_id", "funnel_id", "content_id", "booking_id", "log_id", "automation_id", "mission_id", "plan_id",
         "item_id", "workflow_id", "subagent_id", "action_id", "connection_id", "account_id", "tenant_id", "id",
       ] as const;

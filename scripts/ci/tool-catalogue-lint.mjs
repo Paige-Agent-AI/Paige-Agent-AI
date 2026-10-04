@@ -56,6 +56,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 
 /**
@@ -245,7 +246,7 @@ function phantomRows(catKeys, runtime, baseline) {
  * `CREATE OR REPLACE`d with its whole body each time — but the ones before it are the history the
  * chain check needs, so they are all read here rather than only the tip.
  */
-function catalogueDeclarations() {
+export function catalogueDeclarations() {
   const dir = "supabase/migrations";
   const decls = [];
   for (const f of fs.readdirSync(dir).filter((x) => x.endsWith(".sql")).sort()) {
@@ -399,6 +400,7 @@ function selfTest() {
   return 0;
 }
 
+if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url))) {
 if (process.argv.includes("--self-test")) process.exit(selfTest());
 
 const baseline = JSON.parse(fs.readFileSync(BASELINE_PATH, "utf8"));
@@ -521,4 +523,6 @@ const contractCheck = spawnSync(process.execPath, [
 if (contractCheck.error || contractCheck.status !== 0) {
   console.error(`✗ tool-catalogue-lint: Anthropic tool contract check failed${contractCheck.error ? ` — ${contractCheck.error.message}` : ""}.`);
   process.exit(contractCheck.status ?? 1);
+}
+
 }

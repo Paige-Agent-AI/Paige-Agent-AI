@@ -540,6 +540,7 @@ BEGIN
      OR a.metadata->>'content_hash' IS DISTINCT FROM v.content_hash THEN
     RAISE EXCEPTION 'approval_stale' USING ERRCODE = 'P0001';
   END IF;
+  PERFORM set_config('paige.email_campaign_approve', v.id::text, true);
   UPDATE public.paige_pending_approvals SET status = 'approved', reviewed_by_user_id = auth.uid(), reviewed_at = now(), updated_at = now()
    WHERE id = a.id;
   UPDATE public.email_campaign_versions SET state = 'approved', approved_at = now(), approved_by = auth.uid(), updated_at = now()
@@ -548,6 +549,25 @@ BEGIN
   RETURN jsonb_build_object('campaign_id', c.id, 'version_id', v.id, 'recipients', v.expected_recipients,
     'send_at', COALESCE(v.scheduled_for, now()));
 END $$;
+
+-- A campaign_send approval becomes 'approved' only through email_campaign_approve, which re-derives the
+-- content hash and requires a person. Any other writer (a generic approve button, an agent tool) is refused
+-- loudly here instead of leaving an approval consumed while its version never moved.
+CREATE OR REPLACE FUNCTION public._email_campaign_approval_guard()
+RETURNS trigger LANGUAGE plpgsql SET search_path = public, pg_temp AS $$
+BEGIN
+  IF NEW.type = 'campaign_send' AND NEW.status = 'approved' AND OLD.status IS DISTINCT FROM 'approved'
+     AND NEW.metadata ? 'email_campaign_version_id'
+     AND COALESCE(current_setting('paige.email_campaign_approve', true), '') IS DISTINCT FROM NEW.metadata->>'email_campaign_version_id' THEN
+    RAISE EXCEPTION 'campaign_approval_requires_review' USING ERRCODE = '42501',
+      HINT = 'Approve an email campaign through email_campaign_approve.';
+  END IF;
+  RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION public._email_campaign_approval_guard() FROM PUBLIC, anon, authenticated;
+DROP TRIGGER IF EXISTS trg_email_campaign_approval_guard ON public.paige_pending_approvals;
+CREATE TRIGGER trg_email_campaign_approval_guard BEFORE UPDATE OF status ON public.paige_pending_approvals
+  FOR EACH ROW EXECUTE FUNCTION public._email_campaign_approval_guard();
 
 -- Decline a version awaiting approval: it goes back to being editable as a new draft.
 CREATE OR REPLACE FUNCTION public.email_campaign_decline(p_version_id uuid, p_reason text DEFAULT NULL)
@@ -803,7 +823,14 @@ RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_
   SELECT COALESCE(jsonb_agg(x.j), '[]'::jsonb) FROM (
     SELECT jsonb_build_object('version_id', d.version_id, 'tenant_id', d.tenant_id, 'campaign_id', c.id,
       'campaign_status', c.status, 'blocked_reason', c.blocked_reason, 'work_id', d.work_id, 'work_key', d.work_key,
-      'work_status', w.status, 'lease_until', w.lease_until, 'is_current', c.current_version_id = d.version_id) AS j
+      'work_status', w.status, 'lease_until', w.lease_until, 'is_current', c.current_version_id = d.version_id,
+      'version_state', v.state, 'approved_by', v.approved_by,
+      'totals', (SELECT jsonb_build_object('total', count(*), 'planned', count(*) FILTER (WHERE r.status = 'planned'),
+          'sending', count(*) FILTER (WHERE r.status = 'sending'), 'sent', count(*) FILTER (WHERE r.status = 'sent'),
+          'failed', count(*) FILTER (WHERE r.status = 'failed'),
+          'outcome_unknown', count(*) FILTER (WHERE r.status = 'outcome_unknown'),
+          'skipped', count(*) FILTER (WHERE r.status = 'skipped'), 'cancelled', count(*) FILTER (WHERE r.status = 'cancelled'))
+        FROM public.email_campaign_recipients r WHERE r.version_id = d.version_id)) AS j
     FROM public.email_campaign_dispatches d
     JOIN public.paige_durable_work w ON w.id = d.work_id
     JOIN public.email_campaign_versions v ON v.id = d.version_id

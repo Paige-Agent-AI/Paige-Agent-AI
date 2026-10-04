@@ -173,6 +173,8 @@ export interface OutboundSendContext {
    * never a tenant address). Defaults inside buildListUnsubscribeHeaders() when omitted.
    */
   listUnsubscribeMailto?: string | null;
+  /** A stable send identity forwarded to providers that de-duplicate on it (Resend Idempotency-Key). */
+  idempotencyKey?: string | null;
 }
 
 /**

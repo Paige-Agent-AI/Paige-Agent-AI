@@ -16,6 +16,7 @@ import { PAIGE_APP_ORIGIN } from "../_shared/canonical-app-url.ts";
 import { stampedWebhookUrls } from "../_shared/twilio-webhook-auth.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
+  buildListUnsubscribeHeaders,
   getOutboundAdapter,
   registerOutboundAdapter,
   type NormalizedMessage,
@@ -68,6 +69,14 @@ interface SendBody {
   // comms-attachments bucket), and scheduled_for to queue-for-later / undo-send.
   attachments?: { url: string; mime?: string; name?: string; size?: number }[];
   scheduled_for?: string;
+  // ── Marketing email (E1, owner rulings 2026-10-04) — additive; every other caller omits both. ──
+  // marketing=true makes the one-click unsubscribe MANDATORY: the send is refused (outcome
+  // blocked_unsubscribe_unavailable) unless a token is minted and the body carries {{unsubscribe_url}},
+  // which is replaced per recipient. List-Unsubscribe headers go out on every provider route.
+  marketing?: boolean;
+  // A stable per-recipient send identity (the campaign worker passes its recipient id). Forwarded to
+  // the provider as Idempotency-Key where the provider supports one (Resend).
+  idempotency_key?: string;
 }
 
 const MAX_COMMS_ATTACHMENTS = 10;
@@ -146,6 +155,7 @@ const emailOutboundAdapter: OutboundChannelAdapter = {
         html: msg.body_html ?? null,
         text: msg.body_text ?? null,
         inReplyTo: msg.in_reply_to_provider_id ?? null,
+        headers: buildListUnsubscribeHeaders(ctx.listUnsubscribeUrl),
       });
       if (!sent.ok || !sent.data) {
         return {
@@ -199,6 +209,7 @@ const emailOutboundAdapter: OutboundChannelAdapter = {
         html: msg.body_html ?? null,
         text: msg.body_text ?? null,
         inReplyTo: msg.in_reply_to_provider_id ?? null,
+        headers: buildListUnsubscribeHeaders(ctx.listUnsubscribeUrl),
       });
       if (!sent.ok) {
         return {
@@ -220,7 +231,8 @@ const emailOutboundAdapter: OutboundChannelAdapter = {
     const name = ctx.from.display_name?.replace(/[<>",\r\n]/g, " ").replace(/\s+/g, " ").trim();
     const fromHeader = name ? `${name} <${ctx.from.address}>` : ctx.from.address;
 
-    const headers: Record<string, string> = {};
+    // List-Unsubscribe / List-Unsubscribe-Post (RFC 8058) whenever the dispatcher minted a one-click URL.
+    const headers: Record<string, string> = { ...buildListUnsubscribeHeaders(ctx.listUnsubscribeUrl) };
     if (msg.in_reply_to_provider_id) headers["In-Reply-To"] = msg.in_reply_to_provider_id;
 
     const res = await fetch("https://api.resend.com/emails", {
@@ -228,6 +240,8 @@ const emailOutboundAdapter: OutboundChannelAdapter = {
       headers: {
         Authorization: `Bearer ${resendKey}`,
         "Content-Type": "application/json",
+        // A retried request with the same key is not sent twice by Resend.
+        ...(ctx.idempotencyKey ? { "Idempotency-Key": ctx.idempotencyKey } : {}),
       },
       body: JSON.stringify({
         from: fromHeader,
@@ -1036,6 +1050,25 @@ Deno.serve(async (req) => {
       // without the header (the status quo before this slice), logged honestly (§13).
       let oneClickUrl: string | undefined;
       try {
+        // Reuse this recipient's unused token so links in earlier emails keep working (the handler
+        // looks tokens up by hash, so minting a new one on every send broke every older link). A
+        // token already used, or none yet, mints a fresh one exactly as before.
+        if (tenantId) {
+          const { data: existingTok } = await admin
+            .from("email_unsubscribe_tokens")
+            .select("token")
+            .eq("tenant_id", tenantId)
+            .eq("email", body.to)
+            .is("used_at", null)
+            .not("token", "is", null)
+            .maybeSingle();
+          const reuse = (existingTok as { token?: string | null } | null)?.token;
+          if (reuse) oneClickUrl = `${supabaseUrl}/functions/v1/comms-email-unsubscribe?token=${reuse}`;
+        }
+      } catch (e) {
+        console.warn("send-message: unsubscribe token lookup failed; minting a new one:", (e as Error)?.message);
+      }
+      if (!oneClickUrl) try {
         const rawToken = Array.from(crypto.getRandomValues(new Uint8Array(32)))
           .map((b) => b.toString(16).padStart(2, "0")).join("");
         const hashBuf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(rawToken));
@@ -1063,6 +1096,21 @@ Deno.serve(async (req) => {
         console.warn("send-message: unsubscribe token mint threw; sending without List-Unsubscribe:", (e as Error)?.message);
       }
 
+      // Marketing email fails CLOSED on the unsubscribe (owner ruling 7): no working one-click link,
+      // or no {{unsubscribe_url}} in the body for the visible link, means nothing is sent.
+      if (body.marketing === true) {
+        const reason = !tenantId || !oneClickUrl
+          ? "unsubscribe_unavailable"
+          : !String(body.body ?? "").includes("{{unsubscribe_url}}") ? "unsubscribe_link_missing" : null;
+        if (reason) {
+          return new Response(JSON.stringify({
+            status: "failed", error: null, outcome: "blocked_unsubscribe_unavailable", reason,
+            message_id: null, scheduled_for: null,
+          }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        outMsg.body_html = String(body.body).split("{{unsubscribe_url}}").join(oneClickUrl!);
+      }
+
       const ctx: OutboundSendContext = {
         from: { address: resolvedSenderEmail, display_name: senderName ?? undefined },
         to: body.to,
@@ -1073,6 +1121,8 @@ Deno.serve(async (req) => {
         connectorConfig: isSmtp ? (connectorRow?.config ?? null) : null,
         // OutboundSendContext field is listUnsubscribeUrl (the adapter reads it → buildListUnsubscribeHeaders).
         listUnsubscribeUrl: oneClickUrl ?? null,
+        idempotencyKey: typeof body.idempotency_key === "string" && /^[A-Za-z0-9:_-]{1,128}$/.test(body.idempotency_key)
+          ? body.idempotency_key : null,
         // #141b: Gmail dispatch INSIDE the email adapter (§18 — not a second 'email' entry).
         // provider!=='gmail' leaves the Resend path byte-for-byte unchanged.
         provider: connectorRow?.provider ?? null,

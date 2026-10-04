@@ -147,6 +147,10 @@ project_id = "xygzykjyynhzqytbqnzu"
   # a service-role bearer OR verify_cron_token), so it runs pre-auth like readiness-scan.
   [functions.comms-scheduled-drain]
     verify_jwt = false
+  # Marketing email dispatcher (E1). Cron-token gated every minute (migration 20270547000000);
+  # self-gates in-function on a service-role bearer OR verify_cron_token, like the drainer above.
+  [functions.email-campaign-worker]
+    verify_jwt = false
   # The n8n OAuth grant keepalive (2026-10-03: grants dying silently every ~7-10 days).
   # CRON-invoked every 6h via pg_cron (migration 20270535000000) — self-gates in-function
   # on a service-role bearer OR verify_cron_token, like its scheduled siblings.

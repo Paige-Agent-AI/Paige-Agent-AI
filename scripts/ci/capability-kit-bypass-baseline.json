@@ -562,11 +562,6 @@
   {
     "rule": "direct-risk-entry",
     "path": "supabase/functions/_shared/action-risk.ts",
-    "symbol": "draft_marketing_content"
-  },
-  {
-    "rule": "direct-risk-entry",
-    "path": "supabase/functions/_shared/action-risk.ts",
     "symbol": "forge_subagent"
   },
   {

@@ -19,6 +19,7 @@ on:
       - "supabase/functions/_shared/paige-spine/**"
       - "supabase/migrations/**"
       - "supabase/tests/research_tenant_lineage.sql"
+      - "supabase/tests/research_persist_service_grants.sql"
       - "supabase/tests/mcp_gateway_endpoint_revokes_approvals.sql"
       - "supabase/tests/mcp_gateway_durable_endpoint_bound_consent.sql"
       - "supabase/tests/mcp_gateway_url_auth_configured.sql"

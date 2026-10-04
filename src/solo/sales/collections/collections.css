@@ -27,3 +27,9 @@
 @keyframes sc-drawer-in{from{transform:translateX(32px)}to{transform:translateX(0)}}
 @media(max-width:600px){.paige-solo.sc-drawer .sc-drawer-header{top:-18px;margin:-18px -18px 0;padding:20px 70px 16px 18px}}
 @media(prefers-reduced-motion:reduce){.sc-workspace *,.sc-drawer *,.sc-command-dialog *,.paige-solo.sc-drawer[data-state]{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* Keep the working drawer above its backdrop; nested canonical dialogs stay later at50. */
+.sc-drawer-backdrop[data-state]{z-index:49;background:rgba(12,10,27,.42)}
+.paige-solo.sc-drawer{z-index:50;overscroll-behavior:contain;padding-bottom:max(24px,env(safe-area-inset-bottom))}
+.sc-drawer-header h2{overflow-wrap:anywhere;line-height:1.35}
+@media(max-width:600px){.paige-solo.sc-drawer{padding-bottom:max(18px,env(safe-area-inset-bottom))}}

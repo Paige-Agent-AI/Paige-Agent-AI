@@ -229,6 +229,8 @@
 .vs-studio .vs-pop { position: absolute; top: 50px; right: 12px; width: 360px; z-index: 5; border: 1px solid var(--vs-line); border-radius: 14px; background: var(--vs-pop); box-shadow: 0 24px 60px -24px rgba(0, 0, 0, .8); padding: 16px; display: grid; gap: 12px; }
 .vs-studio .vs-pop h2 { margin: 0; font-size: 14.5px; }
 .vs-studio .vs-pop p { margin: 0; font-size: 12.4px; color: var(--vs-dim); line-height: 1.5; }
+/* A refusal inside the panel keeps its alert colour (the paragraph rule above outranks .vs-alert). */
+.vs-studio .vs-pop p.vs-alert { color: #FF97A5; }
 .vs-studio .vs-checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .vs-studio .vs-checks li { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 8px; font-size: 12.8px; }
 .vs-studio .vs-checks small { display: block; color: var(--vs-faint); font-size: 11.6px; }

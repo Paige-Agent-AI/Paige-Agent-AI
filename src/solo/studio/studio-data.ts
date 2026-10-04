@@ -37,6 +37,9 @@ export interface StudioVersion {
 
 /** A sentence written for the owner. plainError passes it through unchanged. */
 export class Said extends Error {}
+/** The publish call returned, but its readback did not prove a live public address. The server
+ *  may already have changed the piece's state, so the caller re-reads it. */
+export class PublishUnverified extends Said {}
 
 /** A refusal the owner can read: our own sentence, or the server's without its machine code.
  *  Anything else (a dropped connection, a raw database message) becomes the fallback. */
@@ -367,7 +370,7 @@ export async function restoreVersion(versionId: string): Promise<void> {
 }
 
 // ── Publish ────────────────────────────────────────────────────────────────────
-export interface PublishResult { url: string | null }
+export interface PublishResult { url: string }
 
 const PUBLISH_FN: Record<ArtifactKind, [string, string]> = {
   form: ["growth_form_publish", "growth_form_unpublish"],
@@ -376,11 +379,22 @@ const PUBLISH_FN: Record<ArtifactKind, [string, string]> = {
   content: ["studio_image_publish", "studio_image_unpublish"],
 };
 
+// The live state each publish RPC reports (20270537000000): pages and images are `published`,
+// forms and funnels `active`. Same rule as the chat's `publishVerified` (_shared/artifact-receipt.ts).
+const LIVE_STATUS: Record<ArtifactKind, string> = { form: "active", page: "published", funnel: "active", content: "published" };
+
+/** Live only on a readback that proves it: the live status, a publish time, and a public address.
+ *  A return without an address (a workspace with no public slug) is never reported as published. */
 export async function publishArtifact(kind: ArtifactKind, id: string): Promise<PublishResult> {
   const { data, error } = await rpc(PUBLISH_FN[kind][0], { p_tenant_id: null, p_id: id });
   if (error) throw error;
   const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | null;
-  return { url: row && typeof row.url === "string" ? row.url : null };
+  const url = row && typeof row.url === "string" ? row.url.trim() : "";
+  const at = row && typeof row.published_at === "string" ? row.published_at.trim() : "";
+  if (!row || row.status !== LIVE_STATUS[kind] || !at || !url) {
+    throw new PublishUnverified("The publish didn't confirm a public address, so it may not be live. Check the project before sharing a link.");
+  }
+  return { url };
 }
 
 export async function unpublishArtifact(kind: ArtifactKind, id: string): Promise<void> {

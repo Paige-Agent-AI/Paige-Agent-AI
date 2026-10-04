@@ -107,6 +107,20 @@ for (const [w, h] of [[1366, 768], [900, 1000]]) {
   await page.close();
 }
 
+// V0 publish truth: the RPC answers without a public address → the panel refuses to say it's live.
+{
+  const page = await open("theme=light&publish=noaddress", 1366, 768);
+  await openProject(page, "New client intake");
+  await page.getByRole("button", { name: "Publish", exact: true }).click();
+  await page.waitForSelector(".vs-pop");
+  await page.getByRole("button", { name: "Publish now" }).click();
+  await page.waitForTimeout(400);
+  results.push({ name: "publish-noaddress", liveHeading: await page.locator(".vs-pop h2:text(\"It's live\")").count(),
+    error: await page.locator(".vs-pop").textContent() });
+  await shoot(page, "publish-noaddress-1366x768");
+  await page.close();
+}
+
 // Form settings.
 {
   const page = await open("theme=light", 1366, 768);

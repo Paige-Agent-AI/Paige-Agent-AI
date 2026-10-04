@@ -9,8 +9,12 @@
 //   decision (decideDeclaredCapability) → a thread-less, server-issued proposal in
 //   paige_pending_confirmations (202 + fingerprint + preview) → on the second call, an atomic
 //   single-use claim of THAT proposal, bound to this user, workspace, act and artifact → the STORED
-//   call runs through the existing RPC with the caller's own JWT (so _growth_admin_tenant still
-//   decides authority) → a readback that proves the result → exactly one capability receipt.
+//   call runs through the existing RPC on the service-role client, naming the workspace resolved
+//   above and the verified user (Migration G: the eight publish RPCs are service_role-only, so this
+//   door is the only way they run; inside, _growth_admin_tenant requires the named workspace and
+//   _studio_publish_actor re-checks that this person is its owner, admin or managing agency, and
+//   records them on the audit row) → a readback that proves the result → exactly one capability
+//   receipt.
 //
 // It invents no approval channel: the only thing that turns a confirm lane into an execution is a
 // claim of a proposal this door issued. The request names an artifact; it never names a tenant that
@@ -38,9 +42,17 @@ type Client = any;
 type DecisionInput = Parameters<typeof decideDeclaredCapability>[1];
 export type PublishDecision = ReturnType<typeof decideDeclaredCapability>;
 export interface PublishDoorDeps {
-  /** The caller's own client (anon key + their JWT). Every RPC that decides authority runs on it. */
+  /**
+   * The caller's own client (anon key + their JWT): who they are, which workspace their session is
+   * in, whether they may act there, and the autonomy lane. It never runs a publish RPC — those are
+   * service_role-only (Migration G).
+   */
   caller: Client;
-  /** Service-role client: the approval store, the audit row, readiness reads (tenant-filtered) and the receipt. */
+  /**
+   * Service-role client: the approval store, the audit row, readiness reads (tenant-filtered), the
+   * receipt, and — after a claim — the publish/unpublish RPC itself, named with the server-resolved
+   * workspace and the verified user.
+   */
   admin: Client;
   /**
    * The canonical Kit gate for one publish-door key — bound in index.ts as
@@ -390,8 +402,10 @@ export async function handleGrowthPublishCommand(req: Request, deps: PublishDoor
 
     let data: unknown = null, error: { code?: unknown; message?: unknown } | null = null;
     try {
-      // The caller's own client: _growth_admin_tenant inside the RPC decides authority again.
-      const reply = await caller.rpc(publishRpc(cmd.action, cmd.kind), { p_tenant_id: null, p_id: String(args.id) });
+      // Migration G: the publish RPCs run for the server only. The workspace is the one resolved from
+      // the caller's session (and re-checked just above); the person is the verified user. The RPC
+      // refuses a call without either, and re-checks that this person holds the authority there.
+      const reply = await admin.rpc(publishRpc(cmd.action, cmd.kind), { p_tenant_id: tenantId, p_id: String(args.id), p_actor_id: userId });
       data = reply?.data ?? null; error = reply?.error ?? null;
     } catch (e) {
       error = { message: e instanceof Error ? e.message : String(e) };

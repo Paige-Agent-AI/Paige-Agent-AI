@@ -67,9 +67,20 @@ export function requiresWorkspaceAdmin(tool: string, n8nTools: ReadonlySet<strin
 export interface WorkspaceAuthority {
   /** Owner/admin of the ACTIVE workspace, or the agency managing it (`studio_role_ok`). */
   workspaceAdmin: boolean;
+  /**
+   * An ACTIVE owner/admin `tenant_members` seat in the acting workspace — exactly what the governed
+   * CRM and Sales doors (crm-command, sales-invoice-command, sales-collection-command) admit. Stricter
+   * than `workspaceAdmin`: no agency manager, no platform admin, no operator acting-as.
+   */
+  seat: boolean;
   /** The Platform Operator (§53, global super_admin) — admitted explicitly; it holds no seat. */
   platformOperator: boolean;
 }
+
+/** No authority at all — the fail-closed answer. */
+export const NO_WORKSPACE_AUTHORITY: WorkspaceAuthority = Object.freeze({
+  workspaceAdmin: false, seat: false, platformOperator: false,
+});
 
 /**
  * Resolve the caller's authority for workspace-admin tools. `callerClient` MUST carry the caller's JWT
@@ -88,7 +99,8 @@ export async function resolveWorkspaceAuthority(
   userId: string,
   actingTenantId: string | null,
 ): Promise<WorkspaceAuthority> {
-  const [seat, activeTenant, roles] = await Promise.all([
+  if (!userId) return NO_WORKSPACE_AUTHORITY;
+  const [adminOk, activeTenant, roles, memberRole] = await Promise.all([
     callerClient.rpc("studio_role_ok", { _caller: userId }).then(
       (r: { data: unknown; error: unknown }) => !r.error && r.data === true,
       () => false,
@@ -102,28 +114,91 @@ export async function resolveWorkspaceAuthority(
         r.error ? [] : (r.data ?? []).map((x) => x.role),
       () => [] as string[],
     ),
+    // The doors' own question, asked the doors' own way (service read keyed on the verified user and
+    // the server-resolved workspace, never a body value).
+    actingTenantId
+      ? serviceClient.from("tenant_members").select("role,status").eq("tenant_id", actingTenantId)
+        .eq("user_id", userId).eq("status", "active").maybeSingle().then(
+          (r: { data: { role?: unknown } | null; error: unknown }) =>
+            r.error || typeof r.data?.role !== "string" ? null : r.data.role,
+          () => null,
+        )
+      : Promise.resolve(null),
   ]);
   const sameWorkspace = !!actingTenantId && activeTenant === actingTenantId;
   return {
-    workspaceAdmin: seat === true && sameWorkspace,
+    workspaceAdmin: adminOk === true && sameWorkspace,
+    seat: sameWorkspace && (memberRole === "owner" || memberRole === "admin"),
     platformOperator: (roles as string[]).includes("super_admin"),
   };
 }
 
 /**
- * Does this authority admit this tool? The Studio build tools keep their stricter rule (the workspace's
- * own owner/admin or managing agency — the operator does not build in a customer workspace from chat),
- * exactly as the dispatch gate already enforced before this change.
+ * The SAME authority in its actor-EXPLICIT form, for a server path with no JWT (auth.uid() is NULL) —
+ * the native-event engine (Layer C) resolving a decision for the person who authorized it. Owner/admin
+ * seat in THIS tenant (is_tenant_admin_as) or the agency managing it (agency_can_manage_child) is
+ * `workspaceAdmin`; the doors' active owner/admin membership is `seat`; global super_admin is the
+ * operator. Both RPCs are service_role-only, which this client must be.
+ *
+ * Unlike the chat resolver this does NOT fail closed to "no authority": an error returns `ok:false`,
+ * because the engine RETRIES an infra failure rather than settling a refusal that never happened (§32).
+ */
+export async function resolveWorkspaceAuthorityAs(
+  // deno-lint-ignore no-explicit-any
+  serviceClient: any,
+  actorUserId: string,
+  tenantId: string,
+): Promise<{ ok: true; authority: WorkspaceAuthority } | { ok: false; error: string }> {
+  const [adminSeat, agency, roleRead, member] = await Promise.all([
+    serviceClient.rpc("is_tenant_admin_as", { _actor: actorUserId, _tenant: tenantId }),
+    serviceClient.rpc("agency_can_manage_child", { _child: tenantId, _actor: actorUserId }),
+    serviceClient.from("user_roles").select("role").eq("user_id", actorUserId),
+    serviceClient.from("tenant_members").select("role,status").eq("tenant_id", tenantId)
+      .eq("user_id", actorUserId).eq("status", "active").maybeSingle(),
+  ]);
+  const failed = adminSeat.error ?? agency.error ?? roleRead.error ?? member.error;
+  if (failed) return { ok: false, error: `authority read failed: ${failed?.message ?? String(failed)}` };
+  const roles = (Array.isArray(roleRead.data) ? roleRead.data : []).map((r: { role?: unknown }) => r.role);
+  const memberRole = typeof member.data?.role === "string" ? member.data.role : null;
+  return {
+    ok: true,
+    authority: {
+      workspaceAdmin: adminSeat.data === true || agency.data === true,
+      seat: memberRole === "owner" || memberRole === "admin",
+      platformOperator: roles.includes("super_admin"),
+    },
+  };
+}
+
+/**
+ * Does this authority admit this tool? Three rules, strictest first:
+ *  - a governed-door tool (CRM/Sales doors) needs an active owner/admin SEAT — the doors admit nothing
+ *    else, so neither may the description of them;
+ *  - a Studio build tool needs the workspace's own owner/admin or managing agency (the operator does
+ *    not build in a customer workspace from chat), exactly as the dispatch gate already enforced;
+ *  - every other admin tool admits the workspace owner/admin or the Platform Operator.
  */
 export function authorityAdmits(
   tool: string,
   authority: WorkspaceAuthority,
   workspaceBuildTools: ReadonlySet<string>,
+  doorSeatTools: ReadonlySet<string> = EMPTY,
 ): boolean {
+  if (doorSeatTools.has(tool)) return authority.seat;
   if (workspaceBuildTools.has(tool)) return authority.workspaceAdmin;
   return authority.workspaceAdmin || authority.platformOperator;
 }
+const EMPTY: ReadonlySet<string> = new Set();
 
-/** The person-facing refusal — names who CAN do it, never an internal role string. */
+/**
+ * The person-facing refusals — each names who CAN do it, never an internal role string. A read gets
+ * the read wording ("nothing was changed" is meaningless for a lookup); everything else the write one.
+ * Both are addressed to the person through PAIGE, who relays them in her own words.
+ */
 export const WORKSPACE_ADMIN_REFUSAL =
-  "This needs this workspace's owner or an admin. Nothing was changed — tell the person who can do it.";
+  "This needs this workspace's owner or an admin. Nothing was changed — the owner or an admin can do it, or give this person access.";
+export const WORKSPACE_ADMIN_READ_REFUSAL =
+  "Looking this up needs this workspace's owner or an admin — they can look it up, or give this person access.";
+export function workspaceAdminRefusal(isWrite: boolean): string {
+  return isWrite ? WORKSPACE_ADMIN_REFUSAL : WORKSPACE_ADMIN_READ_REFUSAL;
+}

@@ -62,7 +62,14 @@ describe("capability_status tool wiring (source assertions)", () => {
     expect(src).toContain('import { classifyAction, clampLaneByRisk,');
     expect(readFileSync("supabase/functions/_shared/action-risk.ts", "utf8")).toContain("export function clampLaneByRisk(");
     // authority: the SAME resolver the dispatch gate uses (workspace role, never the global admin row)
-    expect(src).toContain("isWorkspaceAdmin: (tool) => authorityAdmits(tool, authority, WORKSPACE_BUILD_TOOLS),");
+    expect(src).toContain("isWorkspaceAdmin: (tool) => authorityAdmits(tool, authority, WORKSPACE_BUILD_TOOLS, DOOR_SEAT_TOOLS),");
+    // the governed doors' tools are described by the doors' own seat rule
+    expect(src).toContain("...CRM_COMMAND_TOOL_NAMES, ...SALES_INVOICE_TOOL_NAMES, ...SALES_COLLECTIONS_TOOL_NAMES,");
+    expect(src).toContain("|| DOOR_SEAT_TOOLS.has(n)));");
+    // the roster is only offered when a delegation tool is in her hands for this person
+    expect(src).toContain("return { rows, specialists: canDelegate ? specialists : [] };");
+    // the batch lane answer describes the turn; it never seeds the dispatch caches (§68)
+    expect(src).not.toMatch(/autonomyModeCache\.set\(key, mode\)/);
     // research readiness gates on the REAL provider-key presence, never the value (§13/§34)
     expect(src).toContain('["research_provider", Deno.env.get("FIRECRAWL_API_KEY") ? "ready" : "not_ready"]');
     // n8n readiness is the MCP/OAuth state — "available" only means the record parsed (the R0 over-claim)

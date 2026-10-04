@@ -68,6 +68,13 @@ const WORKSPACE_BUILD_TOOLS: ReadonlySet<string> = new Set([
   "growth_funnel_generate", "growth_funnel_build", "growth_funnel_publish",
   "draft_marketing_content", "content_save", "generate_image",
 ]);
+
+// The governed CRM and Sales doors admit only an active owner/admin SEAT in the acting workspace
+// (crm-command, sales-invoice-command, sales-collection-command). The capability projection reads the
+// same rule through authorityAdmits so it never describes a door tool the door would refuse (C0a).
+const DOOR_SEAT_TOOLS: ReadonlySet<string> = new Set<string>([
+  ...CRM_COMMAND_TOOL_NAMES, ...SALES_INVOICE_TOOL_NAMES, ...SALES_COLLECTIONS_TOOL_NAMES,
+]);
 import { buildFormSchemaFromQuestions } from "../_shared/growth-form-build.ts";
 import { classifyDocumentSubmissionError, validateDocumentBrief } from "../_shared/document-production.ts";
 // Wave 4 · 4a.3 — token-aware compaction trigger (§18 one home; smoke-tested per §32).
@@ -143,7 +150,7 @@ import {
   requiresWorkspaceAdmin,
   resolveWorkspaceAuthority,
   ROLE_FREE_BRANCH_TOOLS,
-  WORKSPACE_ADMIN_REFUSAL,
+  workspaceAdminRefusal,
   type WorkspaceAuthority,
 } from "../_shared/workspace-authority.ts";
 // The Capability Gateway owns the tool definitions Chat may reach (§18 one home; owner ruling
@@ -4611,11 +4618,10 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       tenantKbContext,
     });
 
-    // Per-request cache of resolved autonomy modes (tool_key → 'auto'|'confirm'|'off').
-    // Defined HERE (before prompt assembly) rather than at the tool-dispatch site so the per-turn
-    // capability manifest below can resolve its lanes at prompt time, and the dispatch reuses the
-    // same cached resolver — one home, one cache (§18). Depends only on supabaseClient + personaCtx,
-    // both resolved above; nothing between here and the old site referenced it.
+    // Per-request cache of resolved autonomy modes (tool_key → 'auto'|'confirm'|'off'), filled by the
+    // dispatch gate on first use of each tool. The capability projection does NOT seed it: its lanes
+    // come from one batch read at prompt time (resolveEffectiveLanes, below) and stay in the projection,
+    // so a Trust-Compass brake that lands mid-request still binds every tool not yet dispatched (§68).
     const autonomyModeCache = new Map<string, string>();
     const resolveToolAutonomy = async (toolKey: string): Promise<string> => {
       if (autonomyModeCache.has(toolKey)) return autonomyModeCache.get(toolKey)!;
@@ -4670,11 +4676,11 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
     };
 
     // The EFFECTIVE lane for many tools in one round trip: the Trust-Compass clamp
-    // (resolve_tool_autonomy_many → the canonical resolve_tool_autonomy per key) THEN the action-class
-    // clamp (clampLaneByRisk, the same helper the dispatch gate uses). Each answer also seeds the
-    // dispatch's own lane cache, so what the manifest says and what the gate does cannot drift within
-    // the request. A tool with no answer is simply absent — the projection treats it as "confirm",
-    // which never over-claims acting unread.
+    // (resolve_tool_autonomy_many → the one canonical resolution, with the rung read once per call)
+    // THEN the action-class clamp (clampLaneByRisk, the same helper the dispatch gate uses). The answer
+    // describes the turn for PAIGE; it is never an authority — every dispatch re-resolves its own lane
+    // at call time, so nothing here is written into the dispatch caches (§68). A tool with no answer is
+    // simply absent — the projection treats it as "confirm", which never over-claims acting unread.
     const resolveEffectiveLanes = async (toolKeys: readonly string[]): Promise<Map<string, Lane>> => {
       const lanes = new Map<string, Lane>();
       if (!toolKeys.length || !personaCtx?.tenant_id) return lanes;
@@ -4691,8 +4697,6 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
           const key = typeof row?.tool_key === "string" ? row.tool_key : null;
           const mode = row?.mode;
           if (!key || (mode !== "auto" && mode !== "confirm" && mode !== "off")) continue;
-          if (!autonomyModeCache.has(key)) autonomyModeCache.set(key, mode);
-          if (!ceilingAllowsAutoCache.has(key)) ceilingAllowsAutoCache.set(key, row?.ceiling_allows_auto === true);
           lanes.set(key, clampLaneByRisk(mode, key) as Lane);
         }
       } catch (e) {
@@ -5320,8 +5324,10 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       const authority = await getWorkspaceAuthority();
       isOperator = authority.workspaceAdmin || authority.platformOperator;
       // A short, human role phrase for the identity line (#139): she should know
-      // WHO she's talking to and in WHAT capacity, not just their name.
-      operatorRoleLabel = isOperator ? "an admin/owner" : "";
+      // WHO she's talking to and in WHAT capacity, not just their name. The Platform Operator acting
+      // in a customer workspace holds no seat there, so is never described as its owner.
+      operatorRoleLabel = authority.workspaceAdmin ? "an owner or admin on"
+        : authority.platformOperator ? "the platform operator, working with" : "";
     } catch (e) {
       console.warn("[paige-ai-chat] role lookup failed:", e);
     }
@@ -5352,7 +5358,7 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
           || (op?.full_name ?? "").trim();
       } catch (_e) { /* name is a nicety, never block */ }
       const whoLine = operatorName
-        ? `You are speaking with ${operatorName}${operatorFirst ? ` — address them as ${operatorFirst}` : ""}, ${operatorRoleLabel ? `${operatorRoleLabel} on` : "a member of"} ${personaCtx?.tenant_name ?? "this"} team. This is a named teammate, not an anonymous user: greet and refer to them by their first name naturally, and remember it for this conversation.\n\n`
+        ? `You are speaking with ${operatorName}${operatorFirst ? ` — address them as ${operatorFirst}` : ""}, ${operatorRoleLabel || "a member of"} ${personaCtx?.tenant_name ?? "this"} team. This is a named teammate, not an anonymous user: greet and refer to them by their first name naturally, and remember it for this conversation.\n\n`
         : "";
       // `whoLine` names the real person and their workspace, both read from storage.
       if (whoLine) markProtectedLate("crm_operator_who_line");
@@ -8346,7 +8352,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         ["research_provider", Deno.env.get("FIRECRAWL_API_KEY") ? "ready" : "not_ready"],
         ["mcp_connection", "unknown"], // per-provider probes land with the Integrations/MCP batch (C0b)
       ]);
-      const adminTools = new Set(emitted.map((t) => t.name).filter((n) => requiresWorkspaceAdmin(n, N8N_MANAGEMENT_TOOL_NAMES)));
+      const adminTools = new Set(emitted.map((t) => t.name)
+        .filter((n) => requiresWorkspaceAdmin(n, N8N_MANAGEMENT_TOOL_NAMES) || DOOR_SEAT_TOOLS.has(n)));
       const rows = projectCapabilities({
         tools: emitted,
         spine: PAIGE_SPINE_CAPABILITIES,
@@ -8354,11 +8361,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         isMutating: (n) => MUTATING_TOOLS.has(n),
         lanes,
         workspaceAdminTools: adminTools,
-        isWorkspaceAdmin: (tool) => authorityAdmits(tool, authority, WORKSPACE_BUILD_TOOLS),
+        isWorkspaceAdmin: (tool) => authorityAdmits(tool, authority, WORKSPACE_BUILD_TOOLS, DOOR_SEAT_TOOLS),
         readiness,
         planned: PLANNED_CAPABILITIES,
       });
-      return { rows, specialists };
+      // The roster is only true when she can actually consult it this turn: a delegation tool is in
+      // her hands AND this person may use it (Studio turns and member seats have neither).
+      const canDelegate = rows.some((r) => (r.tool === "delegate_to_subagent" || r.tool === "list_subagents")
+        && (r.availability === "live" || r.availability === "needs_approval"));
+      return { rows, specialists: canDelegate ? specialists : [] };
     })());
     if (capabilityManifestEligible) {
       try {
@@ -8372,10 +8383,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       const at = aiMessages.indexOf(capabilityStatusMessage);
       if (at >= 0) aiMessages.splice(at, 1);
     }
-
-    // `autonomyModeCache` + `resolveToolAutonomy` are defined earlier (just before the system-prompt
-    // assembly) so the per-turn capability manifest can resolve its lanes at prompt time AND the
-    // tool dispatch below reuses the same cached resolver (§18 one home). Moved, not duplicated.
 
     // Call AI
     // U2 — extended thinking is GATED OFF by default and is ONLY ever considered on the Studio path
@@ -9003,7 +9010,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             && !authorityAdmits(tc.function.name, await authorityForCall(tc.id), WORKSPACE_BUILD_TOOLS)) {
           if (WORKSPACE_BUILD_TOOLS.has(tc.function.name)) await recordStudioRefusal(tc, "workspace_owner_or_admin_required");
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
-            success: false, error: "workspace_owner_or_admin_required", message: WORKSPACE_ADMIN_REFUSAL,
+            success: false, error: "workspace_owner_or_admin_required", message: workspaceAdminRefusal(MUTATING_TOOLS.has(tc.function.name)),
           }) });
           continue;
         }
@@ -10396,7 +10403,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               role: "tool",
               content: JSON.stringify(workspaceAuthorityTool
                 ? { success: false, error: "workspace_owner_or_admin_required", message: "Building and publishing here needs this workspace's owner or an admin. Nothing was changed." }
-                : { success: false, error: "workspace_owner_or_admin_required", message: WORKSPACE_ADMIN_REFUSAL }),
+                : { success: false, error: "workspace_owner_or_admin_required", message: workspaceAdminRefusal(MUTATING_TOOLS.has(tc.function.name)) }),
             });
             continue;
           }
@@ -12707,10 +12714,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               const isAdmin = authorityAdmits(tc.function.name, await authorityForCall(tc.id), WORKSPACE_BUILD_TOOLS);
               if (!isAdmin) {
                 toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Improvement proposals need this workspace's owner or an admin.", note: "Nothing was filed. Tell the operator plainly you could not file this and nothing was recorded — do NOT say it was filed or logged." }) });
-                continue;
-              }
-              if (tc.function.name === "improvement_decide" && !isAdmin) {
-                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, error: "Deciding improvement proposals is admin-only.", note: "Nothing changed. Say plainly you could not do this; do NOT imply a decision was recorded." }) });
                 continue;
               }
               const impTenantId = personaCtx?.tenant_id ?? null;

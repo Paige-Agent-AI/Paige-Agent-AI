@@ -83,9 +83,19 @@ export interface ProjectedCapability extends CapabilityStatus {
   family: string;
   /** How the row was found: canonical Spine, the legacy classification, or neither (CI-blocked). */
   source: "spine" | "legacy" | "undeclared" | "planned";
+  /** The effective lane, on write rows only (a read has no lane). */
+  lane?: Lane;
 }
 
 const FIRST_SENTENCE = /^(.+?[.!?])(\s|$)/;
+
+/** The per-row reasons the projection writes (exported so the render can group them, and tests pin them). */
+export const PROJECTION_REASON = Object.freeze({
+  role: "Needs this workspace's owner or an admin.",
+  confirm: "PAIGE drafts it and you approve before it runs.",
+  manual: "Set to manual — PAIGE prepares it, you run it.",
+  unconfirmedConnection: "The connection behind this isn't confirmed for this workspace — check it before promising a result.",
+});
 
 /** A short label from the model-facing description itself — the one description that already ships. */
 export function labelFromDescription(name: string, description: string): string {
@@ -104,7 +114,7 @@ function actionKindFor(effect: "read" | "mutate" | "external_effect" | null, mut
 
 /**
  * Project the emitted tool surface into one honest availability per tool, most-restrictive-wins:
- *   tenant authority → readiness → lane (writes) → live (reads).
+ *   tenant authority → readiness (not ready → setup; unconfirmed → proof owed) → lane (writes) → live.
  * Tier/seat exclusion is upstream: a tool not emitted to this seat is not projected at all.
  */
 export function projectCapabilities(input: ProjectionInput): ProjectedCapability[] {
@@ -142,20 +152,30 @@ export function projectCapabilities(input: ProjectionInput): ProjectedCapability
 
     const admitted = typeof input.isWorkspaceAdmin === "function" ? input.isWorkspaceAdmin(t.name) : input.isWorkspaceAdmin;
     if (input.workspaceAdminTools.has(t.name) && !admitted) {
-      rows.push(row("not_for_tier", "Needs this workspace's owner or an admin."));
+      rows.push(row("not_for_tier", PROJECTION_REASON.role));
       continue;
     }
-    if (readinessId !== "none" && input.readiness.get(readinessId) === "not_ready") {
-      rows.push(row("needs_setup", READINESS_SETUP_HINT[readinessId] || "Needs a connection before PAIGE can use it."));
-      continue;
+    if (readinessId !== "none") {
+      const state = input.readiness.get(readinessId);
+      if (state === "not_ready") {
+        rows.push(row("needs_setup", READINESS_SETUP_HINT[readinessId] || "Needs a connection before PAIGE can use it."));
+        continue;
+      }
+      // Unread is not ready: a connection nobody has confirmed is offered as an attempt, never as a
+      // promise ("CAN DO NOW" would be the R0 over-claim in a new domain).
+      if (state !== "ready") {
+        rows.push(row("proof_owed", PROJECTION_REASON.unconfirmedConnection));
+        continue;
+      }
     }
     const isWrite = mutating || effect === "mutate" || effect === "external_effect";
     if (isWrite) {
       const lane = input.lanes.get(t.name) ?? "confirm";
-      if (lane === "auto") rows.push(row("live", null));
-      else rows.push(row("needs_approval", lane === "off"
-        ? "Set to manual — PAIGE prepares it, you run it."
-        : "PAIGE drafts it and you approve before it runs."));
+      rows.push({
+        ...(lane === "auto" ? row("live", null)
+          : row("needs_approval", lane === "off" ? PROJECTION_REASON.manual : PROJECTION_REASON.confirm)),
+        lane,
+      });
       continue;
     }
     rows.push(row("live", null));

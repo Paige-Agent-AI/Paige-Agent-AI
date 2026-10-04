@@ -1,5 +1,5 @@
 {
-  "_comment": "Shrink-only (capability-declaration-lint rules 5-6, C0a). readinessUndeclared: Spine capabilities with a chat tool that predate the readiness field — each is declared as its domain batch converges (C0b). deadChatBindings: Spine chatTools on no model surface — delete them, never add.",
+  "_comment": "Shrink-only (capability-declaration-lint rules 5-6, C0a). readinessUndeclared: Spine capabilities with a chat tool that predate the readiness field \u2014 each is declared as its domain batch converges (C0b). deadChatBindings: Spine chatTools on no model surface \u2014 delete them, never add. authorityGateSites: the number of authorityAdmits(tc.function.name, \u2026) dispatch gates in paige-ai-chat (rule 8) \u2014 move it only alongside a reviewed gate.",
   "readinessUndeclared": [
     "activity.crm_log_activity",
     "agreement.draft",
@@ -73,5 +73,6 @@
   ],
   "deadChatBindings": [
     "integrations_health"
-  ]
+  ],
+  "authorityGateSites": 6
 }

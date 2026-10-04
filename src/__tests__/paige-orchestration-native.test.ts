@@ -96,6 +96,7 @@ function mockDb(cfg: DbConfig): AdapterDb & EngineDb {
       order(): MockQuery;
       eq(k: string, v: unknown): MockQuery;
       limit(): MockQuery;
+      maybeSingle(): Promise<{ data: unknown; error: unknown }>;
       then(
         onF: (value: { data: unknown; error: unknown }) => unknown,
         onR?: (reason: unknown) => unknown,
@@ -106,6 +107,12 @@ function mockDb(cfg: DbConfig): AdapterDb & EngineDb {
       order() { return q; },
       eq(k: string, v: unknown) { filters[k] = v; return q; },
       limit() { return q; },
+      // single-row read over the same data (the shared authority module reads a membership this way)
+      maybeSingle() {
+        return q.then((r) => ({ ...(r as { data: unknown; error: unknown }),
+          data: Array.isArray((r as { data: unknown }).data) ? ((r as { data: unknown[] }).data[0] ?? null) : (r as { data: unknown }).data,
+        })) as Promise<{ data: unknown; error: unknown }>;
+      },
       then(onF, onR) {
         cfg.queryFilters.push({ table, filters: { ...filters } });
         let data: unknown = [];

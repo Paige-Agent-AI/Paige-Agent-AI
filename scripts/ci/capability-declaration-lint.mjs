@@ -78,6 +78,7 @@ const HANDLER = path.join(ROOT, "supabase/functions/paige-ai-chat/index.ts");
 const REGISTRY = path.join(ROOT, "supabase/functions/_shared/paige-spine/registry.ts");
 const POLICY = path.join(ROOT, "supabase/functions/_shared/action-risk.ts");
 const LEGACY = path.join(ROOT, "supabase/functions/_shared/paige-capability-status/legacy-capabilities.ts");
+const AUTHORITY = path.join(ROOT, "supabase/functions/_shared/workspace-authority.ts");
 const READINESS = path.join(ROOT, "supabase/functions/_shared/paige-capability-status/readiness.ts");
 const DISCOVERY_BASELINE = process.env.CAPABILITY_DISCOVERY_BASELINE
   ? path.resolve(process.env.CAPABILITY_DISCOVERY_BASELINE)
@@ -363,6 +364,43 @@ export function discoveryFindings({ baselineTools, legacyKeys, spineCaps, chatTo
   };
 }
 
+/**
+ * Rules 7–8 — the projection's ROLE axis cannot drift from the dispatch gates (C0a, verifier finding).
+ * Role is not yet on the Spine registration (a C0b prerequisite), so the one admin-tool set in
+ * _shared/workspace-authority.ts is what both the gates and the projection read. Two things could make
+ * them disagree, and both are caught here:
+ *   7. a legacy row's `workspaceAdmin` says something other than requiresWorkspaceAdmin(tool);
+ *   8. a dispatch site gates on authorityAdmits(...) for a tool the shared set does not name — a new
+ *      inline role gate the projection would describe as available. Every `tc.function.name === "x"`
+ *      in the 12 lines above a gate must be in the set, and the number of gate sites is pinned, so a
+ *      NEW gate site fails until it is reviewed and the pin moved deliberately.
+ *   legacy        : { [tool]: { workspaceAdmin: boolean } }
+ *   requiresAdmin : (tool) => boolean
+ *   handlerSource : paige-ai-chat/index.ts
+ *   pinnedSites   : number (capability-discovery-baseline.json authorityGateSites)
+ */
+export function authorityFindings({ legacy, requiresAdmin, handlerSource, pinnedSites }) {
+  const legacyMismatch = Object.entries(legacy)
+    .filter(([tool, row]) => row?.workspaceAdmin !== requiresAdmin(tool))
+    .map(([tool, row]) => `${tool} (row says ${row?.workspaceAdmin}, gate says ${requiresAdmin(tool)})`).sort();
+  const lines = handlerSource.split("\n");
+  const sites = [];
+  lines.forEach((line, i) => { if (/authorityAdmits\(tc\.function\.name\b/.test(line)) sites.push(i); });
+  const ungated = new Set();
+  for (const i of sites) {
+    const window = lines.slice(Math.max(0, i - 12), i + 1).join("\n");
+    for (const m of window.matchAll(/tc\.function\.name === "([a-z0-9_]+)"/g)) {
+      if (!requiresAdmin(m[1])) ungated.add(`${m[1]} (gate at line ${i + 1})`);
+    }
+  }
+  return {
+    legacyMismatch,
+    ungated: [...ungated].sort(),
+    sitesGrew: sites.length > pinnedSites ? [`${sites.length} gate sites, ${pinnedSites} pinned`] : [],
+    sitesShrank: sites.length < pinnedSites ? [`${sites.length} gate sites, ${pinnedSites} pinned`] : [],
+  };
+}
+
 /* ───────────────────────── self-test ───────────────────────── */
 
 if (process.argv.includes("--self-test")) {
@@ -478,6 +516,28 @@ if (process.argv.includes("--self-test")) {
     disc({ chatTools: new Set(["legacy_a", "t_old"]) }).deadNew.join() === "t_ready");
   ok("FAILS a stale dead-binding baseline entry (the tool shipped or the binding was deleted)",
     disc({ baseline: { readinessUndeclared: ["d.old"], deadChatBindings: ["t_ready"] } }).deadStale.join() === "t_ready");
+
+  // ── rules 7–8 (authority) ─────────────────────────────────────────────────────────────────
+  const adminSet = new Set(["team_invite_member", "forge_subagent"]);
+  const handler = [
+    'if (tc.function.name === "forge_subagent") {',
+    '  if (!authorityAdmits(tc.function.name, a, B)) refuse();',
+    '}',
+  ].join("\n");
+  const auth = (over = {}) => authorityFindings({
+    legacy: { team_invite_member: { workspaceAdmin: true }, web_search: { workspaceAdmin: false } },
+    requiresAdmin: (t) => adminSet.has(t), handlerSource: handler, pinnedSites: 1, ...over,
+  });
+  const clean = auth();
+  ok("authority: a consistent set is clean", !clean.legacyMismatch.length && !clean.ungated.length && !clean.sitesGrew.length && !clean.sitesShrank.length);
+  ok("authority: a legacy row that disagrees with the gate fails",
+    auth({ legacy: { web_search: { workspaceAdmin: true } } }).legacyMismatch.length === 1);
+  ok("authority: a NEW inline role gate for a tool outside the set fails",
+    auth({ handlerSource: handler.replace("forge_subagent", "new_admin_thing") }).ungated.join().startsWith("new_admin_thing"));
+  ok("authority: a new gate site fails until the pin moves",
+    auth({ handlerSource: handler + "\n" + handler }).sitesGrew.length === 1);
+  ok("authority: a removed gate site asks for the pin to come down",
+    auth({ pinnedSites: 2 }).sitesShrank.length === 1);
 
   // ── the end-to-end negative: the REAL check, against a baseline with one entry removed ────
   // A guard nobody proved can fail is theatre. This drives the shipped code path, not a fixture.
@@ -703,6 +763,35 @@ if (r.declared.length || r.softened.length) {
     d.deadNew, "Emit the tool, or delete the dead binding. Do not baseline it.");
   say("stale dead-binding baseline entr(ies):",
     d.deadStale, "Delete them from capability-discovery-baseline.json in this PR.");
+}
+
+// Rules 7–8 — the role axis (C0a).
+{
+  const { LEGACY_CAPABILITIES } = await import(pathToFileURL(LEGACY).href);
+  const { requiresWorkspaceAdmin } = await import(pathToFileURL(AUTHORITY).href);
+  const discBase = JSON.parse(fs.readFileSync(DISCOVERY_BASELINE, "utf8"));
+  if (!Number.isInteger(discBase.authorityGateSites)) fail(`${path.relative(ROOT, DISCOVERY_BASELINE)} has no integer authorityGateSites.`);
+  const a = authorityFindings({
+    legacy: LEGACY_CAPABILITIES ?? {},
+    requiresAdmin: (tool) => requiresWorkspaceAdmin(tool, new Set()),
+    handlerSource: source,
+    pinnedSites: discBase.authorityGateSites,
+  });
+  const say = (title, list, remedy) => {
+    if (!list.length) return;
+    failed = true;
+    console.error(`\n✗ capability-declaration-lint (authority): ${title}\n`);
+    for (const t of list) console.error(`    ${t}`);
+    console.error(`\n  ${remedy}`);
+  };
+  say("legacy row(s) whose workspaceAdmin disagrees with the dispatch gate:",
+    a.legacyMismatch, "Set the row to what requiresWorkspaceAdmin() answers (_shared/workspace-authority.ts is the gate).");
+  say("tool(s) gated on workspace authority at dispatch but NOT in the shared admin set — the projection would offer them to a member:",
+    a.ungated, "Add the tool to OWNER_OPS_BRANCH_TOOLS or OUT_OF_BRANCH_ADMIN_TOOLS in _shared/workspace-authority.ts.");
+  say("NEW authorityAdmits gate site(s) in paige-ai-chat:",
+    a.sitesGrew, "Name every tool it gates in the shared admin set (rule 8 checks the literals above it), then raise authorityGateSites in capability-discovery-baseline.json in the same PR.");
+  say("fewer authorityAdmits gate sites than pinned:",
+    a.sitesShrank, "Lower authorityGateSites in capability-discovery-baseline.json in this PR.");
 }
 
 if (failed) process.exit(1);

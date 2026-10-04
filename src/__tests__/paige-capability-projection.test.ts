@@ -8,6 +8,7 @@ import { describe, expect, it } from "vitest";
 import {
   labelFromDescription,
   PLANNED_CAPABILITIES,
+  PROJECTION_REASON,
   projectCapabilities,
   type ProjectionInput,
   type SpineDeclarationLike,
@@ -100,9 +101,13 @@ describe("C — a provider that is not ready reads needs-setup, never approval",
     expect(row.availability).toBe("needs_setup");
     expect(row.reason).toMatch(/n8n/i);
   });
-  it("ready → live; unknown → never blocks (and never claims setup)", () => {
+  it("ready → live; unconfirmed → an attempt (proof owed), never a promise and never a setup claim", () => {
     expect(projectCapabilities(input({ spine, tools, readiness: new Map([["n8n_connection", "ready"]]) }))[0].availability).toBe("live");
-    expect(projectCapabilities(input({ spine, tools }))[0].availability).toBe("live");
+    for (const readiness of [new Map([["n8n_connection", "unknown"]]), new Map()] as const) {
+      const [row] = projectCapabilities(input({ spine, tools, readiness: readiness as ProjectionInput["readiness"] }));
+      expect(row.availability).toBe("proof_owed");
+      expect(row.reason).toBe(PROJECTION_REASON.unconfirmedConnection);
+    }
   });
 });
 
@@ -126,6 +131,26 @@ describe("D — workspace role decides admin-only tools (ADMIN IS A TENANT ROLE)
       lanes: new Map([["team_invite_member", "auto"]]),
     }));
     expect(row.availability).toBe("not_for_tier");
+  });
+});
+
+describe("D2 — governed-door tools are described by the door's own seat rule", () => {
+  const spine: SpineDeclarationLike[] = [
+    { key: "crm.contact_archive", domain: "crm", action: { classification: "mutate", chatTool: "crm_archive_contact" } },
+    { key: "crm.contact_create", domain: "crm", action: { classification: "mutate", chatTool: "crm_create_contact" } },
+  ];
+  const tools = [{ name: "crm_archive_contact", description: "Archive." }, { name: "crm_create_contact", description: "Create." }];
+  const door = new Set(["crm_archive_contact", "crm_create_contact"]);
+  it("a member sees EVERY door tool as needing the owner or an admin — not just the ones in the owner-ops set", () => {
+    const rows = byTool(projectCapabilities(input({ spine, tools, workspaceAdminTools: door, isWorkspaceAdmin: false })));
+    expect(rows.crm_archive_contact.availability).toBe("not_for_tier");
+    expect(rows.crm_create_contact.availability).toBe("not_for_tier");
+  });
+  it("the per-tool authority answer is used (an operator acting-as holds no door seat)", () => {
+    const rows = byTool(projectCapabilities(input({
+      spine, tools, workspaceAdminTools: door, isWorkspaceAdmin: (t) => !door.has(t),
+    })));
+    expect(rows.crm_archive_contact.availability).toBe("not_for_tier");
   });
 });
 
@@ -201,12 +226,27 @@ describe("render", () => {
       planned: PLANNED_CAPABILITIES,
     }));
     const text = renderProjectedCapabilityBlock(rows, [{ name: "Research Scout", domain: "research" }]);
+    expect(text).not.toContain(PROJECTION_REASON.confirm); // the heading already says it
     expect(text).toContain("- crm: crm_read");
     expect(text).toContain("- integrations: n8n_a, n8n_b — Connect your n8n account first.");
     expect(text.match(/Connect your n8n account first/g)).toHaveLength(1);
     expect(text).toContain("never read out tool names");
     expect(text).toContain("- research: Research Scout");
     expect(text).toContain("Publish a post to your social accounts");
+  });
+
+  it("keeps the MANUAL lane's reason so 'off' never reads like 'confirm'", () => {
+    const spine: SpineDeclarationLike[] = [
+      { key: "crm.a", domain: "crm", action: { classification: "mutate", chatTool: "crm_a" } },
+      { key: "crm.b", domain: "crm", action: { classification: "mutate", chatTool: "crm_b" } },
+    ];
+    const rows = projectCapabilities(input({
+      spine, tools: [{ name: "crm_a", description: "A." }, { name: "crm_b", description: "B." }],
+      lanes: new Map([["crm_a", "off"], ["crm_b", "confirm"]]),
+    }));
+    const text = renderProjectedCapabilityBlock(rows);
+    expect(text).toContain(`- crm: crm_a — ${PROJECTION_REASON.manual}`);
+    expect(text).toMatch(/^- crm: crm_b$/m);
   });
 
   it("returns empty for an empty projection so nothing is injected", () => {

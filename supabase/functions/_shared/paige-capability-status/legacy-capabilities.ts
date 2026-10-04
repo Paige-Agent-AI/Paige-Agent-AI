@@ -80,7 +80,7 @@ export const LEGACY_CAPABILITIES: Readonly<Record<string, LegacyCapabilityRow>> 
   plan_remove_item: { domain: "planning", effect: "mutate", selfDescribe: false, readiness: "none", gapClass: "missing_spine_registration", workspaceAdmin: false },
   plan_set_reminder: { domain: "planning", effect: "mutate", selfDescribe: true, readiness: "none", gapClass: "missing_spine_registration", workspaceAdmin: false },
   plan_update_item: { domain: "planning", effect: "mutate", selfDescribe: false, readiness: "none", gapClass: "missing_spine_registration", workspaceAdmin: false },
-  capability_status: { domain: "platform_meta", effect: "read", selfDescribe: false, readiness: "none", gapClass: "internal_only_not_self_described", workspaceAdmin: true },
+  capability_status: { domain: "platform_meta", effect: "read", selfDescribe: false, readiness: "none", gapClass: "internal_only_not_self_described", workspaceAdmin: false },
   improvement_decide: { domain: "platform_meta", effect: "mutate", selfDescribe: false, readiness: "none", gapClass: "missing_spine_registration", workspaceAdmin: true },
   improvement_list: { domain: "platform_meta", effect: "read", selfDescribe: false, readiness: "none", gapClass: "missing_spine_registration", workspaceAdmin: true },
   improvement_propose: { domain: "platform_meta", effect: "mutate", selfDescribe: false, readiness: "none", gapClass: "missing_spine_registration", workspaceAdmin: true },

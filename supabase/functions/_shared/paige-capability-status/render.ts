@@ -131,7 +131,8 @@ export function renderProjectedCapabilityBlock(
     // Rows sharing a family AND a reason collapse to one line; the reason is printed once.
     const buckets = new Map<string, { family: string; reason: string | null; tools: string[] }>();
     for (const r of inGroup) {
-      const reason = group === "live" || group === "needs_approval" ? null : r.reason;
+      // The default approval reason is the heading itself; only a MANUAL lane says something more.
+      const reason = group === "live" || (group === "needs_approval" && r.lane !== "off") ? null : r.reason;
       const k = `${r.family}\u0000${reason ?? ""}`;
       const b = buckets.get(k) ?? { family: r.family, reason, tools: [] };
       b.tools.push(r.tool ?? r.key);

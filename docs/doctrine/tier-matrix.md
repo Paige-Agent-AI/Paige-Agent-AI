@@ -345,6 +345,10 @@ class of lie as a fabricated metric (§13).
 
 Legend: **✓** live · **—** not built · **N/A** tier not opened yet · **403** denied at the route gate.
 
+### Vibe Studio V2a — receipts, drafts without approval, Migration D (2026-10-04)
+
+Same Studio tiers (Solo owner/admin; the agency managing a sub-account; operators in company workspaces). Every Studio save and publish now appears on the workspace's activity Rail with a named line. Copy drafts run without an approval card for every tier; saving and publishing keep their approval. `save_marketing_content`: a plain member holding the global admin role loses write; a workspace owner/admin without it gains write; the platform owner can no longer write into a workspace where they are not owner/admin. `marketing_content` reads: the managing agency gains read of a sub-account's library only while working inside that sub-account; members still read nothing. Client and Anonymous: unchanged, refused.
+
 ### Vibe Studio V2a-0 — generation writes only into the caller's own workspace (2026-10-04)
 
 `generate-image` and `content-draft` now resolve the workspace from the session and require that workspace's owner/admin or its managing agency (the `studio_role_ok` rule; operators only in company workspaces). A body tenant naming another workspace is refused. paige-ai-chat's gate for `generate_image` and `draft_marketing_content` now asks `studio_role_ok` too. Before: any holder of the platform-wide `admin` role passed and the body tenant was trusted. Solo owners without the global role gain image generation and copy drafting (chat and paige-media); a global admin who is only a member of the active workspace loses it. Client and Anonymous: unchanged, refused. `save_marketing_content` and the growth draft functions are still V2a.

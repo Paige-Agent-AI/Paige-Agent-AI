@@ -14,8 +14,6 @@ export type AudienceContact = {
   do_not_contact: boolean | null;
   dnd_active: boolean | null;
   disqualified: boolean | null;
-  email: string | null;
-  phone: string | null;
 };
 
 export const AUDIENCE_PERIODS = [7, 30, 90] as const;
@@ -98,7 +96,7 @@ export function deriveAudience({ contacts, reachableIds, periodDays, now = Date.
   const qualified = contacts.filter((c) => STAGE_GROUP[c.lifecycle_stage ?? ""] === "qualified").length;
   const tagged = contacts.filter((c) => (c.tags ?? []).some((tag) => tag?.trim())).length;
   const blocked = (c: AudienceContact) => Boolean(c.do_not_contact || c.dnd_active || c.disqualified);
-  const reachable = contacts.filter((c) => !blocked(c) && (Boolean(c.email?.trim() || c.phone?.trim()) || reachableIds.has(c.id))).length;
+  const reachable = contacts.filter((c) => !blocked(c) && reachableIds.has(c.id)).length;
   const contacted = contacts.filter((c) => { const t = at(c.last_contacted_at); return t !== null && t >= start && t <= now; }).length;
   // Not reached in STALE_DAYS: last contacted before then, or never contacted and old enough that it matters
   // (a contact added this week has not been neglected yet).

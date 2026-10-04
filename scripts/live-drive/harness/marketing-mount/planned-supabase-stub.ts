@@ -14,9 +14,9 @@ const CONTACTED = [1, null, 5, null, 40, 2, null, 120, 8, null, 200, 3, null];
 const clients = STAGES.map((lifecycle_stage, i) => ({
   id: `contact-${i + 1}`, lifecycle_stage, source: SOURCES[i], tags: TAGS[i], created_at: day(AGES[i]),
   last_contacted_at: CONTACTED[i] === null ? null : day(CONTACTED[i] as number), do_not_contact: i === 7, dnd_active: false, disqualified: false,
-  email: i % 3 === 0 ? `person${i + 1}@northfield.example` : null, phone: i % 4 === 1 ? "555-0100" : null,
 }));
-const methods = clients.filter((_, i) => i % 5 === 2).map((c) => ({ client_id: c.id }));
+// Contacts with an email or phone on record, as client_contact_methods holds them.
+const methods = clients.filter((_, i) => i % 3 === 0 || i % 4 === 1 || i % 5 === 2).map((c) => ({ client_id: c.id }));
 const content = [
   { id: "mc-1", kind: "image", channel: null, status: "published", title: "Spring workshop hero", updated_at: day(1) },
   { id: "mc-2", kind: "text", channel: "email_campaign", status: "draft", title: "Workshop reminder: two days out", updated_at: day(2) },

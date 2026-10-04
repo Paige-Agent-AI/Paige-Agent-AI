@@ -21,7 +21,8 @@ const GrowthArea = React.lazy(() => import("./marketing-overview-charts").then((
 
 const PAGE = 1000;
 export const CONTACT_READ_LIMIT = 5000;
-const COLUMNS = "id,lifecycle_stage,source,tags,created_at,last_contacted_at,do_not_contact,dnd_active,disqualified,email,phone";
+const COLUMNS = "id,lifecycle_stage,source,tags,created_at,last_contacted_at,do_not_contact,dnd_active,disqualified";
+// Addresses are read from client_contact_methods only: clients.email/phone are a mirror due to be dropped.
 
 type AudienceRead = { contacts: AudienceContact[]; reachableIds: Set<string>; capped: boolean };
 const METHOD_READ_LIMIT = CONTACT_READ_LIMIT * 2;

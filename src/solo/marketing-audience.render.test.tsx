@@ -40,7 +40,7 @@ const render = async (node: React.ReactNode) => { act(() => root.render(node)); 
 const text = () => host.textContent ?? "";
 const stat = (label: string) => [...host.querySelectorAll(".mo-stat")].find((el) => el.querySelector("h3")?.textContent?.startsWith(label))?.querySelector(".mo-stat-value")?.textContent;
 const ago = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString();
-const row = (id: string, extra: Record<string, unknown>) => ({ id, lifecycle_stage: "new_lead", source: "manual", tags: [], created_at: ago(100), last_contacted_at: null, do_not_contact: false, dnd_active: false, disqualified: false, email: null, phone: null, ...extra });
+const row = (id: string, extra: Record<string, unknown>) => ({ id, lifecycle_stage: "new_lead", source: "manual", tags: [], created_at: ago(100), last_contacted_at: null, do_not_contact: false, dnd_active: false, disqualified: false, ...extra });
 
 beforeEach(() => {
   (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -54,12 +54,12 @@ afterEach(() => { act(() => root.unmount()); host.remove(); vi.restoreAllMocks()
 describe("Marketing › Audience", () => {
   it("shows the workspace's own figures, read for this workspace only, merged contacts excluded", async () => {
     db.tables.clients = { data: [
-      row("a", { created_at: ago(3), source: "paige_form", tags: ["webinar"], email: "a@x.test", last_contacted_at: ago(1) }),
+      row("a", { created_at: ago(3), source: "paige_form", tags: ["webinar"], last_contacted_at: ago(1) }),
       row("b", { created_at: ago(12), lifecycle_stage: "qualified", tags: ["webinar", "vip"] }),
-      row("c", { lifecycle_stage: "client_funded", source: "conversations", do_not_contact: true, phone: "5" }),
+      row("c", { lifecycle_stage: "client_funded", source: "conversations", do_not_contact: true }),
       row("d", { lifecycle_stage: "client_active" }),
     ], error: null };
-    db.tables.client_contact_methods = { data: [{ client_id: "b" }], error: null };
+    db.tables.client_contact_methods = { data: [{ client_id: "a" }, { client_id: "b" }, { client_id: "c" }], error: null };
     const onOpenClients = vi.fn();
     await render(<MarketingAudience tenantId="t-1" onOpenClients={onOpenClients}/>);
     const clients = db.calls.find((c) => c.table === "clients");
@@ -69,7 +69,7 @@ describe("Marketing › Audience", () => {
     expect(stat("New, last 30 days")).toBe("2");
     expect(stat("Qualified")).toBe("1");
     expect(stat("Tagged")).toBe("2");
-    expect(stat("Reachable")).toBe("2"); // a (email) and b (method); c opted out
+    expect(stat("Reachable")).toBe("2"); // a and b have an address on record; c has one but opted out
     expect(stat("Contacted, last 30 days")).toBe("1");
     expect(text()).toContain("Audience composition");
     expect(text()).toContain("Your forms");

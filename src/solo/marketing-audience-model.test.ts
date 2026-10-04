@@ -6,7 +6,7 @@ const daysAgo = (n: number) => new Date(NOW - n * 86_400_000).toISOString();
 let seq = 0;
 const contact = (extra: Partial<AudienceContact> = {}): AudienceContact => ({
   id: `c${++seq}`, lifecycle_stage: "new_lead", source: "manual", tags: [], created_at: daysAgo(100), last_contacted_at: null,
-  do_not_contact: false, dnd_active: false, disqualified: false, email: null, phone: null, ...extra,
+  do_not_contact: false, dnd_active: false, disqualified: false, ...extra,
 });
 
 describe("deriveAudience", () => {
@@ -26,9 +26,10 @@ describe("deriveAudience", () => {
   });
 
   it("a contact is reachable only with an email or phone and when it accepts contact", () => {
-    const withMethod = contact();
-    const contacts = [contact({ email: "a@x.test" }), contact({ phone: "555" }), withMethod, contact({ email: "b@x.test", do_not_contact: true }), contact({ phone: "1", dnd_active: true }), contact()];
-    const model = deriveAudience({ contacts, reachableIds: new Set([withMethod.id]), periodDays: 30, now: NOW });
+    // An address on record is a row in client_contact_methods; the ids passed in are those contacts.
+    const contacts = [contact(), contact(), contact(), contact({ do_not_contact: true }), contact({ dnd_active: true }), contact()];
+    const withAddress = new Set(contacts.slice(0, 5).map((c) => c.id));
+    const model = deriveAudience({ contacts, reachableIds: withAddress, periodDays: 30, now: NOW });
     expect(model.reachable).toEqual({ count: 3, share: 50 });
   });
 

@@ -68,7 +68,7 @@ describe("the frame + the run reference (§12: reference + canonical reload)", (
   });
 
   it("a null readback settles the honest reference state (never a fabricated evidence card)", () => {
-    expect(chat).toContain("{ ...r, rehydrating: false }");
+    expect(chat).toContain("{ ...r, rehydrating: false, saved: false }");
     expect(chat).toContain("/* the card keeps its honest reference state */");
     // and the card side claims no engine state a reference cannot support (review P3):
     expect(card).toContain("Reloading…");

@@ -878,11 +878,13 @@ const PaigeAIChatInner = ({
             try {
               const { data } = await supabase.rpc("get_workspace_research_run", { _run_id: ref.run_id });
               if (!data) {
-                // R2b review P2: settle the reference — a null readback clears the
-                // rehydrating state so the card shows its honest unavailable wording,
-                // never an eternal "Loading…" and never a fabricated evidence card.
+                // R2b review P2/P3: settle the reference — a null readback clears the
+                // rehydrating state AND the saved claim (a once-confirmed run whose row
+                // is gone must not keep its badge), so the card shows its honest
+                // unavailable wording — never an eternal "Loading…", never a stale
+                // "Saved" badge, never a fabricated evidence card.
                 setMessages((prev) => prev.map((m) => m.research?.some((r) => r.run_id === ref.run_id)
-                  ? { ...m, research: m.research!.map((r) => r.run_id === ref.run_id ? { ...r, rehydrating: false } : r) }
+                  ? { ...m, research: m.research!.map((r) => r.run_id === ref.run_id ? { ...r, rehydrating: false, saved: false } : r) }
                   : m));
                 continue;
               }

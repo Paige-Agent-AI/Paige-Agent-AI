@@ -2,7 +2,7 @@ name: Migration H critique NO_VERDICT
 on:
   pull_request:
     paths:
-      - 'supabase/migrations/20270555000000_studio_visual_critique_no_verdict.sql'
+      - 'supabase/migrations/20270556000000_studio_visual_critique_no_verdict.sql'
       - 'supabase/migrations/20260719140000_studio_visual_critique_log.sql'
       - 'supabase/tests/migration_h_critique_no_verdict.sql'
       - '.github/workflows/migration-h-critique-no-verdict.yml'

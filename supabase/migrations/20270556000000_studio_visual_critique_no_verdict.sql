@@ -1,4 +1,4 @@
--- 20270555000000_studio_visual_critique_no_verdict.sql
+-- 20270556000000_studio_visual_critique_no_verdict.sql
 --
 -- WHY THIS EXISTS (CLAUDE.md §13/§33): studio-visual-critique wrote a log row only when a verdict
 -- came back. An attempt that produced NO verdict — the page renderer unconfigured, a render that

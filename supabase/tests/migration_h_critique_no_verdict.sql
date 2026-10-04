@@ -1,6 +1,6 @@
 -- ============================================================================
 -- Migration H (screenshots on paige-browser) — repeatable proof for
---   20270555000000_studio_visual_critique_no_verdict.sql
+--   20270556000000_studio_visual_critique_no_verdict.sql
 --
 -- Run against the REAL migration (\ir, twice: clean application + replay) on an isolated database
 -- with synthetic fixtures only (§63). The table's prior definition is loaded by running its REAL
@@ -180,12 +180,12 @@ CREATE TEMP TABLE _rows_before AS SELECT pg_temp.rows_md5((SELECT ids FROM _old_
 CREATE TEMP TABLE _probes_before AS SELECT pg_temp.probes() AS p;
 
 -- The migration text, for the mutation proofs in section 4 (read from the repository root).
-\set h_sql `cat supabase/migrations/20270555000000_studio_visual_critique_no_verdict.sql`
+\set h_sql `cat supabase/migrations/20270556000000_studio_visual_critique_no_verdict.sql`
 SELECT set_config('migration_h.sql', :'h_sql', false) IS NOT NULL AS h_loaded \gset
 
 -- ── The REAL migration, twice (clean application + replay) ───────────────────────────────────────
-\ir ../migrations/20270555000000_studio_visual_critique_no_verdict.sql
-\ir ../migrations/20270555000000_studio_visual_critique_no_verdict.sql
+\ir ../migrations/20270556000000_studio_visual_critique_no_verdict.sql
+\ir ../migrations/20270556000000_studio_visual_critique_no_verdict.sql
 
 CREATE TEMP TABLE _fp_after AS SELECT pg_temp.fp() AS fp;
 CREATE TEMP TABLE _probes_after AS SELECT pg_temp.probes() AS p;

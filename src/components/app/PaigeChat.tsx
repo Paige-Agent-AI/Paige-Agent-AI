@@ -6,6 +6,7 @@ import paigeAvatar from "@/assets/paige-ai-avatar.png";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { parsePaigeChatError } from "@/lib/paigeChatError";
+import { readPaigeStream } from "@/lib/paige-stream";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getCurrentPageName, getPageOpeningInstruction } from "@/lib/pageContext";
 import type { User, Session } from "@supabase/supabase-js";
@@ -208,24 +209,10 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
 
         if (!response.ok) { setIsLoading(false); return; }
 
-        const reader = response.body?.getReader();
-        const decoder = new TextDecoder();
         let greeting = "";
-
-        while (reader) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          const chunk = decoder.decode(value);
-          for (const line of chunk.split("\n")) {
-            if (!line.startsWith("data: ")) continue;
-            const data = line.slice(6).trim();
-            if (data === "[DONE]") continue;
-            try {
-              const parsed = JSON.parse(data);
-              const content = parsed.choices?.[0]?.delta?.content;
-              if (content) greeting += content;
-            } catch { /* skip */ }
-          }
+        // FIX (paige-turn): a line or character cut across chunks is carried over; splitting each chunk alone lost it.
+        for await (const frame of readPaigeStream(response.body, { stopAtDone: false, malformed: "skip" })) {
+          if (frame.type === "content" && frame.text) greeting += frame.text;
         }
 
         if (greeting.trim()) {
@@ -440,11 +427,7 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
         return;
       }
 
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
       let assistantMessage = "";
-      let textBuffer = "";
-      let streamDone = false;
       let syncStatus: SyncStatus | null = null;
       // The server withheld this turn's answer (its text read as internal) and sent one fixed sentence
       // instead. That sentence is not an account of the attached document, so it is never kept as one.
@@ -455,48 +438,24 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
       setSteps([]); // clear last turn's reasoning as this one starts
       setWritingPhase(false); // #11 — back to "Thinking…" until the first token this turn
 
-      while (reader && !streamDone) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        textBuffer += decoder.decode(value, { stream: true });
-
-        let newlineIndex: number;
-        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
-          let line = textBuffer.slice(0, newlineIndex);
-          textBuffer = textBuffer.slice(newlineIndex + 1);
-
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (line.startsWith(":") || line.trim() === "") continue;
-          if (!line.startsWith("data: ")) continue;
-
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") { streamDone = true; break; }
-
-          try {
-            const parsed = JSON.parse(jsonStr);
-            if (parsed.paige_step) {
-              // Live "watch her work" frame — upsert into the reasoning strip.
-              setSteps((prev) => upsertStep(prev, parsed.paige_step as PaigeStep));
-              continue;
-            }
-            // #11 — the server confirmed the reply is starting (belt-and-braces with the first delta).
-            if (parsed.paige_phase === "writing") { setWritingPhase(true); continue; }
-            if (parsed.sync_status) {
-              syncStatus = parsed.sync_status;
-              continue;
-            }
-            if (parsed.paige_withheld === true) { answerWithheld = true; continue; }
-            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (content) {
-              if (!assistantMessage) setWritingPhase(true); // #11 — first token → "Writing…"
-              assistantMessage += content;
-              setMessages([...newMessages, mkMessage({ id: assistantId, role: "assistant", content: assistantMessage })]);
-            }
-          } catch {
-            textBuffer = line + "\n" + textBuffer;
-            break;
-          }
+      // FIX (paige-turn): a non-JSON line is skipped; it used to stall the read and drop the rest of a "successful" reply.
+      for await (const frame of readPaigeStream(response.body, { stopAtDone: true, malformed: "skip" })) {
+        if (frame.type === "step") {
+          // Live "watch her work" frame — upsert into the reasoning strip.
+          setSteps((prev) => upsertStep(prev, frame.step as PaigeStep));
+          continue;
+        }
+        // #11 — the server confirmed the reply is starting (belt-and-braces with the first delta).
+        if (frame.type === "phase") { if (frame.phase === "writing") setWritingPhase(true); continue; }
+        if (frame.type === "sync_status") {
+          syncStatus = frame.syncStatus as SyncStatus;
+          continue;
+        }
+        if (frame.type === "withheld") { answerWithheld = true; continue; }
+        if (frame.type === "content" && frame.text) {
+          if (!assistantMessage) setWritingPhase(true); // #11 — first token → "Writing…"
+          assistantMessage += frame.text;
+          setMessages([...newMessages, mkMessage({ id: assistantId, role: "assistant", content: assistantMessage })]);
         }
       }
 

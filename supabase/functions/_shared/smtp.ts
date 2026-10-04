@@ -333,6 +333,8 @@ export interface SmtpSendInput {
   text?: string | null;
   /** RFC 5322 In-Reply-To (a provider message-id) when replying in a thread. */
   inReplyTo?: string | null;
+  /** Extra headers (e.g. List-Unsubscribe). Names must be RFC 5322 tokens; values are CRLF-stripped. */
+  headers?: Record<string, string> | null;
 }
 
 /**
@@ -385,6 +387,9 @@ export async function smtpSend(
       content,
       html,
       inReplyTo: input.inReplyTo ? sanitizeHeaderValue(input.inReplyTo) : undefined,
+      headers: Object.fromEntries(Object.entries(input.headers ?? {})
+        .filter(([name]) => /^[A-Za-z0-9-]{1,64}$/.test(name))
+        .map(([name, value]) => [name, sanitizeHeaderValue(String(value))])),
     });
     // §13: no durable id from the protocol — honestly null, never fabricated.
     return { ok: true, status: 200, error: null, data: { messageId: null } };

@@ -1,6 +1,6 @@
 # Solo Marketing IA: research, ownership map and proposal (first return to owner)
 
-**Status:** PROPOSAL, awaiting owner review. No production code changed.
+**Status:** ruled 2026-10-03 (see "Owner decisions"); D1 overruled 2026-10-04 (nine tabs).
 **Owner direction:** 2026-10-03, "Paige Solo — Marketing IA research + reorganization handoff".
 **Grounded at:** `main` = `3fa9834` (2026-10-03), branch `claude/gifted-bell-qfezxb`.
 **Prototype:** `docs/prototypes/solo-marketing-ia.html`, reproducible frames via
@@ -253,7 +253,7 @@ the implementation slices.
 
 ## Decisions for the owner (one gate)
 
-- **D1.** Ship Marketing with **5 tabs** (Overview · Campaigns · Lead capture · Social · Analytics) and hold Audience, Content, Email and Ads until real data exists? *Recommended: yes.*
+- **D1.** Ship Marketing with **5 tabs** (Overview · Campaigns · Lead capture · Social · Analytics) and hold Audience, Content, Email and Ads until real data exists? *Recommended: yes.* (Overruled 2026-10-04, see below.)
 - **D2.** Menu order: minimal move (Command Center · Clients · Marketing · Sales · …) or flow order (Command Center · Marketing · Sales · Clients · …)? *Recommended: minimal move.*
 - **D3.** Offers belong to Sales (the Sales lane already treats them that way in #1668). *Recommended: confirm.*
 - **D4.** Sub-accounts run on the Agency tree today and still say "Growth". Should this lane also bring sub-accounts along now, or leave them for the planned `/business` → Solo-shell migration? *Recommended: leave them; record the gap.*
@@ -271,7 +271,7 @@ the implementation slices.
 ## Owner decisions (ruled 2026-10-03)
 
 All five recommendations were approved as written:
-- **D1** five Marketing tabs.
+- **D1** five Marketing tabs. (Overruled 2026-10-04, see below.)
 - **D2** minimal menu move.
 - **D3** Offers belong to Sales.
 - **D4** sub-accounts are left for the `/business` → Solo-shell migration and recorded as a gap.

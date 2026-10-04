@@ -804,8 +804,8 @@ Reference or any domain ledger; it governs how their facts become release and cu
   - Authenticated production behaviour is PROOF OWED (§32.c).
   - Sub-accounts (`/business`, Agency tree) still read "Growth" (D4 gap).
   - Solo Analytics is unchanged until S4.
-- *Marketing tabs to the owner's list (owner, 2026-10-04, branch `claude/gifted-bell-qfezxb`):* "these are the ones that I want dedicated to marketing". The strip is now Overview · Campaigns · Audience · Content · Social · Email · Ads · Lead capture · Analytics. Audience, Content, Email and Ads carry a **Planned** marker (owner wording rule 2026-09-23) and show only what exists today from existing tenant-scoped reads (`src/solo/marketing-planned.tsx`): contacts by stage/source/tag, saved PAIGE drafts, the sending identity exactly as Settings › Connections reads it, saved email and ad copy. Each lists what is not built yet. No table, RPC or migration was added. This overrules the IA proposal's D1 (five tabs). The Overview greeting is removed for every Solo account (owner: Command Center already greets). Evidence: `docs/evidence/ui-delivery/solo-marketing-planned-tabs.md`.
   - No migration or edge change.
+- *Marketing tabs to the owner's list (owner, 2026-10-04, branch `claude/gifted-bell-qfezxb`):* "these are the ones that I want dedicated to marketing". The strip is now Overview · Campaigns · Audience · Content · Social · Email · Ads · Lead capture · Analytics. Audience, Content, Email and Ads carry a **Planned** marker (owner wording rule 2026-09-23) and show only what exists today from existing tenant-scoped reads (`src/solo/marketing-planned.tsx`): contacts by stage/source/tag, the saved `marketing_content` library (admins only, as its read policy allows; members are told so), the sending identity exactly as Settings › Connections reads it (refused if it names another workspace), saved email and ad copy read per channel. Draft-first Ask PAIGE actions on Content, Email and Ads. Each lists what is not built yet. No table, RPC or migration was added. This overrules the IA proposal's D1 (five tabs). The Overview greeting is removed for every Solo account (owner: Command Center already greets). Evidence: `docs/evidence/ui-delivery/solo-marketing-planned-tabs.md`.
 
 **2026-10-03 Agreements consistency with the widened Sales desk. Release channel: `production`; classification: `internal-only` visual patch, `PARTIAL`.** [PR #1669](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/1669), reviewed `1338c1b4a775e77983427315befd828b4360e01d`, squash `ac3d2a77e0beb577e14b6a4d4fb0ac437cd05daf`. Agreements now shares the live Sales frame, width and five-tab selection treatment; scoped solid surfaces, outlined headers and raised enabled controls preserve comfortable internal spacing and existing agreement behavior. An explicit AgreementEditor presentation class styles its portaled modal without changing other editors.
 
@@ -3271,6 +3271,15 @@ Grouped:
 
 ## 5. Current focus + known gaps
 
+### Solo Marketing Planned tabs — GAPS, each named on its tab (2026-10-04)
+
+Audience, Content, Email and Ads ship as read-only views marked **Planned**. What turns each into a
+built feature is a backend decision for the owner (`docs/product/solo-marketing-ia-proposal.md` §4):
+Audience needs a Clients-owned segment table + RPC; Content needs dated briefs for a calendar; Email
+needs a broadcast record + an approval-gated send (sending spends money); Ads needs a tenant
+ad-account connection + spend ingestion. Library rows cannot yet be opened from Marketing, and
+Audience rows cannot yet open Clients filtered by stage or tag.
+
 ### Live Conversation has no way in for a Solo user — GAP, named rather than implied (2026-09-24)
 
 Migration `20270422000000` made Live a Solo **tier** capability and reduced "who may speak today" to
@@ -4811,6 +4820,8 @@ DOCTRINE_190/191/192, 194, 197, 198 + Addendum, 200, 201, 202, 203, 205, 208, 21
 ---
 
 ## 10. §13 corrections log
+
+- **2026-10-04 · THE TIER MATRIX STILL SAID OFFERS, SALES AND PIPELINE SAT IN THE MARKETING STRIP.** After #1676 every old Marketing address for them redirects to Sales (`GrowthHub` → `legacySalesRoute`, unconditional), but the surface ledger row still described them behind a divider. Corrected in the Planned-tabs PR. Same PR found `scripts/live-drive/campaigns-nav-fit-drive.mjs` asserting the eight-tab strip and its `catalog-mount` harness unable to mount Overview (no briefs stub); both repaired.
 
 - **2026-10-03 · THE PLATFORM OPERATOR ANALYTICS ADDRESS IN THE MARKETING IA HANDOFF DOES NOT EXIST.** The owner handoff for the Solo Marketing reorganization names `/admin/platform/analytics` as the operator surface to protect. On `main` (`3fa9834`) there is no `/admin` route at all: `src/App.tsx` declares none, `src/pages/Admin.tsx` is gone, and `src/pages/admin/platform/PlatformAnalyticsAdmin.tsx` is imported by nothing. The only reference is the stale `docs/architecture/CANONICAL-SYSTEM-ARCHITECTURE-2026-08-08.md:133`, which still cites `Admin.tsx`. Searched `admin/platform/analytics`, `platform/analytics`, `PlatformAnalyticsAdmin`, `path="/admin` across `src/` and `docs/`. The live operator analytics is `/operator/analytics/{view}` (`App.tsx:234` → `OperatorEntry`; `OPERATOR_BRANCHES` analytics, ten views, `tierBranches.ts:513-526`). The owner's intent stands; only the address was wrong. The Solo Analytics retirement must leave `/operator/analytics/*` untouched, and its guard tests target that path. Recorded in `docs/product/solo-marketing-ia-proposal.md` §7.
 

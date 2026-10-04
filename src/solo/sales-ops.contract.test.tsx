@@ -83,6 +83,11 @@ vi.mock("./data/useSoloTrust", () => ({
   useSoloTrust: () => ({ loading: false, configured: true, departments: [], bySlug: {}, error: null }),
 }));
 vi.mock("./useSoloCampaigns", () => ({ useSoloCampaigns: () => harness.state }));
+// The Planned Marketing tabs read Supabase directly; this suite only needs them mounted, not reading.
+vi.mock("./marketing-planned", () => {
+  const view = (name: string) => () => <div data-planned-view={name}/>;
+  return { MarketingAudience: view("audience"), MarketingContent: view("content"), MarketingEmail: view("email"), MarketingAds: view("ads") };
+});
 vi.mock("./useCatalogOffers", () => ({ useCatalogOffers: () => harness.offers }));
 // Overview (the Campaign Command Desk) reads owner briefs through its own tenant-scoped adapter;
 // this suite renders all six tabs, so stub the briefs read ready/empty (its own proof is in

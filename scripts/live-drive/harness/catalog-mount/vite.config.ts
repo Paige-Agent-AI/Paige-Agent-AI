@@ -12,6 +12,9 @@ export default defineConfig({
     alias: [
       { find: "./useCatalogOffers", replacement: path.join(import.meta.dirname, "useCatalogOffers-stub.ts") },
       { find: "./useSoloCampaigns", replacement: path.join(import.meta.dirname, "useSoloCampaigns-stub.ts") },
+      // Marketing › Overview reads campaign briefs, which needs the app's TenantProvider; reuse the
+      // Marketing harness stub so the strip can mount.
+      { find: "./useSoloCampaignBriefs", replacement: path.join(import.meta.dirname, "../marketing-mount/briefs-stub.ts") },
       { find: "@", replacement: path.join(repo, "src") },
     ],
   },

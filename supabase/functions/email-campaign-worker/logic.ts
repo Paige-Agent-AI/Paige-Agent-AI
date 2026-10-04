@@ -28,17 +28,21 @@ export function renderCampaignEmail(input: {
   const hidden = preheader
     ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent">${escapeHtml(preheader)}</div>`
     : "";
+  // A comment left open in the body would swallow the footer (postal address and unsubscribe link).
+  const body = input.bodyHtml.replace(/<!--[\s\S]*?(?:-->|$)/g, "");
   const who = [input.businessName?.trim(), input.postalAddress.trim()].filter(Boolean).map((v) => escapeHtml(String(v)));
   const footer =
     `<div style="margin-top:32px;padding-top:16px;border-top:1px solid #e5e5e5;font-size:12px;line-height:1.5;color:#6b6b6b">` +
     `${who.join("<br>")}<br>` +
     `<a href="{{unsubscribe_url}}" style="color:#6b6b6b">Unsubscribe</a> from these emails.` +
     `</div>`;
-  return `${hidden}${input.bodyHtml}${footer}`;
+  return `${hidden}${body}${footer}`;
 }
 
 export type RecipientOutcome = {
-  outcome: "sent" | "failed" | "outcome_unknown" | "skipped";
+  outcome: "sent" | "failed" | "outcome_unknown" | "skipped" | "deferred";
+  /** For a deferred recipient: when the pre-send hold ends. */
+  notBefore?: string | null;
   providerMessageId?: string | null;
   messageId?: string | null;
   skipReason?: string | null;
@@ -74,6 +78,11 @@ export function mapSendResult(httpStatus: number | null, body: unknown, transpor
       providerMessageId: str(b.vendor_message_id) ?? str(b.provider_message_id),
       messageId: str(b.message_id),
     };
+  }
+  // Held by the pre-send checks (quiet hours, a hold) before reaching a provider: send-message wrote
+  // nothing and handed it back, so the recipient waits in the queue until the hold ends.
+  if (httpStatus >= 200 && httpStatus < 300 && b.deferred === true) {
+    return { outcome: "deferred", notBefore: str(b.scheduled_for), error: str(b.reason) ?? outcome };
   }
   if (httpStatus >= 200 && httpStatus < 300 && outcome.startsWith("blocked_")) {
     return { outcome: "skipped", skipReason: SKIP_REASON[outcome] ?? "sender_refused", error: str(b.reason) };

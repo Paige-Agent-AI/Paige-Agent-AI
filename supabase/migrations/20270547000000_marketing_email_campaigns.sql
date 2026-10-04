@@ -108,6 +108,8 @@ CREATE TABLE IF NOT EXISTS public.email_campaign_recipients (
   route text CHECK (route IS NULL OR route IN ('managed','connector')),
   attempt_count integer NOT NULL DEFAULT 0 CHECK (attempt_count BETWEEN 0 AND 5),
   lease_until timestamptz,
+  -- A recipient deferred by the pre-send checks (quiet hours, a hold) waits until this time.
+  not_before timestamptz,
   provider_message_id text,
   message_id uuid,
   error text CHECK (error IS NULL OR char_length(error) <= 500),
@@ -293,10 +295,11 @@ $$;
 REVOKE ALL ON FUNCTION public._email_postal_address(uuid) FROM PUBLIC, anon, authenticated;
 
 CREATE OR REPLACE FUNCTION public._email_version_hash(v public.email_campaign_versions, k text)
-RETURNS text LANGUAGE sql IMMUTABLE SET search_path = public, pg_temp AS $$
+RETURNS text LANGUAGE sql STABLE SET search_path = public, pg_temp AS $$
+  -- scheduled_for is hashed as UTC so the hash never depends on the session's TimeZone.
   SELECT encode(sha256(convert_to(jsonb_build_object(
     'kind', k, 'subject', v.subject, 'preheader', v.preheader, 'body_html', v.body_html, 'sender', v.sender,
-    'audience', v.audience, 'segment_id', v.segment_id, 'scheduled_for', v.scheduled_for,
+    'audience', v.audience, 'segment_id', v.segment_id, 'scheduled_for', (v.scheduled_for AT TIME ZONE 'UTC'),
     'conversion_goal', v.conversion_goal)::text, 'UTF8')), 'hex')
 $$;
 REVOKE ALL ON FUNCTION public._email_version_hash(public.email_campaign_versions, text) FROM PUBLIC, anon, authenticated;
@@ -305,7 +308,10 @@ REVOKE ALL ON FUNCTION public._email_version_hash(public.email_campaign_versions
 CREATE OR REPLACE FUNCTION public._email_used_today(p_tenant uuid)
 RETURNS integer LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_temp AS $$
   SELECT count(*)::int FROM public.email_campaign_recipients r
-   WHERE r.tenant_id = p_tenant AND (r.status = 'sending' OR (r.sent_at IS NOT NULL AND r.sent_at > now() - interval '24 hours'))
+   WHERE r.tenant_id = p_tenant AND (r.status = 'sending'
+     OR (r.sent_at IS NOT NULL AND r.sent_at > now() - interval '24 hours')
+     -- an unanswered hand-off may have been delivered, so it counts
+     OR (r.status = 'outcome_unknown' AND r.updated_at > now() - interval '24 hours'))
 $$;
 REVOKE ALL ON FUNCTION public._email_used_today(uuid) FROM PUBLIC, anon, authenticated;
 
@@ -313,13 +319,22 @@ REVOKE ALL ON FUNCTION public._email_used_today(uuid) FROM PUBLIC, anon, authent
 
 CREATE OR REPLACE FUNCTION public.email_campaign_create(p_kind text DEFAULT 'standard', p_name text DEFAULT NULL)
 RETURNS jsonb LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = public, pg_temp AS $$
-DECLARE t uuid := public._email_caller_tenant(); c uuid; v uuid;
+DECLARE t uuid := public._email_caller_tenant(); c uuid; v uuid; conn uuid;
 BEGIN
+  -- Connected provider first (owner ruling 1): a business's own healthy email connection is the default
+  -- sender; Paige's managed address only when it has none. The draft shows it and the owner may change it.
+  SELECT id INTO conn FROM public.channel_connectors
+   WHERE tenant_id = t AND channel_type = 'email' AND active AND status = 'active'
+     AND NULLIF(btrim(COALESCE(from_address, '')), '') IS NOT NULL
+     AND COALESCE((config->>'managed_default')::boolean, false) = false
+   ORDER BY updated_at DESC NULLS LAST, created_at DESC LIMIT 1;
   INSERT INTO public.email_campaigns (tenant_id, kind, name, created_by)
   VALUES (t, COALESCE(p_kind, 'standard'), COALESCE(NULLIF(btrim(p_name), ''), 'Untitled email'), auth.uid())
   RETURNING id INTO c;
-  INSERT INTO public.email_campaign_versions (campaign_id, tenant_id, version_no, created_by)
-  VALUES (c, t, 1, auth.uid()) RETURNING id INTO v;
+  INSERT INTO public.email_campaign_versions (campaign_id, tenant_id, version_no, sender, created_by)
+  VALUES (c, t, 1, CASE WHEN conn IS NULL THEN '{"mode":"managed"}'::jsonb
+                        ELSE jsonb_build_object('mode', 'connector', 'connector_id', conn) END, auth.uid())
+  RETURNING id INTO v;
   UPDATE public.email_campaigns SET current_version_id = v WHERE id = c;
   RETURN jsonb_build_object('campaign_id', c, 'version_id', v);
 END $$;
@@ -368,8 +383,10 @@ BEGIN
   IF c.status IN ('scheduled','sending') THEN RAISE EXCEPTION 'cancel_first' USING ERRCODE = 'P0001'; END IF;
   SELECT * INTO cur FROM public.email_campaign_versions WHERE id = c.current_version_id FOR UPDATE;
   IF cur.state = 'draft' THEN RETURN cur.id; END IF;
-  IF cur.state = 'locked' THEN
-    UPDATE public.email_campaign_versions SET state = 'superseded', updated_at = now() WHERE id = cur.id;
+  IF cur.state IN ('locked', 'approved') THEN
+    -- A version awaiting approval, or approved but stopped (blocked / cancelled), is replaced: nothing
+    -- still planned under it will ever be sent.
+    UPDATE public.email_campaign_versions SET state = 'superseded', updated_at = now() WHERE id = cur.id AND cur.state = 'locked';
     UPDATE public.email_campaign_recipients SET status = 'cancelled', updated_at = now() WHERE version_id = cur.id AND status = 'planned';
     UPDATE public.paige_pending_approvals SET status = 'skipped', decision_rationale = 'A newer draft replaced the version awaiting approval.',
       updated_at = now() WHERE id = cur.approval_id AND status = 'pending';
@@ -387,6 +404,9 @@ CREATE OR REPLACE FUNCTION public.email_campaign_delete(p_campaign_id uuid)
 RETURNS boolean LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = public, pg_temp AS $$
 DECLARE t uuid := public._email_caller_tenant();
 BEGIN
+  IF NOT EXISTS (SELECT 1 FROM public.email_campaigns WHERE id = p_campaign_id AND tenant_id = t) THEN
+    RAISE EXCEPTION 'campaign_not_found' USING ERRCODE = 'P0002';
+  END IF;
   IF EXISTS (SELECT 1 FROM public.email_campaign_versions WHERE campaign_id = p_campaign_id AND state IN ('approved','sent')) THEN
     RAISE EXCEPTION 'campaign_has_history' USING ERRCODE = 'P0001';
   END IF;
@@ -484,6 +504,10 @@ BEGIN
   SELECT v.campaign_id, v.id, t, a.client_id, a.email, 'planned'
     FROM public._email_audience(t, public._email_version_rule(v), c.kind = 'newsletter') a
    WHERE a.ineligible IS NULL
+     -- A new version of a campaign never goes again to someone an earlier version already reached.
+     AND NOT EXISTS (SELECT 1 FROM public.email_campaign_recipients prev
+                      WHERE prev.campaign_id = v.campaign_id AND prev.email = a.email
+                        AND prev.status IN ('sent','sending','outcome_unknown'))
   ON CONFLICT (version_id, email) DO NOTHING;
   GET DIAGNOSTICS n = ROW_COUNT;
   IF n = 0 THEN RAISE EXCEPTION 'no_eligible_recipients' USING ERRCODE = 'P0001'; END IF;
@@ -531,6 +555,7 @@ BEGIN
   IF NOT FOUND THEN RAISE EXCEPTION 'version_not_found' USING ERRCODE = 'P0002'; END IF;
   IF v.state <> 'locked' THEN RAISE EXCEPTION 'not_awaiting_approval' USING ERRCODE = 'P0001'; END IF;
   SELECT * INTO c FROM public.email_campaigns WHERE id = v.campaign_id FOR UPDATE;
+  IF c.status <> 'pending_approval' THEN RAISE EXCEPTION 'not_awaiting_approval' USING ERRCODE = 'P0001'; END IF;
   SELECT * INTO a FROM public.paige_pending_approvals WHERE id = v.approval_id FOR UPDATE;
   IF NOT FOUND OR a.status <> 'pending' OR a.type <> 'campaign_send' OR a.tenant_id IS DISTINCT FROM t
      OR a.metadata->>'email_campaign_version_id' IS DISTINCT FROM v.id::text THEN
@@ -569,6 +594,39 @@ DROP TRIGGER IF EXISTS trg_email_campaign_approval_guard ON public.paige_pending
 CREATE TRIGGER trg_email_campaign_approval_guard BEFORE UPDATE OF status ON public.paige_pending_approvals
   FOR EACH ROW EXECUTE FUNCTION public._email_campaign_approval_guard();
 
+-- A campaign_send approval declined anywhere (Command Center, the approvals queue, an agent tool) returns
+-- its campaign to an editable draft, exactly as email_campaign_decline does, instead of leaving it
+-- awaiting an approval that no longer exists.
+CREATE OR REPLACE FUNCTION public._email_campaign_approval_withdrawn()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp AS $$
+DECLARE v public.email_campaign_versions%ROWTYPE; nv uuid;
+BEGIN
+  IF NEW.type <> 'campaign_send' OR OLD.status <> 'pending' OR NEW.status NOT IN ('rejected','skipped','changes_requested') THEN
+    RETURN NEW;
+  END IF;
+  SELECT * INTO v FROM public.email_campaign_versions
+   WHERE id = NULLIF(NEW.metadata->>'email_campaign_version_id', '')::uuid AND approval_id = NEW.id AND state = 'locked'
+   FOR UPDATE;
+  IF NOT FOUND OR NOT EXISTS (SELECT 1 FROM public.email_campaigns WHERE id = v.campaign_id
+                                AND current_version_id = v.id AND status = 'pending_approval') THEN
+    RETURN NEW;
+  END IF;
+  UPDATE public.email_campaign_versions SET state = 'superseded', updated_at = now() WHERE id = v.id;
+  UPDATE public.email_campaign_recipients SET status = 'cancelled', updated_at = now() WHERE version_id = v.id AND status = 'planned';
+  INSERT INTO public.email_campaign_versions (campaign_id, tenant_id, version_no, subject, preheader, body_html, sender,
+    audience, segment_id, conversion_goal, created_by)
+  SELECT v.campaign_id, v.tenant_id, (SELECT max(version_no) + 1 FROM public.email_campaign_versions WHERE campaign_id = v.campaign_id),
+    v.subject, v.preheader, v.body_html, v.sender, v.audience, v.segment_id, v.conversion_goal, NEW.reviewed_by_user_id
+  RETURNING id INTO nv;
+  UPDATE public.email_campaigns SET current_version_id = nv, status = 'draft', blocked_reason = NULL, updated_at = now()
+   WHERE id = v.campaign_id;
+  RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION public._email_campaign_approval_withdrawn() FROM PUBLIC, anon, authenticated;
+DROP TRIGGER IF EXISTS trg_email_campaign_approval_withdrawn ON public.paige_pending_approvals;
+CREATE TRIGGER trg_email_campaign_approval_withdrawn AFTER UPDATE OF status ON public.paige_pending_approvals
+  FOR EACH ROW EXECUTE FUNCTION public._email_campaign_approval_withdrawn();
+
 -- Decline a version awaiting approval: it goes back to being editable as a new draft.
 CREATE OR REPLACE FUNCTION public.email_campaign_decline(p_version_id uuid, p_reason text DEFAULT NULL)
 RETURNS boolean LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = public, pg_temp AS $$
@@ -591,12 +649,12 @@ BEGIN
   SELECT * INTO c FROM public.email_campaigns WHERE id = p_campaign_id AND tenant_id = t FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'campaign_not_found' USING ERRCODE = 'P0002'; END IF;
   IF c.status NOT IN ('pending_approval','scheduled','sending','blocked') THEN RAISE EXCEPTION 'nothing_to_cancel' USING ERRCODE = 'P0001'; END IF;
+  UPDATE public.email_campaigns SET status = 'cancelled', updated_at = now() WHERE id = c.id;
   UPDATE public.email_campaign_recipients SET status = 'cancelled', updated_at = now()
    WHERE version_id = c.current_version_id AND status = 'planned';
   GET DIAGNOSTICS n = ROW_COUNT;
   UPDATE public.paige_pending_approvals SET status = 'skipped', decision_rationale = 'Cancelled by the owner.', updated_at = now()
    WHERE id = (SELECT approval_id FROM public.email_campaign_versions WHERE id = c.current_version_id) AND status = 'pending';
-  UPDATE public.email_campaigns SET status = 'cancelled', updated_at = now() WHERE id = c.id;
   RETURN jsonb_build_object('cancelled_recipients', n);
 END $$;
 
@@ -644,7 +702,10 @@ BEGIN
     JOIN public.email_campaign_versions ve ON ve.id = ca.current_version_id
    WHERE ca.status IN ('scheduled','sending') AND ve.state = 'approved'
      AND COALESCE(ve.scheduled_for, now()) <= now()
-     AND EXISTS (SELECT 1 FROM public.email_campaign_recipients r WHERE r.version_id = ve.id AND r.status = 'planned')
+     AND EXISTS (SELECT 1 FROM public.email_campaign_recipients r WHERE r.version_id = ve.id AND r.status = 'planned'
+                   AND (r.not_before IS NULL OR r.not_before <= now()))
+     -- A business at its daily ceiling waits without holding up every other business.
+     AND public._email_used_today(ca.tenant_id) < public.email_campaign_daily_cap()
    ORDER BY COALESCE(ve.scheduled_for, ve.approved_at) ASC
    LIMIT 1 FOR UPDATE OF ca SKIP LOCKED;
   IF NOT FOUND THEN RETURN jsonb_build_object('campaign', NULL); END IF;
@@ -655,6 +716,7 @@ BEGIN
   snd := public._email_resolve_sender(c.tenant_id, v.sender);
   IF NOT active OR addr IS NULL OR NOT (snd->>'ok')::boolean
      OR snd->>'from_address' IS DISTINCT FROM v.sender_snapshot->>'from_address'
+     OR snd->>'from_name' IS DISTINCT FROM v.sender_snapshot->>'from_name'
      OR snd->>'mode' IS DISTINCT FROM v.sender_snapshot->>'mode' THEN
     UPDATE public.email_campaigns SET status = 'blocked', updated_at = now(),
       blocked_reason = CASE
@@ -695,7 +757,7 @@ BEGIN
 
   WITH picked AS (
     SELECT id FROM public.email_campaign_recipients
-     WHERE version_id = v.id AND status = 'planned' ORDER BY created_at, id
+     WHERE version_id = v.id AND status = 'planned' AND (not_before IS NULL OR not_before <= now()) ORDER BY created_at, id
      LIMIT LEAST(lim, room) FOR UPDATE SKIP LOCKED
   ), leased AS (
     UPDATE public.email_campaign_recipients r SET status = 'sending', attempt_count = r.attempt_count + 1,
@@ -720,14 +782,24 @@ END $$;
 -- A send through Paige's account is metered once per recipient.
 CREATE OR REPLACE FUNCTION public.email_campaign_dispatch_record(
   p_recipient_id uuid, p_outcome text, p_provider_message_id text DEFAULT NULL, p_message_id uuid DEFAULT NULL,
-  p_skip_reason text DEFAULT NULL, p_error text DEFAULT NULL)
+  p_skip_reason text DEFAULT NULL, p_error text DEFAULT NULL, p_not_before timestamptz DEFAULT NULL)
 RETURNS text LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = public, pg_temp AS $$
 DECLARE r public.email_campaign_recipients%ROWTYPE;
 BEGIN
-  IF p_outcome NOT IN ('sent','failed','outcome_unknown','skipped') THEN RAISE EXCEPTION 'outcome_invalid' USING ERRCODE = '22023'; END IF;
+  IF p_outcome NOT IN ('sent','failed','outcome_unknown','skipped','deferred') THEN RAISE EXCEPTION 'outcome_invalid' USING ERRCODE = '22023'; END IF;
   SELECT * INTO r FROM public.email_campaign_recipients WHERE id = p_recipient_id FOR UPDATE;
   IF NOT FOUND THEN RETURN 'not_found'; END IF;
   IF r.status <> 'sending' THEN RETURN 'already_' || r.status; END IF;
+  -- Held by the pre-send checks before anything was handed to a provider: back in the queue until
+  -- the hold ends (bounded to a day), and this lease does not count as an attempt.
+  IF p_outcome = 'deferred' THEN
+    UPDATE public.email_campaign_recipients SET status = 'planned', lease_until = NULL,
+      attempt_count = GREATEST(attempt_count - 1, 0), error = left(p_error, 500),
+      not_before = LEAST(GREATEST(COALESCE(p_not_before, now() + interval '15 minutes'), now() + interval '1 minute'), now() + interval '24 hours'),
+      updated_at = now()
+     WHERE id = r.id;
+    RETURN 'deferred';
+  END IF;
   UPDATE public.email_campaign_recipients SET status = p_outcome, lease_until = NULL,
     provider_message_id = COALESCE(p_provider_message_id, provider_message_id), message_id = COALESCE(p_message_id, message_id),
     skip_reason = CASE WHEN p_outcome = 'skipped' THEN COALESCE(p_skip_reason, 'sender_refused') ELSE skip_reason END,
@@ -743,6 +815,28 @@ BEGIN
   END IF;
   RETURN p_outcome;
 END $$;
+
+-- Called immediately before one recipient is handed to send-message. A campaign cancelled, blocked or
+-- replaced since the batch was leased must not keep sending: a cancelled or replaced campaign cancels the
+-- lease, a blocked one returns it to the queue for after resume. True means send now.
+CREATE OR REPLACE FUNCTION public.email_campaign_dispatch_begin(p_recipient_id uuid)
+RETURNS boolean LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = public, pg_temp AS $$
+DECLARE r public.email_campaign_recipients%ROWTYPE; c public.email_campaigns%ROWTYPE;
+BEGIN
+  SELECT * INTO r FROM public.email_campaign_recipients WHERE id = p_recipient_id FOR UPDATE;
+  IF NOT FOUND OR r.status <> 'sending' OR r.lease_until IS NULL OR r.lease_until <= now() THEN RETURN false; END IF;
+  SELECT * INTO c FROM public.email_campaigns WHERE id = r.campaign_id;
+  IF c.status IN ('scheduled','sending') AND c.current_version_id = r.version_id THEN RETURN true; END IF;
+  IF c.status = 'blocked' AND c.current_version_id = r.version_id THEN
+    UPDATE public.email_campaign_recipients SET status = 'planned', lease_until = NULL,
+      attempt_count = GREATEST(attempt_count - 1, 0), updated_at = now() WHERE id = r.id;
+  ELSE
+    UPDATE public.email_campaign_recipients SET status = 'cancelled', lease_until = NULL, updated_at = now() WHERE id = r.id;
+  END IF;
+  RETURN false;
+END $$;
+REVOKE ALL ON FUNCTION public.email_campaign_dispatch_begin(uuid) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.email_campaign_dispatch_begin(uuid) TO service_role;
 
 -- Settle a campaign once nothing is left to send. Totals come from the recipient rows (readback).
 CREATE OR REPLACE FUNCTION public.email_campaign_dispatch_settle(p_campaign_id uuid)
@@ -811,7 +905,8 @@ BEGIN
   IF public._email_postal_address(t) IS NULL THEN RAISE EXCEPTION 'postal_address_missing' USING ERRCODE = 'P0001'; END IF;
   snd := public._email_resolve_sender(t, v.sender);
   IF NOT (snd->>'ok')::boolean THEN RAISE EXCEPTION '%', snd->>'reason' USING ERRCODE = 'P0001'; END IF;
-  IF snd->>'from_address' IS DISTINCT FROM v.sender_snapshot->>'from_address' OR snd->>'mode' IS DISTINCT FROM v.sender_snapshot->>'mode' THEN
+  IF snd->>'from_address' IS DISTINCT FROM v.sender_snapshot->>'from_address' OR snd->>'mode' IS DISTINCT FROM v.sender_snapshot->>'mode'
+     OR snd->>'from_name' IS DISTINCT FROM v.sender_snapshot->>'from_name' THEN
     RAISE EXCEPTION 'sender_changed' USING ERRCODE = 'P0001';
   END IF;
   UPDATE public.email_campaigns SET status = 'scheduled', blocked_reason = NULL, updated_at = now() WHERE id = c.id;
@@ -839,6 +934,9 @@ RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_
     JOIN public.email_campaign_versions v ON v.id = d.version_id
     JOIN public.email_campaigns c ON c.id = v.campaign_id
     WHERE w.status NOT IN ('succeeded','failed','cancelled')
+      -- An envelope already blocked while its campaign stays blocked needs nothing this tick; leaving
+      -- it out keeps long-blocked campaigns from crowding newer envelopes off the list.
+      AND NOT (w.status = 'blocked' AND c.status = 'blocked' AND c.current_version_id = d.version_id)
     ORDER BY d.created_at LIMIT LEAST(GREATEST(p_limit, 1), 100)) x
 $$;
 
@@ -846,8 +944,8 @@ REVOKE ALL ON FUNCTION public.email_campaign_dispatch_open_envelopes(integer) FR
 GRANT EXECUTE ON FUNCTION public.email_campaign_dispatch_open_envelopes(integer) TO service_role;
 REVOKE ALL ON FUNCTION public.email_campaign_dispatch_claim(integer) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.email_campaign_dispatch_claim(integer) TO service_role;
-REVOKE ALL ON FUNCTION public.email_campaign_dispatch_record(uuid,text,text,uuid,text,text) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.email_campaign_dispatch_record(uuid,text,text,uuid,text,text) TO service_role;
+REVOKE ALL ON FUNCTION public.email_campaign_dispatch_record(uuid,text,text,uuid,text,text,timestamptz) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.email_campaign_dispatch_record(uuid,text,text,uuid,text,text,timestamptz) TO service_role;
 REVOKE ALL ON FUNCTION public.email_campaign_dispatch_settle(uuid) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.email_campaign_dispatch_settle(uuid) TO service_role;
 REVOKE ALL ON FUNCTION public.email_campaign_dispatch_envelope(uuid) FROM PUBLIC, anon, authenticated;

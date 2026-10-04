@@ -25,6 +25,12 @@ describe("renderCampaignEmail", () => {
     expect(html).toContain("A&amp;B Co<br>1 Main St, Austin");
     expect(html).toContain('href="{{unsubscribe_url}}"');
   });
+  it("strips HTML comments so a body cannot swallow the footer", () => {
+    const html = renderCampaignEmail({ bodyHtml: "<p>Hi</p><!-- hide everything after", postalAddress: "1 Main St" });
+    expect(html).not.toContain("<!--");
+    expect(html).toContain("1 Main St");
+    expect(html).toContain('href="{{unsubscribe_url}}"');
+  });
   it("omits the preheader block when there is none", () => {
     expect(renderCampaignEmail({ bodyHtml: "<p>x</p>", postalAddress: "1 Main St" }).startsWith("<p>x</p>")).toBe(true);
   });
@@ -43,6 +49,10 @@ describe("mapSendResult", () => {
   it("a connector refusal or provider rejection is failed", () => {
     expect(mapSendResult(409, { error: "connector_not_active" })).toMatchObject({ outcome: "failed", error: "connector_not_active" });
     expect(mapSendResult(200, { status: "failed", outcome: "failed", error: "resend_422" })).toMatchObject({ outcome: "failed" });
+  });
+  it("a pre-send hold that send-message handed back is deferred until it ends", () => {
+    expect(mapSendResult(200, { status: "failed", outcome: "queued_quiet_hours", deferred: true, scheduled_for: "2026-10-05T13:00:00Z", reason: "quiet hours" }))
+      .toEqual({ outcome: "deferred", notBefore: "2026-10-05T13:00:00Z", error: "quiet hours" });
   });
   it("anything that may have reached the provider is outcome_unknown, never failed", () => {
     expect(mapSendResult(null, null, "send_timeout").outcome).toBe("outcome_unknown");
@@ -149,6 +159,7 @@ describe("email-campaign-worker handler", () => {
     let claims = 0;
     state.rpc.mockImplementation(async (name: string) => {
       if (name === "email_campaign_dispatch_claim") return { data: claims++ === 0 ? claim : { campaign: null }, error: null };
+      if (name === "email_campaign_dispatch_begin") return { data: true, error: null };
       if (name === "email_campaign_dispatch_open_envelopes") return { data: [], error: null };
       return { data: { settled: false }, error: null };
     });
@@ -175,6 +186,7 @@ describe("email-campaign-worker handler", () => {
       if (name === "email_campaign_dispatch_claim") {
         return { data: claims++ === 0 ? { ...claim, sender: { mode: "connector", connector_id: "conn-1" }, recipients: [claim.recipients[0]] } : { campaign: null }, error: null };
       }
+      if (name === "email_campaign_dispatch_begin") return { data: true, error: null };
       if (name === "email_campaign_dispatch_open_envelopes") return { data: [], error: null };
       return { data: null, error: null };
     });
@@ -197,6 +209,33 @@ describe("email-campaign-worker handler", () => {
     expect(state.rpc.mock.calls.filter(([n]) => n === "email_campaign_dispatch_claim")).toHaveLength(2);
     expect(sends).toHaveLength(0);
     expect(res.notes).toEqual([{ campaign_id: "cB", blocked: "sender_needs_attention" }, { campaign_id: "c1", waiting: "daily_cap" }]);
+  });
+
+  it("does not send to a recipient whose campaign was cancelled after the batch was leased", async () => {
+    let claims = 0;
+    state.rpc.mockImplementation(async (name: string, args: Record<string, unknown>) => {
+      if (name === "email_campaign_dispatch_claim") return { data: claims++ === 0 ? claim : { campaign: null }, error: null };
+      if (name === "email_campaign_dispatch_begin") return { data: args.p_recipient_id === "r1", error: null };
+      if (name === "email_campaign_dispatch_open_envelopes") return { data: [], error: null };
+      return { data: null, error: null };
+    });
+    const res = await (await post()).json();
+    expect(sends.map((x) => x.to)).toEqual(["one@example.test"]);
+    expect(res.stopped).toBe(1);
+  });
+
+  it("puts a recipient back in the queue when the begin check itself fails", async () => {
+    let claims = 0;
+    state.rpc.mockImplementation(async (name: string) => {
+      if (name === "email_campaign_dispatch_claim") return { data: claims++ === 0 ? { ...claim, recipients: [claim.recipients[0]] } : { campaign: null }, error: null };
+      if (name === "email_campaign_dispatch_begin") return { data: null, error: { message: "connection reset" } };
+      if (name === "email_campaign_dispatch_open_envelopes") return { data: [], error: null };
+      return { data: null, error: null };
+    });
+    await post();
+    expect(sends).toHaveLength(0);
+    const rec = state.rpc.mock.calls.find(([n]) => n === "email_campaign_dispatch_record")![1];
+    expect(rec).toMatchObject({ p_recipient_id: "r1", p_outcome: "deferred" });
   });
 
   it("closes a finished campaign's envelope with readback and one Rail event", async () => {

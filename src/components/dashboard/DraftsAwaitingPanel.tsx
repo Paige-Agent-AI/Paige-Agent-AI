@@ -50,7 +50,8 @@ export function DraftsAwaitingPanel({
   const approveAll = async () => {
     setBatchBusy(true);
     let acted = 0, ackd = 0, failed = 0;
-    for (const a of visible) {
+    // An email campaign goes to many people at once; it is approved one at a time, never in a batch.
+    for (const a of visible.filter((row) => row.type !== "campaign_send")) {
       try {
         const { data, error } = await supabase.functions.invoke("execute-approval", { body: { approval_id: a.id } });
         if (error || (data && data.ok === false)) { failed++; continue; }

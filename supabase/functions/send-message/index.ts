@@ -465,6 +465,13 @@ Deno.serve(async (req) => {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+  // A marketing email is a fresh, immediate email send: never a scheduled row, never a release of a
+  // stored draft (the generic drain re-sends those without the marketing guarantees below).
+  if (body.marketing === true && (body.channel !== "email" || body.scheduled_for || body.message_id || body.invoice_delivery_operation_id)) {
+    return new Response(JSON.stringify({ error: "marketing_send_shape_invalid" }), {
+      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
   if (!body?.channel || !body?.to || !body?.body) {
     return new Response(JSON.stringify({ error: "missing_fields" }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -893,6 +900,15 @@ Deno.serve(async (req) => {
     });
 
     if (!preSend.proceed) {
+      // A marketing email the pre-send checks would QUEUE (quiet hours, a hold) is not queued: a queued
+      // row is later released by the generic drain without the unsubscribe link, idempotency key or
+      // daily ceiling. Nothing is written; the caller defers the recipient until `scheduled_for`.
+      if (body.marketing === true && preSend.outcome !== "error" && !preSend.outcome.startsWith("blocked")) {
+        return new Response(JSON.stringify({
+          status: "failed", error: null, message_id: null,
+          outcome: preSend.outcome, reason: preSend.reason, scheduled_for: preSend.queueUntil ?? null, deferred: true,
+        }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
       if (invoiceBinding) {
         const receipt = await finalizeInvoice("failed");
         return new Response(JSON.stringify({ status: "failed", outcome: receipt ? "failed" : "outcome_unknown", error: "invoice_delivery_held", reason: "Invoice delivery cannot be queued. Review message preferences and try an explicitly approved operation later.", message_id: invoiceBinding.message_id, scheduled_for: null }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -1120,7 +1136,9 @@ Deno.serve(async (req) => {
         // the provider==='smtp' branch can send through the tenant's own host. null for Resend/Gmail.
         connectorConfig: isSmtp ? (connectorRow?.config ?? null) : null,
         // OutboundSendContext field is listUnsubscribeUrl (the adapter reads it → buildListUnsubscribeHeaders).
-        listUnsubscribeUrl: oneClickUrl ?? null,
+        // Only a marketing send advertises List-Unsubscribe: on a 1:1 reply, a thread or an invoice a
+        // one-click "Unsubscribe" would write a channel-wide suppression (channel-adapters.ts doc).
+        listUnsubscribeUrl: body.marketing === true ? (oneClickUrl ?? null) : null,
         idempotencyKey: typeof body.idempotency_key === "string" && /^[A-Za-z0-9:_-]{1,128}$/.test(body.idempotency_key)
           ? body.idempotency_key : null,
         // #141b: Gmail dispatch INSIDE the email adapter (§18 — not a second 'email' entry).

@@ -85,16 +85,31 @@ async function record(admin: Admin, recipientId: string, o: ReturnType<typeof ma
     p_message_id: o.messageId ?? null,
     p_skip_reason: o.skipReason ?? null,
     p_error: o.error ?? null,
+    p_not_before: o.notBefore ?? null,
   });
   // A lost record leaves the lease to expire into outcome_unknown, which is the honest state.
   if (error) console.error("[email-campaign-worker] record failed", { recipientId, reason: error.message });
 }
 
 async function sendBatch(admin: Admin, claim: Claim) {
-  const counts = { sent: 0, failed: 0, outcome_unknown: 0, skipped: 0 };
+  const counts = { sent: 0, failed: 0, outcome_unknown: 0, skipped: 0, deferred: 0, stopped: 0 };
   const queue = [...(claim.recipients ?? [])];
   const lanes = Array.from({ length: Math.min(CONCURRENCY, queue.length) }, async () => {
     for (let r = queue.shift(); r; r = queue.shift()) {
+      // The campaign may have been cancelled, blocked or replaced since this batch was leased.
+      const { data: go, error: beginErr } = await admin.rpc("email_campaign_dispatch_begin", { p_recipient_id: r.id });
+      if (beginErr) {
+        // Nothing was sent: put the recipient back in the queue rather than let the lease lapse into
+        // outcome_unknown, which is never retried.
+        console.error("[email-campaign-worker] begin failed", { recipient: r.id, reason: beginErr.message });
+        await record(admin, r.id, { outcome: "deferred", notBefore: null, error: "begin_failed" });
+        counts.deferred++;
+        continue;
+      }
+      if (go !== true) {
+        counts.stopped++;
+        continue;
+      }
       const outcome = await sendOne(claim, r);
       await record(admin, r.id, outcome);
       counts[outcome.outcome]++;
@@ -151,7 +166,7 @@ Deno.serve(async (req) => {
   if (!(await isAuthorizedInternalCaller(req, admin))) return json(401, { error: "unauthorized" });
 
   const started = Date.now();
-  const totals = { batches: 0, sent: 0, failed: 0, outcome_unknown: 0, skipped: 0 };
+  const totals = { batches: 0, sent: 0, failed: 0, outcome_unknown: 0, skipped: 0, deferred: 0, stopped: 0 };
   const notes: Array<Record<string, unknown>> = [];
 
   while (Date.now() - started < TICK_BUDGET_MS) {
@@ -189,6 +204,8 @@ Deno.serve(async (req) => {
     totals.failed += counts.failed;
     totals.outcome_unknown += counts.outcome_unknown;
     totals.skipped += counts.skipped;
+    totals.deferred += counts.deferred;
+    totals.stopped += counts.stopped;
     await admin.rpc("email_campaign_dispatch_settle", { p_campaign_id: claim.campaign.id });
   }
 

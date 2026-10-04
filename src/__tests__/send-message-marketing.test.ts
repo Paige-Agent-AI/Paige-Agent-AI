@@ -12,9 +12,10 @@ const compiled = transpileModule(raw, { compilerOptions: { module: ModuleKind.No
 
 type Sent = { msg: { body_html?: string | null }; ctx: { listUnsubscribeUrl?: string | null; idempotencyKey?: string | null } };
 
-function setup(opts: { existingToken?: string | null; mintError?: boolean } = {}) {
+function setup(opts: { existingToken?: string | null; mintError?: boolean; hold?: boolean } = {}) {
   const sent: Sent[] = [];
   const tokenWrites: unknown[] = [];
+  const messageWrites: unknown[] = [];
   const adapters: Array<{ channel_type: string; send: (m: unknown, c: unknown) => Promise<unknown> }> = [];
   const fetchCalls: Array<{ url: string; init: RequestInit }> = [];
   let handler: (req: Request) => Promise<Response>;
@@ -30,8 +31,8 @@ function setup(opts: { existingToken?: string | null; mintError?: boolean } = {}
         }
         return { data: { id: "33333333-3333-4333-8333-333333333333" }, error: null };
       };
-      b.insert = () => b;
-      b.update = () => b;
+      b.insert = (v: unknown) => { if (table === "messages") messageWrites.push(v); return b; };
+      b.update = (v: unknown) => { if (table === "messages") messageWrites.push(v); return b; };
       b.upsert = (v: unknown) => {
         if (table === "email_unsubscribe_tokens") {
           tokenWrites.push(v);
@@ -64,7 +65,9 @@ function setup(opts: { existingToken?: string | null; mintError?: boolean } = {}
         return { ok: true, status: "sent", provider_message_id: "re_123" };
       },
     }),
-    runPreSend: async () => ({ proceed: true, outcome: "proceed" }),
+    runPreSend: async () => (opts.hold
+      ? { proceed: false, outcome: "queued_quiet_hours", reason: "quiet hours", queueUntil: "2026-10-05T13:00:00.000Z" }
+      : { proceed: true, outcome: "proceed" }),
     CLIENT_CONTACT_METHODS_EMBED: "client_contact_methods",
     clientAddresses: () => ({ email: "one@example.test", emails: ["one@example.test"], phones: [] }),
     fetch: async (url: string, init: RequestInit) => {
@@ -85,7 +88,7 @@ function setup(opts: { existingToken?: string | null; mintError?: boolean } = {}
     }));
     return { status: r.status, body: await r.json() };
   };
-  return { sent, tokenWrites, adapters, fetchCalls, request };
+  return { sent, tokenWrites, messageWrites, adapters, fetchCalls, request };
 }
 
 describe("send-message marketing mode", () => {
@@ -120,6 +123,30 @@ describe("send-message marketing mode", () => {
     await s.request({ marketing: true });
     expect(s.sent[0].ctx.listUnsubscribeUrl).toBe(`https://db.example.test/functions/v1/comms-email-unsubscribe?token=${"f".repeat(64)}`);
     expect(s.tokenWrites).toHaveLength(0);
+  });
+
+  it("never queues a held marketing email for the generic drain: nothing is written, the caller defers it", async () => {
+    const s = setup({ hold: true });
+    const r = await s.request({ marketing: true });
+    expect(r.body).toMatchObject({ deferred: true, outcome: "queued_quiet_hours", scheduled_for: "2026-10-05T13:00:00.000Z", message_id: null });
+    expect(s.messageWrites).toHaveLength(0);
+    expect(s.sent).toHaveLength(0);
+  });
+
+  it("refuses a marketing send shaped like a schedule or a draft release", async () => {
+    for (const extra of [{ scheduled_for: "2099-01-01T00:00:00Z" }, { message_id: "44444444-4444-4444-8444-444444444444" }, { channel: "sms" }]) {
+      const s = setup();
+      const r = await s.request({ marketing: true, ...extra });
+      expect(r.status).toBe(400);
+      expect(r.body.error).toBe("marketing_send_shape_invalid");
+      expect(s.sent).toHaveLength(0);
+    }
+  });
+
+  it("does not advertise List-Unsubscribe on an ordinary send", async () => {
+    const s = setup();
+    await s.request({});
+    expect(s.sent[0].ctx.listUnsubscribeUrl).toBeNull();
   });
 
   it("leaves a non-marketing send as it was: placeholder untouched, a failed mint does not block", async () => {

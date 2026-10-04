@@ -35,13 +35,13 @@ ACCEPTANCE_CRITERIA: a publish with an address shows "It's live" and the link; a
 MOTION_PURPOSE: none added
 PROTECTED_SEAMS: growth_*_publish / studio_image_publish RPCs unchanged (only their return is now checked); resolve_tool_autonomy answers unchanged (proven equal before/after on production in a rollback transaction: 112 tenant × tool answers, 0 changed); paige-ai-chat request and frame contracts unchanged
 
-INTERNAL_BUILD_IDENTITY: 7d62f5351b4445fa4ed54cb8ba06373d26aac345 plus this PR; deployment=local-vite-dev-server; environment=local; migrations=PENDING(20270539000000 applies through the deploy-migrations pipeline on merge); edge=APPLIED(paige-ai-chat@deployed-by-CI-on-merge); evidence=docs/evidence/ui-delivery/assets/vibe-studio-v0-publish-truth
+INTERNAL_BUILD_IDENTITY: 7d62f5351b4445fa4ed54cb8ba06373d26aac345 plus this PR; deployment=local-vite-dev-server; environment=local; migrations=PROOF_OWED(20270539000000 is applied by the deploy-migrations pipeline on merge; persisted apply is confirmed from schema_migrations afterwards); edge=APPLIED(paige-ai-chat@deployed-by-CI-on-merge); evidence=docs/evidence/ui-delivery/assets/vibe-studio-v0-publish-truth
 RELEASE_CHANNEL: development: verified on a local build, an isolated Postgres and the harness before merge; the frontend deploys through Vercel, paige-ai-chat through the edge pipeline and Migration A through the migration pipeline on merge (pre-launch merge-on-verified, §4)
 RELEASE_CLASSIFICATION: internal-only: no customer release identity
 CUSTOMER_RELEASE_IDENTITY: none: internal-only, PARTIAL until the authenticated drive
 RELEASE_NOTE_REQUIRED: no: internal-only build
 RELEASE_TRUTH_BOUNDARY: PARTIAL: ships on merge, but the authenticated drive on production is not done; the migration's persisted apply is confirmed from schema_migrations after the pipeline runs
-RELEASE_RECOVERY: position=forward-fix or revert (frontend, one edge function, and an additive migration whose only behavioural change is the new reader; the previous resolve_tool_autonomy body can be restored verbatim from 20270122000000); reference=deploy-edge-functions and deploy-migrations pipelines
+RELEASE_RECOVERY: position=forward-fix or revert of this PR; the migration is additive and the previous resolve_tool_autonomy body can be restored verbatim from 20270122000000; reference=deploy-edge-functions and deploy-migrations pipelines redeploy the reverted function and migration
 
 ## Scope and collisions
 

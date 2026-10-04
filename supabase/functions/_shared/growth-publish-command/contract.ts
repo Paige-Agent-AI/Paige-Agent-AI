@@ -108,12 +108,20 @@ export interface ReadinessFacts {
 
 // The same two placeholder shapes the publish RPC refuses (_growth_page_go_live). Kept identical so
 // the card never says "ready" for a page the server will then refuse.
+//
+// Tested against each STRING VALUE on its own, never the serialized JSON (Migration F, 2026-10-04).
+// Serialized, a block array starts with its own "[", so the word pattern ran from that bracket to
+// the first "]" and refused any page whose copy said "your", "add", "enter"… before it — "Get your
+// weekends back" read as a placeholder. A real one ([ADD_WEBINAR_DATE], [Add your date]) sits
+// inside a single string, so a per-string test still finds it. Object keys are structure, not copy,
+// and are not tested.
 const PLACEHOLDER_TOKEN = /\[[A-Za-z0-9]*_[A-Za-z0-9_]*\]/;
 const PLACEHOLDER_WORD = /\[[^\]]*\b(add|paste|insert|enter|fill|tbd|placeholder|replace|example|your)\b[^\]]*\]/i;
-function hasPlaceholder(value: unknown): boolean {
-  if (value === null || value === undefined) return false;
-  const text = typeof value === "string" ? value : JSON.stringify(value);
-  return PLACEHOLDER_TOKEN.test(text) || PLACEHOLDER_WORD.test(text);
+export function hasPlaceholder(value: unknown): boolean {
+  if (typeof value === "string") return PLACEHOLDER_TOKEN.test(value) || PLACEHOLDER_WORD.test(value);
+  if (Array.isArray(value)) return value.some(hasPlaceholder);
+  if (value !== null && typeof value === "object") return Object.values(value).some(hasPlaceholder);
+  return false;
 }
 
 /** The blocks a publish would put live: the working copy, or a live page's own blocks. */

@@ -149,14 +149,42 @@ describe("growth-publish-command — the proposal", () => {
     expect(w.seen.receipts).toHaveLength(0);
   });
 
-  // FAITHFUL TO THE SERVER, INCLUDING ITS DEFECT. _growth_page_go_live's word pattern runs over the
-  // blocks' JSON text, whose own outer brackets enclose ordinary copy — so "Get your weekends back"
-  // is refused as a placeholder. Measured on production 2026-10-04 (the same expression returns true
-  // for that text and false for "Get the weekends back"). The card must never say "ready" for a page
-  // the server will refuse, so the mirror refuses it too; fixing the pattern is a migration.
-  it("mirrors the server's placeholder pattern exactly, even where it over-matches ordinary copy", async () => {
-    const w = world({ tables: { growth_pages: [livePage({ draft_blocks_json: [{ type: "hero", title: "Get your weekends back" }] })] } });
-    expect((await w.call(publishPage)).body).toMatchObject({ outcome: "not_ready" });
+  // PLACEHOLDERS ARE FOUND PER STRING (Migration F, 2026-10-04). Both this mirror and
+  // _growth_page_go_live used to run the word pattern over the serialized JSON, whose own outer "["
+  // reached the first "]" — so "Get your weekends back" was refused as a placeholder. Now both test
+  // each string value on its own: ordinary copy is ready, and a real bracketed prompt inside one
+  // string still blocks, in the blocks and in the SEO.
+  const noPlaceholders = async (tables: Parameters<typeof world>[0]) => {
+    const r = await world(tables).call(publishPage);
+    return (r.body.preview as { checks: Array<{ key: string; ok: boolean }> }).checks.find((c) => c.key === "no_placeholders");
+  };
+
+  it.each([
+    ["Get your weekends back"],
+    ["Add more clients without adding hours"],
+    ["Enter the next season with a plan — see the example below"],
+    ["Fill your calendar, replace the guesswork"],
+  ])("ordinary copy is ready: %s", async (title) => {
+    const w = world({ tables: { growth_pages: [livePage({ draft_blocks_json: [{ type: "hero", title }, { type: "cta", items: ["x"] }] })] } });
+    const r = await w.call(publishPage);
+    expect(r.status).toBe(202);
+    expect(r.body.fingerprint).toMatch(/^[0-9a-f]{16}$/);
+    expect((r.body.preview as { checks: Array<{ key: string; ok: boolean }> }).checks.find((c) => c.key === "no_placeholders")).toMatchObject({ ok: true });
+  });
+
+  it.each([
+    ["a token", [{ type: "hero", title: "Join us on [ADD_DATE]" }], null],
+    ["a word prompt", [{ type: "hero", title: "Signed, [Your name]" }], null],
+    ["a nested string", [{ type: "faq", items: [{ q: "When?", a: "[Add your webinar date]" }] }], null],
+    ["the SEO title", [{ type: "hero", title: "Get your weekends back" }], { title: "[ADD_PAGE_TITLE]" }],
+    ["the SEO description", [{ type: "hero", title: "Get your weekends back" }], { description: "[Your description here]" }],
+  ])("a real placeholder in one string still blocks (%s)", async (_label, draft_blocks_json, draft_seo_json) => {
+    expect(await noPlaceholders({ tables: { growth_pages: [livePage({ draft_blocks_json, draft_seo_json })] } })).toMatchObject({ ok: false });
+  });
+
+  it("brackets split across two strings are not a placeholder; object keys are not copy", async () => {
+    expect(await noPlaceholders({ tables: { growth_pages: [livePage({ draft_blocks_json: [{ type: "hero", title: "[ your", subtitle: "add ]" }] })] } })).toMatchObject({ ok: true });
+    expect(await noPlaceholders({ tables: { growth_pages: [livePage({ draft_blocks_json: [{ type: "hero", "[your_key]": "Get the weekends back" }] })] } })).toMatchObject({ ok: true });
   });
 
   it("an existing form on the page passes; a non-blocking form gap is a warning, not a refusal", async () => {

@@ -28,7 +28,7 @@ describe("Studio edge contract", () => {
   });
 
   it("never lets a new page take a slug another page already has (the upsert would overwrite it)", () => {
-    const save = chat.slice(chat.indexOf('} else if (tc.function.name === "growth_page_save") {'), chat.indexOf('} else if (tc.function.name === "growth_page_publish") {'));
+    const save = chat.slice(chat.indexOf('} else if (tc.function.name === "growth_page_save") {'), chat.indexOf('} else if (tc.function.name === "growth_form_save") {'));
     expect(save).toContain('} else if (personaCtx?.tenant_id) {');
     expect(save).toContain('.from("growth_pages").select("slug").eq("tenant_id", personaCtx.tenant_id).like("slug", `${_base}%`)');
     expect(save).toContain("if (_set.has(_base))");

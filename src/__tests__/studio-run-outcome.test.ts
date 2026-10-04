@@ -10,8 +10,9 @@ const outcome = (capability: string, input: Record<string, unknown>) => classify
 describe("Studio receipts", () => {
   it("covers every Studio save and publish, and files images under one key", () => {
     expect([...STUDIO_RECEIPT_KEYS.keys()].sort()).toEqual([
-      "content_save", "generate_image", "growth_form_publish", "growth_form_save", "growth_funnel_build",
-      "growth_funnel_publish", "growth_page_publish", "growth_page_save",
+      "content_save", "generate_image", "growth_form_publish", "growth_form_save", "growth_form_unpublish",
+      "growth_funnel_build", "growth_funnel_publish", "growth_funnel_unpublish", "growth_page_publish", "growth_page_save",
+      "growth_page_unpublish", "studio_image_publish", "studio_image_unpublish",
     ]);
     expect(classifyStudioRun({ capability: "generate_image", result: { success: true, url: "u" } })).toEqual({ key: "vibe_media_image", outcome: "capability_succeeded" });
   });

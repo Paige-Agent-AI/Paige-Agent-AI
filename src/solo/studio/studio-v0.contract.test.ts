@@ -78,14 +78,16 @@ describe("D4 — document_generate is off the Studio surface", () => {
 });
 
 describe("D2 — funnel tools are reachable, and a partial build is never success", () => {
-  it("routes the three funnel tools into the dispatch branch that handles them", () => {
-    const gate = between('tc.function.name === "growth_form_publish" ||', "// Role gate: admin only");
-    for (const t of ["growth_funnel_generate", "growth_funnel_build", "growth_funnel_publish"]) {
+  it("routes the funnel draft and build tools into the dispatch branch that handles them", () => {
+    const gate = between('tc.function.name === "growth_form_save" ||', "// Role gate: admin only");
+    for (const t of ["growth_funnel_generate", "growth_funnel_build"]) {
       expect(gate).toContain(`tc.function.name === "${t}" ||`);
     }
+    // V2b: funnel publish is reachable through the one publish door instead (see below).
+    expect(gate).not.toContain('tc.function.name === "growth_funnel_publish" ||');
   });
   it("reports a build that failed after a write as partial, naming what was saved", () => {
-    const build = between('} else if (tc.function.name === "growth_funnel_build") {', '} else if (tc.function.name === "growth_funnel_publish") {');
+    const build = between('} else if (tc.function.name === "growth_funnel_build") {', '} else if (tc.function.name === "action_file") {');
     expect(build).toContain("_fbWritten.page_id = _pageId;");
     expect(build).toContain("_fbWritten.form_id = _formId;");
     expect(build).toContain('if (!_formId) throw new Error("The funnel\'s intake form didn\'t save.");');
@@ -94,16 +96,20 @@ describe("D2 — funnel tools are reachable, and a partial build is never succes
   });
 });
 
+// V2b — ONE PUBLISH DOOR. Chat no longer runs its own publish RPC and readback; it hands the act to
+// growth-publish-command (the Studio panel's door too), whose handler requires the readback. The
+// door's behaviour is driven in src/__tests__/growth-publish-door.test.ts; this pins the wiring.
 describe("Publish truth in chat — no success without the published readback", () => {
-  it.each([
-    ["growth_page_publish", '"page", pub'],
-    ["growth_form_publish", '"form", pub'],
-    ["growth_funnel_publish", '"funnel", _pub'],
-  ])("%s requires publishVerified", (tool, call) => {
-    const start = `} else if (tc.function.name === "${tool}") {`;
-    const handler = chat.slice(chat.indexOf(start), chat.indexOf("} else if (tc.function.name ===", chat.indexOf(start) + start.length));
-    expect(handler).toContain(`publishVerified(${call})`);
-    expect(handler).toContain('outcome: "unverified", error: PUBLISH_UNVERIFIED_ERROR');
+  const door = readFileSync("supabase/functions/_shared/growth-publish-command/door.ts", "utf8");
+  it.each(["growth_page_publish", "growth_form_publish", "growth_funnel_publish"])("%s has no inline executor left in chat", (tool) => {
+    expect(chat).not.toContain(`} else if (tc.function.name === "${tool}") {`);
+    expect(chat).not.toContain(`supabaseClient.rpc("${tool}"`);
+  });
+  it("chat routes publishing through the door, and the door requires the readback", () => {
+    expect(between("if (GROWTH_PUBLISH_DOOR_TOOL_NAMES.has(tc.function.name)) {", "// ── CANONICAL GOVERNED CRM/Pipeline DOOR"))
+      .toContain('supabaseClient.functions.invoke("growth-publish-command"');
+    expect(door).toContain("publishVerified(cmd.kind, data)");
+    expect(door).toContain('outcome: "unverified"');
   });
 });
 

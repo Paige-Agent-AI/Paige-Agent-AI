@@ -4518,8 +4518,8 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
   // The refusal travels as a JSON string inside the next model request, so its quotes arrive escaped.
   const scopeRefused = (r, name) => new RegExp(`"error":"outside_studio_scope","message":"\\\\*"${name}\\\\*" isn't something the design studio can do`).test(wire(r));
   const AUTO_LANE = { resolve_tool_autonomy: { data: "auto", error: null } };
-  const studioTurn = (toolCall, scope = SCOPE_ROW, extraRpc = {}) => drive({
-    stream: true, extraBody: { threadId: THREAD }, toolCall,
+  const studioTurn = (toolCall, scope = SCOPE_ROW, extraRpc = {}, functionsExtra = {}) => drive({
+    stream: true, extraBody: { threadId: THREAD }, toolCall, functionsExtra,
     rpcOverrides: { ...AS_TENANT, ...WS, ...AUTO_LANE, ...extraRpc },
     serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...scope },
     tablesExtra: studioTables(),
@@ -4590,14 +4590,20 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
     { studio_role_ok: { data: true, error: null } }, []);
   assert("33.5b this workspace's owner builds without any global role",
     called(ownerNoGlobalRole, "growth_page_upsert") === 1, JSON.stringify(ownerNoGlobalRole.rec.rpc.map((c) => c.name)));
-  // 33.5c The tenant-scoped gate covers ONLY the tools whose backend asks the same question. A tool
-  // whose backend still checks the global role keeps its existing gate. Kills: widening
-  // WORKSPACE_BUILD_TOOLS past the growth RPCs (which would admit callers the backend then refuses).
-  const contentNoGlobal = await mainDrive({ name: "content_save", args: { title: "x", body: "y" } },
-    { studio_role_ok: { data: true, error: null } }, []);
-  assert("33.5c content_save keeps its existing gate (its backend still checks the global role)",
-    called(contentNoGlobal, "save_marketing_content") === 0 && called(contentNoGlobal, "studio_role_ok") === 0,
-    JSON.stringify(contentNoGlobal.rec.rpc.map((c) => c.name)));
+  // 33.5c Every Studio build tool's backend now asks the workspace question (Migration D moved
+  // save_marketing_content; studio-caller moved the draft functions), so content_save and the two
+  // generate tools ask it in chat too: this workspace's owner reaches them without any global role.
+  // Kills: leaving any of them on the tenant-agnostic global-role gate.
+  for (const [tool, args, reach] of [
+    ["content_save", { title: "x", body: "y" }, (r) => called(r, "save_marketing_content") === 1],
+    ["growth_page_generate", { brief: "a page for our spring offer" }, (r) => r.rec.functions.some((f) => f.name === "growth-page-draft")],
+    ["growth_funnel_generate", { brief: "a funnel for our spring offer" }, (r) => r.rec.functions.some((f) => f.name === "growth-funnel-draft")],
+  ]) {
+    const ownerOnly = await mainDrive({ name: tool, args }, { studio_role_ok: { data: true, error: null } }, []);
+    assert(`33.5c ${tool}: this workspace's owner reaches its backend without any global role`,
+      reach(ownerOnly) && called(ownerOnly, "studio_role_ok") === 1,
+      JSON.stringify({ fns: ownerOnly.rec.functions.map((f) => f.name), rpcs: ownerOnly.rec.rpc.map((c) => c.name) }));
+  }
 
   // 33.5d Image generation and copy drafting ask the same workspace question as their backends
   // (_shared/studio-caller.ts). Kills: leaving them on the global-role chat gate, where a workspace
@@ -4626,6 +4632,17 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
       wire(refused).includes(REFUSAL) && !wire(refused).includes("non-2xx"), wire(refused).slice(0, 400));
   }
 
+  // 33.5g The growth draft functions refuse with their own body shape ({ error: { code, message },
+  // forbidden: true }); that reason reaches the model verbatim too. Kills: throwing before the body.
+  for (const [tool, fn] of [["growth_page_generate", "growth-page-draft"], ["growth_funnel_generate", "growth-funnel-draft"]]) {
+    const REASON = "Only this workspace's owner or an admin can use the Studio.";
+    const refusedDraft = await mainDrive({ name: tool, args: { brief: "a page for our spring offer" } }, { studio_role_ok: { data: true, error: null } }, [], {
+      [fn]: { data: null, error: { message: "Edge Function returned a non-2xx status code", context: { json: async () => ({ error: { code: "FORBIDDEN", message: REASON }, forbidden: true }) } } },
+    });
+    assert(`33.5g ${tool}: the draft backend's workspace refusal reaches the model verbatim`,
+      wire(refusedDraft).includes(REASON) && !wire(refusedDraft).includes("non-2xx"), wire(refusedDraft).slice(0, 400));
+  }
+
   // 33.6 A Studio thread whose second read fails still runs as a Studio turn, fail-closed — never as
   // main PAIGE with every tool. Kills: dropping the preStudioSessionId fallback.
   const flaky = await drive({
@@ -4638,6 +4655,88 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
   assert("33.6 a Studio thread whose re-read fails is still fail-closed Studio: off-scope tool refused, only the fail-closed set offered",
     scopeRefused(flaky, "crm_create_contact") && offered(flaky).every((t) => ["ask_choices", "capability_status"].includes(t)),
     JSON.stringify({ offered: offered(flaky), refused: scopeRefused(flaky, "crm_create_contact") }));
+
+  // ── 34. V2a: every Studio act files one honest receipt, through the shared ledger ──────────────
+  const receipts = (r, key) => r.rec.rpc.filter((c) => c.name === "record_capability_run" && c.args?._capability_key === key);
+  const onlyReceipt = (r, key) => { const rs = receipts(r, key); return rs.length === 1 ? rs[0] : null; };
+  const allReceipts = (r) => r.rec.rpc.filter((c) => c.name === "record_capability_run").map((c) => `${c.args?._capability_key}:${c.args?._outcome}`);
+
+  // 34.1 A saved page files one success, on the server client, saying how it was approved and which
+  // page it touched. Kills: leaving pages without a receipt; recording through the caller's client.
+  const pageSaved = await mainDrive({ name: "growth_page_save", args: { title: "Spring offer", blocks: [] } });
+  const pr = onlyReceipt(pageSaved, "growth_page_save");
+  assert("34.1 a saved page files one success receipt with its approval channel and page id",
+    pr && pr.client === "service" && pr.args._outcome === "capability_succeeded"
+      && pr.args._detail?.approval === "standing_autonomy_setting" && pr.args._detail?.page_id === "page-1",
+    JSON.stringify(allReceipts(pageSaved)) + " " + JSON.stringify(pr?.args?._detail ?? null));
+
+  // 34.2 A save whose answer never came back may have landed: it is recorded as unknown, never as
+  // refused or failed. (An unproven publish takes the same path; its classification is pinned in
+  // studio-run-outcome.test.ts, since a publish waits for approval here.) Kills: the forms-era rule
+  // that filed every non-success as a refusal.
+  const lostSave = await mainDrive({ name: "content_save", args: { title: "x", body: "y" } },
+    { save_marketing_content: { data: null, error: { code: "", message: "TypeError: fetch failed", details: "", hint: "" } } });
+  assert("34.2 a save whose answer was lost files capability_outcome_unknown",
+    onlyReceipt(lostSave, "content_save")?.args._outcome === "capability_outcome_unknown", JSON.stringify(allReceipts(lostSave)));
+
+  // 34.3 A caller who is not this workspace's owner/admin is refused before the write, and the
+  // refusal is on the record. Kills: a pre-executor refusal that leaves no trace.
+  const notOwner = await mainDrive({ name: "growth_page_save", args: { title: "x", blocks: [] } },
+    { studio_role_ok: { data: false, error: null } }, []);
+  const nr = onlyReceipt(notOwner, "growth_page_save");
+  assert("34.3 a not-owner refusal files a refused receipt and writes nothing",
+    called(notOwner, "growth_page_upsert") === 0 && nr?.args._outcome === "capability_refused"
+      && nr?.args._detail?.refused === "workspace_owner_or_admin_required",
+    JSON.stringify(allReceipts(notOwner)));
+
+  // 34.4 A Studio act switched off is refused on the record too.
+  const switchedOff = await mainDrive({ name: "content_save", args: { title: "x", body: "y" } },
+    { resolve_tool_autonomy: { data: "off", error: null } });
+  assert("34.4 a switched-off Studio act files a refused receipt and writes nothing",
+    called(switchedOff, "save_marketing_content") === 0 && onlyReceipt(switchedOff, "content_save")?.args._detail?.refused === "turned_off",
+    JSON.stringify(allReceipts(switchedOff)));
+
+  // 34.5 Images: one key, one receipt. Outside a project the chat files it; inside a project paige-
+  // media owns every receipt for its job, so the chat files none. Kills: double-counting an image.
+  const plainImage = await mainDrive({ name: "generate_image", args: { prompt: "a calm hero image" } }, {}, [], {
+    "generate-image": { data: { url: "https://cdn.example.test/i.png", content_id: "c-1", provider: "gemini" }, error: null },
+  });
+  assert("34.5 an image outside a project files one vibe_media_image success and nothing under generate_image",
+    onlyReceipt(plainImage, "vibe_media_image")?.args._outcome === "capability_succeeded"
+      && onlyReceipt(plainImage, "vibe_media_image")?.args._detail?.content_id === "c-1"
+      && receipts(plainImage, "generate_image").length === 0,
+    JSON.stringify(allReceipts(plainImage)));
+  // Inside a project paige-media files the receipt once a job exists, and for a budget refusal; any
+  // other outcome (a synchronous refusal, an answer that never came) is filed by the chat — exactly
+  // one receipt per attempt. Kills: skipping every Studio image (refusals vanish) or none (doubles).
+  const IMG = { name: "generate_image", args: { prompt: "a calm hero image" } };
+  const jobImage = await studioTurn(IMG, SCOPE_ROW, {}, { "paige-media": { data: { job: { id: "job-1", state: "queued", model: "m" } }, error: null } });
+  assert("34.5b an image inside a project that became a paige-media job files no chat receipt (paige-media files it)",
+    receipts(jobImage, "vibe_media_image").length === 0 && receipts(jobImage, "generate_image").length === 0,
+    JSON.stringify(allReceipts(jobImage)));
+  const nonJson = (body) => ({ data: null, error: { message: "Edge Function returned a non-2xx status code", context: { json: async () => body } } });
+  const overBudget = await studioTurn(IMG, SCOPE_ROW, {}, { "paige-media": nonJson({ error: "This month's image budget is used up.", budget_denied: true, gate: "ceiling" }) });
+  assert("34.5c a budget refusal inside a project files no chat receipt (paige-media filed it)",
+    receipts(overBudget, "vibe_media_image").length === 0, JSON.stringify(allReceipts(overBudget)));
+  const mediaRefused = await studioTurn(IMG, SCOPE_ROW, {}, { "paige-media": nonJson({ error: "No image provider is set up for this workspace." }) });
+  assert("34.5d a synchronous paige-media refusal inside a project is filed once, by the chat, as refused",
+    onlyReceipt(mediaRefused, "vibe_media_image")?.args._outcome === "capability_refused", JSON.stringify(allReceipts(mediaRefused)));
+
+  // 34.6 Drafting copy saves nothing, so it runs without an approval card even when the workspace
+  // asks Paige to confirm every write (owner ruling 2026-10-04), and files no receipt.
+  const draftUnderConfirm = await mainDrive({ name: "draft_marketing_content", args: { channel: "social_post", brief: "spring launch for our clients" } },
+    { resolve_tool_autonomy: { data: "confirm", error: null } }, [], {
+      "content-draft": { data: { channel: "social_post", drafts: [{ content: "Spring is here." }] }, error: null },
+    });
+  assert("34.6 a copy draft runs without an approval card under confirm, and files no receipt",
+    draftUnderConfirm.rec.functions.some((f) => f.name === "content-draft") && !/"needs_confirm":true/.test(wire(draftUnderConfirm))
+      && allReceipts(draftUnderConfirm).length === 0,
+    wire(draftUnderConfirm).slice(0, 300));
+  const saveUnderConfirm = await mainDrive({ name: "content_save", args: { title: "x", body: "y" } },
+    { resolve_tool_autonomy: { data: "confirm", error: null } });
+  assert("34.6b saving copy still asks first under confirm",
+    called(saveUnderConfirm, "save_marketing_content") === 0 && /"needs_confirm":true/.test(wire(saveUnderConfirm)),
+    wire(saveUnderConfirm).slice(0, 300));
 }
 
 console.log(`\n${checks - failures} passed, ${failures} failed`);

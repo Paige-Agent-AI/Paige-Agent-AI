@@ -23,19 +23,25 @@
 //     session_id?: uuid, deliverable_id?: uuid, // soft links for the log row
 //     iteration?: number,                       // which loop pass this is (default 0)
 //     spent_usd?: number,                       // running loop cost so far (default 0)
-//     tenant_id?: uuid                          // REQUIRED for a service-role caller; IGNORED for a
-//                                               // JWT caller (tenant is derived from their session, §9)
+//     tenant_id?: uuid                          // REQUIRED for a service-role caller. A JWT caller's
+//                                               // tenant is their session's workspace (§9); a
+//                                               // tenant_id naming any other workspace is refused
 //   }
 //   200 { ok:true, verdict, summary, blockers[], should_fix[], nits[], cheesy_tells_hit[],
 //         refined_prompt?, iteration, cost_estimate_usd, spent_usd, capped?, low_confidence? }
 //   200 { ok:false, needs_config:true, message }   — renderer/model not configured (honest degrade)
+//   403 { error, forbidden:true }                  — JWT caller: no workspace open, another workspace
+//                                                  //   named, or not its owner/admin/managing agency
+//   500 { error }                                  — the workspace/permission lookup failed (retryable)
 //   4xx { error }                                  — bad input / auth
 //
 // ── DOCTRINE ─────────────────────────────────────────────────────────────────
-//   §9  — a JWT caller can ONLY critique for their OWN tenant: tenantId is derived from
-//         current_user_tenant_id(), never from the body (body.tenant_id is ignored for JWT callers).
-//         A service-role caller (Paige's headless agent / paige-ai-chat) must pass tenant_id — it has
-//         already resolved + authorized it. This closes the cross-tenant/IDOR seam.
+//   §9  — a JWT caller can ONLY critique for the workspace their session is in, and only as its
+//         owner/admin or managing agency (_shared/studio-caller.ts resolveStudioCaller, the rule every
+//         Studio backend uses). A platform-wide user_roles admin/super_admin grants nothing — that
+//         table has no tenant. A service-role caller (Paige's headless agent) must pass tenant_id —
+//         it has already resolved + authorized it. paige-ai-chat's critique loop calls with the
+//         person's JWT and the tenant from get_paige_persona_context, so it takes the JWT path.
 //   §13 — HONEST degrade: no renderer/model → needs_config, never a fabricated SHIP. If the critic's
 //         reply can't be parsed into a verdict, we FAIL-OPEN to SHIP with low_confidence:true (a
 //         broken critic must not BLOCK a legitimate artifact) and LOG the malfunction — never silent.
@@ -50,6 +56,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { callModel } from "../_shared/model-router.ts";
 import { CHEESY_TELLS_AVOID } from "../_shared/cheesy-tells.ts";
 import { assertPublicHttpUrl } from "../_shared/ssrf-guard.ts";
+import { resolveStudioCaller } from "../_shared/studio-caller.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -225,21 +232,16 @@ serve(async (req: Request) => {
       const { data: { user }, error: uErr } = await authed.auth.getUser();
       if (uErr || !user) return json(401, { error: uErr?.message || "Could not verify this session." });
       actorUserId = user.id;
-      const { data: roleRows } = await authed.from("user_roles").select("role").eq("user_id", user.id);
-      const roles = (roleRows || []).map((r: Record<string, unknown>) => r.role);
-      if (!roles.some((r) => r === "admin" || r === "super_admin")) {
-        return json(403, { error: "Admin access required." });
+      // The session's own workspace, its owner/admin or managing agency only. A body tenant_id can
+      // only be refused here, never chosen — there is no cross-tenant critique on a person's session.
+      const caller = await resolveStudioCaller(authed, body.tenant_id);
+      if (!caller.ok) {
+        return caller.status === 403
+          ? json(403, { error: caller.error, forbidden: true })
+          : json(500, { error: caller.error });
       }
-      actorRole = roles.includes("super_admin") ? "super_admin" : "admin";
-      const { data: activeTenant } = await authed.rpc("current_user_tenant_id");
-      // super_admin (platform owner) may critique for an explicit tenant; everyone else is pinned to
-      // their own active tenant regardless of what body.tenant_id says (§9 — body is not trusted).
-      if (roles.includes("super_admin") && UUID_RE.test(str(body.tenant_id))) {
-        tenantId = str(body.tenant_id);
-      } else {
-        tenantId = str(activeTenant);
-      }
-      if (!UUID_RE.test(tenantId)) return json(403, { error: "No tenant is in scope for this session." });
+      tenantId = caller.tenantId;
+      actorRole = "tenant"; // acting inside their own workspace (resolveStudioCaller); audit label only
     }
 
     // ── §33 caps — stop an iterate loop before it runs away ──────────────────────────────────

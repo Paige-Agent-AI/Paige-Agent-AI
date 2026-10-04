@@ -119,7 +119,6 @@ export const TOOL_MAP: Readonly<Record<string, { capability: CapabilityKey; risk
   calendar_book_meeting: { capability: "comms", risk: "high" },
 
   // ── Content & Studio ──────────────────────────────────────────────────────────────────────
-  draft_marketing_content: { capability: "content", risk: "ordinary" },
   generate_image: { capability: "content", risk: "ordinary" },
   content_save: { capability: "content", risk: "ordinary" },
   document_generate: { capability: "content", risk: "ordinary" },

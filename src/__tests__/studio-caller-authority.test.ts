@@ -5,7 +5,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { resolveStudioCaller } from "../../supabase/functions/_shared/studio-caller.ts";
+import { resolveStudioCaller, resolveStudioCallerForArtifact } from "../../supabase/functions/_shared/studio-caller.ts";
 
 const MINE = "11111111-1111-4111-8111-111111111111";
 const THEIRS = "22222222-2222-4222-8222-222222222222";
@@ -83,4 +83,68 @@ describe.each(["generate-image", "content-draft"])("%s takes its workspace from 
     expect(src).not.toMatch(/tenantId\s*=\s*body\?\.tenant_id/);
     expect(src).not.toContain('from("user_roles")');
   });
+});
+
+describe("resolveStudioCallerForArtifact", () => {
+  it("admits the owner, admin or managing agency of the artifact's own workspace when they are signed in to it", async () => {
+    const c = client({ active: { data: MINE }, admin: { data: false }, manages: { data: true } });
+    expect(await resolveStudioCallerForArtifact(c, MINE)).toEqual({ ok: true, tenantId: MINE });
+    expect(c.calls.find((x) => x.fn === "is_tenant_admin")?.args).toEqual({ _tenant: MINE });
+  });
+
+  it("refuses an artifact from another workspace and tells the caller to switch — never learns it into theirs", async () => {
+    const c = client({ active: { data: MINE }, admin: { data: true } });
+    expect(await resolveStudioCallerForArtifact(c, THEIRS)).toMatchObject({
+      ok: false, status: 403, reason: "other_workspace", error: "Switch into that workspace to teach its Paige from this artifact.",
+    });
+    expect(c.calls.map((x) => x.fn)).toEqual(["current_user_tenant_id"]);
+  });
+
+  it("refuses an artifact with no valid tenant without asking anything, instead of treating it as 'no workspace named'", async () => {
+    for (const bad of [null, undefined, "", "not-a-uuid", 42]) {
+      const c = client({ active: { data: MINE }, admin: { data: true } });
+      expect(await resolveStudioCallerForArtifact(c, bad)).toMatchObject({ ok: false, status: 403 });
+      expect(c.calls).toEqual([]);
+    }
+  });
+
+  it("refuses a workspace member who is not its owner, admin or managing agency, and fails closed on a lookup error", async () => {
+    expect(await resolveStudioCallerForArtifact(client({ active: { data: MINE }, admin: { data: false }, manages: { data: false } }), MINE))
+      .toMatchObject({ ok: false, status: 403, reason: "not_admin" });
+    expect(await resolveStudioCallerForArtifact(client({ active: { error: { message: "x" } } }), MINE))
+      .toMatchObject({ ok: false, status: 500, reason: "lookup_failed" });
+  });
+});
+
+// The draft, edit, route, critique and learn backends take the shared check on their JWT path; none
+// of them asks the global user_roles table, and none lets a platform-wide super_admin pick a tenant.
+const SESSION_GATED: Array<[string, string, boolean]> = [
+  ["growth-page-draft", "resolveStudioCaller(authed, body?.tenant_id)", true],
+  ["growth-form-draft", "resolveStudioCaller(authed, body?.tenant_id)", true],
+  ["growth-funnel-draft", "resolveStudioCaller(authed, body?.tenant_id)", true],
+  ["growth-block-edit", "resolveStudioCaller(authed, body?.tenant_id)", true],
+  ["growth-studio-route", "resolveStudioCaller(authed, body?.tenant_id)", false],
+  ["studio-visual-critique", "resolveStudioCaller(authed, body.tenant_id)", true],
+  ["studio-learn-from-artifact", "resolveStudioCallerForArtifact(authed, tenantId)", false],
+];
+const code = (src: string) => src.split("\n").filter((l) => !l.trim().startsWith("//")).join("\n");
+
+describe.each(SESSION_GATED)("%s gates a person on their own workspace", (fn, call, usesTenant) => {
+  const src = read(`supabase/functions/${fn}/index.ts`);
+  it("runs the shared caller check and reports a refusal as forbidden", () => {
+    expect(src).toContain(call);
+    expect(src).toContain("forbidden: true");
+    if (usesTenant) expect(src).toContain("tenantId = caller.tenantId;");
+  });
+  it("never reads user_roles or branches on a platform-wide role", () => {
+    expect(src).not.toContain('from("user_roles")');
+    expect(code(src)).not.toMatch(/super_admin|roleRows/);
+  });
+});
+
+it("studio-learn-from-artifact authorizes the caller before it reports anything about the artifact", () => {
+  const src = read("supabase/functions/studio-learn-from-artifact/index.ts");
+  const gate = src.indexOf("resolveStudioCallerForArtifact(authed, tenantId)");
+  expect(gate).toBeGreaterThan(-1);
+  expect(gate).toBeLessThan(src.indexOf('error: "not_published"'));
 });

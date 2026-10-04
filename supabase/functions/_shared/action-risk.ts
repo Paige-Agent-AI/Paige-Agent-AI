@@ -317,7 +317,6 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   // The client seat's ONLY write, and on the portal it is the client editing their own profile.
   // Reversible, in-tenant, and scoped to the client already in focus.
   ["update_client_data", "ordinary", "edits fields on the focused client's record"],
-  ["draft_marketing_content", "ordinary", "produces a draft nobody has sent"],
   ["generate_image", "ordinary", "produces an image nobody has published"],
   ["content_save", "ordinary", "saves to the workspace's own library"],
   ["growth_page_save", "ordinary", "saves a DRAFT; publishing is the separate high-risk act"],
@@ -584,6 +583,10 @@ const REASON_BY_TOOL: ReadonlyMap<string, string> = new Map(
 const NON_MUTATING_EXEMPT: ReadonlyMap<string, string> = new Map([
   ["growth_page_generate", "drafts a page in memory and returns it; saving is growth_page_save"],
   ["growth_funnel_generate", "drafts a funnel in memory; building it is growth_funnel_build"],
+  // ADDED 2026-10-04 by owner ruling ("Drafts skip approval is a go"). content-draft returns copy and
+  // persists nothing; saving it is content_save, which stays gated. Production had one approval card
+  // for a draft, never answered: the gate asked the owner to approve being shown words.
+  ["draft_marketing_content", "drafts copy in memory and returns it; saving is content_save"],
   ["propose_action", "files a request for the operator's decision and sends nothing; the send it proposes is the gated act"],
   // ADDED 2026-09-02 with the Pipelines merge. It persists a row, so the verb backstop was right
   // to stop it — but the row is the archive's own binding: single-use, expiring, scoped to this

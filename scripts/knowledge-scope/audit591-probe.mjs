@@ -167,8 +167,8 @@ function anthropicStream(kind = "text") {
         { type: "message_delta", delta: { stop_reason: "tool_use" }, usage: { output_tokens: 1 } },
         { type: "message_stop" },
       ]
-    // `draft_marketing_content` — a tool that WRITES (so the autonomy gate governs it, and it sits
-    // in `MUTATING_TOOLS`) but whose result is GENERATED COPY grounded in the tenant's name and
+    // `draft_marketing_content` — a tool the autonomy gate no longer holds (it persists nothing; it
+    // left `MUTATING_TOOLS` 2026-10-04) but whose result is GENERATED COPY grounded in the tenant's name and
     // brand voice, read out of storage by `content-draft`. Reusing `MUTATING_TOOLS` as the
     // receipt set therefore left an otherwise-ordinary turn unprotected while its closing reply
     // was written in the previous workspace's voice. Nothing else in this harness drives a tool

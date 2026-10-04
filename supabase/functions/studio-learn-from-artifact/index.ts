@@ -14,12 +14,16 @@
 //   200 { ok:false, blocked:true, mode:"off", message }                 — tenant turned learning off
 //   200 { ok:false, error, message }                                    — nothing usable to learn / embed failed (§13 honest)
 //   4xx { error }                                                       — bad input / auth / not found
+//   403 { error, forbidden:true }   — JWT caller not signed in to the artifact's workspace, or not its
+//                                     owner/admin or managing agency
+//   500 { error }                   — also: the workspace/permission lookup failed (retryable)
 //
 // ── DOCTRINE ─────────────────────────────────────────────────────────────────
 //   §9  — the ingest tenant is resolved FROM THE PUBLISHED ARTIFACT ROW (growth_pages/growth_funnels
 //         .tenant_id), never the caller's active tenant or the request body. A JWT caller is then
-//         authorized AGAINST that tenant (role + they must be acting in that workspace) — this closes
-//         the agency-on-behalf leak (an agency publishing a sub-account's page must not poison the
+//         authorized AGAINST that tenant (they must be signed in to that workspace and be its
+//         owner/admin or managing agency; a platform-wide role grants nothing) — this closes the
+//         agency-on-behalf leak (an agency publishing a sub-account's page must not poison the
 //         agency's KB). This is the one place Slice B is NOT a copy of Slice A.
 //   §15 — NEVER silent. Gated by the existing tenant_tool_autonomy primitive (tool_key
 //         'studio_learn_from_publish'): default 'confirm' → Paige must propose and the tenant say yes
@@ -34,6 +38,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { ingestDoc } from "../_shared/kb-ingest-core.ts";
 import { flattenBlocks, flattenFormSchema } from "../_shared/studio-artifact-extract.ts";
+import { resolveStudioCallerForArtifact } from "../_shared/studio-caller.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -104,6 +109,29 @@ serve(async (req: Request) => {
     const tenantId = str((artifact as unknown as Record<string, unknown>).tenant_id);
     if (!UUID_RE.test(tenantId)) return json(500, { error: "Artifact has no valid tenant." });
 
+    // ── Authorize the caller against the ARTIFACT's tenant (§9 agency-leak guard) ──
+    // Before anything about the artifact (its publish state, its content) is reported back.
+    // A JWT caller must be signed in to the artifact's own workspace AND be its owner/admin or
+    // managing agency (resolveStudioCallerForArtifact — the shared Studio rule, asked of the
+    // artifact's tenant). An artifact from any other workspace is refused, never learned into the
+    // caller's current one: that blocks an agency from learning a sub-account's page into the
+    // agency's KB. A platform-wide user_roles admin/super_admin grants nothing — that table has no
+    // tenant. Service-role callers (the publish path) already resolved the tenant from the row.
+    let userId: string | null = null;
+    if (!isServiceRole) {
+      const authed = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: authHeader } } });
+      const { data: { user }, error: uErr } = await authed.auth.getUser();
+      if (uErr || !user) return json(401, { error: uErr?.message || "Could not verify this session." });
+      userId = user.id;
+
+      const caller = await resolveStudioCallerForArtifact(authed, tenantId);
+      if (!caller.ok) {
+        return caller.status === 403
+          ? json(403, { error: caller.error, forbidden: true })
+          : json(500, { error: caller.error });
+      }
+    }
+
     // Live-status gate applies ONLY to the publish-triggered kinds. A draft page/funnel is unfinished
     // thinking, not the practice's committed voice — learning from it would poison retrieval (§13/§15).
     // The status value is type-specific: growth_page_publish sets a page 'published', growth_funnel_
@@ -118,31 +146,6 @@ serve(async (req: Request) => {
           ok: false, error: "not_published",
           message: `Publish this ${artifactType} first — I only learn from work you've shipped, not drafts.`,
         });
-      }
-    }
-
-    // ── Authorize the caller against the ARTIFACT's tenant (§9 agency-leak guard) ──
-    let userId: string | null = null;
-    if (!isServiceRole) {
-      const authed = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: authHeader } } });
-      const { data: { user }, error: uErr } = await authed.auth.getUser();
-      if (uErr || !user) return json(401, { error: uErr?.message || "Could not verify this session." });
-      userId = user.id;
-
-      const { data: roleRows } = await authed.from("user_roles").select("role").eq("user_id", user.id);
-      const roles = (roleRows || []).map((r: Record<string, unknown>) => r.role);
-      if (!roles.some((r) => r === "admin" || r === "super_admin")) {
-        return json(403, { error: "Admin access required." });
-      }
-      // The caller must be acting IN the artifact's workspace — this blocks an agency from
-      // learning a sub-account's page into the agency's KB (resolve from artifact, authorize
-      // the caller against it). super_admin (platform owner) may act across tenants.
-      const isPlatformOwner = roles.includes("super_admin");
-      if (!isPlatformOwner) {
-        const { data: activeTenant } = await authed.rpc("current_user_tenant_id");
-        if (str(activeTenant) !== tenantId) {
-          return json(403, { error: "Switch into that workspace to teach its Paige from this artifact." });
-        }
       }
     }
 

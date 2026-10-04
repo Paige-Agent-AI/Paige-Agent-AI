@@ -88,10 +88,6 @@
     "kind": "mutating"
   },
   {
-    "tool": "content_save",
-    "kind": "mutating"
-  },
-  {
     "tool": "crm_add_note",
     "kind": "mutating"
   },
@@ -149,7 +145,7 @@
   },
   {
     "tool": "draft_marketing_content",
-    "kind": "mutating"
+    "kind": "read"
   },
   {
     "tool": "forge_subagent",
@@ -168,16 +164,8 @@
     "kind": "read"
   },
   {
-    "tool": "growth_funnel_build",
-    "kind": "mutating"
-  },
-  {
     "tool": "growth_funnel_generate",
     "kind": "read"
-  },
-  {
-    "tool": "growth_funnel_publish",
-    "kind": "mutating"
   },
   {
     "tool": "growth_list",
@@ -186,14 +174,6 @@
   {
     "tool": "growth_page_generate",
     "kind": "read"
-  },
-  {
-    "tool": "growth_page_publish",
-    "kind": "mutating"
-  },
-  {
-    "tool": "growth_page_save",
-    "kind": "mutating"
   },
   {
     "tool": "improvement_decide",

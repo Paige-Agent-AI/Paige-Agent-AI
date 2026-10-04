@@ -40,7 +40,7 @@ import { isSpendableQuoteCents } from "../_shared/purchase-quote.ts";
 // phone line. `capability-record` owns HOW a run is written; `comms-capability-outcome`
 // owns WHICH of the six outcomes these four acts landed in (§18: one home each).
 import { recordCapabilityRun, stableRunId, type CapabilityOutcome } from "../_shared/capability-record.ts";
-import { classifyGrowthFormRun } from "../_shared/growth-form-outcome.ts";
+import { classifyStudioRun, studioReceiptDetail } from "../_shared/studio-run-outcome.ts";
 import { classifyCommsRun } from "../_shared/comms-capability-outcome.ts";
 // Phase 2 · S1 — Pipeline write acts (starting deal_move_stage) record an honest outcome
 // through the SAME ratified pattern (#947): capability-record owns HOW, this owns WHICH.
@@ -56,17 +56,16 @@ import { artifactProduced, ARTIFACT_ABSENT_ERROR, usableDrafts, publishVerified,
 import { narrowToolDefs, outsideStudioScope, resolveRoleToolScope, STUDIO_SCOPE_FAIL_CLOSED, type RoleToolScope } from "../_shared/studio-scope.ts";
 
 /** Tools whose backend requires the CURRENT workspace's owner or admin (or the managing agency) —
- *  the growth RPCs' `_growth_admin_tenant`, and `content-draft` / `generate-image` through
- *  `_shared/studio-caller.ts`. Their chat gate asks the same question, `studio_role_ok`, instead of
- *  the tenant-agnostic global `user_roles` admin (§59, D3), so the chat gate and the backend agree.
- *  Every other tool keeps its existing gate: the growth-*-draft functions and `save_marketing_content`
- *  still check the global role themselves, so moving their chat gate alone would admit callers the
- *  backend refuses. Those move to tenant-scoped authority in V2a. */
+ *  the growth RPCs' `_growth_admin_tenant`, `save_marketing_content` (Migration D), and the Studio
+ *  generation functions through `_shared/studio-caller.ts` (content-draft, generate-image and the
+ *  growth draft functions). Their chat gate asks the same question, `studio_role_ok`, instead of the
+ *  tenant-agnostic global `user_roles` admin (§59, D3), so the chat gate and the backend agree. Every
+ *  other tool keeps its existing gate. */
 const WORKSPACE_BUILD_TOOLS: ReadonlySet<string> = new Set([
-  "growth_page_save", "growth_page_publish",
+  "growth_page_generate", "growth_page_save", "growth_page_publish",
   "growth_form_save", "growth_form_publish",
-  "growth_funnel_build", "growth_funnel_publish",
-  "draft_marketing_content", "generate_image",
+  "growth_funnel_generate", "growth_funnel_build", "growth_funnel_publish",
+  "draft_marketing_content", "content_save", "generate_image",
 ]);
 import { buildFormSchemaFromQuestions } from "../_shared/growth-form-build.ts";
 import { classifyDocumentSubmissionError, validateDocumentBrief } from "../_shared/document-production.ts";
@@ -8570,6 +8569,28 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // the shared queuedApprovals passed in from the loop.
       let documentCallOrdinal = 0;
       const executeToolCalls = async (toolCalls: any[], queuedApprovals: Array<{ id: string; summary: string; category: string; contact_id: string | null }>) => {
+        // A Studio act stopped before it ran — switched off in autonomy settings, or the caller is not
+        // this workspace's owner/admin — still files its receipt, as refused, so the activity feed
+        // shows the attempt and why nothing changed. A held-for-approval proposal files none: the
+        // approval card is its record. Never fails the turn.
+        const recordStudioRefusal = async (tc: any, reason: string): Promise<void> => {
+          try {
+            const receipt = classifyStudioRun({ capability: tc.function.name, result: { success: false } });
+            if (!receipt) return;
+            const { data: refusedTenant, error: rtErr } = await supabaseClient.rpc("current_user_tenant_id");
+            if (rtErr || typeof refusedTenant !== "string") return;
+            await recordCapabilityRun(supabase, {
+              tenantId: refusedTenant,
+              actorId: user.id,
+              capabilityKey: receipt.key,
+              outcome: "capability_refused",
+              runId: await stableRunId([receipt.key, refusedTenant, `${payloadThreadId ?? ""}:${tc.id}`]),
+              detail: { refused: reason },
+            });
+          } catch (e) {
+            console.error("[paige] studio refusal not recorded:", (e as Error)?.message);
+          }
+        };
       const toolResults: any[] = [];
       const executed: any[] = [];
       for (const [toolIndex, tc] of toolCalls.entries()) {
@@ -9209,6 +9230,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           }
 
           if (autoMode === "off") {
+            await recordStudioRefusal(tc, "turned_off");
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, disabled: true, error: `${(TOOL_LABELS[tc.function.name] || "this action").replace(/^./, (c) => c.toUpperCase())} is turned off for this workspace in Paige's autonomy settings. Tell the operator it's disabled (don't mention any internal names) and don't retry.` }) });
             continue;
           }
@@ -10381,6 +10403,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             allowed = N8N_MANAGEMENT_TOOL_NAMES.has(tc.function.name) || roles.includes("admin") || roles.includes("super_admin");
           }
           if (!allowed) {
+            if (workspaceAuthorityTool) await recordStudioRefusal(tc, "workspace_owner_or_admin_required");
             toolResults.push({
               tool_call_id: tc.id,
               role: "tool",
@@ -10553,25 +10576,33 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               console.error("[paige] crm capability run not recorded:", (e as Error)?.message);
             }
           };
-          // Studio forms (save / publish) file the same honest receipt. Attributed to the tenant the
-          // RPC acted on (current_user_tenant_id(), like the CRM recorder), keyed on this tool call so
-          // a retried turn folds to one row. Never fails the turn.
-          const recordFormRun = async (
+          // Studio acts (page, funnel, form, copy and image saves and publishes) file the same honest
+          // receipt. Attributed to the tenant the act landed in (current_user_tenant_id(), like the CRM
+          // recorder), keyed on this tool call so a retried turn folds to one row, carrying how it was
+          // approved and the record it touched. Never fails the turn.
+          // Set by the Studio image branch when paige-media itself files this attempt's receipt: once a
+          // job exists (it files the render's success or failure) or when it refused over budget (it
+          // files that refusal). Every other Studio image outcome — a synchronous refusal, an answer
+          // that never came back — is filed here, so each attempt is on the record exactly once.
+          let mediaFilesReceipt = false;
+          const recordStudioRun = async (
             input: { result?: unknown; thrown?: unknown; threw?: boolean },
           ): Promise<void> => {
             try {
-              const outcome: CapabilityOutcome | null = classifyGrowthFormRun({ capability: tc.function.name, ...input });
-              if (!outcome) return;
-              const formTenant = await resolveActorTenant();
+              if (tc.function.name === "generate_image" && mediaFilesReceipt) return;
+              const receipt = classifyStudioRun({ capability: tc.function.name, ...input });
+              if (!receipt) return;
+              const studioTenant = await resolveActorTenant();
               await recordCapabilityRun(supabase, {
-                tenantId: formTenant,
+                tenantId: studioTenant,
                 actorId: user.id,
-                capabilityKey: tc.function.name,
-                outcome,
-                runId: await stableRunId([tc.function.name, formTenant ?? "", `${payloadThreadId ?? ""}:${tc.id}`]),
+                capabilityKey: receipt.key,
+                outcome: receipt.outcome,
+                runId: await stableRunId([receipt.key, studioTenant ?? "", `${payloadThreadId ?? ""}:${tc.id}`]),
+                detail: studioReceiptDetail(input.threw ? null : input.result, approvalChannel.get(tc.id)),
               });
             } catch (e) {
-              console.error("[paige] form capability run not recorded:", (e as Error)?.message);
+              console.error("[paige] studio capability run not recorded:", (e as Error)?.message);
             }
           };
           // Pre/post-write boundary for the pipeline capability recorder (Codex P2, 2026-09-05):
@@ -10724,6 +10755,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               }
               if (ctx && typeof ctx === "object") return asToolRecord(ctx);
               return {};
+            };
+            /** A Studio backend's workspace refusal (`forbidden: true`), as the sentence to hand the
+             *  model, whichever error shape the backend uses; null when the body is not a refusal. */
+            const workspaceRefusal = (body: Record<string, unknown>): string | null => {
+              if (body.forbidden !== true) return null;
+              const e = body.error as unknown;
+              if (typeof e === "string" && e) return e;
+              const m = (e as { message?: unknown } | null)?.message;
+              return typeof m === "string" && m ? m : null;
             };
 
             // Everything here goes through the SAME seams the Connections surface uses —
@@ -11786,9 +11826,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 body: { channel: args.channel, brief: args.brief, tone: args.tone ?? null, variations: args.variations ?? 1, tenant_id: personaCtx?.tenant_id ?? null },
               });
               // A workspace refusal arrives as a non-2xx whose message only the body carries.
-              const _cdBody = await readInvokeBody(error, cd);
-              if (_cdBody.forbidden === true && typeof _cdBody.error === "string") {
-                result = { success: false, error: _cdBody.error, not_applied: true };
+              const _cdRefusal = workspaceRefusal(await readInvokeBody(error, cd));
+              if (_cdRefusal) {
+                result = { success: false, error: _cdRefusal, not_applied: true };
               } else {
               if (error) throw error;
               if ((cd as any)?.error) throw new Error((cd as any).error);
@@ -11856,6 +11896,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   try { mjBody = await (mjErr as any).context.json(); } catch { mjBody = null; }
                 }
                 const mjJob = mjBody?.job;
+                mediaFilesReceipt = Boolean(mjJob?.id) || mjBody?.budget_denied === true;
                 if (!mjJob?.id) {
                   if (mjBody?.error) result = { success: false, error: String(mjBody.error) };
                   else throw (mjErr ?? new Error("The image request didn't go through."));
@@ -11888,9 +11929,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 },
               });
               // A workspace refusal arrives as a non-2xx whose message only the body carries.
-              const _imgBody = await readInvokeBody(error, img);
-              if (_imgBody.forbidden === true && typeof _imgBody.error === "string") {
-                result = { success: false, error: _imgBody.error, not_applied: true };
+              const _imgRefusal = workspaceRefusal(await readInvokeBody(error, img));
+              if (_imgRefusal) {
+                result = { success: false, error: _imgRefusal, not_applied: true };
               } else if (error) {
                 throw error;
               } else if ((img as any)?.needs_config) {
@@ -11993,13 +12034,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 p_body: args.body,
                 p_channel: args.channel ?? null,
                 p_brief: args.brief ?? null,
-                p_tenant_id: personaCtx?.tenant_id ?? null,
+                // The RPC files into the session's own workspace (Migration D). Naming the persona's
+                // tenant could only refuse: for someone who is a client of one workspace and staff of
+                // another, the persona resolves the client side first.
+                p_tenant_id: null,
               });
               if (error) throw error;
-              // §13/§70 — a 200 with no returned id means the row may not have persisted.
+              // §13/§70 — a 200 with no returned id means the row may or may not have persisted.
               result = artifactProduced("saved_id", cid)
                 ? { success: true, content_id: cid }
-                : { success: false, error: ARTIFACT_ABSENT_ERROR.saved_id };
+                : { success: false, error: ARTIFACT_ABSENT_ERROR.saved_id, outcome_unknown: true };
             } else if (tc.function.name === "document_generate") {
               const currentDocumentCallOrdinal = documentCallOrdinal++;
               const documentIntentId = payloadRequestIntentId
@@ -12216,6 +12260,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               const { data: gd, error } = await supabaseClient.functions.invoke("growth-page-draft", {
                 body: { brief: args.brief, kind: "page", tone: args.tone ?? null, tenant_id: personaCtx?.tenant_id ?? null },
               });
+              // A workspace refusal arrives as a non-2xx whose reason only the body carries.
+              const _gpRefusal = workspaceRefusal(await readInvokeBody(error, gd));
+              if (_gpRefusal) {
+                result = { success: false, error: _gpRefusal, not_applied: true };
+              } else {
               if (error) throw error;
               if ((gd as any)?.error) throw new Error((gd as any).error);
               result = {
@@ -12231,6 +12280,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   blocks: (gd as any).blocks,
                   theme: (gd as any)?.theme_json ?? null,
                 };
+              }
               }
             } else if (tc.function.name === "growth_page_save") {
               // p_tenant_id is IGNORED for JWT callers by the DEFINER RPC (no IDOR, §9) —
@@ -12367,6 +12417,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               const { data: gd, error } = await supabaseClient.functions.invoke("growth-funnel-draft", {
                 body: { brief: args.brief, tenant_id: personaCtx?.tenant_id ?? null },
               });
+              // A workspace refusal arrives as a non-2xx whose reason only the body carries.
+              const _gfRefusal = workspaceRefusal(await readInvokeBody(error, gd));
+              if (_gfRefusal) {
+                result = { success: false, error: _gfRefusal, not_applied: true };
+              } else {
               if (error) throw error;
               if ((gd as any)?.error) {
                 const e = (gd as any).error;
@@ -12376,6 +12431,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               const _fpBlocks = (gd as any)?.page?.blocks ?? (gd as any)?.page?.blocks_json;
               if (studioSessionId && Array.isArray(_fpBlocks) && _fpBlocks.length) {
                 studioPreview = { kind: "funnel", title: String((gd as any)?.name ?? "Funnel draft").slice(0, 120), blocks: _fpBlocks, theme: (gd as any)?.page?.theme_json ?? null };
+              }
               }
             } else if (tc.function.name === "growth_funnel_build") {
               // Persist the funnel into REAL draft rows — entry page + intake form + wired
@@ -13137,7 +13193,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             await recordCommsRun({ result });
             await recordPipelineRun({ result });
             await recordCrmRun({ result });
-            await recordFormRun({ result });
+            await recordStudioRun({ result });
 
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result) });
           } catch (err) {
@@ -13149,7 +13205,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             await recordCommsRun({ thrown: err, threw: true });
             await recordPipelineRun({ thrown: err, threw: true, writeAttempted: false });
             await recordCrmRun({ thrown: err, threw: true, writeAttempted: crmWriteAttempted });
-            await recordFormRun({ thrown: err, threw: true });
+            await recordStudioRun({ thrown: err, threw: true });
 
             // `outcome_unknown` when the answer never arrived (a transport failure, not a refusal):
             // the write may have happened, and the approval card must say so rather than "didn't
@@ -14014,7 +14070,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         team_invite_member: "tenant_invite_tokens", team_invite_resend: "tenant_invite_tokens",
         team_invite_revoke: "tenant_invite_tokens",
         calendar_book_meeting: "internal_bookings",
-        draft_marketing_content: "marketing_content", generate_image: "marketing_content", content_save: "marketing_content",
+        generate_image: "marketing_content", content_save: "marketing_content",
         document_generate: "marketing_content",
         growth_page_save: "growth_pages", growth_page_publish: "growth_pages",
         growth_funnel_build: "growth_funnels", growth_funnel_publish: "growth_funnels",

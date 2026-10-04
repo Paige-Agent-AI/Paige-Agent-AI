@@ -104,7 +104,6 @@
     "deal_create",
     "delegate_to_subagent",
     "document_generate",
-    "draft_marketing_content",
     "forge_subagent",
     "generate_image",
     "growth_funnel_build",
@@ -416,7 +415,8 @@
     {
       "tool": "content_save",
       "risk": "ordinary",
-      "receipt": "seeded_undeclared"
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch records the run via recordStudioRun -> classifyStudioRun (_shared/studio-run-outcome.ts) -> recordCapabilityRun (succeeded / refused / failed / unreachable / outcome_unknown), keyed on the tool call, carrying the approval channel and record id; refusals before the write (switched off, not this workspace's owner/admin) file via recordStudioRefusal"
     },
     {
       "tool": "crm_add_note",
@@ -633,11 +633,6 @@
       "receipt": "seeded_undeclared"
     },
     {
-      "tool": "draft_marketing_content",
-      "risk": "ordinary",
-      "receipt": "seeded_undeclared"
-    },
-    {
       "tool": "forge_subagent",
       "risk": "ordinary",
       "receipt": "seeded_undeclared"
@@ -645,39 +640,44 @@
     {
       "tool": "generate_image",
       "risk": "ordinary",
-      "receipt": "seeded_undeclared"
+      "receipt": "emits",
+      "evidence": "outside a Studio project paige-ai-chat records it via recordStudioRun under capability key vibe_media_image (_shared/studio-run-outcome.ts); inside a project paige-media files the receipt once a job exists (render success or failure in _shared/media-provider/complete.ts) and for a budget refusal, and the chat files every other outcome there (synchronous refusal, lost answer) via recordStudioRun"
     },
     {
       "tool": "growth_form_publish",
       "risk": "high",
       "receipt": "emits",
-      "evidence": "paige-ai-chat dispatch records the run via recordFormRun -> classifyGrowthFormRun (_shared/growth-form-outcome.ts) -> recordCapabilityRun (succeeded / refused / failed / outcome_unknown), keyed on the tool call"
+      "evidence": "paige-ai-chat dispatch records the run via recordStudioRun -> classifyStudioRun (_shared/studio-run-outcome.ts) -> recordCapabilityRun (succeeded / refused / failed / unreachable / outcome_unknown), keyed on the tool call, carrying the approval channel and record id; refusals before the write (switched off, not this workspace's owner/admin) file via recordStudioRefusal"
     },
     {
       "tool": "growth_form_save",
       "risk": "ordinary",
       "receipt": "emits",
-      "evidence": "paige-ai-chat dispatch records the run via recordFormRun -> classifyGrowthFormRun (_shared/growth-form-outcome.ts) -> recordCapabilityRun (succeeded / refused / failed / outcome_unknown), keyed on the tool call"
+      "evidence": "paige-ai-chat dispatch records the run via recordStudioRun -> classifyStudioRun (_shared/studio-run-outcome.ts) -> recordCapabilityRun (succeeded / refused / failed / unreachable / outcome_unknown), keyed on the tool call, carrying the approval channel and record id; refusals before the write (switched off, not this workspace's owner/admin) file via recordStudioRefusal"
     },
     {
       "tool": "growth_funnel_build",
       "risk": "ordinary",
-      "receipt": "seeded_undeclared"
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch records the run via recordStudioRun -> classifyStudioRun (_shared/studio-run-outcome.ts) -> recordCapabilityRun (succeeded / refused / failed / unreachable / outcome_unknown), keyed on the tool call, carrying the approval channel and record id; refusals before the write (switched off, not this workspace's owner/admin) file via recordStudioRefusal"
     },
     {
       "tool": "growth_funnel_publish",
       "risk": "high",
-      "receipt": "seeded_undeclared"
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch records the run via recordStudioRun -> classifyStudioRun (_shared/studio-run-outcome.ts) -> recordCapabilityRun (succeeded / refused / failed / unreachable / outcome_unknown), keyed on the tool call, carrying the approval channel and record id; refusals before the write (switched off, not this workspace's owner/admin) file via recordStudioRefusal"
     },
     {
       "tool": "growth_page_publish",
       "risk": "high",
-      "receipt": "seeded_undeclared"
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch records the run via recordStudioRun -> classifyStudioRun (_shared/studio-run-outcome.ts) -> recordCapabilityRun (succeeded / refused / failed / unreachable / outcome_unknown), keyed on the tool call, carrying the approval channel and record id; refusals before the write (switched off, not this workspace's owner/admin) file via recordStudioRefusal"
     },
     {
       "tool": "growth_page_save",
       "risk": "ordinary",
-      "receipt": "seeded_undeclared"
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch records the run via recordStudioRun -> classifyStudioRun (_shared/studio-run-outcome.ts) -> recordCapabilityRun (succeeded / refused / failed / unreachable / outcome_unknown), keyed on the tool call, carrying the approval channel and record id; refusals before the write (switched off, not this workspace's owner/admin) file via recordStudioRefusal"
     },
     {
       "tool": "improvement_decide",

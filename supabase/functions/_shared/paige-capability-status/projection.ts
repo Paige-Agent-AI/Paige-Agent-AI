@@ -66,8 +66,12 @@ export interface ProjectionInput {
   lanes: ReadonlyMap<string, Lane>;
   /** Tools whose dispatch requires this workspace's owner or an admin (the shared gate set). */
   workspaceAdminTools: ReadonlySet<string>;
-  /** The caller's canonical tenant authority for those tools (same resolver the gate uses). */
-  isWorkspaceAdmin: boolean;
+  /**
+   * The caller's canonical tenant authority for those tools — the SAME resolver the dispatch gate uses
+   * (_shared/workspace-authority.ts). A function when the answer differs by tool (Studio build tools
+   * keep the stricter workspace-seat rule).
+   */
+  isWorkspaceAdmin: boolean | ((tool: string) => boolean);
   readiness: ReadonlyMap<ReadinessResolverId, ReadinessState>;
   planned?: readonly PlannedCapability[];
 }
@@ -136,7 +140,8 @@ export function projectCapabilities(input: ProjectionInput): ProjectedCapability
     const row = (availability: PerCapabilityAvailability, reason: string | null): ProjectedCapability =>
       ({ ...base, availability, reason });
 
-    if (input.workspaceAdminTools.has(t.name) && !input.isWorkspaceAdmin) {
+    const admitted = typeof input.isWorkspaceAdmin === "function" ? input.isWorkspaceAdmin(t.name) : input.isWorkspaceAdmin;
+    if (input.workspaceAdminTools.has(t.name) && !admitted) {
       rows.push(row("not_for_tier", "Needs this workspace's owner or an admin."));
       continue;
     }

@@ -208,7 +208,20 @@ class FakeClient {
 
   async rpc(name, args) {
     this._live().recorder.rpc.push({ client: this._kind, name, args, authorization: this._authorization });
-    const configured = this._live().scenario.rpcs?.[name];
+    let configured = this._live().scenario.rpcs?.[name];
+    // C0a — "ADMIN IS A TENANT ROLE": the chat's owner/admin tools now ask the canonical tenant question
+    // (`studio_role_ok`, the workspace owner/admin seat) instead of the global `user_roles` admin row.
+    // A scenario that does not script it gets the answer production gives: on 2026-10-04 every holder
+    // of the global admin row also held an owner/admin seat in their workspace (the only exception, the
+    // super_admin, is admitted by its own explicit path). So the honest default AGREES with the
+    // scenario's admin row — the same "default to what the scenario already says" rule as `profiles`.
+    // A scenario that wants the two to disagree (an outsider admin, a seated owner without the row)
+    // scripts `studio_role_ok` explicitly and overrides this.
+    if (configured === undefined && name === "studio_role_ok" && this._kind !== "service") {
+      const t = this._live().scenario.tables?.user_roles;
+      const rows = (typeof t === "function" ? t([]) : t) ?? [];
+      configured = { data: Array.isArray(rows) && rows.some((r) => r?.role === "admin"), error: null };
+    }
     // A scenario value is ALWAYS the full PostgREST result — `{ data, error }` — or a
     // function returning one. Never a bare payload that this fake then wraps: wrapping
     // silently produced `{ data: { data: … } }`, which the handler read as null and which

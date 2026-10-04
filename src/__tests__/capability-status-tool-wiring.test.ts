@@ -12,11 +12,16 @@ import { describe, it, expect } from "vitest";
 const src = readFileSync("supabase/functions/paige-ai-chat/index.ts", "utf8");
 
 describe("capability_status tool wiring (source assertions)", () => {
-  it("imports the pure decision core, the signal builder, the render block, and the Spine maturity lookup", () => {
-    expect(src).toContain('import { resolveCapabilityStatus } from "../_shared/paige-capability-status/resolver.ts"');
-    expect(src).toContain('import { buildCapabilitySignals } from "../_shared/paige-capability-status/signals.ts"');
-    expect(src).toContain('import { renderCapabilityStatusBlock } from "../_shared/paige-capability-status/render.ts"');
-    expect(src).toContain('import { getSpineCapability } from "../_shared/paige-spine/registry.ts"');
+  it("imports the projection, the legacy classification, the render block, the Spine registry and the authority seam", () => {
+    // C0a — the manifest is a PROJECTION over the emitted tools, never the hand-written signal list.
+    expect(src).toContain('from "../_shared/paige-capability-status/projection.ts"');
+    expect(src).toContain('import { LEGACY_CAPABILITIES } from "../_shared/paige-capability-status/legacy-capabilities.ts"');
+    expect(src).toContain('import { renderProjectedCapabilityBlock, type SpecialistSummary } from "../_shared/paige-capability-status/render.ts"');
+    expect(src).toContain('import { PAIGE_SPINE_CAPABILITIES } from "../_shared/paige-spine/registry.ts"');
+    expect(src).toContain('from "../_shared/workspace-authority.ts"');
+    // the hand-written family list is no longer the chat's authority
+    expect(src).not.toContain("buildCapabilitySignals");
+    expect(src).not.toContain("gatherCapabilityManifest");
   });
 
   it("offers the tool via the Capability Gateway (not inline) with no body params", () => {
@@ -39,60 +44,51 @@ describe("capability_status tool wiring (source assertions)", () => {
     expect(src).toContain('case "capability_status": return { label: "Checking what I can do here", group: "owner" };');
   });
 
-  it("routes capability_status INTO the admin/super_admin role-gated owner block", () => {
-    expect(src).toContain('tc.function.name === "capability_status" ||');
+  it("routes capability_status INTO the owner-ops branch, where it needs no workspace role", () => {
+    const auth = readFileSync("supabase/functions/_shared/workspace-authority.ts", "utf8");
+    expect(auth).toMatch(/OWNER_OPS_BRANCH_TOOLS[^;]*"capability_status"/s);
+    expect(auth).toContain('export const ROLE_FREE_BRANCH_TOOLS: ReadonlySet<string> = new Set(["capability_status"]);');
+    expect(src).toContain("OWNER_OPS_BRANCH_TOOLS.has(tc.function.name) ||");
+    expect(src).toContain("|| ROLE_FREE_BRANCH_TOOLS.has(tc.function.name)");
   });
 
-  it("resolves the manifest through ONE shared gatherer — server-side facts, the pure core decides", () => {
-    // the gatherer is the §18 one home: it resolves the tier (resolved early, never the body),
-    // the ceiling-clamped lanes, and the REAL Spine maturities, then lets the pure core decide.
-    expect(src).toContain("const gatherCapabilityManifest = async (workflowsConnected: boolean) =>");
-    expect(src).toContain('getSpineCapability(key)?.maturity ?? null');
-    // the manifest resolves the EFFECTIVE lane = trust-compass clamp (resolve_tool_autonomy) THEN the
-    // action-class clamp (clampLaneByRisk), so a HIGH tool on an `auto` grant is NOT over-claimed as
-    // "no approval" when the dispatch would force the card (the §39 over-claim fix).
-    expect(src).toContain("clampLaneByRisk((await resolveToolAutonomy(toolKey))");
-    // the 2026-09-12 anti-under-claim completion: the previously-omitted governed writes each resolve
-    // their OWN effective lane through the SAME gatherer (never a hardcoded lane)
-    expect(src).toContain('resolveEffectiveLane("crm_create_contact")');
-    expect(src).toContain('resolveEffectiveLane("campaign_brief_create")');
-    expect(src).toContain('resolveEffectiveLane("n8n_run_workflow")');
-    expect(src).toContain('resolveEffectiveLane("document_generate")');
-    expect(src).toContain('resolveEffectiveLane("save_to_knowledge_base")');
-    expect(src).toContain('resolveEffectiveLane("plan_create")');
-    expect(src).toContain('resolveEffectiveLane("delegate_to_subagent")');
-    // research gates on the REAL provider-key signal (presence, never the value) — §13/§34/§947
-    expect(src).toContain('const researchProviderConfigured = !!Deno.env.get("FIRECRAWL_API_KEY");');
-    expect(src).toContain("researchProviderConfigured,");
-    expect(src).toContain("buildCapabilitySignals({");
-    expect(src).toContain("resolveCapabilityStatus(signals)");
-    // the dispatch and the manifest clamp through the SAME shared helper (§18 one home) — imported,
-    // and the dispatch's own risk clamp routes through it so they cannot diverge
-    expect(src).toContain("clampLaneByRisk");
+  it("resolves ONE shared projection — server-side facts over exactly the emitted tools", () => {
+    expect(src).toContain("const gatherCapabilityProjection = (): Promise<CapabilityProjection> => (capabilityProjectionCache ??=");
+    // the projection reads the FINAL emitted tool list, not a hand list
+    expect(src).toMatch(/const emitted = \(toolDefs as any\[\]\)/);
+    // lanes: the Trust-Compass clamp in ONE round trip, then the SAME action-class clamp the gate uses
+    expect(src).toContain('supabaseClient.rpc("resolve_tool_autonomy_many"');
+    expect(src).toContain("lanes.set(key, clampLaneByRisk(mode, key) as Lane);");
     expect(src).toContain('import { classifyAction, clampLaneByRisk,');
-    const riskSrc = readFileSync("supabase/functions/_shared/action-risk.ts", "utf8");
-    expect(riskSrc).toContain("export function clampLaneByRisk(");
-    // the manifest must agree with the tools' OWN role gate (admin/super_admin), so a
-    // non-admin member is not told she can do what the gate refuses (§13/§51)
-    expect(src).toContain("const resolveOwnerOpsEligible = async (): Promise<boolean> =>");
-    expect(src).toContain('roles.includes("admin") || roles.includes("super_admin")');
-    expect(src).toContain("ownerOpsEligible,");
+    expect(readFileSync("supabase/functions/_shared/action-risk.ts", "utf8")).toContain("export function clampLaneByRisk(");
+    // authority: the SAME resolver the dispatch gate uses (workspace role, never the global admin row)
+    expect(src).toContain("isWorkspaceAdmin: (tool) => authorityAdmits(tool, authority, WORKSPACE_BUILD_TOOLS),");
+    // research readiness gates on the REAL provider-key presence, never the value (§13/§34)
+    expect(src).toContain('["research_provider", Deno.env.get("FIRECRAWL_API_KEY") ? "ready" : "not_ready"]');
+    // n8n readiness is the MCP/OAuth state — "available" only means the record parsed (the R0 over-claim)
+    expect(src).toContain('if (mcp === "connected_approved_tools" || mcp === "connected_no_approved_tools") return "ready";');
 
-    // the tool dispatch calls the SAME gatherer (never its own divergent resolution)
+    // the tool dispatch returns the SAME cached projection (never its own divergent resolution)
     const at = src.indexOf('} else if (tc.function.name === "capability_status") {');
     expect(at).toBeGreaterThan(-1);
     const block = src.slice(at, at + 900);
-    expect(block).toContain("await gatherCapabilityManifest(n8nEvidence?.status === \"available\")");
-    expect(block).toContain("result = { success: true, count: capabilities.length, capabilities };");
+    expect(block).toContain("const projection = await gatherCapabilityProjection();");
+    expect(block).toContain("capabilities: projection.rows,");
   });
 
-  it("injects the per-turn capability block into the model's system context, tenant-only and never a client seat", () => {
-    // the block is built from the SAME gatherer and gated exactly like the over-claimed tools' role gate
-    expect(src).toContain("let capabilityStatusBlock = \"\";");
-    expect(src).toContain('if (personaCtx.tenant_id && callerTier !== "client") {');
-    expect(src).toContain("capabilityStatusBlock = renderCapabilityStatusBlock(capabilities);");
-    // and it is actually spread into the aiMessages array the model reads
-    expect(src).toContain("...(capabilityStatusBlock ? [{ role: \"system\", content: capabilityStatusBlock }] : [])");
+  it("injects the per-turn capability block, tenant-only and never a client seat, filled once the tool list is final", () => {
+    expect(src).toContain('const capabilityManifestEligible = !!personaCtx.tenant_id && callerTier !== "client";');
+    expect(src).toContain("...(capabilityManifestEligible ? [capabilityStatusMessage] : []),");
+    expect(src).toContain("capabilityStatusMessage.content = renderProjectedCapabilityBlock(projection.rows, projection.specialists);");
+    // an empty or failed projection is removed — never an empty or half-resolved system message
+    expect(src).toContain("const at = aiMessages.indexOf(capabilityStatusMessage);");
+    // ORDER: Studio narrowing → fill → first model call
+    const narrow = src.indexOf("const offScope = narrowToolDefs(");
+    const fill = src.indexOf("capabilityStatusMessage.content = renderProjectedCapabilityBlock(");
+    const firstCall = src.indexOf("messages: liveDecisionMessages(aiMessages),");
+    expect(narrow).toBeGreaterThan(-1);
+    expect(fill).toBeGreaterThan(narrow);
+    expect(firstCall).toBeGreaterThan(fill);
   });
 
   it("is NOT declared a mutating tool — it is a read, so no approval gate wraps it (§no false confirm)", () => {

@@ -34,6 +34,21 @@
  *      a baselined READ tool that later GAINS a risk class fails — the membership stayed flat but
  *      the gap got worse, which is exactly the churn a bare count hides.
  *
+ * C0a — DISCOVERY (docs/delivery/paige-conversational-loop-r0.md §20; owner ruling 2026-10-04 §8:
+ * "a NEW capability should not be considered complete unless PAIGE can discover it"). PAIGE's per-turn
+ * capability projection reads the Spine for a registered tool and the legacy classification
+ * (paige-capability-status/legacy-capabilities.ts) for an unregistered one. Three more rules keep that
+ * projection from ever going blind or stale:
+ *
+ *   4. LEGACY = BASELINE. The legacy classification names EXACTLY the tools this baseline names, so the
+ *      two shrink together and a NEW tool can never be parked there — it must be Spine-registered,
+ *      which is what makes it discoverable with no conversation-layer change.
+ *   5. READINESS. A Spine capability with a chat tool declares what it depends on (`readiness`), or
+ *      its key is in the shrink-only discovery baseline. A new one with no readiness FAILS.
+ *   6. MIRROR. A Spine `chatTool` that is on NO model surface is a dead binding (the projection can
+ *      never find it); it fails unless baselined, and the baseline only shrinks. Delete dead debt —
+ *      do not formalise it.
+ *
  * A RATCHET, NOT A WALL (rule 1). Failing outright would block every unrelated PR on a
  * pre-existing gap, so the known 89 are the baseline: the guard fails when the gap GROWS and tells
  * you to lower the baseline when it shrinks. Same posture, and deliberately the same wording, as
@@ -62,6 +77,11 @@ const LOADER = path.join(ROOT, "scripts", "knowledge-scope", "register.mjs");
 const HANDLER = path.join(ROOT, "supabase/functions/paige-ai-chat/index.ts");
 const REGISTRY = path.join(ROOT, "supabase/functions/_shared/paige-spine/registry.ts");
 const POLICY = path.join(ROOT, "supabase/functions/_shared/action-risk.ts");
+const LEGACY = path.join(ROOT, "supabase/functions/_shared/paige-capability-status/legacy-capabilities.ts");
+const READINESS = path.join(ROOT, "supabase/functions/_shared/paige-capability-status/readiness.ts");
+const DISCOVERY_BASELINE = process.env.CAPABILITY_DISCOVERY_BASELINE
+  ? path.resolve(process.env.CAPABILITY_DISCOVERY_BASELINE)
+  : path.join(HERE, "capability-discovery-baseline.json");
 const BASELINE = process.env.CAPABILITY_DECLARATION_BASELINE
   ? path.resolve(process.env.CAPABILITY_DECLARATION_BASELINE)
   : path.join(HERE, "capability-declaration-baseline.json");
@@ -316,6 +336,33 @@ export function ratchet(undeclared, baseline) {
   };
 }
 
+/**
+ * Rules 4–6 — PAIGE can discover every capability (C0a). Pure, so the self-test drives it directly.
+ *   baselineTools   : tools in capability-declaration-baseline.json (undeclared by the Spine)
+ *   legacyKeys      : tools in the legacy classification
+ *   spineCaps       : Spine capabilities ({ key, readiness?, action?: { chatTool? } })
+ *   chatTools       : the resolved model surface
+ *   readinessKnown  : the closed readiness-resolver ids
+ *   baseline        : { readinessUndeclared: string[], deadChatBindings: string[] }
+ */
+export function discoveryFindings({ baselineTools, legacyKeys, spineCaps, chatTools, readinessKnown, baseline }) {
+  const base = new Set(baselineTools), legacy = new Set(legacyKeys);
+  const readyBase = new Set(baseline.readinessUndeclared ?? []);
+  const deadBase = new Set(baseline.deadChatBindings ?? []);
+  const withTool = spineCaps.filter((c) => c?.action?.chatTool);
+  const missingReadiness = withTool.filter((c) => c.readiness === undefined).map((c) => c.key);
+  const dead = withTool.filter((c) => !chatTools.has(c.action.chatTool)).map((c) => c.action.chatTool);
+  return {
+    legacyMissing: [...base].filter((t) => !legacy.has(t)).sort(),
+    legacyExtra: [...legacy].filter((t) => !base.has(t)).sort(),
+    readinessUnknown: withTool.filter((c) => c.readiness !== undefined && !readinessKnown.includes(c.readiness)).map((c) => c.key).sort(),
+    readinessNew: missingReadiness.filter((k) => !readyBase.has(k)).sort(),
+    readinessStale: [...readyBase].filter((k) => !missingReadiness.includes(k)).sort(),
+    deadNew: dead.filter((t) => !deadBase.has(t)).sort(),
+    deadStale: [...deadBase].filter((t) => !dead.includes(t)).sort(),
+  };
+}
+
 /* ───────────────────────── self-test ───────────────────────── */
 
 if (process.argv.includes("--self-test")) {
@@ -405,6 +452,32 @@ if (process.argv.includes("--self-test")) {
   ok("catches a swap a bare count would miss (one out, one in)",
     (() => { const r = ratchet([{ tool: "old_write", kind: "mutating" }, { tool: "swapped_in", kind: "mutating" }], base);
       return r.addedMutating.join() === "swapped_in" && r.declared.join() === "old_read"; })());
+
+  // ── rules 4–6 (C0a discovery) ─────────────────────────────────────────────────────────────
+  const disc = (over = {}) => discoveryFindings({
+    baselineTools: ["legacy_a"], legacyKeys: ["legacy_a"],
+    spineCaps: [{ key: "d.ready", readiness: "none", action: { chatTool: "t_ready" } }, { key: "d.old", action: { chatTool: "t_old" } }],
+    chatTools: new Set(["t_ready", "t_old", "legacy_a"]), readinessKnown: ["none", "n8n_connection"],
+    baseline: { readinessUndeclared: ["d.old"], deadChatBindings: [] },
+    ...over,
+  });
+  const clean4 = disc();
+  ok("discovery: passes when legacy = baseline, readiness declared or baselined, no dead binding",
+    Object.values(clean4).every((v) => v.length === 0), JSON.stringify(clean4));
+  ok("FAILS a baselined tool missing from the legacy classification (projection would go blind)",
+    disc({ legacyKeys: [] }).legacyMissing.join() === "legacy_a");
+  ok("FAILS a legacy row for a tool not in the baseline (a new tool parked outside the Spine)",
+    disc({ legacyKeys: ["legacy_a", "sneaky_new"] }).legacyExtra.join() === "sneaky_new");
+  ok("FAILS a NEW Spine capability with a chat tool and no readiness",
+    disc({ spineCaps: [{ key: "d.new", action: { chatTool: "t_ready" } }, { key: "d.old", action: { chatTool: "t_old" } }] }).readinessNew.join() === "d.new");
+  ok("FAILS an unknown readiness resolver id",
+    disc({ spineCaps: [{ key: "d.typo", readiness: "n8n_conection", action: { chatTool: "t_ready" } }] }).readinessUnknown.join() === "d.typo");
+  ok("FAILS a stale readiness baseline entry (it declares readiness now — shrink the baseline)",
+    disc({ spineCaps: [{ key: "d.old", readiness: "none", action: { chatTool: "t_old" } }] }).readinessStale.join() === "d.old");
+  ok("FAILS a NEW dead binding: a Spine chatTool on no model surface",
+    disc({ chatTools: new Set(["legacy_a", "t_old"]) }).deadNew.join() === "t_ready");
+  ok("FAILS a stale dead-binding baseline entry (the tool shipped or the binding was deleted)",
+    disc({ baseline: { readinessUndeclared: ["d.old"], deadChatBindings: ["t_ready"] } }).deadStale.join() === "t_ready");
 
   // ── the end-to-end negative: the REAL check, against a baseline with one entry removed ────
   // A guard nobody proved can fail is theatre. This drives the shipped code path, not a fixture.
@@ -593,6 +666,45 @@ if (r.declared.length || r.softened.length) {
   console.error(`\n  Good news, and the ratchet holds the gain: lower the baseline in this same PR, or the next` +
                 `\n  author inherits a lie. \`node scripts/ci/capability-declaration-lint.mjs --update-baseline\`.`);
 }
+// Rules 4–6 — discovery (C0a). PAIGE's capability projection must be able to find every tool.
+{
+  const { LEGACY_CAPABILITIES } = await import(pathToFileURL(LEGACY).href);
+  const { READINESS_RESOLVER_IDS } = await import(pathToFileURL(READINESS).href);
+  if (!fs.existsSync(DISCOVERY_BASELINE)) fail(`${path.relative(ROOT, DISCOVERY_BASELINE)} is missing.`);
+  let discBase;
+  try { discBase = JSON.parse(fs.readFileSync(DISCOVERY_BASELINE, "utf8")); }
+  catch (error) { fail(`${path.relative(ROOT, DISCOVERY_BASELINE)} is not readable JSON — ${error.message}`); }
+  const d = discoveryFindings({
+    baselineTools: baseline.map((e) => e.tool),
+    legacyKeys: Object.keys(LEGACY_CAPABILITIES ?? {}),
+    spineCaps: PAIGE_SPINE_CAPABILITIES,
+    chatTools,
+    readinessKnown: [...(READINESS_RESOLVER_IDS ?? [])],
+    baseline: discBase,
+  });
+  const say = (title, list, remedy) => {
+    if (!list.length) return;
+    failed = true;
+    console.error(`\n✗ capability-declaration-lint (discovery): ${title}\n`);
+    for (const t of list) console.error(`    ${t}`);
+    console.error(`\n  ${remedy}`);
+  };
+  say("baselined tool(s) with NO legacy classification — PAIGE's capability projection cannot place them:",
+    d.legacyMissing, "Add the row to paige-capability-status/legacy-capabilities.ts, or (better) register the tool in the Spine.");
+  say("legacy classification row(s) for tools NOT in the undeclared baseline:",
+    d.legacyExtra, "A registered tool needs no legacy row — delete it. A NEW tool never goes here: declare it in the Spine.");
+  say("Spine capabilit(ies) with an UNKNOWN readiness resolver:",
+    d.readinessUnknown, "Use an id from paige-capability-status/readiness.ts, or add the new resolver there AND resolve it in the chat projection.");
+  say("NEW Spine capabilit(ies) with a chat tool and no `readiness` — PAIGE cannot tell whether it is set up:",
+    d.readinessNew, "Declare `readiness` (\"none\" when it needs nothing). Do NOT add it to capability-discovery-baseline.json.");
+  say("stale readiness baseline entr(ies) — they declare readiness now:",
+    d.readinessStale, "Good news: delete them from capability-discovery-baseline.json in this PR.");
+  say("NEW dead binding(s): a Spine chatTool that is on no model surface (PAIGE can never discover it):",
+    d.deadNew, "Emit the tool, or delete the dead binding. Do not baseline it.");
+  say("stale dead-binding baseline entr(ies):",
+    d.deadStale, "Delete them from capability-discovery-baseline.json in this PR.");
+}
+
 if (failed) process.exit(1);
 
 const mutating = undeclared.filter((e) => e.kind === "mutating").length;

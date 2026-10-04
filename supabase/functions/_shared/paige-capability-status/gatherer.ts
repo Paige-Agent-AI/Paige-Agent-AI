@@ -114,11 +114,22 @@ export async function resolveNativeCapabilityStatus(
     // {ok:false} (retryable) on error, because they cannot fail closed to a safe value the same way.
     const callerTier = await getActorTier(db, { actorUserId: opts.actorUserId, isPlatform: false, scopes: [] });
 
-    // owner-ops role — the SAME direct user_roles read the chat cockpit uses (service client, explicit id).
-    const { data: roleRows, error: roleErr } = await db.from("user_roles").select("role").eq("user_id", opts.actorUserId);
-    if (roleErr) return { ok: false, error: `role read failed: ${roleErr.message ?? String(roleErr)}` };
-    const roles = (Array.isArray(roleRows) ? roleRows : []).map((r: { role?: unknown }) => r.role);
-    const ownerOpsEligible = roles.includes("admin") || roles.includes("super_admin");
+    // owner-ops authority — the SAME tenant question the chat cockpit asks (C0a, owner ruling 2026-10-04
+    // "ADMIN IS A TENANT ROLE"), in its actor-EXPLICIT form because this path has no JWT (auth.uid() is
+    // NULL): an owner/admin seat in THIS tenant (is_tenant_admin_as), or the agency managing it
+    // (agency_can_manage_child), or the Platform Operator (§53, super_admin). Never the tenant-agnostic
+    // global `admin` row. Both RPCs are granted to service_role only, which is this client.
+    const [seat, agency, roleRead] = await Promise.all([
+      db.rpc("is_tenant_admin_as", { _actor: opts.actorUserId, _tenant: opts.tenantId }),
+      db.rpc("agency_can_manage_child", { _child: opts.tenantId, _actor: opts.actorUserId }),
+      db.from("user_roles").select("role").eq("user_id", opts.actorUserId),
+    ]);
+    if (seat.error || agency.error || roleRead.error) {
+      const e = seat.error ?? agency.error ?? roleRead.error;
+      return { ok: false, error: `authority read failed: ${e?.message ?? String(e)}` };
+    }
+    const roles = (Array.isArray(roleRead.data) ? roleRead.data : []).map((r: { role?: unknown }) => r.role);
+    const ownerOpsEligible = seat.data === true || agency.data === true || roles.includes("super_admin");
 
     // Effective lane = ceiling clamp (resolve_tool_autonomy) THEN action-class clamp (clampLaneByRisk),
     // exactly as the chat manifest computes it. Service branch trusts the passed tenant (auth.uid() NULL).

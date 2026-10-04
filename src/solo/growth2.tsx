@@ -15,7 +15,9 @@ import CampaignOverview from "./campaign-desk";
 import { useSoloCampaignBriefs } from "./useSoloCampaignBriefs";
 import { PERIODS, SUBMISSION_READ_LIMIT, deriveMarketingOverview, isBlockedBrief, submissionsInPeriod } from "./marketing-overview-model";
 import { FormIntakePanel } from "./form-intake";
-import { MarketingAds, MarketingAudience, MarketingContent, MarketingEmail } from "./marketing-planned";
+import { AskPaige, ChartBoundary, DeltaLine, OverviewStat } from "./marketing-ui";
+import { MarketingAds, MarketingContent, MarketingEmail } from "./marketing-planned";
+import { MarketingAudience } from "./marketing-audience";
 import "./solo-chart-tokens.css";
 import "./solo-campaigns.css";
 
@@ -355,49 +357,6 @@ const STATUS_TOKENS = { running: "--ok", approved: "--chart-1", review: "--warn"
 const sourceToken = (slice, index) => slice.kind === "untagged" ? "--chart-untagged" : slice.kind === "other" ? "--chart-other" : SOURCE_TOKENS[index] || "--chart-other";
 const NO_ROWS = []; // one stable empty list, so the model is not re-derived on every render
 const percentOf = (count, total) => total ? `${Math.round((count / total) * 100)}%` : "0%";
-
-function ChartSkeleton({ className }) {
-  return <div className={`${className} mo-skel`} aria-hidden="true"/>;
-}
-
-// A chart is an enhancement over numbers already on the page: if its code fails to load (a stale
-// deploy, a dropped connection) it says so in place and logs why, and the rest of Marketing stays up.
-class ChartBoundary extends React.Component {
-  constructor(props) { super(props); this.state = { failed: false }; }
-  static getDerivedStateFromError() { return { failed: true }; }
-  componentDidCatch(error) { console.error("[marketing-overview] chart failed to render", error); }
-  render() {
-    if (this.state.failed) return <p className={`${this.props.className} mo-chart-failed`}>This chart couldn’t load. The figures beside it are still current; reload the page to try again.</p>;
-    return <React.Suspense fallback={<ChartSkeleton className={this.props.className}/>}>{this.props.children}</React.Suspense>;
-  }
-}
-
-// A comparison only when the read covers the whole previous period (marketing-overview-model.ts).
-function DeltaLine({ delta, periodDays, fallback }) {
-  if (!delta) return <span className="mo-delta">{fallback}</span>;
-  const span = `previous ${periodDays} days`;
-  if (delta.change === 0) return <span className="mo-delta">Same as the {span}</span>;
-  const up = delta.change > 0;
-  const amount = delta.percent === null ? `${up ? "+" : ""}${delta.change}` : `${up ? "+" : ""}${delta.percent}%`;
-  return <span className={`mo-delta ${up ? "is-up" : "is-down"}`}><Ic.arrow size={12}/>{amount} vs {span}</span>;
-}
-
-// Ask PAIGE about one chart. The question carries only figures already on this page, and tells her
-// not to invent the measures this workspace cannot see.
-function AskPaige({ prompt }) {
-  return <button type="button" className="mo-ask" onClick={() => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt } }))}><Ic.spark size={12}/>Ask PAIGE</button>;
-}
-
-function OverviewStat({ icon, tone, label, value, foot, link, onLink }) {
-  return <section className="mo-stat" aria-label={label}>
-    <span className={`mo-plate ${tone}`} aria-hidden="true">{icon}</span>
-    <div className="mo-stat-body">
-      <h3>{label}</h3>
-      <strong className="mo-stat-value">{value}</strong>
-      <div className="mo-stat-foot">{foot}{link && <button className="mo-link" onClick={onLink}>{link}<Ic.arrow size={12}/></button>}</div>
-    </div>
-  </section>;
-}
 
 function MarketingOverview({ data, onGo, onCreateBrief, salesInShell = false }) {
   const navigate = useNavigate();

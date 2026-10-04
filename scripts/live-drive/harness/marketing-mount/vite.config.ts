@@ -14,7 +14,7 @@ export default defineConfig({
     name: "planned-tabs-supabase",
     enforce: "pre",
     resolveId(source, importer) {
-      if (importer?.endsWith("marketing-planned.tsx") && source.endsWith("integrations/supabase/client")) return path.join(here, "planned-supabase-stub.ts");
+      if ((importer?.endsWith("marketing-planned.tsx") || importer?.endsWith("marketing-audience.tsx")) && source.endsWith("integrations/supabase/client")) return path.join(here, "planned-supabase-stub.ts");
       return null;
     },
   }],

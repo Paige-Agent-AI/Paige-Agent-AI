@@ -2,7 +2,6 @@
 // Centralizes auth header injection so the React app never needs the bearer.
 // Verbs: list_active_campaigns, get_campaign_detail, list_contact_enrollments,
 // enroll_contact_manual, exit_contact_from_campaign, get_campaign_metrics
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

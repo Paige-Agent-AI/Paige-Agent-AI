@@ -145,6 +145,8 @@ BEGIN
  PERFORM public._sales_invoice_settings_command(_command);
  p:=public._sales_invoice_preferences(_expected_tenant_id);
  IF p->'version' IS DISTINCT FROM _command->'expected_version' THEN RAISE EXCEPTION 'Invoice preferences version conflict' USING ERRCODE='40001'; END IF;
+ IF p#>>'{settings,prefix}'=_command#>>'{settings,prefix}' AND (_command#>>'{settings,next_number}')::bigint<(p#>>'{settings,next_number}')::bigint THEN
+  RAISE EXCEPTION 'Invoice sequence cannot rewind within the same prefix' USING ERRCODE='22023'; END IF;
  RETURN jsonb_build_object('eligible',true,'version',p->'version','preferences',p,'summary','Update invoice appearance and numbering for this workspace. Existing issued invoices remain unchanged.');
 END $$;
 CREATE OR REPLACE FUNCTION public.execute_sales_invoice_command(_actor_user_id uuid,_expected_tenant_id uuid,_operation_id uuid,_command jsonb,_governance jsonb) RETURNS jsonb
@@ -167,6 +169,8 @@ BEGIN
  PERFORM 1 FROM public.tenants WHERE id=_expected_tenant_id FOR UPDATE;
  p:=public._sales_invoice_preferences(_expected_tenant_id);
  IF p->'version' IS DISTINCT FROM _command->'expected_version' THEN RAISE EXCEPTION 'Invoice preferences version conflict' USING ERRCODE='40001'; END IF;
+ IF p#>>'{settings,prefix}'=_command#>>'{settings,prefix}' AND (_command#>>'{settings,next_number}')::bigint<(p#>>'{settings,next_number}')::bigint THEN
+  RAISE EXCEPTION 'Invoice sequence cannot rewind within the same prefix' USING ERRCODE='22023'; END IF;
  UPDATE public.tenants SET brand=jsonb_set(coalesce(brand,'{}'::jsonb),'{invoice_preferences}',jsonb_build_object('version',(p->>'version')::bigint+1,'settings',_command->'settings'),true) WHERE id=_expected_tenant_id;
  PERFORM public.record_capability_run(_expected_tenant_id,_actor_user_id,'sales_update_invoice_settings','capability_succeeded',_operation_id,NULL);
  result:=jsonb_build_object('ok',true,'preferences',public._sales_invoice_preferences(_expected_tenant_id),'operation',jsonb_build_object('id',_operation_id,'action','invoice.settings_update'));

@@ -35,7 +35,7 @@ ACCEPTANCE_CRITERIA: requester approves and the job dispatches once; another adm
 MOTION_PURPOSE: none
 PROTECTED_SEAMS: paige_pending_confirmations schema/RLS unchanged (no migration); paige-ai-chat unchanged; paige-media-sweeper and paige-media-webhook unchanged; record_capability_run unchanged
 
-INTERNAL_BUILD_IDENTITY: a5f646c7be094c644ffa27653e80bf5d9194dcd0 (base) plus the two commits on branch v2b-media-approval; deployment=local; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-media deploys on merge); evidence=docs/evidence/ui-delivery/vibe-studio-v2b-media-approval.md
+INTERNAL_BUILD_IDENTITY: c165bca3f9c61bf0b97b004bd5e5de2a183e7fa1 (integration branch claude/busy-mccarthy-rvxgq9; first built on a5f646c7be094c644ffa27653e80bf5d9194dcd0); deployment=local; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-media deploys on merge); evidence=docs/evidence/ui-delivery/vibe-studio-v2b-media-approval.md
 RELEASE_CHANNEL: development: verified locally; edge deploys through CI on merge (pre-launch merge-on-verified, §4)
 RELEASE_CLASSIFICATION: internal-only: no customer release identity
 CUSTOMER_RELEASE_IDENTITY: none: internal-only

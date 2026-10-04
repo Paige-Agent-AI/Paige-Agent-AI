@@ -3,10 +3,11 @@
 // Owner ruling 2026-10-04: "ADMIN IS A TENANT ROLE." The chat previously decided these tools on the
 // GLOBAL `user_roles` row `admin`, which is tenant-agnostic (§59's global-role trap): an admin of
 // workspace A who is a member of B passed the gate inside B, and a workspace's own owner without the
-// global row was refused. This module asks the canonical tenant question instead — the same one the
-// Studio build tools already ask (`studio_role_ok` = owner/admin of the ACTIVE workspace, or the agency
-// managing it) — and keeps the Platform Operator (§53, global super_admin) as a separate, explicit
-// admit, because acting-as a customer workspace grants no seat there by design.
+// global row was refused. This module asks the canonical tenant question instead — the one the Studio
+// build tools ask (owner/admin of the workspace, or the agency managing it), in its actor-explicit
+// form (`is_tenant_admin_as` / `agency_can_manage_child`) so the answer is always about the one
+// workspace PAIGE acts in — and keeps the Platform Operator (§53, global super_admin) as a separate,
+// explicit admit, because acting-as a customer workspace grants no seat there by design.
 //
 // Measured on production 2026-10-04 before the switch: 0 workspace owners/admins lacked the global
 // row and the only global admin without a workspace seat is the super_admin, so nobody's access
@@ -65,7 +66,10 @@ export function requiresWorkspaceAdmin(tool: string, n8nTools: ReadonlySet<strin
 }
 
 export interface WorkspaceAuthority {
-  /** Owner/admin of the ACTIVE workspace, or the agency managing it (`studio_role_ok`). */
+  /**
+   * Owner/admin of the workspace PAIGE is acting in (`is_tenant_admin_as`), or the agency managing it
+   * (`agency_can_manage_child`) — and that workspace is the caller's active one.
+   */
   workspaceAdmin: boolean;
   /**
    * An ACTIVE owner/admin `tenant_members` seat in the acting workspace — exactly what the governed
@@ -83,13 +87,21 @@ export const NO_WORKSPACE_AUTHORITY: WorkspaceAuthority = Object.freeze({
 });
 
 /**
- * Resolve the caller's authority for workspace-admin tools. `callerClient` MUST carry the caller's JWT
- * (studio_role_ok pins `_caller = auth.uid()`); `serviceClient` reads the global super_admin row keyed
- * on the VERIFIED user id, never a body value. Fails closed: any error resolves to no authority.
+ * Resolve the caller's authority for workspace-admin tools. Fails closed: any error resolves to no
+ * authority.
  *
- * `actingTenantId` is the tenant the chat will actually act on (personaCtx). studio_role_ok answers for
- * current_user_tenant_id(); the two can differ (persona resolution prefers a linked-client tenant), so a
- * seat only counts when they are the same workspace — the guard the CRM service tools already carry.
+ * ONE ANSWER ABOUT ONE WORKSPACE. The authority is asked about `actingTenantId` explicitly — the
+ * tenant the chat will act on (personaCtx), keyed on the VERIFIED user id, never a body value —
+ * through the same actor-explicit question Layer C uses (resolveWorkspaceAuthorityAs). It must not
+ * come from `studio_role_ok`, which answers for whatever workspace is active at the moment it runs:
+ * read in parallel with the active workspace, a switch between the two reads could pair workspace
+ * A's admin verdict with workspace B's identity (Codex review, PR #1697). `is_tenant_admin_as` is
+ * `is_tenant_admin` for an explicit actor (same seat rule, same company-workspace operator rule).
+ *
+ * The active workspace is read only as a GATE: the authority counts when it is the workspace PAIGE
+ * is acting in (persona resolution can prefer a linked-client tenant; caller-JWT writes resolve the
+ * active one) — the guard the CRM service tools already carry. It never feeds the verdict itself.
+ * `callerClient` MUST carry the caller's JWT; `serviceClient` is service-role.
  */
 export async function resolveWorkspaceAuthority(
   // deno-lint-ignore no-explicit-any
@@ -100,35 +112,28 @@ export async function resolveWorkspaceAuthority(
   actingTenantId: string | null,
 ): Promise<WorkspaceAuthority> {
   if (!userId) return NO_WORKSPACE_AUTHORITY;
-  const [adminOk, activeTenant, roles, memberRole] = await Promise.all([
-    callerClient.rpc("studio_role_ok", { _caller: userId }).then(
-      (r: { data: unknown; error: unknown }) => !r.error && r.data === true,
-      () => false,
-    ),
+  const [explicit, activeTenant, roles] = await Promise.all([
+    actingTenantId
+      ? resolveWorkspaceAuthorityAs(serviceClient, userId, actingTenantId).then(
+        (r) => (r.ok ? r.authority : NO_WORKSPACE_AUTHORITY),
+        () => NO_WORKSPACE_AUTHORITY,
+      )
+      : Promise.resolve(NO_WORKSPACE_AUTHORITY),
     callerClient.rpc("current_user_tenant_id").then(
       (r: { data: unknown; error: unknown }) => (r.error || typeof r.data !== "string" ? null : r.data),
       () => null,
     ),
+    // The operator is a global fact, so it is read even without an acting workspace.
     serviceClient.from("user_roles").select("role").eq("user_id", userId).then(
       (r: { data: Array<{ role: string }> | null; error: unknown }) =>
         r.error ? [] : (r.data ?? []).map((x) => x.role),
       () => [] as string[],
     ),
-    // The doors' own question, asked the doors' own way (service read keyed on the verified user and
-    // the server-resolved workspace, never a body value).
-    actingTenantId
-      ? serviceClient.from("tenant_members").select("role,status").eq("tenant_id", actingTenantId)
-        .eq("user_id", userId).eq("status", "active").maybeSingle().then(
-          (r: { data: { role?: unknown } | null; error: unknown }) =>
-            r.error || typeof r.data?.role !== "string" ? null : r.data.role,
-          () => null,
-        )
-      : Promise.resolve(null),
   ]);
   const sameWorkspace = !!actingTenantId && activeTenant === actingTenantId;
   return {
-    workspaceAdmin: adminOk === true && sameWorkspace,
-    seat: sameWorkspace && (memberRole === "owner" || memberRole === "admin"),
+    workspaceAdmin: sameWorkspace && explicit.workspaceAdmin,
+    seat: sameWorkspace && explicit.seat,
     platformOperator: (roles as string[]).includes("super_admin"),
   };
 }

@@ -2116,6 +2116,8 @@ group("safety-first streaming: the sources the first enumeration missed");
       // ruling "ADMIN IS A TENANT ROLE"): a seat in the active workspace (`studio_role_ok`) that is
       // the workspace the chat acts in. Without it the call is refused and nothing is produced.
       studio_role_ok: { data: true, error: null },
+      // …asked of the acting workspace explicitly (C0a: one verdict about one workspace).
+      is_tenant_admin_as: { data: true, error: null },
       current_user_tenant_id: { data: CHILD, error: null },
     },
   };
@@ -2670,6 +2672,8 @@ group("safety-first streaming: the sources the first enumeration missed");
       // propose_action needs this workspace's owner or an admin (C0a: a tenant seat, not the
       // global `admin` row).
       studio_role_ok: { data: true, error: null },
+      // …asked of the acting workspace explicitly (C0a: one verdict about one workspace).
+      is_tenant_admin_as: { data: true, error: null },
       current_user_tenant_id: { data: CHILD, error: null },
     },
     tableExtras: {
@@ -3008,6 +3012,8 @@ group("safety-first streaming: the sources the first enumeration missed");
       current_user_tenant_id: { data: CHILD, error: null },
       // The CRM who-line is an owner/admin context (C0a: a tenant seat in this workspace).
       studio_role_ok: { data: true, error: null },
+      // …asked of the acting workspace explicitly (C0a: one verdict about one workspace).
+      is_tenant_admin_as: { data: true, error: null },
       is_platform_owner: { data: false, error: null },
       tenant_sender_identity: { data: [{ from_name: "PRIVATE-SENDER-MARKER Coaching", from_address: "private-sender-marker@ada.test" }], error: null },
       // The rail arrives through an RPC, not a table read. #804 moved this seam from

@@ -222,6 +222,15 @@ class FakeClient {
       const rows = (typeof t === "function" ? t([]) : t) ?? [];
       configured = { data: Array.isArray(rows) && rows.some((r) => r?.role === "admin"), error: null };
     }
+    // The chat's workspace authority asks the SAME seat question in its actor-explicit form
+    // (`is_tenant_admin_as(actor, acting tenant)` through the service client — one answer about one
+    // workspace, so a mid-request switch cannot pair one workspace's verdict with another's identity).
+    // Its default IS the scenario's seat fact: whatever `studio_role_ok` answers for this scenario (its
+    // own script, or the default above). One fact, two spellings — never two facts that can disagree.
+    if (configured === undefined && name === "is_tenant_admin_as" && this._kind === "service") {
+      configured = await new FakeClient("jwt", this._live, this._authorization).rpc("studio_role_ok", {});
+      this._live().recorder.rpc.pop(); // the derivation is not a call the handler made
+    }
     // A scenario value is ALWAYS the full PostgREST result — `{ data, error }` — or a
     // function returning one. Never a bare payload that this fake then wraps: wrapping
     // silently produced `{ data: { data: … } }`, which the handler read as null and which

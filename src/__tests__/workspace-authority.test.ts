@@ -30,6 +30,7 @@ function settle(r: Rpc | undefined) {
 }
 
 function clients(f: Fake) {
+  const serviceRpcCalls: Array<{ fn: string; args: Record<string, unknown> }> = [];
   const caller = {
     rpc: (fn: string) => settle(fn === "studio_role_ok" ? f.studioRoleOk : fn === "current_user_tenant_id" ? f.currentTenant : undefined),
   };
@@ -59,9 +60,12 @@ function clients(f: Fake) {
   };
   const service = {
     from: query,
-    rpc: (fn: string) => settle(fn === "is_tenant_admin_as" ? f.tenantAdminAs : fn === "agency_can_manage_child" ? f.agencyManages : undefined),
+    rpc: (fn: string, args: Record<string, unknown> = {}) => {
+      serviceRpcCalls.push({ fn, args });
+      return settle(fn === "is_tenant_admin_as" ? f.tenantAdminAs : fn === "agency_can_manage_child" ? f.agencyManages : undefined);
+    },
   };
-  return { caller, service };
+  return { caller, service, serviceRpcCalls };
 }
 
 const resolve = (f: Fake, acting: string | null = ACTING) => {
@@ -69,21 +73,39 @@ const resolve = (f: Fake, acting: string | null = ACTING) => {
   return resolveWorkspaceAuthority(caller, service, USER, acting);
 };
 
-describe("resolveWorkspaceAuthority (chat, caller JWT)", () => {
-  const seated: Fake = { studioRoleOk: { data: true, error: null }, currentTenant: { data: ACTING, error: null }, memberRole: "owner" };
+describe("resolveWorkspaceAuthority (chat): one explicit verdict about the acting workspace", () => {
+  // The seat fact is asked of the ACTING workspace with an explicit actor (is_tenant_admin_as /
+  // agency_can_manage_child); the active workspace is only a gate. `studioRoleOk` is scripted TRUE in
+  // the cases below that must NOT admit, to prove the active-workspace answer no longer decides.
+  const seated: Fake = {
+    tenantAdminAs: { data: true, error: null }, agencyManages: { data: false, error: null },
+    currentTenant: { data: ACTING, error: null }, memberRole: "owner",
+  };
 
   it("an owner of the acting workspace is admin AND seated", async () => {
     expect(await resolve(seated)).toEqual({ workspaceAdmin: true, seat: true, platformOperator: false });
   });
 
-  it("a seat counts only in the workspace PAIGE is acting in (sameWorkspace guard)", async () => {
+  it("asks about the ACTING workspace and the verified user, never the active-workspace shortcut", async () => {
+    const c = clients(seated);
+    await resolveWorkspaceAuthority(c.caller, c.service, USER, ACTING);
+    expect(c.serviceRpcCalls).toContainEqual({ fn: "is_tenant_admin_as", args: { _actor: USER, _tenant: ACTING } });
+    expect(c.serviceRpcCalls).toContainEqual({ fn: "agency_can_manage_child", args: { _child: ACTING, _actor: USER } });
+  });
+
+  it("an admin verdict for some other active workspace never admits (the Codex P1 race)", async () => {
+    const r = await resolve({ ...seated, studioRoleOk: { data: true, error: null }, tenantAdminAs: { data: false, error: null }, memberRole: null });
+    expect(r).toEqual(NO_WORKSPACE_AUTHORITY);
+  });
+
+  it("a seat counts only in the workspace PAIGE is acting in (sameWorkspace gate)", async () => {
     expect(await resolve({ ...seated, currentTenant: { data: OTHER, error: null } }))
       .toEqual({ workspaceAdmin: false, seat: false, platformOperator: false });
   });
 
-  it("fails closed when studio_role_ok errors or rejects", async () => {
-    expect((await resolve({ ...seated, studioRoleOk: { data: true, error: { message: "x" } } })).workspaceAdmin).toBe(false);
-    expect((await resolve({ ...seated, studioRoleOk: "reject" })).workspaceAdmin).toBe(false);
+  it("fails closed when the explicit question errors or rejects", async () => {
+    expect(await resolve({ ...seated, tenantAdminAs: { data: true, error: { message: "x" } } })).toEqual(NO_WORKSPACE_AUTHORITY);
+    expect(await resolve({ ...seated, tenantAdminAs: "reject" })).toEqual(NO_WORKSPACE_AUTHORITY);
   });
 
   it("fails closed when the active workspace cannot be read", async () => {
@@ -91,27 +113,28 @@ describe("resolveWorkspaceAuthority (chat, caller JWT)", () => {
   });
 
   it("a member seat is neither admin nor door-seated", async () => {
-    const r = await resolve({ studioRoleOk: { data: false, error: null }, currentTenant: { data: ACTING, error: null }, memberRole: "member" });
+    const r = await resolve({ ...seated, tenantAdminAs: { data: false, error: null }, memberRole: "member" });
     expect(r).toEqual({ workspaceAdmin: false, seat: false, platformOperator: false });
   });
 
-  it("an agency manager / platform admin passes studio_role_ok but holds no door seat", async () => {
-    const r = await resolve({ studioRoleOk: { data: true, error: null }, currentTenant: { data: ACTING, error: null }, memberRole: null });
+  it("an agency manager / platform admin is workspace admin but holds no door seat", async () => {
+    const r = await resolve({ ...seated, tenantAdminAs: { data: false, error: null }, agencyManages: { data: true, error: null }, memberRole: null });
     expect(r).toEqual({ workspaceAdmin: true, seat: false, platformOperator: false });
   });
 
   it("the global super_admin is the operator — and that grants no seat", async () => {
-    const r = await resolve({ studioRoleOk: { data: false, error: null }, currentTenant: { data: ACTING, error: null }, roles: ["super_admin"] });
+    const r = await resolve({ currentTenant: { data: ACTING, error: null }, roles: ["super_admin"], tenantAdminAs: { data: false, error: null }, agencyManages: { data: false, error: null } });
     expect(r).toEqual({ workspaceAdmin: false, seat: false, platformOperator: true });
   });
 
   it("the global `admin` row is NOT authority (ADMIN IS A TENANT ROLE)", async () => {
-    const r = await resolve({ studioRoleOk: { data: false, error: null }, currentTenant: { data: ACTING, error: null }, roles: ["admin"] });
+    const r = await resolve({ currentTenant: { data: ACTING, error: null }, roles: ["admin"], tenantAdminAs: { data: false, error: null }, agencyManages: { data: false, error: null } });
     expect(r).toEqual(NO_WORKSPACE_AUTHORITY);
   });
 
-  it("a membership read error is no seat", async () => {
-    expect((await resolve({ ...seated, memberRole: "error" })).seat).toBe(false);
+  it("no acting workspace means no workspace authority (the operator flag still reads)", async () => {
+    const r = await resolve({ ...seated, roles: ["super_admin"] }, null);
+    expect(r).toEqual({ workspaceAdmin: false, seat: false, platformOperator: true });
   });
 });
 

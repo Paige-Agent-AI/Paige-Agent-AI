@@ -3204,6 +3204,17 @@ console.log("\ncomms/CRM tool gate — Super Admin admitted, platform_admin deni
   assert("25.14 a seat in a DIFFERENT workspace than the one PAIGE is acting in does not admit",
     !readinessRan(seatElsewhere) && refused(seatElsewhere),
     JSON.stringify({ readiness: readinessRan(seatElsewhere), refused: refused(seatElsewhere) }));
+  // 25.15 — the verdict is about the ACTING workspace, asked once and explicitly (Codex P1, PR #1697).
+  // Before: `studio_role_ok` answered for whichever workspace was active when it ran, read in parallel
+  // with the active workspace, so a switch between the two reads could pair workspace A's admin verdict
+  // with workspace B's identity. Modelled directly: the active-workspace answer says admin, the
+  // explicit question about the workspace PAIGE acts in says no. The old code admitted this caller.
+  const raced = await driveGate(null, "comms_connection_summary", {
+    rpcOverrides: { ...commsRpcs, studio_role_ok: { data: true, error: null }, is_tenant_admin_as: { data: false, error: null } },
+  });
+  assert("25.15 an admin verdict for some OTHER active workspace never admits — the acting workspace is asked explicitly",
+    !readinessRan(raced) && refused(raced),
+    JSON.stringify({ readiness: readinessRan(raced), refused: refused(raced), asked: raced.rec.rpc.filter((c) => c.name === "is_tenant_admin_as").map((c) => c.args) }));
 
   // 25.10 / 25.11 — the honesty fix (Codex P2, 2026-09-05). A tenant-less super_admin (at rest,
   // before entering a workspace) is ADMITTED by the role gate but has no tenant. Before the guard,
@@ -4644,9 +4655,10 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
   ]) {
     const ownerOnly = await mainDrive({ name: tool, args }, { studio_role_ok: { data: true, error: null } }, []);
     assert(`33.5c ${tool}: this workspace's owner reaches its backend without any global role`,
-      // Exactly two asks: once at prompt time (cached — operator mode and the capability projection
-      // share it) and once, fresh, for this tool call (shared by every check the call passes). C0a.
-      reach(ownerOnly) && called(ownerOnly, "studio_role_ok") === 2,
+      // Exactly two asks of the actor-explicit seat question: once at prompt time (cached — operator
+      // mode and the capability projection share it) and once, fresh, for this tool call (shared by
+      // every check the call passes). C0a. Never the active-workspace `studio_role_ok` for this gate.
+      reach(ownerOnly) && called(ownerOnly, "is_tenant_admin_as") === 2,
       JSON.stringify({ fns: ownerOnly.rec.functions.map((f) => f.name), rpcs: ownerOnly.rec.rpc.map((c) => c.name) }));
   }
 
@@ -4661,8 +4673,8 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
   ]) {
     const owner = await mainDrive({ name: tool, args }, { studio_role_ok: { data: true, error: null } }, []);
     assert(`33.5d ${tool}: this workspace's owner reaches ${fn} without any global role`,
-      // Exactly two asks: once at prompt time (cached, shared) and once fresh for this call. C0a.
-      invoked(owner, fn) === 1 && called(owner, "studio_role_ok") === 2,
+      // Exactly two asks of the actor-explicit seat question: prompt time (cached) and fresh for the call.
+      invoked(owner, fn) === 1 && called(owner, "is_tenant_admin_as") === 2,
       JSON.stringify({ fns: owner.rec.functions.map((f) => f.name), rpcs: owner.rec.rpc.map((c) => c.name) }));
     const outsider = await mainDrive({ name: tool, args }, { studio_role_ok: { data: false, error: null } }, [{ role: "admin" }]);
     assert(`33.5e ${tool}: a global admin who is not this workspace's owner/admin is refused before ${fn}`,

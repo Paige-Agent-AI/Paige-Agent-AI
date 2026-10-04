@@ -140,8 +140,12 @@ const bearer = (t: string) => ({ Authorization: `Bearer ${t}` });
 
 const STUBS = { "_shared/claude.ts": { gatewayCompat: () => { throw new Error("model not called in tests"); } } };
 
-// The seven deployed, internal-only specialists (not registered in prod paige_subagents; their only
-// legitimate callers are the orchestrator and email-composer's compliance review — both service-role).
+// The seven deployed, internal-only specialists. Prod paige_subagents (queried 2026-10-04) registers none
+// of them — its only `local` rows are email-composer, problem-reverse-engineer and deep-research — so their
+// only callers are the orchestrator (service role) and email-composer's compliance review (service role).
+// RESIDUAL until INT-310 C1: email-composer itself is still directly reachable and relays a caller-chosen
+// contact_id to compliance under its own service bearer; this gate cannot see through that relay. The
+// relay test below proves only that the call is service-authenticated, NOT that the contact is in scope.
 const SPECIALISTS = [
   "subagent-compliance",
   "subagent-content-drafter",

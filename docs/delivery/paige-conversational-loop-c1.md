@@ -369,7 +369,10 @@ C1b is now unblocked, because #1701 has merged.
 `PaigeAIChat` now reads its stream through the shared reader. Owner rule for this slice: preserve
 all existing behaviour; do not alter product behaviour simply to converge.
 
-- **Reader:** `readPaigeStreamWithRaw(response.body, { stopAtDone: true, malformed: "drain" })`.
+- **Reader:** `readPaigeStreamWithRaw(response.body, { stopAtDone: false, malformed: "drain" })`;
+  the loop breaks on `[DONE]` itself, so once a frame has halted it a later `[DONE]` is skipped and
+  the turn waits for the body to close, as the old loop did (the second §39 verifier found that
+  `stopAtDone: true` ended a halted turn at `[DONE]`; fixed and pinned).
   The `WithRaw` sibling (additive, sharing one internal generator with `readPaigeStream`, so
   framing, `[DONE]` and malformed handling are identical) yields each frame with the whole parsed
   object. `PaigeAIChat` keeps its OWN dispatch and branch order over that object; the decoder's
@@ -390,12 +393,13 @@ all existing behaviour; do not alter product behaviour simply to converge.
   outcome cards, CRM and research cards, artifacts, the document proposal, client-scope refusal,
   compaction, Live voice (output, card, error, done) and every post-loop branch are untouched. The
   `paige_turn` frame falls through every branch and is dropped — C3 consumes it.
-- **Evidence:** `PaigeAIChat.stream.test.tsx` — 31 characterization tests written and run GREEN
-  against the unmodified file first (30/31 on the old loop: the one difference is the sanctioned
+- **Evidence:** `PaigeAIChat.stream.test.tsx` — 33 characterization tests, run GREEN against the
+  unmodified file (32/33 on the old loop: the one difference is the sanctioned
   non-string content case), then green unchanged after the move. Mutation proofs: `"stop"` instead
   of `"drain"`, `break` instead of halting on a throw, `"skip"`, no `voiceSink.done()`, no per-frame
-  ticket check, Live error ignored, typed-frame content, `streamDone` unset — each caught. All 31
-  test files that read `PaigeAIChat` plus the four stream suites: 440 passed. Authenticated
+  ticket check, Live error ignored, typed-frame content, `streamDone` unset, `stopAtDone: true` —
+  each caught across the PaigeAIChat suites. All
+  test files that read `PaigeAIChat` plus the four stream suites: 442 passed. Authenticated
   regression across main chat, Studio, Operator and portal: UNVERIFIED (no signed-in session in
   this lane) — owed after deploy.
 

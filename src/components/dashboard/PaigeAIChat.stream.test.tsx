@@ -291,6 +291,20 @@ describe("PaigeAIChat stream — framing", () => {
     expect(host.textContent).toContain(SERVER_ISSUE);
   });
 
+  it("after a frame whose handling throws, a later [DONE] does not end the turn — it waits for the body", async () => {
+    const gate = deferred();
+    server(body([say("First."), "data: null\n\n", say(" Second."), DONE, gate.promise]));
+    const { host } = await mount();
+    await ask(host);
+    expect(host.textContent).toContain("First.");
+    expect(host.textContent).not.toContain(SERVER_ISSUE);
+    expect(composerFree(host)).toBe(false);
+    await act(async () => { gate.resolve(); await flush(); });
+    expect(host.textContent).not.toContain("Second.");
+    expect(host.textContent).toContain(SERVER_ISSUE);
+    expect(composerFree(host)).toBe(true);
+  });
+
   it("never puts non-string content into the transcript", async () => {
     server(body([say("Real words."), frame({ choices: [{ delta: { content: 5 } }] }), frame({ choices: [{ delta: { content: { x: 1 } } }] }), DONE]));
     const { host } = await mount();
@@ -300,7 +314,7 @@ describe("PaigeAIChat stream — framing", () => {
     expect(host.textContent).not.toContain("[object Object]");
   });
 
-  it("treats a JSON null line the same way as a line that is not JSON", async () => {
+  it("rolls a JSON null line back like a line that is not JSON once the body ends", async () => {
     server(body([say("First."), "data: null\n\n", say(" Second."), DONE]));
     const { host } = await mount();
     await ask(host);
@@ -615,6 +629,27 @@ describe("PaigeAIChat stream — Live voice", () => {
     expect(host.textContent).toContain("First.");
     expect(host.textContent).not.toContain("Second.");
     expect(host.textContent).toContain(LIVE_ISSUE);
+  });
+
+  it("keeps a Live answer open after a frame whose handling throws, even past a [DONE], until the body closes", async () => {
+    // The old loop stalled on the throwing line and never saw the [DONE] behind it.
+    const gate = deferred();
+    server(body([frame({ paige_live_output: "signed-1" }), say("First."), "data: null\n\n", say(" Second."), DONE, gate.promise]));
+    const { host } = await mount();
+    const s = sink();
+    let settled = false;
+    let turn!: Promise<void>;
+    await act(async () => {
+      turn = harness.liveVoiceTurn!("my spoken question", s).then(() => { settled = true; });
+      await flush();
+    });
+    expect(s.done).not.toHaveBeenCalled();
+    expect(s.failed).not.toHaveBeenCalled();
+    expect(settled).toBe(false);
+    await act(async () => { gate.resolve(); await turn; await flush(); });
+    expect(s.done).not.toHaveBeenCalled();
+    expect(s.failed).toHaveBeenCalledTimes(1);
+    expect(host.textContent).not.toContain("Second.");
   });
 
   it("treats a body that ends without [DONE] as an interrupted Live answer", async () => {

@@ -7,9 +7,10 @@
 //    portal's opening greeting: no — they read to the end of the body);
 //  - what a line that is not JSON does: "skip" drops it and reads on; "stop" ends the read there;
 //    "drain" yields it, then reads the body to its end yielding nothing more (the dashboard chat,
-//    PaigeAIChat, whose old loop stalled on such a line until the body closed — it also ends at
-//    `[DONE]` and reads through readPaigeStreamWithRaw to keep its own branch order over the
-//    whole object).
+//    PaigeAIChat, whose old loop stalled on such a line until the body closed — it reads to the
+//    body's end and breaks on `[DONE]` itself, so a frame it halts on keeps the turn open past a
+//    later `[DONE]` as the old loop did, and reads through readPaigeStreamWithRaw to keep its own
+//    branch order over the whole object).
 // Everything else — buffering, CR stripping, comment and blank skipping, the final-line flush — is
 // the same for everyone.
 import { createSseFramer } from "./framing";

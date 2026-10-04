@@ -7,10 +7,10 @@ MATERIAL_FLOW_CHANGE: NO: every frame PaigeAIChat handles produces the same stat
 FLOW_PROTOTYPE: NOT_REQUIRED: no flow change and nothing visible changes; there is nothing to prototype until C3 renders the turn state.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: NOT_APPLICABLE: no surface changes; the primary action on each chat surface (send a message, read the reply) is unchanged.
 VISUAL_DIRECTION: NOT_APPLICABLE: no visual change.
-AUTOMATED_EVIDENCE: PASS: src/components/dashboard/PaigeAIChat.stream.test.tsx 31 tests (30/31 on the unmodified file; the one difference is the sanctioned non-string content case), src/lib/paige-stream 42, every test file mentioning PaigeAIChat plus the four stream suites: 440 passed, 1 skipped.
+AUTOMATED_EVIDENCE: PASS: src/components/dashboard/PaigeAIChat.stream.test.tsx 33 tests (32/33 on the unmodified file; the one difference is the sanctioned non-string content case), src/lib/paige-stream 42, every test file mentioning PaigeAIChat plus the four stream suites: 442 passed, 1 skipped.
 STATIC_EVIDENCE: PASS: eslint clean on changed files; ci:tsc 10 at baseline 10; no edge or migration change.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no rendered output changes; the frame is not rendered by any consumer.
-BEHAVIORAL_EVIDENCE: PASS: the characterization suite drives the real component with recorded stream shapes (framing, cards, approvals, CRM, research, artifacts, proposal, client scope, compaction, Live voice, malformed and throwing frames with their body-end timing); mutation proofs in the packet.
+BEHAVIORAL_EVIDENCE: PASS: the characterization suite drives the real component with recorded stream shapes (framing, cards, approvals, CRM, research, artifacts, proposal, client scope, compaction, Live voice, malformed and throwing frames with their body-end timing, including a [DONE] after a throwing frame); mutation proofs in the packet.
 AUTHENTICATED_RUNTIME: UNVERIFIED: no signed-in session in this lane. Owed after deploy: an owner chat on the main PaigeAIChat surfaces (/solo, /agency, /business), Studio, Operator and the portal, confirming replies, cards, approvals and greetings stream as before.
 KEYBOARD_FOCUS: NOT_APPLICABLE: no interactive element changes.
 ZOOM_REFLOW: NOT_APPLICABLE: no layout changes.
@@ -59,4 +59,4 @@ See AUTOMATED_EVIDENCE and the packet's "C1b as built" section.
 
 ## Review and limitations
 
-Independent adversarial verifier (SHIP) and compliance officer; their one ruling item (malformed-line timing) was closed by preserving the old timing exactly. Authenticated runtime is UNVERIFIED.
+Independent adversarial verifier and compliance officer; their ruling item (malformed-line timing) was closed by preserving the old timing exactly, and a second verifier pass found that a halted turn still ended at a later [DONE] — fixed (stopAtDone: false, the loop breaks on [DONE] itself) and pinned by two tests. Authenticated runtime is UNVERIFIED.

@@ -1377,11 +1377,13 @@ const PaigeAIChatInner = ({
       // was pushed back and failed again on every chunk, so nothing after it was ever acted on and
       // the turn fell to the incomplete-turn branch below only when the server closed the body;
       // "drain" keeps exactly that — nothing more is yielded, and the read waits for the body to
-      // end. A frame whose handling throws halts the same way (`halted`), as it did before.
+      // end. A frame whose handling throws halts the same way (`halted`), as it did before; the
+      // reader runs with `stopAtDone: false` and this loop breaks on `[DONE]` itself, so once halted
+      // a later `[DONE]` is skipped and the turn still waits for the body to close.
       //
       // The `paige_turn` frame has no branch below and is dropped — no state, nothing rendered.
       let halted = false;
-      for await (const { frame, raw } of readPaigeStreamWithRaw(response.body, { stopAtDone: true, malformed: "drain" })) {
+      for await (const { frame, raw } of readPaigeStreamWithRaw(response.body, { stopAtDone: false, malformed: "drain" })) {
         if (!ticketAccepted(requestTicket)) return;
         if (halted) continue;
         if (frame.type === "done") {

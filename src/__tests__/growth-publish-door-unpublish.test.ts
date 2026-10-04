@@ -2,21 +2,17 @@
 // The door's five acts that only the Studio panel performed before V2b — page/form/funnel unpublish and
 // image publish/unpublish — driven through the REAL handler with their risk class present.
 //
-// HONEST SCOPE (§13). Those five keys are classified in _shared/action-risk.ts by the Spine lane of this
-// slice, not by this branch. This file adds exactly those five `high` entries over the real policy (every
-// other key is the real classification) so the door's own behaviour for them is proven now; once the
-// real classification lands the override is a no-op. growth-publish-door.test.ts proves the fail-closed
-// behaviour while they are absent.
-import { describe, expect, it, vi } from "vitest";
+// Their real risk class (Migration E, action-risk.ts) and real declarations (STUDIO_PUBLISH_KIT_BY_ACTION)
+// are used — nothing here is mocked but the two Supabase clients.
+import { describe, expect, it } from "vitest";
+import { classifyAction } from "../../supabase/functions/_shared/action-risk.ts";
+import { FORM, FUNNEL, IMAGE, MINE, PAGE, livePage, world } from "./growth-publish-door.world.ts";
 
-vi.mock("../../supabase/functions/_shared/action-risk.ts", async (importOriginal) => {
-  const real = await importOriginal<typeof import("../../supabase/functions/_shared/action-risk.ts")>();
-  const added = new Set(["growth_page_unpublish", "growth_form_unpublish", "growth_funnel_unpublish", "studio_image_publish", "studio_image_unpublish"]);
-  const classifyAction = (tool: string) => (added.has(tool) && real.classifyAction(tool) === "unclassified" ? "high" : real.classifyAction(tool));
-  return { ...real, classifyAction };
+it("the five door-only acts are classified high by the canonical policy", () => {
+  for (const k of ["growth_page_unpublish", "growth_form_unpublish", "growth_funnel_unpublish", "studio_image_publish", "studio_image_unpublish"]) {
+    expect(classifyAction(k)).toBe("high");
+  }
 });
-
-const { FORM, FUNNEL, IMAGE, MINE, PAGE, livePage, world } = await import("./growth-publish-door.world.ts");
 
 async function approve(w: ReturnType<typeof world>, body: Record<string, unknown>) {
   const first = await w.call(body);

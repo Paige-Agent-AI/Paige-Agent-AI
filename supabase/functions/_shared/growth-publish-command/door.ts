@@ -16,15 +16,17 @@
 // claim of a proposal this door issued. The request names an artifact; it never names a tenant that
 // is honoured, an approval that is trusted, or arguments that run after approval.
 //
-// Dependencies are injected (two Supabase clients) so the REAL handler is driven by tests with
-// in-memory doubles. index.ts wires the real clients.
+// Dependencies are injected so the REAL handler is driven by tests with in-memory doubles: the two
+// Supabase clients, and the authority decision. index.ts binds that decision exactly once —
+// `decideDeclaredCapability(STUDIO_PUBLISH_KIT_BY_ACTION[key], input)`, the Spine's declaration map
+// for this door, the way sales-invoice-command binds SALES_INVOICE_KIT_BY_ACTION — and
+// scripts/ci/action-risk-lint.mjs refuses a door that does not. The door makes no other decision.
 import { confirmFingerprint } from "../confirm-fingerprint.ts";
-import { decideDeclaredCapability } from "../capability-kit/decision.ts";
+import type { decideDeclaredCapability } from "../capability-kit/decision.ts";
 import { resolveStudioCaller, type StudioCallerRefused } from "../studio-caller.ts";
 import { recordCapabilityRun, stableRunId } from "../capability-record.ts";
 import { classifyStudioRun, studioReceiptDetail } from "../studio-run-outcome.ts";
 import { publishVerified, PUBLISH_UNVERIFIED_ERROR } from "../artifact-receipt.ts";
-import { publishCapability } from "./capabilities.ts";
 import {
   buildPublishPreview, pageFormSlugsNeeded, parsePublishCommand, plainRefusal, previewReady, previewSummary,
   publishRpc, PUBLISH_KEYS, REFUSAL_CODES, UNPUBLISH_UNVERIFIED_ERROR, unpublishVerified, UUID,
@@ -33,11 +35,19 @@ import {
 
 // deno-lint-ignore no-explicit-any
 type Client = any;
+type DecisionInput = Parameters<typeof decideDeclaredCapability>[1];
+export type PublishDecision = ReturnType<typeof decideDeclaredCapability>;
 export interface PublishDoorDeps {
   /** The caller's own client (anon key + their JWT). Every RPC that decides authority runs on it. */
   caller: Client;
   /** Service-role client: the approval store, the audit row, readiness reads (tenant-filtered) and the receipt. */
   admin: Client;
+  /**
+   * The canonical Kit gate for one publish-door key — bound in index.ts as
+   * `decideDeclaredCapability(STUDIO_PUBLISH_KIT_BY_ACTION[key], input)`. It throws for a key with no
+   * declaration (or a declaration that contradicts the risk policy); the door refuses on a throw.
+   */
+  decide: (key: string, input: DecisionInput) => PublishDecision;
 }
 
 const HEADERS = {
@@ -145,23 +155,17 @@ export async function handleGrowthPublishCommand(req: Request, deps: PublishDoor
       });
     };
 
-    const declaration = publishCapability(key);
-    if (!declaration) {
-      const recorded = await fileReceipt({ result: { success: false, refused_reason: "capability_not_governed" } }, `refused:${requestNonce}`, null);
-      return respond(503, { ok: false, refused: true, code: "CAPABILITY_NOT_GOVERNED", error: `This can't be done from here yet. ${NOTHING_CHANGED}`, receipt_recorded: recorded });
-    }
-
     const { data: resolvedLane, error: laneError } = await caller.rpc("resolve_tool_autonomy", { _tenant_id: tenantId, _tool_key: key });
     const lane = !laneError && typeof resolvedLane === "string" && ["auto", "confirm", "off"].includes(resolvedLane) ? resolvedLane : "unresolved";
     const requestArgs: Record<string, unknown> = { action: cmd.action, kind: cmd.kind, id: cmd.id, expected_tenant_id: tenantId, approval_subject: `${cmd.action}:${cmd.kind}:${cmd.id}` };
-    const decide = (claimedArgs: Record<string, unknown> | null | undefined) => decideDeclaredCapability(declaration, {
+    const decide = (claimedArgs: Record<string, unknown> | null | undefined) => deps.decide(key, {
       caller: { authenticated: true, userId, principal: "person", tenantId, tenantSource: "server", door: "other",
         access: { allowed: true, reason: "The workspace's owner, an admin, or its managing agency." } },
       capability: { id: key, effect: "mutate", outcomeChannel: "record_capability_run", availability: "needs_approval" },
       approval: { autonomyLane: lane, ...(claimedArgs !== undefined ? { claimedArgs, claimedFor: key } : {}) },
       requestArgs,
     });
-    type Decision = ReturnType<typeof decide>;
+    type Decision = PublishDecision;
     const audit = async (decision: Decision): Promise<boolean> => {
       const { error } = await admin.from("paige_audit_log").insert({
         actor_user_id: userId, actor_role: "studio:workspace_admin", tenant_id: tenantId,
@@ -171,6 +175,13 @@ export async function handleGrowthPublishCommand(req: Request, deps: PublishDoor
           ...(decision.kind === "refuse" ? { refusal: decision.code } : {}) },
       });
       return !error;
+    };
+    // A key the Kit gate cannot decide — no declaration, or one that contradicts the risk policy —
+    // refuses that act, loudly, and never runs it ungoverned.
+    const notGoverned = async (e: unknown): Promise<Response> => {
+      console.error("[growth-publish-command] the Kit gate refused to decide", JSON.stringify({ key, reason: e instanceof Error ? e.message : String(e) }));
+      const recorded = await fileReceipt({ result: { success: false, refused_reason: "capability_not_governed" } }, `refused:${requestNonce}`, null);
+      return respond(503, { ok: false, refused: true, code: "CAPABILITY_NOT_GOVERNED", error: `This can't be done from here yet. ${NOTHING_CHANGED}`, receipt_recorded: recorded });
     };
     const refusedByDecision = async (decision: Extract<Decision, { kind: "refuse" }>): Promise<Response> => {
       const audited = await audit(decision);
@@ -186,7 +197,8 @@ export async function handleGrowthPublishCommand(req: Request, deps: PublishDoor
     // A brake needs no readiness read and no claim: an `off` lane refuses before either, and an
     // approval offered against it is left unspent.
     if (lane === "off") {
-      const decision = decide(undefined);
+      let decision: Decision;
+      try { decision = decide(undefined); } catch (e) { return notGoverned(e); }
       if (decision.kind === "refuse") return await refusedByDecision(decision);
       return respond(503, { ok: false, refused: true, code: "DECISION_INCONSISTENT", error: `This couldn't be checked just now. ${NOTHING_CHANGED}` });
     }
@@ -227,10 +239,7 @@ export async function handleGrowthPublishCommand(req: Request, deps: PublishDoor
     }
 
     let decision: Decision;
-    try { decision = decide(claimedArgs); } catch (e) {
-      console.error("[growth-publish-command] decision refused to run", JSON.stringify({ key, reason: e instanceof Error ? e.message : String(e) }));
-      return respond(503, { ok: false, refused: true, code: "CAPABILITY_NOT_GOVERNED", error: `This can't be done from here yet. ${NOTHING_CHANGED}` });
-    }
+    try { decision = decide(claimedArgs); } catch (e) { return notGoverned(e); }
     if (decision.kind === "refuse") return await refusedByDecision(decision);
     const audited = await audit(decision);
     if (!audited) return respond(503, { ok: false, code: "DECISION_RECEIPT_FAILED", error: `I couldn't record this decision, so I didn't go ahead. ${NOTHING_CHANGED}` });

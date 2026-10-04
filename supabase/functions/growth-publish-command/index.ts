@@ -9,11 +9,19 @@
 // wires the two Supabase clients. verify_jwt is the default (true), and the handler verifies the
 // caller's JWT again (getUser) and resolves the workspace server-side.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
-import { handleGrowthPublishCommand } from "../_shared/growth-publish-command/door.ts";
+import { decideDeclaredCapability } from "../_shared/capability-kit/decision.ts";
+import { STUDIO_PUBLISH_KIT_BY_ACTION } from "../_shared/paige-spine/domains/studio_publish.ts";
+import { handleGrowthPublishCommand, type PublishDoorDeps } from "../_shared/growth-publish-command/door.ts";
+
+// THE authority decision for every act this door runs: the Spine's declaration for the act's key,
+// through the canonical Kit gate. An unknown key has no declaration and the gate throws; the door
+// refuses on a throw. Precedent: sales-invoice-command / SALES_INVOICE_KIT_BY_ACTION.
+const decide: PublishDoorDeps["decide"] = (key, input) =>
+  decideDeclaredCapability(STUDIO_PUBLISH_KIT_BY_ACTION[key as keyof typeof STUDIO_PUBLISH_KIT_BY_ACTION], input);
 
 Deno.serve((req) => {
   // The preflight needs no clients; the handler answers it.
-  if (req.method === "OPTIONS") return handleGrowthPublishCommand(req, { caller: null, admin: null });
+  if (req.method === "OPTIONS") return handleGrowthPublishCommand(req, { caller: null, admin: null, decide });
   const url = Deno.env.get("SUPABASE_URL");
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -27,5 +35,5 @@ Deno.serve((req) => {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
-  return handleGrowthPublishCommand(req, { caller, admin });
+  return handleGrowthPublishCommand(req, { caller, admin, decide });
 });

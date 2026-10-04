@@ -233,11 +233,10 @@ describe("growth-publish-command — the claim and the act", () => {
     const otherArtifact = await world({ tables: { paige_pending_confirmations: store, growth_pages: [livePage(), livePage({ id: "77777777-7777-4777-8777-777777777777" })] } })
       .call({ ...publishPage, id: "77777777-7777-4777-8777-777777777777", approved_fingerprint: fp });
     for (const r of [otherPerson, otherWorkspace, otherArtifact]) expect(r).toMatchObject({ status: 409, body: { code: "APPROVAL_NOT_AVAILABLE" } });
-    // Another act: the tool key names the act, so a publish approval cannot be spent on an unpublish
-    // (refused outright while the unpublish key is unclassified, or found unclaimable once it is).
+    // Another act: the tool key names the act, so a publish approval cannot be spent on an unpublish.
     const otherAct = await world({ tables: { paige_pending_confirmations: store, growth_pages: [livePage({ status: "published" })] } })
       .call({ action: "unpublish", kind: "page", id: PAGE, approved_fingerprint: fp });
-    expect([409, 503]).toContain(otherAct.status);
+    expect(otherAct).toMatchObject({ status: 409, body: { code: "APPROVAL_NOT_AVAILABLE" } });
     expect(store[0].consumed_at).toBeNull();
   });
 
@@ -294,20 +293,28 @@ describe("growth-publish-command — the claim and the act", () => {
   });
 });
 
-// The five acts only the door performs are classified in _shared/action-risk.ts by the Spine lane of
-// this slice. Until that classification is present, each one refuses on its own — the rest of the door
-// keeps working — and never runs ungoverned.
-const UNCLASSIFIED = ["growth_page_unpublish", "studio_image_publish"].every((k) => classifyAction(k) === "unclassified");
-describe.runIf(UNCLASSIFIED)("growth-publish-command — an act whose risk class is missing fails closed", () => {
-  it("refuses unpublish and image publish without touching the approval store or the RPC", async () => {
-    const w = world({ tables: { growth_pages: [livePage({ status: "published" })] } });
-    for (const body of [{ action: "unpublish", kind: "page", id: PAGE }, { action: "publish", kind: "image", id: IMAGE }]) {
-      const r = await w.call(body);
-      expect(r).toMatchObject({ status: 503, body: { refused: true, code: "CAPABILITY_NOT_GOVERNED" } });
-    }
+// The authority decision is the Kit gate over STUDIO_PUBLISH_KIT_BY_ACTION (bound in index.ts). When it
+// cannot decide an act — no declaration, or one contradicting the risk policy, which makes the gate
+// throw — that act refuses on its own, files a refused receipt, and never runs ungoverned.
+describe("growth-publish-command — an act the Kit gate cannot decide fails closed", () => {
+  it("refuses without touching the approval store or the RPC, while other acts keep working", async () => {
+    const w = world({ decideOverride: (key, input, real) => {
+      if (key === "growth_page_unpublish") throw new TypeError("CAPABILITY_DECLARATION_MISMATCH");
+      return real(key, input);
+    }, tables: { growth_pages: [livePage({ status: "published" })] } });
+    const r = await w.call({ action: "unpublish", kind: "page", id: PAGE });
+    expect(r).toMatchObject({ status: 503, body: { refused: true, code: "CAPABILITY_NOT_GOVERNED" } });
     expect(w.tables.paige_pending_confirmations).toHaveLength(0);
     expect(w.executorCalls()).toHaveLength(0);
-    // ...while page publish is unaffected.
-    expect((await w.call(publishPage)).status).toBe(202);
+    expect(w.seen.receipts).toEqual([expect.objectContaining({ _capability_key: "growth_page_unpublish", _outcome: "capability_refused" })]);
+    expect((await w.call({ action: "publish", kind: "image", id: IMAGE })).status).toBe(202);
+  });
+
+  it("decides every act through the real declaration for its own key", async () => {
+    const asked: string[] = [];
+    const w = world({ decideOverride: (key, input, real) => { asked.push(key); return real(key, input); } });
+    await w.call(publishPage);
+    await w.call({ action: "publish", kind: "image", id: IMAGE });
+    expect(asked).toEqual(["growth_page_publish", "studio_image_publish"]);
   });
 });

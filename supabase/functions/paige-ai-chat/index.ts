@@ -14090,6 +14090,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         growth_page_save: "growth_pages", growth_page_publish: "growth_pages",
         growth_funnel_build: "growth_funnels", growth_funnel_publish: "growth_funnels",
         growth_form_save: "growth_forms", growth_form_publish: "growth_forms",
+        // V2b — acts only the publish door (growth-publish-command) performs; named here because this
+        // map is keyed off the classifier, not off Chat's tool list.
+        growth_page_unpublish: "growth_pages", growth_form_unpublish: "growth_forms",
+        growth_funnel_unpublish: "growth_funnels",
+        studio_image_publish: "marketing_content", studio_image_unpublish: "marketing_content",
         action_file: "paige_actions", action_advance: "paige_actions",
         n8n_activate_workflow: "n8n_workflow", n8n_deactivate_workflow: "n8n_workflow",
         n8n_create_workflow: "n8n_workflow", n8n_update_workflow: "n8n_workflow",

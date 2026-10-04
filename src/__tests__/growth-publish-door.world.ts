@@ -4,6 +4,12 @@
 // dropped predicate shows up as a failed test rather than a passing fixture. This is not
 // authenticated runtime proof against Supabase.
 import { handleGrowthPublishCommand } from "../../supabase/functions/_shared/growth-publish-command/door.ts";
+import { decideDeclaredCapability } from "../../supabase/functions/_shared/capability-kit/decision.ts";
+import { STUDIO_PUBLISH_KIT_BY_ACTION } from "../../supabase/functions/_shared/paige-spine/domains/studio_publish.ts";
+
+/** The same binding index.ts makes — the real Kit gate over the real declaration map. */
+export const realDecide = (key: string, input: Parameters<typeof decideDeclaredCapability>[1]) =>
+  decideDeclaredCapability(STUDIO_PUBLISH_KIT_BY_ACTION[key as keyof typeof STUDIO_PUBLISH_KIT_BY_ACTION], input);
 
 export const USER = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 export const OTHER_USER = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
@@ -31,6 +37,8 @@ export interface WorldOptions {
   switchAfter?: number;
   recordFails?: boolean;
   auditFails?: boolean;
+  /** Wrap the real Kit gate, to observe it or make it refuse. */
+  decideOverride?: (key: string, input: Parameters<typeof realDecide>[1], real: typeof realDecide) => ReturnType<typeof realDecide>;
 }
 
 export const livePage = (over: Row = {}): Row => ({
@@ -146,7 +154,7 @@ export function world(o: WorldOptions = {}) {
   const call = async (body: Row, method = "POST") => {
     const res = await handleGrowthPublishCommand(new Request("https://edge.test/growth-publish-command", {
       method, headers: { Authorization: "Bearer test" }, ...(method === "POST" ? { body: JSON.stringify(body) } : {}),
-    }), { caller, admin });
+    }), { caller, admin, decide: o.decideOverride ? (k, i) => o.decideOverride!(k, i, realDecide) : realDecide });
     return { status: res.status, body: await res.json().catch(() => null) as Row };
   };
   const executorCalls = () => seen.rpc.filter((c) => c.client === "caller" && /_(un)?publish$/.test(c.fn));

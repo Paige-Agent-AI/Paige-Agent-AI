@@ -405,7 +405,7 @@ C1b is now unblocked, because #1701 has merged.
 - **Production stream sample showing `paige_turn`: pending** — a read-only check after deploy.
 - **Authenticated owner drive: UNVERIFIED** — the universal proof gate is still owed.
 - **Rendered:** none claimed, because there is no visible change.
-- **Tier matrix:** no change; there is no tier-visible surface. PR number: TBD.
+- **Tier matrix:** no change; there is no tier-visible surface. PR: #1710.
 
 ### Known gaps (as of fix round 3)
 

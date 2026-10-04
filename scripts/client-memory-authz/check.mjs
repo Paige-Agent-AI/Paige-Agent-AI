@@ -4590,14 +4590,20 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
     { studio_role_ok: { data: true, error: null } }, []);
   assert("33.5b this workspace's owner builds without any global role",
     called(ownerNoGlobalRole, "growth_page_upsert") === 1, JSON.stringify(ownerNoGlobalRole.rec.rpc.map((c) => c.name)));
-  // 33.5c The tenant-scoped gate covers ONLY the tools whose backend asks the same question. A tool
-  // whose backend still checks the global role keeps its existing gate. Kills: widening
-  // WORKSPACE_BUILD_TOOLS past the growth RPCs (which would admit callers the backend then refuses).
-  const contentNoGlobal = await mainDrive({ name: "content_save", args: { title: "x", body: "y" } },
-    { studio_role_ok: { data: true, error: null } }, []);
-  assert("33.5c content_save keeps its existing gate (its backend still checks the global role)",
-    called(contentNoGlobal, "save_marketing_content") === 0 && called(contentNoGlobal, "studio_role_ok") === 0,
-    JSON.stringify(contentNoGlobal.rec.rpc.map((c) => c.name)));
+  // 33.5c Every Studio build tool's backend now asks the workspace question (Migration D moved
+  // save_marketing_content; studio-caller moved the draft functions), so content_save and the two
+  // generate tools ask it in chat too: this workspace's owner reaches them without any global role.
+  // Kills: leaving any of them on the tenant-agnostic global-role gate.
+  for (const [tool, args, reach] of [
+    ["content_save", { title: "x", body: "y" }, (r) => called(r, "save_marketing_content") === 1],
+    ["growth_page_generate", { brief: "a page for our spring offer" }, (r) => r.rec.functions.some((f) => f.name === "growth-page-draft")],
+    ["growth_funnel_generate", { brief: "a funnel for our spring offer" }, (r) => r.rec.functions.some((f) => f.name === "growth-funnel-draft")],
+  ]) {
+    const ownerOnly = await mainDrive({ name: tool, args }, { studio_role_ok: { data: true, error: null } }, []);
+    assert(`33.5c ${tool}: this workspace's owner reaches its backend without any global role`,
+      reach(ownerOnly) && called(ownerOnly, "studio_role_ok") === 1,
+      JSON.stringify({ fns: ownerOnly.rec.functions.map((f) => f.name), rpcs: ownerOnly.rec.rpc.map((c) => c.name) }));
+  }
 
   // 33.5d Image generation and copy drafting ask the same workspace question as their backends
   // (_shared/studio-caller.ts). Kills: leaving them on the global-role chat gate, where a workspace

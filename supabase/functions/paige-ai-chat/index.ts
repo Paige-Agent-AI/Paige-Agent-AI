@@ -56,17 +56,16 @@ import { artifactProduced, ARTIFACT_ABSENT_ERROR, usableDrafts, publishVerified,
 import { narrowToolDefs, outsideStudioScope, resolveRoleToolScope, STUDIO_SCOPE_FAIL_CLOSED, type RoleToolScope } from "../_shared/studio-scope.ts";
 
 /** Tools whose backend requires the CURRENT workspace's owner or admin (or the managing agency) —
- *  the growth RPCs' `_growth_admin_tenant`, and `content-draft` / `generate-image` through
- *  `_shared/studio-caller.ts`. Their chat gate asks the same question, `studio_role_ok`, instead of
- *  the tenant-agnostic global `user_roles` admin (§59, D3), so the chat gate and the backend agree.
- *  Every other tool keeps its existing gate: the growth-*-draft functions and `save_marketing_content`
- *  still check the global role themselves, so moving their chat gate alone would admit callers the
- *  backend refuses. Those move to tenant-scoped authority in V2a. */
+ *  the growth RPCs' `_growth_admin_tenant`, `save_marketing_content` (Migration D), and the Studio
+ *  generation functions through `_shared/studio-caller.ts` (content-draft, generate-image and the
+ *  growth draft functions). Their chat gate asks the same question, `studio_role_ok`, instead of the
+ *  tenant-agnostic global `user_roles` admin (§59, D3), so the chat gate and the backend agree. Every
+ *  other tool keeps its existing gate. */
 const WORKSPACE_BUILD_TOOLS: ReadonlySet<string> = new Set([
-  "growth_page_save", "growth_page_publish",
+  "growth_page_generate", "growth_page_save", "growth_page_publish",
   "growth_form_save", "growth_form_publish",
-  "growth_funnel_build", "growth_funnel_publish",
-  "draft_marketing_content", "generate_image",
+  "growth_funnel_generate", "growth_funnel_build", "growth_funnel_publish",
+  "draft_marketing_content", "content_save", "generate_image",
 ]);
 import { buildFormSchemaFromQuestions } from "../_shared/growth-form-build.ts";
 import { classifyDocumentSubmissionError, validateDocumentBrief } from "../_shared/document-production.ts";

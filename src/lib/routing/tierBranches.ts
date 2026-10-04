@@ -135,12 +135,12 @@ export const SOLO_BRANCHES: Branch[] = [
     slug: "paige", key: "paige", label: "Paige", group: "main",
     // Source: src/solo/SoloPaigeWorkspace.tsx. Solo intentionally exposes the
     // customer-facing Chat, Knowledge, Deep Research, Helpers, and Capabilities
-    // contract only. Deep Research (INT-303, 2026-10-04) is the cited-research
-    // home — one canonical engine, one workspace history.
+    // contract only. Research (R2b, 2026-10-03; INT-303) is the evidence
+    // LIBRARY — the engine is invoked in Chat, runs land here.
     subtabs: [
       { slug: "chat", key: "chat", label: "Chat" },
       { slug: "knowledge", key: "knowledge", label: "Knowledge" },
-      { slug: "research", key: "research", label: "Deep Research" },
+      { slug: "research", key: "research", label: "Research" },
       { slug: "helpers", key: "helpers", label: "Helpers" },
       { slug: "capabilities", key: "capabilities", label: "Capabilities" },
     ],

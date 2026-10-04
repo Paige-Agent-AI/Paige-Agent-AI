@@ -1,25 +1,19 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import {
-  Search, BookOpen, FileSearch, ChevronLeft, RotateCw, Timer, AlertTriangle,
-  CheckCircle2, ExternalLink, ShieldQuestion, ListChecks,
+  Search, BookOpen, FileSearch, ChevronLeft, RotateCw, ExternalLink, ShieldQuestion, ListChecks,
 } from "lucide-react";
 import { EntityDossier, type EntityProfile } from "@/components/dashboard/EntityDossier";
-import { useDeepResearch, type ResearchDepth, type ResearchRunRow } from "@/solo/data/deepResearch";
+import { useDeepResearch, type ResearchRunRow } from "@/solo/data/deepResearch";
 
 /**
- * Deep Research — the R1+R2 workspace view (INT-303): ONE research home inside
- * PAIGE (Chat · Knowledge · Deep Research · Helpers · Capabilities), reading
- * and writing the SAME canonical research_runs substrate chat uses. No second
- * engine, no second history, no fake progress: the run state is elapsed-time
- * truth, the result state is the engine's own outcome vocabulary, and "saved"
- * is claimed only after the governed readback proves the row exists.
+ * Research — the evidence LIBRARY of the R2b reshape (owner ruling 2026-10-03;
+ * INT-303 lineage): PAIGE Chat is where research is invoked and experienced
+ * (the inline card), and every saved run lands here through the SAME governed
+ * list/get the chat reload uses — one substrate, one citation identity, no
+ * second engine, no second history. No hero form and no fake progress: the
+ * detail state is the engine's own outcome vocabulary, and "saved" is claimed
+ * only after the governed readback proves the row exists.
  */
-
-const DEPTHS: Array<{ id: ResearchDepth; label: string; hint: string }> = [
-  { id: "quick", label: "Quick", hint: "One pass — a fast, sourced answer" },
-  { id: "standard", label: "Standard", hint: "Balanced depth across sources" },
-  { id: "thorough", label: "Thorough", hint: "Widest sweep within the engine's bounds" },
-];
 
 const STOP_WORDS: Record<string, string> = {
   answered: "Completed",
@@ -48,130 +42,6 @@ const formatDate = (iso: string | null) => {
   try { return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }); }
   catch { return "—"; }
 };
-
-function StartPanel({
-  busy, onStart, onDismiss, dismissLabel,
-}: {
-  busy: boolean;
-  onStart: (question: string, depth: ResearchDepth) => void;
-  onDismiss: () => void;
-  dismissLabel: string;
-}) {
-  const [question, setQuestion] = useState("");
-  const [depth, setDepth] = useState<ResearchDepth>("standard");
-  const trimmed = question.trim();
-  const valid = trimmed.length >= 8 && trimmed.length <= 500;
-  return (
-    <form
-      className="dr-start"
-      onSubmit={(e) => { e.preventDefault(); if (valid && !busy) onStart(trimmed, depth); }}
-    >
-      <label className="dr-field">
-        <span id="dr-question-label">Research question</span>
-        <textarea
-          aria-labelledby="dr-question-label"
-          rows={3}
-          maxLength={500}
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          placeholder="e.g. What's the current competitive landscape for AI-native CRM platforms for small businesses?"
-          disabled={busy}
-        />
-        <small>{trimmed.length}/500 — at least 8 characters</small>
-      </label>
-      <fieldset className="dr-depth" disabled={busy}>
-        <legend>Depth</legend>
-        {DEPTHS.map((d) => (
-          <button
-            key={d.id}
-            type="button"
-            aria-pressed={depth === d.id}
-            onClick={() => setDepth(d.id)}
-          >
-            <strong>{d.label}</strong>
-            <span>{d.hint}</span>
-          </button>
-        ))}
-      </fieldset>
-      <div className="dr-start-actions">
-        <button type="submit" className="dr-primary" disabled={!valid || busy}>
-          <Search aria-hidden size={14} /> Start research
-        </button>
-        <button type="button" onClick={onDismiss} disabled={busy}>{dismissLabel}</button>
-      </div>
-      <p className="dr-start-note">
-        PAIGE investigates the live web through her cited research engine — a
-        question gets a sourced answer, not a guess. Every finding carries a
-        citation you can open.
-      </p>
-    </form>
-  );
-}
-
-function RunningPanel({ question, startedAt, timeoutMs }: { question: string; startedAt: number; timeoutMs: number }) {
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => {
-    const t = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(t);
-  }, []);
-  const elapsed = Math.max(0, Math.floor((now - startedAt) / 1000));
-  const minutes = Math.floor(elapsed / 60);
-  const seconds = elapsed % 60;
-  const overBudget = elapsed * 1000 > timeoutMs;
-  return (
-    <div className="dr-running" role="status" aria-live="polite">
-      <Timer className="dr-running-icon" aria-hidden size={20} />
-      <div>
-        <strong>PAIGE is researching this.</strong>
-        <p className="dr-running-question">{question}</p>
-        <p className="dr-running-time">
-          {minutes}:{String(seconds).padStart(2, "0")} elapsed — bounded by the engine's
-          time and search limits{overBudget ? "; taking longer than usual — the result may have been abandoned in transport" : ""}.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-const FAIL_WORDS: Record<string, { title: string; body: string }> = {
-  engine_unreachable: {
-    title: "Research could not run",
-    body: "The research engine could not be reached. Check your connection and try again — nothing was charged or saved.",
-  },
-  search_unconfigured: {
-    title: "Live web search is not configured",
-    body: "PAIGE's cited research needs the web-search provider, which is not configured for this platform yet. Ask in Chat for a same-session answer from her own knowledge, clearly flagged as not freshly sourced.",
-  },
-  workspace_changed: {
-    title: "Your workspace changed mid-research",
-    body: "The research was started under a different workspace. Its result stays with that workspace — it has not been shown or saved here.",
-  },
-  engine_error: {
-    title: "The research engine reported an error",
-    body: "The engine stopped honestly and nothing was saved. Check the question and try again; if it repeats, the provider may be unreachable.",
-  },
-  not_signed_in: {
-    title: "Sign in to research",
-    body: "Research runs are saved to your workspace, so you need to be signed in first.",
-  },
-};
-
-function FailedPanel({ reason, onRetry }: { reason: string; onRetry: () => void }) {
-  const words = FAIL_WORDS[reason] ?? {
-    title: "Research stopped",
-    body: "The engine reported an honest stop. Nothing was saved unless a run appears in the list below.",
-  };
-  return (
-    <div className="dr-failed" role="alert">
-      <AlertTriangle aria-hidden size={18} />
-      <div>
-        <strong>{words.title}</strong>
-        <p>{words.body}</p>
-      </div>
-      <button type="button" onClick={onRetry}>Try again</button>
-    </div>
-  );
-}
 
 function RunCard({ row, onOpen }: { row: ResearchRunRow; onOpen: (id: string) => void }) {
   return (
@@ -287,31 +157,21 @@ function DetailBody({ run }: { run: NonNullable<ReturnType<typeof useDeepResearc
 
 export function ResearchView({ activeTenantId }: { activeTenantId: string | null }) {
   const research = useDeepResearch(activeTenantId);
-  const { rows, listError, refresh, detail, detailError, open, close, phase, start, reset } = research;
-  const [showStart, setShowStart] = useState(false);
+  const { rows, listError, refresh, detail, detailError, open, close } = research;
   const detailRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => { if (detail) detailRef.current?.focus(); }, [detail]);
-
-  const busy = phase.kind === "running";
-  const runningQuestion = phase.kind === "running" ? phase.question : null;
-  const startedAt = phase.kind === "running" ? phase.startedAt : null;
-
-  const handleStart = (question: string, depth: ResearchDepth) => {
-    close();
-    void start(question, depth);
-  };
 
   return (
     <div className="spw-management-view" data-research-view="">
       <header className="spw-view-head">
         <div>
-          <span className="spw-eyebrow">Cited investigation</span>
-          <h2>Deep Research</h2>
+          <span className="spw-eyebrow">Evidence library</span>
+          <h2>Research</h2>
           <p>
-            Assign PAIGE's research engine a question. It plans, searches the live web,
-            reads the strongest sources, and returns findings whose every claim carries an
-            openable citation — saved to this workspace's research history.
+            Every investigation PAIGE runs in Chat lands here — the question, the
+            findings with their citations, and the sources behind them. Ask PAIGE to
+            research something deeply and the saved run appears in this library.
           </p>
         </div>
         <span className="spw-truth spw-truth-live">Workspace-scoped</span>
@@ -320,32 +180,6 @@ export function ResearchView({ activeTenantId }: { activeTenantId: string | null
       <div className="spw-scroll">
         <div className="dr-layout">
           <section className="spw-stack" aria-label="Research runs">
-            {phase.kind === "failed" && <FailedPanel reason={phase.reason} onRetry={reset} />}
-
-            {phase.kind === "running" && startedAt != null && runningQuestion != null && (
-              <RunningPanel question={runningQuestion} startedAt={startedAt} timeoutMs={research.runTimeoutMs} />
-            )}
-
-            {phase.kind === "done" && (
-              <div className={`dr-didrun ${phase.persisted ? "" : "dr-didrun-unsaved"}`} role="status">
-                {phase.persisted
-                  ? <><CheckCircle2 aria-hidden size={16} /><span>Research completed and saved.</span></>
-                  : <><AlertTriangle aria-hidden size={16} /><span>Research completed, but saving could not be confirmed — the result below is shown unsaved. It has not been added to this workspace's history.</span></>}
-              </div>
-            )}
-
-            {!showStart && !busy && phase.kind !== "done" && phase.kind !== "failed" && (
-              <div className="dr-cta">
-                <button type="button" className="dr-primary" onClick={() => setShowStart(true)}>
-                  <Search aria-hidden size={14} /> Start research
-                </button>
-              </div>
-            )}
-
-            {showStart && !busy && (
-              <StartPanel busy={busy} onStart={handleStart} onDismiss={() => setShowStart(false)} dismissLabel="Cancel" />
-            )}
-
             {detail && (
               <article className="spw-source-card dr-detail-card" ref={detailRef} tabIndex={-1}>
                 <div className="spw-card-row">
@@ -355,7 +189,7 @@ export function ResearchView({ activeTenantId }: { activeTenantId: string | null
                     <p>
                       {formatDate(detail.created_at)}
                       {detail.domain && detail.domain !== "general" ? ` · ${detail.domain}` : ""}
-                      {` · run by ${detail.caller === "workspace" ? "this workspace" : "PAIGE chat"}`}
+                      {` · run in ${detail.caller === "chat" || detail.caller === "subagent" ? "PAIGE chat" : "this workspace"}`}
                     </p>
                   </div>
                   <span className={`spw-truth ${detail.entity_profile ? "spw-truth-proposed" : "spw-truth-live"}`}>
@@ -395,8 +229,8 @@ export function ResearchView({ activeTenantId }: { activeTenantId: string | null
                 <Search aria-hidden size={24} />
                 <strong>No saved research yet</strong>
                 <span>
-                  Ask PAIGE to investigate a market, company, person, competitor, vendor,
-                  regulation, location, or strategic question.
+                  Ask PAIGE in Chat — "research this deeply", "do a deep dive", or just a
+                  question that deserves real sources — and the saved run appears here.
                 </span>
               </div>
             )}
@@ -410,9 +244,9 @@ export function ResearchView({ activeTenantId }: { activeTenantId: string | null
             <span className="spw-truth spw-truth-live">One research engine</span>
             <h3>The same engine chat uses</h3>
             <p>
-              Deep Research here and PAIGE's chat research run one cited engine — planned
-              searches, reliability-ranked sources, and a validation gate that refuses to
-              invent. One history for the workspace, however it was started.
+              Ask in Chat — PAIGE decides when a question deserves real sources — and the
+              saved run lands here: planned searches, reliability-ranked sources, and a
+              validation gate that refuses to invent. One history, however it was started.
             </p>
             <hr />
             <span className="spw-truth spw-truth-neutral">Bounded by design</span>

@@ -113,7 +113,7 @@ SELECT is(has_table_privilege('service_role', 'public.research_sources', 'UPDATE
 SELECT is(has_table_privilege('service_role', 'public.research_sources', 'DELETE'), false,
   'minimality: service_role does NOT hold DELETE on research_sources');
 SELECT is(has_table_privilege('authenticated', 'public.research_runs', 'SELECT'), false,
-  'D: authenticated holds NO base-table read on research_runs (reads are the governed RPCs')');
+  'D: authenticated holds NO base-table read on research_runs (reads go through the governed RPCs)');
 SELECT is(has_table_privilege('authenticated', 'public.research_sources', 'SELECT'), false,
   'E: authenticated holds NO base-table read on research_sources');
 

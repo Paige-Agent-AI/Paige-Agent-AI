@@ -27,7 +27,7 @@ MOTION_PURPOSE: NONE: no new animation.
 PROTECTED_SEAMS: Affected: scoped invoice readers/public-token checks, canonical financial readback, privacy, document rendering, responsive geometry/accessibility. Preserved unchanged: authentication/account choice, entitlement/platform billing/provisioning, approval/autonomy/Spine mutations/Rail writers, chat transcript/Live Conversation, Secure Browser/Vault, provider sends and durable scheduling/recovery.
 INTERNAL_BUILD_IDENTITY: acf6c2efeca5c62ffc265d244cfb60a258f5cb7d; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20270555000000 deploy after merge); edge=PROOF_OWED(sales-invoice-document deployment after merge); evidence=this record.
 RELEASE_CHANNEL: development: implementation and isolated proof only.
-RELEASE_CLASSIFICATION: maintenance: existing invoice/payment evidence presentation correction.
+RELEASE_CLASSIFICATION: patch: existing invoice/payment evidence presentation correction.
 CUSTOMER_RELEASE_IDENTITY: none: authenticated customer outcome not proven.
 RELEASE_NOTE_REQUIRED: no: no customer release claim.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: local read/presentation implementation; authenticated usability PROOF OWED; provider evidence unchanged.

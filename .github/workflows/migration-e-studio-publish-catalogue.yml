@@ -2,8 +2,9 @@ name: Migration E studio publish catalogue
 on:
   pull_request:
     paths:
-      - 'supabase/migrations/20270547000000_studio_publish_autonomy_catalogue.sql'
+      - 'supabase/migrations/20270548000000_studio_publish_autonomy_catalogue.sql'
       - 'supabase/migrations/20270546000000_studio_content_workspace_authority.sql'
+      - 'supabase/migrations/20270547000002_sales_collection_autonomy_catalogue.sql'
       - 'supabase/tests/migration_e_studio_publish_catalogue.sql'
       - '.github/workflows/migration-e-studio-publish-catalogue.yml'
   workflow_dispatch:

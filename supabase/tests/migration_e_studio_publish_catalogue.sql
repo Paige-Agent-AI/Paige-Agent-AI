@@ -1,21 +1,25 @@
 -- ============================================================================
 -- Migration E (Vibe Studio V2b) — repeatable proof for
---   20270547000000_studio_publish_autonomy_catalogue.sql
+--   20270548000000_studio_publish_autonomy_catalogue.sql
 --
 -- Run against the REAL migration (\ir, twice: clean application + replay) on an isolated database
--- with synthetic fixtures only (§63). The previous canonical bodies are Migration D's
--- (20270546000000), applied first and snapshotted, so "unchanged" is measured, not asserted. The
--- platform helpers the catalogue reader calls are the production copies Migration D's suite uses.
+-- with synthetic fixtures only (§63). The previous state is production's: Migration D
+-- (20270546000000), then the Sales Collections catalogue wrapper (20270547000002), applied first and
+-- snapshotted, so "unchanged" is measured, not asserted. 20270547000000 and 20270547000001 (the rest
+-- of Sales Collections) define neither function this migration touches, so they are not loaded; the
+-- md5 checks in section 0 prove the loaded state equals production's anyway. The platform helpers
+-- the catalogue reader calls are the production copies Migration D's suite uses.
 --
 -- What it proves:
---   0. The previous bodies applied here are byte-identical to production's live ones
---      (pg_get_functiondef md5, read 2026-10-04), so "previous" means what prod runs.
+--   0. The previous functions loaded here are byte-identical to production's live ones
+--      (md5, read 2026-10-04 after 20270547000002 landed), so "previous" means what prod runs.
 --   1. _workspace_event_display: each of the five new keys x every capability outcome reads its own
 --      line; every other (source, outcome, capability) answer is identical to the previous body; an
 --      unknown key keeps the generic line; no internal names or banned words in a new line.
---   2. list_tool_autonomy: the previous catalogue plus exactly five Studio rows, labels exact; every
---      other row (modes included) identical; a stored mode on a new key is read back; the tenant
---      mismatch guard is unchanged.
+--   2. list_tool_autonomy: the previous catalogue (Migration D's rows AND the three Sales Payments
+--      rows) plus exactly five Studio rows, labels exact; every other row (modes included)
+--      identical; the predecessor is preserved verbatim and private; a stored mode on a new key is
+--      read back; the tenant mismatch guard is unchanged.
 --   3. Grants and function attributes unchanged.
 -- ============================================================================
 \set ON_ERROR_STOP on
@@ -158,8 +162,9 @@ CREATE POLICY marketing_content_tenant_manage ON public.marketing_content
   WITH CHECK (public.is_tenant_admin(tenant_id) OR public.is_platform_owner());
 
 
--- ── The PREVIOUS canonical bodies (Migration D), applied first ───────────────────────────────────
+-- ── The PREVIOUS canonical state (Migration D, then the Sales catalogue wrapper), applied first ──
 \ir ../migrations/20270546000000_studio_content_workspace_authority.sql
+\ir ../migrations/20270547000002_sales_collection_autonomy_catalogue.sql
 
 -- ── Synthetic fixtures ───────────────────────────────────────────────────────────────────────────
 -- TA, TB: standalone workspaces. e001 owner of TA (active TA) · e003 plain member of TA (active TA).
@@ -213,8 +218,12 @@ END $$;
 DO $$ BEGIN
   PERFORM pg_temp.chk(md5(pg_get_functiondef('public._workspace_event_display(text,text,text)'::regprocedure)) = '3a9888e9db334b177ab9d71acc2f60dc',
     'previous Rail body = production (md5 3a9888e9..., 2026-10-04)');
-  PERFORM pg_temp.chk(md5(pg_get_functiondef('public.list_tool_autonomy(uuid)'::regprocedure)) = '94ee6854d6a6db89536e19e74ad8970d',
-    'previous catalogue body = production (md5 94ee6854..., 2026-10-04)');
+  PERFORM pg_temp.chk(md5(pg_get_functiondef('public.list_tool_autonomy(uuid)'::regprocedure)) = 'a8fcfafeaccff30656b68f7da9554a18',
+    'previous catalogue wrapper = production (md5 a8fcfafe..., 2026-10-04, after 20270547000002)');
+  PERFORM pg_temp.chk(md5(pg_get_functiondef('public._list_tool_autonomy_before_sales_collections(uuid)'::regprocedure)) = '704d3ee28c285f41a68d16d3a9fdec6d',
+    'previous catalogue predecessor = production (md5 704d3ee2..., 2026-10-04)');
+  PERFORM pg_temp.chk(to_regprocedure('public._list_tool_autonomy_before_studio_publish(uuid)') IS NULL,
+    'the Studio predecessor does not exist before this migration');
 END $$;
 
 -- ── Snapshots of the previous bodies ─────────────────────────────────────────────────────────────
@@ -228,6 +237,12 @@ INSERT INTO _new_keys VALUES
   ('studio_image_publish',    'Published your image',           'publish your image',
      'Your image is live. Anyone with the link can see it now.'),
   ('studio_image_unpublish',  'Took your image offline',        'take your image offline',       NULL);
+
+CREATE TEMP TABLE _sales_rows (tool_key text PRIMARY KEY, label text);
+INSERT INTO _sales_rows VALUES
+  ('sales_save_collection_terms',    'Save customer collection terms'),
+  ('sales_stage_collection_import',  'Review imported customer collection records'),
+  ('sales_commit_collection_import', 'Import reviewed customer collection records');
 
 CREATE TEMP TABLE _new_rows (tool_key text PRIMARY KEY, label text, category text);
 INSERT INTO _new_rows VALUES
@@ -254,13 +269,15 @@ CROSS JOIN unnest(ARRAY['n8n_run_workflow','n8n_create_workflow','n8n_update_wor
 DO $$ BEGIN PERFORM set_config('test.uid', '', false); PERFORM set_config('test.role', '', false); END $$;
 CREATE TEMP TABLE _lta_before AS
 SELECT tool_key, label, category, mode, is_default FROM public.list_tool_autonomy('00000000-0000-4000-8000-00000000d0a1');
+CREATE TEMP TABLE _src_before AS
+SELECT md5(prosrc) AS src FROM pg_proc WHERE oid = 'public.list_tool_autonomy(uuid)'::regprocedure;
 CREATE TEMP TABLE _acl_before AS
 SELECT p.oid::regprocedure::text AS fn, p.proacl::text AS acl, p.prosecdef, p.provolatile, p.proconfig::text AS cfg, p.proowner
 FROM pg_proc p WHERE p.oid IN ('public._workspace_event_display(text,text,text)'::regprocedure, 'public.list_tool_autonomy(uuid)'::regprocedure);
 
 -- ── The REAL migration, twice (clean application + replay) ───────────────────────────────────────
-\ir ../migrations/20270547000000_studio_publish_autonomy_catalogue.sql
-\ir ../migrations/20270547000000_studio_publish_autonomy_catalogue.sql
+\ir ../migrations/20270548000000_studio_publish_autonomy_catalogue.sql
+\ir ../migrations/20270548000000_studio_publish_autonomy_catalogue.sql
 
 -- ═════════════════════════════════════════════════════════════════════════════════════════════════
 -- 1. Rail copy
@@ -321,6 +338,12 @@ BEGIN
   SELECT count(*) INTO _gone FROM (SELECT * FROM _lta_before EXCEPT SELECT * FROM _lta_after) x;
   SELECT count(*) INTO _extra FROM (SELECT * FROM _lta_after EXCEPT SELECT * FROM _lta_before) x;
   PERFORM pg_temp.chk(_before >= 150, format('the previous catalogue was read (%s rows)', _before));
+  PERFORM pg_temp.chk((SELECT count(*) FROM _lta_before b JOIN _sales_rows s ON s.tool_key = b.tool_key AND s.label = b.label
+      AND b.category = 'Payments') = 3, 'the previous catalogue carried the three Sales Payments rows');
+  PERFORM pg_temp.chk((SELECT count(*) FROM _lta_after a JOIN _sales_rows s ON s.tool_key = a.tool_key AND s.label = a.label
+      AND a.category = 'Payments') = 3, 'the three Sales Payments rows survive');
+  PERFORM pg_temp.chk(EXISTS (SELECT 1 FROM _lta_after WHERE tool_key = 'growth_page_publish' AND label = 'Publish a landing page'),
+    'Migration D rows survive');
   PERFORM pg_temp.chk(NOT EXISTS (SELECT 1 FROM _lta_before b JOIN _new_rows n USING (tool_key)), 'previous catalogue listed none of the five');
   PERFORM pg_temp.chk(_after = _before + 5, format('exactly five rows added (before %s, after %s)', _before, _after));
   PERFORM pg_temp.chk(_gone = 0 AND _extra = 5, format('every previous row identical, modes included (gone %s, extra %s)', _gone, _extra));
@@ -342,6 +365,16 @@ BEGIN
   PERFORM pg_temp.chk(pg_temp.run('00000000-0000-4000-8000-00000000e001', 'authenticated', 'authenticated',
       $q$SELECT count(*)::text FROM public.list_tool_autonomy(NULL) WHERE tool_key = 'growth_form_unpublish'$q$) = 'ok:1',
     'a signed-in owner reads the new rows for their own workspace');
+  PERFORM pg_temp.chk(pg_temp.run('00000000-0000-4000-8000-00000000e001', 'authenticated', 'authenticated',
+      $q$SELECT count(*)::text FROM public.list_tool_autonomy(NULL)$q$) = 'ok:' || _after,
+    'a signed-in owner reads the whole catalogue, old and new rows alike');
+  -- The predecessor is the previous wrapper, verbatim, renamed once (a replay does not re-wrap).
+  PERFORM pg_temp.chk((SELECT md5(prosrc) FROM pg_proc WHERE oid = 'public._list_tool_autonomy_before_studio_publish(uuid)'::regprocedure)
+      = (SELECT src FROM _src_before), 'the Studio predecessor is the previous catalogue, verbatim');
+  PERFORM pg_temp.chk((SELECT md5(prosrc) FROM pg_proc WHERE oid = 'public._list_tool_autonomy_before_studio_publish(uuid)'::regprocedure)
+      = '4fef99f8588595fab2d136da93ada8ce', 'the Studio predecessor source = production''s live catalogue source');
+  PERFORM pg_temp.chk((SELECT count(*) FROM pg_proc WHERE proname LIKE '\_list\_tool\_autonomy\_before\_%') = 2,
+    'exactly two predecessors (sales, studio): the replay did not wrap twice');
 END $$;
 
 -- ═════════════════════════════════════════════════════════════════════════════════════════════════
@@ -363,6 +396,14 @@ DO $$ BEGIN
   PERFORM pg_temp.chk((SELECT prosecdef AND provolatile = 's' AND proconfig = ARRAY['search_path=public'] FROM pg_proc
      WHERE oid = 'public.list_tool_autonomy(uuid)'::regprocedure), 'catalogue: STABLE SECURITY DEFINER, search_path=public');
   PERFORM pg_temp.chk((SELECT count(*) FROM pg_proc WHERE proname IN ('list_tool_autonomy','_workspace_event_display')) = 2, 'no new overload');
+  PERFORM pg_temp.chk(NOT has_function_privilege('anon',          'public._list_tool_autonomy_before_studio_publish(uuid)', 'EXECUTE')
+     AND NOT has_function_privilege('authenticated', 'public._list_tool_autonomy_before_studio_publish(uuid)', 'EXECUTE')
+     AND     has_function_privilege('service_role',  'public._list_tool_autonomy_before_studio_publish(uuid)', 'EXECUTE')
+     AND NOT EXISTS (SELECT 1 FROM pg_proc p, aclexplode(p.proacl) a
+                     WHERE p.oid = 'public._list_tool_autonomy_before_studio_publish(uuid)'::regprocedure AND a.grantee = 0),
+    'the Studio predecessor is private: no PUBLIC, anon or authenticated EXECUTE; service_role keeps it');
+  PERFORM pg_temp.chk((SELECT prosecdef AND provolatile = 's' AND proconfig = ARRAY['search_path=public'] FROM pg_proc
+     WHERE oid = 'public._list_tool_autonomy_before_studio_publish(uuid)'::regprocedure), 'the Studio predecessor keeps its attributes');
 END $$;
 
 -- ── Verdict ──────────────────────────────────────────────────────────────────────────────────────

@@ -1,0 +1,37 @@
+name: Migration D studio authority
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/20270546000000_studio_content_workspace_authority.sql'
+      - 'supabase/migrations/20270105000000_campaign_brief_verified_rail_copy.sql'
+      - 'supabase/migrations/20270543000003_sales_invoice_autonomy_catalogue.sql'
+      - 'supabase/tests/migration_d_studio_authority.sql'
+      - '.github/workflows/migration-d-studio-authority.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-authority-proof:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        # Synthetic fixtures only; the suite's isolated-DB guard refuses any other database.
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: migration_d_studio_authority_contract
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: migration_d_studio_authority_contract
+    steps:
+      - uses: actions/checkout@v4
+      - name: Migration D — save authority, marketing_content RLS, Rail copy, catalogue, grants (isolated DB, never production)
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/tests/migration_d_studio_authority.sql

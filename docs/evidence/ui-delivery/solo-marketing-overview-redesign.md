@@ -11,7 +11,7 @@ PAIGE_UI_DESIGN: PASS: Impeccable context loaded and craft-floor.md read before 
 MATERIAL_FLOW_CHANGE: YES: Overview is rebuilt to the owner's reference; its Offers and Pipeline links follow the account's menu (Sales for a standalone Solo account, Marketing's own tabs otherwise)
 FLOW_PROTOTYPE: PASS: the owner supplied the reference design itself (2026-10-03 screenshot); rendered frames of the built page were shown to the owner for approval before merge
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: a Solo owner sees in one screen what Marketing produced in the period, where leads came from, what is stuck and the one next move; primary act is Create campaign brief (gold), the next-step band carries the recommended move (violet)
-VISUAL_DIRECTION: PASS: the existing Solo Mineral/Obsidian world (solo-tokens.css) with the owner's reference layout; chart colours are new --chart-1..4, --chart-other and --chart-untagged tokens in solo-tokens.css, light and dark; no hex in the new component rules; gold only on Create campaign brief
+VISUAL_DIRECTION: PASS: the existing Solo Mineral/Obsidian world (solo-tokens.css) with the owner's reference layout; chart colours are --chart-1..4, --chart-other and --chart-untagged tokens in a dedicated src/solo/solo-chart-tokens.css, light and dark; no hex in the new component rules; gold only on Create campaign brief
 AUTOMATED_EVIDENCE: PASS: marketing-overview-model.test.ts (9 tests: day bucketing, previous-period coverage, floor, case-insensitive source folding, form ranking, brief statuses, a US daylight-saving change, a future-stamped lead, a full read reaching past the period) and growth2.render.test.tsx Marketing views (13 tests: figures, floors on every panel, period switch, brief hand-off, next step, Pipeline routing by tier, first use); the daylight-saving, future-row and coverage tests were each shown to fail with the defect reinstated
 STATIC_EVIDENCE: PASS: tsc ratchet no new errors; eslint 0 errors on changed files (one pre-existing warning in growth2.tsx, line 24); gold-discipline lint clean; impeccable detect exit 0
 RENDERED_EVIDENCE: PASS: scripts/live-drive/marketing-views-drive.mjs = 764/764 checks: Overview, Campaigns, Lead capture and Analytics x 4 viewports x 3 PAIGE postures x 2 themes plus first-use, loading, error and read-only; new for Overview - both donuts, the bars and the opportunities line drawn in every frame (24 checks), measured WCAG contrast of every new text element saved to geometry.json (worst 5.65:1, the gold act); frames captured with reduced motion so charts show their final state
@@ -40,7 +40,7 @@ ACCEPTANCE_CRITERIA: on the live app a Solo owner opens Marketing and sees the g
 MOTION_PURPOSE: PURPOSEFUL: chart entrance only (recharts default), so a reader sees the data arrive once; disabled under reduced motion
 PROTECTED_SEAMS: tested - the Campaigns snapshot read (unchanged), briefs read (unchanged), the brief hand-off (render test), Analytics figures (now share Overview's period definition; Analytics render test), Systems Check destinations (unchanged). Unaffected and named - Campaigns desk, Lead capture, Social, Pipeline desk, Sales workspace, operator analytics
 
-INTERNAL_BUILD_IDENTITY: 1e92581f2ce98e4f4e04c9ef8e30d4779cffd4c1; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=scripts/live-drive/marketing-views-drive.mjs
+INTERNAL_BUILD_IDENTITY: fb51af6b2e2b78ba59180094c4255d1dbeb0126f; deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=scripts/live-drive/marketing-views-drive.mjs
 RELEASE_CHANNEL: development: verified locally; production follows the owner's approval of the rendered frames and the merge to main
 RELEASE_CLASSIFICATION: internal-only: redesign of an existing Solo surface from records it already reads
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement or version
@@ -64,7 +64,7 @@ UNVERIFIED: authenticated production runtime (§32.c), owed to a browser-capable
   - Pipeline and Offers links route by the account's own menu: Sales only where the shell shows Sales (standalone Solo), Marketing's own tabs for every other account, decided by tenantShellDestinationsForPath through a prop from SoloApp;
   - Overview and Analytics now share one "last 30 days" definition and both merge source tags case-insensitively;
   - Draft and Paused have their own tones; grey is left to Other sources and No tracking tag;
-  - chart colours moved into solo-tokens.css; the duplicate gold rule was removed;
+  - chart colours moved into their own token file (src/solo/solo-chart-tokens.css, kept out of solo-tokens.css so the pre-existing font import is not re-flagged); the duplicate gold rule was removed;
   - the next-step copy no longer promises result tracking;
   - measured contrast is saved per frame in geometry.json.
 - **§58 call-outs for the owner.** The old Overview's "Channels" panel is folded in: forms and pages are the Published work card, Social keeps its own tab, and email and paid ads are one line under Leads by source (Analytics still lists every unavailable measure). The "Campaigns in progress" list with each brief's timing is kept, now under Campaign status.

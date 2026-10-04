@@ -33,9 +33,15 @@ function clients(f: Fake) {
   const caller = {
     rpc: (fn: string) => settle(fn === "studio_role_ok" ? f.studioRoleOk : fn === "current_user_tenant_id" ? f.currentTenant : undefined),
   };
+  type FakeQuery = {
+    select: () => FakeQuery;
+    eq: (k: string, v: unknown) => FakeQuery;
+    maybeSingle: () => Promise<{ data: unknown; error: unknown }>;
+    then: (ok: (v: unknown) => unknown, bad: (e: unknown) => unknown) => Promise<unknown>;
+  };
   const query = (table: string) => {
     const filters: Record<string, unknown> = {};
-    const q: any = {
+    const q: FakeQuery = {
       select: () => q,
       eq: (k: string, v: unknown) => { filters[k] = v; return q; },
       maybeSingle: () => {

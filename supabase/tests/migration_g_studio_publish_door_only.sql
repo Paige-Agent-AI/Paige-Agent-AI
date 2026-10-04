@@ -1,6 +1,6 @@
 -- ============================================================================
 -- Migration G (Vibe Studio V2b.1) — repeatable proof for
---   20270549000000_studio_publish_door_only.sql
+--   20270554000000_studio_publish_door_only.sql
 --
 -- Run against the REAL migration (\ir, twice: clean application + replay) on an isolated database
 -- with synthetic fixtures only (§63). The previous bodies of the eight publish/unpublish functions and
@@ -808,8 +808,8 @@ DO $$ BEGIN
 END $$;
 
 -- ── The REAL migration, twice (clean application + replay) ───────────────────────────────────────
-\ir ../migrations/20270549000000_studio_publish_door_only.sql
-\ir ../migrations/20270549000000_studio_publish_door_only.sql
+\ir ../migrations/20270554000000_studio_publish_door_only.sql
+\ir ../migrations/20270554000000_studio_publish_door_only.sql
 
 -- The new answer for every case: the publish door's call — service role, the workspace it resolved,
 -- and the person it verified.

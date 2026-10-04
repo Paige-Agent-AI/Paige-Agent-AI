@@ -2,7 +2,7 @@
 -- makes: new work starts unpublished, Publish and Unpublish are the only ways across, a page or
 -- funnel publishes what it needs, and only the workspace's owner or admin does any of it.
 --
--- Migration G (20270549000000): the eight publish/unpublish functions run only for the server —
+-- Migration G (20270554000000): the eight publish/unpublish functions run only for the server —
 -- the publish door, growth-publish-command, on its service-role client, naming the workspace it
 -- resolved and the signed-in person it verified. Every publish and unpublish below runs that way
 -- (pg_temp.door); who may publish is the person check inside the functions (_studio_publish_actor).

@@ -567,11 +567,11 @@ describe("Catalog Offers — rendered flows", () => {
     expect(harness.offers.setOfferStatus).not.toHaveBeenCalled();
   });
 
-  it("opens legacy Offers inside the canonical seven-tab Sales owner", () => {
+  it("opens legacy Offers inside the canonical six-tab Sales owner", () => {
     setCampaigns(); setOffers();
     renderAt("/solo/4471/growth/catalog");
     const tabs = [...host.querySelectorAll('.sales-tabs button')].map((b) => b.textContent?.trim());
-    expect(tabs).toEqual(["Overview", "Opportunities", "Pipeline", "Offers", "Terms & Agreements", "Payments", "Performance"]);
+    expect(tabs).toEqual(["Overview", "Opportunities", "Offers", "Terms & Agreements", "Payments", "Performance"]);
     expect(host.textContent).toContain("Foundations Coaching Program");
     expect(host.querySelector(".co-list")).not.toBeNull();
   });

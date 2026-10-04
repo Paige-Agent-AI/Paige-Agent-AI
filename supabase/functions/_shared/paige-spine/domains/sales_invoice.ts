@@ -4,18 +4,20 @@ import {defineCapability, objectInputSchema, ownerGrantablePermission} from '../
 // Declarations reflect the bound dispatch, not authenticated delivery. The Sales surface remains
 // PROOF_OWED; no processor charge, delivered email, link creation or Mind capability is claimed.
 const mutations = [
-  ['publish', 'sales_publish_invoice'], ['record_manual_payment', 'sales_record_manual_payment'],
+  ['settings_update','sales_update_invoice_settings'], ['publish', 'sales_publish_invoice'], ['record_manual_payment', 'sales_record_manual_payment'],
   ['reverse_manual_payment', 'sales_reverse_manual_payment'], ['void', 'sales_void_invoice'],
 ] as const;
 export const SALES_INVOICE_CAPABILITIES: readonly SpineCapability[] = [
+  {key:'sales_invoice.preferences_read',readiness:'none',domain:'sales_invoice',owner:'sales',humanSurface:'/solo/:account/sales/payments',action:{classification:'read',executor:'public.read_sales_invoice_preferences',chatTool:'read_sales_invoice_preferences',riskPolicyKey:'read_only',approvalAuthority:'none',idempotency:'Authenticated current tenant and owner/admin reader.'},outcome:{kinds:['available','refused','failed'],projector:'public.read_sales_invoice_preferences',railVisibility:'Scoped preferences only; never changes issued documents.'},chatBinding:'LIVE',mindBinding:'UNAVAILABLE',sharedPrimitiveChange:'NONE',maturity:'PARTIAL'},
   { key: 'sales_invoice.read', domain: 'sales_invoice', owner: 'sales', humanSurface: '/solo/:account/sales?tab=payments',
     action: { classification: 'read', executor: 'public.read_sales_invoice', chatTool: 'read_sales_invoice', riskPolicyKey: 'read_only', approvalAuthority: 'none', idempotency: 'Read-only; authenticated tenant and owner/admin role are revalidated by the RPC.' },
     outcome: { kinds: ['available', 'refused', 'failed'], projector: 'public.read_sales_invoice', railVisibility: 'Only safe current invoice and manual receipt facts; manual settlement is not processor verification.' },
     chatBinding: 'LIVE', mindBinding: 'UNAVAILABLE', sharedPrimitiveChange: 'NONE', maturity: 'PARTIAL' },
   ...mutations.map(([verb, chatTool]): SpineCapability => ({
+    ...(verb === 'settings_update' ? {readiness:'none' as const} : {}),
     key: `sales_invoice.${verb}`, domain: 'sales_invoice', owner: 'sales', humanSurface: '/solo/:account/sales?tab=payments',
     action: { classification: 'mutate', executor: 'public.execute_sales_invoice_command', chatTool, riskPolicyKey: 'high', approvalAuthority: 'chat-canonical', idempotency: 'Canonical tenant + actor + operation UUID and stored command result. Chat derives operation UUID from stable user turn and command; approved calls reuse stored arguments. Only sales-invoice-command atomically consumes the canonical approval.' },
-    outcome: { kinds: ['published', 'manual_payment_recorded', 'manual_payment_reversed', 'voided', 'refused', 'outcome_unknown'], projector: 'public.read_sales_invoice_command_result', railVisibility: 'Canonical governed command receipt and readback only. Never claims money was charged, refunded, sent, or provider verified.' },
+    outcome: { kinds: ['settings_saved', 'published', 'manual_payment_recorded', 'manual_payment_reversed', 'voided', 'refused', 'outcome_unknown'], projector: 'public.read_sales_invoice_command_result', railVisibility: 'Canonical governed command receipt and readback only. Never claims money was charged, refunded, sent, or provider verified.' },
     chatBinding: 'LIVE', mindBinding: 'UNAVAILABLE', sharedPrimitiveChange: 'NONE', maturity: 'PARTIAL',
   })),
   { key: 'sales_invoice.email_send', domain: 'sales_invoice', owner: 'sales', humanSurface: '/solo/:account/sales?tab=payments',
@@ -36,7 +38,7 @@ const INVOICE_INPUT = {invoice_id:{type:'string',format:'uuid'},expected_version
 
 export const SALES_INVOICE_PUBLISH_CAPABILITY = defineCapability({
  identity:{id:'sales_invoice.publish',version:1,domain:'sales_invoice',owner:'sales',humanSurface:'/solo/:account/sales/payments',description:'Freeze the reviewed saved invoice as an issued obligation. No send or payment is claimed.'},
- input:objectInputSchema({description:'The canonical saved-version command; governance, actor, tenant, approval and generated token are server-only.',properties:{...INVOICE_INPUT,action:{type:'string',enum:['invoice.publish']}},required:['action','invoice_id','expected_version']}),
+ input:objectInputSchema({description:'The canonical saved-version command; governance, actor, tenant, approval and generated token are server-only.',properties:{...INVOICE_INPUT,action:{type:'string',enum:['invoice.publish']},template:{type:'string',enum:['classic','modern','service']}},required:['action','invoice_id','expected_version']}),
  effect:'mutation',
  governance:{actionRiskKey:'sales_publish_invoice',risk:'high',approval:'confirm',requiredPermission:ownerGrantablePermission('sales_invoice.publish.execute')},
  tenantScope:INVOICE_SCOPE,availability:INVOICE_AVAILABILITY,
@@ -89,7 +91,19 @@ export const SALES_INVOICE_CREATE_LINK_CAPABILITY = defineCapability({
  receipt:INVOICE_RECEIPT,outcome:{projector:'capability-record'},
 });
 
-export const SALES_INVOICE_KIT_CAPABILITIES = [SALES_INVOICE_PUBLISH_CAPABILITY,SALES_INVOICE_RECORD_PAYMENT_CAPABILITY,SALES_INVOICE_REVERSE_PAYMENT_CAPABILITY,SALES_INVOICE_VOID_CAPABILITY,SALES_INVOICE_CREATE_LINK_CAPABILITY] as const;
+export const SALES_INVOICE_SETTINGS_CAPABILITY = defineCapability({
+ identity:{id:'sales_invoice.settings_update',version:1,domain:'sales_invoice',owner:'sales',humanSurface:'/solo/:account/sales/payments',description:'Change tenant invoice preferences for future issuance. Issued documents remain frozen.'},
+ input:objectInputSchema({properties:{action:{type:'string',enum:['invoice.settings_update']},expected_version:{type:'integer',minimum:0},settings:{type:'object',properties:{prefix:{type:'string',pattern:'^[A-Z0-9-]{0,20}$'},next_number:{type:'integer',minimum:1,maximum:999999998},padding:{type:'integer',minimum:1,maximum:9},template:{type:'string',enum:['classic','modern','service']},accent:{type:'string',pattern:'^#[0-9a-fA-F]{6}$'},logo_data_uri:{anyOf:[{type:'string',maxLength:175000},{type:'null'}]},footer:{type:'string',maxLength:1000},payment_instructions:{type:'string',maxLength:2000}},required:['prefix','next_number','padding','template','accent','logo_data_uri','footer','payment_instructions'],additionalProperties:false}},required:['action','expected_version','settings']}),effect:'mutation',
+ governance:{actionRiskKey:'sales_update_invoice_settings',risk:'high',approval:'confirm',requiredPermission:ownerGrantablePermission('sales_invoice.settings_update.execute')},
+ tenantScope:INVOICE_SCOPE,availability:INVOICE_AVAILABILITY,providerBinding:{kind:'internal',operation:'public.execute_sales_invoice_command',connectionResolver:null},
+ idempotency:{mode:'required',key:'Actor + tenant + operation UUID + exact settings version and payload; issuance increments the same version.',readback:'public.read_sales_invoice_command_result',replay:'return_recorded_result'},receipt:INVOICE_RECEIPT,outcome:{projector:'capability-record'},
+});
+export const SALES_INVOICE_PREFERENCES_READ_CAPABILITY = defineCapability({
+ identity:{id:'sales_invoice.preferences_read',version:1,domain:'sales_invoice',owner:'sales',humanSurface:'/solo/:account/sales/payments',description:'Read tenant invoice preferences and management permission.'},
+ input:objectInputSchema({properties:{},required:[]}),effect:'read',governance:{actionRiskKey:null,risk:'read_only',approval:'none',requiredPermission:ownerGrantablePermission('sales_invoice.preferences_read.execute')},
+ tenantScope:INVOICE_SCOPE,availability:INVOICE_AVAILABILITY,providerBinding:{kind:'internal',operation:'public.read_sales_invoice_preferences',connectionResolver:null},idempotency:{mode:'not_applicable'},receipt:INVOICE_RECEIPT,outcome:{projector:'capability-record'},
+});
+export const SALES_INVOICE_KIT_CAPABILITIES = [SALES_INVOICE_SETTINGS_CAPABILITY,SALES_INVOICE_PUBLISH_CAPABILITY,SALES_INVOICE_RECORD_PAYMENT_CAPABILITY,SALES_INVOICE_REVERSE_PAYMENT_CAPABILITY,SALES_INVOICE_VOID_CAPABILITY,SALES_INVOICE_CREATE_LINK_CAPABILITY] as const;
 
 // Read and email declarations describe the existing authenticated read and governed delivery door.
 export const SALES_INVOICE_READ_CAPABILITY = defineCapability({
@@ -110,6 +124,7 @@ export const SALES_INVOICE_EMAIL_CAPABILITY = defineCapability({
 
 /** Canonical policy-key lookup for the existing Kit decision adapter; no alternate execution. */
 export const SALES_INVOICE_KIT_BY_ACTION = {
+ sales_update_invoice_settings:SALES_INVOICE_SETTINGS_CAPABILITY,
  sales_publish_invoice:SALES_INVOICE_PUBLISH_CAPABILITY,
  sales_record_manual_payment:SALES_INVOICE_RECORD_PAYMENT_CAPABILITY,
  sales_reverse_manual_payment:SALES_INVOICE_REVERSE_PAYMENT_CAPABILITY,

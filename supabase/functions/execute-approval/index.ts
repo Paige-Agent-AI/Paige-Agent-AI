@@ -110,6 +110,25 @@ Deno.serve(async (req) => {
     .update({ claimed_at: null })
     .eq("id", approvalId);
 
+  // A marketing email campaign's approval is decided by email_campaign_approve, never by flipping the row:
+  // that RPC re-derives the frozen version's content hash, requires a person who owns or administers the
+  // business, and schedules the dispatch. A DB guard refuses any other writer, so the generic acknowledge
+  // path below would fail here rather than strand the campaign. Called with the caller's own JWT (§9).
+  const campaignVersionId = approval.type === "campaign_send"
+    ? String(((approval as any).metadata ?? {}).email_campaign_version_id ?? "")
+    : "";
+  if (campaignVersionId) {
+    const { data: scheduled, error: approveErr } = await userClient.rpc("email_campaign_approve", { p_version_id: campaignVersionId });
+    if (approveErr) {
+      await releaseClaim();
+      // 200 + ok:false like the other non-terminal outcomes here, so callers can show the reason
+      // (approval_stale, not_permitted, version_not_found …) rather than a generic transport error.
+      return json(200, { ok: false, executed: false, error: approveErr.message, approval_id: approvalId });
+    }
+    // Approved and scheduled: the email-campaign-worker sends it in bounded batches. Nothing has been sent yet.
+    return json(200, { ok: true, executed: false, scheduled: true, campaign: scheduled, approval_id: approvalId });
+  }
+
   // Layer C (C5): an orchestration-sourced approval carries the held act's coordinates. Delegate to the
   // Layer-C approval-executor (the row is already atomically claimed above — that is the single-use guard;
   // the executor's approve RPC is a second idempotency guard on the ledger row). NATIVE acts this slice.

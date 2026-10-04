@@ -48,6 +48,8 @@ import { MARKETING_CONTENT_CAPABILITIES } from "./domains/marketing_content.ts";
 import { SALES_INVOICE_CAPABILITIES } from "./domains/sales_invoice.ts";
 import { SALES_COLLECTION_CAPABILITIES } from "./domains/sales_collections.ts";
 
+import { isReadinessResolverId } from "../paige-capability-status/readiness.ts";
+
 export const PAIGE_SPINE_CAPABILITIES = [PIPELINE_DEAL_STAGE_EVIDENCE, BUSINESS_CONTEXT_READINESS, TEAM_AUTHORITY, SOCIAL_PRESENCE, N8N_CONNECTION_READINESS, ...N8N_MANAGEMENT_CAPABILITIES, ...ZAPIER_MANAGEMENT_CAPABILITIES, ...GHL_MANAGEMENT_CAPABILITIES, ...BUSINESS_MISSION_CAPABILITIES, ...CAMPAIGN_BRIEF_CAPABILITIES, ...CALENDAR_PRESET_CAPABILITIES, ...CALENDAR_LINK_CAPABILITIES, ...AGREEMENT_CAPABILITIES, ...LONG_FORM_CAPABILITIES, ...GROWTH_FORM_CAPABILITIES, ...GROWTH_PAGE_CAPABILITIES, ...GROWTH_FUNNEL_CAPABILITIES, ...MARKETING_CONTENT_CAPABILITIES, ...SALES_INVOICE_CAPABILITIES, ...SALES_COLLECTION_CAPABILITIES, COMMS_MESSAGES_READ, INTEGRATIONS_LIST, INTEGRATIONS_HEALTH, CONTACT_EVENT_STATUS, ...PIPELINE_CRM_ACTIONS, ...CONTACT_CRM_ACTIONS] as const;
 
 const KEY_PATTERN = /^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$/;
@@ -70,6 +72,7 @@ export function validateSpineRegistry(capabilities: readonly SpineCapability[]):
     if (!KEY_PATTERN.test(capability.key)) findings.push(`${capability.key}: capability key must be stable domain.capability snake case`);
     if (capability.key.split(".", 1)[0] !== capability.domain) findings.push(`${capability.key}: capability key namespace must match domain ${capability.domain}`);
     if (!capability.domain || !capability.owner || !capability.humanSurface) findings.push(`${capability.key}: domain, owner, and human surface are required`);
+    if (capability.readiness !== undefined && !isReadinessResolverId(capability.readiness)) findings.push(`${capability.key}: unknown readiness resolver ${String(capability.readiness)}`);
     if (capability.evidence) {
       const evidence = capability.evidence;
       if (!evidence.signalKinds.length) findings.push(`${capability.key}: evidence requires at least one signal kind`);

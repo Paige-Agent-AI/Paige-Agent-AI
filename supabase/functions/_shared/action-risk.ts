@@ -434,6 +434,7 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   ["workflow_register", "high", "defines a new automation and where firing it points"],
   // send_invoice
   ["billing_send_invoice", "high", "emails a real person a bill and a link to pay it"],
+  ["sales_update_invoice_settings", "high", "changes future invoice numbering and document preferences"],
   ["sales_publish_invoice", "high", "issues the business's reviewed customer invoice as an immutable obligation"],
   ["sales_save_collection_terms", "high", "changes agreement-backed customer repayment terms without executing a charge"],
   ["sales_stage_collection_import", "high", "stages tenant commercial records for explicit review without publishing or verifying payment"],

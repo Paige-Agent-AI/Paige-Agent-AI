@@ -35,7 +35,7 @@ ACCEPTANCE_CRITERIA: after deploy, the panel and chat publish as before, and a d
 MOTION_PURPOSE: none
 PROTECTED_SEAMS: _growth_admin_tenant unchanged; _growth_page_go_live / _growth_form_go_live unchanged; door readback, receipt and audit unchanged
 
-INTERNAL_BUILD_IDENTITY: 80ce3211b4bf997992fa07e17ee1a85d7a70cbe0 plus this record; deployment=local; environment=development; migrations=PROOF_OWED(20270549000000 applies on merge through deploy-migrations); edge=PROOF_OWED(growth-publish-command deploys on merge through deploy-edge-functions); evidence=docs/evidence/ui-delivery/vibe-studio-v2b1-publish-door-only.md
+INTERNAL_BUILD_IDENTITY: 80ce3211b4bf997992fa07e17ee1a85d7a70cbe0 plus this record; deployment=local; environment=development; migrations=PROOF_OWED(20270554000000 applies on merge through deploy-migrations); edge=PROOF_OWED(growth-publish-command deploys on merge through deploy-edge-functions); evidence=docs/evidence/ui-delivery/vibe-studio-v2b1-publish-door-only.md
 RELEASE_CHANNEL: development: verified locally and by an independent reviewer before merge; deploys through CI on merge (pre-launch merge-on-verified, §4)
 RELEASE_CLASSIFICATION: internal-only: no customer release identity
 CUSTOMER_RELEASE_IDENTITY: none: internal-only

@@ -118,9 +118,12 @@ describe("INT-104 Live final-answer streaming preserves the canonical tool gate"
     expect(writes).toHaveLength(1);
   });
   it("shares the success projection and drops CRM readback and locator from history", () => {
-    const make = new Function("stepTrace", "queuedApprovals", "confirmTrace", "crmResultTrace", js(`return ${initializer("assistantTurnMetadata")};`));
+    // R2b: assistantTurnMetadata's bundleRef now also spreads the run REFERENCE from
+    // researchTrace (the crmResultTrace pattern) — the harness supplies the new seam
+    // variable like every other one; an empty array must project to no research key.
+    const make = new Function("stepTrace", "queuedApprovals", "confirmTrace", "crmResultTrace", "researchTrace", js(`return ${initializer("assistantTurnMetadata")};`));
     const result = { action: "crm_update", outcome: "success", receipt_recorded: true, external_effect: false, readback: { private: "fixture" }, record_locator: "private-fixture", contact_id: "private-fixture" };
-    const project = make([{ kind: "thought", group: "owner" }, { kind: "action", group: "client" }, { kind: "action", group: "client" }], [], [], [result]);
+    const project = make([{ kind: "thought", group: "owner" }, { kind: "action", group: "client" }, { kind: "action", group: "client" }], [], [], [result], []);
     expect(project()).toEqual({ surfaces: ["client"], bundleRef: { approval_queued: [], paige_confirm: [], paige_crm_result: [{ action: "crm_update", outcome: "success", receipt_recorded: true, external_effect: false }] } });
     expect(code).toContain("persistAssistantTurn(finalAssistantText, assistantTurnMetadata())");
   });

@@ -13,7 +13,7 @@ function harness(rows: unknown[] = []) {
   for (const name of ['select', 'eq', 'in', 'is', 'not', 'gt']) query[name] = (...args: unknown[]) => { predicates.push([name, ...args]); return query; };
   query.limit = async (...args: unknown[]) => { predicates.push(['limit', ...args]); return { data: rows, error: null }; };
   const calls: unknown[] = [];
-  return { predicates, calls, deps: { admin: { from: () => query }, caller: { functions: { invoke: async (_name: string, options: unknown): Promise<{data: Record<string, unknown>; error: null}> => { calls.push(options); return { data: { ok: true, outcome: 'published', access_token: 'secret' }, error: null }; } }, rpc: async () => ({ data: { id: invoice, status: 'issued' }, error: null }) } } };
+  return { predicates, calls, deps: { admin: { from: () => query }, caller: { functions: { invoke: async (_name: string, options: unknown): Promise<{data: Record<string, unknown>; error: null}> => { calls.push(options); return { data: { ok: true, outcome: 'published', access_token: 'secret' }, error: null }; } }, rpc: async ():Promise<{data:unknown;error:unknown}> => ({ data: { id: invoice, status: 'issued' }, error: null }) } } };
 }
 describe('Sales invoice canonical Chat door', () => {
   it('records imported partial receipts through the canonical Collections door and same payment policy',async()=>{
@@ -126,4 +126,11 @@ describe('Sales invoice canonical Chat door', () => {
       expect(result.content).toMatchObject({ outcome, success: false });
     }
   });
+});
+
+const prefs={prefix:'INV-',next_number:1,padding:4,template:'modern',accent:'#475569',logo_data_uri:null,footer:'',payment_instructions:''};
+describe('invoice preferences canonical Chat door',()=>{
+ it('binds actual read and mutation tools',()=>{expect(SALES_INVOICE_TOOLS.map(t=>t.function.name)).toContain('read_sales_invoice_preferences');expect(SALES_INVOICE_TOOLS.map(t=>t.function.name)).toContain('sales_update_invoice_settings')});
+ it('reads only caller scoped preferences and excludes embedded logo payload',async()=>{const h=harness();h.deps.caller.rpc=async()=>({data:{tenant_id:tenant,version:0,settings:{...prefs,logo_data_uri:'private-logo'},can_manage:true},error:null});const r=await dispatchSalesInvoiceChat({...context,toolName:'read_sales_invoice_preferences',args:{},approved:new Set()},h.deps as never);expect(r.content).toMatchObject({success:true,version:0,settings:{logo_available:true}});expect(JSON.stringify(r)).not.toContain('private-logo');expect(h.calls).toHaveLength(0)});
+ it('executes canonical settings without invented invoice ID and projects only saved version',async()=>{const c={action:'invoice.settings_update',expected_version:0,settings:prefs};const h=harness([{fingerprint,args:{command:c,operation_id:operation,expected_tenant_id:tenant,approval_subject:'invoice.settings_update:'+tenant}}]);h.deps.caller.functions.invoke=async(_n,options)=>{h.calls.push(options);return {data:{ok:true,preferences:{tenant_id:tenant,version:1,settings:{logo_data_uri:'private'}}},error:null}};const r=await dispatchSalesInvoiceChat({...context,toolName:'sales_update_invoice_settings',args:{expected_version:0,settings:prefs}},h.deps as never);expect(h.calls).toEqual([{body:{expected_tenant_id:tenant,operation_id:operation,command:c,approved_fingerprint:fingerprint}}]);expect(r.content).toMatchObject({success:true,version:1,outcome:'settings_saved'});expect(JSON.stringify(r)).not.toContain('private')});
 });

@@ -151,7 +151,7 @@ export const CAPABILITY_STATUS_TOOL: ChatToolDef = {
   function: {
     name: "capability_status",
     description:
-      "Report truthfully what you can actually do for THIS workspace right now — across contacts and connections. Each capability comes back with an honest availability: live (do it now), needs_approval (you prepare it, the owner approves), needs_setup (a connection is required first), planned (a real capability not built yet), not_for_tier (not for this account type), or unavailable (can't be confirmed yet). Call this BEFORE claiming you can do something, so you never promise a capability you don't truly have. Resolved server-side from this workspace's tier, autonomy settings, and connection state — never guessed.",
+      "Report truthfully what you can actually do for THIS workspace and THIS person right now — every tool you hold this turn, grouped by area, plus your specialist team. Each comes back with an honest availability: live (do it now), needs_approval (you prepare it, the owner approves), needs_setup (a connection is required first), planned (not something you can do here yet), not_for_tier (needs the workspace's owner or an admin, or not for this account type), or unavailable (can't be confirmed yet). Call this BEFORE claiming you can do something, so you never promise a capability you don't truly have. Resolved server-side from the tools you were given, this workspace's approval settings and connections, and this person's role — never guessed.",
     parameters: { type: "object", properties: {} },
   },
 };

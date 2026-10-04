@@ -1,8 +1,14 @@
 // Server-side capability-status resolver (Main Paige Operational Chat · P3c) — the ASYNC gatherer.
 //
-// The pure seam (signals.ts + resolver.ts) grades already-resolved facts. paige-ai-chat assembles those
-// facts inline for the WHOLE manifest from the verified JWT. This module is the REUSABLE server-side entry
-// the same facts can be resolved through for ONE capability from a NON-JWT caller — the native-event engine
+// STATE AFTER C0a (2026-10-04) — read this first. The chat no longer uses this path: paige-ai-chat
+// projects its whole manifest from the tools it emits (projection.ts). What remains here is the hand-
+// written signals.ts manifest + resolver.ts, used for exactly ONE native binding below. That is a second
+// capability-status engine (§18) and it is known: C0b retires it by resolving Layer C's binding through
+// the projection, then deletes signals.ts, the resolver's manifest path and renderCapabilityStatusBlock.
+// Tenant authority is NOT composed here — it comes from _shared/workspace-authority.ts, the one module
+// the chat gate also uses.
+//
+// This module is the server-side entry for ONE capability from a NON-JWT caller — the native-event engine
 // (Layer C), which holds a service-role client + the authorizing person's user id + the authoritative
 // tenant id, but no JWT. It exists so Layer C resolves a native act's availability THROUGH this canonical
 // Gateway seam (owner correction, 2026-09-13) — never a Layer-C inline `availability` literal, and never a
@@ -16,6 +22,7 @@
 
 import { getActorTier, type Tier } from "../actorTier.ts";
 import { clampLaneByRisk } from "../action-risk.ts";
+import { resolveWorkspaceAuthorityAs } from "../workspace-authority.ts";
 import { buildCapabilitySignals, type CapabilityFacts } from "./signals.ts";
 import { resolveCapabilityStatus, type CapabilityStatus } from "./resolver.ts";
 
@@ -114,11 +121,12 @@ export async function resolveNativeCapabilityStatus(
     // {ok:false} (retryable) on error, because they cannot fail closed to a safe value the same way.
     const callerTier = await getActorTier(db, { actorUserId: opts.actorUserId, isPlatform: false, scopes: [] });
 
-    // owner-ops role — the SAME direct user_roles read the chat cockpit uses (service client, explicit id).
-    const { data: roleRows, error: roleErr } = await db.from("user_roles").select("role").eq("user_id", opts.actorUserId);
-    if (roleErr) return { ok: false, error: `role read failed: ${roleErr.message ?? String(roleErr)}` };
-    const roles = (Array.isArray(roleRows) ? roleRows : []).map((r: { role?: unknown }) => r.role);
-    const ownerOpsEligible = roles.includes("admin") || roles.includes("super_admin");
+    // owner-ops authority — the SAME tenant question the chat gate asks (C0a, owner ruling 2026-10-04
+    // "ADMIN IS A TENANT ROLE"), in its actor-EXPLICIT form because this path has no JWT. One module
+    // composes it for both (§18); never the tenant-agnostic global `admin` row.
+    const resolved = await resolveWorkspaceAuthorityAs(db, opts.actorUserId, opts.tenantId);
+    if ("error" in resolved) return { ok: false, error: resolved.error };
+    const ownerOpsEligible = resolved.authority.workspaceAdmin || resolved.authority.platformOperator;
 
     // Effective lane = ceiling clamp (resolve_tool_autonomy) THEN action-class clamp (clampLaneByRisk),
     // exactly as the chat manifest computes it. Service branch trusts the passed tenant (auth.uid() NULL).

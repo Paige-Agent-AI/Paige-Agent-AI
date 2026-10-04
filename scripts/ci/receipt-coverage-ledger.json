@@ -1006,6 +1006,12 @@
       "evidence": "the canonical mcp-gateway's execute action files the canonical Rail receipt (record_capability_run) for every dispatched outcome — the run body carries recorded:true/false/null honestly (supabase/functions/_shared/mcp-gateway/rail-receipt.ts; the M1 contract pins the wiring)"
     },
     {
+      "tool": "sales_update_invoice_settings",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "execute_sales_invoice_command settings branch in supabase/migrations/20270553000000_sales_invoice_preferences.sql atomically updates tenants.brand.invoice_preferences, calls canonical public.record_capability_run and persists existing invoice operation result. Isolated SQL proves receipt failure rollback and exact replay."
+    },
+    {
       "tool": "sales_publish_invoice",
       "risk": "high",
       "receipt": "emits",

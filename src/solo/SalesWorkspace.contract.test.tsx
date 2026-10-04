@@ -4,11 +4,12 @@ import { branchBySlug, subtabPath } from "../lib/routing/tierBranches";
 import { tenantShellDestinationsForPath } from "../components/tenant-shell/tenantShellRoutes";
 
 describe("Solo Sales department mount", () => {
-  it("owns the seven canonical destinations without removing mixed Marketing Catalog", () => {
-    expect(branchBySlug("solo", "sales")?.subtabs?.map(tab => [tab.slug, tab.label])).toEqual([
-      ["overview", "Overview"], ["opportunities", "Opportunities"], ["pipeline", "Pipeline"],
+  it("owns six visible canonical destinations without removing mixed Marketing Catalog", () => {
+    expect(branchBySlug("solo", "sales")?.subtabs?.filter(tab=>!tab.hidden).map(tab => [tab.slug, tab.label])).toEqual([
+      ["overview", "Overview"], ["opportunities", "Opportunities"],
       ["offers", "Offers"], ["agreements", "Terms & Agreements"], ["payments", "Payments"], ["performance", "Performance"],
     ]);
+    expect(branchBySlug("solo", "sales")?.subtabs?.find(tab=>tab.slug==="pipeline")?.hidden).toBe(true);
     expect(subtabPath("solo", "test-tenant-a", "sales", "payments")).toBe("/solo/test-tenant-a/sales/payments");
     expect(branchBySlug("solo", "growth")?.subtabs?.some(tab => tab.slug === "catalog")).toBe(true);
     expect(branchBySlug("sub_account", "sales")).toBeNull();

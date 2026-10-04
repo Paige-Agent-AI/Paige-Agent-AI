@@ -51,7 +51,7 @@ import { classifyCrmRun } from "../_shared/crm-capability-outcome.ts";
 // no real artifact (null url, empty drafts, null saved id) must degrade to an honest failure,
 // not a success-shaped receipt. ONE pure home for that decision (§18); handlers wrap their
 // own success shape in it so the model, the status label and the artifact card all inherit it.
-import { artifactProduced, ARTIFACT_ABSENT_ERROR, usableDrafts } from "../_shared/artifact-receipt.ts";
+import { artifactProduced, ARTIFACT_ABSENT_ERROR, usableDrafts, publishVerified, PUBLISH_UNVERIFIED_ERROR } from "../_shared/artifact-receipt.ts";
 import { buildFormSchemaFromQuestions } from "../_shared/growth-form-build.ts";
 import { classifyDocumentSubmissionError, validateDocumentBrief } from "../_shared/document-production.ts";
 // Wave 4 · 4a.3 — token-aware compaction trigger (§18 one home; smoke-tested per §32).
@@ -4600,6 +4600,24 @@ Rule 17 — Strongest Bureau First Rule: When coaching on application strategy P
       autonomyModeCache.set(toolKey, mode);
       return mode;
     };
+    // The ONE extra fact a lane-lifter needs (Migration A): does the Trust Compass ceiling permit
+    // acting unread at all? Same canonical resolution as above (resolve_tool_autonomy_detail reads
+    // the same internal function), asked only where a lane may be lifted. Anything but a clean
+    // `true` answers false, so a lift never happens on an unclear reply.
+    const ceilingAllowsAutoCache = new Map<string, boolean>();
+    const ceilingAllowsAuto = async (toolKey: string): Promise<boolean> => {
+      if (ceilingAllowsAutoCache.has(toolKey)) return ceilingAllowsAutoCache.get(toolKey)!;
+      let allowed = false;
+      try {
+        const { data, error } = await supabaseClient.rpc("resolve_tool_autonomy_detail", {
+          _tenant_id: personaCtx?.tenant_id ?? null,
+          _tool_key: toolKey,
+        });
+        allowed = !error && (data as { ceiling_allows_auto?: unknown } | null)?.ceiling_allows_auto === true;
+      } catch { /* keep the safe answer */ }
+      ceilingAllowsAutoCache.set(toolKey, allowed);
+      return allowed;
+    };
 
     // ── Capability manifest — the ONE home for "what can Paige do for THIS workspace?" (§18) ──────
     // Resolves each capability family's honest status from SERVER-RESOLVED truth only: the caller's
@@ -8203,6 +8221,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // #292 — inside a Studio session, give the design agent the clickable-decision tool (studio-gated
     // so main Paige never gains it). Handled as a turn-ender in the stream loop, not a backend call.
     if (studioSessionId) {
+      // document_generate has no Studio execution path (its handler refuses every Studio turn with
+      // DURABLE_DOCUMENT_STUDIO_ASYNC_UNAVAILABLE), so the design agent is not shown it at all.
+      const docIdx = toolDefs.findIndex((d: any) => d?.function?.name === "document_generate");
+      if (docIdx !== -1) toolDefs.splice(docIdx, 1);
       toolDefs.push({
         type: "function",
         function: {
@@ -9031,16 +9053,21 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             gateArgs._folderArchive = { name: archiveFolder.name, pipeline_count: folderBinding.expected_pipeline_count };
           }
           // #292 — inside a STUDIO session the creative BUILD tools run at auto. The Vibe Studio IS the
-          // propose→build surface: the customer already asked, the design agent's core says "build,
-          // don't describe", and StudioChat has no confirm affordance — so confirm-gating these stalls
-          // the agent in an endless "ready to lock these in?" loop that never generates anything (the
-          // reported bug). Drafts/creations only; a tenant 'off' is still respected, and publish
-          // (make-it-LIVE) is deliberately NOT here — going public still asks first.
+          // propose→build surface: the customer already asked and the design agent's core says "build,
+          // don't describe", so confirm-gating these stalls the agent in a "ready to lock these in?"
+          // loop. Drafts/creations only; a tenant 'off' is still respected, and publish (make-it-LIVE)
+          // is deliberately NOT here — going public still asks first.
+          //
+          // NEVER ABOVE THE CEILING (V0, 2026-10-04). The lift only replaces a tenant's own `confirm`.
+          // When the Trust Compass effective rung forbids acting unread (rung 0-1), the confirm IS the
+          // ceiling, and lifting it was a §68 bypass: on rung 1 these writes ran at auto. The lift now
+          // requires the canonical resolver's `ceiling_allows_auto`; an unclear answer allows nothing,
+          // and the Studio shows the held draft with its approval card instead.
           // Only the confirm-gated build tools need listing — the pure-draft generators
           // (growth_page_generate / growth_funnel_generate) are NOT in MUTATING_TOOLS, so they never
           // reach this block and already run at auto; adding them here would be dead code.
           const STUDIO_AUTO_TOOLS = new Set([
-            "generate_image", "content_save", "document_generate",
+            "generate_image", "content_save",
             "growth_page_save", "growth_funnel_build", "growth_form_save",
           ]);
           // …AND IT CAN NEVER LIFT A HIGH-RISK ACTION. This escalation is a fallback path — a way
@@ -9051,6 +9078,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           if (
             studioSessionId && STUDIO_AUTO_TOOLS.has(tc.function.name) && autoMode === "confirm"
             && classifyAction(tc.function.name) === "ordinary"
+            && (await ceilingAllowsAuto(tc.function.name))
           ) {
             autoMode = "auto";
           }
@@ -10193,6 +10221,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           tc.function.name === "growth_page_publish" ||
           tc.function.name === "growth_form_save" ||
           tc.function.name === "growth_form_publish" ||
+          // V0 — the funnel tools were advertised and handled below but missing from this list, so
+          // every call fell through to "Unknown tool" (0 funnels ever built in production). They are
+          // reachable now that a partial build can only report itself as partial.
+          tc.function.name === "growth_funnel_generate" ||
+          tc.function.name === "growth_funnel_build" ||
+          tc.function.name === "growth_funnel_publish" ||
           tc.function.name === "action_file" ||
           tc.function.name === "action_advance" ||
           tc.function.name === "inbox_list" ||
@@ -12150,7 +12184,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 p_id: args.page_id,
               });
               if (error) throw error;
-              result = { success: true, ...(pub as any) };
+              // V0 — "live" only on a readback that proves it: live status, publish time, public address.
+              result = publishVerified("page", pub)
+                ? { success: true, ...(pub as any) }
+                : { success: false, outcome: "unverified", error: PUBLISH_UNVERIFIED_ERROR, status: (pub as any)?.status ?? null };
             } else if (tc.function.name === "growth_form_save") {
               // A form the owner asked for, written by Paige as structured questions and validated by
               // the DEFINER RPC (§9: p_tenant_id is ignored for a signed-in caller; it pins to the
@@ -12213,7 +12250,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 p_id: args.form_id,
               });
               if (error) throw error;
-              result = { success: true, ...(pub as any) };
+              result = publishVerified("form", pub)
+                ? { success: true, ...(pub as any) }
+                : { success: false, outcome: "unverified", error: PUBLISH_UNVERIFIED_ERROR, status: (pub as any)?.status ?? null };
             } else if (tc.function.name === "growth_funnel_generate") {
               // Draft-only: plans + drafts the whole funnel (entry page + intake form) via the
               // edge fn, which reuses the page/form drafters server-side. Writes nothing (§13).
@@ -12273,85 +12312,106 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               } else {
                 _pageSlug = await _uniqueSlug("growth_pages", _page.title || args.name, "page");
               }
-              const { data: _pageRow, error: _pErr } = await supabaseClient.rpc("growth_page_upsert", {
-                p_tenant_id: _fbTid,
-                p_slug: _pageSlug,
-                p_title: _page.title || args.name || "Landing page",
-                p_blocks_json: Array.isArray(_page.blocks) ? _page.blocks : [],
-                p_theme_json: _page.theme ?? _page.theme_json ?? null,
-                p_seo_json: _page.seo ?? _page.seo_json ?? null,
-                p_id: args.page_id ?? null,
-              });
-              if (_pErr) throw _pErr;
-              const _pageId = (_pageRow as any)?.id;
-              if (!_pageId) throw new Error("The funnel's entry page didn't save.");
-              let _formId: string | null = null;
-              if (args.form && args.form.schema) {
-                let _formSlug: string;
-                if (args.form_id && _fbTid) {
-                  const { data: _exForm } = await supabaseClient.from("growth_forms").select("slug").eq("id", args.form_id).eq("tenant_id", _fbTid).maybeSingle();
-                  _formSlug = (_exForm as any)?.slug || args.form.slug || await _uniqueSlug("growth_forms", args.form.name || args.name, "form");
-                } else {
-                  _formSlug = await _uniqueSlug("growth_forms", args.form.name || args.name, "form");
-                }
-                const { data: _formRow, error: _fErr } = await supabaseClient.rpc("growth_form_upsert", {
+              // V0 TRUTH — the build is three writes (page, form, funnel), not one transaction. If any
+              // step fails after an earlier one landed, the outcome is PARTIAL and names exactly what
+              // was saved as a draft; it is never success. (An atomic build RPC is later work.)
+              const _fbWritten: { page_id?: string; form_id?: string } = {};
+              try {
+                const { data: _pageRow, error: _pErr } = await supabaseClient.rpc("growth_page_upsert", {
                   p_tenant_id: _fbTid,
-                  p_slug: _formSlug,
-                  p_name: args.form.name || "Intake form",
-                  p_schema_json: args.form.schema,
-                  p_success_action_json: null,
-                  p_auto_create_contact: true,
-                  p_pipeline_id: null,
-                  p_stage_id: null,
-                  p_id: args.form_id ?? null,
+                  p_slug: _pageSlug,
+                  p_title: _page.title || args.name || "Landing page",
+                  p_blocks_json: Array.isArray(_page.blocks) ? _page.blocks : [],
+                  p_theme_json: _page.theme ?? _page.theme_json ?? null,
+                  p_seo_json: _page.seo ?? _page.seo_json ?? null,
+                  p_id: args.page_id ?? null,
                 });
-                if (_fErr) throw _fErr;
-                _formId = (_formRow as any)?.id ?? null;
+                if (_pErr) throw _pErr;
+                const _pageId = (_pageRow as any)?.id;
+                if (!_pageId) throw new Error("The funnel's entry page didn't save.");
+                _fbWritten.page_id = _pageId;
+                let _formId: string | null = null;
+                if (args.form && args.form.schema) {
+                  let _formSlug: string;
+                  if (args.form_id && _fbTid) {
+                    const { data: _exForm } = await supabaseClient.from("growth_forms").select("slug").eq("id", args.form_id).eq("tenant_id", _fbTid).maybeSingle();
+                    _formSlug = (_exForm as any)?.slug || args.form.slug || await _uniqueSlug("growth_forms", args.form.name || args.name, "form");
+                  } else {
+                    _formSlug = await _uniqueSlug("growth_forms", args.form.name || args.name, "form");
+                  }
+                  const { data: _formRow, error: _fErr } = await supabaseClient.rpc("growth_form_upsert", {
+                    p_tenant_id: _fbTid,
+                    p_slug: _formSlug,
+                    p_name: args.form.name || "Intake form",
+                    p_schema_json: args.form.schema,
+                    p_success_action_json: null,
+                    p_auto_create_contact: true,
+                    p_pipeline_id: null,
+                    p_stage_id: null,
+                    p_id: args.form_id ?? null,
+                  });
+                  if (_fErr) throw _fErr;
+                  _formId = (_formRow as any)?.id ?? null;
+                  // A funnel asked to carry a form is not built without it: dropping the step and
+                  // reporting success would hand the owner a funnel that captures nobody.
+                  if (!_formId) throw new Error("The funnel's intake form didn't save.");
+                  _fbWritten.form_id = _formId;
+                }
+                const _steps: any[] = [{ step_type: "page", order_index: 0, page_id: _pageId }];
+                if (_formId) _steps.push({ step_type: "form", order_index: _steps.length, form_id: _formId });
+                _steps.push({ step_type: "thankyou", order_index: _steps.length });
+                let _funnelSlug: string;
+                if (args.funnel_id && _fbTid) {
+                  const { data: _exFunnel } = await supabaseClient.from("growth_funnels").select("slug").eq("id", args.funnel_id).eq("tenant_id", _fbTid).maybeSingle();
+                  _funnelSlug = (_exFunnel as any)?.slug || args.slug || await _uniqueSlug("growth_funnels", args.name, "funnel");
+                } else {
+                  _funnelSlug = await _uniqueSlug("growth_funnels", args.name, "funnel");
+                }
+                const { data: _funnelRow, error: _fnErr } = await supabaseClient.rpc("growth_funnel_upsert", {
+                  p_tenant_id: _fbTid,
+                  p_slug: _funnelSlug,
+                  p_name: args.name || "New funnel",
+                  p_goal: args.goal ?? null,
+                  p_steps: _steps,
+                  p_entry_page_id: _pageId,
+                  p_success_page_id: null,
+                  p_id: args.funnel_id ?? null,
+                });
+                if (_fnErr) throw _fnErr;
+                // Some upsert rails return the row, some return void — resolve the id by
+                // (tenant, slug) when it isn't handed back so we never report a save we can't
+                // point at (§13), exactly like the client seam's saveFunnel().
+                let _funnelId = (_funnelRow as any)?.id ?? null;
+                let _funnelSlugOut = (_funnelRow as any)?.slug ?? _funnelSlug;
+                if (!_funnelId && _fbTid) {
+                  const { data: _f } = await supabaseClient.from("growth_funnels").select("id,slug").eq("tenant_id", _fbTid).eq("slug", _funnelSlug).maybeSingle();
+                  _funnelId = (_f as any)?.id ?? null;
+                  _funnelSlugOut = (_f as any)?.slug ?? _funnelSlug;
+                }
+                // §13 — never report a save we can't point at. (Practically unreachable: the RPC
+                // RETURNS growth_funnels; this guards the "void return + re-query missed" corner.)
+                if (!_funnelId) throw new Error("The funnel saved but its id couldn't be resolved — try again.");
+                result = {
+                  success: true,
+                  funnel_id: _funnelId,
+                  funnel_slug: _funnelSlugOut,
+                  page_id: _pageId,
+                  form_id: _formId,
+                  steps: _steps.length,
+                  status: "draft",
+                  note: "Funnel saved as a draft — the entry page, the intake form, and the flow are wired. Publish it to take the whole sequence live.",
+                };
+              } catch (_fbErr) {
+                const _why = _fbErr instanceof Error ? _fbErr.message : String((_fbErr as any)?.message ?? _fbErr);
+                if (!_fbWritten.page_id) throw _fbErr; // nothing landed: the ordinary failure path
+                result = {
+                  success: false,
+                  outcome: "partial",
+                  error: `The funnel wasn't finished: ${_why}`,
+                  saved_drafts: _fbWritten,
+                  note: "Some pieces were saved as drafts but the funnel itself was not built. Say exactly which pieces were saved, that nothing went live, and offer to try the build again.",
+                };
               }
-              const _steps: any[] = [{ step_type: "page", order_index: 0, page_id: _pageId }];
-              if (_formId) _steps.push({ step_type: "form", order_index: _steps.length, form_id: _formId });
-              _steps.push({ step_type: "thankyou", order_index: _steps.length });
-              let _funnelSlug: string;
-              if (args.funnel_id && _fbTid) {
-                const { data: _exFunnel } = await supabaseClient.from("growth_funnels").select("slug").eq("id", args.funnel_id).eq("tenant_id", _fbTid).maybeSingle();
-                _funnelSlug = (_exFunnel as any)?.slug || args.slug || await _uniqueSlug("growth_funnels", args.name, "funnel");
-              } else {
-                _funnelSlug = await _uniqueSlug("growth_funnels", args.name, "funnel");
-              }
-              const { data: _funnelRow, error: _fnErr } = await supabaseClient.rpc("growth_funnel_upsert", {
-                p_tenant_id: _fbTid,
-                p_slug: _funnelSlug,
-                p_name: args.name || "New funnel",
-                p_goal: args.goal ?? null,
-                p_steps: _steps,
-                p_entry_page_id: _pageId,
-                p_success_page_id: null,
-                p_id: args.funnel_id ?? null,
-              });
-              if (_fnErr) throw _fnErr;
-              // Some upsert rails return the row, some return void — resolve the id by
-              // (tenant, slug) when it isn't handed back so we never report a save we can't
-              // point at (§13), exactly like the client seam's saveFunnel().
-              let _funnelId = (_funnelRow as any)?.id ?? null;
-              let _funnelSlugOut = (_funnelRow as any)?.slug ?? _funnelSlug;
-              if (!_funnelId && _fbTid) {
-                const { data: _f } = await supabaseClient.from("growth_funnels").select("id,slug").eq("tenant_id", _fbTid).eq("slug", _funnelSlug).maybeSingle();
-                _funnelId = (_f as any)?.id ?? null;
-                _funnelSlugOut = (_f as any)?.slug ?? _funnelSlug;
-              }
-              // §13 — never report a save we can't point at. (Practically unreachable: the RPC
-              // RETURNS growth_funnels; this guards the "void return + re-query missed" corner.)
-              if (!_funnelId) throw new Error("The funnel saved but its id couldn't be resolved — try again.");
-              result = {
-                success: true,
-                funnel_id: _funnelId,
-                funnel_slug: _funnelSlugOut,
-                page_id: _pageId,
-                form_id: _formId,
-                steps: _steps.length,
-                status: "draft",
-                note: "Funnel saved as a draft — the entry page, the intake form, and the flow are wired. Publish it to take the whole sequence live.",
-              };
             } else if (tc.function.name === "growth_funnel_publish") {
               // Going-live (confirm-gated above). One call: the funnel publish puts every page and
               // form the funnel uses live with it, in one transaction, so a refusal leaves nothing
@@ -12359,7 +12419,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               const _fpTid = personaCtx?.tenant_id ?? null;
               const { data: _pub, error: _pubFErr } = await supabaseClient.rpc("growth_funnel_publish", { p_tenant_id: _fpTid, p_id: args.funnel_id });
               if (_pubFErr) throw _pubFErr;
-              result = { success: true, ...(_pub as any) };
+              result = publishVerified("funnel", _pub)
+                ? { success: true, ...(_pub as any) }
+                : { success: false, outcome: "unverified", error: PUBLISH_UNVERIFIED_ERROR, status: (_pub as any)?.status ?? null };
             } else if (tc.function.name === "action_file") {
               // R2 — read where it runs: in the auto lane these are the model's arguments, and on an
               // approval the card's stored ones.
@@ -13779,8 +13841,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // handlers' own dispatch: the canonical `crm_log_activity` command writes `client_notes`,
       // `calendar_book_meeting` writes `internal_bookings` via `create_internal_booking`, the
       // content family writes `marketing_content` (the `document_generate` handler says so in its
-      // own comment) except `content_save`, which writes `studio_artifact_versions` via
-      // `save_artifact_version`, and `author_event_kind` writes `paige_event_kinds`.
+      // own comment) — `content_save` included: it writes `marketing_content` through
+      // `save_marketing_content`; the Studio's `save_artifact_version` is only a side link (V0
+      // correction, 2026-10-04) — and `author_event_kind` writes `paige_event_kinds`.
       //
       // The existing harness checks could not catch this: 19.7 and 19.8 assert that a rail event
       // NAMES a record, which a wrong name satisfies perfectly. Presence and truth are different
@@ -13816,7 +13879,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         team_invite_member: "tenant_invite_tokens", team_invite_resend: "tenant_invite_tokens",
         team_invite_revoke: "tenant_invite_tokens",
         calendar_book_meeting: "internal_bookings",
-        draft_marketing_content: "marketing_content", generate_image: "marketing_content", content_save: "studio_artifact_versions",
+        draft_marketing_content: "marketing_content", generate_image: "marketing_content", content_save: "marketing_content",
         document_generate: "marketing_content",
         growth_page_save: "growth_pages", growth_page_publish: "growth_pages",
         growth_funnel_build: "growth_funnels", growth_funnel_publish: "growth_funnels",

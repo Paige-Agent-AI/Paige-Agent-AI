@@ -85,9 +85,10 @@ export function PublishPanel({ artifact, onClose, onDone }: {
     setBusy(true); setError(null);
     try {
       const res = await publishArtifact(kind, artifactId(artifact));
-      const full = res.url ? (res.url.startsWith("http") ? res.url : `${window.location.origin}${res.url}`) : null;
+      // publishArtifact only returns once the server's readback proves a live public address.
+      const full = res.url.startsWith("http") ? res.url : `${window.location.origin}${res.url}`;
       setUrl(full);
-      onDone(full ? `Live at ${full}` : "Published.");
+      onDone(`Live at ${full}`);
     } catch (e) {
       setError(plainError(e, "It didn't go live. Nothing changed; try again."));
     } finally {

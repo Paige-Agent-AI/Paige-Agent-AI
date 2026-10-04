@@ -52,7 +52,7 @@ class Store {
 
 const tsOf = (v: unknown) => (typeof v === "string" ? Date.parse(v) : NaN);
 
-class Query implements PromiseLike<{ data: unknown; error: { code?: string; message?: string } | null }> {
+class Query {
   private op: "select" | "insert" | "update" = "select";
   private payload: Row | Row[] | null = null;
   private filters: Filter[] = [];
@@ -148,6 +148,9 @@ const rawSource = readFileSync("supabase/functions/paige-media/index.ts", "utf8"
 const source = rawSource.replace(/^import\s[\s\S]*?from\s+"[^"]+";\r?\n/gm, "");
 const compiled = transpileModule(source, { compilerOptions: { module: ModuleKind.None, target: ScriptTarget.ES2022 } }).outputText;
 
+type ApprovalBody = { requested_by_you?: boolean; requester_name?: string | null; fingerprint?: string };
+type MediaBody = { [key: string]: unknown; job: { id: string }; jobs: Array<{ approval?: ApprovalBody }>; approval: ApprovalBody; error?: string };
+
 function harness() {
   const store = new Store();
   let handler!: (req: Request) => Promise<Response>;
@@ -208,7 +211,7 @@ function harness() {
       headers: { Authorization: `Bearer ${as}`, "content-type": "application/json" },
       body: JSON.stringify(body),
     }));
-    return { status: res.status, body: await res.json() as Record<string, any> };
+    return { status: res.status, body: await res.json() as MediaBody };
   };
   return { store, call, submit };
 }

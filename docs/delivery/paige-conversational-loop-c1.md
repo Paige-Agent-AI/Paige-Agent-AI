@@ -364,6 +364,45 @@ C1b is now unblocked, because #1701 has merged.
   `readTurnRecord`. Under the provisional-terminal rule, the persisted record outranks any replayed
   wire frame.
 
+#### C1b as built (2026-10-04)
+
+`PaigeAIChat` now reads its stream through the shared reader. Owner rule for this slice: preserve
+all existing behaviour; do not alter product behaviour simply to converge.
+
+- **Reader:** `readPaigeStreamWithRaw(response.body, { stopAtDone: false, malformed: "drain" })`;
+  the loop breaks on `[DONE]` itself, so once a frame has halted it a later `[DONE]` is skipped and
+  the turn waits for the body to close, as the old loop did (the second §39 verifier found that
+  `stopAtDone: true` ended a halted turn at `[DONE]`; fixed and pinned).
+  The `WithRaw` sibling (additive, sharing one internal generator with `readPaigeStream`, so
+  framing, `[DONE]` and malformed handling are identical) yields each frame with the whole parsed
+  object. `PaigeAIChat` keeps its OWN dispatch and branch order over that object; the decoder's
+  naming decides only `done` and `malformed`. The decoder names one key per frame, so dispatching on
+  the typed frame alone would change the outcome for a frame carrying two keys (pinned).
+- **Malformed lines, decided on purpose:** a new additive option `malformed: "drain"` yields the bad
+  line, then reads the body to its end yielding nothing more. That is exactly the old behaviour —
+  the old loop pushed the line back, failed on it every chunk, acted on nothing after it, and fell
+  to the incomplete-turn branch only when the body closed. `"stop"` was considered and rejected: it
+  rolled the turn back at once, freeing the composer and offering Retry while the server could still
+  be running that turn — a timing change the owner rule does not allow. A frame whose handling
+  throws (JSON `null`) halts the same way, and also waits for the body to end.
+- **Sanctioned deviations (inputs the server never sends):** a final line without its newline is
+  now delivered; a non-string `content` is ignored rather than coerced into the transcript.
+- **Incidental fixes, listed as fixes:** the ticket is checked before each frame (no outcome
+  change); a frame whose handling threw is no longer re-run on every later chunk.
+- **Not changed:** greetings never go through this loop; thread-save semantics, approval/confirm/
+  outcome cards, CRM and research cards, artifacts, the document proposal, client-scope refusal,
+  compaction, Live voice (output, card, error, done) and every post-loop branch are untouched. The
+  `paige_turn` frame falls through every branch and is dropped — C3 consumes it.
+- **Evidence:** `PaigeAIChat.stream.test.tsx` — 33 characterization tests, run GREEN against the
+  unmodified file (32/33 on the old loop: the one difference is the sanctioned
+  non-string content case), then green unchanged after the move. Mutation proofs: `"stop"` instead
+  of `"drain"`, `break` instead of halting on a throw, `"skip"`, no `voiceSink.done()`, no per-frame
+  ticket check, Live error ignored, typed-frame content, `streamDone` unset, `stopAtDone: true` —
+  each caught across the PaigeAIChat suites. All
+  test files that read `PaigeAIChat` plus the four stream suites: 442 passed. Authenticated
+  regression across main chat, Studio, Operator and portal: UNVERIFIED (no signed-in session in
+  this lane) — owed after deploy.
+
 ### Evidence (classes kept separate)
 
 - **Automated:**

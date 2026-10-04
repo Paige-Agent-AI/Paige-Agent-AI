@@ -500,7 +500,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   // INT-313 — X-Orchestrator-Call is a SIGNAL any client can set, never authority. Agent-origin
   // semantics (a body tenant_id + actor_user_id honoured below) belong only to the canonical internal
-  // caller (exact service-role bearer / verified cron token: the orchestrator, paige-ai-chat, paige-mcp).
+  // caller (exact service-role bearer / verified cron token: paige-ai-chat's forge_subagent, paige-mcp).
   // A caller that claims agent origin without being one is refused before anything is read or written.
   const claimsAgentOrigin = req.headers.get("X-Orchestrator-Call") === "1";
   if (claimsAgentOrigin && !(await isAuthorizedInternalCaller(req, adminClient()))) {

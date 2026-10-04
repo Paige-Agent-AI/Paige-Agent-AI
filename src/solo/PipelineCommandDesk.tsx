@@ -182,6 +182,7 @@ export function PipelineCommandDesk({
   focusDealId = null,
   onClearFocus = () => {},
   createRequested = false,
+  dealFilter = null,
 }) {
   const workspace = data.pipelineWorkspace;
   const activePipelines = workspace.pipelines.filter(
@@ -213,7 +214,7 @@ export function PipelineCommandDesk({
   const closingStages = stages.filter((stage) => stage.stageType !== "open");
   const deals = selected
     ? workspace.deals
-        .filter((deal) => deal.pipelineId === selected.id)
+        .filter((deal) => deal.pipelineId === selected.id && (!dealFilter || dealFilter(deal)))
         .map((deal) => ({
           ...deal,
           tags: deal.tags || [],
@@ -326,7 +327,7 @@ export function PipelineCommandDesk({
   React.useEffect(() => {
     if (!focusDealId) return;
     const requested = workspace.deals.find((item) => item.id === focusDealId);
-    if (!requested) {
+    if (!requested || (dealFilter && !dealFilter(requested))) {
       setDetail(null);
       setNotice("Deal record unavailable in this workspace. Nothing was changed.");
       return;
@@ -339,7 +340,8 @@ export function PipelineCommandDesk({
     setMode("board");
     setNotice("");
     setDetail(requested);
-  }, [focusDealId, workspace.deals, selected?.id, setFolderFilter, setSelectedId]);
+  }, [focusDealId, workspace.deals, selected?.id, setFolderFilter, setSelectedId, dealFilter]);
+  React.useEffect(()=>{if(detail&&dealFilter&&!dealFilter(detail)){setDetail(null);setNotice("Deal excluded by the current filters. Nothing was changed.");}},[dealFilter,detail]);
   const run = async (action) => {
     const epoch = operationRef.current.epoch;
     const signature = JSON.stringify(action);
@@ -474,7 +476,6 @@ export function PipelineCommandDesk({
     <section className="pipeline-command-desk">
       <header className="pipeline-command-header">
         <div className="pipeline-command-copy">
-          <span className="eyebrow">Pipeline command desk</span>
           <div>
             <h2>{selected ? selected.name : "Pipeline"}</h2>
             {selected && (

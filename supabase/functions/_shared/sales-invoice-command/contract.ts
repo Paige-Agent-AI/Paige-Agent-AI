@@ -1,4 +1,5 @@
 export const SALES_INVOICE_ACTIONS = {
+  "invoice.settings_update": "sales_update_invoice_settings",
   "invoice.publish": "sales_publish_invoice",
   "invoice.record_manual_payment": "sales_record_manual_payment",
   "invoice.reverse_manual_payment": "sales_reverse_manual_payment",
@@ -10,8 +11,8 @@ export const SALES_INVOICE_ACTIONS = {
 
 export type SalesInvoiceAction = keyof typeof SALES_INVOICE_ACTIONS;
 export type SalesInvoiceCommand = Record<string, unknown> & {
-  action: SalesInvoiceAction; invoice_id: string; expected_version: number;
-};
+  action: Exclude<SalesInvoiceAction,"invoice.settings_update">; invoice_id: string; expected_version: number;
+} | (Record<string,unknown> & {action:"invoice.settings_update";expected_version:number;settings:Record<string,unknown>});
 export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const FINGERPRINT = /^[0-9a-f]{16}$/;
 
@@ -22,6 +23,19 @@ export function parseSalesInvoiceCommand(value: unknown): SalesInvoiceCommand {
   const v = value as Record<string, unknown>;
   if (typeof v.action !== "string" || !Object.prototype.hasOwnProperty.call(SALES_INVOICE_ACTIONS, v.action)) return invalid();
   const action = v.action as SalesInvoiceAction;
+  if(action==='invoice.settings_update') {
+    const settings=v.settings;
+    if(Object.keys(v).some(k=>!['action','expected_version','settings'].includes(k))||!Number.isSafeInteger(v.expected_version)||Number(v.expected_version)<0||!settings||typeof settings!=='object'||Array.isArray(settings))return invalid();
+    const p=settings as Record<string,unknown>,keys=['prefix','next_number','padding','template','accent','logo_data_uri','footer','payment_instructions'];
+    if(Object.keys(p).length!==keys.length||Object.keys(p).some(k=>!keys.includes(k))||typeof p.prefix!=='string'||!/^[A-Z0-9-]{0,20}$/.test(p.prefix)||!Number.isInteger(p.next_number)||Number(p.next_number)<1||Number(p.next_number)>999999999||!Number.isInteger(p.padding)||Number(p.padding)<1||Number(p.padding)>9||typeof p.template!=='string'||!['classic','modern','service'].includes(p.template)||typeof p.accent!=='string'||!/^#[0-9a-fA-F]{6}$/.test(p.accent)||typeof p.footer!=='string'||p.footer.length>1000||typeof p.payment_instructions!=='string'||p.payment_instructions.length>2000)return invalid();
+    if(p.logo_data_uri!==null){
+      if(typeof p.logo_data_uri!=='string'||p.logo_data_uri.length>175000)return invalid();
+      const m=/^data:image\/(png|jpeg);base64,([A-Za-z0-9+/]+={0,2})$/.exec(p.logo_data_uri);if(!m||m[2].length%4!==0)return invalid();
+      let raw:string;try{raw=atob(m[2]);if(btoa(raw)!==m[2])return invalid();}catch{return invalid();}
+      if(raw.length>131072||!(m[1]==='png'?raw.startsWith('\x89PNG\r\n\x1a\n'):raw.startsWith('\xff\xd8\xff')))return invalid();
+    }
+    return {action,expected_version:Number(v.expected_version),settings:{...p}};
+  }
   if (typeof v.invoice_id !== "string" || !UUID.test(v.invoice_id) || !Number.isSafeInteger(v.expected_version) || (v.expected_version as number) < 1) return invalid();
   const out: SalesInvoiceCommand = { action, invoice_id: v.invoice_id.toLowerCase(), expected_version: v.expected_version as number };
   const allowed = new Set(["action", "invoice_id", "expected_version"]);
@@ -32,6 +46,7 @@ export function parseSalesInvoiceCommand(value: unknown): SalesInvoiceCommand {
     if (typeof item !== "string" || item.length > max || (required && !item.trim())) return invalid();
     return item;
   };
+  if(action==="invoice.publish"&&v.template!==undefined){allowed.add("template");if(typeof v.template!=="string"||!["classic","modern","service"].includes(v.template))return invalid();out.template=v.template;}
   if (action === "invoice.email_send" || action === "invoice.sms_send") {
     allowed.add("connector_id");
     if (action === "invoice.sms_send" && v.connector_id !== undefined && v.connector_id !== null) return invalid();

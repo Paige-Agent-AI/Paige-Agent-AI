@@ -190,6 +190,8 @@ export interface GmailSendInput {
   text?: string | null;
   /** RFC 5322 In-Reply-To (a provider message-id) when replying in a thread. */
   inReplyTo?: string | null;
+  /** Extra headers (e.g. List-Unsubscribe). Names must be RFC 5322 tokens; values are CRLF-stripped. */
+  headers?: Record<string, string> | null;
 }
 
 /**
@@ -229,6 +231,9 @@ export async function gmailSend(
     const ref = sanitizeHeaderValue(input.inReplyTo);
     headerLines.push(`In-Reply-To: ${ref}`);
     headerLines.push(`References: ${ref}`);
+  }
+  for (const [name, value] of Object.entries(input.headers ?? {})) {
+    if (/^[A-Za-z0-9-]{1,64}$/.test(name)) headerLines.push(`${name}: ${sanitizeHeaderValue(String(value))}`);
   }
   const rfc822 = `${headerLines.join("\r\n")}\r\n\r\n${bodyContent}`;
   const raw = base64UrlEncode(rfc822);

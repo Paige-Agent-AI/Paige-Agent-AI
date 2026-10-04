@@ -249,6 +249,8 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBa
         </div>
         {publishOpen && artifact && (
           <PublishPanel
+            // A different piece is a different door preparation: never carry a fingerprint across.
+            key={`${artifact.kind}:${artifactId(artifact)}`}
             artifact={artifact}
             onClose={() => { setPublishOpen(false); publishBtnRef.current?.focus(); }}
             onDone={(m) => { setNotice(m); setRefreshKey((k) => k + 1); }}

@@ -1,11 +1,13 @@
 /**
  * Vibe Studio project workspace (layout C) — rendered behaviour.
  *
- * EVIDENCE CLASS (§32/§70.1): a HARNESS drive in jsdom. The data layer (studio-data) and the media
- * hook are in-memory doubles; the chat stream is a scripted SSE body served by a stubbed fetch,
- * parsed by the real useStudioChat. It proves the workspace wires the owner's acts to the right
- * seams and renders what the stream and the reads return. It is NOT authenticated runtime proof
- * that paige-ai-chat or the publish RPCs accept these calls in production.
+ * EVIDENCE CLASS (§32/§70.1): a HARNESS drive in jsdom. The data layer's reads (studio-data) and
+ * the media hook are in-memory doubles; the chat stream is a scripted SSE body served by a stubbed
+ * fetch, parsed by the real useStudioChat. Publishing runs the REAL studio-data door calls
+ * (preparePublication / confirmPublication) against a stubbed `functions.invoke` that answers in
+ * the growth-publish-command contract. It proves the workspace wires the owner's acts to the right
+ * seams and renders what the stream, the reads and the door return. It is NOT authenticated runtime
+ * proof that paige-ai-chat or the publish door accept these calls in production.
  *
  * Synthetic data only (§63): "Northwind Studio", t-synthetic.
  */
@@ -25,8 +27,9 @@ const h = vi.hoisted(() => ({
   form: null as Rec | null,
   versions: [] as Rec[],
   restored: [] as string[],
-  published: [] as Array<[string, string]>,
-  publishError: null as Error | null,
+  // The publish door: every invoke is recorded; `door` answers each body.
+  doorCalls: [] as Rec[],
+  door: null as ((body: Rec, n: number) => { data: unknown; error: unknown }) | null,
   sse: [] as string[],
   status: 200,
   fetchBodies: [] as Rec[],
@@ -45,6 +48,15 @@ vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     auth: { getSession: async () => ({ data: { session: { access_token: "synthetic-token" } } }) },
     from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }) }) }),
+    // No `rpc` here on purpose: a publish that bypassed the door would throw.
+    functions: {
+      invoke: async (fn: string, opts: { body: Rec }) => {
+        if (fn !== "growth-publish-command") throw new Error(`unexpected function ${fn}`);
+        h.doorCalls.push(opts.body);
+        if (!h.door) throw new Error("no door double");
+        return h.door(opts.body, h.doorCalls.length);
+      },
+    },
   },
 }));
 vi.mock("../useMediaJobs", () => ({
@@ -68,14 +80,20 @@ vi.mock("./studio-data", async (orig) => {
     listVersions: async () => { h.versionReads += 1; return h.versions; },
     loadImage: async () => { if (!h.content) throw new Error("missing"); return h.content; },
     restoreVersion: async (id: string) => { h.restored.push(id); },
-    publishArtifact: async (kind: string, id: string) => {
-      if (h.publishError) throw h.publishError;
-      h.published.push([kind, id]);
-      return { url: "/form/" + id };
-    },
-    unpublishArtifact: async () => {},
   };
 });
+
+// growth-publish-command replies, in its contract. A non-2xx body rides on the error's context.
+const ok = (data: unknown) => ({ data, error: null });
+const http = (status: number, body: unknown) => ({ data: null, error: { name: "FunctionsHttpError", message: `status ${status}`, context: new Response(JSON.stringify(body), { status }) } });
+const CHECKS = [
+  { key: "questions", label: "Has 3 questions", ok: true },
+  { key: "email", label: "Asks for an email, so each request becomes a contact", ok: true },
+];
+const ready = (fp = "fp-1", checks: unknown[] = CHECKS) => ok({ approval_required: true, fingerprint: fp, preview: { kind: "form", id: "f-1", title: "New client intake", action: "publish", address: "/form/f-1", checks } });
+const published = () => ok({ ok: true, action: "publish", kind: "form", id: "f-1", status: "active", published_at: "2026-10-04T10:00:00Z", url: "/form/f-1" });
+/** The happy door: prepare → ready, redeem → published. */
+const happyDoor = (body: Rec) => (body.approved_fingerprint ? published() : ready());
 
 const { VibeStudio } = await import("../vibe");
 
@@ -117,7 +135,7 @@ function type(el: HTMLTextAreaElement, value: string) {
 }
 
 beforeEach(() => {
-  Object.assign(h, { sessions: [], created: [], manifest: [], form: null, versions: [], restored: [], published: [], publishError: null, sse: [], status: 200, fetchBodies: [], versionReads: 0, content: null, openTitle: "Client intake", renamed: [], held: [], openBrief: "An intake form for new clients" });
+  Object.assign(h, { sessions: [], created: [], manifest: [], form: null, versions: [], restored: [], doorCalls: [], door: happyDoor, sse: [], status: 200, fetchBodies: [], versionReads: 0, content: null, openTitle: "Client intake", renamed: [], held: [], openBrief: "An intake form for new clients" });
   backs = 0;
   host = document.createElement("div");
   document.body.appendChild(host);
@@ -175,58 +193,180 @@ describe("Vibe Studio project workspace", () => {
     for (const t of ["Page", "Form", "Funnel", "Copy", "Image"]) expect(button(t)).toBeUndefined();
   });
 
-  it("publishing goes through the publish seam and reports only the address it returned", async () => {
+  async function openPiece(piece: Rec = FORM) {
     h.manifest = [{ kind: "form", id: "f-1", title: "New client intake" }];
-    h.form = FORM;
+    h.form = piece;
     h.sessions = [{ id: "s-1", title: "Client intake", seedBrief: null, artifacts: h.manifest, updatedAt: "2026-10-03T12:00:00Z" }];
     await mount();
     await act(async () => { [...host.querySelectorAll(".vs-card")][0]!.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
     await flush();
-    expect(h.fetchBodies).toHaveLength(0); // reopening a project never re-sends a brief
+  }
+  async function openPanel() { await act(async () => { button("Publish")!.click(); }); await flush(); }
+  async function press(label: string) { await act(async () => { button(label)!.click(); }); await flush(); }
 
-    await act(async () => { button("Publish")!.click(); });
+  it("opening Publish prepares through the door; the click redeems that fingerprint; 'It's live' only with the returned address", async () => {
+    await openPiece();
+    expect(h.fetchBodies).toHaveLength(0); // reopening a project never re-sends a brief
+    await openPanel();
+    // One prepare, no fingerprint: opening the panel never executes anything.
+    expect(h.doorCalls).toEqual([{ action: "publish", kind: "form", id: "f-1" }]);
     expect(text()).toContain("Ready to go live?");
+    // The server's checks, not the browser's.
     expect(text()).toContain("Has 3 questions");
     expect(text()).toContain("Asks for an email");
-    await act(async () => { button("Publish now")!.click(); });
-    await flush();
-    expect(h.published).toEqual([["form", "f-1"]]);
+    expect(text()).toContain(`Goes live at ${window.location.origin}/form/f-1`);
+    expect(text()).not.toContain("It's live");
+    await press("Publish now");
+    expect(h.doorCalls[1]).toEqual({ action: "publish", kind: "form", id: "f-1", approved_fingerprint: "fp-1" });
+    expect(h.doorCalls).toHaveLength(2);
     expect(text()).toContain("It's live");
     expect(text()).toContain(`${window.location.origin}/form/f-1`);
   });
 
-  it("a refused publish shows the server's own sentence and claims nothing", async () => {
-    h.manifest = [{ kind: "form", id: "f-1", title: "New client intake" }];
-    h.form = FORM;
-    h.sessions = [{ id: "s-1", title: "Client intake", seedBrief: null, artifacts: h.manifest, updatedAt: "2026-10-03T12:00:00Z" }];
-    h.publishError = new Error("GROWTH_PLACEHOLDER: the form still has unfinished text");
-    await mount();
-    await act(async () => { [...host.querySelectorAll(".vs-card")][0]!.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+  it("while the server checks, Publish waits and says so", async () => {
+    let release: (v: unknown) => void = () => {};
+    h.door = () => new Promise((r) => { release = r; }) as unknown as { data: unknown; error: unknown };
+    await openPiece();
+    await openPanel();
+    expect(text()).toContain("Paige is checking it against what's saved");
+    expect(button("Checking…")!.disabled).toBe(true);
+    await act(async () => { release(ready()); });
     await flush();
-    await act(async () => { button("Publish")!.click(); });
-    await act(async () => { button("Publish now")!.click(); });
-    await flush();
+    expect(button("Publish now")!.disabled).toBe(false);
+  });
+
+  it("a check that fails blocks Publish and shows the server's reason", async () => {
+    h.door = () => ok({ approval_required: true, preview: { kind: "form", id: "f-1", title: "New client intake", action: "publish", checks: [
+      { key: "questions", label: "Has 3 questions", ok: true },
+      { key: "placeholders", label: "Still has unfinished text", ok: false, detail: "The thank-you message says [your name]." },
+    ] } });
+    await openPiece();
+    await openPanel();
+    expect(text()).toContain("Still has unfinished text");
+    expect(text()).toContain("The thank-you message says [your name].");
+    expect(text()).toContain("Fix what's marked, or ask Paige to, then publish.");
+    expect(button("Publish now")!.disabled).toBe(true);
+    expect(h.doorCalls).toHaveLength(1);
+  });
+
+  it("publishing switched off in Paige's settings: the panel says so and offers no Publish", async () => {
+    h.door = () => http(403, { error: "Publishing is switched off in Paige's settings for this workspace.", disabled: true });
+    await openPiece();
+    await openPanel();
+    expect(text()).toContain("Publishing is switched off");
+    expect(text()).toContain("turn it back on in Command Center › Trust Compass");
+    // Said once: the heading carries the fact, the body only the way back.
+    expect(text().split("switched off").length - 1).toBe(1);
+    expect(button("Publish now")).toBeUndefined();
+    expect(button("Close")).toBeDefined();
+  });
+
+  it("someone who isn't an owner or admin is told so, with no Publish", async () => {
+    h.door = () => http(403, { error: "Only the workspace owner or an admin can publish.", forbidden: true });
+    await openPiece();
+    await openPanel();
+    expect(text()).toContain("Only an owner or admin can publish");
+    expect(text()).toContain("Ask this workspace's owner to publish it");
+    expect(document.activeElement?.textContent).toBe("Close"); // focus never drops to the page
+    expect(button("Publish now")).toBeUndefined();
+  });
+
+  it("a stale approval is checked again once, and the owner's next click is the new approval", async () => {
+    let redeems = 0;
+    h.door = (body) => {
+      if (!body.approved_fingerprint) return ready(redeems === 0 ? "fp-1" : "fp-2");
+      redeems += 1;
+      return redeems === 1 ? http(409, { ok: false, refused: true, error: "That approval has expired." }) : published();
+    };
+    await openPiece();
+    await openPanel();
+    await press("Publish now");
+    // Refused → one fresh prepare, never an automatic retry of the act.
+    expect(h.doorCalls.map((c) => c.approved_fingerprint ?? null)).toEqual([null, "fp-1", null]);
+    expect(text()).toContain("That approval has expired. Paige checked it again. Press Publish now to go ahead.");
+    expect(text()).not.toContain("It's live");
+    await press("Publish now");
+    expect(h.doorCalls[3]).toMatchObject({ approved_fingerprint: "fp-2" });
+    expect(text()).toContain("It's live");
+  });
+
+  it("a refusal that holds after the re-check shows the server's own sentence and claims nothing", async () => {
+    h.door = (body) => (body.approved_fingerprint ? http(422, { ok: false, refused: true, error: "GROWTH_PLACEHOLDER: the form still has unfinished text" }) : ready());
+    await openPiece();
+    await openPanel();
+    await press("Publish now");
+    await press("Publish now");
     expect(text()).toContain("The form still has unfinished text");
+    expect(text()).not.toContain("It's live");
+    // prepare, redeem, re-prepare, redeem — and no further re-prepare.
+    expect(h.doorCalls).toHaveLength(4);
+  });
+
+  it("an unverified publish claims nothing and re-reads the piece", async () => {
+    h.door = (body) => {
+      if (!body.approved_fingerprint) return ready();
+      // The server did flip the status, but proved no address.
+      h.form = { ...FORM, status: "active", live: true };
+      return ok({ ok: false, outcome: "unverified", error: "The publish ran but Paige couldn't confirm a public address, so it may not be live." });
+    };
+    await openPiece();
+    const readsBefore = h.versionReads;
+    await openPanel();
+    await press("Publish now");
+    expect(text()).toContain("couldn't confirm a public address");
+    expect(text()).not.toContain("It's live");
+    // The re-read says active, but the panel never turns that into "This is live" without an address.
+    expect(text()).not.toContain("This is live");
+    // The server may have changed state: the piece and its timeline are read again.
+    expect(h.versionReads).toBeGreaterThan(readsBefore);
+  });
+
+  it("a door 'ok' without an address is never reported as live", async () => {
+    h.door = (body) => (body.approved_fingerprint ? ok({ ok: true, action: "publish", kind: "form", id: "f-1", status: "active", url: null }) : ready());
+    await openPiece();
+    await openPanel();
+    await press("Publish now");
+    expect(text()).toContain("didn't confirm a public address");
     expect(text()).not.toContain("It's live");
   });
 
-  it("a publish that returns no public address claims nothing and re-reads the piece", async () => {
-    const { PublishUnverified } = await import("./studio-data");
-    h.manifest = [{ kind: "form", id: "f-1", title: "New client intake" }];
-    h.form = FORM;
-    h.sessions = [{ id: "s-1", title: "Client intake", seedBrief: null, artifacts: h.manifest, updatedAt: "2026-10-03T12:00:00Z" }];
-    h.publishError = new PublishUnverified("The publish didn't confirm a public address, so it may not be live. Check the project before sharing a link.");
-    await mount();
-    await act(async () => { [...host.querySelectorAll(".vs-card")][0]!.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
+  it("when the door can't be reached, the panel says so and offers to check again", async () => {
+    let calls = 0;
+    h.door = () => { calls += 1; return calls === 1 ? { data: null, error: { name: "FunctionsFetchError", message: "Failed to send a request" } } : ready(); };
+    await openPiece();
+    await openPanel();
+    expect(text()).toContain("Paige couldn't check this just now");
+    await press("Check again");
+    expect(button("Publish now")!.disabled).toBe(false);
+  });
+
+  it("a live piece prepares its unpublish on open, and a refusal (a funnel uses it) is shown before any click", async () => {
+    h.door = () => ok({ approval_required: true, preview: { kind: "form", id: "f-1", title: "New client intake", action: "unpublish", checks: [
+      { key: "funnels", label: "A live funnel uses this form", ok: false, detail: "Take “Free strategy call” offline first." },
+    ] } });
+    await openPiece({ ...FORM, status: "active", live: true });
+    await act(async () => { button("Live · Manage")!.click(); });
     await flush();
-    const readsBefore = h.versionReads;
-    await act(async () => { button("Publish")!.click(); });
-    await act(async () => { button("Publish now")!.click(); });
+    expect(h.doorCalls).toEqual([{ action: "unpublish", kind: "form", id: "f-1" }]);
+    expect(text()).toContain("This is live");
+    expect(text()).toContain("A live funnel uses this form");
+    expect(text()).toContain("Take “Free strategy call” offline first.");
+    expect(button("Unpublish")!.disabled).toBe(true);
+  });
+
+  it("unpublishing asks 'Take it offline?' inline and redeems the prepared fingerprint", async () => {
+    h.door = (body) => (body.approved_fingerprint
+      ? ok({ ok: true, action: "unpublish", kind: "form", id: "f-1", status: "draft" })
+      : ok({ approval_required: true, fingerprint: "fp-out", preview: { kind: "form", id: "f-1", title: "New client intake", action: "unpublish", checks: [] } }));
+    await openPiece({ ...FORM, status: "active", live: true });
+    await act(async () => { button("Live · Manage")!.click(); });
     await flush();
-    expect(text()).toContain("didn't confirm a public address");
-    expect(text()).not.toContain("It's live");
-    // The server may have changed state: the piece and its timeline are read again.
-    expect(h.versionReads).toBeGreaterThan(readsBefore);
+    await press("Unpublish");
+    expect(text()).toContain("Take it offline?");
+    expect(h.doorCalls).toHaveLength(1); // already prepared on open
+    await press("Take it offline");
+    expect(h.doorCalls[1]).toEqual({ action: "unpublish", kind: "form", id: "f-1", approved_fingerprint: "fp-out" });
+    expect(text()).toContain("Unpublished. It's back to a draft here in the Studio.");
   });
 
   it("the timeline restores an earlier version into the working copy", async () => {

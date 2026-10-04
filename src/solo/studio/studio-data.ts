@@ -1,7 +1,8 @@
 // The Solo Vibe Studio's one door to the backend. Every call here goes through a server-authorized
-// RPC (owner/admin of the ACTIVE workspace — migration 20270537000000) or an RLS-scoped read; the
-// browser never names a tenant for a write and never writes a growth table directly (the publish
-// guard refuses that). Nothing here reports a result it did not read back.
+// RPC (owner/admin of the ACTIVE workspace — migration 20270537000000), an RLS-scoped read, or (for
+// going live and coming down) the growth-publish-command door; the browser never names a tenant for
+// a write and never writes a growth table directly (the publish guard refuses that). Nothing here
+// reports a result it did not read back.
 import { supabase } from "@/integrations/supabase/client";
 import type { GrowthBlock, GrowthPageTheme } from "@/lib/growth";
 import { buildGrowthBrandFloor } from "@/components/growth/growth-theme";
@@ -37,8 +38,9 @@ export interface StudioVersion {
 
 /** A sentence written for the owner. plainError passes it through unchanged. */
 export class Said extends Error {}
-/** The publish call returned, but its readback did not prove a live public address. The server
- *  may already have changed the piece's state, so the caller re-reads it. */
+/** The publish door answered without proving the outcome (`outcome: "unverified"`, no public
+ *  address, or no readable reply). The server may already have changed the piece's state, so the
+ *  caller re-reads it. */
 export class PublishUnverified extends Said {}
 
 /** A refusal the owner can read: our own sentence, or the server's without its machine code.
@@ -316,7 +318,7 @@ export async function loadFunnel(id: string): Promise<StudioFunnel> {
 }
 
 /** A marketing_content piece linked to the project: an image Paige made, a document, or saved copy.
- *  Only an image is published from the Studio (studio_image_publish refuses anything else). */
+ *  Only an image is published from the Studio (the publish door refuses anything else). */
 export interface StudioImage {
   id: string;
   title: string;
@@ -370,34 +372,123 @@ export async function restoreVersion(versionId: string): Promise<void> {
 }
 
 // ── Publish ────────────────────────────────────────────────────────────────────
-export interface PublishResult { url: string }
+// One door for going live and coming down: the growth-publish-command edge function, the same
+// executor chat publishing uses, so a panel publish and a chat publish carry the same authority
+// check, receipt and Rail record. The panel never calls a publish RPC itself. Two calls: prepare
+// (no fingerprint) returns the server's own readiness checks and, when nothing blocks, a
+// fingerprint; the owner's click redeems it. The door's readback is the only success reported.
+export const PUBLISH_DOOR = "growth-publish-command";
 
-const PUBLISH_FN: Record<ArtifactKind, [string, string]> = {
-  form: ["growth_form_publish", "growth_form_unpublish"],
-  page: ["growth_page_publish", "growth_page_unpublish"],
-  funnel: ["growth_funnel_publish", "growth_funnel_unpublish"],
-  content: ["studio_image_publish", "studio_image_unpublish"],
-};
+export type PublishAction = "publish" | "unpublish";
+export type DoorKind = "page" | "form" | "funnel" | "image";
+/** The Studio calls a made image "content"; the door calls it "image". */
+export const doorKind = (kind: ArtifactKind): DoorKind => (kind === "content" ? "image" : kind);
 
-// The live state each publish RPC reports (20270537000000): pages and images are `published`,
-// forms and funnels `active`. Same rule as the chat's `publishVerified` (_shared/artifact-receipt.ts).
-const LIVE_STATUS: Record<ArtifactKind, string> = { form: "active", page: "published", funnel: "active", content: "published" };
+export interface PublishCheck { key: string; label: string; ok: boolean; detail?: string }
+export interface PublishPreview { title: string | null; address: string | null; checks: PublishCheck[] }
 
-/** Live only on a readback that proves it: the live status, a publish time, and a public address.
- *  A return without an address (a workspace with no public slug) is never reported as published. */
-export async function publishArtifact(kind: ArtifactKind, id: string): Promise<PublishResult> {
-  const { data, error } = await rpc(PUBLISH_FN[kind][0], { p_tenant_id: null, p_id: id });
-  if (error) throw error;
-  const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | null;
-  const url = row && typeof row.url === "string" ? row.url.trim() : "";
-  const at = row && typeof row.published_at === "string" ? row.published_at.trim() : "";
-  if (!row || row.status !== LIVE_STATUS[kind] || !at || !url) {
-    throw new PublishUnverified("The publish didn't confirm a public address, so it may not be live. Check the project before sharing a link.");
+export type Prepared =
+  /** Nothing blocks: the owner's click redeems this fingerprint. */
+  | { state: "ready"; fingerprint: string; preview: PublishPreview }
+  /** A check failed, so the server issued no fingerprint. */
+  | { state: "blocked"; preview: PublishPreview }
+  /** Publishing is switched off in Paige's autonomy settings. */
+  | { state: "disabled"; message: string }
+  /** The signed-in person isn't this workspace's owner or an admin. */
+  | { state: "forbidden"; message: string }
+  /** The server refused outright (not publishable, not found…), in its own words. */
+  | { state: "refused"; message: string };
+
+export interface PublicationResult { action: PublishAction; status: string | null; publishedAt: string | null; url: string | null }
+
+/** The door refused the redeem, often because the fingerprint went stale. The panel re-prepares once. */
+export class PublishRefused extends Said {}
+/** Publishing is switched off in Paige's autonomy settings. */
+export class PublishOff extends Said {}
+
+const OFF_FALLBACK = "Publishing is switched off in Paige's Trust Compass, so nothing goes live from here. Turn it on in Command Center › Trust Compass.";
+const FORBIDDEN_FALLBACK = "Only this workspace's owner or an admin can publish.";
+const CHECK_FAILED = "Paige couldn't check this just now. Try again in a moment.";
+const unverifiedFallback = (action: PublishAction) => action === "publish"
+  ? "The publish didn't confirm a public address, so it may not be live. Check the project before sharing a link."
+  : "Taking it offline didn't confirm, so it may still be live. Check the project before you rely on it.";
+
+/** A server sentence as the owner reads it: trimmed, any machine-code prefix dropped. */
+function serverSentence(raw: unknown, fallback: string): string {
+  if (typeof raw !== "string" || !raw.trim()) return fallback;
+  const t = raw.trim().replace(/^[A-Z][A-Z0-9_]{2,}:\s*/, "");
+  return t ? t.charAt(0).toUpperCase() + t.slice(1) : fallback;
+}
+const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
+
+type DoorReply = { data: Record<string, unknown> | null; transport: boolean };
+/** Calls the door and reads its body whatever the status: a non-2xx body lives on the error's
+ *  context Response. A reply with no readable body (a dropped connection) is `transport`. */
+async function callDoor(body: Record<string, unknown>): Promise<DoorReply> {
+  const { data, error } = await supabase.functions.invoke(PUBLISH_DOOR, { body });
+  if (!error) return data && typeof data === "object" ? { data: data as Record<string, unknown>, transport: false } : { data: null, transport: true };
+  const ctx = (error as { context?: { json?: () => Promise<unknown> } }).context;
+  if (ctx && typeof ctx.json === "function") {
+    try {
+      const parsed = await ctx.json();
+      if (parsed && typeof parsed === "object") return { data: parsed as Record<string, unknown>, transport: false };
+    } catch { /* no readable body */ }
   }
-  return { url };
+  return { data: null, transport: true };
 }
 
-export async function unpublishArtifact(kind: ArtifactKind, id: string): Promise<void> {
-  const { error } = await rpc(PUBLISH_FN[kind][1], { p_tenant_id: null, p_id: id });
-  if (error) throw error;
+function readPreview(raw: unknown): PublishPreview {
+  const p = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const checks: PublishCheck[] = [];
+  for (const c of Array.isArray(p.checks) ? (p.checks as unknown[]) : []) {
+    if (!c || typeof c !== "object") continue;
+    const o = c as Record<string, unknown>;
+    const label = str(o.label);
+    if (!label) continue;
+    checks.push({ key: str(o.key) ?? label, label, ok: o.ok === true, detail: str(o.detail) ?? undefined });
+  }
+  return { title: str(p.title), address: str(p.address), checks };
+}
+
+/** Asks the door to prepare a publish or an unpublish. It never sends a fingerprint, so it never
+ *  executes. Throws Said when the door can't be read, and PublishUnverified if the door answers as
+ *  though it acted (it must not: the owner's click is the approval). */
+export async function preparePublication(kind: ArtifactKind, id: string, action: PublishAction): Promise<Prepared> {
+  const { data, transport } = await callDoor({ action, kind: doorKind(kind), id });
+  if (transport || !data) throw new Said(CHECK_FAILED);
+  if (data.disabled === true) return { state: "disabled", message: serverSentence(data.error, OFF_FALLBACK) };
+  if (data.forbidden === true) return { state: "forbidden", message: serverSentence(data.error, FORBIDDEN_FALLBACK) };
+  if (data.approval_required === true) {
+    const preview = readPreview(data.preview);
+    const fingerprint = str(data.fingerprint);
+    return fingerprint ? { state: "ready", fingerprint, preview } : { state: "blocked", preview };
+  }
+  if (data.ok === true || data.outcome === "unverified") {
+    throw new PublishUnverified("Paige answered without waiting for your click, so this panel can't confirm what happened. Check the project before sharing a link.");
+  }
+  if (data.refused === true || typeof data.error === "string") {
+    return { state: "refused", message: serverSentence(data.error, "Paige can't do that for this piece.") };
+  }
+  throw new Said(CHECK_FAILED);
+}
+
+/** Redeems a prepared fingerprint: the owner's click. Returns only on the door's verified
+ *  readback, and a publish is never reported without a public address. */
+export async function confirmPublication(kind: ArtifactKind, id: string, action: PublishAction, fingerprint: string): Promise<PublicationResult> {
+  const { data, transport } = await callDoor({ action, kind: doorKind(kind), id, approved_fingerprint: fingerprint });
+  // No readable answer after the request left: it may have run, so claim neither outcome.
+  if (transport || !data) throw new PublishUnverified(unverifiedFallback(action));
+  if (data.ok === true) {
+    const url = str(data.url);
+    if (action === "publish" && !url) throw new PublishUnverified(unverifiedFallback(action));
+    return { action, status: str(data.status), publishedAt: str(data.published_at), url };
+  }
+  if (data.outcome === "unverified") throw new PublishUnverified(serverSentence(data.error, unverifiedFallback(action)));
+  if (data.disabled === true) throw new PublishOff(serverSentence(data.error, OFF_FALLBACK));
+  if (data.forbidden === true) throw new Said(serverSentence(data.error, FORBIDDEN_FALLBACK));
+  // A fresh proposal in reply means the fingerprint no longer matched what is saved.
+  if (data.refused === true || data.approval_required === true) {
+    throw new PublishRefused(serverSentence(data.error, "Something changed since this opened."));
+  }
+  throw new PublishUnverified(serverSentence(data.error, unverifiedFallback(action)));
 }

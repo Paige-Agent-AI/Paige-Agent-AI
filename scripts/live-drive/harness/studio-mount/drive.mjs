@@ -7,7 +7,7 @@ import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
 const out = process.argv[2] || "scripts/live-drive/artifacts/studio";
 mkdirSync(out, { recursive: true });
-const base = "http://127.0.0.1:5216/";
+const base = `http://127.0.0.1:${process.env.STUDIO_HARNESS_PORT || 5216}/`;
 const browser = await chromium.launch({ executablePath: process.env.PW_EXECUTABLE_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" });
 const errors = [];
 const results = [];
@@ -89,18 +89,18 @@ for (const [w, h] of [[1366, 768], [900, 1000]]) {
   await page.close();
 }
 
-// Publish panel → publish → the address the RPC returned.
+// Publish panel → prepare through the door → publish → the address the door read back.
 {
   const page = await open("theme=light", 1366, 768);
   await openProject(page, "New client intake");
   await page.getByRole("button", { name: "Publish", exact: true }).click();
   await page.waitForSelector(".vs-pop");
-  await page.waitForTimeout(150);
+  await page.waitForSelector(".vs-checks:not(.vs-checks-skel) li");
   results.push({ name: "publish-checks", checks: await page.$$eval(".vs-checks li span", (s) => s.map((x) => x.firstChild?.textContent)), focused: await page.evaluate(() => document.activeElement?.textContent) });
   await shoot(page, "publish-1366x768");
   await page.getByRole("button", { name: "Publish now" }).click();
   await page.waitForSelector(".vs-pop h2:text(\"It's live\")");
-  results.push({ name: "publish-done", calls: await page.evaluate(() => window.__studioCalls.filter((c) => c.fn.endsWith("_publish"))), link: await page.textContent(".vs-pop a") });
+  results.push({ name: "publish-done", calls: await page.evaluate(() => window.__studioCalls.filter((c) => c.fn === "invoke:growth-publish-command" || c.fn.endsWith("publish"))), link: await page.textContent(".vs-pop a") });
   await shoot(page, "published-1366x768");
   await page.keyboard.press("Escape");
   results.push({ name: "publish-esc", panelOpen: await page.locator(".vs-pop").count(), stillInProject: await page.locator(".vs-session").count() });

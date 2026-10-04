@@ -2,7 +2,8 @@
  * Vibe Studio V0 — the live-defect fixes, pinned.
  *
  * EVIDENCE CLASSES:
- *  - publishVerified and publishArtifact are driven BEHAVIOURALLY (real functions, mocked RPC).
+ *  - publishVerified is driven BEHAVIOURALLY (the real function). The panel's publish path moved
+ *    behind the publish door in V2b (studio-publish-door.contract.test.ts).
  *  - The paige-ai-chat rules (ceiling-respecting Studio lift, funnel reachability, partial funnel
  *    outcomes, document_generate off the Studio surface, publish readback, content_save audit
  *    target) are a STATIC contract over the edge source — the repo's idiom for that 15k-line file.
@@ -10,11 +11,8 @@
  *    authenticated drive.
  */
 import { readFileSync } from "node:fs";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { publishVerified, PUBLISH_UNVERIFIED_ERROR } from "../../../supabase/functions/_shared/artifact-receipt";
-
-const rpcMock = vi.fn();
-vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: (...a: unknown[]) => rpcMock(...a) } }));
 
 const chat = readFileSync("supabase/functions/paige-ai-chat/index.ts", "utf8");
 const between = (from: string, to: string) => {
@@ -46,24 +44,8 @@ describe("publishVerified — live only on a readback that proves it", () => {
   });
 });
 
-describe("Publish panel path (publishArtifact) — never 'Published' without an address", () => {
-  beforeEach(() => rpcMock.mockReset());
-  it("returns the address when the server proves the artifact is live", async () => {
-    rpcMock.mockResolvedValue({ data: { id: "1", status: "published", published_at: "2026-10-04T10:00:00Z", url: "/p/acme/offer" }, error: null });
-    const { publishArtifact } = await import("./studio-data");
-    await expect(publishArtifact("page", "1")).resolves.toEqual({ url: "/p/acme/offer" });
-  });
-  it("throws a plain refusal when the readback has no address", async () => {
-    rpcMock.mockResolvedValue({ data: { id: "1", status: "published", published_at: "2026-10-04T10:00:00Z", url: null }, error: null });
-    const { publishArtifact } = await import("./studio-data");
-    await expect(publishArtifact("page", "1")).rejects.toThrow(/didn't confirm a public address/);
-  });
-  it("throws when the status is not the kind's live state", async () => {
-    rpcMock.mockResolvedValue({ data: { id: "1", status: "draft", published_at: "2026-10-04T10:00:00Z", url: "/form/1" }, error: null });
-    const { publishArtifact } = await import("./studio-data");
-    await expect(publishArtifact("form", "1")).rejects.toThrow(/didn't confirm a public address/);
-  });
-});
+// The Publish panel's own path (V0's publishArtifact readback) moved behind the one publish door in
+// V2b; its "never live without an address" rule is pinned in studio-publish-door.contract.test.ts.
 
 describe("D1 — the Studio auto-run list never runs above the Trust Compass ceiling", () => {
   it("keeps main PAIGE on the canonical resolver and asks the ceiling fact only for a lift, failing closed", () => {

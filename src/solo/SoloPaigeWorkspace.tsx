@@ -19,7 +19,7 @@ type SoloPaigeTab = "chat" | "knowledge" | "research" | "helpers" | "capabilitie
 const TABS: Array<{ id: SoloPaigeTab; label: string; icon: typeof Sparkles }> = [
   { id: "chat", label: "Chat", icon: Sparkles },
   { id: "knowledge", label: "Knowledge", icon: BookOpen },
-  { id: "research", label: "Deep Research", icon: Telescope },
+  { id: "research", label: "Research", icon: Telescope },
   { id: "helpers", label: "Helpers", icon: Bot },
   { id: "capabilities", label: "Capabilities", icon: Wrench },
 ];

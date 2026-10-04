@@ -13,6 +13,7 @@ import './sales-billing.css';
 import {InvoiceCommandReview} from './InvoiceCommandReview';
 import {InvoiceLifecycleActions} from './InvoiceLifecycleActions';
 import type {InvoiceRecord} from './invoiceLifecycleApi';
+import {InvoiceAppearanceWorkspace} from './InvoiceAppearanceWorkspace';
 const cash = (minor: number) => new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(minor / 100);
 const label = (kind: BillingDraftInput['kind']) => kind === 'recurring' ? 'Monthly recurring' : kind === 'deposit' ? 'Deposit and balance' : 'One-time';
 type Catalog = ReturnType<typeof useCatalogOffers>;
@@ -58,6 +59,7 @@ export function SalesBillingWorkspace({ view, integrationsPath }: { view: string
   const catalog = useCatalogOffers({ search: catalogSearch, page: catalogPage, pageSize: 25, referenceIds:catalogReferences });
   const browse:InvoiceBrowseControls={customerSearch,customerPage,customersHasMore:sources.customersHasMore,onCustomerSearch:value=>{setCustomerSearch(value);setCustomerPage(0)},onCustomerPage:setCustomerPage,catalogSearch,catalogPage,catalogHasMore:catalog.hasMore,onCatalogSearch:value=>{setCatalogSearch(value);setCatalogPage(0)},onCatalogPage:setCatalogPage,onRefreshCatalog:catalog.retry,agreementPage,agreementsHasMore:sources.agreementsHasMore,onAgreementPage:setAgreementPage,sourceStatus:sources.phase==='error'?'Billing contacts or agreements could not be read.':sources.phase==='loading'?'Reading billing contacts and agreements...':catalog.phase==='error'?'Catalog could not be read.':'',onRetrySources:()=>{sources.retry();catalog.retry()}};
   const [editing, setEditing] = React.useState<{ tenant: string; row: InvoiceDraft | null; recurring: boolean } | null>(null);
+  const [appearanceTenant,setAppearanceTenant]=React.useState<string|null>(null);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const registerRef = React.useRef<HTMLDivElement>(null);
   const editorWasOpen = React.useRef(false);
@@ -68,6 +70,7 @@ export function SalesBillingWorkspace({ view, integrationsPath }: { view: string
   }, [currentEditor]);
   React.useEffect(() => { setEditing(null); setSelectedId(null); setSearch(''); setCatalogSearch('');setCatalogPage(0);setCustomerSearch('');setCustomerPage(0);setAgreementPage(0);setSourceSelection({clientId:null,agreementId:null});setCatalogReferences([]); }, [store.tenantId]);
   const canEdit = sources.phase === 'ready' && sources.tenantId === store.tenantId && store.phase === 'ready' && clients.phase === 'ready' && clients.tenantId === store.tenantId && clients.canManage && clients.clientsReadable && catalog.phase === 'ready' && catalog.tenantId === store.tenantId;
+  if(appearanceTenant&&appearanceTenant===store.tenantId)return <InvoiceAppearanceWorkspace key={appearanceTenant} tenantId={appearanceTenant} onClose={()=>setAppearanceTenant(null)}/>;
   if (currentEditor) return <DraftEditor key={`${currentEditor.tenant}:${currentEditor.row?.id ?? 'new'}`} row={currentEditor.row} recurring={currentEditor.recurring} store={store} sources={sources} catalog={catalog} browse={browse} onSelection={(clientId,agreementId)=>{setSourceSelection({clientId:clientId||null,agreementId});setAgreementPage(0)}} onReferences={ids=>setCatalogReferences(old=>[...new Set([...old,...ids])])} canManage={canEdit} onClose={() => setEditing(null)} />;
   const rows = store.rows.filter(row => (view === 'recurring' ? row.snapshot.kind === 'recurring' : view === 'invoices' ? row.snapshot.kind !== 'recurring' : true) && `${row.snapshot.items.map(item => item.item).join(', ')} ${row.number} ${clients.clients.find(c => c.id === row.snapshot.client_id)?.name ?? ''}`.toLowerCase().includes(search.toLowerCase()));
   const selected = rows.find(r => r.id === selectedId) ?? rows[0];
@@ -75,7 +78,7 @@ export function SalesBillingWorkspace({ view, integrationsPath }: { view: string
   const create = (recurring: boolean) => {if(!store.tenantId)return;catalog.retry();setSourceSelection({clientId:null,agreementId:null});setCatalogReferences([]);setEditing({tenant:store.tenantId,row:null,recurring});};
   const edit=(row:InvoiceDraft)=>{if(!store.tenantId)return;catalog.retry();setSourceSelection({clientId:row.snapshot.client_id,agreementId:row.snapshot.agreement_id});setCatalogReferences(row.snapshot.items.flatMap(item=>typeof item.price_snapshot?.product_id==='string'?[item.price_snapshot.product_id]:[]));setEditing({tenant:store.tenantId,row,recurring:row.snapshot.kind==='recurring'});};
   return <div className="sb-workspace" ref={registerRef}>
-    <header className="sb-toolbar"><div className="sb-actions"><button className="btn btn-p" disabled={!canEdit} onClick={() => create(false)}>Create invoice</button><button className="btn" disabled={!canEdit} onClick={() => create(true)}>Set up recurring</button></div><span className="sb-muted">USD · invoice records · online processors unavailable</span></header>
+    <header className="sb-toolbar"><div className="sb-actions"><button className="btn btn-p" disabled={!canEdit} onClick={() => create(false)}>Create invoice</button><button className="btn" disabled={!canEdit} onClick={() => create(true)}>Set up recurring</button><button className="btn" disabled={!store.tenantId||store.phase!=='ready'} onClick={()=>setAppearanceTenant(store.tenantId)}>Appearance & numbering</button></div><span className="sb-muted">USD · invoice records · online processors unavailable</span></header>
     <div className="sb-records">
     {sources.phase === 'error' && <p className="sb-notice" role="alert">Billing contacts or agreements could not be read. <button className="btn" onClick={sources.retry}>Retry billing sources</button></p>}
     {<>

@@ -27,12 +27,13 @@ Deno.serve(async req => {
   let body: Record<string, unknown>, command: ReturnType<typeof parseSalesInvoiceCommand>;
   try {
     const raw = await req.text();
-    if (raw.length > 20000) throw new TypeError("BODY_TOO_LARGE");
+    if (raw.length > 200000) throw new TypeError("BODY_TOO_LARGE");
     body = object(JSON.parse(raw))!;
     if (!body || Object.keys(body).some(key => !["expected_tenant_id", "operation_id", "command", "approved_fingerprint"].includes(key))) throw new TypeError("INVALID_BODY");
     if (typeof body.expected_tenant_id !== "string" || !UUID.test(body.expected_tenant_id) || typeof body.operation_id !== "string" || !UUID.test(body.operation_id)) throw new TypeError("INVALID_SCOPE");
     if (body.approved_fingerprint !== undefined && (typeof body.approved_fingerprint !== "string" || !FINGERPRINT.test(body.approved_fingerprint))) throw new TypeError("INVALID_FINGERPRINT");
     command = parseSalesInvoiceCommand(body.command);
+    if(command.action!=="invoice.settings_update"&&raw.length>20000)throw new TypeError("BODY_TOO_LARGE");
   } catch { return response(400, { ok: false, code: "SALES_INVOICE_COMMAND_INVALID" }); }
 
   const { data: tenantId, error: tenantError } = await caller.rpc("current_user_tenant_id");
@@ -44,7 +45,7 @@ Deno.serve(async req => {
   const { data: member, error: memberError } = await admin.from("tenant_members").select("role,status").eq("tenant_id", tenantId).eq("user_id", user.id).eq("status", "active").maybeSingle();
   if (memberError || !["owner", "admin"].includes(member?.role ?? "")) return response(403, { ok: false, outcome: "refused", code: "SALES_INVOICE_FORBIDDEN" });
   const capability = SALES_INVOICE_ACTIONS[command.action];
-  const requestArgs: Record<string, unknown> = { command, operation_id: body.operation_id, expected_tenant_id: tenantId, approval_subject: `${command.action}:${command.invoice_id}` };
+  const requestArgs: Record<string, unknown> = { command, operation_id: body.operation_id, expected_tenant_id: tenantId, approval_subject: `${command.action}:${command.action === "invoice.settings_update" ? tenantId : command.invoice_id}` };
   const rpcArgs = { _actor_user_id: user.id, _expected_tenant_id: tenantId, _operation_id: body.operation_id, _command: command };
   // Replay comes before current balance/version eligibility and before approval redemption.
   // The business RPC fences actor/tenant and exact canonical request even for historical operations.
@@ -108,7 +109,7 @@ Deno.serve(async req => {
     approval: { autonomyLane: lane, ...(claimedArgs !== undefined ? { claimedArgs, claimedFor: capability } : {}) }, requestArgs,
   });
   const auditedCommand = object(object(decision.kind === "execute" ? decision.args : null)?.command) ?? command;
-  const { error: auditError } = await admin.from("paige_audit_log").insert({ actor_user_id: user.id, actor_role: `sales:${member?.role}`, tenant_id: tenantId, action: "sales.invoice_governed_decision", target_type: "invoice", target_id: auditedCommand.invoice_id,
+  const { error: auditError } = await admin.from("paige_audit_log").insert({ actor_user_id: user.id, actor_role: `sales:${member?.role}`, tenant_id: tenantId, action: "sales.invoice_governed_decision", target_type: command.action === "invoice.settings_update" ? "invoice_preferences" : "invoice", target_id: command.action === "invoice.settings_update" ? tenantId : auditedCommand.invoice_id,
     payload: { capability, decision: decision.kind, risk: decision.risk, lane_requested: decision.audit.laneRequested, lane_effective: decision.audit.laneEffective, clamped: decision.audit.clamped } });
   if (decision.kind === "refuse") return response(403, { ok: false, outcome: "refused", code: decision.code, message: decision.message, audit_recorded: !auditError });
   if (auditError) return response(503, { ok: false, outcome: "refused", code: "SALES_DECISION_RECEIPT_FAILED" });

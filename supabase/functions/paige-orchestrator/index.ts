@@ -99,8 +99,11 @@ async function resolveTenantScope(req: Request, payload: OrchestratorRequest): P
  *     real user upstream), but when BOTH the resolved tenant and the actor are present the
  *     association is PROVEN server-side (active tenant_members row for actor+tenant) —
  *     tenant A paired with tenant B's user FAILS CLOSED instead of being forwarded.
- * contact_id / conversation_id pass through unchanged (audit: no downstream consumer reads
- * them as authority today; see the INT-308 record).
+ * contact_id / conversation_id pass through unchanged. Audit finding (INT-308 record):
+ * NEITHER is read as identity/tenant authority downstream, but contact_id IS an unscoped
+ * cross-tenant data-selector in several local specialists (they load clients by id with the
+ * service role and no tenant filter) — a PRE-EXISTING input-validation gap, equally reachable
+ * via input.contact_id, deliberately out of this hotfix's fence.
  */
 async function buildTrustedContext(
   payload: OrchestratorRequest,
@@ -602,9 +605,18 @@ Deno.serve(async (req) => {
   // INT-308: the ONE trusted downstream context — built from verified state, never from the
   // raw caller context (see buildTrustedContext). Everything downstream (invocation
   // attribution + the local/soft/langgraph context envelope) reads THIS, and only this.
-  const trusted = await buildTrustedContext(payload, scope);
-  if ("error" in trusted) return fail(trusted.error, trusted.status);
-  const ctx = trusted.ctx;
+  let ctx: NonNullable<OrchestratorRequest["context"]>;
+  try {
+    const trusted = await buildTrustedContext(payload, scope);
+    if ("error" in trusted) return fail(trusted.error, trusted.status);
+    ctx = trusted.ctx;
+  } catch (e) {
+    // Fail CLOSED with the same JSON/CORS envelope every other error carries — an
+    // identity-proof infrastructure error must never surface as a bare runtime 500
+    // (and must never fall through to an unverified context).
+    console.error("[paige-orchestrator] INT-308 identity proof failed:", (e as Error)?.message);
+    return fail("Identity verification failed; invocation refused", 500);
+  }
 
   try {
     if (payload.action === "list_subagents" || payload.action === "tool_search") {

@@ -52,13 +52,16 @@ const B = "bbbbbbbb-0000-4000-8000-00000000000b"; // another user (same or forei
 const TENANT_A = "aaaaaaaa-1111-4000-8000-0000000000aa";
 const TENANT_B = "bbbbbbbb-1111-4000-8000-0000000000bb";
 
-/** A chainable in-memory stand-in for the service client's tenant_members query. */
+/** A chainable in-memory stand-in for the service client's tenant_members query.
+ *  .eq() arguments are RECORDED so the filter shape (user_id/tenant_id/status-active
+ *  — the exact columns the real proof filters on) is pinned, not just the row result. */
 const makeSupabase = (rows: unknown[] = [], err: unknown = null) => {
-  const q: Record<string, unknown> = { data: rows, error: err };
+  const q: Record<string, unknown> = { data: rows, error: err, eqCalls: [] as unknown[][] };
   const chain: Record<string, unknown> = {};
-  for (const m of ["select", "limit", "eq", "or", "is", "maybeSingle"]) {
+  for (const m of ["select", "limit", "or", "is", "maybeSingle"]) {
     q[m] = (..._args: unknown[]) => chain;
   }
+  q["eq"] = (...args: unknown[]) => { (q.eqCalls as unknown[][]).push(args); return chain; };
   Object.assign(chain, q);
   return { from: (_t: string) => chain };
 };
@@ -92,8 +95,7 @@ describe("INT-308 §6 — the negative matrix (JWT callers cannot forge identity
 
   it("D: caller supplies a FOREIGN tenant's user id → downstream must NOT receive that identity", async () => {
     const r = await build(realFn, { user_id: B }, jwt(A));
-    expect("ctx" in r && r.ctx.user_id).toBe(B ? A : A);
-    expect("ctx" in r && r.ctx.user_id).not.toBe(B);
+    expect("ctx" in r && r.ctx.user_id).toBe(A);
   });
 
   it("E: malformed user_id cannot affect downstream identity", async () => {
@@ -137,10 +139,18 @@ describe("INT-308 §2/§7 — trusted service-role callers, with the actor/tenan
   const svc = (tenantId: string | null) => ({ tenantId, callerId: null, isService: true });
 
   it("positive: canonical service caller (PAIGE chat) names the acting user of its resolved tenant → forwarded", async () => {
-    const rows = [{ tenant_id: TENANT_A }];
-    const r = await build(realFn, { user_id: A, conversation_id: "c1" }, svc(TENANT_A), rows);
+    const sb = makeSupabase([{ tenant_id: TENANT_A }]);
+    // two-stage eval: the outer call binds the stubs, the returned function is the real builder
+    const outer = new Function("supabase", "UUID_RE", "console", js(`return (${realFn});`)) as unknown as
+      (sb: unknown, re: unknown, log: unknown) => (p: { context?: Ctx }, s: ReturnType<typeof svc>) => Promise<{ ctx: Ctx } | { error: string; status: number }>;
+    const fn = outer(sb, UUID_RE, { warn() {} });
+    const r = await fn({ context: { user_id: A, conversation_id: "c1" } }, svc(TENANT_A));
     expect("ctx" in r && r.ctx.user_id).toBe(A);
     expect("ctx" in r && r.ctx.conversation_id).toBe("c1");
+    // the association proof filters EXACTLY these columns: user_id, tenant_id, status='active'
+    expect((sb.from("") as Record<string, unknown>)["eqCalls"]).toEqual([
+      ["user_id", A], ["tenant_id", TENANT_A], ["status", "active"],
+    ]);
   });
 
   it("fail-closed: tenant A + tenant B's user is refused (403), never forwarded", async () => {
@@ -148,9 +158,10 @@ describe("INT-308 §2/§7 — trusted service-role callers, with the actor/tenan
     expect("error" in r && r.status).toBe(403);
   });
 
-  it("fail-closed: an INACTIVE membership does not count as association", async () => {
+  it("fail-closed with the exact refusal state (the stub models the no-row class the status filter produces)", async () => {
     const r = await build(realFn, { user_id: B }, svc(TENANT_A), []);
-    expect("error" in r).toBe(true);
+    expect("error" in r && r.status).toBe(403);
+    expect("error" in r && r.error).toContain("not a member");
   });
 
   it("malformed acting user from an internal caller → 400, not garbage downstream", async () => {
@@ -169,11 +180,10 @@ describe("INT-308 §2/§7 — trusted service-role callers, with the actor/tenan
   });
 
   it("a member-read ERROR propagates (throws) rather than fail-open", async () => {
-    const fnText = realFn;
-    const fn = new Function("supabase", "UUID_RE", "console", js(`return (${fnText});`)) as never as (p: unknown, s: unknown) => Promise<unknown>;
-    await expect(
-      fn(makeSupabase([], { message: "db down" }) as never, UUID_RE, { warn() {} })({ context: { user_id: A } }, svc(TENANT_A)),
-    ).rejects.toThrow("db down");
+    const outer = new Function("supabase", "UUID_RE", "console", js(`return (${realFn});`)) as unknown as
+      (sb: unknown, re: unknown, log: unknown) => (p: { context?: Ctx }, s: ReturnType<typeof svc>) => Promise<unknown>;
+    const fn = outer(makeSupabase([], { message: "db down" }), UUID_RE, { warn() {} });
+    await expect(fn({ context: { user_id: A } }, svc(TENANT_A))).rejects.toThrow("db down");
   });
 });
 

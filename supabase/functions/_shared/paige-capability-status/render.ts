@@ -15,6 +15,7 @@
 // available (§13/§36/§70).
 
 import type { CapabilityStatus, CapabilityAvailability } from "./resolver.ts";
+import type { ProjectedCapability } from "./projection.ts";
 
 const GROUP_ORDER: readonly CapabilityAvailability[] = [
   "live",
@@ -33,7 +34,7 @@ const GROUP_HEADING: Record<CapabilityAvailability, string> = {
   proof_owed: "CAN ATTEMPT, BUT NOT PROVEN HERE YET — offer it, never promise the result:",
   planned: "NOT SOMETHING YOU CAN DO HERE YET — do NOT offer or claim these:",
   unavailable: "CANNOT CONFIRM FOR THIS WORKSPACE — do NOT claim these:",
-  not_for_tier: "NOT AVAILABLE FOR THIS ACCOUNT TYPE:",
+  not_for_tier: "NOT AVAILABLE TO THIS PERSON HERE (account type or workspace role):",
   // `no_applicable_capability` is never a per-capability row (it is the answer when a request matches
   // none of the list); it is named as an explicit resolution in the directive below, not a group.
   no_applicable_capability: "",
@@ -77,5 +78,84 @@ export function renderCapabilityStatusBlock(capabilities: readonly CapabilitySta
     }
   }
 
+  return lines.join("\n");
+}
+
+// ── C0a: the projected manifest (docs/delivery/paige-conversational-loop-r0.md §20) ──────────────
+//
+// The projection covers every tool emitted this turn (~160), not 21 hand-picked families, so the
+// rows are grouped by availability and then by domain and name the TOOL — the model already holds
+// each tool's description, so repeating it would only cost tokens. The person never hears tool
+// names; the directive tells PAIGE to speak in business terms.
+
+
+export interface SpecialistSummary {
+  name: string;
+  domain: string | null;
+}
+
+const PROJECTED_GROUP_ORDER: readonly CapabilityAvailability[] = [
+  "live", "needs_approval", "needs_setup", "proof_owed", "not_for_tier", "unavailable", "planned",
+];
+
+export function renderProjectedCapabilityBlock(
+  rows: readonly ProjectedCapability[],
+  specialists: readonly SpecialistSummary[] = [],
+): string {
+  if (!rows.length) return "";
+  const lines: string[] = [];
+  lines.push("=============================================================");
+  lines.push("WHAT YOU CAN ACTUALLY DO HERE — derived from the tools you hold this turn (authoritative)");
+  lines.push("=============================================================");
+  lines.push(
+    "This is resolved by the server for THIS workspace and THIS person right now, from the exact tools " +
+      "you were given, their governance, the workspace's approval settings, connections, and this person's " +
+      "role. When asked what you can do, or whether you can do something, answer ONLY from this — it " +
+      "OVERRIDES any broader impression. Speak in the person's business terms: never read out tool names. " +
+      "CAN DO NOW: offer freely. CAN PREPARE FOR APPROVAL: say you'll prepare it for them to approve. NEEDS " +
+      "SETUP: say what to connect first. NOT AVAILABLE TO THIS PERSON: say who can do it (the owner or an " +
+      "admin). NOT SOMETHING YOU CAN DO YET: say so plainly, and offer what you CAN do instead. If a request " +
+      "matches none of this, say you don't have a capability for that here — never invent one. Keep a " +
+      "capability answer short and pointed at what you'd do next, not a recited inventory.",
+  );
+
+  for (const group of PROJECTED_GROUP_ORDER) {
+    const inGroup = rows.filter((r) => r.availability === group);
+    if (!inGroup.length) continue;
+    lines.push("");
+    lines.push(GROUP_HEADING[group]);
+    if (group === "planned") {
+      for (const r of inGroup) lines.push(`- ${r.label}${r.reason ? ` — ${r.reason}` : ""}`);
+      continue;
+    }
+    // Rows sharing a family AND a reason collapse to one line; the reason is printed once.
+    const buckets = new Map<string, { family: string; reason: string | null; tools: string[] }>();
+    for (const r of inGroup) {
+      const reason = group === "live" || group === "needs_approval" ? null : r.reason;
+      const k = `${r.family}\u0000${reason ?? ""}`;
+      const b = buckets.get(k) ?? { family: r.family, reason, tools: [] };
+      b.tools.push(r.tool ?? r.key);
+      buckets.set(k, b);
+    }
+    const sorted = [...buckets.values()].sort((a, b) => a.family.localeCompare(b.family));
+    for (const b of sorted) {
+      lines.push(`- ${b.family}: ${b.tools.sort().join(", ")}${b.reason ? ` — ${b.reason}` : ""}`);
+    }
+  }
+
+  if (specialists.length) {
+    lines.push("");
+    lines.push(
+      "YOUR SPECIALISTS (consult them through your delegation tools; you stay the one voice the person hears):",
+    );
+    const byDomain = new Map<string, string[]>();
+    for (const s of specialists) {
+      const d = s.domain || "general";
+      byDomain.set(d, [...(byDomain.get(d) ?? []), s.name]);
+    }
+    for (const [d, names] of [...byDomain.entries()].sort(([a], [b]) => a.localeCompare(b))) {
+      lines.push(`- ${d}: ${names.sort().join(", ")}`);
+    }
+  }
   return lines.join("\n");
 }

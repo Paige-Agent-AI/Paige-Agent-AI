@@ -2,7 +2,7 @@ name: Tool autonomy ceiling fact
 on:
   pull_request:
     paths:
-      - 'supabase/migrations/20270539000000_tool_autonomy_ceiling_fact.sql'
+      - 'supabase/migrations/20270539010000_tool_autonomy_ceiling_fact.sql'
       - 'supabase/tests/tool_autonomy_ceiling_fact.sql'
       - '.github/workflows/tool-autonomy-ceiling.yml'
   workflow_dispatch:

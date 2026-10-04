@@ -161,7 +161,7 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
   it("keeps the seven contextual Settings destinations after notification retirement", () => {
     const settings = branchBySlug("solo", "settings");
     expect(settings?.key).toBe("settings");
-    expect(settings?.subtabs?.map(({ slug, label }) => [slug, label])).toEqual([
+    expect(settings?.subtabs?.filter(({ hidden }) => !hidden).map(({ slug, label }) => [slug, label])).toEqual([
       ["setup", "Setup"],
       ["team", "Team"],
       ["connections", "Connections"],
@@ -253,15 +253,12 @@ describe("Solo sub-tab tree (§65 3-level, solo screens verified 2026-08-18)", (
     // Marketing department (owner ruling 2026-10-03). The last three are the Sales lane's, reachable
     // here only until the top-level Sales destination lands.
     expect(branchBySlug("solo", "growth")?.label).toBe("Marketing");
-    expect(branchBySlug("solo", "growth")?.subtabs?.map(({ slug, label }) => [slug, label])).toEqual([
+    expect(branchBySlug("solo", "growth")?.subtabs?.filter(({ hidden }) => !hidden).map(({ slug, label }) => [slug, label])).toEqual([
       ["overview", "Overview"],
       ["campaigns", "Campaigns"],
       ["lead-capture", "Lead capture"],
       ["social", "Social"],
       ["analytics", "Analytics"],
-      ["catalog", "Offers"],
-      ["sales", "Sales"],
-      ["pipeline", "Pipeline"],
     ]);
     // Previously shipped addresses keep resolving (§58).
     expect(subtabBySlug("solo", "growth", "active")?.key).toBe("campaigns");
@@ -511,4 +508,3 @@ describe("OPERATOR_BRANCHES (Super Admin pack substrate)", () => {
     }
   });
 });
-

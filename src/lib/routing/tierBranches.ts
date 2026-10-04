@@ -189,8 +189,7 @@ export const SOLO_BRANCHES: Branch[] = [
     // through its existing side action; Lead capture measures how published Vibe work is USED.
     // The slug stays `growth` until the canonical-URL slice (S5) so no copied link breaks.
     //
-    // Offers, Sales and Pipeline belong to the Sales lane. They stay here, reachable and unchanged,
-    // only until the top-level Sales destination lands (S3); then they leave with replace redirects.
+    // Commercial entries stay hidden for intent-preserving compatibility redirects into Sales.
     // Retired creative slugs still resolve to the compatibility landing, which now points at
     // Lead capture instead of Catalog.
     subtabs: [
@@ -199,9 +198,9 @@ export const SOLO_BRANCHES: Branch[] = [
       { slug: "lead-capture", aliases: ["brand-kit", "pages", "funnels", "forms", "builders"], key: "capture", label: "Lead capture" },
       { slug: "social", key: "social", label: "Social" },
       { slug: "analytics", aliases: ["performance"], key: "analytics", label: "Analytics" },
-      { slug: "catalog", key: "catalog", label: "Offers" },
-      { slug: "sales", key: "sales", label: "Sales" },
-      { slug: "pipeline", key: "pipeline", label: "Pipeline" },
+      { slug: "catalog", key: "catalog", label: "Offers", hidden: true },
+      { slug: "sales", key: "sales", label: "Sales", hidden: true },
+      { slug: "pipeline", key: "pipeline", label: "Pipeline", hidden: true },
     ],
   },
   {
@@ -740,4 +739,3 @@ export function subtabPath(tier: RouteTierKey, account: string, branchSlug: stri
   if (tree.accountSegment === false) return `${tree.root}/${branchSlug}/${subSlug}`;
   return `${tree.root}/${account}/${branchSlug}/${subSlug}`;
 }
-

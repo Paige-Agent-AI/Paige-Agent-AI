@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
+import { legacySalesRoute } from "./sales/legacySalesRoute";
 import { useSubtabRoute } from "@/lib/routing/useSubtabRoute";
 import { branchPath, subtabPath } from "@/lib/routing/tierBranches";
 import { Ic, PageHead } from "./_shared";
@@ -660,10 +661,16 @@ export const Pipeline=()=>{
 };
 
 export const GrowthHub=({ salesInShell = false } = {})=>{
+  const params=useParams();
+  const location=useLocation();
+  const target=legacySalesRoute(params.account ?? null,(params["*"]||"").split("/")[1]||"",location.search,location.hash);
+  return target ? <Navigate to={target} replace/> : <MarketingWorkspace salesInShell={salesInShell}/>;
+};
+
+const MarketingWorkspace=({ salesInShell = false })=>{
   const[tab,setTab]=useSubtabRoute("solo","growth","overview");
-  // The 4th element marks the Sales-lane tabs. They stay reachable here until the top-level Sales
-  // destination lands, then leave with replace redirects (proposal §11, slice S3).
-  const tabs=[['overview','Overview',()=><Ic.pulse size={14}/>],['campaigns','Campaigns',()=><Ic.bolt size={14}/>],['capture','Lead capture',()=><Ic.doc size={14}/>],['social','Social',()=><Ic.users size={14}/>],['analytics','Analytics',()=><Ic.chart size={14}/>],['catalog','Offers',()=><Ic.grid size={14}/>,'sales'],['sales','Sales',()=><Ic.store size={14}/>,'sales'],['pipeline','Pipeline',()=><Ic.trend size={14}/>,'sales']];
+  // Commercial addresses resolve to Sales before Marketing readers mount.
+  const tabs=[['overview','Overview',()=><Ic.pulse size={14}/>],['campaigns','Campaigns',()=><Ic.bolt size={14}/>],['capture','Lead capture',()=><Ic.doc size={14}/>],['social','Social',()=><Ic.users size={14}/>],['analytics','Analytics',()=><Ic.chart size={14}/>]];
   const data=useSoloCampaigns();
   const params=useParams();
   const location=useLocation();

@@ -393,6 +393,16 @@ function describeStep(
     // Scheduling (owner)
     case "calendar_book_meeting": return { label: "Booking the meeting", group: "owner" };
     // Team / orchestration (shared)
+    case "web_search": {
+      const q = typeof args.query === "string" ? args.query.slice(0, 80) : undefined;
+      return { label: failed ? "Couldn't search the web" : "Searching the web", group: "shared", ...(q ? { detail: q } : {}) };
+    }
+    case "deep_research": {
+      // §5 of the R2b ruling: ONE truthful activity state (subject + the tool is running) —
+      // never invented per-step progress (the engine streams no PLAN/SEARCH/READ events).
+      const q = typeof args.question === "string" ? args.question.slice(0, 80) : undefined;
+      return { label: failed ? "Deep research stopped" : "Researching the live web", group: "shared", ...(q ? { detail: q } : {}) };
+    }
     case "delegate_to_subagent": {
       const slug = args?.slug ?? args?.subagent ?? "";
       const who = SUBAGENT_FRIENDLY[slug] ?? "a specialist";
@@ -5814,7 +5824,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             type: "function",
             function: {
               name: "deep_research",
-              description: "Run a genuine multi-hop, cited research investigation when the client needs a thorough, source-backed answer (comparisons, landscapes, 'find real X with sources', due diligence). Plans sub-questions, searches the live web across several hops, reads top sources, ranks them by reliability, and returns findings where every claim carries a citation. Slower and heavier than web_search. Use web_search for a single quick lookup; use deep_research when the answer must be trustworthy and sourced. Never fabricates: if search is unconfigured or empty it says so.",
+              description: "Run a genuine multi-hop, cited research investigation and CHOOSE IT PROACTIVELY when the question genuinely warrants triangulating multiple sources — competitive analysis, due diligence, acquisition or vendor evaluation, market or regulatory research, company/person dossiers, complex comparisons, or any answer where source triangulation materially changes it. Plans sub-questions, searches the live web across several hops, reads top sources, ranks them by reliability, and returns findings where every claim carries a citation. When the operator explicitly asks for depth — 'research this deeply', 'do a deep dive', 'use Deep Research', 'investigate this before you answer' — this tool is the request. Do NOT reach for it on a simple fresh-fact lookup: that is web_search (the lightest sufficient capability). Never fabricates: if search is unconfigured or empty it says so.",
               parameters: {
                 type: "object",
                 properties: {
@@ -9789,6 +9799,17 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             const coverage = dr?.coverage ?? {};
             const findings = Array.isArray(dr?.findings) ? dr.findings : [];
             const sources = Array.isArray(dr?.sources) ? dr.sources : [];
+            // R2b §10 — the governed readback: never claim a saved run without proving the
+            // row through the M0 RPC (the caller's own client; scope server-derived). A
+            // failed/absent row renders the honest not-saved state downstream.
+            const drRunId = typeof dr?.run_id === "string" ? dr.run_id : null;
+            let drSaved = false;
+            if (drRunId) {
+              try {
+                const { data: drReadback } = await supabaseClient.rpc("get_workspace_research_run", { _run_id: drRunId });
+                drSaved = !!drReadback;
+              } catch { drSaved = false; }
+            }
             // D1 — dossier mode. When the engine detected an entity target it
             // returns a gate-survived `entity_profile` (per-field cited). Format it
             // as a structured intel block: summary, Structure/People/Offerings/
@@ -9812,6 +9833,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               content: JSON.stringify({
                 configured: coverage.configured !== false,
                 run_id: dr?.run_id ?? null,
+                saved: drSaved,
+                question: typeof args.question === "string" ? args.question : "",
                 stop_reason: coverage.stop_reason ?? null,
                 ...(dossier ? { dossier } : {}),
                 ...(ep ? { unverified_notes: Array.isArray(ep.unverified_notes) ? ep.unverified_notes : [] } : {}),
@@ -14387,11 +14410,18 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // to echo it back for the approval to bind to this exact call rather than to a boolean.
       const confirmTrace: Array<{ tool: string; summary: string; fingerprint?: string; command?: Record<string, unknown>; idempotency_key?: string }> = [];
       const crmResultTrace: Array<Record<string, unknown>> = [];
+      // R2b — the inline research card's payload. Captured from the deep_research tool
+      // result in the stream scan below; streamed to the client as a paige_research frame
+      // (attached to the SAME assistant turn — one Paige turn, ruling §7) and persisted in
+      // bundle_ref as a RUN REFERENCE only (§12: reference + canonical reload — the client
+      // rehydrates evidence through the governed get RPC, so chat and the Research library
+      // share one citation identity).
+      const researchTrace: Array<Record<string, unknown>> = [];
       // One authorization-neutral projection for success AND interrupted Live
       // history. Never persist the live CRM readback, locator or contact payload.
       const assistantTurnMetadata = () => ({
         surfaces: stepTrace.filter((s) => s.kind !== "thought").map((s) => s.group).filter((v, i, a) => v && a.indexOf(v) === i),
-        bundleRef: (queuedApprovals.length || confirmTrace.length || crmResultTrace.length)
+        bundleRef: (queuedApprovals.length || confirmTrace.length || crmResultTrace.length || researchTrace.length)
           ? {
               approval_queued: queuedApprovals,
               paige_confirm: confirmTrace,
@@ -14401,6 +14431,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 receipt_recorded: result.receipt_recorded,
                 ...(typeof result.external_effect === "boolean" ? { external_effect: result.external_effect } : {}),
               })),
+              // R2b §12: the run REFERENCE only — the evidence rehydrates from
+              // research_runs through the governed get RPC on reload (one citation
+              // identity with the Research library; no duplicated payload store).
+              ...(researchTrace.length ? { paige_research: researchTrace.map((r) => ({
+                run_id: r.run_id, question: r.question, saved: r.saved === true,
+              })) } : {}),
             }
           : null,
       });
@@ -14742,6 +14778,19 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   if (parsed?.needs_confirm && parsed?.confirm_summary) {
                     confirmTrace.push({ tool: parsed.tool || tc.function?.name || "action", summary: String(parsed.confirm_summary), ...(parsed.confirm_fingerprint ? { fingerprint: String(parsed.confirm_fingerprint) } : {}), ...(parsed.confirm_command && typeof parsed.confirm_command === "object" ? { command: parsed.confirm_command as Record<string, unknown> } : {}), ...(parsed.confirm_idempotency_key ? { idempotency_key: String(parsed.confirm_idempotency_key) } : {}) });
                   }
+                  if (tc.function?.name === "deep_research" && parsed && typeof parsed === "object" && Array.isArray(parsed.findings)) {
+                    researchTrace.push({
+                      run_id: typeof parsed.run_id === "string" ? parsed.run_id : null,
+                      question: typeof parsed.question === "string" ? parsed.question : "",
+                      saved: parsed.saved === true,
+                      configured: parsed.configured !== false,
+                      stop_reason: typeof parsed.stop_reason === "string" ? parsed.stop_reason : null,
+                      is_dossier: typeof parsed.dossier === "string" && parsed.dossier.length > 0,
+                      findings: parsed.findings,
+                      sources: Array.isArray(parsed.sources) ? parsed.sources : [],
+                      unverified_notes: Array.isArray(parsed.unverified_notes) ? parsed.unverified_notes : [],
+                    });
+                  }
                   if (CRM_COMMAND_TOOL_NAMES.has(tc.function?.name) && parsed?.success === true) {
                     crmResultTrace.push({
                       action: String(parsed.action || CRM_TOOL_TO_ACTION[tc.function.name as keyof typeof CRM_TOOL_TO_ACTION]),
@@ -14977,6 +15026,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           await emitApprovalOutcome(controller);
           for (const c of confirmTrace) emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_confirm: c })}\n\n`));
           for (const result of crmResultTrace) emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_crm_result: result })}\n\n`));
+          // R2b — the inline research card's live payload (attached to the same assistant
+          // turn, ruling §7; reloaded turns rehydrate from the run reference instead).
+          for (const r of researchTrace) emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_research: r })}\n\n`));
           // #292 — tell the Studio canvas the exact artifact this turn produced (server-authoritative;
           // the client opens THIS, never a guessed manifest index). Last visual wins if several built.
           if (studioLinked.length) emitContent(controller, enc.encode(`data: ${JSON.stringify({ paige_artifact: studioLinked[studioLinked.length - 1] })}\n\n`));

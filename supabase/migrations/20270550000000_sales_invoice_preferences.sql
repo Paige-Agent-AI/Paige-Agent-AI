@@ -132,6 +132,9 @@ LANGUAGE plpgsql SET search_path=pg_catalog,public AS $$ BEGIN
   OR c->>'action' IS DISTINCT FROM 'invoice.settings_update' OR jsonb_typeof(c->'expected_version') IS DISTINCT FROM 'number'
   OR coalesce(c->>'expected_version','') !~ '^(0|[1-9][0-9]{0,17})$' THEN RAISE EXCEPTION 'Invalid invoice settings command' USING ERRCODE='22023'; END IF;
  PERFORM public._sales_invoice_validate_settings(c->'settings');
+ -- 999999999 is a readable exhausted state after the last supported issuance, never user input.
+ IF (c#>>'{settings,next_number}')::bigint>999999998 THEN
+  RAISE EXCEPTION 'Invoice settings sequence must allow a supported issuance' USING ERRCODE='22023'; END IF;
 END $$;
 CREATE OR REPLACE FUNCTION public.preview_sales_invoice_command(_actor_user_id uuid,_expected_tenant_id uuid,_command jsonb) RETURNS jsonb
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$ DECLARE p jsonb;

@@ -97,3 +97,16 @@ SET ROLE authenticated;
 SELECT proof_denied($q$SELECT read_sales_invoice_preferences('20000000-0000-0000-0000-000000000001')$q$,'42501','member preferences denied');
 RESET ROLE;
 UPDATE tenant_members SET role='owner' WHERE user_id='10000000-0000-0000-0000-000000000001';
+-- User input must leave room for issuance; stored terminal state remains readable and exhausted.
+SAVEPOINT terminal_sequence;
+SET ROLE service_role;
+SELECT proof_denied($q$SELECT proof_preferences(600,3,'{"next_number":999999999}')$q$,'22023','terminal sequence settings save refused');
+SELECT proof_denied($q$SELECT preview_sales_invoice_command('10000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000001','{"action":"invoice.settings_update","expected_version":3,"settings":{"prefix":"END-","next_number":999999999,"padding":5,"template":"classic","accent":"#4931ac","logo_data_uri":null,"footer":"","payment_instructions":""}}')$q$,'22023','terminal sequence settings preview refused');
+SELECT proof_assert(proof_preferences(600,3,'{"prefix":"END-","next_number":999999998}')#>>'{preferences,settings,next_number}'='999999998','last supported user sequence accepted');
+SELECT proof_assert(execute_sales_invoice_command('10000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000001','70000000-0000-0000-0000-000000000601','{"action":"invoice.publish","invoice_id":"60000000-0000-0000-0000-000000000502","expected_version":1}',proof_governance('invoice.publish','sales_publish_invoice'))#>>'{row,invoice_number}'='END-999999998','last supported sequence issues full number without padding truncation');
+SET ROLE authenticated;
+SELECT proof_assert(read_sales_invoice_preferences('20000000-0000-0000-0000-000000000001')#>>'{settings,next_number}'='999999999','exhausted stored sequence remains readable');
+SET ROLE service_role;
+SELECT proof_denied($q$SELECT execute_sales_invoice_command('10000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000001','70000000-0000-0000-0000-000000000602','{"action":"invoice.publish","invoice_id":"60000000-0000-0000-0000-000000000503","expected_version":1}',proof_governance('invoice.publish','sales_publish_invoice'))$q$,'22023','exhausted stored sequence refuses further issuance');
+ROLLBACK TO terminal_sequence;
+RESET ROLE;

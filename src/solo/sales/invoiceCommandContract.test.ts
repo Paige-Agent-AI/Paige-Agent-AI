@@ -28,3 +28,8 @@ it('validates PNG/JPEG signatures and decoded logo bounds',()=>{
  const huge='data:image/png;base64,'+btoa('\x89PNG\r\n\x1a\n'+'a'.repeat(131072));expect(()=>parseSalesInvoiceCommand({...preferences,settings:{...preferences.settings,logo_data_uri:huge}})).toThrow();
  expect(()=>parseSalesInvoiceCommand({...preferences,settings:{...preferences.settings,payment_instructions:'a'.repeat(2001)}})).toThrow();
 });
+
+it('refuses the terminal sequence while accepting the final issuable preference',()=>{
+ expect(parseSalesInvoiceCommand({...preferences,settings:{...preferences.settings,next_number:999999998}})).toMatchObject({settings:{next_number:999999998}});
+ expect(()=>parseSalesInvoiceCommand({...preferences,settings:{...preferences.settings,next_number:999999999}})).toThrow();
+});

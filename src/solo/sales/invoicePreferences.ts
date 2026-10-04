@@ -6,6 +6,9 @@ export function readInvoicePreferences(value:unknown,tenantId:string):InvoicePre
   if(!value||typeof value!=='object')return null;
   const r=value as Record<string,unknown>;
   if(r.tenant_id!==tenantId||!Number.isSafeInteger(r.version)||Number(r.version)<0||typeof r.can_manage!=='boolean')return null;
-  try{parseSalesInvoiceCommand({action:'invoice.settings_update',expected_version:r.version,settings:r.settings});return r as unknown as InvoicePreferences;}catch{return null;}
+  const settings=r.settings as Record<string,unknown>|null;
+  if(!settings||!Number.isSafeInteger(settings.next_number)||Number(settings.next_number)<1||Number(settings.next_number)>999999999)return null;
+  // The terminal stored number is an exhausted sequence, not a new settings input.
+  try{parseSalesInvoiceCommand({action:'invoice.settings_update',expected_version:r.version,settings:{...settings,next_number:Math.min(Number(settings.next_number),999999998)}});return r as unknown as InvoicePreferences;}catch{return null;}
 }
 export function invoiceNumberExample(value:InvoiceAppearance):string {return `${value.prefix}${String(value.next_number).padStart(value.padding,'0')}`;}

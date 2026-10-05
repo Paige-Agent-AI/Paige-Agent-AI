@@ -377,6 +377,18 @@ Same tiers as the layout C workspace below (Solo owner/admin; operator acting in
 
 Same tiers as the layout C workspace below; no new seam. The Studio designer saves drafts in the same turn; held saves surface as approval cards; an unnamed project is renamed through the existing `rename_studio_session` (workspace owner/admin or the project's creator). LIVE on merge; authenticated drive owed.
 
+### Marketing email E2b — PAIGE's email tools in chat (branch `claude/gifted-bell-qfezxb`, 2026-10-05)
+
+Four chat tools (`read_email_campaigns`, `read_email_campaign_audience`, `email_campaign_draft`,
+`email_campaign_request_approval`) on the caller's own session. Every RPC names the business the chat is in
+and refuses another (`active_account_changed`), and refuses an agency account (`not_for_this_account`, §60:
+agencies have no Marketing area). PAIGE never approves or sends; filing locks the version for the owner's one
+approval.
+
+| Capability | God / Super Admin | Agency | Standalone (Solo) | Sub-account | Client | Anonymous | Status |
+|---|---|---|---|---|---|---|---|
+| PAIGE reads campaigns, counts an audience, writes a draft, files it for approval | ✗ (no workspace; the tools say an active business is needed) | ✗ refused in the database (`not_for_this_account`) | **✓** owner/admin; a member is refused before any approval card | DB allows owner/admin; the sub-account tree has no Email screen to approve from yet | ✗ (client seat is deny-by-default) | ✗ | PARTIAL: LIVE on merge; authenticated chat drive owed |
+
 ### Marketing email E2 — the Email dashboard and campaign editor (branch `claude/gifted-bell-qfezxb`, 2026-10-04)
 
 Solo Marketing › Email (`/solo/{account}/growth/email`). The same RPC seam as E1, plus three reads

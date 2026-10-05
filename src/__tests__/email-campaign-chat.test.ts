@@ -3,6 +3,8 @@ import {
   EMAIL_CAMPAIGN_TOOLS, EMAIL_CAMPAIGN_TOOL_NAMES, dispatchEmailCampaignChat, emailCampaignRequestKey,
 } from "../../supabase/functions/_shared/email-campaign-chat.ts";
 import { markupToHtml, sourceOf } from "../../supabase/functions/_shared/email-markup.ts";
+import { NO_WORKSPACE_AUTHORITY, authorityAdmits, requiresWorkspaceAdmin } from "../../supabase/functions/_shared/workspace-authority.ts";
+import fs from "node:fs";
 
 const TENANT = "11111111-1111-4111-8111-111111111111";
 const ACTOR = "22222222-2222-4222-8222-222222222222";
@@ -45,7 +47,7 @@ describe("email campaign chat tools", () => {
     const body = "# Spring\nOur doors open Monday.\n[[Book a call|https://example.com/book]]";
     const { deps, calls } = caller({
       email_campaign_draft: (args) => ({ data: { campaign_id: CAMPAIGN, version_id: VERSION, version_no: 1, created: true, replayed: false, echo: args } }),
-      read_email_campaigns: draftRead({ subject: "Spring is here", body_html: markupToHtml(body) }),
+      read_email_campaigns: draftRead({ subject: "Spring is here", body_html: markupToHtml(body), audience: { stages: ["lead"] } }),
     });
     const result = await run("email_campaign_draft", { name: "Spring", kind: "promotion", subject: "Spring is here", body, audience: { stages: ["lead"] } }, deps);
     expect(result.outcome).toBe("succeeded");
@@ -206,5 +208,40 @@ describe("email campaign chat tools", () => {
     expect(String(refusal.content.error)).toMatch(/inside each business/);
     const read = await run("read_email_campaigns", { campaign_id: CAMPAIGN }, deps);
     expect(String((read.content.version as Record<string, unknown>).body_note)).toMatch(/ask the owner first/);
+  });
+
+  it("does not count a draft saved when a field it set reads back different", async () => {
+    const { deps } = caller({
+      email_campaign_draft: { data: { campaign_id: CAMPAIGN, version_id: VERSION, created: false } },
+      read_email_campaigns: draftRead({ audience: { stages: ["customer"] } }),
+    });
+    const result = await run("email_campaign_draft", { campaign_id: CAMPAIGN, audience: { stages: ["lead"] } }, deps);
+    expect(result.outcome).toBe("outcome_unknown");
+  });
+
+  it("reads a size limit the database enforced as a refusal, and a replayed create as nothing new", async () => {
+    const { deps } = caller({ email_campaign_draft: [{ error: { code: "23514", message: "new row violates check constraint" } },
+      { data: { campaign_id: CAMPAIGN, version_id: VERSION, created: true, replayed: true } }], read_email_campaigns: draftRead({ subject: "Hi" }) });
+    const refused = await run("email_campaign_draft", { subject: "x" }, deps);
+    expect(refused.outcome).toBe("refused");
+    expect(String(refused.content.error)).toMatch(/more than an email campaign can hold/);
+    const replay = await run("email_campaign_draft", { subject: "Hi" }, deps);
+    expect(replay.content).toMatchObject({ success: true, created: false, replayed: true });
+    expect(String(replay.content.note)).toMatch(/already saved from the same request/);
+  });
+
+  it("admits only an owner/admin seat of the business, never an agency manager or the operator acting as it", () => {
+    const seat = { ...NO_WORKSPACE_AUTHORITY, seat: true, workspaceAdmin: true };
+    const manager = { ...NO_WORKSPACE_AUTHORITY, seat: false, workspaceAdmin: true };
+    const operator = { ...NO_WORKSPACE_AUTHORITY, seat: false, platformOperator: true };
+    for (const tool of EMAIL_CAMPAIGN_TOOL_NAMES) {
+      expect(requiresWorkspaceAdmin(tool, new Set())).toBe(true);
+      expect(authorityAdmits(tool, seat, new Set(), EMAIL_CAMPAIGN_TOOL_NAMES)).toBe(true);
+      expect(authorityAdmits(tool, manager, new Set(), EMAIL_CAMPAIGN_TOOL_NAMES)).toBe(false);
+      expect(authorityAdmits(tool, operator, new Set(), EMAIL_CAMPAIGN_TOOL_NAMES)).toBe(false);
+    }
+    const chat = fs.readFileSync("supabase/functions/paige-ai-chat/index.ts", "utf8");
+    expect(chat).toContain("authorityAdmits(tc.function.name, await authorityForCall(tc.id), WORKSPACE_BUILD_TOOLS, EMAIL_CAMPAIGN_TOOL_NAMES)");
+    expect(chat).toMatch(/const DOOR_SEAT_TOOLS[\s\S]{0,600}\.\.\.EMAIL_CAMPAIGN_TOOL_NAMES/);
   });
 });

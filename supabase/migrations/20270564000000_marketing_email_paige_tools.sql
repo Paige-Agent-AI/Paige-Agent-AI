@@ -45,6 +45,18 @@ DECLARE
   c public.email_campaigns%ROWTYPE; v public.email_campaign_versions%ROWTYPE;
   made jsonb; created boolean := false;
 BEGIN
+  IF p_campaign_id IS NULL THEN
+    IF p_request_key IS NULL THEN RAISE EXCEPTION 'request_key_required' USING ERRCODE = '22023'; END IF;
+    -- One create per key, and a repeat returns what the first made before anything else is checked: a
+    -- retry after its send time has passed must still find the campaign. The lock serialises two retries.
+    PERFORM pg_advisory_xact_lock(hashtextextended(t::text || ':' || p_request_key::text, 0));
+    SELECT * INTO c FROM public.email_campaigns WHERE tenant_id = t AND request_key = p_request_key;
+    IF FOUND THEN
+      SELECT * INTO v FROM public.email_campaign_versions WHERE id = c.current_version_id;
+      RETURN jsonb_build_object('campaign_id', c.id, 'version_id', v.id, 'version_no', v.version_no,
+        'state', v.state, 'created', true, 'replayed', true);
+    END IF;
+  END IF;
   IF p_scheduled_for IS NOT NULL AND p_scheduled_for < now() THEN
     RAISE EXCEPTION 'schedule_in_past' USING ERRCODE = '22023';
   END IF;
@@ -53,26 +65,22 @@ BEGIN
   END IF;
 
   IF p_campaign_id IS NULL THEN
-    IF p_request_key IS NULL THEN RAISE EXCEPTION 'request_key_required' USING ERRCODE = '22023'; END IF;
-    -- One create per key. The lock serialises two retries arriving together.
-    PERFORM pg_advisory_xact_lock(hashtextextended(t::text || ':' || p_request_key::text, 0));
-    SELECT * INTO c FROM public.email_campaigns WHERE tenant_id = t AND request_key = p_request_key;
-    IF FOUND THEN
-      SELECT * INTO v FROM public.email_campaign_versions WHERE id = c.current_version_id;
-      RETURN jsonb_build_object('campaign_id', c.id, 'version_id', v.id, 'version_no', v.version_no,
-        'state', v.state, 'created', true, 'replayed', true);
-    END IF;
     made := public.email_campaign_create(COALESCE(p_kind, 'standard'), p_name);
     UPDATE public.email_campaigns SET request_key = p_request_key WHERE id = (made->>'campaign_id')::uuid;
     SELECT * INTO c FROM public.email_campaigns WHERE id = (made->>'campaign_id')::uuid;
     created := true;
   ELSE
-    SELECT * INTO c FROM public.email_campaigns WHERE id = p_campaign_id AND tenant_id = t FOR UPDATE;
+    SELECT * INTO c FROM public.email_campaigns WHERE id = p_campaign_id AND tenant_id = t;
     IF NOT FOUND THEN RAISE EXCEPTION 'campaign_not_found' USING ERRCODE = 'P0002'; END IF;
   END IF;
 
+  -- The version is locked before the campaign, the order the editor's own saves take, so PAIGE and an
+  -- autosave never wait on each other in a circle.
   SELECT * INTO v FROM public.email_campaign_versions WHERE id = c.current_version_id FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'campaign_not_found' USING ERRCODE = 'P0002'; END IF;
+  SELECT * INTO c FROM public.email_campaigns WHERE id = c.id FOR UPDATE;
+  IF c.current_version_id IS DISTINCT FROM v.id THEN RAISE EXCEPTION 'not_the_current_version' USING ERRCODE = 'P0001'; END IF;
+  IF v.state <> 'draft' AND c.status IN ('cancelled', 'blocked') THEN RAISE EXCEPTION 'campaign_stopped' USING ERRCODE = 'P0001'; END IF;
   IF v.state = 'locked' THEN RAISE EXCEPTION 'campaign_awaiting_approval' USING ERRCODE = 'P0001'; END IF;
   IF v.state = 'approved' THEN RAISE EXCEPTION 'campaign_approved' USING ERRCODE = 'P0001'; END IF;
   IF v.state <> 'draft' THEN RAISE EXCEPTION 'campaign_already_sent' USING ERRCODE = 'P0001'; END IF;
@@ -159,16 +167,20 @@ DECLARE
   t uuid := public._email_paige_tenant(p_expected_tenant_id);
   c public.email_campaigns%ROWTYPE; v public.email_campaign_versions%ROWTYPE; a public.paige_pending_approvals%ROWTYPE;
 BEGIN
-  SELECT * INTO c FROM public.email_campaigns WHERE id = p_campaign_id AND tenant_id = t FOR UPDATE;
+  -- No locks here: email_campaign_request_approval takes them, version first, the editor's order.
+  SELECT * INTO c FROM public.email_campaigns WHERE id = p_campaign_id AND tenant_id = t;
   IF NOT FOUND THEN RAISE EXCEPTION 'campaign_not_found' USING ERRCODE = 'P0002'; END IF;
   SELECT * INTO v FROM public.email_campaign_versions WHERE id = c.current_version_id;
   IF NOT FOUND THEN RAISE EXCEPTION 'campaign_not_found' USING ERRCODE = 'P0002'; END IF;
+  IF v.state <> 'draft' AND c.status IN ('cancelled', 'blocked') THEN RAISE EXCEPTION 'campaign_stopped' USING ERRCODE = 'P0001'; END IF;
   IF v.state = 'locked' THEN
+    -- A repeat of PAIGE's own filing returns the approval it made. One the owner filed is theirs, not hers.
     SELECT * INTO a FROM public.paige_pending_approvals WHERE id = v.approval_id;
-    IF FOUND AND a.status = 'pending' THEN
+    IF FOUND AND a.status = 'pending' AND a.source = 'paige' THEN
       RETURN jsonb_build_object('approval_id', a.id, 'version_id', v.id, 'recipients', v.expected_recipients,
         'cost_bound_usd', v.cost_bound_usd, 'from_address', v.sender_snapshot->>'from_address', 'replayed', true);
     END IF;
+    RAISE EXCEPTION 'campaign_awaiting_approval' USING ERRCODE = 'P0001';
   END IF;
   IF v.state = 'approved' THEN RAISE EXCEPTION 'campaign_approved' USING ERRCODE = 'P0001'; END IF;
   IF v.state = 'sent' THEN RAISE EXCEPTION 'campaign_already_sent' USING ERRCODE = 'P0001'; END IF;

@@ -76,6 +76,9 @@ const WORKSPACE_BUILD_TOOLS: ReadonlySet<string> = new Set([
 // same rule through authorityAdmits so it never describes a door tool the door would refuse (C0a).
 const DOOR_SEAT_TOOLS: ReadonlySet<string> = new Set<string>([
   ...CRM_COMMAND_TOOL_NAMES, ...SALES_INVOICE_TOOL_NAMES, ...SALES_COLLECTIONS_TOOL_NAMES,
+  // Marketing email: its RPCs admit only an owner/admin SEAT of the active business (_email_caller_tenant),
+  // never an agency manager acting in a sub-account or the operator acting as a business.
+  ...EMAIL_CAMPAIGN_TOOL_NAMES,
 ]);
 // The one publish door (growth-publish-command, V2b) admits the workspace's owner, an admin or its
 // managing agency — the Studio build rule (its tools are in WORKSPACE_BUILD_TOOLS). It is outside the
@@ -9136,7 +9139,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         // after they approved it. Same resolver as that gate (asked fresh per call); the later gate
         // stays as defense in depth.
         if (requiresWorkspaceAdmin(tc.function.name, N8N_MANAGEMENT_TOOL_NAMES)
-            && !authorityAdmits(tc.function.name, await authorityForCall(tc.id), WORKSPACE_BUILD_TOOLS)) {
+            && !authorityAdmits(tc.function.name, await authorityForCall(tc.id), WORKSPACE_BUILD_TOOLS, EMAIL_CAMPAIGN_TOOL_NAMES)) {
           if (WORKSPACE_BUILD_TOOLS.has(tc.function.name)) await recordStudioRefusal(tc, "workspace_owner_or_admin_required");
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({
             success: false, error: "workspace_owner_or_admin_required", message: workspaceAdminRefusal(MUTATING_TOOLS.has(tc.function.name)),
@@ -14253,7 +14256,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         save_to_knowledge_base: "knowledge_base",
         mission_create: "business_missions", mission_revise: "business_missions", mission_transition: "business_missions",
         campaign_brief_create: "campaign_briefs", campaign_brief_revise: "campaign_briefs",
-        email_campaign_draft: "email_campaigns", email_campaign_request_approval: "email_campaign_versions",
+        email_campaign_draft: "email_campaigns", email_campaign_request_approval: "email_campaigns",
         // Calendar booking presets — every verb's durable subject is the calendars row (the
         // booking /book page). duplicate mints a new row; the rest act on the named one.
         booking_preset_create: "calendars", booking_preset_revise: "calendars",
@@ -14380,7 +14383,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       const TARGET_ID_KEYS = [
         "agreement_id", "batch_id", "contact_id", "client_id", "deleted", "deal_id", "task_id", "pipeline_id", "stage_id",
         "page_id", "funnel_id", "content_id", "booking_id", "log_id", "automation_id", "mission_id", "plan_id",
-        "item_id", "workflow_id", "subagent_id", "action_id", "connection_id", "account_id", "tenant_id", "id",
+        "item_id", "workflow_id", "subagent_id", "action_id", "connection_id", "account_id", "campaign_id", "tenant_id", "id",
       ] as const;
       const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const resolveWriteTargetId = (args: any, out: any): string | null => {

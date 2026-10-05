@@ -15,7 +15,7 @@ const writable = (schema: unknown): Record<string, unknown> => JSON.parse(JSON.s
 export const EMAIL_CAMPAIGN_TOOLS = [
   {type:'function',function:{name:'read_email_campaigns',description:'Read this business\'s email campaigns (newest first), or pass campaign_id for one campaign\'s current version: its words, audience, schedule, goal, sender, approval state, and the audience choices (stages, sources, tags) its contacts carry. Read before changing a campaign. Shows no recipient names or addresses.',parameters:EMAIL_CAMPAIGNS_READ_CAPABILITY.input}},
   {type:'function',function:{name:'read_email_campaign_audience',description:'Count who one email campaign would reach today, and how many are left out because they have no address, opted out, are suppressed, or (for a newsletter) never subscribed. Counts only. Also reports today\'s sending limit and whether the business postal address is set.',parameters:EMAIL_CAMPAIGN_AUDIENCE_READ_CAPABILITY.input}},
-  {type:'function',function:{name:'email_campaign_draft',description:'Write a new email campaign draft (omit campaign_id) or change the current draft of one (pass campaign_id from read_email_campaigns). Only include fields you are setting. Write the body in plain marks, one per line: "# Heading", "- item", "[link text](https://...)", "[[Button text|https://...]]", blank line between paragraphs. Do not invent links, offers, dates or names; ask for any you need. The audience is a rule over the stages, sources and tags read_email_campaigns lists (empty means everyone who can be emailed), plus inactive_days for contacts not emailed in that many days, or a saved segment_id. Give send_at with the owner\'s UTC offset (ask their time zone if unknown), or leave it out. The sender is the business\'s connected email first; the owner changes it in the editor. A draft sends nothing. This saves the email into Marketing > Email; draft_marketing_content is only for words to paste somewhere else. A campaign awaiting approval, approved or sent cannot be changed here; the owner uses Make changes or Edit and send again in Marketing > Email.',parameters:writable(EMAIL_CAMPAIGN_DRAFT_CAPABILITY.input)}},
+  {type:'function',function:{name:'email_campaign_draft',description:'Write a new email campaign draft (omit campaign_id) or change the current draft of one (pass campaign_id from read_email_campaigns). Only include fields you are setting. Write the body in plain marks, one per line: "# Heading", "- item", "[link text](https://...)", "[[Button text|https://...]]", blank line between paragraphs. Do not invent links, offers, dates or names; ask for any you need. The audience is a rule over the stages, sources and tags read_email_campaigns lists (empty means everyone who can be emailed), plus inactive_days for contacts not emailed in that many days, or a saved segment_id. Setting audience replaces the whole rule and any saved segment, so read the campaign first and include what should stay. Give send_at with the owner\'s UTC offset (ask their time zone if unknown), or leave it out. The sender is the business\'s connected email first; the owner changes it in the editor. A draft sends nothing. This saves the email into Marketing > Email; draft_marketing_content is only for words to paste somewhere else. A campaign awaiting approval, approved or sent cannot be changed here; the owner uses Make changes or Edit and send again in Marketing > Email.',parameters:writable(EMAIL_CAMPAIGN_DRAFT_CAPABILITY.input)}},
   {type:'function',function:{name:'email_campaign_request_approval',description:'File one campaign\'s current draft for the owner\'s approval. This freezes that version and counts its recipients; it does NOT approve or send. Only the owner or an admin approves and sends, in Marketing > Email or Approvals. Needs a subject, a body, the business postal address, a working sender and at least one person who can receive it.',parameters:writable(EMAIL_CAMPAIGN_REQUEST_APPROVAL_CAPABILITY.input)}},
 ] as const;
 export const EMAIL_CAMPAIGN_TOOL_NAMES = new Set<string>(EMAIL_CAMPAIGN_TOOLS.map((t) => t.function.name));
@@ -43,6 +43,8 @@ const REFUSALS: Record<string, string> = {
   campaign_not_found: 'That campaign is not in this business. Read the campaigns again and use one of them.',
   campaign_awaiting_approval: 'That campaign is waiting for approval, so it cannot be changed here. The owner can use Make changes in Marketing › Email, which withdraws the waiting approval.',
   campaign_approved: 'That campaign is already approved. Stop it in Marketing › Email before changing it.',
+  campaign_stopped: 'That campaign was stopped or paused, so it can\'t be changed here. The owner can start a new version of it in Marketing › Email.',
+  too_long: 'That is more than an email campaign can hold. Shorten the message or narrow the audience, then try again.',
   campaign_already_sent: 'That campaign has been sent. Use Edit and send again in Marketing › Email to start a new version; it never reaches anyone this campaign already reached.',
   not_an_editable_draft: 'That version is no longer a draft. Read the campaign again.',
   not_the_current_version: 'A newer draft of that campaign exists. Read the campaign again.',
@@ -58,6 +60,8 @@ const REFUSALS: Record<string, string> = {
   sender_needs_attention: 'The sender needs attention before it can send. The owner can reconnect it or pick another in the editor\'s From.',
 };
 function refusalCode(error: unknown): string | null {
+  // A CHECK the database enforces (a body or an audience over its size limit) refused the write whole.
+  if ((object(error)?.code as string | undefined) === '23514') return 'too_long';
   const message = String((object(error)?.message as string | undefined) ?? '');
   const match = /^([a-z_]{3,40})$/.exec(message.trim());
   return match && REFUSALS[match[1]] ? match[1] : match ? match[1] : null;
@@ -66,11 +70,13 @@ function refused(code: string): EmailCampaignChatResult {
   return { outcome: 'refused', content: { success: false, code, error: REFUSALS[code] ?? 'That was refused. Read the campaign again before trying anything else.', note: 'Nothing was changed by this call.' } };
 }
 
+/** Key order normalised, so two equal objects compare equal however they were built or stored. */
+const canonical = (value: unknown): unknown => Array.isArray(value) ? value.map(canonical)
+  : value && typeof value === 'object' ? Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => [k, canonical(v)])) : value;
+
 /** The key that makes one chat request create at most one campaign, however often it is retried. The chat
  *  settles it into the arguments before the approval fingerprint, so the approved call redeems the same key. */
 export async function emailCampaignRequestKey(tenant: string, actor: string, args: Record<string, unknown>, turn: Turn): Promise<string> {
-  const canonical = (value: unknown): unknown => Array.isArray(value) ? value.map(canonical)
-    : value && typeof value === 'object' ? Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => [k, canonical(v)])) : value;
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(canonical({ namespace: 'email_campaign_draft_v1', tenant, actor, args, turn }))));
   const bytes = new Uint8Array(digest).slice(0, 16);
   bytes[6] = (bytes[6] & 15) | 80; bytes[8] = (bytes[8] & 63) | 128;
@@ -231,15 +237,24 @@ export async function dispatchEmailCampaignChat(ctx: EmailCampaignChatContext, d
     // Read it back. Only a draft that now carries what was written counts as saved.
     const back = await readCampaign(deps, ctx.tenantId, savedId).catch(() => null);
     const version = object(back?.version);
-    const matches = !!version && version.id === saved!.version_id && version.state === 'draft'
+    const camp = object(back?.campaign);
+    const same = (a: unknown, b: unknown) => JSON.stringify(canonical(a)) === JSON.stringify(canonical(b));
+    const matches = !!version && !!camp && version.id === saved!.version_id && version.state === 'draft'
       && (args.subject === undefined || version.subject === args.subject)
-      && (bodyHtml === null || version.body_html === bodyHtml);
+      && (args.preview_text === undefined || version.preheader === args.preview_text)
+      && (bodyHtml === null || version.body_html === bodyHtml)
+      && (args.name === undefined || camp.name === String(args.name).trim() || !String(args.name).trim())
+      && (args.kind === undefined || camp.kind === args.kind)
+      && (args.goal === undefined || version.conversion_goal === args.goal)
+      && (rule === null || same(version.audience, rule))
+      && (sendAt === undefined || (sendAt === null ? version.scheduled_for == null : Date.parse(String(version.scheduled_for)) === Date.parse(sendAt)));
     if (!matches) return { outcome: 'outcome_unknown', runId: savedId, content: { success: false, outcome: 'outcome_unknown', campaign_id: savedId, error: 'The draft was written but could not be confirmed.', note: 'Read the campaign before saying it was saved.' } };
     const created = saved!.created === true;
+    const replayed = saved!.replayed === true;
     return { outcome: 'succeeded', runId: String(saved!.version_id), content: {
-      success: true, campaign_id: savedId, version_no: count(version!.version_no), created, replayed: saved!.replayed === true,
+      success: true, campaign_id: savedId, version_no: count(version!.version_no), created: created && !replayed, replayed,
       subject: text(version!.subject, 300), send_at: version!.scheduled_for ?? null,
-      note: `${created ? 'Saved as a new draft' : 'The draft is updated'}. Nothing was sent. The owner can open it in Marketing › Email, or ask you to file it for approval.`,
+      note: `${replayed ? 'This draft was already saved from the same request; nothing new was made' : created ? 'Saved as a new draft' : 'The draft is updated'}. Nothing was sent. The owner can open it in Marketing › Email, or ask you to file it for approval.`,
     } };
   }
 

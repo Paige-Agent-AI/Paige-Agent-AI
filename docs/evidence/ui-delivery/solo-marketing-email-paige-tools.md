@@ -10,7 +10,7 @@ UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: flows - (1) owner asks PAIGE to draft an email and it appears as a draft in Marketing › Email; (2) owner asks PAIGE to change a campaign while its editor is open, with nothing unsaved, and the editor shows PAIGE's version; (3) the same with unsaved edits, and the owner is told and can take PAIGE's version or keep typing; (4) owner asks PAIGE to file a draft and approves the send in Marketing › Email; (5) an agency manager, a member or another business is refused before any approval card
 PAIGE_UI_DESIGN: PASS: Impeccable craft floor applied to the one new element: an existing me-notice is-warn status line with an existing secondary button, owner words, no new colour, no gold
 MATERIAL_FLOW_CHANGE: NO: the editor and dashboard layouts are unchanged; one conditional status line and three prompt strings
-FLOW_PROTOTYPE: NOT_APPLICABLE: no new screen or layout; the status line reuses the editor's notice row
+FLOW_PROTOTYPE: NOT_REQUIRED: no new screen or layout; the status line reuses the editor's notice row
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Solo owner or admin; primary action is asking PAIGE to draft or file, then approving the send in Marketing › Email
 VISUAL_DIRECTION: PASS: unchanged from E2 (me-* on the mo-* system); the new line is the editor's existing warn notice
 AUTOMATED_EVIDENCE: PASS: email-campaign-chat.test.ts (20: create keyed against retries, change, read-back of every field set, refusals in owner words, local validation kept off the activity feed, send time needs an offset, agency refusal, HTML body note, seat gate, write schemas extendable and read schemas frozen); marketing-email.render.test.tsx (+3: PAIGE's change replaces the editor's when nothing is unsaved, a turn that changed nothing leaves it alone, unsaved edits get the notice and Show PAIGE's version); confirm-fingerprint.test.ts (the create key never changes a card and every drafted field does); each guard reinstated as a defect fails its test
@@ -47,7 +47,7 @@ RELEASE_CLASSIFICATION: internal-only: pre-launch, no customers
 CUSTOMER_RELEASE_IDENTITY: none: pre-launch, no customers
 RELEASE_NOTE_REQUIRED: no: pre-launch, no customers
 RELEASE_TRUTH_BOUNDARY: PARTIAL: tools verified by tests and rolled-back production proofs; the signed-in chat drive is owed
-RELEASE_RECOVERY: position=revert the merge commit; the migration adds functions, one nullable column and its index, and catalogue/activity wrappers; reference=git revert of this PR's merge
+RELEASE_RECOVERY: position=revert the merge commit (the migration only adds functions, a nullable column with its index, and catalogue and activity wrappers); reference=git revert of this PR's merge commit
 UNVERIFIED: the signed-in chat on production asking PAIGE to draft and file a campaign (no tenant login in this session).
 
 ## Scope and collisions

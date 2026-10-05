@@ -74,13 +74,13 @@ const exactProof=read('sales-exact-deposit-proof.sql')+`
 CREATE FUNCTION public.trust_effective_rung() RETURNS integer LANGUAGE sql AS $$ SELECT coalesce(nullif(current_setting('test.trust_rung',true),''),'2')::integer $$;
 ${autonomySource.slice(autonomyStart,autonomyEnd)}
 GRANT EXECUTE ON FUNCTION resolve_tool_autonomy(uuid,text) TO service_role;
-`+'\n'+read('sales-governed-draft-proof.sql')+'\n'+read('sales-commercial-offer-read-proof.sql');
+`+'\n'+read('sales-governed-draft-proof.sql')+'\n'+read('sales-commercial-offer-read-proof.sql')+'\n'+read('sales-draft-catalog-facts-proof.sql');
 const ownedDatabase='sales_preferences_race_'+randomUUID().replaceAll('-','');
 if(concurrency){assert(/^sales_preferences_race_[a-f0-9]{32}$/.test(ownedDatabase));run(`CREATE DATABASE ${ownedDatabase};`);database=ownedDatabase;}
 try{
- run(base.replace('ROLLBACK;',()=>snapshot+'\n'+setup+'\n'+assertions+'\n'+(concurrency&&!draftConcurrency?'SAVEPOINT exact_deposit;\n':'')+exactProof+(draftConcurrency?'\nRESET ROLE; CREATE TABLE proof_concurrent_draft AS SELECT command FROM governed_draft_command; GRANT SELECT ON proof_concurrent_draft TO service_role;':concurrency?'\nROLLBACK TO SAVEPOINT exact_deposit;':'')+(concurrency?'\nCOMMIT;':'\nROLLBACK;')));
+ run(base.replace('ROLLBACK;',()=>snapshot+'\n'+setup+'\n'+assertions+'\n'+(concurrency&&!draftConcurrency?'SAVEPOINT exact_deposit;\n':'')+exactProof+(draftConcurrency?'\nRESET ROLE; CREATE TABLE proof_concurrent_draft AS SELECT command FROM governed_draft_command; GRANT SELECT ON proof_concurrent_draft,proof_catalog_lock TO service_role;':concurrency?'\nROLLBACK TO SAVEPOINT exact_deposit;':'')+(concurrency?'\nCOMMIT;':'\nROLLBACK;')));
  if(concurrency){
-  const execute=sql=>new Promise(resolve=>{const p=spawn(binary,args(),{cwd,stdio:['pipe','pipe','pipe']});let stdout='',stderr='';p.stdout.on('data',data=>stdout+=data);p.stderr.on('data',data=>stderr+=data);p.on('close',code=>resolve({code,stdout,stderr}));p.on('error',error=>resolve({code:1,stdout,stderr:String(error)}));p.stdin.end(sql);});
+  const execute=(sql,onReady)=>new Promise(resolve=>{const p=spawn(binary,args(),{cwd,stdio:['pipe','pipe','pipe']});let stdout='',stderr='';p.stdout.on('data',data=>{stdout+=data;if(onReady&&stdout.includes('CATALOG_LOCK_READY')){onReady();onReady=null;}});p.stderr.on('data',data=>stderr+=data);p.on('close',code=>resolve({code,stdout,stderr}));p.on('error',error=>resolve({code:1,stdout,stderr:String(error)}));p.stdin.end(sql);});
   if(draftConcurrency){
    const create=`BEGIN;SET LOCAL ROLE service_role;SELECT execute_sales_invoice_draft_command('10000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000001','70000000-0000-0000-0000-000000000830',(SELECT jsonb_set(command,'{invoice_id}','"60000000-0000-0000-0000-000000000830"') FROM proof_concurrent_draft),proof_draft_governance('invoice.draft_create','billing_create_invoice','standing_autonomy_setting'));COMMIT;`;
    const same=await Promise.all([execute(create),execute(create)]);assert(same.every(r=>r.code===0),JSON.stringify(same));assert.equal(same[0].stdout,same[1].stdout);
@@ -89,6 +89,17 @@ try{
    const revision=op=>`BEGIN;SET LOCAL ROLE service_role;SELECT execute_sales_invoice_draft_command('10000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000001',('70000000-0000-0000-0000-'||lpad('${op}',12,'0'))::uuid,jsonb_build_object('action','invoice.draft_revise','invoice_id','60000000-0000-0000-0000-000000000830','expected_version',1,'draft',(SELECT command->'draft' FROM proof_concurrent_draft)),proof_draft_governance('invoice.draft_revise','sales_revise_invoice_draft'));COMMIT;`;
    const competing=await Promise.all([execute(revision(831)),execute(revision(832))]);assert.equal(competing.filter(r=>r.code===0).length,1,JSON.stringify(competing));assert(competing.find(r=>r.code!==0).stderr.includes('Draft version conflict'));
    assert.equal(run("SELECT billing_draft_version FROM paige_invoices WHERE id='60000000-0000-0000-0000-000000000830';").trim(),'2');
+   // Real writer retains Catalog locks until its transaction commits. A concurrent
+   // Catalog edit cannot slip between reviewed readback and the canonical draft save.
+   run("UPDATE tenant_prices SET active=true,unit_amount=350000 WHERE id='50000000-0000-0000-0000-000000000001';");
+   let readyResolve;const ready=new Promise(resolve=>readyResolve=resolve);
+   const lockRun=execute(`BEGIN;SET LOCAL ROLE service_role;SELECT execute_sales_invoice_draft_command('10000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000001','70000000-0000-0000-0000-000000000841',(SELECT command FROM proof_catalog_lock),proof_draft_governance('invoice.draft_create','billing_create_invoice','standing_autonomy_setting'));SELECT 'CATALOG_LOCK_READY';SELECT pg_sleep(2);COMMIT;`,readyResolve);
+   await Promise.race([ready,lockRun.then(r=>{throw Error('Writer ended before lock handshake: '+r.stderr);})]);
+   const edit=await execute("SET lock_timeout='150ms';UPDATE tenant_prices SET unit_amount=350001 WHERE id='50000000-0000-0000-0000-000000000001';");
+   assert.notEqual(edit.code,0);assert(edit.stderr.includes('lock timeout'),edit.stderr);
+   const locked=await lockRun;assert.equal(locked.code,0,locked.stderr);
+   assert.equal(run("SELECT billing_draft->>'due_now_minor' FROM paige_invoices WHERE id='60000000-0000-0000-0000-000000000841';").trim(),'50000');
+   console.log('PASS: actual catalog-backed writer blocks concurrent price edit through commit.');
   }else{
   const command=(op,version,amount)=>`BEGIN;SET LOCAL ROLE service_role;SELECT proof_command(${op},'{"action":"invoice.record_manual_payment","expected_version":${version},"amount_cents":${amount},"currency":"usd","method":"cash","received_at":"2026-10-01T12:00:00Z"}','sales_record_manual_payment');COMMIT;`;
   const competing=await Promise.all([execute(command(120,5,300)),execute(command(121,5,300))]);assert.equal(competing.filter(r=>r.code===0).length,1);assert(competing.find(r=>r.code!==0).stderr.includes('Invoice version conflict'));

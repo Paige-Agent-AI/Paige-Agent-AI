@@ -10,7 +10,7 @@ const object=(v:unknown):v is Record<string,unknown>=>typeof v==='object'&&v!==n
  * This module does not authenticate, mint/claim approval, execute SQL or prove availability. */
 export async function admitCommercialDraft(input:{
  caller:GovernedCaller;availability:GovernedCapability['availability'];approval:GovernedApproval;
- operationId:string;intent:unknown;
+ operationId:string;intent:unknown;catalogPrices?:unknown;
 }){
  if(!input.availability||input.availability==='unknown')throw new TypeError('DRAFT_AVAILABILITY_UNRESOLVED');
  const intent=parseCommercialDraftCommand(input.intent);
@@ -20,7 +20,8 @@ export async function admitCommercialDraft(input:{
  // Do not generate/create a work order for an unauthenticated or unscoped caller. The shared
  // gate remains the source of its refusal, including every door and current autonomy lane.
  const validScope=!!input.caller.authenticated&&!!input.caller.tenantId&&!!input.caller.userId&&input.caller.tenantSource==='server';
- const command=validScope?await commercialDraftWorkOrder(intent,scope):null;
+ const command=validScope?await commercialDraftWorkOrder(intent,scope,input.catalogPrices):null;
+ if(validScope&&(intent.draft.items as {price_id:string|null}[]).some(v=>v.price_id!==null)&&input.catalogPrices===undefined)throw new TypeError('CATALOG_PRICE_REVIEW_REQUIRED');
  const requestArgs={expected_tenant_id:input.caller.tenantId,operation_id:input.operationId,command};
  const decision=decideDeclaredOrdinaryCapability(declaration,{caller:input.caller,capability:{id:capability,effect:'mutate',outcomeChannel:declaration.receipt.recorder,availability:input.availability},approval:input.approval,requestArgs});
  if(decision.kind!=='execute')return {capability,declaration,decision,execution:null};

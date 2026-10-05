@@ -4,6 +4,7 @@ import {describe,it,expect} from 'vitest';
 import {aggregateInvoiceItems} from '../solo/sales/invoiceDraftSnapshot';
 import {UUID,FINGERPRINT} from '../../supabase/functions/_shared/sales-invoice-command/contract';
 import {parseCommercialDraftCommand} from '../../supabase/functions/_shared/sales-commercial/draft-command';
+import {validateCatalogPriceFacts} from '../../supabase/functions/_shared/sales-commercial/catalog-facts';
 import {commercialDraftWorkOrder} from '../../supabase/functions/_shared/sales-commercial/draft-work-order';
 import {admitCommercialDraft} from '../../supabase/functions/_shared/sales-commercial/draft-admission';
 import {SALES_DRAFT_SPINE} from '../../supabase/functions/_shared/sales-commercial/draft-capabilities';
@@ -14,13 +15,13 @@ const intent={action:'invoice.draft_create' as const,draft};
 const body={expected_tenant_id:tenant,operation_id:op,intent};
 const source=readFileSync('supabase/functions/sales-invoice-draft-command/index.ts','utf8').replace(/^import .*;\r?\n/gm,'');
 const compiled=transpileModule(source,{compilerOptions:{module:ModuleKind.None,target:ScriptTarget.ES2022}}).outputText;
-type Options={authenticated?:boolean;role?:string;lane?:string;current?:string;currentSequence?:string[];claimed?:unknown;replay?:unknown;clientMissing?:boolean;auditFails?:boolean;executeError?:unknown;pending?:unknown};
+type Options={authenticated?:boolean;role?:string;lane?:string;current?:string;currentSequence?:string[];claimed?:unknown;replay?:unknown;clientMissing?:boolean;auditFails?:boolean;executeError?:unknown;pending?:unknown;catalog?:unknown};
 function setup(options:Options={}){
  let handler:(r:Request)=>Promise<Response>=async()=>new Response();
  const calls:{name:string;args:unknown}[]=[];
  let currentRead=0;
  const caller={auth:{getUser:async()=>({data:{user:options.authenticated===false?null:{id:actor}},error:null})},rpc:async(name:string)=>({data:name==='current_user_tenant_id'?options.currentSequence?.[currentRead++]??options.current??tenant:options.lane??'confirm',error:null})};
- const admin={rpc:async(name:string,args:unknown)=>{calls.push({name,args});return {data:name==='read_sales_invoice_command_result'?options.replay??null:{ok:true,outcome:'draft_created',row:{id:'60000000-0000-0000-0000-000000000001',status:'draft',version:1}},error:name==='execute_sales_invoice_draft_command'?options.executeError??null:null}},from:(table:string)=>{
+ const admin={rpc:async(name:string,args:unknown)=>{calls.push({name,args});return {data:['read_sales_invoice_command_result','read_sales_invoice_draft_intent_result'].includes(name)?options.replay??null:name==='read_sales_invoice_draft_catalog'?options.catalog??null:{ok:true,outcome:'draft_created',row:{id:'60000000-0000-0000-0000-000000000001',status:'draft',version:1}},error:name==='execute_sales_invoice_draft_command'?options.executeError??null:null}},from:(table:string)=>{
   let mutation='';const filters:unknown[]=[];const q:Record<string,unknown>={};
   for(const method of ['eq','is','not','neq','gt','contains','limit'])q[method]=(...args:unknown[])=>{filters.push([method,...args]);return q};
   q.select=()=>q;q.update=()=>{mutation='update';return q};q.insert=(args:unknown)=>{mutation='insert';calls.push({name:'insert:'+table,args});return q};
@@ -29,7 +30,7 @@ function setup(options:Options={}){
   return q;
  }};
  const scope={Deno:{env:{get:(k:string)=>k},serve:(fn:typeof handler)=>handler=fn},createClient:(_url:string,key:string)=>key==='SUPABASE_ANON_KEY'?caller:admin,
-  confirmFingerprint:async()=> '0123456789abcdef',databaseAnswered:(e:unknown)=>!!e&&typeof e==='object'&&'code' in e&&e.code==='23514',UUID,FINGERPRINT,parseCommercialDraftCommand,commercialDraftWorkOrder,admitCommercialDraft,SALES_DRAFT_SPINE,projectCapabilities,aggregateInvoiceItems};
+  confirmFingerprint:async()=> '0123456789abcdef',databaseAnswered:(e:unknown)=>!!e&&typeof e==='object'&&'code' in e&&e.code==='23514',UUID,FINGERPRINT,parseCommercialDraftCommand,commercialDraftWorkOrder,admitCommercialDraft,SALES_DRAFT_SPINE,projectCapabilities,aggregateInvoiceItems,validateCatalogPriceFacts};
  new Function(...Object.keys(scope),compiled)(...Object.values(scope));
  return {calls,invoke:async(patch:Record<string,unknown>={})=>{const response=await handler(new Request('http://localhost',{method:'POST',body:JSON.stringify({...body,...patch})}));return {status:response.status,body:await response.json()}}};
 }
@@ -48,4 +49,16 @@ describe('actual draft endpoint with network/auth fixtures, not hosted proof',()
  it('revision preserves the canonical identity and exact optimistic version',async()=>{const h=setup({lane:'auto'});await h.invoke({intent:{action:'invoice.draft_revise',invoice_id:actor,expected_version:7,draft}});const execution=h.calls.find(c=>c.name==='execute_sales_invoice_draft_command')?.args as {_command:{invoice_id:string;expected_version:number};_governance:{tool:string}};expect(execution._command).toMatchObject({invoice_id:actor,expected_version:7});expect(execution._governance.tool).toBe('sales_revise_invoice_draft')});
  it('missing client and invalid/excess deposit never reach approval or mutation',async()=>{for(const test of [{options:{clientMissing:true},patch:{}},{options:{},patch:{intent:{...intent,draft:{...draft,deposit_minor:350000}}}}]){const h=setup(test.options);expect((await h.invoke(test.patch)).status).toBe(422);expect(h.calls.some(c=>c.name==='execute_sales_invoice_draft_command'||c.name==='insert:paige_pending_confirmations')).toBe(false)}});
  it('ambiguous database transport preserves outcome_unknown and the existing operation',async()=>{const h=setup({lane:'auto',executeError:{message:'network'}});const r=await h.invoke();expect(r.body).toMatchObject({outcome:'outcome_unknown',operation_id:op});expect(h.calls.filter(c=>c.name==='execute_sales_invoice_draft_command')).toHaveLength(1)});
+});
+
+const catalogPrice={price_id:'40000000-0000-4000-8000-000000000001',product_id:'50000000-0000-4000-8000-000000000001',product_name:'Catalog service',unit_minor:175000,currency:'usd',kind:'one_time',billing_interval:'one_time',interval_count:null,installments_total:null,active:true,product_status:'active'};
+const catalogIntent={...intent,draft:{...draft,items:[{price_id:catalogPrice.price_id,item:'Catalog service',unit_minor:null,quantity:2}]}};
+describe('catalog-backed actual draft endpoint',()=>{
+ it('reviews frozen facts and deterministic quantity arithmetic without execution',async()=>{const h=setup({catalog:{tenant_id:tenant,prices:[catalogPrice]}});const r=await h.invoke({intent:catalogIntent});expect(r.body.outcome).toBe('approval_required');expect(r.body.summary).toContain('2 × $1,750.00 per unit = $3,500.00');expect(r.body.summary).toContain('$500.00');const row=h.calls.find(c=>c.name==='insert:paige_pending_confirmations')?.args as {args:{command:{catalog_prices:unknown}}};expect(row.args.command.catalog_prices).toEqual([catalogPrice]);expect(h.calls.some(c=>c.name==='execute_sales_invoice_draft_command')).toBe(false)});
+ it('catalog historical replay does not depend on current price or customer',async()=>{const h=setup({clientMissing:true,replay:{ok:true,outcome:'draft_created'}});expect((await h.invoke({intent:catalogIntent})).body.replayed).toBe(true);expect(h.calls.map(c=>c.name)).toEqual(['read_sales_invoice_draft_intent_result'])});
+ it('foreign tenant, missing price, paused price and unsafe source fields refuse before approval',async()=>{for(const catalog of [{tenant_id:actor,prices:[catalogPrice]},{tenant_id:tenant,prices:[]},{tenant_id:tenant,prices:[{...catalogPrice,active:false}]},{tenant_id:tenant,prices:[{...catalogPrice,stripe_price_id:'unsafe'}]}]){const h=setup({catalog,lane:'auto'});expect((await h.invoke({intent:catalogIntent})).body.code).toBe('CATALOG_PRICE_REVIEW_REQUIRED');expect(h.calls.some(c=>c.name==='execute_sales_invoice_draft_command'||c.name==='insert:paige_pending_confirmations')).toBe(false)}});
+});
+
+describe('definitive stale review recovery',()=>{
+ it('a rolled-back SQL version/source conflict requests fresh review instead of ambiguous retry',async()=>{const h=setup({lane:'auto',catalog:{tenant_id:tenant,prices:[catalogPrice]},executeError:{code:'40001'}});const r=await h.invoke({intent:catalogIntent});expect(r.status).toBe(409);expect(r.body).toMatchObject({outcome:'needs_input',code:'DRAFT_REVIEW_CHANGED',operation_id:op});expect(r.body.message).toContain('fresh review');expect(h.calls.filter(c=>c.name==='execute_sales_invoice_draft_command')).toHaveLength(1)});
 });

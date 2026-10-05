@@ -132,7 +132,8 @@ describe("INT-308 §6 — the negative matrix (JWT callers cannot forge identity
   it("I: langgraph dispatch forwards the trusted context (same object, no re-derivation)", () => {
     expect(source).toContain("body: JSON.stringify({ graph, input, context })");
     expect(source).toContain("body: JSON.stringify({ input, context })"); // invokeLocal envelope
-    expect(source).toContain("invokeLocal(agent.edge_function, payload.input ?? {}, ctx)");
+    // INT-310 C1: the input argument is now the binder's bound input; the trusted ctx is still forwarded.
+    expect(source).toContain("invokeLocal(agent.edge_function, boundInput, ctx)");
   });
 
   it("J/K: agent scoping is unchanged — platform defaults or THIS tenant's own, from the trusted tenantId", () => {

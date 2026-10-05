@@ -46,10 +46,16 @@ Deno.serve(async (req) => {
   if (!contactId) return ok({ ok: false, error: "contact_id required" }, 400);
 
   // The CRM record's phone is the contact's PRIMARY phone.
+  // INT-310 C1 (defense in depth): the orchestrator bound this contact to the server-resolved tenant
+  // and forwards that tenant in context; this read is bound to it as well, so a foreign or missing
+  // row is the same not-found. No trusted tenant → nothing to bind to → refuse.
+  const trustedTenant = (payload.context as { tenant_id?: unknown } | undefined)?.tenant_id;
+  if (typeof trustedTenant !== "string") return ok({ ok: false, error: "resource_not_found" }, 404);
   const { data: row } = await supabase
     .from("clients")
     .select(`id,first_name,last_name,entity_name,linked_user_id,street_address,city,state,zip_code,${CLIENT_CONTACT_METHODS_EMBED}`)
     .eq("id", contactId)
+    .eq("tenant_id", trustedTenant)
     .maybeSingle();
   const client = withPrimaryAddresses(row);
   if (!client) return ok({ ok: false, error: "Client not found" }, 404);

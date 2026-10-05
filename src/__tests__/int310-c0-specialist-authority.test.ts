@@ -155,7 +155,12 @@ const SPECIALISTS = [
   "subagent-intake-concierge",
   "subagent-stack-strategist",
 ];
-const specialistBody = { input: { contact_id: CONTACT, draft_text: "hello", intent: "x" }, context: { contact_id: CONTACT } };
+// context.tenant_id is the server-resolved tenant the orchestrator forwards (INT-310 C1); C0 tests the
+// caller-authority gate in front of the lookup, so the fixture carries it like the real caller does.
+const specialistBody = {
+  input: { contact_id: CONTACT, draft_text: "hello", intent: "x" },
+  context: { contact_id: CONTACT, tenant_id: TENANT_A },
+};
 
 describe("INT-310 C0 — internal-only specialists refuse every non-internal caller before any lookup", () => {
   for (const fn of SPECIALISTS) {
@@ -243,7 +248,8 @@ const ORCH_STUBS = {
     DEFAULT_SUBAGENT_JOB_KIND: "internal_first_draft",
   },
 };
-const invoke = { action: "tool_invoke", slug: "email-composer", input: { contact_id: CONTACT, intent: "x" } };
+// No contact selector: C0 asserts WHO may invoke; contact binding is C1's suite (int310-c1-resource-binder).
+const invoke = { action: "tool_invoke", slug: "email-composer", input: { intent: "x" } };
 
 describe("INT-310 C0 — paige-orchestrator tool_invoke needs a real actor", () => {
   it("anon-role JWT (no verified person) → 401 before any sub-agent is resolved", async () => {

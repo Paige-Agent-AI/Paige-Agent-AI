@@ -86,6 +86,9 @@ and checked by the `trg_email_campaign_approval_guard` trigger on `paige_pending
 `_email_campaign_approval_withdrawn`, returns a campaign to draft when its approval is rejected anywhere. Before each
 send the worker calls `email_campaign_dispatch_begin` (service role only); a recipient held by quiet hours is
 recorded `deferred` (back to planned with `not_before`, 1 minute to 24 hours). No new secret.
+E2 (migration `20270560000000`) adds three reads for the Email tab, owner/admin of the caller's business only:
+`read_email_marketing_dashboard(p_days 7|30|90, p_tz IANA zone)`, `read_email_campaign(p_campaign_id)` and
+`read_email_rule_choices()`. No new secret, cron or function.
 
 **Platform alerting evaluator** (A2, migration `20260923000000` + edge function `alerting-evaluate`,
 2026-08-20 — ✅ §32.b rollback-proved on prod pre-merge). Adds `paige_alert_rule.condition_met_since`

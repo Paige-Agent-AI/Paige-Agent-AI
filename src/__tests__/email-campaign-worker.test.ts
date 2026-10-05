@@ -31,6 +31,36 @@ describe("renderCampaignEmail", () => {
     expect(html).toContain("1 Main St");
     expect(html).toContain('href="{{unsubscribe_url}}"');
   });
+  it("closes what the body leaves open, so the footer is never inside a link, a list or bold", () => {
+    const html = renderCampaignEmail({ bodyHtml: "<div><ul><li>one<b>bold <a href=\"https://x.example\">link", postalAddress: "1 Main St" });
+    expect(html).toContain('link</a></b></li></ul></div><div style="margin-top:32px');
+  });
+  it("drops elements that hide or swallow what follows them, even left open", () => {
+    for (const bodyHtml of [
+      "<p>a</p><style>div{display:none}</style>",
+      "<p>a</p><textarea>everything after",
+      "<p>a</p><title>x",
+      "<p>a</p><script>alert(1)</script>",
+      "<p>a</p><noscript>",
+      "<p>a</p><template>",
+      "<p>a</p><plaintext>",
+      "<link rel=\"stylesheet\" href=\"https://x.example/hide.css\"><p>a</p>",
+    ]) {
+      const html = renderCampaignEmail({ bodyHtml, postalAddress: "1 Main St" });
+      expect(html).not.toMatch(/<(style|textarea|title|script|noscript|template|plaintext|link)\b/i);
+      expect(html).toContain("<p>a</p>");
+      expect(html).toContain('href="{{unsubscribe_url}}"');
+    }
+  });
+  it("writes a stray or unfinished tag out as text instead of letting it eat the footer", () => {
+    const html = renderCampaignEmail({ bodyHtml: '<p>a < b</p><a href="x>broken', postalAddress: "1 Main St" });
+    expect(html).toContain("<p>a &lt; b</p>&lt;a href=");
+    expect(html).toContain('<a href="{{unsubscribe_url}}"');
+  });
+  it("leaves well-formed email untouched", () => {
+    const body = '<h2 style="x">Hi</h2><p>One<br>two</p><img src="https://x.example/a.png" alt=""><ul><li>a</li></ul>';
+    expect(renderCampaignEmail({ bodyHtml: body, postalAddress: "1 Main St" }).startsWith(body)).toBe(true);
+  });
   it("omits the preheader block when there is none", () => {
     expect(renderCampaignEmail({ bodyHtml: "<p>x</p>", postalAddress: "1 Main St" }).startsWith("<p>x</p>")).toBe(true);
   });

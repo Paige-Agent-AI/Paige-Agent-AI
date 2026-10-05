@@ -1,19 +1,19 @@
 import { billingDraftFailure, readBillingDraft, type BillingRpc, type DraftResult } from './billingDrafts';
 import { normalizeInvoiceSnapshot, type InvoiceSnapshot, type InvoiceSnapshotInput } from './invoiceDraftSnapshot';
 
-export type InvoiceDraft = { id: string; tenantId: string; version: number; schemaVersion: 1 | 2; number: string; totalMinor: number; snapshot: InvoiceSnapshot };
+export type InvoiceDraft = { id: string; tenantId: string; version: number; schemaVersion: 1 | 2 | 3; number: string; totalMinor: number; snapshot: InvoiceSnapshot };
 export type InvoiceDraftSaveRequest = { openedTenantId: string; invoiceId: string; expectedVersion: number; operationId: string; draft: InvoiceSnapshotInput };
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const object = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
 const version = (value: unknown): value is number => typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
 
-/** Dual-schema reader deployed before the expanded UI writer. Unknown schemas fail the whole read. */
+/** Compatible readers precede expanded writers. Unknown or malformed schemas fail the whole read. */
 export function readInvoiceDraft(value: unknown, tenantId: string): InvoiceDraft | null {
   if (!object(value) || value.tenant_id !== tenantId || typeof value.id !== 'string' || !uuid.test(value.id)
     || value.status !== 'draft' || !version(value.billing_draft_version) || value.billing_draft_version < 1
     || !version(value.amount_total_cents) || value.amount_total_cents < 1 || value.amount_total_cents > 2147483647
     || typeof value.invoice_number !== 'string' || !object(value.billing_draft)) return null;
-  const schemaVersion = value.billing_draft.schema_version === 2 ? 2 : 1;
+  const schemaVersion = value.billing_draft.schema_version === 3 ? 3 : value.billing_draft.schema_version === 2 ? 2 : 1;
   if (schemaVersion === 1 && !readBillingDraft(value, tenantId)) return null;
   const snapshot = normalizeInvoiceSnapshot(value.billing_draft, value.amount_total_cents);
   return snapshot ? { id: value.id, tenantId, version: value.billing_draft_version, schemaVersion, number: value.invoice_number, totalMinor: value.amount_total_cents, snapshot } : null;

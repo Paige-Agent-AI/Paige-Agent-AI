@@ -13,6 +13,15 @@ const snapshot: InvoiceSnapshot = {
 const row=(patch:Record<string,unknown>={})=>({id,tenant_id:tenant,invoice_number:'DRAFT-'+id,status:'draft',billing_draft_version:1,amount_total_cents:1998,billing_draft:snapshot,...patch});
 const request={openedTenantId:tenant,invoiceId:id,expectedVersion:0,operationId:'44444444-4444-4444-8444-444444444444',draft:snapshotEditInput(snapshot)};
 describe('dual-schema durable invoice API',()=>{
+  it('reads exact-deposit schema3 while preserving its canonical amount and edit identity',()=>{
+    const exact={...snapshot,schema_version:3,kind:'deposit',deposit_basis_points:null,deposit_minor:50000,
+      items:[{...snapshot.items[0],unit_minor:350000,quantity:1}],total_minor:350000,due_now_minor:50000,remainder_minor:300000};
+    const before=structuredClone(exact);
+    const read=readInvoiceDraft(row({billing_draft:exact,amount_total_cents:350000}),tenant);
+    expect(read).toMatchObject({schemaVersion:3,totalMinor:350000,snapshot:{deposit_minor:50000,due_now_minor:50000,remainder_minor:300000}});
+    expect(exact).toEqual(before);
+    expect(readInvoiceDraft(row({billing_draft:{...exact,schema_version:4},amount_total_cents:350000}),tenant)).toBeNull();
+  });
   it('reads historical and expanded drafts without mutating either',async()=>{
     const old={...snapshot.items[0],client_id:client,kind:'one_time',provider:'paypal',currency:'usd',cadence:null,deposit_basis_points:null,recipient_email:'original@example.test',due_date:null,memo:null,due_now_minor:1998,remainder_minor:0};
     const rpc=vi.fn().mockResolvedValue({data:{rows:[row(),row({billing_draft:old})],has_more:false,next_cursor:null},error:null});

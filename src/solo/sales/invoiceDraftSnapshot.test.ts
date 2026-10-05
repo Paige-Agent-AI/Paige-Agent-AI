@@ -25,6 +25,23 @@ describe('versioned invoice-only snapshots', () => {
     expect(snapshotEditInput(snapshot)).toMatchObject({ schema_version: 2, recipient_phone: '+15555550123', items: snapshot.items.map(({ price_snapshot: _snapshot, ...line }) => line) });
     expect(snapshotEditInput(snapshot)).not.toHaveProperty('total_minor');
   });
+  it('preserves an exact fixed deposit without rounding it into basis points',()=>{
+    const exact={...snapshot,schema_version:3,deposit_basis_points:null,deposit_minor:50000,
+      items:[{...item,unit_minor:350000,quantity:1}],total_minor:350000,due_now_minor:50000,remainder_minor:300000};
+    expect(normalizeInvoiceSnapshot(exact,350000)).toEqual(exact);
+    const read=normalizeInvoiceSnapshot(exact,350000)!;
+    expect(snapshotEditInput(read)).toMatchObject({schema_version:3,deposit_minor:50000,deposit_basis_points:null});
+    expect(aggregateInvoiceItems(exact.items,undefined,50000)).toEqual({totalMinor:350000,dueNowMinor:50000,remainderMinor:300000});
+  });
+  it.each([0,-1,1.5,350000,350001,NaN,Infinity])('refuses invalid exact deposit %s',deposit_minor=>{
+    expect(()=>aggregateInvoiceItems([{...item,unit_minor:350000,quantity:1}],undefined,deposit_minor)).toThrow();
+  });
+  it('refuses mixed percentage/exact deposits, extra version2 fields and altered saved math',()=>{
+    expect(()=>aggregateInvoiceItems(snapshot.items,2500,500)).toThrow();
+    expect(normalizeInvoiceSnapshot({...snapshot,deposit_minor:750},2999)).toBeNull();
+    expect(normalizeInvoiceSnapshot({...snapshot,schema_version:3,deposit_minor:750},2999)).toBeNull();
+    expect(normalizeInvoiceSnapshot({...snapshot,schema_version:3,deposit_basis_points:null,deposit_minor:749},2999)).toBeNull();
+  });
   it('normalizes historical one-item facts without changing their input object or inferring contacts', () => {
     const old = { client_id: client, ...item, kind: 'one_time', provider: 'paypal', currency: 'usd', cadence: null, deposit_basis_points: null,
       recipient_email: 'saved@example.test', due_date: null, memo: null, due_now_minor: 1998, remainder_minor: 0 };

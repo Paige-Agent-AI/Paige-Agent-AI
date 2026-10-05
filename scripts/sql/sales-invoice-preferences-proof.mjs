@@ -65,10 +65,11 @@ GRANT SELECT,UPDATE(brand) ON tenants TO authenticated;
 `;
 const assertions=read('sales-invoice-lifecycle-proof.sql')+'\n'+preferencesSetup+'\n'+read('sales-invoice-preferences-proof.sql');
 const concurrency=process.argv[6]==='--concurrency';
+const exactProof=read('sales-exact-deposit-proof.sql');
 const ownedDatabase='sales_preferences_race_'+randomUUID().replaceAll('-','');
 if(concurrency){assert(/^sales_preferences_race_[a-f0-9]{32}$/.test(ownedDatabase));run(`CREATE DATABASE ${ownedDatabase};`);database=ownedDatabase;}
 try{
- run(base.replace('ROLLBACK;',()=>snapshot+'\n'+setup+'\n'+assertions+(concurrency?'\nCOMMIT;':'\nROLLBACK;')));
+ run(base.replace('ROLLBACK;',()=>snapshot+'\n'+setup+'\n'+assertions+'\n'+(concurrency?'SAVEPOINT exact_deposit;\n':'')+exactProof+(concurrency?'\nROLLBACK TO SAVEPOINT exact_deposit;':'')+(concurrency?'\nCOMMIT;':'\nROLLBACK;')));
  if(concurrency){
   const execute=sql=>new Promise(resolve=>{const p=spawn(binary,args(),{cwd,stdio:['pipe','pipe','pipe']});let stdout='',stderr='';p.stdout.on('data',data=>stdout+=data);p.stderr.on('data',data=>stderr+=data);p.on('close',code=>resolve({code,stdout,stderr}));p.on('error',error=>resolve({code:1,stdout,stderr:String(error)}));p.stdin.end(sql);});
   const command=(op,version,amount)=>`BEGIN;SET LOCAL ROLE service_role;SELECT proof_command(${op},'{"action":"invoice.record_manual_payment","expected_version":${version},"amount_cents":${amount},"currency":"usd","method":"cash","received_at":"2026-10-01T12:00:00Z"}','sales_record_manual_payment');COMMIT;`;
@@ -91,5 +92,5 @@ try{
   assert.equal(run("SELECT brand#>>'{invoice_preferences,version}' FROM tenants WHERE id='20000000-0000-0000-0000-000000000001';").trim(),'8');
   assert.equal(run("SELECT count(*) FROM paige_invoice_operations WHERE id='70000000-0000-0000-0000-000000000585';").trim(),'1');
  }
- console.log('PASS: preferences migration replay, roles, numbering, frozen presentation, canonical Rail and '+(concurrency?'real simultaneous preferences CAS/publication/replay':'serial regression')+'. Hosted authentication/provider proof UNVERIFIED.');
+ console.log('PASS: exact-deposit migration replay, role/tenant/replay/version guards and precise issuance; preferences migration replay, roles, numbering, frozen presentation, canonical Rail and '+(concurrency?'real simultaneous preferences CAS/publication/replay':'serial regression')+'. Hosted authentication/provider proof UNVERIFIED.');
 }finally{if(concurrency){database='postgres';run(`DROP DATABASE ${ownedDatabase};`);console.log('Removed only the uniquely owned concurrency database.');}}

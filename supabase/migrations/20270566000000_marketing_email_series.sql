@@ -346,17 +346,20 @@ BEGIN
   VALUES (t, k, COALESCE(NULLIF(btrim(p_name), ''), CASE k WHEN 'welcome' THEN 'Welcome series'
     WHEN 'nurture' THEN 'Nurture series' WHEN 'reengagement' THEN 'Win-back series' ELSE 'New series' END), auth.uid())
   RETURNING id INTO s;
-  INSERT INTO public.email_sequence_versions (sequence_id, tenant_id, version_no, entry_mode, audience, exit_when_unmatched,
-    sender, created_by)
+  -- Starters: welcome = new leads as they arrive; nurture = leads, until they book a meeting; win-back =
+  -- anyone not contacted in 90 days, until they become active again. All of it is editable before filing.
+  INSERT INTO public.email_sequence_versions (sequence_id, tenant_id, version_no, entry_mode, audience, exit_on_goal,
+    exit_when_unmatched, sender, created_by)
   VALUES (s, t, 1,
     CASE WHEN k = 'welcome' THEN 'new_contacts' ELSE 'matching' END,
-    CASE k WHEN 'nurture' THEN '{"stages":["new_lead","lead"]}'::jsonb WHEN 'reengagement' THEN '{"inactive_days":90}'::jsonb
-      ELSE '{}'::jsonb END,
+    CASE k WHEN 'welcome' THEN '{"stages":["new_lead","lead"]}'::jsonb WHEN 'nurture' THEN '{"stages":["lead"]}'::jsonb
+      WHEN 'reengagement' THEN '{"inactive_days":90}'::jsonb ELSE '{}'::jsonb END,
+    CASE WHEN k = 'nurture' THEN 'booking' ELSE 'none' END,
     k = 'reengagement',
     CASE WHEN conn IS NULL THEN '{"mode":"managed"}'::jsonb ELSE jsonb_build_object('mode', 'connector', 'connector_id', conn) END,
     auth.uid())
   RETURNING id INTO v;
-  delays := CASE k WHEN 'welcome' THEN ARRAY[0, 2880, 7200] WHEN 'nurture' THEN ARRAY[0, 4320, 10080, 10080]
+  delays := CASE k WHEN 'welcome' THEN ARRAY[0, 2880, 7200] WHEN 'nurture' THEN ARRAY[0, 4320, 5760, 10080]
     WHEN 'reengagement' THEN ARRAY[0, 5760, 10080] ELSE ARRAY[0] END;
   INSERT INTO public.email_sequence_steps (version_id, tenant_id, position, delay_minutes)
   SELECT v, t, i, delays[i] FROM generate_subscripts(delays, 1) AS i;

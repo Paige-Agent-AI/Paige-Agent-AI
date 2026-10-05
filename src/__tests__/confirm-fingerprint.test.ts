@@ -71,9 +71,20 @@ describe("the fingerprint still VARIES by the fields that define the action's id
 });
 
 describe("the ignore-set is NARROW — it never swallows a consequential parameter", () => {
-  it("only action_advance is listed, and only for decision_rationale", () => {
-    expect(Object.keys(NON_IDENTITY_ARGS)).toEqual(["action_advance"]);
+  it("only action_advance's decision_rationale and a new email draft's server-settled create key are listed", () => {
+    expect(Object.keys(NON_IDENTITY_ARGS)).toEqual(["action_advance", "email_campaign_draft"]);
     expect(NON_IDENTITY_ARGS.action_advance).toEqual(["decision_rationale"]);
+    expect(NON_IDENTITY_ARGS.email_campaign_draft).toEqual(["request_key"]);
+  });
+
+  it("an email draft's create key never changes its card, and everything it drafts still does", async () => {
+    const draft = (over: Record<string, unknown> = {}) => ({ name: "Spring", subject: "Hello", body: "Hi", ...over });
+    const a = await confirmFingerprint("email_campaign_draft", draft({ request_key: "11111111-1111-4111-8111-111111111111" }));
+    const b = await confirmFingerprint("email_campaign_draft", draft({ request_key: "22222222-2222-4222-8222-222222222222" }));
+    expect(b).toBe(a);
+    for (const change of [{ subject: "Other" }, { body: "Other" }, { name: "Other" }, { audience: { tags: ["vip"] } }, { campaign_id: "33333333-3333-4333-8333-333333333333" }]) {
+      expect(await confirmFingerprint("email_campaign_draft", draft(change))).not.toBe(a);
+    }
   });
 
   it("a tool with no ignore-set hashes ALL its args (a drifting field there correctly refuses)", async () => {

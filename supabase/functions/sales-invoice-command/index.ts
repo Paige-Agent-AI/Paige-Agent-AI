@@ -172,6 +172,8 @@ Deno.serve(async req => {
   const { data: result, error: executeError } = await admin.rpc("execute_sales_invoice_command", {
     _actor_user_id: user.id, _expected_tenant_id: tenantId, _operation_id: args.operation_id, _command: decided, _governance: governance,
   });
+  if (executeError?.code === "P5501") return response(422, {ok:false,outcome:"refused",code:"INVOICE_DELIVERY_IN_PROGRESS",
+    message:"An invoice delivery is still in progress. Check its delivery outcome before changing payments or invoice state. If it stays pending, request delivery readback; do not start another send.",operation_id:args.operation_id});
   if (executeError) return response(databaseAnswered(executeError) ? 422 : 503, { ok: false,
     outcome: databaseAnswered(executeError) ? "refused" : "outcome_unknown", code: "SALES_INVOICE_COMMAND_FAILED",
     message: databaseAnswered(executeError) ? "The invoice action could not complete. Reload its current state before trying again." : "The result is unknown. Recover this operation before starting another.", operation_id: args.operation_id });

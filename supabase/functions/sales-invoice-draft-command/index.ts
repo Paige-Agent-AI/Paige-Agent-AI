@@ -4,6 +4,7 @@ import {confirmFingerprint} from '../_shared/confirm-fingerprint.ts';
 import {databaseAnswered} from '../_shared/approval-outcome.ts';
 import {UUID,FINGERPRINT} from '../_shared/sales-invoice-command/contract.ts';
 import {parseCommercialDraftCommand} from '../_shared/sales-commercial/draft-command.ts';
+import {validateCatalogPriceFacts,type CatalogPriceFact} from '../_shared/sales-commercial/catalog-facts.ts';
 import {commercialDraftWorkOrder} from '../_shared/sales-commercial/draft-work-order.ts';
 import {admitCommercialDraft} from '../_shared/sales-commercial/draft-admission.ts';
 import {SALES_DRAFT_SPINE} from '../_shared/sales-commercial/draft-capabilities.ts';
@@ -36,20 +37,24 @@ Deno.serve(async req=>{
  if(memberError||!member||!['owner','admin'].includes(member.role??''))return response(403,{ok:false,code:'SALES_DRAFT_FORBIDDEN'});
  const stillCurrent=async()=>{const {data,error}=await caller.rpc('current_user_tenant_id');return !error&&data===tenant;};
  const operationId=body.operation_id as string;
- const command=await commercialDraftWorkOrder(intent,{tenantId:tenant,actorId:user.id,operationId});
+ let command=await commercialDraftWorkOrder(intent,{tenantId:tenant,actorId:user.id,operationId});
  const capability=intent.action==='invoice.draft_create'?'billing_create_invoice':'sales_revise_invoice_draft';
  const rpcArgs={_actor_user_id:user.id,_expected_tenant_id:tenant,_operation_id:operationId,_command:command};
  if(!await stillCurrent())return response(409,{ok:false,code:'WORKSPACE_CHANGED'});
- const {data:prior,error:priorError}=await admin.rpc('read_sales_invoice_command_result',rpcArgs);
+ const lines=intent.draft.items as {price_id:string|null;unit_minor:number|null;quantity:number}[];
+ const hasCatalog=lines.some(line=>line.price_id!==null);
+ const {data:prior,error:priorError}=await admin.rpc(hasCatalog?'read_sales_invoice_draft_intent_result':'read_sales_invoice_command_result',rpcArgs);
  if(priorError)return response(409,{ok:false,code:'DRAFT_REPLAY_UNAVAILABLE'});
  if(object(prior))return response(200,{...prior,replayed:true,capability});
- // Until the canonical offer resolver supplies a frozen price/version review, this bounded
- // conversational door accepts explicit custom items only. UI catalog drafts remain supported
- // by the common writer. Never approve an unresolved or mutable catalog price silently.
- const lines=intent.draft.items as {price_id:string|null;unit_minor:number|null;quantity:number}[];
- if(lines.some(line=>line.price_id!==null))return response(422,{ok:false,outcome:'needs_input',code:'CATALOG_PRICE_REVIEW_REQUIRED',message:'Resolve and review the exact offer price before creating this conversational draft.'});
+ let catalogPrices:CatalogPriceFact[]|undefined;
+ if(hasCatalog){
+  if(!await stillCurrent())return response(409,{ok:false,code:'WORKSPACE_CHANGED'});
+  const {data:catalog,error}=await admin.rpc('read_sales_invoice_draft_catalog',{_actor_user_id:user.id,_expected_tenant_id:tenant,_draft:intent.draft,_lock:false});
+  try{if(error||!object(catalog)||catalog.tenant_id!==tenant)throw Error();catalogPrices=validateCatalogPriceFacts(intent.draft,catalog.prices);command=await commercialDraftWorkOrder(intent,{tenantId:tenant,actorId:user.id,operationId},catalogPrices);if(new TextEncoder().encode(JSON.stringify(command)).length>65000)throw Error();}
+  catch{return response(422,{ok:false,outcome:'needs_input',code:'CATALOG_PRICE_REVIEW_REQUIRED',message:'Select an available supported catalog price and clarify exact commercial terms. Nothing was created.'});}
+ }
  let amounts:ReturnType<typeof aggregateInvoiceItems>;
- try{amounts=aggregateInvoiceItems(lines.map(line=>({unit_minor:Number(line.unit_minor),quantity:line.quantity})),intent.draft.kind==='deposit'&&intent.draft.schema_version===2?Number(intent.draft.deposit_basis_points):undefined,intent.draft.schema_version===3?Number(intent.draft.deposit_minor):undefined);}catch{return response(422,{ok:false,code:'DRAFT_AMOUNTS_INVALID'});}
+ try{amounts=aggregateInvoiceItems(lines.map(line=>({unit_minor:line.price_id===null?Number(line.unit_minor):catalogPrices!.find(p=>p.price_id===line.price_id!.toLowerCase())!.unit_minor,quantity:line.quantity})),intent.draft.kind==='deposit'&&intent.draft.schema_version===2?Number(intent.draft.deposit_basis_points):undefined,intent.draft.schema_version===3?Number(intent.draft.deposit_minor):undefined);}catch{return response(422,{ok:false,code:'DRAFT_AMOUNTS_INVALID'});}
  const {data:client,error:clientError}=await admin.from('clients').select('first_name,last_name,entity_name,entity_type').eq('tenant_id',tenant).eq('id',intent.draft.client_id).maybeSingle();
  if(clientError||!client)return response(422,{ok:false,outcome:'needs_input',code:'CLIENT_UNAVAILABLE'});
  const person=[client.first_name,client.last_name].filter(v=>typeof v==='string'&&v.trim()).join(' ');
@@ -69,7 +74,7 @@ Deno.serve(async req=>{
  }
  const projected=projectCapabilities({tools:[{name:capability,description:'Save an unissued invoice draft.'}],spine:SALES_DRAFT_SPINE,legacy:{},isMutating:()=>true,lanes:new Map([[capability,lane as Lane]]),workspaceAdminTools:new Set([capability]),isWorkspaceAdmin:true,readiness:new Map([['none','ready']])})[0];
  let admission:Awaited<ReturnType<typeof admitCommercialDraft>>;
- try{admission=await admitCommercialDraft({caller:{authenticated:true,userId:user.id,tenantId:tenant,tenantSource:'server',door:'other',access:{allowed:true}},availability:projected?.availability,approval:{autonomyLane:lane,...(claimedArgs!==undefined?{claimedArgs,claimedFor:capability}:{})},operationId,intent});}
+ try{admission=await admitCommercialDraft({caller:{authenticated:true,userId:user.id,tenantId:tenant,tenantSource:'server',door:'other',access:{allowed:true}},availability:projected?.availability,approval:{autonomyLane:lane,...(claimedArgs!==undefined?{claimedArgs,claimedFor:capability}:{})},operationId,intent,catalogPrices});}
  catch{return response(403,{ok:false,code:'DRAFT_APPROVAL_SCOPE_INVALID'});}
  const decision=admission.decision;
  const {error:auditError}=await admin.from('paige_audit_log').insert({actor_user_id:user.id,actor_role:`sales:${member.role}`,tenant_id:tenant,action:'sales.invoice_draft_governed_decision',target_type:'invoice',target_id:admission.execution?.command.invoice_id??command.invoice_id,payload:{capability,decision:decision.kind,risk:decision.risk,lane_requested:decision.audit.laneRequested,lane_effective:decision.audit.laneEffective,operation_id:operationId}});
@@ -83,7 +88,8 @@ Deno.serve(async req=>{
   const args={expected_tenant_id:tenant,operation_id:operationId,command,approval_subject:`${command.action}:${command.invoice_id}`,approval_cycle_nonce:crypto.randomUUID()};
   if(pending){if(!object(pending.args)||JSON.stringify(pending.args.command)!==JSON.stringify(command))return response(409,{ok:false,code:'APPROVAL_CYCLE_CHANGED'});return response(200,{ok:false,outcome:'approval_required',fingerprint:pending.fingerprint,summary:pending.summary});}
   const fingerprint=await confirmFingerprint(capability,args);const now=new Date().toISOString();
-  const summary=`${intent.action==='invoice.draft_create'?'Create':'Revise'} an unissued ${money(amounts.totalMinor)} USD invoice draft for ${clientName}${intent.draft.kind==='deposit'?`, requesting ${money(amounts.dueNowMinor)} as the deposit with ${money(amounts.remainderMinor)} remaining after the deposit`:''}, due ${intent.draft.due_date}. ${intent.draft.agreement_id?'Link the selected canonical agreement without sending or changing it. ':''}This saves a draft only; it does not publish, send, activate a plan or collect payment.`;
+  const catalogSummary=catalogPrices?lines.filter(line=>line.price_id!==null).map(line=>{const p=catalogPrices!.find(p=>p.price_id===line.price_id!.toLowerCase())!;return `${p.product_name}: ${line.quantity} × ${money(p.unit_minor)} per ${p.billing_interval==='month'?'month':'unit'} = ${money(p.unit_minor*line.quantity)}`;}).join('; '):undefined;
+  const summary=`${intent.action==='invoice.draft_create'?'Create':'Revise'} an unissued ${money(amounts.totalMinor)} USD invoice draft for ${clientName}${intent.draft.kind==='deposit'?`, requesting ${money(amounts.dueNowMinor)} as the deposit with ${money(amounts.remainderMinor)} remaining after the deposit`:''}, due ${intent.draft.due_date}. ${intent.draft.agreement_id?'Link the selected canonical agreement without sending or changing it. ':''}${catalogSummary?'Reviewed catalog prices: '+catalogSummary+'. ':''}This saves a draft only; it does not publish, send, activate a plan or collect payment.`;
   const {error}=await admin.from('paige_pending_confirmations').insert({user_id:user.id,tenant_id:tenant,thread_id:null,scoped_client_id:null,tool_name:capability,fingerprint,issued_in_request:requestNonce,server_issued_at:now,args,summary,expires_at:new Date(Date.now()+10*60*1000).toISOString()});
   if(error)return response(503,{ok:false,code:'APPROVAL_STORE_UNAVAILABLE'});
   return response(200,{ok:false,outcome:'approval_required',fingerprint,summary});
@@ -91,6 +97,7 @@ Deno.serve(async req=>{
  if(!admission.execution)return response(503,{ok:false,code:'DRAFT_EXECUTION_UNAVAILABLE'});
  if(!await stillCurrent())return response(409,{ok:false,code:'WORKSPACE_CHANGED'});
  const {data:result,error}=await admin.rpc('execute_sales_invoice_draft_command',{...rpcArgs,_command:admission.execution.command,_governance:{actor_user_id:user.id,tenant_id:tenant,tool:capability,action:admission.execution.command.action,approval_channel:claimedArgs?'operator_card':'standing_autonomy_setting',approved_fingerprint:claimedArgs?body.approved_fingerprint:null,decision_receipt_recorded:true}});
+ if(error?.code==='40001')return response(409,{ok:false,outcome:'needs_input',code:'DRAFT_REVIEW_CHANGED',operation_id:operationId,message:'The invoice or selected catalog facts changed. Read the current draft and selected prices, then request fresh review. Nothing was saved.'});
  if(error)return response(databaseAnswered(error)?422:503,{ok:false,outcome:databaseAnswered(error)?'refused':'outcome_unknown',code:'DRAFT_COMMAND_UNCONFIRMED',operation_id:operationId});
  if(!object(result)||result.ok!==true)return response(503,{ok:false,outcome:'outcome_unknown',code:'DRAFT_READBACK_INVALID',operation_id:operationId});
  return response(200,{...result,capability});

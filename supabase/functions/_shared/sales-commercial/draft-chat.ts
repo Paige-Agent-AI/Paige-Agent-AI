@@ -5,8 +5,8 @@ import type {Context,Dependencies,Result} from '../sales-invoice-chat.ts';
 
 const draftParameters=(declaration:typeof SALES_DRAFT_CREATE)=>({type:'object',properties:Object.fromEntries(Object.entries(declaration.input.properties).filter(([key])=>key!=='action')),required:declaration.input.required.filter(key=>key!=='action'),additionalProperties:false});
 export const SALES_DRAFT_TOOLS=[
- {type:'function' as const,function:{name:'billing_create_invoice',description:'Create a NEW unissued canonical invoice draft from explicit commercial intent. Resolve the canonical customer first. Ask instead of guessing currency, due date, taxes/fees or conflicting agreement terms. Explicit custom-priced USD items only; unresolved catalog prices require review. This does not publish, send, activate collections or collect payment. New draft numbers are assigned at publication; do not show internal IDs as invoice numbers.',parameters:draftParameters(SALES_DRAFT_CREATE)}},
- {type:'function' as const,function:{name:'sales_revise_invoice_draft',description:'Revise an existing unissued canonical invoice draft at its exact current version. Read the invoice first. Explicit custom-priced USD items only. Does not change an issued invoice, terms, send or collect.',parameters:draftParameters(SALES_DRAFT_REVISE)}},
+ {type:'function' as const,function:{name:'billing_create_invoice',description:'Create a NEW unissued canonical invoice draft from explicit commercial intent. Resolve the canonical customer first. Ask instead of guessing currency, due date, taxes/fees or conflicting agreement terms. Use explicit custom-priced USD items or exact canonical catalog price IDs. The server resolves and freezes eligible USD catalog facts for review; never invent a price or treat a cycle price as a total. This does not publish, send, activate collections or collect payment. New draft numbers are assigned at publication; do not show internal IDs as invoice numbers.',parameters:draftParameters(SALES_DRAFT_CREATE)}},
+ {type:'function' as const,function:{name:'sales_revise_invoice_draft',description:'Revise an existing unissued canonical invoice draft at its exact current version. Read the invoice first. Use explicit custom-priced USD items or exact canonical catalog price IDs; eligible catalog prices are resolved and frozen by the server for review. Does not change an issued invoice, terms, send or collect.',parameters:draftParameters(SALES_DRAFT_REVISE)}},
 ];
 export const SALES_DRAFT_TOOL_NAMES=new Set(SALES_DRAFT_TOOLS.map(t=>t.function.name));
 const object=(v:unknown):v is Record<string,unknown>=>typeof v==='object'&&v!==null&&!Array.isArray(v);
@@ -33,7 +33,8 @@ export async function dispatchCommercialDraftChat(ctx:Context,deps:Dependencies,
    if(typeof row.fingerprint!=='string'||!FINGERPRINT.test(row.fingerprint)||!ctx.approved.has(row.fingerprint)||!object(stored)
     ||stored.expected_tenant_id!==ctx.tenantId||typeof stored.operation_id!=='string'||!UUID.test(stored.operation_id)||!object(stored.command))return refuse('The draft approval is not usable in this scope.');
    const command=stored.command;
-   intent=parseCommercialDraftCommand(action==='invoice.draft_create'?{action,draft:command.draft}:command);
+   const {catalog_prices:_catalog,...baseCommand}=command;
+   intent=parseCommercialDraftCommand(action==='invoice.draft_create'?{action,draft:command.draft}:baseCommand);
    op=stored.operation_id;fingerprint=row.fingerprint;
   }else op=await common.operationId(ctx.tenantId,ctx.userId,intent,ctx.turn);
   attempted=true;

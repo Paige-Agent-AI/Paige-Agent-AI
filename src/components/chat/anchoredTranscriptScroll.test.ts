@@ -855,4 +855,54 @@ describe("createAnchoredTranscriptScroll", () => {
     expect(element.scrollTop).toBe(600);
     expect(element.scrollTop).not.toBe(geometry.scrollHeight - geometry.clientHeight);
   });
+
+  // C3a — opening "What PAIGE did" on an answer while the transcript follows the bottom. The answer
+  // grows; without a hold, bottom-follow pushes the line the person just pressed up out of view.
+  it("holds a message in place when the person acts inside it, instead of following the bottom", () => {
+    const geometry: Geometry = {
+      viewportTop: 0,
+      clientHeight: 300,
+      scrollHeight: 900,
+      items: { a: { top: 0, height: 300 }, b: { top: 300, height: 300 }, c: { top: 600, height: 300 } },
+    };
+    const { element, render } = transcriptFixture(geometry);
+    render(["a", "b", "c"]);
+    const pinned: boolean[] = [];
+    const controller = createAnchoredTranscriptScroll({ storagePrefix: "test-hold", onPinnedChange: (p) => pinned.push(p) });
+    controller.setContext("thread-a");
+    controller.attach(element);
+    expect(element.scrollTop).toBe(600);
+    const line = document.createElement("button");
+    element.querySelector('[data-paige-message-id="c"]')!.append(line);
+
+    controller.holdMessageAt(line);
+    expect(controller.isAtBottom()).toBe(false);
+    expect(pinned.at(-1)).toBe(false);
+    // The trace opens: message c grows by 240px. Its top stays exactly where it was.
+    geometry.items.c.height += 240;
+    geometry.scrollHeight += 240;
+    controller.notifyLayoutChange();
+    expect(element.scrollTop).toBe(600);
+    expect(element.querySelector<HTMLElement>('[data-paige-message-id="c"]')!.getBoundingClientRect().top).toBe(0);
+    // "Jump to latest" brings bottom-follow back.
+    controller.jumpToBottom();
+    expect(controller.isAtBottom()).toBe(true);
+    expect(element.scrollTop).toBe(geometry.scrollHeight);
+    controller.destroy();
+  });
+
+  it("ignores a hold for a node outside the transcript or outside any message", () => {
+    const geometry: Geometry = { viewportTop: 0, clientHeight: 300, scrollHeight: 900,
+      items: { a: { top: 0, height: 900 } } };
+    const { element, render } = transcriptFixture(geometry);
+    render(["a"]);
+    const controller = createAnchoredTranscriptScroll({ storagePrefix: "test-hold-ignore" });
+    controller.attach(element);
+    controller.holdMessageAt(document.createElement("div"));
+    const loose = document.createElement("div");
+    element.append(loose);
+    controller.holdMessageAt(loose);
+    expect(controller.isAtBottom()).toBe(true);
+    controller.destroy();
+  });
 });

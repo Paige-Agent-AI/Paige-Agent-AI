@@ -1,0 +1,1373 @@
+<title>PAIGE Turn States</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400..700;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* ── Tokens: copied from src/index.css [data-pg="light"] / [data-pg="dark"] (the Solo PAIGE chat host). ── */
+:root{
+  color-scheme: light;
+  --pg-env:#e8e5df; --pg-nav:#f4f1eb; --pg-canvas:#fbf9f5; --pg-spine:#f1eee8; --pg-workspace:#f7f4ee;
+  --pg-surface:#f5f2ec; --pg-raised:#fffdf8; --pg-artifact:#fffdf8;
+  --pg-line-soft:rgba(45,40,50,.105); --pg-line:rgba(45,40,50,.185); --pg-line-strong:rgba(45,40,50,.28);
+  --pg-ink:#201e23; --pg-ink-2:#3d3941; --pg-muted:#67616b; --pg-faint:#6a646e;
+  --pg-gold-core:#6f5636; --pg-gold:#8b7049; --pg-gold-deep:#7a5c2e; --pg-gold-fill:#c9a96a; --pg-gold-fill-hi:#d8bd85;
+  --pg-on-gold:#201e23;
+  --pg-lift:rgba(45,40,50,.04);
+  --pg-violet:#655a96; --pg-positive:#327458; --pg-warning:#986322; --pg-negative:#a5483d;
+  --pg-lift-1:inset 0 1px 0 rgba(255,255,255,.9),0 1px 1px rgba(45,40,50,.055),0 4px 10px -4px rgba(45,40,50,.12);
+  --pg-lift-2:inset 0 1px 0 rgba(255,255,255,.95),0 2px 4px rgba(45,40,50,.07),0 14px 30px -12px rgba(45,40,50,.17);
+  --pg-lift-3:inset 0 1px 0 #fff,0 6px 12px rgba(45,40,50,.09),0 32px 64px -20px rgba(45,40,50,.22);
+  --pg-r-plate:13px; --pg-r-chip:9px; --pg-r-seal:11px; --pg-r-pill:999px;
+  --pg-scrim:rgba(32,30,35,.32);
+  /* review layer (prototype chrome only, never product) */
+  --rv-bg:#efece6; --rv-surface:#fbfaf7; --rv-ink:#1d1b20; --rv-muted:#5c5660; --rv-line:rgba(45,40,50,.2);
+  --rv-accent:#4b3f8c; --rv-accent-ink:#ffffff; --rv-chip:#e6e2da;
+  --rv-ok:#2d6a50; --rv-mid:#4b3f8c; --rv-warn:#8a5a1e;
+  --font-ui:"Schibsted Grotesk",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --ease-out:cubic-bezier(.16,1,.3,1);
+  /* OD5: status warning tone. Recommended = ink + shape (keeps gold meaning “the act”). */
+  --st-warn:var(--pg-ink-2);
+}
+:root[data-warn="gold"]{--st-warn:var(--pg-warning)}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --pg-env:#08070b; --pg-nav:#0d0b11; --pg-canvas:#100e14; --pg-spine:#121017; --pg-workspace:#16131a;
+    --pg-surface:#19161e; --pg-raised:#211d27; --pg-artifact:#e9e4da;
+    --pg-line-soft:rgba(244,237,222,.115); --pg-line:rgba(244,237,222,.195); --pg-line-strong:rgba(244,237,222,.30);
+    --pg-ink:#f6f2ea; --pg-ink-2:#d6d0c9; --pg-muted:#aca69d; --pg-faint:#969089;
+    --pg-gold-core:#fff0cf; --pg-gold:#ead5aa; --pg-gold-deep:#c7a978; --pg-gold-fill:#d4a752; --pg-gold-fill-hi:#e2bb6c;
+    --pg-on-gold:#0a0811;
+    --pg-lift:rgba(255,255,255,.035);
+    --pg-violet:#9b8de0; --pg-positive:#8fd1ae; --pg-warning:#edc17f; --pg-negative:#eda093;
+    --pg-lift-1:inset 0 1px 0 rgba(255,255,255,.055),0 1px 1px rgba(0,0,0,.3),0 4px 12px -4px rgba(0,0,0,.42);
+    --pg-lift-2:inset 0 1px 0 rgba(255,255,255,.07),0 2px 4px rgba(0,0,0,.32),0 16px 34px -12px rgba(0,0,0,.52);
+    --pg-lift-3:inset 0 1px 0 rgba(255,255,255,.085),0 6px 12px rgba(0,0,0,.36),0 36px 72px -20px rgba(0,0,0,.62);
+    --pg-scrim:rgba(0,0,0,.55);
+    --rv-bg:#0b0a0e; --rv-surface:#16141b; --rv-ink:#ece7de; --rv-muted:#a9a399; --rv-line:rgba(244,237,222,.17);
+    --rv-accent:#b3a8ef; --rv-accent-ink:#120f1a; --rv-chip:#211e28;
+    --rv-ok:#8fd1ae; --rv-mid:#b3a8ef; --rv-warn:#edc17f;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --pg-env:#08070b; --pg-nav:#0d0b11; --pg-canvas:#100e14; --pg-spine:#121017; --pg-workspace:#16131a;
+  --pg-surface:#19161e; --pg-raised:#211d27; --pg-artifact:#e9e4da;
+  --pg-line-soft:rgba(244,237,222,.115); --pg-line:rgba(244,237,222,.195); --pg-line-strong:rgba(244,237,222,.30);
+  --pg-ink:#f6f2ea; --pg-ink-2:#d6d0c9; --pg-muted:#aca69d; --pg-faint:#969089;
+  --pg-gold-core:#fff0cf; --pg-gold:#ead5aa; --pg-gold-deep:#c7a978; --pg-gold-fill:#d4a752; --pg-gold-fill-hi:#e2bb6c;
+  --pg-on-gold:#0a0811;
+  --pg-lift:rgba(255,255,255,.035);
+  --pg-violet:#9b8de0; --pg-positive:#8fd1ae; --pg-warning:#edc17f; --pg-negative:#eda093;
+  --pg-lift-1:inset 0 1px 0 rgba(255,255,255,.055),0 1px 1px rgba(0,0,0,.3),0 4px 12px -4px rgba(0,0,0,.42);
+  --pg-lift-2:inset 0 1px 0 rgba(255,255,255,.07),0 2px 4px rgba(0,0,0,.32),0 16px 34px -12px rgba(0,0,0,.52);
+  --pg-lift-3:inset 0 1px 0 rgba(255,255,255,.085),0 6px 12px rgba(0,0,0,.36),0 36px 72px -20px rgba(0,0,0,.62);
+  --pg-scrim:rgba(0,0,0,.55);
+  --rv-bg:#0b0a0e; --rv-surface:#16141b; --rv-ink:#ece7de; --rv-muted:#a9a399; --rv-line:rgba(244,237,222,.17);
+  --rv-accent:#b3a8ef; --rv-accent-ink:#120f1a; --rv-chip:#211e28;
+  --rv-ok:#8fd1ae; --rv-mid:#b3a8ef; --rv-warn:#edc17f;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--pg-env);color:var(--pg-ink);font:400 14px/1.55 var(--font-ui);letter-spacing:-.002em;overflow-x:hidden}
+button,textarea,select,input{font:inherit;color:inherit}
+::selection{background:color-mix(in srgb,var(--pg-violet) 28%,transparent);color:var(--pg-ink)}
+.sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.i{width:14px;height:14px;flex:none;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.i.fill{fill:currentColor;stroke:none}
+
+/* ── Page layout ── */
+.page{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;padding:16px;max-width:1880px;margin:0 auto}
+@media (min-width:1200px){
+  .page.with-review{grid-template-columns:minmax(0,1fr) 384px}
+  .page.with-review .review{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow-y:auto}
+}
+.stage{min-width:0;display:grid;justify-items:center;align-content:start;gap:10px}
+.stage-cap{width:min(var(--dw,1366px),100%);display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;justify-content:space-between;font-size:12px;color:var(--rv-muted)}
+.stage-cap b{color:var(--rv-ink);font-weight:600}
+.device{position:relative;width:min(var(--dw,1366px),100%);height:clamp(600px,calc(100vh - 96px),900px);container-type:inline-size;container-name:device;
+  background:var(--pg-canvas);border:1px solid var(--pg-line);border-radius:16px;box-shadow:var(--pg-lift-3);overflow:hidden}
+
+/* ── Product: Solo PAIGE workspace ── */
+.app{display:grid;grid-template-rows:auto minmax(0,1fr);height:100%;min-width:0}
+.topbar{display:flex;align-items:center;gap:10px;min-height:52px;padding:0 16px;border-bottom:1px solid var(--pg-line-soft);background:var(--pg-canvas);min-width:0}
+.ws{display:flex;flex-direction:column;min-width:0;flex:1}
+.ws strong{font-size:13px;font-weight:600;color:var(--pg-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ws span{font-size:11.5px;color:var(--pg-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-btn{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 10px;border:1px solid var(--pg-line);border-radius:var(--pg-r-chip);background:var(--pg-raised);color:var(--pg-ink-2);font-size:12.5px;font-weight:500;cursor:pointer;flex:none}
+.tb-btn:hover{color:var(--pg-ink);border-color:var(--pg-line-strong)}
+.main{display:grid;grid-template-columns:minmax(0,1fr);min-height:0}
+.rail{display:none;flex-direction:column;gap:2px;padding:14px 10px;border-right:1px solid var(--pg-line-soft);background:var(--pg-nav);min-height:0;overflow-y:auto}
+.rail h2{margin:4px 8px 6px;font-size:11.5px;font-weight:500;color:var(--pg-muted)}
+.rail button{display:flex;align-items:center;gap:8px;width:100%;min-height:34px;padding:0 10px;border:0;border-radius:8px;background:transparent;color:var(--pg-ink-2);font-size:12.5px;text-align:left;cursor:pointer}
+.rail button:hover{background:var(--pg-lift)}
+.rail button[aria-current="true"]{background:var(--pg-surface);color:var(--pg-ink);font-weight:500;box-shadow:var(--pg-lift-1)}
+.rail button span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.unread{width:7px;height:7px;border-radius:50%;background:var(--pg-ink);flex:none}
+@container device (min-width:1000px){ .main{grid-template-columns:232px minmax(0,1fr)} .rail{display:flex} }
+.chat{position:relative;display:grid;grid-template-rows:minmax(0,1fr) auto;min-height:0;min-width:0}
+.scroll{overflow-y:auto;overflow-x:hidden;min-height:0;scrollbar-width:thin;scrollbar-color:var(--pg-line-strong) transparent}
+.scroll::-webkit-scrollbar{width:10px}.scroll::-webkit-scrollbar-thumb{background:var(--pg-line-strong);border-radius:999px;border:3px solid transparent;background-clip:content-box}
+.transcript{max-width:760px;margin:0 auto;padding:28px 24px 32px;min-width:0}
+@container device (max-width:639px){ .transcript{padding:18px 16px 24px} .topbar{padding:0 12px} }
+
+/* turns */
+.turn{min-width:0}
+.turn+.turn{margin-top:20px}
+.turn.you+.turn.paige,.turn.paige+.turn.you{margin-top:24px}
+.turn.you{display:flex;justify-content:flex-end}
+.bubble{max-width:min(80%,520px);min-width:0;background:var(--pg-surface);border:1px solid var(--pg-line-soft);border-radius:14px 14px 4px 14px;padding:9px 13px;font-size:13.5px;line-height:1.55;color:var(--pg-ink);box-shadow:var(--pg-lift-1);overflow-wrap:anywhere}
+.md{font-size:13.5px;line-height:1.66;color:var(--pg-ink);overflow-wrap:anywhere}
+.md p{margin:0 0 8px}.md p:last-child{margin-bottom:0}
+.md ul,.md ol{margin:4px 0 8px;padding-left:20px}.md li{margin:3px 0}
+.md strong{font-weight:600}
+.md .src{color:var(--pg-muted);font-size:12px}
+.after{margin-top:12px}
+.caret{display:inline-block;width:2px;height:1.05em;margin-left:2px;vertical-align:-2px;background:var(--pg-ink);animation:caret 1s steps(1) infinite}
+@keyframes caret{50%{opacity:0}}
+.greet-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{display:inline-flex;align-items:center;min-height:34px;padding:0 12px;border:1px solid var(--pg-line);border-radius:var(--pg-r-pill);background:var(--pg-raised);color:var(--pg-ink-2);font-size:12.5px;cursor:pointer;text-align:left}
+.chip:hover{border-color:var(--pg-line-strong);color:var(--pg-ink)}
+
+/* ── THE SIGNATURE: the status line ── */
+.sl{margin:8px 0 4px}
+.ack+.sl{margin-top:8px}
+.sl-row{display:flex;align-items:center;gap:8px;width:100%;min-height:28px;padding:3px 2px;background:none;border:0;border-radius:6px;color:var(--pg-ink-2);font:500 12.5px/1.4 var(--font-ui);text-align:left}
+button.sl-row{cursor:pointer}
+button.sl-row:hover .sl-t{color:var(--pg-ink)}
+.sl-g{position:relative;width:14px;height:14px;display:grid;place-items:center;flex:none}
+.sl-t{min-width:0;flex:1}
+.sl-t.chg{animation:fadeSwap 120ms ease-out}
+.sl-m{flex:none;font-size:11.5px;font-weight:400;color:var(--pg-muted);white-space:nowrap}
+.sl-chev{color:var(--pg-muted);transition:transform 200ms var(--ease-out)}
+.sl-row[aria-expanded="true"] .sl-chev{transform:rotate(90deg)}
+.sl-rule{position:relative;height:1px;background:var(--pg-line-soft);overflow:hidden}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--pg-violet)}
+.sl[data-k="work"] .sl-g,.sl[data-k="think"] .sl-g{color:var(--pg-violet)}
+.sl[data-k="work"] .sl-rule::after,.sl[data-k="think"] .sl-rule::after{content:"";position:absolute;top:0;bottom:0;left:0;width:38%;
+  background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--pg-violet) 40%,transparent),transparent);animation:sweep 1.6s linear infinite;will-change:transform}
+.sl.paused .sl-rule::after,.sl.off .sl-rule::after{animation-play-state:paused}
+@keyframes sweep{from{transform:translateX(-100%)}to{transform:translateX(270%)}}
+.sl[data-k="wait"] .sl-row{color:var(--pg-ink);font-weight:600}
+.sl[data-k="wait"] .sl-rule{background:var(--pg-line-strong)}
+.sl[data-k="wait"] .sl-g{color:var(--pg-ink)}
+.sl[data-k="done"] .sl-row{color:var(--pg-muted);font-weight:400}
+.sl[data-k="done"] .sl-g{color:var(--pg-positive)}
+.sl[data-k="warn"] .sl-g{color:var(--st-warn)}
+.sl[data-k="warn"] .sl-row{color:var(--pg-ink)}
+.sl[data-k="warn"] .sl-rule{background:var(--pg-line)}
+.sl[data-k="bg"] .sl-g{color:var(--pg-violet)}
+.sl[data-k="bg"] .sl-rule{background:var(--pg-line)}
+.sl[data-k="stop"] .sl-g,.sl[data-k="held"] .sl-g,.sl[data-k="neutral"] .sl-g{color:var(--pg-muted)}
+.sl[data-k="stop"] .sl-row,.sl[data-k="held"] .sl-row,.sl[data-k="neutral"] .sl-row{color:var(--pg-ink-2)}
+.sl-g .settle{animation:settle 240ms var(--ease-out)}
+@keyframes settle{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+/* Executed beat — the Command Mark, once, on a completed act */
+.beat{position:relative;width:14px;height:14px;display:grid;place-items:center}
+.beat .cm,.beat .ck{grid-area:1/1}
+.beat .cm{width:16px;height:16px;opacity:0}
+.beat .cm .slash{fill:var(--pg-gold-fill);stroke:var(--pg-gold-fill);stroke-width:3.2;stroke-linejoin:round}.beat .cm .orb{fill:var(--pg-gold-core)}
+.beat.go .cm{animation:cmBeat 900ms var(--ease-out) forwards}
+.beat.go .ck{animation:ckAfter 900ms var(--ease-out) forwards}
+@keyframes cmBeat{0%{opacity:0;transform:scale(.7)}25%{opacity:1;transform:scale(1.08)}66%{opacity:1;transform:none}100%{opacity:0;transform:scale(.9)}}
+@keyframes ckAfter{0%,66%{opacity:0;transform:scale(.6)}100%{opacity:1;transform:none}}
+.jump-up{margin-left:6px;padding:0;border:0;background:none;color:var(--pg-violet);font:500 11.5px/1 var(--font-ui);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+
+/* trace — "What PAIGE did" */
+.tr{display:grid;grid-template-rows:0fr;transition:grid-template-rows 220ms var(--ease-out)}
+.tr.open{grid-template-rows:1fr}
+.tr-in{overflow:hidden;min-height:0}
+.tr:not(.open) .tr-in{visibility:hidden;transition:visibility 0s 220ms}
+.steps{list-style:none;margin:8px 0 6px 6px;padding:0 0 0 15px;border-left:1px solid var(--pg-line);display:grid;gap:6px}
+.step{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;line-height:1.45;color:var(--pg-muted);min-width:0}
+.step .sg{width:14px;height:18px;display:grid;place-items:center;flex:none}
+.step .st{min-width:0}
+.step .sm{display:block;font-size:11.5px;color:var(--pg-faint)}
+.step[data-s="run"]{color:var(--pg-ink-2);font-weight:500}
+.step[data-s="run"] .sg{color:var(--pg-violet)}
+.step[data-s="done"] .sg{color:var(--pg-positive)}
+.step[data-s="err"] .sg{color:var(--pg-negative)}
+.step[data-s="stop"] .sg{color:var(--pg-muted)}
+.step .sg.tick{animation:settle 140ms ease-out}
+.grps{display:grid;gap:8px;margin:8px 0 6px 6px}
+.grp{display:grid;gap:5px}
+.grp-h{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:500;color:var(--pg-ink-2)}
+.grp-h em{font-style:normal;font-weight:400;color:var(--pg-muted);font-size:11.5px}
+.grp .steps{margin:2px 0 4px 6px}
+.showall{margin:2px 0 6px 22px;padding:4px 0;border:0;background:none;color:var(--pg-violet);font:500 12px/1.4 var(--font-ui);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+
+/* cards */
+.card{margin-top:12px;border:1px solid var(--pg-line);border-radius:var(--pg-r-plate);background:var(--pg-raised);box-shadow:var(--pg-lift-1);padding:12px 14px;min-width:0}
+.card:focus{outline:none}
+.card:focus-visible{outline:2px solid var(--pg-gold-core);outline-offset:3px}
+.cc[data-mode="decide"]{border-color:var(--pg-line-strong);box-shadow:var(--pg-lift-2)}
+.cc-head{display:flex;gap:10px;align-items:flex-start}
+.seal{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;flex:none;background:var(--pg-surface);border:1px solid var(--pg-line-soft);color:var(--pg-ink-2)}
+.cc[data-mode="done"] .seal{color:var(--pg-positive);background:color-mix(in srgb,var(--pg-positive) 12%,var(--pg-raised))}
+.cc[data-mode="failed"] .seal{color:var(--st-warn);background:color-mix(in srgb,var(--st-warn) 10%,var(--pg-raised))}
+.cc h4:focus{outline:none}.cc h4:focus-visible{outline:2px solid var(--pg-gold-core);outline-offset:2px;border-radius:3px}
+.cc[data-mode="running"] .seal{color:var(--pg-violet)}
+.cc h4{margin:1px 0 0;font-size:14px;font-weight:600;letter-spacing:-.012em;color:var(--pg-ink)}
+.cc .sum{margin:2px 0 0;font-size:13px;color:var(--pg-ink-2)}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;margin:10px 0 0 34px;font-size:12.5px}
+.kv dt{color:var(--pg-muted)}.kv dd{margin:0;color:var(--pg-ink);overflow-wrap:anywhere}
+.acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0 0 34px}
+.note{margin:8px 0 0 34px;font-size:12px;line-height:1.5;color:var(--pg-muted)}
+.receipt{margin:10px 0 0 34px;font-size:11.5px;color:var(--pg-muted)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:0 14px;border-radius:var(--pg-r-chip);border:1px solid transparent;background:transparent;font:600 13px/1 var(--font-ui);cursor:pointer;white-space:nowrap}
+.btn .i{width:15px;height:15px}
+.btn.gold{background:linear-gradient(180deg,var(--pg-gold-fill-hi),var(--pg-gold-fill));color:var(--pg-on-gold);border-color:color-mix(in srgb,var(--pg-gold-fill) 70%,#000 0%);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 1px 2px rgba(0,0,0,.14)}
+.btn.gold:hover{filter:brightness(1.04)}
+.btn.gold:active{transform:translateY(1px)}
+.btn.ghost{color:var(--pg-ink-2)}
+.btn.ghost:hover{background:var(--pg-lift);color:var(--pg-ink)}
+.btn.outline{background:var(--pg-raised);border-color:var(--pg-line-strong);color:var(--pg-ink)}
+.btn.outline:hover{background:var(--pg-surface)}
+.btn.ink{background:var(--pg-ink);color:var(--pg-canvas)}
+.btn.ink:hover{opacity:.92}
+.btn[aria-disabled="true"]{opacity:.55;cursor:not-allowed}
+@container device (max-width:639px){ .btn{min-height:44px} .kv,.acts,.note,.receipt{margin-left:0} }
+
+/* choices */
+.ask{padding:12px 14px}
+.ask .opts{display:grid;gap:8px;margin-top:2px}
+.opt{display:flex;align-items:flex-start;gap:10px;min-height:44px;width:100%;padding:10px 12px;border:1px solid var(--pg-line);border-radius:10px;background:var(--pg-raised);text-align:left;cursor:pointer;color:var(--pg-ink)}
+.opt:hover{border-color:var(--pg-line-strong);background:var(--pg-surface)}
+.opt[aria-checked="true"]{border-color:var(--pg-ink);box-shadow:inset 0 0 0 1px var(--pg-ink)}
+.radio{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--pg-line-strong);flex:none;margin-top:2px;display:grid;place-items:center}
+.opt[aria-checked="true"] .radio{border-color:var(--pg-ink)}
+.opt[aria-checked="true"] .radio::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--pg-ink)}
+.opt b{display:block;font-size:13px;font-weight:600}
+.opt small{display:block;font-size:12px;color:var(--pg-muted);margin-top:1px}
+.ask .acts{margin-left:0}
+.frozen{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--pg-muted)}
+.frozen b{color:var(--pg-ink-2);font-weight:500}
+
+/* background work */
+.work-h{display:flex;align-items:flex-start;gap:10px}
+.work-h .seal{color:var(--pg-violet)}
+.work[data-s="ready"] .work-h .seal{color:var(--pg-positive)}
+.work[data-s="blocked"] .work-h .seal,.work[data-s="failed"] .work-h .seal,.work[data-s="unknown"] .work-h .seal{color:var(--st-warn)}
+.work-t{min-width:0;flex:1}
+.work-t strong{display:block;font-size:13px;font-weight:600;color:var(--pg-ink)}
+.work-t span{display:block;font-size:11.5px;color:var(--pg-muted)}
+.stages{list-style:none;display:flex;flex-wrap:wrap;gap:6px 16px;margin:10px 0 0 34px;padding:0;font-size:12px;color:var(--pg-faint)}
+.stages li{display:flex;align-items:center;gap:6px}
+.stages li[data-s="done"]{color:var(--pg-muted)}
+.stages li[data-s="done"] .i{color:var(--pg-positive)}
+.stages li[data-s="cur"]{color:var(--pg-ink-2);font-weight:500}
+.stages .ring{width:9px;height:9px;border-radius:50%;border:1.5px solid currentColor}
+.stages li[data-s="cur"] .ring{border-color:var(--pg-violet);background:var(--pg-violet)}
+.stages li[data-s="cur"] .ring.live{animation:breathe 2.4s ease-in-out infinite}
+.stages li[data-s="cur"] .ring.live.off,.stages li[data-s="cur"] .ring.live.paused{animation-play-state:paused}
+@keyframes breathe{50%{opacity:.45}}
+@container device (max-width:639px){ .stages{margin-left:0} }
+
+/* artifact */
+.art{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.thumb{width:44px;height:56px;border-radius:6px;background:var(--pg-artifact);border:1px solid var(--pg-line);box-shadow:var(--pg-lift-2);display:grid;align-content:start;gap:4px;padding:8px 7px;flex:none}
+.thumb i{display:block;height:3px;border-radius:2px;background:var(--pg-line-strong)}
+.thumb i:nth-child(1){width:70%;background:var(--pg-ink-2);opacity:.6}
+.art-t{min-width:0;flex:1 1 180px}
+.art-t strong{display:block;font-size:13px;font-weight:600}
+.art-t span{display:block;font-size:11.5px;color:var(--pg-muted)}
+.art .acts{margin:0}
+
+/* crm */
+.crm-k{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--pg-positive)}
+.crm strong{display:block;margin-top:3px;font-size:13px;font-weight:600}
+.crm span{display:block;font-size:12px;color:var(--pg-muted)}
+.lnk{display:inline-flex;align-items:center;gap:4px;margin-top:6px;padding:0;border:0;background:none;color:var(--pg-violet);font:500 12px/1.4 var(--font-ui);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+
+/* research card (tokenised: fixes the light-only pastel pills) */
+.dr{display:grid;gap:11px}
+.dr-head{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.dr-ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--pg-surface);color:var(--pg-violet);flex:none}
+.dr-t{min-width:0;flex:1 1 160px}.dr-t strong{display:block;font-size:12.5px;line-height:1.4}.dr-t span{display:block;margin-top:2px;font-size:11.5px;color:var(--pg-muted)}
+.pill{justify-self:start;display:inline-flex;align-items:center;min-height:22px;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600;white-space:nowrap}
+.pill.ok{background:color-mix(in srgb,var(--pg-positive) 10%,var(--pg-raised));color:var(--pg-positive)}
+.pill.mid{background:color-mix(in srgb,var(--st-warn) 7%,var(--pg-raised));color:var(--st-warn);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--st-warn) 22%,transparent)}
+.pill.low{background:var(--pg-surface);color:var(--pg-muted)}
+.dr ul{list-style:none;margin:0;padding:0;display:grid;gap:9px}
+.dr li{border:1px solid var(--pg-line-soft);border-radius:11px;padding:11px 12px;display:grid;gap:7px}
+.dr li p{margin:0;font-size:12.5px;line-height:1.6}
+.cites{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;color:var(--pg-violet)}
+.dr-src{justify-self:start;display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:0 10px;border:1px solid var(--pg-line);border-radius:9px;background:var(--pg-raised);font-size:12px;font-weight:600;color:var(--pg-ink);cursor:pointer}
+.dr-src em{font-style:normal;font-weight:400;color:var(--pg-muted)}
+
+/* outcome footer + message meta */
+.foot{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;margin-top:12px;padding-top:10px;border-top:1px solid var(--pg-line-soft);font-size:12.5px;color:var(--pg-ink-2)}
+.foot .i{color:var(--st-warn)}
+.foot:focus{outline:none}
+.earlier{margin:0;font-size:12.5px;color:var(--pg-muted)}
+.banner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 12px;margin-top:16px;padding:8px 12px;border:1px solid var(--pg-line);border-radius:10px;background:var(--pg-surface);font-size:12px;line-height:1.5;color:var(--pg-muted)}
+.banner span{flex:1 1 220px;min-width:0}
+.ptoast{position:absolute;right:16px;bottom:96px;z-index:4;width:min(340px,calc(100% - 32px));display:flex;gap:10px;padding:12px 14px;border:1px solid var(--pg-line-strong);border-radius:12px;background:var(--pg-raised);box-shadow:var(--pg-lift-3);font-size:12.5px;color:var(--pg-ink-2)}
+.ptoast .i{color:var(--pg-negative);margin-top:2px}
+.ptoast b{display:block;color:var(--pg-ink);font-weight:600}
+.foot[data-tone="neutral"] .i{color:var(--pg-muted)}
+.foot p{margin:0;flex:1 1 220px;min-width:0}
+.meta{display:flex;gap:2px;margin-top:8px}
+.meta button{width:30px;height:30px;display:grid;place-items:center;border:0;border-radius:7px;background:transparent;color:var(--pg-faint);cursor:pointer}
+.meta button:hover{background:var(--pg-lift);color:var(--pg-ink)}
+.divider{display:flex;align-items:center;gap:10px;margin:24px 0 0;font-size:11.5px;color:var(--pg-muted)}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--pg-line-soft)}
+
+/* composer */
+.composer{padding:10px 24px 16px;background:linear-gradient(to bottom,transparent,var(--pg-canvas) 24%);min-width:0}
+.comp-in{max-width:760px;margin:0 auto;min-width:0}
+.hint{display:flex;align-items:center;gap:6px;margin:0 0 6px 4px;font-size:12px;color:var(--pg-muted)}
+.hint .i{color:var(--pg-ink-2)}
+.hint[hidden]{display:none}
+.box{display:flex;align-items:flex-end;gap:8px;padding:8px 8px 8px 14px;border:1px solid var(--pg-line);border-radius:14px;background:var(--pg-raised);box-shadow:var(--pg-lift-2)}
+.box:focus-within{border-color:var(--pg-line-strong)}
+.box textarea{flex:1;min-width:0;border:0;background:transparent;resize:none;min-height:24px;max-height:120px;padding:6px 0;font-size:13.5px;line-height:1.5;color:var(--pg-ink);outline:none}
+.box textarea::placeholder{color:var(--pg-faint)}
+.send{width:36px;height:36px;border-radius:10px;border:0;display:grid;place-items:center;background:var(--pg-ink);color:var(--pg-canvas);cursor:pointer;flex:none}
+.send.stop{background:var(--pg-surface);color:var(--pg-ink);border:1px solid var(--pg-line-strong)}
+.send .i{width:16px;height:16px}
+.strip{max-width:760px;margin:0 auto 8px;padding:4px 10px;border:1px solid var(--pg-line-soft);border-radius:10px;background:var(--pg-surface)}
+.strip .sl{margin:0}
+@container device (max-width:639px){ .composer{padding:8px 12px 12px} .send{width:44px;height:44px} }
+.jump{position:absolute;left:50%;bottom:100%;transform:translate(-50%,-8px);display:none;align-items:center;gap:6px;min-height:32px;padding:0 12px;border:1px solid var(--pg-line);border-radius:999px;background:var(--pg-raised);box-shadow:var(--pg-lift-2);font-size:12px;font-weight:500;color:var(--pg-ink);cursor:pointer;white-space:nowrap}
+.jump.show{display:inline-flex}
+.jump .dot{background:var(--pg-ink)}
+.comp-wrap{position:relative}
+
+/* phone sheet for the trace */
+.sheet-wrap{position:absolute;inset:0;z-index:5;display:none}
+.sheet-wrap.open{display:block}
+.scrim{position:absolute;inset:0;background:var(--pg-scrim);animation:fadeIn 160ms ease-out}
+.sheet{position:absolute;left:0;right:0;bottom:0;max-height:72%;overflow-y:auto;background:var(--pg-raised);border-top-left-radius:16px;border-top-right-radius:16px;box-shadow:var(--pg-lift-3);padding:10px 16px 20px;animation:sheetUp 260ms var(--ease-out)}
+.sheet .grab{width:36px;height:4px;border-radius:2px;background:var(--pg-line-strong);margin:0 auto 10px}
+.sheet-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sheet-h h3{margin:0;font-size:14px;font-weight:600}
+.x{width:44px;height:44px;display:grid;place-items:center;border:0;border-radius:10px;background:transparent;color:var(--pg-ink-2);cursor:pointer}
+@keyframes sheetUp{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
+@keyframes fadeIn{from{opacity:0}}
+
+/* N/A + simulated toast (review-styled, not product) */
+.na{display:grid;place-items:center;height:100%;padding:24px;text-align:center}
+.na div{max-width:420px;border:1px dashed var(--rv-line);border-radius:12px;padding:20px;background:var(--rv-surface);color:var(--rv-ink);font-size:13px}
+.na b{display:block;margin-bottom:6px}
+.toast{position:absolute;left:50%;bottom:92px;transform:translateX(-50%);z-index:6;max-width:calc(100% - 32px);padding:8px 12px;border:1px dashed var(--rv-line);border-radius:10px;background:var(--rv-surface);color:var(--rv-ink);font-size:12px;box-shadow:var(--pg-lift-2);display:none}
+.toast.show{display:block;animation:fadeIn 160ms ease-out}
+
+/* enter / change motion */
+.enter{animation:enterUp 180ms var(--ease-out) both}
+.card.enter{animation:enterUp 260ms var(--ease-out) both}
+.turn.paige.enter{animation:enterUp 160ms cubic-bezier(.2,0,0,1) both}
+.foot.enter{animation:enterUp 160ms ease-out both}
+@keyframes enterUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@keyframes fadeSwap{from{opacity:.25}to{opacity:1}}
+
+/* ── Reduced motion: every effect has its own fallback ── */
+:root[data-motion="reduce"] .sl-rule::after{display:none}
+:root[data-motion="reduce"] .sl[data-k="work"] .sl-rule,:root[data-motion="reduce"] .sl[data-k="think"] .sl-rule{background:var(--pg-violet)}
+:root[data-motion="reduce"] .enter,:root[data-motion="reduce"] .card.enter,:root[data-motion="reduce"] .turn.paige.enter,:root[data-motion="reduce"] .foot.enter{animation:fadeIn 1ms both}
+:root[data-motion="reduce"] .tr{transition:none}
+:root[data-motion="reduce"] .tr:not(.open) .tr-in{transition:none}
+:root[data-motion="reduce"] .sl-chev{transition:none}
+:root[data-motion="reduce"] .sl-t.chg,:root[data-motion="reduce"] .sl-g .settle,:root[data-motion="reduce"] .step .sg.tick{animation:none}
+:root[data-motion="reduce"] .caret{animation:none}
+:root[data-motion="reduce"] .stages li[data-s="cur"] .ring.live{animation:none}
+:root[data-motion="reduce"] .beat.go .cm{animation:cmStill 1.4s linear forwards}
+:root[data-motion="reduce"] .beat.go .ck{animation:ckStill 1.4s linear forwards}
+@keyframes cmStill{0%,85%{opacity:1}100%{opacity:0}}
+@keyframes ckStill{0%,85%{opacity:0}100%{opacity:1}}
+:root[data-motion="reduce"] .scrim,:root[data-motion="reduce"] .sheet,:root[data-motion="reduce"] .toast.show{animation:none}
+@media (prefers-reduced-motion: reduce){ :root:not([data-motion="full"]) .sl-rule::after{display:none} :root:not([data-motion="full"]) .enter{animation:none} :root:not([data-motion="full"]) .stages li[data-s="cur"] .ring.live{animation:none} :root:not([data-motion="full"]) .caret{animation:none} }
+
+/* focus (Solo rule: gold-core outline, existing product truth) */
+.device :focus-visible{outline:2px solid var(--pg-gold-core);outline-offset:2px}
+/* OD6: §11 says rings are indigo; the shipped Solo chat uses gold-core. Owner decides. */
+:root[data-ring="violet"] .device :focus-visible,:root[data-ring="violet"] .card:focus-visible,:root[data-ring="violet"] .cc h4:focus-visible{outline-color:var(--pg-violet)}
+
+/* ── Review layer (prototype chrome — visually separate from the product) ── */
+.review{min-width:0;background:var(--rv-bg);color:var(--rv-ink);border:1px dashed var(--rv-line);border-radius:14px;padding:14px;font-size:12.5px;display:grid;gap:14px;align-content:start}
+.review :focus-visible,.rv-fab:focus-visible,.stage-cap :focus-visible{outline:2px solid var(--rv-accent);outline-offset:2px}
+.rv-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.rv-top h2{margin:0;font-size:13px;font-weight:700;letter-spacing:-.01em}
+.rv-top p{margin:2px 0 0;color:var(--rv-muted);font-size:12px}
+.rv-sec{display:grid;gap:8px;padding-top:12px;border-top:1px solid var(--rv-line);min-width:0}
+.rv-sec h3{margin:0;font-size:11.5px;font-weight:600;color:var(--rv-muted)}
+.rv-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-width:0}
+.rv-btn{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 10px;border:1px solid var(--rv-line);border-radius:8px;background:var(--rv-surface);color:var(--rv-ink);font-size:12px;font-weight:500;cursor:pointer}
+.rv-btn:hover{border-color:var(--rv-muted)}
+.rv-btn[aria-pressed="true"],.rv-btn[aria-checked="true"]{background:var(--rv-accent);border-color:var(--rv-accent);color:var(--rv-accent-ink)}
+.rv-sel{width:100%;min-height:36px;padding:0 10px;border:1px solid var(--rv-line);border-radius:8px;background:var(--rv-surface);color:var(--rv-ink);font-size:13px}
+.rv-pos{flex:1;min-width:0;font-size:12px;color:var(--rv-muted)}
+.rv-pos b{color:var(--rv-ink);font-weight:600}
+.frames{list-style:none;margin:0;padding:0;display:grid;gap:3px;counter-reset:f}
+.frames button{display:flex;gap:8px;width:100%;min-height:30px;align-items:center;padding:3px 8px;border:1px solid transparent;border-radius:7px;background:transparent;color:var(--rv-ink);font-size:12px;text-align:left;cursor:pointer}
+.frames button:hover{background:var(--rv-surface)}
+.frames button[aria-current="step"]{background:var(--rv-surface);border-color:var(--rv-accent);font-weight:600}
+.frames .n{width:20px;flex:none;color:var(--rv-muted);font-variant-numeric:tabular-nums}
+.frames .br{margin-left:auto;font-size:10.5px;color:var(--rv-muted);border:1px solid var(--rv-line);border-radius:5px;padding:0 5px}
+.hb{display:inline-flex;align-items:center;min-height:22px;padding:1px 8px;border-radius:6px;font-size:11px;font-weight:600;border:1px solid currentColor}
+.hb[data-h="live"]{color:var(--rv-ok)}
+.hb[data-h="client"],.hb[data-h="c2b"]{color:var(--rv-mid)}
+.hb[data-h="c4"],.hb[data-h="c5"],.hb[data-h="srv"]{color:var(--rv-warn)}
+.log{margin:0;padding:8px 10px;border-radius:8px;background:var(--rv-surface);border:1px solid var(--rv-line);font:400 11px/1.55 var(--font-mono);white-space:pre-wrap;overflow-wrap:anywhere;color:var(--rv-ink)}
+.ann{display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px 10px;margin:0}
+.ann dt{color:var(--rv-muted);font-size:11.5px}.ann dd{margin:0;font-size:12px;overflow-wrap:anywhere}
+.srlog{list-style:none;margin:0;padding:0;display:grid;gap:3px;font-size:12px;max-height:120px;overflow-y:auto}
+.srlog li{color:var(--rv-muted)}.srlog li b{color:var(--rv-ink);font-weight:500}
+.review details{border:1px solid var(--rv-line);border-radius:8px;background:var(--rv-surface);padding:6px 10px}
+.review summary{cursor:pointer;font-weight:600;font-size:12px;min-height:26px;display:flex;align-items:center}
+.review details p,.review details li{font-size:12px;color:var(--rv-ink);line-height:1.5}
+.review details ul{padding-left:18px;margin:6px 0}
+.rv-ta{width:100%;min-height:64px;padding:8px;border:1px solid var(--rv-line);border-radius:8px;background:var(--rv-surface);color:var(--rv-ink);font-size:12.5px;resize:vertical}
+.rv-ta[readonly]{font:400 11px/1.5 var(--font-mono)}
+.rv-warn{margin:0;font-size:11.5px;color:var(--rv-muted)}
+.rv-fab{position:fixed;right:16px;bottom:16px;z-index:20;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border:1px dashed var(--rv-line);border-radius:999px;background:var(--rv-surface);color:var(--rv-ink);font-size:12.5px;font-weight:600;cursor:pointer;box-shadow:var(--pg-lift-2)}
+.page:not(.with-review) .review{display:none}
+.vt{font-size:11px;color:var(--rv-muted)}
+</style>
+
+<div class="page with-review" id="page">
+  <main class="stage" aria-label="Prototype stage">
+    <div class="stage-cap" id="cap"></div>
+    <div class="device" id="device" data-pg>
+      <div id="product" class="app"></div>
+      <div class="sheet-wrap" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+        <div class="scrim" data-close-sheet></div>
+        <div class="sheet"><div class="grab" aria-hidden="true"></div>
+          <div class="sheet-h"><h3 id="sheet-title">What PAIGE did</h3><button class="x" type="button" data-close-sheet aria-label="Close"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+          <div id="sheet-body"></div>
+        </div>
+      </div>
+      <div class="toast" id="toast" role="status"></div>
+      <div class="sr" aria-live="polite" id="live"></div>
+    </div>
+  </main>
+
+  <aside class="review" id="review" aria-label="Review controls (prototype only)">
+    <div class="rv-top">
+      <div><h2>Review · PAIGE turn states</h2><p>Prototype. Everything is simulated locally. Nothing is sent, saved or run.</p></div>
+      <button class="rv-btn" type="button" id="hideReview">Hide</button>
+    </div>
+
+    <section class="rv-sec" aria-labelledby="h-sc">
+      <h3 id="h-sc">Scenario</h3>
+      <label class="sr" for="scSel">Scenario</label>
+      <select class="rv-sel" id="scSel"></select>
+      <div class="rv-row" id="scHonesty"></div>
+      <div class="rv-row">
+        <button class="rv-btn" type="button" id="prev" aria-label="Previous frame">← Prev</button>
+        <span class="rv-pos" id="pos" aria-live="polite"></span>
+        <button class="rv-btn" type="button" id="play" aria-pressed="false">Play</button>
+        <button class="rv-btn" type="button" id="next" aria-label="Next frame">Next →</button>
+      </div>
+      <div class="rv-row"><button class="rv-btn" type="button" id="replay">Replay motion</button><span class="vt">Plays this frame’s entrance again, including the one-time Executed mark.</span></div>
+      <ol class="frames" id="frames"></ol>
+      <div id="branches"></div>
+    </section>
+
+    <section class="rv-sec" aria-labelledby="h-an">
+      <h3 id="h-an">This frame</h3>
+      <div class="rv-row" id="frHonesty"></div>
+      <dl class="ann" id="ann"></dl>
+      <h3>Signals driving it (mock wire frames)</h3>
+      <pre class="log" id="log"></pre>
+    </section>
+
+    <section class="rv-sec" aria-labelledby="h-sr">
+      <h3 id="h-sr">Screen reader announcements (polite, once per state change)</h3>
+      <ul class="srlog" id="srlog"></ul>
+    </section>
+
+    <section class="rv-sec" aria-labelledby="h-vw">
+      <h3 id="h-vw">View</h3>
+      <div class="rv-row" role="group" aria-label="Viewport" id="vwGroup">
+        <button class="rv-btn" type="button" data-vw="400">Phone 400</button>
+        <button class="rv-btn" type="button" data-vw="900">Tablet 900</button>
+        <button class="rv-btn" type="button" data-vw="1366">Desktop 1366</button>
+      </div>
+      <div class="rv-row" role="group" aria-label="Theme" id="thGroup">
+        <button class="rv-btn" type="button" data-th="">System</button>
+        <button class="rv-btn" type="button" data-th="light">Light</button>
+        <button class="rv-btn" type="button" data-th="dark">Dark</button>
+      </div>
+      <div class="rv-row" role="group" aria-label="Motion" id="moGroup">
+        <button class="rv-btn" type="button" data-mo="full">Full motion</button>
+        <button class="rv-btn" type="button" data-mo="reduce">Reduced motion</button>
+      </div>
+      <div class="rv-row" role="group" aria-label="Seat" id="roGroup">
+        <button class="rv-btn" type="button" data-ro="owner">Owner / admin</button>
+        <button class="rv-btn" type="button" data-ro="member">Team member</button>
+        <button class="rv-btn" type="button" data-ro="client">Client (portal)</button>
+      </div>
+    </section>
+
+    <section class="rv-sec" aria-labelledby="h-od">
+      <h3 id="h-od">Open decisions (see both)</h3>
+      <div id="ods"></div>
+    </section>
+
+    <section class="rv-sec" aria-labelledby="h-kb">
+      <h3 id="h-kb">Keyboard, focus and screen reader</h3>
+      <details><summary>Notes</summary>
+        <ul>
+          <li><b>[</b> and <b>]</b> step frames when focus is not in a text field. <b>\</b> shows or hides this panel.</li>
+          <li>Tab order in the product: thread rail → New chat → transcript controls (status line, cards) → composer.</li>
+          <li>The status line is one button with <code>aria-expanded</code>; Enter or Space opens “What PAIGE did”. On phone width it opens a sheet; Escape closes it and focus returns to the line.</li>
+          <li>When PAIGE needs an OK or asks a question, focus moves to the card (on a product action or Play). Stepping with the review buttons leaves focus here and notes it.</li>
+          <li>After any product action focus lands somewhere real: Approve → the report heading; Use this, Keep going, Try again → the new answer’s status line; Stop → the footer.</li>
+          <li>Choices are a radio group: arrows move, Space selects, “Use this” submits. Every option is at least 44px tall.</li>
+          <li>Announcements are polite and fire on a change of state only, never per step or per second.</li>
+          <li>Reduced motion: the sweep becomes a solid violet hairline beside the word, the background-work stage dot stops, rows and cards appear by opacity, the Executed mark swaps instantly and fades.</li>
+          <li>Loops (the sweep and the stage dot) pause while scrolled out of view or while the tab is hidden.</li>
+        </ul>
+      </details>
+    </section>
+
+    <section class="rv-sec" aria-labelledby="h-nt">
+      <h3 id="h-nt">Proof boundary and surfaces</h3>
+      <details><summary>What this prototype cannot prove</summary>
+        <ul>
+          <li>Real frame order and timing from the server, time to first output, and the 60–90 s research bound.</li>
+          <li>Anything marked C4 or C5: progress while background work runs, completion pickup, asking a question in the main chat, carrying an approval forward in the same answer, and consulting specialists without an approval stop. Those frames are design intent for contracts that do not exist yet.</li>
+          <li>PAIGE’s real wording (the model writes it), real screen-reader behaviour, haptics (annotation only, nothing vibrates), voice, and authenticated runtime on a real workspace (UNVERIFIED).</li>
+        </ul>
+      </details>
+      <details><summary>Surface variants</summary>
+        <ul>
+          <li><b>Solo / Agency / Business chat</b> — the full grammar shown here.</li>
+          <li><b>Studio</b> — same states inside Studio’s own dark chrome; questions with choices already live there.</li>
+          <li><b>Operator</b> — status line and endings only; no trace (steps are not read there today).</li>
+          <li><b>Client portal</b> — fast and normal answers, held back, can’t help, stopped, limit. No approvals, background work, research or specialists; no department labels.</li>
+          <li><b>Live voice</b> — the same states, spoken. Not shown.</li>
+        </ul>
+      </details>
+    </section>
+
+    <section class="rv-sec" aria-labelledby="h-dec">
+      <h3 id="h-dec">Your decision</h3>
+      <p class="rv-warn">Local only. This panel sends nothing anywhere; choices stay in this browser.</p>
+      <div id="decScenario"></div>
+      <div id="decOverall"></div>
+      <label for="summary" class="vt">Summary to paste into the decision log</label>
+      <textarea class="rv-ta" id="summary" readonly rows="7"></textarea>
+      <div class="rv-row"><button class="rv-btn" type="button" id="copySum">Copy summary</button><span class="vt" id="copied" role="status"></span></div>
+    </section>
+  </aside>
+</div>
+
+<script>
+(function(){
+"use strict";
+/* ───────────── icons (lucide geometry, one stroke weight) ───────────── */
+const ICON={
+ check:'<path d="M20 6 9 17l-5-5"/>',
+ chev:'<path d="m9 18 6-6-6-6"/>',
+ tri:'<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+ err:'<circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>',
+ hand:'<path d="M18 11V6a2 2 0 0 0-4 0v5"/><path d="M14 10V4a2 2 0 0 0-4 0v6"/><path d="M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/>',
+ help:'<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
+ pause:'<circle cx="12" cy="12" r="10"/><path d="M10 15V9"/><path d="M14 15V9"/>',
+ lock:'<rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+ x:'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+ clock:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+ file:'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/>',
+ search:'<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+ users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+ down:'<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>',
+ up:'<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>',
+ shield:'<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="M9.1 9a3 3 0 0 1 5.82 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
+ retry:'<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+ arrow:'<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+ plug:'<path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/>',
+ copy:'<rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+ vol:'<path d="M11 4.7a.7.7 0 0 0-1.2-.5L6.4 7.6A1.4 1.4 0 0 1 5.4 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.4a1.4 1.4 0 0 1 1 .4l3.4 3.4a.7.7 0 0 0 1.2-.5z"/><path d="M16 9a5 5 0 0 1 0 6"/>',
+ plus:'<path d="M5 12h14"/><path d="M12 5v14"/>',
+ ext:'<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+ send:'<path d="M14.5 21.7a.5.5 0 0 0 .94-.02l6.5-19a.5.5 0 0 0-.64-.63l-19 6.5a.5.5 0 0 0-.02.93l7.93 3.18a2 2 0 0 1 1.11 1.11z"/><path d="m21.85 2.15-10.94 10.93"/>',
+ stop:'<rect width="10" height="10" x="7" y="7" rx="1.5"/>'
+};
+const ic=(n,cls)=>'<svg class="i'+(cls?' '+cls:'')+'" viewBox="0 0 24 24" aria-hidden="true" focusable="false">'+ICON[n]+'</svg>';
+const MARK='<svg class="cm" viewBox="0 0 48 48" aria-hidden="true"><polygon class="slash" points="21,13.6 30.5,13.6 21,34.4 11.5,34.4"/><circle class="orb" cx="34.5" cy="30.5" r="5.5"/></svg>';
+const C='<span class="caret" aria-hidden="true"></span>';
+const R=(t,s,m,d)=>({t,s,m,d});
+
+/* ───────────── honesty vocabulary ───────────── */
+const H={
+ live:'Exists today',
+ client:'Client-only change',
+ c2b:'Needs C2b (in review)',
+ c4:'Needs server · C4',
+ c5:'Needs server · C5 + INT-310',
+ srv:'Needs server'
+};
+
+/* ───────────── scenarios ─────────────
+   Every frame names: the turns on screen, the mock wire frames that drive it (log), the honesty
+   label(s), the annotation (container / motion / feedback / haptic), what is announced, focus. */
+const U=(id,t)=>({id,you:t});
+const SC=[];
+/* Client-seat fixture: a client may only read web pages and update their own details, so the
+   client view of each shared scenario gets its own content — never another client's name or a
+   task being created. */
+const CLX={
+ u:U('u1','Can you read this article and tell me the one idea worth trying with my team? hbr.example/weekly-rhythm'),
+ ack:'I’ll read it and pull out the one idea that fits where your team is.',
+ r1r:R('Reading the page you shared','run',''),r1d:R('Reading the page you shared','done','1,800 words'),
+ r2r:R('Reading the study it cites','run',''),r2e:R('Reading the study it cites','err','That page didn’t load — skipped'),
+ body:'<p>The idea worth trying: <strong>a 15-minute Monday priorities check</strong>, where each person names one thing they’ll finish that week.</p><p>The article’s case is that small teams drop longer weekly meetings within a month but keep short ones. I couldn’t open the study it cites, so that claim rests on the article alone.</p>'
+};
+
+/* 2 · Normal work turn (the default: complete at rest in a working state) */
+(function(){
+ const u=U('u1',"Who hasn’t heard from us in two weeks?");
+ const ack="I’ll check your contacts, pipeline and open tasks for anyone who’s gone quiet.";
+ const s1r=R('Looking through your contacts','run','','Owner Ops'), s1d=R('Looking through your contacts','done','41 contacts','Owner Ops');
+ const s2r=R('Reviewing your pipeline','run','','Owner Ops'), s2d=R('Reviewing your pipeline','done','6 open engagements','Owner Ops');
+ const s3e=R('Checking your calendar for booked sessions','err','Calendar isn’t connected — skipped','Owner Ops');
+ const s4r=R('Checking your tasks','run','','Owner Ops'), s4d=R('Checking your tasks','done','3 open follow-ups','Owner Ops');
+ const s5d=R('Adding a follow-up for Priya Natarajan','done','Task · Fri 10:00','Owner Ops');
+ const body='<p>Three clients haven’t heard from you in over two weeks:</p><ul><li><strong>Priya Natarajan</strong> — 19 days. Her last touch was the session recap on Sept 16.</li><li><strong>The Kestrel Group</strong> — 16 days, and they’re mid-onboarding.</li><li><strong>Lumen Freight</strong> — 15 days, though Maya’s week-7 session is Thursday.</li></ul><p>Priya is the one I’d move on first, so I added a follow-up for Fri 10:00.</p>';
+ SC.push({id:'normal',name:'2 · Normal work turn',flow:'F1',na:null,thread:'Quiet clients',frames:[
+  {id:'n1',label:'Sent — PAIGE starts',honesty:['client'],comp:'busy',say:'PAIGE is working',
+   log:['paige_turn {v:1, event:"started", state:"WORKING", mode:"pending"}'],
+   ann:{c:'Inline · a new answer row in the transcript',m:'Row fades in 160ms, y 4px→0. Sweep runs on the hairline.',f:'Polite announcement once: “PAIGE is working”.',h:'none'},
+   turns:[u,{id:'p1',paige:1,line:{k:'think',text:'Thinking',meta:'1s'}}],
+   cl:[CLX.u,{id:'p1',paige:1,line:{k:'think',text:'Thinking',meta:'1s'}}]},
+  {id:'n2',label:'Acknowledges, first step starts',honesty:['c2b','client'],comp:'busy',
+   log:['text  "I’ll check your contacts, pipeline and open tasks…"   (C2 live acknowledgement)','paige_step {id:"a:1:0", status:"running", label:"Looking through your contacts"}   ← C2b sends START'],
+   ann:{c:'Inline · status line on the answer',m:'Label crossfades 120ms. No per-step prose.',f:'None per step.',h:'none'},
+   turns:[u,{id:'p1',paige:1,ack,line:{k:'work',text:'Looking through your contacts',meta:'3s'},trace:[s1r]}],
+   cl:[CLX.u,{id:'p1',paige:1,ack:CLX.ack,line:{k:'work',text:'Reading the page you shared',meta:'3s'},trace:[CLX.r1r]}]},
+  {id:'n3',label:'Steps tick by (trace open)',honesty:['c2b','client'],comp:'busy',
+   log:['paige_step {id:"a:1:0", status:"done"}','paige_step {id:"a:1:1", status:"running", label:"Reviewing your pipeline"}'],
+   ann:{c:'Inline disclosure “What PAIGE did” · max 8 rows, then “Show all”',m:'Disclosure opens by grid rows 220ms. Running → done: glyph settles 140ms.',f:'None. The owner opened the trace; nothing is announced.',h:'none'},
+   turns:[u,{id:'p1',paige:1,ack,line:{k:'work',text:'Reviewing your pipeline',meta:'7s · 2 steps',open:true},trace:[s1d,s2r]}],
+   cl:[CLX.u,{id:'p1',paige:1,ack:CLX.ack,line:{k:'work',text:'Reading the study it cites',meta:'6s · 2 steps',open:true},trace:[CLX.r1d,CLX.r2r]}]},
+  {id:'n4',label:'A step fails — the answer keeps going',honesty:['c2b','client'],comp:'busy',
+   log:['paige_step {id:"a:1:1", status:"done"}','paige_step {id:"a:2:0", status:"error", label:"Checking your calendar…"}','paige_step {id:"a:2:1", status:"running", label:"Checking your tasks"}','(a step that is withdrawn — status:"withdrawn" — leaves the list instead of showing as done)'],
+   ann:{c:'Inline disclosure',m:'Error glyph settles 140ms; a withdrawn row would collapse 120ms.',f:'Error colour on the glyph only; the sentence stays calm.',h:'none'},
+   turns:[u,{id:'p1',paige:1,ack,line:{k:'work',text:'Checking your tasks',meta:'11s · 4 steps',open:true},trace:[s1d,s2d,s3e,s4r]}],
+   cl:[CLX.u,{id:'p1',paige:1,ack:CLX.ack,line:{k:'work',text:'Writing the answer',meta:'9s · 2 steps',open:true},trace:[CLX.r1d,CLX.r2e]}]},
+  {id:'n5',label:'Answer streams',honesty:['client'],comp:'busy',
+   log:['paige_step {id:"a:2:1", status:"done"}','paige_step {id:"a:3:0", status:"done", label:"Adding a follow-up…"}','text  "Three clients haven’t heard from you…"'],
+   ann:{c:'Inline',m:'Text streams; caret blinks (static under reduced motion).',f:'None.',h:'none'},
+   turns:[u,{id:'p1',paige:1,ack,line:{k:'work',text:'Writing the answer',meta:'13s · 5 steps'},trace:[s1d,s2d,s3e,s4d,s5d],body:'<p>Three clients haven’t heard from you in over two weeks:</p><ul><li><strong>Priya Natarajan</strong> — 19 days.'+C+'</li></ul>'}],
+   cl:[CLX.u,{id:'p1',paige:1,ack:CLX.ack,line:{k:'work',text:'Writing the answer',meta:'10s · 2 steps'},trace:[CLX.r1d,CLX.r2e],body:'<p>The idea worth trying: <strong>a 15-minute Monday priorities check</strong>'+C+'</p>'}]},
+  {id:'n6',label:'Done — the trace folds into the record',honesty:['client','live'],comp:'ready',say:'Done',
+   log:['paige_crm_result {kind:"task", action:"create", …}','paige_turn {event:"completed", state:"FINAL", mode:"action"}','→ saved with the message as turn_trace, read back on reload'],
+   ann:{c:'Inline · status line becomes “What PAIGE did · N steps”',m:'Sweep contracts into a check 240ms. Nothing else moves.',f:'Polite “Done”. No success haptic — ordinary answers don’t buzz.',h:'none',why:'Today the strip shows “Done” from the client’s guess; here it comes only from state FINAL. The CRM card is unchanged.'},
+   turns:[u,{id:'p1',paige:1,ack,line:{k:'done',text:'What PAIGE did · 5 steps',meta:'14s'},trace:[s1d,s2d,s3e,s4d,s5d],body,cards:[{type:'crm',k:'Added',title:'Task — Follow up with Priya Natarajan',sub:'Fri 10:00 · assigned to you'}],metaRow:1}],
+   cl:[CLX.u,{id:'p1',paige:1,ack:CLX.ack,line:{k:'done',text:'What PAIGE did · 2 steps',meta:'11s'},trace:[CLX.r1d,CLX.r2e],body:CLX.body,metaRow:1}]}
+ ]});
+})();
+
+/* 1 · Fast response */
+(function(){
+ const u=U('u1','Give me a subject line for Daniel’s renewal note');
+ const full='<p>Try this: <strong>“Your next 90 days with Reyes & Co. — let’s lock them in.”</strong></p><p>Want a softer version too?</p>';
+ const FC={u:U('u1','How do I say no to a meeting without sounding rude?'),full:'<p>Try: <strong>“I can’t make this one — can you send me the notes, and I’ll follow up on anything that needs me?”</strong></p><p>It declines, offers a path, and keeps you in the loop.</p>'};
+ SC.unshift({id:'fast',name:'1 · Fast response',flow:'F1',na:null,thread:'Reyes renewal',frames:[
+  {id:'f1',label:'Sent — first 400 ms, no chrome',honesty:['client'],comp:'busy',
+   log:['paige_turn {event:"started", state:"WORKING", mode:"pending"}'],
+   ann:{c:'Inline answer row',m:'Row fades in 160ms; just a caret.',f:'None yet — a fast answer should feel instant, not staged.',h:'none',why:'Today the “Thinking… Ns” pill appears immediately on every turn.'},
+   turns:[u,{id:'p1',paige:1,caret:1}],cl:()=>[FC.u,{id:'p1',paige:1,caret:1}]},
+  {id:'f2',label:'Nothing yet at 400 ms → “Thinking”',honesty:['client','live'],comp:'busy',say:'PAIGE is thinking',
+   log:['(no text after 400 ms — client timer, as today’s honest elapsed timer)'],
+   ann:{c:'Inline status line',m:'Status line fades in 120ms with the sweep.',f:'Polite “PAIGE is thinking”.',h:'none'},
+   turns:[u,{id:'p1',paige:1,line:{k:'think',text:'Thinking',meta:'1s'}}],cl:()=>[FC.u,{id:'p1',paige:1,line:{k:'think',text:'Thinking',meta:'1s'}}]},
+  {id:'f3',label:'First words arrive — line steps aside',honesty:['client'],comp:'busy',
+   log:['paige_turn {event:"completed", state:"FINAL", mode:"fast_answer"}   ← the server sends the terminal just BEFORE the first answer byte','text  "Try this: “Your next 90 days…"'],
+   ann:{c:'Inline',m:'Status line collapses as the first token lands; text streams.',f:'None.',h:'none'},
+   turns:[u,{id:'p1',paige:1,body:'<p>Try this: <strong>“Your next 90 days with Reyes & Co.'+C+'</strong></p>'}],cl:()=>[FC.u,{id:'p1',paige:1,body:'<p>Try: <strong>“I can’t make this one'+C+'</strong></p>'}]},
+  {id:'f4',label:'Settled — the answer is the whole turn',honesty:['client'],comp:'ready',
+   log:['text  …rest of the answer, then [DONE]','(the terminal FINAL / fast_answer already arrived before the first byte)'],
+   ann:{c:'Inline',m:'None.',f:'None. No status line, no trace, no acknowledgement (Open decision 4 shows the alternative).',h:'none'},
+   turns:[u,{id:'p1',paige:1,body:full,metaRow:1,od4line:{k:'done',text:'Answered · no steps',meta:'2s'}}],cl:()=>[FC.u,{id:'p1',paige:1,body:FC.full,metaRow:1,od4line:{k:'done',text:'Answered · no steps',meta:'2s'}}]}
+ ]});
+})();
+
+/* 3 · Deep Research */
+(function(){
+ const u=U('u1','Why do project-management rollouts stall at small architecture firms?');
+ const ack='I’ll research this on the live web and bring back what holds up.';
+ const sr=R('Researching the live web','run','“Why do project-management rollouts stall at small architecture firms?”','Owner Ops');
+ const sd=R('Researching the live web','done','7 sources · 5 cited','Owner Ops');
+ const card={type:'research',title:'Why PM rollouts stall at small architecture firms',sub:'Deep research · 1m 14s',saved:true,
+  findings:[['high','Rollouts stall when the tool goes live before a shared project template exists. Firms under 20 people rarely have anyone whose job is to own that template.','[1] [3] [4]'],
+            ['mid','Billable-hour pressure pushes setup work into evenings, so use drops after the first two weeks.','[2] [5]'],
+            ['mid','Firms that pilot on one live project first report steadier adoption than firm-wide launches.','[3] [6]']],src:'Sources (7)',cited:'5 cited'};
+ SC.push({id:'research',name:'3 · Deep Research',flow:'F1',na:'Deep Research isn’t offered on a client seat.',thread:'Rollout research',frames:[
+  {id:'r1',label:'Research starts',honesty:['c2b','client'],comp:'busy',say:'PAIGE is researching',
+   log:['text  "I’ll research this on the live web…"','paige_step {status:"running", label:"Researching the live web", detail:"<question>"}   ← C2b START','paige_turn mode → "research"'],
+   ann:{c:'Inline · status line',m:'Sweep runs. No invented sub-steps — the engine sends none.',f:'Polite “PAIGE is researching”.',h:'none'},
+   turns:[u,{id:'p1',paige:1,ack,line:{k:'work',text:'Researching the live web',meta:'4s'},trace:[sr]}]},
+  {id:'r2',label:'Still researching at 12 s',honesty:['c2b','client','srv'],comp:'busy',
+   log:['(no new frames — the research engine streams no plan, search or read events)','client: elapsed > 10s → honest expectation line'],
+   ann:{c:'Inline · status line text changes',m:'Label crossfade 120ms.',f:'None. Elapsed time only — no percentage, no ring, no fake stages.',h:'none',why:'Real counts (“5 sources read”) need phase events from the research engine: server work in the Deep Research lane.'},
+   turns:[u,{id:'p1',paige:1,ack,line:{k:'work',text:'Still researching — this kind can take a couple of minutes.',meta:'12s'},trace:[sr]}]},
+  {id:'r3',label:'Findings arrive, saved to the library',honesty:['live','client'],comp:'ready',say:'Done',
+   log:['paige_research {run_id, question, saved:true}','paige_step {status:"done"}','paige_turn {event:"completed", state:"FINAL", mode:"research"}'],
+   ann:{c:'Inline card (existing research card, unchanged structure)',m:'Card rises 260ms; status settles to a check.',f:'“Saved” shows only on the server’s verified readback.',h:'none',why:'Fix shown: confidence and saved pills now use theme tokens — the shipped card hardcodes light pastels with no dark rule.'},
+   turns:[u,{id:'p1',paige:1,ack,line:{k:'done',text:'What PAIGE did · 1 step',meta:'1m 14s'},trace:[sd],body:'<p>The short version: the tool is rarely the problem. Small firms stall because nobody owns the setup, and the setup competes with billable hours.</p>',cards:[card],metaRow:1}]},
+  {id:'r4',label:'Branch · hit the time limit',branch:1,honesty:['client'],comp:'ready',say:'PAIGE hit the time limit',
+   log:['paige_turn {event:"completed", state:"LIMIT_REACHED", mode:"research"}','(no research frame — the engine returns nothing partial on a time-out)'],
+   ann:{c:'Inline · status line + outcome footer, no card',m:'Footer fades in 160ms.',f:'Says plainly that nothing came back and nothing was saved; one way forward (outlined, not gold).',h:'warning (annotation only)',why:'True to today: on a time-out the research engine sends no progress events and returns no partial findings. Showing partial findings or “3 sources read” needs work in the research engine itself (the Deep Research lane), not this client. “Ask a narrower question” as a new answer works today.'},
+   turns:[u,{id:'p1',paige:1,ack,line:{k:'warn',text:'Hit the time limit',meta:'6m'},trace:[R('Researching the live web','err','No findings came back before the limit','Owner Ops')],body:'<p>No findings came back before the time limit, so nothing was saved to your research library. A narrower question usually finishes well inside it — for example, just firms under 20 people, or just the first month after launch.</p>',foot:{tone:'warn',text:'',btn:'Ask a narrower question',go:'r1'}}]}
+ ]});
+})();
+
+/* 4 · Approval interruption + resume */
+(function(){
+ const u=U('u1','Send the renewal proposal to Daniel Reyes.');
+ const ack='I’ll pull the Q4 proposal and draft a short cover note.';
+ const t1=R('Finding Daniel Reyes','done','Reyes & Co. Design Studio','Owner Ops'),t2=R('Finding the Q4 retainer proposal','done','Updated Oct 1','Owner Ops');
+ const t3r=R('Drafting the cover note','run','','Owner Ops'),t3d=R('Drafting the cover note','done','92 words','Owner Ops');
+ const t4r=R('Sending to Daniel','run','','Owner Ops'),t4d=R('Sending to Daniel','done','Sent 2:14 pm · logged on his timeline','Owner Ops');
+ const pre='<p>Here’s what I’ll send. Nothing goes out until you say so.</p>';
+ const rows=[['To','Daniel Reyes · daniel@reyesco.example'],['Subject','Your next 90 days with Reyes & Co.'],['Attached','Reyes & Co. — Q4 retainer proposal (PDF)']];
+ const title='Send the renewal proposal to Daniel Reyes';
+ const card=(mode,extra)=>Object.assign({type:'confirm',mode,title,rows},extra||{});
+ SC.push({id:'approval',name:'4 · Approval interruption + resume',flow:'F2',na:'Approvals are owner-only; the client portal never shows them.',thread:'Reyes renewal',frames:[
+  {id:'a1',label:'PAIGE prepares the action',honesty:['c2b','client'],comp:'busy',
+   log:['paige_step {status:"running", label:"Drafting the cover note"}'],
+   ann:{c:'Inline status line',m:'Sweep runs.',f:'None.',h:'none'},
+   turns:[u,{id:'p1',paige:1,ack,line:{k:'work',text:'Drafting the cover note',meta:'5s · 3 steps'},trace:[t1,t2,t3r]}]},
+  {id:'a2',label:'Needs your OK',honesty:['live','client'],comp:'wait-ok',say:'PAIGE needs your OK',focus:'card',
+   log:['paige_confirm {tool:"send_email", summary, fingerprint:"fp_7c1…"}','paige_turn {event:"waiting", state:"WAIT_APPROVAL", waiting_on:{kind:"approval", approvals:1}}'],
+   ann:{c:'Inline card, last in the answer — never a modal',m:'Sweep STOPS; hairline goes solid. Card rises 260ms (4px + fade). Focus moves to the card.',f:'Polite “PAIGE needs your OK”. The composer hint appears only if the card is scrolled out of view. Gold appears ONLY on Approve.',h:'none',why:'The card (decide mode, gold Approve, “Not now”) exists today. Reading WAIT_APPROVAL to stop the sweep and set the hint is client-only.'},
+   go:[{label:'Approve',to:'a3'},{label:'Not now',to:'a5'},{label:'Let it expire (30 min)',to:'a6'},{label:'Approve → it fails',to:'a7'}],
+   turns:[u,{id:'p1',paige:1,ack,line:{k:'wait',g:'hand',text:'Waiting for your OK'},trace:[t1,t2,t3d],body:pre,cards:[card('decide')]}]},
+  {id:'a3',label:'Approved — PAIGE resumes in the same answer',honesty:['c4','c2b'],comp:'busy',say:'Approved. PAIGE is working',
+   log:['POST {approvedConfirmations:["fp_7c1…"]}   (today: a new request)','paige_turn {event:"resumed"}   ← reserved today; C4 makes it real','paige_step {status:"running", label:"Sending to Daniel"}'],
+   ann:{c:'Same answer — card switches to report mode; no new bubble',m:'Existing “rises in, seal settles”. Sweep restarts on the same line.',f:'Receipt on the card: “You approved · 2:14 pm”. Keyboard focus moves to the report heading, so Approve by Enter never drops you on the page.',h:'medium (deliberate commitment)',why:'Today Approve sends a user message the owner never typed (“Approved — run it.”) and starts a new answer. Open decision 2 shows that version.'},
+   turns:[u,{id:'p1',paige:1,ack,line:{k:'work',text:'Sending to Daniel',meta:'1s · 4 steps'},trace:[t1,t2,t3d,t4r],body:pre,cards:[card('running',{receipt:'You approved · 2:14 pm'})]}],
+   alt2:[u,{id:'p1',paige:1,ack,line:{k:'done',text:'What PAIGE did · 3 steps',meta:'9s'},trace:[t1,t2,t3d],body:pre,cards:[card('running',{receipt:'You approved · 2:14 pm'})]},U('u2','Approved — run it.'),{id:'p2',paige:1,line:{k:'work',text:'Sending to Daniel',meta:'1s'},trace:[t4r]}]},
+  {id:'a4',label:'Done — the act is confirmed',honesty:['c4','live'],comp:'ready',say:'Done. Sent to Daniel',
+   log:['paige_approval_outcome {fingerprint:"fp_7c1…", outcome:"done"}','paige_turn {event:"completed", state:"FINAL", mode:"action"}'],
+   ann:{c:'Same answer · conclusion streams below the card',m:'Executed beat: the Command Mark shows once in the status line (900ms), then the check.',f:'Gold on the Executed mark only, once, on a completed act.',h:'success',why:'Report card states (Done / Didn’t run / Couldn’t confirm) exist today.'},
+   turns:[u,{id:'p1',paige:1,ack,line:{k:'done',text:'What PAIGE did · 4 steps',meta:'12s',beat:1},trace:[t1,t2,t3d,t4d],body:pre,cards:[card('done',{receipt:'You approved · 2:14 pm',noteTxt:'Sent 2:14 pm · logged on Daniel’s timeline'})],after:'<p>Sent, and it’s on Daniel’s timeline. If he hasn’t opened it by Thursday, I’ll bring it back to you.</p>',metaRow:1}],
+   alt2:[u,{id:'p1',paige:1,ack,line:{k:'done',text:'What PAIGE did · 3 steps',meta:'9s'},trace:[t1,t2,t3d],body:pre,cards:[card('done',{receipt:'You approved · 2:14 pm',noteTxt:'Sent 2:14 pm · logged on Daniel’s timeline'})]},U('u2','Approved — run it.'),{id:'p2',paige:1,line:{k:'done',text:'What PAIGE did · 1 step',meta:'3s',beat:1},trace:[t4d],body:'<p>Sent, and it’s on Daniel’s timeline. If he hasn’t opened it by Thursday, I’ll bring it back to you.</p>',metaRow:1}]},
+  {id:'a5',label:'Branch · Not now',branch:1,honesty:['live','client'],comp:'ready',say:'Skipped. Nothing changed',
+   log:['POST {declinedConfirmations:["fp_7c1…"]}  → stored proposal cancelled','paige_turn {event:"completed", state:"FINAL"}'],
+   ann:{c:'Inline record on the card',m:'Card swaps to its record 160ms.',f:'No haptic — reversible, no consequence.',h:'none'},
+   turns:[u,{id:'p1',paige:1,ack,line:{k:'done',text:'What PAIGE did · 3 steps',meta:'9s'},trace:[t1,t2,t3d],body:pre,cards:[card('skipped')],after:'<p>Okay — it’s not sent. The draft stays here if you change your mind.</p>'}]},
+  {id:'a6',label:'Branch · approval expired',branch:1,honesty:['client'],comp:'ready',say:'The approval expired',
+   log:['(30 minutes pass)','client: card past expiry → expired record; Approve removed'],
+   ann:{c:'Inline record',m:'Approve leaves; record fades in.',f:'Plain: nothing was sent, here is the one way forward.',h:'warning (annotation only)'},
+   turns:[u,{id:'p1',paige:1,ack,line:{k:'neutral',g:'clock',text:'Approval expired'},trace:[t1,t2,t3d],body:pre,cards:[card('expired')]}]},
+  {id:'a7',label:'Branch · approved, but it didn’t run',branch:1,honesty:['live','c4'],comp:'ready',say:'It didn’t run. Nothing was sent',
+   log:['paige_approval_outcome {outcome:"failed", reason:"email_not_connected"}','paige_turn {event:"completed", state:"FINAL"}'],
+   ann:{c:'Inline report card',m:'Seal settles to the warning shape.',f:'Names the problem and the way out. One tone for the outcome: the status line and the card seal share the warning treatment (Open decision 5).',h:'warning'},
+   turns:[u,{id:'p1',paige:1,ack,line:{k:'warn',text:'Nothing was sent',meta:'10s'},trace:[t1,t2,t3d,R('Sending to Daniel','err','Email isn’t connected for this workspace','Owner Ops')],body:pre,cards:[card('failed',{receipt:'You approved · 2:14 pm',noteTxt:'Email isn’t connected for this workspace.',recovery:'Ask PAIGE again'})]}]}
+ ]});
+})();
+
+/* 5 · Owner clarification + resume */
+(function(){
+ const u=U('u1','Set up onboarding for The Kestrel Group.');
+ const ack='Let me check what Kestrel signed up for.';
+ const t1d=R('Reading The Kestrel Group’s agreement','done','14-person engagement · signed Oct 2','Client Experience');
+ const q='<p>Kestrel signed a 14-person engagement but didn’t pick a start. Which start should I build?</p>';
+ const opts=[['Full kickoff','90-minute workshop plus the intake form'],['Light start','Intake form now, kickoff next month'],['Mirror Lumen Freight','Copy the onboarding you ran for Lumen Freight']];
+ const ask={type:'ask',opts};
+ const pick=()=>st.sel>=0?st.sel:1; /* review-stepping past the question with no answer shows option 2 as a demo */
+ const answer=()=>st.typed?st.typed:opts[pick()][0]+' — '+opts[pick()][1].charAt(0).toLowerCase()+opts[pick()][1].slice(1);
+ const ack2=()=>st.typed?'Got it — I’ll work from that.':'Got it — building the '+opts[pick()][0].toLowerCase()+'.';
+ const answered={type:'asked',text:'Answered below',val:'',icon:'check'};
+ SC.push({id:'clarify',name:'5 · Owner clarification + resume',flow:'F3',na:'The client seat has no question-with-choices tool.',thread:'Kestrel onboarding',frames:[
+  {id:'c1',label:'PAIGE looks before asking',honesty:['c2b','client'],comp:'busy',
+   log:['paige_step {status:"running", label:"Reading The Kestrel Group’s agreement"}'],
+   ann:{c:'Inline status line',m:'Sweep runs.',f:'None.',h:'none'},
+   turns:[u,{id:'p1',paige:1,ack,line:{k:'work',text:'Reading The Kestrel Group’s agreement',meta:'3s'},trace:[R('Reading The Kestrel Group’s agreement','run','','Client Experience')]}]},
+  {id:'c2',label:'PAIGE asks — your call',honesty:['srv','c4'],comp:'wait-ask',say:'PAIGE has a question for you',focus:'ask',
+   log:['paige_choices {prompt, options:[3], multi:false, allow_other:true}','paige_turn {event:"waiting", state:"ASK_USER", waiting_on:{kind:"choice"}}'],
+   ann:{c:'Inline radio group under her question; composer stays open for a typed answer',m:'Sweep stops. Options fade in 180ms. Focus moves to the first option.',f:'Polite “PAIGE has a question for you”. Nothing is pre-selected and “Use this” stays disabled until you pick — as the live Studio card does. Submit is ink, not gold — gold is only for approving an act. A typed answer in the composer is sent as written.',h:'selection on pick',why:'Live in Studio today (ask_choices). The main chat needs the ask tool offered there (server) and C4 to resume the same work.'},
+   go:[{label:'Use this',to:'c3'},{label:'Skip, use your best guess',to:'c6'},{label:'Ask something else instead',to:'c5'}],
+   turns:[u,{id:'p1',paige:1,ack,line:{k:'wait',g:'help',text:'Your call'},trace:[t1d],body:q,cards:[ask]}]},
+  {id:'c3',label:'You answer — PAIGE picks the same work back up',honesty:['c4','c2b'],comp:'busy',say:'PAIGE is working',
+   log:['user reply  "<your choice>"   (a real reply — you are the one speaking)','paige_turn {event:"resumed"}   ← C4','paige_step {status:"running", label:"Creating the intake form"}'],
+   ann:{c:'Your reply as your own bubble — your words, exactly as you chose or typed them; the question freezes as “Answered below” so the answer is said once; a new working answer',m:'Unchosen options collapse; record fades in 160ms.',f:'Selection haptic on pick.',h:'selection',why:'Different from approval on purpose: an answer is you speaking, an approval is a decision recorded on its card.'},
+   turns:()=>[u,{id:'p1',paige:1,ack,line:{k:'done',text:'What PAIGE did · 1 step',meta:'4s'},trace:[t1d],body:q,cards:[answered]},U('u2',answer()),{id:'p2',paige:1,ack:ack2(),line:{k:'work',text:'Creating the intake form',meta:'2s'},trace:[R('Creating the intake form','run','','Client Experience')]}]},
+  {id:'c4',label:'Done',honesty:['c4','client'],comp:'ready',say:'Done',
+   log:['paige_turn {event:"completed", state:"FINAL", mode:"build"}'],
+   ann:{c:'Inline',m:'Sweep contracts into a check.',f:'Polite “Done”.',h:'none'},
+   turns:()=>[u,{id:'p1',paige:1,ack,line:{k:'done',text:'What PAIGE did · 1 step',meta:'4s'},trace:[t1d],body:q,cards:[answered]},U('u2',answer()),st.typed
+     ?{id:'p2',paige:1,ack:ack2(),line:{k:'done',text:'What PAIGE did · 2 steps',meta:'14s'},trace:[R('Creating the intake form','done','8 questions','Client Experience'),R('Linking it in Kestrel’s welcome email','done','Saved to your drafts','Client Experience')],body:'<p>The intake form is ready and linked in Kestrel’s welcome email, which is waiting in your drafts. I followed your note — “'+esc(st.typed)+'” — and didn’t book anything yet.</p>',metaRow:1}
+     :{id:'p2',paige:1,ack:ack2(),line:{k:'done',text:'What PAIGE did · 3 steps',meta:'21s'},trace:[R('Creating the intake form','done','8 questions','Client Experience'),R('Linking it in Kestrel’s welcome email','done','Saved to your drafts','Client Experience'),R('Holding a kickoff slot','done','Week of Nov 3','Owner Ops')],body:'<p>The intake form is live and linked in Kestrel’s welcome email, which is waiting in your drafts. I held a kickoff slot for the week of Nov 3 — want me to send the invite?</p>',metaRow:1}]},
+  {id:'c5',label:'Branch · you ask something else',branch:1,honesty:['client','srv'],comp:'ready',
+   log:['user  "Actually — who’s on my calendar tomorrow?"','(the open question goes stale; it is not answered for you)'],
+   ann:{c:'The question freezes as “Not answered”; the new request gets its own answer',m:'Record fades in 160ms.',f:'None.',h:'none'},
+   turns:[u,{id:'p1',paige:1,ack,line:{k:'neutral',g:'help',text:'Question not answered'},trace:[t1d],body:q,cards:[{type:'asked',text:'Not answered',val:''}]},U('u2','Actually — who’s on my calendar tomorrow?'),{id:'p2',paige:1,body:'<p>Two sessions: <strong>Priya Natarajan</strong> at 9:30 and <strong>Maya Okafor</strong> (Lumen Freight) at 2:00. Your afternoon after 3:00 is open.</p>',metaRow:1}]},
+  {id:'c6',label:'Branch · skip, use your best guess',branch:1,honesty:['c4','c2b'],comp:'busy',say:'PAIGE is working',
+   log:['paige_choices answer {skipped:true}','paige_turn {event:"resumed"}   ← C4'],
+   ann:{c:'Question freezes as “You let PAIGE choose”; she says what she picked and why',m:'Record fades in.',f:'Selection haptic.',h:'selection'},
+   turns:[u,{id:'p1',paige:1,ack,line:{k:'done',text:'What PAIGE did · 1 step',meta:'4s'},trace:[t1d],body:q,cards:[{type:'asked',text:'You let PAIGE choose',val:''}]},{id:'p2',paige:1,ack:'I’ll go with the light start — it’s the lightest lift for a 14-person team mid-quarter.',line:{k:'work',text:'Creating the intake form',meta:'2s'},trace:[R('Creating the intake form','run','','Client Experience')]}]}
+ ]});
+})();
+
+/* 6 · Durable work running */
+(function(){
+ const u=U('u1','Build the Operating Rhythm playbook for Lumen Freight — 12 pages, from Maya’s session notes.');
+ const say='I’ve started the playbook for Lumen Freight. I’ll pick it back up here when it’s ready — you don’t need to stay.';
+ const w=(s,extra)=>Object.assign({type:'work',s,title:'Lumen Freight — Operating Rhythm Playbook',sub:'Started 2:20 pm · attempt 1 of 5'},extra||{});
+ const tr=[R('Reading Maya’s last six session notes','done','6 notes','Fulfillment'),R('Handing the playbook to background work','done','Queued 2:20 pm','Fulfillment')];
+ SC.push({id:'work',name:'6 · Background work running',flow:'F4',na:'The client seat has no background-work tools and no thread.',thread:'Lumen playbook',frames:[
+  {id:'w1',label:'Handed off — you can leave',honesty:['c4'],comp:'ready',say:'PAIGE is working in the background',
+   log:['tool result {accepted:true, work_status:"claimed", work_id:"…"}','paige_turn {event:"waiting", state:"WAIT_WORK", waiting_on:{kind:"work", work_ids:[…]}}','!! the live wire frame carries no work_id today (record only)'],
+   ann:{c:'Inline background-work line inside the answer (durable — never a toast)',m:'The status line is a STATIC clock with no sweep — it reads “you are free to go”, not “watch me”. The stage dot is the only loop: 2.4s breathe, static under reduced motion, paused while scrolled out of view or the tab is hidden.',f:'Polite once. Composer is free — the owner keeps working.',h:'none',why:'Today: only the model’s prose (“Document authoring is underway”) and no indicator anywhere.'},
+   turns:[u,{id:'p1',paige:1,line:{k:'bg',g:'clock',text:'Working in the background',meta:'started 2:20 pm'},trace:tr,ack:say,cards:[w('queued')]}]},
+  {id:'w2',label:'Drafting — progress only from real stage changes',honesty:['c4'],comp:'ready',
+   log:['work record status is "claimed" from the moment it was accepted — it does not change when a worker starts','the status read carries no lease or heartbeat, so today the client cannot tell Queued from Drafting','← C4 must add a dispatch-started signal for this stage'],
+   ann:{c:'Inline line updates in place',m:'Stage label crossfade 120ms.',f:'No announcement for a stage tick.',h:'none',why:'Gap A: progress has no voice today. The Queued → Drafting step needs a new signal from C4 (dispatch started); nothing in the current record can drive it.'},
+   turns:[u,{id:'p1',paige:1,line:{k:'bg',g:'clock',text:'Working in the background',meta:'started 2:20 pm'},trace:tr,ack:say,cards:[w('drafting')]}]},
+  {id:'w3',label:'You keep working meanwhile',honesty:['c4','client'],comp:'ready',
+   log:['(new request while the work runs — the background line stays put above)'],
+   ann:{c:'The background answer keeps its line; your new request gets its own answer',m:'New answer enters as usual.',f:'None.',h:'none'},
+   turns:[u,{id:'p1',paige:1,line:{k:'bg',g:'clock',text:'Working in the background',meta:'started 2:20 pm'},trace:tr,ack:say,cards:[w('drafting')]},U('u2','Meanwhile — draft a thank-you to Priya for today’s session.'),{id:'p2',paige:1,line:{k:'done',text:'What PAIGE did · 1 step',meta:'5s'},trace:[R('Reading today’s session notes','done','Priya Natarajan','Client Experience')],body:'<p>Here’s a draft:</p><p>“Priya — thank you for today. The way you named the two decisions you’re keeping was the clearest you’ve been on delegation yet. Same time in two weeks?”</p>',metaRow:1}]},
+  {id:'w4',label:'Branch · paused, needs you',branch:1,honesty:['c4'],comp:'ready',say:'Background work paused. It needs you',
+   log:['work record → status "blocked", blocked_reason:"storage_not_connected"'],
+   ann:{c:'Inline · the line names exactly who it is waiting on',m:'Stage stops; warning glyph.',f:'One action that really exists.',h:'warning'},
+   turns:[u,{id:'p1',paige:1,line:{k:'warn',text:'Paused · needs you',meta:'2:24 pm'},trace:tr,ack:say,cards:[w('blocked',{reason:'Your document storage isn’t connected, so I can’t save the playbook.',btn:'Connect storage'})]}]},
+  {id:'w5',label:'Branch · reopened later (from the record)',branch:1,honesty:['client'],comp:'ready',
+   log:['reload → bundle_ref.turn_state {state:"WAIT_WORK", waiting_on.work_ids}','get_paige_durable_work(work_id) → {status:"claimed", attempt:1, max_attempts:5, updated_at}','("claimed" cannot say Queued vs Drafting, so the reopened view shows “In progress”)'],
+   ann:{c:'Same line, rebuilt from the saved record and a status read',m:'None.',f:'“Last checked” time is honest; nothing pretends to be live.',h:'none',why:'This partial is possible client-only today: read work_ids from the saved record, then read the status.'},
+   turns:[u,{id:'p1',paige:1,line:{k:'bg',g:'clock',text:'Working in the background',meta:'last checked 2:26 pm'},trace:tr,ack:say,cards:[w('claimed',{sub:'Started 2:20 pm · attempt 1 of 5 · last checked 2:26 pm'})]}]}
+ ]});
+})();
+
+/* 7 · Durable completion + resume */
+(function(){
+ const u=U('u1','Build the Operating Rhythm playbook for Lumen Freight — 12 pages, from Maya’s session notes.');
+ const say='I’ve started the playbook for Lumen Freight. I’ll pick it back up here when it’s ready — you don’t need to stay.';
+ const tr=[R('Reading Maya’s last six session notes','done','6 notes','Fulfillment'),R('Handing the playbook to background work','done','Queued 2:20 pm','Fulfillment')];
+ const w=(s,extra)=>Object.assign({type:'work',s,title:'Lumen Freight — Operating Rhythm Playbook',sub:'Started 2:20 pm · attempt 1 of 5'},extra||{});
+ const art={type:'artifact',title:'Lumen Freight — Operating Rhythm Playbook',sub:'12 pages · PDF · checked 2:31 pm'};
+ const p1=(s,lineTxt,meta,k,extra)=>({id:'p1',paige:1,line:{k:k||'done',text:lineTxt,meta,jump:k==='done'||!k},trace:tr,ack:say,cards:[w(s,extra)]});
+ SC.push({id:'complete',name:'7 · Background work completes + resume',flow:'F4',na:'The client seat has no background work.',thread:'Lumen playbook',unread:true,frames:[
+  {id:'d1',label:'Ready — PAIGE picks it back up',honesty:['c4'],comp:'ready',say:'Your playbook is ready',
+   log:['work record → status "succeeded"','thread marked resume-pending (instead of today’s canned turn)','paige_turn {event:"resumed"} → completed {state:"FINAL", mode:"build"}'],
+   ann:{c:'Original line flips to “Ready”; a NEW answer at the bottom, linked back',m:'Check settles on the old line, then the new answer (staggered 60ms). Executed beat once.',f:'Unread dot on the thread (ink, not gold) — not a toast.',h:'success (goal completed)',why:'Gap B: today a fixed “Your document is ready” turn is inserted, PAIGE is not re-invoked, and it only shows after a reload.'},
+   turns:[u,p1('ready','Ready · 2:31 pm',''),{id:'div',divider:'2:31 pm'},{id:'p3',paige:1,line:{k:'done',text:'What PAIGE did · 3 steps',meta:'11m',beat:1},trace:[R('Drafting 12 pages','done','Attempt 1','Fulfillment'),R('Checking names and dates against Maya’s record','done','No mismatches','Fulfillment'),R('Saving the playbook','done','PDF · 12 pages','Fulfillment')],body:'<p>Picking up the Lumen Freight playbook you asked for at 2:20. It’s 12 pages, built from Maya’s last six session notes, and I checked every name and date against her record.</p>',cards:[art],after:'<p>Want me to send it to Maya ahead of Thursday’s session?</p>',metaRow:1}],
+   alt3:[u,{id:'p1',paige:1,line:{k:'done',text:'What PAIGE did · 5 steps',meta:'11m',beat:1},trace:tr.concat([R('Drafting 12 pages','done','Attempt 1','Fulfillment'),R('Checking names and dates','done','No mismatches','Fulfillment'),R('Saving the playbook','done','PDF','Fulfillment')]),ack:say,cards:[w('ready'),art],after:'<p>It’s ready — 12 pages, checked against Maya’s record. Want me to send it to her ahead of Thursday’s session?</p>',metaRow:1}]},
+  {id:'d2',label:'Branch · it couldn’t finish',branch:1,honesty:['c4'],comp:'ready',say:'The playbook couldn’t finish',
+   log:['work record → status "failed", error_code:"verification_failed", attempt:2','(today: settle_…_failure inserts NO chat turn — the failure is silent)'],
+   ann:{c:'Original line flips to “Couldn’t finish”; a new answer explains, linked back',m:'Warning glyph settles.',f:'One word for the outcome (“Couldn’t finish”), said once. Names what happened; retry only because the record allows it.',h:'warning'},
+   turns:[u,p1('failed','Couldn’t finish','2:38 pm','warn',{reason:'It failed my final check on attempts 1 and 2.'}),{id:'div',divider:'2:38 pm'},{id:'p3',paige:1,line:{k:'warn',text:'What PAIGE did · 2 steps',meta:'18m'},trace:[R('Drafting 12 pages','done','Attempts 1 and 2','Fulfillment'),R('Checking names and dates','err','Two session dates didn’t match Maya’s record','Fulfillment')],body:'<p>The Lumen Freight playbook didn’t finish. Both drafts failed my final check — two session dates didn’t match Maya’s record — so I didn’t post a half-right version.</p>',foot:{tone:'warn',text:'Want me to try again with the dates corrected from her record?',btn:'Try again',go:'d1'}}]},
+  {id:'d3',label:'Branch · can’t confirm it finished',branch:1,honesty:['c4'],comp:'ready',say:'PAIGE can’t confirm whether it finished',
+   log:['work record → status "outcome_unknown"','→ reconcile first; never a silent retry'],
+   ann:{c:'Original line + a new answer with one safe action',m:'None beyond the glyph.',f:'No retry button — asking again could make it happen twice.',h:'warning'},
+   turns:[u,p1('unknown','Can’t confirm yet','2:40 pm','warn',{reason:'The save may or may not have landed.'}),{id:'div',divider:'2:40 pm'},{id:'p3',paige:1,line:{k:'warn',text:'Checking before any retry',meta:''},body:'<p>I can’t confirm whether the playbook saved. I’m checking before I try anything again, so it can’t end up there twice.</p>',foot:{tone:'neutral',text:'I’ll post here as soon as I know.',btn:'Check now',go:'d1'}}]}
+ ]});
+})();
+
+/* 8 · Multi-agent consult */
+(function(){
+ const u=U('u1','Plan next month’s client check-ins.');
+ const ack='I’ll have pipeline, content and follow-up each take a look, then bring you one plan.';
+ const G=(g,s,rows,em)=>({g,s,rows,em});
+ SC.push({id:'consult',name:'8 · Multi-agent consult',flow:'F1',na:'Specialists and department labels are owner-only.',thread:'November check-ins',frames:[
+  {id:'m1',label:'PAIGE brings in her team',honesty:['c5','c2b'],comp:'busy',say:'PAIGE is consulting 3 specialists',
+   log:['paige_turn mode → "multi_agent"','paige_step {group:"Pipeline", status:"running", …} ×3 (in parallel)','names come from the live roster — never a hard-coded map, never an internal slug'],
+   ann:{c:'Inline disclosure, rows grouped by specialist',m:'Each group’s rows appear 180ms; sweep on the one line.',f:'One announcement for the whole consult.',h:'none',why:'Today each consult raises its own approval card (3 stops), runs one after another, and the card leaks the internal slug. Consulting without approval is an authority change on INT-310’s contract (open decision D2).'},
+   turns:[u,{id:'p1',paige:1,ack,line:{k:'work',text:'Consulting 3 specialists · 0 done',meta:'4s',open:true},trace:[G('Pipeline specialist','run',[R('Reviewing renewals due in November','run')]),G('Content specialist','run',[R('Pulling themes from October’s sessions','run')]),G('Follow-up specialist','run',[R('Checking who’s waiting on a reply','run')])]}]},
+  {id:'m2',label:'Two of three report back',honesty:['c5','c2b'],comp:'busy',
+   log:['paige_step {group:"Pipeline", status:"done"}','paige_step {group:"Content", status:"done"}'],
+   ann:{c:'Inline disclosure',m:'Group status settles to a check.',f:'None per specialist.',h:'none'},
+   turns:[u,{id:'p1',paige:1,ack,line:{k:'work',text:'Consulting 3 specialists · 2 done',meta:'19s',open:true},trace:[G('Pipeline specialist','done',[R('Reviewing renewals due in November','done','Reyes & Co. renews Nov 14')],'1 renewal'),G('Content specialist','done',[R('Pulling themes from October’s sessions','done','Delegation came up in 4 of Priya’s 6')],'2 themes'),G('Follow-up specialist','run',[R('Checking who’s waiting on a reply','run')])]}]},
+  {id:'m3',label:'One combined plan — one PAIGE',honesty:['c5'],comp:'ready',say:'Done',
+   log:['paige_turn {event:"completed", state:"FINAL", mode:"multi_agent"}'],
+   ann:{c:'One answer — never a bubble per specialist',m:'Sweep contracts into a check.',f:'Who contributed what stays in the trace and as a quiet note per item.',h:'none'},
+   turns:[u,{id:'p1',paige:1,ack,line:{k:'done',text:'What PAIGE did · 3 specialists · 5 steps',meta:'31s'},trace:[G('Pipeline specialist','done',[R('Reviewing renewals due in November','done','Reyes & Co. renews Nov 14')],'1 renewal'),G('Content specialist','done',[R('Pulling themes from October’s sessions','done','Delegation came up in 4 of Priya’s 6')],'2 themes'),G('Follow-up specialist','done',[R('Checking who’s waiting on a reply','done','Kestrel’s intake still open'),R('Matching open slots','done','9 holds possible')],'2 gaps')],body:'<p>Here’s one plan for November:</p><ol><li><strong>Week 1 — Reyes & Co.</strong> Renewal check-in before Nov 14. Lead with the three Q3 wins. <span class="src">· pipeline</span></li><li><strong>Week 2 — Lumen Freight and Kestrel.</strong> Short progress reviews; Kestrel’s intake answers will be in by then. <span class="src">· follow-up</span></li><li><strong>Week 3 — Priya.</strong> A midpoint session built around delegation, which came up in four of her last six sessions. <span class="src">· content</span></li></ol><p>Want me to put these on your calendar as holds?</p>',metaRow:1}]},
+  {id:'m4',label:'Branch · a specialist wants to act',branch:1,honesty:['c5','live'],comp:'wait-ok',say:'PAIGE needs your OK',focus:'card',
+   log:['specialist proposes an ACT → governed exactly like any other action','paige_confirm {…}','paige_turn {event:"waiting", state:"WAIT_APPROVAL"}'],
+   ann:{c:'Becomes a normal approval card',m:'As approval.',f:'Gold only on Approve. The card names the act, never the specialist’s internal name.',h:'as approval'},
+   go:[{label:'Approve (see scenario 4)',to:'@approval:a3'}],
+   turns:[u,{id:'p1',paige:1,ack,line:{k:'wait',g:'hand',text:'Waiting for your OK'},trace:[G('Pipeline specialist','done',[R('Reviewing renewals due in November','done','Reyes & Co. renews Nov 14')]),G('Content specialist','done',[R('Pulling themes from October’s sessions','done')]),G('Follow-up specialist','done',[R('Matching open slots','done','4 holds proposed')])],body:'<p>The follow-up specialist found four open slots that fit. Holding them puts them on your calendar — nothing is sent to clients.</p>',cards:[{type:'confirm',mode:'decide',title:'Hold 4 check-in slots on your calendar',rows:[['When','Nov 4, 11, 18 and 20 · 45 min each'],['Who sees it','Only you — no invites go out']]}]}]}
+ ]});
+})();
+
+/* 9 · Interrupted / limit reached */
+(function(){
+ const u=U('u1','Check every client’s session notes against their goals.');
+ const ack='I’ll go client by client and flag anyone drifting from their goals.';
+ const names=['Priya Natarajan','Daniel Reyes','Maya Okafor','The Kestrel Group','Jordan Ellis','Sam Whitfield','Ana Ruiz','Theo Marsh','Lena Park'];
+ const rows=names.map((n,i)=>R('Reviewing '+n+'’s notes','done',i===0?'Drifting — delegation goal, no progress in 3 sessions':(i===3?'Intake still open':'On track'),'Client Experience'));
+ const running=rows.slice(0,8).concat([R('Reviewing Lena Park’s notes','run','','Client Experience')]);
+ const LC=(()=>{const sites=['hbr.example','sloanreview.example','firstround.example','fastcompany.example','inc.example','strategy-business.example','gallup.example','mckinsey.example','atlassian.example','basecamp.example','lattice.example','asana.example'];
+   const rows=sites.slice(0,9).map((d,i)=>R('Reading article '+(i+1)+' of 12','done',d));
+   return {u:U('u1','Read these twelve articles on delegation and tell me where they agree.'),ack:'I’ll read each one and pull out where they agree.',rows,
+     running:rows.slice(0,8).concat([R('Reading article 9 of 12','run','')]),
+     body:'<p>I read 9 of the 12 articles before this answer’s limit. They agree on one thing: delegation sticks when you hand over the decision, not just the task. Seven of the nine say so directly.</p>'};})();
+ const partBody='<p>I reviewed 9 of 14 clients’ session notes before this answer’s limit. Two are drifting: <strong>Priya Natarajan</strong> (delegation goal, no progress in three sessions) and <strong>The Kestrel Group</strong> (intake still open). The other seven are on track.</p>';
+ SC.push({id:'limit',name:'9 · Interrupted or limit reached',flow:'F1',na:null,thread:'Goal check',frames:[
+  {id:'l1',label:'Working through a long job',honesty:['c2b','client'],comp:'busy',
+   log:['paige_step … ×9 (running/done)'],
+   ann:{c:'Inline disclosure · more than 8 rows → “Show all”',m:'Sweep runs.',f:'None per step.',h:'none'},
+   turns:[u,{id:'p1',paige:1,ack,line:{k:'work',text:'Reviewing Lena Park’s notes',meta:'4m 50s · 9 steps',open:true},trace:running}],
+   cl:[LC.u,{id:'p1',paige:1,ack:LC.ack,line:{k:'work',text:'Reading article 9 of 12',meta:'4m 50s · 9 steps',open:true},trace:LC.running}]},
+  {id:'l2',label:'Hit the limit — here’s how far it got',honesty:['client','c4'],comp:'ready',say:'PAIGE paused at a limit',
+   log:['paige_turn {event:"completed", state:"LIMIT_REACHED", mode:"answer"}','(cause: tool-call budget, 360 s clock, last round, or no progress)'],
+   ann:{c:'Inline · status line + outcome footer',m:'Sweep freezes into the warning glyph; footer fades in 160ms.',f:'The limit is named once (status line). The footer only says what is left and offers one way forward (outlined, not gold).',h:'warning',why:'Today this ends with a green “Done” check in the strip — false. Reading the terminal state is client-only. Keeping the SAME objective on “Keep going” is C4.'},
+   go:[{label:'Keep going',to:'l3'}],
+   turns:[u,{id:'p1',paige:1,ack,line:{k:'warn',text:'Hit the step limit for one answer',meta:'9 steps'},trace:rows,body:partBody,foot:{tone:'warn',text:'Five clients are left.',btn:'Keep going',go:'l3'}}],
+   cl:[LC.u,{id:'p1',paige:1,ack:LC.ack,line:{k:'warn',text:'Hit the step limit for one answer',meta:'9 steps'},trace:LC.rows,body:LC.body,foot:{tone:'warn',text:'Three articles are left.',btn:'Keep going',go:'l3'}}]},
+  {id:'l3',label:'Keep going — picks up where it stopped',honesty:['c4','c2b'],comp:'busy',say:'PAIGE is working',
+   log:['continue {objective: same, done: 9 of 14}   ← C4 (today: a fresh request)','paige_turn {event:"started"}'],
+   ann:{c:'A new working answer, no manufactured “continue” bubble',m:'Row enters 160ms.',f:'Polite “PAIGE is working”.',h:'none'},
+   turns:[u,{id:'p1',paige:1,ack,line:{k:'warn',text:'Hit the step limit for one answer',meta:'9 steps'},trace:rows,body:partBody},{id:'p2',paige:1,ack:'Picking up with the last five clients.',line:{k:'work',text:'Reviewing Noor Haddad’s notes',meta:'4s'},trace:[R('Reviewing Noor Haddad’s notes','run','','Client Experience')]}],
+   cl:[LC.u,{id:'p1',paige:1,ack:LC.ack,line:{k:'warn',text:'Hit the step limit for one answer',meta:'9 steps'},trace:LC.rows,body:LC.body},{id:'p2',paige:1,ack:'Picking up with the last three articles.',line:{k:'work',text:'Reading article 10 of 12',meta:'4s'},trace:[R('Reading article 10 of 12','run','')]}]},
+  {id:'l4',label:'Interrupted · workspace changed',branch:1,honesty:['client','live'],comp:'ready',say:'PAIGE stopped. Your workspace changed',
+   log:['paige_turn {event:"completed", state:"INTERRUPTED"}   (workspace scope changed mid-answer)'],
+   ann:{c:'Inline · the real server sentence carries the explanation; the footer is just the one safe next step',m:'Sweep freezes; footer fades in.',f:'Said once: the status line names the cause, the server sentence explains it, the footer only offers “Ask again”.',h:'warning'},
+   clNa:'A client seat has one workspace, so a workspace change cannot interrupt it.',
+   turns:[u,{id:'p1',paige:1,ack,line:{k:'warn',text:'Stopped — your active workspace changed',meta:'2m'},trace:rows.slice(0,4),body:'<p>Your active workspace changed, so I stopped here. Anything I’d already finished is saved. Try again in the current workspace.</p>',foot:{tone:'warn',text:'',btn:'Ask again',go:'l1'}}]},
+  {id:'l5',label:'Interrupted · connection dropped',branch:1,honesty:['client','live'],comp:'ready',say:'PAIGE stopped. The connection dropped',
+   log:['paige_turn {event:"completed", state:"INTERRUPTED"}   (provider stream never finished)'],
+   ann:{c:'Inline',m:'Sweep freezes.',f:'Partial text is kept and marked; no false “Done”.',h:'warning'},
+   turns:[u,{id:'p1',paige:1,ack,line:{k:'warn',text:'Stopped — the connection dropped',meta:'3m'},trace:rows.slice(0,6),body:'<p>So far: <strong>Priya Natarajan</strong> is drifting on her delegation goal, and <strong>The Kestrel Group</strong> still has an open intake. Daniel, Maya, Jordan and Sam are on track.</p>',foot:{tone:'warn',text:'What arrived is above.',btn:'Ask again',go:'l1'}}],
+   cl:[LC.u,{id:'p1',paige:1,ack:LC.ack,line:{k:'warn',text:'Stopped — the connection dropped',meta:'3m'},trace:LC.rows.slice(0,6),body:'<p>So far, six of the articles agree that delegation sticks when you hand over the decision, not just the task.</p>',foot:{tone:'warn',text:'What arrived is above.',btn:'Ask again',go:'l1'}}]}
+ ]});
+})();
+
+/* Extras the skill makes mandatory */
+SC.push({id:'first',name:'+ First use (empty thread)',flow:'F1',na:null,thread:'New chat',frames:[
+ {id:'e1',label:'New thread — greeting, kept verbatim',honesty:['live'],comp:'ready',
+  log:['(no turn — the greeting is not a turn, so it never gets a status line)'],
+  ann:{c:'Inline',m:'None.',f:'None.',h:'none',why:'Greeting copy is preserved exactly.'},
+  clNa:'The client portal’s greeting is written by PAIGE on its own stream and is unchanged by this work.',
+  turns:[{id:'g',paige:1,body:'<p>What are we moving? Tell me the outcome, and I’ll show what I can read, draft, or ask you to approve.</p>',chips:['Who hasn’t heard from us lately?','Draft a follow-up to Thursday’s workshop leads','Research what agencies charge for a 90-day retainer']}]}
+]});
+SC.push({id:'stop',name:'+ Stopped by you',flow:'F1',na:null,thread:'Quiet clients',frames:[
+ {id:'s1',label:'Working — Send became Stop',honesty:['live','client','c2b'],comp:'busy',
+  log:['paige_step {status:"running"}'],
+  ann:{c:'Composer control (existing)',m:'None.',f:'Stop is always reachable while PAIGE works.',h:'none',why:'Stop exists today. The running step in the line needs C2b’s START.'},
+  cl:[CLX.u,{id:'p1',paige:1,ack:CLX.ack,line:{k:'work',text:'Reading the study it cites',meta:'6s · 2 steps'},trace:[CLX.r1d,CLX.r2r]}],
+  go:[{label:'Press Stop',to:'s2'}],
+  turns:[U('u1','Who hasn’t heard from us in two weeks?'),{id:'p1',paige:1,ack:'I’ll check your contacts, pipeline and open tasks for anyone who’s gone quiet.',line:{k:'work',text:'Reviewing your pipeline',meta:'7s · 2 steps'},trace:[R('Looking through your contacts','done','41 contacts','Owner Ops'),R('Reviewing your pipeline','run','','Owner Ops')]}]},
+ {id:'s2',label:'Stopped by you',honesty:['live','client'],comp:'ready',say:'Stopped',
+  log:['client: request aborted locally (cancelSoloRequest)','server-side cancellation is NOT confirmed — the copy says so plainly'],
+  ann:{c:'Inline footer',m:'Sweep freezes into the pause glyph. The step you interrupted shows a pause mark, not an error — nothing went wrong.',f:'Neutral tone — you did this on purpose. Keyboard focus moves to the footer. “See what finished” leads; “Ask again” is secondary.',h:'none',why:'Same truth as today’s “server-side work cancellation is not confirmed”, without the jargon.'},
+  turns:[U('u1','Who hasn’t heard from us in two weeks?'),{id:'p1',paige:1,ack:'I’ll check your contacts, pipeline and open tasks for anyone who’s gone quiet.',line:{k:'stop',g:'pause',text:'Stopped by you',meta:'7s'},trace:[R('Looking through your contacts','done','41 contacts','Owner Ops'),R('Reviewing your pipeline','stop','Stopped — it may still finish on its own','Owner Ops')],foot:{tone:'neutral',focus:1,text:'Anything already finished is saved. A step that had started may still finish on its own.',see:'p1',btn:'Ask again',ghost:1,go:'s1'}}],
+  cl:[CLX.u,{id:'p1',paige:1,ack:CLX.ack,line:{k:'stop',g:'pause',text:'Stopped by you',meta:'6s'},trace:[CLX.r1d,R('Reading the study it cites','stop','Stopped')],foot:{tone:'neutral',focus:1,text:'Anything already finished is kept. A step that had started may still finish on its own.',see:'p1',btn:'Ask again',ghost:1,go:'s1'}}]}
+]});
+SC.push({id:'held',name:'+ Held back (client portal) / refused',flow:'F1',na:null,portal:true,thread:'',frames:[
+ {id:'h1',label:'Held back after a final check (client portal)',honesty:['live','client'],comp:'ready',say:'PAIGE held this answer back',
+  log:['paige_turn {event:"completed", state:"WITHHELD"}   (client seat only)','text = withheldReplyForClient("Brightwater Advisory")   ← the server’s fixed sentence, word for word'],
+  ann:{c:'Inline, neutral — no content leaks',m:'None.',f:'Lock glyph, muted tone. Not red: it is not the client’s mistake.',h:'none',why:'The sentence is the server’s own, unchanged. Only the status line around it is new (client-only).'},
+  turns:[U('u1','What did my consultant say about my team in our last session?'),{id:'p1',paige:1,line:{k:'held',g:'lock',text:'Held back after a final check'},body:'<p>I wrote an answer, but it included internal system details that aren’t meant to be shared here, so I didn’t send it. I won’t guess at a different answer. You can ask me another way, or ask Brightwater Advisory directly.</p>'}]},
+ {id:'h2',label:'Refused — client focus not confirmed (owner seat)',portal:false,clNa:'This refusal happens on an owner or team seat that has a client in focus; a client seat never sees it.',honesty:['live','client'],comp:'ready',say:'PAIGE stopped. Nothing was saved',
+  log:['paige_turn {event:"started"} → client_scope {status:"refused", kind:"permission"} → paige_turn {state:"REFUSED", mode:"pending"}','client: PaigeAIChat writes its permission notice into the transcript (existing copy, word for word)'],
+  ann:{c:'Inline, neutral',m:'None.',f:'Lock glyph, muted tone; one way forward that exists.',h:'none',why:'REFUSED today is the client-scope refusal on an owner or team seat, with the notice already shipped in the chat. A portal “can’t help with that here” refusal has no server sentence yet, so it is not drawn as if it existed.'},
+  turns:[U('u1','Pull up Maya Okafor’s session history.'),{id:'p1',paige:1,line:{k:'held',g:'lock',text:'Stopped — couldn’t confirm that client'},body:'<p>I couldn’t confirm that client belongs to your workspace, so I’ve let go of that focus. Nothing was saved. Reopen them from your client list if you think that’s wrong.</p>'}]}
+]});
+SC.push({id:'reopen',name:'+ Reopen a saved thread',flow:'F5',na:'The client portal keeps no thread.',thread:'Reyes renewal',frames:[
+ {id:'o1',label:'Reloaded — exactly what happened, nothing falsely live',honesty:['client'],comp:'ready',
+  log:['loadTurns → bundle_ref.turn_state + turn_trace per message','past WAIT_APPROVAL → today’s static line “Earlier, PAIGE asked you to confirm: …” (never a live Approve; no claim about what happened next)','past WORKING with no terminal → “Didn’t finish” (never a spinner; no claim about what the server did after)'],
+  ann:{c:'Inline — every past answer shows its settled line and folded trace',m:'None. Nothing animates on load.',f:'None.',h:'none',why:'Today the trace is lost on reload; the confirm card already turns into “Earlier, Paige asked you to confirm”. The saved record cannot know whether that approval was decided elsewhere or whether the server kept working after the chat closed, so neither is claimed. Showing the real outcome would need server work.'},
+  turns:[U('u1','Who hasn’t heard from us in two weeks?'),{id:'p1',paige:1,line:{k:'done',text:'What PAIGE did · 5 steps',meta:'Yesterday · 14s'},trace:[R('Looking through your contacts','done','41 contacts','Owner Ops'),R('Reviewing your pipeline','done','6 open engagements','Owner Ops'),R('Checking your calendar for booked sessions','err','Calendar isn’t connected — skipped','Owner Ops'),R('Checking your tasks','done','3 open follow-ups','Owner Ops'),R('Adding a follow-up for Priya Natarajan','done','Task · Fri 10:00','Owner Ops')],body:'<p>Three clients haven’t heard from you in over two weeks: Priya Natarajan, The Kestrel Group and Lumen Freight.</p>'},
+   U('u2','Send the renewal proposal to Daniel Reyes.'),{id:'p2',paige:1,earlier:'Send the renewal proposal to Daniel Reyes'},
+   U('u3','Pull last quarter’s session counts for every client.'),{id:'p3',paige:1,line:{k:'neutral',g:'pause',text:'Didn’t finish',meta:'Yesterday'},trace:[R('Counting sessions by client','done','9 of 14','Owner Ops')],foot:{tone:'neutral',text:'',btn:'Ask again',go:'o1'}}]}
+]});
+
+SC.push({id:'conn',name:'+ Connection and limits (unchanged)',flow:'F1',na:null,thread:'Quiet clients',frames:[
+ {id:'k1',label:'Server error before PAIGE starts',honesty:['live'],comp:'ready',
+  log:['POST → 5xx (no stream)','client: message rolled back; existing banner with Retry'],
+  ann:{c:'Existing banner below the transcript — unchanged',m:'None.',f:'Existing copy, word for word. Retry re-sends the same message.',h:'none',why:'Kept exactly as it ships. No turn started, so there is no status line.'},
+  turns:[{id:'g',paige:1,body:'<p>What are we moving? Tell me the outcome, and I’ll show what I can read, draft, or ask you to approve.</p>'},{id:'bn',banner:'Something went wrong on our side and PAIGE didn’t get to answer. Your message wasn’t sent — try again.',retry:1}]},
+ {id:'k2',label:'Offline',honesty:['live'],comp:'ready',
+  log:['navigator offline → nothing is sent'],
+  ann:{c:'Existing banner — unchanged',m:'None.',f:'Existing copy, word for word.',h:'none'},
+  turns:[{id:'g',paige:1,body:'<p>What are we moving? Tell me the outcome, and I’ll show what I can read, draft, or ask you to approve.</p>'},{id:'bn',banner:'You appear to be offline. This message has not been sent.',retry:1}]},
+ {id:'k3',label:'Rate limit reached',honesty:['live'],comp:'ready',
+  log:['POST → 429 {code:"rate_limited", reason:"Too many requests right now.", recommendation:"Wait a moment, then try again."}','client: existing error toast; message rolled back'],
+  ann:{c:'Existing toast — unchanged',m:'Existing toast motion.',f:'Existing copy. Kept distinct from “Hit the step limit for one answer”, which is a per-answer budget.',h:'none'},
+  toast:{t:'Rate limit reached',d:'Too many requests right now. Wait a moment, then try again.'},
+  turns:[{id:'g',paige:1,body:'<p>What are we moving? Tell me the outcome, and I’ll show what I can read, draft, or ask you to approve.</p>'}]},
+ {id:'k4',label:'The six-minute window ended',honesty:['live','client'],comp:'ready',
+  log:['client: 360 s interactive window passed with no terminal frame','existing banner + Retry (copy unchanged)'],
+  ann:{c:'Existing banner — unchanged; the answer’s line stops honestly instead of claiming Done',m:'Sweep freezes.',f:'Existing copy, word for word.',h:'warning (annotation only)',why:'The banner exists today. The neutral status line on the answer is the new, client-only part.'},
+  turns:[U('u1','Who hasn’t heard from us in two weeks?'),{id:'p1',paige:1,ack:'I’ll check your contacts, pipeline and open tasks for anyone who’s gone quiet.',line:{k:'neutral',g:'clock',text:'Stopped listening at six minutes',meta:'6m · 3 steps'},trace:[R('Looking through your contacts','done','41 contacts','Owner Ops'),R('Reviewing your pipeline','done','6 open engagements','Owner Ops'),R('Checking your tasks','stop','No answer before the window ended','Owner Ops')]},{id:'bn',banner:'PAIGE was working on your request when the six-minute interactive window ended. This chat stopped listening, so I can’t confirm whether that work finished or was saved. Retry may start the work again.',retry:1}]}
+]});
+
+/* ───────────── state ───────────── */
+const st={sc:'normal',fi:2,review:true,theme:'',motion:'',vw:1366,role:'owner',od:{1:'inline',2:'none',3:'new',4:'hidden',5:'ink',6:'gold'},
+  open:{},showAll:{},sel:-1,typed:'',played:new Set(),prevKeys:new Set(),prevLine:{},prevStep:{},sr:[],lastSay:'',dec:{},notes:{},overall:'',overallNote:'',playing:null,lastFocusBtn:null};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const sc=()=>SC.find(s=>s.id===st.sc);
+const fr=()=>sc().frames[st.fi];
+function store(){try{localStorage.setItem('c3-proto',JSON.stringify({dec:st.dec,notes:st.notes,overall:st.overall,overallNote:st.overallNote}))}catch(e){}}
+try{const v=JSON.parse(localStorage.getItem('c3-proto')||'null'); if(v){Object.assign(st,{dec:v.dec||{},notes:v.notes||{},overall:v.overall||'',overallNote:v.overallNote||''});}}catch(e){}
+
+/* ───────────── product renderers ───────────── */
+function glyphFor(L){
+  const k=L.k;
+  if(k==='work'||k==='think') return '<span class="dot" aria-hidden="true"></span>';
+  if(k==='done'){
+    if(L.beat){const key=st.sc+':'+fr().id; const go=!st.played.has(key); return '<span class="beat'+(go?' go':'')+'" data-beat="'+key+'">'+(go?MARK:'')+ic('check','ck')+'</span>';}
+    return ic('check','settle');
+  }
+  if(k==='wait') return ic(L.g||'hand','settle');
+  if(k==='bg') return ic('clock');
+  if(k==='warn') return ic('tri','settle');
+  return ic(L.g||'pause','settle');
+}
+function countRows(trace){let n=0;(trace||[]).forEach(r=>{n+=r.rows?r.rows.length:1});return n}
+function stepHTML(r,key){
+  const g=r.s==='run'?'<span class="dot" aria-hidden="true"></span>':r.s==='done'?ic('check'):r.s==='stop'?ic('pause'):ic('err');
+  const prev=st.prevStep[key]; const tick=prev&&prev!==r.s?' tick':'';
+  st.nextStep[key]=r.s;
+  const sword=r.s==='run'?'In progress: ':r.s==='err'?'Problem: ':r.s==='stop'?'Stopped: ':'Done: ';
+  const dept=(r.d&&st.role!=='client')?r.d:'';
+  const meta=[dept,r.m].filter(Boolean).join(' · ');
+  return '<li class="step" data-s="'+r.s+'"><span class="sg'+tick+'">'+g+'</span><span class="st"><span class="sr">'+sword+'</span>'+esc(r.t)+(meta?'<span class="sm">'+esc(meta)+'</span>':'')+'</span></li>';
+}
+function traceList(t){
+  const tr=t.trace||[]; const grouped=tr.some(r=>r.rows);
+  if(grouped){
+    return '<div class="grps">'+tr.map((g,gi)=>'<div class="grp"><div class="grp-h">'+(g.s==='done'?ic('check'):'<span class="sg" style="width:14px;display:grid;place-items:center;color:var(--pg-violet)"><span class="dot" aria-hidden="true"></span></span>')+'<span>'+esc(g.g)+'</span><em>'+(g.s==='done'?'done'+(g.em?' · '+esc(g.em):''):'working')+'</em></div><ol class="steps">'+g.rows.map((r,i)=>stepHTML(r,t.id+':'+gi+':'+i)).join('')+'</ol></div>').join('')+'</div>';
+  }
+  const all=!!st.showAll[t.id]; const show=all?tr:tr.slice(0,8);
+  let h='<ol class="steps">'+show.map((r,i)=>stepHTML(r,t.id+':'+i)).join('')+'</ol>';
+  if(tr.length>8&&!all) h+='<button class="showall" type="button" data-showall="'+t.id+'">Show all '+tr.length+' steps</button>';
+  return h;
+}
+function seatLine(L){
+  if(L&&st.role==='member'&&L.k==='wait'&&(L.g||'hand')==='hand') return Object.assign({},L,{k:'neutral',g:'hand',text:'Waiting for an owner’s OK'});
+  return L;
+}
+function lineHTML(t,L,opts){
+  opts=opts||{}; L=seatLine(L);
+  const n=countRows(t.trace); const hasTrace=n>0;
+  const tid='tr-'+t.id+(opts.strip?'-s':'');
+  const open=(st.open[t.id]!==undefined?st.open[t.id]:!!L.open)&&!isPhone();
+  const prevTxt=st.prevLine[t.id]; st.nextLine[t.id]=L.text;
+  const chg=prevTxt!==undefined&&prevTxt!==L.text?' chg':'';
+  const inner='<span class="sl-g">'+glyphFor(L)+'</span><span class="sl-t'+chg+'">'+esc(L.text)+'</span>'+(L.meta?'<span class="sr">, </span><span class="sl-m">'+esc(L.meta)+'</span>':'')+(hasTrace?'<span class="sr">. What PAIGE did</span>'+ic('chev','sl-chev'):'');
+  let row;
+  if(hasTrace){
+    row='<button class="sl-row" type="button" data-trace="'+t.id+'" '+(isPhone()?'aria-haspopup="dialog"':'aria-expanded="'+open+'" aria-controls="'+tid+'"')+'><span class="sr">'+(L.k==='done'?'':'Status: ')+'</span>'+inner+'</button>';
+  } else row='<div class="sl-row" tabindex="-1">'+inner+'</div>';
+  let jump='';
+  if(L.jump&&t.id==='p1'&&st.sc==='complete'&&st.od[3]==='new') jump='';
+  let h='<div class="sl'+(document.hidden?' paused':'')+'" data-k="'+L.k+'">'+row+'<div class="sl-rule" aria-hidden="true"></div>';
+  if(hasTrace&&!isPhone()) h+='<div class="tr'+(open?' open':'')+'" id="'+tid+'"><div class="tr-in">'+traceList(t)+'</div></div>';
+  h+='</div>';
+  return h;
+}
+function confirmHTML(c,t,ci){
+  const heads={decide:'Needs your OK',running:'Running…',done:'Done',skipped:'Skipped · nothing changed',expired:'This approval expired',failed:'Didn’t run',earlier:'Earlier, PAIGE asked you to confirm'};
+  const seals={decide:ic('shield'),running:'<span class="dot" aria-hidden="true"></span>',done:ic('check'),skipped:ic('x'),expired:ic('clock'),failed:ic('tri'),earlier:ic('clock')};
+  const hid='cc-'+t.id+'-'+ci;
+  let h='<section class="card cc" role="group" data-mode="'+c.mode+'" data-key="'+t.id+':c'+ci+':'+c.mode+'" tabindex="-1" aria-labelledby="'+hid+'"'+(c.mode==='decide'?' data-focus="card"':'')+'>';
+  h+='<div class="cc-head"><span class="seal">'+seals[c.mode]+'</span><div style="min-width:0"><h4 id="'+hid+'" tabindex="-1">'+heads[c.mode]+'</h4><p class="sum">'+esc(c.title)+'</p></div></div>';
+  if(c.rows&&c.rows.length&&c.mode!=='skipped'&&c.mode!=='expired') h+='<dl class="kv">'+c.rows.map(r=>'<dt>'+esc(r[0])+'</dt><dd>'+esc(r[1])+'</dd>').join('')+'</dl>';
+  if(c.noteTxt) h+='<p class="note">'+esc(c.noteTxt)+'</p>';
+  if(c.mode==='expired') h+='<p class="note">Approvals last 30 minutes. Nothing was sent.</p><div class="acts"><button class="btn outline" type="button" data-go="a1">'+ic('retry')+'Ask again</button></div>';
+  if(c.mode==='earlier') h+='<p class="note">This conversation closed before you decided, so nothing was sent.</p>';
+  if(c.mode==='decide'){
+    if(st.role==='member'){
+      h+='<p class="note">This conversation can’t complete approvals, so nothing has changed. Ask for it again where Paige can show you an approval control.</p>';
+    } else {
+      const toA=st.sc==='consult'?'@approval:a3':'a3';
+      h+='<div class="acts"><button class="btn gold" type="button" data-go="'+toA+'" data-act="approve">'+ic('check')+'Approve</button><button class="btn ghost" type="button" data-go="'+(st.sc==='consult'?'@approval:a5':'a5')+'" data-act="deny">'+ic('x')+'Not now</button></div>';
+    }
+  }
+  if(c.recovery) h+='<div class="acts"><button class="btn outline" type="button" data-go="a1">'+ic('retry')+esc(c.recovery)+'</button></div>';
+  if(c.receipt) h+='<p class="receipt">'+esc(c.receipt)+'</p>';
+  return h+'</section>';
+}
+function askHTML(c,t,ci){
+  let h='<section class="card ask" role="group" data-key="'+t.id+':ask" aria-labelledby="ask-'+t.id+'"><p id="ask-'+t.id+'" class="sr">Which start should I build?</p>';
+  h+='<div class="opts" role="radiogroup" aria-labelledby="ask-'+t.id+'">';
+  const tabI=st.sel>=0?st.sel:0;
+  c.opts.forEach((o,i)=>{const on=i===st.sel; h+='<button class="opt" type="button" role="radio" aria-checked="'+on+'" tabindex="'+(i===tabI?0:-1)+'" data-opt="'+i+'"'+(i===tabI?' data-focus="ask"':'')+'><span class="radio" aria-hidden="true"></span><span><b>'+esc(o[0])+'</b><small>'+esc(o[1])+'</small></span></button>';});
+  const none=st.sel<0;
+  h+='</div><div class="acts"><button class="btn ink" type="button" data-go="c3" data-act="choose"'+(none?' aria-disabled="true" aria-describedby="ask-need-'+t.id+'"':'')+'>Use this</button>'+(none?'<span class="sr" id="ask-need-'+t.id+'">Pick an option first</span>':'')+'<button class="btn ghost" type="button" data-go="c6" data-act="choose">Skip, use your best guess</button></div></section>';
+  return h;
+}
+function workHTML(c,t,ci){
+  const idx={queued:0,drafting:1,ready:3,blocked:1,failed:1,unknown:1,claimed:1}[c.s];
+  const label={queued:'Queued',drafting:'Drafting',ready:'Ready',blocked:'Paused',failed:'Couldn’t finish',unknown:'Can’t confirm',claimed:'In progress'}[c.s];
+  const seal=c.s==='ready'?ic('check'):(c.s==='blocked'||c.s==='failed'||c.s==='unknown')?ic('tri'):'<span class="dot" aria-hidden="true"></span>';
+  let h='<section class="card work" data-s="'+c.s+'" data-key="'+t.id+':w:'+c.s+'" aria-label="Background work: '+esc(c.title)+', '+label+'"><div class="work-h"><span class="seal">'+seal+'</span><div class="work-t"><strong>'+esc(c.title)+'</strong><span>'+esc(c.sub)+'</span></div></div>';
+  if(c.s==='queued'||c.s==='drafting'||c.s==='ready'){
+    h+='<ol class="stages" aria-label="Stages">'+['Queued','Drafting','Ready'].map((s,i)=>{const ds=i<idx||c.s==='ready'?'done':i===idx?'cur':'todo';return '<li data-s="'+ds+'">'+(ds==='done'?ic('check'):'<span class="ring'+(ds==='cur'?' live':'')+'" aria-hidden="true"></span>')+s+(ds==='cur'?'<span class="sr"> (current)</span>':'')+'</li>'}).join('')+'</ol>';
+  }
+  if(c.s==='claimed') h+='<ol class="stages" aria-label="Stages"><li data-s="cur"><span class="ring" aria-hidden="true"></span>In progress<span class="sr"> (current)</span></li></ol>';
+  if(c.reason) h+='<p class="note">'+esc(c.reason)+'</p>';
+  if(st.sc==='complete'&&st.od[3]==='new'&&t.id==='p1') h+='<p class="note"><button class="jump-up" style="margin:0" type="button" data-scrollto="p3">'+(c.s==='ready'?'PAIGE picked this back up below':'See PAIGE’s update below')+'</button></p>';
+  if(c.btn) h+='<div class="acts"><button class="btn outline" type="button" data-noop="Connecting storage is simulated in this prototype.">'+ic('plug')+esc(c.btn)+'</button></div>';
+  return h+'</section>';
+}
+function researchHTML(c,t){
+  const conf={high:['ok','High confidence'],mid:['mid','Medium confidence'],low:['low','Low confidence']};
+  let h='<section class="card dr" data-key="'+t.id+':dr:'+(c.saved?'s':'p')+'"><div class="dr-head"><span class="dr-ic">'+ic('search')+'</span><div class="dr-t"><strong>'+esc(c.title)+'</strong><span>'+esc(c.sub)+'</span></div><span class="pill '+(c.saved?'ok':'mid')+'">'+(c.saved?'Saved to your research library':'Not saved yet')+'</span></div><ul>';
+  c.findings.forEach(f=>{h+='<li><span class="pill '+conf[f[0]][0]+'">'+conf[f[0]][1]+'</span><p>'+esc(f[1])+'</p><span class="cites">'+esc(f[2])+'</span></li>'});
+  h+='</ul><button class="dr-src" type="button" aria-expanded="false" data-noop="The sources list opens here, unchanged from today.">'+esc(c.src)+' <em>· '+esc(c.cited)+'</em>'+ic('chev')+'</button></section>';
+  return h;
+}
+function cardHTML(c,t,ci){
+  if(c.type==='confirm') return confirmHTML(c,t,ci);
+  if(c.type==='ask') return askHTML(c,t,ci);
+  if(c.type==='asked') return '<div class="card frozen" data-key="'+t.id+':asked">'+ic(c.icon||(c.val?'check':'help'))+'<span>'+esc(c.text)+(c.val?': <b>'+esc(c.val)+'</b>':'')+'</span></div>';
+  if(c.type==='work') return workHTML(c,t,ci);
+  if(c.type==='research') return researchHTML(c,t);
+  if(c.type==='crm') return '<section class="card crm" data-key="'+t.id+':crm"><span class="crm-k">'+ic('check')+esc(c.k)+'</span><strong>'+esc(c.title)+'</strong><span>'+esc(c.sub)+'</span><button class="lnk" type="button" data-noop="Opens the exact record — simulated here.">Open exact record'+ic('ext')+'</button></section>';
+  if(c.type==='artifact') return '<section class="card art" data-key="'+t.id+':art"><span class="thumb" aria-hidden="true"><i></i><i></i><i></i><i></i></span><div class="art-t"><strong>'+esc(c.title)+'</strong><span>'+esc(c.sub)+'</span></div><div class="acts"><button class="btn outline" type="button" data-noop="Opening the document is simulated here.">'+ic('file')+'Open</button><button class="btn gold" type="button" data-noop="Sending is simulated in this prototype — nothing was sent.">'+ic('send')+'Send</button></div></section>';
+  return '';
+}
+function paigeHTML(t,isLast){
+  let h='<article class="turn paige" data-key="'+t.id+'" id="turn-'+t.id+'" aria-label="PAIGE">';
+  const L=t.line||(st.od[4]==='visible'?t.od4line:null);
+  const stripMode=st.od[1]==='strip';
+  if(t.caret&&!t.body&&!t.ack) h+='<div class="md">'+C+'</div>';
+  if(t.earlier) h+='<p class="earlier">Earlier, PAIGE asked you to confirm: '+esc(t.earlier)+'</p>';
+  if(t.ack) h+='<div class="md ack"><p>'+esc(t.ack)+'</p></div>';
+  if(L&&!stripMode) h+=lineHTML(t,L);
+  if(t.body) h+='<div class="md body"'+(t.ack||L?' style="margin-top:8px"':'')+'>'+t.body+'</div>';
+  (t.cards||[]).forEach((c,i)=>h+=cardHTML(c,t,i));
+  if(t.after) h+='<div class="md after">'+t.after+'</div>';
+  if(t.chips) h+='<div class="greet-chips">'+t.chips.map(c=>'<button class="chip" type="button" data-noop="Prompt chips fill the composer — simulated here.">'+esc(c)+'</button>').join('')+'</div>';
+  if(t.foot){
+    const F=t.foot;
+    h+='<div class="foot enterable" data-key="'+t.id+':foot" data-tone="'+F.tone+'"'+(F.focus?' tabindex="-1" data-footfocus':'')+'>'+(F.text?'<p>'+esc(F.text)+'</p>':'');
+    if(F.see) h+='<button class="btn outline" type="button" data-trace="'+F.see+'" data-seeall>'+ic('chev')+'See what finished</button>';
+    if(F.btn) h+='<button class="btn '+(F.ghost?'ghost':'outline')+'" type="button" data-go="'+F.go+'">'+ic(/Keep|Continue/.test(F.btn)?'arrow':'retry')+esc(F.btn)+'</button>';
+    h+='</div>';
+  }
+  if(t.metaRow&&isLast) h+='<div class="meta"><button type="button" aria-label="Copy" data-noop="Copied (simulated).">'+ic('copy')+'</button><button type="button" aria-label="Listen" data-noop="Read-aloud is simulated here.">'+ic('vol')+'</button></div>';
+  return h+'</article>';
+}
+function isPhone(){const d=$('#device');return d&&d.clientWidth<640}
+function currentTurns(){
+  const f=fr(); let t=f.turns;
+  if(st.role==='client'&&f.cl) t=f.cl;
+  else { if(st.od[2]==='bubble'&&f.alt2) t=f.alt2; if(st.od[3]==='inplace'&&f.alt3) t=f.alt3; }
+  return typeof t==='function'?t():t;
+}
+const THREADS=['Quiet clients','Reyes renewal','Kestrel onboarding','Lumen playbook','November check-ins','Rollout research','Goal check'];
+function renderProduct(trigger){
+  const S=sc(), f=fr();
+  const portal=(f.portal!==undefined?f.portal:S.portal)||st.role==='client';
+  const app=$('#product');
+  st.nextLine={}; st.nextStep={};
+  document.documentElement.setAttribute('data-warn',st.od[5]==='gold'?'gold':'ink');
+  document.documentElement.setAttribute('data-ring',st.od[6]==='violet'?'violet':'gold');
+  if(st.role==='client'&&(S.na||f.clNa)){
+    app.innerHTML='<div class="na" style="grid-row:1/-1"><div><b>N/A for the client portal</b>'+esc(S.na||f.clNa)+'</div></div>';
+    return;
+  }
+  const turns=currentTurns();
+  const lastPaige=[...turns].reverse().find(t=>t.paige);
+  let top='<header class="topbar">'+(portal?'<div class="ws"><strong>Lumen Freight</strong><span>Client portal · Brightwater Advisory</span></div>':'<div class="ws"><strong>'+esc(S.thread||'New chat')+'</strong><span>Brightwater Advisory · PAIGE</span></div><button class="tb-btn" type="button" data-noop="New chat is simulated here.">'+ic('plus')+'New chat</button>')+'</header>';
+  let rail='';
+  if(!portal){
+    rail='<nav class="rail" aria-label="Conversations"><h2>Recent</h2>'+THREADS.map(n=>'<button type="button" '+(n===S.thread?'aria-current="true"':'')+' data-noop="Threads are simulated here."><span>'+esc(n)+'</span>'+(S.unread&&n==='Lumen playbook'&&n!==S.thread?'<span class="unread" aria-label="Unread"></span>':'')+(S.unread&&n==='Lumen playbook'&&n===S.thread?'':'')+'</button>').join('')+'</nav>';
+  }
+  let tx='';
+  turns.forEach(t=>{
+    if(t.you) tx+='<div class="turn you" data-key="'+t.id+'"><div class="bubble"><span class="sr">You: </span>'+esc(t.you)+'</div></div>';
+    else if(t.divider) tx+='<p class="divider" data-key="div">Picked back up · '+esc(t.divider)+'</p>';
+    else if(t.banner) tx+='<div class="banner" role="alert" data-key="'+t.id+'"><span>'+esc(t.banner)+'</span>'+(t.retry?'<button class="btn outline" type="button" data-noop="Retry re-sends the same message — simulated here.">Retry</button>':'')+'</div>';
+    else tx+=paigeHTML(t,t===lastPaige);
+  });
+  const comp=f.comp;
+  const busy=comp==='busy';
+  const hint=(comp==='wait-ok'&&st.role!=='member')?'<p class="hint" id="hint" hidden>'+ic('hand')+'PAIGE is waiting on your OK above</p>':comp==='wait-ask'?'<p class="hint" id="hint" hidden>'+ic('help')+'PAIGE is waiting on your answer above</p>':'';
+  let strip='';
+  if(st.od[1]==='strip'&&lastPaige){const L=lastPaige.line||(st.od[4]==='visible'?lastPaige.od4line:null); if(L) strip='<div class="strip">'+lineHTML(lastPaige,L,{strip:1})+'</div>';}
+  const waiting=(comp==='wait-ok'&&st.role!=='member')||comp==='wait-ask';
+  const jumpLbl=!waiting?'Jump to latest':comp==='wait-ok'?'PAIGE needs your OK':'PAIGE has a question';
+  const ph=comp==='wait-ask'?'Or type your own answer…':'Message PAIGE';
+  const composer='<div class="composer comp-wrap"><button class="jump" type="button" id="jump">'+(waiting?'<span class="dot" aria-hidden="true"></span>':ic('down'))+esc(jumpLbl)+'</button><div class="comp-in">'+strip+hint+'<form class="box" id="compForm"><label class="sr" for="compTa">Message PAIGE</label><textarea id="compTa" rows="1" placeholder="'+ph+'"></textarea>'+(busy?'<button class="send stop" type="button" aria-label="Stop" data-stop>'+ic('stop','fill')+'</button>':'<button class="send" type="submit" aria-label="Send">'+ic('up')+'</button>')+'</form></div></div>';
+  const ptoast=f.toast?'<div class="ptoast" role="status">'+ic('err')+'<div><b>'+esc(f.toast.t)+'</b>'+esc(f.toast.d)+'</div></div>':'';
+  app.innerHTML=top+'<div class="main">'+rail+'<div class="chat"><div class="scroll" id="scroll"><div class="transcript" role="log" aria-label="Conversation">'+tx+'</div></div>'+composer+ptoast+'</div></div>';
+  // enter motion only for elements new to this frame
+  const keys=new Set();
+  app.querySelectorAll('[data-key]').forEach(el=>{const k=el.getAttribute('data-key');keys.add(k); if(trigger!=='switch'&&!st.prevKeys.has(k)) el.classList.add('enter');});
+  const prevK=st.prevKeys;
+  st.prevKeys=keys; st.prevLine=st.nextLine; st.prevStep=st.nextStep;
+  // beat plays once per frame key
+  app.querySelectorAll('[data-beat]').forEach(b=>{const k=b.getAttribute('data-beat'); st.played.add(k);});
+  const sc_=$('#scroll'); sc_.scrollTop=sc_.scrollHeight;
+  sc_.addEventListener('scroll',onScroll,{passive:true}); onScroll();
+  // loops run only while on screen (and the tab is visible)
+  if(st.io) st.io.disconnect();
+  if('IntersectionObserver' in window){
+    st.io=new IntersectionObserver(es=>es.forEach(e=>e.target.classList.toggle('off',!e.isIntersecting)),{root:sc_});
+    app.querySelectorAll('.ring.live,.sl').forEach(el=>st.io.observe(el));
+  }
+  if(document.hidden) app.querySelectorAll('.ring.live').forEach(el=>el.classList.add('paused'));
+  // focus management: never leave keyboard users on <body> after a product action
+  if(f.focus&&(trigger==='product'||trigger==='play')){
+    const el=app.querySelector('[data-focus="'+(f.focus==='ask'?'ask':'card')+'"]'); if(el) el.focus({preventScroll:false});
+  } else if(trigger==='product'){
+    let el=app.querySelector('[data-footfocus]');
+    if(!el){const c=[...app.querySelectorAll('.cc')].find(x=>!prevK.has(x.getAttribute('data-key'))); if(c) el=c.querySelector('h4');}
+    if(!el){const turnsEls=app.querySelectorAll('.turn.paige'); const last=turnsEls[turnsEls.length-1]; if(last) el=last.querySelector('.sl-row')||last;}
+    if(el){ if(!el.hasAttribute('tabindex')&&!/^(BUTTON|A|TEXTAREA)$/.test(el.tagName)) el.setAttribute('tabindex','-1'); el.focus({preventScroll:false}); }
+  }
+}
+function onScroll(){
+  const s=$('#scroll'),j=$('#jump'); if(!s||!j)return; const far=s.scrollHeight-s.scrollTop-s.clientHeight>140; j.classList.toggle('show',far);
+  const hint=$('#hint');
+  if(hint){ const tgt=$('#product').querySelector('[data-focus]'); let vis=false;
+    if(tgt){const card=tgt.closest('.card')||tgt; const act=card.querySelector('.acts')||card; const a=act.getBoundingClientRect(),b=s.getBoundingClientRect(); vis=a.top>=b.top-2&&a.bottom<=b.bottom+2;}
+    hint.hidden=vis; }
+}
+
+/* ───────────── review renderers ───────────── */
+function hb(k){return '<span class="hb" data-h="'+k+'">'+H[k]+'</span>'}
+function scenarioHonesty(S){const set=new Set();S.frames.forEach(f=>f.honesty.forEach(h=>set.add(h)));return [...set]}
+function renderReview(){
+  const S=sc(),f=fr();
+  $('#scSel').value=S.id;
+  $('#scHonesty').innerHTML='<span class="vt">Across this scenario:</span> '+scenarioHonesty(S).map(hb).join(' ')+' <span class="vt">· Flow '+S.flow+'</span>';
+  $('#pos').innerHTML='<b>'+(st.fi+1)+' of '+S.frames.length+'</b> · '+esc(f.label);
+  $('#frames').innerHTML=S.frames.map((x,i)=>'<li><button type="button" data-fi="'+i+'" '+(i===st.fi?'aria-current="step"':'')+'><span class="n">'+(i+1)+'</span><span>'+esc(x.label)+'</span>'+(x.branch?'<span class="br">branch</span>':'')+'</button></li>').join('');
+  const br=(f.go||[]);
+  $('#branches').innerHTML=br.length?'<h3 style="margin:4px 0 6px;font-size:11.5px;font-weight:600;color:var(--rv-muted)">Reachable from here</h3><div class="rv-row">'+br.map(b=>'<button class="rv-btn" type="button" data-jump="'+b.to+'">'+esc(b.label)+'</button>').join('')+'</div>':'';
+  $('#frHonesty').innerHTML=f.honesty.map(hb).join(' ');
+  const a=f.ann;
+  let ann='<dt>Container</dt><dd>'+esc(a.c)+'</dd><dt>Motion</dt><dd>'+esc(a.m)+'</dd><dt>Feedback</dt><dd>'+esc(a.f)+'</dd><dt>Haptic</dt><dd>'+esc(a.h)+' <span class="vt">(annotation only — nothing vibrates)</span></dd>';
+  if(f.say) ann+='<dt>Announced</dt><dd>“'+esc(f.say)+'”</dd>';
+  if(f.focus) ann+='<dt>Focus</dt><dd>Moves to the '+(f.focus==='ask'?'first option':'approval card')+' on a product action or Play.</dd>';
+  if(a.why) ann+='<dt>Today vs this</dt><dd>'+esc(a.why)+'</dd>';
+  if(st.role==='member'&&/decide/.test(JSON.stringify(currentTurns()))) ann+='<dt>Seat</dt><dd>Team member: the status line reads “Waiting for an owner’s OK” in the neutral style, there is no Approve control and no composer hint, and the card uses today’s default refusal copy word for word. Telling an owner that a member is waiting would need server routing that does not exist.</dd>';
+  if(st.role==='client'&&f.cl) ann+='<dt>Seat</dt><dd>Client: its own fixture. A client seat may only read web pages and update its own details, so it never sees other clients or tasks; department labels are hidden.</dd>';
+  if((f.portal!==undefined?f.portal:S.portal)&&st.role!=='client') ann+='<dt>Seat</dt><dd>Shown as the client portal sees it — this state only happens on a client seat.</dd>';
+  $('#ann').innerHTML=ann;
+  $('#log').textContent=f.log.join('\n');
+  $('#srlog').innerHTML=st.sr.length?st.sr.slice(-10).reverse().map(x=>'<li><b>“'+esc(x[1])+'”</b> · '+esc(x[0])+'</li>').join(''):'<li>Nothing announced yet.</li>';
+  // pressed states
+  document.querySelectorAll('[data-vw]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.vw===st.vw)));
+  document.querySelectorAll('[data-th]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.th===st.theme)));
+  document.querySelectorAll('[data-mo]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mo===effMotion())));
+  document.querySelectorAll('[data-ro]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.ro===st.role)));
+  // ODs
+  const ODS=[[1,'What PAIGE did',[['inline','Inline in each answer (recommended)'],['strip','Today: one strip above the composer']]],
+             [2,'After Approve',[['none','Same answer, no bubble (recommended)'],['bubble','Today: “Approved — run it.” bubble + new answer']]],
+             [3,'Background work completes',[['new','New answer at the bottom, linked back (recommended)'],['inplace','Update the original answer in place']]],
+             [4,'Plain fast answer',[['hidden','No status line (recommended)'],['visible','Always show a status line']]],
+             [5,'Warning tone (limit, didn’t run, paused)',[['ink','Ink + triangle shape (recommended — keeps gold for the act)'],['gold','Today’s warning token (gold-family)']]],
+             [6,'Keyboard focus ring',[['gold','Today’s Solo gold-core outline'],['violet','Indigo/violet, as §11 states']]]];
+  $('#ods').innerHTML='<p class="rv-warn" style="margin-bottom:8px">OD5 and OD6 are token decisions: the shipped Solo chat uses a gold-family warning token and a gold-core focus ring, while the doctrine keeps gold for the act and says rings are indigo. Your call — nothing in product changes until you pick.</p>'+ODS.map(o=>'<div style="display:grid;gap:5px;margin-bottom:8px"><span class="vt">OD'+o[0]+' · '+o[1]+'</span><div class="rv-row" role="radiogroup" aria-label="OD'+o[0]+' '+o[1]+'">'+o[2].map(v=>'<button class="rv-btn" type="button" role="radio" aria-checked="'+(st.od[o[0]]===v[0])+'" data-od="'+o[0]+'" data-v="'+v[0]+'">'+esc(v[1])+'</button>').join('')+'</div></div>').join('');
+  // decisions
+  const d=st.dec[S.id]||'';
+  $('#decScenario').innerHTML='<div class="vt" style="margin-bottom:5px">This scenario: '+esc(S.name)+'</div><div class="rv-row" role="radiogroup" aria-label="Decision for this scenario">'+['Approve','Revise','Reject'].map(v=>'<button class="rv-btn" type="button" role="radio" aria-checked="'+(d===v)+'" data-dec="'+v+'">'+v+'</button>').join('')+'</div><label class="vt" for="noteSc" style="display:block;margin-top:6px">Notes for this scenario</label><textarea class="rv-ta" id="noteSc" rows="2">'+esc(st.notes[S.id]||'')+'</textarea>';
+  $('#decOverall').innerHTML='<div class="vt" style="margin:6px 0 5px">Overall</div><div class="rv-row" role="radiogroup" aria-label="Overall decision">'+['Approve','Revise','Reject'].map(v=>'<button class="rv-btn" type="button" role="radio" aria-checked="'+(st.overall===v)+'" data-ovr="'+v+'">'+v+'</button>').join('')+'</div><label class="vt" for="noteOv" style="display:block;margin-top:6px">Overall notes</label><textarea class="rv-ta" id="noteOv" rows="2">'+esc(st.overallNote)+'</textarea>';
+  renderSummary();
+  // caption
+  const dw=$('#device').clientWidth;
+  $('#cap').innerHTML='<span><b>'+esc(S.name)+'</b> · '+esc(f.label)+'</span><span>Viewport '+st.vw+'px'+(dw<st.vw-2?' (showing '+dw+'px in this window)':'')+' · '+(isDark()?'Dark':'Light')+' · '+(effMotion()==='reduce'?'Reduced motion':'Full motion')+(st.review?'':' <button class="rv-btn" type="button" id="showReview" style="margin-left:8px">Show review</button>')+'</span>';
+}
+function renderSummary(){
+  const lines=['C3 PAIGE turn states — prototype review','Overall: '+(st.overall||'—')+(st.overallNote?' — '+st.overallNote:'')];
+  SC.forEach(s=>{if(st.dec[s.id]||st.notes[s.id]) lines.push(s.name+': '+(st.dec[s.id]||'—')+(st.notes[s.id]?' — '+st.notes[s.id]:''))});
+  lines.push('Open decisions: OD1='+st.od[1]+', OD2='+st.od[2]+', OD3='+st.od[3]+', OD4='+st.od[4]+', OD5='+st.od[5]+', OD6='+st.od[6]);
+  $('#summary').value=lines.join('\n');
+}
+function isDark(){return getComputedStyle(document.documentElement).colorScheme.indexOf('dark')>-1}
+function effMotion(){return document.documentElement.getAttribute('data-motion')||'full'}
+
+/* ───────────── navigation ───────────── */
+function announce(){
+  const f=fr();
+  if(f.say&&f.say!==st.lastSay){ $('#live').textContent=''; setTimeout(()=>{$('#live').textContent=f.say},30); st.sr.push([sc().name.replace(/^\S+ · /,'')+' · '+f.label,f.say]); }
+  st.lastSay=f.say||'';
+}
+function render(trigger){ closeSheet(true); renderProduct(trigger); announce(); renderReview(); }
+function goFrame(i,trigger){ const S=sc(); st.fi=Math.max(0,Math.min(S.frames.length-1,i)); render(trigger||'review'); }
+function goId(id,trigger){
+  if(id.startsWith('@')){const [s,fid]=id.slice(1).split(':'); switchSc(s,true); const i=sc().frames.findIndex(x=>x.id===fid); goFrame(i,trigger); return;}
+  const i=sc().frames.findIndex(x=>x.id===id); if(i>=0) goFrame(i,trigger);
+}
+function switchSc(id,silent){ st.sc=id; st.fi=0; st.open={}; st.showAll={}; st.prevLine={}; st.prevStep={}; st.lastSay=''; st.sel=-1; st.typed=''; if(!silent) render('switch'); }
+function stopPlay(){ if(st.playing){clearInterval(st.playing);st.playing=null;$('#play').setAttribute('aria-pressed','false');$('#play').textContent='Play';} }
+
+/* ───────────── sheet (phone) ───────────── */
+function openSheet(tid,btn){
+  const t=currentTurns().find(x=>x.id===tid); if(!t) return;
+  st.lastFocusBtn=btn; $('#sheet-body').innerHTML=traceList(t); $('#sheet').classList.add('open');
+  $('#sheet .x').focus();
+}
+function closeSheet(silent){ const s=$('#sheet'); if(!s.classList.contains('open')) return; s.classList.remove('open'); if(!silent&&st.lastFocusBtn&&document.body.contains(st.lastFocusBtn)) st.lastFocusBtn.focus(); }
+
+let toastT;
+function toast(msg){const t=$('#toast'); t.textContent='Prototype · '+msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2600);}
+
+/* ───────────── events ───────────── */
+$('#scSel').innerHTML=SC.map(s=>'<option value="'+s.id+'">'+esc(s.name)+'</option>').join('');
+$('#scSel').addEventListener('change',e=>{stopPlay();switchSc(e.target.value)});
+$('#prev').addEventListener('click',()=>{stopPlay();goFrame(st.fi-1)});
+$('#next').addEventListener('click',()=>{stopPlay();goFrame(st.fi+1)});
+$('#play').addEventListener('click',()=>{
+  if(st.playing){stopPlay();return}
+  $('#play').setAttribute('aria-pressed','true');$('#play').textContent='Pause';
+  if(st.fi>=sc().frames.length-1) goFrame(0,'play');
+  st.playing=setInterval(()=>{const S=sc(); let n=st.fi+1; while(n<S.frames.length&&S.frames[n].branch) n++; if(n>=S.frames.length){stopPlay();return} goFrame(n,'play')},1900);
+});
+$('#frames').addEventListener('click',e=>{const b=e.target.closest('[data-fi]'); if(b){stopPlay();goFrame(+b.dataset.fi)}});
+$('#branches').addEventListener('click',e=>{const b=e.target.closest('[data-jump]'); if(b){stopPlay();goId(b.dataset.jump,'review')}});
+document.addEventListener('click',e=>{
+  const vw=e.target.closest('[data-vw]'); if(vw){st.vw=+vw.dataset.vw; document.documentElement.style.setProperty('--dw',st.vw+'px'); requestAnimationFrame(()=>render('switch')); return;}
+  const th=e.target.closest('[data-th]'); if(th){st.theme=th.dataset.th; if(st.theme) document.documentElement.setAttribute('data-theme',st.theme); else document.documentElement.removeAttribute('data-theme'); renderReview(); return;}
+  const mo=e.target.closest('[data-mo]'); if(mo){document.documentElement.setAttribute('data-motion',mo.dataset.mo); renderReview(); return;}
+  const ro=e.target.closest('[data-ro]'); if(ro){st.role=ro.dataset.ro; render('switch'); return;}
+  const od=e.target.closest('[data-od]'); if(od){st.od[od.dataset.od]=od.dataset.v; render('switch'); return;}
+  const dc=e.target.closest('[data-dec]'); if(dc){st.dec[st.sc]=dc.dataset.dec; store(); renderReview(); return;}
+  const ov=e.target.closest('[data-ovr]'); if(ov){st.overall=ov.dataset.ovr; store(); renderReview(); return;}
+});
+document.addEventListener('input',e=>{
+  if(e.target.id==='noteSc'){st.notes[st.sc]=e.target.value; store(); renderSummary();}
+  if(e.target.id==='noteOv'){st.overallNote=e.target.value; store(); renderSummary();}
+});
+$('#copySum').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('#summary').value);$('#copied').textContent='Copied.'}catch(err){$('#summary').select();$('#copied').textContent='Selected — press Ctrl/Cmd+C.'}});
+function setReview(on){st.review=on; $('#page').classList.toggle('with-review',on); renderReview(); requestAnimationFrame(()=>{renderReview(); const b=on?$('#hideReview'):$('#showReview'); if(b) b.focus();});}
+$('#hideReview').addEventListener('click',()=>setReview(false));
+$('#cap').addEventListener('click',e=>{if(e.target.closest('#showReview')) setReview(true)});
+
+// product interactions
+$('#device').addEventListener('click',e=>{
+  if(e.target.closest('[data-close-sheet]')){closeSheet();return}
+  const tb=e.target.closest('[data-trace]');
+  if(tb&&tb.hasAttribute('data-seeall')){const id=tb.dataset.trace; const row=document.querySelector('.sl-row[data-trace="'+id+'"]');
+    if(isPhone()){openSheet(id,tb);return}
+    st.open[id]=true; if(row){row.setAttribute('aria-expanded','true'); const panel=document.getElementById(row.getAttribute('aria-controls')); if(panel) panel.classList.add('open'); row.focus();} return;}
+  if(tb){const id=tb.dataset.trace; if(isPhone()){openSheet(id,tb);return} st.open[id]=tb.getAttribute('aria-expanded')!=='true';
+    tb.setAttribute('aria-expanded',String(st.open[id])); const panel=document.getElementById(tb.getAttribute('aria-controls')); if(panel) panel.classList.toggle('open',st.open[id]); return;}
+  const sa=e.target.closest('[data-showall]'); if(sa){st.showAll[sa.dataset.showall]=true; renderProduct('switch'); return;}
+  const op=e.target.closest('[data-opt]'); if(op){st.sel=+op.dataset.opt; st.typed=''; renderProduct('switch'); const b=document.querySelector('[data-opt="'+st.sel+'"]'); if(b) b.focus(); return;}
+  const go=e.target.closest('[data-go]'); if(go){ if(go.getAttribute('aria-disabled')==='true'){toast('Pick an option first, or type your own answer below.');return}
+    if(go.dataset.act==='choose') st.typed=''; stopPlay(); goId(go.dataset.go,'product'); return;}
+  const st_=e.target.closest('[data-stop]'); if(st_){stopPlay(); if(st.sc!=='stop'){switchSc('stop',true); goFrame(1,'product');} else goFrame(1,'product'); return;}
+  const sct=e.target.closest('[data-scrollto]'); if(sct){const el=document.getElementById('turn-'+sct.dataset.scrollto); if(el) el.scrollIntoView({block:'start',behavior:effMotion()==='reduce'?'auto':'smooth'}); return;}
+  const j=e.target.closest('#jump'); if(j){const s=$('#scroll'); s.scrollTo({top:s.scrollHeight,behavior:effMotion()==='reduce'?'auto':'smooth'}); return;}
+  const no=e.target.closest('[data-noop]'); if(no){toast(no.dataset.noop); return;}
+});
+$('#device').addEventListener('submit',e=>{e.preventDefault(); const ta=$('#compTa'); if(fr().comp==='wait-ask'&&ta.value.trim()){st.typed=ta.value.trim(); st.sel=-1; stopPlay(); goId('c3','product');return} toast('Typing is simulated — use the scenario picker to move between states.');});
+$('#device').addEventListener('keydown',e=>{
+  const op=e.target.closest('[data-opt]');
+  if(op&&['ArrowDown','ArrowUp','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault(); const n=document.querySelectorAll('[data-opt]').length; const d=(e.key==='ArrowDown'||e.key==='ArrowRight')?1:-1; st.sel=st.sel<0?(d>0?(+op.dataset.opt+1)%n:(+op.dataset.opt-1+n)%n):(st.sel+d+n)%n; st.typed=''; renderProduct('switch'); document.querySelector('[data-opt="'+st.sel+'"]').focus();}
+  if(e.target.id==='compTa'&&e.key==='Enter'&&!e.shiftKey){e.preventDefault(); const form=$('#compForm'); if(form.requestSubmit) form.requestSubmit(); else form.dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));}
+  if(e.key==='Escape') closeSheet();
+});
+document.addEventListener('keydown',e=>{
+  if(e.target.closest('textarea,input,select')) return;
+  if(e.key===']'){stopPlay();goFrame(st.fi+1)} else if(e.key==='['){stopPlay();goFrame(st.fi-1)} else if(e.key==='\\'){setReview(!st.review)}
+});
+document.addEventListener('visibilitychange',()=>document.querySelectorAll('.sl,.ring.live').forEach(s=>s.classList.toggle('paused',document.hidden)));
+$('#replay').addEventListener('click',()=>{stopPlay(); st.played.delete(st.sc+':'+fr().id); st.prevKeys=new Set(); st.prevLine={}; st.prevStep={}; renderProduct('replay');});
+let rT; window.addEventListener('resize',()=>{clearTimeout(rT); rT=setTimeout(()=>render('switch'),120)});
+
+/* init */
+try{ if(matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.setAttribute('data-motion','reduce'); else document.documentElement.setAttribute('data-motion','full'); }catch(e){document.documentElement.setAttribute('data-motion','full')}
+try{ const q=new URLSearchParams(location.search); if(q.get('sc')){st.sc=q.get('sc');st.fi=+(q.get('f')||0);} }catch(e){}
+try{ if(!new URLSearchParams(location.search).get('vw')){ if(innerWidth<700) st.vw=400; else if(innerWidth<1100) st.vw=900; } else st.vw=+new URLSearchParams(location.search).get('vw'); }catch(e){}
+document.documentElement.style.setProperty('--dw',st.vw+'px');
+render('switch');
+window.__proto={SC,st,goFrame,switchSc,goId,render};
+})();
+</script>

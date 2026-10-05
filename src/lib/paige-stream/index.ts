@@ -78,3 +78,27 @@ async function* readDecoded<T>(
     if (done) return;
   }
 }
+export {
+  DECISION_REPLY,
+  STILL_RESEARCHING,
+  TURN_LINE_GATE_MS,
+  deriveLiveTurnView,
+  deriveSnapshotView,
+  formatElapsed,
+  decisionCardResult,
+  isDecisionReplyText,
+  outcomeFromRecord,
+  readTurnRecord,
+  readTurnTrace,
+  settleTurnRows,
+  upsertTurnRow,
+  type LiveTurnInput,
+  type TurnEndCause,
+  type TurnFooterAction,
+  type TurnGlyph,
+  type TurnLineKind,
+  type TurnOutcome,
+  type TurnRow,
+  type TurnSnapshot,
+  type TurnView,
+} from "./turn-view";

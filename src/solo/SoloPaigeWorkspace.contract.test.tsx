@@ -410,7 +410,14 @@ describe("Solo PAIGE workspace contract", () => {
     expect(workspace).toContain("renderRail");
     expect(chat).toContain('navigator.onLine === false');
     expect(chat).toContain('setConnectionIssue("timeout")');
-    expect(chat).toContain("server-side work cancellation is not confirmed");
+    // C3a (declared change): the jargon cancel notice is replaced by the Stop footer on the answer.
+    // Its truth is kept — Stop does not confirm that started work was cancelled on the server.
+    expect(chat).toContain('settleLiveTurn("cancelled", undefined, { stopFocus: !opts?.fromVoice });');
+    // Stop ends the read, not the work: the footer claims nothing about what was saved or cancelled.
+    const view = source("src/lib/paige-stream/turn-view.ts");
+    expect(view).toContain("Stopped showing this answer. ${name} may still finish work that had already started.");
+    expect(view).not.toContain("Anything already finished is saved");
+    expect(chat).not.toContain("server-side work cancellation is not confirmed");
   });
 
   it("appends dictation to unsent text without sending and clears it locally with focus restored", async () => {

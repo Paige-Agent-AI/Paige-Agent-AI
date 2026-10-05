@@ -247,7 +247,7 @@ describe("PAIGE chat, Solo — after Approve the card answers for what happened"
   });
 
   it("keeps the turn when the connection drops, says it may have gone through, and points at where to check", async () => {
-    server(CONTACT, sse([say("Adding him now")]));
+    const sentBodies = server(CONTACT, sse([say("Adding him now")]));
     const host = await mount();
     await ask(host, "add John Coleman");
     await press(buttons(host, /^Approve/)[0]);
@@ -256,7 +256,10 @@ describe("PAIGE chat, Solo — after Approve the card answers for what happened"
     expect(card.getAttribute("aria-label")).toBe("Couldn't confirm");
     expect(host.textContent).toContain("The connection dropped before Paige could report back, so this may have gone through. Check before asking again.");
     // The approval may have run: the turn stays, and nothing claims the message wasn't sent.
-    expect(host.textContent).toContain("Approved — run it.");
+    // C3a (owner ruling 2026-10-05): the card's sentence is SENT — it stays in the request and the
+    // saved history — but no longer drawn as a bubble the person never typed.
+    expect((sentBodies[1]?.messages as Array<{ role: string; content: string }>).filter((m) => m.role === "user").at(-1)?.content).toBe("Approved — run it.");
+    expect(host.textContent).not.toContain("Approved — run it.");
     expect(host.textContent).toContain("Adding him now");
     expect(host.textContent).not.toMatch(/wasn't sent/);
     expect(buttons(host, /^Retry$/)).toHaveLength(0);
@@ -280,14 +283,17 @@ describe("PAIGE chat, Solo — after Approve the card answers for what happened"
   });
 
   it("treats a request that failed after it left the same way, without the 'failed to send' alarm", async () => {
-    server(DRAFTS, new TypeError("Failed to fetch"));
+    const sentBodies = server(DRAFTS, new TypeError("Failed to fetch"));
     const host = await mount();
     await ask(host);
     await press(buttons(host, /^Approve/)[0]);
 
     expect(reports(host)[0].getAttribute("aria-label")).toBe("Couldn't confirm");
     expect(host.textContent).toContain("these may have gone through");
-    expect(host.textContent).toContain("Approved — run it.");
+    // C3a (owner ruling 2026-10-05): the card's sentence is SENT — it stays in the request and the
+    // saved history — but no longer drawn as a bubble the person never typed.
+    expect((sentBodies[1]?.messages as Array<{ role: string; content: string }>).filter((m) => m.role === "user").at(-1)?.content).toBe("Approved — run it.");
+    expect(host.textContent).not.toContain("Approved — run it.");
     expect(toastMock).not.toHaveBeenCalled();
     // No CRM action, so no invented place to check.
     expect(reports(host)[0].querySelectorAll("a")).toHaveLength(0);
@@ -308,7 +314,7 @@ describe("PAIGE chat, Solo — after Approve the card answers for what happened"
   });
 
   it("keeps the turn when the person stops Paige mid-approval, and never offers Approve again", async () => {
-    server(DRAFTS, new Promise(() => {}));
+    const sentBodies = server(DRAFTS, new Promise(() => {}));
     const host = await mount();
     await ask(host);
     await press(buttons(host, /^Approve/)[0]);
@@ -321,7 +327,10 @@ describe("PAIGE chat, Solo — after Approve the card answers for what happened"
     // The approval may already have run: no card to approve twice, the record and the turn stay.
     expect(buttons(host, /^Approve/)).toHaveLength(0);
     expect(host.textContent).toContain("Approved · 2 actions");
-    expect(host.textContent).toContain("Approved — run it.");
+    // C3a (owner ruling 2026-10-05): the card's sentence is SENT — it stays in the request and the
+    // saved history — but no longer drawn as a bubble the person never typed.
+    expect((sentBodies[1]?.messages as Array<{ role: string; content: string }>).filter((m) => m.role === "user").at(-1)?.content).toBe("Approved — run it.");
+    expect(host.textContent).not.toContain("Approved — run it.");
     expect(reports(host)[0].getAttribute("aria-label")).toBe("Couldn't confirm");
     expect(host.textContent).toContain("Paige couldn't report back, so these may have gone through. Check before asking again.");
     expect(buttons(host, /^Retry$/)).toHaveLength(0);
@@ -415,7 +424,7 @@ describe("PAIGE chat, Solo — when the interactive window runs out", () => {
 });
 
 describe("PAIGE chat, every other mount — unchanged", () => {
-  it("keeps today's behaviour exactly: no record, no report, and the frame changes nothing", async () => {
+  it("keeps today's behaviour: no report and the frame changes nothing — the decided card now settles to its record", async () => {
     const bodies = server(DRAFTS, sse([
       frame({ paige_approval_outcome: { note: "Nothing changed.", actions: [{ fingerprint: FP_A, outcome: "not_run" }, { fingerprint: FP_B, outcome: "not_run" }] } }),
       say("Nothing happened — more than one approval was waiting for that."), DONE,
@@ -426,7 +435,12 @@ describe("PAIGE chat, every other mount — unchanged", () => {
 
     expect(bodies[1]?.approvedConfirmations).toEqual([FP_A, FP_B]);
     expect(host.textContent).toMatch(/Nothing happened/);
-    expect(host.textContent).not.toMatch(/Approved · 2 actions|Didn't run|Nothing changed\./);
+    // C3a §58 (declared addition): the card's sentence is no longer drawn, so the decided card on
+    // this mount settles into its record instead of vanishing — otherwise nothing would show that a
+    // decision was made. What the decision RUNS is unchanged: no report card, no outcome copy.
+    expect(host.textContent).toContain("Approved · 2 actions");
+    expect(host.textContent).not.toContain("Approved — run it.");
+    expect(host.textContent).not.toMatch(/Didn't run|Nothing changed\./);
     expect(reports(host)).toHaveLength(0);
     expect(buttons(host, /Not now/)).toHaveLength(0);
     expect(buttons(host, /^Approve/)).toHaveLength(0);

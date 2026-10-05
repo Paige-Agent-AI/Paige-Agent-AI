@@ -12,11 +12,11 @@ FORM_SEED: Invoice obligation -> payment request -> exact Trust review -> hosted
 COMP_STATE_PACKET: Illustrative comp documents prepare/review/action/processing/unknown/partial/zero/refused/expired/unavailable. Integrated actual-component captures supersede it for current layout; no exact owner approval claim for S3/S4.
 DIFF_PACKET: Existing InvoiceLifecycleActions/InvoiceCommandReview gained canonical payment request caller and separate provider totals; existing public InvoiceDocument gained read-only hosted action; new neutral PaymentReturn never claims payment.
 AUTOMATED_EVIDENCE: PASS: provider suite173 tests/10 files; PostgreSQL locks/isolation/rollback/late-exhausted readback proof; focused UI approval/missing-facts/recovery/rejected-read checks.
-STATIC_EVIDENCE: PARTIAL: preceding build/TypeScript ratchet passed; rerun after review repairs required. Deno payment command/webhook/recovery checks pass.
+STATIC_EVIDENCE: PASS: TypeScript ratchet passes with baseline10/current10 after PromiseLike repair; preceding production build passed. Deno payment command/webhook/recovery checks pass.
 RENDERED_EVIDENCE: INTERNAL: actual components, synthetic RPC/authority responses in local Vite fixture; desktop1366x768 and mobile390x844 scrollWidth equals viewport. Captures in sales-provider-s34-assets include payment review, unknown/exhaustion, provider-accepted, confirmed partial, and public customer controls. These exclude full production drawer geometry and authenticated provider execution.
-IMPECCABLE_FINISH_REVIEW: IN_PROGRESS: initial review returned material fixes; repairs require fresh review.
+IMPECCABLE_FINISH_REVIEW: SHIP: independent review at f2a5891b75af60ed3355b15944508c1f48847d03 resolved eight material findings in internally rendered actual components. Full production parent geometry remains UNVERIFIED.
 AUTHENTICATED_RUNTIME: UNVERIFIED: no two-tenant authenticated/provider acceptance claimed.
-KEYBOARD_FOCUS: UNVERIFIED: complete integrated keyboard matrix pending.
+KEYBOARD_FOCUS: PARTIAL: visible discard, unknown-review Close and public-control focus captured; full authenticated shell keyboard matrix remains UNVERIFIED.
 ZOOM_REFLOW: UNVERIFIED: full Solo shell reflow/zoom pending.
 TRUTHFUL_STATE_LABELS: Request != payment; provider acceptance != settlement; redirect != allocation. Manual receipt != provider-confirmed settlement.
 MUST_PRESERVE: One invoice ledger, canonical Trust/Spine/Rail, tenant merchant direct charges, no PAIGE fee, manual UI and shared capability parity, Billing separation.

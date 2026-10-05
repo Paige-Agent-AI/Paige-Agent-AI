@@ -7,10 +7,10 @@ MATERIAL_FLOW_CHANGE: NO: bounded source read in the existing conversation and e
 FLOW_PROTOTYPE: NOT_REQUIRED: no new visual/interaction flow; existing approved Chat and draft review retained. Full commercial package prototype remains separately owed.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: owner resolves a canonical offer and selects the intended recorded price before assembling commercial terms.
 VISUAL_DIRECTION: PASS: existing canonical Chat presentation retained; source facts only, no decorative metrics or inferred readiness.
-AUTOMATED_EVIDENCE: PASS: offer read/manifest/Chat tests58 PASS; actual existing governed-draft PostgreSQL harness loads/replays this read migration and proves literal search, duplicate offers, price bounds, foreign scope, suspended/non-owner/unauthenticated refusals plus unchanged concurrent draft replay/CAS.
-STATIC_EVIDENCE: PASS: Capability Kit anti-bypass and action-risk lint PASS without new exemptions; caller-JWT RPC, current Sales actor gate, explicit field projection and bounded rows reviewed. Exact-head types/CI remain required before merge.
+AUTOMATED_EVIDENCE: PASS: offer read/manifest/Chat tests63 PASS; actual existing governed-draft PostgreSQL harness loads/replays this read migration and proves literal search, duplicate offers, price bounds, foreign scope, suspended/non-owner/unauthenticated refusals plus unchanged concurrent draft replay/CAS.
+STATIC_EVIDENCE: PASS: Capability Kit anti-bypass and action-risk lint PASS without new exemptions; Actual Chat caller-JWT binding, current Sales actor gate, explicit field projection, text truncation flags, bounded rows and atomic canonical read receipt reviewed. Exact-head types/CI remain required before merge.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no rendered component or layout changes; source output is tested independently of generic Chat rendering.
-BEHAVIORAL_EVIDENCE: PASS: exact/literal lookup, multiple/no matches, multiple/truncated prices, malformed scope/data, safe error projection and shared dispatcher exercised. Provider functions never invoked.
+BEHAVIORAL_EVIDENCE: PASS: exact/literal lookup, multiple/no matches, multiple/truncated prices, malformed scope/data, safe error projection and shared dispatcher exercised. Provider functions never invoked. Missing receipt identity is refused; actual SQL forced receipt failure prevents a successful read.
 AUTHENTICATED_RUNTIME: UNVERIFIED: browser-control process cannot initialize; hosted two-tenant lookup and subsequent package acceptance remain owed.
 KEYBOARD_FOCUS: NOT_APPLICABLE: no controls or focus behavior changed; full authenticated shell remains unverified.
 ZOOM_REFLOW: NOT_APPLICABLE: no DOM or layout change.
@@ -24,8 +24,8 @@ MUST_NOT_HAPPEN: No provider identifier leakage, wildcard-expanded search, forei
 MUST_PRESERVE: Canonical Catalog writers, current role/tenant gate, existing invoice draft/publication/approval engine, existing Chat lifecycle and shared receipts.
 ACCEPTANCE_CRITERIA: Current tenant owner/admin can read bounded exact/literal offer candidates, sees all returned price options and explicit truncation, and selects with the owner; foreign/non-owner reads fail closed. Hosted acceptance remains owed.
 MOTION_PURPOSE: NONE: unchanged.
-PROTECTED_SEAMS: Existing Sales actor gate and caller-JWT RPC, Kit read declaration, canonical Sales tool set and shared owner-seat/receipt paths reused; no shared policy/resume/provider change.
-INTERNAL_BUILD_IDENTITY: base=4ee0b42c6f98252a9079102d6b424c6f134a702f plus local offer-read patch; deployment=NOT_APPLICABLE; environment=local; migrations=PROOF_OWED(20270583000000); edge=PROOF_OWED(paige-ai-chat); evidence=docs/delivery/sales-commercial-s2.md
+PROTECTED_SEAMS: Existing Sales actor gate and caller-JWT RPC, Kit read declaration, canonical Sales tool set and shared owner-seat/receipt paths reused; No shared policy/resume/provider change; existing Sales dispatcher caller is corrected to the authenticated client, retaining service-only approval reads.
+INTERNAL_BUILD_IDENTITY: base=83c5fce12f5b0784568c012c8548555e165cc318 plus local offer-read patch; deployment=NOT_APPLICABLE; environment=local; migrations=PROOF_OWED(20270583000000); edge=PROOF_OWED(paige-ai-chat); evidence=docs/delivery/sales-commercial-s2.md
 RELEASE_CHANNEL: development: local source/SQL/tests only; reviewed CI-green merge and deployed source readback remain required.
 RELEASE_CLASSIFICATION: internal-only: bounded read enabling subsequent commercial assembly.
 CUSTOMER_RELEASE_IDENTITY: none: full commercial transaction acceptance incomplete.

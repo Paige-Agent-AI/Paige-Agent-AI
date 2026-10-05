@@ -10,6 +10,18 @@ INSERT INTO tenant_prices(id,tenant_id,product_id,currency,unit_amount,billing_i
 \ir ../../supabase/migrations/20270583000000_sales_commercial_offer_read.sql
 \ir ../../supabase/migrations/20270583000000_sales_commercial_offer_read.sql
 SELECT proof_assert(NOT has_function_privilege('anon','public.read_sales_commercial_offers(uuid,text,uuid,integer,uuid)','EXECUTE') AND NOT has_function_privilege('service_role','public.read_sales_commercial_offers(uuid,text,uuid,integer,uuid)','EXECUTE'),'offer read only caller authenticated, not anonymous/service');
+INSERT INTO tenant_products(id,tenant_id,name,status,description) VALUES ('40000000-0000-0000-0000-000000000005','20000000-0000-0000-0000-000000000001',repeat('L',201),'active',repeat('D',5001));
+SET LOCAL ROLE authenticated;
+SELECT proof_assert(char_length(read_sales_commercial_offers('20000000-0000-0000-0000-000000000001',NULL,'40000000-0000-0000-0000-000000000005')#>>'{offers,0,name}')=200 AND (read_sales_commercial_offers('20000000-0000-0000-0000-000000000001',NULL,'40000000-0000-0000-0000-000000000005')#>>'{offers,0,name_truncated}')::boolean AND char_length(read_sales_commercial_offers('20000000-0000-0000-0000-000000000001',NULL,'40000000-0000-0000-0000-000000000005')#>>'{offers,0,description}')=5000 AND (read_sales_commercial_offers('20000000-0000-0000-0000-000000000001',NULL,'40000000-0000-0000-0000-000000000005')#>>'{offers,0,description_truncated}')::boolean,'shortened commercial name and description explicitly marked incomplete');
+SELECT set_config('test.offer_receipt',read_sales_commercial_offers('20000000-0000-0000-0000-000000000001','Test')->>'receipt_id',true);
+RESET ROLE;
+SELECT proof_assert(EXISTS(SELECT 1 FROM paige_workspace_events WHERE source_id=current_setting('test.offer_receipt')::uuid AND tenant_id='20000000-0000-0000-0000-000000000001' AND capability_key='read_sales_commercial_offers'),'offer read returned canonical Rail identity');
+CREATE FUNCTION proof_offer_receipt_fail() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.capability_key='read_sales_commercial_offers' THEN RAISE EXCEPTION 'Forced offer receipt failure' USING ERRCODE='22023'; END IF; RETURN NEW; END $$;
+CREATE TRIGGER proof_offer_receipt_fail BEFORE INSERT ON paige_workspace_events FOR EACH ROW EXECUTE FUNCTION proof_offer_receipt_fail();
+SET LOCAL ROLE authenticated;
+SELECT proof_denied($q$SELECT read_sales_commercial_offers('20000000-0000-0000-0000-000000000001','Test')$q$,'22023','offer read cannot return success without its receipt');
+RESET ROLE;
+DROP TRIGGER proof_offer_receipt_fail ON paige_workspace_events;
 SET LOCAL ROLE authenticated;
 SELECT proof_assert(jsonb_array_length(read_sales_commercial_offers('20000000-0000-0000-0000-000000000001','Test service')->'offers')=2,'duplicate offer names remain two choices');
 SELECT proof_assert(jsonb_array_length(read_sales_commercial_offers('20000000-0000-0000-0000-000000000001','%')->'offers')=1,'percent search is literal rather than wildcard');

@@ -67,7 +67,7 @@ let readCheckReply = { can_read_document: false, document_kind: "other", first_f
  */
 const { isTurnFrame, readTurnRecord } = await import("../../supabase/functions/_shared/paige-turn/contract.ts");
 const { auditTurnStream, wireAnswerMatchesSaved } = await import("../lib/audit-turn-frames.mjs");
-const turnAudit = { streams: 0, violations: [], withheld: 0, confirms: 0, refused: 0, persisted: 0, traced: 0, thoughtsBesideTrace: 0, answersCompared: 0, answerMismatches: [] };
+const turnAudit = { streams: 0, violations: [], withheld: 0, confirms: 0, refused: 0, persisted: 0, traced: 0, thoughtsBesideTrace: 0, answersCompared: 0, answerMismatches: [], stepsStarted: 0, stepsWithdrawn: 0, stepsClosedAfterStart: 0 };
 function auditTurnFrames(label, responses, rec, narration) {
   const wireThoughts = new Set();
   for (const response of responses) {
@@ -81,6 +81,15 @@ function auditTurnFrames(label, responses, rec, narration) {
     turnAudit.streams += 1;
     for (const why of audit.violations) turnAudit.violations.push(`${label}: ${why}`);
     for (const it of audit.items) if (it.f?.paige_step?.kind === "thought") wireThoughts.add(it.f.paige_step.label);
+    // C2b — what the step-lifecycle rules (in the shared auditor) actually got to read.
+    const started = new Set(audit.items.filter((it) => it.f?.paige_step?.status === "running").map((it) => it.f.paige_step.id));
+    turnAudit.stepsStarted += started.size;
+    for (const it of audit.items) {
+      const st = it.f?.paige_step;
+      if (!st || st.status === "running" || !started.has(st.id)) continue;
+      if (st.status === "withdrawn") turnAudit.stepsWithdrawn += 1;
+      else turnAudit.stepsClosedAfterStart += 1;
+    }
     if (!audit.terminal) continue;
     const bad = (why) => turnAudit.violations.push(`${label}: ${why}`);
     const { t } = audit.terminal;
@@ -147,6 +156,8 @@ let outboundCalls = [];
 let writeBackAnswer = null;
 /** How `fetch-url-content` answers this drive, as `{ status, body }`; unset, it answers a bare success. */
 let fetchUrlAnswer = null;
+/** How any other sibling function answers this drive, by URL fragment; unset, a bare success. */
+let otherOutboundAnswers = null;
 /**
  * An Anthropic-native tool_use stream. `gatewayCompat` converts it to OpenAI-compat deltas, so
  * the handler's agentic loop sees a real tool call. Without this the whole tool loop — where
@@ -168,6 +179,33 @@ const sseToolCallReply = (name, args, text = "", id = "toolu_test") =>
     ].join(""),
     { status: 200, headers: { "Content-Type": "text/event-stream" } },
   );
+
+/**
+ * SEVERAL tool calls in ONE round (C2b): one tool_use block per spec, in order. A spec may carry its
+ * own `id` (an empty string models a provider that omits it); otherwise `<id>_<n>`. A spec's `rawArgs`
+ * is sent as the arguments text verbatim, so a drive can model a provider that cut them off mid-JSON.
+ */
+const sseToolCallsReply = (specs, text = "", id = "toolu_test") => {
+  const lead = text ? 1 : 0;
+  return new Response(
+    [
+      `event: message_start\ndata: ${JSON.stringify({ type: "message_start", message: { usage: { input_tokens: 1, output_tokens: 1 } } })}\n\n`,
+      ...(text ? [
+        `event: content_block_start\ndata: ${JSON.stringify({ type: "content_block_start", index: 0, content_block: { type: "text", text: "" } })}\n\n`,
+        `event: content_block_delta\ndata: ${JSON.stringify({ type: "content_block_delta", index: 0, delta: { type: "text_delta", text } })}\n\n`,
+        `event: content_block_stop\ndata: ${JSON.stringify({ type: "content_block_stop", index: 0 })}\n\n`,
+      ] : []),
+      ...specs.flatMap((spec, n) => [
+        `event: content_block_start\ndata: ${JSON.stringify({ type: "content_block_start", index: lead + n, content_block: { type: "tool_use", id: spec.id ?? `${id}_${n}`, name: spec.name } })}\n\n`,
+        `event: content_block_delta\ndata: ${JSON.stringify({ type: "content_block_delta", index: lead + n, delta: { type: "input_json_delta", partial_json: spec.rawArgs ?? JSON.stringify(spec.args ?? {}) } })}\n\n`,
+        `event: content_block_stop\ndata: ${JSON.stringify({ type: "content_block_stop", index: lead + n })}\n\n`,
+      ]),
+      `event: message_delta\ndata: ${JSON.stringify({ type: "message_delta", delta: { stop_reason: "tool_use" } })}\n\n`,
+      `event: message_stop\ndata: ${JSON.stringify({ type: "message_stop" })}\n\n`,
+    ].join(""),
+    { status: 200, headers: { "Content-Type": "text/event-stream" } },
+  );
+};
 
 const sseModelReply = (text) =>
   new Response(
@@ -205,7 +243,8 @@ globalThis.fetch = async (url, init) => {
     outboundCalls.push({ url: href, body: String(init?.body ?? "") });
     const answer = href.includes("paige-write-back") && writeBackAnswer ? writeBackAnswer
       : href.includes("fetch-url-content") && fetchUrlAnswer ? fetchUrlAnswer
-      : { status: 200, body: { success: true } };
+      : Object.entries(otherOutboundAnswers ?? {}).find(([fragment]) => href.includes(fragment))?.[1]
+      ?? { status: 200, body: { success: true } };
     return new Response(JSON.stringify(answer.body), { status: answer.status, headers: { "Content-Type": "application/json" } });
   }
   if (modelStub && href.includes("anthropic.com")) {
@@ -251,6 +290,8 @@ globalThis.fetch = async (url, init) => {
         if (turn?.queue?.length) { turn.next = turn.queue.shift(); turn.round += 1; }
         else if (turn) turn.toolCallOnce = false;
         else toolCallOnce = false;
+        // `{ batch: [spec, …] }` is ONE round that calls several tools at once (C2b).
+        if (Array.isArray(spec.batch)) return sseToolCallsReply(spec.batch, toolRoundText, id);
         return sseToolCallReply(spec.name, spec.args, toolRoundText, id);
       }
       return sseModelReply(scriptedReply);
@@ -333,6 +374,8 @@ async function drive({
   writeBack = null,
   /** How `fetch-url-content` answers, as `{ status, body }` — to drive a page that was really read. */
   fetchedPage = null,
+  /** Any other sibling function's answer, as `{ "<url fragment>": { status, body } }` (C2b). */
+  outboundAnswers = null,
   /** What PAIGE's streamed answer says this drive. Default "ok", so every existing check is unchanged. */
   replyText = "ok",
   /** What she writes before her tool call, which becomes a thought line. Default none. */
@@ -366,6 +409,7 @@ async function drive({
   outboundCalls = [];
   writeBackAnswer = writeBack;
   fetchUrlAnswer = fetchedPage;
+  otherOutboundAnswers = outboundAnswers;
   modelStub = stream;
   readCheckReply = readCheck;
   const toolCalls = Array.isArray(toolCall) ? toolCall : toolCall ? [toolCall] : [];
@@ -4490,9 +4534,13 @@ console.log("\noutbound drafts — a draft PAIGE files for a customer is read fo
   assert("31.20 a refused draft renders no step and is not audited as a write",
     refusedAsInternal(refusedFiling) && actionSteps(refusedFiling).length === 0 && audited(refusedFiling).length === 0,
     JSON.stringify({ steps: actionSteps(refusedFiling), audited: audited(refusedFiling).length }));
+  // Since C2b a filed one shows its step as it starts and as it finishes: ONE row, running then done.
+  const stepFrames = (r) => frames(r).filter((f) => f.paige_step?.kind === "action").map((f) => f.paige_step);
+  const cleanSteps = stepFrames(cleanFiling);
   assert("31.20 CONTROL: a filed one renders its step and is audited",
-    actionSteps(cleanFiling).length === 1 && audited(cleanFiling).length >= 1,
-    JSON.stringify({ steps: actionSteps(cleanFiling), audited: audited(cleanFiling).length }));
+    cleanSteps.length === 2 && cleanSteps[0].status === "running" && cleanSteps[1].status === "done"
+      && cleanSteps[0].id === cleanSteps[1].id && audited(cleanFiling).length >= 1,
+    JSON.stringify({ steps: cleanSteps.map((s) => [s.id, s.status, s.label]), audited: audited(cleanFiling).length }));
 
   // A body sent as a list is read string by string: the queue would store it joined into one message.
   const listed = await propose(["Hi Dana,", PLANTS[0][1]]);
@@ -5299,6 +5347,309 @@ console.log("\npaige_turn — every stream says it started and ends once, before
       && closeBrokeMid.bodyText.indexOf('"LIMIT_REACHED"') < closeBrokeMid.bodyText.indexOf(HALF),
     JSON.stringify({ wire: turnsOf(closeBrokeMid), persisted: persistedStates(closeBrokeMid) }));
 
+  // ── C2b · TRUTHFUL START + FINISH (docs/delivery/paige-conversational-loop-c2.md) ──────────────
+  // A tool that passed every gate is announced `running` as it is dispatched and closed on the SAME
+  // id and seq the moment it returns. A call any gate refuses is never announced.
+  const actionFrames = (r) => r.bodyText.split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
+    .map((l) => { try { return JSON.parse(l.slice(6)); } catch { return null; } })
+    .filter((f) => f?.paige_step?.kind === "action").map((f) => f.paige_step);
+  const runningFrames = (r) => actionFrames(r).filter((s) => s.status === "running");
+  const traceOf = (r) => r.rec.rpc.find((c) => c.name === "paige_chat_turn_append" && c.args?.p_role === "assistant")?.args?.p_bundle_ref?.turn_trace ?? [];
+  const lineOf = (r, needle) => r.bodyText.split("\n").filter((l) => l.startsWith("data: ")).findIndex((l) => l.includes(needle));
+  const ORDINARY_OWNER = { rpcOverrides: { ...AS_OWNER, match_paige_memory: { data: [], error: null } }, ...NO_MEMORY };
+  const search = (query, id) => ({ name: "web_search", args: { query }, ...(id !== undefined ? { id } : {}) });
+
+  // 36.21 Two tools in ONE round: each starts and finishes before the next starts.
+  const twoTools = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "Here is what I found.",
+    toolCall: { batch: [search("client onboarding checklist", "toolu_a"), search("retainer agreement template", "toolu_b")] }, ...ORDINARY_OWNER });
+  const tt = actionFrames(twoTools);
+  assert("36.21 two tools in one round arrive start A, finish A, start B, finish B — one id and one seq per tool, no detail on a start",
+    tt.length === 4 && tt.map((x) => x.status).join() === "running,done,running,done"
+      && tt[0].id === tt[1].id && tt[2].id === tt[3].id && tt[0].id !== tt[2].id
+      && tt[0].seq === tt[1].seq && tt[2].seq === tt[3].seq && tt[0].seq < tt[2].seq
+      && tt[0].label === "Searching the web" && !("detail" in tt[0]) && !("detail" in tt[2])
+      && tt[1].detail === "client onboarding checklist" && tt[3].detail === "retainer agreement template"
+      && traceOf(twoTools).length === 2 && traceOf(twoTools).every((e) => e.status === "done"),
+    JSON.stringify({ steps: tt, trace: traceOf(twoTools) }));
+  // 36.22 …and a provider that omits the call ids still gets one row per tool: the id carries the
+  // continuation pass, the round and the call's index (`round` alone restarts on every pass).
+  const noIds = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "Here is what I found.",
+    toolCall: { batch: [search("client onboarding checklist", ""), search("retainer agreement template", "")] }, ...ORDINARY_OWNER });
+  const ni = actionFrames(noIds);
+  assert("36.22 with no call ids from the provider, two tools in one round still keep two distinct rows",
+    ni.length === 4 && ni.map((x) => x.status).join() === "running,done,running,done"
+      && ni[0].id === ni[1].id && ni[2].id === ni[3].id && ni[0].id !== ni[2].id && /^0:0:\d+:$/.test(ni[0].id),
+    JSON.stringify(ni));
+
+  // 36.23 A CALL ANY GATE REFUSES IS NEVER ANNOUNCED. Each shape: the gate really fired (the model was
+  // told), and no `running` frame reached the wire.
+  const toldModel = (r) => r.modelEgress.map((b) => b.replace(/\\"/g, '"')).join("\n");
+  const FILE = { name: "action_file", args: { action_kind: "owner.internal_note", title: "Book your next session", summary: "Next step for Dana", contact_id: OWN } };
+  const laneOf = (mode) => ({ rpcOverrides: { ...PERSONA, get_actor_access: { data: { tier: "tenant" }, error: null }, resolve_tool_autonomy: { data: mode, error: null } },
+    tablesExtra: { user_roles: [{ role: "admin" }], paige_action_kinds: () => [{ executor: "record_only" }] },
+    serviceTablesExtra: { paige_action_kinds: () => [{ executor: "record_only" }] } });
+  const offLane = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "That's switched off.", toolCall: FILE, ...laneOf("off") });
+  const confirmLane = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "Approve it when ready.", toolCall: FILE, ...laneOf("confirm") });
+  const crmCard = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "Approve it when ready.",
+    toolCall: { name: "crm_create_contact", args: { first_name: "Dana", last_name: "Reyes", email: "dana@example.test" } }, ...laneOf("confirm"),
+    functionsExtra: { "crm-command": { data: { ok: false, outcome: "approval_required", fingerprint: "c".repeat(16), summary: "Add Dana Reyes" }, error: null } } });
+  const gateShapes = {
+    clientSeat: [refusedTool, toldModel(refusedTool).includes("forbidden_seat")],
+    autonomyOff: [offLane, toldModel(offLane).includes('"disabled":true')],
+    needsConfirm: [confirmLane, toldModel(confirmLane).includes('"needs_confirm":true')],
+    crmDoorApproval: [crmCard, crmCard.rec.functions.some((c) => c.name === "crm-command") && toldModel(crmCard).includes('"needs_confirm":true')],
+  };
+  assert("36.23 a call a gate refused never shows as running: client seat, autonomy off, a Needs-your-OK card, the CRM door's approval",
+    Object.values(gateShapes).every(([r, fired]) => fired && runningFrames(r).length === 0 && actionFrames(r).length === 0),
+    JSON.stringify(Object.fromEntries(Object.entries(gateShapes).map(([k, [r, fired]]) => [k, { fired, steps: actionFrames(r) }]))));
+  // 36.23b …nor is a call a check INSIDE the dispatch chain refuses: the service-role CRM read bound to
+  // a workspace that is not the caller's own, and a proposal with no message in it. (The internal-text
+  // refusal is 31.20.) Each still gets its FINISH, as before; only the START is withheld.
+  const ADMIN_OWNER = { rpcOverrides: { ...PERSONA, get_actor_access: { data: { tier: "tenant" }, error: null }, match_paige_memory: { data: [], error: null } },
+    tablesExtra: { user_roles: [{ role: "admin" }], client_memory: () => [], paige_pending_approvals: () => [{ id: "b0b0b0b0-b0b0-4b0b-8b0b-b0b0b0b0b0b0" }] },
+    serviceTablesExtra: { client_memory: () => [] } };
+  // The binding re-reads the caller's active workspace at dispatch, after the authority gate read it
+  // once. The switch is FOUND, not written down: the active workspace moves after `k` reads, and the
+  // smallest `k` at which the binding refuses is the first read after the gate's — the START's own.
+  const switchingActive = (k) => { let reads = 0; return () => ({ data: ++reads <= k ? CALLER_TENANT : OTHER_TENANT, error: null }); };
+  // THE FULL SWEEP (C2b race fix): every switch point from the first read to well past the dispatch.
+  // The smallest `k` that refuses is 36.23b's case; 36.23f reads every `k`.
+  const switchSweep = [];
+  for (let k = 1; k <= 30; k++) {
+    const r = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "I couldn't check that workspace.",
+      toolCall: { name: "crm_search_contacts", args: { query: "Dana" } }, ...ADMIN_OWNER,
+      rpcOverrides: { ...ADMIN_OWNER.rpcOverrides, current_user_tenant_id: switchingActive(k) } });
+    switchSweep.push({ k, r, mismatch: toldModel(r).includes("workspace_mismatch") });
+  }
+  const mismatched = switchSweep.find((x) => x.mismatch)?.r ?? { modelEgress: [], bodyText: "" };
+  const bodiless = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "What should it say?",
+    toolCall: { name: "propose_action", args: { action_type: "email", contact_id: OWN, subject: "Your next session", body: "   ", summary: "Email Dana" } }, ...ADMIN_OWNER });
+  const inChain = {
+    workspaceMismatch: [mismatched, toldModel(mismatched).includes("workspace_mismatch")],
+    noMessageBody: [bodiless, toldModel(bodiless).includes("No message body was drafted")],
+  };
+  assert("36.23b a call a check inside the dispatch refuses never shows as running, and still gets its finish",
+    Object.values(inChain).every(([r, fired]) => fired && runningFrames(r).length === 0 && actionFrames(r).length === 1 && actionFrames(r)[0].status === "error"),
+    JSON.stringify(Object.fromEntries(Object.entries(inChain).map(([k, [r, fired]]) => [k, { fired, steps: actionFrames(r) }]))));
+  // 36.23f THE SWITCH CAN LAND ANYWHERE. The START and the dispatch branch ask the SAME one read of the
+  // caller's workspace for a call, so no switch point gives a START for a call the binding refuses:
+  // across the whole sweep, a call the model was told is `workspace_mismatch` never showed as running,
+  // and no row went running → error on the binding. Non-vacuous: the sweep holds refused calls AND
+  // calls that started and ran.
+  const sweepRows = switchSweep.map(({ k, r, mismatch }) => ({ k, mismatch, steps: actionFrames(r).map((x) => x.status).join() }));
+  assert("36.23f a workspace switch at ANY read never yields a START for a call the binding refuses (no running → error on workspace_mismatch)",
+    switchSweep.every(({ r, mismatch }) => !mismatch || runningFrames(r).length === 0)
+      && switchSweep.some((x) => x.mismatch) && switchSweep.some((x) => !x.mismatch && runningFrames(x.r).length === 1),
+    JSON.stringify(sweepRows));
+
+  // 36.23g …and the one read is PER CALL, never shared across the batch: two service-role CRM reads in
+  // one round, the workspace switching between them. Somewhere in the sweep the first call reads the
+  // caller's own workspace and runs, and the second reads the switched one and is refused — unannounced.
+  // (Were the read kept across calls, the second would reuse the first's answer and run against the
+  // OLD workspace — the window the branch's own comment says the per-tool read exists to close.)
+  const batchSweep = [];
+  for (let k = 1; k <= 30; k++) {
+    const r = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "Here is what I found.",
+      toolCall: { batch: [{ name: "crm_search_contacts", args: { query: "Dana" }, id: "toolu_c1" }, { name: "crm_search_contacts", args: { query: "Reyes" }, id: "toolu_c2" }] },
+      ...ADMIN_OWNER, rpcOverrides: { ...ADMIN_OWNER.rpcOverrides, current_user_tenant_id: switchingActive(k) } });
+    const mineMismatch = (id) => (toldModel(r).match(new RegExp(`"tool_use_id":"${id}","content":"[^]{0,80}`)) ?? [""])[0].includes("workspace_mismatch");
+    batchSweep.push({ k, r, first: mineMismatch("toolu_c1"), second: mineMismatch("toolu_c2") });
+  }
+  const splitBatch = batchSweep.find((x) => !x.first && x.second);
+  const splitSteps = splitBatch ? actionFrames(splitBatch.r) : [];
+  assert("36.23g the workspace binding is read fresh for each call: a switch between two calls refuses the second, which never shows as running",
+    !!splitBatch && splitSteps.filter((x) => x.status === "running").length === 1 && splitSteps.find((x) => x.status === "running")?.id.endsWith(":toolu_c1")
+      && batchSweep.every(({ r, first, second }) => [["toolu_c1", first], ["toolu_c2", second]]
+        .every(([id, refused]) => !refused || !runningFrames(r).some((x) => x.id.endsWith(`:${id}`)))),
+    JSON.stringify({ k: splitBatch?.k, steps: splitSteps, sweep: batchSweep.map(({ k, first, second, r }) => [k, first, second, actionFrames(r).map((x) => x.status).join()]) }));
+
+  // 36.23c NO WORKSPACE. A tenant-less caller (a Super Admin at rest) is admitted by the role gate, and
+  // the dispatch then answers "no workspace" for a tool that needs one: it is never announced.
+  const TENANTLESS = { rpcOverrides: { get_actor_access: { data: { tier: "tenant" }, error: null },
+    get_paige_persona_context: { data: [{ tenant_id: null, tenant_name: null, playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null },
+    tenant_comms_readiness: { data: null, error: { code: "42501", message: "COMMS_READINESS_NO_TENANT" } },
+    list_tool_autonomy: { data: [], error: null }, resolve_tool_autonomy: { data: "auto", error: null }, match_paige_memory: { data: [], error: null } },
+    tablesExtra: { user_roles: [{ role: "super_admin" }], client_memory: () => [] }, serviceTablesExtra: { client_memory: () => [] } };
+  const noWorkspace = {};
+  for (const [tool, args] of [["comms_connection_summary", {}], ["comms_list_numbers", {}], ["crm_list_tasks", {}]]) {
+    const r = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "Open a workspace first.", toolCall: { name: tool, args }, ...TENANTLESS });
+    noWorkspace[tool] = [r, toldModel(r).includes("tenant_not_resolved")];
+  }
+  assert("36.23c a tool the dispatch answers with no workspace (tenant_not_resolved) is never shown as running",
+    Object.values(noWorkspace).every(([r, fired]) => fired && runningFrames(r).length === 0),
+    JSON.stringify(Object.fromEntries(Object.entries(noWorkspace).map(([k, [r, fired]]) => [k, { fired, steps: actionFrames(r) }]))));
+  // 36.23i …and a tool that DOES run with no workspace is announced like any other call. The same
+  // tenant-less operator asks whether someone is online: presence_check_user answers platform-wide for
+  // the operator (is_platform_owner()), so the call reaches its handler, runs and returns a match. It
+  // shows `running`, then `done` on the same id and seq — never a FINISH with no START (Codex review,
+  // PR #1729). The control: a tool whose RPC refuses a caller with no workspace (list_team_members
+  // raises TEAM_FORBIDDEN, is_tenant_member(NULL) being false) is still never announced, and closes
+  // `error` on a FINISH-only row.
+  const presenceTenantless = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "Riley is online.",
+    toolCall: { name: "presence_is_online", args: { query: "Riley" } },
+    ...TENANTLESS, rpcOverrides: { ...TENANTLESS.rpcOverrides, presence_check_user: { data: [{ user_id: OWN, full_name: "Riley Park", avatar_url: null, is_online: true, status: "online", last_seen: new Date().toISOString() }], error: null } } });
+  const teamTenantless = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "Open a workspace first.",
+    toolCall: { name: "crm_list_team", args: {} },
+    ...TENANTLESS, rpcOverrides: { ...TENANTLESS.rpcOverrides, list_team_members: { data: null, error: { code: "42501", message: "TEAM_FORBIDDEN" } } } });
+  const pr = actionFrames(presenceTenantless);
+  const tm = actionFrames(teamTenantless);
+  assert("36.23i with no workspace, a tool that runs anyway (presence_is_online) shows running then done on one row; one whose RPC refuses (crm_list_team) is never running and closes error",
+    presenceTenantless.rec.rpc.some((c) => c.name === "presence_check_user") && toldModel(presenceTenantless).includes("Riley Park")
+      && pr.length === 2 && pr.map((x) => x.status).join() === "running,done"
+      && pr[0].id === pr[1].id && pr[0].seq === pr[1].seq && pr[0].label === "Checking if someone's online" && !("detail" in pr[0])
+      && traceOf(presenceTenantless).length === 1 && traceOf(presenceTenantless)[0].status === "done"
+      && teamTenantless.rec.rpc.some((c) => c.name === "list_team_members")
+      && runningFrames(teamTenantless).length === 0 && tm.length === 1 && tm[0].status === "error",
+    JSON.stringify({ presence: pr, presenceTrace: traceOf(presenceTenantless), team: tm }));
+
+  // 36.23d A proposal with a message but nobody to send it to — no contact and no address — is refused
+  // in the branch (`no_recipient`) and is never announced.
+  const headless = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "Who should this go to?",
+    toolCall: { name: "propose_action", args: { action_type: "email", subject: "Your next session", body: "Confirming Tuesday at 3pm.", summary: "Email a client" } }, ...ADMIN_OWNER });
+  const headlessList = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "Who should this go to?",
+    toolCall: { name: "propose_action", args: { action_type: "email", subject: "Your next session", body: "Confirming Tuesday at 3pm.", summary: "Email a client", to: [] } }, ...ADMIN_OWNER });
+  const noRecipient = { noAddress: [headless, toldModel(headless).includes("no_recipient")], emptyListAddress: [headlessList, toldModel(headlessList).includes("no_recipient")] };
+  assert("36.23d a proposal with no contact and no address is refused (no_recipient) and never shown as running",
+    Object.values(noRecipient).every(([r, fired]) => fired && runningFrames(r).length === 0),
+    JSON.stringify(Object.fromEntries(Object.entries(noRecipient).map(([k, [r, fired]]) => [k, { fired, steps: actionFrames(r) }]))));
+
+  // 36.23e The pure refusals a branch makes before any I/O, asked by the START through the SAME
+  // functions: a form with no questions (buildFormSchemaFromQuestions), an agreement id that is not a
+  // UUID (agreementSendPrecheck).
+  const AUTO_ADMIN = { rpcOverrides: { ...ADMIN_OWNER.rpcOverrides, resolve_tool_autonomy: { data: "auto", error: null } },
+    tablesExtra: ADMIN_OWNER.tablesExtra, serviceTablesExtra: ADMIN_OWNER.serviceTablesExtra };
+  const emptyForm = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "What should the form ask?",
+    toolCall: { name: "growth_form_save", args: { name: "Intake", questions: [] } }, ...AUTO_ADMIN });
+  // agreement_send is `high`: it reaches dispatch only on a card a person approved, so the drive files
+  // the card (request A) and then approves it (request B), as the operator would.
+  const sendCard = makeConfirmStore();
+  const sendDrive = (extraBody) => drive({ stream: true, extraBody: { threadId: THREAD, ...extraBody }, replyText: "Which agreement?",
+    toolCall: { name: "agreement_send", args: { agreementId: "the-retainer" } }, ...AUTO_ADMIN,
+    tablesExtra: { ...AUTO_ADMIN.tablesExtra, paige_pending_confirmations: sendCard.table }, onInsert: mirrorConfirms(sendCard) });
+  await sendDrive({});
+  const badAgreement = await sendDrive({ approvedConfirmations: [issuedApproval(sendCard.rows[0])] });
+  const pure = {
+    emptyForm: [emptyForm, toldModel(emptyForm).includes("A form needs at least one question.")],
+    badAgreementId: [badAgreement, toldModel(badAgreement).includes('"reason":"bad_agreement_id"')],
+  };
+  assert("36.23e a form with no questions and an agreement id that is not a UUID are refused before any I/O and never shown as running",
+    Object.values(pure).every(([r, fired]) => fired && runningFrames(r).length === 0),
+    JSON.stringify(Object.fromEntries(Object.entries(pure).map(([k, [r, fired]]) => [k, { fired, steps: actionFrames(r), told: (toldModel(r).match(/"tool_result"[^]{0,500}/g) ?? []).slice(-1) }]))));
+
+  // …and the CONTROL: the same filing on the `auto` lane does start and finish.
+  const autoLane = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "Filed.", toolCall: FILE, ...laneOf("auto") });
+  assert("36.23 CONTROL: the same call on the auto lane starts, then finishes done on the same row",
+    actionFrames(autoLane).map((x) => x.status).join() === "running,done" && actionFrames(autoLane)[0].id === actionFrames(autoLane)[1].id,
+    JSON.stringify(actionFrames(autoLane)));
+
+  // 36.23h ARGUMENTS THAT DO NOT PARSE. A provider can cut a call's arguments off mid-JSON. Nothing can
+  // be said about what such a call would do, so it is never announced; it still gets its FINISH, as
+  // before (each branch fails on its own parse and reports it). Two shapes: a shared read and a
+  // service-role CRM read.
+  const truncated = {};
+  for (const [name, rawArgs, extra] of [
+    ["web_search", '{"query":"client onboarding chec', ORDINARY_OWNER],
+    ["crm_search_contacts", '{"query":"Da', ADMIN_OWNER],
+  ]) {
+    const r = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "Let me try that again.",
+      toolCall: { batch: [{ name, rawArgs, id: `toolu_${name}` }] }, ...extra });
+    truncated[name] = r;
+  }
+  assert("36.23h a call whose arguments do not parse is never shown as running, and still closes error as before",
+    Object.values(truncated).every((r) => runningFrames(r).length === 0
+      && actionFrames(r).length === 1 && actionFrames(r)[0].status === "error"
+      && traceOf(r).length === 1 && traceOf(r)[0].status === "error"),
+    JSON.stringify(Object.fromEntries(Object.entries(truncated).map(([k, r]) => [k, { steps: actionFrames(r), trace: traceOf(r), told: (toldModel(r).match(/"tool_result"[^]{0,300}/g) ?? []).slice(-1) }]))));
+
+  // …and the CONTROL: EMPTY or whitespace-only arguments are not "unparseable" — they read as `{}`, so
+  // the same read is announced (and closes on its own result, whatever that is).
+  const blankArgs = {};
+  for (const [k, rawArgs] of [["empty", ""], ["whitespace", "  \n "]]) {
+    blankArgs[k] = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "Here is what I found.",
+      toolCall: { batch: [{ name: "web_search", rawArgs, id: `toolu_blank_${k}` }] }, ...ORDINARY_OWNER });
+  }
+  assert("36.23h CONTROL: empty and whitespace-only arguments read as {} and the call is announced, then closed on the same row",
+    Object.values(blankArgs).every((r) => { const s = actionFrames(r); return s.length === 2 && s[0].status === "running" && s[1].status !== "running" && s[0].id === s[1].id; }),
+    JSON.stringify(Object.fromEntries(Object.entries(blankArgs).map(([k, r]) => [k, actionFrames(r)]))));
+
+  // 36.27 A RESULT THAT REPORTS FAILURE NEVER CLOSES `done`, whichever way the tool reports it. The
+  // calendar-link reads refuse with `{ ok: false, code }` — here a calendar id that is not a UUID
+  // (CALENDAR_ID_INVALID, refused before any read) — and a refused read must not say "Prepared".
+  const okFalse = {};
+  for (const name of ["calendar_link_prepare", "calendar_link_social_copy"]) {
+    okFalse[name] = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "That calendar id didn't look right.",
+      toolCall: { name, args: { calendarId: "the-intro-call" } }, ...ADMIN_OWNER });
+  }
+  const claimsSuccess = (label) => /^(Prepared|Created|Sent|Saved|Checked|Bought|Revised|Published)\b/.test(String(label ?? ""));
+  assert("36.27 a calendar-link read refused with {ok:false} (CALENDAR_ID_INVALID) closes error, never done, and no step label claims it was prepared",
+    Object.values(okFalse).every((r) => toldModel(r).includes("CALENDAR_ID_INVALID")
+      && actionFrames(r).length >= 1 && actionFrames(r).every((x) => x.status !== "done" && !claimsSuccess(x.label))
+      && actionFrames(r).at(-1).status === "error"
+      && traceOf(r).length === 1 && traceOf(r)[0].status === "error" && !claimsSuccess(traceOf(r)[0].label)),
+    JSON.stringify(Object.fromEntries(Object.entries(okFalse).map(([k, r]) => [k, { steps: actionFrames(r), trace: traceOf(r) }]))));
+  // 36.27b …and the other two shapes still close `error`: `success: false` (most tools), and a bare
+  // `error` with no success flag (paige-web-search passes its provider error through that way).
+  const shaped = {};
+  for (const [k, body] of [["successFalse", { success: false, error: "The search provider timed out." }],
+    ["bareError", { configured: true, query: "client onboarding checklist", results: [], error: "Search provider returned 502." }]]) {
+    shaped[k] = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "The search didn't go through.",
+      toolCall: search("client onboarding checklist"), ...ORDINARY_OWNER,
+      outboundAnswers: { "paige-web-search": { status: 200, body } } });
+  }
+  assert("36.27b a search whose result says success:false, or carries only an error, closes error on its row with a label that does not claim success",
+    Object.values(shaped).every((r) => { const s = actionFrames(r); return s.map((x) => x.status).join() === "running,error"
+      && s[0].id === s[1].id && s[1].label === "Couldn't search the web"
+      && traceOf(r).length === 1 && traceOf(r)[0].status === "error"; }),
+    JSON.stringify(Object.fromEntries(Object.entries(shaped).map(([k, r]) => [k, { steps: actionFrames(r), trace: traceOf(r) }]))));
+
+  // 36.24 A dispatched call whose result the trace does not render: its START is taken back.
+  const withdrawn = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "Search is off here.",
+    toolCall: search("client onboarding checklist", "toolu_w"), ...ORDINARY_OWNER,
+    outboundAnswers: { "paige-web-search": { status: 200, body: { success: false, error: "Web search is disabled for this workspace." } } } });
+  const wd = actionFrames(withdrawn);
+  assert("36.24 a dispatched tool whose result describeStep drops goes running then withdrawn on the same row, and never reaches turn_trace",
+    wd.map((x) => x.status).join() === "running,withdrawn" && wd[0].id === wd[1].id && wd[0].seq === wd[1].seq
+      && withdrawn.outboundCalls.some((c) => c.url.includes("paige-web-search")) && traceOf(withdrawn).length === 0,
+    JSON.stringify({ steps: wd, trace: traceOf(withdrawn) }));
+
+  // 36.25 A dispatched call that THROWS before it has a result closes `error` with its start label,
+  // ahead of the snag sentence. (An error whose every inspection throws escapes the branch's catch.)
+  const unreadable = new Proxy({}, { get() { throw new Error("fixture: unreadable error"); }, getPrototypeOf() { throw new Error("fixture: unreadable error"); } });
+  const thrown = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "ok",
+    toolCall: { name: "integrations_list", args: {} },
+    rpcOverrides: { ...AS_OWNER, match_paige_memory: { data: [], error: null }, list_integration_surface: { data: null, error: unreadable } },
+    ...NO_MEMORY, tablesExtra: { client_memory: () => [], user_roles: [{ role: "admin" }] } });
+  const th = actionFrames(thrown);
+  const SNAG = "I hit a snag finishing that";
+  assert("36.25 a thrown tool goes running then error on the same row, with its start label, then the snag sentence",
+    th.map((x) => x.status).join() === "running,error" && th[0].id === th[1].id && th[1].label === "Checking your connections"
+      && thrown.bodyText.includes(SNAG) && lineOf(thrown, '"status":"error"') < lineOf(thrown, SNAG)
+      && traceOf(thrown).length === 1 && traceOf(thrown)[0].status === "error",
+    JSON.stringify({ steps: th, snag: thrown.bodyText.includes(SNAG), order: [lineOf(thrown, '"status":"error"'), lineOf(thrown, SNAG)], trace: traceOf(thrown) }));
+
+  // 36.26 THE WORKSPACE CHANGES MID-BATCH (protected turn): the first tool ran and settles; the second
+  // is stopped at its own dispatch check and never starts. The boundary is FOUND, not written down: the
+  // persona resolver switches workspace after `k` calls.
+  const switchingPersona = (k) => {
+    let calls = 0;
+    return (args) => (++calls <= k ? PERSONA.get_paige_persona_context
+      : { data: [{ ...PERSONA.get_paige_persona_context.data[0], tenant_id: OTHER_TENANT }], error: null });
+  };
+  let midBatch = null;
+  for (let k = 1; k <= 12 && !midBatch; k++) {
+    const r = await drive({ stream: true, extraBody: { threadId: THREAD }, replyText: "Here is what I found.",
+      toolCall: { batch: [search("client onboarding checklist", "toolu_m1"), search("retainer agreement template", "toolu_m2")] },
+      rpcOverrides: { ...AS_OWNER, get_paige_persona_context: switchingPersona(k) } });
+    const ids = [...new Set(actionFrames(r).map((x) => x.id))];
+    if (ids.length === 1 && r.bodyText.includes("active workspace changed")) midBatch = { k, r };
+  }
+  const mb = midBatch ? actionFrames(midBatch.r) : [];
+  assert("36.26 a mid-batch workspace change: the earlier tool settles done before the stop sentence; the later one never starts",
+    !!midBatch && mb.map((x) => x.status).join() === "running,done" && mb[0].id.endsWith(":toolu_m1")
+      && !midBatch.r.bodyText.includes("toolu_m2")
+      && lineOf(midBatch.r, '"status":"done"') < lineOf(midBatch.r, "active workspace changed"),
+    JSON.stringify({ k: midBatch?.k, steps: mb }));
+
   // The audit, over every stream the suite drove — including the scenarios above.
   assert("36.6 every stream's first frame is `started`, it has exactly one terminal, and the terminal precedes the first content byte and [DONE]",
     turnAudit.streams >= 100 && turnAudit.violations.length === 0,
@@ -5309,6 +5660,9 @@ console.log("\npaige_turn — every stream says it started and ends once, before
   assert("36.8 every persisted assistant turn carries a turn_state in the contract's shape, and every turn_trace holds work steps, never a thought",
     turnAudit.persisted >= 10 && turnAudit.traced >= 1 && turnAudit.thoughtsBesideTrace >= 1 && turnAudit.violations.length === 0,
     JSON.stringify({ persisted: turnAudit.persisted, traced: turnAudit.traced, thoughtsBesideTrace: turnAudit.thoughtsBesideTrace }));
+  assert("36.8d the step-lifecycle audit is not vacuous: it read started steps closed done/error and started steps withdrawn",
+    turnAudit.stepsStarted >= 5 && turnAudit.stepsClosedAfterStart >= 4 && turnAudit.stepsWithdrawn >= 1,
+    JSON.stringify({ started: turnAudit.stepsStarted, closed: turnAudit.stepsClosedAfterStart, withdrawn: turnAudit.stepsWithdrawn }));
   assert("36.8b on every drive that streamed one answer and saved one turn, the answer a reader got up to [DONE] is exactly the saved text, and nothing follows [DONE]",
     turnAudit.answersCompared >= 100 && turnAudit.answerMismatches.length === 0,
     JSON.stringify({ compared: turnAudit.answersCompared, mismatches: turnAudit.answerMismatches.slice(0, 6) }));
@@ -5321,6 +5675,34 @@ console.log("\npaige_turn — every stream says it started and ends once, before
       && wireAnswerMatchesSaved(sse(say("A"), "[DONE]", say("B")), "A") === "reply text after the first [DONE]"
       && wireAnswerMatchesSaved(sse({ paige_choices: { prompt: "Which one?", options: [] } }, "[DONE]"), "Which one?") === null,
     "");
+  // …and the step-lifecycle rules bite (C2b), on synthetic bodies: each broken shape is flagged, each
+  // lawful one is not.
+  const TURN_START = { paige_turn: { v: 1, event: "started", state: "WORKING", mode: "pending" } };
+  const TURN_END = { paige_turn: { v: 1, event: "completed", state: "FINAL", mode: "action" } };
+  const step = (o) => ({ paige_step: { id: "0:0:0:a", round: 0, seq: 1, kind: "action", label: "Searching the web", group: "shared", ts: 1, ...o } });
+  const stepIssues = (...frames) => auditTurnStream(sse(TURN_START, ...frames, TURN_END, say("ok"), "[DONE]")).violations;
+  const lawful = {
+    startThenDone: stepIssues(step({ status: "running" }), step({ status: "done", detail: "3 found" })),
+    startThenError: stepIssues(step({ status: "running" }), step({ status: "error" })),
+    startThenWithdrawn: stepIssues(step({ status: "running" }), step({ status: "withdrawn" })),
+    olderFrameNoStatus: stepIssues(step({})),
+    finishOnly: stepIssues(step({ status: "done" })),
+    thoughtDone: stepIssues(step({ kind: "thought", id: "t:0", status: "done" })),
+  };
+  const broken = {
+    unknownStatus: stepIssues(step({ status: "paused" })),
+    thoughtRunning: stepIssues(step({ kind: "thought", id: "t:0", status: "running" }), step({ kind: "thought", id: "t:0", status: "done" })),
+    startedTwice: stepIssues(step({ status: "running" }), step({ status: "running" }), step({ status: "done" })),
+    closedTwice: stepIssues(step({ status: "running" }), step({ status: "done" }), step({ status: "done" })),
+    withdrawnUnstarted: stepIssues(step({ status: "withdrawn" })),
+    seqChanged: stepIssues(step({ status: "running" }), step({ status: "done", seq: 2 })),
+    leftOpen: stepIssues(step({ status: "running" })),
+    afterTheAnswer: auditTurnStream(sse(TURN_START, TURN_END, say("ok"), step({ status: "done" }), "[DONE]")).violations,
+    afterDone: auditTurnStream(sse(TURN_START, TURN_END, "[DONE]", step({ status: "done" }))).violations,
+  };
+  assert("36.8e the step-lifecycle rules flag every broken shape and pass every lawful one",
+    Object.values(lawful).every((v) => v.length === 0) && Object.values(broken).every((v) => v.length >= 1),
+    JSON.stringify({ lawful, broken }));
 }
 
 console.log(`\n${checks - failures} passed, ${failures} failed`);

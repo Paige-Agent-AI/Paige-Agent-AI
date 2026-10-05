@@ -1290,11 +1290,13 @@ group("tool dispatch re-asserts scope for every tool, not once per round");
   //   3 tool-1 dispatch           4 tool-2 dispatch           5 pre-continuation
   // so n=3 lands the switch on the FIRST tool's check and n=4 on the SECOND's.
   //
-  // THE DISCRIMINATOR is the step trace. A mid-batch abort returns `scopeInvalidated` and the
-  // caller breaks BEFORE narrating the round, so no `0:tool-*` step is emitted at all. With a
-  // batch-level check at n=4 there is no second check to fail: both tools run, the round
-  // completes, and BOTH steps are narrated (verified by mutation — this is not a guess).
-  const stepIds = (text) => (text.match(/"id":"0:tool-\d"/g) || []).map((m) => m.slice(7, -1));
+  // THE DISCRIMINATOR is the step trace. Since C2b each tool's step is sent the moment that tool
+  // finishes (docs/delivery/paige-conversational-loop-c2.md), so a tool that RAN shows its step even
+  // when a later tool in the same round is refused — it did run. A mid-batch abort therefore shows
+  // exactly the steps of the tools before the switch, and none after it. With a batch-level check at
+  // n=4 there is no second check to fail: both tools run and BOTH steps are shown.
+  // Step ids are `<pass>:<round>:<index>:<call id>`; the call ids here are tool-1 / tool-2.
+  const stepIds = (text) => [...new Set((text.match(/"id":"0:0:\d+:tool-\d"/g) || []).map((m) => m.slice(6, -1).split(":")[3]))];
   const runTools = (n) => drive({
     personaTenant: CHILD,
     personaSequence: n === null ? [CHILD] : Array(n).fill(CHILD).concat([AGENCY]),
@@ -1322,8 +1324,9 @@ group("tool dispatch re-asserts scope for every tool, not once per round");
   // for the wrong reason with the per-tool guard gone.
   //
   // No tool in this harness leaves a recordable side effect (`plan_list` and `list_event_kinds`
-  // both return an error result before reaching their RPC, and a mid-batch abort suppresses the
-  // step trace), so "tool 1 ran" is not directly observable. What IS observable is the TRANSITION:
+  // both return an error result before reaching their RPC). Before C2b a mid-batch abort also
+  // suppressed the step trace, so "tool 1 ran" was not observable at all; it now is (16.4). What is
+  // observable either way is the TRANSITION:
   // the smallest n at which the round completes. A per-tool guard puts three refusal boundaries
   // before completion (post-round, tool-1, tool-2); a per-batch guard puts two. So the transition
   // point itself distinguishes them, and it is derived rather than assumed.
@@ -1362,9 +1365,9 @@ group("tool dispatch re-asserts scope for every tool, not once per round");
 
   const betweenTools = await runTools(firstComplete - 1);
   assert(
-    "16.4 a switch BETWEEN the two tools aborts the round (per-tool guard, not per-batch)",
-    stepIds(betweenTools.responseText).length === 0,
-    `narrated steps: ${JSON.stringify(stepIds(betweenTools.responseText))} — a batch-level check narrates both`,
+    "16.4 a switch BETWEEN the two tools stops the second (per-tool guard, not per-batch): only the first, which ran, shows its step",
+    JSON.stringify(stepIds(betweenTools.responseText)) === JSON.stringify(["tool-1"]),
+    `shown steps: ${JSON.stringify(stepIds(betweenTools.responseText))} — a batch-level check shows both, the old round-end emission none`,
   );
   assert(
     "16.5 a switch between the two tools makes no continuation provider call",
@@ -3653,6 +3656,11 @@ group("the neutral-frame classifier itself");
   // groups 20 and 21 would pass by classifying the whole transcript as a leak.
   assert("22.2 a plain action step is neutral",
     isNeutral(f({ paige_step: { kind: "action", label: "Working on that", detail: "3 found" } })), "");
+  // C2b — a tool's START (and a START taken back) is the same fixed vocabulary: a present-tense label,
+  // never a detail. Sent direct like any action step, so it must classify neutral.
+  assert("22.2b a running action step with a fixed label, and its withdrawal, are neutral",
+    isNeutral(f({ paige_step: { id: "0:0:0:toolu_1", round: 0, seq: 1, kind: "action", label: "Searching the web", group: "shared", status: "running", ts: 3 } }))
+      && isNeutral(f({ paige_step: { id: "0:0:0:toolu_1", round: 0, seq: 1, kind: "action", label: "Searching the web", group: "shared", status: "withdrawn", ts: 9 } })), "");
   assert("22.3 a phase marker is neutral", isNeutral(f({ paige_phase: "writing" })), "");
   assert("22.4 a compaction frame is neutral", isNeutral(f({ paige_compacting: { state: "folding", pct: 42 } })), "");
   assert("22.5 the fixed client-scope category is neutral",

@@ -272,17 +272,17 @@ async function reportPhase() {
       judge_v2_insufficiency: avg(set.filter((p) => p.judges["q0_insufficiency-v2"]).map((p) => p.judges["q0_insufficiency-v2"]?.score)),
       judge_v2_cost_usd: Number(rows2.filter((r) => r.judge_version === "rubric_judge_v2" && set.some((x) => x.case_id === r.q0_case)).reduce((a2, r) => a2 + (r.cost_estimate_usd ?? 0), 0).toFixed(4)),
       parse_degradation_v2: (() => { const rs = rows2.filter((r) => r.judge_version === "rubric_judge_v2" && set.some((x) => x.case_id === r.q0_case)); return rs.length ? Number((rs.filter((r) => r.status !== "scored").length / rs.length).toFixed(3)) : null; })(),
-      judge_precision: avg(set.map((p) => (p.judges["q0_precision-v1"] ?? p.judges.precision)?.score)),
-      judge_completeness: avg(set.map((p) => (p.judges["q0_completeness-v1"] ?? p.judges.completeness)?.score)),
-      judge_contradiction: avg(set.filter((p) => p.judges.contradiction).map((p) => p.judges.contradiction?.score)),
-      judge_insufficiency: avg(set.filter((p) => p.judges.insufficiency).map((p) => p.judges.insufficiency?.score)),
+      judge_precision: avg(set.map((p) => p.judges["q0_precision-v1"]?.score)),
+      judge_completeness: avg(set.map((p) => p.judges["q0_completeness-v1"]?.score)),
+      judge_contradiction: avg(set.filter((p) => p.judges["q0_contradiction-v1"]).map((p) => p.judges["q0_contradiction-v1"]?.score)),
+      judge_insufficiency: avg(set.filter((p) => p.judges["q0_insufficiency-v1"]).map((p) => p.judges["q0_insufficiency-v1"]?.score)),
       primary_ratio: avg(set.map((p) => p.deterministic?.primary_ratio)),
       citation_independence: avg(set.map((p) => p.deterministic?.citation_independence)),
       findings_with_citations: avg(set.map((p) => p.deterministic?.findings_with_citations)),
       empty_findings_rate: Number((set.filter((p) => p.deterministic?.findings_count === 0).length / set.length).toFixed(3)),
       median_wall_latency_ms: (() => { const xs = set.map((p) => p.deterministic?.wall_latency_ms).filter(Number.isFinite).sort((a, b) => a - b); return xs.length ? xs[Math.floor(xs.length / 2)] : null; })(),
       total_trace_cost_usd: Number(set.reduce((a, p) => a + (p.deterministic?.trace_cost_usd ?? 0), 0).toFixed(4)),
-      total_judge_cost_usd: Number(rows2.filter((r) => set.some((s) => s.case_id === r.q0_case)).reduce((a, r) => a + (r.cost_estimate_usd ?? 0), 0).toFixed(4)),
+      total_judge_cost_usd: Number(rows2.filter((r) => r.judge_version !== "rubric_judge_v2" && set.some((s) => s.case_id === r.q0_case)).reduce((a, r) => a + (r.cost_estimate_usd ?? 0), 0).toFixed(4)),
     };
   }
   writeFileSync(join(ROOT, "docs", "research-quality", "q0", "baseline.json"), JSON.stringify(agg, null, 2) + "\n");

@@ -1,4 +1,4 @@
--- R3 — the inspectable research dossier (owner ruling 2026-10-05): ONE bounded diagnostic
+-- R3 — the inspectable research dossier (owner ruling 2026-10-03): ONE bounded diagnostic
 -- jsonb column on the CANONICAL research_runs record. No second store, no new engine, no
 -- page-body duplication (research_sources remains the sole owner of fetched content) —
 -- only the bounded data needed to answer, for any run:

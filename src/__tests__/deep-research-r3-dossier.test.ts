@@ -19,7 +19,7 @@ import ts from "typescript";
 
 const root = join(__dirname, "..", "..");
 const core = readFileSync(join(root, "supabase/functions/paige-deep-research/index.ts"), "utf8");
-const migration = readFileSync(join(root, "supabase/migrations/20270566000000_research_dossier_column.sql"), "utf8");
+const migration = readFileSync(join(root, "supabase/migrations/20270588000000_research_dossier_column.sql"), "utf8");
 
 const js = (body: string) =>
   ts.transpileModule(body, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None } }).outputText;

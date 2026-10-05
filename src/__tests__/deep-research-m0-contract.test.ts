@@ -54,7 +54,8 @@ describe("the engine's persistence lineage is strict (fail-closed)", () => {
   });
 
   it("all three persist call sites carry the lineage argument", () => {
-    expect(engine.match(/persistRun\(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId\)/g)?.length).toBe(3);
+    // R3: the trailing dossier arg is optional diagnostics — the lineage contract is the 6 required args.
+    expect(engine.match(/persistRun\(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId(?:, dossier)?\)/g)?.length).toBe(3);
     expect(engine).not.toContain("persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result);");
   });
 

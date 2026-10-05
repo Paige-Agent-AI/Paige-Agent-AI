@@ -438,6 +438,12 @@ describe("INT-310 C1 — email-composer: internal path, compliance hand-off, wor
     expect(await res.json()).toMatchObject({ error: "resource_verification_unavailable" });
   });
 
+  it("the 503 applies to every selector the binder knows, including input.client_id", async () => {
+    const h = loadEdge("subagent-email-composer", { rows, activeTenant: TENANT_A, memberOf: [TENANT_A], tenantRpcFails: true }, DRAFTING);
+    const res = await h.handler(post({ input: { intent: "reach out", client_id: CONTACT_A } }, USER_A));
+    expect(res.status).toBe(503);
+  });
+
   it("a caller-supplied context.tenant_id does not override a person's own workspace", async () => {
     const h = loadEdge("subagent-email-composer", { rows, activeTenant: TENANT_A, memberOf: [TENANT_A] }, DRAFTING);
     const res = await h.handler(post({ ...compose(CONTACT_B), context: { contact_id: CONTACT_B, tenant_id: TENANT_B } }, USER_A));

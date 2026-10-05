@@ -19,7 +19,7 @@ import {
 } from "../_shared/attachment-extract.ts";
 import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses } from "../_shared/contact-methods.ts";
 import { adminClient, isAuthorizedInternalCaller } from "../_shared/systems-check-http.ts";
-import { bindContactToTenant } from "../_shared/paige-orchestration/resource-binder.ts";
+import { bindContactToTenant, collectContactSelectors } from "../_shared/paige-orchestration/resource-binder.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -175,7 +175,7 @@ Deno.serve(async (req) => {
   // canonical binder: a malformed, missing, foreign or disagreeing selector is one uniform refusal.
   // An infrastructure failure resolving the workspace is reported as such (503), never as a
   // not-found — the same distinction the binder draws for its own lookup error.
-  if (workspaceResolveFailed && (input.contact_id || payload.context?.contact_id)) {
+  if (workspaceResolveFailed && collectContactSelectors(input as unknown as Record<string, unknown>, payload.context ?? {}).length > 0) {
     return ok({ ok: false, error: "resource_verification_unavailable" }, 503);
   }
   const binding = await bindContactToTenant(

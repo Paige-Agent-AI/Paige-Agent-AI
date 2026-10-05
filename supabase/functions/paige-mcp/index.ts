@@ -3528,6 +3528,12 @@ mcp.tool("delegate_to_subagent", {
     const r = await callOrchestrator({
       action: "tool_invoke",
       slug,
+      // INT-310 C1: a contact selector is bound by the orchestrator to this SERVER-RESOLVED workspace
+      // (the actor's active tenant), never to a tool argument; null fails closed. Sent only when a
+      // contact is selected, so contact-free delegation keeps its prior (tenant-less) behaviour.
+      ...((contact_id || parsedInput.contact_id || parsedInput.client_id)
+        ? { tenant_id: await actorTenantId() }
+        : {}),
       input: parsedInput,
       context: { contact_id, conversation_id, user_id: actor.user_id ?? undefined },
     });
@@ -3562,6 +3568,8 @@ mcp.tool("compose_email", {
     const r = await callOrchestrator({
       action: "tool_invoke",
       slug: "email-composer",
+      // INT-310 C1: the workspace a selected contact is bound to (only sent when one is selected).
+      ...(args.contact_id ? { tenant_id: await actorTenantId() } : {}),
       input: args,
       context: { contact_id: args.contact_id, user_id: currentActor().user_id ?? undefined },
     });

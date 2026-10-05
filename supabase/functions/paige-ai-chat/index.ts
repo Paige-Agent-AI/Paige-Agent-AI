@@ -15703,13 +15703,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 // stream that never carried text gets its terminal now (then its held bytes).
                 if (!closingFinished) turnTracker.interrupted();
                 interruptEmptyFinal();
-                // INT-323 (review P2): when the closing stream carried NO answer text, the
-                // translator's trailing `data: [DONE]` sits in heldLead; flushing it before the
-                // fallback copy below would terminate the 4/7 SSE consumers that break on [DONE]
-                // before the copy ever renders — making the copy reload-only on the exact path it
-                // exists for. The sentinel led nothing; drop it (the fallback below — or the
-                // pump's own tail — supplies the real one).
-                if (!answerStarted && heldLead.length) {
+                // INT-323 (review P2): when the closing stream carried NO answer text on a
+                // RESEARCH turn (site 2's exact guard — the one path whose replacement copy
+                // follows), the translator's trailing `data: [DONE]` sits in heldLead; flushing
+                // it before that copy would terminate the 4/7 SSE consumers that break on
+                // [DONE] before the copy ever renders — making the copy reload-only on the
+                // exact path it exists for. The sentinel led nothing; drop it — site 2 below
+                // supplies the copy and its own sentinel. Every OTHER answer-less closing
+                // stream keeps its held [DONE] byte-for-byte (the wire still ends on DONE).
+                if (!answerStarted && heldLead.length
+                    && researchTrace.length > 0 && queuedApprovals.length === 0 && confirmTrace.length === 0 && !studioSessionId) {
                   const heldTail = new TextDecoder().decode(heldLead[heldLead.length - 1]);
                   if (heldTail.trim() === "data: [DONE]") heldLead.pop();
                 }

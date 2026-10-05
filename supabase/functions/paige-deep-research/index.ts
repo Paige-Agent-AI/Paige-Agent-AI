@@ -951,7 +951,18 @@ async function planSynthesisUnits(
       const kind = typeof u?.coverage_kind === "string" && kinds.has(u.coverage_kind) ? u.coverage_kind as UnitCoverageKind : "facet";
       if (objective.length >= 8) units.push({ unit_id: `u${units.length + 1}`, objective, coverage_kind: kind, source_refs: [], status: "pending" });
     }
-    if (units.length) return units;
+    // R4 review P2: deterministic post-plan guard — a comparison that planned only ONE
+    // side, or a contested plan with a single position and no relation/insufficiency,
+    // degrades to the single overall unit (prompt enforcement is not a guarantee).
+    if (units.length) {
+      const sides = units.filter((u) => u.coverage_kind === "side");
+      const positions = units.filter((u) => u.coverage_kind === "position");
+      const hasRelationOrInsuff = units.some((u) => u.coverage_kind === "relation" || u.coverage_kind === "insufficiency");
+      const oneSided = sides.length === 1 && !hasRelationOrInsuff;
+      const singlePosition = positions.length === 1 && !hasRelationOrInsuff;
+      if (!oneSided && !singlePosition) return units;
+      console.warn("[paige-deep-research] R4 unit plan degenerate (one-sided/single-position); degrading to overall");
+    }
   } catch (e) {
     console.warn("[paige-deep-research] unit planning failed (degrade to overall):", (e as Error)?.message);
   }
@@ -1022,6 +1033,31 @@ function jaccard(a: Set<string>, b: Set<string>): number {
   for (const t of a) if (b.has(t)) inter++;
   return inter / (a.size + b.size - inter);
 }
+// R4 review P1: the content-token set drops digit runs and short tokens, so figure-only
+// disagreements ("7.25 vs 15 dollars") and short-source disputes dedupe away — manufactured
+// consensus. The dedupe key therefore ALSO compares numeric fingerprints and quoted values:
+// two candidates whose numbers or non-empty `values` differ are NEVER duplicates.
+function numericTokens(text: string): Set<string> {
+  return new Set((text.match(/\d+(?:[.,]\d+)?/g) ?? []).map((n) => n.replace(/,/g, "")));
+}
+function sameClaim(rfA: { summary?: string; values?: string[] }, rfB: { summary?: string; values?: string[] }): boolean {
+  const tokA = new Set(tokens(`${rfA.summary ?? ""}`));
+  const tokB = new Set(tokens(`${rfB.summary ?? ""}`));
+  if (jaccard(tokA, tokB) < 0.8) return false;
+  const numA = numericTokens(`${rfA.summary ?? ""} ${(rfA.values ?? []).join(" ")}`);
+  const numB = numericTokens(`${rfB.summary ?? ""} ${(rfB.values ?? []).join(" ")}`);
+  // differing numeric fingerprints => different facts (even in near-identical prose)
+  const numInter = new Set([...numA].filter((n) => numB.has(n)));
+  if (numA.size > 0 && numB.size > 0 && (numInter.size < numA.size || numInter.size < numB.size)) return false;
+  const valsA = new Set((rfA.values ?? []).map((v) => v.trim()).filter(Boolean));
+  const valsB = new Set((rfB.values ?? []).map((v) => v.trim()).filter(Boolean));
+  if (valsA.size > 0 && valsB.size > 0) {
+    let allIn = true;
+    for (const v of valsA) if (!valsB.has(v)) { allIn = false; break; }
+    if (!allIn) return false;
+  }
+  return true;
+}
 function aggregateUnits(
   perUnit: Array<{ unit: SynthUnit; out: UnitSynthOut | null }>,
 ): { findings: RawFinding[]; unitDiagnostics: Array<Record<string, unknown>> } {
@@ -1035,7 +1071,7 @@ function aggregateUnits(
       const toks = new Set(tokens(`${rf.summary ?? ""}`));
       let merged = false;
       for (const k of kept) {
-        if (jaccard(k.tokens, toks) >= 0.8) {
+        if (sameClaim(k.rf, rf)) {
           const unionCites = new Set([...(k.rf.citations ?? []), ...(rf.citations ?? [])]);
           k.rf.citations = Array.from(unionCites);
           merged = true;
@@ -1048,6 +1084,7 @@ function aggregateUnits(
     unit.status = out === null ? "failed" : out.insufficient === true ? "insufficient" : "synthesized";
     unitDiagnostics.push({
       unit_id: unit.unit_id, objective: unit.objective.slice(0, 160), coverage_kind: unit.coverage_kind,
+      source_refs: unit.source_refs.slice(0, 14),
       synthesis_returned: out !== null, insufficient: out?.insufficient === true,
       candidates_emitted: emitted.length, aggregated, deduped_away: dedupedAway,
     });
@@ -1940,6 +1977,7 @@ serve(async (req) => {
   const dossier: {
     v: 1; hops: Array<Record<string, unknown>>; synthesis: { returned: boolean; candidates: number };
     candidates: CandidateDiag[]; caps_applied: { candidates_truncated: boolean };
+    units?: Array<Record<string, unknown>>;
   } = { v: 1, hops: [], synthesis: { returned: false, candidates: 0 }, candidates: [], caps_applied: { candidates_truncated: false } };
   const hopBudget = () => ({ searches, reads, cost_usd_est: Number(costUSD.toFixed(4)), elapsed_ms: Date.now() - t0 });
 
@@ -2100,16 +2138,26 @@ serve(async (req) => {
   } else {
     const units = await planSynthesisUnits(question, domainHint, citable);
     for (const u of units) u.source_refs = citable.slice(0, 14).map((x) => x.index);
+    costUSD += COST.cheapLLM; // the unit planner's extract call
     // bounded lanes: R4_UNIT_CONCURRENCY at a time, hard call ceiling R4_MAX_SYNTH_CALLS
     const perUnit: Array<{ unit: SynthUnit; out: UnitSynthOut | null }> = [];
     let callsMade = 0;
+    // R4 review P2: a phase deadline anchored on the run clock — a lane that cannot start
+    // in time is skipped (its units aggregate as pending/failed), so the unit phase can
+    // never blow the edge wall clock worst case (per-call deadline x lanes).
+    const synthDeadline = t0 + BND.WALL_CLOCK_MS + 110_000; // gathering budget + bounded unit headroom
     for (let i = 0; i < units.length; i += R4_UNIT_CONCURRENCY) {
-      const lane = units.slice(i, i + R4_UNIT_CONCURRENCY).filter(() => callsMade < R4_MAX_SYNTH_CALLS);
-      const outs = await Promise.all(lane.map((u) => { callsMade++; return synthesizeUnit(u, question, domainHint, citable); }));
+      if (Date.now() > synthDeadline) {
+        console.warn("[paige-deep-research] R4 unit-phase deadline reached; aggregating completed units only");
+        for (const skipped of units.slice(i)) perUnit.push({ unit: skipped, out: null });
+        break;
+      }
+      const lane = units.slice(i, i + R4_UNIT_CONCURRENCY).slice(0, Math.max(0, R4_MAX_SYNTH_CALLS - callsMade));
+      const outs = await Promise.all(lane.map((u) => { callsMade++; costUSD += COST.synthesis; return synthesizeUnit(u, question, domainHint, citable); }));
       lane.forEach((u, j) => perUnit.push({ unit: u, out: outs[j] }));
     }
     const { findings: unitFindings, unitDiagnostics } = aggregateUnits(perUnit);
-    (dossier as Record<string, unknown>).units = unitDiagnostics;
+    dossier.units = unitDiagnostics;
     synth = { findings: unitFindings };
     // all units failed at the transport level = the monolithic failure class (honest error)
     if (perUnit.length > 0 && perUnit.every((pu) => pu.out === null)) {
@@ -2120,11 +2168,6 @@ serve(async (req) => {
   }
   dossier.synthesis.returned = true;
   dossier.synthesis.candidates = Array.isArray(synth?.findings) ? synth.findings.length : 0;
-  if (!synth) {
-    const result = buildResult([], "error", "Synthesis failed; no findings returned rather than risk fabrication.");
-    if (persist) await persistRun(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier);
-    return json(result);
-  }
 
   // ── POST-VALIDATION gate ──────────────────────────────────────────────────
   const findings = validateAndBind(synth, citable, strict, dossier.candidates);

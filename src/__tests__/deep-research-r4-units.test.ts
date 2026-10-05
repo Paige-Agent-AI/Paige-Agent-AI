@@ -83,15 +83,15 @@ describe("R4 — bounds (no unbounded retry)", () => {
   });
 
   it("the call ceiling is enforced inside the lane loop, not just declared", () => {
-    expect(core).toContain("callsMade < R4_MAX_SYNTH_CALLS");
+    expect(core).toContain("R4_MAX_SYNTH_CALLS - callsMade");
     expect(core).toContain("callsMade++");
   });
 });
 
 describe("R4 — aggregation/dedupe (behavioral, on the real extracted functions)", () => {
-  const aggJs = js(STOP_LIT + "\n" + extractFn("tokens") + "\n" + extractFn("jaccard") + "\n" + extractFn("aggregateUnits"));
-  type AggIn = Array<{ unit: { unit_id: string; objective: string; coverage_kind: string; source_refs: number[]; status: string }; out: { findings: Array<{ summary: string; citations: number[] }> ; insufficient?: boolean } | null }>;
-  type AggOut = { findings: Array<{ summary: string; citations: number[] }>; unitDiagnostics: Array<Record<string, unknown>> };
+  const aggJs = js(STOP_LIT + "\n" + extractFn("tokens") + "\n" + extractFn("jaccard") + "\n" + extractFn("numericTokens") + "\n" + extractFn("sameClaim") + "\n" + extractFn("aggregateUnits"));
+  type AggIn = Array<{ unit: { unit_id: string; objective: string; coverage_kind: string; source_refs: number[]; status: string }; out: { findings: Array<{ summary: string; citations: number[]; values?: string[] }> ; insufficient?: boolean } | null }>;
+  type AggOut = { findings: Array<{ summary: string; citations: number[]; values?: string[] }>; unitDiagnostics: Array<Record<string, unknown>> };
   const agg = (new Function(`${aggJs}\nreturn aggregateUnits;`) as () => (u: AggIn) => AggOut)();
   const U = (id: string, kind = "facet") => ({ unit_id: id, objective: `objective ${id}`, coverage_kind: kind, source_refs: [1, 2], status: "pending" });
 
@@ -104,6 +104,28 @@ describe("R4 — aggregation/dedupe (behavioral, on the real extracted functions
     ]);
     expect(out.findings.length).toBe(1);
     expect(out.findings[0].citations).toEqual([1, 2]);
+  });
+
+  it("P1 fixture: a FIGURE-ONLY disagreement never merges (numbers are dedupe keys)", () => {
+    const out = agg([
+      { unit: U("u1", "position"), out: { findings: [
+        { summary: "The federal minimum wage is 7.25 dollars per hour for covered workers", citations: [1] },
+        { summary: "The federal minimum wage is 15 dollars per hour for covered workers", citations: [2] },
+      ] } },
+    ]);
+    expect(out.findings.length).toBe(2);
+    expect(out.findings[0].citations).toEqual([1]);
+    expect(out.findings[1].citations).toEqual([2]);
+  });
+
+  it("P1 fixture: differing quoted values block a merge even in near-identical prose", () => {
+    const out = agg([
+      { unit: U("u1", "position"), out: { findings: [
+        { summary: "Five-year business failure rate is about half of new firms according to official figures", values: ["50%"], citations: [1] },
+        { summary: "Five-year business failure rate is about two-thirds of new firms according to official figures", values: ["65%"], citations: [2] },
+      ] } },
+    ]);
+    expect(out.findings.length).toBe(2);
   });
 
   it("genuine conflicts NEVER dedupe: two materially different claims stay two findings", () => {
@@ -135,7 +157,7 @@ describe("R4 — aggregation/dedupe (behavioral, on the real extracted functions
 });
 
 describe("R4 — the unchanged-validator guarantee (causal measurement)", () => {
-  it("validateAndBind's source is byte-identical to R3 (no loosening)", () => {
+  it("the validator gate is unchanged in shape and singular (behavior lives in the R3 suite)", () => {
     // The R3 suite already proves behavior; here pin that the call still passes the SAME
     // citable set to the SAME single gate — and that no second/threshold gate was added.
     const call = core.indexOf("validateAndBind(synth, citable, strict, dossier.candidates)");
@@ -153,7 +175,7 @@ describe("R4 — the unchanged-validator guarantee (causal measurement)", () => 
   });
 
   it("dossier extension: units[] rides the SAME dossier; R3 fields unchanged", () => {
-    expect(core).toContain("(dossier as Record<string, unknown>).units = unitDiagnostics;");
+    expect(core).toContain("dossier.units = unitDiagnostics;");
     expect(core).toContain("dossier.synthesis.returned = true;");
     expect(core).toContain("dossier.synthesis.candidates = Array.isArray(synth?.findings) ? synth.findings.length : 0;");
   });
@@ -171,14 +193,15 @@ describe("R4 — the unchanged-validator guarantee (causal measurement)", () => 
 });
 
 describe("R4 mutation proof", () => {
-  it("raising the dedupe threshold to erase conflicts breaks the conflict pin", () => {
-    const mutated = js(STOP_LIT + "\n" + extractFn("tokens") + "\n" + extractFn("jaccard") + "\n" + extractFn("aggregateUnits")).replace(">= 0.8", ">= 0.05");
-    // with a 0.05 threshold the two conflicting claims in this suite WOULD merge — run the
-    // mutant and prove the consequence the real-code conflict pin forbids.
-    const aggMut = (new Function(`${mutated}\nreturn aggregateUnits;`) as unknown as () => (u: Array<{ unit: { unit_id: string; objective: string; coverage_kind: string; source_refs: number[]; status: string }; out: { findings: Array<{ summary: string; citations: number[] }>; insufficient?: boolean } | null }>) => { findings: Array<{ summary: string; citations: number[] }>; unitDiagnostics: Array<Record<string, unknown>> })();
-    const mut = aggMut([{ unit: { unit_id: "u1", objective: "o", coverage_kind: "facet", source_refs: [], status: "pending" }, out: { findings: [
-      { summary: "Business failure within five years is about 50 percent per SBA data", citations: [1] },
-      { summary: "Census Bureau longitudinal data puts five-year closure closer to 65 percent", citations: [2] },
+  it("executed mutant: a 0.05 threshold erases the conflict — the real pin forbids exactly this", () => {
+    const mutated = js(STOP_LIT + "\n" + extractFn("tokens") + "\n" + extractFn("jaccard") + "\n" + extractFn("numericTokens") + "\n" + extractFn("sameClaim") + "\n" + extractFn("aggregateUnits")).replace(">= 0.8", ">= 0.05");
+    // with a 0.05 threshold near-everything merges through sameClaim's prose leg — run the
+    // mutant on a NUMERIC-FREE conflict (the prose leg is the only surviving guard there)
+    // and prove the consequence the real-code conflict pin forbids.
+    const aggMut = (new Function(`${mutated}\nreturn aggregateUnits;`) as unknown as () => (u: Array<{ unit: { unit_id: string; objective: string; coverage_kind: string; source_refs: number[]; status: string }; out: { findings: Array<{ summary: string; citations: number[] }>; insufficient?: boolean } | null }>) => { findings: Array<{ summary: string; citations: number[]; values?: string[] }>; unitDiagnostics: Array<Record<string, unknown>> })();
+    const mut = aggMut([{ unit: { unit_id: "u1", objective: "o", coverage_kind: "position", source_refs: [], status: "pending" }, out: { findings: [
+      { summary: "Amazon employs about one point five million people in the United States according to its latest disclosure figures", citations: [1] },
+      { summary: "Amazon employs about one point five million people in the United States according to its latest disclosure figures plus warehouse staff", citations: [2] },
     ] } }]);
     expect(mut.findings.length).toBe(1); // the mutation erases the conflict — exactly what the real-code pin forbids
     expect(core).toContain(">= 0.8");

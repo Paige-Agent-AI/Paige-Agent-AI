@@ -140,11 +140,15 @@ export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConn
   const [declineOpen, setDeclineOpen] = React.useState(false);
   const [declineReason, setDeclineReason] = React.useState("");
   const [focusStep, setFocusStep] = React.useState<string | null>(null);
+  // Adding, moving or deleting an email renumbers them; editing waits until the re-read lands, so a keystroke
+  // is never dropped by the re-read or saved onto the email that took its place.
+  const [reshaping, setReshaping] = React.useState(false);
 
   React.useEffect(() => {
     let live = true;
     rpc("read_email_sequence", { p_sequence_id: sequenceId }).then(({ data, error }) => {
       if (!live) return;
+      setReshaping(false);
       if (error) { console.error("[marketing-email] series read failed", error); setRead({ phase: "error", data: null, missing: error.message === "series_not_found" }); return; }
       const d = data as SeriesRead;
       setRead({ phase: "ready", data: d });
@@ -276,21 +280,25 @@ export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConn
 
   const review = () => void act("review", "email_sequence_request_approval", { p_sequence_id: s.id, p_source: "owner" });
   const addStep = async () => {
-    setBusy("add");
-    if (!(await flush())) { setBusy(null); return; }
+    setBusy("add"); setReshaping(true);
+    if (!(await flush())) { setBusy(null); setReshaping(false); return; }
     const { data: made, error } = await rpc("email_sequence_step_save", { p_sequence_id: s.id });
     setBusy(null);
-    if (error) { setNotice({ tone: "bad", text: seriesErrorWords(error) }); return; }
+    if (error) { setReshaping(false); setNotice({ tone: "bad", text: seriesErrorWords(error) }); return; }
     const pos = (made as { position?: number } | null)?.position ?? null;
     setOpen(pos); if (pos !== null) setFocusStep(`s${pos}`); reload();
   };
   const moveStep = async (from: number, to: number) => {
+    setReshaping(true);
     if (await act(`move-${from}`, "email_sequence_step_move", { p_sequence_id: s.id, p_from: from, p_to: to })) { setOpen(open === from ? to : open === to ? from : open); setFocusStep(`m${to}`); }
+    else setReshaping(false);
   };
   const deleteStep = async (pos: number) => {
     const shown = steps.find((x) => x.position === pos);
     if (!window.confirm(`Delete email ${pos}${shown?.subject ? ` (“${shown.subject}”)` : ""}?`)) return;
+    setReshaping(true);
     if (await act(`del-${pos}`, "email_sequence_step_delete", { p_sequence_id: s.id, p_position: pos }, `Email ${pos} removed.`)) setOpen(null);
+    else setReshaping(false);
   };
 
   return <div className="mk-view mo me me-editor ms">
@@ -330,7 +338,7 @@ export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConn
         <div><dt>From</dt><dd>{fromLine}</dd></div>
         <div><dt>Daily limit</dt><dd>Up to {data.sending.daily_cap.toLocaleString()} a day across all your marketing email; series emails wait, never dropped</dd></div>
       </dl>
-      <p className="me-hint">Someone leaves when they unsubscribe, bounce or are marked do not contact{v.exit_on_goal !== "none" && goalLabel ? `, or ${goalLabel}` : ""}{v.exit_when_unmatched ? ", or they stop matching" : ""}. Each person goes through this series once and never gets the same email twice. Nothing has been sent.</p>
+      <p className="me-hint">Someone leaves when they unsubscribe, bounce or are marked do not contact{v.exit_on_goal !== "none" && goalLabel ? `, or ${goalLabel}` : ""}{v.exit_when_unmatched ? ", or they stop matching" : ""}. Each person goes through this series once. Nothing has been sent.</p>
       <div className="me-review-acts">
         <button type="button" className="btn btn-s btn-g" disabled={busy !== null} onClick={() => void act("approve", "email_sequence_approve", { p_version_id: v.id }, changing ? "Updated. People carry on with the new emails from where they are." : v.entry_mode === "new_contacts" ? `Started. “${s.name}” sends by itself from now on. New contacts who match join as they arrive.` : `Started. People who match join within a few minutes; their first email goes out ${v.steps[0]?.delay_minutes ? waitWords(v.steps[0].delay_minutes, 0) : "within today’s limit"}.`)}>{busy === "approve" ? "Approving…" : changing ? "Approve changes" : "Approve and start"}</button>
         <button type="button" className="btn btn-s" disabled={busy !== null} onClick={() => void act("changes", "email_sequence_edit", { p_sequence_id: s.id }, "Back to draft. The waiting approval is withdrawn; nothing was sent.")}>Make changes</button>
@@ -422,7 +430,7 @@ export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConn
                   </div> : <span/>}
                 </div>
                 {live && !isOpen && sx && <p className="ms-cardstats"><span>Sent <b>{sx.sent.toLocaleString()}</b></span>{sx.tracked > 0 && <><span>Opened <b>{Math.round((sx.opened / sx.tracked) * 100)}%</b></span><span>Clicked <b>{Math.round((sx.clicked / sx.tracked) * 100)}%</b></span></>}{sx.waiting > 0 && <span><b>{sx.waiting.toLocaleString()}</b> waiting for this email</span>}{sx.not_delivered > 0 && <span><b>{sx.not_delivered}</b> not delivered</span>}</p>}
-                {isOpen && <div className="ms-card-body">
+                {isOpen && <div className="ms-card-body"><fieldset className="ms-lock" disabled={reshaping}>
                   <fieldset className="me-field"><legend>When it sends</legend>
                     <div className="me-chips">{QUICK_WAITS.map((q) => <button type="button" key={q.minutes} className="me-chip" aria-pressed={step.delay_minutes === q.minutes} onClick={() => changeStep(step.position, { delay_minutes: q.minutes })}>{q.label ?? (i === 0 ? q.first : q.rest)}</button>)}</div>
                     <div className="ms-waitnums">
@@ -437,7 +445,7 @@ export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConn
                     <textarea rows={10} value={step.source !== null ? step.source : step.html} onChange={(e) => changeStep(step.position, step.source !== null ? { source: e.target.value } : { html: e.target.value })}
                       placeholder={"Hi there,\n\nWrite your email here.\n\n[[Book a call|https://…]]"}/></label>
                   <p className="me-hint">A line starting “# ” is a heading, “- ” a list item. [text](https://…) is a link. [[Button text|https://…]] on its own line is a button. The footer with your business name, postal address and unsubscribe link is added for you.</p>
-                </div>}
+                </fieldset></div>}
               </div>
             </li>;
           })}</ol>
@@ -448,7 +456,7 @@ export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConn
         <section className="campaigns-surface mo-panel" aria-labelledby="ms-leave">
           <div className="mo-panel-head"><div><h2 id="ms-leave">When someone leaves</h2></div></div>
           <ul className="ms-always">
-            <li><Ic.check size={13}/><span>Always, straight away: they unsubscribe, an email to them bounces, or they’re marked do not contact.</span></li>
+            <li><Ic.check size={13}/><span>Always, before their next email: they unsubscribe, an email to them bounces, or they’re marked do not contact.</span></li>
             <li><Ic.check size={13}/><span>If an email to them can’t be sent or confirmed, their series ends there. It’s never retried or guessed.</span></li>
           </ul>
           <button type="button" className="ms-switch" role="switch" aria-checked={settings.exit_on_goal !== "none"} disabled={!editable} onClick={() => changeSettings({ exit_on_goal: settings.exit_on_goal === "none" ? "booking" : "none" })}>

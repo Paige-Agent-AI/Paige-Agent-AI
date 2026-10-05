@@ -186,12 +186,14 @@ CREATE POLICY email_campaigns_admin_read ON public.email_campaigns FOR SELECT TO
 -- ── Freezing and ownership ─────────────────────────────────────────────────────────────────────────
 
 -- A series version that has left draft is history: who enters, the exits and the sender never change.
+-- Its segment may still be deleted (segment_id → NULL): the segment's rule was copied into it when filed.
 CREATE OR REPLACE FUNCTION public._email_sequence_version_frozen()
 RETURNS trigger LANGUAGE plpgsql SET search_path = public, pg_temp AS $$
 BEGIN
   IF OLD.state <> 'draft' AND (
        NEW.entry_mode IS DISTINCT FROM OLD.entry_mode OR NEW.audience IS DISTINCT FROM OLD.audience
-    OR NEW.segment_id IS DISTINCT FROM OLD.segment_id OR NEW.exit_on_goal IS DISTINCT FROM OLD.exit_on_goal
+    OR (NEW.segment_id IS DISTINCT FROM OLD.segment_id AND NEW.segment_id IS NOT NULL)
+    OR NEW.exit_on_goal IS DISTINCT FROM OLD.exit_on_goal
     OR NEW.exit_when_unmatched IS DISTINCT FROM OLD.exit_when_unmatched OR NEW.sender IS DISTINCT FROM OLD.sender
     OR NEW.sender_snapshot IS DISTINCT FROM OLD.sender_snapshot OR NEW.content_hash IS DISTINCT FROM OLD.content_hash
     OR NEW.expected_entrants IS DISTINCT FROM OLD.expected_entrants OR NEW.sequence_id IS DISTINCT FROM OLD.sequence_id
@@ -367,6 +369,28 @@ BEGIN
   RETURN jsonb_build_object('sequence_id', s, 'version_id', v);
 END $$;
 
+-- A rule a series can run: only the keys the rule builder writes, lists of text, and a whole number of days.
+-- The minute tick runs every business's series, so a rule that could raise is refused when it is saved.
+CREATE OR REPLACE FUNCTION public._email_sequence_rule_check(p_rule jsonb)
+RETURNS void LANGUAGE plpgsql IMMUTABLE SET search_path = public, pg_temp AS $$
+DECLARE k text;
+BEGIN
+  IF p_rule IS NULL OR jsonb_typeof(p_rule) <> 'object' THEN RAISE EXCEPTION 'rule_invalid' USING ERRCODE = '22023'; END IF;
+  FOR k IN SELECT jsonb_object_keys(p_rule) LOOP
+    IF k NOT IN ('stages','sources','tags','inactive_days') THEN RAISE EXCEPTION 'rule_invalid' USING ERRCODE = '22023'; END IF;
+    IF k = 'inactive_days' THEN
+      IF jsonb_typeof(p_rule->k) = 'null' THEN CONTINUE; END IF;
+      IF jsonb_typeof(p_rule->k) <> 'number' OR (p_rule->>k) !~ '^[0-9]{1,4}$' OR (p_rule->>k)::int NOT BETWEEN 1 AND 3650 THEN
+        RAISE EXCEPTION 'rule_invalid' USING ERRCODE = '22023';
+      END IF;
+    ELSIF jsonb_typeof(p_rule->k) <> 'array' OR jsonb_array_length(p_rule->k) > 200
+       OR EXISTS (SELECT 1 FROM jsonb_array_elements(p_rule->k) x WHERE jsonb_typeof(x) <> 'string' OR char_length(x #>> '{}') > 200) THEN
+      RAISE EXCEPTION 'rule_invalid' USING ERRCODE = '22023';
+    END IF;
+  END LOOP;
+END $$;
+REVOKE ALL ON FUNCTION public._email_sequence_rule_check(jsonb) FROM PUBLIC, anon, authenticated;
+
 -- Edit the draft's settings. NULL leaves a field as it is.
 CREATE OR REPLACE FUNCTION public.email_sequence_update_draft(
   p_sequence_id uuid, p_name text DEFAULT NULL, p_entry_mode text DEFAULT NULL, p_audience jsonb DEFAULT NULL,
@@ -388,6 +412,7 @@ BEGIN
           WHERE id = NULLIF(p_sender->>'connector_id','')::uuid AND tenant_id = t AND channel_type = 'email'))) THEN
     RAISE EXCEPTION 'sender_not_found' USING ERRCODE = 'P0002';
   END IF;
+  IF p_audience IS NOT NULL THEN PERFORM public._email_sequence_rule_check(p_audience); END IF;
   UPDATE public.email_sequence_versions SET
     entry_mode = COALESCE(p_entry_mode, entry_mode), audience = COALESCE(p_audience, audience),
     segment_id = CASE WHEN p_clear_segment THEN NULL ELSE COALESCE(p_segment_id, segment_id) END,
@@ -557,6 +582,9 @@ BEGIN
     UPDATE public.email_sequence_versions SET audience = public._email_sequence_rule(v.id) WHERE id = v.id;
     SELECT * INTO v FROM public.email_sequence_versions WHERE id = v.id;
   END IF;
+  -- The rule is checked and run here in both modes, so a rule the tick could not run never starts.
+  PERFORM public._email_sequence_rule_check(v.audience);
+  IF v.entry_mode <> 'matching' THEN PERFORM count(*) FROM public._email_audience(t, v.audience, false); END IF;
   IF v.entry_mode = 'matching' THEN
     SELECT count(*) INTO n FROM public._email_audience(t, v.audience, false) a WHERE a.ineligible IS NULL
       AND NOT EXISTS (SELECT 1 FROM public.email_sequence_enrollments x WHERE x.sequence_id = s.id AND x.client_id = a.client_id);
@@ -1018,115 +1046,125 @@ DECLARE
   s public.email_sequences%ROWTYPE; v public.email_sequence_versions%ROWTYPE;
   e public.email_sequence_enrollments%ROWTYPE; st public.email_sequence_steps%ROWTYPE; camp public.email_campaigns%ROWTYPE;
   l_status text; l_skip text; l_sent timestamptz; l_pos int; nsteps int; nxt int; base timestamptz; due timestamptz; rid uuid; br text; k int;
+  matched uuid[];
   enrolled int := 0; planned int := 0; done int := 0; left_n int := 0; blocked int := 0; looked int := 0;
 BEGIN
   FOR s IN SELECT * FROM public.email_sequences WHERE status = 'active' ORDER BY updated_at FOR UPDATE SKIP LOCKED LOOP
     looked := looked + 1;
-    SELECT * INTO v FROM public.email_sequence_versions WHERE id = s.live_version_id;
-    IF NOT FOUND THEN CONTINUE; END IF;
+    -- Each series runs in its own subtransaction: one that raises is undone and marked as needing
+    -- attention, and every other business's series still runs this minute.
+    BEGIN
+      SELECT * INTO v FROM public.email_sequence_versions WHERE id = s.live_version_id;
+      IF NOT FOUND THEN CONTINUE; END IF;
 
-    SELECT c.blocked_reason INTO br FROM public.email_campaigns c
-     WHERE c.sequence_id = s.id AND c.status = 'blocked' AND c.blocked_reason IS DISTINCT FROM 'series_paused' LIMIT 1;
-    IF FOUND THEN
-      UPDATE public.email_campaigns SET status = 'blocked', blocked_reason = br, updated_at = now()
+      SELECT c.blocked_reason INTO br FROM public.email_campaigns c
+       WHERE c.sequence_id = s.id AND c.status = 'blocked' AND c.blocked_reason IS DISTINCT FROM 'series_paused' LIMIT 1;
+      IF FOUND THEN
+        UPDATE public.email_campaigns SET status = 'blocked', blocked_reason = br, updated_at = now()
+         WHERE sequence_id = s.id AND status IN ('scheduled','sending');
+        UPDATE public.email_sequences SET status = 'blocked', blocked_reason = br, updated_at = now() WHERE id = s.id;
+        blocked := blocked + 1;
+        CONTINUE;
+      END IF;
+
+      SELECT count(*) INTO nsteps FROM public.email_sequence_steps WHERE version_id = v.id;
+
+      IF s.checked_at IS NULL OR s.checked_at < now() - interval '5 minutes' THEN
+        -- Everyone the frozen rule matches now (eligible or not): who may enter, and who has stopped matching.
+        SELECT COALESCE(array_agg(a.client_id), '{}') INTO matched FROM public._email_audience(s.tenant_id, v.audience, false) a;
+
+        INSERT INTO public.email_sequence_enrollments (sequence_id, tenant_id, client_id, email, entered_at)
+        SELECT s.id, s.tenant_id, a.client_id, a.email, now()
+          FROM public._email_audience(s.tenant_id, v.audience, false) a JOIN public.clients cl ON cl.id = a.client_id
+         WHERE a.ineligible IS NULL
+           AND (v.entry_mode = 'matching' OR cl.created_at >= s.activated_at)
+           AND NOT EXISTS (SELECT 1 FROM public.email_sequence_enrollments x WHERE x.sequence_id = s.id AND x.client_id = a.client_id)
+         ORDER BY cl.created_at, cl.id
+         LIMIT lim
+        ON CONFLICT (sequence_id, client_id) DO NOTHING;
+        GET DIAGNOSTICS k = ROW_COUNT; enrolled := enrolled + k;
+
+        IF v.exit_when_unmatched THEN
+          WITH gone AS (
+            UPDATE public.email_sequence_enrollments en SET status = 'exited', exit_reason = 'stopped_matching',
+              finished_at = now(), updated_at = now()
+             WHERE en.sequence_id = s.id AND en.status = 'active'
+               AND NOT (en.client_id = ANY (matched))
+            RETURNING en.id)
+          UPDATE public.email_campaign_recipients r SET status = 'cancelled', updated_at = now()
+            FROM gone WHERE r.enrollment_id = gone.id AND r.status = 'planned';
+          GET DIAGNOSTICS k = ROW_COUNT;
+        END IF;
+        IF v.exit_on_goal <> 'none' THEN
+          WITH gone AS (
+            UPDATE public.email_sequence_enrollments en SET status = 'exited', exit_reason = 'reached_goal',
+              finished_at = now(), updated_at = now()
+             WHERE en.sequence_id = s.id AND en.status = 'active'
+               AND public._email_goal_reached(s.tenant_id, en.client_id, v.exit_on_goal, en.entered_at)
+            RETURNING en.id)
+          UPDATE public.email_campaign_recipients r SET status = 'cancelled', updated_at = now()
+            FROM gone WHERE r.enrollment_id = gone.id AND r.status = 'planned';
+        END IF;
+        UPDATE public.email_sequences SET checked_at = now() WHERE id = s.id;
+      END IF;
+
+      FOR e IN SELECT en.* FROM public.email_sequence_enrollments en
+                WHERE en.sequence_id = s.id AND en.status = 'active'
+                  AND NOT EXISTS (SELECT 1 FROM public.email_campaign_recipients r
+                                   WHERE r.enrollment_id = en.id AND r.status IN ('planned','sending'))
+                ORDER BY en.updated_at, en.id LIMIT lim FOR UPDATE OF en SKIP LOCKED LOOP
+        l_status := NULL; l_skip := NULL; l_sent := NULL; l_pos := NULL;
+        SELECT r.status, r.skip_reason, r.sent_at, c.sequence_position INTO l_status, l_skip, l_sent, l_pos
+          FROM public.email_campaign_recipients r JOIN public.email_campaigns c ON c.id = r.campaign_id
+         WHERE r.enrollment_id = e.id ORDER BY r.created_at DESC, r.id DESC LIMIT 1;
+        IF l_status IN ('skipped','failed','outcome_unknown') THEN
+          UPDATE public.email_sequence_enrollments SET status = 'exited', finished_at = now(), updated_at = now(),
+            exit_reason = CASE l_status WHEN 'skipped' THEN COALESCE(l_skip, 'sender_refused')
+                                           WHEN 'failed' THEN 'send_failed' ELSE 'not_confirmed' END
+           WHERE id = e.id;
+          left_n := left_n + 1;
+          CONTINUE;
+        END IF;
+        IF l_status IS NULL THEN
+          nxt := 1; base := e.entered_at;
+        ELSIF l_status = 'sent' THEN
+          nxt := l_pos + 1; base := l_sent;
+          UPDATE public.email_sequence_enrollments SET last_sent_at = l_sent WHERE id = e.id AND last_sent_at IS DISTINCT FROM l_sent;
+        ELSE
+          -- Withdrawn before it went (the series changed): the same email again, on the new content.
+          nxt := l_pos; base := COALESCE(e.last_sent_at, e.entered_at);
+        END IF;
+        IF nxt > nsteps THEN
+          UPDATE public.email_sequence_enrollments SET status = 'completed', finished_at = now(), updated_at = now() WHERE id = e.id;
+          done := done + 1;
+          CONTINUE;
+        END IF;
+        SELECT * INTO st FROM public.email_sequence_steps WHERE version_id = v.id AND position = nxt;
+        SELECT * INTO camp FROM public.email_campaigns WHERE sequence_id = s.id AND sequence_position = nxt;
+        IF NOT FOUND OR camp.status NOT IN ('scheduled','sending') THEN CONTINUE; END IF;
+        due := base + make_interval(mins => st.delay_minutes);
+        rid := NULL;
+        INSERT INTO public.email_campaign_recipients (campaign_id, version_id, tenant_id, client_id, email, status, not_before, enrollment_id)
+        VALUES (camp.id, camp.current_version_id, s.tenant_id, e.client_id, e.email, 'planned', CASE WHEN due > now() THEN due END, e.id)
+        ON CONFLICT (version_id, email) DO NOTHING
+        RETURNING id INTO rid;
+        IF rid IS NULL THEN
+          -- This address already has this email (another contact shares it): never send it twice.
+          UPDATE public.email_sequence_enrollments SET status = 'exited', exit_reason = 'already_sent', finished_at = now(), updated_at = now()
+           WHERE id = e.id;
+          left_n := left_n + 1;
+          CONTINUE;
+        END IF;
+        UPDATE public.email_sequence_enrollments SET position = nxt, updated_at = now() WHERE id = e.id;
+        planned := planned + 1;
+      END LOOP;
+    EXCEPTION WHEN OTHERS THEN
+      UPDATE public.email_campaigns SET status = 'blocked', blocked_reason = 'series_error', updated_at = now()
        WHERE sequence_id = s.id AND status IN ('scheduled','sending');
-      UPDATE public.email_sequences SET status = 'blocked', blocked_reason = br, updated_at = now() WHERE id = s.id;
+      UPDATE public.email_sequences SET status = 'blocked', blocked_reason = 'series_error', updated_at = now() WHERE id = s.id;
       blocked := blocked + 1;
-      CONTINUE;
-    END IF;
-
-    SELECT count(*) INTO nsteps FROM public.email_sequence_steps WHERE version_id = v.id;
-
-    IF s.checked_at IS NULL OR s.checked_at < now() - interval '5 minutes' THEN
-      CREATE TEMP TABLE IF NOT EXISTS _email_seq_audience (client_id uuid, email text, ineligible text) ON COMMIT DROP;
-      TRUNCATE _email_seq_audience;
-      INSERT INTO _email_seq_audience SELECT * FROM public._email_audience(s.tenant_id, v.audience, false);
-
-      INSERT INTO public.email_sequence_enrollments (sequence_id, tenant_id, client_id, email, entered_at)
-      SELECT s.id, s.tenant_id, a.client_id, a.email, now()
-        FROM _email_seq_audience a JOIN public.clients cl ON cl.id = a.client_id
-       WHERE a.ineligible IS NULL
-         AND (v.entry_mode = 'matching' OR cl.created_at >= s.activated_at)
-         AND NOT EXISTS (SELECT 1 FROM public.email_sequence_enrollments x WHERE x.sequence_id = s.id AND x.client_id = a.client_id)
-       ORDER BY cl.created_at, cl.id
-       LIMIT lim
-      ON CONFLICT (sequence_id, client_id) DO NOTHING;
-      GET DIAGNOSTICS k = ROW_COUNT; enrolled := enrolled + k;
-
-      IF v.exit_when_unmatched THEN
-        WITH gone AS (
-          UPDATE public.email_sequence_enrollments en SET status = 'exited', exit_reason = 'stopped_matching',
-            finished_at = now(), updated_at = now()
-           WHERE en.sequence_id = s.id AND en.status = 'active'
-             AND NOT EXISTS (SELECT 1 FROM _email_seq_audience a WHERE a.client_id = en.client_id)
-          RETURNING en.id)
-        UPDATE public.email_campaign_recipients r SET status = 'cancelled', updated_at = now()
-          FROM gone WHERE r.enrollment_id = gone.id AND r.status = 'planned';
-        GET DIAGNOSTICS k = ROW_COUNT;
-      END IF;
-      IF v.exit_on_goal <> 'none' THEN
-        WITH gone AS (
-          UPDATE public.email_sequence_enrollments en SET status = 'exited', exit_reason = 'reached_goal',
-            finished_at = now(), updated_at = now()
-           WHERE en.sequence_id = s.id AND en.status = 'active'
-             AND public._email_goal_reached(s.tenant_id, en.client_id, v.exit_on_goal, en.entered_at)
-          RETURNING en.id)
-        UPDATE public.email_campaign_recipients r SET status = 'cancelled', updated_at = now()
-          FROM gone WHERE r.enrollment_id = gone.id AND r.status = 'planned';
-      END IF;
-      UPDATE public.email_sequences SET checked_at = now() WHERE id = s.id;
-    END IF;
-
-    FOR e IN SELECT en.* FROM public.email_sequence_enrollments en
-              WHERE en.sequence_id = s.id AND en.status = 'active'
-                AND NOT EXISTS (SELECT 1 FROM public.email_campaign_recipients r
-                                 WHERE r.enrollment_id = en.id AND r.status IN ('planned','sending'))
-              ORDER BY en.updated_at, en.id LIMIT lim FOR UPDATE OF en SKIP LOCKED LOOP
-      l_status := NULL; l_skip := NULL; l_sent := NULL; l_pos := NULL;
-      SELECT r.status, r.skip_reason, r.sent_at, c.sequence_position INTO l_status, l_skip, l_sent, l_pos
-        FROM public.email_campaign_recipients r JOIN public.email_campaigns c ON c.id = r.campaign_id
-       WHERE r.enrollment_id = e.id ORDER BY r.created_at DESC, r.id DESC LIMIT 1;
-      IF l_status IN ('skipped','failed','outcome_unknown') THEN
-        UPDATE public.email_sequence_enrollments SET status = 'exited', finished_at = now(), updated_at = now(),
-          exit_reason = CASE l_status WHEN 'skipped' THEN COALESCE(l_skip, 'sender_refused')
-                                         WHEN 'failed' THEN 'send_failed' ELSE 'not_confirmed' END
-         WHERE id = e.id;
-        left_n := left_n + 1;
-        CONTINUE;
-      END IF;
-      IF l_status IS NULL THEN
-        nxt := 1; base := e.entered_at;
-      ELSIF l_status = 'sent' THEN
-        nxt := l_pos + 1; base := l_sent;
-        UPDATE public.email_sequence_enrollments SET last_sent_at = l_sent WHERE id = e.id AND last_sent_at IS DISTINCT FROM l_sent;
-      ELSE
-        -- Withdrawn before it went (the series changed): the same email again, on the new content.
-        nxt := l_pos; base := COALESCE(e.last_sent_at, e.entered_at);
-      END IF;
-      IF nxt > nsteps THEN
-        UPDATE public.email_sequence_enrollments SET status = 'completed', finished_at = now(), updated_at = now() WHERE id = e.id;
-        done := done + 1;
-        CONTINUE;
-      END IF;
-      SELECT * INTO st FROM public.email_sequence_steps WHERE version_id = v.id AND position = nxt;
-      SELECT * INTO camp FROM public.email_campaigns WHERE sequence_id = s.id AND sequence_position = nxt;
-      IF NOT FOUND OR camp.status NOT IN ('scheduled','sending') THEN CONTINUE; END IF;
-      due := base + make_interval(mins => st.delay_minutes);
-      rid := NULL;
-      INSERT INTO public.email_campaign_recipients (campaign_id, version_id, tenant_id, client_id, email, status, not_before, enrollment_id)
-      VALUES (camp.id, camp.current_version_id, s.tenant_id, e.client_id, e.email, 'planned', CASE WHEN due > now() THEN due END, e.id)
-      ON CONFLICT (version_id, email) DO NOTHING
-      RETURNING id INTO rid;
-      IF rid IS NULL THEN
-        -- This address already has this email (another contact shares it): never send it twice.
-        UPDATE public.email_sequence_enrollments SET status = 'exited', exit_reason = 'already_sent', finished_at = now(), updated_at = now()
-         WHERE id = e.id;
-        left_n := left_n + 1;
-        CONTINUE;
-      END IF;
-      UPDATE public.email_sequence_enrollments SET position = nxt, updated_at = now() WHERE id = e.id;
-      planned := planned + 1;
-    END LOOP;
+      RAISE WARNING 'email_sequence_tick: series % blocked: % (%)', s.id, SQLERRM, SQLSTATE;
+    END;
   END LOOP;
   RETURN jsonb_build_object('series', looked, 'enrolled', enrolled, 'planned', planned, 'completed', done,
     'left', left_n, 'blocked', blocked);
@@ -1135,6 +1173,36 @@ REVOKE ALL ON FUNCTION public.email_sequence_tick(integer) FROM PUBLIC, anon, au
 GRANT EXECUTE ON FUNCTION public.email_sequence_tick(integer) TO service_role;
 
 -- ── Existing functions, changed for series ─────────────────────────────────────────────────────────
+-- An email of a series is cancelled at the last step before the provider when its person has left the
+-- series (removed, reached the goal, stopped matching, series stopped) since it was leased. Otherwise as E1.
+CREATE OR REPLACE FUNCTION public.email_campaign_dispatch_begin(p_recipient_id uuid)
+RETURNS boolean LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = public, pg_temp AS $$
+DECLARE r public.email_campaign_recipients%ROWTYPE; c public.email_campaigns%ROWTYPE;
+BEGIN
+  SELECT * INTO r FROM public.email_campaign_recipients WHERE id = p_recipient_id FOR UPDATE;
+  IF NOT FOUND OR r.status <> 'sending' OR r.lease_until IS NULL OR r.lease_until <= now() THEN RETURN false; END IF;
+  IF r.enrollment_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM public.email_sequence_enrollments en
+       WHERE en.id = r.enrollment_id AND en.status = 'active') THEN
+    UPDATE public.email_campaign_recipients SET status = 'cancelled', lease_until = NULL, updated_at = now() WHERE id = r.id;
+    RETURN false;
+  END IF;
+  SELECT * INTO c FROM public.email_campaigns WHERE id = r.campaign_id;
+  IF c.status IN ('scheduled','sending') AND c.current_version_id = r.version_id THEN RETURN true; END IF;
+  IF c.status = 'blocked' AND c.current_version_id = r.version_id THEN
+    UPDATE public.email_campaign_recipients SET status = 'planned', lease_until = NULL,
+      attempt_count = GREATEST(attempt_count - 1, 0), updated_at = now() WHERE id = r.id;
+  ELSE
+    UPDATE public.email_campaign_recipients SET status = 'cancelled', lease_until = NULL, updated_at = now() WHERE id = r.id;
+  END IF;
+  RETURN false;
+END $$;
+REVOKE ALL ON FUNCTION public.email_campaign_dispatch_begin(uuid) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.email_campaign_dispatch_begin(uuid) TO service_role;
+
+-- Series keep many people planned for days; the claim's "anything due" check reads them by due time.
+CREATE INDEX IF NOT EXISTS email_campaign_recipients_planned_due
+  ON public.email_campaign_recipients (campaign_id, not_before) WHERE status = 'planned';
+
 -- A running series' own campaign is never settled while the series runs.
 CREATE OR REPLACE FUNCTION public.email_campaign_dispatch_settle(p_campaign_id uuid)
 RETURNS jsonb LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = public, pg_temp AS $$

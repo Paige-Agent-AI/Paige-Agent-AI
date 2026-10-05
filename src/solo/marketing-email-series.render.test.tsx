@@ -240,6 +240,21 @@ describe("Series view", () => {
     expect(calls.filter((c) => c.fn === "read_email_sequence").length).toBe(reads + 1);
   });
 
+  it("moving an email locks editing until the series is re-read, so a keystroke can't land on the wrong email", async () => {
+    await openSeries(seriesRead());
+    await act(async () => { (host.querySelector('[aria-label^="Email 2: How we work"]') as HTMLButtonElement).click(); });
+    expect(labelled("Subject").matches(":disabled")).toBe(false);
+    let release!: () => void;
+    answers.read_email_sequence = () => new Promise((resolve) => { release = () => resolve({ data: seriesRead(), error: null }); });
+    await act(async () => { (host.querySelector('[aria-label="Move email 2 down"]') as HTMLButtonElement).click(); });
+    await flush();
+    expect(calls.find((c) => c.fn === "email_sequence_step_move")?.args).toEqual({ p_sequence_id: "q-1", p_from: 2, p_to: 3 });
+    expect(labelled("Subject").matches(":disabled")).toBe(true);
+    await act(async () => { release(); });
+    await flush();
+    expect(labelled("Subject").matches(":disabled")).toBe(false);
+  });
+
   it("a member or another business is refused in the owner's words", async () => {
     answers.read_email_sequence = { data: null, error: { message: "series_not_found" } };
     window.history.replaceState(null, "", "/solo/1/growth/email?series=q-9");

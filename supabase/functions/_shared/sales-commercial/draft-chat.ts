@@ -3,11 +3,11 @@ import {parseCommercialDraftCommand} from './draft-command.ts';
 import {UUID,FINGERPRINT} from '../sales-invoice-command/contract.ts';
 import type {Context,Dependencies,Result} from '../sales-invoice-chat.ts';
 
-const declarations=[SALES_DRAFT_CREATE,SALES_DRAFT_REVISE];
-export const SALES_DRAFT_TOOLS=declarations.map(declaration=>({type:'function' as const,function:{name:declaration.governance.actionRiskKey!,description:declaration===SALES_DRAFT_CREATE
- ?'Create a NEW unissued canonical invoice draft from explicit commercial intent. Resolve the canonical customer first. Ask instead of guessing currency, due date, taxes/fees or conflicting agreement terms. Explicit custom-priced USD items only; unresolved catalog prices require review. This does not publish, send, activate collections or collect payment. New draft numbers are assigned at publication; do not show internal IDs as invoice numbers.'
- :'Revise an existing unissued canonical invoice draft at its exact current version. Read the invoice first. Explicit custom-priced USD items only. Does not change an issued invoice, terms, send or collect.',
- parameters:{type:'object',properties:Object.fromEntries(Object.entries(declaration.input.properties).filter(([key])=>key!=='action')),required:declaration.input.required.filter(key=>key!=='action'),additionalProperties:false}}}));
+const draftParameters=(declaration:typeof SALES_DRAFT_CREATE)=>({type:'object',properties:Object.fromEntries(Object.entries(declaration.input.properties).filter(([key])=>key!=='action')),required:declaration.input.required.filter(key=>key!=='action'),additionalProperties:false});
+export const SALES_DRAFT_TOOLS=[
+ {type:'function' as const,function:{name:'billing_create_invoice',description:'Create a NEW unissued canonical invoice draft from explicit commercial intent. Resolve the canonical customer first. Ask instead of guessing currency, due date, taxes/fees or conflicting agreement terms. Explicit custom-priced USD items only; unresolved catalog prices require review. This does not publish, send, activate collections or collect payment. New draft numbers are assigned at publication; do not show internal IDs as invoice numbers.',parameters:draftParameters(SALES_DRAFT_CREATE)}},
+ {type:'function' as const,function:{name:'sales_revise_invoice_draft',description:'Revise an existing unissued canonical invoice draft at its exact current version. Read the invoice first. Explicit custom-priced USD items only. Does not change an issued invoice, terms, send or collect.',parameters:draftParameters(SALES_DRAFT_REVISE)}},
+];
 export const SALES_DRAFT_TOOL_NAMES=new Set(SALES_DRAFT_TOOLS.map(t=>t.function.name));
 const object=(v:unknown):v is Record<string,unknown>=>typeof v==='object'&&v!==null&&!Array.isArray(v);
 type Common={operationId:(tenant:string,actor:string,command:unknown,turn:Context['turn'])=>Promise<string>;safeResult:(value:unknown)=>Record<string,unknown>};

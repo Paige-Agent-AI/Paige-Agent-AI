@@ -55,3 +55,10 @@ The risk guard follows the real Sales declaration/dispatch/shared-gate chain and
 - Cases 19–25: tenant-owned Stripe/PayPal hosted requests, provider readback, verified settlement/once-only allocation, identical subsequent modality reads and governed Collections stop conditions remain S3–S9 work.
 
 This is a bounded S2 draft unit, not S2 or INT-311 completion. Explicit custom USD invoice items are supported; catalog-price conversational creation fails with `CATALOG_PRICE_REVIEW_REQUIRED` until canonical price/version resolution is bound. The full package may not guess dates, currency, tax/fees or conflicting signed terms. No recurring mandate, customer charge, provider settlement, loan or new scheduler is introduced.
+
+
+## Capability Kit CI repair � 2026-10-05
+
+The anti-bypass failure was repaired in implementation, without expanding its baseline or exemptions: create/revise now have literal branded declarations and literal Chat tool names with schemas projected from those declarations. Admission uses the canonical Kit ordinary internal-mutation adapter (SCR-2026-10-05), which delegates unchanged Trust semantics to governedExecution; the existing high-risk adapter is untouched. Discovery guards inspect each adapter body independently and reject a broken import, risk check, provider boundary or alternate authority. No SQL or approval semantics changed. Open-PR changed-file check found no other lane editing decision.ts; #1615's Kit branding/types and #1400's risk-parser hunks remain untouched.
+
+Local validation: Capability Kit anti-bypass PASS; action-risk lint and negative selftests PASS; 122 affected tests PASS; actual Deno endpoint graph PASS. Hosted authentication, full package assembly and provider settlement remain UNVERIFIED. Final exact-head review/CI and delivery evidence are recorded in #1741 before merge.

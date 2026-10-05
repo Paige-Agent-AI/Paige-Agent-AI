@@ -17,25 +17,30 @@ const common={
  delivery_channel_intents:{type:'array',maxItems:2,items:{type:'string',enum:['email','sms']}},due_date:{type:'string',pattern:'^\\d{4}-\\d{2}-\\d{2}$'},memo:nullableText(2000),
 } as const satisfies Readonly<Record<string,NestedInputSchema>>;
 const draft:NestedInputSchema={type:'object',properties:{...common,deposit_minor:{type:'integer',minimum:1,maximum:2147483647}},required:Object.keys(common),additionalProperties:false};
-function declareDraft(revise:boolean){
- const key=revise?'sales_revise_invoice_draft':'billing_create_invoice';
- return defineCapability({
-  identity:{id:revise?'sales_invoice.draft_revise':'sales_invoice.draft_create',version:1,domain:'sales_invoice',owner:'sales',humanSurface:'/solo/:account/sales/payments',description:'Save and read back an unissued canonical invoice draft. No publication, delivery, mandate or payment.'},
-  input:objectInputSchema({properties:{action:{type:'string',enum:[revise?'invoice.draft_revise':'invoice.draft_create']},draft,...(revise?{invoice_id:{type:'string',format:'uuid'} as const,expected_version:{type:'integer',minimum:1} as const}:{})},required:revise?['action','draft','invoice_id','expected_version']:['action','draft']}),
-  effect:'mutation',governance:{actionRiskKey:key,risk:'ordinary',approval:'confirm',requiredPermission:ownerGrantablePermission(revise?'sales_invoice.draft_revise.execute':'sales_invoice.draft_create.execute')},
+export const SALES_DRAFT_CREATE=defineCapability({
+  identity:{id:'sales_invoice.draft_create',version:1,domain:'sales_invoice',owner:'sales',humanSurface:'/solo/:account/sales/payments',description:'Save and read back an unissued canonical invoice draft. No publication, delivery, mandate or payment.'},
+  input:objectInputSchema({properties:{action:{type:'string',enum:['invoice.draft_create']},draft,},required:['action','draft']}),
+  effect:'mutation',governance:{actionRiskKey:'billing_create_invoice',risk:'ordinary',approval:'confirm',requiredPermission:ownerGrantablePermission('sales_invoice.draft_create.execute')},
   tenantScope:{source:'server',tenantResolver:'current_user_tenant_id',actorResolver:'authenticated_user',revalidateAt:['before_availability','before_execution','before_receipt']},
   availability:{resolver:'paige-capability-status',states:['live','needs_approval','not_for_tier','unavailable']},
   providerBinding:{kind:'internal',operation:'public.execute_sales_invoice_draft_command',connectionResolver:null},
   idempotency:{mode:'required',key:'Server-scoped actor, tenant, stable operation and exact draft command; generated create identity is never model input.',readback:'public.read_sales_invoice_command_result',replay:'return_recorded_result'},
   receipt:{rail:true,recorder:'record_capability_run',redaction:'tenant_safe',visibility:'owner_internal'},outcome:{projector:'capability-record'},
  });
-}
-export const SALES_DRAFT_CREATE=declareDraft(false);
-export const SALES_DRAFT_REVISE=declareDraft(true);
+export const SALES_DRAFT_REVISE=defineCapability({
+  identity:{id:'sales_invoice.draft_revise',version:1,domain:'sales_invoice',owner:'sales',humanSurface:'/solo/:account/sales/payments',description:'Save and read back an unissued canonical invoice draft. No publication, delivery, mandate or payment.'},
+  input:objectInputSchema({properties:{action:{type:'string',enum:['invoice.draft_revise']},draft,invoice_id:{type:'string',format:'uuid'},expected_version:{type:'integer',minimum:1}},required:['action','draft','invoice_id','expected_version']}),
+  effect:'mutation',governance:{actionRiskKey:'sales_revise_invoice_draft',risk:'ordinary',approval:'confirm',requiredPermission:ownerGrantablePermission('sales_invoice.draft_revise.execute')},
+  tenantScope:{source:'server',tenantResolver:'current_user_tenant_id',actorResolver:'authenticated_user',revalidateAt:['before_availability','before_execution','before_receipt']},
+  availability:{resolver:'paige-capability-status',states:['live','needs_approval','not_for_tier','unavailable']},
+  providerBinding:{kind:'internal',operation:'public.execute_sales_invoice_draft_command',connectionResolver:null},
+  idempotency:{mode:'required',key:'Server-scoped actor, tenant, stable operation and exact draft command; generated create identity is never model input.',readback:'public.read_sales_invoice_command_result',replay:'return_recorded_result'},
+  receipt:{rail:true,recorder:'record_capability_run',redaction:'tenant_safe',visibility:'owner_internal'},outcome:{projector:'capability-record'},
+ });
 
 export const SALES_DRAFT_SPINE = [SALES_DRAFT_CREATE,SALES_DRAFT_REVISE].map(declaration=>({
  key:declaration.identity.id,domain:'sales_invoice',owner:'sales',humanSurface:'/solo/:account/sales/payments',readiness:'none' as const,
  action:{classification:'mutate' as const,executor:'public.execute_sales_invoice_draft_command',chatTool:declaration.governance.actionRiskKey!,riskPolicyKey:'ordinary' as const,approvalAuthority:'chat-canonical' as const,idempotency:declaration.idempotency.mode==='required'?declaration.idempotency.key:'Not applicable'},
  outcome:{kinds:['draft_created','draft_revised','refused','outcome_unknown'],projector:'public.read_sales_invoice_command_result',railVisibility:'Saved canonical unissued draft and immutable operation receipt only; never issuance, delivery, mandate or settlement.'},
- chatBinding:'LIVE' as const,mindBinding:'UNAVAILABLE' as const,sharedPrimitiveChange:'NONE' as const,maturity:'PARTIAL' as const,
+ chatBinding:'LIVE' as const,mindBinding:'UNAVAILABLE' as const,sharedPrimitiveChange:'SCR-2026-10-05' as const,maturity:'PARTIAL' as const,
 }));

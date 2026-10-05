@@ -1,4 +1,5 @@
-import {decideGovernedExecution,type GovernedApproval,type GovernedCaller,type GovernedCapability} from '../paige-spine/governedExecution.ts';
+import {decideDeclaredOrdinaryCapability} from '../capability-kit/decision.ts';
+import {type GovernedApproval,type GovernedCaller,type GovernedCapability} from '../paige-spine/governedExecution.ts';
 import {parseCommercialDraftCommand} from './draft-command.ts';
 import {commercialDraftWorkOrder,validateStoredDraftWorkOrder} from './draft-work-order.ts';
 import {SALES_DRAFT_CREATE,SALES_DRAFT_REVISE} from './draft-capabilities.ts';
@@ -21,7 +22,7 @@ export async function admitCommercialDraft(input:{
  const validScope=!!input.caller.authenticated&&!!input.caller.tenantId&&!!input.caller.userId&&input.caller.tenantSource==='server';
  const command=validScope?await commercialDraftWorkOrder(intent,scope):null;
  const requestArgs={expected_tenant_id:input.caller.tenantId,operation_id:input.operationId,command};
- const decision=decideGovernedExecution({caller:input.caller,capability:{id:capability,effect:'mutate',outcomeChannel:declaration.receipt.recorder,availability:input.availability},approval:input.approval,requestArgs});
+ const decision=decideDeclaredOrdinaryCapability(declaration,{caller:input.caller,capability:{id:capability,effect:'mutate',outcomeChannel:declaration.receipt.recorder,availability:input.availability},approval:input.approval,requestArgs});
  if(decision.kind!=='execute')return {capability,declaration,decision,execution:null};
  const args=decision.args;
  if(!object(args)||args.expected_tenant_id!==scope.tenantId||args.operation_id!==scope.operationId)throw new TypeError('DRAFT_APPROVAL_SCOPE_INVALID');

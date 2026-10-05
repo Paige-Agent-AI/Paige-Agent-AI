@@ -1,6 +1,9 @@
 // @ts-nocheck
 import React from "react";
 import { PipelineDelete } from "./PipelineDelete";
+import { DealClientPicker } from "./deals/DealClientPicker";
+import { CrmDealCommandReview } from "./deals/CrmDealCommandReview";
+import { X } from "lucide-react";
 
 const fmt = (value) => {
   if (!value) return "Not recorded";
@@ -95,8 +98,8 @@ function DeskDialog({
       >
         <header>
           <div>
-            <span className="eyebrow">{eyebrow}</span>
             <h2 id={titleId}>{title}</h2>
+            {eyebrow && <p className="pipeline-evidence">{eyebrow}</p>}
           </div>
           <button
             ref={closeRef}
@@ -105,7 +108,7 @@ function DeskDialog({
             onClick={onClose}
             aria-label="Close"
           >
-            X
+            <X size={18} aria-hidden="true" />
           </button>
         </header>
         {children}
@@ -849,15 +852,19 @@ export function PipelineCommandDesk({
       )}
       {mode === "new" && selected && (
         <NewDealDialog
+          key={data.tenantId}
+          tenantId={data.tenantId}
           pipeline={selected}
           stages={activeStages}
-          run={run}
           busy={busy}
+          onCreated={() => { data.retry(); setMode("board"); if (createRequested) onClearFocus(); }}
           onClose={() => { setMode("board"); if (createRequested) onClearFocus(); }}
         />
       )}
       {detail && !move && !outcome && (
         <DealDialog
+          tenantId={data.tenantId}
+          onRelationshipChanged={() => data.retry()}
           deal={workspace.deals.find((item) => item.id === detail.id) || detail}
           stages={stages}
           canManage={workspace.canManage}
@@ -901,23 +908,31 @@ export function PipelineCommandDesk({
   );
 }
 
-function NewDealDialog({ pipeline, stages, run, busy, onClose }) {
+function NewDealDialog({ tenantId, pipeline, stages, busy, onCreated, onClose }) {
   const [draft, setDraft] = React.useState({
     title: "",
     stageId: stages[0]?.id || "",
     tags: "",
     notes: "",
+    clientId: "",
+    relationship: "linked",
+    unlinkedReason: "",
   });
   const [error, setError] = React.useState("");
+  const [command, setCommand] = React.useState(null);
   const save = async () => {
     if (!draft.title.trim() || !draft.stageId) {
       setError("Add a deal name and choose an active-work stage.");
       return;
     }
-    const result = await run({
-      type: "create-deal",
-      pipelineId: pipeline.id,
-      stageId: draft.stageId,
+    if (draft.relationship === "linked" && !draft.clientId) { setError("Choose a canonical client record before creating this opportunity."); return; }
+    if (draft.relationship === "unlinked" && !draft.unlinkedReason) { setError("Choose why this prospect is intentionally unlinked."); return; }
+    setError("");
+    setCommand({
+      action: "deal.create",
+      pipeline_id: pipeline.id,
+      stage_id: draft.stageId,
+      ...(draft.relationship === "linked" ? {contact_id: draft.clientId} : {unlinked_reason: draft.unlinkedReason}),
       title: draft.title.trim(),
       tags: draft.tags
         .split(",")
@@ -925,8 +940,6 @@ function NewDealDialog({ pipeline, stages, run, busy, onClose }) {
         .filter(Boolean),
       notes: draft.notes,
     });
-    if (result?.ok) onClose();
-    else setError(result?.message || "Deal was not created.");
   };
   return (
     <DeskDialog
@@ -935,7 +948,7 @@ function NewDealDialog({ pipeline, stages, run, busy, onClose }) {
       onClose={onClose}
       busy={busy}
     >
-      <div className="pipeline-desk-form">
+      {command ? <div className="pipeline-desk-form"><CrmDealCommandReview tenantId={tenantId} command={command} onComplete={onCreated} onClose={() => setCommand(null)}/></div> : <div className="pipeline-desk-form">
         <label>
           <span>Deal or opportunity name</span>
           <input
@@ -946,6 +959,8 @@ function NewDealDialog({ pipeline, stages, run, busy, onClose }) {
             }
           />
         </label>
+        <fieldset className="pipeline-relationship-choice"><legend>Client relationship</legend><label><input type="radio" name="deal-relationship" checked={draft.relationship === "linked"} onChange={() => setDraft({...draft,relationship:"linked"})}/>Existing client</label><label><input type="radio" name="deal-relationship" checked={draft.relationship === "unlinked"} onChange={() => setDraft({...draft,relationship:"unlinked"})}/>Intentionally unlinked prospect</label></fieldset>
+        {draft.relationship === "linked" ? <DealClientPicker tenantId={tenantId} value={draft.clientId} onChange={clientId => setDraft({...draft,clientId})}/> : <label><span>Why is this prospect unlinked?</span><select value={draft.unlinkedReason} onChange={e=>setDraft({...draft,unlinkedReason:e.target.value})}><option value="">Choose a reason</option><option value="anonymous_prospect">Anonymous prospect</option><option value="early_stage_prospect">Early-stage prospect</option><option value="import_pending_identity">Imported · identity pending</option></select></label>}
         <label>
           <span>Starting stage</span>
           <select
@@ -982,9 +997,7 @@ function NewDealDialog({ pipeline, stages, run, busy, onClose }) {
           />
         </label>
         <p className="pipeline-evidence">
-          Contact, offer, owner, and next-action selection are unavailable until
-          their tenant-safe creation sources are connected. You can add the
-          sourced relationship later without inventing it.
+          The selected client is stored on the canonical opportunity. Approval follows your current policy.
         </p>
         {error && <p role="alert">{error}</p>}
         <footer>
@@ -999,12 +1012,14 @@ function NewDealDialog({ pipeline, stages, run, busy, onClose }) {
             {busy ? "Creating..." : "Create deal"}
           </button>
         </footer>
-      </div>
+      </div>}
     </DeskDialog>
   );
 }
 
 function DealDialog({
+  tenantId,
+  onRelationshipChanged,
   deal,
   stages,
   canManage,
@@ -1021,6 +1036,9 @@ function DealDialog({
     notes: deal.notes || "",
   });
   const [message, setMessage] = React.useState("");
+  const [relationshipEditing, setRelationshipEditing] = React.useState(false);
+  const [clientId,setClientId] = React.useState(deal.clientId || "");
+  const [relationshipCommand,setRelationshipCommand] = React.useState(null);
   const latest = (deal.outcomes || [])[0];
   const save = async () => {
     const result = await run({
@@ -1077,6 +1095,7 @@ function DealDialog({
               <dd>{fmt(deal.updatedAt)}</dd>
             </div>
           </dl>
+          {canManage && <div className="pipeline-relationship-editor">{relationshipCommand ? <CrmDealCommandReview tenantId={tenantId} command={relationshipCommand} onComplete={() => { setRelationshipCommand(null); setRelationshipEditing(false); onRelationshipChanged(); setMessage("Client relationship updated from canonical readback."); }} onClose={() => setRelationshipCommand(null)}/> : relationshipEditing ? <><DealClientPicker tenantId={tenantId} value={clientId} onChange={setClientId}/><div className="pipeline-relationship-actions"><button className="btn btn-p" disabled={!clientId || clientId===deal.clientId} onClick={() => setRelationshipCommand({action:"deal.assign_contact",deal_id:deal.id,expected_version:deal.version,contact_id:clientId})}>Review client change</button><button className="btn btn-s" onClick={() => setRelationshipEditing(false)}>Cancel</button></div></> : <button className="btn btn-s" onClick={() => setRelationshipEditing(true)}>{deal.clientId ? "Change client" : "Link client"}</button>}</div>}
         </section>
         <section>
           <h3>Editable record</h3>

@@ -636,6 +636,25 @@ const isResearchCapability = (tool: string): boolean => RESEARCH_CHAT_TOOLS.has(
 
 const MAX_MESSAGE_CONTENT = 200_000;
 
+/**
+ * INT-323 — the deterministic terminal copy for a research turn whose closing model prose
+ * came back empty (the turn records its limit). Derived ONLY from runtime truth — the
+ * governed-readback `saved` verdicts already in the research trace — never a model call,
+ * never a fabricated synthesis, and never a Saved claim unless the readback proved it. The
+ * turn's recorded state (LIMIT_REACHED) is preserved: this copy is truthful ABOUT the limit,
+ * not a conversion to success.
+ */
+function researchLimitFallbackCopy(researchTrace: Array<Record<string, unknown>>, limitReached: boolean): string {
+  const savedRuns = researchTrace.filter((r) => r.saved === true).length;
+  const how = limitReached
+    ? "I reached this conversation's research limit before I could finish the written summary"
+    : "The research ran, but the written summary came back empty before the turn closed";
+  if (savedRuns > 0) {
+    return how + " — the saved run is in this workspace's research library. Open it from the Research tab, or ask me again and I can continue from that saved run in a fresh message.";
+  }
+  return how + ", and the run could not be confirmed as saved in this workspace — so I won't claim any result from it. Ask me again and I'll run a fresh, better-targeted research pass.";
+}
+
 const messageSchema = z.object({
   liveRuntimeChallenge: z.string().max(12_000).optional(),
   messages: z.array(
@@ -15395,6 +15414,25 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             ];
             lastRoundFinished = true;
           }
+          // INT-323 site 1 — a research turn that produced a GOVERNED research result must not
+          // lose its durable assistant-turn reference merely because the closing model prose
+          // came back empty. Same authorship pattern as the exhausted branch above: the server
+          // writes the whole answer from runtime truth, the ONE replay path sends it on the
+          // wire, and the ONE persistence site saves the SAME copy with the normal bundle
+          // metadata (the paige_research reference rides assistantTurnMetadata). The tracker's
+          // recorded state is untouched — whatever it is flows to the record verbatim. (Site 2,
+          // after the closing stream, covers the LIMIT_REACHED path where finalChunks is null;
+          // this site covers the replayed-round sibling.)
+          if (finalChunks && !forcedTermination && !liveRuntimeScope && researchTrace.length > 0 && !finalAssistantText.trim()
+              && queuedApprovals.length === 0 && confirmTrace.length === 0 && !studioSessionId) {
+            const limited = researchLimitFallbackCopy(researchTrace, turnTracker.record().state === "LIMIT_REACHED");
+            finalAssistantText = limited;
+            finalChunks = [
+              enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: limited } }] })}\n\n`),
+              enc.encode("data: [DONE]\n\n"),
+            ];
+            lastRoundFinished = true;
+          }
           if (continueContinuation) { continueContinuation = false; continue; }
           break;
           } // ── end the C1 while wrapper ──
@@ -15665,6 +15703,19 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 // stream that never carried text gets its terminal now (then its held bytes).
                 if (!closingFinished) turnTracker.interrupted();
                 interruptEmptyFinal();
+                // INT-323 (review P2): when the closing stream carried NO answer text on a
+                // RESEARCH turn (site 2's exact guard — the one path whose replacement copy
+                // follows), the translator's trailing `data: [DONE]` sits in heldLead; flushing
+                // it before that copy would terminate the 4/7 SSE consumers that break on
+                // [DONE] before the copy ever renders — making the copy reload-only on the
+                // exact path it exists for. The sentinel led nothing; drop it — site 2 below
+                // supplies the copy and its own sentinel. Every OTHER answer-less closing
+                // stream keeps its held [DONE] byte-for-byte (the wire still ends on DONE).
+                if (!answerStarted && heldLead.length
+                    && researchTrace.length > 0 && queuedApprovals.length === 0 && confirmTrace.length === 0 && !studioSessionId) {
+                  const heldTail = new TextDecoder().decode(heldLead[heldLead.length - 1]);
+                  if (heldTail.trim() === "data: [DONE]") heldLead.pop();
+                }
                 startAnswer();
               }
             }
@@ -15698,6 +15749,22 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             //
             // Buffered, it releases in order behind the content. The refusal path below emits its
             // own `[DONE]` after discarding, so a withheld turn still terminates cleanly.
+            emitContent(controller, enc.encode("data: [DONE]\n\n")); // sentinel so the client finalizes the bubble
+          }
+          // INT-323 site 2 — THE RECORDED DEFECT PATH: the closing stream returned OK but
+          // EMPTY (the captured acceptance turns — terminal LIMIT_REACHED, paige_research
+          // frame present, zero content deltas), so the turn reached the persistence guard
+          // with no text and the assistant turn + its paige_research reference were dropped.
+          // Same truth rule as the fallbacks above: author from runtime state (the trace's
+          // readback verdicts + the tracker's recorded limit), emit on the wire, and the ONE
+          // persistence site saves the SAME copy. The tracker state is untouched — LIMIT_REACHED
+          // stays LIMIT_REACHED in the record; the copy is truthful ABOUT it. (Live never
+          // reaches here: it throws on an empty answer inside the pump.)
+          if (!liveRuntimeScope && researchTrace.length > 0 && !finalAssistantText.trim()
+              && queuedApprovals.length === 0 && confirmTrace.length === 0 && !studioSessionId) {
+            const limited = researchLimitFallbackCopy(researchTrace, turnTracker.record().state === "LIMIT_REACHED");
+            finalAssistantText = limited;
+            emitContent(controller, enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: limited } }] })}\n\n`));
             emitContent(controller, enc.encode("data: [DONE]\n\n")); // sentinel so the client finalizes the bubble
           }
 

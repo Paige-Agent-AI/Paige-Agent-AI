@@ -16,6 +16,16 @@
  *     `paige_choices`) and the first `[DONE]`;
  *   - a withheld turn (`paige_withheld` on the wire) ends WITHHELD.
  *
+ * And the tool-step lifecycle (C2b, docs/delivery/paige-conversational-loop-c2.md), read from every
+ * `paige_step` frame (`auditStepLifecycle`, below):
+ *   - a step's status is `running`, `done`, `error`, `withdrawn`, or missing (an older frame: done);
+ *   - a thought is never `running` and never `withdrawn` — it is only ever sent finished;
+ *   - per id: at most one `running`, first; then exactly ONE close (done / error / withdrawn / missing),
+ *     carrying the same `seq` as its `running`; nothing after the close;
+ *   - `withdrawn` only ever closes a `running` (there is nothing to take back otherwise);
+ *   - no id is left `running` when the stream ends;
+ *   - every step frame precedes the first answer frame and the first `[DONE]`.
+ *
  * Plus one rule a harness applies where it can see the saved turn (C2): the answer a reader gets up
  * to the first `[DONE]` is exactly the text the thread kept, and no reply text follows that `[DONE]`
  * (`wireAnswerText` / `wireAnswerMatchesSaved`, below).
@@ -54,6 +64,7 @@ export function auditTurnStream(bodyText, { isTurnFrame } = {}) {
   if (isTurnFrame && turns.some((x) => !isTurnFrame(x.t))) {
     violations.push(`a turn frame outside the contract: ${JSON.stringify(turns.map((x) => x.t))}`);
   }
+  for (const why of auditStepLifecycle(items)) violations.push(why);
   if (terminals.length !== 1) {
     violations.push(`${terminals.length} terminal frames: ${JSON.stringify(turns.map((x) => x.t))}`);
     return { violations, terminal: null, items, has };
@@ -66,6 +77,46 @@ export function auditTurnStream(bodyText, { isTurnFrame } = {}) {
   if (firstDone !== -1 && terminal.i > firstDone) violations.push(`terminal after [DONE] (${terminal.i} > ${firstDone})`);
   if (has("paige_withheld") && terminal.t.state !== "WITHHELD") violations.push(`a withheld turn's terminal is ${terminal.t.state}`);
   return { violations, terminal, items, has };
+}
+
+const STEP_STATUSES = new Set(["running", "done", "error", "withdrawn"]);
+
+/**
+ * THE TOOL-STEP LIFECYCLE (C2b). Reads the parsed items of one stream (as `auditTurnStream` builds
+ * them) and returns every way its `paige_step` frames break the contract in the header above.
+ *
+ * @param {Array<{ done?: true, f?: Record<string, unknown>, bad?: true }>} items
+ * @returns {string[]}
+ */
+export function auditStepLifecycle(items) {
+  const violations = [];
+  const firstAnswer = items.findIndex((it) => Array.isArray(it.f?.choices) || it.f?.paige_choices !== undefined);
+  const firstDone = items.findIndex((it) => it.done);
+  const fence = [firstAnswer, firstDone].filter((i) => i !== -1).reduce((a, b) => Math.min(a, b), Infinity);
+  /** @type {Map<string, { open: boolean, seq: unknown, closed: boolean }>} */
+  const byId = new Map();
+  items.forEach((it, i) => {
+    const s = /** @type {any} */ (it.f?.paige_step);
+    if (s === undefined) return;
+    const id = String(s?.id ?? "");
+    const status = s?.status;
+    const at = `step ${JSON.stringify(id)} (${s?.kind ?? "?"}, ${status ?? "missing"})`;
+    if (status !== undefined && !STEP_STATUSES.has(status)) { violations.push(`${at}: status outside the lifecycle`); return; }
+    if (s?.kind === "thought" && (status === "running" || status === "withdrawn")) violations.push(`${at}: a thought is only ever sent finished`);
+    if (i > fence) violations.push(`${at}: after the first answer frame or [DONE] (${i} > ${fence})`);
+    const prior = byId.get(id);
+    if (prior?.closed) { violations.push(`${at}: arrived after the step had already closed`); return; }
+    if (status === "running") {
+      if (prior?.open) { violations.push(`${at}: started twice`); return; }
+      byId.set(id, { open: true, seq: s?.seq, closed: false });
+      return;
+    }
+    if (status === "withdrawn" && !prior?.open) violations.push(`${at}: withdrawn without a running start`);
+    if (prior?.open && prior.seq !== s?.seq) violations.push(`${at}: closed with seq ${JSON.stringify(s?.seq)}, started with ${JSON.stringify(prior.seq)}`);
+    byId.set(id, { open: false, seq: s?.seq, closed: true });
+  });
+  for (const [id, st] of byId) if (st.open) violations.push(`step ${JSON.stringify(id)} still running when the stream ended`);
+  return violations;
 }
 
 /**

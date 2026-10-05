@@ -3296,7 +3296,13 @@ The ⌘K launcher + right-side Paige presence rail chrome is a reusable primitiv
   verified. The service-only control plane rechecks canonical proof and atomically reserves uncached
   TTS cost before any provider call; ambiguous provider outcomes stay counted, actor deletion cannot
   erase spend, and activation commits readiness plus profile atomically. Revocation or an exceeded
-  cap fails closed. No provider or voice reference appears in customer UI.
+  cap fails closed. No provider or voice reference appears in customer UI. INT-321 (2026-10-05,
+  ships on merge): a refused message-playback reservation names the limit that refused it — this
+  workspace's monthly allowance (with the reset day the reservation function proves), the platform
+  cap, the emergency brake, or not-configured — instead of one "temporarily paused"; a transient
+  profile failure is a retry, never a session-long disable. Owner ruling 2026-10-05 (policy, migration
+  20270581010000): the default monthly message-playback allowance every workspace inherits is $40
+  (was $10), for every Solo alike; the $100 platform cap and the $0.30/1,000-char ceiling are unchanged.
 - ✅ **Supabase** — Postgres + RLS + edge functions + auth. Prod ref `xygzykjyynhzqytbqnzu`. 231+ edge functions. 688+ migrations. RLS helpers: `is_platform_owner()` (operator scope), `current_user_tenant_id()` (tenant scope).
 - ✅ **Vercel** — deploy target. `vercel.json` at repo root.
 - ✅ **LLM providers via `_shared/model-router.ts`** — text tier: Anthropic + Featherless. Capability tier: OpenAI + Gemini + Groq + Ideogram + Replicate + Meshy + ElevenLabs.

@@ -156,3 +156,34 @@ describe("INT-310 orchestrator local-agent allowlist — the predicate", () => {
     }
   });
 });
+
+describe("INT-317 §58 — the allowlist retires ONE workflow route, not PAIGE messaging", () => {
+  // Owner ruling 2026-10-05: `direct_send_message → send-message` is retired from the generic
+  // direct_edge_function workflow route only. Messaging stays on its canonical, governed paths, which
+  // never pass through the workflow dispatcher and so are not touched by this allowlist.
+  const src = (p: string) => readFileSync(join(fnDir, p), "utf8");
+  // The exact endpoint, closed by the template literal's backtick (so `send-message-x` does not count).
+  const SEND = /\/functions\/v1\/send-message`/;
+
+  it("send-message is still a deployed executor (its handler exists)", () => {
+    expect(src("send-message/index.ts")).toMatch(/Deno\.serve\(/);
+  });
+
+  it("execute-approval still sends approved email/SMS through send-message, as the approving user", () => {
+    const s = src("execute-approval/index.ts");
+    expect(s).toMatch(SEND);
+    expect(s).toMatch(/Authorization:\s*authHeader/);
+  });
+
+  it("the scheduled Comms drain still delivers through send-message", () => {
+    expect(src("comms-scheduled-drain/index.ts")).toMatch(SEND);
+  });
+
+  it("none of the canonical messaging paths routes through the workflow dispatcher the allowlist gates", () => {
+    for (const p of ["send-message/index.ts", "execute-approval/index.ts", "comms-scheduled-drain/index.ts"]) {
+      expect(src(p)).not.toMatch(/workflowDispatch/);
+    }
+    // ...while the generic workflow route to the same function is the one refused.
+    expect(isServiceDispatchDirectFunctionAllowed("send-message")).toBe(false);
+  });
+});

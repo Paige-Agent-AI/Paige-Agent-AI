@@ -124,6 +124,11 @@ jobs:
             grep -E '^\{|^ACCEPTANCE_RESULT=' acceptance.log || echo "(no result lines — see the log)"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+          # Also as annotations, so the metadata is readable from the API (job logs live on a separate
+          # host). The lines carry metadata only — no secret, no image bytes.
+          tr -d '\r' < acceptance.log | grep -E '^\{|^ACCEPTANCE_RESULT=' | sed 's/%/%25/g' | while IFS= read -r line; do
+            echo "::notice title=render acceptance::${line}"
+          done || true
           if ! grep -qx 'ACCEPTANCE_RESULT=PASS' <(tr -d '\r' < acceptance.log); then
             echo "::error::paige-browser /render acceptance did not pass (flyctl exit $ssh_status). See the result lines above."
             exit 1

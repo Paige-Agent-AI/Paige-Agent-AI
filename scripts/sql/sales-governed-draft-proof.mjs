@@ -74,7 +74,7 @@ const exactProof=read('sales-exact-deposit-proof.sql')+`
 CREATE FUNCTION public.trust_effective_rung() RETURNS integer LANGUAGE sql AS $$ SELECT coalesce(nullif(current_setting('test.trust_rung',true),''),'2')::integer $$;
 ${autonomySource.slice(autonomyStart,autonomyEnd)}
 GRANT EXECUTE ON FUNCTION resolve_tool_autonomy(uuid,text) TO service_role;
-`+'\n'+read('sales-governed-draft-proof.sql');
+`+'\n'+read('sales-governed-draft-proof.sql')+'\n'+read('sales-commercial-offer-read-proof.sql');
 const ownedDatabase='sales_preferences_race_'+randomUUID().replaceAll('-','');
 if(concurrency){assert(/^sales_preferences_race_[a-f0-9]{32}$/.test(ownedDatabase));run(`CREATE DATABASE ${ownedDatabase};`);database=ownedDatabase;}
 try{

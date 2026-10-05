@@ -1,3 +1,4 @@
+import {SALES_COMMERCIAL_OFFERS_SPINE} from '../../sales-commercial/offers-read.ts';
 import {SALES_DRAFT_SPINE} from '../../sales-commercial/draft-capabilities.ts';
 import type { SpineCapability } from '../contracts.ts';
 import {defineCapability, objectInputSchema, ownerGrantablePermission} from '../../capability-kit/mod.ts';
@@ -9,7 +10,7 @@ const mutations = [
   ['reverse_manual_payment', 'sales_reverse_manual_payment'], ['void', 'sales_void_invoice'],
 ] as const;
 export const SALES_INVOICE_CAPABILITIES: readonly SpineCapability[] = [
- ...SALES_DRAFT_SPINE,
+ ...SALES_DRAFT_SPINE, SALES_COMMERCIAL_OFFERS_SPINE,
   {key:'sales_invoice.preferences_read',readiness:'none',domain:'sales_invoice',owner:'sales',humanSurface:'/solo/:account/sales/payments',action:{classification:'read',executor:'public.read_sales_invoice_preferences',chatTool:'read_sales_invoice_preferences',riskPolicyKey:'read_only',approvalAuthority:'none',idempotency:'Authenticated current tenant and owner/admin reader.'},outcome:{kinds:['available','refused','failed'],projector:'public.read_sales_invoice_preferences',railVisibility:'Scoped preferences only; never changes issued documents.'},chatBinding:'LIVE',mindBinding:'UNAVAILABLE',sharedPrimitiveChange:'NONE',maturity:'PARTIAL'},
   { key: 'sales_invoice.read', domain: 'sales_invoice', owner: 'sales', humanSurface: '/solo/:account/sales?tab=payments',
     action: { classification: 'read', executor: 'public.read_sales_invoice', chatTool: 'read_sales_invoice', riskPolicyKey: 'read_only', approvalAuthority: 'none', idempotency: 'Read-only; authenticated tenant and owner/admin role are revalidated by the RPC.' },

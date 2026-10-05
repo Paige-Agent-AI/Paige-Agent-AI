@@ -644,12 +644,15 @@ const MAX_MESSAGE_CONTENT = 200_000;
  * turn's recorded state (LIMIT_REACHED) is preserved: this copy is truthful ABOUT the limit,
  * not a conversion to success.
  */
-function researchLimitFallbackCopy(researchTrace: Array<Record<string, unknown>>): string {
+function researchLimitFallbackCopy(researchTrace: Array<Record<string, unknown>>, limitReached: boolean): string {
   const savedRuns = researchTrace.filter((r) => r.saved === true).length;
+  const how = limitReached
+    ? "I reached this conversation's research limit before I could finish the written summary"
+    : "The research ran, but the written summary came back empty before the turn closed";
   if (savedRuns > 0) {
-    return "I reached this conversation's research limit before I could finish the written summary — but the research itself ran, and the saved run is in this workspace's research library. Open it from the Research tab, or ask me again and I can pick the analysis up from the saved evidence in a fresh message.";
+    return how + " — the saved run is in this workspace's research library. Open it from the Research tab, or ask me again and I can continue from that saved run in a fresh message.";
   }
-  return "I reached this conversation's research limit before I could finish the written summary, and the run could not be confirmed as saved in this workspace — so I won't claim any result from it. Ask me again and I'll run a fresh, better-targeted research pass.";
+  return how + ", and the run could not be confirmed as saved in this workspace — so I won't claim any result from it. Ask me again and I'll run a fresh, better-targeted research pass.";
 }
 
 const messageSchema = z.object({
@@ -15411,19 +15414,18 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             ];
             lastRoundFinished = true;
           }
-          // INT-323 — a research turn that produced a GOVERNED research result must not lose
-          // its durable assistant-turn reference merely because the closing model prose came
-          // back empty and the turn recorded a limit (the acceptance-drive defect: the persist
-          // guard needs non-empty text, so the turn — and its paige_research reference — never
-          // landed, and reload lost the card). Same authorship pattern as the exhausted branch
-          // above: the server writes the whole answer from runtime truth, the ONE replay path
-          // sends it on the wire, and the ONE persistence site saves the SAME copy with the
-          // normal bundle metadata (the paige_research reference rides assistantTurnMetadata).
-          // Wire and reload therefore carry identical copy; the turn state recorded by the
-          // tracker is untouched (LIMIT_REACHED stays LIMIT_REACHED — never converted to FINAL).
-          if (finalChunks && !liveRuntimeScope && researchTrace.length > 0 && !finalAssistantText.trim()
+          // INT-323 site 1 — a research turn that produced a GOVERNED research result must not
+          // lose its durable assistant-turn reference merely because the closing model prose
+          // came back empty. Same authorship pattern as the exhausted branch above: the server
+          // writes the whole answer from runtime truth, the ONE replay path sends it on the
+          // wire, and the ONE persistence site saves the SAME copy with the normal bundle
+          // metadata (the paige_research reference rides assistantTurnMetadata). The tracker's
+          // recorded state is untouched — whatever it is flows to the record verbatim. (Site 2,
+          // after the closing stream, covers the LIMIT_REACHED path where finalChunks is null;
+          // this site covers the replayed-round sibling.)
+          if (finalChunks && !forcedTermination && !liveRuntimeScope && researchTrace.length > 0 && !finalAssistantText.trim()
               && queuedApprovals.length === 0 && confirmTrace.length === 0 && !studioSessionId) {
-            const limited = researchLimitFallbackCopy(researchTrace);
+            const limited = researchLimitFallbackCopy(researchTrace, turnTracker.record().state === "LIMIT_REACHED");
             finalAssistantText = limited;
             finalChunks = [
               enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: limited } }] })}\n\n`),
@@ -15734,6 +15736,22 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             //
             // Buffered, it releases in order behind the content. The refusal path below emits its
             // own `[DONE]` after discarding, so a withheld turn still terminates cleanly.
+            emitContent(controller, enc.encode("data: [DONE]\n\n")); // sentinel so the client finalizes the bubble
+          }
+          // INT-323 site 2 — THE RECORDED DEFECT PATH: the closing stream returned OK but
+          // EMPTY (the captured acceptance turns — terminal LIMIT_REACHED, paige_research
+          // frame present, zero content deltas), so the turn reached the persistence guard
+          // with no text and the assistant turn + its paige_research reference were dropped.
+          // Same truth rule as the fallbacks above: author from runtime state (the trace's
+          // readback verdicts + the tracker's recorded limit), emit on the wire, and the ONE
+          // persistence site saves the SAME copy. The tracker state is untouched — LIMIT_REACHED
+          // stays LIMIT_REACHED in the record; the copy is truthful ABOUT it. (Live never
+          // reaches here: it throws on an empty answer inside the pump.)
+          if (!liveRuntimeScope && researchTrace.length > 0 && !finalAssistantText.trim()
+              && queuedApprovals.length === 0 && confirmTrace.length === 0 && !studioSessionId) {
+            const limited = researchLimitFallbackCopy(researchTrace, turnTracker.record().state === "LIMIT_REACHED");
+            finalAssistantText = limited;
+            emitContent(controller, enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: limited } }] })}\n\n`));
             emitContent(controller, enc.encode("data: [DONE]\n\n")); // sentinel so the client finalizes the bubble
           }
 

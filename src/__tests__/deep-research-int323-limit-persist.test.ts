@@ -49,16 +49,18 @@ const extractFn = (name: string): string => {
   return found;
 };
 
-const copyFor = (trace: Array<Record<string, unknown>>): string => {
+const copyFor = (trace: Array<Record<string, unknown>>, limitReached = true): string => {
   // two-stage eval: the outer call returns the real function; the inner call runs it
   const outer = new Function(js(`return (${extractFn("researchLimitFallbackCopy")});`)) as unknown as
-    () => (t: Array<Record<string, unknown>>) => string;
-  return outer()(trace);
+    () => (t: Array<Record<string, unknown>>, limit: boolean) => string;
+  return outer()(trace, limitReached);
 };
 
-const branchStart = core.indexOf("// INT-323 — a research turn that produced a GOVERNED research result");
-const branchEnd = core.indexOf("if (continueContinuation) { continueContinuation = false; continue; }", branchStart);
-const branch = core.slice(branchStart, branchEnd);
+const site1Start = core.indexOf("// INT-323 site 1 — a research turn that produced a GOVERNED research result");
+const site2Start = core.indexOf("// INT-323 site 2 — THE RECORDED DEFECT PATH");
+const site2End = core.indexOf("// ── THE FINAL CHECK", site2Start);
+const site1 = core.slice(site1Start, core.indexOf("if (continueContinuation)", site1Start));
+const site2 = core.slice(site2Start, site2End);
 
 describe("INT-323 — the fallback copy is deterministic runtime truth", () => {
   it("proof 4: saved=false can NEVER produce a Saved claim", () => {
@@ -79,60 +81,71 @@ describe("INT-323 — the fallback copy is deterministic runtime truth", () => {
     expect(copyFor([{ saved: false }, { saved: false }])).not.toContain("research library");
   });
 
+  it("the limit wording appears ONLY when a limit was actually recorded (site-truthful copy)", () => {
+    expect(copyFor([{ saved: true }], true)).toContain("research limit");
+    expect(copyFor([{ saved: false }], true)).toContain("research limit");
+    expect(copyFor([{ saved: true }], false)).not.toContain("research limit");
+    expect(copyFor([{ saved: false }], false)).not.toContain("research limit");
+  });
+
   it("no fabricated synthesis: neither arm claims findings, sources, or completion", () => {
-    for (const c of [copyFor([{ saved: true }]), copyFor([{ saved: false }])]) {
-      expect(c).toContain("before I could finish the written summary");
-      expect(c).not.toMatch(/found \d|sources? (say|show)|verified|conclusion/i);
+    for (const c of [copyFor([{ saved: true }], true), copyFor([{ saved: false }], true), copyFor([{ saved: true }], false), copyFor([{ saved: false }], false)]) {
+      expect(c).not.toMatch(/found \d|sources? (say|show)|verified|conclusion|evidence/i);
     }
   });
 });
 
-describe("INT-323 — the branch (research + empty prose → the copy rides the ONE replay + ONE persist)", () => {
-  it("exists, and fires ONLY when a governed research result exists AND the prose is empty (proof 5)", () => {
-    expect(branchStart).toBeGreaterThan(-1);
-    expect(branch).toContain("researchTrace.length > 0");
-    expect(branch).toContain("!finalAssistantText.trim()");
-    // ordinary FINAL research turns (prose present) never enter — the trim guard is load-bearing
-    expect(branch).toContain("const limited = researchLimitFallbackCopy(researchTrace);");
+describe("INT-323 — both sites (research + empty prose → the copy rides the ONE replay/pump + ONE persist)", () => {
+  it("proof 1: SITE 2 covers THE RECORDED DEFECT PATH (ok-but-empty closing stream, LIMIT_REACHED)", () => {
+    expect(site2Start).toBeGreaterThan(-1);
+    expect(site2).toContain("researchTrace.length > 0");
+    expect(site2).toContain("!finalAssistantText.trim()");
+    expect(site2).toContain('turnTracker.record().state === "LIMIT_REACHED"');
+    expect(site2).toContain("const limited = researchLimitFallbackCopy(researchTrace");
   });
 
-  it("the copy is emitted ON THE WIRE exactly like the exhausted branch (proof 3, wire half)", () => {
-    expect(branch).toContain("finalAssistantText = limited;");
-    expect(branch).toContain("enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: limited } }] })}");
-    expect(branch).toContain('enc.encode("data: [DONE]');
-    expect(branch).toMatch(/finalChunks = \[/);
-    expect(branch).toContain("lastRoundFinished = true;");
+  it("site 2 emits the copy ON THE WIRE (wire half of proofs 2/3) — content frame + sentinel", () => {
+    expect(site2).toContain("finalAssistantText = limited;");
+    expect(site2).toContain("emitContent(controller, enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: limited } }] })}");
+    expect(site2.match(/data: \[DONE\]/g)?.length).toBe(1);
   });
 
-  it("LIMIT_REACHED is NEVER converted: the branch touches no turn-tracker state", () => {
-    expect(branch).not.toContain("turnTracker.");
-    expect(branch).not.toContain("budgetStop");
-    expect(branch).not.toContain("interrupted(");
+  it("site 1 covers the replayed-round sibling (finalChunks present, no forced termination)", () => {
+    expect(site1Start).toBeGreaterThan(-1);
+    expect(site1).toContain("finalChunks && !forcedTermination");
+    expect(site1).toContain("!finalAssistantText.trim()");
+    expect(site1).toContain('turnTracker.record().state === "LIMIT_REACHED"');
   });
 
-  it("proof 6 — exactly-once: the branch neither persists nor dispatches anything itself", () => {
-    expect(branch).not.toContain("persistAssistantTurn");
-    expect(branch).not.toContain("fetch(");
-    expect(branch).not.toContain("emitContent");
-    expect(branch).not.toContain("turnTracker.");
-    // the branch only READS the trace and sets the copy variables — its executable body is
-    // exactly: the guard, the fallback call, three variable assignments. Nothing else runs.
-    const body = branch.slice(branch.indexOf("if (finalChunks")).trim();
-    expect(body.startsWith("if (finalChunks")).toBe(true);
-    expect(body.replace(/}\s*$/, "").trimEnd().endsWith("lastRoundFinished = true;")).toBe(true);
-    for (const stmt of ["const limited = researchLimitFallbackCopy(researchTrace);", "finalAssistantText = limited;", "finalChunks = [", "lastRoundFinished = true;"]) {
-      expect(body).toContain(stmt);
+  it("NEITHER site converts the turn state — no tracker calls at all", () => {
+    for (const site of [site1, site2]) {
+      expect(site).not.toContain("turnTracker.budgetStop");
+      expect(site).not.toContain("turnTracker.interrupted");
+      expect(site).not.toContain("turnTracker.final");
     }
-    expect(body.split(";").length).toBeLessThanOrEqual(8); // no hidden extra statements
+  });
+
+  it("proof 6 — exactly-once: neither site persists or dispatches anything itself", () => {
+    for (const site of [site1, site2]) {
+      expect(site).not.toContain("persistAssistantTurn");
+      expect(site).not.toContain("fetch(");
+    }
+    // site 1 only sets replay variables; site 2 only sets text + emits the two frames
+    expect(site1).toContain("lastRoundFinished = true;");
+    expect(site2).toContain("finalAssistantText = limited;");
   });
 
   it("proofs 2/3 (persist half): the ONE persist site is unchanged and saves the SAME variable with the reference", () => {
     const guard = "if (payloadThreadId && finalAssistantText.trim()) {";
     expect(core).toContain(guard);
-    // the persist uses assistantTurnMetadata (which carries the paige_research reference — pinned by R2b)
     const site = core.indexOf(guard);
     const persistCall = core.slice(site, core.indexOf("} catch", site));
     expect(persistCall).toContain("persistAssistantTurn(finalAssistantText, withTurnRecord(finalAssistantText, assistantTurnMetadata()))");
+  });
+
+  it("proof 5 — ordinary FINAL research turns (prose present) can never enter either site", () => {
+    expect(site1).toContain("!finalAssistantText.trim()");
+    expect(site2).toContain("!finalAssistantText.trim()");
   });
 
   it("the paige_research reference still rides assistantTurnMetadata (the reload contract)", () => {
@@ -141,24 +154,23 @@ describe("INT-323 — the branch (research + empty prose → the copy rides the 
   });
 });
 
-describe("INT-323 proof 7 — the mutation (restore skip-on-empty) fails the gate", () => {
-  it("deleting the branch removes every load-bearing pin (the gate goes red on the real source)", () => {
-    const mutated = core.replace(branch, "");
-    expect(mutated).not.toContain("researchLimitFallbackCopy(researchTrace)");
-    expect(mutated).not.toContain("// INT-323 — a research turn");
-    // while the real source holds them:
-    expect(core).toContain("researchLimitFallbackCopy(researchTrace)");
-    expect(branchStart).toBeGreaterThan(-1);
+describe("INT-323 proof 7 — the mutations demonstrably break the gate's predicates", () => {
+  it("deleting site 2 (the recorded defect path) removes the only coverage of it — the gate goes red", () => {
+    expect(core).toContain("INT-323 site 2 — THE RECORDED DEFECT PATH");
+    expect(core.replace(site2, "")).not.toContain("THE RECORDED DEFECT PATH");
   });
 
-  it("gutting the fallback (always claiming saved) fails proof 4", () => {
+  it("gutting the fallback to always-claimed-saved VIOLATES proof 4's predicate (enforcement shown)", () => {
     const mutatedFn = extractFn("researchLimitFallbackCopy").replace(
       "const savedRuns = researchTrace.filter((r) => r.saved === true).length;",
       "const savedRuns = 1;",
     );
     const outer = new Function(js(`return (${mutatedFn});`)) as unknown as
-      () => (t: Array<Record<string, unknown>>) => string;
-    const c = outer()([{ saved: false }]);
-    expect(c).toContain("research library"); // the mutation lies — and the saved=false pin above refuses exactly this
+      () => (t: Array<Record<string, unknown>>, limit: boolean) => string;
+    const c = outer()([{ saved: false }], true);
+    // the same predicate proof 4 enforces on the REAL source:
+    const proof4Holds = c.includes("could not be confirmed as saved") && !c.includes("research library");
+    expect(proof4Holds).toBe(false); // the mutation lies — proof 4 would fail exactly here
+    expect(copyFor([{ saved: false }], true)).toContain("could not be confirmed as saved"); // the real one holds
   });
 });

@@ -926,7 +926,7 @@ Reference or any domain ledger; it governs how their facts become release and cu
   - The autonomy catalogue gains rows (Campaigns), and the activity wording is added.
   - Every chat function names the business (`_email_paige_tenant`).
 - *Grounding:* before any write, the adapter refuses three kinds of unsupported content.
-  - **A link** must be one of the business's own live links, already in the series, or given by the owner in this conversation.
+  - **A link** (written out, or a bare domain or email address a mail app would turn into a link) must be one of the business's own live links, already in the series, or given by the owner in this conversation.
   - **A price** must be recorded, already in the series, or written by the owner as money or next to a price word.
   - **A fill-in** such as `[Your name]` or `{{first_name}}` is refused, because the sender does not personalise.
   - The refusal names the missing fact and changes nothing, and PAIGE asks. There is no resume store; that is shared C4c, not built.
@@ -938,7 +938,13 @@ Reference or any domain ledger; it governs how their facts become release and cu
   - **Approving:** the approve panel says one approval covers everyone who enters that version, and a change needs a new approval.
   - **Stop** is confirmed inline ("Stop for good" / "Keep it running") and says it is final. A stopped series offers Start a copy, and says that a copy of a "matching" series can include people who already went through it.
   - The series view and the Automations list re-read when a chat turn ends, and over unsaved edits they ask the owner to choose.
-- *Proof:* `scripts/sql/email-series-chat-proof.sql`, rolled back on the PR's preview database, returned 40 results. Tests: adapter 23 and series render 21. Each guard was mutation-checked, and the render drive passed 1152/1152.
+- *Proof:* `scripts/sql/email-series-chat-proof.sql`, rolled back on the PR's preview database, returned 40 results. Tests: adapter 22 and series render 25. Each guard was mutation-checked, and the render drive passed 1152/1152.
+- *Review fixes (independent verifier):*
+  - A chat turn is compared with what the server last held, not with what is being typed, so a turn that changed nothing never raises "PAIGE changed" or stops autosave.
+  - Nothing saves while the owner chooses between versions.
+  - Keep my edits removes PAIGE's extra emails.
+  - Bare domains, email addresses and more price forms are checked.
+  - An incomplete email in a whole-series write is refused.
 - *Not built here:*
   - the four E3 hardening debts, ranked in the PR;
   - per-form audiences: `_email_audience` cannot target one form's submitters yet;

@@ -145,16 +145,18 @@ const stepHtml = (s: StepDraft) => (s.source !== null ? markupToHtml(s.source) :
 /** What a series says, in a form two reads (or a read and what is on screen) can be compared by. */
 const sortKeys = (v: unknown): unknown => Array.isArray(v) ? v.map(sortKeys)
   : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => a.localeCompare(b)).map(([k, x]) => [k, sortKeys(x)])) : v;
-const contentKey = (d: SeriesRead, s: Settings, steps: { position: number; delay_minutes: number; subject: string; preheader: string; html: string }[]) => JSON.stringify(sortKeys({
-  status: d.sequence.status, version: d.version.id, state: d.version.state, name: s.name, entry: s.entry_mode, audience: s.audience ?? {},
+// `withState` false compares only what the series says (its version and words), so a status the worker changed
+// (needs attention, say) is not mistaken for an edit.
+const contentKey = (d: SeriesRead, s: Settings, steps: { position: number; delay_minutes: number; subject: string; preheader: string; html: string }[], withState = true) => JSON.stringify(sortKeys({
+  ...(withState ? { status: d.sequence.status, state: d.version.state } : {}), version: d.version.id, name: s.name, entry: s.entry_mode, audience: s.audience ?? {},
   segment: s.segment_id ?? null, goal: s.exit_on_goal, unmatched: s.exit_when_unmatched,
   sender: { mode: s.sender.mode, connector: s.sender.mode === "connector" ? s.sender.connector_id ?? null : null },
   steps: steps.map((x) => [x.position, x.delay_minutes, x.subject, x.preheader, x.html]),
 }));
-const seriesKey = (d: SeriesRead) => contentKey(d, { name: d.sequence.name, entry_mode: d.version.entry_mode, audience: d.version.audience ?? {},
+const seriesKey = (d: SeriesRead, withState = true) => contentKey(d, { name: d.sequence.name, entry_mode: d.version.entry_mode, audience: d.version.audience ?? {},
   segment_id: d.version.segment_id, exit_on_goal: d.version.exit_on_goal, exit_when_unmatched: d.version.exit_when_unmatched, sender: d.version.sender },
-  d.version.steps.map((x) => ({ ...x, html: x.body_html })));
-const shownKey = (d: SeriesRead, s: Settings, steps: StepDraft[]) => contentKey(d, s, steps.map((x) => ({ ...x, html: stepHtml(x) })));
+  d.version.steps.map((x) => ({ ...x, html: x.body_html })), withState);
+const shownKey = (d: SeriesRead, s: Settings, steps: StepDraft[], withState = true) => contentKey(d, s, steps.map((x) => ({ ...x, html: stepHtml(x) })), withState);
 
 /** One series: build it, file it, approve it, run it. */
 export function EmailSeriesView({ sequenceId, onBack, onOpen, onOpenSettings, onOpenConnections }: {
@@ -179,6 +181,15 @@ export function EmailSeriesView({ sequenceId, onBack, onOpen, onOpenSettings, on
   const [changedByPaige, setChangedByPaige] = React.useState(false);
   // Stop is final, so it is confirmed inline with buttons that name what happens.
   const [confirmStop, setConfirmStop] = React.useState(false);
+  // What the server holds, as last read or as last written from here: a chat turn that leaves it as it is
+  // is not a change, whatever is being typed meanwhile.
+  const lastRead = React.useRef<SeriesRead | null>(null);
+  const held = React.useRef<{ full: string; body: string } | null>(null);
+  const savedName = React.useRef("");
+  const conflict = React.useRef(false);
+  conflict.current = changedByPaige;
+  // "Keep my edits" over a version with more emails: the extra ones are removed after the owner's are saved.
+  const trimFrom = React.useRef<number | null>(null);
 
   React.useEffect(() => {
     let live = true;
@@ -187,6 +198,8 @@ export function EmailSeriesView({ sequenceId, onBack, onOpen, onOpenSettings, on
       setReshaping(false);
       if (error) { console.error("[marketing-email] series read failed", error); setRead({ phase: "error", data: null, missing: error.message === "series_not_found" }); return; }
       const d = data as SeriesRead;
+      lastRead.current = d; savedName.current = d.sequence.name; trimFrom.current = null;
+      held.current = { full: seriesKey(d), body: seriesKey(d, false) };
       setRead({ phase: "ready", data: d });
       setSettings({ name: d.sequence.name, entry_mode: d.version.entry_mode, audience: d.version.audience ?? {}, segment_id: d.version.segment_id,
         exit_on_goal: d.version.exit_on_goal, exit_when_unmatched: d.version.exit_when_unmatched, sender: d.version.sender });
@@ -222,6 +235,7 @@ export function EmailSeriesView({ sequenceId, onBack, onOpen, onOpenSettings, on
         p_sender: s.sender.mode === "connector" ? { mode: "connector", connector_id: s.sender.connector_id } : { mode: "managed" },
       });
       if (error) { dirtySettings.current = true; console.error("[marketing-email] series save failed", error); setSave("failed"); setNotice({ tone: "bad", text: seriesErrorWords(error) }); return false; }
+      if (s.name.trim()) savedName.current = s.name.trim();
     }
     for (const pos of Array.from(dirtySteps.current)) {
       const st = latest.current.steps.find((x) => x.position === pos);
@@ -230,6 +244,17 @@ export function EmailSeriesView({ sequenceId, onBack, onOpen, onOpenSettings, on
       const { error } = await rpc("email_sequence_step_save", { p_sequence_id: sequenceId, p_position: pos, p_delay_minutes: st.delay_minutes,
         p_subject: st.subject, p_preheader: st.preheader, p_body_html: stepHtml(st) });
       if (error) { dirtySteps.current.add(pos); console.error("[marketing-email] series email save failed", error); setSave("failed"); setNotice({ tone: "bad", text: seriesErrorWords(error) }); return false; }
+    }
+    for (let pos = trimFrom.current ?? 0; pos > latest.current.steps.length; pos--) {
+      const { error } = await rpc("email_sequence_step_delete", { p_sequence_id: sequenceId, p_position: pos });
+      if (error) { console.error("[marketing-email] series email trim failed", error); setSave("failed"); setNotice({ tone: "bad", text: seriesErrorWords(error) }); return false; }
+    }
+    trimFrom.current = null;
+    // What the server now holds is what was written: the name as stored (trimmed; a cleared name keeps the last).
+    const base = lastRead.current;
+    if (base) {
+      const stored = { ...s, name: s.name.trim() || savedName.current };
+      held.current = { full: shownKey(base, stored, latest.current.steps), body: shownKey(base, stored, latest.current.steps, false) };
     }
     setSave(rev === revision.current ? "saved" : "dirty");
     return true;
@@ -246,8 +271,12 @@ export function EmailSeriesView({ sequenceId, onBack, onOpen, onOpenSettings, on
     return () => clearTimeout(timer);
   }, [settings, steps, editable, save, persist, changedByPaige]);
   const unsaved = editable && save !== "saved";
-  /** Everything typed so far is saved before a structural change, a review or leaving. */
-  const flush = async () => (unsaved || dirtySettings.current || dirtySteps.current.size ? persist() : true);
+  /** Everything typed so far is saved before a structural change, a review or leaving. While PAIGE's change and
+   *  the owner's edits disagree, nothing is saved until the owner chooses. */
+  const flush = async () => {
+    if (conflict.current) { setNotice({ tone: "bad", text: "Choose which version to keep first." }); return false; }
+    return unsaved || dirtySettings.current || dirtySteps.current.size ? persist() : true;
+  };
 
   const changeSettings = (patch: Partial<Settings>) => { revision.current += 1; dirtySettings.current = true; setSettings((s) => (s ? { ...s, ...patch } : s)); setSave("dirty"); setNotice(null); };
   const changeStep = (position: number, patch: Partial<StepDraft>) => {
@@ -259,7 +288,7 @@ export function EmailSeriesView({ sequenceId, onBack, onOpen, onOpenSettings, on
   // before a reload or a closed tab while anything is unsaved.
   const pending = React.useRef({ unsaved, persist });
   pending.current = { unsaved, persist };
-  React.useEffect(() => () => { if (pending.current.unsaved) void pending.current.persist(); }, []);
+  React.useEffect(() => () => { if (pending.current.unsaved && !conflict.current) void pending.current.persist(); }, []);
   React.useEffect(() => {
     if (!unsaved) return;
     const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
@@ -270,23 +299,36 @@ export function EmailSeriesView({ sequenceId, onBack, onOpen, onOpenSettings, on
   // not yet saved: then say so, so neither version is lost without the owner seeing it.
   React.useEffect(() => {
     const check = () => {
-      rpc("read_email_sequence", { p_sequence_id: sequenceId }).then(({ data: fresh, error }) => {
-        const now = latest.current;
-        if (error || !fresh || !read.data || !now.settings) return;
-        if (seriesKey(fresh as SeriesRead) === shownKey(read.data, now.settings, now.steps)) return;
-        if (pending.current.unsaved) { setChangedByPaige(true); return; }
+      rpc("read_email_sequence", { p_sequence_id: sequenceId }).then(({ data, error }) => {
+        const fresh = data as SeriesRead | null;
+        if (error || !fresh || !held.current) return;
+        if (seriesKey(fresh) === held.current.full) return;
+        const wordsSame = seriesKey(fresh, false) === held.current.body;
+        if (pending.current.unsaved) {
+          if (wordsSame) return; // only its status moved; the owner's edits still apply to the same words
+          trimFrom.current = fresh.version.steps.length;
+          setChangedByPaige(true);
+          return;
+        }
         reload();
-        setNotice({ tone: "ok", text: "PAIGE updated this series." });
+        // A status the worker changed is shown as it is; a change to the words came from PAIGE's turn.
+        if (!wordsSame) setNotice({ tone: "ok", text: "PAIGE updated this series." });
       });
     };
     window.addEventListener("paige:turn-settled", check);
     return () => window.removeEventListener("paige:turn-settled", check);
-  }, [sequenceId, read.data]);
-  const takePaigeVersion = () => { pending.current.unsaved = false; dirtySettings.current = false; dirtySteps.current = new Set(); revision.current += 1; setChangedByPaige(false); reload(); };
-  const keepMine = () => { setChangedByPaige(false); revision.current += 1; dirtySettings.current = true; latest.current.steps.forEach((x) => dirtySteps.current.add(x.position)); setSave("dirty"); };
+  }, [sequenceId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const takePaigeVersion = () => { pending.current.unsaved = false; dirtySettings.current = false; dirtySteps.current = new Set(); trimFrom.current = null; revision.current += 1; conflict.current = false; setChangedByPaige(false); reload(); };
+  const keepMine = () => {
+    conflict.current = false; setChangedByPaige(false); revision.current += 1; dirtySettings.current = true;
+    latest.current.steps.forEach((x) => dirtySteps.current.add(x.position)); setSave("dirty");
+  };
 
   const leave = async () => {
-    if (changedByPaige && !window.confirm("PAIGE changed this series while you were editing. Save your edits over hers and leave?")) return;
+    if (changedByPaige) {
+      if (!window.confirm("PAIGE changed this series while you were editing. Save your edits over hers and leave?")) return;
+      keepMine();
+    }
     if (unsaved) {
       pending.current.unsaved = false;
       if (!(await flush()) && !window.confirm("Your latest changes did not save. Leave anyway and lose them?")) { pending.current.unsaved = true; return; }

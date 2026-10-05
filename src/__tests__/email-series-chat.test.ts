@@ -230,11 +230,26 @@ describe("email series chat tools", () => {
     expect(result.content.words_note).toMatch(/never in field names/);
   });
 
+  it("refuses links a mail app would make from bare words, and prices in other forms", async () => {
+    for (const body of ["Visit www.made-up-offer.com/call", "Go to made-up-offer.com/sale", "Write to sales@made-up-corp.com",
+      "[Book](www.made-up-offer.com)", "Only USD 997", "Only 997$", "Only ₹9,997"]) {
+      const db = database();
+      const result = await run("email_series_draft", { kind: "welcome", emails: [email({ body })] }, db);
+      expect([body, result.content.outcome]).toEqual([body, "needs_input"]);
+      expect(db.writes()).toHaveLength(0);
+    }
+    const db = database();
+    expect((await run("email_series_draft", { kind: "welcome", emails: [email({ body: "Reply to hello@acme.test or see acme.test" })] }, db,
+      "My email is hello@acme.test")).outcome).toBe("succeeded");
+    expect(linksIn("Built with Next.js and React, version 2.5")).toEqual([]);
+  });
+
   it("reads links and amounts the way a reader sees them", () => {
     expect(linkKey("https://www.Acme.test/start/")).toBe("acme.test/start");
     expect(linkKey("acme.test/start?utm=x")).toBe("acme.test/start");
     expect(linksIn("[a](https://x.test/a) [[b|https://y.test/b]] http://z.test")).toEqual(["https://x.test/a", "https://y.test/b", "http://z.test"]);
     expect(amountsIn("$497, $1,997.50 and 300 USD")).toEqual([49700, 199750, 30000]);
+    expect(amountsIn("USD 997, 997$ and ₹9,997")).toEqual([99700, 999700, 99700]);
   });
 });
 

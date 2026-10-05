@@ -140,10 +140,17 @@ export function linkKey(raw: string): string | null {
     return url.hostname.toLowerCase().replace(/^www\./, '') + url.pathname.replace(/\/+$/, '');
   } catch { return null; }
 }
-/** Every link the words would put in front of a reader: marked links, buttons and bare addresses. */
+// A domain a mail app would turn into a link without "https://": "www." anything, or a common ending.
+const BARE_DOMAIN = /\b(?:www\.[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,24}|(?:[a-z0-9-]+\.)+(?:com|net|org|io|co|ai|app|biz|info|us|uk|ca|au|nz|ie|me|dev|xyz|online|site|store|shop|academy|coach|consulting|agency|studio|tech|ly|tv|fm|link|page|so|club|pro|life|world|today|email|events|health|fitness|guru|expert|group|solutions|services|systems|global|media|design))\b(?:\/[^\s<>"'()[\]|]*)?/gi;
+const EMAIL_ADDRESS = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,24}/gi;
+/** Every link the words would put in front of a reader: marked links, buttons, web and email addresses
+ *  written out, and bare domains and email addresses a mail app turns into links. */
 export function linksIn(words: string): string[] {
   const out = new Set<string>();
-  for (const m of words.matchAll(/https?:\/\/[^\s<>"'()[\]|]+|mailto:[^\s<>"'()[\]|]+/gi)) out.add(m[0]);
+  let rest = words;
+  for (const m of words.matchAll(/https?:\/\/[^\s<>"'()[\]|]+|mailto:[^\s<>"'()[\]|]+/gi)) { out.add(m[0]); rest = rest.split(m[0]).join(' '); }
+  for (const m of rest.matchAll(EMAIL_ADDRESS)) { out.add(`mailto:${m[0]}`); rest = rest.split(m[0]).join(' '); }
+  for (const m of rest.matchAll(BARE_DOMAIN)) out.add(m[0]);
   return [...out];
 }
 /** Links the owner wrote, with or without "https://". */
@@ -154,12 +161,21 @@ function linksGivenIn(words: string): Set<string> {
   for (const m of words.matchAll(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,24}/gi)) keys.add(`mailto:${m[0].toLowerCase()}`);
   return keys;
 }
-/** Money the words state, in cents: "$497", "$1,997.50", "497 dollars", "300 USD". */
+/** Money the words state, in cents: "$497", "$1,997.50", "497 dollars", "300 USD", "USD 997", "997$", "₹9,997". */
 export function amountsIn(words: string): number[] {
   const out: number[] = [];
   const cents = (whole: string, frac?: string) => Number(whole.replace(/,/g, '')) * 100 + (frac ? Number(frac.padEnd(2, '0')) : 0);
-  for (const m of words.matchAll(/[$£€]\s?(\d{1,3}(?:,\d{3})+|\d+)(?:\.(\d{1,2}))?/g)) out.push(cents(m[1], m[2]));
-  for (const m of words.matchAll(/\b(\d{1,3}(?:,\d{3})+|\d+)(?:\.(\d{1,2}))?\s?(?:usd|eur|gbp|dollars?|euros?|pounds?)\b/gi)) out.push(cents(m[1], m[2]));
+  const n = '(\\d{1,3}(?:,\\d{3})+|\\d+)(?:\\.(\\d{1,2}))?';
+  const patterns = [
+    new RegExp(`(?:[$£€¥₹]|\\b(?:usd|us\\$|eur|gbp|cad|aud|nzd|inr|rs\\.?)\\s?)\\s?${n}`, 'gi'),
+    new RegExp(`\\b${n}\\s?(?:[$£€¥₹]|(?:usd|eur|gbp|cad|aud|nzd|inr|dollars?|euros?|pounds?|rupees?)\\b)`, 'gi'),
+  ];
+  const seen = new Set<number>();
+  for (const pattern of patterns) for (const m of words.matchAll(pattern)) {
+    if (seen.has(m.index ?? -1)) continue;
+    seen.add(m.index ?? -1);
+    out.push(cents(m[1], m[2]));
+  }
   return out;
 }
 /** Amounts the owner gave: written as money ("$497", "300 dollars"), or a number near a price word ("the
@@ -466,6 +482,8 @@ export async function dispatchEmailSeriesChat(ctx: EmailSeriesChatContext, deps:
     const reply = await deps.caller.rpc('email_series_submit_for_approval', { p_expected_tenant_id: tenantId, p_sequence_id: seriesId });
     if (reply.error) {
       const code = refusalCode(reply.error);
+      // The owner filed it in the moment between the check and the filing.
+      if (code === 'not_an_editable_draft') return refused('series_awaiting_approval');
       if (code && REFUSALS[code]) return refused(code, object(reply.error)?.details);
       return unknown('Filing the series for approval', seriesId);
     }

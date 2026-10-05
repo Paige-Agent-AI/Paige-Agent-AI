@@ -104,6 +104,7 @@ BEGIN
       RAISE EXCEPTION 'steps_invalid' USING ERRCODE = '22023';
     END IF;
     IF EXISTS (SELECT 1 FROM jsonb_array_elements(p_steps) x WHERE jsonb_typeof(x) <> 'object'
+                OR NOT (x ?& ARRAY['delay_minutes','subject','body_html'])
                 OR jsonb_typeof(x->'delay_minutes') <> 'number' OR (x->>'delay_minutes') !~ '^[0-9]{1,6}$'
                 OR (x->>'delay_minutes')::int > 129600
                 OR jsonb_typeof(x->'subject') <> 'string' OR jsonb_typeof(x->'body_html') <> 'string'

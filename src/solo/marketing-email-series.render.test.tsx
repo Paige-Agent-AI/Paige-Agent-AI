@@ -323,6 +323,67 @@ describe("Series view", () => {
     expect(calls.find((c) => c.fn === "email_sequence_step_save")?.args).toMatchObject({ p_position: 1, p_subject: "My own subject" });
   });
 
+  it("a chat turn that left the series alone never interrupts typing, and autosave still runs", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    await openSeries(seriesRead());
+    await act(async () => { (host.querySelector('[aria-label^="Email 1: Welcome aboard"]') as HTMLButtonElement).click(); });
+    await type(labelled("Subject"), "Typed but not saved yet");
+    await act(async () => { window.dispatchEvent(new Event("paige:turn-settled")); });
+    await flush();
+    expect(text()).not.toContain("PAIGE changed this series");
+    await act(async () => { vi.advanceTimersByTime(2000); });
+    await flush();
+    expect(calls.find((c) => c.fn === "email_sequence_step_save")?.args).toMatchObject({ p_position: 1, p_subject: "Typed but not saved yet" });
+  });
+
+  it("a name saved with a trailing space is not later mistaken for PAIGE's change", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    await openSeries(seriesRead());
+    await type(labelled("Series name"), "Welcome series ");
+    await act(async () => { vi.advanceTimersByTime(2000); });
+    await flush();
+    expect(calls.some((c) => c.fn === "email_sequence_update_draft")).toBe(true);
+    await act(async () => { window.dispatchEvent(new Event("paige:turn-settled")); });
+    await flush();
+    expect(text()).not.toContain("PAIGE updated this series.");
+    expect(labelled("Series name").value).toBe("Welcome series ");
+  });
+
+  it("while the owner is choosing, nothing is saved: not by Add an email, not by leaving", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    await openSeries(seriesRead());
+    await act(async () => { (host.querySelector('[aria-label^="Email 1: Welcome aboard"]') as HTMLButtonElement).click(); });
+    await type(labelled("Subject"), "My own subject");
+    const changed = seriesRead();
+    changed.version.steps = [{ ...steps[0], subject: "PAIGE's subject" }, steps[1], steps[2]];
+    answers.read_email_sequence = { data: changed, error: null };
+    await act(async () => { window.dispatchEvent(new Event("paige:turn-settled")); });
+    await flush();
+    await act(async () => { button(/Add an email/)!.click(); });
+    await flush();
+    expect(calls.some((c) => c.fn === "email_sequence_step_save")).toBe(false);
+    expect(text()).toContain("Choose which version to keep first.");
+    act(() => root.unmount()); root = createRoot(host);
+    await flush();
+    expect(calls.some((c) => c.fn === "email_sequence_step_save" || c.fn === "email_sequence_update_draft")).toBe(false);
+  });
+
+  it("Keep my edits over a longer version of PAIGE's removes her extra emails", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    await openSeries(seriesRead());
+    await act(async () => { (host.querySelector('[aria-label^="Email 1: Welcome aboard"]') as HTMLButtonElement).click(); });
+    await type(labelled("Subject"), "My own subject");
+    const longer = seriesRead();
+    longer.version.steps = [...steps, { ...steps[1], position: 4, subject: "Four" }, { ...steps[1], position: 5, subject: "Five" }];
+    answers.read_email_sequence = { data: longer, error: null };
+    await act(async () => { window.dispatchEvent(new Event("paige:turn-settled")); });
+    await flush();
+    await act(async () => { button("Keep my edits")!.click(); });
+    await act(async () => { vi.advanceTimersByTime(2000); });
+    await flush(20);
+    expect(calls.filter((c) => c.fn === "email_sequence_step_delete").map((c) => c.args.p_position)).toEqual([5, 4]);
+  });
+
   it("the Automations list picks up a series PAIGE wrote when her turn ends", async () => {
     await mount();
     expect(button(/Start an automated welcome series/)).toBeTruthy();

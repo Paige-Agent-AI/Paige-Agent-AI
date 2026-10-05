@@ -1,0 +1,1640 @@
+{
+  "generated_at": "2026-10-05T16:35:18.045Z",
+  "per_case": [
+    {
+      "case_id": "F1",
+      "split": "dev",
+      "class": "fresh_fact",
+      "answer_class": "answerable",
+      "deterministic": {
+        "stop_reason": "no_results",
+        "configured": true,
+        "findings_count": 0,
+        "sources_retrieved": 25,
+        "sources_included": 25,
+        "sources_excluded": 0,
+        "sources_cited": 0,
+        "primary_ratio": null,
+        "citation_independence": null,
+        "distinct_cited_hosts": 0,
+        "findings_with_citations": null,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 365,
+        "wall_latency_ms": 47184,
+        "trace_cost_usd": 0.0131,
+        "engine_internal_cost_est_usd": 0.045,
+        "trace_models": [
+          "anthropic/claude-sonnet-5/reason:strategize"
+        ],
+        "trace_call_count": 1,
+        "empty_findings_honest_stop": true
+      },
+      "judges": {
+        "entailment": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "no findings produced; nothing mis-cited",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": 0.85,
+          "status": "scored",
+          "rationale": "Nearly all 25 sources directly address the federal minimum wage rate ($7.25), its 2007-2009 statutory history, or the pending 2025 Raise the Wage Act, making them topically on-point, with only a couple of state-focused or tangential items (e.g., NCSL state wages, Paycom state guide) being marginally less central to the federal question.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": 0,
+          "status": "scored",
+          "rationale": "Neither sub-question (current hourly rate; date/legislation of last change) is addressed by any finding—findings list is empty. The coverage note explains no claim survived verification, but this is a general caveat, not an explicit per-sub-question flag of 'unresolved' for each required sub-question, so it does not qualify for the half-credit 'explicitly unresolved' treatment under a strict reading. Even if treated as a blanket unresolved note, at best this yields 0.5 credit for both sub-questions (0.5*2/2=0.5), but since no explicit mapping to each sub-question is given and the sources actually contain clear answers (7.25/hr, 2009 via Fair Minimum Wage Act of 2007) that went unused, the output fails to address the question content at all. Score reflects zero findings addressing either required sub-question.",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    },
+    {
+      "case_id": "F2",
+      "split": "dev",
+      "class": "fresh_fact",
+      "answer_class": "answerable",
+      "deterministic": {
+        "stop_reason": "max_hops",
+        "configured": true,
+        "findings_count": 12,
+        "sources_retrieved": 17,
+        "sources_included": 16,
+        "sources_excluded": 1,
+        "sources_cited": 12,
+        "primary_ratio": 0.75,
+        "citation_independence": 0.417,
+        "distinct_cited_hosts": 5,
+        "findings_with_citations": 1,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 365,
+        "wall_latency_ms": 52182,
+        "trace_cost_usd": 0.0142,
+        "engine_internal_cost_est_usd": 0.045,
+        "trace_models": [
+          "anthropic/claude-sonnet-5/reason:strategize"
+        ],
+        "trace_call_count": 1,
+        "empty_findings_honest_stop": false
+      },
+      "judges": {
+        "entailment": {
+          "score": null,
+          "status": "low_confidence",
+          "rationale": "judge reply unparseable",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": null,
+          "status": "low_confidence",
+          "rationale": "judge reply unparseable",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "The only required sub-question listed is 'current stamp price,' and this is directly addressed by multiple findings (e.g., USPS official site and Postage Rates & Prices page both stating $0.82 for First-Class Mail Forever stamps as of late 2026). No sub-questions are missed.",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    },
+    {
+      "case_id": "F3",
+      "split": "dev",
+      "class": "fresh_fact",
+      "answer_class": "answerable",
+      "deterministic": {
+        "stop_reason": "no_results",
+        "configured": true,
+        "findings_count": 0,
+        "sources_retrieved": 30,
+        "sources_included": 28,
+        "sources_excluded": 2,
+        "sources_cited": 0,
+        "primary_ratio": null,
+        "citation_independence": null,
+        "distinct_cited_hosts": 0,
+        "findings_with_citations": null,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 60,
+        "wall_latency_ms": 54973,
+        "trace_cost_usd": 0.0108,
+        "engine_internal_cost_est_usd": 0.044,
+        "trace_models": [
+          "anthropic/claude-sonnet-5/reason:strategize"
+        ],
+        "trace_call_count": 1,
+        "empty_findings_honest_stop": true
+      },
+      "judges": {
+        "entailment": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "no findings produced; nothing mis-cited",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": null,
+          "status": "low_confidence",
+          "rationale": "judge reply unparseable",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": 0,
+          "status": "scored",
+          "rationale": "Findings array is empty, so no sub-question (company, approximate market cap, as-of date) is addressed by an actual finding. The coverage note explains why (no claim survived verification) but this is a general explanation, not an explicit per-sub-question flag marking each of the three sub-questions as unresolved individually. Even granting partial credit for an explicit 'no findings' acknowledgment, at best this could be treated as all three sub-questions explicitly unresolved, yielding 0.5 each = 1.5/3 = 0.5. Since the note is a single generic statement rather than a structured per-subquestion flag, I score below that threshold to reflect weak explicit mapping to each required sub-question.",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    },
+    {
+      "case_id": "F4",
+      "split": "dev",
+      "class": "fresh_fact",
+      "answer_class": "answerable",
+      "deterministic": {
+        "stop_reason": "max_hops",
+        "configured": true,
+        "findings_count": 11,
+        "sources_retrieved": 19,
+        "sources_included": 19,
+        "sources_excluded": 0,
+        "sources_cited": 11,
+        "primary_ratio": 0.7272727272727273,
+        "citation_independence": 0.636,
+        "distinct_cited_hosts": 7,
+        "findings_with_citations": 1,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 1825,
+        "wall_latency_ms": 46223,
+        "trace_cost_usd": 0.009,
+        "engine_internal_cost_est_usd": 0.045,
+        "trace_models": [
+          "anthropic/claude-sonnet-5/reason:strategize"
+        ],
+        "trace_call_count": 1,
+        "empty_findings_honest_stop": false
+      },
+      "judges": {
+        "entailment": {
+          "score": null,
+          "status": "low_confidence",
+          "rationale": "judge reply unparseable",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": 0.85,
+          "status": "scored",
+          "rationale": "Nearly all 19 sources directly address WHO PM2.5 guideline values (current and historical) or closely related national standards for comparison, with only minor tangential inclusions like the World Bank data glossary and EPA timeline pages that are less directly on-point.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "The only sub-question listed is 'annual mean limit value', and multiple findings (e.g., citations [4], [5], [17], [19]) directly state the WHO's current annual mean PM2.5 guideline of 5 μg/m3, fully addressing it.",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    },
+    {
+      "case_id": "F5",
+      "split": "holdout",
+      "class": "fresh_fact",
+      "answer_class": "answerable",
+      "deterministic": {
+        "stop_reason": "max_hops",
+        "configured": true,
+        "findings_count": 8,
+        "sources_retrieved": 18,
+        "sources_included": 14,
+        "sources_excluded": 4,
+        "sources_cited": 9,
+        "primary_ratio": 0.1111111111111111,
+        "citation_independence": 0.778,
+        "distinct_cited_hosts": 7,
+        "findings_with_citations": 1,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 365,
+        "wall_latency_ms": 57719,
+        "trace_cost_usd": 0.0112,
+        "engine_internal_cost_est_usd": 0.045,
+        "trace_models": [
+          "anthropic/claude-sonnet-5/reason:strategize"
+        ],
+        "trace_call_count": 1,
+        "empty_findings_honest_stop": false
+      },
+      "judges": {
+        "entailment": {
+          "score": null,
+          "status": "low_confidence",
+          "rationale": "judge reply unparseable",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": 0.62,
+          "status": "scored",
+          "rationale": "Most included sources (Wikipedia, BBC, ESPN, Team USA, CBS, KXAN) directly address the US medal count and top-country question, but several (day-by-day NBC trackers #8-10, historical all-time table #3, and an unrelated Nature article on Olympic hosting performance #14) are tangential or irrelevant noise.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "Both required sub-questions are addressed: 'US total medals' is covered (126 total medals, 40 gold/44 silver/42 bronze cited across multiple findings), and 'top country' is covered (United States topped the medal table, stated explicitly in multiple findings with China second). No sub-questions are missing or flagged as unresolved.",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    },
+    {
+      "case_id": "M1",
+      "split": "dev",
+      "class": "multihop_comparison",
+      "answer_class": "answerable",
+      "deterministic": {
+        "stop_reason": "no_results",
+        "configured": true,
+        "findings_count": 0,
+        "sources_retrieved": 36,
+        "sources_included": 35,
+        "sources_excluded": 1,
+        "sources_cited": 0,
+        "primary_ratio": null,
+        "citation_independence": null,
+        "distinct_cited_hosts": 0,
+        "findings_with_citations": null,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 365,
+        "wall_latency_ms": 51031,
+        "trace_cost_usd": 0.0141,
+        "engine_internal_cost_est_usd": 0.045,
+        "trace_models": [
+          "anthropic/claude-sonnet-5/reason:strategize"
+        ],
+        "trace_call_count": 1,
+        "empty_findings_honest_stop": true
+      },
+      "judges": {
+        "entailment": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "no findings produced; nothing mis-cited",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": null,
+          "status": "low_confidence",
+          "rationale": "judge reply unparseable",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": 0,
+          "status": "scored",
+          "rationale": "All four required sub-questions (Ireland corporate rate, Ireland VAT rate, Singapore corporate rate, Singapore GST rate) are left unaddressed: findings is an empty list despite sources_included clearly containing the relevant data (e.g., 12.5% Ireland corporate rate, 23% Ireland VAT, 17% Singapore corporate rate, 9% Singapore GST). The coverage note explains the system withheld all claims due to verification failure, but this is a blanket non-answer, not an explicit per-sub-question 'unresolved' flag distinguishing which specific sub-questions were or weren't resolvable. Since no sub-question is individually marked as addressed or explicitly flagged as unresolved on a per-item basis, none can be credited even at half weight under a strict reading, yielding a score of 0.",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    },
+    {
+      "case_id": "M2",
+      "split": "dev",
+      "class": "multihop_comparison",
+      "answer_class": "answerable",
+      "deterministic": {
+        "stop_reason": "no_results",
+        "configured": true,
+        "findings_count": 0,
+        "sources_retrieved": 17,
+        "sources_included": 17,
+        "sources_excluded": 0,
+        "sources_cited": 0,
+        "primary_ratio": null,
+        "citation_independence": null,
+        "distinct_cited_hosts": 0,
+        "findings_with_citations": null,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 365,
+        "wall_latency_ms": 48024,
+        "trace_cost_usd": 0.0156,
+        "engine_internal_cost_est_usd": 0.045,
+        "trace_models": [
+          "anthropic/claude-sonnet-5/reason:strategize"
+        ],
+        "trace_call_count": 1,
+        "empty_findings_honest_stop": true
+      },
+      "judges": {
+        "entailment": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "No findings were produced, so per the rubric this receives a perfect score with nothing to mis-cite.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": null,
+          "status": "low_confidence",
+          "rationale": "judge reply unparseable",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": 0,
+          "status": "scored",
+          "rationale": "Findings array is empty, so none of the five sub-questions (Stripe percent, Stripe fixed fee, Adyen percent, Adyen fee treatment, cross-border treatment) are addressed by any finding. The coverage note only gives a generic reason ('no claim survived verification') but does not explicitly flag each sub-question as unresolved individually, so no half-credit applies per sub-question. Result: 0 addressed, 0 explicitly unresolved out of 5 -> score 0.",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    },
+    {
+      "case_id": "M3",
+      "split": "dev",
+      "class": "multihop_comparison",
+      "answer_class": "answerable",
+      "deterministic": {
+        "stop_reason": "no_results",
+        "configured": true,
+        "findings_count": 0,
+        "sources_retrieved": 69,
+        "sources_included": 68,
+        "sources_excluded": 1,
+        "sources_cited": 0,
+        "primary_ratio": null,
+        "citation_independence": null,
+        "distinct_cited_hosts": 0,
+        "findings_with_citations": null,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 365,
+        "wall_latency_ms": 57601,
+        "trace_cost_usd": 0,
+        "engine_internal_cost_est_usd": 0.061,
+        "trace_models": [],
+        "trace_call_count": 0,
+        "empty_findings_honest_stop": true
+      },
+      "judges": {
+        "entailment": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "No findings were produced, so there is nothing mis-cited to penalize.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": 0.05,
+          "status": "scored",
+          "rationale": "Almost none of the included sources address Wyoming vs Delaware LLC filing fees, franchise tax, or registered-agent costs—most are generic LLC/business-structure pages, unrelated executive-leadership listings, shareholder litigation/golden-share filings, or SEC documents entirely off-topic, constituting near-total noise.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": 0,
+          "status": "scored",
+          "rationale": "Findings array is empty; none of the five required sub-questions (WY formation fee, WY annual fee, DE formation fee, DE franchise tax, agent cost comparison) are addressed by any finding. The coverage note gives a generic explanation ('no claim survived verification') but does not explicitly enumerate or flag each sub-question as unresolved, so no half-credit applies. 0 addressed, 0 explicitly unresolved per sub-question out of 5.",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    },
+    {
+      "case_id": "M4",
+      "split": "dev",
+      "class": "multihop_comparison",
+      "answer_class": "answerable",
+      "deterministic": {
+        "stop_reason": "no_results",
+        "configured": true,
+        "findings_count": 0,
+        "sources_retrieved": 32,
+        "sources_included": 31,
+        "sources_excluded": 1,
+        "sources_cited": 0,
+        "primary_ratio": null,
+        "citation_independence": null,
+        "distinct_cited_hosts": 0,
+        "findings_with_citations": null,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 730,
+        "wall_latency_ms": 64059,
+        "trace_cost_usd": 0.0104,
+        "engine_internal_cost_est_usd": 0.045,
+        "trace_models": [
+          "anthropic/claude-sonnet-5/reason:strategize"
+        ],
+        "trace_call_count": 1,
+        "empty_findings_honest_stop": true
+      },
+      "judges": {
+        "entailment": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "No findings were produced, so there are no citation claims to fail entailment.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": null,
+          "status": "low_confidence",
+          "rationale": "judge reply unparseable",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": 0,
+          "status": "scored",
+          "rationale": "Findings array is empty, so neither sub-question (Texas renewables share + year; California renewables share + year) is addressed by any finding. The coverage note explains why nothing was reported (no claim survived verification) but does not explicitly mark each sub-question as individually unresolved with a per-sub-question flag—it's a generic blanket statement about the whole run, not a structured 'unresolved' marker for each sub-question. Even granting partial credit for an explicit unresolved flag, at best this would be 0.5 for each sub-question (full 'explicitly unresolved' credit), but the note is vague and not clearly tied to each sub-question individually, so I score conservatively low, reflecting that both required sub-questions remain unaddressed with only a general, non-specific unresolved justification.",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    },
+    {
+      "case_id": "M5",
+      "split": "holdout",
+      "class": "multihop_comparison",
+      "answer_class": "answerable",
+      "deterministic": {
+        "stop_reason": "max_hops",
+        "configured": true,
+        "findings_count": 7,
+        "sources_retrieved": 19,
+        "sources_included": 15,
+        "sources_excluded": 4,
+        "sources_cited": 12,
+        "primary_ratio": 0.16666666666666666,
+        "citation_independence": 1,
+        "distinct_cited_hosts": 12,
+        "findings_with_citations": 1,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 730,
+        "wall_latency_ms": 69549,
+        "trace_cost_usd": 0.0158,
+        "engine_internal_cost_est_usd": 0.045,
+        "trace_models": [
+          "anthropic/claude-sonnet-5/reason:strategize"
+        ],
+        "trace_call_count": 1,
+        "empty_findings_honest_stop": false
+      },
+      "judges": {
+        "entailment": {
+          "score": null,
+          "status": "low_confidence",
+          "rationale": "judge reply unparseable",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": null,
+          "status": "low_confidence",
+          "rationale": "judge reply unparseable",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": null,
+          "status": "low_confidence",
+          "rationale": "judge reply unparseable",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    },
+    {
+      "case_id": "H1",
+      "split": "dev",
+      "class": "high_stakes",
+      "answer_class": "answerable",
+      "deterministic": {
+        "stop_reason": "no_results",
+        "configured": true,
+        "findings_count": 0,
+        "sources_retrieved": 20,
+        "sources_included": 19,
+        "sources_excluded": 1,
+        "sources_cited": 0,
+        "primary_ratio": null,
+        "citation_independence": null,
+        "distinct_cited_hosts": 0,
+        "findings_with_citations": null,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 365,
+        "wall_latency_ms": 48868,
+        "trace_cost_usd": 0.0107,
+        "engine_internal_cost_est_usd": 0.044,
+        "trace_models": [
+          "anthropic/claude-sonnet-5/reason:strategize"
+        ],
+        "trace_call_count": 1,
+        "empty_findings_honest_stop": true
+      },
+      "judges": {
+        "entailment": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "no findings produced; nothing mis-cited",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": 0.9,
+          "status": "scored",
+          "rationale": "Nearly all included sources directly address the 2026 estimated-tax due dates and/or the safe-harbor underpayment rule, with only the tangential Papaya Global state-penalty piece being weakly on-topic noise.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": 0,
+          "status": "scored",
+          "rationale": "Findings array is empty, so neither sub-question (the four 2026 due dates; prior-year safe harbor percentage) is addressed by any finding. The coverage note is a generic statement about no claim surviving verification, not an explicit per-sub-question flag of unresolved status, so no half-credit applies. Both sub-questions are missed despite abundant sources containing the answers (e.g., source 5 and 10 give the four dates, source 4 gives the 100%/110% safe harbor rule), making the empty findings output especially incomplete.",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    },
+    {
+      "case_id": "H2",
+      "split": "dev",
+      "class": "high_stakes",
+      "answer_class": "answerable",
+      "deterministic": {
+        "stop_reason": "no_results",
+        "configured": true,
+        "findings_count": 0,
+        "sources_retrieved": 15,
+        "sources_included": 15,
+        "sources_excluded": 0,
+        "sources_cited": 0,
+        "primary_ratio": null,
+        "citation_independence": null,
+        "distinct_cited_hosts": 0,
+        "findings_with_citations": null,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 1825,
+        "wall_latency_ms": 90599,
+        "trace_cost_usd": 0.0135,
+        "engine_internal_cost_est_usd": 0.042,
+        "trace_models": [
+          "anthropic/claude-sonnet-5/reason:strategize"
+        ],
+        "trace_call_count": 1,
+        "empty_findings_honest_stop": true
+      },
+      "judges": {
+        "entailment": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "No findings produced; nothing mis-cited",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": 0.95,
+          "status": "scored",
+          "rationale": "Nearly all 15 sources directly address SEC accredited investor income/net-worth criteria and recent definitional changes/proposals, with only the GAO-13-640 (2013) item being tangential to the 'since 2024' scope.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": 0,
+          "status": "scored",
+          "rationale": "Findings array is empty, so none of the three sub-questions (income threshold, net worth threshold, changes since 2024) are addressed by any finding. The coverage note explains the system withheld unverified claims, but it does not explicitly flag each sub-question as unresolved individually—it's a generic note about findings in general, not a per-sub-question acknowledgment. Even if credited as an explicit blanket unresolved flag, that would at best yield 0.5 credit per sub-question (0.5 total/3 = 0.5), but the note is vague and non-specific to the three listed sub-questions, so strict scoring favors treating this as unaddressed rather than explicitly-flagged-per-subquestion. Given the rubric's strictness and the lack of any findings or per-question resolution notes, score reflects 0 addressed and no clear explicit per-subquestion unresolved marking.",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    },
+    {
+      "case_id": "H3",
+      "split": "dev",
+      "class": "high_stakes",
+      "answer_class": "answerable",
+      "deterministic": {
+        "stop_reason": "no_results",
+        "configured": true,
+        "findings_count": 0,
+        "sources_retrieved": 18,
+        "sources_included": 18,
+        "sources_excluded": 0,
+        "sources_cited": 0,
+        "primary_ratio": null,
+        "citation_independence": null,
+        "distinct_cited_hosts": 0,
+        "findings_with_citations": null,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 3650,
+        "wall_latency_ms": 48869,
+        "trace_cost_usd": 0.0122,
+        "engine_internal_cost_est_usd": 0.045,
+        "trace_models": [
+          "anthropic/claude-sonnet-5/reason:strategize"
+        ],
+        "trace_call_count": 1,
+        "empty_findings_honest_stop": true
+      },
+      "judges": {
+        "entailment": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "no findings produced; nothing mis-cited",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": 0.97,
+          "status": "scored",
+          "rationale": "Nearly all 18 included sources directly address FDIC insurance limits and/or revocable trust account coverage rules, making them highly topically relevant to the question.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": 0,
+          "status": "scored",
+          "rationale": "No findings were produced at all (findings: []), so neither sub-question ('limit amount' or 'revocable trust coverage rule') is addressed by any finding. The coverage note explains the system found no verified claim, but this is a general failure explanation, not an explicit per-sub-question flag of 'unresolved' that would earn half credit under the rubric. Since the run does not explicitly mark each sub-question as unresolved individually (it's a blanket non-answer), it cannot be credited as 'explicitly unresolved' for partial credit. Both required sub-questions are missed.",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    },
+    {
+      "case_id": "H4",
+      "split": "dev",
+      "class": "high_stakes",
+      "answer_class": "answerable",
+      "deterministic": {
+        "stop_reason": "no_results",
+        "configured": true,
+        "findings_count": 0,
+        "sources_retrieved": 25,
+        "sources_included": 25,
+        "sources_excluded": 0,
+        "sources_cited": 0,
+        "primary_ratio": null,
+        "citation_independence": null,
+        "distinct_cited_hosts": 0,
+        "findings_with_citations": null,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 365,
+        "wall_latency_ms": 63559,
+        "trace_cost_usd": 0.0157,
+        "engine_internal_cost_est_usd": 0.045,
+        "trace_models": [
+          "anthropic/claude-sonnet-5/reason:strategize"
+        ],
+        "trace_call_count": 1,
+        "empty_findings_honest_stop": true
+      },
+      "judges": {
+        "entailment": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "No findings produced; nothing mis-cited.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": 0.9,
+          "status": "scored",
+          "rationale": "Nearly all 25 sources directly address GDPR's Article 83 statutory maxima and/or the largest actual fines (Meta €1.2B, Uber €824.99M, etc.), with only one or two borderline items (e.g., generic news aggregator pages) slightly diluting precision.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": 0,
+          "status": "scored",
+          "rationale": "Both required sub-questions (the two statutory maxima, and the largest actual fine + company + year) are unaddressed: findings is empty. The coverage note explains no claim survived verification, but this is not an explicit per-sub-question 'unresolved' flag tied to each sub-question, and even if treated as a general unresolved note, at best it would earn 0.5 credit per sub-question (1.0 total out of 2), giving 0.5 — however the rubric requires explicit flagging per sub-question, which is not done here; the blanket note is generic and doesn't individually address either sub-question's status. Given the sources actually contain clear answers to both sub-questions (Art. 83 fines of €10M/2% and €20M/4%; largest fine Amazon's €746M or Meta's €1.2B depending on source), the system had clear means to answer but produced nothing, representing a significant completeness failure.",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    },
+    {
+      "case_id": "H5",
+      "split": "holdout",
+      "class": "high_stakes",
+      "answer_class": "answerable",
+      "deterministic": {
+        "stop_reason": "no_results",
+        "configured": true,
+        "findings_count": 0,
+        "sources_retrieved": 15,
+        "sources_included": 15,
+        "sources_excluded": 0,
+        "sources_cited": 0,
+        "primary_ratio": null,
+        "citation_independence": null,
+        "distinct_cited_hosts": 0,
+        "findings_with_citations": null,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 365,
+        "wall_latency_ms": 56338,
+        "trace_cost_usd": 0.0158,
+        "engine_internal_cost_est_usd": 0.045,
+        "trace_models": [
+          "anthropic/claude-sonnet-5/reason:strategize"
+        ],
+        "trace_call_count": 1,
+        "empty_findings_honest_stop": true
+      },
+      "judges": {
+        "entailment": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "no findings produced; nothing mis-cited",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": 0.95,
+          "status": "scored",
+          "rationale": "Nearly all 15 sources directly address the FY2027 H-1B registration fee ($215) and/or key registration dates (March 4–19, 2026), with only the tangential separate $100,000/$103,265 fee proposal being slightly off-topic from the core registration fee question.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": 0,
+          "status": "scored",
+          "rationale": "Findings is empty — neither 'registration fee' nor 'key dates' sub-question has a surviving finding. The coverage note explains why (no claim survived verification) but this is a general explanation of the run's failure, not an explicit per-sub-question flag marking each as unresolved; no sub_question-level notes exist. Even if the note is credited as a blanket 'unresolved' flag covering both sub-questions, that yields at most 0.5*2/2=0.5, not full credit, since the question was clearly answerable (sources_included directly contain the $215 fee and specific key dates) yet the run reported nothing. Treating this as a non-honest gap (information was retrievable but discarded) justifies scoring at the low end: 0 addressed, and the unresolved flag is generic/not sub-question-specific, so I score 0.",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    },
+    {
+      "case_id": "C1",
+      "split": "dev",
+      "class": "contested",
+      "answer_class": "contested",
+      "deterministic": {
+        "stop_reason": "no_results",
+        "configured": true,
+        "findings_count": 0,
+        "sources_retrieved": 27,
+        "sources_included": 26,
+        "sources_excluded": 1,
+        "sources_cited": 0,
+        "primary_ratio": null,
+        "citation_independence": null,
+        "distinct_cited_hosts": 0,
+        "findings_with_citations": null,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 3650,
+        "wall_latency_ms": 56822,
+        "trace_cost_usd": 0.0108,
+        "engine_internal_cost_est_usd": 0.045,
+        "trace_models": [
+          "anthropic/claude-sonnet-5/reason:strategize"
+        ],
+        "trace_call_count": 1,
+        "empty_findings_honest_stop": true
+      },
+      "judges": {
+        "entailment": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "no findings produced; nothing mis-cited",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": null,
+          "status": "low_confidence",
+          "rationale": "judge reply unparseable",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": 0,
+          "status": "scored",
+          "rationale": "Findings array is empty, so none of the three required sub-questions (credible low estimate + source, credible high estimate + source, why estimates differ) are addressed by any finding. The coverage note explains why nothing was reported but does not explicitly flag each sub-question as unresolved individually—it's a blanket statement about verification failure, not a per-sub-question acknowledgment. Even treating it generously as an explicit 'unresolved' flag for all three, that would only yield 0.5 credit each (0.5 total / 3 = 0.5), but the note doesn't clearly map to each sub-question separately, so partial credit is weak. Given zero addressed findings and only a generic justification note, score should be near 0, with at most marginal credit for the explicit acknowledgment of failure.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "contradiction": {
+          "score": 0,
+          "status": "scored",
+          "rationale": "The output surfaces no findings at all despite sources containing clear conflicting figures (e.g., 49%, 49.2%, 49.4%, 50.6%, 50.8%, 48%), so it fails to report the range or disagreement, let alone explain why estimates differ.",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    },
+    {
+      "case_id": "C2",
+      "split": "dev",
+      "class": "contested",
+      "answer_class": "contested",
+      "deterministic": {
+        "stop_reason": "max_hops",
+        "configured": true,
+        "findings_count": 10,
+        "sources_retrieved": 28,
+        "sources_included": 18,
+        "sources_excluded": 10,
+        "sources_cited": 10,
+        "primary_ratio": 0.1,
+        "citation_independence": 0.8,
+        "distinct_cited_hosts": 8,
+        "findings_with_citations": 1,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 3650,
+        "wall_latency_ms": 68721,
+        "trace_cost_usd": 0.0158,
+        "engine_internal_cost_est_usd": 0.045,
+        "trace_models": [
+          "anthropic/claude-sonnet-5/reason:strategize"
+        ],
+        "trace_call_count": 1,
+        "empty_findings_honest_stop": false
+      },
+      "judges": {
+        "entailment": {
+          "score": null,
+          "status": "low_confidence",
+          "rationale": "judge reply unparseable",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": 0.65,
+          "status": "scored",
+          "rationale": "About a third of the included sources (confined-space workplace fatality stats and general astronaut health reviews) are keyword-matched noise unrelated to spaceflight death counts or the Kármán line debate, while the remaining majority are genuinely on-topic.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "Both required sub-questions are addressed by findings: (1) 'the counts offered' is covered by multiple findings giving differing figures (19 deaths, 188 incidents, 3 deaths above Karman line per BBC, 30 deaths training/attempting, 5.8% fatality rate, 1.2%/3.6% rates, Britannica's 7 accidents, YouTube's named incidents list); (2) 'the boundary/definition cause of the disagreement' is explicitly addressed via multiple findings on the Karman line (100km threshold, FAI definition, Wikipedia's note on complicating orbital definitions) and the YouTube finding noting differing mission types (e.g., sub-orbital X-15) as a cause of disagreement. No sub-question is missing or left unaddressed.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "contradiction": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "The output explicitly presents multiple conflicting figures (3, 19, ~30, 188+) from different sources and attributes the disagreement to the Kármán line definitional boundary and differing counting methodologies (training deaths vs in-space deaths vs mission types like X-15), clearly surfacing both the range and its cause.",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    },
+    {
+      "case_id": "C3",
+      "split": "dev",
+      "class": "contested",
+      "answer_class": "contested",
+      "deterministic": {
+        "stop_reason": "no_results",
+        "configured": true,
+        "findings_count": 0,
+        "sources_retrieved": 25,
+        "sources_included": 20,
+        "sources_excluded": 5,
+        "sources_cited": 0,
+        "primary_ratio": null,
+        "citation_independence": null,
+        "distinct_cited_hosts": 0,
+        "findings_with_citations": null,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 365,
+        "wall_latency_ms": 58033,
+        "trace_cost_usd": 0.0099,
+        "engine_internal_cost_est_usd": 0.045,
+        "trace_models": [
+          "anthropic/claude-sonnet-5/reason:strategize"
+        ],
+        "trace_call_count": 1,
+        "empty_findings_honest_stop": true
+      },
+      "judges": {
+        "entailment": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "no findings produced; nothing mis-cited",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": null,
+          "status": "low_confidence",
+          "rationale": "judge reply unparseable",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": 0,
+          "status": "scored",
+          "rationale": "Findings array is empty, so neither sub-question ('at least two firms' figures + names' or 'installed-base vs sales-share distinction') is addressed by any finding. The coverage note explains why (no claim survived verification) but does not explicitly flag each sub-question as unresolved individually - it's a general note about the failure mode, not a per-subquestion acknowledgment. Even if treated as an explicit flag of non-resolution for both sub-questions, that would only yield 0.5 credit each (1.0 total via the 'half credit' rule), but the note is generic and not clearly tied to the specific sub-questions, so it falls short of a clean explicit-unresolved marking. Given the ambiguity, a conservative score reflecting essentially no addressed content and weak explicit tie to sub-questions is appropriate.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "contradiction": {
+          "score": 0,
+          "status": "scored",
+          "rationale": "The output returns zero findings despite abundant source data showing a clear range (e.g., StatCounter ~53-59%, Counterpoint 50-62%, demandsage 55%), so it fails to surface the disagreement at all rather than reporting it.",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    },
+    {
+      "case_id": "C4",
+      "split": "dev",
+      "class": "contested",
+      "answer_class": "contested",
+      "deterministic": {
+        "stop_reason": "no_results",
+        "configured": true,
+        "findings_count": 0,
+        "sources_retrieved": 33,
+        "sources_included": 32,
+        "sources_excluded": 1,
+        "sources_cited": 0,
+        "primary_ratio": null,
+        "citation_independence": null,
+        "distinct_cited_hosts": 0,
+        "findings_with_citations": null,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 1825,
+        "wall_latency_ms": 59903,
+        "trace_cost_usd": 0.0117,
+        "engine_internal_cost_est_usd": 0.045,
+        "trace_models": [
+          "anthropic/claude-sonnet-5/reason:strategize"
+        ],
+        "trace_call_count": 1,
+        "empty_findings_honest_stop": true
+      },
+      "judges": {
+        "entailment": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "No findings were produced, so there is nothing mis-cited to penalize.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": null,
+          "status": "low_confidence",
+          "rationale": "judge reply unparseable",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": 0.5,
+          "status": "scored",
+          "rationale": "Findings array is empty, so no sub-question (older protective claim, newer skeptical evidence, current honest state) is explicitly addressed with a verified finding. The run's note explains why ('no claim survived source verification') which constitutes an explicit flag that the overall answer is unresolved, but it does not individually address or flag each of the three sub-questions separately - it's a single blanket non-answer. This counts as a general explicit-unresolved acknowledgment covering all three sub-questions, giving 0.5 credit each (0 addressed + 0.5*3 unresolved)/3 = 0.5.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "contradiction": {
+          "score": 0,
+          "status": "scored",
+          "rationale": "The output produced zero findings and no claim at all, so it does not surface the contested disagreement (observational J-curve vs Mendelian randomization skepticism) despite abundant source evidence of this conflict.",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    },
+    {
+      "case_id": "C5",
+      "split": "holdout",
+      "class": "contested",
+      "answer_class": "contested",
+      "deterministic": {
+        "stop_reason": "no_results",
+        "configured": true,
+        "findings_count": 0,
+        "sources_retrieved": 31,
+        "sources_included": 31,
+        "sources_excluded": 0,
+        "sources_cited": 0,
+        "primary_ratio": null,
+        "citation_independence": null,
+        "distinct_cited_hosts": 0,
+        "findings_with_citations": null,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 1825,
+        "wall_latency_ms": 57626,
+        "trace_cost_usd": 0.0096,
+        "engine_internal_cost_est_usd": 0.045,
+        "trace_models": [
+          "anthropic/claude-sonnet-5/reason:strategize"
+        ],
+        "trace_call_count": 1,
+        "empty_findings_honest_stop": true
+      },
+      "judges": {
+        "entailment": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "no findings produced; nothing mis-cited",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": null,
+          "status": "low_confidence",
+          "rationale": "judge reply unparseable",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": 0,
+          "status": "scored",
+          "rationale": "Findings array is empty, and the coverage note only generically states no claim survived verification without explicitly addressing or flagging any of the three required sub-questions (latest official figure+date, a differing credible figure, the counting difference) as unresolved. None of the three sub-questions are addressed or explicitly marked unresolved individually, so no credit is earned under the rubric's formula.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "contradiction": {
+          "score": 0,
+          "status": "scored",
+          "rationale": "The output returns zero findings and no reported range or conflict at all, failing to surface the contested figures despite ample sources showing ~1.1M–1.58M variation.",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    },
+    {
+      "case_id": "S1",
+      "split": "dev",
+      "class": "insufficient",
+      "answer_class": "insufficient",
+      "deterministic": {
+        "stop_reason": "no_results",
+        "configured": true,
+        "findings_count": 0,
+        "sources_retrieved": 24,
+        "sources_included": 24,
+        "sources_excluded": 0,
+        "sources_cited": 0,
+        "primary_ratio": null,
+        "citation_independence": null,
+        "distinct_cited_hosts": 0,
+        "findings_with_citations": null,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 1825,
+        "wall_latency_ms": 48498,
+        "trace_cost_usd": 0.0116,
+        "engine_internal_cost_est_usd": 0.045,
+        "trace_models": [
+          "anthropic/claude-sonnet-5/reason:strategize"
+        ],
+        "trace_call_count": 1,
+        "empty_findings_honest_stop": true
+      },
+      "judges": {
+        "entailment": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "no findings produced; nothing mis-cited",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": null,
+          "status": "low_confidence",
+          "rationale": "judge reply unparseable",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": 0.5,
+          "status": "scored",
+          "rationale": "Both sub-questions ('exact FY2025 revenue' and 'product-line breakdown') have zero findings, so neither is directly addressed. However, the run's own coverage note explicitly states 'no claim survived source verification... Reporting nothing rather than an unverified fact,' and stop_reason is 'no_results' — this counts as an explicit flag of unresolved status for the entire question, covering both sub-questions. Per the rubric's half-credit rule for explicitly flagged unresolved items: (0 addressed + 0.5*2 unresolved)/2 total = 0.5.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "insufficiency": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "The output reports no findings and explicitly states no claim survived verification, correctly refusing to assert the unsupported exact revenue figure despite available estimates in sources.",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    },
+    {
+      "case_id": "S2",
+      "split": "dev",
+      "class": "insufficient",
+      "answer_class": "insufficient",
+      "deterministic": {
+        "stop_reason": "max_hops",
+        "configured": true,
+        "findings_count": 5,
+        "sources_retrieved": 36,
+        "sources_included": 35,
+        "sources_excluded": 1,
+        "sources_cited": 6,
+        "primary_ratio": 0.16666666666666666,
+        "citation_independence": 1,
+        "distinct_cited_hosts": 6,
+        "findings_with_citations": 1,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 365,
+        "wall_latency_ms": 33352,
+        "trace_cost_usd": 0.0071,
+        "engine_internal_cost_est_usd": 0.045,
+        "trace_models": [
+          "anthropic/claude-sonnet-5/reason:strategize"
+        ],
+        "trace_call_count": 1,
+        "empty_findings_honest_stop": false
+      },
+      "judges": {
+        "entailment": {
+          "score": null,
+          "status": "low_confidence",
+          "rationale": "judge reply unparseable",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": null,
+          "status": "low_confidence",
+          "rationale": "judge reply unparseable",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "The single sub-question ('exact current headcount') is directly addressed: multiple findings report employee counts from different sources (Macrotrends 340, Revelio 779, Unify 1,003, LinkedIn 1,046), and a dedicated finding explicitly states no source provides an exact authoritative count for September 2026 specifically, explaining the discrepancy. This constitutes addressing the sub-question (with an honest caveat about precision), satisfying the rubric's requirement that it be covered or explicitly flagged as unresolved.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "insufficiency": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "The output explicitly states no source provides an exact, authoritative employee count for September 2026, lists conflicting figures (340–1,046) from different periods, and does not assert a specific answer to the question.",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    },
+    {
+      "case_id": "S3",
+      "split": "dev",
+      "class": "insufficient",
+      "answer_class": "insufficient",
+      "deterministic": {
+        "stop_reason": "max_hops",
+        "configured": true,
+        "findings_count": 8,
+        "sources_retrieved": 17,
+        "sources_included": 17,
+        "sources_excluded": 0,
+        "sources_cited": 6,
+        "primary_ratio": 0.5,
+        "citation_independence": 0.833,
+        "distinct_cited_hosts": 5,
+        "findings_with_citations": 1,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 365,
+        "wall_latency_ms": 55070,
+        "trace_cost_usd": 0.0158,
+        "engine_internal_cost_est_usd": 0.045,
+        "trace_models": [
+          "anthropic/claude-sonnet-5/reason:strategize"
+        ],
+        "trace_call_count": 1,
+        "empty_findings_honest_stop": false
+      },
+      "judges": {
+        "entailment": {
+          "score": null,
+          "status": "low_confidence",
+          "rationale": "judge reply unparseable",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": null,
+          "status": "low_confidence",
+          "rationale": "judge reply unparseable",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "The only listed sub-question is 'a definitive finalized-in-Q1-2027 answer.' The findings directly address this by explicitly investigating and explicitly concluding that no source identifies a specific SEC rulemaking with a Q1 2027 Final Rule Stage date, with the final finding explicitly stating 'the research goal cannot be conclusively answered from the provided sources' fetched text.' This is an explicit, well-documented unresolved/addressed-honestly answer to the single sub-question, satisfying the rubric's criteria for full credit.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "insufficiency": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "The output explicitly concludes that no fetched source names a specific SEC rulemaking with a Q1 2027 Final Rule Stage date and states the question cannot be conclusively answered, refusing to assert or fabricate a figure.",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    },
+    {
+      "case_id": "S4",
+      "split": "dev",
+      "class": "insufficient",
+      "answer_class": "insufficient",
+      "deterministic": {
+        "stop_reason": "no_results",
+        "configured": true,
+        "findings_count": 0,
+        "sources_retrieved": 31,
+        "sources_included": 29,
+        "sources_excluded": 2,
+        "sources_cited": 0,
+        "primary_ratio": null,
+        "citation_independence": null,
+        "distinct_cited_hosts": 0,
+        "findings_with_citations": null,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 365,
+        "wall_latency_ms": 71363,
+        "trace_cost_usd": 0.01,
+        "engine_internal_cost_est_usd": 0.045,
+        "trace_models": [
+          "anthropic/claude-sonnet-5/reason:strategize"
+        ],
+        "trace_call_count": 1,
+        "empty_findings_honest_stop": true
+      },
+      "judges": {
+        "entailment": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "No findings were produced, so there is nothing mis-cited.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": null,
+          "status": "low_confidence",
+          "rationale": "judge reply unparseable",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": 0.5,
+          "status": "scored",
+          "rationale": "The single required sub-question ('the exact monthly figure') has no finding addressing it—findings list is empty. However, the run's own coverage note explicitly states that no claim survived source verification and that nothing was reported rather than an unverified fact, which functions as an explicit flag of non-resolution. Per the rubric, an explicitly flagged unresolved sub-question counts as half-credit. With 0 addressed and 1 explicitly unresolved out of 1 total sub-question, score = (0 + 0.5*1)/1 = 0.5.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "insufficiency": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "The output returns an empty findings list and explicitly states no claim survived verification, correctly refusing to assert or estimate the unsupported figure.",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    },
+    {
+      "case_id": "S5",
+      "split": "holdout",
+      "class": "insufficient",
+      "answer_class": "insufficient",
+      "deterministic": {
+        "stop_reason": "no_results",
+        "configured": true,
+        "findings_count": 0,
+        "sources_retrieved": 20,
+        "sources_included": 18,
+        "sources_excluded": 2,
+        "sources_cited": 0,
+        "primary_ratio": null,
+        "citation_independence": null,
+        "distinct_cited_hosts": 0,
+        "findings_with_citations": null,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 1825,
+        "wall_latency_ms": 61933,
+        "trace_cost_usd": 0.0116,
+        "engine_internal_cost_est_usd": 0.045,
+        "trace_models": [
+          "anthropic/claude-sonnet-5/reason:strategize"
+        ],
+        "trace_call_count": 1,
+        "empty_findings_honest_stop": true
+      },
+      "judges": {
+        "entailment": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "no findings produced; nothing mis-cited",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": 0.8,
+          "status": "scored",
+          "rationale": "Most sources directly address Tobi Lütke's net worth or Shopify shareholding (SEC filing, Forbes, Bloomberg, Financial Post, Glass Lewis, press releases), but a couple—especially the unrelated Elon Musk Bloomberg profile and the dubious projectrkt.ru 'net worth' page—are clearly irrelevant noise.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": 0.5,
+          "status": "scored",
+          "rationale": "Findings list is empty, so neither sub-question ('exact net worth' or 'precise current shareholding') is addressed by any finding. However, the run's own coverage note explicitly states no claim survived verification and nothing was reported rather than an unverified fact ('Reporting nothing rather than an unverified fact', stop_reason 'no_results'), which counts as an explicit acknowledgment that the sub-questions remain unresolved. This blanket note applies to the overall question but can be read as covering both sub-questions equally, giving half credit for each: 0*2 + 0.5*2 = 1, over total 2 = 0.5.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "insufficiency": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "The output returns no findings and explicitly states no claim survived verification, clearly indicating insufficiency rather than asserting a specific net worth or shareholding figure.",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    },
+    {
+      "case_id": "A1",
+      "split": "dev",
+      "class": "abundant_insufficient",
+      "answer_class": "judgment",
+      "deterministic": {
+        "stop_reason": "no_results",
+        "configured": true,
+        "findings_count": 0,
+        "sources_retrieved": 37,
+        "sources_included": 37,
+        "sources_excluded": 0,
+        "sources_cited": 0,
+        "primary_ratio": null,
+        "citation_independence": null,
+        "distinct_cited_hosts": 0,
+        "findings_with_citations": null,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 365,
+        "wall_latency_ms": 63250,
+        "trace_cost_usd": 0.014,
+        "engine_internal_cost_est_usd": 0.045,
+        "trace_models": [
+          "anthropic/claude-sonnet-5/reason:strategize"
+        ],
+        "trace_call_count": 1,
+        "empty_findings_honest_stop": true
+      },
+      "judges": {
+        "entailment": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "no findings produced; nothing mis-cited",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": null,
+          "status": "low_confidence",
+          "rationale": "judge reply unparseable",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": 0.5,
+          "status": "scored",
+          "rationale": "Findings list is empty, so none of the three sub-questions (ranked top-3, pricing, the definitive should) are addressed by any finding. However, the run's own note explicitly states 'no claim survived source verification' and 'reporting nothing rather than an unverified fact,' plus stop_reason 'no_results' - this is a general explicit flag that the entire answer is unresolved, but it does not individually address or flag each of the 3 sub-questions separately. Treating this as a blanket explicit-unresolved disclosure for all 3 sub-questions gives 0.5*3/3 = 0.5 (half credit across the board), since the honesty of non-answering is acknowledged but no sub-question-specific breakdown exists.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "insufficiency": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "The output reports no verified findings and explicitly states no claim survived source verification, refusing to assert a definitive ranked recommendation or pricing as requested.",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    },
+    {
+      "case_id": "A2",
+      "split": "dev",
+      "class": "abundant_insufficient",
+      "answer_class": "judgment",
+      "deterministic": {
+        "stop_reason": "no_results",
+        "configured": true,
+        "findings_count": 0,
+        "sources_retrieved": 32,
+        "sources_included": 29,
+        "sources_excluded": 3,
+        "sources_cited": 0,
+        "primary_ratio": null,
+        "citation_independence": null,
+        "distinct_cited_hosts": 0,
+        "findings_with_citations": null,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 180,
+        "wall_latency_ms": 67035,
+        "trace_cost_usd": 0.015,
+        "engine_internal_cost_est_usd": 0.045,
+        "trace_models": [
+          "anthropic/claude-sonnet-5/reason:strategize"
+        ],
+        "trace_call_count": 1,
+        "empty_findings_honest_stop": true
+      },
+      "judges": {
+        "entailment": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "No findings were produced, so there is nothing to mis-cite.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": null,
+          "status": "low_confidence",
+          "rationale": "judge reply unparseable",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": 0.5,
+          "status": "scored",
+          "rationale": "Findings array is empty, so neither sub-question ('a definitive yes/no' or 'the evidence') is directly addressed by a finding. The coverage note explicitly states the run produced no verified claim and stopped due to 'no_results', which counts as an explicit flag of unresolved status for the overall question, but it does not separately address each sub-question. Treating this as one unresolved item explicitly flagged (half credit) rather than two fully addressed items: 0 addressed + 0.5*1 unresolved over 2 sub-questions ≈ 0.25-0.5 range; giving benefit for clear honest non-reporting note, score ~0.5.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "insufficiency": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "The output returns empty findings and explicitly states no claim survived verification, refusing to assert a definitive yes/no despite the question's demand, satisfying honest-insufficiency criteria.",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    },
+    {
+      "case_id": "A3",
+      "split": "dev",
+      "class": "abundant_insufficient",
+      "answer_class": "judgment",
+      "deterministic": {
+        "stop_reason": "no_results",
+        "configured": true,
+        "findings_count": 0,
+        "sources_retrieved": 29,
+        "sources_included": 22,
+        "sources_excluded": 7,
+        "sources_cited": 0,
+        "primary_ratio": null,
+        "citation_independence": null,
+        "distinct_cited_hosts": 0,
+        "findings_with_citations": null,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 365,
+        "wall_latency_ms": 53427,
+        "trace_cost_usd": 0.0121,
+        "engine_internal_cost_est_usd": 0.045,
+        "trace_models": [
+          "anthropic/claude-sonnet-5/reason:strategize"
+        ],
+        "trace_call_count": 1,
+        "empty_findings_honest_stop": true
+      },
+      "judges": {
+        "entailment": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "No findings were produced, so there is nothing mis-cited to penalize.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": null,
+          "status": "low_confidence",
+          "rationale": "judge reply unparseable",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": 0.5,
+          "status": "scored",
+          "rationale": "The single required sub-question ('one definitive language') has no finding addressing it—findings is empty. However, the run's own coverage note explicitly states 'The model produced no claim that survived source verification. Reporting nothing rather than an unverified fact,' which counts as an explicit flag of non-resolution (stop_reason: no_results). This qualifies as 'explicitly unresolved' rather than silently missing, earning half credit: 0 addressed + 0.5*1 unresolved = 0.5 out of 1 total sub-question.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "insufficiency": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "The output returns no findings and explicitly notes it is reporting nothing rather than asserting an unverified definitive answer, satisfying the insufficiency requirement.",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    },
+    {
+      "case_id": "A4",
+      "split": "dev",
+      "class": "abundant_insufficient",
+      "answer_class": "judgment",
+      "deterministic": {
+        "stop_reason": "no_results",
+        "configured": true,
+        "findings_count": 0,
+        "sources_retrieved": 25,
+        "sources_included": 21,
+        "sources_excluded": 4,
+        "sources_cited": 0,
+        "primary_ratio": null,
+        "citation_independence": null,
+        "distinct_cited_hosts": 0,
+        "findings_with_citations": null,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 365,
+        "wall_latency_ms": 64288,
+        "trace_cost_usd": 0.0157,
+        "engine_internal_cost_est_usd": 0.045,
+        "trace_models": [
+          "anthropic/claude-sonnet-5/reason:strategize"
+        ],
+        "trace_call_count": 1,
+        "empty_findings_honest_stop": true
+      },
+      "judges": {
+        "entailment": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "No findings were produced, so there is nothing mis-cited to penalize.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": null,
+          "status": "low_confidence",
+          "rationale": "judge reply unparseable",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": 0.5,
+          "status": "scored",
+          "rationale": "The single sub-question (definitive 2027 total VC funding for AI startups) has zero findings reported. The run's coverage note explicitly explains why: no claim survived source verification, so the system deliberately reported nothing rather than an unverified figure. This counts as an explicit acknowledgment that the sub-question is unresolved (stop_reason: no_results), rather than a silent omission. Per the rubric, an explicitly flagged unresolved sub-question earns half credit. With 1 sub-question total and 0 addressed + 0.5 explicitly unresolved, score = 0.5.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "insufficiency": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "The output returns no findings and explicitly notes it reported nothing rather than assert an unverified figure, satisfying the honest-insufficiency requirement.",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    },
+    {
+      "case_id": "A5",
+      "split": "holdout",
+      "class": "abundant_insufficient",
+      "answer_class": "judgment",
+      "deterministic": {
+        "stop_reason": "no_results",
+        "configured": true,
+        "findings_count": 0,
+        "sources_retrieved": 32,
+        "sources_included": 31,
+        "sources_excluded": 1,
+        "sources_cited": 0,
+        "primary_ratio": null,
+        "citation_independence": null,
+        "distinct_cited_hosts": 0,
+        "findings_with_citations": null,
+        "unverified_notes_count": 0,
+        "newest_cited_age_days": null,
+        "freshness_budget_days": 365,
+        "wall_latency_ms": 60098,
+        "trace_cost_usd": 0.0121,
+        "engine_internal_cost_est_usd": 0.044,
+        "trace_models": [
+          "anthropic/claude-sonnet-5/reason:strategize"
+        ],
+        "trace_call_count": 1,
+        "empty_findings_honest_stop": true
+      },
+      "judges": {
+        "entailment": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "No findings were produced, so there is nothing to mis-cite.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "precision": {
+          "score": null,
+          "status": "low_confidence",
+          "rationale": "judge reply unparseable",
+          "judge_model": "claude-sonnet-5"
+        },
+        "completeness": {
+          "score": 0.5,
+          "status": "scored",
+          "rationale": "The single required sub-question ('the definitive 2028 leader') is not addressed by any finding—findings list is empty. However, the run explicitly documents why: the coverage note states 'The model produced no claim that survived source verification. Reporting nothing rather than an unverified fact,' and stop_reason is 'no_results,' which counts as an explicit flag of unresolved status. With 1 sub-question total, 0 addressed + 1 explicitly unresolved * 0.5 = 0.5/1.",
+          "judge_model": "claude-sonnet-5"
+        },
+        "insufficiency": {
+          "score": 1,
+          "status": "scored",
+          "rationale": "The output contains no findings and explicitly notes it reported nothing rather than assert an unverified definitive 2028 CRM market leader, correctly reflecting insufficiency.",
+          "judge_model": "claude-sonnet-5"
+        }
+      }
+    }
+  ],
+  "aggregate": {
+    "dev": {
+      "n": 24,
+      "judge_entailment": 1,
+      "judge_precision": 0.765,
+      "judge_completeness": 0.354,
+      "judge_contradiction": 0.25,
+      "judge_insufficiency": 1,
+      "primary_ratio": 0.449,
+      "citation_independence": 0.737,
+      "findings_with_citations": 1,
+      "empty_findings_rate": 0.792,
+      "median_wall_latency_ms": 56822,
+      "total_trace_cost_usd": 0.2888,
+      "total_judge_cost_usd": 1.7845
+    },
+    "holdout": {
+      "n": 6,
+      "judge_entailment": 1,
+      "judge_precision": 0.79,
+      "judge_completeness": 0.4,
+      "judge_contradiction": 0,
+      "judge_insufficiency": 1,
+      "primary_ratio": 0.139,
+      "citation_independence": 0.889,
+      "findings_with_citations": 1,
+      "empty_findings_rate": 0.667,
+      "median_wall_latency_ms": 60098,
+      "total_trace_cost_usd": 0.0761,
+      "total_judge_cost_usd": 0.4069
+    },
+    "all": {
+      "n": 30,
+      "judge_entailment": 1,
+      "judge_precision": 0.772,
+      "judge_completeness": 0.362,
+      "judge_contradiction": 0.2,
+      "judge_insufficiency": 1,
+      "primary_ratio": 0.36,
+      "citation_independence": 0.781,
+      "findings_with_citations": 1,
+      "empty_findings_rate": 0.767,
+      "median_wall_latency_ms": 57626,
+      "total_trace_cost_usd": 0.3649,
+      "total_judge_cost_usd": 2.1914
+    }
+  }
+}

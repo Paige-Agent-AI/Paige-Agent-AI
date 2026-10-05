@@ -1,0 +1,427 @@
+{
+  "case_id": "F4",
+  "split": "dev",
+  "class": "fresh_fact",
+  "answer_class": "answerable",
+  "question": "What is the World Health Organization's current guideline limit for annual mean PM2.5 exposure?",
+  "sub_questions": [
+    "annual mean limit value"
+  ],
+  "freshness_days": 1825,
+  "engine_head_at_run": "dfcdd72c2efa8794422fc73c07f8fe45eab97cda",
+  "ran_at": "2026-10-05T15:56:20.230Z",
+  "http_status": 200,
+  "wall_latency_ms": 46223,
+  "engine_result": {
+    "run_id": "92c2c332-8ff9-4068-b0ac-65580eaac932",
+    "question": "What is the World Health Organization's current guideline limit for annual mean PM2.5 exposure?",
+    "findings": [
+      {
+        "text": "The WHO's 2021 Global Air Quality Guidelines recommend that annual mean PM2.5 concentrations should not exceed 5 μg/m3. (annual mean concentrations of PM2.5 not exceeding 5 μg/m3)",
+        "citations": [
+          4
+        ],
+        "confidence": "high",
+        "unverifiedFields": [
+          "value:NO2 not exceeding 10 μg/m3 as listed on [4], verify directly — terms change."
+        ],
+        "values": [
+          "annual mean concentrations of PM2.5 not exceeding 5 μg/m3"
+        ]
+      },
+      {
+        "text": "The WHO updated its air quality guidelines in September 2021, recommending a more stringent limit on annual PM2.5 exposure of 5 μg/m3. (5 μg m–3 as listed on [5], verify directly — terms change.)",
+        "citations": [
+          5
+        ],
+        "confidence": "high",
+        "values": [
+          "5 μg m–3 as listed on [5], verify directly — terms change."
+        ]
+      },
+      {
+        "text": "The WHO recently updated its air quality guideline for annual fine particulate matter (PM2.5) exposure, lowering it from 10 to 5 μg/m3.",
+        "citations": [
+          16
+        ],
+        "confidence": "low",
+        "unverifiedFields": [
+          "value:from 10 to 5 μg/m3 as listed on [16], verify directly — terms change."
+        ]
+      },
+      {
+        "text": "The WHO air quality guideline (AQG) states that annual average concentrations of PM2.5 should not exceed 5 µg/m3, while 24-hour average exposures should not exceed 15 µg/m3 more than 3-4 days per year. (website: https://www.c40knowledgehub.org/s/article/WHO-Air-Quality-Guidelines?language=en_US · annual average concentrations of PM2.5 should not exceed 5 µg/m3)",
+        "citations": [
+          17
+        ],
+        "confidence": "low",
+        "unverifiedFields": [
+          "value:24-hour average exposures should not exceed 15 µg/m3 more than 3 - 4 days per year as listed on [17], verify directly — terms change."
+        ],
+        "website": "https://www.c40knowledgehub.org/s/article/WHO-Air-Quality-Guidelines?language=en_US",
+        "values": [
+          "annual average concentrations of PM2.5 should not exceed 5 µg/m3"
+        ]
+      },
+      {
+        "text": "The recommendation for the annual mean concentration of fine particulate matter (PM2.5) was lowered from 10 μg/m3 (AQG 2005) to 5 μg/m3 (AQG 2021). (website: https://www.sciencedirect.com/science/article/pii/S0160412025001291 · 10 μg/m3 (AQG 2005))",
+        "citations": [
+          19
+        ],
+        "confidence": "low",
+        "unverifiedFields": [
+          "value:5 μg/m3 (AQG 2021) as listed on [19], verify directly — terms change."
+        ],
+        "website": "https://www.sciencedirect.com/science/article/pii/S0160412025001291",
+        "values": [
+          "10 μg/m3 (AQG 2005)"
+        ]
+      },
+      {
+        "text": "An earlier source states that existing national standards ranged from 8 to 75 µg/m3, mostly higher than the WHO guideline annual limit of less than 10 µg/m3 (referring to the prior 2005 guideline level). (website: https://pmc.ncbi.nlm.nih.gov/articles/PMC7856362/ · WHO guideline annual limit of < 10 µg/m3; existing standards ranged from 8 to 75 µg/m3 as listed on [2], verify directly — terms change.)",
+        "citations": [
+          2
+        ],
+        "confidence": "high",
+        "website": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7856362/",
+        "values": [
+          "WHO guideline annual limit of < 10 µg/m3",
+          "existing standards ranged from 8 to 75 µg/m3 as listed on [2], verify directly — terms change."
+        ]
+      },
+      {
+        "text": "A WHO presentation slide references a long-term AQG and annual mean figure of 10 μg/m3, alongside a value of 25 μg/m3. (website: https://ww2.arb.ca.gov/sites/default/files/2023-06/Luben_AQGs%20Presentation%20May%202023.pdf · annual mean, of 10 μg/m3; 25 μg/m3 as listed on [6], verify directly — terms change.)",
+        "citations": [
+          6
+        ],
+        "confidence": "high",
+        "website": "https://ww2.arb.ca.gov/sites/default/files/2023-06/Luben_AQGs%20Presentation%20May%202023.pdf",
+        "values": [
+          "annual mean, of 10 μg/m3",
+          "25 μg/m3 as listed on [6], verify directly — terms change."
+        ]
+      },
+      {
+        "text": "WHO's official Q&A page on the 2021 Global Air Quality Guidelines discusses PM2.5 health risks and interim targets, noting that achieving interim target 4 for PM2.5 (the same level as the 2005 AQG) would result in a nearly 48% decrease in total deaths attributed to PM2.5 exposure. (website: https://www.who.int/news-room/questions-and-answers/item/who-global-air-quality-guidelines)",
+        "citations": [
+          12
+        ],
+        "confidence": "high",
+        "unverifiedFields": [
+          "value:nearly 48% decrease in total deaths attributed to PM₂.₅ exposure as listed on [12], verify directly — terms change."
+        ],
+        "website": "https://www.who.int/news-room/questions-and-answers/item/who-global-air-quality-guidelines"
+      },
+      {
+        "text": "WHO's official fact sheet on ambient air pollution states that the WHO Global Air Quality Guidelines (AQG) offer global guidance on thresholds and limits for key air pollutants that pose health risks. (website: https://www.who.int/news-room/fact-sheets/detail/ambient-(outdoor)-air-quality-and-health)",
+        "citations": [
+          10
+        ],
+        "confidence": "high",
+        "website": "https://www.who.int/news-room/fact-sheets/detail/ambient-(outdoor)-air-quality-and-health"
+      },
+      {
+        "text": "The US EPA's National Ambient Air Quality Standards (NAAQS) set the level of the primary (health-based) annual PM2.5 standard at 9.0 micrograms per cubic meter, which is a separate national standard distinct from the WHO guideline. (website: https://www.epa.gov/pm-pollution/national-ambient-air-quality-standards-naaqs-pm · 9.0 micrograms per cubic meter as listed on [7], verify directly — terms change.)",
+        "citations": [
+          7
+        ],
+        "confidence": "high",
+        "website": "https://www.epa.gov/pm-pollution/national-ambient-air-quality-standards-naaqs-pm",
+        "values": [
+          "9.0 micrograms per cubic meter as listed on [7], verify directly — terms change."
+        ]
+      },
+      {
+        "text": "A prior US EPA standard (referenced in a 2012 factsheet) set the annual PM2.5 standard at 15.0 µg/m3, which is distinct from the WHO guideline. (website: https://www.epa.gov/sites/default/files/2016-04/documents/2012_aqi_factsheet.pdf)",
+        "citations": [
+          9
+        ],
+        "confidence": "high",
+        "unverifiedFields": [
+          "value:annual PM2.5 standard of 15.0 µg/m3 as listed on [9], verify directly — terms change."
+        ],
+        "website": "https://www.epa.gov/sites/default/files/2016-04/documents/2012_aqi_factsheet.pdf"
+      }
+    ],
+    "sources": [
+      {
+        "index": 1,
+        "url": "https://iris.who.int/server/api/core/bitstreams/551b515e-2a32-4e1a-a58c-cdaecd395b19/content",
+        "title": "[PDF] WHO global air quality guidelines - World Health Organization (WHO)",
+        "snippet": "Among all countries with standards for 24-hour averaging times for PM2.5 and PM10, 21% and 46% met the air quality guidelines, respectively.",
+        "reliability_score": 0.85,
+        "tier": "T1",
+        "reliability": "high",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:55:46.667Z",
+        "excluded": false
+      },
+      {
+        "index": 2,
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7856362/",
+        "title": "Air quality standards for the concentration of particulate matter ...",
+        "snippet": "The existing standards ranged from 8 to 75 µg/m3, mostly higher than the World Health Organization guideline annual limit of < 10 µg/m3. The weakest PM2.5 ...",
+        "reliability_score": 0.85,
+        "tier": "T1",
+        "reliability": "high",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:56:05.460Z",
+        "excluded": false
+      },
+      {
+        "index": 3,
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8553929/",
+        "title": "WHO Air Quality Guidelines Need to be Adopted - PMC - NIH",
+        "snippet": "In brief, most 2021 AQGs are lower compared to 2005 using updated WHO methodology, and given the fact that new evidence shows health effects occur even at lower ...",
+        "reliability_score": 0.85,
+        "tier": "T1",
+        "reliability": "high",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:55:48.234Z",
+        "excluded": false
+      },
+      {
+        "index": 4,
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8920460/",
+        "title": "World Health Organization air quality guidelines 2021 - PMC - NIH",
+        "snippet": "the WHO AQGs 2021 recommend annual mean concentrations of PM2.5 not exceeding 5 μg/m3 and NO2 not exceeding 10 μg/m3 and the peak season mean 8-h O3",
+        "reliability_score": 0.85,
+        "tier": "T1",
+        "reliability": "high",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:56:02.201Z",
+        "excluded": false
+      },
+      {
+        "index": 5,
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9202349/",
+        "title": "Updated World Health Organization Air Quality Guidelines Highlight the ...",
+        "snippet": "The WHO recently (September 2021) updated their air quality guidelines, recommending a more stringent limit on annual PM2.5 exposure (5 μg m–3)",
+        "reliability_score": 0.85,
+        "tier": "T1",
+        "reliability": "high",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:55:46.667Z",
+        "excluded": false
+      },
+      {
+        "index": 6,
+        "url": "https://ww2.arb.ca.gov/sites/default/files/2023-06/Luben_AQGs%20Presentation%20May%202023.pdf",
+        "title": "[PDF] WHO Global Air Quality Guidelines 2021",
+        "snippet": "and annual mean, of 10 μg/m3,= 25 μg/m3. Page 16. Long-term. AQG ... The average PM2.5 level across these five studies with the lowest ...",
+        "reliability_score": 0.85,
+        "tier": "T1",
+        "reliability": "high",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:56:02.201Z",
+        "excluded": false
+      },
+      {
+        "index": 7,
+        "url": "https://www.epa.gov/pm-pollution/national-ambient-air-quality-standards-naaqs-pm",
+        "title": "National Ambient Air Quality Standards (NAAQS) for PM | US EPA",
+        "snippet": "EPA is setting the level of the primary (health-based) annual PM2.5 standard at 9.0 micrograms per cubic meter to provide increased public health protection,",
+        "reliability_score": 0.85,
+        "tier": "T1",
+        "reliability": "high",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:55:49.194Z",
+        "excluded": false
+      },
+      {
+        "index": 8,
+        "url": "https://www.epa.gov/pm-pollution/timeline-particulate-matter-pm-national-ambient-air-quality-standards-naaqs",
+        "title": "Timeline of Particulate Matter (PM) National Ambient Air Quality ...",
+        "snippet": "The level of the annual PM2.5 standards was to be compared to measurements made at sites that represent “community-wide air quality” recording the highest level ...",
+        "reliability_score": 0.85,
+        "tier": "T1",
+        "reliability": "high",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:56:06.622Z",
+        "excluded": false
+      },
+      {
+        "index": 9,
+        "url": "https://www.epa.gov/sites/default/files/2016-04/documents/2012_aqi_factsheet.pdf",
+        "title": "[PDF] The National Ambient Air Quality Standards for Particle Pollution - EPA",
+        "snippet": "An area will meet the standard if the three-year average of its annual average PM2. ... standards are: an annual PM2.5 standard of 15.0 µg/m3. ; a 24-hour PM2.5 ...",
+        "reliability_score": 0.85,
+        "tier": "T1",
+        "reliability": "high",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:55:50.138Z",
+        "excluded": false
+      },
+      {
+        "index": 10,
+        "url": "https://www.who.int/news-room/fact-sheets/detail/ambient-(outdoor)-air-quality-and-health",
+        "title": "Ambient (outdoor) air pollution - World Health Organization (WHO)",
+        "snippet": "The WHO Global air quality guidelines (AQG) offer global guidance on thresholds and limits for key air pollutants that pose health risks. These ...",
+        "reliability_score": 0.85,
+        "tier": "T1",
+        "reliability": "high",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:56:00.742Z",
+        "excluded": false
+      },
+      {
+        "index": 11,
+        "url": "https://www.who.int/news-room/feature-stories/detail/what-are-the-who-air-quality-guidelines",
+        "title": "What are the WHO Air quality guidelines?",
+        "snippet": "The WHO Air quality guidelines are a set of evidence-based recommendations of limit values for specific air pollutants developed to help ...",
+        "reliability_score": 0.85,
+        "tier": "T1",
+        "reliability": "high",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:56:00.742Z",
+        "excluded": false
+      },
+      {
+        "index": 12,
+        "url": "https://www.who.int/news-room/questions-and-answers/item/who-global-air-quality-guidelines",
+        "title": "WHO Global Air Quality Guidelines - World Health Organization (WHO)",
+        "snippet": "# WHO Global Air Quality Guidelines\n#### Recommended 2021 AQG levels compared to 2005 air quality guidelines.\n- offer new good practice statements on the management of certain types of PM (i.e. black carbon/elemental carbon, ultrafine particles, and particles originating from sand and dust storms).\n\nThe health risks associated with PM smaller than or equal to 2.5 microns (µm) in diameter (PM₂.₅) are of particular\n\nof interim target 4 for PM₂.₅ (the same level as the AQG from 2005), would result in a nearly 48% decrease in total deaths attributed to PM₂.₅ exposure.",
+        "reliability_score": 0.85,
+        "tier": "T1",
+        "reliability": "high",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:55:46.667Z",
+        "excluded": false
+      },
+      {
+        "index": 13,
+        "url": "https://www.who.int/publications/i/item/9789240034228",
+        "title": "WHO global air quality guidelines: particulate matter (‎PM2.5 and PM10 ...",
+        "snippet": "WHO global air quality guidelines: particulate matter (‎PM2.5 and PM10)‎, ozone, nitrogen dioxide, sulfur dioxide and carbon monoxide. 22 ...",
+        "reliability_score": 0.85,
+        "tier": "T1",
+        "reliability": "high",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:55:46.667Z",
+        "excluded": false
+      },
+      {
+        "index": 14,
+        "url": "https://data.worldbank.org/indicator/EN.ATM.PM25.MC.M3",
+        "title": "PM2.5 air pollution, mean annual exposure (micrograms per cubic ...",
+        "snippet": "PM2.5 air pollution, mean annual exposure (micrograms per cubic meter). Global Burden of Disease Study 2023 ( GBD 2023 ) Air Pollution Exposure ...",
+        "reliability_score": 0.76,
+        "tier": "T2",
+        "reliability": "high",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:56:05.460Z",
+        "excluded": false
+      },
+      {
+        "index": 15,
+        "url": "https://databank.worldbank.org/metadataglossary/world-development-indicators/series/EN.ATM.PM25.MC.ZS",
+        "title": "PM2.5 air pollution, population exposed to ... - Glossary | DataBank",
+        "snippet": "# DataBank\n## Metadata Glossary\n|  |  |\n|-|-|\n| Limitations and exceptions | Pollutant concentrations are sensitive to local conditions, and even monitoring sites in the same city may register different levels. Direct monitoring of PM2.5 is still rare in most parts of the world, and measurement protocols and standards are not the same for all countries. These data should be considered only a general indication of air quality, intended to inform cross-country comparisons of the health risks due to particulate matter pollution. The guideline set by the World Health Organization (WHO) for PM2.5 i",
+        "reliability_score": 0.76,
+        "tier": "T2",
+        "reliability": "high",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:55:49.194Z",
+        "excluded": false
+      },
+      {
+        "index": 16,
+        "url": "https://pubs.acs.org/estlcu/article/9/6/501/380468/Updated-World-Health-Organization-Air-Quality",
+        "title": "Updated World Health Organization Air Quality Guidelines Highlight the ...",
+        "snippet": "The World Health Organization recently updated their air quality guideline for annual fine particulate matter (PM2.5) exposure from 10 to 5 μg ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:56:02.201Z",
+        "excluded": false
+      },
+      {
+        "index": 17,
+        "url": "https://www.c40knowledgehub.org/s/article/WHO-Air-Quality-Guidelines?language=en_US",
+        "title": "WHO air quality guidelines - C40 Knowledge Hub",
+        "snippet": "# WHO air quality guidelines\n#### Article Topics\nPM2.5, fine particulate matter of 2.5 micrometres or less in diameter, is the most dangerous pollutant because it can penetrate the lung barrier and enter the blood system, causing cardiovascular and respiratory disease and cancers.\n\n**The WHO air quality guideline (AQG) states that annual average concentrations of PM2.5 should not exceed 5 µg/m3,** while 24-hour average exposures should not exceed 15 µg/m3 more than 3 - 4 days per year.\n\nFor PM2.5 these are:",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:55:46.667Z",
+        "excluded": false
+      },
+      {
+        "index": 18,
+        "url": "https://www.iqair.com/newsroom/2021-who-air-quality-guidelines",
+        "title": "New WHO air quality guidelines will save lives | IQAir USA",
+        "snippet": "# New WHO air quality guidelines will save lives\nThe World Health Organization (WHO) released revised air quality guidelines on September 22, 2021, the first major update to the standards in 15 years.1\n\nThe revised recommendations, produced from evidence-based data and information and a growing awareness that no amount of air pollution is safe for human beings, resulted in nearly all pollutant standards being strengthened in comparison to the air quality guidelines established in 2005 (published in 2006).2 If target levels of pollution are implemented by governments, these new guidelines will ",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:55:48.234Z",
+        "excluded": false
+      },
+      {
+        "index": 19,
+        "url": "https://www.sciencedirect.com/science/article/pii/S0160412025001291",
+        "title": "Towards compliance with the 2021 WHO air quality guidelines",
+        "snippet": "The recommendation for the annual mean concentration of fine particulate matter (PM2.5) was lowered from 10 μg/m3 (AQG 2005) to 5 μg/m3 (AQG 2021) (Han et al., ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:55:48.234Z",
+        "excluded": false
+      }
+    ],
+    "coverage": {
+      "stop_reason": "max_hops",
+      "hops_used": 2,
+      "searches": 8,
+      "reads": 6,
+      "note": "Verified 11 finding(s) across 19 citable source(s).",
+      "configured": true
+    }
+  },
+  "llm_traces": [
+    {
+      "id": "3661c660-e404-4320-afcb-d349f7248327",
+      "agent_id": "paige-strategist",
+      "provider": "anthropic",
+      "model": "claude-sonnet-5",
+      "job_kind": "reason:strategize",
+      "tier": "reasoning",
+      "status": "success",
+      "tokens_in": 251,
+      "tokens_out": 548,
+      "cost_estimate_usd": 0.009,
+      "latency_ms": 5864,
+      "error_class": null,
+      "input_excerpt": "[{\"role\":\"system\",\"content\":\"You are Paige's strategist. Before any work is produced, you plan HOW to tackle it — you do not do the work itself. Given a task, return a tight strategy as STRICT JSON with exactly these keys: {\\\"decomposition\\",
+      "created_at": "2026-10-05T15:55:39.898792+00:00"
+    }
+  ],
+  "deterministic_metrics": {
+    "stop_reason": "max_hops",
+    "configured": true,
+    "findings_count": 11,
+    "sources_retrieved": 19,
+    "sources_included": 19,
+    "sources_excluded": 0,
+    "sources_cited": 11,
+    "primary_ratio": 0.7272727272727273,
+    "citation_independence": 0.636,
+    "distinct_cited_hosts": 7,
+    "findings_with_citations": 1,
+    "unverified_notes_count": 0,
+    "newest_cited_age_days": null,
+    "freshness_budget_days": 1825,
+    "wall_latency_ms": 46223,
+    "trace_cost_usd": 0.009,
+    "engine_internal_cost_est_usd": 0.045,
+    "trace_models": [
+      "anthropic/claude-sonnet-5/reason:strategize"
+    ],
+    "trace_call_count": 1,
+    "empty_findings_honest_stop": false
+  }
+}

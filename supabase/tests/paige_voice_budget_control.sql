@@ -14,6 +14,8 @@
 --   * INT-321 (20270581000000): the emergency brake raises its own identity, a switched-off budget
 --     keeps PAIGE_VOICE_BUDGET_DISABLED, both cost-limit refusals carry the canonical reset as DETAIL,
 --     and the replace kept SECURITY DEFINER + search_path=public (§59);
+--   * INT-324: an OpenAI active profile reserves, refuses and settles through the same seam and caps
+--     (paige-tts reserves before either provider; proof only, no SQL changed);
 --   * the reservation implementation owns both lock rows and guarded counters. A separate two-session
 --     proof exercises the real race; this assertion prevents a lock-free implementation from passing.
 
@@ -21,7 +23,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(53);
+SELECT plan(60);
 
 SELECT ok(
   NOT has_table_privilege('authenticated', 'public.paige_voice_platform_budget', 'SELECT,INSERT,UPDATE,DELETE'),
@@ -212,6 +214,28 @@ SELECT is((SELECT provider FROM public.paige_voice_cost_reservations WHERE reque
 
 SELECT lives_ok($$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000003',NULL,'elevenlabs-budget-proof-r1','10400000-0000-4000-8000-000000000109',1)$$, 'platform staff without a tenant consumes the platform budget only');
 SELECT is((SELECT tenant_id FROM public.paige_voice_cost_reservations WHERE request_ref='10400000-0000-4000-8000-000000000109'),NULL::uuid,'operator reservation never fabricates a tenant');
+
+-- INT-324 Slice A (proof only — no SQL changed): an OpenAI active profile reserves through the SAME
+-- seam and the SAME tenant + platform caps. paige-tts now reserves before synthesizeSpeechStream(
+-- exactly as it does before elevenlabsTts(. Tenant A has 0.20 - 0.0001 headroom at the $0.10 ceiling.
+UPDATE public.paige_voice_profiles
+SET provider='openai',
+    provider_voice_ref='nova',
+    active=true,
+    approved=true,
+    revision='openai-budget-proof-r1',
+    effective_at=now(),
+    provider_verification_id=NULL,
+    provider_verification_receipt_ref=NULL,
+    provider_verified_at=NULL
+WHERE slot='active';
+SELECT lives_ok($$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000001','10400000-0000-4000-8000-0000000000a1','openai-budget-proof-r1','10400000-0000-4000-8000-000000000120',1)$$, 'INT-324: an OpenAI active profile reserves through the same budget controller');
+SELECT is((SELECT provider FROM public.paige_voice_cost_reservations WHERE request_ref='10400000-0000-4000-8000-000000000120'),'openai','INT-324: the reservation records openai as the selected provider');
+SELECT is((SELECT rate_usd_per_1000_chars FROM public.paige_voice_cost_reservations WHERE request_ref='10400000-0000-4000-8000-000000000120'),0.10::numeric,'INT-324: OpenAI reserves at the same platform per-1,000-char ceiling');
+SELECT throws_ok($$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000001','10400000-0000-4000-8000-0000000000a1','openai-budget-proof-r1','10400000-0000-4000-8000-000000000121',2000)$$, '54000','PAIGE_VOICE_TENANT_COST_LIMIT','INT-324: the same tenant cap refuses an OpenAI reservation');
+SELECT throws_ok($$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000001','10400000-0000-4000-8000-0000000000a1','elevenlabs-budget-proof-r1','10400000-0000-4000-8000-000000000122',1)$$, '55000','PAIGE_VOICE_PROFILE_UNAVAILABLE','INT-324: the replaced revision can no longer reserve once OpenAI is the active profile');
+SELECT lives_ok($$SELECT public.settle_paige_voice_cost_internal((SELECT id FROM public.paige_voice_cost_reservations WHERE request_ref='10400000-0000-4000-8000-000000000120'),'10400000-0000-4000-8000-000000000001','committed')$$, 'INT-324: an OpenAI reservation commits through the same settlement seam');
+SELECT is((SELECT state FROM public.paige_voice_cost_reservations WHERE request_ref='10400000-0000-4000-8000-000000000120'),'committed','INT-324: the committed OpenAI reservation is durable');
 
 SELECT matches(pg_get_functiondef('public.reserve_paige_voice_cost_internal(uuid,uuid,text,uuid,integer)'::regprocedure),'FOR[[:space:]]+UPDATE[[:space:][:print:]]+ON CONFLICT','reservation implementation combines row locks with guarded month buckets for concurrent cap enforcement');
 

@@ -200,13 +200,18 @@ describe("INT-321 end to end: reservation identity → paige-tts code → owner-
 
 describe("INT-321 paige-tts wiring (structural)", () => {
   const tts = readFileSync("supabase/functions/paige-tts/index.ts", "utf8");
+  // INT-324: the reserve/refuse block now precedes BOTH providers; the refusal branch ends where
+  // the pre-dispatch release helper begins (it used to end at the ElevenLabs-only `let res`).
   const refusalBranch = tts.slice(
     tts.indexOf("if (reservationError || !reservationId) {"),
-    tts.indexOf("let res: Awaited<ReturnType<typeof elevenlabsTts>>;"),
+    tts.indexOf("const releaseIfPreDispatch"),
   );
 
   it("8/11: a refused reservation returns from the request — no provider call, no next attempt", () => {
     expect(refusalBranch.length).toBeGreaterThan(0);
+    // INT-324: the one refusal branch sits before EITHER provider is entered.
+    expect(tts.indexOf("if (reservationError || !reservationId) {")).toBeLessThan(tts.indexOf("elevenlabsTts({"));
+    expect(tts.indexOf("if (reservationError || !reservationId) {")).toBeLessThan(tts.indexOf("synthesizeSpeechStream("));
     expect(refusalBranch).toContain("classifyVoiceCostRefusal(reservationError)");
     // 12/F2: the response is the one allow-listed body builder + the classifier's status — never a
     // hard-coded generic 503 and never a hand-built object that could grow a raw field.
@@ -227,7 +232,7 @@ describe("INT-321 paige-tts wiring (structural)", () => {
     expect(profileBranch).not.toMatch(/profileError\??\.(message|details|hint)/);
   });
 
-  it("9/10: cache lookup still precedes reservation, and settlement is untouched", () => {
+  it("9/10: cache lookup still precedes reservation, and settlement is unchanged in meaning", () => {
     const cache = tts.indexOf("download(cachePath)");
     const reserve = tts.indexOf('rpc("reserve_paige_voice_cost_internal"');
     expect(cache).toBeGreaterThan(-1);

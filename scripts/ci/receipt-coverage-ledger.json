@@ -663,6 +663,18 @@
       "evidence": "paige-ai-chat dispatch (the EMAIL_CAMPAIGN_TOOL_NAMES branch) records the run via recordCapabilityRun after the adapter (_shared/email-campaign-chat.ts) returns: capability_succeeded only when a fresh read_email_campaigns readback shows the intended draft or the version frozen with its approval pending, capability_refused for a database-named refusal, capability_outcome_unknown otherwise; runId is stableRunId(tool, tenant, thread:tool-call)"
     },
     {
+      "tool": "email_series_draft",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch (the EMAIL_SERIES_TOOL_NAMES branch) records the run via recordCapabilityRun after the adapter (_shared/email-series-chat.ts) returns: capability_succeeded only when a fresh read_email_series readback shows the draft with every email, wait and rule as written, or the version frozen with its approval pending; capability_refused for a database-named refusal; capability_outcome_unknown otherwise. A link, price or fill-in nobody gave is refused before any write and is not recorded (nothing reached the business); runId is stableRunId(tool, tenant, result or thread:tool-call)"
+    },
+    {
+      "tool": "email_series_request_approval",
+      "risk": "ordinary",
+      "receipt": "emits",
+      "evidence": "paige-ai-chat dispatch (the EMAIL_SERIES_TOOL_NAMES branch) records the run via recordCapabilityRun after the adapter (_shared/email-series-chat.ts) returns: capability_succeeded only when a fresh read_email_series readback shows the draft with every email, wait and rule as written, or the version frozen with its approval pending; capability_refused for a database-named refusal; capability_outcome_unknown otherwise. A link, price or fill-in nobody gave is refused before any write and is not recorded (nothing reached the business); runId is stableRunId(tool, tenant, result or thread:tool-call)"
+    },
+    {
       "tool": "growth_form_save",
       "risk": "ordinary",
       "receipt": "emits",

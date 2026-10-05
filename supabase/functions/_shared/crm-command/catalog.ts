@@ -28,6 +28,16 @@ export type CrmCapability = typeof CRM_ACTION_CAPABILITY[CrmAction];
 export const CRM_TOOL_TO_ACTION = Object.freeze(Object.fromEntries(
   Object.entries(CRM_ACTION_CAPABILITY).map(([action, capability]) => [capability, action]),
 )) as Readonly<Record<CrmCapability, CrmAction>>;
+
+/**
+ * The actions crm-command never executes from a full command after approval: it binds a preview and
+ * stores the proposal as `{ action, preview_id }` instead. ONE home (§18) — the door decides with it,
+ * and the chat's approval resume (C4b) reads it to leave these proposals on their existing path,
+ * because the door's request contract cannot take a preview binding back as a command.
+ */
+export const CRM_PREVIEW_REQUIRED_ACTIONS: ReadonlySet<CrmAction> = new Set<CrmAction>([
+  "contact.merge", "contact.hard_delete", "contact.bulk_update", "task.delete", "deal.delete",
+]);
 export const CRM_COMMAND_TOOL_NAMES = new Set<CrmCapability>(Object.keys(CRM_TOOL_TO_ACTION) as CrmCapability[]);
 
 declare const canonicalCrmCommandBrand: unique symbol;

@@ -241,6 +241,8 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   ["campaign_brief_revise", "ordinary", "edits a campaign PLANNING brief; nothing is launched, sent, or published"],
   ["email_campaign_draft", "ordinary", "writes or changes an email campaign DRAFT in this business; nothing is sent, and a version awaiting approval, approved or sent is refused"],
   ["email_campaign_request_approval", "ordinary", "freezes one draft and files the owner's single approval for it; PAIGE cannot approve, and nothing is sent until a person approves"],
+  ["email_series_draft", "ordinary", "writes or changes an email series DRAFT in this business (who enters, each email and its wait, when people leave); nothing is sent, a running series keeps its approved version, and a series awaiting approval or stopped is refused"],
+  ["email_series_request_approval", "ordinary", "freezes one series draft and files the owner's single approval for it; PAIGE cannot approve or start it, and nothing is sent until a person approves"],
   // ── Calendar booking presets (E5, 2026-09-13). The SAME server-authorized RPCs the Settings ›
   // Connections › Calendars UI drives, adopted into Chat (no parallel model). Per-tool risk assumes
   // each tool's HIGHEST-impact use (the table is per-tool, not per-call): a tool that CAN change or

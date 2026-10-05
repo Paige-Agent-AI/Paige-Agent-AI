@@ -10,6 +10,7 @@ import {
   crmApprovalSubject,
   crmCommandExecutionPayload,
   crmCommandLegacyReplaySource,
+  CRM_PREVIEW_REQUIRED_ACTIONS,
   type CanonicalCrmCommand,
   type CrmAction,
 } from "../_shared/crm-command/catalog.ts";
@@ -28,9 +29,8 @@ const cors = {
 
 type JsonObject = Record<string, unknown>;
 
-const PREVIEW_REQUIRED_ACTIONS = new Set<CrmAction>([
-  "contact.merge", "contact.hard_delete", "contact.bulk_update", "task.delete", "deal.delete",
-]);
+// The one home is the shared catalog (the chat's approval resume reads the same set, C4b).
+const PREVIEW_REQUIRED_ACTIONS = CRM_PREVIEW_REQUIRED_ACTIONS;
 
 const actionSchema = z.custom<CrmAction>(
   (value): value is CrmAction => typeof value === "string"
@@ -357,14 +357,22 @@ serve(async (req) => {
   // caller's own workspace before anything is decided, cached, approved or executed
   // (_shared/crm-command/contact-refs.ts). Skipped for a caller the decision below refuses anyway,
   // so a caller without CRM authority learns nothing about which references exist.
+  //
+  // The canonical command is FROZEN (catalog.ts markCanonicalCrmCommand) and the resolver fills each
+  // reference in place, so it resolves a copy, which is then issued back through the canonical
+  // boundary. Resolving the frozen command itself threw in strict mode ("Cannot assign to read only
+  // property 'client_ref'") for EVERY command naming a contact by client_ref — the reference Paige is
+  // shown — so none of them could be proposed or run (found by C4b's harness, group 40, 2026-10-05).
   if (accessAllowed) {
-    const resolution = await resolveCommandContactRefs(admin, tenantId, body.command, "crm-command");
+    const resolvedCommand = { ...body.command };
+    const resolution = await resolveCommandContactRefs(admin, tenantId, resolvedCommand, "crm-command");
     if (!resolution.ok) {
       return response(resolution.status, {
         ok: false, outcome: "refused", code: resolution.code, detail: resolution.detail,
         ...executorFailureSpeech(resolution.code, resolution.detail, "refused"),
       });
     }
+    body.command = canonicalizeCrmCommand(resolvedCommand);
   }
   const capability = ACTION_CAPABILITY[body.command.action];
   const requestArgs = { command: body.command, idempotency_key: body.idempotency_key };

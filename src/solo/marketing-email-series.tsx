@@ -51,10 +51,12 @@ const GOALS = [
 ];
 const QUICK_WAITS = [{ minutes: 0, first: "Right away", rest: "Right after" }, { minutes: 1440, label: "1 day" }, { minutes: 2880, label: "2 days" }, { minutes: 10080, label: "1 week" }];
 
-const STARTERS: { kind: SeriesKind; icon: string; title: string; detail: string }[] = [
-  { kind: "welcome", icon: "users", title: "Welcome new contacts", detail: "New leads get 3 emails over their first week" },
-  { kind: "nurture", icon: "trend", title: "Nurture leads", detail: "Leads get 4 emails over about two weeks" },
-  { kind: "reengagement", icon: "clock", title: "Win back quiet contacts", detail: "Anyone not contacted in 90+ days" },
+// "Start an automated welcome series" is worded apart from Start creating's "Send a one-time welcome email"
+// (owner ruling 2026-10-05: keep both, make them unmistakably different).
+const STARTERS: { kind: SeriesKind; icon: string; title: string; short: string; detail: string }[] = [
+  { kind: "welcome", icon: "users", title: "Start an automated welcome series", short: "Welcome series", detail: "New leads get 3 emails over their first week" },
+  { kind: "nurture", icon: "trend", title: "Nurture leads", short: "Nurture", detail: "Leads get 4 emails over about two weeks" },
+  { kind: "reengagement", icon: "clock", title: "Win back quiet contacts", short: "Win-back", detail: "Anyone not contacted in 90+ days" },
 ];
 
 const when = (iso: string | null) => {
@@ -83,7 +85,7 @@ export function SeriesPanel({ tenantId, onOpen }: { tenantId: string | null; onO
   React.useEffect(() => {
     if (!tenantId) return;
     let live = true;
-    setState((s) => ({ phase: "loading", rows: s.rows }));
+    setState((s) => (s.phase === "ready" ? s : { phase: "loading", rows: s.rows }));
     rpc("read_email_sequences").then(({ data, error: e }) => {
       if (!live) return;
       if (e) { console.error("[marketing-email] series list failed", e); setState({ phase: "error", rows: [] }); return; }
@@ -91,6 +93,12 @@ export function SeriesPanel({ tenantId, onOpen }: { tenantId: string | null; onO
     });
     return () => { live = false; };
   }, [tenantId, attempt]);
+  // A series PAIGE writes in chat appears here when her turn ends.
+  React.useEffect(() => {
+    const again = () => setAttempt((n) => n + 1);
+    window.addEventListener("paige:turn-settled", again);
+    return () => window.removeEventListener("paige:turn-settled", again);
+  }, []);
   const start = async (kind: SeriesKind) => {
     setCreating(kind); setError(null);
     const made = await createSeries(kind);
@@ -125,7 +133,7 @@ export function SeriesPanel({ tenantId, onOpen }: { tenantId: string | null; onO
             <small>{line(r)}{r.change_state ? " · changes being made" : ""}</small>
           </button></li>;
         })}</ul>
-        <div className="ms-more"><span>New series:</span>{STARTERS.map((s) => <button type="button" key={s.kind} className="me-chip" disabled={creating !== null} onClick={() => void start(s.kind)}>{creating === s.kind ? "Creating…" : s.title.replace(" new contacts", "").replace(" quiet contacts", "")}</button>)}</div>
+        <div className="ms-more"><span>New series:</span>{STARTERS.map((s) => <button type="button" key={s.kind} className="me-chip" disabled={creating !== null} onClick={() => void start(s.kind)}>{creating === s.kind ? "Creating…" : s.short}</button>)}</div>
       </>}
     </Frame>
   </>;
@@ -134,10 +142,25 @@ export function SeriesPanel({ tenantId, onOpen }: { tenantId: string | null; onO
 type Settings = { name: string; entry_mode: "new_contacts" | "matching"; audience: Rule; segment_id: string | null; exit_on_goal: string; exit_when_unmatched: boolean; sender: SeriesSender };
 type StepDraft = { position: number; delay_minutes: number; subject: string; preheader: string; source: string | null; html: string };
 const stepHtml = (s: StepDraft) => (s.source !== null ? markupToHtml(s.source) : s.html);
+/** What a series says, in a form two reads (or a read and what is on screen) can be compared by. */
+const sortKeys = (v: unknown): unknown => Array.isArray(v) ? v.map(sortKeys)
+  : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => a.localeCompare(b)).map(([k, x]) => [k, sortKeys(x)])) : v;
+// `withState` false compares only what the series says (its version and words), so a status the worker changed
+// (needs attention, say) is not mistaken for an edit.
+const contentKey = (d: SeriesRead, s: Settings, steps: { position: number; delay_minutes: number; subject: string; preheader: string; html: string }[], withState = true) => JSON.stringify(sortKeys({
+  ...(withState ? { status: d.sequence.status, state: d.version.state } : {}), version: d.version.id, name: s.name, entry: s.entry_mode, audience: s.audience ?? {},
+  segment: s.segment_id ?? null, goal: s.exit_on_goal, unmatched: s.exit_when_unmatched,
+  sender: { mode: s.sender.mode, connector: s.sender.mode === "connector" ? s.sender.connector_id ?? null : null },
+  steps: steps.map((x) => [x.position, x.delay_minutes, x.subject, x.preheader, x.html]),
+}));
+const seriesKey = (d: SeriesRead, withState = true) => contentKey(d, { name: d.sequence.name, entry_mode: d.version.entry_mode, audience: d.version.audience ?? {},
+  segment_id: d.version.segment_id, exit_on_goal: d.version.exit_on_goal, exit_when_unmatched: d.version.exit_when_unmatched, sender: d.version.sender },
+  d.version.steps.map((x) => ({ ...x, html: x.body_html })), withState);
+const shownKey = (d: SeriesRead, s: Settings, steps: StepDraft[], withState = true) => contentKey(d, s, steps.map((x) => ({ ...x, html: stepHtml(x) })), withState);
 
 /** One series: build it, file it, approve it, run it. */
-export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConnections }: {
-  sequenceId: string; onBack: () => void; onOpenSettings: (() => void) | null; onOpenConnections: (() => void) | null;
+export function EmailSeriesView({ sequenceId, onBack, onOpen, onOpenSettings, onOpenConnections }: {
+  sequenceId: string; onBack: () => void; onOpen?: (id: string) => void; onOpenSettings: (() => void) | null; onOpenConnections: (() => void) | null;
 }) {
   const [read, setRead] = React.useState<{ phase: Phase; data: SeriesRead | null; missing?: boolean }>({ phase: "loading", data: null });
   const [attempt, setAttempt] = React.useState(0);
@@ -154,6 +177,19 @@ export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConn
   // Adding, moving or deleting an email renumbers them; editing waits until the re-read lands, so a keystroke
   // is never dropped by the re-read or saved onto the email that took its place.
   const [reshaping, setReshaping] = React.useState(false);
+  // PAIGE changed this series in chat while edits here were not yet saved: nothing is saved until the owner chooses.
+  const [changedByPaige, setChangedByPaige] = React.useState(false);
+  // Stop is final, so it is confirmed inline with buttons that name what happens.
+  const [confirmStop, setConfirmStop] = React.useState(false);
+  // What the server holds, as last read or as last written from here: a chat turn that leaves it as it is
+  // is not a change, whatever is being typed meanwhile.
+  const lastRead = React.useRef<SeriesRead | null>(null);
+  const held = React.useRef<{ full: string; body: string } | null>(null);
+  const savedName = React.useRef("");
+  const conflict = React.useRef(false);
+  conflict.current = changedByPaige;
+  // "Keep my edits" over a version with more emails: the extra ones are removed after the owner's are saved.
+  const trimFrom = React.useRef<number | null>(null);
 
   React.useEffect(() => {
     let live = true;
@@ -162,6 +198,8 @@ export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConn
       setReshaping(false);
       if (error) { console.error("[marketing-email] series read failed", error); setRead({ phase: "error", data: null, missing: error.message === "series_not_found" }); return; }
       const d = data as SeriesRead;
+      lastRead.current = d; savedName.current = d.sequence.name; trimFrom.current = null;
+      held.current = { full: seriesKey(d), body: seriesKey(d, false) };
       setRead({ phase: "ready", data: d });
       setSettings({ name: d.sequence.name, entry_mode: d.version.entry_mode, audience: d.version.audience ?? {}, segment_id: d.version.segment_id,
         exit_on_goal: d.version.exit_on_goal, exit_when_unmatched: d.version.exit_when_unmatched, sender: d.version.sender });
@@ -197,6 +235,7 @@ export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConn
         p_sender: s.sender.mode === "connector" ? { mode: "connector", connector_id: s.sender.connector_id } : { mode: "managed" },
       });
       if (error) { dirtySettings.current = true; console.error("[marketing-email] series save failed", error); setSave("failed"); setNotice({ tone: "bad", text: seriesErrorWords(error) }); return false; }
+      if (s.name.trim()) savedName.current = s.name.trim();
     }
     for (const pos of Array.from(dirtySteps.current)) {
       const st = latest.current.steps.find((x) => x.position === pos);
@@ -205,6 +244,17 @@ export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConn
       const { error } = await rpc("email_sequence_step_save", { p_sequence_id: sequenceId, p_position: pos, p_delay_minutes: st.delay_minutes,
         p_subject: st.subject, p_preheader: st.preheader, p_body_html: stepHtml(st) });
       if (error) { dirtySteps.current.add(pos); console.error("[marketing-email] series email save failed", error); setSave("failed"); setNotice({ tone: "bad", text: seriesErrorWords(error) }); return false; }
+    }
+    for (let pos = trimFrom.current ?? 0; pos > latest.current.steps.length; pos--) {
+      const { error } = await rpc("email_sequence_step_delete", { p_sequence_id: sequenceId, p_position: pos });
+      if (error) { console.error("[marketing-email] series email trim failed", error); setSave("failed"); setNotice({ tone: "bad", text: seriesErrorWords(error) }); return false; }
+    }
+    trimFrom.current = null;
+    // What the server now holds is what was written: the name as stored (trimmed; a cleared name keeps the last).
+    const base = lastRead.current;
+    if (base) {
+      const stored = { ...s, name: s.name.trim() || savedName.current };
+      held.current = { full: shownKey(base, stored, latest.current.steps), body: shownKey(base, stored, latest.current.steps, false) };
     }
     setSave(rev === revision.current ? "saved" : "dirty");
     return true;
@@ -216,13 +266,17 @@ export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConn
     return run;
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   React.useEffect(() => {
-    if (!editable || save !== "dirty") return;
+    if (!editable || save !== "dirty" || changedByPaige) return;
     const timer = setTimeout(() => { void persist(); }, 800);
     return () => clearTimeout(timer);
-  }, [settings, steps, editable, save, persist]);
+  }, [settings, steps, editable, save, persist, changedByPaige]);
   const unsaved = editable && save !== "saved";
-  /** Everything typed so far is saved before a structural change, a review or leaving. */
-  const flush = async () => (unsaved || dirtySettings.current || dirtySteps.current.size ? persist() : true);
+  /** Everything typed so far is saved before a structural change, a review or leaving. While PAIGE's change and
+   *  the owner's edits disagree, nothing is saved until the owner chooses. */
+  const flush = async () => {
+    if (conflict.current) { setNotice({ tone: "bad", text: "Choose which version to keep first." }); return false; }
+    return unsaved || dirtySettings.current || dirtySteps.current.size ? persist() : true;
+  };
 
   const changeSettings = (patch: Partial<Settings>) => { revision.current += 1; dirtySettings.current = true; setSettings((s) => (s ? { ...s, ...patch } : s)); setSave("dirty"); setNotice(null); };
   const changeStep = (position: number, patch: Partial<StepDraft>) => {
@@ -234,14 +288,47 @@ export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConn
   // before a reload or a closed tab while anything is unsaved.
   const pending = React.useRef({ unsaved, persist });
   pending.current = { unsaved, persist };
-  React.useEffect(() => () => { if (pending.current.unsaved) void pending.current.persist(); }, []);
+  React.useEffect(() => () => { if (pending.current.unsaved && !conflict.current) void pending.current.persist(); }, []);
   React.useEffect(() => {
     if (!unsaved) return;
     const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, [unsaved]);
+  // When a chat turn ends, look again. A change PAIGE made replaces what is shown, unless there are edits here
+  // not yet saved: then say so, so neither version is lost without the owner seeing it.
+  React.useEffect(() => {
+    const check = () => {
+      rpc("read_email_sequence", { p_sequence_id: sequenceId }).then(({ data, error }) => {
+        const fresh = data as SeriesRead | null;
+        if (error || !fresh || !held.current) return;
+        if (seriesKey(fresh) === held.current.full) return;
+        const wordsSame = seriesKey(fresh, false) === held.current.body;
+        if (pending.current.unsaved) {
+          if (wordsSame) return; // only its status moved; the owner's edits still apply to the same words
+          trimFrom.current = fresh.version.steps.length;
+          setChangedByPaige(true);
+          return;
+        }
+        reload();
+        // A status the worker changed is shown as it is; a change to the words came from PAIGE's turn.
+        if (!wordsSame) setNotice({ tone: "ok", text: "PAIGE updated this series." });
+      });
+    };
+    window.addEventListener("paige:turn-settled", check);
+    return () => window.removeEventListener("paige:turn-settled", check);
+  }, [sequenceId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const takePaigeVersion = () => { pending.current.unsaved = false; dirtySettings.current = false; dirtySteps.current = new Set(); trimFrom.current = null; revision.current += 1; conflict.current = false; setChangedByPaige(false); reload(); };
+  const keepMine = () => {
+    conflict.current = false; setChangedByPaige(false); revision.current += 1; dirtySettings.current = true;
+    latest.current.steps.forEach((x) => dirtySteps.current.add(x.position)); setSave("dirty");
+  };
+
   const leave = async () => {
+    if (changedByPaige) {
+      if (!window.confirm("PAIGE changed this series while you were editing. Save your edits over hers and leave?")) return;
+      keepMine();
+    }
     if (unsaved) {
       pending.current.unsaved = false;
       if (!(await flush()) && !window.confirm("Your latest changes did not save. Leave anyway and lose them?")) { pending.current.unsaved = true; return; }
@@ -289,6 +376,15 @@ export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConn
   const stats = (pos: number) => data.emails.find((e) => e.position === pos);
   const totalSent = data.emails.reduce((t, e) => t + e.sent, 0);
 
+  // Stop is final (owner ruling 2026-10-05): a stopped series is replaced by a copy, never restarted.
+  const startCopy = async () => {
+    setBusy("copy"); setNotice(null);
+    const { data: made, error } = await rpc("email_sequence_duplicate", { p_sequence_id: s.id });
+    setBusy(null);
+    const id = (made as { sequence_id?: string } | null)?.sequence_id;
+    if (error || !id) { if (error) console.error("[marketing-email] email_sequence_duplicate failed", error); setNotice({ tone: "bad", text: seriesErrorWords(error) }); return; }
+    onOpen?.(id);
+  };
   const review = () => void act("review", "email_sequence_request_approval", { p_sequence_id: s.id, p_source: "owner" });
   const addStep = async () => {
     setBusy("add"); setReshaping(true);
@@ -327,15 +423,22 @@ export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConn
         {editable && changing && <button type="button" className="btn btn-s" disabled={busy !== null} onClick={() => void act("discard", "email_sequence_discard_draft", { p_sequence_id: s.id }, "Changes discarded. The running version is unchanged.")}>Discard changes</button>}
         {editable && <button type="button" className="btn btn-s btn-p" disabled={busy !== null || !data.postal_address} aria-describedby={!data.postal_address ? "ms-postal-why" : undefined} onClick={review}>{busy === "review" ? "Preparing…" : changing ? "Review changes" : "Review and start"}</button>}
         {!editable && !locked && (s.status === "active" || s.status === "paused" || s.status === "blocked") && <button type="button" className="btn btn-s" disabled={busy !== null} onClick={() => void act("edit", "email_sequence_edit", { p_sequence_id: s.id })}><Ic.edit size={14}/>Edit</button>}
-        {s.status === "active" && <button type="button" className="btn btn-s" disabled={busy !== null} onClick={() => void act("pause", "email_sequence_pause", { p_sequence_id: s.id }, "Paused. Nothing sends until you resume.")}><Ic.pause size={14}/>Pause</button>}
-        {(s.status === "active" || s.status === "paused" || s.status === "blocked") && <button type="button" className="btn btn-s ms-danger" disabled={busy !== null} onClick={() => {
-          if (window.confirm(`Stop “${s.name}”? This can’t be undone. The ${data.people.in_now.toLocaleString()} ${data.people.in_now === 1 ? "person" : "people"} in it leave now and their scheduled emails are cancelled. What was already sent stays recorded, and nobody who was in it can go through it again.`))
-            void act("stop", "email_sequence_stop", { p_sequence_id: s.id }, "Stopped. Everyone in it left and their scheduled emails were cancelled.");
-        }}>Stop</button>}
-        {s.status === "paused" && <button type="button" className="btn btn-s btn-p" disabled={busy !== null} onClick={() => void act("resume", "email_sequence_resume", { p_sequence_id: s.id }, "Resumed. Emails that were waiting go out now, within today’s limit.")}><Ic.play size={14}/>Resume</button>}
+        {s.status === "active" && <button type="button" className="btn btn-s" disabled={busy !== null} onClick={() => void act("pause", "email_sequence_pause", { p_sequence_id: s.id }, "Paused. Nothing sends until you resume. People who match in the meantime join then.")}><Ic.pause size={14}/>Pause</button>}
+        {(s.status === "active" || s.status === "paused" || s.status === "blocked") && <button type="button" className="btn btn-s ms-danger" disabled={busy !== null || confirmStop} aria-expanded={confirmStop} onClick={() => setConfirmStop(true)}>Stop</button>}
+        {s.status === "stopped" && onOpen && <button type="button" className="btn btn-s btn-p" disabled={busy !== null} onClick={() => void startCopy()}>{busy === "copy" ? "Copying…" : "Start a copy"}</button>}
+        {s.status === "paused" && <button type="button" className="btn btn-s btn-p" disabled={busy !== null} onClick={() => void act("resume", "email_sequence_resume", { p_sequence_id: s.id }, `Resumed. Emails that were waiting go out now${data.waiting_to_enter ? `, and the ${data.waiting_to_enter.toLocaleString()} ${data.waiting_to_enter === 1 ? "person" : "people"} waiting join within a few minutes` : ""}, all within today’s limit.`)}><Ic.play size={14}/>Resume</button>}
       </div>
     </div>
     {notice && <p className={`me-notice ${notice.tone === "bad" ? "is-bad" : "is-ok"}`} role={notice.tone === "bad" ? "alert" : "status"}>{notice.text}</p>}
+    {confirmStop && (s.status === "active" || s.status === "paused" || s.status === "blocked") && <div className="me-notice is-warn ms-stop-confirm" role="alertdialog" aria-labelledby="ms-stop-q" aria-describedby="ms-stop-why">
+      <p id="ms-stop-q"><strong>Stop “{s.name}” for good?</strong></p>
+      <p id="ms-stop-why">The {data.people.in_now.toLocaleString()} {data.people.in_now === 1 ? "person" : "people"} in it leave now and their scheduled emails are cancelled. What was already sent stays recorded. A stopped series can’t be restarted; to run it again you’d start a copy, which needs its own approval. For a break, use Pause instead.</p>
+      <button type="button" className="btn btn-s ms-danger" disabled={busy !== null} onClick={() => { setConfirmStop(false); void act("stop", "email_sequence_stop", { p_sequence_id: s.id }, "Stopped. Everyone in it left and their scheduled emails were cancelled."); }}>Stop for good</button>{" "}
+      <button type="button" className="btn btn-s" autoFocus onClick={() => setConfirmStop(false)}>Keep it running</button>
+    </div>}
+    {changedByPaige && <p className="me-notice is-warn" role="status">PAIGE changed this series while you were editing. Nothing is saved until you choose.{" "}
+      <button type="button" className="btn btn-s" onClick={keepMine}>Keep my edits</button>{" "}
+      <button type="button" className="btn btn-s" onClick={takePaigeVersion}>Show PAIGE’s version</button></p>}
     {data.last_declined && editable && <p className="me-notice is-warn" role="status">You chose not now{data.last_declined.reason ? `: “${data.last_declined.reason}”` : "."} It’s a draft again and nothing changed in what sends. Change what you need, then review it again.</p>}
     {changing && editable && <p className="me-notice is-info" role="status"><b>You’re editing a new version.</b> The running version keeps sending until you approve this one. Then the {data.people.in_now.toLocaleString()} {data.people.in_now === 1 ? "person" : "people"} in it carry on with the new emails from where they are.</p>}
     {!data.postal_address && editable && <div className="mo-next me-warn" role="status"><span className="mo-next-plate" aria-hidden="true"><Ic.shield size={16}/></span><div><h2>Add your postal address before you start</h2><p id="ms-postal-why">Every marketing email shows your business’s postal address. This series can’t start until it’s added in Settings › Connections › Registration.</p></div>{onOpenSettings && <button type="button" className="btn btn-s" onClick={onOpenSettings}>Open Settings</button>}</div>}
@@ -349,7 +452,7 @@ export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConn
         <div><dt>From</dt><dd>{fromLine}</dd></div>
         <div><dt>Daily limit</dt><dd>Up to {data.sending.daily_cap.toLocaleString()} a day across all your marketing email; series emails wait, never dropped</dd></div>
       </dl>
-      <p className="me-hint">Someone leaves when they unsubscribe, bounce or are marked do not contact{v.exit_on_goal !== "none" && goalLabel ? `, or ${goalLabel}` : ""}{v.exit_when_unmatched ? ", or they stop matching" : ""}. Each person goes through this series once. Nothing has been sent.</p>
+      <p className="me-hint">Someone leaves when they unsubscribe, bounce or are marked do not contact{v.exit_on_goal !== "none" && goalLabel ? `, or ${goalLabel}` : ""}{v.exit_when_unmatched ? ", or they stop matching" : ""}. Each person goes through this series once. Approving once covers everyone who enters this version, now and later; if you change it after that, the change is a new version that needs your approval again. Nothing has been sent.</p>
       <div className="me-review-acts">
         <button type="button" className="btn btn-s btn-g" disabled={busy !== null} onClick={() => void act("approve", "email_sequence_approve", { p_version_id: v.id }, changing ? "Updated. People carry on with the new emails from where they are." : v.entry_mode === "new_contacts" ? `Started. “${s.name}” sends by itself from now on. New contacts who match join as they arrive.` : `Started. People who match join within a few minutes; their first email goes out ${v.steps[0]?.delay_minutes ? waitWords(v.steps[0].delay_minutes, 0) : "within today’s limit"}.`)}>{busy === "approve" ? "Approving…" : changing ? "Approve changes" : "Approve and start"}</button>
         <button type="button" className="btn btn-s" disabled={busy !== null} onClick={() => void act("changes", "email_sequence_edit", { p_sequence_id: s.id }, "Back to draft. The waiting approval is withdrawn; nothing was sent.")}>Make changes</button>
@@ -364,8 +467,8 @@ export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConn
 
     {live && <section className={`campaigns-surface mo-panel me-review ${s.status === "blocked" ? "is-blocked" : s.status === "paused" ? "is-paused" : ""}`} aria-labelledby="ms-live-h">
       <div className="mo-panel-head"><div><h2 id="ms-live-h">{s.status === "stopped" ? "Stopped" : s.status === "paused" ? "Paused" : s.status === "blocked" ? "Needs attention" : "Running"}</h2>
-        <p>{s.status === "stopped" ? "Everyone in it left and their scheduled emails were cancelled. What was sent, and its results, stay here."
-          : s.status === "paused" ? `Nothing sends while it’s paused. Emails that come due wait and go out after you resume. The ${data.people.in_now.toLocaleString()} people in it stay where they are; people who match while it’s paused join when you resume.`
+        <p>{s.status === "stopped" ? `Everyone in it left and their scheduled emails were cancelled. What was sent, and its results, stay here. A stopped series can’t be restarted. Start a copy makes a new draft with the same emails, and it needs its own approval.${(data.live?.entry_mode ?? v.entry_mode) === "matching" ? " Anyone who matches the copy can join it, including people who already went through this one." : ""}`
+          : s.status === "paused" ? `Nothing sends while it’s paused. The ${data.people.in_now.toLocaleString()} ${data.people.in_now === 1 ? "person" : "people"} in it stay on the email they reached, and their emails that come due go out after you resume. People who match while it’s paused don’t miss out: they join when you resume.`
           : s.status === "blocked" ? `${blockReason(s.blocked_reason)} Nothing more sends until it’s fixed, and nothing was sent from a different address. The people in it stay where they are.`
           : `Sends by itself${s.activated_at ? ` since ${new Date(s.activated_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}` : ""}. ${data.live?.entry_mode === "new_contacts" || (!data.live && v.entry_mode === "new_contacts") ? "New contacts who match join as they arrive." : "Anyone who matches joins, now or later."}`}</p></div></div>
       {s.status === "blocked" && <div className="me-review-acts">
@@ -377,7 +480,8 @@ export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConn
         <div><dt>In it now</dt><dd>{data.people.in_now.toLocaleString()}</dd></div>
         <div><dt>Joined since start</dt><dd>{(data.people.in_now + data.people.completed + data.people.left).toLocaleString()}</dd></div>
         <div><dt>Emails sent</dt><dd>{totalSent.toLocaleString()}</dd></div>
-        <div><dt>Next send</dt><dd className="is-small">{s.status === "paused" ? "None while paused" : s.status === "blocked" ? "On hold until fixed" : s.status === "stopped" ? "—" : when(data.emails.map((e) => e.next_at).filter(Boolean).sort()[0] ?? null) ?? "Nothing due yet"}</dd></div>
+        {s.status === "paused" ? <div><dt>Join when you resume</dt><dd>{data.waiting_to_enter == null ? "—" : data.waiting_to_enter.toLocaleString()}</dd></div>
+        : <div><dt>Next send</dt><dd className="is-small">{s.status === "blocked" ? "On hold until fixed" : s.status === "stopped" ? "—" : when(data.emails.map((e) => e.next_at).filter(Boolean).sort()[0] ?? null) ?? "Nothing due yet"}</dd></div>}
       </dl>
       {data.sending.remaining_today === 0 && s.status === "active" && data.people.in_now > 0 && <p className="me-notice is-warn">Today’s {data.sending.daily_cap.toLocaleString()} are used up across your email. Series emails that are due wait for tomorrow, and the emails after them wait too. Nothing is dropped.</p>}
       {(data.people.in_now + data.people.completed + data.people.left) === 0 ? <p className="me-hint">Nobody yet. {v.entry_mode === "new_contacts" ? "The next new contact who matches joins and gets email 1." : "People who match join within a few minutes."}</p>
@@ -420,7 +524,7 @@ export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConn
         </section>
 
         <section className="campaigns-surface mo-panel" aria-labelledby="ms-emails">
-          <div className="mo-panel-head"><div><h2 id="ms-emails">Emails <span className="ms-count">{steps.length} of up to {MAX_STEPS}</span></h2><p>Each wait counts from when the email before it was sent; the first, from when they join. If an email waits for the daily limit, the next one waits for it.</p></div></div>
+          <div className="mo-panel-head"><div><h2 id="ms-emails">Emails <span className="ms-count">{steps.length} of up to {MAX_STEPS}</span></h2><p>Each wait counts from when the email before it was sent; the first, from when they join. If an email waits for the daily limit, the next one waits for it.</p></div>{editable && <button type="button" className="mo-ask" onClick={() => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt: `Rewrite the emails in my series "${s.name}" (series ${s.id}). Read it first and ask me what should change before you write. Use only links and prices I give you or that are already in my business. Save it as a draft. Do not file it for approval unless I ask, and never say anything was sent.` } }))}><Ic.spark size={12}/>Write with PAIGE</button>}</div>
           <ol className="ms-spine" aria-label="Emails in order">{steps.map((step, i) => {
             const isOpen = editable && open === step.position;
             const sx = stats(step.position);

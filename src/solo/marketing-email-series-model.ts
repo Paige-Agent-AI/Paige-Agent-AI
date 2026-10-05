@@ -37,6 +37,8 @@ export type SeriesRead = {
   segments: { id: string; name: string; rule: Rule }[];
   choices: { stages: { key: string; count: number }[]; sources: { key: string; count: number }[]; tags: { key: string; count: number }[] };
   sending: { daily_cap: number; used_last_24h: number; remaining_today: number };
+  /** People who qualify for a started series but have not entered yet (they enter on the next check, or on resume). */
+  waiting_to_enter?: number | null;
 };
 
 export const SERIES_KIND_LABEL: Record<SeriesKind, string> = { welcome: "Welcome series", nurture: "Nurture series", reengagement: "Win-back series", custom: "Series" };

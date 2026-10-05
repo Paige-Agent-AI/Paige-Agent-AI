@@ -381,6 +381,22 @@ Same tiers as the layout C workspace below (Solo owner/admin; operator acting in
 
 Same tiers as the layout C workspace below; no new seam. The Studio designer saves drafts in the same turn; held saves surface as approval cards; an unnamed project is renamed through the existing `rename_studio_session` (workspace owner/admin or the project's creator). LIVE on merge; authenticated drive owed.
 
+### Marketing email E3c — PAIGE writes email series from chat (branch `claude/gifted-bell-qfezxb`, 2026-10-06)
+
+PAIGE's chat tools `read_email_series`, `email_series_draft` and `email_series_request_approval` write the
+same E3 series records through the same owner functions the series view uses (migration `20270595000000`).
+Each call names the business the chat is in (`_email_paige_tenant`), so a business switch is refused and
+an agency account is refused (`not_for_this_account`). The tools are seat-gated like E2b's: an agency
+manager or the operator acting as a business is refused before any approval card. PAIGE has no approve,
+start, pause, resume, stop or send tool. A link, price or fill-in nobody gave is refused before anything
+is written.
+
+| Capability | God / Super Admin | Agency | Standalone (Solo) | Sub-account | Client | Anonymous | Status |
+|---|---|---|---|---|---|---|---|
+| Ask PAIGE to read, write or change an email series draft | ✗ (no workspace; refused, not a seat) | ✗ refused (`not_for_this_account`; seat gate) | **✓** owner/admin seat; Trust lane `confirm` by default | ✓ owner/admin seat of the sub-account (no Email screen yet) | ✗ | ✗ | PARTIAL: LIVE on merge; authenticated chat drive owed |
+| Ask PAIGE to file a series for approval | as above | as above | **✓** files the one approval; a person approves | as Solo | ✗ | ✗ | PARTIAL: LIVE on merge |
+| Start a copy of a stopped series; see who is waiting to join a paused one | — | ✗ no screen | **✓** owner/admin | DB allows owner/admin; no screen | ✗ | ✗ | LIVE on merge |
+
 ### Marketing email E3 — series that send by themselves (branch `claude/gifted-bell-qfezxb`, 2026-10-05)
 
 Solo Marketing › Email › Automations (`/solo/{account}/growth/email`, `?series=` opens one). Welcome,

@@ -184,7 +184,8 @@ export function BuildView({ steps, status, brand }: { steps: BuildStep[]; status
   const shape = shapeFromSteps(steps);
   const latest = steps[steps.length - 1];
   const caption = latest?.label ?? status ?? SHAPE_WORD[shape];
-  const done = steps.slice(0, -1).slice(-3);
+  // "Done so far" never lists a step that is still under way.
+  const done = steps.slice(0, -1).filter((s) => s.status !== "running").slice(-3);
   return (
     <div className="vs-build" data-shape={shape}>
       <div className="vs-build-sheet" aria-hidden="true">

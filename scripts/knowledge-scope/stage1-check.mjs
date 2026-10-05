@@ -474,7 +474,7 @@ async function drive({ personaTenant, personaSequence = null, memberships, kbRej
     );
     status = res?.status ?? null;
     if (res?.body) responseText = await res.text();
-    drivenStreams.push({ label: userMessage.slice(0, 40), status, responseText });
+    drivenStreams.push({ label: userMessage.slice(0, 40), status, responseText, rec });
   } catch {
     // A downstream failure (no model key configured) is expected and irrelevant — the
     // retrieval call under test happens well before any model call.
@@ -3985,7 +3985,7 @@ group("the turn frame on every stream this harness drove (paige-turn)");
   // so the rule is held on the turns that exercise the gates rather than on a few written for it.
   // The structural rules come from the one shared auditor (scripts/lib/audit-turn-frames.mjs); this
   // harness adds its own: a turn stopped on a changed workspace ends INTERRUPTED.
-  const { auditTurnStream } = await import("../lib/audit-turn-frames.mjs");
+  const { auditTurnStream, wireAnswerMatchesSaved } = await import("../lib/audit-turn-frames.mjs");
   const { isTurnFrame } = await import("../../supabase/functions/_shared/paige-turn/contract.ts");
   const violations = [];
   let audited = 0, interrupted = 0, withheld = 0;
@@ -4002,10 +4002,24 @@ group("the turn frame on every stream this harness drove (paige-turn)");
     }
     if (audit.has("paige_withheld")) withheld += 1;
   }
+  // The wire and the transcript carry the same answer (§13/§94): on a drive that saved one assistant
+  // turn, what a reader got up to the first [DONE] is exactly the saved text, and nothing follows it.
+  const answerMismatches = [];
+  let answersCompared = 0;
+  for (const { label, status, responseText, rec } of drivenStreams) {
+    if (status !== 200) continue;
+    const saved = rec.rpc.filter((c) => c.name === "paige_chat_turn_append" && c.args?.p_role === "assistant");
+    if (saved.length !== 1) continue;
+    answersCompared += 1;
+    const why = wireAnswerMatchesSaved(responseText, saved[0].args?.p_content);
+    if (why) answerMismatches.push(`${label}: ${why}`);
+  }
   assert("29.5 every stream starts with `started` and has one terminal frame, ahead of its answer and [DONE]",
     audited >= 50 && violations.length === 0, JSON.stringify({ audited, violations: violations.slice(0, 6) }));
   assert("29.6 every turn stopped on a changed workspace — at the tool boundary or the final gate — ends INTERRUPTED, never FINAL",
     interrupted >= 10 && violations.length === 0, JSON.stringify({ interrupted, withheld }));
+  assert("29.13 on every drive that saved an assistant turn, the answer a reader got up to [DONE] is exactly the saved text, and nothing follows [DONE]",
+    answersCompared >= 10 && answerMismatches.length === 0, JSON.stringify({ answersCompared, mismatches: answerMismatches.slice(0, 6) }));
 }
 
 console.log(`\n${checks - failures} passed, ${failures} failed`);

@@ -3,10 +3,11 @@
 // produced arrive as their own frames; nothing here invents a step or a result the stream did not send.
 import React from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { readPaigeStream } from "@/lib/paige-stream";
+import { normalizeStepStatus, readPaigeStream, settleOpenSteps } from "@/lib/paige-stream";
 import { ensureThread, loadHeldConfirms, loadTurns, plainError, Said, type ArtifactKind, type ChatTurn } from "./studio-data";
 
-export interface BuildStep { id: string; label: string; detail?: string; status: "done" | "error"; at: number }
+/** One thing Paige did this turn. "running" while it is under way; it closes on the same id. */
+export interface BuildStep { id: string; label: string; detail?: string; status: "running" | "done" | "error"; at: number }
 export interface ChoiceOption { label: string; value: string; description?: string }
 export interface Choices { prompt: string; options: ChoiceOption[]; multi: boolean; allowOther: boolean }
 export interface ProducedArtifact { kind: ArtifactKind; id: string; title: string }
@@ -129,7 +130,12 @@ export function useStudioChat(opts: {
       if (!resp.ok) throw new Said(resp.status === 429 ? "Give it a moment — too many requests." : "Paige couldn't take that just now. Try again.");
       let reply = "";
       let gotChoices = false;
-      let sawStep = false;
+      // This turn's steps, owned by the read: a later frame for an id replaces the earlier one in
+      // place, "withdrawn" removes it, and whatever is still running when the read ends is dropped.
+      let built: BuildStep[] = [];
+      // A frame with no id of its own gets the next of these. A count, never the list's length:
+      // a withdrawn row shrinks the list, and a reused id would merge a new step over an old one.
+      let anonSteps = 0;
       let sawConfirm = false;
       // The shared reader (src/lib/paige-stream) owns the framing. As this loop always did, [DONE]
       // ends the read and a line that is not JSON is skipped; a frame it does not name is dropped.
@@ -137,15 +143,25 @@ export function useStudioChat(opts: {
         if (frame.type === "step") {
           if (typeof frame.step !== "object") continue;
           const ps = frame.step as Record<string, unknown>;
-          if (typeof ps.label === "string" && ps.label) {
-            const label = ps.label;
-            sawStep = true;
-            setStatus(label);
-            setSteps((prev) => {
-              const id = typeof ps.id === "string" && ps.id ? ps.id : `s:${prev.length}`;
-              if (prev.some((p) => p.id === id)) return prev;
-              return [...prev, { id, label, detail: typeof ps.detail === "string" ? ps.detail : undefined, status: ps.status === "error" ? "error" : "done", at: Date.now() }];
-            });
+          // The shared rule (normalizeStepStatus): no status still means "done"; a status this client
+          // does not know is dropped rather than drawn as done.
+          const stepStatus = normalizeStepStatus(ps.status);
+          if (stepStatus === null) continue;
+          const id = typeof ps.id === "string" && ps.id ? ps.id : `s:${anonSteps++}`;
+          if (stepStatus === "withdrawn") {
+            // Its label goes with it: the status line falls back to the step still standing.
+            if (built.some((b) => b.id === id)) { built = built.filter((b) => b.id !== id); setSteps(built); setStatus(built.at(-1)?.label ?? null); }
+            continue;
+          }
+          // The closing frame merges over the opening one, as the main chat's trace does: what it
+          // leaves out (a label, a detail) is kept, and the row keeps the time it started.
+          const earlier = built.find((b) => b.id === id);
+          const label = typeof ps.label === "string" && ps.label ? ps.label : earlier?.label;
+          if (label) {
+            if (typeof ps.label === "string" && ps.label) setStatus(label);
+            const step: BuildStep = { id, label, detail: typeof ps.detail === "string" ? ps.detail : earlier?.detail, status: stepStatus, at: earlier?.at ?? Date.now() };
+            built = earlier ? built.map((b) => (b.id === id ? step : b)) : [...built, step];
+            setSteps(built);
           }
           continue;
         }
@@ -196,6 +212,9 @@ export function useStudioChat(opts: {
           setTurns([...shown, { role: "assistant", content: reply }]);
         }
       }
+      const settled = settleOpenSteps(built);
+      if (settled !== built) { built = settled; setSteps(built); }
+      const sawStep = built.length > 0;
       if (!reply.trim() && !gotChoices && !produced && !sawStep && !sawConfirm) setTurns([...shown, { role: "assistant", content: "I didn't catch that. Try saying it another way?" }]);
       failedIntent.current = null;
       // A saved piece replaces any unsaved preview: the stage now shows the real thing.

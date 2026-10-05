@@ -155,6 +155,15 @@
 .vs-studio .vs-steps li { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 8px; font-size: 12.6px; }
 .vs-studio .vs-steps li small { display: block; color: var(--vs-faint); font-size: 11.6px; }
 .vs-studio .vs-steps time { font: 11px ui-monospace, monospace; color: var(--vs-faint); }
+/* A step still under way: violet (Paige at work, never done-green). A turning spinner only when motion
+   is welcome; under reduced motion a still ring holds the place instead — the main trace does the same. */
+.vs-studio .vs-steps .vs-step-busy { display: inline-grid; place-items: center; width: 14px; height: 14px; color: var(--vs-link); }
+.vs-studio .vs-steps .vs-step-spin { display: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .vs-studio .vs-steps .vs-step-spin { display: block; animation: vs-spin 1s linear infinite; }
+  .vs-studio .vs-steps .vs-step-still { display: none; }
+  @keyframes vs-spin { to { transform: rotate(360deg); } }
+}
 .vs-studio .vs-ask { border: 1px solid var(--vs-violet-line); background: linear-gradient(180deg, rgba(101, 73, 219, .14), rgba(101, 73, 219, .05)); border-radius: 14px; padding: 14px; display: grid; gap: 10px; }
 .vs-studio .vs-ask b { font-size: 13.4px; }
 .vs-studio .vs-ask-options { display: flex; flex-wrap: wrap; gap: 6px; }

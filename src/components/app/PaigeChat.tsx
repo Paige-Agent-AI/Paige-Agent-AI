@@ -6,7 +6,7 @@ import paigeAvatar from "@/assets/paige-ai-avatar.png";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { parsePaigeChatError } from "@/lib/paigeChatError";
-import { readPaigeStream } from "@/lib/paige-stream";
+import { readPaigeStream, settleOpenSteps } from "@/lib/paige-stream";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getCurrentPageName, getPageOpeningInstruction } from "@/lib/pageContext";
 import type { User, Session } from "@supabase/supabase-js";
@@ -34,7 +34,7 @@ import { trackEvent } from "@/hooks/useAnalytics";
 import { usePlaybook } from "@/lib/playbook";
 import { useClientPortalBrandState } from "@/hooks/useClientPortalBrand";
 import { readableTextOn } from "@/lib/brand/contrast";
-import { PaigeReasoningStrip, upsertStep, type PaigeStep } from "@/components/dashboard/PaigeStepTrace";
+import { PaigeReasoningStrip, upsertStep, type PaigeStep, type PaigeStepFrame } from "@/components/dashboard/PaigeStepTrace";
 import { PaigeThinkingIndicator } from "@/components/paige/chat/PaigeThinkingIndicator";
 import { createAnchoredTranscriptScroll } from "@/components/chat/anchoredTranscriptScroll";
 
@@ -442,7 +442,7 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
       for await (const frame of readPaigeStream(response.body, { stopAtDone: true, malformed: "skip" })) {
         if (frame.type === "step") {
           // Live "watch her work" frame — upsert into the reasoning strip.
-          setSteps((prev) => upsertStep(prev, frame.step as PaigeStep));
+          setSteps((prev) => upsertStep(prev, frame.step as PaigeStepFrame));
           continue;
         }
         // #11 — the server confirmed the reply is starting (belt-and-braces with the first delta).
@@ -458,6 +458,8 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
           setMessages([...newMessages, mkMessage({ id: assistantId, role: "assistant", content: assistantMessage })]);
         }
       }
+      // The read is over: a step it started and never closed will not close now.
+      setSteps(settleOpenSteps);
 
       if (currentDoc && !answerWithheld && assistantMessage.length > 100) {
         extractDocumentSummary(assistantMessage, currentDoc.name);
@@ -513,6 +515,7 @@ function PaigeChatInner({ user, session, clientId }: PaigeChatProps) {
       console.error("Chat error:", error);
       toast({ title: "Error", description: "Failed to send message. Please try again.", variant: "destructive" });
       setMessages(messages);
+      setSteps(settleOpenSteps);
       setIsLoading(false);
     }
   };

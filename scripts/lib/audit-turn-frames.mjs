@@ -16,6 +16,10 @@
  *     `paige_choices`) and the first `[DONE]`;
  *   - a withheld turn (`paige_withheld` on the wire) ends WITHHELD.
  *
+ * Plus one rule a harness applies where it can see the saved turn (C2): the answer a reader gets up
+ * to the first `[DONE]` is exactly the text the thread kept, and no reply text follows that `[DONE]`
+ * (`wireAnswerText` / `wireAnswerMatchesSaved`, below).
+ *
  * Pure: no imports, no I/O. The contract's `isTurnFrame` is passed in, so this file needs no TypeScript
  * loader of its own.
  */
@@ -62,4 +66,55 @@ export function auditTurnStream(bodyText, { isTurnFrame } = {}) {
   if (firstDone !== -1 && terminal.i > firstDone) violations.push(`terminal after [DONE] (${terminal.i} > ${firstDone})`);
   if (has("paige_withheld") && terminal.t.state !== "WITHHELD") violations.push(`a withheld turn's terminal is ${terminal.t.state}`);
   return { violations, terminal, items, has };
+}
+
+/**
+ * THE ANSWER A CLIENT READS, from one SSE body: every reply-text delta (`choices[0].delta.content`) and
+ * any Studio question's `paige_choices.prompt`, joined in wire order, up to the FIRST `[DONE]` — where
+ * four of the seven SSE consumers stop reading. Text after that sentinel never reaches those readers,
+ * so it is not part of the answer they saw; it is still a defect, and `wireAnswerMatchesSaved` reports
+ * it by comparing what a reader got with what the thread kept.
+ *
+ * @param {string} bodyText
+ * @returns {string}
+ */
+export function wireAnswerText(bodyText) {
+  if (typeof bodyText !== "string") return "";
+  const lines = bodyText.split("\n").filter((l) => l.startsWith("data: "));
+  let out = "";
+  for (const l of lines) {
+    const raw = l.slice(6).trim();
+    if (raw === "[DONE]") break;
+    let f;
+    try { f = JSON.parse(raw); } catch { continue; }
+    const c = f?.choices?.[0]?.delta?.content;
+    if (typeof c === "string") out += c;
+    if (typeof f?.paige_choices?.prompt === "string") out += f.paige_choices.prompt;
+  }
+  return out;
+}
+
+/**
+ * THE WIRE AND THE TRANSCRIPT CARRY THE SAME ANSWER (§13/§94). Given one stream and the assistant text
+ * the thread saved for it, says why they differ, or null when they agree. Also flags any reply text
+ * that arrives AFTER the first `[DONE]` (a reader that stops there never sees it, and one that does
+ * not stop sees a different answer from the one saved).
+ *
+ * @param {string} bodyText
+ * @param {string} savedText
+ * @returns {string | null}
+ */
+export function wireAnswerMatchesSaved(bodyText, savedText) {
+  const read = wireAnswerText(bodyText);
+  const saved = String(savedText ?? "");
+  if (read !== saved) return `the wire answer differs from the saved one: ${JSON.stringify(read.slice(0, 80))} vs ${JSON.stringify(saved.slice(0, 80))}`;
+  const lines = String(bodyText).split("\n").filter((l) => l.startsWith("data: "));
+  const firstDone = lines.indexOf("data: [DONE]");
+  if (firstDone !== -1) {
+    const late = lines.slice(firstDone + 1).some((l) => {
+      try { const f = JSON.parse(l.slice(6)); return typeof f?.choices?.[0]?.delta?.content === "string" && f.choices[0].delta.content.length > 0; } catch { return false; }
+    });
+    if (late) return "reply text after the first [DONE]";
+  }
+  return null;
 }

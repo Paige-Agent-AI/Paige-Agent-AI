@@ -118,7 +118,7 @@ bypasses the vocab + correction + confirmation discipline; prefer the seam.
   logged, returns no semantic hits; migration first: the old call resolves to the new function with no
   workspace and returns no own rows). Proof: `supabase/tests/match_paige_memory_authz.sql` W-A…W-E,
   `test:client-memory-authz` §37 (37.1–37.17), the hook test
-  `src/hooks/useClientChatContext.memory-scope.test.tsx` (5 tests). Production drive PROOF OWED.
+  `src/hooks/useClientChatContext.memory-scope.test.tsx` (6 tests). Production drive PROOF OWED.
 - **Follow-ups (filed, not folded in):** GDPR bulk hard-delete of owner/prompt memory via
   `process-data-deletion` (self-serve `forget` ships now). `match_paige_owner_memory`'s NULL-tenant `=`
   filter is a documented latent trap for a future operator semantic-recall path (a DIFFERENT function /

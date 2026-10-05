@@ -6184,6 +6184,38 @@ console.log("\nINT-326 — a person's own memory is recalled only in the workspa
     opBrief.rec.from.some((f) => f.table === "paige_owner_memory"
       && f.filters.some((x) => x[0] === "is" && x[1] === "tenant_id" && x[2] === null)),
     JSON.stringify(opBrief.rec.from.filter((f) => f.table === "paige_owner_memory").map((f) => f.filters)));
+  // 40.11 — a CLIENT turn keeps its legitimately-read client memory even when the CALLER's own
+  // declaration is stale: the client arm's guard sample is the resolver (the same source the
+  // persona derives from), not the caller's declared pointer — the client's rows belong to the
+  // client's tenant, which client authorization already established.
+  const staleOwnFocused = await turn(WS_A, WS_A, {
+    clientId: OWN,
+    tablesExtra: {
+      client_memory: admit,
+      profiles: () => [{ active_tenant_id: WS_B }], // the caller's own declaration points elsewhere
+    },
+  });
+  // A stale CALLER declaration on a client turn is later refused by the declared-scope
+  // revalidator (the whole turn, evidence-carrying as it is) — but the memory guard runs FIRST,
+  // and the guard must not report a "different workspace" drop it has no basis for: the client's
+  // rows belong to the client's tenant and the read never used the caller's declaration.
+  assert("40.11 a stale CALLER declaration does not log a spurious memory-workspace drop on a client turn",
+    !staleOwnFocused.logged.some((l) => /memory was read in a different workspace/.test(l.msg)),
+    JSON.stringify(staleOwnFocused.logged.filter((l) => /different workspace|client memory/.test(l.msg)).map((l) => l.msg.slice(0, 90))));
+  assert("40.11b …and the turn is refused by the declared-scope revalidator, not by memory",
+    staleOwnFocused.status === 409 || staleOwnFocused.bodyText.includes("ACTIVE_ACCOUNT_CHANGED"),
+    JSON.stringify({ status: staleOwnFocused.status }));
+
+  // 40.12 — the STATIC prompt sentence is subject-relative too (the heading's truthfulness must
+  // not be undone one section later by a sentence that claims every block is "this client's").
+  assert("40.12 the static MEMORY instruction reads the block's heading instead of assuming a client",
+    healthy.modelEgress.some((b) => b.includes("read its heading for who it is about"))
+      // The OLD framing asserted the block was about a client unconditionally; the new sentence
+      // names the client case explicitly, so the negative pin targets the old sentence's own
+      // construction ("present, it's what you know"), which the new wording never contains.
+      && healthy.modelEgress.every((b) => !b.includes("block is present, it's what you know about this client")),
+    JSON.stringify({ egress: healthy.modelEgress.length }));
+
   assert("40.10 …so this human's Solo-workspace memory never becomes platform doctrine",
     opBrief.modelEgress.some((b) => b.includes(OP_TENANTLESS))
       && opBrief.modelEgress.every((b) => !b.includes(OP_TENANTROW)),

@@ -1548,25 +1548,25 @@ JSON:`;
         );
       }
 
-      // Insert session summary memory (with embedding)
+      // Insert session summary memory (with embedding). INT-326 write rule: resolve the turn's
+      // declared∧validated scope BEFORE the paid embed — a no-client turn that established no
+      // workspace persists NO tenant memory and buys no embedding for it.
       if (!skipScopedMemoryWrites && summaryContent.trim()) {
-        const summaryEmbedding = await embedText(summaryContent.trim());
-        const memoryInsert: any = {
-          client_user_id: scopedClientId || user.id,
-          memory_type: "session_summary",
-          content: summaryContent.trim(),
-          source_session_id: rawData.sessionId || null,
-          embedding: summaryEmbedding,
-          metadata: { channel: "text" },
-        };
-        if (scopedClientId) memoryInsert.client_id = scopedClientId;
-        else memoryInsert.tenant_id = await memoryWorkspaceScope();
-        // INT-326 write rule: a no-client turn that could not establish its workspace persists
-        // NO tenant memory — the handler fails closed BEFORE the database instead of letting a
-        // fallback-stamped row (or a MEMORY_TENANT_UNRESOLVED refusal) stand in for a decision.
-        if (!scopedClientId && memoryInsert.tenant_id === null) {
+        const ownSummaryScope = scopedClientId ? undefined : await memoryWorkspaceScope();
+        if (ownSummaryScope === null) {
           console.error("[paige] own-memory write skipped — no established workspace this turn", JSON.stringify({ kind: "session_summary" }));
         } else {
+          const summaryEmbedding = await embedText(summaryContent.trim());
+          const memoryInsert: any = {
+            client_user_id: scopedClientId || user.id,
+            memory_type: "session_summary",
+            content: summaryContent.trim(),
+            source_session_id: rawData.sessionId || null,
+            embedding: summaryEmbedding,
+            metadata: { channel: "text" },
+          };
+          if (scopedClientId) memoryInsert.client_id = scopedClientId;
+          else memoryInsert.tenant_id = ownSummaryScope;
           await recordWrite("client_memory:turn", supabase.from("client_memory").insert(memoryInsert));
         }
       }
@@ -1587,8 +1587,14 @@ JSON:`;
             business_bank_opened: "Client mentioned opening a business bank account",
           };
 
+          // INT-326 write rule (see session_summary): resolve the scope ONCE before the loop so a
+          // no-scope turn skips every milestone embed and write, not just the insert.
+          const ownMilestoneScope = scopedClientId ? undefined : await memoryWorkspaceScope();
+          if (ownMilestoneScope === null) {
+            console.error("[paige] own-memory write skipped — no established workspace this turn", JSON.stringify({ kind: "milestone_completed" }));
+          }
           for (const m of milestones) {
-            if (labelMap[m]) {
+            if (labelMap[m] && ownMilestoneScope !== null) {
               const emb = await embedText(labelMap[m]);
               const milestoneMemory: any = {
                 client_user_id: scopedClientId || user.id,
@@ -1598,13 +1604,8 @@ JSON:`;
                 embedding: emb,
               };
               if (scopedClientId) milestoneMemory.client_id = scopedClientId;
-              else milestoneMemory.tenant_id = await memoryWorkspaceScope();
-              // INT-326 write rule: no established workspace ⇒ no durable write (see session_summary).
-              if (!scopedClientId && milestoneMemory.tenant_id === null) {
-                console.error("[paige] own-memory write skipped — no established workspace this turn", JSON.stringify({ kind: "milestone_completed" }));
-              } else {
-                await recordWrite("client_memory:milestone", supabase.from("client_memory").insert(milestoneMemory));
-              }
+              else milestoneMemory.tenant_id = ownMilestoneScope;
+              await recordWrite("client_memory:milestone", supabase.from("client_memory").insert(milestoneMemory));
             }
           }
         } catch (err) {
@@ -1635,9 +1636,16 @@ JSON:`;
             commitments: "commitment",
             open_loops: "open_loop",
           };
+          // INT-326 write rule (see session_summary): resolve the scope ONCE before the loops so a
+          // no-scope turn skips every fact embed and write, not just the insert.
+          const ownFactScope = scopedClientId ? undefined : await memoryWorkspaceScope();
+          if (ownFactScope === null) {
+            console.error("[paige] own-memory write skipped — no established workspace this turn", JSON.stringify({ kind: "fact_extraction" }));
+          }
           for (const [list, memoryType] of Object.entries(kindByList)) {
             for (const p of facts[list] ?? []) {
               if (typeof p !== "string" || !p.trim()) continue;
+              if (ownFactScope === null) continue;
               const emb = await embedText(p.trim());
               const factMemory: any = {
                 client_user_id: scopedClientId || user.id,
@@ -1648,13 +1656,8 @@ JSON:`;
                 metadata: { channel: "text", source: "auto_extracted" },
               };
               if (scopedClientId) factMemory.client_id = scopedClientId;
-              else factMemory.tenant_id = await memoryWorkspaceScope();
-              // INT-326 write rule: no established workspace ⇒ no durable write (see session_summary).
-              if (!scopedClientId && factMemory.tenant_id === null) {
-                console.error("[paige] own-memory write skipped — no established workspace this turn", JSON.stringify({ kind: memoryType }));
-              } else {
-                await recordWrite(`client_memory:${memoryType}`, supabase.from("client_memory").insert(factMemory));
-              }
+              else factMemory.tenant_id = ownFactScope;
+              await recordWrite(`client_memory:${memoryType}`, supabase.from("client_memory").insert(factMemory));
             }
           }
         } catch (err) {
@@ -1989,12 +1992,18 @@ JSON:`;
       // The workspace sample is needed on EVERY memory-reading turn, client turns included: the
       // race guard after the persona read compares it with the turn's workspace, and a client turn
       // with no sample would have its legitimate client memory dropped (or, if exempted, lose the
-      // guard). Only the OWN-memory read is filtered by it, so only that path waits for it before
-      // reading; a client turn's read is keyed on client_id, and its sample runs alongside the read
-      // instead of in front of it (no extra serial round trip). The sample IS the declared∧validated
-      // memory scope (INT-326 ruling): one memoized resolution shared with the writers and the
-      // de-dupe probe below, so the whole turn governs memory by ONE captured scope.
-      const memoryTenantSample: Promise<string | null> = clientScopeDenied ? Promise.resolve(null) : memoryWorkspaceScope();
+      // guard). The sample is PER-ARM: the own-memory arm samples the declared∧validated memory
+      // scope (INT-326 ruling — one memoized resolution shared with the writers and the de-dupe
+      // probe, so the whole turn governs OWN memory by ONE captured scope); a CLIENT turn's read
+      // is keyed on client_id and belongs to the CLIENT's tenant, not the caller's declaration —
+      // its guard sample is the resolver the persona itself derives from, so a caller with a null
+      // or stale DECLARED pointer keeps their legitimately-read client memory instead of having it
+      // dropped for a mismatch their own declaration played no part in authorizing.
+      const memoryTenantSample: Promise<string | null> = clientScopeDenied
+        ? Promise.resolve(null)
+        : scopedClientId
+        ? callerActiveTenantId()
+        : memoryWorkspaceScope();
       const memoryTurnTenant = clientScopeDenied || scopedClientId ? null : await memoryTenantSample;
       const ownMemoryAllowed = !clientScopeDenied && !scopedClientId && memoryTurnTenant !== null;
       // Refused client context does NO memory work at all: the block below is skipped entirely,
@@ -16306,6 +16315,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 paigeChatUploadId,
                 revalidateTenantKnowledgeScope,
                 traceFor("credit-report-extraction"),
+                // INT-326: the turn's captured memory scope — undefined for client-scoped turns,
+                // null when no workspace was established (the helper then writes nothing).
+                scopedClientId ? undefined : await memoryWorkspaceScope(),
               );
               if (!(await revalidateTenantKnowledgeScope())) {
                 pendingTenantKbTelemetry = null;
@@ -16949,6 +16961,10 @@ export async function runStructuredExtractionAndSync(
   uploadRecordId: string | null = null,
   revalidateKnowledgeScope: (() => Promise<boolean>) | null = null,
   trace?: Record<string, unknown>,
+  // INT-326: the turn's captured declared∧validated memory scope. `undefined` = not applicable
+  // (a client-scoped turn, or a direct test caller) — keep the legacy behavior. `null` = the turn
+  // established NO workspace — write nothing, fail closed. A string = stamp it; never a fallback.
+  ownMemoryScope?: string | null,
 ): Promise<any> {
   console.log("Starting structured extraction from analysis...");
 
@@ -17117,18 +17133,30 @@ export async function runStructuredExtractionAndSync(
       memory_type: "report_upload",
       content: memoryContent,
     };
+    // INT-326 write rule: a row about the caller takes the TURN'S captured declared∧validated
+    // scope, and a turn that established no workspace persists NOTHING (fail closed BEFORE the
+    // database's refusal — and never the resolver's first-membership fallback). The upload row in
+    // Step 5 is the document's own record, not memory, and is unaffected by this skip.
+    let remembered: string = "ok";
     if (clientId) {
       memoryInsert.client_id = clientId;
-    } else {
-      // A row about the caller takes the caller's active tenant, read through the caller's own session
-      // (this client is service-role). Null leaves the database to refuse the row rather than guess.
+      remembered = await writeIfScopeCurrent("client_memory", () => supabase.from("client_memory").insert(memoryInsert));
+    } else if (ownMemoryScope === undefined) {
+      // Legacy path (direct callers): a row about the caller takes the caller's active tenant,
+      // read through the caller's own session (this client is service-role). Null leaves the
+      // database to refuse the row rather than guess.
       const caller = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
         global: { headers: { Authorization: authHeader } },
       });
       const { data: callerTenant, error: callerTenantErr } = await caller.rpc("current_user_tenant_id");
       memoryInsert.tenant_id = callerTenantErr ? null : (callerTenant ?? null);
+      remembered = await writeIfScopeCurrent("client_memory", () => supabase.from("client_memory").insert(memoryInsert));
+    } else if (ownMemoryScope === null) {
+      console.error("[paige] own-memory write skipped — no established workspace this turn", JSON.stringify({ kind: "report_upload" }));
+    } else {
+      memoryInsert.tenant_id = ownMemoryScope;
+      remembered = await writeIfScopeCurrent("client_memory", () => supabase.from("client_memory").insert(memoryInsert));
     }
-    const remembered = await writeIfScopeCurrent("client_memory", () => supabase.from("client_memory").insert(memoryInsert));
     if (remembered !== "ok") return stoppedBy(remembered, "client_memory");
 
     // Step 5: stamp the upload row. THIS IS THE DOCUMENT'S OWN RECORD, not a profile field, so it

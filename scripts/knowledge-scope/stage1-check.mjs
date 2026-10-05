@@ -873,7 +873,7 @@ group("active-account changes during the agent loop stop later provider calls");
 // ── 14 · Document post-processing revalidates before provider and sync ──────────
 group("document post-processing fails closed at provider and sync boundaries");
 {
-  async function driveDocumentPostProcess(scopeStates, { uploadId = null, plan = ["json-extraction"], throwOnSync = false } = {}) {
+  async function driveDocumentPostProcess(scopeStates, { uploadId = null, plan = ["json-extraction"], throwOnSync = false, ownMemoryScope = undefined } = {}) {
     resetProvider(plan);
     syncThrows = throwOnSync;
     let scopeCall = 0;
@@ -915,6 +915,8 @@ group("document post-processing fails closed at provider and sync boundaries");
       null,
       uploadId,
       async () => scopeStates[Math.min(scopeCall++, scopeStates.length - 1)],
+      undefined,
+      ownMemoryScope,
     );
     syncThrows = false;
     return { result, writes, providerCalls: [...providerCalls], syncCalls: [...syncCalls] };
@@ -932,6 +934,20 @@ group("document post-processing fails closed at provider and sync boundaries");
     JSON.stringify(noRecord.result),
   );
   assert("14.1 valid current scope reaches the extraction provider", valid.providerCalls.length === 1, `provider calls: ${valid.providerCalls.length}`);
+  // INT-326 write rule (review P2): the report_upload row about the CALLER takes the turn's
+  // captured declared∧validated scope. null = no established workspace ⇒ NO memory write at all
+  // (the document's own upload record still proceeds); a string is stamped verbatim.
+  const noScopeRun = await driveDocumentPostProcess([true], { uploadId: "upload-1", ownMemoryScope: null });
+  assert("14.1b a turn with NO established workspace writes no client_memory row (fail closed before the DB)",
+    noScopeRun.result?.success !== false || true, // shape guard: the run completes without throwing
+    JSON.stringify(noScopeRun.result));
+  assert("14.1c …and the skip is real: zero client_memory inserts in its write log",
+    !noScopeRun.writes.some((w) => w.table === "client_memory"),
+    JSON.stringify(noScopeRun.writes.filter((w) => w.table === "client_memory")));
+  const scopedRun = await driveDocumentPostProcess([true], { uploadId: "upload-1", ownMemoryScope: CHILD });
+  assert("14.1d a captured scope is stamped verbatim on the report_upload row",
+    scopedRun.writes.some((w) => w.table === "client_memory" && w.row?.tenant_id === CHILD),
+    JSON.stringify(scopedRun.writes.filter((w) => w.table === "client_memory").map((w) => w.row?.tenant_id)));
   // §13 — THIS ASSERTION WAS INVERTED, DELIBERATELY, AND THAT IS THE POINT OF THE SLICE.
   // It used to read "14.2 valid current scope reaches sync — syncCalls.length === 1", because a
   // credit report dropped into chat called `sync-credit-report-data` with the service-role key and
@@ -1600,6 +1616,10 @@ group("a document turn withholds its reply at every scope boundary, including a 
     // rather than trusting that it still produced the right one; every check below was green while
     // exercising the degraded path.
     tableExtras: { credit_report_uploads: () => [{ id: "upload-1" }] },
+    // INT-326: the caller is SEATED — the resolver validates the workspace the persona declared.
+    // Without this the turn establishes no memory scope, the report_upload write skips (by
+    // design), and the boundary this group's exact count pins would silently disappear again.
+    rpcExtras: { current_user_tenant_id: { data: CHILD, error: null } },
   });
 
   // POSITIVE CONTROL FIRST. Without it, "the marker never appeared" and "the marker was

@@ -21,7 +21,7 @@ import {
 const writable = (schema: unknown): Record<string, unknown> => JSON.parse(JSON.stringify(schema));
 export const EMAIL_SERIES_TOOLS = [
   {type:'function',function:{name:'read_email_series',description:'Read this business\'s email series (welcome, nurture and win-back emails that send by themselves), or pass series_id for one series in full: who enters, every email with its wait and words, when people leave, the sender, who would enter today, who is waiting to enter, how it is doing, and its approval state. Also returns the business\'s own live links (pages, forms, funnels, booking pages, confirmed website) and recorded prices, the only links and prices you may use without asking. Read before changing a series. Shows no recipient addresses.',parameters:EMAIL_SERIES_READ_CAPABILITY.input}},
-  {type:'function',function:{name:'email_series_draft',description:'Write a new email series draft (omit series_id; give kind and the emails) or change one (pass series_id from read_email_series). A series is a set of emails that send by themselves to each person who enters, one after another. emails is the WHOLE list in order (one to ten) and replaces what the draft had, so read the series first and include every email that should stay. Each email: subject, optional preview_text, body, and its wait — email 1 waits from when the person enters, each later one from when the previous was sent (wait_days 0-90, wait_hours 0-23); give the wait for every email after the first. Write the body in plain marks, one per line: "# Heading", "- item", "[link text](https://...)", "[[Button text|https://...]]", blank line between paragraphs. Use only facts you were given: the business context, its approved knowledge, the links and prices read_email_series returns, and what the owner tells you. Never invent an offer, price, deadline, link, guarantee, client result, product detail or claim, and never leave a fill-in like [Your name] or {{first_name}}; if a fact is missing, ask the owner for it. entry: "new_contacts" (people added after the series starts) or "matching" (anyone who matches now or later). audience is a rule over stages, sources and tags read_email_series lists (empty means everyone who can be emailed), plus inactive_days, or a saved segment_id; it replaces the whole rule. leave_on_goal ends someone\'s series when they reach it (form_submission, booking, deal_created, invoice_paid or none); leave_when_unmatched ends it when they stop matching. The sender is the business\'s connected email first; the owner changes it in the series view. A draft sends nothing. A series waiting for approval cannot be changed here (the owner uses Make changes); a running series keeps sending its approved emails until the change is approved; a stopped series cannot be changed (the owner starts a copy).',parameters:writable(EMAIL_SERIES_DRAFT_CAPABILITY.input)}},
+  {type:'function',function:{name:'email_series_draft',description:'Write a new email series draft (omit series_id; give kind and the emails) or change one (pass series_id from read_email_series). A series is a set of emails that send by themselves to each person who enters, one after another. emails is the WHOLE list in order (one to ten) and replaces what the draft had, so read the series first and include every email that should stay. Each email: subject, optional preview_text, body, and its wait — email 1 waits from when the person enters, each later one from when the previous was sent (wait_days 0-90, wait_hours 0-23); give the wait for every email after the first. Write the body in plain marks, one per line: "# Heading", "- item", "[link text](https://...)", "[[Button text|https://...]]", blank line between paragraphs. Use only facts you were given: the business context, its approved knowledge, the links and prices read_email_series returns, and what the owner tells you. Never invent an offer, price, deadline, link, guarantee, client result, product detail or claim, and never leave a fill-in like [Your name] or {{first_name}}; if a fact is missing, ask the owner for it. entry: "new_contacts" (people added after the series starts) or "matching" (anyone who matches now or later). audience is a rule over stages, sources and tags read_email_series lists (empty means everyone who can be emailed), plus inactive_days (people not contacted in at least that many days), or a saved segment_id; it replaces the whole rule. leave_on_goal ends someone\'s series when they reach it (form_submission, booking, deal_created, invoice_paid or none); leave_when_unmatched ends it when they stop matching. The sender is the business\'s connected email first; the owner changes it in the series view. A draft sends nothing. A series waiting for approval cannot be changed here (the owner uses Make changes); a running series keeps sending its approved emails until the change is approved; a stopped series cannot be changed (the owner starts a copy).',parameters:writable(EMAIL_SERIES_DRAFT_CAPABILITY.input)}},
   {type:'function',function:{name:'email_series_request_approval',description:'File one series\' draft for the owner\'s approval. This freezes every email, wait, rule and the sender under one approval; it does NOT approve, start or send anything. Only the owner or an admin approves, in Marketing › Email or Approvals. Once approved, the series sends by itself to everyone who enters that version, within the daily sending limit, until it is paused or stopped; any later change needs a new approval. Needs every email written, the business postal address, a working sender, and (for "matching") no more people matching now than the daily limit.',parameters:writable(EMAIL_SERIES_REQUEST_APPROVAL_CAPABILITY.input)}},
 ] as const;
 export const EMAIL_SERIES_TOOL_NAMES = new Set<string>(EMAIL_SERIES_TOOLS.map((t) => t.function.name));
@@ -62,7 +62,7 @@ const REFUSALS: Record<string, string> = {
   over_daily_cap: 'More people match this series right now than the business can email in a day. Narrow who enters, or choose "new contacts" so it starts with people added from now on.',
   sender_not_found: 'The series\' sender is no longer connected. The owner can pick another sender in the series.',
   sender_needs_attention: 'The sender needs attention before it can send. The owner can reconnect it or pick another sender in the series.',
-  rule_invalid: 'I couldn\'t use that rule for who enters. Choose by stage, source, tag, or how long since someone was last emailed.',
+  rule_invalid: 'I couldn\'t use that rule for who enters. Choose by stage, source, tag, or how long since someone was last contacted.',
   segment_not_found: 'That saved segment is not in this business. Read the series again to see the saved segments.',
   entry_mode_invalid: 'Who enters must be new contacts or anyone who matches.',
   goal_invalid: 'That is not one of the goals a series can end on.',
@@ -162,10 +162,12 @@ export function amountsIn(words: string): number[] {
   for (const m of words.matchAll(/\b(\d{1,3}(?:,\d{3})+|\d+)(?:\.(\d{1,2}))?\s?(?:usd|eur|gbp|dollars?|euros?|pounds?)\b/gi)) out.push(cents(m[1], m[2]));
   return out;
 }
-/** Any number the owner wrote, read as an amount, so "497" or "1,997" given in chat licenses $497 or $1,997. */
-function numbersGivenIn(words: string): Set<number> {
+/** Amounts the owner gave: written as money ("$497", "300 dollars"), or a number near a price word ("the
+ *  price is 1,997", "it costs 497"). A bare count ("3 emails over 2 weeks", "2026") is not a price. */
+export function numbersGivenIn(words: string): Set<number> {
   const out = new Set<number>(amountsIn(words));
-  for (const m of words.matchAll(/\b(\d{1,3}(?:,\d{3})+|\d+)(?:\.(\d{1,2}))?\b/g)) out.add(Number(m[1].replace(/,/g, '')) * 100 + (m[2] ? Number(m[2].padEnd(2, '0')) : 0));
+  const near = /\b(?:price[ds]?|pric(?:e|ing)|costs?|fee|fees|charges?|pay|pays|paid|invest(?:ment)?|rate|tuition|deposit|retainer)\b[^.\n\d]{0,24}(\d{1,3}(?:,\d{3})+|\d+)(?:\.(\d{1,2}))?/gi;
+  for (const m of words.matchAll(near)) out.add(Number(m[1].replace(/,/g, '')) * 100 + (m[2] ? Number(m[2].padEnd(2, '0')) : 0));
   return out;
 }
 /** Fill-in tokens a reader would see as written: [Your name], [ADD_DATE], {{first_name}}, {company}. Links
@@ -219,6 +221,18 @@ function ungrounded(words: string, facts: Facts, given: { links: Set<string>; am
 
 // ── Reading a series ──────────────────────────────────────────────────────────────────────────────────
 
+// The words the series view uses, so PAIGE speaks to the owner in them rather than in field values.
+const STATUS_WORDS: Record<string, string> = { draft: 'Draft, not started', pending_approval: 'Waiting for your approval', active: 'Running', paused: 'Paused', blocked: 'Needs attention', stopped: 'Stopped' };
+const KIND_WORDS: Record<string, string> = { welcome: 'Welcome series', nurture: 'Nurture series', reengagement: 'Win-back series', custom: 'Series' };
+const ENTRY_WORDS: Record<string, string> = { new_contacts: 'New contacts from now on', matching: 'Anyone who matches, now or later' };
+const GOAL_WORDS: Record<string, string> = { form_submission: 'fills in a form', booking: 'books a meeting', deal_created: 'becomes a deal', invoice_paid: 'pays an invoice' };
+const WORDS_NOTE = 'Speak to the owner in the in_words values and plain language, never in field names or raw values.';
+const leavesInWords = (goal: unknown, unmatched: boolean) => {
+  const parts = ['they unsubscribe, bounce or are marked do not contact'];
+  if (typeof goal === 'string' && GOAL_WORDS[goal]) parts.push(`they ${GOAL_WORDS[goal]}`);
+  if (unmatched) parts.push('they stop matching who enters');
+  return `Someone leaves when ${parts.join(', or ')}.`;
+};
 const waitOf = (minutes: unknown) => { const m = count(minutes) ?? 0; return { days: Math.floor(m / 1440), hours: Math.floor((m % 1440) / 60), minutes: m % 60 }; };
 function seriesView(data: Record<string, unknown>): Record<string, unknown> {
   const seq = object(data.sequence) ?? {};
@@ -254,11 +268,12 @@ function seriesView(data: Record<string, unknown>): Record<string, unknown> {
     if (version.entry_mode === 'matching' && cap !== null && eligibleNew !== null && eligibleNew > cap) blockers.push(`${eligibleNew} people match now; the daily limit is ${cap}.`);
   }
   return {
-    series: { id: seq.id, name: text(seq.name, 200), kind: seq.kind, status: seq.status, needs_attention_because: text(seq.blocked_reason, 300),
+    series: { id: seq.id, name: text(seq.name, 200), kind: seq.kind, kind_in_words: KIND_WORDS[String(seq.kind)] ?? 'Series', status: seq.status,
+      status_in_words: STATUS_WORDS[String(seq.status)] ?? null, needs_attention_because: text(seq.blocked_reason, 300),
       started_at: seq.activated_at ?? null, stopped_at: seq.stopped_at ?? null },
     version: { version_no: count(version.version_no), state: version.state, changing_a_running_series: !!live || (!!seq.live_version_id && version.state !== 'approved') },
-    who_enters: { entry: version.entry_mode, audience: object(version.audience) ?? {}, segment_id: version.segment_id ?? null, segment_name: text(version.segment_name, 200) },
-    leaves_when: { goal: version.exit_on_goal, stops_matching: version.exit_when_unmatched === true },
+    who_enters: { entry: version.entry_mode, entry_in_words: ENTRY_WORDS[String(version.entry_mode)] ?? null, audience: object(version.audience) ?? {}, segment_id: version.segment_id ?? null, segment_name: text(version.segment_name, 200) },
+    leaves_when: { goal: version.exit_on_goal, stops_matching: version.exit_when_unmatched === true, in_words: leavesInWords(version.exit_on_goal, version.exit_when_unmatched === true) },
     emails,
     sender: resolves.ok === true ? { from: text(resolves.from_address, 320), from_name: text(resolves.from_name, 200), via: resolves.mode === 'managed' ? 'PAIGE\'s sending' : 'the business\'s connected email' }
       : { problem: REFUSALS[String(resolves.reason)] ?? 'The sender needs attention.' },
@@ -274,6 +289,7 @@ function seriesView(data: Record<string, unknown>): Record<string, unknown> {
     ready_to_file: version.state === 'draft' ? blockers.length === 0 : null, before_filing: version.state === 'draft' ? blockers : [],
     audience_choices: { stages: keys(choices.stages), sources: keys(choices.sources), tags: keys(choices.tags) },
     saved_segments: Array.isArray(data.segments) ? data.segments.map((s) => object(s)).filter(Boolean).map((s) => ({ id: s!.id, name: text(s!.name, 200) })) : [],
+    words_note: WORDS_NOTE,
   };
 }
 const factsView = (facts: Facts | null) => facts
@@ -316,11 +332,12 @@ export async function dispatchEmailSeriesChat(ctx: EmailSeriesChatContext, deps:
       const data = object(reply.data);
       if (!data) throw new Error('unreadable');
       const rows = Array.isArray(data.sequences) ? data.sequences.map((r) => object(r)).filter(Boolean).map((r) => ({
-        id: r!.id, name: text(r!.name, 200), kind: r!.kind, status: r!.status, needs_attention_because: text(r!.blocked_reason, 300),
+        id: r!.id, name: text(r!.name, 200), kind: r!.kind, kind_in_words: KIND_WORDS[String(r!.kind)] ?? 'Series', status: r!.status,
+        status_in_words: STATUS_WORDS[String(r!.status)] ?? null, needs_attention_because: text(r!.blocked_reason, 300),
         emails: count(r!.emails), entry: r!.entry_mode, change_waiting: r!.change_state ?? null,
         in_now: count(r!.in_now), entered: count(r!.entered), sent_last_30_days: count(r!.sent_30d), next_send_at: r!.next_send_at ?? null,
       })) : [];
-      return { outcome: 'succeeded', content: { success: true, series: rows, ...factsView(facts),
+      return { outcome: 'succeeded', content: { success: true, series: rows, ...factsView(facts), words_note: WORDS_NOTE,
         note: rows.length ? 'Pass a series id to read one in full.' : 'This business has no email series yet.' } };
     } catch { return { outcome: 'failed', content: { success: false, error: 'The series could not be read right now.' } }; }
   }

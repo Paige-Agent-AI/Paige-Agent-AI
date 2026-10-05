@@ -205,15 +205,19 @@ describe("Series view", () => {
     expect(calls.find((c) => c.fn === "email_sequence_pause")?.args).toEqual({ p_sequence_id: "q-1" });
   });
 
-  it("Stop asks first, and stops only when confirmed", async () => {
+  it("Stop asks first, says it is final, and stops only on Stop for good", async () => {
     await openSeries(seriesRead({ status: "active", state: "approved", live: true }));
-    const confirm = vi.spyOn(window, "confirm").mockReturnValueOnce(false).mockReturnValueOnce(true);
     await act(async () => { button("Stop")!.click(); });
     await flush();
     expect(calls.some((c) => c.fn === "email_sequence_stop")).toBe(false);
-    expect(confirm.mock.calls[0][0]).toContain("Stopping is final. A stopped series can’t be restarted.");
-    expect(confirm.mock.calls[0][0]).toContain("use Start a copy. For a break, use Pause instead.");
+    expect(text()).toContain("Stop “Welcome series” for good?");
+    expect(text()).toContain("A stopped series can’t be restarted; to run it again you’d start a copy, which needs its own approval. For a break, use Pause instead.");
+    expect(document.activeElement?.textContent).toBe("Keep it running");
+    await act(async () => { button("Keep it running")!.click(); });
+    expect(text()).not.toContain("for good?");
+    expect(calls.some((c) => c.fn === "email_sequence_stop")).toBe(false);
     await act(async () => { button("Stop")!.click(); });
+    await act(async () => { button("Stop for good")!.click(); });
     await flush();
     expect(calls.find((c) => c.fn === "email_sequence_stop")?.args).toEqual({ p_sequence_id: "q-1" });
   });
@@ -256,18 +260,23 @@ describe("Series view", () => {
     expect(labelled("Subject").matches(":disabled")).toBe(false);
   });
 
-  it("a paused series says pausing stops sending, not who qualifies, and how many are waiting to join", async () => {
+  it("a paused series says pausing stops sending, not who matches, and how many join on resume", async () => {
     await openSeries(Object.assign(seriesRead({ status: "paused", state: "approved", live: true }), { waiting_to_enter: 4 }));
-    expect(text()).toContain("Nothing sends while it’s paused, but people can still qualify.");
-    expect(text()).toContain("anyone who qualifies in the meantime joins then");
-    expect(text()).toContain("Waiting to join4");
-    expect(button("Resume")).toBeTruthy();
+    expect(text()).toContain("Nothing sends while it’s paused.");
+    expect(text()).toContain("People who match while it’s paused don’t miss out: they join when you resume.");
+    expect(text()).toContain("Join when you resume4");
+    await act(async () => { button("Resume")!.click(); });
+    await flush();
+    expect(text()).toContain("the 4 people waiting join within a few minutes");
   });
 
   it("a stopped series can't be restarted; Start a copy makes a new draft and opens it", async () => {
     answers.email_sequence_duplicate = { data: { sequence_id: "q-2", version_id: "v-2" }, error: null };
-    await openSeries(seriesRead({ status: "stopped", state: "approved", live: true }));
+    const stopped = seriesRead({ status: "stopped", state: "approved", live: true });
+    stopped.version.entry_mode = "matching";
+    await openSeries(stopped);
     expect(text()).toContain("A stopped series can’t be restarted");
+    expect(text()).toContain("Anyone who matches the copy can join it, including people who already went through this one.");
     expect(button("Resume")).toBeUndefined();
     await act(async () => { button("Start a copy")!.click(); });
     await flush();

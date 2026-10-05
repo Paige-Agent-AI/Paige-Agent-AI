@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
-  EMAIL_SERIES_TOOLS, EMAIL_SERIES_TOOL_NAMES, amountsIn, dispatchEmailSeriesChat, emailSeriesRequestKey, fillInsIn, linkKey, linksIn,
+  EMAIL_SERIES_TOOLS, EMAIL_SERIES_TOOL_NAMES, amountsIn, numbersGivenIn, dispatchEmailSeriesChat, emailSeriesRequestKey, fillInsIn, linkKey, linksIn,
 } from "../../supabase/functions/_shared/email-series-chat.ts";
 import { EMAIL_CAMPAIGN_TOOL_NAMES } from "../../supabase/functions/_shared/email-campaign-chat.ts";
 import { markupToHtml } from "../../supabase/functions/_shared/email-markup.ts";
@@ -144,8 +144,13 @@ describe("email series chat tools", () => {
     result = await run("email_series_draft", { kind: "welcome", emails: [email({ body: "The program is $497." })] }, db);
     expect(result.outcome).toBe("succeeded");
     db = database();
-    result = await run("email_series_draft", { kind: "welcome", emails: [email({ body: "Only $1,997 for the year." })] }, db, "The yearly plan is 1,997.");
+    result = await run("email_series_draft", { kind: "welcome", emails: [email({ body: "Only $1,997 for the year." })] }, db, "The yearly plan costs 1,997.");
     expect(result.outcome).toBe("succeeded");
+  });
+
+  it("a count or a year the owner wrote is not a price", () => {
+    expect([...numbersGivenIn("3 emails over 2 weeks, starting in 2026")]).toEqual([]);
+    expect([...numbersGivenIn("the price is 497, or $1,997 for the year")].sort()).toEqual([199700, 49700]);
   });
 
   it("refuses fill-ins but not a link whose words read like one", async () => {
@@ -219,6 +224,10 @@ describe("email series chat tools", () => {
     expect((result.content.emails as { wait: unknown }[])[0].wait).toEqual({ days: 2, hours: 1, minutes: 0 });
     expect(result.content.business_links).toEqual([`${SITE}/book/acme-intro`, `${SITE}/p/acme/guide`, "https://acme.test"]);
     expect(result.content.recorded_prices).toEqual(["$497"]);
+    expect((result.content.series as { status_in_words: string }).status_in_words).toBe("Draft, not started");
+    expect((result.content.who_enters as { entry_in_words: string }).entry_in_words).toBe("New contacts from now on");
+    expect((result.content.leaves_when as { in_words: string }).in_words).toBe("Someone leaves when they unsubscribe, bounce or are marked do not contact.");
+    expect(result.content.words_note).toMatch(/never in field names/);
   });
 
   it("reads links and amounts the way a reader sees them", () => {

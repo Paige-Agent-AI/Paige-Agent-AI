@@ -157,7 +157,7 @@ export function MarketingEmail({ tenantId, onOpenAudience, onOpenConnections, on
     { key: "welcome", icon: <Ic.users size={20}/>, title: "Send a one-time welcome email", detail: "One email to current leads", act: () => void create("welcome", "welcome", "Welcome", { stages: ["new_lead", "lead"] }) },
     { key: "reengagement", icon: <Ic.clock size={20}/>, title: "Re-engagement campaign", detail: "Not contacted in 90 days", act: () => void create("reengagement", "reengagement", "We miss you", { inactive_days: 90 }) },
     { key: "nurture", icon: <Ic.trend size={20}/>, title: "Plan a nurture series", detail: "Sends by itself once you approve it", act: () => void startSeries() },
-    { key: "paige", icon: <Ic.spark size={20}/>, title: "Use PAIGE", detail: "Describe what you need", act: () => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt: "Draft a marketing email for my business. Ask me who it is for and what it should say before you write it, then save it as a campaign draft in Marketing › Email. Do not file it for approval unless I ask, and never say it was sent." } })) },
+    { key: "paige", icon: <Ic.spark size={20}/>, title: "Use PAIGE", detail: "Describe what you need", act: () => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt: "Help me with marketing email for my business. Ask me who it is for, what I want them to do, and whether it should be one email or a series that sends by itself, before you write anything. Use only links and prices I give you or that are already in my business. Save it as a draft in Marketing › Email. Do not file it for approval unless I ask, and never say anything was sent." } })) },
   ];
 
   const audienceRows = d ? [
@@ -228,7 +228,7 @@ export function MarketingEmail({ tenantId, onOpenAudience, onOpenConnections, on
           <section className="campaigns-surface mo-panel" aria-labelledby="me-auto">
             <div className="mo-panel-head"><div><h2 id="me-auto">Automations</h2><p>Email series that send by themselves once you approve them.</p></div></div>
             <SeriesPanel tenantId={tenantId} onOpen={(id) => go({ kind: "series", id })}/>
-            <AskPaige prompt="Which email series would help my business most (a welcome for new contacts, a nurture for leads, or a win-back for quiet contacts), and what should each email say? Use only what you know about my business. Draft the emails here in chat; do not send or schedule anything."/>
+            <AskPaige prompt="Write an email series for my business that sends by itself. Ask me who it is for, what I want them to do, and how many emails over how long before you write it. Use only links and prices I give you or that are already in my business. Save it as a draft in Marketing › Email › Automations. Do not file it for approval unless I ask, and never say anything was sent."/>
             <p className="mo-note">Series share the {d.sending.daily_cap.toLocaleString()}-a-day limit with your campaigns. Series emails that don’t fit today wait; they’re never dropped.</p>
           </section>
           <section className="campaigns-surface mo-panel" aria-labelledby="me-activity">

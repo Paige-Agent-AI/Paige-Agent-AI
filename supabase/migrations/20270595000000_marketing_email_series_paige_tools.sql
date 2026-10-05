@@ -299,7 +299,7 @@ DECLARE result jsonb;
 BEGIN
  result:=public._workspace_event_display_before_email_series_chat(_source_kind,_outcome,_capability);
  IF _source_kind='capability_run' AND _capability='email_series_draft' AND _outcome IN ('capability_succeeded','capability_refused') THEN
-  result:=result||jsonb_build_object('title',CASE WHEN _outcome='capability_succeeded' THEN 'PAIGE wrote an email series draft' ELSE 'PAIGE''s email series draft was refused' END,
+  result:=result||jsonb_build_object('title',CASE WHEN _outcome='capability_succeeded' THEN 'PAIGE saved an email series draft' ELSE 'PAIGE couldn''t save an email series draft' END,
    'summary',CASE WHEN _outcome='capability_succeeded' THEN 'A draft in Marketing › Email › Automations. Nothing was sent.' ELSE 'Nothing was changed and nothing was sent.' END);
  ELSIF _source_kind='capability_run' AND _capability='email_series_request_approval' AND _outcome IN ('capability_succeeded','capability_refused') THEN
   result:=result||jsonb_build_object('title',CASE WHEN _outcome='capability_succeeded' THEN 'PAIGE filed an email series for approval' ELSE 'PAIGE could not file an email series for approval' END,

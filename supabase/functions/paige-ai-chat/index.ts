@@ -403,7 +403,7 @@ function describeStep(
     case "email_campaign_draft": return { label: failed ? "Couldn't confirm the email draft" : "Saved an email draft", group: "owner", detail: failed ? "no confirmed change" : "draft · nothing sent" };
     case "email_campaign_request_approval": return { label: failed ? "Couldn't confirm it was filed for approval" : "Filed an email campaign for approval", group: "owner", detail: failed ? "nothing sent" : "waiting for your approval · nothing sent" };
     case "read_email_series": return { label: failed ? "Couldn't read your email series" : "Checked your email series", group: "owner" };
-    case "email_series_draft": return { label: failed ? "Couldn't confirm the email series" : "Saved an email series draft", group: "owner", detail: failed ? "no confirmed change" : "draft · nothing sent" };
+    case "email_series_draft": return { label: failed ? "Couldn't confirm the email series was saved" : "Saved an email series draft", group: "owner", detail: failed ? "no confirmed change" : "draft · nothing sent" };
     case "email_series_request_approval": return { label: failed ? "Couldn't confirm the series was filed for approval" : "Filed an email series for approval", group: "owner", detail: failed ? "nothing sent" : "waiting for your approval · nothing sent" };
     // Calendar booking presets (owner) — a preset is a bookable /book PAGE; only publish makes it public.
     // Each verb special-cases CALENDAR_PRESET_RAIL_WRITE_FAILED: there the mutation IS verified and
@@ -8244,11 +8244,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           const emails = Array.isArray(a?.emails) ? a.emails.length : 0;
           const count = emails ? ` with ${emails} email${emails === 1 ? "" : "s"}` : "";
           return a?.series_id
-            ? `Change this email series${count}. It stays a draft; if the series is running, what is running keeps sending until you approve the change. Nothing is sent.`
+            ? `Rewrite this email series${emails ? ` as ${emails} email${emails === 1 ? "" : "s"}` : ""}. It stays a draft; if the series is running, the approved version keeps sending until you approve the change. Nothing is sent.`
             : `Save a new email series draft${a?.name ? ` "${String(a.name).slice(0, 120)}"` : ""}${count} in Marketing › Email › Automations. Nothing is sent.`;
         }
         case "email_series_request_approval":
-          return "Lock this email series for your decision: its emails, waits, who enters, when people leave and the sender stop changing. You then approve it in Marketing › Email; once approved it sends by itself to everyone who enters, within the daily limit, until you pause or stop it.";
+          return "File this email series for your decision. Its emails, waits, who enters, when people leave and the sender are locked. You approve it in Marketing › Email; nothing sends until you do. One approval covers everyone who enters this version, within the daily limit, until you pause or stop it. Any later change is a new version that needs its own approval.";
         case "booking_preset_create":
           return `Create a booking calendar "${String(a?.name || "Untitled").slice(0, 80)}"${a?.model ? ` (${String(a.model).replaceAll("_", " ")})` : ""} as a PRIVATE DRAFT. Its public /book page is NOT live — publishing is a separate, explicit step.`;
         case "booking_preset_duplicate": {

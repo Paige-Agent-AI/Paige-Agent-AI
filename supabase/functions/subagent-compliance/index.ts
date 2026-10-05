@@ -84,6 +84,7 @@ Deno.serve(async (req) => {
     // INT-310 C1 (defense in depth): the orchestrator bound this contact to the server-resolved tenant
     // and forwards that tenant in context; this read is bound to it as well, so a foreign or missing
     // row is the same not-found. No trusted tenant → nothing to bind to → refuse.
+    // The binder that resolved this tenant: _shared/paige-orchestration/resource-binder.ts.
     const trustedTenant = (body.context as { tenant_id?: unknown } | undefined)?.tenant_id;
     if (typeof trustedTenant !== "string") return ok({ ok: false, error: "resource_not_found" }, 404);
     const { data: row } = await supabase

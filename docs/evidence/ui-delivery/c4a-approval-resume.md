@@ -37,7 +37,7 @@ PROTECTED_SEAMS: tested — the stream dispatch (PaigeAIChat.stream), approval r
 
 <!-- RELEASE_GOVERNANCE_POLICY — read docs/doctrine/release-governance-and-customer-update-policy.md -->
 INTERNAL_BUILD_IDENTITY: PR #1762 on base 5b72df95231ba2f0c9d0633408b3e825796d7c0b (main after #1756/#1758/#1760; built on 5307015f6 and rebased); deployment=none-pre-merge; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat deploys from main on merge and the edge-live readback is owed); evidence=docs/evidence/ui-delivery/c4a-approval-resume.md (the merge commit is recorded in the Shipped Delivery Log)
-RELEASE_CHANNEL: development: uncommitted worktree on branch c4-resume; PR, independent review and merge follow
+RELEASE_CHANNEL: development: PR #1762 (pre-merge); exact-head independent review, fixes and merge recorded on the PR
 RELEASE_CLASSIFICATION: internal-only: the approval path finishes what the person already approved; no new capability, permission or data class
 CUSTOMER_RELEASE_IDENTITY: none: no customer release record; deployment-only change pre-launch
 RELEASE_NOTE_REQUIRED: NO: internal runtime and presentation change pre-launch; a customer note belongs to the eventual release of the conversational loop

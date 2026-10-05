@@ -2582,7 +2582,7 @@ const PaigeAIChatInner = ({
       <PaigeTurnFooter
         footer={footerFor(view.footer, view.kind, original)}
         onAskAgain={askAgainFor(original)}
-        onSee={() => openTurnTrace(message.id, true)}
+        onSee={() => openTurnTrace(messages[resumesFrom(index) >= 0 ? chainHead(index) : index].id, true)}
         focusOnMount={live && liveTurn?.endCause === "cancelled" && liveTurn.stopFocus}
         quietAskAgain={view.kind === "stop"}
         disabled={composerSendBlocked}

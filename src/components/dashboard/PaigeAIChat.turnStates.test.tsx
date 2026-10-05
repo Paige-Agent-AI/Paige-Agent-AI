@@ -662,6 +662,36 @@ describe("C4a — a resumed approval is one answer, live and on reload", () => {
     expect(reloaded.textContent).not.toContain("Approved — run it.");
   });
 
+  it("Stop while the carried-forward act runs: the footer's See opens the ONE line, Ask again restores the original request", async () => {
+    // Kills: the footer (drawn under the resumed answer) opening a line that does not exist, and
+    // "Ask again" restoring the hidden decision sentence instead of the person's request.
+    const hold = deferred();
+    server(asked(), body([
+      turn("started", "WORKING", "pending"), turn("resumed", "WORKING", "pending"),
+      step("0:0:0:resume_x", 1, "Sending to Daniel", "running"), hold.promise, say("late"), DONE,
+    ]));
+    const host = await mount();
+    await ask(host, "send the renewal");
+    const approve = Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((b) => /Approve/.test(b.textContent ?? ""))!;
+    await act(async () => { approve.click(); await flush(); });
+    const cancel = host.querySelector<HTMLButtonElement>('button[aria-label="Cancel PAIGE response"]')!;
+    await act(async () => { cancel.click(); await flush(); });
+    expect(lines(host)).toHaveLength(1);
+    const line = lines(host)[0];
+    const toggle = line.querySelector<HTMLButtonElement>("button[aria-expanded]")!;
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    const foots = host.querySelectorAll<HTMLElement>("[data-paige-turn-footer]");
+    expect(foots).toHaveLength(1);
+    const see = Array.from(foots[0].querySelectorAll<HTMLButtonElement>("button")).find((b) => b.textContent === "See what finished")!;
+    await act(async () => { see.click(); });
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(rowsOf(line).map((r) => r[0])).toEqual(["Drafted the cover noteOwner Ops", "Sending to DanielOwner Ops · Stopped — it may still finish on its own"]);
+    const askAgain = Array.from(foots[0].querySelectorAll<HTMLButtonElement>("button")).find((b) => b.textContent === "Ask again")!;
+    await act(async () => { askAgain.click(); await flush(); });
+    expect(host.querySelector("textarea")!.value).toBe("send the renewal");
+    await act(async () => { hold.resolve(); await flush(); });
+  });
+
   it("a CHAIN of approvals is one answer: one line at the first answer over every step, on reload", async () => {
     // Kills: drawing the line only over the first pair. A resumed answer can propose again; when that
     // second card is approved too, the third answer belongs to the same piece of work.

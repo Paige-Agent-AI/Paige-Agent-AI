@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { commercialTermsSummary } from "../_shared/sales-commercial/terms-summary.ts";
 import { confirmFingerprint } from "../_shared/confirm-fingerprint.ts";
 import { decideDeclaredCapability } from "../_shared/capability-kit/decision.ts";
 import { SALES_COLLECTION_KIT_BY_ACTION } from "../_shared/paige-spine/domains/sales_collections.ts";
@@ -108,7 +109,12 @@ Deno.serve(async req => {
       .is("thread_id", null).is("scoped_client_id", null).is("consumed_at", null)
       .not("server_issued_at", "is", null).not("issued_in_request", "is", null).lte("expires_at", now);
     if (expiredError) return response(503, { ok: false, code: "APPROVAL_STORE_UNAVAILABLE" });
-    const summary = typeof preview.summary === "string" ? preview.summary : "Confirm the reviewed collection action.";
+    let commercialSummary: string | null = null;
+    if(command.action === "collection.create_commercial_terms") {
+      try { commercialSummary = commercialTermsSummary(command, preview); }
+      catch { return response(422, {ok:false,outcome:"refused",code:"COMMERCIAL_REVIEW_CONTEXT_UNAVAILABLE"}); }
+    }
+    const summary = commercialSummary ?? (typeof preview.summary === "string" ? preview.summary : "Confirm the reviewed collection action.");
     let { data: proposal, error: proposalError } = await admin.from("paige_pending_confirmations").insert({
       user_id: user.id, tenant_id: tenantId, thread_id: null, scoped_client_id: null, tool_name: capability,
       fingerprint, issued_in_request: requestNonce, server_issued_at: now, args: requestArgs, summary,

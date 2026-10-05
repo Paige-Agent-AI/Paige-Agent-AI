@@ -1,0 +1,1 @@
+export const useTenantContext=()=>({activeTenantId:'t1',accountContextLoading:false});

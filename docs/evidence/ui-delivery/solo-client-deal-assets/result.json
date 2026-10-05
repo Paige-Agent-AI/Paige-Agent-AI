@@ -1,0 +1,1046 @@
+{
+  "boundary": "Actual production component rendering, synthetic client/auth/CRM fixture; standalone container, no real Solo shell or PAIGE workspace; no provider/auth acceptance",
+  "errors": [],
+  "cases": [
+    {
+      "theme": "light",
+      "width": 1536,
+      "height": 770,
+      "error": {
+        "rect": {
+          "x": 1096,
+          "y": 0,
+          "width": 440,
+          "height": 770,
+          "top": 0,
+          "right": 1536,
+          "bottom": 770,
+          "left": 1096
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 964,
+        "clientHeight": 770,
+        "overflow": "auto"
+      },
+      "linked": {
+        "rect": {
+          "x": 1096,
+          "y": 0,
+          "width": 440,
+          "height": 770,
+          "top": 0,
+          "right": 1536,
+          "bottom": 770,
+          "left": 1096
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 1046,
+        "clientHeight": 770,
+        "overflow": "auto"
+      },
+      "recovery": {
+        "rect": {
+          "x": 1096,
+          "y": 0,
+          "width": 440,
+          "height": 770,
+          "top": 0,
+          "right": 1536,
+          "bottom": 770,
+          "left": 1096
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 770,
+        "clientHeight": 770,
+        "overflow": "auto"
+      },
+      "unlinked": {
+        "rect": {
+          "x": 1096,
+          "y": 0,
+          "width": 440,
+          "height": 770,
+          "top": 0,
+          "right": 1536,
+          "bottom": 770,
+          "left": 1096
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 779,
+        "clientHeight": 770,
+        "overflow": "auto"
+      },
+      "reassign": {
+        "rect": {
+          "x": 936,
+          "y": 0,
+          "width": 600,
+          "height": 770,
+          "top": 0,
+          "right": 1536,
+          "bottom": 770,
+          "left": 936
+        },
+        "focusInside": false,
+        "scrollWidth": 599,
+        "clientWidth": 599,
+        "scrollHeight": 1370,
+        "clientHeight": 770,
+        "overflow": "auto"
+      },
+      "sameOperation": true,
+      "document": {
+        "width": 1536,
+        "height": 770,
+        "viewport": [
+          1536,
+          770
+        ]
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1366,
+      "height": 768,
+      "error": {
+        "rect": {
+          "x": 926,
+          "y": 0,
+          "width": 440,
+          "height": 768,
+          "top": 0,
+          "right": 1366,
+          "bottom": 768,
+          "left": 926
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 964,
+        "clientHeight": 768,
+        "overflow": "auto"
+      },
+      "linked": {
+        "rect": {
+          "x": 926,
+          "y": 0,
+          "width": 440,
+          "height": 768,
+          "top": 0,
+          "right": 1366,
+          "bottom": 768,
+          "left": 926
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 1046,
+        "clientHeight": 768,
+        "overflow": "auto"
+      },
+      "recovery": {
+        "rect": {
+          "x": 926,
+          "y": 0,
+          "width": 440,
+          "height": 768,
+          "top": 0,
+          "right": 1366,
+          "bottom": 768,
+          "left": 926
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 768,
+        "clientHeight": 768,
+        "overflow": "auto"
+      },
+      "unlinked": {
+        "rect": {
+          "x": 926,
+          "y": 0,
+          "width": 440,
+          "height": 768,
+          "top": 0,
+          "right": 1366,
+          "bottom": 768,
+          "left": 926
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 779,
+        "clientHeight": 768,
+        "overflow": "auto"
+      },
+      "reassign": {
+        "rect": {
+          "x": 766,
+          "y": 0,
+          "width": 600,
+          "height": 768,
+          "top": 0,
+          "right": 1366,
+          "bottom": 768,
+          "left": 766
+        },
+        "focusInside": false,
+        "scrollWidth": 599,
+        "clientWidth": 599,
+        "scrollHeight": 1370,
+        "clientHeight": 768,
+        "overflow": "auto"
+      },
+      "sameOperation": true,
+      "document": {
+        "width": 1366,
+        "height": 768,
+        "viewport": [
+          1366,
+          768
+        ]
+      }
+    },
+    {
+      "theme": "light",
+      "width": 1024,
+      "height": 768,
+      "error": {
+        "rect": {
+          "x": 584,
+          "y": 0,
+          "width": 440,
+          "height": 768,
+          "top": 0,
+          "right": 1024,
+          "bottom": 768,
+          "left": 584
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 964,
+        "clientHeight": 768,
+        "overflow": "auto"
+      },
+      "linked": {
+        "rect": {
+          "x": 584,
+          "y": 0,
+          "width": 440,
+          "height": 768,
+          "top": 0,
+          "right": 1024,
+          "bottom": 768,
+          "left": 584
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 1046,
+        "clientHeight": 768,
+        "overflow": "auto"
+      },
+      "recovery": {
+        "rect": {
+          "x": 584,
+          "y": 0,
+          "width": 440,
+          "height": 768,
+          "top": 0,
+          "right": 1024,
+          "bottom": 768,
+          "left": 584
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 768,
+        "clientHeight": 768,
+        "overflow": "auto"
+      },
+      "unlinked": {
+        "rect": {
+          "x": 584,
+          "y": 0,
+          "width": 440,
+          "height": 768,
+          "top": 0,
+          "right": 1024,
+          "bottom": 768,
+          "left": 584
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 779,
+        "clientHeight": 768,
+        "overflow": "auto"
+      },
+      "reassign": {
+        "rect": {
+          "x": 424,
+          "y": 0,
+          "width": 600,
+          "height": 768,
+          "top": 0,
+          "right": 1024,
+          "bottom": 768,
+          "left": 424
+        },
+        "focusInside": false,
+        "scrollWidth": 599,
+        "clientWidth": 599,
+        "scrollHeight": 1370,
+        "clientHeight": 768,
+        "overflow": "auto"
+      },
+      "sameOperation": true,
+      "document": {
+        "width": 1024,
+        "height": 768,
+        "viewport": [
+          1024,
+          768
+        ]
+      }
+    },
+    {
+      "theme": "light",
+      "width": 900,
+      "height": 1000,
+      "error": {
+        "rect": {
+          "x": 460,
+          "y": 0,
+          "width": 440,
+          "height": 1000,
+          "top": 0,
+          "right": 900,
+          "bottom": 1000,
+          "left": 460
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 1000,
+        "clientHeight": 1000,
+        "overflow": "auto"
+      },
+      "linked": {
+        "rect": {
+          "x": 460,
+          "y": 0,
+          "width": 440,
+          "height": 1000,
+          "top": 0,
+          "right": 900,
+          "bottom": 1000,
+          "left": 460
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 1046,
+        "clientHeight": 1000,
+        "overflow": "auto"
+      },
+      "recovery": {
+        "rect": {
+          "x": 460,
+          "y": 0,
+          "width": 440,
+          "height": 1000,
+          "top": 0,
+          "right": 900,
+          "bottom": 1000,
+          "left": 460
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 1000,
+        "clientHeight": 1000,
+        "overflow": "auto"
+      },
+      "unlinked": {
+        "rect": {
+          "x": 460,
+          "y": 0,
+          "width": 440,
+          "height": 1000,
+          "top": 0,
+          "right": 900,
+          "bottom": 1000,
+          "left": 460
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 1000,
+        "clientHeight": 1000,
+        "overflow": "auto"
+      },
+      "reassign": {
+        "rect": {
+          "x": 300,
+          "y": 0,
+          "width": 600,
+          "height": 1000,
+          "top": 0,
+          "right": 900,
+          "bottom": 1000,
+          "left": 300
+        },
+        "focusInside": false,
+        "scrollWidth": 599,
+        "clientWidth": 599,
+        "scrollHeight": 1370,
+        "clientHeight": 1000,
+        "overflow": "auto"
+      },
+      "sameOperation": true,
+      "document": {
+        "width": 900,
+        "height": 1000,
+        "viewport": [
+          900,
+          1000
+        ]
+      }
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "error": {
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        },
+        "focusInside": true,
+        "scrollWidth": 389,
+        "clientWidth": 389,
+        "scrollHeight": 973,
+        "clientHeight": 844,
+        "overflow": "auto"
+      },
+      "linked": {
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        },
+        "focusInside": true,
+        "scrollWidth": 389,
+        "clientWidth": 389,
+        "scrollHeight": 1055,
+        "clientHeight": 844,
+        "overflow": "auto"
+      },
+      "recovery": {
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        },
+        "focusInside": true,
+        "scrollWidth": 389,
+        "clientWidth": 389,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "overflow": "auto"
+      },
+      "unlinked": {
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        },
+        "focusInside": true,
+        "scrollWidth": 389,
+        "clientWidth": 389,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "overflow": "auto"
+      },
+      "reassign": {
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        },
+        "focusInside": false,
+        "scrollWidth": 389,
+        "clientWidth": 389,
+        "scrollHeight": 1679,
+        "clientHeight": 844,
+        "overflow": "auto"
+      },
+      "sameOperation": true,
+      "document": {
+        "width": 390,
+        "height": 844,
+        "viewport": [
+          390,
+          844
+        ]
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1536,
+      "height": 770,
+      "error": {
+        "rect": {
+          "x": 1096,
+          "y": 0,
+          "width": 440,
+          "height": 770,
+          "top": 0,
+          "right": 1536,
+          "bottom": 770,
+          "left": 1096
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 964,
+        "clientHeight": 770,
+        "overflow": "auto"
+      },
+      "linked": {
+        "rect": {
+          "x": 1096,
+          "y": 0,
+          "width": 440,
+          "height": 770,
+          "top": 0,
+          "right": 1536,
+          "bottom": 770,
+          "left": 1096
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 1046,
+        "clientHeight": 770,
+        "overflow": "auto"
+      },
+      "recovery": {
+        "rect": {
+          "x": 1096,
+          "y": 0,
+          "width": 440,
+          "height": 770,
+          "top": 0,
+          "right": 1536,
+          "bottom": 770,
+          "left": 1096
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 770,
+        "clientHeight": 770,
+        "overflow": "auto"
+      },
+      "unlinked": {
+        "rect": {
+          "x": 1096,
+          "y": 0,
+          "width": 440,
+          "height": 770,
+          "top": 0,
+          "right": 1536,
+          "bottom": 770,
+          "left": 1096
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 779,
+        "clientHeight": 770,
+        "overflow": "auto"
+      },
+      "reassign": {
+        "rect": {
+          "x": 936,
+          "y": 0,
+          "width": 600,
+          "height": 770,
+          "top": 0,
+          "right": 1536,
+          "bottom": 770,
+          "left": 936
+        },
+        "focusInside": false,
+        "scrollWidth": 599,
+        "clientWidth": 599,
+        "scrollHeight": 1370,
+        "clientHeight": 770,
+        "overflow": "auto"
+      },
+      "sameOperation": true,
+      "document": {
+        "width": 1536,
+        "height": 770,
+        "viewport": [
+          1536,
+          770
+        ]
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1366,
+      "height": 768,
+      "error": {
+        "rect": {
+          "x": 926,
+          "y": 0,
+          "width": 440,
+          "height": 768,
+          "top": 0,
+          "right": 1366,
+          "bottom": 768,
+          "left": 926
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 964,
+        "clientHeight": 768,
+        "overflow": "auto"
+      },
+      "linked": {
+        "rect": {
+          "x": 926,
+          "y": 0,
+          "width": 440,
+          "height": 768,
+          "top": 0,
+          "right": 1366,
+          "bottom": 768,
+          "left": 926
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 1046,
+        "clientHeight": 768,
+        "overflow": "auto"
+      },
+      "recovery": {
+        "rect": {
+          "x": 926,
+          "y": 0,
+          "width": 440,
+          "height": 768,
+          "top": 0,
+          "right": 1366,
+          "bottom": 768,
+          "left": 926
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 768,
+        "clientHeight": 768,
+        "overflow": "auto"
+      },
+      "unlinked": {
+        "rect": {
+          "x": 926,
+          "y": 0,
+          "width": 440,
+          "height": 768,
+          "top": 0,
+          "right": 1366,
+          "bottom": 768,
+          "left": 926
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 779,
+        "clientHeight": 768,
+        "overflow": "auto"
+      },
+      "reassign": {
+        "rect": {
+          "x": 766,
+          "y": 0,
+          "width": 600,
+          "height": 768,
+          "top": 0,
+          "right": 1366,
+          "bottom": 768,
+          "left": 766
+        },
+        "focusInside": false,
+        "scrollWidth": 599,
+        "clientWidth": 599,
+        "scrollHeight": 1370,
+        "clientHeight": 768,
+        "overflow": "auto"
+      },
+      "sameOperation": true,
+      "document": {
+        "width": 1366,
+        "height": 768,
+        "viewport": [
+          1366,
+          768
+        ]
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 1024,
+      "height": 768,
+      "error": {
+        "rect": {
+          "x": 584,
+          "y": 0,
+          "width": 440,
+          "height": 768,
+          "top": 0,
+          "right": 1024,
+          "bottom": 768,
+          "left": 584
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 964,
+        "clientHeight": 768,
+        "overflow": "auto"
+      },
+      "linked": {
+        "rect": {
+          "x": 584,
+          "y": 0,
+          "width": 440,
+          "height": 768,
+          "top": 0,
+          "right": 1024,
+          "bottom": 768,
+          "left": 584
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 1046,
+        "clientHeight": 768,
+        "overflow": "auto"
+      },
+      "recovery": {
+        "rect": {
+          "x": 584,
+          "y": 0,
+          "width": 440,
+          "height": 768,
+          "top": 0,
+          "right": 1024,
+          "bottom": 768,
+          "left": 584
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 768,
+        "clientHeight": 768,
+        "overflow": "auto"
+      },
+      "unlinked": {
+        "rect": {
+          "x": 584,
+          "y": 0,
+          "width": 440,
+          "height": 768,
+          "top": 0,
+          "right": 1024,
+          "bottom": 768,
+          "left": 584
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 779,
+        "clientHeight": 768,
+        "overflow": "auto"
+      },
+      "reassign": {
+        "rect": {
+          "x": 424,
+          "y": 0,
+          "width": 600,
+          "height": 768,
+          "top": 0,
+          "right": 1024,
+          "bottom": 768,
+          "left": 424
+        },
+        "focusInside": false,
+        "scrollWidth": 599,
+        "clientWidth": 599,
+        "scrollHeight": 1370,
+        "clientHeight": 768,
+        "overflow": "auto"
+      },
+      "sameOperation": true,
+      "document": {
+        "width": 1024,
+        "height": 768,
+        "viewport": [
+          1024,
+          768
+        ]
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 900,
+      "height": 1000,
+      "error": {
+        "rect": {
+          "x": 460,
+          "y": 0,
+          "width": 440,
+          "height": 1000,
+          "top": 0,
+          "right": 900,
+          "bottom": 1000,
+          "left": 460
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 1000,
+        "clientHeight": 1000,
+        "overflow": "auto"
+      },
+      "linked": {
+        "rect": {
+          "x": 460,
+          "y": 0,
+          "width": 440,
+          "height": 1000,
+          "top": 0,
+          "right": 900,
+          "bottom": 1000,
+          "left": 460
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 1046,
+        "clientHeight": 1000,
+        "overflow": "auto"
+      },
+      "recovery": {
+        "rect": {
+          "x": 460,
+          "y": 0,
+          "width": 440,
+          "height": 1000,
+          "top": 0,
+          "right": 900,
+          "bottom": 1000,
+          "left": 460
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 1000,
+        "clientHeight": 1000,
+        "overflow": "auto"
+      },
+      "unlinked": {
+        "rect": {
+          "x": 460,
+          "y": 0,
+          "width": 440,
+          "height": 1000,
+          "top": 0,
+          "right": 900,
+          "bottom": 1000,
+          "left": 460
+        },
+        "focusInside": true,
+        "scrollWidth": 439,
+        "clientWidth": 439,
+        "scrollHeight": 1000,
+        "clientHeight": 1000,
+        "overflow": "auto"
+      },
+      "reassign": {
+        "rect": {
+          "x": 300,
+          "y": 0,
+          "width": 600,
+          "height": 1000,
+          "top": 0,
+          "right": 900,
+          "bottom": 1000,
+          "left": 300
+        },
+        "focusInside": false,
+        "scrollWidth": 599,
+        "clientWidth": 599,
+        "scrollHeight": 1370,
+        "clientHeight": 1000,
+        "overflow": "auto"
+      },
+      "sameOperation": true,
+      "document": {
+        "width": 900,
+        "height": 1000,
+        "viewport": [
+          900,
+          1000
+        ]
+      }
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "error": {
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        },
+        "focusInside": true,
+        "scrollWidth": 389,
+        "clientWidth": 389,
+        "scrollHeight": 973,
+        "clientHeight": 844,
+        "overflow": "auto"
+      },
+      "linked": {
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        },
+        "focusInside": true,
+        "scrollWidth": 389,
+        "clientWidth": 389,
+        "scrollHeight": 1055,
+        "clientHeight": 844,
+        "overflow": "auto"
+      },
+      "recovery": {
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        },
+        "focusInside": true,
+        "scrollWidth": 389,
+        "clientWidth": 389,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "overflow": "auto"
+      },
+      "unlinked": {
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        },
+        "focusInside": true,
+        "scrollWidth": 389,
+        "clientWidth": 389,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "overflow": "auto"
+      },
+      "reassign": {
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "left": 0
+        },
+        "focusInside": false,
+        "scrollWidth": 389,
+        "clientWidth": 389,
+        "scrollHeight": 1679,
+        "clientHeight": 844,
+        "overflow": "auto"
+      },
+      "sameOperation": true,
+      "document": {
+        "width": 390,
+        "height": 844,
+        "viewport": [
+          390,
+          844
+        ]
+      }
+    }
+  ]
+}

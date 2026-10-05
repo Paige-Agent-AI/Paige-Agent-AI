@@ -99,7 +99,7 @@ describe("Automations panel", () => {
     await mount();
     expect(text()).not.toContain("No automations yet");
     expect(text()).toContain("Email series that send by themselves once you approve them.");
-    for (const t of ["Welcome new contacts", "Nurture leads", "Win back quiet contacts"]) expect(button(new RegExp(t))).toBeTruthy();
+    for (const t of ["Start an automated welcome series", "Nurture leads", "Win back quiet contacts"]) expect(button(new RegExp(t))).toBeTruthy();
     await act(async () => { button(/Win back quiet contacts/)!.click(); });
     await flush();
     expect(calls.find((c) => c.fn === "email_sequence_create")?.args).toEqual({ p_kind: "reengagement" });
@@ -211,7 +211,8 @@ describe("Series view", () => {
     await act(async () => { button("Stop")!.click(); });
     await flush();
     expect(calls.some((c) => c.fn === "email_sequence_stop")).toBe(false);
-    expect(confirm.mock.calls[0][0]).toContain("can’t be undone");
+    expect(confirm.mock.calls[0][0]).toContain("Stopping is final. A stopped series can’t be restarted.");
+    expect(confirm.mock.calls[0][0]).toContain("use Start a copy. For a break, use Pause instead.");
     await act(async () => { button("Stop")!.click(); });
     await flush();
     expect(calls.find((c) => c.fn === "email_sequence_stop")?.args).toEqual({ p_sequence_id: "q-1" });
@@ -253,6 +254,73 @@ describe("Series view", () => {
     await act(async () => { release(); });
     await flush();
     expect(labelled("Subject").matches(":disabled")).toBe(false);
+  });
+
+  it("a paused series says pausing stops sending, not who qualifies, and how many are waiting to join", async () => {
+    await openSeries(Object.assign(seriesRead({ status: "paused", state: "approved", live: true }), { waiting_to_enter: 4 }));
+    expect(text()).toContain("Nothing sends while it’s paused, but people can still qualify.");
+    expect(text()).toContain("anyone who qualifies in the meantime joins then");
+    expect(text()).toContain("Waiting to join4");
+    expect(button("Resume")).toBeTruthy();
+  });
+
+  it("a stopped series can't be restarted; Start a copy makes a new draft and opens it", async () => {
+    answers.email_sequence_duplicate = { data: { sequence_id: "q-2", version_id: "v-2" }, error: null };
+    await openSeries(seriesRead({ status: "stopped", state: "approved", live: true }));
+    expect(text()).toContain("A stopped series can’t be restarted");
+    expect(button("Resume")).toBeUndefined();
+    await act(async () => { button("Start a copy")!.click(); });
+    await flush();
+    expect(calls.find((c) => c.fn === "email_sequence_duplicate")?.args).toEqual({ p_sequence_id: "q-1" });
+    expect(new URL(window.location.href).searchParams.get("series")).toBe("q-2");
+  });
+
+  it("when PAIGE changes the series in chat, the view shows her version", async () => {
+    await openSeries(seriesRead());
+    const changed = seriesRead();
+    changed.version.steps = [{ ...steps[0], subject: "Welcome to the team" }, steps[1], steps[2]];
+    answers.read_email_sequence = { data: changed, error: null };
+    await act(async () => { window.dispatchEvent(new Event("paige:turn-settled")); });
+    await flush();
+    expect(text()).toContain("PAIGE updated this series.");
+  });
+
+  it("a chat turn that changed nothing leaves the view alone", async () => {
+    await openSeries(seriesRead());
+    const reads = calls.filter((c) => c.fn === "read_email_sequence").length;
+    await act(async () => { window.dispatchEvent(new Event("paige:turn-settled")); });
+    await flush();
+    expect(calls.filter((c) => c.fn === "read_email_sequence").length).toBe(reads + 1);
+    expect(text()).not.toContain("PAIGE updated this series.");
+  });
+
+  it("PAIGE's change never overwrites unsaved edits here; the owner chooses", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    await openSeries(seriesRead());
+    await act(async () => { (host.querySelector('[aria-label^="Email 1: Welcome aboard"]') as HTMLButtonElement).click(); });
+    await type(labelled("Subject"), "My own subject");
+    const changed = seriesRead();
+    changed.version.steps = [{ ...steps[0], subject: "PAIGE's subject" }, steps[1], steps[2]];
+    answers.read_email_sequence = { data: changed, error: null };
+    await act(async () => { window.dispatchEvent(new Event("paige:turn-settled")); });
+    await flush();
+    expect(text()).toContain("PAIGE changed this series while you were editing. Nothing is saved until you choose.");
+    await act(async () => { vi.advanceTimersByTime(2000); });
+    await flush();
+    expect(calls.some((c) => c.fn === "email_sequence_step_save")).toBe(false);
+    await act(async () => { button("Keep my edits")!.click(); });
+    await act(async () => { vi.advanceTimersByTime(2000); });
+    await flush();
+    expect(calls.find((c) => c.fn === "email_sequence_step_save")?.args).toMatchObject({ p_position: 1, p_subject: "My own subject" });
+  });
+
+  it("the Automations list picks up a series PAIGE wrote when her turn ends", async () => {
+    await mount();
+    expect(button(/Start an automated welcome series/)).toBeTruthy();
+    answers.read_email_sequences = { data: { sequences: [{ id: "q-1", name: "Welcome series", kind: "welcome", status: "draft", blocked_reason: null, emails: 3, entry_mode: "new_contacts", change_state: null, in_now: 0, entered: 0, sent_30d: 0, next_send_at: null, activated_at: null, updated_at: "2026-10-05T00:00:00Z" }] }, error: null };
+    await act(async () => { window.dispatchEvent(new Event("paige:turn-settled")); });
+    await flush();
+    expect(text()).toContain("3 emails · not started");
   });
 
   it("a member or another business is refused in the owner's words", async () => {

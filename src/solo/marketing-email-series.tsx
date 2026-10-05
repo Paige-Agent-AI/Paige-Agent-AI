@@ -51,10 +51,12 @@ const GOALS = [
 ];
 const QUICK_WAITS = [{ minutes: 0, first: "Right away", rest: "Right after" }, { minutes: 1440, label: "1 day" }, { minutes: 2880, label: "2 days" }, { minutes: 10080, label: "1 week" }];
 
-const STARTERS: { kind: SeriesKind; icon: string; title: string; detail: string }[] = [
-  { kind: "welcome", icon: "users", title: "Welcome new contacts", detail: "New leads get 3 emails over their first week" },
-  { kind: "nurture", icon: "trend", title: "Nurture leads", detail: "Leads get 4 emails over about two weeks" },
-  { kind: "reengagement", icon: "clock", title: "Win back quiet contacts", detail: "Anyone not contacted in 90+ days" },
+// "Start an automated welcome series" is worded apart from Start creating's "Send a one-time welcome email"
+// (owner ruling 2026-10-05: keep both, make them unmistakably different).
+const STARTERS: { kind: SeriesKind; icon: string; title: string; short: string; detail: string }[] = [
+  { kind: "welcome", icon: "users", title: "Start an automated welcome series", short: "Welcome series", detail: "New leads get 3 emails over their first week" },
+  { kind: "nurture", icon: "trend", title: "Nurture leads", short: "Nurture", detail: "Leads get 4 emails over about two weeks" },
+  { kind: "reengagement", icon: "clock", title: "Win back quiet contacts", short: "Win-back", detail: "Anyone not contacted in 90+ days" },
 ];
 
 const when = (iso: string | null) => {
@@ -91,6 +93,12 @@ export function SeriesPanel({ tenantId, onOpen }: { tenantId: string | null; onO
     });
     return () => { live = false; };
   }, [tenantId, attempt]);
+  // A series PAIGE writes in chat appears here when her turn ends.
+  React.useEffect(() => {
+    const again = () => setAttempt((n) => n + 1);
+    window.addEventListener("paige:turn-settled", again);
+    return () => window.removeEventListener("paige:turn-settled", again);
+  }, []);
   const start = async (kind: SeriesKind) => {
     setCreating(kind); setError(null);
     const made = await createSeries(kind);
@@ -125,7 +133,7 @@ export function SeriesPanel({ tenantId, onOpen }: { tenantId: string | null; onO
             <small>{line(r)}{r.change_state ? " · changes being made" : ""}</small>
           </button></li>;
         })}</ul>
-        <div className="ms-more"><span>New series:</span>{STARTERS.map((s) => <button type="button" key={s.kind} className="me-chip" disabled={creating !== null} onClick={() => void start(s.kind)}>{creating === s.kind ? "Creating…" : s.title.replace(" new contacts", "").replace(" quiet contacts", "")}</button>)}</div>
+        <div className="ms-more"><span>New series:</span>{STARTERS.map((s) => <button type="button" key={s.kind} className="me-chip" disabled={creating !== null} onClick={() => void start(s.kind)}>{creating === s.kind ? "Creating…" : s.short}</button>)}</div>
       </>}
     </Frame>
   </>;
@@ -134,10 +142,23 @@ export function SeriesPanel({ tenantId, onOpen }: { tenantId: string | null; onO
 type Settings = { name: string; entry_mode: "new_contacts" | "matching"; audience: Rule; segment_id: string | null; exit_on_goal: string; exit_when_unmatched: boolean; sender: SeriesSender };
 type StepDraft = { position: number; delay_minutes: number; subject: string; preheader: string; source: string | null; html: string };
 const stepHtml = (s: StepDraft) => (s.source !== null ? markupToHtml(s.source) : s.html);
+/** What a series says, in a form two reads (or a read and what is on screen) can be compared by. */
+const sortKeys = (v: unknown): unknown => Array.isArray(v) ? v.map(sortKeys)
+  : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => a.localeCompare(b)).map(([k, x]) => [k, sortKeys(x)])) : v;
+const contentKey = (d: SeriesRead, s: Settings, steps: { position: number; delay_minutes: number; subject: string; preheader: string; html: string }[]) => JSON.stringify(sortKeys({
+  status: d.sequence.status, version: d.version.id, state: d.version.state, name: s.name, entry: s.entry_mode, audience: s.audience ?? {},
+  segment: s.segment_id ?? null, goal: s.exit_on_goal, unmatched: s.exit_when_unmatched,
+  sender: { mode: s.sender.mode, connector: s.sender.mode === "connector" ? s.sender.connector_id ?? null : null },
+  steps: steps.map((x) => [x.position, x.delay_minutes, x.subject, x.preheader, x.html]),
+}));
+const seriesKey = (d: SeriesRead) => contentKey(d, { name: d.sequence.name, entry_mode: d.version.entry_mode, audience: d.version.audience ?? {},
+  segment_id: d.version.segment_id, exit_on_goal: d.version.exit_on_goal, exit_when_unmatched: d.version.exit_when_unmatched, sender: d.version.sender },
+  d.version.steps.map((x) => ({ ...x, html: x.body_html })));
+const shownKey = (d: SeriesRead, s: Settings, steps: StepDraft[]) => contentKey(d, s, steps.map((x) => ({ ...x, html: stepHtml(x) })));
 
 /** One series: build it, file it, approve it, run it. */
-export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConnections }: {
-  sequenceId: string; onBack: () => void; onOpenSettings: (() => void) | null; onOpenConnections: (() => void) | null;
+export function EmailSeriesView({ sequenceId, onBack, onOpen, onOpenSettings, onOpenConnections }: {
+  sequenceId: string; onBack: () => void; onOpen?: (id: string) => void; onOpenSettings: (() => void) | null; onOpenConnections: (() => void) | null;
 }) {
   const [read, setRead] = React.useState<{ phase: Phase; data: SeriesRead | null; missing?: boolean }>({ phase: "loading", data: null });
   const [attempt, setAttempt] = React.useState(0);
@@ -154,6 +175,8 @@ export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConn
   // Adding, moving or deleting an email renumbers them; editing waits until the re-read lands, so a keystroke
   // is never dropped by the re-read or saved onto the email that took its place.
   const [reshaping, setReshaping] = React.useState(false);
+  // PAIGE changed this series in chat while edits here were not yet saved: nothing is saved until the owner chooses.
+  const [changedByPaige, setChangedByPaige] = React.useState(false);
 
   React.useEffect(() => {
     let live = true;
@@ -216,10 +239,10 @@ export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConn
     return run;
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   React.useEffect(() => {
-    if (!editable || save !== "dirty") return;
+    if (!editable || save !== "dirty" || changedByPaige) return;
     const timer = setTimeout(() => { void persist(); }, 800);
     return () => clearTimeout(timer);
-  }, [settings, steps, editable, save, persist]);
+  }, [settings, steps, editable, save, persist, changedByPaige]);
   const unsaved = editable && save !== "saved";
   /** Everything typed so far is saved before a structural change, a review or leaving. */
   const flush = async () => (unsaved || dirtySettings.current || dirtySteps.current.size ? persist() : true);
@@ -241,7 +264,27 @@ export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConn
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, [unsaved]);
+  // When a chat turn ends, look again. A change PAIGE made replaces what is shown, unless there are edits here
+  // not yet saved: then say so, so neither version is lost without the owner seeing it.
+  React.useEffect(() => {
+    const check = () => {
+      rpc("read_email_sequence", { p_sequence_id: sequenceId }).then(({ data: fresh, error }) => {
+        const now = latest.current;
+        if (error || !fresh || !read.data || !now.settings) return;
+        if (seriesKey(fresh as SeriesRead) === shownKey(read.data, now.settings, now.steps)) return;
+        if (pending.current.unsaved) { setChangedByPaige(true); return; }
+        reload();
+        setNotice({ tone: "ok", text: "PAIGE updated this series." });
+      });
+    };
+    window.addEventListener("paige:turn-settled", check);
+    return () => window.removeEventListener("paige:turn-settled", check);
+  }, [sequenceId, read.data]);
+  const takePaigeVersion = () => { pending.current.unsaved = false; dirtySettings.current = false; dirtySteps.current = new Set(); revision.current += 1; setChangedByPaige(false); reload(); };
+  const keepMine = () => { setChangedByPaige(false); revision.current += 1; dirtySettings.current = true; latest.current.steps.forEach((x) => dirtySteps.current.add(x.position)); setSave("dirty"); };
+
   const leave = async () => {
+    if (changedByPaige && !window.confirm("PAIGE changed this series while you were editing. Save your edits over hers and leave?")) return;
     if (unsaved) {
       pending.current.unsaved = false;
       if (!(await flush()) && !window.confirm("Your latest changes did not save. Leave anyway and lose them?")) { pending.current.unsaved = true; return; }
@@ -289,6 +332,15 @@ export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConn
   const stats = (pos: number) => data.emails.find((e) => e.position === pos);
   const totalSent = data.emails.reduce((t, e) => t + e.sent, 0);
 
+  // Stop is final (owner ruling 2026-10-05): a stopped series is replaced by a copy, never restarted.
+  const startCopy = async () => {
+    setBusy("copy"); setNotice(null);
+    const { data: made, error } = await rpc("email_sequence_duplicate", { p_sequence_id: s.id });
+    setBusy(null);
+    const id = (made as { sequence_id?: string } | null)?.sequence_id;
+    if (error || !id) { if (error) console.error("[marketing-email] email_sequence_duplicate failed", error); setNotice({ tone: "bad", text: seriesErrorWords(error) }); return; }
+    onOpen?.(id);
+  };
   const review = () => void act("review", "email_sequence_request_approval", { p_sequence_id: s.id, p_source: "owner" });
   const addStep = async () => {
     setBusy("add"); setReshaping(true);
@@ -327,15 +379,19 @@ export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConn
         {editable && changing && <button type="button" className="btn btn-s" disabled={busy !== null} onClick={() => void act("discard", "email_sequence_discard_draft", { p_sequence_id: s.id }, "Changes discarded. The running version is unchanged.")}>Discard changes</button>}
         {editable && <button type="button" className="btn btn-s btn-p" disabled={busy !== null || !data.postal_address} aria-describedby={!data.postal_address ? "ms-postal-why" : undefined} onClick={review}>{busy === "review" ? "Preparing…" : changing ? "Review changes" : "Review and start"}</button>}
         {!editable && !locked && (s.status === "active" || s.status === "paused" || s.status === "blocked") && <button type="button" className="btn btn-s" disabled={busy !== null} onClick={() => void act("edit", "email_sequence_edit", { p_sequence_id: s.id })}><Ic.edit size={14}/>Edit</button>}
-        {s.status === "active" && <button type="button" className="btn btn-s" disabled={busy !== null} onClick={() => void act("pause", "email_sequence_pause", { p_sequence_id: s.id }, "Paused. Nothing sends until you resume.")}><Ic.pause size={14}/>Pause</button>}
+        {s.status === "active" && <button type="button" className="btn btn-s" disabled={busy !== null} onClick={() => void act("pause", "email_sequence_pause", { p_sequence_id: s.id }, "Paused. Nothing sends until you resume, and anyone who qualifies in the meantime joins then.")}><Ic.pause size={14}/>Pause</button>}
         {(s.status === "active" || s.status === "paused" || s.status === "blocked") && <button type="button" className="btn btn-s ms-danger" disabled={busy !== null} onClick={() => {
-          if (window.confirm(`Stop “${s.name}”? This can’t be undone. The ${data.people.in_now.toLocaleString()} ${data.people.in_now === 1 ? "person" : "people"} in it leave now and their scheduled emails are cancelled. What was already sent stays recorded, and nobody who was in it can go through it again.`))
+          if (window.confirm(`Stop “${s.name}” for good?\n\nStopping is final. A stopped series can’t be restarted. The ${data.people.in_now.toLocaleString()} ${data.people.in_now === 1 ? "person" : "people"} in it leave now, and their scheduled emails are cancelled. What was already sent stays recorded.\n\nTo run it again later, use Start a copy. For a break, use Pause instead.`))
             void act("stop", "email_sequence_stop", { p_sequence_id: s.id }, "Stopped. Everyone in it left and their scheduled emails were cancelled.");
         }}>Stop</button>}
+        {s.status === "stopped" && onOpen && <button type="button" className="btn btn-s btn-p" disabled={busy !== null} onClick={() => void startCopy()}>{busy === "copy" ? "Copying…" : "Start a copy"}</button>}
         {s.status === "paused" && <button type="button" className="btn btn-s btn-p" disabled={busy !== null} onClick={() => void act("resume", "email_sequence_resume", { p_sequence_id: s.id }, "Resumed. Emails that were waiting go out now, within today’s limit.")}><Ic.play size={14}/>Resume</button>}
       </div>
     </div>
     {notice && <p className={`me-notice ${notice.tone === "bad" ? "is-bad" : "is-ok"}`} role={notice.tone === "bad" ? "alert" : "status"}>{notice.text}</p>}
+    {changedByPaige && <p className="me-notice is-warn" role="status">PAIGE changed this series while you were editing. Nothing is saved until you choose.{" "}
+      <button type="button" className="btn btn-s" onClick={keepMine}>Keep my edits</button>{" "}
+      <button type="button" className="btn btn-s" onClick={takePaigeVersion}>Show PAIGE’s version</button></p>}
     {data.last_declined && editable && <p className="me-notice is-warn" role="status">You chose not now{data.last_declined.reason ? `: “${data.last_declined.reason}”` : "."} It’s a draft again and nothing changed in what sends. Change what you need, then review it again.</p>}
     {changing && editable && <p className="me-notice is-info" role="status"><b>You’re editing a new version.</b> The running version keeps sending until you approve this one. Then the {data.people.in_now.toLocaleString()} {data.people.in_now === 1 ? "person" : "people"} in it carry on with the new emails from where they are.</p>}
     {!data.postal_address && editable && <div className="mo-next me-warn" role="status"><span className="mo-next-plate" aria-hidden="true"><Ic.shield size={16}/></span><div><h2>Add your postal address before you start</h2><p id="ms-postal-why">Every marketing email shows your business’s postal address. This series can’t start until it’s added in Settings › Connections › Registration.</p></div>{onOpenSettings && <button type="button" className="btn btn-s" onClick={onOpenSettings}>Open Settings</button>}</div>}
@@ -364,8 +420,8 @@ export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConn
 
     {live && <section className={`campaigns-surface mo-panel me-review ${s.status === "blocked" ? "is-blocked" : s.status === "paused" ? "is-paused" : ""}`} aria-labelledby="ms-live-h">
       <div className="mo-panel-head"><div><h2 id="ms-live-h">{s.status === "stopped" ? "Stopped" : s.status === "paused" ? "Paused" : s.status === "blocked" ? "Needs attention" : "Running"}</h2>
-        <p>{s.status === "stopped" ? "Everyone in it left and their scheduled emails were cancelled. What was sent, and its results, stay here."
-          : s.status === "paused" ? `Nothing sends while it’s paused. Emails that come due wait and go out after you resume. The ${data.people.in_now.toLocaleString()} people in it stay where they are; people who match while it’s paused join when you resume.`
+        <p>{s.status === "stopped" ? "Everyone in it left and their scheduled emails were cancelled. What was sent, and its results, stay here. A stopped series can’t be restarted; Start a copy makes a new draft from it that needs its own approval."
+          : s.status === "paused" ? `Nothing sends while it’s paused, but people can still qualify. The ${data.people.in_now.toLocaleString()} ${data.people.in_now === 1 ? "person" : "people"} in it stay on the email they reached, emails that come due go out after you resume, and anyone who qualifies in the meantime joins then.`
           : s.status === "blocked" ? `${blockReason(s.blocked_reason)} Nothing more sends until it’s fixed, and nothing was sent from a different address. The people in it stay where they are.`
           : `Sends by itself${s.activated_at ? ` since ${new Date(s.activated_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}` : ""}. ${data.live?.entry_mode === "new_contacts" || (!data.live && v.entry_mode === "new_contacts") ? "New contacts who match join as they arrive." : "Anyone who matches joins, now or later."}`}</p></div></div>
       {s.status === "blocked" && <div className="me-review-acts">
@@ -377,7 +433,8 @@ export function EmailSeriesView({ sequenceId, onBack, onOpenSettings, onOpenConn
         <div><dt>In it now</dt><dd>{data.people.in_now.toLocaleString()}</dd></div>
         <div><dt>Joined since start</dt><dd>{(data.people.in_now + data.people.completed + data.people.left).toLocaleString()}</dd></div>
         <div><dt>Emails sent</dt><dd>{totalSent.toLocaleString()}</dd></div>
-        <div><dt>Next send</dt><dd className="is-small">{s.status === "paused" ? "None while paused" : s.status === "blocked" ? "On hold until fixed" : s.status === "stopped" ? "—" : when(data.emails.map((e) => e.next_at).filter(Boolean).sort()[0] ?? null) ?? "Nothing due yet"}</dd></div>
+        {s.status === "paused" ? <div><dt>Waiting to join</dt><dd>{data.waiting_to_enter == null ? "—" : data.waiting_to_enter.toLocaleString()}</dd></div>
+        : <div><dt>Next send</dt><dd className="is-small">{s.status === "blocked" ? "On hold until fixed" : s.status === "stopped" ? "—" : when(data.emails.map((e) => e.next_at).filter(Boolean).sort()[0] ?? null) ?? "Nothing due yet"}</dd></div>}
       </dl>
       {data.sending.remaining_today === 0 && s.status === "active" && data.people.in_now > 0 && <p className="me-notice is-warn">Today’s {data.sending.daily_cap.toLocaleString()} are used up across your email. Series emails that are due wait for tomorrow, and the emails after them wait too. Nothing is dropped.</p>}
       {(data.people.in_now + data.people.completed + data.people.left) === 0 ? <p className="me-hint">Nobody yet. {v.entry_mode === "new_contacts" ? "The next new contact who matches joins and gets email 1." : "People who match join within a few minutes."}</p>

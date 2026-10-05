@@ -1,0 +1,24 @@
+import React from 'react';
+import {act} from 'react';
+import {createRoot,type Root} from 'react-dom/client';
+import {describe,it,expect,vi,beforeEach,afterEach} from 'vitest';
+const m=vi.hoisted(()=>({review:null as {tenantId:string;command:Record<string,unknown>} | null}));
+vi.mock('@/lib/team/assignableStaff',()=>({loadAssignableStaff:async()=>[{user_id:'member-a',name:'Avery'}]}));
+vi.mock('@/hooks/useTenantContext',()=>({useTenantContext:()=>({activeTenantId:'tenant-a',accountContextLoading:false})}));
+vi.mock('@/solo/deals/useSoloDealClients',()=>({useSoloDealClients:()=>({phase:'ready',clients:[{id:'client-a',name:'Alex',primaryEmail:'alex@example.test'}],retry:vi.fn(),hasMore:false,loadMore:vi.fn()})}));
+vi.mock('@/solo/deals/CrmDealCommandReview',()=>({CrmDealCommandReview:(props:{tenantId:string;command:Record<string,unknown>})=>{m.review=props;return <div>Governed review</div>}}));
+vi.mock('@/hooks/useTenantOffers',()=>({useTenantOffers:()=>({offers:[]})}));
+vi.mock('@/components/admin/contacts/NewContactDialog',()=>({NewContactDialog:()=>null}));
+import {NewDealDialog} from './NewDealDialog';
+globalThis.IS_REACT_ACT_ENVIRONMENT=true;
+let root:Root,node:HTMLDivElement;
+const render=async(defaultContactId?:string)=>{await act(async()=>root.render(<NewDealDialog open onOpenChange={()=>{}} pipeline={{id:'pipeline-a',name:'Main'} as import('@/lib/pipelines').Pipeline} stages={[{id:'stage-a',pipeline_id:'pipeline-a',label:'New',order_index:0} as import('@/lib/pipelines').PipelineStage]} defaultContactId={defaultContactId} onCreated={()=>{}}/>));};
+const input=async(el:HTMLInputElement,value:string)=>{await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')!.set!.call(el,value);el.dispatchEvent(new Event('input',{bubbles:true}))})};
+const click=async(text:string)=>{const el=[...document.querySelectorAll('button')].find(b=>b.textContent===text);expect(el).toBeTruthy();await act(async()=>el!.click())};
+beforeEach(()=>{m.review=null;node=document.createElement('div');document.body.append(node);root=createRoot(node)});
+afterEach(async()=>{await act(async()=>root.unmount());node.remove()});
+describe('governed full deal editor',()=>{
+ it('preserves known client identity and emits exact command without owner insertion',async()=>{await render('client-a');await input(document.querySelector('input[placeholder="e.g. Acme SBA Loan"]')!,'Discovery');await click('Review deal');expect(m.review.tenantId).toBe('tenant-a');expect(m.review.command).toEqual({action:'deal.create',title:'Discovery',pipeline_id:'pipeline-a',stage_id:'stage-a',contact_id:'client-a',value_cents:0,currency:'USD',expected_close_date:null,offer_type:null})});
+ it('includes the selected canonical workspace member in the governed create command',async()=>{await render('client-a');await input(document.querySelector('input[placeholder="e.g. Acme SBA Loan"]')!,'Discovery');const owner=document.getElementById('deal-owner') as HTMLSelectElement;await act(async()=>{owner.value='member-a';owner.dispatchEvent(new Event('change',{bubbles:true}))});await click('Review deal');expect(m.review.command.owner_user_id).toBe('member-a')});
+ it.each(['anonymous_prospect' ,'early_stage_prospect','import_pending_identity'])('requires explicit canonical unlinked intent %s',async allowedReason=>{await render();await input(document.querySelector('input[placeholder="e.g. Acme SBA Loan"]')!,'Discovery');await click('Review deal');expect(m.review).toBeNull();const reason=document.getElementById('deal-unlinked-reason') as HTMLSelectElement;expect(reason.tagName).toBe('SELECT');await act(async()=>{reason.value=allowedReason;reason.dispatchEvent(new Event('change',{bubbles:true}))});await click('Review deal');expect(m.review.command.unlinked_reason).toBe(allowedReason);expect(m.review.command).not.toHaveProperty('contact_id')});
+});

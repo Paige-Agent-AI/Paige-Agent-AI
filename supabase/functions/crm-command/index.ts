@@ -16,6 +16,7 @@ import {
 import { parseExecutorError, executorFailureSpeech } from "../_shared/crm-command/executor-error.ts";
 import { databaseAnswered } from "../_shared/approval-outcome.ts";
 import { canonicalAppUrl, type CanonicalTier } from "../_shared/canonical-app-url.ts";
+import { dealCreateRelationshipIssue, UNLINKED_DEAL_REASONS } from "../_shared/crm-command/deal-relationship-integrity.ts";
 import { resolveCommandContactRefs } from "../_shared/crm-command/contact-refs.ts";
 
 const cors = {
@@ -41,6 +42,7 @@ const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected an ISO cale
 const commandSchema = z.object({
   action: actionSchema,
   contact_id: z.string().uuid().nullable().optional(),
+  unlinked_reason: z.enum(UNLINKED_DEAL_REASONS).optional(),
   loser_contact_id: z.string().uuid().nullable().optional(),
   // The reference Paige is shown (a contact's account number). Resolved to contact_id inside the
   // caller's own workspace before anything else runs; see resolveContactReferences below.
@@ -76,6 +78,8 @@ const commandSchema = z.object({
   const requireField = (field: keyof typeof command) => {
     if (command[field] === undefined) ctx.addIssue({ code: z.ZodIssueCode.custom, path: [field], message: `${String(field)} is required for ${command.action}` });
   };
+  const relationshipIssue = dealCreateRelationshipIssue(command);
+  if (relationshipIssue) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["client_ref"], message: relationshipIssue });
   // A contact is named by its id or by the client_ref a read returned; either satisfies the action.
   const requireContact = (idField: "contact_id" | "loser_contact_id", refField: "client_ref" | "loser_client_ref") => {
     if (command[idField] === undefined && command[refField] === undefined) {
@@ -83,7 +87,7 @@ const commandSchema = z.object({
     }
   };
   const namesContact = (command.action.startsWith("contact.") && !["contact.create", "contact.bulk_update"].includes(command.action))
-    || ["company.create", "activity.log", "deal.assign_contact"].includes(command.action);
+    || ["company.create", "activity.log", "deal.create", "deal.assign_contact"].includes(command.action);
   if (command.client_ref !== undefined && !namesContact) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["client_ref"], message: `${command.action} does not name a contact.` });
   }
@@ -155,6 +159,7 @@ const commandSchema = z.object({
 });
 
 const bodySchema = z.object({
+  expected_tenant_id: z.string().uuid().optional(),
   command: commandSchema,
   legacy_command: commandSchema.optional(),
   legacy_idempotency_key: z.string().regex(/^[0-9a-f]{16}$/).optional(),
@@ -306,6 +311,7 @@ serve(async (req) => {
     }
     body = {
       command: canonicalCommand,
+      ...(parsedBody.expected_tenant_id ? { expected_tenant_id: parsedBody.expected_tenant_id } : {}),
       idempotency_key: parsedBody.idempotency_key,
       ...(parsedBody.approved_fingerprint ? { approved_fingerprint: parsedBody.approved_fingerprint } : {}),
       legacyCommand,
@@ -323,6 +329,9 @@ serve(async (req) => {
   const { data: tenantId, error: tenantError } = await caller.rpc("current_user_tenant_id");
   if (tenantError || typeof tenantId !== "string") {
     return response(403, { ok: false, code: "CRM_TENANT_REQUIRED" });
+  }
+  if (body.expected_tenant_id && body.expected_tenant_id !== tenantId) {
+    return response(409, { ok: false, outcome: "refused", code: "CRM_ACTIVE_ACCOUNT_CHANGED", message: "The active workspace changed. Reopen the record in the intended workspace." });
   }
   // Active account is mutable session state. Re-read it at the last responsible moment so
   // an account switch between request authentication, approval, and execution cannot write the

@@ -29,6 +29,18 @@ describe('Sales invoice canonical Chat door', () => {
     expect(h.calls).toEqual([{body:{expected_tenant_id:tenant,operation_id:operation,approved_fingerprint:fingerprint,command:{action:'invoice.payment_request',invoice_id:invoice,expected_version:2,provider:'stripe',purpose:'partial',amount_minor:50000}}}]);
   });
 
+  it('C4 pinned payment approval resumes its exact operation without another approval lookup or model drift',async()=>{
+    const exact={action:'invoice.payment_request',invoice_id:invoice,expected_version:2,provider:'stripe',purpose:'partial',amount_minor:50000,currency:'usd',client_id:invoice,issued_snapshot_version:1,merchant_account_id:'acct_A',merchant_binding_version:1,environment:'test'};
+    const h=harness();h.deps.caller.functions.invoke=async(_name,options)=>{h.calls.push(options);return {data:{ok:true,outcome:'customer_action_required',amount_minor:50000,currency:'usd'},error:null}};
+    const result=await dispatchSalesInvoiceChat({...context,toolName:'sales_create_payment_request',approved:new Set(),args:{invoice_id:invoice,expected_version:99,provider:'stripe',purpose:'partial',amount_minor:99999},pinned:{fingerprint,args:{command:exact,operation_id:operation,expected_tenant_id:tenant}}},h.deps as never);
+    expect(h.predicates).toEqual([]);expect(result.spent).toBe(fingerprint);expect(result.content.note).toContain('does not establish money received');
+    expect(h.calls).toEqual([{body:{expected_tenant_id:tenant,operation_id:operation,approved_fingerprint:fingerprint,command:{action:'invoice.payment_request',invoice_id:invoice,expected_version:2,provider:'stripe',purpose:'partial',amount_minor:50000}}}]);
+  });
+  it('C4 pinned payment authority from another tenant refuses before dispatch',async()=>{
+    const h=harness();const result=await dispatchSalesInvoiceChat({...context,toolName:'sales_create_payment_request',approved:new Set(),pinned:{fingerprint,args:{command:{action:'invoice.payment_request',invoice_id:invoice,expected_version:2,provider:'stripe',purpose:'full',currency:'usd',client_id:invoice,issued_snapshot_version:1,merchant_account_id:'acct_A',merchant_binding_version:1,environment:'test',amount_minor:50000},operation_id:operation,expected_tenant_id:operation}}},h.deps as never);
+    expect(result.content.success).toBe(false);expect(h.calls).toEqual([]);expect(result.spent).toBeUndefined();
+  });
+
   it('records imported partial receipts through the canonical Collections door and same payment policy',async()=>{
     const h=harness();let endpoint='';h.deps.caller.functions.invoke=async(name,options)=>{endpoint=name;h.calls.push(options);return {data:{ok:true,operation:{id:operation,action:'collection.record_receipt'},row:{status:'recorded',remaining_cents:5000,currency:'jpy',version:2}},error:null}};
     const result=await dispatchSalesInvoiceChat({...context,toolName:'sales_record_manual_payment',approved:new Set(),args:{record_kind:'imported',invoice_id:invoice,expected_version:1,amount_cents:1000,currency:'jpy',method:'wire',received_at:'2026-10-03T12:00:00.000Z'}},h.deps as never);

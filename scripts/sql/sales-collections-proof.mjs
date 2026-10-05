@@ -71,7 +71,8 @@ try {
   assert.throws(()=>run("SELECT list_sales_collection_register('20000000-0000-0000-0000-000000000001');"),/does not exist/);
   const migration=read('supabase/migrations/20270547000000_sales_collections.sql');run(migration);run(migration);
   const catalogue=read('supabase/migrations/20270547000002_sales_collection_autonomy_catalogue.sql');run(catalogue);run(catalogue);
-  const output=run(read('scripts/sql/sales-collections-proof.sql'));
+  const contextRead=read('supabase/migrations/20270585000000_sales_collection_read_context.sql');run(contextRead);run(contextRead);
+  const output=run(read('scripts/sql/sales-collections-proof.sql'))+run(read('scripts/sql/sales-collection-context-proof.sql'));
   const actor='10000000-0000-0000-0000-000000000001',tenant='20000000-0000-0000-0000-000000000001';
   const stageId=randomUUID(),commitId=randomUUID();
   const rows=[{entity:'invoice',entity_id:'concurrent-i',client_id:'30000000-0000-0000-0000-000000000001',invoice_id:null,invoice_number:'CONCURRENT',currency:'usd',amount_cents:1000,due_date:null,memo:null},{entity:'receipt',entity_id:'concurrent-r',invoice_entity_id:'concurrent-i',invoice_id:null,payment_id:null,currency:'usd',amount_cents:400,method:'cash',received_at:'2026-10-01T12:00:00.000Z',reference:null}];

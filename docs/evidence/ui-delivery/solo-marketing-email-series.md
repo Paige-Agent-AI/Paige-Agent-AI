@@ -8,7 +8,7 @@ daily limit, footer and unsubscribe as campaigns. PAIGE proposes; nothing sends 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: flows - (1) first use: no series, the three starters, one opens a draft series; (2) build: who enters (new contacts, or anyone who matches a rule or saved segment, with today's reach), emails with waits (add, move, delete, preview), leave rules, sender; saves as you type; (3) file for approval, refused with the owner's words for an empty email, no postal address, a sender that cannot send or more matches than the daily limit; (4) approve on the series page or from the shared approvals queue, or Make changes / Not now; (5) running: people in it, funnel, who left and why, recent people with Remove; (6) pause, resume, stop (final), edit a running series as a new version approved again; (7) a member, another business or a client is refused in the database
 PAIGE_UI_DESIGN: PASS: Impeccable craft floor applied: built on the E2 editor's me-/mo- system, token-only CSS, gold only on Approve, layered surfaces, both themes; render drive measured AA on every small-text style and found ink-3 at 4.15:1, moved to ink-2
-MATERIAL_FLOW_CHANGE: YES: a new surface (the series page) and a live Automations panel replacing the E2 placeholder; the "Plan a nurture series" starter now creates a nurture series instead of opening PAIGE chat
+MATERIAL_FLOW_CHANGE: YES: a new surface (the series page) and a live Automations panel replacing E2's "built next" note; the "Plan a nurture series" starter now creates a nurture series instead of opening PAIGE chat
 FLOW_PROTOTYPE: PASS: interactive flow prototype (Flow Prototype skill) published for the owner at https://claude.ai/artifact/3rs8JoFfqD851QcV3mMXH3 - panel empty and populated, series view in draft, waiting for approval, running, paused, needs attention and stopped, the edit-a-running-series path, the state map, motion and reduced-motion notes, and open questions; mocked and throwaway, not in the product. Pre-launch (§4/§69) the build proceeds while the owner reviews it; the PR names where the product differs from it
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: Solo owner or admin; primary action is approving a series to start
 VISUAL_DIRECTION: PASS: the E2 email editor's direction (me-* on the mo-* system), with a vertical spine of emails and waits
@@ -46,7 +46,7 @@ RELEASE_CLASSIFICATION: internal-only: pre-launch, no customers
 CUSTOMER_RELEASE_IDENTITY: none: pre-launch, no customers
 RELEASE_NOTE_REQUIRED: no: pre-launch, no customers
 RELEASE_TRUTH_BOUNDARY: PARTIAL: verified by tests, the render drive and rolled-back preview proofs; the signed-in production drive is owed
-RELEASE_RECOVERY: position=revert the merge commit and pause any running series (the migration adds tables, two nullable columns, functions and redefinitions of existing functions; reverting the code leaves the tables inert); reference=git revert of this PR's merge commit
+RELEASE_RECOVERY: position=revert the merge commit and pause any running series (the migration adds tables, two nullable columns, functions and redefinitions of existing functions, and reverting the code leaves the tables inert); reference=git revert of this PR's merge commit
 UNVERIFIED: the signed-in production flow of building, approving and receiving a series (no tenant login in this session).
 
 ## Scope and collisions

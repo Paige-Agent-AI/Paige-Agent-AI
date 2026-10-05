@@ -70,3 +70,5 @@ Final focused suite after current-main rebase: **102 tests / ten files PASS**. A
 ## Integrated independent review disposition
 
 Nonwriter review completed on 35c7ed4b4e7dba605f3e0f66b3b80683eb069887: FAIL, one P2. Active Clients NewDealDialog accepted free-text unlinked reasons that canonical CRM refuses. The editor now uses the same three allowed reason values; missing selection refuses, all three are component-tested. Revised test failed first (INPUT instead of SELECT), then all four editor cases passed. No additional material findings were reported. Trailing fixture-driver blank line also removed. One exact-head repair recheck remains required and will be recorded in PR #1761 before merge.
+
+Post-review rendered correction: relationship picker initial focus repaired after the checked-in browser driver exposed reassignment focus loss. Ten viewport/theme cases and 18 focused tests pass. Prior COMPLETE PASS applies to 02fb00f8 only; review of the new head requires escalation under AGENTS.md merge gate item 2. No merge/deployment claim.

@@ -94,6 +94,8 @@ const BLOCK_REASON: Record<string, string> = {
   business_inactive: "This business is not active.",
   sender_needs_attention: "The approved sender needs attention.",
   sender_changed: "The sender changed since approval.",
+  sender_not_found: "The approved sender was removed.",
+  series_error: "This series could not run. Choose Edit, check who enters, and approve it again.",
 };
 export const blockReason = (reason: string | null) => (reason ? BLOCK_REASON[reason] ?? "Sending is paused." : "Sending is paused.");
 

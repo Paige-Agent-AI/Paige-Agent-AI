@@ -23,7 +23,7 @@ const rpc = (supabase as unknown as { rpc: Rpc }).rpc.bind(supabase);
 
 export type Rule = { stages?: string[]; sources?: string[]; tags?: string[]; inactive_days?: number };
 type Choice = { key: string; count: number };
-type Choices = { stages: Choice[]; sources: Choice[]; tags: Choice[] };
+export type Choices = { stages: Choice[]; sources: Choice[]; tags: Choice[] };
 type Sender = { mode: "managed" | "connector"; connector_id?: string; provider?: string; from_address?: string | null; from_name?: string | null; healthy?: boolean; ok?: boolean; reason?: string };
 type CampaignRead = {
   campaign: { id: string; name: string; kind: string; status: string; blocked_reason: string | null; updated_at: string };
@@ -81,7 +81,7 @@ const words = (key: string) => key.charAt(0).toUpperCase() + key.slice(1).replac
 const stageLabel = (k: string) => STAGE_LABEL[k] ?? words(k);
 const sourceLabel = (k: string) => SOURCE_LABEL[k] ?? words(k);
 
-function ruleSummary(rule: Rule): string {
+export function ruleSummary(rule: Rule): string {
   const parts: string[] = [];
   if (rule.stages?.length) parts.push(rule.stages.map(stageLabel).join(" or "));
   if (rule.sources?.length) parts.push(`from ${rule.sources.map(sourceLabel).join(" or ")}`);
@@ -91,7 +91,7 @@ function ruleSummary(rule: Rule): string {
 }
 
 /** Who a rule reaches today; re-read a moment after the rule stops changing. */
-function useAudiencePreview(rule: Rule, kind: string, segmentId: string | null, enabled = true) {
+export function useAudiencePreview(rule: Rule, kind: string, segmentId: string | null, enabled = true) {
   const [state, setState] = React.useState<{ phase: Phase; data: Preview | null }>({ phase: "loading", data: null });
   const key = JSON.stringify([rule, kind, segmentId]);
   React.useEffect(() => {
@@ -133,7 +133,7 @@ export function RuleBuilder({ rule, onChange, choices, disabled }: { rule: Rule;
   </fieldset>;
 }
 
-function Reach({ preview, newsletter }: { preview: { phase: Phase; data: Preview | null }; newsletter: boolean }) {
+export function Reach({ preview, newsletter }: { preview: { phase: Phase; data: Preview | null }; newsletter: boolean }) {
   const p = preview.data;
   if (!p) return <p className="me-reach" aria-live="polite">{preview.phase === "error" ? "The count could not load." : "Counting…"}</p>;
   const out = [
@@ -472,7 +472,7 @@ export function EmailCampaignList({ tenantId, onBack, onOpen }: { tenantId: stri
 }
 
 /** Arrow keys move through a radio group and choose, as a native radio group does. */
-function roveRadios(e: React.KeyboardEvent<HTMLElement>) {
+export function roveRadios(e: React.KeyboardEvent<HTMLElement>) {
   const step = e.key === "ArrowDown" || e.key === "ArrowRight" ? 1 : e.key === "ArrowUp" || e.key === "ArrowLeft" ? -1 : 0;
   if (!step) return;
   const radios = Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="radio"]:not(:disabled)'));

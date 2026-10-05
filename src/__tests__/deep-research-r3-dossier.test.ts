@@ -134,7 +134,7 @@ describe("R3 dossier wiring — bounded shape + canonical persistence", () => {
   });
 
   it("synthesis diagnostics: returned + candidate count (the synthesis-refusal vs validation-rejection split)", () => {
-    expect(core).toContain("dossier.synthesis.returned = !!synth;");
+    expect(core).toContain("dossier.synthesis.returned = true;"); // R4: both paths converge before this stamp
     expect(core).toContain("dossier.synthesis.candidates = Array.isArray(synth?.findings) ? synth.findings.length : 0;");
   });
 
@@ -144,7 +144,7 @@ describe("R3 dossier wiring — bounded shape + canonical persistence", () => {
   });
 
   it("the dossier persists on the canonical record — all three persistRun sites carry it", () => {
-    expect(core.match(/persistRun\(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier\)/g)?.length).toBe(3);
+    expect(core.match(/persistRun\(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier\)/g)?.length).toBe(4); // R4: 3 original + the all-units-failed early return (the dead !synth block was removed)
     expect(core).toContain("dossier: (dossier ?? null) as never,");
   });
 
@@ -160,7 +160,7 @@ describe("R3 dossier wiring — bounded shape + canonical persistence", () => {
     const reads = core.match(/dossier\.[a-z_]+/g) ?? [];
     const readTargets = new Set(reads.map((r) => r.replace(/\.slice|\.push|\.length|\.candidates|\.synthesis|\.hops|\.caps_applied|\.v/g, "").split(".")[1] ?? ""));
     // the only fields read are its own bookkeeping (push/length/slice on the collectors)
-    for (const t of readTargets) expect(["", "hops", "synthesis", "candidates", "caps_applied", "v"]).toContain(t);
+    for (const t of readTargets) expect(["", "hops", "synthesis", "candidates", "caps_applied", "v", "units"]).toContain(t); // R4 adds the units layer
   });
 });
 

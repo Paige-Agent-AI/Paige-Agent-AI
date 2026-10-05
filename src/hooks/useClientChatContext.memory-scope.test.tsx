@@ -25,6 +25,9 @@ const h = vi.hoisted(() => ({
   ctx: null as { activeTenantId: string | null } | null,
   /** When set, the active-workspace lookup waits on it — models a re-read still in flight. */
   hold: null as Promise<void> | null,
+  /** The DECLARED active workspace (`profiles.active_tenant_id`). Defaults to agreeing with the
+   *  resolver; a scenario sets it to a different tenant to model the stale-pointer case. */
+  profileTenant: null as string | null,
 }));
 
 vi.mock("@/hooks/useTenantContext", () => ({ useOptionalTenantContext: () => h.ctx }));
@@ -34,6 +37,9 @@ vi.mock("@/integrations/supabase/client", () => {
     const filters: unknown[][] = [];
     const answer = () => {
       h.reads.push({ table, filters });
+      if (table === "profiles") {
+        return { data: h.profileTenant != null ? [{ active_tenant_id: h.profileTenant }] : [], error: null };
+      }
       if (table !== "client_memory") return { data: null, error: null };
       const rows = h.rows.filter((r) => filters.every((f) => {
         if ((f[0] === "eq" || f[0] === "is") && typeof f[1] === "string" && f[1] in r) return r[f[1]] === f[2];
@@ -112,6 +118,7 @@ beforeEach(() => {
   h.reads.length = 0;
   h.rpcs.length = 0;
   h.active = { data: WS_A, error: null };
+  h.profileTenant = WS_A;
   h.ctx = null;
   h.hold = null;
   const now = new Date().toISOString();
@@ -139,6 +146,7 @@ describe("useClientChatContext — own memory is read in the active workspace on
 
   it("the same person in workspace B never sees what they wrote in A", async () => {
     h.active = { data: WS_B, error: null };
+    h.profileTenant = WS_B; // a real switch moves the declared pointer with it (the stale case is its own test below)
     const { result } = renderHook(null, ME);
     await waitFor(() => expect(result.current.contextBlock).toContain("Recent Memory"));
     expect(has(memoryReads()[0].filters, "eq", "tenant_id", WS_B)).toBe(true);
@@ -178,6 +186,7 @@ describe("useClientChatContext — own memory is read in the active workspace on
     // The user switches to workspace B (another tab, or the switcher). PaigeChat is NOT remounted:
     // only the tenant context changes, and the server-side active workspace moves with it.
     h.active = { data: WS_B, error: null };
+    h.profileTenant = WS_B;
     h.ctx = { activeTenantId: WS_B };
     rerender();
 
@@ -196,6 +205,7 @@ describe("useClientChatContext — own memory is read in the active workspace on
     let release: () => void = () => {};
     h.hold = new Promise<void>((r) => { release = r; });
     h.active = { data: WS_B, error: null };
+    h.profileTenant = WS_B;
     h.ctx = { activeTenantId: WS_B };
     rerender();
 
@@ -205,5 +215,41 @@ describe("useClientChatContext — own memory is read in the active workspace on
     release();
     await waitFor(() => expect(result.current.contextBlock).toContain("WRITTEN-IN-B"));
     expect(result.current.contextBlock).not.toContain("WRITTEN-IN-A");
+  });
+
+  it("a STALE declared pointer (declared A, resolver B) is no memory scope — no read, no line, no fallback", async () => {
+    h.profileTenant = WS_A; // the pointer still names A…
+    h.active = { data: WS_B, error: null }; // …but standing validates B only
+    const { result } = renderHook(null, ME);
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    await waitFor(() => expect(h.reads.length).toBeGreaterThan(0));
+    expect(memoryReads()).toHaveLength(0);
+    expect(result.current.contextBlock).not.toContain("Recent Memory");
+    expect(result.current.contextBlock).not.toContain("WRITTEN-IN-A");
+    expect(result.current.contextBlock).not.toContain("WRITTEN-IN-B");
+  });
+
+  it("A → B → A: the return to A re-reads A fresh and B never bleeds back", async () => {
+    h.ctx = { activeTenantId: WS_A };
+    const { result, rerender } = renderHook(null, ME);
+    await waitFor(() => expect(result.current.contextBlock).toContain("WRITTEN-IN-A"));
+
+    h.active = { data: WS_B, error: null };
+    h.profileTenant = WS_B;
+    h.ctx = { activeTenantId: WS_B };
+    rerender();
+    await waitFor(() => expect(result.current.contextBlock).toContain("WRITTEN-IN-B"));
+    expect(result.current.contextBlock).not.toContain("WRITTEN-IN-A");
+
+    // Back to A — a fresh capture, not a resurrected cache.
+    h.active = { data: WS_A, error: null };
+    h.profileTenant = WS_A;
+    h.ctx = { activeTenantId: WS_A };
+    rerender();
+    await waitFor(() => expect(memoryReads().length).toBeGreaterThanOrEqual(3));
+    const last = memoryReads()[memoryReads().length - 1];
+    expect(has(last.filters, "eq", "tenant_id", WS_A)).toBe(true);
+    await waitFor(() => expect(result.current.contextBlock).toContain("WRITTEN-IN-A"));
+    expect(result.current.contextBlock).not.toContain("WRITTEN-IN-B");
   });
 });

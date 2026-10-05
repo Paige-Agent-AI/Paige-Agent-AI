@@ -1297,6 +1297,43 @@ serve(async (req) => {
         const { data, error } = await supabaseClient.rpc("current_user_tenant_id");
         return error ? null : ((data ?? null) as string | null);
       })());
+    // INT-326 memory-scope authority (coordinator ruling 2026-10-05): durable tenant memory —
+    // read OR write — may key on the person only inside the workspace that is BOTH explicitly
+    // declared AND currently validated: `profiles.active_tenant_id` (read through the caller's
+    // own JWT, so RLS applies) AND the entitlement-validated resolver returning the SAME
+    // workspace. Neither alone is authority: the declared pointer can be stale (membership
+    // revoked/cleared) and the resolver alone would substitute the oldest membership the caller
+    // never chose. Declared null, stale, revoked, or mismatched ⇒ NO tenant-memory read or
+    // write this turn — fail closed, existence-silent (the log below names the failed leg,
+    // never whether any memory exists). One resolution per turn, shared by every memory
+    // consumer below (recall, semantic search, the writers, the de-dupe probe), so the whole
+    // turn governs memory by ONE captured scope. Not a second resolver: it CONSUMES
+    // callerActiveTenantId() and the same declared-profile read the Knowledge gate uses.
+    let memoryWorkspaceScopeRead: Promise<string | null> | null = null;
+    const memoryWorkspaceScope = (): Promise<string | null> =>
+      (memoryWorkspaceScopeRead ??= (async () => {
+        try {
+          const [declaredRead, validated] = await Promise.all([
+            supabaseClient
+              .from("profiles")
+              .select("active_tenant_id")
+              .eq("user_id", user.id)
+              .maybeSingle(),
+            callerActiveTenantId(),
+          ]);
+          const { data, error } = declaredRead;
+          if (error) {
+            console.error("[paige] memory workspace scope unreadable — no memory this turn",
+              JSON.stringify({ code: (error as any)?.code ?? null }));
+            return null;
+          }
+          const declared = (data as { active_tenant_id?: unknown } | null)?.active_tenant_id;
+          if (typeof declared !== "string" || !declared) return null;
+          return declared === validated ? declared : null;
+        } catch {
+          return null;
+        }
+      })());
       // THE SIX REFUSAL REASONS ARE NOT ONE KIND OF THING, and a consumer that treats them as one
     // asserts something false to the person. Two are PERMISSION verdicts — the read succeeded and
     // the answer was no. Four are UNKNOWN — an RPC blip, a failed read, a thrown exception —
@@ -1523,8 +1560,15 @@ JSON:`;
           metadata: { channel: "text" },
         };
         if (scopedClientId) memoryInsert.client_id = scopedClientId;
-        else memoryInsert.tenant_id = await callerActiveTenantId();
-        await recordWrite("client_memory:turn", supabase.from("client_memory").insert(memoryInsert));
+        else memoryInsert.tenant_id = await memoryWorkspaceScope();
+        // INT-326 write rule: a no-client turn that could not establish its workspace persists
+        // NO tenant memory — the handler fails closed BEFORE the database instead of letting a
+        // fallback-stamped row (or a MEMORY_TENANT_UNRESOLVED refusal) stand in for a decision.
+        if (!scopedClientId && memoryInsert.tenant_id === null) {
+          console.error("[paige] own-memory write skipped — no established workspace this turn", JSON.stringify({ kind: "session_summary" }));
+        } else {
+          await recordWrite("client_memory:turn", supabase.from("client_memory").insert(memoryInsert));
+        }
       }
 
       // Insert milestone memories if detected
@@ -1554,8 +1598,13 @@ JSON:`;
                 embedding: emb,
               };
               if (scopedClientId) milestoneMemory.client_id = scopedClientId;
-              else milestoneMemory.tenant_id = await callerActiveTenantId();
-              await recordWrite("client_memory:milestone", supabase.from("client_memory").insert(milestoneMemory));
+              else milestoneMemory.tenant_id = await memoryWorkspaceScope();
+              // INT-326 write rule: no established workspace ⇒ no durable write (see session_summary).
+              if (!scopedClientId && milestoneMemory.tenant_id === null) {
+                console.error("[paige] own-memory write skipped — no established workspace this turn", JSON.stringify({ kind: "milestone_completed" }));
+              } else {
+                await recordWrite("client_memory:milestone", supabase.from("client_memory").insert(milestoneMemory));
+              }
             }
           }
         } catch (err) {
@@ -1599,8 +1648,13 @@ JSON:`;
                 metadata: { channel: "text", source: "auto_extracted" },
               };
               if (scopedClientId) factMemory.client_id = scopedClientId;
-              else factMemory.tenant_id = await callerActiveTenantId();
-              await recordWrite(`client_memory:${memoryType}`, supabase.from("client_memory").insert(factMemory));
+              else factMemory.tenant_id = await memoryWorkspaceScope();
+              // INT-326 write rule: no established workspace ⇒ no durable write (see session_summary).
+              if (!scopedClientId && factMemory.tenant_id === null) {
+                console.error("[paige] own-memory write skipped — no established workspace this turn", JSON.stringify({ kind: memoryType }));
+              } else {
+                await recordWrite(`client_memory:${memoryType}`, supabase.from("client_memory").insert(factMemory));
+              }
             }
           }
         } catch (err) {
@@ -1918,7 +1972,8 @@ JSON:`;
     let memoryBlock = "";
     // INT-326 — A PERSON'S OWN MEMORY IS RECALLED ONLY IN THE WORKSPACE IT WAS WRITTEN IN (§9/§51).
     // Every `client_memory` row carries a NOT NULL tenant: a row about the caller is stamped with the
-    // caller's ACTIVE tenant by the writers below (`callerActiveTenantId()`). The no-client read used
+    // caller's established memory scope by the writers below (`memoryWorkspaceScope()` — the
+    // declared∧validated conjunction, coordinator ruling 2026-10-05). The no-client read used
     // to key on `client_user_id` alone through the service-role client, so a preference written in
     // workspace A was recalled into a conversation in workspace B. The read now uses the SAME source
     // the writers stamp with, so read scope and write scope cannot diverge:
@@ -1936,9 +1991,10 @@ JSON:`;
       // with no sample would have its legitimate client memory dropped (or, if exempted, lose the
       // guard). Only the OWN-memory read is filtered by it, so only that path waits for it before
       // reading; a client turn's read is keyed on client_id, and its sample runs alongside the read
-      // instead of in front of it (no extra serial round trip). The read is cached per turn and is
-      // the same one the writers below stamp with.
-      const memoryTenantSample: Promise<string | null> = clientScopeDenied ? Promise.resolve(null) : callerActiveTenantId();
+      // instead of in front of it (no extra serial round trip). The sample IS the declared∧validated
+      // memory scope (INT-326 ruling): one memoized resolution shared with the writers and the
+      // de-dupe probe below, so the whole turn governs memory by ONE captured scope.
+      const memoryTenantSample: Promise<string | null> = clientScopeDenied ? Promise.resolve(null) : memoryWorkspaceScope();
       const memoryTurnTenant = clientScopeDenied || scopedClientId ? null : await memoryTenantSample;
       const ownMemoryAllowed = !clientScopeDenied && !scopedClientId && memoryTurnTenant !== null;
       // Refused client context does NO memory work at all: the block below is skipped entirely,
@@ -2029,10 +2085,16 @@ JSON:`;
           const semanticBlock = semanticEntries.length > 0
             ? `\n\n--- Semantically-relevant past context for this question ---\n${semanticEntries.join("\n")}`
             : "";
+          // INT-326 (Impeccable): name the TRUE subject. With a client in focus the rows are that
+          // client's; with none they are the CALLER's own preferences as shared while working in
+          // THIS workspace — the heading must not claim a client that is not in scope.
+          const memoryHeading = scopedClientId
+            ? "What I know about this client from previous sessions"
+            : "What I've learned about how you work in this workspace";
           // The remembered spans above are sanitized; lead the block with the untrusted-data notice so
           // an embedded directive/tool-call/permission-change is never obeyed. The trusted instruction
           // below still scopes what to honor to tone/length/format PREFERENCES — data, not authority.
-          memoryBlock = `\n\n=== PAIGE MEMORY — What I know about this client from previous sessions ===\n${RETRIEVED_KNOWLEDGE_UNTRUSTED_NOTICE}\n${included.join("\n")}${semanticBlock}\n=== END MEMORY ===\n\nIMPORTANT: Honor any user_preference items (tone, length, formats) in every response. Use the rest of the memory to personalize. If this is the start of a new conversation (only 1 user message), open with a personalized greeting that references what you know.\n`;
+          memoryBlock = `\n\n=== PAIGE MEMORY — ${memoryHeading} ===\n${RETRIEVED_KNOWLEDGE_UNTRUSTED_NOTICE}\n${included.join("\n")}${semanticBlock}\n=== END MEMORY ===\n\nIMPORTANT: Honor any user_preference items (tone, length, formats) in every response. Use the rest of the memory to personalize. If this is the start of a new conversation (only 1 user message), open with a personalized greeting that references what you know.\n`;
         }
       }
     } catch (err) {
@@ -2149,7 +2211,7 @@ JSON:`;
           // suppressed the same one in workspace B for a week. A client turn keys on the client.
           // With no workspace there is nothing to compare against (the insert below is refused by
           // the database with MEMORY_TENANT_UNRESOLVED, exactly as before), so no probe is made.
-          const dedupeTenant = scopedClientId ? null : await callerActiveTenantId();
+          const dedupeTenant = scopedClientId ? null : await memoryWorkspaceScope();
           const dedupeProbe = scopedClientId
             ? supabase.from("client_memory").select("id").eq("client_id", scopedClientId)
             : dedupeTenant
@@ -2163,7 +2225,10 @@ JSON:`;
               .limit(1)
               .maybeSingle()
             : { data: null };
-          if (!dup) {
+          // INT-326 write rule: with no established workspace the whole write is skipped HERE —
+          // before the paid embed, not by waiting for the database's MEMORY_TENANT_UNRESOLVED
+          // refusal. A turn that cannot name its workspace persists no tenant memory.
+          if (!dup && (scopedClientId || dedupeTenant)) {
             const emb = await embedText(lastUserMessage!.content);
             const row: any = {
               client_user_id: targetUserId,
@@ -2173,8 +2238,10 @@ JSON:`;
               metadata: { source: "explicit_signal", channel: "text" },
             };
             if (scopedClientId) row.client_id = scopedClientId;
-            else row.tenant_id = await callerActiveTenantId();
+            else row.tenant_id = dedupeTenant;
             await recordWrite("client_memory:extracted", supabase.from("client_memory").insert(row));
+          } else if (!dup && !scopedClientId) {
+            console.error("[paige] own-memory write skipped — no established workspace this turn", JSON.stringify({ kind: "explicit_signal" }));
           }
         }
       }
@@ -2236,7 +2303,11 @@ JSON:`;
 
     // INT-326 — MEMORY READ IN ANOTHER WORKSPACE NEVER REACHES THIS TURN. Client memory is loaded
     // before the turn's workspace is pinned here, so a workspace switch between the two reads would
-    // hand workspace A's memory to a turn now scoped to B. Compare once, before anything consumes the
+    // hand workspace A's memory to a turn now scoped to B. The comparison basis is the SAME
+    // declared∧validated memory scope the reads and writes were captured under (S4 convergence:
+    // the guard consumes the captured scope; the drop feeds the protected-evidence latch, which
+    // re-checks the workspace at every provider boundary — no memory-specific switching logic).
+    // Compare once, before anything consumes the
     // block (the protected-evidence latch and the prompt both read it later), and drop it on mismatch.
     // Dropping the text does NOT drop the protection: the turn still counts as having carried
     // protected evidence (`memoryDroppedForScope` below), so the scope re-check before dispatch still

@@ -3814,7 +3814,11 @@ for (const [label, next] of [
   const r = await drive({ personaTenant: CHILD, memberships: [CHILD, AGENCY],
     chunkContent: "DECLARED-SCOPE-PRIVATE-MARKER", tableExtras: { profiles: (filters) => {
       if (filters.some(([op, cols]) => op === "select" && cols === "active_tenant_id")) reads++;
-      if (reads <= 1) return [{ active_tenant_id: CHILD }];
+      // reads <= 2: the FIRST declared read of the turn is INT-326's memory scope (the
+      // declared-and-validated conjunction resolves before any memory work); the second is this
+      // pathway's own initial declared check. Drift begins on the THIRD read — the
+      // post-retrieval recheck this group exists to prove refuses the turn.
+      if (reads <= 2) return [{ active_tenant_id: CHILD }];
       if (next === "throws") throw new Error("profile read unavailable");
       if (next === "missing") return [];
       return [{ active_tenant_id: next }];

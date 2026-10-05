@@ -636,6 +636,22 @@ const isResearchCapability = (tool: string): boolean => RESEARCH_CHAT_TOOLS.has(
 
 const MAX_MESSAGE_CONTENT = 200_000;
 
+/**
+ * INT-323 — the deterministic terminal copy for a research turn whose closing model prose
+ * came back empty (the turn records its limit). Derived ONLY from runtime truth — the
+ * governed-readback `saved` verdicts already in the research trace — never a model call,
+ * never a fabricated synthesis, and never a Saved claim unless the readback proved it. The
+ * turn's recorded state (LIMIT_REACHED) is preserved: this copy is truthful ABOUT the limit,
+ * not a conversion to success.
+ */
+function researchLimitFallbackCopy(researchTrace: Array<Record<string, unknown>>): string {
+  const savedRuns = researchTrace.filter((r) => r.saved === true).length;
+  if (savedRuns > 0) {
+    return "I reached this conversation's research limit before I could finish the written summary — but the research itself ran, and the saved run is in this workspace's research library. Open it from the Research tab, or ask me again and I can pick the analysis up from the saved evidence in a fresh message.";
+  }
+  return "I reached this conversation's research limit before I could finish the written summary, and the run could not be confirmed as saved in this workspace — so I won't claim any result from it. Ask me again and I'll run a fresh, better-targeted research pass.";
+}
+
 const messageSchema = z.object({
   liveRuntimeChallenge: z.string().max(12_000).optional(),
   messages: z.array(
@@ -15391,6 +15407,26 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             turnTracker.budgetStop();
             finalChunks = [
               enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: exhausted } }] })}\n\n`),
+              enc.encode("data: [DONE]\n\n"),
+            ];
+            lastRoundFinished = true;
+          }
+          // INT-323 — a research turn that produced a GOVERNED research result must not lose
+          // its durable assistant-turn reference merely because the closing model prose came
+          // back empty and the turn recorded a limit (the acceptance-drive defect: the persist
+          // guard needs non-empty text, so the turn — and its paige_research reference — never
+          // landed, and reload lost the card). Same authorship pattern as the exhausted branch
+          // above: the server writes the whole answer from runtime truth, the ONE replay path
+          // sends it on the wire, and the ONE persistence site saves the SAME copy with the
+          // normal bundle metadata (the paige_research reference rides assistantTurnMetadata).
+          // Wire and reload therefore carry identical copy; the turn state recorded by the
+          // tracker is untouched (LIMIT_REACHED stays LIMIT_REACHED — never converted to FINAL).
+          if (finalChunks && !liveRuntimeScope && researchTrace.length > 0 && !finalAssistantText.trim()
+              && queuedApprovals.length === 0 && confirmTrace.length === 0 && !studioSessionId) {
+            const limited = researchLimitFallbackCopy(researchTrace);
+            finalAssistantText = limited;
+            finalChunks = [
+              enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: limited } }] })}\n\n`),
               enc.encode("data: [DONE]\n\n"),
             ];
             lastRoundFinished = true;

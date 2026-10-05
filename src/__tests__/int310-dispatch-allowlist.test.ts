@@ -2,7 +2,7 @@
  * INT-310 — the workflow direct-dispatch allowlist (owner ruling, 2026-10-05).
  *
  * `_shared/workflowDispatch.ts` invokes a `direct_edge_function` target with the SERVICE-ROLE bearer and
- * a body shaped by whoever queued the run (a tenant admin may write registry + run rows under RLS). That
+ * a body shaped by whoever queued the run (registry rows via paige-mcp register_workflow; run rows via RLS inserts or the action bus). That
  * bearer passes every internal-caller gate (INT-310 C0) and lets the body name its own tenant (C1's
  * internal path), so an unlisted target is a confused deputy. Only allowlisted targets may be dispatched;
  * the allowlist is empty until a target is reviewed to derive tenant/actor server-side.
@@ -15,7 +15,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import ts from "typescript";
-import { isServiceDispatchDirectFunctionAllowed } from "../../supabase/functions/_shared/marketplace-authority-containment";
+import { isOrchestratorLocalAgentFunctionAllowed, isServiceDispatchDirectFunctionAllowed } from "../../supabase/functions/_shared/marketplace-authority-containment";
 
 const fnDir = join(__dirname, "..", "..", "supabase/functions");
 const SERVICE = "svc-role-dispatch-key";
@@ -133,5 +133,22 @@ describe("INT-310 dispatch allowlist — the cron sweeper terminates before clai
     const claim = src.indexOf('.update({ status: "running", last_dispatched_at: claimStamp })');
     expect(gate).toBeGreaterThan(0);
     expect(claim).toBeGreaterThan(gate);
+  });
+});
+
+describe("INT-310 orchestrator local-agent allowlist — the predicate", () => {
+  it("allows exactly the functions built for the orchestrator's {input, context} contract", () => {
+    for (const name of ["subagent-email-composer", "paige-problem-reverse-engineer", "paige-deep-research", "subagent-fundability"]) {
+      expect(isOrchestratorLocalAgentFunctionAllowed(name)).toBe(true);
+    }
+  });
+  it("refuses any other function, and every non-canonical spelling (no path can escape the functions route)", () => {
+    for (const v of [
+      "send-message", "subagent-forge", "paige-orchestrator", "subagent-sales-pipeline", "subagent-coach-copilot",
+      "../../rest/v1/clients", "%2e%2e/%2e%2e/auth/v1/admin/users", "subagent-email-composer/../x",
+      "Subagent-Email-Composer", " subagent-email-composer", "", null, 7,
+    ]) {
+      expect(isOrchestratorLocalAgentFunctionAllowed(v)).toBe(false);
+    }
   });
 });

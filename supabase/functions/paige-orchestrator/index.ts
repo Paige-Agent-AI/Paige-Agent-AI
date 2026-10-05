@@ -9,6 +9,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { recordCapabilityRun } from "../_shared/capability-record.ts";
 import { idempotencyKey } from "../_shared/durable-job/mod.ts";
 import { applyBoundContact, bindContactToTenant } from "../_shared/paige-orchestration/resource-binder.ts";
+import { isOrchestratorLocalAgentFunctionAllowed } from "../_shared/marketplace-authority-containment.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -699,6 +700,11 @@ Deno.serve(async (req) => {
     // is a documented follow-up, deliberately NOT faked here (never claim a swap that does nothing, §13).
     if (agent.runtime === "local") {
       if (!agent.edge_function) return fail(`Sub-agent ${agent.slug} has no edge_function configured`, 500);
+      // INT-310: the target comes from a paige_subagents row (tenant-admin writable) and is called with
+      // the SERVICE ROLE, so only an allowlisted, canonical local-agent function may be reached.
+      if (!isOrchestratorLocalAgentFunctionAllowed(agent.edge_function)) {
+        return fail(`Sub-agent ${agent.slug} is not a registered local specialist`, 403);
+      }
       result = await invokeLocal(agent.edge_function, boundInput, ctx);
     } else if (agent.runtime === "soft") {
       result = await invokeSoft(

@@ -6203,7 +6203,7 @@ console.log("\nINT-326 — a person's own memory is recalled only in the workspa
     !staleOwnFocused.logged.some((l) => /memory was read in a different workspace/.test(l.msg)),
     JSON.stringify(staleOwnFocused.logged.filter((l) => /different workspace|client memory/.test(l.msg)).map((l) => l.msg.slice(0, 90))));
   assert("40.11b …and the turn is refused by the declared-scope revalidator, not by memory",
-    staleOwnFocused.status === 409 || staleOwnFocused.bodyText.includes("ACTIVE_ACCOUNT_CHANGED"),
+    staleOwnFocused.status === 409 && staleOwnFocused.bodyText.includes("ACTIVE_ACCOUNT_CHANGED"),
     JSON.stringify({ status: staleOwnFocused.status }));
 
   // 40.12 — the STATIC prompt sentence is subject-relative too (the heading's truthfulness must

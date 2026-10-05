@@ -938,9 +938,9 @@ group("document post-processing fails closed at provider and sync boundaries");
   // captured declared∧validated scope. null = no established workspace ⇒ NO memory write at all
   // (the document's own upload record still proceeds); a string is stamped verbatim.
   const noScopeRun = await driveDocumentPostProcess([true], { uploadId: "upload-1", ownMemoryScope: null });
-  assert("14.1b a turn with NO established workspace writes no client_memory row (fail closed before the DB)",
-    noScopeRun.result?.success !== false || true, // shape guard: the run completes without throwing
-    JSON.stringify(noScopeRun.result));
+  assert("14.1b a no-scope turn still stamps the document's own upload record and returns success",
+    noScopeRun.result?.success === true && noScopeRun.writes.some((w) => w.table === "credit_report_uploads"),
+    JSON.stringify({ result: noScopeRun.result, uploadWrites: noScopeRun.writes.filter((w) => w.table === "credit_report_uploads").length }));
   assert("14.1c …and the skip is real: zero client_memory inserts in its write log",
     !noScopeRun.writes.some((w) => w.table === "client_memory"),
     JSON.stringify(noScopeRun.writes.filter((w) => w.table === "client_memory")));

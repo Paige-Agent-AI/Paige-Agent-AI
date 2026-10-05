@@ -136,6 +136,7 @@ const seriesFor = (id: string) => {
     postal_address: "1200 Peachtree St NE, Suite 400, Atlanta, GA 30309, US", business_name: "Northfield Advisory",
     segments: segments.map(({ id: sid, name, rule }) => ({ id: sid, name, rule })), choices,
     sending: { daily_cap: 500, used_last_24h: 148, remaining_today: 352 },
+    waiting_to_enter: status === "paused" ? 6 : live && status !== "stopped" ? 0 : null,
   };
 };
 

@@ -154,7 +154,7 @@ export function MarketingEmail({ tenantId, onOpenAudience, onOpenConnections, on
   const starters: Starter[] = [
     { key: "campaign", icon: <Ic.send size={20}/>, title: "Create a campaign", detail: "One-time send", act: () => void create("campaign", "standard", "Untitled campaign") },
     { key: "newsletter", icon: <Ic.doc size={20}/>, title: "Create a newsletter", detail: "To people who opted in", act: () => void create("newsletter", "newsletter", "Newsletter") },
-    { key: "welcome", icon: <Ic.users size={20}/>, title: "Send a one-time welcome email", detail: "One email to the leads you have today", act: () => void create("welcome", "welcome", "Welcome", { stages: ["new_lead", "lead"] }) },
+    { key: "welcome", icon: <Ic.users size={20}/>, title: "Send a one-time welcome email", detail: "One email to current leads", act: () => void create("welcome", "welcome", "Welcome", { stages: ["new_lead", "lead"] }) },
     { key: "reengagement", icon: <Ic.clock size={20}/>, title: "Re-engagement campaign", detail: "Not contacted in 90 days", act: () => void create("reengagement", "reengagement", "We miss you", { inactive_days: 90 }) },
     { key: "nurture", icon: <Ic.trend size={20}/>, title: "Plan a nurture series", detail: "Sends by itself once you approve it", act: () => void startSeries() },
     { key: "paige", icon: <Ic.spark size={20}/>, title: "Use PAIGE", detail: "Describe what you need", act: () => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt: "Draft a marketing email for my business. Ask me who it is for and what it should say before you write it, then save it as a campaign draft in Marketing › Email. Do not file it for approval unless I ask, and never say it was sent." } })) },

@@ -1,6 +1,6 @@
 // deno test --allow-import --node-modules-dir=none supabase/functions/_shared/paige-turn/resume.test.ts
 //
-// C4a — the pure half of the approval resume (resume.ts). What these hold: the server rebuilds the
+// C4a/C4b — the pure half of the approval resume (resume.ts). What these hold: the server rebuilds the
 // approved act from its STORED row and nothing else; the id it runs under is deterministic per
 // approval and inside the provider's id alphabet; only governed general-gate writes are carried
 // forward; the per-act outcome uses the existing closed vocabulary and never reads optimism into a
@@ -11,19 +11,23 @@ import {
   actIdentityArgs,
   buildResumeCall,
   classifyResumedApproval,
+  doorResumeShape,
   findSuspendedTurnId,
   isResumableTool,
+  parseDoorToken,
   parseScopedToken,
   readResumeApprovalFrame,
   readResumeRecord,
   RESUME_ALREADY_HANDLED_RESULT,
   RESUME_CHECK_UNAVAILABLE_RESULT,
+  RESUME_DOOR_ALREADY_HANDLED_RESULT,
   RESUME_EXPIRED_RESULT,
   RESUME_KINDS,
   RESUME_LOST_RESULT,
   RESUME_TURN_NOTE,
   resumeCallId,
   resumeRecord,
+  selectDoorRow,
   storedRowState,
 } from "./resume.ts";
 import { APPROVAL_OUTCOME_SENTENCES } from "../approval-outcome.ts";
@@ -156,4 +160,77 @@ Deno.test("the four refusals say nothing ran here and never invite a retry", () 
     assertEquals(r.refused_before_run, true);
     assert(/do not call/i.test(r.note), r.note);
   }
+});
+
+// ── C4b — door proposals ─────────────────────────────────────────────────────────────────────────
+
+const T = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+const CATALOGS = {
+  crmActionCapability: { "contact.create": "crm_create_contact", "deal.create": "deal_create", "deal.delete": "crm_delete_deal" },
+  crmPreviewActions: new Set(["deal.delete"]),
+  salesTools: new Set(["sales_void_invoice", "sales_record_manual_payment", "billing_send_invoice", "billing_create_invoice"]),
+  publishTools: { growth_page_publish: { kind: "page", idArg: "page_id" } },
+};
+
+Deno.test("a door token is the bare server fingerprint only", () => {
+  assertEquals(parseDoorToken(FP), FP);
+  assertEquals(parseDoorToken(TOKEN), null);
+  assertEquals(parseDoorToken(FP.toUpperCase()), null);
+  assertEquals(parseDoorToken(42), null);
+});
+
+Deno.test("the live row wins; with none live the newest row speaks for the token; other fingerprints are ignored", () => {
+  const now = Date.parse("2026-10-05T12:00:00Z");
+  const old = { fingerprint: FP, tool_name: "deal_create", args: {}, consumed_at: "2026-10-05T10:01:00Z", expires_at: "2026-10-05T10:30:00Z", server_issued_at: "2026-10-05T10:00:00Z" };
+  const live = { fingerprint: FP, tool_name: "deal_create", args: {}, consumed_at: null, expires_at: "2026-10-05T12:30:00Z", server_issued_at: "2026-10-05T11:59:00Z" };
+  const swept = { fingerprint: FP, tool_name: "deal_create", args: {}, consumed_at: "2026-10-05T11:00:00Z", expires_at: "2026-10-05T10:59:00Z", server_issued_at: "2026-10-05T10:29:00Z" };
+  const foreign = { ...live, fingerprint: "f".repeat(16) };
+  assertEquals(selectDoorRow([old, live, foreign], FP, now), { row: live, state: "live" });
+  assertEquals(selectDoorRow([live, old], FP, now)?.row, live);
+  // None live: the newest (swept by its door's expiry retire) says expired, not "used".
+  assertEquals(selectDoorRow([old, swept], FP, now), { row: swept, state: "expired" });
+  assertEquals(selectDoorRow([old], FP, now), { row: old, state: "used" });
+  assertEquals(selectDoorRow([foreign], FP, now), null);
+  // The live row wins on liveness, not on recency: even a live row whose issue time cannot be read
+  // (sorting it last) is preferred over an older used one.
+  const liveUnknownIssue = { ...live, server_issued_at: null };
+  assertEquals(selectDoorRow([old, liveUnknownIssue], FP, now), { row: liveUnknownIssue, state: "live" });
+});
+
+Deno.test("CRM: a full stored command is carried forward; a preview binding, a mismatched tool or a missing key is not", () => {
+  const args = { command: { action: "contact.create", patch: { first_name: "D" } }, idempotency_key: "k", approval_subject: "s" };
+  assertEquals(doorResumeShape("crm_create_contact", args, T, CATALOGS), { family: "crm", callArgs: { patch: { first_name: "D" } } });
+  assertEquals(doorResumeShape("deal_create", args, T, CATALOGS), null);
+  assertEquals(doorResumeShape("crm_delete_deal", { command: { action: "deal.delete", preview_id: NONCE }, idempotency_key: "k" }, T, CATALOGS), null);
+  assertEquals(doorResumeShape("crm_create_contact", { ...args, idempotency_key: " " }, T, CATALOGS), null);
+  assertEquals(doorResumeShape("crm_create_contact", { ...args, command: { ...args.command, preview_id: NONCE } }, T, CATALOGS), null);
+});
+
+Deno.test("Sales: the stored command must be bound to THIS workspace and a real operation; the call names the same action", () => {
+  const args = { command: { action: "invoice.void", invoice_id: NONCE, expected_version: 2, reason: "r" }, operation_id: NONCE, expected_tenant_id: T };
+  assertEquals(doorResumeShape("sales_void_invoice", args, T, CATALOGS), { family: "sales", callArgs: { invoice_id: NONCE, expected_version: 2, reason: "r" } });
+  assertEquals(doorResumeShape("sales_void_invoice", { ...args, expected_tenant_id: NONCE }, T, CATALOGS), null);
+  assertEquals(doorResumeShape("sales_void_invoice", { ...args, operation_id: "op" }, T, CATALOGS), null);
+  // The two tools whose stored action the tool name alone does not say.
+  assertEquals(doorResumeShape("sales_record_manual_payment", { ...args, command: { action: "collection.record_receipt", agreement_id: NONCE } }, T, CATALOGS)?.callArgs,
+    { agreement_id: NONCE, record_kind: "imported" });
+  assertEquals(doorResumeShape("billing_send_invoice", { ...args, command: { action: "invoice.sms_send", invoice_id: NONCE, expected_version: 1 } }, T, CATALOGS)?.callArgs,
+    { invoice_id: NONCE, expected_version: 1, channel: "sms" });
+  assertEquals(doorResumeShape("billing_create_invoice", { ...args, command: { action: "invoice.draft_create", draft: {}, catalog_prices: [] } }, T, CATALOGS)?.callArgs, { draft: {} });
+});
+
+Deno.test("publish: only a publish of the tool's own kind, in this workspace", () => {
+  const args = { action: "publish", kind: "page", id: NONCE.toUpperCase(), expected_tenant_id: T };
+  assertEquals(doorResumeShape("growth_page_publish", args, T, CATALOGS), { family: "publish", callArgs: { page_id: NONCE } });
+  for (const change of [{ kind: "form" }, { action: "unpublish" }, { id: "x" }, { expected_tenant_id: NONCE }]) {
+    assertEquals(doorResumeShape("growth_page_publish", { ...args, ...change }, T, CATALOGS), null);
+  }
+  assertEquals(doorResumeShape("growth_unknown_publish", args, T, CATALOGS), null);
+  assertEquals(doorResumeShape("growth_page_publish", null, T, CATALOGS), null);
+});
+
+Deno.test("the door re-emit note refuses without a run or a card and points at the earlier result", () => {
+  assertEquals(RESUME_DOOR_ALREADY_HANDLED_RESULT.success, false);
+  assertEquals(RESUME_DOOR_ALREADY_HANDLED_RESULT.refused_before_run, true);
+  assert(/not run and no new approval was requested/.test(RESUME_DOOR_ALREADY_HANDLED_RESULT.note));
 });

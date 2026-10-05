@@ -10,6 +10,7 @@ import {
   crmApprovalSubject,
   crmCommandExecutionPayload,
   crmCommandLegacyReplaySource,
+  CRM_PREVIEW_REQUIRED_ACTIONS,
   type CanonicalCrmCommand,
   type CrmAction,
 } from "../_shared/crm-command/catalog.ts";
@@ -28,9 +29,8 @@ const cors = {
 
 type JsonObject = Record<string, unknown>;
 
-const PREVIEW_REQUIRED_ACTIONS = new Set<CrmAction>([
-  "contact.merge", "contact.hard_delete", "contact.bulk_update", "task.delete", "deal.delete",
-]);
+// The one home is the shared catalog (the chat's approval resume reads the same set, C4b).
+const PREVIEW_REQUIRED_ACTIONS = CRM_PREVIEW_REQUIRED_ACTIONS;
 
 const actionSchema = z.custom<CrmAction>(
   (value): value is CrmAction => typeof value === "string"

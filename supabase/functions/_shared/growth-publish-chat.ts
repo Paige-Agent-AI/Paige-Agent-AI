@@ -26,7 +26,12 @@ export type GrowthPublishChatDeps = {
   /** POST to growth-publish-command with the operator's own JWT. */
   invoke(body: Record<string, unknown>): Promise<Reply>;
 };
-type Context = { tenantId: string | null; userId: string; toolName: string; args: Record<string, unknown>; approved: Set<string>; sameToolCalls: number };
+/** C4b — `pinned`: the stored proposal the chat's approval resume carried forward, selected by the
+ *  chat under the door's own claim scope (this user, this workspace, thread and client NULL). When set,
+ *  this call redeems exactly that proposal: no lookup, no choosing between approvals, and never an
+ *  unapproved request — the door still claims it (single claim site) and runs what it stored. */
+type Context = { tenantId: string | null; userId: string; toolName: string; args: Record<string, unknown>; approved: Set<string>; sameToolCalls: number;
+  pinned?: { fingerprint: string; args: unknown } };
 type Refusal = 'ambiguous' | 'unclaimable' | 'lookup_failed';
 export type GrowthPublishChatResult = {
   content: Record<string, unknown>;
@@ -35,6 +40,10 @@ export type GrowthPublishChatResult = {
   tokens?: string[];
   /** The approval this call handed to the door to redeem. Its result is that approval's outcome. */
   spent?: string;
+  /** The door found nothing to claim for the approval it was handed (APPROVAL_NOT_AVAILABLE: already
+   *  used or expired). Not model-facing; the chat's approval resume reads it (C4b), because "nothing
+   *  ran" is true of THIS call and may be false of the act — another request may have published it. */
+  approvalUnavailable?: true;
 };
 
 const NOT_AGAIN = 'Do not call this tool again in this reply.';
@@ -69,23 +78,28 @@ export async function dispatchGrowthPublishChat(ctx: Context, deps: GrowthPublis
   const tokens: string[] = [];
   let approvedFingerprint: string | undefined;
   let storedId: string | undefined;
-  if (ctx.approved.size) {
+  if (ctx.pinned || ctx.approved.size) {
     try {
-      const reply = await deps.admin.from('paige_pending_confirmations').select('fingerprint,args')
-        .eq('tenant_id', ctx.tenantId).eq('user_id', ctx.userId).eq('tool_name', key)
-        .in('fingerprint', [...ctx.approved].map((token) => token.split(':')[0]))
-        .is('thread_id', null).is('scoped_client_id', null).is('consumed_at', null)
-        .not('server_issued_at', 'is', null).not('issued_in_request', 'is', null)
-        .gt('expires_at', new Date().toISOString()).limit(CRM_APPROVAL_CANDIDATE_LIMIT + 1);
-      if (reply.error) return refusal('lookup_failed', tokens);
-      const rows = reply.data ?? [];
-      for (const row of rows) for (const token of ctx.approved) if (token.split(':')[0] === row.fingerprint) tokens.push(token);
+      let rows: { fingerprint?: unknown; args?: unknown }[];
+      const approved = ctx.pinned ? new Set([ctx.pinned.fingerprint]) : ctx.approved;
+      if (ctx.pinned) rows = [{ fingerprint: ctx.pinned.fingerprint, args: ctx.pinned.args }];
+      else {
+        const reply = await deps.admin.from('paige_pending_confirmations').select('fingerprint,args')
+          .eq('tenant_id', ctx.tenantId).eq('user_id', ctx.userId).eq('tool_name', key)
+          .in('fingerprint', [...ctx.approved].map((token) => token.split(':')[0]))
+          .is('thread_id', null).is('scoped_client_id', null).is('consumed_at', null)
+          .not('server_issued_at', 'is', null).not('issued_in_request', 'is', null)
+          .gt('expires_at', new Date().toISOString()).limit(CRM_APPROVAL_CANDIDATE_LIMIT + 1);
+        if (reply.error) return refusal('lookup_failed', tokens);
+        rows = reply.data ?? [];
+      }
+      for (const row of rows) for (const token of approved) if (token.split(':')[0] === row.fingerprint) tokens.push(token);
       const subject = requestedId ? `publish:${spec.kind}:${requestedId}` : '';
-      const selected = resolveCrmApprovedFingerprint(rows, subject, ctx.sameToolCalls);
+      const selected = ctx.pinned ? { kind: 'claim' as const, fingerprint: ctx.pinned.fingerprint } : resolveCrmApprovedFingerprint(rows, subject, ctx.sameToolCalls);
       if (selected.kind === 'ambiguous') return refusal('ambiguous', tokens);
       if (selected.kind === 'claim') {
         // The WHOLE echoed token must be present, not only the bare prefix the search used.
-        if (!ctx.approved.has(selected.fingerprint)) return refusal('unclaimable', tokens);
+        if (!approved.has(selected.fingerprint)) return refusal('unclaimable', tokens);
         const stored = rows.find((row) => row.fingerprint === selected.fingerprint)?.args as Record<string, unknown> | undefined;
         if (!stored || stored.action !== 'publish' || stored.kind !== spec.kind || typeof stored.id !== 'string' || !UUID.test(stored.id)
           || stored.expected_tenant_id !== ctx.tenantId) return refusal('unclaimable', tokens);
@@ -142,6 +156,6 @@ export async function dispatchGrowthPublishChat(ctx: Context, deps: GrowthPublis
       note: 'Tell the operator what is missing in plain words and offer to fix it. Nothing went live.' } };
   }
   // Every other answer is the door refusing before or inside a single-statement publish: nothing applied.
-  return { tokens, spent, content: { success: false, not_applied: true, error,
+  return { tokens, spent, ...(answer.code === 'APPROVAL_NOT_AVAILABLE' ? { approvalUnavailable: true as const } : {}), content: { success: false, not_applied: true, error,
     note: `Say what the door said, in one plain line. Nothing went live. ${NOT_AGAIN}` } };
 }

@@ -2,13 +2,14 @@ import { BUSINESS_MISSION_TOOLS } from '../_shared/paige-spine/domains/business_
 import { executeVerifiedMissionMutation, resolveBusinessMissionThreadContext, resolveSelectedBusinessMissionContext } from '../_shared/business-mission-tenant-brain.ts';
 import { CAMPAIGN_BRIEF_TOOLS } from '../_shared/paige-spine/domains/campaigns.ts';
 import { preserveResolvedDealClient, projectDealRelationshipIntegrity } from "../_shared/crm-command/deal-relationship-integrity.ts";
-import { CRM_ACTION_LABEL, CRM_COMMAND_TOOLS, CRM_COMMAND_TOOL_NAMES, CRM_TOOL_TO_ACTION, canonicalizeCrmCommand, crmApprovalSubject, crmCommandFallbackIdempotencyKeys } from '../_shared/crm-command/catalog.ts';
+import { CRM_ACTION_CAPABILITY, CRM_ACTION_LABEL, CRM_COMMAND_TOOLS, CRM_COMMAND_TOOL_NAMES, CRM_PREVIEW_REQUIRED_ACTIONS, CRM_TOOL_TO_ACTION, canonicalizeCrmCommand, crmApprovalSubject, crmCommandFallbackIdempotencyKeys } from '../_shared/crm-command/catalog.ts';
 import { resolveCrmApprovedFingerprint, CRM_APPROVAL_CANDIDATE_LIMIT } from '../_shared/crm-command/approval-resolution.ts';
 import { SALES_INVOICE_TOOLS, SALES_INVOICE_TOOL_NAMES, dispatchSalesInvoiceChat, type SalesInvoiceApprovalQuery } from '../_shared/sales-invoice-chat.ts';
 import { SALES_COLLECTIONS_TOOLS, SALES_COLLECTIONS_TOOL_NAMES, dispatchSalesCollectionsChat } from '../_shared/sales-collections-chat.ts';
 import { EMAIL_CAMPAIGN_TOOLS, EMAIL_CAMPAIGN_TOOL_NAMES, dispatchEmailCampaignChat, emailCampaignRequestKey } from '../_shared/email-campaign-chat.ts';
 import { EMAIL_SERIES_TOOLS, EMAIL_SERIES_TOOL_NAMES, dispatchEmailSeriesChat, emailSeriesRequestKey } from '../_shared/email-series-chat.ts';
 import { GROWTH_PUBLISH_DOOR_TOOL_NAMES, dispatchGrowthPublishChat, type GrowthPublishApprovalQuery } from '../_shared/growth-publish-chat.ts';
+import { PUBLISH_DOOR_CHAT_TOOLS } from '../_shared/growth-publish-command/contract.ts';
 import { executeVerifiedCampaignBriefMutation, resolveCampaignBriefListContext } from '../_shared/campaign-brief-tenant-brain.ts';
 import { CALENDAR_PRESET_TOOLS } from '../_shared/paige-spine/domains/calendar_preset.ts';
 import { executeVerifiedCalendarPresetMutation, resolveCalendarPresetListContext, type CalendarPresetMutationTool } from '../_shared/calendar-preset-tenant-brain.ts';
@@ -226,7 +227,7 @@ import { turnFrameLine } from "../_shared/paige-turn/contract.ts";
 import { attachTurnRecord, createTurnTracker, NO_TOOLS, observeToolResult, type TurnClassifiers } from "../_shared/paige-turn/reducer.ts";
 // C2b — the present-tense START of a tool step; describeStep below stays the FINISH.
 import { describeStepStart } from "../_shared/paige-turn/step-start.ts";
-import { actIdentityArgs, buildResumeCall, classifyResumedApproval, findSuspendedTurnId, isResumableTool, parseScopedToken, RESUME_ALREADY_HANDLED_RESULT, RESUME_CHECK_UNAVAILABLE_RESULT, RESUME_EXPIRED_RESULT, RESUME_LOST_RESULT, RESUME_TURN_NOTE, resumeRecord, storedRowState, type ResumeCall } from "../_shared/paige-turn/resume.ts";
+import { actIdentityArgs, buildResumeCall, classifyResumedApproval, doorResumeShape, findSuspendedTurnId, isResumableTool, parseDoorToken, parseScopedToken, RESUME_ALREADY_HANDLED_RESULT, RESUME_CHECK_UNAVAILABLE_RESULT, RESUME_DOOR_ALREADY_HANDLED_RESULT, RESUME_EXPIRED_RESULT, RESUME_LOST_RESULT, RESUME_TURN_NOTE, resumeRecord, selectDoorRow, storedRowState, type ResumeCall, type StoredDoorRow } from "../_shared/paige-turn/resume.ts";
 import { looksLikeFinanceAgent } from "../_shared/finance-gate.ts";
 // "ADMIN IS A TENANT ROLE" (owner ruling 2026-10-04): one resolver + one tool set for every
 // owner/admin-only chat tool, the early refusal, and the projection.
@@ -1228,6 +1229,21 @@ serve(async (req) => {
     // tool (a re-emit whose arguments drifted, so it is not recognised as the same act) never runs on
     // its own: an `auto` lane is put back on `confirm`, so at worst it becomes a card the person sees.
     const resumeHandledTools = new Set<string>();
+    // C4b — DOOR PROPOSALS CARRIED FORWARD (crm-command, the Sales doors, growth-publish-command). A
+    // door row's synthetic call is pinned to the stored row it was rebuilt from (SERVER-ONLY, keyed by
+    // the call id the server minted), so the door branch hands exactly that proposal to its door —
+    // never a lookup, never a guess, never an unapproved request. `toolName` and `selectedAt` (the
+    // moment this request selected the row) bound the retirement of any proposal the door mints again
+    // when its claim finds nothing (settlePinnedDoorResult): an approval that could not be used here
+    // never leaves a hidden live proposal behind for the same token to claim later. `issuedInRequest`
+    // names the pinned row itself: it is re-read when the door's claim fails (still live = the claim
+    // could not run, nothing ran), and it is never what the retirement consumes.
+    type DoorPin = { fingerprint: string; toolName: string; tenantId: string; issuedInRequest: string; args: Record<string, unknown>; expiresAt: unknown; selectedAt: string };
+    const resumeDoorPin = new Map<string, DoorPin>();
+    // A door decides its own lane, so a drifted re-emit cannot be "put back on confirm" the way the
+    // general gate does it; while this reply carries a door approval forward, any other call to the
+    // same door tool is not run ("here": the resumed call ran in this reply; "elsewhere": it could not).
+    const resumeHandledDoorTools = new Map<string, "here" | "elsewhere">();
 
     // ===== CLIENT SCOPE AUTHORIZATION — resolved ONCE, before ANY use of the body id =====
     //
@@ -7907,17 +7923,19 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             return false;
           }
         }
-        // CRM and Sales command proposals are intentionally action-door scoped (tenant + actor + exact
-        // capability) and carry NULL thread/client scope because the Edge Function cannot trust
+        // CRM, Sales and publish-door proposals are intentionally action-door scoped (tenant + actor +
+        // exact capability) and carry NULL thread/client scope because the Edge Function cannot trust
         // model/request-provided scope. Record an inline-card decline against that exact, server-
         // issued proposal too. The tool-name restriction prevents this fallback from consuming a
-        // proposal owned by any other confirmation flow.
+        // proposal owned by any other confirmation flow. (C4b: the publish door's own proposals were
+        // missing here, so a declined publish card stayed claimable — and the server now carries an
+        // approval forward without a model re-emit, so a stale Approve would publish it.)
         const legacyFps = fps.filter((token) => /^[0-9a-f]{16}$/.test(token));
         if (personaCtx?.tenant_id && legacyFps.length > 0) {
           const { error: crmCancellationError } = await supabase.from("paige_pending_confirmations")
             .update({ consumed_at: new Date().toISOString() })
             .eq("user_id", user.id).eq("tenant_id", personaCtx.tenant_id)
-            .in("fingerprint", legacyFps).in("tool_name", [...CRM_COMMAND_TOOL_NAMES, ...SALES_INVOICE_TOOL_NAMES, ...SALES_COLLECTIONS_TOOL_NAMES])
+            .in("fingerprint", legacyFps).in("tool_name", [...CRM_COMMAND_TOOL_NAMES, ...SALES_INVOICE_TOOL_NAMES, ...SALES_COLLECTIONS_TOOL_NAMES, ...GROWTH_PUBLISH_DOOR_TOOL_NAMES])
             .is("thread_id", null).is("scoped_client_id", null).is("consumed_at", null)
             .not("server_issued_at", "is", null);
           if (crmCancellationError) {
@@ -8925,12 +8943,36 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     let resumeFromTurnId: string | null = null;
     // The approvals this resolution attributed to a tool, so a failure part-way can take them back.
     const resumeTokenTools: string[] = [];
-    if (approvedConfirmations.size > 0 && payloadThreadId && !attachedDocument && !liveRuntimeScope && cancellationsRecorded) {
+    // The thread's recent turns, newest first, read ONCE with the caller's own session (RLS) — for the
+    // door half's thread binding and for naming the suspended turn.
+    type ThreadTurn = { id?: unknown; role?: unknown; bundle_ref?: unknown };
+    let threadTurnsRead: ThreadTurn[] | null = null;
+    const readThreadTurns = async (): Promise<ThreadTurn[]> => {
+      if (threadTurnsRead) return threadTurnsRead;
+      const { data: recent, error: recentError } = await supabaseClient.from("paige_chat_turns")
+        .select("id,role,bundle_ref").eq("thread_id", payloadThreadId as string)
+        .order("seq", { ascending: false }).limit(25);
+      if (recentError) throw new Error(recentError.message ?? "turn read failed");
+      threadTurnsRead = (recent ?? []) as ThreadTurn[];
+      return threadTurnsRead;
+    };
+    // C4b — the door half needs no thread: a door proposal carries none (thread_id NULL), and its
+    // binding is the door's own claim scope (this user, this workspace, the exact tool and
+    // fingerprint, unconsumed, unexpired, server-issued). Requiring a thread would add no binding the
+    // row carries. The general-gate half still requires one (its rows are thread-scoped).
+    if (approvedConfirmations.size > 0 && !attachedDocument && !liveRuntimeScope && cancellationsRecorded) {
       try {
-        const scoped = [...approvedConfirmations]
+        const scoped = !payloadThreadId ? [] : [...approvedConfirmations]
           .map((token) => ({ token, parsed: parseScopedToken(token) }))
           .filter((x): x is { token: string; parsed: { fingerprint: string; nonce: string } } => x.parsed !== null);
-        if (scoped.length > 0 && await revalidateProposalScope()) {
+        // THE CAPABILITY FINGERPRINT. The tools this turn offers, final by here (manifest, Studio
+        // scope, funding, presets). A model can only emit an offered tool, so the re-emit path was
+        // implicitly bounded by this list; the resume rebuilds the call from a stored row and must
+        // be bounded the same way, or a tool withdrawn since the card was shown would run.
+        const offeredTools = new Set((toolDefs as any[]).map((d) => d?.function?.name).filter((n): n is string => typeof n === "string"));
+        let proposalScopeOk: boolean | null = null;
+        const proposalScopeHolds = async () => (proposalScopeOk ??= await revalidateProposalScope());
+        if (scoped.length > 0 && payloadThreadId && await proposalScopeHolds()) {
           let selected = supabase.from("paige_pending_confirmations")
             .select("fingerprint,args,issued_in_request,tool_name,consumed_at,expires_at")
             .eq("user_id", user.id).eq("thread_id", payloadThreadId)
@@ -8947,11 +8989,6 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           const { data: rows, error: selectError } = await selected.limit(33);
           if (selectError) throw new Error(selectError.message ?? "resume selection failed");
           const doorTools = [CRM_COMMAND_TOOL_NAMES as ReadonlySet<string>, SALES_INVOICE_TOOL_NAMES as ReadonlySet<string>, SALES_COLLECTIONS_TOOL_NAMES as ReadonlySet<string>, GROWTH_PUBLISH_DOOR_TOOL_NAMES];
-          // THE CAPABILITY FINGERPRINT. The tools this turn offers, final by here (manifest, Studio
-          // scope, funding, presets). A model can only emit an offered tool, so the re-emit path was
-          // implicitly bounded by this list; the resume rebuilds the call from a stored row and must
-          // be bounded the same way, or a tool withdrawn since the card was shown would run.
-          const offeredTools = new Set((toolDefs as any[]).map((d) => d?.function?.name).filter((n): n is string => typeof n === "string"));
           const nowMs = Date.now();
           for (const { token, parsed } of scoped) {
             const row = (rows ?? []).find((r: any) => r?.fingerprint === parsed.fingerprint && r?.issued_in_request === parsed.nonce) as
@@ -8994,15 +9031,107 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             resumeCalls.push(call);
           }
         }
-        if (resumeCalls.length > 0) {
+        // ── C4b · DOOR PROPOSALS ──────────────────────────────────────────────────────────────
+        // An approved bare fingerprint that names a door's own proposal (crm-command, the Sales doors,
+        // growth-publish-command) for THIS user in THIS workspace becomes one synthetic call to that
+        // door tool, pinned (server-only) to the stored row. The door branch below hands the door
+        // exactly that proposal; the door alone claims it and runs its STORED request — the single
+        // claim site is unchanged, and so is everything the door checks (membership, the lane, the
+        // workspace at the moment of execution, the readback). Rows this cannot hand back to their
+        // door unchanged (a CRM preview binding, a request bound to another workspace, a row whose
+        // fingerprint does not match its stored request) keep the existing path.
+        let doorTokens = [...approvedConfirmations].map(parseDoorToken).filter((t): t is string => t !== null);
+        const doorTenant = personaCtx?.tenant_id ?? null;
+        // RESUME PRESERVES THE THREAD. A door row carries no thread (thread_id NULL), so its binding
+        // to this conversation is the card: in a thread, a door approval is carried forward only when
+        // one of THIS thread's recent turns showed its card (the same turns the suspended-turn read
+        // below uses). A door token posted in another thread, or one whose card is older than that
+        // window, keeps its existing path (a model re-emit). With no thread at all (an Operator inside
+        // a workspace, a surface without one) the door's own binding — this user, this workspace — is
+        // the only one there is, and it stands.
+        if (doorTokens.length > 0 && doorTenant && payloadThreadId) {
+          try {
+            const turns = await readThreadTurns();
+            doorTokens = doorTokens.filter((fp) => findSuspendedTurnId(turns, new Set([fp])) !== null);
+          } catch (e) {
+            console.error("[paige] approval resume: the thread's turns could not be read; door approvals keep their existing path", JSON.stringify({ correlation_id: requestNonce, message: (e as Error)?.message ?? String(e) }));
+            doorTokens = [];
+          }
+        }
+        if (doorTokens.length > 0 && doorTenant && await proposalScopeHolds()) {
+          // The moment this request selects the door rows, less a small allowance for the clock of
+          // the door's own isolate (it stamps server_issued_at). It bounds the retirement of a
+          // proposal the door mints again when its claim finds nothing (settlePinnedDoorResult). The
+          // allowance cannot reach a row this request did not see: a live row with the approved
+          // fingerprint at this moment is the row the selection pins and hands to the door.
+          const doorSelectedAt = new Date(Date.now() - 2_000).toISOString();
+          const doorToolNames = [...CRM_COMMAND_TOOL_NAMES, ...SALES_INVOICE_TOOL_NAMES, ...SALES_COLLECTIONS_TOOL_NAMES, ...GROWTH_PUBLISH_DOOR_TOOL_NAMES] as string[];
+          const { data: doorRows, error: doorSelectError } = await supabase.from("paige_pending_confirmations")
+            .select("fingerprint,args,tool_name,consumed_at,expires_at,server_issued_at,issued_in_request")
+            // The door's own claim scope, predicate for predicate (crm-command ~L452, sales-invoice-command
+            // ~L97, growth-publish door ~L312): this user, this workspace, a door row (thread and client
+            // NULL), server-issued, never minted by this request.
+            .eq("user_id", user.id).eq("tenant_id", doorTenant)
+            .is("thread_id", null).is("scoped_client_id", null)
+            .in("fingerprint", [...new Set(doorTokens)]).in("tool_name", doorToolNames)
+            .not("server_issued_at", "is", null).not("issued_in_request", "is", null)
+            .neq("issued_in_request", requestNonce)
+            .order("server_issued_at", { ascending: false }).limit(64);
+          if (doorSelectError) throw new Error(doorSelectError.message ?? "door resume selection failed");
+          const catalogs = {
+            crmActionCapability: CRM_ACTION_CAPABILITY as Readonly<Record<string, string>>,
+            crmPreviewActions: CRM_PREVIEW_REQUIRED_ACTIONS as ReadonlySet<string>,
+            salesTools: new Set<string>([...SALES_INVOICE_TOOL_NAMES, ...SALES_COLLECTIONS_TOOL_NAMES]),
+            publishTools: PUBLISH_DOOR_CHAT_TOOLS,
+          };
+          const doorNowMs = Date.now();
+          for (const fp of new Set(doorTokens)) {
+            const pick = selectDoorRow((doorRows ?? []) as StoredDoorRow[], fp, doorNowMs);
+            if (!pick) continue;
+            const { row, state } = pick;
+            if (!row.args || typeof row.args !== "object" || Array.isArray(row.args)) continue;
+            // The row must be the request its card was minted from: every door stores the request it
+            // fingerprinted (confirmFingerprint(tool, args)), so a row whose args no longer hash to its
+            // fingerprint is not carried forward.
+            if (await confirmFingerprint(row.tool_name, row.args as Record<string, unknown>) !== row.fingerprint) continue;
+            const shape = doorResumeShape(row.tool_name, row.args, doorTenant, catalogs);
+            if (!shape) continue;
+            approvalTokenTool.set(fp, row.tool_name);
+            resumeTokenTools.push(fp);
+            // Past its window — unused, or retired by a door's expiry sweep. Nothing ran; the door is
+            // not asked (it would only propose again).
+            if (state === "expired") {
+              resumeTokens.set(fp, { tool: row.tool_name, state: "expired" });
+              continue;
+            }
+            // Not offered on this turn: not run, and the approval is left unspent.
+            if (!offeredTools.has(row.tool_name)) {
+              console.warn("[paige] approval resume: the approved door tool is not offered on this turn; not run", JSON.stringify({ tool: row.tool_name, correlation_id: requestNonce }));
+              resumeTokens.set(fp, { tool: row.tool_name, state: "withheld" });
+              continue;
+            }
+            // Already used. The CRM and Sales doors read back a result they committed under the stored
+            // key BEFORE they would claim anything, so they are asked: a committed act reads back as
+            // what it did, and nothing runs twice. The publish door keeps no such result (it would only
+            // answer "already used"), so a used publish approval reads "can't confirm, check first".
+            if (state === "used" && shape.family === "publish") {
+              resumeTokens.set(fp, { tool: row.tool_name, state: "lost" });
+              resumeHandledDoorTools.set(row.tool_name, "elsewhere");
+              continue;
+            }
+            const call = buildResumeCall(fp, { tool_name: row.tool_name, args: shape.callArgs });
+            resumePin.set(call.id, fp);
+            resumeDoorPin.set(call.id, { fingerprint: fp, toolName: row.tool_name, tenantId: doorTenant, issuedInRequest: String((row as StoredDoorRow & { issued_in_request?: unknown }).issued_in_request), args: row.args as Record<string, unknown>, expiresAt: row.expires_at, selectedAt: doorSelectedAt });
+            resumeTokens.set(fp, { tool: row.tool_name, state: "pending" });
+            resumeHandledDoorTools.set(row.tool_name, "here");
+            resumeCalls.push(call);
+          }
+        }
+        if (resumeCalls.length > 0 && payloadThreadId) {
           // The suspended turn this objective resumes: the latest assistant turn whose card carried
           // one of these approvals. Read with the caller's own session (RLS), newest first.
           try {
-            const { data: recent, error: recentError } = await supabaseClient.from("paige_chat_turns")
-              .select("id,role,bundle_ref").eq("thread_id", payloadThreadId)
-              .order("seq", { ascending: false }).limit(25);
-            if (recentError) throw new Error(recentError.message ?? "turn read failed");
-            resumeFromTurnId = findSuspendedTurnId(recent ?? [], new Set(resumeCalls.map((c) => resumePin.get(c.id) as string)));
+            resumeFromTurnId = findSuspendedTurnId(await readThreadTurns(), new Set(resumeCalls.map((c) => resumePin.get(c.id) as string)));
           } catch (e) {
             console.error("[paige] approval resume: the suspended turn could not be read; recorded as unknown", JSON.stringify({ correlation_id: requestNonce, message: (e as Error)?.message ?? String(e) }));
           }
@@ -9015,11 +9144,87 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         resumeHandledActs.clear();
         resumeHandledSubjects.clear();
         resumeHandledTools.clear();
+        resumeDoorPin.clear();
+        resumeHandledDoorTools.clear();
         for (const token of resumeTokenTools) approvalTokenTool.delete(token);
         resumeTokenTools.length = 0;
         resumeFromTurnId = null;
       }
     }
+
+    // C4b — WHAT A DOOR SAID TO A CARRIED-FORWARD APPROVAL, read once for the card and for PAIGE. The
+    // door was handed the pinned proposal (`spent`), so its answer is that approval's outcome — with
+    // two exceptions, both meaning its claim found nothing to claim (another request used it first,
+    // or it ran out of time between this request's selection and the door's claim): the CRM and
+    // Sales doors then propose the act again (a fresh card), the publish door answers "not
+    // available". A carried-forward approval never becomes a fresh card (C4a's rule): the person is
+    // told it can't be confirmed here, or that it expired, and nothing is proposed in its place.
+    //
+    // A door that proposed again has just minted a LIVE proposal nobody was shown. For CRM it carries
+    // the SAME fingerprint as the card (the stored command and key re-hash to it), so the old token
+    // could claim it later — a declined card run by a second stale Approve, an "expired" act run by a
+    // re-send. It is retired here, before anything else reads it: this user, this workspace, this
+    // door tool, the card's fingerprint or the one the door just proposed, a door row (thread and
+    // client NULL), unconsumed, issued since this request selected the pinned row — and never the
+    // pinned row itself (when the claim could not run, the door answers with that still-live card, and
+    // it is the person's to use, not this request's to retire). A retirement that fails is logged
+    // loudly; the outcome this request reports is unchanged (nothing ran here).
+    //
+    // WHICH OUTCOME, read the way C4a reads it (resumedRowStateNow): the pinned row is read once more
+    // BEFORE anything is retired. Still live = the door's claim itself could not run (a store error):
+    // nothing ran, "the approval could not be checked". Past its window = expired. Used, or unreadable
+    // = "can't confirm, check first".
+    const doorRowStateNow = async (pin: DoorPin): Promise<"live" | "expired" | "used" | "unknown"> => {
+      try {
+        const { data, error } = await supabase.from("paige_pending_confirmations")
+          .select("consumed_at,expires_at")
+          .eq("user_id", user.id).eq("tenant_id", pin.tenantId).eq("tool_name", pin.toolName)
+          .eq("fingerprint", pin.fingerprint).eq("issued_in_request", pin.issuedInRequest)
+          .is("thread_id", null).is("scoped_client_id", null)
+          .not("server_issued_at", "is", null)
+          .limit(2);
+        if (error || (data?.length ?? 0) !== 1) return "unknown";
+        return storedRowState(data![0], Date.now());
+      } catch {
+        return "unknown";
+      }
+    };
+    const retireDoorReproposal = async (pin: DoorPin, content: Record<string, unknown>): Promise<void> => {
+      const fingerprints = new Set([pin.fingerprint]);
+      const again = parseDoorToken(content.confirm_fingerprint);
+      if (again) fingerprints.add(again);
+      try {
+        const { error } = await supabase.from("paige_pending_confirmations")
+          .update({ consumed_at: new Date().toISOString() })
+          .eq("user_id", user.id).eq("tenant_id", pin.tenantId).eq("tool_name", pin.toolName)
+          .in("fingerprint", [...fingerprints])
+          .is("thread_id", null).is("scoped_client_id", null).is("consumed_at", null)
+          .not("server_issued_at", "is", null)
+          .neq("issued_in_request", pin.issuedInRequest)
+          .gte("server_issued_at", pin.selectedAt);
+        if (error) console.error("[paige] approval resume: the door's unshown re-proposal could not be retired", JSON.stringify({ tool: pin.toolName, code: error.code ?? null, correlation_id: requestNonce }));
+      } catch (e) {
+        console.error("[paige] approval resume: the door's unshown re-proposal could not be retired", JSON.stringify({ tool: pin.toolName, message: (e as Error)?.message ?? String(e), correlation_id: requestNonce }));
+      }
+    };
+    const settlePinnedDoorResult = async (tc: any, pin: DoorPin,
+      spent: string | undefined, content: Record<string, unknown>, claimFound: boolean): Promise<Record<string, unknown>> => {
+      if (spent) approvalSpend.set(spent, tc.id);
+      if (claimFound && content.needs_confirm !== true) return content;
+      approvalSpend.delete(pin.fingerprint);
+      const rowNow = await doorRowStateNow(pin);
+      if (content.needs_confirm === true) await retireDoorReproposal(pin, content);
+      const expiresMs = typeof pin.expiresAt === "string" ? Date.parse(pin.expiresAt) : NaN;
+      const expiredByClock = Number.isFinite(expiresMs) && expiresMs <= Date.now();
+      const settled = rowNow === "live" ? "unavailable"
+        : rowNow === "expired" || (rowNow === "unknown" && expiredByClock) ? "expired"
+        : "lost";
+      const info = resumeTokens.get(pin.fingerprint);
+      if (info) info.state = settled;
+      resumeHandledDoorTools.set(tc.function.name, "elsewhere");
+      console.warn("[paige] approval resume: the door's claim did not take the approval", JSON.stringify({ tool: tc.function.name, row: rowNow, correlation_id: requestNonce }));
+      return { ...(settled === "unavailable" ? RESUME_CHECK_UNAVAILABLE_RESULT : settled === "expired" ? RESUME_EXPIRED_RESULT : RESUME_LOST_RESULT) };
+    };
 
     // Live uses the SAME governed tool loop, then the existing tools-free
     // answer stream. Never speak speculative content from a tool-capable round.
@@ -9387,6 +9592,18 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           continue;
         }
 
+        // C4b — A DOOR TOOL CALLED AGAIN IN A REPLY THAT CARRIED ITS APPROVAL FORWARD is not run. The
+        // door decides its own lane, so this cannot be put back on `confirm` the way the general gate
+        // does it (C4a, 39.13): a drifted re-emit on a lane at `auto` would be a second write. No new
+        // card either — the carried-forward call already answered for the act.
+        const doorPin = resumeDoorPin.get(tc.id);
+        if (!doorPin && resumeHandledDoorTools.has(tc.function.name)) {
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(
+            resumeHandledDoorTools.get(tc.function.name) === "here" ? RESUME_DOOR_ALREADY_HANDLED_RESULT : RESUME_LOST_RESULT,
+          ) });
+          continue;
+        }
+
         // Sales uses its canonical action door, which alone claims approval and executes stored
         // arguments. This branch stays after scope/seat guards and before the legacy Chat gate.
         if (SALES_INVOICE_TOOL_NAMES.has(tc.function.name) || SALES_COLLECTIONS_TOOL_NAMES.has(tc.function.name)) {
@@ -9405,16 +9622,21 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           const dispatchSales = SALES_COLLECTIONS_TOOL_NAMES.has(tc.function.name) ? dispatchSalesCollectionsChat : dispatchSalesInvoiceChat;
           const result = await dispatchSales({
             tenantId: personaCtx?.tenant_id ?? null, userId: user.id, toolName: tc.function.name,
-            args: invoiceArgs, approved: approvedConfirmations,
-            sameToolCalls: toolCalls.filter((call: any) => call?.function?.name === tc.function.name).length,
+            // C4b — a carried-forward approval redeems exactly its pinned proposal (sales-invoice-chat.ts).
+            args: invoiceArgs, approved: doorPin ? new Set([doorPin.fingerprint]) : approvedConfirmations,
+            sameToolCalls: doorPin ? 1 : toolCalls.filter((call: any) => call?.function?.name === tc.function.name).length,
             turn: { thread_id: payloadThreadId ?? null, user_turn_ordinal: userTurns.length, user_turn: userTurns[userTurns.length - 1]?.content ?? null },
+            ...(doorPin ? { pinned: { fingerprint: doorPin.fingerprint, args: doorPin.args } } : {}),
           }, { caller: supabaseClient, admin: { from: (name: string) => ({
             // Dynamic approval table: isolate the SDK generic expansion at the selected-query boundary.
             select: (columns: string) => createClient(supabaseUrl, supabaseServiceKey).from(name).select(columns) as unknown as SalesInvoiceApprovalQuery,
           }) } });
           for (const token of result.tokens ?? []) approvalTokenTool.set(token, tc.function.name);
           if (result.refusal) approvalRefusals.set(tc.function.name, result.refusal);
-          toolResults.push({ tool_call_id: tc.id, role: 'tool', content: JSON.stringify(result.content) });
+          const salesContent = doorPin
+            ? await settlePinnedDoorResult(tc, doorPin, result.spent, result.content, true)
+            : result.content;
+          toolResults.push({ tool_call_id: tc.id, role: 'tool', content: JSON.stringify(salesContent) });
           continue;
         }
 
@@ -9441,8 +9663,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           const publishAdmin = createClient(supabaseUrl, supabaseServiceKey);
           const result = await dispatchGrowthPublishChat({
             tenantId: personaCtx?.tenant_id ?? null, userId: user.id, toolName: tc.function.name,
-            args: publishArgs, approved: approvedConfirmations,
-            sameToolCalls: toolCalls.filter((call: any) => call?.function?.name === tc.function.name).length,
+            // C4b — a carried-forward approval redeems exactly its pinned proposal (growth-publish-chat.ts).
+            args: publishArgs, approved: doorPin ? new Set([doorPin.fingerprint]) : approvedConfirmations,
+            sameToolCalls: doorPin ? 1 : toolCalls.filter((call: any) => call?.function?.name === tc.function.name).length,
+            ...(doorPin ? { pinned: { fingerprint: doorPin.fingerprint, args: doorPin.args } } : {}),
           }, {
             admin: { from: (name: string) => ({
               // Dynamic approval table: isolate the SDK generic expansion at the selected-query boundary.
@@ -9454,6 +9678,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           for (const token of result.tokens ?? []) approvalTokenTool.set(token, tc.function.name);
           if (result.refusal) approvalRefusals.set(tc.function.name, result.refusal);
           // The door claims the stored proposal atomically; what it returns is this approval's outcome.
+          if (doorPin) {
+            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(
+              await settlePinnedDoorResult(tc, doorPin, result.spent, result.content, result.approvalUnavailable !== true),
+            ) });
+            continue;
+          }
           if (result.spent) approvalSpend.set(result.spent, tc.id);
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result.content) });
           continue;
@@ -9509,7 +9739,13 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // verbatim, so a single shared message would have Paige state a cause that did not
           // happen. That is the §13 failure this whole change is about, reappearing in the copy.
           let approvalResolutionFailed: "" | "ambiguous" | "unclaimable" | "lookup_failed" = "";
-          if (approvedConfirmations.size > 0 && personaCtx?.tenant_id) {
+          // C4b — a carried-forward approval is PINNED: the door is handed exactly its stored proposal,
+          // with the command and idempotency key the door stored with it (the same body the approved
+          // card's own lane sends), so the door reads back a result it already committed under that
+          // key before it would claim anything. No lookup, no choosing among approvals.
+          const pinnedRequest = doorPin ? doorPin.args as { command: Record<string, unknown>; idempotency_key: string } : null;
+          if (doorPin) approvedFingerprint = doorPin.fingerprint;
+          if (!doorPin && approvedConfirmations.size > 0 && personaCtx?.tenant_id) {
             const gateAdmin = createClient(supabaseUrl, supabaseServiceKey);
             // Narrow THIS call WITHIN the operator-echoed set. Every predicate below is the
             // claimable boundary and none of them may be relaxed: the set itself, the tenant, the
@@ -9638,7 +9874,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           }
           // crm-command claims the stored row atomically; what it returns is this approval's outcome.
           if (approvedFingerprint) approvalSpend.set(approvedFingerprint, tc.id);
-          const { data: crmData, error: crmError } = await supabaseClient.functions.invoke("crm-command", {
+          // C4b — a carried-forward approval sends the command and key the door STORED, never the ones
+          // derived from the call (and no legacy readback keys: they describe the call, not the proposal).
+          const { data: crmData, error: crmError } = pinnedRequest ? await supabaseClient.functions.invoke("crm-command", {
+            headers: { Authorization: authHeader },
+            body: { command: pinnedRequest.command, idempotency_key: pinnedRequest.idempotency_key, approved_fingerprint: approvedFingerprint },
+          }) : await supabaseClient.functions.invoke("crm-command", {
             headers: { Authorization: authHeader },
             body: { command: canonicalCrmCommand, idempotency_key: idempotencyKey,
               ...(legacyCrmCommand ? { legacy_command: legacyCrmCommand } : {}),
@@ -9655,18 +9896,19 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             const ctx = (crmError as any)?.context;
             if (ctx && typeof ctx.json === "function") { try { crmBody = await ctx.json(); } catch { /* generic failure below */ } }
           }
+          let crmContent: Record<string, unknown>;
           if (crmBody.outcome === "approval_required" && typeof crmBody.fingerprint === "string") {
             const summary = typeof crmBody.summary === "string" ? crmBody.summary : "Review this CRM change.";
             // This is a single-use confirmation, not a paige_pending_approvals work item. The
             // existing confirmTrace bridge below renders the actionable Needs your OK card from
             // these exact fingerprint fields; do not fabricate a passive approval-queue row/id.
-            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, needs_confirm: true,
+            crmContent = { success: false, needs_confirm: true,
               requires_operator_approval: true, confirm_fingerprint: crmBody.fingerprint, confirm_summary: summary,
               // The approved card executes the STORED proposal: these let the surface invoke the
               // door directly with the exact command it minted, so execution never depends on the
               // model re-emitting the arguments.
               confirm_command: canonicalCrmCommand, confirm_idempotency_key: idempotencyKey,
-              preview: crmBody.preview ?? null, note: "Show the Needs your OK card. Nothing changed yet. Do not call this tool again in this reply." }) });
+              preview: crmBody.preview ?? null, note: "Show the Needs your OK card. Nothing changed yet. Do not call this tool again in this reply." };
           } else if (crmError || crmBody.ok === false) {
             // No answer from crm-command's own code (it always writes `ok`): the request failed in
             // transit or the platform cut it off, so the write may have committed. Say "couldn't
@@ -9677,16 +9919,19 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // one case it cannot vouch for (a lost readback or execute answer) it marks
             // `outcome_unknown` itself. The gateway turning the call away never started it.
             const notApplied = !unanswered && crmBody.outcome_unknown !== true;
-            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: false, ...crmBody,
+            crmContent = { success: false, ...crmBody,
               error: crmBody.message ?? crmBody.code ?? (unanswered
                 ? "The CRM action's answer never arrived, so whether it completed is not known."
                 : "The CRM action could not be completed. Nothing should be claimed as changed."),
               ...(notApplied ? { not_applied: true } : {}),
-              ...(unanswered ? { outcome_unknown: true, note: OUTCOME_UNKNOWN_NOTE } : {}) }) });
+              ...(unanswered ? { outcome_unknown: true, note: OUTCOME_UNKNOWN_NOTE } : {}) };
           } else {
-            toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify({ success: true, ...crmBody,
-              ...(action === "activity.log" ? { external_effect: false, note: "Logged internally only. No email or SMS was sent and no call was placed." } : {}) }) });
+            crmContent = { success: true, ...crmBody,
+              ...(action === "activity.log" ? { external_effect: false, note: "Logged internally only. No email or SMS was sent and no call was placed." } : {}) };
           }
+          // C4b — for a carried-forward approval, a door that proposed again found nothing to claim.
+          if (doorPin) crmContent = await settlePinnedDoorResult(tc, doorPin, approvedFingerprint, crmContent, true);
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(crmContent) });
           continue;
         }
 

@@ -98,7 +98,7 @@ bypasses the vocab + correction + confirmation discipline; prefer the seam.
   production drive (legit recall works; no cross-tenant leak in the running product) remain PROOF OWED
   (§32.c/§70) — deployed + persisted + boundary-proven is not the same as production-verified.
 - **INT-326 — a person's own memory is recalled only in the workspace it was written in (2026-10-05,
-  PR TBD; NOT merged or deployed when this was written).** Migration `20270588326000` replaces
+  #1760; NOT merged or deployed when this was written).** Migration `20270588326000` replaces
   `match_paige_memory` with a 7-argument signature (`_target_tenant_id`; the unscoped 6-argument one is
   dropped). User branch: `client_user_id = target AND client_id IS NULL AND tenant_id = scope`; service
   role needs a non-null tenant for it, a JWT caller's scope is `current_user_tenant_id()` and naming a

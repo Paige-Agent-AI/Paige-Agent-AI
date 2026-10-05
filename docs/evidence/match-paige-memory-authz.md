@@ -125,7 +125,7 @@ Exact merge SHA, `deploy-migrations.yml` run + `db-live` tag against the merge S
 `migration list` confirmation that `20270304000000` is recorded on prod, and the Shipped Delivery Log
 row — recorded after merge per §32.a (never hand-applied).
 
-## INT-326 addendum — workspace scope (2026-10-05, PR TBD, not merged)
+## INT-326 addendum — workspace scope (2026-10-05, #1760, not merged when written)
 
 The function above keyed a person's own memory on `client_user_id` alone, so a row written in
 workspace A was recalled in workspace B. Migration `20270588326000_match_paige_memory_workspace_scope.sql`

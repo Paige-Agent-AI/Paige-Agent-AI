@@ -230,20 +230,22 @@ export function EmailCampaignEditor({ campaignId, onBack, onOpenSettings, onOpen
     return true;
   };
   React.useEffect(() => {
-    if (!draft || !editable || save !== "dirty") return;
+    // While PAIGE's change and the owner's unsaved edits disagree, nothing saves until the owner chooses.
+    if (!draft || !editable || save !== "dirty" || changedByPaige) return;
     const timer = setTimeout(() => { void persist(draft); }, 800);
     return () => clearTimeout(timer);
-  }, [draft, editable, save, persist]);
+  }, [draft, editable, save, persist, changedByPaige]);
   const change = (patch: Partial<Draft>) => { revision.current += 1; setDraft((d) => (d ? { ...d, ...patch } : d)); setSave("dirty"); setNotice(null); };
 
   // Leaving must never drop the last edits: Back saves first, unmounting saves what is pending, and the
   // browser asks before a reload or a closed tab while anything is unsaved.
   const unsaved = Boolean(editable && draft && save !== "saved");
-  const pending = React.useRef<{ draft: Draft | null; unsaved: boolean; persist: typeof persist }>({ draft: null, unsaved: false, persist });
-  pending.current = { draft, unsaved, persist };
+  const pending = React.useRef<{ draft: Draft | null; unsaved: boolean; conflict: boolean; persist: typeof persist }>({ draft: null, unsaved: false, conflict: false, persist });
+  pending.current = { draft, unsaved, conflict: changedByPaige, persist };
   React.useEffect(() => () => {
-    const { draft: last, unsaved: open, persist: flush } = pending.current;
-    if (open && last) void flush(last);
+    // An open choice between PAIGE's change and unsaved edits is not answered by closing: PAIGE's stays.
+    const { draft: last, unsaved: open, conflict, persist: flush } = pending.current;
+    if (open && last && !conflict) void flush(last);
   }, []);
   React.useEffect(() => {
     if (!unsaved) return;
@@ -266,8 +268,10 @@ export function EmailCampaignEditor({ campaignId, onBack, onOpenSettings, onOpen
     return () => window.removeEventListener("paige:turn-settled", check);
   }, [campaignId]);
   const takePaigeVersion = () => { pending.current.unsaved = false; revision.current += 1; setChangedByPaige(false); reload(); };
+  const keepMine = () => { setChangedByPaige(false); setSave("dirty"); };
 
   const leave = async () => {
+    if (changedByPaige && !window.confirm("PAIGE changed this campaign while you were editing. Save your edits over hers and leave?")) return;
     if (unsaved && draft) {
       pending.current.unsaved = false; // this save is the one; unmounting need not repeat it
       if (!(await persist(draft)) && !window.confirm("Your latest changes did not save. Leave anyway and lose them?")) { pending.current.unsaved = true; return; }
@@ -286,6 +290,7 @@ export function EmailCampaignEditor({ campaignId, onBack, onOpenSettings, onOpen
   };
   const review = async () => {
     if (!draft || !data) return;
+    if (changedByPaige) { setNotice({ tone: "bad", text: "Choose which version to keep before sending it for approval." }); return; }
     if (!(await persist(draft))) return;
     await act("review", "email_campaign_request_approval", { p_version_id: data.version.id, p_source: "owner" });
   };
@@ -318,7 +323,7 @@ export function EmailCampaignEditor({ campaignId, onBack, onOpenSettings, onOpen
         {editable ? <label className="me-name-input"><span className="campaigns-sr-only">Campaign name</span><input value={draft.name} maxLength={200} onChange={(e) => change({ name: e.target.value })}/></label> : <h2>{c.name}</h2>}
         <span className="me-kind">{KIND_LABEL[draft.kind] ?? "Campaign"}</span>
         <span className={`mk-flag ${c.status === "completed" ? "is-live" : c.status === "blocked" || (c.status === "failed" && !p.not_confirmed) ? "is-blocked" : c.status === "partially_completed" || c.status === "failed" ? "is-warn" : c.status === "draft" || c.status === "cancelled" ? "" : "is-review"}`}>{state}</span>
-        {editable && <span className="me-save" aria-live="polite">{save === "saving" ? "Saving…" : save === "dirty" ? "Unsaved changes" : save === "failed" ? "Not saved" : "Saved"}</span>}
+        {editable && <span className="me-save" aria-live="polite">{changedByPaige ? "Waiting for your choice" : save === "saving" ? "Saving…" : save === "dirty" ? "Unsaved changes" : save === "failed" ? "Not saved" : "Saved"}</span>}
       </div>
       <div className="me-editor-acts">
         {editable && <button type="button" className="btn btn-s" onClick={() => void remove()} disabled={busy !== null}>Delete</button>}
@@ -326,7 +331,8 @@ export function EmailCampaignEditor({ campaignId, onBack, onOpenSettings, onOpen
       </div>
     </div>
     {notice && <p className={`me-notice ${notice.tone === "bad" ? "is-bad" : "is-ok"}`} role={notice.tone === "bad" ? "alert" : "status"}>{notice.text}</p>}
-    {changedByPaige && <p className="me-notice is-warn" role="status">PAIGE changed this campaign while you were editing. Your edits will save over hers.{" "}
+    {changedByPaige && <p className="me-notice is-warn" role="status">PAIGE changed this campaign while you were editing. Nothing is saved until you choose.{" "}
+      <button type="button" className="btn btn-s" onClick={keepMine}>Keep my edits</button>{" "}
       <button type="button" className="btn btn-s" onClick={takePaigeVersion}>Show PAIGE's version</button></p>}
     {data.last_declined && editable && <p className="me-notice is-warn" role="status">Version {data.last_declined.version_no} was declined{data.last_declined.reason ? `: “${data.last_declined.reason}”` : "."} This is a new draft; change what you need and send it for approval again.</p>}
     {!data.postal_address && editable && <div className="mo-next me-warn"><span className="mo-next-plate" aria-hidden="true"><Ic.shield size={16}/></span><div><h2>Add your postal address</h2><p>Every marketing email shows the sender’s postal address. You can write this campaign now; it sends once the address is added.</p></div>{onOpenSettings && <button type="button" className="btn btn-s" onClick={onOpenSettings}>Open Settings</button>}</div>}

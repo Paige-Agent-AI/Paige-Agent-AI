@@ -13612,11 +13612,19 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               turn: { thread_id: payloadThreadId ?? null, user_turn_ordinal: userTurns.length, user_turn: userTurns[userTurns.length - 1]?.content ?? null },
             }, { caller: supabaseClient });
             if (!tc.function.name.startsWith("read_") && tid && result.outcome !== "failed" && result.outcome !== "invalid") {
-              await recordCapabilityRun(supabase, {
+              // A completed act is keyed by what it produced (the draft version, or the approval filed), so a
+              // retried call that found the same result records one activity, not two.
+              const recorded = await recordCapabilityRun(supabase, {
                 tenantId: tid, actorId: user.id, capabilityKey: tc.function.name,
                 outcome: result.outcome === "succeeded" ? "capability_succeeded" : result.outcome === "refused" ? "capability_refused" : "capability_outcome_unknown",
-                runId: await stableRunId([tc.function.name, tid, `${payloadThreadId ?? ""}:${tc.id}`]),
+                runId: await stableRunId(result.outcome === "succeeded" && result.runId
+                  ? [tc.function.name, tid, result.runId]
+                  : [tc.function.name, tid, `${payloadThreadId ?? ""}:${tc.id}`]),
               });
+              if (!recorded && result.outcome === "succeeded") {
+                result.content = { ...result.content, activity_recorded: false,
+                  note: `${String(result.content.note ?? "")} It is done, but it did not appear in the business's activity record; say so if asked what PAIGE did.`.trim() };
+              }
             }
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result.content) });
           } catch {

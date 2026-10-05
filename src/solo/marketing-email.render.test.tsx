@@ -253,12 +253,56 @@ describe("Marketing › Email campaign editor", () => {
     answers.read_email_campaign = { data: byPaige, error: null };
     await act(async () => { window.dispatchEvent(new CustomEvent("paige:turn-settled")); });
     await flush();
-    expect(text()).toContain("PAIGE changed this campaign while you were editing. Your edits will save over hers.");
+    expect(text()).toContain("PAIGE changed this campaign while you were editing. Nothing is saved until you choose.");
+    expect(text()).toContain("Waiting for your choice");
     expect(host.querySelector<HTMLInputElement>('input[placeholder="What the inbox shows first"]')!.value).toBe("Mine, not saved yet");
     await act(async () => { button("Show PAIGE's version")!.click(); });
     await flush();
     expect(host.querySelector<HTMLInputElement>('input[placeholder="What the inbox shows first"]')!.value).toBe("Written by PAIGE");
     expect(text()).not.toContain("while you were editing");
+  });
+
+  it("while PAIGE's change and unsaved edits disagree nothing saves, Review waits, and Keep my edits saves the owner's", async () => {
+    window.history.replaceState(null, "", "/solo/1/growth/email?campaign=c-new");
+    answers.read_email_campaign = { data: campaignRead(), error: null };
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    await mount();
+    await type(host.querySelector<HTMLInputElement>('input[placeholder="What the inbox shows first"]')!, "Mine");
+    const byPaige = campaignRead();
+    byPaige.version.subject = "Written by PAIGE";
+    answers.read_email_campaign = { data: byPaige, error: null };
+    await act(async () => { window.dispatchEvent(new CustomEvent("paige:turn-settled")); });
+    await flush();
+    calls.length = 0;
+    await act(async () => { vi.advanceTimersByTime(2000); });
+    await flush();
+    expect(calls.filter((c) => c.fn === "email_campaign_update_draft")).toHaveLength(0);
+    await act(async () => { button("Review and send")!.click(); });
+    await flush();
+    expect(calls.filter((c) => c.fn === "email_campaign_request_approval")).toHaveLength(0);
+    expect(text()).toContain("Choose which version to keep before sending it for approval.");
+    await act(async () => { button("Keep my edits")!.click(); });
+    await act(async () => { vi.advanceTimersByTime(900); });
+    await flush();
+    expect(calls.filter((c) => c.fn === "email_campaign_update_draft").at(-1)?.args).toMatchObject({ p_subject: "Mine" });
+    expect(text()).not.toContain("while you were editing");
+  });
+
+  it("closing the editor during an open choice keeps PAIGE's version", async () => {
+    window.history.replaceState(null, "", "/solo/1/growth/email?campaign=c-new");
+    answers.read_email_campaign = { data: campaignRead(), error: null };
+    await mount();
+    await type(host.querySelector<HTMLInputElement>('input[placeholder="What the inbox shows first"]')!, "Mine");
+    const byPaige = campaignRead();
+    byPaige.version.subject = "Written by PAIGE";
+    answers.read_email_campaign = { data: byPaige, error: null };
+    await act(async () => { window.dispatchEvent(new CustomEvent("paige:turn-settled")); });
+    await flush();
+    calls.length = 0;
+    act(() => root.unmount());
+    root = createRoot(host);
+    await flush();
+    expect(calls.filter((c) => c.fn === "email_campaign_update_draft")).toHaveLength(0);
   });
 
   it("an edit still pending when the editor closes is saved, not dropped", async () => {

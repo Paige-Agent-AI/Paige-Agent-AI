@@ -244,4 +244,27 @@ describe("email campaign chat tools", () => {
     expect(chat).toContain("authorityAdmits(tc.function.name, await authorityForCall(tc.id), WORKSPACE_BUILD_TOOLS, EMAIL_CAMPAIGN_TOOL_NAMES)");
     expect(chat).toMatch(/const DOOR_SEAT_TOOLS[\s\S]{0,600}\.\.\.EMAIL_CAMPAIGN_TOOL_NAMES/);
   });
+
+  it("refuses an audience rule and a saved segment together, and checks which one took effect", async () => {
+    const { deps, calls } = caller({
+      email_campaign_draft: { data: { campaign_id: CAMPAIGN, version_id: VERSION, created: false } },
+      read_email_campaigns: draftRead({ audience: { stages: ["lead"] }, segment_id: "77777777-7777-4777-8777-777777777777" }),
+    });
+    const both = await run("email_campaign_draft", { campaign_id: CAMPAIGN, audience: { stages: ["lead"] }, segment_id: "77777777-7777-4777-8777-777777777777" }, deps);
+    expect(both.outcome).toBe("invalid");
+    expect(calls).toHaveLength(0);
+    const ruleOnly = await run("email_campaign_draft", { campaign_id: CAMPAIGN, audience: { stages: ["lead"] } }, deps);
+    expect(calls[0].args.p_clear_segment).toBe(true);
+    expect(ruleOnly.outcome).toBe("outcome_unknown"); // the read-back still shows a segment deciding the audience
+  });
+
+  it("keys a create's receipt to its create key, and leaves a change keyed to its call", async () => {
+    const settled = "88888888-8888-4888-8888-888888888888";
+    const { deps } = caller({
+      email_campaign_draft: { data: { campaign_id: CAMPAIGN, version_id: VERSION, created: true } },
+      read_email_campaigns: draftRead({ subject: "Hi" }),
+    });
+    expect((await run("email_campaign_draft", { request_key: settled, subject: "Hi" }, deps)).runId).toBe(`create:${settled}`);
+    expect((await run("email_campaign_draft", { campaign_id: CAMPAIGN, subject: "Hi" }, deps)).runId).toBeUndefined();
+  });
 });

@@ -202,6 +202,9 @@ export async function dispatchEmailCampaignChat(ctx: EmailCampaignChatContext, d
     if (rule === 'invalid') return invalid('audience may only hold stages, sources and tags (lists of text) and inactive_days.');
     const segment = args.segment_id;
     if (segment !== undefined && segment !== null && (typeof segment !== 'string' || !UUID.test(segment))) return invalid('segment_id must be an id from read_email_campaigns.');
+    // A saved segment decides the audience whenever one is set, so a rule and a segment together would save
+    // one audience and send to another. One or the other.
+    if (rule !== null && typeof segment === 'string') return invalid('Give either an audience rule or a saved segment_id, not both.');
     let sendAt: string | null | undefined = undefined;
     if (args.send_at !== undefined) {
       if (args.send_at === null) sendAt = null;
@@ -219,7 +222,7 @@ export async function dispatchEmailCampaignChat(ctx: EmailCampaignChatContext, d
         p_expected_tenant_id: ctx.tenantId, p_campaign_id: campaignId, p_request_key: requestKey,
         p_name: args.name ?? null, p_kind: args.kind ?? null, p_subject: args.subject ?? null, p_preheader: args.preview_text ?? null,
         p_body_html: bodyHtml, p_audience: rule,
-        p_segment_id: typeof segment === 'string' ? segment : null, p_clear_segment: segment === null || (rule !== null && segment === undefined),
+        p_segment_id: typeof segment === 'string' ? segment : null, p_clear_segment: segment === null || rule !== null,
         p_scheduled_for: sendAt ?? null, p_clear_schedule: sendAt === null, p_conversion_goal: args.goal ?? null,
       });
       if (reply.error) {
@@ -246,12 +249,16 @@ export async function dispatchEmailCampaignChat(ctx: EmailCampaignChatContext, d
       && (args.name === undefined || camp.name === String(args.name).trim() || !String(args.name).trim())
       && (args.kind === undefined || camp.kind === args.kind)
       && (args.goal === undefined || version.conversion_goal === args.goal)
-      && (rule === null || same(version.audience, rule))
+      && (rule === null || (same(version.audience, rule) && version.segment_id == null))
+      && (typeof segment !== 'string' || version.segment_id === segment)
+      && (segment !== null || version.segment_id == null)
       && (sendAt === undefined || (sendAt === null ? version.scheduled_for == null : Date.parse(String(version.scheduled_for)) === Date.parse(sendAt)));
     if (!matches) return { outcome: 'outcome_unknown', runId: savedId, content: { success: false, outcome: 'outcome_unknown', campaign_id: savedId, error: 'The draft was written but could not be confirmed.', note: 'Read the campaign before saying it was saved.' } };
     const created = saved!.created === true;
     const replayed = saved!.replayed === true;
-    return { outcome: 'succeeded', runId: String(saved!.version_id), content: {
+    // A create is one act however often it is retried, so its receipt is keyed to the create key; each change
+    // to a draft is its own act, keyed by the call.
+    return { outcome: 'succeeded', runId: requestKey ? `create:${requestKey}` : undefined, content: {
       success: true, campaign_id: savedId, version_no: count(version!.version_no), created: created && !replayed, replayed,
       subject: text(version!.subject, 300), send_at: version!.scheduled_for ?? null,
       note: `${replayed ? 'This draft was already saved from the same request; nothing new was made' : created ? 'Saved as a new draft' : 'The draft is updated'}. Nothing was sent. The owner can open it in Marketing › Email, or ask you to file it for approval.`,

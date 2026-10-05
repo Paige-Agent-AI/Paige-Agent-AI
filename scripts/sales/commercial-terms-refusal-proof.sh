@@ -24,8 +24,11 @@ if [ "$(id -u)" -eq 0 ]; then
   MIG_COPY=/var/tmp/commercial-terms-proof-migration.sql
   cp "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/supabase/migrations/20270532100000_commercial_terms_refusals_reach_the_operator.sql" "$MIG_COPY"
   chmod 644 "$MIG_COPY"
+  SHARED_COPY=/var/tmp/commercial-terms-shared-writer.sql
+  cp "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/supabase/migrations/20270586000000_sales_shared_commercial_writer.sql" "$SHARED_COPY"
+  chmod 644 "$SHARED_COPY"
   export PROOF_REEXEC=1
-  exec su "$RUNNER" -s /bin/bash -c "PROOF_REEXEC=1 PGBIN='${PGBIN:-}' MIGRATION='$MIG_COPY' TMPDIR=/var/tmp $(printf '%q' "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")")"
+  exec su "$RUNNER" -s /bin/bash -c "PROOF_REEXEC=1 PGBIN='${PGBIN:-}' MIGRATION='$MIG_COPY' SHARED_MIGRATION='$SHARED_COPY' TMPDIR=/var/tmp $(printf '%q' "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")")"
 fi
 
 if [ -z "${PGBIN:-}" ]; then
@@ -48,6 +51,9 @@ psql() { "$PGBIN/psql" -h "$WORK" -p "$PORT" -U p -d postgres "$@"; }
 
 psql -q -v ON_ERROR_STOP=1 -f "$HERE/_stub-schema.sql" >/dev/null
 psql -q -f "$MIGRATION" 2>&1 | grep -iE "^psql.*error" && { echo "FAIL — the migration did not apply"; exit 1; }
+SHARED_MIGRATION="${SHARED_MIGRATION:-$HERE/../../supabase/migrations/20270586000000_sales_shared_commercial_writer.sql}"
+psql -q -v ON_ERROR_STOP=1 -f "$SHARED_MIGRATION" >/dev/null
+psql -q -v ON_ERROR_STOP=1 -f "$SHARED_MIGRATION" >/dev/null
 
 OUT="$WORK/out"
 psql -q -f "$HERE/refusal-drive.sql" 2>&1 | grep -E '^(D[0-9]|---)' | tee "$OUT"
@@ -63,3 +69,4 @@ if [ "$(grep -c 'PASS' "$OUT")" -lt 8 ]; then
   echo "FAIL — fewer refusals ran than expected; the proof itself is broken."; exit 1
 fi
 echo "OK — every driven refusal announced itself with the code its class requires."
+psql -q -v ON_ERROR_STOP=1 -f "$HERE/shared-commercial-writer-drive.sql"

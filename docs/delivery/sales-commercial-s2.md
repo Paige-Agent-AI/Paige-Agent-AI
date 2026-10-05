@@ -112,3 +112,16 @@ Grounded main: `fdb8c693d69d2299461f9b420979d5d3b8816f47`. #1745 is reviewed, CI
 Shared collision check: #1744's C3 turn UI is merged. Active #1748 modifies the main Chat handler and shared capability gateway/status renderer; those files are excluded from the next Sales writer/link unit. Full package/C4 binding must recheck that lane and the joint Conversational Loop/Deep Research seam before editing. The current next unit must not create a second approval/orchestrator merely to avoid that dependency.
 
 Canonical commercial writer requires a tenant-owned offer, resolves catalog amounts itself, accepts nonnegative recorded amounts and paired currency, and applies existing lifecycle/refusal rules. Its current caller-derived `auth.uid()`/tenant guard cannot be bypassed by setting JWT claims in a service-role command. A governed path must share the writer with explicit authenticated actor validation and transactional authority/readback; factoring that seam requires human-path regression proof before delivery.
+
+### Pre-edit gate - shared commercial writer seam
+
+1. Outcome: retain the existing human save behavior while extracting its one write implementation for later governed commercial creation. No new callable commercial action is delivered by this extraction.
+2. Owner: Sales `tenant_client_agreements`; same source writer from migration `20270532100000`, no new store. Active #1748's Chat/gateway files are excluded.
+3. Harness/Gateway: no new worker or authority resolver; subsequent creation must use existing Collections governed command. Package/C4 remains unavailable.
+4. Spine: existing terms-update and invoice draft declarations remain unchanged; new commercial creation is UNAVAILABLE until bound and proven.
+5. Provider: none; no merchant, price-provider object, charge, mandate or financial provider decision.
+6. Authority: existing human wrapper retains caller identity, current workspace and owner/admin checks before resource resolution. Extracted implementation is owner-only: no PUBLIC, anon, authenticated or service-role direct execution. Future trusted executor must re-prove actor/tenant and current canonical Trust authority.
+7. Durable work: none added; existing Collections operation store remains the later execution/replay owner.
+8. Readback/Rail: exact original normalized saved-row readback, immutability, stale-version and refusal vocabulary remain. No new successful execution claim or read receipt for extraction itself.
+9. Surface/binding: unchanged Solo terms form and parameters; PARTIAL remains. No new layout/interaction or prototype; full package Flow Prototype/Impeccable still required.
+10. Proof: actual PostgreSQL old refusal suite, human create/update readback, workspace/role/foreign-resource/stale refusal and direct private-helper ACL tests; existing commercial hook regressions and exact-head independent review/CI. Hosted human/Chat acceptance remains UNVERIFIED.

@@ -1,7 +1,7 @@
 -- Stand-ins for the real surface, enough to CREATE the two writers and drive their refusals.
 -- Deliberately permissive: the gates return true so the REFUSAL VOCABULARY is what gets exercised
 -- here. Tenant isolation and role enforcement are proven against the real schema, not against this.
-CREATE ROLE anon; CREATE ROLE authenticated;
+CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role;
 CREATE TABLE public.tenant_client_agreements(
   id uuid DEFAULT gen_random_uuid(), tenant_id uuid, contact_id uuid, offer_id uuid, status text,
   updated_at timestamptz, agreed_amount_minor bigint, agreed_currency text, catalog_price_id uuid,

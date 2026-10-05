@@ -5,3 +5,10 @@
 .invoice-document-toolbar button:focus-visible{outline:2px solid #6247aa;outline-offset:3px}
 .invoice-document-page iframe{flex:1;min-height:0;width:100%;border:0}
 .invoice-document-page>p{padding:24px}
+
+.invoice-payment-return{min-height:100dvh;background:#fff;color:#172033;padding:clamp(24px,6vw,72px);font:16px/1.6 system-ui}
+.invoice-payment-return h1{font-size:clamp(24px,4vw,36px);line-height:1.2;letter-spacing:-.025em;max-width:24ch;margin:0 0 24px}
+.invoice-payment-return p{max-width:65ch;margin:16px 0}
+.invoice-payment-return::selection{background:#eeebfb;color:#172033}
+
+.invoice-payment-request{padding:12px 20px;background:#f5f2ff;border-bottom:1px solid #d8ceff;color:#182442}.invoice-payment-request p{margin:8px 0}.invoice-payment-request a{display:inline-block;padding:10px 16px;border-radius:8px;background:#5937d5;color:white;text-decoration:none;font-weight:600}.invoice-payment-request button{padding:8px 12px;border:1px solid #c6b7ef;border-radius:8px;background:white;color:#2d2059}

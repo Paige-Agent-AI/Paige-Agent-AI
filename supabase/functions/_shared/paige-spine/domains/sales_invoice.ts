@@ -11,6 +11,14 @@ const mutations = [
 ] as const;
 export const SALES_INVOICE_CAPABILITIES: readonly SpineCapability[] = [
  ...SALES_DRAFT_SPINE, SALES_COMMERCIAL_OFFERS_SPINE,
+ {key:'sales.payment_reconcile',domain:'sales_invoice',owner:'sales',humanSurface:'/solo/:account/sales/payments',
+  action:{classification:'read',executor:'sales-payment-reconcile',riskPolicyKey:'read_only',approvalAuthority:'none',idempotency:'Service-only existing authorized payment operation; canonical durable-work lease and exact merchant binding. Provider GET only, never another payment dispatch.'},
+  outcome:{kinds:['checking','settled','failed','expired','cancelled','outcome_unknown','refused'],projector:'public.list_sales_invoice_payment_operations',railVisibility:'Provider readback advances canonical settlement/allocation only through the original immutable authorized operation. Atomic ledger/Rail proof required; authenticated provider acceptance remains PROOF_OWED.'},
+  chatBinding:'UNAVAILABLE',mindBinding:'UNAVAILABLE',sharedPrimitiveChange:'NONE',maturity:'PARTIAL'},
+ {key:'sales_invoice.payment_request',domain:'sales_invoice',owner:'sales',humanSurface:'/solo/:account/sales/payments',
+  action:{classification:'external_effect',executor:'public.prepare_sales_invoice_payment_request',chatTool:'sales_create_payment_request',riskPolicyKey:'high',approvalAuthority:'chat-canonical',idempotency:'Exact server-resolved tenant/customer/invoice/version/amount/currency/merchant/environment, immutable operation and one persisted dispatch claim; uncertain response only reconciles.'},
+  outcome:{kinds:['prepared','dispatching','provider_accepted','customer_action_required','outcome_unknown','settled','failed','expired','cancelled','refused'],projector:'public.read_sales_invoice_payment_request',railVisibility:'Request/readback/verified settlement and allocation are distinct. Hosted request never claims payment. Authenticated provider acceptance is PROOF_OWED.'},
+  chatBinding:'LIVE',mindBinding:'UNAVAILABLE',sharedPrimitiveChange:'NONE',maturity:'PARTIAL'},
   {key:'sales_invoice.preferences_read',readiness:'none',domain:'sales_invoice',owner:'sales',humanSurface:'/solo/:account/sales/payments',action:{classification:'read',executor:'public.read_sales_invoice_preferences',chatTool:'read_sales_invoice_preferences',riskPolicyKey:'read_only',approvalAuthority:'none',idempotency:'Authenticated current tenant and owner/admin reader.'},outcome:{kinds:['available','refused','failed'],projector:'public.read_sales_invoice_preferences',railVisibility:'Scoped preferences only; never changes issued documents.'},chatBinding:'LIVE',mindBinding:'UNAVAILABLE',sharedPrimitiveChange:'NONE',maturity:'PARTIAL'},
   { key: 'sales_invoice.read', domain: 'sales_invoice', owner: 'sales', humanSurface: '/solo/:account/sales?tab=payments',
     action: { classification: 'read', executor: 'public.read_sales_invoice', chatTool: 'read_sales_invoice', riskPolicyKey: 'read_only', approvalAuthority: 'none', idempotency: 'Read-only; authenticated tenant and owner/admin role are revalidated by the RPC.' },
@@ -127,6 +135,15 @@ export const SALES_INVOICE_EMAIL_CAPABILITY = defineCapability({
 
 /** Canonical policy-key lookup for the existing Kit decision adapter; no alternate execution. */
 export const SALES_INVOICE_KIT_BY_ACTION = {
+ sales_create_payment_request:defineCapability({
+  identity:{id:'sales_invoice.payment_request',version:1,domain:'sales_invoice',owner:'sales',humanSurface:'/solo/:account/sales/payments',description:'Prepare an exact tenant-merchant hosted payment request. Request creation never proves payment.'},
+  input:objectInputSchema({description:'Caller intent only. Server resolves customer, merchant, currency and current eligible amount before exact review.',properties:{...INVOICE_INPUT,action:{type:'string',enum:['invoice.payment_request']},provider:{type:'string',enum:['stripe','paypal']},purpose:{type:'string',enum:['full','partial','deposit','installment']},amount_minor:{type:'integer',minimum:1,maximum:2147483647}},required:['action','invoice_id','expected_version','provider','purpose']}),
+  effect:'external_effect',governance:{actionRiskKey:'sales_create_payment_request',risk:'high',approval:'confirm',requiredPermission:ownerGrantablePermission('sales_invoice.payment_request.execute')},
+  tenantScope:INVOICE_SCOPE,availability:INVOICE_AVAILABILITY,
+  providerBinding:{kind:'internal',operation:'public.prepare_sales_invoice_payment_request',connectionResolver:null},
+  idempotency:{mode:'required',key:'Tenant + actor + immutable operation + exact invoice/customer/merchant/environment/amount/currency. Persisted single dispatch claim. Unknown outcomes reconcile without creating another provider payment.',readback:'public.read_sales_invoice_payment_request',replay:'reconcile_then_return'},
+  receipt:INVOICE_RECEIPT,outcome:{projector:'capability-record'},
+ }),
  sales_update_invoice_settings:SALES_INVOICE_SETTINGS_CAPABILITY,
  sales_publish_invoice:SALES_INVOICE_PUBLISH_CAPABILITY,
  sales_record_manual_payment:SALES_INVOICE_RECORD_PAYMENT_CAPABILITY,

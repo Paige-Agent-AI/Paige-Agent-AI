@@ -6,7 +6,7 @@ import {useTheme} from 'next-themes';
 import type {InvoiceAppearance} from './invoicePreferences';
 import {invoiceDisplayNumber} from './invoicePaymentCopy';
 type Result=Record<string,unknown>;
-type ReviewProps={tenantId:string;command:SalesInvoiceCommand;onComplete(result:Result):void;onClose():void};
+type ReviewProps={tenantId:string;command:SalesInvoiceCommand;operationId?:string;onComplete(result:Result):void;onClose():void};
 /** One immutable operation and command, proposed then approved through the canonical server card. */
 export function InvoiceCommandReview(props:ReviewProps){
   const [actorId,setActorId]=React.useState<string|null>(null),[resolved,setResolved]=React.useState(false);
@@ -19,14 +19,14 @@ export function InvoiceCommandReview(props:ReviewProps){
   if(!actorId)return <p role="alert">Sign in to review this invoice action.</p>;
   return <ActorInvoiceCommandReview key={`${actorId}:${props.tenantId}`} {...props} actorId={actorId}/>;
 }
-function ActorInvoiceCommandReview({tenantId,command,onComplete,onClose,actorId}:ReviewProps&{actorId:string}){
+function ActorInvoiceCommandReview({tenantId,command,operationId,onComplete,onClose,actorId}:ReviewProps&{actorId:string}){
   const {resolvedTheme}=useTheme();const primary=React.useRef<HTMLButtonElement>(null);
   const commandScope=command.action==='invoice.settings_update'?'settings':command.invoice_id;
   const storageKey=`paige:invoice-operation:${actorId}:${tenantId}:${commandScope}`;
-  const captured=React.useRef({actorId,tenantId,command:structuredClone(command),operationId:crypto.randomUUID()});
+  const captured=React.useRef({actorId,tenantId,command:structuredClone(command),operationId:operationId&&UUID.test(operationId)?operationId:crypto.randomUUID()});
   const initialized=React.useRef(false);
-  const restored=React.useRef(false);
-  if(!initialized.current){initialized.current=true;try{const saved=JSON.parse(sessionStorage.getItem(storageKey)||'null');const savedScope=saved?.command?.action==='invoice.settings_update'?'settings':saved?.command?.invoice_id;if(saved?.actorId===actorId&&saved?.tenantId===tenantId&&savedScope===commandScope&&UUID.test(saved.operationId)){captured.current={actorId,tenantId,command:parseSalesInvoiceCommand(saved.command),operationId:saved.operationId};restored.current=true;}}catch{/* invalid stored recovery is not authority */}}
+  const restored=React.useRef(!!operationId);
+  if(!initialized.current){initialized.current=true;try{const saved=JSON.parse(sessionStorage.getItem(storageKey)||'null');const savedScope=saved?.command?.action==='invoice.settings_update'?'settings':saved?.command?.invoice_id;if(saved?.actorId===actorId&&saved?.tenantId===tenantId&&savedScope===commandScope&&(!operationId||saved.operationId===operationId)&&UUID.test(saved.operationId)){captured.current={actorId,tenantId,command:parseSalesInvoiceCommand(saved.command),operationId:saved.operationId};restored.current=true;}}catch{/* invalid stored recovery is not authority */}}
   const latestTenant=React.useRef(tenantId);latestTenant.current=tenantId;
   const unresolved=React.useRef(restored.current);
   const [busy,setBusy]=React.useState(false),[proposal,setProposal]=React.useState<Result|null>(null),[unknown,setUnknown]=React.useState(restored.current),[notice,setNotice]=React.useState('');
@@ -34,7 +34,7 @@ function ActorInvoiceCommandReview({tenantId,command,onComplete,onClose,actorId}
   const alive=React.useRef(true);React.useEffect(()=>{alive.current=true;return()=>{alive.current=false}},[]);
   const settings=captured.current.command.action==='invoice.settings_update'?captured.current.command.settings as InvoiceAppearance:null;
   const forget=()=>{try{sessionStorage.removeItem(storageKey)}catch{/* unavailable storage */}};
-  const money=(v:unknown)=>typeof v==='number'&&Number.isSafeInteger(v)?new Intl.NumberFormat(undefined,{style:'currency',currency:'USD'}).format(v/100):'Unavailable';
+  const money=(v:unknown)=>typeof v==='number'&&Number.isSafeInteger(v)?new Intl.NumberFormat(undefined,{style:'currency',currency:typeof (proposal?.preview as Result)?.currency==='string'?String((proposal?.preview as Result).currency).toUpperCase():'USD'}).format(v/100):'Unavailable';
   React.useEffect(()=>{if(!busy)primary.current?.focus();},[proposal,busy]);
   React.useEffect(()=>{if(!busy&&!unknown)return;const prevent=(event:BeforeUnloadEvent)=>{event.preventDefault();event.returnValue='';};window.addEventListener('beforeunload',prevent);return()=>window.removeEventListener('beforeunload',prevent);},[busy,unknown]);
   const execute=async(approve:boolean)=>{

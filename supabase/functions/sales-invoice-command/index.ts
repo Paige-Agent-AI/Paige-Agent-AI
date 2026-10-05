@@ -1,3 +1,7 @@
+import type {SalesPaymentAdmin} from "../_shared/sales-payments/database-port.ts";
+import { preparePaymentReview,executeInvoicePaymentRequest,paymentExecutionPorts } from "../_shared/sales-payments/invoice-payment-adapter.ts";
+import { parseCanonicalPaymentRequestCommand,parsePaymentRequestIntent } from "../_shared/sales-payments/request-command.ts";
+import { reconcilePayment } from "../_shared/sales-payments/request-execution.ts";
 import { PAIGE_APP_ORIGIN } from "../_shared/canonical-app-url.ts";
 import { invoicePublicOriginReady } from "../_shared/sales-invoice-delivery/binding.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
@@ -13,6 +17,9 @@ import { readInvoiceDeliveryReadiness, type InvoiceReadinessAdmin } from "../_sh
 const headers = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Content-Type": "application/json", "Cache-Control": "no-store" };
 const response = (status: number, body: Record<string, unknown>) => new Response(JSON.stringify(body), { status, headers });
 const object = (value: unknown): Record<string, unknown> | null => value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
+
+const parseStoredCommand = (value:unknown):ReturnType<typeof parseSalesInvoiceCommand> => object(value)?.action==='invoice.payment_request'
+  ? {...parseCanonicalPaymentRequestCommand(value)} : parseSalesInvoiceCommand(value);
 
 // A domain adapter to the existing approval gate. It neither creates a new approval channel
 // nor trusts request-authored actor, tenant, governance, financial facts or public-link secrets.
@@ -44,6 +51,37 @@ Deno.serve(async req => {
   };
   const { data: member, error: memberError } = await admin.from("tenant_members").select("role,status").eq("tenant_id", tenantId).eq("user_id", user.id).eq("status", "active").maybeSingle();
   if (memberError || !["owner", "admin"].includes(member?.role ?? "")) return response(403, { ok: false, outcome: "refused", code: "SALES_INVOICE_FORBIDDEN" });
+  const paymentAction = command.action === "invoice.payment_request";
+  let preparedPaymentRecovery=false;
+  let preparedPaymentCommand:Record<string,unknown>|null=null;
+  // Narrow structural port across pinned SDKs; every returned JSON fact remains unknown/validated.
+  const paymentAdmin=admin as unknown as SalesPaymentAdmin;
+  const paymentCaller = {tenantId,actorId:user.id,operationId:String(body.operation_id),stillCurrent};
+  if (paymentAction) {
+    // Historical replay is checked before current balance/readiness eligibility. It cannot
+    // become permission for another provider POST; recovery is GET/list/readback only.
+    const prior = await admin.rpc("read_sales_invoice_payment_request", {_actor_user_id:user.id,_expected_tenant_id:tenantId,_operation_id:body.operation_id});
+    if (prior.error) return response(409,{ok:false,outcome:"refused",code:"PAYMENT_REPLAY_UNAVAILABLE"});
+    const saved = object(prior.data);
+    if(saved) {
+      try {
+        const exact=parseCanonicalPaymentRequestCommand(saved.command);
+        const intent=parsePaymentRequestIntent({action:exact.action,invoice_id:exact.invoice_id,expected_version:exact.expected_version,provider:exact.provider,purpose:exact.purpose,...(exact.purpose==='full'?{}:{amount_minor:exact.amount_minor})});
+        if(JSON.stringify(intent)!==JSON.stringify(command))return response(409,{ok:false,outcome:"refused",code:"PAYMENT_OPERATION_INPUT_CHANGED"});
+        if(saved.state==='prepared'){
+          preparedPaymentRecovery=true;preparedPaymentCommand={...exact};
+        }else {
+          const result=await reconcilePayment(paymentExecutionPorts(paymentAdmin,paymentCaller,Deno.env.get("STRIPE_SECRET_KEY")??"",PAIGE_APP_ORIGIN));
+          return response(200,{...result,replayed:true,capability:"sales_create_payment_request"});
+        }
+      }catch {return response(503,{ok:false,outcome:"outcome_unknown",code:"PAYMENT_READBACK_REQUIRED",operation_id:body.operation_id});}
+    }
+    try {
+      command={...await preparePaymentReview(paymentAdmin,paymentCaller,command,Deno.env.get("STRIPE_SECRET_KEY")??"")};
+      if(preparedPaymentCommand&&JSON.stringify(preparedPaymentCommand)!==JSON.stringify(command))return response(409,{ok:false,outcome:"refused",code:"PAYMENT_OPERATION_INPUT_CHANGED"});
+    }
+    catch {return response(422,{ok:false,outcome:"refused",code:"PAYMENT_REQUEST_NOT_READY"});}
+  }
   const capability = SALES_INVOICE_ACTIONS[command.action];
   const requestArgs: Record<string, unknown> = { command, operation_id: body.operation_id, expected_tenant_id: tenantId, approval_subject: `${command.action}:${command.action === "invoice.settings_update" ? tenantId : command.invoice_id}` };
   const rpcArgs = { _actor_user_id: user.id, _expected_tenant_id: tenantId, _operation_id: body.operation_id, _command: command };
@@ -51,13 +89,21 @@ Deno.serve(async req => {
   // The business RPC fences actor/tenant and exact canonical request even for historical operations.
   if (!(await stillCurrent())) return response(409, { ok: false, code: "WORKSPACE_CHANGED" });
   const emailAction = command.action === "invoice.email_send" || command.action === "invoice.sms_send";
-  const { data: replay, error: replayError } = await admin.rpc(emailAction ? "read_sales_invoice_delivery_result" : "read_sales_invoice_command_result", rpcArgs);
+  const { data: replay, error: replayError } = paymentAction ? {data:null,error:null} : await admin.rpc(emailAction ? "read_sales_invoice_delivery_result" : "read_sales_invoice_command_result", rpcArgs);
   if (replayError) return response(409, { ok: false, outcome: "refused", code: "SALES_INVOICE_REPLAY_UNAVAILABLE" });
-  const preparedRecovery = emailAction && object(replay)?.outcome === "prepared";
+  const preparedRecovery = preparedPaymentRecovery || (emailAction && object(replay)?.outcome === "prepared");
   if (object(replay) && !preparedRecovery) return response(200, { ...object(replay)!, replayed: true, capability, ...(command.action === "invoice.link_create" ? { link_recovery_required: true } : {}) });
 
   if (emailAction && !invoicePublicOriginReady(PAIGE_APP_ORIGIN)) return response(422, { ok:false, outcome:"needs_setup", code:"INVOICE_PUBLIC_ORIGIN_UNAVAILABLE" });
-  const { data: previewData, error: previewError } = await admin.rpc(emailAction ? "preview_sales_invoice_delivery_command" : "preview_sales_invoice_command", { _actor_user_id: user.id, _expected_tenant_id: tenantId, _command: command });
+  let paymentInvoicePreview:Record<string,unknown>|null=null;
+  if(paymentAction){
+    const read=await admin.rpc('_sales_invoice_read',{_tenant:tenantId,_invoice:command.invoice_id});
+    const facts=object(read.data);
+    const customer=await admin.from('paige_invoices').select('contact_id').eq('tenant_id',tenantId).eq('id',command.invoice_id).maybeSingle();
+    if(read.error||customer.error||!facts||facts.tenant_id!==tenantId||facts.id!==command.invoice_id||facts.version!==command.expected_version||customer.data?.contact_id!==command.client_id||facts.currency!==command.currency||!Number.isSafeInteger(facts.remaining_cents)||Number(facts.remaining_cents)<Number(command.amount_minor))return response(409,{ok:false,outcome:'refused',code:'PAYMENT_CONTEXT_CHANGED'});
+    paymentInvoicePreview=facts;
+  }
+  const { data: previewData, error: previewError } = paymentAction ? {data:{eligible:true,invoice_number:paymentInvoicePreview?.invoice_number,remaining_cents:paymentInvoicePreview?.remaining_cents,summary:`Request ${new Intl.NumberFormat('en-US',{style:'currency',currency:String(command.currency).toUpperCase()}).format(Number(command.amount_minor)/100)} from this invoice’s customer using the business’s connected ${command.provider==='stripe'?'Stripe':'PayPal'} account. The customer completes payment securely with the provider. Creating this request does not record a payment.`,invoice_id:command.invoice_id,amount_minor:command.amount_minor,currency:command.currency,client_id:command.client_id,provider:command.provider,merchant_account_id:command.merchant_account_id,environment:command.environment},error:null} : await admin.rpc(emailAction ? "preview_sales_invoice_delivery_command" : "preview_sales_invoice_command", { _actor_user_id: user.id, _expected_tenant_id: tenantId, _command: command });
   const preview = object(previewData);
   if (previewError || !preview || preview.eligible !== true) return response(422, { ok: false, outcome: "refused", code: "SALES_INVOICE_INELIGIBLE", ...(preview ? { preview } : {}) });
   if (emailAction) {
@@ -80,7 +126,7 @@ Deno.serve(async req => {
     const cycle = object(pendingCycle?.args);
     if (cycle) {
       let cycleCommand: ReturnType<typeof parseSalesInvoiceCommand>;
-      try { cycleCommand = parseSalesInvoiceCommand(cycle.command); } catch { return response(409, { ok:false, outcome:preparedRecovery?"prepared":"refused", code:"APPROVAL_CYCLE_INVALID" }); }
+      try { cycleCommand = parseStoredCommand(cycle.command); } catch { return response(409, { ok:false, outcome:preparedRecovery?"prepared":"refused", code:"APPROVAL_CYCLE_INVALID" }); }
       if (cycle.expected_tenant_id !== tenantId || cycle.operation_id !== body.operation_id
         || JSON.stringify(cycleCommand) !== JSON.stringify(command) || cycle.approval_subject !== requestArgs.approval_subject
         || typeof cycle.approval_cycle_nonce !== "string" || !UUID.test(cycle.approval_cycle_nonce))
@@ -140,7 +186,7 @@ Deno.serve(async req => {
   }
   let decided: ReturnType<typeof parseSalesInvoiceCommand>;
   const args = object(decision.args);
-  try { decided = parseSalesInvoiceCommand(args?.command); } catch { return response(403, { ok: false, code: "APPROVAL_CLAIM_INVALID" }); }
+  try { decided = parseStoredCommand(args?.command); } catch { return response(403, { ok: false, code: "APPROVAL_CLAIM_INVALID" }); }
   if (args?.expected_tenant_id !== tenantId || typeof args.operation_id !== "string" || !UUID.test(args.operation_id) || SALES_INVOICE_ACTIONS[decided.action] !== capability) return response(403, { ok: false, code: "APPROVAL_CLAIM_INVALID" });
   if (preparedRecovery && (args.operation_id !== body.operation_id || JSON.stringify(decided) !== JSON.stringify(command) || typeof args.approval_cycle_nonce !== "string" || !UUID.test(args.approval_cycle_nonce))) return response(403, { ok:false, outcome:"prepared", code:"APPROVAL_CYCLE_INVALID" });
   if (!(await stillCurrent())) return response(409, { ok: false, code: "WORKSPACE_CHANGED" });
@@ -168,6 +214,12 @@ Deno.serve(async req => {
       },
     });
     return response(result.ok === true ? 200 : result.outcome === "refused" ? 422 : 503, { ...result, capability });
+  }
+  if(decided.action==='invoice.payment_request') {
+    try {
+      const result=await executeInvoicePaymentRequest(paymentAdmin,{...paymentCaller,operationId:args.operation_id},parseCanonicalPaymentRequestCommand(decided),governance,Deno.env.get("STRIPE_SECRET_KEY")??"",PAIGE_APP_ORIGIN);
+      return response(result.ok===true?200:503,{...result,capability});
+    }catch {return response(503,{ok:false,outcome:"outcome_unknown",code:"PAYMENT_READBACK_REQUIRED",operation_id:args.operation_id});}
   }
   const { data: result, error: executeError } = await admin.rpc("execute_sales_invoice_command", {
     _actor_user_id: user.id, _expected_tenant_id: tenantId, _operation_id: args.operation_id, _command: decided, _governance: governance,

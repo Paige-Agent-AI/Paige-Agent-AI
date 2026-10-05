@@ -13,11 +13,13 @@ describe('canonical request binding',()=>{
  it('cannot bind another tenant merchant',()=>expect(()=>bindProviderOperation(request,{...merchant,tenant_id:'other'},'op-1','key')).toThrow('MERCHANT_TENANT_MISMATCH'));
 });
 describe('settlement/allocation boundaries',()=>{
- const operation={...bindProviderOperation(request,merchant,'op-1','key'),provider_operation_id:'pi_test',state:'externally_accepted' as const};
+ const operation={...bindProviderOperation(request,merchant,'op-1','key'),provider_operation_id:'pi_test',state:'provider_accepted' as const};
  const settlement={id:'settlement-1',tenant_id:request.tenant_id,provider:'stripe' as const,merchant_id:merchant.merchant_id,environment:'test' as const,operation_id:operation.id,provider_transaction_id:'ch_test',provider_settlement_id:'txn_test',amount_minor:50000,currency:'usd',state:'verified' as const,readback_reference:'readback-1'};
  const allocation={id:'allocation-1',tenant_id:request.tenant_id,settlement_id:settlement.id,invoice_id:request.invoice_id,amount_minor:50000,currency:'usd'};
  it('permits only verified matching settlement evidence',()=>expect(validateSettlementAllocation(allocation,settlement,operation,request)).toBe(null));
  it.each([{state:'pending'},{state:'outcome_unknown'},{tenant_id:'other'},{merchant_id:'acct_other'},{environment:'live'},{operation_id:'other'},{currency:'eur'},{readback_reference:''},{provider_settlement_id:''},{amount_minor:49999}])('refuses %j',patch=>expect(validateSettlementAllocation(allocation,{...settlement,...patch} as typeof settlement,operation,request)).not.toBe(null));
  it('does not treat Checkout completion or provider acceptance as settlement',()=>expect(validateSettlementAllocation(allocation,{...settlement,state:'pending'},operation,request)).not.toBe(null));
  it('does not overallocate a verified transaction',()=>expect(validateSettlementAllocation({...allocation,amount_minor:50001},settlement,operation,request)).not.toBe(null));
+ it('does not strand part of a settlement behind an exactly-once allocation identity',()=>expect(validateSettlementAllocation({...allocation,amount_minor:49999},settlement,operation,request)).not.toBe(null));
+ it('requires exact request amount, including a request for a partial invoice balance',()=>expect(validateSettlementAllocation({...allocation,amount_minor:49999},{...settlement,amount_minor:49999},operation,request)).not.toBe(null));
 });

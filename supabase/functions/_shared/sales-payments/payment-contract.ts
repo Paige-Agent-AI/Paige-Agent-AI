@@ -9,7 +9,8 @@ export interface InvoicePaymentContext {
   id: string; tenant_id: string; client_id: string; lifecycle_version: number; issued_snapshot_version: number;
   status: string; currency: string; outstanding_minor: number;
 }
-export type ProviderOperationState = 'prepared' | 'dispatching' | 'externally_accepted' | 'failed' | 'outcome_unknown' | 'reconciled';
+export type ProviderOperationState = 'prepared' | 'dispatching' | 'provider_accepted' | 'customer_action_required' |
+  'outcome_unknown' | 'settled' | 'failed' | 'expired' | 'cancelled';
 export interface ProviderOperation {
   id: string; tenant_id: string; request_id: string; provider: SalesPaymentProvider; merchant_id: string;
   merchant_version: number; environment: ProviderEnvironment; idempotency_key: string;
@@ -68,7 +69,7 @@ export function validateSettlementAllocation(allocation: SettlementAllocation, s
       settlement.environment !== operation.environment) return 'SETTLEMENT_SCOPE_MISMATCH';
   if (settlement.currency !== request.currency || allocation.currency !== request.currency) return 'CURRENCY_MISMATCH';
   if (!money(settlement.amount_minor) || !money(allocation.amount_minor) ||
-      settlement.amount_minor > request.amount_minor || allocation.amount_minor > settlement.amount_minor)
+      settlement.amount_minor !== request.amount_minor || allocation.amount_minor !== settlement.amount_minor)
     return 'ALLOCATION_AMOUNT_INVALID';
   return null;
 }

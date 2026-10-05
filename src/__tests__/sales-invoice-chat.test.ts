@@ -16,6 +16,19 @@ function harness(rows: unknown[] = []) {
   return { predicates, calls, deps: { admin: { from: () => query }, caller: { functions: { invoke: async (_name: string, options: unknown): Promise<{data: Record<string, unknown>; error: null}> => { calls.push(options); return { data: { ok: true, outcome: 'published', access_token: 'secret' }, error: null }; } }, rpc: async ():Promise<{data:unknown;error:unknown}> => ({ data: { id: invoice, status: 'issued' }, error: null }) } } };
 }
 describe('Sales invoice canonical Chat door', () => {
+  it('hosted payment request uses shared invoice door and reports request state without claiming money received',async()=>{
+    const h=harness();let endpoint='';h.deps.caller.functions.invoke=async(name,options)=>{endpoint=name;h.calls.push(options);return {data:{ok:true,outcome:'customer_action_required',payment_url:'https://checkout.stripe.com/pay/test',amount_minor:50000,currency:'usd',access_token:'private'},error:null}};
+    const result=await dispatchSalesInvoiceChat({...context,toolName:'sales_create_payment_request',approved:new Set(),args:{invoice_id:invoice,expected_version:2,provider:'stripe',purpose:'partial',amount_minor:50000}},h.deps as never);
+    expect(endpoint).toBe('sales-invoice-command');expect(h.calls[0]).toMatchObject({body:{command:{action:'invoice.payment_request',invoice_id:invoice,expected_version:2,purpose:'partial',amount_minor:50000}}});
+    expect(result.content).toMatchObject({outcome:'customer_action_required',payment_url:'https://checkout.stripe.com/pay/test',amount_minor:50000});expect(result.content.note).toContain('does not establish money received');expect(JSON.stringify(result)).not.toContain('private');
+  });
+  it('approved hosted request derives caller intent from exact stored command rather than model drift',async()=>{
+    const exact={action:'invoice.payment_request',invoice_id:invoice,expected_version:2,provider:'stripe',purpose:'partial',amount_minor:50000,currency:'usd',client_id:invoice,issued_snapshot_version:1,merchant_account_id:'acct_A',merchant_binding_version:1,environment:'test'};
+    const h=harness([{fingerprint,args:{command:exact,operation_id:operation,expected_tenant_id:tenant,approval_subject:`invoice.payment_request:${invoice}`}}]);
+    await dispatchSalesInvoiceChat({...context,toolName:'sales_create_payment_request',args:{invoice_id:invoice,expected_version:99,provider:'stripe',purpose:'partial',amount_minor:99999}},h.deps as never);
+    expect(h.calls).toEqual([{body:{expected_tenant_id:tenant,operation_id:operation,approved_fingerprint:fingerprint,command:{action:'invoice.payment_request',invoice_id:invoice,expected_version:2,provider:'stripe',purpose:'partial',amount_minor:50000}}}]);
+  });
+
   it('records imported partial receipts through the canonical Collections door and same payment policy',async()=>{
     const h=harness();let endpoint='';h.deps.caller.functions.invoke=async(name,options)=>{endpoint=name;h.calls.push(options);return {data:{ok:true,operation:{id:operation,action:'collection.record_receipt'},row:{status:'recorded',remaining_cents:5000,currency:'jpy',version:2}},error:null}};
     const result=await dispatchSalesInvoiceChat({...context,toolName:'sales_record_manual_payment',approved:new Set(),args:{record_kind:'imported',invoice_id:invoice,expected_version:1,amount_cents:1000,currency:'jpy',method:'wire',received_at:'2026-10-03T12:00:00.000Z'}},h.deps as never);

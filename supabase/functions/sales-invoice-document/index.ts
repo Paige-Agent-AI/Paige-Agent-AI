@@ -14,6 +14,11 @@ Deno.serve(async req=>{
   const url=new URL(req.url);const token=url.searchParams.get('token');let projection:unknown;
   if(token){
     if(!/^[0-9a-f]{64}$/.test(token))return refuse();
+    if(url.searchParams.get('format')==='payment-request'){
+      const {data,error}=await db.rpc('read_public_sales_invoice_payment_request',{_token_hash:await sha256Hex(token)});
+      if(error||!data)return refuse();
+      return new Response(JSON.stringify(data),{headers:{...headers,'Content-Type':'application/json'}});
+    }
     projection=await collectInvoiceLedger(db,'read_public_sales_invoice_payment_ledger',{_token_hash:await sha256Hex(token)});
     if(!projection)return refuse();
   }else{

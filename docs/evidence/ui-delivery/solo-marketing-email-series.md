@@ -40,7 +40,7 @@ ACCEPTANCE_CRITERIA: on the live app the owner opens Marketing › Email › Aut
 MOTION_PURPOSE: hover and press feedback only
 PROTECTED_SEAMS: tested - worker claim path with the tick before it, execute-approval's campaign branch (unchanged, series branch added after it), the E2 editor render suite; redefined with a series filter and proven - dashboard, campaign reads, settle, open envelopes, segment delete
 
-INTERNAL_BUILD_IDENTITY: c83a22bf47360f9100358ff4407a7fedd01ac694; deployment=none-pre-merge; environment=development; migrations=PROOF_OWED(20270580000000 applies through deploy-migrations.yml on merge after its rolled-back preview proofs passed); edge=PROOF_OWED(email-campaign-worker and execute-approval deploy through deploy-edge-functions.yml on merge); evidence=src/solo/marketing-email-series.render.test.tsx (this commit carries every executable change; later commits change only this record)
+INTERNAL_BUILD_IDENTITY: 8bcf3f0bf3c2b4fd7af4888bfa3f14bb6b234d61; deployment=none-pre-merge; environment=development; migrations=PROOF_OWED(20270580000000 applies through deploy-migrations.yml on merge after its rolled-back preview proofs passed); edge=PROOF_OWED(email-campaign-worker and execute-approval deploy through deploy-edge-functions.yml on merge); evidence=src/solo/marketing-email-series.render.test.tsx (this commit carries every executable change; later commits change only this record)
 RELEASE_CHANNEL: development: verified locally; production on merge per the owner's standing instruction
 RELEASE_CLASSIFICATION: internal-only: pre-launch, no customers
 CUSTOMER_RELEASE_IDENTITY: none: pre-launch, no customers

@@ -15,7 +15,7 @@ KEYBOARD_FOCUS: UNVERIFIED: no changed keyboard or focus code; authenticated UI 
 ZOOM_REFLOW: UNVERIFIED: no changed layout; authenticated zoom not re-driven.
 REDUCED_MOTION: UNVERIFIED: no motion code changed; runtime not re-driven.
 STATE_COVERAGE: PASS: missing/stale/future/wrong provider facts, legacy foreign ownership, tenant/version/environment mismatch and rebind; provider timeout stays unverified. Hosted paths remain owed.
-TRUTHFUL_STATE_LABELS: PASS: readiness never claims execution; transaction/settlement/allocation separate; manual receipts and platform billing untouched; PayPal UNAVAILABLE pending partner/merchant proof.
+TRUTHFUL_STATE_LABELS: PASS: readiness never claims execution; transaction/settlement/allocation separate; manual receipts and platform billing untouched; PayPal adapter absent and honestly recorded UNAVAILABLE in the canonical integration registry.
 SOLO_UI: NO: server foundation for shared Solo Sales, no UI source edits, tenant-specific exceptions or new visible controls.
 UNVERIFIED: hosted JWT merchant refresh, Stripe/PayPal credentials/permissions, real transactions, settlement/allocation and COMMERCIAL-ASSEMBLY-01 remain proof owed. No charge/collection endpoint exists in this slice.
 OWNER_INTENT: Owner S0 accepted/S1 authorized 2026-10-04; tenant-connected direct charges with no application fee, same provider-neutral Sales contracts; future conversational commercial package within approved ladder.

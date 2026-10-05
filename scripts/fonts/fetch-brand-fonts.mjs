@@ -7,7 +7,9 @@
 //   1. Reads the family's METADATA.pb from the google/fonts repository and REFUSES anything that is not
 //      licensed OFL (the library is open-licence by owner ruling, 2026-10-04).
 //   2. Requests the family from the Google Fonts CSS2 API with its full variable axis ranges (or the
-//      exact static weights a static family ships in), keeps ONLY the `latin` subset blocks, and
+//      exact static weights a static family ships in), keeps ONLY the `latin` and `latin-ext` subset
+//      blocks (latin-ext covers Central European, Turkish and Vietnamese letters in business names; the
+//      browser fetches it only when a page actually uses one of those characters, via unicode-range), and
 //      downloads each unique WOFF2 into public/fonts/brand/<slug>/. A variable family yields ONE file,
 //      not one copy per weight (the P0 harness saved the same variable file once per weight).
 //   3. Opens every downloaded file (WOFF2 header + brotli-decoded `fvar` table) and FAILS the run when a
@@ -124,17 +126,19 @@ export function woff2Axes(buf) {
   return [];
 }
 
-// ── CSS2 parsing: keep only the latin blocks ─────────────────────────────────────────────────────
+// ── CSS2 parsing: keep only the latin and latin-ext blocks ───────────────────────────────────────
+export const SUBSETS = ["latin", "latin-ext"];
 function latinFaces(css) {
   const out = [];
   const parts = css.split(/\/\*\s*([a-z0-9-]+)\s*\*\//i).slice(1);
   for (let i = 0; i < parts.length; i += 2) {
-    if (parts[i] !== "latin") continue;
+    if (!SUBSETS.includes(parts[i])) continue;
+    const subset = parts[i];
     const block = parts[i + 1];
     const get = (prop) => block.match(new RegExp(`${prop}:\\s*([^;]+);`))?.[1]?.trim();
     const url = block.match(/url\((https:[^)]+\.woff2)\)/)?.[1];
     if (!url) throw new Error("latin block without a woff2 url");
-    out.push({ url, style: get("font-style") ?? "normal", weight: get("font-weight") ?? "400", stretch: get("font-stretch") ?? null, unicodeRange: get("unicode-range") });
+    out.push({ url, subset, style: get("font-style") ?? "normal", weight: get("font-weight") ?? "400", stretch: get("font-stretch") ?? null, unicodeRange: get("unicode-range") });
   }
   return out;
 }
@@ -156,14 +160,14 @@ function main() {
 
     const request = f.axes ? `${f.family.replace(/ /g, "+")}:${f.axes}` : f.family.replace(/ /g, "+");
     const faces = latinFaces(curlText(`https://fonts.googleapis.com/css2?family=${request}&display=swap`, ["-A", UA]));
-    if (faces.length === 0) throw new Error(`${f.family}: no latin faces returned`);
+    if (!faces.some((x) => x.subset === "latin")) throw new Error(`${f.family}: no latin faces returned`);
 
     const byUrl = new Map();
     const files = [];
     for (const face of faces) {
       if (byUrl.has(face.url)) continue; // the same variable file listed once per weight → keep one
       const weightPart = face.weight.replace(/\s+/g, "-");
-      const file = `${slug}-${face.style}-${weightPart}.woff2`;
+      const file = `${slug}-${face.subset}-${face.style}-${weightPart}.woff2`;
       const dest = path.join(dir, file);
       curlFile(face.url, dest);
       const buf = readFileSync(dest);
@@ -172,14 +176,14 @@ function main() {
         if (!axes.some((a) => a.tag === tag)) throw new Error(`${f.family}: ${file} lacks a live "${tag}" axis (has ${axes.map((a) => a.tag).join(",") || "none"}) — refusing to ship a broken cut`);
       }
       byUrl.set(face.url, file);
-      files.push({ file, style: face.style, weight: face.weight, ...(face.stretch ? { stretch: face.stretch } : {}), axes: axes.map((a) => `${a.tag} ${a.min}–${a.max}`), bytes: buf.length });
+      files.push({ file, subset: face.subset, style: face.style, weight: face.weight, ...(face.stretch ? { stretch: face.stretch } : {}), unicodeRange: face.unicodeRange, axes: axes.map((a) => `${a.tag} ${a.min}–${a.max}`), bytes: buf.length });
       totalBytes += buf.length;
     }
 
     const ofl = curlText(`https://raw.githubusercontent.com/google/fonts/main/${f.repo}/OFL.txt`);
     writeFileSync(path.join(dir, "OFL.txt"), ofl);
-    manifest[slug] = { family: f.family, license, designer, source: `https://github.com/google/fonts/tree/main/${f.repo}`, unicodeRange: faces[0].unicodeRange, files };
-    console.log(`${f.family.padEnd(24)} ${files.length} file(s) ${files.map((x) => x.axes.join(",") || `static ${x.weight}`).join(" | ")} · ${files.reduce((n, x) => n + x.bytes, 0)} B`);
+    manifest[slug] = { family: f.family, license, designer, source: `https://github.com/google/fonts/tree/main/${f.repo}`, files };
+    console.log(`${f.family.padEnd(24)} ${files.length} file(s) ${files.map((x) => `${x.subset}:${x.axes.join(",") || `static ${x.weight}`}`).join(" | ")} · ${files.reduce((n, x) => n + x.bytes, 0)} B`);
   }
 
   // Remove any directory left from a family that is no longer in the list.
@@ -188,17 +192,21 @@ function main() {
   }
 
   const header = `// GENERATED by scripts/fonts/fetch-brand-fonts.mjs — do not edit by hand; rerun the script.
-// The self-hosted WOFF2 files under public/fonts/brand/<slug>/ (latin subset, OFL, licence beside each).
+// The self-hosted WOFF2 files under public/fonts/brand/<slug>/ (latin + latin-ext, OFL, licence beside each).
 // Policy (what is offered, character, pairing, fallback) lives in ./brand-fonts.ts, never here.
 `;
   const body = `export interface BrandFontFile {
   /** File name under /fonts/brand/<slug>/. */
   file: string;
+  /** Google Fonts subset: "latin" or "latin-ext". */
+  subset: string;
   style: string;
   /** CSS font-weight descriptor: a single weight, or "min max" for a variable file. */
   weight: string;
   /** CSS font-stretch descriptor, present only for a width-variable file. */
   stretch?: string;
+  /** The code points this file covers (the browser downloads it only when the page uses one). */
+  unicodeRange: string;
   /** The fvar axes verified in the file by the fetch script (empty = static). */
   axes: readonly string[];
   bytes: number;
@@ -209,7 +217,6 @@ export interface BrandFontFileSet {
   license: string;
   designer: string | null;
   source: string;
-  unicodeRange: string;
   files: readonly BrandFontFile[];
 }
 
@@ -217,6 +224,9 @@ export const BRAND_FONT_FILES: Record<string, BrandFontFileSet> = ${JSON.stringi
 
 /** Total bytes of every self-hosted brand font file. */
 export const BRAND_FONT_TOTAL_BYTES = ${totalBytes};
+
+/** Bytes of the latin files only — what a page with Western European text can ever download. */
+export const BRAND_FONT_LATIN_BYTES = ${Object.values(manifest).flatMap((m) => m.files).filter((x) => x.subset === "latin").reduce((n, x) => n + x.bytes, 0)};
 `;
   writeFileSync(MANIFEST, header + "\n" + body);
   console.log(`\n${Object.keys(manifest).length} families · ${Object.values(manifest).reduce((n, m) => n + m.files.length, 0)} WOFF2 files · ${totalBytes} bytes · wrote ${path.relative(ROOT, MANIFEST)}`);

@@ -65,10 +65,13 @@ export async function settleRenderFrame(root: HTMLElement, capMs = RENDER_SETTLE
   const images = Array.from(root.querySelectorAll("img"));
   const embeds = Array.from(root.querySelectorAll("iframe"));
   for (const el of [...images, ...embeds]) if (el.getAttribute("loading") === "lazy") el.setAttribute("loading", "eager");
-  // Force style + layout first so every face the rendered text needs is already a pending load when
-  // fonts.ready is read (a face first needed by the next recalc is not pending yet, and ready would
-  // resolve early). The brand faces are awaited explicitly as well: GrowthBlocks started those loads
-  // in its layout effect, before this runs.
+  // Wait one frame before reading any font state: GrowthBlocks registers its brand-face loads in a
+  // layout effect of the same commit, so they exist by now — but a frame also absorbs any face a later
+  // commit injects, rather than trusting effect order alone. Then force style + layout so every face
+  // the rendered text needs is already a pending load when fonts.ready is read (a face first needed by
+  // the next recalc is not pending yet, and ready would resolve early). The brand faces are awaited
+  // explicitly as well.
+  await nextFrame();
   void root.offsetHeight;
   const doc = root.ownerDocument ?? (typeof document !== "undefined" ? document : null);
   const fonts = Promise.all([

@@ -94,6 +94,8 @@ describe("Client Portal typeface picker", () => {
     expect(groups.join("|")).toMatch(/Editorial serif.*Premium serif.*Humanist sans.*Geometric sans.*Product sans.*Condensed display.*Expressive display.*Classic/);
     const literata = options().find((o) => o.textContent === "Literata")!;
     expect((literata.querySelector("span[style]") as HTMLElement).style.fontFamily).toContain("brand-literata");
+    // Every option is normalised to one x-height, so a small-eyed display face is not tiny.
+    expect(literata.querySelector("span[style]")!.getAttribute("style")).toContain("font-size-adjust: 0.52");
     // Opening the list loads the library faces for the previews.
     expect(document.head.querySelector(`style[${BRAND_FONT_STYLE_ATTR}="literata"]`)).not.toBeNull();
   });

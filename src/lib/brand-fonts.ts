@@ -98,8 +98,8 @@ export interface BrandFontFace {
   cssFamily: string;
   /** Body partner family name (always another entry in this map). */
   partner: string;
+  /** latin + latin-ext files; each carries its own unicode-range, so latin-ext downloads only when used. */
   files: readonly BrandFontFile[];
-  unicodeRange: string;
   license: string;
 }
 
@@ -118,7 +118,6 @@ export const BRAND_FONTS: readonly BrandFontFace[] = Object.entries(POLICY).flat
     cssFamily: `brand-${slug}`,
     partner: p.partner,
     files: set.files,
-    unicodeRange: set.unicodeRange,
     license: set.license,
   }];
 });
@@ -179,10 +178,11 @@ export function brandFontStack(face: BrandFontFace): string {
   return `"${face.cssFamily}", "${face.family}", ${FALLBACK[face.category]}`;
 }
 
-/** @font-face rules for one face. A single-file static face declares the whole weight range so a
- *  semibold heading uses the real (only) cut instead of a synthesised faux bold. */
+/** @font-face rules for one face (one per file: each subset × cut). A static face with a single cut
+ *  declares the whole weight range so a semibold heading uses the real (only) cut instead of a
+ *  synthesised faux bold. */
 export function brandFontFaceCss(face: BrandFontFace, base = "/fonts/brand"): string {
-  const single = face.files.length === 1 && face.files[0].axes.length === 0;
+  const single = face.files.every((f) => f.axes.length === 0) && new Set(face.files.map((f) => f.weight)).size === 1;
   return face.files.map((f) => [
     "@font-face{",
     `font-family:"${face.cssFamily}";`,
@@ -191,7 +191,7 @@ export function brandFontFaceCss(face: BrandFontFace, base = "/fonts/brand"): st
     f.stretch ? `font-stretch:${f.stretch};` : "",
     "font-display:swap;",
     `src:url("${base}/${face.slug}/${f.file}") format("woff2");`,
-    `unicode-range:${face.unicodeRange};`,
+    `unicode-range:${f.unicodeRange};`,
     "}",
   ].join("")).join("\n");
 }
@@ -207,12 +207,21 @@ function fontBase(): string {
   return `${origin}/fonts/brand`;
 }
 
+/** Weights a page needs up front: body (400) and headings (600). A picker preview needs only 400. */
+export const PAGE_FONT_WEIGHTS = ["400", "600"] as const;
+export const PREVIEW_FONT_WEIGHTS = ["400"] as const;
+
 /**
  * Inject @font-face for ONLY these faces into `doc`'s <head> (once per face per document) and start
- * loading the regular and semibold cuts. Resolves when those loads settle; a failed load is logged
- * loudly and the text stays visible in the stack's fallback (font-display: swap).
+ * loading the given cuts (latin; latin-ext loads only when a page uses those letters). Resolves when
+ * those loads settle; a failed load is logged loudly and the text stays visible in the stack's
+ * fallback (font-display: swap).
  */
-export function ensureBrandFontFaces(doc: Document | null | undefined, faces: readonly (BrandFontFace | null | undefined)[]): Promise<void> {
+export function ensureBrandFontFaces(
+  doc: Document | null | undefined,
+  faces: readonly (BrandFontFace | null | undefined)[],
+  weights: readonly string[] = PAGE_FONT_WEIGHTS,
+): Promise<void> {
   if (!doc?.head) return Promise.resolve();
   const unique = [...new Map(faces.filter((f): f is BrandFontFace => !!f).map((f) => [f.slug, f])).values()];
   const loads: Promise<unknown>[] = [];
@@ -226,7 +235,7 @@ export function ensureBrandFontFaces(doc: Document | null | undefined, faces: re
     }
     const fontSet = (doc as Document & { fonts?: FontFaceSet }).fonts;
     if (fontSet && typeof fontSet.load === "function") {
-      const load = Promise.all(["400", "600"].map((w) => fontSet.load(`${w} 16px "${face.cssFamily}"`, "Aa"))).catch((err) => {
+      const load = Promise.all(weights.map((w) => fontSet.load(`${w} 16px "${face.cssFamily}"`, "Aa"))).catch((err) => {
         console.error(`[brand-fonts] ${face.family} did not load; the page shows its fallback face.`, err);
       });
       loads.push(load);

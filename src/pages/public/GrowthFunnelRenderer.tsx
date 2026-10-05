@@ -6,7 +6,7 @@
 // live preview. A page reached through a funnel is the SAME page: canvas == published ==
 // funnel, no third renderer to drift. This file owns only data loading, the brand floor,
 // the step machine, and the advance affordance.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type {
@@ -343,11 +343,11 @@ function Scope({
   const vars = resolveGrowthTheme(null, brandFloor);
   // Same brand-font loading as <GrowthBlocks>, so the form and thank-you steps wear the brand faces too.
   const fontPair = resolveGrowthFontPair(null, brandFloor);
-  const [node, setNode] = useState<HTMLDivElement | null>(null);
-  useBrandFontFaces(node, fontPair ? [fontPair.display, fontPair.body] : []);
+  const scopeRef = useRef<HTMLDivElement>(null);
+  useBrandFontFaces(scopeRef, fontPair ? [fontPair.display, fontPair.body] : []);
   return (
     <div
-      ref={setNode}
+      ref={scopeRef}
       data-gp=""
       data-gp-font={fontPair ? "brand" : undefined}
       className={className}

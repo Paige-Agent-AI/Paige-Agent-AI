@@ -10,6 +10,7 @@ import {
   brandFontStack,
   brandFontsSettled,
   ensureBrandFontFaces,
+  PREVIEW_FONT_WEIGHTS,
   lookupBrandFont,
   resolveBrandFontPair,
   type BrandFontPairingName,
@@ -105,14 +106,25 @@ describe("brand font allowlist", () => {
   it("Bodoni Moda ships a variable file with a LIVE optical-size axis (GRAMMAR §19.17), or not at all", () => {
     const bodoni = lookupBrandFont("Bodoni Moda");
     expect(bodoni).not.toBeNull();
-    expect(bodoni!.files).toHaveLength(1);
-    expect(bodoni!.files[0].axes.some((a) => a.startsWith("opsz"))).toBe(true);
+    expect(bodoni!.files.map((f) => f.subset).sort()).toEqual(["latin", "latin-ext"]);
+    for (const f of bodoni!.files) expect(f.axes.some((a) => a.startsWith("opsz")), f.file).toBe(true);
   });
 
-  it("dedupes variable files — one file per variable family, not one per weight", () => {
+  it("dedupes variable files — one file per subset for a variable family, not one per weight", () => {
     for (const face of BRAND_FONTS) {
-      if (face.files.some((f) => f.axes.length > 0)) expect(face.files, face.family).toHaveLength(1);
+      if (face.files.some((f) => f.axes.length > 0)) expect(face.files.map((f) => f.subset).sort(), face.family).toEqual(["latin", "latin-ext"]);
     }
+  });
+
+  it("ships latin and latin-ext for every face, each @font-face scoped by its own unicode-range", () => {
+    for (const face of BRAND_FONTS) {
+      expect(new Set(face.files.map((f) => f.subset)), face.family).toEqual(new Set(["latin", "latin-ext"]));
+      const css = brandFontFaceCss(face);
+      for (const f of face.files) expect(css, f.file).toContain(`/${f.file}") format("woff2");unicode-range:${f.unicodeRange};`);
+    }
+    // latin-ext (e.g. Ł, ő, ğ) is a separate file the browser fetches only for a page that uses it.
+    const latinExt = lookupBrandFont("Literata")!.files.find((f) => f.subset === "latin-ext")!;
+    expect(latinExt.unicodeRange).toMatch(/U\+0100-02BA/);
   });
 
   it("declares a single-cut static face across the weight range so headings never fake-bold it", () => {
@@ -125,7 +137,7 @@ describe("brand font allowlist", () => {
     const inter = lookupBrandFont("Inter")!;
     expect(brandFontFaceCss(inter)).toContain('font-family:"brand-inter";');
     // The only family any of its @font-face rules declares is the namespaced one.
-    expect(brandFontFaceCss(inter).match(/font-family:"[^"]+"/g)).toEqual(['font-family:"brand-inter"']);
+    expect(new Set(brandFontFaceCss(inter).match(/font-family:"[^"]+"/g))).toEqual(new Set(['font-family:"brand-inter"']));
     expect(brandFontStack(inter)).toBe('"brand-inter", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif');
     expect(brandFontStack(lookupBrandFont("Literata")!)).toMatch(/^"brand-literata", "Literata", Georgia/);
   });
@@ -175,6 +187,14 @@ describe("ensureBrandFontFaces — loading into the right document", () => {
     release();
     await done;
     expect(settled).toBe(true);
+  });
+
+  it("a picker preview loads only the regular cut", () => {
+    const doc = document.implementation.createHTMLDocument("x");
+    const load = vi.fn(() => Promise.resolve([]));
+    Object.defineProperty(doc, "fonts", { value: { load }, configurable: true });
+    void ensureBrandFontFaces(doc, [lookupBrandFont("Spectral")!], PREVIEW_FONT_WEIGHTS);
+    expect(load.mock.calls).toEqual([['400 16px "brand-spectral"', "Aa"]]);
   });
 
   it("a failed load is logged loudly and still settles — the page stays visible in its fallback", async () => {

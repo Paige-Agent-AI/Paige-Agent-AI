@@ -8,7 +8,9 @@
     "body": "brand-public-sans, \"Public Sans\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
     "statFigure": "brand-literata, Literata, Georgia, \"Times New Roman\", serif",
     "faces": [
+      "brand-literata 200 900 unloaded",
       "brand-literata 200 900 loaded",
+      "brand-public-sans 100 900 unloaded",
       "brand-public-sans 100 900 loaded"
     ],
     "injected": [
@@ -17,8 +19,8 @@
     ],
     "scrollWidth": 1440,
     "fontRequests": [
-      "/fonts/brand/literata/literata-normal-200-900.woff2",
-      "/fonts/brand/public-sans/public-sans-normal-100-900.woff2"
+      "/fonts/brand/literata/literata-latin-normal-200-900.woff2",
+      "/fonts/brand/public-sans/public-sans-latin-normal-100-900.woff2"
     ],
     "abortedHosts": [
       "fonts.googleapis.com",
@@ -37,7 +39,9 @@
     "body": "brand-source-sans-3, \"Source Sans 3\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
     "statFigure": "brand-bodoni-moda, \"Bodoni Moda\", Georgia, \"Times New Roman\", serif",
     "faces": [
+      "brand-bodoni-moda 400 900 unloaded",
       "brand-bodoni-moda 400 900 loaded",
+      "brand-source-sans-3 200 900 unloaded",
       "brand-source-sans-3 200 900 loaded"
     ],
     "injected": [
@@ -46,8 +50,8 @@
     ],
     "scrollWidth": 1440,
     "fontRequests": [
-      "/fonts/brand/bodoni-moda/bodoni-moda-normal-400-900.woff2",
-      "/fonts/brand/source-sans-3/source-sans-3-normal-200-900.woff2"
+      "/fonts/brand/bodoni-moda/bodoni-moda-latin-normal-400-900.woff2",
+      "/fonts/brand/source-sans-3/source-sans-3-latin-normal-200-900.woff2"
     ],
     "abortedHosts": [
       "fonts.googleapis.com",
@@ -66,11 +70,17 @@
     "body": "brand-public-sans, \"Public Sans\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
     "statFigure": "brand-barlow-semi-condensed, \"Barlow Semi Condensed\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
     "faces": [
+      "brand-barlow-semi-condensed 400 unloaded",
       "brand-barlow-semi-condensed 400 loaded",
       "brand-barlow-semi-condensed 500 unloaded",
+      "brand-barlow-semi-condensed 500 unloaded",
+      "brand-barlow-semi-condensed 600 unloaded",
       "brand-barlow-semi-condensed 600 loaded",
       "brand-barlow-semi-condensed 700 unloaded",
+      "brand-barlow-semi-condensed 700 unloaded",
       "brand-barlow-semi-condensed 800 unloaded",
+      "brand-barlow-semi-condensed 800 unloaded",
+      "brand-public-sans 100 900 unloaded",
       "brand-public-sans 100 900 loaded"
     ],
     "injected": [
@@ -79,9 +89,9 @@
     ],
     "scrollWidth": 1440,
     "fontRequests": [
-      "/fonts/brand/barlow-semi-condensed/barlow-semi-condensed-normal-400.woff2",
-      "/fonts/brand/barlow-semi-condensed/barlow-semi-condensed-normal-600.woff2",
-      "/fonts/brand/public-sans/public-sans-normal-100-900.woff2"
+      "/fonts/brand/barlow-semi-condensed/barlow-semi-condensed-latin-normal-400.woff2",
+      "/fonts/brand/barlow-semi-condensed/barlow-semi-condensed-latin-normal-600.woff2",
+      "/fonts/brand/public-sans/public-sans-latin-normal-100-900.woff2"
     ],
     "abortedHosts": [
       "fonts.googleapis.com",
@@ -100,9 +110,13 @@
     "body": "brand-poppins, Poppins, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
     "statFigure": "brand-poppins, Poppins, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
     "faces": [
+      "brand-poppins 400 unloaded",
       "brand-poppins 400 loaded",
+      "brand-poppins 500 unloaded",
       "brand-poppins 500 loaded",
+      "brand-poppins 600 unloaded",
       "brand-poppins 600 loaded",
+      "brand-poppins 700 unloaded",
       "brand-poppins 700 unloaded"
     ],
     "injected": [
@@ -110,9 +124,9 @@
     ],
     "scrollWidth": 1440,
     "fontRequests": [
-      "/fonts/brand/poppins/poppins-normal-400.woff2",
-      "/fonts/brand/poppins/poppins-normal-600.woff2",
-      "/fonts/brand/poppins/poppins-normal-500.woff2"
+      "/fonts/brand/poppins/poppins-latin-normal-400.woff2",
+      "/fonts/brand/poppins/poppins-latin-normal-600.woff2",
+      "/fonts/brand/poppins/poppins-latin-normal-500.woff2"
     ],
     "abortedHosts": [
       "fonts.googleapis.com",

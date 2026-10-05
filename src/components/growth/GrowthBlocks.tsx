@@ -969,8 +969,8 @@ export function GrowthBlocks({ blocks, theme, brandFloor, tenantId, children, cl
   // in (the Studio canvas is an iframe). `data-gp-font="brand"` arms the scoped heading rule in
   // ./growth-brand-fonts.css; without a library font the page keeps today's type exactly.
   const fontPair = resolveGrowthFontPair(theme, brandFloor);
-  const [scopeNode, setScopeNode] = useState<HTMLDivElement | null>(null);
-  useBrandFontFaces(scopeNode, fontPair ? [fontPair.display, fontPair.body] : []);
+  const scopeRef = useRef<HTMLDivElement>(null);
+  useBrandFontFaces(scopeRef, fontPair ? [fontPair.display, fontPair.body] : []);
   const scopeStyle = {
     ...(vars as GrowthThemeVars),
     background: "var(--gp-bg)",
@@ -982,7 +982,7 @@ export function GrowthBlocks({ blocks, theme, brandFloor, tenantId, children, cl
   const bands = useMemo(() => assignBands(blocks ?? []), [blocks]);
 
   return (
-    <div ref={setScopeNode} data-gp="" data-gp-font={fontPair ? "brand" : undefined} className={className} style={scopeStyle}>
+    <div ref={scopeRef} data-gp="" data-gp-font={fontPair ? "brand" : undefined} className={className} style={scopeStyle}>
       {(blocks ?? []).map((block, i) => (
         <div key={i} className={GP_FADE_RISE} style={{ ...fadeRiseStyle(i), ...bandStyle(bands[i]) }}>
           <BlockRenderer block={block} tenantId={tenantId} />

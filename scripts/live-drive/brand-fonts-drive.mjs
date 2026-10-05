@@ -3,6 +3,7 @@
 //
 //   node scripts/live-drive/brand-fonts-drive.mjs pages   <dist> <outDir> [label]
 //   node scripts/live-drive/brand-fonts-drive.mjs landing <baseDist> <headDist> <outDir>
+//   node scripts/live-drive/brand-fonts-drive.mjs delay   <dist> <outDir>
 //   node scripts/live-drive/brand-fonts-drive.mjs picker  <outDir>        (needs the harness dev server:
 //        npx vite --config scripts/live-drive/harness/brand-font-mount/vite.config.ts)
 //
@@ -176,8 +177,19 @@ async function picker(out) {
     for (const theme of ["dark", "light"]) {
       const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 }, deviceScaleFactor: 1 });
       const page = await ctx.newPage();
+      // Font bytes the picker downloads: at mount (System default → none), on open, after scrolling the list.
+      const fontBytes = { files: [], total: 0 };
+      page.on("response", async (resp) => {
+        const u = new URL(resp.url());
+        if (!u.pathname.startsWith("/fonts/brand/")) return;
+        const n = (await resp.body().catch(() => Buffer.alloc(0))).length;
+        fontBytes.files.push(u.pathname.split("/").pop());
+        fontBytes.total += n;
+      });
+      const snap = () => ({ files: fontBytes.files.length, bytes: fontBytes.total });
       await page.goto(`${BASE}?theme=${theme}&paige=closed`, { waitUntil: "networkidle" });
       await page.waitForSelector("#portal-brand-typeface");
+      const bytesAtMount = snap();
       // Keyboard path: focus the trigger, open with Enter.
       await page.focus("#portal-brand-typeface");
       await page.keyboard.press("Enter");
@@ -190,8 +202,33 @@ async function picker(out) {
         brandFacesLoaded: [...document.fonts].filter((f) => f.family.startsWith("brand-") && f.status === "loaded").length,
         firstOptionFamily: getComputedStyle(document.querySelector('[role="option"] span[style]')).fontFamily,
       }));
+      await page.waitForLoadState("networkidle");
+      const bytesOnOpen = snap();
       await page.screenshot({ path: path.join(out, `picker-open-${theme}-1366x768.png`) });
-      summary[`list_${theme}`] = list;
+      // Scroll the list in steps to the end, as a person browsing it would.
+      for (let i = 0; i < 12; i++) {
+        await page.evaluate(() => { const v = document.querySelector("[data-radix-select-viewport]"); if (v) v.scrollTop += 160; });
+        await page.waitForTimeout(120);
+      }
+      await page.waitForLoadState("networkidle");
+      await page.evaluate(() => document.fonts.ready);
+      const bytesAfterScroll = snap();
+      // Per option label: the inline span's box height is the face's content area at the USED size, so
+      // it shows the font-size-adjust scaling (computed font-size stays 14px). Contrast of the label
+      // colour on the list surface is read too.
+      const optionInk = await page.evaluate(() => {
+        const rgb = (c) => (c.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+        const lum = ([r, g, b]) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
+        const content = document.querySelector('[role="listbox"]')?.closest("[data-radix-popper-content-wrapper] > *") || document.querySelector('[role="listbox"]');
+        const bg = getComputedStyle(content).backgroundColor;
+        return [...document.querySelectorAll('[role="option"] span[style]')].map((s) => {
+          const cs = getComputedStyle(s);
+          const L1 = lum(rgb(cs.color)); const L2 = lum(rgb(bg));
+          return { label: s.textContent, fontSizeAdjust: cs.fontSizeAdjust, contentAreaPx: +s.getBoundingClientRect().height.toFixed(1), contrast: +((Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05)).toFixed(2) };
+        });
+      });
+      await page.screenshot({ path: path.join(out, `picker-open-scrolled-${theme}-1366x768.png`) });
+      summary[`list_${theme}`] = { ...list, fontBytes: { atMount: bytesAtMount, onOpen: bytesOnOpen, afterScrollingWholeList: bytesAfterScroll }, optionInk };
       if (theme === "dark") {
         await page.getByRole("option", { name: "Bodoni Moda" }).scrollIntoViewIfNeeded();
         await page.getByRole("option", { name: "Bodoni Moda" }).focus();
@@ -214,7 +251,42 @@ async function picker(out) {
   console.log(JSON.stringify(summary, null, 2));
 }
 
+// delay — hold every /fonts/brand response for 2.5 s and sample /render-frame's ready marker every
+// 250 ms: it must stay "false" until the brand face has loaded (review finding F1 on P1).
+async function delay(dist, out) {
+  dist = path.resolve(dist);
+  const browser = await launch();
+  try {
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    await ctx.route("**/*", async (route) => {
+      const u = new URL(route.request().url());
+      if (u.origin !== ORIGIN) return route.abort();
+      let file = path.join(dist, decodeURIComponent(u.pathname));
+      if (!file.startsWith(dist) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) file = path.join(dist, "index.html");
+      if (u.pathname.startsWith("/fonts/brand/")) await new Promise((r) => setTimeout(r, 2500));
+      return route.fulfill({ status: 200, contentType: TYPES[path.extname(file)] || "application/octet-stream", body: fs.readFileSync(file) });
+    });
+    await ctx.addInitScript((pl) => { window.__PAIGE_RENDER_PAYLOAD__ = pl; }, { blocks: BLOCKS.slice(0, 1), theme: null, brand: { font: "Literata" }, tenant_name: "Harness workspace" });
+    const page = await ctx.newPage();
+    const t0 = Date.now();
+    await page.goto(`${ORIGIN}/render-frame`, { waitUntil: "domcontentloaded" });
+    const samples = [];
+    for (let i = 0; i < 14; i++) {
+      await page.waitForTimeout(250);
+      samples.push({ ms: Date.now() - t0, ...(await page.evaluate(() => ({
+        ready: document.querySelector("[data-render-frame]")?.getAttribute("data-render-ready"),
+        literataLatin: [...document.fonts].filter((f) => f.family === "brand-literata").map((f) => f.status).join("/"),
+      }))) });
+    }
+    const result = { fontDelayMs: 2500, samples, neverReadyBeforeLoaded: samples.every((s) => s.ready !== "true" || s.literataLatin.includes("loaded")) };
+    fs.mkdirSync(out, { recursive: true });
+    fs.writeFileSync(path.join(out, "render-frame-font-delay.json"), JSON.stringify(result, null, 2));
+    console.log(JSON.stringify(result, null, 2));
+  } finally { await browser.close(); }
+}
+
 if (mode === "pages") await pages(args[0], args[1], args[2]);
+else if (mode === "delay") await delay(args[0], args[1]);
 else if (mode === "landing") await landing(args[0], args[1], args[2]);
 else if (mode === "picker") await picker(args[0]);
 else { console.error("usage: brand-fonts-drive.mjs pages|landing|picker …"); process.exit(2); }

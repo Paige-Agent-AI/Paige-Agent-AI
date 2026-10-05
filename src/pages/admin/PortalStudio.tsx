@@ -160,8 +160,8 @@ export default function PortalStudio() {
   const previewPair = resolveBrandFontPair(previewFontName);
   const previewFont = previewPair ? brandFontStack(previewPair.body) : previewFontName || undefined;
   const previewDisplayFont = previewPair ? brandFontStack(previewPair.display) : previewFont;
-  const [previewNode, setPreviewNode] = useState<HTMLDivElement | null>(null);
-  useBrandFontFaces(previewNode, previewPair ? [previewPair.display, previewPair.body] : []);
+  const previewRef = useRef<HTMLDivElement>(null);
+  useBrandFontFaces(previewRef, previewPair ? [previewPair.display, previewPair.body] : []);
 
   const invalidHex =
     (!!brandForm.primary_color.trim() && !isValidHex(brandForm.primary_color)) ||
@@ -415,7 +415,7 @@ export default function PortalStudio() {
               description="A representative view — not live client data."
             >
               <div className="p-4">
-                <div ref={setPreviewNode} className="overflow-hidden rounded-xl border border-border shadow-card">
+                <div ref={previewRef} className="overflow-hidden rounded-xl border border-border shadow-card">
                   {/* masthead */}
                   <div className="flex items-center gap-2.5 px-4 py-3" style={{ background: previewPrimary }}>
                     {previewLogo ? (

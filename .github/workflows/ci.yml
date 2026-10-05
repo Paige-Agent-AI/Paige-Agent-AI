@@ -209,6 +209,7 @@ jobs:
         run: |
           npm install --prefix services/paige-browser --omit=dev --no-audit --no-fund --no-package-lock
           npm run smoke:paige-browser-render
+          node services/paige-browser/smoke-pdf.mjs
 
       - name: Tier-feature guard (§60 — render gates must not hardcode a tier; use useTierFeatures)
         if: ${{ !cancelled() }}

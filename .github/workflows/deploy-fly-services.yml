@@ -138,6 +138,12 @@ jobs:
           # services/paige-browser/fly.toml"). The cd form matches the service README exactly.
           ( cd "$dir" && flyctl deploy --app "${{ matrix.service }}" --remote-only )
 
+      - name: Prove deployed browser PDF capability
+        if: success() && matrix.service == 'paige-browser'
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: flyctl ssh console --app paige-browser --command 'node /app/pdf-live-proof.mjs'
+
       - name: Record deployed image (§32.a evidence)
         if: success()
         env:

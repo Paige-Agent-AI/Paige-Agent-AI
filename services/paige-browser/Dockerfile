@@ -26,7 +26,7 @@ RUN npm install --omit=dev
 RUN curl -fsSL "https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/fakenews-gambling-porn/hosts" -o /app/blocklist.txt \
     || echo "# denylist fetch failed at build; Layer-2 content denylist is a no-op" > /app/blocklist.txt
 
-COPY server.js ssrf-guard.mjs render.mjs ./
+COPY server.js ssrf-guard.mjs render.mjs pdf.mjs pdf-live-proof.mjs ./
 
 # Slice 3a — Layer-1 DNS denylist (owner-ruled 2026-08-12): point the container resolver at Cloudflare
 # for Families (1.1.1.3 / 1.0.0.3), which sinkholes malware + adult domains to 0.0.0.0 — the guard's

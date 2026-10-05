@@ -181,7 +181,9 @@ export async function resolveGmailAccessToken(
 // Send — build RFC 822, base64url, POST to Gmail
 // -----------------------------------------------------------------------------
 
+import {attachmentMime,type EmailAttachment} from './email-attachments.ts';
 export interface GmailSendInput {
+  attachments?: EmailAttachment[];
   from: string;          // the authenticated Gmail address (Google enforces this)
   fromName?: string | null;
   to: string;
@@ -235,7 +237,11 @@ export async function gmailSend(
   for (const [name, value] of Object.entries(input.headers ?? {})) {
     if (/^[A-Za-z0-9-]{1,64}$/.test(name)) headerLines.push(`${name}: ${sanitizeHeaderValue(String(value))}`);
   }
-  const rfc822 = `${headerLines.join("\r\n")}\r\n\r\n${bodyContent}`;
+  const mime = attachmentMime(bodyContent,contentType,input.attachments??[]);
+  // Use the SAME boundary in the header and body.
+  const typeIndex=headerLines.findIndex(line=>line.startsWith('Content-Type:'));
+  headerLines[typeIndex]=`Content-Type: ${mime.contentType}`;
+  const rfc822 = `${headerLines.join("\r\n")}\r\n\r\n${mime.body}`;
   const raw = base64UrlEncode(rfc822);
 
   try {

@@ -136,6 +136,8 @@ export interface OutboundChannelAdapter {
 
 /** What the dispatcher hands an outbound adapter to actually perform the send. */
 export interface OutboundSendContext {
+  /** Ephemeral server-produced bytes; never accepted from SendBody or persisted as secrets. */
+  serverAttachments?: import('./email-attachments.ts').EmailAttachment[];
   from: MessageParty;          // resolved tenant sender identity (§38 tenant-owned)
   to: string;                  // primary recipient address/phone/handle
   replyTo?: string | null;

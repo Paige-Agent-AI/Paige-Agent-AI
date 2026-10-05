@@ -28,7 +28,7 @@ function accountActivity(value: ObjectValue, total: number): string | null {
 }
 function reference(value: ObjectValue, document: ObjectValue) {
   const current = value.current_invoice_number ?? value.invoice_number ?? document.invoice_number;
-  return {current: typeof current === 'string' && current.startsWith('DRAFT-') ? 'Previously issued invoice' : current, original: current !== document.invoice_number || (typeof current === 'string' && current.startsWith('DRAFT-')) ? '<p class="muted">Original reference: ' + escape(document.invoice_number) + '</p>' : ''};
+  return {current: typeof current === 'string' && current.startsWith('DRAFT-') ? 'Previously issued invoice' : current, original: ''};
 }
 function renderLegacyInvoiceDocument(value: unknown): string | null {
   if (!object(value) || !object(value.document)) return null;

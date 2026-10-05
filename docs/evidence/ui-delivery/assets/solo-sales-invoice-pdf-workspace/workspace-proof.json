@@ -1,0 +1,389 @@
+{
+  "boundary": "Actual production components and Solo shell with synthetic local RPC/approval/auth/document fixtures. Real authenticated tenants, hosted renderer/provider and native print UNVERIFIED.",
+  "results": [
+    {
+      "width": 1536,
+      "height": 770,
+      "theme": "light",
+      "dock": "closed",
+      "geometry": {
+        "left": 48,
+        "right": 1488,
+        "bottom": 746,
+        "width": 1536,
+        "height": 770,
+        "bodyScroll": 1438,
+        "bodyWidth": 1438
+      },
+      "download": "invoice-INV-01.pdf"
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "theme": "light",
+      "dock": "open",
+      "geometry": {
+        "left": 48,
+        "right": 1488,
+        "bottom": 746,
+        "width": 1536,
+        "height": 770,
+        "bodyScroll": 1438,
+        "bodyWidth": 1438
+      },
+      "download": "invoice-INV-01.pdf"
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "theme": "dark",
+      "dock": "closed",
+      "geometry": {
+        "left": 48,
+        "right": 1488,
+        "bottom": 746,
+        "width": 1536,
+        "height": 770,
+        "bodyScroll": 1438,
+        "bodyWidth": 1438
+      },
+      "download": "invoice-INV-01.pdf"
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "theme": "dark",
+      "dock": "open",
+      "geometry": {
+        "left": 48,
+        "right": 1488,
+        "bottom": 746,
+        "width": 1536,
+        "height": 770,
+        "bodyScroll": 1438,
+        "bodyWidth": 1438
+      },
+      "download": "invoice-INV-01.pdf"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "theme": "light",
+      "dock": "closed",
+      "geometry": {
+        "left": 24,
+        "right": 1342,
+        "bottom": 744,
+        "width": 1366,
+        "height": 768,
+        "bodyScroll": 1316,
+        "bodyWidth": 1316
+      },
+      "download": "invoice-INV-01.pdf"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "theme": "light",
+      "dock": "open",
+      "geometry": {
+        "left": 24,
+        "right": 1342,
+        "bottom": 744,
+        "width": 1366,
+        "height": 768,
+        "bodyScroll": 1316,
+        "bodyWidth": 1316
+      },
+      "download": "invoice-INV-01.pdf"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "theme": "dark",
+      "dock": "closed",
+      "geometry": {
+        "left": 24,
+        "right": 1342,
+        "bottom": 744,
+        "width": 1366,
+        "height": 768,
+        "bodyScroll": 1316,
+        "bodyWidth": 1316
+      },
+      "download": "invoice-INV-01.pdf"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "theme": "dark",
+      "dock": "open",
+      "geometry": {
+        "left": 24,
+        "right": 1342,
+        "bottom": 744,
+        "width": 1366,
+        "height": 768,
+        "bodyScroll": 1316,
+        "bodyWidth": 1316
+      },
+      "download": "invoice-INV-01.pdf"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "theme": "light",
+      "dock": "closed",
+      "geometry": {
+        "left": 24,
+        "right": 1000,
+        "bottom": 744,
+        "width": 1024,
+        "height": 768,
+        "bodyScroll": 974,
+        "bodyWidth": 974
+      },
+      "download": "invoice-INV-01.pdf"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "theme": "light",
+      "dock": "open",
+      "geometry": {
+        "left": 24,
+        "right": 1000,
+        "bottom": 744,
+        "width": 1024,
+        "height": 768,
+        "bodyScroll": 974,
+        "bodyWidth": 974
+      },
+      "download": "invoice-INV-01.pdf"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "theme": "dark",
+      "dock": "closed",
+      "geometry": {
+        "left": 24,
+        "right": 1000,
+        "bottom": 744,
+        "width": 1024,
+        "height": 768,
+        "bodyScroll": 974,
+        "bodyWidth": 974
+      },
+      "download": "invoice-INV-01.pdf"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "theme": "dark",
+      "dock": "open",
+      "geometry": {
+        "left": 24,
+        "right": 1000,
+        "bottom": 744,
+        "width": 1024,
+        "height": 768,
+        "bodyScroll": 974,
+        "bodyWidth": 974
+      },
+      "download": "invoice-INV-01.pdf"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "theme": "light",
+      "dock": "closed",
+      "geometry": {
+        "left": 24,
+        "right": 876,
+        "bottom": 976,
+        "width": 900,
+        "height": 1000,
+        "bodyScroll": 850,
+        "bodyWidth": 850
+      },
+      "download": "invoice-INV-01.pdf"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "theme": "light",
+      "dock": "open",
+      "geometry": {
+        "left": 24,
+        "right": 876,
+        "bottom": 976,
+        "width": 900,
+        "height": 1000,
+        "bodyScroll": 850,
+        "bodyWidth": 850
+      },
+      "download": "invoice-INV-01.pdf"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "theme": "dark",
+      "dock": "closed",
+      "geometry": {
+        "left": 24,
+        "right": 876,
+        "bottom": 976,
+        "width": 900,
+        "height": 1000,
+        "bodyScroll": 850,
+        "bodyWidth": 850
+      },
+      "download": "invoice-INV-01.pdf"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "theme": "dark",
+      "dock": "open",
+      "geometry": {
+        "left": 24,
+        "right": 876,
+        "bottom": 976,
+        "width": 900,
+        "height": 1000,
+        "bodyScroll": 850,
+        "bodyWidth": 850
+      },
+      "download": "invoice-INV-01.pdf"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "dock": "closed",
+      "geometry": {
+        "left": 0,
+        "right": 390,
+        "bottom": 844,
+        "width": 390,
+        "height": 844,
+        "bodyScroll": 388,
+        "bodyWidth": 388
+      },
+      "download": "invoice-INV-01.pdf"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "dock": "open",
+      "geometry": {
+        "left": 0,
+        "right": 390,
+        "bottom": 844,
+        "width": 390,
+        "height": 844,
+        "bodyScroll": 388,
+        "bodyWidth": 388
+      },
+      "download": "invoice-INV-01.pdf"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "dock": "closed",
+      "geometry": {
+        "left": 0,
+        "right": 390,
+        "bottom": 844,
+        "width": 390,
+        "height": 844,
+        "bodyScroll": 388,
+        "bodyWidth": 388
+      },
+      "download": "invoice-INV-01.pdf"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "dock": "open",
+      "geometry": {
+        "left": 0,
+        "right": 390,
+        "bottom": 844,
+        "width": 390,
+        "height": 844,
+        "bodyScroll": 388,
+        "bodyWidth": 388
+      },
+      "download": "invoice-INV-01.pdf"
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "dock": "closed",
+      "geometry": {
+        "left": 0,
+        "right": 430,
+        "bottom": 932,
+        "width": 430,
+        "height": 932,
+        "bodyScroll": 428,
+        "bodyWidth": 428
+      },
+      "download": "invoice-INV-01.pdf"
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "light",
+      "dock": "open",
+      "geometry": {
+        "left": 0,
+        "right": 430,
+        "bottom": 932,
+        "width": 430,
+        "height": 932,
+        "bodyScroll": 428,
+        "bodyWidth": 428
+      },
+      "download": "invoice-INV-01.pdf"
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "dock": "closed",
+      "geometry": {
+        "left": 0,
+        "right": 430,
+        "bottom": 932,
+        "width": 430,
+        "height": 932,
+        "bodyScroll": 428,
+        "bodyWidth": 428
+      },
+      "download": "invoice-INV-01.pdf"
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "theme": "dark",
+      "dock": "open",
+      "geometry": {
+        "left": 0,
+        "right": 430,
+        "bottom": 932,
+        "width": 430,
+        "height": 932,
+        "bodyScroll": 428,
+        "bodyWidth": 428
+      },
+      "download": "invoice-INV-01.pdf"
+    }
+  ]
+}

@@ -376,8 +376,9 @@ program state. The three sources stay apart:
    ("Based on what you're telling me…"). She never presents it as her own knowledge, never treats it as a
    live capability, and never says she is tracking the build.
 3. **Platform roadmap, delivery, release and program state is operator scope.** A workspace chat never
-   receives it, even when the person in the workspace is the platform owner. Being that person is not
-   operator authority (§9/§52/§53).
+   must never receive it, even when the person in the workspace is the platform owner. Being that person
+   is not operator authority (§9/§52/§53). As built, this holds for every source except per-user client
+   memory; see the known gap below.
 
 If the owner says a capability is live and the projection places it in another state (needs approval,
 needs setup, needs the owner or an admin, not proven here), she answers with that state. Only when the
@@ -448,7 +449,7 @@ this workspace does not currently expose that capability to me yet."*
   preference stated on the operator desk could be recalled in that person's Solo chat (and a person in
   two workspaces carries memories between them). Prod: 0 `client_memory` rows and 0 embeddings for any
   platform operator, so it is latent. Scoping it means deciding what happens to rows with no workspace
-  and adding a tenant to the embeddings store — a memory-contract change, filed as its own follow-up.
+  and adding a tenant to the embeddings store — a memory-contract change, proposed to the owner as its own follow-up task (not yet tracked in the repo).
   Until it lands, "operator context never reaches a workspace chat" holds for the briefing, owner
   memory, doctrine, continuity and thread summaries, not for per-user client memory.
 - **§52 operator briefing.** It already required a tenant-less persona plus `is_platform_operator()`.

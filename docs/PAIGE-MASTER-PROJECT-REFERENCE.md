@@ -3732,7 +3732,7 @@ production build — no migration/edge deploy for this commit.**
 - When the owner describes what is being built, PAIGE acknowledges it as their account ("Based on what you're telling me…"), never as her own knowledge or as a live capability.
 - If they claim a capability the report places in another state (needs approval, needs setup, needs the owner or an admin, not proven here), she answers with that state. Only when the report does not offer it at all does she say "That's the direction you've given me, but this workspace does not currently expose that capability to me yet." The rule says "this capability report" so it reads true both in the prompt block and as the tool's `note`.
 - A workspace chat holds no view of platform roadmap, build or release status.
-- Known gap (latent, follow-up filed): per-user client memory (`client_memory`, `match_paige_memory`) is keyed by user, not workspace, so it is the one operator-context path this slice does not close.
+- Known gap (latent; follow-up proposed to the owner, not yet tracked in the repo): per-user client memory (`client_memory`, `match_paige_memory`) is keyed by user, not workspace, so it is the one operator-context path this slice does not close.
 
 Other changes:
 - The rolling thread summary is read back as "your recollection of what was said", no longer "things you already know". On prod, 5 tenant summaries carried dev/roadmap claims as fact. Existing rows are not rewritten: the new label changes how they are read, but re-attribution is NOT guaranteed — the next fold feeds the old summary back as PRIOR SUMMARY, so its wording can survive, and a thread nobody returns to keeps its old text.

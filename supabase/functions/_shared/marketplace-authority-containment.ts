@@ -43,6 +43,29 @@ export function canonicalDirectFunctionName(value: unknown): string | null {
   return value;
 }
 
+/**
+ * INT-310 dispatch allowlist — the edge functions a workflow may invoke with the SERVICE-ROLE bearer
+ * (`_shared/workflowDispatch.ts`, used by paige-mcp run_workflow and the dispatch-queued-workflow-runs
+ * sweeper). That bearer passes every internal-caller gate, and the run's payload is shaped by whoever
+ * queued it (a tenant admin may write registry + run rows under RLS), so an unlisted target would be a
+ * confused deputy: it could name another tenant in its own body. Allowlist, not denylist: a new target is
+ * dispatchable only after it is reviewed to derive its tenant/actor server-side and never from the body.
+ *
+ * Deliberately EMPTY today (grounded 2026-10-05): the two direct targets ever registered are
+ *   • `send-message` — its service-role path takes the sending tenant from a body `message_id` row or a
+ *     body `contact_id` row, so a dispatched run could send through another tenant's channel;
+ *   • `credit-verification-initiate` — no such function exists in this repo.
+ * Neither has ever run (prod `paige_workflow_runs`: 0 rows for either). User-triggered direct workflows
+ * (`trigger-workflow`) forward the caller's OWN auth and are unaffected.
+ */
+const SERVICE_DISPATCH_DIRECT_FUNCTIONS: ReadonlySet<string> = new Set<string>([]);
+
+/** May a workflow dispatch this function with the service-role bearer? Unlisted → no. */
+export function isServiceDispatchDirectFunctionAllowed(value: unknown): boolean {
+  const canonical = canonicalDirectFunctionName(value);
+  return canonical !== null && SERVICE_DISPATCH_DIRECT_FUNCTIONS.has(canonical);
+}
+
 /** Marketplace mutations are not reachable through generic workflow dispatch. */
 export function isMarketplaceDirectFunctionBlocked(value: unknown): boolean {
   const canonical = canonicalDirectFunctionName(value);

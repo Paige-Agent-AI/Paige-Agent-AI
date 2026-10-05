@@ -1,0 +1,137 @@
+/**
+ * INT-310 — the workflow direct-dispatch allowlist (owner ruling, 2026-10-05).
+ *
+ * `_shared/workflowDispatch.ts` invokes a `direct_edge_function` target with the SERVICE-ROLE bearer and
+ * a body shaped by whoever queued the run (a tenant admin may write registry + run rows under RLS). That
+ * bearer passes every internal-caller gate (INT-310 C0) and lets the body name its own tenant (C1's
+ * internal path), so an unlisted target is a confused deputy. Only allowlisted targets may be dispatched;
+ * the allowlist is empty until a target is reviewed to derive tenant/actor server-side.
+ *
+ * Runs the REAL dispatcher (transpiled, Deno/fetch/supabase stubbed) and asserts both the result and that
+ * no outbound call was made. Mutation proof: putting a target on the allowlist lets the service-bearer
+ * call through — so the allowlist is the thing doing the stopping.
+ */
+import { readFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { describe, expect, it } from "vitest";
+import ts from "typescript";
+import { isServiceDispatchDirectFunctionAllowed } from "../../supabase/functions/_shared/marketplace-authority-containment";
+
+const fnDir = join(__dirname, "..", "..", "supabase/functions");
+const SERVICE = "svc-role-dispatch-key";
+
+function loadDispatcher(mutate?: (s: string) => string) {
+  const fetches: Array<{ url: string; auth: string }> = [];
+  const updates: Array<Record<string, unknown>> = [];
+  const supa = {
+    createClient: () => ({
+      from: () => {
+        const c: Record<string, unknown> = {};
+        const self = () => c;
+        Object.assign(c, {
+          select: self, eq: self,
+          update: (patch: Record<string, unknown>) => { updates.push(patch); return c; },
+          maybeSingle: async () => ({ data: null, error: null }),
+          then: (res: (v: unknown) => void) => res({ data: null, error: null }),
+        });
+        return c;
+      },
+    }),
+  };
+  const fakeFetch = async (url: string, init?: { headers?: Record<string, string> }) => {
+    fetches.push({ url: String(url), auth: init?.headers?.Authorization ?? "" });
+    return new Response(JSON.stringify({ ok: true }), { status: 200 });
+  };
+  const Deno = { env: { get: (k: string) => ({ SUPABASE_URL: "https://x.supabase.co", SUPABASE_SERVICE_ROLE_KEY: SERVICE } as Record<string, string>)[k] } };
+  const stubs: Record<string, unknown> = {
+    "_shared/railAutomation.ts": { contactHintsFromPayload: () => ({ contactId: null, email: null, phone: null }), emitAutomationRail: async () => {} },
+    "_shared/platform-operator-tenant.ts": { platformOperatorTenantId: async () => null },
+  };
+  const cache = new Map<string, unknown>();
+  const load = (abs: string): unknown => {
+    if (cache.has(abs)) return cache.get(abs);
+    const rel = abs.slice(fnDir.length + 1);
+    let src = readFileSync(abs, "utf8");
+    if (mutate && rel === "_shared/marketplace-authority-containment.ts") {
+      const before = src; src = mutate(src);
+      if (src === before) throw new Error("mutation matched nothing");
+    }
+    const out = ts.transpileModule(src, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
+    const mod = { exports: {} as Record<string, unknown> };
+    cache.set(abs, mod.exports);
+    const req = (spec: string): unknown => {
+      if (spec.includes("supabase-js")) return supa;
+      if (spec.startsWith(".")) {
+        const t = resolve(dirname(abs), spec);
+        const k = t.slice(fnDir.length + 1);
+        return k in stubs ? stubs[k] : load(t);
+      }
+      throw new Error(`unmapped ${spec}`);
+    };
+    new Function("require", "module", "exports", "Deno", "fetch", out)(req, mod, mod.exports, Deno, fakeFetch);
+    cache.set(abs, mod.exports);
+    return mod.exports;
+  };
+  const mod = load(join(fnDir, "_shared/workflowDispatch.ts")) as {
+    dispatchWorkflowRun: (o: Record<string, unknown>) => Promise<{ status: string; error?: string | null }>;
+  };
+  return { dispatch: mod.dispatchWorkflowRun, fetches, updates };
+}
+
+const run = (directFunctionName: string) => ({
+  runId: "run-1", provider: "direct_edge_function", n8nWebhookUrl: null, needsN8nLink: null,
+  langgraphGraphId: null, directFunctionName,
+  payload: { input: { contact_id: "22222222-bbbb-4000-8000-0000000000b2" }, context: { tenant_id: "bbbbbbbb-1111-4000-8000-0000000000bb" } },
+});
+
+describe("INT-310 dispatch allowlist — the predicate", () => {
+  it("allows nothing today: no reviewed service-dispatch target exists", () => {
+    for (const name of [
+      "send-message", "credit-verification-initiate", "subagent-fundability", "subagent-email-composer",
+      "paige-orchestrator", "paige-problem-reverse-engineer", "paige-deep-research", "",
+    ]) {
+      expect(isServiceDispatchDirectFunctionAllowed(name)).toBe(false);
+    }
+  });
+  it("rejects non-canonical spellings before any lookup", () => {
+    for (const v of ["Send-Message", " send-message", "../send-message", null, 42, {}]) {
+      expect(isServiceDispatchDirectFunctionAllowed(v)).toBe(false);
+    }
+  });
+});
+
+describe("INT-310 dispatch allowlist — the real dispatcher refuses before any service-bearer call", () => {
+  for (const target of ["send-message", "subagent-fundability", "paige-orchestrator", "subagent-email-composer"]) {
+    it(`${target}: run fails as direct_function_not_allowlisted, nothing is called`, async () => {
+      const d = loadDispatcher();
+      const res = await d.dispatch(run(target));
+      expect(res).toMatchObject({ status: "failed", error: "direct_function_not_allowlisted" });
+      expect(d.fetches).toEqual([]);
+      expect(d.updates.some((u) => u.status === "failed" && u.error === "direct_function_not_allowlisted")).toBe(true);
+    });
+  }
+
+  it("the existing Marketplace block still answers first (direct_function_not_allowed)", async () => {
+    const d = loadDispatcher();
+    const res = await d.dispatch(run("marketplace-checkout"));
+    expect(res).toMatchObject({ status: "failed", error: "direct_function_not_allowed" });
+    expect(d.fetches).toEqual([]);
+  });
+
+  it("mutation proof: allowlisting a target lets the service-bearer call through", async () => {
+    const d = loadDispatcher((s) => s.replace("new Set<string>([])", 'new Set<string>(["subagent-fundability"])'));
+    await d.dispatch(run("subagent-fundability"));
+    expect(d.fetches).toHaveLength(1);
+    expect(d.fetches[0].auth).toBe(`Bearer ${SERVICE}`);
+  });
+});
+
+describe("INT-310 dispatch allowlist — the cron sweeper terminates before claiming (structural)", () => {
+  it("checks the allowlist before the atomic claim update", () => {
+    const src = readFileSync(join(fnDir, "dispatch-queued-workflow-runs/index.ts"), "utf8");
+    const gate = src.indexOf('await terminate("direct_function_not_allowlisted")');
+    const claim = src.indexOf('.update({ status: "running", last_dispatched_at: claimStamp })');
+    expect(gate).toBeGreaterThan(0);
+    expect(claim).toBeGreaterThan(gate);
+  });
+});

@@ -97,6 +97,28 @@ bypasses the vocab + correction + confirmation discipline; prefer the seam.
   evidence `docs/evidence/match-paige-memory-authz.md`. Row-count re-confirm AND the authenticated
   production drive (legit recall works; no cross-tenant leak in the running product) remain PROOF OWED
   (§32.c/§70) — deployed + persisted + boundary-proven is not the same as production-verified.
+- **INT-326 — a person's own memory is recalled only in the workspace it was written in (2026-10-05,
+  PR TBD; NOT merged or deployed when this was written).** Migration `20270588326000` replaces
+  `match_paige_memory` with a 7-argument signature (`_target_tenant_id`; the unscoped 6-argument one is
+  dropped). User branch: `client_user_id = target AND client_id IS NULL AND tenant_id = scope`; service
+  role needs a non-null tenant for it, a JWT caller's scope is `current_user_tenant_id()` and naming a
+  different tenant is refused unless the caller is a platform operator. The `chat_message_embeddings`
+  branch is removed (0 rows ever, no writer, no tenant source). `paige-ai-chat` reads own memory with
+  `tenant_id = callerActiveTenantId()` + `client_id IS NULL` (the same value its writers stamp), does
+  no memory work with no workspace, scopes the 7-day preference de-dupe the same way, and drops a memory
+  block read in a different workspace than the turn's persona resolved (still latching the turn's
+  scope re-check, on client turns as well). `useClientChatContext` filters its own-memory line to
+  `current_user_tenant_id()` + `client_id IS NULL` and re-reads when the tab's active workspace changes
+  (PaigeChat stays mounted across a switch), clearing the old block before the re-read starts so a
+  message sent mid-read carries no context. Residual: a switch made in ANOTHER tab reaches an open chat
+  only when that tab's tenant context re-reads (sign-in, token refresh or a new session — possibly up
+  to about an hour later); until then its held block can still
+  carry the earlier workspace's line as `clientContext`. Deploy order: migration and edge function may
+  land in either order — both fail safe and recall-only (edge first: the 7-argument call errors, is
+  logged, returns no semantic hits; migration first: the old call resolves to the new function with no
+  workspace and returns no own rows). Proof: `supabase/tests/match_paige_memory_authz.sql` W-A…W-E,
+  `test:client-memory-authz` §37 (37.1–37.17), the hook test
+  `src/hooks/useClientChatContext.memory-scope.test.tsx` (5 tests). Production drive PROOF OWED.
 - **Follow-ups (filed, not folded in):** GDPR bulk hard-delete of owner/prompt memory via
   `process-data-deletion` (self-serve `forget` ships now). `match_paige_owner_memory`'s NULL-tenant `=`
   filter is a documented latent trap for a future operator semantic-recall path (a DIFFERENT function /

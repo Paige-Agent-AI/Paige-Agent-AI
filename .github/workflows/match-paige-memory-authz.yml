@@ -3,12 +3,14 @@ on:
   pull_request:
     paths:
       - 'supabase/migrations/*match_paige_memory_resource_scoped_authz.sql'
+      - 'supabase/migrations/*match_paige_memory_workspace_scope.sql'
       - 'supabase/tests/match_paige_memory_authz.sql'
       - '.github/workflows/match-paige-memory-authz.yml'
   push:
     branches: [main]
     paths:
       - 'supabase/migrations/*match_paige_memory_resource_scoped_authz.sql'
+      - 'supabase/migrations/*match_paige_memory_workspace_scope.sql'
       - 'supabase/tests/match_paige_memory_authz.sql'
       - '.github/workflows/match-paige-memory-authz.yml'
 permissions:

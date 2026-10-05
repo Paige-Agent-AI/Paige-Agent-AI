@@ -5939,5 +5939,130 @@ console.log("\npaige_turn — every stream says it started and ends once, before
     JSON.stringify({ lawful, broken }));
 }
 
+console.log("\nINT-326 — a person's own memory is recalled only in the workspace it was written in");
+{
+  // The DATABASE, modelled faithfully: `client_memory` holds rows each pinned to ONE tenant, and a read
+  // returns whatever its filters admit — an unfiltered read returns every workspace's rows, which is
+  // the defect. `match_paige_memory` is modelled at both signatures: called WITHOUT `_target_tenant_id`
+  // (the pre-INT-326 6-argument function) it keys on the person alone and returns the A row in any
+  // workspace; called WITH it, it returns the row only in its own workspace.
+  const WS_A = CALLER_TENANT, WS_B = OTHER_TENANT;
+  const RECENT_A = "INT326-RECENT-PREFERENCE-WRITTEN-IN-A";
+  const SEMANTIC_A = "INT326-SEMANTIC-MEMORY-WRITTEN-IN-A";
+  const ABOUT_CLIENT = "INT326-ROW-THE-CALLER-WROTE-ABOUT-A-CLIENT";
+  const PREF = "please be brief from now on";
+  const now = new Date().toISOString();
+  const ROWS = [
+    { client_user_id: USER, client_id: null, tenant_id: WS_A, memory_type: "user_preference", content: RECENT_A, created_at: now, is_active: true },
+    // Written ABOUT a client by this caller (the paige-mcp / field-ingestion shape: client_user_id = actor).
+    { client_user_id: USER, client_id: OWN, tenant_id: WS_A, memory_type: "coach_note", content: ABOUT_CLIENT, created_at: now, is_active: true },
+    // The same preference text, written in A — what the 7-day de-dupe probe could wrongly find from B.
+    { client_user_id: USER, client_id: null, tenant_id: WS_A, memory_type: "user_preference", content: PREF, created_at: now, is_active: true },
+  ];
+  const admit = (filters) => ROWS.filter((r) => filters.every((f) => {
+    if ((f[0] === "eq" || f[0] === "is") && f[1] in r) return r[f[1]] === f[2];
+    return true; // order/limit/select/gte(now) admit
+  }));
+  const memoryTables = { serviceTablesExtra: { client_memory: admit }, tablesExtra: { client_memory: admit } };
+  const semantic = (args) => {
+    const scoped = Object.prototype.hasOwnProperty.call(args ?? {}, "_target_tenant_id");
+    const hit = [{ source: "memory", memory_type: "user_preference", content: SEMANTIC_A, similarity: 0.95 }];
+    if (!scoped) return { data: args?._target_user_id === USER ? hit : [], error: null };
+    return { data: args._target_user_id === USER && args._target_tenant_id === WS_A ? hit : [], error: null };
+  };
+  const persona = (tenant) => ({ get_paige_persona_context: { data: tenant ? [{ tenant_id: tenant, tenant_name: "Northside Fitness", playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }] : [], error: null } });
+  const turn = (active, personaTenant, extra = {}) => drive({
+    stream: true, ...memoryTables, ...extra,
+    rpcOverrides: { ...persona(personaTenant), get_actor_access: { data: { tier: "tenant" }, error: null },
+      current_user_tenant_id: { data: active, error: null }, match_paige_memory: semantic, ...(extra.rpcOverrides ?? {}) },
+  });
+  const egress = (r) => r.modelEgress.join("\n");
+  const ownRead = (r) => r.memoryReads.find((m) => m.client === "service"
+    && m.filters.some((f) => f[0] === "eq" && f[1] === "client_user_id") && !m.filters.some((f) => f[0] === "gte"));
+  const has = (read, op, col, val) => !!read && read.filters.some((f) => f[0] === op && f[1] === col && f[2] === val);
+
+  // A — a memory written in A appears in A.
+  const inA = await turn(WS_A, WS_A);
+  const readA = ownRead(inA);
+  assert("37.1 [A] the no-client recent read is pinned to the turn's workspace and to the person's own rows",
+    has(readA, "eq", "tenant_id", WS_A) && has(readA, "is", "client_id", null) && has(readA, "eq", "client_user_id", USER),
+    JSON.stringify(readA?.filters ?? null));
+  assert("37.2 [A] the semantic search is told the workspace",
+    inA.memoryRpc.length === 1 && inA.memoryRpc[0].args._target_tenant_id === WS_A,
+    JSON.stringify(inA.memoryRpc.map((r) => r.args._target_tenant_id)));
+  assert("37.3 [A] …and both memories reach Paige in A (the positive control: nothing here is vacuous)",
+    egress(inA).includes(RECENT_A) && egress(inA).includes(SEMANTIC_A),
+    JSON.stringify({ recent: egress(inA).includes(RECENT_A), semantic: egress(inA).includes(SEMANTIC_A), calls: inA.modelEgress.length }));
+  assert("37.4 [E] a row the caller wrote ABOUT a client never enters their own recall",
+    !egress(inA).includes(ABOUT_CLIENT), "a client-keyed row reached the caller's no-client prompt");
+
+  // B — the same person, working in B, does not get A's memory.
+  const inB = await turn(WS_B, WS_B);
+  const readB = ownRead(inB);
+  assert("37.5 [B] in workspace B the recent read is pinned to B, never unscoped",
+    has(readB, "eq", "tenant_id", WS_B) && has(readB, "is", "client_id", null),
+    JSON.stringify(readB?.filters ?? null));
+  assert("37.6 [B] …the semantic search is told B",
+    inB.memoryRpc.length === 1 && inB.memoryRpc[0].args._target_tenant_id === WS_B,
+    JSON.stringify(inB.memoryRpc.map((r) => r.args)));
+  assert("37.7 [B] …and nothing written in A reaches Paige in B",
+    inB.modelEgress.length > 0 && !egress(inB).includes(RECENT_A) && !egress(inB).includes(SEMANTIC_A),
+    JSON.stringify({ calls: inB.modelEgress.length, recent: egress(inB).includes(RECENT_A), semantic: egress(inB).includes(SEMANTIC_A) }));
+
+  // C — an operator at rest (no workspace) does no memory work at all: no read, no paid embedding, no RPC.
+  const atRest = await turn(null, null);
+  assert("37.8 [C] with no workspace there is no own-memory read and no semantic search",
+    !atRest.memoryReads.some((m) => m.filters.some((f) => f[0] === "eq" && f[1] === "client_user_id") && !m.filters.some((f) => f[0] === "gte"))
+      && atRest.memoryRpc.length === 0,
+    JSON.stringify({ reads: atRest.memoryReads.map((m) => m.filters), rpc: atRest.memoryRpc.length }));
+  assert("37.9 [C] …the memory embedding (a paid call) is skipped versus a workspace turn, and no memory reaches Paige",
+    atRest.embeds < inA.embeds && !egress(atRest).includes(RECENT_A) && !egress(atRest).includes(SEMANTIC_A),
+    JSON.stringify({ atRest: atRest.embeds, inA: inA.embeds }));
+
+  // F — the workspace changes between the memory read and the persona read: the block is dropped.
+  const raced = await turn(WS_A, WS_B);
+  assert("37.10 [F] memory read in A is never handed to a turn that resolved to B",
+    raced.modelEgress.length > 0 && !egress(raced).includes(RECENT_A) && !egress(raced).includes(SEMANTIC_A),
+    JSON.stringify({ calls: raced.modelEgress.length, recent: egress(raced).includes(RECENT_A) }));
+  assert("37.11 [F] …and the drop is logged, not silent",
+    raced.logged.some((l) => l.level === "error" && /memory was read in a different workspace/.test(l.msg)),
+    JSON.stringify(raced.logged.map((l) => l.msg.slice(0, 90))));
+  assert("37.15 [F] …and dropping the text keeps the protection: the turn still re-checks its workspace before Paige answers",
+    raced.rec.rpc.filter((c) => c.name === "get_paige_persona_context").length >= 2,
+    `persona reads: ${raced.rec.rpc.filter((c) => c.name === "get_paige_persona_context").length}`);
+
+  // De-dupe — a preference written in A must not stop the same preference being saved in B.
+  const prefB = await drive({ stream: true, ...memoryTables, text: PREF,
+    rpcOverrides: { ...persona(WS_B), get_actor_access: { data: { tier: "tenant" }, error: null },
+      current_user_tenant_id: { data: WS_B, error: null }, match_paige_memory: semantic } });
+  const dedupe = prefB.memoryReads.find((m) => m.filters.some((f) => f[0] === "gte" && f[1] === "created_at"));
+  assert("37.12 the 7-day preference de-dupe probe is pinned to the workspace and the person's own rows",
+    has(dedupe, "eq", "tenant_id", WS_B) && has(dedupe, "is", "client_id", null),
+    JSON.stringify(dedupe?.filters ?? null));
+  assert("37.13 …so a preference already saved in A is still saved in B, stamped B",
+    (prefB.rec.inserts ?? []).some((i) => i.table === "client_memory" && i.row?.memory_type === "user_preference" && i.row?.tenant_id === WS_B),
+    JSON.stringify((prefB.rec.inserts ?? []).filter((i) => i.table === "client_memory").map((i) => i.row?.tenant_id)));
+
+  // The client path is unchanged: keyed on the AUTHORIZED client, the user branch off.
+  const focused = await turn(WS_A, WS_A, { clientId: OWN });
+  assert("37.14 a focused client turn still reads that client's memory and asks the search for that client only",
+    focused.memoryReads.some((m) => has(m, "eq", "client_id", OWN))
+      && focused.memoryRpc.length === 1 && focused.memoryRpc[0].args._target_client_id === OWN
+      && focused.memoryRpc[0].args._target_tenant_id === null,
+    JSON.stringify({ reads: focused.memoryReads.map((m) => m.filters), rpc: focused.memoryRpc.map((r) => r.args) }));
+
+  // The race guard covers client turns too. A client turn's read is keyed on client_id, so its workspace
+  // sample runs alongside the read rather than in front of it — but it must still be TAKEN: without it
+  // the guard would see "no workspace" and drop legitimate client memory (or, if exempted, lose its cover).
+  assert("37.16 [F] a focused client turn in an unchanged workspace keeps that client's memory in the prompt",
+    egress(focused).includes(ABOUT_CLIENT)
+      && !focused.logged.some((l) => /memory was read in a different workspace/.test(l.msg)),
+    JSON.stringify({ calls: focused.modelEgress.length, client: egress(focused).includes(ABOUT_CLIENT) }));
+  const focusedRaced = await turn(WS_A, WS_B, { clientId: OWN });
+  assert("37.17 [F] …and a client turn whose workspace moved between the memory read and the persona read drops it",
+    focusedRaced.modelEgress.length > 0 && !egress(focusedRaced).includes(ABOUT_CLIENT),
+    JSON.stringify({ calls: focusedRaced.modelEgress.length, client: egress(focusedRaced).includes(ABOUT_CLIENT) }));
+}
+
 console.log(`\n${checks - failures} passed, ${failures} failed`);
 process.exit(failures === 0 ? 0 : 1);

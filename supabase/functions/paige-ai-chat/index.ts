@@ -1916,19 +1916,45 @@ JSON:`;
     // no embedding (a paid provider call), no RPC, nothing in the prompt. Falling back would be
     // safe for confidentiality but would silently mask a caller probing for other clients.
     let memoryBlock = "";
+    // INT-326 — A PERSON'S OWN MEMORY IS RECALLED ONLY IN THE WORKSPACE IT WAS WRITTEN IN (§9/§51).
+    // Every `client_memory` row carries a NOT NULL tenant: a row about the caller is stamped with the
+    // caller's ACTIVE tenant by the writers below (`callerActiveTenantId()`). The no-client read used
+    // to key on `client_user_id` alone through the service-role client, so a preference written in
+    // workspace A was recalled into a conversation in workspace B. The read now uses the SAME source
+    // the writers stamp with, so read scope and write scope cannot diverge:
+    //   · no workspace (an operator at rest, a portal client with no membership, a resolver error)
+    //     → NO memory work: no read, no paid embedding, no RPC. The column is NOT NULL, so the set a
+    //     "tenant IS NULL" read could return is empty anyway.
+    //   · `client_id IS NULL` keeps rows written ABOUT a client by this caller (paige-mcp and the
+    //     field-ingestion tab write `client_user_id = <actor>`) out of the caller's own recall.
+    // `memoryScopeTenantId` records the workspace the memory was read in; the turn's own workspace is
+    // pinned later (persona read), and a block read in a different one is dropped there.
+    let memoryScopeTenantId: string | null = null;
     try {
+      // The workspace sample is needed on EVERY memory-reading turn, client turns included: the
+      // race guard after the persona read compares it with the turn's workspace, and a client turn
+      // with no sample would have its legitimate client memory dropped (or, if exempted, lose the
+      // guard). Only the OWN-memory read is filtered by it, so only that path waits for it before
+      // reading; a client turn's read is keyed on client_id, and its sample runs alongside the read
+      // instead of in front of it (no extra serial round trip). The read is cached per turn and is
+      // the same one the writers below stamp with.
+      const memoryTenantSample: Promise<string | null> = clientScopeDenied ? Promise.resolve(null) : callerActiveTenantId();
+      const memoryTurnTenant = clientScopeDenied || scopedClientId ? null : await memoryTenantSample;
+      const ownMemoryAllowed = !clientScopeDenied && !scopedClientId && memoryTurnTenant !== null;
       // Refused client context does NO memory work at all: the block below is skipped entirely,
       // so there is no recent read, no semantic embedding, and no match_paige_memory call.
       const memoryQuery = clientScopeDenied
         ? null
         : scopedClientId
         ? supabase.from("client_memory").select("memory_type, content, created_at").eq("client_id", scopedClientId).eq("is_active", true).order("created_at", { ascending: false }).limit(15)
-        : supabase.from("client_memory").select("memory_type, content, created_at").eq("client_user_id", user.id).eq("is_active", true).order("created_at", { ascending: false }).limit(15);
+        : ownMemoryAllowed
+        ? supabase.from("client_memory").select("memory_type, content, created_at").eq("client_user_id", user.id).eq("tenant_id", memoryTurnTenant).is("client_id", null).eq("is_active", true).order("created_at", { ascending: false }).limit(15)
+        : null;
 
       // Embed the latest user message so we can retrieve semantically-relevant
-      // memories and past chat snippets in parallel with the recent-memory pull.
+      // memories in parallel with the recent-memory pull.
       const lastUserContent = lastUserMessage?.content?.slice(0, 4000) || "";
-      const semanticPromise = (lastUserContent && !clientScopeDenied)
+      const semanticPromise = (lastUserContent && (scopedClientId !== null || ownMemoryAllowed))
         ? embedText(lastUserContent).then(async (queryEmbedding) => {
             if (!queryEmbedding) return [] as any[];
             const { data, error } = await supabase.rpc("match_paige_memory", {
@@ -1939,6 +1965,10 @@ JSON:`;
               _match_threshold: 0.7,
               _memory_count: 5,
               _message_count: 3,
+              // The person's own recall is read in this workspace only. A focused client turn passes
+              // null: its rows are keyed on the client (whose own tenant pins them), and the user
+              // branch has nothing to match there — every row a client turn writes carries client_id.
+              _target_tenant_id: scopedClientId ? null : memoryTurnTenant,
             });
             if (error) {
               console.error("match_paige_memory error:", error);
@@ -1948,10 +1978,12 @@ JSON:`;
           }).catch((e) => { console.error("semantic search failed:", e); return [] as any[]; })
         : Promise.resolve([] as any[]);
 
-      const [memoryResult, semanticHits] = await Promise.all([
+      const [memoryResult, semanticHits, sampledTenant] = await Promise.all([
         memoryQuery ?? Promise.resolve({ data: null }),
         semanticPromise,
+        memoryTenantSample,
       ]);
+      memoryScopeTenantId = sampledTenant;
       const memories = (memoryResult as any)?.data ?? null;
 
       if (memories && memories.length > 0) {
@@ -2112,16 +2144,25 @@ JSON:`;
           // attacker-authored text as a `user_preference`, the type surfaced at the top of
           // the prompt for whoever legitimately reads that client next.
           const targetUserId = scopedClientId || user.id;
-          // Avoid dupes: skip if we wrote the exact same content in the last 7 days.
-          const { data: dup } = await supabase
-            .from("client_memory")
-            .select("id")
-            .eq("client_user_id", targetUserId)
-            .eq("memory_type", "user_preference")
-            .eq("content", lastUserMessage!.content.trim())
-            .gte("created_at", new Date(Date.now() - 7 * 86400_000).toISOString())
-            .limit(1)
-            .maybeSingle();
+          // Avoid dupes: skip if we wrote the exact same content in the last 7 days — in THIS
+          // workspace (INT-326). Keyed on the person alone, a preference saved in workspace A
+          // suppressed the same one in workspace B for a week. A client turn keys on the client.
+          // With no workspace there is nothing to compare against (the insert below is refused by
+          // the database with MEMORY_TENANT_UNRESOLVED, exactly as before), so no probe is made.
+          const dedupeTenant = scopedClientId ? null : await callerActiveTenantId();
+          const dedupeProbe = scopedClientId
+            ? supabase.from("client_memory").select("id").eq("client_id", scopedClientId)
+            : dedupeTenant
+            ? supabase.from("client_memory").select("id").eq("client_user_id", targetUserId).eq("tenant_id", dedupeTenant).is("client_id", null)
+            : null;
+          const { data: dup } = dedupeProbe
+            ? await dedupeProbe
+              .eq("memory_type", "user_preference")
+              .eq("content", lastUserMessage!.content.trim())
+              .gte("created_at", new Date(Date.now() - 7 * 86400_000).toISOString())
+              .limit(1)
+              .maybeSingle()
+            : { data: null };
           if (!dup) {
             const emb = await embedText(lastUserMessage!.content);
             const row: any = {
@@ -2192,6 +2233,23 @@ JSON:`;
       console.warn("[paige-ai-chat] persona context resolution failed (defaulting to neutral):", e);
     }
     const fundingEnabled = personaCtx.funding_enabled;
+
+    // INT-326 — MEMORY READ IN ANOTHER WORKSPACE NEVER REACHES THIS TURN. Client memory is loaded
+    // before the turn's workspace is pinned here, so a workspace switch between the two reads would
+    // hand workspace A's memory to a turn now scoped to B. Compare once, before anything consumes the
+    // block (the protected-evidence latch and the prompt both read it later), and drop it on mismatch.
+    // Dropping the text does NOT drop the protection: the turn still counts as having carried
+    // protected evidence (`memoryDroppedForScope` below), so the scope re-check before dispatch still
+    // runs and still refuses a turn whose workspace is unknown or has moved. Without that, clearing
+    // the block would have turned a refused turn into an ordinary one.
+    let memoryDroppedForScope = false;
+    if (memoryBlock && memoryScopeTenantId !== (personaCtx.tenant_id ?? null)) {
+      memoryDroppedForScope = true;
+      console.error("[paige] client memory was read in a different workspace than this turn — dropped", JSON.stringify({
+        memory_tenant_id: memoryScopeTenantId, turn_tenant_id: personaCtx.tenant_id ?? null,
+      }));
+      memoryBlock = "";
+    }
 
     // THE THREAD MUST BELONG TO THIS TURN'S WORKSPACE (§9, owner addition 2026-10-05). Every later use
     // of `payloadThreadId` — the user-turn append, the pre-flight fold, the summary read that becomes
@@ -2627,6 +2685,9 @@ JSON:`;
       //    Buffering the frame while streaming the persisted extraction of it on every later
       //    turn is not a rule, it is a coincidence of which surface was audited.
       !!memoryBlock ||
+      //    …including memory read in another workspace and dropped before use (INT-326): the
+      //    mismatch that dropped it is itself evidence the turn's scope is not settled.
+      memoryDroppedForScope ||
       // Server-validated Spine evidence remains tenant/client evidence, so it uses the
       // same buffered final-scope gate even though its model projection is fixed-field.
       !!spineEvidenceBlock ||

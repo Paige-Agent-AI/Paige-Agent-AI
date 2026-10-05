@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { readUserPrimaryAddress } from "@/lib/contacts";
 import { countUniqueNegativeAccounts, deduplicateNegativeItems } from "@/lib/deduplicateNegatives";
@@ -6,6 +6,7 @@ import { differenceInMonths } from "date-fns";
 import { buildBureauHealthContext } from "@/components/credit/CreditFileHealthAssessment";
 import { getUnlockedPrograms, summarizeDemographics, type DemographicProfile } from "@/lib/unlockedPrograms";
 import type { Tables } from "@/integrations/supabase/types";
+import { useOptionalTenantContext } from "@/hooks/useTenantContext";
 
 export interface ClientChatContext {
   contextBlock: string;
@@ -59,8 +60,24 @@ export function useClientChatContext(clientId?: string | null, userId?: string |
   const [isLoading, setIsLoading] = useState(false);
   const [hasCreditData, setHasCreditData] = useState(false);
   const [hasCompletedIntake, setHasCompletedIntake] = useState(false);
+  // The active workspace is an INPUT of this read (INT-326): PaigeChat stays mounted across a
+  // workspace switch, so without it the block assembled in workspace A — including A's own-memory
+  // line — would keep riding along as `clientContext` after the user moved to B. It only triggers the
+  // re-read; the filter value itself still comes from `current_user_tenant_id()` below, the value the
+  // server stamps rows with. `cancelled` discards the stale in-flight read. Optional so the hook
+  // still renders outside a <TenantProvider> (tests, previews).
+  const activeTenantId = useOptionalTenantContext()?.activeTenantId ?? null;
+  // The workspace the current block was assembled for. On a switch between two real workspaces the
+  // old block is cleared BEFORE the re-read starts, so a message sent while the re-read is in flight
+  // carries no context rather than the previous workspace's own-memory line.
+  const blockWorkspaceRef = useRef<string | null>(activeTenantId);
 
   useEffect(() => {
+    if (blockWorkspaceRef.current !== null && blockWorkspaceRef.current !== activeTenantId) {
+      setContextBlock("");
+    }
+    blockWorkspaceRef.current = activeTenantId;
+
     if (!clientId && !userId) {
       setContextBlock("");
       setHasCreditData(false);
@@ -653,10 +670,20 @@ export function useClientChatContext(clientId?: string | null, userId?: string |
         }
 
         // --- Memory ---
+        // A person's OWN memory is read in the active workspace only (INT-326). Under this JWT the
+        // `client_memory` RLS arm `client_user_id = auth.uid()` admits that person's rows from EVERY
+        // workspace, so the read itself must name the workspace — the same `current_user_tenant_id()`
+        // the server stamps those rows with. `client_id IS NULL` leaves out rows this person wrote
+        // ABOUT a client. No workspace (or a failed lookup) means no own-memory line at all.
+        let ownMemoryTenant: string | null = null;
+        if (!clientId && resolvedUserId) {
+          const { data: activeTenant, error: activeTenantError } = await supabase.rpc("current_user_tenant_id");
+          ownMemoryTenant = !activeTenantError && typeof activeTenant === "string" ? activeTenant : null;
+        }
         const memFilter = clientId
           ? supabase.from("client_memory").select("memory_type, content, created_at").eq("client_id", clientId).eq("is_active", true).order("created_at", { ascending: false }).limit(5)
-          : resolvedUserId
-            ? supabase.from("client_memory").select("memory_type, content, created_at").eq("client_user_id", resolvedUserId).eq("is_active", true).order("created_at", { ascending: false }).limit(5)
+          : resolvedUserId && ownMemoryTenant
+            ? supabase.from("client_memory").select("memory_type, content, created_at").eq("client_user_id", resolvedUserId).eq("tenant_id", ownMemoryTenant).is("client_id", null).eq("is_active", true).order("created_at", { ascending: false }).limit(5)
             : null;
 
         if (memFilter) {
@@ -883,7 +910,7 @@ export function useClientChatContext(clientId?: string | null, userId?: string |
 
     fetchContext();
     return () => { cancelled = true; };
-  }, [clientId, userId]);
+  }, [clientId, userId, activeTenantId]);
 
   return { contextBlock, isLoading, hasCreditData, hasCompletedIntake };
 }

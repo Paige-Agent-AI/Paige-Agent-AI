@@ -3,7 +3,7 @@
 // owner never picks an artifact type: Paige decides from the brief, and the project holds whatever
 // she builds. Pending image approvals for this project surface here, beside the conversation.
 import React from "react";
-import { ArrowLeft, Monitor, Smartphone, MessageSquare, SlidersHorizontal, ArrowUp, Check, AlertCircle } from "lucide-react";
+import { ArrowLeft, Monitor, Smartphone, MessageSquare, SlidersHorizontal, ArrowUp, Check, AlertCircle, Loader2, Circle } from "lucide-react";
 import { Logo } from "../_shared";
 import { buildGrowthBrandFloor } from "@/components/growth/growth-theme";
 import { useMediaJobs } from "../useMediaJobs";
@@ -277,8 +277,16 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onBa
                 {i === lastAssistant && chat.steps.length > 0 && (
                   <ol className="vs-steps" aria-label="What Paige did">
                     {chat.steps.map((s) => (
-                      <li key={s.id}>
-                        {s.status === "error" ? <AlertCircle size={14} color="var(--vs-bad)" aria-label="Didn't work" /> : <Check size={14} color="var(--vs-good)" aria-label="Done" />}
+                      <li key={s.id} data-status={s.status}>
+                        {s.status === "error" ? <AlertCircle size={14} color="var(--vs-bad)" aria-label="Didn't work" />
+                          // Under way: a spinner when motion is welcome, a still ring when it is not (studio.css).
+                          : s.status === "running" ? (
+                            <span className="vs-step-busy" role="img" aria-label="Working on it">
+                              <Loader2 size={14} className="vs-step-spin" aria-hidden />
+                              <Circle size={14} className="vs-step-still" aria-hidden />
+                            </span>
+                          )
+                          : <Check size={14} color="var(--vs-good)" aria-label="Done" />}
                         <span>{s.label}{s.detail && <small>{s.detail}</small>}</span>
                         <time>{new Date(s.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</time>
                       </li>

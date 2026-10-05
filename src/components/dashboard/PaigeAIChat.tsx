@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useLayoutEffect } from "react";
 import { mergeIntoDraft, subscribePaigePromptHandoff } from "@/lib/paigePromptHandoff";
-import { PaigeReasoningStrip, StepTimeline, upsertStep, type PaigeStep } from "@/components/dashboard/PaigeStepTrace";
+import { PaigeReasoningStrip, StepTimeline, upsertStep, type PaigeStep, type PaigeStepFrame } from "@/components/dashboard/PaigeStepTrace";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -49,7 +49,7 @@ import { PaigeArtifactCard, type PaigeArtifact } from "@/components/paige/chat/P
 import { ExtractionProposalCard, type ExtractionProposal } from "@/components/chat/ExtractionProposalCard";
 import { PaigeCompactingCard, type CompactingSignal } from "@/components/paige/chat/PaigeCompactingCard";
 import { PaigeLiveConversation, type LiveVoiceSink } from "@/components/paige/live/PaigeLiveConversation";
-import { readPaigeStreamWithRaw } from "@/lib/paige-stream";
+import { readPaigeStreamWithRaw, settleOpenSteps } from "@/lib/paige-stream";
 import { parseLiveConversationCard, type LiveConversationCard } from "@/lib/paigeLiveConversation/contract";
 import { createAnchoredTranscriptScroll, messageScrollAnchorKey } from "@/components/chat/anchoredTranscriptScroll";
 import {
@@ -625,6 +625,8 @@ const PaigeAIChatInner = ({
   }, []);
   const abortActiveRequest = useCallback(() => {
     if (requestFenceRef.current.invalidate()) setIsLoading(false);
+    // The stopped read will never close a step it started, so none is left spinning.
+    setSteps(settleOpenSteps);
     setStreamingThreadId(null);
     setWritingPhase(false);
     setCompacting(null);
@@ -1408,7 +1410,7 @@ const PaigeAIChatInner = ({
           }
           // Structured event: a "watch her work" step (#95). Upsert by id, sorted by seq.
           if (parsed.paige_step) {
-            setSteps((prev) => upsertStep(prev, parsed.paige_step as PaigeStep));
+            setSteps((prev) => upsertStep(prev, parsed.paige_step as PaigeStepFrame));
             continue;
           }
           const liveCard = parseLiveConversationCard(parsed.paige_live_card);
@@ -1634,6 +1636,10 @@ const PaigeAIChatInner = ({
       // this, an unexpected exception between the specific handlers leaves the working
       // indicator on with no stream behind it — the exact fake-working state C2 forbids.
       releaseRequestBusy(requestTicket);
+      // However the read ended — [DONE], a rollback, an error — a step it started and never
+      // closed is dropped, so the trace and the strip stop saying she is at work. A superseded
+      // request leaves the trace alone: it now belongs to the turn that replaced it.
+      if (ticketAccepted(requestTicket)) setSteps(settleOpenSteps);
       if (timeoutId !== null) window.clearTimeout(timeoutId);
       if (businessMissionId && ticketAccepted(requestTicket)) {
         window.dispatchEvent(new CustomEvent("business-mission:refresh", { detail: { missionId: businessMissionId } }));

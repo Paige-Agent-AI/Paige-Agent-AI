@@ -150,12 +150,21 @@ export function isTurnFrame(value: unknown): value is TurnFrame {
     && oneOf(TURN_MODES, o.mode);
 }
 
-/** Bound a trace for persistence: action steps only, labels capped, entry count capped. */
+/**
+ * Bound a trace for persistence: FINISHED action steps only, labels capped, entry count capped.
+ *
+ * Only an outcome is durable. A step's START (`running`) and anything withdrawn are live lifecycle —
+ * they belong in the "What PAIGE did" strip while the turn runs, never in the record — so any status
+ * other than `done` or `error` is skipped rather than coerced to `done` (it used to be, which would
+ * have saved a step that never finished as one that did). A step with NO status is read as `done`,
+ * as before: that is how a finished step was written before steps carried a lifecycle.
+ */
 export function boundTurnTrace(steps: ReadonlyArray<{ kind?: unknown; label?: unknown; group?: unknown; status?: unknown }>): TurnTraceEntry[] {
   const out: TurnTraceEntry[] = [];
   for (const s of steps) {
     if (out.length >= TURN_TRACE_MAX_ENTRIES) break;
     if (s?.kind !== "action") continue; // thoughts are model text — never durable
+    if (s.status !== undefined && s.status !== "done" && s.status !== "error") continue; // not an outcome
     if (typeof s.label !== "string" || !s.label.trim()) continue;
     const label = s.label.trim().length > TURN_TRACE_MAX_LABEL
       ? `${s.label.trim().slice(0, TURN_TRACE_MAX_LABEL - 1).trimEnd()}…`

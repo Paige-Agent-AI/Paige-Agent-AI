@@ -286,6 +286,32 @@ describe("the persisted record and trace", () => {
     expect(JSON.stringify(t.trace(steps))).not.toContain("PRIVATE-NOTE");
   });
 
+  // C2 — a step's START (`running`) and anything withdrawn are live lifecycle, never an outcome. Kills:
+  // coercing every non-error status to "done" (the pre-C2 rule saved a step that never finished as one
+  // that did); dropping status-less steps (how a finished step was written before the lifecycle).
+  it("the trace keeps outcomes only: running and withdrawn steps never persist, a missing status reads as done", () => {
+    const steps = [
+      { kind: "action", label: "Adding Dana to your contacts", group: "owner", status: "running" },
+      { kind: "action", label: "Added Dana to your contacts", group: "owner", status: "done" },
+      { kind: "action", label: "Drafting the welcome email", group: "client", status: "withdrawn" },
+      { kind: "action", label: "Searching your calendar", group: "owner", status: "queued" },
+      { kind: "action", label: "Couldn't book the session", group: "client", status: "error" },
+      { kind: "action", label: "Searched your contacts", group: "owner" },
+    ];
+    expect(tracker().trace(steps)).toEqual([
+      { label: "Added Dana to your contacts", group: "owner", status: "done" },
+      { label: "Couldn't book the session", group: "client", status: "error" },
+      { label: "Searched your contacts", group: "owner", status: "done" },
+    ]);
+  });
+
+  it("a START that never finished leaves nothing behind, and does not use up the entry cap", () => {
+    const running = Array.from({ length: TURN_TRACE_MAX_ENTRIES + 5 }, (_, i) => ({ kind: "action", label: `Starting ${i}`, group: "owner", status: "running" }));
+    expect(tracker().trace(running)).toEqual([]);
+    const trace = tracker().trace([...running, { kind: "action", label: "Finished", group: "owner", status: "done" }]);
+    expect(trace).toEqual([{ label: "Finished", group: "owner", status: "done" }]);
+  });
+
   it("the trace is bounded", () => {
     const steps = Array.from({ length: 60 }, (_, i) => ({ kind: "action", label: `Step ${i} ${"x".repeat(100)}`, group: "owner", status: "done" }));
     const trace = tracker().trace(steps);

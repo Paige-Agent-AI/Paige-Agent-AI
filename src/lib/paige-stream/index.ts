@@ -18,6 +18,7 @@ import { decodePaigeFrameWithRaw, type PaigeFrame } from "./decode";
 
 export { createSseFramer, type SseFramer } from "./framing";
 export { decodePaigeFrame, decodePaigeFrameWithRaw, type PaigeFrame } from "./decode";
+export { normalizeStepStatus, settleOpenSteps, type StepStatus } from "./step-status";
 
 export interface PaigeStreamOptions {
   stopAtDone: boolean;

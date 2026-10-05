@@ -8,6 +8,7 @@ import { looksLikeFinanceAgent } from "../_shared/finance-gate.ts";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { recordCapabilityRun } from "../_shared/capability-record.ts";
 import { idempotencyKey } from "../_shared/durable-job/mod.ts";
+import { applyBoundContact, bindContactToTenant } from "../_shared/paige-orchestration/resource-binder.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -144,6 +145,8 @@ interface OrchestratorRequest {
     contact_id?: string;
     conversation_id?: string;
     user_id?: string;
+    // INT-310 C1: set by the orchestrator ONLY (the server-resolved tenant), never read from a caller.
+    tenant_id?: string;
   };
 }
 
@@ -644,6 +647,23 @@ Deno.serve(async (req) => {
     if (!isService && !callerId) return fail("Authentication required", 401);
     if (!payload.slug) return fail("Missing slug for tool_invoke", 400);
 
+    // INT-310 C1: bind every caller-selected contact (input.contact_id / input.client_id /
+    // context.contact_id) to the SERVER-RESOLVED tenant before any specialist — all of which read
+    // clients with the service role — can see it. Malformed, missing, foreign or disagreeing
+    // selectors get one indistinguishable refusal, before any agent lookup or invocation row. The
+    // binder reads only the selected row's owning tenant_id (the canonical subject check); no foreign
+    // row CONTENT is ever returned, forwarded to a specialist, or persisted.
+    const binding = await bindContactToTenant(supabase, tenantId, payload.input ?? {}, ctx);
+    if (!binding.ok) {
+      console.warn(`[paige-orchestrator] INT-310: contact selector refused (${binding.error})`);
+      return fail(binding.error, binding.status);
+    }
+    const bound = applyBoundContact(payload.input ?? {}, ctx, binding.contactId);
+    const boundInput = bound.input;
+    // The trusted tenant travels with the context so specialists can bind their own reads to it
+    // (defense in depth); a caller-supplied context.tenant_id never survives this overwrite.
+    ctx = { ...bound.context, tenant_id: tenantId ?? undefined } as typeof ctx;
+
     let invQ = supabase
       .from("paige_subagents")
       .select("slug,name,domain,description,runtime,edge_function,langgraph_graph,enabled,system_prompt,config,tenant_id")
@@ -667,7 +687,7 @@ Deno.serve(async (req) => {
       invoked_by: ctx.user_id ?? null,
       contact_id: ctx.contact_id ?? null,
       conversation_id: ctx.conversation_id ?? null,
-      input: payload.input ?? {},
+      input: boundInput,
       status: "pending",
       tenant_id: tenantId, // §9 attribution: the resolved request tenant, never caller-supplied
     });
@@ -679,17 +699,17 @@ Deno.serve(async (req) => {
     // is a documented follow-up, deliberately NOT faked here (never claim a swap that does nothing, §13).
     if (agent.runtime === "local") {
       if (!agent.edge_function) return fail(`Sub-agent ${agent.slug} has no edge_function configured`, 500);
-      result = await invokeLocal(agent.edge_function, payload.input ?? {}, ctx);
+      result = await invokeLocal(agent.edge_function, boundInput, ctx);
     } else if (agent.runtime === "soft") {
       result = await invokeSoft(
         { slug: agent.slug, name: agent.name, system_prompt: agent.system_prompt, config: agent.config },
-        payload.input ?? {},
+        boundInput,
         ctx,
         tenantId,
       );
     } else {
       if (!agent.langgraph_graph) return fail(`Sub-agent ${agent.slug} has no langgraph_graph configured`, 500);
-      result = await dispatchLangGraph(agent.langgraph_graph, payload.input ?? {}, ctx);
+      result = await dispatchLangGraph(agent.langgraph_graph, boundInput, ctx);
     }
 
     const latency = Date.now() - startedAt;

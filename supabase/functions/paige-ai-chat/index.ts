@@ -15086,6 +15086,16 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // Budget exhausted on an unresolved action: the honest blockage sentence, not
           // a replay of the last narration. THE WIRE AND THE TRANSCRIPT CARRY THE SAME
           // SENTENCE (§13/§94).
+          //
+          // The sentence REPLACES the round's chunks rather than being emitted beside them. It used
+          // to be emitted here directly while `finalChunks` still held the last narration round, so
+          // the one replay below then streamed that narration — and the provider's own `[DONE]` —
+          // after the sentence, while the thread saved only the sentence. And if that narration round
+          // had not finished, the post-loop check recorded INTERRUPTED over a wire that said
+          // LIMIT_REACHED. Now the server authors the whole answer (one content frame + its own
+          // `[DONE]`), it is complete by construction, and the ONE replay path sends terminal →
+          // paige_phase → exactly the saved sentence → [DONE], held and released like any other on a
+          // protected turn. A client seat never reaches this branch (`isActionIntent` is false there).
           if (finalChunks && !liveRuntimeScope && !forcedTermination && isActionIntent
               && continuationsUsed >= MAX_CONTINUATIONS && totalToolCalls === 0
               && queuedApprovals.length === 0 && confirmTrace.length === 0 && crmResultTrace.length === 0
@@ -15093,8 +15103,11 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             const exhausted = "I wasn't able to complete that request. The task may need a different approach or a capability that isn't available here yet — could you try asking again, or check what's possible from this workspace?";
             finalAssistantText = exhausted;
             turnTracker.budgetStop();
-            emitTurnTerminalBeforeAnswer(controller);
-            emitContent(controller, enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: exhausted } }] })}\n\n`));
+            finalChunks = [
+              enc.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: exhausted } }] })}\n\n`),
+              enc.encode("data: [DONE]\n\n"),
+            ];
+            lastRoundFinished = true;
           }
           if (continueContinuation) { continueContinuation = false; continue; }
           break;

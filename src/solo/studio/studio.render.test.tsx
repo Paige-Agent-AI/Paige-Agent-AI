@@ -628,6 +628,61 @@ describe("Vibe Studio project workspace", () => {
     expect(host.querySelector(".vs-build")).toBeNull();
   });
 
+  it("C2: a step under way shows a working glyph in What Paige did, then closes to Done on the same row", async () => {
+    let release: () => void = () => {};
+    const gate = new Promise<void>((r) => { release = r; });
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init: RequestInit) => {
+      h.fetchBodies.push(JSON.parse(String(init.body)));
+      const enc = new TextEncoder();
+      return new Response(new ReadableStream<Uint8Array>({
+        async start(c) {
+          c.enqueue(enc.encode(`data: ${JSON.stringify({ paige_step: { id: "a", label: "Read your brand" } })}\n\n`));
+          c.enqueue(enc.encode(`data: ${JSON.stringify({ paige_step: { id: "b", label: "Designing your landing page", status: "running" } })}\n\n`));
+          await gate;
+          c.enqueue(enc.encode(`data: ${JSON.stringify({ paige_step: { id: "b", label: "Designed your landing page", status: "done" } })}\n\n`));
+          c.enqueue(enc.encode("data: [DONE]\n\n")); c.close();
+        },
+      }), { status: 200 });
+    }));
+    await startProject("A landing page for my workshop");
+    const rows = () => Array.from(host.querySelectorAll<HTMLElement>('ol[aria-label="What Paige did"] li'));
+    const glyph = (li: HTMLElement) => li.firstElementChild?.getAttribute("aria-label");
+    expect(rows().map((li) => [li.dataset.status, glyph(li)])).toEqual([["done", "Done"], ["running", "Working on it"]]);
+    // Both glyphs are drawn; studio.css shows the spinner, or the still ring under reduced motion.
+    const busy = rows()[1].firstElementChild!;
+    expect(busy.classList.contains("vs-step-busy")).toBe(true);
+    expect([busy.querySelector(".vs-step-spin"), busy.querySelector(".vs-step-still")].every(Boolean)).toBe(true);
+    // The step under way is never listed as done on the stage either.
+    expect(host.querySelector(".vs-build-now")?.textContent).toBe("Designing your landing page");
+    await act(async () => { release(); });
+    await flush();
+    expect(rows().map((li) => [li.dataset.status, glyph(li), li.textContent?.includes("Designed your landing page")]))
+      .toEqual([["done", "Done", false], ["done", "Done", true]]);
+  });
+
+  it("C2: the stage's Done so far never lists a step still under way", async () => {
+    let release: () => void = () => {};
+    const gate = new Promise<void>((r) => { release = r; });
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init: RequestInit) => {
+      h.fetchBodies.push(JSON.parse(String(init.body)));
+      const enc = new TextEncoder();
+      return new Response(new ReadableStream<Uint8Array>({
+        async start(c) {
+          c.enqueue(enc.encode(`data: ${JSON.stringify({ paige_step: { id: "a", label: "Checking your brand", status: "running" } })}\n\n`));
+          c.enqueue(enc.encode(`data: ${JSON.stringify({ paige_step: { id: "b", label: "Read the brief" } })}\n\n`));
+          c.enqueue(enc.encode(`data: ${JSON.stringify({ paige_step: { id: "c", label: "Designing your landing page" } })}\n\n`));
+          await gate;
+          c.enqueue(enc.encode("data: [DONE]\n\n")); c.close();
+        },
+      }), { status: 200 });
+    }));
+    await startProject("A landing page for my workshop");
+    const done = Array.from(host.querySelectorAll(".vs-build-done li")).map((li) => li.textContent);
+    expect(done).toEqual(["Read the brief"]);
+    await act(async () => { release(); });
+    await flush();
+  });
+
   it("a page designed but not saved shows on the stage as not saved, never as an empty stage", async () => {
     h.sse = [
       JSON.stringify({ paige_step: { id: "a", label: "Designing your landing page" } }),

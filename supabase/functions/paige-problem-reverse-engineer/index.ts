@@ -8,6 +8,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2.45.0";
 
 import { gatewayCompat } from "../_shared/claude.ts";
+import { adminClient, isAuthorizedInternalCaller } from "../_shared/systems-check-http.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-orchestrator-call",
@@ -76,6 +77,14 @@ interface ReverseEngineerInput {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  // INT-310 C1: an orchestrator-only specialist (its one caller is paige-orchestrator's invokeLocal —
+  // there is no direct user consumer). It reads clients with the SERVICE ROLE, so the gateway's
+  // verify_jwt (which the public anon key passes) is not authority: only the canonical internal caller.
+  if (!(await isAuthorizedInternalCaller(req, adminClient()))) {
+    return new Response(JSON.stringify({ success: false, error: "unauthorized" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   try {
     const body = await req.json().catch(() => ({}));
@@ -92,11 +101,20 @@ Deno.serve(async (req) => {
     // Optional: pull thin contact context to ground the analysis.
     let contactContext = "";
     if (input.contact_id) {
+      // INT-310 C1 (defense in depth): bind the read to the server-resolved tenant the orchestrator
+      // forwards; with no trusted tenant there is nothing to bind to, so no contact context is read.
+      const trustedTenant = (context as { tenant_id?: unknown }).tenant_id;
+      if (typeof trustedTenant !== "string") {
+        return new Response(JSON.stringify({ success: false, error: "resource_not_found" }), {
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       const sb = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
       const { data: c } = await sb
         .from("clients")
         .select("first_name,last_name,lifecycle_stage,journey_stage,entity_name,assigned_coach_user_id")
         .eq("id", input.contact_id)
+        .eq("tenant_id", trustedTenant)
         .maybeSingle();
       if (c) {
         contactContext = `\n# Contact context\nName: ${c.first_name ?? ""} ${c.last_name ?? ""}\nLifecycle: ${c.lifecycle_stage ?? "n/a"}\nJourney stage: ${c.journey_stage ?? "n/a"}\nEntity (free-text): ${c.entity_name ?? "none"}`.trim();

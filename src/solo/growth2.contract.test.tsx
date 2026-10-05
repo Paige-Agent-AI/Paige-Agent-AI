@@ -339,7 +339,7 @@ describe("Solo Campaigns approved contract", () => {
     expect(archiveMigration).toContain("for share");
     expect(archiveMigration).toContain("where id=_stage_id for update");
     // Admission now owns stage advance + durable binding in one transaction.
-    const admission = readFileSync(resolve(process.cwd(), "supabase/migrations/20270588000000_solo_form_deal_identity.sql"), "utf8");
+    const admission = readFileSync(resolve(process.cwd(), "supabase/migrations/20270588326001_solo_form_deal_identity.sql"), "utf8");
     expect(submissionProcessor).toContain('admin.rpc("growth_attach_submission_deal"');
     expect(submissionProcessor).toContain('if(attachError || !attached) return {status:"error",result:{},error:"submission_deal_admission_failed"}');
     expect(admission).toContain("archived_at IS NULL FOR SHARE");

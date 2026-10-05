@@ -25,7 +25,7 @@ MUST_PRESERVE: Explicitly unlinked prospects, canonical client merge/deletion se
 ACCEPTANCE_CRITERIA: Owner's 2026-10-05 cross-surface matrix remains controlling; fixture checks are supporting evidence, not authenticated acceptance.
 MOTION_PURPOSE: NONE: no new motion or animation.
 PROTECTED_SEAMS: CRM Trust/approval/readback and client scope tested; forms admission derives saved route identity; C4, payment providers, Knowledge and commercial package authority are not expanded.
-INTERNAL_BUILD_IDENTITY: a847f7b130b1deb3d50e13f01fad2f7d36b7cd3a; deployment=none-local-build; environment=local; migrations=PROOF_OWED(hosted 20270588000000_solo_form_deal_identity not applied); edge=PROOF_OWED(crm-command and paige-ai-chat and growth-process-submission not deployed); evidence=docs/delivery/solo-client-deal-integrity.md
+INTERNAL_BUILD_IDENTITY: a847f7b130b1deb3d50e13f01fad2f7d36b7cd3a; deployment=none-local-build; environment=local; migrations=PROOF_OWED(hosted 20270588326001_solo_form_deal_identity not applied); edge=PROOF_OWED(crm-command and paige-ai-chat and growth-process-submission not deployed); evidence=docs/delivery/solo-client-deal-integrity.md
 RELEASE_CHANNEL: development: local implementation and supporting fixtures only; no production release.
 RELEASE_CLASSIFICATION: patch: canonical client relationship repair across active Solo producers.
 CUSTOMER_RELEASE_IDENTITY: none: authenticated cross-surface outcome and release proof are owed.

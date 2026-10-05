@@ -89,7 +89,7 @@ where a START may appear:
 4. **A FINISH never says `done` for a call whose result reports failure.**
 
 **The START map** (`_shared/paige-turn/step-start.ts`, pure, no imports).
-- `STEP_START_LABELS` — 63 tools with a fixed present-tense label ("Buying that number", "Searching the
+- `STEP_START_LABELS` — 67 tools with a fixed present-tense label ("Buying that number", "Searching the
   web"). Never the past-tense claim `describeStep` would make with no result ("Bought a number").
 - `STEP_START_SAME_LABEL` — `action_file` and `delegate_to_subagent` keep `describeStep`'s own wording:
   it is already present tense, from a fixed vocabulary, and does not depend on the result.

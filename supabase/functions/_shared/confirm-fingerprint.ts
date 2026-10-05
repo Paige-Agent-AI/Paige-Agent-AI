@@ -38,6 +38,12 @@ export const NON_IDENTITY_ARGS: Readonly<Record<string, readonly string[]>> = Ob
   // a batch dismissal's card match on re-emission. The action's identity stays in action_id +
   // to_status, which are NOT ignored.
   action_advance: ["decision_rationale"],
+  // `request_key` is the create key the chat settles into a NEW email campaign draft's arguments before
+  // this fingerprint (it is derived from the turn, so the approving turn would derive a different one).
+  // It is not the operator's choice and changes nothing about WHAT is drafted: the stored arguments, key
+  // included, are what run on approval, so the same campaign is made once. Without this, approving two
+  // drafts together never matches either card.
+  email_campaign_draft: ["request_key"],
 });
 
 // ── THE SUBJECT-ID FOR BATCH DISAMBIGUATION (§9/§13/§39) ─────────────────────────────────────────

@@ -65,6 +65,11 @@ export const STEP_START_LABELS: Readonly<Record<string, string>> = Object.freeze
   calendar_link_prepare: "Preparing a booking link to share",
   calendar_link_social_copy: "Preparing social post copy",
   calendar_link_send: "Sending your booking link",
+  // Marketing email (E2b) — PAIGE drafts and files for approval; she never approves or sends
+  read_email_campaigns: "Checking your email campaigns",
+  read_email_campaign_audience: "Counting who that campaign would reach",
+  email_campaign_draft: "Saving an email draft",
+  email_campaign_request_approval: "Filing an email campaign for approval",
   // Agreements
   agreement_send: "Sending the agreement for signature",
   agreement_draft: "Drafting the agreement",

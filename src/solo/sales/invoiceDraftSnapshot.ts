@@ -3,8 +3,10 @@ export type InvoiceAddress = { line1: string | null; line2: string | null; city:
 export type InvoiceItemInput = { price_id: string | null; item: string; description?: string | null; unit_minor: number | null; quantity: number };
 export type InvoiceItemSnapshot = Omit<InvoiceItemInput, 'unit_minor'> & { unit_minor: number; price_snapshot: Record<string, unknown> | null };
 export type InvoiceSnapshotInput = {
-  schema_version: 2; client_id: string; items: InvoiceItemInput[];
+  schema_version: 2 | 3; client_id: string; items: InvoiceItemInput[];
   kind: 'one_time' | 'deposit' | 'recurring'; deposit_basis_points: number | null; currency: 'usd'; cadence: 'monthly' | null;
+  /** Version3 exact deposits only; version2 never admits this field. */
+  deposit_minor?: number;
   recipient_email: string | null; recipient_phone: string | null; email_source_method_id: string | null; phone_source_method_id: string | null;
   billing_address: InvoiceAddress | null; agreement_id: string | null; processor_intent: string | null; payment_method_intents: string[];
   delivery_channel_intents: ('email' | 'sms')[]; due_date: string | null; memo: string | null;
@@ -23,7 +25,7 @@ const addressKeys = ['line1', 'line2', 'city', 'region', 'postal_code', 'country
 const inputKeys = ['schema_version', 'client_id', 'items', 'kind', 'deposit_basis_points', 'currency', 'cadence', 'recipient_email', 'recipient_phone', 'email_source_method_id', 'phone_source_method_id', 'billing_address', 'agreement_id', 'processor_intent', 'payment_method_intents', 'delivery_channel_intents', 'due_date', 'memo'];
 
 /** PostgreSQL amount_total_cents is int4. BigInt also prevents unsafe intermediate products. */
-export function aggregateInvoiceItems(items: readonly Pick<InvoiceItemSnapshot, 'unit_minor' | 'quantity'>[], depositBasisPoints?: number) {
+export function aggregateInvoiceItems(items: readonly Pick<InvoiceItemSnapshot, 'unit_minor' | 'quantity'>[], depositBasisPoints?: number, depositMinor?: number) {
   if (items.length < 1 || items.length > 50) throw new Error('Add between one and 50 items.');
   let total = 0n;
   for (const line of items) {
@@ -33,17 +35,20 @@ export function aggregateInvoiceItems(items: readonly Pick<InvoiceItemSnapshot, 
     if (total > 2147483647n) throw new Error('The invoice amount exceeds the supported range.');
   }
   if (depositBasisPoints !== undefined && (!integer(depositBasisPoints) || depositBasisPoints < 1 || depositBasisPoints > 9999)) throw new Error('Check the deposit percentage.');
-  const due = depositBasisPoints === undefined ? total : (total * BigInt(depositBasisPoints) + 5000n) / 10000n;
-  if (due < 1n || (depositBasisPoints !== undefined && due >= total)) throw new Error('A deposit must leave a positive balance.');
+  if (depositMinor !== undefined && (depositBasisPoints !== undefined || !integer(depositMinor) || depositMinor < 1 || BigInt(depositMinor) >= total)) throw new Error('Check the deposit amount. It must leave a positive balance.');
+  const due = depositMinor !== undefined ? BigInt(depositMinor) : depositBasisPoints === undefined ? total : (total * BigInt(depositBasisPoints) + 5000n) / 10000n;
+  if (due < 1n || ((depositBasisPoints !== undefined || depositMinor !== undefined) && due >= total)) throw new Error('A deposit must leave a positive balance.');
   return { totalMinor: Number(total), dueNowMinor: Number(due), remainderMinor: Number(total - due) };
 }
 
-function readV2(value: Record<string, unknown>, expectedTotal: number): InvoiceSnapshot | null {
-  if (!only(value, [...inputKeys, 'agreement_snapshot', 'total_minor', 'due_now_minor', 'remainder_minor'])
-    || value.schema_version !== 2 || typeof value.client_id !== 'string' || !uuid.test(value.client_id)
+function readVersioned(value: Record<string, unknown>, expectedTotal: number): InvoiceSnapshot | null {
+  const exact=value.schema_version===3;
+  if (!only(value, [...inputKeys, ...(exact?['deposit_minor']:[]), 'agreement_snapshot', 'total_minor', 'due_now_minor', 'remainder_minor'])
+    || (value.schema_version !== 2 && !exact) || typeof value.client_id !== 'string' || !uuid.test(value.client_id)
     || !['one_time', 'deposit', 'recurring'].includes(String(value.kind)) || value.currency !== 'usd'
     || (value.kind === 'recurring' ? value.cadence !== 'monthly' : value.cadence !== null)
-    || (value.kind === 'deposit' ? !integer(value.deposit_basis_points) : value.deposit_basis_points !== null)
+    || (exact ? value.kind !== 'deposit' || value.deposit_basis_points !== null || !integer(value.deposit_minor)
+      : value.kind === 'deposit' ? !integer(value.deposit_basis_points) : value.deposit_basis_points !== null)
     || !nullableId(value.email_source_method_id) || !nullableId(value.phone_source_method_id) || !nullableId(value.agreement_id)
     || !text(value.recipient_email, 254) || !text(value.recipient_phone, 40) || !text(value.memo, 2000) || !text(value.processor_intent, 80)
     || !text(value.due_date, 10) || (value.due_date !== null && !/^\d{4}-\d{2}-\d{2}$/.test(String(value.due_date)))
@@ -74,7 +79,8 @@ function readV2(value: Record<string, unknown>, expectedTotal: number): InvoiceS
         || (value.kind === 'recurring' ? line.price_snapshot.billing_interval !== 'month' || line.price_snapshot.interval_count !== 1 : line.price_snapshot.billing_interval !== 'one_time'))) return null;
   }
   try {
-    const amounts = aggregateInvoiceItems(value.items as InvoiceItemSnapshot[], value.kind === 'deposit' ? Number(value.deposit_basis_points) : undefined);
+    const amounts = aggregateInvoiceItems(value.items as InvoiceItemSnapshot[], value.kind === 'deposit' && !exact ? Number(value.deposit_basis_points) : undefined,
+      exact ? Number(value.deposit_minor) : undefined);
     if (amounts.totalMinor !== expectedTotal || value.total_minor !== amounts.totalMinor || value.due_now_minor !== amounts.dueNowMinor || value.remainder_minor !== amounts.remainderMinor) return null;
   } catch { return null; }
   return value as InvoiceSnapshot;
@@ -83,7 +89,7 @@ function readV2(value: Record<string, unknown>, expectedTotal: number): InvoiceS
 /** Old facts gain a local view only. No database rewrite or CRM refresh is performed. */
 export function normalizeInvoiceSnapshot(value: unknown, expectedTotal: number): InvoiceSnapshot | null {
   if (!object(value)) return null;
-  if ('schema_version' in value) return readV2(value, expectedTotal);
+  if ('schema_version' in value) return readVersioned(value, expectedTotal);
   if (!only(value, ['client_id','price_id','item','unit_minor','quantity','kind','deposit_basis_points','provider','currency','cadence','due_date','recipient_email','memo','total_minor','due_now_minor','remainder_minor','price_snapshot'])) return null;
   if (!['stripe', 'paypal'].includes(String(value.provider))) return null;
   const candidate = {
@@ -95,7 +101,7 @@ export function normalizeInvoiceSnapshot(value: unknown, expectedTotal: number):
     delivery_channel_intents: [], due_date: value.due_date, memo: value.memo,
     total_minor: expectedTotal, due_now_minor: value.due_now_minor, remainder_minor: value.remainder_minor,
   };
-  return readV2(candidate, expectedTotal);
+  return readVersioned(candidate, expectedTotal);
 }
 
 /** A deliberate edit resolves Catalog amounts again; an unknown retry uses the original request instead. */

@@ -117,7 +117,7 @@ export async function runEval(opts: RunEvalOpts): Promise<EvalResult> {
 
       let result: ScoreResult;
       try {
-        if (name === "rubric_judge") {
+        if (name === "rubric_judge" || name === "rubric_judge_v2") {
           const trace: TraceCtx = {
             tenant_id: opts.tenantId ?? null,
             task_id: opts.taskId ?? null,
@@ -125,7 +125,7 @@ export async function runEval(opts: RunEvalOpts): Promise<EvalResult> {
             parent_trace_id: opts.parentTraceId ?? null,
             job_kind: "eval:rubric_judge",
           };
-          result = await rubricJudge(input, trace);
+          result = await rubricJudge(input, trace, name === "rubric_judge_v2" ? "v2" : "v1");
           runningCost += typeof result.costUsd === "number" ? result.costUsd : 0;
         } else {
           const scorer = DETERMINISTIC_SCORERS[name];
@@ -138,7 +138,7 @@ export async function runEval(opts: RunEvalOpts): Promise<EvalResult> {
       } catch (e) {
         // A scorer throw must NEVER break the run — record it as an error result, excluded from aggregate.
         console.error(`[eval] scorer "${name}" threw (non-fatal):`, (e as Error)?.message);
-        result = { scorer: name, scorerKind: name === "rubric_judge" ? "llm_judge" : "deterministic", score: null, passed: null, status: "error", rationale: "scorer threw" };
+        result = { scorer: name, scorerKind: name === "rubric_judge" || name === "rubric_judge_v2" ? "llm_judge" : "deterministic", score: null, passed: null, status: "error", rationale: "scorer threw" };
       }
       results.push(result);
     }

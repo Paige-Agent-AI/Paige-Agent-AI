@@ -107,7 +107,7 @@ function validUrl(raw) {
         status = res.status;
         json = await res.json().catch(() => null);
       } catch (e) {
-        json = { ok: false, reason: "request_failed", error: String(e && e.message || e).slice(0, 200) };
+        json = { ok: false, reason: "request_failed", error: String(e && e.message || e).split(secret).join("[redacted]").slice(0, 200) };
       }
       const slices = Array.isArray(json && json.slices) ? json.slices : [];
       const sliceMeta = slices.map((s) => {

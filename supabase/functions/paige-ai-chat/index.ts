@@ -2203,6 +2203,8 @@ JSON:`;
     //   · A READABLE thread whose tenant is not this turn's (null matches only null) → refused.
     //   · A FAILED read → refused: an unknown owner is not a match (the same rule the protected-scope
     //     re-check applies to a resolver error).
+    //   · An UNKNOWN turn scope (the persona read failed, so its null tenant only looks tenant-less) →
+    //     refused for any readable thread: nothing can be shown to match it (the §52 rule below).
     //   · NO ROW → unchanged. RLS hid it or it does not exist; every later thread read uses this same
     //     caller client and so returns nothing, the append RPC carries its own workspace predicate
     //     (20261020100000), and the service-role writes are already pinned to the active tenant.
@@ -2210,7 +2212,7 @@ JSON:`;
       const { data: turnThread, error: turnThreadErr } = await supabaseClient
         .from("paige_chat_threads").select("tenant_id").eq("id", payloadThreadId).maybeSingle();
       const threadTenantId = (turnThread as { tenant_id?: string | null } | null)?.tenant_id ?? null;
-      if (turnThreadErr || (turnThread && threadTenantId !== (personaCtx.tenant_id ?? null))) {
+      if (turnThreadErr || (turnThread && (!proposalScopeResolved || threadTenantId !== (personaCtx.tenant_id ?? null)))) {
         console.error("[paige] thread is outside this turn's workspace — refused before use", JSON.stringify({
           read_failed: !!turnThreadErr, code: (turnThreadErr as any)?.code ?? null,
           thread_tenant_id: threadTenantId, turn_tenant_id: personaCtx.tenant_id ?? null,

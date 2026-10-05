@@ -5309,6 +5309,18 @@ console.log("\nsurface-aware self-knowledge — what she can do, what the owner 
     operatorIntoWorkspace.status === 409 && operatorIntoWorkspace.bodyText.includes("ACTIVE_ACCOUNT_CHANGED")
       && operatorIntoWorkspace.modelEgress.every((b) => !b.includes("WORKSPACE-THREAD-SUMMARY-MARKER")) && threadWrites(operatorIntoWorkspace).appends === 0,
     JSON.stringify({ status: operatorIntoWorkspace.status, egress: operatorIntoWorkspace.modelEgress.length, ...threadWrites(operatorIntoWorkspace) }));
+  // AN UNKNOWN SCOPE MATCHES NOTHING. A failed persona read leaves the default null tenant, which looks
+  // exactly like the operator surface — so a null-tenant platform thread would "match" it. Refused.
+  const unknownScopeThread = await drive({
+    stream: true, ownerRpc: { data: true, error: null }, extraBody: { threadId: PLATFORM_THREAD }, text: "Where were we?",
+    rpcOverrides: { ...OPERATOR, get_paige_persona_context: { data: null, error: { message: "fixture: persona read failed" } } },
+    tablesExtra: { paige_chat_threads: threadRow(null, PLATFORM_SUMMARY), paige_chat_turns: foldableTurns },
+  });
+  assert("38.17 a turn whose scope is unknown (persona read failed) cannot use a null-tenant thread: refused 409, nothing reaches a model",
+    unknownScopeThread.status === 409 && unknownScopeThread.bodyText.includes("ACTIVE_ACCOUNT_CHANGED")
+      && unknownScopeThread.modelEgress.every((b) => !b.includes("PLATFORM-THREAD-SUMMARY-MARKER") && !b.includes("platform turn 1"))
+      && threadWrites(unknownScopeThread).appends === 0,
+    JSON.stringify({ status: unknownScopeThread.status, egress: unknownScopeThread.modelEgress.length, ...threadWrites(unknownScopeThread) }));
 }
 
 console.log("\npaige_turn — every stream says it started and ends once, before the answer");

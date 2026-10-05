@@ -431,6 +431,26 @@ this workspace does not currently expose that capability to me yet."*
   - Not addressed: the check compares workspace only. Inside one workspace a caller whom RLS already
     admits to a coworker's thread can name it; that is not an escalation (they can read it directly)
     and writes still require `caller_user_id = auth.uid()`.
+  - An unknown turn scope (the persona read failed, so its null tenant only looks tenant-less) never
+    matches a readable thread, so it is refused too (38.17). Before this, a null-tenant platform thread
+    would have matched it, and its summary could be folded before the later scope re-check refused the
+    turn.
+  - **Also newly refused (§58, latent):**
+    - The check compares against the persona tenant, but `paige_chat_thread_create` stamps
+      `current_user_tenant_id()`. The persona resolver reads a linked `clients` row first, so a user
+      with a linked client row in another workspace would now be refused in their own threads. Prod has
+      0 users with `linked_user_id`. Reconciling the two is part of the "platform mode" follow-up.
+    - A platform owner opening another workspace's Studio chat is now refused; `paige_studio_thread_ensure`
+      admits them there. Refusing is consistent with this rule, and it is declared here.
+- **Known gap, not closed here: per-user client memory is not workspace-scoped.** With no client in
+  scope, the recent `client_memory` read keys on `client_user_id` and `match_paige_memory` keys on the
+  user id; neither filters by workspace, and `chat_message_embeddings` has no tenant column. So a
+  preference stated on the operator desk could be recalled in that person's Solo chat (and a person in
+  two workspaces carries memories between them). Prod: 0 `client_memory` rows and 0 embeddings for any
+  platform operator, so it is latent. Scoping it means deciding what happens to rows with no workspace
+  and adding a tenant to the embeddings store — a memory-contract change, filed as its own follow-up.
+  Until it lands, "operator context never reaches a workspace chat" holds for the briefing, owner
+  memory, doctrine, continuity and thread summaries, not for per-user client memory.
 - **§52 operator briefing.** It already required a tenant-less persona plus `is_platform_operator()`.
   It now also requires that the persona read succeeded (`proposalScopeResolved`). Before this, a failed
   read defaulted to a null tenant, which looked tenant-less.
@@ -450,7 +470,7 @@ new backend work, a named follow-up that is not built here.
 
 **Evidence.**
 
-- **Automated:** `test:client-memory-authz` group 38 (38.1–38.16) and 20.4d. It reads the real system
+- **Automated:** `test:client-memory-authz` group 38 (38.1–38.17) and 20.4d. It reads the real system
   prompt the handler sent for a Solo owner who is also a platform operator (actor tier `god`):
   - the contract is beside the capability block;
   - no briefing, doctrine index, platform snapshot or owner-memory row is present;

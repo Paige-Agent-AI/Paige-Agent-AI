@@ -528,12 +528,20 @@ describe("C3a — proof (4)/(5): a saved thread reads back the same", () => {
       { id: "u2", role: "user", content: "Approved — run it. [Card result — Add John Coleman to your clients: didn't run]", created_at: "2026-10-04T09:01:00Z" },
       { id: "a2", role: "assistant", content: "He was already there.", created_at: "2026-10-04T09:01:04Z" },
     ];
-    server();
+    const bodies = server();
     const host = await mount();
     await act(async () => { await flush(); });
     expect(host.textContent).not.toContain("Approved — run it.");
     expect(host.textContent).toContain("· You approved");
     expect(host.querySelector("[data-paige-card-result]")!.textContent).toBe("Result: Add John Coleman to your clients: didn't run");
+    // The next request after a reload carries none of the view's own fields.
+    await ask(host, "Thanks.");
+    expect(bodies.length).toBe(1);
+    for (const m of bodies[0].messages as Array<Record<string, unknown>>) {
+      expect(m).not.toHaveProperty("confirmReceipt");
+      expect(m).not.toHaveProperty("turnSnapshot");
+      expect(m).not.toHaveProperty("decision");
+    }
   });
 });
 

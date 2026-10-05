@@ -1439,9 +1439,9 @@ const PaigeAIChatInner = ({
           body: JSON.stringify({
             // An approval turn Paige never got to put words to carries what its card showed, since the
             // server refuses an empty message and that turn stays on screen (approvalOutcome.ts).
-            // C3a's display-only fields (an answer's `turnSnapshot`, a decision turn's `decision`) never
-            // ride the wire: what is sent is the same shape it was before C3.
-            messages: voiceSink ? [{ role: "user", content: userText }] : newMessages.map(({ turnSnapshot: _view, decision: _decided, ...m }) =>
+            // C3a's display-only fields (an answer's `turnSnapshot` and reloaded `confirmReceipt`, a
+            // decision turn's `decision`) never ride the wire: what is sent is the shape it was before C3.
+            messages: voiceSink ? [{ role: "user", content: userText }] : newMessages.map(({ turnSnapshot: _view, confirmReceipt: _receipt, decision: _decided, ...m }) =>
               m.role === "assistant" && m.content.trim() === "" && m.approvalOutcome
                 ? { ...m, content: approvalOutcomeTranscript(m.approvalOutcome) } : m),
             ...(voiceSink ? { liveRuntimeChallenge: voiceSink.challenge } : {}),

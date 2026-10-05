@@ -11,6 +11,9 @@
 --     revision consume the same tenant + platform monthly budgets;
 --   * exact cap succeeds, over-cap fails, idempotency is scope-bound, old months do not consume this
 --     month, and ambiguous post-dispatch outcomes remain charged until explicitly reconciled;
+--   * INT-321 (20270581000000): the emergency brake raises its own identity, a switched-off budget
+--     keeps PAIGE_VOICE_BUDGET_DISABLED, both cost-limit refusals carry the canonical reset as DETAIL,
+--     and the replace kept SECURITY DEFINER + search_path=public (§59);
 --   * the reservation implementation owns both lock rows and guarded counters. A separate two-session
 --     proof exercises the real race; this assertion prevents a lock-free implementation from passing.
 
@@ -18,7 +21,7 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 
-SELECT plan(48);
+SELECT plan(53);
 
 SELECT ok(
   NOT has_table_privilege('authenticated', 'public.paige_voice_platform_budget', 'SELECT,INSERT,UPDATE,DELETE'),
@@ -116,7 +119,13 @@ RESET ROLE;
 SELECT set_config('request.jwt.claims','{"role":"service_role"}',true);
 SELECT throws_ok(
   $$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000001','10400000-0000-4000-8000-0000000000a1','elevenlabs-jessica-r1','10400000-0000-4000-8000-000000000100',1)$$,
-  '55000','PAIGE_VOICE_BUDGET_DISABLED','emergency disable refuses before any provider dispatch'
+  '55000','PAIGE_VOICE_EMERGENCY_DISABLED','emergency disable refuses before any provider dispatch, under its own identity (INT-321)'
+);
+-- INT-321: a budget that is merely switched off is NOT the emergency brake.
+UPDATE public.paige_voice_platform_budget SET emergency_disabled=false, enabled=false WHERE singleton=true;
+SELECT throws_ok(
+  $$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000001','10400000-0000-4000-8000-0000000000a1','elevenlabs-jessica-r1','10400000-0000-4000-8000-000000000100',1)$$,
+  '55000','PAIGE_VOICE_BUDGET_DISABLED','a switched-off platform budget keeps its configuration identity, distinct from the emergency brake'
 );
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claims','{"sub":"10400000-0000-4000-8000-000000000004","role":"authenticated"}',true);
@@ -130,9 +139,34 @@ SELECT lives_ok($$SELECT public.reserve_paige_voice_cost_internal('10400000-0000
 SELECT lives_ok($$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000001','10400000-0000-4000-8000-0000000000a1','elevenlabs-jessica-r1','10400000-0000-4000-8000-000000000102',1000)$$, 'exact tenant cap succeeds');
 SELECT throws_ok($$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000001','10400000-0000-4000-8000-0000000000a1','elevenlabs-jessica-r1','10400000-0000-4000-8000-000000000103',1)$$, '54000','PAIGE_VOICE_TENANT_COST_LIMIT','one character over the tenant cap fails');
 
+-- INT-321: the refusal carries the canonical reset as DETAIL (MESSAGE + ERRCODE above unchanged).
+CREATE FUNCTION pg_temp.voice_refusal(_sql text) RETURNS text LANGUAGE plpgsql AS $f$
+DECLARE _msg text; _detail text;
+BEGIN
+  EXECUTE _sql;
+  RETURN 'no refusal';
+EXCEPTION WHEN OTHERS THEN
+  GET STACKED DIAGNOSTICS _msg = MESSAGE_TEXT, _detail = PG_EXCEPTION_DETAIL;
+  RETURN _msg || ' ' || coalesce(nullif(_detail, ''), '<no detail>');
+END $f$;
+SELECT is(
+  pg_temp.voice_refusal($$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000001','10400000-0000-4000-8000-0000000000a1','elevenlabs-jessica-r1','10400000-0000-4000-8000-000000000110',1)$$),
+  'PAIGE_VOICE_TENANT_COST_LIMIT ' || jsonb_build_object(
+    'budget_month', date_trunc('month', now() AT TIME ZONE 'UTC')::date,
+    'resets_at', to_char((date_trunc('month', now() AT TIME ZONE 'UTC') + interval '1 month')::date, 'YYYY-MM-DD') || 'T00:00:00Z')::text,
+  'tenant cost-limit refusal names the first instant of the next UTC month as its reset (INT-321)'
+);
+
 -- Tenant B has independent headroom, but its first reservation reaches the shared platform cap exactly.
 SELECT lives_ok($$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000005','10400000-0000-4000-8000-0000000000b1','elevenlabs-jessica-r1','10400000-0000-4000-8000-000000000104',1000)$$, 'a second tenant may use its own budget up to the exact global cap');
 SELECT throws_ok($$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000005','10400000-0000-4000-8000-0000000000b1','elevenlabs-jessica-r1','10400000-0000-4000-8000-000000000105',1)$$, '54000','PAIGE_VOICE_PLATFORM_COST_LIMIT','one character over the global cap fails');
+SELECT is(
+  pg_temp.voice_refusal($$SELECT public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000005','10400000-0000-4000-8000-0000000000b1','elevenlabs-jessica-r1','10400000-0000-4000-8000-000000000111',1)$$),
+  'PAIGE_VOICE_PLATFORM_COST_LIMIT ' || jsonb_build_object(
+    'budget_month', date_trunc('month', now() AT TIME ZONE 'UTC')::date,
+    'resets_at', to_char((date_trunc('month', now() AT TIME ZONE 'UTC') + interval '1 month')::date, 'YYYY-MM-DD') || 'T00:00:00Z')::text,
+  'platform cost-limit refusal carries the same canonical reset, under its own identity (INT-321)'
+);
 
 SELECT is(
   (public.reserve_paige_voice_cost_internal('10400000-0000-4000-8000-000000000001','10400000-0000-4000-8000-0000000000a1','elevenlabs-jessica-r1','10400000-0000-4000-8000-000000000101',1000)->>'reservation_id'),
@@ -180,6 +214,14 @@ SELECT lives_ok($$SELECT public.reserve_paige_voice_cost_internal('10400000-0000
 SELECT is((SELECT tenant_id FROM public.paige_voice_cost_reservations WHERE request_ref='10400000-0000-4000-8000-000000000109'),NULL::uuid,'operator reservation never fabricates a tenant');
 
 SELECT matches(pg_get_functiondef('public.reserve_paige_voice_cost_internal(uuid,uuid,text,uuid,integer)'::regprocedure),'FOR[[:space:]]+UPDATE[[:space:][:print:]]+ON CONFLICT','reservation implementation combines row locks with guarded month buckets for concurrent cap enforcement');
+
+-- INT-321 / §59: CREATE OR REPLACE in 20270581000000 kept SECURITY DEFINER and the pinned search_path.
+SELECT is_definer('public','reserve_paige_voice_cost_internal',ARRAY['uuid','uuid','text','uuid','integer'],'reservation stays SECURITY DEFINER after the INT-321 replace');
+SELECT ok(
+  (SELECT proconfig @> ARRAY['search_path=public']::text[] FROM pg_proc
+    WHERE oid = 'public.reserve_paige_voice_cost_internal(uuid,uuid,text,uuid,integer)'::regprocedure),
+  'reservation keeps search_path=public after the INT-321 replace (§59)'
+);
 
 SELECT * FROM finish();
 ROLLBACK;

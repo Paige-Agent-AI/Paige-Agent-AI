@@ -18,6 +18,13 @@
 //      with the true provider/voice/model + a fell_back flag (§13/§17 honest).
 //   6. §13 HONEST DEGRADE — NEITHER provider keyed → 503 { error:"tts_not_configured" }; every keyed
 //      attempt errored → 502 { error:"tts_synth_failed" }. NEVER a fake/empty audio body.
+//      A refused cost reservation returns the ONE code its semantic identity proves (INT-321,
+//      _shared/voice-cost-refusal.ts): 429 tts_tenant_cost_limit (+ reset_at only when the
+//      canonical function supplied it) · 503 tts_platform_cost_limit · 503 tts_emergency_disabled ·
+//      503 tts_workspace_voice_disabled · 503 tts_not_configured · 503 tts_voice_profile_changed
+//      (a profile-revision race; retryable) · else 503 tts_cost_limit_unavailable.
+//      A failed profile resolve is 503 tts_not_configured only when the resolver PROVED there is no
+//      usable profile; a resolver call that merely failed is 503 voice_profile_unavailable (retryable).
 //
 // verify_jwt=true (config.toml): a normal authenticated fetch from the chat UI. The Authorization
 // header carries the caller's session; the tenant is derived server-side from it.
@@ -31,6 +38,11 @@ import {
 } from "../_shared/tts-router.ts";
 import { elevenlabsTts } from "../_shared/elevenlabs.ts";
 import { NeedsConfigError } from "../_shared/provider-types.ts";
+import {
+  classifyVoiceCostRefusal,
+  classifyVoiceProfileFailure,
+  voiceCostRefusalBody,
+} from "../_shared/voice-cost-refusal.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -163,8 +175,12 @@ serve(async (req: Request) => {
       })
       : null;
     if (!resolvedVoice) {
-      console.error("[paige-tts] approved Paige Voice Profile unavailable", { code: profileError?.code });
-      return json({ error: "voice_profile_unavailable" }, 503);
+      // INT-321: a resolver that PROVED there is no usable profile is configuration
+      // (tts_not_configured, the client disables playback); a resolver call that merely failed is
+      // transient (voice_profile_unavailable, the client offers a retry). Never sticky on a blip.
+      const failure = classifyVoiceProfileFailure(profileError, profileRecord !== null);
+      console.error("[paige-tts] approved Paige Voice Profile unavailable", { sqlstate: profileError?.code ?? null, code: failure.code });
+      return json({ error: failure.code }, failure.status);
     }
     const voiceSource = `paige_profile:${resolvedVoice.profileRevision}`;
 
@@ -219,8 +235,17 @@ serve(async (req: Request) => {
         const reservationId = reservation && typeof reservation === "object" && typeof (reservation as Record<string, unknown>).reservation_id === "string"
           ? String((reservation as Record<string, unknown>).reservation_id) : null;
         if (reservationError || !reservationId) {
-          console.error("[paige-tts] provider cost reservation refused", { code: reservationError?.code });
-          return json({ error: "tts_cost_limit_unavailable" }, 503);
+          // INT-321: name WHICH refusal by the function's semantic identity (tenant and platform
+          // caps share SQLSTATE 54000). Nothing after this returns audio or tries another
+          // provider: a refused reservation ends the request, so no path can spend past the cap.
+          const refusal = classifyVoiceCostRefusal(reservationError);
+          console.error("[paige-tts] provider cost reservation refused", {
+            sqlstate: reservationError?.code ?? null,
+            identity: refusal.identity,
+            code: refusal.code,
+            reset_proven: refusal.resetAt !== null,
+          });
+          return json(voiceCostRefusalBody(refusal), refusal.status);
         }
 
         let res: Awaited<ReturnType<typeof elevenlabsTts>>;

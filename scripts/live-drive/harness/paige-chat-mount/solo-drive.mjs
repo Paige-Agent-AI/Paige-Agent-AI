@@ -85,6 +85,21 @@ for (const theme of ["light", "dark"]) {
   s("drawer-a2-open-in-view", { scenario: "approval", layout: "drawer", w: 1024, h: 768, after: ["openTraceInPlace"] });
 }
 
+// C4a — the approval carried forward by the server (frames a3/a4), selected with --only c4a-.
+for (const [w, h] of VIEWPORTS) for (const layout of ["page", "drawer"]) for (const theme of ["light", "dark"]) {
+  shots.push(shot(`c4a-matrix-a4-${layout}-${theme}-${w}x${h}`, { scenario: "approval", resume: true, layout, theme, w, h, after: ["approve", "openFirstTrace"] }));
+}
+for (const theme of ["light", "dark"]) for (const layout of ["page", "drawer"]) {
+  const s = (name, o) => shots.push(shot(`c4a-${name}-${layout}-${theme}`, { scenario: "approval", resume: true, layout, theme, w: 1366, h: 768, ...o }));
+  s("a3-resumed-running", { followHold: 3, after: ["approve", "openFirstTrace"] });
+  s("a4-resumed-done", { after: ["approve", "openFirstTrace"] });
+  s("a4-resumed-done-closed", { after: ["approve"] });
+}
+shots.push(shot("c4a-rm-a3-reduced-motion-page-light", { scenario: "approval", resume: true, followHold: 3, reduce: true, layout: "page", theme: "light", w: 1366, h: 768, after: ["approve"] }));
+shots.push(shot("c4a-kbd-a4-line-page-dark", { scenario: "approval", resume: true, layout: "page", theme: "dark", w: 1366, h: 768, after: ["approve", "tabToLine"] }));
+shots.push(shot("c4a-zoom200-a4-page-light", { scenario: "approval", resume: true, layout: "page", theme: "light", w: 683, h: 384, dpr: 2, after: ["approve"] }));
+shots.push(shot("c4a-reflow320-a4-drawer-dark", { scenario: "approval", resume: true, layout: "drawer", theme: "dark", w: 320, h: 720, after: ["approve"] }));
+
 const selected = only ? shots.filter((s) => only.some((o) => s.name.includes(o))) : shots;
 
 function startVite() {
@@ -146,6 +161,10 @@ const MEASURE = () => {
     cot: /NOT-SHOWN-REASONING|Thought process/i.test(text),
     c4Language: /resum|pick(ing)? (this|it) back up|keep going|same answer/i.test(text),
     syntheticBubble: /Approved — run it\.|Hold off — skip that one\./.test(text),
+    // C4a — how many answers carry the resumed seam, and how many status lines are drawn.
+    resumedSeams: document.querySelectorAll('[data-paige-continues="resumed"]').length,
+    lineCount: lines.length,
+    reportCard: Array.from(document.querySelectorAll("[data-state]")).map((n) => n.getAttribute("data-state")).filter(Boolean),
   };
 };
 
@@ -160,7 +179,8 @@ async function run() {
       const page = await ctx.newPage();
       const errors = [];
       page.on("pageerror", (e) => errors.push(String(e)));
-      const q = new URLSearchParams({ scenario: s.scenario, theme: s.theme, layout: s.layout, ...(s.hold !== undefined ? { hold: String(s.hold) } : {}) });
+      const q = new URLSearchParams({ scenario: s.scenario, theme: s.theme, layout: s.layout, ...(s.hold !== undefined ? { hold: String(s.hold) } : {}),
+        ...(s.resume ? { resume: "1" } : {}), ...(s.followHold !== undefined ? { followHold: String(s.followHold) } : {}) });
       await page.goto(`${BASE}?${q}`);
       await page.waitForSelector("textarea", { timeout: 30_000 });
       // Record every announcement the live region makes (a change of state, never a step).

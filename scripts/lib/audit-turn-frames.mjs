@@ -12,6 +12,7 @@
  *   - the first frame is `paige_turn` / `started`, and `started` appears exactly once;
  *   - every `paige_turn` frame passes the contract's closed-shape reader (when one is supplied);
  *   - exactly ONE terminal (`completed` or `waiting`);
+ *   - `resumed` (C4a) at most once, in state WORKING, before the terminal;
  *   - the terminal precedes the first answer frame (reply text in `choices`, or a Studio question's
  *     `paige_choices`) and the first `[DONE]`;
  *   - a withheld turn (`paige_withheld` on the wire) ends WITHHELD.
@@ -76,6 +77,13 @@ export function auditTurnStream(bodyText, { isTurnFrame } = {}) {
   if (firstAnswer !== -1 && terminal.i > firstAnswer) violations.push(`terminal after the first answer frame (${terminal.i} > ${firstAnswer})`);
   if (firstDone !== -1 && terminal.i > firstDone) violations.push(`terminal after [DONE] (${terminal.i} > ${firstDone})`);
   if (has("paige_withheld") && terminal.t.state !== "WITHHELD") violations.push(`a withheld turn's terminal is ${terminal.t.state}`);
+  // C4a — `resumed` is said at most once, while WORKING, after `started` and before the terminal.
+  const resumed = turns.filter((x) => x.t?.event === "resumed");
+  if (resumed.length > 1) violations.push(`resumed ${resumed.length} times`);
+  for (const r of resumed) {
+    if (r.t.state !== "WORKING") violations.push(`resumed in state ${r.t.state}, not WORKING`);
+    if (r.i > terminal.i) violations.push(`resumed after the terminal (${r.i} > ${terminal.i})`);
+  }
   return { violations, terminal, items, has };
 }
 

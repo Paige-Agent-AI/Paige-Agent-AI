@@ -7,6 +7,8 @@
 // ?scenario=fast|normal|research|approval|limit|interrupted|stop|refused|reload|first
 // ?hold=<n>        stop the stream after n chunks and keep it open (a mid-turn frame)
 // ?theme=light|dark  ?layout=page|drawer  (page = the Solo PAIGE workspace, drawer = the docked panel)
+// ?resume=1        C4a: Approve is answered by a server that carried the approval forward
+//                  (`paige_turn` resumed); ?followHold=<n> holds THAT follow-up after n chunks (frame a3)
 import { createRoot } from "react-dom/client";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -19,6 +21,8 @@ const theme = params.get("theme") === "dark" ? "dark" : "light";
 const layout = params.get("layout") === "drawer" ? "drawer" : "page";
 const scenario = params.get("scenario") ?? "normal";
 const hold = params.has("hold") ? Number(params.get("hold")) : null;
+const resume = params.get("resume") === "1";
+const followHold = params.has("followHold") ? Number(params.get("followHold")) : null;
 document.documentElement.classList.toggle("dark", theme === "dark");
 
 type Chunk = { wait?: number; data: string };
@@ -130,6 +134,18 @@ const followUps: Record<string, Chunk[]> = {
     DONE,
   ],
   declined: [turn("started", "WORKING", "pending"), turn("completed", "FINAL", "fast_answer", 300), say("Okay — it's not sent. The draft stays here if you change your mind."), DONE],
+  // C4a — the same approval, carried forward by the server: it says `resumed`, runs the stored act
+  // (the step), reports the card's outcome, and only then does PAIGE speak. followHold=3 → frame a3.
+  resumed: [
+    turn("started", "WORKING", "pending"),
+    turn("resumed", "WORKING", "pending"),
+    step("0:0:0:resume_fp_7c1harness", 1, "Sending to Daniel", "running"),
+    step("0:0:0:resume_fp_7c1harness", 1, "Sent to Daniel", "done", "Sent 2:14 pm · logged on his timeline", 900),
+    f({ paige_approval_outcome: { actions: [{ fingerprint: FP, outcome: "ran" }] } }),
+    turn("completed", "FINAL", "action"),
+    say("Sent, and it's on Daniel's timeline. If he hasn't opened it by Thursday, I'll bring it back to you."),
+    DONE,
+  ],
 };
 
 (window as unknown as { __c3: unknown }).__c3 = { requests: [] as unknown[] };
@@ -140,8 +156,8 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   const body = JSON.parse(String(init?.body ?? "{}"));
   const log = (window as unknown as { __c3: { requests: unknown[] } }).__c3.requests;
   log.push(body);
-  const chunks = body.approvedConfirmations ? followUps.approved : body.declinedConfirmations ? followUps.declined : (scripts[scenario] ?? scripts.normal);
-  const limit = log.length === 1 && hold !== null ? hold : chunks.length;
+  const chunks = body.approvedConfirmations ? (resume ? followUps.resumed : followUps.approved) : body.declinedConfirmations ? followUps.declined : (scripts[scenario] ?? scripts.normal);
+  const limit = log.length === 1 && hold !== null ? hold : log.length > 1 && followHold !== null ? followHold : chunks.length;
   const signal = init?.signal;
   return new Response(new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -181,7 +197,7 @@ function Harness() {
       <MemoryRouter initialEntries={["/solo/3855/paige"]}>
         <div data-pg={theme} data-tenant-shell className="h-page">
           <div className="h-cap" data-harness-cap>
-            {layout === "drawer" ? "PAIGE open (docked panel, no Solo safety props)" : "PAIGE workspace (Solo page)"} · {scenario}{hold !== null ? ` · held at ${hold}` : ""} · {theme}
+            {layout === "drawer" ? "PAIGE open (docked panel, no Solo safety props)" : "PAIGE workspace (Solo page)"} · {scenario}{resume ? " · approval carried forward by the server" : ""}{hold !== null ? ` · held at ${hold}` : ""}{followHold !== null ? ` · follow-up held at ${followHold}` : ""} · {theme}
           </div>
           <div className="h-body">
             {layout === "drawer" ? (<><div className="h-work">Workspace content (illustrative)</div><aside className="h-drawer">{chat}</aside></>) : <div className="h-full">{chat}</div>}

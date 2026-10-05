@@ -564,3 +564,211 @@ describe("C3a — proof (9): no chain-of-thought", () => {
     });
   }
 });
+
+// ── C4a — a resumed approval is ONE answer (prototype frames a3/a4) ─────────────────────────────
+// The server now carries the approved act forward itself and says so (`paige_turn` resumed). Only
+// then is the follow-up drawn as the same answer: one line at the top of the answer that asked —
+// restarting on the running step, then "What PAIGE did" over the steps before AND after the card —
+// no seam, and the report card answering for the act. A reload draws exactly the same from the saved
+// turn (`turn_state.resumed` + `bundle_ref.paige_resume.approval_outcome`).
+describe("C4a — a resumed approval is one answer, live and on reload", () => {
+  const FP = "0123456789abcdef:11111111-2222-4333-8444-555555555555";
+  const card = frame({ paige_confirm: { tool: "send_email", summary: "Send the renewal proposal to Daniel Reyes", fingerprint: FP } });
+  const report = { actions: [{ fingerprint: FP, outcome: "ran" }] };
+  const asked = () => body([turn("started", "WORKING", "pending"), step("a", 1, "Drafted the cover note", "done"), card, turn("waiting", "WAIT_APPROVAL", "action"), say("Here's what I'll send."), DONE]);
+  const reportText = (host: HTMLElement) => Array.from(host.querySelectorAll<HTMLElement>('[data-mode="report"], [data-state]'))
+    .map((el) => el.textContent ?? "").find((t) => t.includes("Send the renewal proposal")) ?? null;
+
+  it("live: the line restarts on the resumed step at the top of the answer that asked, then reads over both answers", async () => {
+    const hold = deferred();
+    const bodies = server(asked(), body([
+      turn("started", "WORKING", "pending"), turn("resumed", "WORKING", "pending"),
+      step("0:0:0:resume_x", 1, "Sending to Daniel", "running"), hold.promise,
+      step("0:0:0:resume_x", 1, "Sent to Daniel", "done"),
+      frame({ paige_approval_outcome: report }), turn("completed", "FINAL", "action"), say("Sent, and it's on his timeline."), DONE,
+    ]));
+    const host = await mount();
+    await ask(host, "send the renewal");
+    const approve = Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((b) => /Approve/.test(b.textContent ?? ""))!;
+    await act(async () => { approve.click(); await flush(); });
+    expect(bodies[1].approvedConfirmations).toEqual([FP]);
+    // While the resumed act runs: ONE line, on the first answer, naming the running step.
+    expect(lines(host)).toHaveLength(1);
+    expect(lineText(lines(host)[0])).toBe("Sending to Daniel");
+    await openTrace(lines(host)[0]);
+    expect(rowsOf(lines(host)[0])).toEqual([["Drafted the cover noteOwner Ops", "done"], ["Sending to DanielOwner Ops", "running"]]);
+    await act(async () => { hold.resolve(); await flush(); });
+    await act(async () => { await flush(); });
+    expect(lines(host)).toHaveLength(1);
+    expect(lineText(lines(host)[0])).toBe("What PAIGE did · 2 steps");
+    expect(rowsOf(lines(host)[0])).toEqual([["Drafted the cover noteOwner Ops", "done"], ["Sent to DanielOwner Ops", "done"]]);
+    const resumed = host.querySelector<HTMLElement>('[data-paige-continues="resumed"]');
+    expect(resumed).not.toBeNull();
+    expect(resumed!.textContent).toContain("Sent, and it's on his timeline.");
+    expect(host.querySelector('[data-paige-continues="approval"]')).toBeNull();
+    expect(host.textContent).not.toContain("Approved — run it.");
+  });
+
+  it("a follow-up the server did NOT carry forward keeps C3's presentation exactly (no merge, own line)", async () => {
+    server(asked(), body([turn("started", "WORKING", "pending"), step("b", 1, "Sent to Daniel", "done"), turn("completed", "FINAL", "action"), say("Sent."), DONE]));
+    const host = await mount();
+    await ask(host, "send the renewal");
+    const approve = Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((b) => /Approve/.test(b.textContent ?? ""))!;
+    await act(async () => { approve.click(); await flush(); });
+    await act(async () => { await flush(); });
+    expect(host.querySelector('[data-paige-continues="resumed"]')).toBeNull();
+    expect(host.querySelector('[data-paige-continues="approval"]')).not.toBeNull();
+    expect(lines(host).map(lineText)).toEqual(["What PAIGE did · 1 step", "What PAIGE did · 1 step"]);
+  });
+
+  it("wire = persist = reload: the saved thread draws the same line, the same steps and the same report card", async () => {
+    // Live first, to capture exactly what the person saw.
+    server(asked(), body([
+      turn("started", "WORKING", "pending"), turn("resumed", "WORKING", "pending"),
+      step("0:0:0:resume_x", 1, "Sent to Daniel", "done"),
+      frame({ paige_approval_outcome: report }), turn("completed", "FINAL", "action"), say("Sent."), DONE,
+    ]));
+    const live = await mount();
+    await ask(live, "send the renewal");
+    const approve = Array.from(live.querySelectorAll<HTMLButtonElement>("button")).find((b) => /Approve/.test(b.textContent ?? ""))!;
+    await act(async () => { approve.click(); await flush(); });
+    await act(async () => { await flush(); });
+    await openTrace(lines(live)[0]);
+    const seen = { line: lineText(lines(live)[0]), rows: rowsOf(lines(live)[0]), report: reportText(live), lines: lines(live).length };
+    expect(seen.report).toMatch(/Send the renewal proposal to Daniel Reyes/);
+
+    // Then the saved thread, exactly as the server persists these two turns.
+    harness.threads = [{ id: "thread-r", title: "Renewal", updated_at: "2026-10-05T10:00:00Z" }];
+    harness.turns = [
+      { id: "u1", role: "user", content: "send the renewal", created_at: "2026-10-05T09:00:00Z" },
+      { id: "a1", role: "assistant", content: "Here's what I'll send.", created_at: "2026-10-05T09:00:05Z", bundle_ref: {
+        paige_confirm: [{ tool: "send_email", summary: "Send the renewal proposal to Daniel Reyes", fingerprint: FP }],
+        turn_state: { v: 1, state: "WAIT_APPROVAL", mode: "action", rounds: 1, tools: 1, waiting_on: { kind: "approval", approvals: 1 } },
+        turn_trace: [{ label: "Drafted the cover note", group: "owner", status: "done" }],
+      } },
+      { id: "u2", role: "user", content: "Approved — run it.", created_at: "2026-10-05T09:01:00Z" },
+      { id: "a2", role: "assistant", content: "Sent.", created_at: "2026-10-05T09:01:04Z", bundle_ref: {
+        turn_state: { v: 1, state: "FINAL", mode: "action", rounds: 1, tools: 1, resumed: { kind: "approval" } },
+        turn_trace: [{ label: "Sent to Daniel", group: "owner", status: "done" }],
+        paige_resume: { kind: "approval", from_turn_id: null, outcomes: [{ tool: "send_email", outcome: "ran" }], approval_outcome: report },
+      } },
+    ];
+    server();
+    const reloaded = await mount();
+    await act(async () => { await flush(); });
+    await openTrace(lines(reloaded)[0]);
+    expect({ line: lineText(lines(reloaded)[0]), rows: rowsOf(lines(reloaded)[0]), report: reportText(reloaded), lines: lines(reloaded).length }).toEqual(seen);
+    expect(reloaded.querySelector('[data-paige-continues="resumed"]')).not.toBeNull();
+    expect(reloaded.textContent).not.toContain("Approved — run it.");
+  });
+
+  it("Stop while the carried-forward act runs: the footer's See opens the ONE line, Ask again restores the original request", async () => {
+    // Kills: the footer (drawn under the resumed answer) opening a line that does not exist, and
+    // "Ask again" restoring the hidden decision sentence instead of the person's request.
+    const hold = deferred();
+    server(asked(), body([
+      turn("started", "WORKING", "pending"), turn("resumed", "WORKING", "pending"),
+      step("0:0:0:resume_x", 1, "Sending to Daniel", "running"), hold.promise, say("late"), DONE,
+    ]));
+    const host = await mount();
+    await ask(host, "send the renewal");
+    const approve = Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find((b) => /Approve/.test(b.textContent ?? ""))!;
+    await act(async () => { approve.click(); await flush(); });
+    const cancel = host.querySelector<HTMLButtonElement>('button[aria-label="Cancel PAIGE response"]')!;
+    await act(async () => { cancel.click(); await flush(); });
+    expect(lines(host)).toHaveLength(1);
+    const line = lines(host)[0];
+    const toggle = line.querySelector<HTMLButtonElement>("button[aria-expanded]")!;
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    const foots = host.querySelectorAll<HTMLElement>("[data-paige-turn-footer]");
+    expect(foots).toHaveLength(1);
+    const see = Array.from(foots[0].querySelectorAll<HTMLButtonElement>("button")).find((b) => b.textContent === "See what finished")!;
+    await act(async () => { see.click(); });
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(rowsOf(line).map((r) => r[0])).toEqual(["Drafted the cover noteOwner Ops", "Sending to DanielOwner Ops · Stopped — it may still finish on its own"]);
+    const askAgain = Array.from(foots[0].querySelectorAll<HTMLButtonElement>("button")).find((b) => b.textContent === "Ask again")!;
+    await act(async () => { askAgain.click(); await flush(); });
+    expect(host.querySelector("textarea")!.value).toBe("send the renewal");
+    await act(async () => { hold.resolve(); await flush(); });
+  });
+
+  it("a CHAIN of approvals is one answer: one line at the first answer over every step, on reload", async () => {
+    // Kills: drawing the line only over the first pair. A resumed answer can propose again; when that
+    // second card is approved too, the third answer belongs to the same piece of work.
+    const FP2 = "fedcba9876543210:66666666-7777-4888-8999-aaaaaaaaaaaa";
+    harness.threads = [{ id: "thread-c", title: "Renewal", updated_at: "2026-10-05T10:00:00Z" }];
+    harness.turns = [
+      { id: "u1", role: "user", content: "send the renewal", created_at: "2026-10-05T09:00:00Z" },
+      { id: "a1", role: "assistant", content: "Here's what I'll send.", created_at: "2026-10-05T09:00:05Z", bundle_ref: {
+        paige_confirm: [{ tool: "send_email", summary: "Send the renewal proposal to Daniel Reyes", fingerprint: FP }],
+        turn_state: { v: 1, state: "WAIT_APPROVAL", mode: "action", rounds: 1, tools: 1, waiting_on: { kind: "approval", approvals: 1 } },
+        turn_trace: [{ label: "Drafted the cover note", group: "owner", status: "done" }],
+      } },
+      { id: "u2", role: "user", content: "Approved — run it.", created_at: "2026-10-05T09:01:00Z" },
+      { id: "a2", role: "assistant", content: "Sent. Want a follow-up task?", created_at: "2026-10-05T09:01:04Z", bundle_ref: {
+        paige_confirm: [{ tool: "task_create", summary: "Create a follow-up task for Friday", fingerprint: FP2 }],
+        turn_state: { v: 1, state: "WAIT_APPROVAL", mode: "action", rounds: 1, tools: 1, resumed: { kind: "approval" }, waiting_on: { kind: "approval", approvals: 1 } },
+        turn_trace: [{ label: "Sent to Daniel", group: "owner", status: "done" }],
+        paige_resume: { kind: "approval", from_turn_id: null, outcomes: [{ tool: "send_email", outcome: "ran" }], approval_outcome: report },
+      } },
+      { id: "u3", role: "user", content: "Approved — run it.", created_at: "2026-10-05T09:02:00Z" },
+      { id: "a3", role: "assistant", content: "Done — it's on Friday.", created_at: "2026-10-05T09:02:04Z", bundle_ref: {
+        turn_state: { v: 1, state: "FINAL", mode: "action", rounds: 1, tools: 1, resumed: { kind: "approval" } },
+        turn_trace: [{ label: "Created the follow-up task", group: "owner", status: "done" }],
+        paige_resume: { kind: "approval", from_turn_id: null, outcomes: [{ tool: "task_create", outcome: "ran" }], approval_outcome: { actions: [{ fingerprint: FP2, outcome: "ran" }] } },
+      } },
+    ];
+    server();
+    const host = await mount();
+    await act(async () => { await flush(); });
+    expect(lines(host)).toHaveLength(1);
+    expect(lineText(lines(host)[0])).toBe("What PAIGE did · 3 steps");
+    await openTrace(lines(host)[0]);
+    expect(rowsOf(lines(host)[0])).toEqual([
+      ["Drafted the cover noteOwner Ops", "done"], ["Sent to DanielOwner Ops", "done"], ["Created the follow-up taskOwner Ops", "done"],
+    ]);
+    expect(host.querySelectorAll('[data-paige-continues="resumed"]')).toHaveLength(2);
+    expect(host.textContent).not.toContain("Approved — run it.");
+  });
+
+  it("only an APPROVAL is drawn as the same answer: a resumed answer after a decline keeps its own line", async () => {
+    // Kills: loosening the merge to any decision. A decline never carries an act forward; if a record
+    // ever says otherwise, the two answers are not drawn as one piece of work.
+    harness.threads = [{ id: "thread-d", title: "Renewal", updated_at: "2026-10-05T10:00:00Z" }];
+    harness.turns = [
+      { id: "u1", role: "user", content: "send the renewal", created_at: "2026-10-05T09:00:00Z" },
+      { id: "a1", role: "assistant", content: "Here's what I'll send.", created_at: "2026-10-05T09:00:05Z", bundle_ref: {
+        paige_confirm: [{ tool: "send_email", summary: "Send the renewal proposal to Daniel Reyes", fingerprint: FP }],
+        turn_state: { v: 1, state: "WAIT_APPROVAL", mode: "action", rounds: 1, tools: 1, waiting_on: { kind: "approval", approvals: 1 } },
+        turn_trace: [{ label: "Drafted the cover note", group: "owner", status: "done" }],
+      } },
+      { id: "u2", role: "user", content: "Hold off — skip that one.", created_at: "2026-10-05T09:01:00Z" },
+      { id: "a2", role: "assistant", content: "Okay, holding it.", created_at: "2026-10-05T09:01:04Z", bundle_ref: {
+        turn_state: { v: 1, state: "FINAL", mode: "action", rounds: 1, tools: 1, resumed: { kind: "approval" } },
+        turn_trace: [{ label: "Sent to Daniel", group: "owner", status: "done" }],
+      } },
+    ];
+    server();
+    const host = await mount();
+    await act(async () => { await flush(); });
+    expect(host.querySelector('[data-paige-continues="resumed"]')).toBeNull();
+    expect(lines(host)).toHaveLength(2);
+  });
+
+  it("a saved report outside the contract draws no report card (never a guess)", async () => {
+    harness.threads = [{ id: "thread-x", title: "x", updated_at: "2026-10-05T10:00:00Z" }];
+    harness.turns = [
+      { id: "u1", role: "user", content: "send it", created_at: "2026-10-05T09:00:00Z" },
+      { id: "a1", role: "assistant", content: "Ready.", created_at: "2026-10-05T09:00:05Z", bundle_ref: { paige_confirm: [{ tool: "send_email", summary: "Send the renewal proposal to Daniel Reyes", fingerprint: FP }] } },
+      { id: "u2", role: "user", content: "Approved — run it.", created_at: "2026-10-05T09:01:00Z" },
+      { id: "a2", role: "assistant", content: "Sent.", created_at: "2026-10-05T09:01:04Z", bundle_ref: {
+        turn_state: { v: 1, state: "FINAL", mode: "action", rounds: 1, tools: 1, resumed: { kind: "approval" } },
+        paige_resume: { kind: "approval", from_turn_id: null, outcomes: [], approval_outcome: { actions: [{ fingerprint: FP, outcome: "ran", note: "It totally worked!" }] } },
+      } },
+    ];
+    server();
+    const host = await mount();
+    await act(async () => { await flush(); });
+    expect(reportText(host)).toBeNull();
+  });
+});

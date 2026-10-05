@@ -87,6 +87,7 @@ export {
   formatElapsed,
   decisionCardResult,
   isDecisionReplyText,
+  mergeResumedRows,
   outcomeFromRecord,
   readTurnRecord,
   readTurnTrace,

@@ -187,18 +187,24 @@ describe("the write trail skips only what declares it never ran", () => {
   });
 
   it("no other edge code produces the marker", () => {
-    // One producer; everything else that names it only reads it: the audit skip, the approval
-    // card's outcome (approval-outcome.ts, which reports such a call as not run), and the turn
-    // record (paige-turn/reducer.ts, which does not count such a call as a tool that ran).
+    // Two producers, both refusals before anything ran; everything else that names it only reads
+    // it: the audit skip, the approval card's outcome (approval-outcome.ts, which reports such a
+    // call as not run), and the turn record (paige-turn/reducer.ts, which does not count such a call
+    // as a tool that ran). C4a added the second producer: the approval resume's three refusals
+    // (paige-turn/resume.ts — an approval another request used, a check that could not run, an act
+    // already carried forward this reply). None of them is ever a SPENT approval, so the card never
+    // reads them as "couldn't tell which item"; the resume classifies them itself.
     const producers = execSync("grep -rlE 'refused_before_run: ?true' supabase/functions --include=*.ts", { encoding: "utf8" })
       .trim().split("\n").sort();
-    expect(producers).toEqual(["supabase/functions/_shared/confirm-fingerprint.ts"]);
+    expect(producers).toEqual(["supabase/functions/_shared/confirm-fingerprint.ts", "supabase/functions/_shared/paige-turn/resume.ts"]);
     const mentions = execSync("grep -rl 'refused_before_run' supabase/functions --include=*.ts", { encoding: "utf8" })
       .trim().split("\n").sort();
     expect(mentions).toEqual([
       "supabase/functions/_shared/approval-outcome.ts",
       "supabase/functions/_shared/confirm-fingerprint.ts",
       "supabase/functions/_shared/paige-turn/reducer.ts",
+      "supabase/functions/_shared/paige-turn/resume.test.ts",
+      "supabase/functions/_shared/paige-turn/resume.ts",
       "supabase/functions/paige-ai-chat/index.ts",
     ]);
   });

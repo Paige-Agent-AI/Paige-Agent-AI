@@ -19,6 +19,7 @@ import {
   TURN_CONTRACT_VERSION,
   turnFrame,
   WAITING_STATES,
+  type ResumeKind,
   type TurnEvent,
   type TurnFrame,
   type TurnMode,
@@ -128,9 +129,12 @@ export interface TurnTracker {
   refused(): void;
   /** A round resolved with no tool call — the model answered. */
   naturalStop(): void;
+  /** This turn carried a paused objective forward (C4a: an approved act run from its stored
+   *  proposal). Recorded as `turn_state.resumed`; the wire says so with one `resumed` frame. */
+  resumed(kind: ResumeKind): void;
   readonly state: TurnState;
   readonly mode: TurnMode;
-  /** `started` (WORKING), or the terminal event that matches the state. Reserved events throw. */
+  /** `started` / `resumed` (WORKING), or the terminal event that matches the state. Reserved events throw. */
   frame(event: TurnEvent): TurnFrame;
   /** The one terminal frame: `waiting` for a waiting state, else `completed`. */
   terminalFrame(): TurnFrame;
@@ -152,6 +156,7 @@ export function createTurnTracker(classify: TurnClassifiers): TurnTracker {
   let wasInterrupted = false;
   let wasWithheld = false;
   let wasRefused = false;
+  let resumedKind: ResumeKind | null = null;
 
   const mode = (): TurnMode => {
     if (executed.some((t) => classify.isBuild(t))) return "build";
@@ -206,10 +211,12 @@ export function createTurnTracker(classify: TurnClassifiers): TurnTracker {
     withheld() { wasWithheld = true; },
     refused() { wasRefused = true; },
     naturalStop() { answered = true; },
+    resumed(kind) { resumedKind = kind; },
     get state() { return state(); },
     get mode() { return mode(); },
     frame(event) {
       if (event === "started") return turnFrame("started", "WORKING", mode());
+      if (event === "resumed") return turnFrame("resumed", "WORKING", mode());
       if (event !== "waiting" && event !== "completed") {
         throw new Error(`paige_turn: ${event} is reserved for a later slice and never emitted yet`);
       }
@@ -224,7 +231,7 @@ export function createTurnTracker(classify: TurnClassifiers): TurnTracker {
     record() {
       const s = state();
       const w = waitingOn(s);
-      return { v: TURN_CONTRACT_VERSION, state: s, mode: mode(), rounds: rounds + closingCalls, tools: executed.length, ...(w ? { waiting_on: w } : {}) };
+      return { v: TURN_CONTRACT_VERSION, state: s, mode: mode(), rounds: rounds + closingCalls, tools: executed.length, ...(w ? { waiting_on: w } : {}), ...(resumedKind ? { resumed: { kind: resumedKind } } : {}) };
     },
     trace(steps) { return boundTurnTrace(steps); },
   };

@@ -218,13 +218,15 @@ BEGIN
   OR EXISTS (SELECT 1 FROM public.messages o WHERE o.tenant_id=m.tenant_id AND o.id<>m.id AND o.meta ? 'comms_email_binding'
    AND o.meta#>>'{comms_email_binding,recipient}'=b->>'recipient' AND o.meta#>>'{comms_email_binding,content_digest}'=b->>'content_digest'
    AND o.meta#>>'{comms_email_binding,state}' IN ('dispatching','unknown')) THEN
-  RETURN jsonb_build_object('state',b->>'state','attempts',coalesce((b->>'attempts')::int,0));
+  -- Not admitted. The row may ALREADY read 'dispatching' (a concurrent winner just claimed it), so
+  -- the reply must say so explicitly: send-message dispatches only on admitted=true.
+  RETURN jsonb_build_object('state',b->>'state','attempts',coalesce((b->>'attempts')::int,0),'admitted',false);
  END IF;
  attempts:=coalesce((b->>'attempts')::int,0)+1;
  UPDATE public.messages SET meta=jsonb_set(meta,'{comms_email_binding}',
    b||jsonb_build_object('state','dispatching','attempts',attempts,'claimed_at',now())),error=NULL
   WHERE id=m.id;
- RETURN jsonb_build_object('state','dispatching','attempts',attempts);
+ RETURN jsonb_build_object('state','dispatching','attempts',attempts,'admitted',true);
 END $$;
 
 -- §59 service-only, door-scoped exemption (see header): no actor parameter by design.

@@ -91,7 +91,7 @@ function setup(options: Options = {}) {
       rpcCalls.push({ name, args });
       if (name === "read_comms_email_send_binding") return { data: { ...b, message_id: MSG, tenant_id: TENANT, channel_type: "email", message_status: options.draftStatus ?? "draft", eligible: options.eligible ?? true }, error: null };
       if (name === "claim_comms_email_send") {
-        const claimed = options.claim ?? { data: { state: "dispatching", attempts: 1 }, error: null };
+        const claimed = options.claim ?? { data: { state: "dispatching", attempts: 1, admitted: true }, error: null };
         const d = claimed.data as { state?: string; attempts?: number } | null;
         if (d?.state === "dispatching") { db.state = "dispatching"; db.attempts = Number(d.attempts); }
         return claimed;
@@ -396,12 +396,26 @@ describe("send-message comms_email path (real handler source, network substitute
   });
 
   it("the claimant finalizes with the attempt number its own claim returned", async () => {
-    const s = setup({ bindingOverride: { state: "unknown", attempts: 2 }, claim: { data: { state: "dispatching", attempts: 3 }, error: null } });
+    const s = setup({ bindingOverride: { state: "unknown", attempts: 2 }, claim: { data: { state: "dispatching", attempts: 3, admitted: true }, error: null } });
     const r = await s.request({ comms_email_reconcile: true });
     expect(r.body.outcome).toBe("provider_accepted");
     expect(s.finalizeCalls()).toEqual([expect.objectContaining({ _outcome: "provider_accepted", _claimed_attempt: 3 })]);
   });
 
+  it("a claim that did not ADMIT this caller is not a claim, even when the row already reads dispatching (the race loser)", async () => {
+    // A second claimant re-reads the row the winner just moved to dispatching. Without an explicit
+    // admission it would look exactly like the winner's reply and dispatch the same email twice.
+    const s = setup({ claim: { data: { state: "dispatching", attempts: 1, admitted: false }, error: null } });
+    const r = await s.request();
+    expect(r.status).toBe(409);
+    expect(r.body).toMatchObject({ ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_NOT_CLAIMABLE" });
+    expect(s.fetchCalls).toEqual([]);
+    expect(s.finalizeCalls()).toEqual([]);
+    // And a reply that never says admitted at all is not one either.
+    const legacy = setup({ claim: { data: { state: "dispatching", attempts: 1 }, error: null } });
+    await legacy.request();
+    expect(legacy.fetchCalls).toEqual([]);
+  });
   it("a claim reply without a whole attempt number is not a claim: no provider call, no finalize", async () => {
     for (const data of [{ state: "dispatching" }, { state: "dispatching", attempts: "1" }, { state: "dispatching", attempts: 0 }]) {
       const s = setup({ claim: { data, error: null } });

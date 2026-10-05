@@ -1415,7 +1415,11 @@ Deno.serve(async (req) => {
           _message_id: body.message_id, _operation_id: commsBinding.operation_id, _reconcile: commsReconcile,
         });
         const claimedAttempt = (claimed as { attempts?: unknown } | null)?.attempts;
-        if (claimError || !claimed || (claimed as { state?: unknown }).state !== "dispatching" ||
+        // `admitted` is set true ONLY by the call that performed the prepared→dispatching update. A
+        // caller that lost a race re-reads a row already 'dispatching' with the winner's attempt
+        // number; without this flag it would be indistinguishable and send the email a second time.
+        if (claimError || !claimed || (claimed as { admitted?: unknown }).admitted !== true ||
+            (claimed as { state?: unknown }).state !== "dispatching" ||
             typeof claimedAttempt !== "number" || !Number.isInteger(claimedAttempt) || claimedAttempt < 1) {
           return commsEmailResponse("outcome_unknown", null, { code: "COMMS_EMAIL_NOT_CLAIMABLE" }, 409);
         }

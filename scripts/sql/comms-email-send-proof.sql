@@ -132,7 +132,7 @@ SELECT pg_temp.ok(23, (SELECT count(*)=0 FROM public.messages WHERE meta#>>'{com
 SET LOCAL ROLE service_role;
 CREATE TEMP TABLE _c1 AS SELECT public.claim_comms_email_send(pg_temp.msg(1),pg_temp.op(1)) r;
 SELECT pg_temp.ok(30, (SELECT r->>'state'='dispatching' AND r->>'attempts'='1' FROM _c1), 'claim moves prepared to dispatching, attempt 1');
-SELECT pg_temp.ok(31, (SELECT r->>'state'='dispatching' AND r->>'attempts'='1' FROM (SELECT public.claim_comms_email_send(pg_temp.msg(1),pg_temp.op(1)) r) x), 'second claim is a no-op');
+SELECT pg_temp.ok(31, (SELECT r->>'state'='dispatching' AND r->>'attempts'='1' AND r->'admitted'='false'::jsonb FROM (SELECT public.claim_comms_email_send(pg_temp.msg(1),pg_temp.op(1)) r) x), 'second claim changes nothing and is NOT admitted (it must not dispatch)');
 SELECT pg_temp.err(32, 'claim with another operation id refused', $q$SELECT public.claim_comms_email_send(pg_temp.msg(1),pg_temp.op(99))$q$, '22023', 'COMMS_EMAIL_CLAIM_INVALID');
 SELECT pg_temp.err(33, 'provider_accepted without a provider id refused', $q$SELECT public.finalize_comms_email_send(pg_temp.msg(1),pg_temp.op(1),'provider_accepted',NULL,NULL)$q$, '22023', 'COMMS_EMAIL_RECEIPT_INVALID');
 CREATE TEMP TABLE _f1 AS SELECT public.finalize_comms_email_send(pg_temp.msg(1),pg_temp.op(1),'provider_accepted','re_proof_1',NULL,1) r;
@@ -163,7 +163,7 @@ SELECT pg_temp.err(52, 'identical new operation refused while unknown', $q$SELEC
 SELECT pg_temp.ok(53, public.find_comms_email_pending_reconciliation('aaaaaaaa-3280-4000-8000-000000000001','Client.One@example.invalid',pg_temp.dg('client.one@example.invalid','cccccccc-3280-4000-8000-000000000001','Second note','Body two.'))=pg_temp.op(2), 'finder returns the unknown operation');
 SELECT pg_temp.ok(54, public.read_comms_email_send_result('ffffffff-3280-4000-8000-000000000001','aaaaaaaa-3280-4000-8000-000000000001',pg_temp.op(2))->>'reconcilable'='true', 'unknown resend within 23h reads reconcilable');
 SELECT pg_temp.ok(55, public.claim_comms_email_send(pg_temp.msg(2),pg_temp.op(2))->>'state'='unknown', 'normal claim cannot re-enter unknown');
-SELECT pg_temp.ok(56, (SELECT r->>'state'='dispatching' AND r->>'attempts'='2' FROM (SELECT public.claim_comms_email_send(pg_temp.msg(2),pg_temp.op(2),true) r) x), 'reconcile claim re-enters dispatching, attempt 2');
+SELECT pg_temp.ok(56, (SELECT r->>'state'='dispatching' AND r->>'attempts'='2' AND r->'admitted'='true'::jsonb FROM (SELECT public.claim_comms_email_send(pg_temp.msg(2),pg_temp.op(2),true) r) x), 'reconcile claim re-enters dispatching, attempt 2');
 SELECT pg_temp.ok(57, public.finalize_comms_email_send(pg_temp.msg(2),pg_temp.op(2),'provider_accepted','re_proof_2',NULL,2)->>'outcome'='provider_accepted', 'reconciled send finalizes accepted');
 RESET ROLE;
 SELECT pg_temp.ok(58, (SELECT count(*)=2 FROM public.paige_workspace_events WHERE source_id=pg_temp.op(2) AND outcome IN ('capability_outcome_unknown','capability_succeeded')), 'Rail keeps both the unknown and the reconciled outcome');
@@ -185,17 +185,17 @@ SELECT pg_temp.ok(61, public.claim_comms_email_send(pg_temp.msg(5),pg_temp.op(5)
 -- dispatching: fresh is not reconcilable, older than 120 s is.
 SELECT pg_temp.prep(6,'Stale note','Body six.');
 SELECT public.claim_comms_email_send(pg_temp.msg(6),pg_temp.op(6));
-SELECT pg_temp.ok(62, (SELECT r->>'state'='dispatching' AND r->>'attempts'='1' FROM (SELECT public.claim_comms_email_send(pg_temp.msg(6),pg_temp.op(6),true) r) x), 'fresh dispatching cannot be reconciled');
+SELECT pg_temp.ok(62, (SELECT r->>'state'='dispatching' AND r->>'attempts'='1' AND r->'admitted'='false'::jsonb FROM (SELECT public.claim_comms_email_send(pg_temp.msg(6),pg_temp.op(6),true) r) x), 'fresh dispatching cannot be reconciled');
 RESET ROLE;
 UPDATE public.messages SET meta=jsonb_set(meta,'{comms_email_binding,claimed_at}',to_jsonb(now()-interval '200 seconds')) WHERE id=pg_temp.msg(6);
 SET LOCAL ROLE service_role;
-SELECT pg_temp.ok(63, public.claim_comms_email_send(pg_temp.msg(6),pg_temp.op(6),true)->>'attempts'='2', 'stale dispatching re-claims through reconcile');
+SELECT pg_temp.ok(63, (SELECT r->>'attempts'='2' AND r->'admitted'='true'::jsonb FROM (SELECT public.claim_comms_email_send(pg_temp.msg(6),pg_temp.op(6),true) r) x), 'stale dispatching re-claims through reconcile');
 SELECT public.finalize_comms_email_send(pg_temp.msg(6),pg_temp.op(6),'provider_accepted','re_proof_6',NULL,2);
 
 -- ── 5. two approvals of identical content cannot both be admitted ───────────────────────────
 SELECT pg_temp.prep(7,'Twin note','Twin body.');
 SELECT pg_temp.prep(8,'Twin note','Twin body.');
-SELECT pg_temp.ok(70, public.claim_comms_email_send(pg_temp.msg(7),pg_temp.op(7))->>'state'='dispatching', 'first identical operation admitted');
+SELECT pg_temp.ok(70, (SELECT r->>'state'='dispatching' AND r->'admitted'='true'::jsonb FROM (SELECT public.claim_comms_email_send(pg_temp.msg(7),pg_temp.op(7)) r) x), 'first identical operation admitted');
 SELECT pg_temp.ok(71, public.claim_comms_email_send(pg_temp.msg(8),pg_temp.op(8))->>'state'='prepared', 'second identical operation held while the first is in flight');
 SELECT pg_temp.err(72, 'new identical prepare refused while in flight', $q$SELECT pg_temp.prep(9,'Twin note','Twin body.')$q$, '55000', 'COMMS_EMAIL_RECONCILIATION_REQUIRED');
 
@@ -234,7 +234,7 @@ SELECT public.claim_comms_email_send(pg_temp.msg(32),pg_temp.op(32));
 RESET ROLE;
 UPDATE public.messages SET meta=jsonb_set(meta,'{comms_email_binding,claimed_at}',to_jsonb(now()-interval '200 seconds')) WHERE id=pg_temp.msg(32);
 SET LOCAL ROLE service_role;
-SELECT pg_temp.ok(107, public.claim_comms_email_send(pg_temp.msg(32),pg_temp.op(32),true)->>'attempts'='2', 'superseded: reconcile takes attempt 2');
+SELECT pg_temp.ok(107, (SELECT r->>'attempts'='2' AND r->'admitted'='true'::jsonb FROM (SELECT public.claim_comms_email_send(pg_temp.msg(32),pg_temp.op(32),true) r) x), 'superseded: reconcile takes attempt 2');
 SELECT pg_temp.err(108, 'superseded: attempt 1 can no longer finalize', $q$SELECT public.finalize_comms_email_send(pg_temp.msg(32),pg_temp.op(32),'unknown',NULL,NULL,1)$q$, '42501', 'COMMS_EMAIL_NOT_CLAIMED');
 SELECT pg_temp.ok(109, public.finalize_comms_email_send(pg_temp.msg(32),pg_temp.op(32),'provider_accepted','re_proof_32',NULL,2)->>'outcome'='provider_accepted', 'superseded: attempt 2 finalizes');
 RESET ROLE;

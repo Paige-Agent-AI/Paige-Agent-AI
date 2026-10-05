@@ -25,7 +25,7 @@ MUST_PRESERVE: All old schema1/2 reads/replays and frozen issued snapshots; cano
 ACCEPTANCE_CRITERIA: Save and publish exact schema3 deposit with total=350000, due=50000, remainder=300000; UI reads/edits exact units, legacy percentage path remains, invalid/mixed schemas fail closed. Broader conversational transaction remains separate proof owed.
 MOTION_PURPOSE: NONE: existing motion/reduced-motion only.
 PROTECTED_SEAMS: canonical save_sales_billing_draft and installed publication admission; bounded asserted body patches preserve installed functions and ACL. Shell/Chat handler/approval gateway/provider registry unchanged.
-INTERNAL_BUILD_IDENTITY: 5d7ff9d2508d4a84f02600cd987a563dee688063 (base; exact reviewed head recorded in PR); deployment=UNVERIFIED; environment=development; migrations=PROOF_OWED(20270571000000); edge=NOT_APPLICABLE(no runtime edge source change); evidence=this record.
+INTERNAL_BUILD_IDENTITY: 5d7ff9d2508d4a84f02600cd987a563dee688063 (base; exact reviewed head recorded in PR); deployment=UNVERIFIED; environment=development; migrations=PROOF_OWED(20270571000000); edge=NOT_APPLICABLE; evidence=this record.
 RELEASE_CHANNEL: development: implementation/review in progress, no production identity claimed.
 RELEASE_CLASSIFICATION: internal-only: canonical contract compatibility toward authorized S2, no new conversational completion claim.
 CUSTOMER_RELEASE_IDENTITY: none: complete commercial transaction and authenticated acceptance remain PROOF OWED.
@@ -59,3 +59,7 @@ Draft Edit -> exact amount -> live recomputed summary -> invalid deposit refuses
 
 ## Reproduction
 scripts/live-drive/sales-exact-deposit-smoke.mjs uses synthetic Sales lifecycle Vite harness on port5298 and writes this assets directory. SQL runner scripts/sql/sales-invoice-preferences-proof.mjs requires explicit disposable cluster/data-directory identity; --concurrency also exercises actual competing PostgreSQL sessions. No hosted/database credentials in artifacts.
+
+Independent non-writer invoice_pdf_review COMPLETE/PASS on 0cfc73d037ef57409e618f464b30a2c138d851dd; separate Impeccable finish disposition ship/no material fixes after actual review/edit/invalid desktop and phone captures. Final exact-head documentation repair recheck required before merge. CI evidence syntax repair removes explanatory parentheses from NOT_APPLICABLE edge state; no runtime code change.
+
+Additional field/validation captures: assets/sales-exact-deposit/1536-dark-edit.png,1536-dark-invalid.png,390-light-edit.png,390-light-invalid.png. Actual synthetic component captures from the same reviewed source; no provider writes.

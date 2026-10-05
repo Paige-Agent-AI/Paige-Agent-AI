@@ -94,6 +94,31 @@ export interface SpecialistSummary {
   domain: string | null;
 }
 
+/**
+ * WHO SAID IT — surface-aware self-knowledge (owner addition 2026-10-05). The capability report — the
+ * block below, or the same projection returned by the `capability_status` tool — is the one source of
+ * what PAIGE can do in this workspace, and the rule says "this capability report" so it reads true in
+ * both. The person may also TELL her what is coming (in a Solo workspace the owner said the dev team was
+ * building Marketing and Sales, and she answered as though she were tracking the build herself). That is the owner's account, never her knowledge and never live
+ * capability; and a workspace carries no view of the platform's own roadmap or delivery state, which is
+ * operator scope (§9/§52/§53). When they claim something the report places in another state (approval,
+ * setup, someone else's role, not proven), she answers with that state; the "not exposed yet" line is
+ * only for what the report does not offer at all. One home: the block carries this rule and the
+ * `capability_status` tool result carries the same constant, so the two cannot disagree. It names no
+ * capability — what is live still comes only from the projection, so a newly shipped tool needs no edit.
+ */
+export const CAPABILITY_TRUTH_RULE =
+  "WHO SAID IT: what you can do here comes only from this capability report. When the person tells you " +
+  "what's being built, planned or coming soon — in this chat, or in what you remember of earlier ones — " +
+  "that is their account: acknowledge it as theirs (\"Based on what you're telling me…\", \"You've told me " +
+  "that's being built out\") and keep working from what this report says today, never as something you " +
+  "know or are tracking yourself. This workspace gives you no view of the platform's roadmap, build or " +
+  "release status, so never claim one. If they say you can do something, answer with the state this report " +
+  "gives it — needs approval before it goes ahead, needs a connection or setup first, needs the owner or an admin, or not " +
+  "proven here yet. Only when it is not listed as something you can do at all, say: \"That's the direction " +
+  "you've given me, but this workspace does not currently expose that capability to me yet.\" Once it " +
+  "appears here as available, it is real — offer it then.";
+
 const PROJECTED_GROUP_ORDER: readonly CapabilityAvailability[] = [
   "live", "needs_approval", "needs_setup", "proof_owed", "not_for_tier", "unavailable", "planned",
 ];
@@ -118,6 +143,7 @@ export function renderProjectedCapabilityBlock(
       "matches none of this, say you don't have a capability for that here — never invent one. Keep a " +
       "capability answer short and pointed at what you'd do next, not a recited inventory.",
   );
+  lines.push(CAPABILITY_TRUTH_RULE);
 
   for (const group of PROJECTED_GROUP_ORDER) {
     const inGroup = rows.filter((r) => r.availability === group);

@@ -13,7 +13,8 @@ import {
   type ProjectionInput,
   type SpineDeclarationLike,
 } from "../../supabase/functions/_shared/paige-capability-status/projection";
-import { renderProjectedCapabilityBlock } from "../../supabase/functions/_shared/paige-capability-status/render";
+import { CAPABILITY_TRUTH_RULE, renderProjectedCapabilityBlock } from "../../supabase/functions/_shared/paige-capability-status/render";
+import { CAPABILITY_STATUS_TOOL } from "../../supabase/functions/_shared/paige-capability-gateway/gateway";
 import { PAIGE_SPINE_CAPABILITIES } from "../../supabase/functions/_shared/paige-spine/registry";
 import { mutatingTools } from "../../supabase/functions/_shared/action-risk";
 
@@ -251,6 +252,78 @@ describe("render", () => {
 
   it("returns empty for an empty projection so nothing is injected", () => {
     expect(renderProjectedCapabilityBlock([])).toBe("");
+  });
+});
+
+// SURFACE-AWARE SELF-KNOWLEDGE (owner addition 2026-10-05). What PAIGE can do comes from this block;
+// what the owner TELLS her is coming is the owner's account; the platform's own roadmap and delivery
+// state is operator scope and never hers to claim in a workspace. The rule lives here, once, beside
+// the projection it protects (§18) — never as a hand-kept capability list.
+describe("surface-aware self-knowledge — capability truth vs what the owner says", () => {
+  const block = (over: Partial<ProjectionInput> = {}) => renderProjectedCapabilityBlock(projectCapabilities(input({
+    spine: [{ key: "crm.read", domain: "crm", action: { classification: "read", chatTool: "crm_read" } }],
+    tools: [{ name: "crm_read", description: "Read a contact." }],
+    ...over,
+  })));
+
+  it("A/E — the block carries the attribution and contradiction contract, in the owner's words", () => {
+    const text = block();
+    expect(text).toContain(CAPABILITY_TRUTH_RULE);
+    // A: owner-described plans are acknowledged as THEIRS, never as her own knowledge or tracking
+    expect(CAPABILITY_TRUTH_RULE).toContain("Based on what you're telling me");
+    expect(CAPABILITY_TRUTH_RULE).toMatch(/never as something you know or are tracking yourself/);
+    // no program/roadmap visibility from a workspace
+    expect(CAPABILITY_TRUTH_RULE).toMatch(/no view of the platform's roadmap, build or release status/);
+    // E: the owner saying it is live does not make it live
+    expect(CAPABILITY_TRUTH_RULE).toContain(
+      "That's the direction you've given me, but this workspace does not currently expose that capability to me yet.",
+    );
+    // …but that line is the LAST resort: a claim the report places in another state is answered with
+    // that state, and the scenario-E line is reserved for what the report does not offer at all.
+    const stateFirst = CAPABILITY_TRUTH_RULE.indexOf("answer with the state this report gives it");
+    const lastResort = CAPABILITY_TRUTH_RULE.indexOf("Only when it is not listed as something you can do at all");
+    expect(stateFirst).toBeGreaterThan(-1);
+    expect(lastResort).toBeGreaterThan(stateFirst);
+    expect(CAPABILITY_TRUTH_RULE.indexOf("That's the direction you've given me")).toBeGreaterThan(lastResort);
+    for (const state of ["needs approval before it goes ahead", "needs a connection or setup first", "needs the owner or an admin", "not proven here yet"]) {
+      expect(CAPABILITY_TRUTH_RULE).toContain(state);
+    }
+  });
+
+  it("the rule's referent is true wherever it is read — the prompt block AND the capability_status tool's note", () => {
+    // The same constant is the tool result's `note`, where there is no block to point at.
+    expect(CAPABILITY_TRUTH_RULE).toContain("this capability report");
+    expect(CAPABILITY_TRUTH_RULE).not.toMatch(/this block/i);
+    // §18: the tool description points at the note rather than restating the rule in its own words.
+    const description = CAPABILITY_STATUS_TOOL.function.description;
+    expect(description).toContain("Follow the result's note on what the person tells you.");
+    expect(description).not.toMatch(/their account|being built|coming soon/i);
+  });
+
+  it("C — a capability shipped and emitted this turn reads CAN DO NOW with no edit to the rule or the renderer", () => {
+    const text = block({
+      spine: [
+        { key: "crm.read", domain: "crm", action: { classification: "read", chatTool: "crm_read" } },
+        { key: "sales.invoice_read", domain: "sales", action: { classification: "read", chatTool: "sales_read_invoice" } },
+      ],
+      tools: [{ name: "crm_read", description: "Read a contact." }, { name: "sales_read_invoice", description: "Read an invoice." }],
+    });
+    const live = text.slice(text.indexOf("CAN DO NOW"));
+    expect(live).toMatch(/^- sales: sales_read_invoice$/m);
+    // …and the moment it is no longer emitted it is gone again: the rule names no capability itself
+    expect(block()).not.toContain("sales_read_invoice");
+    expect(CAPABILITY_TRUTH_RULE).not.toMatch(/invoice|marketing|sales/i);
+  });
+
+  it("B — the workspace block holds no operator briefing or program-state text", () => {
+    const text = block({ planned: PLANNED_CAPABILITIES });
+    for (const operatorOnly of ["OPERATOR BRIEFING", "DOCTRINE §-INDEX", "PLATFORM SNAPSHOT", "CURRENT GAPS", "Real ARR"]) {
+      expect(text).not.toContain(operatorOnly);
+    }
+  });
+
+  it("the capability_status tool names every state it can return, including the not-yet-proven one", () => {
+    expect(CAPABILITY_STATUS_TOOL.function.description).toContain("proof_owed");
   });
 });
 

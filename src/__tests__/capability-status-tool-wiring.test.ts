@@ -16,7 +16,7 @@ describe("capability_status tool wiring (source assertions)", () => {
     // C0a — the manifest is a PROJECTION over the emitted tools, never the hand-written signal list.
     expect(src).toContain('from "../_shared/paige-capability-status/projection.ts"');
     expect(src).toContain('import { LEGACY_CAPABILITIES } from "../_shared/paige-capability-status/legacy-capabilities.ts"');
-    expect(src).toContain('import { renderProjectedCapabilityBlock, type SpecialistSummary } from "../_shared/paige-capability-status/render.ts"');
+    expect(src).toContain('import { CAPABILITY_TRUTH_RULE, renderProjectedCapabilityBlock, type SpecialistSummary } from "../_shared/paige-capability-status/render.ts"');
     expect(src).toContain('import { PAIGE_SPINE_CAPABILITIES } from "../_shared/paige-spine/registry.ts"');
     expect(src).toContain('from "../_shared/workspace-authority.ts"');
     // the hand-written family list is no longer the chat's authority
@@ -81,9 +81,15 @@ describe("capability_status tool wiring (source assertions)", () => {
     // the tool dispatch returns the SAME cached projection (never its own divergent resolution)
     const at = src.indexOf('} else if (tc.function.name === "capability_status") {');
     expect(at).toBeGreaterThan(-1);
-    const block = src.slice(at, at + 900);
+    const block = src.slice(at, at + 1300);
     expect(block).toContain("const projection = await gatherCapabilityProjection();");
     expect(block).toContain("capabilities: projection.rows,");
+    // …and carries the same who-said-it rule the block does (owner addition 2026-10-05), so a model
+    // that reads the tool result instead of the block meets the same contract.
+    expect(block).toContain("note: CAPABILITY_TRUTH_RULE,");
+    // §18 one home: the handler carries the constant, never its own copy of the rule's words.
+    expect(src).not.toContain("does not currently expose that capability");
+    expect(src).not.toContain("answer with the state this report gives it");
   });
 
   it("injects the per-turn capability block, tenant-only and never a client seat, filled once the tool list is final", () => {

@@ -1,0 +1,16 @@
+import React,{act} from 'react';
+import {createRoot,type Root} from 'react-dom/client';
+import {beforeEach,afterEach,it,expect,vi} from 'vitest';
+import {InvoiceWorkspace} from './InvoiceWorkspace';
+globalThis.IS_REACT_ACT_ENVIRONMENT=true;
+const h=vi.hoisted(()=>({session:vi.fn(),fetch:vi.fn()}));
+vi.mock('@/integrations/supabase/client',()=>({supabase:{auth:{getSession:h.session}}}));
+vi.mock('next-themes',()=>({useTheme:()=>({resolvedTheme:'dark'})}));
+vi.mock('./InvoiceLifecycleActions',()=>({InvoiceLifecycleActions:()=> <button>Review and publish invoice</button>}));
+let root:Root,host:HTMLDivElement;
+beforeEach(()=>{h.session.mockReset().mockResolvedValue({data:{session:{access_token:'fixture'}}});h.fetch.mockReset().mockResolvedValue({ok:true,text:async()=>'<h1>Invoice INV-01</h1>'});vi.stubGlobal('fetch',h.fetch);host=document.createElement('div');document.body.append(host);root=createRoot(host);});
+afterEach(()=>{act(()=>root.unmount());host.remove();vi.unstubAllGlobals();});
+const render=async(status:'draft'|'issued'='draft',tenantId='test-tenant-a',invoiceId='test-invoice-a',version=1)=>act(async()=>{root.render(<InvoiceWorkspace tenantId={tenantId} invoiceId={invoiceId} version={version} number={status==='draft'?'DRAFT-22222222-2222-4222-8222-222222222222':'INV-01'} status={status} canManage onChanged={()=>{}} open/>);await Promise.resolve();});
+it('draft opens truthfully with publication available and no issued-document request',async()=>{await render();expect(document.body.textContent).toContain('Draft invoice');expect(document.body.textContent).toContain('Not issued.');expect(document.body.textContent).not.toContain('Previously issued');expect(document.body.textContent).not.toContain('DRAFT-');expect(document.body.textContent).not.toContain('preview unavailable');expect(document.body.textContent).not.toContain('Show invoice preview');expect(document.querySelector('.sb-invoice-preview')?.classList.contains('is-visible')).toBe(true);expect(h.session).not.toHaveBeenCalled();expect(h.fetch).not.toHaveBeenCalled();expect(document.querySelector('iframe')).toBeNull();});
+it('canonical publication enables the issued preview',async()=>{await render();await render('issued','test-tenant-a','test-invoice-a',2);expect(h.fetch).toHaveBeenCalledTimes(1);expect(document.querySelector('iframe')?.getAttribute('srcdoc')).toContain('INV-01');expect(document.body.textContent).not.toContain('Not issued.');});
+it('workspace switch to a draft drops a late issued preview',async()=>{let resolve!:(v:unknown)=>void;h.fetch.mockImplementation(()=>new Promise(r=>resolve=r));await render('issued');await render('draft','test-tenant-b','test-invoice-b');await act(async()=>resolve({ok:true,text:async()=>'<h1>Private old invoice</h1>'}));expect(document.querySelector('iframe')).toBeNull();expect(document.body.textContent).not.toContain('Private old invoice');expect(document.body.textContent).toContain('Draft invoice');});

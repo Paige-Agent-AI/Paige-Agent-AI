@@ -127,6 +127,7 @@ Deno.serve(async (req) => {
   //   • a person (the two Clients-hub composers call this directly): a VERIFIED user, and the workspace
   //     is current_user_tenant_id() — never a caller-supplied tenant. The anon key resolves no user and
   //     is refused.
+  // Both go through the one binder: _shared/paige-orchestration/resource-binder.ts.
   const authHeader = req.headers.get("Authorization") ?? "";
   const isInternalCall = await isAuthorizedInternalCaller(req, adminClient());
   let userClient: ReturnType<typeof createClient> | null = null;

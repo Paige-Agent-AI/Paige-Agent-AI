@@ -134,7 +134,7 @@ describe("R3 dossier wiring — bounded shape + canonical persistence", () => {
   });
 
   it("synthesis diagnostics: returned + candidate count (the synthesis-refusal vs validation-rejection split)", () => {
-    expect(core).toContain("dossier.synthesis.returned = !!synth;");
+    expect(core).toContain("dossier.synthesis.returned = true;"); // R4: both paths converge before this stamp
     expect(core).toContain("dossier.synthesis.candidates = Array.isArray(synth?.findings) ? synth.findings.length : 0;");
   });
 
@@ -144,7 +144,7 @@ describe("R3 dossier wiring — bounded shape + canonical persistence", () => {
   });
 
   it("the dossier persists on the canonical record — all three persistRun sites carry it", () => {
-    expect(core.match(/persistRun\(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier\)/g)?.length).toBe(3);
+    expect(core.match(/persistRun\(SUPABASE_URL, SERVICE_KEY, runId, body, result, lineageTenantId, dossier\)/g)?.length).toBe(5); // R4 adds the two decomposed-path early returns
     expect(core).toContain("dossier: (dossier ?? null) as never,");
   });
 

@@ -44,9 +44,10 @@ export function previewCommercialAssembly(input:unknown,context:CommercialAssemb
  if(agreed_obligation&&(agreed_obligation.tenant_id!==tenant_id||(client&&agreed_obligation.client_id!==client.id)))
   return {state:'refused',code:'RESOURCE_SCOPE_MISMATCH'};
  if(agreement&&(!reference(agreement.id)||!['signed','unsigned','upload'].includes(agreement.kind)
-   ||('version' in agreement&&!version(agreement.version))
+   ||(agreement.kind!=='upload'&&(!version(agreement.version)||!reference(agreement.client_id)))
    ||(agreement.kind==='unsigned'&&typeof agreement.signature_required_before_collection!=='boolean')
-   ||('document_ref' in agreement&&agreement.document_ref!==null&&!reference(agreement.document_ref))))
+   ||(agreement.kind==='signed'&&agreement.document_ref!=null&&!reference(agreement.document_ref))
+   ||(agreement.kind==='upload'&&agreement.document_ref!==null&&!reference(agreement.document_ref))))
   return {state:'refused',code:'INVALID_CANONICAL_CONTEXT'};
  if(delivery_channels&&(delivery_channels.length<1||delivery_channels.length>2
    ||delivery_channels.some(c=>c!=='email'&&c!=='sms')||new Set(delivery_channels).size!==delivery_channels.length))
@@ -56,7 +57,7 @@ export function previewCommercialAssembly(input:unknown,context:CommercialAssemb
  const fields=schedule.state==='needs_input'?[...schedule.fields]:[];
  if(!client)fields.push('client');
  if(!agreement)fields.push('agreement_or_document');
- if(agreement&&'document_ref' in agreement&&agreement.document_ref===null)fields.push('agreement_document');
+ if(agreement&&agreement.kind!=='unsigned'&&agreement.document_ref==null)fields.push('agreement_document');
  if(!agreed_obligation)fields.push('agreed_terms_including_taxes_and_fees');
  if(!delivery_channels)fields.push('delivery_channel');
  if(fields.length)return {state:'needs_input',fields};

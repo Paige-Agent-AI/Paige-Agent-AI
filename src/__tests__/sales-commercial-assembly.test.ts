@@ -54,4 +54,23 @@ describe('commercial assembly preflight - no authority or writes',()=>{
  it('does not mutate canonical resolved inputs while assembling',()=>{
   const ctx=context();const before=structuredClone(ctx);previewCommercialAssembly(intent,ctx);expect(ctx).toEqual(before);
  });
+ it.each(['version','client_id'])('refuses an incomplete signed reference missing %s',key=>{
+  const ctx=context();delete (ctx.agreement as unknown as Record<string,unknown>)[key];
+  expect(previewCommercialAssembly(intent,ctx).state).toBe('refused');
+ });
+ it('asks for an omitted signed document instead of claiming it can be included',()=>{
+  const ctx=context();delete (ctx.agreement as unknown as Record<string,unknown>).document_ref;
+  expect(previewCommercialAssembly(intent,ctx)).toEqual({state:'needs_input',fields:['agreement_document']});
+ });
+ it.each(['version','client_id'])('refuses an incomplete unsigned reference missing %s',key=>{
+  const ctx=context();ctx.agreement={kind:'unsigned',id:'test-agreement',tenant_id:ctx.tenant_id,client_id:ctx.client!.id,version:1,signature_required_before_collection:true};
+  delete (ctx.agreement as unknown as Record<string,unknown>)[key];
+  expect(previewCommercialAssembly(intent,ctx).state).toBe('refused');
+ });
+ it('refuses an uploaded reference without document provenance and unsigned reference without policy',()=>{
+  const ctx=context();ctx.agreement={kind:'upload',id:'test-upload',tenant_id:ctx.tenant_id} as never;
+  expect(previewCommercialAssembly(intent,ctx)).toMatchObject({state:'refused',code:'INVALID_CANONICAL_CONTEXT'});
+  ctx.agreement={kind:'unsigned',id:'test-agreement',tenant_id:ctx.tenant_id,client_id:ctx.client!.id,version:1} as never;
+  expect(previewCommercialAssembly(intent,ctx)).toMatchObject({state:'refused',code:'INVALID_CANONICAL_CONTEXT'});
+ });
 });

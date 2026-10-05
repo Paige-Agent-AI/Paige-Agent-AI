@@ -180,6 +180,75 @@ describe("PaigeChat send reader (characterization)", () => {
     expect(text()).toContain("Done");
   });
 
+  // C2 — the start/finish lifecycle. An action arrives as "running" and closes on the same id.
+  it("a running step that closes as done is one row, done", async () => {
+    await send(
+      step({ id: "0:a", seq: 1, label: "Reading your goals", status: "running" })
+      + step({ id: "0:a", seq: 1, label: "Read your goals", status: "done" })
+      + content("Start with your intake call.")
+      + "data: [DONE]\n\n",
+    );
+    expect(text()).toContain("Read your goals");
+    expect(text()).not.toContain("Reading your goals");
+    expect(text()).toContain("1 step");
+    expect(text()).toContain("Done");
+  });
+
+  it("a running step that is withdrawn leaves no row", async () => {
+    await send(
+      step({ id: "0:a", seq: 1, label: "Read your goals" })
+      + step({ id: "0:b", seq: 2, label: "Checking your calendar", status: "running" })
+      + step({ id: "0:b", seq: 2, label: "Checking your calendar", status: "withdrawn" })
+      + content("Start with your intake call.")
+      + "data: [DONE]\n\n",
+    );
+    expect(text()).toContain("1 step");
+    expect(text()).not.toContain("Checking your calendar");
+  });
+
+  it("a running step never closed is settled when the read ends — the strip says Done, not at work", async () => {
+    await send(null);
+    await settle();
+    await act(async () => {
+      controller!.enqueue(enc.encode(step({ id: "0:a", seq: 1, label: "Read your goals" }) + step({ id: "0:b", seq: 2, label: "Checking your calendar", status: "running" })));
+    });
+    await settle();
+    expect(text()).toContain("Paige at work");
+    expect(text()).toContain("Checking your calendar");
+    await act(async () => { controller!.enqueue(enc.encode(content("Here.") + "data: [DONE]\n\n")); controller!.close(); });
+    await settle();
+    expect(loading()).toBe(false);
+    expect(text()).not.toContain("Paige at work");
+    expect(text()).not.toContain("Checking your calendar");
+    expect(text()).toContain("1 step");
+    expect(text()).toContain("Done");
+  });
+
+  it("a read that fails after a running step leaves nothing running", async () => {
+    await send(null);
+    await settle();
+    await act(async () => {
+      controller!.enqueue(enc.encode(step({ id: "0:a", seq: 1, label: "Read your goals" }) + step({ id: "0:b", seq: 2, label: "Checking your calendar", status: "running" })));
+    });
+    await settle();
+    expect(text()).toContain("Checking your calendar");
+    // The connection drops mid-turn: the read throws, and nothing will ever close "0:b".
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    await act(async () => { controller!.error(new Error("connection lost")); });
+    await settle();
+    errors.mockRestore();
+    expect(loading()).toBe(false);
+    expect(text()).not.toContain("Checking your calendar");
+    expect(text()).not.toContain("Paige at work");
+    expect(text()).toContain("Read your goals");
+  });
+
+  it("a frame without a status still reads as done", async () => {
+    await send(line({ paige_step: { id: "0:a", seq: 1, round: 0, kind: "action", group: "owner", label: "Read your goals" } }) + content("Here.") + "data: [DONE]\n\n");
+    expect(text()).toContain("Read your goals");
+    expect(text()).toContain("Done");
+  });
+
   it("paige_phase \"writing\" flips Thinking… to Writing… before any word arrives", async () => {
     await send(null);
     await settle();

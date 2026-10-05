@@ -416,6 +416,106 @@ describe("PaigeAIChat stream — the work she shows", () => {
     expect(host.textContent).toContain("Answer.");
   });
 
+  // C2 — the start/finish lifecycle. An action arrives as "running" and closes on the same id.
+  it("a running step that closes as done is one row, done", async () => {
+    server(body([
+      frame({ paige_step: step("a", 1, "Looking up Northwind") }),
+      frame({ paige_step: step("a", 1, "Looked up Northwind", "done") }),
+      say("Found them."),
+      DONE,
+    ]));
+    const { host, trace } = await mount();
+    await ask(host);
+    expect(trace.at(-1)!.map((s) => [s.id, s.status, s.label])).toEqual([["a", "done", "Looked up Northwind"]]);
+  });
+
+  it("a running step that is withdrawn leaves no row", async () => {
+    server(body([
+      frame({ paige_step: step("a", 1, "Read your goals", "done") }),
+      frame({ paige_step: step("b", 2, "Checking the calendar") }),
+      frame({ paige_step: { ...step("b", 2, "Checking the calendar"), status: "withdrawn" } }),
+      say("Here."),
+      DONE,
+    ]));
+    const { host, trace } = await mount();
+    await ask(host);
+    expect(trace.at(-1)!.map((s) => s.id)).toEqual(["a"]);
+    expect(host.textContent).not.toContain("Checking the calendar");
+  });
+
+  it("a running step never closed is settled when the turn ends — the strip says Done, not at work", async () => {
+    server(body([
+      frame({ paige_step: step("a", 1, "Read your goals", "done") }),
+      frame({ paige_step: step("b", 2, "Checking the calendar") }),
+      say("Here."),
+      DONE,
+    ]));
+    const { host, trace } = await mount();
+    await ask(host);
+    expect(trace.at(-1)!.map((s) => [s.id, s.status])).toEqual([["a", "done"]]);
+    expect(host.textContent).toContain("Done");
+    expect(host.textContent).not.toContain("PAIGE at work");
+    expect(host.querySelector(".animate-spin")).toBeNull();
+  });
+
+  it("a running step is settled when the turn rolls back, and when the person cancels", async () => {
+    server(body([frame({ paige_step: step("b", 2, "Checking the calendar") }), say("Half")]));
+    const first = await mount();
+    await ask(first.host, "my question");
+    expect(first.host.textContent).toContain(SERVER_ISSUE);
+    expect(first.trace.at(-1)).toEqual([]);
+
+    const hold = deferred();
+    server(body([frame({ paige_step: step("c", 1, "Saving the form") }), hold.promise, say("late"), DONE]));
+    const second = await mount();
+    await ask(second.host, "save it");
+    expect(second.trace.at(-1)!.map((s) => [s.id, s.status])).toEqual([["c", "running"]]);
+    expect(second.host.textContent).toContain("PAIGE at work");
+    const cancel = second.host.querySelector<HTMLButtonElement>('button[aria-label="Cancel PAIGE response"]')!;
+    await act(async () => { cancel.click(); await flush(); });
+    expect(second.trace.at(-1)).toEqual([]);
+    expect(second.host.textContent).not.toContain("PAIGE at work");
+    await act(async () => { hold.resolve(); await flush(); });
+  });
+
+  it("a stopped request that ends late leaves the newer turn's running step alone", async () => {
+    // The first read is stopped while it waits; the person asks again and the new turn starts a
+    // step. Only then does the first body end. Its clean-up must not settle the newer turn's trace:
+    // that step is still under way, and the strip should still say so.
+    const firstHold = deferred();
+    const secondHold = deferred();
+    server(
+      body([frame({ paige_step: step("a", 1, "Saving the form") }), firstHold.promise, say("late"), DONE]),
+      body([frame({ paige_step: step("b", 1, "Checking the calendar") }), secondHold.promise, say("Here."), DONE]),
+    );
+    const { host, trace } = await mount();
+    await ask(host, "save it");
+    expect(trace.at(-1)!.map((s) => [s.id, s.status])).toEqual([["a", "running"]]);
+    const cancel = host.querySelector<HTMLButtonElement>('button[aria-label="Cancel PAIGE response"]')!;
+    await act(async () => { cancel.click(); await flush(); });
+    expect(trace.at(-1)).toEqual([]);
+
+    await ask(host, "check my calendar");
+    expect(trace.at(-1)!.map((s) => [s.id, s.status])).toEqual([["b", "running"]]);
+
+    await act(async () => { firstHold.resolve(); await flush(); });
+    expect(trace.at(-1)!.map((s) => [s.id, s.status])).toEqual([["b", "running"]]);
+    expect(host.textContent).toContain("PAIGE at work");
+    expect(host.textContent).not.toContain("late");
+
+    await act(async () => { secondHold.resolve(); await flush(); });
+    expect(trace.at(-1)).toEqual([]);
+    expect(host.textContent).toContain("Here.");
+  });
+
+  it("frames without a status still read as done", async () => {
+    const { status: _status, ...noStatus } = step("a", 1, "Read your goals");
+    server(body([frame({ paige_step: noStatus }), say("Here."), DONE]));
+    const { host, trace } = await mount();
+    await ask(host);
+    expect(trace.at(-1)!.map((s) => [s.id, s.status])).toEqual([["a", "done"]]);
+  });
+
   it("flips to Writing on the first word when no phase frame came", async () => {
     const hold = deferred();
     server(body([say("Hi"), hold.promise, DONE]));

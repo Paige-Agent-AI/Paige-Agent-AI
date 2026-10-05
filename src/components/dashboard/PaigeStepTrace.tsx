@@ -11,6 +11,7 @@ import { useState } from "react";
 import { Loader2, Check, AlertCircle, Circle, ListChecks, Users, UserRound, MessageSquareText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SectionCard, EmptyState } from "@/components/ui/page";
+import { normalizeStepStatus } from "@/lib/paige-stream";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 export type PaigeStep = {
@@ -28,13 +29,26 @@ export type PaigeStep = {
   ts?: number;
 };
 
-// Upsert by id, keep sorted by seq. Same reducer serves the v1 burst and a future
-// live (running→done) stream with zero change.
-export function upsertStep(prev: PaigeStep[], step: PaigeStep): PaigeStep[] {
+/**
+ * A step frame as the stream sends it. An action may arrive first as "running" and close later on
+ * the SAME id as "done", "error" or "withdrawn" (it started, but nothing it did is worth showing).
+ * Frames from before that lifecycle carry no status at all, and those still mean done.
+ */
+export type PaigeStepFrame = Omit<PaigeStep, "status"> & { status?: unknown };
+
+// Upsert by id, keep sorted by seq. A later frame for an id merges over the earlier one, so a
+// "running" row becomes "done"/"error" in place; "withdrawn" removes the row. A status this client
+// does not know is ignored rather than drawn — never shown as done (§13). The status rules live in
+// the shared stream reader (normalizeStepStatus), so every client reads a frame the same way.
+export function upsertStep(prev: PaigeStep[], step: PaigeStepFrame): PaigeStep[] {
+  const status = normalizeStepStatus(step.status);
+  if (status === null) return prev;
+  const i = prev.findIndex((s) => s.id === step.id);
+  if (status === "withdrawn") return i >= 0 ? prev.filter((s) => s.id !== step.id) : prev;
+  const merged: PaigeStep = { ...step, status };
   const next = prev.slice();
-  const i = next.findIndex((s) => s.id === step.id);
-  if (i >= 0) next[i] = { ...next[i], ...step };
-  else next.push(step);
+  if (i >= 0) next[i] = { ...next[i], ...merged };
+  else next.push(merged);
   next.sort((a, b) => a.seq - b.seq);
   return next;
 }
@@ -55,7 +69,9 @@ function StatusGlyph({ status }: { status: PaigeStep["status"] }) {
     );
   }
   if (status === "error") return <AlertCircle className="h-3.5 w-3.5 text-[hsl(var(--destructive))]" aria-hidden />;
-  return <Check className="h-3.5 w-3.5 text-[hsl(var(--success))]" aria-hidden />;
+  if (status === "done") return <Check className="h-3.5 w-3.5 text-[hsl(var(--success))]" aria-hidden />;
+  // Not a status this client knows: draw nothing rather than claim it finished.
+  return null;
 }
 
 /** The shared vertical list — used by the rail and the mobile Sheet. */

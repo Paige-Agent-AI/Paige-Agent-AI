@@ -120,24 +120,99 @@ describe("useStudioChat reads the stream (characterization)", () => {
     expect(api.sendError).toBeNull();
   });
 
-  it("paige_step: append-only, first id wins, a label is required, status collapses to done|error", async () => {
+  // DELIBERATELY REWRITTEN (C2a, 2026-10-04). This pin used to read "append-only, first id wins …
+  // status collapses to done|error": a second frame for an id was dropped and "running" was drawn
+  // as done. That is exactly what breaks once an action STARTS as "running" and closes later on the
+  // same id — the start would win and the close would never show. The owner-approved C2 lifecycle
+  // replaces it: a later frame for an id replaces the earlier in place (merging what it leaves
+  // out), "withdrawn" removes the row, an unknown status is dropped, a missing status is done, and
+  // a step still running when the read ends is settled away. The other pins in this file are
+  // untouched.
+  it("paige_step: upsert by id, a label is required, running settles away when the read ends", async () => {
     await turn([
       line({ paige_step: { id: "a", label: "Wrote 3 questions", status: "done", kind: "action", seq: 2, group: "owner" } }),
       line({ paige_step: { id: "a", label: "A second frame for the same id", status: "error" } }),
       line({ paige_step: { id: "b", status: "done" } }),
       line({ paige_step: { id: "c", label: "" } }),
       line({ paige_step: { label: "No id, so it is numbered", status: "error", detail: "why" } }),
-      line({ paige_step: { id: "d", label: "Running maps to done", status: "running", seq: 1 } }),
+      line({ paige_step: { id: "d", label: "Running, never closed", status: "running", seq: 1 } }),
+      line({ paige_step: { id: "e", label: "A status nobody sends", status: "paused" } }),
       content("Done."),
       "data: [DONE]\n\n",
     ].map((s) => enc.encode(s)));
     expect(held().steps).toEqual([
-      { id: "a", label: "Wrote 3 questions", detail: undefined, status: "done" },
-      { id: "s:1", label: "No id, so it is numbered", detail: "why", status: "error" },
-      { id: "d", label: "Running maps to done", detail: undefined, status: "done" },
+      { id: "a", label: "A second frame for the same id", detail: undefined, status: "error" },
+      { id: "s:0", label: "No id, so it is numbered", detail: "why", status: "error" },
     ]);
     // The status line clears when the turn settles.
     expect(api.status).toBeNull();
+  });
+
+  it("C2: a running step closes on the same id as done — one row, its start time and detail kept", async () => {
+    await act(async () => { void api.send("Build me a page"); });
+    await flush();
+    await act(async () => { controller!.enqueue(enc.encode(line({ paige_step: { id: "a", label: "Laying out the page", detail: "Hero first", status: "running" } }))); });
+    await flush();
+    expect(held().steps).toEqual([{ id: "a", label: "Laying out the page", detail: "Hero first", status: "running" }]);
+    const startedAt = api.steps[0].at;
+    await act(async () => { controller!.enqueue(enc.encode(line({ paige_step: { id: "a", label: "Laid out the page", status: "done" } }))); });
+    await flush();
+    expect(held().steps).toEqual([{ id: "a", label: "Laid out the page", detail: "Hero first", status: "done" }]);
+    expect(api.steps[0].at).toBe(startedAt);
+    await act(async () => { controller!.enqueue(enc.encode(content("Ready.") + "data: [DONE]\n\n")); controller!.close(); });
+    await flush();
+    expect(held().steps).toEqual([{ id: "a", label: "Laid out the page", detail: "Hero first", status: "done" }]);
+  });
+
+  it("C2: a close that leaves out the label keeps the one it started with", async () => {
+    await turn(line({ paige_step: { id: "a", label: "Saving the form", status: "running" } }) + line({ paige_step: { id: "a", status: "done" } }) + "data: [DONE]\n\n");
+    expect(held().steps).toEqual([{ id: "a", label: "Saving the form", detail: undefined, status: "done" }]);
+  });
+
+  it("C2: a withdrawn step leaves no row, and the status line falls back to the step still standing", async () => {
+    await act(async () => { void api.send("Build me a page"); });
+    await flush();
+    await act(async () => {
+      controller!.enqueue(enc.encode(
+        line({ paige_step: { id: "a", label: "Read your brand" } })
+        + line({ paige_step: { id: "b", label: "Checking the calendar", status: "running" } })
+        + line({ paige_step: { id: "b", label: "Checking the calendar", status: "withdrawn" } }),
+      ));
+    });
+    await flush();
+    expect(held().steps).toEqual([{ id: "a", label: "Read your brand", detail: undefined, status: "done" }]);
+    expect(api.status).toBe("Read your brand");
+    await act(async () => { controller!.enqueue(enc.encode(content("Ready.") + "data: [DONE]\n\n")); controller!.close(); });
+    await flush();
+    expect(held().steps).toEqual([{ id: "a", label: "Read your brand", detail: undefined, status: "done" }]);
+  });
+
+  it("C2: a turn whose only step started and was withdrawn is an empty turn, said so", async () => {
+    await turn(line({ paige_step: { id: "b", label: "Checking", status: "running" } }) + line({ paige_step: { id: "b", status: "withdrawn" } }) + "data: [DONE]\n\n");
+    expect(api.steps).toEqual([]);
+    expect(api.turns.at(-1)).toEqual({ role: "assistant", content: "I didn't catch that. Try saying it another way?" });
+  });
+
+  it("steps with no id each get their own row, even after a withdrawn row shrinks the list", async () => {
+    // Numbered from the list's length, the second id-less step would take the first one's number
+    // once "x" is withdrawn, and merge over it — one row where Paige did two things.
+    await turn(
+      line({ paige_step: { id: "x", label: "Checking the calendar", status: "running" } })
+      + line({ paige_step: { label: "Read your brand" } })
+      + line({ paige_step: { id: "x", status: "withdrawn" } })
+      + line({ paige_step: { label: "Wrote the headline" } })
+      + content("Ready.") + "data: [DONE]\n\n",
+    );
+    expect(held().steps).toEqual([
+      { id: "s:0", label: "Read your brand", detail: undefined, status: "done" },
+      { id: "s:1", label: "Wrote the headline", detail: undefined, status: "done" },
+    ]);
+  });
+
+  it("C2: a step still running when the stream ends without [DONE] is settled — nothing left spinning", async () => {
+    await turn(line({ paige_step: { id: "a", label: "Read your brand" } }) + line({ paige_step: { id: "b", label: "Saving the page", status: "running" } }) + content("Here it is."));
+    expect(held().steps).toEqual([{ id: "a", label: "Read your brand", detail: undefined, status: "done" }]);
+    expect(api.sending).toBe(false);
   });
 
   it("the status line follows the latest step label while the turn is still open", async () => {

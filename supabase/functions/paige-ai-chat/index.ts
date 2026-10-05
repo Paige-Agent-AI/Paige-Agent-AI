@@ -222,6 +222,7 @@ import { turnFrameLine } from "../_shared/paige-turn/contract.ts";
 import { attachTurnRecord, createTurnTracker, NO_TOOLS, observeToolResult, type TurnClassifiers } from "../_shared/paige-turn/reducer.ts";
 // C2b — the present-tense START of a tool step; describeStep below stays the FINISH.
 import { describeStepStart } from "../_shared/paige-turn/step-start.ts";
+import { actIdentityArgs, buildResumeCall, classifyResumedApproval, findSuspendedTurnId, isResumableTool, parseScopedToken, RESUME_ALREADY_HANDLED_RESULT, RESUME_CHECK_UNAVAILABLE_RESULT, RESUME_EXPIRED_RESULT, RESUME_LOST_RESULT, RESUME_TURN_NOTE, resumeRecord, storedRowState, type ResumeCall } from "../_shared/paige-turn/resume.ts";
 import { looksLikeFinanceAgent } from "../_shared/finance-gate.ts";
 // "ADMIN IS A TENANT ROLE" (owner ruling 2026-10-04): one resolver + one tool set for every
 // owner/admin-only chat tool, the early refusal, and the projection.
@@ -314,6 +315,11 @@ function describeStep(
   if (out?.forbidden_seat === true) return null;
   // A draft for a customer refused for internal text (R2) did not run either: PAIGE rewrites it.
   if (out?.error === "internal_text_in_draft") return null;
+  // C4a — the approval resume's two refusals are not steps either. A re-emit of an act the approval
+  // already carried forward is not work (the act's own row is the step), and an approval another
+  // request had already used did not run here — its card says "check before asking again", and an
+  // error row beside it would claim a failure nobody knows happened.
+  if (out?.error === "already_handled_this_reply" || out?.error === "approval_already_used") return null;
 
   switch (name) {
     case "comms_connection_summary":
@@ -1197,6 +1203,24 @@ serve(async (req) => {
     // A failed approved-set lookup cannot say which approvals it was checking — that is what failed —
     // so the ones nothing else accounts for are reported as that failure, not as "not run".
     let approvalLookupFailed = false;
+    // C4a — THE APPROVALS THE SERVER CARRIES FORWARD ITSELF (_shared/paige-turn/resume.ts). When the
+    // person approves a thread-scoped proposal, the stored act is rebuilt from its row and run through
+    // the same gate below, before PAIGE is asked anything — so it no longer depends on the model
+    // re-emitting it. `resumePin` maps the synthetic call's id to its token: SERVER-ONLY, never read
+    // from a call's arguments, so a model cannot pin a call to an approval. `resumeTokens` is every
+    // approval this resume handled and what became of it before or at its claim; `resumeHandledActs`
+    // / `resumeHandledSubjects` are what the model is refused from re-emitting in the same reply.
+    const resumePin = new Map<string, string>();
+    const resumeTokens = new Map<string, { tool: string; state: "pending" | "expired" | "lost" | "unavailable" | "withheld" }>();
+    // "here": this reply's resumed round carried the act forward. "elsewhere": the approval had
+    // already been used before this request could (a second click, another tab) — the act may
+    // already have happened there. Either way the model may not run or re-propose it now.
+    const resumeHandledActs = new Map<string, "here" | "elsewhere">();
+    const resumeHandledSubjects = new Map<string, "here" | "elsewhere">();
+    // Every tool one of those acts belongs to. While the reply holds one, ANOTHER call to the same
+    // tool (a re-emit whose arguments drifted, so it is not recognised as the same act) never runs on
+    // its own: an `auto` lane is put back on `confirm`, so at worst it becomes a card the person sees.
+    const resumeHandledTools = new Set<string>();
 
     // ===== CLIENT SCOPE AUTHORIZATION — resolved ONCE, before ANY use of the body id =====
     //
@@ -5762,7 +5786,7 @@ N8N AUTHORING — read n8n_get_sdk_reference before writing Workflow SDK code. V
 ADD SUB-AGENTS INTELLIGENTLY — one brain by default (give it tools, not more brains). Add a specialist sub-agent ("@n8n/n8n-nodes-langchain.agentTool") only when the work genuinely splits: a distinct expertise/persona is needed, two audiences at once (a Client-Experience agent for the client + an Owner-Ops agent for the coach — the action bus §8), more than ~6-8 tools on one agent, a stage needs its own memory/loop, or a long-horizon 90-day workflow (orchestrator decides "who's due today", a content sub-agent personalizes each touch). Tell the operator plainly: "one brain that can act, unless the work splits into different jobs or two audiences — then I give the brain a specialist teammate." Keep every generated automation coaching-generic (never funding/credit content in a default).
 
 BE A PROACTIVE ASSISTANT, NOT AN ORDER-TAKER. Never just execute the literal request and stop. Anticipate the natural next steps and offer them, and confirm before you commit anything. Three rules:
-1. PROPOSE → REVIEW → THEN ACT. For an action that needs approval, describe exactly what you intend to do and wait for approval through the workspace's approval control. When a tool returns needs_confirm, read confirm_summary in plain language. If a Needs your OK card is visible in this conversation, the person can click Approve there. A spoken or typed yes alone does not complete this step. If this chat has no approval control, say the action is pending and cannot be approved here. They can request the action afresh in a Paige workspace with approval controls if their account has access, or ask an authorized workspace teammate to complete it. Never claim the pending action transferred to another conversation. Do not retry a pending action in the same reply. An approved card executes the stored proposal exactly as it was shown — never re-construct, re-word, or re-emit an action the person already approved; after an approval, report the outcome the surface shows and nothing more, and use success words only after that verified outcome. Resolve every required identity — the contact, the pipeline, the stage, and their exact references — from current reads BEFORE proposing an approval; when a name is ambiguous, ask before you propose, never after. If the person changes the request, propose the new action for review. Existing workspace autopilot settings remain the operator's standing choice, never your assumption. Anything outbound (an email, an SMS) is NEVER sent directly — draft it and route it to the existing approval lane.
+1. PROPOSE → REVIEW → THEN ACT. For an action that needs approval, describe exactly what you intend to do and wait for approval through the workspace's approval control. When a tool returns needs_confirm, read confirm_summary in plain language. If a Needs your OK card is visible in this conversation, the person can click Approve there. A spoken or typed yes alone does not complete this step. If this chat has no approval control, say the action is pending and cannot be approved here. They can request the action afresh in a Paige workspace with approval controls if their account has access, or ask an authorized workspace teammate to complete it. Never claim the pending action transferred to another conversation. Do not retry a pending action in the same reply. An approved card executes the stored proposal exactly as it was shown — never re-construct, re-word, or re-emit an action the person already approved. When this conversation holds a tool result for an approved action, that result is what happened: say what it actually did, use success words only when it says it succeeded, then carry on with what the person originally asked for. When there is no such result, do not say the action ran — report only the outcome the surface shows. Resolve every required identity — the contact, the pipeline, the stage, and their exact references — from current reads BEFORE proposing an approval; when a name is ambiguous, ask before you propose, never after. If the person changes the request, propose the new action for review. Existing workspace autopilot settings remain the operator's standing choice, never your assumption. Anything outbound (an email, an SMS) is NEVER sent directly — draft it and route it to the existing approval lane.
 2. CONFIRM THE RESULT — AND NEVER FAKE ONE. Only say you did something ("Done — created…", "reminder set", "task assigned", "added to your calendar") when a TOOL you called THIS turn actually returned success. A claim of completion with no tool call behind it is a lie, and it is the worst thing you can do here — it destroys trust. You DO have real tools for reminders, planning, tasks, and booking (plan_set_reminder, plan_create/plan_assign_task/plan_add_milestone, crm_create_task, calendar_book_meeting) — USE them, then confirm off the tool's success. If there is genuinely no tool for what they asked, DO NOT pretend — say plainly "I can't do that one from here yet" and offer what you genuinely can do, or file it on the action bus so it's tracked. "It'll show up in your reminders / Task Manager / calendar" is only true if a tool actually put it there — never say it otherwise. Once an action really commits, confirm plainly in one line; never leave them guessing. For anything that SENDS (SMS/email/outbound), this is bound by AUTOMATION HONESTY: report fired vs delivered, and only say "sent" when delivered:true — never off a bare fire. The test before every "done": "Did a tool call this turn return success for exactly this? If not, I do not claim it happened."
 3. PROBE, THEN DRIVE. Then surface the obvious next moves as a short, tight menu of questions (not a wall of text).
 
@@ -8833,12 +8857,157 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       }
     }
 
+    // ── C4a · RESOLVE THE RESUME (docs/delivery/paige-conversational-loop-c4.md) ─────────────────
+    // An approval used to mean "Approved — run it." plus a NEW request in which the model had to
+    // re-emit the act; when it did not, nothing ran (14 of 28 approved general-gate proposals in
+    // prod over 30 days). Here, before PAIGE is asked anything, every approved token that names a
+    // live, thread-scoped, general-gate proposal of THIS caller in THIS workspace, thread and focused
+    // client is rebuilt from its stored row into one synthetic call. Those calls become the turn's
+    // first round (below, in the stream): the existing gate claims each one exactly once and runs
+    // the stored arguments; then PAIGE is called with their results and continues the objective.
+    //
+    // It grants nothing. The selection repeats the claim's own scope predicates, the row must pass
+    // the same integrity check the card token was minted under (`confirmationToken`), and the gate
+    // still decides everything else. Door proposals (CRM, Sales, publish — thread_id NULL) and
+    // legacy bare-fingerprint tokens are not resumed here: they keep their existing path (C4b).
+    // A failure to resolve degrades to exactly the old behaviour, loudly — never to "run it anyway".
+    const resumeActKey = async (tool: string, args: Record<string, unknown>) =>
+      `${tool}\u0000${await confirmFingerprint(tool, actIdentityArgs(args))}`;
+    const resumeSubjectKey = (tool: string, args: Record<string, unknown>): string | null => {
+      if (!CONFIRM_IDENTITY_KEY[tool]) return null;
+      const subject = confirmIdentityValue(tool, args);
+      return subject === null ? null : `${tool}\u0000${subject}`;
+    };
+    // What a resumed approval's row says NOW, after its claim failed: still live (the claim itself could
+    // not run), past its window, or used by someone else. Read under the claim's own scope; a failed
+    // read is "unknown", which the caller treats as used — the cautious "check before asking again".
+    const resumedRowStateNow = async (token: string, tool: string): Promise<"live" | "expired" | "used" | "unknown"> => {
+      const parsed = parseScopedToken(token);
+      if (!parsed) return "unknown";
+      try {
+        let q = supabase.from("paige_pending_confirmations")
+          .select("consumed_at,expires_at").eq("user_id", user.id).eq("tool_name", tool)
+          .eq("fingerprint", parsed.fingerprint).eq("issued_in_request", parsed.nonce)
+          .not("server_issued_at", "is", null);
+        q = personaCtx?.tenant_id ? q.eq("tenant_id", personaCtx.tenant_id) : q.is("tenant_id", null);
+        q = payloadThreadId ? q.eq("thread_id", payloadThreadId) : q.is("thread_id", null);
+        q = scopedClientId ? q.eq("scoped_client_id", scopedClientId) : q.is("scoped_client_id", null);
+        const { data, error } = await q.limit(2);
+        if (error || (data?.length ?? 0) !== 1) return "unknown";
+        return storedRowState(data![0], Date.now());
+      } catch {
+        return "unknown";
+      }
+    };
+    const resumeCalls: ResumeCall[] = [];
+    let resumeFromTurnId: string | null = null;
+    // The approvals this resolution attributed to a tool, so a failure part-way can take them back.
+    const resumeTokenTools: string[] = [];
+    if (approvedConfirmations.size > 0 && payloadThreadId && !attachedDocument && !liveRuntimeScope && cancellationsRecorded) {
+      try {
+        const scoped = [...approvedConfirmations]
+          .map((token) => ({ token, parsed: parseScopedToken(token) }))
+          .filter((x): x is { token: string; parsed: { fingerprint: string; nonce: string } } => x.parsed !== null);
+        if (scoped.length > 0 && await revalidateProposalScope()) {
+          let selected = supabase.from("paige_pending_confirmations")
+            .select("fingerprint,args,issued_in_request,tool_name,consumed_at,expires_at")
+            .eq("user_id", user.id).eq("thread_id", payloadThreadId)
+            .in("fingerprint", [...new Set(scoped.map((x) => x.parsed.fingerprint))])
+            // …and to the exact requests that minted the approved cards, so rows an earlier proposal
+            // of the same act left behind (consumed, same scoped fingerprint) cannot crowd the live
+            // one out of the bounded read below.
+            .in("issued_in_request", [...new Set(scoped.map((x) => x.parsed.nonce))])
+            .not("server_issued_at", "is", null).not("issued_in_request", "is", null)
+            // A proposal is never redeemed by the request that minted it.
+            .neq("issued_in_request", requestNonce);
+          selected = personaCtx?.tenant_id ? selected.eq("tenant_id", personaCtx.tenant_id) : selected.is("tenant_id", null);
+          selected = scopedClientId ? selected.eq("scoped_client_id", scopedClientId) : selected.is("scoped_client_id", null);
+          const { data: rows, error: selectError } = await selected.limit(33);
+          if (selectError) throw new Error(selectError.message ?? "resume selection failed");
+          const doorTools = [CRM_COMMAND_TOOL_NAMES as ReadonlySet<string>, SALES_INVOICE_TOOL_NAMES as ReadonlySet<string>, SALES_COLLECTIONS_TOOL_NAMES as ReadonlySet<string>, GROWTH_PUBLISH_DOOR_TOOL_NAMES];
+          // THE CAPABILITY FINGERPRINT. The tools this turn offers, final by here (manifest, Studio
+          // scope, funding, presets). A model can only emit an offered tool, so the re-emit path was
+          // implicitly bounded by this list; the resume rebuilds the call from a stored row and must
+          // be bounded the same way, or a tool withdrawn since the card was shown would run.
+          const offeredTools = new Set((toolDefs as any[]).map((d) => d?.function?.name).filter((n): n is string => typeof n === "string"));
+          const nowMs = Date.now();
+          for (const { token, parsed } of scoped) {
+            const row = (rows ?? []).find((r: any) => r?.fingerprint === parsed.fingerprint && r?.issued_in_request === parsed.nonce) as
+              (PendingConfirmation & { tool_name: string; consumed_at: string | null; expires_at: string | null }) | undefined;
+            if (!row || !isResumableTool(row.tool_name, { mutating: MUTATING_TOOLS, doorTools })) continue;
+            if (!row.args || typeof row.args !== "object" || Array.isArray(row.args)) continue;
+            if (await confirmationToken(row, row.tool_name) !== token) continue;
+            approvalTokenTool.set(token, row.tool_name);
+            resumeTokenTools.push(token);
+            const subject = resumeSubjectKey(row.tool_name, row.args);
+            const rowState = storedRowState(row, nowMs);
+            // Already used — by an earlier request, or by a concurrent one that claimed it a moment
+            // ago. Whatever used it may have done the work, so it reads "can't be used any more, check
+            // first", whenever the other request claimed it (the earlier-use check compares claim
+            // time with this request's start, and a concurrent claim lands after it). Nothing runs.
+            if (rowState === "used") {
+              resumeTokens.set(token, { tool: row.tool_name, state: "lost" });
+              resumeHandledActs.set(await resumeActKey(row.tool_name, row.args), "elsewhere");
+              resumeHandledTools.add(row.tool_name);
+              if (subject) resumeHandledSubjects.set(subject, "elsewhere");
+              continue;
+            }
+            // Past its window — unused, or stamped consumed by the expiry sweep (storedRowState).
+            if (rowState === "expired") {
+              resumeTokens.set(token, { tool: row.tool_name, state: "expired" });
+              continue;
+            }
+            // Not offered on this turn: not run, and the approval is left unspent.
+            if (!offeredTools.has(row.tool_name)) {
+              console.warn("[paige] approval resume: the approved tool is not offered on this turn; not run", JSON.stringify({ tool: row.tool_name, correlation_id: requestNonce }));
+              resumeTokens.set(token, { tool: row.tool_name, state: "withheld" });
+              continue;
+            }
+            const call = buildResumeCall(token, { tool_name: row.tool_name, args: row.args });
+            resumePin.set(call.id, token);
+            resumeTokens.set(token, { tool: row.tool_name, state: "pending" });
+            resumeHandledActs.set(await resumeActKey(row.tool_name, row.args), "here");
+            resumeHandledTools.add(row.tool_name);
+            if (subject) resumeHandledSubjects.set(subject, "here");
+            resumeCalls.push(call);
+          }
+        }
+        if (resumeCalls.length > 0) {
+          // The suspended turn this objective resumes: the latest assistant turn whose card carried
+          // one of these approvals. Read with the caller's own session (RLS), newest first.
+          try {
+            const { data: recent, error: recentError } = await supabaseClient.from("paige_chat_turns")
+              .select("id,role,bundle_ref").eq("thread_id", payloadThreadId)
+              .order("seq", { ascending: false }).limit(25);
+            if (recentError) throw new Error(recentError.message ?? "turn read failed");
+            resumeFromTurnId = findSuspendedTurnId(recent ?? [], new Set(resumeCalls.map((c) => resumePin.get(c.id) as string)));
+          } catch (e) {
+            console.error("[paige] approval resume: the suspended turn could not be read; recorded as unknown", JSON.stringify({ correlation_id: requestNonce, message: (e as Error)?.message ?? String(e) }));
+          }
+        }
+      } catch (e) {
+        console.error("[paige] approval resume could not be resolved — the turn runs as before", JSON.stringify({ correlation_id: requestNonce, message: (e as Error)?.message ?? String(e) }));
+        resumeCalls.length = 0;
+        resumePin.clear();
+        resumeTokens.clear();
+        resumeHandledActs.clear();
+        resumeHandledSubjects.clear();
+        resumeHandledTools.clear();
+        for (const token of resumeTokenTools) approvalTokenTool.delete(token);
+        resumeTokenTools.length = 0;
+        resumeFromTurnId = null;
+      }
+    }
+
     // Live uses the SAME governed tool loop, then the existing tools-free
     // answer stream. Never speak speculative content from a tool-capable round.
     const liveDecisionMessages = (messages: any[]) => liveRuntimeScope && !attachedDocument
       ? [...messages, { role: "system", content: "This is the internal tool-decision phase of a Live turn. Select the tools needed under the existing authority rules. Do not draft the user-facing answer here. When no further tool is needed, reply only with Ready. The same runtime will then request the final spoken answer in a tools-free phase." }]
       : messages;
-    const response = await gatewayCompat("anthropic", {
+    // C4a — on a resume turn the first model call is LAZY: the resumed acts run first (the stream's
+    // first round), and PAIGE is called with their results at the end of that round, through the
+    // same loop call every later round uses. Every other turn makes this call exactly as before.
+    const response = resumeCalls.length > 0 ? null : await gatewayCompat("anthropic", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -8862,7 +9031,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     // "studio-design-agent" at the Studio-session branch above, which runs before this line.
     }, traceFor("chat"));
 
-    if (!response.ok) {
+    if (response && !response.ok) {
       const errorId = crypto.randomUUID();
       const status = response.status;
       if (status === 429) return new Response(JSON.stringify({ error: "Rate limit exceeded.", errorId }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -9686,6 +9855,20 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             }
           }
 
+          // C4a — AN ACT THE APPROVAL ALREADY CARRIED FORWARD IS NOT RUN, OR PROPOSED, AGAIN. The
+          // resumed round ran it from its stored proposal; a model that then re-emits the same act
+          // (same arguments once the gate's settled keys are set aside, or the same subject for a tool
+          // with a stable subject id) gets this refusal — never a second run on a standing `auto`
+          // lane, and never a fresh approval card for something that already happened.
+          if (resumeHandledActs.size > 0 && !resumePin.has(tc.id)) {
+            const subject = resumeSubjectKey(tc.function.name, gateArgs);
+            const handled = resumeHandledActs.get(await resumeActKey(tc.function.name, gateArgs))
+              ?? (subject !== null ? resumeHandledSubjects.get(subject) : undefined);
+            if (handled) {
+              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(handled === "here" ? RESUME_ALREADY_HANDLED_RESULT : RESUME_LOST_RESULT) });
+              continue;
+            }
+          }
           let autoMode = await resolveToolAutonomy(tc.function.name);
           let studioLifted = false; // true only when the Studio lift below changed confirm → auto
           const isPipelineArchive = tc.function.name === "pipeline_configure" && gateArgs?.command?.type === "archive-pipeline";
@@ -9864,6 +10047,15 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             console.warn("[paige] autonomy clamped by action class", JSON.stringify({ tool: tc.function.name, from: autoMode, to: clampedMode, risk: classifyAction(tc.function.name) }));
             autoMode = clampedMode;
           }
+          // C4a — a resumed act runs ONLY by spending its approval. Its lane may have moved to `auto`
+          // since the card was shown; running it there would skip the claim, leave the proposal live
+          // and let a second click run it again. So it takes the approval path (the claim is the
+          // exactly-once). `off` still wins: a brake pulled after the card was shown is honoured.
+          if (resumePin.has(tc.id) && autoMode === "auto") autoMode = "confirm";
+          // …and while this reply holds a carried-forward act, no OTHER call to the same tool runs on
+          // its own: a drifted re-emit of the approved act is not recognised as the same act (no stable
+          // subject id), so on an `auto` lane it would run a second write. It becomes a card instead.
+          if (!resumePin.has(tc.id) && resumeHandledTools.has(tc.function.name) && autoMode === "auto") autoMode = "confirm";
 
           if (autoMode === "off") {
             await recordStudioRefusal(tc, "turned_off");
@@ -9905,7 +10097,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             // CHANNEL 1 — the authenticated caller submits a selected proposal fingerprint.
             // The model cannot author this request field. This is not proof of a physical click;
             // the trusted stored proposal, exact scope and atomic claim define the effect.
-            let approvedFingerprint: string | undefined = approvedConfirmations.has(fp) ? fp : undefined;
+            // C4a — a resumed act is pinned to its approval by the server (`resumePin`), never matched.
+            let approvedFingerprint: string | undefined = resumePin.get(tc.id) ?? (approvedConfirmations.has(fp) ? fp : undefined);
             if (approvedFingerprint) approvalTokenTool.set(approvedFingerprint, tc.function.name);
             // FIX B signal (P0 containment): the operator approved proposal(s) for this tool, but this
             // re-emitted call could not be pinned to exactly one of them. Set below when the approved-set
@@ -9948,6 +10141,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                   for (const row of candidates ?? []) {
                     const token = await confirmationToken(row, tc.function.name);
                     if (token && approvedConfirmations.has(token)) {
+                      // An approval the resume already handled is never spent a second way, and no
+                      // other approval is spent on an act the resume already carried forward (C4a).
+                      if (resumeTokens.has(token) || (resumeHandledActs.size > 0 && row?.args && typeof row.args === "object"
+                        && resumeHandledActs.has(await resumeActKey(tc.function.name, row.args)))) continue;
                       matches.push({ fingerprint: token, args: row.args });
                       approvalTokenTool.set(token, tc.function.name);
                     }
@@ -10004,6 +10201,21 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               : null;
 
             if (!approvedArgs) {
+              // C4a — A RESUMED ACT WHOSE CLAIM FAILED never becomes a fresh card. Read the row once
+              // more to tell the two causes apart: still live means the claim itself could not run
+              // (nothing ran — "something went wrong checking your approval"); gone means another
+              // request used it first, and may have done the work ("check before asking again").
+              const pinned = resumePin.get(tc.id);
+              if (pinned) {
+                const rowNow = await resumedRowStateNow(pinned, tc.function.name);
+                const info = resumeTokens.get(pinned);
+                if (info) info.state = rowNow === "live" ? "unavailable" : rowNow === "expired" ? "expired" : "lost";
+                console.warn("[paige] approval resume claim failed", JSON.stringify({ tool: tc.function.name, row: rowNow, correlation_id: requestNonce }));
+                toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(
+                  rowNow === "live" ? RESUME_CHECK_UNAVAILABLE_RESULT : rowNow === "expired" ? RESUME_EXPIRED_RESULT : RESUME_LOST_RESULT,
+                ) });
+                continue;
+              }
               // ── FIX B (P0 containment): STOP THE LOOP, TELL THE TRUTH ──────────────────────────
               // The operator IS approving, but this call could not be claimed and there is already a
               // pending, turn-predating proposal for this action that cannot be safely picked — a
@@ -15062,6 +15274,12 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         });
       };
       const convo: any[] = [...flagUnverifiedOutcomes(flagUngroundedCapabilityClaims(aiMessages))];
+      // C4a — only on a turn that carries an approval forward does PAIGE hear that the approved act was
+      // already attempted; rule 1 of the standing prompt stays neutral for every other approval turn
+      // (a door proposal, a legacy token, a resume that failed to resolve), where no such result exists.
+      if (resumeCalls.length > 0) convo.push({ role: "system", content: RESUME_TURN_NOTE });
+      // Null only on a C4a resume turn, whose first round is the resumed acts (never consumed); the
+      // end of that round assigns the first real model response.
       let currentResponse = response;
       // ── C1: THE BOUNDED CONTINUATION LOOP ─────────────────────────────────────────────
       // A turn may NOT dead-end on narration. When the user's request carries action intent
@@ -15250,7 +15468,21 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // `assistantTurnMetadata` (its output is pinned by n5; #1701 extended it). The persist gate is
       // unchanged: an empty turn with no legacy card still persists nothing (attachTurnRecord).
       const withTurnRecord = <M extends { bundleRef?: unknown }>(text: string, meta: M): M =>
-        attachTurnRecord(turnTracker, text, meta, stepTrace);
+        withResumeRecord(attachTurnRecord(turnTracker, text, meta, stepTrace));
+      // C4a — what the resume did, beside the turn record: `bundle_ref.paige_resume` names the kind,
+      // the suspended turn it carried forward, and each resumed act's outcome in the SAME closed
+      // reading the card gets on the wire (`resumedApprovalClassified`), so a reload reads back
+      // exactly what the person was told. Only on a resume turn, and only where a bundle is written.
+      function withResumeRecord<M extends { bundleRef?: unknown }>(meta: M): M {
+        if (resumeCalls.length === 0 || !meta.bundleRef || typeof meta.bundleRef !== "object") return meta;
+        try {
+          const outcomes = [...resumeTokens.entries()].map(([token, info]) => ({ tool: info.tool, outcome: resumedApprovalClassified(token).outcome }));
+          return { ...meta, bundleRef: { ...(meta.bundleRef as Record<string, unknown>), paige_resume: resumeRecord("approval", resumeFromTurnId, outcomes, approvalOutcomeFrame) } };
+        } catch (e) {
+          console.error("[paige] approval resume record not attached", JSON.stringify({ correlation_id: requestNonce, message: (e as Error)?.message ?? String(e) }));
+          return meta;
+        }
+      }
       // WHAT BECAME OF EACH APPROVAL THE OPERATOR SENT, in the order they sent them — once per turn,
       // however the turn ends (a reply, a changed workspace, a snag), so the card that asked never
       // has to guess (_shared/approval-outcome.ts).
@@ -15264,13 +15496,32 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // It never throws. It runs on the exits that carry the turn's last word (a changed workspace,
       // a snag, an interrupted Live answer), and nothing here may cost the client the frame it needs
       // to settle — so a failure is logged, loudly, and the exit carries on.
+      // C4a — what became of one approval the resume handled (_shared/paige-turn/resume.ts): the
+      // card on the wire and `bundle_ref.paige_resume` both read it here, so they cannot disagree.
+      function resumedApprovalClassified(token: string) {
+        const info = resumeTokens.get(token);
+        const spentBy = approvalSpend.get(token);
+        return classifyResumedApproval({
+          spent: spentBy !== undefined,
+          spentContent: spentBy !== undefined ? toolResultContent.get(spentBy) : undefined,
+          lost: info?.state === "lost",
+          expired: info?.state === "expired",
+          withheld: info?.state === "withheld",
+          refusal: info?.state === "unavailable" ? "lookup_failed" : info ? approvalRefusals.get(info.tool) : undefined,
+          reportsOk: !!info && N8N_MANAGEMENT_TOOL_NAMES.has(info.tool),
+        });
+      }
       let approvalOutcomeSent = false;
+      // The report exactly as it went out, so the resumed turn's record can keep it (C4a).
+      let approvalOutcomeFrame: unknown = null;
       const emitApprovalOutcome = async (controller: ReadableStreamDefaultController) => {
         if (approvalOutcomeSent || approvedConfirmations.size === 0) return;
         approvalOutcomeSent = true;
         try {
           const tokens = [...approvedConfirmations];
           const classified = tokens.map((token) => {
+            // C4a — an approval the resume handled has ONE reading, shared with the turn's record.
+            if (resumeTokens.has(token)) return resumedApprovalClassified(token);
             const spentBy = approvalSpend.get(token);
             const tool = approvalTokenTool.get(token);
             return spentBy !== undefined
@@ -15281,7 +15532,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // the work — "didn't run" is then true of this request and false of the change. Only the
           // stored row can say. If the look fails, nobody knows, and the card says so.
           let usedEarlier: (token: string) => boolean | "unknown" = () => false;
-          const unrun = tokens.filter((_, i) => classified[i].outcome === "not_run");
+          // The resume's own readings are final: those rows were live when this request selected them.
+          const unrun = tokens.filter((token, i) => classified[i].outcome === "not_run" && !resumeTokens.has(token));
           if (unrun.length) {
             try {
               const { data, error } = await supabase.from("paige_pending_confirmations")
@@ -15303,8 +15555,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           }
           const approvalOutcome = buildApprovalOutcome(tokens.map((token, i) => ({
             fingerprint: token,
-            ...settleUsedEarlier(classified[i], usedEarlier(token)),
+            ...(resumeTokens.has(token) ? classified[i] : settleUsedEarlier(classified[i], usedEarlier(token))),
           })));
+          approvalOutcomeFrame = approvalOutcome;
           controller.enqueue(enc.encode(`data: ${JSON.stringify({ paige_approval_outcome: approvalOutcome })}\n\n`));
         } catch (e) {
           console.error("[paige] approval outcome frame not sent", JSON.stringify({ correlation_id: requestNonce, message: (e as { message?: string })?.message ?? String(e) }));
@@ -15341,10 +15594,26 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           // the SAME for loop with the continuation response. No duplicated tool logic, no new
           // type scopes, no second executeToolCalls call site. A hard budget stops it.
           let continueContinuation = false;
+          // C4a — THE RESUMED ROUND. On a resume turn the first round is not a model round: it is the
+          // approved acts, rebuilt from their stored proposals, dispatched through the same
+          // executeToolCalls and handled by the same round body as any model-emitted call (the claim,
+          // the approval rewrite, the audit, the Rail, the step frames, the convo). It takes round 0 —
+          // the round the model used to spend re-emitting the approved act — so the model keeps the
+          // same budget it had before; it starts no model round, and its signature is not a no-progress
+          // signature (a model re-emit is refused by the gate as already handled, not stopped as a
+          // repeat). The round's end makes the first model call, with the results.
+          let resumeRound: { content: string; toolCalls: ResumeCall[]; allChunks: Uint8Array[]; hasToolCall: boolean; finished: boolean } | null = null;
+          if (resumeCalls.length > 0) {
+            turnTracker.resumed("approval");
+            controller.enqueue(enc.encode(turnFrameLine(turnTracker.frame("resumed"))));
+            resumeRound = { content: "", toolCalls: [...resumeCalls], allChunks: [], hasToolCall: true, finished: true };
+          }
           while (true) {
           for (let round = 0; round < MAX_ROUNDS; round++) {
-            turnTracker.roundStarted();
-            const { content, toolCalls, allChunks, hasToolCall, finished } = await consumeRound(currentResponse);
+            const resumedRound = resumeRound;
+            resumeRound = null;
+            if (!resumedRound) turnTracker.roundStarted();
+            const { content, toolCalls, allChunks, hasToolCall, finished } = resumedRound ?? await consumeRound(currentResponse as Response);
             lastRoundFinished = finished;
             // The active account can change while a streamed provider round is in
             // flight. Re-check before accepting its result or executing any tool it
@@ -15466,7 +15735,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               break;
             }
             totalToolCalls += sumToolCost(executed);
-            seenSignatures.add(sig);
+            if (!resumedRound) seenSignatures.add(sig);
             // Each executed tool's step already went out as it finished (C2b, `createToolStepHooks`).
             // What stays at the round's end reads the round as a whole, after the approval rewrite:
             // the confirm/research/CRM traces, the audit row and the rail.
@@ -16133,7 +16402,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     }
 
     // With document: intercept stream to accumulate response, then trigger background sync
-    const reader = response.body!.getReader();
+    // Never null here: a resume turn (the only one without a first call) is never a document turn.
+    const reader = (response as Response).body!.getReader();
     const decoder = new TextDecoder();
     let fullAssistantResponse = "";
     // Leftover-line buffer across pulls: a `data:` record split over two reads

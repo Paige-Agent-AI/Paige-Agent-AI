@@ -120,7 +120,7 @@ function auditTurnFrames(label, responses, rec, narration) {
     const state = b?.turn_state;
     if (!state) { bad(`an assistant turn persisted with no turn_state: ${JSON.stringify(b)?.slice(0, 120)}`); continue; }
     turnAudit.persisted += 1;
-    const extra = Object.keys(state).filter((k) => !["v", "state", "mode", "rounds", "tools", "waiting_on"].includes(k));
+    const extra = Object.keys(state).filter((k) => !["v", "state", "mode", "rounds", "tools", "waiting_on", "resumed"].includes(k));
     if (extra.length || JSON.stringify(readTurnRecord(state)) !== JSON.stringify(state)) bad(`turn_state outside the contract: ${JSON.stringify(state)}`);
     if (b.turn_trace !== undefined) {
       turnAudit.traced += 1;
@@ -1244,8 +1244,11 @@ const mirrorConfirms = (st) => (t, row) => {
   // ── 13.6b …and the SCOPE lookup that resolved it re-checked scope rather than matching on the
   // tool name alone. Kills: dropping the tenant / thread / focused-client predicates from the
   // lookup, which would let a drifted approval reach across a switch — the thing S2 exists to stop.
+  // C4a: the approved card is now carried forward by the server's own resume selection (13.6b2), and
+  // the model's drifted re-emit still reaches the gate's approved-set lookup — both are held to scope.
   const lookupQ = approved.rec.from.find(
     (f) => f.table === "paige_pending_confirmations" && f.op === "select"
+      && f.filters.some((x) => x[0] === "select" && x[1] === "fingerprint,args,issued_in_request")
       && f.filters.some((x) => x[0] === "in" && x[1] === "fingerprint"));
   const lf = (op, col) => lookupQ?.filters.some((x) => x[0] === op && x[1] === col);
   assert("13.6b the scope lookup re-checks user, tenant, expiry, thread and focused client",
@@ -1254,6 +1257,18 @@ const mirrorConfirms = (st) => (t, row) => {
       && (lf("eq", "thread_id") || lf("is", "thread_id"))
       && (lf("eq", "scoped_client_id") || lf("is", "scoped_client_id")),
     JSON.stringify(lookupQ?.filters ?? "no lookup recorded"));
+  // 13.6b2 — the resume selection carries the claim's own scope: this user, this (non-null) thread,
+  // this workspace and focused client, server-issued, and never minted by this very request. It
+  // reads consumed and expiry so it can report them truthfully; the claim itself still filters both.
+  const resumeQ = approved.rec.from.find(
+    (f) => f.table === "paige_pending_confirmations" && f.op === "select"
+      && f.filters.some((x) => x[0] === "select" && String(x[1]).includes("consumed_at") && String(x[1]).includes("expires_at")));
+  const rf = (op, col, value) => resumeQ?.filters.some((x) => x[0] === op && x[1] === col && (value === undefined || x[2] === value));
+  assert("13.6b2 the resume selection re-checks user, thread, tenant, focused client, issuance and the request nonce",
+    !!resumeQ && rf("eq", "user_id", USER) && rf("eq", "thread_id", THREAD)
+      && (rf("eq", "tenant_id") || rf("is", "tenant_id")) && rf("eq", "scoped_client_id", OWN)
+      && rf("not", "server_issued_at") && rf("not", "issued_in_request") && rf("neq", "issued_in_request"),
+    JSON.stringify(resumeQ?.filters ?? "no resume selection recorded"));
 
   // ── 13.6c …and it refuses when it cannot tell WHICH proposal was approved. Two live proposals
   // for the same tool make a drifted yes ambiguous, and a fresh summary is the right answer to an
@@ -1994,10 +2009,15 @@ const mirrorConfirms = (st) => (t, row) => {
   const batchSelected = await batchDrive({ ...batchArgs[2], confirm: true }, {
     approvedConfirmations: batchStore.rows.map(issuedApproval),
   });
+  // C4a: the person approved all three cards, so all three stored calls run — each exactly once,
+  // each from its own stored arguments — whatever the model re-emits. (On main only the one the model
+  // happened to re-emit ran and the other two were stranded: the prod defect C4a fixes.)
+  const batchWrites = batchSelected.outboundCalls.filter((call) => call.url.includes("paige-write-back"));
   assert("18.H12", batchStore.rows.length === 3
-    && batchStore.rows.filter((row) => row.consumed).length === 1
-    && batchStore.rows[2].consumed
-    && batchSelected.outboundCalls.filter((call) => call.url.includes("paige-write-back")).length === 1);
+    && batchStore.rows.every((row) => row.consumed)
+    && batchWrites.length === 3
+    && ["one", "two", "three"].every((goal) => batchWrites.filter((call) => call.body.includes(`"goal":"${goal}"`)).length === 1),
+    JSON.stringify({ rows: batchStore.rows.length, consumed: batchStore.rows.filter((r) => r.consumed).length, writes: batchWrites.map((c) => c.body.slice(0, 80)) }));
   const legacyFresh = hardeningLegacy.rows.find((row) => !row.consumed
     && row.fingerprint !== hardeningLegacy.rows[0].fingerprint);
   assert("18.H13", !!legacyFresh);
@@ -2024,10 +2044,13 @@ const mirrorConfirms = (st) => (t, row) => {
   const subjectSelected = await subjectDrive({ ...subjectArgs[1], decision_rationale: "different note", confirm: true }, {
     approvedConfirmations: subjectStore.rows.map(issuedApproval),
   });
-  assert("18.H15", subjectStore.rows.length === 2 && !subjectStore.rows[0].consumed && subjectStore.rows[1].consumed
-    && subjectSelected.rec.rpc.filter((call) => call.name === "advance_action").length === 1
-    && subjectSelected.rec.rpc.some((call) => call.name === "advance_action"
-      && call.args.p_action_id === FOREIGN && call.args.p_decision_rationale === "original note"));
+  // C4a: both approved subjects run, each once, each with its STORED rationale; the model's drifted
+  // re-emit for the second subject is refused as already handled (same subject id), never a third run.
+  const advanced = subjectSelected.rec.rpc.filter((call) => call.name === "advance_action");
+  assert("18.H15", subjectStore.rows.length === 2 && subjectStore.rows.every((row) => row.consumed)
+    && advanced.length === 2
+    && [OWN, FOREIGN].every((id) => advanced.filter((call) => call.args.p_action_id === id && call.args.p_decision_rationale === "original note").length === 1),
+    JSON.stringify(advanced.map((c) => c.args)));
 
   // 18.ID1–ID8 — AN ID THE EXECUTOR CANNOT ADDRESS NEVER BECOMES A CARD, never spends an approval,
   // and never reaches advance_action. 2026-09-13: Paige sent a shortened action id, the approval was
@@ -2430,8 +2453,10 @@ const mirrorConfirms = (st) => (t, row) => {
     let changed = false;
     store.table = (filters) => {
       const snapshot = table(filters);
+      // The race is between the CLAIM's own select and its update (C4a: the resume selection, which
+      // reads consumed/expiry too, is not that select).
       if (!changed && !filters.some(([op]) => op === "update")
-        && filters.some(([op, columns]) => op === "select" && String(columns).includes("tool_name"))) {
+        && filters.some(([op, columns]) => op === "select" && String(columns) === "fingerprint,args,issued_in_request,tool_name")) {
         changed = true;
         store.rows[0].issued_in_request = "22222222-2222-4222-8222-222222222222";
       }
@@ -2651,7 +2676,13 @@ const mirrorConfirms = (st) => (t, row) => {
     toolCall:{name:GRANT_TOOL,args:driftArgs},...CONFIRM,tablesExtra:{paige_pending_confirmations:store.table,...asAdmin},onInsert:mirrorConfirms(store)});
   const driftApproved = await driveCard(driftStore);
   assert("18.7d clicked high-risk card survives model argument drift",granted(driftApproved));
-  assert("18.7e execution uses stored approved arguments, never the drift", !JSON.stringify(driftApproved.rec.rpc).includes("model-changed-role") && driftStore.rows[0].consumed);
+  // C4a: the stored call runs from the resume before the model speaks; the model's drifted re-emit is
+  // then a DIFFERENT act, so it can only become a new proposal awaiting its own approval — it never
+  // runs. So the check is on what EXECUTED, not on whether the drifted words appear anywhere.
+  const grants = driftApproved.rec.rpc.filter((c) => c.name === "grant_tenant_member_role");
+  assert("18.7e execution uses stored approved arguments, never the drift",
+    grants.length === 1 && !JSON.stringify(grants).includes("model-changed-role") && JSON.stringify(grants).includes("coach") && driftStore.rows[0].consumed,
+    JSON.stringify(grants.map((c) => c.args)));
   const replay = await driveCard(driftStore);
   assert("18.7f drifted card cannot replay a consumed approval",!granted(replay));
   for (const [label, patch] of Object.entries({wrong_user:{user_id:FOREIGN},wrong_tenant:{tenant_id:OTHER_TENANT},wrong_thread:{thread_id:FOREIGN},wrong_client:{scoped_client_id:FOREIGN},wrong_tool:{tool_name:"n8n_create_workflow"},expired:{expires_at:"2000-01-01T00:00:00Z"},legacy:{issued_in_request:null}})) {
@@ -2661,7 +2692,12 @@ const mirrorConfirms = (st) => (t, row) => {
   }
   const ambiguous=makeConfirmStore([{...approvedRow,consumed:false},{...approvedRow,fingerprint:"f".repeat(16),consumed:false}]);
   const ambiguousReply=await driveCard(ambiguous,{approvedConfirmations:[issuedApproval(approvedRow),"f".repeat(16)]});
-  assert("18.7h ambiguous submitted proposals do not pick an arbitrary call",!granted(ambiguousReply));
+  // C4a: the scoped approval is PINNED by the server, so nothing is ambiguous about it — it runs once,
+  // from its stored call. The bare token beside it (an identical act) is never spent on top of it.
+  assert("18.7h ambiguous submitted proposals do not pick an arbitrary call",
+    ambiguousReply.rec.rpc.filter((c) => c.name === "grant_tenant_member_role").length === 1
+      && ambiguous.rows[0].consumed && !ambiguous.rows[1].consumed,
+    JSON.stringify({ grants: ambiguousReply.rec.rpc.filter((c) => c.name === "grant_tenant_member_role").length, rows: ambiguous.rows.map((r) => r.consumed) }));
 
   // ── 18.7b — OWNER-ONLY IS REFUSED DOWN BOTH CHANNELS, INCLUDING THE CARD. This is the property
   // 18.6/18.7 moved off `automation_set_grant` to make room for. A rendered card is the strongest
@@ -3565,6 +3601,10 @@ console.log("\nsigned Live runtime admission (real handler and real signed chall
     ["another signed tenant", { scopeOverride: { tenantId: OTHER_TENANT } }, false],
     ["body-supplied identity cannot override authorization", { authority: { data: false, error: null },
       bodyOverride: { actorId: FOREIGN, user_id: FOREIGN, tenantId: OTHER_TENANT, tenant_id: OTHER_TENANT } }, true],
+    // C4a (39.6) — a spoken turn still may not carry an approval, now that an approval RUNS on the
+    // server rather than waiting for the model: speech never approves anything.
+    ["a Live turn carrying an approval", { bodyOverride: { approvedConfirmations: ["a".repeat(16)] } }, false],
+    ["a Live turn carrying a scoped approval token", { bodyOverride: { approvedConfirmations: [`${"b".repeat(16)}:${sessionId}`] } }, false],
   ]) {
     const denied = await liveDrive(options);
     assert(`26 ${name}: refuses`, denied.status === 403 && denied.bodyText === '{"error":"live_runtime_unavailable"}', denied.bodyText);
@@ -5328,6 +5368,488 @@ console.log("\nsurface-aware self-knowledge — what she can do, what the owner 
       && unknownScopeThread.modelEgress.every((b) => !b.includes("PLATFORM-THREAD-SUMMARY-MARKER") && !b.includes("platform turn 1"))
       && threadWrites(unknownScopeThread).appends === 0,
     JSON.stringify({ status: unknownScopeThread.status, egress: unknownScopeThread.modelEgress.length, ...threadWrites(unknownScopeThread) }));
+}
+
+// ── 39. C4a — AN APPROVAL RESUMES THE SAME OBJECTIVE ON THE SERVER ───────────────────────────────
+//
+// docs/delivery/paige-conversational-loop-c4.md. Approve used to start a new request in which the
+// MODEL had to re-emit the approved act; when it did not, nothing ran (prod, 30 days: 14 of 28
+// approved general-gate proposals never executed). Now the server rebuilds the act from its stored
+// row, claims it once through the existing gate, runs the stored arguments, and only then calls PAIGE
+// with the result. Each check names the defect it catches; "red at base" means it fails on main.
+console.log("\nC4a — an approval resumes the same objective on the server");
+{
+  const THREAD = "c4c4c4c4-c4c4-4c4c-8c4c-c4c4c4c4c4c4";
+  const SUSPENDED = "5a5a5a5a-5a5a-4a5a-8a5a-5a5a5a5a5a5a";
+  const TOOL = "update_client_data";
+  const ARGS = { client_id: OWN, updates: { goal: "resume-stored-goal" } };
+  const CONFIRM_LANE = { resolve_tool_autonomy: { data: "confirm", error: null } };
+  const writes = (r) => r.outboundCalls.filter((c) => c.url.includes("paige-write-back"));
+  const framesOf = (text) => String(text ?? "").split("\n").filter((l) => l.startsWith("data: ") && l !== "data: [DONE]")
+    .flatMap((l) => { try { return [JSON.parse(l.slice(6))]; } catch { return []; } });
+  const outcomeOf = (text) => framesOf(text).find((f) => f.paige_approval_outcome)?.paige_approval_outcome ?? null;
+  const resumedFrames = (text) => framesOf(text).filter((f) => f.paige_turn?.event === "resumed");
+  const savedAnswer = (r) => r.rec.rpc.filter((c) => c.name === "paige_chat_turn_append" && c.args?.p_role === "assistant").at(-1)?.args?.p_bundle_ref ?? null;
+  const toldModel = (r) => r.modelEgress.join("\n").replace(/\\"/g, '"');
+  const turnsWith = (token) => ({ paige_chat_turns: () => [
+    { id: SUSPENDED, role: "assistant", content: "Here is what I'll change.", seq: 2, bundle_ref: { paige_confirm: [{ tool: TOOL, summary: "Update the goal", fingerprint: token }] } },
+  ] });
+  const propose = async (store, extra = {}) => {
+    const r = await drive({
+      stream: true, clientId: OWN, extraBody: { threadId: THREAD }, toolCall: { name: TOOL, args: ARGS },
+      rpcOverrides: { ...CONFIRM_LANE, ...(extra.rpc ?? {}) },
+      tablesExtra: { paige_pending_confirmations: store.table, ...(extra.tables ?? {}) },
+      onInsert: mirrorConfirms(store),
+    });
+    return framesOf(r.bodyText).find((f) => f.paige_confirm)?.paige_confirm?.fingerprint ?? null;
+  };
+  const approve = (store, token, opts = {}) => drive({
+    stream: true, clientId: OWN, text: "Approved — run it.",
+    extraBody: { threadId: THREAD, ...(opts.declined ? { declinedConfirmations: [token] } : { approvedConfirmations: [token] }) },
+    toolCall: opts.toolCall,
+    rpcOverrides: { ...CONFIRM_LANE, ...(opts.rpc ?? {}) },
+    tablesExtra: { paige_pending_confirmations: store.table, ...turnsWith(token), ...(opts.tables ?? {}) },
+    onInsert: mirrorConfirms(store),
+    concurrentRequests: opts.concurrent ?? 1,
+  });
+
+  // ── 39.1 THE PROD STRAND. Approve, and the model does NOT re-emit the act: it still runs, once,
+  // from the STORED arguments. Red at base (nothing ran). Kills: deleting the resumed round.
+  const st1 = makeConfirmStore();
+  const token1 = await propose(st1);
+  assert("39.0 the proposal minted a scoped card token (guards 39.1)", /^[0-9a-f]{16}:[0-9a-f-]{36}$/.test(token1 ?? ""), String(token1));
+  const ran = await approve(st1, token1);
+  assert("39.1 approved with NO model re-emit: the stored act runs exactly once, from the stored arguments",
+    writes(ran).length === 1 && writes(ran)[0].body.includes("resume-stored-goal") && st1.rows[0]?.consumed === true,
+    JSON.stringify({ writes: writes(ran).map((c) => c.body.slice(0, 120)), consumed: st1.rows[0]?.consumed, status: ran.status }));
+  const outcome1 = outcomeOf(ran.bodyText);
+  assert("39.1b the card reports it ran (the act's own result, never optimism)",
+    outcome1?.actions?.length === 1 && outcome1.actions[0].fingerprint === token1 && outcome1.actions[0].outcome === "ran",
+    JSON.stringify(outcome1));
+  assert("39.1c PAIGE is called AFTER the act ran, with its result: the objective continues in the same answer",
+    ran.modelEgress.length >= 1 && /"tool_use_id":"resume_[0-9a-f]{16}_[0-9a-f-]{36}"/.test(ran.modelEgress[0].replace(/\\"/g, '"')),
+    ran.modelEgress[0]?.slice(0, 300));
+  assert("39.1d the wire says resumed once, WORKING, after started and before the terminal",
+    resumedFrames(ran.bodyText).length === 1 && resumedFrames(ran.bodyText)[0].paige_turn.state === "WORKING",
+    JSON.stringify(framesOf(ran.bodyText).filter((f) => f.paige_turn).map((f) => f.paige_turn)));
+  const resumeSteps = framesOf(ran.bodyText).filter((f) => String(f.paige_step?.id ?? "").includes("resume_")).map((f) => f.paige_step);
+  assert("39.1e the resumed act's step closes done from its own result, on the same answer (C2b lifecycle)",
+    resumeSteps.length >= 1 && resumeSteps.at(-1).status === "done" && resumeSteps.every((st) => st.kind === "action"),
+    JSON.stringify(resumeSteps));
+
+  // ── 39.2 A MODEL THAT RE-EMITS THE ACT AFTER THE RESUME is refused as already handled: no second
+  // run, no new card. Red at base (the re-emit was the act; nothing said "already handled").
+  const st2 = makeConfirmStore();
+  const token2 = await propose(st2);
+  const reemit = await approve(st2, token2, { toolCall: { name: TOOL, args: { ...ARGS, confirm: true } } });
+  assert("39.2 the model re-emitting the resumed act is refused as already handled — one run, no new card",
+    writes(reemit).length === 1 && st2.rows.length === 1
+      && toldModel(reemit).includes("already_handled_this_reply")
+      && !framesOf(reemit.bodyText).some((f) => f.paige_confirm),
+    JSON.stringify({ writes: writes(reemit).length, rows: st2.rows.length, cards: framesOf(reemit.bodyText).filter((f) => f.paige_confirm).length }));
+
+  // ── 39.2b …and a re-emit byte-identical to the stored call (no `confirm` key at all) is refused the
+  // same way — never mistaken for the model repeating itself (a no-progress LIMIT stop). Kills:
+  // counting the resumed round's signature as a model round's.
+  const st2b = makeConfirmStore();
+  const token2b = await propose(st2b);
+  const identical = await approve(st2b, token2b, { toolCall: { name: TOOL, args: ARGS } });
+  const terminal2b = framesOf(identical.bodyText).filter((f) => f.paige_turn && f.paige_turn.event !== "started" && f.paige_turn.event !== "resumed").at(-1)?.paige_turn;
+  assert("39.2b a byte-identical re-emit is refused as already handled, and the turn does not end LIMIT_REACHED",
+    writes(identical).length === 1 && toldModel(identical).includes("already_handled_this_reply") && terminal2b?.state !== "LIMIT_REACHED",
+    JSON.stringify({ writes: writes(identical).length, terminal: terminal2b }));
+
+  // ── 39.3 DOUBLE APPROVE (two POSTs, same token, at once): one execution; the loser says it can't
+  // confirm — never "ran", never "nothing changed". Red at base (nothing ran in either).
+  const st3 = makeConfirmStore();
+  const token3 = await propose(st3);
+  const doubled = await approve(st3, token3, { concurrent: 2 });
+  const outcomes3 = doubled.responses.map((r) => outcomeOf(r.bodyText)?.actions?.[0]?.outcome ?? null).sort();
+  const loserNote3 = doubled.responses.map((r) => outcomeOf(r.bodyText)).find((o) => o?.actions?.[0]?.outcome === "unconfirmed")?.note ?? "";
+  assert("39.3 two approvals of one card at once: exactly one execution, from the stored arguments",
+    writes(doubled).length === 1 && st3.rows.length === 1 && st3.rows[0].consumed === true,
+    JSON.stringify({ writes: writes(doubled).length, rows: st3.rows.length }));
+  assert("39.3b …the winner reports ran, the loser reports it can't confirm (it may already have happened)",
+    JSON.stringify(outcomes3) === JSON.stringify(["ran", "unconfirmed"]) && /can't be used any more/.test(loserNote3),
+    JSON.stringify({ outcomes3, loserNote3 }));
+  // …and a refresh / reopen that sends the same approval again later runs nothing and says the same.
+  const again3 = await approve(st3, token3);
+  assert("39.3c the same approval sent again later runs nothing and reports can't confirm",
+    writes(again3).length === 0 && outcomeOf(again3.bodyText)?.actions?.[0]?.outcome === "unconfirmed" && resumedFrames(again3.bodyText).length === 0,
+    JSON.stringify(outcomeOf(again3.bodyText)));
+
+  // ── 39.3d THE LOSER THAT ARRIVES JUST AFTER THE WINNER CLAIMED: its approval was used by another
+  // request that started AFTER this one — the earlier-use check (claim time < this request's start)
+  // cannot see that. It still says "can't confirm", never "Paige didn't run this"; and a re-emit of
+  // the act is refused rather than becoming a fresh card for something that may already have run.
+  const st3d = makeConfirmStore();
+  const token3d = await propose(st3d);
+  st3d.rows[0].consumed = true;
+  // After this request began, and (as every real claim is) inside the proposal's window — a claim
+  // stamped at or past `expires_at` is a shape only the expiry sweep produces (39.9b).
+  st3d.rows[0].consumedAt = "2098-01-01T00:00:00.000Z";
+  const late = await approve(st3d, token3d, { toolCall: { name: TOOL, args: { ...ARGS, confirm: true } } });
+  const outcome3d = outcomeOf(late.bodyText);
+  assert("39.3d an approval another request claimed after this one began: can't confirm, nothing runs, no fresh card",
+    writes(late).length === 0 && st3d.rows.length === 1 && outcome3d?.actions?.[0]?.outcome === "unconfirmed"
+      && /can't be used any more/.test(outcome3d?.note ?? "") && toldModel(late).includes("approval_already_used"),
+    JSON.stringify({ writes: writes(late).length, rows: st3d.rows.length, outcome3d }));
+
+  // ── 39.4 A TOKEN FROM ANOTHER SCOPE is not claimed and nothing runs. Each patch moves the stored
+  // row out of this caller's user / tenant / thread / focused client. Kills: dropping a predicate
+  // from the resume selection.
+  const st4seed = makeConfirmStore();
+  const token4 = await propose(st4seed);
+  for (const [label, patch] of Object.entries({
+    another_user: { user_id: FOREIGN }, another_tenant: { tenant_id: OTHER_TENANT },
+    another_thread: { thread_id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd" }, another_client: { scoped_client_id: FOREIGN },
+  })) {
+    const st = makeConfirmStore([{ ...st4seed.rows[0], ...patch, consumed: false }]);
+    const r = await approve(st, token4);
+    assert(`39.4 a token whose proposal belongs to ${label.replace("_", " ")} is not claimed and nothing runs`,
+      writes(r).length === 0 && !st.rows[0].consumed && resumedFrames(r.bodyText).length === 0,
+      JSON.stringify({ writes: writes(r).length, consumed: st.rows[0].consumed }));
+  }
+
+  // ── 39.5 DECLINE IS UNCHANGED: recorded, nothing runs, no resume.
+  const st5 = makeConfirmStore();
+  const token5 = await propose(st5);
+  const declined = await approve(st5, token5, { declined: true });
+  assert("39.5 Not now still cancels the stored proposal and runs nothing; no resume",
+    writes(declined).length === 0 && st5.rows[0].consumed === true && resumedFrames(declined.bodyText).length === 0 && !outcomeOf(declined.bodyText),
+    JSON.stringify({ writes: writes(declined).length, consumed: st5.rows[0].consumed }));
+
+  // ── 39.7 A→B→A. The approval was minted in workspace A. Arriving while B is active, the thread is
+  // refused (409) before anything is claimed; back in A, it runs once; sent again, it runs nothing.
+  const PERSONA = (tenant) => ({ get_paige_persona_context: { data: [{ tenant_id: tenant, tenant_name: "T", playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null } });
+  const threadOfA = { paige_chat_threads: () => [{ id: THREAD, tenant_id: CALLER_TENANT, caller_user_id: USER, contact_id: null }] };
+  const st7 = makeConfirmStore();
+  const token7 = await propose(st7, { rpc: PERSONA(CALLER_TENANT), tables: threadOfA });
+  const inB = await approve(st7, token7, { rpc: PERSONA(OTHER_TENANT), tables: threadOfA });
+  assert("39.7 approval minted in A, request arrives with B active: 409, nothing claimed, nothing runs",
+    inB.status === 409 && writes(inB).length === 0 && st7.rows[0]?.consumed === false && st7.rows[0]?.tenant_id === CALLER_TENANT,
+    JSON.stringify({ status: inB.status, writes: writes(inB).length, row: st7.rows[0] && { consumed: st7.rows[0].consumed, tenant: st7.rows[0].tenant_id } }));
+  const backInA = await approve(st7, token7, { rpc: PERSONA(CALLER_TENANT), tables: threadOfA });
+  assert("39.7b …back in A, the same approval runs once under A's authority",
+    backInA.status === 200 && writes(backInA).length === 1 && st7.rows[0].consumed === true, JSON.stringify({ status: backInA.status, writes: writes(backInA).length }));
+  const againInA = await approve(st7, token7, { rpc: PERSONA(CALLER_TENANT), tables: threadOfA });
+  assert("39.7c …and once more in A, nothing runs again", writes(againInA).length === 0, String(writes(againInA).length));
+
+  // ── 39.8 WIRE = PERSIST: the saved answer carries turn_state.resumed and paige_resume, whose report
+  // is byte-for-byte the frame the card read live. Red at base (no record of the resume at all).
+  const saved1 = savedAnswer(ran);
+  // (Imported defensively so this group can be run against main to show it is red there.)
+  const { readResumeRecord } = await import("../../supabase/functions/_shared/paige-turn/resume.ts").catch(() => ({ readResumeRecord: () => null }));
+  const rec1 = readResumeRecord(saved1?.paige_resume);
+  assert("39.8 the saved answer records the resume: kind, the suspended turn, each act's outcome",
+    saved1?.turn_state?.resumed?.kind === "approval" && rec1?.kind === "approval" && rec1.from_turn_id === SUSPENDED
+      && JSON.stringify(rec1.outcomes) === JSON.stringify([{ tool: TOOL, outcome: "ran" }]),
+    JSON.stringify(saved1 ? { turn_state: saved1.turn_state, paige_resume: saved1.paige_resume } : null));
+  // The resumed round is not a model call: the record counts the ONE model call PAIGE made after it
+  // and the ONE act that ran. Kills: counting the resumed round as a model round.
+  assert("39.8a the saved turn counts what really happened: one model call, one act, FINAL",
+    saved1?.turn_state?.state === "FINAL" && saved1.turn_state.rounds === 1 && saved1.turn_state.tools === 1
+      && ran.modelEgress.filter((b) => b.includes('"stream":true')).length === 1,
+    JSON.stringify({ turn_state: saved1?.turn_state, streamed: ran.modelEgress.filter((b) => b.includes('"stream":true')).length }));
+  assert("39.8b the saved report is exactly the report the wire carried (the reload rebuilds the same card)",
+    !!outcome1 && JSON.stringify(rec1?.approval_outcome) === JSON.stringify(outcome1),
+    JSON.stringify({ saved: rec1?.approval_outcome, wire: outcome1 }));
+  assert("39.8c an ordinary approval-less turn records no resume",
+    !savedAnswer(declined)?.paige_resume && !savedAnswer(declined)?.turn_state?.resumed, JSON.stringify(savedAnswer(declined)));
+
+  // ── 39.9 EXPIRED: nothing runs, and the card says it expired (not "Paige didn't run this").
+  const st9 = makeConfirmStore();
+  const token9 = await propose(st9);
+  st9.rows[0].expires_at = "2000-01-01T00:00:00Z";
+  const expired = await approve(st9, token9);
+  const outcome9 = outcomeOf(expired.bodyText);
+  assert("39.9 an expired approval runs nothing and the card says it expired",
+    writes(expired).length === 0 && !st9.rows[0].consumed && outcome9?.actions?.[0]?.outcome === "not_run" && /expired/.test(outcome9?.note ?? "")
+      && resumedFrames(expired.bodyText).length === 0,
+    JSON.stringify(outcome9));
+
+  // ── 39.10 THE LANE MOVED TO AUTO AFTER THE CARD: the resumed act still spends its approval (the
+  // claim is the exactly-once), so a second send runs nothing. Kills: letting `auto` skip the claim.
+  const st10 = makeConfirmStore();
+  const token10 = await propose(st10);
+  const autoNow = await approve(st10, token10, { rpc: { resolve_tool_autonomy: { data: "auto", error: null } } });
+  const autoAgain = await approve(st10, token10, { rpc: { resolve_tool_autonomy: { data: "auto", error: null } } });
+  assert("39.10 a lane moved to auto after the card still claims the approval: one run, then none",
+    writes(autoNow).length === 1 && st10.rows[0].consumed === true && writes(autoAgain).length === 0,
+    JSON.stringify({ first: writes(autoNow).length, consumed: st10.rows[0].consumed, second: writes(autoAgain).length }));
+
+  // ── 39.11 THE BRAKE PULLED AFTER THE CARD (lane `off`) is honoured: nothing runs, nothing claimed.
+  const st11 = makeConfirmStore();
+  const token11 = await propose(st11);
+  const off = await approve(st11, token11, { rpc: { resolve_tool_autonomy: { data: "off", error: null } } });
+  assert("39.11 a lane switched off after the card: the resumed act does not run and the approval is not spent",
+    writes(off).length === 0 && !st11.rows[0].consumed && outcomeOf(off.bodyText)?.actions?.[0]?.outcome === "not_run",
+    JSON.stringify(outcomeOf(off.bodyText)));
+
+  // ════ C4a review fixes (verifier + compliance, 2026-10-05). Each names the mutation it kills. ════
+
+  // ── 39.12 THE PROMPT ONLY SAYS "IT ALREADY RAN" ON A TURN WHERE IT WAS ATTEMPTED. Rule 1 is neutral;
+  // the resume note is turn-local. Kills: putting the note (or its claim) back into the standing prompt,
+  // or adding the note on a turn the server did not carry forward.
+  // Driven as the platform operator, whose prompt carries rule 1 (the CRM operator block), so the
+  // standing rule's own wording is on the wire to check — not just the note's absence.
+  // The platform operator is a super_admin role row (workspace-authority.ts: platformOperator).
+  const OPERATOR = { is_platform_operator: { data: true, error: null }, is_super_admin: { data: true, error: null } };
+  const OPERATOR_ROLE = { user_roles: [{ role: "super_admin" }] };
+  const RESUME_NOTE_HEAD = "THIS TURN CARRIES AN APPROVAL FORWARD";
+  const FALSE_CLAIM = "the platform runs that stored action itself and its result is already in this conversation";
+  const NEUTRAL_RULE = "When there is no such result, do not say the action ran";
+  const st12a = makeConfirmStore();
+  const token12a = await propose(st12a, { rpc: OPERATOR, tables: OPERATOR_ROLE });
+  const resumed12 = await approve(st12a, token12a, { rpc: OPERATOR, tables: OPERATOR_ROLE });
+  assert("39.12 a resume turn tells PAIGE the approved act was attempted before she was asked (turn-local note); rule 1 stays neutral",
+    resumedFrames(resumed12.bodyText).length === 1 && toldModel(resumed12).includes(RESUME_NOTE_HEAD)
+      && toldModel(resumed12).includes(NEUTRAL_RULE) && !toldModel(resumed12).includes(FALSE_CLAIM),
+    JSON.stringify({ resumed: resumedFrames(resumed12.bodyText).length, note: toldModel(resumed12).includes(RESUME_NOTE_HEAD), rule: toldModel(resumed12).includes(NEUTRAL_RULE) }));
+  const st12 = makeConfirmStore();
+  const token12 = await propose(st12, { rpc: OPERATOR, tables: OPERATOR_ROLE });
+  // A read in the reply makes a second model call, whose messages are the loop's conversation — where
+  // the note would be if it were added on every turn rather than only a resumed one.
+  const legacyTurn = await approve(st12, token12.split(":")[0], { rpc: OPERATOR, tables: OPERATOR_ROLE, toolCall: { name: "capability_status", args: {} } });
+  assert("39.12b an approval turn the server did NOT carry forward (a bare legacy token) is not told anything ran",
+    resumedFrames(legacyTurn.bodyText).length === 0 && legacyTurn.modelEgress.length >= 2
+      && !toldModel(legacyTurn).includes(RESUME_NOTE_HEAD) && !toldModel(legacyTurn).includes(FALSE_CLAIM)
+      && toldModel(legacyTurn).includes(NEUTRAL_RULE),
+    JSON.stringify({ resumed: resumedFrames(legacyTurn.bodyText).length, calls: legacyTurn.modelEgress.length, rule: toldModel(legacyTurn).includes(NEUTRAL_RULE) }));
+
+  // ── 39.13 A DRIFTED RE-EMIT ON A LANE NOW `auto` IS NOT A SECOND WRITE. The lane moved to auto after
+  // the card; the stored act runs (spending its approval), and the model's re-emit with different
+  // arguments — a different act to the identity check — becomes a card, never a second run (VFY-A).
+  // Kills: dropping the same-tool confirm clamp while a carried-forward act is in the reply.
+  const st13 = makeConfirmStore();
+  const token13 = await propose(st13);
+  const drifted13 = await approve(st13, token13, {
+    rpc: { resolve_tool_autonomy: { data: "auto", error: null } },
+    toolCall: { name: TOOL, args: { client_id: OWN, updates: { goal: "drifted-goal" } } },
+  });
+  assert("39.13 lane moved to auto + a drifted re-emit: one write (the stored one), the drifted call is held as a card",
+    writes(drifted13).length === 1 && writes(drifted13)[0].body.includes("resume-stored-goal")
+      && !writes(drifted13).some((c) => c.body.includes("drifted-goal")) && /"needs_confirm":true/.test(toldModel(drifted13)),
+    JSON.stringify({ writes: writes(drifted13).map((c) => c.body.slice(0, 120)) }));
+
+  // ── 39.14 SAME SUBJECT, RE-AUTHORED CONTENT: refused as already handled — not a second change, not a
+  // fresh card re-asking for an action the approval already carried forward. `draft_content` is part of
+  // the act's identity (only `decision_rationale` is set aside), so a model that rewords the draft on its
+  // re-emit is a different act to the identity check; the subject id is what recognises it.
+  // Kills: removing the subject-key refusal (MV6). (Accepted cost, stated in the delivery record: a
+  // genuinely different second change to the SAME action in the same reply is refused too, and can be
+  // proposed on the next turn. action_advance is the only tool with a subject key.)
+  const ACTION14 = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14";
+  const st14 = makeConfirmStore();
+  const advDrive = (body, toolCall) => drive({
+    stream: true, extraBody: { threadId: THREAD, ...body }, toolCall,
+    rpcOverrides: { ...CONFIRM_LANE, get_actor_access: { data: { tier: "tenant" }, error: null } },
+    tablesExtra: { paige_pending_confirmations: st14.table, user_roles: [{ role: "admin" }], ...turnsWith("x") },
+    onInsert: mirrorConfirms(st14),
+  });
+  const proposed14 = await advDrive({}, { name: "action_advance", args: { action_id: ACTION14, to_status: "drafted", draft_content: "Hi Sam, checking in on your week." } });
+  const token14 = framesOf(proposed14.bodyText).find((f) => f.paige_confirm)?.paige_confirm?.fingerprint ?? null;
+  const subj14 = await advDrive({ approvedConfirmations: [token14] },
+    { name: "action_advance", args: { action_id: ACTION14, to_status: "drafted", draft_content: "Hi Sam, just checking in on how your week is going.", confirm: true } });
+  const advanced14 = subj14.rec.rpc.filter((c) => c.name === "advance_action");
+  assert("39.14 a same-subject re-emit with re-authored content is refused as already handled: one change, stored draft, no card",
+    !!token14 && advanced14.length === 1 && JSON.stringify(advanced14[0].args).includes("checking in on your week.")
+      && st14.rows.length === 1 && toldModel(subj14).includes("already_handled_this_reply") && !framesOf(subj14.bodyText).some((f) => f.paige_confirm),
+    JSON.stringify({ token14, advanced: advanced14.map((c) => c.args), rows: st14.rows.length }));
+
+  // ── 39.15 A ROW WHOSE STORED ARGUMENTS NO LONGER MATCH ITS CARD TOKEN is not carried forward at all.
+  // Kills: dropping the integrity check from the resume selection (MV1) — the claim's own check would
+  // still refuse it, but only after a "resumed" turn and a check-failed card for something never valid.
+  const st15 = makeConfirmStore();
+  const token15 = await propose(st15);
+  st15.rows[0].args = { client_id: OWN, updates: { goal: "tampered-after-the-card" } };
+  const tampered = await approve(st15, token15);
+  assert("39.15 a stored proposal altered after its card was shown: no resume, nothing claimed, nothing runs",
+    resumedFrames(tampered.bodyText).length === 0 && writes(tampered).length === 0 && !st15.rows[0].consumed,
+    JSON.stringify({ resumed: resumedFrames(tampered.bodyText).length, writes: writes(tampered).length, consumed: st15.rows[0].consumed }));
+
+  // ── 39.16 MANY CONSUMED ROWS OF THE SAME ACT do not crowd the live one out of the bounded read.
+  // A thread where the same act was proposed again and again leaves consumed rows sharing the scoped
+  // fingerprint. Kills: dropping the issuing-request narrowing from the resume selection.
+  const st16 = makeConfirmStore();
+  const token16 = await propose(st16);
+  const live16 = st16.rows[0];
+  for (let i = 0; i < 40; i += 1) {
+    st16.rows.unshift({ ...structuredClone(live16), id: `old-${i}`, issued_in_request: crypto.randomUUID(), consumed: true, consumedAt: "2026-01-01T00:00:00.000Z" });
+  }
+  const crowded = await approve(st16, token16);
+  assert("39.16 forty spent proposals of the same act ahead of the live one: the approved one still runs, once",
+    writes(crowded).length === 1 && live16.consumed === true && resumedFrames(crowded.bodyText).length === 1,
+    JSON.stringify({ writes: writes(crowded).length, consumed: live16.consumed }));
+
+  // ── 39.9b A ROW THE EXPIRY SWEEP STAMPED (consumed at or after its window closed) says EXPIRED, not
+  // "may already have happened". Kills: reading every consumed row as used elsewhere.
+  const st9b = makeConfirmStore();
+  const token9b = await propose(st9b);
+  Object.assign(st9b.rows[0], { expires_at: "2000-01-01T00:00:00Z", consumed: true, consumedAt: "2000-01-01T00:05:00.000Z" });
+  const swept = await approve(st9b, token9b);
+  const outcome9b = outcomeOf(swept.bodyText);
+  assert("39.9b an approval whose proposal the expiry sweep closed: nothing runs, the card says it expired",
+    writes(swept).length === 0 && outcome9b?.actions?.[0]?.outcome === "not_run" && /expired/.test(outcome9b?.note ?? "")
+      && resumedFrames(swept.bodyText).length === 0,
+    JSON.stringify(outcome9b));
+
+  // ── 39.9c A ROW THAT EXPIRES BETWEEN THE RESUME'S SELECTION AND ITS CLAIM says EXPIRED too, and PAIGE
+  // is told the same. Kills: reading every failed claim on a no-longer-live row as "used elsewhere".
+  const st9c = makeConfirmStore();
+  const token9c = await propose(st9c);
+  const expiringTable = (filters) => {
+    const out = st9c.table(filters);
+    const cols = filters.find(([op]) => op === "select")?.[1];
+    if (cols === "fingerprint,args,issued_in_request,tool_name,consumed_at,expires_at") st9c.rows[0].expires_at = "2000-01-01T00:00:00Z";
+    return out;
+  };
+  const expiring = await drive({
+    stream: true, clientId: OWN, text: "Approved — run it.", extraBody: { threadId: THREAD, approvedConfirmations: [token9c] },
+    rpcOverrides: { ...CONFIRM_LANE }, tablesExtra: { paige_pending_confirmations: expiringTable, ...turnsWith(token9c) },
+    onInsert: mirrorConfirms(st9c),
+  });
+  const outcome9c = outcomeOf(expiring.bodyText);
+  assert("39.9c an approval that expires between selection and claim: nothing runs, card and PAIGE both say expired",
+    writes(expiring).length === 0 && !st9c.rows[0].consumed && outcome9c?.actions?.[0]?.outcome === "not_run"
+      && /expired/.test(outcome9c?.note ?? "") && toldModel(expiring).includes("approval_expired"),
+    JSON.stringify({ outcome9c, consumed: st9c.rows[0].consumed }));
+
+  // ── 39.17 THE CAPABILITY FINGERPRINT: an approved tool this turn does not offer is not run, and the
+  // approval is left unspent. Here a writer since removed from the chat manifest (the legacy CRM stage
+  // writer, whose dispatch branch is tombstoned), approved on the owner seat. Red before the fix: the
+  // stored row was claimed and the tombstoned branch dispatched (it answered contact_not_found).
+  // Kills: removing the offered-tools check from the resume.
+  const { confirmFingerprint: fpOf } = await import("../../supabase/functions/_shared/confirm-fingerprint.ts");
+  const TENANT_PERSONA = { get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: "T", playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null } };
+  const tenantThread = { paige_chat_threads: () => [{ id: THREAD, tenant_id: CALLER_TENANT, caller_user_id: USER, contact_id: null, studio_session_id: null, summary: null }] };
+  const OWNER_SEAT = { ...TENANT_PERSONA, get_actor_access: { data: { tier: "tenant" }, error: null }, studio_role_ok: { data: true, error: null } };
+  const LEGACY = "crm_update_pipeline_stage";
+  const legacyArgs = { contact_id: OWN, stage: "qualified" };
+  const legacyNonce = "7e7e7e7e-7e7e-4e7e-8e7e-7e7e7e7e7e7e";
+  const legacyFp = await fpOf(LEGACY, { intent: await fpOf(LEGACY, legacyArgs), tenant: CALLER_TENANT, thread: THREAD, client: null });
+  const st17 = makeConfirmStore([{ user_id: USER, tenant_id: CALLER_TENANT, thread_id: THREAD, scoped_client_id: null, tool_name: LEGACY,
+    fingerprint: legacyFp, issued_in_request: legacyNonce, args: legacyArgs, summary: "Move the contact to Qualified" }]);
+  const withdrawn = await drive({
+    stream: true, text: "Approved — run it.", extraBody: { threadId: THREAD, approvedConfirmations: [`${legacyFp}:${legacyNonce}`] },
+    rpcOverrides: { ...CONFIRM_LANE, ...OWNER_SEAT }, tablesExtra: { paige_pending_confirmations: st17.table, ...tenantThread },
+    onInsert: mirrorConfirms(st17),
+  });
+  const outcome17 = outcomeOf(withdrawn.bodyText);
+  assert("39.17 an approved tool no longer offered this turn: not run, approval unspent, card says it no longer matches",
+    !st17.rows[0].consumed && resumedFrames(withdrawn.bodyText).length === 0 && outcome17?.actions?.[0]?.outcome === "not_run"
+      && /no longer matches anything Paige can run/.test(outcome17?.note ?? "") && !toldModel(withdrawn).includes("contact_not_found"),
+    JSON.stringify({ consumed: st17.rows[0].consumed, outcome17 }));
+
+  // ── 39.17b …and a model that names the withheld tool anyway (with the stored arguments) cannot spend
+  // that approval by the other door, the approved-set lookup. Kills: dropping the lookup's skip of
+  // approvals the resume already handled (MV8) — the withheld approval is the one the act-identity
+  // clause does not cover, because nothing was carried forward for it.
+  const st17b = makeConfirmStore([{ ...structuredClone(st17.rows[0]), id: "row-17b", consumed: false }]);
+  const named = await drive({
+    stream: true, text: "Approved — run it.", extraBody: { threadId: THREAD, approvedConfirmations: [`${legacyFp}:${legacyNonce}`] },
+    toolCall: { name: LEGACY, args: { ...legacyArgs, confirm: true } },
+    rpcOverrides: { ...CONFIRM_LANE, ...OWNER_SEAT }, tablesExtra: { paige_pending_confirmations: st17b.table, ...tenantThread },
+    onInsert: mirrorConfirms(st17b),
+  });
+  assert("39.17b the withheld tool named by the model anyway does not spend the approval or reach its branch",
+    !st17b.rows[0].consumed && !toldModel(named).includes("contact_not_found")
+      && /no longer matches anything Paige can run/.test(outcomeOf(named.bodyText)?.note ?? outcomeOf(named.bodyText)?.actions?.[0]?.note ?? ""),
+    JSON.stringify({ consumed: st17b.rows[0].consumed, outcome: outcomeOf(named.bodyText), rows: st17b.rows.length }));
+
+  // ── 39.18 THE PROPOSER LOST THE ROLE BEFORE APPROVING (workspace admin → member): refused by the
+  // role gate before any claim; the approval is left unspent. Tenant persona (§51 Standalone/Sub-account).
+  const PAGE = { growth_page_upsert: { data: { id: "page-1", slug: "spring-offer", status: "draft", tenant_id: CALLER_TENANT }, error: null } };
+  const st18 = makeConfirmStore();
+  const pageDrive = (seat, body, toolCall) => drive({
+    stream: true, extraBody: { threadId: THREAD, ...body }, toolCall,
+    rpcOverrides: { ...CONFIRM_LANE, ...TENANT_PERSONA, ...PAGE, get_actor_access: { data: { tier: "tenant" }, error: null }, studio_role_ok: { data: seat, error: null } },
+    tablesExtra: { paige_pending_confirmations: st18.table, ...tenantThread },
+    onInsert: mirrorConfirms(st18),
+  });
+  const proposed18 = await pageDrive(true, {}, { name: "growth_page_save", args: { title: "Spring offer", blocks: [] } });
+  const token18 = framesOf(proposed18.bodyText).find((f) => f.paige_confirm)?.paige_confirm?.fingerprint ?? null;
+  const demoted = await pageDrive(false, { approvedConfirmations: [token18] });
+  assert("39.18 a proposer demoted from admin before approving: refused by the role gate, nothing written, approval unspent",
+    !!token18 && demoted.rec.rpc.filter((c) => c.name === "growth_page_upsert").length === 0 && st18.rows[0]?.consumed === false
+      && toldModel(demoted).includes("workspace_owner_or_admin_required") && outcomeOf(demoted.bodyText)?.actions?.[0]?.outcome === "not_run",
+    JSON.stringify({ token18, upserts: demoted.rec.rpc.filter((c) => c.name === "growth_page_upsert").length, consumed: st18.rows[0]?.consumed }));
+  const reinstated = await pageDrive(true, { approvedConfirmations: [token18] });
+  assert("39.18b …the same approval, once the role is back, runs once under the tenant's scope",
+    reinstated.rec.rpc.filter((c) => c.name === "growth_page_upsert").length === 1 && st18.rows[0].consumed === true && st18.rows[0].tenant_id === CALLER_TENANT,
+    JSON.stringify({ upserts: reinstated.rec.rpc.filter((c) => c.name === "growth_page_upsert").length }));
+
+  // ── 39.19 GOD TIER (platform operator, no workspace). (a) The Operator client sends no threadId, so
+  // its approvals are NOT carried forward: nothing is resumed and the model-re-emit path is unchanged
+  // (the honest boundary — Operator is open work). (b) The same server, given a thread, resumes the
+  // tenant-less proposal under the operator's own null scope, once.
+  const st19 = makeConfirmStore();
+  const opPropose = await drive({ stream: true, clientId: OWN, toolCall: { name: TOOL, args: ARGS }, rpcOverrides: { ...CONFIRM_LANE, ...OPERATOR },
+    tablesExtra: { paige_pending_confirmations: st19.table, ...OPERATOR_ROLE }, onInsert: mirrorConfirms(st19) });
+  const token19 = framesOf(opPropose.bodyText).find((f) => f.paige_confirm)?.paige_confirm?.fingerprint ?? null;
+  const opApprove = await drive({ stream: true, clientId: OWN, text: "Approved — run it.", extraBody: { approvedConfirmations: [token19] },
+    rpcOverrides: { ...CONFIRM_LANE, ...OPERATOR }, tablesExtra: { paige_pending_confirmations: st19.table, ...OPERATOR_ROLE }, onInsert: mirrorConfirms(st19) });
+  assert("39.19 Operator (no threadId): no resume — nothing claimed, no resumed frame; the old path is unchanged",
+    !!token19 && st19.rows[0]?.thread_id == null && resumedFrames(opApprove.bodyText).length === 0 && writes(opApprove).length === 0 && st19.rows[0]?.consumed === false,
+    JSON.stringify({ token19, thread: st19.rows[0]?.thread_id, consumed: st19.rows[0]?.consumed }));
+  const st19b = makeConfirmStore();
+  const token19b = await propose(st19b, { rpc: OPERATOR, tables: OPERATOR_ROLE });
+  const opThread = await approve(st19b, token19b, { rpc: OPERATOR, tables: OPERATOR_ROLE });
+  assert("39.19b a tenant-less operator proposal on a thread is carried forward once under the operator's null scope",
+    st19b.rows[0]?.tenant_id == null && writes(opThread).length === 1 && st19b.rows[0].consumed === true && resumedFrames(opThread.bodyText).length === 1,
+    JSON.stringify({ tenant: st19b.rows[0]?.tenant_id, writes: writes(opThread).length }));
+
+  // ── 39.20 STUDIO. (a) A design-studio save held for approval is carried forward once from its stored
+  // proposal. (b) If the Studio scope stops offering the tool before the approval arrives, it is not run
+  // and the approval is left unspent — the capability fingerprint, not just the dispatch scope guard.
+  const SESSION20 = "5e550000-0000-4000-8000-000000000020";
+  const STUDIO_TOOLS20 = ["ask_choices", "capability_status", "growth_page_save", "growth_list", "web_search"];
+  const studioScope = (tools) => ({ paige_subagents: (filters) => (
+    filters.some((f) => f[0] === "eq" && f[1] === "slug" && f[2] === "design-studio") && filters.some((f) => f[0] === "is" && f[1] === "tenant_id" && f[2] === null)
+  ) ? [{ config: { capability_scope: { version: 1, mode: "allowlist", tools } } }] : [] });
+  const studioThread = { paige_chat_threads: () => [{ studio_session_id: SESSION20, summary: null, last_image_content_id: null, last_image_anchor_at: null }],
+    studio_sessions: () => [{ id: SESSION20, artifact_refs: [], title: "Spring launch" }] };
+  const studioDrive = (st, tools, body, toolCall) => drive({
+    stream: true, extraBody: { threadId: THREAD, ...body }, toolCall,
+    rpcOverrides: { get_actor_access: { data: { tier: "tenant" }, error: null }, studio_role_ok: { data: true, error: null }, ...PAGE,
+      resolve_tool_autonomy: { data: "confirm", error: null }, resolve_tool_autonomy_detail: { data: { mode: "confirm", ceiling_allows_auto: false }, error: null } },
+    serviceTablesExtra: { user_roles: () => [{ role: "admin" }], ...studioScope(tools) },
+    tablesExtra: { ...studioThread, paige_pending_confirmations: st.table },
+    onInsert: mirrorConfirms(st),
+  });
+  const st20 = makeConfirmStore();
+  const held20 = await studioDrive(st20, STUDIO_TOOLS20, {}, { name: "growth_page_save", args: { title: "Spring offer", blocks: [] } });
+  const token20 = framesOf(held20.bodyText).find((f) => f.paige_confirm)?.paige_confirm?.fingerprint ?? null;
+  const studioRan = await studioDrive(st20, STUDIO_TOOLS20, { approvedConfirmations: [token20] });
+  assert("39.20 Studio: an approved held save is carried forward once from its stored proposal",
+    !!token20 && studioRan.rec.rpc.filter((c) => c.name === "growth_page_upsert").length === 1 && st20.rows[0].consumed === true
+      && resumedFrames(studioRan.bodyText).length === 1,
+    JSON.stringify({ token20, upserts: studioRan.rec.rpc.filter((c) => c.name === "growth_page_upsert").length }));
+  const st20b = makeConfirmStore();
+  const held20b = await studioDrive(st20b, STUDIO_TOOLS20, {}, { name: "growth_page_save", args: { title: "Spring offer", blocks: [] } });
+  const token20b = framesOf(held20b.bodyText).find((f) => f.paige_confirm)?.paige_confirm?.fingerprint ?? null;
+  const narrowed = await studioDrive(st20b, STUDIO_TOOLS20.filter((t) => t !== "growth_page_save"), { approvedConfirmations: [token20b] });
+  const outcome20b = outcomeOf(narrowed.bodyText);
+  assert("39.20b Studio scope narrowed after the card: not run, approval unspent, the card says it no longer matches",
+    !!token20b && narrowed.rec.rpc.filter((c) => c.name === "growth_page_upsert").length === 0 && !st20b.rows[0].consumed
+      && resumedFrames(narrowed.bodyText).length === 0 && /no longer matches anything Paige can run/.test(outcome20b?.note ?? ""),
+    JSON.stringify({ outcome20b, consumed: st20b.rows[0].consumed }));
+
+  // ── 39.21 A DOOR TOOL'S ROW is never carried forward here, even one that (unlike real door rows)
+  // carries a thread. Kills: letting door tools through `isResumableTool` (MV15) — on real rows the
+  // thread predicate already excludes them, so only this shape can tell.
+  const { CRM_COMMAND_TOOL_NAMES } = await import("../../supabase/functions/_shared/crm-command/catalog.ts");
+  const { mutatingTools } = await import("../../supabase/functions/_shared/action-risk.ts");
+  const DOOR = [...CRM_COMMAND_TOOL_NAMES].find((t) => mutatingTools().has(t));
+  const doorArgs = { name: "Spring pipeline" };
+  const doorNonce = "8e8e8e8e-8e8e-4e8e-8e8e-8e8e8e8e8e8e";
+  const doorFp = await fpOf(DOOR, { intent: await fpOf(DOOR, doorArgs), tenant: null, thread: THREAD, client: OWN });
+  const st21 = makeConfirmStore([{ user_id: USER, tenant_id: null, thread_id: THREAD, scoped_client_id: OWN, tool_name: DOOR,
+    fingerprint: doorFp, issued_in_request: doorNonce, args: doorArgs, summary: "door act" }]);
+  const doorTurn = await approve(st21, `${doorFp}:${doorNonce}`);
+  assert("39.21 a door tool's proposal is never carried forward by the general resume (nothing claimed, no resumed frame)",
+    !!DOOR && !st21.rows[0].consumed && resumedFrames(doorTurn.bodyText).length === 0,
+    JSON.stringify({ DOOR, consumed: st21.rows[0].consumed }));
 }
 
 console.log("\npaige_turn — every stream says it started and ends once, before the answer");

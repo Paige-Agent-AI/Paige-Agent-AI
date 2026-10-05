@@ -21,8 +21,10 @@ export const TURN_CONTRACT_VERSION = 1 as const;
 
 /**
  * Wire events. `started` is the first frame of every stream; exactly one of `waiting` / `completed`
- * closes it, emitted before any answer byte. `segment` (interim vs final text) and `resumed` (one
- * shared resume with the durable-work lane) are reserved for a later slice and never emitted yet.
+ * closes it, emitted before any answer byte. `resumed` (C4a, state WORKING) is sent at most once,
+ * after `started` and before the terminal, on a turn that carries a paused objective forward — today
+ * an approved act the server ran from its stored proposal (_shared/paige-turn/resume.ts). `segment`
+ * (interim vs final text) is reserved for a later slice and never emitted yet.
  *
  * THE WIRE TERMINAL IS PROVISIONAL ON AN ORDINARY STREAMED TURN; THE PERSISTED RECORD IS AUTHORITATIVE.
  * A turn whose answer streams live (nothing held for a final check) must send its terminal before the
@@ -95,6 +97,13 @@ export interface TurnWaitingOn {
   work_ids?: string[];
 }
 
+/**
+ * Why a paused objective resumed (C4). Closed — the same three reasons a turn can wait: an approval,
+ * an answer to a question, durable work. C4a emits `approval` only.
+ */
+export const RESUME_KINDS = ["approval", "answer", "work"] as const;
+export type ResumeKind = (typeof RESUME_KINDS)[number];
+
 /** Persisted on the assistant turn as bundle_ref.turn_state. */
 export interface TurnRecord {
   v: typeof TURN_CONTRACT_VERSION;
@@ -105,6 +114,9 @@ export interface TurnRecord {
   /** Tool calls actually executed. */
   tools: number;
   waiting_on?: TurnWaitingOn;
+  /** This turn carried a paused objective forward (C4). The kind only — what resumed, and how each
+   *  resumed act ended, rides beside it in bundle_ref.paige_resume. */
+  resumed?: { kind: ResumeKind };
 }
 
 /** One entry of bundle_ref.turn_trace: a work step as the person saw it (never a thought). */
@@ -189,5 +201,7 @@ export function readTurnRecord(value: unknown): TurnRecord | null {
     if (Number.isInteger(w.approvals)) rec.waiting_on.approvals = w.approvals as number;
     if (Array.isArray(w.work_ids)) rec.waiting_on.work_ids = w.work_ids.filter((x): x is string => typeof x === "string" && UUID.test(x));
   }
+  const r = o.resumed as Record<string, unknown> | undefined;
+  if (r && typeof r === "object" && oneOf(RESUME_KINDS, r.kind)) rec.resumed = { kind: r.kind };
   return rec;
 }

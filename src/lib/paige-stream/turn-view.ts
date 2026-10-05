@@ -83,6 +83,10 @@ export interface TurnSnapshot {
   /** "live" was seen in this session; "reload" came back from a saved thread. */
   source: "live" | "reload";
   hasContent: boolean;
+  /** C4a — this answer carried a paused objective forward (the server said `resumed` live, or the
+   *  record has `turn_state.resumed`): today, an approved act the server ran from its stored
+   *  proposal. Presentation reads it to draw the two answers as one; it never decides a state. */
+  resumed?: boolean;
 }
 
 export interface LiveTurnInput {
@@ -103,6 +107,8 @@ export interface LiveTurnInput {
   /** The approval card for this answer is on screen and undecided. */
   awaitingApproval: boolean;
   personaName?: string;
+  /** C4a — the server said `resumed`: the person's approval is being carried forward (frame a3). */
+  resumed?: boolean;
 }
 
 const nameOf = (personaName?: string) => (personaName && personaName.trim()) || "PAIGE";
@@ -294,8 +300,30 @@ export function deriveSnapshotView(
   }
 }
 
+/**
+ * C4a — ONE ANSWER, ONE LINE. When an approval resumes the objective, the answer that asked and the
+ * answer that carried it forward are drawn as one (prototype frames a3/a4): a single line whose
+ * "What PAIGE did" lists the steps before the card and the steps after it, in that order. Ids are
+ * namespaced so a reloaded trace (`trace-0` on both turns) cannot collide.
+ */
+export function mergeResumedRows(prior: readonly TurnRow[], resumed: readonly TurnRow[]): TurnRow[] {
+  return [
+    ...prior.map((r) => ({ ...r, id: `before:${r.id}` })),
+    ...resumed.map((r) => ({ ...r, id: `after:${r.id}` })),
+  ];
+}
+
 /** The line for the answer being read right now (or just finished, in this session). */
 export function deriveLiveTurnView(i: LiveTurnInput): TurnView | null {
+  const view = deriveLiveTurnViewInner(i);
+  // a3 — "Approved. PAIGE is working": what a screen reader hears when the carried-forward work starts.
+  if (view && i.resumed && i.streaming && (view.kind === "work" || view.kind === "think")) {
+    return { ...view, announce: `Approved. ${nameOf(i.personaName)} is working` };
+  }
+  return view;
+}
+
+function deriveLiveTurnViewInner(i: LiveTurnInput): TurnView | null {
   const name = nameOf(i.personaName);
   if (!i.streaming) {
     return deriveSnapshotView(

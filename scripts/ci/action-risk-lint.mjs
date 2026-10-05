@@ -127,6 +127,15 @@ export function invoiceDeclaredGateBound(handler, decision) {
     && decision.includes('input.capability.outcomeChannel !== declaration.receipt.recorder')
     && decision.includes('return decideGovernedExecution(input);');
 }
+export function salesDraftDoorBound(chat, salesChat, draftChat, door, admission) {
+  return chat.includes('...SALES_INVOICE_TOOLS') && salesChat.includes('...SALES_DRAFT_TOOLS')
+    && salesChat.includes('dispatchCommercialDraftChat(ctx,deps,')
+    && draftChat.includes("from './draft-capabilities.ts'")
+    && draftChat.includes("functions.invoke('sales-invoice-draft-command'")
+    && door.includes('await admitCommercialDraft(')
+    && admission.includes("from '../paige-spine/governedExecution.ts'")
+    && admission.includes('decideGovernedExecution(');
+}
 export function parseExemptions(src) {
   const at = src.indexOf("const NON_MUTATING_EXEMPT: ReadonlyMap<string, string> = new Map([");
   if (at < 0) return null;
@@ -212,6 +221,12 @@ function selfTest() {
     verbSourceMatches: true,
   };
   let bad = 0;
+  const draftSources = [CHAT,'supabase/functions/_shared/sales-invoice-chat.ts','supabase/functions/_shared/sales-commercial/draft-chat.ts','supabase/functions/sales-invoice-draft-command/index.ts','supabase/functions/_shared/sales-commercial/draft-admission.ts'].map(path=>fs.readFileSync(path,'utf8'));
+  bad += ok('draft guard follows the real declaration/dispatch/shared-gate chain',salesDraftDoorBound(...draftSources));
+  for (const [index,token] of [[0,'...SALES_INVOICE_TOOLS'],[1,'...SALES_DRAFT_TOOLS'],[1,'dispatchCommercialDraftChat(ctx,deps,'],[2,"functions.invoke('sales-invoice-draft-command'"],[3,'await admitCommercialDraft('],[4,"from '../paige-spine/governedExecution.ts'"]]) {
+    const broken=[...draftSources];broken[index]=broken[index].replace(token,'BROKEN_BINDING');
+    bad += ok(`draft guard refuses broken binding ${token}`,!salesDraftDoorBound(...broken));
+  }
   const invoiceHandler = fs.readFileSync(SALES_INVOICE_HANDLER, 'utf8');
   const invoiceDecision = fs.readFileSync('supabase/functions/_shared/capability-kit/decision.ts', 'utf8');
   bad += ok('invoice declared gate follows the exact canonical adapter', invoiceDeclaredGateBound(invoiceHandler, invoiceDecision));
@@ -402,6 +417,21 @@ const governedEdgeActions = [
   ...CONTACT_SCOPED_EDGE_HANDLERS.flatMap((path) => parseCapabilityConstants(fs.readFileSync(path, "utf8"))),
 ];
 const requiredClassifications = [];
+// The ordinary draft door uses the same shared gate; the high-only Kit adapter is not widened.
+// Follow its real Chat import/dispatch and declaration, rather than exempting a new policy key.
+const draftDoor = 'supabase/functions/sales-invoice-draft-command/index.ts';
+if (fs.existsSync(draftDoor)) {
+  const salesChat = fs.readFileSync('supabase/functions/_shared/sales-invoice-chat.ts','utf8');
+  const draftChat = fs.readFileSync('supabase/functions/_shared/sales-commercial/draft-chat.ts','utf8');
+  const admission = fs.readFileSync('supabase/functions/_shared/sales-commercial/draft-admission.ts','utf8');
+  const declarations = fs.readFileSync('supabase/functions/_shared/sales-commercial/draft-capabilities.ts','utf8');
+  const door = fs.readFileSync(draftDoor,'utf8');
+  if (!salesDraftDoorBound(chatSrc,salesChat,draftChat,door,admission)) throw new Error('Sales draft door lost its declared Chat/shared-governance binding');
+  const keys = declarations.match(/const key=revise\?'([a-z0-9_]+)':'([a-z0-9_]+)'/);
+  if (!keys || !declarations.includes('actionRiskKey:key')) throw new Error('Sales draft declaration keys could not be parsed');
+  importedTools.push(keys[1],keys[2]);
+  requiredClassifications.push(keys[1],keys[2]);
+}
 if (fs.existsSync(SALES_INVOICE_HANDLER)) {
   const source = fs.readFileSync(SALES_INVOICE_HANDLER, 'utf8');
   if (!invoiceDeclaredGateBound(source, fs.readFileSync('supabase/functions/_shared/capability-kit/decision.ts', 'utf8'))) throw new Error('Invoice handler no longer binds its canonical action map and validated declaration to the governed gate');

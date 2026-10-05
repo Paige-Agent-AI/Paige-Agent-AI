@@ -657,3 +657,7 @@ verify_jwt = true
 [functions.sales-invoice-document]
 # Public hash-only grant capability and separate JWT owner read; handler enforces both.
 verify_jwt = false
+
+[functions.sales-invoice-draft-command]
+# JWT-authenticated canonical owner/admin draft act; shared Trust, operation and Rail.
+verify_jwt = true

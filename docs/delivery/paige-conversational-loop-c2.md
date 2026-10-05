@@ -211,14 +211,18 @@ show `done`.
    role answer is the per-call cache. Everything else the START asks is pure. A memo miss (arguments
    that do not serialise) asks the draft question once more.
 
-**Existing exposure, not widened.** `web_search` and `deep_research` FINISH details carry the first 80
+**Existing exposure, widened on two paths.** `web_search` and `deep_research` FINISH details carry the first 80
 characters of the model's own query, and `emitStep` is never held for a protected turn's final check, so
-that text can reach the wire before the check. This predates C2b; a START never carries a detail, so C2b
-adds nothing to it. Filed as a follow-up.
+that text can reach the wire before the check. This predates C2b, and a START never carries a detail.
+But two paths now send FINISH frames that were never sent before: a mid-batch workspace-scope abort, and
+a call that throws mid-round (declared changes 1 and 3). On those paths the details of tools that had
+already run (the search query, an agreement title, a phone number) can now reach the wire, where before
+the round-end emission was skipped. Same class of exposure, same authenticated viewer; the filed
+follow-up covers these two paths as well.
 
 **Evidence** (classes kept apart).
 - Automated harness, against in-memory doubles (not an authenticated runtime): client-memory-authz
-  578/0 (base 574/0) — 36.21–36.26 (start A, finish A, start B, finish B; distinct rows without provider
+  578/0 (base 559/0) — 36.21–36.26 (start A, finish A, start B, finish B; distinct rows without provider
   ids; every gate-refused shape never `running`; 36.23b–g the in-chain checks, including a workspace
   switch at every read point and a fresh read per call; withdrawn absent from `turn_trace`; a throw
   closes `error`; the mid-batch change); 36.23h (truncated JSON arguments to `web_search` and

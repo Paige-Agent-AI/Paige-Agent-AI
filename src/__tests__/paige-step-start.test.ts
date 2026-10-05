@@ -17,14 +17,23 @@ import { readFileSync } from "node:fs";
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
 
-function port(path: string) {
+type Step = { label: string; group: string; detail?: string } | null;
+type DescribeStep = (tc: unknown, res: unknown) => Step;
+type StepStartModule = {
+  describeStepStart: (tc: unknown, describeFinished: DescribeStep) => Step;
+  STEP_START_LABELS: Readonly<Record<string, string>>;
+  STEP_START_SAME_LABEL: ReadonlySet<string>;
+  STEP_NO_START: Readonly<Record<string, string>>;
+};
+
+function port(path: string): StepStartModule {
   const src = readFileSync(path, "utf8");
   const js = ts.transpileModule(src, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   }).outputText;
-  const out: any = {};
+  const out: Record<string, unknown> = {};
   new Function("require", "exports", js)((k: string) => { throw new Error(`unexpected runtime import: ${k}`); }, out);
-  return out;
+  return out as StepStartModule;
 }
 
 const { describeStepStart, STEP_START_LABELS, STEP_START_SAME_LABEL, STEP_NO_START } =
@@ -37,12 +46,13 @@ const describeStepSource = (() => {
   if (from < 0 || to < 0 || to < from) throw new Error("describeStep could not be located in paige-ai-chat/index.ts");
   return CHAT.slice(from, to);
 })();
-const describeStep: (tc: unknown, res: unknown) => { label: string; group: string; detail?: string } | null = (() => {
+const describeStep: DescribeStep = (() => {
   const js = ts.transpileModule(`${describeStepSource}\nexports.describeStep = describeStep;`, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   }).outputText;
-  const out: any = {};
+  const out: { describeStep?: DescribeStep } = {};
   new Function("exports", js)(out);
+  if (!out.describeStep) throw new Error("describeStep did not transpile");
   return out.describeStep;
 })();
 

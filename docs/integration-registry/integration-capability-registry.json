@@ -481,8 +481,8 @@
       "rail_mind_memory": "Rail: billing outcome events (no sender/secret). Mind: safe billing-status only (platform-billing-spine-source-contract). Memory: none of card/PII.",
       "status": "PARTIAL",
       "owner": "Money Spine workstream",
-      "dependency": "Live Solo acquisition binding, Stripe-eligible Checkout contract, and receipt-derived welcome lifecycle are deployed; first authorized live Checkout/fulfillment, actual payment-method presentation/welcome delivery, and Billing Portal activation remain proof owed. Connect direct-charge posture and M1 controls remain separate.",
-      "next_slice": "Prove one authorized live Solo enrollment, Stripe-selected method presentation, signed fulfillment and welcome receipt plus conservative Billing Portal behavior; separately bind safe billing status into Paige and verify Connect direct-charge posture.",
+      "dependency": "Live Solo acquisition binding, Stripe-eligible Checkout contract, and receipt-derived welcome lifecycle are deployed; first authorized live Checkout/fulfillment, actual payment-method presentation/welcome delivery, and Billing Portal activation remain proof owed. Connect direct-charge posture and M1 controls remain separate. Sales S1 adds server-owned tenant merchant readback/CAS and provider-neutral contracts; provider execution and verified allocation remain unavailable pending S3/S4. Legacy destination-charge storefront is unchanged.",
+      "next_slice": "Sales S2 canonical commercial assembly and request/read capabilities; S3/S4 tenant-connected direct-charge execution to verified settlement/allocation. No Sales application fee; PAIGE billing separate. Existing platform enrollment proof obligations remain.",
       "tier_eligibility": {
         "platform": "eligible",
         "solo": "eligible",
@@ -551,12 +551,83 @@
           "path": "supabase/functions/_shared/stripe-webhook-signature.ts",
           "role": "provider_adapter",
           "note": "Stripe-specific webhook signature verification."
+        },
+        {
+          "path": "supabase/functions/_shared/sales-payments/merchant.ts",
+          "role": "callback_readback",
+          "note": "S1 tenant/account/environment/version readiness; requires provider tenant provenance. No charge/settlement writer."
         }
       ],
       "sources": [
         "docs/PAIGE-MASTER-PROJECT-REFERENCE.md §4 (Stripe)",
         "docs/doctrine/money-spine-architecture.md",
-        "docs/handoff/platform-billing-spine-source-contract.md"
+        "docs/handoff/platform-billing-spine-source-contract.md",
+        "docs/delivery/sales-provider-s1.md (owner direct-charge ruling 2026-10-04; no Sales application fee; legacy storefront unchanged)"
+      ]
+    },
+    {
+      "id": "paypal",
+      "name": "PayPal",
+      "taxonomy": "finance_accounting_payments",
+      "business_reason": "Equal Sales launch target for tenant-owned customer payments; feeds the same canonical Sales request, operation and settlement/allocation contracts.",
+      "paige_use_cases": [
+        "Future tenant-owned hosted customer payment request",
+        "Future verified settlement, refund and reconciliation"
+      ],
+      "connection_prerequisite": "Approved PayPal partner application and tenant seller onboarding/consent; provider merchant-integrations readback; none verified by S1.",
+      "required_scopes": [
+        "Seller PAYMENT delegated permissions, actual partner app authorization and merchant-integration readback",
+        "Refund/recurring permissions must be grounded per capability before activation"
+      ],
+      "safe_readable_context": "Future tenant-scoped merchant identity/readiness and canonical invoice/balance references; no PAN/CVV, tokens or raw payloads.",
+      "allowed_writes_external_effects": "None implemented. Future customer payment requests and verified outcomes require shared Spine/Trust/provider readback/Rail.",
+      "authority_lane": [
+        "prohibited"
+      ],
+      "m1_dependency": "M1 real-money spend control (see cost_tracks): payments/charges are real money movement — currency-aware caps + atomic reserve/adjust/release + provider-confirmed actuals + reconciliation + receipt + Rail; NEVER satisfied by LLM-token metering. §38 fences merchant-of-record.",
+      "canonical_provider_receipt": "None in S1; future signed webhook/capture/transaction readback and canonical operation/Rail references required.",
+      "rail_mind_memory": "Future canonical Sales execution receipts on Rail; no mutable financial truth in Memory/Mind.",
+      "status": "UNAVAILABLE",
+      "owner": "Sales execution program INT-311",
+      "dependency": "Approved partner access, seller delegated permissions and tenant merchant identity/readback are PROOF OWED. No PayPal adapter or onboarding activation exists.",
+      "next_slice": "Ground partner app access and merchant-integrations permissions; implement the same Sales hosted request to verified settlement/allocation vertical as Stripe.",
+      "tier_eligibility": {
+        "platform": "eligible",
+        "solo": "eligible",
+        "agency_future": "eligible",
+        "enterprise_future": "eligible"
+      },
+      "expense_and_operations": {
+        "cost_responsibility": "tenant_direct",
+        "billing_owner": "Tenant merchant owns customer payments; PAIGE platform billing is separate.",
+        "operational_owner": "Sales execution program INT-311",
+        "pricing_model": "per_action",
+        "pricing_source_url": "https://www.paypal.com/us/business/paypal-business-fees",
+        "pricing_checked_as_of": null,
+        "pricing_note": "Partner/commercial fees not verified; no rates or free plan assumed.",
+        "access_prerequisite": "Approved PayPal partner application and tenant seller onboarding/consent; provider merchant-integrations readback; none verified by S1.",
+        "expected_cost_driver": [
+          "transactions"
+        ],
+        "rate_limits_quotas": "Partner API limits and request-id retention require grounding before execution.",
+        "usage_review_cadence": "Monthly (revenue + fee reconciliation).",
+        "renewal_deprecation_review": "No fixed contract; track Stripe API version pinning + webhook/API deprecations.",
+        "data_privacy_retention": "No raw card data or credentials in Chat/Voice/model context; hosted/tokenized collection only.",
+        "money_movement": {
+          "can_move_real_money": true,
+          "m1_dependency_track": "m1_real_money_spend_control",
+          "detail": "Future tenant-customer money movement requires M1 real-money spend control, exact customer authority, provider readback and once-only canonical allocation."
+        },
+        "receipt_reconciliation": "Future provider transaction/capture and verified webhook readback; no receipt exists in S1.",
+        "rail_outcome": "Future canonical Sales operation/Rail outcomes; none emitted by S1.",
+        "pause_revoke_path": "MERCHANT.PARTNER-CONSENT.REVOKED must invalidate eligibility; no active adapter to revoke in S1.",
+        "next_owner": "Sales execution program INT-311",
+        "next_slice": "Ground partner app access and merchant-integrations permissions; implement the same Sales hosted request to verified settlement/allocation vertical as Stripe."
+      },
+      "code_anchors": [],
+      "sources": [
+        "https://developer.paypal.com/platforms/seller-onboarding/before-payment",
+        "docs/delivery/sales-provider-s1.md"
       ]
     },
     {

@@ -10,6 +10,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import Stripe from "https://esm.sh/stripe@17.5.0?target=deno";
+import { readStripeMerchant } from "../_shared/sales-payments/merchant.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -77,7 +78,10 @@ Deno.serve(async (req) => {
     .single();
   if (!tenant) return json(404, { error: "tenant_not_found" });
 
+  // Preserve the existing storefront API pin; S1 does not migrate its charge rail.
   const stripe = new Stripe(STRIPE_KEY, { apiVersion: "2024-11-20.acacia" });
+  const environment = /^(?:sk|rk)_(test|live)_/.exec(STRIPE_KEY)?.[1];
+  if (environment !== "test" && environment !== "live") return json(503, { error: "stripe_environment_unverified" });
 
   let body: Record<string, unknown>;
   try {
@@ -114,6 +118,7 @@ Deno.serve(async (req) => {
           tenant_id: tenant.id,
           stripe_account_id: accountId,
           account_type: "express",
+          provider_environment: environment,
           charges_enabled: false,
           payouts_enabled: false,
           details_submitted: false,
@@ -138,24 +143,39 @@ Deno.serve(async (req) => {
     if (!existing?.stripe_account_id) {
       return json(404, { error: "no_connected_account" });
     }
-    const acct = await stripe.accounts.retrieve(existing.stripe_account_id);
-    await admin
-      .from("tenant_stripe_accounts")
-      .update({
-        charges_enabled: acct.charges_enabled,
-        payouts_enabled: acct.payouts_enabled,
-        details_submitted: acct.details_submitted,
-        country: acct.country,
-        default_currency: acct.default_currency,
-        requirements: (acct.requirements as unknown) ?? null,
-      })
-      .eq("tenant_id", tenantId);
-
-    return json(200, {
-      charges_enabled: acct.charges_enabled,
-      payouts_enabled: acct.payouts_enabled,
-      details_submitted: acct.details_submitted,
-    });
+    try {
+      // Server key determines environment; saved merchant identity determines provider target.
+      let providerAccount: Stripe.Account | null = null;
+      const facts = await readStripeMerchant({
+        tenant_id: tenantId, provider: "stripe", merchant_id: existing.stripe_account_id,
+        environment: existing.provider_environment ?? environment, version: existing.binding_version,
+      }, {
+        environment,
+        retrieveAccount: async (id) => {
+          const account = await stripe.accounts.retrieve(id);
+          if ('deleted' in account && account.deleted) return {id: account.id, deleted: true};
+          providerAccount = account as Stripe.Account;
+          return providerAccount;
+        },
+      }, Date.now);
+      const acct = providerAccount as Stripe.Account | null;
+      if (!acct) return json(409, { error: "merchant_readback_unavailable" });
+      const saved = await admin.rpc("record_sales_stripe_readback", {
+        _tenant_id: tenantId, _merchant_id: facts.merchant_id, _expected_version: existing.binding_version,
+        _environment: environment, _charges_enabled: facts.charges_enabled, _payouts_enabled: facts.payouts_enabled,
+        _details_submitted: facts.details_submitted, _payment_permission: facts.payment_permission,
+        _country: acct.country ?? null, _currency: acct.default_currency ?? null,
+        _requirements: acct.requirements ?? null,
+      });
+      if (saved.error) return json(409, { error: "merchant_binding_changed", retry: "refresh_current_binding" });
+      return json(200, {
+        charges_enabled: facts.charges_enabled, payouts_enabled: facts.payouts_enabled,
+        details_submitted: facts.details_submitted,
+      });
+    } catch {
+      // Transport ambiguity is not proof the merchant disconnected, nor a successful refresh.
+      return json(503, { error: "merchant_readback_unverified", retry: "refresh_status" });
+    }
   }
 
   if (action === "login_link") {

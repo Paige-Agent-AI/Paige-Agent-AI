@@ -670,15 +670,25 @@ export function useClientChatContext(clientId?: string | null, userId?: string |
         }
 
         // --- Memory ---
-        // A person's OWN memory is read in the active workspace only (INT-326). Under this JWT the
-        // `client_memory` RLS arm `client_user_id = auth.uid()` admits that person's rows from EVERY
-        // workspace, so the read itself must name the workspace — the same `current_user_tenant_id()`
-        // the server stamps those rows with. `client_id IS NULL` leaves out rows this person wrote
-        // ABOUT a client. No workspace (or a failed lookup) means no own-memory line at all.
+        // A person's OWN memory is read in the established workspace only (INT-326). Under this JWT
+        // the `client_memory` RLS arm `client_user_id = auth.uid()` admits that person's rows from
+        // EVERY workspace, so the read itself must name the workspace — under the same authority
+        // the server uses (coordinator ruling 2026-10-05): the DECLARED active workspace
+        // (`profiles.active_tenant_id`) AND the entitlement-validated resolver agreeing on it. The
+        // resolver alone would substitute the oldest membership the caller never chose; the
+        // declared pointer alone can be stale. `client_id IS NULL` leaves out rows this person
+        // wrote ABOUT a client. No established workspace (or a failed lookup) means no own-memory
+        // line at all.
         let ownMemoryTenant: string | null = null;
         if (!clientId && resolvedUserId) {
-          const { data: activeTenant, error: activeTenantError } = await supabase.rpc("current_user_tenant_id");
-          ownMemoryTenant = !activeTenantError && typeof activeTenant === "string" ? activeTenant : null;
+          const [{ data: activeTenant, error: activeTenantError }, { data: profile, error: profileError }] = await Promise.all([
+            supabase.rpc("current_user_tenant_id"),
+            supabase.from("profiles").select("active_tenant_id").eq("user_id", resolvedUserId).maybeSingle(),
+          ]);
+          const validated = !activeTenantError && typeof activeTenant === "string" ? activeTenant : null;
+          const declared = !profileError && typeof (profile as { active_tenant_id?: unknown } | null)?.active_tenant_id === "string"
+            ? ((profile as { active_tenant_id?: unknown } | null)?.active_tenant_id as string) : null;
+          ownMemoryTenant = declared && declared === validated ? declared : null;
         }
         const memFilter = clientId
           ? supabase.from("client_memory").select("memory_type, content, created_at").eq("client_id", clientId).eq("is_active", true).order("created_at", { ascending: false }).limit(5)

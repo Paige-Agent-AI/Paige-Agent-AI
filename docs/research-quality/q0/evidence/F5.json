@@ -1,0 +1,403 @@
+{
+  "case_id": "F5",
+  "split": "holdout",
+  "class": "fresh_fact",
+  "answer_class": "answerable",
+  "question": "How many medals did the United States win at the most recent Summer Olympics, and which country topped the medal table?",
+  "sub_questions": [
+    "US total medals",
+    "top country"
+  ],
+  "freshness_days": 365,
+  "engine_head_at_run": "dfcdd72c2efa8794422fc73c07f8fe45eab97cda",
+  "ran_at": "2026-10-05T15:57:18.789Z",
+  "http_status": 200,
+  "wall_latency_ms": 57719,
+  "engine_result": {
+    "run_id": "44248061-749b-4336-bd0e-41bf1427dc0f",
+    "question": "How many medals did the United States win at the most recent Summer Olympics, and which country topped the medal table?",
+    "findings": [
+      {
+        "text": "United States — The United States topped the final medal table at the 2024 Summer Olympics (Paris), leading for the fourth consecutive Summer Games, with 40 gold medals and 126 total medals; China finished second with 40 gold medals as well. (website: https://en.wikipedia.org/wiki/2024_Summer_Olympics_medal_table · 40 gold; 126 total medals; China finished second with 40 gold)",
+        "citations": [
+          1
+        ],
+        "confidence": "low",
+        "name": "United States",
+        "website": "https://en.wikipedia.org/wiki/2024_Summer_Olympics_medal_table",
+        "values": [
+          "40 gold",
+          "126 total medals",
+          "China finished second with 40 gold"
+        ]
+      },
+      {
+        "text": "United States — Team USA topped the medal rankings at the 2024 Summer Olympics for the fourth consecutive and 19th overall time, winning 40 gold, 44 silver, and 42 bronze medals. (website: https://en.wikipedia.org/wiki/United_States_at_the_2024_Summer_Olympics · 40 gold; 44 silver; 42 bronze)",
+        "citations": [
+          2
+        ],
+        "confidence": "low",
+        "name": "United States",
+        "website": "https://en.wikipedia.org/wiki/United_States_at_the_2024_Summer_Olympics",
+        "values": [
+          "40 gold",
+          "44 silver",
+          "42 bronze"
+        ]
+      },
+      {
+        "text": "United States — BBC's Paris 2024 medal table lists the United States ranked 1st with 40 gold, 44 silver, 42 bronze, totaling 126 medals, ahead of China (40 gold, 27 silver, 24 bronze, 91 total) and Japan in third. (website: https://www.bbc.com/sport/olympics/paris-2024/medals · 40 gold; 44 silver; 42 bronze; 126 total; China: 40 gold, 27 silver, 24 bronze, 91 total)",
+        "citations": [
+          4
+        ],
+        "confidence": "low",
+        "name": "United States",
+        "website": "https://www.bbc.com/sport/olympics/paris-2024/medals",
+        "values": [
+          "40 gold",
+          "44 silver",
+          "42 bronze",
+          "126 total",
+          "China: 40 gold, 27 silver, 24 bronze, 91 total"
+        ]
+      },
+      {
+        "text": "United States — Going into the Paris Games, the U.S. led the all-time Olympic medal count with 2,975 total medals, followed by the Soviet Union (1,204) and Germany (1,058), according to the Olympic Foundation for Culture and Heritage. (website: https://www.cbsnews.com/news/olympic-medal-count-2024-paris/ · 2,975 total medals; Soviet Union: 1,204 medals; Germany: 1,058 medals)",
+        "citations": [
+          5
+        ],
+        "confidence": "low",
+        "name": "United States",
+        "website": "https://www.cbsnews.com/news/olympic-medal-count-2024-paris/",
+        "values": [
+          "2,975 total medals",
+          "Soviet Union: 1,204 medals",
+          "Germany: 1,058 medals"
+        ]
+      },
+      {
+        "text": "United States — ESPN's medal tracker for the 2024 Paris Olympics lists the United States as the top country medal leader with a total of 126 medals, followed by China with 91 and Great Britain with 65. (website: https://www.espn.com/olympics/summer/2024/medals · United States Total: 126; China Total: 91; Great Britain Total: 65)",
+        "citations": [
+          6
+        ],
+        "confidence": "low",
+        "name": "United States",
+        "website": "https://www.espn.com/olympics/summer/2024/medals",
+        "values": [
+          "United States Total: 126",
+          "China Total: 91",
+          "Great Britain Total: 65"
+        ]
+      },
+      {
+        "text": "The 126 medals won by Team USA in 2024 ranks as the third-highest total ever for Team USA, and the most since the 1984 Los Angeles Olympics, when the team won 174 medals. (website: https://www.kxan.com/2024-olympics/2024-olympics-medal-count/ · 126 medals; 174 medals (1984 Los Angeles))",
+        "citations": [
+          7
+        ],
+        "confidence": "low",
+        "website": "https://www.kxan.com/2024-olympics/2024-olympics-medal-count/",
+        "values": [
+          "126 medals",
+          "174 medals (1984 Los Angeles)"
+        ]
+      },
+      {
+        "text": "United States of America — The official Olympics website lists the United States of America (USA) with 40 gold and 44 silver medals in the Paris 2024 medal table. (website: https://www.olympics.com/en/olympic-games/paris-2024/medals · 40 gold; 44 silver)",
+        "citations": [
+          11
+        ],
+        "confidence": "low",
+        "name": "United States of America",
+        "website": "https://www.olympics.com/en/olympic-games/paris-2024/medals",
+        "values": [
+          "40 gold",
+          "44 silver"
+        ]
+      },
+      {
+        "text": "Team USA — Team USA's official site states the team won 126 total Olympic medals at the Paris 2024 Olympic Games, with athletes taking home 40 gold medals, 44 silver medals, and 42 bronze medals. (website: https://www.teamusa.com/paris-2024/olympics/medals · 40 gold; 44 silver; 42 bronze; 126 total)",
+        "citations": [
+          12,
+          13
+        ],
+        "confidence": "low",
+        "name": "Team USA",
+        "website": "https://www.teamusa.com/paris-2024/olympics/medals",
+        "values": [
+          "40 gold",
+          "44 silver",
+          "42 bronze",
+          "126 total"
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "index": 1,
+        "url": "https://en.wikipedia.org/wiki/2024_Summer_Olympics_medal_table",
+        "title": "2024 Summer Olympics medal table - Wikipedia",
+        "snippet": "The United States led the final medal table for the fourth consecutive Summer Games, with 40 gold and 126 total medals, while China finished second with 40 ...Medals · Medal table · Changes in medal standings",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:56:39.891Z",
+        "excluded": false
+      },
+      {
+        "index": 2,
+        "url": "https://en.wikipedia.org/wiki/United_States_at_the_2024_Summer_Olympics",
+        "title": "United States at the 2024 Summer Olympics - Wikipedia",
+        "snippet": "The team topped the medal rankings for the fourth consecutive and 19th overall time, with a total of 40 gold, 44 silver, and 42 bronze medals. Americans won ...Medalists · Basketball · Football (soccer) · Gymnastics",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:56:39.891Z",
+        "excluded": false
+      },
+      {
+        "index": 3,
+        "url": "https://en.wikipedia.org/wiki/United_States_at_the_Olympics",
+        "title": "United States at the Olympics - Wikipedia",
+        "snippet": "# United States at the Olympics\n## Medal tables\n### Medals by Summer Games\n| Games | Athletes | Gold | Silver | Bronze | Total | [Gold medal](https://en.wikipedia.org/wiki/Olympic_medal_table) | [Total medal](https://en.wikipedia.org/wiki/Olympic_medal_table) |\n|-|-|-|-|-|-|-|-|\n| [1896 Athens](https://en.wikipedia.org/wiki/1896_Summer_Olympics) | [14](https://en.wikipedia.org/wiki/United_States_at_the_1896_Summer_Olympics) | 11 | 7 | 2 | **20** | [1](https://en.wikipedia.org/wiki/1896_Summer_Olympics_medal_table) | [2](https://en.wikipedia.org/wiki/1896_Summer_Olympics_medal_table) |\n| [1900 ",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:56:57.569Z",
+        "excluded": false
+      },
+      {
+        "index": 4,
+        "url": "https://www.bbc.com/sport/olympics/paris-2024/medals",
+        "title": "Olympic Medal Table - Paris 2024 gold, silver & bronze tally - BBC",
+        "snippet": "# Paris Olympics 2024 medal table\n| Rank | Country | GGold![](https://static.files.bbci.co.uk/core/website/assets/static/sport/gold-medal.9ace5897bf.svg) | SSilver![](https://static.files.bbci.co.uk/core/website/assets/static/sport/silver-medal.a8dcbfb200.svg) | BBronze![](https://static.files.bbci.co.uk/core/website/assets/static/sport/bronze-medal.7074815402.svg) | TotalTotal![](https://static.files.bbci.co.uk/core/website/assets/static/sport/all-medals.b3eb1f2427.svg) |\n|-|-|-|-|-|-|\n| 1 | ![](https://static.files.bbci.co.uk/core/website/assets/static/sport/country-flags/usa.d67eb055dc.svg)",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:56:42.700Z",
+        "excluded": false
+      },
+      {
+        "index": 5,
+        "url": "https://www.cbsnews.com/news/olympic-medal-count-2024-paris/",
+        "title": "See the current Olympic medal count for the 2024 Paris Games - CBS News",
+        "snippet": "## Which country has the most medals overall?\nAccording to the Olympic Foundation for Culture and Heritage, the U.S. leds the [all-time medal count](https://www.cbsnews.com/news/2024-paris-games-most-olympic-medals-ever/) going into the Paris Games with a total of 2,975 Olympic medals, followed by the now-defunct Soviet Union, with 1,204 medals, and Germany, with 1,058 medals.\n\nAnd, as hoped, the [U.S. added to its medal haul](https://www.cbssports.com/olympics/news/2024-paris-olympics-updates-results-tracker-team-usa-schedule-united-states-medal-count-from-summer-games/live/) at the 2024 Game",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:56:42.700Z",
+        "excluded": false
+      },
+      {
+        "index": 6,
+        "url": "https://www.espn.com/olympics/summer/2024/medals",
+        "title": "2024 Paris Olympic Medal Tracker - ESPN",
+        "snippet": "Top Country Medal Leaders ; United States. Total: 126 ; China. Total: 91 ; Great Britain. Total: 65.",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:56:39.891Z",
+        "excluded": false
+      },
+      {
+        "index": 7,
+        "url": "https://www.kxan.com/2024-olympics/2024-olympics-medal-count/",
+        "title": "Medal Count: Who topped the table in the 2024 Paris Olympics",
+        "snippet": "The 126 medals won in 2024 ranks as the third-highest total ever for Team USA, and the most since the 1984 Los Angeles Olympics, when 174 medals ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:56:44.040Z",
+        "excluded": false
+      },
+      {
+        "index": 8,
+        "url": "https://www.nbcnewyork.com/paris-2024-summer-olympics/medal-count-team-usa-day-5-paris/5653845/",
+        "title": "Olympic medal count: How has Team USA fared on Day 5 – NBC New York",
+        "snippet": "Women have won 19 of the 30 U.S. medals thus far. France and China scored more gold medals on Wednesday, leading all countries in golds won.",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:56:41.234Z",
+        "excluded": false
+      },
+      {
+        "index": 9,
+        "url": "https://www.nbcnewyork.com/paris-2024-summer-olympics/medal-count-team-usa-tuesady-day-4/5649502/",
+        "title": "Olympic medal count: Team USA adds to lead in Day 4, but trails in golds",
+        "snippet": "After claiming silver in Tokyo three years ago, the U.S. women's gymnastics team recaptured the gold medal in Tuesday's team final for the 2024 ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:57:03.290Z",
+        "excluded": false
+      },
+      {
+        "index": 10,
+        "url": "https://www.nbcnewyork.com/paris-2024-summer-olympics/olympic-medal-count-team-usa-day-3-leaderboard/5645232/",
+        "title": "Olympic medal count: Team USA adds eight more - NBC 4 New York",
+        "snippet": "The team has 20 medals through Day 3, where in Tokyo, Team USA had 14 medals. France won as many medals in Day three. Team USA won 12 medals ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:56:56.181Z",
+        "excluded": false
+      },
+      {
+        "index": 11,
+        "url": "https://www.olympics.com/en/olympic-games/paris-2024/medals",
+        "title": "Paris 2024 Olympic Medal Table - Gold, Silver & Bronze",
+        "snippet": "Official medal table of the Summer Olympic Games in Paris. Find an alphabetical list of medals. United States of America USA United States of America 40 44",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:56:39.891Z",
+        "excluded": false
+      },
+      {
+        "index": 12,
+        "url": "https://www.teamusa.com/paris-2024/olympics/medals",
+        "title": "Team USA Paris 2024 Olympic Medals",
+        "snippet": "Paris 2024 Olympic Games, winning 126 total Olympic medals, with our athletes taking home 40 gold medals, 44 silver medals, and 42 bronze medals ...",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:56:39.891Z",
+        "excluded": false
+      },
+      {
+        "index": 13,
+        "url": "https://www.teamusa.com/paris-2024/olympics/results",
+        "title": "US Olympic Paris 2024 Medals by Sport - Team USA",
+        "snippet": "# U.S. Olympic Paris 2024 Medals by Sport\n## Team USA: 40 Gold | 44 Silver | 42 Bronze | 126 Total [Permalink to the 'Team USA: 40 Gold | 44 Silver | 42 Bronze | 126 Total' heading](https://www.teamusa.com/paris-2024/olympics/results#Team_USA__40_Gold___44_Silver___42_Bronze___126_Total_cs6a)\n### Athletics: 14 Gold | 11 Silver | 9 Bronze | 34 Total\n**Gold**\n\n[Noah Lyles](https://www.teamusa.com/profiles/noah-lyles-996866), Men's 100m\n\n[Gabby Thomas](https://www.teamusa.com/profiles/gabrielle-thomas), Women's 200m\n\n[Quincy Hall](https://www.teamusa.com/profiles/quincy-hall), Men's 400m\n\n[Cole H",
+        "reliability_score": 0.557,
+        "tier": "T4",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:56:41.234Z",
+        "excluded": false
+      },
+      {
+        "index": 14,
+        "url": "https://www.nature.com/articles/s41598-022-27259-8",
+        "title": "The less obvious effect of hosting the Olympics on sporting performance",
+        "snippet": "Interestingly, only one study found a positive and significant correlation with medal totals, and only one presents evidence of the immediate ...",
+        "reliability_score": 0.55,
+        "tier": "T2",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:56:57.569Z",
+        "excluded": false
+      },
+      {
+        "index": 15,
+        "url": "https://www.facebook.com/FirstCoastNews/posts/the-olympics-have-just-started-but-you-may-be-surprised-where-the-us-ranks-in-te/1357940263033727/",
+        "title": "The Olympics have just started, but you may be surprised where the US ...",
+        "snippet": "The United States dominates in terms of gold medals with nearly 1,030 of them won since the first game in Athens, but could the nation's success ...",
+        "reliability_score": 0.468,
+        "tier": "T5",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:56:57.569Z",
+        "excluded": true
+      },
+      {
+        "index": 16,
+        "url": "https://www.facebook.com/FOX35Orlando/posts/the-2024-olympics-are-done-heres-where-the-usa-and-other-countries-stack-up-in-t/1069926101159791/",
+        "title": "The 2024 Olympics are done. Here's where the USA and other countries ...",
+        "snippet": "The top 10 countries in the Olympic 2024 medal count are: 1. United States: 40 gold, 44 silver, 42 bronze. The US won the total medal count ( ...",
+        "reliability_score": 0.468,
+        "tier": "T5",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:56:54.923Z",
+        "excluded": true
+      },
+      {
+        "index": 17,
+        "url": "https://www.facebook.com/kens5/posts/on-top-of-the-world-once-again-the-us-dominated-the-field-with-the-most-olympic-/881313907361549/",
+        "title": "ON TOP OF THE WORLD Once again, the US dominated the field ...",
+        "snippet": "The US won the total medal count (113) and the gold medal count (39) and Germany won 37 medals total and 10 gold medals - which is actually ...",
+        "reliability_score": 0.468,
+        "tier": "T5",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:57:03.290Z",
+        "excluded": true
+      },
+      {
+        "index": 18,
+        "url": "https://www.reddit.com/r/dataisbeautiful/comments/1eprlqo/oc_usa_medal_performance_compared_to_last_olympics/",
+        "title": "[OC] USA Medal Performance Compared to last Olympics - Reddit",
+        "snippet": "The swimming teams were just OK, especially the men. The games lasted months to 80% of the participants were Americans. US medal total would be ...",
+        "reliability_score": 0.468,
+        "tier": "T5",
+        "reliability": "low",
+        "published_at": null,
+        "fetched_at": "2026-10-05T15:56:57.569Z",
+        "excluded": true
+      }
+    ],
+    "coverage": {
+      "stop_reason": "max_hops",
+      "hops_used": 2,
+      "searches": 8,
+      "reads": 6,
+      "note": "Verified 8 finding(s) across 14 citable source(s).",
+      "configured": true
+    }
+  },
+  "llm_traces": [
+    {
+      "id": "8f28bc71-a51f-47a4-9a52-a1f6ad52f087",
+      "agent_id": "paige-strategist",
+      "provider": "anthropic",
+      "model": "claude-sonnet-5",
+      "job_kind": "reason:strategize",
+      "tier": "reasoning",
+      "status": "success",
+      "tokens_in": 252,
+      "tokens_out": 696,
+      "cost_estimate_usd": 0.0112,
+      "latency_ms": 9189,
+      "error_class": null,
+      "input_excerpt": "[{\"role\":\"system\",\"content\":\"You are Paige's strategist. Before any work is produced, you plan HOW to tackle it — you do not do the work itself. Given a task, return a tight strategy as STRICT JSON with exactly these keys: {\\\"decomposition\\",
+      "created_at": "2026-10-05T15:56:31.137073+00:00"
+    }
+  ],
+  "deterministic_metrics": {
+    "stop_reason": "max_hops",
+    "configured": true,
+    "findings_count": 8,
+    "sources_retrieved": 18,
+    "sources_included": 14,
+    "sources_excluded": 4,
+    "sources_cited": 9,
+    "primary_ratio": 0.1111111111111111,
+    "citation_independence": 0.778,
+    "distinct_cited_hosts": 7,
+    "findings_with_citations": 1,
+    "unverified_notes_count": 0,
+    "newest_cited_age_days": null,
+    "freshness_budget_days": 365,
+    "wall_latency_ms": 57719,
+    "trace_cost_usd": 0.0112,
+    "engine_internal_cost_est_usd": 0.045,
+    "trace_models": [
+      "anthropic/claude-sonnet-5/reason:strategize"
+    ],
+    "trace_call_count": 1,
+    "empty_findings_honest_stop": false
+  }
+}

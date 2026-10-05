@@ -105,7 +105,7 @@
         "completion_criterion": "Authenticated Solo owner completes source-backed commercial workflows and verifies recorded outcomes; fixture rendering does not meet this criterion."
       },
       "state": "PROOF_OWED",
-      "state_reason": "Dedicated Sales mounts and Collections code are implemented, with local SQL and synthetic rendered proof. Authenticated tenant flows and provider outcomes remain unverified. Collections Chat binds canonical governed tools. The 2026-10-04 invoice customization and six-tab Opportunities List/Board refinement is development evidence only; authenticated preferences save/issuance, customer artifact and opportunity interactions remain UNVERIFIED. The approved invoice pop-out and actual PDF/email-attachment implementation has local component/renderer and version-fence proof; hosted renderer and authenticated provider attachment acceptance remain UNVERIFIED. Broad INT-299 runtime architecture stays deferred.",
+      "state_reason": "Dedicated Sales mounts and Collections code are implemented, with local SQL and synthetic rendered proof. Authenticated tenant flows and provider outcomes remain unverified. Collections Chat binds canonical governed tools. The 2026-10-04 invoice customization and six-tab Opportunities List/Board refinement is development evidence only; authenticated preferences save/issuance, customer artifact and opportunity interactions remain UNVERIFIED. The approved invoice pop-out and actual PDF/email-attachment implementation has local component/renderer and version-fence proof; hosted renderer and authenticated provider attachment acceptance remain UNVERIFIED. Broad INT-299 runtime architecture stays deferred. Post-merge repair keeps draft previews unpublished and serializes invoice financial mutations against canonical dispatch admission; authenticated concurrent delivery/payment proof remains owed.",
       "next_slice": "Prove authenticated scoped collection terms, import/export, partial receipts/corrections and invoice email/SMS outcomes; no iMessage/accounting sync claim. Apply INT-299 only after accepted Sales UI.",
       "evidence_class": [
         "source_read",
@@ -122,7 +122,8 @@
         "supabase/functions/_shared/sales-collections-chat.ts",
         "docs/evidence/ui-delivery/solo-sales-collections.md",
         "docs/evidence/ui-delivery/solo-sales-invoice-customization.md",
-        "docs/evidence/ui-delivery/solo-sales-invoice-pdf-workspace.md"
+        "docs/evidence/ui-delivery/solo-sales-invoice-pdf-workspace.md",
+        "docs/evidence/ui-delivery/solo-sales-invoice-dispatch-repair.md"
       ]
     },
     {

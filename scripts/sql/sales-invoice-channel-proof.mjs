@@ -47,23 +47,46 @@ CREATE TABLE messages(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),tenant_id uu
 \\ir ../../supabase/migrations/20270543000002_sales_invoice_delivery.sql
 `;
 const channelMigration=read('../../supabase/migrations/20270547000001_sales_invoice_channel_delivery.sql');
+const dispatchGuard=read('../../supabase/migrations/20270562000000_sales_invoice_dispatch_version_guard.sql');
 const base=read('sales-billing-drafts-proof.sql');
 const snapshot=read('sales-invoice-snapshot-proof.sql');
 const original=read('sales-invoice-lifecycle-proof.sql');
 const prefix=original.slice(0,original.indexOf('CREATE FUNCTION proof_delivery(')).replace('CREATE TEMP TABLE issued_result',`RESET ROLE; UPDATE paige_invoices SET billing_draft=jsonb_set(billing_draft,'{recipient_phone}','"+12025550123"') WHERE id='60000000-0000-0000-0000-000000000091'; SET LOCAL ROLE service_role; CREATE TEMP TABLE issued_result`);
 const checks=read('sales-invoice-channel-proof.sql');
-run(base.replace('ROLLBACK;',()=>snapshot+'\n'+setup+'\n'+channelMigration+'\n'+channelMigration+'\n'+prefix+'\n'+checks+'\nROLLBACK;'));
+run(base.replace('ROLLBACK;',()=>snapshot+'\n'+setup+'\n'+channelMigration+'\n'+channelMigration+'\n'+dispatchGuard+'\n'+dispatchGuard+'\n'+prefix+'\n'+checks+'\nROLLBACK;'));
 console.log('PASS: actual isolated channel migration twice, frozen SMS recipient, replay, single admission and unknown fencing. No provider/JWT proof.');
 const raceDatabase='sales_channel_race_'+randomUUID().replaceAll('-','');
 assert(/^sales_channel_race_[a-f0-9]{32}$/.test(raceDatabase));
 run(`CREATE DATABASE ${raceDatabase};`);database=raceDatabase;
 try {
  const ready=checks.slice(0,checks.indexOf('SELECT proof_assert(claim_sales'));
- run(base.replace('ROLLBACK;',()=>snapshot+'\n'+setup+'\n'+channelMigration+'\n'+prefix+'\n'+ready+'\nRESET ROLE; COMMIT;'));
+ run(base.replace('ROLLBACK;',()=>snapshot+'\n'+setup+'\n'+channelMigration+'\n'+dispatchGuard+'\n'+prefix+'\n'+ready+'\nRESET ROLE; COMMIT;'));
  const attempt=op=>new Promise(resolve=>{const p=spawn(binary,args(),{cwd,stdio:['pipe','pipe','pipe']});let stderr='';p.stderr.on('data',chunk=>stderr+=chunk);p.on('close',code=>resolve({code,stderr}));p.on('error',error=>resolve({code:1,stderr:String(error)}));p.stdin.end(`SET ROLE service_role; SELECT claim_sales_invoice_delivery((read_sales_invoice_delivery_result('10000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000001','70000000-0000-0000-0000-000000000${op}','{"action":"invoice.sms_send","invoice_id":"60000000-0000-0000-0000-000000000091","expected_version":5,"connector_id":null}') ->>'message_id')::uuid,'70000000-0000-0000-0000-000000000${op}','90000000-0000-0000-0000-000000000${op}',repeat('${op===210?'b':'c'}',64),now()+interval '1 day');`);});
  const race=await Promise.all([attempt(210),attempt(211)]);
  assert.equal(race.filter(r=>r.code===0).length,1,'exactly one distinct approved operation admits '+JSON.stringify(race));
  assert.equal(run("SELECT count(*) FROM messages WHERE meta#>>'{sales_invoice_binding,state}'='dispatching';").trim(),'1');
  console.log('PASS: actual concurrent distinct-operation SMS provider admission has one winner.');
+
+ // Hold an uncommitted claim while another session tries to insert a financial receipt.
+ // The marker starts the second session only after the real invoice lock is held.
+ run("TRUNCATE messages,paige_invoice_access_grants; DELETE FROM paige_invoice_operations WHERE id IN ('70000000-0000-0000-0000-000000000210','70000000-0000-0000-0000-000000000211'); SET ROLE service_role; SELECT proof_sms(210);");
+ const session=(sql,marker)=>{
+  let readyResolve;const ready=new Promise(resolve=>readyResolve=resolve);
+  const done=new Promise(resolve=>{const p=spawn(binary,args(),{cwd,stdio:['pipe','pipe','pipe']});let stdout='',stderr='';
+   p.stdout.on('data',chunk=>{stdout+=chunk;if(marker&&stdout.includes(marker))readyResolve();});p.stderr.on('data',chunk=>stderr+=chunk);
+   p.on('close',code=>{readyResolve();resolve({code,stdout,stderr});});p.on('error',error=>{readyResolve();resolve({code:1,stdout,stderr:String(error)});});
+   p.stdin.end("SET statement_timeout='5s';\n"+sql);
+  });return{ready,done};
+ };
+ const claimMessage=run("SELECT id FROM messages WHERE meta#>>'{sales_invoice_binding,operation_id}'='70000000-0000-0000-0000-000000000210';").trim();assert(/^[a-f0-9-]{36}$/.test(claimMessage));
+ const claimSql=`SET ROLE service_role; BEGIN; SELECT claim_sales_invoice_delivery('${claimMessage}'::uuid,'70000000-0000-0000-0000-000000000210','90000000-0000-0000-0000-000000000212',repeat('d',64),now()+interval '1 day');`;
+ const claimant=session(claimSql+"\n\\echo CLAIM_ADMITTED\nSELECT pg_sleep(0.4); COMMIT;",'CLAIM_ADMITTED');await claimant.ready;
+ const receipt=session("INSERT INTO paige_invoice_payments(id,invoice_id,tenant_id,actor_user_id,kind,amount_cents,currency,method,received_at) VALUES('70000000-0000-0000-0000-000000000224','60000000-0000-0000-0000-000000000091','20000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001','receipt',100,'usd','cash',now());");
+ const [claimed,refused]=await Promise.all([claimant.done,receipt.done]);assert.equal(claimed.code,0,claimed.stderr);assert(claimed.stdout.includes('CLAIM_ADMITTED'));assert.notEqual(refused.code,0);assert(refused.stderr.includes('Invoice delivery is in progress'),refused.stderr);
+ assert.equal(run("SELECT count(*) FROM paige_invoice_payments WHERE id='70000000-0000-0000-0000-000000000224';").trim(),'0');
+ run(`SET ROLE service_role; SELECT finalize_sales_invoice_delivery('${claimMessage}'::uuid,'70000000-0000-0000-0000-000000000210','failed',NULL,NULL);`);
+ assert.equal(run(`SET ROLE service_role; SELECT proof_command(225,'{"action":"invoice.record_manual_payment","expected_version":5,"amount_cents":100,"currency":"usd","method":"cash","received_at":"2026-10-04T12:00:00Z"}','sales_record_manual_payment')#>>'{row,remaining_cents}';`).trim().split(/\r?\n/).at(-1),'300');
+ console.log('PASS: concurrent receipt waits for invoice claim then refuses; finalization releases the financial write.');
+
 }finally{database='postgres';run(`DROP DATABASE ${raceDatabase};`);}
 

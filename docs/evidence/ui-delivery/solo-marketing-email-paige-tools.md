@@ -41,7 +41,7 @@ ACCEPTANCE_CRITERIA: on the live app the owner asks PAIGE to write a campaign em
 MOTION_PURPOSE: none added
 PROTECTED_SEAMS: tested - the E2 editor saves (serialised, Back, unmount), confirm-fingerprint ignore list, workspace authority, capability status wiring, campaign brief chat reach, approval stored-proposal execution; unaffected and named - Sales and CRM doors (their seat set is extended, not changed), the worker renderer (only the markup source moved, re-exported)
 
-INTERNAL_BUILD_IDENTITY: head of claude/gifted-bell-qfezxb; deployment=none-pre-merge; environment=development; migrations=PROOF_OWED(20270564000000 applies through deploy-migrations.yml on merge after its rolled-back production proofs passed); edge=paige-ai-chat deploys on merge; evidence=src/__tests__/email-campaign-chat.test.ts
+INTERNAL_BUILD_IDENTITY: 8a0f9a6124bea7e3b2c36292e9851c113a972739; deployment=none-pre-merge; environment=development; migrations=PROOF_OWED(20270564000000 applies through deploy-migrations.yml on merge after its rolled-back production proofs passed); edge=paige-ai-chat deploys on merge; evidence=src/__tests__/email-campaign-chat.test.ts
 RELEASE_CHANNEL: development: verified locally; production on merge per the owner ("Merge when green, then start E2B")
 RELEASE_CLASSIFICATION: internal-only: pre-launch, no customers
 CUSTOMER_RELEASE_IDENTITY: none: pre-launch, no customers

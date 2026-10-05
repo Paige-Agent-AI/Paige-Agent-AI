@@ -13,8 +13,20 @@ SELECT proof_assert((SELECT result->>'message_id' FROM sms_result)=(SELECT proof
 CREATE TEMP TABLE sms_second AS SELECT proof_sms(211) result;
 SELECT proof_assert(claim_sales_invoice_delivery((SELECT (result->>'message_id')::uuid FROM sms_result),'70000000-0000-0000-0000-000000000210','90000000-0000-0000-0000-000000000210',repeat('b',64),now()+interval '1 day')->>'state'='dispatching','SMS admits one provider attempt');
 SELECT proof_denied($q$SELECT claim_sales_invoice_delivery((SELECT (result->>'message_id')::uuid FROM sms_second),'70000000-0000-0000-0000-000000000211','90000000-0000-0000-0000-000000000211',repeat('c',64),now()+interval '1 day')$q$,'42501','cross-operation SMS claim refused');
+-- Payment inserts and invoice lifecycle updates cannot invalidate a claimed PDF.
+SELECT proof_denied($q$SELECT proof_command(220,'{"action":"invoice.record_manual_payment","expected_version":5,"amount_cents":100,"currency":"usd","method":"cash","received_at":"2026-10-04T12:00:00Z"}','sales_record_manual_payment')$q$,'P5501','receipt blocked while dispatching');
+SELECT proof_denied($q$SELECT proof_command(221,'{"action":"invoice.reverse_manual_payment","expected_version":5,"payment_id":"70000000-0000-0000-0000-000000000104","reason":"Correction"}','sales_reverse_manual_payment')$q$,'P5501','correction blocked while dispatching');
+SELECT proof_denied($q$SELECT proof_command(222,'{"action":"invoice.void","expected_version":5,"reason":"Cancel"}','sales_void_invoice')$q$,'P5501','void blocked while dispatching');
+RESET ROLE;
+SELECT proof_assert((SELECT billing_lifecycle_version=5 FROM paige_invoices WHERE id='60000000-0000-0000-0000-000000000091'),'claimed version remains unchanged');
+SELECT proof_assert(NOT EXISTS(SELECT 1 FROM paige_invoice_payments WHERE id IN ('70000000-0000-0000-0000-000000000220','70000000-0000-0000-0000-000000000221')),'refused receipts have no side effects');
+SET LOCAL ROLE service_role;
 SELECT finalize_sales_invoice_delivery((SELECT (result->>'message_id')::uuid FROM sms_result),'70000000-0000-0000-0000-000000000210','unknown',NULL,'not persisted');
 SELECT proof_denied($q$SELECT proof_sms(212)$q$,'55000','unknown SMS prevents fresh operation bypass');
 RESET ROLE;
 SELECT proof_assert((SELECT body_html IS NULL AND body_text='View {{PAIGE_INVOICE_LINK}}' AND connector_id IS NULL AND recipients->0->>'address'='+12025550123' AND position('?token=' in meta::text)=0 FROM messages WHERE id=(SELECT (result->>'message_id')::uuid FROM sms_result)),'SMS durable content token-free and client snapshot exact');
 
+
+SET LOCAL ROLE service_role;
+SELECT proof_assert(proof_command(223,'{"action":"invoice.record_manual_payment","expected_version":5,"amount_cents":100,"currency":"usd","method":"cash","received_at":"2026-10-04T12:00:00Z"}','sales_record_manual_payment')#>>'{row,remaining_cents}'='300','finalized unknown releases financial mutation without claiming delivery');
+RESET ROLE;

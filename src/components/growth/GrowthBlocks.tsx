@@ -10,7 +10,9 @@ import { useParams } from "react-router-dom";
 import DOMPurify from "dompurify";
 import type { GrowthBlock, GrowthPageTheme } from "@/lib/growth";
 import { supabase } from "@/integrations/supabase/client";
-import { resolveGrowthTheme, type GrowthThemeVars } from "@/components/growth/growth-theme";
+import { resolveGrowthFontPair, resolveGrowthTheme, type GrowthThemeVars } from "@/components/growth/growth-theme";
+import { useBrandFontFaces } from "@/hooks/useBrandFontFaces";
+import "./growth-brand-fonts.css";
 import { GP_FADE_RISE, GP_PRESS, fadeRiseStyle, useReducedMotion } from "@/components/growth/growth-motion";
 import { GrowthFormEmbed } from "@/pages/public/GrowthFormRenderer";
 
@@ -963,6 +965,12 @@ export interface GrowthBlocksProps {
  */
 export function GrowthBlocks({ blocks, theme, brandFloor, tenantId, children, className = "" }: GrowthBlocksProps) {
   const vars = resolveGrowthTheme(theme, brandFloor);
+  // Brand fonts: load ONLY the resolved display + body faces, into the document this tree is actually
+  // in (the Studio canvas is an iframe). `data-gp-font="brand"` arms the scoped heading rule in
+  // ./growth-brand-fonts.css; without a library font the page keeps today's type exactly.
+  const fontPair = resolveGrowthFontPair(theme, brandFloor);
+  const scopeRef = useRef<HTMLDivElement>(null);
+  useBrandFontFaces(scopeRef, fontPair ? [fontPair.display, fontPair.body] : []);
   const scopeStyle = {
     ...(vars as GrowthThemeVars),
     background: "var(--gp-bg)",
@@ -974,7 +982,7 @@ export function GrowthBlocks({ blocks, theme, brandFloor, tenantId, children, cl
   const bands = useMemo(() => assignBands(blocks ?? []), [blocks]);
 
   return (
-    <div className={className} style={scopeStyle}>
+    <div ref={scopeRef} data-gp="" data-gp-font={fontPair ? "brand" : undefined} className={className} style={scopeStyle}>
       {(blocks ?? []).map((block, i) => (
         <div key={i} className={GP_FADE_RISE} style={{ ...fadeRiseStyle(i), ...bandStyle(bands[i]) }}>
           <BlockRenderer block={block} tenantId={tenantId} />

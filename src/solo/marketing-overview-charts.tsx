@@ -236,3 +236,61 @@ export function GrowthArea({ points, label }: { points: GrowthPointView[]; label
     </ResponsiveContainer>
   </div>;
 }
+
+export type EmailRatePointView = { day: string; label: string; sent: number; openRate: number | null; clickRate: number | null };
+
+/**
+ * Marketing › Email: open rate and click rate on each day email went out. A day with nothing sent has
+ * no point (never a 0%); hover any day for its rates and how many were sent.
+ */
+export function EmailRatesChart({ points, label }: { points: EmailRatePointView[]; label: string }) {
+  const ref = React.useRef<HTMLDivElement>(null);
+  const colors = useChartColors(ref);
+  const reduced = useReducedMotion();
+  const id = React.useId().replace(/:/g, "");
+  const measured = points.filter((p) => p.openRate !== null);
+  const top = Math.max(10, ...measured.map((p) => p.openRate ?? 0));
+  const ceiling = Math.min(100, Math.ceil(top / 20) * 20);
+  const ticks = [0, ceiling / 4, ceiling / 2, (ceiling * 3) / 4, ceiling];
+  // Sends land on a few days; the line runs between the days that were measured and every measured day
+  // carries a dot, so a reader sees exactly where a rate came from. Days with nothing sent stay empty.
+  const dot = (token: "--chart-1" | "--chart-2") => ({ r: 3, fill: colors[token], stroke: colors["--surface"], strokeWidth: 2 });
+  return <div ref={ref} className="mo-chart me-chart-rates" role="img"
+    aria-label={`${label}. ${measured.length ? `${measured.length} day${measured.length === 1 ? "" : "s"} with emails that report opens.` : "No emails that report opens in this period."}`}>
+    <ResponsiveContainer width="100%" height="100%">
+      <AreaChart accessibilityLayer={false} data={points} margin={{ top: 10, right: 10, bottom: 0, left: -12 }}>
+        <defs>
+          <linearGradient id={`${id}-o`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={colors["--chart-1"]} stopOpacity={0.26} />
+            <stop offset="100%" stopColor={colors["--chart-1"]} stopOpacity={0.02} />
+          </linearGradient>
+          <linearGradient id={`${id}-c`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={colors["--chart-2"]} stopOpacity={0.24} />
+            <stop offset="100%" stopColor={colors["--chart-2"]} stopOpacity={0.02} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid vertical={false} stroke={colors["--line-soft"]} />
+        <XAxis dataKey="label" tickLine={false} axisLine={false} minTickGap={24} tick={{ fill: colors["--ink-3"], fontSize: 11 }} />
+        <YAxis tickLine={false} axisLine={false} width={44} domain={[0, ceiling]} ticks={ticks} tickFormatter={(v: number) => `${v}%`} tick={{ fill: colors["--ink-3"], fontSize: 11 }} />
+        <Tooltip cursor={{ stroke: colors["--line-soft"] }}
+          content={({ active, payload, label: day }) => {
+            if (!active || !payload?.length) return null;
+            const point = (payload[0] as unknown as { payload: EmailRatePointView }).payload;
+            return <TipBox title={String(day)} rows={point.openRate === null
+              ? [{ label: "Sent", value: point.sent }, { label: "Opens", value: point.sent ? "Not reported" : "No email sent" }]
+              : [
+                { label: "Open rate", value: `${point.openRate}%`, color: colors["--chart-1"] },
+                { label: "Click rate", value: `${point.clickRate}%`, color: colors["--chart-2"] },
+                { label: "Sent", value: point.sent },
+              ]} />;
+          }} />
+        <Area type="monotone" dataKey="openRate" connectNulls stroke={colors["--chart-1"]} strokeWidth={2} fill={`url(#${id}-o)`}
+          isAnimationActive={!reduced} dot={dot("--chart-1")}
+          activeDot={{ r: 4, stroke: colors["--surface"], strokeWidth: 2 }} />
+        <Area type="monotone" dataKey="clickRate" connectNulls stroke={colors["--chart-2"]} strokeWidth={2} fill={`url(#${id}-c)`}
+          isAnimationActive={!reduced} dot={dot("--chart-2")}
+          activeDot={{ r: 4, stroke: colors["--surface"], strokeWidth: 2 }} />
+      </AreaChart>
+    </ResponsiveContainer>
+  </div>;
+}

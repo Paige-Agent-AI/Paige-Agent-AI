@@ -55,10 +55,16 @@ Deno.serve(async (req) => {
   const contactId = body.input?.contact_id ?? body.context?.contact_id;
   if (!contactId) return ok({ ok: false, error: "contact_id required" });
 
+  // INT-310 C1 (defense in depth): the orchestrator bound this contact to the server-resolved tenant
+  // and forwards that tenant in context; this read is bound to it as well, so a foreign or missing
+  // row is the same not-found. No trusted tenant → nothing to bind to → refuse.
+  const trustedTenant = (body.context as { tenant_id?: unknown } | undefined)?.tenant_id;
+  if (typeof trustedTenant !== "string") return ok({ ok: false, error: "resource_not_found" }, 404);
   const { data: client } = await supabase
     .from("clients")
     .select("id,first_name,last_name,linked_user_id,funding_goal,monthly_revenue")
     .eq("id", contactId)
+    .eq("tenant_id", trustedTenant)
     .maybeSingle();
   if (!client) return ok({ ok: false, error: `Client ${contactId} not found` }, 404);
 

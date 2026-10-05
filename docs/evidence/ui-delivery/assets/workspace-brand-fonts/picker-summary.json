@@ -1,0 +1,518 @@
+{
+  "frames": [
+    {
+      "viewport": "1536x770",
+      "paige": "closed",
+      "file": "solo-1536x770-paige-closed.png",
+      "trigger": "Literata",
+      "triggerBox": [
+        545,
+        476,
+        374,
+        35
+      ],
+      "docScrollWidth": 1536,
+      "ownerScrollWidth": 1536,
+      "ownerClientWidth": 1536,
+      "labelFor": "Typeface",
+      "describedBy": "Headings use Literata; body text uses Public Sans."
+    },
+    {
+      "viewport": "1536x770",
+      "paige": "open",
+      "file": "solo-1536x770-paige-open.png",
+      "trigger": "Literata",
+      "triggerBox": [
+        355,
+        493,
+        321,
+        35
+      ],
+      "docScrollWidth": 1536,
+      "ownerScrollWidth": 1156,
+      "ownerClientWidth": 1156,
+      "labelFor": "Typeface",
+      "describedBy": "Headings use Literata; body text uses Public Sans."
+    },
+    {
+      "viewport": "1366x768",
+      "paige": "closed",
+      "file": "solo-1366x768-paige-closed.png",
+      "trigger": "Literata",
+      "triggerBox": [
+        460,
+        476,
+        374,
+        35
+      ],
+      "docScrollWidth": 1366,
+      "ownerScrollWidth": 1366,
+      "ownerClientWidth": 1366,
+      "labelFor": "Typeface",
+      "describedBy": "Headings use Literata; body text uses Public Sans."
+    },
+    {
+      "viewport": "1366x768",
+      "paige": "open",
+      "file": "solo-1366x768-paige-open.png",
+      "trigger": "Literata",
+      "triggerBox": [
+        270,
+        493,
+        236,
+        35
+      ],
+      "docScrollWidth": 1366,
+      "ownerScrollWidth": 986,
+      "ownerClientWidth": 986,
+      "labelFor": "Typeface",
+      "describedBy": "Headings use Literata; body text uses Public Sans."
+    },
+    {
+      "viewport": "1024x768",
+      "paige": "closed",
+      "file": "solo-1024x768-paige-closed.png",
+      "trigger": "Literata",
+      "triggerBox": [
+        289,
+        493,
+        255,
+        35
+      ],
+      "docScrollWidth": 1024,
+      "ownerScrollWidth": 1024,
+      "ownerClientWidth": 1024,
+      "labelFor": "Typeface",
+      "describedBy": "Headings use Literata; body text uses Public Sans."
+    },
+    {
+      "viewport": "1024x768",
+      "paige": "open",
+      "file": "solo-1024x768-paige-open.png",
+      "trigger": "Literata",
+      "triggerBox": [
+        99,
+        654,
+        65,
+        35
+      ],
+      "docScrollWidth": 1024,
+      "ownerScrollWidth": 644,
+      "ownerClientWidth": 644,
+      "labelFor": "Typeface",
+      "describedBy": "Headings use Literata; body text uses Public Sans."
+    },
+    {
+      "viewport": "900x1000",
+      "paige": "closed",
+      "file": "solo-900x1000-paige-closed.png",
+      "trigger": "Literata",
+      "triggerBox": [
+        457,
+        476,
+        424,
+        35
+      ],
+      "docScrollWidth": 900,
+      "ownerScrollWidth": 900,
+      "ownerClientWidth": 900,
+      "labelFor": "Typeface",
+      "describedBy": "Headings use Literata; body text uses Public Sans."
+    },
+    {
+      "viewport": "900x1000",
+      "paige": "open",
+      "file": "solo-900x1000-paige-open.png",
+      "trigger": "Literata",
+      "triggerBox": [
+        267,
+        511,
+        234,
+        35
+      ],
+      "docScrollWidth": 900,
+      "ownerScrollWidth": 520,
+      "ownerClientWidth": 520,
+      "labelFor": "Typeface",
+      "describedBy": "Headings use Literata; body text uses Public Sans."
+    }
+  ],
+  "list_dark": {
+    "groups": [
+      "Editorial serif",
+      "Premium serif",
+      "Humanist sans",
+      "Geometric sans",
+      "Product sans",
+      "Condensed display",
+      "Expressive display",
+      "Classic"
+    ],
+    "options": 26,
+    "brandFacesLoaded": 8,
+    "firstOptionFamily": "brand-source-serif-4, \"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+    "fontBytes": {
+      "atMount": {
+        "files": 0,
+        "bytes": 0
+      },
+      "onOpen": {
+        "files": 8,
+        "bytes": 406692
+      },
+      "afterScrollingWholeList": {
+        "files": 25,
+        "bytes": 1030916
+      }
+    },
+    "optionInk": [
+      {
+        "label": "Source Serif 4",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 18,
+        "contrast": 17.54
+      },
+      {
+        "label": "Literata",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 19,
+        "contrast": 17.54
+      },
+      {
+        "label": "Spectral",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 22,
+        "contrast": 17.54
+      },
+      {
+        "label": "Bodoni Moda",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 22,
+        "contrast": 17.54
+      },
+      {
+        "label": "Libre Caslon Display",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 19,
+        "contrast": 17.54
+      },
+      {
+        "label": "Gloock",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 15,
+        "contrast": 17.54
+      },
+      {
+        "label": "Source Sans 3",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 18,
+        "contrast": 17.54
+      },
+      {
+        "label": "Public Sans",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 15,
+        "contrast": 17.54
+      },
+      {
+        "label": "Urbanist",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 15,
+        "contrast": 17.54
+      },
+      {
+        "label": "Figtree",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 15,
+        "contrast": 17.54
+      },
+      {
+        "label": "Onest",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 16,
+        "contrast": 17.54
+      },
+      {
+        "label": "Manrope",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 17,
+        "contrast": 17.54
+      },
+      {
+        "label": "Barlow Semi Condensed",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 16,
+        "contrast": 17.54
+      },
+      {
+        "label": "Oswald",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 16,
+        "contrast": 17.54
+      },
+      {
+        "label": "Anton",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 13,
+        "contrast": 17.54
+      },
+      {
+        "label": "Unbounded",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 14,
+        "contrast": 17.54
+      },
+      {
+        "label": "Archivo",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 14,
+        "contrast": 17.54
+      },
+      {
+        "label": "Inter",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 14,
+        "contrast": 17.54
+      },
+      {
+        "label": "Plus Jakarta Sans",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 15,
+        "contrast": 17.54
+      },
+      {
+        "label": "Poppins",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 16,
+        "contrast": 17.54
+      },
+      {
+        "label": "Montserrat",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 15,
+        "contrast": 17.54
+      },
+      {
+        "label": "Playfair Display",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 16,
+        "contrast": 17.54
+      },
+      {
+        "label": "Lora",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 16,
+        "contrast": 17.54
+      },
+      {
+        "label": "DM Sans",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 16,
+        "contrast": 17.54
+      },
+      {
+        "label": "Space Grotesk",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 17,
+        "contrast": 17.54
+      }
+    ]
+  },
+  "selection": {
+    "trigger": "Bodoni Moda",
+    "hint": "Headings use Bodoni Moda; body text uses Source Sans 3.",
+    "focusOnTrigger": true,
+    "writes": [
+      {
+        "fn": "set_tenant_brand",
+        "args": {
+          "_tenant_id": "harness-tenant",
+          "_patch": {
+            "font": "Bodoni Moda"
+          }
+        }
+      }
+    ]
+  },
+  "list_light": {
+    "groups": [
+      "Editorial serif",
+      "Premium serif",
+      "Humanist sans",
+      "Geometric sans",
+      "Product sans",
+      "Condensed display",
+      "Expressive display",
+      "Classic"
+    ],
+    "options": 26,
+    "brandFacesLoaded": 8,
+    "firstOptionFamily": "brand-source-serif-4, \"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+    "fontBytes": {
+      "atMount": {
+        "files": 0,
+        "bytes": 0
+      },
+      "onOpen": {
+        "files": 8,
+        "bytes": 406692
+      },
+      "afterScrollingWholeList": {
+        "files": 25,
+        "bytes": 1030916
+      }
+    },
+    "optionInk": [
+      {
+        "label": "Source Serif 4",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 18,
+        "contrast": 16.31
+      },
+      {
+        "label": "Literata",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 19,
+        "contrast": 16.31
+      },
+      {
+        "label": "Spectral",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 22,
+        "contrast": 16.31
+      },
+      {
+        "label": "Bodoni Moda",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 22,
+        "contrast": 16.31
+      },
+      {
+        "label": "Libre Caslon Display",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 19,
+        "contrast": 16.31
+      },
+      {
+        "label": "Gloock",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 15,
+        "contrast": 16.31
+      },
+      {
+        "label": "Source Sans 3",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 18,
+        "contrast": 16.31
+      },
+      {
+        "label": "Public Sans",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 15,
+        "contrast": 16.31
+      },
+      {
+        "label": "Urbanist",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 15,
+        "contrast": 16.31
+      },
+      {
+        "label": "Figtree",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 15,
+        "contrast": 16.31
+      },
+      {
+        "label": "Onest",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 16,
+        "contrast": 16.31
+      },
+      {
+        "label": "Manrope",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 17,
+        "contrast": 16.31
+      },
+      {
+        "label": "Barlow Semi Condensed",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 16,
+        "contrast": 16.31
+      },
+      {
+        "label": "Oswald",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 16,
+        "contrast": 16.31
+      },
+      {
+        "label": "Anton",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 13,
+        "contrast": 16.31
+      },
+      {
+        "label": "Unbounded",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 14,
+        "contrast": 16.31
+      },
+      {
+        "label": "Archivo",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 14,
+        "contrast": 16.31
+      },
+      {
+        "label": "Inter",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 14,
+        "contrast": 16.31
+      },
+      {
+        "label": "Plus Jakarta Sans",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 15,
+        "contrast": 16.31
+      },
+      {
+        "label": "Poppins",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 16,
+        "contrast": 16.31
+      },
+      {
+        "label": "Montserrat",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 15,
+        "contrast": 16.31
+      },
+      {
+        "label": "Playfair Display",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 16,
+        "contrast": 16.31
+      },
+      {
+        "label": "Lora",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 16,
+        "contrast": 16.31
+      },
+      {
+        "label": "DM Sans",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 16,
+        "contrast": 16.31
+      },
+      {
+        "label": "Space Grotesk",
+        "fontSizeAdjust": "0.52",
+        "contentAreaPx": 17,
+        "contrast": 16.31
+      }
+    ]
+  }
+}

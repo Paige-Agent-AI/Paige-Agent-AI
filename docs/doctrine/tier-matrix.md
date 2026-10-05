@@ -345,6 +345,10 @@ class of lie as a fabricated metric (§13).
 
 Legend: **✓** live · **—** not built · **N/A** tier not opened yet · **403** denied at the route gate.
 
+### Workspace pages wear their real brand fonts — P1 (branch `p1-brand-fonts`, 2026-10-04; ships on merge, NOT live)
+
+**Published workspace pages, funnels, `/render-frame` and the Studio canvas (all tiers that can publish or view a page):** a page whose brand font (or page `theme_json.font`) is in the self-hosted library now loads that face and its paired body face from `/fonts/brand/` and sets its headings in the brand face. Anonymous visitors see the change on every tenant's published page that names a library font; no tier gains or loses access to anything. A page with no brand font, or one outside the library, renders exactly as before. **Client Portal → Typeface (Solo owner/admin; the agency managing a sub-account; operators acting inside a tenant — the existing PortalStudio gate, unchanged):** the picker offers the library grouped by character, each option in its own face, plus the earlier picks under "Classic"; it still writes only `brand.font` through `set_tenant_brand`. Agency and Enterprise reach it only where they already reach PortalStudio. Client and Anonymous: no picker (unchanged). Written before merge; LIVE only once merged and the frontend deploys — authenticated owner drive owed.
+
 ### Page screenshots move onto paige-browser `/render`; `/render-frame` (branch `screenshots-on-paige-browser`, 2026-10-04)
 
 **No tier gains or loses a visible capability.** The §33 visual-critique loop stays OFF in the product flow (`STUDIO_VISUAL_CRITIQUE_ENABLED` unset), so no Solo, Sub-account, Agency, Enterprise or God surface changes. What changes underneath: `studio-visual-critique` renders landing pages through paige-browser instead of a host that never existed — and that endpoint path is itself gated by the same flag (off → `status:"disabled"`, no paige-browser call, no row), so deploying the function opens nothing to any tier; every tier's calls are throttled per tenant (12 per 10 min by default) and the §33 caps run on server-derived loop state; an attempt with no verdict is logged `NO_VERDICT` with a reason code. The published `/p/:tenant/:page` gains a hidden `data-growth-page-ready` marker and fetches its brand as a GET — visitors see no change. Its authority is unchanged — a JWT caller only for the session's own workspace as owner/admin or managing agency (`resolveStudioCaller`); a service-role caller names the tenant, which the log row and the model trace carry; Client and Anonymous: refused (no Studio seam). New public route `/render-frame`: **Anonymous-reachable by design but inert** — it reads no data, renders only a payload injected by paige-browser, is noindex, carries no telemetry, and shows "Nothing to render" to a person who opens it (it holds no tenant data to leak). Written before merge; LIVE only once merged, the edge function and paige-browser are redeployed, and the frontend ships `/render-frame`.
@@ -376,6 +380,16 @@ Same tiers as the layout C workspace below (Solo owner/admin; operator acting in
 ### Vibe Studio build view, in-project saving, approval cards (2026-10-03)
 
 Same tiers as the layout C workspace below; no new seam. The Studio designer saves drafts in the same turn; held saves surface as approval cards; an unnamed project is renamed through the existing `rename_studio_session` (workspace owner/admin or the project's creator). LIVE on merge; authenticated drive owed.
+
+### Marketing email E2 — the Email dashboard and campaign editor (branch `claude/gifted-bell-qfezxb`, 2026-10-04)
+
+Solo Marketing › Email (`/solo/{account}/growth/email`). The same RPC seam as E1, plus three reads
+(`read_email_marketing_dashboard`, `read_email_campaign`, `read_email_rule_choices`) on the caller's active workspace,
+owner or admin only.
+
+| Capability | God / Super Admin | Agency | Standalone (Solo) | Sub-account | Client | Anonymous | Status |
+|---|---|---|---|---|---|---|---|
+| Email dashboard, campaign editor, segments | ✗ (no workspace; §61 default) | ✗ no screen (the agency does not run its own email book here) | **✓** owner/admin; a member is told only owners and admins can | DB allows owner/admin; the sub-account tree has no Email screen yet | ✗ | ✗ | LIVE on merge (Solo) |
 
 ### Marketing email E1 — the sending foundation (branch `claude/gifted-bell-qfezxb`, 2026-10-04)
 

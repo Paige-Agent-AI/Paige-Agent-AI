@@ -81,10 +81,17 @@ Deno.serve(async (req) => {
   let contactSummary: Record<string, unknown> | null = null;
   if (contactId) {
     // `email` in the summary is the contact's PRIMARY email.
+    // INT-310 C1 (defense in depth): the orchestrator bound this contact to the server-resolved tenant
+    // and forwards that tenant in context; this read is bound to it as well, so a foreign or missing
+    // row is the same not-found. No trusted tenant → nothing to bind to → refuse.
+    // The binder that resolved this tenant: _shared/paige-orchestration/resource-binder.ts.
+    const trustedTenant = (body.context as { tenant_id?: unknown } | undefined)?.tenant_id;
+    if (typeof trustedTenant !== "string") return ok({ ok: false, error: "resource_not_found" }, 404);
     const { data: row } = await supabase
       .from("clients")
       .select(`id,first_name,last_name,do_not_contact,agreement_signed_at,linked_user_id,tenant_id,${CLIENT_CONTACT_METHODS_EMBED}`)
       .eq("id", contactId)
+      .eq("tenant_id", trustedTenant)
       .maybeSingle();
     const client = withPrimaryAddresses(row);
 

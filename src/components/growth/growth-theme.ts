@@ -10,6 +10,7 @@
 //   --gp-accent-foreground : ink to place ON an accent fill (accent button label)
 //   --gp-accent-ink        : an AA-clamped accent, safe to use AS text on the background
 import type { GrowthPageTheme } from "@/lib/growth";
+import { brandFontStack, resolveBrandFontPair, type BrandFontPair } from "@/lib/brand-fonts";
 
 // On-brand fallback floor (§6/§11) — Paige indigo ink + Paige gold. Never the old
 // #0b1220/#cfae70. Any token the tenant theme + brand peek both leave blank lands here.
@@ -114,7 +115,7 @@ function clampToContrast(color: RGB, bg: RGB, target = 4.5): RGB {
 // font string can never break out of the inline style into arbitrary declarations.
 function safeFont(font?: string): string | null {
   if (!font || typeof font !== "string") return null;
-  const cleaned = font.replace(/[^a-zA-Z0-9 ,"'\-]/g, "").trim();
+  const cleaned = font.replace(/[^a-zA-Z0-9 ,"'-]/g, "").trim();
   if (!cleaned) return null;
   // If the tenant gave a bare family, quote it and append a resilient fallback stack.
   const stack = /,/.test(cleaned) ? cleaned : `"${cleaned.replace(/["']/g, "")}"`;
@@ -153,8 +154,20 @@ function layerThemes(...layers: (GrowthPageTheme | null | undefined)[]): GrowthP
  * Layering: hard floor → tenant brand floor → the page's own theme_json (most specific).
  * Returns a plain object spreadable into a React `style` prop.
  */
+/**
+ * The brand font pair a page resolves to, with the same floor → brand → page layering as the colours:
+ * the page's own theme_json.font wins, then the tenant brand font. Null when that string is not in the
+ * self-hosted library (src/lib/brand-fonts.ts) — the page then keeps today's behaviour exactly: its
+ * sanitised family name in --gp-font, and no --gp-font-display.
+ */
+export function resolveGrowthFontPair(theme?: GrowthPageTheme | null, brandFloor?: GrowthPageTheme | null): BrandFontPair | null {
+  return resolveBrandFontPair(layerThemes(brandFloor, theme).font);
+}
+
 export function resolveGrowthTheme(theme?: GrowthPageTheme | null, brandFloor?: GrowthPageTheme | null): GrowthThemeVars {
   const t: GrowthPageTheme = layerThemes(GROWTH_BRAND_FLOOR, brandFloor, theme);
+  // A library brand font → the real self-hosted faces: the brand face for display, its partner for body.
+  const fontPair = resolveBrandFontPair(t.font);
 
   const primary = parseHex(t.primary) || parseHex(GROWTH_BRAND_FLOOR.primary)!;
   const accent = parseHex(t.accent) || parseHex(GROWTH_BRAND_FLOOR.accent)!;
@@ -204,7 +217,8 @@ export function resolveGrowthTheme(theme?: GrowthPageTheme | null, brandFloor?: 
     "--gp-accent-foreground": toHex(accentForeground),
     "--gp-primary-foreground": toHex(primaryForeground),
     "--gp-accent-ink": toHex(accentInk),
-    "--gp-font": safeFont(t.font) || GROWTH_BRAND_FLOOR.font,
+    "--gp-font": fontPair ? brandFontStack(fontPair.body) : (safeFont(t.font) || GROWTH_BRAND_FLOOR.font),
+    ...(fontPair ? { "--gp-font-display": brandFontStack(fontPair.display) } : {}),
     // Band variants — a section wrapper rebinds the base --gp-* to one of these for rhythm.
     "--gp-deep-bg": toHex(deepBg),
     "--gp-deep-text": toHex(deepText),

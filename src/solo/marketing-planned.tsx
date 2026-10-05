@@ -1,20 +1,18 @@
-// Marketing › Content, Email and Ads (owner ruling 2026-10-04: "these are the ones that I
+// Marketing › Content and Ads (owner ruling 2026-10-04: "these are the ones that I
 // want dedicated to marketing"). The feature each name promises is not built yet. Each tab still
 // earns its place: it shows what this workspace
 // really has today for that job, links to where it lives, and names what is missing in plain words.
 //
-// Audience lives in marketing-audience.tsx.
+// Audience lives in marketing-audience.tsx; Email in marketing-email.tsx. These shared helpers
+// (useTenantRead, Frame, TabActions, AskPaigeButton) serve all of them.
 // Reads (all tenant-scoped, read-only, existing tables and RPCs; nothing new on the server):
-//   marketing_content     the saved library, not archived (Content, Email, Ads). RLS: is_tenant_admin
+//   marketing_content     the saved library, not archived (Content, Ads; email copy shows under Content). RLS: is_tenant_admin
 //                         of the row's business, or the platform owner (20270542000000), which is the
 //                         same test the briefs read reports as can_manage, so a member who cannot read
 //                         it is told so rather than shown an empty library.
-//   resolve_tenant_domain_identity()  the sending identity Settings shows (Email); the row must name
-//                         the workspace on screen, or it is treated as unreadable.
 // No segment, broadcast, ad-account or spend source exists; those stay "Not available".
 import React from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getManagedIdentityPresentation } from "./settings-contract";
 import { useSoloCampaignBriefs } from "./useSoloCampaignBriefs";
 
 export type Phase = "loading" | "ready" | "error";
@@ -53,19 +51,7 @@ const readLibrary = (channel?: string) => async (tenantId: string): Promise<Cont
   return (data ?? []) as unknown as ContentRow[];
 };
 const readAll = readLibrary();
-const readEmails = readLibrary("email_campaign");
 const readAds = readLibrary("ad_copy");
-
-type Identity = { tenant_id?: string | null; default_email_sender?: string | null; default_email_domain?: string | null; default_email_status?: string | null } | null;
-async function readIdentity(tenantId: string): Promise<Identity> {
-  // The RPC resolves the caller's own active workspace server-side (the same read Settings makes).
-  const { data, error } = await (supabase as unknown as { rpc: (name: string) => Promise<{ data: unknown; error: unknown }> }).rpc("resolve_tenant_domain_identity");
-  if (error) throw error;
-  const row = (Array.isArray(data) ? data[0] : data) as Identity;
-  // A row for a different workspace than the one on screen must not be shown as this one's.
-  if (row?.tenant_id && row.tenant_id !== tenantId) throw new Error("The sending identity resolved for a different workspace.");
-  return row ?? null;
-}
 
 const CHANNEL_LABEL: Record<string, string> = {
   social_post: "Social post", ad_copy: "Ad copy", email_campaign: "Email", caption: "Caption", blog_outline: "Blog outline", sms_broadcast: "Text message",
@@ -174,43 +160,6 @@ export function MarketingContent({ tenantId, published, onOpenCapture, onRetryPu
     <NotYet items={[
       { title: "Content calendar", detail: "Briefs record timing as words, not dates, so nothing can be laid out on a calendar yet." },
       { title: "Posting and scheduling from here", detail: "Posts are drafted with PAIGE and posted by you; scheduling is not connected." },
-    ]}/>
-  </div>;
-}
-
-export function MarketingEmail({ tenantId, onOpenConnections }: { tenantId: string | null; onOpenConnections: (() => void) | null }) {
-  const access = useLibraryAccess();
-  const identity = useTenantRead<Identity>(tenantId, null, readIdentity);
-  const content = useTenantRead(tenantId, NO_CONTENT, access === "allowed" ? readEmails : null);
-  const id = identity.rows;
-  // The same reading Settings › Connections gives this identity, so the two can never disagree (§57).
-  const shown = getManagedIdentityPresentation({ identity: id, loading: false, error: null });
-  const tone = { ok: "is-live", warn: "is-warn", bad: "is-blocked" }[shown.tone] ?? "";
-  const libraryPhase = libraryPhaseFor(access, content.phase);
-  const ask = <AskPaigeButton label="Ask PAIGE to draft an email" prompt="Draft a marketing email for my business. Ask me who it is for and what it should say before you write it. Save it as a draft; do not send anything."/>;
-  return <div className="mk-view mo mp">
-    <TabActions>
-      {ask}
-      {onOpenConnections && <button className="btn btn-s" onClick={onOpenConnections}>Sending settings</button>}
-    </TabActions>
-    <div className="mo-grid mp-grid mp-grid-2">
-      <section className="campaigns-surface mo-panel"><div className="mo-panel-head"><div><h2>Who your email comes from</h2><p>The sending identity set in Settings › Connections.</p></div></div>
-        <Frame phase={identity.phase} retry={identity.retry} noun="sending identity">
-          {id?.default_email_sender || id?.default_email_domain ? <dl className="mp-facts">
-            <div><dt>Sender</dt><dd>{id.default_email_sender || "Not set"}</dd></div>
-            <div><dt>Domain</dt><dd>{id.default_email_domain || "Not set"}</dd></div>
-            <div><dt>Status</dt><dd><span className={`mk-flag ${tone}`}>{shown.accountLabel}</span> <small>{shown.healthLabel}</small></dd></div>
-          </dl> : <p className="mo-note">No sending identity is set up yet. Set one in Sending settings so email can come from your business.</p>}
-        </Frame>
-      </section>
-      <section className="campaigns-surface mo-panel"><div className="mo-panel-head"><div><h2>Saved email copy</h2><p>Email drafts in your library. Nothing here has been sent.</p></div></div>
-        <Frame phase={libraryPhase} retry={content.retry} noun="saved email copy">{access === "denied" ? <p className="mo-note">{LIBRARY_DENIED}</p> : <LibraryList rows={content.rows.slice(0, 10)} empty={<><p className="mo-note">No email copy saved yet.</p>{ask}</>}/>}</Frame>
-      </section>
-    </div>
-    <NotYet items={[
-      { title: "Broadcasts to a list", detail: "Nothing sends one email to many contacts from Marketing yet." },
-      { title: "Sequences", detail: "Timed series of marketing emails are not built yet." },
-      { title: "Opens, clicks and unsubscribes by campaign", detail: "Marketing email is not sent yet, so there is nothing to measure." },
     ]}/>
   </div>;
 }

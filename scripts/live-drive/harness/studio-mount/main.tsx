@@ -16,9 +16,20 @@ document.documentElement.classList.toggle("dark", theme === "dark");
 document.documentElement.setAttribute("data-theme", theme);
 
 // ?stream=default | build (holds after the first page step) | preview (designed, held for approval)
+//   | lifecycle (a step opens "running", waits for window.__releaseStep(), then closes "done" on the same id)
 const mode = params.get("stream") ?? "default";
-const frames: Array<Record<string, unknown> | "HOLD"> =
-  mode === "build" ? [{ paige_step: { id: "a", label: "Designing your landing page" } }, "HOLD"]
+let releaseStep: () => void = () => {};
+const stepGate = new Promise<void>((r) => { releaseStep = r; });
+(window as unknown as { __releaseStep: () => void }).__releaseStep = () => releaseStep();
+const frames: Array<Record<string, unknown> | "HOLD" | "GATE"> =
+  mode === "lifecycle" ? [
+    { paige_step: { id: "a", label: "Read your form", detail: "6 questions, routed to Sales" } },
+    { paige_step: { id: "b", label: "Adding a budget question", status: "running" } },
+    "GATE",
+    { paige_step: { id: "b", label: "Added a budget question", detail: "After the goal question", status: "done" } },
+    { choices: [{ delta: { content: "Added “What's your budget for this?” after the goal question. It's saved as a draft change; publish when you're ready." } }] },
+  ]
+  : mode === "build" ? [{ paige_step: { id: "a", label: "Designing your landing page" } }, "HOLD"]
   : mode === "start" ? ["HOLD"]
   : mode === "preview" ? [
     { paige_step: { id: "a", label: "Designing your landing page" } },
@@ -44,6 +55,7 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       async start(c) {
         for (const f of frames) {
           if (f === "HOLD") { await new Promise(() => {}); }
+          if (f === "GATE") { await stepGate; continue; }
           c.enqueue(enc.encode(`data: ${JSON.stringify(f)}\n\n`)); await new Promise((r) => setTimeout(r, 60));
         }
         c.enqueue(enc.encode("data: [DONE]\n\n")); c.close();

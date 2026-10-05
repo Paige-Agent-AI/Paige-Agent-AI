@@ -13,6 +13,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { dispatchWorkflowRun } from "../_shared/workflowDispatch.ts";
+import { isServiceDispatchDirectFunctionAllowed } from "../_shared/marketplace-authority-containment.ts";
 import { contactHintsFromPayload, emitAutomationRail } from "../_shared/railAutomation.ts";
 
 const corsHeaders = {
@@ -279,6 +280,12 @@ Deno.serve(async (req) => {
         RE_ENTRANT_TARGETS.has(String(reg.direct_function_name ?? ""))
       ) {
         await terminate(`re_entrant_target_refused:${reg.direct_function_name}`);
+        continue;
+      }
+      // INT-310 dispatch allowlist: this sweeper dispatches with the SERVICE ROLE, so a direct target
+      // that is not allowlisted ends in an honest terminal state here, before it is ever claimed.
+      if (reg.provider === "direct_edge_function" && !isServiceDispatchDirectFunctionAllowed(reg.direct_function_name)) {
+        await terminate("direct_function_not_allowlisted");
         continue;
       }
 

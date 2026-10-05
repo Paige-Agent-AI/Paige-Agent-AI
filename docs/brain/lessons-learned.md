@@ -6,6 +6,19 @@ RED-LINE index and the §-doctrine; this file is the fast-lookup version.
 
 ---
 
+### A pure helper tested on plain objects, called on a frozen one (2026-10-05, C4b rebase)
+
+**Symptom → root cause → rule.** Every crm-command request naming a contact by `client_ref` threw
+`Cannot assign to read only property 'client_ref'` on `main` from 2026-10-01 until the C4b fix. Two PRs merged the
+same day: one froze the canonical command (`markCanonicalCrmCommand`), the other added a resolver that
+fills references IN PLACE. Each was green — the resolver's unit tests passed plain object literals, and
+the door's only test of the call site was a source-string order check. Nothing drove the real door with
+a `client_ref` until C4b's harness did. **Rule:** a helper whose contract is "mutates its argument" is
+tested against the object its real caller passes (here, the canonical command), and a door that composes
+two such seams is driven end to end with the shape Paige actually sends.
+
+---
+
 ### Merged before the final review returned (2026-10-04, INT-312 / DEL-093)
 
 **Symptom → root cause → rule.** #1712 merged five minutes before its requested Codex review landed a

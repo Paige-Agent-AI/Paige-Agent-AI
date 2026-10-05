@@ -771,14 +771,15 @@ jobs:
           # values they echo back. It needs no credentials.
           ./scripts/sales/commercial-terms-refusal-proof.sh
 
-      - name: C4a — an approval resumes the same objective (the pure resume model)
+      - name: C4a/C4b — an approval resumes the same objective (the pure resume model)
         if: ${{ !cancelled() }}
         run: |
           # The pure half of the server-carried approval resume (docs/delivery/paige-conversational-loop-c4.md):
           # the act is rebuilt from its stored row only, its call id is deterministic and provider-safe,
-          # only general-gate writes are carried forward, the outcome reads the act's own result, and
-          # the saved record is closed enums read defensively. The handler is driven end to end by
-          # test:client-memory-authz (group 39).
+          # only general-gate writes are carried forward by the general gate, a door proposal is handed
+          # back to its door only in a shape the door accepts and only for this workspace (C4b), the
+          # outcome reads the act's own result, and the saved record is closed enums read defensively.
+          # The handler is driven end to end by test:client-memory-authz (groups 39 and 40).
           deno test --allow-import=deno.land --node-modules-dir=none --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi --deny-sys \
             supabase/functions/_shared/paige-turn/resume.test.ts
 

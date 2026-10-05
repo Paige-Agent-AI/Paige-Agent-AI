@@ -30,6 +30,12 @@ bolt:I(<><path d="M13.5 3L6 13.5h4.5L10 21l7.5-10.5H13z"/></>),
 filter:I(<><path d="M4 6.5h16M7 12h10M10 17.5h4"/></>),
 cal:I(<><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3.5v3M16 3.5v3"/><circle cx="8.5" cy="14" r="1.1" fill="currentColor" stroke="none"/><circle cx="12" cy="14" r="1.1" fill="currentColor" stroke="none"/></>),
 plus:I(<><path d="M12 5.5v13M5.5 12h13"/></>),
+edit:I(<><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></>),
+pause:I(<><path d="M9 5.5v13M15 5.5v13"/></>),
+play:I(<><path d="M7.5 5.5l11 6.5-11 6.5z"/></>),
+up:I(<><path d="M12 18.5v-13M6.5 11L12 5.5 17.5 11"/></>),
+down:I(<><path d="M12 5.5v13M6.5 13L12 18.5 17.5 13"/></>),
+trash:I(<><path d="M4.5 7h15M10 11v5.5M14 11v5.5M6.5 7l.8 12h9.4l.8-12M9.5 7V4.5h5V7"/></>),
 };
 export const Logo=({size=26})=>(<svg width={size} height={size} viewBox="0 0 48 48" fill="none"><polygon points="21,13.6 30.5,13.6 21,34.4 11.5,34.4" fill="var(--gold-bright)" stroke="var(--gold-bright)" strokeWidth="3.2" strokeLinejoin="round"/><circle cx="34.5" cy="30.5" r="5.5" fill="var(--gold-bright)"/></svg>);
 export const Avatar=({name,size=28,tone})=>{const init=name.split(' ').map(w=>w[0]).slice(0,2).join('');const tones=['var(--violet)','var(--gold)','#2E7D8F','#8A5A9E','#3F7A4B'];const c=tone||tones[name.charCodeAt(0)%5];

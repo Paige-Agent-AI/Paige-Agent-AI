@@ -15,7 +15,7 @@ export default defineConfig({
     enforce: "pre",
     resolveId(source, importer) {
       if ((importer?.endsWith("marketing-planned.tsx") || importer?.endsWith("marketing-audience.tsx")) && source.endsWith("integrations/supabase/client")) return path.join(here, "planned-supabase-stub.ts");
-      if ((importer?.endsWith("marketing-email.tsx") || importer?.endsWith("marketing-email-editor.tsx")) && source.endsWith("integrations/supabase/client")) return path.join(here, "email-supabase-stub.ts");
+      if ((importer?.endsWith("marketing-email.tsx") || importer?.endsWith("marketing-email-editor.tsx") || importer?.endsWith("marketing-email-series.tsx")) && source.endsWith("integrations/supabase/client")) return path.join(here, "email-supabase-stub.ts");
       return null;
     },
   }],

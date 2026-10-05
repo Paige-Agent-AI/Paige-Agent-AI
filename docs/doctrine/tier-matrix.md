@@ -381,6 +381,20 @@ Same tiers as the layout C workspace below (Solo owner/admin; operator acting in
 
 Same tiers as the layout C workspace below; no new seam. The Studio designer saves drafts in the same turn; held saves surface as approval cards; an unnamed project is renamed through the existing `rename_studio_session` (workspace owner/admin or the project's creator). LIVE on merge; authenticated drive owed.
 
+### Marketing email E3 — series that send by themselves (branch `claude/gifted-bell-qfezxb`, 2026-10-05)
+
+Solo Marketing › Email › Automations (`/solo/{account}/growth/email`, `?series=` opens one). Welcome,
+nurture and win-back series (up to 10 emails, each with its wait) on the caller's active workspace, owner or
+admin only (`is_tenant_admin`). One approval per version of a series, filed and approved in the series view;
+the email worker runs `email_sequence_tick` each minute (service role only) and sends each email through the
+same claim, eligibility, daily limit (500 a day per business, shared with campaigns), footer, receipts and
+metering as campaigns. Agency accounts have no Marketing area (§60).
+
+| Capability | God / Super Admin | Agency | Standalone (Solo) | Sub-account | Client | Anonymous | Status |
+|---|---|---|---|---|---|---|---|
+| Build, approve, pause, resume, stop, remove someone from an email series | ✗ (no workspace) | ✗ (no Marketing area, §60) | **✓** owner/admin; a member is refused in the database | DB allows owner/admin; the sub-account tree has no Email screen yet | ✗ (client seat is deny-by-default) | ✗ | PARTIAL: LIVE on merge; authenticated drive owed |
+| The series' own step campaigns | hidden from every campaign read and the dashboard (RLS `sequence_id IS NULL`); only the series RPCs and the worker touch them | | | | | | LIVE on merge |
+
 ### Marketing email E2b — PAIGE's email tools in chat (branch `claude/gifted-bell-qfezxb`, 2026-10-05)
 
 Four chat tools (`read_email_campaigns`, `read_email_campaign_audience`, `email_campaign_draft`,

@@ -17137,7 +17137,7 @@ export async function runStructuredExtractionAndSync(
     // scope, and a turn that established no workspace persists NOTHING (fail closed BEFORE the
     // database's refusal — and never the resolver's first-membership fallback). The upload row in
     // Step 5 is the document's own record, not memory, and is unaffected by this skip.
-    let remembered: string = "ok";
+    let remembered: "ok" | "scope_changed" | "rejected" = "ok";
     if (clientId) {
       memoryInsert.client_id = clientId;
       remembered = await writeIfScopeCurrent("client_memory", () => supabase.from("client_memory").insert(memoryInsert));

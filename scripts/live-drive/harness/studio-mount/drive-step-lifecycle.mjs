@@ -6,7 +6,7 @@
 import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
 
-const [out = "scripts/live-drive/artifacts/step-lifecycle", theme = "light"] = process.argv.slice(2);
+const [out = "scripts/live-drive/artifacts/step-lifecycle", theme = "dark"] = process.argv.slice(2);
 mkdirSync(out, { recursive: true });
 const base = `http://127.0.0.1:${process.env.STUDIO_HARNESS_PORT || 5216}/`;
 const browser = await chromium.launch({ executablePath: process.env.PW_EXECUTABLE_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" });
@@ -56,7 +56,43 @@ async function run(name, reducedMotion, closeIt) {
   await page.close();
 }
 
-await run(`studio-steps-${theme}`, "no-preference", true);
-await run(`studio-steps-${theme}-reduced-motion`, "reduce", false);
+// The Solo matrix (4 viewports × PAIGE closed/open): the running row mid-turn, with the chat drawer
+// opened where the viewport makes it a drawer, measuring document overflow and whether the row is on
+// screen. The Studio is a full-screen overlay, so PAIGE open and closed render the same frame.
+async function matrix() {
+  for (const [w, h] of [[1536, 770], [1366, 768], [1024, 768], [900, 1000]]) {
+    for (const paige of ["closed", "open"]) {
+      const name = `solo-${w}x${h}-paige-${paige}`;
+      const page = await browser.newPage({ viewport: { width: w, height: h } });
+      page.on("pageerror", (e) => errors.push(`${name}: ${e}`));
+      await page.goto(`${base}?theme=${theme}&paige=${paige}&stream=lifecycle`);
+      await page.waitForSelector(".vs-home");
+      await page.locator(".vs-card", { hasText: "New client intake" }).click();
+      await page.waitForSelector(".vs-session");
+      const toggle = page.locator(".vs-chat-toggle");
+      if (await toggle.isVisible() && (await toggle.getAttribute("aria-expanded")) === "false") await toggle.click();
+      await page.fill("#vs-chat-input", "Add a question about budget");
+      await page.keyboard.press("Enter");
+      await page.waitForSelector('.vs-steps li[data-status="running"]');
+      await page.locator('.vs-steps li[data-status="running"]').scrollIntoViewIfNeeded();
+      await page.waitForTimeout(250);
+      const m = await page.evaluate(() => {
+        const r = document.querySelector('.vs-steps li[data-status="running"]').getBoundingClientRect();
+        return {
+          docOverflowX: document.documentElement.scrollWidth - innerWidth,
+          rowOnScreen: r.width > 0 && r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight,
+        };
+      });
+      results.push({ name, ...m });
+      await label(page);
+      await page.screenshot({ path: `${out}/${name}.png` });
+      await page.close();
+    }
+  }
+}
+
+await run("studio-steps", "no-preference", true);
+await run("studio-steps-reduced-motion", "reduce", false);
+await matrix();
 await browser.close();
 console.log(JSON.stringify({ results, errors }, null, 2));

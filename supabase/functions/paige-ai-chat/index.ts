@@ -9035,7 +9035,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             args: invoiceArgs, approved: approvedConfirmations,
             sameToolCalls: toolCalls.filter((call: any) => call?.function?.name === tc.function.name).length,
             turn: { thread_id: payloadThreadId ?? null, user_turn_ordinal: userTurns.length, user_turn: userTurns[userTurns.length - 1]?.content ?? null },
-          }, { caller: supabase, admin: { from: (name: string) => ({
+          }, { caller: supabaseClient, admin: { from: (name: string) => ({
             // Dynamic approval table: isolate the SDK generic expansion at the selected-query boundary.
             select: (columns: string) => createClient(supabaseUrl, supabaseServiceKey).from(name).select(columns) as unknown as SalesInvoiceApprovalQuery,
           }) } });

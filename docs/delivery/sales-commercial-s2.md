@@ -57,8 +57,24 @@ The risk guard follows the real Sales declaration/dispatch/shared-gate chain and
 This is a bounded S2 draft unit, not S2 or INT-311 completion. Explicit custom USD invoice items are supported; catalog-price conversational creation fails with `CATALOG_PRICE_REVIEW_REQUIRED` until canonical price/version resolution is bound. The full package may not guess dates, currency, tax/fees or conflicting signed terms. No recurring mandate, customer charge, provider settlement, loan or new scheduler is introduced.
 
 
-## Capability Kit CI repair — 2026-10-05
+## Capability Kit CI repair â€” 2026-10-05
 
 The anti-bypass failure was repaired in implementation, without expanding its baseline or exemptions: create/revise now have literal branded declarations and literal Chat tool names with schemas projected from those declarations. Admission uses the canonical Kit ordinary internal-mutation adapter (SCR-2026-10-05), which delegates unchanged Trust semantics to governedExecution; the existing high-risk adapter is untouched. Discovery guards inspect each adapter body independently and reject a broken import, risk check, provider boundary or alternate authority. No SQL or approval semantics changed. Open-PR changed-file check found no other lane editing decision.ts; #1615's Kit branding/types and #1400's risk-parser hunks remain untouched.
 
 Local validation: Capability Kit anti-bypass PASS; action-risk lint and negative selftests PASS; 122 affected tests PASS; actual Deno endpoint graph PASS. Hosted authentication, full package assembly and provider settlement remain UNVERIFIED. Final exact-head review/CI and delivery evidence are recorded in #1741 before merge.
+
+
+## Next S2 unit pre-edit gate - canonical offer resolution
+
+1. Outcome: PAIGE resolves recorded tenant offers/prices before commercial draft assembly; ambiguous names/prices require owner selection. No published invoice or charge is implied.
+2. Owner: Sales owns tenant_products/tenant_prices; existing Catalog writer remains unchanged. Open #1615 Knowledge and #1737 research own separate shared seams; this unit extends the existing Sales dispatcher only.
+3. Harness/Gateway: canonical capability projection and read dispatch, no new workflow/resume engine. Shared C4 remains a full-package dependency.
+4. Spine: add sales_invoice.offers_read through public.read_sales_commercial_offers and the canonical Sales Chat set/Kit read schema; maturity PARTIAL until authenticated proof.
+5. Provider: none for recorded offer read. Stripe/PayPal S1 unchanged; platform Product/Price IDs never imply connected-account execution objects.
+6. Trust: read_only/none, authenticated current-workspace owner/admin through the existing Sales actor gate. No approval or risk-registry changes.
+7. Durable work: no jobs created by a read. Full package later uses canonical orchestration and shared C4.
+8. Evidence: caller-JWT RPC repeats tenant/member checks, bounded explicit projection; shared Chat read receipts/trace. No provider IDs, tokens, storage keys or raw database errors.
+9. Surface: existing Chat tool result and Sales Offers records, no new page/layout/modal; approved draft review unchanged. Source facts only, no package approval/execution.
+10. Proof: literal/exact-ID search, duplicate choices, bounds, foreign/removed/unauthenticated caller refusal, unexpected-data rejection and canonical binding tests; real SQL, exact-head CI/review. Authenticated two-tenant read/full COMMERCIAL-ASSEMBLY-01 remain owed.
+
+Independent first review at f3179f413ac95a0b7ace12455748903bc7d22cc5 found three valid defects: actual Sales Chat supplied the service client instead of caller JWT, shortened offer text lacked flags, and the declared read receipt was absent. One repair batch corrects caller binding for the existing Sales dispatcher (service-only approval selections retained), adds strict text-truncation/owner-context indicators, and atomically records the read through existing record_capability_run with a safe receipt ID. SQL role/receipt-failure proofs and actual-source caller-binding regressions accompany the fix. This does not change approval policy, create a second receipt stream or establish authenticated execution. Sole exact-head recheck required before merge.

@@ -15,6 +15,8 @@ export const READINESS_RESOLVER_IDS = Object.freeze([
   "research_provider",
   /** A tenant-approved MCP provider connection (GHL, Zapier, …). Resolved per provider in C0b. */
   "mcp_connection",
+  /** Tenant merchant identity and fresh provider-served payment permission. Exact request gateway still fails closed. */
+  "sales_merchant",
 ] as const);
 
 export type ReadinessResolverId = (typeof READINESS_RESOLVER_IDS)[number];
@@ -32,4 +34,5 @@ export const READINESS_SETUP_HINT: Readonly<Record<ReadinessResolverId, string>>
   n8n_connection: "Connect your n8n account first.",
   research_provider: "Web research isn't configured for this workspace yet.",
   mcp_connection: "Connect and approve that app first.",
+  sales_merchant: "Connect your business payment account and verify its payment permission first.",
 });

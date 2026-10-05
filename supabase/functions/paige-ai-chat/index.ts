@@ -1915,18 +1915,60 @@ JSON:`;
     // safe for confidentiality but would silently mask a caller probing for other clients.
     let memoryBlock = "";
     try {
+      // === MEMORY WORKSPACE SCOPE (INT-326 S1) ==============================================
+      //
+      // Durable memory recall is WORKSPACE-bound: a person's identity is not a workspace grant,
+      // so the no-client arm below may key on the person ONLY inside the workspace the caller
+      // explicitly holds. The scope authority is the caller's DECLARED active workspace
+      // (profiles.active_tenant_id, read through the caller's own JWT so RLS applies) — never
+      // current_user_tenant_id(), whose first-membership fallback would invent a workspace the
+      // caller never chose (a cleared pointer means NO memory scope, not the oldest membership).
+      // NULL — the platform operator, an unresolved scope, or a failed read — recalls NOTHING:
+      // no recent read, no paid embedding, no RPC, no block, exactly like the refused-client
+      // path. The operator surface reads owner memory through the §52 briefing, never
+      // tenant/client memory keyed on the person.
+      let memoryScopeTenantRead: Promise<string | null> | null = null;
+      const memoryScopeTenantId = (): Promise<string | null> =>
+        (memoryScopeTenantRead ??= (async () => {
+          try {
+            const { data, error } = await supabaseClient
+              .from("profiles")
+              .select("active_tenant_id")
+              .eq("user_id", user.id)
+              .maybeSingle();
+            if (error) {
+              // §13 — diagnosable, existence-silent: the log says the scope read failed, never
+              // whether any memory exists. A failed scope is not a scope: no memory this turn.
+              console.error("[paige] memory workspace scope unreadable — no memory this turn",
+                JSON.stringify({ code: (error as any)?.code ?? null }));
+              return null;
+            }
+            const declared = (data as { active_tenant_id?: unknown } | null)?.active_tenant_id;
+            return typeof declared === "string" && declared ? declared : null;
+          } catch {
+            return null;
+          }
+        })());
+      const noClientMemoryTenant: string | null =
+        !clientScopeDenied && !scopedClientId ? await memoryScopeTenantId() : null;
+
       // Refused client context does NO memory work at all: the block below is skipped entirely,
       // so there is no recent read, no semantic embedding, and no match_paige_memory call.
+      // INT-326 S1: the no-client arm adds the captured workspace to the person predicate, and a
+      // caller with NO workspace reads nothing — the operator surface is the §52 briefing, not
+      // tenant/client memory keyed on the person.
       const memoryQuery = clientScopeDenied
         ? null
         : scopedClientId
         ? supabase.from("client_memory").select("memory_type, content, created_at").eq("client_id", scopedClientId).eq("is_active", true).order("created_at", { ascending: false }).limit(15)
-        : supabase.from("client_memory").select("memory_type, content, created_at").eq("client_user_id", user.id).eq("is_active", true).order("created_at", { ascending: false }).limit(15);
+        : noClientMemoryTenant
+        ? supabase.from("client_memory").select("memory_type, content, created_at").eq("client_user_id", user.id).eq("tenant_id", noClientMemoryTenant).eq("is_active", true).order("created_at", { ascending: false }).limit(15)
+        : null;
 
       // Embed the latest user message so we can retrieve semantically-relevant
       // memories and past chat snippets in parallel with the recent-memory pull.
       const lastUserContent = lastUserMessage?.content?.slice(0, 4000) || "";
-      const semanticPromise = (lastUserContent && !clientScopeDenied)
+      const semanticPromise = (lastUserContent && !clientScopeDenied && (scopedClientId || noClientMemoryTenant))
         ? embedText(lastUserContent).then(async (queryEmbedding) => {
             if (!queryEmbedding) return [] as any[];
             const { data, error } = await supabase.rpc("match_paige_memory", {
@@ -1942,7 +1984,31 @@ JSON:`;
               console.error("match_paige_memory error:", error);
               return [] as any[];
             }
-            return data || [];
+            const hits = (data || []) as any[];
+            if (scopedClientId) return hits;
+            // INT-326 S1: for the person arm the RPC result is NOT yet workspace-bound (that
+            // binding lands with the S2 function hardening), so every hit is re-verified against
+            // the captured workspace HERE before it may enter the prompt: a 'memory' hit must
+            // exist as a client_memory row in THIS tenant; a 'chat' hit (chat_message_embeddings)
+            // carries no tenant anywhere and cannot be proven for ANY workspace — dropped for the
+            // person arm until that store has canonical tenant provenance. Fail closed,
+            // existence-silent.
+            if (!noClientMemoryTenant) return [] as any[];
+            const scopedIds = hits
+              .filter((h) => h?.source === "memory" && typeof h?.id === "string")
+              .map((h) => h.id);
+            if (scopedIds.length === 0) return [] as any[];
+            const { data: verifiedRows, error: verifyErr } = await supabase
+              .from("client_memory")
+              .select("id")
+              .eq("tenant_id", noClientMemoryTenant)
+              .in("id", scopedIds);
+            if (verifyErr) {
+              console.error("memory workspace verification failed:", verifyErr);
+              return [] as any[];
+            }
+            const okIds = new Set((((verifiedRows as any[]) ?? []) as any[]).map((r: any) => r?.id));
+            return hits.filter((h) => h?.source === "memory" && okIds.has(h?.id));
           }).catch((e) => { console.error("semantic search failed:", e); return [] as any[]; })
         : Promise.resolve([] as any[]);
 
@@ -1995,10 +2061,16 @@ JSON:`;
           const semanticBlock = semanticEntries.length > 0
             ? `\n\n--- Semantically-relevant past context for this question ---\n${semanticEntries.join("\n")}`
             : "";
+          // INT-326 S1 (Impeccable): name the true subject. With a client in focus the rows are
+          // that client's; with none they are the CALLER's own preferences as shared while
+          // working in THIS workspace — the heading must not claim a client that is not in scope.
+          const memoryHeading = scopedClientId
+            ? "What I know about this client from previous sessions"
+            : "What I've learned about how you work in this workspace";
           // The remembered spans above are sanitized; lead the block with the untrusted-data notice so
           // an embedded directive/tool-call/permission-change is never obeyed. The trusted instruction
           // below still scopes what to honor to tone/length/format PREFERENCES — data, not authority.
-          memoryBlock = `\n\n=== PAIGE MEMORY — What I know about this client from previous sessions ===\n${RETRIEVED_KNOWLEDGE_UNTRUSTED_NOTICE}\n${included.join("\n")}${semanticBlock}\n=== END MEMORY ===\n\nIMPORTANT: Honor any user_preference items (tone, length, formats) in every response. Use the rest of the memory to personalize. If this is the start of a new conversation (only 1 user message), open with a personalized greeting that references what you know.\n`;
+          memoryBlock = `\n\n=== PAIGE MEMORY — ${memoryHeading} ===\n${RETRIEVED_KNOWLEDGE_UNTRUSTED_NOTICE}\n${included.join("\n")}${semanticBlock}\n=== END MEMORY ===\n\nIMPORTANT: Honor any user_preference items (tone, length, formats) in every response. Use the rest of the memory to personalize. If this is the start of a new conversation (only 1 user message), open with a personalized greeting that references what you know.\n`;
         }
       }
     } catch (err) {

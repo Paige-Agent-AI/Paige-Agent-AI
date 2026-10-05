@@ -544,9 +544,20 @@ async function drive({
 
 console.log("\nauthorized paths still work (no regression)");
 {
-  const noClient = await drive({ clientId: undefined });
+  // INT-326 S1: the no-client read is additionally bound to the caller's captured workspace, so
+  // this scenario seats the caller in their workspace the way a Solo owner's persona resolves.
+  // An UNSEATED caller has no workspace at all and legitimately recalls nothing (39.2/39.3).
+  const noClient = await drive({
+    clientId: undefined,
+    rpcOverrides: { get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: null, playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null } },
+  });
   assert("1.1 with NO clientId, memory is read scoped to the caller's own user id",
     noClient.memoryReads.some((r) => r.filters.some((f) => f[0] === "eq" && f[1] === "client_user_id" && f[2] === USER)),
+    JSON.stringify(noClient.memoryReads.map((r) => r.filters)));
+  assert("1.1b …AND to the captured workspace — a person's identity alone is not a memory scope (INT-326 S1)",
+    noClient.memoryReads.some((r) =>
+      r.filters.some((f) => f[0] === "eq" && f[1] === "client_user_id" && f[2] === USER)
+      && r.filters.some((f) => f[0] === "eq" && f[1] === "tenant_id" && f[2] === CALLER_TENANT)),
     JSON.stringify(noClient.memoryReads.map((r) => r.filters)));
   assert("1.2 …and never keyed on a client_id",
     !noClient.memoryReads.some((r) => r.filters.some((f) => f[0] === "eq" && f[1] === "client_id")));
@@ -5321,6 +5332,126 @@ console.log("\nsurface-aware self-knowledge — what she can do, what the owner 
       && unknownScopeThread.modelEgress.every((b) => !b.includes("PLATFORM-THREAD-SUMMARY-MARKER") && !b.includes("platform turn 1"))
       && threadWrites(unknownScopeThread).appends === 0,
     JSON.stringify({ status: unknownScopeThread.status, egress: unknownScopeThread.modelEgress.length, ...threadWrites(unknownScopeThread) }));
+}
+
+// ============================================================================================
+// 39 — INT-326 S1: no-client memory recall is bound to the caller's captured workspace.
+//
+// A person's identity is not a workspace grant. The no-client (person-keyed) recall used to read
+// EVERY client_memory row keyed on the caller's user id — across all workspaces — and trusted
+// match_paige_memory's person branch, which carries no tenant predicate either. The same human in
+// Solo A and Solo B (and on the operator desk) carried memories between them.
+//
+// S1 binds the no-client arm to the caller's DECLARED active workspace (profiles.active_tenant_id,
+// through the caller's own JWT): the recent read carries the tenant predicate, every semantic hit
+// is re-verified against the captured workspace before it may enter the prompt, 'chat'-source hits
+// (a store with no tenant provenance at all) are dropped for the person arm, and NO scope (the
+// platform operator, an unresolved scope, a failed read) does no memory work at all — no read, no
+// paid embedding, no RPC, no block. Fail closed, existence-silent.
+// ============================================================================================
+{
+  const SEATED = { get_paige_persona_context: { data: [{ tenant_id: CALLER_TENANT, tenant_name: null, playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null } };
+  const UNSEATED = { get_paige_persona_context: { data: [{ tenant_id: null, tenant_name: null, playbook_config: null, playbook_slug: null, funding_enabled: false, brand: null }], error: null } };
+  const OPERATOR = { is_platform_operator: { data: true, error: null } };
+  const RECENT_IN_SCOPE = "IN-SCOPE-RECENT-PREF";
+  const FOREIGN_SEMANTIC = "SECRET-OTHER-WORKSPACE-PREF";
+  const FOREIGN_CHAT = "SECRET-PAST-CHAT-EXCERPT";
+  const HIT_ID = "11111111-2222-4333-8444-555555555555";
+  // Service-side client_memory that answers the RECENT shape normally and the S1 verification
+  // shape (an `in("id", …)` probe) with whichever rows this scenario scripts — the default
+  // service fixture answers every shape with id-less rows, which would make the verification
+  // pass/fail assertions vacuous (grading the fixture, not the code).
+  const memoryTable = (verifyRows) => (filters) => {
+    if (filters.some((f) => f[0] === "in" && f[1] === "id")) return verifyRows;
+    if (filters.some((f) => f[0] === "gte" && f[1] === "created_at")) return [];
+    return [{ memory_type: "user_preference", content: RECENT_IN_SCOPE, created_at: new Date().toISOString() }];
+  };
+  const semanticRpc = (rows) => ({ match_paige_memory: { data: rows, error: null } });
+
+  // 39.1 — a seated caller's no-client memory block names the WORKSPACE subject, not a client.
+  const seated = await drive({ clientId: undefined, stream: true, rpcOverrides: SEATED });
+  assert("39.1 the no-client memory block is workspace-relative in the egressed prompt",
+    seated.modelEgress.some((b) => b.includes("how you work in this workspace"))
+    && seated.modelEgress.every((b) => !b.includes("What I know about this client from previous sessions")),
+    "expected the workspace-relative heading, never the client heading, without a client in scope");
+
+  // 39.2 — NO workspace (the default unseated caller) → no memory work at all, existence-silent.
+  // The egress marker is the em-dash heading opener "PAIGE MEMORY — ": the STATIC prompt rule in
+  // client-context.ts legitimately says "=== PAIGE MEMORY ===" when describing the block, so the
+  // bare phrase alone would false-positive on every turn that has no memory block at all.
+  const noScope = await drive({ clientId: undefined, stream: true });
+  assert("39.2 a caller with no workspace reads no client_memory and calls no memory RPC",
+    noScope.memoryReads.length === 0 && noScope.memoryRpc.length === 0,
+    JSON.stringify({ reads: noScope.memoryReads.map((r) => r.filters), rpc: noScope.memoryRpc.map((r) => r.args) }));
+  // The shared embed counter cannot isolate the memory path (the preference-signal WRITER also
+  // embeds on ordinary turns), so absence is proven by the read/RPC gates plus the block itself.
+  assert("39.3 …and no memory block is egressed for a caller with no workspace",
+    noScope.modelEgress.every((b) => !b.includes("PAIGE MEMORY \u2014 ")),
+    JSON.stringify({ egress: noScope.modelEgress.length }));
+
+  // 39.4 — the platform operator does not fall back into tenant/client memory by person.
+  const operator = await drive({ clientId: undefined, stream: true, rpcOverrides: { ...UNSEATED, ...OPERATOR } });
+  assert("39.4 the OPERATOR surface recalls no tenant/client memory (the briefing is its memory seam)",
+    operator.memoryReads.length === 0 && operator.memoryRpc.length === 0
+    && operator.modelEgress.every((b) => !b.includes("PAIGE MEMORY \u2014 ")),
+    JSON.stringify({ reads: operator.memoryReads.map((r) => r.filters), rpc: operator.memoryRpc.length }));
+
+  // 39.5 — a semantic hit from ANOTHER workspace is re-verified against the captured tenant and dropped.
+  const foreignHit = await drive({
+    clientId: undefined, stream: true, rpcOverrides: { ...SEATED, ...semanticRpc([
+      { source: "memory", id: HIT_ID, memory_type: "user_preference", content: FOREIGN_SEMANTIC, similarity: 0.95 },
+    ]) },
+    serviceTablesExtra: { client_memory: memoryTable([]) }, // the id probe finds the row in NO tenant
+  });
+  assert("39.5 a person-keyed semantic hit is verified against the captured workspace BEFORE the prompt",
+    foreignHit.rec.from.some((f) => f.table === "client_memory" && f.op === "select"
+      && f.filters.some((x) => x[0] === "eq" && x[1] === "tenant_id" && x[2] === CALLER_TENANT)
+      && f.filters.some((x) => x[0] === "in" && x[1] === "id")),
+    JSON.stringify(foreignHit.rec.from.filter((f) => f.table === "client_memory").map((f) => f.filters)));
+  assert("39.6 …so a hit that does not exist in this workspace never reaches the model, while the in-scope recent memory still does",
+    foreignHit.modelEgress.every((b) => !b.includes(FOREIGN_SEMANTIC))
+    && foreignHit.modelEgress.some((b) => b.includes(RECENT_IN_SCOPE)),
+    JSON.stringify({ egress: foreignHit.modelEgress.length }));
+
+  // 39.7 — the same hit, verified present in the workspace, DOES pass — the check is not a blanket drop.
+  const ownHit = await drive({
+    clientId: undefined, stream: true, rpcOverrides: { ...SEATED, ...semanticRpc([
+      { source: "memory", id: HIT_ID, memory_type: "user_preference", content: FOREIGN_SEMANTIC, similarity: 0.95 },
+    ]) },
+    serviceTablesExtra: { client_memory: memoryTable([{ id: HIT_ID }]) },
+  });
+  assert("39.7 a semantic hit verified in the captured workspace is still recalled (no over-blocking)",
+    ownHit.modelEgress.some((b) => b.includes(FOREIGN_SEMANTIC)),
+    JSON.stringify({ egress: ownHit.modelEgress.length }));
+
+  // 39.8 — 'chat'-source hits (chat_message_embeddings) carry no tenant anywhere: dropped for the
+  // person arm until that store has canonical tenant provenance, while the verified memory hit passes.
+  const chatHit = await drive({
+    clientId: undefined, stream: true, rpcOverrides: { ...SEATED, ...semanticRpc([
+      { source: "memory", id: HIT_ID, memory_type: "user_preference", content: FOREIGN_SEMANTIC, similarity: 0.95 },
+      { source: "chat", id: "99999999-9999-4999-8999-999999999998", memory_type: "user", content: FOREIGN_CHAT, similarity: 0.9 },
+    ]) },
+    serviceTablesExtra: { client_memory: memoryTable([{ id: HIT_ID }]) },
+  });
+  assert("39.8 a chat-source hit is not recalled for the person arm (no tenant provenance to verify)",
+    chatHit.modelEgress.every((b) => !b.includes(FOREIGN_CHAT))
+    && chatHit.modelEgress.some((b) => b.includes(FOREIGN_SEMANTIC)),
+    JSON.stringify({ egress: chatHit.modelEgress.length }));
+
+  // 39.9 — an unreadable scope is not a scope: fail closed, existence-silent, diagnosable by code only.
+  const scopeFail = await drive({ clientId: undefined, stream: true, rpcOverrides: SEATED, tableErrorsExtra: { profiles: { code: "PGRST-error", message: "fixture: profiles read failed" } } });
+  assert("39.9 a failed scope read recalls nothing and says only that the scope was unreadable",
+    scopeFail.memoryReads.length === 0 && scopeFail.memoryRpc.length === 0
+    && scopeFail.modelEgress.every((b) => !b.includes("PAIGE MEMORY \u2014 "))
+    && scopeFail.logged.some((l) => l.msg.includes("memory workspace scope unreadable")),
+    JSON.stringify({ reads: scopeFail.memoryReads.length, rpc: scopeFail.memoryRpc.length }));
+
+  // 39.10 — the client-in-focus arm is unchanged: client-keyed, and the CLIENT heading is kept.
+  const clientFocused = await drive({ clientId: OWN, stream: true });
+  assert("39.10 a client in focus keeps the client-keyed read and the client-relative heading",
+    clientFocused.memoryReads.some((r) => r.filters.some((f) => f[0] === "eq" && f[1] === "client_id" && f[2] === OWN))
+    && clientFocused.modelEgress.some((b) => b.includes("What I know about this client from previous sessions")),
+    JSON.stringify({ reads: clientFocused.memoryReads.map((r) => r.filters) }));
 }
 
 console.log("\npaige_turn — every stream says it started and ends once, before the answer");

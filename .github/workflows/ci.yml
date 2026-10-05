@@ -563,7 +563,10 @@ jobs:
       # so CI fetches it through npx at the pinned version.
       - name: Impeccable — UI anti-patterns (changed src)
         if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch') && steps.changed.outputs.ui_count != '0' }}
-        run: xargs -r -a changed_ui.txt npx --yes impeccable@4.1.0 detect
+        run: |
+          node --test scripts/ci/check-source-utf8.test.mjs
+          xargs -r -a changed_ui.txt node scripts/ci/check-source-utf8.mjs
+          xargs -r -a changed_ui.txt npx --yes impeccable@4.1.0 detect
 
       # --- Edge functions: the gap this closes (task #142) ---------------------------------
       # NOTHING compiled an edge function before it deployed. `tsc` covers src/ only (edge fns
